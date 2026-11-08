@@ -152,7 +152,7 @@ function RegisterTable({ tid, items }: { tid: string; items: EvidenceRegisterIte
                         ))}
                         {e.includesRestrictedRecords === true ? (
                           <li data-restricted-link="true">
-                            <RestrictedRecordsLabel value />
+                            <RestrictedRecordsLabel value scope="item" />
                           </li>
                         ) : null}
                       </ul>

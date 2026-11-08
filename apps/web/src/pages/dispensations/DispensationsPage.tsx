@@ -140,7 +140,7 @@ function DispensationRegister() {
               ) : d.includesRestrictedRecords ? (
                 // T-DG6-BE-Z10B (D-218): the dispensation has evidence the reader is not admitted to; never "none".
                 <span data-evidence="restricted">
-                  <RestrictedRecordsLabel value />
+                  <RestrictedRecordsLabel value scope="item" />
                 </span>
               ) : (
                 t("common.value.none")

@@ -309,7 +309,7 @@ function SectionView({ section: s }: { section: ReportSection }) {
         {title}
       </h3>
       {/* T-DG6-BE-Z7B (F-DG6-340; ADR-0051 §2): its totals or metrics include a value whose row is not shown. */}
-      <RestrictedRecordsLabel value={s.includesRestrictedRecords} />
+      <RestrictedRecordsLabel value={s.includesRestrictedRecords} scope="total" />
       {body}
     </section>
   );

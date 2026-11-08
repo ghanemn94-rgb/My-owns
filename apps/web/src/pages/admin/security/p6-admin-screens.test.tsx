@@ -681,6 +681,26 @@ describe("The sensitivity panel and the restricted-records label (REQ-S10-002)",
     expect(labels).toHaveLength(1);
     expect(document.querySelectorAll("[data-restricted-records]")).toHaveLength(1);
   });
+
+  it.each(LOCALES)("%s: T-DG6-BE-Z13 (F-DG6-561): the description fits a total or an item", async (locale) => {
+    mockApi(meRoute(["organization.read"], locale));
+    renderInSession(
+      <>
+        <RestrictedRecordsLabel value={true} />
+        <RestrictedRecordsLabel value={true} scope="item" />
+      </>,
+      locale,
+    );
+    await screen.findAllByText(tx(locale, "access.includesRestrictedRecords"));
+    const [total, item] = [...document.querySelectorAll("[data-restricted-records]")];
+    expect(total?.getAttribute("data-restricted-scope")).toBe("total");
+    expect(total?.getAttribute("title")).toBe(tx(locale, "adminP6.restricted.hint"));
+    expect(total?.textContent).toContain(tx(locale, "adminP6.restricted.hint"));
+    expect(item?.getAttribute("data-restricted-scope")).toBe("item");
+    expect(item?.getAttribute("title")).toBe(tx(locale, "adminP6.restricted.hintItem"));
+    expect(item?.textContent).toContain(tx(locale, "adminP6.restricted.hintItem"));
+    expect(item?.textContent).not.toContain(tx(locale, "adminP6.restricted.hint"));
+  });
 });
 
 describe("The safe evidence preview (REQ-S13-011)", () => {

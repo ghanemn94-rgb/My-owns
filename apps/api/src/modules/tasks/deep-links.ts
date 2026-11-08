@@ -19,6 +19,9 @@
 //   A missing (deleted) record is not readable. A link to a corrective case or a transition decision (records that carry
 //   a benefit's values; `restrictedLinkChildren`, T-DG6-BE-Z4) is not readable when that record is restricted for the
 //   reader under the ADR-0051 §2 amendment (sensitive-reach.ts).
+// - `restrictedNotifications` (T-DG6-BE-Z13, F-DG6-540; D-218, D-226): the decision every notification response and
+//   the resolver use: `readableTargets`, plus any id in the link, params or target that names a sensitive record or a
+//   child carrying one's values the reader is not admitted to, plus the announced work item's own restriction.
 //
 // The token is an opaque identifier, NEVER a credential: holding it grants nothing, every resolution re-authorizes the
 // signed-in caller, and being the recipient is neither required nor sufficient. Every forbidden token answers the same
@@ -36,8 +39,10 @@ import {
   readScopeFor,
   reachKey,
   resolveTarget,
+  restrictedIdsAmong,
   restrictedRecordRefs,
   SENSITIVE_RECORD_TYPE_LIST,
+  uuidsIn,
   type Principal,
   type ReadScope,
   type ResolvedTarget,
@@ -151,10 +156,19 @@ export async function restrictedWorkItems(
   };
   const perItem = items.map(refsOf);
   const all = perItem.flat();
-  if (all.length === 0) return items.map(() => false);
-  const restricted = await restrictedRecordRefs(db, principal, all);
-  if (restricted.size === 0) return items.map(() => false);
-  return perItem.map((refs) => refs.some((r) => restricted.has(reachKey(r))));
+  // T-DG6-BE-Z13 (F-DG6-540): any id in the link that names a sensitive record or a child carrying one's values (a
+  // Finance validation, an overlap, ...), whatever route it uses, restricts the item too.
+  const linkIds = items.map((w) => uuidsIn(w.linkPath));
+  const hidden = await restrictedIdsAmong(
+    db,
+    principal,
+    linkIds.flatMap((ids) => [...ids]),
+  );
+  const restricted = all.length === 0 ? new Set<string>() : await restrictedRecordRefs(db, principal, all);
+  if (restricted.size === 0 && hidden.size === 0) return items.map(() => false);
+  return perItem.map(
+    (refs, i) => refs.some((r) => restricted.has(reachKey(r))) || [...linkIds.at(i)!].some((id) => hidden.has(id)),
+  );
 }
 
 const UUID_ONLY = new RegExp(`^${UUID}$`);
@@ -162,6 +176,60 @@ const UUID_ONLY = new RegExp(`^${UUID}$`);
 /** The web path a restricted work item links to instead of its record: the transformation home (else My Work). */
 export const restrictedWorkItemLink = (transformationId: string | null): string =>
   transformationId === null ? "/my-work" : `/transformations/${transformationId}`;
+
+/** The columns of a notification that can name a record (T-DG6-BE-Z13). */
+export type NotificationRefColumns = Pick<
+  InboxNotificationRow,
+  "link_path" | "transformation_id" | "target_record_type" | "target_record_id" | "work_item_id" | "message_params"
+>;
+
+/**
+ * T-DG6-BE-Z13 (F-DG6-540; D-218, D-222 (1), D-226; ADR-0051 §2, §3): for each notification, true when the recipient
+ * may not see what it is about, so every response that serializes it (`listMyInbox`, `markInboxNotificationRead`)
+ * shows `restrictedNotificationView`. Restricted when ANY of these holds (one reach decision per kind for the batch):
+ *   - its target is not readable now (`readableTargets`: the stored or recognized benefit, business case or evidence,
+ *     a restricted corrective case or transition decision route, or the transformation);
+ *   - its link, its message parameters or its stored target name the id of a sensitive record or of ANY child that
+ *     carries one's values (every SENSITIVE_CHILD_SOURCES type: a Finance validation, a benefit overlap, a measurement,
+ *     ...) the recipient is not admitted to (`restrictedIdsAmong`), whatever route the link uses;
+ *   - the work item it announces is restricted for the recipient (`restrictedWorkItems`: its subject or its link), so
+ *     the inbox and My Work agree on the same event.
+ */
+export async function restrictedNotifications(
+  db: DbOrTx,
+  principal: Principal,
+  rows: readonly NotificationRefColumns[],
+): Promise<boolean[]> {
+  if (rows.length === 0) return [];
+  const readable = await readableTargets(db, principal, rows);
+  const idsOf = rows.map((r) => uuidsIn([r.link_path, r.message_params, r.target_record_id]));
+  const hidden = await restrictedIdsAmong(
+    db,
+    principal,
+    idsOf.flatMap((ids) => [...ids]),
+  );
+  const itemIds = [...new Set(rows.flatMap((r) => (r.work_item_id === null ? [] : [r.work_item_id])))];
+  const items =
+    itemIds.length === 0
+      ? []
+      : await db
+          .selectFrom("work_item")
+          .select(["id", "subject_type", "subject_id", "link_path"])
+          .where("id", "in", itemIds)
+          .execute();
+  const itemRestricted = await restrictedWorkItems(
+    db,
+    principal,
+    items.map((w) => ({ subjectType: w.subject_type, subjectId: w.subject_id, linkPath: w.link_path })),
+  );
+  const restrictedItems = new Set(items.filter((_, i) => itemRestricted.at(i) === true).map((w) => w.id));
+  return rows.map(
+    (r, i) =>
+      readable.at(i) !== true ||
+      [...idsOf.at(i)!].some((id) => hidden.has(id)) ||
+      (r.work_item_id !== null && restrictedItems.has(r.work_item_id)),
+  );
+}
 
 /** What a notification points to, for the read check. */
 type TargetRef =
@@ -372,12 +440,21 @@ export function registerDeepLinkRoutes(app: FastifyInstance, { db }: ModuleDeps)
       parseQuery(z.strictObject({}), request.query);
       const row = await db
         .selectFrom("inbox_notification")
-        .select(["link_path", "transformation_id", "target_record_type", "target_record_id"])
+        .select([
+          "link_path",
+          "transformation_id",
+          "target_record_type",
+          "target_record_id",
+          "work_item_id",
+          "message_params",
+        ])
         .where("link_token", "=", token)
         .executeTakeFirst();
       if (!row) throw problems.notFound();
-      const [readable] = await readableTargets(db, principal, [row]);
-      if (!readable) throw deepLinkForbidden();
+      // T-DG6-BE-Z13 (D-226): the same decision as the inbox, so a child route (a Finance validation, an overlap) of a
+      // restricted record is refused too.
+      const [restricted] = await restrictedNotifications(db, principal, [row]);
+      if (restricted === true) throw deepLinkForbidden();
       const ref = targetRefOf(row);
       return {
         linkPath: row.link_path,

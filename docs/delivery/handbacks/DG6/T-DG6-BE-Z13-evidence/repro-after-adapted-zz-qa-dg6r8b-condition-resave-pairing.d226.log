@@ -1,0 +1,32 @@
+port-policy: PostgreSQL listening on port 31150 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-z13
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw8c33cy_7a446113 (server_encoding UTF8); applied 118 migrations to a fresh database
+stdout | apps/api/test/integration/access/zz-qa-dg6r8b-condition-resave-pairing.d226.test.ts
+QA-R8b ids: hidden X=01a1bd06-91ac-7630-b24b-70a189b66fca hidden Y=01a1bd06-91e3-71c4-b140-b92a0eb2af36 visible V=01a1bd06-91fc-7668-9845-62322cb1b836
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r8b-condition-resave-pairing.d226.test.ts > QA-R8b: keepRestrictedLiterals when the author removes or reorders conditions (D-222 (2)) > P0 control: changing only an unrelated condition keeps both hidden literals
+QA-R8b P0: author saw [{"op":"neq","field":"benefitId","value":"[restricted:1]"},{"op":"neq","field":"benefitId","value":"[restricted:2]"},{"op":"eq","field":"severity","value":"high"}]; sent [{"op":"neq","field":"benefitId","value":"[restricted:1]"},{"op":"neq","field":"benefitId","value":"[restricted:2]"},{"op":"eq","field":"severity","value":"critical"}]; stored now [{"op":"neq","field":"benefitId","value":"01a1bd06-91ac-7630-b24b-70a189b66fca"},{"op":"neq","field":"benefitId","value":"01a1bd06-91e3-71c4-b140-b92a0eb2af36"},{"op":"eq","field":"severity","value":"critical"}]; author response [{"op":"neq","field":"benefitId","value":"[restricted:1]"},{"op":"neq","field":"benefitId","value":"[restricted:2]"},{"op":"eq","field":"severity","value":"critical"}] marker true
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r8b-condition-resave-pairing.d226.test.ts > QA-R8b: keepRestrictedLiterals when the author removes or reorders conditions (D-222 (2)) > P1: two restricted literals under one (field, op); the author deletes the FIRST -> the remaining one should keep Y
+QA-R8b P1 delete first restricted: author saw [{"op":"neq","field":"benefitId","value":"[restricted:1]"},{"op":"neq","field":"benefitId","value":"[restricted:2]"}]; sent [{"op":"neq","field":"benefitId","value":"[restricted:2]"}]; stored now [{"op":"neq","field":"benefitId","value":"01a1bd06-91e3-71c4-b140-b92a0eb2af36"}]; author response [{"op":"neq","field":"benefitId","value":"[restricted:1]"}] marker true
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r8b-condition-resave-pairing.d226.test.ts > QA-R8b: keepRestrictedLiterals when the author removes or reorders conditions (D-222 (2)) > P2: a visible literal then a restricted one; the author deletes the visible one -> the remaining one should keep Y
+QA-R8b P2 delete visible first: author saw [{"op":"neq","field":"benefitId","value":"01a1bd06-91fc-7668-9845-62322cb1b836"},{"op":"neq","field":"benefitId","value":"[restricted:1]"}]; sent [{"op":"neq","field":"benefitId","value":"[restricted:1]"}]; stored now [{"op":"neq","field":"benefitId","value":"01a1bd06-91e3-71c4-b140-b92a0eb2af36"}]; author response [{"op":"neq","field":"benefitId","value":"[restricted:1]"}] marker true
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r8b-condition-resave-pairing.d226.test.ts > QA-R8b: keepRestrictedLiterals when the author removes or reorders conditions (D-222 (2)) > P3: an `in` list of two restricted literals; the author removes the first element -> the list should keep [Y]
+QA-R8b P3 in-list drop first: author saw [{"op":"in","field":"benefitId","value":["[restricted:1]","[restricted:2]"]}]; sent [{"op":"in","field":"benefitId","value":["[restricted:2]"]}]; stored now [{"op":"in","field":"benefitId","value":["01a1bd06-91e3-71c4-b140-b92a0eb2af36"]}]; author response [{"op":"in","field":"benefitId","value":["[restricted:1]"]}] marker true
+
+ ✓ |integration| apps/api/test/integration/access/zz-qa-dg6r8b-condition-resave-pairing.d226.test.ts (4 tests) 1157ms
+
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+   Start at  21:17:53
+   Duration  13.42s (transform 4.65s, setup 0ms, collect 8.61s, tests 1.16s, environment 0ms, prepare 57ms)
+
+exit 0

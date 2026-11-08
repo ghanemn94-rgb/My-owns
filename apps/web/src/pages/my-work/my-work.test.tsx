@@ -102,6 +102,31 @@ describe.each(["en", "ar"] as const)("My Work (%s)", (locale) => {
     expect(read!.headers["if-match"]).toBe('"2"');
   });
 
+  it("T-DG6-BE-Z13 (D-226): a reminder about a restricted record shows the item label and links home", async () => {
+    const n = notification({
+      messageKey: "inbox.restricted",
+      messageParams: {},
+      linkPath: `/transformations/${TR_ID}`,
+      includesRestrictedRecords: true,
+    });
+    const open = notification();
+    mockApi(
+      ...p4Handlers(
+        locale,
+        [],
+        [route("GET", /\/api\/v1\/me\/inbox/, () => json({ items: [n, open], nextCursor: null, unreadCount: 2 }))],
+      ),
+    );
+    renderApp("/my-work", { i18n: createI18n(locale) });
+    await screen.findByText(t("myWork.message.inbox__restricted"));
+    const message = document.querySelector(`[data-notification='${n.id}']`)!;
+    const label = message.querySelector("[data-restricted-records='true']");
+    expect(label?.getAttribute("data-restricted-scope")).toBe("item");
+    expect(label?.getAttribute("title")).toBe(t("adminP6.restricted.hintItem"));
+    expect(message.querySelector("a")?.getAttribute("href")).toBe(`/transformations/${TR_ID}`);
+    expect(document.querySelector(`[data-notification='${open.id}'] [data-restricted-records]`)).toBeNull();
+  });
+
   it("an unknown message key renders a neutral text, never the raw key", async () => {
     const w = workItem({ kind: "brand_new_kind", messageKey: "future.task.thing", messageParams: {} });
     mockApi(...p4Handlers(locale, [], [route("GET", /\/api\/v1\/me\/work-items/, () => page([w]))]));

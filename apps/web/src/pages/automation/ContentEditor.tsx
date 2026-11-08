@@ -7,7 +7,7 @@
 import {
   AUTOMATION_CONDITION_OPS,
   AUTOMATION_MESSAGE_KEYS,
-  AUTOMATION_RESTRICTED_LITERAL,
+  AUTOMATION_RESTRICTED_TOKEN_PATTERN,
   HUMAN_ONLY_ACTION_CODES,
 } from "@mth/shared/schemas";
 import { useTranslation } from "react-i18next";
@@ -37,13 +37,15 @@ export interface ContentDraft {
 }
 
 /**
- * T-DG6-BE-Z12B (D-222; ADR-0051 §2): whether a condition's literal is shown as the restricted marker (it names a record
- * the reader is not admitted to). Saving the marker back unchanged keeps the hidden literal on the server.
+ * T-DG6-BE-Z12B, T-DG6-BE-Z13 (D-222, D-226; ADR-0051 §2): whether a condition's literal (or an element of its list) is
+ * an opaque restricted token `[restricted:k]` the server showed in place of a value that names a record the reader is
+ * not admitted to. The label follows the token, never a value that merely equals marker text. Saving the token back,
+ * wherever the condition now sits, keeps the hidden value on the server; removing it removes the value.
  */
 export function conditionIsRestricted(c: { value?: unknown }): boolean {
-  if (c.value === AUTOMATION_RESTRICTED_LITERAL) return true;
-  if (typeof c.value === "string") return c.value.split(",").some((x) => x.trim() === AUTOMATION_RESTRICTED_LITERAL);
-  return Array.isArray(c.value) && c.value.includes(AUTOMATION_RESTRICTED_LITERAL);
+  const isToken = (x: unknown) => typeof x === "string" && AUTOMATION_RESTRICTED_TOKEN_PATTERN.test(x.trim());
+  if (typeof c.value === "string") return c.value.split(",").some(isToken);
+  return Array.isArray(c.value) && c.value.some(isToken);
 }
 
 /** The role parameter of each automatic admin action (D-146). */
@@ -238,7 +240,7 @@ export function ContentEditor({
                 disabled={c.op === "present" || c.op === "absent"}
                 onChange={(e) => setCondition(i, { value: e.target.value })}
               />
-              <RestrictedRecordsLabel value={conditionIsRestricted(c)} />
+              <RestrictedRecordsLabel value={conditionIsRestricted(c)} scope="item" />
             </div>
             <button
               type="button"

@@ -27,6 +27,7 @@ import { PageHeader, usePageTitle } from "../../components/Page.tsx";
 import { RegisterTable, type RegisterColumn } from "../../components/RegisterTable.tsx";
 import { Section } from "../../components/Section.tsx";
 import { QueryState } from "../../components/States.tsx";
+import { RestrictedRecordsLabel } from "../../components/sensitivity/RestrictedRecordsLabel.tsx";
 import { formatDateTime } from "../../lib/format.ts";
 import { renderMessage } from "./messages.ts";
 import { DueDate, FormAlert } from "./p4ui.tsx";
@@ -305,6 +306,8 @@ function InboxSection() {
                           <Link className="link" to={n.linkPath}>
                             {text}
                           </Link>
+                          {/* T-DG6-BE-Z13 (D-218, D-226): about a record I am not admitted to; links home only. */}
+                          <RestrictedRecordsLabel value={n.includesRestrictedRecords} scope="item" />
                           <span className="block small muted">{formatDateTime(n.createdAt, locale)}</span>
                         </div>
                         {n.readAt ? null : (

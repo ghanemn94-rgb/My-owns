@@ -66,7 +66,7 @@ export function ExecutiveOverviewPage() {
         <QueryState query={query}>
           {(d) => (
             <>
-              <RestrictedRecordsLabel value={d.includesRestrictedRecords} />
+              <RestrictedRecordsLabel value={d.includesRestrictedRecords} scope="total" />
               <GeneratedNote at={d.generatedAt} onRefresh={() => void query.refetch()} />
               <p data-transformation-count={d.transformationCount}>
                 <strong>{t("dashboards.overview.count", { count: d.transformationCount })}</strong>

@@ -4,7 +4,8 @@
 //   - a foreign-key column (single or composite) whose referenced column is the `id` of a sensitive table (benefit,
 //     business case, evidence) or of a SENSITIVE_CHILD_SOURCES table is not in the inventory as kind "fk";
 //   - a uuid column with no foreign key (a polymorphic `(record_type, record_id)` pair, a scope id, ...) is not in it
-//     as kind "uuid"; a uuid[] column is not in it as "array"; a json/jsonb column is not in it as "json";
+//     as kind "uuid"; a uuid[] column is not in it as "array"; a json/jsonb column is not in it as "json"; a text
+//     column holding an in-app link (link_path, href) is not in it as "text" (T-DG6-BE-Z13, F-DG6-540);
 //   - an inventory row names a column the catalog does not have (stale), or has another kind;
 //   - an operationId it names is not in docs/api/openapi.yaml; a "redacted" row has no exercise, or its exercise file
 //     does not exist or does not contain its fragment;
@@ -38,6 +39,12 @@ afterAll(async () => {
   await h?.close();
 });
 
+/**
+ * The names of text columns that hold an in-app link to a record (T-DG6-BE-Z13, F-DG6-540): a link path or an href.
+ * Event and dedupe keys built from ids are outside this pattern (the T-DG6-BE-Z13 handback lists them for routing).
+ */
+const TEXT_REFERENCE_COLUMN = /(^|_)(link_path|href)$/;
+
 /** The catalog's reference columns, by kind (`table.column`). */
 async function catalog(): Promise<Map<string, InventoryKind>> {
   const targets = [...SENSITIVE_RECORD_TYPE_LIST, ...Object.values(SENSITIVE_CHILD_SOURCES).map((s) => s.table)];
@@ -64,6 +71,16 @@ async function catalog(): Promise<Map<string, InventoryKind>> {
     else if (r.udt === "json" || r.udt === "jsonb") out.set(key, "json");
     else if (r.col !== "id" && !r.has_fk && !out.has(key)) out.set(key, "uuid");
   }
+  // T-DG6-BE-Z13 (F-DG6-540): text columns that hold an in-app link (a link path, an href) can name a hidden record
+  // too; they are classified as kind "text".
+  const text = await sql<{ t: string; col: string }>`
+    SELECT c.table_name AS t, c.column_name AS col
+      FROM information_schema.columns c
+      JOIN information_schema.tables x
+        ON x.table_schema = 'public' AND x.table_name = c.table_name AND x.table_type = 'BASE TABLE'
+     WHERE c.table_schema = 'public' AND c.udt_name IN ('text', 'varchar', 'bpchar')
+       AND c.column_name ~ ${TEXT_REFERENCE_COLUMN.source}`.execute(h.db);
+  for (const r of text.rows) out.set(`${r.t}.${r.col}`, "text");
   return out;
 }
 
@@ -87,6 +104,7 @@ describe("T-DG6-BE-Z12: the sensitive-reference inventory matches the schema (F-
     expect(counts.get("fk") ?? 0).toBeGreaterThanOrEqual(50);
     expect(counts.get("uuid") ?? 0).toBeGreaterThanOrEqual(50);
     expect(counts.get("json") ?? 0).toBeGreaterThanOrEqual(80);
+    expect(counts.get("text") ?? 0).toBeGreaterThanOrEqual(2);
   });
 
   it("every operation, exercise and status is real", () => {

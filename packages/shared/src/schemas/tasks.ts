@@ -43,6 +43,11 @@ export const inboxNotification = z.strictObject({
   readAt: timestamp.nullable(),
   createdAt: timestamp,
   version,
+  /**
+   * T-DG6-BE-Z13 (D-218, D-226; ADR-0051 §3): true when the notification is about a record the recipient is not
+   * admitted to; the text is then `inbox.restricted` with no params and the link is the transformation home.
+   */
+  includesRestrictedRecords: z.literal(true).optional(),
 });
 export type InboxNotification = z.infer<typeof inboxNotification>;
 export const inboxPage = z.strictObject({

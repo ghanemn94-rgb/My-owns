@@ -7826,7 +7826,7 @@ paths:
     get:
       tags: [tasks]
       operationId: listMyInbox
-      summary: "The caller's in-app reminders, newest first, with the unread count. An item whose target the caller cannot read now (a restricted benefit, business case or evidence item, or a corrective case or transition decision of a restricted benefit) keeps its ids, link, read state and version, with messageKey inbox.restricted and messageParams {} (ADR-0051 §2, §3)."
+      summary: "The caller's in-app reminders, newest first, with the unread count. An item about a record the caller is not admitted to now (a restricted benefit, business case or evidence item, any child that carries one's values such as a Finance validation, benefit overlap, corrective case or transition decision, or a restricted work item it announces) keeps its id, work item id, read state and version, with messageKey inbox.restricted, messageParams {}, linkPath the transformation home (else /my-work) and includesRestrictedRecords true (ADR-0051 §2, §3; D-218, D-226; T-DG6-BE-Z13)."
       parameters:
         - $ref: "#/components/parameters/Cursor"
         - $ref: "#/components/parameters/Limit"
@@ -7846,7 +7846,7 @@ paths:
     post:
       tags: [tasks]
       operationId: markInboxNotificationRead
-      summary: "Mark one of the caller's reminders as read (once). 422 inbox.already_read."
+      summary: "Mark one of the caller's reminders as read (once). The response is redacted as listMyInbox is (inbox.restricted, params {}, the transformation home link, includesRestrictedRecords; D-226). 422 inbox.already_read."
       security:
         - sessionCookie: []
           csrfToken: []
@@ -19194,7 +19194,7 @@ paths:
     post:
       tags: [automation]
       operationId: createAutomationRule
-      summary: "Create an admin rule (disabled) with its draft version 1 (automation.configure; ADM_METHOD). 409 automation_rule.code_taken; 422 automation_rule.human_only_action, trigger_unknown, action_unknown, condition_invalid, action_parameters_invalid, initiating_user_unavailable, service_permission_forbidden, scope_invalid."
+      summary: "Create an admin rule (disabled) with its draft version 1 (automation.configure; ADM_METHOD). 409 automation_rule.code_taken; 422 automation_rule.human_only_action, trigger_unknown, action_unknown, condition_invalid, action_parameters_invalid, initiating_user_unavailable, service_permission_forbidden, scope_invalid, restricted_marker_unknown (D-226)."
       security:
         - sessionCookie: []
           csrfToken: []
@@ -19405,7 +19405,7 @@ paths:
     patch:
       tags: [automation]
       operationId: updateAutomationRuleVersion
-      summary: "Change the content of a draft version; a starter version takes parameters only (automation.configure). 409 automation_rule_version.not_editable; 422 automation_rule.human_only_action, trigger_unknown, action_unknown, condition_invalid, action_parameters_invalid, initiating_user_unavailable, service_permission_forbidden, starter_fixed."
+      summary: "Change the content of a draft version; a starter version takes parameters only (automation.configure). 409 automation_rule_version.not_editable; 422 automation_rule.human_only_action, trigger_unknown, action_unknown, condition_invalid, action_parameters_invalid, initiating_user_unavailable, service_permission_forbidden, starter_fixed, restricted_marker_unknown (an unknown restricted token or marker text; D-226)."
       security:
         - sessionCookie: []
           csrfToken: []
@@ -27657,7 +27657,7 @@ components:
       additionalProperties: false
       properties:
         triggerCodes: { type: array, minItems: 1, maxItems: 6, items: { type: string } }
-        conditions: { type: array, maxItems: 20, items: { type: object, additionalProperties: false, required: [field, op], properties: { field: { type: string, pattern: "^[a-z][a-zA-Z0-9]{0,39}$" }, op: { type: string, enum: [eq, neq, in, gt, gte, lt, lte, present, absent] }, value: { description: "A string, a decimal string, a boolean or an array of up to 50 strings; numbers are decimal strings, never floats. In a response, a literal (or list element) that names a sensitive record, or a child that carries one's values, the reader is not admitted to is shown as the neutral restricted marker \"[restricted]\" in place, and the version carries includesRestrictedRecords; sent back in an update in the same condition (field and operator, in order) and position, the marker keeps the stored literal unchanged; a marker with no hidden literal behind it is stored as an ordinary literal. A literal is free text and is not existence-checked on write for any id, so a writer who already holds a hidden record's id sees the marker on read (accepted, D-223) (T-DG6-BE-Z12B; F-DG6-480; ADR-0051 §2; D-218, D-222, D-223).", oneOf: [{ type: string, maxLength: 500 }, { type: boolean }, { type: array, maxItems: 50, items: { type: string, maxLength: 500 } }] } } } }
+        conditions: { type: array, maxItems: 20, items: { type: object, additionalProperties: false, required: [field, op], properties: { field: { type: string, pattern: "^[a-z][a-zA-Z0-9]{0,39}$" }, op: { type: string, enum: [eq, neq, in, gt, gte, lt, lte, present, absent] }, value: { description: "A string, a decimal string, a boolean or an array of up to 50 strings; numbers are decimal strings, never floats. In a response, a literal (or list element) that names a sensitive record, or a child that carries one's values, the reader is not admitted to is shown as the opaque token \"[restricted:k]\" in place (k = its 1-based ordinal among the version's hidden literals in reading order: conditions in order, list elements in order; it reveals nothing), and the version carries includesRestrictedRecords. In an update, each token is mapped back to its stored literal wherever the condition now sits (any condition, order or list position); a token left out is removed. An unknown token, the bare marker text \"[restricted]\" or any other text starting with \"[restricted\" is refused with 422 automation_rule.restricted_marker_unknown (also on a rule create), so marker text is never stored. A literal is free text and is not existence-checked on write for any id, so a writer who already holds a hidden record's id sees a token on read (accepted, D-223) (T-DG6-BE-Z12B, T-DG6-BE-Z13; F-DG6-480, F-DG6-520, F-DG6-541, F-DG6-560; ADR-0051 §2; D-218, D-222, D-223, D-226).", oneOf: [{ type: string, maxLength: 500 }, { type: boolean }, { type: array, maxItems: 50, items: { type: string, maxLength: 500 } }] } } } }
         actions: { type: array, minItems: 1, maxItems: 10, items: { type: object, additionalProperties: false, required: [type], properties: { type: { type: string, pattern: "^[a-z][a-z0-9_]{2,63}$" }, parameters: { type: object, description: "Validated by the action type schema (ADR-0043 §2)." }, handlers: { type: array, maxItems: 6, items: { type: string }, description: "starter_handler only (read-only)." } } } }
         runAs: { type: string, enum: [initiating_user, service] }
         servicePermissionCodes: { type: array, maxItems: 20, items: { $ref: "#/components/schemas/PermissionCode" } }
@@ -27719,7 +27719,7 @@ components:
         summary: { $ref: "#/components/schemas/AutomationRuleSummary" }
         version: { $ref: "#/components/schemas/Version" }
         updatedAt: { $ref: "#/components/schemas/Timestamp" }
-        includesRestrictedRecords: { type: boolean, const: true, description: "Present (true) when a condition literal is shown as the restricted marker \"[restricted]\" (and the summary as \"a restricted record\" / \"سجل مقيد\") because it names a record the reader is not admitted to; the stored conditions and contentSha256 are unchanged (T-DG6-BE-Z12B; F-DG6-480; ADR-0051 §2; D-218, D-222; label access.includesRestrictedRecords)." }
+        includesRestrictedRecords: { type: boolean, const: true, description: "Present (true) when a condition literal is shown as a restricted token \"[restricted:k]\" (D-226; and the summary as \"a restricted record\" / \"سجل مقيد\") because it names a record the reader is not admitted to; the stored conditions and contentSha256 are unchanged (T-DG6-BE-Z12B; F-DG6-480; ADR-0051 §2; D-218, D-222; label access.includesRestrictedRecords)." }
     AutomationRuleVersionPage:
       type: object
       required: [items, nextCursor]
@@ -33438,6 +33438,7 @@ components:
         readAt: { $ref: "#/components/schemas/NullableTimestamp" }
         createdAt: { $ref: "#/components/schemas/Timestamp" }
         version: { $ref: "#/components/schemas/Version" }
+        includesRestrictedRecords: { type: boolean, const: true, description: "Present (true) when the notification is about a record the recipient is not admitted to: its target, or any id in its link, parameters or stored target that names a sensitive record or a child that carries one's values (a Finance validation, a benefit overlap, ...), or the work item it announces. The messageKey is then inbox.restricted, messageParams is {} and linkPath is the transformation home (else /my-work); id, workItemId, readAt and version are unchanged. The same in listMyInbox and markInboxNotificationRead (T-DG6-BE-Z13; F-DG6-540; ADR-0051 §2, §3; D-218, D-222, D-226; label access.includesRestrictedRecords)." }
     InboxPage:
       type: object
       required: [items, nextCursor, unreadCount]

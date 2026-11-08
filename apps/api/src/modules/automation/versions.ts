@@ -18,10 +18,12 @@ import { sql, type AutomationRuleRow, type AutomationRuleVersionRow, type DbOrTx
 import { APPROVAL_CATEGORIES, PERMISSIONS, PROBLEM_TYPES, type Permission } from "@mth/shared";
 import {
   AUTOMATION_DECIMAL_PATTERN,
-  AUTOMATION_RESTRICTED_LITERAL,
+  AUTOMATION_RESTRICTED_TOKEN_PATTERN,
+  automationRestrictedToken,
   automationRuleVersionCreate,
   automationRuleVersionUpdate,
   emptyStarterParameters,
+  looksLikeRestrictedMarker,
   normalizeAutomationContent,
   STARTER_PARAMETER_SCHEMAS,
   type AutomationCondition,
@@ -78,6 +80,23 @@ export const automationRefusals = {
       "automation_rule.condition_invalid",
       "A condition must test a field of the trigger with a valid operator and value.",
     ),
+  // T-DG6-BE-Z13 (D-226): a marker that does not map to a hidden literal of the stored version is never stored.
+  restrictedMarkerUnknown: (pointer: string) =>
+    new HttpProblem({
+      status: 422,
+      type: PROBLEM_TYPES.validation,
+      code: "automation_rule.restricted_marker_unknown",
+      title: "Business rule violated",
+      detail:
+        "A condition value is restricted-record marker text that does not stand for a value of this version. Reload the version and keep each restricted value as shown, or remove it.",
+      errors: [
+        {
+          pointer,
+          code: "automation_rule.restricted_marker_unknown",
+          message: "Restricted-record marker text that does not stand for a value of this version.",
+        },
+      ],
+    }),
   actionParametersInvalid: () =>
     problems.businessRule(
       "automation_rule.action_parameters_invalid",
@@ -305,9 +324,9 @@ const OP_AR: Readonly<Record<string, string>> = {
   absent: "غير موجود",
 };
 
-/** The restricted marker in the readable summary (T-DG6-BE-Z12B): a neutral phrase, never the literal. */
+/** A restricted token in the readable summary (T-DG6-BE-Z12B, D-226): a neutral phrase, never the literal. */
 const literalText = (v: string, lang: "en" | "ar"): string =>
-  v !== AUTOMATION_RESTRICTED_LITERAL ? v : lang === "en" ? "a restricted record" : "سجل مقيد";
+  !AUTOMATION_RESTRICTED_TOKEN_PATTERN.test(v) ? v : lang === "en" ? "a restricted record" : "سجل مقيد";
 
 const valueText = (v: AutomationCondition["value"], lang: "en" | "ar"): string => {
   if (v === undefined) return "";
@@ -318,85 +337,79 @@ const valueText = (v: AutomationCondition["value"], lang: "en" | "ar"): string =
 
 // ------------------------------------------------------------------------------------------------ restricted literals
 
+/** Every string literal of a set of conditions in reading order (a string value, then each `in` element), with a setter. */
+function mapLiterals(
+  conditions: readonly AutomationCondition[],
+  f: (literal: string, at: string) => string,
+): AutomationCondition[] {
+  return conditions.map((c, i): AutomationCondition => {
+    if (typeof c.value === "string") return { ...c, value: f(c.value, `/content/conditions/${i}/value`) };
+    if (Array.isArray(c.value))
+      return { ...c, value: c.value.map((x, j) => f(x, `/content/conditions/${i}/value/${j}`)) };
+    return c;
+  });
+}
+
 /**
- * T-DG6-BE-Z12B (F-DG6-480; D-218, D-222; ADR-0051 §2): a rule condition may compare a field (`benefitId`, for one) to
- * a literal uuid. For each set of conditions, every literal (a string value, or an element of an `in` list) that
- * contains the id of a sensitive record, or of a child that carries one's values, the principal is not admitted to is
- * shown as AUTOMATION_RESTRICTED_LITERAL, in place (the condition, its operator and the list positions stay, so the
- * rule is still seen to test something), and `restricted` is true. The stored conditions, the content hash and the
- * audit trail are unchanged. One policy decision for the whole batch.
+ * T-DG6-BE-Z12B, T-DG6-BE-Z13 (F-DG6-480, F-DG6-520/541/560; D-218, D-222, D-226; ADR-0051 §2): a rule condition may
+ * compare a field (`benefitId`, for one) to a literal uuid. For each set of conditions, every literal (a string value,
+ * or an element of an `in` list) that contains the id of a sensitive record, or of a child that carries one's values,
+ * the principal is not admitted to is shown as the opaque token `[restricted:k]` (k = its 1-based ordinal among the
+ * set's hidden literals in reading order), in place, and `restricted` is true. `tokens` maps each token back to its
+ * stored literal (used only by the re-save; never serialized). The stored conditions, the content hash and the audit
+ * trail are unchanged. One policy decision for the whole batch.
  */
 export async function redactConditionLiterals(
   db: DbOrTx,
   principal: Principal,
   sets: readonly (readonly AutomationCondition[])[],
-): Promise<{ conditions: AutomationCondition[]; restricted: boolean }[]> {
+): Promise<{ conditions: AutomationCondition[]; restricted: boolean; tokens: Map<string, string> }[]> {
   const hidden = await restrictedIdsAmong(db, principal, [...uuidsIn(sets)]);
   const isHidden = (v: string) => [...uuidsIn(v)].some((id) => hidden.has(id));
   return sets.map((conditions) => {
-    if (hidden.size === 0) return { conditions: [...conditions], restricted: false };
-    let restricted = false;
-    const mask = (v: string) => {
+    const tokens = new Map<string, string>();
+    if (hidden.size === 0) return { conditions: [...conditions], restricted: false, tokens };
+    const out = mapLiterals(conditions, (v) => {
       if (!isHidden(v)) return v;
-      restricted = true;
-      return AUTOMATION_RESTRICTED_LITERAL;
-    };
-    const out = conditions.map((c): AutomationCondition => {
-      if (typeof c.value === "string") return { ...c, value: mask(c.value) };
-      if (Array.isArray(c.value)) return { ...c, value: c.value.map(mask) };
-      return c;
+      const token = automationRestrictedToken(tokens.size + 1);
+      tokens.set(token, v);
+      return token;
     });
-    return { conditions: out, restricted };
+    return { conditions: out, restricted: tokens.size > 0, tokens };
   });
 }
 
 /**
- * T-DG6-BE-Z12B — the re-save rule (D-222; the D-218 re-save of `keptRestrictedRef`). A writer who was shown the
- * restricted marker in place of a stored literal and sends the marker back, in a condition with the same field and
- * operator (the k-th such condition of the request against the k-th of the stored version) and at the same list
- * position, keeps the stored literal unchanged. A marker with no hidden stored literal behind it stays an ordinary
- * literal (it names nothing). A writer admitted to the record was never shown the marker and edits the literal freely.
+ * T-DG6-BE-Z13 — the re-save rule of D-226 (supersedes the ordinal pairing of D-222 (2)). Every literal of the sent
+ * conditions that looks like restricted marker text must be a token the writer is shown for the stored version
+ * (`stored`; null on a rule create, where no token exists): it is replaced by the literal it stands for, wherever the
+ * condition now sits (any condition, any list position, any order). A token left out is simply removed. An unknown
+ * token, the bare marker text `[restricted]`, or any other marker-like text is refused with 422
+ * `automation_rule.restricted_marker_unknown` (en/ar problem text), so marker text is never stored as a literal. A
+ * writer admitted to the record is never shown a token and edits the literal freely.
  */
-export async function keepRestrictedLiterals(
+export async function resolveRestrictedTokens(
   db: DbOrTx,
   principal: Principal,
-  stored: readonly AutomationCondition[],
+  stored: readonly AutomationCondition[] | null,
   sent: AutomationRuleContentInput,
 ): Promise<AutomationRuleContentInput> {
   const conditions = sent.conditions ?? [];
-  const hasMarker = (c: AutomationCondition) =>
-    c.value === AUTOMATION_RESTRICTED_LITERAL ||
-    (Array.isArray(c.value) && c.value.includes(AUTOMATION_RESTRICTED_LITERAL));
-  if (!conditions.some(hasMarker) || stored.length === 0) return sent;
-  const [shown] = await redactConditionLiterals(db, principal, [stored]);
-  if (shown === undefined || !shown.restricted) return sent;
-  const keyOf = (c: AutomationCondition) => `${c.field}\u0000${c.op}`;
-  const storedByKey = new Map<string, { stored: AutomationCondition; shown: AutomationCondition }[]>();
-  stored.forEach((c, i) => {
-    const list = storedByKey.get(keyOf(c)) ?? [];
-    list.push({ stored: c, shown: shown.conditions.at(i)! });
-    storedByKey.set(keyOf(c), list);
+  let any = false;
+  mapLiterals(conditions, (v) => {
+    if (looksLikeRestrictedMarker(v)) any = true;
+    return v;
   });
-  const seen = new Map<string, number>();
-  const restore = (sentValue: string, storedValue: unknown, shownValue: unknown): string =>
-    sentValue === AUTOMATION_RESTRICTED_LITERAL &&
-    shownValue === AUTOMATION_RESTRICTED_LITERAL &&
-    typeof storedValue === "string"
-      ? storedValue
-      : sentValue;
-  const merged = conditions.map((c): AutomationCondition => {
-    const k = keyOf(c);
-    const n = seen.get(k) ?? 0;
-    seen.set(k, n + 1);
-    const pair = storedByKey.get(k)?.at(n);
-    if (pair === undefined || !hasMarker(c)) return c;
-    if (typeof c.value === "string") return { ...c, value: restore(c.value, pair.stored.value, pair.shown.value) };
-    if (Array.isArray(c.value)) {
-      const sv = Array.isArray(pair.stored.value) ? pair.stored.value : [];
-      const hv = Array.isArray(pair.shown.value) ? pair.shown.value : [];
-      return { ...c, value: c.value.map((x, i) => restore(x, sv.at(i), hv.at(i))) };
-    }
-    return c;
+  if (!any) return sent;
+  const tokens =
+    stored === null || stored.length === 0
+      ? new Map<string, string>()
+      : ((await redactConditionLiterals(db, principal, [stored])).at(0)?.tokens ?? new Map<string, string>());
+  const merged = mapLiterals(conditions, (v, at) => {
+    if (!looksLikeRestrictedMarker(v)) return v;
+    const literal = AUTOMATION_RESTRICTED_TOKEN_PATTERN.test(v) ? tokens.get(v) : undefined;
+    if (literal === undefined) throw automationRefusals.restrictedMarkerUnknown(at);
+    return literal;
   });
   return { ...sent, conditions: merged };
 }
@@ -694,11 +707,11 @@ async function updateVersion(
   const current = await loadVersionRow(tx, rule.id, versionNo, true);
   if (current.version !== expected) throw problems.versionConflict(current.version);
   if (current.status !== "draft") throw automationRefusals.notEditable();
-  // T-DG6-BE-Z12B (D-222): a restricted marker sent back where it was shown keeps the hidden stored literal.
+  // T-DG6-BE-Z13 (D-226): each restricted token maps back to its hidden stored literal; unknown marker text is refused.
   const sent =
     body.content === undefined
       ? undefined
-      : await keepRestrictedLiterals(tx, principalOf(request), contentOfRow(current).conditions, body.content);
+      : await resolveRestrictedTokens(tx, principalOf(request), contentOfRow(current).conditions, body.content);
   const content =
     sent === undefined
       ? contentOfRow(current)

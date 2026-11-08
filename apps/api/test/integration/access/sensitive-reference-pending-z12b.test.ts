@@ -8,9 +8,9 @@
 //     benefit's owner launches about the benefit, whose `reason` input names it;
 //   - automation_rule_version.conditions: an admin rule whose conditions compare `benefitId` to the benefit's id.
 // Readers not admitted (no grant, not a named party) get no id of the benefit or of its decision anywhere in these
-// responses: the reference is null (or the condition literal is the neutral marker) with `includesRestrictedRecords:
+// responses: the reference is null (or the condition literal is an opaque `[restricted:k]` token, D-226) with `includesRestrictedRecords:
 // true`. Admitted readers (the TO, who holds sensitive_record.grant; the owner BO) still see the ids. A re-save of the
-// rule version that sends the marker back keeps the stored literal unchanged; after an explicit grant the author sees it.
+// rule version that sends the tokens back keeps the stored literal unchanged; after an explicit grant the author sees it.
 // Every value is SYNTHETIC. Marking a record sensitive or granting access is an access decision, never a business
 // approval: the demo Sponsor decision below approves nothing real (G1-G6), and nothing here touches DG0-DG7.
 import { insertAuditEvent } from "@mth/db";
@@ -254,7 +254,7 @@ describe("T-DG6-BE-Z12B: the PENDING inventory rows, seeded (F-DG6-480; D-218)",
   });
 });
 
-describe("T-DG6-BE-Z12B: automation_rule_version.conditions (D-222)", () => {
+describe("T-DG6-BE-Z12B: automation_rule_version.conditions (D-222, D-226)", () => {
   const V = () => `${R}/${S.ruleId}/versions`;
   const storedConditions = async () =>
     (await api.db
@@ -264,11 +264,12 @@ describe("T-DG6-BE-Z12B: automation_rule_version.conditions (D-222)", () => {
       .where("version_no", "=", 1)
       .executeTakeFirstOrThrow()) as { conditions: Body; content_sha256: string; version: number };
 
-  it("the author, not admitted, sees the marker in place of each hidden literal, the label in the summary, marked", async () => {
+  it("the author, not admitted, sees a token in place of each hidden literal, the label in the summary, marked", async () => {
     const one = ok(await send("GET", `${V()}/1`, { session: admin.session }));
     expect(one.content.conditions).toEqual([
-      { field: "benefitId", op: "eq", value: AUTOMATION_RESTRICTED_LITERAL },
-      { field: "benefitId", op: "in", value: [P.benefitId, AUTOMATION_RESTRICTED_LITERAL] },
+      // T-DG6-BE-Z13 (D-226): opaque per-version tokens in reading order.
+      { field: "benefitId", op: "eq", value: "[restricted:1]" },
+      { field: "benefitId", op: "in", value: [P.benefitId, "[restricted:2]"] },
       { field: "severity", op: "eq", value: "high" },
     ]);
     expect(one.includesRestrictedRecords).toBe(true);
@@ -286,7 +287,7 @@ describe("T-DG6-BE-Z12B: automation_rule_version.conditions (D-222)", () => {
     expect(one.contentSha256).toBe(stored.content_sha256);
   });
 
-  it("a re-save that sends the marker back keeps each hidden literal; an unrelated edit still applies", async () => {
+  it("a re-save that sends the tokens back keeps each hidden literal; an unrelated edit still applies", async () => {
     const before = await storedConditions();
     const shown = ok(await send("GET", `${V()}/1`, { session: admin.session }));
     const content = {
@@ -309,23 +310,22 @@ describe("T-DG6-BE-Z12B: automation_rule_version.conditions (D-222)", () => {
       { field: "benefitId", op: "in", value: [P.benefitId, S.benefitId] },
       { field: "severity", op: "eq", value: "critical" },
     ]);
-    // The marker where no hidden literal stood is an ordinary literal (names nothing).
-    const extra = ok(
-      await send("PATCH", `${V()}/1`, {
-        session: admin.session,
-        headers: ifm(saved.version),
-        body: {
-          content: {
-            ...content,
-            conditions: [...content.conditions, { field: "severity", op: "neq", value: AUTOMATION_RESTRICTED_LITERAL }],
-          },
+    // T-DG6-BE-Z13 (D-226): marker text where no token of this version stood is refused, never stored.
+    const extra = await send("PATCH", `${V()}/1`, {
+      session: admin.session,
+      headers: ifm(saved.version),
+      body: {
+        content: {
+          ...content,
+          conditions: [...content.conditions, { field: "severity", op: "neq", value: AUTOMATION_RESTRICTED_LITERAL }],
         },
-      }),
-    );
+      },
+    });
+    expect(extra.status).toBe(422);
+    expect(extra.body.code).toBe("automation_rule.restricted_marker_unknown");
     const last = await storedConditions();
-    expect(last.conditions.at(-1)).toEqual({ field: "severity", op: "neq", value: AUTOMATION_RESTRICTED_LITERAL });
-    expect(last.conditions[0].value).toBe(S.benefitId);
-    expect(extra.version).toBe(saved.version + 1);
+    expect(last.conditions).toEqual(after.conditions);
+    expect(last.version).toBe(after.version);
   });
 
   it("positive: with an explicit grant the author sees the literals again (next request)", async () => {

@@ -442,7 +442,7 @@ function TaskTable({
                     <span className="block small muted">
                       {/* T-DG6-BE-Z12 (D-218): a restricted output is linked; the screen shows the restricted label. */}
                       {task.includesRestrictedRecords === true ? (
-                        <RestrictedRecordsLabel value />
+                        <RestrictedRecordsLabel value scope="item" />
                       ) : task.outputRecordId ? (
                         t("launchHealthP5.launch.outputLinked")
                       ) : (

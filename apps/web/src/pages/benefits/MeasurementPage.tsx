@@ -169,7 +169,7 @@ function Lineage({ m }: { m: BenefitMeasurement }) {
                 </Link>
               )}
               {/* T-DG6-BE-Z10 (D-218): evidence the reader is not admitted to is not counted or linked. */}
-              <RestrictedRecordsLabel value={m.includesRestrictedRecords} />
+              <RestrictedRecordsLabel value={m.includesRestrictedRecords} scope="item" />
             </dd>
           </div>
         </dl>
