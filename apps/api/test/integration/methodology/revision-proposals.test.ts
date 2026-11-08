@@ -333,3 +333,55 @@ describe("configuration revision (REQ-S12-018 case 1; the function submitConfigR
     expect(list.body.items.map((p: Body) => p.id)).toEqual([first.proposal.id]);
   });
 });
+
+/**
+ * T-DG6-BE-Z12 (F-DG6-480; D-218; ADR-0051 §2): a formula revision's impact names each affected benefit by id. A
+ * benefit the reader is not admitted to (marked sensitive by the organization's TO) is dropped from the shown impact,
+ * the proposal carries `includesRestrictedRecords: true`, and the counts are unchanged ("Totals and rollups"); the
+ * benefit's creator (a named party, admitted) still sees it. The stored impact is unchanged. SYNTHETIC.
+ */
+describe("T-DG6-BE-Z12: D-218 on the revision proposal impact", () => {
+  it("revision proposal: a sensitive affected benefit is dropped for AUD (marked, counts unchanged) and shown to its creator", async () => {
+    const f = await formulaV1();
+    const benefit = await call<Body>(api.app, "POST", `${b.base}/benefits`, {
+      session: b.s.tl,
+      body: financialBody(b as never, { benefitFormulaId: f.id }),
+    });
+    expect(benefit.status, JSON.stringify(benefit.body)).toBe(201);
+    const toUser = await createUser(api.db, w.orgA.id);
+    await grant(api.db, w.grantor.id, toUser.id, "TO", { type: "organization", id: w.orgA.id }, w.orgA.id);
+    const marked = await call<Body>(
+      api.app,
+      "PUT",
+      `/api/v1/transformations/${b.transformationId}/records/benefit/${benefit.body.id}/sensitivity`,
+      {
+        session: await signIn(api.app, toUser.subject),
+        headers: { "if-match": '"0"' },
+        body: { isSensitive: true, reason: "Synthetic sensitive benefit (BE-Z12)" },
+      },
+    );
+    expect(marked.status, JSON.stringify(marked.body)).toBe(200);
+    const res = await newVersion(await formulaRow(f.id), "4.5");
+    expect(res.status, JSON.stringify(res.body)).toBe(201);
+    const q = `${PROPOSALS}?subjectType=benefit_formula_version&subjectId=${res.body.id}`;
+
+    const aud = await call<Body>(api.app, "GET", q, { session: auditor });
+    expect(aud.status).toBe(200);
+    expect(aud.body.items).toHaveLength(1);
+    const shown = aud.body.items[0];
+    expect(JSON.stringify(aud.body)).not.toContain(benefit.body.id);
+    expect(shown.impact.affectedBenefits).toEqual([]);
+    expect(shown.impact.affectedRecords).toContainEqual({ recordType: "benefit", count: 1 });
+    expect(shown.includesRestrictedRecords).toBe(true);
+
+    const creator = await call<Body>(api.app, "GET", q, { session: b.s.tl });
+    expect(creator.body.items[0].impact.affectedBenefits).toEqual([
+      { benefitId: benefit.body.id, code: benefit.body.code },
+    ]);
+    expect(creator.body.items[0].includesRestrictedRecords).toBeUndefined();
+    const stored = await proposalsOf(res.body.id);
+    expect((stored[0]!.impact as Body).affectedBenefits).toEqual([
+      { benefitId: benefit.body.id, code: benefit.body.code },
+    ]);
+  });
+});

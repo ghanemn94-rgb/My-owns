@@ -38,7 +38,7 @@ import {
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
-import { principalOf, requireTransformationRead } from "../access/index.ts";
+import { hideRestrictedRefs, principalOf, requireTransformationRead } from "../access/index.ts";
 import { record } from "../audit/index.ts";
 import {
   cursorSchema,
@@ -751,14 +751,26 @@ export function registerControlRoutes(app: FastifyInstance, { db }: ModuleDeps):
       .limit(query.limit + 1)
       .execute()) as ReviewRow[];
     const page = paginate(rows, query.limit, (r) => [r.id], hash);
-    return { items: page.items.map(toReview), nextCursor: page.nextCursor };
+    // T-DG6-BE-Z12 (F-DG6-480; D-218): a review of a transition decision the reader is not admitted to (the decision of a
+    // sensitive benefit carries its values) keeps its subject kind with `transitionDecisionId: null`, marked.
+    const items = await hideRestrictedRefs(
+      db,
+      principalOf(request),
+      "transition_decision",
+      page.items.map(toReview),
+      "transitionDecisionId",
+    );
+    return { items, nextCursor: page.nextCursor };
   });
 
   app.post(SUSTAINMENT_REVIEW_COMPLETE, { config: completeCfg }, async (request, reply) => {
     const { transformationId, sustainmentReviewId } = parse(reviewParams, request.params, "params");
     const body = await db.transaction().execute(async (tx) => {
       await completeReview(tx, request, transformationId, sustainmentReviewId);
-      return toReview(await findReview(tx, transformationId, sustainmentReviewId));
+      const shown = [toReview(await findReview(tx, transformationId, sustainmentReviewId))];
+      return (
+        await hideRestrictedRefs(tx, principalOf(request), "transition_decision", shown, "transitionDecisionId")
+      )[0]!;
     });
     return sendVersioned(reply, 200, body);
   });

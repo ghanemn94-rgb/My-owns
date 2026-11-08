@@ -96,6 +96,7 @@ export {
   requireRecordReach,
   restrictedIdsAmong,
   restrictedIdsOf,
+  refIsRestricted,
   restrictedRecordRefs,
   SENSITIVE_CHILD_SOURCES,
   SENSITIVE_REACH_PARAMS,

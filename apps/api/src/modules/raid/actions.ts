@@ -27,7 +27,7 @@ import type { Selectable } from "kysely";
 import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
 import type { WriteRule } from "../access/index.ts";
-import { principalOf, requireTransformationRead } from "../access/index.ts";
+import { hideRestrictedRefs, principalOf, requireTransformationRead } from "../access/index.ts";
 import { record } from "../audit/index.ts";
 import {
   cursorSchema,
@@ -155,6 +155,22 @@ export function toRaidAction(r: ActionRow, today: string): RaidAction {
     updatedAt: iso(r.updated_at),
     updatedBy: r.updated_by,
   };
+}
+
+/**
+ * T-DG6-BE-Z12 (F-DG6-480; D-218): the action register's view of actions. An action linked to a corrective case the
+ * reader is not admitted to (a variance case of a sensitive benefit carries its values) keeps `sourceKind:
+ * "corrective_case"` with `correctiveCaseId: null` and `includesRestrictedRecords: true`. The case's own action routes
+ * answer 404 to that reader (SENSITIVE_REACH_PARAMS).
+ */
+async function shownActions(
+  db: DbOrTx,
+  request: FastifyRequest,
+  rows: readonly ActionRow[],
+  today: string,
+): Promise<RaidAction[]> {
+  const items = rows.map((r) => toRaidAction(r, today));
+  return hideRestrictedRefs(db, principalOf(request), "corrective_case", items, "correctiveCaseId");
 }
 
 // ------------------------------------------------------------------------------------------------ work items
@@ -550,7 +566,7 @@ export function registerRaidActionRoutes(app: FastifyInstance, { db }: ModuleDep
       .limit(query.limit + 1)
       .execute();
     const page = paginate(rows, query.limit, (r) => [r.id], hash);
-    return { items: page.items.map((r) => toRaidAction(r, today)), nextCursor: page.nextCursor };
+    return { items: await shownActions(db, request, page.items, today), nextCursor: page.nextCursor };
   });
 
   app.get(ACTION_REGISTER_ITEM, { config: read }, async (request, reply) => {
@@ -563,13 +579,14 @@ export function registerRaidActionRoutes(app: FastifyInstance, { db }: ModuleDep
       .where("transformation_id", "=", transformationId)
       .executeTakeFirst();
     if (!row) throw problems.notFound();
-    return sendVersioned(reply, 200, toRaidAction(row, await todayOf(db, row.organization_id)));
+    const [shown] = await shownActions(db, request, [row], await todayOf(db, row.organization_id));
+    return sendVersioned(reply, 200, shown!);
   });
 
   app.patch(ACTION_REGISTER_ITEM, { config: write }, async (request, reply) => {
     const body = await db.transaction().execute(async (tx) => {
       const row = await updateAction(tx, request);
-      return toRaidAction(row, await todayOf(tx, row.organization_id));
+      return (await shownActions(tx, request, [row], await todayOf(tx, row.organization_id)))[0]!;
     });
     return sendVersioned(reply, 200, body);
   });

@@ -650,6 +650,24 @@ export async function keptRestrictedRef(
   return hidden.has(stored) ? stored : null;
 }
 
+/**
+ * T-DG6-BE-Z12 (F-DG6-480; D-218) — the write side. Whether a reference a write is about to store (`recordType`, `id`)
+ * names a record the principal is not admitted to (a sensitive record, or a child that carries one's values). The
+ * caller then answers EXACTLY as it answers an unknown id (the same status, code and pointer), so the write is neither
+ * an existence oracle nor a way to attach a record the writer gets 404 on. False for a null id or a type outside the
+ * sensitive set and its children. One policy decision.
+ */
+export async function refIsRestricted(
+  db: DbOrTx,
+  principal: Principal,
+  recordType: string | null | undefined,
+  id: string | null | undefined,
+): Promise<boolean> {
+  if (typeof recordType !== "string" || typeof id !== "string" || !UUID.test(id)) return false;
+  if (!SENSITIVE_TYPES.has(recordType) && !CHILD_SOURCES.has(recordType)) return false;
+  return (await restrictedIdsOf(db, principal, recordType, [id])).has(id);
+}
+
 const REF_TEXT = /^(?:[a-z][a-z0-9_]{0,63}:)?([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i;
 const isPlainObject = (v: unknown): v is Record<string, unknown> =>
   v !== null && typeof v === "object" && !Array.isArray(v) && !(v instanceof Date);

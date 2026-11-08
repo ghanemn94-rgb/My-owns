@@ -331,15 +331,22 @@ export async function assertSameTransformation(
     .where("id", "=", String(id))
     .where("transformation_id", "=", transformationId)
     .executeTakeFirst();
-  if (!row)
-    throw new HttpProblem({
-      status: 422,
-      type: "urn:mth:problem:validation",
-      code: "validation.reference",
-      title: "Business rule violated",
-      detail: "The referenced record does not exist in this transformation.",
-      errors: [{ pointer, code: "validation.reference", message: `No ${table} with this id in this transformation.` }],
-    });
+  if (!row) throw unknownReference(table, pointer);
+}
+
+/**
+ * The 422 `validation.reference` of a reference to a record that does not exist in this transformation. T-DG6-BE-Z12
+ * (F-DG6-480; D-218): also the answer to a reference that names a sensitive record the writer is not admitted to.
+ */
+export function unknownReference(table: string, pointer: string): HttpProblem {
+  return new HttpProblem({
+    status: 422,
+    type: "urn:mth:problem:validation",
+    code: "validation.reference",
+    title: "Business rule violated",
+    detail: "The referenced record does not exist in this transformation.",
+    errors: [{ pointer, code: "validation.reference", message: `No ${table} with this id in this transformation.` }],
+  });
 }
 
 /** The transformation row (organization, archive state) for a write; 404 when it vanished. */

@@ -25,7 +25,13 @@ import {
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
-import { principalOf, requireTransformationRead } from "../access/index.ts";
+import {
+  hideRestrictedTypedRefs,
+  principalOf,
+  refIsRestricted,
+  requireTransformationRead,
+  type Principal,
+} from "../access/index.ts";
 import { record } from "../audit/index.ts";
 import {
   cursorSchema,
@@ -263,7 +269,17 @@ function toTask(r: TaskRow, predecessors: readonly LaunchTaskRef[], calendar: Wo
   };
 }
 
-export async function presentTasks(db: DbOrTx, transformationId: string, rows: readonly TaskRow[]) {
+/**
+ * T-DG6-BE-Z12 (F-DG6-480; D-218): an `outputRecordId` naming a record the principal is not admitted to (a sensitive
+ * benefit, business case or evidence item) is null, the type is kept, and the task carries
+ * `includesRestrictedRecords: true`.
+ */
+export async function presentTasks(
+  db: DbOrTx,
+  principal: Principal,
+  transformationId: string,
+  rows: readonly TaskRow[],
+): Promise<LaunchTask[]> {
   const [preds, calendar] = await Promise.all([
     predecessorsOf(
       db,
@@ -271,11 +287,17 @@ export async function presentTasks(db: DbOrTx, transformationId: string, rows: r
     ),
     loadCalendar(db, transformationId),
   ]);
-  return rows.map((r) => toTask(r, preds.get(r.id) ?? [], calendar));
+  const tasks = rows.map((r) => toTask(r, preds.get(r.id) ?? [], calendar));
+  return hideRestrictedTypedRefs(db, principal, tasks, "outputRecordType", "outputRecordId");
 }
 
-export async function presentTask(db: DbOrTx, transformationId: string, taskId: string): Promise<LaunchTask> {
-  const [task] = await presentTasks(db, transformationId, [await findTask(db, transformationId, taskId)]);
+export async function presentTask(
+  db: DbOrTx,
+  principal: Principal,
+  transformationId: string,
+  taskId: string,
+): Promise<LaunchTask> {
+  const [task] = await presentTasks(db, principal, transformationId, [await findTask(db, transformationId, taskId)]);
   return task!;
 }
 
@@ -363,7 +385,15 @@ async function updateTask(tx: Tx, request: FastifyRequest, transformationId: str
 
   // The required output: a template task keeps its type; the record must be of that type in this transformation.
   const outputType = body.outputRecordType !== undefined ? body.outputRecordType : current.output_record_type;
-  const outputId = body.outputRecordId !== undefined ? body.outputRecordId : current.output_record_id;
+  // T-DG6-BE-Z12 (D-218 re-save rule): a writer not admitted to the stored output was shown null; sending null keeps it.
+  const resave =
+    body.outputRecordId === null &&
+    (outputType ?? null) === current.output_record_type &&
+    (await refIsRestricted(tx, ctx.principal, current.output_record_type, current.output_record_id));
+  const outputId = body.outputRecordId !== undefined && !resave ? body.outputRecordId : current.output_record_id;
+  // T-DG6-BE-Z12 (F-DG6-480; D-218): an output the writer names and is not admitted to answers as an unknown record.
+  if (typeof body.outputRecordId === "string" && (await refIsRestricted(tx, ctx.principal, outputType, outputId)))
+    throw TASK_OUTPUT_RECORD_INVALID();
   if (current.template_item_code !== null && outputType !== current.output_record_type)
     throw TASK_OUTPUT_RECORD_INVALID();
   if (outputId !== null) {
@@ -385,7 +415,7 @@ async function updateTask(tx: Tx, request: FastifyRequest, transformationId: str
       ...(completing ? { completed_at: sql<Date>`now()`, completed_by: ctx.userId } : {}),
       ...(leavingCompleted ? { completed_at: null, completed_by: null } : {}),
       ...(body.outputRecordType !== undefined ? { output_record_type: outputType } : {}),
-      ...(body.outputRecordId !== undefined ? { output_record_id: outputId } : {}),
+      ...(body.outputRecordId !== undefined && !resave ? { output_record_id: outputId } : {}),
       version: sql<number>`version + 1`,
       updated_at: sql<Date>`now()`,
       updated_by: ctx.userId,
@@ -449,7 +479,10 @@ export function registerLaunchTaskRoutes(app: FastifyInstance, { db }: ModuleDep
           .limit(query.limit + 1)
           .execute()) as TaskRow[];
         const page = paginate(rows, query.limit, (r) => [dateText(r.due_date), r.ordinal], hash);
-        return { items: await presentTasks(tx, transformationId, page.items), nextCursor: page.nextCursor };
+        return {
+          items: await presentTasks(tx, principalOf(request), transformationId, page.items),
+          nextCursor: page.nextCursor,
+        };
       });
   });
 
@@ -457,7 +490,7 @@ export function registerLaunchTaskRoutes(app: FastifyInstance, { db }: ModuleDep
     const transformationId = parseTransformationParam(request.params);
     const body = await db.transaction().execute(async (tx) => {
       const id = await createTask(tx, request, transformationId);
-      return presentTask(tx, transformationId, id);
+      return presentTask(tx, principalOf(request), transformationId, id);
     });
     return sendVersioned(reply, 201, body, `${request.url.split("?")[0]!}/${body.id}`);
   });
@@ -469,7 +502,7 @@ export function registerLaunchTaskRoutes(app: FastifyInstance, { db }: ModuleDep
       .transaction()
       .setIsolationLevel("repeatable read")
       .setAccessMode("read only")
-      .execute(async (tx) => presentTask(tx, transformationId, taskId));
+      .execute(async (tx) => presentTask(tx, principalOf(request), transformationId, taskId));
     return sendVersioned(reply, 200, body);
   });
 
@@ -477,7 +510,7 @@ export function registerLaunchTaskRoutes(app: FastifyInstance, { db }: ModuleDep
     const { transformationId, taskId } = parse(taskParams, request.params, "params");
     const body = await db.transaction().execute(async (tx) => {
       await updateTask(tx, request, transformationId, taskId);
-      return presentTask(tx, transformationId, taskId);
+      return presentTask(tx, principalOf(request), transformationId, taskId);
     });
     return sendVersioned(reply, 200, body);
   });

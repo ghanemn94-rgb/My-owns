@@ -489,7 +489,9 @@ export function registerFinanceValidationRoutes(app: FastifyInstance, { db }: Mo
     const { transformationId, benefitId } = parseBenefitParams(request.params);
     const body = await db
       .transaction()
-      .execute(async (tx) => presentBenefit(tx, await decideBaseline(tx, request, transformationId, benefitId)));
+      .execute(async (tx) =>
+        presentBenefit(tx, principalOf(request), await decideBaseline(tx, request, transformationId, benefitId)),
+      );
     return sendVersioned(reply, 200, body);
   });
 

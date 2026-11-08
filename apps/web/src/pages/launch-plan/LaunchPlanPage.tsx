@@ -34,6 +34,7 @@ import { Chip, StatusChip, type ChipTone } from "../automation/ui.tsx";
 import type { IconName } from "../../components/Icon.tsx";
 import { launchPaths, useLaunchPlan, useLaunchRefresh, useLaunchTasks, useLaunchTemplate } from "./api.ts";
 import { ProvisionalTranslationNote, TransformationPicker, todayRiyadh, useFefRunner } from "./ui.tsx";
+import { RestrictedRecordsLabel } from "../../components/sensitivity/RestrictedRecordsLabel.tsx";
 
 const TASK_STATUS: Record<LaunchTaskStatus, readonly [ChipTone, IconName]> = {
   not_started: ["neutral", "dot"],
@@ -439,9 +440,14 @@ function TaskTable({
                   <span>
                     {t(`launchHealthP5.launch.outputType.${task.outputRecordType}`)}
                     <span className="block small muted">
-                      {task.outputRecordId
-                        ? t("launchHealthP5.launch.outputLinked")
-                        : t("launchHealthP5.launch.outputMissing")}
+                      {/* T-DG6-BE-Z12 (D-218): a restricted output is linked; the screen shows the restricted label. */}
+                      {task.includesRestrictedRecords === true ? (
+                        <RestrictedRecordsLabel value />
+                      ) : task.outputRecordId ? (
+                        t("launchHealthP5.launch.outputLinked")
+                      ) : (
+                        t("launchHealthP5.launch.outputMissing")
+                      )}
                     </span>
                   </span>
                 ) : (

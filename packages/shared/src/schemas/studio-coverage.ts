@@ -74,6 +74,8 @@ export const revisionProposal = z.strictObject({
   reviewerRoleCode: z.string(),
   reviewTaskCount: z.number().int().min(0),
   createdAt: timestamp,
+  /** T-DG6-BE-Z12 (F-DG6-480; D-218): an impact entry naming a benefit the reader is not admitted to was dropped. */
+  includesRestrictedRecords: z.literal(true).optional(),
 });
 export type RevisionProposal = z.infer<typeof revisionProposal>;
 export const revisionProposalPage = page(revisionProposal);

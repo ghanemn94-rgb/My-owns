@@ -227,6 +227,8 @@ export const meetingOutput = z.strictObject({
   note: z.string().min(1).max(4000).nullable(),
   createdAt: timestamp,
   createdBy: uuid,
+  /** T-DG6-BE-Z12 (F-DG6-480; D-218): a reference to a record the reader is not admitted to was not named. */
+  includesRestrictedRecords: z.literal(true).optional(),
 });
 export type MeetingOutput = z.infer<typeof meetingOutput>;
 export const meetingOutputPage = page(meetingOutput);

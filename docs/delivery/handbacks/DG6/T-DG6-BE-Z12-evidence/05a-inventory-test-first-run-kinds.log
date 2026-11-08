@@ -1,0 +1,74 @@
+port-policy: PostgreSQL listening on port 31050 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-z12
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw7n2oc9_a437afbb (server_encoding UTF8); applied 118 migrations to a fresh database
+stdout | apps/api/test/integration/access/sensitive-reference-inventory.test.ts > T-DG6-BE-Z12: the sensitive-reference inventory matches the schema (F-DG6-480 class) > every reference column of the catalog is classified, with its kind, and no row is stale
+[BE-Z12 inventory] catalog: fk=54 uuid=59 json=84 array=2
+
+ ❯ |integration| apps/api/test/integration/access/sensitive-reference-inventory.test.ts (2 tests | 2 failed) 125ms
+   × T-DG6-BE-Z12: the sensitive-reference inventory matches the schema (F-DG6-480 class) > every reference column of the catalog is classified, with its kind, and no row is stale 122ms
+     → expected [ …(15) ] to deeply equal []
+   × T-DG6-BE-Z12: the sensitive-reference inventory matches the schema (F-DG6-480 class) > every operation, exercise and status is real 1ms
+     → (0 , operations) is not a function
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reference-inventory.test.ts > T-DG6-BE-Z12: the sensitive-reference inventory matches the schema (F-DG6-480 class) > every reference column of the catalog is classified, with its kind, and no row is stale
+AssertionError: expected [ …(15) ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   "benefit_overlap.excluded_benefit_id: listed fk, catalog uuid",[39m
+[31m+   "corrective_case.kpi_scope_id: listed fk, catalog uuid",[39m
+[31m+   "corrective_case.source_record_id: listed fk, catalog uuid",[39m
+[31m+   "evidence_link.record_id: listed fk, catalog uuid",[39m
+[31m+   "form_custom_value.record_id: listed fk, catalog uuid",[39m
+[31m+   "form_draft.record_id: listed fk, catalog uuid",[39m
+[31m+   "form_record_attachment.record_id: listed fk, catalog uuid",[39m
+[31m+   "form_record_comment.record_id: listed fk, catalog uuid",[39m
+[31m+   "record_sensitivity.record_id: listed fk, catalog uuid",[39m
+[31m+   "record_sensitivity_change.record_id: listed fk, catalog uuid",[39m
+[31m+   "benefit_calculation.inputs: listed fk, catalog json",[39m
+[31m+   "benefit_calculation.rounding: listed fk, catalog json",[39m
+[31m+   "corrective_signal.payload: listed fk, catalog json",[39m
+[31m+   "finance_validation.content: listed fk, catalog json",[39m
+[31m+   "impact_assessment_item.detail: listed fk, catalog json",[39m
+[31m+ ][39m
+
+ ❯ apps/api/test/integration/access/sensitive-reference-inventory.test.ts:79:23
+     77|     expect(missing, "a reference column of the schema is not in the in…
+     78|     expect(stale, "an inventory row names a column the schema does not…
+     79|     expect(wrongKind).toEqual([]);
+       |                       ^
+     80|     // Floors, so a broken catalog query cannot pass by finding nothin…
+     81|     expect(counts.get("fk") ?? 0).toBeGreaterThanOrEqual(50);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reference-inventory.test.ts > T-DG6-BE-Z12: the sensitive-reference inventory matches the schema (F-DG6-480 class) > every operation, exercise and status is real
+TypeError: (0 , operations) is not a function
+ ❯ apps/api/test/integration/access/sensitive-reference-inventory.test.ts:87:25
+     85| 
+     86|   it("every operation, exercise and status is real", () => {
+     87|     const ops = new Set(operations().map((o) => o.operationId));
+       |                         ^
+     88|     const unknownOps = SENSITIVE_REFERENCE_INVENTORY.flatMap((r) =>
+     89|       r.operations.filter((o) => !ops.has(o)).map((o) => `${r.column}:…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  09:37:44
+   Duration  6.64s (transform 1.18s, setup 0ms, collect 3.17s, tests 125ms, environment 0ms, prepare 60ms)
+
+EXIT=1 (first run: the catalog check flagged 15 rows I had given the wrong kind, and operations was called as a function; fixed)
