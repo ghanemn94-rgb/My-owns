@@ -12,13 +12,13 @@
 // (no config.consumes, the activateKpiDefinition precedent); each re-resolves the session inside its transaction
 // (commit-time authorisation: 401 when the session ended), checks If-Match (428/409), and writes its audit event in
 // the same transaction. An AUD user holds no item, so every write by one is refused like anyone else's.
-import { sql, type InboxNotificationRow, type Tx, type WorkItemRow } from "@mth/db";
+import { sql, type DbOrTx, type InboxNotificationRow, type Tx, type WorkItemRow } from "@mth/db";
 import { uuid, type InboxNotification, type WorkItem } from "@mth/shared/schemas";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { auditContextOf, organizationsWith, principalOf, refreshPrincipal } from "../access/index.ts";
 import { record } from "../audit/index.ts";
-import { readableTargets, restrictedLinkChildren } from "./deep-links.ts";
+import { readableTargets, restrictedWorkItemLink, restrictedWorkItems } from "./deep-links.ts";
 import {
   cursorSchema,
   decodeCursor,
@@ -92,9 +92,31 @@ export const toWorkItem = (r: WorkItemRow): WorkItem => ({
   version: r.version,
 });
 
-/** A work item as returned to its assignee; `restricted`: its text is redacted (T-DG6-BE-Z4; ADR-0051 §3). */
+/**
+ * A work item as returned to its assignee. `restricted` (T-DG6-BE-Z4 text; T-DG6-BE-Z12B ids, D-218/D-222; ADR-0051
+ * §2, §3): the subject or the stored link names a record the assignee is not admitted to, so the text is the inbox's
+ * `inbox.restricted`, the subject id is null (the type is kept), the link is the transformation home and the item
+ * carries `includesRestrictedRecords: true`. Its id, status and version stay, so the assignee can still complete it.
+ */
 const workItemFor = (r: WorkItemRow, restricted: boolean): WorkItem =>
-  restricted ? { ...toWorkItem(r), ...INBOX_RESTRICTED, periodLabel: null } : toWorkItem(r);
+  restricted
+    ? {
+        ...toWorkItem(r),
+        ...INBOX_RESTRICTED,
+        periodLabel: null,
+        subjectId: null,
+        linkPath: restrictedWorkItemLink(r.transformation_id),
+        includesRestrictedRecords: true,
+      }
+    : toWorkItem(r);
+
+/** The reach decision of work-item rows (one per batch; T-DG6-BE-Z12B). */
+const restrictedRows = (db: DbOrTx, request: FastifyRequest, rows: readonly WorkItemRow[]) =>
+  restrictedWorkItems(
+    db,
+    principalOf(request),
+    rows.map((r) => ({ subjectType: r.subject_type, subjectId: r.subject_id, linkPath: r.link_path })),
+  );
 
 export const toInboxNotification = (r: InboxNotificationRow): InboxNotification => ({
   id: r.id,
@@ -275,13 +297,10 @@ export function registerTaskRoutes(app: FastifyInstance, { db }: ModuleDeps): st
       .limit(query.limit + 1)
       .execute();
     const page = paginate(rows, query.limit, (r) => [Number(r.status_rank), String(r.due_rank), r.id], hash);
-    // T-DG6-BE-Z4 (F-DG6-220; ADR-0051 §2, §3): a work item about a corrective case or transition decision the caller
-    // is not admitted to keeps its ids, link, status and version, and its text is the inbox's `inbox.restricted`.
-    const restricted = await restrictedLinkChildren(
-      db,
-      principalOf(request),
-      page.items.map((r) => r.link_path),
-    );
+    // T-DG6-BE-Z4 / T-DG6-BE-Z12B (ADR-0051 §2, §3; D-218, D-222): a work item about a record the caller is not
+    // admitted to keeps its id, status and version; its subject id is null, its link the transformation home, its text
+    // the inbox's `inbox.restricted`, and it carries the marker.
+    const restricted = await restrictedRows(db, request, page.items);
     return { items: page.items.map((r, i) => workItemFor(r, restricted.at(i) === true)), nextCursor: page.nextCursor };
   });
 
@@ -296,14 +315,19 @@ export function registerTaskRoutes(app: FastifyInstance, { db }: ModuleDeps): st
       .where("assignee_user_id", "=", userId)
       .executeTakeFirst();
     if (!row) throw problems.notFound();
-    const [restricted] = await restrictedLinkChildren(db, principalOf(request), [row.link_path]);
+    const [restricted] = await restrictedRows(db, request, [row]);
     return sendVersioned(reply, 200, workItemFor(row, restricted === true));
   });
 
   app.post(COMPLETE, { config: session }, async (request, reply) => {
     const { workItemId } = parse(itemParams, request.params, "params");
-    const row = await db.transaction().execute((tx) => completeItem(tx, request, workItemId));
-    return sendVersioned(reply, 200, toWorkItem(row));
+    // The assignee completes a restricted item as any other; the response is redacted as the reads are (D-222).
+    const item = await db.transaction().execute(async (tx) => {
+      const row = await completeItem(tx, request, workItemId);
+      const [restricted] = await restrictedRows(tx, request, [row]);
+      return workItemFor(row, restricted === true);
+    });
+    return sendVersioned(reply, 200, item);
   });
 
   app.get(INBOX, { config: session }, async (request) => {

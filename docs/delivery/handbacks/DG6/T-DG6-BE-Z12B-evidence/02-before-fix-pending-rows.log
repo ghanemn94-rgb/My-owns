@@ -1,0 +1,172 @@
+port-policy: PostgreSQL listening on port 31100 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-z12b
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw7qaw5g_29c0fe65 (server_encoding UTF8); applied 118 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/access/sensitive-reference-pending-z12b.test.ts (7 tests | 3 failed) 1534ms
+   ✓ T-DG6-BE-Z12B: the PENDING inventory rows, seeded (F-DG6-480; D-218) > control: TL, AUD and SP get 404 on the benefit and its decision; the TO and BO read both 131ms
+   × T-DG6-BE-Z12B: the PENDING inventory rows, seeded (F-DG6-480; D-218) > approval.subject_id: the SP's approval of the restricted decision names no subject id (marked) 16ms
+     → expected { …(3) } to deeply equal { …(3) }
+   × T-DG6-BE-Z12B: the PENDING inventory rows, seeded (F-DG6-480; D-218) > sustainment_review.transition_decision_id: TL and AUD see the review without the decision id (marked) 14ms
+     → expected { kind: 'transition_decision', …(2) } to deeply equal { kind: 'transition_decision', …(2) }
+   × T-DG6-BE-Z12B: the PENDING inventory rows, seeded (F-DG6-480; D-218) > procedure_instance.subject_record_id and input_values: TL sees the instance without the benefit id (marked) 25ms
+     → expected { type: 'benefit', …(3) } to deeply equal { Object (type, subject, ...) }
+   ✓ T-DG6-BE-Z12B: automation_rule_version.conditions (D-222) > the author, not admitted, sees the marker in place of each hidden literal, the label in the summary, marked 66ms
+   ✓ T-DG6-BE-Z12B: automation_rule_version.conditions (D-222) > a re-save that sends the marker back keeps each hidden literal; an unrelated edit still applies 94ms
+   ✓ T-DG6-BE-Z12B: automation_rule_version.conditions (D-222) > positive: with an explicit grant the author sees the literals again (next request) 45ms
+ ❯ |integration| apps/api/test/integration/reporting/modular.test.ts (15 tests | 1 failed) 3416ms
+   ✓ REQ-PB-005 / REQ-S03-005: Modular entry at Design with an inherited G2 approval > G2 is labelled inherited (never approved); baseline and outcome link are missing until supplied  624ms
+   ✓ REQ-PB-005 / REQ-S03-005: Modular entry at Design with an inherited G2 approval > a pending inherited approval is inherited_pending_verification and an inherited_approval_unverified warning 205ms
+   ✓ REQ-PB-005 / REQ-S03-005: Modular entry at Design with an inherited G2 approval > a gate approved by the platform is the only `approved` label 137ms
+   ✓ REQ-PB-005 / REQ-S03-005: Modular entry at Design with an inherited G2 approval > scope: another organization's TO gets 404; a malformed id is 400 126ms
+   ✓ REQ-S03-005: labelled inherited records > inherited evidence and baseline are listed with provenance and the inherited label, beside the prior approval 296ms
+   ✓ REQ-S03-005: labelled inherited records > End-to-End → 422 inherited_record.not_modular; prior_approval → 422 use_dispensation; nothing written  304ms
+   ✓ REQ-S03-005: labelled inherited records > validation: 400 for a missing id or blank text; 422 for a record outside the transformation; 409 duplicate  336ms
+   ✓ S-4: authorization, If-Match and audit on every write > AUD and BO get 403 on create and withdraw; nothing written 207ms
+   ✓ S-4: authorization, If-Match and audit on every write > T-DG4-BE-R3 (JK.10 item 3): another organization's TO gets 404 on create and withdraw, as on reads; nothing written 164ms
+   ✓ S-4: authorization, If-Match and audit on every write > withdraw: 428 without If-Match, 409 stale, 404 unknown id, 422 when already withdrawn 205ms
+   ✓ S-4: authorization, If-Match and audit on every write > one audit event per mutation, in the write's transaction 148ms
+   ✓ S-4: authorization, If-Match and audit on every write > T-DG4-BE-R3 (D-107): the real server built by the harness registers getInheritedRecord with no hand wiring 0ms
+   ✓ S-4: authorization, If-Match and audit on every write > T-DG4-BE-R3 getInheritedRecord: 200 + ETag active or withdrawn; 404 for a prior_approval id, unknown id, outsider 213ms
+   ✓ S-4: authorization, If-Match and audit on every write > commit-time: a grant revoked while the create waited is 403; nothing written 127ms
+   × T-DG6-BE-Z12B: D-218 on inherited_record.evidence_id > inherited evidence marked sensitive: AUD sees the record without the evidence id (marked); TO and TL see it 149ms
+     → the inherited record stays listed: expected { …(19) } to match object { kind: 'evidence', …(3) }
+(16 matching properties omitted from actual)
+ ❯ |integration| apps/api/test/integration/methodology/revision-proposals.test.ts (7 tests | 1 failed) 1139ms
+   ✓ formula revision (REQ-S12-018 case 2; ADR-0039 §8) > proposing a formula change lists the affected benefits and creates one review task for FIN 127ms
+   ✓ formula revision (REQ-S12-018 case 2; ADR-0039 §8) > replay x3 creates nothing more; the wrapped port still runs the DG4 behaviour first on every call 110ms
+   ✓ formula revision (REQ-S12-018 case 2; ADR-0039 §8) > routes to FIN holders of the transformation only, never to the editor (SoD) or another transformation's FIN 127ms
+   ✓ listRevisionProposals (ADR-0039 §8, §9) > AUD and the transformation's TL see a formula proposal; readers without access to it do not; 403; 400 133ms
+   ✓ configuration revision (REQ-S12-018 case 1; the function submitConfigReview calls) > records validation, impact and routing once; tasks TO holders except the requester and author; replay adds nothing 173ms
+   ✓ T-DG6-BE-Z12: D-218 on the revision proposal impact > revision proposal: a sensitive affected benefit is dropped for AUD (marked, counts unchanged) and shown to its creator 124ms
+   × T-DG6-BE-Z12B: D-218 on the revision proposal validation report > revision proposal: a validation report naming a sensitive benefit is redacted for AUD (marked) and shown to its creator 72ms
+     → expected '{"items":[{"id":"01a1bad8-6ac0-712c-9…' not to contain '01a1bad8-6a9e-73a4-ab2d-be00aebf7ad4'
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reference-pending-z12b.test.ts > T-DG6-BE-Z12B: the PENDING inventory rows, seeded (F-DG6-480; D-218) > approval.subject_id: the SP's approval of the restricted decision names no subject id (marked)
+AssertionError: expected { …(3) } to deeply equal { …(3) }
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[32m-   "marker": true,[39m
+[32m-   "subjectId": null,[39m
+[31m+   "marker": undefined,[39m
+[31m+   "subjectId": "01a1bad8-47ee-77a1-a778-46cc253c3db9",[39m
+[2m    "type": "benefit_transition_decision",[22m
+[2m  }[22m
+
+ ❯ apps/api/test/integration/access/sensitive-reference-pending-z12b.test.ts:188:105
+    186|   it("approval.subject_id: the SP's approval of the restricted decisio…
+    187|     const one = ok(await send("GET", `/api/v1/approvals/${S.approvalId…
+    188|     expect({ type: one.approvalType, subjectId: one.subjectId, marker:…
+       |                                                                                                         ^
+    189|       type: "benefit_transition_decision",
+    190|       subjectId: null,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reference-pending-z12b.test.ts > T-DG6-BE-Z12B: the PENDING inventory rows, seeded (F-DG6-480; D-218) > sustainment_review.transition_decision_id: TL and AUD see the review without the decision id (marked)
+AssertionError: expected { kind: 'transition_decision', …(2) } to deeply equal { kind: 'transition_decision', …(2) }
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[32m-   "decision": null,[39m
+[31m+   "decision": "01a1bad8-47ee-77a1-a778-46cc253c3db9",[39m
+[2m    "kind": "transition_decision",[22m
+[32m-   "marker": true,[39m
+[31m+   "marker": undefined,[39m
+[2m  }[22m
+
+ ❯ apps/api/test/integration/access/sensitive-reference-pending-z12b.test.ts:221:10
+    219|         decision: review.transitionDecisionId,
+    220|         marker: review.includesRestrictedRecords,
+    221|       }).toEqual({ kind: "transition_decision", decision: null, marker…
+       |          ^
+    222|       expect(leaks(list), `${who}: listSustainmentReviews`).toEqual([]…
+    223|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reference-pending-z12b.test.ts > T-DG6-BE-Z12B: the PENDING inventory rows, seeded (F-DG6-480; D-218) > procedure_instance.subject_record_id and input_values: TL sees the instance without the benefit id (marked)
+AssertionError: expected { type: 'benefit', …(3) } to deeply equal { Object (type, subject, ...) }
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[32m-   "marker": true,[39m
+[32m-   "reason": null,[39m
+[32m-   "subject": null,[39m
+[31m+   "marker": undefined,[39m
+[31m+   "reason": "01a1bad8-4780-7546-a1b8-d37aa0393784",[39m
+[31m+   "subject": "01a1bad8-4780-7546-a1b8-d37aa0393784",[39m
+[2m    "type": "benefit",[22m
+[2m  }[22m
+
+ ❯ apps/api/test/integration/access/sensitive-reference-pending-z12b.test.ts:236:8
+    234|       reason: one.inputValues.reason,
+    235|       marker: one.includesRestrictedRecords,
+    236|     }).toEqual({ type: "benefit", subject: null, reason: null, marker:…
+       |        ^
+    237|     expect(leaks(one), "getProcedureInstance").toEqual([]);
+    238|     const list = ok(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  |integration| apps/api/test/integration/methodology/revision-proposals.test.ts > T-DG6-BE-Z12B: D-218 on the revision proposal validation report > revision proposal: a validation report naming a sensitive benefit is redacted for AUD (marked) and shown to its creator
+AssertionError: expected '{"items":[{"id":"01a1bad8-6ac0-712c-9…' not to contain '01a1bad8-6a9e-73a4-ab2d-be00aebf7ad4'
+
+Expected: [32m"01a1bad8-6a9e-73a4-ab2d-be00aebf7ad4"[39m
+Received: [31m"{"items":[{"id":"01a1bad8-6ac0-712c-93b8-f50047b30ab5","transformationId":"01a1bad8-66d7-7687-a992-dbf9944865bb","subjectType":"benefit_formula_version","subjectId":"01a1bad8-6ac0-712c-93b8-f015a42ca9db","subjectVersion":2,"contentSha256":"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc","validationResult":"fail","validationReport":{"errors":[{"code":"synthetic.recheck","benefitId":"01a1bad8-6a9e-73a4-ab2d-be00aebf7ad4"}],"engineVersion":"synthetic-1","checkedBenefitId":"01a1bad8-6a9e-73a4-ab2d-be00aebf7ad4"},"impact":{"affectedRecords":[]},"reviewerRoleCode":"FIN","reviewTaskCount":0,"createdAt":"2026-11-08T11:08:27.713Z"}],"nextCursor":null}"[39m
+
+ ❯ apps/api/test/integration/methodology/revision-proposals.test.ts:466:42
+    464|     expect(aud.status).toBe(200);
+    465|     expect(aud.body.items).toHaveLength(1);
+    466|     expect(JSON.stringify(aud.body)).not.toContain(hidden);
+       |                                          ^
+    467|     expect(aud.body.items[0].validationReport).toEqual({
+    468|       engineVersion: "synthetic-1",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  |integration| apps/api/test/integration/reporting/modular.test.ts > T-DG6-BE-Z12B: D-218 on inherited_record.evidence_id > inherited evidence marked sensitive: AUD sees the record without the evidence id (marked); TO and TL see it
+AssertionError: the inherited record stays listed: expected { …(19) } to match object { kind: 'evidence', …(3) }
+(16 matching properties omitted from actual)
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[32m-   "evidenceId": null,[39m
+[32m-   "includesRestrictedRecords": true,[39m
+[31m+   "evidenceId": "01a1bad8-5f67-7538-b416-3f4b2d78cbb8",[39m
+[2m    "kind": "evidence",[22m
+[2m    "label": "inherited",[22m
+[2m  }[22m
+
+ ❯ apps/api/test/integration/reporting/modular.test.ts:570:57
+    568|     expect(list.status).toBe(200);
+    569|     const listed = (list.body as { items: { id: string }[] }).items.fi…
+    570|     expect(listed, "the inherited record stays listed").toMatchObject({
+       |                                                         ^
+    571|       kind: "evidence",
+    572|       label: "inherited",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  3 failed (3)
+      Tests  5 failed | 24 passed (29)
+   Start at  11:08:06
+   Duration  21.52s (transform 4.61s, setup 0ms, collect 11.80s, tests 6.09s, environment 0ms, prepare 56ms)
+
+exit=1

@@ -19,6 +19,7 @@ import { RegisterTable, type RegisterColumn } from "../../components/RegisterTab
 import { Section } from "../../components/Section.tsx";
 import { QueryState } from "../../components/States.tsx";
 import { formatDateTime } from "../../lib/format.ts";
+import { RestrictedRecordsLabel } from "../../components/sensitivity/RestrictedRecordsLabel.tsx";
 import { ReadOnlyNote, useUserNames } from "../my-work/p4ui.tsx";
 import {
   fedPaths,
@@ -34,7 +35,13 @@ import {
   type AutomationRule,
   type AutomationRuleVersion,
 } from "./api.ts";
-import { ContentEditor, toContentBody, toContentDraft, type ContentDraft } from "./ContentEditor.tsx";
+import {
+  conditionIsRestricted,
+  ContentEditor,
+  toContentBody,
+  toContentDraft,
+  type ContentDraft,
+} from "./ContentEditor.tsx";
 import { AutomationLinks, EnabledChip } from "./RulesPage.tsx";
 import { Chip, HumanDecisionNote, NoteForm, StatusChip, pick, useRunner, type Runner } from "./ui.tsx";
 
@@ -363,9 +370,13 @@ function ContentView({ version: v, catalogue }: { version: AutomationRuleVersion
         {(c.conditions ?? []).length === 0
           ? t("workflowsP5.rules.noConditions")
           : c.conditions.map((x, i) => (
-              <bdi key={i} dir="ltr" className="block code">
-                {x.field} {x.op} {x.value === undefined ? "" : JSON.stringify(x.value)}
-              </bdi>
+              <span key={i} className="block" data-condition={i}>
+                <bdi dir="ltr" className="code">
+                  {x.field} {x.op} {x.value === undefined ? "" : JSON.stringify(x.value)}
+                </bdi>
+                {/* T-DG6-BE-Z12B (D-222): a literal naming a record the reader is not admitted to is the marker. */}
+                <RestrictedRecordsLabel value={conditionIsRestricted(x)} />
+              </span>
             ))}
       </dd>
       <dt>{t("workflowsP5.rules.thenTitle")}</dt>

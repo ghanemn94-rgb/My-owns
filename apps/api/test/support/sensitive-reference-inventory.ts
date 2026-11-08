@@ -23,7 +23,8 @@
 //     record's id.
 //   - not-served: no API response serializes the column.
 //   - own-input: served only to the principal who wrote it, as they wrote it (their own draft or saved selection).
-//   - open: not repaired in T-DG6-BE-Z12; the handback lists it under "What remains". The inventory test logs these.
+//   - open: not repaired; the handback lists it under "What remains". The inventory test logs these. None since
+//     T-DG6-BE-Z12B (D-222 decided work_item.subject_id and automation_rule_version.conditions; both are redacted).
 // Everything is SYNTHETIC test metadata. Nothing here is a business approval (G1-G6) or touches DG0-DG7.
 
 export type InventoryKind = "fk" | "uuid" | "array" | "json";
@@ -59,6 +60,7 @@ export interface InventoryRow {
 
 const Z12 = "apps/api/test/integration/access/sensitive-reach-id-refs-z12.test.ts";
 const Z10B = "apps/api/test/integration/access/sensitive-reach-id-refs-writes.test.ts";
+const Z12B = "apps/api/test/integration/access/sensitive-reference-pending-z12b.test.ts";
 
 const holder = (column: string, names: string, guard: string, kind: InventoryKind = "fk"): InventoryRow => ({
   column,
@@ -194,8 +196,7 @@ export const SENSITIVE_REFERENCE_INVENTORY: readonly InventoryRow[] = [
     before: "LEAK: transitionDecisionId named the hidden decision (found by this inventory)",
     status: "redacted",
     fix: "sustainment/controls.ts: hideRestrictedRefs -> null + marker",
-    exercise:
-      "PENDING: needs a transition decision of a sensitive benefit (the demo has none); redaction by code reading",
+    exercise: `${Z12B}#sustainment_review.transition_decision_id`,
   },
   holder(
     "financial_cash_flow.set_id",
@@ -335,7 +336,7 @@ export const SENSITIVE_REFERENCE_INVENTORY: readonly InventoryRow[] = [
     status: "redacted",
     fix: "reporting/modular.ts (BE-Z10B); the same member as the dispensation prior_approval entry",
     exercise:
-      "PENDING: Modular transformations only (the demo is not one); the same member as the dispensation prior_approval entry the sweep seeds",
+      "apps/api/test/integration/reporting/modular.test.ts#inherited evidence marked sensitive: AUD sees the record without the evidence id",
   },
   {
     column: "kpi_actual_evidence.evidence_id",
@@ -408,7 +409,7 @@ export const SENSITIVE_REFERENCE_INVENTORY: readonly InventoryRow[] = [
     before: "LEAK: subjectId named a hidden transition decision (found by this inventory)",
     status: "redacted",
     fix: "workflows/approvals.ts toApprovals: hideRestrictedTypedRefs -> subjectId null + marker (contract: Approval.subjectId NullableUuid)",
-    exercise: "PENDING: needs a benefit_transition_decision approval (the demo has none); redaction by code reading",
+    exercise: `${Z12B}#approval.subject_id`,
   },
   cannot("audit_event.actor_user_id", "uuid", "a user id"),
   cannot("audit_event.on_behalf_of_user_id", "uuid", "a user id"),
@@ -587,8 +588,7 @@ export const SENSITIVE_REFERENCE_INVENTORY: readonly InventoryRow[] = [
     before: "LEAK (F-DG6-480, by code reading): subjectRecordId served raw",
     status: "redacted",
     fix: "procedures/steps.ts presentInstance: subjectRecordId null + marker. The launch does not check the subject's existence for any id, so a hidden id is accepted exactly as an unknown one (no oracle)",
-    exercise:
-      "PENDING: needs a procedure definition launched with a subject; redaction by code reading (hideRestrictedTypedRefs)",
+    exercise: `${Z12B}#procedure_instance.subject_record_id and input_values`,
   },
   {
     column: "procedure_instance_link.record_id",
@@ -680,10 +680,12 @@ export const SENSITIVE_REFERENCE_INVENTORY: readonly InventoryRow[] = [
     column: "work_item.subject_id",
     kind: "uuid",
     names: "subject types include corrective_case, finance_validation, benefit_overlap (children)",
-    operations: ["listMyWorkItems", "getWorkItem", "completeWorkItem", "getMyWork"],
+    operations: ["listMyWorkItems", "getWorkItem", "completeWorkItem", "getMyWork", "getWorkspaceHeader"],
     before: "kept by design in BE-Z4 for the assignee (text redacted, ids and link kept), before D-218",
-    status: "open",
-    fix: "PROPOSED: for a restricted item, subjectId null (WorkItem.subjectId and MyWorkItem.recordId NullableUuid) and a link to the transformation home, + marker; the SPA keys My Work rows by recordId, so it needs a web change too",
+    status: "redacted",
+    fix: "D-222 (T-DG6-BE-Z12B): tasks/deep-links.ts restrictedWorkItems (subject, or the record the stored link names) -> tasks/routes.ts workItemFor (subjectId null, linkPath the transformation home, inbox.restricted, marker; completion too) and reporting/my-work.ts presentWorkItems (recordId null, href the transformation home, marker; the workspace header's next actions too; the My Work cursor carries the work-item id, never the record id). Contract: WorkItem.subjectId and MyWorkItem.recordId NullableUuid. Web: rows keyed by myWorkRowKeys, restricted label",
+    exercise:
+      "apps/api/test/integration/access/sensitive-reach-registers.test.ts#D-222 work item ids: BO2's restricted work items, My Work items and next actions name no record id",
   },
   // ------------------------------------------------------------------ uuid arrays
   {
@@ -754,10 +756,26 @@ export const SENSITIVE_REFERENCE_INVENTORY: readonly InventoryRow[] = [
     column: "automation_rule_version.conditions",
     kind: "json",
     names: "a condition may compare the condition field benefitId to a literal uuid",
-    operations: ["listAutomationRuleVersions", "getAutomationRuleVersion"],
-    before: "served raw to rule authors",
-    status: "open",
-    fix: "PROPOSED: redactRestrictedIds on read with a re-save rule that keeps a hidden literal (keptRestrictedRef); needs a decision because a redacted condition changes what the rule is shown to do",
+    operations: [
+      "listAutomationRuleVersions",
+      "getAutomationRuleVersion",
+      "createAutomationRuleVersion",
+      "updateAutomationRuleVersion",
+      "submitAutomationRuleVersion",
+      "decideAutomationRuleReview",
+      "publishAutomationRuleVersion",
+      "discardAutomationRuleVersion",
+      "listAutomationRules",
+      "getAutomationRule",
+      "createAutomationRule",
+      "updateAutomationRule",
+      "enableAutomationRule",
+      "disableAutomationRule",
+    ],
+    before: "served raw to rule authors (the version content and the rule's readable summary)",
+    status: "redacted",
+    fix: "D-222 (T-DG6-BE-Z12B): automation/versions.ts redactConditionLiterals -> each hidden literal shown as AUTOMATION_RESTRICTED_LITERAL in place, the summary as 'a restricted record' / 'سجل مقيد', + marker (versions and rules.ts presentRule); re-save: keepRestrictedLiterals keeps the stored literal when the marker comes back in the same condition and position. Web: the rule screen shows the restricted label on the condition",
+    exercise: `${Z12B}#automation_rule_version.conditions`,
   },
   cannot("automation_rule_version.parameters", "json", "numeric and text parameters of a starter"),
   holder(
@@ -877,7 +895,7 @@ export const SENSITIVE_REFERENCE_INVENTORY: readonly InventoryRow[] = [
     before: "served raw",
     status: "redacted",
     fix: "procedures/steps.ts presentInstance: redactRestrictedIds + marker",
-    exercise: "PENDING: needs a procedure input naming a record; redaction by code reading (redactRestrictedIds)",
+    exercise: `${Z12B}#procedure_instance.subject_record_id and input_values`,
   },
   cannot("procedure_step_definition.condition_value", "json", "a step condition literal (definition data)"),
   cannot("ranking_entry.cause_detail", "json", "initiative ranking causes"),
@@ -912,7 +930,8 @@ export const SENSITIVE_REFERENCE_INVENTORY: readonly InventoryRow[] = [
     before: "served raw",
     status: "redacted",
     fix: "the same redactRestrictedIds as revision_proposal.impact",
-    exercise: "PENDING: as revision_proposal.impact",
+    exercise:
+      "apps/api/test/integration/methodology/revision-proposals.test.ts#revision proposal: a validation report naming a sensitive benefit",
   },
   cannot("saved_view.columns", "json", "column keys"),
   cannot(

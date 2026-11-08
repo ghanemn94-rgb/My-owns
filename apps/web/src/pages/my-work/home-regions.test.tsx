@@ -18,6 +18,9 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+/** The transformation of the restricted rows (any id: the row links to its home, never to a record). */
+const TR_HOME_ID = "01920000-0000-7000-9000-00000000a0a0";
+
 const REGIONS = [
   ["decisions", "myWork.home.decisions.title"],
   ["outcomes", "myWork.home.outcomes.title"],
@@ -73,6 +76,56 @@ describe.each(["en", "ar"] as const)("My Work: key decisions, key outcomes, next
         })
         .getAttribute("href"),
     ).toBe("#mw-assigned_actions");
+  });
+
+  it("T-DG6-BE-Z12B: restricted work items (no record id) render with the restricted label and the home link", async () => {
+    // D-222 (ADR-0051 §2): a work item about a record the caller is not admitted to has recordId null, href the
+    // transformation home, the inbox.restricted text and includesRestrictedRecords. Two such rows must both render
+    // (rows are never keyed by recordId alone) and each shows the restricted label (en and ar).
+    const base = myWork();
+    const restricted = {
+      section: "missing_updates" as const,
+      source: "work_item" as const,
+      recordType: "corrective_case",
+      recordId: null,
+      kind: "kpi_update_due",
+      code: null,
+      label: null,
+      messageKey: "inbox.restricted",
+      messageParams: {},
+      transformationId: TR_HOME_ID,
+      href: `/transformations/${TR_HOME_ID}`,
+      dueDate: "2026-06-09",
+      overdue: true,
+      includesRestrictedRecords: true as const,
+    };
+    const data: MyWork = {
+      ...base,
+      sections: base.sections.map((x) =>
+        x.section === "missing_updates" ? { ...x, total: 3, items: [restricted, restricted, ...x.items] } : x,
+      ),
+      upcomingDeadlines: [restricted, restricted, ...base.upcomingDeadlines],
+    };
+    const errors = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    mockApi(...p4Handlers(locale, [], [route("GET", /\/api\/v1\/me\/work$/, () => json(data))]));
+    renderApp("/my-work", { i18n: createI18n(locale) });
+    const outcomes = await screen.findByRole("region", { name: t("myWork.home.outcomes.title") });
+    await waitFor(() => expect(outcomes.querySelectorAll("[data-glance-list] li").length).toBeGreaterThanOrEqual(2));
+    const text = t("myWork.message.inbox__restricted");
+    const links = within(outcomes).getAllByRole("link", { name: text });
+    expect(links).toHaveLength(2);
+    for (const a of links) expect(a.getAttribute("href")).toBe(`/transformations/${TR_HOME_ID}`);
+    expect(outcomes.querySelectorAll("[data-restricted-records='true']")).toHaveLength(2);
+    expect(within(outcomes).getAllByText(t("access.includesRestrictedRecords"))).toHaveLength(2);
+    // The deadlines list and the section table render both restricted rows too.
+    await waitFor(() => expect(document.querySelectorAll("#mw-deadlines li")).toHaveLength(3));
+    expect(document.querySelectorAll("#mw-deadlines [data-restricted-records='true']")).toHaveLength(2);
+    await waitFor(() =>
+      expect(document.querySelectorAll("#mw-missing_updates [data-restricted-records='true']")).toHaveLength(2),
+    );
+    const keyWarnings = errors.mock.calls.filter((c) => String(c[0]).includes("same key"));
+    expect(keyWarnings).toEqual([]);
+    errors.mockRestore();
   });
 
   it("an empty My Work shows each region's designed empty state, never a blank region", async () => {

@@ -13,6 +13,7 @@
 //    current hash, routing to TO holders except the requester and author, tasks once, replay creates nothing.
 // All data is synthetic. A review task asks a person to review; nothing here approves anything (the DG3 Finance
 // validation stays a human decision) or touches the engineering gates DG0-DG7.
+import { insertAuditEvent } from "@mth/db";
 import { benefitFormulaVersion } from "@mth/shared/schemas";
 import { v7 as uuidv7 } from "uuid";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -383,5 +384,101 @@ describe("T-DG6-BE-Z12: D-218 on the revision proposal impact", () => {
     expect((stored[0]!.impact as Body).affectedBenefits).toEqual([
       { benefitId: benefit.body.id, code: benefit.body.code },
     ]);
+  });
+});
+
+/**
+ * T-DG6-BE-Z12B (F-DG6-480; D-218; ADR-0051 §2): revision_proposal.validation_report. No writer at HEAD puts a record
+ * id in a validation report (a formula revision stores its engine version, result type and expression errors; a
+ * configuration revision its check-run ids), so this test seeds a SYNTHETIC formula proposal directly, as the starter
+ * inserts it (append-only, with its audit event), whose report names a sensitive benefit in an error entry and in a
+ * member. AUD (not admitted) sees the report without the benefit (the entry dropped, the member null) and the proposal
+ * marked; the benefit's creator (a named party) sees it as stored. The stored report is unchanged.
+ */
+describe("T-DG6-BE-Z12B: D-218 on the revision proposal validation report", () => {
+  it("revision proposal: a validation report naming a sensitive benefit is redacted for AUD (marked) and shown to its creator", async () => {
+    const f = await formulaV1();
+    const benefit = await call<Body>(api.app, "POST", `${b.base}/benefits`, {
+      session: b.s.tl,
+      body: financialBody(b as never, { benefitFormulaId: f.id }),
+    });
+    expect(benefit.status, JSON.stringify(benefit.body)).toBe(201);
+    const hidden = benefit.body.id as string;
+    const toUser = await createUser(api.db, w.orgA.id);
+    await grant(api.db, w.grantor.id, toUser.id, "TO", { type: "organization", id: w.orgA.id }, w.orgA.id);
+    const marked = await call<Body>(
+      api.app,
+      "PUT",
+      `/api/v1/transformations/${b.transformationId}/records/benefit/${hidden}/sensitivity`,
+      {
+        session: await signIn(api.app, toUser.subject),
+        headers: { "if-match": '"0"' },
+        body: { isSensitive: true, reason: "Synthetic sensitive benefit (BE-Z12B)" },
+      },
+    );
+    expect(marked.status, JSON.stringify(marked.body)).toBe(200);
+    const subjectId = uuidv7();
+    const sha = "c".repeat(64);
+    const report = {
+      engineVersion: "synthetic-1",
+      errors: [{ code: "synthetic.recheck", benefitId: hidden }],
+      checkedBenefitId: hidden,
+    };
+    const id = uuidv7();
+    await api.db.transaction().execute(async (tx) => {
+      await tx
+        .insertInto("revision_proposal")
+        .values({
+          id,
+          organization_id: w.orgA.id,
+          transformation_id: b.transformationId,
+          subject_type: "benefit_formula_version",
+          subject_id: subjectId,
+          subject_version: 2,
+          content_sha256: sha,
+          validation_result: "fail",
+          validation_report: JSON.stringify(report),
+          impact: JSON.stringify({ affectedRecords: [] }),
+          reviewer_role_code: "FIN",
+          review_task_count: 0,
+          dedupe_key: `benefit_formula_version:${subjectId}:${sha}`,
+          created_by: null,
+        })
+        .execute();
+      await insertAuditEvent(
+        tx,
+        { actorType: "system", actorUserId: null, source: "migration", requestId: `be-z12b-${id}` },
+        {
+          action: "revision_proposal.create",
+          recordType: "revision_proposal",
+          recordId: id,
+          organizationId: w.orgA.id,
+          transformationId: b.transformationId,
+          newVersion: 1,
+        },
+      );
+    });
+    const q = `${PROPOSALS}?subjectType=benefit_formula_version&subjectId=${subjectId}`;
+
+    const aud = await call<Body>(api.app, "GET", q, { session: auditor });
+    expect(aud.status).toBe(200);
+    expect(aud.body.items).toHaveLength(1);
+    expect(JSON.stringify(aud.body)).not.toContain(hidden);
+    expect(aud.body.items[0].validationReport).toEqual({
+      engineVersion: "synthetic-1",
+      errors: [],
+      checkedBenefitId: null,
+    });
+    expect(aud.body.items[0].includesRestrictedRecords).toBe(true);
+
+    const creator = await call<Body>(api.app, "GET", q, { session: b.s.tl });
+    expect(creator.body.items[0].validationReport).toEqual(report);
+    expect(creator.body.items[0].includesRestrictedRecords).toBeUndefined();
+    const stored = await api.db
+      .selectFrom("revision_proposal")
+      .select("validation_report")
+      .where("id", "=", id)
+      .executeTakeFirstOrThrow();
+    expect(stored.validation_report).toEqual(report);
   });
 });

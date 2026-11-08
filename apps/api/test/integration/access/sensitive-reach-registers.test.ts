@@ -10,9 +10,11 @@
 //   - negative (TL, AUD and BO2: no grant, not a named party of the benefit): 404 on the benefit; the case, the
 //     decision and the benefit link are absent from their lists (every cursor page; the rows of a plain benefit are still
 //     listed, so nothing else is hidden); every item, signals, actions, close, edit, submit and remove route that names
-//     one answers 404; a create that names the benefit answers the 422 of an unknown id; the work item, the inbox
-//     notification and the My Work item about the case or decision keep their ids and say `inbox.restricted`, and the
-//     deep link answers the one 403; and no refused write changed a row;
+//     one answers 404; a create that names the benefit answers the 422 of an unknown id; the inbox notification about
+//     the case or decision says `inbox.restricted`; the work item, the My Work item and the workspace header's next
+//     action say it too and (T-DG6-BE-Z12B, D-222, superseding BE-Z4's kept ids) carry no subject or record id, link to
+//     the transformation home and carry `includesRestrictedRecords: true`, and the assignee still completes the item;
+//     the deep link answers the one 403; and no refused write changed a row;
 //   - positive: the TO (sensitive_record.grant) and BO (the owner, a named party) see everything, and BO2 and TL after
 //     an explicit grant see the rows and texts again on the next request.
 // It fails on the round-3 candidate (every row is listed and every item answers 200) and passes with the list filters
@@ -367,17 +369,15 @@ describe("ADR-0051 §2: a sensitive benefit's register rows (F-DG6-220)", () => 
       expect(n, id).toBeDefined();
       expect({ key: n.messageKey, params: n.messageParams }).toEqual({ key: "inbox.restricted", params: {} });
     }
-    const mine = await myWork(s);
-    for (const subject of [S.caseId, S.decisionId]) {
-      const found = mine.filter((x) => x.recordId === subject);
-      expect(found.length, subject).toBeGreaterThan(0);
-      for (const m of found)
-        expect({ key: m.messageKey, params: m.messageParams, code: m.code }).toEqual({
-          key: "inbox.restricted",
-          params: {},
-          code: null,
-        });
-    }
+    // My Work items about the case and decision (T-DG6-BE-Z12B: recordId null, so found by their redaction).
+    const mine = (await myWork(s)).filter((x) => x.includesRestrictedRecords === true);
+    expect(mine.length).toBeGreaterThan(0);
+    for (const m of mine)
+      expect({ key: m.messageKey, params: m.messageParams, code: m.code }).toEqual({
+        key: "inbox.restricted",
+        params: {},
+        code: null,
+      });
     for (const id of [N.caseNoteId, N.decisionNoteId]) {
       const { token } = await issueDeepLink(api.db, id, {
         actorUserId: null,
@@ -391,6 +391,88 @@ describe("ADR-0051 §2: a sensitive benefit's register rows (F-DG6-220)", () => 
         id === N.caseNoteId ? S.caseId : S.decisionId,
       );
     }
+  });
+
+  it("D-222 work item ids: BO2's restricted work items, My Work items and next actions name no record id", async () => {
+    // T-DG6-BE-Z12B (F-DG6-480; D-218, D-222; ADR-0051 §2): the assignee too gets no subject or record id, a link to the
+    // transformation home and the marker; the type, the item's own id, status and version stay.
+    const s = c.b.s.bo2;
+    const home = `/transformations/${c.b.transformationId}`;
+    const hidden = [S.caseId, S.decisionId, S.benefitId];
+    const leaks = (body: unknown) => hidden.filter((id) => JSON.stringify(body).includes(id));
+    const list = ok(await send("GET", "/api/v1/me/work-items?limit=100", { session: s }));
+    for (const id of [N.caseItemId, N.decisionItemId]) {
+      const one = ok(await send("GET", `/api/v1/work-items/${id}`, { session: s }));
+      const listed = list.items.find((x: Body) => x.id === id);
+      for (const item of [listed, one])
+        expect({
+          subjectId: item.subjectId,
+          linkPath: item.linkPath,
+          marker: item.includesRestrictedRecords,
+          key: item.messageKey,
+          periodLabel: item.periodLabel,
+        }).toEqual({ subjectId: null, linkPath: home, marker: true, key: "inbox.restricted", periodLabel: null });
+      expect(one.subjectType).toBe(id === N.caseItemId ? "corrective_case" : "sustainment_review");
+      expect(leaks(one), `work item ${id}`).toEqual([]);
+    }
+    expect(leaks(list), "work-item list").toEqual([]);
+    // My Work: every section, the upcoming deadlines, and every cursor page of each section (limit 1).
+    const work = ok(await send("GET", "/api/v1/me/work?limit=100", { session: s }));
+    expect(leaks(work), "My Work").toEqual([]);
+    const mine = await myWork(s);
+    const restricted = mine.filter((x) => x.includesRestrictedRecords === true);
+    expect(restricted.length).toBeGreaterThanOrEqual(2);
+    for (const m of restricted)
+      expect({ recordId: m.recordId, href: m.href, key: m.messageKey, code: m.code }).toEqual({
+        recordId: null,
+        href: home,
+        key: "inbox.restricted",
+        code: null,
+      });
+    for (const section of work.sections.filter((x: Body) => x.total > 0).map((x: Body) => x.section as string)) {
+      let cursor: string | null = null;
+      for (let i = 0; i < 100; i += 1) {
+        const q: string = `section=${section}&limit=1${cursor === null ? "" : `&cursor=${encodeURIComponent(cursor)}`}`;
+        const page = ok(await send("GET", `/api/v1/me/work?${q}`, { session: s }));
+        expect(leaks(page), `My Work ${section} page ${i}`).toEqual([]);
+        cursor = page.sections[0].nextCursor;
+        if (cursor !== null)
+          expect(leaks(Buffer.from(cursor, "base64url").toString("utf8")), `${section} cursor`).toEqual([]);
+        if (cursor === null) break;
+      }
+    }
+    // The workspace header's next actions (the same My Work items).
+    const header = ok(await send("GET", `${c.b.base}/summary`, { session: s }));
+    expect(leaks(header.nextActions), "workspace header next actions").toEqual([]);
+    for (const n of header.nextActions.items.filter((x: Body) => x.includesRestrictedRecords === true))
+      expect({ recordId: n.recordId, href: n.href }).toEqual({ recordId: null, href: home });
+    // The assignee completes a restricted item (the decision follow-up is not system managed); the answer is redacted.
+    const cur = ok(await send("GET", `/api/v1/work-items/${N.decisionItemId}`, { session: s }));
+    const done = ok(
+      await send("POST", `/api/v1/work-items/${N.decisionItemId}/complete`, { session: s, headers: ifm(cur.version) }),
+    );
+    expect({ status: done.status, subjectId: done.subjectId, marker: done.includesRestrictedRecords }).toEqual({
+      status: "done",
+      subjectId: null,
+      marker: true,
+    });
+    expect(done.version).toBe(cur.version + 1);
+    expect(leaks(done), "completion response").toEqual([]);
+    const stored = await api.db
+      .selectFrom("work_item")
+      .select(["status", "subject_id"])
+      .where("id", "=", N.decisionItemId)
+      .executeTakeFirstOrThrow();
+    expect(stored).toEqual({ status: "done", subject_id: S.decisionId });
+    const audit = await api.db
+      .selectFrom("audit_event")
+      .select("action")
+      .where("record_id", "=", N.decisionItemId)
+      .where("action", "=", "work_item.complete")
+      .execute();
+    expect(audit).toHaveLength(1);
+    // Positive: the admitted TO is not the assignee (404 as for anyone else's item); BO, a named party, is not either.
+    expect((await send("GET", `/api/v1/work-items/${N.caseItemId}`, { session: c.s.to.session })).status).toBe(404);
   });
 
   it("positive: the TO (sensitive_record.grant) and BO (the owner) list and read every row", async () => {
@@ -452,6 +534,14 @@ describe("ADR-0051 §2: a sensitive benefit's register rows (F-DG6-220)", () => 
     expect(inbox.find((x) => x.id === N.decisionNoteId).messageKey).toBe("sustainment.task.benefit_monitoring_due");
     const mine = await myWork(c.b.s.bo2);
     expect(mine.find((x) => x.recordId === S.caseId).messageKey).toBe("raid.task.corrective_follow_up");
+    // T-DG6-BE-Z12B: admitted now, the ids and the record link are back.
+    const one = ok(await send("GET", `/api/v1/work-items/${N.caseItemId}`, { session: c.b.s.bo2 }));
+    expect({ subjectId: one.subjectId, marker: one.includesRestrictedRecords }).toEqual({
+      subjectId: S.caseId,
+      marker: undefined,
+    });
+    expect(one.linkPath).toContain(S.caseId);
+    expect(mine.find((x) => x.recordId === S.caseId).href).toContain(S.caseId);
     const aud = await observe(c.b.s.auditor);
     expect(aud.cases).not.toContain(S.caseId);
     expect(aud.caseItem).toBe(404);

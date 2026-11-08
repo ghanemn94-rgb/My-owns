@@ -523,7 +523,8 @@ export const myWorkItem = z.strictObject({
   section: myWorkSection,
   source: z.enum(["work_item", "action_item", "draft"]),
   recordType: z.string(),
-  recordId: uuid,
+  /** Null for a work item whose record the caller is not admitted to (T-DG6-BE-Z12B; D-222; ADR-0051 §2). */
+  recordId: uuid.nullable(),
   kind: z.string().nullable(),
   code: z.string().nullable(),
   label: z.string().nullable(),
@@ -533,6 +534,8 @@ export const myWorkItem = z.strictObject({
   href: z.string(),
   dueDate: nullableDate,
   overdue: z.boolean(),
+  /** True on a work item whose record the caller is not admitted to (label access.includesRestrictedRecords). */
+  includesRestrictedRecords: z.literal(true).optional(),
 });
 export type MyWorkItem = z.infer<typeof myWorkItem>;
 

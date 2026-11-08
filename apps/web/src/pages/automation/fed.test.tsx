@@ -19,6 +19,7 @@ import { dirname, join } from "node:path";
 import { cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Permission } from "@mth/shared";
+import { AUTOMATION_RESTRICTED_LITERAL } from "@mth/shared/schemas";
 import { createI18n, catalogues } from "../../i18n/index.ts";
 import {
   ORG_ID,
@@ -32,7 +33,7 @@ import {
   route,
 } from "../../test/fixtures.tsx";
 import { toBody, toDraft } from "../procedure-builder/DefinitionPage.tsx";
-import { toContentBody, toContentDraft } from "./ContentEditor.tsx";
+import { conditionIsRestricted, toContentBody, toContentDraft } from "./ContentEditor.tsx";
 import { SAMPLE_TRANSFORMATION_PLACEHOLDER, dryRunTemplate } from "./RulePage.tsx";
 
 beforeEach(() => localStorage.clear());
@@ -322,6 +323,48 @@ describe("REQ-S12-001 / S12-002: an automation rule", () => {
     expect(await screen.findByText(catalogues.ar.problems.automation_rule__guarantee_protected)).toBeTruthy();
     expect(screen.queryByRole("button", { name: ar.rules.disable })).toBeNull();
     expect(document.documentElement.dir).toBe("rtl");
+  });
+
+  for (const locale of ["en", "ar"] as const) {
+    it(`${locale}: T-DG6-BE-Z12B: a condition whose literal names a restricted record shows the restricted label`, async () => {
+      // D-222 (ADR-0051 §2): the server shows the literal as AUTOMATION_RESTRICTED_LITERAL and marks the version.
+      const restricted = {
+        ...content,
+        conditions: [
+          { field: "gateCode", op: "eq", value: AUTOMATION_RESTRICTED_LITERAL },
+          { field: "outcome", op: "eq", value: "approved" },
+        ],
+      };
+      mockApi(
+        meRoute(ADM_METHOD, locale),
+        ...ruleRoutes(
+          rule(),
+          ruleVersion({ status: "in_review", content: restricted, includesRestrictedRecords: true }),
+        ),
+      );
+      renderApp(`/admin/automation/rules/${RULE_ID}`, { i18n: createI18n(locale) });
+      const first = await found("[data-condition='0']");
+      expect(first.querySelector("[data-restricted-records='true']")).not.toBeNull();
+      expect(first.textContent).toContain(catalogues[locale].access.includesRestrictedRecords);
+      expect(document.querySelector("[data-condition='1'] [data-restricted-records]")).toBeNull();
+    });
+  }
+
+  it("T-DG6-BE-Z12B: the builder sends the restricted marker back in place (the server keeps the hidden literal)", () => {
+    const draft = toContentDraft({
+      ...content,
+      runAs: "service",
+      conditions: [
+        { field: "gateCode", op: "eq", value: AUTOMATION_RESTRICTED_LITERAL },
+        { field: "outcome", op: "in", value: ["approved", AUTOMATION_RESTRICTED_LITERAL] },
+      ],
+    });
+    expect(conditionIsRestricted(draft.conditions[0]!)).toBe(true);
+    expect(conditionIsRestricted(draft.conditions[1]!)).toBe(true);
+    expect(toContentBody(draft)["conditions"]).toEqual([
+      { field: "gateCode", op: "eq", value: AUTOMATION_RESTRICTED_LITERAL },
+      { field: "outcome", op: "in", value: ["approved", AUTOMATION_RESTRICTED_LITERAL] },
+    ]);
   });
 
   it("the builder body keeps the typed action settings and never sends a float", () => {

@@ -15,7 +15,7 @@ import { useTranslation } from "react-i18next";
 import type { MyWork, MyWorkItem, MyWorkSection } from "@mth/shared/schemas";
 import { Icon, type IconName } from "../../components/Icon.tsx";
 import { useMyWorkDashboard } from "../dashboards/api.ts";
-import { useItemText } from "../dashboards/MyWorkSections.tsx";
+import { MyWorkRestricted, myWorkRowKeys, useItemText } from "../dashboards/MyWorkSections.tsx";
 import { RecordLink } from "../dashboards/ui.tsx";
 import { DueDate } from "./p4ui.tsx";
 
@@ -95,13 +95,16 @@ function section(d: MyWork, s: MyWorkSection) {
 function GlanceList({ items, list }: { items: readonly MyWorkItem[]; list: string }) {
   const { t } = useTranslation();
   const text = useItemText();
+  const shown = items.slice(0, GLANCE_ITEMS);
+  const keys = myWorkRowKeys(shown);
   return (
     <ul className="plain-list glance__list" data-glance-list={list}>
-      {items.slice(0, GLANCE_ITEMS).map((i) => (
-        <li key={`${i.source}-${i.recordId}-${i.kind ?? ""}`} data-glance-item={i.recordId}>
+      {shown.map((i) => (
+        <li key={keys.get(i)} data-glance-item={i.recordId ?? undefined}>
           <RecordLink href={i.href} contextTid={i.transformationId}>
             {text(i)}
           </RecordLink>
+          <MyWorkRestricted item={i} />
           <span className="block small muted">
             <DueDate date={i.dueDate} />
           </span>

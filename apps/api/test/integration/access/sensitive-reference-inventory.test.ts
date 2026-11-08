@@ -22,17 +22,13 @@ import { operations } from "../../support/contract.ts";
 import { SENSITIVE_REFERENCE_INVENTORY, type InventoryKind } from "../../support/sensitive-reference-inventory.ts";
 
 const ROOT = resolve(import.meta.dirname, "../../../../..");
-/** The rows the T-DG6-BE-Z12 handback lists under "What remains" (each with its proposed repair). */
-const KNOWN_OPEN = ["automation_rule_version.conditions", "work_item.subject_id"];
-/** The repaired rows no test seeds yet (the same handback section). */
-const KNOWN_PENDING = [
-  "approval.subject_id",
-  "inherited_record.evidence_id",
-  "procedure_instance.input_values",
-  "procedure_instance.subject_record_id",
-  "revision_proposal.validation_report",
-  "sustainment_review.transition_decision_id",
-];
+/**
+ * The open rows and the repaired rows no test seeds yet (PENDING). T-DG6-BE-Z12B (D-222) closed the two open rows of
+ * the T-DG6-BE-Z12 handback and seeded its six PENDING rows: both lists are pinned EMPTY, so a new reference column
+ * must be repaired and exercised before this test passes.
+ */
+const KNOWN_OPEN: readonly string[] = [];
+const KNOWN_PENDING: readonly string[] = [];
 
 let h: RoleHandles;
 beforeAll(() => {
