@@ -1,0 +1,394 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG6",
+  "round": 8,
+  "candidate_id": "sha256:6cda8b33e184b41983d7718cf6ad15d3912337219fd5c15d9b9d516f0142f21d",
+  "source_commit": "d84d11a62f52932dd5c0aa932c5c1790c13e7e8b",
+  "reviewer_role": "qa-verifier",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG6-T-DG6-REV-QA-R8-qa-verifier-20261108T170554Z-d340cd64",
+    "session_id": "d340cd64-5c8a-48af-8322-f09adcc61d62"
+  },
+  "implementation_author": [
+    "solution-architect",
+    "backend-workflow-engineer",
+    "kpi-benefits-engineer",
+    "frontend-ux-engineer",
+    "transformation-analyst",
+    "devops-engineer",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "In this run (T-DG6-REV-QA-R8, session d340cd64), qa-verifier authored no product implementation in the DG6 scope and changed no candidate file. The implementer roles listed wrote the round-7 repairs BE-Z12, BE-Z12B and ARCH-16 and the product (apps/**, packages/**, migrations, deploy/**, ADRs). Earlier qa-verifier authoring tasks (T-DG6-QA-A to H) wrote the candidate's acceptance suites under tests/qa/** and e2e/** before the freeze; those were authoring tasks, not this gate review. My probes are under docs/delivery/test-evidence/DG6/qa/tests/round-8/ and ran only in disposable sparse --shared clones ($TMPDIR/c for the candidate, $TMPDIR/m for the mutant, removed after use) on disposable PostgreSQL clusters. I formed this verdict without reading the other reviewers' round-8 records or evidence."
+  },
+  "assignment": "docs/delivery/assignments/DG6/round-8/qa-verifier.md",
+  "requirements_checked": [
+    "REQ-DLV-038",
+    "REQ-S01-005",
+    "REQ-S02-006",
+    "REQ-S10-002",
+    "REQ-S10-004",
+    "REQ-S12-019",
+    "REQ-S12-023",
+    "REQ-S12-024",
+    "REQ-S13-011",
+    "REQ-S13-013",
+    "REQ-S15-001",
+    "REQ-S15-003",
+    "REQ-S15-007",
+    "REQ-S15-009",
+    "REQ-S15-010",
+    "REQ-S15-011",
+    "REQ-S15-012",
+    "REQ-S15-013",
+    "REQ-S15-014",
+    "REQ-S16-006",
+    "REQ-S16-007",
+    "REQ-S16-022",
+    "REQ-S16-023",
+    "REQ-S16-026",
+    "REQ-S16-027",
+    "REQ-S16-029",
+    "REQ-S16-030",
+    "REQ-S16-032",
+    "REQ-S17-001",
+    "REQ-S17-002",
+    "REQ-S17-003",
+    "REQ-S17-005",
+    "REQ-S17-006",
+    "REQ-S17-007",
+    "REQ-S17-008",
+    "REQ-S17-009",
+    "REQ-S17-010",
+    "REQ-S17-011",
+    "REQ-S20-001",
+    "REQ-S20-012",
+    "REQ-S20-013",
+    "REQ-S20-014",
+    "REQ-S20-017",
+    "REQ-S20-020",
+    "REQ-S20-021",
+    "REQ-S20-022",
+    "REQ-S20-029",
+    "REQ-S20-030"
+  ],
+  "checks_run": [
+    {
+      "id": "QA-R8-00-candidate",
+      "procedure": "Confirm the frozen candidate: the assignment's sha256, HEAD against the source commit, and the candidate ID recomputed in a clone checked out at the source commit and in the repository at HEAD.",
+      "command": "sha256sum docs/delivery/assignments/DG6/round-8/qa-verifier.md; git clone --shared --no-checkout <repo> $TMPDIR/c; git sparse-checkout set --no-cone '/*' '!/docs/delivery/runs/' '!/docs/delivery/test-evidence/' '!/docs/delivery/reviews/' '!/docs/delivery/handbacks/' '!/trading_agent/'; git checkout d84d11a6; node tools/gates/candidate.mjs --stage DG6 (clone and repository)",
+      "environment": "Node v24.21.0; sandboxed shell; shared 4-vCPU host with about 1-5 GB free on the shared volume",
+      "expected": "Assignment sha256 59edfbda...b566; candidate sha256:6cda8b33...142f21d over 2754 files.",
+      "actual": "Assignment sha256 matches. Both computations give sha256:6cda8b33e184b41983d7718cf6ad15d3912337219fd5c15d9b9d516f0142f21d, files 2754. HEAD is 5dd264274 (later run and record commits); git diff d84d11a6..HEAD outside docs/delivery is empty, so the product tree equals the source commit. Disclosure: a full clone did not fit on the shared volume (my first clone attempt hit 'disk full' and was removed at once), so the clone is a --shared clone with sparse checkout. It leaves out only delivery-record folders, which candidate.mjs META_EXCLUDES anyway; the recomputed ID proves the candidate's 2754 files are complete. Later I added docs/delivery/handbacks/DG6/T-DG6-DO-G-evidence back (needed by a unit test; QA-R8-02) and copied probe specs into e2e/ for runs. Both change only the clone's working-tree ID, never the candidate. The repository at HEAD gives the same 6cda8b33.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/00-candidate-identity.log"
+      ]
+    },
+    {
+      "id": "QA-R8-VERIF",
+      "procedure": "Verify my open findings from earlier rounds on this candidate.",
+      "environment": "docs/delivery/findings.json and my earlier sidecars",
+      "expected": "Every open qa-verifier finding re-verified.",
+      "actual": "None open from my earlier rounds (the assignment says so, and F-DG6-440, my last one, was CLOSED_VERIFIED in round 7). qa-verifier.verifications.json is written with an empty list.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/reviews/DG6/round-8/qa-verifier.verifications.json"
+      ]
+    },
+    {
+      "id": "QA-R8-01-static",
+      "procedure": "Build, typecheck, lint, OpenAPI lint, no-CDN, format and contrast in clone c.",
+      "command": "pnpm -r build; pnpm -r typecheck; pnpm lint; pnpm openapi:lint; pnpm check:no-cdn; pnpm format:check; pnpm --filter @mth/design-tokens run check:contrast",
+      "environment": "Clone c at d84d11a6; Node v24.21.0; node_modules copied from the repository into the clone (writable), because the offline pnpm install fails with EROFS on the read-only store (01-install.log, exit 226, environmental)",
+      "expected": "Every command exits 0.",
+      "actual": "build exit 0; typecheck 0; lint 0 (eslint --max-warnings=0); openapi:lint 0 (932 operations; grep finds 932 operationId lines); no-CDN 0; format:check 0; contrast 0 ('PASS contrast: 50 pairs meet WCAG AA; 3 prohibited pairs fail as documented': the three documented prohibited pairs, including white on #0078FF, which is not used for action buttons). Because node_modules is a writable copy, Vitest did not need --configLoader runner and A06/A07 got E2E_SCREENSHOT_DIR=$TMPDIR/shots/<run> (e2e-run.sh).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/01-install.log",
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/02-build.log",
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/05-static.log"
+      ]
+    },
+    {
+      "id": "QA-R8-02-unit",
+      "procedure": "pnpm test (unit-node, unit-web, unit-formula-nocodegen) on Node 24 and Node 22, each with the locale unset and with C.UTF-8.",
+      "command": "pnpm test (x4); npx vitest run --project unit-node tests/qa/unit/dlv038-s20-029-load-report.test.ts",
+      "environment": "Clone c; Node v24.21.0 (/opt/nvm) and v22.22.0 (/opt/node22/bin: present, but 22.22.0, not the 22.22.2 the assignment names)",
+      "expected": "Every project passes in all four configurations.",
+      "actual": "Node 24 C.UTF-8, Node 22 unset and Node 22 C.UTF-8: unit-node 190/190 files, 2899 tests; unit-web 123/123, 2082; unit-formula-nocodegen 3 files, 259 passed + 2 skipped; exit 0. Node 24 unset (the first run): unit-node 189 passed + 1 failed file (2893 tests passed), exit 1. The failed file was tests/qa/unit/dlv038-s20-029-load-report.test.ts with 'ENOENT ... docs/delivery/handbacks/DG6/T-DG6-DO-G-evidence/final/summary.json': my sparse checkout had left that folder out (QA-R8-00), so this is not a candidate defect. After restoring it, the file passes 6/6 on Node 24 with the locale unset (06b), and it passed in the three later configurations. The 2 skips are by design (two ESLint assertions in the nocodegen project, as in round 7).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/06-unit-v24.21.0-unset.log",
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/06-unit-v24.21.0-C.UTF-8.log",
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/06-unit-v22.22.0-unset.log",
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/06-unit-v22.22.0-C.UTF-8.log",
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/06b-unit-dlv038-rerun-v24-unset.log"
+      ]
+    },
+    {
+      "id": "QA-R8-03-integration",
+      "procedure": "The integration project (all 430 files: apps/*/test/integration, packages/*/test/integration, tests/qa/integration) on a fresh disposable PostgreSQL, twice. Record the migration count, contract.test.ts and response validation with their operation counts, and the p6-pending lists.",
+      "command": "QA_PG_PORT=30700 MTH_PORT_POOL=30700-30719 MTH_SECRET_QA_A17_WEBHOOK_SIGNING_SECRET=qa-a17-synthetic-signing-secret-0001 tests/qa/support/with-pg.sh pnpm test:integration (run 1 with the locale unset, run 2 with C.UTF-8)",
+      "environment": "Clone c; Node v24.21.0; PostgreSQL 16.15 (UTF8, C collation); shared, heavily loaded host (load 11-20 during run 1)",
+      "expected": "Both runs exit 0; 932 of 932 operations validated; every p6-pending list empty.",
+      "actual": "Run 2 (C.UTF-8): 430/430 files, 4296 passed, 1 skipped, 1 todo, exit 0 (3110 s). Run 1 (unset): 429 passed, 1 failed file, 4263 passed, 34 skipped, 1 todo, exit 1 (4765 s). The failed file is apps/api/test/integration/oidc.test.ts, whose beforeAll migration failed with 'could not extend file ...: No space left on device' (the shared volume was full at that moment; other reviewers' runs share it), so its 33 tests were skipped and its afterAll reported 'Cannot read properties of undefined (reading close)'. Re-run alone on a fresh cluster: 33/33 passed, exit 0 (10b). With that, run 1 equals run 2 and the orchestrator's V11 counts (4296/1/1). The 1 skipped test (governance/presentation.test.ts) and the 1 todo (audit-events.test.ts) are the in-tree declared ones. Migrations: 118 files, 0001 to 0126 (the assignment says 0125; 0126_p6_report_snapshot_aggregate.sql came with BE-Z9 in round 7), 'applied 118 migrations to a fresh database'. Both runs: contract/contract.test.ts 105 tests passed; '[response-validation] ... 932 of 932 live operations (0 pending excluded) ... operations without a validated response: 0'; route inventory 'pending (not routed) 0'. Every apps/api/test/support/p6-pending-*.ts list is empty (the arch-* lists only spread empty lists).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/10-integration-run1.log",
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/10b-integration-run1-oidc-rerun.log",
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/11-integration-run2.log"
+      ]
+    },
+    {
+      "id": "QA-R8-04-tests-qa",
+      "procedure": "tests/qa/integration on its own on a fresh disposable PostgreSQL.",
+      "command": "QA_PG_PORT=30710 tests/qa/support/with-pg.sh npx vitest run --project integration tests/qa/integration",
+      "environment": "Clone c; Node v24.21.0; locale unset",
+      "expected": "Exit 0.",
+      "actual": "45 files, 437 tests passed, exit 0. A first attempt started with '&' inside a foreground command was killed when that command returned (the log stops after 'RUN'); the run was then started as a proper background job, and that is the log cited.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/12-tests-qa-alone.log"
+      ]
+    },
+    {
+      "id": "QA-R8-05-e2e-product",
+      "procedure": "Every product journey (apps/web/e2e, 66 files) on apps/web/e2e/support/with-stack.sh with --workers=1, chromium-en and chromium-ar, with C.UTF-8 and with the locale unset.",
+      "command": "e2e-run.sh <label> <locale> 30730 30731 chromium-en --project=chromium-ar apps/web/e2e (playwright test --workers=1 --trace=off)",
+      "environment": "Clone c; Node v24.21.0; PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers; ports 30730-30731 (pool 30700-30799)",
+      "expected": "Every journey passes in both languages and both locale settings.",
+      "actual": "C.UTF-8 (31): 556 passed, 2 skipped, exit 0. Unset: 32 ran until the background task's 2-hour limit stopped it during chromium-ar (tests 1-463 passed, 1 skipped, 0 failed; the en project complete). 33 then ran the remaining chromium-ar files from p5-launch-health-kpi onwards: 94 passed, 1 skipped, exit 0. Together that is 556 passed and 2 skipped, the same as C.UTF-8. The 2 skips (1 per language) are p6-walkthrough-keyboard, which needs the demo database; it passes on the demo stack (QA-R8-07). Disclosure, the discarded run 30 (en, unset): it was started with Playwright's configured trace 'retain-on-failure', whose trace files grew to about 690 MB while the shared volume was at 52 MB free. I deleted the trace folder to keep the volume usable, and pruned it in a loop until the run ended. That broke 7 tests with trace-file ENOENT/ENOSPC errors ('copyfile ... traces ... ENOENT', 'ENOSPC: no space left on device', and one 'Target crashed'): p3-journeys 2b, p4-benefits 5, p4-gates-closure 5, p5-reflow-axe, p5-table-regions-axe, p6-layout-1440 and p6-report-restricted-totals; 21 did not run. These failures were caused by my own intervention, not by product behaviour, and run 30 is not used as evidence. All later runs use --trace=off (no effect on assertions). axe: the specs that scan (p5-reflow-axe, p5-table-regions-axe, p6-* and others) report no serious or critical violation in runs 31-33.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/31-e2e-product-cutf8.log",
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/32-e2e-product-unset.log",
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/33-e2e-product-unset-ar-remainder.log",
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/30-e2e-product-en-unset.log",
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/e2e-run.sh"
+      ]
+    },
+    {
+      "id": "QA-R8-06-e2e-root",
+      "procedure": "The 22 root acceptance specs named in the assignment, by explicit paths, on with-stack.sh, chromium-en and chromium-ar, --workers=1, with the locale unset and with C.UTF-8.",
+      "command": "e2e-run.sh 50-e2e-root-unset unset ... e2e/a03-modular-entry.spec.ts ... e2e/a22-p6-operability.spec.ts (22 paths); the same with C.UTF-8 (52)",
+      "environment": "Clone c; Node v24.21.0; E2E_SCREENSHOT_DIR=$TMPDIR/shots/<run>; MTH_SECRET_QA_A17_WEBHOOK_SIGNING_SECRET synthetic value",
+      "expected": "Every spec passes; skips only the declared NOT SCANNED routes.",
+      "actual": "Unset (50): 288 passed, 18 skipped, exit 0 (31.0 min). C.UTF-8 (52): 288 passed, 18 skipped, exit 0 (24.0 min). The 18 skips are all a20-p6-axe routes the spec marks NOT SCANNED (9 parameterised detail routes per language, e.g. /admin/sensitive-grants/:grantId and /admin/operations/exceptions/:exceptionId), as the register discloses. My detail-axe probe scans two of them (QA-R8-08). Includes a12-p6-scope-isolation (A12-1 to A12-6), a13, a14, a17 (both), a20 (axe 0 serious/critical on the scanned routes, layout and brand, UX, term scan), a21 and a22.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/50-e2e-root-unset.log",
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/52-e2e-root-cutf8.log"
+      ]
+    },
+    {
+      "id": "QA-R8-07-e2e-demo",
+      "procedure": "On e2e/support/with-demo-stack.sh (AUTH_MODE=dev; the demo role users roaming.user.* through the dev sign-in), chromium-en and chromium-ar, both locale settings: a02-demo-labels, a02-demo-users-walkthrough, a02-guided-walkthrough and p6-walkthrough-keyboard, with my probes demo-1440, walkthrough-crumbs, restricted-label-ui, id-refs-network and restricted-mywork-automation (revision e).",
+      "environment": "Clone c; Node v24.21.0; demo-initialized stack",
+      "expected": "The in-tree specs pass; the probes pass except where they demonstrate a finding.",
+      "actual": "Unset, in-tree specs alone (40, en and ar): 6 passed per language; the 7th test was my probe revision a, which failed on a probe harness bug (psql did not decode '+' in the stack URL), not a product defect. C.UTF-8 (44) and unset (45): 24 passed, 2 failed, exit 1 each. All in-tree demo specs pass, and so do demo-1440 ('/my-work decisions/outcomes/nextActions' above the fold for roaming.user.sp and roaming.user.tl), walkthrough-crumbs ('problems []'), restricted-label-ui and id-refs-network ('TL hits []'). The 2 failures in each are exactly the assertion that demonstrates F-DG6-560 (QA-R8-11), in en and ar.",
+      "exit_status": 1,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/40-e2e-demo-chromium-en-unset.log",
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/40-e2e-demo-chromium-ar-unset.log",
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/44-e2e-demo-probes-cutf8.log",
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/45-e2e-demo-probes-unset.log"
+      ]
+    },
+    {
+      "id": "QA-R8-08-probes",
+      "procedure": "My standing probes on with-stack.sh, en and ar, both locale settings (unchanged since round 7 except names): AUD read-only pass and P6 reflow at 360 px, 390 px and 200 % text; 400 validation in the selected language; REQ-S17-001 counts on screen; REQ-S02-006 cleared storage; breadcrumb Tab order; axe, reflow and AUD on two unscanned detail screens; the reports output label; XSS on evidence, evidence register and search; exception 'Last error' catalogue text.",
+      "command": "e2e-run.sh 72/73 ... e2e/a17-failing-connector-exception.spec.ts e2e/zz-qa-dg6r8-*.spec.ts; e2e-run.sh 74/75 ... a17-failing-connector-exception a22-p6-operability zz-qa-dg6r8-exception-last-error",
+      "environment": "Clone c; Node v24.21.0; production-initialized stack",
+      "expected": "Every probe passes.",
+      "actual": "72 (unset) and 73 (C.UTF-8): 30 passed, 2 failed, exit 1 each. The 2 failures are the exception-last-error probe in en and ar, on its soft precondition 'an exception with lastErrorCode operations.heartbeat_missed exists on this stack'. Only a22-p6-operability creates that exception, and it was not in this batch. The codes present (kpi.stale, connector.source_unavailable) showed catalogue texts. With a17 and a22-p6-operability first (74 unset, 75 C.UTF-8): 6 passed, exit 0 each, every code including operations.heartbeat_missed shown as catalogue text, ltr in en and rtl in ar. Others: 'AUD en/ar: 19 screens; offending []', AUD detail 'methods [\"GET\"]'; 'REFLOW dev.admin: 42 checks; problems []' and 'dev.lead: 15 checks; problems []' in both languages; XSS 'textShown 7' on three surfaces, 'dialogs 0'; detail-axe 0 serious/critical; output label variants as in round 7.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/72-probes-stack-unset.log",
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/73-probes-stack-cutf8.log",
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/74-a17-a22-exception-probe-unset.log",
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/75-a17-a22-exception-probe-cutf8.log"
+      ]
+    },
+    {
+      "id": "QA-R8-09-validate",
+      "procedure": "The gate validators in the repository at HEAD.",
+      "command": "node tools/gates/validate.mjs --historical --stage DG5|DG4|DG3|DG2|DG1; --register DG6; --pipeline",
+      "environment": "Repository at HEAD 5dd264274 (read-only use)",
+      "expected": "All exit 0.",
+      "actual": "'PASS gate DG5 (historical)' and the same for DG4, DG3, DG2 and DG1; 'PASS register rules at DG6'; 'PASS pipeline (active stage: DG6 REVIEWING)'. Seven exits 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/03-historical.log",
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/04-register-pipeline.log"
+      ]
+    },
+    {
+      "id": "QA-R8-10-z12-before-after",
+      "procedure": "Re-run the BE-Z12/BE-Z12B before-and-after evidence myself. After: the Z12/Z12B integration files and the web unit files on the candidate. Before: the same tests in a mutant clone m with apps/api/src reverted to the round-7 source 70f05ed4 (tests and packages at the candidate), then the web change files reverted too (apps/web/src non-test files changed since round 7).",
+      "command": "with-pg.sh npx vitest run --project integration access/sensitive-reach-id-refs-z12, sensitive-reference-pending-z12b, sensitive-reference-inventory, sensitive-reach-registers; npx vitest run --project unit-web automation/fed, my-work/home-regions, raid/raid, health-check/fef",
+      "environment": "Clones c (candidate) and m (mutant, removed afterwards); Node v24.21.0",
+      "expected": "Candidate passes; the mutant fails the tests that pin the repairs.",
+      "actual": "Integration: candidate 4 files / 21 passed, exit 0; mutant 3 failed files, 12 failed / 9 passed, exit 1 by design. The failing tests are exactly the repair pins: work items, My Work and next actions naming no record id (D-222 (1)); B1 parentBenefitId, business-case line, B2 meeting output, B3 launch task (200 instead of 422), action register; approval.subject_id, sustainment_review.transition_decision_id, procedure_instance subject; automation literals and the re-save. The inventory test passes on both, since it is schema-driven. Web: candidate 4 files / 75 passed; mutant 9 failed (the restricted label on conditions and My Work rows en and ar, the marker sent back, launch plan and action register), exit 1 by design.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/60-z12-z12b-after-candidate.log",
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/60-z12-z12b-before-mutant.log",
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/61-web-z12b-after-candidate.log",
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/61-web-z12b-before-mutant.log",
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/61-web-mutant-files.txt"
+      ]
+    },
+    {
+      "id": "QA-R8-11-d225-screens",
+      "procedure": "D-225 open question: the My Work and automation screens with a restricted item, en and ar, on the real demo stack. Probe zz-qa-dg6r8e: (A) a TL work item about a benefit the TO then marks sensitive: API (getWorkItem, listMyWorkItems, getMyWork, workspace summary), My Work page and workspace header, axe, 360/390 px, following the link; (B) an ADM_METHOD author's draft rule with two conditions naming benefits the TO marks sensitive: API view, an API re-save control, the draft editor, axe; (C) in the UI the author removes condition 1 and saves the draft, then the TO reads the stored conditions. Revisions a to d fixed probe harness bugs only (URL '+' decoding, the audit row the 0010/0120 guard needs for a synthetic work item, a direct grant because the demo access administrator is business-unit scoped, the catalogue key, and the editor route); each run is in the log history.",
+      "command": "HARNESS=e2e/support/with-demo-stack.sh e2e-run.sh 41-probe-restricted-mywork-automation-unset unset 30760 30761 chromium-en --project=chromium-ar e2e/zz-qa-dg6r8e-restricted-mywork-automation.spec.ts (also inside 44 and 45)",
+      "environment": "Clone c; demo stack; en and ar; locale unset (41, 45) and C.UTF-8 (44)",
+      "expected": "A: no record id anywhere, link to the transformation home, the marker and the label, axe clean, no reflow. B: markers and the label on the two conditions only. C: the condition the author kept keeps its own hidden literal (D-222 (2)).",
+      "actual": "A passes in en and ar, in all three runs: subjectId null, linkPath and href the transformation home, messageKey inbox.restricted, includesRestrictedRecords true; My Work recordId null and code null; the benefit id absent from every response and the DOM; 2 labels on My Work (dir ltr / rtl); horizontal overflow 0 px at 360 and 390 px; the link lands on the home; header next actions show the restricted link; axe 0 serious/critical; completion answers subjectId null. B passes: author view [restricted, restricted, high], summary 'a restricted record' / 'سجل مقيد', flag true, the API re-save control keeps both literals, the editor shows '[restricted]' in Value 1 and 2 with the label and no label on Value 3, no id in the DOM, axe clean. C FAILS in en and ar, in all three runs: the stored rule is [benefitId eq <B1>, severity eq critical], 'kept literal is the FIRST (the removed one)'. Raised as F-DG6-560 (Medium). Also: the label's title and screen-reader text say 'This total includes records you are not admitted to. The total is the same for every user...' on condition values and work-item rows, where there is no total (en and ar); raised as F-DG6-561 (Low). Observations, not defects: the Tasks table row shows the restricted text without the label chip (D-222 requires the marker in the API, which is set); with no business calendar in the demo, 'Upcoming deadlines' lists only items due by the business date, per ADR-0037 §7's documented rule.",
+      "exit_status": 1,
+      "result": "FAIL",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/41-probe-restricted-mywork-automation-unset.log",
+        "docs/delivery/test-evidence/DG6/qa/tests/round-8/zz-qa-dg6r8e-restricted-mywork-automation.spec.ts",
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/shots/41-A-my-work-TL-en.png",
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/shots/41-A-my-work-TL-ar.png",
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/shots/41-A-workspace-header-TL-en.png",
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/shots/41-A-workspace-header-TL-ar.png",
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/shots/41-B-rule-editor-author-en.png",
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/shots/41-B-rule-editor-author-ar.png",
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/shots/41-C-rule-editor-after-remove-en.png",
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/shots/41-C-rule-editor-after-remove-ar.png"
+      ]
+    },
+    {
+      "id": "QA-R8-12-resave-pairing",
+      "procedure": "Challenge D-222 (2) on the server: integration probe zz-qa-dg6r8b-condition-resave-pairing.test.ts (P0 control; P1 delete the first of two restricted literals under one field/op; P2 delete a visible literal before a restricted one; P3 drop the first of two restricted elements of an `in` list). Read keepRestrictedLiterals (versions.ts:360-402), the ADR-0051 amendment and the BE-Z12B handback §2 and §5.",
+      "command": "cp <probe> apps/api/test/integration/access/; QA_PG_PORT=30720 tests/qa/support/with-pg.sh npx vitest run --project integration apps/api/test/integration/access/zz-qa-dg6r8b-condition-resave-pairing.test.ts",
+      "environment": "Clone c; disposable PostgreSQL; Node v24.21.0",
+      "expected": "Each remaining condition keeps its own hidden literal.",
+      "actual": "P0 passes. P1 stores X (the deleted literal). P2 stores the string '[restricted]': the hidden Y is destroyed, the response no longer carries the flag, and the editor would still label it restricted. P3 stores [X] instead of [Y]. 3 failed of 4, exit 1. The ADR-0051 amendment documents the (field, op, order, position) pairing, but neither it nor the handback discloses this effect of a removal or reordering. F-DG6-560.",
+      "exit_status": 1,
+      "result": "FAIL",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/20-probe-resave-pairing.log",
+        "docs/delivery/test-evidence/DG6/qa/tests/round-8/zz-qa-dg6r8b-condition-resave-pairing.test.ts"
+      ]
+    },
+    {
+      "id": "QA-R8-13-reliability",
+      "procedure": "The A13 kill-and-restart drills (reindex, connector run, import commit, channel delivery), outbound write-once, the worker SIGKILL drills and the D-203 burst, from both integration runs and tests/qa alone.",
+      "environment": "Integration runs 1 and 2, tests/qa alone",
+      "expected": "No duplicate execution, measurement or notification; failed work recoverable.",
+      "actual": "a13-p6-reindex-, connector-run-, import-commit- and channel-send-kill-restart pass in both runs and in tests/qa alone ('the killed commit leaves the batch staged with nothing written; the retried commit commits once; a replay is refused'); REQ-S12-020 'a real worker process is SIGKILLed inside the rule's action; the restarted worker completes it exactly once'; the export job SIGKILLed in its final transaction completes once; D-203 'O-1: ... 240 automation.evaluate jobs plus 60 concurrent replays: one execution and one task per event' passes in both runs (6014 ms, 4077 ms).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/10-integration-run1.log",
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/11-integration-run2.log",
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/12-tests-qa-alone.log"
+      ]
+    },
+    {
+      "id": "QA-R8-14-load-export",
+      "procedure": "REQ-S20-029 and REQ-S20-030: the in-tree generator (profile default), reindex, one workload repetition (60 s warm-up, 300 s steady, 100 virtual users), report.mjs and export-proof.mjs, with my round-7 driver (names only changed; SKIP_A=1). PROVISIONAL.",
+      "command": "QA_PG_PORT=30780 MTH_PORT_POOL=30780-30799 API_PORT=30785 SKIP_A=1 OUT=<evidence>/load tests/qa/support/with-pg.sh bash docs/delivery/test-evidence/DG6/qa/tests/round-8/load-driver-r8.sh",
+      "environment": "Clone c; shared 4-vCPU, 16 GB host; load average 5.3-7.6 during the run; synthetic data",
+      "expected": "The report states dataset, infrastructure and workload with actual p95 per class; any miss against 2 s / 4 s listed; exports start with a job id, reach 100 %, and download only for the requester.",
+      "actual": "Dataset mth_load_v1: 50 transformations, 1000 initiatives, 10000 KPI actuals, 100000 audit events, 120 users. 14864 steady requests (2944 warm-up), 0 errors, 0 rate-limit refusals, 0 error-level log lines. p95: read 32.9 ms, update 50.9 ms, search 33.4 ms, key dashboard 70.7 ms, export start 63.8 ms; all within the provisional targets, so there is no miss to list. Export proof: 66 exports; each start answers 202 with a job id; progress rises to 100; the other user and AUD get 404 on getExport and download; part B (50 at once) start p95 572 ms, max 601 ms; assembly attempts max 1; 'export-proof ... 66 exports, 1 failed', exit 1. The one failure is the sub-check 'LOAD-T20 FAIL: no sameScopeOther user for this transformation' (the generator gives no transformation a second same-scope user), the same residual as round 7, not a requester-only failure. UUID check: '120 not RFC 9562' are the fixed methodology seed ids (methodology_coverage_link 96, procedure_step_definition 24), as in round 7. These figures are provisional engineering measurements on one shared sandbox host, not Mobily capacity.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/80-load-export.log",
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/load/report.md",
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/load/summary.json",
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/load/export-proof-1.json",
+        "docs/delivery/test-evidence/DG6/qa/tests/round-8/load-driver-r8.sh"
+      ]
+    },
+    {
+      "id": "QA-R8-diff-review",
+      "procedure": "Review the whole diff 70f05ed4..d84d11a6 (63 non-record files): sensitive-reach.ts, the BE-Z12 redaction across approvals, benefits, governance, KPI versions, launch, procedures, RAID, sustainment and others; tasks deep-links and routes; my-work.ts; automation versions/rules/lifecycle; the shared schemas; the web pages; OpenAPI, ADR-0045/0051 amendments, data dictionary and ERD.",
+      "environment": "git diff in the repository; behaviour from QA-R8-10 to 12",
+      "expected": "Every repair tested, no new defect.",
+      "actual": "The work-item and My Work redaction (presentWorkItems, restrictedWorkItems, the cursor tie on the work-item id) matches D-222 (1) and behaves correctly on screen (QA-R8-11 A). The BE-Z12 rows are pinned by tests that fail without the fix (QA-R8-10), and the inventory pins zero open and zero PENDING rows. One defect: keepRestrictedLiterals' ordinal pairing (F-DG6-560). The label copy is reused for non-totals (F-DG6-561). The OpenAPI widening (NullableUuid) is reflected in the contract run (932/932 validated).",
+      "exit_status": 1,
+      "result": "FAIL",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/20-probe-resave-pairing.log",
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/60-z12-z12b-before-mutant.log"
+      ]
+    },
+    {
+      "id": "QA-R8-register",
+      "procedure": "Read the notes of all 48 DG6 rows against this candidate. Judge every deferral to the orchestrator's freeze verification and every partly covered clause, and re-run what the notes defer.",
+      "environment": "docs/delivery/requirements.csv; this round's runs",
+      "expected": "Every deferral re-run on this candidate; every partial clause covered or acceptable.",
+      "actual": "Every deferral (REQ-DLV-038, S12-019, S15-014, S17-007, S20-001, S20-012, S20-017, S20-022 and others) points at full runs, and I made them here (QA-R8-02 to 08): e2e/a17-failing-connector-exception passes in four runs, a20-s15-014-term-scan in both root runs, A12-5 assistant in both. Partly covered clauses I covered myself: REQ-S02-006 browser storage and REQ-S15-007 clause 2 and REQ-S17-001 counts (aud-reflow probes C to E); REQ-S15-001 1440 px with content (demo-1440); REQ-S15-012 keyboard (p6-walkthrough-keyboard, walkthrough-crumbs); REQ-S16-030 XSS (xss probe). Disclosed residuals stay acceptable: Keycloak live login (D-049), LOAD-T20, the 9 NOT SCANNED axe routes per language (2 scanned by my probe), provisional capacity.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/72-probes-stack-unset.log",
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/45-e2e-demo-probes-unset.log",
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/52-e2e-root-cutf8.log"
+      ]
+    },
+    {
+      "id": "QA-R8-ENV",
+      "procedure": "The environmental residuals the assignment names, recorded on the offline and configuration surface.",
+      "environment": "Sandbox without network",
+      "expected": "PASS on the offline/config surface with the residual noted.",
+      "actual": "Keycloak and an enterprise IdP (D-049): the OIDC clauses pass against the bundled test issuer (oidc.test.ts 33/33, identity other-realm tests in both integration runs); the live Keycloak e2e and the SAML broker need a container runtime and stay documented. Live registry (REQ-DLV-042 AC-1, D-057) and live CI (REQ-DLV-025 A24, D-058): not reachable; the offline pin and pipeline validators pass. External systems: no real Mobily system, mail server, messaging service or AI provider is reachable; connectors, outbound writes, channels and the assistant run through their test adapters and the shipped disabled configuration (a21 suites pass). Production capacity: QA-R8-14 figures are provisional.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/10b-integration-run1-oidc-rerun.log",
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/04-register-pipeline.log"
+      ]
+    },
+    {
+      "id": "QA-R8-REQ-48",
+      "procedure": "Map each of the 48 DG6-final acceptance texts, clause by clause, to this round's evidence.",
+      "environment": "This round's runs",
+      "expected": "Every clause verified.",
+      "actual": "All 48 literal acceptance texts hold on this candidate. DLV-038: the A12-A22 suites pass and the load report states actuals (QA-R8-14). S01-005: a17-s01-005-external-change. S02-006: route inventory plus the cleared-storage probe. S10-002: a12 scope isolation, the sensitive-reach suites, the id-refs probe; a sensitive benefit stays hidden on My Work and in rules (QA-R8-11 A, B). S10-004 and S20-012: a12-p6-scope-isolation. S12-019: a17 failing connector. S12-023: a21. S12-024: deep links 403 without title. S13-011, S13-013, S16-006/007/022/023/026/027/029/030/032: the named integration suites pass in both runs. S15-001/003/007/009/010/011/012/013/014 and S20-020: the a20 specs, the product journeys, contrast and my probes. S17-001 to S17-011, S20-013/014/017/021/022: a13/a14/a17/a21/a22 suites and drills. S20-001: a01 suites. S20-029/030: QA-R8-14. Note: F-DG6-560 and F-DG6-561 are defects in the D-222 redaction of automation conditions, recorded against REQ-S10-002. They do not break that row's literal acceptance text, but F-DG6-560 is a Medium defect that D-192 requires repairing before the gate.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/11-integration-run2.log",
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/31-e2e-product-cutf8.log",
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/52-e2e-root-cutf8.log"
+      ]
+    }
+  ],
+  "findings": [
+    "F-DG6-560",
+    "F-DG6-561"
+  ],
+  "verdict": "FAIL",
+  "evidence_paths": [
+    "docs/delivery/reviews/DG6/round-8/qa-verifier.md",
+    "docs/delivery/reviews/DG6/round-8/qa-verifier.findings.json",
+    "docs/delivery/reviews/DG6/round-8/qa-verifier.verifications.json",
+    "docs/delivery/test-evidence/DG6/qa/round-8/r8/00-candidate-identity.log",
+    "docs/delivery/test-evidence/DG6/qa/round-8/r8/11-integration-run2.log",
+    "docs/delivery/test-evidence/DG6/qa/round-8/r8/20-probe-resave-pairing.log",
+    "docs/delivery/test-evidence/DG6/qa/round-8/r8/41-probe-restricted-mywork-automation-unset.log",
+    "docs/delivery/test-evidence/DG6/qa/round-8/r8/e2e-run.sh"
+  ],
+  "reviewed_at": "2026-11-08T20:50:00Z"
+}

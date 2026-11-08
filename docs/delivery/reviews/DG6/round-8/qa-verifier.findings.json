@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG6-560",
+      "stage_id": "DG6",
+      "requirement": "REQ-S10-002",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "Automation rule re-save pairs hidden condition literals by ordinal: removing or reordering a restricted condition silently keeps the removed record's literal, or destroys the kept one",
+      "reproduction": "Candidate 6cda8b33 (source d84d11a6). (1) Real demo stack (e2e/support/with-demo-stack.sh), UI, chromium-en and chromium-ar, locale unset: probe docs/delivery/test-evidence/DG6/qa/tests/round-8/zz-qa-dg6r8e-restricted-mywork-automation.spec.ts test 'QA-R8 B/C'. A rule author holding ADM_METHOD (synthetic grant) creates a draft rule with conditions [benefitId eq B1, benefitId eq B2, severity eq high]; the Transformation Office marks B1 and B2 sensitive. The author's draft editor shows 'Value 1' and 'Value 2' as '[restricted]' with the 'Includes restricted records' label (correct). The author clicks 'Remove condition 1' (the B1 condition), the editor now shows ['[restricted]', 'critical'], and clicks 'Save the draft'. The TO (admitted) reads GET /api/v1/admin/automation-rules/{id}/versions/1. (2) Integration, disposable PostgreSQL: docs/delivery/test-evidence/DG6/qa/tests/round-8/zz-qa-dg6r8b-condition-resave-pairing.test.ts copied to apps/api/test/integration/access/ and run with tests/qa/support/with-pg.sh: P0 control (edit an unrelated condition), P1 (two restricted literals under one field/op, delete the first), P2 (a visible literal V then a restricted one Y under one field/op, delete the visible one), P3 (an `in` list of two restricted literals, drop the first element). Cause: keepRestrictedLiterals (apps/api/src/modules/automation/versions.ts:360-402) pairs the k-th sent condition with a given (field, op) with the k-th stored one, and an `in` element by list position, so any deletion or reordering shifts the pairing.",
+      "expected": "D-222 (2): 'a re-save keeps the hidden literal unchanged'. The condition the author kept keeps its own hidden literal: after removing condition 1 the stored rule is [benefitId eq B2, severity eq critical]; in P2 the stored rule is [benefitId neq Y]; in P3 the list is [Y]. If the server cannot tell which hidden literal a marker stands for, it should refuse the save (for example 409/422 with a reason) rather than guess.",
+      "actual": "UI on the real stack, en and ar: the stored rule after removing condition 1 is [benefitId eq B1, severity eq critical]: the literal of the condition the author REMOVED is kept, and B2 (the one kept on screen) is silently dropped; the author's screen and the 200 response still show '[restricted]', so the author cannot see it (41-probe-restricted-mywork-automation-unset.log: 'kept literal is the FIRST (the removed one)', both languages). Integration: P0 passes; P1 stores X (the deleted literal) instead of Y; P2 stores the literal string '[restricted]' (the hidden Y is destroyed, the condition 'benefitId neq [restricted]' now matches every benefit, and the response no longer carries includesRestrictedRecords, while the editor still shows '[restricted]' with the 'Includes restricted records' label because the web marks any value equal to the marker); P3 stores [X] instead of [Y] (20-probe-resave-pairing.log, 3 failed of 4, by design). The rule silently targets the record the author removed, or no record, without any error; the change is visible only in the audit trail and to an admitted reader. ADR-0051's amendment documents the (field, op, order, position) pairing, but neither it nor the BE-Z12B handback discloses this effect of a removal or reordering.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/41-probe-restricted-mywork-automation-unset.log",
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/20-probe-resave-pairing.log",
+        "docs/delivery/test-evidence/DG6/qa/tests/round-8/zz-qa-dg6r8e-restricted-mywork-automation.spec.ts",
+        "docs/delivery/test-evidence/DG6/qa/tests/round-8/zz-qa-dg6r8b-condition-resave-pairing.test.ts",
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/shots/41-B-rule-editor-author-en.png",
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/shots/41-C-rule-editor-after-remove-en.png",
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/shots/41-C-rule-editor-after-remove-ar.png"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG6/round-8/qa-verifier.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-08T18:46:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG6 round 8 (T-DG6-REV-QA-R8) on candidate 6cda8b33: reproduced in the UI on the real demo stack in en and ar, and in an integration probe (P1-P3 fail, P0 control passes)."
+        }
+      ]
+    },
+    {
+      "id": "F-DG6-561",
+      "stage_id": "DG6",
+      "requirement": "REQ-S10-002",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The 'Includes restricted records' label describes every marked item as a total ('This total includes records you are not admitted to...'), also on My Work rows, automation conditions and register rows",
+      "reproduction": "Demo stack, chromium-en and chromium-ar: probe zz-qa-dg6r8e-restricted-mywork-automation.spec.ts logs the label's title and text on the automation draft editor (conditions 1 and 2) and on My Work (restricted work item). RestrictedRecordsLabel (apps/web/src/components/sensitivity/RestrictedRecordsLabel.tsx) always renders title and visually hidden text adminP6.restricted.hint. BE-Z12B adds it to My Work rows, the home glance lists and automation conditions; it was already used before in non-total places (BenefitsPage, RegisterPages, DispensationsPage, EvidenceRegisterPage rows).",
+      "expected": "The label's description fits what is marked: on a total, that the total is the same for every user; on a row, link or condition literal, that the item refers to a record the reader is not admitted to.",
+      "actual": "en: title and screen-reader text 'This total includes records you are not admitted to. The total is the same for every user; the individual records and values stay hidden.' on condition values and work-item rows, where there is no total. ar: 'يشمل هذا الإجمالي سجلات غير مسموح لك بها. الإجمالي واحد لجميع المستخدمين...'. Copy only: nothing is disclosed, and the visible label 'Includes restricted records' is correct.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/41-probe-restricted-mywork-automation-unset.log",
+        "docs/delivery/test-evidence/DG6/qa/tests/round-8/zz-qa-dg6r8e-restricted-mywork-automation.spec.ts"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG6/round-8/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-08T18:46:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG6 round 8 (T-DG6-REV-QA-R8) on candidate 6cda8b33 while checking the D-225 My Work and automation screens in en and ar."
+        }
+      ]
+    }
+  ]
+}
