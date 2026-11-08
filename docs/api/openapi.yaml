@@ -26847,7 +26847,7 @@ components:
         completedAt: { $ref: "#/components/schemas/NullableTimestamp" }
         completedBy: { $ref: "#/components/schemas/NullableUuid" }
         outputRecordType: { type: [string, "null"], enum: [charter, diagnostic_item, baseline, north_star, kpi_definition, tom_canvas_cell, initiative, business_case, roadmap_wave, benefit, evidence, meeting_series, null] }
-        outputRecordId: { $ref: "#/components/schemas/NullableUuid" }
+        outputRecordId: { $ref: "#/components/schemas/NullableUuid", description: "Null for a reader not admitted to the output record; outputRecordType is kept and includesRestrictedRecords is true (T-DG6-BE-Z12; F-DG6-480; ADR-0051 §2; D-218)." }
         predecessors: { type: array, maxItems: 20, items: { $ref: "#/components/schemas/LaunchTaskRef" } }
         blockedBy: { type: array, maxItems: 20, items: { $ref: "#/components/schemas/LaunchTaskRef" } }
         version: { $ref: "#/components/schemas/Version" }
@@ -26883,7 +26883,7 @@ components:
         ownerUserId: { $ref: "#/components/schemas/NullableUuid" }
         status: { type: string, enum: [not_started, in_progress, completed, cancelled] }
         outputRecordType: { type: [string, "null"], enum: [charter, diagnostic_item, baseline, north_star, kpi_definition, tom_canvas_cell, initiative, business_case, roadmap_wave, benefit, evidence, meeting_series, null] }
-        outputRecordId: { $ref: "#/components/schemas/NullableUuid" }
+        outputRecordId: { $ref: "#/components/schemas/NullableUuid", description: "An output record the writer is not admitted to answers 422 launch_task.output_record_invalid (ADR-0051 §2 write rule: answered exactly as an unknown id, and nothing is stored). Re-save rule: null (with outputRecordType unchanged) from a writer not admitted to the stored record keeps it (that writer was shown null); another id replaces it and is checked as before; a writer admitted to the stored record clears it with null (T-DG6-BE-Z12; ADR-0051 §2; D-218)." }
     LaunchTaskPredecessors:
       type: object
       required: [predecessorTaskIds]
@@ -26907,7 +26907,7 @@ components:
       properties:
         answer: { type: string, enum: [yes, no] }
         comment: { type: [string, "null"] }
-        evidenceId: { $ref: "#/components/schemas/NullableUuid" }
+        evidenceId: { $ref: "#/components/schemas/NullableUuid", description: "Null for a reader not admitted to the evidence item; the test then carries includesRestrictedRecords (T-DG6-BE-Z10; ADR-0051 §2; D-218)." }
         respondedBy: { $ref: "#/components/schemas/Uuid" }
         updatedAt: { $ref: "#/components/schemas/Timestamp" }
     DayNinetyQuestion:
@@ -26953,7 +26953,7 @@ components:
       properties:
         answer: { type: string, enum: [yes, no] }
         comment: { type: [string, "null"], minLength: 1, maxLength: 2000 }
-        evidenceId: { $ref: "#/components/schemas/NullableUuid" }
+        evidenceId: { $ref: "#/components/schemas/NullableUuid", description: "Re-save rule: null from a writer not admitted to the stored record keeps it (that writer was shown null); another id replaces it and is checked as before; a writer admitted to the stored record clears it with null; omitting it is the same as null (T-DG6-BE-Z10B; ADR-0051 §2; D-218)." }
     HealthCheckQuestion:
       type: object
       required: [code, ordinal, textEn, textAr, sourceRef]
@@ -27023,7 +27023,7 @@ components:
         questionCode: { type: string }
         response: { type: string, enum: [yes, no, partial, na] }
         evidenceNote: { type: [string, "null"] }
-        evidenceId: { $ref: "#/components/schemas/NullableUuid" }
+        evidenceId: { $ref: "#/components/schemas/NullableUuid", description: "Null for a reader not admitted to the evidence item; the answer then carries includesRestrictedRecords (T-DG6-BE-Z10; ADR-0051 §2; D-218)." }
         ownerUserId: { $ref: "#/components/schemas/NullableUuid" }
         actionNote: { type: [string, "null"] }
         answeredBy: { $ref: "#/components/schemas/Uuid" }
@@ -27119,7 +27119,7 @@ components:
       properties:
         response: { type: string, enum: [yes, no, partial, na] }
         evidenceNote: { type: [string, "null"], minLength: 1, maxLength: 2000 }
-        evidenceId: { $ref: "#/components/schemas/NullableUuid" }
+        evidenceId: { $ref: "#/components/schemas/NullableUuid", description: "Re-save rule: null from a writer not admitted to the stored record keeps it (that writer was shown null); another id replaces it and is checked as before; a writer admitted to the stored record clears it with null; omitting it is the same as null (T-DG6-BE-Z10B; ADR-0051 §2; D-218)." }
         ownerUserId: { $ref: "#/components/schemas/NullableUuid" }
         actionNote: { type: [string, "null"], minLength: 1, maxLength: 1000 }
     HealthCheckActionsPut:
@@ -27170,7 +27170,7 @@ components:
         approvalState: { type: string, enum: [approved, pending, not_submitted, changes_requested, rejected, mixed, not_applicable] }
         sections:
           type: array
-          description: "The sections of the zod mirror (packages/shared/src/schemas/report.ts). T-DG6-BE-Z7B (F-DG6-340; ADR-0051 §2 'Totals and rollups'; D-195 Q3): a section that references a marked-sensitive record (a row, an item or a source) carries the read-time member includesRestrictedRecords (boolean): true when the reader is not admitted to at least one of them (its rows are omitted, its totals and metrics are unchanged; label access.includesRestrictedRecords), false when the reader is admitted to all; absent otherwise. Never stored: contentSha256 is unchanged."
+          description: "The sections of the zod mirror (packages/shared/src/schemas/report.ts). A section carries the read-time member includesRestrictedRecords (boolean) when it references a marked-sensitive record (a row, an item or a source; T-DG6-BE-Z7B, F-DG6-340) or when its aggregate figures include one (T-DG6-BE-Z9, F-DG6-400): the executive pack's metrics_<subject> and the executive dashboard's area_value include the dashboard facts' benefits and business cases, the executive dashboard's items_portfolio rows include the benefits allocated to each initiative, and the gate pack's criteria count unverified evidence items. It is true when the reader is not admitted to at least one of those records (rows and items naming them are omitted; totals and metrics are unchanged and the same for every reader; label access.includesRestrictedRecords), false when the reader is admitted to all, and absent when none is sensitive (the document is then returned unchanged). A live report takes the aggregate records from its assembly; a stored snapshot from report_snapshot_aggregate (migration 0126), or, for a snapshot stored before 0126 (aggregates_recorded false), conservatively from every record of those types marked sensitive in its transformation. The aggregate records are never shown. The member is never stored: content and contentSha256 are unchanged (ADR-0051 §2 'Totals and rollups', amendment of 2026-11-08; ADR-0045 §3; D-195 Q3)."
           items: { type: object }
         synthetic: { type: boolean, enum: [true], description: "Present, and true, exactly when the document was assembled in a demo database (ADR-0050 §2 (d); D-163): its values are synthetic illustrative examples, and every export prints the illustrative label. Absent in production." }
     LiveReport:
@@ -27657,7 +27657,7 @@ components:
       additionalProperties: false
       properties:
         triggerCodes: { type: array, minItems: 1, maxItems: 6, items: { type: string } }
-        conditions: { type: array, maxItems: 20, items: { type: object, additionalProperties: false, required: [field, op], properties: { field: { type: string, pattern: "^[a-z][a-zA-Z0-9]{0,39}$" }, op: { type: string, enum: [eq, neq, in, gt, gte, lt, lte, present, absent] }, value: { description: "A string, a decimal string, a boolean or an array of up to 50 strings; numbers are decimal strings, never floats. In a response, a literal (or list element) that names a sensitive record, or a child that carries one's values, the reader is not admitted to is shown as the neutral restricted marker \"[restricted]\" in place, and the version carries includesRestrictedRecords; sent back in an update in the same condition (field and operator, in order) and position, the marker keeps the stored literal unchanged (T-DG6-BE-Z12B; F-DG6-480; ADR-0051 §2; D-218, D-222).", oneOf: [{ type: string, maxLength: 500 }, { type: boolean }, { type: array, maxItems: 50, items: { type: string, maxLength: 500 } }] } } } }
+        conditions: { type: array, maxItems: 20, items: { type: object, additionalProperties: false, required: [field, op], properties: { field: { type: string, pattern: "^[a-z][a-zA-Z0-9]{0,39}$" }, op: { type: string, enum: [eq, neq, in, gt, gte, lt, lte, present, absent] }, value: { description: "A string, a decimal string, a boolean or an array of up to 50 strings; numbers are decimal strings, never floats. In a response, a literal (or list element) that names a sensitive record, or a child that carries one's values, the reader is not admitted to is shown as the neutral restricted marker \"[restricted]\" in place, and the version carries includesRestrictedRecords; sent back in an update in the same condition (field and operator, in order) and position, the marker keeps the stored literal unchanged; a marker with no hidden literal behind it is stored as an ordinary literal. A literal is free text and is not existence-checked on write for any id, so a writer who already holds a hidden record's id sees the marker on read (accepted, D-223) (T-DG6-BE-Z12B; F-DG6-480; ADR-0051 §2; D-218, D-222, D-223).", oneOf: [{ type: string, maxLength: 500 }, { type: boolean }, { type: array, maxItems: 50, items: { type: string, maxLength: 500 } }] } } } }
         actions: { type: array, minItems: 1, maxItems: 10, items: { type: object, additionalProperties: false, required: [type], properties: { type: { type: string, pattern: "^[a-z][a-z0-9_]{2,63}$" }, parameters: { type: object, description: "Validated by the action type schema (ADR-0043 §2)." }, handlers: { type: array, maxItems: 6, items: { type: string }, description: "starter_handler only (read-only)." } } } }
         runAs: { type: string, enum: [initiating_user, service] }
         servicePermissionCodes: { type: array, maxItems: 20, items: { $ref: "#/components/schemas/PermissionCode" } }
@@ -28251,7 +28251,7 @@ components:
         recordType: { $ref: "#/components/schemas/FormRecordTypeCode" }
         recordId: { $ref: "#/components/schemas/Uuid" }
         formSchemaVersionId: { $ref: "#/components/schemas/Uuid" }
-        values: { type: object }
+        values: { type: object, description: "An attachment or reference value naming a record the reader is not admitted to is redacted on read (an array element dropped, a single reference null) and includesRestrictedRecords is set; the stored row is unchanged (T-DG6-BE-Z10B; ADR-0051 §2; D-218)." }
         calculated: { type: object, additionalProperties: { type: object, additionalProperties: false, required: [status, value, missingFields], properties: { status: { type: string, enum: [computed, not_computable] }, value: { oneOf: [{ $ref: "#/components/schemas/Decimal" }, { type: "null" }] }, missingFields: { type: array, items: { type: string } } } } }
         version: { type: integer, minimum: 0 }
         updatedAt: { $ref: "#/components/schemas/NullableTimestamp" }
@@ -28263,7 +28263,7 @@ components:
       required: [values]
       additionalProperties: false
       properties:
-        values: { type: object, maxProperties: 200 }
+        values: { type: object, maxProperties: 200, description: "Re-save rule: a stored attachment id the writer is not admitted to stays in its list, and a stored single reference the writer is not admitted to stays when the writer sends null or omits it, because that writer was shown neither (T-DG6-BE-Z10B; ADR-0051 §2; D-218)." }
     FormRecordVersion:
       type: object
       description: "One entry of a record's version history (from the audit trail)."
@@ -28591,7 +28591,7 @@ components:
         procedureCode: { $ref: "#/components/schemas/ProcedureCode" }
         transformationId: { $ref: "#/components/schemas/NullableUuid" }
         subjectRecordType: { type: [string, "null"] }
-        subjectRecordId: { $ref: "#/components/schemas/NullableUuid" }
+        subjectRecordId: { $ref: "#/components/schemas/NullableUuid", description: "Not existence-checked for any id, so a record the writer is not admitted to is accepted exactly as an unknown id (no existence oracle); the instance then shows it as null with includesRestrictedRecords (T-DG6-BE-Z12 §3; ADR-0051 §2)." }
         inputValues: { type: object }
     ProcedureInstanceLink:
       type: object
@@ -28646,14 +28646,14 @@ components:
         nameAr: { type: string }
         status: { type: string, enum: [active, completed, cancelled] }
         subjectRecordType: { type: [string, "null"] }
-        subjectRecordId: { $ref: "#/components/schemas/NullableUuid" }
-        inputValues: { type: object }
+        subjectRecordId: { $ref: "#/components/schemas/NullableUuid", description: "Null for a reader not admitted to the subject record; subjectRecordType is kept and includesRestrictedRecords is true (T-DG6-BE-Z12; F-DG6-480; ADR-0051 §2; D-218)." }
+        inputValues: { type: object, description: "An input value naming a record the reader is not admitted to is redacted on read (an array element dropped, any other value null) and includesRestrictedRecords is set; the stored inputs are unchanged (T-DG6-BE-Z12; ADR-0051 §2; D-218)." }
         dueDate: { $ref: "#/components/schemas/NullableBusinessDate" }
         currentStepKeys: { type: array, items: { type: string } }
         missingInputs: { type: array, items: { type: object, additionalProperties: false, required: [key, labelEn, labelAr], properties: { key: { type: string }, labelEn: { type: string }, labelAr: { type: string } } } }
         nextAction: { type: object, additionalProperties: false, required: [kind, stepKey, messageKey, messageParams], properties: { kind: { type: string, enum: [provide_input, link_evidence, complete_step, await_approval, none] }, stepKey: { type: [string, "null"] }, messageKey: { type: string }, messageParams: { type: object } } }
         steps: { type: array, items: { $ref: "#/components/schemas/ProcedureStepInstance" } }
-        links: { type: array, items: { $ref: "#/components/schemas/ProcedureInstanceLink" } }
+        links: { type: array, items: { $ref: "#/components/schemas/ProcedureInstanceLink" }, description: "A link to a record the reader is not admitted to is not listed (the link exists only to name that record); includesRestrictedRecords is then true (T-DG6-BE-Z12; F-DG6-480; ADR-0051 §2; D-218)." }
         launchedBy: { $ref: "#/components/schemas/Uuid" }
         launchedAt: { $ref: "#/components/schemas/Timestamp" }
         completedAt: { $ref: "#/components/schemas/NullableTimestamp" }
@@ -28692,7 +28692,7 @@ components:
       additionalProperties: false
       properties:
         note: { type: [string, "null"], minLength: 1, maxLength: 4000 }
-        outputRecordId: { $ref: "#/components/schemas/NullableUuid" }
+        outputRecordId: { $ref: "#/components/schemas/NullableUuid", description: "For a link output, a record the writer is not admitted to answers 422 procedure_step.output_record_invalid, the same refusal as an unreadable or unknown record (T-DG6-BE-Z12; ADR-0051 §2 write rule; D-218)." }
         outputInput: { type: object }
     ProcedureStepSkip:
       type: object
@@ -28711,7 +28711,7 @@ components:
       required: [evidenceId]
       additionalProperties: false
       properties:
-        evidenceId: { $ref: "#/components/schemas/Uuid" }
+        evidenceId: { $ref: "#/components/schemas/Uuid", description: "An evidence item the writer is not admitted to answers 422 procedure_step.output_record_invalid (ADR-0051 §2 write rule: answered exactly as an unknown id, and nothing is stored; T-DG6-BE-Z12; D-218)." }
     ProcedureCancel:
       type: object
       required: [reason]
@@ -29532,7 +29532,7 @@ components:
         occurredAt: { $ref: "#/components/schemas/Timestamp" }
         action: { type: string, pattern: "^[a-z_]+\\.[a-z_.]+$", examples: [transformation.update] }
         recordType: { type: string, examples: [transformation] }
-        recordId: { $ref: "#/components/schemas/Uuid" }
+        recordId: { $ref: "#/components/schemas/Uuid", description: "Kept on an event of a restricted record, whose changes and reason are then null: D-219 (1), the audit trail stays complete for its readers (ADR-0051 §2). An event of an open record whose changes name a restricted id is redacted the same way (T-DG6-BE-Z10)." }
         transformationId:
           oneOf:
             - { $ref: "#/components/schemas/Uuid" }
@@ -33677,7 +33677,7 @@ components:
         transformationId: { $ref: "#/components/schemas/Uuid" }
         approvalType: { type: string }
         subjectType: { type: string }
-        subjectId: { $ref: "#/components/schemas/NullableUuid" }
+        subjectId: { $ref: "#/components/schemas/NullableUuid", description: "The approval's subject. Null only for a reader not admitted to it (a sensitive benefit's transition decision); approvalType is kept and includesRestrictedRecords is true (T-DG6-BE-Z12; F-DG6-480; ADR-0051 §2; D-218)." }
         subjectVersion: { $ref: "#/components/schemas/Version" }
         roundNo: { type: integer, minimum: 1 }
         decisionRightId: { $ref: "#/components/schemas/NullableUuid" }
@@ -33755,7 +33755,7 @@ components:
         recordId: { $ref: "#/components/schemas/Uuid" }
         approvalKind: { type: string }
         subjectType: { type: string }
-        subjectId: { $ref: "#/components/schemas/NullableUuid" }
+        subjectId: { $ref: "#/components/schemas/NullableUuid", description: "The decided approval's subject. Null only for a reader not admitted to it; the type is kept and includesRestrictedRecords is true (T-DG6-BE-Z12; F-DG6-480; ADR-0051 §2; D-218)." }
         subjectVersion: { type: [integer, "null"] }
         outcome: { type: string, enum: [approved, rejected, changes_requested, deferred, revoked] }
         rationale: { type: string }
@@ -34728,7 +34728,7 @@ components:
         financialStatementLine: { type: [string, "null"] }
         measurementKpiDefinitionId: { $ref: "#/components/schemas/NullableUuid" }
         measurementKpiVariable: { type: [string, "null"] }
-        businessCaseLineId: { $ref: "#/components/schemas/NullableUuid" }
+        businessCaseLineId: { $ref: "#/components/schemas/NullableUuid", description: "The business-case line. Null for a reader not admitted to it (a line of a sensitive business case); includesRestrictedRecords is then true (T-DG6-BE-Z12; F-DG6-480; ADR-0051 §2; D-218)." }
         benefitFormulaId: { $ref: "#/components/schemas/NullableUuid" }
         baselineId: { $ref: "#/components/schemas/NullableUuid" }
         baselineValue: { $ref: "#/components/schemas/NullableDecimal" }
@@ -34753,7 +34753,7 @@ components:
         measurementSource: { type: [string, "null"] }
         confidence: { type: [string, "null"], enum: [H, M, L, null] }
         assumptions: { type: [string, "null"] }
-        parentBenefitId: { $ref: "#/components/schemas/NullableUuid" }
+        parentBenefitId: { $ref: "#/components/schemas/NullableUuid", description: "The parent benefit. Null for a reader not admitted to it (a sensitive benefit); includesRestrictedRecords is then true and its id is never returned (T-DG6-BE-Z12; F-DG6-480; ADR-0051 §2; D-218)." }
         benefitGroupId: { $ref: "#/components/schemas/NullableUuid" }
         allocationSetNo: { type: integer, minimum: 0 }
         lifecycleStep: { $ref: "#/components/schemas/BenefitLifecycleStep" }
@@ -34790,7 +34790,7 @@ components:
         financialStatementLine: { type: [string, "null"], minLength: 1, maxLength: 200 }
         measurementKpiDefinitionId: { $ref: "#/components/schemas/NullableUuid" }
         measurementKpiVariable: { type: [string, "null"], pattern: "^[a-z][a-z0-9_]{0,47}$" }
-        businessCaseLineId: { $ref: "#/components/schemas/NullableUuid" }
+        businessCaseLineId: { $ref: "#/components/schemas/NullableUuid", description: "A line of a business case the writer is not admitted to answers 422 benefit.case_line_invalid, checked before benefit.case_line_taken (ADR-0051 §2 write rule: answered exactly as an unknown id, and nothing is stored; T-DG6-BE-Z12; D-218)." }
         benefitFormulaId: { $ref: "#/components/schemas/NullableUuid" }
         baselineId: { $ref: "#/components/schemas/NullableUuid" }
         baselineValue: { $ref: "#/components/schemas/NullableDecimal" }
@@ -34811,7 +34811,7 @@ components:
         measurementSource: { type: [string, "null"], minLength: 1, maxLength: 500 }
         confidence: { type: [string, "null"], enum: [H, M, L, null] }
         assumptions: { type: [string, "null"], minLength: 1, maxLength: 8000 }
-        parentBenefitId: { $ref: "#/components/schemas/NullableUuid" }
+        parentBenefitId: { $ref: "#/components/schemas/NullableUuid", description: "A parent benefit the writer is not admitted to answers 422 validation.reference at /parentBenefitId (ADR-0051 §2 write rule: answered exactly as an unknown id, and nothing is stored; T-DG6-BE-Z12; D-218)." }
         benefitGroupId: { $ref: "#/components/schemas/NullableUuid" }
     BenefitUpdate:
       type: object
@@ -34829,7 +34829,7 @@ components:
         financialStatementLine: { type: [string, "null"], minLength: 1, maxLength: 200 }
         measurementKpiDefinitionId: { $ref: "#/components/schemas/NullableUuid" }
         measurementKpiVariable: { type: [string, "null"], pattern: "^[a-z][a-z0-9_]{0,47}$" }
-        businessCaseLineId: { $ref: "#/components/schemas/NullableUuid" }
+        businessCaseLineId: { $ref: "#/components/schemas/NullableUuid", description: "A line of a business case the writer is not admitted to answers 422 benefit.case_line_invalid, checked before benefit.case_line_taken (ADR-0051 §2 write rule: answered exactly as an unknown id, and nothing is stored). Re-save rule: null from a writer not admitted to the stored record keeps it (that writer was shown null); another id replaces it and is checked as before; a writer admitted to the stored record clears it with null (T-DG6-BE-Z12; ADR-0051 §2; D-218)." }
         benefitFormulaId: { $ref: "#/components/schemas/NullableUuid" }
         baselineId: { $ref: "#/components/schemas/NullableUuid" }
         baselineValue: { $ref: "#/components/schemas/NullableDecimal" }
@@ -34850,7 +34850,7 @@ components:
         measurementSource: { type: [string, "null"], minLength: 1, maxLength: 500 }
         confidence: { type: [string, "null"], enum: [H, M, L, null] }
         assumptions: { type: [string, "null"], minLength: 1, maxLength: 8000 }
-        parentBenefitId: { $ref: "#/components/schemas/NullableUuid" }
+        parentBenefitId: { $ref: "#/components/schemas/NullableUuid", description: "A parent benefit the writer is not admitted to answers 422 validation.reference at /parentBenefitId (ADR-0051 §2 write rule: answered exactly as an unknown id, and nothing is stored). Re-save rule: null from a writer not admitted to the stored record keeps it (that writer was shown null); another id replaces it and is checked as before; a writer admitted to the stored record clears it with null (T-DG6-BE-Z12; ADR-0051 §2; D-218)." }
         benefitGroupId: { $ref: "#/components/schemas/NullableUuid" }
         recoveryPlan: { type: [string, "null"], minLength: 1, maxLength: 8000 }
         bauOwnerUserId: { $ref: "#/components/schemas/NullableUuid" }
@@ -36491,7 +36491,7 @@ components:
         description: { type: [string, "null"], minLength: 1, maxLength: 8000 }
         presenterUserId: { $ref: "#/components/schemas/NullableUuid" }
         durationMinutes: { type: [integer, "null"], minimum: 1, maximum: 480 }
-        materialsEvidenceIds: { type: array, maxItems: 20, items: { $ref: "#/components/schemas/Uuid" } }
+        materialsEvidenceIds: { type: array, maxItems: 20, items: { $ref: "#/components/schemas/Uuid" }, description: "Re-save rule: a stored material the writer is not admitted to (not shown to them) is kept, appended back to the sent list (T-DG6-BE-Z10B; ADR-0051 §2; D-218)." }
         ordinal: { type: integer, minimum: 1, maximum: 999 }
         decisionId: { $ref: "#/components/schemas/NullableUuid" }
         brief: { oneOf: [{ $ref: "#/components/schemas/ExecutiveAskBriefInput" }, { type: "null" }] }
@@ -36581,7 +36581,7 @@ components:
         agendaItemId: { $ref: "#/components/schemas/NullableUuid" }
         outputKind: { $ref: "#/components/schemas/MeetingOutputKind" }
         recordType: { type: [string, "null"], enum: [decision, raid_entry, dependency, benefit, milestone, action_item, evidence, benefit_evidence, benefit_measurement, corrective_case, null] }
-        recordId: { $ref: "#/components/schemas/NullableUuid" }
+        recordId: { $ref: "#/components/schemas/NullableUuid", description: "Null for a reader not admitted to the linked record; recordType is kept and includesRestrictedRecords is true (T-DG6-BE-Z12; F-DG6-480; ADR-0051 §2; D-218)." }
         note: { type: [string, "null"], minLength: 1, maxLength: 4000 }
         createdAt: { $ref: "#/components/schemas/Timestamp" }
         createdBy: { $ref: "#/components/schemas/Uuid" }
@@ -36594,7 +36594,7 @@ components:
         outputKind: { $ref: "#/components/schemas/MeetingOutputKind" }
         agendaItemId: { $ref: "#/components/schemas/Uuid" }
         recordType: { type: string, enum: [decision, raid_entry, dependency, benefit, milestone, action_item, evidence, benefit_evidence, benefit_measurement, corrective_case] }
-        recordId: { $ref: "#/components/schemas/Uuid" }
+        recordId: { $ref: "#/components/schemas/Uuid", description: "A record the writer is not admitted to answers 422 meeting_output.record_not_found (ADR-0051 §2 write rule: answered exactly as an unknown id, and nothing is stored; T-DG6-BE-Z12; D-218)." }
         note: { type: string, minLength: 1, maxLength: 4000 }
     MeetingAction:
       type: object
@@ -38167,7 +38167,7 @@ components:
         id: { $ref: "#/components/schemas/Uuid" }
         transformationId: { $ref: "#/components/schemas/Uuid" }
         phaseStepId: { $ref: "#/components/schemas/Uuid" }
-        evidenceId: { $ref: "#/components/schemas/Uuid" }
+        evidenceId: { $ref: "#/components/schemas/Uuid", description: "listPhaseStepEvidence does not list a link to an evidence item the reader is not admitted to (the link exists only to name it; T-DG6-BE-Z10B; D-218). The removePhaseStepEvidence response echoes this id to the writer who named the link id: D-219 (3), no new disclosure." }
         status: { type: string, enum: [active, removed] }
         removedBy: { $ref: "#/components/schemas/NullableUuid" }
         removedAt: { $ref: "#/components/schemas/NullableTimestamp" }
@@ -39935,7 +39935,7 @@ components:
         id: { $ref: "#/components/schemas/Uuid" }
         transformationId: { $ref: "#/components/schemas/Uuid" }
         recordType: { $ref: "#/components/schemas/SensitiveRecordType" }
-        recordId: { $ref: "#/components/schemas/Uuid" }
+        recordId: { $ref: "#/components/schemas/Uuid", description: "Shown to sensitive_record.read holders, who administer grants by record id: D-219 (2) (ADR-0051 §7). recordTitle is null unless the caller can read the record." }
         recordTitle: { type: [string, "null"], description: "Null when the caller cannot read the record (ADR-0051 §2)." }
         recordTitleRedacted: { type: boolean }
         granteeUserId: { $ref: "#/components/schemas/Uuid" }
@@ -40035,7 +40035,7 @@ components:
         organizationId: { $ref: "#/components/schemas/NullableUuid" }
         action: { type: string, pattern: "^[a-z_]+\\.[a-z_.]+$" }
         recordType: { type: string }
-        recordId: { $ref: "#/components/schemas/Uuid" }
+        recordId: { $ref: "#/components/schemas/Uuid", description: "Kept on an event of a restricted record, whose changes and reason are then null and redacted is true: D-219 (1), the audit trail stays complete for its readers (ADR-0051 §2). An event of an open record whose changes name a restricted id is redacted the same way (T-DG6-BE-Z10)." }
         transformationId: { $ref: "#/components/schemas/NullableUuid" }
         actor:
           type: object

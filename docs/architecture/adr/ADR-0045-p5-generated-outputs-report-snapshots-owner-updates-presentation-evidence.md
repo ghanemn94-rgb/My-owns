@@ -82,6 +82,7 @@ Snapshots are never deleted (mth_app has no DELETE grant; RS30).
 | calculation versions | `report_snapshot_version` rows (closed set `version_kind`): `kpi_version` (each KPI definition version used), `formula_version` (each benefit or business-case formula version used), `weight_set` (the T06 weight set used by a ranking shown), `calculation_engine` (`ENGINE_VERSION` of `packages/shared/src/formula`, read, never changed), `config_version` (form schema and procedure pins that shaped a section), `scoring_scheme` (reserved for slice H's health-check scheme) |
 | approval state | `report_snapshot.approval_state` (closed set: `approved`, `pending`, `not_submitted`, `changes_requested`, `rejected`, `mixed`, `not_applicable`) and, per source record, `report_snapshot_source.approval_state` (same set without `mixed`; NULL when the record type has no approval) |
 | evidence cited | `report_snapshot_evidence`: per section and evidence item, the cited `content_id`, `content_revision` and `content_sha256` (equal to the `evidence_content` row, trigger `report_snapshot_evidence_content_matches`, RC06) and the `review_status` at the as-of instant |
+| records an aggregate includes (added 2026-11-08, T-DG6-ARCH-16; migration `0126`, T-DG6-BE-Z9) | `report_snapshot_aggregate`: per section, the records (`record_type`, `record_id`) whose values the section's aggregate figures include without naming them. Used only to decide the read-time restricted flag, never shown, and not a source. `report_snapshot.aggregates_recorded` is false for the snapshots stored before `0126` (amendment of 2026-11-08) |
 
 **Snapshot approval state**, by definition: `charter` = the charter's approval state; `gate_pack` = the gate decision's state (`approved`, `rejected`, `changes_requested`, `pending` for a submitted gate, `not_submitted`); `meeting_minutes` = `approved` once the DG4 minutes are approved, else `pending`; `handover` = `approved` when accepted, `pending` when submitted, `changes_requested` when returned, `not_submitted` in draft; `business_cases` and `registers` = `mixed` when their rows' states differ, else the common state, `not_applicable` when no row has one; `diagnostic`, `tom`, `roadmap`, `executive_dashboard`, `executive_pack`, `meeting_pack` = `not_applicable`. These are recorded facts; none is an approval.
 
@@ -318,7 +319,7 @@ Nothing here approves anything. Product gates G1–G6 are business approvals ins
 
 **Rule.**
 - **Where it applies.** `documentForReader` (`apps/api/src/modules/reporting/reports/restricted.ts`) sets the member per reader as a document leaves the API. That covers the live report of every definition and every snapshot response: GET, and the generate, issue, discard and reissue bodies.
-- **Absent** when the section references no marked-sensitive record through a row, an item or a source.
+- **Absent** when the section references no marked-sensitive record through a row, an item or a source. _(Since T-DG6-BE-Z9 it is also decided from the records the section's aggregate figures include: amendment of 2026-11-08.)_
 - **`true`** when the reader is not admitted to at least one of them. The section's restricted rows, items and sources are omitted, and its table totals and metrics are unchanged.
 - **`false`** when the reader is admitted to all of them.
 - **How it is decided.** The flag is decided on the section as assembled, before anything is omitted.
@@ -332,5 +333,33 @@ Nothing here approves anything. Product gates G1–G6 are business approvals ins
 - **Exports.** An export that would include a record the caller is not admitted to is still refused with 403 `export.includes_restricted_records` (D-199; ADR-0051 §2).
 
 **Why it is not breaking.** The member is optional and absent until a record is marked sensitive, and nothing stored changes. No DG5 reopen is needed.
+
+This is an engineering design record. It grants no business, Finance or IT approval (G1–G6), and it implies no DG0–DG7 result. Demo content is synthetic.
+
+## Amendment (2026-11-08, T-DG6-ARCH-16; T-DG6-BE-Z9; F-DG6-400, F-DG6-460): the records a section's aggregate includes, and the new snapshot child table `report_snapshot_aggregate` (`0126`)
+
+**Why.** Some sections show aggregate figures over records they never name. The amendment of 2026-11-06 decided the restricted flag only from the records a section names, so those sections were never labelled (F-DG6-400). T-DG6-BE-Z9 repaired the code and migration. This amendment records the shipped design (F-DG6-460).
+
+**Rule (ADR-0051 §2, amendment of 2026-11-08, part A).**
+- A section's `includesRestrictedRecords` is decided from its rows, items and sources **plus** the records its aggregate figures include. Those are:
+  - `executive_pack` `metrics_<subject>` and `executive_dashboard` `area_value`: the dashboard facts' benefits and business cases;
+  - `executive_dashboard` `items_portfolio`: the benefits allocated to each listed initiative;
+  - `gate_pack` `criteria`: the evidence items counted by `unverified_evidence_count`.
+- The flag is true, false or absent exactly as before.
+- Each assembler returns these records beside the document (`aggregates: AggregateRef[]`, `reporting/reports/assembler.ts`). A live report passes them to `documentForReader`.
+
+**What a snapshot retains (§3 gains one row).** These are the `0126` rules, as read from the migrated catalogue (data dictionary, "P6 round-6 repair migration 0126"):
+- **The new table `report_snapshot_aggregate`.** It has one row per (snapshot, section, record), UNIQUE `report_snapshot_aggregate_key`. Like the other snapshot children:
+  - it is written only by the snapshot's creating transaction (`report_snapshot_child_guard`);
+  - it is append-only (`p2_append_only`);
+  - `mth_app` has INSERT and SELECT;
+  - a composite FK keeps it in the snapshot's transformation.
+
+  It is **not** a source. `listReportSnapshotSources` does not list it, and the D-199 export refusal does not read it.
+- **The new column `report_snapshot.aggregates_recorded`** (boolean, NOT NULL). It is true for every snapshot written since `0126` (the default) and false for those stored before. It is immutable after insert (`report_snapshot_aggregates_recorded_immutable`). When it is false, the API judges the aggregate sections against every record of the section's types marked sensitive in the transformation (`legacyAggregates`). That conservative superset never under-labels.
+
+**What does not change.** Content, `content_sha256` and `content_schema_version` (1) are unchanged, and so are the totals, which are the same for every reader (D-195 Q3). The sources and the D-199 export refusal are also unchanged. The member is still read-time only and never stored. The rendered export files still carry no restricted label (ADR-0051 amendment of 2026-11-08, part A, "Exports").
+
+**Contract.** Description text only. The `ReportDocument.sections` description in `docs/api/openapi.yaml` now states the aggregate rule and the snapshot source of the records. The zod mirror comment (`packages/shared/src/schemas/report.ts`) was already corrected by T-DG6-BE-Z9. This is not a breaking change, and no gate needs reopening.
 
 This is an engineering design record. It grants no business, Finance or IT approval (G1–G6), and it implies no DG0–DG7 result. Demo content is synthetic.
