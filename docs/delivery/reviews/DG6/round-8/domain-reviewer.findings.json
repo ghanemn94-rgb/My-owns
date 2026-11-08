@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG6-520",
+      "stage_id": "DG6",
+      "requirement": "REQ-S10-002",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "The D-222 (2) re-save of automation conditions maps the restricted marker by position, so a not-admitted rule author who removes an open literal or an earlier condition silently replaces the hidden record id with the literal text \"[restricted]\". The rule then tests nothing, while the screen and the readable summary still say it tests \"a restricted record\" (en and ar)",
+      "reproduction": "Candidate sha256:6cda8b33e184b41983d7718cf6ad15d3912337219fd5c15d9b9d516f0142f21d (source d84d11a62f52932dd5c0aa932c5c1790c13e7e8b), disposable clone, Node 24.21.0, disposable PostgreSQL 16. All data SYNTHETIC. (A) API: probe docs/delivery/test-evidence/DG6/domain/round-8/probes/dom-r8-condition-resave.test.ts.txt, whose setup is BE-Z12B's own sensitive-reference-pending-z12b.test.ts unchanged. An ADM_METHOD author (automation.configure, not admitted to sensitive records) owns rule version 1 with conditions [benefitId eq S, benefitId in [P, S], severity eq high]; S is then marked sensitive, P is open. The author GETs the version (shown [eq \"[restricted]\", in [P, \"[restricted]\"], ...]), removes P from the in-list and PATCHes the rest back unchanged. Second case: a rule [benefitId neq P, benefitId neq S]; the author removes condition 1 (the editor's 'Remove condition 1' button) and saves condition 2 as shown. (B) Real UI: e2e probe docs/delivery/test-evidence/DG6/domain/round-8/probes/dom-r8-screens.spec.ts.txt on apps/web/e2e/support/with-stack.sh (production-initialized), chromium-en and chromium-ar: the same second case, read on /admin/automation-rules/{id}/versions/1 before and after the save, with the stored conditions read by psql.",
+      "expected": "D-222 (2): 'a re-save keeps the hidden literal unchanged'. ADR-0051 amendment of 2026-11-08 §C: 'The marker sent back keeps the stored literal'; 'A writer can only bring back literals of the version being edited'. So when the author keeps the condition or list element that shows the marker and only removes an open one, the stored literal S survives. The rule still excludes S. The screen labels a condition 'Includes restricted records' / 'يشمل سجلات مقيدة' only when it really tests a record the reader cannot see.",
+      "actual": "keepRestrictedLiterals (apps/api/src/modules/automation/versions.ts:360-402) pairs the k-th sent condition of a (field, op) with the k-th stored one, and the j-th list element with the j-th stored element. A marker is restored only when the stored counterpart at that position was itself shown as the marker. Once the author removes anything before it, the positions shift and the marker is stored as the ordinary literal \"[restricted]\". The probe log (probe-condition-resave.log) shows: case 1, stored after save {op:in, field:benefitId, value:[\"[restricted]\"]} (S lost), while the admitted TO reads the in-list as [\"[restricted]\"]; case 2, stored [{op:neq, field:benefitId, value:\"[restricted]\"}] (S lost). After the save the API returns no includesRestrictedRecords, yet the readable summary still says 'if benefitId is not a restricted record' / 'إذا كان benefitId لا يساوي سجل مقيد'. On screen (probe-screens.log, screenshots en and ar '2-after-removing-condition-1'), the condition shows the value '[restricted]' with the label 'Includes restricted records' / 'يشمل سجلات مقيدة', because the web check conditionIsRestricted (apps/web/src/pages/automation/ContentEditor.tsx) matches the text, not the server marker. So an exclusion rule meant to skip the sensitive benefit now fires for every benefit, including S, and nothing on screen tells the author or an admitted reviewer. BE-Z12B's test (sensitive-reference-pending-z12b.test.ts) only re-saves the version with every condition in place, so it does not catch this. Effect: bounded. The rule is a draft until it is published and enabled, the audit event records the change, and no id is disclosed. But the automation logic changes silently, and the screen misleads, which is D-223's falsifier ('a misleading screen').",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-8/probe-condition-resave.log",
+        "docs/delivery/test-evidence/DG6/domain/round-8/probes/dom-r8-condition-resave.test.ts.txt",
+        "docs/delivery/test-evidence/DG6/domain/round-8/probe-screens.log",
+        "docs/delivery/test-evidence/DG6/domain/round-8/probes/dom-r8-screens.spec.ts.txt",
+        "docs/delivery/test-evidence/DG6/domain/round-8/screenshots/en/dom-r8-rule-author-1-before.png",
+        "docs/delivery/test-evidence/DG6/domain/round-8/screenshots/en/dom-r8-rule-author-2-after-removing-condition-1.png",
+        "docs/delivery/test-evidence/DG6/domain/round-8/screenshots/ar/dom-r8-rule-author-1-before.png",
+        "docs/delivery/test-evidence/DG6/domain/round-8/screenshots/ar/dom-r8-rule-author-2-after-removing-condition-1.png",
+        "apps/api/src/modules/automation/versions.ts",
+        "apps/web/src/pages/automation/ContentEditor.tsx"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG6/round-8/domain-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-08T17:10:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG6 round 8 by domain-reviewer while challenging D-222 (2) and D-223 (2) as a rule author, as the assignment asks. Medium, not mandatory: a real defect with a bounded effect (draft rule content, audited, no disclosure). Under D-192 it must be repaired before the gate. Suggested repair, as an option only: bind a returned marker to its stored literal by something that survives removals, for example an opaque per-read token in the marker or keying by the stored condition's index sent back by the editor; or refuse (422) a marker that no longer lines up with a hidden literal instead of storing it as text. Also have the web label follow the server's includesRestrictedRecords and per-condition marker rather than matching the text, and add a removal case to the BE-Z12B test."
+        }
+      ]
+    }
+  ]
+}
