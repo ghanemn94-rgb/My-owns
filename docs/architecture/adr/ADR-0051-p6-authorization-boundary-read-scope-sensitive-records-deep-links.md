@@ -75,6 +75,7 @@ Service principals are admitted only through their declared scope (ADR-0053); a 
 - Record GET of a sensitive record the principal is not admitted to: **404** `not_found` (existence not disclosed; ADR-0006).
 - Lists, search, exports, assistant retrieval: the row is absent (`ReadScope.predicate`).
 - Evidence of a sensitive parent: §4.
+- **An open record that references a restricted record** never names its id (D-218), and a write that names one answers as an unknown id. The read, re-save and write rules, D-219's three exclusions and the reference inventory are in the amendment of 2026-11-08 (added by T-DG6-ARCH-16).
 - **Totals and rollups (D-195 Q3, decided by the user):** an aggregate that includes a sensitive record's value is computed exactly as in DG4 (identical for every user; decimal arithmetic unchanged; **no DG4 reopen**). When a reader is not admitted to at least one sensitive record whose value the aggregate includes, the response carries `includesRestrictedRecords: true` and the screen shows the label **"Includes restricted records"** / **"يشمل سجلات مقيدة"** (Arabic provisional, i18n key `access.includesRestrictedRecords`). The record and its individual value are never shown. When the reader is admitted to all of them, the field is `false` and no label is shown. When none of them is sensitive, the field is **absent** and the response is unchanged byte for byte (corrected 2026-11-06, T-DG6-ARCH-15: the text said `false`; the shipped code and the contract omit the field, so every DG4/DG5 response stays identical until a record is marked). Which DG4/DG5 aggregate responses gain the optional field is BE-B2's inventory (p6-work-split §E/F.3) (the benefit totals of `benefits/**` and the dashboard totals of `reporting/dashboards/**` at minimum); each is an additive optional property, recorded by the orchestrator in the contract (an implementer's contract need goes in its handback, p6-plan §5.3). The shipped list is in "Which responses carry `includesRestrictedRecords`" below. Unknown and n/a stay Unknown and n/a; the label never turns an Unknown into a number.
 
 **Which responses carry `includesRestrictedRecords` (as shipped; T-DG6-BE-B2, T-DG6-BE-Z7, T-DG6-BE-Z7B; F-DG6-340, F-DG6-360, F-DG6-361; recorded 2026-11-06, T-DG6-ARCH-15).** Each is an optional boolean, additive to the contract:
@@ -86,7 +87,7 @@ Service principals are admitted only through their declared scope (ADR-0053); a 
 | `FinanceDashboard` | a benefit or business case of the dashboard's facts is sensitive (it lists no items, so nothing is removed) | ADR-0037 §2, N2 |
 | `ExecutiveOverview` (`getExecutiveOverview`; T-DG6-BE-Z7B) | the same | ADR-0037 §8 (amendment of 2026-11-06) |
 | `DashboardDrilldown` (`getDashboardDrilldown`) | the same | ADR-0037 §5 |
-| every section of `ReportDocument`: live report, snapshot GET and the generate, issue, discard and reissue bodies (T-DG6-BE-Z7B) | the section references a marked-sensitive record through a row, an item or a source | ADR-0045 §3 (amendment of 2026-11-06) |
+| every section of `ReportDocument`: live report, snapshot GET and the generate, issue, discard and reissue bodies (T-DG6-BE-Z7B, T-DG6-BE-Z9) | the section references a marked-sensitive record through a row, an item or a source, **or its aggregate figures include one** (the executive pack's `metrics_<subject>`, the executive dashboard's `area_value` and `items_portfolio`, the gate pack's `criteria`; corrected 2026-11-08, T-DG6-ARCH-16: see the amendment of that date) | ADR-0045 §3 (amendments of 2026-11-06 and 2026-11-08) |
 
 `AdoptionDashboard` filters its items through the same rule but has no such member. Its items are adoption KPIs, which are never a sensitive record type or a child of one, so no item can be removed today (T-DG6-BE-Z7B §7 item 3). A change that lets an adoption item be restricted must add the member in the same change.
 
@@ -97,7 +98,7 @@ Service principals are admitted only through their declared scope (ADR-0053); a 
 - `BenefitTotals`;
 - the table totals and metrics of every report section.
 
-Only the listed entries differ between readers. The flag is decided from the assembled content, before anything is omitted. It is `true` whenever the reader is not admitted to at least one included sensitive record, **and** whenever the shared rule removed an entry (`restrictedFieldAfter`, `apps/api/src/modules/reporting/dashboards/restricted.ts`). A reader who lost an entry is therefore never told that nothing was restricted (absent or `false`). That covers, for example, a sensitive evidence item of an open benefit. A report section is read-time only: the assemblers never set the member, so stored content and `contentSha256` are unchanged (`apps/api/src/modules/reporting/reports/restricted.ts` `documentForReader`).
+Only the listed entries differ between readers. The flag is decided from the assembled content, before anything is omitted. It is `true` whenever the reader is not admitted to at least one included sensitive record, **and** whenever the shared rule removed an entry (`restrictedFieldAfter`, `apps/api/src/modules/reporting/dashboards/restricted.ts`). A reader who lost an entry is therefore never told that nothing was restricted (absent or `false`). That covers, for example, a sensitive evidence item of an open benefit. A report section is read-time only: the assemblers never set the member, so stored content and `contentSha256` are unchanged (`apps/api/src/modules/reporting/reports/restricted.ts` `documentForReader`). For a report section, "included" also covers the records its aggregate figures include without naming them (T-DG6-BE-Z9; the aggregate flag rule in the amendment of 2026-11-08).
 
 **The drill-down rule (as shipped; T-DG6-BE-Z7, T-DG6-BE-Z7B; F-DG6-361).** `getDashboardDrilldown` treats every metric and value class the same way:
 - **What is filtered.** Its `items`, `calculation.inputs` and `evidence` go through `withoutRestrictedRefs`.
@@ -274,5 +275,130 @@ They are recorded in the ADRs that own those responses: ADR-0037 (amendment of 2
 - `access/sensitive-reach.ts` (`recordRefSensitivity`).
 
 The latent adoption limit is stated in §2 and is not a defect today.
+
+Nothing else in this ADR changes. This is an engineering design record. It grants no business, Finance or IT approval (G1–G6), and it implies no DG0–DG7 result.
+
+## Amendment (2026-11-08, T-DG6-ARCH-16): §2, the report aggregate flag, references to restricted records (D-218, D-222), the re-save and write rules, D-219's exclusions and the reference inventory (sweep after T-DG6-BE-Z9 to T-DG6-BE-Z12B)
+
+**Why.** F-DG6-460 (Low; REQ-S10-002) found that this ADR, the OpenAPI descriptions and the data dictionary still described the narrower report-section rule from before T-DG6-BE-Z9. They also did not record what T-DG6-BE-Z10, BE-Z10B, BE-Z11, BE-Z12 and BE-Z12B shipped under D-218, D-219, D-222 and D-223. This amendment records the shipped rules. No code changes. The §2 table row for `ReportDocument` and the sentence after "Totals that are the same for every reader" are corrected in place, with a pointer to this amendment.
+
+### A. The report aggregate flag (T-DG6-BE-Z9; F-DG6-400; D-195 Q3)
+
+- **The rule.** A report section's `includesRestrictedRecords` is decided from the records the section references (rows, items, sources) **plus the records its aggregate figures include without naming them**:
+  - true when the reader is not admitted to at least one sensitive record among them;
+  - false when the reader is admitted to all of them;
+  - absent when none of them is sensitive. The document is then the same object, byte for byte.
+- **Which sections aggregate over records they do not name.** These come from the T-DG6-BE-Z9 sweep of all 12 definitions:
+
+  | Definition | Section | The records the aggregate includes |
+  |---|---|---|
+  | `executive_pack` | `metrics_<subject>` | the dashboard facts' benefits and business cases (value headlines, value lines, investment) |
+  | `executive_dashboard` | `area_value` | the same |
+  | `executive_dashboard` | `items_portfolio` | the benefits allocated to each listed initiative (planned value = Σ allocated benefit amount × share) |
+  | `gate_pack` | `criteria` | the evidence items counted by `unverified_evidence_count` |
+
+  Every other section either references its records itself (BE-Z7B) or aggregates over no sensitive type. The facts come from the same functions the dashboards use (`factsValueRecords`, `allocatedBenefitRecords` in `reporting/dashboards/restricted.ts`). So a report section is labelled for exactly the readers the transformation dashboard labels.
+- **Where the records come from.**
+  - Assemblers return them as `aggregates: AggregateRef[]` (`reporting/reports/assembler.ts`).
+  - A live report passes them to `documentForReader` (`reporting/reports/restricted.ts`).
+  - A stored snapshot keeps them in `report_snapshot_aggregate` (migration `0126`; ADR-0045 §3, amendment of 2026-11-08).
+- **Legacy snapshots.** A snapshot stored before `0126` has `report_snapshot.aggregates_recorded = false`. Its aggregate sections are judged conservatively against **every** record of the section's types marked sensitive in its transformation (`legacyAggregates`). This is a deliberate superset: it may over-label, and it never under-labels. The column is immutable after insert.
+- **What the aggregate records are not.** They are never shown and never omit anything. They are not sources: `listReportSnapshotSources` does not list them, and the D-199 export refusal does not read them. An aggregate shows a value to every reader (D-195 Q3). Totals and metrics are unchanged, and `content` and `contentSha256` are unchanged.
+- **Exports (unchanged; T-DG6-BE-Z9 §9 item 1).** The member is read-time only. So the rendered export files carry no "Includes restricted records" label for any section. Whether an export should carry it is an open design question and is not decided here. It is not a defect against D-195 Q3, and refusing such an export would contradict the D-199 rule, which is decided on the selection's records.
+
+### B. An open record never names a restricted record's id (D-218)
+
+- **The rule** (D-218, quoted): "a response never names the id of a sensitive record the reader is not admitted to. The reference is omitted; where the open record depends on it, a neutral restricted marker without an id is returned, `includesRestrictedRecords: true` is set, and the screen shows the restricted label instead of a link."
+- **Restricted** means a record of the §2 sensitive set, or a `SENSITIVE_CHILD_SOURCES` child carrying its values (amendment of 2026-11-04), that the reader is not admitted to by the §2 clause. Admitted readers get every id and no marker.
+- **The shapes.** Every response that serializes such a reference takes one of these shapes. The OpenAPI description of each listed field and member states its own case.
+
+  | Shape | Where (as shipped) | Helper |
+  |---|---|---|
+  | **Null + marker.** A nullable reference becomes `null`, and the object carries `includesRestrictedRecords: true`. | Benefit `parentBenefitId` and `businessCaseLineId`; Day-90 response, health answer, gate-condition closure, workstream output, inherited record, dispensation and deliverable-confirmation `evidenceId`; RAID action `correctiveCaseId`; sustainment review `transitionDecisionId`; procedure instance `subjectRecordId`. | `hideRestrictedRefs` (`access/sensitive-reach.ts`) |
+  | **Null with the type kept.** For a typed reference, the type stays and the id becomes null, plus the marker. | Launch task `outputRecordType`/`outputRecordId`; meeting output `recordType`/`recordId`; approval and approval decision record `subjectId`; workstream output `recordId`. | `hideRestrictedTypedRefs` |
+  | **Null + a named restricted flag.** Used where null alone would read as "none". | `countedBenefitRestricted` (benefit group), `businessCaseRestricted` (funding decision), `parentCaseRestricted` (business case), `blockerRecordRestricted` (executive decision), `evidenceRestricted` (RAG override and the override in force). | as above |
+  | **Omitted from a list of ids, plus the marker.** Counts of hidden ids are not returned. | Benefit group members; measurement, KPI-actual, BAU-handover and T14 register evidence ids (`evidenceCount` counts only what the reader may see); `includedCaseIds` (totals unchanged); agenda `materialsEvidenceIds`. | `hideRestrictedRefLists`, `restrictedIdsOf` |
+  | **A row whose only purpose is to name the record is not listed.** | Evidence links, phase-step evidence, TOM canvas evidence, procedure instance links, report snapshot sources and evidence, the orphan report, the evidence register's own sensitive items. | `withoutRestricted`; `visibleRefs` for the snapshot lists |
+  | **Redacted body.** In a free-form or frozen body, a hidden id that is an array element is dropped. An array element that is an object naming it is dropped. Any other property naming it becomes null. The stored body and its hash are unchanged, so a redacted gate snapshot does not verify against `snapshotSha256`. | Gate submission `snapshot` and criterion `detail`, the live gate view, finance-validation `content.evidence`, closure `snapshot.benefits[]`, form custom values, procedure `inputValues`, revision proposal `impact` and `validationReport` (counts unchanged), audit `changes` of an open record. | `redactRestrictedIds` |
+  | **Work items and My Work (D-222 (1)).** The rule covers the assignee too. A restricted item has `subjectId: null` (the type is kept), and its link goes to the transformation home (`/my-work` for an item outside any transformation). Its text is `inbox.restricted`, and it carries the marker. In My Work it has `recordId: null`, `href` the transformation home and `code: null`. This also applies to the completion response and to the workspace header's next actions. For a restricted item, the My Work cursor carries the work-item id, never the record id. BE-Z4's kept ids are superseded. | `listMyWorkItems`, `getWorkItem`, `completeWorkItem`, `getMyWork`, `getWorkspaceHeader` | `restrictedWorkItems` (`tasks/deep-links.ts`), `presentWorkItems` (`reporting/my-work.ts`) |
+  | **Automation condition literals (D-222 (2)).** A literal (or `in`-list element) naming a restricted record is shown **in place** as the neutral marker `"[restricted]"` (`AUTOMATION_RESTRICTED_LITERAL`). The condition, operator and positions stay, so the rule is still seen to test something. The readable summary says "a restricted record" / "سجل مقيد", and the version carries the marker. The rule's own `summary` is redacted the same way. The stored conditions, `contentSha256` and the audit trail are unchanged. Refusing the whole version was rejected, because it would hide that a rule exists. | every response that serializes a rule version or a rule | `redactConditionLiterals` (`automation/versions.ts`) |
+
+- **On screen (en/ar).** The restricted label is `access.includesRestrictedRecords` ("Includes restricted records" / "يشمل سجلات مقيدة", Arabic provisional), shown through `RestrictedRecordsLabel` in place of a link and never as "none". No new catalogue key was added.
+- **Contract shape changes (additive or widening, as merged).** Each changed schema gained an optional `includesRestrictedRecords` (`const: true`). Six fields widened from `Uuid` to `NullableUuid` and are still required:
+  - `RagOverride.evidenceId` and `RagOverrideInForce.evidenceId` (BE-Z10B, merged per D-220);
+  - `Approval.subjectId` and `ApprovalDecisionRecord.subjectId` (BE-Z12);
+  - `WorkItem.subjectId` and `MyWorkItem.recordId` (BE-Z12B). These two are confirmed by D-223 (1). No decision row names the first four; they are recorded here as merged. An approval, an override or a work item is a governance record. Omitting it would hide that it exists, so the record stays and only the id is withheld. The version string stays `1.5.0-p6`.
+
+### C. The re-save rule (D-218 continuation; `keptRestrictedRef`)
+
+A writer not admitted to a stored reference was shown it as null or omitted. When that writer saves the record back, the save must not remove a reference they never saw:
+- **A single reference.** Sending `null`, or omitting the field on a replacing write, **keeps** the stored hidden reference. Another id replaces it and is checked as before. A writer admitted to the stored record, or a stored reference to an open record, clears it with `null` exactly as before. The audit event records no change for such a re-save. Applied to:
+  - the Day-90 response PUT and the health answer PUT;
+  - the benefit PATCH `parentBenefitId` and `businessCaseLineId`, including the forms bulk edit, which uses the same core;
+  - the launch-task PATCH `outputRecordId`, when `outputRecordType` is unchanged.
+- **A list of ids.** On the agenda item PATCH, hidden `materialsEvidenceIds` are appended back. On the custom-field values PUT, a hidden attachment id stays in its list, and a hidden single reference stays when the writer sends null or omits it.
+- **Automation conditions (D-222 (2); `keepRestrictedLiterals`).** The marker sent back keeps the stored literal when four things match: the same field and operator, the k-th such condition of the request against the k-th stored one, and the same list position. A marker with no hidden literal behind it is stored as an ordinary literal: it names nothing and matches no id. A writer can only bring back literals of the version being edited, never an id from elsewhere.
+
+### D. The write rule for hidden references (T-DG6-BE-Z12; `refIsRestricted`)
+
+A write that names a reference to a restricted record answers **exactly as it answers an unknown id**: the same status, code, pointer and problem keys, and nothing is stored. The write is then neither an existence oracle nor a way to attach a record the writer gets 404 on. `refIsRestricted` makes one policy decision. The register kit's `unknownReference` (`transformations/register-kit.ts`) is the shared 422.
+
+| Write | Answer for a hidden id (= unknown id) |
+|---|---|
+| `createBenefit`, `updateBenefit` `parentBenefitId` | 422 `validation.reference` at `/parentBenefitId` |
+| `createBenefit`, `updateBenefit` `businessCaseLineId` | 422 `benefit.case_line_invalid`, checked **before** the 409 `benefit.case_line_taken`, which would otherwise disclose the line |
+| `updateLaunchTask` `outputRecordId` | 422 `launch_task.output_record_invalid` |
+| `createMeetingOutput` `recordId` | 422 `meeting_output.record_not_found` |
+| `linkProcedureStepEvidence` `evidenceId`; `completeProcedureStep` `outputRecordId` (link outputs, `requireNamedRecordRead`) | 422 `procedure_step.output_record_invalid` |
+| `launchProcedureInstance` `subjectRecordId`; automation condition literals | accepted. Neither is existence-checked for **any** id, so a hidden id and an unknown id behave identically. The reader is then shown null or the marker. A writer who already holds a hidden id learns that it names a restricted record. This was accepted by BE-Z12 §3 and by D-223 (2): UUIDv7 ids are not guessable, and no new 422 is added on a free-text field. |
+
+Writes that earlier tasks already refused, and references set only by the system (blockers, closures, snapshots), are unchanged.
+
+### E. D-219's exclusions (what D-218 does not override)
+
+D-218 governs business responses to readers not admitted to the record. It does **not** override these three cases. Each is excused in the sweep's `ID_REF_ALLOWED` (`access/sensitive-reach-sweep.test.ts`) and in the inventory (status `D-219`):
+1. **Audit events of a restricted record** (§2): actor, action, time, record id and versions are kept, and `changes`/`reason` are redacted (`redacted: true` on the global audit API). The audit trail must stay complete and tamper-evident for its readers. An event of an *open* record whose `changes` name a restricted id is redacted the same way (T-DG6-BE-Z10).
+2. **The grant register `recordId`** (§7). It is shown only to `sensitive_record.read` holders, who administer grants by record id. `recordTitle` stays null unless the caller can read the record.
+3. **The phase-step evidence remove response.** It echoes the id of the link the writer named in the request, so it adds no new disclosure. The list no longer gives a not-admitted reader that link id.
+
+D-219's falsifier stands: a reviewer showing a reader learning a restricted id it could not otherwise obtain through one of these paths reopens it.
+
+### F. The reference inventory is the reference list of this class (T-DG6-BE-Z12, BE-Z12B)
+
+- **The inventory.** `apps/api/test/support/sensitive-reference-inventory.ts` has one row per column that can hold the id of a sensitive record or of a `SENSITIVE_CHILD_SOURCES` child. Each row gives the column, its kind, what it can name, the operations that serialize it, its status, the fix or citation, and the test that seeds it. Its statuses are `redacted`, `holder-restricted`, `D-219`, `cannot-name`, `not-served`, `own-input` and `open`.
+- **The test.** `apps/api/test/integration/access/sensitive-reference-inventory.test.ts` derives the column set from the **PostgreSQL catalogue** of a database migrated to HEAD, not from the demo seed. The set is:
+  - every FK column referencing a sensitive or child table's `id`;
+  - every uuid column with no FK;
+  - every `uuid[]` column;
+  - every `json`/`jsonb` column.
+
+  The test fails on a missing, stale or mis-kinded row, an unknown operationId, or a `redacted` row without an existing exercise. It also pins the `open` and `PENDING` lists, both empty since BE-Z12B.
+- **The sweep.** `sensitive-reach-sweep.test.ts` checks in the database that every row it claims to exercise really holds a hidden id.
+- **Counts at T-DG6-BE-Z12B** (its handback §4): 199 rows from the catalogue (fk 54, uuid 59, json 84, array 2):
+
+  | Status | Rows |
+  |---|---|
+  | `redacted` | 48 |
+  | `holder-restricted` | 49 |
+  | `cannot-name` | 91 |
+  | `D-219` | 2 |
+  | `not-served` | 6 |
+  | `own-input` | 3 |
+  | `open` | 0 |
+- **Adding a column.** A new reference column of any of these kinds fails the inventory test until it is classified, in the same change. This extends the "Adding a table" rule of the amendment of 2026-11-04 from tables to columns.
+
+### G. Saved-view registry (T-DG6-BE-Z11)
+
+`includesRestrictedRecords` on a list item is a list **column**, not response metadata (ADR-0057 §4: the registry's columns are exactly the item schema's properties). It is listed for `workstream_outputs`. It has no filter and no sort: a "restricted only" filter would let a reader probe for restricted links, and the value is computed at read time.
+
+**Contract.** Only description texts changed in `docs/api/openapi.yaml`, with no schema change: `ReportDocument.sections`, the condition `value` of `AutomationRuleContent`, and the per-field descriptions of the fields in B to E. `pnpm openapi:lint` passes with 932 operations. No gate needs reopening.
+
+**Checked against the code** by the solution-architect at the integrated `HEAD` `95936867c`. The code agrees with the text above, and no contradiction was found. The code checked:
+- `reporting/reports/restricted.ts` (`documentForReader`, the aggregate section map, `legacyAggregates`) and migration `0126`;
+- `access/sensitive-reach.ts` (`keptRestrictedRef`, `refIsRestricted`, `redactRestrictedIds`);
+- `benefits/register.ts` (the re-save loop) and `launch/tasks.ts` (the re-save and the write);
+- `automation/versions.ts` (`redactConditionLiterals`, `keepRestrictedLiterals`);
+- `tasks/deep-links.ts` (`restrictedWorkItems`) and `reporting/my-work.ts` (`presentWorkItems` and the cursor);
+- the inventory and its test (`KNOWN_OPEN` and `KNOWN_PENDING` empty).
 
 Nothing else in this ADR changes. This is an engineering design record. It grants no business, Finance or IT approval (G1–G6), and it implies no DG0–DG7 result.

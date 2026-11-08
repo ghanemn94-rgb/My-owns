@@ -2198,6 +2198,29 @@ erDiagram
 
 The column list, the CHECK and the guard's constraint names are in `data-dictionary.md` ("P6 round-1 repair migration 0125"), as read from the migrated catalogue.
 
+### 1ab.3 P6 round-6 repair migration 0126: the records a report section's aggregate includes (T-DG6-ARCH-16, 2026-11-08; ADR-0045 amendment of 2026-11-08, ADR-0051 §2)
+
+`0126_p6_report_snapshot_aggregate.sql` (T-DG6-BE-Z9; F-DG6-400; the next id above `0125`, D-196) adds one snapshot child table and one column:
+
+- **`report_snapshot_aggregate`** (new) has one row per (snapshot, section, record) for each record whose values a section's aggregate figures include without naming it. These are the executive pack `metrics_<subject>`, the executive dashboard `area_value` and `items_portfolio`, and the gate pack `criteria`.
+  - Like the other snapshot children, it is written only by the snapshot's creating transaction and is append-only. The composite FK `(transformation_id, snapshot_id)` keeps it in the snapshot's transformation.
+  - `record_id` is polymorphic (`record_type` is `benefit`, `business_case` or `evidence`), so it has no FK.
+  - It is **not** a source. It decides only the read-time restricted flag (ADR-0051 §2), and it is never shown or exported.
+- **`report_snapshot.aggregates_recorded`** (new, boolean, immutable) is false for snapshots stored before `0126`. Their flag is decided conservatively (`legacyAggregates`).
+
+T-DG6-BE-Z10 to BE-Z12B added no table and no relationship. Their read-time rules for references to restricted records are in ADR-0051 (amendment of 2026-11-08). The column list, constraints and triggers are in `data-dictionary.md` ("P6 round-6 repair migration 0126"), as read from the migrated catalogue.
+
+```mermaid
+erDiagram
+    report_snapshot ||--o{ report_snapshot_aggregate : "records an aggregate section includes (append-only; not a source)"
+    organization ||--o{ report_snapshot_aggregate : "organization"
+    transformation ||--o{ report_snapshot_aggregate : "same transformation as the snapshot"
+```
+
+| Entity | Table(s) | PK | Owner (column) | Writers | Status field | `version` | API module |
+|---|---|---|---|---|---|---|---|
+| Snapshot aggregate records (S13-007; S10-002) | `report_snapshot_aggregate` | `id` (snapshot, section, record unique) | — | the snapshot's creating transaction | — | append-only | reporting |
+
 ## 2. Conceptual model, all §16 entity groups
 
 ### 2.1 Identity and access (REQ-S16-011; final gate DG4)

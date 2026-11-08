@@ -10727,6 +10727,7 @@ Generated from the catalogue of a freshly migrated database by `docs/delivery/ha
 ## report_snapshot
 
 - **Purpose:** One assembled output with its as-of time, reporting period, content, methodology version, approval state and provisional/unknown counts; issue, reissue as a new version, discard (REQ-S13-007, REQ-S13-008; ADR-0045 §2-§5).
+- **Changed by `0126`:** the column `aggregates_recorded` and the trigger `report_snapshot_aggregates_recorded_immutable`, plus the child table `report_snapshot_aggregate`. See "P6 round-6 repair migration 0126" (added 2026-11-08, T-DG6-ARCH-16).
 - **Migration:** `0080_p5_reports_snapshots_updates.sql`. **API module:** `reporting`. **Who writes:** `report.generate` (generate, reissue's assembly), `report.issue` (issue, reissue, discard). **Lifecycle:** generated → issued | discarded; issued → superseded by a reissue; content immutable after INSERT; never deleted; versioned.
 - **`mth_app` privileges:** INSERT, SELECT, UPDATE.
 
@@ -14436,3 +14437,81 @@ Every other constraint of `export_job` is unchanged, including `export_job_selec
 | Database | `export_job_assembly_attempt_count_check` (≥ 0) and the replaced `export_job_guard()`: no attempt at insert, an attempt steps by + 1 only while pending, and an assigned snapshot is of the stored selection's definition. These are added to the `0124` rules, which are kept. |
 | Watch (`assembly.ts`, API process) | It runs on **one pooled connection** per job, which holds class `exportJob` (730264) as a **session** lock: `pg_try_advisory_lock`, only tried, taken at the claim and released with `pg_advisory_unlock` in a `finally`. **Step 0, its own committed transaction:** claim the oldest pending job `FOR UPDATE SKIP LOCKED`, then the try-lock. At `assembly_attempt_count` ≥ `EXPORT_ASSEMBLY_MAX_ERRORS` (3), fail the job `export.assembly_failed` (`export_job.fail`). Otherwise count the attempt (+ 1, version + 1, `export_job.assembly_attempt`) and COMMIT before assembling. **Steps 1–6, one transaction:** re-read the job `FOR UPDATE` at the counted version, then exactly the `0124` flow (access check, assembly on its own read-only connection, commit-time access check, D-199, then the snapshot, the assignment `export_job.assemble` and the `export_job.requested` outbox event together). Every failure is `queued → failed` with `export_job.fail`. Settings are unchanged: `EXPORT_ASSEMBLY_INTERVAL_MS` 1,000, `EXPORT_ASSEMBLY_CONCURRENCY` 2, `EXPORT_ASSEMBLY_BATCH` 50, `EXPORT_ASSEMBLY_MAX_ERRORS` 3 (per job, persisted). |
 | Integration tests | `packages/db/test/integration/catalogue.test.ts` "0125: …" (the column, its CHECK, the guard's constraint names and the definition comparison); `apps/api/test/integration/reporting/exports-assembly.test.ts` (the bound across fresh module copies, the attempt committed before the assembly, the session lock held between the two transactions and released after, and the guard step). |
+
+# P6 round-6 repair migration 0126 (DG6)
+
+Recorded by T-DG6-ARCH-16 (2026-11-08; F-DG6-460) from the shipped `packages/db/migrations/0126_p6_report_snapshot_aggregate.sql` (T-DG6-BE-Z9; F-DG6-400). The column, constraint, index, trigger and grant texts below are `information_schema` / `pg_get_constraintdef` / `pg_indexes.indexdef` / `pg_get_triggerdef` output. They come from a disposable PostgreSQL 16.15 database with all 118 migrations applied (`docs/delivery/handbacks/DG6/T-DG6-ARCH-16-evidence/01-catalog-0126.log`). The design is ADR-0045 §3 (amendment of 2026-11-08) and ADR-0051 §2 (amendment of 2026-11-08, part A). The migration adds one table and one column to `report_snapshot` (0080, "P5 tables, slice F"). Where this section and the `0080` section differ, this section wins. T-DG6-BE-Z10 to BE-Z12B shipped no migration. Their changes to what the API returns for references to restricted records are read-time rules, recorded in ADR-0051 (amendment of 2026-11-08) and checked by `apps/api/test/support/sensitive-reference-inventory.ts`. No stored column changed.
+
+## report_snapshot_aggregate
+
+- **Purpose:** The records whose values a report section's aggregate figures include without naming them. One row per (snapshot, section, record). The rows feed only the read-time `includesRestrictedRecords` of the section (ADR-0051 §2, D-195 Q3):
+  - the executive pack's `metrics_<subject>` and the executive dashboard's `area_value`: the dashboard facts' benefits and business cases;
+  - the executive dashboard's `items_portfolio`: the benefits allocated to each listed initiative;
+  - the gate pack's `criteria`: the evidence items counted as unverified.
+- **Not a source:**
+  - never shown;
+  - never listed by `listReportSnapshotSources`;
+  - not read by the D-199 export refusal (`exports/jobs.ts` reads `report_snapshot_source`);
+  - never part of `content` or `content_sha256`.
+- **Migration:** `0126_p6_report_snapshot_aggregate.sql`. **API module:** `reporting` (`reports/restricted.ts` reads it, and the snapshot writer inserts it).
+- **Who writes:** the snapshot's creating transaction only (`report_snapshot_child_guard`: same organization and transformation as the snapshot, which must be `generated` and created in this transaction).
+- **Lifecycle:** append-only, never updated or deleted. It has no audit event of its own: `report_snapshot.generate` covers it, as for `report_snapshot_source`.
+- **`mth_app` privileges:** INSERT, SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| snapshot_id | uuid | NOT NULL |  |  |
+| section_key | text | NOT NULL |  | `CHECK ((section_key ~ '^[a-z][a-z0-9_]{0,63}$'))` |
+| record_type | text | NOT NULL |  | `CHECK ((record_type ~ '^[a-z][a-z0-9_]{1,63}$'))` |
+| record_id | uuid | NOT NULL |  |  |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+
+`record_type` is the audit record type (the table name): `benefit`, `business_case` or `evidence` for the sections above. `record_id` has no foreign key, because it is polymorphic. The reference inventory classifies it under its uuid class.
+
+**Table constraints:**
+
+- `report_snapshot_aggregate_key` (UNIQUE): `UNIQUE (snapshot_id, section_key, record_type, record_id)`
+- `report_snapshot_aggregate_snapshot_fkey` (FK): `FOREIGN KEY (transformation_id, snapshot_id) REFERENCES report_snapshot(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+
+**Indexes:** `report_snapshot_aggregate_pkey` (`id`) and `report_snapshot_aggregate_key`: `UNIQUE (snapshot_id, section_key, record_type, record_id)`. The key also serves the read by snapshot.
+
+**Triggers:**
+
+- `report_snapshot_aggregate_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `report_snapshot_aggregate_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+- `report_snapshot_aggregate_guard`: BEFORE INSERT FOR EACH ROW → `report_snapshot_child_guard()` (raises `report_snapshot_aggregate_same_transformation` or `report_snapshot_aggregate_creation_only`)
+- `report_snapshot_aggregate_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## report_snapshot: changes in 0126
+
+| Column | Type | Null | Default | Change in 0126 |
+|---|---|---|---|---|
+| aggregates_recorded | boolean | NOT NULL | `true` | **New** (ordinal 38). It is true when the snapshot's aggregate records are in `report_snapshot_aggregate`, which holds for every snapshot written since `0126` (the column default). It is false for the snapshots that existed when `0126` ran: the column was added with default `false` and then given default `true`. For those, the API labels the aggregate sections conservatively, from every record of the section's types marked sensitive in the snapshot's transformation (`legacyAggregates`, `reporting/reports/restricted.ts`). That may over-label and never under-labels. Immutable after insert (`report_snapshot_aggregates_recorded_immutable`). Not in the API. |
+
+**Triggers (added):**
+
+- `report_snapshot_aggregates_recorded_immutable`: BEFORE UPDATE FOR EACH ROW → `report_snapshot_aggregates_recorded_immutable()`
+
+Every other column, constraint, index and trigger of `report_snapshot` is unchanged. `mth_app` privileges are unchanged (INSERT, SELECT, UPDATE).
+
+**Backfill:** none. The only existing-row change is `aggregates_recorded = false` on the snapshots stored before `0126`. Content and `content_sha256` are unchanged.
+
+## P6 function (0126)
+
+| Function | Migration | What it does | `mth_app` |
+|---|---|---|---|
+| `report_snapshot_aggregates_recorded_immutable()` | 0126 | `search_path = public, pg_temp`; not `SECURITY DEFINER`. On UPDATE it raises `check_violation` with constraint `report_snapshot_aggregates_recorded_immutable` when `aggregates_recorded` changes. So no update can turn a recorded snapshot into a legacy one, or the reverse. | via trigger |
+
+`report_snapshot_child_guard()` (0080) is reused unchanged for the new table.
+
+## P6 validation rules (0126)
+
+| Layer | What it checks |
+|---|---|
+| Database | The `section_key` and `record_type` patterns, the per-snapshot UNIQUE key, the composite FK (same transformation), `report_snapshot_child_guard()` (creation transaction only), append-only, and the immutable `aggregates_recorded`. |
+| API, write (snapshot creation) | The assembler's `aggregates: AggregateRef[]` are inserted in the snapshot's creating transaction, beside `report_snapshot_source`. Content and `contentSha256` are unchanged. |
+| API, read (`documentForReader`) | The flag of each aggregate section is decided from its references plus its aggregate records, per reader: true, false, or absent when none is sensitive. When `aggregates_recorded` is false, the records come from `legacyAggregates`. |
+| Integration tests | `packages/db/test/integration/catalogue.test.ts` "0126: …" (the triggers, the privileges and the immutable column), and `apps/api/test/integration/access/sensitive-reach-dashboards-reports.test.ts` (T-DG6-BE-Z9: the flag on live and stored snapshots, the legacy rule, and the content hash unchanged). |
