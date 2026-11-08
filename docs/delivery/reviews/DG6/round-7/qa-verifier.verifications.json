@@ -1,0 +1,27 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG6-440",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified by qa-verifier (the originating reviewer) on candidate sha256:b64b95ff5deda5d1ccc9adf8c6bf85b3ed251a5c5cb1cf24e87d8532e3aa4bae (source 70f05ed49d893378efc99cd3e1a4027fc77697e8), in disposable --shared clones under $TMPDIR (r7: the candidate; m: the mutant, then rebuilt from the candidate). I read the finding in findings.json (OPEN, one history entry) and in round-6/qa-verifier.findings.json, the FE-Z3-R6 and FE-Z4 handbacks, and the diff 031945d8..70f05ed4 of apps/web/src/pages/reports/ui.tsx (only commit cf59bad63 touches it): SectionView case 'table' now builds the totals row once and, when there are no rows but there are totals, renders the table with its header, one row whose single cell (colSpan = every column) holds the empty text, and the totals row; with no rows and no totals it keeps the plain empty text. Live preview, the snapshot page and presentation mode all render ReportDocumentView/SectionView (ReportsPage.tsx:325, SnapshotPage.tsx:159, PresentationPage.tsx:181). (1) My round-6 reproduction, unchanged except names (zz-qa-dg6r7-restricted-label-ui.spec.ts), on the real demo stack (e2e/support/with-demo-stack.sh) where the finding was observed, chromium-en and chromium-ar: roaming.user.to marks demo benefit B01 sensitive; roaming.user.tl (not admitted) and the TO open the live benefits register preview. With the locale unset (07a, 22 passed, exit 0) and with C.UTF-8 (07b, 22 passed, exit 0): API totals identical for TL and TO, TL has no B01 row, label shown to the TL and not the TO, and on screen 'TL totals rows 3' equal to the TO's 3 and to the TL's own 3 before the marking (Revenue uplift: Total SAR 222,750.00 Validated by Finance, SAR 99,000.00 pending, Provisional; ar the same in Arabic). Screenshots show the label, 'No records' inside the table and the Total row. The first demo run (07) lost chromium-en renderers to memory pressure ('Target crashed'/'Page crashed'); its chromium-ar run of the same probe passed, and the full re-run (07a) passed in both languages. (2) Mutant: ui.tsx reverted to the round-6 source in clone m, rebuilt (10c, exit 0). section-totals.test.tsx fails 2 of 6 (the 'every row restricted' test in en and ar; 10a, exit 1 by design); my probe fails in en and ar with 'TL totals rows 2 ... TO totals rows 3 ... before 3' and 'No records' (10d); the in-tree apps/web/e2e/p6-report-restricted-totals.spec.ts fails in en and ar at 'live: the TL's totals rows equal the TO's' (10d, exit 1 by design). On the candidate the unit tests pass 16/16 (10b) and the in-tree spec passes in every product run (06a en, 06b ar locale unset; 06c en, 06d ar C.UTF-8). The in-tree spec asserts the clause literally: header, empty cell spanning every column, one totals row with the 'Total' row header and text equal to the admitted reader's, on the live preview and on the stored snapshot, plus axe 0 serious/critical and no benefit id in the TL's DOM. Clone m was restored (git checkout) and rebuilt from the candidate before any other use (01h). Presentation mode is covered through the shared component only; the meeting pack holds no benefit, business case or evidence record, so no presentation section can be fully restricted.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-7/07a-e2e-demo-unset-rerun.log",
+        "docs/delivery/test-evidence/DG6/qa/round-7/07b-e2e-demo-cutf8.log",
+        "docs/delivery/test-evidence/DG6/qa/round-7/07-e2e-demo-unset.log",
+        "docs/delivery/test-evidence/DG6/qa/round-7/10a-f440-mutant-unit.log",
+        "docs/delivery/test-evidence/DG6/qa/round-7/10b-f440-candidate-unit.log",
+        "docs/delivery/test-evidence/DG6/qa/round-7/10c-f440-mutant-build.log",
+        "docs/delivery/test-evidence/DG6/qa/round-7/10d-f440-mutant-e2e.log",
+        "docs/delivery/test-evidence/DG6/qa/round-7/01h-clone-m-rebuild.log",
+        "docs/delivery/test-evidence/DG6/qa/round-7/06a-e2e-product-unset-en.log",
+        "docs/delivery/test-evidence/DG6/qa/round-7/06b-e2e-product-unset-ar.log",
+        "docs/delivery/test-evidence/DG6/qa/round-7/shots/probes-unset/restricted-register-TL-en.png",
+        "docs/delivery/test-evidence/DG6/qa/round-7/shots/probes-unset/restricted-register-TL-ar.png",
+        "docs/delivery/test-evidence/DG6/qa/round-7/shots/probes-demo-cutf8/restricted-register-TL-en.png",
+        "docs/delivery/test-evidence/DG6/qa/round-7/shots/f440-mutant/restricted-register-TL-en.png",
+        "docs/delivery/test-evidence/DG6/qa/tests/round-7/zz-qa-dg6r7-restricted-label-ui.spec.ts"
+      ]
+    }
+  ]
+}
