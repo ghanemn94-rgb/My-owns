@@ -1,0 +1,133 @@
+port-policy: PostgreSQL listening on port 31100 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-z12b
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw7q9rsk_e2eb4d3c (server_encoding UTF8); applied 118 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/access/sensitive-reach-registers.test.ts (6 tests | 2 failed) 2024ms
+   ✓ ADR-0051 §2: a sensitive benefit's register rows (F-DG6-220) > negative: TL, AUD and BO2 get 404 on the benefit; its case, decision and link are absent and 404  362ms
+   ✓ ADR-0051 §2: a sensitive benefit's register rows (F-DG6-220) > negative: BO2 (holds every write permission) gets 404 on each write naming a child, and nothing changes 128ms
+   × ADR-0051 §2: a sensitive benefit's register rows (F-DG6-220) > negative: BO2's work items, inbox, My Work and deep links about the case and decision say inbox.restricted 80ms
+     → expected 0 to be greater than 0
+   × ADR-0051 §2: a sensitive benefit's register rows (F-DG6-220) > D-222 work item ids: BO2's restricted work items, My Work items and next actions name no record id 25ms
+     → expected { …(5) } to deeply equal { subjectId: null, …(4) }
+   ✓ ADR-0051 §2: a sensitive benefit's register rows (F-DG6-220) > positive: the TO (sensitive_record.grant) and BO (the owner) list and read every row 204ms
+   ✓ ADR-0051 §2: a sensitive benefit's register rows (F-DG6-220) > positive: BO2 and TL with an explicit grant see the rows and texts again (next request); AUD still does not  347ms
+ ❯ |integration| apps/api/test/integration/access/sensitive-reference-pending-z12b.test.ts (7 tests | 2 failed) 1073ms
+   ✓ T-DG6-BE-Z12B: the PENDING inventory rows, seeded (F-DG6-480; D-218) > control: TL, AUD and SP get 404 on the benefit and its decision; the TO and BO read both 99ms
+   ✓ T-DG6-BE-Z12B: the PENDING inventory rows, seeded (F-DG6-480; D-218) > approval.subject_id: the SP's approval of the restricted decision names no subject id (marked) 46ms
+   ✓ T-DG6-BE-Z12B: the PENDING inventory rows, seeded (F-DG6-480; D-218) > sustainment_review.transition_decision_id: TL and AUD see the review without the decision id (marked) 26ms
+   ✓ T-DG6-BE-Z12B: the PENDING inventory rows, seeded (F-DG6-480; D-218) > procedure_instance.subject_record_id and input_values: TL sees the instance without the benefit id (marked) 57ms
+   × T-DG6-BE-Z12B: automation_rule_version.conditions (D-222) > the author, not admitted, sees the marker in place of each hidden literal, the label in the summary, marked 18ms
+     → expected [ { op: 'eq', …(2) }, …(2) ] to deeply equal [ { field: 'benefitId', …(2) }, …(2) ]
+   × T-DG6-BE-Z12B: automation_rule_version.conditions (D-222) > a re-save that sends the marker back keeps each hidden literal; an unrelated edit still applies 26ms
+     → expected undefined to be true // Object.is equality
+   ✓ T-DG6-BE-Z12B: automation_rule_version.conditions (D-222) > positive: with an explicit grant the author sees the literals again (next request) 24ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-registers.test.ts > ADR-0051 §2: a sensitive benefit's register rows (F-DG6-220) > negative: BO2's work items, inbox, My Work and deep links about the case and decision say inbox.restricted
+AssertionError: expected 0 to be greater than 0
+ ❯ apps/api/test/integration/access/sensitive-reach-registers.test.ts:374:25
+    372|     // My Work items about the case and decision (T-DG6-BE-Z12B: recor…
+    373|     const mine = (await myWork(s)).filter((x) => x.includesRestrictedR…
+    374|     expect(mine.length).toBeGreaterThan(0);
+       |                         ^
+    375|     for (const m of mine)
+    376|       expect({ key: m.messageKey, params: m.messageParams, code: m.cod…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-registers.test.ts > ADR-0051 §2: a sensitive benefit's register rows (F-DG6-220) > D-222 work item ids: BO2's restricted work items, My Work items and next actions name no record id
+AssertionError: expected { …(5) } to deeply equal { subjectId: null, …(4) }
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[2m    "key": "inbox.restricted",[22m
+[32m-   "linkPath": "/transformations/01a1bad7-7967-7364-8220-744b247bd654",[39m
+[32m-   "marker": true,[39m
+[31m+   "linkPath": "/transformations/01a1bad7-7967-7364-8220-744b247bd654/corrective-actions/01a1bad7-7b45-77b4-8ba9-f62b81b830b5",[39m
+[31m+   "marker": undefined,[39m
+[2m    "periodLabel": null,[22m
+[32m-   "subjectId": null,[39m
+[31m+   "subjectId": "01a1bad7-7b45-77b4-8ba9-f62b81b830b5",[39m
+[2m  }[22m
+
+ ❯ apps/api/test/integration/access/sensitive-reach-registers.test.ts:414:12
+    412|           key: item.messageKey,
+    413|           periodLabel: item.periodLabel,
+    414|         }).toEqual({ subjectId: null, linkPath: home, marker: true, ke…
+       |            ^
+    415|       expect(one.subjectType).toBe(id === N.caseItemId ? "corrective_c…
+    416|       expect(leaks(one), `work item ${id}`).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reference-pending-z12b.test.ts > T-DG6-BE-Z12B: automation_rule_version.conditions (D-222) > the author, not admitted, sees the marker in place of each hidden literal, the label in the summary, marked
+AssertionError: expected [ { op: 'eq', …(2) }, …(2) ] to deeply equal [ { field: 'benefitId', …(2) }, …(2) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[33m@@ -1,17 +1,17 @@[39m
+[2m  [[22m
+[2m    {[22m
+[2m      "field": "benefitId",[22m
+[2m      "op": "eq",[22m
+[32m-     "value": "[restricted]",[39m
+[31m+     "value": "01a1bad7-8858-7615-b013-6dc2c64ec062",[39m
+[2m    },[22m
+[2m    {[22m
+[2m      "field": "benefitId",[22m
+[2m      "op": "in",[22m
+[2m      "value": [[22m
+[2m        "01a1bad7-8892-76dc-bc2c-e4414268bbb8",[22m
+[32m-       "[restricted]",[39m
+[31m+       "01a1bad7-8858-7615-b013-6dc2c64ec062",[39m
+[2m      ],[22m
+[2m    },[22m
+[2m    {[22m
+[2m      "field": "severity",[22m
+[2m      "op": "eq",[22m
+
+ ❯ apps/api/test/integration/access/sensitive-reference-pending-z12b.test.ts:271:36
+    269|   it("the author, not admitted, sees the marker in place of each hidde…
+    270|     const one = ok(await send("GET", `${V()}/1`, { session: admin.sess…
+    271|     expect(one.content.conditions).toEqual([
+       |                                    ^
+    272|       { field: "benefitId", op: "eq", value: AUTOMATION_RESTRICTED_LIT…
+    273|       { field: "benefitId", op: "in", value: [P.benefitId, AUTOMATION_…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reference-pending-z12b.test.ts > T-DG6-BE-Z12B: automation_rule_version.conditions (D-222) > a re-save that sends the marker back keeps each hidden literal; an unrelated edit still applies
+AssertionError: expected undefined to be true // Object.is equality
+
+[32m- Expected:[39m 
+true
+
+[31m+ Received:[39m 
+undefined
+
+ ❯ apps/api/test/integration/access/sensitive-reference-pending-z12b.test.ts:307:45
+    305|       }),
+    306|     );
+    307|     expect(saved.includesRestrictedRecords).toBe(true);
+       |                                             ^
+    308|     expect(leaks(saved), "updateAutomationRuleVersion response").toEqu…
+    309|     const after = await storedConditions();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  4 failed | 9 passed (13)
+   Start at  11:07:13
+   Duration  16.52s (transform 4.53s, setup 0ms, collect 9.74s, tests 3.10s, environment 0ms, prepare 47ms)
+
+exit=1

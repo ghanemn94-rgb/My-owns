@@ -5,11 +5,14 @@
 //    its record type and code. A draft is labelled "Draft – not submitted", never as submitted or approved data.
 //  - A due date that is null is Unknown, never a guessed date. The horizon is Unknown when no calendar is configured.
 //  - Every item links to its record (`href`: the work item's stored link, or the record's path mapped to its screen).
+//  - T-DG6-BE-Z12B (D-222; ADR-0051 §2): a work item about a record the caller is not admitted to has `recordId: null`,
+//    links to the transformation home and shows the restricted label; rows are never keyed by `recordId` alone.
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { MY_WORK_SECTIONS, type MyWorkItem, type MyWorkSectionPage } from "@mth/shared/schemas";
 import { useLocale } from "../../app/locale.ts";
 import { Icon } from "../../components/Icon.tsx";
+import { RestrictedRecordsLabel } from "../../components/sensitivity/RestrictedRecordsLabel.tsx";
 import { RegisterTable, type RegisterColumn } from "../../components/RegisterTable.tsx";
 import { Section } from "../../components/Section.tsx";
 import { formatBusinessDate } from "../../lib/format.ts";
@@ -17,6 +20,31 @@ import { renderMessage } from "../my-work/messages.ts";
 import { DueDate } from "../my-work/p4ui.tsx";
 import { useMyWorkDashboard, useMyWorkSectionPages } from "./api.ts";
 import { RecordLink } from "./ui.tsx";
+
+/**
+ * The React keys of a list of My Work items, unique within the list. A restricted work item has no record id
+ * (T-DG6-BE-Z12B; D-222), so its key is its position among the restricted items of the list.
+ */
+export function myWorkRowKeys(items: readonly MyWorkItem[]): Map<MyWorkItem, string> {
+  const out = new Map<MyWorkItem, string>();
+  let restricted = 0;
+  for (const i of items) {
+    const id = i.recordId ?? `restricted-${String((restricted += 1))}`;
+    out.set(i, `${i.source}-${id}-${i.kind ?? ""}`);
+  }
+  return out;
+}
+
+/** The restricted label of a work item whose record the caller is not admitted to (nothing otherwise). */
+export function MyWorkRestricted({ item }: { item: MyWorkItem }) {
+  if (item.includesRestrictedRecords !== true) return null;
+  return (
+    <>
+      {" "}
+      <RestrictedRecordsLabel value />
+    </>
+  );
+}
 
 /** The text of one My Work item: its translated message, or for a draft its record type and code. */
 export function useItemText(): (item: MyWorkItem) => string {
@@ -106,6 +134,7 @@ function UpcomingDeadlines({
   const { t } = useTranslation();
   const locale = useLocale();
   const text = useItemText();
+  const keys = myWorkRowKeys(items);
   return (
     <Section
       id="mw-deadlines"
@@ -122,7 +151,7 @@ function UpcomingDeadlines({
       ) : (
         <ol className="plain-list" data-deadlines={items.length}>
           {items.map((i) => (
-            <li key={`${i.source}-${i.recordId}-${i.kind ?? ""}`} data-deadline={i.recordId} data-overdue={i.overdue}>
+            <li key={keys.get(i)} data-deadline={i.recordId ?? undefined} data-overdue={i.overdue}>
               <DueDate date={i.dueDate} />{" "}
               {i.overdue ? (
                 <span className="status-chip status-chip--off-track">
@@ -131,7 +160,8 @@ function UpcomingDeadlines({
               ) : null}{" "}
               <RecordLink href={i.href} contextTid={i.transformationId}>
                 {text(i)}
-              </RecordLink>{" "}
+              </RecordLink>
+              <MyWorkRestricted item={i} />{" "}
               <span className="small muted">({t(`dashboards.myWork.section.${i.section}`)})</span>
             </li>
           ))}
@@ -151,6 +181,7 @@ function SectionBlock({ page }: { page: MyWorkSectionPage }) {
   const last = extra[extra.length - 1];
   const loading = more.some((q) => q.isFetching);
   const nextCursor = cursors.length === 0 ? page.nextCursor : (last?.nextCursor ?? null);
+  const keys = myWorkRowKeys(rows);
   const columns: RegisterColumn<MyWorkItem>[] = [
     {
       id: "item",
@@ -162,6 +193,7 @@ function SectionBlock({ page }: { page: MyWorkSectionPage }) {
           <RecordLink href={i.href} contextTid={i.transformationId}>
             {text(i)}
           </RecordLink>
+          <MyWorkRestricted item={i} />
           {i.source === "draft" ? (
             <span className="lifecycle-chip lifecycle-chip--draft small" data-draft>
               {t("dashboards.myWork.draftLabel")}
@@ -208,7 +240,7 @@ function SectionBlock({ page }: { page: MyWorkSectionPage }) {
         caption={t(`dashboards.myWork.section.${page.section}`)}
         rows={rows}
         columns={columns}
-        getRowId={(i) => `${i.source}-${i.recordId}-${i.kind ?? ""}`}
+        getRowId={(i) => keys.get(i) ?? ""}
         emptyTitle={t("dashboards.myWork.sectionEmpty")}
         defaultSort={{ id: "due", dir: "asc" }}
       />

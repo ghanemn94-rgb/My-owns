@@ -15,7 +15,8 @@ export const workItem = z.strictObject({
   kind: z.string(),
   assigneeUserId: uuid,
   subjectType: z.string(),
-  subjectId: uuid,
+  /** Null for a subject the reader is not admitted to (T-DG6-BE-Z12B; D-222; ADR-0051 §2). */
+  subjectId: uuid.nullable(),
   linkPath: relativeLinkPath,
   messageKey: z.string(),
   messageParams,
@@ -26,6 +27,8 @@ export const workItem = z.strictObject({
   completedBy: uuid.nullable(),
   createdAt: timestamp,
   version,
+  /** True when the subject or link names a record the reader is not admitted to (label access.includesRestrictedRecords). */
+  includesRestrictedRecords: z.literal(true).optional(),
 });
 export type WorkItem = z.infer<typeof workItem>;
 export const workItemPage = z.strictObject({ items: z.array(workItem), nextCursor: z.string().nullable() });

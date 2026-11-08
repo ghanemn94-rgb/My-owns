@@ -31,7 +31,13 @@ import {
   type ModuleDeps,
 } from "../platform/index.ts";
 import { loadDefaultWorkingCalendar } from "../portfolio/index.ts";
-import { INBOX_RESTRICTED, loadOpenWorkItems, restrictedLinkChildren, type OpenWorkItemFact } from "../tasks/index.ts";
+import {
+  INBOX_RESTRICTED,
+  loadOpenWorkItems,
+  restrictedWorkItemLink,
+  restrictedWorkItems,
+  type OpenWorkItemFact,
+} from "../tasks/index.ts";
 import { dueSoonHorizon } from "./dashboards/areas.ts";
 import { readOnly, T_PATH } from "./dashboards/engine.ts";
 import { businessClockOf } from "./dashboards/filters.ts";
@@ -200,6 +206,33 @@ export function workItemOf(w: OpenWorkItemFact, businessDate: string): MyWorkIte
   };
 }
 
+/**
+ * The caller's work items as My Work items (My Work and the workspace header's next actions). T-DG6-BE-Z4 /
+ * T-DG6-BE-Z12B (ADR-0051 §2, §3; D-218, D-222): an item whose subject or stored link names a record the caller is not
+ * admitted to stays listed (it is the caller's task) with the inbox's `inbox.restricted` text, no code, `recordId:
+ * null`, `href` the transformation home, and `includesRestrictedRecords: true`. One reach decision for the batch.
+ */
+export async function presentWorkItems(
+  db: DbOrTx,
+  principal: Principal,
+  facts: readonly OpenWorkItemFact[],
+  businessDate: string,
+): Promise<MyWorkItem[]> {
+  const restricted = await restrictedWorkItems(db, principal, facts);
+  return facts.map((w, i) =>
+    restricted.at(i) === true
+      ? {
+          ...workItemOf(w, businessDate),
+          ...INBOX_RESTRICTED,
+          code: null,
+          recordId: null,
+          href: restrictedWorkItemLink(w.transformationId),
+          includesRestrictedRecords: true as const,
+        }
+      : workItemOf(w, businessDate),
+  );
+}
+
 /** Whether the caller may still see an item of `transformationId` (null: an organization-level item of its own org). */
 function visible(
   transformationId: string | null,
@@ -211,8 +244,16 @@ function visible(
 }
 
 const DUE_KEY = (i: MyWorkItem) => i.dueDate ?? "9999-12-31";
+/**
+ * An item and its order key. The last key part is the record id, or for a restricted work item (recordId null) its
+ * own work-item id, so the cursor (an opaque but decodable string) never carries a hidden record's id (D-218).
+ */
+interface Keyed {
+  readonly item: MyWorkItem;
+  readonly tie: string;
+}
 /** Order inside a section: by due date (none last), then source, record id (deterministic; the cursor key). */
-const keyOf = (i: MyWorkItem): [string, string, string] => [DUE_KEY(i), i.source, i.recordId];
+const keyOf = (k: Keyed): [string, string, string] => [DUE_KEY(k.item), k.item.source, k.tie];
 const compareKeys = (a: readonly string[], b: readonly string[]) => {
   const bs = b.values();
   for (const x of a) {
@@ -227,6 +268,8 @@ export interface MyWorkFacts {
   readonly horizonWorkingDays: number;
   readonly horizonDate: string | null;
   readonly items: readonly MyWorkItem[];
+  /** `items` with their order keys (same order). */
+  readonly keyed: readonly Keyed[];
 }
 
 /** Loads every own item of the caller (all six sections), each visible and in its section. */
@@ -244,18 +287,11 @@ export async function loadMyWork(db: DbOrTx, principal: Principal): Promise<MyWo
   const workItems = (await loadOpenWorkItems(db, userId)).filter((w) =>
     visible(w.transformationId, w.organizationId, readable, orgs),
   );
-  // T-DG6-BE-Z4 (F-DG6-220; ADR-0051 §2, §3): an item about a corrective case or transition decision the caller is not
-  // admitted to stays listed (it is the caller's task) with the inbox's `inbox.restricted` text and no code.
-  const restricted = await restrictedLinkChildren(
-    db,
-    principal,
-    workItems.map((w) => w.linkPath),
-  );
-  const items: MyWorkItem[] = workItems.map((w, i) =>
-    restricted.at(i) === true
-      ? { ...workItemOf(w, clock.date), ...INBOX_RESTRICTED, code: null }
-      : workItemOf(w, clock.date),
-  );
+  const keyed: Keyed[] = (await presentWorkItems(db, principal, workItems, clock.date)).map((item, i) => ({
+    item,
+    tie: item.recordId ?? workItems.at(i)!.id,
+  }));
+  const push = (item: MyWorkItem & { recordId: string }) => keyed.push({ item, tie: item.recordId });
 
   // Action items the caller owns that no open work item of the caller names as its subject (listed once).
   const named = new Set(workItems.filter((w) => w.subjectType === "action_item").map((w) => w.subjectId));
@@ -267,7 +303,7 @@ export async function loadMyWork(db: DbOrTx, principal: Principal): Promise<MyWo
     .execute();
   for (const a of actions) {
     if (named.has(a.id) || !visible(a.transformation_id, a.organization_id, readable, orgs)) continue;
-    items.push({
+    push({
       section: "assigned_actions",
       source: "action_item",
       recordType: "action_item",
@@ -293,7 +329,7 @@ export async function loadMyWork(db: DbOrTx, principal: Principal): Promise<MyWo
   for (const d of drafts) {
     if (d.record_id === null || d.record_type === null || d.organization_id === null) continue;
     if (!visible(d.transformation_id, d.organization_id, readable, orgs)) continue;
-    items.push({
+    push({
       section: "drafts",
       source: "draft",
       recordType: d.record_type,
@@ -314,12 +350,13 @@ export async function loadMyWork(db: DbOrTx, principal: Principal): Promise<MyWo
       overdue: false,
     });
   }
-  items.sort((a, b) => compareKeys(keyOf(a), keyOf(b)));
+  keyed.sort((a, b) => compareKeys(keyOf(a), keyOf(b)));
   return {
     businessDate: clock.date,
     horizonWorkingDays,
     horizonDate: dueSoonHorizon(clock.date, horizonWorkingDays, calendar),
-    items,
+    items: keyed.map((k) => k.item),
+    keyed,
   };
 }
 
@@ -358,10 +395,10 @@ export function registerMyWorkRoutes(app: FastifyInstance, { db }: ModuleDeps): 
     return readOnly(db, async (tx) => {
       const f = await loadMyWork(tx, principal);
       const sections = (query.section === undefined ? MY_WORK_SECTIONS : [query.section]).map((section) => {
-        const all = f.items.filter((i) => i.section === section);
-        const rest = after === null ? all : all.filter((i) => compareKeys(keyOf(i), after.map(String)) > 0);
+        const all = f.keyed.filter((k) => k.item.section === section);
+        const rest = after === null ? all : all.filter((k) => compareKeys(keyOf(k), after.map(String)) > 0);
         const page = paginate(rest, query.limit, keyOf, hashOf(section));
-        return { section, total: all.length, items: page.items, nextCursor: page.nextCursor };
+        return { section, total: all.length, items: page.items.map((k) => k.item), nextCursor: page.nextCursor };
       });
       const now = await sql<{ now: Date }>`SELECT now() AS now`.execute(tx);
       return {

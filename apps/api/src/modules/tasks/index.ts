@@ -34,6 +34,8 @@ export {
   issueDeepLink,
   readableTargets,
   restrictedLinkChildren,
+  restrictedWorkItemLink,
+  restrictedWorkItems,
   type DeepLinkTarget,
   type IssuedDeepLink,
 } from "./deep-links.ts";

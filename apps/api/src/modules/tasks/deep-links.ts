@@ -122,6 +122,47 @@ export async function restrictedLinkChildren(
   return children.map((c) => c !== null && restricted.has(reachKey(c)));
 }
 
+/** The columns of a work item that can name a record (its subject and its stored link). */
+export interface WorkItemRefs {
+  readonly subjectType: string;
+  readonly subjectId: string;
+  readonly linkPath: string;
+}
+
+/**
+ * T-DG6-BE-Z12B (F-DG6-480; D-218, D-222; ADR-0051 §2): for each work item, true when its subject, or the record its
+ * stored link names (a benefit, business case or evidence route, or a corrective case or transition decision route),
+ * discloses a sensitive record the principal is not admitted to, assignee included (D-222 supersedes BE-Z4's kept
+ * ids). Such an item is shown as `restrictedWorkItemView` describes. One reach decision for the batch.
+ */
+export async function restrictedWorkItems(
+  db: DbOrTx,
+  principal: Principal,
+  items: readonly WorkItemRefs[],
+): Promise<boolean[]> {
+  const refsOf = (w: WorkItemRefs): { recordType: string; recordId: string }[] => {
+    const out: { recordType: string; recordId: string }[] = [];
+    if (UUID_ONLY.test(w.subjectId)) out.push({ recordType: w.subjectType, recordId: w.subjectId.toLowerCase() });
+    const child = deepLinkChild(w.linkPath);
+    if (child !== null) out.push(child);
+    const target = deepLinkTarget(w.linkPath);
+    if (target !== null) out.push({ recordType: target.recordType, recordId: target.recordId });
+    return out;
+  };
+  const perItem = items.map(refsOf);
+  const all = perItem.flat();
+  if (all.length === 0) return items.map(() => false);
+  const restricted = await restrictedRecordRefs(db, principal, all);
+  if (restricted.size === 0) return items.map(() => false);
+  return perItem.map((refs) => refs.some((r) => restricted.has(reachKey(r))));
+}
+
+const UUID_ONLY = new RegExp(`^${UUID}$`);
+
+/** The web path a restricted work item links to instead of its record: the transformation home (else My Work). */
+export const restrictedWorkItemLink = (transformationId: string | null): string =>
+  transformationId === null ? "/my-work" : `/transformations/${transformationId}`;
+
 /** What a notification points to, for the read check. */
 type TargetRef =
   | {

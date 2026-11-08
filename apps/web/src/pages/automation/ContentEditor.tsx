@@ -4,9 +4,15 @@
 // runs as. Human decisions (approve a gate, decide an approval or an investment, attest a Finance value, decide an
 // executive ask or a methodology migration) are listed as NOT automatable and cannot be chosen; the server refuses them
 // again (422 automation_rule.human_only_action) and the database a third time.
-import { AUTOMATION_CONDITION_OPS, AUTOMATION_MESSAGE_KEYS, HUMAN_ONLY_ACTION_CODES } from "@mth/shared/schemas";
+import {
+  AUTOMATION_CONDITION_OPS,
+  AUTOMATION_MESSAGE_KEYS,
+  AUTOMATION_RESTRICTED_LITERAL,
+  HUMAN_ONLY_ACTION_CODES,
+} from "@mth/shared/schemas";
 import { useTranslation } from "react-i18next";
 import { useLocale } from "../../app/locale.ts";
+import { RestrictedRecordsLabel } from "../../components/sensitivity/RestrictedRecordsLabel.tsx";
 import { pick } from "./ui.tsx";
 import type { AutomationCatalogue } from "./api.ts";
 
@@ -28,6 +34,16 @@ export interface ContentDraft {
   actions: ActionDraft[];
   runAs: "initiating_user" | "service";
   servicePermissionCodes: string;
+}
+
+/**
+ * T-DG6-BE-Z12B (D-222; ADR-0051 §2): whether a condition's literal is shown as the restricted marker (it names a record
+ * the reader is not admitted to). Saving the marker back unchanged keeps the hidden literal on the server.
+ */
+export function conditionIsRestricted(c: { value?: unknown }): boolean {
+  if (c.value === AUTOMATION_RESTRICTED_LITERAL) return true;
+  if (typeof c.value === "string") return c.value.split(",").some((x) => x.trim() === AUTOMATION_RESTRICTED_LITERAL);
+  return Array.isArray(c.value) && c.value.includes(AUTOMATION_RESTRICTED_LITERAL);
 }
 
 /** The role parameter of each automatic admin action (D-146). */
@@ -222,6 +238,7 @@ export function ContentEditor({
                 disabled={c.op === "present" || c.op === "absent"}
                 onChange={(e) => setCondition(i, { value: e.target.value })}
               />
+              <RestrictedRecordsLabel value={conditionIsRestricted(c)} />
             </div>
             <button
               type="button"

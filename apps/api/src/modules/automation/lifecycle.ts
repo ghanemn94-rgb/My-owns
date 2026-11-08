@@ -44,7 +44,14 @@ import { PROBLEM_TYPES } from "@mth/shared";
 import { freeText } from "@mth/shared/schemas";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { z } from "zod";
-import { auditContextOf, denialOf, organizationsWith, refreshPrincipal, type Principal } from "../access/index.ts";
+import {
+  auditContextOf,
+  denialOf,
+  organizationsWith,
+  principalOf,
+  refreshPrincipal,
+  type Principal,
+} from "../access/index.ts";
 import { record } from "../audit/index.ts";
 import {
   HttpProblem,
@@ -512,7 +519,7 @@ export function registerAutomationLifecycleRoutes(app: FastifyInstance, { db }: 
     async (request: FastifyRequest, reply: Parameters<typeof sendVersioned>[0]) => {
       const { ruleId, versionNo } = parse(versionParams, request.params, "params");
       const row = await db.transaction().execute((tx) => fn(tx, request, ruleId, versionNo));
-      return sendVersioned(reply, 200, await toRuleVersion(db, row));
+      return sendVersioned(reply, 200, await toRuleVersion(db, principalOf(request), row));
     };
   app.post(SUBMIT, { config: configure }, route(submitVersion));
   app.post(REVIEW, { config: { ...review, consumes: JSON_BODY } }, route(decideReview));

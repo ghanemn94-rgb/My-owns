@@ -18,6 +18,7 @@ import { sql, type AutomationRuleRow, type AutomationRuleVersionRow, type DbOrTx
 import { APPROVAL_CATEGORIES, PERMISSIONS, PROBLEM_TYPES, type Permission } from "@mth/shared";
 import {
   AUTOMATION_DECIMAL_PATTERN,
+  AUTOMATION_RESTRICTED_LITERAL,
   automationRuleVersionCreate,
   automationRuleVersionUpdate,
   emptyStarterParameters,
@@ -33,7 +34,7 @@ import {
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
-import { auditContextOf, principalOf } from "../access/index.ts";
+import { auditContextOf, principalOf, restrictedIdsAmong, uuidsIn, type Principal } from "../access/index.ts";
 import { record } from "../audit/index.ts";
 import {
   cursorSchema,
@@ -304,12 +305,101 @@ const OP_AR: Readonly<Record<string, string>> = {
   absent: "غير موجود",
 };
 
+/** The restricted marker in the readable summary (T-DG6-BE-Z12B): a neutral phrase, never the literal. */
+const literalText = (v: string, lang: "en" | "ar"): string =>
+  v !== AUTOMATION_RESTRICTED_LITERAL ? v : lang === "en" ? "a restricted record" : "سجل مقيد";
+
 const valueText = (v: AutomationCondition["value"], lang: "en" | "ar"): string => {
   if (v === undefined) return "";
-  if (Array.isArray(v)) return ` ${v.join(lang === "en" ? ", " : "، ")}`;
+  if (Array.isArray(v)) return ` ${v.map((x) => literalText(x, lang)).join(lang === "en" ? ", " : "، ")}`;
   if (typeof v === "boolean") return lang === "en" ? ` ${v ? "true" : "false"}` : ` ${v ? "صحيح" : "خطأ"}`;
-  return ` ${v}`;
+  return ` ${literalText(v, lang)}`;
 };
+
+// ------------------------------------------------------------------------------------------------ restricted literals
+
+/**
+ * T-DG6-BE-Z12B (F-DG6-480; D-218, D-222; ADR-0051 §2): a rule condition may compare a field (`benefitId`, for one) to
+ * a literal uuid. For each set of conditions, every literal (a string value, or an element of an `in` list) that
+ * contains the id of a sensitive record, or of a child that carries one's values, the principal is not admitted to is
+ * shown as AUTOMATION_RESTRICTED_LITERAL, in place (the condition, its operator and the list positions stay, so the
+ * rule is still seen to test something), and `restricted` is true. The stored conditions, the content hash and the
+ * audit trail are unchanged. One policy decision for the whole batch.
+ */
+export async function redactConditionLiterals(
+  db: DbOrTx,
+  principal: Principal,
+  sets: readonly (readonly AutomationCondition[])[],
+): Promise<{ conditions: AutomationCondition[]; restricted: boolean }[]> {
+  const hidden = await restrictedIdsAmong(db, principal, [...uuidsIn(sets)]);
+  const isHidden = (v: string) => [...uuidsIn(v)].some((id) => hidden.has(id));
+  return sets.map((conditions) => {
+    if (hidden.size === 0) return { conditions: [...conditions], restricted: false };
+    let restricted = false;
+    const mask = (v: string) => {
+      if (!isHidden(v)) return v;
+      restricted = true;
+      return AUTOMATION_RESTRICTED_LITERAL;
+    };
+    const out = conditions.map((c): AutomationCondition => {
+      if (typeof c.value === "string") return { ...c, value: mask(c.value) };
+      if (Array.isArray(c.value)) return { ...c, value: c.value.map(mask) };
+      return c;
+    });
+    return { conditions: out, restricted };
+  });
+}
+
+/**
+ * T-DG6-BE-Z12B — the re-save rule (D-222; the D-218 re-save of `keptRestrictedRef`). A writer who was shown the
+ * restricted marker in place of a stored literal and sends the marker back, in a condition with the same field and
+ * operator (the k-th such condition of the request against the k-th of the stored version) and at the same list
+ * position, keeps the stored literal unchanged. A marker with no hidden stored literal behind it stays an ordinary
+ * literal (it names nothing). A writer admitted to the record was never shown the marker and edits the literal freely.
+ */
+export async function keepRestrictedLiterals(
+  db: DbOrTx,
+  principal: Principal,
+  stored: readonly AutomationCondition[],
+  sent: AutomationRuleContentInput,
+): Promise<AutomationRuleContentInput> {
+  const conditions = sent.conditions ?? [];
+  const hasMarker = (c: AutomationCondition) =>
+    c.value === AUTOMATION_RESTRICTED_LITERAL ||
+    (Array.isArray(c.value) && c.value.includes(AUTOMATION_RESTRICTED_LITERAL));
+  if (!conditions.some(hasMarker) || stored.length === 0) return sent;
+  const [shown] = await redactConditionLiterals(db, principal, [stored]);
+  if (shown === undefined || !shown.restricted) return sent;
+  const keyOf = (c: AutomationCondition) => `${c.field}\u0000${c.op}`;
+  const storedByKey = new Map<string, { stored: AutomationCondition; shown: AutomationCondition }[]>();
+  stored.forEach((c, i) => {
+    const list = storedByKey.get(keyOf(c)) ?? [];
+    list.push({ stored: c, shown: shown.conditions.at(i)! });
+    storedByKey.set(keyOf(c), list);
+  });
+  const seen = new Map<string, number>();
+  const restore = (sentValue: string, storedValue: unknown, shownValue: unknown): string =>
+    sentValue === AUTOMATION_RESTRICTED_LITERAL &&
+    shownValue === AUTOMATION_RESTRICTED_LITERAL &&
+    typeof storedValue === "string"
+      ? storedValue
+      : sentValue;
+  const merged = conditions.map((c): AutomationCondition => {
+    const k = keyOf(c);
+    const n = seen.get(k) ?? 0;
+    seen.set(k, n + 1);
+    const pair = storedByKey.get(k)?.at(n);
+    if (pair === undefined || !hasMarker(c)) return c;
+    if (typeof c.value === "string") return { ...c, value: restore(c.value, pair.stored.value, pair.shown.value) };
+    if (Array.isArray(c.value)) {
+      const sv = Array.isArray(pair.stored.value) ? pair.stored.value : [];
+      const hv = Array.isArray(pair.shown.value) ? pair.shown.value : [];
+      return { ...c, value: c.value.map((x, i) => restore(x, sv.at(i), hv.at(i))) };
+    }
+    return c;
+  });
+  return { ...sent, conditions: merged };
+}
 
 const lookup = (m: Readonly<Record<string, string>>, k: string): string => new Map(Object.entries(m)).get(k) ?? k;
 
@@ -378,11 +468,18 @@ function presentDryRun(d: DryRunRow): AutomationDryRun {
 /** Versions as the contract's AutomationRuleVersion (newest dry run each; whether a pass run covers the content). */
 export async function toRuleVersions(
   db: DbOrTx,
+  principal: Principal,
   rows: readonly AutomationRuleVersionRow[],
   catalogue?: CatalogueRows,
 ): Promise<AutomationRuleVersion[]> {
   if (rows.length === 0) return [];
   const cat = catalogue ?? (await loadCatalogueRows(db));
+  // T-DG6-BE-Z12B (D-222): condition literals naming a record the reader is not admitted to are shown as the marker.
+  const shown = await redactConditionLiterals(
+    db,
+    principal,
+    rows.map((v) => contentOfRow(v).conditions),
+  );
   const runs = await db
     .selectFrom("automation_dry_run")
     .select([
@@ -410,8 +507,9 @@ export async function toRuleVersions(
     if (!latest.has(r.automation_rule_version_id)) latest.set(r.automation_rule_version_id, r);
     if (r.outcome === "pass") passFor.add(`${r.automation_rule_version_id}:${r.content_sha256}`);
   }
-  return rows.map((v) => {
-    const content = contentOfRow(v);
+  return rows.map((v, i) => {
+    const redacted = shown.at(i)!;
+    const content = { ...contentOfRow(v), conditions: redacted.conditions };
     const last = latest.get(v.id);
     return {
       id: v.id,
@@ -442,12 +540,17 @@ export async function toRuleVersions(
       summary: summarize(content, cat),
       version: v.version,
       updatedAt: iso(v.updated_at),
+      ...(redacted.restricted ? { includesRestrictedRecords: true as const } : {}),
     };
   });
 }
 
-export async function toRuleVersion(db: DbOrTx, row: AutomationRuleVersionRow): Promise<AutomationRuleVersion> {
-  const [one] = await toRuleVersions(db, [row]);
+export async function toRuleVersion(
+  db: DbOrTx,
+  principal: Principal,
+  row: AutomationRuleVersionRow,
+): Promise<AutomationRuleVersion> {
+  const [one] = await toRuleVersions(db, principal, [row]);
   if (one === undefined) throw new Error("toRuleVersion: no row");
   return one;
 }
@@ -591,10 +694,15 @@ async function updateVersion(
   const current = await loadVersionRow(tx, rule.id, versionNo, true);
   if (current.version !== expected) throw problems.versionConflict(current.version);
   if (current.status !== "draft") throw automationRefusals.notEditable();
-  const content =
+  // T-DG6-BE-Z12B (D-222): a restricted marker sent back where it was shown keeps the hidden stored literal.
+  const sent =
     body.content === undefined
+      ? undefined
+      : await keepRestrictedLiterals(tx, principalOf(request), contentOfRow(current).conditions, body.content);
+  const content =
+    sent === undefined
       ? contentOfRow(current)
-      : validateContent(rule, body.content, await loadCatalogueRows(tx), contentOfRow(current));
+      : validateContent(rule, sent, await loadCatalogueRows(tx), contentOfRow(current));
   const updated = await tx
     .updateTable("automation_rule_version")
     .set({
@@ -662,13 +770,18 @@ export function registerAutomationVersionRoutes(app: FastifyInstance, { db }: Mo
       .limit(query.limit + 1)
       .execute();
     const pageRows = paginate(rows, query.limit, (r) => [r.version_no], hash);
-    return { items: await toRuleVersions(db, pageRows.items), nextCursor: pageRows.nextCursor };
+    return { items: await toRuleVersions(db, principal, pageRows.items), nextCursor: pageRows.nextCursor };
   });
 
   app.post(VERSIONS, { config: { ...configure, consumes: JSON_BODY } }, async (request, reply) => {
     const { ruleId } = parse(ruleParams, request.params, "params");
     const row = await db.transaction().execute((tx) => createVersion(tx, request, ruleId));
-    return sendVersioned(reply, 201, await toRuleVersion(db, row), versionPath(ruleId, row.version_no));
+    return sendVersioned(
+      reply,
+      201,
+      await toRuleVersion(db, principalOf(request), row),
+      versionPath(ruleId, row.version_no),
+    );
   });
 
   app.get(VERSION, { config: read }, async (request, reply) => {
@@ -676,13 +789,13 @@ export function registerAutomationVersionRoutes(app: FastifyInstance, { db }: Mo
     const principal = principalOf(request);
     requireRuleReader(principal);
     const rule = await loadRuleForRead(db, principal, ruleId);
-    return sendVersioned(reply, 200, await toRuleVersion(db, await loadVersionRow(db, rule.id, versionNo)));
+    return sendVersioned(reply, 200, await toRuleVersion(db, principal, await loadVersionRow(db, rule.id, versionNo)));
   });
 
   app.patch(VERSION, { config: { ...configure, consumes: JSON_BODY } }, async (request, reply) => {
     const { ruleId, versionNo } = parse(versionParams, request.params, "params");
     const row = await db.transaction().execute((tx) => updateVersion(tx, request, ruleId, versionNo));
-    return sendVersioned(reply, 200, await toRuleVersion(db, row));
+    return sendVersioned(reply, 200, await toRuleVersion(db, principalOf(request), row));
   });
 
   return [`GET ${VERSIONS}`, `POST ${VERSIONS}`, `GET ${VERSION}`, `PATCH ${VERSION}`];

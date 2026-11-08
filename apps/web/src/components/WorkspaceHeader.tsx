@@ -22,7 +22,7 @@ import {
   keyText,
   useDrill,
 } from "../pages/dashboards/ui.tsx";
-import { useItemText } from "../pages/dashboards/MyWorkSections.tsx";
+import { MyWorkRestricted, myWorkRowKeys, useItemText } from "../pages/dashboards/MyWorkSections.tsx";
 import { DueDate } from "../pages/my-work/p4ui.tsx";
 import { PhaseStepper } from "../pages/transformations/common.tsx";
 import { Unknown } from "./Badges.tsx";
@@ -194,6 +194,7 @@ function Element({ id, label, children }: { id: string; label: string; children:
 function HeaderGrid({ h, tid }: { h: Header; tid: string }) {
   const { t } = useTranslation();
   const itemText = useItemText();
+  const nextKeys = myWorkRowKeys(h.nextActions.items);
   const g = h.gateReadiness;
   return (
     <dl className="workspace-header__grid">
@@ -310,11 +311,11 @@ function HeaderGrid({ h, tid }: { h: Header; tid: string }) {
         ) : (
           <ul className="plain-list" data-next-actions={h.nextActions.items.length}>
             {h.nextActions.items.map((i) => (
-              <li key={`${i.source}-${i.recordId}-${i.kind ?? ""}`}>
+              <li key={nextKeys.get(i)}>
                 <RecordLink href={i.href} contextTid={tid}>
                   {itemText(i)}
-                </RecordLink>{" "}
-                <DueDate date={i.dueDate} />
+                </RecordLink>
+                <MyWorkRestricted item={i} /> <DueDate date={i.dueDate} />
               </li>
             ))}
           </ul>

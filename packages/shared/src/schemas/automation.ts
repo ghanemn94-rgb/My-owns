@@ -59,6 +59,14 @@ export const automationConditionValue = z.union([
   z.array(freeText(1, 500)).min(1).max(50),
 ]);
 
+/**
+ * T-DG6-BE-Z12B (F-DG6-480; D-218, D-222; ADR-0051 §2): the neutral restricted marker a condition literal is shown as
+ * when it names a sensitive record (or a child that carries one's values) the reader is not admitted to. It names no
+ * record. A version update that sends it back, in the same condition (field and operator) and position, keeps the
+ * stored literal unchanged (the D-218 re-save rule); anywhere else it is an ordinary literal that names nothing.
+ */
+export const AUTOMATION_RESTRICTED_LITERAL = "[restricted]";
+
 export const automationCondition = z.strictObject({
   field: z.string().regex(AUTOMATION_CONDITION_FIELD_PATTERN, "validation.condition_field"),
   op: z.enum(AUTOMATION_CONDITION_OPS),
@@ -271,6 +279,8 @@ export const automationRule = z.strictObject({
   summary: automationRuleSummary.nullable(),
   version,
   updatedAt: timestamp,
+  /** True when the summary shows a condition literal as the restricted marker (label access.includesRestrictedRecords). */
+  includesRestrictedRecords: z.literal(true).optional(),
 });
 export type AutomationRule = z.infer<typeof automationRule>;
 export const automationRulePage = page(automationRule);
@@ -350,6 +360,8 @@ export const automationRuleVersion = z.strictObject({
   summary: automationRuleSummary,
   version,
   updatedAt: timestamp,
+  /** True when a condition literal is shown as AUTOMATION_RESTRICTED_LITERAL (label access.includesRestrictedRecords). */
+  includesRestrictedRecords: z.literal(true).optional(),
 });
 export type AutomationRuleVersion = z.infer<typeof automationRuleVersion>;
 export const automationRuleVersionPage = page(automationRuleVersion);
