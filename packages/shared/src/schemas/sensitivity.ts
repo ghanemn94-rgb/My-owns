@@ -66,3 +66,11 @@ export type SensitiveGrantCreate = z.infer<typeof sensitiveGrantCreate>;
 /** SensitiveGrantRevoke (POST /admin/sensitive-grants/{grantId}/revoke). */
 export const sensitiveGrantRevoke = z.strictObject({ reason });
 export type SensitiveGrantRevoke = z.infer<typeof sensitiveGrantRevoke>;
+
+/**
+ * T-DG6-BE-Z13B (D-227; D-218): the neutral marker that replaces the id of a sensitive record (or of a child that carries
+ * one's values) the reader is not admitted to, inside a served text built from record ids: an idempotency, trigger or
+ * event key such as `benefit.value_validated:<financeValidationId>`. The item then carries `includesRestrictedRecords:
+ * true`. The marker names no record and no id. The stored key is unchanged.
+ */
+export const RESTRICTED_ID_MARKER = "[restricted]";

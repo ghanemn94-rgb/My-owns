@@ -8,6 +8,8 @@
 //   - every foreign-key column (single or composite) whose referenced column is the `id` of a sensitive or child table;
 //   - every uuid column with no foreign key at all (polymorphic `(record_type, record_id)` pairs, scope ids, ...);
 //   - every uuid[] column; and every json/jsonb column;
+//   - every text column holding an in-app link (link_path, href; T-DG6-BE-Z13) or a key (`key`, `*_key`: idempotency,
+//     trigger, event, dedupe and scope keys can be built from record ids; T-DG6-BE-Z13B, D-227);
 // and nothing that is not in the catalog. A new column of any of these kinds fails the test until it is classified here.
 // The sweep (`sensitive-reach-sweep.test.ts`) seeds every row whose `exercise` is "sweep" and checks in the database
 // that the column really holds a hidden id before it reads every GET of the contract.
@@ -62,6 +64,7 @@ const Z12 = "apps/api/test/integration/access/sensitive-reach-id-refs-z12.test.t
 const Z10B = "apps/api/test/integration/access/sensitive-reach-id-refs-writes.test.ts";
 const Z12B = "apps/api/test/integration/access/sensitive-reference-pending-z12b.test.ts";
 const Z13 = "apps/api/test/integration/tasks/inbox-restricted-z13.test.ts";
+const Z13B = "apps/api/test/integration/access/served-keys-restricted-z13b.test.ts";
 
 const holder = (column: string, names: string, guard: string, kind: InventoryKind = "fk"): InventoryRow => ({
   column,
@@ -98,6 +101,13 @@ const notServed = (column: string, kind: InventoryKind, names: string): Inventor
 });
 const secretRef = (column: string): InventoryRow =>
   cannot(column, "json", "a secret reference (environment or vault key name), never a record id");
+
+/** T-DG6-BE-Z13B (D-227): a text key column that holds a code (a template, catalogue or i18n key), never a record id. */
+const code = (column: string, what: string): InventoryRow => cannot(column, "text", what);
+/** T-DG6-BE-Z13B (D-227): a text key column no API response serializes. */
+const keyNotServed = (column: string, what: string): InventoryRow => notServed(column, "text", what);
+const MARKER_FIX =
+  'maskRestrictedIdsInFields / maskHiddenIds (access/sensitive-reach.ts): hidden id -> "[restricted]" + marker';
 
 export const SENSITIVE_REFERENCE_INVENTORY: readonly InventoryRow[] = [
   // ------------------------------------------------------------------ foreign keys into benefit
@@ -985,6 +995,203 @@ export const SENSITIVE_REFERENCE_INVENTORY: readonly InventoryRow[] = [
     fix: "tasks/routes.ts workItemFor",
     exercise: "apps/api/test/integration/access/sensitive-reach-escalation.test.ts#",
   },
+  // ------------------------------------------------------------------ T-DG6-BE-Z13B (D-227): text key columns
+  // Every text column named `key` or `*_key` (the catalog query in the inventory test). A key built from record ids
+  // that a response serializes is redacted: the hidden id inside the key becomes the restricted marker.
+  {
+    column: "operational_failure.idempotency_key",
+    kind: "text",
+    names:
+      "the failed job's outbox key, e.g. benefit.variance_evaluated:<measurementId>, benefit.value_validated:<financeValidationId>",
+    operations: [
+      "listAutomationFailures",
+      "getAutomationFailure",
+      "retryAutomationFailure",
+      "dismissAutomationFailure",
+    ],
+    before: "LEAK (D-227, BE-Z13 handback §7): the key named a hidden child id",
+    status: "redacted",
+    fix: `automation/failures.ts shownFailures (also errorMessage): ${MARKER_FIX}`,
+    exercise: `${Z13B}#failure queue: the job's idempotency key and error message`,
+  },
+  {
+    column: "automation_execution.trigger_key",
+    kind: "text",
+    names: "the trigger event's key, e.g. benefit.variance_evaluated:<measurementId>",
+    operations: ["listAutomationExecutions", "getAutomationExecution"],
+    before: "LEAK (D-227): the key named a hidden child id",
+    status: "redacted",
+    fix: `automation/executions.ts shownExecutions (also errorDetail): ${MARKER_FIX}`,
+    exercise: `${Z13B}#execution history: the trigger key and every action result's key`,
+  },
+  {
+    column: "automation_action_result.idempotency_key",
+    kind: "text",
+    names: "<ruleCode>:<triggerKey>:<ordinal> (automationActionKey): the trigger key's ids",
+    operations: ["listAutomationExecutions", "getAutomationExecution"],
+    before: "LEAK (D-227): the key named a hidden child id",
+    status: "redacted",
+    fix: `automation/executions.ts shownExecutions: ${MARKER_FIX}`,
+    exercise: `${Z13B}#execution history: the trigger key and every action result's key`,
+  },
+  {
+    column: "integration_run.idempotency_key",
+    kind: "text",
+    names:
+      "manual:<userId>:<caller's Idempotency-Key>, retry:<runId>, schedule slots: the caller's text can hold any id",
+    operations: [
+      "listIntegrationRuns",
+      "runConnector",
+      "getIntegrationRun",
+      "retryIntegrationRun",
+      "testConnector",
+      "listConnectors",
+      "createConnector",
+      "getConnector",
+      "putConnector",
+      "enableConnector",
+      "disableConnector",
+    ],
+    before: "served raw (found by this inventory, D-227)",
+    status: "redacted",
+    fix: `integrations/routes.ts shownRuns / shownConnector (lastRun): ${MARKER_FIX}`,
+    exercise: `${Z13B}#integration runs: a caller's Idempotency-Key naming the benefit`,
+  },
+  {
+    column: "outbound_write.idempotency_key",
+    kind: "text",
+    names: "the caller's key (free text of the integration caller; can hold any id)",
+    operations: ["listOutboundWrites", "executeOutboundWrite", "getOutboundWrite", "confirmOutboundWrite"],
+    before: "served raw (found by this inventory, D-227)",
+    status: "redacted",
+    fix: `integrations/routes.ts shownWrite / shownWriteDetail: ${MARKER_FIX}`,
+    exercise: `${Z13B}#outbound writes: a key naming the benefit`,
+  },
+  {
+    column: "corrective_case.source_scope_key",
+    kind: "text",
+    names: "the case's own benefit id, a KPI scope, a check id, or value_review:<free-text finding reference>",
+    operations: [
+      "listCorrectiveCases",
+      "createCorrectiveCase",
+      "getCorrectiveCase",
+      "updateCorrectiveCase",
+      "closeCorrectiveCase",
+    ],
+    before: "served raw (found by this inventory, D-227); the case of a restricted benefit was already 404 / absent",
+    status: "redacted",
+    fix: `raid/corrective-cases.ts shownCases: ${MARKER_FIX}`,
+    exercise: `${Z13B}#corrective case: a Value Review finding reference naming the benefit`,
+  },
+  holder(
+    "corrective_signal.source_event_key",
+    "the signal's event key (benefit.variance_evaluated:<measurementId> of the case's own benefit, KPI or check keys)",
+    "served only under /corrective-actions/{correctiveCaseId}/signals (SENSITIVE_REACH_PARAMS guard: 404 when the case's benefit is restricted)",
+    "text",
+  ),
+  keyNotServed("corrective_signal.source_scope_key", "the signal's scope key (the CorrectiveSignal schema omits it)"),
+  cannot(
+    "corrective_signal.period_key",
+    "text",
+    "writers (worker raid.ts): periodStart..periodEnd, a reporting period id or a check id; held under the guarded case",
+  ),
+  holder(
+    "benefit.driver_key",
+    "a normalized driver text of the benefit",
+    "the benefit itself: 404 / omitted when restricted",
+    "text",
+  ),
+  holder(
+    "benefit.population_key",
+    "a normalized population text of the benefit",
+    "the benefit itself: 404 / omitted when restricted",
+    "text",
+  ),
+  holder(
+    "benefit_overlap.driver_key",
+    "the overlap's driver text",
+    "benefit_overlap is a SENSITIVE_CHILD_SOURCES type of both benefits",
+    "text",
+  ),
+  holder(
+    "benefit_overlap.population_key",
+    "the overlap's population text",
+    "benefit_overlap is a SENSITIVE_CHILD_SOURCES type of both benefits",
+    "text",
+  ),
+  cannot(
+    "adoption_intervention.trigger_key",
+    "text",
+    "belowTrajectoryTriggerKey: <metricLinkId>:<scopeKind>:<scopeId>:<reportingPeriodId> (scope: transformation, business unit, initiative)",
+  ),
+  cannot(
+    "import_row.duplicate_key",
+    "text",
+    "the KPI import target's slot key: KPI definition, scope (transformation, business unit, initiative) and period ids",
+  ),
+  cannot(
+    "operational_exception.dedup_key",
+    "text",
+    "<sourceKind>:<sourceCode>:<failureClass>; source codes are queue names, connector codes, 'worker' or kpi:<kpiDefinitionId>",
+  ),
+  code("report_snapshot_version.reference_key", "a methodology or report definition key"),
+  code("adoption_indicator_template.indicator_key", "an adoption indicator code"),
+  code("adoption_indicator_template.key", "a template code"),
+  code("adoption_metric_link.template_key", "an adoption template code"),
+  code("approval_route_step.route_key", "an approval route code"),
+  code("decision_right_template.key", "a decision-right template code"),
+  code("form_source_field.field_key", "a form field code"),
+  code("forum.template_key", "a forum template code"),
+  code("forum_template.key", "a forum template code"),
+  code("gate_criterion_definition.key", "a gate criterion code"),
+  code("gate_criterion_review.criterion_key", "a gate criterion code"),
+  code("gate_exception.criterion_key", "a gate criterion code"),
+  code("gate_submission_criterion.criterion_key", "a gate criterion code"),
+  code("health_assessment.band_key", "a health band code (assessments.ts bandKey)"),
+  code("help_topic.screen_key", "a screen code"),
+  code("help_topic.topic_key", "a help topic code"),
+  code("inbox_notification.message_key", "an i18n message key"),
+  code("kpi_evaluation.explanation_key", "an i18n explanation key"),
+  code("methodology_element.stable_key", "a methodology stable key"),
+  code("methodology_element_profile.stable_key", "a methodology stable key"),
+  code("methodology_migration_item.stable_key", "a methodology stable key"),
+  code("methodology_version.key", "a methodology version code"),
+  code("phase_step.step_key", "a phase step code"),
+  code("phase_step_definition.key", "a phase step code"),
+  code("playbook_block_link.target_key", "a seeded methodology target key"),
+  code("procedure_step_definition.condition_input_key", "a procedure input code"),
+  code("procedure_step_definition.step_key", "a procedure step code"),
+  code("procedure_step_instance.step_key", "a procedure step code"),
+  code("raci_template_cell.deliverable_key", "a RACI deliverable code"),
+  code("raci_template_deliverable.key", "a RACI deliverable code"),
+  code("report_snapshot_aggregate.section_key", "a report section code"),
+  code("report_snapshot_evidence.section_key", "a report section code"),
+  code("report_snapshot_source.section_key", "a report section code"),
+  code("saved_view.list_key", "a list code"),
+  code("source_element.stable_key", "a source element stable key"),
+  code("transformation_decision_right.template_key", "a decision-right template code"),
+  code("transformation_raci_deliverable.template_key", "a RACI template code"),
+  code("webhook_endpoint.endpoint_key", "a webhook endpoint code"),
+  code("work_item.message_key", "an i18n message key"),
+  code("worker_heartbeat.instance_key", "a worker instance name"),
+  keyNotServed("calculation_run.idempotency_key", "a calculation run's key (CalculationRun omits it)"),
+  keyNotServed("demo_seed_record.fixture_key", "a demo fixture key"),
+  keyNotServed("dependency_slip.slip_key", "a slip dedupe key"),
+  keyNotServed("evidence_content.storage_key", "an object storage key"),
+  keyNotServed("export_job.idempotency_key", "an export job's key (ExportJob omits it)"),
+  keyNotServed("export_job.storage_key", "an object storage key"),
+  keyNotServed("finance_validation.idempotency_key", "a Finance validation's key (FinanceValidation omits it)"),
+  keyNotServed("idempotency_record.key", "a request Idempotency-Key ledger"),
+  keyNotServed("inbox_notification.dedupe_key", "a notification dedupe key"),
+  keyNotServed("launch_plan.idempotency_key", "a launch plan's key"),
+  keyNotServed(
+    "outbox_event.idempotency_key",
+    "the outbox ledger (served only through the failure queue and executions, redacted above)",
+  ),
+  keyNotServed("procedure_instance.launch_key", "a procedure launch key"),
+  keyNotServed("processed_message.idempotency_key", "the consumer ledger"),
+  keyNotServed("revision_proposal.dedupe_key", "a revision proposal dedupe key"),
+  keyNotServed("work_item.dedupe_key", "a work item dedupe key"),
 ];
 
 function ownInputRow(column: string, why: string): InventoryRow {

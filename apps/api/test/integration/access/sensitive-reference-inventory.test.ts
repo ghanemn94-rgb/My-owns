@@ -5,7 +5,8 @@
 //     business case, evidence) or of a SENSITIVE_CHILD_SOURCES table is not in the inventory as kind "fk";
 //   - a uuid column with no foreign key (a polymorphic `(record_type, record_id)` pair, a scope id, ...) is not in it
 //     as kind "uuid"; a uuid[] column is not in it as "array"; a json/jsonb column is not in it as "json"; a text
-//     column holding an in-app link (link_path, href) is not in it as "text" (T-DG6-BE-Z13, F-DG6-540);
+//     column holding an in-app link (link_path, href) or a key (`key`, `*_key`) is not in it as "text" (T-DG6-BE-Z13,
+//     F-DG6-540; T-DG6-BE-Z13B, D-227);
 //   - an inventory row names a column the catalog does not have (stale), or has another kind;
 //   - an operationId it names is not in docs/api/openapi.yaml; a "redacted" row has no exercise, or its exercise file
 //     does not exist or does not contain its fragment;
@@ -40,10 +41,11 @@ afterAll(async () => {
 });
 
 /**
- * The names of text columns that hold an in-app link to a record (T-DG6-BE-Z13, F-DG6-540): a link path or an href.
- * Event and dedupe keys built from ids are outside this pattern (the T-DG6-BE-Z13 handback lists them for routing).
+ * The names of text columns that can hold a record id: an in-app link to a record (T-DG6-BE-Z13, F-DG6-540: a link path
+ * or an href), and every key column (T-DG6-BE-Z13B, D-227: `key` or `*_key`; idempotency, trigger, event, dedupe and
+ * scope keys can be built from record ids, and template or catalogue keys are classified as codes).
  */
-const TEXT_REFERENCE_COLUMN = /(^|_)(link_path|href)$/;
+const TEXT_REFERENCE_COLUMN = /(^|_)(link_path|href|key)$/;
 
 /** The catalog's reference columns, by kind (`table.column`). */
 async function catalog(): Promise<Map<string, InventoryKind>> {
@@ -104,7 +106,7 @@ describe("T-DG6-BE-Z12: the sensitive-reference inventory matches the schema (F-
     expect(counts.get("fk") ?? 0).toBeGreaterThanOrEqual(50);
     expect(counts.get("uuid") ?? 0).toBeGreaterThanOrEqual(50);
     expect(counts.get("json") ?? 0).toBeGreaterThanOrEqual(80);
-    expect(counts.get("text") ?? 0).toBeGreaterThanOrEqual(2);
+    expect(counts.get("text") ?? 0).toBeGreaterThanOrEqual(73);
   });
 
   it("every operation, exercise and status is real", () => {

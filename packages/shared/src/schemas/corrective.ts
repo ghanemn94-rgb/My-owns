@@ -75,6 +75,8 @@ export const correctiveCase = z.strictObject({
   createdBy: nullableUuid,
   updatedAt: timestamp,
   updatedBy: nullableUuid,
+  /** D-227: true when sourceScopeKey shows the restricted marker in place of a hidden record id. */
+  includesRestrictedRecords: z.literal(true).optional(),
 });
 export type CorrectiveCase = z.infer<typeof correctiveCase>;
 export const correctiveCasePage = page(correctiveCase);

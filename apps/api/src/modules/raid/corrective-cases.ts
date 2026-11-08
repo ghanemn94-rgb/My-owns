@@ -41,7 +41,12 @@ import {
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
-import { principalOf, requireTransformationRead, withoutRestricted } from "../access/index.ts";
+import {
+  maskRestrictedIdsInFields,
+  principalOf,
+  requireTransformationRead,
+  withoutRestricted,
+} from "../access/index.ts";
 import { record } from "../audit/index.ts";
 import {
   ADVISORY_LOCK_CLASSES,
@@ -164,6 +169,18 @@ function caseRow(db: DbOrTx, transformationId: string, id: string): Promise<Corr
     .where("transformation_id", "=", transformationId)
     .executeTakeFirst();
 }
+
+/**
+ * T-DG6-BE-Z13B (D-227; D-218): the cases as served. `sourceScopeKey` can embed a record id (a benefit id, a KPI scope,
+ * a check id, or the free-text reference of a Value Review finding); an id of a sensitive record, or of a child that
+ * carries one's values, the reader is not admitted to is replaced by the restricted marker and the case carries
+ * `includesRestrictedRecords: true`. (A benefit case's own benefit is never hidden here: the case of a restricted
+ * benefit is itself 404 / absent.)
+ */
+const shownCases = (db: DbOrTx, request: FastifyRequest, items: readonly CorrectiveCase[]) =>
+  maskRestrictedIdsInFields(db, principalOf(request), items, ["sourceScopeKey"]);
+const shownCase = async (db: DbOrTx, request: FastifyRequest, item: CorrectiveCase) =>
+  (await shownCases(db, request, [item]))[0]!;
 
 async function presentOne(db: DbOrTx, transformationId: string, id: string): Promise<CorrectiveCase> {
   const row = await caseRow(db, transformationId, id);
@@ -525,14 +542,14 @@ export function registerCorrectiveCaseRoutes(app: FastifyInstance, { db }: Modul
       recordType: "corrective_case",
       recordId: r.id,
     }));
-    return { items: await presentCases(db, visible), nextCursor: page.nextCursor };
+    return { items: await shownCases(db, request, await presentCases(db, visible)), nextCursor: page.nextCursor };
   });
 
   app.post(CORRECTIVE_CASES, { config: write }, async (request, reply) => {
     const transformationId = parseTransformationParam(request.params);
     const body = await db.transaction().execute(async (tx) => {
       const id = await createCase(tx, request);
-      return presentOne(tx, transformationId, id);
+      return shownCase(tx, request, await presentOne(tx, transformationId, id));
     });
     return sendVersioned(reply, 201, body, `${request.url.split("?")[0]!}/${body.id}`);
   });
@@ -540,14 +557,18 @@ export function registerCorrectiveCaseRoutes(app: FastifyInstance, { db }: Modul
   app.get(CORRECTIVE_CASE_ITEM, { config: read }, async (request, reply) => {
     const { transformationId, correctiveCaseId } = parseCaseParams(request.params);
     await requireTransformationRead(db, principalOf(request), transformationId);
-    return sendVersioned(reply, 200, await presentOne(db, transformationId, correctiveCaseId));
+    return sendVersioned(
+      reply,
+      200,
+      await shownCase(db, request, await presentOne(db, transformationId, correctiveCaseId)),
+    );
   });
 
   app.patch(CORRECTIVE_CASE_ITEM, { config: write }, async (request, reply) => {
     const { transformationId, correctiveCaseId } = parseCaseParams(request.params);
     const body = await db.transaction().execute(async (tx) => {
       await updateCase(tx, request);
-      return presentOne(tx, transformationId, correctiveCaseId);
+      return shownCase(tx, request, await presentOne(tx, transformationId, correctiveCaseId));
     });
     return sendVersioned(reply, 200, body);
   });
@@ -556,7 +577,7 @@ export function registerCorrectiveCaseRoutes(app: FastifyInstance, { db }: Modul
     const { transformationId, correctiveCaseId } = parseCaseParams(request.params);
     const body = await db.transaction().execute(async (tx) => {
       await closeCase(tx, request);
-      return presentOne(tx, transformationId, correctiveCaseId);
+      return shownCase(tx, request, await presentOne(tx, transformationId, correctiveCaseId));
     });
     return sendVersioned(reply, 200, body);
   });

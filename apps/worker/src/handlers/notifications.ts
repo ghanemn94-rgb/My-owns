@@ -54,7 +54,13 @@ import type {
   NotificationChannel,
   SmtpSettings,
 } from "../channels/port.ts";
-import { channelLocaleOf, renderNotificationMessage, type ChannelParamValue } from "../channels/render.ts";
+import {
+  channelLocaleOf,
+  DEFAULT_CHANNEL_CATALOGUE,
+  renderNotificationMessage,
+  type ChannelCatalogue,
+  type ChannelParamValue,
+} from "../channels/render.ts";
 import {
   defineJob,
   INBOX_NOTIFICATION_CREATED_EVENT,
@@ -66,6 +72,7 @@ import {
   type LoadedServiceIdentity,
 } from "../kit.ts";
 import type { SecretUse } from "../secrets.ts";
+import { restrictedForRecipient, uuidsInValue } from "../sensitive-children.ts";
 import { ServiceScopeViolation } from "../service-scope.ts";
 import type { JobHandler } from "./spec.ts";
 
@@ -98,6 +105,11 @@ const TR = "transformation.read";
 const READS = [TR, "user.read", "access.read", "operations.read"] as const;
 
 export const fanoutKey = (notificationId: string): string => `notification:${notificationId}`;
+/** The twin of apps/api tasks/routes.ts INBOX_RESTRICTED.messageKey. */
+export const RESTRICTED_MESSAGE_KEY = "inbox.restricted";
+/** The twin of apps/api tasks/deep-links.ts restrictedWorkItemLink: the transformation home, else My Work. */
+export const restrictedChannelLink = (transformationId: string | null): string =>
+  transformationId === null ? "/my-work" : `/transformations/${transformationId}`;
 export const deliveryLockKey = (notificationId: string, kind: string): string => `${notificationId}:${kind}`;
 /** Seconds to wait after the n-th failed attempt before the next one (10, 20, 40, 80). */
 export const retryDelaySeconds = (attempts: number): number => RETRY_BACKOFF_SECONDS * 2 ** Math.max(0, attempts - 1);
@@ -123,6 +135,8 @@ export interface NotificationChannelDeps {
   readonly appBaseUrl: URL | null;
   /** Refuse `none` SMTP security (NODE_ENV=production). */
   readonly refuseInsecure: boolean;
+  /** The channel texts and per-message templates (render.ts; DEFAULT_CHANNEL_CATALOGUE unless a test sets one). */
+  readonly catalogue: ChannelCatalogue;
   /** The adapter of a channel kind with its settings; null when no adapter ships (enterprise messaging). */
   readonly channelFor: (
     kind: ChannelKind,
@@ -149,6 +163,7 @@ const DEFAULT_DEPS: NotificationChannelDeps = Object.freeze({
   resolveSecret: async () => undefined,
   appBaseUrl: null,
   refuseInsecure: true,
+  catalogue: DEFAULT_CHANNEL_CATALOGUE,
   channelFor: defaultChannelFor,
 });
 let deps: NotificationChannelDeps = DEFAULT_DEPS;
@@ -242,17 +257,24 @@ export function deepLinkTargetTwin(
 
 /**
  * May the recipient still read the notification's target (ADR-0051 §3)? FAIL-CLOSED restatement of the API's
- * `readableTargets` for one user (the worker imports no API code): an organization-level item is readable; otherwise
- * the user needs an active `transformation.read` grant that reaches the transformation (its organization or one of its
- * business units with a downward-inheriting role, or the transformation itself), and a sensitive record target (and,
- * for evidence, every sensitive benefit or business case it is linked to) needs the user's ACTIVE explicit
- * sensitive-record grant. The ADR-0051 §2 party clause (owner, submitter ...) is not restated, so a party without an
- * explicit grant gets the restricted text here: this can only hide, never reveal. Either way the message carries no
- * record value and the deep link re-authorizes on open.
+ * `readableTargets` and `restrictedNotifications` for one user (the worker imports no API code): an organization-level
+ * item is readable; otherwise the user needs an active `transformation.read` grant that reaches the transformation (its
+ * organization or one of its business units with a downward-inheriting role, or the transformation itself). Then
+ * (T-DG6-BE-Z13B, D-227 (2), (3); the twin of the API's child-source check) every id in the link, the message
+ * parameters, the stored target and the announced work item (its subject and link) is checked by
+ * `restrictedForRecipient` (../sensitive-children.ts): a sensitive benefit, business case or evidence item, ANY child
+ * that carries one's values (a Finance validation, a benefit overlap, a measurement, a corrective case, ...; the twin of
+ * SENSITIVE_CHILD_SOURCES), an action on such a corrective case, and the benefits and business cases an evidence item is
+ * linked to, each needs the user's ACTIVE explicit sensitive-record grant. The ADR-0051 §2 party clause (owner,
+ * submitter ...) is not restated, so a party without an explicit grant gets the restricted text here: this can only
+ * hide, never reveal. A restricted message carries no record value, no parameter and no deep link to the record.
  */
 export async function recipientCanRead(
   db: DbOrTx,
-  n: Pick<InboxNotificationRow, "link_path" | "transformation_id" | "target_record_type" | "target_record_id">,
+  n: Pick<
+    InboxNotificationRow,
+    "link_path" | "transformation_id" | "target_record_type" | "target_record_id" | "message_params" | "work_item_id"
+  >,
   userId: string,
 ): Promise<boolean> {
   const path = deepLinkTargetTwin(n.link_path);
@@ -300,36 +322,17 @@ export async function recipientCanRead(
       (g.inherits_downward && g.scope_type === "business_unit" && ancestry.includes(g.scope_id)),
   );
   if (!reaches) return false;
-  if (record === null) return true;
-  const refs: { recordType: string; recordId: string }[] = [record];
-  if (record.recordType === "evidence") {
-    const parents = await sql<{ record_type: string; record_id: string }>`
-      SELECT 'benefit' AS record_type, be.benefit_id AS record_id FROM benefit_evidence be WHERE be.evidence_id = ${record.recordId}::uuid
-      UNION
-      SELECT frt.table_name AS record_type, fa.record_id FROM form_record_attachment fa
-        JOIN form_record_type frt ON frt.code = fa.record_type
-       WHERE fa.evidence_id = ${record.recordId}::uuid AND frt.table_name IN ('benefit', 'business_case')`.execute(db);
-    refs.push(...parents.rows.map((p) => ({ recordType: p.record_type, recordId: p.record_id })));
-  }
-  for (const ref of refs) {
-    const marked = await db
-      .selectFrom("record_sensitivity")
-      .select("is_sensitive")
-      .where("record_type", "=", ref.recordType)
-      .where("record_id", "=", ref.recordId)
+  const ids = uuidsInValue([n.link_path, n.message_params, n.target_record_id]);
+  if (record !== null) ids.add(record.recordId.toLowerCase());
+  if (n.work_item_id !== null) {
+    const item = await db
+      .selectFrom("work_item")
+      .select(["subject_id", "link_path"])
+      .where("id", "=", n.work_item_id)
       .executeTakeFirst();
-    if (!marked?.is_sensitive) continue;
-    const granted = await db
-      .selectFrom("sensitive_record_grant")
-      .select("id")
-      .where("record_type", "=", ref.recordType)
-      .where("record_id", "=", ref.recordId)
-      .where("grantee_user_id", "=", userId)
-      .where("status", "=", "active")
-      .executeTakeFirst();
-    if (!granted) return false;
+    if (item) for (const id of uuidsInValue([item.subject_id, item.link_path])) ids.add(id);
   }
-  return true;
+  return !(await restrictedForRecipient(db, userId, ids));
 }
 
 /**
@@ -593,17 +596,23 @@ export async function sendDelivery(db: Db, deliveryId: string, jobId: string): P
         return "skipped";
       }
       const restricted = !(await recipientCanRead(conn, n, n.recipient_user_id));
-      const token = await issueDeepLinkTwin(conn, n.id, jobId);
-      const path = `/links/${token}`;
-      const message = renderNotificationMessage({
-        notificationId: n.id,
-        recipientUserId: n.recipient_user_id,
-        locale: channelLocaleOf(user!.preferred_locale),
-        messageKey: n.message_key,
-        messageParams: (n.message_params ?? {}) as Record<string, ChannelParamValue>,
-        restricted,
-        deepLinkUrl: deps.appBaseUrl ? new URL(path, deps.appBaseUrl).toString() : path,
-      });
+      // T-DG6-BE-Z13B (D-227 (2); D-218, D-226): a restricted message names nothing: the inbox.restricted text, no
+      // parameter, and the transformation home (else My Work) instead of a deep link to the record, as the inbox shows.
+      const path = restricted
+        ? restrictedChannelLink(n.transformation_id)
+        : `/links/${await issueDeepLinkTwin(conn, n.id, jobId)}`;
+      const message = renderNotificationMessage(
+        {
+          notificationId: n.id,
+          recipientUserId: n.recipient_user_id,
+          locale: channelLocaleOf(user!.preferred_locale),
+          messageKey: restricted ? RESTRICTED_MESSAGE_KEY : n.message_key,
+          messageParams: restricted ? {} : ((n.message_params ?? {}) as Record<string, ChannelParamValue>),
+          restricted,
+          deepLinkUrl: deps.appBaseUrl ? new URL(path, deps.appBaseUrl).toString() : path,
+        },
+        deps.catalogue,
+      );
       let result: ChannelSendResult;
       try {
         result = await adapter!.send(message, user!.email!);

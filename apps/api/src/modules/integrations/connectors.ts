@@ -525,6 +525,8 @@ export interface IntegrationRunBody {
   };
   readonly importBatchId: string | null;
   readonly version: number;
+  /** T-DG6-BE-Z13B (D-227): the idempotency key shows the restricted marker in place of a hidden record id. */
+  readonly includesRestrictedRecords?: true;
 }
 
 /** A numeric(24,6) as the contract's Decimal: trailing fractional zeros dropped ("10.500000" -> "10.5"). */

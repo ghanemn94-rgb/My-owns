@@ -135,6 +135,21 @@ export interface WorkItemRefs {
 }
 
 /**
+ * T-DG6-BE-Z13B (D-227 (3); D-218, D-222 (1)): the corrective case each action among `ids` belongs to (`actionId ->
+ * caseId`). The action register keeps an action on a restricted corrective case (correctiveCaseId null + marker), but a
+ * task or a notification about that action (its subject or its `/action-register/<actionId>` link, and the case code it
+ * carries as `sourceCode`) is about the case, so the reach check treats the action id as naming its case.
+ */
+export async function correctiveCasesOfActions(db: DbOrTx, ids: Iterable<string>): Promise<Map<string, string>> {
+  const unique = [...new Set([...ids].map((x) => x.toLowerCase()))].filter((x) => UUID_ONLY.test(x));
+  if (unique.length === 0) return new Map();
+  const rows = await sql<{ id: string; corrective_case_id: string }>`
+    SELECT id::text AS id, corrective_case_id::text AS corrective_case_id FROM action_item
+     WHERE id = ANY(${unique}::uuid[]) AND corrective_case_id IS NOT NULL`.execute(db);
+  return new Map(rows.rows.map((r) => [r.id.toLowerCase(), r.corrective_case_id.toLowerCase()]));
+}
+
+/**
  * T-DG6-BE-Z12B (F-DG6-480; D-218, D-222; ADR-0051 §2): for each work item, true when its subject, or the record its
  * stored link names (a benefit, business case or evidence route, or a corrective case or transition decision route),
  * discloses a sensitive record the principal is not admitted to, assignee included (D-222 supersedes BE-Z4's kept
@@ -154,7 +169,19 @@ export async function restrictedWorkItems(
     if (target !== null) out.push({ recordType: target.recordType, recordId: target.recordId });
     return out;
   };
-  const perItem = items.map(refsOf);
+  // T-DG6-BE-Z13B (D-227 (3)): an action (the item's subject, or an id in its link) on a corrective case names the case.
+  const cases = await correctiveCasesOfActions(
+    db,
+    items.flatMap((w) => [w.subjectId, ...uuidsIn(w.linkPath)]),
+  );
+  const perItem = items.map((w) => {
+    const refs = refsOf(w);
+    for (const id of new Set([w.subjectId.toLowerCase(), ...uuidsIn(w.linkPath)])) {
+      const caseId = cases.get(id);
+      if (caseId !== undefined) refs.push({ recordType: "corrective_case", recordId: caseId });
+    }
+    return refs;
+  });
   const all = perItem.flat();
   // T-DG6-BE-Z13 (F-DG6-540): any id in the link that names a sensitive record or a child carrying one's values (a
   // Finance validation, an overlap, ...), whatever route it uses, restricts the item too.
@@ -203,6 +230,16 @@ export async function restrictedNotifications(
   if (rows.length === 0) return [];
   const readable = await readableTargets(db, principal, rows);
   const idsOf = rows.map((r) => uuidsIn([r.link_path, r.message_params, r.target_record_id]));
+  // T-DG6-BE-Z13B (D-227 (3)): an action on a corrective case named by the notification names the case too.
+  const cases = await correctiveCasesOfActions(
+    db,
+    idsOf.flatMap((ids) => [...ids]),
+  );
+  for (const ids of idsOf)
+    for (const id of [...ids]) {
+      const caseId = cases.get(id);
+      if (caseId !== undefined) ids.add(caseId);
+    }
   const hidden = await restrictedIdsAmong(
     db,
     principal,
