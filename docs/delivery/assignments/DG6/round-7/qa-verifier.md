@@ -4,9 +4,9 @@ Task ID: `T-DG6-REV-QA-R7`. You are the independent qa verifier of the frozen **
 
 ## Candidate
 
-- **candidate_id:** `sha256:be0200e246368bcb3d959174274783e6cf30cbc4726c328269b3b8532dad2807`. Verify it with `node tools/gates/candidate.mjs --stage DG6` (2750 files) on a **complete clone**. If the clone is incomplete, the review is BLOCKED.
-- **manifest:** `docs/delivery/candidates/DG6/be0200e246368bcb.manifest.json`.
-- **source_commit:** `7a1b7ce00feffabd0444ed50d0757c0cbbca1afb` (record this full 40-character id in your record's `source_commit`).
+- **candidate_id:** `sha256:b64b95ff5deda5d1ccc9adf8c6bf85b3ed251a5c5cb1cf24e87d8532e3aa4bae`. Verify it with `node tools/gates/candidate.mjs --stage DG6` (2750 files) on a **complete clone**. If the clone is incomplete, the review is BLOCKED.
+- **manifest:** `docs/delivery/candidates/DG6/b64b95ff5deda5d1.manifest.json`.
+- **source_commit:** `70f05ed49d893378efc99cd3e1a4027fc77697e8` (record this full 40-character id in your record's `source_commit`).
 - **Node:** 24.21.0 at `/opt/nvm/versions/node/v24.21.0/bin`; 22.22.2 at `/opt/node22/bin` if present (if it is absent, say so: the Node 22 run is then BLOCKED, not PASS).
 - **Browser:** pre-installed Chromium (`PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers`). Never run `playwright install`.
 - **Ports:** use ports below 32768; the harnesses retry on collision. **Your range is 30500–30599.** The other two reviewers run at the same time on other ranges.
@@ -28,7 +28,7 @@ Task ID: `T-DG6-REV-QA-R7`. You are the independent qa verifier of the frozen **
 ## What this round is
 
 This is DG6's seventh gate round. Round 6 on candidate `0fea8adf` (source `031945d8761a253665c6b794e6c8d2efbacdfe65`) failed all three reviews (D-217). Every open finding was routed to a repair task, and all of them are merged (D-220). The handbacks are in `docs/delivery/handbacks/DG6/T-DG6-{BE-Z9,BE-Z10,BE-Z10B,FE-Z3-R6,BE-Z11,FE-Z4}-*.md`, with evidence in the matching `-evidence/` folders.
-- The diff since round 6 is `git diff 031945d8761a253665c6b794e6c8d2efbacdfe65..7a1b7ce00feffabd0444ed50d0757c0cbbca1afb`. Review all of it, not only the lines a finding names.
+- The diff since round 6 is `git diff 031945d8761a253665c6b794e6c8d2efbacdfe65..70f05ed49d893378efc99cd3e1a4027fc77697e8`. Review all of it, not only the lines a finding names.
 - New since round 6:
   - BE-Z9 (F-DG6-400): report aggregate sections (executive pack and executive dashboard metrics, gate pack), live and snapshot (migration `0126`, `report_snapshot_aggregate`), carry `includesRestrictedRecords` from the records the aggregate includes;
   - BE-Z10 and BE-Z10B (F-DG6-420): responses no longer name the id of a sensitive record the reader is not admitted to (D-218): benefit groups, measurements, workstream outputs, phase-step evidence, form custom values, inherited records, KPI RAG overrides and status, deliverable confirmation, dispensations, readiness, agenda materials, canvas evidence, gate-condition close and health-check writes; re-save keeps hidden links; `listEvidenceVersions` checks reach. D-219 records what D-218 does not cover (audit trail, grant register, the phase-step evidence remove echo); challenge it if you can show a disclosure;

@@ -32,7 +32,7 @@ _Updated by the delivery-orchestrator at every step change. On resumption, run `
   - **10 review rounds** (D-117 to D-140). Two history repairs were authorized by the user: D-136, restoring 33 deleted run files (write-once), and D-140, re-ordering the approval commit after the findings import.
   - **Open follow-up (D-140):** before the next gate audit, propose a decided fix for the auditor-sidecar ordering problem.
 - **DG5 (P5 "Configuration automation and outputs") is APPROVED** (D-193) on branch `claude/mobily-transformation-platform-dg5-regate2`: gate `docs/delivery/gates/DG5.json`, candidate `sha256:55a411ae…` (2207 files, source `660f40c`), 78/78 DG5-final requirements. `validate --stage DG5`, `--historical --stage DG5` and `--pipeline` exit 0. DG6 carry-forward items and process lessons are listed in D-193.
-- **DG6:** REVIEWING, round 7 on candidate `sha256:be0200e2…` (2750 files, source `7a1b7ce`), D-220. Round 6 failed (D-217); repairs BE-Z9, BE-Z10, BE-Z10B, FE-Z3, BE-Z11, FE-Z4 merged; V10 on b80cf4d all green.
+- **DG6:** REVIEWING, round 7 on candidate `sha256:b64b95ff…` (2750 files, source `70f05ed`), D-220. Round 6 failed (D-217); repairs BE-Z9, BE-Z10, BE-Z10B, FE-Z3, BE-Z11, FE-Z4 merged; V10 on b80cf4d all green.
 - **Next action:** wait for the three round-7 reviews (assignments `docs/delivery/assignments/DG6/round-7/`), import findings; if all PASS, run the release audit (D-140 option 1); else route findings to serial repairs.
 ## DG2 scope (P2 — diagnose, define and design)
 
