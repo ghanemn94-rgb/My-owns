@@ -16143,14 +16143,39 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG6/round-7/domain-reviewer.json",
       "owner": "solution-architect",
-      "status": "OPEN",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-08T05:40:00Z",
           "status": "OPEN",
           "note": "Raised in DG6 round 7 by domain-reviewer while verifying F-DG6-400, whose runtime repair is CLOSED_VERIFIED. This is documentation and contract-text drift only: Low, not mandatory, not blocking. Suggested repair: amend the ADR-0051 §2 table row and its 2026-11-06 sentence, the OpenAPI description (no schema change), ADR-0045 §3 (the new snapshot child table) and the data dictionary/ERD for 0126."
+        },
+        {
+          "at": "2026-11-08T18:15:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 8: PASS"
         }
-      ]
+      ],
+      "verification": {
+        "by_role": "domain-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG6-T-DG6-REV-DOM-R8-domain-reviewer-20261108T170554Z-1662c58a",
+          "session_id": "1662c58a-34a4-484c-848d-40f24918aff9"
+        },
+        "at": "2026-11-08T18:15:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG6/domain/round-8/r1662/f460-repro.log",
+          "docs/delivery/test-evidence/DG6/domain/round-8/r1662/openapi-lint.log",
+          "docs/delivery/test-evidence/DG6/domain/round-8/r1662/int-z12.log",
+          "docs/architecture/adr/ADR-0051-p6-authorization-boundary-read-scope-sensitive-records-deep-links.md",
+          "docs/architecture/data-dictionary.md",
+          "docs/architecture/erd.md",
+          "docs/api/openapi.yaml"
+        ],
+        "note": "Re-ran the round-7 reproduction on candidate 6cda8b33 (source d84d11a62f52932dd5c0aa932c5c1790c13e7e8b) in a complete disposable clone. (1) ADR-0051 §2 table row 90 now reads that a ReportDocument section is flagged when it references a marked-sensitive record through a row, an item or a source, 'or its aggregate figures include one' (executive pack metrics_<subject>, executive dashboard area_value and items_portfolio, gate pack criteria). Lines 304-307 record report_snapshot_aggregate (0126) and the conservative legacyAggregates rule for aggregates_recorded = false. (2) The OpenAPI ReportDocument.sections description (openapi.yaml:27173) states the aggregate rule (T-DG6-BE-Z9, F-DG6-400). No schema change, and pnpm openapi:lint passes with 932 operations. (3) data-dictionary.md now has a 'report_snapshot_aggregate' section (line 14445) and 'report_snapshot: changes in 0126'. I compared its columns, CHECKs, FK, UNIQUE key, triggers, grants and the default-false-then-true backfill with packages/db/migrations/0126_p6_report_snapshot_aggregate.sql, and they match. erd.md:2203-2222 adds the table and the column. ADR-0045 §3 has the 2026-11-08 amendment (line 339). Mutant: not practical, because the repair is documentation only and no executable test guards prose. The runtime behaviour F-DG6-460 described was already CLOSED_VERIFIED under F-DG6-400, and the BE-Z12/Z12B integration suites I re-ran (45/45) still pass. ARCH-16's text covers BE-Z12B as it is designed. The separate defect I found in the D-222 re-save rule is raised as a new finding (F-DG6-520). It is not a documentation drift of F-DG6-460."
+      }
     },
     {
       "id": "F-DG6-480",
@@ -16175,12 +16200,194 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG6/round-7/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "OPEN",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-08T05:55:00Z",
           "status": "OPEN",
           "note": "Raised by code-security-reviewer in DG6 round 7 (T-DG6-REV-CS-R7) while checking whether the F-DG6-420 repair (BE-Z10, BE-Z10B, D-218) covers every reference an open record can hold to a sensitive benefit, business case or evidence item, beyond the columns the sweep seeds. Three read paths were reproduced through the API against an uninvolved TL who gets 404 on the record, and one write-side existence oracle. Owner backend-workflow-engineer (the BE-Z10 owner). The decision already exists (D-218), so no architect decision is needed."
+        },
+        {
+          "at": "2026-11-08T19:20:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 8: PASS"
+        }
+      ],
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG6-T-DG6-REV-CS-R8-code-security-reviewer-20261108T170554Z-1725e2f9",
+          "session_id": "1725e2f9-2fdf-4506-b6c7-b43d45e974e0"
+        },
+        "at": "2026-11-08T19:20:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG6/code-security/round-8/41-repro-r7-id-refs.log",
+          "docs/delivery/test-evidence/DG6/code-security/round-8/repro/zz-cs-r7-id-refs.test.ts",
+          "docs/delivery/test-evidence/DG6/code-security/round-8/59-control-unmutated.log",
+          "docs/delivery/test-evidence/DG6/code-security/round-8/50-mutant-M1-launch-task-output-unhidden.log",
+          "docs/delivery/test-evidence/DG6/code-security/round-8/51-mutant-M2-launch-task-write-oracle.log",
+          "docs/delivery/test-evidence/DG6/code-security/round-8/52-mutant-M3-work-item-ids-kept.log",
+          "docs/delivery/test-evidence/DG6/code-security/round-8/53-mutant-M4-benefit-parent-unhidden.log",
+          "docs/delivery/test-evidence/DG6/code-security/round-8/mutants.sh",
+          "docs/delivery/test-evidence/DG6/code-security/round-8/30-integration-lang-unset-shard1of4.log"
+        ],
+        "note": "Verified on candidate sha256:6cda8b33... (source d84d11a6) in a disposable clone with a disposable PostgreSQL, Node 22.22.0, LANG unset. (1) The round-7 reproduction zz-cs-r7-id-refs.test.ts, unchanged, now passes 4/4 (log 41): tl2 (a TL with no grant, never a named party) gets 404 on the hidden benefit B02, the hidden parent B04 and the sensitive evidence, and receives none of their ids from getBenefit of the open child B03, listBenefits, listMeetingOutputs, listLaunchTasks or getLaunchTask ('part B leaks (0)'), while the admitted TO still receives them. The round-7 write oracle is closed: the not-admitted TL's launch-task PATCH answers 422 launch_task.output_record_invalid for a random uuid AND for the sensitive benefit (was 422/200), and nothing is stored. The part-A F-DG6-420 controls still hold (group, measurement, re-save). As in round 7, the demo has no procedure instance (B4) and the evidence meeting output is refused by the forum rule; those rows are covered by the in-tree tests below. (2) In-tree tests, unmutated: sensitive-reach-id-refs-z12 (6), sensitive-reference-pending-z12b (7) and sensitive-reach-registers (6) pass 19/19 (log 59); evidence-link-read-authorization (procedure links), revision-proposals, sensitive-reach-sweep (inventory-seeded, 'not seeded: none') and the catalog-backed sensitive-reference-inventory test pass in both integration runs. (3) Four mutants, each reverting one part of the repair in the clone, are each caught by the in-tree tests (logs 50-53, exit 1): M1 launch-task output read unhidden, M2 the launch-task write oracle restored, M3 work-item subject id and link kept (D-222), M4 benefit parentBenefitId unhidden; every file restored afterwards (0 changed paths). Every path F-DG6-480 names (parentBenefitId, meeting output recordId, launch-task outputRecordId and its write, procedure links and subject) is repaired. The repair's broader claim, that the inventory closes the class, does not hold for the inbox: that new, separate defect is raised as F-DG6-540 and does not reopen the paths verified here."
+      }
+    },
+    {
+      "id": "F-DG6-520",
+      "stage_id": "DG6",
+      "requirement": "REQ-S10-002",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "The D-222 (2) re-save rule loses the hidden automation condition literal when the author deletes an earlier condition or list element. The stored rule then compares against the text '[restricted]', which silently changes what it matches, and the editor still shows 'Includes restricted records' / 'يشمل سجلات مقيدة' and 'is not a restricted record'",
+      "reproduction": "Candidate 6cda8b33 (source d84d11a62). Set-up: an ADM_METHOD rule author, not admitted to sensitive records, owns a draft rule (trigger benefit.variance_evaluated). The TO then marks benefit S sensitive. Case (c), conditions [benefitId neq P (open benefit), benefitId neq S]: the author opens /admin/automation-rules/<id>/versions/1 and sees condition 1 = P and condition 2 = '[restricted]' with the 'Includes restricted records' badge. The author clicks 'Remove condition 1' and saves the draft, which sends the PATCH body content.conditions = [the shown condition 2]. Case (b), conditions [benefitId eq S, benefitId in [P, S], severity eq high]: the author removes the open id P from the in-list and saves [marker]. API probe: docs/delivery/test-evidence/DG6/domain/round-8/r1662/dom-r8-condition-resave.test.ts.txt (integration project, disposable PostgreSQL). UI probe: r1662/dom-r8-screens.spec.ts.txt (production-initialized stack, with-stack.sh, chromium-en and chromium-ar).",
+      "expected": "D-222 (2), ADR-0051 amendment and REQ-S10-002: 'a re-save keeps the hidden literal unchanged'. The rule must go on testing the hidden record S after any edit that leaves the shown marker in place, and must never quietly start matching a record the author meant to exclude. If the server cannot map a marker back to its stored literal, it should refuse the save with an explanation, not store the marker text. The screen must not claim the rule tests a restricted record when it does not.",
+      "actual": "keepRestrictedLiterals (apps/api/src/modules/automation/versions.ts) pairs the k-th sent condition with the k-th stored condition of the same field and operator, and an in-list element by its position. After the removal, the sent marker sits at a different ordinal or position than the stored hidden literal, so it is not restored. The text '[restricted]' is stored as an ordinary literal (D-222: a marker with no hidden literal behind it 'stays an ordinary literal'). Case (c) stored: [{op:neq, field:benefitId, value:'[restricted]'}]. Case (b) stored the in-list as ['[restricted]']. Effects: (1) Integrity: the hidden id S is lost from the draft, and the exclusion 'benefitId neq S' becomes 'neq [restricted]', which every event satisfies, so the rule would now fire for S. In case (b) the in-list matches nothing. The author got no warning and no error. (2) Misleading screen, EN and AR: after the save the editor still shows the value '[restricted]' with the 'Includes restricted records' / 'يشمل سجلات مقيدة' badge, and the readable rule says 'if benefitId is not a restricted record' / 'لا يساوي سجل مقيد', because literalText renders the marker text as 'a restricted record' whatever is stored. Yet the API no longer sets includesRestrictedRecords, and the admitted TO also reads '[restricted]'. Bounded: draft versions only. Publishing needs a dry run and a person to publish. Only rules whose literals name a sensitive record are affected. The audit trail records the change, so the TO can recover the literal. No business approval or Finance value is affected. BE-Z12B's own tests cover only an unchanged order, an unrelated edit and appending, so they pass.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-8/r1662/probe-condition-resave.log",
+        "docs/delivery/test-evidence/DG6/domain/round-8/r1662/dom-r8-condition-resave.test.ts.txt",
+        "docs/delivery/test-evidence/DG6/domain/round-8/r1662/probe-screens.log",
+        "docs/delivery/test-evidence/DG6/domain/round-8/r1662/dom-r8-screens.spec.ts.txt",
+        "docs/delivery/test-evidence/DG6/domain/round-8/r1662/screens/en/dom-r8-rule-author-1-before.png",
+        "docs/delivery/test-evidence/DG6/domain/round-8/r1662/screens/en/dom-r8-rule-author-2-after-removing-condition-1.png",
+        "docs/delivery/test-evidence/DG6/domain/round-8/r1662/screens/ar/dom-r8-rule-author-1-before.png",
+        "docs/delivery/test-evidence/DG6/domain/round-8/r1662/screens/ar/dom-r8-rule-author-2-after-removing-condition-1.png",
+        "apps/api/src/modules/automation/versions.ts"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG6/round-8/domain-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-08T18:10:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG6 round 8 by domain-reviewer while judging D-222 (2) as a rule author in EN and AR. Medium: a real integrity defect with a bounded effect (draft automation rules naming a sensitive record), which must be repaired before the gate (D-192). Suggested repair: match a sent marker to its stored hidden literal by a stable handle rather than by ordinal or position (for example an opaque per-read token for each hidden literal), or refuse a save whose marker cannot be mapped (422 with an explanation in en and ar). Never store the marker text as a literal. Render the badge and 'a restricted record' only when the API flags the condition. Add tests for removing an earlier condition, removing an open list element, and reordering."
+        }
+      ]
+    },
+    {
+      "id": "F-DG6-540",
+      "stage_id": "DG6",
+      "requirement": "REQ-S10-002",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "The in-app inbox still names sensitive records to recipients who get 404 on them: GET /me/inbox keeps a restricted item's linkPath (the hidden record's id), POST /me/inbox/{id}/read returns the unredacted text and link, and notifications about a Finance validation or a benefit overlap of a sensitive benefit are not redacted at all (the benefit's code is shown)",
+      "reproduction": "Candidate sha256:6cda8b33e184b41983d7718cf6ad15d3912337219fd5c15d9b9d516f0142f21d (source d84d11a62f52932dd5c0aa932c5c1790c13e7e8b), disposable clone, disposable PostgreSQL (tests/qa/support/with-pg.sh), Node 22.22.0, LANG unset, demo seed (all data SYNTHETIC). Probe docs/delivery/test-evidence/DG6/code-security/round-8/repro/zz-cs-r8-inbox-text.test.ts, run with checks.sh repro (log 42-probe-r8-inbox-text.log). tl2 is a TL scoped to the demo transformation with no grant (never a named party). P1: a work item and its inbox notification for tl2 in the exact shape of the real producer apps/worker/src/handlers/benefits.ts:250-258 (subject finance_validation, linkPath /transformations/{t}/finance-validations/{fv}, messageKey benefits.task.finance_validation_review, messageParams {benefitCode, periodStart, periodEnd}), created through the API's createWorkItemOnce and released as the delivery job does; then the TO marks the benefit B01 sensitive; tl2 reads GET /me/work-items, GET /me/inbox and POST /me/inbox/{id}/read. P1b, through the REAL producer: a TL creates two benefits B04 and B05 and POST /benefit-overlaps (201), which writes a benefit_overlap_review work item and notification for the Finance recipient; the TO marks B04 sensitive; the recipient reads GET /me/inbox. P1c: a notification whose link is the hidden benefit's own route /transformations/{t}/benefits/{B01} (a route deep-links.ts ROUTES recognises), messageParams {benefitCode}; tl2 reads GET /me/inbox, then POST /me/inbox/{id}/read.",
+      "expected": "D-218: a response never names the id of a sensitive record the reader is not admitted to; D-222 (1) applied it to work items and My Work for the assignee (subject id null, link = the transformation home, marker). ADR-0051 §3 / T-DG6-BE-C: an inbox item whose target the recipient cannot read shows messageKey inbox.restricted with messageParams {}. finance_validation and benefit_overlap are child sources of a benefit in access/sensitive-reach.ts (:110, :117), and tl2 and the Finance recipient get 404 on them. So every response that serializes such a notification (listMyInbox AND markInboxNotificationRead) returns inbox.restricted, params {}, no hidden id in linkPath, and the marker, exactly as the same user's work item for the same event does.",
+      "actual": "Log 42 (P1): tl2 gets 404 on benefit B01 and on its Finance validation; the work item is redacted correctly (subjectId null, linkPath the transformation home, inbox.restricted, marker true), but GET /me/inbox returns messageKey benefits.task.finance_validation_review, messageParams {\"benefitCode\":\"B01\",\"periodStart\":\"2026-07-01\",\"periodEnd\":\"2026-07-31\"} and linkPath /transformations/.../finance-validations/<fv id>; POST /me/inbox/{id}/read returns the same. P1b (real producer): the Finance recipient gets 404 on B04 and on the overlap, the work item is redacted, but GET /me/inbox returns messageParams {\"benefitACode\":\"B04\",\"benefitBCode\":\"B05\",\"dimensions\":\"driver\"} and linkPath /transformations/.../benefit-overlaps/<overlap id>. P1c: GET /me/inbox does show inbox.restricted with params {}, but linkPath is still /transformations/.../benefits/<B01 id> (the hidden id), and POST /me/inbox/{id}/read returns messageKey benefits.task.synthetic_cs_r8, messageParams {\"benefitCode\":\"B01\"} and the same link. Causes (60-source-checks.log): apps/api/src/modules/tasks/routes.ts:361-366 redacts only messageKey/messageParams and keeps linkPath by design ('ids, link, read state and version are unchanged'); routes.ts:370-373 (markInboxNotificationRead) returns toInboxNotification(row) with no readableTargets call at all (BE-Z12B redacted the work-item COMPLETE response the same way but not this one); apps/api/src/modules/tasks/deep-links.ts:74-97 ROUTES and CHILD_ROUTES recognise only benefit, business case, evidence, corrective case and transition decision routes, so targetRefOf (:185) classifies a finance-validations or benefit-overlaps link as transformation-level and readable. The BE-Z12 inventory classifies inbox_notification.target_record_id and .message_params as 'redacted' with operations [listMyInbox] only (apps/api/test/support/sensitive-reference-inventory.ts:531-539, 858-866): it omits markInboxNotificationRead, and inbox_notification.link_path is a text column outside its catalog scope (InventoryKind is fk|uuid|array|json), so the catalog test cannot see it. By code reading, not reproduced: the channel fan-out (tasks/channels/render.ts) decides 'restricted' with the same readableTargets, so an email or Teams body for the P1/P1b notifications would carry the code once a channel is enabled (channels are off by default); and the action-register work item and notification of an action on a restricted corrective case carry messageParams {sourceCode: <the case code>} with an /action-register/ link the reach check does not recognise (raid/actions.ts:185-199, 443-459). Disclosed: codes, periods and the ids of the benefit, overlap and Finance validation, and their existence; no title or value. Medium, not mandatory, for the same reasons as F-DG6-420/F-DG6-480 (identifier and code disclosure), but D-218 is binding and D-192 requires the repair before the gate. Suggested repair: apply the work-item rule to the inbox (null/transformation-home link, inbox.restricted, marker) in list and mark-read; decide readability from the work item's subject (restrictedWorkItems) or add the finance-validations and benefit-overlaps routes; extend the inventory to text columns that hold links or ids (link_path).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-8/42-probe-r8-inbox-text.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-8/repro/zz-cs-r8-inbox-text.test.ts",
+        "docs/delivery/test-evidence/DG6/code-security/round-8/60-source-checks.log",
+        "apps/api/src/modules/tasks/routes.ts",
+        "apps/api/src/modules/tasks/deep-links.ts",
+        "apps/api/src/modules/access/sensitive-reach.ts",
+        "apps/api/test/support/sensitive-reference-inventory.ts",
+        "apps/worker/src/handlers/benefits.ts",
+        "apps/api/src/modules/benefits/overlaps.ts",
+        "docs/delivery/decisions.md"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG6/round-8/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-08T19:10:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG6 round 8 (T-DG6-REV-CS-R8) while testing D-225 open question 1 (a column, response or write path that references a sensitive record and that the inventory does not classify, or classifies wrongly). Reproduced on the real API with a disposable PostgreSQL; P1b uses the real POST /benefit-overlaps producer."
+        }
+      ]
+    },
+    {
+      "id": "F-DG6-541",
+      "stage_id": "DG6",
+      "requirement": "REQ-S10-002",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "Removing an earlier condition in the automation rule editor silently replaces a hidden condition literal with the text \"[restricted]\": the D-222 re-save rule pairs the k-th (field, operator) condition of the request with the k-th of the stored version, so after a removal the returned marker no longer maps to its hidden literal, the exclusion of the sensitive benefit is lost and the rule's behaviour changes, with no refusal and no marker",
+      "reproduction": "Candidate sha256:6cda8b33e184b41983d7718cf6ad15d3912337219fd5c15d9b9d516f0142f21d (source d84d11a62f52932dd5c0aa932c5c1790c13e7e8b), disposable clone and PostgreSQL, Node 22.22.0, LANG unset; all data SYNTHETIC. Probe docs/delivery/test-evidence/DG6/code-security/round-8/repro/zz-cs-r8-automation-resave.test.ts (log 43-probe-r8-automation-resave.log), built on the in-tree BE-Z12B fixtures (seedWorld, seedClosureWorld, pendingBenefit). An ADM_METHOD author (organization scope, not admitted) creates a rule on benefit.variance_evaluated with conditions [benefitId neq P, benefitId neq S, severity eq high] ('not these two benefits'). The TO marks S sensitive. The author GETs version 1 (draft), removes the FIRST condition as the editor's 'remove condition 1' button does (apps/web/src/pages/automation/ContentEditor.tsx:246: conditions.filter((_, j) => j !== i)) and PATCHes the remaining conditions back unchanged, the marker included, with If-Match.",
+      "expected": "D-222 (2): 'a re-save keeps the hidden literal unchanged (same rule as the D-218 re-save)'. A marker the author was shown and sends back unchanged keeps the hidden literal it stands for wherever the condition now sits, or the write is refused (422) because the marker cannot be mapped; the marker text is never stored as an ordinary literal in place of a hidden one.",
+      "actual": "Log 43: the author sees [neq <PLAIN>, neq \"[restricted]\", severity eq high] with includesRestrictedRecords true and the summary 'benefitId is not a restricted record'. The PATCH of [benefitId neq \"[restricted]\", severity eq high] answers 200 with NO includesRestrictedRecords, and the stored conditions are [benefitId neq \"[restricted]\", severity eq high]: S is no longer stored anywhere in the version ('hidden exclusion kept: false; marker text stored as a literal: true'). The admitted TO now sees the literal \"[restricted]\" too. Cause: apps/api/src/modules/automation/versions.ts keepRestrictedLiterals (from :360) keys conditions by field and operator and pairs the n-th sent condition with the n-th stored one; after the removal the sent marker pairs with stored condition 0, whose shown value is <PLAIN>, not the marker, so restore() returns the marker text, which the handback's rule 'a marker with no hidden stored literal behind it stays an ordinary literal' then stores (conditionValueValid accepts any string for eq/neq). Effect: once this draft is submitted, reviewed and approved, the rule fires for the sensitive benefit it was written to exclude (and an 'in' list member can be dropped the same way by inserting or deleting an earlier element); the author was never told. Bounded: it changes a draft that still needs review and approval before it takes effect, it discloses nothing, and an author admitted to S is unaffected. Medium, not mandatory; D-192 requires the repair before the gate. Suggested repair: pair returned markers with the shown version's marker occurrences independently of the k-th (field, op) position (for example by the order of markers in the shown content), or refuse with 422 a marker that does not map to a hidden stored literal; add the removal and reorder cases to sensitive-reference-pending-z12b.test.ts.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-8/43-probe-r8-automation-resave.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-8/repro/zz-cs-r8-automation-resave.test.ts",
+        "docs/delivery/test-evidence/DG6/code-security/round-8/60-source-checks.log",
+        "apps/api/src/modules/automation/versions.ts",
+        "apps/web/src/pages/automation/ContentEditor.tsx",
+        "docs/delivery/handbacks/DG6/T-DG6-BE-Z12B-backend-workflow-engineer.md",
+        "docs/delivery/decisions.md"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG6/round-8/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-08T19:10:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG6 round 8 (T-DG6-REV-CS-R8) while challenging D-222/D-223 (the automation-condition re-save rule) as D-225 invites. Reproduced on the real API with a disposable PostgreSQL."
+        }
+      ]
+    },
+    {
+      "id": "F-DG6-560",
+      "stage_id": "DG6",
+      "requirement": "REQ-S10-002",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "Automation rule re-save pairs hidden condition literals by ordinal: removing or reordering a restricted condition silently keeps the removed record's literal, or destroys the kept one",
+      "reproduction": "Candidate 6cda8b33 (source d84d11a6). (1) Real demo stack (e2e/support/with-demo-stack.sh), UI, chromium-en and chromium-ar, locale unset: probe docs/delivery/test-evidence/DG6/qa/tests/round-8/zz-qa-dg6r8e-restricted-mywork-automation.spec.ts test 'QA-R8 B/C'. A rule author holding ADM_METHOD (synthetic grant) creates a draft rule with conditions [benefitId eq B1, benefitId eq B2, severity eq high]; the Transformation Office marks B1 and B2 sensitive. The author's draft editor shows 'Value 1' and 'Value 2' as '[restricted]' with the 'Includes restricted records' label (correct). The author clicks 'Remove condition 1' (the B1 condition), the editor now shows ['[restricted]', 'critical'], and clicks 'Save the draft'. The TO (admitted) reads GET /api/v1/admin/automation-rules/{id}/versions/1. (2) Integration, disposable PostgreSQL: docs/delivery/test-evidence/DG6/qa/tests/round-8/zz-qa-dg6r8b-condition-resave-pairing.test.ts copied to apps/api/test/integration/access/ and run with tests/qa/support/with-pg.sh: P0 control (edit an unrelated condition), P1 (two restricted literals under one field/op, delete the first), P2 (a visible literal V then a restricted one Y under one field/op, delete the visible one), P3 (an `in` list of two restricted literals, drop the first element). Cause: keepRestrictedLiterals (apps/api/src/modules/automation/versions.ts:360-402) pairs the k-th sent condition with a given (field, op) with the k-th stored one, and an `in` element by list position, so any deletion or reordering shifts the pairing.",
+      "expected": "D-222 (2): 'a re-save keeps the hidden literal unchanged'. The condition the author kept keeps its own hidden literal: after removing condition 1 the stored rule is [benefitId eq B2, severity eq critical]; in P2 the stored rule is [benefitId neq Y]; in P3 the list is [Y]. If the server cannot tell which hidden literal a marker stands for, it should refuse the save (for example 409/422 with a reason) rather than guess.",
+      "actual": "UI on the real stack, en and ar: the stored rule after removing condition 1 is [benefitId eq B1, severity eq critical]: the literal of the condition the author REMOVED is kept, and B2 (the one kept on screen) is silently dropped; the author's screen and the 200 response still show '[restricted]', so the author cannot see it (41-probe-restricted-mywork-automation-unset.log: 'kept literal is the FIRST (the removed one)', both languages). Integration: P0 passes; P1 stores X (the deleted literal) instead of Y; P2 stores the literal string '[restricted]' (the hidden Y is destroyed, the condition 'benefitId neq [restricted]' now matches every benefit, and the response no longer carries includesRestrictedRecords, while the editor still shows '[restricted]' with the 'Includes restricted records' label because the web marks any value equal to the marker); P3 stores [X] instead of [Y] (20-probe-resave-pairing.log, 3 failed of 4, by design). The rule silently targets the record the author removed, or no record, without any error; the change is visible only in the audit trail and to an admitted reader. ADR-0051's amendment documents the (field, op, order, position) pairing, but neither it nor the BE-Z12B handback discloses this effect of a removal or reordering.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/41-probe-restricted-mywork-automation-unset.log",
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/20-probe-resave-pairing.log",
+        "docs/delivery/test-evidence/DG6/qa/tests/round-8/zz-qa-dg6r8e-restricted-mywork-automation.spec.ts",
+        "docs/delivery/test-evidence/DG6/qa/tests/round-8/zz-qa-dg6r8b-condition-resave-pairing.test.ts",
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/shots/41-B-rule-editor-author-en.png",
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/shots/41-C-rule-editor-after-remove-en.png",
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/shots/41-C-rule-editor-after-remove-ar.png"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG6/round-8/qa-verifier.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-08T18:46:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG6 round 8 (T-DG6-REV-QA-R8) on candidate 6cda8b33: reproduced in the UI on the real demo stack in en and ar, and in an integration probe (P1-P3 fail, P0 control passes)."
+        }
+      ]
+    },
+    {
+      "id": "F-DG6-561",
+      "stage_id": "DG6",
+      "requirement": "REQ-S10-002",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The 'Includes restricted records' label describes every marked item as a total ('This total includes records you are not admitted to...'), also on My Work rows, automation conditions and register rows",
+      "reproduction": "Demo stack, chromium-en and chromium-ar: probe zz-qa-dg6r8e-restricted-mywork-automation.spec.ts logs the label's title and text on the automation draft editor (conditions 1 and 2) and on My Work (restricted work item). RestrictedRecordsLabel (apps/web/src/components/sensitivity/RestrictedRecordsLabel.tsx) always renders title and visually hidden text adminP6.restricted.hint. BE-Z12B adds it to My Work rows, the home glance lists and automation conditions; it was already used before in non-total places (BenefitsPage, RegisterPages, DispensationsPage, EvidenceRegisterPage rows).",
+      "expected": "The label's description fits what is marked: on a total, that the total is the same for every user; on a row, link or condition literal, that the item refers to a record the reader is not admitted to.",
+      "actual": "en: title and screen-reader text 'This total includes records you are not admitted to. The total is the same for every user; the individual records and values stay hidden.' on condition values and work-item rows, where there is no total. ar: 'يشمل هذا الإجمالي سجلات غير مسموح لك بها. الإجمالي واحد لجميع المستخدمين...'. Copy only: nothing is disclosed, and the visible label 'Includes restricted records' is correct.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-8/r8/41-probe-restricted-mywork-automation-unset.log",
+        "docs/delivery/test-evidence/DG6/qa/tests/round-8/zz-qa-dg6r8e-restricted-mywork-automation.spec.ts"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG6/round-8/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-08T18:46:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG6 round 8 (T-DG6-REV-QA-R8) on candidate 6cda8b33 while checking the D-225 My Work and automation screens in en and ar."
         }
       ]
     }
