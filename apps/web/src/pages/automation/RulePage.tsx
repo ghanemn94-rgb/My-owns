@@ -375,7 +375,7 @@ function ContentView({ version: v, catalogue }: { version: AutomationRuleVersion
                   {x.field} {x.op} {x.value === undefined ? "" : JSON.stringify(x.value)}
                 </bdi>
                 {/* T-DG6-BE-Z12B (D-222): a literal naming a record the reader is not admitted to is the marker. */}
-                <RestrictedRecordsLabel value={conditionIsRestricted(x)} />
+                <RestrictedRecordsLabel value={conditionIsRestricted(x)} scope="item" />
               </span>
             ))}
       </dd>

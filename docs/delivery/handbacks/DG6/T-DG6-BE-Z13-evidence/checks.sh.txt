@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+cd /home/user/wt/dg6-be-z13
+E=docs/delivery/handbacks/DG6/T-DG6-BE-Z13-evidence
+export PATH=/opt/nvm/versions/node/v24.21.0/bin:$PATH
+unset LANG LC_ALL
+run() { local n=$1; shift; { echo "\$ $*"; echo "node $(node -v); LANG=${LANG-unset}; $(date -u)"; "$@"; echo "exit $?"; } > $E/$n.log 2>&1; echo "$n: $(tail -1 $E/$n.log)"; }
+case "$1" in
+  static)
+    run 10-typecheck pnpm -r typecheck
+    run 11-build pnpm -r build
+    run 12-lint pnpm lint
+    run 13-prettier bash -c 'git ls-files -co --exclude-standard -z | xargs -0 npx prettier --check --ignore-unknown'
+    run 14-openapi-lint pnpm openapi:lint
+    ;;
+  unit)
+    run 20-test-lang-unset pnpm test
+    export LANG=C.UTF-8
+    run 21-test-lang-cutf8 pnpm test
+    ;;
+esac

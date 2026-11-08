@@ -354,7 +354,7 @@ export function FinanceDashboardPage() {
             const investment = d.headlines.filter((h) => h.metric === "value.investment");
             return (
               <>
-                <RestrictedRecordsLabel value={d.includesRestrictedRecords} />
+                <RestrictedRecordsLabel value={d.includesRestrictedRecords} scope="total" />
                 <GeneratedNote at={d.generatedAt} onRefresh={() => void query.refetch()} />
                 <Section id="finance-headlines" title={t("dashboards.finance.headlines")}>
                   <HeadlineList

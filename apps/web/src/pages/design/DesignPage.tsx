@@ -313,7 +313,7 @@ function DimensionView({ view, onClose }: { view: TomCanvasCellView; onClose: ()
         <div>
           <h4 className="small-heading">{t("evidence.title")}</h4>
           {/* T-DG6-BE-Z10B (D-218): a linked item the reader is not admitted to is not listed; the label says so. */}
-          <RestrictedRecordsLabel value={view.includesRestrictedRecords} />
+          <RestrictedRecordsLabel value={view.includesRestrictedRecords} scope="item" />
           {view.evidence.length === 0 ? (
             view.includesRestrictedRecords ? null : (
               <p className="muted">{t("evidence.noneLinked")}</p>

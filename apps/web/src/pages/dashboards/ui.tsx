@@ -941,7 +941,7 @@ export function DrilldownPanel({
         <QueryState query={query}>
           {(d) => (
             <>
-              <RestrictedRecordsLabel value={d.includesRestrictedRecords} />
+              <RestrictedRecordsLabel value={d.includesRestrictedRecords} scope="total" />
               <dl className="details details--compact">
                 <div>
                   <dt>{t("dashboards.drill.value")}</dt>

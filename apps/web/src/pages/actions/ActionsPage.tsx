@@ -69,7 +69,7 @@ export function ActionSource({ action, tid }: { action: RaidAction; tid: string 
   if (action.includesRestrictedRecords === true)
     return (
       <span data-source={action.sourceKind}>
-        {label} <RestrictedRecordsLabel value />
+        {label} <RestrictedRecordsLabel value scope="item" />
       </span>
     );
   return (

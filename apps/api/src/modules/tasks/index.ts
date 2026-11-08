@@ -33,6 +33,7 @@ export {
   deepLinkTarget,
   issueDeepLink,
   readableTargets,
+  restrictedNotifications,
   restrictedLinkChildren,
   restrictedWorkItemLink,
   restrictedWorkItems,

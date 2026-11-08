@@ -47,7 +47,7 @@ function TransformationDashboardBody() {
         {(d) => (
           <>
             <GeneratedNote at={d.generatedAt} timezone={d.timezone} onRefresh={() => void query.refetch()} />
-            <RestrictedRecordsLabel value={d.includesRestrictedRecords} />
+            <RestrictedRecordsLabel value={d.includesRestrictedRecords} scope="total" />
             <AreaGrid areas={d.areas} onDrill={openDrill} contextTid={tid} />
           </>
         )}
@@ -142,7 +142,7 @@ function WorkstreamDashboardBody() {
               {d.name}
             </h2>
             <GeneratedNote at={d.generatedAt} onRefresh={() => void query.refetch()} />
-            <RestrictedRecordsLabel value={d.includesRestrictedRecords} />
+            <RestrictedRecordsLabel value={d.includesRestrictedRecords} scope="total" />
             <AreaGrid areas={d.areas} onDrill={openDrill} contextTid={tid} />
           </>
         )}

@@ -150,7 +150,7 @@ function Groups() {
             ))}
             {g.includesRestrictedRecords === true ? (
               <li data-restricted-member="true">
-                <RestrictedRecordsLabel value />
+                <RestrictedRecordsLabel value scope="item" />
               </li>
             ) : null}
           </ul>
@@ -167,7 +167,7 @@ function Groups() {
         ) : g.countedBenefitRestricted === true ? (
           // A member is counted, but the reader is not admitted to it (D-218): the label, never "none counted".
           <span data-counted-member="restricted">
-            <RestrictedRecordsLabel value />
+            <RestrictedRecordsLabel value scope="item" />
           </span>
         ) : (
           <span className="status-chip status-chip--unknown status-chip--wrap" data-counted-member="none">

@@ -41,7 +41,7 @@ export function MyWorkRestricted({ item }: { item: MyWorkItem }) {
   return (
     <>
       {" "}
-      <RestrictedRecordsLabel value />
+      <RestrictedRecordsLabel value scope="item" />
     </>
   );
 }

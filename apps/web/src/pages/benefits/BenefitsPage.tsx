@@ -220,7 +220,7 @@ function Register() {
           <span data-evidence-count={b.evidenceCount}>{t("benefitsP4.evidenceCount", { count: b.evidenceCount })}</span>
           {b.includesRestrictedRecords === true ? (
             <span className="block">
-              <RestrictedRecordsLabel value />
+              <RestrictedRecordsLabel value scope="item" />
             </span>
           ) : null}
         </span>

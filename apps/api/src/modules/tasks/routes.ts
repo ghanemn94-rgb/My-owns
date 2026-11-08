@@ -18,7 +18,7 @@ import type { FastifyInstance, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { auditContextOf, organizationsWith, principalOf, refreshPrincipal } from "../access/index.ts";
 import { record } from "../audit/index.ts";
-import { readableTargets, restrictedWorkItemLink, restrictedWorkItems } from "./deep-links.ts";
+import { restrictedNotifications, restrictedWorkItemLink, restrictedWorkItems } from "./deep-links.ts";
 import {
   cursorSchema,
   decodeCursor,
@@ -129,6 +129,23 @@ export const toInboxNotification = (r: InboxNotificationRow): InboxNotification 
   createdAt: iso(r.created_at),
   version: r.version,
 });
+
+/**
+ * A notification as returned to its recipient (T-DG6-BE-Z13, F-DG6-540; D-218, D-222 (1), D-226; ADR-0051 §2, §3).
+ * `restricted` (`restrictedNotifications`): the text is `inbox.restricted` with params {}, the link is the
+ * transformation home (else My Work) and the item carries `includesRestrictedRecords: true`; its id, work item id, read
+ * state and version stay, so the recipient can still mark it read. The stored row is never modified (access restored =
+ * text and link restored).
+ */
+const notificationFor = (r: InboxNotificationRow, restricted: boolean): InboxNotification =>
+  restricted
+    ? {
+        ...toInboxNotification(r),
+        ...INBOX_RESTRICTED,
+        linkPath: restrictedWorkItemLink(r.transformation_id),
+        includesRestrictedRecords: true,
+      }
+    : toInboxNotification(r);
 
 const stringBool = z.stringbool({ truthy: ["true"], falsy: ["false"] });
 const workItemQuery = z.strictObject({
@@ -357,20 +374,22 @@ export function registerTaskRoutes(app: FastifyInstance, { db }: ModuleDeps): st
       .where("delivery_state", "=", "delivered") // T-DG5-BE-L: the unread count of the listed rows
       .where("read_at", "is", null)
       .executeTakeFirstOrThrow();
-    // P6 (T-DG6-BE-C; ADR-0051 §3; REQ-S12-024): read-time redaction. An item whose target the recipient cannot read
-    // now is returned with messageKey `inbox.restricted` and messageParams {}; ids, link, read state and version are
-    // unchanged and the stored row is never modified (access restored = text restored).
-    const readable = await readableTargets(db, principalOf(request), page.items);
-    const items = page.items.map((r, i) =>
-      readable.at(i) === true ? toInboxNotification(r) : { ...toInboxNotification(r), ...INBOX_RESTRICTED },
-    );
+    // P6 (T-DG6-BE-C; ADR-0051 §3; REQ-S12-024) and T-DG6-BE-Z13 (D-218, D-226): read-time redaction. An item about
+    // a record the recipient may not see is returned as `notificationFor` describes; the stored row is never modified.
+    const restricted = await restrictedNotifications(db, principalOf(request), page.items);
+    const items = page.items.map((r, i) => notificationFor(r, restricted.at(i) === true));
     return { items, nextCursor: page.nextCursor, unreadCount: Number(unread.n) };
   });
 
   app.post(READ, { config: session }, async (request, reply) => {
     const { notificationId } = parse(notificationParams, request.params, "params");
-    const row = await db.transaction().execute((tx) => markRead(tx, request, notificationId));
-    return sendVersioned(reply, 200, toInboxNotification(row));
+    // T-DG6-BE-Z13 (F-DG6-540; D-226): the response is redacted as the inbox list is.
+    const item = await db.transaction().execute(async (tx) => {
+      const row = await markRead(tx, request, notificationId);
+      const [restricted] = await restrictedNotifications(tx, principalOf(request), [row]);
+      return notificationFor(row, restricted === true);
+    });
+    return sendVersioned(reply, 200, item);
   });
 
   return [`GET ${ME_ITEMS}`, `GET ${ITEM}`, `POST ${COMPLETE}`, `GET ${INBOX}`, `POST ${READ}`];

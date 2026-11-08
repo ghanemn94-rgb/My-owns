@@ -43,7 +43,7 @@ export function TotalsView({ totals, tid }: { totals: BenefitTotals; tid?: strin
   return (
     <div data-totals-scope={totals.scope}>
       {/* T-DG6-FE-B (ADR-0051 §2): "Includes restricted records" when the total contains a record hidden from me. */}
-      <RestrictedRecordsLabel value={totals.includesRestrictedRecords} />
+      <RestrictedRecordsLabel value={totals.includesRestrictedRecords} scope="total" />
       {totals.allocated ? (
         <p className="banner banner--info" role="note" data-state="allocated">
           <Icon name="info" /> {t("benefitsP4.totals.allocatedNote")}

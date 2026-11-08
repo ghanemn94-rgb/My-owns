@@ -27,7 +27,7 @@
 //     T-DG6-BE-Z12B (D-222 decided work_item.subject_id and automation_rule_version.conditions; both are redacted).
 // Everything is SYNTHETIC test metadata. Nothing here is a business approval (G1-G6) or touches DG0-DG7.
 
-export type InventoryKind = "fk" | "uuid" | "array" | "json";
+export type InventoryKind = "fk" | "uuid" | "array" | "json" | "text";
 export type InventoryStatus =
   | "redacted"
   | "holder-restricted"
@@ -61,6 +61,7 @@ export interface InventoryRow {
 const Z12 = "apps/api/test/integration/access/sensitive-reach-id-refs-z12.test.ts";
 const Z10B = "apps/api/test/integration/access/sensitive-reach-id-refs-writes.test.ts";
 const Z12B = "apps/api/test/integration/access/sensitive-reference-pending-z12b.test.ts";
+const Z13 = "apps/api/test/integration/tasks/inbox-restricted-z13.test.ts";
 
 const holder = (column: string, names: string, guard: string, kind: InventoryKind = "fk"): InventoryRow => ({
   column,
@@ -531,11 +532,23 @@ export const SENSITIVE_REFERENCE_INVENTORY: readonly InventoryRow[] = [
     column: "inbox_notification.target_record_id",
     kind: "uuid",
     names: "any record a notification targets",
-    operations: ["listMyInbox"],
-    before: "redacted by BE-Y1/Z4 (tasks/deep-links.ts: target not readable -> inbox.restricted without the link)",
+    operations: ["listMyInbox", "markInboxNotificationRead", "resolveDeepLink"],
+    before:
+      "redacted by BE-Y1/Z4 in listMyInbox only (readableTargets); markInboxNotificationRead unredacted (F-DG6-540)",
     status: "redacted",
-    fix: "tasks/deep-links.ts readableTargets",
-    exercise: "apps/api/test/integration/tasks/deep-links.test.ts#inbox.restricted",
+    fix: "T-DG6-BE-Z13 (D-226): tasks/deep-links.ts restrictedNotifications -> tasks/routes.ts notificationFor (list and mark-read: inbox.restricted, params {}, the transformation home link, marker); the resolver refuses 403",
+    exercise: `${Z13}#markInboxNotificationRead returns the same redaction`,
+  },
+  {
+    column: "inbox_notification.link_path",
+    kind: "text",
+    names: "the in-app route of the notification's record (a benefit, a Finance validation, an overlap, ...)",
+    operations: ["listMyInbox", "markInboxNotificationRead", "resolveDeepLink"],
+    before:
+      "LEAK (F-DG6-540): kept in listMyInbox by design and in markInboxNotificationRead; child routes (finance-validations, benefit-overlaps) not recognized",
+    status: "redacted",
+    fix: "T-DG6-BE-Z13 (D-226): restrictedNotifications checks every id in the link with restrictedIdsAmong (any SENSITIVE_CHILD_SOURCES type) -> linkPath = the transformation home + marker; the resolver refuses 403",
+    exercise: `${Z13}#listMyInbox: Finance validation, overlap and benefit notifications are redacted`,
   },
   cannot("journey_pain_point.step_key", "uuid", "a journey step key"),
   cannot("kpi_actual.scope_id", "uuid", "KPI scope kinds"),
@@ -686,6 +699,16 @@ export const SENSITIVE_REFERENCE_INVENTORY: readonly InventoryRow[] = [
     fix: "D-222 (T-DG6-BE-Z12B): tasks/deep-links.ts restrictedWorkItems (subject, or the record the stored link names) -> tasks/routes.ts workItemFor (subjectId null, linkPath the transformation home, inbox.restricted, marker; completion too) and reporting/my-work.ts presentWorkItems (recordId null, href the transformation home, marker; the workspace header's next actions too; the My Work cursor carries the work-item id, never the record id). Contract: WorkItem.subjectId and MyWorkItem.recordId NullableUuid. Web: rows keyed by myWorkRowKeys, restricted label",
     exercise:
       "apps/api/test/integration/access/sensitive-reach-registers.test.ts#D-222 work item ids: BO2's restricted work items, My Work items and next actions name no record id",
+  },
+  {
+    column: "work_item.link_path",
+    kind: "text",
+    names: "the in-app route of the item's record (a benefit, a Finance validation, an overlap, ...)",
+    operations: ["listMyWorkItems", "getWorkItem", "completeWorkItem", "getMyWork", "getWorkspaceHeader"],
+    before: "redacted by D-222 (T-DG6-BE-Z12B) for the subject and the recognized routes",
+    status: "redacted",
+    fix: "tasks/deep-links.ts restrictedWorkItems (subject, recognized routes and, T-DG6-BE-Z13, every id in the link via restrictedIdsAmong) -> workItemFor / presentWorkItems: the transformation home + marker",
+    exercise: `${Z13}#listMyWorkItems: the work item of the Finance validation links home`,
   },
   // ------------------------------------------------------------------ uuid arrays
   {
@@ -858,11 +881,12 @@ export const SENSITIVE_REFERENCE_INVENTORY: readonly InventoryRow[] = [
     column: "inbox_notification.message_params",
     kind: "json",
     names: "codes and labels of the notification's subject",
-    operations: ["listMyInbox"],
-    before: "redacted by BE-Y1/Z4 (inbox.restricted with params {})",
+    operations: ["listMyInbox", "markInboxNotificationRead"],
+    before:
+      "redacted by BE-Y1/Z4 in listMyInbox for a readable-target miss only; child sources and mark-read unredacted (F-DG6-540)",
     status: "redacted",
-    fix: "tasks/deep-links.ts",
-    exercise: "apps/api/test/integration/tasks/deep-links.test.ts#inbox.restricted",
+    fix: "T-DG6-BE-Z13 (D-226): tasks/routes.ts notificationFor (inbox.restricted with params {}) on restrictedNotifications",
+    exercise: `${Z13}#listMyInbox: Finance validation, overlap and benefit notifications are redacted`,
   },
   cannot("initiative_score_result.inputs", "json", "initiative scoring inputs"),
   cannot("journey.steps", "json", "journey steps (text)"),

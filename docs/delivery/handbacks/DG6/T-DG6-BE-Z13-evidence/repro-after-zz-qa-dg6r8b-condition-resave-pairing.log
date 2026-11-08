@@ -1,0 +1,110 @@
+port-policy: PostgreSQL listening on port 31150 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-z13
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw8c0sj7_580867dd (server_encoding UTF8); applied 118 migrations to a fresh database
+stdout | apps/api/test/integration/access/zz-qa-dg6r8b-condition-resave-pairing.test.ts
+QA-R8b ids: hidden X=01a1bd04-ee0d-742a-878e-66be45c20694 hidden Y=01a1bd04-ee55-73eb-af73-cca0b41db5c2 visible V=01a1bd04-ee76-732f-ab07-568018d39283
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r8b-condition-resave-pairing.test.ts > QA-R8b: keepRestrictedLiterals when the author removes or reorders conditions (D-222 (2)) > P0 control: changing only an unrelated condition keeps both hidden literals
+QA-R8b P0: author saw [{"op":"neq","field":"benefitId","value":"[restricted:1]"},{"op":"neq","field":"benefitId","value":"[restricted:2]"},{"op":"eq","field":"severity","value":"high"}]; sent [{"op":"neq","field":"benefitId","value":"[restricted:1]"},{"op":"neq","field":"benefitId","value":"[restricted:2]"},{"op":"eq","field":"severity","value":"critical"}]; stored now [{"op":"neq","field":"benefitId","value":"01a1bd04-ee0d-742a-878e-66be45c20694"},{"op":"neq","field":"benefitId","value":"01a1bd04-ee55-73eb-af73-cca0b41db5c2"},{"op":"eq","field":"severity","value":"critical"}]; author response [{"op":"neq","field":"benefitId","value":"[restricted:1]"},{"op":"neq","field":"benefitId","value":"[restricted:2]"},{"op":"eq","field":"severity","value":"critical"}] marker true
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r8b-condition-resave-pairing.test.ts > QA-R8b: keepRestrictedLiterals when the author removes or reorders conditions (D-222 (2)) > P1: two restricted literals under one (field, op); the author deletes the FIRST -> the remaining one should keep Y
+QA-R8b P1 delete first restricted: author saw [{"op":"neq","field":"benefitId","value":"[restricted:1]"},{"op":"neq","field":"benefitId","value":"[restricted:2]"}]; sent [{"op":"neq","field":"benefitId","value":"[restricted:2]"}]; stored now [{"op":"neq","field":"benefitId","value":"01a1bd04-ee55-73eb-af73-cca0b41db5c2"}]; author response [{"op":"neq","field":"benefitId","value":"[restricted:1]"}] marker true
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r8b-condition-resave-pairing.test.ts > QA-R8b: keepRestrictedLiterals when the author removes or reorders conditions (D-222 (2)) > P2: a visible literal then a restricted one; the author deletes the visible one -> the remaining one should keep Y
+QA-R8b P2 delete visible first: author saw [{"op":"neq","field":"benefitId","value":"01a1bd04-ee76-732f-ab07-568018d39283"},{"op":"neq","field":"benefitId","value":"[restricted:1]"}]; sent [{"op":"neq","field":"benefitId","value":"[restricted:1]"}]; stored now [{"op":"neq","field":"benefitId","value":"01a1bd04-ee55-73eb-af73-cca0b41db5c2"}]; author response [{"op":"neq","field":"benefitId","value":"[restricted:1]"}] marker true
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r8b-condition-resave-pairing.test.ts > QA-R8b: keepRestrictedLiterals when the author removes or reorders conditions (D-222 (2)) > P3: an `in` list of two restricted literals; the author removes the first element -> the list should keep [Y]
+QA-R8b P3 in-list drop first: author saw [{"op":"in","field":"benefitId","value":["[restricted:1]","[restricted:2]"]}]; sent [{"op":"in","field":"benefitId","value":["[restricted:2]"]}]; stored now [{"op":"in","field":"benefitId","value":["01a1bd04-ee55-73eb-af73-cca0b41db5c2"]}]; author response [{"op":"in","field":"benefitId","value":["[restricted:1]"]}] marker true
+
+ ❯ |integration| apps/api/test/integration/access/zz-qa-dg6r8b-condition-resave-pairing.test.ts (4 tests | 3 failed) 1472ms
+   × QA-R8b: keepRestrictedLiterals when the author removes or reorders conditions (D-222 (2)) > P0 control: changing only an unrelated condition keeps both hidden literals 192ms
+     → expected [ '[restricted:1]', '[restricted:2]' ] to deeply equal [ '[restricted]', '[restricted]' ]
+   ✓ QA-R8b: keepRestrictedLiterals when the author removes or reorders conditions (D-222 (2)) > P1: two restricted literals under one (field, op); the author deletes the FIRST -> the remaining one should keep Y 72ms
+   × QA-R8b: keepRestrictedLiterals when the author removes or reorders conditions (D-222 (2)) > P2: a visible literal then a restricted one; the author deletes the visible one -> the remaining one should keep Y 94ms
+     → expected [ …(2) ] to deeply equal [ …(2) ]
+   × QA-R8b: keepRestrictedLiterals when the author removes or reorders conditions (D-222 (2)) > P3: an `in` list of two restricted literals; the author removes the first element -> the list should keep [Y] 98ms
+     → expected [ '[restricted:1]', '[restricted:2]' ] to deeply equal [ '[restricted]', '[restricted]' ]
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/access/zz-qa-dg6r8b-condition-resave-pairing.test.ts > QA-R8b: keepRestrictedLiterals when the author removes or reorders conditions (D-222 (2)) > P0 control: changing only an unrelated condition keeps both hidden literals
+AssertionError: expected [ '[restricted:1]', '[restricted:2]' ] to deeply equal [ '[restricted]', '[restricted]' ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   "[restricted]",[39m
+[32m-   "[restricted]",[39m
+[31m+   "[restricted:1]",[39m
+[31m+   "[restricted:2]",[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/access/zz-qa-dg6r8b-condition-resave-pairing.test.ts:117:76
+    115|     ]);
+    116|     const { shown, now } = await edit(id, (cs) => cs.map((x) => (x.fie…
+    117|     expect(shown.content.conditions.slice(0, 2).map((x: Body) => x.val…
+       |                                                                            ^
+    118|     expect(now.map((x: Body) => x.value)).toEqual([H.x, H.y, "critical…
+    119|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/zz-qa-dg6r8b-condition-resave-pairing.test.ts > QA-R8b: keepRestrictedLiterals when the author removes or reorders conditions (D-222 (2)) > P2: a visible literal then a restricted one; the author deletes the visible one -> the remaining one should keep Y
+AssertionError: expected [ …(2) ] to deeply equal [ …(2) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    "01a1bd04-ee76-732f-ab07-568018d39283",[22m
+[32m-   "[restricted]",[39m
+[31m+   "[restricted:1]",[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/access/zz-qa-dg6r8b-condition-resave-pairing.test.ts:134:64
+    132|     ]);
+    133|     const { shown, now } = await edit(id, (cs) => cs.filter((_, i) => …
+    134|     expect(shown.content.conditions.map((x: Body) => x.value)).toEqual…
+       |                                                                ^
+    135|     expect(now.map((x: Body) => x.value), "the hidden literal survives…
+    136|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/zz-qa-dg6r8b-condition-resave-pairing.test.ts > QA-R8b: keepRestrictedLiterals when the author removes or reorders conditions (D-222 (2)) > P3: an `in` list of two restricted literals; the author removes the first element -> the list should keep [Y]
+AssertionError: expected [ '[restricted:1]', '[restricted:2]' ] to deeply equal [ '[restricted]', '[restricted]' ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   "[restricted]",[39m
+[32m-   "[restricted]",[39m
+[31m+   "[restricted:1]",[39m
+[31m+   "[restricted:2]",[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/access/zz-qa-dg6r8b-condition-resave-pairing.test.ts:140:47
+    138|     const id = await rule([{ field: "benefitId", op: "in", value: [H.x…
+    139|     const { shown, now } = await edit(id, (cs) => cs.map((x) => ({ ...…
+    140|     expect(shown.content.conditions[0].value).toEqual([M, M]);
+       |                                               ^
+    141|     expect(now[0].value, "the element the author kept keeps its own li…
+    142|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 1 passed (4)
+   Start at  21:16:06
+   Duration  13.48s (transform 4.91s, setup 0ms, collect 8.91s, tests 1.47s, environment 0ms, prepare 54ms)
+
+exit 1

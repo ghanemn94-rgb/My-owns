@@ -60,12 +60,24 @@ export const automationConditionValue = z.union([
 ]);
 
 /**
- * T-DG6-BE-Z12B (F-DG6-480; D-218, D-222; ADR-0051 §2): the neutral restricted marker a condition literal is shown as
- * when it names a sensitive record (or a child that carries one's values) the reader is not admitted to. It names no
- * record. A version update that sends it back, in the same condition (field and operator) and position, keeps the
- * stored literal unchanged (the D-218 re-save rule); anywhere else it is an ordinary literal that names nothing.
+ * T-DG6-BE-Z12B, T-DG6-BE-Z13 (F-DG6-480, F-DG6-520/541/560; D-218, D-222, D-226; ADR-0051 §2): the bare restricted
+ * marker text. It is never shown on its own any more and never stored: a write that sends it as a literal (or anything
+ * else that looks like marker text but is not a token of the stored version) is refused with 422
+ * `automation_rule.restricted_marker_unknown`.
  */
 export const AUTOMATION_RESTRICTED_LITERAL = "[restricted]";
+
+/**
+ * D-226: the opaque per-version token a condition literal is shown as when it names a sensitive record (or a child that
+ * carries one's values) the reader is not admitted to. `k` is the literal's 1-based ordinal among the stored version's
+ * hidden literals, in reading order (conditions in order, `in` list elements in order); it reveals nothing about the
+ * record. A version update maps each token it receives back to its literal wherever the condition now sits; a token
+ * that is left out is simply removed.
+ */
+export const automationRestrictedToken = (k: number): string => `[restricted:${k}]`;
+export const AUTOMATION_RESTRICTED_TOKEN_PATTERN = /^\[restricted:([1-9][0-9]{0,3})\]$/;
+/** True for a token, the bare marker, or any other text that looks like marker text (refused unless a known token). */
+export const looksLikeRestrictedMarker = (v: string): boolean => /^\s*\[\s*restricted\b/i.test(v);
 
 export const automationCondition = z.strictObject({
   field: z.string().regex(AUTOMATION_CONDITION_FIELD_PATTERN, "validation.condition_field"),
@@ -360,7 +372,7 @@ export const automationRuleVersion = z.strictObject({
   summary: automationRuleSummary,
   version,
   updatedAt: timestamp,
-  /** True when a condition literal is shown as AUTOMATION_RESTRICTED_LITERAL (label access.includesRestrictedRecords). */
+  /** True when a condition literal is shown as a restricted token (D-226; label access.includesRestrictedRecords). */
   includesRestrictedRecords: z.literal(true).optional(),
 });
 export type AutomationRuleVersion = z.infer<typeof automationRuleVersion>;

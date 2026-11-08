@@ -362,12 +362,14 @@ describe("listMyInbox redaction (ADR-0051 §3; D-195 reopen row 6)", () => {
       id,
       transformationId: b.transformationId,
       workItemId: stored.work_item_id,
-      linkPath: benefitPath(b.transformationId, sensitiveId),
+      // T-DG6-BE-Z13 (F-DG6-540; D-218, D-226): the link is the transformation home, never the hidden id; marked.
+      linkPath: `/transformations/${b.transformationId}`,
       messageKey: "inbox.restricted",
       messageParams: {},
       readAt: null,
       createdAt: stored.created_at.toISOString(),
       version: stored.version,
+      includesRestrictedRecords: true,
     });
     const g = await send("POST", "/api/v1/admin/sensitive-grants", {
       session: office,
@@ -380,8 +382,10 @@ describe("listMyInbox redaction (ADR-0051 §3; D-195 reopen row 6)", () => {
       },
     });
     expect(g.status, JSON.stringify(g.body)).toBe(201);
+    const { includesRestrictedRecords: _marker, ...unmarked } = redacted;
     expect(await inboxItem(b.s.bo2, id)).toEqual({
-      ...redacted,
+      ...unmarked,
+      linkPath: benefitPath(b.transformationId, sensitiveId),
       messageKey: "tasks.kpi_update_due",
       messageParams: { title: SECRET_TITLE },
     });

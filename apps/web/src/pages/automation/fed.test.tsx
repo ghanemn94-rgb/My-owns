@@ -327,12 +327,14 @@ describe("REQ-S12-001 / S12-002: an automation rule", () => {
 
   for (const locale of ["en", "ar"] as const) {
     it(`${locale}: T-DG6-BE-Z12B: a condition whose literal names a restricted record shows the restricted label`, async () => {
-      // D-222 (ADR-0051 §2): the server shows the literal as AUTOMATION_RESTRICTED_LITERAL and marks the version.
+      // D-226 (ADR-0051 §2): the server shows the literal as an opaque token and marks the version; a value that only
+      // equals the bare marker text gets no label (T-DG6-BE-Z13).
       const restricted = {
         ...content,
         conditions: [
-          { field: "gateCode", op: "eq", value: AUTOMATION_RESTRICTED_LITERAL },
+          { field: "gateCode", op: "eq", value: "[restricted:1]" },
           { field: "outcome", op: "eq", value: "approved" },
+          { field: "outcome", op: "neq", value: AUTOMATION_RESTRICTED_LITERAL },
         ],
       };
       mockApi(
@@ -346,24 +348,33 @@ describe("REQ-S12-001 / S12-002: an automation rule", () => {
       const first = await found("[data-condition='0']");
       expect(first.querySelector("[data-restricted-records='true']")).not.toBeNull();
       expect(first.textContent).toContain(catalogues[locale].access.includesRestrictedRecords);
+      expect(first.querySelector("[data-restricted-records='true']")?.getAttribute("title")).toBe(
+        catalogues[locale].adminP6.restricted.hintItem,
+      );
       expect(document.querySelector("[data-condition='1'] [data-restricted-records]")).toBeNull();
+      expect(document.querySelector("[data-condition='2'] [data-restricted-records]")).toBeNull();
     });
   }
 
-  it("T-DG6-BE-Z12B: the builder sends the restricted marker back in place (the server keeps the hidden literal)", () => {
+  it("T-DG6-BE-Z13: the builder sends each restricted token back wherever its condition sits (D-226)", () => {
     const draft = toContentDraft({
       ...content,
       runAs: "service",
       conditions: [
-        { field: "gateCode", op: "eq", value: AUTOMATION_RESTRICTED_LITERAL },
-        { field: "outcome", op: "in", value: ["approved", AUTOMATION_RESTRICTED_LITERAL] },
+        { field: "gateCode", op: "eq", value: "[restricted:1]" },
+        { field: "outcome", op: "in", value: ["approved", "[restricted:2]"] },
+        { field: "outcome", op: "neq", value: AUTOMATION_RESTRICTED_LITERAL },
       ],
     });
     expect(conditionIsRestricted(draft.conditions[0]!)).toBe(true);
     expect(conditionIsRestricted(draft.conditions[1]!)).toBe(true);
+    // The bare marker text is not a token: no label (the server refuses it on save).
+    expect(conditionIsRestricted(draft.conditions[2]!)).toBe(false);
+    // The author removes the first condition: the label follows the token to its new position.
+    draft.conditions = draft.conditions.slice(1, 2);
+    expect(conditionIsRestricted(draft.conditions[0]!)).toBe(true);
     expect(toContentBody(draft)["conditions"]).toEqual([
-      { field: "gateCode", op: "eq", value: AUTOMATION_RESTRICTED_LITERAL },
-      { field: "outcome", op: "in", value: ["approved", AUTOMATION_RESTRICTED_LITERAL] },
+      { field: "outcome", op: "in", value: ["approved", "[restricted:2]"] },
     ]);
   });
 

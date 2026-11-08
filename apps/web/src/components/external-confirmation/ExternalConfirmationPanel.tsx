@@ -157,7 +157,7 @@ export function ExternalConfirmationPanel({
           <Link className="link" to={`/transformations/${tid}/evidence-register`}>
             {t("externalChange.provenance.evidence")}
           </Link>{" "}
-          <RestrictedRecordsLabel value={x.includesRestrictedRecords} />
+          <RestrictedRecordsLabel value={x.includesRestrictedRecords} scope="item" />
           {x.confirmedAt ? ` · ${formatDateTime(x.confirmedAt, locale)}` : ""}
         </span>
       ) : null}
