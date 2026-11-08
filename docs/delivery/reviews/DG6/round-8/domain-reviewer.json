@@ -1,0 +1,275 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG6",
+  "round": 8,
+  "candidate_id": "sha256:6cda8b33e184b41983d7718cf6ad15d3912337219fd5c15d9b9d516f0142f21d",
+  "source_commit": "d84d11a62f52932dd5c0aa932c5c1790c13e7e8b",
+  "reviewer_role": "domain-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG6-T-DG6-REV-DOM-R8-domain-reviewer-20261108T170554Z-1662c58a",
+    "session_id": "1662c58a-34a4-484c-848d-40f24918aff9"
+  },
+  "implementation_author": [
+    "backend-workflow-engineer",
+    "kpi-benefits-engineer",
+    "frontend-ux-engineer",
+    "solution-architect",
+    "transformation-analyst",
+    "devops-engineer",
+    "qa-verifier",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "domain-reviewer authored no DG6 implementation, test, register row, ADR, repair or delivery decision in the reviewed candidate. I formed this verdict only from my own runs in this session (run 1662c58a). I did not open any other reviewer's round-8 record or evidence. I saw only their untracked folder names in git status, and the file name of a QA test committed at 7173f382d..HEAD, which I did not read. A previous attempt of this task (run c1924c83) was interrupted. Its untracked files are at the root of docs/delivery/test-evidence/DG6/domain/round-8/. I re-ran every probe it contained in this session and cite only my files under round-8/r1662/. Disclosures: (1) the repository HEAD is 5dd264274, not the source commit, but it differs from d84d11a62 only in delivery records (assignments, manifest, progress, stages.json, run evidence, one QA evidence file), and the recomputed candidate ID matches on both the working tree and a complete clone at d84d11a62. (2) The assignment text says 'round: 7', but the task is R8 and the record path is round-8, so I record round 8 as the DG6 round-5 to round-7 records did; I treat the 7 as a copy error. All product data I created or cite is SYNTHETIC. No in-product G1-G6 decision, demo approval or sensitivity grant here approves anything real, and none relates to DG0-DG7."
+  },
+  "assignment": "docs/delivery/assignments/DG6/round-8/domain-reviewer.md",
+  "requirements_checked": [
+    "REQ-DLV-038", "REQ-S01-005", "REQ-S02-006", "REQ-S10-002", "REQ-S10-004", "REQ-S12-019", "REQ-S12-023", "REQ-S12-024",
+    "REQ-S13-011", "REQ-S13-013", "REQ-S15-001", "REQ-S15-003", "REQ-S15-007", "REQ-S15-009", "REQ-S15-010", "REQ-S15-011",
+    "REQ-S15-012", "REQ-S15-013", "REQ-S15-014", "REQ-S16-006", "REQ-S16-007", "REQ-S16-022", "REQ-S16-023", "REQ-S16-026",
+    "REQ-S16-027", "REQ-S16-029", "REQ-S16-030", "REQ-S16-032", "REQ-S17-001", "REQ-S17-002", "REQ-S17-003", "REQ-S17-005",
+    "REQ-S17-006", "REQ-S17-007", "REQ-S17-008", "REQ-S17-009", "REQ-S17-010", "REQ-S17-011", "REQ-S20-001", "REQ-S20-012",
+    "REQ-S20-013", "REQ-S20-014", "REQ-S20-017", "REQ-S20-020", "REQ-S20-021", "REQ-S20-022", "REQ-S20-029", "REQ-S20-030"
+  ],
+  "checks_run": [
+    {
+      "id": "DOM-R8-00-candidate",
+      "procedure": "Verify the frozen candidate on the repository and on a complete, non-shallow disposable clone checked out at the source commit. List what differs between the source commit and HEAD.",
+      "command": "git rev-parse HEAD; node tools/gates/candidate.mjs --stage DG6; git clone --shared --no-checkout /home/user/My-owns $TMPDIR/rv8 && git checkout d84d11a62; git rev-parse --is-shallow-repository; node tools/gates/candidate.mjs --stage DG6; git diff --name-only d84d11a62 HEAD",
+      "environment": "Repository /home/user/My-owns at HEAD 5dd264274 (a617a8f63 when first read; the orchestrator committed 5dd264274 during my run, delivery records only); clone $TMPDIR/rv8 at d84d11a62 (non-shallow; --shared uses the repository's object store, with a full checkout of all files); Node 24.21.0",
+      "expected": "candidate_id sha256:6cda8b33…f21d with 2754 files on both; HEAD descends from d84d11a62 and differs from it only outside the manifest",
+      "actual": "Both give sha256:6cda8b33e184b41983d7718cf6ad15d3912337219fd5c15d9b9d516f0142f21d and 2754 files, exit 0. The clone is not shallow. HEAD differs from d84d11a62 only in docs/delivery (assignments, the candidate manifest, progress.md, stages.json, runs/, and one qa test-evidence file). My first clone attempt failed with 'No space left on device' on the shared temp volume, so I removed it and recloned with --shared.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-038"],
+      "evidence": ["docs/delivery/test-evidence/DG6/domain/round-8/r1662/candidate-clone.log"]
+    },
+    {
+      "id": "DOM-R8-01-validators",
+      "procedure": "Run the historical validators of DG1-DG5 and the DG6 register rules.",
+      "command": "for s in DG5 DG4 DG3 DG2 DG1; do node tools/gates/validate.mjs --historical --stage $s; done; node tools/gates/validate.mjs --register DG6",
+      "environment": "Repository working tree at HEAD; Node 24.21.0",
+      "expected": "All exit 0 with PASS",
+      "actual": "'PASS gate DG5 (historical)' through DG1, each with rc=0. 'PASS register rules at DG6', rc=0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-038"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-8/r1662/hist-DG5.log",
+        "docs/delivery/test-evidence/DG6/domain/round-8/r1662/hist-DG4.log",
+        "docs/delivery/test-evidence/DG6/domain/round-8/r1662/hist-DG3.log",
+        "docs/delivery/test-evidence/DG6/domain/round-8/r1662/hist-DG2.log",
+        "docs/delivery/test-evidence/DG6/domain/round-8/r1662/hist-DG1.log",
+        "docs/delivery/test-evidence/DG6/domain/round-8/r1662/register-DG6.log"
+      ]
+    },
+    {
+      "id": "DOM-R8-02-build",
+      "procedure": "Build every workspace package in the disposable clone. node_modules is read-only, so each package gets its own node_modules directory: workspace packages point at the clone, third-party packages at the repository's read-only .pnpm store. Vite runs with --configLoader runner.",
+      "command": "for p in packages/design-tokens packages/shared packages/config packages/reporting packages/db apps/api apps/worker; do (cd $p && pnpm run build); done; cd apps/web && npx tsc -p tsconfig.json && npx vite build --configLoader runner",
+      "environment": "$TMPDIR/rv8 at d84d11a62; Node 24.21.0; pnpm 10.33.0",
+      "expected": "Every build exits 0",
+      "actual": "Final build rc=0 (build.log). Two earlier failures came from my environment set-up, not the product, and I disclose both. (1) build-web.log/build-rest.log: the first 'pnpm -r build' failed with EROFS writing node_modules/.vite-temp, because node_modules is read-only. (2) The worker then failed with TS2305 'no exported member secretUseHost', because my first node_modules symlinks resolved @mth/config to the repository tree's stale dist instead of the clone's. A further attempt failed with 'spawn ELOOP' from a self-referencing .bin symlink I had made. After fixing the links, every package built. The only remaining notices are Vite's chunk-size and Rollup comment-annotation warnings, which are not errors.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-8/r1662/build.log",
+        "docs/delivery/test-evidence/DG6/domain/round-8/r1662/build-web.log",
+        "docs/delivery/test-evidence/DG6/domain/round-8/r1662/build-rest.log"
+      ]
+    },
+    {
+      "id": "DOM-R8-03-F-DG6-460",
+      "procedure": "Verify F-DG6-460 by re-running the round-7 reproduction on this candidate: grep ADR-0051, ADR-0045, the OpenAPI ReportDocument.sections description, the data dictionary and the ERD for the aggregate rule, report_snapshot_aggregate and aggregates_recorded. Compare the dictionary with migration 0126, then lint the OpenAPI.",
+      "command": "grep -n 'report_snapshot_aggregate\\|aggregates_recorded' docs/architecture/{data-dictionary,erd}.md docs/architecture/adr/ADR-00{51,45}-*.md docs/api/openapi.yaml; grep -n ReportDocument ADR-0051; cat packages/db/migrations/0126_*.sql; pnpm openapi:lint",
+      "environment": "$TMPDIR/rv8 at d84d11a62; Node 24.21.0",
+      "expected": "The texts state the shipped rule (a section is also flagged from its aggregate records), and the dictionary and ERD cover 0126",
+      "actual": "All the corrections are present (ADR-0051 row 90 and lines 304-307; ADR-0045 amendment line 339; openapi.yaml:27173; data-dictionary 14443-14516; erd 2203-2222). The dictionary matches 0126 column by column, constraint by constraint and trigger by trigger. openapi:lint PASS with 932 operations, rc=0. A mutant is not practical, because the repair is prose only. CLOSED_VERIFIED in domain-reviewer.verifications.json.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S10-002", "REQ-S13-013"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-8/r1662/f460-repro.log",
+        "docs/delivery/test-evidence/DG6/domain/round-8/r1662/openapi-lint.log"
+      ]
+    },
+    {
+      "id": "DOM-R8-04-z12-suites",
+      "procedure": "Run the BE-Z12/BE-Z12B integration suites added or changed since round 7: the reference inventory (which fails on an unclassified column), the six PENDING rows, the id-refs redaction, the registers, the sweep, the modular report and the revision proposals. Use a disposable PostgreSQL.",
+      "command": "QA_PG_PORT=30601 tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration apps/api/test/integration/access/sensitive-reference-inventory.test.ts …/sensitive-reference-pending-z12b.test.ts …/sensitive-reach-id-refs-z12.test.ts …/sensitive-reach-registers.test.ts …/sensitive-reach-sweep.test.ts apps/api/test/integration/reporting/modular.test.ts apps/api/test/integration/methodology/revision-proposals.test.ts",
+      "environment": "$TMPDIR/rv8; PostgreSQL 16 disposable cluster, port 30601; Node 24.21.0; vitest --configLoader runner (read-only node_modules)",
+      "expected": "All pass",
+      "actual": "7 files, 45 tests passed, none skipped or failed, rc=0. The inventory pins zero open and zero PENDING rows. A restricted work item and My Work row carry subjectId/recordId null, link to the transformation home and carry includesRestrictedRecords. Condition literals naming a hidden benefit read as the marker.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S10-002", "REQ-S10-004", "REQ-S13-013", "REQ-S12-023"],
+      "evidence": ["docs/delivery/test-evidence/DG6/domain/round-8/r1662/int-z12.log"]
+    },
+    {
+      "id": "DOM-R8-05-mutant-redaction",
+      "procedure": "Mutant: make redactConditionLiterals return every condition unredacted (versions.ts), run sensitive-reference-pending-z12b.test.ts, then restore the file (git diff empty afterwards).",
+      "command": "perl -0pi -e 's/if \\(hidden\\.size === 0\\) return/return/' apps/api/src/modules/automation/versions.ts; QA_PG_PORT=30604 tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration apps/api/test/integration/access/sensitive-reference-pending-z12b.test.ts; restore",
+      "environment": "$TMPDIR/rv8 (disposable); PostgreSQL 16, port 30604",
+      "expected": "The suite fails under the mutant (so it guards D-222 (2) on read)",
+      "actual": "Under the mutant, 2 of 7 tests fail as intended ('the author, not admitted, sees the marker…' and 'a re-save that sends the marker back keeps each hidden literal…'), rc=1 by design. The file was restored, and git diff is empty afterwards.",
+      "exit_status": 1,
+      "result": "PASS",
+      "requirements": ["REQ-S10-002"],
+      "evidence": ["docs/delivery/test-evidence/DG6/domain/round-8/r1662/mutant-z12b-redaction.log"]
+    },
+    {
+      "id": "DOM-R8-06-D222-resave-api",
+      "procedure": "Challenge D-222 (2), 'a re-save keeps the hidden literal unchanged', with the edits a rule author makes in the editor. Use the BE-Z12B set-up copied unchanged. (a) Control read. (b) Remove the open id P from an in-list [P, marker] and save. (c) For conditions [benefitId neq P, benefitId neq S], remove condition 1 and save the shown condition 2. Read the stored conditions from the database.",
+      "command": "QA_PG_PORT=30603 tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration apps/api/test/integration/zz-domain/dom-r8-condition-resave.test.ts (probe copied from r1662/dom-r8-condition-resave.test.ts.txt into the disposable clone only)",
+      "environment": "$TMPDIR/rv8; PostgreSQL 16 disposable, port 30603; synthetic data",
+      "expected": "After (b) the stored list is [S]. After (c) the stored conditions are [benefitId neq S].",
+      "actual": "(a) passes. (b) FAIL: stored [{eq S}, {in ['[restricted]']}, {severity eq high}]. The hidden S in the list is replaced by the text '[restricted]'. (c) FAIL: stored [{benefitId neq '[restricted]'}], so the exclusion of S is gone, and the rule now matches S. The author re-reads with includesRestrictedRecords absent, and the summary says 'if benefitId is not a restricted record'. The vitest exit 1 comes from these 2 assertions only. Raised as F-DG6-520 (Medium).",
+      "exit_status": 1,
+      "result": "FAIL",
+      "requirements": ["REQ-S10-002", "REQ-S20-013"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-8/r1662/probe-condition-resave.log",
+        "docs/delivery/test-evidence/DG6/domain/round-8/r1662/dom-r8-condition-resave.test.ts.txt"
+      ]
+    },
+    {
+      "id": "DOM-R8-07-D222-rule-author-ui",
+      "procedure": "Judge the open question D-222 (2) as a rule author, EN and AR, in the real UI. On the production-initialized stack (with-stack.sh), a synthetic ADM_METHOD author with no sensitive grant opens the rule version page, before and after removing condition 1 through the same PATCH the editor sends. Screenshot each state and read the stored row with psql.",
+      "command": "E2E_PG_PORT=30610 E2E_API_PORT=30611 E2E_SCREENSHOT_DIR=…/r1662/screens apps/web/e2e/support/with-stack.sh npx playwright test --config playwright.config.ts e2e/zz-domain/dom-r8-screens.spec.ts --workers=1 (probe copied from r1662/dom-r8-screens.spec.ts.txt into the disposable clone only)",
+      "environment": "$TMPDIR/rv8 built SPA + API (AUTH_MODE=dev, production-initialized seed, no worker); Chromium from /opt/pw-browsers; chromium-en and chromium-ar; Asia/Riyadh",
+      "expected": "The marker is understood, and after the re-save the rule still excludes S. The screen never states something the stored rule does not do.",
+      "actual": "Before the save, the marker is understandable in both locales: condition 2's value is '[restricted]' with a lock badge 'Includes restricted records' / 'يشمل سجلات مقيدة', and the readable rule says '…benefitId is not a restricted record' / '…لا يساوي سجل مقيد'. No title or id of S appears. After the save, the database holds benefitId neq '[restricted]'. The screen still shows the same value, badge and sentence in EN and AR, so the author is told the rule excludes a restricted record when it now excludes nothing. That is misleading. The Playwright soft assertion on the stored literal fails in both projects (exit 1, by design), and that is the only failure. Other observations, not new findings: the readable rule shows the raw field key 'benefitId' and the open benefit's raw uuid in both locales. This is an administrator screen, so REQ-S15-014 allows technical detail there. Raised as F-DG6-520.",
+      "exit_status": 1,
+      "result": "FAIL",
+      "requirements": ["REQ-S10-002", "REQ-S15-007", "REQ-S15-011"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-8/r1662/probe-screens.log",
+        "docs/delivery/test-evidence/DG6/domain/round-8/r1662/dom-r8-screens.spec.ts.txt",
+        "docs/delivery/test-evidence/DG6/domain/round-8/r1662/screens/en/dom-r8-rule-author-1-before.png",
+        "docs/delivery/test-evidence/DG6/domain/round-8/r1662/screens/en/dom-r8-rule-author-2-after-removing-condition-1.png",
+        "docs/delivery/test-evidence/DG6/domain/round-8/r1662/screens/ar/dom-r8-rule-author-1-before.png",
+        "docs/delivery/test-evidence/DG6/domain/round-8/r1662/screens/ar/dom-r8-rule-author-2-after-removing-condition-1.png"
+      ]
+    },
+    {
+      "id": "DOM-R8-08-D224-unlabelled-export",
+      "procedure": "Judge the open question D-224 (3), whether an export with no 'Includes restricted records' label misleads a report reader. Read ADR-0051 lines 79 and 307, D-195 Q3, D-199 and restricted.ts. Check that the A12-4 export refusal and the A15 reporting journeys pass in EN and AR (DOM-R8-09, DOM-R8-10).",
+      "command": "grep -n export docs/architecture/adr/ADR-0051-*.md; sed -n 1,130p apps/api/src/modules/reporting/reports/restricted.ts; grep -n -i sensitiv docs/source/master-prompt.anchored.md; e2e runs in DOM-R8-09/10",
+      "environment": "$TMPDIR/rv8 source; e2e as in DOM-R8-09/10",
+      "expected": "No export leaks restricted content, and none states something untrue about what it contains",
+      "actual": "Not a defect, so no finding. Aggregates are computed identically for every reader (D-195 Q3, a user decision), so the exported figure is the true figure. Exports that would include a restricted record are refused (D-199; A12-4 passes in EN and AR), and the D-218 redaction omits restricted rows. So the file does not name what it omits, and it states no false figure. The screen label is an aid to the reader. The master prompt's scope clause (M0188 §10: access scoped by organization, business unit, transformation and sensitive record) does not require the label in a rendered file. The remaining gap is that a reader of the exported file is not told that a total includes values they cannot itemise. ADR-0051 records this as an open design question for a business owner. I recommend a footnote, but it is not a defect against an acceptance text. The restricted marker in automation conditions is understandable as such in EN and AR (DOM-R8-07). Its defect is integrity on re-save, not wording.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S10-002", "REQ-S13-013"],
+      "evidence": [
+        "docs/architecture/adr/ADR-0051-p6-authorization-boundary-read-scope-sensitive-records-deep-links.md",
+        "apps/api/src/modules/reporting/reports/restricted.ts",
+        "docs/delivery/test-evidence/DG6/domain/round-8/r1662/e2e-domain.log"
+      ]
+    },
+    {
+      "id": "DOM-R8-09-e2e-domain-batch-1",
+      "procedure": "Run the root e2e journeys on the production-initialized stack in EN and AR: A12 scope isolation (search, deep link, evidence, exports, assistant, revocation), A17 failing connector (one exception, Stale with the last value and date), A17 imports and integration (staging, validation, duplicates, lineage, signed webhook, stopped connector), A21 no-AI operation and degradation, the A20 S15-014 term scan, layout and brand, and UX. Then re-run the spec that failed on its own.",
+      "command": "MTH_SECRET_QA_A17_WEBHOOK_SIGNING_SECRET=qa-a17-synthetic-signing-secret-0001 E2E_PG_PORT=30620 E2E_API_PORT=30621 E2E_SCREENSHOT_DIR=…/r1662/e2e-shots apps/web/e2e/support/with-stack.sh npx playwright test --config playwright.config.ts e2e/a12-p6-scope-isolation.spec.ts e2e/a17-failing-connector-exception.spec.ts e2e/a17-import-and-integration.spec.ts e2e/a21-no-ai-operation.spec.ts e2e/a21-p6-degradation.spec.ts e2e/a20-s15-014-term-scan.spec.ts e2e/a20-p6-layout-brand.spec.ts e2e/a20-p6-ux.spec.ts --workers=1; then MTH_PORT_POOL=30630-30649 … e2e/a21-p6-degradation.spec.ts",
+      "environment": "$TMPDIR/rv8 built; with-stack.sh (no worker); Chromium /opt/pw-browsers; chromium-en and chromium-ar; ports 30620-30649",
+      "expected": "All pass in both locales",
+      "actual": "First run: 172 passed, 2 failed, rc=1. Both failures are a21-p6-degradation.spec.ts:163 (EN and AR), with 'BLOCKED: MTH_PORT_POOL (\"a-b\") is not set; no harness port for the fresh-install API'. That spec starts its own fresh-install API from a port pool I had not exported, so this is my harness omission, not a product defect. I re-ran the spec alone with MTH_PORT_POOL=30630-30649: 4 passed, rc=0. The API log has two level-50 'operations.heartbeat_missed' lines. They are expected: with-stack.sh runs no worker, and the API opens a heartbeat exception, which is the product behaving as designed (REQ-S12-019, ADR-0053). There were no timeouts or flaky tests. Screens: the A17 exception page shows one exception and the linked KPI Stale (قديم) with last value 250.75 and date 2026-01-31, never zero or green. The A17 import screens are captured in EN and AR. A12-2 refuses a forwarded deep link with no title (REQ-S12-024). The S15-014 scan of 21 non-admin routes finds no stack trace or infrastructure term in normal, 500 and network-failure states, in EN and AR. Its disclosed limit is that states are scanned only in those forms, which I accept as a scan-scope limit and not a gap in the acceptance text.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S10-002", "REQ-S10-004", "REQ-S13-013", "REQ-S12-019", "REQ-S12-024", "REQ-S17-001", "REQ-S17-002", "REQ-S17-003", "REQ-S17-005", "REQ-S17-006", "REQ-S17-007", "REQ-S17-008", "REQ-S17-009", "REQ-S17-010", "REQ-S17-011", "REQ-S15-001", "REQ-S15-003", "REQ-S15-007", "REQ-S15-009", "REQ-S15-010", "REQ-S15-011", "REQ-S15-012", "REQ-S15-014", "REQ-S20-020", "REQ-S20-013"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-8/r1662/e2e-domain.log",
+        "docs/delivery/test-evidence/DG6/domain/round-8/r1662/e2e-a21-degradation-rerun.log",
+        "docs/delivery/test-evidence/DG6/domain/round-8/r1662/e2e-shots/en/a17-exception-data-owner.png",
+        "docs/delivery/test-evidence/DG6/domain/round-8/r1662/e2e-shots/ar/a17-exception-data-owner.png",
+        "docs/delivery/test-evidence/DG6/domain/round-8/r1662/e2e-shots/en/a17-csv-committed.png",
+        "docs/delivery/test-evidence/DG6/domain/round-8/r1662/e2e-shots/ar/a17-csv-committed.png",
+        "docs/delivery/test-evidence/DG6/domain/round-8/r1662/e2e-shots/en/a17-connector-stopped.png",
+        "docs/delivery/test-evidence/DG6/domain/round-8/r1662/e2e-shots/ar/a17-connector-stopped.png"
+      ]
+    },
+    {
+      "id": "DOM-R8-10-e2e-domain-batch-2",
+      "procedure": "Run the second batch of root e2e journeys in EN and AR: A22 P6 operability, A13 automation recovery, A13 connector run-once, A20 P6 axe, A20 bilingual shell and A15 reporting.",
+      "command": "MTH_PORT_POOL=30630-30649 MTH_SECRET_QA_A17_WEBHOOK_SIGNING_SECRET=qa-a17-synthetic-signing-secret-0001 E2E_PG_PORT=30624 E2E_API_PORT=30625 apps/web/e2e/support/with-stack.sh npx playwright test --config playwright.config.ts e2e/a22-p6-operability.spec.ts e2e/a13-automation-recovery.spec.ts e2e/a13-connector-run-once.spec.ts e2e/a20-p6-axe.spec.ts e2e/a20-bilingual-shell.spec.ts e2e/a15-reporting.spec.ts --workers=1",
+      "environment": "As DOM-R8-09; ports 30624-30649",
+      "expected": "All pass. Any skip is explained.",
+      "actual": "88 passed, 18 skipped, 0 failed, rc=0. The 18 skips are a20-p6-axe.spec.ts:208 'NOT SCANNED: no value for :<param>' for 9 detail routes × 2 locales: sensitive-grant, deep-link landing, operational exception, webhook, outbound write, import, approval, benefit, and walkthrough. On a fresh production-initialized stack these have no fixture id. The orchestrator's V11 root run shows the same 18 skips. They are a coverage limit of the axe scan, not a pass. Keyboard, focus and labels on the approval, KPI and gate flows are covered by a20-p6-ux (DOM-R8-09), and the import detail screen by the A17 journey. A13 recovery: a failed execution appears in the failure queue and succeeds on retry without duplicate actions.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S15-012", "REQ-S15-007", "REQ-S15-013", "REQ-S12-019", "REQ-S20-013", "REQ-S20-014", "REQ-S20-017", "REQ-S13-011", "REQ-S16-029", "REQ-S16-030"],
+      "evidence": ["docs/delivery/test-evidence/DG6/domain/round-8/r1662/e2e-domain-2.log"]
+    },
+    {
+      "id": "DOM-R8-11-web-unit",
+      "procedure": "Run the web unit tests changed since round 7 (automation fed, home regions, raid, health-check fef).",
+      "command": "npx vitest run --configLoader runner --project unit-web apps/web/src/pages/automation/fed.test.tsx apps/web/src/pages/my-work/home-regions.test.tsx apps/web/src/pages/raid/raid.test.tsx apps/web/src/pages/health-check/fef.test.tsx",
+      "environment": "$TMPDIR/rv8; Node 24.21.0; jsdom",
+      "expected": "All pass",
+      "actual": "4 files, 75 tests passed, none skipped or failed, rc=0",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S15-011", "REQ-S10-002"],
+      "evidence": ["docs/delivery/test-evidence/DG6/domain/round-8/r1662/web-unit.log"]
+    },
+    {
+      "id": "DOM-R8-12-register-outputs",
+      "procedure": "REQ-DLV-038 and the load report: check that every evidence path of the 48 DG6 register rows exists and that each row is IMPLEMENTED. Read the REQ-S20-029 load report, and the notes that defer clauses to the freeze verification (REQ-S12-019, REQ-S15-014, REQ-S17-007).",
+      "command": "node (CSV parse of docs/delivery/requirements.csv; fs.existsSync for each evidence path of the final_gate=DG6 rows); grep p95 docs/delivery/handbacks/DG6/T-DG6-DO-G-evidence/final/report.md",
+      "environment": "$TMPDIR/rv8 at d84d11a62",
+      "expected": "1109 paths exist, and 48 rows are IMPLEMENTED. The load report labels its targets provisional and gives the dataset, the infrastructure and the actual p95.",
+      "actual": "48 rows are IMPLEMENTED, and 0 of 1109 evidence paths are missing (rc=0). The load report opens with 'Engineering measurements on the stated sandbox host, not Mobily production capacity'. It states 50 transformations, 1,000 initiatives, 10,000 KPI-period actuals, 100,000 audit events and 120 users, with a 100-user workload. The highest p95 values are read 22.9 ms, update 34.9 ms, dashboards 50.3 ms and export start 108.5 ms, with no miss. Run 1's export-start miss of 2,688 ms is reported beside the re-run. Its disclosed gap (getWorkstreamDashboard not measured, patched generator, LOAD-T20) is a provisional, single-host measurement, and I accept it as documented (D-199 item 2). The deferred clauses of REQ-S12-019, REQ-S15-014 and REQ-S17-007 were re-run by me in DOM-R8-09 and pass.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-038", "REQ-S20-029", "REQ-S20-030"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-8/r1662/register-evidence-exists.log",
+        "docs/delivery/handbacks/DG6/T-DG6-DO-G-evidence/final/report.md"
+      ]
+    },
+    {
+      "id": "DOM-R8-13-decisions",
+      "procedure": "Judge D-194 to D-196, D-199 item 2, D-202, D-203 to D-205 and D-222 to D-224 against the playbook and the master prompt, from decisions.md, ADR-0043 (amended by ARCH-07 to ARCH-10) and the code.",
+      "command": "sed -n decisions.md; read ADR-0043 amendments and apps/api/src/modules/automation/versions.ts",
+      "environment": "$TMPDIR/rv8 source",
+      "expected": "Each is accepted, or raised as a finding",
+      "actual": "D-194 to D-196 (plan and scope), D-199 item 2 (load dataset), D-202 (pre-freeze repairs): accepted. D-203 (batch 8, concurrency 4, configurable): accepted. D-204: accepted, because a late event is evaluated against the rule version in force and enabled at its occurrence, which keeps automation explainable and matches the M0239 automation clauses. D-205: accepted. A rule disabled now stops its pending events. The residual commit-order race is documented in ADR-0043, and it can only run an action that a person already enabled, never an approval, since automations never decide approvals or gates (shown on the rule screen). D-223 (2) (no existence check on literals): accepted. D-222 (1) (work items): accepted and tested. D-222 (2): the re-save promise is not kept under ordinary edits, so it is rejected and raised as F-DG6-520. D-224 (3): accepted as an open design question (DOM-R8-08). No engineering agent or the assistant grants a business, Finance or IT approval anywhere I exercised, and product G6 is not linked to DG7.",
+      "exit_status": 0,
+      "result": "FAIL",
+      "requirements": ["REQ-S20-013", "REQ-S12-019", "REQ-S10-002"],
+      "evidence": [
+        "docs/delivery/decisions.md",
+        "docs/delivery/test-evidence/DG6/domain/round-8/r1662/probe-condition-resave.log"
+      ]
+    },
+    {
+      "id": "DOM-R8-14-not-rerun",
+      "procedure": "List which assigned requirements I did not re-execute myself this round. For each, I inspected the orchestrator's V11 logs on dbcb46995 (product tree equal to the candidate's) without re-running them.",
+      "command": "cat docs/delivery/test-evidence/DG6/orchestrator-final-dbcb469/summary.txt",
+      "environment": "Repository evidence; the temp volume had 1.8 GB free with three reviewers running, so a full integration and e2e re-run did not fit",
+      "expected": "Each requirement is re-run by me, or recorded as not independently re-run",
+      "actual": "V11 shows all 15 steps exit 0 (integration 4296 passed, 1 skipped, 1 todo; e2e 556 passed per locale; root 288; demo 10). I did not independently re-run the identity, OIDC, security and operations rows (REQ-S16-006, S16-007, S16-022, S16-023, S16-026, S16-027, S16-032), REQ-S20-001, S20-012, S20-021, S20-022, REQ-S01-005, REQ-S02-006 or REQ-S12-023 (the in-app inbox), beyond the partial coverage in DOM-R8-04/09/10. My verdict is FAIL on F-DG6-520 in any case, so I record these as BLOCKED for my independent confirmation this round, not as PASS.",
+      "exit_status": null,
+      "result": "BLOCKED",
+      "requirements": ["REQ-S16-006", "REQ-S16-007", "REQ-S16-022", "REQ-S16-023", "REQ-S16-026", "REQ-S16-027", "REQ-S16-032", "REQ-S20-001", "REQ-S20-012", "REQ-S20-021", "REQ-S20-022", "REQ-S01-005", "REQ-S02-006", "REQ-S12-023"],
+      "evidence": ["docs/delivery/test-evidence/DG6/orchestrator-final-dbcb469/summary.txt"]
+    }
+  ],
+  "findings": ["F-DG6-520"],
+  "verdict": "FAIL",
+  "evidence_paths": [
+    "docs/delivery/reviews/DG6/round-8/domain-reviewer.verifications.json",
+    "docs/delivery/reviews/DG6/round-8/domain-reviewer.findings.json",
+    "docs/delivery/test-evidence/DG6/domain/round-8/r1662/candidate-clone.log",
+    "docs/delivery/test-evidence/DG6/domain/round-8/r1662/f460-repro.log",
+    "docs/delivery/test-evidence/DG6/domain/round-8/r1662/int-z12.log",
+    "docs/delivery/test-evidence/DG6/domain/round-8/r1662/probe-condition-resave.log",
+    "docs/delivery/test-evidence/DG6/domain/round-8/r1662/probe-screens.log",
+    "docs/delivery/test-evidence/DG6/domain/round-8/r1662/e2e-domain.log",
+    "docs/delivery/test-evidence/DG6/domain/round-8/r1662/e2e-domain-2.log"
+  ],
+  "reviewed_at": "2026-11-08T18:15:00Z",
+  "summary": "FAIL. F-DG6-460 (Low) is CLOSED_VERIFIED: ADR-0051, ADR-0045, OpenAPI, the data dictionary and the ERD now state the aggregate rule and cover migration 0126. New finding F-DG6-520 (Medium, REQ-S10-002): the D-222 (2) re-save rule pairs restricted markers by ordinal and position. When a rule author removes an earlier condition or an open list element, the hidden benefit id is replaced by the stored text '[restricted]'. That silently changes what the draft rule matches (a 'neq S' exclusion now matches S), while the editor still shows 'Includes restricted records' and 'is not a restricted record' in EN and AR. The BE-Z12/Z12B suites (45/45), the domain e2e journeys in EN and AR (172+88 passed, 18 axe screens not scanned and disclosed) and the validators pass. 14 requirements were not independently re-run this round (BLOCKED in DOM-R8-14)."
+}

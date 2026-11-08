@@ -1,0 +1,19 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG6-460",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Re-ran the round-7 reproduction on candidate 6cda8b33 (source d84d11a62f52932dd5c0aa932c5c1790c13e7e8b) in a complete disposable clone. (1) ADR-0051 §2 table row 90 now reads that a ReportDocument section is flagged when it references a marked-sensitive record through a row, an item or a source, 'or its aggregate figures include one' (executive pack metrics_<subject>, executive dashboard area_value and items_portfolio, gate pack criteria). Lines 304-307 record report_snapshot_aggregate (0126) and the conservative legacyAggregates rule for aggregates_recorded = false. (2) The OpenAPI ReportDocument.sections description (openapi.yaml:27173) states the aggregate rule (T-DG6-BE-Z9, F-DG6-400). No schema change, and pnpm openapi:lint passes with 932 operations. (3) data-dictionary.md now has a 'report_snapshot_aggregate' section (line 14445) and 'report_snapshot: changes in 0126'. I compared its columns, CHECKs, FK, UNIQUE key, triggers, grants and the default-false-then-true backfill with packages/db/migrations/0126_p6_report_snapshot_aggregate.sql, and they match. erd.md:2203-2222 adds the table and the column. ADR-0045 §3 has the 2026-11-08 amendment (line 339). Mutant: not practical, because the repair is documentation only and no executable test guards prose. The runtime behaviour F-DG6-460 described was already CLOSED_VERIFIED under F-DG6-400, and the BE-Z12/Z12B integration suites I re-ran (45/45) still pass. ARCH-16's text covers BE-Z12B as it is designed. The separate defect I found in the D-222 re-save rule is raised as a new finding (F-DG6-520). It is not a documentation drift of F-DG6-460.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-8/r1662/f460-repro.log",
+        "docs/delivery/test-evidence/DG6/domain/round-8/r1662/openapi-lint.log",
+        "docs/delivery/test-evidence/DG6/domain/round-8/r1662/int-z12.log",
+        "docs/architecture/adr/ADR-0051-p6-authorization-boundary-read-scope-sensitive-records-deep-links.md",
+        "docs/architecture/data-dictionary.md",
+        "docs/architecture/erd.md",
+        "docs/api/openapi.yaml"
+      ]
+    }
+  ]
+}

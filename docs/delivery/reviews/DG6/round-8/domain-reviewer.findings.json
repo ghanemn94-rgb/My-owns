@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG6-520",
+      "stage_id": "DG6",
+      "requirement": "REQ-S10-002",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "The D-222 (2) re-save rule loses the hidden automation condition literal when the author deletes an earlier condition or list element. The stored rule then compares against the text '[restricted]', which silently changes what it matches, and the editor still shows 'Includes restricted records' / 'يشمل سجلات مقيدة' and 'is not a restricted record'",
+      "reproduction": "Candidate 6cda8b33 (source d84d11a62). Set-up: an ADM_METHOD rule author, not admitted to sensitive records, owns a draft rule (trigger benefit.variance_evaluated). The TO then marks benefit S sensitive. Case (c), conditions [benefitId neq P (open benefit), benefitId neq S]: the author opens /admin/automation-rules/<id>/versions/1 and sees condition 1 = P and condition 2 = '[restricted]' with the 'Includes restricted records' badge. The author clicks 'Remove condition 1' and saves the draft, which sends the PATCH body content.conditions = [the shown condition 2]. Case (b), conditions [benefitId eq S, benefitId in [P, S], severity eq high]: the author removes the open id P from the in-list and saves [marker]. API probe: docs/delivery/test-evidence/DG6/domain/round-8/r1662/dom-r8-condition-resave.test.ts.txt (integration project, disposable PostgreSQL). UI probe: r1662/dom-r8-screens.spec.ts.txt (production-initialized stack, with-stack.sh, chromium-en and chromium-ar).",
+      "expected": "D-222 (2), ADR-0051 amendment and REQ-S10-002: 'a re-save keeps the hidden literal unchanged'. The rule must go on testing the hidden record S after any edit that leaves the shown marker in place, and must never quietly start matching a record the author meant to exclude. If the server cannot map a marker back to its stored literal, it should refuse the save with an explanation, not store the marker text. The screen must not claim the rule tests a restricted record when it does not.",
+      "actual": "keepRestrictedLiterals (apps/api/src/modules/automation/versions.ts) pairs the k-th sent condition with the k-th stored condition of the same field and operator, and an in-list element by its position. After the removal, the sent marker sits at a different ordinal or position than the stored hidden literal, so it is not restored. The text '[restricted]' is stored as an ordinary literal (D-222: a marker with no hidden literal behind it 'stays an ordinary literal'). Case (c) stored: [{op:neq, field:benefitId, value:'[restricted]'}]. Case (b) stored the in-list as ['[restricted]']. Effects: (1) Integrity: the hidden id S is lost from the draft, and the exclusion 'benefitId neq S' becomes 'neq [restricted]', which every event satisfies, so the rule would now fire for S. In case (b) the in-list matches nothing. The author got no warning and no error. (2) Misleading screen, EN and AR: after the save the editor still shows the value '[restricted]' with the 'Includes restricted records' / 'يشمل سجلات مقيدة' badge, and the readable rule says 'if benefitId is not a restricted record' / 'لا يساوي سجل مقيد', because literalText renders the marker text as 'a restricted record' whatever is stored. Yet the API no longer sets includesRestrictedRecords, and the admitted TO also reads '[restricted]'. Bounded: draft versions only. Publishing needs a dry run and a person to publish. Only rules whose literals name a sensitive record are affected. The audit trail records the change, so the TO can recover the literal. No business approval or Finance value is affected. BE-Z12B's own tests cover only an unchanged order, an unrelated edit and appending, so they pass.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-8/r1662/probe-condition-resave.log",
+        "docs/delivery/test-evidence/DG6/domain/round-8/r1662/dom-r8-condition-resave.test.ts.txt",
+        "docs/delivery/test-evidence/DG6/domain/round-8/r1662/probe-screens.log",
+        "docs/delivery/test-evidence/DG6/domain/round-8/r1662/dom-r8-screens.spec.ts.txt",
+        "docs/delivery/test-evidence/DG6/domain/round-8/r1662/screens/en/dom-r8-rule-author-1-before.png",
+        "docs/delivery/test-evidence/DG6/domain/round-8/r1662/screens/en/dom-r8-rule-author-2-after-removing-condition-1.png",
+        "docs/delivery/test-evidence/DG6/domain/round-8/r1662/screens/ar/dom-r8-rule-author-1-before.png",
+        "docs/delivery/test-evidence/DG6/domain/round-8/r1662/screens/ar/dom-r8-rule-author-2-after-removing-condition-1.png",
+        "apps/api/src/modules/automation/versions.ts"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG6/round-8/domain-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-08T18:10:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG6 round 8 by domain-reviewer while judging D-222 (2) as a rule author in EN and AR. Medium: a real integrity defect with a bounded effect (draft automation rules naming a sensitive record), which must be repaired before the gate (D-192). Suggested repair: match a sent marker to its stored hidden literal by a stable handle rather than by ordinal or position (for example an opaque per-read token for each hidden literal), or refuse a save whose marker cannot be mapped (422 with an explanation in en and ar). Never store the marker text as a literal. Render the badge and 'a restricted record' only when the API flags the condition. Add tests for removing an earlier condition, removing an open list element, and reordering."
+        }
+      ]
+    }
+  ]
+}
