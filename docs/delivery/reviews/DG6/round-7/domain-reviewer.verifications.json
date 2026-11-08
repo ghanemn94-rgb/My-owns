@@ -1,0 +1,21 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG6-400",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified adversarially on candidate b64b95ff (source 70f05ed49), in a disposable clone, with PostgreSQL 16.15 and Node 24.21.0. All data is SYNTHETIC. (1) Round-6 reproduction re-run unchanged (my probe dom-r6-report-sections.test.ts, r6repro.log, exit 0, 3/3 passed). Its binding assertion, 'executive pack metrics section labelled for TL', failed in round 6 and now passes. Live executive_pack: metrics_transformation and metrics_ws_77 are true for TL and false for the TO, with sameFigures true. Live executive_dashboard: area_value is true/false, and items_value and items_portfolio are true/false. TL's planned top line is still 396000 (B01's own line, as D-195 Q3 allows every reader to see), now labelled. The benefit's title appears nowhere in TL's bodies (tlMentions 0). Sections with no sensitive aggregate (business_cases, diagnostic, roadmap, charter, tom) carry no member. gate_pack and handover answer 422 without a subject, for both readers, as designed. (2) Mutant (mutant400.log, exit 1 by design): documentForReader ignores the declared aggregates (`aggregates.slice(0, 0)`). Exactly 7 tests failed: the 6 BE-Z9 behaviour tests (live and snapshot executive_pack, live and snapshot executive_dashboard, the legacy pack, gate-pack criteria) and my probe's 'compare'. The 13 others passed (the BE-Z7B tests and the storage/guard tests, which do not depend on the flag). The source was restored. (3) UI on the production-initialized stack, en and ar (e2e-screens-r7.log, exit 0, 6/6, which includes BE-Z9's own p6-report-aggregate-label spec). TL's executive pack snapshot shows 'Includes restricted records' / 'يشمل سجلات مقيدة' directly under 'Current metrics' / 'المؤشرات الحالية', next to 'Planned revenue uplift … SAR 300.00'. TL's executive dashboard snapshot shows the label under 'Value' / 'القيمة' and under its 'Items' table. The TO sees no label on any of the four screens. The finding is closed. Two residuals, neither a reopening: the ADR-0051 'Which responses carry' row, the OpenAPI ReportDocument.sections description and the data dictionary were not updated for the new rule or for table 0126 (raised as F-DG6-460, Low, documentation only). An exported pack file carries no label: judged an observation in DOM-R7-04.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-7/r6repro.log",
+        "docs/delivery/test-evidence/DG6/domain/round-7/mutant400.log",
+        "docs/delivery/test-evidence/DG6/domain/round-7/e2e-screens-r7.log",
+        "docs/delivery/test-evidence/DG6/domain/round-7/probes/dom-r6-report-sections.test.ts.txt",
+        "docs/delivery/test-evidence/DG6/domain/round-7/probes/dom-r7-screens.spec.ts.txt",
+        "docs/delivery/test-evidence/DG6/domain/round-7/screenshots/en/dom-r7-tl-exec-pack-snapshot.png",
+        "docs/delivery/test-evidence/DG6/domain/round-7/screenshots/ar/dom-r7-tl-exec-pack-snapshot.png",
+        "docs/delivery/test-evidence/DG6/domain/round-7/screenshots/ar/dom-r7-tl-exec-dashboard-snapshot.png",
+        "docs/delivery/test-evidence/DG6/domain/round-7/screenshots/en/dom-r7-to-exec-pack-snapshot.png"
+      ]
+    }
+  ]
+}

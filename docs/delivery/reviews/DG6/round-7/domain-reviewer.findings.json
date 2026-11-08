@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG6-460",
+      "stage_id": "DG6",
+      "requirement": "REQ-S10-002",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The architecture and contract texts were not updated for T-DG6-BE-Z9. ADR-0051's shipped list, the OpenAPI ReportDocument.sections description and the data dictionary still describe the report-section restricted flag as decided only from a section's own rows, items and sources, and omit report_snapshot_aggregate and report_snapshot.aggregates_recorded (migration 0126)",
+      "reproduction": "Candidate b64b95ff (source 70f05ed49). (1) docs/architecture/adr/ADR-0051-p6-authorization-boundary-read-scope-sensitive-records-deep-links.md line 89, in the table 'Which responses carry includesRestrictedRecords (as shipped)': 'every section of ReportDocument … | the section references a marked-sensitive record through a row, an item or a source'. (2) docs/api/openapi.yaml line ~27172, ReportDocument.sections description: 'a section that references a marked-sensitive record (a row, an item or a source) carries the read-time member … absent otherwise'. (3) grep -n report_snapshot_aggregate docs/architecture/data-dictionary.md docs/architecture/erd.md finds nothing; the dictionary's newest P6 migration section is 0125. git diff 031945d87..70f05ed49 -- docs/architecture shows no change in this round. The BE-Z9 handback §7 items 2 and 3 asked for these corrections, and no decision (D-217 to D-220) routes or waives them.",
+      "expected": "The texts that state the shipped rule match the code. Since T-DG6-BE-Z9, a section is also flagged from the records its aggregate figures include: the executive pack metrics_*, the executive dashboard area_value and items_portfolio, and the gate pack criteria. Those records are kept in report_snapshot_aggregate, with the conservative legacy rule for snapshots whose aggregates_recorded is false. The data dictionary covers every migrated table. F-DG6-400's suggested repair named the ADR-0051 sentence explicitly.",
+      "actual": "The code (apps/api/src/modules/reporting/reports/restricted.ts, assembler.ts, migration 0126) and the zod comment in packages/shared/src/schemas/report.ts state the new rule. ADR-0051, the OpenAPI description and the data dictionary still state the old, narrower one, and the dictionary omits the new table and column. There is no behavioural effect: the runtime flag is correct (verified for F-DG6-400). But an API consumer or a later implementer reading the contract or the ADR would believe that metrics sections are never flagged.",
+      "evidence": [
+        "docs/architecture/adr/ADR-0051-p6-authorization-boundary-read-scope-sensitive-records-deep-links.md",
+        "docs/api/openapi.yaml",
+        "docs/architecture/data-dictionary.md",
+        "docs/delivery/handbacks/DG6/T-DG6-BE-Z9-backend-workflow-engineer.md",
+        "apps/api/src/modules/reporting/reports/restricted.ts",
+        "packages/db/migrations/0126_p6_report_snapshot_aggregate.sql"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG6/round-7/domain-reviewer.json",
+      "owner": "solution-architect",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-08T05:40:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG6 round 7 by domain-reviewer while verifying F-DG6-400, whose runtime repair is CLOSED_VERIFIED. This is documentation and contract-text drift only: Low, not mandatory, not blocking. Suggested repair: amend the ADR-0051 §2 table row and its 2026-11-06 sentence, the OpenAPI description (no schema change), ADR-0045 §3 (the new snapshot child table) and the data dictionary/ERD for 0126."
+        }
+      ]
+    }
+  ]
+}
