@@ -374,7 +374,7 @@ export function registerGovernanceMatrixRoutes(app: FastifyInstance, { db }: Mod
         due: null,
       });
     });
-    const [out] = await toApprovals(db, [approval]);
+    const [out] = await toApprovals(db, principalOf(request), [approval]);
     return sendVersioned(reply, 201, out!, `/api/v1/approvals/${approval.id}`);
   });
 

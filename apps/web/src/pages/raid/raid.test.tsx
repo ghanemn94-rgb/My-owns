@@ -224,6 +224,17 @@ describe.each(["en", "ar"] as const)("RAID and actions screens (%s)", (locale) =
                 raidEntryId: null,
                 correctiveCaseId: CASE_ID,
               }),
+              // T-DG6-BE-Z12 (D-218): an action of a corrective case the reader is not admitted to.
+              raidAction({
+                id: "01920000-0000-7000-a000-00000000fffd",
+                title: "Synthetic restricted follow up",
+                overdue: false,
+                followUpDate: null,
+                sourceKind: "corrective_case",
+                raidEntryId: null,
+                correctiveCaseId: null,
+                includesRestrictedRecords: true,
+              }),
             ]),
           ),
           route("PATCH", new RegExp(`${esc(TRP)}/action-register/${ACTION_ID}$`), () =>
@@ -242,6 +253,13 @@ describe.each(["en", "ar"] as const)("RAID and actions screens (%s)", (locale) =
     expect(other.textContent).toContain(t("raidP4.noFollowUp"));
     expect(other.querySelector("[data-source='corrective_case'] a")!.getAttribute("href")).toBe(
       `/transformations/${TR_ID}/corrective-actions/${CASE_ID}`,
+    );
+    // T-DG6-BE-Z12 (D-218): the restricted label instead of a link to the case.
+    const restricted = screen.getByRole("link", { name: "Synthetic restricted follow up" }).closest("tr")!;
+    const source = restricted.querySelector("[data-source='corrective_case']")!;
+    expect(source.querySelector("a")).toBeNull();
+    expect(source.querySelector("[data-restricted-records='true']")!.textContent).toContain(
+      t("access.includesRestrictedRecords"),
     );
     fireEvent.click(row.querySelector(`[data-edit-action='${ACTION_ID}']`)!);
     const dialog = await screen.findByRole("dialog");

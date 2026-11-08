@@ -26852,6 +26852,7 @@ components:
         blockedBy: { type: array, maxItems: 20, items: { $ref: "#/components/schemas/LaunchTaskRef" } }
         version: { $ref: "#/components/schemas/Version" }
         updatedAt: { $ref: "#/components/schemas/Timestamp" }
+        includesRestrictedRecords: { type: boolean, const: true, description: "Present (true) when the task's output record is one the reader is not admitted to (a sensitive benefit, business case or evidence item); outputRecordType is kept and outputRecordId is then null (T-DG6-BE-Z12; F-DG6-480; ADR-0051 §2; D-218; label access.includesRestrictedRecords)." }
     LaunchTaskPage:
       type: object
       required: [items, nextCursor]
@@ -28658,6 +28659,7 @@ components:
         cancelReason: { type: [string, "null"], minLength: 3, maxLength: 2000 }
         version: { $ref: "#/components/schemas/Version" }
         updatedAt: { $ref: "#/components/schemas/Timestamp" }
+        includesRestrictedRecords: { type: boolean, const: true, description: "Present (true) when a link to a record the reader is not admitted to is not listed, the subject is such a record (subjectRecordId is then null) or an input value naming one is redacted (T-DG6-BE-Z12; F-DG6-480; ADR-0051 §2; D-218; label access.includesRestrictedRecords)." }
     ProcedureInstancePage:
       type: object
       required: [items, nextCursor]
@@ -33670,7 +33672,7 @@ components:
         transformationId: { $ref: "#/components/schemas/Uuid" }
         approvalType: { type: string }
         subjectType: { type: string }
-        subjectId: { $ref: "#/components/schemas/Uuid" }
+        subjectId: { $ref: "#/components/schemas/NullableUuid" }
         subjectVersion: { $ref: "#/components/schemas/Version" }
         roundNo: { type: integer, minimum: 1 }
         decisionRightId: { $ref: "#/components/schemas/NullableUuid" }
@@ -33699,6 +33701,7 @@ components:
         version: { $ref: "#/components/schemas/Version" }
         createdAt: { $ref: "#/components/schemas/Timestamp" }
         updatedAt: { $ref: "#/components/schemas/Timestamp" }
+        includesRestrictedRecords: { type: boolean, const: true, description: "Present (true) when the approval's subject is a record the reader is not admitted to (a sensitive benefit's transition decision); subjectType is kept and subjectId is then null (T-DG6-BE-Z12; F-DG6-480; ADR-0051 §2; D-218; label access.includesRestrictedRecords)." }
     ApprovalRequest:
       type: object
       required: [approvalType, subjectId, subjectVersion, decisionRightId, title]
@@ -33747,13 +33750,14 @@ components:
         recordId: { $ref: "#/components/schemas/Uuid" }
         approvalKind: { type: string }
         subjectType: { type: string }
-        subjectId: { $ref: "#/components/schemas/Uuid" }
+        subjectId: { $ref: "#/components/schemas/NullableUuid" }
         subjectVersion: { type: [integer, "null"] }
         outcome: { type: string, enum: [approved, rejected, changes_requested, deferred, revoked] }
         rationale: { type: string }
         decidedBy: { $ref: "#/components/schemas/Uuid" }
         onBehalfOfUserId: { $ref: "#/components/schemas/NullableUuid" }
         decidedAt: { $ref: "#/components/schemas/Timestamp" }
+        includesRestrictedRecords: { type: boolean, const: true, description: "Present (true) when the decision's subject is a record the reader is not admitted to; subjectType is kept and subjectId is then null (T-DG6-BE-Z12; F-DG6-480; ADR-0051 §2; D-218; label access.includesRestrictedRecords)." }
     ApprovalDecisionRecordPage:
       type: object
       required: [items, nextCursor]
@@ -34764,6 +34768,7 @@ components:
         createdBy: { $ref: "#/components/schemas/Uuid" }
         updatedAt: { $ref: "#/components/schemas/Timestamp" }
         updatedBy: { $ref: "#/components/schemas/Uuid" }
+        includesRestrictedRecords: { type: boolean, const: true, description: "Present (true) when parentBenefitId or businessCaseLineId names a record the reader is not admitted to (a sensitive parent benefit, or a line of a sensitive business case); that member is then null (T-DG6-BE-Z12; F-DG6-480; ADR-0051 §2; D-218; label access.includesRestrictedRecords)." }
     BenefitCreate:
       type: object
       description: "A new benefit at Identify. ownerUserId is ONE user id: a body naming two owners fails validation (400; REQ-PB-058). A financial class needs financialStatementLine; non_financial needs measurementKpiDefinitionId (REQ-S08-003)."
@@ -35715,6 +35720,7 @@ components:
         createdBy: { $ref: "#/components/schemas/Uuid" }
         updatedAt: { $ref: "#/components/schemas/Timestamp" }
         updatedBy: { $ref: "#/components/schemas/Uuid" }
+        includesRestrictedRecords: { type: boolean, const: true, description: "Present (true) when the action's corrective case is one the reader is not admitted to (the variance case of a sensitive benefit); sourceKind is kept and correctiveCaseId is then null (T-DG6-BE-Z12; F-DG6-480; ADR-0051 §2; D-218; label access.includesRestrictedRecords)." }
     RaidActionCreate:
       type: object
       required: [title, ownerUserId]
@@ -36574,6 +36580,7 @@ components:
         note: { type: [string, "null"], minLength: 1, maxLength: 4000 }
         createdAt: { $ref: "#/components/schemas/Timestamp" }
         createdBy: { $ref: "#/components/schemas/Uuid" }
+        includesRestrictedRecords: { type: boolean, const: true, description: "Present (true) when the linked record is one the reader is not admitted to; recordType is kept and recordId is then null (T-DG6-BE-Z12; F-DG6-480; ADR-0051 §2; D-218; label access.includesRestrictedRecords)." }
     MeetingOutputCreate:
       type: object
       required: [outputKind]
@@ -37782,6 +37789,7 @@ components:
         createdBy: { $ref: "#/components/schemas/NullableUuid" }
         updatedAt: { $ref: "#/components/schemas/Timestamp" }
         updatedBy: { $ref: "#/components/schemas/NullableUuid" }
+        includesRestrictedRecords: { type: boolean, const: true, description: "Present (true) when the reviewed transition decision is one the reader is not admitted to (the decision of a sensitive benefit); subjectKind is kept and transitionDecisionId is then null (T-DG6-BE-Z12; F-DG6-480; ADR-0051 §2; D-218; label access.includesRestrictedRecords)." }
     SustainmentReviewComplete:
       type: object
       required: [outcomeNote, performanceSignal]
@@ -39716,6 +39724,7 @@ components:
         reviewerRoleCode: { type: string }
         reviewTaskCount: { type: integer, minimum: 0 }
         createdAt: { $ref: "#/components/schemas/Timestamp" }
+        includesRestrictedRecords: { type: boolean, const: true, description: "Present (true) when an impact or validation-report entry naming a benefit the reader is not admitted to was dropped from the shown proposal; counts are unchanged (T-DG6-BE-Z12; F-DG6-480; ADR-0051 §2; D-218; label access.includesRestrictedRecords)." }
     RevisionProposalPage:
       type: object
       required: [items, nextCursor]

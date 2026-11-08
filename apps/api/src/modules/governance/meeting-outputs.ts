@@ -20,7 +20,13 @@ import {
 import type { FastifyInstance } from "fastify";
 import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
-import { auditContextOf, principalOf, requireTransformationRead } from "../access/index.ts";
+import {
+  auditContextOf,
+  hideRestrictedTypedRefs,
+  principalOf,
+  refIsRestricted,
+  requireTransformationRead,
+} from "../access/index.ts";
 import { record } from "../audit/index.ts";
 import {
   cursorSchema,
@@ -192,7 +198,16 @@ export function registerMeetingOutputRoutes(app: FastifyInstance, { db }: Module
       .limit(query.limit + 1)
       .execute();
     const page = paginate(rows, query.limit, (r) => [r.id], hash);
-    return { items: page.items.map(toMeetingOutput), nextCursor: page.nextCursor };
+    // T-DG6-BE-Z12 (F-DG6-480; D-218): a linked record the reader is not admitted to (a sensitive benefit, business
+    // case or evidence item) is not named: `recordId` is null, the type is kept, and the output is marked.
+    const items = await hideRestrictedTypedRefs(
+      db,
+      principalOf(request),
+      page.items.map(toMeetingOutput),
+      "recordType",
+      "recordId",
+    );
+    return { items, nextCursor: page.nextCursor };
   });
 
   app.post(OUTPUTS, { config: { access: { permission: PREPARE }, consumes: JSON_BODY } }, async (request, reply) => {
@@ -220,7 +235,9 @@ export function registerMeetingOutputRoutes(app: FastifyInstance, { db }: Module
       if (
         body.recordType !== undefined &&
         body.recordId !== undefined &&
-        !(await recordExists(tx, transformationId, body.recordType, body.recordId))
+        // T-DG6-BE-Z12 (F-DG6-480; D-218): a record the writer is not admitted to answers as one that does not exist.
+        ((await refIsRestricted(tx, principalOf(request), body.recordType, body.recordId)) ||
+          !(await recordExists(tx, transformationId, body.recordType, body.recordId)))
       )
         throw outputRefusals.recordNotFound();
       await checkAgendaItemOf(tx, meetingId, body.agendaItemId);

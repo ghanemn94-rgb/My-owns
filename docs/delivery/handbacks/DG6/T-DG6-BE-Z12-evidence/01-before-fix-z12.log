@@ -1,0 +1,143 @@
+port-policy: PostgreSQL listening on port 31050 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-z12
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw7na3p7_611dbf4e (server_encoding UTF8); applied 118 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/access/sensitive-reach-id-refs-z12.test.ts (6 tests | 5 failed) 5667ms
+   ✓ T-DG6-BE-Z12: D-218 on every reference to a sensitive record (F-DG6-480) > control: tl and tl2 get 404 on the hidden benefit and evidence item; the TO reads both 60ms
+   × T-DG6-BE-Z12: D-218 on every reference to a sensitive record (F-DG6-480) > B1 parentBenefitId: hidden from tl2 with the marker, shown to the TO; naming a hidden parent answers as an unknown id; a null re-save keeps it 76ms
+     → expected '01a1ba8a-e54d-747e-b403-8b900c760bfd' to be null
+   × T-DG6-BE-Z12: D-218 on every reference to a sensitive record (F-DG6-480) > business-case line: a line of a hidden case is null for tl2 (marked), shown to the TO; naming it answers as an unknown line (no 409 'taken' oracle) 34ms
+     → expected '01995000-4306-7000-8000-000000000002' to be null
+   × T-DG6-BE-Z12: D-218 on every reference to a sensitive record (F-DG6-480) > B2 meeting output: recordId of a hidden benefit is null for tl2 (marked), shown to the TO; naming it answers as an unknown record 33ms
+     → expected { …(9) } to match object { outputKind: 'benefit_view', …(2) }
+(6 matching properties omitted from actual)
+   × T-DG6-BE-Z12: D-218 on every reference to a sensitive record (F-DG6-480) > B3 launch task: a hidden output answers 422 exactly as an unknown id (was 200); once the TO sets it, tl2 gets null with the marker and a null re-save keeps it 46ms
+     → expected { status: 200, code: undefined, …(1) } to deeply equal { status: 422, …(2) }
+   × T-DG6-BE-Z12: D-218 on every reference to a sensitive record (F-DG6-480) > action register: an action of the hidden benefit's corrective case keeps its source kind with correctiveCaseId null for tl2 (marked); the TO sees the case 64ms
+     → expected { …(19) } to match object { sourceKind: 'corrective_case', …(2) }
+(17 matching properties omitted from actual)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-id-refs-z12.test.ts > T-DG6-BE-Z12: D-218 on every reference to a sensitive record (F-DG6-480) > B1 parentBenefitId: hidden from tl2 with the marker, shown to the TO; naming a hidden parent answers as an unknown id; a null re-save keeps it
+AssertionError: expected '01a1ba8a-e54d-747e-b403-8b900c760bfd' to be null
+
+[32m- Expected:[39m 
+null
+
+[31m+ Received:[39m 
+"01a1ba8a-e54d-747e-b403-8b900c760bfd"
+
+ ❯ apps/api/test/integration/access/sensitive-reach-id-refs-z12.test.ts:168:36
+    166|     const r = await get(`${t}/benefits/${child.id}`, tl2);
+    167|     expect(r.status).toBe(200);
+    168|     expect(r.body.parentBenefitId).toBeNull();
+       |                                    ^
+    169|     expect(r.body.includesRestrictedRecords).toBe(true);
+    170|     expect(JSON.stringify(r.body)).not.toContain(p.body.id);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-id-refs-z12.test.ts > T-DG6-BE-Z12: D-218 on every reference to a sensitive record (F-DG6-480) > business-case line: a line of a hidden case is null for tl2 (marked), shown to the TO; naming it answers as an unknown line (no 409 'taken' oracle)
+AssertionError: expected '01995000-4306-7000-8000-000000000002' to be null
+
+[32m- Expected:[39m 
+null
+
+[31m+ Received:[39m 
+"01995000-4306-7000-8000-000000000002"
+
+ ❯ apps/api/test/integration/access/sensitive-reach-id-refs-z12.test.ts:246:39
+    244|     await mark("business_case", line.business_case_id);
+    245|     const r = await get(`${t}/benefits/${holder.id}`, tl2);
+    246|     expect(r.body.businessCaseLineId).toBeNull();
+       |                                       ^
+    247|     expect(r.body.includesRestrictedRecords).toBe(true);
+    248|     expect((await get(`${t}/benefits/${holder.id}`, to)).body.business…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-id-refs-z12.test.ts > T-DG6-BE-Z12: D-218 on every reference to a sensitive record (F-DG6-480) > B2 meeting output: recordId of a hidden benefit is null for tl2 (marked), shown to the TO; naming it answers as an unknown record
+AssertionError: expected { …(9) } to match object { outputKind: 'benefit_view', …(2) }
+(6 matching properties omitted from actual)
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[2m    "outputKind": "benefit_view",[22m
+[32m-   "recordId": null,[39m
+[31m+   "recordId": "01995000-4401-7000-8000-000000000001",[39m
+[2m    "recordType": "benefit",[22m
+[2m  }[22m
+
+ ❯ apps/api/test/integration/access/sensitive-reach-id-refs-z12.test.ts:321:19
+    319|     expect(r.status, JSON.stringify(r.body)).toBe(200);
+    320|     const shown = r.body.items.find((x: Body) => x.id === oid);
+    321|     expect(shown).toMatchObject({ outputKind: "benefit_view", recordTy…
+       |                   ^
+    322|     expect(shown.includesRestrictedRecords).toBe(true);
+    323|     expect(JSON.stringify(r.body)).not.toContain(S.hidden);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-id-refs-z12.test.ts > T-DG6-BE-Z12: D-218 on every reference to a sensitive record (F-DG6-480) > B3 launch task: a hidden output answers 422 exactly as an unknown id (was 200); once the TO sets it, tl2 gets null with the marker and a null re-save keeps it
+AssertionError: expected { status: 200, code: undefined, …(1) } to deeply equal { status: 422, …(2) }
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[32m-   "code": "launch_task.output_record_invalid",[39m
+[31m+   "code": undefined,[39m
+[2m    "errors": undefined,[22m
+[32m-   "status": 422,[39m
+[31m+   "status": 200,[39m
+[2m  }[22m
+
+ ❯ apps/api/test/integration/access/sensitive-reach-id-refs-z12.test.ts:348:32
+    346|     expect(unknown.status).toBe(422);
+    347|     expect(unknown.body.code).toBe("launch_task.output_record_invalid"…
+    348|     expect(refusal(hiddenRef)).toEqual(refusal(unknown));
+       |                                ^
+    349|     const before = await api.db
+    350|       .selectFrom("launch_task")
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-id-refs-z12.test.ts > T-DG6-BE-Z12: D-218 on every reference to a sensitive record (F-DG6-480) > action register: an action of the hidden benefit's corrective case keeps its source kind with correctiveCaseId null for tl2 (marked); the TO sees the case
+AssertionError: expected { …(19) } to match object { sourceKind: 'corrective_case', …(2) }
+(17 matching properties omitted from actual)
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[32m-   "correctiveCaseId": null,[39m
+[32m-   "includesRestrictedRecords": true,[39m
+[31m+   "correctiveCaseId": "01a1ba8a-e60c-7755-bc7b-bedd71f289a9",[39m
+[2m    "sourceKind": "corrective_case",[22m
+[2m  }[22m
+
+ ❯ apps/api/test/integration/access/sensitive-reach-id-refs-z12.test.ts:409:23
+    407|     const item = await get(`${t}/action-register/${id}`, tl2);
+    408|     expect(item.status).toBe(200);
+    409|     expect(item.body).toMatchObject({
+       |                       ^
+    410|       sourceKind: "corrective_case",
+    411|       correctiveCaseId: null,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 1 passed (6)
+   Start at  09:43:30
+   Duration  17.08s (transform 4.10s, setup 0ms, collect 7.79s, tests 5.67s, environment 0ms, prepare 56ms)
+
+EXIT=1

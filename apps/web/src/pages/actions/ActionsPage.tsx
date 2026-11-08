@@ -28,6 +28,7 @@ import {
   StatusText,
   vocabOptions,
 } from "../raid/ui.tsx";
+import { RestrictedRecordsLabel } from "../../components/sensitivity/RestrictedRecordsLabel.tsx";
 
 /** The fields of a new action (RAID entry, corrective case). */
 export function actionCreateFields(t: TFunction, people: readonly { value: string; label: string }[]): P4FieldSpec[] {
@@ -64,6 +65,13 @@ export function ActionSource({ action, tid }: { action: RaidAction; tid: string 
           : action.sourceKind === "workshop"
             ? `/transformations/${tid}/design`
             : null;
+  // T-DG6-BE-Z12 (D-218): a corrective case the reader is not admitted to is not linked; the restricted label shows.
+  if (action.includesRestrictedRecords === true)
+    return (
+      <span data-source={action.sourceKind}>
+        {label} <RestrictedRecordsLabel value />
+      </span>
+    );
   return (
     <span data-source={action.sourceKind}>
       {to ? (

@@ -56,6 +56,7 @@ import {
   denialOf,
   effectiveGroupIds,
   isTechnicalAdminOnly,
+  hideRestrictedTypedRefs,
   principalOf,
   refreshPrincipal,
   requireAction,
@@ -439,8 +440,16 @@ const toEscalation = (e: ApprovalEscalationRow) => ({
   escalatedAt: iso(e.escalated_at),
 });
 
-/** The API shape of approvals, with their decisions and escalations (one query each for the whole page). */
-export async function toApprovals(db: DbOrTx, rows: readonly ApprovalRow[]): Promise<Approval[]> {
+/**
+ * The API shape of approvals, with their decisions and escalations (one query each for the whole page).
+ * T-DG6-BE-Z12 (F-DG6-480; D-218): an approval whose subject is a record the principal is not admitted to (a sensitive
+ * benefit's transition decision carries its values) keeps its type with `subjectId: null`, marked.
+ */
+export async function toApprovals(db: DbOrTx, principal: Principal, rows: readonly ApprovalRow[]): Promise<Approval[]> {
+  return hideRestrictedTypedRefs(db, principal, await approvalsOf(db, rows), "subjectType", "subjectId");
+}
+
+async function approvalsOf(db: DbOrTx, rows: readonly ApprovalRow[]): Promise<Approval[]> {
   if (rows.length === 0) return [];
   const ids = rows.map((r) => r.id);
   const decisions = await db
@@ -494,8 +503,8 @@ export async function toApprovals(db: DbOrTx, rows: readonly ApprovalRow[]): Pro
   }));
 }
 
-async function toApproval(db: DbOrTx, row: ApprovalRow): Promise<Approval> {
-  return (await toApprovals(db, [row]))[0]!;
+async function toApproval(db: DbOrTx, principal: Principal, row: ApprovalRow): Promise<Approval> {
+  return (await toApprovals(db, principal, [row]))[0]!;
 }
 
 /** The transformation target of an approval (for policy decisions). */
@@ -1240,7 +1249,7 @@ export function registerApprovalRoutes(app: FastifyInstance, { db }: ModuleDeps)
       .limit(query.limit + 1)
       .execute();
     const page = paginate(rows, query.limit, (r) => [r.id], hash);
-    return { items: await toApprovals(db, page.items), nextCursor: page.nextCursor };
+    return { items: await toApprovals(db, principalOf(request), page.items), nextCursor: page.nextCursor };
   });
 
   app.post(
@@ -1287,7 +1296,7 @@ export function registerApprovalRoutes(app: FastifyInstance, { db }: ModuleDeps)
           requestBusinessDate,
         });
       });
-      return sendVersioned(reply, 201, await toApproval(db, row), `/api/v1/approvals/${row.id}`);
+      return sendVersioned(reply, 201, await toApproval(db, principalOf(request), row), `/api/v1/approvals/${row.id}`);
     },
   );
 
@@ -1297,7 +1306,7 @@ export function registerApprovalRoutes(app: FastifyInstance, { db }: ModuleDeps)
     const row = await findApproval(db, approvalId);
     if (!row) throw problems.notFound();
     await requireTransformationRead(db, principalOf(request), row.transformation_id);
-    return sendVersioned(reply, 200, await toApproval(db, row));
+    return sendVersioned(reply, 200, await toApproval(db, principalOf(request), row));
   });
 
   app.post(
@@ -1306,7 +1315,7 @@ export function registerApprovalRoutes(app: FastifyInstance, { db }: ModuleDeps)
     async (request, reply) => {
       const { approvalId } = parse(approvalParams, request.params, "params");
       const row = await db.transaction().execute((tx) => decideApproval(tx, request, approvalId));
-      return sendVersioned(reply, 200, await toApproval(db, row));
+      return sendVersioned(reply, 200, await toApproval(db, principalOf(request), row));
     },
   );
 
@@ -1316,7 +1325,7 @@ export function registerApprovalRoutes(app: FastifyInstance, { db }: ModuleDeps)
     async (request, reply) => {
       const { approvalId } = parse(approvalParams, request.params, "params");
       const row = await db.transaction().execute((tx) => resubmitApproval(tx, request, approvalId));
-      return sendVersioned(reply, 200, await toApproval(db, row));
+      return sendVersioned(reply, 200, await toApproval(db, principalOf(request), row));
     },
   );
 
@@ -1326,7 +1335,7 @@ export function registerApprovalRoutes(app: FastifyInstance, { db }: ModuleDeps)
     async (request, reply) => {
       const { approvalId } = parse(approvalParams, request.params, "params");
       const row = await db.transaction().execute((tx) => withdrawApproval(tx, request, approvalId));
-      return sendVersioned(reply, 200, await toApproval(db, row));
+      return sendVersioned(reply, 200, await toApproval(db, principalOf(request), row));
     },
   );
 
@@ -1362,7 +1371,12 @@ export function registerApprovalRoutes(app: FastifyInstance, { db }: ModuleDeps)
       onBehalfOfUserId: r.on_behalf_of_user_id,
       decidedAt: iso(r.decided_at),
     }));
-    return { items, nextCursor: page.nextCursor };
+    // T-DG6-BE-Z12 (F-DG6-480; D-218): a decision on a record the reader is not admitted to keeps its subject type with
+    // `subjectId: null`, marked.
+    return {
+      items: await hideRestrictedTypedRefs(db, principalOf(request), items, "subjectType", "subjectId"),
+      nextCursor: page.nextCursor,
+    };
   });
 
   return [

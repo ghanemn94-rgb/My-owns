@@ -13,6 +13,7 @@ import { launchTaskPredecessors } from "@mth/shared/schemas";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
+import { principalOf } from "../access/index.ts";
 import { record } from "../audit/index.ts";
 import { parse, parseBody, problems, requireIfMatch, sendVersioned, type ModuleDeps } from "../platform/index.ts";
 import { JSON_BODY, LAUNCH_PLAN_EDIT, lockLaunchPlan, openLaunchWrite } from "./plan.ts";
@@ -169,7 +170,7 @@ export function registerLaunchPredecessorRoutes(app: FastifyInstance, { db }: Mo
     const { transformationId, taskId } = parse(taskParams, request.params, "params");
     const body = await db.transaction().execute(async (tx) => {
       await replacePredecessors(tx, request, transformationId, taskId);
-      return presentTask(tx, transformationId, taskId);
+      return presentTask(tx, principalOf(request), transformationId, taskId);
     });
     return sendVersioned(reply, 200, body);
   });
