@@ -21,7 +21,7 @@ import { Section } from "../../components/Section.tsx";
 import { QueryState } from "../../components/States.tsx";
 import { formatDateTime } from "../../lib/format.ts";
 import { RestrictedRecordsLabel } from "../../components/sensitivity/RestrictedRecordsLabel.tsx";
-import { ReadOnlyNote, useUserNames } from "../my-work/p4ui.tsx";
+import { FormAlert, ReadOnlyNote, useUserNames } from "../my-work/p4ui.tsx";
 import {
   fedPaths,
   useCatalogue,
@@ -44,7 +44,7 @@ import {
   type ContentDraft,
 } from "./ContentEditor.tsx";
 import { AutomationLinks, EnabledChip } from "./RulesPage.tsx";
-import { Chip, HumanDecisionNote, NoteForm, StatusChip, codeOf, pick, useRunner, type Runner } from "./ui.tsx";
+import { Chip, FED_NS, HumanDecisionNote, NoteForm, StatusChip, codeOf, pick, useRunner, type Runner } from "./ui.tsx";
 
 export const VERSION_STATUS_CHIP = {
   draft: ["draft", "pencil"],
@@ -414,10 +414,16 @@ function ContentView({ version: v, catalogue }: { version: AutomationRuleVersion
 const loadDraft = (v: AutomationRuleVersion): ContentDraft =>
   toContentDraft(v.content as unknown as Parameters<typeof toContentDraft>[0]);
 
-/** A 409 (the version changed) or a 422 for a restricted token not issued by this version as it now stands (D-231, D-233). */
-const isChangedSinceRead = (e: unknown): boolean =>
-  e instanceof ApiError &&
-  (e.status === 409 || (e.status === 422 && codeOf(e) === "automation_rule.restricted_token_stale"));
+/** A 409: the version changed after the form read it. */
+const isChangedSinceRead = (e: unknown): boolean => e instanceof ApiError && e.status === 409;
+
+/**
+ * A 422 for a restricted token not issued by this version as it now stands (D-231, D-233). If-Match matched, so the
+ * rule did NOT change: the token was pasted from another version or another rule, or issued before migration 0127
+ * (T-DG6-FE-Z16, F-DG6-700, F-DG6-740; D-235).
+ */
+const isStaleToken = (e: unknown): boolean =>
+  e instanceof ApiError && e.status === 422 && codeOf(e) === "automation_rule.restricted_token_stale";
 
 function EditContent({
   rule: r,
@@ -437,12 +443,15 @@ function EditContent({
   // T-DG6-BE-Z14 (D-231, F-DG6-580): the form always holds the content of one served version, and saves with that
   // version as If-Match, so the restricted tokens it sends (`[restricted:<tag>:<k>]`, opaque, D-233) are those of the version they
   // replace. After a save it reloads from the saved version's response; after a 409 or a stale-token 422 it reloads the
-  // current version and asks the author to re-apply the change. It never re-sends tokens of an earlier version.
+  // current version. It never re-sends tokens of an earlier version. T-DG6-FE-Z16 (D-235): a 409 says that the rule
+  // changed and asks the author to re-apply the change; a stale-token 422 (the rule did not change) shows the
+  // problem's own text, in this form's one alert.
   const [form, setForm] = useState<{ from: number; draft: ContentDraft }>(() => ({
     from: v.version,
     draft: loadDraft(v),
   }));
   const [changed, setChanged] = useState(false);
+  const [staleToken, setStaleToken] = useState<unknown>(null);
   const draft = form.draft;
   const setDraft = (next: ContentDraft) => setForm((f) => ({ ...f, draft: next }));
   const reloadCurrent = async () => {
@@ -458,15 +467,19 @@ function EditContent({
       onSubmit={(e) => {
         e.preventDefault();
         setChanged(false);
+        setStaleToken(null);
         void runner
           .run<AutomationRuleVersion>(fedPaths.version(r.id, v.versionNo), {
             method: "PATCH",
             body: { content: toContentBody(draft) },
             ifMatch: form.from,
             onError: async (err) => {
-              if (!isChangedSinceRead(err)) return;
+              const conflict = isChangedSinceRead(err);
+              const stale = isStaleToken(err);
+              if (!conflict && !stale) return;
               runner.clear();
-              setChanged(true);
+              if (conflict) setChanged(true);
+              else setStaleToken(err);
               await reloadCurrent().catch(() => undefined);
             },
           })
@@ -480,6 +493,7 @@ function EditContent({
           {t("workflowsP5.rules.changedReapply")}
         </p>
       ) : null}
+      <FormAlert error={staleToken} namespaces={FED_NS} />
       <QueryState query={transformations}>
         {(items) => (
           <ContentEditor

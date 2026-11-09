@@ -1,0 +1,354 @@
+// frontend-ux-engineer T-DG6-FE-Z16 (F-DG6-700, F-DG6-740; D-235): an after-fix real-browser check, adapted from the QA
+// round-11 probe docs/delivery/test-evidence/DG6/qa/tests/round-11/zz-qa-dg6r11-restricted-mywork-automation.spec.ts
+// (its runs 40/41 are the before-fix reproduction: step F showed "This rule changed after you opened it"). Test A of
+// that probe is dropped (unrelated). Changed here: step E (409) also asserts that the stale-token problem text is NOT
+// shown; step F (a token pasted from ANOTHER rule at the same row version -> 422 restricted_token_stale) asserts the
+// problem's own en/ar text in the editor form's alert, NO "changed, re-apply" banner, the form reloaded with the stored
+// version, nothing stored changed; then the author re-applies with this version's own values and the save succeeds.
+// Run as e2e/zz-fe-z16-stale-token.spec.ts on e2e/support/with-demo-stack.sh (AUTH_MODE=dev), chromium-en and -ar;
+// removed from e2e/ after the run (not part of the candidate). Every value is SYNTHETIC demo data. Nothing approves
+// anything (no G1-G6 business approval; unrelated to DG0-DG7).
+import { execFileSync } from "node:child_process";
+import { randomUUID } from "node:crypto";
+import { mkdirSync } from "node:fs";
+import path from "node:path";
+import { expect, test, type Page } from "@playwright/test";
+import { expectAccessible, langOf, tr, type ApiSession } from "../apps/web/e2e/support/ui.ts";
+import { demoApi, demoPage } from "./support/a02-demo.ts";
+
+// (default mode, see header)
+test.setTimeout(420_000);
+const OUT = process.env["QA_PROBE_OUT"] ?? "test-results/fe-z16";
+// Round 11 (D-233): the tag is opaque to a client; a token of the version at row version v is matched by shape and
+// position (the API probe checks the exact tag from the row key).
+const T = (_version: number, k: number) => expect.stringMatching(new RegExp(`^\\[restricted:[0-9a-f]{24}:${k}\\]$`));
+
+type Body = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+function psql(sql: string): string {
+  const url = process.env["DATABASE_OWNER_URL"];
+  if (!url) throw new Error("BLOCKED: DATABASE_OWNER_URL is not exported by the stack harness");
+  return execFileSync("psql", [url.replace(/\+/g, "%20"), "-v", "ON_ERROR_STOP=1", "-At", "-c", sql], { encoding: "utf8" }).trim();
+}
+
+async function demoWorld(to: ApiSession) {
+  const ts = await to.call<Body>("GET", "/api/v1/transformations?limit=50");
+  for (const t of ts.items as Body[]) {
+    const bs = await to.call<Body>("GET", `/api/v1/transformations/${t.id}/benefits?limit=100`);
+    if ((bs.items as Body[]).length >= 2)
+      return { tid: String(t.id), org: String(t.organizationId), benefits: (bs.items as Body[]).map((b) => String(b.id)) };
+  }
+  throw new Error("no demo transformation with two benefits");
+}
+
+async function mark(to: ApiSession, tid: string, bid: string, on: boolean, reason: string): Promise<void> {
+  const p = `/api/v1/transformations/${tid}/records/benefit/${bid}/sensitivity`;
+  const cur = await to.call<Body>("GET", p);
+  if (Boolean(cur.isSensitive) === on) return;
+  await to.call("PUT", p, { isSensitive: on, reason }, { ifMatch: Number(cur.version) });
+}
+
+const noIds = async (page: Page, ids: readonly string[], what: string) => {
+  const html = await page.content();
+  for (const id of ids) expect(html.includes(id), `${what}: the DOM names hidden id ${id}`).toBe(false);
+};
+
+test("QA-R11 B/C: automation condition literals naming restricted benefits (API, screen, re-save, ordinal pairing)", async ({
+  browser,
+  playwright,
+}, info) => {
+  const lang = langOf(info);
+  mkdirSync(OUT, { recursive: true });
+  const to = await demoApi(playwright, "to");
+  const adm = await demoApi(playwright, "adm_access");
+  const cm = await demoApi(playwright, "cm");
+  const w = await demoWorld(to);
+  const [b1, b2] = lang === "en" ? [w.benefits[0]!, w.benefits[1]!] : [w.benefits[1]!, w.benefits[0]!];
+  const gid = randomUUID();
+  psql(
+    `DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM scoped_assignment a JOIN role r ON r.id = a.role_id WHERE a.user_id = '${cm.userId}' AND r.code = 'ADM_METHOD' AND a.revoked_at IS NULL) THEN INSERT INTO audit_event (id, organization_id, actor_type, action, record_type, record_id, new_version, source, reason) VALUES (gen_random_uuid(), '${w.org}', 'system', 'scoped_assignment.create', 'scoped_assignment', '${gid}', 1, 'api', 'QA-R11 synthetic grant to author a rule'); INSERT INTO scoped_assignment (id, organization_id, user_id, role_id, scope_type, scope_id, reason, granted_by, created_by, updated_by) SELECT '${gid}', '${w.org}', '${cm.userId}', r.id, 'organization', '${w.org}', 'QA-R11 synthetic grant to author a rule', '${adm.userId}', '${adm.userId}', '${adm.userId}' FROM role r WHERE r.code = 'ADM_METHOD'; END IF; END $$`,
+  );
+  const R = "/api/v1/admin/automation-rules";
+  let ruleId = "";
+  try {
+    const rule = await cm.call<Body>("POST", R, {
+      code: `qa.dg6r11.${lang}.${Date.now()}`,
+      nameEn: "QA-R11 synthetic variance follow-up",
+      nameAr: "متابعة انحراف تجريبية QA-R11",
+      scopeLevel: "organization",
+      organizationId: w.org,
+      ownerUserId: cm.userId,
+      content: {
+        triggerCodes: ["benefit.variance_evaluated"],
+        conditions: [
+          { field: "benefitId", op: "eq", value: b1 },
+          { field: "benefitId", op: "eq", value: b2 },
+          { field: "severity", op: "eq", value: "high" },
+        ],
+        actions: [{ type: "create_task", parameters: { assigneeRole: "TL", messageKey: "automation.message.follow_up" } }],
+        runAs: "service",
+      },
+    });
+    ruleId = String(rule.id);
+    console.log(`QA-R11 B ${lang}: rule ${ruleId}, benefits ${b1} ${b2}`);
+    await mark(to, w.tid, b1, true, "QA-R11 synthetic sensitivity probe");
+    await mark(to, w.tid, b2, true, "QA-R11 synthetic sensitivity probe");
+    for (const b of [b1, b2])
+      await cm.call("GET", `/api/v1/transformations/${w.tid}/benefits/${b}`, undefined, { expect: 404 });
+    // B. API as the author.
+    const v1 = await cm.call<Body>("GET", `${R}/${ruleId}/versions/1`);
+    console.log(`QA-R11 B ${lang} author view: ${JSON.stringify({ c: v1.content.conditions, s: v1.summary, f: v1.includesRestrictedRecords })}`);
+    expect(v1.content.conditions).toEqual([
+      { field: "benefitId", op: "eq", value: T(Number(v1.version), 1) },
+      { field: "benefitId", op: "eq", value: T(Number(v1.version), 2) },
+      { field: "severity", op: "eq", value: "high" },
+    ]);
+    expect(v1.includesRestrictedRecords).toBe(true);
+    expect(JSON.stringify(v1.summary.en)).toContain("a restricted record");
+    expect(JSON.stringify(v1.summary.ar)).toContain("سجل مقيد");
+    for (const p of [`${R}/${ruleId}`, `${R}/${ruleId}/versions`, `${R}/${ruleId}/versions/1`, `${R}?limit=100`]) {
+      const b = await cm.call<Body>("GET", p);
+      for (const id of [b1, b2]) expect(JSON.stringify(b).includes(id), `${p} names ${id}`).toBe(false);
+    }
+    // B. A re-save through the API of the shown content (only the severity changed) keeps both literals (control).
+    const saved = await cm.call<Body>(
+      "PATCH",
+      `${R}/${ruleId}/versions/1`,
+      {
+        content: {
+          ...v1.content,
+          conditions: (v1.content.conditions as Body[]).map((c) => (c.field === "severity" ? { ...c, value: "critical" } : c)),
+        },
+      },
+      { ifMatch: Number(v1.version) },
+    );
+    expect(saved.includesRestrictedRecords).toBe(true);
+    const byTo = await to.call<Body>("GET", `${R}/${ruleId}/versions/1`);
+    console.log(`QA-R11 B ${lang} after API re-save, TO (admitted) reads: ${JSON.stringify(byTo.content.conditions)}`);
+    expect(byTo.content.conditions).toEqual([
+      { field: "benefitId", op: "eq", value: b1 },
+      { field: "benefitId", op: "eq", value: b2 },
+      { field: "severity", op: "eq", value: "critical" },
+    ]);
+    // B. Screen as the author: the draft editor.
+    const page = await demoPage(browser, lang, "cm");
+    await page.goto(`/admin/automation-rules/${ruleId}/versions/1`);
+    const valueBox = (n: number) => page.getByRole("textbox", { name: tr(lang, "workflowsP5.rules.conditionValue", { n }) });
+    await expect(valueBox(1)).toBeVisible({ timeout: 60_000 });
+    const values = [await valueBox(1).inputValue(), await valueBox(2).inputValue(), await valueBox(3).inputValue()];
+    console.log(`QA-R11 B ${lang} editor values: ${JSON.stringify(values)}`);
+    expect(values).toEqual([T(Number(saved.version), 1), T(Number(saved.version), 2), "critical"]);
+    await expect(page.locator("form[data-form='edit-rule-content']")).toHaveAttribute("data-form-version", String(saved.version));
+    const labels = page.locator("[data-restricted-records='true']");
+    const n = await labels.count();
+    const titles = await labels.evaluateAll((els) => els.map((e) => [e.getAttribute("title"), (e as HTMLElement).innerText]));
+    console.log(`QA-R11 B ${lang} restricted labels on the editor: ${n}; title/text ${JSON.stringify(titles)}`);
+    for (const [title] of titles) expect(title).toBe(tr(lang, "adminP6.restricted.hintItem"));
+    for (const i of [1, 2])
+      await expect(valueBox(i).locator("xpath=..").locator("[data-restricted-records='true']")).toContainText(
+        tr(lang, "access.includesRestrictedRecords"),
+      );
+    await expect(valueBox(3).locator("xpath=..").locator("[data-restricted-records='true']")).toHaveCount(0);
+    await noIds(page, [b1, b2], "rule editor");
+    await page.screenshot({ path: path.join(OUT, `B-rule-editor-author-${lang}.png`), fullPage: true });
+    await expectAccessible(page, lang, "qa-r11-rule-restricted-conditions");
+    // C. In the UI, the author removes condition 1 and saves the draft.
+    await page.getByRole("button", { name: tr(lang, "workflowsP5.rules.removeCondition", { n: 1 }) }).click();
+    const after = [await valueBox(1).inputValue(), await valueBox(2).inputValue()];
+    console.log(`QA-R11 C ${lang} editor after removing condition 1: ${JSON.stringify(after)}`);
+    await page.getByRole("button", { name: tr(lang, "workflowsP5.rules.saveDraft") }).click();
+    await expect
+      .poll(async () => (await to.call<Body>("GET", `${R}/${ruleId}/versions/1`)).content.conditions.length, { timeout: 60_000 })
+      .toBe(2);
+    await page.screenshot({ path: path.join(OUT, `C-rule-editor-after-remove-${lang}.png`), fullPage: true });
+    // C2 (F-DG6-580 class, D-231). Without a reload, the author clicks 'Save the draft' a second time.
+    const v2 = await to.call<Body>("GET", `${R}/${ruleId}/versions/1`);
+    await expect(page.locator("form[data-form='edit-rule-content']")).toHaveAttribute("data-form-version", String(v2.version), {
+      timeout: 30_000,
+    });
+    const reloaded = [await valueBox(1).inputValue(), await valueBox(2).inputValue()];
+    console.log(`QA-R11 C2 ${lang} editor after the save (no reload): version ${v2.version}, values ${JSON.stringify(reloaded)}`);
+    expect(reloaded).toEqual([T(Number(v2.version), 1), "critical"]);
+    await expect(valueBox(1).locator("xpath=..").locator("[data-restricted-records='true']")).toContainText(
+      tr(lang, "access.includesRestrictedRecords"),
+    );
+    await expect(valueBox(2).locator("xpath=..").locator("[data-restricted-records='true']")).toHaveCount(0);
+    const second = page.waitForResponse((r) => r.url().includes(`/automation-rules/${ruleId}/versions/1`) && r.request().method() === "PATCH");
+    await page.getByRole("button", { name: tr(lang, "workflowsP5.rules.saveDraft") }).click();
+    const r2 = await second;
+    const sent2 = JSON.parse(r2.request().postData() ?? "{}");
+    console.log(
+      `QA-R11 C2 ${lang} second save: status ${r2.status()}, If-Match ${JSON.stringify(r2.request().headers()["if-match"])}, sent ${JSON.stringify(sent2.content?.conditions)}`,
+    );
+    expect(r2.status()).toBe(200);
+    expect(sent2.content.conditions[0].value).toEqual(T(Number(v2.version), 1));
+    expect(sent2.content.conditions[0].value).toBe(reloaded[0]);
+    expect(r2.request().headers()["if-match"]).toContain(String(v2.version));
+    await expect(page.locator("[data-state='rule-changed-reapply']")).toHaveCount(0);
+    const afterC2 = await to.call<Body>("GET", `${R}/${ruleId}/versions/1`);
+    console.log(`QA-R11 C2 ${lang}: stored after the second save ${JSON.stringify(afterC2.content.conditions)}`);
+    expect(afterC2.content.conditions).toEqual([
+      { field: "benefitId", op: "eq", value: b2 },
+      { field: "severity", op: "eq", value: "critical" },
+    ]);
+    await page.screenshot({ path: path.join(OUT, `C2-rule-editor-after-second-save-${lang}.png`), fullPage: true });
+    await page.context().close();
+    const afterDelete = await to.call<Body>("GET", `${R}/${ruleId}/versions/1`);
+    const kept = afterDelete.content.conditions[0]?.value;
+    console.log(
+      `QA-R11 C ${lang}: in the UI the author removed condition 1 (benefitId eq ${b1}) and kept condition 2 (benefitId eq ${b2}); stored now ${JSON.stringify(afterDelete.content.conditions)}; kept literal is ${kept === b2 ? "the SECOND (intended)" : kept === b1 ? "the FIRST (the removed one)" : String(kept)}`,
+    );
+    expect(afterDelete.content.conditions).toEqual([
+      { field: "benefitId", op: "eq", value: b2 },
+      { field: "severity", op: "eq", value: "critical" },
+    ]);
+    // D. In the UI the author types the bare marker text as a value and saves: refused, nothing stored changes.
+    const page2 = await demoPage(browser, lang, "cm");
+    await page2.goto(`/admin/automation-rules/${ruleId}/versions/1`);
+    const vb = (n: number) => page2.getByRole("textbox", { name: tr(lang, "workflowsP5.rules.conditionValue", { n }) });
+    await expect(vb(1)).toBeVisible({ timeout: 60_000 });
+    const shownD = [await vb(1).inputValue(), await vb(2).inputValue()];
+    console.log(`QA-R11 D ${lang} editor values after C (positions renumbered for the new version): ${JSON.stringify(shownD)}`);
+    expect(shownD).toEqual([T(Number(afterDelete.version), 1), "critical"]);
+    await vb(2).fill("[restricted]");
+    const respP = page2.waitForResponse((r) => r.url().includes(`/automation-rules/${ruleId}/versions/1`) && r.request().method() === "PATCH");
+    await page2.getByRole("button", { name: tr(lang, "workflowsP5.rules.saveDraft") }).click();
+    const resp = await respP;
+    const pb = await resp.json();
+    console.log(`QA-R11 D ${lang}: PATCH status ${resp.status()} code ${pb.code} errors ${JSON.stringify(pb.errors)}`);
+    expect(resp.status()).toBe(422);
+    expect(pb.code).toBe("automation_rule.restricted_marker_unknown");
+    await expect(page2.getByText(tr(lang, "problems.automation_rule__restricted_marker_unknown")).first()).toBeVisible({ timeout: 30_000 });
+    await page2.screenshot({ path: path.join(OUT, `D-rule-editor-bare-marker-refused-${lang}.png`), fullPage: true });
+    await noIds(page2, [b1, b2], "rule editor (D)");
+    await page2.context().close();
+    const afterD = await to.call<Body>("GET", `${R}/${ruleId}/versions/1`);
+    expect(afterD.content.conditions).toEqual(afterDelete.content.conditions);
+    // E (D-231). The 409 path: the author's editor is open; the same author saves first from another tab (API, as
+    // the author: it reads its own tokens). Revision b: run 40 used the TO as the second writer, which has no
+    // automation.configure (403 at this step; a probe error, steps B-D had passed).
+    const page3 = await demoPage(browser, lang, "cm");
+    await page3.goto(`/admin/automation-rules/${ruleId}/versions/1`);
+    const ve = (n: number) => page3.getByRole("textbox", { name: tr(lang, "workflowsP5.rules.conditionValue", { n }) });
+    await expect(ve(1)).toBeVisible({ timeout: 60_000 });
+    const otherTab = await cm.call<Body>("GET", `${R}/${ruleId}/versions/1`);
+    await cm.call(
+      "PATCH",
+      `${R}/${ruleId}/versions/1`,
+      { content: { ...otherTab.content, conditions: [otherTab.content.conditions[0], { field: "severity", op: "eq", value: "high" }] } },
+      { ifMatch: Number(otherTab.version) },
+    );
+    const vE = await to.call<Body>("GET", `${R}/${ruleId}/versions/1`);
+    // The author removes condition 2 (severity) and saves: 409.
+    await page3.getByRole("button", { name: tr(lang, "workflowsP5.rules.removeCondition", { n: 2 }) }).click();
+    const conflict = page3.waitForResponse((r) => r.url().includes(`/automation-rules/${ruleId}/versions/1`) && r.request().method() === "PATCH");
+    await page3.getByRole("button", { name: tr(lang, "workflowsP5.rules.saveDraft") }).click();
+    const rc = await conflict;
+    console.log(`QA-R11 E ${lang}: author save after a concurrent save: status ${rc.status()} If-Match ${JSON.stringify(rc.request().headers()["if-match"])}`);
+    expect(rc.status()).toBe(409);
+    const alert = page3.locator("[data-state='rule-changed-reapply']");
+    await expect(alert).toBeVisible({ timeout: 30_000 });
+    await expect(alert).toHaveText(tr(lang, "workflowsP5.rules.changedReapply"));
+    await expect(alert).toHaveAttribute("role", "alert");
+    await expect(page3.locator("[data-problem='automation_rule.restricted_token_stale']")).toHaveCount(0);
+    await expect(page3.locator("form[data-form='edit-rule-content']")).toHaveAttribute("data-form-version", String(vE.version), {
+      timeout: 30_000,
+    });
+    const shownE = [await ve(1).inputValue(), await ve(2).inputValue()];
+    console.log(`QA-R11 E ${lang}: alert ${JSON.stringify(await alert.innerText())}; form reloaded to version ${vE.version}: ${JSON.stringify(shownE)}; dir ${await page3.locator("html").getAttribute("dir")}`);
+    expect(shownE).toEqual([T(Number(vE.version), 1), "high"]);
+    await page3.screenshot({ path: path.join(OUT, `Z16-E-rule-editor-409-reapply-${lang}.png`), fullPage: true });
+    await expectAccessible(page3, lang, "qa-r11-rule-changed-reapply");
+    await noIds(page3, [b1, b2], "rule editor (E)");
+    // Re-apply (remove condition 2) and save: 200, the hidden literal kept, the alert cleared.
+    await page3.getByRole("button", { name: tr(lang, "workflowsP5.rules.removeCondition", { n: 2 }) }).click();
+    const reapply = page3.waitForResponse((r) => r.url().includes(`/automation-rules/${ruleId}/versions/1`) && r.request().method() === "PATCH");
+    await page3.getByRole("button", { name: tr(lang, "workflowsP5.rules.saveDraft") }).click();
+    const rr = await reapply;
+    const sentE = JSON.parse(rr.request().postData() ?? "{}");
+    console.log(`QA-R11 E ${lang}: re-applied save ${rr.status()} sent ${JSON.stringify(sentE.content?.conditions)}`);
+    expect(rr.status()).toBe(200);
+    await expect(alert).toHaveCount(0);
+    const afterE = await to.call<Body>("GET", `${R}/${ruleId}/versions/1`);
+    console.log(`QA-R11 E ${lang}: stored ${JSON.stringify(afterE.content.conditions)}`);
+    expect(afterE.content.conditions).toEqual([{ field: "benefitId", op: "eq", value: b2 }]);
+    await page3.context().close();
+    // F (D-233, F-DG6-640) IN THE UI: the author pastes a token copied from ANOTHER rule (whose row version is the same
+    // as this draft's) into a condition value and saves: 422 restricted_token_stale -> the bilingual 'changed, re-apply'
+    // alert, the form reloaded with the current version, nothing stored changes, and the pasted token is not re-sent.
+    const other = await cm.call<Body>("POST", R, {
+      code: `qa.dg6r11.f.${lang}.${Date.now()}`,
+      nameEn: "QA-R11 synthetic second rule",
+      nameAr: "قاعدة ثانية تجريبية QA-R11",
+      scopeLevel: "organization",
+      organizationId: w.org,
+      ownerUserId: cm.userId,
+      content: {
+        triggerCodes: ["benefit.variance_evaluated"],
+        conditions: [{ field: "benefitId", op: "eq", value: b1 }],
+        actions: [{ type: "create_task", parameters: { assigneeRole: "TL", messageKey: "automation.message.follow_up" } }],
+        runAs: "service",
+      },
+    });
+    let ov = await cm.call<Body>("GET", `${R}/${other.id}/versions/1`);
+    let mine = await cm.call<Body>("GET", `${R}/${ruleId}/versions/1`);
+    // bring the other rule's row version to this draft's (the F-DG6-640 coincidence)
+    while (Number(ov.version) < Number(mine.version)) {
+      await cm.call("PATCH", `${R}/${other.id}/versions/1`, { content: ov.content }, { ifMatch: Number(ov.version) });
+      ov = await cm.call<Body>("GET", `${R}/${other.id}/versions/1`);
+    }
+    mine = await cm.call<Body>("GET", `${R}/${ruleId}/versions/1`);
+    const foreign = String(ov.content.conditions[0].value);
+    console.log(`QA-R11 F ${lang}: other rule v${ov.version} token ${foreign}; this draft v${mine.version} token ${JSON.stringify(mine.content.conditions[0].value)}`);
+    expect(Number(ov.version)).toBe(Number(mine.version));
+    expect(foreign).not.toBe(mine.content.conditions[0].value);
+    const page4 = await demoPage(browser, lang, "cm");
+    await page4.goto(`/admin/automation-rules/${ruleId}/versions/1`);
+    const vf = (n: number) => page4.getByRole("textbox", { name: tr(lang, "workflowsP5.rules.conditionValue", { n }) });
+    await expect(vf(1)).toBeVisible({ timeout: 60_000 });
+    await page4.getByRole("button", { name: tr(lang, "workflowsP5.rules.addCondition") }).click();
+    await expect(vf(2)).toBeVisible({ timeout: 30_000 });
+    await vf(2).fill(foreign);
+    const pasted = page4.waitForResponse((r) => r.url().includes(`/automation-rules/${ruleId}/versions/1`) && r.request().method() === "PATCH");
+    await page4.getByRole("button", { name: tr(lang, "workflowsP5.rules.saveDraft") }).click();
+    const rf = await pasted;
+    const pf = await rf.json();
+    const sentF = JSON.parse(rf.request().postData() ?? "{}");
+    console.log(`QA-R11 F ${lang}: pasted foreign token save -> ${rf.status()} ${pf.code}; sent ${JSON.stringify(sentF.content?.conditions)}`);
+    expect(rf.status()).toBe(422);
+    expect(pf.code).toBe("automation_rule.restricted_token_stale");
+    // Z16: the problem's own text in the editor form's one alert; never the 409 "changed, re-apply" banner.
+    const alertF = page4.locator("form[data-form='edit-rule-content'] [role='alert']");
+    await expect(alertF).toBeVisible({ timeout: 30_000 });
+    await expect(alertF).toHaveAttribute("data-problem", "automation_rule.restricted_token_stale");
+    await expect(alertF).toContainText(tr(lang, "problems.automation_rule__restricted_token_stale"));
+    await expect(page4.locator("[data-state='rule-changed-reapply']")).toHaveCount(0);
+    await expect(page4.getByText(tr(lang, "workflowsP5.rules.changedReapply"))).toHaveCount(0);
+    await expect(page4.locator("[data-problem='automation_rule.restricted_token_stale']")).toHaveCount(1);
+    await expect.poll(async () => await vf(2).count(), { timeout: 30_000 }).toBe(0);
+    const shownF = [await vf(1).inputValue()];
+    console.log(`QA-R11 F ${lang}: alert ${JSON.stringify(await alertF.innerText())}; form after reload ${JSON.stringify(shownF)}; dir ${await page4.locator("html").getAttribute("dir")}`);
+    expect(shownF[0]).toBe(mine.content.conditions[0].value);
+    expect(await page4.locator("html").getAttribute("dir")).toBe(lang === "ar" ? "rtl" : "ltr");
+    await page4.screenshot({ path: path.join(OUT, `Z16-F-rule-editor-foreign-token-${lang}.png`), fullPage: true });
+    await expectAccessible(page4, lang, "fe-z16-rule-foreign-token");
+    await noIds(page4, [b1, b2], "rule editor (F)");
+    const afterF = await to.call<Body>("GET", `${R}/${ruleId}/versions/1`);
+    expect(afterF.content.conditions).toEqual(afterE.content.conditions);
+    // the next save from the reloaded form sends only this draft's own token
+    const nextSave = page4.waitForResponse((r) => r.url().includes(`/automation-rules/${ruleId}/versions/1`) && r.request().method() === "PATCH");
+    await page4.getByRole("button", { name: tr(lang, "workflowsP5.rules.saveDraft") }).click();
+    const rn = await nextSave;
+    const sentN = JSON.parse(rn.request().postData() ?? "{}");
+    console.log(`QA-R11 F ${lang}: next save ${rn.status()} sent ${JSON.stringify(sentN.content?.conditions)}`);
+    expect(rn.status()).toBe(200);
+    expect(JSON.stringify(sentN).includes(foreign)).toBe(false);
+    await expect(alertF).toHaveCount(0);
+    expect((await to.call<Body>("GET", `${R}/${ruleId}/versions/1`)).content.conditions).toEqual([{ field: "benefitId", op: "eq", value: b2 }]);
+    await page4.context().close();
+  } finally {
+    await mark(to, w.tid, b1, false, "QA-R11 probe cleanup");
+    await mark(to, w.tid, b2, false, "QA-R11 probe cleanup");
+    // the synthetic grant stays in the disposable database (see header)
+  }
+});
