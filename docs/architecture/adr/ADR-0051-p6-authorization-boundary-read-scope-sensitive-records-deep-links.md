@@ -547,7 +547,9 @@ _Corrected in place 2026-11-09 by T-DG6-BE-Z15 (D-233; F-DG6-640, Medium; REQ-S1
 
 - The form holds the content of one served version, and records that version. It saves with **that** version as `If-Match`, never with a version it did not load from.
 - After a successful "Save the draft", it reloads its form from the saved version's response, so the next save carries that version's tokens.
-- After a 409, or a 422 `automation_rule.restricted_token_stale`, it reloads the current version (`GET` the version) into the form. It shows, in en and ar, `workflowsP5.rules.changedReapply`: "This rule changed after you opened it. The form now shows the current version: re-apply your change, then save the draft again." Any other refusal keeps the author's draft and shows the problem text.
+- After a 409 it reloads the current version (`GET` the version) into the form. It shows, in en and ar, `workflowsP5.rules.changedReapply`: "This rule changed after you opened it. The form now shows the current version: re-apply your change, then save the draft again."
+- After a 422 `automation_rule.restricted_token_stale` (If-Match matched; the rule did not change), it reloads the version and shows the problem text `problems.automation_rule__restricted_token_stale` in the form's alert, en and ar (T-DG6-FE-Z16, D-235). The web wording of that problem differs from the API's English `detail`, which stays accurate for a direct API client.
+- Any other refusal keeps the author's draft and shows the problem text.
 - So the editor never re-sends tokens of an earlier version.
 
 ### C. Every notification serializer applies the D-226 redaction

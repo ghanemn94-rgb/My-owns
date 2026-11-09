@@ -1,14 +1,21 @@
 // T-DG6-BE-Z14 (F-DG6-580, code-security observation 601; D-231; ADR-0051 §2): the rule editor (RulePage.tsx
 // EditContent) always holds the content of one served version and saves with that version as If-Match. After a
 // successful "Save the draft" it reloads its form from the saved version's response, so the next save carries that
-// version's tokens. After a 409 or a 422 `automation_rule.restricted_token_stale` it reloads the current version and
-// shows, in en and ar, that the rule changed and the draft must be re-applied. It never re-sends tokens of an earlier
-// version. The server's answers are scripted as the real API returns them (issuer-bound tokens
+// version's tokens. After a 409 or a 422 `automation_rule.restricted_token_stale` it reloads the current version (a 409
+// says, in en and ar, that the rule changed and the draft must be re-applied; a stale-token 422 shows the problem text,
+// T-DG6-FE-Z16 below). It never re-sends tokens of an earlier version. The server's answers are scripted as the real API returns them (issuer-bound tokens
 // `[restricted:<tag>:<k>]`, T-DG6-BE-Z15, D-233: the tag is opaque to the web; the fixture gives each served version
 // its own fixed tag). Before-fix reproduction: code-security round-9 probe zz-cs-r9-editor-stale-token.
 // T-DG6-BE-Z15 (F-DG6-640) adds, in en and ar: a token pasted from another version (the published version, or another
-// rule) is sent verbatim, the server's 422 `restricted_token_stale` shows the "changed, re-apply" message, the form
+// rule) is sent verbatim, the server's 422 `restricted_token_stale` is shown (as the problem text since Z16), the form
 // reloads the current version and the pasted token is never re-sent; an issuer-bound token carries the restricted label.
+// T-DG6-FE-Z16 (F-DG6-700, F-DG6-740; D-235): a 422 `restricted_token_stale` is NOT a concurrent change (If-Match
+// matched, so the rule did not change). The editor still reloads the version as stored, but shows the problem's own
+// en/ar text (problems.automation_rule__restricted_token_stale, corrected so that its instruction is true in this flow)
+// and never the 409 text "This rule changed after you opened it". Cases, en and ar: a token pasted from another version
+// of the same rule, a token pasted from another rule, a token in the retired pre-0127 form, and a 409 (which keeps
+// "changed, re-apply"). Before-fix reproductions: domain round-11 probe dom-r11-editor-tokens (part C) and QA round-11
+// probe zz-qa-dg6r11-restricted-mywork-automation (step F).
 // All data SYNTHETIC; nothing here is a business approval (G1-G6) and nothing touches DG0-DG7.
 import { cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
@@ -131,6 +138,22 @@ const TAGS = new Map<number, string>([
 const tok = (version: number, k: number) => `[restricted:${TAGS.get(version)}:${k}]`;
 /** A token issued by ANOTHER rule-version row (the published version 1, or another rule) at the same row version. */
 const FOREIGN = "[restricted:9a41c7e2085fd36b1e70c4a9:2]";
+/** A token issued by another rule's draft at the same row version (the F-DG6-640 coincidence; QA round-11 step F). */
+const OTHER_RULE = "[restricted:41d07be29ac3f560e18b2c7a:1]";
+/** A token in the retired D-231 form `[restricted:<version>:<k>]`, issued before migration 0127 (D-233). */
+const RETIRED = "[restricted:2:2]";
+const staleRefusal = (index: number) =>
+  problem(422, "automation_rule.restricted_token_stale", {
+    errors: [
+      {
+        pointer: `/content/conditions/${index}/value`,
+        code: "automation_rule.restricted_token_stale",
+        message: "Restricted-record token not issued for this version as it now stands.",
+      },
+    ],
+  });
+/** The form-level alert inside the rule editor's form (one per form, S-7). */
+const formAlert = () => document.querySelector("form[data-form='edit-rule-content'] [role='alert']");
 /** Version 2 as the author reads it: [neq G1, neq <hidden> (token), eq approved]. */
 const v2 = () =>
   versionAt(2, [
@@ -220,7 +243,7 @@ for (const locale of ["en", "ar"] as const) {
     expect(document.documentElement.dir).toBe(locale === "ar" ? "rtl" : "ltr");
   });
 
-  it(`${locale}: after a 409 the form reloads the current version, says the rule changed, and never re-sends stale tokens`, async () => {
+  it(`${locale}: after a 409 the form reloads the current version, says the rule changed (not the stale-token text), and never re-sends stale tokens`, async () => {
     // Another tab removed condition 1: the server is at version 3 and shows the hidden literal as [restricted:3:1].
     const { requests } = serve(locale, (n, req, s) => {
       if (n === 1) {
@@ -237,6 +260,11 @@ for (const locale of ["en", "ar"] as const) {
     await save(locale, requests, 1);
     const banner = await screen.findByText(t.rules.changedReapply);
     expect(banner.closest("[data-state='rule-changed-reapply']")?.getAttribute("role")).toBe("alert");
+    // Z16: a 409 keeps "changed, re-apply"; the stale-token problem text is not shown for it.
+    expect(document.body.textContent).not.toContain(
+      catalogues[locale].problems.automation_rule__restricted_token_stale,
+    );
+    expect(document.querySelector("[data-problem='automation_rule.restricted_token_stale']")).toBeNull();
     await waitFor(() => expect(valueInputs()).toEqual([tok(3, 1), "approved"]));
     await save(locale, requests, 2);
     const p2 = patchesOf(requests)[1]!;
@@ -246,53 +274,8 @@ for (const locale of ["en", "ar"] as const) {
     await waitFor(() => expect(document.querySelector("[data-state='rule-changed-reapply']")).toBeNull());
   });
 
-  it(`${locale}: after a stale-token 422 the form reloads the current version and says the rule changed`, async () => {
-    const { requests } = serve(locale, (n, req, s) => {
-      if (n === 1) {
-        s.current = versionAt(4, [
-          { field: "gateCode", op: "neq", value: tok(4, 1) },
-          { field: "outcome", op: "eq", value: "approved" },
-        ]);
-        return problem(422, "automation_rule.restricted_token_stale", {
-          errors: [
-            {
-              pointer: "/content/conditions/1/value",
-              code: "automation_rule.restricted_token_stale",
-              message: "stale",
-            },
-          ],
-        });
-      }
-      s.current = versionAt(s.current.version + 1, sentConditions(req));
-      return { status: 200, body: s.current };
-    });
-    await screen.findByRole("button", { name: t.rules.removeCondition.replace("{{n}}", "1") });
-    await save(locale, requests, 1);
-    expect(await screen.findByText(t.rules.changedReapply)).toBeTruthy();
-    await waitFor(() => expect(valueInputs()).toEqual([tok(4, 1), "approved"]));
-    await save(locale, requests, 2);
-    const p2 = patchesOf(requests)[1]!;
-    expect(p2.headers["if-match"]).toBe('"4"');
-    expect(JSON.stringify(sentConditions(p2))).not.toContain(tok(2, 2));
-  });
-
-  it(`${locale}: an issuer-bound token shows the restricted label, and one pasted from another version gets the 422 "changed, re-apply" (Z15)`, async () => {
-    const { requests } = serve(locale, (n, req, s) => {
-      if (n === 1) {
-        // The server refuses the token issued by another rule-version row (D-233) and is unchanged.
-        return problem(422, "automation_rule.restricted_token_stale", {
-          errors: [
-            {
-              pointer: "/content/conditions/2/value",
-              code: "automation_rule.restricted_token_stale",
-              message: "Restricted-record token not issued for this version as it now stands.",
-            },
-          ],
-        });
-      }
-      s.current = versionAt(s.current.version + 1, sentConditions(req));
-      return { status: 200, body: s.current };
-    });
+  it(`${locale}: an issuer-bound token shows the restricted label (D-226, Z15)`, async () => {
+    serve(locale, () => ({ status: 500 }));
     await screen.findByRole("button", { name: t.rules.removeCondition.replace("{{n}}", "1") });
     // The token's condition carries the label; the plain ones do not (the label follows the token, D-226).
     await waitFor(() =>
@@ -300,23 +283,68 @@ for (const locale of ["en", "ar"] as const) {
     );
     expect(document.querySelector("[data-condition-row='0'] [data-restricted-records='true']")).toBeNull();
     expect(document.querySelector("[data-condition-row='2'] [data-restricted-records='true']")).toBeNull();
-    // The author pastes a token copied from the published version's page into condition 3's value.
-    const third = document.querySelectorAll("[data-condition-row] input")[2] as HTMLInputElement;
-    fireEvent.change(third, { target: { value: FOREIGN } });
-    await save(locale, requests, 1);
-    // Sent verbatim (the web never rewrites a token), with the served version as If-Match.
-    const p1 = patchesOf(requests)[0]!;
-    expect(p1.headers["if-match"]).toBe('"2"');
-    expect(sentConditions(p1).map((c) => c.value)).toEqual(["G1", tok(2, 2), FOREIGN]);
-    const banner = await screen.findByText(t.rules.changedReapply);
-    expect(banner.closest("[data-state='rule-changed-reapply']")?.getAttribute("role")).toBe("alert");
-    // The form reloads the current version: the pasted token is gone, the version's own token is back.
-    await waitFor(() => expect(valueInputs()).toEqual(["G1", tok(2, 2), "approved"]));
-    await save(locale, requests, 2);
-    const p2 = patchesOf(requests)[1]!;
-    expect(JSON.stringify(sentConditions(p2))).not.toContain(FOREIGN);
-    expect(sentConditions(p2)[1]!.value).toBe(tok(2, 2));
-    expect(document.documentElement.dir).toBe(locale === "ar" ? "rtl" : "ltr");
+  });
+
+  // T-DG6-FE-Z16: the three ways a stale-token 422 is reached from the editor. In each, the server refuses the token
+  // and is unchanged (same row version, same conditions): the rule did NOT change.
+  for (const [what, pasted] of [
+    ["a token pasted from another version of the rule", FOREIGN],
+    ["a token pasted from another rule", OTHER_RULE],
+    ["a token in the retired pre-0127 form", RETIRED],
+  ] as const) {
+    it(`${locale}: ${what} gets the 422 problem text, not "this rule changed"; the form reloads the stored version (Z16)`, async () => {
+      const { requests, state } = serve(locale, (n, req, s) => {
+        if (n === 1) return staleRefusal(2);
+        s.current = versionAt(s.current.version + 1, sentConditions(req));
+        return { status: 200, body: s.current };
+      });
+      await screen.findByRole("button", { name: t.rules.removeCondition.replace("{{n}}", "1") });
+      // The author pastes the token into condition 3's value and saves.
+      const third = document.querySelectorAll("[data-condition-row] input")[2] as HTMLInputElement;
+      fireEvent.change(third, { target: { value: pasted } });
+      await save(locale, requests, 1);
+      // Sent verbatim (the web never rewrites a token), with the served version as If-Match.
+      const p1 = patchesOf(requests)[0]!;
+      expect(p1.headers["if-match"]).toBe('"2"');
+      expect(sentConditions(p1).map((c) => c.value)).toEqual(["G1", tok(2, 2), pasted]);
+      // The server did not change: same row version.
+      expect(state.current.version).toBe(2);
+      // The problem's own text, in the form's one alert; never the 409 "changed, re-apply" text.
+      const text = catalogues[locale].problems.automation_rule__restricted_token_stale;
+      await waitFor(() => expect(formAlert()?.textContent).toContain(text));
+      expect(formAlert()?.getAttribute("data-problem")).toBe("automation_rule.restricted_token_stale");
+      expect(document.querySelector("[data-state='rule-changed-reapply']")).toBeNull();
+      expect(document.body.textContent).not.toContain(t.rules.changedReapply);
+      // The page-level alert does not repeat it (one alert for this form, S-7).
+      expect(document.querySelectorAll("[data-problem='automation_rule.restricted_token_stale']")).toHaveLength(1);
+      // The form reloads the stored version: the pasted token is gone, the version's own token is back.
+      await waitFor(() => expect(valueInputs()).toEqual(["G1", tok(2, 2), "approved"]));
+      // The author re-applies the change with this version's own values only, as the text says: it saves.
+      fireEvent.click(screen.getByRole("button", { name: t.rules.removeCondition.replace("{{n}}", "3") }));
+      await save(locale, requests, 2);
+      const p2 = patchesOf(requests)[1]!;
+      expect(p2.headers["if-match"]).toBe('"2"');
+      expect(JSON.stringify(sentConditions(p2))).not.toContain(pasted);
+      expect(sentConditions(p2).map((c) => c.value)).toEqual(["G1", tok(2, 2)]);
+      // A successful save clears the alert.
+      await waitFor(() => expect(formAlert()).toBeNull());
+      expect(document.documentElement.dir).toBe(locale === "ar" ? "rtl" : "ltr");
+    });
+  }
+
+  it(`${locale}: the stale-token problem text is true in the editor flow (Z16)`, () => {
+    const text = catalogues[locale].problems.automation_rule__restricted_token_stale;
+    // It says nothing was saved and that the editor shows the stored version again; it no longer only says "reload the
+    // version and re-apply your change" (re-applying a pasted token gives the same refusal).
+    if (locale === "en") {
+      expect(text).toContain("nothing was saved");
+      expect(text).toContain("The rule editor shows the version as it is stored now");
+      expect(text).not.toContain(": reload the version and re-apply your change.");
+    } else {
+      expect(text).toContain("لم يُحفظ أي شيء");
+      expect(text).toContain("يعرض محرر القواعد الإصدار بحالته المحفوظة الآن");
+      expect(text).not.toContain(": أعد تحميل الإصدار وأعد تطبيق تعديلك.");
+    }
   });
 }
 

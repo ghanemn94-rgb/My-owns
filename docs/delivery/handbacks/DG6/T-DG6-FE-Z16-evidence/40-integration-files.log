@@ -1,0 +1,48 @@
+port-policy: PostgreSQL listening on port 31460 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-fe-z16
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw9vbupl_ff20ea34 (server_encoding UTF8); applied 119 migrations to a fresh database
+ ✓ |integration| tests/qa/integration/a13-durable-automation.test.ts (12 tests) 26224ms
+   ✓ REQ-S12-020: killing the worker mid-job and restarting completes the job once > a real worker process is SIGKILLed inside the rule's action; the restarted worker completes it exactly once  5249ms
+   ✓ REQ-S12-001: each execution is recorded with rule version, trigger event and outcome > the execution history names the rule, its version, the trigger event and the outcome, per action  495ms
+   ✓ REQ-S12-002: a dry-run creates no tasks > evaluates the draft against a sample event and writes no task, notification, execution or outbox event  2582ms
+   ✓ REQ-S12-020 + REQ-S12-002: after the retry limit the execution lands in the failure queue; it succeeds on retry without duplicating actions > bounded retries: after 1 + retryLimit attempts ONE rule-execution entry is in the queue; the task is not doubled  1313ms
+   ✓ REQ-S12-020 + REQ-S12-002: after the retry limit the execution lands in the failure queue; it succeeds on retry without duplicating actions > an admin retries it from the queue: it succeeds once; completed actions are not repeated; a second retry is refused  3352ms
+   ✓ REQ-S12-020 + REQ-S12-002: after the retry limit the execution lands in the failure queue; it succeeds on retry without duplicating actions > both queue entries of one failed execution (the job entry and the rule-execution entry) are retried: one task, one reminder  3063ms
+   ✓ REQ-S12-020 + REQ-S12-002: after the retry limit the execution lands in the failure queue; it succeeds on retry without duplicating actions > a dismissed failure records who and why, adds no effect, and can no longer be retried  1477ms
+   ✓ REQ-S12-021: replaying the same event three times yields one reminder, one action and one approval task > the admin rule's event re-relayed x3 and re-delivered x3: one execution, one task (action), one reminder  2065ms
+   ✓ REQ-S12-021: replaying the same event three times yields one reminder, one action and one approval task > a gate submission's event re-relayed x3 and re-delivered x3 to every consumer: one approval task  2997ms
+   ✓ REQ-S12-026: saving a rule with action 'approve gate' is rejected; all automatic preparation and reminder rules run > the sixteen starters (preparation, routing, calculation, reminders) are all enabled, cannot be disabled, and run  775ms
+ ✓ |integration| tests/qa/integration/a22-p6-operability.test.ts (17 tests) 135645ms
+   ✓ A22 worker heartbeat (ADR-0053 §6): unknown before any beat, alive while beating, stale after it stops (never alive); the API raises one heartbeat_missed exception and one alert line, and resolves it when beats resume > the built worker beats: alive, one instance with its app version, queue count and a growing beat count; its log lines are JSON  2909ms
+   ✓ A22 worker heartbeat (ADR-0053 §6): unknown before any beat, alive while beating, stale after it stops (never alive); the API raises one heartbeat_missed exception and one alert line, and resolves it when beats resume > after the worker stops and >90 s pass (rows aged), status is stale, never alive; the watch opens exactly one heartbeat_missed exception and writes one alert line  57022ms
+   ✓ A22 worker heartbeat (ADR-0053 §6): unknown before any beat, alive while beating, stale after it stops (never alive); the API raises one heartbeat_missed exception and one alert line, and resolves it when beats resume > when beats resume: alive again with the old instance stale beside the new one; the alert sweep notifies the acknowledgers in-app once; the watch resolves the exception as recovered  59964ms
+   ✓ A22 operational exceptions and error alerts (REQ-S12-019, REQ-S20-022): a failing connector opens one visible exception and one alert; acknowledge and resolve are authorized, version-checked and audited > one failing run -> exactly one open connector exception, visible to the technical admin and the auditor, not to a team lead  1196ms
+   ✓ A22 operational exceptions and error alerts (REQ-S12-019, REQ-S20-022): a failing connector opens one visible exception and one alert; acknowledge and resolve are authorized, version-checked and audited > the alert sweep writes exactly one structured alert line (worker) and one in-app alert per acknowledger; a recurrence alerts nothing  11018ms
+ ✓ |integration| apps/api/test/integration/operations/exceptions.test.ts (13 tests) 819ms
+ ✓ |integration| apps/api/test/integration/automation/automation-failures.test.ts (9 tests) 1729ms
+   ✓ dismiss, refusals, access (ADR-0043 §8, §9) > the 21st retry -> 422 automation_failure.retry_limit (each failed retry reopens the entry)  315ms
+ ✓ |integration| apps/api/test/integration/access/automation-restricted-tokens-z15.test.ts (7 tests) 1580ms
+ ✓ |integration| apps/api/test/integration/operations/exception-recurrence-race.test.ts (7 tests) 557ms
+ ✓ |integration| apps/api/test/integration/operations/exception-last-known-value.test.ts (8 tests) 411ms
+ ✓ |integration| apps/api/test/integration/jobs/job-operations.test.ts (7 tests) 2706ms
+ ✓ |integration| apps/api/test/integration/access/automation-restricted-tokens-z14.test.ts (5 tests) 1085ms
+ ✓ |integration| apps/worker/test/integration/automation-failure-queue.test.ts (2 tests) 12737ms
+   ✓ REQ-S12-020: kill the worker mid-job and restart it > completes the job once; nothing enters the failure queue  5570ms
+   ✓ REQ-S12-020: after the retry limit the job is in the failure queue; a retry completes it once > captures the last attempt, keeps ops.failed, and resolves through the retry dispatcher  4690ms
+ ✓ |integration| apps/api/test/integration/operations/concurrent-exception-recurrence.test.ts (7 tests) 1108ms
+ ✓ |integration| apps/worker/test/integration/job-runs.test.ts (5 tests) 5338ms
+   ✓ REQ-S12-022: scheduled runs are stored, run now runs once > run now: dispatched after COMMIT, the handler runs once, one succeeded job_run; a replay sends nothing  1044ms
+   ✓ REQ-S12-022: scheduled runs are stored, run now runs once > a failing scheduled job: one failed job_run per attempt; the last one is exhausted and in the failure queue  1612ms
+
+ Test Files  12 passed (12)
+      Tests  99 passed (99)
+   Start at  23:04:21
+   Duration  219.17s (transform 5.15s, setup 0ms, collect 25.76s, tests 189.94s, environment 0ms, prepare 54ms)
+
+exit=0
