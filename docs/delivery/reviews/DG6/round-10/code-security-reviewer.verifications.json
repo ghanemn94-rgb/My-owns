@@ -1,0 +1,58 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG6-540",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:56415aeea66a2aa11e721024ff0d3a2c0321f629f5e41fb2cc0c95c2c392d1b3 (source cde60365) in a disposable, complete clone with a disposable PostgreSQL, Node 22.22.0, LANG unset; all data SYNTHETIC. This entry also covers my interrupted round-9 observation 600 (the digest read is not redacted). It has no finding id of its own, and it is the same defect class: D-226 says 'every response that serializes a notification'. (1) I re-ran my round-8 reproduction zz-cs-r8-inbox-text.test.ts unchanged (log 42): 5/5 pass. P1 uses the real producer's Finance-validation shape: tl2 gets 404 on benefit B01 and on its Finance validation. GET /me/work-items, GET /me/inbox and POST /me/inbox/{id}/read all return inbox.restricted, params {}, the transformation home link and the marker, with 'P1 leaks (0)'. P1b uses the real POST /benefit-overlaps producer: the Finance recipient's inbox is redacted, with 'P1b leaks (0)'. P1c (a benefit-route notification): the list and mark-read are redacted. (2) I re-ran my round-9 digest probe unchanged (log 45, renamed zz-cs-r10-digest.test.ts). The real worker job runDigestWindow digests tl2's held notification. GET /me/notification-digests/{id} now returns the item as messageKey inbox.restricted, params {} and the home link, with 'leaks (0)'. In round 9 this probe failed, naming the hidden ids and the code B01. (3) In-tree tests, unmutated: inbox-restricted-z13, digest-restricted-z14 and the tokens z13/z14 pass 27/27 (log 59). The notification-serializer sweep and the editor tests pass (log 59-unit). The full integration suite passes in both locales (logs 30, 31, 32). (4) Mutants, each caught by assertions: M1, the digest decision is computed but not applied: digest-restricted-z14 and my digest probe fail, 2 of 6 (log 50). M4, markInboxNotificationRead is no longer redacted: inbox-restricted-z13 and my round-8 probe fail, 3 of 12 (log 53). M6, a new API module serializes NotificationDigestItem from inbox_notification without the helpers: the serializer sweep fails (log 55). M6B, the helper names are kept but shadowed by no-ops: the textual sweep passes, as I expected (it is a name heuristic), but digest-restricted-z14 fails (log 57). So a functional regression is caught even where the heuristic is fooled. (5) Source: every API module that reads inbox_notification is either in the sweep or listed with a reason (60-source-checks.log). The worker's channel fan-out applies the twin decision (restrictedForRecipient). The digest notification itself carries only {count}.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-10/42-repro-r8-F540-inbox-text.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-10/45-probe-r10-digest.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-10/repro/zz-cs-r8-inbox-text.test.ts",
+        "docs/delivery/test-evidence/DG6/code-security/round-10/repro/zz-cs-r10-digest.test.ts",
+        "docs/delivery/test-evidence/DG6/code-security/round-10/59-control-unmutated-integration.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-10/59-control-unmutated-unit.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-10/50-mutant-M1-digest-unredacted.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-10/53-mutant-M4-mark-read-unredacted.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-10/55-mutant-M6-new-unredacted-serializer.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-10/57-mutant-M6B-shadowed-helpers.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-10/mutants.sh",
+        "docs/delivery/test-evidence/DG6/code-security/round-10/60-source-checks.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG6-541",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:56415aee... (source cde60365), disposable clone and PostgreSQL, Node 22.22.0, LANG unset; SYNTHETIC data. (1) I re-ran my round-8 reproduction zz-cs-r8-automation-resave.test.ts unchanged (log 41): 1/1 pass. The not-admitted ADM_METHOD author sees [neq <PLAIN>, neq \"[restricted:1:2]\", eq high]. Removing condition 1 and PATCHing the rest, token included, answers 200 with the marker. The stored version keeps the hidden literal: 'hidden exclusion kept: true; marker text stored as a literal: false'. The admitted TO sees the real id. (2) Round-9 token probe, with its literals moved to the version-bound form (behaviour assertions unchanged; log 43, zz-cs-r10-token-stale.test.ts): T4 passes 4/4. The bare marker, a marker-like text and an unknown position are refused 422 restricted_marker_unknown. A token moved into an in-list keeps S. Marking Q sensitive or S visible between read and save keeps both. A token for a plain position resolves to that plain literal. (3) Mutant M3, an unknown token stored as a literal instead of refused: caught by automation-restricted-tokens-z13 (negative and positive cases) and z14 (d), 3 of 17 (log 52). Control: log 59. (4) The real browser on the production-initialized stack, en and ar (log 46): removing condition 1 in the editor keeps S stored, and no screen names S.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-10/41-repro-r8-F541-automation-resave.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-10/repro/zz-cs-r8-automation-resave.test.ts",
+        "docs/delivery/test-evidence/DG6/code-security/round-10/43-probe-r10-token-stale.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-10/repro/zz-cs-r10-token-stale.test.ts",
+        "docs/delivery/test-evidence/DG6/code-security/round-10/52-mutant-M3-unknown-token-stored.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-10/59-control-unmutated-integration.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-10/46-probe-r10-editor-e2e.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-10/mutants.sh"
+      ]
+    },
+    {
+      "finding_id": "F-DG6-580",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Recorded as my verification of round-9 observation 601, the same defect as F-DG6-580 (D-231). The domain reviewer raised F-DG6-580; I authored none of its repair. Candidate sha256:56415aee... (source cde60365). (1) API, my round-9 probe with its token literals moved to [restricted:<version>:<k>] and its behaviour assertions unchanged (log 43). In round 9, T1 to T3 failed; all now pass. T1, the editor flow of two saves of the same local draft: save 1 returns 200 and shows [restricted:2:1]; save 2, sending the stale [restricted:1:2] with If-Match 2, is refused 422 automation_rule.restricted_token_stale, and S is still stored. T2 has two hidden literals: the second save is 422, and S1 and S2 stay in place. T3 is the 409 path: a second tab removes condition 1, the author's save is 409, and the re-save of the same draft with the refreshed If-Match is 422 stale, with S kept. (2) Web unit, my round-9 jsdom probe with its literals moved (log 44): after save 1 the editor holds [restricted:3:1], and PATCH 2 sends If-Match \"3\" with [restricted:3:1]. In round 9 it re-sent [restricted:2] with If-Match 3. (3) A real browser, written by me for this round (log 46; repro/cs-r10-editor-tokens.spec.ts), production-initialized stack, chromium-en and chromium-ar, 2/2 pass. A, the double save: PATCH 1 (If-Match 1, [restricted:1:2]) returns 200, the form reloads to version 2 showing [restricted:2:1], PATCH 2 (If-Match 2, [restricted:2:1]) returns 200, and S and Q are both still stored, each once. B, the concurrent edit: a second session removes Q; the editor's save (If-Match 1) is 409. The bilingual changedReapply banner shows, and the form reloads to version 2 ([<P>, [restricted:2:2]]); the restricted label is on the token, not on P. The re-applied save (If-Match 2) returns 200 and stores [neq S]. No screen shows S's id or title. (4) Mutants: M2, the version check removed, is caught by z14 (a) to (d) and my T1 to T3, 7 of 9 (log 51). M5, the editor no longer reloading after a save, is caught by rule-editor-tokens-z14 (en and ar) and my jsdom probe (log 54). M7, no reload after a 409 or a stale 422, is caught, 4 of 7 (log 56).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-10/43-probe-r10-token-stale.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-10/44-probe-r10-editor-stale-token.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-10/46-probe-r10-editor-e2e.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-10/repro/zz-cs-r10-token-stale.test.ts",
+        "docs/delivery/test-evidence/DG6/code-security/round-10/repro/zz-cs-r10-editor-stale-token.test.tsx",
+        "docs/delivery/test-evidence/DG6/code-security/round-10/repro/cs-r10-editor-tokens.spec.ts",
+        "docs/delivery/test-evidence/DG6/code-security/round-10/51-mutant-M2-token-version-unchecked.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-10/54-mutant-M5-editor-no-reload.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-10/56-mutant-M7-editor-no-reload-after-409.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-10/mutants.sh"
+      ]
+    }
+  ]
+}
