@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG6-600",
+      "stage_id": "DG6",
+      "requirement": "REQ-S10-002",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "The notification digest read still names sensitive records: GET /me/notification-digests/{digestId} serializes each digested notification's messageKey, messageParams (the restricted benefit's code) and linkPath (the Finance validation's id) with no redaction, so a recipient whose quiet hours or digest mode route notifications into a digest gets none of the D-226 inbox redaction",
+      "reproduction": "Candidate sha256:fe824c05d70d73d1ae53fecdf52f4f3af1579b748cb98c08a7a8ea1da026c25f (source d974011fbc6e106c1628819d60a6efe1bbbafa65), disposable clone, disposable PostgreSQL (tests/qa/support/with-pg.sh), Node 22.22.0, LANG unset, demo seed (all data SYNTHETIC). Probe docs/delivery/test-evidence/DG6/code-security/round-9/repro/zz-cs-r9-digest.test.ts, run with checks.sh repro (log 45-probe-r9-digest.log). It uses the F-DG6-540 P1 setup: tl2 is a TL scoped to the demo transformation with no sensitive-record grant and is never a named party. (1) tl2 sets its own preferences through PUT /me/notification-preferences: quiet hours around now and a daily digest, exactly as p5-exercises-be-l.ts does. (2) The real producer's Finance-validation task and notification for tl2 are created through the API's createWorkItemOnce, in the shape of apps/worker/src/handlers/benefits.ts: subject finance_validation, linkPath /transformations/{t}/finance-validations/{fv}, messageKey benefits.task.finance_validation_review, messageParams {benefitCode, periodStart, periodEnd}. The delivery decision holds the notification (state held). (3) The TO marks benefit B01 sensitive. (4) The REAL worker job runDigestWindow (apps/worker/src/handlers/digests.ts) digests it. (5) tl2 reads GET /me/work-items, GET /me/inbox and GET /me/notification-digests/{digestId}.",
+      "expected": "D-226: 'D-218 and D-222 (1) apply to every response that serializes a notification'. ADR-0051 amendment of 2026-11-09, part B: a restricted notification shows messageKey inbox.restricted, messageParams {}, the transformation home as linkPath, and the marker. tl2 gets 404 on B01 and on its Finance validation. So the digest read must serialize the digested notification the way the inbox does (inbox.restricted, {}, home link, marker), or leave it out, and must name neither the Finance validation's id nor the benefit's code.",
+      "actual": "Log 45. tl2 gets 404 on benefit B01 and on its Finance validation (control). GET /me/work-items redacts the work item correctly: subjectId null, linkPath /transformations/<t>, inbox.restricted, params {}, marker true. GET /me/inbox lists only the digest notification itself (notifications.digest, {count: 1}); the digested notification is not listed. But GET /me/notification-digests/{id} answers 200 with items[0] = {messageKey: 'benefits.task.finance_validation_review', messageParams: {benefitCode: 'B01', periodStart: '2026-07-01', periodEnd: '2026-07-31'}, linkPath: '/transformations/01995000-.../finance-validations/01995000-4501-7000-8000-000000000001'}. So the restricted benefit's code, the period and the hidden Finance validation's id all reach a reader who gets 404 on them. Cause: apps/api/src/modules/tasks/digests.ts:38 selects message_key, message_params and link_path, and :49-55 serialize them unchanged. The handler makes no restrictedNotifications call (T-DG6-BE-Z13 changed only tasks/routes.ts listMyInbox and markInboxNotificationRead, and the resolver). The BE-Z13 inventory lists inbox_notification.target_record_id, link_path and message_params with operations [listMyInbox, markInboxNotificationRead, resolveDeepLink] (apps/api/test/support/sensitive-reference-inventory.ts:547, :558) and [listMyInbox, markInboxNotificationRead] (:896). It omits getMyNotificationDigest, the same kind of gap F-DG6-540 found for markInboxNotificationRead. inbox-restricted-z13.test.ts has no digest case. Scope: any user whose own preferences (quiet hours with a digest mode) or the organization's policy route non-urgent notifications into digests, which ADR-0044 §5 ships. For that user every such notification about a restricted record is readable in clear through the digest, whatever the inbox shows. Disclosed: codes, periods and child-record ids, and their existence; no value. Medium, not mandatory, on the same reasoning as F-DG6-540 (identifier and code disclosure). D-218/D-226 are binding, and D-192 requires the repair before the gate. Suggested repair: run restrictedNotifications over the digest items and serialize them with the inbox's notificationFor rule (inbox.restricted, {}, home link, marker; add includesRestrictedRecords to NotificationDigest items in OpenAPI and the zod mirror). Add getMyNotificationDigest to the three inventory rows, and add a digest case to inbox-restricted-z13.test.ts.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-9/45-probe-r9-digest.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-9/repro/zz-cs-r9-digest.test.ts",
+        "apps/api/src/modules/tasks/digests.ts",
+        "apps/api/src/modules/tasks/routes.ts",
+        "apps/api/src/modules/tasks/deep-links.ts",
+        "apps/api/test/support/sensitive-reference-inventory.ts",
+        "apps/api/test/integration/tasks/inbox-restricted-z13.test.ts",
+        "apps/worker/src/handlers/digests.ts",
+        "docs/delivery/decisions.md"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG6/round-9/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-09T05:25:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG6 round 9 (T-DG6-REV-CS-R9) while looking, as D-230 invites, for a served response that still names a sensitive record after the F-DG6-540 repair. Reproduced on the real API with a disposable PostgreSQL, the real preferences endpoint and the real worker digest job. F-DG6-540's own reproductions pass on this candidate; this is a sibling path that the repair and its inventory did not cover."
+        }
+      ]
+    },
+    {
+      "id": "F-DG6-601",
+      "stage_id": "DG6",
+      "requirement": "REQ-S10-002",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "A restricted condition token carries no version identity, and the shipped rule editor re-sends the tokens of an earlier revision with the current If-Match. A second save of the same draft (after a save that removed an earlier condition), or a re-save after a 409, silently replaces the hidden literal with another literal of the version: the exclusion of the sensitive benefit is lost (200, no refusal), and with two hidden literals one is lost while the label stays",
+      "reproduction": "Candidate sha256:fe824c05d70d73d1ae53fecdf52f4f3af1579b748cb98c08a7a8ea1da026c25f (source d974011fbc6e106c1628819d60a6efe1bbbafa65), disposable clone; all data SYNTHETIC. (A) The real API, disposable PostgreSQL, Node 22.22.0, LANG unset: probe docs/delivery/test-evidence/DG6/code-security/round-9/repro/zz-cs-r9-token-stale.test.ts (log 43-probe-r9-token-stale.log), built on the in-tree BE-Z12B fixtures. An ADM_METHOD author at organization scope, never admitted, writes a rule on benefit.variance_evaluated. T1: [benefitId neq P, benefitId neq S, severity eq high]; the TO marks S sensitive; the author GETs version 1 and is shown [P, [restricted:2], high]. Save 1 removes condition 1 (the F-DG6-541 step) with If-Match 1. Save 2 sends the SAME local draft again with the version save 1 returned (If-Match 2). T2: the same with [neq P, neq S1, neq S2, severity eq high], S1 and S2 sensitive. T3 (409 path): the author reads; a second tab removes condition 1; the author's save of a severity change is 409; the author re-saves the same draft with the refreshed version. (B) The shipped web editor, Node 24.21.0: component test docs/delivery/test-evidence/DG6/code-security/round-9/repro/zz-cs-r9-editor-stale-token.test.tsx (log 44-probe-r9-editor-stale-token.log), run in apps/web/src/pages/automation of the disposable clone (vitest --project unit-web). It renders RulePage/EditContent with the server answers scripted exactly as the real API returned them in T1, clicks 'Remove condition 1', clicks 'Save the draft', waits for the refreshed version, clicks 'Save the draft' again, and records both PATCH requests.",
+      "expected": "D-226: a save maps each token back to its literal wherever the condition now sits; an unknown token is refused 422; marker text never replaces a hidden literal. ADR-0051 amendment of 2026-11-09, part A: 'k depends only on the version that the author read, which If-Match pins.' F-DG6-541's contract: a marker the author was shown and sends back unchanged keeps the hidden literal it stands for, or the write is refused. So a token from an earlier revision of the draft must either resolve to the literal it was shown for or be refused (409/422). It must never be silently resolved against a different revision's positions. And the editor must not pair stale content with a fresh If-Match.",
+      "actual": "(A) Log 43. T1: save 1 answers 200, stores [neq S, eq high] and now shows S as [restricted:1] (the F-DG6-541 case is fixed). Save 2 of the same draft [neq [restricted:2], eq high] with If-Match 2 answers 200 and stores [benefitId neq \"high\", severity eq high]. S is no longer stored anywhere in the version, the response carries no marker, and nothing was refused: [restricted:2] was resolved against the new revision, where position 2 is the severity literal \"high\". T2: save 2 stores [neq S2, neq \"high\", eq high]. S1 is lost and S2 has moved to the first condition, and the version still shows a token and the label, so the author cannot see that anything changed. T3: after the 409 the re-save answers 200 and stores [neq P, neq \"high\", eq medium]; S is lost. T4 (controls) passes: the bare marker, an unknown token and marker-like text get 422; a token moved into an in list keeps S; sensitivity changes between read and save shift nothing. (B) Log 44: the shipped editor sends PATCH 1 with If-Match \"2\" and [neq [restricted:2], eq approved], then PATCH 2 with If-Match \"3\" and the SAME conditions [neq [restricted:2], eq approved]. The editor still displays [restricted:2] while the server's version 3 shows [restricted:1]. Causes: (1) the token carries only k (packages/shared/src/schemas/automation.ts:78-79, versions.ts:406), and resolveRestrictedTokens (apps/api/src/modules/automation/versions.ts:424-446) resolves it against whatever revision is stored at commit time (:439, :443). If-Match pins the revision being overwritten, not the revision the tokens were issued for, so the server cannot tell a stale token from a current one. (2) RulePage.tsx EditContent initializes its local draft once (apps/web/src/pages/automation/RulePage.tsx:427, useState initializer) and sends it with ifMatch: v.version (:439-440). After a save or a 409 the runner refreshes the query (ui.tsx:122 and the success path), but QueryState keeps children mounted on refetch (apps/web/src/components/States.tsx:237: loading only while isPending), and VersionPanel is keyed by the version id (RulePage.tsx:257), so the stale draft survives and is paired with the new version number. The in-tree automation-restricted-tokens-z13.test.ts covers removal, reorder, in-list, refusal and the two D-228 (1) races, but no token re-sent against a later revision. Effect: once the draft is submitted, reviewed and approved, the rule fires for the sensitive benefit it was written to exclude (T1, T3), or excludes the wrong one (T2). The author was not told, and in T2 cannot see it. Bounded as F-DG6-541 was: the change hits a draft that still needs review and approval, it discloses nothing, and an admitted author is unaffected. Medium, not mandatory. D-192 requires the repair before the gate. Suggested repair: bind tokens to the revision they were issued for (for example `[restricted:<version>.<k>]`, or a per-version nonce) and refuse 409/422 a token from another revision. And re-initialize the editor's draft from the server's answer after a successful save, and offer compare/re-apply instead of re-sending stale content after a 409 (REQ-S16-026). Add the two-save and 409 cases to automation-restricted-tokens-z13.test.ts and fed.test.tsx.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-9/43-probe-r9-token-stale.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-9/repro/zz-cs-r9-token-stale.test.ts",
+        "docs/delivery/test-evidence/DG6/code-security/round-9/44-probe-r9-editor-stale-token.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-9/repro/zz-cs-r9-editor-stale-token.test.tsx",
+        "docs/delivery/test-evidence/DG6/code-security/round-9/41-repro-r8-F541-automation-resave.log",
+        "apps/api/src/modules/automation/versions.ts",
+        "packages/shared/src/schemas/automation.ts",
+        "apps/web/src/pages/automation/RulePage.tsx",
+        "apps/web/src/pages/automation/ui.tsx",
+        "apps/web/src/components/States.tsx",
+        "apps/api/test/integration/access/automation-restricted-tokens-z13.test.ts",
+        "docs/architecture/adr/ADR-0051-p6-authorization-boundary-read-scope-sensitive-records-deep-links.md",
+        "docs/delivery/decisions.md"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG6/round-9/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-09T05:25:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG6 round 9 (T-DG6-REV-CS-R9) while looking, as D-230 invites, for a token sequence that loses or misplaces a hidden literal after edits or concurrent saves. Reproduced on the real API (T1-T3) and in the shipped web editor. F-DG6-541's own reproduction (one save after a removal) passes on this candidate. The repair touches the server token format and the web editor, so frontend-ux-engineer is also concerned."
+        }
+      ]
+    }
+  ]
+}
