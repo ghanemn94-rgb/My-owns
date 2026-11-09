@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG6-580",
+      "stage_id": "DG6",
+      "requirement": "REQ-S10-002",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "A D-226 restricted token is not bound to the draft revision it was issued for, and the rule editor keeps its pre-save form after 'Save draft'. Saving the same form a second time resolves the stale token against the shifted positions: the hidden condition literal is replaced by another literal, while the editor still shows 'Includes restricted records' / 'يشمل سجلات مقيدة' on that condition",
+      "reproduction": "Candidate fe824c05 (source d974011fb). Production-initialized stack (apps/web/e2e/support/with-stack.sh), chromium-en and chromium-ar; probe docs/delivery/test-evidence/DG6/domain/round-9/probes/dom-r9-editor-stale-tokens.spec.ts.txt. A synthetic ADM_METHOD author, not admitted to sensitive records, owns a draft rule (trigger benefit.variance_evaluated) with conditions [benefitId neq P, benefitId neq S, benefitId neq Q]. The TO marks benefit S sensitive. The author opens /admin/automation-rules/<id>/versions/1 and sees [P, '[restricted:2]', Q] with the lock label on condition 2. (1) The author clicks 'Remove condition 1' / 'حذف الشرط 1', then 'Save the draft' / 'حفظ المسودة'. PATCH If-Match 1 sends [[restricted:2], Q], and the server correctly stores [neq S, neq Q] (version 2). The editor's form state is not reloaded: EditContent initializes its draft once with useState(() => toContentDraft(v.content)) and is not keyed by version, so it still holds '[restricted:2]', although the server would now show '[restricted:1]'. (2) The author clicks 'Save the draft' again without touching anything. The page sends PATCH If-Match 2 with the same body [[restricted:2], Q]. resolveRestrictedTokens maps token 2 to the literal now at position 2, which is Q. API-level reproduction of the same sequence: probes/dom-r9-token-resave.test.ts.txt case (g).",
+      "expected": "D-226: 'each hidden literal is shown as an opaque per-version token … A save maps each token back to its literal'. ADR-0051/ADR-0043 (ARCH-17): a token that is not a token of the stored version is refused 422 `automation_rule.restricted_marker_unknown`, so marker text never stands for a different value. REQ-S10-002 and the F-DG6-520 expectation: an edit that leaves the shown marker in place must go on testing the hidden record S, or the save must be refused. The editor must never show the restricted label on a condition that no longer tests a restricted record.",
+      "actual": "Stored after the second save, in both EN and AR: [{benefitId neq Q}, {benefitId neq Q}]. The exclusion of the sensitive benefit S is silently gone. The rule now fires for S's variance events, and Q is tested twice. Both PATCHes return 200; there is no warning and no 422. After the second save, the same screen shows condition 1 = '[restricted:2]' with the lock badge 'Includes restricted records' / 'يشمل سجلات مقيدة', while the readable rule right above it says 'benefitId is not <Q> and benefitId is not <Q>' (screens/en|ar/dom-r9-editor-3-after-second-save.png). Only a reload shows [Q, Q] with no badge (…-4-after-reload.png). Cause: the token encodes only a position k of the version's stored content. It is not bound to the draft revision (row version or content hash) the reader was shown, so the If-Match check passes with the refreshed version while the body still carries tokens from the earlier revision. The candidate's own suites (automation-restricted-tokens-z13, 11 tests) cover the read-to-save races of D-228 (1), but not a token reused across a save. Bounded: draft versions only. Publishing needs a dry run and a person to publish. Only rules whose literals name a sensitive record are affected. The audit trail records each change. No business approval or Finance value is affected. Suggested repair (implementer's choice): bind each token to the revision it was issued for (for example `[restricted:k@<version>]` or a content-hash nonce) and refuse 422 a token from another revision; and/or re-initialize the editor's form from the saved response (key EditContent by v.version). Add tests for the double save in the API and in the web unit tests.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-9/probe-editor-stale-tokens.log",
+        "docs/delivery/test-evidence/DG6/domain/round-9/probes/dom-r9-editor-stale-tokens.spec.ts.txt",
+        "docs/delivery/test-evidence/DG6/domain/round-9/probe-token-resave.log",
+        "docs/delivery/test-evidence/DG6/domain/round-9/probes/dom-r9-token-resave.test.ts.txt",
+        "docs/delivery/test-evidence/DG6/domain/round-9/screens/en/dom-r9-editor-2-after-remove-and-save.png",
+        "docs/delivery/test-evidence/DG6/domain/round-9/screens/en/dom-r9-editor-3-after-second-save.png",
+        "docs/delivery/test-evidence/DG6/domain/round-9/screens/en/dom-r9-editor-4-after-reload.png",
+        "docs/delivery/test-evidence/DG6/domain/round-9/screens/ar/dom-r9-editor-2-after-remove-and-save.png",
+        "docs/delivery/test-evidence/DG6/domain/round-9/screens/ar/dom-r9-editor-3-after-second-save.png",
+        "docs/delivery/test-evidence/DG6/domain/round-9/screens/ar/dom-r9-editor-4-after-reload.png",
+        "apps/api/src/modules/automation/versions.ts",
+        "apps/web/src/pages/automation/RulePage.tsx"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG6/round-9/domain-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-09T07:00:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG6 round 9 by domain-reviewer while challenging D-226/D-228 (1) as a rule author through the real editor, in EN and AR. Medium (D-192): a real integrity defect with a bounded effect, of the same class as F-DG6-520, on a different path (a token reused across a save rather than a single edit). The F-DG6-520 reproductions themselves are fixed and are verified CLOSED in this round's verifications sidecar. The repair spans the token contract in versions.ts and the editor's form state in RulePage.tsx; the frontend-ux-engineer may need to take the RulePage part."
+        }
+      ]
+    }
+  ]
+}

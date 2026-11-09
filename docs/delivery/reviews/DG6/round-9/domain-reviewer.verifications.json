@@ -1,0 +1,20 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG6-520",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Re-ran the round-8 reproductions on candidate fe824c05 (source d974011fb) against a disposable PostgreSQL in the integration project (probes/dom-r9-token-resave.test.ts.txt). The author now reads opaque tokens ([P, '[restricted:2]']); the summary says 'a restricted record' / 'سجل مقيد' and names no id of S. (b) Removing the open id P from the in-list [P, S] stores [S]. (c) Removing the earlier condition [neq P, neq S] stores [neq S], and the re-read still flags includesRestrictedRecords with the token [restricted:1]. Further cases: reordering conditions and list elements moves each hidden literal with its token (d). The bare marker, an unknown token, [restricted:0], a case or space variant and an unclosed token are all refused 422 automation_rule.restricted_marker_unknown with a pointer, and nothing is stored (e), on create too. A grant between read and save shifts nothing (f). The PATCH response and the rule reads name no id of S (h). Mutants in a disposable clone, restored afterwards with an empty git diff: M1 (store unmapped marker text instead of refusing) fails 2 of the candidate's 11 automation-restricted-tokens-z13 tests; M2 (resolve a token by the sent literal's ordinal, the round-8 pairing) fails 6 of the 11. So the candidate's tests catch a revert. The en/ar 422 text exists in problems.json. Separately, a token reused across a save (the editor keeps its pre-save form, and a second save misplaces the literal) is a different path. It is raised as new finding F-DG6-580, not as a reopening of F-DG6-520, whose reported single-edit reproductions are fixed.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-9/probe-token-resave.log",
+        "docs/delivery/test-evidence/DG6/domain/round-9/probes/dom-r9-token-resave.test.ts.txt",
+        "docs/delivery/test-evidence/DG6/domain/round-9/mutants-f520.log",
+        "docs/delivery/test-evidence/DG6/domain/round-9/int-z13.log",
+        "docs/delivery/test-evidence/DG6/domain/round-9/screens/en/dom-r9-editor-1-read.png",
+        "docs/delivery/test-evidence/DG6/domain/round-9/screens/ar/dom-r9-editor-1-read.png",
+        "docs/delivery/test-evidence/DG6/domain/round-9/screens/en/dom-r9-editor-2-after-remove-and-save.png",
+        "docs/delivery/test-evidence/DG6/domain/round-9/screens/ar/dom-r9-editor-2-after-remove-and-save.png"
+      ]
+    }
+  ]
+}
