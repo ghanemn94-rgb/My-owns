@@ -109,6 +109,8 @@ export interface ActionableError {
   readonly errorCode: ActionableErrorCode;
   readonly params: Readonly<Record<string, string>>;
   readonly fallbacks: readonly ("kpi_form" | "import_file")[];
+  /** T-DG6-BE-Z13C (D-228 (2)): a params value shows "[restricted]" in place of a record the reader is not admitted to. */
+  readonly includesRestrictedRecords?: true;
 }
 
 export interface IntegrationRun {
@@ -141,6 +143,11 @@ export interface IntegrationRun {
   };
   readonly importBatchId: string | null;
   readonly version: number;
+  /**
+   * T-DG6-BE-Z13B/Z13C (D-227, D-228): the idempotency key or the error text shows "[restricted]" in place of a record
+   * the reader is not admitted to.
+   */
+  readonly includesRestrictedRecords?: true;
 }
 
 export interface IntegrationRunEvent {

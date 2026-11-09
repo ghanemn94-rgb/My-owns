@@ -16,6 +16,7 @@ import { Unknown } from "../../components/Badges.tsx";
 import type { useCursorPager } from "../../components/DataTable.tsx";
 import { ColumnPicker, DataTable, Pager, usePersistentVisibility } from "../../components/DataTable.tsx";
 import { Icon, type IconName } from "../../components/Icon.tsx";
+import { RestrictedRecordsLabel } from "../../components/sensitivity/RestrictedRecordsLabel.tsx";
 import { formatDateTime } from "../../lib/format.ts";
 import { placeholdersOf } from "../../lib/problem.ts";
 import { Chip, type ChipTone } from "../reports/ui.tsx";
@@ -181,7 +182,11 @@ export function ActionableErrorPanel({
           <span className="small muted">{formatDateTime(error.finishedAt, locale)}</span>
         </dd>
         <dt>{t("integrations.actionable.why")}</dt>
-        <dd data-why>{why}</dd>
+        <dd data-why>
+          {why}{" "}
+          {/* T-DG6-BE-Z13C (D-228 (2)): a name in the why text refers to a record the reader is not admitted to. */}
+          <RestrictedRecordsLabel value={error.includesRestrictedRecords} scope="item" />
+        </dd>
         <dt>{t("integrations.actionable.whatToDo")}</dt>
         <dd data-what-to-do>{todo}</dd>
       </dl>

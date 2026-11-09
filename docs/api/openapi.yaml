@@ -27657,7 +27657,7 @@ components:
       additionalProperties: false
       properties:
         triggerCodes: { type: array, minItems: 1, maxItems: 6, items: { type: string } }
-        conditions: { type: array, maxItems: 20, items: { type: object, additionalProperties: false, required: [field, op], properties: { field: { type: string, pattern: "^[a-z][a-zA-Z0-9]{0,39}$" }, op: { type: string, enum: [eq, neq, in, gt, gte, lt, lte, present, absent] }, value: { description: "A string, a decimal string, a boolean or an array of up to 50 strings; numbers are decimal strings, never floats. In a response, a literal (or list element) that names a sensitive record, or a child that carries one's values, the reader is not admitted to is shown as the opaque token \"[restricted:k]\" in place (k = its 1-based ordinal among the version's hidden literals in reading order: conditions in order, list elements in order; it reveals nothing), and the version carries includesRestrictedRecords. In an update, each token is mapped back to its stored literal wherever the condition now sits (any condition, order or list position); a token left out is removed. An unknown token, the bare marker text \"[restricted]\" or any other text starting with \"[restricted\" is refused with 422 automation_rule.restricted_marker_unknown (also on a rule create), so marker text is never stored. A literal is free text and is not existence-checked on write for any id, so a writer who already holds a hidden record's id sees a token on read (accepted, D-223) (T-DG6-BE-Z12B, T-DG6-BE-Z13; F-DG6-480, F-DG6-520, F-DG6-541, F-DG6-560; ADR-0051 §2; D-218, D-222, D-223, D-226).", oneOf: [{ type: string, maxLength: 500 }, { type: boolean }, { type: array, maxItems: 50, items: { type: string, maxLength: 500 } }] } } } }
+        conditions: { type: array, maxItems: 20, items: { type: object, additionalProperties: false, required: [field, op], properties: { field: { type: string, pattern: "^[a-z][a-zA-Z0-9]{0,39}$" }, op: { type: string, enum: [eq, neq, in, gt, gte, lt, lte, present, absent] }, value: { description: "A string, a decimal string, a boolean or an array of up to 50 strings; numbers are decimal strings, never floats. In a response, a literal (or list element) that names a sensitive record, or a child that carries one's values, the reader is not admitted to is shown as the opaque token \"[restricted:k]\" in place (k = its 1-based position among all literals of the stored version in reading order: conditions in order, a scalar value counts as one, each list element as one; it does not shift when a grant or sensitivity changes and reveals nothing, D-228 (1)), and the version carries includesRestrictedRecords. In an update, each token is mapped back to the stored literal at its position wherever the condition now sits (any condition, order or list position); a token left out is removed. An unknown token, the bare marker text \"[restricted]\" or any other text starting with \"[restricted\" is refused with 422 automation_rule.restricted_marker_unknown (also on a rule create), so marker text is never stored. A literal is free text and is not existence-checked on write for any id, so a writer who already holds a hidden record's id sees a token on read (accepted, D-223) (T-DG6-BE-Z12B, T-DG6-BE-Z13; F-DG6-480, F-DG6-520, F-DG6-541, F-DG6-560; ADR-0051 §2; D-218, D-222, D-223, D-226, D-228).", oneOf: [{ type: string, maxLength: 500 }, { type: boolean }, { type: array, maxItems: 50, items: { type: string, maxLength: 500 } }] } } } }
         actions: { type: array, minItems: 1, maxItems: 10, items: { type: object, additionalProperties: false, required: [type], properties: { type: { type: string, pattern: "^[a-z][a-z0-9_]{2,63}$" }, parameters: { type: object, description: "Validated by the action type schema (ADR-0043 §2)." }, handlers: { type: array, maxItems: 6, items: { type: string }, description: "starter_handler only (read-only)." } } } }
         runAs: { type: string, enum: [initiating_user, service] }
         servicePermissionCodes: { type: array, maxItems: 20, items: { $ref: "#/components/schemas/PermissionCode" } }
@@ -40100,7 +40100,7 @@ components:
         firstOccurredAt: { $ref: "#/components/schemas/Timestamp" }
         lastOccurredAt: { $ref: "#/components/schemas/Timestamp" }
         lastErrorCode: { type: string, maxLength: 100 }
-        lastErrorMessage: { type: string, maxLength: 2000, description: "Redacted before it is stored (ADR-0053 §4)." }
+        lastErrorMessage: { type: string, maxLength: 2000, description: "Redacted before it is stored (ADR-0053 §4). In a response, the id of a record the reader is not admitted to is shown as the restricted marker \"[restricted]\" and the item carries includesRestrictedRecords (T-DG6-BE-Z13C; D-228 (2))." }
         serviceIdentityId: { $ref: "#/components/schemas/NullableUuid" }
         acknowledgedAt: { $ref: "#/components/schemas/NullableTimestamp" }
         acknowledgedBy: { $ref: "#/components/schemas/NullableUuid" }
@@ -40111,6 +40111,7 @@ components:
         resolutionNote: { type: [string, "null"], maxLength: 1000 }
         linkedKpiCount: { type: integer, minimum: 0 }
         version: { type: integer, minimum: 1 }
+        includesRestrictedRecords: { type: boolean, const: true, description: "Present (true) when lastErrorMessage embedded the id of a record the reader is not admitted to (a sensitive benefit, business case or evidence item, or a child that carries one's values such as a measurement, Finance validation or benefit overlap), and the restricted marker \"[restricted]\" stands in its place; the stored value is unchanged (T-DG6-BE-Z13C; D-228 (2); ADR-0051 §2; D-218; label access.includesRestrictedRecords)." }
     OperationalExceptionDetail:
       type: object
       required: [id, organizationId, sourceKind, sourceCode, failureClass, dedupKey, status, occurrenceCount, firstOccurredAt, lastOccurredAt, lastErrorCode, lastErrorMessage, serviceIdentityId, acknowledgedAt, acknowledgedBy, acknowledgeNote, resolvedAt, resolvedBy, resolution, resolutionNote, linkedKpiCount, version, linkedKpis, hiddenKpiCount, events]
@@ -40127,7 +40128,7 @@ components:
         firstOccurredAt: { $ref: "#/components/schemas/Timestamp" }
         lastOccurredAt: { $ref: "#/components/schemas/Timestamp" }
         lastErrorCode: { type: string, maxLength: 100 }
-        lastErrorMessage: { type: string, maxLength: 2000, description: "Redacted before it is stored (ADR-0053 §4)." }
+        lastErrorMessage: { type: string, maxLength: 2000, description: "Redacted before it is stored (ADR-0053 §4). In a response, the id of a record the reader is not admitted to is shown as the restricted marker \"[restricted]\" and the item carries includesRestrictedRecords (T-DG6-BE-Z13C; D-228 (2))." }
         serviceIdentityId: { $ref: "#/components/schemas/NullableUuid" }
         acknowledgedAt: { $ref: "#/components/schemas/NullableTimestamp" }
         acknowledgedBy: { $ref: "#/components/schemas/NullableUuid" }
@@ -40168,6 +40169,7 @@ components:
               actorUserId: { $ref: "#/components/schemas/NullableUuid" }
               note: { type: [string, "null"] }
               occurredAt: { $ref: "#/components/schemas/Timestamp" }
+        includesRestrictedRecords: { type: boolean, const: true, description: "Present (true) when lastErrorMessage embedded the id of a record the reader is not admitted to (a sensitive benefit, business case or evidence item, or a child that carries one's values such as a measurement, Finance validation or benefit overlap), and the restricted marker \"[restricted]\" stands in its place; the stored value is unchanged (T-DG6-BE-Z13C; D-228 (2); ADR-0051 §2; D-218; label access.includesRestrictedRecords)." }
     OperationalExceptionPage:
       type: object
       required: [items, nextCursor]
@@ -40527,6 +40529,7 @@ components:
         errorCode: { type: string, enum: [connector.source_unavailable, connector.stopped, connector.credentials_rejected, connector.secret_unresolvable, connector.mapping_mismatch, connector.response_invalid] }
         params: { type: object, additionalProperties: { type: string } }
         fallbacks: { type: array, items: { type: string, enum: [kpi_form, import_file] } }
+        includesRestrictedRecords: { type: boolean, const: true, description: "Present (true) when a params value (parsed from the run's error text: a credential name or a source column) embedded the id of a record the reader is not admitted to, and the restricted marker \"[restricted]\" stands in its place; the stored run is unchanged (T-DG6-BE-Z13C; D-228 (2); ADR-0051 §2; D-218)." }
     Connector:
       type: object
       required: [id, organizationId, code, nameEn, nameAr, adapterKind, targetKind, status, statusReason, config, verification, lastSuccessAt, lastRun, actionableError, serviceIdentityId, version, updatedAt]
@@ -40650,7 +40653,7 @@ components:
         rowsDuplicate: { type: [integer, "null"], minimum: 0 }
         errorCount: { type: [integer, "null"], minimum: 0 }
         errorCode: { type: [string, "null"], maxLength: 100 }
-        errorMessage: { type: [string, "null"], maxLength: 2000, description: "Redacted before it is stored (ADR-0053 §4)." }
+        errorMessage: { type: [string, "null"], maxLength: 2000, description: "Redacted before it is stored (ADR-0053 §4). In a response, the id of a record the reader is not admitted to is shown as the restricted marker \"[restricted]\" and the run carries includesRestrictedRecords (T-DG6-BE-Z13C; D-228 (2))." }
         reconciliation:
           type: object
           required: [status, sourceRowCount, sourceControlTotal, stagedControlTotal]
@@ -40662,7 +40665,7 @@ components:
             stagedControlTotal: { $ref: "#/components/schemas/NullableDecimal" }
         importBatchId: { $ref: "#/components/schemas/NullableUuid" }
         version: { type: integer, minimum: 1 }
-        includesRestrictedRecords: { type: boolean, const: true, description: "Present (true) when idempotencyKey embedded the id of a record the reader is not admitted to (a sensitive benefit, business case or evidence item, or a child that carries one's values such as a measurement, Finance validation or benefit overlap), and the restricted marker \"[restricted]\" stands in its place; the stored value is unchanged (T-DG6-BE-Z13B; D-227; ADR-0051 §2; D-218; label access.includesRestrictedRecords)." }
+        includesRestrictedRecords: { type: boolean, const: true, description: "Present (true) when idempotencyKey or errorMessage embedded the id of a record the reader is not admitted to (a sensitive benefit, business case or evidence item, or a child that carries one's values such as a measurement, Finance validation or benefit overlap), and the restricted marker \"[restricted]\" stands in its place; the stored value is unchanged (T-DG6-BE-Z13B, T-DG6-BE-Z13C; D-227, D-228 (2); ADR-0051 §2; D-218; label access.includesRestrictedRecords)." }
     IntegrationRunDetail:
       type: object
       required: [run, retriedByRunId, events, actionableError]

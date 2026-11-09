@@ -291,7 +291,7 @@ async function createRule(
   if (!mayConfigureIn(principal, body.organizationId)) throw automationRefusals.scopeInvalid();
   await assertActiveOwner(tx, body.ownerUserId, body.organizationId);
   // T-DG6-BE-Z13 (D-226): a new rule has no stored version, so no token exists; marker text is refused, never stored.
-  const sent = await resolveRestrictedTokens(tx, principal, null, body.content);
+  const sent = resolveRestrictedTokens(null, body.content);
   const content = validateContent({ origin: "admin", code: body.code }, sent, await loadCatalogueRows(tx), null);
   const taken = await tx.selectFrom("automation_rule").select("id").where("code", "=", body.code).executeTakeFirst();
   if (taken !== undefined) throw automationRefusals.codeTaken();

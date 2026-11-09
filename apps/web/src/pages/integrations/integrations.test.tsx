@@ -353,6 +353,67 @@ describe("integration run detail", () => {
   );
 });
 
+describe("T-DG6-BE-Z13C (D-228 (2), (3); D-227, D-218): the restricted label on the run detail", () => {
+  const detailRoutes = (masked: boolean): Handler[] => [
+    route("GET", new RegExp(`/runs/${RUN_FAILED}$`), () => ({
+      status: 200,
+      body: {
+        run: run({
+          errorCode: "connector.secret_unresolvable",
+          ...(masked
+            ? {
+                idempotencyKey: "manual:01920000-0000-7000-9000-000000000201:vr-[restricted]",
+                errorMessage: "The secret reference z13c-[restricted] could not be resolved. {name=z13c-[restricted]}",
+                includesRestrictedRecords: true as const,
+              }
+            : {}),
+        }),
+        retriedByRunId: null,
+        events: [],
+        actionableError: {
+          runId: RUN_FAILED,
+          triggerKind: "manual",
+          attemptNo: 1,
+          finishedAt: "2026-10-30T08:00:02Z",
+          errorCode: "connector.secret_unresolvable",
+          params: { name: masked ? "z13c-[restricted]" : "SYN_FEED_TOKEN" },
+          fallbacks: ["kpi_form", "import_file"],
+          ...(masked ? { includesRestrictedRecords: true as const } : {}),
+        },
+      },
+    })),
+    ...connectorRoutes(),
+  ];
+
+  for (const locale of LOCALES) {
+    it(`${locale}: a run whose key or error text is masked shows the item label on its key and its actionable error`, async () => {
+      const i18n = i18nFor(locale);
+      const t = i18n.t.bind(i18n);
+      mockApi(meRoute(AUD), ...detailRoutes(true));
+      renderApp(`/admin/integrations/connectors/${CONNECTOR_ID}/runs/${RUN_FAILED}`, { i18n });
+      const key = await screen.findByText("manual:01920000-0000-7000-9000-000000000201:vr-[restricted]");
+      const onKey = key.closest("dd")?.querySelector("[data-restricted-records='true']");
+      expect(onKey?.getAttribute("data-restricted-scope")).toBe("item");
+      expect(onKey?.getAttribute("title")).toBe(t("adminP6.restricted.hintItem"));
+      expect(onKey?.textContent).toContain(t("access.includesRestrictedRecords"));
+      const why = document.querySelector("[data-why]");
+      expect(why?.querySelector("[data-restricted-records='true']")?.getAttribute("data-restricted-scope")).toBe(
+        "item",
+      );
+      expect(document.documentElement.dir).toBe(locale === "ar" ? "rtl" : "ltr");
+    });
+  }
+
+  it("a run without the marker shows no label", async () => {
+    const i18n = i18nFor("en");
+    mockApi(meRoute(AUD), ...detailRoutes(false));
+    renderApp(`/admin/integrations/connectors/${CONNECTOR_ID}/runs/${RUN_FAILED}`, { i18n });
+    await screen.findByText("run-key-0001");
+    await waitFor(() => expect(document.querySelector("[data-why]")).not.toBeNull());
+    expect(document.querySelector("[data-restricted-records]")).toBeNull();
+  });
+});
+
 function write(over: Partial<OutboundWrite> = {}): OutboundWrite {
   return {
     id: WRITE_ID,

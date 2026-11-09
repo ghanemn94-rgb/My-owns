@@ -267,9 +267,9 @@ describe("T-DG6-BE-Z12B: automation_rule_version.conditions (D-222, D-226)", () 
   it("the author, not admitted, sees a token in place of each hidden literal, the label in the summary, marked", async () => {
     const one = ok(await send("GET", `${V()}/1`, { session: admin.session }));
     expect(one.content.conditions).toEqual([
-      // T-DG6-BE-Z13 (D-226): opaque per-version tokens in reading order.
+      // T-DG6-BE-Z13, T-DG6-BE-Z13C (D-226, D-228 (1)): opaque per-version tokens; k = the position among all literals.
       { field: "benefitId", op: "eq", value: "[restricted:1]" },
-      { field: "benefitId", op: "in", value: [P.benefitId, "[restricted:2]"] },
+      { field: "benefitId", op: "in", value: [P.benefitId, "[restricted:3]"] },
       { field: "severity", op: "eq", value: "high" },
     ]);
     expect(one.includesRestrictedRecords).toBe(true);

@@ -20,6 +20,7 @@ import { Icon } from "../../components/Icon.tsx";
 import { PageHeader, usePageTitle } from "../../components/Page.tsx";
 import { TableScrollRegion } from "../../components/TableScrollRegion.tsx";
 import { ReasonDialog } from "../../components/ReasonDialog.tsx";
+import { RestrictedRecordsLabel } from "../../components/sensitivity/RestrictedRecordsLabel.tsx";
 import { EmptyState, QueryState } from "../../components/States.tsx";
 import { formatDateTime } from "../../lib/format.ts";
 import { errorMessage } from "../../lib/problem.ts";
@@ -820,7 +821,9 @@ function RunView({
           <dd>
             <bdi dir="ltr" className="mono">
               {r.idempotencyKey}
-            </bdi>
+            </bdi>{" "}
+            {/* T-DG6-BE-Z13C (D-228 (3)): the key or error text names a record the reader is not admitted to. */}
+            <RestrictedRecordsLabel value={r.includesRestrictedRecords} scope="item" />
           </dd>
           <dt>{t("integrations.run.importBatch")}</dt>
           <dd>

@@ -9,7 +9,8 @@
 //   - every uuid column with no foreign key at all (polymorphic `(record_type, record_id)` pairs, scope ids, ...);
 //   - every uuid[] column; and every json/jsonb column;
 //   - every text column holding an in-app link (link_path, href; T-DG6-BE-Z13) or a key (`key`, `*_key`: idempotency,
-//     trigger, event, dedupe and scope keys can be built from record ids; T-DG6-BE-Z13B, D-227);
+//     trigger, event, dedupe and scope keys can be built from record ids; T-DG6-BE-Z13B, D-227) or an error text
+//     (`(^|_)error_(message|detail)$`: a job's or a connector's error text can name a record id; T-DG6-BE-Z13C, D-228 (2));
 // and nothing that is not in the catalog. A new column of any of these kinds fails the test until it is classified here.
 // The sweep (`sensitive-reach-sweep.test.ts`) seeds every row whose `exercise` is "sweep" and checks in the database
 // that the column really holds a hidden id before it reads every GET of the contract.
@@ -65,6 +66,7 @@ const Z10B = "apps/api/test/integration/access/sensitive-reach-id-refs-writes.te
 const Z12B = "apps/api/test/integration/access/sensitive-reference-pending-z12b.test.ts";
 const Z13 = "apps/api/test/integration/tasks/inbox-restricted-z13.test.ts";
 const Z13B = "apps/api/test/integration/access/served-keys-restricted-z13b.test.ts";
+const Z13C = "apps/api/test/integration/access/served-error-text-restricted-z13c.test.ts";
 
 const holder = (column: string, names: string, guard: string, kind: InventoryKind = "fk"): InventoryRow => ({
   column,
@@ -1066,6 +1068,73 @@ export const SENSITIVE_REFERENCE_INVENTORY: readonly InventoryRow[] = [
     status: "redacted",
     fix: `integrations/routes.ts shownWrite / shownWriteDetail: ${MARKER_FIX}`,
     exercise: `${Z13B}#outbound writes: a key naming the benefit`,
+  },
+  // T-DG6-BE-Z13C (D-228 (2)): every served error text column (`(^|_)error_(message|detail)$`). A job's error can name
+  // a record (handleBenefitVariance throws `benefit <id> is not in organization ...`), and a connector's error text
+  // embeds configuration text (a credential name, a source column). The hidden id becomes the restricted marker.
+  {
+    column: "operational_failure.error_message",
+    kind: "text",
+    names: "the failed job's error text, e.g. `benefit <id> is not in organization <id>` (handleBenefitVariance)",
+    operations: [
+      "listAutomationFailures",
+      "getAutomationFailure",
+      "retryAutomationFailure",
+      "dismissAutomationFailure",
+    ],
+    before: "LEAK (BE-Z13B handback §7 item 2): masked by T-DG6-BE-Z13B next to the key; classified by T-DG6-BE-Z13C",
+    status: "redacted",
+    fix: `automation/failures.ts shownFailures (errorMessage with idempotencyKey): ${MARKER_FIX}`,
+    exercise: `${Z13B}#failure queue: the job's idempotency key and error message`,
+  },
+  {
+    column: "automation_execution.error_detail",
+    kind: "text",
+    names: "the execution's error text (a handler's thrown message can name a record)",
+    operations: ["listAutomationExecutions", "getAutomationExecution"],
+    before: "masked by T-DG6-BE-Z13B next to the trigger key; classified by T-DG6-BE-Z13C",
+    status: "redacted",
+    fix: `automation/executions.ts shownExecutions (errorDetail with triggerKey): ${MARKER_FIX}`,
+    exercise: `${Z13C}#execution history: errorDetail naming the benefit is redacted`,
+  },
+  {
+    column: "operational_exception.last_error_message",
+    kind: "text",
+    names:
+      "the exception's last error text: a failed job's error (captureJobFailure -> raiseJobException), a connector run's error, a channel send's error",
+    operations: [
+      "listOperationalExceptions",
+      "getOperationalException",
+      "acknowledgeOperationalException",
+      "resolveOperationalException",
+    ],
+    before: "served raw (found by the widened catalog pattern, D-228 (2))",
+    status: "redacted",
+    fix: `operations/exceptions.ts shownExceptions (list in operations/routes.ts; exceptionDetail for get, acknowledge, resolve): ${MARKER_FIX}`,
+    exercise: `${Z13C}#operational exception: lastErrorMessage (job failure) is redacted`,
+  },
+  {
+    column: "integration_run.error_message",
+    kind: "text",
+    names:
+      "the run's error text: the why text of its connector error code with the {name=<credential name>} / {column=<source column>} tail (configuration text can hold any id)",
+    operations: [
+      "listIntegrationRuns",
+      "runConnector",
+      "getIntegrationRun",
+      "retryIntegrationRun",
+      "testConnector",
+      "listConnectors",
+      "createConnector",
+      "getConnector",
+      "putConnector",
+      "enableConnector",
+      "disableConnector",
+    ],
+    before: "served raw (BE-Z13B handback §7 item 2; found by the widened catalog pattern, D-228 (2))",
+    status: "redacted",
+    fix: `integrations/routes.ts shownRuns (errorMessage with idempotencyKey; lastRun via shownConnector) and shownActionable (actionableError.params parsed from it, on getIntegrationRun and every connector response): ${MARKER_FIX}`,
+    exercise: `${Z13C}#integration run: errorMessage and the actionable error's params are redacted`,
   },
   {
     column: "corrective_case.source_scope_key",

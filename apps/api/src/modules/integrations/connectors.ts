@@ -577,6 +577,8 @@ export interface ConnectorActionableError {
   readonly errorCode: ConnectorErrorCode;
   readonly params: Record<string, string>;
   readonly fallbacks: ("kpi_form" | "import_file")[];
+  /** T-DG6-BE-Z13C (D-228 (2)): a params value shows the restricted marker in place of a hidden record id. */
+  readonly includesRestrictedRecords?: true;
 }
 
 export interface ConnectorConfigBody {
