@@ -1,0 +1,268 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG6",
+  "round": 11,
+  "candidate_id": "sha256:c45d73b838dc20dce1d618faedcea9370feed96d1e6108d9053c24d75020ad2b",
+  "source_commit": "33db1a46ca498d917d9e33793e9771533269c446",
+  "reviewer_role": "domain-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG6-T-DG6-REV-DOM-R11-domain-reviewer-20261109T190802Z-ccbf2477",
+    "session_id": "ccbf2477-5b41-4c0d-96c6-87cd229b444d"
+  },
+  "implementation_author": [
+    "backend-workflow-engineer",
+    "frontend-ux-engineer",
+    "kpi-benefits-engineer",
+    "devops-engineer",
+    "solution-architect",
+    "qa-verifier"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I (domain-reviewer, session ccbf2477) authored no implementation in the DG6 scope, including the BE-Z15 repair. My only writes are this record, its findings and verifications sidecars, and evidence under docs/delivery/test-evidence/DG6/domain/round-11/. Every probe, mutant and test run happened in a disposable clone ($TMPDIR/rv11), which I deleted afterwards. I formed this verdict without reading any other reviewer's round-11 record. Note: the assignment's record-format section says 'round: 7'. This is round 11 (the assignment's own title, path and task id), so I record 11, as in rounds 9 and 10."
+  },
+  "assignment": "docs/delivery/assignments/DG6/round-11/domain-reviewer.md",
+  "requirements_checked": [
+    "REQ-DLV-038", "REQ-S01-005", "REQ-S02-006", "REQ-S10-002", "REQ-S10-004", "REQ-S12-019", "REQ-S12-023", "REQ-S12-024",
+    "REQ-S13-011", "REQ-S13-013", "REQ-S15-001", "REQ-S15-003", "REQ-S15-007", "REQ-S15-009", "REQ-S15-010", "REQ-S15-011",
+    "REQ-S15-012", "REQ-S15-013", "REQ-S15-014", "REQ-S16-006", "REQ-S16-007", "REQ-S16-022", "REQ-S16-023", "REQ-S16-026",
+    "REQ-S16-027", "REQ-S16-029", "REQ-S16-030", "REQ-S16-032", "REQ-S17-001", "REQ-S17-002", "REQ-S17-003", "REQ-S17-005",
+    "REQ-S17-006", "REQ-S17-007", "REQ-S17-008", "REQ-S17-009", "REQ-S17-010", "REQ-S17-011", "REQ-S20-001", "REQ-S20-012",
+    "REQ-S20-013", "REQ-S20-014", "REQ-S20-017", "REQ-S20-020", "REQ-S20-021", "REQ-S20-022", "REQ-S20-029", "REQ-S20-030"
+  ],
+  "checks_run": [
+    {
+      "id": "DOM-R11-00-candidate",
+      "procedure": "Verify the frozen candidate in the repository and in a complete disposable clone at the source commit.",
+      "command": "git rev-parse HEAD; node tools/gates/candidate.mjs --stage DG6; git diff --name-only 33db1a46 HEAD; git clone --shared --no-checkout /home/user/My-owns $TMPDIR/rv11 && git checkout 33db1a46ca498d917d9e33793e9771533269c446; git rev-parse --is-shallow-repository; node tools/gates/candidate.mjs --stage DG6; git diff --stat bf11756db 33db1a46 -- . ':!docs/delivery'",
+      "environment": "Repository at HEAD 4492cdfd0 (the round-11 freeze commit); clone $TMPDIR/rv11 at 33db1a46 (non-shallow, full checkout); Node 24.21.0",
+      "expected": "candidate_id sha256:c45d73b8…ad2b over 2769 files in both trees; the freeze commit adds only assignments, the manifest and stages.json",
+      "actual": "Both give sha256:c45d73b838dc20dce1d618faedcea9370feed96d1e6108d9053c24d75020ad2b over 2769 files, rc 0. HEAD is the freeze commit 4492cdfd0, not the source commit. Its diff against 33db1a46 is only the three round-11 assignments, the candidate manifest and stages.json, all excluded from the candidate, so the frozen candidate is the one assigned. The clone is not shallow. The product tree of 33db1a46 equals bf11756db's (empty diff outside docs/delivery). node_modules: the repository's read-only node_modules is symlinked into the clone, with the @mth/* workspace links pointing at the clone's own packages.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG6/domain/round-11/candidate.log"]
+    },
+    {
+      "id": "DOM-R11-01-validators",
+      "procedure": "Historical validators for the approved gates, and the DG6 register rules.",
+      "command": "for s in DG5 DG4 DG3 DG2 DG1; do node tools/gates/validate.mjs --historical --stage $s; done; node tools/gates/validate.mjs --register DG6 (each rc via PIPESTATUS)",
+      "environment": "Repository working tree at HEAD 4492cdfd0; Node 24.21.0",
+      "expected": "Every run PASS, exit 0",
+      "actual": "PASS gate DG5, DG4, DG3, DG2 and DG1 (historical), and PASS register rules at DG6. All rc 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG6/domain/round-11/validators.log"]
+    },
+    {
+      "id": "DOM-R11-02-build",
+      "procedure": "Build every package, the API and the worker, type-check the web app and build the SPA.",
+      "command": "for p in packages/design-tokens packages/shared packages/config packages/reporting packages/db apps/api apps/worker; do (cd $p && pnpm run build); done; cd apps/web && npx tsc -p tsconfig.json --noEmit && npx vite build --configLoader runner",
+      "environment": "$TMPDIR/rv11 at 33db1a46; Node 24.21.0; pnpm",
+      "expected": "All exit 0",
+      "actual": "All nine steps rc 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG6/domain/round-11/build.log"]
+    },
+    {
+      "id": "DOM-R11-03-F-DG6-640-api-rerun",
+      "procedure": "Re-run the round-10 API reproduction of F-DG6-640, with its literals moved to the D-233 form and its soft assertions made hard. Add adversarial cases: a token from a discarded draft, the tag formula computed independently, the key never served or audited, forged tags, and the same token for two readers. Run it with the candidate's token, digest, inbox and deep-link suites.",
+      "command": "QA_PG_PORT=32201 MTH_PORT_POOL=32200-32209 tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration zz-domain/dom-r11-token-binding.test.ts access/automation-restricted-tokens-z15.test.ts access/automation-restricted-tokens-z14.test.ts access/automation-restricted-tokens-z13.test.ts access/sensitive-reference-pending-z12b.test.ts tasks/digest-restricted-z14.test.ts tasks/inbox-restricted-z13.test.ts tasks/deep-links.test.ts (probe copied from probes/dom-r11-token-binding.test.ts.txt into the clone only)",
+      "environment": "$TMPDIR/rv11; PostgreSQL 16 disposable cluster, ports 32200-32209; Node 24.21.0; synthetic data; author = ADM_METHOD, not admitted to S or H",
+      "expected": "A token copied from another version row (published to draft, discarded to new draft) or from another rule at the same row version is refused 422 automation_rule.restricted_token_stale, and nothing is stored. The served tag equals the ADR-0051 D-233 HMAC. The key is never served or audited. The F-DG6-580 sequences stay fixed.",
+      "actual": "8 files, 63/63 passed, rc 0. (j) published v1 and draft v2, both at row version 4, show different tags for the same k. v1's token pasted into v2 gives 422 stale, and v2 stays [P, H]. (i) cross-rule: 422 stale, B unchanged. (k) discarded v2 to v3: 422 stale. (l) the tag equals my independent HMAC for two rows, differs per row and per revision, and the key is absent from five served bodies and the audit events. (m) forged gives stale; upper-case and wrong-length tags give marker_unknown; the retired form gives stale. (n) two readers see the same token. (g, g2) F-DG6-580 is still refused. Disclosed: this run used the probe before the (l) assertion fix described in DOM-R11-05. That assertion passed here by chance (no tag ended in the row-version digit).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-11/int-tokens.log",
+        "docs/delivery/test-evidence/DG6/domain/round-11/probes/dom-r11-token-binding.test.ts.txt"
+      ]
+    },
+    {
+      "id": "DOM-R11-04-mutants",
+      "procedure": "Revert the F-DG6-640 fix in two ways, and show that the tests catch each.",
+      "command": "M1: perl replaces restrictedTokenTag's HMAC(row key, domain LF id LF version) with createHmac('sha256','m1-fixed').update(String(issuer.version)), the version-only binding of D-231; M2: perl deletes 'if (!sameTag(m[1]!, expected)) throw automationRefusals.restrictedTokenStale(at);'. Each runs vitest --project integration on my probe and z15 (M2 also z14), then cp restores versions.ts and git diff --stat is checked",
+      "environment": "$TMPDIR/rv11 (disposable); PostgreSQL 16, ports 32210-32219",
+      "expected": "Each mutant fails the F-DG6-640 tests; the file is restored with an empty diff",
+      "actual": "M1: 7 of 16 fail: my (i), (j), (k), (l) and the candidate's z15 (a), (b), (c); rc 1. M2: 14 of 21 fail across my probe, z15 and z14; rc 1. These non-zero exits are the mutants being caught, by design. After restoring, git status shows no modified tracked file and git diff --stat is empty.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG6/domain/round-11/mutants-f640.log"]
+    },
+    {
+      "id": "DOM-R11-05-node22",
+      "procedure": "Run the token suites and my probe on Node 22.",
+      "command": "PATH=/opt/node22/bin:$PATH QA_PG_PORT=32241 MTH_PORT_POOL=32242-32249 tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration zz-domain/dom-r11-token-binding.test.ts access/automation-restricted-tokens-z15.test.ts access/automation-restricted-tokens-z14.test.ts; then the same on Node 22 and on Node 24.21.0 with the corrected probe",
+      "environment": "$TMPDIR/rv11; /opt/node22/bin is Node v22.22.0 (the assignment says 22.22.2); PostgreSQL 16",
+      "expected": "Identical to Node 24",
+      "actual": "Run 1 (Node 22): 20/21, rc 1. The failure is my probe's own bug, not the product. Case (l) asserted that the token text does not contain '1:', but the served tag '507659a7cde63d860a8d4591' ends in '1', so '…4591:' matched. A hex tag ends in the row-version digit 1 time in 16. I changed the assertion to 'the token does not start with [restricted:<version>:', which is what it meant (the probe file records the fix). Runs 2 (Node 22.22.0) and 3 (Node 24.21.0) with the corrected probe: 21/21 each, rc 0. Node 22.22.0 is present; it is not 22.22.2.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-11/node22-tokens.log",
+        "docs/delivery/test-evidence/DG6/domain/round-11/probes/dom-r11-token-binding.test.ts.txt"
+      ]
+    },
+    {
+      "id": "DOM-R11-06-rule-editor-real-ui",
+      "procedure": "Re-run the round-10 real-UI reproduction (parts A, B, C) with the token regex moved to 24 hex. Part C publishes through the real state machine (dry run, submit, TO review, publish), pastes the token from the published v1 page into draft v2 in the editor, saves, and then follows the alert once.",
+      "command": "E2E_PG_PORT=32220 E2E_API_PORT=32221 MTH_PORT_POOL=32222-32229 E2E_SCREENSHOT_DIR=…/round-11/screens apps/web/e2e/support/with-stack.sh npx playwright test --config playwright.config.ts e2e/zz-domain/dom-r11-editor-tokens.spec.ts --workers=1 (probe copied from probes/dom-r11-editor-tokens.spec.ts.txt)",
+      "environment": "$TMPDIR/rv11 built SPA and API, production-initialized seed (dev sign-in, no worker); Chromium /opt/pw-browsers; chromium-en and chromium-ar; Asia/Riyadh",
+      "expected": "A: S kept after two saves. B: 409 shows the bilingual re-apply alert, S kept. C: v1's token is refused 422 stale and v2 stays [P, H]. The screen tells the truth about the refusal.",
+      "actual": "2 passed (en, ar), rc 0. A and B pass with hard assertions. C: v1 shows '[restricted:678b…:2]' (en) / '[restricted:f0bf…:2]' (ar) with 'Includes restricted records' / 'يشمل سجلات مقيدة'. After the paste: PATCH If-Match 4 gives 422 automation_rule.restricted_token_stale, v2 is stored at version 4 as [P, H] (unchanged, never [P, H, H]), and the form reloads. F-DG6-640 is fixed in the UI. However, the screen then says 'This rule changed after you opened it … re-apply your change' / 'تغيّرت هذه القاعدة بعد أن فتحتها …', although the rule did not change. Re-applying gives the same 422 and the same alert. The corrected problem text is never shown. Raised as F-DG6-700 (Low, non-blocking, frontend-ux-engineer). The 422 lines in the log are the by-design refusals.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-11/probe-editor-tokens.log",
+        "docs/delivery/test-evidence/DG6/domain/round-11/probes/dom-r11-editor-tokens.spec.ts.txt",
+        "docs/delivery/test-evidence/DG6/domain/round-11/screens/en/dom-r11-A3-after-second-save.png",
+        "docs/delivery/test-evidence/DG6/domain/round-11/screens/ar/dom-r11-A3-after-second-save.png",
+        "docs/delivery/test-evidence/DG6/domain/round-11/screens/en/dom-r11-B1-after-409.png",
+        "docs/delivery/test-evidence/DG6/domain/round-11/screens/ar/dom-r11-B1-after-409.png",
+        "docs/delivery/test-evidence/DG6/domain/round-11/screens/en/dom-r11-C4-after-save.png",
+        "docs/delivery/test-evidence/DG6/domain/round-11/screens/ar/dom-r11-C4-after-save.png",
+        "docs/delivery/test-evidence/DG6/domain/round-11/screens/en/dom-r11-C5-reapply-after-save.png",
+        "docs/delivery/test-evidence/DG6/domain/round-11/screens/ar/dom-r11-C5-reapply-after-save.png"
+      ]
+    },
+    {
+      "id": "DOM-R11-07-unit",
+      "procedure": "Run the unit-web and unit-node files the DG6 register cites, plus the automation editor token tests and the notification serializer guard.",
+      "command": "npx vitest run --configLoader runner --project unit-web --maxWorkers=2 <19 register web files> rule-editor-tokens-z14.test.tsx fed.test.tsx; npx vitest run --configLoader runner --project unit-node --maxWorkers=2 <register node files> notification-serializers.test.ts",
+      "environment": "$TMPDIR/rv11; Node 24.21.0; jsdom",
+      "expected": "All pass",
+      "actual": "unit-web: 19 files, 274/274, rc 0. unit-node: the first run gave 18 files passed and 1 failed, rc 1. tests/qa/unit/dlv038-s20-029-load-report.test.ts hit ENOENT on docs/delivery/handbacks/DG6/T-DG6-DO-G-evidence/final/summary.json, because I had deleted docs/delivery/{runs,handbacks,test-evidence} in my clone only, to free disk (free space was down to 918 MB). I restored that directory with git checkout and re-ran the file: 6/6, rc 0. So 19/19 files and 271 tests pass. No test in the integration list reads those directories (checked by grep: only comments mention them).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG6/domain/round-11/unit.log"]
+    },
+    {
+      "id": "DOM-R11-08-integration-register-dg6",
+      "procedure": "Every integration file named in the DG6 register (74 API/DB files plus 23 tests/qa/integration files) in one run. These include the binding re-runs that 13 rows defer to the freeze verification.",
+      "command": "MTH_SECRET_QA_A17_WEBHOOK_SIGNING_SECRET=qa-a17-synthetic-signing-secret-0001 QA_PG_PORT=32230 MTH_PORT_POOL=32231-32239 tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration --maxWorkers=2 $(97 files parsed from requirements.csv)",
+      "environment": "$TMPDIR/rv11; PostgreSQL 16 disposable; Node 24.21.0; test adapters only (no real IdP, mail, messaging or AI provider); three reviews running concurrently (load average about 19 on 4 vCPU)",
+      "expected": "All pass",
+      "actual": "97/97 files, 1225 passed and 1 todo (1226), rc 0, 2287 s, all in one pass with no retry. The todo is the pre-existing it.todo 'PENDING T-DG6-BE-B: a caller admitted to the sensitive record (grantee, named party) sees it unredacted' in audit/audit-events.test.ts, also shown as 1 skipped in that file's line. The orchestrator's V14 has the same 1 todo. The admitted path is asserted by the grant tests (sensitive-reads, a12-p6-scope-isolation 'an explicit grant admits the WL', and my probe (f)). Every 'error' line in the log is a passing test title or the response-validation summary.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG6/domain/round-11/int-register-dg6.log"]
+    },
+    {
+      "id": "DOM-R11-09-e2e-domain-batch-1",
+      "procedure": "The domain journeys for scope isolation, failed connector / stale data, imports, no-AI, degradation, the plain-language term scan, layout and brand, and UX, in EN and AR on the production-initialized stack.",
+      "command": "MTH_PORT_POOL=32222-32229 MTH_SECRET_QA_A17_WEBHOOK_SIGNING_SECRET=qa-a17-synthetic-signing-secret-0001 E2E_PG_PORT=32220 E2E_API_PORT=32221 E2E_SCREENSHOT_DIR=$TMPDIR/shots1 apps/web/e2e/support/with-stack.sh npx playwright test --config playwright.config.ts e2e/a12-p6-scope-isolation e2e/a17-failing-connector-exception e2e/a17-import-and-integration e2e/a21-no-ai-operation e2e/a21-p6-degradation e2e/a20-s15-014-term-scan e2e/a20-p6-layout-brand e2e/a20-p6-ux --workers=1",
+      "environment": "$TMPDIR/rv11 built; with-stack.sh (no worker); Chromium /opt/pw-browsers; chromium-en and chromium-ar",
+      "expected": "All pass. The failed connector opens one exception, and its KPI shows Stale with the last value and its date.",
+      "actual": "176 passed (20.9 m), 0 failed, 0 skipped, 0 flaky, rc 0, on the first run with no timeout. The a17 screenshots, e.g. e2e-shots/ar/a17-exception-data-owner.png, show one open exception (connector.source_unavailable) and its linked KPI as Stale / قديم with last known value 250.75 dated 2026-01-31, never zero or green. The connector shows Unknown counts, never 0. The 'error' lines in the log are titles of passing term-scan tests (forced 500 / network failure states).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-11/e2e-domain-1.log",
+        "docs/delivery/test-evidence/DG6/domain/round-11/e2e-shots/en/a17-exception-data-owner.png",
+        "docs/delivery/test-evidence/DG6/domain/round-11/e2e-shots/ar/a17-exception-data-owner.png",
+        "docs/delivery/test-evidence/DG6/domain/round-11/e2e-shots/en/a17-connector-stopped.png",
+        "docs/delivery/test-evidence/DG6/domain/round-11/e2e-shots/ar/a17-connector-stopped.png",
+        "docs/delivery/test-evidence/DG6/domain/round-11/e2e-shots/en/a17-csv-staged.png",
+        "docs/delivery/test-evidence/DG6/domain/round-11/e2e-shots/ar/a17-csv-staged.png"
+      ]
+    },
+    {
+      "id": "DOM-R11-10-e2e-domain-batch-2",
+      "procedure": "Operability, automation recovery, connector run-once, axe, the bilingual shell, reporting and compare-reapply, in EN and AR.",
+      "command": "MTH_PORT_POOL=32222-32229 MTH_SECRET_QA_A17_WEBHOOK_SIGNING_SECRET=qa-a17-synthetic-signing-secret-0001 E2E_PG_PORT=32220 E2E_API_PORT=32221 E2E_SCREENSHOT_DIR=$TMPDIR/shots2 apps/web/e2e/support/with-stack.sh npx playwright test --config playwright.config.ts e2e/a22-p6-operability e2e/a13-automation-recovery e2e/a13-connector-run-once e2e/a20-p6-axe e2e/a20-bilingual-shell e2e/a15-reporting e2e/a14-compare-reapply --workers=1",
+      "environment": "As DOM-R11-09",
+      "expected": "All pass; any skip is the disclosed axe NOT SCANNED set",
+      "actual": "90 passed and 18 skipped, 0 failed, rc 0. The 18 skips are the a20-p6-axe 'NOT SCANNED' detail screens, the same 9 routes in each language (sensitive grant, deep-link landing, operational exception, webhook, outbound write, import, approval, benefit, walkthrough). The REQ-S15-012 note discloses them (QA-D §4), and some are scanned by other specs (A17 imports, A12 deep link). I accept this as disclosed, as in round 10. The operations screen shows a stale heartbeat as Stale / قديم (a22-p6-operations-stale.png).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-11/e2e-domain-2.log",
+        "docs/delivery/test-evidence/DG6/domain/round-11/e2e-shots/en/a22-p6-operations-stale.png",
+        "docs/delivery/test-evidence/DG6/domain/round-11/e2e-shots/ar/a22-p6-operations-stale.png",
+        "docs/delivery/test-evidence/DG6/domain/round-11/e2e-shots/en/a14-reapplied.png",
+        "docs/delivery/test-evidence/DG6/domain/round-11/e2e-shots/ar/a14-reapplied.png",
+        "docs/delivery/test-evidence/DG6/domain/round-11/e2e-shots/en/a13-connector-run-once.png",
+        "docs/delivery/test-evidence/DG6/domain/round-11/e2e-shots/ar/a13-connector-run-once.png"
+      ]
+    },
+    {
+      "id": "DOM-R11-11-e2e-demo-and-web-p6",
+      "procedure": "On the demo-initialized stack: the demo role users' twelve-step walkthrough, the guided walkthrough, and no-AI report generation. On the production-initialized stack: the frontend P6 specs (360 px flows, draft recovery, compare/reapply, the 1,000-row register, integrations/imports, admin screens, 1440 layout).",
+      "command": "E2E_PG_PORT=32220 E2E_API_PORT=32221 MTH_PORT_POOL=32222-32229 e2e/support/with-demo-stack.sh npx playwright test --config playwright.config.ts e2e/a02-guided-walkthrough e2e/a02-demo-users-walkthrough e2e/a21-no-ai-operation --workers=1; apps/web/e2e/support/with-stack.sh npx playwright test --config playwright.config.ts apps/web/e2e/p6-flows-360 p6-draft-recovery p6-compare-reapply p6-register-1000 p6-integrations-imports p6-admin-screens p6-layout-1440 --workers=1",
+      "environment": "$TMPDIR/rv11; demo stack AUTH_MODE=dev with roaming.user.* sign-in (D-165); production-initialized stack; Chromium; en and ar",
+      "expected": "All pass",
+      "actual": "Demo: 6 passed (2.8 m), rc 0. The demo role users complete the twelve walkthrough steps in the UI in en and ar, and A21 produces a report with no AI, channel or export adapter. Web P6: 58 passed (7.9 m), 0 failed or skipped, rc 0. The Arabic 360 px approval decision is RTL with no horizontal overflow (p6-360-approval-decision.png). Draft restored after a reload, compare/reapply, the filtered 1,000-row register, the deep link refused with no name, and the connector's actionable error with the form and import fallbacks are all shown in en and ar.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-11/e2e-demo.log",
+        "docs/delivery/test-evidence/DG6/domain/round-11/e2e-web-p6.log",
+        "docs/delivery/test-evidence/DG6/domain/round-11/e2e-shots/en/p6-360-approval-decision.png",
+        "docs/delivery/test-evidence/DG6/domain/round-11/e2e-shots/ar/p6-360-approval-decision.png",
+        "docs/delivery/test-evidence/DG6/domain/round-11/e2e-shots/en/p6-1440-home.png",
+        "docs/delivery/test-evidence/DG6/domain/round-11/e2e-shots/ar/p6-1440-home.png",
+        "docs/delivery/test-evidence/DG6/domain/round-11/e2e-shots/en/p6-deep-link-forbidden.png",
+        "docs/delivery/test-evidence/DG6/domain/round-11/e2e-shots/ar/p6-deep-link-forbidden.png",
+        "docs/delivery/test-evidence/DG6/domain/round-11/e2e-shots/en/fec-connector-actionable-error.png",
+        "docs/delivery/test-evidence/DG6/domain/round-11/e2e-shots/ar/fec-connector-actionable-error.png",
+        "docs/delivery/test-evidence/DG6/domain/round-11/e2e-shots/en/p6-draft-restored.png",
+        "docs/delivery/test-evidence/DG6/domain/round-11/e2e-shots/ar/p6-draft-restored.png",
+        "docs/delivery/test-evidence/DG6/domain/round-11/e2e-shots/en/p6-register-1000-filtered.png",
+        "docs/delivery/test-evidence/DG6/domain/round-11/e2e-shots/ar/p6-register-1000-filtered.png"
+      ]
+    },
+    {
+      "id": "DOM-R11-12-register-outputs-load",
+      "procedure": "Parse the register: statuses, the existence of every evidence path, the rows that defer to the freeze verification, and the load and export disclosures. Read the V14 README and step exit codes.",
+      "command": "python3 (csv parse + os.path.exists) on docs/delivery/requirements.csv; cat docs/delivery/test-evidence/DG6/orchestrator-final-bf11756/{README.md,summary.txt,*.rc}",
+      "environment": "Repository at HEAD",
+      "expected": "48 rows IMPLEMENTED, no missing evidence; the deferred re-runs are re-run by me; the load targets are labelled provisional",
+      "actual": "48 rows, all IMPLEMENTED, 1109 evidence paths, 0 missing. 13 rows defer to the freeze verification / binding re-run (DLV-038, S10-002, S12-019, S15-007, S15-011, S15-014, S17-001, S17-007, S20-001, S20-012, S20-013, S20-017, S20-022). I re-ran what they defer (DOM-R11-08 to 11), and all pass. V14 on bf11756 (same product tree): 15/15 steps rc 0 (integration 4354 passed, 1 skipped, 1 todo; e2e 556 + 556; root 288; demo 10). REQ-S20-029: 'Provisional engineering targets, not verified Mobily capacity requirements', measured on one sandbox host. LOAD-T20's dataset gap (D-199 item 2) is disclosed, and I accept it as documented. REQ-S20-030: the slow simultaneous starts on the loaded host are disclosed in the note's history, and asynchronous jobs with progress and requester-only download are shown. Accepted as in round 10. REQ-S12-019's residual (the freshness scan reads only the newest period) is disclosed and bounded, and the stale display itself is correct (DOM-R11-09).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG6/domain/round-11/register-outputs.log"]
+    },
+    {
+      "id": "DOM-R11-13-decisions-and-diff",
+      "procedure": "Review the full product diff since round 10 (cde60365..33db1a46). Challenge D-226 to D-234 (disclosure through the tag or its key, a lost or misplaced literal, a misleading screen), D-229 and D-228 (4). Judge D-194 to D-196, D-199 item 2, D-202 and D-203 to D-205.",
+      "command": "git diff cde6036571064c12c812d240b48e3289c78d7d48..33db1a46ca498d917d9e33793e9771533269c446 -- . ':!docs/delivery'; read versions.ts (restrictedTokenTag, redactConditionLiterals, resolveRestrictedTokens, toRuleVersions, insertDraftVersion, createVersion), rules.ts, RulePage.tsx EditContent, ContentEditor.tsx, migration 0127, schema.ts, problems.json en/ar, ADR-0051 amendment parts A and B, the BE-Z15 handback; grep for selectAll/returningAll/SCHEMA_COLUMNS/to_jsonb uses that could serialize restricted_token_key",
+      "environment": "Source at 33db1a46 and the runs above",
+      "expected": "No disclosure through the tag or key, no misplaced literal, true screens; decisions acceptable or raised",
+      "actual": "Diff: 22 product files; the automation token, migration 0127, tests, ADR and data-dictionary text. Tag and key: the key is never copied to a new draft (insertDraftVersion lists its columns), is immutable (trigger) and 32 bytes (CHECK). The version presenter maps fields explicitly, the audit diff covers CONTENT_COLUMNS only, and no generic table dump uses SCHEMA_COLUMNS. Probe (l) confirms the key is absent from every served body and from the audit trail. The tag is an HMAC under a per-row secret key, so it discloses neither the id nor a literal. Every reader of the same row and revision gets the same tag (n), so it carries nothing per user. No token sequence I tried (re-save, 409 then re-send, grant between read and save, published to draft, discarded to new draft, cross-rule, forged, retired) loses or misplaces a hidden literal. Misleading screen: yes. On the stale 422 the editor shows 'This rule changed after you opened it' (en/ar), which is untrue for every UI-reachable stale case, and it hides the corrected problem text. Raised as F-DG6-700, Low (F-DG4-160 precedent), non-blocking. D-229 (connector configuration names stay cannot-name) and D-228 (4) (cross-organization ids out of scope): accepted, unchanged since round 10. Credentials are references only (fec-connector-actionable-error.png), and A12 isolation passes in en and ar (DOM-R11-08/09). D-194 to D-196, D-199 (2), D-202 and D-203: accepted, untouched by this diff. D-204: a late event is evaluated against the rule version in force and enabled at its occurrence. That keeps automation explainable and meets REQ-S12-019 and REQ-S20-013 (A13 suites green). D-205: a rule disabled now stops its pending events. The residual commit-order race documented in ADR-0043 can only run an action of a rule a person had enabled, never an approval or a gate, so it is acceptable as documented. No engineering agent or assistant path grants a business, Finance or IT approval (A21 and assistant guardrail suites green), and product G6 is not linked to DG7.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-11/int-tokens.log",
+        "docs/delivery/test-evidence/DG6/domain/round-11/probe-editor-tokens.log",
+        "apps/api/src/modules/automation/versions.ts",
+        "apps/web/src/pages/automation/RulePage.tsx",
+        "packages/db/migrations/0127_p6_automation_restricted_token_key.sql"
+      ]
+    }
+  ],
+  "findings": ["F-DG6-700"],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG6/domain/round-11/candidate.log",
+    "docs/delivery/test-evidence/DG6/domain/round-11/validators.log",
+    "docs/delivery/test-evidence/DG6/domain/round-11/build.log",
+    "docs/delivery/test-evidence/DG6/domain/round-11/int-tokens.log",
+    "docs/delivery/test-evidence/DG6/domain/round-11/mutants-f640.log",
+    "docs/delivery/test-evidence/DG6/domain/round-11/node22-tokens.log",
+    "docs/delivery/test-evidence/DG6/domain/round-11/probe-editor-tokens.log",
+    "docs/delivery/test-evidence/DG6/domain/round-11/probes/dom-r11-token-binding.test.ts.txt",
+    "docs/delivery/test-evidence/DG6/domain/round-11/probes/dom-r11-editor-tokens.spec.ts.txt",
+    "docs/delivery/test-evidence/DG6/domain/round-11/unit.log",
+    "docs/delivery/test-evidence/DG6/domain/round-11/int-register-dg6.log",
+    "docs/delivery/test-evidence/DG6/domain/round-11/e2e-domain-1.log",
+    "docs/delivery/test-evidence/DG6/domain/round-11/e2e-domain-2.log",
+    "docs/delivery/test-evidence/DG6/domain/round-11/e2e-demo.log",
+    "docs/delivery/test-evidence/DG6/domain/round-11/e2e-web-p6.log",
+    "docs/delivery/test-evidence/DG6/domain/round-11/register-outputs.log",
+    "docs/delivery/reviews/DG6/round-11/domain-reviewer.verifications.json",
+    "docs/delivery/reviews/DG6/round-11/domain-reviewer.findings.json"
+  ],
+  "reviewed_at": "2026-11-09T20:35:00Z",
+  "summary": "PASS. F-DG6-640 is CLOSED_VERIFIED. A token copied from a published version into its draft, from another rule, or from a discarded draft, at the same row version, is now refused 422 restricted_token_stale and nothing is stored. I checked this through the API (Node 24 and 22) and through the real editor and publish flow in EN and AR. Two revert mutants are caught by my probe and by the candidate's z14/z15 tests. The issuer tag matches the ADR's HMAC, and its key is never served or audited. New F-DG6-700 (Low, non-blocking): on that refusal the editor says 'This rule changed after you opened it' in EN and AR, which is untrue, and it hides the corrected problem text. Everything else passes: 97 register integration files (1225 tests + 1 pre-existing todo), unit 38 files, domain e2e 176 + 90 (18 disclosed axe skips), demo 6, web P6 58, the build and the validators. Disclosed: my own probe bug in the first Node 22 run (fixed, re-run green), and a unit ENOENT caused by my disk cleanup in the clone (restored, re-run green). Product gate G6 is not DG7; I granted no business, Finance or IT approval."
+}

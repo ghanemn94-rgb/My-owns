@@ -1,0 +1,24 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG6-640",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Re-run on candidate c45d73b8 (source 33db1a46; BE-Z15, D-233). (1) The round-10 API reproduction, with its token literals moved to [restricted:<24 hex>:<k>] and its behaviour assertions kept. The round-10 soft assertions of (i) and (j) are now hard (probes/dom-r11-token-binding.test.ts.txt; int-tokens.log). (j) Published v1 [P, S, H] (row version 4) and draft v2 after removing S and re-saving to row version 4 issue different tags for the same k ('[restricted:7e36…:2]' vs '[restricted:8b58…:2]'). Pasting v1's token for S into v2 with If-Match 4 gives 422 automation_rule.restricted_token_stale at /content/conditions/2/value, and v2 stays [P, H], never [P, H, H]. (i) Cross-rule: rules A and B at the same row version 1 issue different tags. A's token pasted into B gives 422 stale, and B is unchanged. New adversarial cases: (k) a token from a discarded draft v2 pasted into the new draft v3 at the same row version gives 422 stale, nothing stored. (l) I computed the tag independently, HMAC-SHA256(row key, 'mth.automation.restricted-token.v1' LF id LF version)[0:24], from the database key. It equals the served tag for two rows, the tags differ between rows and between revisions, and the key keeps its value across a save. The key appears in neither hex, base64 nor by column name in the rule list, rule, version list, version (author and TO) or the version's audit events. (m) A forged random 24-hex tag gives 422 stale; an upper-case, 23- or 25-digit tag gives marker_unknown; the retired [restricted:<version>:<k>] form gives stale; nothing stored. (n) Two non-admitted readers of the same row at the same revision get the same token, and the second can save with it (S kept). F-DG6-580's sequences (g, g2) still pass. 63/63 with the candidate's z13, z14, z15, z12b, digest, inbox and deep-link suites. Node 22.22.0 and Node 24.21.0 are identical (21/21 each). The first Node 22 run failed my probe's own assertion in (l): it checked that the token text has no '1:', but a hex tag can end in '1'. I corrected the assertion and re-ran both versions green (node22-tokens.log). (2) The round-10 real-UI reproduction (part C), on the production-initialized stack in EN and AR (probe-editor-tokens.log; screens/*/dom-r11-C*): through the real publish state machine, the token copied from the published v1 page and pasted into draft v2 in the editor is refused 422 stale, v2 stays [P, H] at row version 4, and the form reloads. Parts A and B (the F-DG6-580 re-saves and the 409 alert) pass. What the author is told on that refusal is untrue; that is raised separately as F-DG6-700 (Low) and is not part of this finding. (3) Mutants (mutants-f640.log): M1 reverts the tag to a version-only value (no key, no row id). My (i), (j), (k), (l) and the candidate's z15 (a), (b), (c) fail: 7 of 16. M2 removes the tag comparison. 14 of 21 fail, across my probe, z15 and z14. After each, versions.ts is restored and the git diff is empty.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-11/int-tokens.log",
+        "docs/delivery/test-evidence/DG6/domain/round-11/probes/dom-r11-token-binding.test.ts.txt",
+        "docs/delivery/test-evidence/DG6/domain/round-11/node22-tokens.log",
+        "docs/delivery/test-evidence/DG6/domain/round-11/mutants-f640.log",
+        "docs/delivery/test-evidence/DG6/domain/round-11/probe-editor-tokens.log",
+        "docs/delivery/test-evidence/DG6/domain/round-11/probes/dom-r11-editor-tokens.spec.ts.txt",
+        "docs/delivery/test-evidence/DG6/domain/round-11/screens/en/dom-r11-C1-published-v1.png",
+        "docs/delivery/test-evidence/DG6/domain/round-11/screens/en/dom-r11-C4-token-pasted.png",
+        "docs/delivery/test-evidence/DG6/domain/round-11/screens/en/dom-r11-C6-draft-v2-after-reload.png",
+        "docs/delivery/test-evidence/DG6/domain/round-11/screens/ar/dom-r11-C1-published-v1.png",
+        "docs/delivery/test-evidence/DG6/domain/round-11/screens/ar/dom-r11-C4-token-pasted.png",
+        "docs/delivery/test-evidence/DG6/domain/round-11/screens/ar/dom-r11-C6-draft-v2-after-reload.png"
+      ]
+    }
+  ]
+}
