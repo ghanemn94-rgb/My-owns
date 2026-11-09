@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG6-640",
+      "stage_id": "DG6",
+      "requirement": "REQ-S10-002",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "A D-231 restricted token names only a row-version number, not the rule version (row) it was issued from. A token copied from the published version of a rule (or from another rule) into a draft whose row version has the same number is resolved against the draft's positions, so the hidden literal it stood for is silently replaced by another hidden literal of the draft, while the editor shows 'Includes restricted records' / 'يشمل سجلات مقيدة' as if it had been restored",
+      "reproduction": "Candidate 56415aee (source cde60365). Production-initialized stack (apps/web/e2e/support/with-stack.sh), chromium-en and chromium-ar; probe docs/delivery/test-evidence/DG6/domain/round-10/probes/dom-r10-editor-tokens.spec.ts.txt part C; log probe-editor-tokens-run4.log. A synthetic ADM_METHOD author, not admitted to sensitive records, creates a transformation-scoped rule, version 1 = [benefitId neq P, neq S, neq H]. The TO marks S and H sensitive. Version 1 is published through the real state machine: a dry run (pass), submit, review by the TO, publish. Its row version is now 4. The author creates draft version 2, a server-side copy at row version 1. In the editor of version 2 the author clicks 'Remove condition 2' / 'حذف الشرط 2' (the S condition) and 'Save the draft' / 'حفظ المسودة', then saves twice more. The draft is now [P, H] at row version 4 and shows H as '[restricted:4:2]'. The published version 1 page shows S as the same text '[restricted:4:2]' (benefitId neq \"[restricted:4:2]\" plus the lock label). To restore 'exclude S', the only way open to an author who cannot see S, the author clicks 'Add a condition' in draft 2, chooses benefitId / neq, enters '[restricted:4:2]' as copied from version 1, and saves. API-level reproduction of the same sequence, and of the cross-rule variant (rule A's token for S pasted into rule B's draft at the same row version): probes/dom-r10-token-binding.test.ts.txt cases (i) and (j); logs probe-token-binding-run1.log, int-tokens-digest.log and node22-tokens.log (Node 24 and Node 22 identical).",
+      "expected": "ADR-0051 amendment D-231 part A: '<version> is the row version … of the rule version the token was issued from' and a token of another version 'is never resolved against another version's positions … So a hidden literal is never replaced by another literal'. The editor's contract (ContentEditor.tsx): 'Saving the token back, wherever the condition now sits, keeps the hidden value'. REQ-S10-002 and the F-DG6-520/580 expectation: a token the author saves must stand for the record it was shown for, or the save must be refused (422). A token issued from published version 1 (or from another rule) must therefore be refused in draft 2 (or resolve to S). It must never resolve to H.",
+      "actual": "PATCH If-Match 4 returns 200. Stored version 2 = [neq P, neq H, neq H] in both EN and AR. The exclusion of S is not restored, H is tested twice, and there is no warning and no 422. The editor reloads from the saved response and shows [P, '[restricted:5:2]', '[restricted:5:3]'] with two 'Includes restricted records' / 'يشمل سجلات مقيدة' labels, so the author has every reason to believe that S is excluded again (screens/en|ar/dom-r10-C4-draft-v2-token-pasted.png: two identical '[restricted:4:2]' values standing for different records; …-C5-draft-v2-after-save.png; …-C6-draft-v2-after-reload.png). The cross-rule API variant (i) stores [Q, H2, H2] for rule B where the author pasted rule A's token for S. Cause: resolveRestrictedTokens (apps/api/src/modules/automation/versions.ts) compares only the number <version> with the stored row version. Row versions are small per-row counters, so every version row of every rule issues the same token text for the same (version, position): a published version at 4 (create 1, submit 2, review 3, publish 4) and its new draft after three saves both issue '[restricted:4:k]'. The F-DG6-580 sequences (the same draft re-saved, or re-sent after a 409) are fixed. This is a different path, the class of F-DG6-520/580. Bounded: only rules whose literals name a sensitive record, and only when a token is entered by hand. Publishing needs a passing dry run and a reviewer. The audit trail records each change. No business approval or Finance value is affected. Suggested repair (implementer's choice): make the token identify its issuing row as well as its revision, for example a short HMAC or nonce over (version row id, row version, k), or [restricted:<versionNo>:<rowVersion>:<k>] checked against the path's versionNo and rule. Refuse 422 (restricted_token_stale or restricted_marker_unknown) any token that was not issued for the version row being replaced. Add API tests for the published-to-draft and cross-rule paste.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-10/probe-editor-tokens-run4.log",
+        "docs/delivery/test-evidence/DG6/domain/round-10/probes/dom-r10-editor-tokens.spec.ts.txt",
+        "docs/delivery/test-evidence/DG6/domain/round-10/probe-token-binding-run1.log",
+        "docs/delivery/test-evidence/DG6/domain/round-10/int-tokens-digest.log",
+        "docs/delivery/test-evidence/DG6/domain/round-10/node22-tokens.log",
+        "docs/delivery/test-evidence/DG6/domain/round-10/probes/dom-r10-token-binding.test.ts.txt",
+        "docs/delivery/test-evidence/DG6/domain/round-10/screens/en/dom-r10-C1-published-v1.png",
+        "docs/delivery/test-evidence/DG6/domain/round-10/screens/en/dom-r10-C3-draft-v2-after-removing-S-and-3-saves.png",
+        "docs/delivery/test-evidence/DG6/domain/round-10/screens/en/dom-r10-C4-draft-v2-token-pasted.png",
+        "docs/delivery/test-evidence/DG6/domain/round-10/screens/en/dom-r10-C5-draft-v2-after-save.png",
+        "docs/delivery/test-evidence/DG6/domain/round-10/screens/ar/dom-r10-C1-published-v1.png",
+        "docs/delivery/test-evidence/DG6/domain/round-10/screens/ar/dom-r10-C4-draft-v2-token-pasted.png",
+        "docs/delivery/test-evidence/DG6/domain/round-10/screens/ar/dom-r10-C5-draft-v2-after-save.png",
+        "apps/api/src/modules/automation/versions.ts",
+        "packages/shared/src/schemas/automation.ts"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG6/round-10/domain-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-09T12:30:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG6 round 10 by domain-reviewer while challenging D-231 (the assignment asks for 'a token sequence that loses or misplaces a hidden literal after edits'). Medium (D-192): the same integrity class as F-DG6-520 and F-DG6-580, reached through the real editor and the real publish state machine in EN and AR. F-DG6-580's own reproductions (the same draft re-saved, and re-sent after a 409) are fixed, and are verified CLOSED in this round's verifications sidecar."
+        }
+      ]
+    }
+  ]
+}

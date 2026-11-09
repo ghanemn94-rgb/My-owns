@@ -1,0 +1,23 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG6-580",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Re-run on candidate 56415aee (source cde60365). (1) The round-9 API reproduction, with its token literals moved to [restricted:<version>:<k>] and its behaviour assertions unchanged (probes/dom-r10-token-binding.test.ts.txt): (g) [neq P, neq S, neq Q] with S hidden from the ADM_METHOD author. Save 1 removes condition 1, and the response shows [restricted:2:1]. Save 2 re-sends the same body with If-Match 2: 422 automation_rule.restricted_token_stale at /content/conditions/0/value, with the bilingual 'reload … re-apply' detail. Stored [neq S, neq Q], unchanged. (g2) A concurrent tab's 409, then the same draft re-sent with the fresh If-Match: 422 stale, S kept. (e) The retired [restricted:2], an unknown position, case, space and unclosed variants: 422 marker_unknown. Tokens of version v+1 and v+7: 422 stale. Nothing stored. Node 24 and Node 22 identical. (2) The round-9 real-UI reproduction, on the production-initialized stack in EN and AR (probe-editor-tokens-run4.log, part A): after 'Remove condition 1' and 'Save the draft' the form reloads (data-form-version 2, [restricted:2:1]). A second 'Save the draft' sends If-Match 2 with [restricted:2:1], gets 200, and stores [neq S, neq Q]. The form is at version 3 with one lock label. Part B: an edit behind the open editor, then a save, gives 409. The form reloads to version 4 and shows the alert 'This rule changed after you opened it …' / 'تغيّرت هذه القاعدة بعد أن فتحتها …', and S is kept. (3) Mutants: M1 removes the version check in resolveRestrictedTokens, and 4 of 5 z14 tests fail, as do my (g) and (g2). M2 drops the editor's reload after a save, and 2 of 7 rule-editor-tokens-z14 tests (en, ar) fail. Both are restored, with an empty git diff. The finding's own sequences (the same draft re-saved, or re-sent after a 409) are closed. A different path, a token copied from another version row with the same row-version number, still misplaces a hidden literal. It is raised separately as F-DG6-640 and is not part of this verification.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-10/int-tokens-digest.log",
+        "docs/delivery/test-evidence/DG6/domain/round-10/probes/dom-r10-token-binding.test.ts.txt",
+        "docs/delivery/test-evidence/DG6/domain/round-10/probe-editor-tokens-run4.log",
+        "docs/delivery/test-evidence/DG6/domain/round-10/probes/dom-r10-editor-tokens.spec.ts.txt",
+        "docs/delivery/test-evidence/DG6/domain/round-10/mutant-f580-stale-check.log",
+        "docs/delivery/test-evidence/DG6/domain/round-10/mutant-f580-editor.log",
+        "docs/delivery/test-evidence/DG6/domain/round-10/node22-tokens.log",
+        "docs/delivery/test-evidence/DG6/domain/round-10/screens/en/dom-r10-A3-after-second-save.png",
+        "docs/delivery/test-evidence/DG6/domain/round-10/screens/ar/dom-r10-A3-after-second-save.png",
+        "docs/delivery/test-evidence/DG6/domain/round-10/screens/en/dom-r10-B1-after-409.png",
+        "docs/delivery/test-evidence/DG6/domain/round-10/screens/ar/dom-r10-B1-after-409.png"
+      ]
+    }
+  ]
+}
