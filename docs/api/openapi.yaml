@@ -27719,7 +27719,7 @@ components:
         summary: { $ref: "#/components/schemas/AutomationRuleSummary" }
         version: { $ref: "#/components/schemas/Version" }
         updatedAt: { $ref: "#/components/schemas/Timestamp" }
-        includesRestrictedRecords: { type: boolean, const: true, description: "Present (true) when a condition literal is shown as a restricted token \"[restricted:k]\" (D-226; and the summary as \"a restricted record\" / \"سجل مقيد\") because it names a record the reader is not admitted to; the stored conditions and contentSha256 are unchanged (T-DG6-BE-Z12B; F-DG6-480; ADR-0051 §2; D-218, D-222; label access.includesRestrictedRecords)." }
+        includesRestrictedRecords: { type: boolean, const: true, description: "Present (true) when a condition literal is shown as a restricted token \"[restricted:k]\" (k = its position among all literals of the stored version, D-226, D-228 (1); see the condition value; and the summary as \"a restricted record\" / \"سجل مقيد\") because it names a record the reader is not admitted to; the stored conditions and contentSha256 are unchanged (T-DG6-BE-Z12B; F-DG6-480; ADR-0051 §2; D-218, D-222; label access.includesRestrictedRecords)." }
     AutomationRuleVersionPage:
       type: object
       required: [items, nextCursor]
@@ -27818,7 +27818,7 @@ components:
         attemptNo: { type: integer, minimum: 1 }
         ordinal: { type: integer, minimum: 1 }
         actionType: { type: string }
-        idempotencyKey: { type: string }
+        idempotencyKey: { type: string, description: "<ruleCode>:<triggerKey>:<ordinal>; it can embed the trigger key's record ids. In a response, the id of a sensitive record or of a child that carries one's values (a measurement, Finance validation, benefit overlap, corrective case, ...) that the reader is not admitted to is shown as the restricted marker \"[restricted]\" inside the text, and the item carries includesRestrictedRecords; the stored value is unchanged and an admitted reader sees it in full (T-DG6-BE-Z13B; the execution carries the member; ADR-0051 §2, amendment of 2026-11-09; D-218, D-227 (1))." }
         outcome: { type: string, enum: [done, existing, skipped, failed, forbidden] }
         resultRecordType: { type: [string, "null"] }
         resultRecordId: { $ref: "#/components/schemas/NullableUuid" }
@@ -27836,7 +27836,7 @@ components:
         versionId: { $ref: "#/components/schemas/Uuid" }
         versionNo: { type: integer, minimum: 1 }
         triggerCode: { type: string }
-        triggerKey: { type: string }
+        triggerKey: { type: string, description: "The trigger event's key, e.g. benefit.variance_evaluated:<measurementId>. In a response, the id of a sensitive record or of a child that carries one's values (a measurement, Finance validation, benefit overlap, corrective case, ...) that the reader is not admitted to is shown as the restricted marker \"[restricted]\" inside the text, and the item carries includesRestrictedRecords; the stored value is unchanged and an admitted reader sees it in full (T-DG6-BE-Z13B; ADR-0051 §2, amendment of 2026-11-09; D-218, D-227 (1))." }
         organizationId: { $ref: "#/components/schemas/NullableUuid" }
         transformationId: { $ref: "#/components/schemas/NullableUuid" }
         runAs: { type: string, enum: [initiating_user, service] }
@@ -27845,7 +27845,7 @@ components:
         conditionsMet: { type: ["boolean", "null"] }
         attemptNo: { type: integer, minimum: 1 }
         errorCode: { type: [string, "null"] }
-        errorDetail: { type: [string, "null"] }
+        errorDetail: { type: [string, "null"], description: "The execution's error text; a handler's message can name a record. In a response, the id of a sensitive record or of a child that carries one's values (a measurement, Finance validation, benefit overlap, corrective case, ...) that the reader is not admitted to is shown as the restricted marker \"[restricted]\" inside the text, and the item carries includesRestrictedRecords; the stored value is unchanged and an admitted reader sees it in full (T-DG6-BE-Z13B, T-DG6-BE-Z13C; D-228 (2); ADR-0051 §2, amendment of 2026-11-09; D-218, D-227 (1))." }
         startedAt: { $ref: "#/components/schemas/Timestamp" }
         finishedAt: { $ref: "#/components/schemas/NullableTimestamp" }
         actionResults: { type: array, items: { $ref: "#/components/schemas/AutomationActionResult" } }
@@ -27870,9 +27870,9 @@ components:
         jobScheduleCode: { type: [string, "null"] }
         queueName: { type: string }
         jobId: { type: [string, "null"] }
-        idempotencyKey: { type: string }
+        idempotencyKey: { type: string, description: "The failed execution's or job's key (a job's outbox key, e.g. benefit.variance_evaluated:<measurementId> or benefit.value_validated:<financeValidationId>); a retry keeps it. In a response, the id of a sensitive record or of a child that carries one's values (a measurement, Finance validation, benefit overlap, corrective case, ...) that the reader is not admitted to is shown as the restricted marker \"[restricted]\" inside the text, and the item carries includesRestrictedRecords; the stored value is unchanged and an admitted reader sees it in full (T-DG6-BE-Z13B; ADR-0051 §2, amendment of 2026-11-09; D-218, D-227 (1))." }
         errorCode: { type: string }
-        errorMessage: { type: string }
+        errorMessage: { type: string, description: "The failure's error text, e.g. benefit <id> is not in organization <id>. In a response, the id of a sensitive record or of a child that carries one's values (a measurement, Finance validation, benefit overlap, corrective case, ...) that the reader is not admitted to is shown as the restricted marker \"[restricted]\" inside the text, and the item carries includesRestrictedRecords; the stored value is unchanged and an admitted reader sees it in full (T-DG6-BE-Z13B, T-DG6-BE-Z13C; D-228 (2); ADR-0051 §2, amendment of 2026-11-09; D-218, D-227 (1)). The failure queue shows the item-scoped restricted label on such a row and in its dismiss form (D-228 (3))." }
         attempts: { type: integer, minimum: 1 }
         firstFailedAt: { $ref: "#/components/schemas/Timestamp" }
         lastFailedAt: { $ref: "#/components/schemas/Timestamp" }
@@ -33418,7 +33418,7 @@ components:
         completedBy: { $ref: "#/components/schemas/NullableUuid" }
         createdAt: { $ref: "#/components/schemas/Timestamp" }
         version: { $ref: "#/components/schemas/Version" }
-        includesRestrictedRecords: { type: boolean, const: true, description: "Present (true) when the task's subject or link names a record the reader is not admitted to; subjectId is then null, subjectType is kept, linkPath is the transformation home and messageKey is inbox.restricted (T-DG6-BE-Z12B; F-DG6-480; ADR-0051 §2; D-218, D-222; label access.includesRestrictedRecords)." }
+        includesRestrictedRecords: { type: boolean, const: true, description: "Present (true) when the task's subject, or any id in its link, names a record the reader is not admitted to (a sensitive record, a child that carries one's values, or an action whose corrective case is restricted: T-DG6-BE-Z13, T-DG6-BE-Z13B; D-227 (3)); subjectId is then null, subjectType is kept, linkPath is the transformation home and messageKey is inbox.restricted (T-DG6-BE-Z12B; F-DG6-480; ADR-0051 §2; D-218, D-222; label access.includesRestrictedRecords)." }
     WorkItemPage:
       type: object
       required: [items, nextCursor]
@@ -33434,13 +33434,13 @@ components:
         id: { $ref: "#/components/schemas/Uuid" }
         transformationId: { $ref: "#/components/schemas/NullableUuid" }
         workItemId: { $ref: "#/components/schemas/NullableUuid" }
-        linkPath: { type: string, pattern: "^/[^/\\\\]" }
-        messageKey: { type: string }
+        linkPath: { type: string, pattern: "^/[^/\\\\]", description: "Relative in-app link. For a restricted notification (see includesRestrictedRecords) the transformation home /transformations/<transformationId>, else /my-work; the stored link is unchanged and comes back when access is restored (T-DG6-BE-Z13; ADR-0051 §3, corrected 2026-11-09; D-226)." }
+        messageKey: { type: string, description: "i18n key; the client translates it at render time. inbox.restricted for a restricted notification (see includesRestrictedRecords), with messageParams {}." }
         messageParams: { type: object, additionalProperties: { type: [string, number, boolean, "null"] } }
         readAt: { $ref: "#/components/schemas/NullableTimestamp" }
         createdAt: { $ref: "#/components/schemas/Timestamp" }
         version: { $ref: "#/components/schemas/Version" }
-        includesRestrictedRecords: { type: boolean, const: true, description: "Present (true) when the notification is about a record the recipient is not admitted to: its target, or any id in its link, parameters or stored target that names a sensitive record or a child that carries one's values (a Finance validation, a benefit overlap, ...), or the work item it announces. The messageKey is then inbox.restricted, messageParams is {} and linkPath is the transformation home (else /my-work); id, workItemId, readAt and version are unchanged. The same in listMyInbox and markInboxNotificationRead (T-DG6-BE-Z13; F-DG6-540; ADR-0051 §2, §3; D-218, D-222, D-226; label access.includesRestrictedRecords)." }
+        includesRestrictedRecords: { type: boolean, const: true, description: "Present (true) when the notification is about a record the recipient is not admitted to: its target, or any id in its link, parameters or stored target that names a sensitive record or a child that carries one's values (a Finance validation, a benefit overlap, ...), or an action whose corrective case is such a record (D-227 (3)), or the work item it announces. The messageKey is then inbox.restricted, messageParams is {} and linkPath is the transformation home (else /my-work); id, workItemId, readAt and version are unchanged. The same in listMyInbox and markInboxNotificationRead (T-DG6-BE-Z13; F-DG6-540; ADR-0051 §2, §3; D-218, D-222, D-226, D-227; label access.includesRestrictedRecords)." }
     InboxPage:
       type: object
       required: [items, nextCursor, unreadCount]
@@ -35763,7 +35763,7 @@ components:
         transformationId: { $ref: "#/components/schemas/Uuid" }
         code: { type: string, pattern: "^CA-[0-9]{2,6}$" }
         sourceKind: { $ref: "#/components/schemas/CorrectiveSourceKind" }
-        sourceScopeKey: { type: string, minLength: 1, maxLength: 200 }
+        sourceScopeKey: { type: string, minLength: 1, maxLength: 200, description: "The source's scope: the case's own benefit id, a KPI scope, a check id, or value_review:<finding reference> (free text of the case's creator). In a response, the id of a sensitive record or of a child that carries one's values (a measurement, Finance validation, benefit overlap, corrective case, ...) that the reader is not admitted to is shown as the restricted marker \"[restricted]\" inside the text, and the item carries includesRestrictedRecords; the stored value is unchanged and an admitted reader sees it in full (T-DG6-BE-Z13B; ADR-0051 §2, amendment of 2026-11-09; D-218, D-227 (1))." }
         kpiDefinitionId: { $ref: "#/components/schemas/NullableUuid" }
         kpiScopeKind: { type: [string, "null"], enum: [transformation, business_unit, initiative, null] }
         kpiScopeId: { $ref: "#/components/schemas/NullableUuid" }
@@ -40428,7 +40428,7 @@ components:
         attempts: { type: integer, minimum: 0, maximum: 20 }
         lastAttemptAt: { $ref: "#/components/schemas/NullableTimestamp" }
         sentAt: { $ref: "#/components/schemas/NullableTimestamp" }
-        skipReason: { type: [string, "null"], enum: [no_address, recipient_restricted, channel_disabled, recipient_disabled, null] }
+        skipReason: { type: [string, "null"], enum: [no_address, recipient_restricted, channel_disabled, recipient_disabled, null], description: "Why the delivery was skipped. recipient_restricted is allowed but not set by the shipped worker: a recipient who is not admitted to the notification's record is sent the inbox.restricted text with the transformation home link and no deep-link token instead (ADR-0054 amendment of 2026-11-09; D-227 (2))." }
         errorCode: { type: [string, "null"] }
         createdAt: { $ref: "#/components/schemas/Timestamp" }
         version: { type: integer, minimum: 1 }
@@ -40502,8 +40502,8 @@ components:
         versionNo: { type: integer, minimum: 1 }
         sourceSystemId: { type: string }
         endpointUrl: { type: [string, "null"] }
-        credentialRefs: { type: object, additionalProperties: { $ref: "#/components/schemas/CredentialRefView" } }
-        fieldMappings: { type: array, items: { $ref: "#/components/schemas/FieldMapping" } }
+        credentialRefs: { type: object, additionalProperties: { $ref: "#/components/schemas/CredentialRefView" }, description: "Not masked: a name is configuration, set only through IT's secret manifest or by connector administrators, who already see it, so no id is disclosed to anyone who could not already read it (cannot-name in the reference inventory; ADR-0051 amendment of 2026-11-09, part E; D-229). The run's error text that repeats a name is masked (IntegrationRun.errorMessage)." }
+        fieldMappings: { type: array, items: { $ref: "#/components/schemas/FieldMapping" }, description: "Column mappings. Not masked: a name is configuration, set only through IT's secret manifest or by connector administrators, who already see it, so no id is disclosed to anyone who could not already read it (cannot-name in the reference inventory; ADR-0051 amendment of 2026-11-09, part E; D-229). The run's error text that repeats a name is masked (IntegrationRun.errorMessage)." }
         targetTransformationId: { $ref: "#/components/schemas/NullableUuid" }
         cadence: { $ref: "#/components/schemas/ConnectorCadence" }
         retryMaxAttempts: { type: integer, minimum: 0, maximum: 5 }
@@ -40527,7 +40527,7 @@ components:
         attemptNo: { type: integer, minimum: 1 }
         finishedAt: { $ref: "#/components/schemas/Timestamp" }
         errorCode: { type: string, enum: [connector.source_unavailable, connector.stopped, connector.credentials_rejected, connector.secret_unresolvable, connector.mapping_mismatch, connector.response_invalid] }
-        params: { type: object, additionalProperties: { type: string } }
+        params: { type: object, additionalProperties: { type: string }, description: "Values parsed from the run's error text for the why text ({name=<credential name>}, {column=<source column>}). In a response, a value that embeds the id of a record the reader is not admitted to shows the restricted marker \"[restricted]\" in its place, and this object carries includesRestrictedRecords; the panel then shows the item-scoped restricted label (T-DG6-BE-Z13C; ADR-0051 §2, amendment of 2026-11-09; D-218, D-228 (2), (3))." }
         fallbacks: { type: array, items: { type: string, enum: [kpi_form, import_file] } }
         includesRestrictedRecords: { type: boolean, const: true, description: "Present (true) when a params value (parsed from the run's error text: a credential name or a source column) embedded the id of a record the reader is not admitted to, and the restricted marker \"[restricted]\" stands in its place; the stored run is unchanged (T-DG6-BE-Z13C; D-228 (2); ADR-0051 §2; D-218)." }
     Connector:
@@ -40640,7 +40640,7 @@ components:
         status: { $ref: "#/components/schemas/IntegrationRunStatus" }
         attemptNo: { type: integer, minimum: 1, maximum: 6 }
         retryOfRunId: { $ref: "#/components/schemas/NullableUuid" }
-        idempotencyKey: { type: string }
+        idempotencyKey: { type: string, description: "manual:<userId>:<caller's Idempotency-Key>, retry:<runId> or a schedule slot; the caller's text can hold any id. In a response, the id of a sensitive record or of a child that carries one's values (a measurement, Finance validation, benefit overlap, corrective case, ...) that the reader is not admitted to is shown as the restricted marker \"[restricted]\" inside the text, and the item carries includesRestrictedRecords; the stored value is unchanged and an admitted reader sees it in full (T-DG6-BE-Z13B; also as a connector's lastRun; ADR-0051 §2, amendment of 2026-11-09; D-218, D-227 (1)). The run detail shows the item-scoped restricted label next to it (D-228 (3))." }
         requestedBy: { $ref: "#/components/schemas/NullableUuid" }
         serviceIdentityId: { $ref: "#/components/schemas/Uuid" }
         queuedAt: { $ref: "#/components/schemas/Timestamp" }
@@ -40921,7 +40921,7 @@ components:
         configVersionNo: { type: integer, minimum: 1 }
         actionCode: { type: string, enum: [deliverable_status_push] }
         deliverableId: { $ref: "#/components/schemas/Uuid" }
-        idempotencyKey: { type: string }
+        idempotencyKey: { type: string, description: "The integration caller's key (free text; it can hold any id). In a response, the id of a sensitive record or of a child that carries one's values (a measurement, Finance validation, benefit overlap, corrective case, ...) that the reader is not admitted to is shown as the restricted marker \"[restricted]\" inside the text, and the item carries includesRestrictedRecords; the stored value is unchanged and an admitted reader sees it in full (T-DG6-BE-Z13B; ADR-0051 §2, amendment of 2026-11-09; D-218, D-227 (1))." }
         payload: { type: object }
         payloadSha256: { type: string, pattern: "^[0-9a-f]{64}$" }
         status: { $ref: "#/components/schemas/OutboundWriteStatus" }

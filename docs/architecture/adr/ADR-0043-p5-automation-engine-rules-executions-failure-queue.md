@@ -1,6 +1,6 @@
 # ADR-0043: Automation engine: versioned rules (trigger, conditions, actions, scope, owner, effective version), the action registry, dry run, enable/disable, execution history, the failure queue and repair, bounded retries with backoff, idempotency keys, service identity and per-action authorization, the human-only boundary, and the jobs operations view
 
-- **Status:** Proposed for P5 (DG5). Author: solution-architect (T-DG5-ARCH-03), 2026-10-14.
+- **Status:** Proposed for P5 (DG5). Author: solution-architect (T-DG5-ARCH-03), 2026-10-14. Amended later; see the amendments at the end (the latest: 2026-11-09, T-DG6-ARCH-17).
 - **Requirements (slice D of `docs/architecture/p5-plan.md`):** REQ-S12-001, REQ-S12-002, REQ-S12-003, REQ-S12-020, REQ-S12-021, REQ-S12-022, REQ-S12-026. ADR-0044 covers slice E (the sixteen starters as rules, approval routes, conditional approval, notification policy, cut-off packs, dependency slips).
 - **Sources (quoted where a design point has one):**
   - M0221 (§12): "Implement server-side event and schedule-driven automation with trigger, conditions, actions, scope, owner, effective version and execution history. Administrators need a readable rule builder, dry-run preview, enable/disable, retry and failure queue. Actions must respect the initiating/system service identity and the applicable permissions."
@@ -397,3 +397,14 @@ Sources: D-204 and D-205 (`docs/delivery/decisions.md`), the T-DG6-BE-X10 handba
 - **Test:** none (untested, as BE-X10 §8 states).
 
 Requirement rows: REQ-S12-001, REQ-S12-002 and REQ-S12-021, with the versioning principle REQ-PB-093. No HTTP operation, error code, configuration variable or dependency changes (the operation count stays 932). Nothing here grants or records a business, Finance or IT approval, touches product gates G1–G6, or reads or writes the engineering gates DG0–DG7.
+
+## Amendment (2026-11-09, T-DG6-ARCH-17; D-226, D-228 (1)): §9, one refusal code for restricted-record marker text
+
+**Why.** T-DG6-BE-Z13 added a refusal to rule writes, and T-DG6-BE-Z13C fixed what its token means. ADR-0051 records the rule (amendment of 2026-11-09, part A). §9 lists this engine's refusals exactly, so the code is recorded here as well. The §9 table itself is left as it is. No code changes.
+
+- **Code:** 422 `automation_rule.restricted_marker_unknown`. **English text (exact):** "A condition value is restricted-record marker text that does not stand for a value of this version. Reload the version and keep each restricted value as shown, or remove it." The en and ar texts are in `apps/web/src/i18n/{en,ar}/problems.json` (Arabic provisional). The problem's field error carries a JSON pointer to the value, with the message "Restricted-record marker text that does not stand for a value of this version."
+- **Where:** `createAutomationRule` and `updateAutomationRuleVersion` (`automationRefusals.restrictedMarkerUnknown`, `apps/api/src/modules/automation/versions.ts`).
+- **When:** a condition literal, or an `in` element, is marker-like text (the bare `[restricted]`, a token `[restricted:k]`, or a case or space variant) and is not a token of the stored version. A token names position k among **all** literals of the stored version (D-228 (1)). It is unknown when there is no stored version (a create), or no string literal at that position. A known token is replaced by the stored literal, so marker text is never stored.
+- **Condition values on read** (a reader who is not admitted to a record named by a literal sees the token in place) are ADR-0051's rule, not this engine's. Evaluation is unchanged: the engine always reads the stored literals.
+
+The operation count is unchanged (932). No configuration variable or dependency changes. This is an engineering design record. It grants no business, Finance or IT approval (G1–G6), and it implies no DG0–DG7 result.
