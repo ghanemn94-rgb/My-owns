@@ -97,6 +97,24 @@ export const automationRefusals = {
         },
       ],
     }),
+  // T-DG6-BE-Z14 (D-231, F-DG6-580): a token issued from another version of the draft is never resolved against this
+  // version's positions; the writer must reload the version and re-apply the change.
+  restrictedTokenStale: (pointer: string) =>
+    new HttpProblem({
+      status: 422,
+      type: PROBLEM_TYPES.validation,
+      code: "automation_rule.restricted_token_stale",
+      title: "Business rule violated",
+      detail:
+        "A condition value is a restricted-record token issued from an earlier version of this draft. The rule changed since it was read: reload the version and re-apply your change.",
+      errors: [
+        {
+          pointer,
+          code: "automation_rule.restricted_token_stale",
+          message: "Restricted-record token issued from another version of this draft.",
+        },
+      ],
+    }),
   actionParametersInvalid: () =>
     problems.businessRule(
       "automation_rule.action_parameters_invalid",
@@ -387,23 +405,23 @@ function mapLiteralsAt(
  * ADR-0051 §2): a rule condition may compare a field (`benefitId`, for one) to a literal uuid. For each set of
  * conditions, every literal (a string value, or an element of an `in` list) that contains the id of a sensitive record,
  * or of a child that carries one's values, the principal is not admitted to is shown as the opaque token
- * `[restricted:k]` (k = the literal's 1-based position among **all** literals of the stored version, D-228 (1)), in
- * place, and `restricted` is true. `tokens` maps each token shown back to its stored literal (never serialized). The
+ * `[restricted:<version>:<k>]` (`<version>` = the row version the set was read at, D-231; k = the literal's 1-based
+ * position among **all** literals of the stored version, D-228 (1)), in place, and `restricted` is true. `tokens` maps each token shown back to its stored literal (never serialized). The
  * stored conditions, the content hash and the audit trail are unchanged. One policy decision for the whole batch.
  */
 export async function redactConditionLiterals(
   db: DbOrTx,
   principal: Principal,
-  sets: readonly (readonly AutomationCondition[])[],
+  sets: readonly { readonly conditions: readonly AutomationCondition[]; readonly version: number }[],
 ): Promise<{ conditions: AutomationCondition[]; restricted: boolean; tokens: Map<string, string> }[]> {
-  const hidden = await restrictedIdsAmong(db, principal, [...uuidsIn(sets)]);
+  const hidden = await restrictedIdsAmong(db, principal, [...uuidsIn(sets.map((x) => x.conditions))]);
   const isHidden = (v: string) => [...uuidsIn(v)].some((id) => hidden.has(id));
-  return sets.map((conditions) => {
+  return sets.map(({ conditions, version }) => {
     const tokens = new Map<string, string>();
     if (hidden.size === 0) return { conditions: [...conditions], restricted: false, tokens };
     const out = mapLiteralsAt(conditions, (v, k) => {
       if (!isHidden(v)) return v;
-      const token = automationRestrictedToken(k);
+      const token = automationRestrictedToken(version, k);
       tokens.set(token, v);
       return token;
     });
@@ -414,15 +432,16 @@ export async function redactConditionLiterals(
 /**
  * T-DG6-BE-Z13 — the re-save rule of D-226 (supersedes the ordinal pairing of D-222 (2)). Every literal of the sent
  * conditions that looks like restricted marker text must be a token the writer is shown for the stored version
- * (`stored`; null on a rule create, where no token exists): it is replaced by the stored literal at the token's
- * position (D-228 (1)), wherever the
+ * (`stored`; null on a rule create, where no token exists). A token issued from another version (D-231) is refused 422
+ * `automation_rule.restricted_token_stale`. A token of the stored version is replaced by the stored literal at the
+ * token's position (D-228 (1)), wherever the
  * condition now sits (any condition, any list position, any order). A token left out is simply removed. An unknown
  * token, the bare marker text `[restricted]`, or any other marker-like text is refused with 422
  * `automation_rule.restricted_marker_unknown` (en/ar problem text), so marker text is never stored as a literal. A
  * writer admitted to the record is never shown a token and edits the literal freely.
  */
 export function resolveRestrictedTokens(
-  stored: readonly AutomationCondition[] | null,
+  stored: { readonly conditions: readonly AutomationCondition[]; readonly version: number } | null,
   sent: AutomationRuleContentInput,
 ): AutomationRuleContentInput {
   const conditions = sent.conditions ?? [];
@@ -436,11 +455,16 @@ export function resolveRestrictedTokens(
   // version, not only the ones hidden from the writer now. A record that became hidden after the read keeps the other
   // tokens in place (the writer sends its plain id back, D-223); a record that became visible after the read is still
   // reached by the token the writer holds. Resolving a position the writer can read discloses nothing.
-  const positions = stored === null ? new Map<number, string>() : literalPositions(stored);
+  // D-231 (F-DG6-580): a token names the version it was issued from. Only a token of the version being replaced (the
+  // caller has already checked If-Match against `stored.version`) is resolved; a token of any other version is refused
+  // and never resolved against this version's positions, so a hidden literal is never swapped for another literal.
+  const positions = stored === null ? new Map<number, string>() : literalPositions(stored.conditions);
   const merged = mapLiterals(conditions, (v, at) => {
     if (!looksLikeRestrictedMarker(v)) return v;
-    const k = AUTOMATION_RESTRICTED_TOKEN_PATTERN.exec(v)?.[1];
-    const literal = k === undefined ? undefined : positions.get(Number(k));
+    const m = AUTOMATION_RESTRICTED_TOKEN_PATTERN.exec(v);
+    if (m === null || stored === null) throw automationRefusals.restrictedMarkerUnknown(at);
+    if (Number(m[1]) !== stored.version) throw automationRefusals.restrictedTokenStale(at);
+    const literal = positions.get(Number(m[2]));
     if (literal === undefined) throw automationRefusals.restrictedMarkerUnknown(at);
     return literal;
   });
@@ -524,7 +548,7 @@ export async function toRuleVersions(
   const shown = await redactConditionLiterals(
     db,
     principal,
-    rows.map((v) => contentOfRow(v).conditions),
+    rows.map((v) => ({ conditions: contentOfRow(v).conditions, version: v.version })),
   );
   const runs = await db
     .selectFrom("automation_dry_run")
@@ -742,7 +766,12 @@ async function updateVersion(
   if (current.status !== "draft") throw automationRefusals.notEditable();
   // T-DG6-BE-Z13 (D-226): each restricted token maps back to its hidden stored literal; unknown marker text is refused.
   const sent =
-    body.content === undefined ? undefined : resolveRestrictedTokens(contentOfRow(current).conditions, body.content);
+    body.content === undefined
+      ? undefined
+      : resolveRestrictedTokens(
+          { conditions: contentOfRow(current).conditions, version: current.version },
+          body.content,
+        );
   const content =
     sent === undefined
       ? contentOfRow(current)

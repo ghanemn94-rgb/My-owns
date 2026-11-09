@@ -19405,7 +19405,7 @@ paths:
     patch:
       tags: [automation]
       operationId: updateAutomationRuleVersion
-      summary: "Change the content of a draft version; a starter version takes parameters only (automation.configure). 409 automation_rule_version.not_editable; 422 automation_rule.human_only_action, trigger_unknown, action_unknown, condition_invalid, action_parameters_invalid, initiating_user_unavailable, service_permission_forbidden, starter_fixed, restricted_marker_unknown (an unknown restricted token or marker text; D-226)."
+      summary: "Change the content of a draft version; a starter version takes parameters only (automation.configure). 409 automation_rule_version.not_editable; 422 automation_rule.human_only_action, trigger_unknown, action_unknown, condition_invalid, action_parameters_invalid, initiating_user_unavailable, service_permission_forbidden, starter_fixed, restricted_marker_unknown (an unknown restricted token or marker text; D-226), restricted_token_stale (a restricted token issued from another version than the one If-Match names; reload and re-apply; D-231)."
       security:
         - sessionCookie: []
           csrfToken: []
@@ -20053,7 +20053,7 @@ paths:
     get:
       tags: [notifications]
       operationId: getMyNotificationDigest
-      summary: "One of your digests with the notifications it delivered (own digests only; others 404)."
+      summary: "One of your digests with the notifications it delivered (own digests only; others 404). A digested notification about a record you are not admitted to is redacted as in listMyInbox (inbox.restricted, params {}, the transformation home as link, includesRestrictedRecords; D-226, D-231)."
       responses:
         "200":
           description: "OK."
@@ -27657,7 +27657,7 @@ components:
       additionalProperties: false
       properties:
         triggerCodes: { type: array, minItems: 1, maxItems: 6, items: { type: string } }
-        conditions: { type: array, maxItems: 20, items: { type: object, additionalProperties: false, required: [field, op], properties: { field: { type: string, pattern: "^[a-z][a-zA-Z0-9]{0,39}$" }, op: { type: string, enum: [eq, neq, in, gt, gte, lt, lte, present, absent] }, value: { description: "A string, a decimal string, a boolean or an array of up to 50 strings; numbers are decimal strings, never floats. In a response, a literal (or list element) that names a sensitive record, or a child that carries one's values, the reader is not admitted to is shown as the opaque token \"[restricted:k]\" in place (k = its 1-based position among all literals of the stored version in reading order: conditions in order, a scalar value counts as one, each list element as one; it does not shift when a grant or sensitivity changes and reveals nothing, D-228 (1)), and the version carries includesRestrictedRecords. In an update, each token is mapped back to the stored literal at its position wherever the condition now sits (any condition, order or list position); a token left out is removed. An unknown token, the bare marker text \"[restricted]\" or any other text starting with \"[restricted\" is refused with 422 automation_rule.restricted_marker_unknown (also on a rule create), so marker text is never stored. A literal is free text and is not existence-checked on write for any id, so a writer who already holds a hidden record's id sees a token on read (accepted, D-223) (T-DG6-BE-Z12B, T-DG6-BE-Z13; F-DG6-480, F-DG6-520, F-DG6-541, F-DG6-560; ADR-0051 §2; D-218, D-222, D-223, D-226, D-228).", oneOf: [{ type: string, maxLength: 500 }, { type: boolean }, { type: array, maxItems: 50, items: { type: string, maxLength: 500 } }] } } } }
+        conditions: { type: array, maxItems: 20, items: { type: object, additionalProperties: false, required: [field, op], properties: { field: { type: string, pattern: "^[a-z][a-zA-Z0-9]{0,39}$" }, op: { type: string, enum: [eq, neq, in, gt, gte, lt, lte, present, absent] }, value: { description: "A string, a decimal string, a boolean or an array of up to 50 strings; numbers are decimal strings, never floats. In a response, a literal (or list element) that names a sensitive record, or a child that carries one's values, the reader is not admitted to is shown as the opaque version-bound token \"[restricted:<version>:<k>]\" in place (<version> = the row version, the ETag, of the rule version it was issued from, D-231; k = its 1-based position among all literals of that stored version in reading order: conditions in order, a scalar value counts as one, each list element as one; it does not shift when a grant or sensitivity changes and reveals nothing, D-228 (1)), and the version carries includesRestrictedRecords. In an update, each token whose <version> is the version being replaced (If-Match) is mapped back to the stored literal at its position wherever the condition now sits (any condition, order or list position); a token left out is removed. A token issued from any other version (for example one kept by a client across an earlier save or a 409) is refused with 422 automation_rule.restricted_token_stale and is never resolved against another version's positions: reload the version and re-apply the change. An unknown token, the bare marker text \"[restricted]\" or any other text starting with \"[restricted\" is refused with 422 automation_rule.restricted_marker_unknown (also on a rule create), so marker text is never stored. A literal is free text and is not existence-checked on write for any id, so a writer who already holds a hidden record's id sees a token on read (accepted, D-223) (T-DG6-BE-Z12B, T-DG6-BE-Z13, T-DG6-BE-Z14; F-DG6-480, F-DG6-520, F-DG6-541, F-DG6-560, F-DG6-580; ADR-0051 §2; D-218, D-222, D-223, D-226, D-228, D-231).", oneOf: [{ type: string, maxLength: 500 }, { type: boolean }, { type: array, maxItems: 50, items: { type: string, maxLength: 500 } }] } } } }
         actions: { type: array, minItems: 1, maxItems: 10, items: { type: object, additionalProperties: false, required: [type], properties: { type: { type: string, pattern: "^[a-z][a-z0-9_]{2,63}$" }, parameters: { type: object, description: "Validated by the action type schema (ADR-0043 §2)." }, handlers: { type: array, maxItems: 6, items: { type: string }, description: "starter_handler only (read-only)." } } } }
         runAs: { type: string, enum: [initiating_user, service] }
         servicePermissionCodes: { type: array, maxItems: 20, items: { $ref: "#/components/schemas/PermissionCode" } }
@@ -27719,7 +27719,7 @@ components:
         summary: { $ref: "#/components/schemas/AutomationRuleSummary" }
         version: { $ref: "#/components/schemas/Version" }
         updatedAt: { $ref: "#/components/schemas/Timestamp" }
-        includesRestrictedRecords: { type: boolean, const: true, description: "Present (true) when a condition literal is shown as a restricted token \"[restricted:k]\" (k = its position among all literals of the stored version, D-226, D-228 (1); see the condition value; and the summary as \"a restricted record\" / \"سجل مقيد\") because it names a record the reader is not admitted to; the stored conditions and contentSha256 are unchanged (T-DG6-BE-Z12B; F-DG6-480; ADR-0051 §2; D-218, D-222; label access.includesRestrictedRecords)." }
+        includesRestrictedRecords: { type: boolean, const: true, description: "Present (true) when a condition literal is shown as a restricted token \"[restricted:<version>:<k>]\" (<version> = this version's row version, D-231; k = its position among all literals of the stored version, D-226, D-228 (1); see the condition value; and the summary as \"a restricted record\" / \"سجل مقيد\") because it names a record the reader is not admitted to; the stored conditions and contentSha256 are unchanged (T-DG6-BE-Z12B; F-DG6-480; ADR-0051 §2; D-218, D-222; label access.includesRestrictedRecords)." }
     AutomationRuleVersionPage:
       type: object
       required: [items, nextCursor]
@@ -28163,10 +28163,11 @@ components:
       additionalProperties: false
       properties:
         notificationId: { $ref: "#/components/schemas/Uuid" }
-        messageKey: { type: string }
+        messageKey: { type: string, description: "i18n key; inbox.restricted for a restricted notification (see includesRestrictedRecords), with messageParams {}." }
         messageParams: { type: object }
-        linkPath: { type: string }
+        linkPath: { type: string, description: "Relative in-app link. For a restricted notification the transformation home /transformations/<transformationId>, else /my-work (as in listMyInbox)." }
         createdAt: { $ref: "#/components/schemas/Timestamp" }
+        includesRestrictedRecords: { type: boolean, const: true, description: "Present (true) when the digested notification is about a record the recipient is not admitted to, by the same decision as listMyInbox and markInboxNotificationRead: the messageKey is then inbox.restricted, messageParams is {} and linkPath is the transformation home (else /my-work); notificationId and createdAt are unchanged and the stored row is never modified (T-DG6-BE-Z14; code-security observation 600; ADR-0051 §3; D-226, D-231; label access.includesRestrictedRecords)." }
     NotificationDigest:
       type: object
       required: [id, windowStart, windowEnd, count, items]
@@ -33440,7 +33441,7 @@ components:
         readAt: { $ref: "#/components/schemas/NullableTimestamp" }
         createdAt: { $ref: "#/components/schemas/Timestamp" }
         version: { $ref: "#/components/schemas/Version" }
-        includesRestrictedRecords: { type: boolean, const: true, description: "Present (true) when the notification is about a record the recipient is not admitted to: its target, or any id in its link, parameters or stored target that names a sensitive record or a child that carries one's values (a Finance validation, a benefit overlap, ...), or an action whose corrective case is such a record (D-227 (3)), or the work item it announces. The messageKey is then inbox.restricted, messageParams is {} and linkPath is the transformation home (else /my-work); id, workItemId, readAt and version are unchanged. The same in listMyInbox and markInboxNotificationRead (T-DG6-BE-Z13; F-DG6-540; ADR-0051 §2, §3; D-218, D-222, D-226, D-227; label access.includesRestrictedRecords)." }
+        includesRestrictedRecords: { type: boolean, const: true, description: "Present (true) when the notification is about a record the recipient is not admitted to: its target, or any id in its link, parameters or stored target that names a sensitive record or a child that carries one's values (a Finance validation, a benefit overlap, ...), or an action whose corrective case is such a record (D-227 (3)), or the work item it announces. The messageKey is then inbox.restricted, messageParams is {} and linkPath is the transformation home (else /my-work); id, workItemId, readAt and version are unchanged. The same in listMyInbox, markInboxNotificationRead and every item of getMyNotificationDigest (T-DG6-BE-Z13, T-DG6-BE-Z14; F-DG6-540; ADR-0051 §2, §3; D-218, D-222, D-226, D-227; label access.includesRestrictedRecords)." }
     InboxPage:
       type: object
       required: [items, nextCursor, unreadCount]

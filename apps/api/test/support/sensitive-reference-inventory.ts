@@ -809,7 +809,7 @@ export const SENSITIVE_REFERENCE_INVENTORY: readonly InventoryRow[] = [
     ],
     before: "served raw to rule authors (the version content and the rule's readable summary)",
     status: "redacted",
-    fix: "D-222, D-226, D-228 (1) (T-DG6-BE-Z12B, BE-Z13, BE-Z13C): automation/versions.ts shows each hidden literal as the token [restricted:k] (k = position among all literals of the version), + marker; re-save: resolveRestrictedTokens maps each token back to its literal; an unknown token or the bare marker text is refused 422 (automation_rule.restricted_marker_unknown).",
+    fix: "D-222, D-226, D-228 (1) (T-DG6-BE-Z12B, BE-Z13, BE-Z13C): automation/versions.ts shows each hidden literal as the token [restricted:<version>:<k>] (k = position among all literals of the version; bound to the row version, D-231, T-DG6-BE-Z14), + marker; re-save: resolveRestrictedTokens maps each token back to its literal; an unknown token or the bare marker text is refused 422 (automation_rule.restricted_marker_unknown); a token of another version is refused 422 (automation_rule.restricted_token_stale).",
     exercise: `${Z12B}#automation_rule_version.conditions`,
   },
   cannot("automation_rule_version.parameters", "json", "numeric and text parameters of a starter"),

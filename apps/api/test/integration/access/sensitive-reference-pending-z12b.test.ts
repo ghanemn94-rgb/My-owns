@@ -267,9 +267,10 @@ describe("T-DG6-BE-Z12B: automation_rule_version.conditions (D-222, D-226)", () 
   it("the author, not admitted, sees a token in place of each hidden literal, the label in the summary, marked", async () => {
     const one = ok(await send("GET", `${V()}/1`, { session: admin.session }));
     expect(one.content.conditions).toEqual([
-      // T-DG6-BE-Z13, T-DG6-BE-Z13C (D-226, D-228 (1)): opaque per-version tokens; k = the position among all literals.
-      { field: "benefitId", op: "eq", value: "[restricted:1]" },
-      { field: "benefitId", op: "in", value: [P.benefitId, "[restricted:3]"] },
+      // T-DG6-BE-Z13, BE-Z13C, BE-Z14 (D-226, D-228 (1), D-231): opaque tokens bound to the row version they were
+      // issued from; k = the position among all literals.
+      { field: "benefitId", op: "eq", value: `[restricted:${one.version}:1]` },
+      { field: "benefitId", op: "in", value: [P.benefitId, `[restricted:${one.version}:3]`] },
       { field: "severity", op: "eq", value: "high" },
     ]);
     expect(one.includesRestrictedRecords).toBe(true);
@@ -310,14 +311,18 @@ describe("T-DG6-BE-Z12B: automation_rule_version.conditions (D-222, D-226)", () 
       { field: "benefitId", op: "in", value: [P.benefitId, S.benefitId] },
       { field: "severity", op: "eq", value: "critical" },
     ]);
-    // T-DG6-BE-Z13 (D-226): marker text where no token of this version stood is refused, never stored.
+    // T-DG6-BE-Z13 (D-226): marker text where no token of this version stood is refused, never stored. The base is the
+    // saved response, whose tokens name the new version (D-231).
     const extra = await send("PATCH", `${V()}/1`, {
       session: admin.session,
       headers: ifm(saved.version),
       body: {
         content: {
-          ...content,
-          conditions: [...content.conditions, { field: "severity", op: "neq", value: AUTOMATION_RESTRICTED_LITERAL }],
+          ...saved.content,
+          conditions: [
+            ...saved.content.conditions,
+            { field: "severity", op: "neq", value: AUTOMATION_RESTRICTED_LITERAL },
+          ],
         },
       },
     });
