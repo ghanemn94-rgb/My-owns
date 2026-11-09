@@ -1,0 +1,25 @@
+# 40-probe-r11-token-key-adversarial  started 2026-11-09T19:20:07Z  node=v22.22.0  LANG=<unset> LC_ALL=<unset>  load=13.31 8.73 5.14  commit=33db1a46ca498d917d9e33793e9771533269c446
+$ tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration apps/api/test/integration/access/cs-r11-token-key-adversarial.test.ts
+port-policy: PostgreSQL listening on port 32265 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.HPtFgL/claude-0/r/w1
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw9nblf6_4bf23c45 (server_encoding UTF8); applied 119 migrations to a fresh database
+stdout | apps/api/test/integration/access/cs-r11-token-key-adversarial.test.ts > CS-R11 adversarial probe of issuer-bound restricted tokens (BE-Z15, 0127) > (o1) observation: dry run on a chosen sample confirms a guessed hidden id (conditionsMet)
+O1 dry-run statuses [33m201[39m [33m201[39m conditionsMet [33mtrue[39m [33mfalse[39m outcome fail fail codes [90mundefined[39m [90mundefined[39m leaks [] []
+
+ ✓ |integration| apps/api/test/integration/access/cs-r11-token-key-adversarial.test.ts (8 tests) 5905ms
+   ✓ CS-R11 adversarial probe of issuer-bound restricted tokens (BE-Z15, 0127) > (k1) the per-row key is never served or audited  1258ms
+   ✓ CS-R11 adversarial probe of issuer-bound restricted tokens (BE-Z15, 0127) > (k3) a draft created from a version draws its own key  397ms
+   ✓ CS-R11 adversarial probe of issuer-bound restricted tokens (BE-Z15, 0127) > (t1) malformed tokens are refused restricted_marker_unknown and store nothing  662ms
+   ✓ CS-R11 adversarial probe of issuer-bound restricted tokens (BE-Z15, 0127) > (t2) two concurrent identical saves: one 200, one 409; the hidden literal is kept  320ms
+   ✓ CS-R11 adversarial probe of issuer-bound restricted tokens (BE-Z15, 0127) > (t3) grant given and revoked between read and save: held tokens resolve to the same literal  491ms
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  19:20:12
+   Duration  32.98s (transform 9.58s, setup 0ms, collect 21.20s, tests 5.90s, environment 0ms, prepare 237ms)
+
+exit=0  finished 2026-11-09T19:20:47Z
+0

@@ -16628,12 +16628,108 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG6/round-10/domain-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "OPEN",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-09T12:30:00Z",
           "status": "OPEN",
           "note": "Raised in DG6 round 10 by domain-reviewer while challenging D-231 (the assignment asks for 'a token sequence that loses or misplaces a hidden literal after edits'). Medium (D-192): the same integrity class as F-DG6-520 and F-DG6-580, reached through the real editor and the real publish state machine in EN and AR. F-DG6-580's own reproductions (the same draft re-saved, and re-sent after a 409) are fixed, and are verified CLOSED in this round's verifications sidecar."
+        },
+        {
+          "at": "2026-11-09T20:35:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 11: PASS"
+        }
+      ],
+      "verification": {
+        "by_role": "domain-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG6-T-DG6-REV-DOM-R11-domain-reviewer-20261109T190802Z-ccbf2477",
+          "session_id": "ccbf2477-5b41-4c0d-96c6-87cd229b444d"
+        },
+        "at": "2026-11-09T20:35:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG6/domain/round-11/int-tokens.log",
+          "docs/delivery/test-evidence/DG6/domain/round-11/probes/dom-r11-token-binding.test.ts.txt",
+          "docs/delivery/test-evidence/DG6/domain/round-11/node22-tokens.log",
+          "docs/delivery/test-evidence/DG6/domain/round-11/mutants-f640.log",
+          "docs/delivery/test-evidence/DG6/domain/round-11/probe-editor-tokens.log",
+          "docs/delivery/test-evidence/DG6/domain/round-11/probes/dom-r11-editor-tokens.spec.ts.txt",
+          "docs/delivery/test-evidence/DG6/domain/round-11/screens/en/dom-r11-C1-published-v1.png",
+          "docs/delivery/test-evidence/DG6/domain/round-11/screens/en/dom-r11-C4-token-pasted.png",
+          "docs/delivery/test-evidence/DG6/domain/round-11/screens/en/dom-r11-C6-draft-v2-after-reload.png",
+          "docs/delivery/test-evidence/DG6/domain/round-11/screens/ar/dom-r11-C1-published-v1.png",
+          "docs/delivery/test-evidence/DG6/domain/round-11/screens/ar/dom-r11-C4-token-pasted.png",
+          "docs/delivery/test-evidence/DG6/domain/round-11/screens/ar/dom-r11-C6-draft-v2-after-reload.png"
+        ],
+        "note": "Re-run on candidate c45d73b8 (source 33db1a46; BE-Z15, D-233). (1) The round-10 API reproduction, with its token literals moved to [restricted:<24 hex>:<k>] and its behaviour assertions kept. The round-10 soft assertions of (i) and (j) are now hard (probes/dom-r11-token-binding.test.ts.txt; int-tokens.log). (j) Published v1 [P, S, H] (row version 4) and draft v2 after removing S and re-saving to row version 4 issue different tags for the same k ('[restricted:7e36…:2]' vs '[restricted:8b58…:2]'). Pasting v1's token for S into v2 with If-Match 4 gives 422 automation_rule.restricted_token_stale at /content/conditions/2/value, and v2 stays [P, H], never [P, H, H]. (i) Cross-rule: rules A and B at the same row version 1 issue different tags. A's token pasted into B gives 422 stale, and B is unchanged. New adversarial cases: (k) a token from a discarded draft v2 pasted into the new draft v3 at the same row version gives 422 stale, nothing stored. (l) I computed the tag independently, HMAC-SHA256(row key, 'mth.automation.restricted-token.v1' LF id LF version)[0:24], from the database key. It equals the served tag for two rows, the tags differ between rows and between revisions, and the key keeps its value across a save. The key appears in neither hex, base64 nor by column name in the rule list, rule, version list, version (author and TO) or the version's audit events. (m) A forged random 24-hex tag gives 422 stale; an upper-case, 23- or 25-digit tag gives marker_unknown; the retired [restricted:<version>:<k>] form gives stale; nothing stored. (n) Two non-admitted readers of the same row at the same revision get the same token, and the second can save with it (S kept). F-DG6-580's sequences (g, g2) still pass. 63/63 with the candidate's z13, z14, z15, z12b, digest, inbox and deep-link suites. Node 22.22.0 and Node 24.21.0 are identical (21/21 each). The first Node 22 run failed my probe's own assertion in (l): it checked that the token text has no '1:', but a hex tag can end in '1'. I corrected the assertion and re-ran both versions green (node22-tokens.log). (2) The round-10 real-UI reproduction (part C), on the production-initialized stack in EN and AR (probe-editor-tokens.log; screens/*/dom-r11-C*): through the real publish state machine, the token copied from the published v1 page and pasted into draft v2 in the editor is refused 422 stale, v2 stays [P, H] at row version 4, and the form reloads. Parts A and B (the F-DG6-580 re-saves and the 409 alert) pass. What the author is told on that refusal is untrue; that is raised separately as F-DG6-700 (Low) and is not part of this finding. (3) Mutants (mutants-f640.log): M1 reverts the tag to a version-only value (no key, no row id). My (i), (j), (k), (l) and the candidate's z15 (a), (b), (c) fail: 7 of 16. M2 removes the tag comparison. 14 of 21 fail, across my probe, z15 and z14. After each, versions.ts is restored and the git diff is empty."
+      }
+    },
+    {
+      "id": "F-DG6-700",
+      "stage_id": "DG6",
+      "requirement": "REQ-S15-011",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "When the rule editor's save is refused 422 automation_rule.restricted_token_stale (a token pasted from another version or rule, the F-DG6-640 path, or a pre-0127 token), the editor suppresses the corrected problem text and tells the author in EN and AR 'This rule changed after you opened it … re-apply your change', which is untrue (the If-Match matched, the rule did not change); re-applying the same change gives the same false message again",
+      "reproduction": "Candidate c45d73b8 (source 33db1a46). Production-initialized stack (apps/web/e2e/support/with-stack.sh), chromium-en and chromium-ar; probe docs/delivery/test-evidence/DG6/domain/round-11/probes/dom-r11-editor-tokens.spec.ts.txt part C, log probe-editor-tokens.log. A synthetic ADM_METHOD author, not admitted to sensitive records, publishes rule version 1 = [benefitId neq P, neq S, neq H] (S and H marked sensitive by the TO) through the real dry run, submit, TO review and publish. In draft version 2 the author clicks 'Remove condition 2' (S) and saves three times (row version 4). To restore 'exclude S' the author copies the token shown for S on the published version 1 page ('[restricted:<24 hex>:2]'), clicks 'Add a condition', enters benefitId / does not equal / the token, and clicks 'Save the draft'. Then the author does what the alert says: re-applies the same change and saves again.",
+      "expected": "The integrity behaviour is correct and must stay: the PATCH is refused 422 restricted_token_stale and nothing is stored (F-DG6-640 is fixed). What the author is told must be true for the release it ships in, in EN and AR (the F-DG4-160 standard; CLAUDE.md honesty rules). D-233 / T-DG6-BE-Z15 corrected the problem text for exactly this case ('… not issued for this version as it now stands (it comes from an earlier save, another version or another rule): reload the version and re-apply your change'), but the editor never shows it. For a 422 stale (If-Match matched), the editor should say that a restricted value was not issued for this version (for example, that a restricted value copied from another version or rule cannot be reused here, and that only someone admitted to the record can add it), not that the rule changed. A 409 can keep the current 'changed' alert.",
+      "actual": "PATCH If-Match 4 -> 422 automation_rule.restricted_token_stale with the corrected detail (log: 'C last PATCH status=422 problem=…'). Draft v2 stays [P, H] at row version 4, so the rule did not change. RulePage.tsx EditContent maps 409 and 422-stale alike through isChangedSinceRead: runner.clear() drops the problem text, and the form shows only workflowsP5.rules.changedReapply: 'This rule changed after you opened it. The form now shows the current version: re-apply your change, then save the draft again.' / 'تغيّرت هذه القاعدة بعد أن فتحتها. يعرض النموذج الآن الإصدار الحالي: أعد تطبيق تعديلك، ثم احفظ المسودة مرة أخرى.' (screens/en/dom-r11-C4-after-save.png, screens/ar/dom-r11-C4-after-save.png). Following the instruction (re-apply, save) gives the same 422 and the same alert again (…-C5-reapply-after-save.png). The editor reloads after every successful save, so a 422 stale is reached from the UI only by a pasted foreign token or by a token issued before migration 0127. In both cases the rule has not changed, so the alert is false in every UI case where a 422 triggers it. ADR-0051 amendment part B and the BE-Z15 handback (item 2; 'the real-browser flow was not re-run with a pasted token') document the alert; neither notices that it is untrue for the new cases. Bounded: no stored value changes, no hidden literal is disclosed or misplaced, no business approval is affected. Low, by the F-DG4-160 precedent (untrue user-facing text, EN and AR). Suggested repair: in EditContent, show changedReapply for a 409 only; for a 422 stale, reload too but show a separate en/ar message (or the problem text) that explains that the restricted value cannot be used in this version. Pin both in rule-editor-tokens-z14.test.tsx.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-11/probe-editor-tokens.log",
+        "docs/delivery/test-evidence/DG6/domain/round-11/probes/dom-r11-editor-tokens.spec.ts.txt",
+        "docs/delivery/test-evidence/DG6/domain/round-11/screens/en/dom-r11-C4-token-pasted.png",
+        "docs/delivery/test-evidence/DG6/domain/round-11/screens/en/dom-r11-C4-after-save.png",
+        "docs/delivery/test-evidence/DG6/domain/round-11/screens/en/dom-r11-C5-reapply-after-save.png",
+        "docs/delivery/test-evidence/DG6/domain/round-11/screens/ar/dom-r11-C4-token-pasted.png",
+        "docs/delivery/test-evidence/DG6/domain/round-11/screens/ar/dom-r11-C4-after-save.png",
+        "docs/delivery/test-evidence/DG6/domain/round-11/screens/ar/dom-r11-C5-reapply-after-save.png",
+        "apps/web/src/pages/automation/RulePage.tsx",
+        "apps/web/src/i18n/en/workflowsP5.json",
+        "apps/web/src/i18n/ar/workflowsP5.json",
+        "apps/web/src/i18n/en/problems.json"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG6/round-11/domain-reviewer.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-09T20:20:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG6 round 11 by domain-reviewer. The assignment asks reviewers to challenge D-226 to D-234 for 'a misleading screen'. F-DG6-640 itself is CLOSED_VERIFIED in this round: the token is refused and nothing is stored. This finding covers only what the author is told on that refusal. Low and non-blocking (F-DG4-160 precedent). It is not accepted as an observation by the reporter, because the fix is small and the text is untrue in EN and AR."
+        }
+      ]
+    },
+    {
+      "id": "F-DG6-740",
+      "stage_id": "DG6",
+      "requirement": "REQ-S20-014",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Rule editor: a 422 restricted_token_stale that is NOT a concurrent change (a token pasted from another rule or version, or one issued before 0127) is shown as 'This rule changed after you opened it' in en and ar",
+      "reproduction": "Real demo stack (e2e/support/with-demo-stack.sh, AUTH_MODE=dev), roaming.user.cm with a synthetic ADM_METHOD grant. Probe docs/delivery/test-evidence/DG6/qa/tests/round-11/zz-qa-dg6r11-restricted-mywork-automation.spec.ts step F, chromium-en and chromium-ar, locale unset (run 40) and C.UTF-8 (run 41): (1) draft rule A version 1 holds a condition whose literal names a benefit the author may not read, so the editor shows the issuer-bound token [restricted:<tagA>:1]; (2) a second rule B with a hidden literal is brought to the same row version as A's draft (the F-DG6-640 coincidence); (3) nobody else touches rule A; (4) in A's editor the author adds a condition and pastes B's token [restricted:<tagB>:1], then clicks 'Save the draft'.",
+      "expected": "The save is refused (422 automation_rule.restricted_token_stale). That is correct, and nothing is stored. The screen should then tell the author what happened: the value is a restricted-record token that was not issued for this version (it comes from another rule, another version or an earlier save). BE-Z15 corrected the en/ar problem texts to say exactly that (problems.automation_rule__restricted_token_stale). The screen should not claim that the rule was changed by someone else.",
+      "actual": "The editor maps every 422 restricted_token_stale to the same branch as a 409 (RulePage.tsx isChangedSinceRead). It shows the alert workflowsP5.rules.changedReapply: en 'This rule changed after you opened it. The form now shows the current version: re-apply your change, then save the draft again.' and ar 'تغيّرت هذه القاعدة بعد أن فتحتها. يعرض النموذج الآن الإصدار الحالي: أعد تطبيق تعديلك، ثم احفظ المسودة مرة أخرى.' It also reloads the form, which discards the author's other unsaved edits along with the pasted token. Rule A did not change: its row version is the same before and after, and the stored conditions are unchanged. So the alert states something false, and the corrected problem text is never shown in the editor. The same text appears for a token issued before migration 0127 (D-233), where the rule did not change either. No hidden literal is lost, swapped or disclosed: the next save sends only A's own token and stores A's own literal (asserted in the probe). The impact is a misleading message and lost unsaved form edits in an edge case the editor never offers (it never copies a token between rules). Hence Low, not a data or access defect. The candidate's own web test rule-editor-tokens-z14.test.tsx (Z15 case) asserts this changedReapply text for the pasted-token case, so the behaviour is as built, not a regression.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-11/40-e2e-demo-unset.log",
+        "docs/delivery/test-evidence/DG6/qa/round-11/41-e2e-demo-cutf8.log",
+        "docs/delivery/test-evidence/DG6/qa/round-11/shots/F-rule-editor-foreign-token-en.png",
+        "docs/delivery/test-evidence/DG6/qa/round-11/shots/F-rule-editor-foreign-token-ar.png",
+        "docs/delivery/test-evidence/DG6/qa/tests/round-11/zz-qa-dg6r11-restricted-mywork-automation.spec.ts",
+        "apps/web/src/pages/automation/RulePage.tsx"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG6/round-11/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-09T22:40:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG6 round 11 on candidate c45d73b8 (source 33db1a46). Low, not mandatory; not blocking in my judgement. Reproduced on the real demo stack in en and ar under both locale settings."
         }
       ]
     }

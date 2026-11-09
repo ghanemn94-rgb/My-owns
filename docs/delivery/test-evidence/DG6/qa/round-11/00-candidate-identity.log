@@ -1,0 +1,22 @@
+## 2026-11-09T19:09:12Z qa-verifier DG6 round 11 candidate identity
+$ sha256sum docs/delivery/assignments/DG6/round-11/qa-verifier.md
+67647d3465ef7861d46ba39aea22731e15b156d56a9a273bd9c2307ff40874ce  docs/delivery/assignments/DG6/round-11/qa-verifier.md
+$ git rev-parse HEAD
+4492cdfd01ec1d6e04a0cc727032f23c779835e6
+$ git log --oneline 33db1a46..HEAD
+4492cdfd0 DG6 round 11: freeze c45d73b8, assignments
+$ git diff --stat 33db1a46..HEAD
+ .../DG6/round-11/code-security-reviewer.md         |   155 +
+ .../assignments/DG6/round-11/domain-reviewer.md    |   157 +
+ .../assignments/DG6/round-11/qa-verifier.md        |   139 +
+ .../candidates/DG6/c45d73b838dc20dc.manifest.json  | 13863 +++++++++++++++++++
+ docs/delivery/stages.json                          |    27 +-
+ 5 files changed, 14336 insertions(+), 5 deletions(-)
+$ node tools/gates/candidate.mjs --stage DG6 (repository, HEAD)
+{"stage":"DG6","source":"working-tree","candidate_id":"sha256:c45d73b838dc20dce1d618faedcea9370feed96d1e6108d9053c24d75020ad2b","files":2769}
+exit=0
+$ (clone $TMPDIR/c: git clone --shared --no-checkout; sparse-checkout excluding docs/delivery/{runs,test-evidence,reviews,handbacks}/ and trading_agent/ (none in the manifest); git checkout 33db1a46ca498d917d9e33793e9771533269c446)
+33db1a46ca498d917d9e33793e9771533269c446
+{"stage":"DG6","source":"working-tree","candidate_id":"sha256:c45d73b838dc20dce1d618faedcea9370feed96d1e6108d9053c24d75020ad2b","files":2769}
+exit=0
+manifest entries missing from the clone: 0 (python check over c45d73b838dc20dc.manifest.json entries)

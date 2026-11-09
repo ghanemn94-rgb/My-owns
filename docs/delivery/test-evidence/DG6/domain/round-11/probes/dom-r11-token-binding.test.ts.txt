@@ -1,0 +1,368 @@
+// DOMAIN REVIEW PROBE (DG6 round 11, domain-reviewer, T-DG6-REV-DOM-R11). Not part of the candidate; copied into a
+// disposable clone only as apps/api/test/integration/zz-domain/dom-r11-token-binding.test.ts. Every value is SYNTHETIC.
+// Marking a record sensitive or granting access is an access decision, never a business approval (G1-G6); nothing
+// here touches DG0-DG7.
+//
+// F-DG6-640 re-run on candidate c45d73b8 (D-233): the round-10 probe dom-r10-token-binding.test.ts.txt with its token
+// literals moved to the issuer-tag form [restricted:<tag>:<k>] (24 lowercase hex). The behaviour assertions stand, and
+// the round-10 soft assertions of (i) and (j) are now hard: refused 422 restricted_token_stale and nothing stored.
+// New adversarial sequences:
+//   (k)  DISCARDED -> NEW DRAFT: a token from discarded draft v2 (row version 1) pasted into new draft v3 (row version 1)
+//   (l)  the tag is the ADR-0051 D-233 formula (HMAC-SHA256(row key, domain LF id LF version), 96 bits), computed here
+//        independently from the database key; differs per row and per revision; the key never appears in any served
+//        body or in the audit trail of the version
+//   (m)  a forged tag (24 random hex, uppercase, 23/25 digits) is refused, nothing stored
+//   (n)  a token of the SAME row at the SAME row version issued to another reader (the grantor) resolves identically
+import { createDb, insertAuditEvent, type Db } from "@mth/db";
+import { createHmac, randomBytes, randomUUID } from "node:crypto";
+import { v7 as uuidv7 } from "uuid";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { call, createUser, grant, seedWorld, signIn, startApi, type Res, type Session, type TestApi, type World } from "../../support/harness.ts";
+import { ifm } from "../../support/p2-fixtures.ts";
+import { launchedInitiative, pendingBenefit, seedClosureWorld, type ClosureWorld } from "../contract/p4-exercises-be-j.ts";
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Body = any;
+type Cond = { field: string; op: string; value?: string | string[] };
+let api: TestApi;
+let owner: Db;
+let w: World;
+let c: ClosureWorld;
+let ini: Awaited<ReturnType<typeof launchedInitiative>>;
+let author: { id: string; session: Session };
+const names = new Map<string, string>();
+const R = "/api/v1/admin/automation-rules";
+const TOKEN = /^\[restricted:([0-9a-f]{24}):([1-9][0-9]*)\]$/;
+const SYSTEM = { actorType: "system" as const, actorUserId: null, source: "migration" as const };
+const send = (m: string, u: string, o?: Parameters<typeof call>[3]) => call<Body>(api.app, m, u, o);
+const ok = (res: Res<Body>, status = 200) => {
+  expect(res.status, JSON.stringify(res.body).slice(0, 600)).toBe(status);
+  return res.body as Body;
+};
+const mask = (x: unknown) => {
+  let s = JSON.stringify(x) ?? "undefined";
+  for (const [id, n] of names) s = s.replaceAll(id, `<${n}>`);
+  return s;
+};
+const log = (...a: unknown[]) => console.log("DOM-R11", ...a);
+const neq = (v: string): Cond => ({ field: "benefitId", op: "neq", value: v });
+async function benefit(name: string): Promise<string> {
+  const id = (await pendingBenefit(api, c, ini)).id as string;
+  names.set(id, name);
+  return id;
+}
+async function markSensitive(id: string) {
+  ok(
+    await send("PUT", `${c.b.base}/records/benefit/${id}/sensitivity`, {
+      session: c.s.to.session,
+      headers: ifm(0),
+      body: { isSensitive: true, reason: "Synthetic commercially sensitive benefit (DOM-R11)" },
+    }),
+  );
+}
+const action = { type: "create_task", parameters: { assigneeRole: "TL", messageKey: "automation.message.follow_up" } };
+async function newRule(conditions: Cond[]): Promise<string> {
+  const rule = ok(
+    await send("POST", R, {
+      session: author.session,
+      body: {
+        code: `test.domr11.${randomUUID().slice(0, 8)}`,
+        nameEn: "Synthetic exclusion rule R11",
+        nameAr: "قاعدة استثناء تجريبية",
+        scopeLevel: "organization",
+        organizationId: c.b.organizationId,
+        ownerUserId: author.id,
+        content: { triggerCodes: ["benefit.variance_evaluated"], conditions, actions: [action], runAs: "service" },
+      },
+    }),
+    201,
+  );
+  return rule.id;
+}
+const row = async (ruleId: string, versionNo = 1) =>
+  (await owner
+    .selectFrom("automation_rule_version")
+    .select(["id", "conditions", "version", "restricted_token_key"])
+    .where("automation_rule_id", "=", ruleId)
+    .where("version_no", "=", versionNo)
+    .executeTakeFirstOrThrow()) as { id: string; conditions: Cond[]; version: number; restricted_token_key: Buffer };
+const stored = async (ruleId: string, versionNo = 1) => {
+  const r = await row(ruleId, versionNo);
+  return { conditions: r.conditions, version: r.version };
+};
+const read = async (ruleId: string, versionNo = 1) =>
+  ok(await send("GET", `${R}/${ruleId}/versions/${versionNo}`, { session: author.session }));
+const patch = (ruleId: string, version: number, content: Body, versionNo = 1) =>
+  send("PATCH", `${R}/${ruleId}/versions/${versionNo}`, {
+    session: author.session,
+    headers: ifm(version),
+    body: { content, changeSummary: "Synthetic domain probe R11" },
+  });
+async function bumpTo(ruleId: string, target: number, versionNo = 1) {
+  for (;;) {
+    const v = await read(ruleId, versionNo);
+    if (v.version >= target) return v;
+    ok(await patch(ruleId, v.version, v.content, versionNo));
+  }
+}
+/** Independent implementation of the ADR-0051 D-233 tag formula (not the API's restrictedTokenTag). */
+const myTag = (key: Buffer, id: string, version: number) =>
+  createHmac("sha256", key).update(`mth.automation.restricted-token.v1\n${id}\n${version}`).digest("hex").slice(0, 24);
+async function publish(ruleId: string, versionNo: number) {
+  await owner.transaction().execute(async (tx) => {
+    const v = await tx.selectFrom("automation_rule_version").selectAll().where("automation_rule_id", "=", ruleId).where("version_no", "=", versionNo).executeTakeFirstOrThrow();
+    const runId = uuidv7();
+    await tx.insertInto("automation_dry_run").values({ id: runId, automation_rule_version_id: v.id, content_sha256: v.content_sha256, sample_event: JSON.stringify({ fixture: true }), outcome: "pass", run_by: author.id }).execute();
+    await insertAuditEvent(tx, SYSTEM, { action: "test.seed", recordType: "automation_dry_run", recordId: runId, organizationId: c.b.organizationId });
+    let version = v.version;
+    for (const s of [
+      { status: "in_review", submitted_at: new Date() },
+      { status: "approved", reviewed_by: w.grantor.id, reviewed_at: new Date() },
+      { status: "published", published_by: author.id, published_at: new Date() },
+    ] as Record<string, unknown>[]) {
+      version += 1;
+      await tx.updateTable("automation_rule_version").set({ ...s, version }).where("id", "=", v.id).execute();
+      await insertAuditEvent(tx, SYSTEM, { action: "test.seed", recordType: "automation_rule_version", recordId: v.id, organizationId: c.b.organizationId, newVersion: version });
+    }
+    const rule = await tx.selectFrom("automation_rule").selectAll().where("id", "=", ruleId).executeTakeFirstOrThrow();
+    await tx.updateTable("automation_rule").set({ effective_version_id: v.id, version: rule.version + 1 }).where("id", "=", ruleId).execute();
+    await insertAuditEvent(tx, SYSTEM, { action: "test.seed", recordType: "automation_rule", recordId: ruleId, organizationId: c.b.organizationId, newVersion: rule.version + 1 });
+  });
+}
+const expectStale = (res: Res<Body>, label: string) => {
+  log(label, res.status, res.body?.code ?? "", res.body?.errors?.[0]?.pointer ?? "", "detail:", res.body?.detail ?? "");
+  expect(res.status).toBe(422);
+  expect(res.body?.code).toBe("automation_rule.restricted_token_stale");
+};
+
+beforeAll(async () => {
+  api = await startApi();
+  owner = createDb(api.owner);
+  w = await seedWorld(api.db);
+  c = await seedClosureWorld(api, w);
+  ini = await launchedInitiative(api.db, c.b);
+  const u = await createUser(api.db, c.b.organizationId);
+  await grant(api.db, w.grantor.id, u.id, "ADM_METHOD", { type: "organization", id: c.b.organizationId }, c.b.organizationId);
+  author = { id: u.id, session: await signIn(api.app, u.subject) };
+}, 240_000);
+afterAll(() => api?.close());
+
+describe("DOM-R11 probe: issuer-bound tokens (D-233) under ordinary and adversarial sequences", () => {
+  it("(g) F-DG6-580 reproduction: the same form saved twice; the 2nd save is refused 422 stale and S stays", async () => {
+    const P = await benefit("P"), S = await benefit("S"), Q = await benefit("Q");
+    const id = await newRule([neq(P), neq(S), neq(Q)]);
+    await markSensitive(S);
+    const shown = await read(id);
+    log("(g) shown", mask(shown.content.conditions), "version", shown.version, "flag", shown.includesRestrictedRecords);
+    expect(shown.content.conditions[1].value).toMatch(TOKEN);
+    expect(TOKEN.exec(shown.content.conditions[1].value)![2]).toBe("2");
+    const form = { ...shown.content, conditions: shown.content.conditions.slice(1) };
+    const first = await patch(id, shown.version, form);
+    log("(g) first save", first.status, mask(first.body?.content?.conditions), "version", first.body?.version);
+    expect(first.status).toBe(200);
+    expect(first.body.content.conditions[0].value).not.toBe(shown.content.conditions[1].value); // fresh tag per revision
+    expectStale(await patch(id, first.body.version, form), "(g) second save");
+    expect((await stored(id)).conditions).toEqual([neq(S), neq(Q)]);
+  });
+
+  it("(g2) a 409 from a concurrent tab, then the same draft re-sent with the refreshed If-Match: refused, S stays", async () => {
+    const P = await benefit("P"), S = await benefit("S"), Q = await benefit("Q");
+    const id = await newRule([neq(P), neq(S), neq(Q)]);
+    await markSensitive(S);
+    const tab1 = await read(id);
+    const tab2 = await read(id);
+    ok(await patch(id, tab2.version, { ...tab2.content, conditions: tab2.content.conditions.slice(1) }));
+    const draft1 = { ...tab1.content, conditions: [tab1.content.conditions[1], tab1.content.conditions[2]] };
+    const conflict = await patch(id, tab1.version, draft1);
+    log("(g2) tab1 stale If-Match", conflict.status, conflict.body?.code);
+    expect(conflict.status).toBe(409);
+    const cur = await stored(id);
+    expectStale(await patch(id, cur.version, draft1), "(g2) tab1 resend with fresh If-Match");
+    expect((await stored(id)).conditions).toEqual([neq(S), neq(Q)]);
+  });
+
+  it("(e)+(m) bare, D-226, retired D-231, unknown position, forged and marker-like text: 422, nothing stored", async () => {
+    const P = await benefit("P"), S = await benefit("S");
+    const id = await newRule([neq(P), neq(S)]);
+    await markSensitive(S);
+    const before = await stored(id);
+    const shown0 = await read(id);
+    const v = shown0.version;
+    const tag = TOKEN.exec(shown0.content.conditions[1].value)![1]!;
+    const forged = randomBytes(12).toString("hex");
+    const cases: [string, string][] = [
+      ["[restricted]", "automation_rule.restricted_marker_unknown"],
+      ["[restricted:2]", "automation_rule.restricted_marker_unknown"],
+      [`[restricted:${tag}:9]`, "automation_rule.restricted_marker_unknown"],
+      [`[restricted:${tag}:0]`, "automation_rule.restricted_marker_unknown"],
+      [` [Restricted:${tag}:2] `, "automation_rule.restricted_marker_unknown"],
+      [`[restricted:${tag}:2`, "automation_rule.restricted_marker_unknown"],
+      [`[restricted:${tag.toUpperCase()}:2]`, "automation_rule.restricted_marker_unknown"],
+      [`[restricted:${tag.slice(1)}:2]`, "automation_rule.restricted_marker_unknown"],
+      [`[restricted:${tag}0:2]`, "automation_rule.restricted_marker_unknown"],
+      [`[restricted:${v}:2]`, "automation_rule.restricted_token_stale"],
+      [`[restricted:${v + 1}:2]`, "automation_rule.restricted_token_stale"],
+      [`[restricted:${forged}:2]`, "automation_rule.restricted_token_stale"],
+    ];
+    for (const [bad, code] of cases) {
+      const shown = await read(id);
+      const res = await patch(id, shown.version, { ...shown.content, conditions: [shown.content.conditions[1], neq(bad)] });
+      log("(e)", JSON.stringify(bad.replace(tag, "<tag>").replace(forged, "<forged>")), "status", res.status, "code", res.body?.code, "pointer", res.body?.errors?.[0]?.pointer);
+      expect(res.status).toBe(422);
+      expect(res.body?.code).toBe(code);
+    }
+    expect(await stored(id)).toEqual(before);
+    const created = await send("POST", R, {
+      session: author.session,
+      body: {
+        code: `test.domr11.${randomUUID().slice(0, 8)}`, nameEn: "x", nameAr: "س", scopeLevel: "organization", organizationId: c.b.organizationId, ownerUserId: author.id,
+        content: { triggerCodes: ["benefit.variance_evaluated"], conditions: [neq(`[restricted:${tag}:1]`)], actions: [action], runAs: "service" },
+      },
+    });
+    log("(e) create with a token", created.status, created.body?.code);
+    expect(created.status).toBe(422);
+  });
+
+  it("(f) a grant between read and save keeps S", async () => {
+    const P = await benefit("P"), H = await benefit("H"), Q = await benefit("Q");
+    const id = await newRule([neq(P), neq(H), neq(Q)]);
+    await markSensitive(H);
+    const shown = await read(id);
+    ok(await send("POST", "/api/v1/admin/sensitive-grants", {
+      session: c.s.to.session,
+      body: { transformationId: c.b.transformationId, recordType: "benefit", recordId: H, granteeUserId: author.id, reason: "Synthetic grant between read and save (DOM-R11)" },
+    }), 201);
+    const res = await patch(id, shown.version, { ...shown.content, conditions: shown.content.conditions.slice(1) });
+    log("(f) save", res.status, mask(res.body?.content?.conditions));
+    expect(res.status).toBe(200);
+    expect((await stored(id)).conditions).toEqual([neq(H), neq(Q)]);
+  });
+
+  it("(i) CROSS-RULE (F-DG6-640): a token copied from rule A into rule B's draft at the same row version is refused stale", async () => {
+    const P = await benefit("P"), S = await benefit("S"), Q = await benefit("Q"), H2 = await benefit("H2");
+    const A = await newRule([neq(P), neq(S)]);
+    const B = await newRule([neq(Q), neq(H2)]);
+    await markSensitive(S);
+    await markSensitive(H2);
+    let a = await read(A);
+    let b = await read(B);
+    const target = Math.max(a.version, b.version);
+    a = await bumpTo(A, target);
+    b = await bumpTo(B, target);
+    log("(i) rule A shown", mask(a.content.conditions), "v", a.version, "| rule B shown", mask(b.content.conditions), "v", b.version);
+    const tokenOfS = a.content.conditions[1].value;
+    expect(a.version).toBe(b.version);
+    expect(tokenOfS).not.toBe(b.content.conditions[1].value); // same row version, same k, different rows -> different text
+    const before = await stored(B);
+    expectStale(await patch(B, b.version, { ...b.content, conditions: [...b.content.conditions, neq(tokenOfS)] }), "(i) save B with A's token");
+    expect(await stored(B)).toEqual(before);
+  });
+
+  it("(j) PUBLISHED -> DRAFT (F-DG6-640): a token copied from published v1 into draft v2 at the same row version is refused stale", async () => {
+    const P = await benefit("P"), S = await benefit("S"), H = await benefit("H");
+    const id = await newRule([neq(P), neq(S), neq(H)]);
+    await markSensitive(S);
+    await markSensitive(H);
+    await publish(id, 1);
+    const v1 = await read(id, 1);
+    log("(j) published v1 shown", mask(v1.content.conditions), "row version", v1.version, "status", v1.status);
+    const rule = ok(await send("GET", `${R}/${id}`, { session: author.session }));
+    ok(await send("POST", `${R}/${id}/versions`, { session: author.session, headers: ifm(rule.version), body: { changeSummary: "Synthetic draft v2 (DOM-R11)" } }), 201);
+    let d = await read(id, 2);
+    log("(j) draft v2 shown", mask(d.content.conditions), "row version", d.version);
+    expect(d.content.conditions[1].value).not.toBe(v1.content.conditions[1].value);
+    ok(await patch(id, d.version, { ...d.content, conditions: [d.content.conditions[0], d.content.conditions[2]] }, 2));
+    d = await bumpTo(id, v1.version, 2);
+    log("(j) draft v2 after removal and re-saves", mask(d.content.conditions), "row version", d.version, "| v1 row version", v1.version);
+    expect(d.version).toBe(v1.version);
+    const tokenOfS = v1.content.conditions[1].value;
+    expect(TOKEN.exec(tokenOfS)![2]).toBe(TOKEN.exec(d.content.conditions[1].value)![2]); // same k
+    const before = await stored(id, 2);
+    expectStale(await patch(id, d.version, { ...d.content, conditions: [...d.content.conditions, neq(tokenOfS)] }, 2), "(j) save v2 with v1's token");
+    const after = await stored(id, 2);
+    log("(j) v2 stored", mask(after.conditions));
+    expect(after).toEqual(before);
+    expect(after.conditions).toEqual([neq(P), neq(H)]);
+  });
+
+  it("(k) DISCARDED -> NEW DRAFT: a token from discarded draft v2 pasted into new draft v3 (both at row version 1) is refused", async () => {
+    const P = await benefit("P"), S = await benefit("S"), H = await benefit("H");
+    const id = await newRule([neq(P), neq(S), neq(H)]);
+    await markSensitive(S);
+    await markSensitive(H);
+    await publish(id, 1);
+    let rule = ok(await send("GET", `${R}/${id}`, { session: author.session }));
+    ok(await send("POST", `${R}/${id}/versions`, { session: author.session, headers: ifm(rule.version), body: { changeSummary: "Synthetic draft v2 (DOM-R11)" } }), 201);
+    const v2 = await read(id, 2);
+    expect(v2.version).toBe(1);
+    // v2 is edited so its position 2 becomes H; its token for H at k=2 is kept by the author
+    const v2b = ok(await patch(id, v2.version, { ...v2.content, conditions: [v2.content.conditions[0], v2.content.conditions[2]] }, 2));
+    const tokenOfH = v2b.content.conditions[1].value;
+    const v2now = await read(id, 2);
+    ok(await send("POST", `${R}/${id}/versions/2/discard`, { session: author.session, headers: ifm(v2now.version) }));
+    rule = ok(await send("GET", `${R}/${id}`, { session: author.session }));
+    ok(await send("POST", `${R}/${id}/versions`, { session: author.session, headers: ifm(rule.version), body: { changeSummary: "Synthetic draft v3 (DOM-R11)" } }), 201);
+    let v3 = await read(id, 3);
+    v3 = await bumpTo(id, v2b.version, 3);
+    log("(k) v3 shown", mask(v3.content.conditions), "row version", v3.version, "| discarded v2 token row version", v2b.version);
+    expect(v3.version).toBe(v2b.version);
+    const before = await stored(id, 3);
+    expectStale(await patch(id, v3.version, { ...v3.content, conditions: [v3.content.conditions[0], neq(tokenOfH)] }, 3), "(k) save v3 with discarded v2's token");
+    expect(await stored(id, 3)).toEqual(before);
+    expect(before.conditions).toEqual([neq(P), neq(S), neq(H)]);
+  });
+
+  it("(l) the tag is the ADR formula, per row and per revision; the key is never served nor audited", async () => {
+    const P = await benefit("P"), S = await benefit("S");
+    const A = await newRule([neq(P), neq(S)]);
+    const B = await newRule([neq(P), neq(S)]);
+    await markSensitive(S);
+    const ra = await row(A), rb = await row(B);
+    expect(ra.restricted_token_key.length).toBe(32);
+    expect(ra.restricted_token_key.equals(rb.restricted_token_key)).toBe(false);
+    const a = await read(A), b = await read(B);
+    const ta = TOKEN.exec(a.content.conditions[1].value)![1]!, tb = TOKEN.exec(b.content.conditions[1].value)![1]!;
+    log("(l) A", ra.version, "tag ok:", ta === myTag(ra.restricted_token_key, ra.id, ra.version), "| B", rb.version, "tag ok:", tb === myTag(rb.restricted_token_key, rb.id, rb.version), "| tags differ:", ta !== tb);
+    expect(ta).toBe(myTag(ra.restricted_token_key, ra.id, ra.version));
+    expect(tb).toBe(myTag(rb.restricted_token_key, rb.id, rb.version));
+    expect(ta).not.toBe(tb);
+    expect(a.content.conditions[1].value).not.toContain(ra.id);
+    expect(a.content.conditions[1].value.startsWith(`[restricted:${ra.version}:`)).toBe(false); // probe fix after the Node 22 run: a hex tag may end in the digit, so "1:" can occur inside the tag
+    const keyHex = ra.restricted_token_key.toString("hex"), keyB64 = ra.restricted_token_key.toString("base64");
+    const bodies = [
+      await send("GET", `${R}/${A}`, { session: author.session }),
+      await send("GET", `${R}/${A}/versions`, { session: author.session }),
+      await send("GET", `${R}/${A}/versions/1`, { session: author.session }),
+      await send("GET", R, { session: author.session }),
+      await send("GET", `${R}/${A}/versions/1`, { session: c.s.to.session }),
+    ];
+    const audit = await owner.selectFrom("audit_event").selectAll().where("record_id", "in", [ra.id, A]).execute();
+    const all = JSON.stringify(bodies.map((x) => x.body)) + JSON.stringify(audit);
+    log("(l) served statuses", bodies.map((x) => x.status).join(","), "| audit events", audit.length, "| key hex/base64/name in served+audit:", all.includes(keyHex), all.includes(keyB64), /restricted_?token_?key/i.test(all));
+    expect(all.includes(keyHex) || all.includes(keyB64) || /restricted_?token_?key/i.test(all)).toBe(false);
+    // the tag changes with each revision of the same row
+    const saved = ok(await patch(A, a.version, a.content));
+    const ra2 = await row(A);
+    expect(TOKEN.exec(saved.content.conditions[1].value)![1]).toBe(myTag(ra2.restricted_token_key, ra2.id, ra2.version));
+    expect(TOKEN.exec(saved.content.conditions[1].value)![1]).not.toBe(ta);
+    expect(ra2.restricted_token_key.equals(ra.restricted_token_key)).toBe(true);
+    expect(ra2.conditions).toEqual([neq(P), neq(S)]);
+  });
+
+  it("(n) the same row at the same revision issues the same token to every reader who is shown it", async () => {
+    const P = await benefit("P"), S = await benefit("S");
+    const id = await newRule([neq(P), neq(S)]);
+    await markSensitive(S);
+    const u2 = await createUser(api.db, c.b.organizationId);
+    await grant(api.db, w.grantor.id, u2.id, "ADM_METHOD", { type: "organization", id: c.b.organizationId }, c.b.organizationId);
+    const s2 = await signIn(api.app, u2.subject);
+    const mine = await read(id);
+    const theirs = ok(await send("GET", `${R}/${id}/versions/1`, { session: s2 }));
+    log("(n) same token for two non-admitted readers:", mine.content.conditions[1].value === theirs.content.conditions[1].value);
+    expect(theirs.content.conditions[1].value).toBe(mine.content.conditions[1].value);
+    // the second author saves with the first author's token (same row, same revision): S is kept
+    const res = await send("PATCH", `${R}/${id}/versions/1`, { session: s2, headers: ifm(mine.version), body: { content: { ...mine.content, conditions: [mine.content.conditions[1]] }, changeSummary: "Synthetic (DOM-R11)" } });
+    expect(res.status).toBe(200);
+    expect((await stored(id)).conditions).toEqual([neq(S)]);
+  });
+});

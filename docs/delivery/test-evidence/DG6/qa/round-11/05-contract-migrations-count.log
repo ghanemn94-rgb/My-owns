@@ -1,0 +1,10 @@
+$ grep -c "operationId:" docs/api/openapi.yaml
+932
+$ ls packages/db/migrations/*.sql | wc -l; first/last
+119
+packages/db/migrations/0001_identity_access.sql
+packages/db/migrations/0126_p6_report_snapshot_aggregate.sql
+packages/db/migrations/0127_p6_automation_restricted_token_key.sql
+$ grep -h "pending excluded\|applied .* migrations" integration logs
+      1 [integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw9n8sfm_33212248 (server_encoding UTF8); applied 119 migrations to a fresh database
+      1 [response-validation] 11133 validated responses; 932 of 932 live operations (0 pending excluded); 4286 distinct (operationId, status) pairs; operations without a validated response: 0

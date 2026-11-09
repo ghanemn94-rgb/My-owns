@@ -1,0 +1,74 @@
+## M1: restrictedTokenTag reverted to a version-only tag (same text for every row at the same row version = the D-231 behaviour)
+ apps/api/src/modules/automation/versions.ts | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+diff --git a/apps/api/src/modules/automation/versions.ts b/apps/api/src/modules/automation/versions.ts
+index 1ed9e2b99..4d77c2ade 100644
+--- a/apps/api/src/modules/automation/versions.ts
++++ b/apps/api/src/modules/automation/versions.ts
+@@ -424,8 +424,7 @@ const RESTRICTED_TOKEN_TAG_DOMAIN = "mth.automation.restricted-token.v1";
+  * a pseudo-random function of its message). 96 bits make an accidental match between two issuers negligible.
+  */
+ export function restrictedTokenTag(issuer: RestrictedTokenIssuer): string {
+-  return createHmac("sha256", issuer.restricted_token_key)
+-    .update(`${RESTRICTED_TOKEN_TAG_DOMAIN}\n${issuer.id}\n${issuer.version}`)
++  return createHmac("sha256", "m1-fixed").update(String(issuer.version))
+     .digest("hex")
+     .slice(0, AUTOMATION_RESTRICTED_TOKEN_TAG_HEX_LENGTH);
+ }
+   ✓ DOM-R11 probe: issuer-bound tokens (D-233) under ordinary and adversarial sequences > (g) F-DG6-580 reproduction: the same form saved twice; the 2nd save is refused 422 stale and S stays  561ms
+   ✓ DOM-R11 probe: issuer-bound tokens (D-233) under ordinary and adversarial sequences > (g2) a 409 from a concurrent tab, then the same draft re-sent with the refreshed If-Match: refused, S stays 237ms
+   ✓ DOM-R11 probe: issuer-bound tokens (D-233) under ordinary and adversarial sequences > (e)+(m) bare, D-226, retired D-231, unknown position, forged and marker-like text: 422, nothing stored  640ms
+   ✓ DOM-R11 probe: issuer-bound tokens (D-233) under ordinary and adversarial sequences > (f) a grant between read and save keeps S 282ms
+   × DOM-R11 probe: issuer-bound tokens (D-233) under ordinary and adversarial sequences > (i) CROSS-RULE (F-DG6-640): a token copied from rule A into rule B's draft at the same row version is refused stale 320ms
+   × DOM-R11 probe: issuer-bound tokens (D-233) under ordinary and adversarial sequences > (j) PUBLISHED -> DRAFT (F-DG6-640): a token copied from published v1 into draft v2 at the same row version is refused stale 650ms
+   × DOM-R11 probe: issuer-bound tokens (D-233) under ordinary and adversarial sequences > (k) DISCARDED -> NEW DRAFT: a token from discarded draft v2 pasted into new draft v3 (both at row version 1) is refused 601ms
+   × DOM-R11 probe: issuer-bound tokens (D-233) under ordinary and adversarial sequences > (l) the tag is the ADR formula, per row and per revision; the key is never served nor audited 176ms
+   ✓ DOM-R11 probe: issuer-bound tokens (D-233) under ordinary and adversarial sequences > (n) the same row at the same revision issues the same token to every reader who is shown it 190ms
+   × T-DG6-BE-Z15: restricted tokens are bound to their issuing rule-version row (D-233, F-DG6-640) > (a) the token is an opaque issuer tag: no row version, no row id, no hidden value; other rows issue other tags 496ms
+   × T-DG6-BE-Z15: restricted tokens are bound to their issuing rule-version row (D-233, F-DG6-640) > (b) F-DG6-640: a token copied from the published version 1 into its draft version 2 at the same row version is refused stale 788ms
+   × T-DG6-BE-Z15: restricted tokens are bound to their issuing rule-version row (D-233, F-DG6-640) > (c) F-DG6-640: a token copied from another rule's version at the same row version is refused stale 670ms
+   ✓ T-DG6-BE-Z15: restricted tokens are bound to their issuing rule-version row (D-233, F-DG6-640) > (d) F-DG6-580: the same draft saved twice; the second save carries the first save's tokens and is refused 201ms
+   ✓ T-DG6-BE-Z15: restricted tokens are bound to their issuing rule-version row (D-233, F-DG6-640) > (e) F-DG6-580: after a 409, the same draft re-sent with the refreshed If-Match is refused; S stays  522ms
+   ✓ T-DG6-BE-Z15: restricted tokens are bound to their issuing rule-version row (D-233, F-DG6-640) > (f) the normal round trip keeps the hidden literal wherever the token now sits, and re-issues a fresh tag 288ms
+   ✓ T-DG6-BE-Z15: restricted tokens are bound to their issuing rule-version row (D-233, F-DG6-640) > (g) the retired D-231 form [restricted:<version>:<k>] is refused stale even at the current version  306ms
+ Test Files  2 failed (2)
+      Tests  7 failed | 9 passed (16)
+M1 rc=1
+## M2: the issuer-tag comparison removed (any well-formed tag resolves by position)
+diff --git a/apps/api/src/modules/automation/versions.ts b/apps/api/src/modules/automation/versions.ts
+index 1ed9e2b99..0658008a9 100644
+--- a/apps/api/src/modules/automation/versions.ts
++++ b/apps/api/src/modules/automation/versions.ts
+@@ -507,7 +507,6 @@ export function resolveRestrictedTokens(
+       if (AUTOMATION_RESTRICTED_TOKEN_RETIRED_PATTERN.test(v)) throw automationRefusals.restrictedTokenStale(at);
+       throw automationRefusals.restrictedMarkerUnknown(at);
+     }
+-    if (!sameTag(m[1]!, expected)) throw automationRefusals.restrictedTokenStale(at);
+     const literal = positions.get(Number(m[2]));
+     if (literal === undefined) throw automationRefusals.restrictedMarkerUnknown(at);
+     return literal;
+   × DOM-R11 probe: issuer-bound tokens (D-233) under ordinary and adversarial sequences > (g) F-DG6-580 reproduction: the same form saved twice; the 2nd save is refused 422 stale and S stays 739ms
+   × DOM-R11 probe: issuer-bound tokens (D-233) under ordinary and adversarial sequences > (g2) a 409 from a concurrent tab, then the same draft re-sent with the refreshed If-Match: refused, S stays 529ms
+   × DOM-R11 probe: issuer-bound tokens (D-233) under ordinary and adversarial sequences > (e)+(m) bare, D-226, retired D-231, unknown position, forged and marker-like text: 422, nothing stored 943ms
+   ✓ DOM-R11 probe: issuer-bound tokens (D-233) under ordinary and adversarial sequences > (f) a grant between read and save keeps S 229ms
+   × DOM-R11 probe: issuer-bound tokens (D-233) under ordinary and adversarial sequences > (i) CROSS-RULE (F-DG6-640): a token copied from rule A into rule B's draft at the same row version is refused stale 441ms
+   × DOM-R11 probe: issuer-bound tokens (D-233) under ordinary and adversarial sequences > (j) PUBLISHED -> DRAFT (F-DG6-640): a token copied from published v1 into draft v2 at the same row version is refused stale 776ms
+   × DOM-R11 probe: issuer-bound tokens (D-233) under ordinary and adversarial sequences > (k) DISCARDED -> NEW DRAFT: a token from discarded draft v2 pasted into new draft v3 (both at row version 1) is refused 776ms
+   ✓ DOM-R11 probe: issuer-bound tokens (D-233) under ordinary and adversarial sequences > (l) the tag is the ADR formula, per row and per revision; the key is never served nor audited  356ms
+   ✓ DOM-R11 probe: issuer-bound tokens (D-233) under ordinary and adversarial sequences > (n) the same row at the same revision issues the same token to every reader who is shown it 224ms
+   ✓ T-DG6-BE-Z15: restricted tokens are bound to their issuing rule-version row (D-233, F-DG6-640) > (a) the token is an opaque issuer tag: no row version, no row id, no hidden value; other rows issue other tags  549ms
+   × T-DG6-BE-Z15: restricted tokens are bound to their issuing rule-version row (D-233, F-DG6-640) > (b) F-DG6-640: a token copied from the published version 1 into its draft version 2 at the same row version is refused stale 732ms
+   × T-DG6-BE-Z15: restricted tokens are bound to their issuing rule-version row (D-233, F-DG6-640) > (c) F-DG6-640: a token copied from another rule's version at the same row version is refused stale 665ms
+   × T-DG6-BE-Z15: restricted tokens are bound to their issuing rule-version row (D-233, F-DG6-640) > (d) F-DG6-580: the same draft saved twice; the second save carries the first save's tokens and is refused 164ms
+   × T-DG6-BE-Z15: restricted tokens are bound to their issuing rule-version row (D-233, F-DG6-640) > (e) F-DG6-580: after a 409, the same draft re-sent with the refreshed If-Match is refused; S stays 153ms
+   ✓ T-DG6-BE-Z15: restricted tokens are bound to their issuing rule-version row (D-233, F-DG6-640) > (f) the normal round trip keeps the hidden literal wherever the token now sits, and re-issues a fresh tag 162ms
+   ✓ T-DG6-BE-Z15: restricted tokens are bound to their issuing rule-version row (D-233, F-DG6-640) > (g) the retired D-231 form [restricted:<version>:<k>] is refused stale even at the current version 139ms
+   ✓ T-DG6-BE-Z14: restricted tokens are bound to their version (D-231, F-DG6-580) > read: a token names the row version it was issued from and the literal's position  458ms
+   × T-DG6-BE-Z14: restricted tokens are bound to their version (D-231, F-DG6-580) > (a) a second save of the same draft after removing an earlier condition is refused; S is never swapped 209ms
+   × T-DG6-BE-Z14: restricted tokens are bound to their version (D-231, F-DG6-580) > (b) two hidden literals: the stale second save is refused and S1, S2 stay in place 515ms
+   × T-DG6-BE-Z14: restricted tokens are bound to their version (D-231, F-DG6-580) > (c) a re-save of the same draft after a 409 is refused; after a reload the change re-applies and S stays 220ms
+   × T-DG6-BE-Z14: restricted tokens are bound to their version (D-231, F-DG6-580) > (d) a token naming another version is refused even where the positions coincide; unknown text stays unknown 235ms
+ Test Files  3 failed (3)
+      Tests  14 failed | 7 passed (21)
+M2 rc=1
+## restored

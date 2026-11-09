@@ -1,0 +1,142 @@
+## product paths differing between HEAD and the source commit (expect 0)
+0
+## files changed since round 10 (all paths)
+M	apps/api/src/modules/automation/rules.ts
+M	apps/api/src/modules/automation/versions.ts
+M	apps/api/test/integration/access/automation-restricted-tokens-z13.test.ts
+M	apps/api/test/integration/access/automation-restricted-tokens-z14.test.ts
+A	apps/api/test/integration/access/automation-restricted-tokens-z15.test.ts
+M	apps/api/test/integration/access/sensitive-reference-pending-z12b.test.ts
+A	apps/api/test/support/restricted-tokens.ts
+M	apps/api/test/support/sensitive-reference-inventory.ts
+M	apps/web/src/i18n/ar/problems.json
+M	apps/web/src/i18n/en/problems.json
+M	apps/web/src/pages/automation/ContentEditor.tsx
+M	apps/web/src/pages/automation/RulePage.tsx
+M	apps/web/src/pages/automation/fed.test.tsx
+M	apps/web/src/pages/automation/rule-editor-tokens-z14.test.tsx
+M	docs/api/openapi.yaml
+M	docs/architecture/adr/ADR-0043-p5-automation-engine-rules-executions-failure-queue.md
+M	docs/architecture/adr/ADR-0051-p6-authorization-boundary-read-scope-sensitive-records-deep-links.md
+M	docs/architecture/data-dictionary.md
+A	packages/db/migrations/0127_p6_automation_restricted_token_key.sql
+M	packages/db/src/schema.ts
+M	packages/db/test/integration/catalogue.test.ts
+M	packages/shared/src/schemas/automation.ts
+(delivery records changed: 282)
+## operationId count (plain) and contract version
+932
+4:  version: 1.5.0-p6
+## p6-pending lists: quoted entries
+apps/api/test/support/p6-pending-arch-01.ts: 0 quoted lines
+apps/api/test/support/p6-pending-arch-02.ts: 0 quoted lines
+apps/api/test/support/p6-pending-arch-03.ts: 0 quoted lines
+apps/api/test/support/p6-pending-arch-04.ts: 0 quoted lines
+apps/api/test/support/p6-pending-arch-05.ts: 0 quoted lines
+apps/api/test/support/p6-pending-arch-06.ts: 0 quoted lines
+apps/api/test/support/p6-pending-be-b.ts: 0 quoted lines
+apps/api/test/support/p6-pending-be-c.ts: 0 quoted lines
+apps/api/test/support/p6-pending-be-d.ts: 0 quoted lines
+apps/api/test/support/p6-pending-be-e.ts: 0 quoted lines
+apps/api/test/support/p6-pending-be-g.ts: 0 quoted lines
+apps/api/test/support/p6-pending-be-h2.ts: 0 quoted lines
+apps/api/test/support/p6-pending-be-i.ts: 0 quoted lines
+apps/api/test/support/p6-pending-be-i2.ts: 0 quoted lines
+apps/api/test/support/p6-pending-be-j.ts: 0 quoted lines
+apps/api/test/support/p6-pending-be-k.ts: 0 quoted lines
+apps/api/test/support/p6-pending-be-l.ts: 0 quoted lines
+apps/api/test/support/p6-pending-be-l2.ts: 0 quoted lines
+apps/api/test/support/p6-pending-be-m2.ts: 0 quoted lines
+apps/api/test/support/p6-pending-be-n.ts: 0 quoted lines
+apps/api/test/support/p6-pending-be-n2.ts: 0 quoted lines
+apps/api/test/support/p6-pending-be-o.ts: 0 quoted lines
+apps/api/test/support/p6-pending-be-p.ts: 0 quoted lines
+apps/api/test/support/p6-pending-be-q.ts: 0 quoted lines
+apps/api/test/support/p6-pending-be-q2.ts: 0 quoted lines
+apps/api/test/support/p6-pending-be-t.ts: 0 quoted lines
+apps/api/test/support/p6-pending-be-u.ts: 0 quoted lines
+apps/api/test/support/p6-pending-be-w.ts: 0 quoted lines
+## migrations: count, gaps, P6 range
+119
+gap after 0065 -> 0068
+gap after 0072 -> 0074
+gap after 0076 -> 0080
+gap after 0082 -> 0085
+0098_p6_sensitive_records_deep_links.sql
+0099_p6_upload_policy_content_types.sql
+0100_p6_access_hardening_permissions.sql
+0101_p6_operations_service_identities.sql
+0102_p6_storage_notification_channels.sql
+0103_p6_operations_channels_permissions.sql
+0104_p6_connectors_runs_outbound_writes.sql
+0105_p6_imports_lineage_webhooks.sql
+0106_p6_deliverable_external_change.sql
+0107_p6_integrations_permissions.sql
+0108_p6_search_saved_views_help.sql
+0109_p6_search_productivity_permissions.sql
+0110_p6_register_filter_indexes.sql
+0111_p6_assistant.sql
+0112_p6_assistant_permissions.sql
+0113_p6_branding_contrast_reports.sql
+0114_p6_job_service_identities.sql
+0115_p6_search_index_jobs.sql
+0116_p6_connector_run_jobs.sql
+0117_p6_operations_triggers_freshness.sql
+0118_p6_evidence_content_detected_type_required.sql
+0119_p6_branding_version_contrast_required.sql
+0120_p6_audit_required_index_use.sql
+0121_p6_notification_fanout_jobs.sql
+0122_p6_automation_rule_enablement.sql
+0123_p6_automation_rule_enablement_disable.sql
+0124_p6_export_live_selection_pending.sql
+0125_p6_export_assembly_attempts.sql
+0126_p6_report_snapshot_aggregate.sql
+0127_p6_automation_restricted_token_key.sql
+## migrations modified/deleted since DG5 (forward-only; expect none)
+none
+## migrations changed since round 10 (expect only A 0127)
+A	packages/db/migrations/0127_p6_automation_restricted_token_key.sql
+(end)
+## worker imports API code? (expect none)
+none
+## public CDN references in web sources/index (expect none)
+none
+## secret-looking literals added since round 10 in product code (expect none)
+none
+## restricted_token_key: every reference outside tests and dist (expect migration 0127, schema.ts, versions.ts only)
+apps/api/src/modules/automation/versions.ts:408: * issued from. `restricted_token_key` is the row's own secret key (0127: 32 random bytes drawn at insert, immutable,
+apps/api/src/modules/automation/versions.ts:414:  readonly restricted_token_key: Buffer;
+apps/api/src/modules/automation/versions.ts:427:  return createHmac("sha256", issuer.restricted_token_key)
+packages/db/src/schema.ts:5275:  restricted_token_key: Generated<Buffer>;
+packages/db/src/schema.ts:11766:    "restricted_token_key",
+packages/db/migrations/0127_p6_automation_restricted_token_key.sql:9:-- HMAC-SHA256(restricted_token_key, "mth.automation.restricted-token.v1" LF <row id> LF <row version>), so a token names
+packages/db/migrations/0127_p6_automation_restricted_token_key.sql:13:--   * automation_rule_version.restricted_token_key bytea: 32 bytes drawn from PostgreSQL's strong random source (two
+packages/db/migrations/0127_p6_automation_restricted_token_key.sql:27:  ADD COLUMN restricted_token_key bytea NOT NULL
+packages/db/migrations/0127_p6_automation_restricted_token_key.sql:29:    CONSTRAINT automation_rule_version_token_key_length CHECK (octet_length(restricted_token_key) = 32);
+packages/db/migrations/0127_p6_automation_restricted_token_key.sql:31:COMMENT ON COLUMN automation_rule_version.restricted_token_key IS
+packages/db/migrations/0127_p6_automation_restricted_token_key.sql:37:  IF NEW.restricted_token_key IS DISTINCT FROM OLD.restricted_token_key THEN
+packages/db/migrations/0127_p6_automation_restricted_token_key.sql:38:    RAISE EXCEPTION 'automation_rule_version: restricted_token_key is set when the version is created and never changes'
+## the key is in no web source, no OpenAPI and no shared schema (expect none)
+none
+## token constructors and resolvers (every call site)
+apps/api/src/modules/automation/versions.ts:426:export function restrictedTokenTag(issuer: RestrictedTokenIssuer): string {
+apps/api/src/modules/automation/versions.ts:447:export async function redactConditionLiterals(
+apps/api/src/modules/automation/versions.ts:460:      tag ??= restrictedTokenTag(issuer);
+apps/api/src/modules/automation/versions.ts:461:      const token = automationRestrictedToken(tag, k);
+apps/api/src/modules/automation/versions.ts:481:export function resolveRestrictedTokens(
+apps/api/src/modules/automation/versions.ts:501:  const expected = stored === null ? null : restrictedTokenTag(stored.issuer);
+apps/api/src/modules/automation/versions.ts:592:  const shown = await redactConditionLiterals(
+apps/api/src/modules/automation/versions.ts:815:      : resolveRestrictedTokens({ conditions: contentOfRow(current).conditions, issuer: current }, body.content);
+apps/api/src/modules/automation/rules.ts:201:  const redacted = await redactConditionLiterals(
+apps/api/src/modules/automation/rules.ts:294:  const sent = resolveRestrictedTokens(null, body.content);
+apps/api/test/support/restricted-tokens.ts:31:      return automationRestrictedToken(
+apps/api/test/support/restricted-tokens.ts:32:        restrictedTokenTag({ id: issuer.id, version, restricted_token_key: issuer.key }),
+## retired-form literals [restricted:<n>:<k>] or [restricted:<k>] left in product code (expect only the RETIRED pattern)
+apps/web/src/pages/automation/rule-editor-tokens-z14.test.tsx:224:    // Another tab removed condition 1: the server is at version 3 and shows the hidden literal as [restricted:3:1].
+## the web never parses or computes the tag (expect no TOKEN_PATTERN use beyond a marker test)
+apps/web/src/pages/automation/ContentEditor.tsx:10:  AUTOMATION_RESTRICTED_TOKEN_PATTERN,
+apps/web/src/pages/automation/ContentEditor.tsx:48:  const isToken = (x: unknown) => typeof x === "string" && AUTOMATION_RESTRICTED_TOKEN_PATTERN.test(x.trim());
+## en/ar problem keys for restricted_token_stale present in both locales
+apps/web/src/i18n/en/problems.json:1
+apps/web/src/i18n/ar/problems.json:1
+## exit=0

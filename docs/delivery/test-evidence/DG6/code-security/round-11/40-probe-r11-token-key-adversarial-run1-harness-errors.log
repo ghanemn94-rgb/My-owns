@@ -1,0 +1,72 @@
+# 40-probe-r11-token-key-adversarial  started 2026-11-09T19:18:45Z  node=v22.22.0  LANG=<unset> LC_ALL=<unset>  load=9.30 6.63 4.19  commit=33db1a46ca498d917d9e33793e9771533269c446
+$ tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration apps/api/test/integration/access/cs-r11-token-key-adversarial.test.ts
+port-policy: PostgreSQL listening on port 32265 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.HPtFgL/claude-0/r/w1
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw9n9vi3_fc8c7793 (server_encoding UTF8); applied 119 migrations to a fresh database
+stdout | apps/api/test/integration/access/cs-r11-token-key-adversarial.test.ts > CS-R11 adversarial probe of issuer-bound restricted tokens (BE-Z15, 0127) > (o1) observation: dry run on a chosen sample confirms a guessed hidden id (conditionsMet)
+O1 dry-run statuses [33m422[39m [33m422[39m conditionsMet [90mundefined[39m [90mundefined[39m codes automation.dry_run_sample_invalid automation.dry_run_sample_invalid leaks [] []
+
+ ❯ |integration| apps/api/test/integration/access/cs-r11-token-key-adversarial.test.ts (8 tests | 2 failed) 5869ms
+   × CS-R11 adversarial probe of issuer-bound restricted tokens (BE-Z15, 0127) > (k1) the per-row key is never served or audited 1054ms
+     → {"type":"urn:mth:problem:forbidden","title":"Forbidden","status":403,"detail":"You do not have permission for this action.","code":"forbidden","requestId":"01a1c1c0-52a2-77d4-9491-5c563444c4bc"}: expected 403 to be 200 // Object.is equality
+   × CS-R11 adversarial probe of issuer-bound restricted tokens (BE-Z15, 0127) > (k2) the key is immutable for owner and app roles; every pre-0127 row has its own 32-byte key 19ms
+     → expected [Function] to throw error matching /restricted_token_key|permission deni…/i but got 'automation_rule_version: version must…'
+   ✓ CS-R11 adversarial probe of issuer-bound restricted tokens (BE-Z15, 0127) > (k3) a draft created from a version draws its own key 126ms
+   ✓ CS-R11 adversarial probe of issuer-bound restricted tokens (BE-Z15, 0127) > (t1) malformed tokens are refused restricted_marker_unknown and store nothing  500ms
+   ✓ CS-R11 adversarial probe of issuer-bound restricted tokens (BE-Z15, 0127) > (t2) two concurrent identical saves: one 200, one 409; the hidden literal is kept  479ms
+   ✓ CS-R11 adversarial probe of issuer-bound restricted tokens (BE-Z15, 0127) > (t3) grant given and revoked between read and save: held tokens resolve to the same literal  935ms
+   ✓ CS-R11 adversarial probe of issuer-bound restricted tokens (BE-Z15, 0127) > (t4) two non-admitted readers see the same tag; the owner-admitted reader sees the literal  350ms
+   ✓ CS-R11 adversarial probe of issuer-bound restricted tokens (BE-Z15, 0127) > (o1) observation: dry run on a chosen sample confirms a guessed hidden id (conditionsMet) 173ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/access/cs-r11-token-key-adversarial.test.ts > CS-R11 adversarial probe of issuer-bound restricted tokens (BE-Z15, 0127) > (k1) the per-row key is never served or audited
+AssertionError: {"type":"urn:mth:problem:forbidden","title":"Forbidden","status":403,"detail":"You do not have permission for this action.","code":"forbidden","requestId":"01a1c1c0-52a2-77d4-9491-5c563444c4bc"}: expected 403 to be 200 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 200[39m
+[31m+ 403[39m
+
+ ❯ ok apps/api/test/integration/access/cs-r11-token-key-adversarial.test.ts:59:62
+     57| const send = (m: string, u: string, o?: Parameters<typeof call>[3]) =>…
+     58| const ok = (res: Res<Body>, status = 200) => {
+     59|   expect(res.status, JSON.stringify(res.body).slice(0, 600)).toBe(stat…
+       |                                                              ^
+     60|   return res.body as Body;
+     61| };
+ ❯ apps/api/test/integration/access/cs-r11-token-key-adversarial.test.ts:148:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/cs-r11-token-key-adversarial.test.ts > CS-R11 adversarial probe of issuer-bound restricted tokens (BE-Z15, 0127) > (k2) the key is immutable for owner and app roles; every pre-0127 row has its own 32-byte key
+AssertionError: expected [Function] to throw error matching /restricted_token_key|permission deni…/i but got 'automation_rule_version: version must…'
+
+[32m- Expected:[39m 
+/restricted_token_key|permission denied|check/i
+
+[31m+ Received:[39m 
+"automation_rule_version: version must increase by exactly 1 on every update (optimistic concurrency, ADR-0003)"
+
+ ❯ apps/api/test/integration/access/cs-r11-token-key-adversarial.test.ts:168:7
+    166|     const target = all[0]!;
+    167|     for (const db of [owner, api.db]) {
+    168|       await expect(
+       |       ^
+    169|         db.updateTable("automation_rule_version").set({ restricted_tok…
+    170|       ).rejects.toThrow(/restricted_token_key|permission denied|check/…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 6 passed (8)
+   Start at  19:18:52
+   Duration  39.66s (transform 10.40s, setup 0ms, collect 25.75s, tests 5.87s, environment 1ms, prepare 157ms)
+
+exit=1  finished 2026-11-09T19:19:34Z
+0
