@@ -1,0 +1,912 @@
+## 2026-11-09T04:38:02Z MUTANT: git checkout d84d11a6 -- apps/api/src/modules/automation/versions.ts apps/api/src/modules/automation/rules.ts packages/shared/src/schemas/automation.ts (reverts BE-Z13/Z13C token model to the round-8 ordinal pairing)
+M  apps/api/src/modules/automation/rules.ts
+M  apps/api/src/modules/automation/versions.ts
+M  packages/shared/src/schemas/automation.ts
+## cmd: with-pg.sh npx vitest run --project integration apps/api/test/integration/access/automation-restricted-tokens-z13.test.ts zz-qa-dg6r9-condition-token-resave zz-qa-dg6r8b-condition-resave-pairing
+port-policy: PostgreSQL listening on port 30900 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.TvZ4PC/claude-0/c
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw8rt6xz_d2132fea (server_encoding UTF8); applied 118 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/access/automation-restricted-tokens-z13.test.ts (11 tests | 9 failed) 2448ms
+   × T-DG6-BE-Z13: restricted condition tokens (D-226) > read: each hidden literal is an opaque token in reading order, marked; the summary names no record 81ms
+     → expected [ { op: 'in', …(2) }, …(1) ] to deeply equal [ { field: 'benefitId', …(2) }, …(1) ]
+   × T-DG6-BE-Z13: restricted condition tokens (D-226) > removing an earlier condition keeps the hidden literal of the condition kept (F-DG6-541, F-DG6-520 (c)) 83ms
+     → expected undefined to be true // Object.is equality
+   × T-DG6-BE-Z13: restricted condition tokens (D-226) > reordering two hidden literals keeps each with its own condition (F-DG6-560 P1) 111ms
+     → expected [ { op: 'eq', …(2) }, …(2) ] to deeply equal [ { field: 'severity', …(2) }, …(2) ]
+   ✓ T-DG6-BE-Z13: restricted condition tokens (D-226) > removing the restricted condition itself removes its literal and keeps the rest 53ms
+   × T-DG6-BE-Z13: restricted condition tokens (D-226) > in-list: removing the open element and reordering the hidden ones keeps both (F-DG6-520 (b), F-DG6-560 P3) 33ms
+     → expected [ '[restricted]', …(2) ] to deeply equal [ '[restricted:1]', …(2) ]
+   × T-DG6-BE-Z13: restricted condition tokens (D-226) > in-list: removing a hidden element removes exactly that literal 62ms
+     → expected [ { op: 'in', …(2) }, …(1) ] to deeply equal [ { field: 'benefitId', …(2) }, …(1) ]
+   × T-DG6-BE-Z13: restricted condition tokens (D-226) > negative: an unknown token, the bare marker or other marker text is refused 422 and nothing is stored 47ms
+     → [restricted:9]: expected 200 to be 422 // Object.is equality
+   ✓ T-DG6-BE-Z13: restricted condition tokens (D-226) > negative: a writer without automation.configure is refused before any token is resolved 36ms
+   × T-DG6-BE-Z13: restricted condition tokens (D-226) > race (D-228 (1)): a record that becomes hidden between the read and the save shifts no token 110ms
+     → expected [ '[restricted]', …(3) ] to deeply equal [ '[restricted:1]', …(3) ]
+     → expected [ Array(4) ] to deeply equal [ '[restricted:1]', …(3) ]
+   × T-DG6-BE-Z13: restricted condition tokens (D-226) > race (D-228 (1)): a record that becomes visible between the read and the save keeps its literal 23ms
+     → expected [ Array(4) ] to deeply equal [ '[restricted:1]', …(3) ]
+   × T-DG6-BE-Z13: restricted condition tokens (D-226) > positive: after an explicit grant the author reads the real values; a token still names its position 65ms
+     → expected [ '[restricted:3]', '[restricted:1]' ] to deeply equal [ …(2) ]
+stdout | apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts
+QA-R9 ids: hidden X=01a1be99-c287-72fd-9066-c8b50dea7d04 hidden Y=01a1be99-c300-7302-908b-bef2d03bf11b hidden Z=01a1be99-c350-700f-bd9d-b88a54b16284 visible V=01a1be99-c329-7585-9767-22059e9d25e0
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts > QA-R9 F-DG6-560 re-run (round-8 P0-P3) on the token model > P0 control: changing only an unrelated condition keeps both hidden literals
+QA-R9 P0: author saw [{"op":"neq","field":"benefitId","value":"[restricted]"},{"op":"neq","field":"benefitId","value":"[restricted]"},{"op":"eq","field":"severity","value":"high"}]; sent [{"op":"neq","field":"benefitId","value":"[restricted]"},{"op":"neq","field":"benefitId","value":"[restricted]"},{"op":"eq","field":"severity","value":"critical"}]; stored now [{"op":"neq","field":"benefitId","value":"01a1be99-c287-72fd-9066-c8b50dea7d04"},{"op":"neq","field":"benefitId","value":"01a1be99-c300-7302-908b-bef2d03bf11b"},{"op":"eq","field":"severity","value":"critical"}]; author response [{"op":"neq","field":"benefitId","value":"[restricted]"},{"op":"neq","field":"benefitId","value":"[restricted]"},{"op":"eq","field":"severity","value":"critical"}] marker true
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts > QA-R9 F-DG6-560 re-run (round-8 P0-P3) on the token model > P1: two restricted literals under one (field, op); delete the FIRST -> [Y]
+QA-R9 P1 delete first restricted: author saw [{"op":"neq","field":"benefitId","value":"[restricted]"},{"op":"neq","field":"benefitId","value":"[restricted]"}]; sent [{"op":"neq","field":"benefitId","value":"[restricted]"}]; stored now [{"op":"neq","field":"benefitId","value":"01a1be99-c287-72fd-9066-c8b50dea7d04"}]; author response [{"op":"neq","field":"benefitId","value":"[restricted]"}] marker true
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts > QA-R9 F-DG6-560 re-run (round-8 P0-P3) on the token model > P2: a visible literal then a restricted one; delete the visible one -> [Y]
+QA-R9 P2 delete visible first: author saw [{"op":"neq","field":"benefitId","value":"01a1be99-c329-7585-9767-22059e9d25e0"},{"op":"neq","field":"benefitId","value":"[restricted]"}]; sent [{"op":"neq","field":"benefitId","value":"[restricted]"}]; stored now [{"op":"neq","field":"benefitId","value":"[restricted]"}]; author response [{"op":"neq","field":"benefitId","value":"[restricted]"}] marker undefined
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts > QA-R9 F-DG6-560 re-run (round-8 P0-P3) on the token model > P3: an `in` list of two restricted literals; drop the first element -> [Y]
+QA-R9 P3 in-list drop first: author saw [{"op":"in","field":"benefitId","value":["[restricted]","[restricted]"]}]; sent [{"op":"in","field":"benefitId","value":["[restricted]"]}]; stored now [{"op":"in","field":"benefitId","value":["01a1be99-c287-72fd-9066-c8b50dea7d04"]}]; author response [{"op":"in","field":"benefitId","value":["[restricted]"]}] marker true
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts > QA-R9 adversarial token cases (D-226, D-228 (1)) > P4 reorder: swap two restricted conditions and a visible one
+QA-R9 P4 reorder: author saw [{"op":"neq","field":"benefitId","value":"[restricted]"},{"op":"eq","field":"severity","value":"high"},{"op":"neq","field":"benefitId","value":"[restricted]"}]; sent [{"op":"neq","field":"benefitId","value":"[restricted]"},{"op":"eq","field":"severity","value":"high"},{"op":"neq","field":"benefitId","value":"[restricted]"}]; stored now [{"op":"neq","field":"benefitId","value":"01a1be99-c287-72fd-9066-c8b50dea7d04"},{"op":"eq","field":"severity","value":"high"},{"op":"neq","field":"benefitId","value":"01a1be99-c300-7302-908b-bef2d03bf11b"}]; author response [{"op":"neq","field":"benefitId","value":"[restricted]"},{"op":"eq","field":"severity","value":"high"},{"op":"neq","field":"benefitId","value":"[restricted]"}] marker true
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts > QA-R9 adversarial token cases (D-226, D-228 (1)) > P5 move: a scalar token into an `in` list of another condition, and a list token to a scalar with another field/op
+QA-R9 P5 move tokens: author saw [{"op":"eq","field":"benefitId","value":"[restricted]"},{"op":"in","field":"benefitId","value":["01a1be99-c329-7585-9767-22059e9d25e0","[restricted]"]}]; sent [{"field":"benefitId","op":"in","value":["[restricted]","01a1be99-c329-7585-9767-22059e9d25e0"]},{"field":"severity","op":"neq","value":"[restricted]"}]; stored now [{"op":"in","field":"benefitId","value":["[restricted]","01a1be99-c329-7585-9767-22059e9d25e0"]},{"op":"neq","field":"severity","value":"[restricted]"}]; author response [{"op":"in","field":"benefitId","value":["[restricted]","01a1be99-c329-7585-9767-22059e9d25e0"]},{"op":"neq","field":"severity","value":"[restricted]"}] marker undefined
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts > QA-R9 adversarial token cases (D-226, D-228 (1)) > P5b duplicate: the same token sent twice stores the same literal twice (no other literal is touched)
+QA-R9 P5b duplicate token 1, drop token 2: author saw [{"op":"neq","field":"benefitId","value":"[restricted]"},{"op":"neq","field":"benefitId","value":"[restricted]"}]; sent [{"op":"neq","field":"benefitId","value":"[restricted]"},{"op":"eq","field":"benefitId","value":"[restricted]"}]; stored now [{"op":"neq","field":"benefitId","value":"01a1be99-c287-72fd-9066-c8b50dea7d04"},{"op":"eq","field":"benefitId","value":"[restricted]"}]; author response [{"op":"neq","field":"benefitId","value":"[restricted]"},{"op":"eq","field":"benefitId","value":"[restricted]"}] marker true
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts > QA-R9 adversarial token cases (D-226, D-228 (1)) > P6 refusals: bare marker, unknown token, marker-like variants, a token on create; nothing stored changes
+QA-R9 P6 refusals: {"\"[restricted]\"":{"status":200},"\"[restricted:3]\"":{"status":409,"code":"version_conflict"},"\"[restricted:9]\"":{"status":409,"code":"version_conflict"},"\"[restricted:0]\"":{"status":409,"code":"version_conflict"},"\"[restricted:01]\"":{"status":409,"code":"version_conflict"},"\"[Restricted:1]\"":{"status":409,"code":"version_conflict"},"\" [restricted:1]\"":{"status":409,"code":"version_conflict"},"\"[restricted:1] \"":{"status":409,"code":"version_conflict"},"\"[ restricted ]\"":{"status":409,"code":"version_conflict"},"\"[restricted:1]x\"":{"status":409,"code":"version_conflict"},"\"[restricted:10000]\"":{"status":409,"code":"version_conflict"},"in [T1, bare]":{"status":409,"code":"version_conflict"},"create with [restricted:1]":{"status":201,"code":"qa.r9.b8d300aa"},"create with [restricted]":{"status":201,"code":"qa.r9.e632559a"}}
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts > QA-R9 adversarial token cases (D-226, D-228 (1)) > P8 concurrent saves from the same read: the second is refused 409 (If-Match), never applies stale tokens
+QA-R9 P8: statuses 409/200; codes version_conflict/undefined; stored [{"op":"neq","field":"benefitId","value":"01a1be99-c287-72fd-9066-c8b50dea7d04"},{"op":"eq","field":"severity","value":"high"}]
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts > QA-R9 adversarial token cases (D-226, D-228 (1)) > P9 a forged token for a position the author can read resolves to that visible literal (no disclosure)
+QA-R9 P9 forged visible token: author saw [{"op":"neq","field":"benefitId","value":"01a1be99-c329-7585-9767-22059e9d25e0"},{"op":"neq","field":"benefitId","value":"[restricted]"}]; sent [{"op":"neq","field":"benefitId","value":"[restricted:1]"},{"op":"neq","field":"benefitId","value":"[restricted]"}]; stored now [{"op":"neq","field":"benefitId","value":"[restricted:1]"},{"op":"neq","field":"benefitId","value":"01a1be99-c287-72fd-9066-c8b50dea7d04"}]; author response [{"op":"neq","field":"benefitId","value":"[restricted:1]"},{"op":"neq","field":"benefitId","value":"[restricted]"}] marker true
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts > QA-R9 adversarial token cases (D-226, D-228 (1)) > P10 a token pointing at a boolean position is refused
+QA-R9 P10 shown [{"op":"eq","field":"severity","value":true},{"op":"neq","field":"benefitId","value":"[restricted]"}]
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts > QA-R9 adversarial token cases (D-226, D-228 (1)) > P12 after edits the rule list, rule, version list and readable summary name no hidden id
+QA-R9 P12 reorder: author saw [{"op":"in","field":"benefitId","value":["[restricted]","[restricted]"]},{"op":"neq","field":"benefitId","value":"[restricted]"}]; sent [{"op":"neq","field":"benefitId","value":"[restricted]"},{"op":"in","field":"benefitId","value":["[restricted]","[restricted]"]}]; stored now [{"op":"neq","field":"benefitId","value":"01a1be99-c300-7302-908b-bef2d03bf11b"},{"op":"in","field":"benefitId","value":["01a1be99-c287-72fd-9066-c8b50dea7d04","01a1be99-c350-700f-bd9d-b88a54b16284"]}]; author response [{"op":"neq","field":"benefitId","value":"[restricted]"},{"op":"in","field":"benefitId","value":["[restricted]","[restricted]"]}] marker true
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts > QA-R9 adversarial token cases (D-226, D-228 (1)) > P12 after edits the rule list, rule, version list and readable summary name no hidden id
+QA-R9 P12 summary {"en":"When Benefit deviates from its forecast, if benefitId is not a restricted record and benefitId is one of a restricted record, a restricted record: Create a task with an in-app reminder (TL). Runs as the service identity.","ar":"عند انحراف المنفعة عن توقعها، إذا كان benefitId لا يساوي سجل مقيد وbenefitId أحد القيم سجل مقيد، سجل مقيد: إنشاء مهمة مع تذكير داخل التطبيق (TL). يعمل بصفة هوية الخدمة."}
+
+ ❯ |integration| apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts (13 tests | 12 failed) 2925ms
+   × QA-R9 F-DG6-560 re-run (round-8 P0-P3) on the token model > P0 control: changing only an unrelated condition keeps both hidden literals 304ms
+     → expected [ Array(3) ] to deeply equal [ '[restricted:1]', …(2) ]
+   × QA-R9 F-DG6-560 re-run (round-8 P0-P3) on the token model > P1: two restricted literals under one (field, op); delete the FIRST -> [Y] 124ms
+     → expected [ Array(1) ] to deeply equal [ Array(1) ]
+   × QA-R9 F-DG6-560 re-run (round-8 P0-P3) on the token model > P2: a visible literal then a restricted one; delete the visible one -> [Y] 95ms
+     → expected [ …(2) ] to deeply equal [ …(2) ]
+   × QA-R9 F-DG6-560 re-run (round-8 P0-P3) on the token model > P3: an `in` list of two restricted literals; drop the first element -> [Y] 73ms
+     → expected [ '[restricted]', '[restricted]' ] to deeply equal [ '[restricted:1]', '[restricted:2]' ]
+   × QA-R9 adversarial token cases (D-226, D-228 (1)) > P4 reorder: swap two restricted conditions and a visible one 90ms
+     → expected [ …(3) ] to deeply equal [ …(3) ]
+   × QA-R9 adversarial token cases (D-226, D-228 (1)) > P5 move: a scalar token into an `in` list of another condition, and a list token to a scalar with another field/op 70ms
+     → expected [ { op: 'eq', …(2) }, …(1) ] to deeply equal [ { field: 'benefitId', …(2) }, …(1) ]
+   × QA-R9 adversarial token cases (D-226, D-228 (1)) > P5b duplicate: the same token sent twice stores the same literal twice (no other literal is touched) 78ms
+     → expected [ { op: 'neq', …(2) }, …(1) ] to deeply equal [ { field: 'benefitId', …(2) }, …(1) ]
+   × QA-R9 adversarial token cases (D-226, D-228 (1)) > P6 refusals: bare marker, unknown token, marker-like variants, a token on create; nothing stored changes 221ms
+     → "[restricted]": expected 200 to be 422 // Object.is equality
+   × QA-R9 adversarial token cases (D-226, D-228 (1)) > P7 sensitivity changes between read and save: tokens resolved by position, nothing shifts or leaks 47ms
+     → expected [ …(3) ] to deeply equal [ …(3) ]
+   ✓ QA-R9 adversarial token cases (D-226, D-228 (1)) > P8 concurrent saves from the same read: the second is refused 409 (If-Match), never applies stale tokens 139ms
+   × QA-R9 adversarial token cases (D-226, D-228 (1)) > P9 a forged token for a position the author can read resolves to that visible literal (no disclosure) 130ms
+     → expected [ '[restricted:1]', …(1) ] to deeply equal [ …(2) ]
+   × QA-R9 adversarial token cases (D-226, D-228 (1)) > P10 a token pointing at a boolean position is refused 39ms
+     → expected '[restricted]' to be '[restricted:2]' // Object.is equality
+   × QA-R9 adversarial token cases (D-226, D-228 (1)) > P12 after edits the rule list, rule, version list and readable summary name no hidden id 149ms
+     → expected [ { op: 'neq', …(2) }, …(1) ] to deeply equal [ { field: 'benefitId', …(2) }, …(1) ]
+stdout | apps/api/test/integration/access/zz-qa-dg6r8b-condition-resave-pairing.test.ts
+QA-R8b ids: hidden X=01a1be99-d5f2-7609-8adf-495fd664264f hidden Y=01a1be99-d673-76d9-875d-67fffccf4a2a visible V=01a1be99-d69e-73a5-87c8-ddfdddd54bb6
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r8b-condition-resave-pairing.test.ts > QA-R8b: keepRestrictedLiterals when the author removes or reorders conditions (D-222 (2)) > P0 control: changing only an unrelated condition keeps both hidden literals
+QA-R8b P0: author saw [{"op":"neq","field":"benefitId","value":"[restricted]"},{"op":"neq","field":"benefitId","value":"[restricted]"},{"op":"eq","field":"severity","value":"high"}]; sent [{"op":"neq","field":"benefitId","value":"[restricted]"},{"op":"neq","field":"benefitId","value":"[restricted]"},{"op":"eq","field":"severity","value":"critical"}]; stored now [{"op":"neq","field":"benefitId","value":"01a1be99-d5f2-7609-8adf-495fd664264f"},{"op":"neq","field":"benefitId","value":"01a1be99-d673-76d9-875d-67fffccf4a2a"},{"op":"eq","field":"severity","value":"critical"}]; author response [{"op":"neq","field":"benefitId","value":"[restricted]"},{"op":"neq","field":"benefitId","value":"[restricted]"},{"op":"eq","field":"severity","value":"critical"}] marker true
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r8b-condition-resave-pairing.test.ts > QA-R8b: keepRestrictedLiterals when the author removes or reorders conditions (D-222 (2)) > P1: two restricted literals under one (field, op); the author deletes the FIRST -> the remaining one should keep Y
+QA-R8b P1 delete first restricted: author saw [{"op":"neq","field":"benefitId","value":"[restricted]"},{"op":"neq","field":"benefitId","value":"[restricted]"}]; sent [{"op":"neq","field":"benefitId","value":"[restricted]"}]; stored now [{"op":"neq","field":"benefitId","value":"01a1be99-d5f2-7609-8adf-495fd664264f"}]; author response [{"op":"neq","field":"benefitId","value":"[restricted]"}] marker true
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r8b-condition-resave-pairing.test.ts > QA-R8b: keepRestrictedLiterals when the author removes or reorders conditions (D-222 (2)) > P2: a visible literal then a restricted one; the author deletes the visible one -> the remaining one should keep Y
+QA-R8b P2 delete visible first: author saw [{"op":"neq","field":"benefitId","value":"01a1be99-d69e-73a5-87c8-ddfdddd54bb6"},{"op":"neq","field":"benefitId","value":"[restricted]"}]; sent [{"op":"neq","field":"benefitId","value":"[restricted]"}]; stored now [{"op":"neq","field":"benefitId","value":"[restricted]"}]; author response [{"op":"neq","field":"benefitId","value":"[restricted]"}] marker undefined
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r8b-condition-resave-pairing.test.ts > QA-R8b: keepRestrictedLiterals when the author removes or reorders conditions (D-222 (2)) > P3: an `in` list of two restricted literals; the author removes the first element -> the list should keep [Y]
+QA-R8b P3 in-list drop first: author saw [{"op":"in","field":"benefitId","value":["[restricted]","[restricted]"]}]; sent [{"op":"in","field":"benefitId","value":["[restricted]"]}]; stored now [{"op":"in","field":"benefitId","value":["01a1be99-d5f2-7609-8adf-495fd664264f"]}]; author response [{"op":"in","field":"benefitId","value":["[restricted]"]}] marker true
+
+ ❯ |integration| apps/api/test/integration/access/zz-qa-dg6r8b-condition-resave-pairing.test.ts (4 tests | 3 failed) 1437ms
+   ✓ QA-R8b: keepRestrictedLiterals when the author removes or reorders conditions (D-222 (2)) > P0 control: changing only an unrelated condition keeps both hidden literals 241ms
+   × QA-R8b: keepRestrictedLiterals when the author removes or reorders conditions (D-222 (2)) > P1: two restricted literals under one (field, op); the author deletes the FIRST -> the remaining one should keep Y 84ms
+     → the condition the author kept keeps its own literal (Y): expected [ Array(1) ] to deeply equal [ Array(1) ]
+   × QA-R8b: keepRestrictedLiterals when the author removes or reorders conditions (D-222 (2)) > P2: a visible literal then a restricted one; the author deletes the visible one -> the remaining one should keep Y 107ms
+     → the hidden literal survives the re-save: expected [ '[restricted]' ] to deeply equal [ Array(1) ]
+   × QA-R8b: keepRestrictedLiterals when the author removes or reorders conditions (D-222 (2)) > P3: an `in` list of two restricted literals; the author removes the first element -> the list should keep [Y] 173ms
+     → the element the author kept keeps its own literal (Y): expected [ Array(1) ] to deeply equal [ Array(1) ]
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 24 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/access/automation-restricted-tokens-z13.test.ts > T-DG6-BE-Z13: restricted condition tokens (D-226) > read: each hidden literal is an opaque token in reading order, marked; the summary names no record
+AssertionError: expected [ { op: 'in', …(2) }, …(1) ] to deeply equal [ { field: 'benefitId', …(2) }, …(1) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[33m@@ -1,13 +1,13 @@[39m
+[2m  [[22m
+[2m    {[22m
+[2m      "field": "benefitId",[22m
+[2m      "op": "in",[22m
+[2m      "value": [[22m
+[32m-       "[restricted:1]",[39m
+[31m+       "[restricted]",[39m
+[2m        "01a1be99-ac5c-7593-929a-f6571a8cef97",[22m
+[32m-       "[restricted:3]",[39m
+[31m+       "[restricted]",[39m
+[2m      ],[22m
+[2m    },[22m
+[2m    {[22m
+[2m      "field": "severity",[22m
+[2m      "op": "eq",[22m
+
+ ❯ apps/api/test/integration/access/automation-restricted-tokens-z13.test.ts:168:36
+    166|     const one = ok(await send("GET", V(rules.get("listReorder")!), { s…
+    167|     // D-228 (1): k is the position among all literals (S1 = 1, P = 2,…
+    168|     expect(one.content.conditions).toEqual([{ field: "benefitId", op: …
+       |                                    ^
+    169|     expect(one.includesRestrictedRecords).toBe(true);
+    170|     expect(one.summary.en).toContain("a restricted record");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/25]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/automation-restricted-tokens-z13.test.ts > T-DG6-BE-Z13: restricted condition tokens (D-226) > removing an earlier condition keeps the hidden literal of the condition kept (F-DG6-541, F-DG6-520 (c))
+AssertionError: expected undefined to be true // Object.is equality
+
+[32m- Expected:[39m 
+true
+
+[31m+ Received:[39m 
+undefined
+
+ ❯ apps/api/test/integration/access/automation-restricted-tokens-z13.test.ts:183:44
+    181|     const { res, ruleId } = await resave("removeEarlier", (s) => s.sli…
+    182|     const body = ok(res);
+    183|     expect(body.includesRestrictedRecords).toBe(true);
+       |                                            ^
+    184|     expect(body.content.conditions).toEqual([{ field: "benefitId", op:…
+    185|     expect(leaks(body)).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/25]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/automation-restricted-tokens-z13.test.ts > T-DG6-BE-Z13: restricted condition tokens (D-226) > reordering two hidden literals keeps each with its own condition (F-DG6-560 P1)
+AssertionError: expected [ { op: 'eq', …(2) }, …(2) ] to deeply equal [ { field: 'severity', …(2) }, …(2) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[33m@@ -5,13 +5,13 @@[39m
+[2m      "value": "high",[22m
+[2m    },[22m
+[2m    {[22m
+[2m      "field": "benefitId",[22m
+[2m      "op": "neq",[22m
+[32m-     "value": "01a1be99-ac3f-7502-8949-2654b3ad6ba8",[39m
+[31m+     "value": "01a1be99-abcd-741e-94af-02b7530f9c91",[39m
+[2m    },[22m
+[2m    {[22m
+[2m      "field": "benefitId",[22m
+[2m      "op": "neq",[22m
+[32m-     "value": "01a1be99-abcd-741e-94af-02b7530f9c91",[39m
+[31m+     "value": "01a1be99-ac3f-7502-8949-2654b3ad6ba8",[39m
+[2m    },[22m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/access/automation-restricted-tokens-z13.test.ts:192:47
+    190|     const { res, ruleId } = await resave("reorder", (s) => [s[2]!, s[1…
+    191|     ok(res);
+    192|     expect((await stored(ruleId)).conditions).toEqual([
+       |                                               ^
+    193|       sev,
+    194|       { field: "benefitId", op: "neq", value: id.S2 },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/25]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/automation-restricted-tokens-z13.test.ts > T-DG6-BE-Z13: restricted condition tokens (D-226) > in-list: removing the open element and reordering the hidden ones keeps both (F-DG6-520 (b), F-DG6-560 P3)
+AssertionError: expected [ '[restricted]', …(2) ] to deeply equal [ '[restricted:1]', …(2) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   "[restricted:1]",[39m
+[31m+   "[restricted]",[39m
+[2m    "01a1be99-ac5c-7593-929a-f6571a8cef97",[22m
+[32m-   "[restricted:3]",[39m
+[31m+   "[restricted]",[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/access/automation-restricted-tokens-z13.test.ts:208:47
+    206|   it("in-list: removing the open element and reordering the hidden one…
+    207|     const { shown, res, ruleId } = await resave("listReorder", (s) => …
+    208|     expect(shown.content.conditions[0].value).toEqual([T1, id.P, T3]);
+       |                                               ^
+    209|     ok(res);
+    210|     expect((await stored(ruleId)).conditions).toEqual([{ field: "benef…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/25]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/automation-restricted-tokens-z13.test.ts > T-DG6-BE-Z13: restricted condition tokens (D-226) > in-list: removing a hidden element removes exactly that literal
+AssertionError: expected [ { op: 'in', …(2) }, …(1) ] to deeply equal [ { field: 'benefitId', …(2) }, …(1) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[33m@@ -2,11 +2,11 @@[39m
+[2m    {[22m
+[2m      "field": "benefitId",[22m
+[2m      "op": "in",[22m
+[2m      "value": [[22m
+[2m        "01a1be99-ac5c-7593-929a-f6571a8cef97",[22m
+[32m-       "01a1be99-ac3f-7502-8949-2654b3ad6ba8",[39m
+[31m+       "[restricted:3]",[39m
+[2m      ],[22m
+[2m    },[22m
+[2m    {[22m
+[2m      "field": "severity",[22m
+[2m      "op": "eq",[22m
+
+ ❯ apps/api/test/integration/access/automation-restricted-tokens-z13.test.ts:216:47
+    214|     const { res, ruleId } = await resave("listRemove", (s) => [{ ...s[…
+    215|     ok(res);
+    216|     expect((await stored(ruleId)).conditions).toEqual([{ field: "benef…
+       |                                               ^
+    217|   });
+    218| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/25]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/automation-restricted-tokens-z13.test.ts > T-DG6-BE-Z13: restricted condition tokens (D-226) > negative: an unknown token, the bare marker or other marker text is refused 422 and nothing is stored
+AssertionError: [restricted:9]: expected 200 to be 422 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 422[39m
+[31m+ 200[39m
+
+ ❯ apps/api/test/integration/access/automation-restricted-tokens-z13.test.ts:230:31
+    228|     ]) {
+    229|       const { res } = await resave("refusals", (s) => [{ ...s[0]!, val…
+    230|       expect(res.status, bad).toBe(422);
+       |                               ^
+    231|       expect(res.body.code).toBe("automation_rule.restricted_marker_un…
+    232|       expect(res.body.detail).toContain("Reload the version");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/25]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/automation-restricted-tokens-z13.test.ts > T-DG6-BE-Z13: restricted condition tokens (D-226) > race (D-228 (1)): a record that becomes hidden between the read and the save shifts no token
+AssertionError: expected [ '[restricted]', …(3) ] to deeply equal [ '[restricted:1]', …(3) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   "[restricted:1]",[39m
+[31m+   "[restricted]",[39m
+[2m    "01a1be99-ac7f-7761-9f6a-452969696f89",[22m
+[32m-   "[restricted:3]",[39m
+[31m+   "[restricted]",[39m
+[2m    "high",[22m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/access/automation-restricted-tokens-z13.test.ts:283:69
+    281|     const shown = ok(await send("GET", V(ruleId), { session: author.se…
+    282|     // Soft, so the save below is still exercised (and its stored lite…
+    283|     expect.soft(shown.content.conditions.map((x: Cond) => x.value)).to…
+       |                                                                     ^
+    284|     // A Transformation Office lead marks H sensitive before the autho…
+    285|     ok(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/25]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/automation-restricted-tokens-z13.test.ts > T-DG6-BE-Z13: restricted condition tokens (D-226) > race (D-228 (1)): a record that becomes hidden between the read and the save shifts no token
+AssertionError: expected [ Array(4) ] to deeply equal [ '[restricted:1]', …(3) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   "[restricted:1]",[39m
+[32m-   "[restricted:2]",[39m
+[32m-   "[restricted:3]",[39m
+[31m+   "[restricted]",[39m
+[31m+   "[restricted]",[39m
+[31m+   "[restricted]",[39m
+[2m    "low",[22m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/access/automation-restricted-tokens-z13.test.ts:311:63
+    309|     ]);
+    310|     // The response now hides H too, at its own position; nothing hidd…
+    311|     expect(body.content.conditions.map((x: Cond) => x.value)).toEqual(…
+       |                                                               ^
+    312|     expect(leaks(body)).toEqual([]);
+    313|     expect(JSON.stringify(body)).not.toContain(id.H);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/25]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/automation-restricted-tokens-z13.test.ts > T-DG6-BE-Z13: restricted condition tokens (D-226) > race (D-228 (1)): a record that becomes visible between the read and the save keeps its literal
+AssertionError: expected [ Array(4) ] to deeply equal [ '[restricted:1]', …(3) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   "[restricted:1]",[39m
+[32m-   "[restricted:2]",[39m
+[32m-   "[restricted:3]",[39m
+[31m+   "[restricted]",[39m
+[31m+   "[restricted]",[39m
+[31m+   "[restricted]",[39m
+[2m    "high",[22m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/access/automation-restricted-tokens-z13.test.ts:320:64
+    318|     // The author reads while V is still hidden: three tokens at posit…
+    319|     const shown = ok(await send("GET", V(ruleId), { session: author.se…
+    320|     expect(shown.content.conditions.map((x: Cond) => x.value)).toEqual…
+       |                                                                ^
+    321|     // An explicit grant admits the author to V before the save (an ac…
+    322|     ok(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/25]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/automation-restricted-tokens-z13.test.ts > T-DG6-BE-Z13: restricted condition tokens (D-226) > positive: after an explicit grant the author reads the real values; a token still names its position
+AssertionError: expected [ '[restricted:3]', '[restricted:1]' ] to deeply equal [ …(2) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   "01a1be99-ac3f-7502-8949-2654b3ad6ba8",[39m
+[32m-   "01a1be99-abcd-741e-94af-02b7530f9c91",[39m
+[31m+   "[restricted:3]",[39m
+[31m+   "[restricted:1]",[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/access/automation-restricted-tokens-z13.test.ts:374:45
+    372|     }
+    373|     const one = ok(await send("GET", V(rules.get("listReorder")!), { s…
+    374|     expect(one.content.conditions[0].value).toEqual([id.S2, id.S1]);
+       |                                             ^
+    375|     expect(one.includesRestrictedRecords).toBeUndefined();
+    376|     const earlier = ok(await send("GET", V(rules.get("removeEarlier")!…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/25]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/zz-qa-dg6r8b-condition-resave-pairing.test.ts > QA-R8b: keepRestrictedLiterals when the author removes or reorders conditions (D-222 (2)) > P1: two restricted literals under one (field, op); the author deletes the FIRST -> the remaining one should keep Y
+AssertionError: the condition the author kept keeps its own literal (Y): expected [ Array(1) ] to deeply equal [ Array(1) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   "01a1be99-d673-76d9-875d-67fffccf4a2a",[39m
+[31m+   "01a1be99-d5f2-7609-8adf-495fd664264f",[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/access/zz-qa-dg6r8b-condition-resave-pairing.test.ts:126:102
+    124|     ]);
+    125|     const { now } = await edit(id, (cs) => cs.filter((_, i) => i !== 0…
+    126|     expect(now.map((x: Body) => x.value), "the condition the author ke…
+       |                                                                                                      ^
+    127|   });
+    128|   it("P2: a visible literal then a restricted one; the author deletes …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/25]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/zz-qa-dg6r8b-condition-resave-pairing.test.ts > QA-R8b: keepRestrictedLiterals when the author removes or reorders conditions (D-222 (2)) > P2: a visible literal then a restricted one; the author deletes the visible one -> the remaining one should keep Y
+AssertionError: the hidden literal survives the re-save: expected [ '[restricted]' ] to deeply equal [ Array(1) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   "01a1be99-d673-76d9-875d-67fffccf4a2a",[39m
+[31m+   "[restricted]",[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/access/zz-qa-dg6r8b-condition-resave-pairing.test.ts:135:86
+    133|     const { shown, now } = await edit(id, (cs) => cs.filter((_, i) => …
+    134|     expect(shown.content.conditions.map((x: Body) => x.value)).toEqual…
+    135|     expect(now.map((x: Body) => x.value), "the hidden literal survives…
+       |                                                                                      ^
+    136|   });
+    137|   it("P3: an `in` list of two restricted literals; the author removes …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/25]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/zz-qa-dg6r8b-condition-resave-pairing.test.ts > QA-R8b: keepRestrictedLiterals when the author removes or reorders conditions (D-222 (2)) > P3: an `in` list of two restricted literals; the author removes the first element -> the list should keep [Y]
+AssertionError: the element the author kept keeps its own literal (Y): expected [ Array(1) ] to deeply equal [ Array(1) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   "01a1be99-d673-76d9-875d-67fffccf4a2a",[39m
+[31m+   "01a1be99-d5f2-7609-8adf-495fd664264f",[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/access/zz-qa-dg6r8b-condition-resave-pairing.test.ts:141:83
+    139|     const { shown, now } = await edit(id, (cs) => cs.map((x) => ({ ...…
+    140|     expect(shown.content.conditions[0].value).toEqual([M, M]);
+    141|     expect(now[0].value, "the element the author kept keeps its own li…
+       |                                                                                   ^
+    142|   });
+    143| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/25]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts > QA-R9 F-DG6-560 re-run (round-8 P0-P3) on the token model > P0 control: changing only an unrelated condition keeps both hidden literals
+AssertionError: expected [ Array(3) ] to deeply equal [ '[restricted:1]', …(2) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   "[restricted:1]",[39m
+[32m-   "[restricted:2]",[39m
+[31m+   "[restricted]",[39m
+[31m+   "[restricted]",[39m
+[2m    "high",[22m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts:129:64
+    127|     ]);
+    128|     const { shown, now, saved } = await edit(id, (cs) => cs.map((x) =>…
+    129|     expect(shown.content.conditions.map((x: Body) => x.value)).toEqual…
+       |                                                                ^
+    130|     expect(now.map((x: Body) => x.value)).toEqual([H.x, H.y, "critical…
+    131|     expect(saved.includesRestrictedRecords).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/25]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts > QA-R9 F-DG6-560 re-run (round-8 P0-P3) on the token model > P1: two restricted literals under one (field, op); delete the FIRST -> [Y]
+AssertionError: expected [ Array(1) ] to deeply equal [ Array(1) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   "01a1be99-c300-7302-908b-bef2d03bf11b",[39m
+[31m+   "01a1be99-c287-72fd-9066-c8b50dea7d04",[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts:140:43
+    138|     ]);
+    139|     const { now, saved } = await edit(id, (cs) => cs.filter((_, i) => …
+    140|     expect(now.map((x: Body) => x.value)).toEqual([H.y]);
+       |                                           ^
+    141|     expect(saved.content.conditions.map((x: Body) => x.value), "P11 re…
+    142|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/25]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts > QA-R9 F-DG6-560 re-run (round-8 P0-P3) on the token model > P2: a visible literal then a restricted one; delete the visible one -> [Y]
+AssertionError: expected [ …(2) ] to deeply equal [ …(2) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    "01a1be99-c329-7585-9767-22059e9d25e0",[22m
+[32m-   "[restricted:2]",[39m
+[31m+   "[restricted]",[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts:149:64
+    147|     ]);
+    148|     const { shown, now } = await edit(id, (cs) => cs.filter((_, i) => …
+    149|     expect(shown.content.conditions.map((x: Body) => x.value)).toEqual…
+       |                                                                ^
+    150|     expect(now.map((x: Body) => x.value)).toEqual([H.y]);
+    151|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/25]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts > QA-R9 F-DG6-560 re-run (round-8 P0-P3) on the token model > P3: an `in` list of two restricted literals; drop the first element -> [Y]
+AssertionError: expected [ '[restricted]', '[restricted]' ] to deeply equal [ '[restricted:1]', '[restricted:2]' ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   "[restricted:1]",[39m
+[32m-   "[restricted:2]",[39m
+[31m+   "[restricted]",[39m
+[31m+   "[restricted]",[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts:155:47
+    153|     const id = await rule([{ field: "benefitId", op: "in", value: [H.x…
+    154|     const { shown, now } = await edit(id, (cs) => cs.map((x) => ({ ...…
+    155|     expect(shown.content.conditions[0].value).toEqual([T(1), T(2)]);
+       |                                               ^
+    156|     expect(now[0].value).toEqual([H.y]);
+    157|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/25]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts > QA-R9 adversarial token cases (D-226, D-228 (1)) > P4 reorder: swap two restricted conditions and a visible one
+AssertionError: expected [ …(3) ] to deeply equal [ …(3) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   "01a1be99-c300-7302-908b-bef2d03bf11b",[39m
+[32m-   "high",[39m
+[2m    "01a1be99-c287-72fd-9066-c8b50dea7d04",[22m
+[31m+   "high",[39m
+[31m+   "01a1be99-c300-7302-908b-bef2d03bf11b",[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts:168:43
+    166|     ]);
+    167|     const { now } = await edit(id, (cs) => [cs[2], cs[1], cs[0]], "P4 …
+    168|     expect(now.map((x: Body) => x.value)).toEqual([H.y, "high", H.x]);
+       |                                           ^
+    169|   });
+    170|   it("P5 move: a scalar token into an `in` list of another condition, …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/25]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts > QA-R9 adversarial token cases (D-226, D-228 (1)) > P5 move: a scalar token into an `in` list of another condition, and a list token to a scalar with another field/op
+AssertionError: expected [ { op: 'eq', …(2) }, …(1) ] to deeply equal [ { field: 'benefitId', …(2) }, …(1) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    {[22m
+[2m      "field": "benefitId",[22m
+[2m      "op": "eq",[22m
+[32m-     "value": "[restricted:1]",[39m
+[31m+     "value": "[restricted]",[39m
+[2m    },[22m
+[2m    {[22m
+[2m      "field": "benefitId",[22m
+[2m      "op": "in",[22m
+[2m      "value": [[22m
+[2m        "01a1be99-c329-7585-9767-22059e9d25e0",[22m
+[32m-       "[restricted:3]",[39m
+[31m+       "[restricted]",[39m
+[2m      ],[22m
+[2m    },[22m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts:183:38
+    181|       "P5 move tokens",
+    182|     );
+    183|     expect(shown.content.conditions).toEqual([
+       |                                      ^
+    184|       { field: "benefitId", op: "eq", value: T(1) },
+    185|       { field: "benefitId", op: "in", value: [H.v, T(3)] },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/25]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts > QA-R9 adversarial token cases (D-226, D-228 (1)) > P5b duplicate: the same token sent twice stores the same literal twice (no other literal is touched)
+AssertionError: expected [ { op: 'neq', …(2) }, …(1) ] to deeply equal [ { field: 'benefitId', …(2) }, …(1) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[33m@@ -5,8 +5,8 @@[39m
+[2m      "value": "01a1be99-c287-72fd-9066-c8b50dea7d04",[22m
+[2m    },[22m
+[2m    {[22m
+[2m      "field": "benefitId",[22m
+[2m      "op": "eq",[22m
+[32m-     "value": "01a1be99-c287-72fd-9066-c8b50dea7d04",[39m
+[31m+     "value": "[restricted]",[39m
+[2m    },[22m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts:198:17
+    196|     ]);
+    197|     const { now } = await edit(id, (cs) => [cs[0], { ...cs[0], op: "eq…
+    198|     expect(now).toEqual([
+       |                 ^
+    199|       { field: "benefitId", op: "neq", value: H.x },
+    200|       { field: "benefitId", op: "eq", value: H.x },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/25]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts > QA-R9 adversarial token cases (D-226, D-228 (1)) > P6 refusals: bare marker, unknown token, marker-like variants, a token on create; nothing stored changes
+AssertionError: "[restricted]": expected 200 to be 422 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 422[39m
+[31m+ 200[39m
+
+ ❯ apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts:222:37
+    220|       // " [restricted:1]" with surrounding blanks: the schema may tri…
+    221|       if (k === JSON.stringify(" [restricted:1]") || k === JSON.string…
+    222|       expect((r as Body).status, k).toBe(422);
+       |                                     ^
+    223|       expect((r as Body).code, k).toBe("automation_rule.restricted_mar…
+    224|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/25]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts > QA-R9 adversarial token cases (D-226, D-228 (1)) > P7 sensitivity changes between read and save: tokens resolved by position, nothing shifts or leaks
+AssertionError: expected [ …(3) ] to deeply equal [ …(3) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    "01a1be99-c329-7585-9767-22059e9d25e0",[22m
+[32m-   "[restricted:2]",[39m
+[32m-   "[restricted:3]",[39m
+[31m+   "[restricted]",[39m
+[31m+   "[restricted]",[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts:236:64
+    234|     ]);
+    235|     const shown = await read(id);
+    236|     expect(shown.content.conditions.map((x: Body) => x.value)).toEqual…
+       |                                                                ^
+    237|     await mark(H.v, true); // V becomes hidden after the read: the aut…
+    238|     await mark(H.x, false); // X becomes visible after the read: the a…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/25]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts > QA-R9 adversarial token cases (D-226, D-228 (1)) > P9 a forged token for a position the author can read resolves to that visible literal (no disclosure)
+AssertionError: expected [ '[restricted:1]', …(1) ] to deeply equal [ …(2) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   "01a1be99-c329-7585-9767-22059e9d25e0",[39m
+[31m+   "[restricted:1]",[39m
+[2m    "01a1be99-c287-72fd-9066-c8b50dea7d04",[22m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts:279:43
+    277|     ]);
+    278|     const { now, saved } = await edit(id, (cs) => [{ ...cs[0], value: …
+    279|     expect(now.map((x: Body) => x.value)).toEqual([H.v, H.x]);
+       |                                           ^
+    280|     expect(saved.content.conditions.map((x: Body) => x.value)).toEqual…
+    281|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/25]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts > QA-R9 adversarial token cases (D-226, D-228 (1)) > P10 a token pointing at a boolean position is refused
+AssertionError: expected '[restricted]' to be '[restricted:2]' // Object.is equality
+
+Expected: [32m"[restricted[7m:2[27m]"[39m
+Received: [31m"[restricted]"[39m
+
+ ❯ apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts:289:47
+    287|     const shown = await read(id);
+    288|     console.log(`QA-R9 P10 shown ${JSON.stringify(shown.content.condit…
+    289|     expect(shown.content.conditions[1].value).toBe(T(2));
+       |                                               ^
+    290|     const res = await patch(id, shown, [{ field: "severity", op: "eq",…
+    291|     console.log(`QA-R9 P10: ${res.status} ${res.body?.code}`);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/25]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts > QA-R9 adversarial token cases (D-226, D-228 (1)) > P12 after edits the rule list, rule, version list and readable summary name no hidden id
+AssertionError: expected [ { op: 'neq', …(2) }, …(1) ] to deeply equal [ { field: 'benefitId', …(2) }, …(1) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    {[22m
+[2m      "field": "benefitId",[22m
+[2m      "op": "neq",[22m
+[32m-     "value": "[restricted:1]",[39m
+[31m+     "value": "[restricted]",[39m
+[2m    },[22m
+[2m    {[22m
+[2m      "field": "benefitId",[22m
+[2m      "op": "in",[22m
+[2m      "value": [[22m
+[32m-       "[restricted:2]",[39m
+[32m-       "[restricted:3]",[39m
+[31m+       "[restricted]",[39m
+[31m+       "[restricted]",[39m
+[2m      ],[22m
+[2m    },[22m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts:307:34
+    305|     console.log(`QA-R9 P12 summary ${JSON.stringify(v.summary)}`);
+    306|     expect(JSON.stringify(v.summary)).toContain("a restricted record");
+    307|     expect(v.content.conditions).toEqual([
+       |                                  ^
+    308|       { field: "benefitId", op: "neq", value: T(1) },
+    309|       { field: "benefitId", op: "in", value: [T(2), T(3)] },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[25/25]⎯
+
+
+ Test Files  3 failed (3)
+      Tests  24 failed | 4 passed (28)
+   Start at  04:38:05
+   Duration  30.47s (transform 6.69s, setup 0ms, collect 18.85s, tests 6.81s, environment 0ms, prepare 100ms)
+
+exit=1
+## restored:
+## CANDIDATE: same three files
+port-policy: PostgreSQL listening on port 30900 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.TvZ4PC/claude-0/c
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw8rtykw_2e2d2b8c (server_encoding UTF8); applied 118 migrations to a fresh database
+stdout | apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts
+QA-R9 ids: hidden X=01a1be9a-2f49-773d-8103-15fb95fa3d68 hidden Y=01a1be9a-3056-71dc-ab0d-fcd1f4c635e8 hidden Z=01a1be9a-30b2-7546-90eb-b4967b83e660 visible V=01a1be9a-307d-76e9-b823-f090404ee22c
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts > QA-R9 F-DG6-560 re-run (round-8 P0-P3) on the token model > P0 control: changing only an unrelated condition keeps both hidden literals
+QA-R9 P0: author saw [{"op":"neq","field":"benefitId","value":"[restricted:1]"},{"op":"neq","field":"benefitId","value":"[restricted:2]"},{"op":"eq","field":"severity","value":"high"}]; sent [{"op":"neq","field":"benefitId","value":"[restricted:1]"},{"op":"neq","field":"benefitId","value":"[restricted:2]"},{"op":"eq","field":"severity","value":"critical"}]; stored now [{"op":"neq","field":"benefitId","value":"01a1be9a-2f49-773d-8103-15fb95fa3d68"},{"op":"neq","field":"benefitId","value":"01a1be9a-3056-71dc-ab0d-fcd1f4c635e8"},{"op":"eq","field":"severity","value":"critical"}]; author response [{"op":"neq","field":"benefitId","value":"[restricted:1]"},{"op":"neq","field":"benefitId","value":"[restricted:2]"},{"op":"eq","field":"severity","value":"critical"}] marker true
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts > QA-R9 F-DG6-560 re-run (round-8 P0-P3) on the token model > P1: two restricted literals under one (field, op); delete the FIRST -> [Y]
+QA-R9 P1 delete first restricted: author saw [{"op":"neq","field":"benefitId","value":"[restricted:1]"},{"op":"neq","field":"benefitId","value":"[restricted:2]"}]; sent [{"op":"neq","field":"benefitId","value":"[restricted:2]"}]; stored now [{"op":"neq","field":"benefitId","value":"01a1be9a-3056-71dc-ab0d-fcd1f4c635e8"}]; author response [{"op":"neq","field":"benefitId","value":"[restricted:1]"}] marker true
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts > QA-R9 F-DG6-560 re-run (round-8 P0-P3) on the token model > P2: a visible literal then a restricted one; delete the visible one -> [Y]
+QA-R9 P2 delete visible first: author saw [{"op":"neq","field":"benefitId","value":"01a1be9a-307d-76e9-b823-f090404ee22c"},{"op":"neq","field":"benefitId","value":"[restricted:2]"}]; sent [{"op":"neq","field":"benefitId","value":"[restricted:2]"}]; stored now [{"op":"neq","field":"benefitId","value":"01a1be9a-3056-71dc-ab0d-fcd1f4c635e8"}]; author response [{"op":"neq","field":"benefitId","value":"[restricted:1]"}] marker true
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts > QA-R9 F-DG6-560 re-run (round-8 P0-P3) on the token model > P3: an `in` list of two restricted literals; drop the first element -> [Y]
+QA-R9 P3 in-list drop first: author saw [{"op":"in","field":"benefitId","value":["[restricted:1]","[restricted:2]"]}]; sent [{"op":"in","field":"benefitId","value":["[restricted:2]"]}]; stored now [{"op":"in","field":"benefitId","value":["01a1be9a-3056-71dc-ab0d-fcd1f4c635e8"]}]; author response [{"op":"in","field":"benefitId","value":["[restricted:1]"]}] marker true
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts > QA-R9 adversarial token cases (D-226, D-228 (1)) > P4 reorder: swap two restricted conditions and a visible one
+QA-R9 P4 reorder: author saw [{"op":"neq","field":"benefitId","value":"[restricted:1]"},{"op":"eq","field":"severity","value":"high"},{"op":"neq","field":"benefitId","value":"[restricted:3]"}]; sent [{"op":"neq","field":"benefitId","value":"[restricted:3]"},{"op":"eq","field":"severity","value":"high"},{"op":"neq","field":"benefitId","value":"[restricted:1]"}]; stored now [{"op":"neq","field":"benefitId","value":"01a1be9a-3056-71dc-ab0d-fcd1f4c635e8"},{"op":"eq","field":"severity","value":"high"},{"op":"neq","field":"benefitId","value":"01a1be9a-2f49-773d-8103-15fb95fa3d68"}]; author response [{"op":"neq","field":"benefitId","value":"[restricted:1]"},{"op":"eq","field":"severity","value":"high"},{"op":"neq","field":"benefitId","value":"[restricted:3]"}] marker true
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts > QA-R9 adversarial token cases (D-226, D-228 (1)) > P5 move: a scalar token into an `in` list of another condition, and a list token to a scalar with another field/op
+QA-R9 P5 move tokens: author saw [{"op":"eq","field":"benefitId","value":"[restricted:1]"},{"op":"in","field":"benefitId","value":["01a1be9a-307d-76e9-b823-f090404ee22c","[restricted:3]"]}]; sent [{"field":"benefitId","op":"in","value":["[restricted:1]","01a1be9a-307d-76e9-b823-f090404ee22c"]},{"field":"severity","op":"neq","value":"[restricted:3]"}]; stored now [{"op":"in","field":"benefitId","value":["01a1be9a-2f49-773d-8103-15fb95fa3d68","01a1be9a-307d-76e9-b823-f090404ee22c"]},{"op":"neq","field":"severity","value":"01a1be9a-3056-71dc-ab0d-fcd1f4c635e8"}]; author response [{"op":"in","field":"benefitId","value":["[restricted:1]","01a1be9a-307d-76e9-b823-f090404ee22c"]},{"op":"neq","field":"severity","value":"[restricted:3]"}] marker true
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts > QA-R9 adversarial token cases (D-226, D-228 (1)) > P5b duplicate: the same token sent twice stores the same literal twice (no other literal is touched)
+QA-R9 P5b duplicate token 1, drop token 2: author saw [{"op":"neq","field":"benefitId","value":"[restricted:1]"},{"op":"neq","field":"benefitId","value":"[restricted:2]"}]; sent [{"op":"neq","field":"benefitId","value":"[restricted:1]"},{"op":"eq","field":"benefitId","value":"[restricted:1]"}]; stored now [{"op":"neq","field":"benefitId","value":"01a1be9a-2f49-773d-8103-15fb95fa3d68"},{"op":"eq","field":"benefitId","value":"01a1be9a-2f49-773d-8103-15fb95fa3d68"}]; author response [{"op":"neq","field":"benefitId","value":"[restricted:1]"},{"op":"eq","field":"benefitId","value":"[restricted:2]"}] marker true
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts > QA-R9 adversarial token cases (D-226, D-228 (1)) > P6 refusals: bare marker, unknown token, marker-like variants, a token on create; nothing stored changes
+QA-R9 P6 refusals: {"\"[restricted]\"":{"status":422,"code":"automation_rule.restricted_marker_unknown","pointer":"/content/conditions/1/value"},"\"[restricted:3]\"":{"status":422,"code":"automation_rule.restricted_marker_unknown","pointer":"/content/conditions/1/value"},"\"[restricted:9]\"":{"status":422,"code":"automation_rule.restricted_marker_unknown","pointer":"/content/conditions/1/value"},"\"[restricted:0]\"":{"status":422,"code":"automation_rule.restricted_marker_unknown","pointer":"/content/conditions/1/value"},"\"[restricted:01]\"":{"status":422,"code":"automation_rule.restricted_marker_unknown","pointer":"/content/conditions/1/value"},"\"[Restricted:1]\"":{"status":422,"code":"automation_rule.restricted_marker_unknown","pointer":"/content/conditions/1/value"},"\" [restricted:1]\"":{"status":422,"code":"automation_rule.restricted_marker_unknown","pointer":"/content/conditions/1/value"},"\"[restricted:1] \"":{"status":422,"code":"automation_rule.restricted_marker_unknown","pointer":"/content/conditions/1/value"},"\"[ restricted ]\"":{"status":422,"code":"automation_rule.restricted_marker_unknown","pointer":"/content/conditions/1/value"},"\"[restricted:1]x\"":{"status":422,"code":"automation_rule.restricted_marker_unknown","pointer":"/content/conditions/1/value"},"\"[restricted:10000]\"":{"status":422,"code":"automation_rule.restricted_marker_unknown","pointer":"/content/conditions/1/value"},"in [T1, bare]":{"status":422,"code":"automation_rule.restricted_marker_unknown","pointer":"/content/conditions/0/value/1"},"create with [restricted:1]":{"status":422,"code":"automation_rule.restricted_marker_unknown"},"create with [restricted]":{"status":422,"code":"automation_rule.restricted_marker_unknown"}}
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts > QA-R9 adversarial token cases (D-226, D-228 (1)) > P7 sensitivity changes between read and save: tokens resolved by position, nothing shifts or leaks
+QA-R9 P7: sent [{"op":"neq","field":"benefitId","value":"01a1be9a-307d-76e9-b823-f090404ee22c"},{"op":"neq","field":"benefitId","value":"[restricted:2]"}]; stored [{"op":"neq","field":"benefitId","value":"01a1be9a-307d-76e9-b823-f090404ee22c"},{"op":"neq","field":"benefitId","value":"01a1be9a-2f49-773d-8103-15fb95fa3d68"}]; response [{"op":"neq","field":"benefitId","value":"[restricted:1]"},{"op":"neq","field":"benefitId","value":"01a1be9a-2f49-773d-8103-15fb95fa3d68"}]
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts > QA-R9 adversarial token cases (D-226, D-228 (1)) > P8 concurrent saves from the same read: the second is refused 409 (If-Match), never applies stale tokens
+QA-R9 P8: statuses 200/409; codes undefined/version_conflict; stored [{"op":"neq","field":"benefitId","value":"01a1be9a-3056-71dc-ab0d-fcd1f4c635e8"}]
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts > QA-R9 adversarial token cases (D-226, D-228 (1)) > P9 a forged token for a position the author can read resolves to that visible literal (no disclosure)
+QA-R9 P9 forged visible token: author saw [{"op":"neq","field":"benefitId","value":"01a1be9a-307d-76e9-b823-f090404ee22c"},{"op":"neq","field":"benefitId","value":"[restricted:2]"}]; sent [{"op":"neq","field":"benefitId","value":"[restricted:1]"},{"op":"neq","field":"benefitId","value":"[restricted:2]"}]; stored now [{"op":"neq","field":"benefitId","value":"01a1be9a-307d-76e9-b823-f090404ee22c"},{"op":"neq","field":"benefitId","value":"01a1be9a-2f49-773d-8103-15fb95fa3d68"}]; author response [{"op":"neq","field":"benefitId","value":"01a1be9a-307d-76e9-b823-f090404ee22c"},{"op":"neq","field":"benefitId","value":"[restricted:2]"}] marker true
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts > QA-R9 adversarial token cases (D-226, D-228 (1)) > P10 a token pointing at a boolean position is refused
+QA-R9 P10 shown [{"op":"eq","field":"severity","value":true},{"op":"neq","field":"benefitId","value":"[restricted:2]"}]
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts > QA-R9 adversarial token cases (D-226, D-228 (1)) > P10 a token pointing at a boolean position is refused
+QA-R9 P10: 422 automation_rule.restricted_marker_unknown
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts > QA-R9 adversarial token cases (D-226, D-228 (1)) > P12 after edits the rule list, rule, version list and readable summary name no hidden id
+QA-R9 P12 reorder: author saw [{"op":"in","field":"benefitId","value":["[restricted:1]","[restricted:2]"]},{"op":"neq","field":"benefitId","value":"[restricted:3]"}]; sent [{"op":"neq","field":"benefitId","value":"[restricted:3]"},{"op":"in","field":"benefitId","value":["[restricted:1]","[restricted:2]"]}]; stored now [{"op":"neq","field":"benefitId","value":"01a1be9a-3056-71dc-ab0d-fcd1f4c635e8"},{"op":"in","field":"benefitId","value":["01a1be9a-2f49-773d-8103-15fb95fa3d68","01a1be9a-30b2-7546-90eb-b4967b83e660"]}]; author response [{"op":"neq","field":"benefitId","value":"[restricted:1]"},{"op":"in","field":"benefitId","value":["[restricted:2]","[restricted:3]"]}] marker true
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts > QA-R9 adversarial token cases (D-226, D-228 (1)) > P12 after edits the rule list, rule, version list and readable summary name no hidden id
+QA-R9 P12 summary {"en":"When Benefit deviates from its forecast, if benefitId is not a restricted record and benefitId is one of a restricted record, a restricted record: Create a task with an in-app reminder (TL). Runs as the service identity.","ar":"عند انحراف المنفعة عن توقعها، إذا كان benefitId لا يساوي سجل مقيد وbenefitId أحد القيم سجل مقيد، سجل مقيد: إنشاء مهمة مع تذكير داخل التطبيق (TL). يعمل بصفة هوية الخدمة."}
+
+ ✓ |integration| apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts (13 tests) 2605ms
+ ✓ |integration| apps/api/test/integration/access/automation-restricted-tokens-z13.test.ts (11 tests) 1884ms
+   ✓ T-DG6-BE-Z13: restricted condition tokens (D-226) > positive: after an explicit grant the author reads the real values; a token still names its position  366ms
+stdout | apps/api/test/integration/access/zz-qa-dg6r8b-condition-resave-pairing.test.ts
+QA-R8b ids: hidden X=01a1be9a-4faa-76d2-ae1d-a83f28a51a42 hidden Y=01a1be9a-4fed-73ac-8487-cdabd0d06023 visible V=01a1be9a-4ffd-7157-b581-50c7086095f3
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r8b-condition-resave-pairing.test.ts > QA-R8b: keepRestrictedLiterals when the author removes or reorders conditions (D-222 (2)) > P0 control: changing only an unrelated condition keeps both hidden literals
+QA-R8b P0: author saw [{"op":"neq","field":"benefitId","value":"[restricted:1]"},{"op":"neq","field":"benefitId","value":"[restricted:2]"},{"op":"eq","field":"severity","value":"high"}]; sent [{"op":"neq","field":"benefitId","value":"[restricted:1]"},{"op":"neq","field":"benefitId","value":"[restricted:2]"},{"op":"eq","field":"severity","value":"critical"}]; stored now [{"op":"neq","field":"benefitId","value":"01a1be9a-4faa-76d2-ae1d-a83f28a51a42"},{"op":"neq","field":"benefitId","value":"01a1be9a-4fed-73ac-8487-cdabd0d06023"},{"op":"eq","field":"severity","value":"critical"}]; author response [{"op":"neq","field":"benefitId","value":"[restricted:1]"},{"op":"neq","field":"benefitId","value":"[restricted:2]"},{"op":"eq","field":"severity","value":"critical"}] marker true
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r8b-condition-resave-pairing.test.ts > QA-R8b: keepRestrictedLiterals when the author removes or reorders conditions (D-222 (2)) > P1: two restricted literals under one (field, op); the author deletes the FIRST -> the remaining one should keep Y
+QA-R8b P1 delete first restricted: author saw [{"op":"neq","field":"benefitId","value":"[restricted:1]"},{"op":"neq","field":"benefitId","value":"[restricted:2]"}]; sent [{"op":"neq","field":"benefitId","value":"[restricted:2]"}]; stored now [{"op":"neq","field":"benefitId","value":"01a1be9a-4fed-73ac-8487-cdabd0d06023"}]; author response [{"op":"neq","field":"benefitId","value":"[restricted:1]"}] marker true
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r8b-condition-resave-pairing.test.ts > QA-R8b: keepRestrictedLiterals when the author removes or reorders conditions (D-222 (2)) > P2: a visible literal then a restricted one; the author deletes the visible one -> the remaining one should keep Y
+QA-R8b P2 delete visible first: author saw [{"op":"neq","field":"benefitId","value":"01a1be9a-4ffd-7157-b581-50c7086095f3"},{"op":"neq","field":"benefitId","value":"[restricted:2]"}]; sent [{"op":"neq","field":"benefitId","value":"[restricted:2]"}]; stored now [{"op":"neq","field":"benefitId","value":"01a1be9a-4fed-73ac-8487-cdabd0d06023"}]; author response [{"op":"neq","field":"benefitId","value":"[restricted:1]"}] marker true
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r8b-condition-resave-pairing.test.ts > QA-R8b: keepRestrictedLiterals when the author removes or reorders conditions (D-222 (2)) > P3: an `in` list of two restricted literals; the author removes the first element -> the list should keep [Y]
+QA-R8b P3 in-list drop first: author saw [{"op":"in","field":"benefitId","value":["[restricted:1]","[restricted:2]"]}]; sent [{"op":"in","field":"benefitId","value":["[restricted:2]"]}]; stored now [{"op":"in","field":"benefitId","value":["01a1be9a-4fed-73ac-8487-cdabd0d06023"]}]; author response [{"op":"in","field":"benefitId","value":["[restricted:1]"]}] marker true
+
+ ❯ |integration| apps/api/test/integration/access/zz-qa-dg6r8b-condition-resave-pairing.test.ts (4 tests | 3 failed) 777ms
+   × QA-R8b: keepRestrictedLiterals when the author removes or reorders conditions (D-222 (2)) > P0 control: changing only an unrelated condition keeps both hidden literals 104ms
+     → expected [ '[restricted:1]', '[restricted:2]' ] to deeply equal [ '[restricted]', '[restricted]' ]
+   ✓ QA-R8b: keepRestrictedLiterals when the author removes or reorders conditions (D-222 (2)) > P1: two restricted literals under one (field, op); the author deletes the FIRST -> the remaining one should keep Y 46ms
+   × QA-R8b: keepRestrictedLiterals when the author removes or reorders conditions (D-222 (2)) > P2: a visible literal then a restricted one; the author deletes the visible one -> the remaining one should keep Y 41ms
+     → expected [ …(2) ] to deeply equal [ …(2) ]
+   × QA-R8b: keepRestrictedLiterals when the author removes or reorders conditions (D-222 (2)) > P3: an `in` list of two restricted literals; the author removes the first element -> the list should keep [Y] 38ms
+     → expected [ '[restricted:1]', '[restricted:2]' ] to deeply equal [ '[restricted]', '[restricted]' ]
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/access/zz-qa-dg6r8b-condition-resave-pairing.test.ts > QA-R8b: keepRestrictedLiterals when the author removes or reorders conditions (D-222 (2)) > P0 control: changing only an unrelated condition keeps both hidden literals
+AssertionError: expected [ '[restricted:1]', '[restricted:2]' ] to deeply equal [ '[restricted]', '[restricted]' ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   "[restricted]",[39m
+[32m-   "[restricted]",[39m
+[31m+   "[restricted:1]",[39m
+[31m+   "[restricted:2]",[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/access/zz-qa-dg6r8b-condition-resave-pairing.test.ts:117:76
+    115|     ]);
+    116|     const { shown, now } = await edit(id, (cs) => cs.map((x) => (x.fie…
+    117|     expect(shown.content.conditions.slice(0, 2).map((x: Body) => x.val…
+       |                                                                            ^
+    118|     expect(now.map((x: Body) => x.value)).toEqual([H.x, H.y, "critical…
+    119|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/zz-qa-dg6r8b-condition-resave-pairing.test.ts > QA-R8b: keepRestrictedLiterals when the author removes or reorders conditions (D-222 (2)) > P2: a visible literal then a restricted one; the author deletes the visible one -> the remaining one should keep Y
+AssertionError: expected [ …(2) ] to deeply equal [ …(2) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    "01a1be9a-4ffd-7157-b581-50c7086095f3",[22m
+[32m-   "[restricted]",[39m
+[31m+   "[restricted:2]",[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/access/zz-qa-dg6r8b-condition-resave-pairing.test.ts:134:64
+    132|     ]);
+    133|     const { shown, now } = await edit(id, (cs) => cs.filter((_, i) => …
+    134|     expect(shown.content.conditions.map((x: Body) => x.value)).toEqual…
+       |                                                                ^
+    135|     expect(now.map((x: Body) => x.value), "the hidden literal survives…
+    136|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/zz-qa-dg6r8b-condition-resave-pairing.test.ts > QA-R8b: keepRestrictedLiterals when the author removes or reorders conditions (D-222 (2)) > P3: an `in` list of two restricted literals; the author removes the first element -> the list should keep [Y]
+AssertionError: expected [ '[restricted:1]', '[restricted:2]' ] to deeply equal [ '[restricted]', '[restricted]' ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   "[restricted]",[39m
+[32m-   "[restricted]",[39m
+[31m+   "[restricted:1]",[39m
+[31m+   "[restricted:2]",[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/access/zz-qa-dg6r8b-condition-resave-pairing.test.ts:140:47
+    138|     const id = await rule([{ field: "benefitId", op: "in", value: [H.x…
+    139|     const { shown, now } = await edit(id, (cs) => cs.map((x) => ({ ...…
+    140|     expect(shown.content.conditions[0].value).toEqual([M, M]);
+       |                                               ^
+    141|     expect(now[0].value, "the element the author kept keeps its own li…
+    142|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed | 2 passed (3)
+      Tests  3 failed | 25 passed (28)
+   Start at  04:38:41
+   Duration  25.24s (transform 6.14s, setup 0ms, collect 15.91s, tests 5.27s, environment 0ms, prepare 78ms)
+
+exit=1

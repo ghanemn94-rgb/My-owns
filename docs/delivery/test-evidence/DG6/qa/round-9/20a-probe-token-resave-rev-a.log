@@ -1,0 +1,135 @@
+## 2026-11-09T04:36:47Z node v24.21.0 LANG=unset cmd: QA_PG_PORT=30900 MTH_PORT_POOL=30900-30919 tests/qa/support/with-pg.sh npx vitest run --project integration apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts; load 5.74 3.63 2.41
+port-policy: PostgreSQL listening on port 30900 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.TvZ4PC/claude-0/c
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw8rrk8j_7935575c (server_encoding UTF8); applied 118 migrations to a fresh database
+stdout | apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts
+QA-R9 ids: hidden X=01a1be98-73ff-75e6-a3af-0f0c83933302 hidden Y=01a1be98-7447-7000-ad9b-f1b66666da68 hidden Z=01a1be98-7479-734f-893b-6fab4878d8cb visible V=01a1be98-7461-77a3-a196-5ebd206ff8a3
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts > QA-R9 F-DG6-560 re-run (round-8 P0-P3) on the token model > P0 control: changing only an unrelated condition keeps both hidden literals
+QA-R9 P0: author saw [{"op":"neq","field":"benefitId","value":"[restricted:1]"},{"op":"neq","field":"benefitId","value":"[restricted:2]"},{"op":"eq","field":"severity","value":"high"}]; sent [{"op":"neq","field":"benefitId","value":"[restricted:1]"},{"op":"neq","field":"benefitId","value":"[restricted:2]"},{"op":"eq","field":"severity","value":"critical"}]; stored now [{"op":"neq","field":"benefitId","value":"01a1be98-73ff-75e6-a3af-0f0c83933302"},{"op":"neq","field":"benefitId","value":"01a1be98-7447-7000-ad9b-f1b66666da68"},{"op":"eq","field":"severity","value":"critical"}]; author response [{"op":"neq","field":"benefitId","value":"[restricted:1]"},{"op":"neq","field":"benefitId","value":"[restricted:2]"},{"op":"eq","field":"severity","value":"critical"}] marker true
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts > QA-R9 F-DG6-560 re-run (round-8 P0-P3) on the token model > P1: two restricted literals under one (field, op); delete the FIRST -> [Y]
+QA-R9 P1 delete first restricted: author saw [{"op":"neq","field":"benefitId","value":"[restricted:1]"},{"op":"neq","field":"benefitId","value":"[restricted:2]"}]; sent [{"op":"neq","field":"benefitId","value":"[restricted:2]"}]; stored now [{"op":"neq","field":"benefitId","value":"01a1be98-7447-7000-ad9b-f1b66666da68"}]; author response [{"op":"neq","field":"benefitId","value":"[restricted:1]"}] marker true
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts > QA-R9 F-DG6-560 re-run (round-8 P0-P3) on the token model > P2: a visible literal then a restricted one; delete the visible one -> [Y]
+QA-R9 P2 delete visible first: author saw [{"op":"neq","field":"benefitId","value":"01a1be98-7461-77a3-a196-5ebd206ff8a3"},{"op":"neq","field":"benefitId","value":"[restricted:2]"}]; sent [{"op":"neq","field":"benefitId","value":"[restricted:2]"}]; stored now [{"op":"neq","field":"benefitId","value":"01a1be98-7447-7000-ad9b-f1b66666da68"}]; author response [{"op":"neq","field":"benefitId","value":"[restricted:1]"}] marker true
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts > QA-R9 F-DG6-560 re-run (round-8 P0-P3) on the token model > P3: an `in` list of two restricted literals; drop the first element -> [Y]
+QA-R9 P3 in-list drop first: author saw [{"op":"in","field":"benefitId","value":["[restricted:1]","[restricted:2]"]}]; sent [{"op":"in","field":"benefitId","value":["[restricted:2]"]}]; stored now [{"op":"in","field":"benefitId","value":["01a1be98-7447-7000-ad9b-f1b66666da68"]}]; author response [{"op":"in","field":"benefitId","value":["[restricted:1]"]}] marker true
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts > QA-R9 adversarial token cases (D-226, D-228 (1)) > P4 reorder: swap two restricted conditions and a visible one
+QA-R9 P4 reorder: author saw [{"op":"neq","field":"benefitId","value":"[restricted:1]"},{"op":"eq","field":"severity","value":"high"},{"op":"neq","field":"benefitId","value":"[restricted:3]"}]; sent [{"op":"neq","field":"benefitId","value":"[restricted:3]"},{"op":"eq","field":"severity","value":"high"},{"op":"neq","field":"benefitId","value":"[restricted:1]"}]; stored now [{"op":"neq","field":"benefitId","value":"01a1be98-7447-7000-ad9b-f1b66666da68"},{"op":"eq","field":"severity","value":"high"},{"op":"neq","field":"benefitId","value":"01a1be98-73ff-75e6-a3af-0f0c83933302"}]; author response [{"op":"neq","field":"benefitId","value":"[restricted:1]"},{"op":"eq","field":"severity","value":"high"},{"op":"neq","field":"benefitId","value":"[restricted:3]"}] marker true
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts > QA-R9 adversarial token cases (D-226, D-228 (1)) > P5b duplicate: the same token sent twice stores the same literal twice (no other literal is touched)
+QA-R9 P5b duplicate token 1, drop token 2: author saw [{"op":"neq","field":"benefitId","value":"[restricted:1]"},{"op":"neq","field":"benefitId","value":"[restricted:2]"}]; sent [{"op":"neq","field":"benefitId","value":"[restricted:1]"},{"op":"eq","field":"benefitId","value":"[restricted:1]"}]; stored now [{"op":"neq","field":"benefitId","value":"01a1be98-73ff-75e6-a3af-0f0c83933302"},{"op":"eq","field":"benefitId","value":"01a1be98-73ff-75e6-a3af-0f0c83933302"}]; author response [{"op":"neq","field":"benefitId","value":"[restricted:1]"},{"op":"eq","field":"benefitId","value":"[restricted:2]"}] marker true
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts > QA-R9 adversarial token cases (D-226, D-228 (1)) > P6 refusals: bare marker, unknown token, marker-like variants, a token on create; nothing stored changes
+QA-R9 P6 refusals: {"\"[restricted]\"":{"status":422,"code":"automation_rule.restricted_marker_unknown","pointer":"/content/conditions/1/value"},"\"[restricted:3]\"":{"status":422,"code":"automation_rule.restricted_marker_unknown","pointer":"/content/conditions/1/value"},"\"[restricted:9]\"":{"status":422,"code":"automation_rule.restricted_marker_unknown","pointer":"/content/conditions/1/value"},"\"[restricted:0]\"":{"status":422,"code":"automation_rule.restricted_marker_unknown","pointer":"/content/conditions/1/value"},"\"[restricted:01]\"":{"status":422,"code":"automation_rule.restricted_marker_unknown","pointer":"/content/conditions/1/value"},"\"[Restricted:1]\"":{"status":422,"code":"automation_rule.restricted_marker_unknown","pointer":"/content/conditions/1/value"},"\" [restricted:1]\"":{"status":422,"code":"automation_rule.restricted_marker_unknown","pointer":"/content/conditions/1/value"},"\"[restricted:1] \"":{"status":422,"code":"automation_rule.restricted_marker_unknown","pointer":"/content/conditions/1/value"},"\"[ restricted ]\"":{"status":422,"code":"automation_rule.restricted_marker_unknown","pointer":"/content/conditions/1/value"},"\"[restricted:1]x\"":{"status":422,"code":"automation_rule.restricted_marker_unknown","pointer":"/content/conditions/1/value"},"\"[restricted:10000]\"":{"status":422,"code":"automation_rule.restricted_marker_unknown","pointer":"/content/conditions/1/value"},"in [T1, bare]":{"status":422,"code":"automation_rule.restricted_marker_unknown","pointer":"/content/conditions/0/value/1"},"create with [restricted:1]":{"status":422,"code":"automation_rule.restricted_marker_unknown"},"create with [restricted]":{"status":422,"code":"automation_rule.restricted_marker_unknown"}}
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts > QA-R9 adversarial token cases (D-226, D-228 (1)) > P7 sensitivity changes between read and save: tokens resolved by position, nothing shifts or leaks
+QA-R9 P7: sent [{"op":"neq","field":"benefitId","value":"01a1be98-7461-77a3-a196-5ebd206ff8a3"},{"op":"neq","field":"benefitId","value":"[restricted:2]"}]; stored [{"op":"neq","field":"benefitId","value":"01a1be98-7461-77a3-a196-5ebd206ff8a3"},{"op":"neq","field":"benefitId","value":"01a1be98-73ff-75e6-a3af-0f0c83933302"}]; response [{"op":"neq","field":"benefitId","value":"[restricted:1]"},{"op":"neq","field":"benefitId","value":"01a1be98-73ff-75e6-a3af-0f0c83933302"}]
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts > QA-R9 adversarial token cases (D-226, D-228 (1)) > P8 concurrent saves from the same read: the second is refused 409 (If-Match), never applies stale tokens
+QA-R9 P8: statuses 200/409; codes undefined/version_conflict; stored [{"op":"neq","field":"benefitId","value":"01a1be98-7447-7000-ad9b-f1b66666da68"}]
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts > QA-R9 adversarial token cases (D-226, D-228 (1)) > P9 a forged token for a position the author can read resolves to that visible literal (no disclosure)
+QA-R9 P9 forged visible token: author saw [{"op":"neq","field":"benefitId","value":"01a1be98-7461-77a3-a196-5ebd206ff8a3"},{"op":"neq","field":"benefitId","value":"[restricted:2]"}]; sent [{"op":"neq","field":"benefitId","value":"[restricted:1]"},{"op":"neq","field":"benefitId","value":"[restricted:2]"}]; stored now [{"op":"neq","field":"benefitId","value":"01a1be98-7461-77a3-a196-5ebd206ff8a3"},{"op":"neq","field":"benefitId","value":"01a1be98-73ff-75e6-a3af-0f0c83933302"}]; author response [{"op":"neq","field":"benefitId","value":"01a1be98-7461-77a3-a196-5ebd206ff8a3"},{"op":"neq","field":"benefitId","value":"[restricted:2]"}] marker true
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts > QA-R9 adversarial token cases (D-226, D-228 (1)) > P12 after edits the rule list, rule, version list and readable summary name no hidden id
+QA-R9 P12 reorder: author saw [{"op":"in","field":"benefitId","value":["[restricted:1]","[restricted:2]"]},{"op":"neq","field":"benefitId","value":"[restricted:3]"}]; sent [{"op":"neq","field":"benefitId","value":"[restricted:3]"},{"op":"in","field":"benefitId","value":["[restricted:1]","[restricted:2]"]}]; stored now [{"op":"neq","field":"benefitId","value":"01a1be98-7447-7000-ad9b-f1b66666da68"},{"op":"in","field":"benefitId","value":["01a1be98-73ff-75e6-a3af-0f0c83933302","01a1be98-7479-734f-893b-6fab4878d8cb"]}]; author response [{"op":"neq","field":"benefitId","value":"[restricted:1]"},{"op":"in","field":"benefitId","value":["[restricted:2]","[restricted:3]"]}] marker true
+
+ ❯ |integration| apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts (13 tests | 3 failed) 1882ms
+   ✓ QA-R9 F-DG6-560 re-run (round-8 P0-P3) on the token model > P0 control: changing only an unrelated condition keeps both hidden literals 149ms
+   ✓ QA-R9 F-DG6-560 re-run (round-8 P0-P3) on the token model > P1: two restricted literals under one (field, op); delete the FIRST -> [Y] 51ms
+   ✓ QA-R9 F-DG6-560 re-run (round-8 P0-P3) on the token model > P2: a visible literal then a restricted one; delete the visible one -> [Y] 40ms
+   ✓ QA-R9 F-DG6-560 re-run (round-8 P0-P3) on the token model > P3: an `in` list of two restricted literals; drop the first element -> [Y] 36ms
+   ✓ QA-R9 adversarial token cases (D-226, D-228 (1)) > P4 reorder: swap two restricted conditions and a visible one 39ms
+   × QA-R9 adversarial token cases (D-226, D-228 (1)) > P5 move: a scalar token into an `in` list of another condition, and a list token to a scalar with another field/op 39ms
+     → {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"A condition must test a field of the trigger with a valid operator and value.","code":"automation_rule.condition_invalid","requestId":"01a1be98-763e-7288-b4c0-33deb198ad5e"}: expected 422 to be 200 // Object.is equality
+   ✓ QA-R9 adversarial token cases (D-226, D-228 (1)) > P5b duplicate: the same token sent twice stores the same literal twice (no other literal is touched) 33ms
+   ✓ QA-R9 adversarial token cases (D-226, D-228 (1)) > P6 refusals: bare marker, unknown token, marker-like variants, a token on create; nothing stored changes 109ms
+   ✓ QA-R9 adversarial token cases (D-226, D-228 (1)) > P7 sensitivity changes between read and save: tokens resolved by position, nothing shifts or leaks 121ms
+   ✓ QA-R9 adversarial token cases (D-226, D-228 (1)) > P8 concurrent saves from the same read: the second is refused 409 (If-Match), never applies stale tokens 74ms
+   ✓ QA-R9 adversarial token cases (D-226, D-228 (1)) > P9 a forged token for a position the author can read resolves to that visible literal (no disclosure) 56ms
+   × QA-R9 adversarial token cases (D-226, D-228 (1)) > P10 a token pointing at a boolean position is refused 8ms
+     → {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"A condition must test a field of the trigger with a valid operator and value.","code":"automation_rule.condition_invalid","requestId":"01a1be98-77dc-75ff-b7ac-d77a8a3f1b94"}: expected 422 to be 201 // Object.is equality
+   × QA-R9 adversarial token cases (D-226, D-228 (1)) > P12 after edits the rule list, rule, version list and readable summary name no hidden id 107ms
+     → {"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"The request is not valid.","code":"validation","requestId":"01a1be98-7845-740a-a9e3-095ac88a40dd","errors":[{"pointer":"/query/limit","code":"validation.too_big","message":"Too big: expected number to be <=100"}]}: expected 400 to be 200 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts > QA-R9 adversarial token cases (D-226, D-228 (1)) > P5 move: a scalar token into an `in` list of another condition, and a list token to a scalar with another field/op
+AssertionError: {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"A condition must test a field of the trigger with a valid operator and value.","code":"automation_rule.condition_invalid","requestId":"01a1be98-763e-7288-b4c0-33deb198ad5e"}: expected 422 to be 200 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 200[39m
+[31m+ 422[39m
+
+ ❯ ok apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts:32:62
+     30| const send = (m: string, u: string, o?: Parameters<typeof call>[3]) =>…
+     31| const ok = (res: Res<Body>, status = 200) => {
+     32|   expect(res.status, JSON.stringify(res.body).slice(0, 600)).toBe(stat…
+       |                                                              ^
+     33|   return res.body as Body;
+     34| };
+ ❯ edit apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts:73:17
+ ❯ apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts:172:28
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts > QA-R9 adversarial token cases (D-226, D-228 (1)) > P10 a token pointing at a boolean position is refused
+AssertionError: {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"A condition must test a field of the trigger with a valid operator and value.","code":"automation_rule.condition_invalid","requestId":"01a1be98-77dc-75ff-b7ac-d77a8a3f1b94"}: expected 422 to be 201 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 201[39m
+[31m+ 422[39m
+
+ ❯ ok apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts:32:62
+     30| const send = (m: string, u: string, o?: Parameters<typeof call>[3]) =>…
+     31| const ok = (res: Res<Body>, status = 200) => {
+     32|   expect(res.status, JSON.stringify(res.body).slice(0, 600)).toBe(stat…
+       |                                                              ^
+     33|   return res.body as Body;
+     34| };
+ ❯ rule apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts:60:10
+ ❯ apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts:280:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts > QA-R9 adversarial token cases (D-226, D-228 (1)) > P12 after edits the rule list, rule, version list and readable summary name no hidden id
+AssertionError: {"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"The request is not valid.","code":"validation","requestId":"01a1be98-7845-740a-a9e3-095ac88a40dd","errors":[{"pointer":"/query/limit","code":"validation.too_big","message":"Too big: expected number to be <=100"}]}: expected 400 to be 200 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 200[39m
+[31m+ 400[39m
+
+ ❯ ok apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts:32:62
+     30| const send = (m: string, u: string, o?: Parameters<typeof call>[3]) =>…
+     31| const ok = (res: Res<Body>, status = 200) => {
+     32|   expect(res.status, JSON.stringify(res.body).slice(0, 600)).toBe(stat…
+       |                                                              ^
+     33|   return res.body as Body;
+     34| };
+ ❯ apps/api/test/integration/access/zz-qa-dg6r9-condition-token-resave.test.ts:298:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 10 passed (13)
+   Start at  04:36:49
+   Duration  16.09s (transform 5.86s, setup 0ms, collect 10.80s, tests 1.88s, environment 0ms, prepare 69ms)
+
+exit=1

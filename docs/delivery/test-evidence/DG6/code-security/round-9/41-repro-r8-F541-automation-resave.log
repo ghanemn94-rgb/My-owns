@@ -1,0 +1,39 @@
+# 41-repro-r8-F541-automation-resave  started 2026-11-09T04:42:46Z  cwd=/var/tmp/mth-run.eIk4zY/claude-0/r/w1  node=v22.22.0  LANG=<unset> LC_ALL=<unset>  load=8.06 5.87 3.84  commit=d974011fbc6e106c1628819d60a6efe1bbbafa65
+$ tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration tests/qa/integration/zz-cs-r8-automation-resave.test.ts
+port-policy: PostgreSQL listening on port 30865 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.eIk4zY/claude-0/r/w1
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw8rzaug_ac5de584 (server_encoding UTF8); applied 118 migrations to a fresh database
+stdout | tests/qa/integration/zz-cs-r8-automation-resave.test.ts
+[CS-R8-AUTO] ADM_METHOD POST rule -> 201 
+
+stdout | tests/qa/integration/zz-cs-r8-automation-resave.test.ts
+[CS-R8-AUTO] TO marks the benefit sensitive -> 200
+
+stdout | tests/qa/integration/zz-cs-r8-automation-resave.test.ts > CS-R8-AUTO: removing an earlier same-(field, op) condition > keeps the hidden literal or refuses; never stores the marker text in its place
+[CS-R8-AUTO] stored before (status draft): [{"op":"neq","field":"benefitId","value":"<PLAIN>"},{"op":"neq","field":"benefitId","value":"<HIDDEN>"},{"op":"eq","field":"severity","value":"high"}]
+
+stdout | tests/qa/integration/zz-cs-r8-automation-resave.test.ts > CS-R8-AUTO: removing an earlier same-(field, op) condition > keeps the hidden literal or refuses; never stores the marker text in its place
+[CS-R8-AUTO] author GET version 1 -> 200: conditions=[{"op":"neq","field":"benefitId","value":"<PLAIN>"},{"op":"neq","field":"benefitId","value":"[restricted:2]"},{"op":"eq","field":"severity","value":"high"}] marker=true summary.en=When Benefit deviates from its forecast, if benefitId is not 01a1be9e-24a6-775c-85c5-376ddb2b3614 and benefitId is not a restricted record and severity is high: Create a task with an in-app reminder (TL). Runs as the service identity.
+[CS-R8-AUTO] author PATCH conditions=[{"op":"neq","field":"benefitId","value":"[restricted:2]"},{"op":"eq","field":"severity","value":"high"}]
+
+stdout | tests/qa/integration/zz-cs-r8-automation-resave.test.ts > CS-R8-AUTO: removing an earlier same-(field, op) condition > keeps the hidden literal or refuses; never stores the marker text in its place
+[CS-R8-AUTO] -> 200 marker=true conditions=[{"op":"neq","field":"benefitId","value":"[restricted:1]"},{"op":"eq","field":"severity","value":"high"}]
+
+stdout | tests/qa/integration/zz-cs-r8-automation-resave.test.ts > CS-R8-AUTO: removing an earlier same-(field, op) condition > keeps the hidden literal or refuses; never stores the marker text in its place
+[CS-R8-AUTO] stored after: [{"op":"neq","field":"benefitId","value":"<HIDDEN>"},{"op":"eq","field":"severity","value":"high"}]
+[CS-R8-AUTO] hidden exclusion kept: true; marker text stored as a literal: false
+
+stdout | tests/qa/integration/zz-cs-r8-automation-resave.test.ts > CS-R8-AUTO: removing an earlier same-(field, op) condition > keeps the hidden literal or refuses; never stores the marker text in its place
+[CS-R8-AUTO] TO (admitted) GET version 1 -> 200 conditions=[{"op":"neq","field":"benefitId","value":"<HIDDEN>"},{"op":"eq","field":"severity","value":"high"}]
+
+ ✓ |integration| tests/qa/integration/zz-cs-r8-automation-resave.test.ts (1 test) 2115ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  04:42:50
+   Duration  27.21s (transform 8.22s, setup 0ms, collect 19.13s, tests 2.11s, environment 0ms, prepare 167ms)
+
+exit=0  finished 2026-11-09T04:43:22Z  load=11.72 7.00 4.29

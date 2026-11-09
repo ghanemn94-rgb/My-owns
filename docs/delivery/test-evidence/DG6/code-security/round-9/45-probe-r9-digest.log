@@ -1,0 +1,71 @@
+# 45-probe-r9-digest  started 2026-11-09T04:48:19Z  cwd=/var/tmp/mth-run.eIk4zY/claude-0/r/w1  node=v22.22.0  LANG=<unset> LC_ALL=<unset>  load=12.76 11.23 6.94  commit=d974011fbc6e106c1628819d60a6efe1bbbafa65
+$ tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration tests/qa/integration/zz-cs-r9-digest.test.ts
+port-policy: PostgreSQL listening on port 30865 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.eIk4zY/claude-0/r/w1
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw8s6g5r_49a2dc94 (server_encoding UTF8); applied 118 migrations to a fresh database
+stdout | tests/qa/integration/zz-cs-r9-digest.test.ts
+[CS-R9-DIGEST] tl2 PUT /me/notification-preferences (quiet hours now, daily digest) -> 200
+
+stdout | tests/qa/integration/zz-cs-r9-digest.test.ts
+[CS-R9-DIGEST] hidden benefit B01 01995000-4401-7000-8000-000000000001; finance validation 01995000-4501-7000-8000-000000000001
+
+stdout | tests/qa/integration/zz-cs-r9-digest.test.ts
+[CS-R9-DIGEST] notification 01a1bea3-6d33-71b8-87b2-5bec86fce1ce: delivery decision (state held, deliver_after 2026-11-09T07:49:00.000Z)
+
+stdout | tests/qa/integration/zz-cs-r9-digest.test.ts
+[CS-R9-DIGEST] runDigestWindow -> [{"userId":"01a1bea3-6cbc-7138-a1a1-e2aff27462cf","outcome":"digested","digestId":"01a1bea3-6d8c-747d-bb6c-0b1bf792f6c7","count":1}]
+
+stdout | tests/qa/integration/zz-cs-r9-digest.test.ts > CS-R9-DIGEST: a digested notification about a restricted record > tl2 gets 404 on the benefit and its Finance validation (control)
+[CS-R9-DIGEST] tl2 GET benefit 404; tl2 GET finance validation 404
+
+stdout | tests/qa/integration/zz-cs-r9-digest.test.ts > CS-R9-DIGEST: a digested notification about a restricted record > work item, inbox and the digest read never name a hidden id or the restricted benefit's code
+[CS-R9-DIGEST] GET /me/work-items 200: subjectId=null linkPath=/transformations/01995000-0000-7000-8000-000000000001 key=inbox.restricted params={} marker=true
+
+stdout | tests/qa/integration/zz-cs-r9-digest.test.ts > CS-R9-DIGEST: a digested notification about a restricted record > work item, inbox and the digest read never name a hidden id or the restricted benefit's code
+[CS-R9-DIGEST] GET /me/inbox 200: [{"id":"01a1bea3-6d8d-790f-b677-2321d61e94b8","key":"notifications.digest","params":{"count":1},"link":"/me/notification-digests/01a1bea3-6d8c-747d-bb6c-0b1bf792f6c7"}] (the digested notification 01a1bea3-6d33-71b8-87b2-5bec86fce1ce listed: false)
+
+stdout | tests/qa/integration/zz-cs-r9-digest.test.ts > CS-R9-DIGEST: a digested notification about a restricted record > work item, inbox and the digest read never name a hidden id or the restricted benefit's code
+[CS-R9-DIGEST] GET /me/notification-digests/{id} 200: {"id":"01a1bea3-6d8c-747d-bb6c-0b1bf792f6c7","windowStart":"2026-11-09T07:45:00.000Z","windowEnd":"2026-11-09T08:00:00.000Z","count":1,"items":[{"notificationId":"01a1bea3-6d33-71b8-87b2-5bec86fce1ce","messageKey":"benefits.task.finance_validation_review","messageParams":{"periodEnd":"2026-07-31","benefitCode":"B01","periodStart":"2026-07-01"},"linkPath":"/transformations/01995000-0000-7000-8000-000000000001/finance-validations/01995000-4501-7000-8000-000000000001","createdAt":"2026-11-09T04:49:03.790Z"}]}
+[CS-R9-DIGEST] leaks (2):
+getMyNotificationDigest names 01995000-4501-7000-8000-000000000001
+getMyNotificationDigest returns the restricted benefit's code B01
+
+ ❯ |integration| tests/qa/integration/zz-cs-r9-digest.test.ts (2 tests | 1 failed) 8563ms
+   ✓ CS-R9-DIGEST: a digested notification about a restricted record > tl2 gets 404 on the benefit and its Finance validation (control) 113ms
+   × CS-R9-DIGEST: a digested notification about a restricted record > work item, inbox and the digest read never name a hidden id or the restricted benefit's code 183ms
+     → expected [ …(2) ] to deeply equal []
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/zz-cs-r9-digest.test.ts > CS-R9-DIGEST: a digested notification about a restricted record > work item, inbox and the digest read never name a hidden id or the restricted benefit's code
+AssertionError: expected [ …(2) ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   "getMyNotificationDigest names 01995000-4501-7000-8000-000000000001",[39m
+[31m+   "getMyNotificationDigest returns the restricted benefit's code B01",[39m
+[31m+ ][39m
+
+ ❯ tests/qa/integration/zz-cs-r9-digest.test.ts:164:19
+    162|     log(`leaks (${leaks.length}):\n${leaks.join("\n")}`);
+    163|     expect(wi?.subjectId ?? null).toBeNull();
+    164|     expect(leaks).toEqual([]);
+       |                   ^
+    165|   });
+    166| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  04:48:24
+   Duration  40.20s (transform 10.68s, setup 0ms, collect 23.36s, tests 8.56s, environment 0ms, prepare 356ms)
+
+exit=1  finished 2026-11-09T04:49:06Z  load=12.12 11.31 7.18

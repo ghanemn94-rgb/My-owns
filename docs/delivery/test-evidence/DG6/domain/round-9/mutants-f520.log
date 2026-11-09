@@ -1,0 +1,52 @@
+== M1: an unmapped marker is stored as an ordinary literal (the pre-D-226 behaviour)
+ apps/api/src/modules/automation/versions.ts | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+   ✓ T-DG6-BE-Z13: restricted condition tokens (D-226) > read: each hidden literal is an opaque token in reading order, marked; the summary names no record 81ms
+   ✓ T-DG6-BE-Z13: restricted condition tokens (D-226) > removing an earlier condition keeps the hidden literal of the condition kept (F-DG6-541, F-DG6-520 (c)) 74ms
+   ✓ T-DG6-BE-Z13: restricted condition tokens (D-226) > reordering two hidden literals keeps each with its own condition (F-DG6-560 P1) 61ms
+   ✓ T-DG6-BE-Z13: restricted condition tokens (D-226) > removing the restricted condition itself removes its literal and keeps the rest 43ms
+   ✓ T-DG6-BE-Z13: restricted condition tokens (D-226) > in-list: removing the open element and reordering the hidden ones keeps both (F-DG6-520 (b), F-DG6-560 P3) 32ms
+   ✓ T-DG6-BE-Z13: restricted condition tokens (D-226) > in-list: removing a hidden element removes exactly that literal 57ms
+   × T-DG6-BE-Z13: restricted condition tokens (D-226) > negative: an unknown token, the bare marker or other marker text is refused 422 and nothing is stored 41ms
+   ✓ T-DG6-BE-Z13: restricted condition tokens (D-226) > negative: a writer without automation.configure is refused before any token is resolved 17ms
+   ✓ T-DG6-BE-Z13: restricted condition tokens (D-226) > race (D-228 (1)): a record that becomes hidden between the read and the save shifts no token 72ms
+   ✓ T-DG6-BE-Z13: restricted condition tokens (D-226) > race (D-228 (1)): a record that becomes visible between the read and the save keeps its literal 111ms
+   × T-DG6-BE-Z13: restricted condition tokens (D-226) > positive: after an explicit grant the author reads the real values; a token still names its position 77ms
+   ✓ DOM-R9 probe: D-226 tokens under ordinary and adversarial edits > (b) removing the open id P from an in-list [P, S] keeps S 154ms
+   ✓ DOM-R9 probe: D-226 tokens under ordinary and adversarial edits > (c) removing an earlier condition [neq P, neq S] keeps neq S, and the screen data still flags it 114ms
+   ✓ DOM-R9 probe: D-226 tokens under ordinary and adversarial edits > (d) reordering conditions and list elements moves each hidden literal with its token 69ms
+   × DOM-R9 probe: D-226 tokens under ordinary and adversarial edits > (e) the bare marker, an unknown token and marker-like text are refused 422 and nothing is stored 46ms
+   ✓ DOM-R9 probe: D-226 tokens under ordinary and adversarial edits > (f) a grant between the author's read and save does not shift or lose the hidden literal 101ms
+   × DOM-R9 probe: D-226 tokens under ordinary and adversarial edits > (g) STALE TOKENS: the same form content saved twice after positions shift must not misplace the hidden literal 82ms
+   ✓ DOM-R9 probe: D-226 tokens under ordinary and adversarial edits > (h) the PATCH response and the version's audit trail name no id of S for the author 116ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed (2)
+      Tests  4 failed | 14 passed (18)
+rc=1
+== M2: a token is resolved by the sent literal's position (ordinal pairing, the round-8 behaviour)
+ apps/api/src/modules/automation/versions.ts | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+   ✓ T-DG6-BE-Z13: restricted condition tokens (D-226) > read: each hidden literal is an opaque token in reading order, marked; the summary names no record 111ms
+   × T-DG6-BE-Z13: restricted condition tokens (D-226) > removing an earlier condition keeps the hidden literal of the condition kept (F-DG6-541, F-DG6-520 (c)) 71ms
+   × T-DG6-BE-Z13: restricted condition tokens (D-226) > reordering two hidden literals keeps each with its own condition (F-DG6-560 P1) 55ms
+   ✓ T-DG6-BE-Z13: restricted condition tokens (D-226) > removing the restricted condition itself removes its literal and keeps the rest 57ms
+   × T-DG6-BE-Z13: restricted condition tokens (D-226) > in-list: removing the open element and reordering the hidden ones keeps both (F-DG6-520 (b), F-DG6-560 P3) 29ms
+   × T-DG6-BE-Z13: restricted condition tokens (D-226) > in-list: removing a hidden element removes exactly that literal 28ms
+   × T-DG6-BE-Z13: restricted condition tokens (D-226) > negative: an unknown token, the bare marker or other marker text is refused 422 and nothing is stored 26ms
+   ✓ T-DG6-BE-Z13: restricted condition tokens (D-226) > negative: a writer without automation.configure is refused before any token is resolved 15ms
+   ✓ T-DG6-BE-Z13: restricted condition tokens (D-226) > race (D-228 (1)): a record that becomes hidden between the read and the save shifts no token 49ms
+   ✓ T-DG6-BE-Z13: restricted condition tokens (D-226) > race (D-228 (1)): a record that becomes visible between the read and the save keeps its literal 62ms
+   × T-DG6-BE-Z13: restricted condition tokens (D-226) > positive: after an explicit grant the author reads the real values; a token still names its position 39ms
+   × DOM-R9 probe: D-226 tokens under ordinary and adversarial edits > (b) removing the open id P from an in-list [P, S] keeps S 287ms
+   × DOM-R9 probe: D-226 tokens under ordinary and adversarial edits > (c) removing an earlier condition [neq P, neq S] keeps neq S, and the screen data still flags it 92ms
+   × DOM-R9 probe: D-226 tokens under ordinary and adversarial edits > (d) reordering conditions and list elements moves each hidden literal with its token 73ms
+   × DOM-R9 probe: D-226 tokens under ordinary and adversarial edits > (e) the bare marker, an unknown token and marker-like text are refused 422 and nothing is stored 77ms
+   × DOM-R9 probe: D-226 tokens under ordinary and adversarial edits > (f) a grant between the author's read and save does not shift or lose the hidden literal 173ms
+   × DOM-R9 probe: D-226 tokens under ordinary and adversarial edits > (g) STALE TOKENS: the same form content saved twice after positions shift must not misplace the hidden literal 229ms
+   ✓ DOM-R9 probe: D-226 tokens under ordinary and adversarial edits > (h) the PATCH response and the version's audit trail name no id of S for the author 271ms
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed (2)
+      Tests  12 failed | 6 passed (18)
+rc=1
+== restored; git diff:
+(end)

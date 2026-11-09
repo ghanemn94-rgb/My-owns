@@ -1,0 +1,20 @@
+$ git -C /home/user/My-owns rev-parse HEAD
+e46f2aded45a5c747902502cd2dee4b1f96046e4
+$ git -C /home/user/My-owns log --oneline d974011..HEAD; diff --stat (freeze metadata only)
+e46f2aded DG6 round 9: freeze fe824c05, assignments
+ .../DG6/round-9/code-security-reviewer.md          |   160 +
+ .../assignments/DG6/round-9/domain-reviewer.md     |   161 +
+ .../assignments/DG6/round-9/qa-verifier.md         |   144 +
+ .../candidates/DG6/fe824c05d70d73d1.manifest.json  | 13823 +++++++++++++++++++
+ docs/delivery/stages.json                          |    27 +-
+ 5 files changed, 14310 insertions(+), 5 deletions(-)
+$ (main repo) node tools/gates/candidate.mjs --stage DG6
+{"stage":"DG6","source":"working-tree","candidate_id":"sha256:fe824c05d70d73d1ae53fecdf52f4f3af1579b748cb98c08a7a8ea1da026c25f","files":2761}
+exit=0
+$ (disposable clone: git clone --shared --no-checkout; sparse-checkout excludes docs/delivery/{test-evidence,handbacks,runs}, none of which is in the manifest) git rev-parse HEAD
+d974011fbc6e106c1628819d60a6efe1bbbafa65
+$ node tools/gates/candidate.mjs --stage DG6
+{"stage":"DG6","source":"working-tree","candidate_id":"sha256:fe824c05d70d73d1ae53fecdf52f4f3af1579b748cb98c08a7a8ea1da026c25f","files":2761}
+exit=0
+node: v24.21.0; node22: v22.22.0 (22.22.2 NOT installed; /opt/node22 holds 22.22.0)
+/dev/vda        252G   36G  3.0G  93% /var/tmp/mth-run.TvZ4PC/claude-0

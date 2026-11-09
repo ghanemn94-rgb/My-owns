@@ -1,0 +1,247 @@
+// DOMAIN REVIEW PROBE (DG6 round 9, domain-reviewer, T-DG6-REV-DOM-R9). Not part of the candidate; copied into a
+// disposable clone only as apps/api/test/integration/zz-domain/dom-r9-token-resave.test.ts. Every value is SYNTHETIC.
+// Marking a record sensitive or granting access is an access decision, never a business approval (G1-G6); nothing
+// here touches DG0-DG7.
+//
+// F-DG6-520 re-run on candidate fe824c05 (D-226, D-228 (1)): the author (ADM_METHOD, not admitted to the sensitive
+// benefit S) edits a rule version the way the editor lets them, and the hidden literal must survive or the save must be
+// refused 422; marker text must never be stored. Adversarial sequences beyond the round-8 reproduction:
+//   (b) remove the open id P from an in-list [P, S]                               -> S kept
+//   (c) remove an earlier condition [neq P, neq S]                                 -> [neq S]
+//   (d) reorder conditions and list elements                                       -> literals follow their tokens
+//   (e) bare marker '[restricted]', unknown token, marker-like text               -> 422, nothing stored
+//   (f) a grant change between the author's read and save (S becomes visible)     -> tokens still resolve, S kept
+//   (g) STALE TOKENS: the author saves once (positions shift), then saves the SAME form content again with the new
+//       If-Match (what the rule editor does when its form state is not re-read after a save) -> must not misplace
+//   (h) the response to the PATCH and the audit trail of the version name no id of S for the author
+import { randomUUID } from "node:crypto";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { call, createUser, grant, seedWorld, signIn, startApi, type Res, type Session, type TestApi, type World } from "../../support/harness.ts";
+import { ifm } from "../../support/p2-fixtures.ts";
+import { launchedInitiative, pendingBenefit, seedClosureWorld, type ClosureWorld } from "../contract/p4-exercises-be-j.ts";
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Body = any;
+let api: TestApi;
+let w: World;
+let c: ClosureWorld;
+const S = { id: "" };
+const P = { id: "" };
+const Q = { id: "" };
+const H = { id: "" };
+let author: { id: string; session: Session };
+const R = "/api/v1/admin/automation-rules";
+const send = (m: string, u: string, o?: Parameters<typeof call>[3]) => call<Body>(api.app, m, u, o);
+const ok = (res: Res<Body>, status = 200) => {
+  expect(res.status, JSON.stringify(res.body).slice(0, 600)).toBe(status);
+  return res.body as Body;
+};
+const mask = (x: unknown) =>
+  JSON.stringify(x).replaceAll(S.id, "<S>").replaceAll(H.id, "<H>").replaceAll(P.id, "<P>").replaceAll(Q.id, "<Q>");
+const log = (...a: unknown[]) => console.log("DOM-R9", ...a);
+const stored = async (ruleId: string) =>
+  (
+    (await api.db
+      .selectFrom("automation_rule_version")
+      .select(["conditions"])
+      .where("automation_rule_id", "=", ruleId)
+      .where("version_no", "=", 1)
+      .executeTakeFirstOrThrow()) as { conditions: Body }
+  ).conditions;
+const action = { type: "create_task", parameters: { assigneeRole: "TL", messageKey: "automation.message.follow_up" } };
+async function newRule(conditions: Body[]): Promise<string> {
+  const rule = ok(
+    await send("POST", R, {
+      session: author.session,
+      body: {
+        code: `test.domr9.${randomUUID().slice(0, 8)}`,
+        nameEn: "Synthetic exclusion rule R9",
+        nameAr: "قاعدة استثناء تجريبية",
+        scopeLevel: "organization",
+        organizationId: c.b.organizationId,
+        ownerUserId: author.id,
+        content: { triggerCodes: ["benefit.variance_evaluated"], conditions, actions: [action], runAs: "service" },
+      },
+    }),
+    201,
+  );
+  return rule.id;
+}
+const read = async (ruleId: string, session = author.session) =>
+  ok(await send("GET", `${R}/${ruleId}/versions/1`, { session }));
+const patch = (ruleId: string, version: number, content: Body) =>
+  send("PATCH", `${R}/${ruleId}/versions/1`, {
+    session: author.session,
+    headers: ifm(version),
+    body: { content, changeSummary: "Synthetic domain probe R9" },
+  });
+
+beforeAll(async () => {
+  api = await startApi();
+  w = await seedWorld(api.db);
+  c = await seedClosureWorld(api, w);
+  const ini = await launchedInitiative(api.db, c.b);
+  S.id = (await pendingBenefit(api, c, ini)).id;
+  P.id = (await pendingBenefit(api, c, ini)).id;
+  Q.id = (await pendingBenefit(api, c, ini)).id;
+  H.id = (await pendingBenefit(api, c, ini)).id;
+  const u = await createUser(api.db, c.b.organizationId);
+  await grant(api.db, w.grantor.id, u.id, "ADM_METHOD", { type: "organization", id: c.b.organizationId }, c.b.organizationId);
+  author = { id: u.id, session: await signIn(api.app, u.subject) };
+  for (const b of [S.id, H.id])
+    ok(
+      await send("PUT", `${c.b.base}/records/benefit/${b}/sensitivity`, {
+        session: c.s.to.session,
+        headers: ifm(0),
+        body: { isSensitive: true, reason: "Synthetic commercially sensitive benefit (DOM-R9)" },
+      }),
+    );
+}, 240_000);
+afterAll(() => api?.close());
+
+describe("DOM-R9 probe: D-226 tokens under ordinary and adversarial edits", () => {
+  it("(b) removing the open id P from an in-list [P, S] keeps S", async () => {
+    const id = await newRule([{ field: "benefitId", op: "in", value: [P.id, S.id] }]);
+    const shown = await read(id);
+    log("(b) shown", mask(shown.content.conditions), "flag", shown.includesRestrictedRecords, "summary.en", shown.summary?.en, "summary.ar", shown.summary?.ar);
+    expect(mask(shown)).not.toContain("<S>");
+    const conditions = [{ ...shown.content.conditions[0], value: [shown.content.conditions[0].value[1]] }];
+    const res = await patch(id, shown.version, { ...shown.content, conditions });
+    log("(b) status", res.status, "response", mask(res.body?.content?.conditions));
+    expect(res.status).toBe(200);
+    expect(mask(res.body)).not.toContain("<S>");
+    const after = await stored(id);
+    log("(b) stored", mask(after));
+    expect(after).toEqual([{ field: "benefitId", op: "in", value: [S.id] }]);
+  });
+
+  it("(c) removing an earlier condition [neq P, neq S] keeps neq S, and the screen data still flags it", async () => {
+    const id = await newRule([
+      { field: "benefitId", op: "neq", value: P.id },
+      { field: "benefitId", op: "neq", value: S.id },
+    ]);
+    const shown = await read(id);
+    log("(c) shown", mask(shown.content.conditions));
+    ok(await patch(id, shown.version, { ...shown.content, conditions: [shown.content.conditions[1]] }));
+    const after = await stored(id);
+    log("(c) stored", mask(after));
+    expect(after).toEqual([{ field: "benefitId", op: "neq", value: S.id }]);
+    const again = await read(id);
+    log("(c) re-read", mask(again.content.conditions), "flag", again.includesRestrictedRecords, "summary.en", again.summary?.en);
+    expect(again.includesRestrictedRecords).toBe(true);
+  });
+
+  it("(d) reordering conditions and list elements moves each hidden literal with its token", async () => {
+    const id = await newRule([
+      { field: "benefitId", op: "neq", value: S.id },
+      { field: "benefitId", op: "in", value: [S.id, P.id, Q.id] },
+      { field: "severity", op: "eq", value: "high" },
+    ]);
+    const shown = await read(id);
+    log("(d) shown", mask(shown.content.conditions));
+    const [a, b, s] = shown.content.conditions;
+    const conditions = [s, { ...b, value: [...b.value].reverse() }, a];
+    ok(await patch(id, shown.version, { ...shown.content, conditions }));
+    const after = await stored(id);
+    log("(d) stored", mask(after));
+    expect(after).toEqual([
+      { field: "severity", op: "eq", value: "high" },
+      { field: "benefitId", op: "in", value: [Q.id, P.id, S.id] },
+      { field: "benefitId", op: "neq", value: S.id },
+    ]);
+  });
+
+  it("(e) the bare marker, an unknown token and marker-like text are refused 422 and nothing is stored", async () => {
+    const id = await newRule([
+      { field: "benefitId", op: "neq", value: P.id },
+      { field: "benefitId", op: "neq", value: S.id },
+    ]);
+    const before = await stored(id);
+    for (const bad of ["[restricted]", "[restricted:9]", "[restricted:0]", " [Restricted:2] ", "[restricted:1"]) {
+      const shown = await read(id);
+      const res = await patch(id, shown.version, {
+        ...shown.content,
+        conditions: [shown.content.conditions[1], { field: "benefitId", op: "neq", value: bad }],
+      });
+      log("(e)", JSON.stringify(bad), "status", res.status, "code", res.body?.code, "pointer", res.body?.errors?.[0]?.pointer);
+      expect(res.status).toBe(422);
+      expect(res.body?.code).toBe("automation_rule.restricted_marker_unknown");
+    }
+    expect(await stored(id)).toEqual(before);
+    // Creating a rule with marker text is refused too.
+    const created = await send("POST", R, {
+      session: author.session,
+      body: {
+        code: `test.domr9.${randomUUID().slice(0, 8)}`,
+        nameEn: "x", nameAr: "س", scopeLevel: "organization", organizationId: c.b.organizationId, ownerUserId: author.id,
+        content: { triggerCodes: ["benefit.variance_evaluated"], conditions: [{ field: "benefitId", op: "eq", value: "[restricted:1]" }], actions: [action], runAs: "service" },
+      },
+    });
+    log("(e) create with token status", created.status, created.body?.code);
+    expect(created.status).toBe(422);
+  });
+
+  it("(f) a grant between the author's read and save does not shift or lose the hidden literal", async () => {
+    const id = await newRule([
+      { field: "benefitId", op: "neq", value: P.id },
+      { field: "benefitId", op: "neq", value: H.id },
+      { field: "benefitId", op: "neq", value: Q.id },
+    ]);
+    const shown = await read(id);
+    log("(f) shown", mask(shown.content.conditions));
+    expect(shown.includesRestrictedRecords).toBe(true);
+    // The TO grants the author access to H after the read (explicit grant; an access decision, not an approval).
+    const g = await send("POST", "/api/v1/admin/sensitive-grants", {
+      session: c.s.to.session,
+      body: { transformationId: c.b.transformationId, recordType: "benefit", recordId: H.id, granteeUserId: author.id, reason: "Synthetic grant between read and save (DOM-R9)" },
+    });
+    log("(f) grant status", g.status, g.body?.code ?? "");
+    expect(g.status).toBe(201);
+    const res = await patch(id, shown.version, { ...shown.content, conditions: shown.content.conditions.slice(1) });
+    log("(f) save status", res.status, "response", mask(res.body?.content?.conditions));
+    const after = await stored(id);
+    log("(f) stored", mask(after));
+    expect(after).toEqual([
+      { field: "benefitId", op: "neq", value: H.id },
+      { field: "benefitId", op: "neq", value: Q.id },
+    ]);
+  });
+
+  it("(g) STALE TOKENS: the same form content saved twice after positions shift must not misplace the hidden literal", async () => {
+    const id = await newRule([
+      { field: "benefitId", op: "neq", value: P.id },
+      { field: "benefitId", op: "neq", value: S.id },
+      { field: "benefitId", op: "neq", value: Q.id },
+    ]);
+    const shown = await read(id);
+    expect(shown.includesRestrictedRecords, "precondition: the author is not admitted to S").toBe(true);
+    log("(g) shown", mask(shown.content.conditions));
+    // First save: the author removes condition 1 (P). The form now holds [token(S at position 2), Q].
+    const form = { ...shown.content, conditions: shown.content.conditions.slice(1) };
+    const first = await patch(id, shown.version, form);
+    log("(g) first save status", first.status, "response conditions", mask(first.body?.content?.conditions), "version", first.body?.version);
+    log("(g) stored after first save", mask(await stored(id)));
+    // Second save: the SAME form content, with the new If-Match (the editor's form state is not re-read after a save).
+    const second = await patch(id, first.body.version, form);
+    log("(g) second save status", second.status, "code", second.body?.code ?? "", "response conditions", mask(second.body?.content?.conditions));
+    const after = await stored(id);
+    log("(g) stored after second save", mask(after));
+    expect.soft(after, "the hidden literal S is still tested after the second save (or the save was refused)").toEqual([
+      { field: "benefitId", op: "neq", value: S.id },
+      { field: "benefitId", op: "neq", value: Q.id },
+    ]);
+  });
+
+  it("(h) the PATCH response and the version's audit trail name no id of S for the author", async () => {
+    const id = await newRule([{ field: "benefitId", op: "neq", value: S.id }]);
+    const shown = await read(id);
+    const res = ok(await patch(id, shown.version, { ...shown.content, conditions: [...shown.content.conditions, { field: "severity", op: "eq", value: "high" }] }));
+    log("(h) response", mask(res.content.conditions), "flag", res.includesRestrictedRecords);
+    expect(mask(res)).not.toContain("<S>");
+    for (const url of [`${R}/${id}`, `${R}/${id}/versions`, `/api/v1/audit-events?recordType=automation_rule_version&recordId=${shown.id ?? ""}`, `/api/v1/audit-events?recordType=automation_rule&recordId=${id}`]) {
+      const r = await send("GET", url, { session: author.session });
+      log("(h) GET", url.replace(id, "<rule>"), "status", r.status, "names S:", mask(r.body).includes("<S>"));
+      if (r.status === 200) expect(mask(r.body)).not.toContain("<S>");
+    }
+  });
+});

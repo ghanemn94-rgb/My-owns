@@ -1,0 +1,44 @@
+# 44-probe-r9-editor-stale-token  started 2026-11-09T04:43:52Z  cwd=/var/tmp/mth-run.eIk4zY/claude-0/r/w1  node=v24.21.0  LANG=<unset> LC_ALL=<unset>  load=13.11 7.80 4.64  commit=d974011fbc6e106c1628819d60a6efe1bbbafa65
+$ npx vitest run --configLoader runner --project unit-web apps/web/src/pages/automation/zz-cs-r9-editor-stale-token.test.tsx
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.eIk4zY/claude-0/r/w1
+
+stdout | src/pages/automation/zz-cs-r9-editor-stale-token.test.tsx > CS-R9-EDITOR: the second save of the rule editor sends the server's current token, not a stale one
+[CS-R9-EDITOR] editor values after save 1 (server now shows [restricted:1]): ["[restricted:2]","approved"]
+
+stdout | src/pages/automation/zz-cs-r9-editor-stale-token.test.tsx > CS-R9-EDITOR: the second save of the rule editor sends the server's current token, not a stale one
+[CS-R9-EDITOR] PATCH 1 If-Match "2" conditions [{"field":"gateCode","op":"neq","value":"[restricted:2]"},{"field":"outcome","op":"eq","value":"approved"}]
+[CS-R9-EDITOR] PATCH 2 If-Match "3" conditions [{"field":"gateCode","op":"neq","value":"[restricted:2]"},{"field":"outcome","op":"eq","value":"approved"}]
+
+ ❯ |unit-web| src/pages/automation/zz-cs-r9-editor-stale-token.test.tsx (1 test | 1 failed) 10141ms
+   × CS-R9-EDITOR: the second save of the rule editor sends the server's current token, not a stale one 1916ms
+     → expected '[restricted:2]' to be '[restricted:1]' // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-web| src/pages/automation/zz-cs-r9-editor-stale-token.test.tsx > CS-R9-EDITOR: the second save of the rule editor sends the server's current token, not a stale one
+AssertionError: expected '[restricted:2]' to be '[restricted:1]' // Object.is equality
+
+Expected: [32m"[restricted:[7m1[27m]"[39m
+Received: [31m"[restricted:[7m2[27m]"[39m
+
+ ❯ src/pages/automation/zz-cs-r9-editor-stale-token.test.tsx:172:104
+    170|   expect(p2!.headers["if-match"]).toBe('"3"');
+    171|   // The contract: on version 3 the hidden literal is [restricted:1]; …
+    172|   expect((p2!.body as { content: { conditions: { value: unknown }[] } …
+       |                                                                                                        ^
+    173| });
+    174| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  04:43:52
+   Duration  16.85s (transform 828.29s, setup 278ms, collect 4.62s, tests 10.14s, environment 1.12s, prepare 185ms)
+
+exit=1  finished 2026-11-09T04:44:10Z  load=13.02 8.13 4.82
