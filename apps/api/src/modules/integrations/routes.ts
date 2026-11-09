@@ -5,7 +5,13 @@ import type { DbOrTx } from "@mth/db";
 import type { FastifyInstance, FastifyRequest, RawRequestDefaultExpression } from "fastify";
 import { freeText, uuid } from "@mth/shared/schemas";
 import { z } from "zod";
-import { holdsAnywhere, maskRestrictedIdsInFields, principalOf } from "../access/index.ts";
+import {
+  hiddenIdsInTexts,
+  holdsAnywhere,
+  maskHiddenIds,
+  maskRestrictedIdsInFields,
+  principalOf,
+} from "../access/index.ts";
 import {
   cursorInstantText,
   cursorSchema,
@@ -51,6 +57,7 @@ import {
   toConnectorMappings,
   toIntegrationRun,
   visibleConnector,
+  type ConnectorActionableError,
   type ConnectorBody,
   type ConnectorTargetKind,
   type IntegrationRunBody,
@@ -156,14 +163,34 @@ const connectorListQuery = z.strictObject({
 // Idempotency-Key, `manual:<userId>:<key>`, `retry:<runId>`). An id of a sensitive record, or of a child that carries
 // one's values, the reader is not admitted to is replaced by the restricted marker and the item carries
 // `includesRestrictedRecords: true`. Every response that serializes a run or a write goes through these.
+// T-DG6-BE-Z13C (D-228 (2)): the run's served error text (`integration_run.error_message`) is masked the same way, and
+// so are the `actionableError.params` values parsed from it (a credential name or a source column: configuration text).
 const shownRuns = (db: DbOrTx, request: FastifyRequest, runs: readonly IntegrationRunBody[]) =>
-  maskRestrictedIdsInFields(db, principalOf(request), runs, ["idempotencyKey"]);
+  maskRestrictedIdsInFields(db, principalOf(request), runs, ["idempotencyKey", "errorMessage"]);
 const shownRun = async (db: DbOrTx, request: FastifyRequest, run: IntegrationRunBody) =>
   (await shownRuns(db, request, [run]))[0]!;
+async function shownActionable(
+  db: DbOrTx,
+  request: FastifyRequest,
+  a: ConnectorActionableError | null,
+): Promise<ConnectorActionableError | null> {
+  if (a === null) return a;
+  const hidden = await hiddenIdsInTexts(db, principalOf(request), Object.values(a.params));
+  if (hidden.size === 0) return a;
+  let any = false;
+  const params = Object.fromEntries(
+    Object.entries(a.params).map(([k, v]) => {
+      const r = maskHiddenIds(v, hidden);
+      any ||= r.masked;
+      return [k, r.text ?? v];
+    }),
+  );
+  return any ? { ...a, params, includesRestrictedRecords: true } : a;
+}
 async function shownConnector(db: DbOrTx, request: FastifyRequest, c: ConnectorBody): Promise<ConnectorBody> {
-  if (c.lastRun === null) return c;
-  const lastRun = await shownRun(db, request, c.lastRun);
-  return lastRun === c.lastRun ? c : { ...c, lastRun };
+  const lastRun = c.lastRun === null ? null : await shownRun(db, request, c.lastRun);
+  const actionableError = await shownActionable(db, request, c.actionableError);
+  return lastRun === c.lastRun && actionableError === c.actionableError ? c : { ...c, lastRun, actionableError };
 }
 const shownWrite = async <T extends { idempotencyKey: string }>(db: DbOrTx, request: FastifyRequest, w: T) =>
   (await maskRestrictedIdsInFields(db, principalOf(request), [w], ["idempotencyKey"]))[0]!;
@@ -414,7 +441,10 @@ function registerRunRoutes(app: FastifyInstance, { db }: ModuleDeps): string[] {
     reply.header("ETag", etag(run.version));
     const detail = await toIntegrationRunDetail(db, connector, run);
     const shown = await shownRun(db, request, detail.run);
-    return shown === detail.run ? detail : { ...detail, run: shown };
+    const actionableError = await shownActionable(db, request, detail.actionableError);
+    return shown === detail.run && actionableError === detail.actionableError
+      ? detail
+      : { ...detail, run: shown, actionableError };
   });
 
   // retryIntegrationRun: 202 with the queued retry.

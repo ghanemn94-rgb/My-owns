@@ -39,6 +39,7 @@ import {
   OPERATIONS_READ,
   requireExceptionChange,
   resolveException,
+  shownExceptions,
   toOperationalException,
   visibleException,
 } from "./exceptions.ts";
@@ -87,7 +88,12 @@ export function registerOperationsRoutes(app: FastifyInstance, { db }: ModuleDep
       limit,
     });
     const page = paginate(rows, limit, (r) => [r.cursor_at, r.id], hash);
-    return { items: page.items.map((r) => toOperationalException(r, r.linked_kpi_count)), nextCursor: page.nextCursor };
+    const items = await shownExceptions(
+      db,
+      principalOf(request),
+      page.items.map((r) => toOperationalException(r, r.linked_kpi_count)),
+    );
+    return { items, nextCursor: page.nextCursor };
   });
 
   // getOperationalException: 404 when missing or outside the caller's scope.

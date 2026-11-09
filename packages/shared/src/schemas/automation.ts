@@ -69,10 +69,11 @@ export const AUTOMATION_RESTRICTED_LITERAL = "[restricted]";
 
 /**
  * D-226: the opaque per-version token a condition literal is shown as when it names a sensitive record (or a child that
- * carries one's values) the reader is not admitted to. `k` is the literal's 1-based ordinal among the stored version's
- * hidden literals, in reading order (conditions in order, `in` list elements in order); it reveals nothing about the
- * record. A version update maps each token it receives back to its literal wherever the condition now sits; a token
- * that is left out is simply removed.
+ * carries one's values) the reader is not admitted to. `k` is the literal's 1-based position among **all** literals of
+ * the stored version, in reading order (conditions in order; a scalar value counts as one, each `in` list element as
+ * one), so it does not shift when a grant or sensitivity changes (D-228 (1)); it reveals nothing about the record. A
+ * version update maps each token it receives back to the stored literal at that position wherever the condition now
+ * sits; a token that is left out is simply removed.
  */
 export const automationRestrictedToken = (k: number): string => `[restricted:${k}]`;
 export const AUTOMATION_RESTRICTED_TOKEN_PATTERN = /^\[restricted:([1-9][0-9]{0,3})\]$/;

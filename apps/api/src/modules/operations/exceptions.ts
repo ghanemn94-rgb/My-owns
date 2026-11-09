@@ -27,6 +27,7 @@ import {
   auditContextOf,
   authorize,
   commitTimeDenial,
+  maskRestrictedIdsInFields,
   organizationsWith,
   refreshPrincipal,
   scopeFilter,
@@ -81,6 +82,8 @@ export interface OperationalExceptionBody {
   readonly resolutionNote: string | null;
   readonly linkedKpiCount: number;
   readonly version: number;
+  /** T-DG6-BE-Z13C (D-228 (2)): `lastErrorMessage` shows the restricted marker in place of a hidden record id. */
+  readonly includesRestrictedRecords?: true;
 }
 
 export interface LinkedKpiBody {
@@ -149,6 +152,21 @@ export function checkedNote(value: string): string {
   const r = noteRule.safeParse(value);
   if (!r.success) throw exceptionRefusals.noteRequired();
   return r.data;
+}
+
+/**
+ * T-DG6-BE-Z13C (D-228 (2), D-227; D-218; ADR-0051 §2): an exception's served error text (`last_error_message`) can name
+ * a record id (a job's error such as `benefit <id> is not in organization ...`). An id of a sensitive record, or of a
+ * child that carries one's values, the reader is not admitted to is replaced by the restricted marker and the item
+ * carries `includesRestrictedRecords: true`. The stored row is unchanged. Every response that serializes an exception
+ * (list, get, acknowledge, resolve) goes through this.
+ */
+export function shownExceptions<T extends OperationalExceptionBody>(
+  db: DbOrTx,
+  principal: Principal,
+  items: readonly T[],
+): Promise<T[]> {
+  return maskRestrictedIdsInFields(db, principal, items, ["lastErrorMessage"]);
 }
 
 export function toOperationalException(r: OperationalExceptionRow, linkedKpiCount: number): OperationalExceptionBody {
@@ -481,8 +499,9 @@ export async function exceptionDetail(
     if (status === null) hidden += 1;
     else linkedKpis.push(status);
   }
+  const [shown] = await shownExceptions(db, principal, [toOperationalException(row, links.length)]);
   return {
-    ...toOperationalException(row, links.length),
+    ...shown!,
     linkedKpis,
     hiddenKpiCount: hidden,
     events: events.map((e) => ({
