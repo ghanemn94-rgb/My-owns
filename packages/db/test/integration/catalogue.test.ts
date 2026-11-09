@@ -643,6 +643,7 @@ describe("schema.ts matches the migrated database", () => {
          'notification_digest', 'meeting_cutoff_pack', 'dependency_slip')
          AND t.tgname NOT LIKE '%contributor%' -- 0097's triggers: checked by the 0097 test below
          AND t.tgname <> 'automation_rule_enablement_record' -- 0122's trigger: checked by the 0122 test below
+         AND t.tgname <> 'automation_rule_version_token_key_immutable' -- 0127's trigger: checked by the 0127 test below
        ORDER BY 1, 2`,
     );
     type Row = [string, string, boolean, boolean];
@@ -1076,6 +1077,55 @@ describe("schema.ts matches the migrated database", () => {
          FROM pg_proc p WHERE p.proname = 'automation_rule_enablement_record'`,
     );
     expect(fn).toEqual({ definer: true, public_exec: false });
+  });
+
+  it("0127: each rule version has its own 32-byte restricted-token key, drawn at insert and never changed (D-233)", async () => {
+    const rows = await q<{ tgname: string; deferrable: boolean }>(
+      `SELECT t.tgname, t.tgdeferrable AS deferrable FROM pg_trigger t
+        WHERE NOT t.tgisinternal AND t.tgname = 'automation_rule_version_token_key_immutable'
+          AND t.tgrelid = 'automation_rule_version'::regclass`,
+    );
+    expect(rows).toEqual([{ tgname: "automation_rule_version_token_key_immutable", deferrable: false }]);
+    // The starter versions written by earlier migrations each got their own key when the column was added.
+    const [keys] = await q<{ n: number; distinct_keys: number; short: number }>(
+      `SELECT count(*)::int AS n, count(DISTINCT restricted_token_key)::int AS distinct_keys,
+              count(*) FILTER (WHERE octet_length(restricted_token_key) <> 32)::int AS short
+         FROM automation_rule_version`,
+    );
+    expect(keys!.n).toBeGreaterThan(0);
+    expect(keys).toEqual({ n: keys!.n, distinct_keys: keys!.n, short: 0 });
+    const client = await owner.pool.connect();
+    try {
+      await client.query("BEGIN");
+      const [row] = (
+        await client.query<{ id: string; version: number }>("SELECT id, version FROM automation_rule_version LIMIT 1")
+      ).rows;
+      await client.query("SAVEPOINT s");
+      const changed = await client
+        .query("UPDATE automation_rule_version SET restricted_token_key = $2, version = version + 1 WHERE id = $1", [
+          row!.id,
+          Buffer.alloc(32, 7),
+        ])
+        .then(
+          () => "updated",
+          (e: { constraint?: string }) => e.constraint,
+        );
+      expect(changed).toBe("automation_rule_version_token_key_immutable");
+      await client.query("ROLLBACK TO SAVEPOINT s");
+    } finally {
+      await client.query("ROLLBACK");
+      client.release();
+    }
+    const [check] = await q<{ def: string }>(
+      `SELECT pg_get_constraintdef(c.oid) AS def FROM pg_constraint c
+        WHERE c.conname = 'automation_rule_version_token_key_length' AND c.conrelid = 'automation_rule_version'::regclass`,
+    );
+    expect(check?.def).toBe("CHECK ((octet_length(restricted_token_key) = 32))");
+    const [col] = await q<{ nullable: string; def: string }>(
+      `SELECT is_nullable AS nullable, column_default AS def FROM information_schema.columns
+        WHERE table_name = 'automation_rule_version' AND column_name = 'restricted_token_key'`,
+    );
+    expect(col).toEqual({ nullable: "NO", def: "(uuid_send(gen_random_uuid()) || uuid_send(gen_random_uuid()))" });
   });
 
   it("0123: the ledger records disables (source CHECK), has the occurrence-time lookup index, and its writer stays SECURITY DEFINER (D-204)", async () => {

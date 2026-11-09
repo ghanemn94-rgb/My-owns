@@ -3,8 +3,12 @@
 // successful "Save the draft" it reloads its form from the saved version's response, so the next save carries that
 // version's tokens. After a 409 or a 422 `automation_rule.restricted_token_stale` it reloads the current version and
 // shows, in en and ar, that the rule changed and the draft must be re-applied. It never re-sends tokens of an earlier
-// version. The server's answers are scripted as the real API returns them (version-bound tokens
-// `[restricted:<version>:<k>]`). Before-fix reproduction: code-security round-9 probe zz-cs-r9-editor-stale-token.
+// version. The server's answers are scripted as the real API returns them (issuer-bound tokens
+// `[restricted:<tag>:<k>]`, T-DG6-BE-Z15, D-233: the tag is opaque to the web; the fixture gives each served version
+// its own fixed tag). Before-fix reproduction: code-security round-9 probe zz-cs-r9-editor-stale-token.
+// T-DG6-BE-Z15 (F-DG6-640) adds, in en and ar: a token pasted from another version (the published version, or another
+// rule) is sent verbatim, the server's 422 `restricted_token_stale` shows the "changed, re-apply" message, the form
+// reloads the current version and the pasted token is never re-sent; an issuer-bound token carries the restricted label.
 // All data SYNTHETIC; nothing here is a business approval (G1-G6) and nothing touches DG0-DG7.
 import { cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
@@ -117,7 +121,16 @@ const ADM_METHOD: Permission[] = ["organization.read", "automation.read", "autom
 
 type Version = ReturnType<typeof versionAt>;
 type Conditions = { field: string; op: string; value: unknown }[];
-const tok = (version: number, k: number) => `[restricted:${version}:${k}]`;
+/** Fixed opaque issuer tags per served row version (the real tag is a keyed hash the web never computes, D-233). */
+const TAGS = new Map<number, string>([
+  [2, "3f9c0a7e51b2d48c6a0e9f17"],
+  [3, "b80d42e6a1c9375f0e2b8d64"],
+  [4, "5ce1a09b7d3f28e4c6b1a07d"],
+  [5, "e27b9d0c43a8f6152d9c0b3e"],
+]);
+const tok = (version: number, k: number) => `[restricted:${TAGS.get(version)}:${k}]`;
+/** A token issued by ANOTHER rule-version row (the published version 1, or another rule) at the same row version. */
+const FOREIGN = "[restricted:9a41c7e2085fd36b1e70c4a9:2]";
 /** Version 2 as the author reads it: [neq G1, neq <hidden> (token), eq approved]. */
 const v2 = () =>
   versionAt(2, [
@@ -261,6 +274,49 @@ for (const locale of ["en", "ar"] as const) {
     const p2 = patchesOf(requests)[1]!;
     expect(p2.headers["if-match"]).toBe('"4"');
     expect(JSON.stringify(sentConditions(p2))).not.toContain(tok(2, 2));
+  });
+
+  it(`${locale}: an issuer-bound token shows the restricted label, and one pasted from another version gets the 422 "changed, re-apply" (Z15)`, async () => {
+    const { requests } = serve(locale, (n, req, s) => {
+      if (n === 1) {
+        // The server refuses the token issued by another rule-version row (D-233) and is unchanged.
+        return problem(422, "automation_rule.restricted_token_stale", {
+          errors: [
+            {
+              pointer: "/content/conditions/2/value",
+              code: "automation_rule.restricted_token_stale",
+              message: "Restricted-record token not issued for this version as it now stands.",
+            },
+          ],
+        });
+      }
+      s.current = versionAt(s.current.version + 1, sentConditions(req));
+      return { status: 200, body: s.current };
+    });
+    await screen.findByRole("button", { name: t.rules.removeCondition.replace("{{n}}", "1") });
+    // The token's condition carries the label; the plain ones do not (the label follows the token, D-226).
+    await waitFor(() =>
+      expect(document.querySelector("[data-condition-row='1'] [data-restricted-records='true']")).not.toBeNull(),
+    );
+    expect(document.querySelector("[data-condition-row='0'] [data-restricted-records='true']")).toBeNull();
+    expect(document.querySelector("[data-condition-row='2'] [data-restricted-records='true']")).toBeNull();
+    // The author pastes a token copied from the published version's page into condition 3's value.
+    const third = document.querySelectorAll("[data-condition-row] input")[2] as HTMLInputElement;
+    fireEvent.change(third, { target: { value: FOREIGN } });
+    await save(locale, requests, 1);
+    // Sent verbatim (the web never rewrites a token), with the served version as If-Match.
+    const p1 = patchesOf(requests)[0]!;
+    expect(p1.headers["if-match"]).toBe('"2"');
+    expect(sentConditions(p1).map((c) => c.value)).toEqual(["G1", tok(2, 2), FOREIGN]);
+    const banner = await screen.findByText(t.rules.changedReapply);
+    expect(banner.closest("[data-state='rule-changed-reapply']")?.getAttribute("role")).toBe("alert");
+    // The form reloads the current version: the pasted token is gone, the version's own token is back.
+    await waitFor(() => expect(valueInputs()).toEqual(["G1", tok(2, 2), "approved"]));
+    await save(locale, requests, 2);
+    const p2 = patchesOf(requests)[1]!;
+    expect(JSON.stringify(sentConditions(p2))).not.toContain(FOREIGN);
+    expect(sentConditions(p2)[1]!.value).toBe(tok(2, 2));
+    expect(document.documentElement.dir).toBe(locale === "ar" ? "rtl" : "ltr");
   });
 }
 

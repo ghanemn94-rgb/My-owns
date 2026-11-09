@@ -68,18 +68,27 @@ export const automationConditionValue = z.union([
 export const AUTOMATION_RESTRICTED_LITERAL = "[restricted]";
 
 /**
- * D-226, D-231 (F-DG6-580): the opaque version-bound token a condition literal is shown as when it names a sensitive
- * record (or a child that carries one's values) the reader is not admitted to: `[restricted:<version>:<k>]`.
- * `<version>` is the row version (the ETag / If-Match value) of the rule version the token was issued from; `k` is the
- * literal's 1-based position among **all** literals of that stored version, in reading order (conditions in order; a
- * scalar value counts as one, each `in` list element as one), so it does not shift when a grant or sensitivity changes
- * (D-228 (1)); it reveals nothing about the record. A version update maps each token it receives back to the stored
- * literal at that position wherever the condition now sits, but only when `<version>` is the version being replaced
- * (If-Match); a token issued from any other version is refused 422 `automation_rule.restricted_token_stale` and is
- * never resolved against another version's positions. A token that is left out is simply removed.
+ * D-226, D-231, D-233 (F-DG6-580, F-DG6-640): the opaque issuer-bound token a condition literal is shown as when it
+ * names a sensitive record (or a child that carries one's values) the reader is not admitted to:
+ * `[restricted:<tag>:<k>]`.
+ * - `<tag>` is the issuer tag: 24 lowercase hex digits, computed by the server only (a keyed hash of the issuing
+ *   rule-version row's id and its row version, ADR-0051 amendment D-231 part A). It names the row and the revision the
+ *   token was issued from, and discloses neither the row id nor any hidden value. Clients treat it as opaque.
+ * - `k` is the literal's 1-based position among **all** literals of that stored version, in reading order (conditions
+ *   in order; a scalar value counts as one, each `in` list element as one), so it does not shift when a grant or
+ *   sensitivity changes (D-228 (1)); it reveals nothing about the record.
+ * A version update maps each token it receives back to the stored literal at that position wherever the condition now
+ * sits, but only when `<tag>` is the tag of the row being replaced at the If-Match version. A token issued by another
+ * version row, another rule or another row version (and any token in the retired D-231 form
+ * `[restricted:<version>:<k>]`) is refused 422 `automation_rule.restricted_token_stale` and is never resolved against
+ * another row's positions. A token that is left out is simply removed.
  */
-export const automationRestrictedToken = (version: number, k: number): string => `[restricted:${version}:${k}]`;
-export const AUTOMATION_RESTRICTED_TOKEN_PATTERN = /^\[restricted:([1-9][0-9]{0,9}):([1-9][0-9]{0,3})\]$/;
+export const automationRestrictedToken = (tag: string, k: number): string => `[restricted:${tag}:${k}]`;
+/** The length of the issuer tag in hex digits (96 bits: an accidental match between two issuers is negligible). */
+export const AUTOMATION_RESTRICTED_TOKEN_TAG_HEX_LENGTH = 24;
+export const AUTOMATION_RESTRICTED_TOKEN_PATTERN = /^\[restricted:([0-9a-f]{24}):([1-9][0-9]{0,3})\]$/;
+/** The retired D-231 form `[restricted:<version>:<k>]`: issued by an earlier release, refused stale (D-233). */
+export const AUTOMATION_RESTRICTED_TOKEN_RETIRED_PATTERN = /^\[restricted:[1-9][0-9]{0,9}:[1-9][0-9]{0,3}\]$/;
 /** True for a token, the bare marker, or any other text that looks like marker text (refused unless a known token). */
 export const looksLikeRestrictedMarker = (v: string): boolean => /^\s*\[\s*restricted\b/i.test(v);
 

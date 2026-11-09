@@ -38,8 +38,9 @@ export interface ContentDraft {
 
 /**
  * T-DG6-BE-Z12B, T-DG6-BE-Z13 (D-222, D-226; ADR-0051 §2): whether a condition's literal (or an element of its list) is
- * an opaque restricted token `[restricted:<version>:<k>]` (D-231: bound to the version it was issued from) the server
- * showed in place of a value that names a record the reader is
+ * an opaque restricted token `[restricted:<tag>:<k>]` (D-231, D-233: the tag binds it to the rule-version row and the
+ * row version it was issued from; the web never computes or parses it) the server showed in place of a value that
+ * names a record the reader is
  * not admitted to. The label follows the token, never a value that merely equals marker text. Saving the token back,
  * wherever the condition now sits, keeps the hidden value on the server; removing it removes the value.
  */

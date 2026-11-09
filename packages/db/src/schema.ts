@@ -5271,6 +5271,8 @@ export interface AutomationRuleVersionTable {
   created_by: string | null;
   updated_at: TimestampDefault;
   updated_by: string | null;
+  /** 0127 (T-DG6-BE-Z15, D-233): per-row secret HMAC key of the restricted token tag. Never served; immutable. */
+  restricted_token_key: Generated<Buffer>;
 }
 
 export interface AutomationDryRunTable {
@@ -11761,6 +11763,7 @@ export const SCHEMA_COLUMNS = {
     "created_by",
     "updated_at",
     "updated_by",
+    "restricted_token_key",
   ],
   automation_dry_run: [
     "id",

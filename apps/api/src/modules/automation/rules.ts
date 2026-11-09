@@ -201,7 +201,7 @@ async function loadRuleFacts(
   const redacted = await redactConditionLiterals(
     db,
     principal,
-    versions.map((v) => ({ conditions: contentOfRow(v).conditions, version: v.version })),
+    versions.map((v) => ({ conditions: contentOfRow(v).conditions, issuer: v })),
   );
   return {
     versions: new Map(versions.map((v) => [v.id, v])),

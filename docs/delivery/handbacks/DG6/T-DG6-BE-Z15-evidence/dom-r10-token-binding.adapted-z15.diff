@@ -1,0 +1,29 @@
+0a1,5
+> // ADAPTED BY T-DG6-BE-Z15 (backend-workflow-engineer) for the after-fix run ONLY: the domain round-10 probe with its
+> // token LITERALS moved from the retired D-231 form [restricted:<version>:<k>] to the D-233 issuer-bound form
+> // [restricted:<tag>:<k>] (the tag taken from the server's own response). Every behaviour assertion is unchanged; the
+> // retired-form cases now expect restricted_token_stale (D-233: a token issued by an earlier release is stale).
+> // Diff against docs/delivery/test-evidence/DG6/domain/round-10/probes/dom-r10-token-binding.test.ts.txt to review.
+148c153
+<     expect(shown.content.conditions[1].value).toBe(`[restricted:${shown.version}:2]`);
+---
+>     expect(shown.content.conditions[1].value).toMatch(/^\[restricted:[0-9a-f]{24}:2\]$/);
+188c193,195
+<     const v = (await read(id)).version;
+---
+>     const r0 = await read(id);
+>     const v = r0.version;
+>     const tag = /^\[restricted:([0-9a-f]{24}):2\]$/.exec(r0.content.conditions[1].value)![1];
+192,195c199,205
+<       [`[restricted:${v}:9]`, "automation_rule.restricted_marker_unknown"],
+<       [`[restricted:${v}:0]`, "automation_rule.restricted_marker_unknown"],
+<       [` [Restricted:${v}:2] `, "automation_rule.restricted_marker_unknown"],
+<       [`[restricted:${v}:2`, "automation_rule.restricted_marker_unknown"],
+---
+>       [`[restricted:${tag}:9]`, "automation_rule.restricted_marker_unknown"],
+>       [`[restricted:${tag}:0]`, "automation_rule.restricted_marker_unknown"],
+>       [` [Restricted:${tag}:2] `, "automation_rule.restricted_marker_unknown"],
+>       [`[restricted:${tag}:2`, "automation_rule.restricted_marker_unknown"],
+>       [`[restricted:${tag.toUpperCase()}:2]`, "automation_rule.restricted_marker_unknown"],
+>       [`[restricted:${"0".repeat(24)}:2]`, "automation_rule.restricted_token_stale"],
+>       [`[restricted:${v}:2]`, "automation_rule.restricted_token_stale"],

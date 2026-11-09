@@ -1,7 +1,9 @@
 // T-DG6-BE-Z14 (F-DG6-580, code-security observation 601; D-231, extending D-226 and D-228 (1); ADR-0051 §2;
 // REQ-S10-002 "a sensitive benefit is hidden from a workstream member without the grant"): a restricted condition token
-// names the row version it was issued from, `[restricted:<version>:<k>]`. On a save, a token whose version is not the
-// version being replaced (If-Match) is refused 422 `automation_rule.restricted_token_stale` with a pointer, and is never
+// names the row version it was issued from (T-DG6-BE-Z15, D-233: `[restricted:<tag>:<k>]`, the tag a keyed hash of the
+// issuing row's id and row version; the expected token is computed with support/restricted-tokens.ts). On a save, a
+// token not issued by the version being replaced (If-Match) is refused 422 `automation_rule.restricted_token_stale`
+// with a pointer, and is never
 // resolved against another version's positions. So no hidden literal is ever replaced by another literal or by marker
 // text. Cases, on the real API with a disposable PostgreSQL:
 //   (a) a second save of the same draft after a save that removed an earlier condition (one hidden literal);
@@ -27,6 +29,7 @@ import {
   type World,
 } from "../../support/harness.ts";
 import { ifm } from "../../support/p2-fixtures.ts";
+import { restrictedTokens } from "../../support/restricted-tokens.ts";
 import {
   launchedInitiative,
   pendingBenefit,
@@ -50,7 +53,8 @@ const ok = (res: Res<Body>, status = 200) => {
   expect(res.status, JSON.stringify(res.body).slice(0, 600)).toBe(status);
   return res.body as Body;
 };
-const tok = (version: number, k: number) => `[restricted:${version}:${k}]`;
+const tokens = restrictedTokens(() => api.db);
+const tok = tokens.tok;
 const hiddenIds: string[] = [];
 const leaks = (body: unknown) => hiddenIds.filter((x) => JSON.stringify(body).includes(x));
 
@@ -88,6 +92,7 @@ async function createRule(conditions: Cond[]): Promise<string> {
     }),
     201,
   );
+  await tokens.register(rule.id as string);
   return rule.id as string;
 }
 const stored = async (ruleId: string) =>
@@ -140,7 +145,7 @@ describe("T-DG6-BE-Z14: restricted tokens are bound to their version (D-231, F-D
     const shown = await getV(ruleId);
     expect(shown.content.conditions).toEqual([
       { field: "benefitId", op: "neq", value: P },
-      { field: "benefitId", op: "neq", value: tok(shown.version, 2) },
+      { field: "benefitId", op: "neq", value: tok(ruleId, shown.version, 2) },
       sev,
     ]);
     expect(AUTOMATION_RESTRICTED_TOKEN_PATTERN.test(shown.content.conditions[1].value)).toBe(true);
@@ -161,7 +166,7 @@ describe("T-DG6-BE-Z14: restricted tokens are bound to their version (D-231, F-D
     ]);
     await markSensitive(S);
     const shown = await getV(ruleId);
-    expect(shown.content.conditions[1].value).toBe(tok(shown.version, 2));
+    expect(shown.content.conditions[1].value).toBe(tok(ruleId, shown.version, 2));
     // The editor's draft after "remove condition 1".
     const draft = { ...shown.content, conditions: shown.content.conditions.slice(1) };
     const s1 = ok(await patch(ruleId, draft, shown.version));
@@ -170,7 +175,7 @@ describe("T-DG6-BE-Z14: restricted tokens are bound to their version (D-231, F-D
       { field: "benefitId", op: "neq", value: Q },
     ]);
     // The new version shows S at position 1, bound to the new row version.
-    expect(s1.content.conditions[0].value).toBe(tok(s1.version, 1));
+    expect(s1.content.conditions[0].value).toBe(tok(ruleId, s1.version, 1));
     expect(s1.includesRestrictedRecords).toBe(true);
     // The F-DG6-580 sequence: the same draft (token of the earlier version) with the refreshed If-Match.
     const before = await stored(ruleId);
@@ -182,7 +187,7 @@ describe("T-DG6-BE-Z14: restricted tokens are bound to their version (D-231, F-D
     // Reload and re-apply: the current tokens save, and S stays where the author meant it.
     const fresh = await getV(ruleId);
     const s3 = ok(await patch(ruleId, fresh.content, fresh.version));
-    expect(s3.content.conditions[0].value).toBe(tok(s3.version, 1));
+    expect(s3.content.conditions[0].value).toBe(tok(ruleId, s3.version, 1));
     expect((await stored(ruleId)).conditions).toEqual([
       { field: "benefitId", op: "neq", value: S },
       { field: "benefitId", op: "neq", value: Q },
@@ -205,15 +210,19 @@ describe("T-DG6-BE-Z14: restricted tokens are bound to their version (D-231, F-D
     const shown = await getV(ruleId);
     expect(shown.content.conditions.map((x: Cond) => x.value)).toEqual([
       P,
-      tok(shown.version, 2),
-      tok(shown.version, 3),
+      tok(ruleId, shown.version, 2),
+      tok(ruleId, shown.version, 3),
       "high",
     ]);
     const draft = { ...shown.content, conditions: shown.content.conditions.slice(1) };
     const s1 = ok(await patch(ruleId, draft, shown.version));
     const kept = [{ field: "benefitId", op: "neq", value: S1 }, { field: "benefitId", op: "neq", value: S2 }, sev];
     expect((await stored(ruleId)).conditions).toEqual(kept);
-    expect(s1.content.conditions.map((x: Cond) => x.value)).toEqual([tok(s1.version, 1), tok(s1.version, 2), "high"]);
+    expect(s1.content.conditions.map((x: Cond) => x.value)).toEqual([
+      tok(ruleId, s1.version, 1),
+      tok(ruleId, s1.version, 2),
+      "high",
+    ]);
     const s2 = await patch(ruleId, draft, s1.version);
     expectStale(s2, "/content/conditions/0/value");
     expect((await stored(ruleId)).conditions).toEqual(kept);
@@ -222,7 +231,11 @@ describe("T-DG6-BE-Z14: restricted tokens are bound to their version (D-231, F-D
       ruleId,
       {
         ...s1.content,
-        conditions: [s1.content.conditions[0], { ...s1.content.conditions[1], value: tok(shown.version, 3) }, sev],
+        conditions: [
+          s1.content.conditions[0],
+          { ...s1.content.conditions[1], value: tok(ruleId, shown.version, 3) },
+          sev,
+        ],
       },
       s1.version,
     );
@@ -231,7 +244,7 @@ describe("T-DG6-BE-Z14: restricted tokens are bound to their version (D-231, F-D
     // In an `in` list too.
     const inList = await patch(
       ruleId,
-      { ...s1.content, conditions: [{ field: "benefitId", op: "in", value: [P, tok(shown.version, 2)] }, sev] },
+      { ...s1.content, conditions: [{ field: "benefitId", op: "in", value: [P, tok(ruleId, shown.version, 2)] }, sev] },
       s1.version,
     );
     expectStale(inList, "/content/conditions/0/value/1");
@@ -275,7 +288,7 @@ describe("T-DG6-BE-Z14: restricted tokens are bound to their version (D-231, F-D
     expect(await stored(ruleId)).toEqual(before);
     // Reload and re-apply the severity change on the current version: S stays, severity changes.
     const fresh = await getV(ruleId);
-    expect(fresh.content.conditions[0].value).toBe(tok(fresh.version, 1));
+    expect(fresh.content.conditions[0].value).toBe(tok(ruleId, fresh.version, 1));
     const a3 = ok(
       await patch(
         ruleId,
@@ -308,14 +321,14 @@ describe("T-DG6-BE-Z14: restricted tokens are bound to their version (D-231, F-D
         v1.version,
       ),
     );
-    expect(v2.content.conditions[0].value).toBe(tok(v2.version, 1));
+    expect(v2.content.conditions[0].value).toBe(tok(ruleId, v2.version, 1));
     const before = await stored(ruleId);
     for (const version of [v1.version, v2.version + 1, 999_999]) {
       const res = await patch(
         ruleId,
         {
           ...v2.content,
-          conditions: [{ field: "benefitId", op: "neq", value: tok(version, 1) }, v2.content.conditions[1]],
+          conditions: [{ field: "benefitId", op: "neq", value: tok(ruleId, version, 1) }, v2.content.conditions[1]],
         },
         v2.version,
       );
@@ -325,7 +338,7 @@ describe("T-DG6-BE-Z14: restricted tokens are bound to their version (D-231, F-D
     // A token of the current version at a position with no string literal stays unknown (D-226).
     const unknown = await patch(
       ruleId,
-      { ...v2.content, conditions: [{ field: "benefitId", op: "neq", value: tok(v2.version, 7) }] },
+      { ...v2.content, conditions: [{ field: "benefitId", op: "neq", value: tok(ruleId, v2.version, 7) }] },
       v2.version,
     );
     expect(unknown.status).toBe(422);

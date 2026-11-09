@@ -10101,7 +10101,7 @@ Generated from the catalogue of a freshly migrated database by `docs/delivery/ha
 - **Purpose:** One version of a rule: triggers, conditions, actions, identity, service permissions, parameters, content hash, review and publication (REQ-S12-001, REQ-S12-002; ADR-0043 §1, §4).
 - **Migration:** `0074_p5_automation_engine.sql`. **API module:** `automation`. **Who writes:** `automation.configure` (content, submit, publish, discard), `automation.review` (review); starter v1 by migration. **Lifecycle:** draft → in_review → approved → published → superseded; discarded; content frozen outside draft; versioned.
 - **`mth_app` privileges:** INSERT, SELECT, UPDATE.
-- **Read-time rule (P6 round 8; no stored change):** `conditions` (redacted: literals shown as `[restricted:<version>:<k>]` tokens, D-231). See "P6 read-time classifications after round 8" at the end of this file (added 2026-11-09, T-DG6-ARCH-17).
+- **Read-time rule (P6 round 8; no stored change):** `conditions` (redacted: literals shown as `[restricted:<tag>:<k>]` tokens, D-231, D-233; `<tag>` is the issuer tag keyed by `restricted_token_key`, see "P6 round-10 repair migration 0127"). See "P6 read-time classifications after round 8" at the end of this file (added 2026-11-09, T-DG6-ARCH-17).
 
 | Column | Type | Null | Default | Column constraints |
 |---|---|---|---|---|
@@ -10132,6 +10132,7 @@ Generated from the catalogue of a freshly migrated database by `docs/delivery/ha
 | created_by | uuid | NULL |  | FK → app_user(id) |
 | updated_at | timestamp with time zone | NOT NULL | `now()` |  |
 | updated_by | uuid | NULL |  | FK → app_user(id) |
+| restricted_token_key | bytea | NOT NULL | `(uuid_send(gen_random_uuid()) \|\| uuid_send(gen_random_uuid()))` | `CHECK ((octet_length(restricted_token_key) = 32))`; _added by 0127 (T-DG6-BE-Z15, D-233): the row's secret HMAC key of the restricted token tag; never served, audited or logged; immutable_ |
 
 **Table constraints:**
 
@@ -10156,6 +10157,7 @@ Generated from the catalogue of a freshly migrated database by `docs/delivery/ha
 - `automation_rule_version_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `automation_rule_version_guard()`
 - `automation_rule_version_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
 - `automation_rule_version_sod_contributor` and four contributor-recording triggers: _added by 0097, 2026-10-18_; listed in section "P5 repair migration 0097"
+- `automation_rule_version_token_key_immutable`: BEFORE UPDATE FOR EACH ROW → `automation_rule_version_token_key_immutable()`; _added by 0127, 2026-11-09_; listed in section "P6 round-10 repair migration 0127"
 
 ## automation_dry_run
 
@@ -14528,6 +14530,19 @@ Every other column, constraint, index and trigger of `report_snapshot` is unchan
 | API, read (`documentForReader`) | The flag of each aggregate section is decided from its references plus its aggregate records, per reader: true, false, or absent when none is sensitive. When `aggregates_recorded` is false, the records come from `legacyAggregates`. |
 | Integration tests | `packages/db/test/integration/catalogue.test.ts` "0126: …" (the triggers, the privileges and the immutable column), and `apps/api/test/integration/access/sensitive-reach-dashboards-reports.test.ts` (T-DG6-BE-Z9: the flag on live and stored snapshots, the legacy rule, and the content hash unchanged). |
 
+
+# P6 round-10 repair migration 0127 (DG6)
+
+Recorded by T-DG6-BE-Z15 (2026-11-09; F-DG6-640; D-233) from the shipped `packages/db/migrations/0127_p6_automation_restricted_token_key.sql`. The column default and the CHECK text below are `information_schema` / `pg_get_constraintdef` output, asserted by `packages/db/test/integration/catalogue.test.ts` ("0127: …") on a disposable PostgreSQL with all migrations applied. The design is ADR-0051, amendment "version-bound automation tokens" (2026-11-09), part A. The migration adds one column, one CHECK and one trigger to `automation_rule_version` (0074, "P5 tables, slices D and E"). No table is new, no row changes except the new column, and no grant changes: `mth_app` keeps INSERT, SELECT and UPDATE on the table.
+
+| Item | Text | Purpose |
+| --- | --- | --- |
+| Column `automation_rule_version.restricted_token_key` | `bytea NOT NULL DEFAULT (uuid_send(gen_random_uuid()) \|\| uuid_send(gen_random_uuid()))` | The row's own secret key for the issuer tag of its restricted condition tokens (`[restricted:<tag>:<k>]`; `restrictedTokenTag`, `apps/api/src/modules/automation/versions.ts`). It holds 32 bytes, 244 of them random bits from PostgreSQL's strong random source (core since PostgreSQL 13, no extension). `ADD COLUMN` evaluated the volatile default once per existing row, so each existing version, the starters included, has its own key. Never served, never audited (the version audit diff covers the content columns only), never logged, never copied into a new version. |
+| CHECK `automation_rule_version_token_key_length` | `CHECK ((octet_length(restricted_token_key) = 32))` | A key is exactly 32 bytes. |
+| Function and trigger `automation_rule_version_token_key_immutable` | `BEFORE UPDATE … FOR EACH ROW`, `SET search_path = public, pg_temp`; raises `check_violation`, constraint `automation_rule_version_token_key_immutable` | The key is set when the version is inserted and never changes. A changed key would turn every token the row ever issued stale. No API path writes it, so no problem code maps it. |
+
+**Effect on deploy.** Every token issued by the previous release (`[restricted:<version>:<k>]`, D-231) is refused 422 `automation_rule.restricted_token_stale`. The rule editor then reloads the version and asks the author to re-apply the change. No stored condition changes.
+
 # P6 read-time classifications after round 8 (no migration)
 
 Recorded by T-DG6-ARCH-17 (2026-11-09; D-228 (5)) from the shipped code of T-DG6-BE-Z13, BE-Z13B and BE-Z13C (D-226 to D-229). **None of these tasks shipped a migration**: every column below keeps its type, constraints, triggers and privileges as recorded in its own section. What changed is what the API returns to a reader who is not admitted to a sensitive record (ADR-0051 §2), and how the reference inventory (`apps/api/test/support/sensitive-reference-inventory.ts`) classifies the column. The design is ADR-0051 (amendment of 2026-11-09) and ADR-0054 (amendment of 2026-11-09).
@@ -14543,7 +14558,7 @@ Recorded by T-DG6-ARCH-17 (2026-11-09; D-228 (5)) from the shipped code of T-DG6
 
 | Table.column | Kind | What it can hold | Served as (OpenAPI) | Status and read-time rule | Task; decision | Exercise |
 |---|---|---|---|---|---|---|
-| `automation_rule_version.conditions` | json | a condition literal may compare `benefitId` to a uuid | `AutomationRuleContent.conditions[].value` of every rule-version and rule response | redacted. A literal (or `in` element) containing a hidden id is shown as the token `[restricted:k]`, k = its 1-based position among **all** literals of the stored version (string or boolean scalar = one, each `in` element = one, no value = none). The version and rule carry the member. On write, a token is mapped back to the stored string literal at position k; an unknown token, the bare `[restricted]` or marker-like text is 422 `automation_rule.restricted_marker_unknown`, so marker text is never stored. `contentSha256` is unchanged. | BE-Z13, BE-Z13C; D-226, D-228 (1) (supersedes D-222 (2)) | `automation-restricted-tokens-z13.test.ts`, `sensitive-reference-pending-z12b.test.ts` |
+| `automation_rule_version.conditions` | json | a condition literal may compare `benefitId` to a uuid | `AutomationRuleContent.conditions[].value` of every rule-version and rule response | redacted. A literal (or `in` element) containing a hidden id is shown as the token `[restricted:<tag>:<k>]` (format of D-231 and D-233; D-226 first shipped `[restricted:k]`). `<tag>` is the issuer tag: 24 lowercase hex digits of HMAC-SHA256 keyed by the row's `restricted_token_key` over the row's id and row version. It is opaque, and discloses neither the id nor any literal. k = its 1-based position among **all** literals of the stored version (string or boolean scalar = one, each `in` element = one, no value = none). The version and rule carry the member. On write, a token whose tag is the tag of the row being replaced at the `If-Match` version is mapped back to the stored string literal at position k. A token of another version row, another rule or another row version, or one in the retired form `[restricted:<version>:<k>]`, is 422 `automation_rule.restricted_token_stale`. An unknown position, the bare `[restricted]` or marker-like text is 422 `automation_rule.restricted_marker_unknown`, so marker text is never stored. `contentSha256` is unchanged. | BE-Z13, BE-Z13C, BE-Z14, BE-Z15; D-226, D-228 (1) (supersedes D-222 (2)), D-231, D-233 | `automation-restricted-tokens-z13.test.ts`, `automation-restricted-tokens-z14.test.ts`, `automation-restricted-tokens-z15.test.ts`, `sensitive-reference-pending-z12b.test.ts` |
 | `inbox_notification.link_path` | text | the route of the notification's record (benefit, Finance validation, overlap, action, …) | `InboxNotification.linkPath` (`listMyInbox`, `markInboxNotificationRead`); the resolver | redacted. Restricted notification (ADR-0051 §3 as corrected): `linkPath` = `/transformations/<transformationId>` (else `/my-work`); `resolveDeepLink` answers 403 `deep_link.forbidden`. | BE-Z13, BE-Z13B; D-226, D-227 (3) | `inbox-restricted-z13.test.ts`, `action-register-restricted-z13b.test.ts` |
 | `inbox_notification.message_params` | json | codes and labels of the subject | `InboxNotification.messageParams` | redacted: `{}` with `messageKey` `inbox.restricted` for a restricted notification. | BE-Z13; D-226 | `inbox-restricted-z13.test.ts` |
 | `inbox_notification.target_record_id` | uuid | any record a notification targets | not serialized; decides restriction for the inbox and the resolver | redacted (as above). | BE-Z13; D-226 | `inbox-restricted-z13.test.ts` |

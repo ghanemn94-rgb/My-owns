@@ -1,7 +1,8 @@
 // T-DG6-BE-Z13 (F-DG6-520, F-DG6-541, F-DG6-560; D-226, superseding the ordinal pairing of D-222 (2); ADR-0051 §2;
 // REQ-S10-002 "a sensitive benefit is hidden from a workstream member without the grant"): a rule author who is not
 // admitted to a sensitive benefit sees each hidden condition literal as the opaque per-version token
-// `[restricted:<version>:<k>]` (T-DG6-BE-Z14, D-231: bound to the row version it was issued from).
+// `[restricted:<tag>:<k>]` (T-DG6-BE-Z14, D-231; T-DG6-BE-Z15, D-233: the tag binds it to the rule-version row and the
+// row version it was issued from; the expected token is computed with support/restricted-tokens.ts).
 // A save maps every token back to its literal wherever the condition now sits: after removing an earlier condition,
 // after reordering, after removing the restricted condition itself, after removing or reordering `in` list elements,
 // and with two hidden literals. An unknown token, or the bare marker text, is refused with 422
@@ -11,7 +12,7 @@
 // becomes hidden, or one that becomes visible, between the author's read and save cannot shift a token: the right
 // literal is kept in both. Every value is SYNTHETIC; marking a record sensitive or granting access is an
 // access decision, never a business approval (G1-G6), and nothing here touches DG0-DG7.
-import { AUTOMATION_RESTRICTED_LITERAL } from "@mth/shared/schemas";
+import { AUTOMATION_RESTRICTED_LITERAL, AUTOMATION_RESTRICTED_TOKEN_PATTERN } from "@mth/shared/schemas";
 import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
@@ -27,6 +28,7 @@ import {
   type World,
 } from "../../support/harness.ts";
 import { ifm } from "../../support/p2-fixtures.ts";
+import { restrictedTokens } from "../../support/restricted-tokens.ts";
 import {
   launchedInitiative,
   pendingBenefit,
@@ -53,7 +55,11 @@ const ok = (res: Res<Body>, status = 200) => {
 };
 const R = "/api/v1/admin/automation-rules";
 /** D-231: a token names the row version it was issued from and the literal's position k (D-228 (1)). */
-const tok = (version: number, k: number) => `[restricted:${version}:${k}]`;
+const tokens = restrictedTokens(() => api.db);
+const tok = tokens.tok;
+/** The issuer tag of rule `ruleId`'s version 1 at row version `version` (the middle part of its tokens). */
+const tagOf = (ruleId: string, version: number) =>
+  AUTOMATION_RESTRICTED_TOKEN_PATTERN.exec(tok(ruleId, version, 1))![1]!;
 const sev: Cond = { field: "severity", op: "eq", value: "high" };
 
 /** The rules by case, created before the benefits are marked sensitive (their conditions name S1/S2 by id). */
@@ -93,13 +99,17 @@ const stored = async (ruleId: string) =>
     .executeTakeFirstOrThrow()) as { conditions: Cond[]; version: number };
 const leaks = (body: unknown) => [id.S1, id.S2].filter((x) => JSON.stringify(body).includes(x));
 /** GET as the author, then PATCH `edit(shown conditions)` back with If-Match. */
-async function resave(name: string, edit: (shown: Cond[], version: number) => Cond[], session = author.session) {
+async function resave(
+  name: string,
+  edit: (shown: Cond[], version: number, ruleId: string) => Cond[],
+  session = author.session,
+) {
   const ruleId = rules.get(name)!;
   const shown = ok(await send("GET", V(ruleId), { session }));
   const res = await send("PATCH", V(ruleId), {
     session,
     headers: ifm(shown.version),
-    body: { content: { ...shown.content, conditions: edit(shown.content.conditions, shown.version) } },
+    body: { content: { ...shown.content, conditions: edit(shown.content.conditions, shown.version, ruleId) } },
   });
   return { shown, res, ruleId };
 }
@@ -148,6 +158,7 @@ beforeAll(async () => {
       201,
     );
     rules.set(name, rule.id);
+    await tokens.register(rule.id);
   }
   for (const b of [id.S1, id.S2, id.V]) {
     ok(
@@ -163,10 +174,11 @@ afterAll(() => api?.close());
 
 describe("T-DG6-BE-Z13: restricted condition tokens (D-226)", () => {
   it("read: each hidden literal is an opaque token in reading order, marked; the summary names no record", async () => {
-    const one = ok(await send("GET", V(rules.get("listReorder")!), { session: author.session }));
+    const L = rules.get("listReorder")!;
+    const one = ok(await send("GET", V(L), { session: author.session }));
     // D-228 (1): k is the position among all literals (S1 = 1, P = 2, S2 = 3), not among the hidden ones.
     expect(one.content.conditions).toEqual([
-      { field: "benefitId", op: "in", value: [tok(one.version, 1), id.P, tok(one.version, 3)] },
+      { field: "benefitId", op: "in", value: [tok(L, one.version, 1), id.P, tok(L, one.version, 3)] },
       sev,
     ]);
     expect(one.includesRestrictedRecords).toBe(true);
@@ -176,8 +188,8 @@ describe("T-DG6-BE-Z13: restricted condition tokens (D-226)", () => {
     expect(leaks(one)).toEqual([]);
     const two = ok(await send("GET", V(rules.get("reorder")!), { session: author.session }));
     expect(two.content.conditions.map((x: Cond) => x.value)).toEqual([
-      tok(two.version, 1),
-      tok(two.version, 2),
+      tok(rules.get("reorder")!, two.version, 1),
+      tok(rules.get("reorder")!, two.version, 2),
       "high",
     ]);
     const list = ok(await send("GET", R, { session: author.session }));
@@ -188,7 +200,10 @@ describe("T-DG6-BE-Z13: restricted condition tokens (D-226)", () => {
     const { res, ruleId } = await resave("removeEarlier", (s) => s.slice(1));
     const body = ok(res);
     expect(body.includesRestrictedRecords).toBe(true);
-    expect(body.content.conditions).toEqual([{ field: "benefitId", op: "neq", value: tok(body.version, 1) }, sev]);
+    expect(body.content.conditions).toEqual([
+      { field: "benefitId", op: "neq", value: tok(ruleId, body.version, 1) },
+      sev,
+    ]);
     expect(leaks(body)).toEqual([]);
     expect((await stored(ruleId)).conditions).toEqual([{ field: "benefitId", op: "neq", value: id.S1 }, sev]);
   });
@@ -211,17 +226,21 @@ describe("T-DG6-BE-Z13: restricted condition tokens (D-226)", () => {
   });
 
   it("in-list: removing the open element and reordering the hidden ones keeps both (F-DG6-520 (b), F-DG6-560 P3)", async () => {
-    const { shown, res, ruleId } = await resave("listReorder", (s, v) => [
-      { ...s[0]!, value: [tok(v, 3), tok(v, 1)] },
+    const { shown, res, ruleId } = await resave("listReorder", (s, v, r) => [
+      { ...s[0]!, value: [tok(r, v, 3), tok(r, v, 1)] },
       s[1]!,
     ]);
-    expect(shown.content.conditions[0].value).toEqual([tok(shown.version, 1), id.P, tok(shown.version, 3)]);
+    expect(shown.content.conditions[0].value).toEqual([
+      tok(ruleId, shown.version, 1),
+      id.P,
+      tok(ruleId, shown.version, 3),
+    ]);
     ok(res);
     expect((await stored(ruleId)).conditions).toEqual([{ field: "benefitId", op: "in", value: [id.S2, id.S1] }, sev]);
   });
 
   it("in-list: removing a hidden element removes exactly that literal", async () => {
-    const { res, ruleId } = await resave("listRemove", (s, v) => [{ ...s[0]!, value: [id.P, tok(v, 3)] }, s[1]!]);
+    const { res, ruleId } = await resave("listRemove", (s, v, r) => [{ ...s[0]!, value: [id.P, tok(r, v, 3)] }, s[1]!]);
     ok(res);
     expect((await stored(ruleId)).conditions).toEqual([{ field: "benefitId", op: "in", value: [id.P, id.S2] }, sev]);
   });
@@ -229,8 +248,9 @@ describe("T-DG6-BE-Z13: restricted condition tokens (D-226)", () => {
   it("negative: an unknown token, the bare marker or other marker text is refused 422 and nothing is stored", async () => {
     const ruleId = rules.get("refusals")!;
     const before = await stored(ruleId);
-    // `@v` is replaced by the version being replaced, so "[restricted:@v:9]" is a token of the right version with no
-    // string literal at position 9. "[restricted:1]" is the retired, unbound D-226 format (D-231).
+    // `@v` is replaced by the issuer tag of the row being replaced (D-233), so "[restricted:@v:9]" is a token of the
+    // right row and version with no string literal at position 9. "[restricted:1]" is the retired, unbound D-226
+    // format (D-231).
     for (const bad of [
       "[restricted:@v:9]",
       AUTOMATION_RESTRICTED_LITERAL,
@@ -240,14 +260,17 @@ describe("T-DG6-BE-Z13: restricted condition tokens (D-226)", () => {
       "[restricted:@v:x]",
       "[restricted:@v:1",
     ]) {
-      const { res } = await resave("refusals", (s, v) => [{ ...s[0]!, value: bad.replace("@v", String(v)) }, s[1]!]);
+      const { res } = await resave("refusals", (s, v, r) => [
+        { ...s[0]!, value: bad.replace("@v", tagOf(r, v)) },
+        s[1]!,
+      ]);
       expect(res.status, bad).toBe(422);
       expect(res.body.code).toBe("automation_rule.restricted_marker_unknown");
       expect(res.body.detail).toContain("Reload the version");
       expect(res.body.errors[0].pointer).toBe("/content/conditions/0/value");
       // In an `in` list too.
-      const inList = await resave("refusals", (s, v) => [
-        { field: "benefitId", op: "in", value: [id.P, bad.replace("@v", String(v))] },
+      const inList = await resave("refusals", (s, v, r) => [
+        { field: "benefitId", op: "in", value: [id.P, bad.replace("@v", tagOf(r, v))] },
         s[1]!,
       ]);
       expect(inList.res.status, `in ${bad}`).toBe(422);
@@ -266,7 +289,7 @@ describe("T-DG6-BE-Z13: restricted condition tokens (D-226)", () => {
         ownerUserId: author.id,
         content: {
           triggerCodes: ["benefit.variance_evaluated"],
-          conditions: [{ field: "benefitId", op: "neq", value: tok(1, 1) }],
+          conditions: [{ field: "benefitId", op: "neq", value: tok(ruleId, 1, 1) }],
           actions: [
             { type: "create_task", parameters: { assigneeRole: "TL", messageKey: "automation.message.follow_up" } },
           ],
@@ -299,7 +322,7 @@ describe("T-DG6-BE-Z13: restricted condition tokens (D-226)", () => {
     // Soft, so the save below is still exercised (and its stored literals checked) when the read assertion fails.
     expect
       .soft(shown.content.conditions.map((x: Cond) => x.value))
-      .toEqual([tok(shown.version, 1), id.H, tok(shown.version, 3), "high"]);
+      .toEqual([tok(ruleId, shown.version, 1), id.H, tok(ruleId, shown.version, 3), "high"]);
     // A Transformation Office lead marks H sensitive before the author saves (an access decision, not an approval).
     ok(
       await send("PUT", `${c.b.base}/records/benefit/${id.H}/sensitivity`, {
@@ -328,7 +351,12 @@ describe("T-DG6-BE-Z13: restricted condition tokens (D-226)", () => {
     ]);
     // The response now hides H too, at its own position; nothing hidden leaks.
     const nv = body.version as number;
-    expect(body.content.conditions.map((x: Cond) => x.value)).toEqual([tok(nv, 1), tok(nv, 2), tok(nv, 3), "low"]);
+    expect(body.content.conditions.map((x: Cond) => x.value)).toEqual([
+      tok(ruleId, nv, 1),
+      tok(ruleId, nv, 2),
+      tok(ruleId, nv, 3),
+      "low",
+    ]);
     expect(leaks(body)).toEqual([]);
     expect(JSON.stringify(body)).not.toContain(id.H);
   });
@@ -338,7 +366,12 @@ describe("T-DG6-BE-Z13: restricted condition tokens (D-226)", () => {
     // The author reads while V is still hidden: three tokens at positions 1, 2 and 3.
     const shown = ok(await send("GET", V(ruleId), { session: author.session }));
     const sv = shown.version as number;
-    expect(shown.content.conditions.map((x: Cond) => x.value)).toEqual([tok(sv, 1), tok(sv, 2), tok(sv, 3), "high"]);
+    expect(shown.content.conditions.map((x: Cond) => x.value)).toEqual([
+      tok(ruleId, sv, 1),
+      tok(ruleId, sv, 2),
+      tok(ruleId, sv, 3),
+      "high",
+    ]);
     // An explicit grant admits the author to V before the save (an access decision, not an approval).
     ok(
       await send("POST", "/api/v1/admin/sensitive-grants", {
@@ -372,9 +405,9 @@ describe("T-DG6-BE-Z13: restricted condition tokens (D-226)", () => {
     ]);
     // The author now reads V in plain; S1 and S2 stay tokens at their positions.
     expect(body.content.conditions.map((x: Cond) => x.value)).toEqual([
-      tok(body.version, 1),
+      tok(ruleId, body.version, 1),
       id.V,
-      tok(body.version, 3),
+      tok(ruleId, body.version, 3),
       "low",
     ]);
     expect(leaks(body)).toEqual([]);
@@ -403,10 +436,10 @@ describe("T-DG6-BE-Z13: restricted condition tokens (D-226)", () => {
     expect(earlier.content.conditions[0].value).toBe(id.S1);
     // D-228 (1): a token names a position of the stored version, so one the author still holds from an earlier read
     // keeps the stored literal there (the author can read it now); a position with no string literal stays unknown.
-    const { res, ruleId } = await resave("refusals", (s, v) => [{ ...s[0]!, value: tok(v, 1) }, s[1]!]);
+    const { res, ruleId } = await resave("refusals", (s, v, r) => [{ ...s[0]!, value: tok(r, v, 1) }, s[1]!]);
     ok(res);
     expect((await stored(ruleId)).conditions).toEqual([{ field: "benefitId", op: "neq", value: id.S1 }, sev]);
-    const unknown = await resave("refusals", (s, v) => [{ ...s[0]!, value: tok(v, 3) }, s[1]!]);
+    const unknown = await resave("refusals", (s, v, r) => [{ ...s[0]!, value: tok(r, v, 3) }, s[1]!]);
     expect(unknown.res.status).toBe(422);
     expect(unknown.res.body.code).toBe("automation_rule.restricted_marker_unknown");
   });

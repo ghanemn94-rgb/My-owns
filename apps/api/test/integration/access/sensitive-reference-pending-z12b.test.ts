@@ -8,7 +8,7 @@
 //     benefit's owner launches about the benefit, whose `reason` input names it;
 //   - automation_rule_version.conditions: an admin rule whose conditions compare `benefitId` to the benefit's id.
 // Readers not admitted (no grant, not a named party) get no id of the benefit or of its decision anywhere in these
-// responses: the reference is null (or the condition literal is an opaque `[restricted:k]` token, D-226) with `includesRestrictedRecords:
+// responses: the reference is null (or the condition literal is an opaque `[restricted:<tag>:<k>]` token, D-226, D-233) with `includesRestrictedRecords:
 // true`. Admitted readers (the TO, who holds sensitive_record.grant; the owner BO) still see the ids. A re-save of the
 // rule version that sends the tokens back keeps the stored literal unchanged; after an explicit grant the author sees it.
 // Every value is SYNTHETIC. Marking a record sensitive or granting access is an access decision, never a business
@@ -31,6 +31,7 @@ import {
   type World,
 } from "../../support/harness.ts";
 import { ifm } from "../../support/p2-fixtures.ts";
+import { restrictedTokens } from "../../support/restricted-tokens.ts";
 import {
   decideDecision,
   draftDecision,
@@ -255,6 +256,7 @@ describe("T-DG6-BE-Z12B: the PENDING inventory rows, seeded (F-DG6-480; D-218)",
 });
 
 describe("T-DG6-BE-Z12B: automation_rule_version.conditions (D-222, D-226)", () => {
+  const tokens = restrictedTokens(() => api.db);
   const V = () => `${R}/${S.ruleId}/versions`;
   const storedConditions = async () =>
     (await api.db
@@ -265,12 +267,13 @@ describe("T-DG6-BE-Z12B: automation_rule_version.conditions (D-222, D-226)", () 
       .executeTakeFirstOrThrow()) as { conditions: Body; content_sha256: string; version: number };
 
   it("the author, not admitted, sees a token in place of each hidden literal, the label in the summary, marked", async () => {
+    await tokens.register(S.ruleId);
     const one = ok(await send("GET", `${V()}/1`, { session: admin.session }));
     expect(one.content.conditions).toEqual([
-      // T-DG6-BE-Z13, BE-Z13C, BE-Z14 (D-226, D-228 (1), D-231): opaque tokens bound to the row version they were
-      // issued from; k = the position among all literals.
-      { field: "benefitId", op: "eq", value: `[restricted:${one.version}:1]` },
-      { field: "benefitId", op: "in", value: [P.benefitId, `[restricted:${one.version}:3]`] },
+      // T-DG6-BE-Z13, BE-Z13C, BE-Z14, BE-Z15 (D-226, D-228 (1), D-231, D-233): opaque tokens bound to the rule-version
+      // row and the row version they were issued from (the issuer tag); k = the position among all literals.
+      { field: "benefitId", op: "eq", value: tokens.tok(S.ruleId, one.version, 1) },
+      { field: "benefitId", op: "in", value: [P.benefitId, tokens.tok(S.ruleId, one.version, 3)] },
       { field: "severity", op: "eq", value: "high" },
     ]);
     expect(one.includesRestrictedRecords).toBe(true);
