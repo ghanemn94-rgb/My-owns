@@ -1,0 +1,147 @@
+# 52-mutant-M3-unknown-token-stored  started 2026-11-09T12:56:15Z  load=6.06 7.03 9.17  commit=cde6036571064c12c812d240b48e3289c78d7d48
+## mutation (git diff of w1, product paths):
+ apps/api/src/modules/automation/versions.ts | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+diff --git a/apps/api/src/modules/automation/versions.ts b/apps/api/src/modules/automation/versions.ts
+index 1fd07cd31..a1faa4f29 100644
+--- a/apps/api/src/modules/automation/versions.ts
++++ b/apps/api/src/modules/automation/versions.ts
+@@ -465,7 +465,7 @@ export function resolveRestrictedTokens(
+     if (m === null || stored === null) throw automationRefusals.restrictedMarkerUnknown(at);
+     if (Number(m[1]) !== stored.version) throw automationRefusals.restrictedTokenStale(at);
+     const literal = positions.get(Number(m[2]));
+-    if (literal === undefined) throw automationRefusals.restrictedMarkerUnknown(at);
++    if (literal === undefined) return v;
+     return literal;
+   });
+   return { ...sent, conditions: merged };
+$ vt apps/api/test/integration/access/automation-restricted-tokens-z13.test.ts apps/api/test/integration/access/automation-restricted-tokens-z14.test.ts tests/qa/integration/zz-cs-r8-automation-resave.test.ts
+port-policy: PostgreSQL listening on port 32070 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.PgA8z9/claude-0/r/w1
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw99lvho_5ed40e5e (server_encoding UTF8); applied 118 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/access/automation-restricted-tokens-z14.test.ts (5 tests | 1 failed) 2236ms
+   ✓ T-DG6-BE-Z14: restricted tokens are bound to their version (D-231, F-DG6-580) > read: a token names the row version it was issued from and the literal's position  359ms
+   ✓ T-DG6-BE-Z14: restricted tokens are bound to their version (D-231, F-DG6-580) > (a) a second save of the same draft after removing an earlier condition is refused; S is never swapped  314ms
+   ✓ T-DG6-BE-Z14: restricted tokens are bound to their version (D-231, F-DG6-580) > (b) two hidden literals: the stale second save is refused and S1, S2 stay in place  309ms
+   ✓ T-DG6-BE-Z14: restricted tokens are bound to their version (D-231, F-DG6-580) > (c) a re-save of the same draft after a 409 is refused; after a reload the change re-applies and S stays 211ms
+   × T-DG6-BE-Z14: restricted tokens are bound to their version (D-231, F-DG6-580) > (d) a token naming another version is refused even where the positions coincide; unknown text stays unknown 143ms
+     → expected 200 to be 422 // Object.is equality
+ ❯ |integration| apps/api/test/integration/access/automation-restricted-tokens-z13.test.ts (11 tests | 2 failed) 1924ms
+   ✓ T-DG6-BE-Z13: restricted condition tokens (D-226) > read: each hidden literal is an opaque token in reading order, marked; the summary names no record 112ms
+   ✓ T-DG6-BE-Z13: restricted condition tokens (D-226) > removing an earlier condition keeps the hidden literal of the condition kept (F-DG6-541, F-DG6-520 (c)) 67ms
+   ✓ T-DG6-BE-Z13: restricted condition tokens (D-226) > reordering two hidden literals keeps each with its own condition (F-DG6-560 P1) 51ms
+   ✓ T-DG6-BE-Z13: restricted condition tokens (D-226) > removing the restricted condition itself removes its literal and keeps the rest 59ms
+   ✓ T-DG6-BE-Z13: restricted condition tokens (D-226) > in-list: removing the open element and reordering the hidden ones keeps both (F-DG6-520 (b), F-DG6-560 P3) 60ms
+   ✓ T-DG6-BE-Z13: restricted condition tokens (D-226) > in-list: removing a hidden element removes exactly that literal 35ms
+   × T-DG6-BE-Z13: restricted condition tokens (D-226) > negative: an unknown token, the bare marker or other marker text is refused 422 and nothing is stored 31ms
+     → [restricted:@v:9]: expected 200 to be 422 // Object.is equality
+   ✓ T-DG6-BE-Z13: restricted condition tokens (D-226) > negative: a writer without automation.configure is refused before any token is resolved 15ms
+   ✓ T-DG6-BE-Z13: restricted condition tokens (D-226) > race (D-228 (1)): a record that becomes hidden between the read and the save shifts no token 88ms
+   ✓ T-DG6-BE-Z13: restricted condition tokens (D-226) > race (D-228 (1)): a record that becomes visible between the read and the save keeps its literal 159ms
+   × T-DG6-BE-Z13: restricted condition tokens (D-226) > positive: after an explicit grant the author reads the real values; a token still names its position 131ms
+     → expected [ { op: 'neq', …(2) }, …(1) ] to deeply equal [ { field: 'benefitId', …(2) }, …(1) ]
+stdout | tests/qa/integration/zz-cs-r8-automation-resave.test.ts
+[CS-R8-AUTO] ADM_METHOD POST rule -> 201 
+
+stdout | tests/qa/integration/zz-cs-r8-automation-resave.test.ts
+[CS-R8-AUTO] TO marks the benefit sensitive -> 200
+
+stdout | tests/qa/integration/zz-cs-r8-automation-resave.test.ts > CS-R8-AUTO: removing an earlier same-(field, op) condition > keeps the hidden literal or refuses; never stores the marker text in its place
+[CS-R8-AUTO] stored before (status draft): [{"op":"neq","field":"benefitId","value":"<PLAIN>"},{"op":"neq","field":"benefitId","value":"<HIDDEN>"},{"op":"eq","field":"severity","value":"high"}]
+
+stdout | tests/qa/integration/zz-cs-r8-automation-resave.test.ts > CS-R8-AUTO: removing an earlier same-(field, op) condition > keeps the hidden literal or refuses; never stores the marker text in its place
+[CS-R8-AUTO] author GET version 1 -> 200: conditions=[{"op":"neq","field":"benefitId","value":"<PLAIN>"},{"op":"neq","field":"benefitId","value":"[restricted:1:2]"},{"op":"eq","field":"severity","value":"high"}] marker=true summary.en=When Benefit deviates from its forecast, if benefitId is not 01a1c061-df82-72eb-b082-7e6cc174548d and benefitId is not a restricted record and severity is high: Create a task with an in-app reminder (TL). Runs as the service identity.
+[CS-R8-AUTO] author PATCH conditions=[{"op":"neq","field":"benefitId","value":"[restricted:1:2]"},{"op":"eq","field":"severity","value":"high"}]
+
+stdout | tests/qa/integration/zz-cs-r8-automation-resave.test.ts > CS-R8-AUTO: removing an earlier same-(field, op) condition > keeps the hidden literal or refuses; never stores the marker text in its place
+[CS-R8-AUTO] -> 200 marker=true conditions=[{"op":"neq","field":"benefitId","value":"[restricted:2:1]"},{"op":"eq","field":"severity","value":"high"}]
+
+stdout | tests/qa/integration/zz-cs-r8-automation-resave.test.ts > CS-R8-AUTO: removing an earlier same-(field, op) condition > keeps the hidden literal or refuses; never stores the marker text in its place
+[CS-R8-AUTO] stored after: [{"op":"neq","field":"benefitId","value":"<HIDDEN>"},{"op":"eq","field":"severity","value":"high"}]
+[CS-R8-AUTO] hidden exclusion kept: true; marker text stored as a literal: false
+
+stdout | tests/qa/integration/zz-cs-r8-automation-resave.test.ts > CS-R8-AUTO: removing an earlier same-(field, op) condition > keeps the hidden literal or refuses; never stores the marker text in its place
+[CS-R8-AUTO] TO (admitted) GET version 1 -> 200 conditions=[{"op":"neq","field":"benefitId","value":"<HIDDEN>"},{"op":"eq","field":"severity","value":"high"}]
+
+ ✓ |integration| tests/qa/integration/zz-cs-r8-automation-resave.test.ts (1 test) 889ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/access/automation-restricted-tokens-z13.test.ts > T-DG6-BE-Z13: restricted condition tokens (D-226) > negative: an unknown token, the bare marker or other marker text is refused 422 and nothing is stored
+AssertionError: [restricted:@v:9]: expected 200 to be 422 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 422[39m
+[31m+ 200[39m
+
+ ❯ apps/api/test/integration/access/automation-restricted-tokens-z13.test.ts:244:31
+    242|     ]) {
+    243|       const { res } = await resave("refusals", (s, v) => [{ ...s[0]!, …
+    244|       expect(res.status, bad).toBe(422);
+       |                               ^
+    245|       expect(res.body.code).toBe("automation_rule.restricted_marker_un…
+    246|       expect(res.body.detail).toContain("Reload the version");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/automation-restricted-tokens-z13.test.ts > T-DG6-BE-Z13: restricted condition tokens (D-226) > positive: after an explicit grant the author reads the real values; a token still names its position
+AssertionError: expected [ { op: 'neq', …(2) }, …(1) ] to deeply equal [ { field: 'benefitId', …(2) }, …(1) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[33m@@ -1,10 +1,10 @@[39m
+[2m  [[22m
+[2m    {[22m
+[2m      "field": "benefitId",[22m
+[2m      "op": "neq",[22m
+[32m-     "value": "01a1c061-cf86-73b8-9d94-11853c1caa63",[39m
+[31m+     "value": "[restricted:1:9]",[39m
+[2m    },[22m
+[2m    {[22m
+[2m      "field": "severity",[22m
+[2m      "op": "eq",[22m
+[2m      "value": "high",[22m
+
+ ❯ apps/api/test/integration/access/automation-restricted-tokens-z13.test.ts:408:47
+    406|     const { res, ruleId } = await resave("refusals", (s, v) => [{ ...s…
+    407|     ok(res);
+    408|     expect((await stored(ruleId)).conditions).toEqual([{ field: "benef…
+       |                                               ^
+    409|     const unknown = await resave("refusals", (s, v) => [{ ...s[0]!, va…
+    410|     expect(unknown.res.status).toBe(422);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/automation-restricted-tokens-z14.test.ts > T-DG6-BE-Z14: restricted tokens are bound to their version (D-231, F-DG6-580) > (d) a token naming another version is refused even where the positions coincide; unknown text stays unknown
+AssertionError: expected 200 to be 422 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 422[39m
+[31m+ 200[39m
+
+ ❯ apps/api/test/integration/access/automation-restricted-tokens-z14.test.ts:331:28
+    329|       v2.version,
+    330|     );
+    331|     expect(unknown.status).toBe(422);
+       |                            ^
+    332|     expect(unknown.body.code).toBe("automation_rule.restricted_marker_…
+    333|     expect(await stored(ruleId)).toEqual(before);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  2 failed | 1 passed (3)
+      Tests  3 failed | 14 passed (17)
+   Start at  12:56:17
+   Duration  24.91s (transform 6.30s, setup 0ms, collect 15.82s, tests 5.05s, environment 0ms, prepare 82ms)
+
+exit=1  finished 2026-11-09T12:56:42Z
+restored: 0 changed paths

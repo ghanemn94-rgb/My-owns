@@ -1,0 +1,43 @@
+# 45-probe-r10-digest  started 2026-11-09T10:53:23Z  cwd=/var/tmp/mth-run.PgA8z9/claude-0/r/w1  node=v22.22.0  LANG=<unset> LC_ALL=<unset>  load=13.83 8.00 4.48  commit=cde6036571064c12c812d240b48e3289c78d7d48
+$ tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration tests/qa/integration/zz-cs-r10-digest.test.ts
+port-policy: PostgreSQL listening on port 32065 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.PgA8z9/claude-0/r/w1
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw9580bi_1c4d8993 (server_encoding UTF8); applied 118 migrations to a fresh database
+stdout | tests/qa/integration/zz-cs-r10-digest.test.ts
+[CS-R9-DIGEST] tl2 PUT /me/notification-preferences (quiet hours now, daily digest) -> 200
+
+stdout | tests/qa/integration/zz-cs-r10-digest.test.ts
+[CS-R9-DIGEST] hidden benefit B01 01995000-4401-7000-8000-000000000001; finance validation 01995000-4501-7000-8000-000000000001
+
+stdout | tests/qa/integration/zz-cs-r10-digest.test.ts
+[CS-R9-DIGEST] notification 01a1bff1-c57a-7067-999a-01520864038b: delivery decision (state held, deliver_after 2026-11-09T13:54:00.000Z)
+
+stdout | tests/qa/integration/zz-cs-r10-digest.test.ts
+[CS-R9-DIGEST] runDigestWindow -> [{"userId":"01a1bff1-c45a-7325-8e4b-d307f0987a27","outcome":"digested","digestId":"01a1bff1-c5de-7e08-9bd1-8ce5e7d78424","count":1}]
+
+stdout | tests/qa/integration/zz-cs-r10-digest.test.ts > CS-R9-DIGEST: a digested notification about a restricted record > tl2 gets 404 on the benefit and its Finance validation (control)
+[CS-R9-DIGEST] tl2 GET benefit 404; tl2 GET finance validation 404
+
+stdout | tests/qa/integration/zz-cs-r10-digest.test.ts > CS-R9-DIGEST: a digested notification about a restricted record > work item, inbox and the digest read never name a hidden id or the restricted benefit's code
+[CS-R9-DIGEST] GET /me/work-items 200: subjectId=null linkPath=/transformations/01995000-0000-7000-8000-000000000001 key=inbox.restricted params={} marker=true
+
+stdout | tests/qa/integration/zz-cs-r10-digest.test.ts > CS-R9-DIGEST: a digested notification about a restricted record > work item, inbox and the digest read never name a hidden id or the restricted benefit's code
+[CS-R9-DIGEST] GET /me/inbox 200: [{"id":"01a1bff1-c5df-7dcb-9a11-10dc2e89120b","key":"notifications.digest","params":{"count":1},"link":"/me/notification-digests/01a1bff1-c5de-7e08-9bd1-8ce5e7d78424"}] (the digested notification 01a1bff1-c57a-7067-999a-01520864038b listed: false)
+
+stdout | tests/qa/integration/zz-cs-r10-digest.test.ts > CS-R9-DIGEST: a digested notification about a restricted record > work item, inbox and the digest read never name a hidden id or the restricted benefit's code
+[CS-R9-DIGEST] GET /me/notification-digests/{id} 200: {"id":"01a1bff1-c5de-7e08-9bd1-8ce5e7d78424","windowStart":"2026-11-09T13:45:00.000Z","windowEnd":"2026-11-09T14:00:00.000Z","count":1,"items":[{"notificationId":"01a1bff1-c57a-7067-999a-01520864038b","messageKey":"inbox.restricted","messageParams":{},"linkPath":"/transformations/01995000-0000-7000-8000-000000000001","createdAt":"2026-11-09T10:54:15.385Z","includesRestrictedRecords":true}]}
+[CS-R9-DIGEST] leaks (0):
+
+
+ ✓ |integration| tests/qa/integration/zz-cs-r10-digest.test.ts (2 tests) 9588ms
+   ✓ CS-R9-DIGEST: a digested notification about a restricted record > work item, inbox and the digest read never name a hidden id or the restricted benefit's code  303ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  10:53:31
+   Duration  44.29s (transform 12.48s, setup 0ms, collect 26.35s, tests 9.59s, environment 0ms, prepare 292ms)
+
+exit=0  finished 2026-11-09T10:54:22Z  load=16.18 9.82 5.33

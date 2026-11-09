@@ -1,0 +1,210 @@
+## MUTANT M1: the D-231 version check removed from resolveRestrictedTokens
+diff --git a/apps/api/src/modules/automation/versions.ts b/apps/api/src/modules/automation/versions.ts
+index 1fd07cd31..d32dbf639 100644
+--- a/apps/api/src/modules/automation/versions.ts
++++ b/apps/api/src/modules/automation/versions.ts
+@@ -463,7 +463,6 @@ export function resolveRestrictedTokens(
+     if (!looksLikeRestrictedMarker(v)) return v;
+     const m = AUTOMATION_RESTRICTED_TOKEN_PATTERN.exec(v);
+     if (m === null || stored === null) throw automationRefusals.restrictedMarkerUnknown(at);
+-    if (Number(m[1]) !== stored.version) throw automationRefusals.restrictedTokenStale(at);
+     const literal = positions.get(Number(m[2]));
+     if (literal === undefined) throw automationRefusals.restrictedMarkerUnknown(at);
+     return literal;
+port-policy: PostgreSQL listening on port 32022 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.9n811i/claude-0/rv10
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw95k61e_488562c0 (server_encoding UTF8); applied 118 migrations to a fresh database
+stdout | apps/api/test/integration/zz-domain/dom-r10-token-binding.test.ts > DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (g) F-DG6-580 reproduction: the same form saved twice; the 2nd save is refused 422 stale and S stays
+DOM-R10 (g) shown [{"op":"neq","field":"benefitId","value":"<P>"},{"op":"neq","field":"benefitId","value":"[restricted:1:2]"},{"op":"neq","field":"benefitId","value":"<Q>"}] version [33m1[39m flag [33mtrue[39m
+
+stdout | apps/api/test/integration/zz-domain/dom-r10-token-binding.test.ts > DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (g) F-DG6-580 reproduction: the same form saved twice; the 2nd save is refused 422 stale and S stays
+DOM-R10 (g) first save [33m200[39m [{"op":"neq","field":"benefitId","value":"[restricted:2:1]"},{"op":"neq","field":"benefitId","value":"<Q>"}] version [33m2[39m
+
+stdout | apps/api/test/integration/zz-domain/dom-r10-token-binding.test.ts > DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (g) F-DG6-580 reproduction: the same form saved twice; the 2nd save is refused 422 stale and S stays
+DOM-R10 (g) second save [33m200[39m [90mundefined[39m [90mundefined[39m detail: [90mundefined[39m
+
+stdout | apps/api/test/integration/zz-domain/dom-r10-token-binding.test.ts > DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (g2) a 409 from a concurrent tab, then the same draft re-sent with the refreshed If-Match: refused, S stays
+DOM-R10 (g2) tab1 stale If-Match [33m409[39m version_conflict
+
+stdout | apps/api/test/integration/zz-domain/dom-r10-token-binding.test.ts > DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (g2) a 409 from a concurrent tab, then the same draft re-sent with the refreshed If-Match: refused, S stays
+DOM-R10 (g2) tab1 resend with fresh If-Match [33m200[39m [90mundefined[39m
+
+ ❯ |integration| apps/api/test/integration/zz-domain/dom-r10-token-binding.test.ts (6 tests | 2 failed | 4 skipped) 3754ms
+   × DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (g) F-DG6-580 reproduction: the same form saved twice; the 2nd save is refused 422 stale and S stays 1009ms
+     → expected 200 to be 422 // Object.is equality
+   × DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (g2) a 409 from a concurrent tab, then the same draft re-sent with the refreshed If-Match: refused, S stays 641ms
+     → expected 200 to be 422 // Object.is equality
+   ↓ DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (e) bare, retired, unknown and marker-like text are refused 422 and nothing is stored
+   ↓ DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (f) a grant between read and save keeps S
+   ↓ DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (i) CROSS-RULE: a token copied from rule A into rule B's draft at the same row version is refused or keeps S
+   ↓ DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (j) PUBLISHED -> DRAFT: a token copied from published v1 into draft v2 after positions shifted
+ ↓ |integration| apps/api/test/integration/access/automation-restricted-tokens-z14.test.ts (5 tests | 5 skipped)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/zz-domain/dom-r10-token-binding.test.ts > DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (g) F-DG6-580 reproduction: the same form saved twice; the 2nd save is refused 422 stale and S stays
+AssertionError: expected 200 to be 422 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 422[39m
+[31m+ 200[39m
+
+ ❯ apps/api/test/integration/zz-domain/dom-r10-token-binding.test.ts:155:27
+    153|     const second = await patch(id, first.body.version, form);
+    154|     log("(g) second save", second.status, second.body?.code, second.bo…
+    155|     expect(second.status).toBe(422);
+       |                           ^
+    156|     expect(second.body?.code).toBe("automation_rule.restricted_token_s…
+    157|     const after = await stored(id);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |integration| apps/api/test/integration/zz-domain/dom-r10-token-binding.test.ts > DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (g2) a 409 from a concurrent tab, then the same draft re-sent with the refreshed If-Match: refused, S stays
+AssertionError: expected 200 to be 422 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 422[39m
+[31m+ 200[39m
+
+ ❯ apps/api/test/integration/zz-domain/dom-r10-token-binding.test.ts:177:27
+    175|     const resend = await patch(id, cur.version, draft1);
+    176|     log("(g2) tab1 resend with fresh If-Match", resend.status, resend.…
+    177|     expect(resend.status).toBe(422);
+       |                           ^
+    178|     expect(resend.body?.code).toBe("automation_rule.restricted_token_s…
+    179|     log("(g2) stored", mask((await stored(id)).conditions));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed | 1 skipped (2)
+      Tests  2 failed | 9 skipped (11)
+   Start at  11:02:59
+   Duration  42.97s (transform 10.41s, setup 0ms, collect 29.61s, tests 3.75s, environment 0ms, prepare 243ms)
+
+rc=1
+## restored; git diff --stat:
+
+## MUTANT M1 again, the candidate's own z14 suite unfiltered (the -t filter above skipped it)
+ apps/api/src/modules/automation/versions.ts | 1 -
+ 1 file changed, 1 deletion(-)
+port-policy: PostgreSQL listening on port 32023 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.9n811i/claude-0/rv10
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw95lj5w_c2962592 (server_encoding UTF8); applied 118 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/access/automation-restricted-tokens-z14.test.ts (5 tests | 4 failed) 3500ms
+   ✓ T-DG6-BE-Z14: restricted tokens are bound to their version (D-231, F-DG6-580) > read: a token names the row version it was issued from and the literal's position  462ms
+   × T-DG6-BE-Z14: restricted tokens are bound to their version (D-231, F-DG6-580) > (a) a second save of the same draft after removing an earlier condition is refused; S is never swapped 656ms
+     → {"id":"01a1bffb-2dcc-757f-865e-9902b206bcee","ruleId":"01a1bffb-2dc9-77b8-b439-816823fc9521","versionNo":1,"status":"draft","content":{"triggerCodes":["benefit.variance_evaluated"],"conditions":[{"op":"neq","field":"benefitId","value":"01a1bffb-2d6c-74ff-bdb1-bfca52be6ef3"},{"op":"neq","field":"benefitId","value":"01a1bffb-2d6c-74ff-bdb1-bfca52be6ef3"}],"actions":[{"type":"create_task","parameters: expected 200 to be 422 // Object.is equality
+   × T-DG6-BE-Z14: restricted tokens are bound to their version (D-231, F-DG6-580) > (b) two hidden literals: the stale second save is refused and S1, S2 stay in place 338ms
+     → {"id":"01a1bffb-3036-7728-b387-966851419d53","ruleId":"01a1bffb-3034-7554-83c0-da1d5c8cd620","versionNo":1,"status":"draft","content":{"triggerCodes":["benefit.variance_evaluated"],"conditions":[{"op":"neq","field":"benefitId","value":"[restricted:3:1]"},{"op":"neq","field":"benefitId","value":"high"},{"op":"eq","field":"severity","value":"high"}],"actions":[{"type":"create_task","parameters":{"me: expected 200 to be 422 // Object.is equality
+   × T-DG6-BE-Z14: restricted tokens are bound to their version (D-231, F-DG6-580) > (c) a re-save of the same draft after a 409 is refused; after a reload the change re-applies and S stays 463ms
+     → {"id":"01a1bffb-31ac-7058-8d78-1ceffd054a35","ruleId":"01a1bffb-31aa-7287-90e3-6d74657daa57","versionNo":1,"status":"draft","content":{"triggerCodes":["benefit.variance_evaluated"],"conditions":[{"op":"neq","field":"benefitId","value":"01a1bffb-30fc-775b-95f1-8497c24327ca"},{"op":"neq","field":"benefitId","value":"high"},{"op":"eq","field":"severity","value":"medium"}],"actions":[{"type":"create_t: expected 200 to be 422 // Object.is equality
+   × T-DG6-BE-Z14: restricted tokens are bound to their version (D-231, F-DG6-580) > (d) a token naming another version is refused even where the positions coincide; unknown text stays unknown 253ms
+     → {"id":"01a1bffb-3311-76af-b25c-74a74ce79627","ruleId":"01a1bffb-330d-722d-9b7c-b6f0ae3f125e","versionNo":1,"status":"draft","content":{"triggerCodes":["benefit.variance_evaluated"],"conditions":[{"op":"neq","field":"benefitId","value":"[restricted:3:1]"},{"op":"eq","field":"severity","value":"low"}],"actions":[{"type":"create_task","parameters":{"messageKey":"automation.message.follow_up","assigne: expected 200 to be 422 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/access/automation-restricted-tokens-z14.test.ts > T-DG6-BE-Z14: restricted tokens are bound to their version (D-231, F-DG6-580) > (a) a second save of the same draft after removing an earlier condition is refused; S is never swapped
+AssertionError: {"id":"01a1bffb-2dcc-757f-865e-9902b206bcee","ruleId":"01a1bffb-2dc9-77b8-b439-816823fc9521","versionNo":1,"status":"draft","content":{"triggerCodes":["benefit.variance_evaluated"],"conditions":[{"op":"neq","field":"benefitId","value":"01a1bffb-2d6c-74ff-bdb1-bfca52be6ef3"},{"op":"neq","field":"benefitId","value":"01a1bffb-2d6c-74ff-bdb1-bfca52be6ef3"}],"actions":[{"type":"create_task","parameters: expected 200 to be 422 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 422[39m
+[31m+ 200[39m
+
+ ❯ expectStale apps/api/test/integration/access/automation-restricted-tokens-z14.test.ts:104:62
+    102|   send("PATCH", V(ruleId), { session: author.session, headers: ifm(ver…
+    103| function expectStale(res: Res<Body>, pointer: string) {
+    104|   expect(res.status, JSON.stringify(res.body).slice(0, 400)).toBe(422);
+       |                                                              ^
+    105|   expect(res.body.code).toBe("automation_rule.restricted_token_stale");
+    106|   expect(res.body.detail).toContain("reload the version and re-apply y…
+ ❯ apps/api/test/integration/access/automation-restricted-tokens-z14.test.ts:178:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/automation-restricted-tokens-z14.test.ts > T-DG6-BE-Z14: restricted tokens are bound to their version (D-231, F-DG6-580) > (b) two hidden literals: the stale second save is refused and S1, S2 stay in place
+AssertionError: {"id":"01a1bffb-3036-7728-b387-966851419d53","ruleId":"01a1bffb-3034-7554-83c0-da1d5c8cd620","versionNo":1,"status":"draft","content":{"triggerCodes":["benefit.variance_evaluated"],"conditions":[{"op":"neq","field":"benefitId","value":"[restricted:3:1]"},{"op":"neq","field":"benefitId","value":"high"},{"op":"eq","field":"severity","value":"high"}],"actions":[{"type":"create_task","parameters":{"me: expected 200 to be 422 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 422[39m
+[31m+ 200[39m
+
+ ❯ expectStale apps/api/test/integration/access/automation-restricted-tokens-z14.test.ts:104:62
+    102|   send("PATCH", V(ruleId), { session: author.session, headers: ifm(ver…
+    103| function expectStale(res: Res<Body>, pointer: string) {
+    104|   expect(res.status, JSON.stringify(res.body).slice(0, 400)).toBe(422);
+       |                                                              ^
+    105|   expect(res.body.code).toBe("automation_rule.restricted_token_stale");
+    106|   expect(res.body.detail).toContain("reload the version and re-apply y…
+ ❯ apps/api/test/integration/access/automation-restricted-tokens-z14.test.ts:218:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/automation-restricted-tokens-z14.test.ts > T-DG6-BE-Z14: restricted tokens are bound to their version (D-231, F-DG6-580) > (c) a re-save of the same draft after a 409 is refused; after a reload the change re-applies and S stays
+AssertionError: {"id":"01a1bffb-31ac-7058-8d78-1ceffd054a35","ruleId":"01a1bffb-31aa-7287-90e3-6d74657daa57","versionNo":1,"status":"draft","content":{"triggerCodes":["benefit.variance_evaluated"],"conditions":[{"op":"neq","field":"benefitId","value":"01a1bffb-30fc-775b-95f1-8497c24327ca"},{"op":"neq","field":"benefitId","value":"high"},{"op":"eq","field":"severity","value":"medium"}],"actions":[{"type":"create_t: expected 200 to be 422 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 422[39m
+[31m+ 200[39m
+
+ ❯ expectStale apps/api/test/integration/access/automation-restricted-tokens-z14.test.ts:104:62
+    102|   send("PATCH", V(ruleId), { session: author.session, headers: ifm(ver…
+    103| function expectStale(res: Res<Body>, pointer: string) {
+    104|   expect(res.status, JSON.stringify(res.body).slice(0, 400)).toBe(422);
+       |                                                              ^
+    105|   expect(res.body.code).toBe("automation_rule.restricted_token_stale");
+    106|   expect(res.body.detail).toContain("reload the version and re-apply y…
+ ❯ apps/api/test/integration/access/automation-restricted-tokens-z14.test.ts:274:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/automation-restricted-tokens-z14.test.ts > T-DG6-BE-Z14: restricted tokens are bound to their version (D-231, F-DG6-580) > (d) a token naming another version is refused even where the positions coincide; unknown text stays unknown
+AssertionError: {"id":"01a1bffb-3311-76af-b25c-74a74ce79627","ruleId":"01a1bffb-330d-722d-9b7c-b6f0ae3f125e","versionNo":1,"status":"draft","content":{"triggerCodes":["benefit.variance_evaluated"],"conditions":[{"op":"neq","field":"benefitId","value":"[restricted:3:1]"},{"op":"eq","field":"severity","value":"low"}],"actions":[{"type":"create_task","parameters":{"messageKey":"automation.message.follow_up","assigne: expected 200 to be 422 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 422[39m
+[31m+ 200[39m
+
+ ❯ expectStale apps/api/test/integration/access/automation-restricted-tokens-z14.test.ts:104:62
+    102|   send("PATCH", V(ruleId), { session: author.session, headers: ifm(ver…
+    103| function expectStale(res: Res<Body>, pointer: string) {
+    104|   expect(res.status, JSON.stringify(res.body).slice(0, 400)).toBe(422);
+       |                                                              ^
+    105|   expect(res.body.code).toBe("automation_rule.restricted_token_stale");
+    106|   expect(res.body.detail).toContain("reload the version and re-apply y…
+ ❯ apps/api/test/integration/access/automation-restricted-tokens-z14.test.ts:322:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 1 passed (5)
+   Start at  11:04:03
+   Duration  30.58s (transform 7.81s, setup 0ms, collect 18.45s, tests 3.50s, environment 0ms, prepare 94ms)
+
+rc=1
+## restored; git diff --stat (empty = restored):

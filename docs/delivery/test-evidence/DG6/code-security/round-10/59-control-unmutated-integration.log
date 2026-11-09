@@ -1,0 +1,40 @@
+# 59-control-unmutated-integration  started 2026-11-09T12:54:26Z  load=8.83 7.83 9.67  commit=cde6036571064c12c812d240b48e3289c78d7d48
+## mutation (git diff of w1, product paths):
+$ vt apps/api/test/integration/tasks/inbox-restricted-z13.test.ts apps/api/test/integration/tasks/digest-restricted-z14.test.ts apps/api/test/integration/access/automation-restricted-tokens-z13.test.ts apps/api/test/integration/access/automation-restricted-tokens-z14.test.ts
+port-policy: PostgreSQL listening on port 32070 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.PgA8z9/claude-0/r/w1
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw99jj2q_ffda84f0 (server_encoding UTF8); applied 118 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/access/automation-restricted-tokens-z13.test.ts (11 tests) 2677ms
+   ✓ T-DG6-BE-Z13: restricted condition tokens (D-226) > negative: an unknown token, the bare marker or other marker text is refused 422 and nothing is stored  412ms
+ ✓ |integration| apps/api/test/integration/tasks/inbox-restricted-z13.test.ts (7 tests) 1244ms
+stdout | apps/api/test/integration/tasks/digest-restricted-z14.test.ts
+[BE-Z14-DIGEST] tl2 PUT /me/notification-preferences (quiet hours now, daily digest) -> 200
+
+stdout | apps/api/test/integration/tasks/digest-restricted-z14.test.ts
+[BE-Z14-DIGEST] hidden benefit B01 01995000-4401-7000-8000-000000000001; finance validation 01995000-4501-7000-8000-000000000001
+
+stdout | apps/api/test/integration/tasks/digest-restricted-z14.test.ts
+[BE-Z14-DIGEST] notification 01a1c060-42b4-71ec-bafc-b0f4c449726d: delivery decision (state held, deliver_after 2026-11-09T15:54:00.000Z)
+
+stdout | apps/api/test/integration/tasks/digest-restricted-z14.test.ts
+[BE-Z14-DIGEST] runDigestWindow -> [{"userId":"01a1c060-4280-76de-bc3b-d63df5745917","outcome":"digested","digestId":"01a1c060-42d5-7849-a351-348da709124b","count":1}]
+
+stdout | apps/api/test/integration/tasks/digest-restricted-z14.test.ts > T-DG6-BE-Z14: a digested notification about a restricted record (D-226, D-231) > the digest read applies the inbox redaction: inbox.restricted, params {}, the home link, the marker
+[BE-Z14-DIGEST] GET /me/notification-digests/{id} 200: {"id":"01a1c060-42d5-7849-a351-348da709124b","windowStart":"2026-11-09T15:45:00.000Z","windowEnd":"2026-11-09T16:00:00.000Z","count":1,"items":[{"notificationId":"01a1c060-42b4-71ec-bafc-b0f4c449726d","messageKey":"inbox.restricted","messageParams":{},"linkPath":"/transformations/01995000-0000-7000-8000-000000000001","createdAt":"2026-11-09T12:54:56.432Z","includesRestrictedRecords":true}]}
+
+stdout | apps/api/test/integration/tasks/digest-restricted-z14.test.ts > T-DG6-BE-Z14: a digested notification about a restricted record (D-226, D-231) > positive: after an explicit grant the same read shows the original text and link (access restored)
+[BE-Z14-DIGEST] TO grants tl2 the benefit -> 201 (TO user 01a1c060-4245-730e-8920-0e693ec280b4)
+
+ ✓ |integration| apps/api/test/integration/tasks/digest-restricted-z14.test.ts (4 tests) 4791ms
+ ✓ |integration| apps/api/test/integration/access/automation-restricted-tokens-z14.test.ts (5 tests) 1618ms
+
+ Test Files  4 passed (4)
+      Tests  27 passed (27)
+   Start at  12:54:28
+   Duration  32.78s (transform 6.17s, setup 0ms, collect 18.81s, tests 10.33s, environment 0ms, prepare 78ms)
+
+exit=0  finished 2026-11-09T12:55:01Z
+restored: 0 changed paths

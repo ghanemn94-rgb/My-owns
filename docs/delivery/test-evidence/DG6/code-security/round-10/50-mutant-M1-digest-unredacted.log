@@ -1,0 +1,144 @@
+# 50-mutant-M1-digest-unredacted  started 2026-11-09T12:55:19Z  load=6.33 7.27 9.37  commit=cde6036571064c12c812d240b48e3289c78d7d48
+## mutation (git diff of w1, product paths):
+ apps/api/src/modules/tasks/digests.ts | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+diff --git a/apps/api/src/modules/tasks/digests.ts b/apps/api/src/modules/tasks/digests.ts
+index df8896690..00fda62ee 100644
+--- a/apps/api/src/modules/tasks/digests.ts
++++ b/apps/api/src/modules/tasks/digests.ts
+@@ -71,7 +71,7 @@ export function registerDigestRoutes(app: FastifyInstance, { db }: ModuleDeps):
+             createdAt: iso(n.created_at),
+           },
+           n.transformation_id,
+-          restricted.at(i) === true,
++          (void restricted, false),
+         ),
+       ),
+     };
+$ vt apps/api/test/integration/tasks/digest-restricted-z14.test.ts tests/qa/integration/zz-cs-r10-digest.test.ts
+port-policy: PostgreSQL listening on port 32070 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.PgA8z9/claude-0/r/w1
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw99kodk_6e4d7269 (server_encoding UTF8); applied 118 migrations to a fresh database
+stdout | apps/api/test/integration/tasks/digest-restricted-z14.test.ts
+[BE-Z14-DIGEST] tl2 PUT /me/notification-preferences (quiet hours now, daily digest) -> 200
+
+stdout | apps/api/test/integration/tasks/digest-restricted-z14.test.ts
+[BE-Z14-DIGEST] hidden benefit B01 01995000-4401-7000-8000-000000000001; finance validation 01995000-4501-7000-8000-000000000001
+
+stdout | apps/api/test/integration/tasks/digest-restricted-z14.test.ts
+[BE-Z14-DIGEST] notification 01a1c060-f454-758d-8a00-16e9ae4abc9b: delivery decision (state held, deliver_after 2026-11-09T15:55:00.000Z)
+
+stdout | apps/api/test/integration/tasks/digest-restricted-z14.test.ts
+[BE-Z14-DIGEST] runDigestWindow -> [{"userId":"01a1c060-f3fb-757f-8afa-9ca6d3fb5a50","outcome":"digested","digestId":"01a1c060-f47c-7ff3-b289-b992bdd8ec71","count":1}]
+
+stdout | apps/api/test/integration/tasks/digest-restricted-z14.test.ts > T-DG6-BE-Z14: a digested notification about a restricted record (D-226, D-231) > the digest read applies the inbox redaction: inbox.restricted, params {}, the home link, the marker
+[BE-Z14-DIGEST] GET /me/notification-digests/{id} 200: {"id":"01a1c060-f47c-7ff3-b289-b992bdd8ec71","windowStart":"2026-11-09T15:45:00.000Z","windowEnd":"2026-11-09T16:00:00.000Z","count":1,"items":[{"notificationId":"01a1c060-f454-758d-8a00-16e9ae4abc9b","messageKey":"benefits.task.finance_validation_review","messageParams":{"periodEnd":"2026-07-31","benefitCode":"B01","periodStart":"2026-07-01"},"linkPath":"/transformations/01995000-0000-7000-8000-000000000001/finance-validations/01995000-4501-7000-8000-000000000001","createdAt":"2026-11-09T12:55:41.903Z"}]}
+
+stdout | apps/api/test/integration/tasks/digest-restricted-z14.test.ts > T-DG6-BE-Z14: a digested notification about a restricted record (D-226, D-231) > positive: after an explicit grant the same read shows the original text and link (access restored)
+[BE-Z14-DIGEST] TO grants tl2 the benefit -> 201 (TO user 01a1c060-f399-70ed-b81f-92261ea19685)
+
+ ❯ |integration| apps/api/test/integration/tasks/digest-restricted-z14.test.ts (4 tests | 1 failed) 5620ms
+   ✓ T-DG6-BE-Z14: a digested notification about a restricted record (D-226, D-231) > control: tl2 cannot read the benefit or its Finance validation 20ms
+   × T-DG6-BE-Z14: a digested notification about a restricted record (D-226, D-231) > the digest read applies the inbox redaction: inbox.restricted, params {}, the home link, the marker 82ms
+     → expected { …(5) } to deeply equal { …(6) }
+   ✓ T-DG6-BE-Z14: a digested notification about a restricted record (D-226, D-231) > negative: another user's digest is 404 and names nothing 10ms
+   ✓ T-DG6-BE-Z14: a digested notification about a restricted record (D-226, D-231) > positive: after an explicit grant the same read shows the original text and link (access restored) 83ms
+stdout | tests/qa/integration/zz-cs-r10-digest.test.ts
+[CS-R9-DIGEST] tl2 PUT /me/notification-preferences (quiet hours now, daily digest) -> 200
+
+stdout | tests/qa/integration/zz-cs-r10-digest.test.ts
+[CS-R9-DIGEST] hidden benefit B01 01995000-4401-7000-8000-000000000001; finance validation 01995000-4501-7000-8000-000000000001
+
+stdout | tests/qa/integration/zz-cs-r10-digest.test.ts
+[CS-R9-DIGEST] notification 01a1c061-139f-7538-aacd-405420dcdcb4: delivery decision (state held, deliver_after 2026-11-09T15:55:00.000Z)
+
+stdout | tests/qa/integration/zz-cs-r10-digest.test.ts
+[CS-R9-DIGEST] runDigestWindow -> [{"userId":"01a1c061-136a-73c3-b87f-15483dfc25d7","outcome":"digested","digestId":"01a1c061-13c7-728e-b7fd-d389400f3c43","count":1}]
+
+stdout | tests/qa/integration/zz-cs-r10-digest.test.ts > CS-R9-DIGEST: a digested notification about a restricted record > tl2 gets 404 on the benefit and its Finance validation (control)
+[CS-R9-DIGEST] tl2 GET benefit 404; tl2 GET finance validation 404
+
+stdout | tests/qa/integration/zz-cs-r10-digest.test.ts > CS-R9-DIGEST: a digested notification about a restricted record > work item, inbox and the digest read never name a hidden id or the restricted benefit's code
+[CS-R9-DIGEST] GET /me/work-items 200: subjectId=null linkPath=/transformations/01995000-0000-7000-8000-000000000001 key=inbox.restricted params={} marker=true
+
+stdout | tests/qa/integration/zz-cs-r10-digest.test.ts > CS-R9-DIGEST: a digested notification about a restricted record > work item, inbox and the digest read never name a hidden id or the restricted benefit's code
+[CS-R9-DIGEST] GET /me/inbox 200: [{"id":"01a1c061-13c7-76fe-8d24-085102270f90","key":"notifications.digest","params":{"count":1},"link":"/me/notification-digests/01a1c061-13c7-728e-b7fd-d389400f3c43"}] (the digested notification 01a1c061-139f-7538-aacd-405420dcdcb4 listed: false)
+
+stdout | tests/qa/integration/zz-cs-r10-digest.test.ts > CS-R9-DIGEST: a digested notification about a restricted record > work item, inbox and the digest read never name a hidden id or the restricted benefit's code
+[CS-R9-DIGEST] GET /me/notification-digests/{id} 200: {"id":"01a1c061-13c7-728e-b7fd-d389400f3c43","windowStart":"2026-11-09T15:45:00.000Z","windowEnd":"2026-11-09T16:00:00.000Z","count":1,"items":[{"notificationId":"01a1c061-139f-7538-aacd-405420dcdcb4","messageKey":"benefits.task.finance_validation_review","messageParams":{"periodEnd":"2026-07-31","benefitCode":"B01","periodStart":"2026-07-01"},"linkPath":"/transformations/01995000-0000-7000-8000-000000000001/finance-validations/01995000-4501-7000-8000-000000000001","createdAt":"2026-11-09T12:55:49.914Z"}]}
+[CS-R9-DIGEST] leaks (2):
+getMyNotificationDigest names 01995000-4501-7000-8000-000000000001
+getMyNotificationDigest returns the restricted benefit's code B01
+
+ ❯ |integration| tests/qa/integration/zz-cs-r10-digest.test.ts (2 tests | 1 failed) 5390ms
+   ✓ CS-R9-DIGEST: a digested notification about a restricted record > tl2 gets 404 on the benefit and its Finance validation (control) 14ms
+   × CS-R9-DIGEST: a digested notification about a restricted record > work item, inbox and the digest read never name a hidden id or the restricted benefit's code 63ms
+     → expected [ …(2) ] to deeply equal []
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/zz-cs-r10-digest.test.ts > CS-R9-DIGEST: a digested notification about a restricted record > work item, inbox and the digest read never name a hidden id or the restricted benefit's code
+AssertionError: expected [ …(2) ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   "getMyNotificationDigest names 01995000-4501-7000-8000-000000000001",[39m
+[31m+   "getMyNotificationDigest returns the restricted benefit's code B01",[39m
+[31m+ ][39m
+
+ ❯ tests/qa/integration/zz-cs-r10-digest.test.ts:164:19
+    162|     log(`leaks (${leaks.length}):\n${leaks.join("\n")}`);
+    163|     expect(wi?.subjectId ?? null).toBeNull();
+    164|     expect(leaks).toEqual([]);
+       |                   ^
+    165|   });
+    166| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |integration| apps/api/test/integration/tasks/digest-restricted-z14.test.ts > T-DG6-BE-Z14: a digested notification about a restricted record (D-226, D-231) > the digest read applies the inbox redaction: inbox.restricted, params {}, the home link, the marker
+AssertionError: expected { …(5) } to deeply equal { …(6) }
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[2m    "createdAt": "2026-11-09T12:55:41.903Z",[22m
+[32m-   "includesRestrictedRecords": true,[39m
+[32m-   "linkPath": "/transformations/01995000-0000-7000-8000-000000000001",[39m
+[32m-   "messageKey": "inbox.restricted",[39m
+[32m-   "messageParams": {},[39m
+[31m+   "linkPath": "/transformations/01995000-0000-7000-8000-000000000001/finance-validations/01995000-4501-7000-8000-000000000001",[39m
+[31m+   "messageKey": "benefits.task.finance_validation_review",[39m
+[31m+   "messageParams": {[39m
+[31m+     "benefitCode": "B01",[39m
+[31m+     "periodEnd": "2026-07-31",[39m
+[31m+     "periodStart": "2026-07-01",[39m
+[31m+   },[39m
+[2m    "notificationId": "01a1c060-f454-758d-8a00-16e9ae4abc9b",[22m
+[2m  }[22m
+
+ ❯ apps/api/test/integration/tasks/digest-restricted-z14.test.ts:175:18
+    173|     const item = (digest.body.items as Body[]).find((x) => x.notificat…
+    174|     expect(item).toBeDefined();
+    175|     expect(item).toEqual({
+       |                  ^
+    176|       notificationId: S.noteId,
+    177|       messageKey: "inbox.restricted",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  2 failed | 4 passed (6)
+   Start at  12:55:21
+   Duration  28.58s (transform 6.07s, setup 0ms, collect 13.50s, tests 11.01s, environment 0ms, prepare 99ms)
+
+exit=1  finished 2026-11-09T12:55:50Z
+restored: 0 changed paths

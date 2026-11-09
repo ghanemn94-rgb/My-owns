@@ -1,0 +1,43 @@
+## 2026-11-09T10:46:10Z candidate identity
+$ sha256sum docs/delivery/assignments/DG6/round-10/qa-verifier.md
+2b825db568171f7a0a9a99cfb26820b1da12925f3ad196545efb99e4fb39b3e5  docs/delivery/assignments/DG6/round-10/qa-verifier.md
+$ git rev-parse HEAD
+de4e7d23f60472d204bd165126710dff063522b2
+$ git log --oneline cde6036..HEAD; git diff --stat cde6036..HEAD
+de4e7d23f DG6 round 10: freeze 56415aee, assignments
+ .../DG6/round-10/code-security-reviewer.md         |   162 +
+ .../assignments/DG6/round-10/domain-reviewer.md    |   161 +
+ .../assignments/DG6/round-10/qa-verifier.md        |   144 +
+ .../candidates/DG6/56415aeea66a2aa1.manifest.json  | 13848 +++++++++++++++++++
+ docs/delivery/stages.json                          |    27 +-
+ 5 files changed, 14337 insertions(+), 5 deletions(-)
+$ (repository at HEAD) node tools/gates/candidate.mjs --stage DG6
+{"stage":"DG6","source":"working-tree","candidate_id":"sha256:56415aeea66a2aa11e721024ff0d3a2c0321f629f5e41fb2cc0c95c2c392d1b3","files":2766}
+exit=0
+$ (disposable clone, sparse: excludes docs/delivery/{runs,test-evidence,reviews,handbacks}, trading_agent; none is in the manifest) git rev-parse HEAD
+cde6036571064c12c812d240b48e3289c78d7d48
+$ (clone) node tools/gates/candidate.mjs --stage DG6
+{"stage":"DG6","source":"working-tree","candidate_id":"sha256:56415aeea66a2aa11e721024ff0d3a2c0321f629f5e41fb2cc0c95c2c392d1b3","files":2766}
+exit=0
+node: v24.21.0; node22: v22.22.0 (22.22.2 NOT installed; /opt/node22 holds 22.22.0)
+/dev/vda        252G   34G  5.3G  87% /var/tmp/mth-run.8fgEPl/claude-0
+
+## 2026-11-09T10:58:42Z after copying my probes into the clone (untracked) and adding the DO-G evidence folder to the sparse checkout
+$ git status --short (excluding node_modules)
+?? apps/api/test/integration/access/zz-qa-dg6r10-condition-token-resave.test.ts
+?? e2e/zz-qa-dg6r10-aud-reflow.spec.ts
+?? e2e/zz-qa-dg6r10-breadcrumb-tab-order.spec.ts
+?? e2e/zz-qa-dg6r10-demo-1440.spec.ts
+?? e2e/zz-qa-dg6r10-detail-axe.spec.ts
+?? e2e/zz-qa-dg6r10-exception-last-error.spec.ts
+?? e2e/zz-qa-dg6r10-id-refs-network.spec.ts
+?? e2e/zz-qa-dg6r10-reports-output-label.spec.ts
+?? e2e/zz-qa-dg6r10-restricted-label-ui.spec.ts
+?? e2e/zz-qa-dg6r10-restricted-mywork-automation.spec.ts
+?? e2e/zz-qa-dg6r10-walkthrough-crumbs.spec.ts
+?? e2e/zz-qa-dg6r10-xss-e2e.spec.ts
+$ git diff --stat HEAD (tracked files)
+(empty = no tracked candidate file changed)
+$ node tools/gates/candidate.mjs --stage DG6
+{"stage":"DG6","source":"working-tree","candidate_id":"sha256:2be50a42b2fab346cc0399ae8a8d96922733dd3e3fd4e40b4173aea4e9c19c39","files":2778}
+The ID differs from 56415aee only because candidate.mjs hashes the working tree, which now also holds my untracked probe files (12 more files); the identity above was taken before any probe was copied.

@@ -1,0 +1,26 @@
+# 32-integration-lang-unset-shard1-enospc-files-rerun  started 2026-11-09T12:46:02Z  cwd=/var/tmp/mth-run.PgA8z9/claude-0/r/w1  node=v22.22.0  LANG=<unset> LC_ALL=<unset>  load=9.88 10.38 11.75  commit=cde6036571064c12c812d240b48e3289c78d7d48
+$ tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration apps/api/test/integration/launch/worker-parity.test.ts apps/api/test/integration/operations/log-redaction.test.ts apps/worker/test/integration/maintenance.test.ts packages/db/test/integration/load-dataset.test.ts apps/worker/test/integration/demo-reset-dev-binding.test.ts
+port-policy: PostgreSQL listening on port 32062 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.PgA8z9/claude-0/r/w1
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw998q9s_e2e12528 (server_encoding UTF8); applied 118 migrations to a fresh database
+ ✓ |integration| packages/db/test/integration/load-dataset.test.ts (9 tests) 21205ms
+   ✓ deploy/load/generate.mjs (ADR-0058 §2) > two runs with one seed give identical row hashes  7685ms
+   ✓ deploy/load/generate.mjs (ADR-0058 §2) > a different seed gives different rows  3435ms
+   ✓ mth-db refuses a load database (ADR-0058 §2) > bootstrap: exit 3, the exact refusal, nothing changed  4206ms
+   ✓ mth-db refuses a load database (ADR-0058 §2) > seed-demo: exit 3, the exact refusal, nothing changed (also with MTH_ENV=demo)  1760ms
+   ✓ mth-db refuses a load database (ADR-0058 §2) > an empty database without the marker is not refused by this rule (bootstrap still works)  3588ms
+ ✓ |integration| apps/worker/test/integration/demo-reset-dev-binding.test.ts (2 tests) 2990ms
+ ✓ |integration| apps/worker/test/integration/maintenance.test.ts (2 tests) 3321ms
+ ✓ |integration| apps/api/test/integration/launch/worker-parity.test.ts (1 test) 1194ms
+   ✓ the worker launch-plan generator (parity with the API generator) > writes the same plan, tasks, test and audit events; a replay writes nothing  699ms
+ ✓ |integration| apps/api/test/integration/operations/log-redaction.test.ts (2 tests) 300ms
+
+ Test Files  5 passed (5)
+      Tests  16 passed (16)
+   Start at  12:46:04
+   Duration  51.34s (transform 7.77s, setup 0ms, collect 17.72s, tests 29.01s, environment 0ms, prepare 133ms)
+
+exit=0  finished 2026-11-09T12:46:56Z  load=7.47 9.66 11.43

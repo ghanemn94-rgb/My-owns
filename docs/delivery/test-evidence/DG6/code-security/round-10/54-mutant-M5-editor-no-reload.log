@@ -1,0 +1,811 @@
+# 54-mutant-M5-editor-no-reload  started 2026-11-09T12:57:09Z  load=4.81 6.55 8.88  commit=cde6036571064c12c812d240b48e3289c78d7d48
+## mutation (git diff of w1, product paths):
+ apps/web/src/pages/automation/RulePage.tsx | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+diff --git a/apps/web/src/pages/automation/RulePage.tsx b/apps/web/src/pages/automation/RulePage.tsx
+index d9a9a5fd1..b0427271a 100644
+--- a/apps/web/src/pages/automation/RulePage.tsx
++++ b/apps/web/src/pages/automation/RulePage.tsx
+@@ -471,7 +471,7 @@ function EditContent({
+             },
+           })
+           .then((saved) => {
+-            if (saved !== null) setForm({ from: saved.version, draft: loadDraft(saved) });
++            void saved;
+           });
+       }}
+     >
+$ vw apps/web/src/pages/automation/rule-editor-tokens-z14.test.tsx apps/web/src/pages/automation/zz-cs-r10-editor-stale-token.test.tsx
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.PgA8z9/claude-0/r/w1
+
+stdout | src/pages/automation/zz-cs-r10-editor-stale-token.test.tsx > CS-R10-EDITOR: the second save of the rule editor sends the server's current token, not a stale one
+[CS-R10-EDITOR] editor values after save 1 (server now shows [restricted:1]): ["[restricted:2:2]","approved"]
+
+stdout | src/pages/automation/zz-cs-r10-editor-stale-token.test.tsx > CS-R10-EDITOR: the second save of the rule editor sends the server's current token, not a stale one
+[CS-R10-EDITOR] PATCH 1 If-Match "2" conditions [{"field":"gateCode","op":"neq","value":"[restricted:2:2]"},{"field":"outcome","op":"eq","value":"approved"}]
+[CS-R10-EDITOR] PATCH 2 If-Match "2" conditions [{"field":"gateCode","op":"neq","value":"[restricted:2:2]"},{"field":"outcome","op":"eq","value":"approved"}]
+
+ ❯ |unit-web| src/pages/automation/zz-cs-r10-editor-stale-token.test.tsx (1 test | 1 failed) 4883ms
+   × CS-R10-EDITOR: the second save of the rule editor sends the server's current token, not a stale one 1386ms
+     → expected '"2"' to be '"3"' // Object.is equality
+ ❯ |unit-web| src/pages/automation/rule-editor-tokens-z14.test.tsx (7 tests | 2 failed) 18012ms
+   × en: after a save the form reloads from the saved version, so the second save sends its tokens 6521ms
+     → expected '[restricted:2:2]' to be '[restricted:3:1]' // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head>[39m
+    [36m<title>[39m
+      [0mAutomation rule · Mobily Transformation Hub[0m
+    [36m</title>[39m
+  [36m</head>[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"app"[39m
+      [36m>[39m
+        [36m<a[39m
+          [33mclass[39m=[32m"skip-link"[39m
+          [33mhref[39m=[32m"#main"[39m
+        [36m>[39m
+          [0mSkip to main content[0m
+        [36m</a>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"app-header"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-controls[39m=[32m"_r_0_"[39m
+            [33maria-expanded[39m=[32m"false"[39m
+            [33mclass[39m=[32m"button button--ghost-inverse nav-toggle"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"icon"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"16"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.8"[39m
+              [33mviewBox[39m=[32m"0 0 20 20"[39m
+              [33mwidth[39m=[32m"16"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M3 5h14M3 10h14M3 15h14"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"visually-hidden"[39m
+            [36m>[39m
+              [0mShow or hide navigation[0m
+            [36m</span>[39m
+          [36m</button>[39m
+          [36m<a[39m
+            [33mclass[39m=[32m"wordmark"[39m
+            [33mdata-discover[39m=[32m"true"[39m
+            [33mdata-testid[39m=[32m"wordmark"[39m
+            [33mhref[39m=[32m"/"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"wordmark__name"[39m
+            [36m>[39m
+              [0mMobily Transformation Hub[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"badge badge--provisional"[39m
+              [33mdata-testid[39m=[32m"provisional-badge"[39m
+              [33mtitle[39m=[32m"Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values."[39m
+            [36m>[39m
+              [0mProvisional[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"visually-hidden"[39m
+            [36m>[39m
+              [0mProvisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values.[0m
+            [36m</span>[39m
+          [36m</a>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"app-header__spacer"[39m
+          [36m/>[39m
+          [36m<div[39m
+            [33maria-label[39m=[32m"Search records"[39m
+            [33mclass[39m=[32m"global-search"[39m
+            [33mrole[39m=[32m"search"[39m
+          [36m>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"visually-hidden"[39m
+              [33mfor[39m=[32m"_r_1_"[39m
+            [36m>[39m
+              [0mSearch for[0m
+            [36m</label>[39m
+            [36m<input[39m
+              [33maria-invalid[39m=[32m"false"[39m
+              [33mclass[39m=[32m"global-search__input"[39m
+              [33mdata-global-search[39m=[32m"true"[39m
+              [33menterkeyhint[39m=[32m"search"[39m
+              [33mid[39m=[32m"_r_1_"[39m
+              [33minputmode[39m=[32m"search"[39m
+              [33mmaxlength[39m=[32m"200"[39m
+              [33mplaceholder[39m=[32m"Search records"[39m
+              [33mtype[39m=[32m"text"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"Search records"[39m
+              [33mclass[39m=[32m"button button--ghost-inverse button--small"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mSearch[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"language-switch"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"Switch language to العربية"[39m
+              [33mclass[39m=[32m"button button--ghost-inverse button--small"[39m
+              [33mlang[39m=[32m"ar"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mالعربية[0m
+            [36m</button>[39m
+          [36m</span>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"user-box"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"user-box__name"[39m
+            [36m>[39m
+              [0mSynthetic Test User[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"user-box__org"[39m
+            [36m>[39m
+              [0mSynthetic Organization[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"button button--ghost-inverse button--small"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"icon"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"16"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.8"[39m
+              [33mviewBox[39m=[32m"0 0 20 20"[39m
+              [33mwidth[39m=[32m"16"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M8 4H4v12h4M12 6l4 4-4 4M16 10H8"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [36m<span[39m
+              [33mclass[39m=[32m"app-header__label"[39m
+            [36m>[39m
+              [0mSign out[0m
+            [36m</span>[39m
+          [36m</button>[39m
+        [36m</header>[39m
+        [36m<div[39m
+          [33maria-atomic[39m=[32m"true"[39m
+          [33maria-live[39m=[32m"polite"[39m
+          [33mclass[39m=[32m"app-notice language-switch__live"[39m
+          [33mlang[39m=[32m"en"[39m
+        [36m/>[39m
+        [36m...
+   ✓ en: after a 409 the form reloads the current version, says the rule changed, and never re-sends stale tokens  555ms
+   ✓ en: after a stale-token 422 the form reloads the current version and says the rule changed  454ms
+   × ar: after a save the form reloads from the saved version, so the second save sends its tokens 5392ms
+     → expected '[restricted:2:2]' to be '[restricted:3:1]' // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"rtl"[39m
+  [33mlang[39m=[32m"ar"[39m
+[36m>[39m
+  [36m<head>[39m
+    [36m<title>[39m
+      [0mقاعدة أتمتة · منصة موبايلي للتحوّل[0m
+    [36m</title>[39m
+  [36m</head>[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"app"[39m
+      [36m>[39m
+        [36m<a[39m
+          [33mclass[39m=[32m"skip-link"[39m
+          [33mhref[39m=[32m"#main"[39m
+        [36m>[39m
+          [0mانتقل إلى المحتوى الرئيسي[0m
+        [36m</a>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"app-header"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-controls[39m=[32m"_r_i_"[39m
+            [33maria-expanded[39m=[32m"false"[39m
+            [33mclass[39m=[32m"button button--ghost-inverse nav-toggle"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"icon"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"16"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.8"[39m
+              [33mviewBox[39m=[32m"0 0 20 20"[39m
+              [33mwidth[39m=[32m"16"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M3 5h14M3 10h14M3 15h14"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"visually-hidden"[39m
+            [36m>[39m
+              [0mإظهار التنقل أو إخفاؤه[0m
+            [36m</span>[39m
+          [36m</button>[39m
+          [36m<a[39m
+            [33mclass[39m=[32m"wordmark"[39m
+            [33mdata-discover[39m=[32m"true"[39m
+            [33mdata-testid[39m=[32m"wordmark"[39m
+            [33mhref[39m=[32m"/"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"wordmark__name"[39m
+            [36m>[39m
+              [0mمنصة موبايلي للتحوّل[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"badge badge--provisional"[39m
+              [33mdata-testid[39m=[32m"provisional-badge"[39m
+              [33mtitle[39m=[32m"شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة."[39m
+            [36m>[39m
+              [0mمؤقت[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"visually-hidden"[39m
+            [36m>[39m
+              [0mشعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة.[0m
+            [36m</span>[39m
+          [36m</a>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"app-header__spacer"[39m
+          [36m/>[39m
+          [36m<div[39m
+            [33maria-label[39m=[32m"البحث في السجلات"[39m
+            [33mclass[39m=[32m"global-search"[39m
+            [33mrole[39m=[32m"search"[39m
+          [36m>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"visually-hidden"[39m
+              [33mfor[39m=[32m"_r_j_"[39m
+            [36m>[39m
+              [0mابحث عن[0m
+            [36m</label>[39m
+            [36m<input[39m
+              [33maria-invalid[39m=[32m"false"[39m
+              [33mclass[39m=[32m"global-search__input"[39m
+              [33mdata-global-search[39m=[32m"true"[39m
+              [33menterkeyhint[39m=[32m"search"[39m
+              [33mid[39m=[32m"_r_j_"[39m
+              [33minputmode[39m=[32m"search"[39m
+              [33mmaxlength[39m=[32m"200"[39m
+              [33mplaceholder[39m=[32m"ابحث في السجلات"[39m
+              [33mtype[39m=[32m"text"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"البحث في السجلات"[39m
+              [33mclass[39m=[32m"button button--ghost-inverse button--small"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mبحث[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"language-switch"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"تغيير اللغة إلى English"[39m
+              [33mclass[39m=[32m"button button--ghost-inverse button--small"[39m
+              [33mlang[39m=[32m"en"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mEnglish[0m
+            [36m</button>[39m
+          [36m</span>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"user-box"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"user-box__name"[39m
+            [36m>[39m
+              [0mSynthetic Test User[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"user-box__org"[39m
+            [36m>[39m
+              [0mجهة اصطناعية[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"button button--ghost-inverse button--small"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"icon"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"16"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.8"[39m
+              [33mviewBox[39m=[32m"0 0 20 20"[39m
+              [33mwidth[39m=[32m"16"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M8 4H4v12h4M12 6l4 4-4 4M16 10H8"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [36m<span[39m
+              [33mclass[39m=[32m"app-header__label"[39m
+            [36m>[39m
+              [0mتسجيل الخروج[0m
+            [36m</span>[39m
+          [36m</button>[39m
+        [36m</header>[39m
+        [36m<div[39m
+          [33maria-atomic[39m=[32m"true"[39m
+          [33maria-live[39m=[32m"polite"[39m
+          [33mclass[39m=[32m"app-notice language-switch__live"[39m
+          [33mlang[39m=[32m"ar"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"app-body"[39m
+        [36m>[39m
+          [36m<...
+   ✓ ar: after a 409 the form reloads the current version, says the rule changed, and never re-sends stale tokens  556ms
+   ✓ ar: after a stale-token 422 the form reloads the current version and says the rule changed  621ms
+   ✓ another 422 (not a stale token) keeps the author's draft and shows the problem text  414ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-web| src/pages/automation/rule-editor-tokens-z14.test.tsx > en: after a save the form reloads from the saved version, so the second save sends its tokens
+AssertionError: expected '[restricted:2:2]' to be '[restricted:3:1]' // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head>[39m
+    [36m<title>[39m
+      [0mAutomation rule · Mobily Transformation Hub[0m
+    [36m</title>[39m
+  [36m</head>[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"app"[39m
+      [36m>[39m
+        [36m<a[39m
+          [33mclass[39m=[32m"skip-link"[39m
+          [33mhref[39m=[32m"#main"[39m
+        [36m>[39m
+          [0mSkip to main content[0m
+        [36m</a>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"app-header"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-controls[39m=[32m"_r_0_"[39m
+            [33maria-expanded[39m=[32m"false"[39m
+            [33mclass[39m=[32m"button button--ghost-inverse nav-toggle"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"icon"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"16"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.8"[39m
+              [33mviewBox[39m=[32m"0 0 20 20"[39m
+              [33mwidth[39m=[32m"16"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M3 5h14M3 10h14M3 15h14"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"visually-hidden"[39m
+            [36m>[39m
+              [0mShow or hide navigation[0m
+            [36m</span>[39m
+          [36m</button>[39m
+          [36m<a[39m
+            [33mclass[39m=[32m"wordmark"[39m
+            [33mdata-discover[39m=[32m"true"[39m
+            [33mdata-testid[39m=[32m"wordmark"[39m
+            [33mhref[39m=[32m"/"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"wordmark__name"[39m
+            [36m>[39m
+              [0mMobily Transformation Hub[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"badge badge--provisional"[39m
+              [33mdata-testid[39m=[32m"provisional-badge"[39m
+              [33mtitle[39m=[32m"Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values."[39m
+            [36m>[39m
+              [0mProvisional[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"visually-hidden"[39m
+            [36m>[39m
+              [0mProvisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values.[0m
+            [36m</span>[39m
+          [36m</a>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"app-header__spacer"[39m
+          [36m/>[39m
+          [36m<div[39m
+            [33maria-label[39m=[32m"Search records"[39m
+            [33mclass[39m=[32m"global-search"[39m
+            [33mrole[39m=[32m"search"[39m
+          [36m>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"visually-hidden"[39m
+              [33mfor[39m=[32m"_r_1_"[39m
+            [36m>[39m
+              [0mSearch for[0m
+            [36m</label>[39m
+            [36m<input[39m
+              [33maria-invalid[39m=[32m"false"[39m
+              [33mclass[39m=[32m"global-search__input"[39m
+              [33mdata-global-search[39m=[32m"true"[39m
+              [33menterkeyhint[39m=[32m"search"[39m
+              [33mid[39m=[32m"_r_1_"[39m
+              [33minputmode[39m=[32m"search"[39m
+              [33mmaxlength[39m=[32m"200"[39m
+              [33mplaceholder[39m=[32m"Search records"[39m
+              [33mtype[39m=[32m"text"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"Search records"[39m
+              [33mclass[39m=[32m"button button--ghost-inverse button--small"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mSearch[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"language-switch"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"Switch language to العربية"[39m
+              [33mclass[39m=[32m"button button--ghost-inverse button--small"[39m
+              [33mlang[39m=[32m"ar"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mالعربية[0m
+            [36m</button>[39m
+          [36m</span>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"user-box"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"user-box__name"[39m
+            [36m>[39m
+              [0mSynthetic Test User[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"user-box__org"[39m
+            [36m>[39m
+              [0mSynthetic Organization[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"button button--ghost-inverse button--small"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"icon"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"16"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.8"[39m
+              [33mviewBox[39m=[32m"0 0 20 20"[39m
+              [33mwidth[39m=[32m"16"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M8 4H4v12h4M12 6l4 4-4 4M16 10H8"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [36m<span[39m
+              [33mclass[39m=[32m"app-header__label"[39m
+            [36m>[39m
+              [0mSign out[0m
+            [36m</span>[39m
+          [36m</button>[39m
+        [36m</header>[39m
+        [36m<div[39m
+          [33maria-atomic[39m=[32m"true"[39m
+          [33maria-live[39m=[32m"polite"[39m
+          [33mclass[39m=[32m"app-notice language-switch__live"[39m
+          [33mlang[39m=[32m"en"[39m
+        [36m/>[39m
+        [36m...
+
+Expected: [32m"[restricted:[7m3:1[27m]"[39m
+Received: [31m"[restricted:[7m2:2[27m]"[39m
+
+ ❯ src/pages/automation/rule-editor-tokens-z14.test.tsx:198:50
+    196|     fireEvent.click(await screen.findByRole("button", { name: t.rules.…
+    197|     await save(locale, requests, 1);
+    198|     await waitFor(() => expect(valueInputs()[0]).toBe(tok(3, 1)));
+       |                                                  ^
+    199|     await save(locale, requests, 2);
+    200|     const [p1, p2] = patchesOf(requests);
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../../node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |unit-web| src/pages/automation/rule-editor-tokens-z14.test.tsx > ar: after a save the form reloads from the saved version, so the second save sends its tokens
+AssertionError: expected '[restricted:2:2]' to be '[restricted:3:1]' // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"rtl"[39m
+  [33mlang[39m=[32m"ar"[39m
+[36m>[39m
+  [36m<head>[39m
+    [36m<title>[39m
+      [0mقاعدة أتمتة · منصة موبايلي للتحوّل[0m
+    [36m</title>[39m
+  [36m</head>[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"app"[39m
+      [36m>[39m
+        [36m<a[39m
+          [33mclass[39m=[32m"skip-link"[39m
+          [33mhref[39m=[32m"#main"[39m
+        [36m>[39m
+          [0mانتقل إلى المحتوى الرئيسي[0m
+        [36m</a>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"app-header"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-controls[39m=[32m"_r_i_"[39m
+            [33maria-expanded[39m=[32m"false"[39m
+            [33mclass[39m=[32m"button button--ghost-inverse nav-toggle"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"icon"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"16"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.8"[39m
+              [33mviewBox[39m=[32m"0 0 20 20"[39m
+              [33mwidth[39m=[32m"16"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M3 5h14M3 10h14M3 15h14"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"visually-hidden"[39m
+            [36m>[39m
+              [0mإظهار التنقل أو إخفاؤه[0m
+            [36m</span>[39m
+          [36m</button>[39m
+          [36m<a[39m
+            [33mclass[39m=[32m"wordmark"[39m
+            [33mdata-discover[39m=[32m"true"[39m
+            [33mdata-testid[39m=[32m"wordmark"[39m
+            [33mhref[39m=[32m"/"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"wordmark__name"[39m
+            [36m>[39m
+              [0mمنصة موبايلي للتحوّل[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"badge badge--provisional"[39m
+              [33mdata-testid[39m=[32m"provisional-badge"[39m
+              [33mtitle[39m=[32m"شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة."[39m
+            [36m>[39m
+              [0mمؤقت[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"visually-hidden"[39m
+            [36m>[39m
+              [0mشعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة.[0m
+            [36m</span>[39m
+          [36m</a>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"app-header__spacer"[39m
+          [36m/>[39m
+          [36m<div[39m
+            [33maria-label[39m=[32m"البحث في السجلات"[39m
+            [33mclass[39m=[32m"global-search"[39m
+            [33mrole[39m=[32m"search"[39m
+          [36m>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"visually-hidden"[39m
+              [33mfor[39m=[32m"_r_j_"[39m
+            [36m>[39m
+              [0mابحث عن[0m
+            [36m</label>[39m
+            [36m<input[39m
+              [33maria-invalid[39m=[32m"false"[39m
+              [33mclass[39m=[32m"global-search__input"[39m
+              [33mdata-global-search[39m=[32m"true"[39m
+              [33menterkeyhint[39m=[32m"search"[39m
+              [33mid[39m=[32m"_r_j_"[39m
+              [33minputmode[39m=[32m"search"[39m
+              [33mmaxlength[39m=[32m"200"[39m
+              [33mplaceholder[39m=[32m"ابحث في السجلات"[39m
+              [33mtype[39m=[32m"text"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"البحث في السجلات"[39m
+              [33mclass[39m=[32m"button button--ghost-inverse button--small"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mبحث[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"language-switch"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"تغيير اللغة إلى English"[39m
+              [33mclass[39m=[32m"button button--ghost-inverse button--small"[39m
+              [33mlang[39m=[32m"en"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mEnglish[0m
+            [36m</button>[39m
+          [36m</span>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"user-box"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"user-box__name"[39m
+            [36m>[39m
+              [0mSynthetic Test User[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"user-box__org"[39m
+            [36m>[39m
+              [0mجهة اصطناعية[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"button button--ghost-inverse button--small"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"icon"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"16"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.8"[39m
+              [33mviewBox[39m=[32m"0 0 20 20"[39m
+              [33mwidth[39m=[32m"16"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M8 4H4v12h4M12 6l4 4-4 4M16 10H8"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [36m<span[39m
+              [33mclass[39m=[32m"app-header__label"[39m
+            [36m>[39m
+              [0mتسجيل الخروج[0m
+            [36m</span>[39m
+          [36m</button>[39m
+        [36m</header>[39m
+        [36m<div[39m
+          [33maria-atomic[39m=[32m"true"[39m
+          [33maria-live[39m=[32m"polite"[39m
+          [33mclass[39m=[32m"app-notice language-switch__live"[39m
+          [33mlang[39m=[32m"ar"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"app-body"[39m
+        [36m>[39m
+          [36m<...
+
+Expected: [32m"[restricted:[7m3:1[27m]"[39m
+Received: [31m"[restricted:[7m2:2[27m]"[39m
+
+ ❯ src/pages/automation/rule-editor-tokens-z14.test.tsx:198:50
+    196|     fireEvent.click(await screen.findByRole("button", { name: t.rules.…
+    197|     await save(locale, requests, 1);
+    198|     await waitFor(() => expect(valueInputs()[0]).toBe(tok(3, 1)));
+       |                                                  ^
+    199|     await save(locale, requests, 2);
+    200|     const [p1, p2] = patchesOf(requests);
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../../node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |unit-web| src/pages/automation/zz-cs-r10-editor-stale-token.test.tsx > CS-R10-EDITOR: the second save of the rule editor sends the server's current token, not a stale one
+AssertionError: expected '"2"' to be '"3"' // Object.is equality
+
+Expected: [32m""[7m3[27m""[39m
+Received: [31m""[7m2[27m""[39m
+
+ ❯ src/pages/automation/zz-cs-r10-editor-stale-token.test.tsx:172:35
+    170|   console.log("[CS-R10-EDITOR] PATCH 2 If-Match", p2!.headers["if-matc…
+    171|   expect(p1!.headers["if-match"]).toBe('"2"');
+    172|   expect(p2!.headers["if-match"]).toBe('"3"');
+       |                                   ^
+    173|   // The contract: on version 3 the hidden literal is [restricted:1]; …
+    174|   expect((p2!.body as { content: { conditions: { value: unknown }[] } …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  3 failed | 5 passed (8)
+   Start at  12:57:10
+   Duration  21.60s (transform 328.23s, setup 362ms, collect 5.16s, tests 22.90s, environment 986ms, prepare 169ms)
+
+exit=1  finished 2026-11-09T12:57:32Z
+restored: 0 changed paths

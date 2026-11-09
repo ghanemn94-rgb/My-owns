@@ -1,0 +1,194 @@
+# 53-mutant-M4-mark-read-unredacted  started 2026-11-09T12:56:43Z  load=5.57 6.82 9.03  commit=cde6036571064c12c812d240b48e3289c78d7d48
+## mutation (git diff of w1, product paths):
+ apps/api/src/modules/tasks/routes.ts | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+diff --git a/apps/api/src/modules/tasks/routes.ts b/apps/api/src/modules/tasks/routes.ts
+index b3a4682f7..11b4d0c04 100644
+--- a/apps/api/src/modules/tasks/routes.ts
++++ b/apps/api/src/modules/tasks/routes.ts
+@@ -385,7 +385,7 @@ export function registerTaskRoutes(app: FastifyInstance, { db }: ModuleDeps): st
+     const item = await db.transaction().execute(async (tx) => {
+       const row = await markRead(tx, request, notificationId);
+       const [restricted] = await restrictedNotifications(tx, principalOf(request), [row]);
+-      return notificationFor(row, restricted === true);
++      void restricted; return notificationFor(row, false);
+     });
+     return sendVersioned(reply, 200, item);
+   });
+$ vt apps/api/test/integration/tasks/inbox-restricted-z13.test.ts tests/qa/integration/zz-cs-r8-inbox-text.test.ts
+port-policy: PostgreSQL listening on port 32070 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.PgA8z9/claude-0/r/w1
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw99mgtg_2904a55d (server_encoding UTF8); applied 118 migrations to a fresh database
+stdout | tests/qa/integration/zz-cs-r8-inbox-text.test.ts
+[CS-R8-INBOX] hidden benefit B01 01995000-4401-7000-8000-000000000001; finance validation 01995000-4501-7000-8000-000000000001
+
+stdout | tests/qa/integration/zz-cs-r8-inbox-text.test.ts
+[CS-R8-INBOX] child ids of the hidden benefit: 15
+
+stdout | tests/qa/integration/zz-cs-r8-inbox-text.test.ts > CS-R8 P1: inbox notification about a restricted record > tl2 gets 404 on the benefit and the Finance validation (control)
+[CS-R8-INBOX] tl2 GET benefit 404; tl2 GET finance validation 404 not_found; TO GET finance validation 200
+
+stdout | tests/qa/integration/zz-cs-r8-inbox-text.test.ts > CS-R8 P1: inbox notification about a restricted record > work item (BE-Z12B control), inbox list and mark-read never name a hidden id or the restricted record's code
+[CS-R8-INBOX] GET /me/work-items 200: subjectType=finance_validation subjectId=null linkPath=/transformations/01995000-0000-7000-8000-000000000001 key=inbox.restricted params={} marker=true
+
+stdout | tests/qa/integration/zz-cs-r8-inbox-text.test.ts > CS-R8 P1: inbox notification about a restricted record > work item (BE-Z12B control), inbox list and mark-read never name a hidden id or the restricted record's code
+[CS-R8-INBOX] GET /me/inbox 200: key=inbox.restricted params={} linkPath=/transformations/01995000-0000-7000-8000-000000000001 keys=id,transformationId,workItemId,linkPath,messageKey,messageParams,readAt,createdAt,version,includesRestrictedRecords
+
+stdout | tests/qa/integration/zz-cs-r8-inbox-text.test.ts > CS-R8 P1: inbox notification about a restricted record > work item (BE-Z12B control), inbox list and mark-read never name a hidden id or the restricted record's code
+[CS-R8-INBOX] GET /me/work 200: names=[]
+
+stdout | tests/qa/integration/zz-cs-r8-inbox-text.test.ts > CS-R8 P1: inbox notification about a restricted record > work item (BE-Z12B control), inbox list and mark-read never name a hidden id or the restricted record's code
+[CS-R8-INBOX] POST /me/inbox/{id}/read 200: key=benefits.task.finance_validation_review params={"periodEnd":"2026-07-31","benefitCode":"B01","periodStart":"2026-07-01"} linkPath=/transformations/01995000-0000-7000-8000-000000000001/finance-validations/01995000-4501-7000-8000-000000000001
+
+stdout | tests/qa/integration/zz-cs-r8-inbox-text.test.ts > CS-R8 P1: inbox notification about a restricted record > work item (BE-Z12B control), inbox list and mark-read never name a hidden id or the restricted record's code
+[CS-R8-INBOX] GET /me/inbox after read: key=inbox.restricted params={} linkPath=/transformations/01995000-0000-7000-8000-000000000001
+
+stdout | tests/qa/integration/zz-cs-r8-inbox-text.test.ts > CS-R8 P1: inbox notification about a restricted record > work item (BE-Z12B control), inbox list and mark-read never name a hidden id or the restricted record's code
+[CS-R8-INBOX] TO GET benefit 200 code=B01
+[CS-R8-INBOX] P1 leaks (2):
+markInboxNotificationRead names 01995000-4501-7000-8000-000000000001
+markInboxNotificationRead returns messageParams with the restricted benefit's code B01
+
+stdout | tests/qa/integration/zz-cs-r8-inbox-text.test.ts > CS-R8 P1b: benefit-overlap notification through the real producer (API POST /benefit-overlaps) > a Finance recipient not admitted to the sensitive benefit gets neither its code nor the overlap id
+[CS-R8-INBOX] P1b TL POST benefit Synthetic CONFIDENTIAL CS-R8 overlap benefit -> 201 B04
+
+stdout | tests/qa/integration/zz-cs-r8-inbox-text.test.ts > CS-R8 P1b: benefit-overlap notification through the real producer (API POST /benefit-overlaps) > a Finance recipient not admitted to the sensitive benefit gets neither its code nor the overlap id
+[CS-R8-INBOX] P1b TL POST benefit Synthetic open CS-R8 overlap benefit -> 201 B05
+
+stdout | tests/qa/integration/zz-cs-r8-inbox-text.test.ts > CS-R8 P1b: benefit-overlap notification through the real producer (API POST /benefit-overlaps) > a Finance recipient not admitted to the sensitive benefit gets neither its code nor the overlap id
+[CS-R8-INBOX] P1b TL POST benefit-overlaps -> 201 01a1c062-37fb-7236-b49d-6f0335ae4dbf
+
+stdout | tests/qa/integration/zz-cs-r8-inbox-text.test.ts > CS-R8 P1b: benefit-overlap notification through the real producer (API POST /benefit-overlaps) > a Finance recipient not admitted to the sensitive benefit gets neither its code nor the overlap id
+[CS-R8-INBOX] P1b overlap work items: [{"wi":"01a1c062-3806-76bf-af36-4ca743440886","assignee":"01995000-0000-7000-8000-000000000014","note":"01a1c062-3809-7163-bd72-f66d69558c65","state":"delivered"}]
+
+stdout | tests/qa/integration/zz-cs-r8-inbox-text.test.ts > CS-R8 P1b: benefit-overlap notification through the real producer (API POST /benefit-overlaps) > a Finance recipient not admitted to the sensitive benefit gets neither its code nor the overlap id
+[CS-R8-INBOX] P1b recipient 01995000-0000-7000-8000-000000000014: GET sensitive benefit 404; GET overlap 404; work item subjectId=null key=inbox.restricted marker=true; inbox key=inbox.restricted params={} linkPath=/transformations/01995000-0000-7000-8000-000000000001
+[CS-R8-INBOX] P1b leaks (0):
+
+
+stdout | tests/qa/integration/zz-cs-r8-inbox-text.test.ts > CS-R8 P1c: mark-read of a notification the inbox list DOES redact (corrective case, raid.ts:416-429 shape) > POST /me/inbox/{id}/read returns the same redaction as GET /me/inbox
+[CS-R8-INBOX] P1c: the demo has no corrective case; using a benefit-route notification (ROUTES) instead
+
+stdout | tests/qa/integration/zz-cs-r8-inbox-text.test.ts > CS-R8 P1c: mark-read of a notification the inbox list DOES redact (corrective case, raid.ts:416-429 shape) > POST /me/inbox/{id}/read returns the same redaction as GET /me/inbox
+[CS-R8-INBOX] P1c tl2 GET case 404; GET /me/inbox key=inbox.restricted params={} linkPath=/transformations/01995000-0000-7000-8000-000000000001
+
+stdout | tests/qa/integration/zz-cs-r8-inbox-text.test.ts > CS-R8 P1c: mark-read of a notification the inbox list DOES redact (corrective case, raid.ts:416-429 shape) > POST /me/inbox/{id}/read returns the same redaction as GET /me/inbox
+[CS-R8-INBOX] P1c POST /me/inbox/{id}/read 200: key=benefits.task.synthetic_cs_r8 params={"benefitCode":"B01"} linkPath=/transformations/01995000-0000-7000-8000-000000000001/benefits/01995000-4401-7000-8000-000000000001
+
+stdout | tests/qa/integration/zz-cs-r8-inbox-text.test.ts > CS-R8 P2: text columns that hold a hidden id (outside the inventory's fk/uuid/array/json catalog) > lists every text/varchar column holding the hidden benefit's id or a child id
+[CS-R8-INBOX] text/varchar columns scanned: 1702; columns holding a hidden id (5):
+finance_validation.idempotency_key (2)
+inbox_notification.dedupe_key (2)
+inbox_notification.link_path (2)
+work_item.dedupe_key (2)
+work_item.link_path (2)
+
+ ❯ |integration| tests/qa/integration/zz-cs-r8-inbox-text.test.ts (5 tests | 2 failed) 5986ms
+   ✓ CS-R8 P1: inbox notification about a restricted record > tl2 gets 404 on the benefit and the Finance validation (control) 34ms
+   × CS-R8 P1: inbox notification about a restricted record > work item (BE-Z12B control), inbox list and mark-read never name a hidden id or the restricted record's code 191ms
+     → expected [ …(2) ] to deeply equal []
+   ✓ CS-R8 P1b: benefit-overlap notification through the real producer (API POST /benefit-overlaps) > a Finance recipient not admitted to the sensitive benefit gets neither its code nor the overlap id 236ms
+   × CS-R8 P1c: mark-read of a notification the inbox list DOES redact (corrective case, raid.ts:416-429 shape) > POST /me/inbox/{id}/read returns the same redaction as GET /me/inbox 84ms
+     → expected { …(2) } to deeply equal { key: 'inbox.restricted', params: {} }
+   ✓ CS-R8 P2: text columns that hold a hidden id (outside the inventory's fk/uuid/array/json catalog) > lists every text/varchar column holding the hidden benefit's id or a child id  572ms
+ ❯ |integration| apps/api/test/integration/tasks/inbox-restricted-z13.test.ts (7 tests | 1 failed) 1126ms
+   ✓ T-DG6-BE-Z13: inbox notifications about a restricted record (F-DG6-540; D-226) > control: FIN gets 404 on the benefit, its Finance validation and the overlap 42ms
+   ✓ T-DG6-BE-Z13: inbox notifications about a restricted record (F-DG6-540; D-226) > listMyInbox: Finance validation, overlap and benefit notifications are redacted; no hidden id or code 65ms
+   ✓ T-DG6-BE-Z13: inbox notifications about a restricted record (F-DG6-540; D-226) > listMyWorkItems: the work item of the Finance validation links home, as its notification does 41ms
+   × T-DG6-BE-Z13: inbox notifications about a restricted record (F-DG6-540; D-226) > markInboxNotificationRead returns the same redaction as the list (each restricted kind) 68ms
+     → 01a1c062-46f1-76f3-ac9d-3465ebba4db4: expected { …(4) } to deeply equal { Object (messageKey, messageParams, ...) }
+   ✓ T-DG6-BE-Z13: inbox notifications about a restricted record (F-DG6-540; D-226) > a forwarded deep link to the Finance validation route is refused 403 for FIN 42ms
+   ✓ T-DG6-BE-Z13: inbox notifications about a restricted record (F-DG6-540; D-226) > positive: after an explicit grant FIN gets the original text and link back (list) 69ms
+   ✓ T-DG6-BE-Z13: inbox notifications about a restricted record (F-DG6-540; D-226) > negative: another user cannot mark FIN's notification read (404, nothing written) 12ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/zz-cs-r8-inbox-text.test.ts > CS-R8 P1: inbox notification about a restricted record > work item (BE-Z12B control), inbox list and mark-read never name a hidden id or the restricted record's code
+AssertionError: expected [ …(2) ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   "markInboxNotificationRead names 01995000-4501-7000-8000-000000000001",[39m
+[31m+   "markInboxNotificationRead returns messageParams with the restricted benefit's code B01",[39m
+[31m+ ][39m
+
+ ❯ tests/qa/integration/zz-cs-r8-inbox-text.test.ts:166:19
+    164|     log(`P1 leaks (${leaks.length}):\n${leaks.join("\n")}`);
+    165|     expect(wi?.subjectId ?? null).toBeNull();
+    166|     expect(leaks).toEqual([]);
+       |                   ^
+    167|   });
+    168| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |integration| tests/qa/integration/zz-cs-r8-inbox-text.test.ts > CS-R8 P1c: mark-read of a notification the inbox list DOES redact (corrective case, raid.ts:416-429 shape) > POST /me/inbox/{id}/read returns the same redaction as GET /me/inbox
+AssertionError: expected { …(2) } to deeply equal { key: 'inbox.restricted', params: {} }
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[32m-   "key": "inbox.restricted",[39m
+[32m-   "params": {},[39m
+[31m+   "key": "benefits.task.synthetic_cs_r8",[39m
+[31m+   "params": {[39m
+[31m+     "benefitCode": "B01",[39m
+[31m+   },[39m
+[2m  }[22m
+
+ ❯ tests/qa/integration/zz-cs-r8-inbox-text.test.ts:287:78
+    285|     log(`P1c POST /me/inbox/{id}/read ${read.status}: key=${read.body?…
+    286|     expect(n?.messageKey).toBe("inbox.restricted");
+    287|     expect({ key: read.body?.messageKey, params: read.body?.messagePar…
+       |                                                                              ^
+    288|   });
+    289| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |integration| apps/api/test/integration/tasks/inbox-restricted-z13.test.ts > T-DG6-BE-Z13: inbox notifications about a restricted record (F-DG6-540; D-226) > markInboxNotificationRead returns the same redaction as the list (each restricted kind)
+AssertionError: 01a1c062-46f1-76f3-ac9d-3465ebba4db4: expected { …(4) } to deeply equal { Object (messageKey, messageParams, ...) }
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[32m-   "linkPath": "/transformations/01a1c062-44fd-729c-9b78-e1c83a08aa82",[39m
+[32m-   "marker": true,[39m
+[32m-   "messageKey": "inbox.restricted",[39m
+[32m-   "messageParams": {},[39m
+[31m+   "linkPath": "/transformations/01a1c062-44fd-729c-9b78-e1c83a08aa82/finance-validations/01a1c062-46c1-7079-a89c-cb046c02eb73",[39m
+[31m+   "marker": undefined,[39m
+[31m+   "messageKey": "benefits.task.finance_validation_review",[39m
+[31m+   "messageParams": {[39m
+[31m+     "benefitCode": "B01",[39m
+[31m+     "periodEnd": "2026-09-30",[39m
+[31m+     "periodStart": "2026-09-01",[39m
+[31m+   },[39m
+[2m  }[22m
+
+ ❯ apps/api/test/integration/tasks/inbox-restricted-z13.test.ts:254:44
+    252|       });
+    253|       expect(res.status, JSON.stringify(res.body)).toBe(200);
+    254|       expect(restrictedView(res.body), id).toEqual(REDACTED());
+       |                                            ^
+    255|       expect(res.body.readAt).not.toBeNull();
+    256|       for (const hidden of [S.benefit, S.fv, S.overlap, S.code]) expec…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  3 failed | 9 passed (12)
+   Start at  12:56:45
+   Duration  23.94s (transform 6.20s, setup 0ms, collect 13.25s, tests 7.11s, environment 0ms, prepare 121ms)
+
+exit=1  finished 2026-11-09T12:57:09Z
+restored: 0 changed paths

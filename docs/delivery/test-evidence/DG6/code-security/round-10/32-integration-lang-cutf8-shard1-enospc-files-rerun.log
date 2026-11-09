@@ -1,0 +1,26 @@
+# 32-integration-lang-cutf8-shard1-enospc-files-rerun  started 2026-11-09T12:44:42Z  cwd=/var/tmp/mth-run.PgA8z9/claude-0/r/w1  node=v22.22.0  LANG=C.UTF-8 LC_ALL=<unset>  load=9.93 10.29 11.84  commit=cde6036571064c12c812d240b48e3289c78d7d48
+$ tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration apps/api/test/integration/launch/worker-parity.test.ts apps/api/test/integration/operations/log-redaction.test.ts apps/worker/test/integration/maintenance.test.ts packages/db/test/integration/load-dataset.test.ts apps/worker/test/integration/demo-reset-dev-binding.test.ts
+port-policy: PostgreSQL listening on port 32062 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.PgA8z9/claude-0/r/w1
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw9972j0_41e5c522 (server_encoding UTF8); applied 118 migrations to a fresh database
+ ✓ |integration| packages/db/test/integration/load-dataset.test.ts (9 tests) 29790ms
+   ✓ deploy/load/generate.mjs (ADR-0058 §2) > two runs with one seed give identical row hashes  9723ms
+   ✓ deploy/load/generate.mjs (ADR-0058 §2) > a different seed gives different rows  4010ms
+   ✓ mth-db refuses a load database (ADR-0058 §2) > bootstrap: exit 3, the exact refusal, nothing changed  6063ms
+   ✓ mth-db refuses a load database (ADR-0058 §2) > seed-demo: exit 3, the exact refusal, nothing changed (also with MTH_ENV=demo)  2820ms
+   ✓ mth-db refuses a load database (ADR-0058 §2) > an empty database without the marker is not refused by this rule (bootstrap still works)  5689ms
+ ✓ |integration| apps/api/test/integration/launch/worker-parity.test.ts (1 test) 1484ms
+   ✓ the worker launch-plan generator (parity with the API generator) > writes the same plan, tasks, test and audit events; a replay writes nothing  783ms
+ ✓ |integration| apps/api/test/integration/operations/log-redaction.test.ts (2 tests) 303ms
+ ✓ |integration| apps/worker/test/integration/maintenance.test.ts (2 tests) 3843ms
+ ✓ |integration| apps/worker/test/integration/demo-reset-dev-binding.test.ts (2 tests) 3925ms
+
+ Test Files  5 passed (5)
+      Tests  16 passed (16)
+   Start at  12:44:46
+   Duration  68.20s (transform 9.32s, setup 0ms, collect 21.60s, tests 39.34s, environment 0ms, prepare 183ms)
+
+exit=0  finished 2026-11-09T12:45:55Z  load=11.05 10.62 11.84

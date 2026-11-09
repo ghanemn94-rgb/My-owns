@@ -1,0 +1,46 @@
+# 55-mutant-M6-new-unredacted-serializer  started 2026-11-09T12:57:32Z  load=4.15 6.26 8.72  commit=cde6036571064c12c812d240b48e3289c78d7d48
+## mutation (git diff of w1, product paths):
+$ sh -c git add -N apps/api/src/modules/tasks/zz-cs-export.ts; PATH=/opt/nvm/versions/node/v24.21.0/bin:$PATH npx vitest run --configLoader runner --project unit-node apps/api/src/modules/tasks/notification-serializers.test.ts; r=$?; git reset -q apps/api/src/modules/tasks/zz-cs-export.ts; rm -f apps/api/src/modules/tasks/zz-cs-export.ts; exit $r
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.PgA8z9/claude-0/r/w1
+
+ ❯ |unit-node| apps/api/src/modules/tasks/notification-serializers.test.ts (3 tests | 1 failed) 81ms
+   × T-DG6-BE-Z14: every notification serializer applies the D-226 redaction > source sweep: a module that reads or builds a notification calls restrictedNotifications and restrictedNotificationView 69ms
+     → notification serializers without the D-226 redaction: expected [ Array(1) ] to deeply equal []
+   ✓ T-DG6-BE-Z14: every notification serializer applies the D-226 redaction > contract sweep: exactly the redacted operations return a notification shape 11ms
+   ✓ T-DG6-BE-Z14: every notification serializer applies the D-226 redaction > the redacted view: inbox.restricted, params {}, the transformation home (else My Work), the marker; other fields kept 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-node| apps/api/src/modules/tasks/notification-serializers.test.ts > T-DG6-BE-Z14: every notification serializer applies the D-226 redaction > source sweep: a module that reads or builds a notification calls restrictedNotifications and restrictedNotificationView
+AssertionError: notification serializers without the D-226 redaction: expected [ Array(1) ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   "modules/tasks/zz-cs-export.ts (decision: false, view: false)",[39m
+[31m+ ][39m
+
+ ❯ apps/api/src/modules/tasks/notification-serializers.test.ts:69:77
+     67|       if (!decides || !redacts) missing.push(`${rel} (decision: ${deci…
+     68|     }
+     69|     expect(missing, "notification serializers without the D-226 redact…
+       |                                                                             ^
+     70|     // The known serializers are found by the sweep (a sweep that matc…
+     71|     expect(touching).toEqual(expect.arrayContaining(["modules/tasks/ro…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed (3)
+   Start at  12:57:33
+   Duration  3.08s (transform 1.55s, setup 0ms, collect 2.68s, tests 81ms, environment 0ms, prepare 104ms)
+
+exit=1  finished 2026-11-09T12:57:36Z
+restored: 0 changed paths

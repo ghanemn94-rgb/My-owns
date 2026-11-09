@@ -1,0 +1,25 @@
+## 2026-11-09T12:38:34Z node v24.21.0 LANG=unset LC_ALL=unset load 10.28 10.06 12.53
+## cmd: QA_PG_PORT=32120 MTH_PORT_POOL=32120-32129 tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration apps/api/test/integration/benefits/measurements.test.ts
+port-policy: PostgreSQL listening on port 32120 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.8fgEPl/claude-0/c
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw98z60p_044a29f9 (server_encoding UTF8); applied 118 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/benefits/measurements.test.ts (12 tests) 4442ms
+   ✓ create, read, list (ADR-0030 §2) > BO records a draft: 201, Location, ETag, basis, one audit event; list newest first; AUD reads  470ms
+   ✓ create, read, list (ADR-0030 §2) > the §11 refusals: step, value shape, unmonetised, period taken, period range, unknown evidence  484ms
+   ✓ submission (REQ-S08-016, REQ-S12-014 API half) > submit needs the period and evidence; If-Match 428/409; one audit event and one outbox event; pending only  329ms
+   ✓ submission (REQ-S08-016, REQ-S12-014 API half) > commit-time: a BO grant revoked while the submission waited is 403; still a draft  476ms
+   ✓ the formula engine and lineage (REQ-S08-004, REQ-S08-006, REQ-S08-008) > REQ-S08-006: after a formula change, an older measurement keeps its formula version reference  305ms
+
+ Test Files  1 passed (1)
+      Tests  12 passed (12)
+   Start at  12:38:38
+   Duration  27.14s (transform 9.10s, setup 0ms, collect 16.98s, tests 4.44s, environment 0ms, prepare 126ms)
+
+exit=0
+## end 2026-11-09T12:39:06Z

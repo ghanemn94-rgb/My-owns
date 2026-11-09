@@ -16320,14 +16320,44 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG6/round-8/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "OPEN",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-08T19:10:00Z",
           "status": "OPEN",
           "note": "Raised by code-security-reviewer in DG6 round 8 (T-DG6-REV-CS-R8) while testing D-225 open question 1 (a column, response or write path that references a sensitive record and that the inventory does not classify, or classifies wrongly). Reproduced on the real API with a disposable PostgreSQL; P1b uses the real POST /benefit-overlaps producer."
+        },
+        {
+          "at": "2026-11-09T13:05:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 10: PASS"
         }
-      ]
+      ],
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG6-T-DG6-REV-CS-R10-code-security-reviewer-20261109T104450Z-d0c4e8a6",
+          "session_id": "d0c4e8a6-d89e-4002-bddb-3c41ea85553d"
+        },
+        "at": "2026-11-09T13:05:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG6/code-security/round-10/42-repro-r8-F540-inbox-text.log",
+          "docs/delivery/test-evidence/DG6/code-security/round-10/45-probe-r10-digest.log",
+          "docs/delivery/test-evidence/DG6/code-security/round-10/repro/zz-cs-r8-inbox-text.test.ts",
+          "docs/delivery/test-evidence/DG6/code-security/round-10/repro/zz-cs-r10-digest.test.ts",
+          "docs/delivery/test-evidence/DG6/code-security/round-10/59-control-unmutated-integration.log",
+          "docs/delivery/test-evidence/DG6/code-security/round-10/59-control-unmutated-unit.log",
+          "docs/delivery/test-evidence/DG6/code-security/round-10/50-mutant-M1-digest-unredacted.log",
+          "docs/delivery/test-evidence/DG6/code-security/round-10/53-mutant-M4-mark-read-unredacted.log",
+          "docs/delivery/test-evidence/DG6/code-security/round-10/55-mutant-M6-new-unredacted-serializer.log",
+          "docs/delivery/test-evidence/DG6/code-security/round-10/57-mutant-M6B-shadowed-helpers.log",
+          "docs/delivery/test-evidence/DG6/code-security/round-10/mutants.sh",
+          "docs/delivery/test-evidence/DG6/code-security/round-10/60-source-checks.log"
+        ],
+        "note": "Verified on candidate sha256:56415aeea66a2aa11e721024ff0d3a2c0321f629f5e41fb2cc0c95c2c392d1b3 (source cde60365) in a disposable, complete clone with a disposable PostgreSQL, Node 22.22.0, LANG unset; all data SYNTHETIC. This entry also covers my interrupted round-9 observation 600 (the digest read is not redacted). It has no finding id of its own, and it is the same defect class: D-226 says 'every response that serializes a notification'. (1) I re-ran my round-8 reproduction zz-cs-r8-inbox-text.test.ts unchanged (log 42): 5/5 pass. P1 uses the real producer's Finance-validation shape: tl2 gets 404 on benefit B01 and on its Finance validation. GET /me/work-items, GET /me/inbox and POST /me/inbox/{id}/read all return inbox.restricted, params {}, the transformation home link and the marker, with 'P1 leaks (0)'. P1b uses the real POST /benefit-overlaps producer: the Finance recipient's inbox is redacted, with 'P1b leaks (0)'. P1c (a benefit-route notification): the list and mark-read are redacted. (2) I re-ran my round-9 digest probe unchanged (log 45, renamed zz-cs-r10-digest.test.ts). The real worker job runDigestWindow digests tl2's held notification. GET /me/notification-digests/{id} now returns the item as messageKey inbox.restricted, params {} and the home link, with 'leaks (0)'. In round 9 this probe failed, naming the hidden ids and the code B01. (3) In-tree tests, unmutated: inbox-restricted-z13, digest-restricted-z14 and the tokens z13/z14 pass 27/27 (log 59). The notification-serializer sweep and the editor tests pass (log 59-unit). The full integration suite passes in both locales (logs 30, 31, 32). (4) Mutants, each caught by assertions: M1, the digest decision is computed but not applied: digest-restricted-z14 and my digest probe fail, 2 of 6 (log 50). M4, markInboxNotificationRead is no longer redacted: inbox-restricted-z13 and my round-8 probe fail, 3 of 12 (log 53). M6, a new API module serializes NotificationDigestItem from inbox_notification without the helpers: the serializer sweep fails (log 55). M6B, the helper names are kept but shadowed by no-ops: the textual sweep passes, as I expected (it is a name heuristic), but digest-restricted-z14 fails (log 57). So a functional regression is caught even where the heuristic is fooled. (5) Source: every API module that reads inbox_notification is either in the sweep or listed with a reason (60-source-checks.log). The worker's channel fan-out applies the twin decision (restrictedForRecipient). The digest notification itself carries only {count}."
+      }
     },
     {
       "id": "F-DG6-541",
@@ -16351,14 +16381,40 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG6/round-8/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "OPEN",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-08T19:10:00Z",
           "status": "OPEN",
           "note": "Raised by code-security-reviewer in DG6 round 8 (T-DG6-REV-CS-R8) while challenging D-222/D-223 (the automation-condition re-save rule) as D-225 invites. Reproduced on the real API with a disposable PostgreSQL."
+        },
+        {
+          "at": "2026-11-09T13:05:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 10: PASS"
         }
-      ]
+      ],
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG6-T-DG6-REV-CS-R10-code-security-reviewer-20261109T104450Z-d0c4e8a6",
+          "session_id": "d0c4e8a6-d89e-4002-bddb-3c41ea85553d"
+        },
+        "at": "2026-11-09T13:05:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG6/code-security/round-10/41-repro-r8-F541-automation-resave.log",
+          "docs/delivery/test-evidence/DG6/code-security/round-10/repro/zz-cs-r8-automation-resave.test.ts",
+          "docs/delivery/test-evidence/DG6/code-security/round-10/43-probe-r10-token-stale.log",
+          "docs/delivery/test-evidence/DG6/code-security/round-10/repro/zz-cs-r10-token-stale.test.ts",
+          "docs/delivery/test-evidence/DG6/code-security/round-10/52-mutant-M3-unknown-token-stored.log",
+          "docs/delivery/test-evidence/DG6/code-security/round-10/59-control-unmutated-integration.log",
+          "docs/delivery/test-evidence/DG6/code-security/round-10/46-probe-r10-editor-e2e.log",
+          "docs/delivery/test-evidence/DG6/code-security/round-10/mutants.sh"
+        ],
+        "note": "Verified on candidate sha256:56415aee... (source cde60365), disposable clone and PostgreSQL, Node 22.22.0, LANG unset; SYNTHETIC data. (1) I re-ran my round-8 reproduction zz-cs-r8-automation-resave.test.ts unchanged (log 41): 1/1 pass. The not-admitted ADM_METHOD author sees [neq <PLAIN>, neq \"[restricted:1:2]\", eq high]. Removing condition 1 and PATCHing the rest, token included, answers 200 with the marker. The stored version keeps the hidden literal: 'hidden exclusion kept: true; marker text stored as a literal: false'. The admitted TO sees the real id. (2) Round-9 token probe, with its literals moved to the version-bound form (behaviour assertions unchanged; log 43, zz-cs-r10-token-stale.test.ts): T4 passes 4/4. The bare marker, a marker-like text and an unknown position are refused 422 restricted_marker_unknown. A token moved into an in-list keeps S. Marking Q sensitive or S visible between read and save keeps both. A token for a plain position resolves to that plain literal. (3) Mutant M3, an unknown token stored as a literal instead of refused: caught by automation-restricted-tokens-z13 (negative and positive cases) and z14 (d), 3 of 17 (log 52). Control: log 59. (4) The real browser on the production-initialized stack, en and ar (log 46): removing condition 1 in the editor keeps S stored, and no screen names S."
+      }
     },
     {
       "id": "F-DG6-560",
@@ -16382,14 +16438,46 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG6/round-8/qa-verifier.json",
       "owner": "backend-workflow-engineer",
-      "status": "OPEN",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-08T18:46:00Z",
           "status": "OPEN",
           "note": "Raised by qa-verifier in DG6 round 8 (T-DG6-REV-QA-R8) on candidate 6cda8b33: reproduced in the UI on the real demo stack in en and ar, and in an integration probe (P1-P3 fail, P0 control passes)."
+        },
+        {
+          "at": "2026-11-09T14:25:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 10: PASS"
         }
-      ]
+      ],
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG6-T-DG6-REV-QA-R10-qa-verifier-20261109T104450Z-094e31f2",
+          "session_id": "094e31f2-326f-47ba-9574-9adbccfc1823"
+        },
+        "at": "2026-11-09T14:25:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG6/qa/round-10/20-probe-token-resave.log",
+          "docs/delivery/test-evidence/DG6/qa/tests/round-10/zz-qa-dg6r10-condition-token-resave.test.ts",
+          "docs/delivery/test-evidence/DG6/qa/round-10/42-e2e-demo-rerun-alone-unset.log",
+          "docs/delivery/test-evidence/DG6/qa/round-10/43-e2e-demo-probe-bc-cutf8.log",
+          "docs/delivery/test-evidence/DG6/qa/round-10/40-e2e-demo-unset.log",
+          "docs/delivery/test-evidence/DG6/qa/round-10/41-e2e-demo-cutf8.log",
+          "docs/delivery/test-evidence/DG6/qa/tests/round-10/zz-qa-dg6r10-restricted-mywork-automation.spec.ts",
+          "docs/delivery/test-evidence/DG6/qa/round-10/21-mutant-M1-api.log",
+          "docs/delivery/test-evidence/DG6/qa/round-10/21-mutant-M2-api.log",
+          "docs/delivery/test-evidence/DG6/qa/round-10/22-mutant-W1-web.log",
+          "docs/delivery/test-evidence/DG6/qa/tests/round-10/mutants.py",
+          "docs/delivery/test-evidence/DG6/qa/round-10/shots/42-C2-rule-editor-after-second-save-en.png",
+          "docs/delivery/test-evidence/DG6/qa/round-10/shots/42-E-rule-editor-409-reapply-en.png",
+          "docs/delivery/test-evidence/DG6/qa/round-10/shots/42-E-rule-editor-409-reapply-ar.png"
+        ],
+        "note": "Re-verified adversarially on candidate 56415aee (source cde60365), after BE-Z13 (positional tokens, D-226/D-228 (1)) and BE-Z14 (version-bound tokens [restricted:<version>:<k>], editor reload, D-231). (1) Round-8 reproduction on the real API, disposable PostgreSQL (my probe zz-qa-dg6r10-condition-token-resave.test.ts, 18/18 pass): P0 control keeps both literals; P1 delete the first of two restricted literals stores [Y] (round 8 stored X); P2 delete the visible literal stores [Y] (round 8 stored the marker text); P3 drop the first in-list element stores [Y] (round 8 stored [X]); reorder, move into/out of an in-list, duplicate, grant/sensitivity changes between read and save, concurrent saves, forged tokens and ten successive saves through the served response keep every hidden literal in place; marker-like variants, unknown positions, the retired [restricted:k] and tokens of other versions are refused 422 with nothing stored. The F-DG6-580 class (a token reused across a save): the double save (P13), the 409 loser re-sending its draft with the refreshed If-Match (P8) and a stale token after a grant (P16) are each refused 422 automation_rule.restricted_token_stale and change nothing. (2) The round-8 UI reproduction on the real demo stack, chromium-en and chromium-ar (zz-qa-dg6r10-restricted-mywork-automation.spec.ts, run 42 alone: 10 passed; steps B-D also passed in runs 40 and 41): the author removes condition 1 in the editor and saves; the admitted TO reads [benefitId eq b2, severity eq critical] ('kept literal is the SECOND (intended)'), en and ar. New step C2: without a page reload the form has reloaded to the saved version (data-form-version 3, [restricted:3:1]) and a second save sends If-Match 3 with the current token; stored unchanged. New step E: a save after a concurrent save gets 409, the bilingual alert 'This rule changed after you opened it...' / 'تغيّرت هذه القاعدة بعد أن فتحتها...' (role=alert), the form reloads to version 5, axe clean; the re-applied save keeps b2. (3) Mutants in a disposable clone: M2 (ordinal pairing = the original F-DG6-560 defect) fails 22 tests, including my P1-P5b and the candidate's z13/z14/z12b re-save tests; M1 (version check removed = F-DG6-580) fails 8 (4 candidate z14 + my P8, P13, P14, P16); W1 (no editor reload after a save) fails the candidate's rule-editor-tokens-z14 'after a save the form reloads' in en and ar. Runs 40/41 failed step E only because my probe used the TO (no automation.configure) as the second writer (403); fixed in revision b and passed in run 42."
+      }
     },
     {
       "id": "F-DG6-561",
@@ -16408,14 +16496,38 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG6/round-8/qa-verifier.json",
       "owner": "frontend-ux-engineer",
-      "status": "OPEN",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-08T18:46:00Z",
           "status": "OPEN",
           "note": "Raised by qa-verifier in DG6 round 8 (T-DG6-REV-QA-R8) on candidate 6cda8b33 while checking the D-225 My Work and automation screens in en and ar."
+        },
+        {
+          "at": "2026-11-09T14:25:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 10: PASS"
         }
-      ]
+      ],
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG6-T-DG6-REV-QA-R10-qa-verifier-20261109T104450Z-094e31f2",
+          "session_id": "094e31f2-326f-47ba-9574-9adbccfc1823"
+        },
+        "at": "2026-11-09T14:25:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG6/qa/round-10/40-e2e-demo-unset.log",
+          "docs/delivery/test-evidence/DG6/qa/round-10/42-e2e-demo-rerun-alone-unset.log",
+          "docs/delivery/test-evidence/DG6/qa/round-10/23-mutant-L1-web.log",
+          "docs/delivery/test-evidence/DG6/qa/round-10/shots/42-A-my-work-TL-en.png",
+          "docs/delivery/test-evidence/DG6/qa/round-10/shots/42-A-my-work-TL-ar.png",
+          "docs/delivery/test-evidence/DG6/qa/round-10/shots/42-B-rule-editor-author-ar.png"
+        ],
+        "note": "Re-verified on candidate 56415aee. RestrictedRecordsLabel now takes scope 'total' | 'item'; every one of its 27 uses in apps/web/src (non-test) passes a scope explicitly, 'total' only on aggregates (dashboard and executive overview totals, a dashboard drill-down of a total, report sections whose totals include hidden rows, the benefits Totals) and 'item' on rows, links, conditions, My Work, the digest, failures and runs. On the real demo stack, en and ar (runs 40 and 42): the My Work restricted rows carry title and screen-reader text 'This item refers to a record you are not admitted to. The record and its values stay hidden.' / 'يشير هذا العنصر إلى سجل غير مسموح لك به، ويبقى السجل وقيمه مخفيين.' with data-restricted-scope=item, never the total text; the two automation condition labels carry the same item text; 360 px and 390 px show no horizontal overflow; axe clean. Mutant L1 (always the total text) fails 10 candidate tests in 4 files (p6-admin-screens 'the description fits a total or an item', fed, integrations, my-work), en and ar."
+      }
     },
     {
       "id": "F-DG6-580",
@@ -16444,12 +16556,84 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG6/round-9/domain-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "OPEN",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-09T07:00:00Z",
           "status": "OPEN",
           "note": "Raised in DG6 round 9 by domain-reviewer while challenging D-226/D-228 (1) as a rule author through the real editor, in EN and AR. Medium (D-192): a real integrity defect with a bounded effect, of the same class as F-DG6-520, on a different path (a token reused across a save rather than a single edit). The F-DG6-520 reproductions themselves are fixed and are verified CLOSED in this round's verifications sidecar. The repair spans the token contract in versions.ts and the editor's form state in RulePage.tsx; the frontend-ux-engineer may need to take the RulePage part."
+        },
+        {
+          "at": "2026-11-09T12:55:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 10: PASS"
+        },
+        {
+          "at": "2026-11-09T13:05:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 10: PASS"
+        }
+      ],
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG6-T-DG6-REV-CS-R10-code-security-reviewer-20261109T104450Z-d0c4e8a6",
+          "session_id": "d0c4e8a6-d89e-4002-bddb-3c41ea85553d"
+        },
+        "at": "2026-11-09T13:05:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG6/code-security/round-10/43-probe-r10-token-stale.log",
+          "docs/delivery/test-evidence/DG6/code-security/round-10/44-probe-r10-editor-stale-token.log",
+          "docs/delivery/test-evidence/DG6/code-security/round-10/46-probe-r10-editor-e2e.log",
+          "docs/delivery/test-evidence/DG6/code-security/round-10/repro/zz-cs-r10-token-stale.test.ts",
+          "docs/delivery/test-evidence/DG6/code-security/round-10/repro/zz-cs-r10-editor-stale-token.test.tsx",
+          "docs/delivery/test-evidence/DG6/code-security/round-10/repro/cs-r10-editor-tokens.spec.ts",
+          "docs/delivery/test-evidence/DG6/code-security/round-10/51-mutant-M2-token-version-unchecked.log",
+          "docs/delivery/test-evidence/DG6/code-security/round-10/54-mutant-M5-editor-no-reload.log",
+          "docs/delivery/test-evidence/DG6/code-security/round-10/56-mutant-M7-editor-no-reload-after-409.log",
+          "docs/delivery/test-evidence/DG6/code-security/round-10/mutants.sh"
+        ],
+        "note": "Recorded as my verification of round-9 observation 601, the same defect as F-DG6-580 (D-231). The domain reviewer raised F-DG6-580; I authored none of its repair. Candidate sha256:56415aee... (source cde60365). (1) API, my round-9 probe with its token literals moved to [restricted:<version>:<k>] and its behaviour assertions unchanged (log 43). In round 9, T1 to T3 failed; all now pass. T1, the editor flow of two saves of the same local draft: save 1 returns 200 and shows [restricted:2:1]; save 2, sending the stale [restricted:1:2] with If-Match 2, is refused 422 automation_rule.restricted_token_stale, and S is still stored. T2 has two hidden literals: the second save is 422, and S1 and S2 stay in place. T3 is the 409 path: a second tab removes condition 1, the author's save is 409, and the re-save of the same draft with the refreshed If-Match is 422 stale, with S kept. (2) Web unit, my round-9 jsdom probe with its literals moved (log 44): after save 1 the editor holds [restricted:3:1], and PATCH 2 sends If-Match \"3\" with [restricted:3:1]. In round 9 it re-sent [restricted:2] with If-Match 3. (3) A real browser, written by me for this round (log 46; repro/cs-r10-editor-tokens.spec.ts), production-initialized stack, chromium-en and chromium-ar, 2/2 pass. A, the double save: PATCH 1 (If-Match 1, [restricted:1:2]) returns 200, the form reloads to version 2 showing [restricted:2:1], PATCH 2 (If-Match 2, [restricted:2:1]) returns 200, and S and Q are both still stored, each once. B, the concurrent edit: a second session removes Q; the editor's save (If-Match 1) is 409. The bilingual changedReapply banner shows, and the form reloads to version 2 ([<P>, [restricted:2:2]]); the restricted label is on the token, not on P. The re-applied save (If-Match 2) returns 200 and stores [neq S]. No screen shows S's id or title. (4) Mutants: M2, the version check removed, is caught by z14 (a) to (d) and my T1 to T3, 7 of 9 (log 51). M5, the editor no longer reloading after a save, is caught by rule-editor-tokens-z14 (en and ar) and my jsdom probe (log 54). M7, no reload after a 409 or a stale 422, is caught, 4 of 7 (log 56)."
+      }
+    },
+    {
+      "id": "F-DG6-640",
+      "stage_id": "DG6",
+      "requirement": "REQ-S10-002",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "A D-231 restricted token names only a row-version number, not the rule version (row) it was issued from. A token copied from the published version of a rule (or from another rule) into a draft whose row version has the same number is resolved against the draft's positions, so the hidden literal it stood for is silently replaced by another hidden literal of the draft, while the editor shows 'Includes restricted records' / 'يشمل سجلات مقيدة' as if it had been restored",
+      "reproduction": "Candidate 56415aee (source cde60365). Production-initialized stack (apps/web/e2e/support/with-stack.sh), chromium-en and chromium-ar; probe docs/delivery/test-evidence/DG6/domain/round-10/probes/dom-r10-editor-tokens.spec.ts.txt part C; log probe-editor-tokens-run4.log. A synthetic ADM_METHOD author, not admitted to sensitive records, creates a transformation-scoped rule, version 1 = [benefitId neq P, neq S, neq H]. The TO marks S and H sensitive. Version 1 is published through the real state machine: a dry run (pass), submit, review by the TO, publish. Its row version is now 4. The author creates draft version 2, a server-side copy at row version 1. In the editor of version 2 the author clicks 'Remove condition 2' / 'حذف الشرط 2' (the S condition) and 'Save the draft' / 'حفظ المسودة', then saves twice more. The draft is now [P, H] at row version 4 and shows H as '[restricted:4:2]'. The published version 1 page shows S as the same text '[restricted:4:2]' (benefitId neq \"[restricted:4:2]\" plus the lock label). To restore 'exclude S', the only way open to an author who cannot see S, the author clicks 'Add a condition' in draft 2, chooses benefitId / neq, enters '[restricted:4:2]' as copied from version 1, and saves. API-level reproduction of the same sequence, and of the cross-rule variant (rule A's token for S pasted into rule B's draft at the same row version): probes/dom-r10-token-binding.test.ts.txt cases (i) and (j); logs probe-token-binding-run1.log, int-tokens-digest.log and node22-tokens.log (Node 24 and Node 22 identical).",
+      "expected": "ADR-0051 amendment D-231 part A: '<version> is the row version … of the rule version the token was issued from' and a token of another version 'is never resolved against another version's positions … So a hidden literal is never replaced by another literal'. The editor's contract (ContentEditor.tsx): 'Saving the token back, wherever the condition now sits, keeps the hidden value'. REQ-S10-002 and the F-DG6-520/580 expectation: a token the author saves must stand for the record it was shown for, or the save must be refused (422). A token issued from published version 1 (or from another rule) must therefore be refused in draft 2 (or resolve to S). It must never resolve to H.",
+      "actual": "PATCH If-Match 4 returns 200. Stored version 2 = [neq P, neq H, neq H] in both EN and AR. The exclusion of S is not restored, H is tested twice, and there is no warning and no 422. The editor reloads from the saved response and shows [P, '[restricted:5:2]', '[restricted:5:3]'] with two 'Includes restricted records' / 'يشمل سجلات مقيدة' labels, so the author has every reason to believe that S is excluded again (screens/en|ar/dom-r10-C4-draft-v2-token-pasted.png: two identical '[restricted:4:2]' values standing for different records; …-C5-draft-v2-after-save.png; …-C6-draft-v2-after-reload.png). The cross-rule API variant (i) stores [Q, H2, H2] for rule B where the author pasted rule A's token for S. Cause: resolveRestrictedTokens (apps/api/src/modules/automation/versions.ts) compares only the number <version> with the stored row version. Row versions are small per-row counters, so every version row of every rule issues the same token text for the same (version, position): a published version at 4 (create 1, submit 2, review 3, publish 4) and its new draft after three saves both issue '[restricted:4:k]'. The F-DG6-580 sequences (the same draft re-saved, or re-sent after a 409) are fixed. This is a different path, the class of F-DG6-520/580. Bounded: only rules whose literals name a sensitive record, and only when a token is entered by hand. Publishing needs a passing dry run and a reviewer. The audit trail records each change. No business approval or Finance value is affected. Suggested repair (implementer's choice): make the token identify its issuing row as well as its revision, for example a short HMAC or nonce over (version row id, row version, k), or [restricted:<versionNo>:<rowVersion>:<k>] checked against the path's versionNo and rule. Refuse 422 (restricted_token_stale or restricted_marker_unknown) any token that was not issued for the version row being replaced. Add API tests for the published-to-draft and cross-rule paste.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-10/probe-editor-tokens-run4.log",
+        "docs/delivery/test-evidence/DG6/domain/round-10/probes/dom-r10-editor-tokens.spec.ts.txt",
+        "docs/delivery/test-evidence/DG6/domain/round-10/probe-token-binding-run1.log",
+        "docs/delivery/test-evidence/DG6/domain/round-10/int-tokens-digest.log",
+        "docs/delivery/test-evidence/DG6/domain/round-10/node22-tokens.log",
+        "docs/delivery/test-evidence/DG6/domain/round-10/probes/dom-r10-token-binding.test.ts.txt",
+        "docs/delivery/test-evidence/DG6/domain/round-10/screens/en/dom-r10-C1-published-v1.png",
+        "docs/delivery/test-evidence/DG6/domain/round-10/screens/en/dom-r10-C3-draft-v2-after-removing-S-and-3-saves.png",
+        "docs/delivery/test-evidence/DG6/domain/round-10/screens/en/dom-r10-C4-draft-v2-token-pasted.png",
+        "docs/delivery/test-evidence/DG6/domain/round-10/screens/en/dom-r10-C5-draft-v2-after-save.png",
+        "docs/delivery/test-evidence/DG6/domain/round-10/screens/ar/dom-r10-C1-published-v1.png",
+        "docs/delivery/test-evidence/DG6/domain/round-10/screens/ar/dom-r10-C4-draft-v2-token-pasted.png",
+        "docs/delivery/test-evidence/DG6/domain/round-10/screens/ar/dom-r10-C5-draft-v2-after-save.png",
+        "apps/api/src/modules/automation/versions.ts",
+        "packages/shared/src/schemas/automation.ts"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG6/round-10/domain-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-09T12:30:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG6 round 10 by domain-reviewer while challenging D-231 (the assignment asks for 'a token sequence that loses or misplaces a hidden literal after edits'). Medium (D-192): the same integrity class as F-DG6-520 and F-DG6-580, reached through the real editor and the real publish state machine in EN and AR. F-DG6-580's own reproductions (the same draft re-saved, and re-sent after a 409) are fixed, and are verified CLOSED in this round's verifications sidecar."
         }
       ]
     }

@@ -1,0 +1,105 @@
+# 57-mutant-M6B-shadowed-helpers  started 2026-11-09T12:57:36Z  load=4.15 6.26 8.72  commit=cde6036571064c12c812d240b48e3289c78d7d48
+## mutation (git diff of w1, product paths):
+ apps/api/src/modules/tasks/digests.ts | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+diff --git a/apps/api/src/modules/tasks/digests.ts b/apps/api/src/modules/tasks/digests.ts
+index df8896690..2a560fd20 100644
+--- a/apps/api/src/modules/tasks/digests.ts
++++ b/apps/api/src/modules/tasks/digests.ts
+@@ -14,7 +14,7 @@ import type { FastifyInstance } from "fastify";
+ import { z } from "zod";
+ import { principalOf } from "../access/index.ts";
+ import { iso, parse, parseQuery, problems, type ModuleDeps } from "../platform/index.ts";
+-import { restrictedNotifications, restrictedNotificationView } from "./deep-links.ts";
++const restrictedNotifications = async (..._a: unknown[]) => [] as boolean[]; const restrictedNotificationView = <T,>(v: T, ..._a: unknown[]) => v;
+ 
+ export const DIGEST_PATH = "/api/v1/me/notification-digests/:digestId";
+ /** The in-app link of a digest notification (relative; 0028 CHECK). */
+$ sh -c PATH=/opt/nvm/versions/node/v24.21.0/bin:$PATH npx vitest run --configLoader runner --project unit-node apps/api/src/modules/tasks/notification-serializers.test.ts; echo sweep-exit=$?; PATH=/opt/node22/bin:$PATH tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration apps/api/test/integration/tasks/digest-restricted-z14.test.ts
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.PgA8z9/claude-0/r/w1
+
+ ✓ |unit-node| apps/api/src/modules/tasks/notification-serializers.test.ts (3 tests) 84ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed (3)
+   Start at  12:57:37
+   Duration  3.22s (transform 1.69s, setup 0ms, collect 2.90s, tests 84ms, environment 0ms, prepare 55ms)
+
+sweep-exit=0
+port-policy: PostgreSQL listening on port 32070 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.PgA8z9/claude-0/r/w1
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw99np12_7cfa3690 (server_encoding UTF8); applied 118 migrations to a fresh database
+stdout | apps/api/test/integration/tasks/digest-restricted-z14.test.ts
+[BE-Z14-DIGEST] tl2 PUT /me/notification-preferences (quiet hours now, daily digest) -> 200
+
+stdout | apps/api/test/integration/tasks/digest-restricted-z14.test.ts
+[BE-Z14-DIGEST] hidden benefit B01 01995000-4401-7000-8000-000000000001; finance validation 01995000-4501-7000-8000-000000000001
+
+stdout | apps/api/test/integration/tasks/digest-restricted-z14.test.ts
+[BE-Z14-DIGEST] notification 01a1c063-17ae-71f2-8917-1b46ea9e44ec: delivery decision (state held, deliver_after 2026-11-09T15:58:00.000Z)
+
+stdout | apps/api/test/integration/tasks/digest-restricted-z14.test.ts
+[BE-Z14-DIGEST] runDigestWindow -> [{"userId":"01a1c063-1769-714c-bbc8-030642487481","outcome":"digested","digestId":"01a1c063-17e1-76b0-afe5-c96fb86a3a8a","count":1}]
+
+stdout | apps/api/test/integration/tasks/digest-restricted-z14.test.ts > T-DG6-BE-Z14: a digested notification about a restricted record (D-226, D-231) > the digest read applies the inbox redaction: inbox.restricted, params {}, the home link, the marker
+[BE-Z14-DIGEST] GET /me/notification-digests/{id} 200: {"id":"01a1c063-17e1-76b0-afe5-c96fb86a3a8a","windowStart":"2026-11-09T15:45:00.000Z","windowEnd":"2026-11-09T16:00:00.000Z","count":1,"items":[{"notificationId":"01a1c063-17ae-71f2-8917-1b46ea9e44ec","messageKey":"benefits.task.finance_validation_review","messageParams":{"periodEnd":"2026-07-31","benefitCode":"B01","periodStart":"2026-07-01"},"linkPath":"/transformations/01995000-0000-7000-8000-000000000001/finance-validations/01995000-4501-7000-8000-000000000001","createdAt":"2026-11-09T12:58:02.025Z"}]}
+
+stdout | apps/api/test/integration/tasks/digest-restricted-z14.test.ts > T-DG6-BE-Z14: a digested notification about a restricted record (D-226, D-231) > positive: after an explicit grant the same read shows the original text and link (access restored)
+[BE-Z14-DIGEST] TO grants tl2 the benefit -> 201 (TO user 01a1c063-170f-7069-9959-e36428309669)
+
+ ❯ |integration| apps/api/test/integration/tasks/digest-restricted-z14.test.ts (4 tests | 1 failed) 5384ms
+   ✓ T-DG6-BE-Z14: a digested notification about a restricted record (D-226, D-231) > control: tl2 cannot read the benefit or its Finance validation 18ms
+   × T-DG6-BE-Z14: a digested notification about a restricted record (D-226, D-231) > the digest read applies the inbox redaction: inbox.restricted, params {}, the home link, the marker 19ms
+     → expected { …(5) } to deeply equal { …(6) }
+   ✓ T-DG6-BE-Z14: a digested notification about a restricted record (D-226, D-231) > negative: another user's digest is 404 and names nothing 4ms
+   ✓ T-DG6-BE-Z14: a digested notification about a restricted record (D-226, D-231) > positive: after an explicit grant the same read shows the original text and link (access restored) 37ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/tasks/digest-restricted-z14.test.ts > T-DG6-BE-Z14: a digested notification about a restricted record (D-226, D-231) > the digest read applies the inbox redaction: inbox.restricted, params {}, the home link, the marker
+AssertionError: expected { …(5) } to deeply equal { …(6) }
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[2m    "createdAt": "2026-11-09T12:58:02.025Z",[22m
+[32m-   "includesRestrictedRecords": true,[39m
+[32m-   "linkPath": "/transformations/01995000-0000-7000-8000-000000000001",[39m
+[32m-   "messageKey": "inbox.restricted",[39m
+[32m-   "messageParams": {},[39m
+[31m+   "linkPath": "/transformations/01995000-0000-7000-8000-000000000001/finance-validations/01995000-4501-7000-8000-000000000001",[39m
+[31m+   "messageKey": "benefits.task.finance_validation_review",[39m
+[31m+   "messageParams": {[39m
+[31m+     "benefitCode": "B01",[39m
+[31m+     "periodEnd": "2026-07-31",[39m
+[31m+     "periodStart": "2026-07-01",[39m
+[31m+   },[39m
+[2m    "notificationId": "01a1c063-17ae-71f2-8917-1b46ea9e44ec",[22m
+[2m  }[22m
+
+ ❯ apps/api/test/integration/tasks/digest-restricted-z14.test.ts:175:18
+    173|     const item = (digest.body.items as Body[]).find((x) => x.notificat…
+    174|     expect(item).toBeDefined();
+    175|     expect(item).toEqual({
+       |                  ^
+    176|       notificationId: S.noteId,
+    177|       messageKey: "inbox.restricted",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+   Start at  12:57:42
+   Duration  19.84s (transform 5.78s, setup 0ms, collect 10.75s, tests 5.38s, environment 0ms, prepare 78ms)
+
+exit=1  finished 2026-11-09T12:58:02Z
+restored: 0 changed paths
