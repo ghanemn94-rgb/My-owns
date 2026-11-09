@@ -1,0 +1,119 @@
+# FINAL TREE: token suites + adapted domain probe + inventory/reach sweep + db catalogue/migrate; Mon Nov  9 15:18:41 UTC 2026
+port-policy: PostgreSQL listening on port 31414 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-z15
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw9ep1a3_74c8e017 (server_encoding UTF8); applied 119 migrations to a fresh database
+ ✓ |integration| packages/db/test/integration/migrate.test.ts (9 tests) 4480ms
+   ✓ mth-db migrate on a fresh database > applies every shipped migration, then reports up to date  2065ms
+stdout | apps/api/test/integration/zz-domain/dom-r10-token-binding.test.ts > DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (g) F-DG6-580 reproduction: the same form saved twice; the 2nd save is refused 422 stale and S stays
+DOM-R10 (g) shown [{"op":"neq","field":"benefitId","value":"<P>"},{"op":"neq","field":"benefitId","value":"[restricted:85f80ee53773828e6475ecad:2]"},{"op":"neq","field":"benefitId","value":"<Q>"}] version [33m1[39m flag [33mtrue[39m
+
+stdout | apps/api/test/integration/zz-domain/dom-r10-token-binding.test.ts > DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (g) F-DG6-580 reproduction: the same form saved twice; the 2nd save is refused 422 stale and S stays
+DOM-R10 (g) first save [33m200[39m [{"op":"neq","field":"benefitId","value":"[restricted:37aeade7a55b9360bc39709e:1]"},{"op":"neq","field":"benefitId","value":"<Q>"}] version [33m2[39m
+
+stdout | apps/api/test/integration/zz-domain/dom-r10-token-binding.test.ts > DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (g) F-DG6-580 reproduction: the same form saved twice; the 2nd save is refused 422 stale and S stays
+DOM-R10 (g) second save [33m422[39m automation_rule.restricted_token_stale /content/conditions/0/value detail: A condition value is a restricted-record token that was not issued for this version as it now stands (it comes from an earlier save, another version or another rule): reload the version and re-apply your change.
+
+stdout | apps/api/test/integration/zz-domain/dom-r10-token-binding.test.ts > DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (g) F-DG6-580 reproduction: the same form saved twice; the 2nd save is refused 422 stale and S stays
+DOM-R10 (g) stored after second save [{"op":"neq","field":"benefitId","value":"<S>"},{"op":"neq","field":"benefitId","value":"<Q>"}]
+
+stdout | apps/api/test/integration/zz-domain/dom-r10-token-binding.test.ts > DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (g2) a 409 from a concurrent tab, then the same draft re-sent with the refreshed If-Match: refused, S stays
+DOM-R10 (g2) tab1 stale If-Match [33m409[39m version_conflict
+
+stdout | apps/api/test/integration/zz-domain/dom-r10-token-binding.test.ts > DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (g2) a 409 from a concurrent tab, then the same draft re-sent with the refreshed If-Match: refused, S stays
+DOM-R10 (g2) tab1 resend with fresh If-Match [33m422[39m automation_rule.restricted_token_stale
+
+stdout | apps/api/test/integration/zz-domain/dom-r10-token-binding.test.ts > DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (g2) a 409 from a concurrent tab, then the same draft re-sent with the refreshed If-Match: refused, S stays
+DOM-R10 (g2) stored [{"op":"neq","field":"benefitId","value":"<S>"},{"op":"neq","field":"benefitId","value":"<Q>"}]
+
+stdout | apps/api/test/integration/zz-domain/dom-r10-token-binding.test.ts > DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (e) bare, retired, unknown and marker-like text are refused 422 and nothing is stored
+DOM-R10 (e) "[restricted]" status [33m422[39m code automation_rule.restricted_marker_unknown pointer /content/conditions/1/value
+
+stdout | apps/api/test/integration/zz-domain/dom-r10-token-binding.test.ts > DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (e) bare, retired, unknown and marker-like text are refused 422 and nothing is stored
+DOM-R10 (e) "[restricted:2]" status [33m422[39m code automation_rule.restricted_marker_unknown pointer /content/conditions/1/value
+
+stdout | apps/api/test/integration/zz-domain/dom-r10-token-binding.test.ts > DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (e) bare, retired, unknown and marker-like text are refused 422 and nothing is stored
+DOM-R10 (e) "[restricted:b53dcb82c412ba216559ba4c:9]" status [33m422[39m code automation_rule.restricted_marker_unknown pointer /content/conditions/1/value
+
+stdout | apps/api/test/integration/zz-domain/dom-r10-token-binding.test.ts > DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (e) bare, retired, unknown and marker-like text are refused 422 and nothing is stored
+DOM-R10 (e) "[restricted:b53dcb82c412ba216559ba4c:0]" status [33m422[39m code automation_rule.restricted_marker_unknown pointer /content/conditions/1/value
+
+stdout | apps/api/test/integration/zz-domain/dom-r10-token-binding.test.ts > DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (e) bare, retired, unknown and marker-like text are refused 422 and nothing is stored
+DOM-R10 (e) " [Restricted:b53dcb82c412ba216559ba4c:2] " status [33m422[39m code automation_rule.restricted_marker_unknown pointer /content/conditions/1/value
+
+stdout | apps/api/test/integration/zz-domain/dom-r10-token-binding.test.ts > DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (e) bare, retired, unknown and marker-like text are refused 422 and nothing is stored
+DOM-R10 (e) "[restricted:b53dcb82c412ba216559ba4c:2" status [33m422[39m code automation_rule.restricted_marker_unknown pointer /content/conditions/1/value
+
+stdout | apps/api/test/integration/zz-domain/dom-r10-token-binding.test.ts > DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (e) bare, retired, unknown and marker-like text are refused 422 and nothing is stored
+DOM-R10 (e) "[restricted:B53DCB82C412BA216559BA4C:2]" status [33m422[39m code automation_rule.restricted_marker_unknown pointer /content/conditions/1/value
+
+stdout | apps/api/test/integration/zz-domain/dom-r10-token-binding.test.ts > DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (e) bare, retired, unknown and marker-like text are refused 422 and nothing is stored
+DOM-R10 (e) "[restricted:000000000000000000000000:2]" status [33m422[39m code automation_rule.restricted_token_stale pointer /content/conditions/1/value
+
+stdout | apps/api/test/integration/zz-domain/dom-r10-token-binding.test.ts > DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (e) bare, retired, unknown and marker-like text are refused 422 and nothing is stored
+DOM-R10 (e) "[restricted:1:2]" status [33m422[39m code automation_rule.restricted_token_stale pointer /content/conditions/1/value
+
+stdout | apps/api/test/integration/zz-domain/dom-r10-token-binding.test.ts > DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (e) bare, retired, unknown and marker-like text are refused 422 and nothing is stored
+DOM-R10 (e) "[restricted:2:2]" status [33m422[39m code automation_rule.restricted_token_stale pointer /content/conditions/1/value
+
+stdout | apps/api/test/integration/zz-domain/dom-r10-token-binding.test.ts > DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (e) bare, retired, unknown and marker-like text are refused 422 and nothing is stored
+DOM-R10 (e) "[restricted:8:2]" status [33m422[39m code automation_rule.restricted_token_stale pointer /content/conditions/1/value
+
+stdout | apps/api/test/integration/zz-domain/dom-r10-token-binding.test.ts > DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (e) bare, retired, unknown and marker-like text are refused 422 and nothing is stored
+DOM-R10 (e) create with a token [33m422[39m automation_rule.restricted_marker_unknown
+
+stdout | apps/api/test/integration/zz-domain/dom-r10-token-binding.test.ts > DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (f) a grant between read and save keeps S
+DOM-R10 (f) save [33m200[39m [{"op":"neq","field":"benefitId","value":"<H>"},{"op":"neq","field":"benefitId","value":"<Q>"}]
+
+stdout | apps/api/test/integration/zz-domain/dom-r10-token-binding.test.ts > DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (i) CROSS-RULE: a token copied from rule A into rule B's draft at the same row version is refused or keeps S
+DOM-R10 (i) rule A shown [{"op":"neq","field":"benefitId","value":"<P>"},{"op":"neq","field":"benefitId","value":"[restricted:5f1bcad7edb149fd0fe6d4a1:2]"}] v [33m1[39m | rule B shown [{"op":"neq","field":"benefitId","value":"<Q>"},{"op":"neq","field":"benefitId","value":"[restricted:832f0c036ccca74ddc9241d9:2]"}] v [33m1[39m
+DOM-R10 (i) token of S copied from A: [restricted:5f1bcad7edb149fd0fe6d4a1:2] | B's own token of H2: [restricted:832f0c036ccca74ddc9241d9:2]
+
+stdout | apps/api/test/integration/zz-domain/dom-r10-token-binding.test.ts > DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (i) CROSS-RULE: a token copied from rule A into rule B's draft at the same row version is refused or keeps S
+DOM-R10 (i) save B [33m422[39m automation_rule.restricted_token_stale response undefined flag [90mundefined[39m
+
+stdout | apps/api/test/integration/zz-domain/dom-r10-token-binding.test.ts > DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (i) CROSS-RULE: a token copied from rule A into rule B's draft at the same row version is refused or keeps S
+DOM-R10 (i) B stored [{"op":"neq","field":"benefitId","value":"<Q>"},{"op":"neq","field":"benefitId","value":"<H2>"}]
+
+stdout | apps/api/test/integration/zz-domain/dom-r10-token-binding.test.ts > DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (j) PUBLISHED -> DRAFT: a token copied from published v1 into draft v2 after positions shifted
+DOM-R10 (j) published v1 shown [{"op":"neq","field":"benefitId","value":"<P>"},{"op":"neq","field":"benefitId","value":"[restricted:331fd1ef7302adfd3324a218:2]"},{"op":"neq","field":"benefitId","value":"[restricted:331fd1ef7302adfd3324a218:3]"}] row version [33m4[39m status published
+
+stdout | apps/api/test/integration/zz-domain/dom-r10-token-binding.test.ts > DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (j) PUBLISHED -> DRAFT: a token copied from published v1 into draft v2 after positions shifted
+DOM-R10 (j) draft v2 shown [{"op":"neq","field":"benefitId","value":"<P>"},{"op":"neq","field":"benefitId","value":"[restricted:fbda0e8d0f8172663c5fb6bc:2]"},{"op":"neq","field":"benefitId","value":"[restricted:fbda0e8d0f8172663c5fb6bc:3]"}] row version [33m1[39m
+
+stdout | apps/api/test/integration/zz-domain/dom-r10-token-binding.test.ts > DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (j) PUBLISHED -> DRAFT: a token copied from published v1 into draft v2 after positions shifted
+DOM-R10 (j) draft v2 after removal and re-saves [{"op":"neq","field":"benefitId","value":"<P>"},{"op":"neq","field":"benefitId","value":"[restricted:4ca114838d4e84592e2f75d8:2]"}] row version [33m4[39m | v1 row version [33m4[39m
+
+stdout | apps/api/test/integration/zz-domain/dom-r10-token-binding.test.ts > DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (j) PUBLISHED -> DRAFT: a token copied from published v1 into draft v2 after positions shifted
+DOM-R10 (j) save v2 with v1's token [restricted:331fd1ef7302adfd3324a218:2] -> [33m422[39m automation_rule.restricted_token_stale response undefined flag [90mundefined[39m
+
+stdout | apps/api/test/integration/zz-domain/dom-r10-token-binding.test.ts > DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (j) PUBLISHED -> DRAFT: a token copied from published v1 into draft v2 after positions shifted
+DOM-R10 (j) v2 stored [{"op":"neq","field":"benefitId","value":"<P>"},{"op":"neq","field":"benefitId","value":"<H>"}]
+
+ ✓ |integration| apps/api/test/integration/zz-domain/dom-r10-token-binding.test.ts (6 tests) 2055ms
+   ✓ DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (g) F-DG6-580 reproduction: the same form saved twice; the 2nd save is refused 422 stale and S stays  304ms
+   ✓ DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (e) bare, retired, unknown and marker-like text are refused 422 and nothing is stored  328ms
+ ✓ |integration| apps/api/test/integration/access/automation-restricted-tokens-z15.test.ts (7 tests) 1579ms
+ ✓ |integration| apps/api/test/integration/access/automation-restricted-tokens-z13.test.ts (11 tests) 1346ms
+ ✓ |integration| apps/api/test/integration/access/automation-restricted-tokens-z14.test.ts (5 tests) 1124ms
+ ✓ |integration| apps/api/test/integration/access/sensitive-reference-pending-z12b.test.ts (7 tests) 1065ms
+ ✓ |integration| packages/db/test/integration/catalogue.test.ts (40 tests) 167ms
+stdout | apps/api/test/integration/access/sensitive-reference-inventory.test.ts > T-DG6-BE-Z12: the sensitive-reference inventory matches the schema (F-DG6-480 class) > every reference column of the catalog is classified, with its kind, and no row is stale
+[BE-Z12 inventory] catalog: fk=54 uuid=59 json=84 array=2 text=77
+
+stdout | apps/api/test/integration/access/sensitive-reference-inventory.test.ts > T-DG6-BE-Z12: the sensitive-reference inventory matches the schema (F-DG6-480 class) > every operation, exercise and status is real
+[BE-Z12 inventory] redacted=60 holder-restricted=54 cannot-name=135 D-219=2 not-served=22 own-input=3
+
+ ✓ |integration| apps/api/test/integration/access/sensitive-reference-inventory.test.ts (2 tests) 88ms
+
+ Test Files  8 passed (8)
+      Tests  87 passed (87)
+   Start at  15:18:43
+   Duration  31.74s (transform 4.63s, setup 0ms, collect 16.37s, tests 11.90s, environment 0ms, prepare 56ms)
+
+EXIT=0

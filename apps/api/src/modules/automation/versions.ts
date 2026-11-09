@@ -13,12 +13,14 @@
 // missing, 409 stale); one audit event per row written, in the same transaction; no remote I/O. A version's content
 // changes only while it is a draft; published versions never change (the 0074 guard refuses it again). A configuration
 // review of a rule version is not a business approval, and no rule can automate one (REQ-S12-026).
-import { createHash } from "node:crypto";
+import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 import { sql, type AutomationRuleRow, type AutomationRuleVersionRow, type DbOrTx, type Tx } from "@mth/db";
 import { APPROVAL_CATEGORIES, PERMISSIONS, PROBLEM_TYPES, type Permission } from "@mth/shared";
 import {
   AUTOMATION_DECIMAL_PATTERN,
   AUTOMATION_RESTRICTED_TOKEN_PATTERN,
+  AUTOMATION_RESTRICTED_TOKEN_RETIRED_PATTERN,
+  AUTOMATION_RESTRICTED_TOKEN_TAG_HEX_LENGTH,
   automationRestrictedToken,
   automationRuleVersionCreate,
   automationRuleVersionUpdate,
@@ -97,8 +99,9 @@ export const automationRefusals = {
         },
       ],
     }),
-  // T-DG6-BE-Z14 (D-231, F-DG6-580): a token issued from another version of the draft is never resolved against this
-  // version's positions; the writer must reload the version and re-apply the change.
+  // T-DG6-BE-Z14, T-DG6-BE-Z15 (D-231, D-233; F-DG6-580, F-DG6-640): a token issued by another version row, another
+  // rule or another row version is never resolved against this version's positions; the writer must reload the
+  // version and re-apply the change.
   restrictedTokenStale: (pointer: string) =>
     new HttpProblem({
       status: 422,
@@ -106,12 +109,12 @@ export const automationRefusals = {
       code: "automation_rule.restricted_token_stale",
       title: "Business rule violated",
       detail:
-        "A condition value is a restricted-record token issued from an earlier version of this draft. The rule changed since it was read: reload the version and re-apply your change.",
+        "A condition value is a restricted-record token that was not issued for this version as it now stands (it comes from an earlier save, another version or another rule): reload the version and re-apply your change.",
       errors: [
         {
           pointer,
           code: "automation_rule.restricted_token_stale",
-          message: "Restricted-record token issued from another version of this draft.",
+          message: "Restricted-record token not issued for this version as it now stands.",
         },
       ],
     }),
@@ -401,27 +404,61 @@ function mapLiteralsAt(
 }
 
 /**
- * T-DG6-BE-Z12B, T-DG6-BE-Z13, T-DG6-BE-Z13C (F-DG6-480, F-DG6-520/541/560; D-218, D-222, D-226, D-228 (1);
- * ADR-0051 §2): a rule condition may compare a field (`benefitId`, for one) to a literal uuid. For each set of
- * conditions, every literal (a string value, or an element of an `in` list) that contains the id of a sensitive record,
- * or of a child that carries one's values, the principal is not admitted to is shown as the opaque token
- * `[restricted:<version>:<k>]` (`<version>` = the row version the set was read at, D-231; k = the literal's 1-based
- * position among **all** literals of the stored version, D-228 (1)), in place, and `restricted` is true. `tokens` maps each token shown back to its stored literal (never serialized). The
- * stored conditions, the content hash and the audit trail are unchanged. One policy decision for the whole batch.
+ * T-DG6-BE-Z15 (F-DG6-640; D-233; ADR-0051 §2 amendment D-231 part A): the rule-version row a restricted token is
+ * issued from. `restricted_token_key` is the row's own secret key (0127: 32 random bytes drawn at insert, immutable,
+ * never served, audited or logged).
+ */
+export interface RestrictedTokenIssuer {
+  readonly id: string;
+  readonly version: number;
+  readonly restricted_token_key: Buffer;
+}
+
+const RESTRICTED_TOKEN_TAG_DOMAIN = "mth.automation.restricted-token.v1";
+
+/**
+ * T-DG6-BE-Z15 (D-233): the issuer tag of a token, the first 96 bits (24 lowercase hex digits) of
+ * HMAC-SHA256(row key, domain LF row id LF row version). It changes with every revision of the row and differs between
+ * rows (each has its own key, and the id is in the message), so a token names the row and the revision it was issued
+ * from. Without the key it cannot be computed or checked, and it discloses neither the row id nor any literal (HMAC is
+ * a pseudo-random function of its message). 96 bits make an accidental match between two issuers negligible.
+ */
+export function restrictedTokenTag(issuer: RestrictedTokenIssuer): string {
+  return createHmac("sha256", issuer.restricted_token_key)
+    .update(`${RESTRICTED_TOKEN_TAG_DOMAIN}\n${issuer.id}\n${issuer.version}`)
+    .digest("hex")
+    .slice(0, AUTOMATION_RESTRICTED_TOKEN_TAG_HEX_LENGTH);
+}
+
+/** Constant-time comparison of two issuer tags (both are 24 hex digits when they reach here). */
+const sameTag = (a: string, b: string): boolean =>
+  a.length === b.length && timingSafeEqual(Buffer.from(a, "latin1"), Buffer.from(b, "latin1"));
+
+/**
+ * T-DG6-BE-Z12B, T-DG6-BE-Z13, T-DG6-BE-Z13C, T-DG6-BE-Z15 (F-DG6-480, F-DG6-520/541/560, F-DG6-640; D-218, D-222,
+ * D-226, D-228 (1), D-233; ADR-0051 §2): a rule condition may compare a field (`benefitId`, for one) to a literal uuid.
+ * For each set of conditions, every literal (a string value, or an element of an `in` list) that contains the id of a
+ * sensitive record, or of a child that carries one's values, the principal is not admitted to is shown as the opaque
+ * token `[restricted:<tag>:<k>]` (`<tag>` = the issuer tag of the row the set was read from, at the row version it was
+ * read at, D-233; k = the literal's 1-based position among **all** literals of the stored version, D-228 (1)), in place,
+ * and `restricted` is true. `tokens` maps each token shown back to its stored literal (never serialized). The stored
+ * conditions, the content hash and the audit trail are unchanged. One policy decision for the whole batch.
  */
 export async function redactConditionLiterals(
   db: DbOrTx,
   principal: Principal,
-  sets: readonly { readonly conditions: readonly AutomationCondition[]; readonly version: number }[],
+  sets: readonly { readonly conditions: readonly AutomationCondition[]; readonly issuer: RestrictedTokenIssuer }[],
 ): Promise<{ conditions: AutomationCondition[]; restricted: boolean; tokens: Map<string, string> }[]> {
   const hidden = await restrictedIdsAmong(db, principal, [...uuidsIn(sets.map((x) => x.conditions))]);
   const isHidden = (v: string) => [...uuidsIn(v)].some((id) => hidden.has(id));
-  return sets.map(({ conditions, version }) => {
+  return sets.map(({ conditions, issuer }) => {
     const tokens = new Map<string, string>();
     if (hidden.size === 0) return { conditions: [...conditions], restricted: false, tokens };
+    let tag: string | undefined;
     const out = mapLiteralsAt(conditions, (v, k) => {
       if (!isHidden(v)) return v;
-      const token = automationRestrictedToken(version, k);
+      tag ??= restrictedTokenTag(issuer);
+      const token = automationRestrictedToken(tag, k);
       tokens.set(token, v);
       return token;
     });
@@ -432,16 +469,17 @@ export async function redactConditionLiterals(
 /**
  * T-DG6-BE-Z13 — the re-save rule of D-226 (supersedes the ordinal pairing of D-222 (2)). Every literal of the sent
  * conditions that looks like restricted marker text must be a token the writer is shown for the stored version
- * (`stored`; null on a rule create, where no token exists). A token issued from another version (D-231) is refused 422
- * `automation_rule.restricted_token_stale`. A token of the stored version is replaced by the stored literal at the
- * token's position (D-228 (1)), wherever the
- * condition now sits (any condition, any list position, any order). A token left out is simply removed. An unknown
- * token, the bare marker text `[restricted]`, or any other marker-like text is refused with 422
- * `automation_rule.restricted_marker_unknown` (en/ar problem text), so marker text is never stored as a literal. A
- * writer admitted to the record is never shown a token and edits the literal freely.
+ * (`stored`: the row being replaced, at the If-Match version; null on a rule create, where no token exists). A token
+ * whose issuer tag is not the tag of that row at that row version (another version row, another rule, another row
+ * version; D-231, D-233), or a token in the retired D-231 form `[restricted:<version>:<k>]`, is refused 422
+ * `automation_rule.restricted_token_stale`. A token of the stored row is replaced by the stored literal at the token's
+ * position (D-228 (1)), wherever the condition now sits (any condition, any list position, any order). A token left
+ * out is simply removed. An unknown position, the bare marker text `[restricted]`, or any other marker-like text is
+ * refused with 422 `automation_rule.restricted_marker_unknown` (en/ar problem text), so marker text is never stored as
+ * a literal. A writer admitted to the record is never shown a token and edits the literal freely.
  */
 export function resolveRestrictedTokens(
-  stored: { readonly conditions: readonly AutomationCondition[]; readonly version: number } | null,
+  stored: { readonly conditions: readonly AutomationCondition[]; readonly issuer: RestrictedTokenIssuer } | null,
   sent: AutomationRuleContentInput,
 ): AutomationRuleContentInput {
   const conditions = sent.conditions ?? [];
@@ -455,15 +493,21 @@ export function resolveRestrictedTokens(
   // version, not only the ones hidden from the writer now. A record that became hidden after the read keeps the other
   // tokens in place (the writer sends its plain id back, D-223); a record that became visible after the read is still
   // reached by the token the writer holds. Resolving a position the writer can read discloses nothing.
-  // D-231 (F-DG6-580): a token names the version it was issued from. Only a token of the version being replaced (the
-  // caller has already checked If-Match against `stored.version`) is resolved; a token of any other version is refused
-  // and never resolved against this version's positions, so a hidden literal is never swapped for another literal.
+  // D-231, D-233 (F-DG6-580, F-DG6-640): a token names the row and the revision it was issued from (its issuer tag).
+  // Only a token of the row being replaced, at the version being replaced (the caller has already checked If-Match
+  // against `stored.issuer.version`), is resolved; a token of any other row or revision is refused and never resolved
+  // against this row's positions, so a hidden literal is never swapped for another literal.
   const positions = stored === null ? new Map<number, string>() : literalPositions(stored.conditions);
+  const expected = stored === null ? null : restrictedTokenTag(stored.issuer);
   const merged = mapLiterals(conditions, (v, at) => {
     if (!looksLikeRestrictedMarker(v)) return v;
     const m = AUTOMATION_RESTRICTED_TOKEN_PATTERN.exec(v);
-    if (m === null || stored === null) throw automationRefusals.restrictedMarkerUnknown(at);
-    if (Number(m[1]) !== stored.version) throw automationRefusals.restrictedTokenStale(at);
+    if (expected === null) throw automationRefusals.restrictedMarkerUnknown(at);
+    if (m === null) {
+      if (AUTOMATION_RESTRICTED_TOKEN_RETIRED_PATTERN.test(v)) throw automationRefusals.restrictedTokenStale(at);
+      throw automationRefusals.restrictedMarkerUnknown(at);
+    }
+    if (!sameTag(m[1]!, expected)) throw automationRefusals.restrictedTokenStale(at);
     const literal = positions.get(Number(m[2]));
     if (literal === undefined) throw automationRefusals.restrictedMarkerUnknown(at);
     return literal;
@@ -548,7 +592,7 @@ export async function toRuleVersions(
   const shown = await redactConditionLiterals(
     db,
     principal,
-    rows.map((v) => ({ conditions: contentOfRow(v).conditions, version: v.version })),
+    rows.map((v) => ({ conditions: contentOfRow(v).conditions, issuer: v })),
   );
   const runs = await db
     .selectFrom("automation_dry_run")
@@ -768,10 +812,7 @@ async function updateVersion(
   const sent =
     body.content === undefined
       ? undefined
-      : resolveRestrictedTokens(
-          { conditions: contentOfRow(current).conditions, version: current.version },
-          body.content,
-        );
+      : resolveRestrictedTokens({ conditions: contentOfRow(current).conditions, issuer: current }, body.content);
   const content =
     sent === undefined
       ? contentOfRow(current)

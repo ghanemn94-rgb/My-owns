@@ -414,7 +414,7 @@ function ContentView({ version: v, catalogue }: { version: AutomationRuleVersion
 const loadDraft = (v: AutomationRuleVersion): ContentDraft =>
   toContentDraft(v.content as unknown as Parameters<typeof toContentDraft>[0]);
 
-/** A 409 (the version changed) or a 422 for a restricted token of an earlier version (D-231). */
+/** A 409 (the version changed) or a 422 for a restricted token not issued by this version as it now stands (D-231, D-233). */
 const isChangedSinceRead = (e: unknown): boolean =>
   e instanceof ApiError &&
   (e.status === 409 || (e.status === 422 && codeOf(e) === "automation_rule.restricted_token_stale"));
@@ -435,7 +435,7 @@ function EditContent({
   // can be chosen.
   const transformations = useAllTransformations({ sort: "code:asc" });
   // T-DG6-BE-Z14 (D-231, F-DG6-580): the form always holds the content of one served version, and saves with that
-  // version as If-Match, so the restricted tokens it sends (`[restricted:<version>:<k>]`) are those of the version they
+  // version as If-Match, so the restricted tokens it sends (`[restricted:<tag>:<k>]`, opaque, D-233) are those of the version they
   // replace. After a save it reloads from the saved version's response; after a 409 or a stale-token 422 it reloads the
   // current version and asks the author to re-apply the change. It never re-sends tokens of an earlier version.
   const [form, setForm] = useState<{ from: number; draft: ContentDraft }>(() => ({
