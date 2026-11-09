@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG6-740",
+      "stage_id": "DG6",
+      "requirement": "REQ-S20-014",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Rule editor: a 422 restricted_token_stale that is NOT a concurrent change (a token pasted from another rule or version, or one issued before 0127) is shown as 'This rule changed after you opened it' in en and ar",
+      "reproduction": "Real demo stack (e2e/support/with-demo-stack.sh, AUTH_MODE=dev), roaming.user.cm with a synthetic ADM_METHOD grant. Probe docs/delivery/test-evidence/DG6/qa/tests/round-11/zz-qa-dg6r11-restricted-mywork-automation.spec.ts step F, chromium-en and chromium-ar, locale unset (run 40) and C.UTF-8 (run 41): (1) draft rule A version 1 holds a condition whose literal names a benefit the author may not read, so the editor shows the issuer-bound token [restricted:<tagA>:1]; (2) a second rule B with a hidden literal is brought to the same row version as A's draft (the F-DG6-640 coincidence); (3) nobody else touches rule A; (4) in A's editor the author adds a condition and pastes B's token [restricted:<tagB>:1], then clicks 'Save the draft'.",
+      "expected": "The save is refused (422 automation_rule.restricted_token_stale). That is correct, and nothing is stored. The screen should then tell the author what happened: the value is a restricted-record token that was not issued for this version (it comes from another rule, another version or an earlier save). BE-Z15 corrected the en/ar problem texts to say exactly that (problems.automation_rule__restricted_token_stale). The screen should not claim that the rule was changed by someone else.",
+      "actual": "The editor maps every 422 restricted_token_stale to the same branch as a 409 (RulePage.tsx isChangedSinceRead). It shows the alert workflowsP5.rules.changedReapply: en 'This rule changed after you opened it. The form now shows the current version: re-apply your change, then save the draft again.' and ar 'تغيّرت هذه القاعدة بعد أن فتحتها. يعرض النموذج الآن الإصدار الحالي: أعد تطبيق تعديلك، ثم احفظ المسودة مرة أخرى.' It also reloads the form, which discards the author's other unsaved edits along with the pasted token. Rule A did not change: its row version is the same before and after, and the stored conditions are unchanged. So the alert states something false, and the corrected problem text is never shown in the editor. The same text appears for a token issued before migration 0127 (D-233), where the rule did not change either. No hidden literal is lost, swapped or disclosed: the next save sends only A's own token and stores A's own literal (asserted in the probe). The impact is a misleading message and lost unsaved form edits in an edge case the editor never offers (it never copies a token between rules). Hence Low, not a data or access defect. The candidate's own web test rule-editor-tokens-z14.test.tsx (Z15 case) asserts this changedReapply text for the pasted-token case, so the behaviour is as built, not a regression.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-11/40-e2e-demo-unset.log",
+        "docs/delivery/test-evidence/DG6/qa/round-11/41-e2e-demo-cutf8.log",
+        "docs/delivery/test-evidence/DG6/qa/round-11/shots/F-rule-editor-foreign-token-en.png",
+        "docs/delivery/test-evidence/DG6/qa/round-11/shots/F-rule-editor-foreign-token-ar.png",
+        "docs/delivery/test-evidence/DG6/qa/tests/round-11/zz-qa-dg6r11-restricted-mywork-automation.spec.ts",
+        "apps/web/src/pages/automation/RulePage.tsx"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG6/round-11/qa-verifier.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-09T22:40:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG6 round 11 on candidate c45d73b8 (source 33db1a46). Low, not mandatory; not blocking in my judgement. Reproduced on the real demo stack in en and ar under both locale settings."
+        }
+      ]
+    }
+  ]
+}
