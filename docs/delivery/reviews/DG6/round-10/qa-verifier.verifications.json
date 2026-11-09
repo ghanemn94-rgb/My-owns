@@ -1,0 +1,40 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG6-560",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Re-verified adversarially on candidate 56415aee (source cde60365), after BE-Z13 (positional tokens, D-226/D-228 (1)) and BE-Z14 (version-bound tokens [restricted:<version>:<k>], editor reload, D-231). (1) Round-8 reproduction on the real API, disposable PostgreSQL (my probe zz-qa-dg6r10-condition-token-resave.test.ts, 18/18 pass): P0 control keeps both literals; P1 delete the first of two restricted literals stores [Y] (round 8 stored X); P2 delete the visible literal stores [Y] (round 8 stored the marker text); P3 drop the first in-list element stores [Y] (round 8 stored [X]); reorder, move into/out of an in-list, duplicate, grant/sensitivity changes between read and save, concurrent saves, forged tokens and ten successive saves through the served response keep every hidden literal in place; marker-like variants, unknown positions, the retired [restricted:k] and tokens of other versions are refused 422 with nothing stored. The F-DG6-580 class (a token reused across a save): the double save (P13), the 409 loser re-sending its draft with the refreshed If-Match (P8) and a stale token after a grant (P16) are each refused 422 automation_rule.restricted_token_stale and change nothing. (2) The round-8 UI reproduction on the real demo stack, chromium-en and chromium-ar (zz-qa-dg6r10-restricted-mywork-automation.spec.ts, run 42 alone: 10 passed; steps B-D also passed in runs 40 and 41): the author removes condition 1 in the editor and saves; the admitted TO reads [benefitId eq b2, severity eq critical] ('kept literal is the SECOND (intended)'), en and ar. New step C2: without a page reload the form has reloaded to the saved version (data-form-version 3, [restricted:3:1]) and a second save sends If-Match 3 with the current token; stored unchanged. New step E: a save after a concurrent save gets 409, the bilingual alert 'This rule changed after you opened it...' / 'تغيّرت هذه القاعدة بعد أن فتحتها...' (role=alert), the form reloads to version 5, axe clean; the re-applied save keeps b2. (3) Mutants in a disposable clone: M2 (ordinal pairing = the original F-DG6-560 defect) fails 22 tests, including my P1-P5b and the candidate's z13/z14/z12b re-save tests; M1 (version check removed = F-DG6-580) fails 8 (4 candidate z14 + my P8, P13, P14, P16); W1 (no editor reload after a save) fails the candidate's rule-editor-tokens-z14 'after a save the form reloads' in en and ar. Runs 40/41 failed step E only because my probe used the TO (no automation.configure) as the second writer (403); fixed in revision b and passed in run 42.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-10/20-probe-token-resave.log",
+        "docs/delivery/test-evidence/DG6/qa/tests/round-10/zz-qa-dg6r10-condition-token-resave.test.ts",
+        "docs/delivery/test-evidence/DG6/qa/round-10/42-e2e-demo-rerun-alone-unset.log",
+        "docs/delivery/test-evidence/DG6/qa/round-10/43-e2e-demo-probe-bc-cutf8.log",
+        "docs/delivery/test-evidence/DG6/qa/round-10/40-e2e-demo-unset.log",
+        "docs/delivery/test-evidence/DG6/qa/round-10/41-e2e-demo-cutf8.log",
+        "docs/delivery/test-evidence/DG6/qa/tests/round-10/zz-qa-dg6r10-restricted-mywork-automation.spec.ts",
+        "docs/delivery/test-evidence/DG6/qa/round-10/21-mutant-M1-api.log",
+        "docs/delivery/test-evidence/DG6/qa/round-10/21-mutant-M2-api.log",
+        "docs/delivery/test-evidence/DG6/qa/round-10/22-mutant-W1-web.log",
+        "docs/delivery/test-evidence/DG6/qa/tests/round-10/mutants.py",
+        "docs/delivery/test-evidence/DG6/qa/round-10/shots/42-C2-rule-editor-after-second-save-en.png",
+        "docs/delivery/test-evidence/DG6/qa/round-10/shots/42-E-rule-editor-409-reapply-en.png",
+        "docs/delivery/test-evidence/DG6/qa/round-10/shots/42-E-rule-editor-409-reapply-ar.png"
+      ]
+    },
+    {
+      "finding_id": "F-DG6-561",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Re-verified on candidate 56415aee. RestrictedRecordsLabel now takes scope 'total' | 'item'; every one of its 27 uses in apps/web/src (non-test) passes a scope explicitly, 'total' only on aggregates (dashboard and executive overview totals, a dashboard drill-down of a total, report sections whose totals include hidden rows, the benefits Totals) and 'item' on rows, links, conditions, My Work, the digest, failures and runs. On the real demo stack, en and ar (runs 40 and 42): the My Work restricted rows carry title and screen-reader text 'This item refers to a record you are not admitted to. The record and its values stay hidden.' / 'يشير هذا العنصر إلى سجل غير مسموح لك به، ويبقى السجل وقيمه مخفيين.' with data-restricted-scope=item, never the total text; the two automation condition labels carry the same item text; 360 px and 390 px show no horizontal overflow; axe clean. Mutant L1 (always the total text) fails 10 candidate tests in 4 files (p6-admin-screens 'the description fits a total or an item', fed, integrations, my-work), en and ar.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-10/40-e2e-demo-unset.log",
+        "docs/delivery/test-evidence/DG6/qa/round-10/42-e2e-demo-rerun-alone-unset.log",
+        "docs/delivery/test-evidence/DG6/qa/round-10/23-mutant-L1-web.log",
+        "docs/delivery/test-evidence/DG6/qa/round-10/shots/42-A-my-work-TL-en.png",
+        "docs/delivery/test-evidence/DG6/qa/round-10/shots/42-A-my-work-TL-ar.png",
+        "docs/delivery/test-evidence/DG6/qa/round-10/shots/42-B-rule-editor-author-ar.png"
+      ]
+    }
+  ]
+}
