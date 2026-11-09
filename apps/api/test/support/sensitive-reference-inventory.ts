@@ -809,7 +809,7 @@ export const SENSITIVE_REFERENCE_INVENTORY: readonly InventoryRow[] = [
     ],
     before: "served raw to rule authors (the version content and the rule's readable summary)",
     status: "redacted",
-    fix: "D-222 (T-DG6-BE-Z12B): automation/versions.ts redactConditionLiterals -> each hidden literal shown as AUTOMATION_RESTRICTED_LITERAL in place, the summary as 'a restricted record' / 'سجل مقيد', + marker (versions and rules.ts presentRule); re-save: keepRestrictedLiterals keeps the stored literal when the marker comes back in the same condition and position. Web: the rule screen shows the restricted label on the condition",
+    fix: "D-222, D-226, D-228 (1) (T-DG6-BE-Z12B, BE-Z13, BE-Z13C): automation/versions.ts shows each hidden literal as the token [restricted:k] (k = position among all literals of the version), + marker; re-save: resolveRestrictedTokens maps each token back to its literal; an unknown token or the bare marker text is refused 422 (automation_rule.restricted_marker_unknown).",
     exercise: `${Z12B}#automation_rule_version.conditions`,
   },
   cannot("automation_rule_version.parameters", "json", "numeric and text parameters of a starter"),

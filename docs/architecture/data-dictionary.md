@@ -3679,6 +3679,7 @@ The P1 migrations create three views, owned by `mth_owner`. `mth_app` has `SELEC
 - **Purpose:** One owned task in My Work with an i18n message and a relative deep link (REQ-S12-005, REQ-S03-008; ADR-0025 §4). The dedupe key makes a duplicate creation impossible (REQ-S16-005).
 - **Migration:** `0028_p4_calendar_jobs_work_items.sql`. **API module:** `tasks`. **Who writes:** `tasks/service.ts` `createWorkItemOnce` (domain services, job handlers); the assignee completes. **Lifecycle:** open → done | cancelled (final).
 - **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+- **Read-time rule (P6 round 8; no stored change):** `link_path` (redacted: any id in the link, including an action on a restricted corrective case). See "P6 read-time classifications after round 8" at the end of this file (added 2026-11-09, T-DG6-ARCH-17).
 
 | Column | Type | Null | Default | Column constraints |
 |---|---|---|---|---|
@@ -3728,6 +3729,7 @@ The P1 migrations create three views, owned by `mth_owner`. `mth_app` has `SELEC
 - **Purpose:** In-app reminder with a direct link (REQ-S12-005; ADR-0025 §4). No email or messaging channel in P4.
 - **Migration:** `0028_p4_calendar_jobs_work_items.sql`. **API module:** `tasks`. **Who writes:** `createWorkItemOnce`; the recipient marks it read. **Lifecycle:** unread → read (once).
 - **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+- **Read-time rule (P6 round 8; no stored change):** `link_path`, `message_params`, `target_record_id` (redacted). See "P6 read-time classifications after round 8" at the end of this file (added 2026-11-09, T-DG6-ARCH-17).
 
 | Column | Type | Null | Default | Column constraints |
 |---|---|---|---|---|
@@ -5964,6 +5966,7 @@ Written by T-DG4-ARCH-04 (solution-architect), 2026-10-09. Binding design: ADR-0
 - **Purpose:** A recovery plan / corrective-action case (REQ-PB-085, REQ-S12-016; ADR-0031 §5): at most one case that is not closed per source; one case ever per failed check; worker cases have no human author (service audit actor).
 - **Migration:** `0041_p4_raid_actions_corrective.sql`. **API module:** `raid`. **Who writes:** the worker consumers (kpi_deviation, benefit_variance, adoption_check, control_check); `corrective_action.manage` (TL, BO, FIN) for value_review cases and person updates. **Lifecycle:** open ⇄ in_progress; open | in_progress → closed (final; needs an owner).
 - **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+- **Read-time rule (P6 round 8; no stored change):** `source_scope_key` (redacted). See "P6 read-time classifications after round 8" at the end of this file (added 2026-11-09, T-DG6-ARCH-17).
 
 | Column | Type | Null | Default | Column constraints |
 |---|---|---|---|---|
@@ -10098,6 +10101,7 @@ Generated from the catalogue of a freshly migrated database by `docs/delivery/ha
 - **Purpose:** One version of a rule: triggers, conditions, actions, identity, service permissions, parameters, content hash, review and publication (REQ-S12-001, REQ-S12-002; ADR-0043 §1, §4).
 - **Migration:** `0074_p5_automation_engine.sql`. **API module:** `automation`. **Who writes:** `automation.configure` (content, submit, publish, discard), `automation.review` (review); starter v1 by migration. **Lifecycle:** draft → in_review → approved → published → superseded; discarded; content frozen outside draft; versioned.
 - **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+- **Read-time rule (P6 round 8; no stored change):** `conditions` (redacted: literals shown as `[restricted:k]` tokens). See "P6 read-time classifications after round 8" at the end of this file (added 2026-11-09, T-DG6-ARCH-17).
 
 | Column | Type | Null | Default | Column constraints |
 |---|---|---|---|---|
@@ -10193,6 +10197,7 @@ Generated from the catalogue of a freshly migrated database by `docs/delivery/ha
 - **Purpose:** One evaluation of one rule version for one trigger occurrence: identity, outcome, attempt, error (REQ-S12-001, REQ-S12-021; ADR-0043 §5).
 - **Migration:** `0074_p5_automation_engine.sql`. **API module:** `automation`. **Who writes:** the worker (service identity); retry by `automation.repair`. **Lifecycle:** running → succeeded | skipped | failed; failed → running (retry); versioned.
 - **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+- **Read-time rule (P6 round 8; no stored change):** `trigger_key`, `error_detail` (redacted). See "P6 read-time classifications after round 8" at the end of this file (added 2026-11-09, T-DG6-ARCH-17).
 
 | Column | Type | Null | Default | Column constraints |
 |---|---|---|---|---|
@@ -10245,6 +10250,7 @@ Generated from the catalogue of a freshly migrated database by `docs/delivery/ha
 - **Purpose:** The outcome of one action of one execution attempt with its idempotency key and produced record (REQ-S12-021; ADR-0043 §5).
 - **Migration:** `0074_p5_automation_engine.sql`. **API module:** `automation`. **Who writes:** the worker. **Lifecycle:** append-only.
 - **`mth_app` privileges:** INSERT, SELECT.
+- **Read-time rule (P6 round 8; no stored change):** `idempotency_key` (redacted). See "P6 read-time classifications after round 8" at the end of this file (added 2026-11-09, T-DG6-ARCH-17).
 
 | Column | Type | Null | Default | Column constraints |
 |---|---|---|---|---|
@@ -10318,6 +10324,7 @@ Generated from the catalogue of a freshly migrated database by `docs/delivery/ha
 - **Purpose:** The failure queue: failed rule executions and jobs with the original idempotency key and job data, retries and dismissal (REQ-S12-002, REQ-S12-020, REQ-S12-022; M0239; ADR-0043 §5).
 - **Migration:** `0074_p5_automation_engine.sql`. **API module:** `automation`. **Who writes:** the worker (capture, retry outcome); `automation.repair` / `job.repair` (retry, dismiss). **Lifecycle:** open → retrying → resolved | open; open → dismissed; versioned.
 - **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+- **Read-time rule (P6 round 8; no stored change):** `idempotency_key`, `error_message` (redacted). See "P6 read-time classifications after round 8" at the end of this file (added 2026-11-09, T-DG6-ARCH-17).
 
 | Column | Type | Null | Default | Column constraints |
 |---|---|---|---|---|
@@ -12692,6 +12699,7 @@ Written by T-DG6-ARCH-02 (ADR-0053, ADR-0054). The table sections below are gene
 - **Purpose:** One visible operational exception per source and failure class while active (REQ-S12-019, M0239; ADR-0053 §2).
 - **Migration:** `0101_p6_operations_service_identities.sql`. **API module:** `operations`. **Who writes:** the worker failure hook, the connector run, the freshness scan and the API heartbeat watch (actor service; lock 730305); acknowledge and resolve: `operations.acknowledge` (ADM_TECH, KDS). **Lifecycle:** open -> acknowledged | resolved; acknowledged -> resolved; resolved is final; one active row per (organization, dedup key); versioned and audited.
 - **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+- **Read-time rule (P6 round 8; no stored change):** `last_error_message` (redacted). See "P6 read-time classifications after round 8" at the end of this file (added 2026-11-09, T-DG6-ARCH-17).
 
 | Column | Type | Null | Default | Column constraints |
 |---|---|---|---|---|
@@ -12977,6 +12985,7 @@ Written by T-DG6-ARCH-02 (ADR-0053, ADR-0054). The table sections below are gene
 - **Purpose:** One external delivery of one inbox notification on one channel: the idempotency backstop of the fan-out (ADR-0054 §3). No message text or address is stored.
 - **Migration:** `0102_p6_storage_notification_channels.sql`. **API module:** `tasks (channels)`. **Who writes:** the worker fan-out handler (actor service; lock 730306). **Lifecycle:** pending -> sent | failed | skipped; failed -> pending (retry); sent and skipped are final; one per (notification, channel); versioned and audited.
 - **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+- **Read-time rule (P6 round 8; no stored change):** `skip_reason` (`recipient_restricted` is not set by the shipped worker). See "P6 read-time classifications after round 8" at the end of this file (added 2026-11-09, T-DG6-ARCH-17).
 
 | Column | Type | Null | Default | Column constraints |
 |---|---|---|---|---|
@@ -13075,6 +13084,7 @@ Written by T-DG6-ARCH-03 (ADR-0055, ADR-0056). The table sections below are gene
 - **Purpose:** One immutable configuration version of a connector: source system id, credential REFERENCES, field mappings, target transformation, cadence, retry bound, commit mode, outbound actions, reconciliation rule, adapter settings (ADR-0055 §1).
 - **Migration:** `0104_p6_connectors_runs_outbound_writes.sql`. **API module:** `integrations`. **Who writes:** `connector.configure` (ADM_TECH) through createConnector, putConnector and putConnectorMappings (each change is a new version). **Lifecycle:** append-only; numbered 1, 2, 3 … per connector without gaps.
 - **`mth_app` privileges:** INSERT, SELECT.
+- **Read-time rule (P6 round 8; no stored change):** `credential_refs`, `field_mappings` (cannot-name, D-229). See "P6 read-time classifications after round 8" at the end of this file (added 2026-11-09, T-DG6-ARCH-17).
 
 | Column | Type | Null | Default | Column constraints |
 |---|---|---|---|---|
@@ -13146,6 +13156,7 @@ Written by T-DG6-ARCH-03 (ADR-0055, ADR-0056). The table sections below are gene
 - **Purpose:** IntegrationRun (REQ-S16-022): one run of a connector with its trigger, attempt, counts (read, staged, committed, rejected, duplicates, errors), error code and redacted message, and reconciliation (REQ-S17-001; ADR-0055 §2).
 - **Migration:** `0104_p6_connectors_runs_outbound_writes.sql`. **API module:** `integrations`. **Who writes:** the worker connector-run handler (actor service, as the connector's service identity; lock 730310); runConnector, retryIntegrationRun, testConnector and the webhook receipt create it queued. **Lifecycle:** queued -> running | cancelled; running -> succeeded | failed; finished rows never change; one active run per connector; at most one retry per failed run; versioned and audited.
 - **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+- **Read-time rule (P6 round 8; no stored change):** `idempotency_key`, `error_message` (redacted). See "P6 read-time classifications after round 8" at the end of this file (added 2026-11-09, T-DG6-ARCH-17).
 
 | Column | Type | Null | Default | Column constraints |
 |---|---|---|---|---|
@@ -13245,6 +13256,7 @@ Written by T-DG6-ARCH-03 (ADR-0055, ADR-0056). The table sections below are gene
 - **Purpose:** One guarded downstream write (REQ-S17-006, M0335): a connector-defined action on a deliverable with an idempotency key, marked confirmed only with the reference of a confirmed response (ADR-0055 §5).
 - **Migration:** `0104_p6_connectors_runs_outbound_writes.sql`. **API module:** `integrations`. **Who writes:** `outbound_write.execute` (TD) through executeOutboundWrite and confirmOutboundWrite; the dispatch result by the same request after the transaction (lock 730313). **Lifecycle:** requested -> pending_confirmation | confirmed | failed; pending_confirmation -> confirmed | failed; confirmed and failed final; one per (connector, idempotency key); versioned and audited.
 - **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+- **Read-time rule (P6 round 8; no stored change):** `idempotency_key` (redacted). See "P6 read-time classifications after round 8" at the end of this file (added 2026-11-09, T-DG6-ARCH-17).
 
 | Column | Type | Null | Default | Column constraints |
 |---|---|---|---|---|
@@ -14515,3 +14527,54 @@ Every other column, constraint, index and trigger of `report_snapshot` is unchan
 | API, write (snapshot creation) | The assembler's `aggregates: AggregateRef[]` are inserted in the snapshot's creating transaction, beside `report_snapshot_source`. Content and `contentSha256` are unchanged. |
 | API, read (`documentForReader`) | The flag of each aggregate section is decided from its references plus its aggregate records, per reader: true, false, or absent when none is sensitive. When `aggregates_recorded` is false, the records come from `legacyAggregates`. |
 | Integration tests | `packages/db/test/integration/catalogue.test.ts` "0126: …" (the triggers, the privileges and the immutable column), and `apps/api/test/integration/access/sensitive-reach-dashboards-reports.test.ts` (T-DG6-BE-Z9: the flag on live and stored snapshots, the legacy rule, and the content hash unchanged). |
+
+# P6 read-time classifications after round 8 (no migration)
+
+Recorded by T-DG6-ARCH-17 (2026-11-09; D-228 (5)) from the shipped code of T-DG6-BE-Z13, BE-Z13B and BE-Z13C (D-226 to D-229). **None of these tasks shipped a migration**: every column below keeps its type, constraints, triggers and privileges as recorded in its own section. What changed is what the API returns to a reader who is not admitted to a sensitive record (ADR-0051 §2), and how the reference inventory (`apps/api/test/support/sensitive-reference-inventory.ts`) classifies the column. The design is ADR-0051 (amendment of 2026-11-09) and ADR-0054 (amendment of 2026-11-09).
+
+**Terms.**
+- **Hidden id:** the id of a benefit, business case or evidence item marked sensitive, or of a `SENSITIVE_CHILD_SOURCES` child that carries one's values (a measurement, Finance validation, benefit overlap, corrective case, …), that the reader is not admitted to by the ADR-0051 §2 clause. Ids of another organization are out of scope (D-228 (4)).
+- **Masked:** each hidden id inside the text is replaced by `[restricted]` (`RESTRICTED_ID_MARKER`), and the response item carries `includesRestrictedRecords: true`. Helpers `maskHiddenIds`, `hiddenIdsInTexts` and `maskRestrictedIdsInFields` (`apps/api/src/modules/access/sensitive-reach.ts`).
+- **The stored value never changes**, and an admitted reader sees it in full with no member.
+
+**Inventory catalogue (BE-Z13 to BE-Z13C).** Besides the FK, uuid, `uuid[]` and `json`/`jsonb` columns of the T-DG6-ARCH-16 section, the catalogue now includes every **text** column whose name matches `(^|_)(link_path|href|key|error_message|error_detail)$` (kind `"text"`). At BE-Z13C: fk 54, uuid 59, json 84, array 2, text 77. Statuses: `redacted` 60, `holder-restricted` 54, `cannot-name` 135, `D-219` 2, `not-served` 22, `own-input` 3, `open` 0 (`docs/delivery/handbacks/DG6/T-DG6-BE-Z13C-evidence/13-after-fix-error-texts.log`).
+
+## Columns whose response changed or that were classified
+
+| Table.column | Kind | What it can hold | Served as (OpenAPI) | Status and read-time rule | Task; decision | Exercise |
+|---|---|---|---|---|---|---|
+| `automation_rule_version.conditions` | json | a condition literal may compare `benefitId` to a uuid | `AutomationRuleContent.conditions[].value` of every rule-version and rule response | redacted. A literal (or `in` element) containing a hidden id is shown as the token `[restricted:k]`, k = its 1-based position among **all** literals of the stored version (string or boolean scalar = one, each `in` element = one, no value = none). The version and rule carry the member. On write, a token is mapped back to the stored string literal at position k; an unknown token, the bare `[restricted]` or marker-like text is 422 `automation_rule.restricted_marker_unknown`, so marker text is never stored. `contentSha256` is unchanged. | BE-Z13, BE-Z13C; D-226, D-228 (1) (supersedes D-222 (2)) | `automation-restricted-tokens-z13.test.ts`, `sensitive-reference-pending-z12b.test.ts` |
+| `inbox_notification.link_path` | text | the route of the notification's record (benefit, Finance validation, overlap, action, …) | `InboxNotification.linkPath` (`listMyInbox`, `markInboxNotificationRead`); the resolver | redacted. Restricted notification (ADR-0051 §3 as corrected): `linkPath` = `/transformations/<transformationId>` (else `/my-work`); `resolveDeepLink` answers 403 `deep_link.forbidden`. | BE-Z13, BE-Z13B; D-226, D-227 (3) | `inbox-restricted-z13.test.ts`, `action-register-restricted-z13b.test.ts` |
+| `inbox_notification.message_params` | json | codes and labels of the subject | `InboxNotification.messageParams` | redacted: `{}` with `messageKey` `inbox.restricted` for a restricted notification. | BE-Z13; D-226 | `inbox-restricted-z13.test.ts` |
+| `inbox_notification.target_record_id` | uuid | any record a notification targets | not serialized; decides restriction for the inbox and the resolver | redacted (as above). | BE-Z13; D-226 | `inbox-restricted-z13.test.ts` |
+| `work_item.link_path` | text | the route of the item's record | `WorkItem.linkPath`, `MyWorkItem.href` (`listMyWorkItems`, `getWorkItem`, `completeWorkItem`, `getMyWork`, `getWorkspaceHeader`) | redacted. Any id in the link, and an action id whose corrective case is restricted, makes the item restricted: transformation home link, `subjectId: null`, `inbox.restricted`, member. | BE-Z13, BE-Z13B; D-222 (1), D-227 (3) | `inbox-restricted-z13.test.ts`, `action-register-restricted-z13b.test.ts` |
+| `operational_failure.idempotency_key` | text | the job's outbox key, e.g. `benefit.variance_evaluated:<measurementId>` | `OperationalFailure.idempotencyKey` (`listAutomationFailures`, `getAutomationFailure`, `retryAutomationFailure`, `dismissAutomationFailure`) | redacted: masked. The failure queue shows the item label on the row and in the dismiss form. | BE-Z13B, BE-Z13C; D-227 (1), D-228 (3) | `served-keys-restricted-z13b.test.ts` |
+| `operational_failure.error_message` | text | the job's error text, e.g. `benefit <id> is not in organization <id>` | `OperationalFailure.errorMessage` (same operations) | redacted: masked. | BE-Z13B (masked), BE-Z13C (classified); D-228 (2) | `served-keys-restricted-z13b.test.ts` |
+| `automation_execution.trigger_key` | text | the trigger event's key | `AutomationExecution.triggerKey` (`listAutomationExecutions`, `getAutomationExecution`) | redacted: masked. The execution detail shows the item label next to it. | BE-Z13B, BE-Z13C; D-227 (1), D-228 (3) | `served-keys-restricted-z13b.test.ts` |
+| `automation_execution.error_detail` | text | a handler's error text | `AutomationExecution.errorDetail` (same operations) | redacted: masked. | BE-Z13B (masked), BE-Z13C (classified); D-228 (2) | `served-error-text-restricted-z13c.test.ts` |
+| `automation_action_result.idempotency_key` | text | `<ruleCode>:<triggerKey>:<ordinal>` | `AutomationExecution.actionResults[].idempotencyKey` (same operations) | redacted: masked; the execution carries the member. | BE-Z13B; D-227 (1) | `served-keys-restricted-z13b.test.ts` |
+| `integration_run.idempotency_key` | text | `manual:<userId>:<caller's Idempotency-Key>`, `retry:<runId>`, schedule slots | `IntegrationRun.idempotencyKey` (`listIntegrationRuns`, `runConnector`, `getIntegrationRun`, `retryIntegrationRun`, `testConnector`; `lastRun` of `listConnectors`, `createConnector`, `getConnector`, `putConnector`, `enableConnector`, `disableConnector`) | redacted: masked. The run detail shows the item label next to it. | BE-Z13B, BE-Z13C; D-227 (1), D-228 (3) | `served-keys-restricted-z13b.test.ts` |
+| `integration_run.error_message` | text | the why text with a `{name=…}` / `{column=…}` tail (configuration text) | `IntegrationRun.errorMessage` (same operations); `ConnectorActionableError.params` parsed from it (`getIntegrationRun`, every connector response) | redacted: masked; a masked params value also sets `ConnectorActionableError.includesRestrictedRecords`, and the actionable-error panel shows the item label. | BE-Z13C; D-228 (2), (3) | `served-error-text-restricted-z13c.test.ts` |
+| `operational_exception.last_error_message` | text | a failed job's, connector run's or channel send's error text | `OperationalException.lastErrorMessage`, `OperationalExceptionDetail.lastErrorMessage` (`listOperationalExceptions`, `getOperationalException`, `acknowledgeOperationalException`, `resolveOperationalException`) | redacted: masked. The Operations screen shows the catalogue text of `lastErrorCode`, never this column (F-DG6-221), so no label is needed there. | BE-Z13C; D-228 (2) | `served-error-text-restricted-z13c.test.ts` |
+| `outbound_write.idempotency_key` | text | the integration caller's key (free text) | `OutboundWrite.idempotencyKey` (`listOutboundWrites`, `executeOutboundWrite` incl. replay, `getOutboundWrite`, `confirmOutboundWrite`) | redacted: masked. | BE-Z13B; D-227 (1) | `served-keys-restricted-z13b.test.ts` |
+| `corrective_case.source_scope_key` | text | the case's own benefit id, a KPI scope, a check id, or `value_review:<finding reference>` | `CorrectiveCase.sourceScopeKey` (`listCorrectiveCases`, `createCorrectiveCase`, `getCorrectiveCase`, `updateCorrectiveCase`, `closeCorrectiveCase`) | redacted: masked. (A case whose own benefit is restricted was already 404 or absent.) | BE-Z13B; D-227 (1) | `served-keys-restricted-z13b.test.ts` |
+| `connector_config_version.credential_refs` | json | secret references (provider and name) | `ConnectorConfig.credentialRefs` | cannot-name, **not masked**: a name is set only through IT's secret manifest or by connector administrators, who already see it; the run error text that repeats it is masked (above). | BE-Z13C §7; D-229 | — |
+| `connector_config_version.field_mappings` | json | column mappings (source, target) | `ConnectorConfig.fieldMappings` | cannot-name, **not masked** (same reason). | BE-Z13C §7; D-229 | — |
+
+The exercise files are under `apps/api/test/integration/access/` (`automation-restricted-tokens-z13`, `sensitive-reference-pending-z12b`, `served-keys-restricted-z13b`, `served-error-text-restricted-z13c`) and `apps/api/test/integration/tasks/` (`inbox-restricted-z13`, `action-register-restricted-z13b`).
+
+The other 65 of the 71 text `key` / `*_key` columns that BE-Z13B classified are `holder-restricted` (for example `corrective_signal.source_event_key`, served only under a case route that answers 404 when the case's benefit is restricted), `cannot-name` (codes, or keys their writers build from non-sensitive ids) or `not-served`. Each row of the inventory gives its reason.
+
+## notification_delivery: the restricted channel send
+
+No column changed. A recipient who is not admitted to the notification's record (ADR-0054, amendment of 2026-11-09; D-227 (2)) is **sent** the `inbox.restricted` text with the transformation home link and no link token, so the delivery follows `pending` → `sent` | `failed`. `skip_reason = 'recipient_restricted'` stays allowed by the column's CHECK and by the contract enum, but the shipped worker does not set it. No message text is stored, as before.
+
+## P6 validation rules (round 8, read-time)
+
+| Layer | What it checks |
+|---|---|
+| Database | Unchanged. No migration in T-DG6-BE-Z13 to BE-Z13C. |
+| API, read | `redactConditionLiterals` (tokens by position); `restrictedNotifications` → `notificationFor`; `restrictedWorkItems` (link ids, action → case); `maskRestrictedIdsInFields` on the keys and error texts above; `shownActionable` on the actionable error's params. |
+| API, write | `resolveRestrictedTokens` on `createAutomationRule` and `updateAutomationRuleVersion` (422 `automation_rule.restricted_marker_unknown`). |
+| Worker | `recipientCanRead` with `restrictedForRecipient` (`SENSITIVE_CHILD_SOURCES_TWIN`, active explicit grants only): a restricted channel message carries `inbox.restricted`, no params, the home link and no token. |
+| Integration tests | The exercise files above, plus `apps/api/test/integration/tasks/channel-fanout-restricted-z13b.test.ts` (channel send) and `apps/api/test/integration/access/sensitive-reference-inventory.test.ts` (catalogue, statuses, `KNOWN_OPEN` and `KNOWN_PENDING` empty). |

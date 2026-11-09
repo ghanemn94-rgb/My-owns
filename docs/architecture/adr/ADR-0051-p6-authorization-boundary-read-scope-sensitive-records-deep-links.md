@@ -1,6 +1,6 @@
 # ADR-0051: The P6 authorization boundary: one `ReadScope` derived from the ADR-0006 policy, sensitive records and explicit grants, notification deep links with re-authorization and title redaction, evidence authorization after ownership transfer, and the S02-006 route-inventory sweep
 
-- **Status:** Proposed for P6 (DG6). Author: solution-architect (T-DG6-ARCH-01), 2026-10-26. Amended 2026-11-04 (T-DG6-ARCH-14) and 2026-11-06 (T-DG6-ARCH-15); see the amendments at the end.
+- **Status:** Proposed for P6 (DG6). Author: solution-architect (T-DG6-ARCH-01), 2026-10-26. Amended 2026-11-04 (T-DG6-ARCH-14), 2026-11-06 (T-DG6-ARCH-15), 2026-11-08 (T-DG6-ARCH-16) and 2026-11-09 (T-DG6-ARCH-17); see the amendments at the end.
 - **Requirements (slice E of `docs/architecture/p6-plan.md`):** REQ-S02-006, REQ-S10-002, REQ-S10-004, REQ-S12-024, REQ-S13-013.
 - **Sources (quoted where a design point has one):**
   - M0090 (§2) "All required controls must work against persisted server-side data. … A navigation shell, static dashboard, clickable mockup or browser-local data store does not meet completion criteria."
@@ -148,7 +148,7 @@ A grant response shows the record's title only when the caller can read the reco
 - otherwise **200** `{ linkPath, recordType, recordId }`; the web route `/l/{token}` navigates to `linkPath`, whose own API calls re-check access again.
 - Being the recipient is neither required nor sufficient: a colleague with read access resolves a forwarded link; the original recipient who lost access gets 403.
 
-**Inbox redaction** (`listMyInbox`, `GET /api/v1/me/inbox`; DG4 response **content** change accepted by D-195, shape unchanged): for each item, the server re-checks the recipient's read access to the item's target. The target is `target_record_*` when set, else `deepLinkTarget(link_path)` computed at read time (nothing is written by the GET), else the item's `transformation_id` with `transformation.read`; an item with none of these is organization-level and is never redacted. The in-app inbox keeps navigating by `linkPath`; every page it opens re-checks access through its own API calls. When the recipient cannot read it now, the item is returned with `messageKey` = `inbox.restricted` and `messageParams` = `{}`; `id`, `linkPath`, `readAt`, `createdAt`, `version`, `transformationId` and `workItemId` are unchanged (they are ids, not content). Text: **"You no longer have access to this item."** / ar provisional **"لم تعد لديك صلاحية الوصول إلى هذا العنصر."** The stored row is never modified by redaction (it is a read-time rule; access restored = text restored). Fields redacted: exactly `messageKey` and `messageParams`. The channel adapters of ADR-0054 send only the token link and a neutral subject, never `messageParams` content, for the same reason.
+**Inbox redaction** (`listMyInbox`, `GET /api/v1/me/inbox`, and `markInboxNotificationRead`; DG4 response **content** change accepted by D-195; the shape gains one optional member, below): for each item, the server re-checks the recipient's read access to the item's target. The target is `target_record_*` when set, else `deepLinkTarget(link_path)` computed at read time (nothing is written by the GET), else the item's `transformation_id` with `transformation.read`; an item with none of these is organization-level and is never redacted. The in-app inbox keeps navigating by `linkPath`; every page it opens re-checks access through its own API calls. **As shipped (corrected 2026-11-09, T-DG6-ARCH-17; D-226, D-227 (3); the earlier text said "shape unchanged", "`linkPath` … unchanged" and "exactly `messageKey` and `messageParams`"):** an item is restricted when the recipient cannot read the target now, **or** when any id in its link, its `messageParams` or its stored target names a sensitive record or a `SENSITIVE_CHILD_SOURCES` child (a Finance validation, a benefit overlap, a measurement, a corrective case, …) the recipient is not admitted to, **or** an action whose corrective case is such a record, **or** the work item it announces is restricted (`restrictedNotifications`, `tasks/deep-links.ts`; one decision). A restricted item is returned with `messageKey` = `inbox.restricted`, `messageParams` = `{}`, `linkPath` = the transformation home `/transformations/<transformationId>` (else `/my-work`) and `includesRestrictedRecords: true`; `id`, `readAt`, `createdAt`, `version`, `transformationId` and `workItemId` are unchanged (they are ids, not content). Fields redacted: `messageKey`, `messageParams` and `linkPath`. `markInboxNotificationRead` returns the same redaction. Text: **"You no longer have access to this item."** / ar provisional **"لم تعد لديك صلاحية الوصول إلى هذا العنصر."** The stored row is never modified by redaction (it is a read-time rule; access restored = text and link restored). **Channels (corrected 2026-11-09; D-227 (2)):** a channel message of ADR-0054 never carries `messageParams` content. For a recipient who may read the target it carries the token link `/links/<token>` (re-authorized on open). For a restricted recipient it carries the `inbox.restricted` text, no parameter and the transformation home link (else `/my-work`), and **no token is issued**. The earlier text said the adapters "send only the token link and a neutral subject". See the amendment of 2026-11-09.
 
 ### 4. Evidence authorization, including after ownership transfer (REQ-S13-013)
 
@@ -321,7 +321,7 @@ Nothing else in this ADR changes. This is an engineering design record. It grant
   | **A row whose only purpose is to name the record is not listed.** | Evidence links, phase-step evidence, TOM canvas evidence, procedure instance links, report snapshot sources and evidence, the orphan report, the evidence register's own sensitive items. | `withoutRestricted`; `visibleRefs` for the snapshot lists |
   | **Redacted body.** In a free-form or frozen body, a hidden id that is an array element is dropped. An array element that is an object naming it is dropped. Any other property naming it becomes null. The stored body and its hash are unchanged, so a redacted gate snapshot does not verify against `snapshotSha256`. | Gate submission `snapshot` and criterion `detail`, the live gate view, finance-validation `content.evidence`, closure `snapshot.benefits[]`, form custom values, procedure `inputValues`, revision proposal `impact` and `validationReport` (counts unchanged), audit `changes` of an open record. | `redactRestrictedIds` |
   | **Work items and My Work (D-222 (1)).** The rule covers the assignee too. A restricted item has `subjectId: null` (the type is kept), and its link goes to the transformation home (`/my-work` for an item outside any transformation). Its text is `inbox.restricted`, and it carries the marker. In My Work it has `recordId: null`, `href` the transformation home and `code: null`. This also applies to the completion response and to the workspace header's next actions. For a restricted item, the My Work cursor carries the work-item id, never the record id. BE-Z4's kept ids are superseded. | `listMyWorkItems`, `getWorkItem`, `completeWorkItem`, `getMyWork`, `getWorkspaceHeader` | `restrictedWorkItems` (`tasks/deep-links.ts`), `presentWorkItems` (`reporting/my-work.ts`) |
-  | **Automation condition literals (D-222 (2)).** A literal (or `in`-list element) naming a restricted record is shown **in place** as the neutral marker `"[restricted]"` (`AUTOMATION_RESTRICTED_LITERAL`). The condition, operator and positions stay, so the rule is still seen to test something. The readable summary says "a restricted record" / "سجل مقيد", and the version carries the marker. The rule's own `summary` is redacted the same way. The stored conditions, `contentSha256` and the audit trail are unchanged. Refusing the whole version was rejected, because it would hide that a rule exists. | every response that serializes a rule version or a rule | `redactConditionLiterals` (`automation/versions.ts`) |
+  | **Automation condition literals (D-222 (2); the marker superseded by D-226 and D-228 (1), see the amendment of 2026-11-09).** A literal (or `in`-list element) naming a restricted record is shown **in place** as the opaque token `[restricted:k]` (`automationRestrictedToken(k)`; k = the literal's 1-based position among **all** literals of the stored version). The bare marker `"[restricted]"` (`AUTOMATION_RESTRICTED_LITERAL`) is never shown and is refused on write. The condition, operator and positions stay, so the rule is still seen to test something. The readable summary says "a restricted record" / "سجل مقيد", and the version carries the marker. The rule's own `summary` is redacted the same way. The stored conditions, `contentSha256` and the audit trail are unchanged. Refusing the whole version was rejected, because it would hide that a rule exists. | every response that serializes a rule version or a rule | `redactConditionLiterals` (`automation/versions.ts`) |
 
 - **On screen (en/ar).** The restricted label is `access.includesRestrictedRecords` ("Includes restricted records" / "يشمل سجلات مقيدة", Arabic provisional), shown through `RestrictedRecordsLabel` in place of a link and never as "none". No new catalogue key was added.
 - **Contract shape changes (additive or widening, as merged).** Each changed schema gained an optional `includesRestrictedRecords` (`const: true`). Six fields widened from `Uuid` to `NullableUuid` and are still required:
@@ -337,7 +337,7 @@ A writer not admitted to a stored reference was shown it as null or omitted. Whe
   - the benefit PATCH `parentBenefitId` and `businessCaseLineId`, including the forms bulk edit, which uses the same core;
   - the launch-task PATCH `outputRecordId`, when `outputRecordType` is unchanged.
 - **A list of ids.** On the agenda item PATCH, hidden `materialsEvidenceIds` are appended back. On the custom-field values PUT, a hidden attachment id stays in its list, and a hidden single reference stays when the writer sends null or omits it.
-- **Automation conditions (D-222 (2); `keepRestrictedLiterals`).** The marker sent back keeps the stored literal when four things match: the same field and operator, the k-th such condition of the request against the k-th stored one, and the same list position. A marker with no hidden literal behind it is stored as an ordinary literal: it names nothing and matches no id. A writer can only bring back literals of the version being edited, never an id from elsewhere.
+- **Automation conditions (superseded 2026-11-09: D-226 and D-228 (1) replace the D-222 (2) pairing; `resolveRestrictedTokens` replaces `keepRestrictedLiterals`).** Each token `[restricted:k]` sent back is replaced by the stored string literal at position k of the version being edited, wherever the condition now sits (any condition, order or list position). A token left out removes its literal. An unknown token (a position with no string literal), the bare marker `[restricted]` or any other marker-like text is refused with 422 `automation_rule.restricted_marker_unknown`, so marker text is never stored as a literal. A writer can only bring back literals of the version being edited, never an id from elsewhere. The full rule is in the amendment of 2026-11-09, part A. _(The earlier text described a four-way pairing of the k-th marker with the k-th stored condition, and said that a marker with no hidden literal behind it was stored as an ordinary literal. Both are no longer true.)_
 
 ### D. The write rule for hidden references (T-DG6-BE-Z12; `refIsRestricted`)
 
@@ -400,5 +400,109 @@ D-219's falsifier stands: a reviewer showing a reader learning a restricted id i
 - `automation/versions.ts` (`redactConditionLiterals`, `keepRestrictedLiterals`);
 - `tasks/deep-links.ts` (`restrictedWorkItems`) and `reporting/my-work.ts` (`presentWorkItems` and the cursor);
 - the inventory and its test (`KNOWN_OPEN` and `KNOWN_PENDING` empty).
+
+Nothing else in this ADR changes. This is an engineering design record. It grants no business, Finance or IT approval (G1–G6), and it implies no DG0–DG7 result.
+
+## Amendment (2026-11-09, T-DG6-ARCH-17): §2 and §3, automation marker tokens (D-226, D-228 (1)), inbox and channel redaction (D-226, D-227 (2)), served keys and the action→case rule (D-227 (1), (3)), served error texts and the item label (D-228 (2), (3)), and connector configuration names (D-229) (sweep after T-DG6-BE-Z13 to T-DG6-BE-Z13C)
+
+**Why.** T-DG6-BE-Z13, BE-Z13B and BE-Z13C repaired the round-8 findings F-DG6-520, 540, 541, 560 and 561 and the residuals that D-227 and D-228 named. This ADR still described the D-222 (2) marker and pairing, an inbox redaction with an unchanged `linkPath`, and channel messages that always carry the token link. D-228 (5) assigns this sweep. This amendment records the shipped rules. No code changes. Four places above are corrected in place, each with a pointer here: §3 "Inbox redaction"; the amendment of 2026-11-08, part B (the automation row of the shapes table) and part C (the automation re-save bullet). The "Checked against the code" list of 2026-11-08 names `keepRestrictedLiterals`. It is kept as the record of that check; the function is now `resolveRestrictedTokens`.
+
+### A. Automation condition literals: opaque per-version tokens (D-226, D-228 (1); supersedes the marker and pairing of D-222 (2))
+
+- **Read.** A condition literal, or an `in`-list element, that contains the id of a restricted record (§2 sensitive set or a `SENSITIVE_CHILD_SOURCES` child, as in part B of 2026-11-08) is shown **in place** as the opaque token `[restricted:k]`. The version, and the rule whose effective version it is, carry `includesRestrictedRecords: true`. The readable summary renders a token as "a restricted record" / "سجل مقيد". The stored conditions, `contentSha256` and the audit trail are unchanged. Helper: `redactConditionLiterals` (`automation/versions.ts`), one policy decision per batch.
+- **k (D-228 (1)).** k is the literal's 1-based position among **all** literals of the **stored** version, in reading order: conditions in order; a string or boolean scalar counts as one; each `in` element counts as one; a condition without a value (`present`, `absent`) counts none. So k depends only on the version that the author read, which `If-Match` pins. A grant or sensitivity change between the read and the save cannot shift a token. It discloses only the number of literals before the hidden one, which the reader already sees. (D-226 first defined k among the reader's hidden literals. BE-Z13's handback §5 showed that this set can change between read and save, and D-228 (1) replaced it.)
+- **Write.** `resolveRestrictedTokens` (synchronous; it needs no policy decision) runs on `updateAutomationRuleVersion` against the stored version, and on `createAutomationRule` with no stored version:
+  - a token `[restricted:k]` is replaced by the stored **string** literal at position k, wherever the condition now sits (any condition, order or list position);
+  - a token left out removes its literal;
+  - an unknown token (no stored version, or no string literal at position k), the bare marker text `[restricted]`, or any other marker-like text (`looksLikeRestrictedMarker`: optional leading space, `[`, optional space, `restricted`, any case) is refused **422** `automation_rule.restricted_marker_unknown` with a JSON pointer to the value. English text: "A condition value is restricted-record marker text that does not stand for a value of this version. Reload the version and keep each restricted value as shown, or remove it." (en/ar in `problems.json`, Arabic provisional);
+  - so marker text is **never stored** as a literal.
+- **The two races D-228 (1) closes.** (a) A record becomes hidden between the read and the save: the author sends back the plain id they hold (allowed, D-223), and every other token keeps its position. (b) A record becomes visible between the read and the save: the token the author holds still resolves to the literal at its position. Resolving a position the writer can now read discloses nothing, because the stored literal is never returned to a reader who is not admitted.
+- **An admitted writer** is never shown a token, so for them any token is unknown (422), and they edit the literal freely.
+- **Shared constants** (`packages/shared/src/schemas/automation.ts`): `automationRestrictedToken(k)`, `AUTOMATION_RESTRICTED_TOKEN_PATTERN` (`^\[restricted:([1-9][0-9]{0,3})\]$`), `looksLikeRestrictedMarker`, and `AUTOMATION_RESTRICTED_LITERAL` (`"[restricted]"`), which is now the bare text that is refused, never shown.
+- **On screen.** The rule editor shows the item-scoped restricted label on a condition whose value matches the token pattern, never on a value equal to the bare text. The label moves with the token when a condition is removed.
+- **Write rule for a plain hidden id** (part D of 2026-11-08) is unchanged: a literal is free text and is not existence-checked for any id (D-223).
+
+### B. Inbox, work items and channel messages (D-226, D-227 (2), (3))
+
+- **One decision for a notification.** `restrictedNotifications` (`tasks/deep-links.ts`) marks a notification restricted when (1) its target is unreadable (`readableTargets`); or (2) any id in its link, its `messageParams` or its stored target names a sensitive record or any `SENSITIVE_CHILD_SOURCES` child the reader is not admitted to (`restrictedIdsAmong`); or (3) that id is an action whose corrective case is such a record (`correctiveCasesOfActions`, D-227 (3)); or (4) the work item it announces is restricted.
+- **The inbox response** (`listMyInbox` and `markInboxNotificationRead`, `notificationFor` in `tasks/routes.ts`): `messageKey` `inbox.restricted`, `messageParams` `{}`, `linkPath` the transformation home `/transformations/<transformationId>` (else `/my-work`), and `includesRestrictedRecords: true`. `id`, `workItemId`, `transformationId`, `readAt`, `createdAt` and `version` are unchanged. The stored row is never changed. §3 is corrected in place.
+- **The resolver.** `resolveDeepLink` uses the same decision: a restricted notification's token answers the §3 **403** `deep_link.forbidden`, including for a child route of a restricted record.
+- **Work items (D-227 (3)).** `restrictedWorkItems` checks the subject and every id in the item's link, and treats an action id as naming its corrective case. So the owner's task for an action on a restricted corrective case (`raid.task.action_due`, `{sourceCode}`, link `/action-register/<actionId>`) and its notification are restricted, in `listMyWorkItems`, `getWorkItem`, `completeWorkItem`, `getMyWork`, `getWorkspaceHeader`, the inbox and the resolver. The work-item shape is the one of part B of 2026-11-08 (`subjectId: null`, home link, `inbox.restricted`, marker). Register rows of such an action were already redacted (`correctiveCaseId: null` and the marker, BE-Z12).
+- **Channel messages (D-227 (2); ADR-0054 §3).** The worker decides restriction with `recipientCanRead` (`apps/worker/src/handlers/notifications.ts`). It collects every uuid in the link, the params, the stored target and the announced work item (subject and link), and resolves it with `restrictedForRecipient` (`apps/worker/src/sensitive-children.ts`) through `SENSITIVE_CHILD_SOURCES_TWIN`, which a test pins deep-equal to the API's `SENSITIVE_CHILD_SOURCES`. It also covers an action on a corrective case and the parents of an evidence item. The worker imports no API code.
+  - **A restricted message** carries the `inbox.restricted` text in the recipient's locale, no parameter, and the transformation home link (else `/my-work`), and **no link token is issued**.
+  - **Fail-closed.** In the worker, only an active explicit `sensitive_record_grant` admits. The §2 named-party and `sensitive_record.grant` clauses are not restated, so a party without an explicit grant receives the restricted text by e-mail while the inbox shows them the full text. The worker can hide more than the API, never less.
+  - **Not skipped.** A restricted recipient is sent the restricted message. The delivery is not `skipped`, and the `recipient_restricted` skip reason, which stays in the `notification_delivery` CHECK and in the contract enum, is not set by the shipped worker.
+
+### C. Served keys: hidden ids masked inside the text (D-227 (1))
+
+- **The rule.** A served text column that embeds a record id is not excluded by D-219. A hidden id inside it (a §2 sensitive record or a `SENSITIVE_CHILD_SOURCES` child the reader is not admitted to; for example `benefit.variance_evaluated:<measurementId>`) is replaced by the marker `[restricted]` (`RESTRICTED_ID_MARKER`, `packages/shared/src/schemas/sensitivity.ts`), and the item carries `includesRestrictedRecords: true`. The stored row is unchanged. An admitted reader sees the real key and no member.
+- **Helpers** (`access/sensitive-reach.ts`): `hiddenIdsInTexts` (one `restrictedIdsAmong` decision for every uuid in the texts), `maskHiddenIds` and `maskRestrictedIdsInFields`.
+- **Where it applies (as shipped):**
+
+  | Response member | Operations |
+  |---|---|
+  | `OperationalFailure.idempotencyKey` | `listAutomationFailures`, `getAutomationFailure`, `retryAutomationFailure`, `dismissAutomationFailure` |
+  | `AutomationExecution.triggerKey`, `actionResults[].idempotencyKey` | `listAutomationExecutions`, `getAutomationExecution` |
+  | `IntegrationRun.idempotencyKey` (also as a connector's `lastRun`) | `listIntegrationRuns`, `runConnector`, `getIntegrationRun`, `retryIntegrationRun`, `testConnector`; `listConnectors`, `createConnector`, `getConnector`, `putConnector`, `enableConnector`, `disableConnector` |
+  | `OutboundWrite.idempotencyKey` | `listOutboundWrites`, `executeOutboundWrite` (also on replay), `getOutboundWrite`, `confirmOutboundWrite` |
+  | `CorrectiveCase.sourceScopeKey` | `listCorrectiveCases`, `createCorrectiveCase`, `getCorrectiveCase`, `updateCorrectiveCase`, `closeCorrectiveCase` |
+
+  D-227 named the first three columns and "any other served text column the inventory finds". The inventory found the integration and corrective keys: the system builds them from non-sensitive ids, but they embed caller text (`manual:<userId>:<Idempotency-Key>`, an outbound caller's key, a Value Review finding reference), which can hold any id.
+- **Same rule for an action on a restricted corrective case.** See part B (D-227 (3)).
+
+### D. Served error texts and the item label (D-228 (2), (3))
+
+- **Error texts.** Every served column matching `(^|_)error_(message|detail)$` is classified in the inventory and masked exactly as in part C:
+
+  | Response member | Operations |
+  |---|---|
+  | `OperationalFailure.errorMessage` | as its key (part C) |
+  | `AutomationExecution.errorDetail` | as its key |
+  | `OperationalException.lastErrorMessage` (and `OperationalExceptionDetail`) | `listOperationalExceptions`, `getOperationalException`, `acknowledgeOperationalException`, `resolveOperationalException` |
+  | `IntegrationRun.errorMessage`, and `ConnectorActionableError.params` values parsed from it (`{name=…}`, `{column=…}`) | as `IntegrationRun.idempotencyKey`; the actionable error on `getIntegrationRun` and every connector response |
+
+  `ConnectorActionableError` carries its own `includesRestrictedRecords` when a params value was masked. The Operations screen never shows `lastErrorMessage` (it shows the catalogue text of `lastErrorCode`, F-DG6-221), so the marker is not visible there.
+- **The item label (D-226, F-DG6-561; D-228 (3)).** `RestrictedRecordsLabel` has a `scope` prop, exposed as `data-restricted-scope`. Its visible text is always `access.includesRestrictedRecords`. Its description depends on the scope:
+  - `"total"` (default; totals): `adminP6.restricted.hint`, "This total includes records you are not admitted to. The total is the same for every user; the individual records and values stay hidden.";
+  - `"item"` (a row, link, count of links or condition): `adminP6.restricted.hintItem`, "This item refers to a record you are not admitted to. The record and its values stay hidden." / "يشير هذا العنصر إلى سجل غير مسموح لك به، ويبقى السجل وقيمه مخفيين." (Arabic provisional).
+  
+  The item label is shown when `includesRestrictedRecords` is set: on an inbox row (My Work), on a rule condition, on a failure-queue row and in its dismiss form, on the execution detail next to the trigger key, on the run detail next to the idempotency key, and in the actionable-error panel.
+
+### E. What stays out of scope
+
+- **Cross-organization ids (D-228 (4)).** Every D-218 helper checks the records marked sensitive in the **reader's** organizations, and a reader never reaches another organization's records. A hidden id of another organization inside a key or an error text is not masked. This is reachable only on a fault path (an envelope naming another organization's benefit).
+- **Connector configuration names (D-229).** `connector_config_version.credential_refs` (secret references) and `field_mappings` (column mappings) stay **cannot-name**. They are set only through IT's secret manifest (ADR-0052 §5, amendment of 2026-11-04) or by connector administrators, who already see that configuration. A name that textually holds an id therefore discloses nothing to anyone who could not already read it, although the run's error text that repeats it is masked (part D). D-229's falsifier stands: a reviewer showing a reader learning a hidden id they could not already see reopens it.
+
+### F. The reference inventory at T-DG6-BE-Z13C
+
+- **Catalogue widened (part F of 2026-11-08).** The column set now also contains every **text** column whose name matches `(^|_)(link_path|href|key|error_message|error_detail)$`: links (BE-Z13), keys (BE-Z13B, D-227) and error texts (BE-Z13C, D-228 (2)). The new kind is `"text"`.
+- **Counts** (BE-Z13C handback §2.2; `T-DG6-BE-Z13C-evidence/13-after-fix-error-texts.log`): catalogue fk 54, uuid 59, json 84, array 2, text 77 (276 rows).
+
+  | Status | Rows |
+  |---|---|
+  | `redacted` | 60 |
+  | `holder-restricted` | 54 |
+  | `cannot-name` | 135 |
+  | `D-219` | 2 |
+  | `not-served` | 22 |
+  | `own-input` | 3 |
+  | `open` | 0 |
+
+  `KNOWN_OPEN` and `KNOWN_PENDING` stay pinned empty. The per-column classification of this sweep is in the data dictionary, "P6 read-time classifications after round 8".
+
+**Contract.** The members below were added by the implementers and merged. Each is an optional `includesRestrictedRecords` (`type: boolean`, `const: true`), additive:
+- `InboxNotification` (BE-Z13);
+- `AutomationExecution`, `OperationalFailure`, `IntegrationRun`, `OutboundWrite` and `CorrectiveCase` (BE-Z13B);
+- `OperationalException`, `OperationalExceptionDetail` and `ConnectorActionableError` (BE-Z13C).
+
+One problem code is new: 422 `automation_rule.restricted_marker_unknown` on `createAutomationRule` and `updateAutomationRuleVersion`. This task changed only description texts in `docs/api/openapi.yaml`: every key, error text, link and configuration member listed in parts B to E now states its own rule. No schema changed, the version string stays `1.5.0-p6`, and no gate needs reopening.
+
+**Checked against the code** by the solution-architect at the integrated `HEAD` `553f278b0`. The code agrees with the text above, with no contradiction found. The code checked:
+- `automation/versions.ts` (`literalPositions`, `mapLiteralsAt`, `redactConditionLiterals`, `resolveRestrictedTokens`, `automationRefusals.restrictedMarkerUnknown`) and `packages/shared/src/schemas/automation.ts`;
+- `tasks/deep-links.ts` (`restrictedNotifications`, `restrictedWorkItems`, `correctiveCasesOfActions`, `restrictedWorkItemLink`) and `tasks/routes.ts` (`notificationFor`);
+- `apps/worker/src/handlers/notifications.ts` (`recipientCanRead`, `restrictedChannelLink`, the send path) and `apps/worker/src/sensitive-children.ts` (`restrictedForRecipient`: active explicit grants only);
+- `access/sensitive-reach.ts` (`maskHiddenIds`, `hiddenIdsInTexts`, `maskRestrictedIdsInFields`) and `packages/shared/src/schemas/sensitivity.ts` (`RESTRICTED_ID_MARKER`);
+- `apps/api/test/support/sensitive-reference-inventory.ts` (the text rows, `credential_refs` and `field_mappings` as cannot-name);
+- `apps/web/src/i18n/{en,ar}/adminP6.json` (`restricted.hint`, `restricted.hintItem`) and `problems.json` (`automation_rule__restricted_marker_unknown`).
 
 Nothing else in this ADR changes. This is an engineering design record. It grants no business, Finance or IT approval (G1–G6), and it implies no DG0–DG7 result.
