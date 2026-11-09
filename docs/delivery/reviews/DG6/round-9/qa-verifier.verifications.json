@@ -1,0 +1,39 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG6-560",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Re-verified on candidate fe824c05 (source d974011f) by qa-verifier (T-DG6-REV-QA-R9, run 7e2124db), who raised it in round 8. (1) Round 8's reproduction on the REAL demo stack (with-demo-stack.sh), adapted to the D-226 token model (zz-qa-dg6r9-restricted-mywork-automation.spec.ts, test 'QA-R9 B/C'), chromium-en and chromium-ar, C.UTF-8 (40) and locale unset (41): the author sees '[restricted:1]', '[restricted:2]' in the draft editor; in the UI they click 'Remove condition 1' and 'Save the draft'; the TO (admitted) then reads [benefitId eq b2, severity eq critical]: 'kept literal is the SECOND (intended)' in all four runs. Part D: typing the bare marker '[restricted]' and saving is refused 422 automation_rule.restricted_marker_unknown with the localized problem text on screen, nothing stored changes. (2) Round 8's integration reproduction P0-P3 re-run on the token model plus adversarial cases (zz-qa-dg6r9-condition-token-resave.test.ts, revision b, 20b): 13/13 pass: P1 delete the first of two hidden -> [Y]; P2 delete a visible literal ahead of a hidden one -> [Y] (round 8 stored the string '[restricted]'); P3 drop the first `in` element -> [Y]; P4 reorder; P5 move tokens across conditions, fields and into/out of an `in` list; P5b duplicate a token; P6 14 refusals (bare marker, unknown/zero/padded/case/whitespace/suffix/over-range tokens, a token inside a list, a token or bare marker on create) all 422 with nothing stored; P7 a record hidden and another revealed between read and save shifts no token; P8 two concurrent saves from one read give 200/409 version_conflict, and a stale token after a save is 409; P9 a forged token for a readable position resolves to that visible literal (no disclosure); P10 a token at a boolean position is 422; P12 rule, version list, rule list and summary name no hidden id after edits. Revision a (20a) had 3 probe errors of mine (fields not on the trigger, limit 200), fixed in revision b. (3) Mutant (21): with versions.ts, rules.ts and the shared automation schema reverted to round 8 (d84d11a6), 24 of 28 tests fail across BE-Z13's automation-restricted-tokens-z13.test.ts, my round-9 probe and my round-8 probe; restored, the in-tree file and my round-9 probe pass and my round-8 probe fails only its 3 assertions on the old bare marker form that D-226 deliberately replaced (its P1 stored-literal assertion passes).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-9/40-e2e-demo-probe-cutf8.log",
+        "docs/delivery/test-evidence/DG6/qa/round-9/41-e2e-demo-unset.log",
+        "docs/delivery/test-evidence/DG6/qa/round-9/20b-probe-token-resave.log",
+        "docs/delivery/test-evidence/DG6/qa/round-9/20a-probe-token-resave-rev-a.log",
+        "docs/delivery/test-evidence/DG6/qa/round-9/21-mutant-z13-tokens.log",
+        "docs/delivery/test-evidence/DG6/qa/tests/round-9/zz-qa-dg6r9-condition-token-resave.test.ts",
+        "docs/delivery/test-evidence/DG6/qa/tests/round-9/zz-qa-dg6r9-restricted-mywork-automation.spec.ts",
+        "docs/delivery/test-evidence/DG6/qa/round-9/shots/C-rule-editor-after-remove-en.png",
+        "docs/delivery/test-evidence/DG6/qa/round-9/shots/C-rule-editor-after-remove-ar.png",
+        "docs/delivery/test-evidence/DG6/qa/round-9/shots/D-rule-editor-bare-marker-refused-en.png",
+        "docs/delivery/test-evidence/DG6/qa/round-9/shots/D-rule-editor-bare-marker-refused-ar.png"
+      ]
+    },
+    {
+      "finding_id": "F-DG6-561",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Re-verified on candidate fe824c05 by qa-verifier (run 7e2124db), who raised it in round 8. Round 8's reproduction on the real demo stack (zz-qa-dg6r9-restricted-mywork-automation.spec.ts parts A and B), chromium-en and chromium-ar, both locale settings (40, 41): on My Work the restricted item's label has data-restricted-scope='item', title and screen-reader text 'This item refers to a record you are not admitted to. The record and its values stay hidden.' (ar 'يشير هذا العنصر إلى سجل غير مسموح لك به، ويبقى السجل وقيمه مخفيين.') and not the total text; on the automation draft editor both condition labels carry the same item description in en and ar. Every RestrictedRecordsLabel call site in apps/web/src passes an explicit scope: 'total' only on Totals, the transformation, executive and portfolio dashboards and the report summary; 'item' on rows, links, conditions, the inbox, the failure queue, executions and connector runs. Mutant (22): with RestrictedRecordsLabel.tsx and the en/ar adminP6.json reverted to round 8, 12 of 128 web unit tests fail (p6-admin-screens 'the description fits a total or an item', fed, integrations, my-work, en and ar); restored, 128/128 pass.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-9/40-e2e-demo-probe-cutf8.log",
+        "docs/delivery/test-evidence/DG6/qa/round-9/41-e2e-demo-unset.log",
+        "docs/delivery/test-evidence/DG6/qa/round-9/22-mutant-561-label.log",
+        "docs/delivery/test-evidence/DG6/qa/tests/round-9/zz-qa-dg6r9-restricted-mywork-automation.spec.ts",
+        "docs/delivery/test-evidence/DG6/qa/round-9/shots/A-my-work-TL-en.png",
+        "docs/delivery/test-evidence/DG6/qa/round-9/shots/A-my-work-TL-ar.png",
+        "docs/delivery/test-evidence/DG6/qa/round-9/shots/B-rule-editor-author-en.png",
+        "docs/delivery/test-evidence/DG6/qa/round-9/shots/B-rule-editor-author-ar.png"
+      ]
+    }
+  ]
+}
