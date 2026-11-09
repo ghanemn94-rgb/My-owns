@@ -68,15 +68,18 @@ export const automationConditionValue = z.union([
 export const AUTOMATION_RESTRICTED_LITERAL = "[restricted]";
 
 /**
- * D-226: the opaque per-version token a condition literal is shown as when it names a sensitive record (or a child that
- * carries one's values) the reader is not admitted to. `k` is the literal's 1-based position among **all** literals of
- * the stored version, in reading order (conditions in order; a scalar value counts as one, each `in` list element as
- * one), so it does not shift when a grant or sensitivity changes (D-228 (1)); it reveals nothing about the record. A
- * version update maps each token it receives back to the stored literal at that position wherever the condition now
- * sits; a token that is left out is simply removed.
+ * D-226, D-231 (F-DG6-580): the opaque version-bound token a condition literal is shown as when it names a sensitive
+ * record (or a child that carries one's values) the reader is not admitted to: `[restricted:<version>:<k>]`.
+ * `<version>` is the row version (the ETag / If-Match value) of the rule version the token was issued from; `k` is the
+ * literal's 1-based position among **all** literals of that stored version, in reading order (conditions in order; a
+ * scalar value counts as one, each `in` list element as one), so it does not shift when a grant or sensitivity changes
+ * (D-228 (1)); it reveals nothing about the record. A version update maps each token it receives back to the stored
+ * literal at that position wherever the condition now sits, but only when `<version>` is the version being replaced
+ * (If-Match); a token issued from any other version is refused 422 `automation_rule.restricted_token_stale` and is
+ * never resolved against another version's positions. A token that is left out is simply removed.
  */
-export const automationRestrictedToken = (k: number): string => `[restricted:${k}]`;
-export const AUTOMATION_RESTRICTED_TOKEN_PATTERN = /^\[restricted:([1-9][0-9]{0,3})\]$/;
+export const automationRestrictedToken = (version: number, k: number): string => `[restricted:${version}:${k}]`;
+export const AUTOMATION_RESTRICTED_TOKEN_PATTERN = /^\[restricted:([1-9][0-9]{0,9}):([1-9][0-9]{0,3})\]$/;
 /** True for a token, the bare marker, or any other text that looks like marker text (refused unless a known token). */
 export const looksLikeRestrictedMarker = (v: string): boolean => /^\s*\[\s*restricted\b/i.test(v);
 

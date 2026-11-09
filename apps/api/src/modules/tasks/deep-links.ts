@@ -22,6 +22,8 @@
 // - `restrictedNotifications` (T-DG6-BE-Z13, F-DG6-540; D-218, D-226): the decision every notification response and
 //   the resolver use: `readableTargets`, plus any id in the link, params or target that names a sensitive record or a
 //   child carrying one's values the reader is not admitted to, plus the announced work item's own restriction.
+// - `restrictedNotificationView` (T-DG6-BE-Z14, D-231): the redacted view every notification serializer returns for
+//   a restricted notification (inbox list, mark read, digest read).
 //
 // The token is an opaque identifier, NEVER a credential: holding it grants nothing, every resolution re-authorizes the
 // signed-in caller, and being the recipient is neither required nor sufficient. Every forbidden token answers the same
@@ -203,6 +205,29 @@ const UUID_ONLY = new RegExp(`^${UUID}$`);
 /** The web path a restricted work item links to instead of its record: the transformation home (else My Work). */
 export const restrictedWorkItemLink = (transformationId: string | null): string =>
   transformationId === null ? "/my-work" : `/transformations/${transformationId}`;
+
+/**
+ * T-DG6-BE-Z14 (D-226, D-231; code-security observation 600; ADR-0051 §3): the one redaction every response that
+ * serializes a notification applies (`listMyInbox`, `markInboxNotificationRead`, `getMyNotificationDigest`; the
+ * serializer sweep test `notification-serializers.test.ts` fails when a new serializer skips it). For a notification
+ * `restrictedNotifications` marks: the text is `inbox.restricted` with params {}, the link is the transformation home
+ * (else My Work) and the item carries `includesRestrictedRecords: true`. Every other field is kept; the stored row is
+ * never modified (access restored = text and link restored).
+ */
+export function restrictedNotificationView<T extends { messageKey: string; messageParams: object; linkPath: string }>(
+  view: T,
+  transformationId: string | null,
+  restricted: boolean,
+): T {
+  if (!restricted) return view;
+  return {
+    ...view,
+    messageKey: "inbox.restricted",
+    messageParams: {},
+    linkPath: restrictedWorkItemLink(transformationId),
+    includesRestrictedRecords: true,
+  };
+}
 
 /** The columns of a notification that can name a record (T-DG6-BE-Z13). */
 export type NotificationRefColumns = Pick<

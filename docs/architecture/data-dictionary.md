@@ -10101,7 +10101,7 @@ Generated from the catalogue of a freshly migrated database by `docs/delivery/ha
 - **Purpose:** One version of a rule: triggers, conditions, actions, identity, service permissions, parameters, content hash, review and publication (REQ-S12-001, REQ-S12-002; ADR-0043 §1, §4).
 - **Migration:** `0074_p5_automation_engine.sql`. **API module:** `automation`. **Who writes:** `automation.configure` (content, submit, publish, discard), `automation.review` (review); starter v1 by migration. **Lifecycle:** draft → in_review → approved → published → superseded; discarded; content frozen outside draft; versioned.
 - **`mth_app` privileges:** INSERT, SELECT, UPDATE.
-- **Read-time rule (P6 round 8; no stored change):** `conditions` (redacted: literals shown as `[restricted:k]` tokens). See "P6 read-time classifications after round 8" at the end of this file (added 2026-11-09, T-DG6-ARCH-17).
+- **Read-time rule (P6 round 8; no stored change):** `conditions` (redacted: literals shown as `[restricted:<version>:<k>]` tokens, D-231). See "P6 read-time classifications after round 8" at the end of this file (added 2026-11-09, T-DG6-ARCH-17).
 
 | Column | Type | Null | Default | Column constraints |
 |---|---|---|---|---|
@@ -14575,6 +14575,6 @@ No column changed. A recipient who is not admitted to the notification's record 
 |---|---|
 | Database | Unchanged. No migration in T-DG6-BE-Z13 to BE-Z13C. |
 | API, read | `redactConditionLiterals` (tokens by position); `restrictedNotifications` → `notificationFor`; `restrictedWorkItems` (link ids, action → case); `maskRestrictedIdsInFields` on the keys and error texts above; `shownActionable` on the actionable error's params. |
-| API, write | `resolveRestrictedTokens` on `createAutomationRule` and `updateAutomationRuleVersion` (422 `automation_rule.restricted_marker_unknown`). |
+| API, write | `resolveRestrictedTokens` on `createAutomationRule` and `updateAutomationRuleVersion` (422 `automation_rule.restricted_marker_unknown`; 422 `automation_rule.restricted_token_stale` for a token issued from another version, D-231, T-DG6-BE-Z14). |
 | Worker | `recipientCanRead` with `restrictedForRecipient` (`SENSITIVE_CHILD_SOURCES_TWIN`, active explicit grants only): a restricted channel message carries `inbox.restricted`, no params, the home link and no token. |
 | Integration tests | The exercise files above, plus `apps/api/test/integration/tasks/channel-fanout-restricted-z13b.test.ts` (channel send) and `apps/api/test/integration/access/sensitive-reference-inventory.test.ts` (catalogue, statuses, `KNOWN_OPEN` and `KNOWN_PENDING` empty). |

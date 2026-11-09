@@ -1,0 +1,105 @@
+port-policy: PostgreSQL listening on port 31350 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-z14
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw8vcc2l_35bf4d06 (server_encoding UTF8); applied 118 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/access/automation-restricted-tokens-z13.test.ts (11 tests) 2171ms
+   ✓ T-DG6-BE-Z13: restricted condition tokens (D-226) > negative: an unknown token, the bare marker or other marker text is refused 422 and nothing is stored  310ms
+stdout | tests/qa/integration/zz-cs-r9-token-stale.test.ts > CS-R9-TOKEN: stale tokens > T1 editor flow: a second save of the same local draft keeps S (or is refused)
+[CS-R9-TOKEN] TO marks <S> isSensitive=true -> 200
+
+stdout | tests/qa/integration/zz-cs-r9-token-stale.test.ts > CS-R9-TOKEN: stale tokens > T1 editor flow: a second save of the same local draft keeps S (or is refused)
+[CS-R9-TOKEN] T1 author GET -> 200 v1 conditions=[{"op":"neq","field":"benefitId","value":"<P>"},{"op":"neq","field":"benefitId","value":"[restricted:1:2]"},{"op":"eq","field":"severity","value":"high"}]
+
+stdout | tests/qa/integration/zz-cs-r9-token-stale.test.ts > CS-R9-TOKEN: stale tokens > T1 editor flow: a second save of the same local draft keeps S (or is refused)
+[CS-R9-TOKEN] T1 save 1 (remove condition 1) -> 200 v2 shown=[{"op":"neq","field":"benefitId","value":"[restricted:2:1]"},{"op":"eq","field":"severity","value":"high"}] stored=[{"op":"neq","field":"benefitId","value":"<S>"},{"op":"eq","field":"severity","value":"high"}]
+
+stdout | tests/qa/integration/zz-cs-r9-token-stale.test.ts > CS-R9-TOKEN: stale tokens > T1 editor flow: a second save of the same local draft keeps S (or is refused)
+[CS-R9-TOKEN] T1 save 2 (same local draft, If-Match 2) -> 422 {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"A condition value is a restricted-record token issued from an earlier version of this draft. The rule changed since it was read: reload the version and re-apply your change.","code":"automation_rule.restrict
+[CS-R9-TOKEN] T1 stored after save 2: [{"op":"neq","field":"benefitId","value":"<S>"},{"op":"eq","field":"severity","value":"high"}]; S kept: true
+
+stdout | tests/qa/integration/zz-cs-r9-token-stale.test.ts > CS-R9-TOKEN: stale tokens > T2 two hidden literals: the second save keeps S1 and S2 where they were (or is refused)
+[CS-R9-TOKEN] TO marks <S1> isSensitive=true -> 200
+
+stdout | tests/qa/integration/zz-cs-r9-token-stale.test.ts > CS-R9-TOKEN: stale tokens > T2 two hidden literals: the second save keeps S1 and S2 where they were (or is refused)
+[CS-R9-TOKEN] TO marks <S2> isSensitive=true -> 200
+
+stdout | tests/qa/integration/zz-cs-r9-token-stale.test.ts > CS-R9-TOKEN: stale tokens > T2 two hidden literals: the second save keeps S1 and S2 where they were (or is refused)
+[CS-R9-TOKEN] T2 author GET -> v1 conditions=[{"op":"neq","field":"benefitId","value":"<P2>"},{"op":"neq","field":"benefitId","value":"[restricted:1:2]"},{"op":"neq","field":"benefitId","value":"[restricted:1:3]"},{"op":"eq","field":"severity","value":"high"}]
+
+stdout | tests/qa/integration/zz-cs-r9-token-stale.test.ts > CS-R9-TOKEN: stale tokens > T2 two hidden literals: the second save keeps S1 and S2 where they were (or is refused)
+[CS-R9-TOKEN] T2 save 1 -> 200 shown=[{"op":"neq","field":"benefitId","value":"[restricted:2:1]"},{"op":"neq","field":"benefitId","value":"[restricted:2:2]"},{"op":"eq","field":"severity","value":"high"}] stored=[{"op":"neq","field":"benefitId","value":"<S1>"},{"op":"neq","field":"benefitId","value":"<S2>"},{"op":"eq","field":"severity","value":"high"}]
+
+stdout | tests/qa/integration/zz-cs-r9-token-stale.test.ts > CS-R9-TOKEN: stale tokens > T2 two hidden literals: the second save keeps S1 and S2 where they were (or is refused)
+[CS-R9-TOKEN] T2 save 2 -> 422 {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"A condition value is a restricted-record token issued from an earlier version of this draft. The rule changed since it was read: reload the version and re-apply your change.","code":"automation_rule.restrict
+[CS-R9-TOKEN] T2 stored after save 2: [{"op":"neq","field":"benefitId","value":"<S1>"},{"op":"neq","field":"benefitId","value":"<S2>"},{"op":"eq","field":"severity","value":"high"}]
+
+stdout | tests/qa/integration/zz-cs-r9-token-stale.test.ts > CS-R9-TOKEN: stale tokens > T3 409 path: re-saving the same draft after a concurrent edit keeps S (or is refused)
+[CS-R9-TOKEN] TO marks <S3> isSensitive=true -> 200
+
+stdout | tests/qa/integration/zz-cs-r9-token-stale.test.ts > CS-R9-TOKEN: stale tokens > T3 409 path: re-saving the same draft after a concurrent edit keeps S (or is refused)
+[CS-R9-TOKEN] T3 author GET -> v1 conditions=[{"op":"neq","field":"benefitId","value":"<P3>"},{"op":"neq","field":"benefitId","value":"[restricted:1:2]"},{"op":"eq","field":"severity","value":"high"}]
+
+stdout | tests/qa/integration/zz-cs-r9-token-stale.test.ts > CS-R9-TOKEN: stale tokens > T3 409 path: re-saving the same draft after a concurrent edit keeps S (or is refused)
+[CS-R9-TOKEN] T3 TO GET -> 200 conditions=[{"op":"neq","field":"benefitId","value":"<P3>"},{"op":"neq","field":"benefitId","value":"<S3>"},{"op":"eq","field":"severity","value":"high"}]
+
+stdout | tests/qa/integration/zz-cs-r9-token-stale.test.ts > CS-R9-TOKEN: stale tokens > T3 409 path: re-saving the same draft after a concurrent edit keeps S (or is refused)
+[CS-R9-TOKEN] T3 TO save (remove condition 1) -> 403 {"type":"urn:mth:problem:forbidden","title":"Forbidden","status":403,"detail":"You do not have permission for this action.","code":"forbidden","requestId":"01a1bef4-2cee-7536-afbf-a19fc6f5b8c4"}
+
+stdout | tests/qa/integration/zz-cs-r9-token-stale.test.ts > CS-R9-TOKEN: stale tokens > T3 409 path: re-saving the same draft after a concurrent edit keeps S (or is refused)
+[CS-R9-TOKEN] T3 second tab save (remove condition 1) -> 200
+
+stdout | tests/qa/integration/zz-cs-r9-token-stale.test.ts > CS-R9-TOKEN: stale tokens > T3 409 path: re-saving the same draft after a concurrent edit keeps S (or is refused)
+[CS-R9-TOKEN] T3 stored after the concurrent edit: [{"op":"neq","field":"benefitId","value":"<S3>"},{"op":"eq","field":"severity","value":"high"}]
+
+stdout | tests/qa/integration/zz-cs-r9-token-stale.test.ts > CS-R9-TOKEN: stale tokens > T3 409 path: re-saving the same draft after a concurrent edit keeps S (or is refused)
+[CS-R9-TOKEN] T3 author save with stale If-Match 1 -> 409 {"type":"urn:mth:problem:version-conflict","title":"Version conflict","status":409,"detail":"The record was changed by someone else. Review the current version and re-apply your change.","code":"versi
+
+stdout | tests/qa/integration/zz-cs-r9-token-stale.test.ts > CS-R9-TOKEN: stale tokens > T3 409 path: re-saving the same draft after a concurrent edit keeps S (or is refused)
+[CS-R9-TOKEN] T3 author re-save of the same draft (If-Match 2) -> 422 {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"A condition value is a restricted-record token issued from an earlier version of this draft. The rule changed since it was read: reload the version and re-apply your change.","code":"automation_rule.restrict
+[CS-R9-TOKEN] T3 stored after: [{"op":"neq","field":"benefitId","value":"<S3>"},{"op":"eq","field":"severity","value":"high"}]; S kept: true
+
+stdout | tests/qa/integration/zz-cs-r9-token-stale.test.ts > CS-R9-TOKEN: stale tokens > T4 controls: refusals, moves, grant and sensitivity changes
+[CS-R9-TOKEN] TO marks <S4> isSensitive=true -> 200
+
+stdout | tests/qa/integration/zz-cs-r9-token-stale.test.ts > CS-R9-TOKEN: stale tokens > T4 controls: refusals, moves, grant and sensitivity changes
+[CS-R9-TOKEN] T4 author GET -> conditions=[{"op":"neq","field":"benefitId","value":"<P4>"},{"op":"neq","field":"benefitId","value":"[restricted:1:2]"},{"op":"eq","field":"severity","value":"high"}] token=[restricted:1:2]
+
+ ❯ |integration| tests/qa/integration/zz-cs-r9-token-stale.test.ts (4 tests | 1 failed) 1245ms
+   ✓ CS-R9-TOKEN: stale tokens > T1 editor flow: a second save of the same local draft keeps S (or is refused) 261ms
+   ✓ CS-R9-TOKEN: stale tokens > T2 two hidden literals: the second save keeps S1 and S2 where they were (or is refused) 180ms
+   ✓ CS-R9-TOKEN: stale tokens > T3 409 path: re-saving the same draft after a concurrent edit keeps S (or is refused) 174ms
+   × CS-R9-TOKEN: stale tokens > T4 controls: refusals, moves, grant and sensitivity changes 137ms
+     → expected '[restricted:1:2]' to be '[restricted:2]' // Object.is equality
+ ✓ |integration| apps/api/test/integration/access/sensitive-reference-pending-z12b.test.ts (7 tests) 1145ms
+ ✓ |integration| apps/api/test/integration/access/automation-restricted-tokens-z14.test.ts (5 tests) 1393ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/zz-cs-r9-token-stale.test.ts > CS-R9-TOKEN: stale tokens > T4 controls: refusals, moves, grant and sensitivity changes
+AssertionError: expected '[restricted:1:2]' to be '[restricted:2]' // Object.is equality
+
+Expected: [32m"[restricted:2]"[39m
+Received: [31m"[restricted:[7m1:[27m2]"[39m
+
+ ❯ tests/qa/integration/zz-cs-r9-token-stale.test.ts:223:17
+    221|     const tok = v.body.content.conditions[1].value as string;
+    222|     log(`T4 author GET -> conditions=${anon(v.body.content.conditions)…
+    223|     expect(tok).toBe("[restricted:2]");
+       |                 ^
+    224|     const base = v.body.content;
+    225|     const res: Record<string, string> = {};
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 3 passed (4)
+      Tests  1 failed | 26 passed (27)
+   Start at  06:16:57
+   Duration  24.59s (transform 5.19s, setup 0ms, collect 15.04s, tests 5.95s, environment 0ms, prepare 78ms)
+
+exit=1

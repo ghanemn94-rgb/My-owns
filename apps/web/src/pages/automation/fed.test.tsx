@@ -332,7 +332,7 @@ describe("REQ-S12-001 / S12-002: an automation rule", () => {
       const restricted = {
         ...content,
         conditions: [
-          { field: "gateCode", op: "eq", value: "[restricted:1]" },
+          { field: "gateCode", op: "eq", value: "[restricted:3:1]" },
           { field: "outcome", op: "eq", value: "approved" },
           { field: "outcome", op: "neq", value: AUTOMATION_RESTRICTED_LITERAL },
         ],
@@ -361,8 +361,8 @@ describe("REQ-S12-001 / S12-002: an automation rule", () => {
       ...content,
       runAs: "service",
       conditions: [
-        { field: "gateCode", op: "eq", value: "[restricted:1]" },
-        { field: "outcome", op: "in", value: ["approved", "[restricted:2]"] },
+        { field: "gateCode", op: "eq", value: "[restricted:3:1]" },
+        { field: "outcome", op: "in", value: ["approved", "[restricted:3:2]"] },
         { field: "outcome", op: "neq", value: AUTOMATION_RESTRICTED_LITERAL },
       ],
     });
@@ -374,7 +374,7 @@ describe("REQ-S12-001 / S12-002: an automation rule", () => {
     draft.conditions = draft.conditions.slice(1, 2);
     expect(conditionIsRestricted(draft.conditions[0]!)).toBe(true);
     expect(toContentBody(draft)["conditions"]).toEqual([
-      { field: "outcome", op: "in", value: ["approved", "[restricted:2]"] },
+      { field: "outcome", op: "in", value: ["approved", "[restricted:3:2]"] },
     ]);
   });
 

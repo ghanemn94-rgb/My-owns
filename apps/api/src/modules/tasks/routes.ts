@@ -18,7 +18,12 @@ import type { FastifyInstance, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { auditContextOf, organizationsWith, principalOf, refreshPrincipal } from "../access/index.ts";
 import { record } from "../audit/index.ts";
-import { restrictedNotifications, restrictedWorkItemLink, restrictedWorkItems } from "./deep-links.ts";
+import {
+  restrictedNotifications,
+  restrictedNotificationView,
+  restrictedWorkItemLink,
+  restrictedWorkItems,
+} from "./deep-links.ts";
 import {
   cursorSchema,
   decodeCursor,
@@ -138,14 +143,7 @@ export const toInboxNotification = (r: InboxNotificationRow): InboxNotification 
  * text and link restored).
  */
 const notificationFor = (r: InboxNotificationRow, restricted: boolean): InboxNotification =>
-  restricted
-    ? {
-        ...toInboxNotification(r),
-        ...INBOX_RESTRICTED,
-        linkPath: restrictedWorkItemLink(r.transformation_id),
-        includesRestrictedRecords: true,
-      }
-    : toInboxNotification(r);
+  restrictedNotificationView(toInboxNotification(r), r.transformation_id, restricted);
 
 const stringBool = z.stringbool({ truthy: ["true"], falsy: ["false"] });
 const workItemQuery = z.strictObject({

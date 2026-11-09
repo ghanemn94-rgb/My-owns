@@ -88,6 +88,8 @@ export interface Runner {
       body?: unknown;
       ifMatch?: number;
       idempotencyKey?: string;
+      /** Called after the refresh when the action fails (T-DG6-BE-Z14: the rule editor reloads its form). */
+      onError?: (e: unknown) => void | Promise<void>;
     },
   ) => Promise<T | null>;
   /** The form-level alert (one per form; S-7). */
@@ -100,7 +102,13 @@ export function useRunner(refresh: () => Promise<unknown>): Runner {
   const [error, setError] = useState<unknown>(null);
   const run = async <T,>(
     url: string,
-    options: { method?: "POST" | "PATCH" | "PUT"; body?: unknown; ifMatch?: number; idempotencyKey?: string },
+    options: {
+      method?: "POST" | "PATCH" | "PUT";
+      body?: unknown;
+      ifMatch?: number;
+      idempotencyKey?: string;
+      onError?: (e: unknown) => void | Promise<void>;
+    },
   ): Promise<T | null> => {
     const action = beginSessionGuard();
     setBusy(true);
@@ -120,6 +128,7 @@ export function useRunner(refresh: () => Promise<unknown>): Runner {
       if (action.stale(e)) return null;
       setError(e);
       if (e instanceof ApiError && (e.status === 409 || e.status === 422)) await refresh();
+      if (options.onError !== undefined && !action.stale()) await options.onError(e);
       return null;
     } finally {
       if (action.current()) setBusy(false);

@@ -10,6 +10,7 @@
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router";
+import { api, ApiError } from "../../api/client.ts";
 import { useAllTransformations } from "../../api/queries.ts";
 import { useLocale } from "../../app/locale.ts";
 import { canAnywhere } from "../../auth/permissions.ts";
@@ -43,7 +44,7 @@ import {
   type ContentDraft,
 } from "./ContentEditor.tsx";
 import { AutomationLinks, EnabledChip } from "./RulesPage.tsx";
-import { Chip, HumanDecisionNote, NoteForm, StatusChip, pick, useRunner, type Runner } from "./ui.tsx";
+import { Chip, HumanDecisionNote, NoteForm, StatusChip, codeOf, pick, useRunner, type Runner } from "./ui.tsx";
 
 export const VERSION_STATUS_CHIP = {
   draft: ["draft", "pencil"],
@@ -409,6 +410,15 @@ function ContentView({ version: v, catalogue }: { version: AutomationRuleVersion
   );
 }
 
+/** The editor's form state of a served version. */
+const loadDraft = (v: AutomationRuleVersion): ContentDraft =>
+  toContentDraft(v.content as unknown as Parameters<typeof toContentDraft>[0]);
+
+/** A 409 (the version changed) or a 422 for a restricted token of an earlier version (D-231). */
+const isChangedSinceRead = (e: unknown): boolean =>
+  e instanceof ApiError &&
+  (e.status === 409 || (e.status === 422 && codeOf(e) === "automation_rule.restricted_token_stale"));
+
 function EditContent({
   rule: r,
   version: v,
@@ -424,26 +434,56 @@ function EditContent({
   // D-181: every transformation the user may see (all pages): a rule action's target past the first 100 is shown and
   // can be chosen.
   const transformations = useAllTransformations({ sort: "code:asc" });
-  const [draft, setDraft] = useState<ContentDraft>(() =>
-    toContentDraft(v.content as unknown as Parameters<typeof toContentDraft>[0]),
-  );
+  // T-DG6-BE-Z14 (D-231, F-DG6-580): the form always holds the content of one served version, and saves with that
+  // version as If-Match, so the restricted tokens it sends (`[restricted:<version>:<k>]`) are those of the version they
+  // replace. After a save it reloads from the saved version's response; after a 409 or a stale-token 422 it reloads the
+  // current version and asks the author to re-apply the change. It never re-sends tokens of an earlier version.
+  const [form, setForm] = useState<{ from: number; draft: ContentDraft }>(() => ({
+    from: v.version,
+    draft: loadDraft(v),
+  }));
+  const [changed, setChanged] = useState(false);
+  const draft = form.draft;
+  const setDraft = (next: ContentDraft) => setForm((f) => ({ ...f, draft: next }));
+  const reloadCurrent = async () => {
+    const current = await api.get<AutomationRuleVersion>(fedPaths.version(r.id, v.versionNo));
+    setForm({ from: current.version, draft: loadDraft(current) });
+  };
   return (
     <form
       className="form"
       noValidate
       data-form="edit-rule-content"
+      data-form-version={form.from}
       onSubmit={(e) => {
         e.preventDefault();
-        void runner.run(fedPaths.version(r.id, v.versionNo), {
-          method: "PATCH",
-          body: { content: toContentBody(draft) },
-          ifMatch: v.version,
-        });
+        setChanged(false);
+        void runner
+          .run<AutomationRuleVersion>(fedPaths.version(r.id, v.versionNo), {
+            method: "PATCH",
+            body: { content: toContentBody(draft) },
+            ifMatch: form.from,
+            onError: async (err) => {
+              if (!isChangedSinceRead(err)) return;
+              runner.clear();
+              setChanged(true);
+              await reloadCurrent().catch(() => undefined);
+            },
+          })
+          .then((saved) => {
+            if (saved !== null) setForm({ from: saved.version, draft: loadDraft(saved) });
+          });
       }}
     >
+      {changed ? (
+        <p className="banner banner--warning" role="alert" data-state="rule-changed-reapply">
+          {t("workflowsP5.rules.changedReapply")}
+        </p>
+      ) : null}
       <QueryState query={transformations}>
         {(items) => (
           <ContentEditor
+            key={form.from}
             value={draft}
             onChange={setDraft}
             catalogue={catalogue}
