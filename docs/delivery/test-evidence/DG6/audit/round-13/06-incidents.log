@@ -1,0 +1,70 @@
+## 06 incidents and orchestrator decisions (auditor T-DG6-AUDIT-R13)
+
+### D-216 BE-Z7 / BE-Z7B
+docs/delivery/runs/DG6/DG6-T-DG6-BE-Z7-backend-workflow-engineer-20261106T003839Z-4b6cbf47
+docs/delivery/runs/DG6/DG6-T-DG6-BE-Z7B-backend-workflow-engineer-20261106T010213Z-60c2f6f3
+docs/delivery/runs/DG6/DG6-T-DG6-BE-Z7-backend-workflow-engineer-20261106T003839Z-4b6cbf47: no meta.json (killed by the restart): settings.json stderr.log transcript.jsonl 
+DG6-T-DG6-BE-Z7B-backend-workflow-engineer-20261106T010213Z-60c2f6f3 0 success 5fa96009f9e9a9fc1df007b8ef723d1ffa8a85fa
+48360e6c3 DG6 merge T-DG6-BE-Z7B
+e765cd551 run: BE-Z7B records
+6e532aefc T-DG6-BE-Z7/Z7B: sensitive benefit in the overview, drill-downs and totals; sweep is a real guard (F-DG6-360, 361, 340, 362)
+b2e9b10e5 DG6: BE-Z7 run killed by a container restart; continuation brief BE-Z7B
+5fa96009f DG6 round 5 FAIL: import findings, D-215, BE-Z7 brief
+T-DG6-BE-Z7-evidence
+T-DG6-BE-Z7B-backend-workflow-engineer.md
+T-DG6-BE-Z7B-evidence
+orchestrator-final-9fbfea0 rc:
+build=0 contrast=0 demo=0 e2e-cutf8=0 e2e-unset=0 format=0 hist=0 install=0 integration=0 lint=0 openapi=0 root=0 typecheck=0 unit-cutf8=0 unit-unset=0 
+
+### D-231 round-9 code-security and QA killed (exit 143)
+DG6-T-DG6-REV-CS-R9-code-security-reviewer-20261109T042908Z-72748d4e 143 no-result-line
+DG6-T-DG6-REV-DOM-R9-domain-reviewer-20261109T042908Z-9f4023f7 0 success
+DG6-T-DG6-REV-QA-R9-qa-verifier-20261109T042908Z-7e2124db 143 no-result-line
+auto-commits of the killed runs and what they committed under reviews/:
+432823421 2026-11-09T06:02:44+00:00 run: DG6-T-DG6-REV-CS-R9-code-security-reviewer-20261109T042908Z-72748d4e (review evidence, auto-committed by run-agent.sh)
+A	docs/delivery/reviews/DG6/round-9/code-security-reviewer.findings.json
+62cfb0b98 2026-11-09T06:02:44+00:00 run: DG6-T-DG6-REV-QA-R9-qa-verifier-20261109T042908Z-7e2124db (review evidence, auto-committed by run-agent.sh)
+A	docs/delivery/reviews/DG6/round-9/qa-verifier.verifications.json
+deleted by the orchestrator in:
+4d62bbe72 2026-11-09T06:04:27+00:00 DG6 round 9: domain FAIL (580), CS/QA interrupted; D-231; BE-Z14 brief
+D	docs/delivery/reviews/DG6/round-9/code-security-reviewer.findings.json
+D	docs/delivery/reviews/DG6/round-9/qa-verifier.verifications.json
+=> The assignment's statement 'their partial output was never committed' is NOT confirmed by history: the runner auto-committed code-security-reviewer.findings.json (F-DG6-600, 601 drafts) and qa-verifier.verifications.json (560, 561 PASS) and the orchestrator deleted them 1m43s later. D-231 itself says only 'set aside'.
+
+### round-8 interrupted domain attempt
+a617a8f63 2026-11-08T17:03:48+00:00 run: DG6-T-DG6-REV-DOM-R8-domain-reviewer-20261108T163207Z-c1924c83 (review evidence, auto-committed by run-agent.sh)
+A	docs/delivery/reviews/DG6/round-8/domain-reviewer.findings.json
+A	docs/delivery/reviews/DG6/round-8/domain-reviewer.verifications.json
+5dd264274 2026-11-08T17:06:08+00:00 DG6 round 8: remove partial domain records of the interrupted attempt (kept in run evidence)
+D	docs/delivery/reviews/DG6/round-8/domain-reviewer.findings.json
+D	docs/delivery/reviews/DG6/round-8/domain-reviewer.verifications.json
+0ce02b71d 2026-11-08T18:04:10+00:00 run: DG6-T-DG6-REV-DOM-R8-domain-reviewer-20261108T170554Z-1662c58a (review evidence, auto-committed by run-agent.sh)
+A	docs/delivery/reviews/DG6/round-8/domain-reviewer.findings.json
+A	docs/delivery/reviews/DG6/round-8/domain-reviewer.json
+A	docs/delivery/reviews/DG6/round-8/domain-reviewer.verifications.json
+
+### V15 restart (orchestrator-final-4288d7c)
+# DG6 orchestrator final verification V15 on 4288d7c
+
+Source commit `4288d7c0b` (after FE-Z16), clean detached checkout. All 15 steps exit 0 (`summary.txt`).
+
+- integration: 4354 passed, 1 skipped, 1 todo
+- e2e: 556 passed with the locale unset and 556 with C.UTF-8
+- root: 288 passed
+- demo: 10 passed
+
+A container restart interrupted the e2e-cutf8 step. Its partial log is kept as `e2e-cutf8.interrupted.log` (it wrote no `.rc`). `run.sh` was restarted unchanged: steps with an `.rc` file were skipped, and e2e-cutf8, root and demo ran in full from the start.
+interrupted log: 229 lines, failures: 0; last test:   ✓   89 [chromium-en] › apps/web/e2e/p4-adoption-bau.spec.ts:132:1 › 1. T13: a stakeholder group with the closed 
+
+### ADR-0051 amendment with FE-Z16 (D-235/D-236)
+4c0525fa4 Claude T-DG6-FE-Z16: truthful message on a stale-token refusal (F-DG6-700, F-DG6-740, D-235)
+ADR-0051 part B corrected by the orchestrator per the handback.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+ ...-authorization-boundary-read-scope-sensitive-records-deep-links.md | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+FE-Z16 run Write/Edit calls (replayed): only its handback; its handback proposes the ADR-0051 part B text (lines 152-164).
+round-12 reviews of that edit: domain DOM-R12-12, code-security CS-R12-09, qa QA-R12-16 (each reviewed the 5-file product diff incl. ADR-0051).
+
+### Decision to repair rather than accept F-DG6-700/740 (D-235)
+| D-235 | 2026-11-09 | delivery-orchestrator | **DG6 round 11: domain, code-security and QA all PASS on c45d73b8.** 640 is CLOSED_VERIFIED. Two Low findings name one defect: F-DG6-700 (domain) and F-DG6-740 (QA). On a 422 `restricted_token_stale` that is not a concurrent change, the editor tells the author in en and ar that the rule changed after they opened it. That is untrue. **Repair rather than accept:** a user-facing text that is untrue is not accepted as an observation (the F-DG4-160 precedent). T-DG6-FE-Z16 shows the problem's own text for this 422 and keeps the 'changed, re-apply' message for 409. A full round 12 follows, then the release audit (D-140 option 1). | Round-11 records | — |

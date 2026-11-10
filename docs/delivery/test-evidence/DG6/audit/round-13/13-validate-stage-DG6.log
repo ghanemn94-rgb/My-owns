@@ -1,0 +1,162 @@
+## 13 node tools/gates/validate.mjs --stage DG6 (auditor T-DG6-AUDIT-R13, 2026-11-10T07:04:33Z, HEAD 7fa83c6216e5d7d52d2f650efdb0bb34c081c5d4, with this run's staged records)
+## raw output:
+FAIL gate DG6 (current) (131 problems)
+  - gate DG6: decision is BLOCKED
+  - gate DG6: blocking conditions recorded: B1 (no fix_revision on any DG6 finding; record integrity, owner delivery-orchestrator): all 52 DG6 findings in docs/delivery/findings.json are CLOSED_VERIFIED, but none has a fix_revision. The field is absent, as 03-findings.log shows ('CLOSED_VERIFIED without a full 40-hex fix_revision: 52 of 52'). Assignment item 4 requires a full 40-hex fix_revision that is an ancestor of the candidate. tools/gates/lib/rules.mjs:742 reports 'CLOSED_VERIFIED needs a full fix_revision commit id' for each one. This is the same defect as D-184 B1 (DG5). Remedy: record, for each finding, the full 40-hex id of its fix commit. It must be a commit object that is an ancestor of the verifying round's source_commit, of the verifying run's head_commit_at_start and of 2495e036 (for example 4c0525fa4… for F-DG6-700/740). Leave status and verification unchanged: import-findings.mjs --fix would reset the status to FIXED_PENDING_VERIFICATION. findings.json is meta-excluded, so the candidate stays sha256:c05864ba….; B2 (write-once breaches in the DG6 write-once paths; record integrity, owner delivery-orchestrator): checkWriteOnce(repo, 'DG6') reports 51 errors (05-write-once.log), and validate --stage DG6 reports the same ones. (a) The killed round-9 runs auto-committed docs/delivery/reviews/DG6/round-9/code-security-reviewer.findings.json (in 432823421) and qa-verifier.verifications.json (in 62cfb0b98). The orchestrator deleted both in 4d62bbe72. (b) round-8/domain-reviewer.findings.json and .verifications.json of the interrupted attempt (a617a8f63) were deleted in 5dd264274, then re-committed with different content (0ce02b71d). (c) runs/DG6 BE-P2 and KBE-A .pre-config.txt, .pre-snapshot.json and transcript.jsonl were deleted in 88b1e42, b4510ca, 4930b25, 9d4f9f3 and e16b99a. (d) candidates/DG6/be0200e246368bcb.manifest.json was deleted, and the round-7 assignments were modified (6631b8c, 15adee2). (e) This audit's own assignment, assignments/DG6/round-13/release-auditor.md, was modified after it was committed (7fa83c6). Assignment item 5 requires that nothing under reviews/DG6 or runs/DG6 was ever deleted or rewritten, and that the validator's write-once check reports nothing. Neither holds. History events cannot be undone by new commits. Remedy, for the user to decide: an authorized history rewrite that restores the deleted files and keeps one content per path (the D-136 precedent), or a clean re-gate on a new base (the D-184 / D-056 path C precedent). Then a new audit round with a write-once assignment.; B3 (an incident premise contradicted by history; owner delivery-orchestrator): assignment item 6 states that the round-9 code-security and QA reviews' partial output 'was never committed'. History shows otherwise: run-agent.sh auto-committed both sidecars at 06:02:44Z (with drafts of F-DG6-600/601 and PASS for 560/561), and the orchestrator deleted them at 06:04:27Z in 4d62bbe72. D-231 says only 'set aside'. The deletions in B2 (a), (b) and (c) and the round-7 re-freeze edits in (d) are not recorded in any decision. Remedy: record a decision that states these events and their handling truthfully, as part of the B2 remedy.; B4 (closures not bound to their verifying run; owner delivery-orchestrator, re-verification by qa-verifier or another non-owner specialist): the latest verification of F-DG6-144, F-DG6-200 and F-DG6-201 (all Low) is docs/delivery/reviews/DG6/round-3/qa-verifier.verifications.json. The killed run DG6-T-DG6-REV-QA-R3-qa-verifier-20261104T123608Z-01cb5eae (exit 143, no record) wrote that file, and it was auto-committed in c95ecb4d4. findings.json attributes those closures to DG6-T-DG6-REV-QA-R3B-qa-verifier-20261104T171853Z-f440e4a5, which did not write it. The R3B record cites assignment round-3/qa-verifier.md, but the run executed round-3/qa-verifier-continuation.md. validate --stage DG6 reports four errors for each finding: 'was not written by this run's file tools', 'cannot be reconstructed from this run's own successful Write/Edit calls', 'differs from what the run wrote', 'ran assignment … record cites …'. So these three closures have no valid verifying run. Remedy: a non-owner specialist re-verifies F-DG6-144, 200 and 201 on the candidate in a new review round, through its own verifications sidecar, and the orchestrator imports it. No product change is expected.; B5 (stage-state metadata; owner delivery-orchestrator): validate --stage DG6 reports 'review rounds: DG6 round 9 code-security-reviewer: file not found' and 'DG6 round 9 qa-verifier: file not found'. stages.json lists records for the two killed round-9 reviews, and those records never existed. It also reports 'review rounds: DG6 round 12 frozen_at/source_commit differ from its committed manifest': stages.json round 12 says frozen_at 2026-11-10T03:12:24Z, while candidates/DG6/c05864ba65f6319c.manifest.json and the stage's candidate entry say 03:12:17Z. Remedy: correct stages.json (meta-excluded) so that round 9 lists only the records that exist, with a note on the killed runs, and round 12's frozen_at equals the manifest's.
+  - review release-auditor (docs/delivery/reviews/DG6/round-13/release-auditor.json): verdict is BLOCKED
+  - review release-auditor (docs/delivery/reviews/DG6/round-13/release-auditor.json): check AUD-R13-04-findings is FAIL
+  - review release-auditor (docs/delivery/reviews/DG6/round-13/release-auditor.json): check AUD-R13-06-write-once is FAIL
+  - review release-auditor (docs/delivery/reviews/DG6/round-13/release-auditor.json): check AUD-R13-07-incidents-orchestrator-decisions is FAIL
+  - review release-auditor (docs/delivery/reviews/DG6/round-13/release-auditor.json): check AUD-R13-14-validate-stage-with-gate is FAIL
+  - review release-auditor (docs/delivery/reviews/DG6/round-13/release-auditor.json) invocation: file not found (docs/delivery/runs/DG6/DG6-T-DG6-AUDIT-R13-release-auditor-20261110T062621Z-5749b487/meta.json)
+  - gate DG6: test '52 DG6 findings: CLOSED_VERIFIED by non-owners, mirror exact, 0 unresolved Critical/High or mandatory; but 0 of 52 carry a fix_revision (B1) and the closures of F-DG6-144/200/201 are not bound to their verifying run (B4)' is FAIL
+  - gate DG6: test 'Write-once over reviews/DG6, runs/DG6, candidates/DG6, assignments/DG6/round-*: 51 checkWriteOnce errors (B2)' is FAIL
+  - gate DG6: test 'Incidents and orchestrator decisions: D-216 BE-Z7/Z7B, the V15 restart, the ADR-0051 edit and D-235 are sound; D-231's round-9 partial output was committed and then deleted (B3)' is FAIL
+  - gate DG6: test 'Stage validation of DG6 with this gate: errors beyond this in-flight run (B1, B2, B4, B5)' is FAIL
+  - review rounds: DG6/round-13 exists but is not recorded in stages.json
+  - review rounds: DG6 round 9 code-security-reviewer: file not found (docs/delivery/reviews/DG6/round-9/code-security-reviewer.json)
+  - review rounds: DG6 round 9 qa-verifier: file not found (docs/delivery/reviews/DG6/round-9/qa-verifier.json)
+  - review rounds: DG6 round 12 frozen_at/source_commit differ from its committed manifest
+  - write-once: docs/delivery/assignments/DG6/round-13/release-auditor.md has a M event in 7fa83c6216 (review evidence is append-only)
+  - write-once: docs/delivery/reviews/DG6/round-9/code-security-reviewer.findings.json has a D event in 4d62bbe72b (review evidence is append-only)
+  - write-once: docs/delivery/reviews/DG6/round-9/qa-verifier.verifications.json has a D event in 4d62bbe72b (review evidence is append-only)
+  - write-once: docs/delivery/reviews/DG6/round-8/domain-reviewer.findings.json has a D event in 5dd264274b (review evidence is append-only)
+  - write-once: docs/delivery/reviews/DG6/round-8/domain-reviewer.verifications.json has a D event in 5dd264274b (review evidence is append-only)
+  - write-once: docs/delivery/assignments/DG6/round-7/code-security-reviewer.md has a M event in 15adee2506 (review evidence is append-only)
+  - write-once: docs/delivery/assignments/DG6/round-7/domain-reviewer.md has a M event in 15adee2506 (review evidence is append-only)
+  - write-once: docs/delivery/assignments/DG6/round-7/qa-verifier.md has a M event in 15adee2506 (review evidence is append-only)
+  - write-once: docs/delivery/assignments/DG6/round-7/code-security-reviewer.md has a M event in 6631b8c8ab (review evidence is append-only)
+  - write-once: docs/delivery/assignments/DG6/round-7/domain-reviewer.md has a M event in 6631b8c8ab (review evidence is append-only)
+  - write-once: docs/delivery/assignments/DG6/round-7/qa-verifier.md has a M event in 6631b8c8ab (review evidence is append-only)
+  - write-once: docs/delivery/candidates/DG6/be0200e246368bcb.manifest.json has a D event in 6631b8c8ab (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG6/DG6-T-DG6-BE-P2-backend-workflow-engineer-20261029T195625Z-8fefa337/.pre-config.txt has a D event in 88b1e42164 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG6/DG6-T-DG6-BE-P2-backend-workflow-engineer-20261029T195625Z-8fefa337/.pre-snapshot.json has a D event in 88b1e42164 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG6/DG6-T-DG6-BE-P2-backend-workflow-engineer-20261029T195625Z-8fefa337/transcript.jsonl has a D event in 88b1e42164 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG6/DG6-T-DG6-BE-P2-backend-workflow-engineer-20261029T195625Z-8fefa337/.pre-config.txt has a D event in b4510ca73a (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG6/DG6-T-DG6-BE-P2-backend-workflow-engineer-20261029T195625Z-8fefa337/.pre-snapshot.json has a D event in b4510ca73a (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG6/DG6-T-DG6-BE-P2-backend-workflow-engineer-20261029T195625Z-8fefa337/transcript.jsonl has a D event in b4510ca73a (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG6/DG6-T-DG6-BE-P2-backend-workflow-engineer-20261029T195625Z-8fefa337/.pre-config.txt has a D event in 4930b25ee4 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG6/DG6-T-DG6-BE-P2-backend-workflow-engineer-20261029T195625Z-8fefa337/.pre-snapshot.json has a D event in 4930b25ee4 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG6/DG6-T-DG6-BE-P2-backend-workflow-engineer-20261029T195625Z-8fefa337/transcript.jsonl has a D event in 4930b25ee4 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG6/DG6-T-DG6-BE-P2-backend-workflow-engineer-20261029T195625Z-8fefa337/.pre-config.txt has a D event in 9d4f9f31d7 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG6/DG6-T-DG6-BE-P2-backend-workflow-engineer-20261029T195625Z-8fefa337/.pre-snapshot.json has a D event in 9d4f9f31d7 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG6/DG6-T-DG6-BE-P2-backend-workflow-engineer-20261029T195625Z-8fefa337/transcript.jsonl has a D event in 9d4f9f31d7 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG6/DG6-T-DG6-KBE-A-kpi-benefits-engineer-20261029T195605Z-a376e4b7/.pre-config.txt has a D event in e16b99acd5 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG6/DG6-T-DG6-KBE-A-kpi-benefits-engineer-20261029T195605Z-a376e4b7/.pre-snapshot.json has a D event in e16b99acd5 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG6/DG6-T-DG6-KBE-A-kpi-benefits-engineer-20261029T195605Z-a376e4b7/transcript.jsonl has a D event in e16b99acd5 (review evidence is append-only)
+  - write-once: docs/delivery/assignments/DG6/round-13/release-auditor.md was committed with 2 different contents (review evidence is append-only)
+  - write-once: docs/delivery/reviews/DG6/round-9/code-security-reviewer.findings.json was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/reviews/DG6/round-9/code-security-reviewer.findings.json is missing from the working tree
+  - write-once: docs/delivery/reviews/DG6/round-9/qa-verifier.verifications.json was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/reviews/DG6/round-9/qa-verifier.verifications.json is missing from the working tree
+  - write-once: docs/delivery/reviews/DG6/round-8/domain-reviewer.findings.json was committed with 2 different contents (review evidence is append-only)
+  - write-once: docs/delivery/reviews/DG6/round-8/domain-reviewer.verifications.json was committed with 2 different contents (review evidence is append-only)
+  - write-once: docs/delivery/assignments/DG6/round-7/code-security-reviewer.md was committed with 3 different contents (review evidence is append-only)
+  - write-once: docs/delivery/assignments/DG6/round-7/domain-reviewer.md was committed with 3 different contents (review evidence is append-only)
+  - write-once: docs/delivery/assignments/DG6/round-7/qa-verifier.md was committed with 3 different contents (review evidence is append-only)
+  - write-once: docs/delivery/candidates/DG6/be0200e246368bcb.manifest.json was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/candidates/DG6/be0200e246368bcb.manifest.json is missing from the working tree
+  - write-once: docs/delivery/runs/DG6/DG6-T-DG6-BE-P2-backend-workflow-engineer-20261029T195625Z-8fefa337/.pre-config.txt was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG6/DG6-T-DG6-BE-P2-backend-workflow-engineer-20261029T195625Z-8fefa337/.pre-config.txt is missing from the working tree
+  - write-once: docs/delivery/runs/DG6/DG6-T-DG6-BE-P2-backend-workflow-engineer-20261029T195625Z-8fefa337/.pre-snapshot.json was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG6/DG6-T-DG6-BE-P2-backend-workflow-engineer-20261029T195625Z-8fefa337/.pre-snapshot.json is missing from the working tree
+  - write-once: docs/delivery/runs/DG6/DG6-T-DG6-BE-P2-backend-workflow-engineer-20261029T195625Z-8fefa337/transcript.jsonl was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG6/DG6-T-DG6-BE-P2-backend-workflow-engineer-20261029T195625Z-8fefa337/transcript.jsonl is missing from the working tree
+  - write-once: docs/delivery/runs/DG6/DG6-T-DG6-KBE-A-kpi-benefits-engineer-20261029T195605Z-a376e4b7/.pre-config.txt was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG6/DG6-T-DG6-KBE-A-kpi-benefits-engineer-20261029T195605Z-a376e4b7/.pre-config.txt is missing from the working tree
+  - write-once: docs/delivery/runs/DG6/DG6-T-DG6-KBE-A-kpi-benefits-engineer-20261029T195605Z-a376e4b7/.pre-snapshot.json was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG6/DG6-T-DG6-KBE-A-kpi-benefits-engineer-20261029T195605Z-a376e4b7/.pre-snapshot.json is missing from the working tree
+  - write-once: docs/delivery/runs/DG6/DG6-T-DG6-KBE-A-kpi-benefits-engineer-20261029T195605Z-a376e4b7/transcript.jsonl was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG6/DG6-T-DG6-KBE-A-kpi-benefits-engineer-20261029T195605Z-a376e4b7/transcript.jsonl is missing from the working tree
+  - finding F-DG6-100 (Medium): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG6-101 (Medium): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG6-102 (Low): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG6-120 (High, mandatory): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG6-121 (High, mandatory): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG6-122 (High, mandatory): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG6-123 (High, mandatory): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG6-124 (Low): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG6-140 (Medium): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG6-141 (Medium): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG6-142 (Medium): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG6-143 (Low): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG6-144 (Low) verification: invocation DG6-T-DG6-REV-QA-R3B-qa-verifier-20261104T171853Z-f440e4a5: ran assignment docs/delivery/assignments/DG6/round-3/qa-verifier-continuation.md, record cites docs/delivery/assignments/DG6/round-3/qa-verifier.md
+  - finding F-DG6-144 (Low) verification: invocation DG6-T-DG6-REV-QA-R3B-qa-verifier-20261104T171853Z-f440e4a5: docs/delivery/reviews/DG6/round-3/qa-verifier.verifications.json differs from what the run wrote (edited after the run?)
+  - finding F-DG6-144 (Low) verification: invocation DG6-T-DG6-REV-QA-R3B-qa-verifier-20261104T171853Z-f440e4a5: docs/delivery/reviews/DG6/round-3/qa-verifier.verifications.json was not written by this run's file tools
+  - finding F-DG6-144 (Low) verification: invocation DG6-T-DG6-REV-QA-R3B-qa-verifier-20261104T171853Z-f440e4a5: docs/delivery/reviews/DG6/round-3/qa-verifier.verifications.json cannot be reconstructed from this run's own successful Write/Edit calls in its transcript
+  - finding F-DG6-144 (Low): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG6-145 (Low): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG6-146 (Low): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG6-147 (Medium): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG6-160 (Low): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG6-161 (Low): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG6-180 (High, mandatory): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG6-181 (High, mandatory): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG6-200 (Low) verification: invocation DG6-T-DG6-REV-QA-R3B-qa-verifier-20261104T171853Z-f440e4a5: ran assignment docs/delivery/assignments/DG6/round-3/qa-verifier-continuation.md, record cites docs/delivery/assignments/DG6/round-3/qa-verifier.md
+  - finding F-DG6-200 (Low) verification: invocation DG6-T-DG6-REV-QA-R3B-qa-verifier-20261104T171853Z-f440e4a5: docs/delivery/reviews/DG6/round-3/qa-verifier.verifications.json differs from what the run wrote (edited after the run?)
+  - finding F-DG6-200 (Low) verification: invocation DG6-T-DG6-REV-QA-R3B-qa-verifier-20261104T171853Z-f440e4a5: docs/delivery/reviews/DG6/round-3/qa-verifier.verifications.json was not written by this run's file tools
+  - finding F-DG6-200 (Low) verification: invocation DG6-T-DG6-REV-QA-R3B-qa-verifier-20261104T171853Z-f440e4a5: docs/delivery/reviews/DG6/round-3/qa-verifier.verifications.json cannot be reconstructed from this run's own successful Write/Edit calls in its transcript
+  - finding F-DG6-200 (Low): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG6-201 (Low) verification: invocation DG6-T-DG6-REV-QA-R3B-qa-verifier-20261104T171853Z-f440e4a5: ran assignment docs/delivery/assignments/DG6/round-3/qa-verifier-continuation.md, record cites docs/delivery/assignments/DG6/round-3/qa-verifier.md
+  - finding F-DG6-201 (Low) verification: invocation DG6-T-DG6-REV-QA-R3B-qa-verifier-20261104T171853Z-f440e4a5: docs/delivery/reviews/DG6/round-3/qa-verifier.verifications.json differs from what the run wrote (edited after the run?)
+  - finding F-DG6-201 (Low) verification: invocation DG6-T-DG6-REV-QA-R3B-qa-verifier-20261104T171853Z-f440e4a5: docs/delivery/reviews/DG6/round-3/qa-verifier.verifications.json was not written by this run's file tools
+  - finding F-DG6-201 (Low) verification: invocation DG6-T-DG6-REV-QA-R3B-qa-verifier-20261104T171853Z-f440e4a5: docs/delivery/reviews/DG6/round-3/qa-verifier.verifications.json cannot be reconstructed from this run's own successful Write/Edit calls in its transcript
+  - finding F-DG6-201 (Low): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG6-220 (High, mandatory): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG6-221 (Low): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG6-222 (Medium): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG6-260 (Low): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG6-261 (Low): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG6-280 (High, mandatory): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG6-281 (Low): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG6-300 (High, mandatory): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG6-301 (Low): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG6-320 (Low): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG6-340 (Medium): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG6-341 (Low): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG6-360 (High, mandatory): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG6-361 (High, mandatory): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG6-362 (Medium): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG6-380 (High, mandatory): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG6-400 (Medium): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG6-420 (Medium): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG6-440 (Medium): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG6-460 (Low): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG6-480 (Medium): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG6-520 (Medium): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG6-540 (Medium): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG6-541 (Medium): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG6-560 (Medium): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG6-561 (Low): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG6-580 (Medium): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG6-640 (Medium): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG6-700 (Low): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG6-740 (Low): CLOSED_VERIFIED needs a full fix_revision commit id
+exit code: 1
+
+## classification (by pattern; the BLOCKED-decision lines are matched first because they quote B1-B5 text)
+IN-FLIGHT (this run): 2
+     review release-auditor (docs/delivery/reviews/DG6/round-13/release-auditor.json) invocation: file not found (docs/delivery/runs/DG6/DG6-T-DG6-AUDIT-R13-release-auditor-20261110T062621Z-5749b487/meta.json)
+     review rounds: DG6/round-13 exists but is not recorded in stages.json
+CONSEQUENCE OF THIS BLOCKED DECISION: 11
+     gate DG6: decision is BLOCKED
+     gate DG6: blocking conditions recorded: B1 (no fix_revision on any DG6 finding; record integrity, owner delivery-orchestrator): all 52 DG6 findings in docs/delivery/findings.json are CLOSED_VERIFIED, but none has a fix_revision. The field is absent, as 03-findings.log shows ('CLOSED_VERIFIED without
+     review release-auditor (docs/delivery/reviews/DG6/round-13/release-auditor.json): verdict is BLOCKED
+     review release-auditor (docs/delivery/reviews/DG6/round-13/release-auditor.json): check AUD-R13-04-findings is FAIL
+     review release-auditor (docs/delivery/reviews/DG6/round-13/release-auditor.json): check AUD-R13-06-write-once is FAIL
+     review release-auditor (docs/delivery/reviews/DG6/round-13/release-auditor.json): check AUD-R13-07-incidents-orchestrator-decisions is FAIL
+     review release-auditor (docs/delivery/reviews/DG6/round-13/release-auditor.json): check AUD-R13-14-validate-stage-with-gate is FAIL
+     gate DG6: test '52 DG6 findings: CLOSED_VERIFIED by non-owners, mirror exact, 0 unresolved Critical/High or mandatory; but 0 of 52 carry a fix_revision (B1) and the closures of F-DG6-144/200/201 are not bound to their verifying run (B4)' is FAIL
+     gate DG6: test 'Write-once over reviews/DG6, runs/DG6, candidates/DG6, assignments/DG6/round-*: 51 checkWriteOnce errors (B2)' is FAIL
+     gate DG6: test 'Incidents and orchestrator decisions: D-216 BE-Z7/Z7B, the V15 restart, the ADR-0051 edit and D-235 are sound; D-231's round-9 partial output was committed and then deleted (B3)' is FAIL
+     gate DG6: test 'Stage validation of DG6 with this gate: errors beyond this in-flight run (B1, B2, B4, B5)' is FAIL
+B1 fix_revision: 52
+B2 write-once: 51
+B4 closure binding F-DG6-144/200/201: 12
+B5 stages.json round metadata: 3
+     review rounds: DG6 round 9 code-security-reviewer: file not found (docs/delivery/reviews/DG6/round-9/code-security-reviewer.json)
+     review rounds: DG6 round 9 qa-verifier: file not found (docs/delivery/reviews/DG6/round-9/qa-verifier.json)
+     review rounds: DG6 round 12 frozen_at/source_commit differ from its committed manifest
+UNCLASSIFIED: 0
+total problems: 131
+Errors that do not concern this in-flight run exist (B1, B2, B4, B5): PASS cannot be recorded; the decision is BLOCKED.

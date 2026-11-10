@@ -1,0 +1,262 @@
+## 12 product gates vs engineering gates, honesty (auditor T-DG6-AUDIT-R13), on the tree at 2495e036 (product paths identical at HEAD)
+$ git grep -n 'DG[0-7]' -- apps packages (non-test, non-comment product strings)
+2495e036c:apps/api/src/modules/workflows/gates.ts:1041:    note: "Product gate (business approval inside the product); unrelated to the engineering delivery gates DG0-DG7.",
+2495e036c:packages/db/migrations/0017_p2_decisions_gates.sql:243:-- gate_instance: A product gate (G1-G6) of one transformation: status, configured approver, current submission. Business approval inside the product; unrelated to engineering gates DG0-DG7.
+2495e036c:packages/db/migrations/0022_p3_dependency_capacity_funding.sql:25:-- Seed (B0081 "Decision / Tech / Data / Vendor"; 'other' keeps DG2 rows valid). Arabic is a PROVISIONAL translation.
+2495e036c:packages/db/migrations/0022_p3_dependency_capacity_funding.sql:55:-- dependency (DG2 0017, canonical, shared by T08 and RAID): P3 adds initiative endpoints and configurable types.
+2495e036c:packages/db/migrations/0022_p3_dependency_capacity_funding.sql:56:-- Compatible extension: existing rows keep every value; the five DG2 type codes are system rows above.
+2495e036c:packages/db/migrations/0024_p3_gates_access_instantiation.sql:6:-- G1-G6 are BUSINESS approvals inside the product; nothing here touches engineering gates DG0-DG7, and no row here
+2495e036c:packages/db/migrations/0024_p3_gates_access_instantiation.sql:118:-- ungated; the DG2 ARCH-01B precedent), so neither a fresh nor an upgraded database ever holds the earlier malformed
+2495e036c:packages/db/migrations/0025_p3_g1_agreement_guard.sql:11:-- earlier would have broken the DG2 G1 approval. gate_decision is append-only (0017), so checking at INSERT suffices;
+2495e036c:packages/db/migrations/0025_p3_g1_agreement_guard.sql:13:-- G1-G6 are BUSINESS approvals inside the product; nothing here touches engineering gates DG0-DG7, and no row here
+2495e036c:packages/db/migrations/0026_p3_enable_g4.sql:5:-- 0024 seeded the eight g4.* criteria but left G4 closed, so the DG2 API stayed unchanged until the G4 evaluators
+2495e036c:packages/db/migrations/0026_p3_enable_g4.sql:10:-- engineering delivery gates DG0-DG7. G5 and G6 stay closed (later stages).
+2495e036c:packages/db/migrations/0027_p3_calculation_rounding.sql:19:--   - P3 is not released (DG3 is building), so no production database holds such rows. A fresh database has none.
+2495e036c:packages/db/migrations/0029_p4_groups_role_mapping_delegation.sql:167:-- The audit-required trigger is NOT attached: DG3 integration fixtures insert delegation rows directly, and adding it
+2495e036c:packages/db/migrations/0029_p4_groups_role_mapping_delegation.sql:168:-- would change a DG1-approved table's write contract. Audit coverage for delegation writes is enforced by the API
+2495e036c:packages/db/migrations/0031_p4_approvals_permissions.sql:8:-- only records an escalation (approval_escalation). Nothing here touches the engineering gates DG0-DG7.
+2495e036c:packages/db/migrations/0031_p4_approvals_permissions.sql:362:-- TO, WL or CM would change two DG1/DG2 rules that key on "a role holding an approval permission" (the creator-derived
+2495e036c:packages/db/migrations/0033_p4_kpi_dictionary_versions.sql:7:-- The DG2 kpi_definition table and its contract are unchanged except for one additive trigger
+2495e036c:packages/db/migrations/0033_p4_kpi_dictionary_versions.sql:9:-- (no row created before P4 has a version, so no DG2 behaviour on existing data changes).
+2495e036c:packages/db/migrations/0033_p4_kpi_dictionary_versions.sql:86:-- kpi_version: the versioned P4 measurement definition of a KPI (KPIVersion, REQ-S16-014). Together with the DG2
+2495e036c:packages/db/migrations/0033_p4_kpi_dictionary_versions.sql:300:  -- The measure type must fit the DG2 polarity: higher -> higher or binary milestone, lower -> lower, band -> band.
+2495e036c:packages/db/migrations/0033_p4_kpi_dictionary_versions.sql:335:-- kpi_definition_measure_lock: additive trigger on the DG2 table. Once any kpi_version exists for a KPI, its unit,
+2495e036c:packages/db/migrations/0036_p4_kpi_permissions_backfill.sql:2:-- permission catalogue and role defaults, and a one-time copy of approved DG2 T02 trajectories into target_trajectory
+2495e036c:packages/db/migrations/0036_p4_kpi_permissions_backfill.sql:5:-- Nothing here approves anything new: the backfill copies approvals that named people already gave on DG2 outcome_kpi
+2495e036c:packages/db/migrations/0036_p4_kpi_permissions_backfill.sql:6:-- rows (approver and time preserved), and no job or trigger here grants an approval. Nothing touches DG0-DG7.
+2495e036c:packages/db/migrations/0036_p4_kpi_permissions_backfill.sql:23:-- are unchanged. Trajectory approval reuses the DG2 business approval kpi_target.approve (SP, BO). No technical_admin
+2495e036c:packages/db/migrations/0036_p4_kpi_permissions_backfill.sql:57:-- One-time backfill (p4-plan seam 7, additive form): every ACTIVE outcome_kpi row whose DG2 trajectory is approved and
+2495e036c:packages/db/migrations/0036_p4_kpi_permissions_backfill.sql:59:-- the same points, created by the outcome_kpi row's creator and approved by its DG2 approver at the DG2 approval time.
+2495e036c:packages/db/migrations/0037_p4_benefit_register.sql:8:-- Finance users through the API (finance.validate). Nothing touches DG0-DG7.
+2495e036c:packages/db/migrations/0040_p4_benefit_permissions.sql:4:-- SQL floor: PostgreSQL 16. Nothing here approves or validates anything, and nothing touches DG0-DG7.
+2495e036c:packages/db/migrations/0041_p4_raid_actions_corrective.sql:7:-- SQL floor: PostgreSQL 16. Nothing here approves anything, and nothing touches DG0-DG7.
+2495e036c:packages/db/migrations/0041_p4_raid_actions_corrective.sql:56:-- and open | in_progress -> closed; a closed entry is final and frozen (no field changes, no reopening in DG4).
+2495e036c:packages/db/migrations/0041_p4_raid_actions_corrective.sql:87:-- dependency (DG2 0017, canonical, shared by T08 and RAID; extended by 0022): the T15 Impact column. Additive: a
+2495e036c:packages/db/migrations/0041_p4_raid_actions_corrective.sql:89:-- dependency at all: it is n/a by construction (REQ-PB-080). The T08 and DG2 representations do not show it.
+2495e036c:packages/db/migrations/0041_p4_raid_actions_corrective.sql:293:-- action_item (DG2 0017): P4 source links and a follow-up date (p4-plan seam 13, additive). Existing rows keep every
+2495e036c:packages/db/migrations/0043_p4_raid_permissions.sql:4:-- once merged. SQL floor: PostgreSQL 16. Nothing here approves anything, and nothing touches DG0-DG7.
+2495e036c:packages/db/migrations/0044_p4_forums_meetings.sql:8:-- SQL floor: PostgreSQL 16. Nothing here approves anything, and nothing touches DG0-DG7.
+2495e036c:packages/db/migrations/0045_p4_t16_escalation.sql:6:-- SQL floor: PostgreSQL 16. Nothing here approves anything, and nothing touches DG0-DG7.
+2495e036c:packages/db/migrations/0045_p4_t16_escalation.sql:9:-- decision (DG2 0017, THE canonical decision record): the T16 columns of B0130 that the table does not have yet, as
+2495e036c:packages/db/migrations/0045_p4_t16_escalation.sql:13:-- Impact if delayed = impact_of_delay, Outcome = outcome_text. ask_origin is NULL on every pre-P4 row and on the DG3
+2495e036c:packages/db/migrations/0045_p4_t16_escalation.sql:240:-- ask origin. DG3 funding decisions (kind 'executive', ask_origin NULL) are listed with their own columns; a T16 column
+2495e036c:packages/db/migrations/0046_p4_governance_permissions.sql:5:-- and nothing touches DG0-DG7.
+2495e036c:packages/db/migrations/0047_p4_adoption.sql:10:-- SQL floor: PostgreSQL 16. Nothing here approves anything, and nothing touches DG0-DG7.
+2495e036c:packages/db/migrations/0048_p4_sustainment.sql:11:-- SQL floor: PostgreSQL 16. Nothing here approves anything, and nothing touches DG0-DG7. Product gate G6 is read
+2495e036c:packages/db/migrations/0048_p4_sustainment.sql:35:-- its DG3 meaning and edges; 'completed' is "delivery complete" and now records who completed delivery and when.
+2495e036c:packages/db/migrations/0048_p4_sustainment.sql:877:-- in the same transaction). The DG1 PATCH keeps refusing closure in the API; this adds the database invariant beside it.
+2495e036c:packages/db/migrations/0049_p4_adoption_sustainment_permissions.sql:7:-- DG0-DG7. The recurring-job schedules (review and control-check scans) are migration 0050 (p4-work-split §F+G).
+2495e036c:packages/db/migrations/0050_p4_sustainment_schedules.sql:4:-- and nothing touches DG0-DG7.
+2495e036c:packages/db/migrations/0051_p4_phases_gates_g5_g6_exceptions.sql:11:-- the 0026 precedent) or touches the engineering delivery gates DG0-DG7. Product G6 never implies DG7.
+2495e036c:packages/db/migrations/0051_p4_phases_gates_g5_g6_exceptions.sql:13:-- One DG2 database invariant changes here, as decided by the orchestrator (D-089 Q2, p4-plan §3 seam 3):
+2495e036c:packages/db/migrations/0051_p4_phases_gates_g5_g6_exceptions.sql:15:-- covered by an accepted gate exception recorded on the row". A row without an exception keeps the DG2 rule exactly.
+2495e036c:packages/db/migrations/0051_p4_phases_gates_g5_g6_exceptions.sql:496:-- an exception is held to the DG2 rule exactly.
+2495e036c:packages/db/migrations/0052_p4_change_control.sql:10:-- (gate_decision and gate_submission are append-only/frozen since 0017). Nothing here touches DG0-DG7.
+2495e036c:packages/db/migrations/0053_p4_gates_change_permissions.sql:6:-- once merged. SQL floor: PostgreSQL 16. Nothing here approves anything, and nothing touches DG0-DG7.
+2495e036c:packages/db/migrations/0054_p4_gate_exception_expiry_schedule.sql:4:-- here approves anything, and nothing touches DG0-DG7.
+2495e036c:packages/db/migrations/0055_p4_traceability_modular_structure.sql:8:-- DG0-DG7.
+2495e036c:packages/db/migrations/0055_p4_traceability_modular_structure.sql:127:-- trace_link: the chain steps of M0097 that no typed DG2-P4 table already records (REQ-S03-006, REQ-PB-044):
+2495e036c:packages/db/migrations/0055_p4_traceability_modular_structure.sql:196:-- The DG3 initiative -> outcome/KPI contribution (T05 "Outcome/KPI contribution") gains an optional share of the KPI
+2495e036c:packages/db/migrations/0055_p4_traceability_modular_structure.sql:197:-- movement it is credited with. Additive: NULL on every existing row, and the DG3 routes never write it (the P4
+2495e036c:packages/db/migrations/0056_p4_dashboards_t10.sql:6:-- table here stores a dashboard figure, a RAG status or an approval. Nothing touches DG0-DG7.
+2495e036c:packages/db/migrations/0057_p4_dashboards_traceability_permissions.sql:10:-- already holds read-only. AUD gets no code here. No technical_admin role receives any of these. Nothing touches DG0-DG7.
+2495e036c:packages/db/migrations/0058_p4_approval_reminder_kinds.sql:13:-- engineering gates DG0-DG7. label_en is the platform wording; label_ar is a PROVISIONAL translation that needs
+2495e036c:packages/db/migrations/0059_p4_enable_g5_g6.sql:6:-- 0051 seeded the eight g5.*/g6.* criteria but left G5 and G6 closed (probe G05), so the DG2 refusal
+2495e036c:packages/db/migrations/0059_p4_enable_g5_g6.sql:12:-- engineering delivery gates DG0-DG7 (an approved G6 never implies DG7).
+2495e036c:packages/db/migrations/0060_p4_governance_schedules_weekly_cadence.sql:5:-- engineering delivery gates DG0-DG7.
+2495e036c:packages/db/migrations/0061_p4_finance_validation_correction_step.sql:15:-- nothing touches the engineering delivery gates DG0-DG7.
+2495e036c:packages/db/migrations/0062_p5_config_versions.sql:7:-- D-142 Q1: the DG2 catalogue rows (gate_definition, phase_definition, tom_dimension, ...) stay the stable-identity
+2495e036c:packages/db/migrations/0062_p5_config_versions.sql:10:-- Every change below to a DG2 table is additive: new nullable/defaulted columns, a widened CHECK, new triggers that
+2495e036c:packages/db/migrations/0062_p5_config_versions.sql:11:-- only constrain rows written from now on, and an extra privilege. The DG2 immutability trigger
+2495e036c:packages/db/migrations/0062_p5_config_versions.sql:12:-- methodology_version_published_immutable and the DG2 CHECK methodology_version_published_complete are kept as they are.
+2495e036c:packages/db/migrations/0062_p5_config_versions.sql:13:-- Nothing here reads or writes the engineering gates DG0-DG7; no row here is a business approval.
+2495e036c:packages/db/migrations/0062_p5_config_versions.sql:69:-- The Studio lifecycle (ADR-0039 §4). Status: draft -> published -> retired (DG2 values). Draft stage:
+2495e036c:packages/db/migrations/0062_p5_config_versions.sql:208:  -- A benefit formula revision is reviewed by the DG3 Finance validation (validateBenefitFormulaVersion, finance.validate);
+2495e036c:packages/db/migrations/0062_p5_config_versions.sql:254:-- where a version differs from, or adds to, the DG2 catalogue; ConfigResolver reads the row, else the catalogue.
+2495e036c:packages/db/migrations/0062_p5_config_versions.sql:365:-- (a Studio draft submitted for review) or a formula revision (a new benefit_formula_version, DG3) is proposed, the
+2495e036c:packages/db/migrations/0063_p5_pins_methodology_migrations.sql:6:-- Additive on DG2: the transformation_config_pin kind CHECK is widened (the P4 polarity precedent, p5-plan §3 row 2);
+2495e036c:packages/db/migrations/0063_p5_pins_methodology_migrations.sql:10:-- by a person through the canonical approval (approval type methodology_migration); nothing here touches DG0-DG7.
+2495e036c:packages/db/migrations/0064_p5_studio_permissions_source_inventory.sql:8:-- One business_approval code, methodology_migration.approve, held by SP only: TL stays approval-free because the DG1
+2495e036c:packages/db/migrations/0064_p5_studio_permissions_source_inventory.sql:12:-- AUD gets methodology.read only. Nothing touches DG0-DG7.
+2495e036c:packages/db/migrations/0064_p5_studio_permissions_source_inventory.sql:40:-- feature_status: 'working' where a DG2-DG4-approved feature implements the element; 'planned' where a P5 slice
+2495e036c:packages/db/migrations/0065_p5_scoring_defaults_instantiation.sql:4:-- D-142 Q12 is a scoped reopen of the DG3 function p3_instantiate_transformation() (last defined in 0025, whose body
+2495e036c:packages/db/migrations/0065_p5_scoring_defaults_instantiation.sql:7:--       (a transformation_config_pin row with its transformation_config_pin.create audit event, like the DG2 methodology
+2495e036c:packages/db/migrations/0065_p5_scoring_defaults_instantiation.sql:13:--         are the DG3 statements VERBATIM: the same rows in the same order, approval_basis 'source_default', the DG3
+2495e036c:packages/db/migrations/0065_p5_scoring_defaults_instantiation.sql:14:--         rationale text and the DG3 audit event, so the DG3 output is byte-identical (regression test
+2495e036c:packages/db/migrations/0065_p5_scoring_defaults_instantiation.sql:128:      -- The DG3 statements (0024/0025), unchanged.
+2495e036c:packages/db/migrations/0068_p5_form_schemas_framework.sql:7:-- Additive on DG2-DG4: no DG2-DG4 table, column, CHECK or trigger changes. Custom-field values live in a side table
+2495e036c:packages/db/migrations/0068_p5_form_schemas_framework.sql:9:-- the DG2-DG4 frozen-column and immutability triggers of those tables (e.g. funding_decision, evidence, decision) are
+2495e036c:packages/db/migrations/0068_p5_form_schemas_framework.sql:10:-- untouched (ADR-0041 §4; amends the ADR-0014 §4 wording, D-142 seam 5 reason). On slice A (DG5, not yet approved):
+2495e036c:packages/db/migrations/0068_p5_form_schemas_framework.sql:13:-- Nothing here reads or writes the engineering gates DG0-DG7; no row here is a business approval.
+2495e036c:packages/db/migrations/0068_p5_form_schemas_framework.sql:90:-- related rows, 'computed' = calculated by a DG2-DG4 engine. Read-only for the application.
+2495e036c:packages/db/migrations/0068_p5_form_schemas_framework.sql:162:  ('01920005-0206-7000-8000-000000000004', 'T06', 'weighted_result', 4, 'weighted result', 'النتيجة المرجّحة', 'calculated', 'computed', 'initiative_score_result (DG3 scorin
+2495e036c:packages/db/migrations/0068_p5_form_schemas_framework.sql:182:  ('01920005-0209-7000-8000-000000000004', 'T09', 'formula', 4, 'formula', 'المعادلة', 'calculated', 'computed', 'benefit_formula_version (DG3 formula engine)', false, 'M0137'),
+2495e036c:packages/db/migrations/0068_p5_form_schemas_framework.sql:215:  ('01920005-020e-7000-8000-000000000007', 'T14', 'realized', 7, 'realized', 'المُحقَّق', 'calculated', 'computed', 'benefit_measurement (DG4 realized value)', false, 'M0142'),
+2495e036c:packages/db/migrations/0068_p5_form_schemas_framework.sql:361:-- The seeded form schema v1 (key 'forms'): no element rows, so every form resolves to the registry (the DG2-DG4
+2495e036c:packages/db/migrations/0068_p5_form_schemas_framework.sql:431:-- stored (computed at read through the DG3 engine). JSON null clears a value. Core entity columns stay typed.
+2495e036c:packages/db/migrations/0068_p5_form_schemas_framework.sql:592:-- form_record_attachment: evidence attached to a record of a type the DG2 evidence_link does not cover (REQ-S05-001
+2495e036c:packages/db/migrations/0068_p5_form_schemas_framework.sql:593:-- "attachments"). The twenty DG2 record types keep evidence_link (one canonical attachment place per record type,
+2495e036c:packages/db/migrations/0068_p5_form_schemas_framework.sql:631:    -- The DG2 record types of evidence_link (0012) keep their attachments there.
+2495e036c:packages/db/migrations/0069_p5_procedures.sql:13:-- role that decides; a seed approves nothing. Nothing here reads or writes the engineering gates DG0-DG7.
+2495e036c:packages/db/migrations/0069_p5_procedures.sql:260:   'The DG4 actual-submission rules apply unchanged.', 'تنطبق قواعد تقديم القيم الفعلية المعتمدة في المرحلة الرابعة دون تغيير.',
+2495e036c:packages/db/migrations/0069_p5_procedures.sql:286:   'The DG3 scoring and ranking rules apply unchanged.', 'تنطبق قواعد التقييم والترتيب المعتمدة في المرحلة الثالثة دون تغيير.',
+2495e036c:packages/db/migrations/0069_p5_procedures.sql:300:   'Missing mandatory evidence blocks submission unless an authorized exception is recorded (DG2-DG4 gate rules unchanged).', 'غياب الأدلة الإلزامية يمنع التقديم ما ل�
+2495e036c:packages/db/migrations/0069_p5_procedures.sql:313:   'The DG4 change-control and impact-assessment rules apply unchanged.', 'تنطبق قواعد ضبط التغيير وتقييم الأثر المعتمدة دون تغيير.',
+2495e036c:packages/db/migrations/0069_p5_procedures.sql:326:   'Finance validation follows the DG4 rules; the validator is not the benefit owner.', 'يتبع تحقق المالية القواعد المعتمدة؛ والمتحقق ليس مالك المنف�
+2495e036c:packages/db/migrations/0069_p5_procedures.sql:352:   'The DG4 BAU handover rules apply unchanged.', 'تنطبق قواعد التسليم المعتمدة دون تغيير.',
+2495e036c:packages/db/migrations/0070_p5_forms_procedures_permissions_coverage.sql:9:-- right. Authoring procedures and form schemas uses the existing methodology.configure (ADM_METHOD, DG2) and the slice A
+2495e036c:packages/db/migrations/0070_p5_forms_procedures_permissions_coverage.sql:10:-- publish pipeline. AUD gets procedure.read only (read-only everywhere). Nothing touches DG0-DG7.
+2495e036c:packages/db/migrations/0071_p5_choice_multiple_values.sql:12:-- Nothing here reads or writes the engineering gates DG0-DG7; no row here is a business approval.
+2495e036c:packages/db/migrations/0072_p5_procedure_step_approval_type.sql:18:-- approval decided by a person inside the product; nothing here approves anything and nothing touches DG0-DG7.
+2495e036c:packages/db/migrations/0074_p5_automation_engine.sql:6:-- Additive: new tables only; no DG1-DG4 table, constraint or function changes. A rule is an identity
+2495e036c:packages/db/migrations/0074_p5_automation_engine.sql:12:-- nothing reads or writes the engineering gates DG0-DG7.
+2495e036c:packages/db/migrations/0074_p5_automation_engine.sql:56:-- implements a DG2-DG4-approved guarantee (D-142 Q3): it can never be disabled.
+2495e036c:packages/db/migrations/0074_p5_automation_engine.sql:639:-- Action types. The 'starter.*' actions call the DG4/P5 handler of their starter unchanged (ADR-0044 §1); the
+2495e036c:packages/db/migrations/0075_p5_starters_routes_policies.sql:9:-- every DG4 row and behaviour as it was ('normal', 'delivered'); one new BEFORE UPDATE trigger on inbox_notification
+2495e036c:packages/db/migrations/0075_p5_starters_routes_policies.sql:10:-- (delivery transitions; a DG4 row is 'delivered', which is final) and one on agenda_item that refuses publishing only
+2495e036c:packages/db/migrations/0075_p5_starters_routes_policies.sql:11:-- items generated into a cut-off pack that is not yet reviewed (no DG4 item is in a pack).
+2495e036c:packages/db/migrations/0075_p5_starters_routes_policies.sql:12:-- The starters' version-1 settings equal the DG4 behaviour (D-142 Q3): each calls its DG4 handler unchanged. A seed
+2495e036c:packages/db/migrations/0075_p5_starters_routes_policies.sql:13:-- approves nothing; route steps and conditions are decided and closed by people. Nothing touches DG0-DG7.
+2495e036c:packages/db/migrations/0075_p5_starters_routes_policies.sql:17:-- Triggers the starters need beyond 0074's list (the other event types their DG4 handlers already consume).
+2495e036c:packages/db/migrations/0075_p5_starters_routes_policies.sql:40:-- a guarantee (D-142 Q3): enabled, never disableable. Version 1 runs the DG4/P5 handler(s) named in its action with
+2495e036c:packages/db/migrations/0075_p5_starters_routes_policies.sql:41:-- the DG4 settings; `parameters` holds the values ADR-0044 §1 declares configurable (empty = none beyond cadence).
+2495e036c:packages/db/migrations/0075_p5_starters_routes_policies.sql:74:       'Seeded starter: the DG4 behaviour (D-142 Q3).', now()
+2495e036c:packages/db/migrations/0075_p5_starters_routes_policies.sql:87:-- and 2-6 roles. A DG4 single-step approval has no rows. A resubmission (DG4 round_no + 1) gets a fresh set of steps
+2495e036c:packages/db/migrations/0075_p5_starters_routes_policies.sql:194:-- Conditional approval (REQ-S04-011): the DG4 condition rows (gate_decision_condition, 0051, append-only) stay as
+2495e036c:packages/db/migrations/0075_p5_starters_routes_policies.sql:263:-- With no policy row and no preference row nothing is held: the DG4 behaviour.
+2495e036c:packages/db/migrations/0075_p5_starters_routes_policies.sql:348:-- inbox_notification gains its delivery state. Defaults keep every existing row and every DG4 insert 'delivered'.
+2495e036c:packages/db/migrations/0075_p5_starters_routes_policies.sql:382:-- created are DG4 agenda items in 'draft'. Review: the chair or secretary marks the pack reviewed; until then none of
+2495e036c:packages/db/migrations/0075_p5_starters_routes_policies.sql:444:-- after the pack is reviewed. Items outside packs (every DG4 item) are unaffected.
+2495e036c:packages/db/migrations/0075_p5_starters_routes_policies.sql:463:-- before and after, computed by the DG4 scheduling functions unchanged. Append-only; one per (dependency, slip key).
+2495e036c:packages/db/migrations/0076_p5_automation_permissions.sql:10:-- (ADM_TECH), so a non-admin gets 403 there (REQ-S12-022). Nothing touches DG0-DG7.
+2495e036c:packages/db/migrations/0080_p5_reports_snapshots_updates.sql:6:-- Additive: new tables, one work-item kind and one job schedule; no DG1-DG4 table, constraint or function changes.
+2495e036c:packages/db/migrations/0080_p5_reports_snapshots_updates.sql:12:-- DG0-DG7: a snapshot only records the approval state its sources had at the as-of instant.
+2495e036c:packages/db/migrations/0080_p5_reports_snapshots_updates.sql:37:-- The Arabic labels are provisional translations (not reviewed by a Mobily Arabic editor), as every DG1-DG4 seed.
+2495e036c:packages/db/migrations/0082_p5_reporting_permissions.sql:8:-- (DG1) in the transformation: the same right as the records they show. No code here is a business_approval or
+2495e036c:packages/db/migrations/0082_p5_reporting_permissions.sql:11:-- Nothing touches DG0-DG7.
+2495e036c:packages/db/migrations/0085_p5_kpi_restatements_financial_metrics.sql:7:-- DG4 tables touched, each additively (ADR-0047 §2, §8):
+2495e036c:packages/db/migrations/0085_p5_kpi_restatements_financial_metrics.sql:9:--     ('restatement_approved' / 'kpi_restatement'); every DG4 value stays valid and means what it meant. A new trigger
+2495e036c:packages/db/migrations/0085_p5_kpi_restatements_financial_metrics.sql:12:--     run (the run's own periods and, for the restated KPI, the restated version); DG4 evaluations are unaffected.
+2495e036c:packages/db/migrations/0085_p5_kpi_restatements_financial_metrics.sql:18:-- when a person with the authority decides through the API. Nothing reads or writes the engineering gates DG0-DG7.
+2495e036c:packages/db/migrations/0085_p5_kpi_restatements_financial_metrics.sql:196:-- the value, status, RAG, target and version in force before (the latest DG4 evaluation of the slot, or 'none') and
+2495e036c:packages/db/migrations/0085_p5_kpi_restatements_financial_metrics.sql:293:-- calculation_run (DG4, 0035): one more trigger kind for the recalculation of an approved restatement (additive; every
+2495e036c:packages/db/migrations/0085_p5_kpi_restatements_financial_metrics.sql:294:-- DG4 value keeps its meaning). The restatement run is written once per restatement (trigger_slot 1; the DG4
+2495e036c:packages/db/migrations/0085_p5_kpi_restatements_financial_metrics.sql:326:-- kpi_evaluation (DG4, 0035): an evaluation of a restatement run lies in one of the restatement's selected periods,
+2495e036c:packages/db/migrations/0086_p5_launch_plans_health_checks.sql:14:-- Slice A objects touched (DG5 code, not yet approved; the 0068 precedent): methodology_element's element-type CHECK
+2495e036c:packages/db/migrations/0086_p5_launch_plans_health_checks.sql:16:-- kept verbatim plus the health_check_scheme kind's types. No DG1-DG4 table, constraint or function changes.
+2495e036c:packages/db/migrations/0086_p5_launch_plans_health_checks.sql:17:-- Nothing here grants or records a business approval, and nothing reads or writes the engineering gates DG0-DG7.
+2495e036c:packages/db/migrations/0086_p5_launch_plans_health_checks.sql:858:-- improvement actions"), ranks 1-3, written only while the assessment is a draft; optionally linked to a DG4
+2495e036c:packages/db/migrations/0087_p5_kpi_launch_health_permissions.sql:9:-- assessments needs transformation.read (DG1) in the transformation; reading the health-check schemes needs a session
+2495e036c:packages/db/migrations/0087_p5_kpi_launch_health_permissions.sql:14:-- TL holds no business-approval code (ADR-0039 §9: the DG1 creator-derived assignment never derives one). AUD and the
+2495e036c:packages/db/migrations/0087_p5_kpi_launch_health_permissions.sql:16:-- optional financial extension on or off. AUD gets nothing here and stays read-only. Nothing touches DG0-DG7.
+2495e036c:packages/db/migrations/0088_p5_launch_health_source_working.sql:15:-- approval, and nothing touches the engineering gates DG0-DG7.
+2495e036c:packages/db/migrations/0089_p5_reader_provenance_branding.sql:16:-- Slice A objects touched (DG5 code, not yet approved; the 0068/0086 precedent): methodology_element gains one extra
+2495e036c:packages/db/migrations/0089_p5_reader_provenance_branding.sql:18:-- methodology_element_guard() is NOT redefined. No DG1-DG4 table, constraint or function changes.
+2495e036c:packages/db/migrations/0089_p5_reader_provenance_branding.sql:19:-- Nothing here grants or records a business approval, and nothing reads or writes the engineering gates DG0-DG7.
+2495e036c:packages/db/migrations/0089_p5_reader_provenance_branding.sql:43:-- p5_mentions_engineering_gate: true when the text names an engineering delivery gate DG0-DG7 (REQ-S21-001: no product
+2495e036c:packages/db/migrations/0089_p5_reader_provenance_branding.sql:275:-- Every text in these namespaces passes the two text rules (no official-PMI claim, no DG0-DG7 name).
+2495e036c:packages/db/migrations/0089_p5_reader_provenance_branding.sql:337:      RAISE EXCEPTION 'methodology_element %: % claims official PMI status or certification, or names an engineering gate DG0-DG7', NEW.id, k
+2495e036c:packages/db/migrations/0090_p5_demo_environment_walkthrough.sql:14:-- Nothing here grants or records a business approval, and nothing reads or writes the engineering gates DG0-DG7.
+2495e036c:packages/db/migrations/0091_p5_reader_branding_demo_permissions.sql:12:-- AUD gets nothing here and stays read-only. Nothing touches DG0-DG7.
+2495e036c:packages/db/migrations/0093_p5_roaming_example_source_working.sql:6:-- B0145 elements verbatim, the three B0147 chains in the DG4 traceability model, and a complete seed-coverage check),
+2495e036c:packages/db/migrations/0093_p5_roaming_example_source_working.sql:12:-- and nothing touches the engineering gates DG0-DG7.
+2495e036c:packages/db/migrations/0094_p5_gate_approver_configured.sql:19:-- here touches the engineering gates DG0-DG7.
+2495e036c:packages/db/migrations/0095_p5_procedures_v2_baseline_assignee.sql:27:-- Nothing here grants a business, Finance or IT approval, and nothing reads or writes the engineering gates DG0-DG7.
+2495e036c:packages/db/migrations/0096_p5_intake_adopts_transformation.sql:6:-- step (`confirm_sponsor`) can never be requested: the DG4 approval guard (0031 p4_approval_subject_version) needs the
+2495e036c:packages/db/migrations/0096_p5_intake_adopts_transformation.sql:25:-- Nothing here grants a business, Finance or IT approval, and nothing reads or writes the engineering gates DG0-DG7.
+2495e036c:packages/db/migrations/0097_p5_config_review_contributors.sql:47:-- Nothing here grants a business, Finance or IT approval, and nothing reads or writes the engineering gates DG0-DG7.
+2495e036c:packages/db/migrations/0098_p6_sensitive_records_deep_links.sql:20:-- Nothing here reads or writes DG0-DG7. A grant is an access decision, never a business approval.
+2495e036c:packages/db/migrations/0099_p6_upload_policy_content_types.sql:9:--                          (all ten types below, 26214400 bytes = 25 MiB, the DG2 EVIDENCE_MAX_BYTES ceiling). A row can
+2495e036c:packages/db/migrations/0099_p6_upload_policy_content_types.sql:17:--                          BE-D's migration 0101, merged with the upload change, so the DG2 upload path keeps working
+2495e036c:packages/db/migrations/0099_p6_upload_policy_content_types.sql:19:-- Nothing here reads or writes DG0-DG7.
+2495e036c:packages/db/migrations/0100_p6_access_hardening_permissions.sql:17:-- (REQ-S10-003). AUD gets read codes only. Nothing touches DG0-DG7.
+2495e036c:packages/db/migrations/0101_p6_operations_service_identities.sql:25:--                              (same organization; the KPI's Stale label and last value stay DG4's, ADR-0028).
+2495e036c:packages/db/migrations/0101_p6_operations_service_identities.sql:29:-- Nothing here reads or writes DG0-DG7. No code grants a business approval.
+2495e036c:packages/db/migrations/0102_p6_storage_notification_channels.sql:27:-- Nothing here reads or writes DG0-DG7.
+2495e036c:packages/db/migrations/0103_p6_operations_channels_permissions.sql:22:-- (REQ-S10-003). AUD gets read codes only. Nothing touches DG0-DG7.
+2495e036c:packages/db/migrations/0104_p6_connectors_runs_outbound_writes.sql:32:-- Nothing here reads or writes DG0-DG7. No code grants a business approval.
+2495e036c:packages/db/migrations/0105_p6_imports_lineage_webhooks.sql:30:-- Nothing here reads or writes DG0-DG7. No code grants a business approval.
+2495e036c:packages/db/migrations/0106_p6_deliverable_external_change.sql:10:--                                on DG3: the deliverable table, its acceptance and every task table are unchanged and
+2495e036c:packages/db/migrations/0106_p6_deliverable_external_change.sql:22:-- Nothing here reads or writes DG0-DG7. Confirming an external change is not a business approval.
+2495e036c:packages/db/migrations/0107_p6_integrations_permissions.sql:27:-- code, so the technical-admin trigger of 0001 accepts every link. AUD gets read codes only. Nothing touches DG0-DG7.
+2495e036c:packages/db/migrations/0108_p6_search_saved_views_help.sql:32:-- Nothing here reads or writes DG0-DG7. Searching, saving a view or reading help approves nothing.
+2495e036c:packages/db/migrations/0109_p6_search_productivity_permissions.sql:15:-- touches DG0-DG7.
+2495e036c:packages/db/migrations/0110_p6_register_filter_indexes.sql:5:-- Plain btree indexes only: no table, column, constraint, trigger, grant or row changes, so every DG1-DG5 response is
+2495e036c:packages/db/migrations/0111_p6_assistant.sql:35:-- four tables and the history table. Nothing here reads or writes DG0-DG7. The assistant approves nothing.
+2495e036c:packages/db/migrations/0112_p6_assistant_permissions.sql:17:-- finance_validation code, so the technical-admin trigger of 0001 accepts every link. Nothing touches DG0-DG7.
+2495e036c:packages/db/migrations/0113_p6_branding_contrast_reports.sql:23:-- (work split §I/K.1, BE-W), as the next migration id at merge time, so the DG5 publish path keeps committing until
+2495e036c:packages/db/migrations/0113_p6_branding_contrast_reports.sql:27:-- writes the engineering delivery gates DG0-DG7. #0078FF is a provisional brand token, not a verified Mobily colour.
+2495e036c:packages/db/migrations/0114_p6_job_service_identities.sql:9:-- codes its DG4/DG5 handler needs, platform scope (the job builds one principal per organization), and the grant equal
+2495e036c:packages/db/migrations/0114_p6_job_service_identities.sql:12:-- refuses those, also here): a service identity never approves anything and nothing here touches DG0-DG7. Two
+2495e036c:packages/db/migrations/0114_p6_job_service_identities.sql:63:       'Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.'
+2495e036c:packages/db/migrations/0115_p6_search_index_jobs.sql:12:--    anything, and nothing here reads or writes DG0-DG7.
+2495e036c:packages/db/migrations/0116_p6_connector_run_jobs.sql:12:--    Neither job approves anything (G1-G6), and nothing here reads or writes DG0-DG7.
+2495e036c:packages/db/migrations/0117_p6_operations_triggers_freshness.sql:12:--                            stale episode of a KPI (its DG4 freshness became `stale`).
+2495e036c:packages/db/migrations/0117_p6_operations_triggers_freshness.sql:27:--      kpi.freshness_scan          hourly at minute 25, Asia/Riyadh: reads DG4 freshness (unchanged; ADR-0028) through
+2495e036c:packages/db/migrations/0117_p6_operations_triggers_freshness.sql:32:-- configure, business-approval or Finance-validation code (0101 guard), and nothing reads or writes DG0-DG7.
+2495e036c:packages/db/migrations/0117_p6_operations_triggers_freshness.sql:217:   'Find KPIs whose last accepted data became stale (DG4 freshness rule, unchanged) and open one operational exception per KPI; resolve it when the data is fresh again. Never change
+2495e036c:packages/db/migrations/0118_p6_evidence_content_detected_type_required.sql:15:-- trigger directly. Nothing here reads or writes DG0-DG7.
+2495e036c:packages/db/migrations/0119_p6_branding_version_contrast_required.sql:17:-- never a user error). Branding is configuration, never a business approval; nothing here reads or writes DG0-DG7.
+2495e036c:packages/db/migrations/0120_p6_audit_required_index_use.sql:22:-- writes DG0-DG7 or any business approval.
+2495e036c:packages/db/migrations/0121_p6_notification_fanout_jobs.sql:21:-- approval, G1-G6), and nothing reads or writes DG0-DG7.
+2495e036c:packages/db/migrations/0122_p6_automation_rule_enablement.sql:25:-- writes DG0-DG7.
+2495e036c:packages/db/migrations/0123_p6_automation_rule_enablement_disable.sql:27:-- DG0-DG7.
+2495e036c:packages/db/migrations/0124_p6_export_live_selection_pending.sql:29:-- approval, G1-G6), and nothing reads or writes DG0-DG7.
+2495e036c:packages/db/migrations/0125_p6_export_assembly_attempts.sql:24:-- (no business approval, G1-G6), and nothing reads or writes DG0-DG7.
+2495e036c:packages/db/migrations/0126_p6_report_snapshot_aggregate.sql:23:-- anything (no business approval, G1-G6), and nothing reads or writes DG0-DG7.
+2495e036c:packages/db/migrations/0127_p6_automation_restricted_token_key.sql:1:-- 0127 P6 DG6 round-10 repair: the key that binds a restricted condition token to its issuing rule-version row
+2495e036c:packages/db/migrations/0127_p6_automation_restricted_token_key.sql:24:-- G1-G6), and nothing reads or writes DG0-DG7.
+2495e036c:packages/db/src/demo/data/roaming-gates.ts:493:    note: "Product gate (business approval inside the product); unrelated to the engineering delivery gates DG0-DG7.",
+2495e036c:packages/shared/src/text-scan/corpus.ts:83:  { text: "DG7 approved", expected: true },
+2495e036c:packages/shared/src/text-scan/corpus.ts:87:  { text: "(DG3)", expected: true },
+2495e036c:packages/shared/src/text-scan/corpus.ts:97:  { text: "DG0–DG7", expected: true },
+2495e036c:packages/shared/src/text-scan/corpus.ts:98:  { text: "gates: DG1, DG2.", expected: true },
+2495e036c:packages/shared/src/text-scan/corpus.ts:106:  { text: "بوابة DG2", expected: true },
+
+$ the product gate service's own disclaimer
+2495e036c:apps/api/src/modules/kpi/gate-facts.ts:3:// the product (G1-G6), unrelated to the engineering delivery gates DG0-DG7.
+2495e036c:apps/api/src/modules/reporting/reports/assemblers/gate-pack.ts:6:// evaluators and the decision say and approves nothing. It is unrelated to the engineering delivery gates DG0-DG7.
+2495e036c:apps/api/src/modules/transformations/routes.ts:85: * This is a PRODUCT gate (G6), unrelated to the engineering delivery gates DG0-DG7.
+2495e036c:apps/api/src/modules/workflows/gates.ts:1041:    note: "Product gate (business approval inside the product); unrelated to the engineering delivery gates DG0-DG7.",
+2495e036c:apps/api/src/modules/workflows/index.ts:7:// phase. They are unrelated to the engineering delivery gates DG0-DG7 (G6 never implies DG7, and the reverse).
+2495e036c:apps/api/test/integration/contract/p2-exercises.ts:6:// unrelated to the engineering delivery gates DG0-DG7).
+2495e036c:apps/api/test/text-scan/scan.ts:158:    text: "Product gate (business approval inside the product); unrelated to the engineering delivery gates DG0-DG7.",
+
+$ database guard on methodology text (0089): refuses claims of official PMI status/certification and names of DG0-DG7
+2495e036c:packages/db/migrations/0089_p5_reader_provenance_branding.sql:337:      RAISE EXCEPTION 'methodology_element %: % claims official PMI status or certification, or names an engineering gate DG0-DG7', NEW.id, k
+
+$ provenance texts (en)
+2495e036c:apps/web/src/i18n/en/common.json:135:    "methodBody": "The product operationalizes the Business Transformation Playbook v1.0, a practical synthesis inspired by PMI, Brightline and BRM practice with custom extensions. It is not an official PMI standard, and this product is not certified by
+2495e036c:apps/web/src/i18n/en/playbookP5.json:12:    "intro": "A practical synthesis inspired by PMI and Brightline foundations, with custom extensions. It is not an official PMI standard.",
+
+$ claims of certification / official PMI / G6-implies-DG7 in i18n (en, ar), excluding negations
+2495e036c:apps/web/src/i18n/problems-p5.test.ts:101:  it("no P5 problem text names an engineering delivery gate (DG0–DG7)", () => {
+2495e036c:apps/web/src/i18n/problems-p6.test.ts:189:  it("no P6 problem text names an engineering delivery gate (DG0–DG7) or calls an adapter live", () => {
+(end)
+
+$ provisional brand token
+2495e036c:packages/design-tokens/README.md:6:  - `color`: the seven **provisional** tokens from master prompt §15 (REQ-S15-002), unchanged. `#0078FF` is a
+2495e036c:packages/design-tokens/README.md:18:    `#0078FF`, 4.09:1); each must actually fail.
+2495e036c:packages/design-tokens/src/branding-contrast.test.ts:2:// #0078FF is a provisional brand token, not a verified Mobily colour.
+2495e036c:packages/design-tokens/src/branding-contrast.ts:9:// #0078FF is a provisional brand token, not a verified Mobily colour; nothing here claims official brand compliance.
+2495e036c:packages/design-tokens/src/contrast.ts:82: * is returned. Examples: the provisional #0078FF gives #0071F1 (4.53:1), #FFD700 gives #8B7500, #003B73 stays itself.
+2495e036c:apps/web/src/i18n/en/common.json:4:    "provisional": "Provisional",
+2495e036c:apps/web/src/i18n/en/common.json:5:    "provisionalHint": "Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values.",
+2495e036c:apps/web/src/i18n/en/common.json:6:    "provisionalNotice": "Branding is provisional: the text wordmark and colours are placeholders, not official Mobily brand assets."
+2495e036c:apps/web/src/i18n/en/common.json:132:    "brandBody": "No official Mobily logo or verified brand colours have been supplied. The header shows a provisional text wordmark, and the colours (including #0078FF) are
+
+$ demo data labelled synthetic
+2495e036c:apps/web/src/i18n/en/auth.json:21:    "warning": "Development mode only: signs in a seeded synthetic user. Not available in production.",
+2495e036c:apps/web/src/i18n/en/auth.json:22:    "username": "Synthetic user name",
+2495e036c:packages/db/src/cli.ts:7://   mth-db seed-dev     SYNTHETIC dev-login users (refused with NODE_ENV=production or AUTH_MODE != dev)
+2495e036c:packages/db/src/cli.ts:8://   mth-db seed-demo    SYNTHETIC demo dataset into a migrated, empty database (ADR-0050 §3, §6)          exit 0 | 3
+2495e036c:packages/db/src/cli.ts:14:// synthetic load dataset (a load_dataset_marker row, written by deploy/load/generate.mjs).
+2495e036c:packages/db/src/cli.ts:31:  "This database holds the synthetic load dataset; it cannot be bootstrapped or seeded as a demo.";
+2495e036c:packages/db/src/cli.ts:178:        ? `mth-db seed-dev: seeded SYNTHETIC dev users: ${result.users.join(", ")}`
+2495e036c:packages/db/src/cli.ts:179:        : "mth-db seed-dev: synthetic dev users already present; nothing written",
+
+$ business approvals in the product are in-product decisions, not real approvals (domain DOM-R12-10/13 screenshots; qa QA-R12-08)
+domain-reviewer : in), rc 0. Web P6: 58 passed (7.8 min), 0 failed, skipped or flaky, rc 0. The AR 360 px approval decision (which I inspected) is RTL with no horizontal overflow. It says the decision is an in-product business decision recorded in the user's name, that the software never decides, and that the data is synthetic ('approves nothing real'). Also shown in en and ar: the draft restored after a reload, the filtered 1,000-row register, the deep link refused without naming the record, and the stopped conn
+domain-reviewer : ss. V15 on 4288d7c (the same product tree): 15/15 steps rc 0. The README discloses that a container restart interrupted e2e-cutf8, which was then re-run in full; I accept that. REQ-S20-029: labelled 'Provisional engineering targets, not verified Mobily capacity requirements', measured on one sandbox host. LOAD-T20's dataset gap (D-199 item 2) is disclosed, and I accept it as documented. REQ-S20-030: the slow simultaneous starts on the loaded host and DO-H's idle-host re-measurement (D-202) are d
+domain-reviewer : The header wordmark carries the 'Provisional' / 'مؤقت' chip in every screenshot. The rule editor lists the human decisions that cannot be automated (gate approval, business approval, investment, Finance attestation, executive ask, methodology migration), in line with the playbook's governance model, where gates are explicit approva
+qa-verifier : D-049 residual. other-realm.test.ts and oidc.test.ts pass against the bundled test issuer. - REQ-S16-006: the S3 adapter runs against the SigV4 fake. - REQ-S17-009: the A18 network capture belongs to DG7. The A21 suites show AI disabled on a fresh install. - REQ-S20-029/030: provisional, with LOAD-T20 a dataset gap. - The Arabic texts are provisional. REQ-S20-014: with F-DG6-740 closed, every conflict message is now true. A 409 shows changed-reapply; a stale token shows its own problem text. No 

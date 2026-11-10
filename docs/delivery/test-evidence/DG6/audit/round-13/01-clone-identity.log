@@ -1,0 +1,64 @@
+## 01 clone and identity  (auditor T-DG6-AUDIT-R13, 2026-11-10T06:43:45Z)
+$ git rev-parse HEAD (repository)
+7fa83c6216e5d7d52d2f650efdb0bb34c081c5d4
+$ git rev-parse --is-shallow-repository
+false
+$ node tools/gates/candidate.mjs --stage DG6 --ref 2495e036c4d933788044756ab3c41415e3873cf3
+{"stage":"DG6","source":"2495e036c4d933788044756ab3c41415e3873cf3","candidate_id":"sha256:c05864ba65f6319c0e9501cd80216a8d3f775eb07c7853744ecb8c1314f5023c","files":2769}
+rc=0
+$ node tools/gates/candidate.mjs --stage DG6   (repository working tree at HEAD)
+{"stage":"DG6","source":"working-tree","candidate_id":"sha256:c05864ba65f6319c0e9501cd80216a8d3f775eb07c7853744ecb8c1314f5023c","files":2769}
+rc=0
+$ (disposable clone /var/tmp/mth-run.CK4tdU/claude-0/r, git clone --shared, sparse without runs/test-evidence/handbacks, checked out at 2495e036) node tools/gates/candidate.mjs --stage DG6
+2495e036c4d933788044756ab3c41415e3873cf3
+false
+{"stage":"DG6","source":"working-tree","candidate_id":"sha256:9e25ba4a4f115aa4139a8a2cfa6665a0b09561ecab6cb8cceb61ea59105d8559","files":2771}
+rc=0
+Note: a first full (non-sparse) clone filled the run's TMPDIR volume (0 MB free); it was removed and replaced by --shared clones, as the round-12 reviewers did. The full --shared clone (no sparse) was used for the write-once check (05-write-once.log) and recomputed the same candidate id at 7fa83c6 and --ref 2495e036.
+$ manifest
+-rw-r--r-- 1 root root 471435 Nov 10 03:12 docs/delivery/candidates/DG6/c05864ba65f6319c.manifest.json
+{"candidate_id":"sha256:c05864ba65f6319c0e9501cd80216a8d3f775eb07c7853744ecb8c1314f5023c","source_commit":"2495e036c4d933788044756ab3c41415e3873cf3","files":0,"frozen_at":"2026-11-10T03:12:17Z"}
+$ git diff --name-only 2495e036 HEAD | classify
+      3 docs/delivery/assignments/DG6/round-12
+      1 docs/delivery/assignments/DG6/round-13
+      1 docs/delivery/candidates/DG6/c05864ba65f6319c.manifest.json
+      1 docs/delivery/findings.json
+      1 docs/delivery/progress.md
+      7 docs/delivery/reviews/DG6/round-12
+      6 docs/delivery/runs/DG6/DG6-T-DG6-REV-CS-R12-code-security-reviewer-20261110T031314Z-8507d8a7
+      6 docs/delivery/runs/DG6/DG6-T-DG6-REV-DOM-R12-domain-reviewer-20261110T031314Z-3c5aa74e
+      6 docs/delivery/runs/DG6/DG6-T-DG6-REV-QA-R12-qa-verifier-20261110T031314Z-90a1b667
+      1 docs/delivery/stages.json
+     40 docs/delivery/test-evidence/DG6/code-security
+     75 docs/delivery/test-evidence/DG6/domain
+     84 docs/delivery/test-evidence/DG6/qa
+$ non-docs/delivery paths changed since freeze:
+0
+$ git diff --stat 2495e036 HEAD -- docs/delivery/decisions.md   (empty = unchanged since the freeze)
+(end)
+$ git log --oneline 2495e036..HEAD
+7fa83c621 DG6: audit assignment, fill requirement list
+340f78a76 DG6: release audit assignment (round 13)
+42470a3c5 DG6: move D-237 to progress.md (decisions.md frozen in candidate)
+3d3400485 DG6: round 12 all PASS, evidence, D-237
+0b3c3dfb6 run: DG6-T-DG6-REV-QA-R12-qa-verifier-20261110T031314Z-90a1b667 (review evidence, auto-committed by run-agent.sh)
+e442fe08a run: DG6-T-DG6-REV-CS-R12-code-security-reviewer-20261110T031314Z-8507d8a7 (review evidence, auto-committed by run-agent.sh)
+ea67ad938 run: DG6-T-DG6-REV-DOM-R12-domain-reviewer-20261110T031314Z-3c5aa74e (review evidence, auto-committed by run-agent.sh)
+895b1e43b DG6: freeze round 12 (candidate c05864ba) and assignments
+$ node tools/gates/validate.mjs --historical --stage DG5
+PASS gate DG5 (historical)
+rc=0
+
+$ git log --format='%h %s' 2495e036..HEAD -- docs/delivery/decisions.md   (intermediate edits)
+42470a3c5 DG6: move D-237 to progress.md (decisions.md frozen in candidate)
+3d3400485 DG6: round 12 all PASS, evidence, D-237
+$ git show --stat 3d3400485 -- docs/delivery/decisions.md
+ docs/delivery/decisions.md | 1 +
+ 1 file changed, 1 insertion(+)
+$ git show --stat 42470a3c5 -- docs/delivery/decisions.md
+ docs/delivery/decisions.md | 1 -
+ 1 file changed, 1 deletion(-)
+$ git rev-parse 2495e036c:docs/delivery/decisions.md HEAD:docs/delivery/decisions.md
+d2188c4b5c99f650c294a66ad95a67a243b4bc1c
+d2188c4b5c99f650c294a66ad95a67a243b4bc1c
+Judgement: decisions.md at HEAD is byte-identical to the frozen blob; D-237 was added in 3d3400485 and moved to progress.md in 42470a3c5 (net zero). The candidate id recomputes at HEAD.
