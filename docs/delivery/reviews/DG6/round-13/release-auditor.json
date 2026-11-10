@@ -1,0 +1,212 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG6",
+  "round": 13,
+  "candidate_id": "sha256:c05864ba65f6319c0e9501cd80216a8d3f775eb07c7853744ecb8c1314f5023c",
+  "source_commit": "2495e036c4d933788044756ab3c41415e3873cf3",
+  "reviewer_role": "release-auditor",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG6-T-DG6-AUDIT-R13-release-auditor-20261110T062621Z-5749b487",
+    "session_id": "5749b487-d99f-444e-b8ed-d3832c31af8f"
+  },
+  "implementation_author": [
+    "solution-architect",
+    "backend-workflow-engineer",
+    "kpi-benefits-engineer",
+    "frontend-ux-engineer",
+    "devops-engineer",
+    "transformation-analyst",
+    "qa-verifier",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "release-auditor (session 5749b487, task T-DG6-AUDIT-R13) authored no DG6 implementation, test, register row, ADR, repair, delivery decision, finding fix or findings.json entry. That includes FE-Z16 (frontend-ux-engineer), the ADR-0051 part B correction (delivery-orchestrator, disclosed in the 4c0525fa4 commit message), D-193 to D-237 (delivery-orchestrator), and the round-13 assignment. qa-verifier is listed among the authors only for its pre-freeze acceptance suites under tests/qa and e2e, which the protocol allows. Its authoring runs' replayed Write/Edit calls touch only those paths (02-provenance.log). I worked in disposable git clones under my private $TMPDIR. These were a --shared clone, because a plain local clone filled the 5.5 GB scratch volume and was removed (01-clone-identity.log), and later a sparse --shared clone at 2495e036 with node_modules copied from the repository. I never used git worktree. The repository was read-only to me. I read the specialist records as objects of the audit, not as a substitute for my own checks. I wrote only this record, my evidence under docs/delivery/test-evidence/DG6/audit/round-13/ and docs/delivery/gates/DG6.json. I wrote no findings or verifications sidecar."
+  },
+  "assignment": "docs/delivery/assignments/DG6/round-13/release-auditor.md",
+  "requirements_checked": [
+    "REQ-DLV-038", "REQ-S01-005", "REQ-S02-006", "REQ-S10-002", "REQ-S10-004", "REQ-S12-019", "REQ-S12-023", "REQ-S12-024",
+    "REQ-S13-011", "REQ-S13-013", "REQ-S15-001", "REQ-S15-003", "REQ-S15-007", "REQ-S15-009", "REQ-S15-010", "REQ-S15-011",
+    "REQ-S15-012", "REQ-S15-013", "REQ-S15-014", "REQ-S16-006", "REQ-S16-007", "REQ-S16-022", "REQ-S16-023", "REQ-S16-026",
+    "REQ-S16-027", "REQ-S16-029", "REQ-S16-030", "REQ-S16-032", "REQ-S17-001", "REQ-S17-002", "REQ-S17-003", "REQ-S17-005",
+    "REQ-S17-006", "REQ-S17-007", "REQ-S17-008", "REQ-S17-009", "REQ-S17-010", "REQ-S17-011", "REQ-S20-001", "REQ-S20-012",
+    "REQ-S20-013", "REQ-S20-014", "REQ-S20-017", "REQ-S20-020", "REQ-S20-021", "REQ-S20-022", "REQ-S20-029", "REQ-S20-030"
+  ],
+  "checks_run": [
+    {
+      "id": "AUD-R13-01-clone-identity",
+      "procedure": "Recompute the candidate in a complete (non-shallow) clone at --ref 2495e036, at HEAD 7fa83c6 and in a sparse clone checked out at 2495e036. Classify every path changed since the freeze. Check that decisions.md is unchanged since the freeze. Run the DG5 historical validator.",
+      "command": "node tools/gates/candidate.mjs --stage DG6 [--ref 2495e036c4d933788044756ab3c41415e3873cf3]; git diff --name-only 2495e036c HEAD; git rev-parse 2495e036c:docs/delivery/decisions.md HEAD:docs/delivery/decisions.md; node tools/gates/validate.mjs --historical --stage DG5",
+      "environment": "Node 24.21.0; git clone --shared of /home/user/My-owns under $TMPDIR (is-shallow false), and the read-only repository at 7fa83c6",
+      "expected": "sha256:c05864ba… over 2769 files everywhere; only meta-excluded records changed after the freeze; decisions.md unchanged; DG5 historical PASS",
+      "actual": "All three computations give sha256:c05864ba65f6319c0e9501cd80216a8d3f775eb07c7853744ecb8c1314f5023c over 2769 files. 0 non-docs/delivery paths changed since 2495e036. The changes are round-12 assignments, the round-13 assignment, the candidate manifest, findings.json, progress.md, stages.json, round-12 reviews, runs and test evidence: all meta-excluded or review records. decisions.md at HEAD is the frozen blob d2188c4b. D-237 was added to it in 3d3400485 and moved to progress.md in 42470a3c5, net zero. 'PASS gate DG5 (historical)', rc 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG6/audit/round-13/01-clone-identity.log"]
+    },
+    {
+      "id": "AUD-R13-02-independence-provenance",
+      "procedure": "Resolve each round-12 invocation_reference to its run folder: meta, exit status, session, assignment and the sandbox.json hash against meta.process_sandbox_sha256. Apply D-082 over every DG6 review run. Replay every reviewer-role run's Write/Edit targets from its transcript.",
+      "command": "python3 docs/delivery/test-evidence/DG6/audit/round-13/scripts/prov.py",
+      "environment": "Python 3, repository at 7fa83c6 (read-only)",
+      "expected": "three distinct successful sandboxed round-12 runs bound to their records; empty external_config_changed in every DG6 review run; no reviewer authored product code",
+      "actual": "Domain 3c5aa74e, code-security 8507d8a7 and qa 90a1b667: three distinct sessions. Each run has exit 0, subtype success and head_at_start 895b1e43 (the freeze). Each sandbox.json hash equals meta.process_sandbox_sha256, external_config_changed is [], and each assignment matches its record. All 43 DG6-T-DG6-REV-* run folders have matching sandbox hashes and 0 config changes. The exit-143 runs of rounds 2, 3, 8 and 9 are recorded as killed. Replayed Write/Edit calls: domain and code-security wrote only docs/delivery. qa-verifier's authoring runs QA-A to QA-H wrote only tests/qa/** and e2e/**, which the protocol allows. No reviewer wrote apps/, packages/, ADRs or migrations. meta.outputs is a whole-repository before/after diff, so concurrent runs' files appear in each other's lists (code-security evidence in the domain run's outputs). The transcripts show no cross-write.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG6/audit/round-13/02-provenance.log", "docs/delivery/test-evidence/DG6/audit/round-13/scripts/prov.py"]
+    },
+    {
+      "id": "AUD-R13-03-verdicts-full-review",
+      "procedure": "Read the three round-12 records: verdict, candidate, full 40-hex source_commit, all check results. Judge from their checks and evidence whether each was a full review of the candidate, not only of the round-11 diff.",
+      "command": "read docs/delivery/reviews/DG6/round-12/{domain-reviewer,code-security-reviewer,qa-verifier}.json",
+      "environment": "repository at 7fa83c6",
+      "expected": "3 x PASS on c05864ba with full source_commit; every check PASS; whole-candidate scope",
+      "actual": "All three PASS on sha256:c05864ba… with source_commit 2495e036c4d933788044756ab3c41415e3873cf3, and every check result PASS (14, 21 and 19 checks). Each is a full review. Domain built every package, ran 97/97 register-cited integration files (1225 passed, 1 todo), 176 + 90 + 6 + 58 e2e in EN/AR and the 48-row register check, plus the diff review. Code-security ran build, typecheck, lint, format, OpenAPI lint and no-CDN, unit on Node 22 and 24, the whole integration project (439 files, 4354 passed) in two locales, its own probes and mutants, and a 36-requirement map. QA ran static checks, unit x4 combinations, integration x2 (4354 passed), 556 + 556 product e2e, 288 x2 root, 30 x2 demo, its own probes, load and export, and all 48 acceptance texts.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/reviews/DG6/round-12/domain-reviewer.json", "docs/delivery/reviews/DG6/round-12/code-security-reviewer.json", "docs/delivery/reviews/DG6/round-12/qa-verifier.json"]
+    },
+    {
+      "id": "AUD-R13-04-findings",
+      "procedure": "For every DG6 finding: status, severity, mandatory flag, owner against verifier, and for CLOSED_VERIFIED a full 40-hex fix_revision that is an ancestor of 2495e036. Check that findings.json mirrors the latest sidecar verification of each finding, and that each closure is bound to the run that wrote its sidecar (validator).",
+      "command": "python3 docs/delivery/test-evidence/DG6/audit/round-13/scripts/find.py; node tools/gates/validate.mjs --stage DG6 (closure provenance lines)",
+      "environment": "Python 3, git, Node 24.21.0, repository at 7fa83c6",
+      "expected": "52 CLOSED_VERIFIED by non-owners, each with a full ancestor fix_revision and a closure bound to its verifying run; mirror exact; 0 unresolved Critical/High or mandatory",
+      "actual": "52 DG6 findings, all CLOSED_VERIFIED, each verified by a non-owner (its reporter). 0 unresolved Critical/High and 0 unresolved mandatory. The mirror is exact (0 mismatches). F-DG6-580 was verified by domain and by code-security in round 10, and findings.json records the role the importer applies last, code-security. FAIL (a): none of the 52 has a fix_revision ('CLOSED_VERIFIED without a full 40-hex fix_revision: 52 of 52'). The assignment's item 4 and the validator (rules.mjs:742) both require it, the same defect as D-184 B1. The fix commits exist: for example 4c0525fa4 (FE-Z16) is an ancestor of 2495e036. FAIL (b): F-DG6-144, 200 and 201 have their latest verification in reviews/DG6/round-3/qa-verifier.verifications.json. The killed run QA-R3 (01cb5eae, exit 143) wrote that file, auto-committed in c95ecb4d4. findings.json attributes it to QA-R3B (f440e4a5), which did not write it. The R3B record also cites assignment round-3/qa-verifier.md, while the run executed qa-verifier-continuation.md. The validator reports four binding errors for each of the three ('was not written by this run's file tools', 'cannot be reconstructed', 'ran assignment … record cites …'). These closures rest on no valid verifying run.",
+      "exit_status": 1,
+      "result": "FAIL",
+      "evidence": ["docs/delivery/test-evidence/DG6/audit/round-13/03-findings.log", "docs/delivery/test-evidence/DG6/audit/round-13/13-validate-stage-DG6.log", "docs/delivery/test-evidence/DG6/audit/round-13/scripts/find.py"]
+    },
+    {
+      "id": "AUD-R13-05-repro-f700-f740",
+      "procedure": "Re-run the reproductions of the last repaired findings myself on the real stack: domain's F-DG6-700 probe (production-initialized stack, apps/web/e2e/support/with-stack.sh) and QA's F-DG6-740 spec (demo stack, e2e/support/with-demo-stack.sh), chromium-en and chromium-ar. Both are byte-identical copies, placed in my disposable clone only.",
+      "command": "pnpm run build (8 packages); E2E_PG_PORT=32600 E2E_API_PORT=32601 MTH_PORT_POOL=32602-32619 apps/web/e2e/support/with-stack.sh npx playwright test --config playwright.config.ts e2e/zz-audit/dom-r12-editor-tokens.spec.ts --workers=1; E2E_PG_PORT=32630 E2E_API_PORT=32631 MTH_PORT_POOL=32632-32649 e2e/support/with-demo-stack.sh npx playwright test --config playwright.config.ts e2e/zz-qa-dg6r12-restricted-mywork-automation.spec.ts --project chromium-en --project chromium-ar --workers=1",
+      "environment": "sparse --shared clone at 2495e036 (candidate recomputed c05864ba), Node 24.21.0, disposable PostgreSQL, ports 32600-32649, LANG unset",
+      "expected": "the stale-token 422 shows the problem's own text in one form alert, never 'This rule changed after you opened it'; 409 still shows the changed/re-apply alert; nothing stored",
+      "actual": "Build: 8 packages rc 0 (with pipefail). F-DG6-700 probe: 2 passed (1.6 min), rc 0. EN C4/C5/D/E: PATCH 422 automation_rule.restricted_token_stale. The form alert reads 'A condition value is a restricted-record token that was not issued for this version as it now stands … so nothing was saved'. v2 stays at row version 4, and F (re-apply with own values) gives 200. The 'This rule changed after you opened it' text appears only at B1, the genuine 409. AR passes the same assertions. F-DG6-740 spec (sha256 50960774… = QA's): 4 passed (51.6 s), rc 0. Step F asserts the problem text and data-problem, and that 'rule-changed-reapply' is absent. Neither finding reproduces.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG6/audit/round-13/10-build.log", "docs/delivery/test-evidence/DG6/audit/round-13/20-repro-f700-domain-probe.log", "docs/delivery/test-evidence/DG6/audit/round-13/21-repro-f740-qa-probe.log"]
+    },
+    {
+      "id": "AUD-R13-06-write-once",
+      "procedure": "Look for any delete, modify, rename or type change under reviews/DG6, runs/DG6 (and the validator's other write-once roots, candidates/DG6 and assignments/DG6/round-*) in this branch's history. Run the validator's checkWriteOnce for DG6 in a complete clone at HEAD.",
+      "command": "git log --diff-filter=DMRT --name-status -- docs/delivery/reviews/DG6 docs/delivery/runs/DG6 docs/delivery/candidates/DG6; node -e 'import(\"./tools/gates/lib/rules.mjs\").then(m=>{const e=[];m.checkWriteOnce(process.cwd(),\"DG6\",e);…})'",
+      "environment": "complete --shared clone at 7fa83c6 (full working tree), Node 24.21.0",
+      "expected": "no D/M/R/T event; checkWriteOnce reports nothing",
+      "actual": "FAIL: checkWriteOnce reports 51 errors, and validate --stage DG6 reports the same ones. (a) reviews/DG6/round-9/code-security-reviewer.findings.json (drafts of F-DG6-600/601) and round-9/qa-verifier.verifications.json (560/561 PASS) were auto-committed in 432823421 and 62cfb0b98 by the killed round-9 runs. The orchestrator deleted them in 4d62bbe72. (b) reviews/DG6/round-8/domain-reviewer.{findings,verifications}.json of the interrupted attempt (a617a8f63) were deleted in 5dd264274, then re-committed with different content by the successful run (0ce02b71d): 'committed with 2 different contents'. (c) runs/DG6 BE-P2 and KBE-A .pre-config.txt, .pre-snapshot.json and transcript.jsonl were deleted in 88b1e42, b4510ca, 4930b25, 9d4f9f3 and e16b99a. (d) candidates/DG6/be0200e246368bcb.manifest.json was deleted, and the round-7 assignments were modified twice (6631b8c, 15adee2). (e) assignments/DG6/round-13/release-auditor.md (this audit's own assignment) was modified in 7fa83c6. No decision in decisions.md or progress.md records (a), (b), (c) or (e). D-231 says only 'set aside'.",
+      "exit_status": 1,
+      "result": "FAIL",
+      "evidence": ["docs/delivery/test-evidence/DG6/audit/round-13/05-write-once.log"]
+    },
+    {
+      "id": "AUD-R13-07-incidents-orchestrator-decisions",
+      "procedure": "Judge D-216 (BE-Z7 killed, BE-Z7B continuation), D-231 (round-9 code-security/QA killed; confirm from history that their partial output was never committed), the V15 restart, the orchestrator's ADR-0051 edit with FE-Z16, and D-235's decision to repair rather than accept F-DG6-700/740.",
+      "command": "run meta of BE-Z7/BE-Z7B and the R9 runs; git show --name-status 432823421 62cfb0b98 4d62bbe72; README and interrupted log of orchestrator-final-4288d7c; git show 4c0525fa4; FE-Z16 transcript replay",
+      "environment": "repository at 7fa83c6",
+      "expected": "each incident handled honestly and documented",
+      "actual": "Sound: D-216. BE-Z7 has no meta (killed), and BE-Z7B (exit 0) judged BE-Z7's uncommitted diff item by item: kept, fixed or added (its handback §0). V-final 9fbfea0 shows 15 x rc 0, and rounds 6 to 12 reviewed the result. Sound: the V15 restart. The interrupted log has 89 passing tests, 0 failures and no .rc. e2e-cutf8, root and demo re-ran in full, all rc 0. Sound: the ADR-0051 part B edit was made by the orchestrator and disclosed in the commit message ('ADR-0051 part B corrected by the orchestrator per the handback'). It follows FE-Z16's proposed text, and all three round-12 reviewers reviewed it (DOM-R12-12, CS-R12-09, QA-R12-16). D-236 could have named the author, a minor traceability point. Sound: D-235. An untrue user-facing text is repaired, not accepted (the F-DG4-160 precedent), and my AUD-R13-05 confirms the repair. NOT confirmed: the statement that the round-9 partial output 'was never committed' is contradicted by history. It was auto-committed and then deleted (see AUD-R13-06 (a)). D-231 does not record the deletion. The same killed-run pattern in round 3 left a sidecar that now carries the closures of F-DG6-144/200/201 (AUD-R13-04 (b)).",
+      "exit_status": 1,
+      "result": "FAIL",
+      "evidence": ["docs/delivery/test-evidence/DG6/audit/round-13/06-incidents.log", "docs/delivery/test-evidence/DG6/audit/round-13/05-write-once.log"]
+    },
+    {
+      "id": "AUD-R13-08-final-verification",
+      "procedure": "Confirm that test-evidence/DG6/orchestrator-final-4288d7c is a run on 4288d7c0b whose product tree equals the candidate's. Check every .rc, and grep the logs myself.",
+      "command": "git diff --name-only 4288d7c0b 2495e036c; blob-by-blob comparison of the 2769 manifest entries; cat *.rc; grep of the 16 logs",
+      "environment": "repository at 7fa83c6",
+      "expected": "identical product tree; 15 x rc 0; no failure in the logs",
+      "actual": "4288d7c0b is an ancestor of 2495e036. Of the 2769 manifest entries, only docs/delivery/decisions.md (D-236) differs, so the product tree is the candidate's. --ref 4288d7c0b gives sha256:f224dc1a… only because of that decisions.md entry. All 15 .rc files are 0. Logs: unit 2902 + 2111 + 259 (2 skipped by design) in both locales; integration 439 files, 4354 passed, 1 skipped, 1 todo; e2e 556 passed and 2 skipped in each locale; root 288 passed and 18 skipped (axe NOT SCANNED routes); demo 10 passed. 0 failure markers outside passing test titles. The 'exit 3/78/1' and 'Timeout' hits are the names of passing tests.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG6/audit/round-13/07-final-verification.log"]
+    },
+    {
+      "id": "AUD-R13-09-requirements",
+      "procedure": "Check the 48 DG6-final requirements against the register (final_gate=DG6, status) and the round-12 records (qa AND (domain OR code-security)). Run the register validator.",
+      "command": "python3 docs/delivery/test-evidence/DG6/audit/round-13/scripts/req.py; node tools/gates/validate.mjs --register DG6",
+      "environment": "Python 3, Node 24.21.0, repository at 7fa83c6",
+      "expected": "48 = register set, all IMPLEMENTED, rule met for all; register PASS",
+      "actual": "The assignment's 48 IDs equal the register's final_gate=DG6 set exactly, and all are IMPLEMENTED. qa lists 48, domain 48 and code-security 36. 0 IDs fail 'qa AND (domain OR code-security)'. 'PASS register rules at DG6', rc 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG6/audit/round-13/08-requirements.log", "docs/delivery/test-evidence/DG6/audit/round-13/scripts/req.py"]
+    },
+    {
+      "id": "AUD-R13-10-decisions",
+      "procedure": "Confirm that D-193 to D-236 are in decisions.md with rationale, and that D-237 is in progress.md. Quote them verbatim.",
+      "command": "python3 docs/delivery/test-evidence/DG6/audit/round-13/scripts/dec.py",
+      "environment": "repository at 7fa83c6",
+      "expected": "44 + 1 decisions with rationale",
+      "actual": "44 of 44 present (none missing), each with a headline, rationale text, an evidence column and a reopen column. The log quotes them verbatim, for example D-235: 'DG6 round 11: domain, code-security and QA all PASS on c45d73b8.' and D-236: 'Round-11 repair complete; round 12 frozen.' D-237 is quoted in full from progress.md: 'the release audit is therefore a single run, T-DG6-AUDIT-R13 … The auditor may judge that a two-part audit is required; if so, the gate is BLOCKED and the audit is re-run in two parts.'",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG6/audit/round-13/09-decisions.log", "docs/delivery/test-evidence/DG6/audit/round-13/scripts/dec.py"]
+    },
+    {
+      "id": "AUD-R13-11-single-run-form",
+      "procedure": "Judge D-237's single-run audit against D-140 option 1. The two-part form exists only so that the orchestrator can import the auditor's own verification or acceptance sidecar into findings.json before the gate record is committed (checkApprovalImmutable).",
+      "command": "reasoning over D-140, D-237 and findings.json",
+      "environment": "repository at 7fa83c6",
+      "expected": "single run sound only if this audit adds nothing to findings.json",
+      "actual": "Sound. All 52 findings are already terminal in findings.json, and none is ACCEPTED_OBSERVATION awaiting my acceptance. I write no verifications or findings sidecar, so findings.json needs no import after the gate record and the D-140 ordering problem cannot arise. The single-run form is not a reason to block.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG6/audit/round-13/09-decisions.log", "docs/delivery/test-evidence/DG6/audit/round-13/03-findings.log"]
+    },
+    {
+      "id": "AUD-R13-12-evidence-honesty",
+      "procedure": "Check that every evidence path cited by the three records exists as a regular file. Grep every cited log for non-zero exits, failures, timeouts and unhandled errors, and check that the citing record discloses and explains each one.",
+      "command": "python3 docs/delivery/test-evidence/DG6/audit/round-13/scripts/hon.py",
+      "environment": "Python 3, repository at 7fa83c6",
+      "expected": "0 missing paths; every hit named and explained",
+      "actual": "55, 43 and 77 cited paths, 0 missing. Every hit is in a log the record names and explains. Domain: its mutant logs (rc 1 by design) and a register note. Code-security: 21-unit-node24 (architecture.test.ts timeout at load about 20, file re-run 141/141 and project 2902/2902 rc 0), 20-unit-node22 (vitest-worker RPC timeout after all tests passed, re-run rc 0) and mutant 48 (kill by design). QA: 01-lint and 01-format (its own probe files copied in first, re-run 01b rc 0), two unit combinations with the worker RPC timeout (02b re-run rc 0), 20 (probe clone lacked docs/api, 20b 30/30), its mutants, and 80-load-export ('LOAD-T20 FAIL: no sameScopeOther user', a disclosed fixture limitation). V15's clean unit runs corroborate that the timeouts depend on load.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG6/audit/round-13/11-evidence-honesty.log", "docs/delivery/test-evidence/DG6/audit/round-13/scripts/hon.py"]
+    },
+    {
+      "id": "AUD-R13-13-product-vs-engineering-gates",
+      "procedure": "Check that G1-G6 stay business approvals, unconnected to DG0-DG7, with no real business, Finance or IT approval granted; that product G6 never implies DG7; that demo data is synthetic and labelled; that the brand token is provisional; and that nothing claims official PMI status or certification.",
+      "command": "git grep over apps/, packages/ and i18n at 2495e036 (12-product-vs-engineering.log); round-12 screenshots described by domain and QA",
+      "environment": "repository at 7fa83c6",
+      "expected": "no coupling and no false claim",
+      "actual": "The only product strings naming DG0-DG7 are disclaimers: gates.ts 'Product gate (business approval inside the product); unrelated to the engineering delivery gates DG0-DG7', and migration comments. Migration 0089 refuses methodology text that claims official PMI status or certification or names DG0-DG7. The i18n texts say 'not an official PMI standard … not certified'. No i18n claim of certification or DG7 exists, apart from tests that assert their absence. #0078FF is documented as provisional, and the wordmark carries a 'Provisional' chip in the domain screenshots. Demo and sign-in texts label users and values as synthetic.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": ["docs/delivery/test-evidence/DG6/audit/round-13/12-product-vs-engineering.log"]
+    },
+    {
+      "id": "AUD-R13-14-validate-stage-with-gate",
+      "procedure": "After writing this record and the BLOCKED gate record, run the stage validator and classify every error: this in-flight run, a consequence of the BLOCKED decision itself, or a pre-existing defect.",
+      "command": "node tools/gates/validate.mjs --stage DG6",
+      "environment": "repository at 7fa83c6 with this run's staged records, Node 24.21.0",
+      "expected": "for APPROVED: errors only about this in-flight run",
+      "actual": "rc 1, 'FAIL gate DG6 (current)'. Classified in 13-validate-stage-DG6.log. In-flight run only: its meta.json is not found yet, and round 13 is not yet recorded in stages.json. Consequences of this BLOCKED decision: decision BLOCKED, verdict BLOCKED, my FAIL checks and tests, and the recorded blocking conditions. Pre-existing defects that do not concern my run: 52 x 'CLOSED_VERIFIED needs a full fix_revision commit id' (B1); 51 write-once errors (B2); 12 binding errors on the round-3 QA closures of F-DG6-144/200/201 (B4); 'review rounds: DG6 round 9 code-security-reviewer / qa-verifier: file not found' and 'DG6 round 12 frozen_at/source_commit differ from its committed manifest' (stages.json says 03:12:24Z, the manifest 03:12:17Z) (B5). Because errors remain that are not about my in-flight run, PASS cannot be recorded.",
+      "exit_status": 1,
+      "result": "FAIL",
+      "evidence": ["docs/delivery/test-evidence/DG6/audit/round-13/13-validate-stage-DG6.log"]
+    }
+  ],
+  "findings": [],
+  "verdict": "BLOCKED",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG6/audit/round-13/01-clone-identity.log",
+    "docs/delivery/test-evidence/DG6/audit/round-13/02-provenance.log",
+    "docs/delivery/test-evidence/DG6/audit/round-13/03-findings.log",
+    "docs/delivery/test-evidence/DG6/audit/round-13/05-write-once.log",
+    "docs/delivery/test-evidence/DG6/audit/round-13/06-incidents.log",
+    "docs/delivery/test-evidence/DG6/audit/round-13/07-final-verification.log",
+    "docs/delivery/test-evidence/DG6/audit/round-13/08-requirements.log",
+    "docs/delivery/test-evidence/DG6/audit/round-13/09-decisions.log",
+    "docs/delivery/test-evidence/DG6/audit/round-13/10-build.log",
+    "docs/delivery/test-evidence/DG6/audit/round-13/11-evidence-honesty.log",
+    "docs/delivery/test-evidence/DG6/audit/round-13/12-product-vs-engineering.log",
+    "docs/delivery/test-evidence/DG6/audit/round-13/13-validate-stage-DG6.log",
+    "docs/delivery/test-evidence/DG6/audit/round-13/20-repro-f700-domain-probe.log",
+    "docs/delivery/test-evidence/DG6/audit/round-13/21-repro-f740-qa-probe.log"
+  ],
+  "reviewed_at": "2026-11-10T07:05:00Z",
+  "summary": "DG6 release audit, single run (D-237): BLOCKED on candidate sha256:c05864ba65f6319c0e9501cd80216a8d3f775eb07c7853744ecb8c1314f5023c (2769 files, source 2495e036c4d933788044756ab3c41415e3873cf3).\n\nWhat holds:\n- The candidate recomputes in complete clones, and only meta-excluded records changed after the freeze. decisions.md is the frozen blob. DG5 historical PASS.\n- Three distinct, successful, sandboxed round-12 runs, with no config change in any of the 43 DG6 review runs. No reviewer authored product code.\n- Three full-scope PASS reviews with full source_commits.\n- 52/52 findings CLOSED_VERIFIED by non-owners, 0 unresolved Critical/High or mandatory, and an exact sidecar mirror.\n- F-DG6-700/740 no longer reproduce on the real stack in EN and AR (my own runs).\n- V15 is green on a product tree equal to the candidate's.\n- 48/48 requirements meet the coverage rule, and the register passes.\n- D-193 to D-237 are recorded with rationale.\n- Evidence is honest.\n- The product and engineering gates stay separate.\n- The single-run form is sound because this audit adds nothing to findings.json.\n\nWhat fails (record integrity and closure provenance, owned by delivery-orchestrator; no product defect):\n- B1: none of the 52 CLOSED_VERIFIED DG6 findings has a fix_revision (as in D-184 B1).\n- B2: 51 write-once errors in the DG6 write-once paths. These are deleted committed review sidecars (round 9, round 8), deleted run files (BE-P2, KBE-A), a deleted candidate manifest, and modified assignments (round 7, and this audit's own round-13 assignment).\n- B3: the premise that the round-9 partial output 'was never committed' is false: it was auto-committed and then deleted in 4d62bbe72, and no decision records it.\n- B4: the closures of F-DG6-144/200/201 rest on a round-3 sidecar that the killed run QA-R3 wrote, but they are attributed to QA-R3B, which did not write it. The validator rejects the binding.\n- B5: stages.json lists round-9 code-security and QA records that do not exist, and records a round-12 frozen_at that differs from the committed manifest.\n\nI cannot waive these. Remedies are in the gate record. Product gate G6 never implies DG7. No real business, Finance or IT approval is granted."
+}
