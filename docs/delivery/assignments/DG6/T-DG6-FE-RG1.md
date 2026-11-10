@@ -1,4 +1,4 @@
-# T-DG6-FE-RG1: truthful basis label in the realized-value explanation (F-DG6-900)
+# T-DG6-FE-RG1: truthful basis label in the realized-value explanation (F-DG6-900; assistant notices after F-DG6-920)
 
 ## What to change (read first)
 
@@ -7,7 +7,8 @@ Read F-DG6-900 in `docs/delivery/findings.json`, the round-1 domain sidecar, and
 1. In `apps/web/src/components/explanation/panels.tsx` (`BenefitRealizedExplanation`), the column now labelled "Basis" / "الأساس" must say what it holds: the comparison basis (baseline and formula version), validated by Finance or provisional. For example the column "Comparison basis" / "أساس المقارنة" with values "Validated baseline" / "Provisional baseline" (wording yours, true in en and ar). A row under "Pending Finance validation (not realized)" must not read as a validated value.
 2. Check every other explanation panel that shows the same `basis` field and fix it the same way.
 3. **Tests:** a web unit test in en and ar for the pending row's label, with a before-fix log (fails) and an after-fix log (passes). The e2e explanation spec(s) touching this panel still pass in both locales.
-4. **Limits:** no API, schema or contract change.
+4. **Assistant withheld notices (from the T-DG6-BE-RG1 handback §8).** After F-DG6-920, an answer or suggestion is also withheld when a record it was *given* but did not cite becomes unreadable. Make the `withheld` strings for the answer and the suggestion in `apps/web/src/i18n/{en,ar}/assistant.json` true for that case (for example "This answer was based on a record you can no longer read, so it is hidden."), in en and ar, and update any web test that asserts the old text.
+5. **Limits:** no API, schema or contract change.
 
 ## Stage and working tree
 
