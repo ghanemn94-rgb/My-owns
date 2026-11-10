@@ -15,11 +15,14 @@
 //    answer seam (answer.ts: guardrails -> retrieval -> provider, BE-U; BE-T's stub answers no_sources); then
 //    transaction 2 appends the reply and its suggestions. No remote I/O inside a transaction (§2 rule 4). Each
 //    transaction re-checks assistant.use and ownership at commit time; each conversation version has one audit event.
-//  - Read-time re-check (§9): every record citation is checked through ReadScope (transformation.read, the read
-//    permission of every search record view, with the ADR-0051 §2 sensitivity clause) for the caller at read time. An
-//    answer citing a record the caller can no longer read is returned with content null, contentWithheld true and that
-//    citation readable false; its suggestions are withheld the same way. A record no longer in the search index is
-//    treated as unreadable (fail closed).
+//  - Read-time re-check (§9): every record an answer or suggestion was generated from is checked through ReadScope
+//    (transformation.read, the read permission of every search record view, with the ADR-0051 §2 sensitivity clause)
+//    for the caller at read time: its record citations AND its stored generation context (0128 `context_records`: every
+//    record item given to the model, cited or not; F-DG6-920). A row stored before 0128 has no context and falls back
+//    to its citations. An answer generated from a record the caller can no longer read is returned with content null
+//    and contentWithheld true (a citation of that record shows readable false; an uncited record is not named); its
+//    suggestions are withheld the same way. A record no longer in the search index is treated as unreadable (fail
+//    closed).
 //  - Logging (§9 rule 3): one line per post with ids, kinds, codes, counts and latency; never prompt, answer or record
 //    text. Audit events carry ids, versions, kinds, codes and citation counts; never message text or a credential.
 // The assistant writes only its own tables and their audit events; nothing here approves anything (G1-G6) or touches
@@ -62,7 +65,7 @@ import {
   requireIfMatch,
   type ModuleDeps,
 } from "../platform/index.ts";
-import { answer, type AnswerOutcome, type SuggestionDraft } from "./answer.ts";
+import { answer, type AnswerOutcome, type ContextRecord, type SuggestionDraft } from "./answer.ts";
 import { assistantSecretProviders, CITABLE_RECORD_TYPES, providerFor, type Citation } from "./provider.ts";
 import { loadSetting } from "./settings.ts";
 
@@ -232,9 +235,31 @@ export function toConversationView(row: ConversationRow): AssistantConversationV
 }
 
 const citationsOf = (value: unknown): Citation[] => (Array.isArray(value) ? (value as Citation[]) : []);
-const recordKey = (c: { recordType: string; recordId: string }) => `${c.recordType}:${c.recordId}`;
+/** A record key: the record a citation names, or one item of the stored generation context. */
+export interface RecordRef {
+  readonly recordType: string;
+  readonly recordId: string;
+}
+const recordKey = (c: RecordRef) => `${c.recordType}:${c.recordId}`;
 
-type Readable = (c: Citation) => boolean;
+/**
+ * Every record a stored answer or suggestion was generated from (ADR-0059 §9; F-DG6-920): its record citations and
+ * its generation context (0128 `context_records`, every record item given to the model, cited or not), distinct.
+ * A row stored before 0128 has a NULL context: its record citations are then the only records known (the fallback
+ * the ADR-0059 §9 amendment records).
+ */
+export function recordRefsOf(row: { citations: unknown; context_records: unknown }): RecordRef[] {
+  const out = new Map<string, RecordRef>();
+  for (const c of citationsOf(row.citations))
+    if (c.source === "record") out.set(recordKey(c), { recordType: c.recordType, recordId: c.recordId });
+  const context: unknown = row.context_records;
+  if (Array.isArray(context))
+    for (const r of context as ContextRecord[])
+      out.set(recordKey(r), { recordType: r.recordType, recordId: r.recordId });
+  return [...out.values()];
+}
+
+type Readable = (r: RecordRef) => boolean;
 
 function citationViews(citations: readonly Citation[], readable: Readable) {
   return citations.map((c) =>
@@ -250,11 +275,13 @@ function citationViews(citations: readonly Citation[], readable: Readable) {
   );
 }
 
-const withheld = (citations: readonly Citation[], readable: Readable) => citations.some((c) => !readable(c));
+/** Withheld when any record the row was generated from (citations and context) is unreadable now. */
+const withheld = (row: { citations: unknown; context_records: unknown }, readable: Readable) =>
+  recordRefsOf(row).some((r) => !readable(r));
 
 export function toMessageView(row: MessageRow, readable: Readable): AssistantMessageView {
   const citations = citationsOf(row.citations);
-  const hide = row.author === "assistant" && withheld(citations, readable);
+  const hide = row.author === "assistant" && withheld(row, readable);
   return {
     id: row.id,
     conversationId: row.conversation_id,
@@ -281,7 +308,7 @@ export function toSuggestionView(
   messageWithheld: boolean,
 ): AssistantSuggestionView {
   const citations = citationsOf(row.citations);
-  const hide = messageWithheld || withheld(citations, readable);
+  const hide = messageWithheld || withheld(row, readable);
   return {
     id: row.id,
     conversationId: row.conversation_id,
@@ -305,17 +332,17 @@ export function toSuggestionView(
 // ------------------------------------------------------------------------------------------------ the read-time check
 
 /**
- * The record citations among `citations` that `principal` may read NOW (ADR-0059 §9): the search document of the
- * record passes ReadScope.predicate for transformation.read, with the ADR-0051 §2 sensitivity clause and the named
- * parties of the LIVE source row (the search query's own rule, ADR-0057 §3). Returns the readable keys.
+ * The records among `records` that `principal` may read NOW (ADR-0059 §9): the search document of the record passes
+ * ReadScope.predicate for transformation.read, with the ADR-0051 §2 sensitivity clause and the named parties of the
+ * LIVE source row (the search query's own rule, ADR-0057 §3). Returns the readable keys ("recordType:recordId").
  */
 export async function readableRecordKeys(
   db: DbOrTx,
   principal: Principal,
-  citations: readonly Citation[],
+  records: readonly RecordRef[],
 ): Promise<Set<string>> {
-  const refs = new Map<string, { recordType: string; recordId: string }>();
-  for (const c of citations) if (c.source === "record") refs.set(recordKey(c), c);
+  const refs = new Map<string, RecordRef>();
+  for (const r of records) refs.set(recordKey(r), r);
   if (refs.size === 0) return new Set();
   const scope = await readScopeFor(db, principal, READ_RECORDS);
   const ref = (c: string) => sql.ref(c) as Expression<string | null>;
@@ -363,18 +390,14 @@ export async function readableRecordKeys(
   return new Set(rows.map((r) => `${r.record_type}:${r.record_id}`));
 }
 
-/** The `readable` predicate of a set of messages and suggestions, loaded once. */
+/** The `readable` predicate of a set of messages and suggestions (citations and context), loaded once. */
 async function readabilityOf(
   db: DbOrTx,
   principal: Principal,
-  rows: readonly { citations: unknown }[],
+  rows: readonly { citations: unknown; context_records: unknown }[],
 ): Promise<Readable> {
-  const keys = await readableRecordKeys(
-    db,
-    principal,
-    rows.flatMap((r) => citationsOf(r.citations)),
-  );
-  return (c) => c.source !== "record" || keys.has(recordKey(c));
+  const keys = await readableRecordKeys(db, principal, rows.flatMap(recordRefsOf));
+  return (r) => keys.has(recordKey(r));
 }
 
 // ------------------------------------------------------------------------------------------------ helpers
@@ -441,6 +464,7 @@ function replyColumns(
     error_code: null,
     content: null,
     citations: JSON.stringify([]),
+    context_records: null as string | null,
     provider_kind: null,
     model_name: null,
     setting_version: null,
@@ -469,6 +493,7 @@ function replyColumns(
         reply_kind: "answer",
         content: outcome.content,
         citations: JSON.stringify(outcome.citations),
+        context_records: JSON.stringify(outcome.contextRecords),
         provider_kind: setting.providerKind,
         model_name: setting.modelName,
         setting_version: setting.version,
@@ -752,11 +777,13 @@ export function registerAssistantConversationRoutes(app: FastifyInstance, { db, 
         providerKind: provider?.kind ?? null,
         modelName: provider?.modelName ?? null,
       };
-      // Suggestions belong to an answer of a conversation with a transformation focus (0111; §5).
+      // Suggestions belong to an answer of a conversation with a transformation focus (0111; §5). Each one stores the
+      // answer's generation context: it was built from every record item given, cited or not (F-DG6-920).
       const suggestions: readonly SuggestionDraft[] =
         outcome.kind === "answer" && first.conversation.transformation_id !== null
           ? outcome.suggestions.slice(0, 5)
           : [];
+      const suggestionContext = JSON.stringify(outcome.kind === "answer" ? outcome.contextRecords : []);
 
       // Transaction 2: the reply and its suggestions.
       const second = await db.transaction().execute(async (tx) => {
@@ -788,6 +815,7 @@ export function registerAssistantConversationRoutes(app: FastifyInstance, { db, 
               fields: s.fields === null ? null : JSON.stringify(s.fields),
               text_content: s.textContent,
               citations: JSON.stringify(s.citations),
+              context_records: suggestionContext,
               created_by: me,
               updated_by: me,
             })

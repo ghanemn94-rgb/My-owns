@@ -14080,6 +14080,7 @@ Written by T-DG6-ARCH-05 (ADR-0059, the optional assistant); placed here by its 
 
 - **Purpose:** One message of a conversation: the user's prompt as typed, or the assistant's reply (answer with content and at least one citation; refusal with its code; no_sources; unavailable with an error code; interrupted). Citations are record ids and versions or playbook block references; retrieved record text is never stored (REQ-S17-007, REQ-S17-008, REQ-S17-011; ADR-0059 §5, §8).
 - **Migration:** `0111_p6_assistant.sql`. **API module:** `assistant`. **Who writes:** postAssistantMessage only, in the transaction of the conversation update that counts it (the owner is the row's created_by). **Lifecycle:** append-only.
+- **Changed by `0128`:** the column `context_records` and the CHECKs `assistant_message_context_records_valid` and `assistant_message_context_records_required` (NOT VALID). See "P6 re-gate repair migration 0128" (added 2026-11-10, T-DG6-BE-RG1).
 - **`mth_app` privileges:** INSERT, SELECT.
 
 | Column | Type | Null | Default | Column constraints |
@@ -14128,6 +14129,7 @@ END))`
 
 - **Purpose:** A labelled suggestion on an answer: a charter or T16 decision-brief draft (text fields only) or advice (a recovery action, missing evidence), with its citations (REQ-S17-007, REQ-S17-008; ADR-0059 §6).
 - **Migration:** `0111_p6_assistant.sql`. **API module:** `assistant`. **Who writes:** postAssistantMessage (created proposed with the answer); the owner through takeAssistantSuggestionToDraft (proposed -> taken_to_draft). **Lifecycle:** proposed -> taken_to_draft (final; draft kinds only); content never changes; versioned and audited.
+- **Changed by `0128`:** the column `context_records`, the CHECKs `assistant_suggestion_context_records_valid` and `assistant_suggestion_context_records_required` (NOT VALID), and the trigger `assistant_suggestion_context_immutable`. See "P6 re-gate repair migration 0128" (added 2026-11-10, T-DG6-BE-RG1).
 - **`mth_app` privileges:** INSERT, SELECT, UPDATE.
 
 | Column | Type | Null | Default | Column constraints |
@@ -14542,6 +14544,24 @@ Recorded by T-DG6-BE-Z15 (2026-11-09; F-DG6-640; D-233) from the shipped `packag
 | Function and trigger `automation_rule_version_token_key_immutable` | `BEFORE UPDATE … FOR EACH ROW`, `SET search_path = public, pg_temp`; raises `check_violation`, constraint `automation_rule_version_token_key_immutable` | The key is set when the version is inserted and never changes. A changed key would turn every token the row ever issued stale. No API path writes it, so no problem code maps it. |
 
 **Effect on deploy.** Every token issued by the previous release (`[restricted:<version>:<k>]`, D-231) is refused 422 `automation_rule.restricted_token_stale`. The rule editor then reloads the version and asks the author to re-apply the change. No stored condition changes.
+
+# P6 re-gate repair migration 0128 (DG6)
+
+Recorded by T-DG6-BE-RG1 (2026-11-10; F-DG6-920) from the shipped `packages/db/migrations/0128_p6_assistant_context_records.sql`. The texts below are `information_schema` / `pg_get_constraintdef` / `pg_get_triggerdef` output from a disposable PostgreSQL 16.15 database with all 120 migrations applied (`docs/delivery/handbacks/DG6/T-DG6-BE-RG1-evidence/03-catalog-0128.log`). They are asserted by `packages/db/test/integration/catalogue.test.ts` ("0128: …"). The design is ADR-0059 §5 and §9, amendment of 2026-11-10. The migration adds one column to `assistant_message` and one to `assistant_suggestion` (0111, "P6 tables, slice D"), plus two functions, four CHECKs and one trigger. No table is new, no existing row changes and no grant changes: `mth_app` keeps INSERT and SELECT on `assistant_message`, and INSERT, SELECT and UPDATE on `assistant_suggestion`.
+
+| Item | Text | Purpose |
+| --- | --- | --- |
+| Column `assistant_message.context_records` | `jsonb NULL`, no default | The generation context of an answer: the `{recordType, recordId}` of **every record item given to the model**, cited or not. Playbook blocks are excluded; there is no version, title or text. Only an `answer` holds one. Never served by the API: it feeds only the ADR-0059 §9 read-time re-check. NULL on answers stored before 0128, which then fall back to their citations. |
+| Column `assistant_suggestion.context_records` | `jsonb NULL`, no default | The generation context of the answer the suggestion belongs to (the same list). Re-checked at read time and by `takeAssistantSuggestionToDraft` (404). Never served; immutable. NULL on suggestions stored before 0128. |
+| Function `p6_assistant_context_records_valid(p jsonb)` | IMMUTABLE SQL, `SET search_path = public, pg_catalog, pg_temp` | A JSON array of 0–20 distinct objects, each exactly `{"recordType": <one of the 12 search record types, p6_search_record_type_valid>, "recordId": <lower-case uuid>}`. |
+| Function `p6_assistant_context_covers(context jsonb, citations jsonb)` | IMMUTABLE SQL, same search path | True when every `source: record` citation is listed in the context (by `recordType` and `recordId`), so a check over the context is never weaker than the check over the citations. |
+| CHECK `assistant_message_context_records_valid` | `CHECK (((context_records IS NULL) OR ((author = 'assistant'::text) AND (reply_kind = 'answer'::text) AND p6_assistant_context_records_valid(context_records) AND p6_assistant_context_covers(context_records, citations))))` | Only an answer holds a context; its shape is valid and covers its citations. |
+| CHECK `assistant_message_context_records_required` | `CHECK (((author <> 'assistant'::text) OR (reply_kind IS DISTINCT FROM 'answer'::text) OR (context_records IS NOT NULL))) NOT VALID` | Every new answer stores its context. NOT VALID (the 0027 `benefit_calculation_rounding_required` precedent): rows stored before 0128 are not checked. No backfill is possible because what the model was given was never stored. |
+| CHECK `assistant_suggestion_context_records_valid` | `CHECK (((context_records IS NULL) OR (p6_assistant_context_records_valid(context_records) AND p6_assistant_context_covers(context_records, citations))))` | The shape is valid and covers the suggestion's citations. |
+| CHECK `assistant_suggestion_context_records_required` | `CHECK ((context_records IS NOT NULL)) NOT VALID` | Every new suggestion stores its context. Existing rows are not checked. |
+| Function and trigger `assistant_suggestion_context_immutable` | `BEFORE UPDATE ON public.assistant_suggestion FOR EACH ROW`; plpgsql, `SET search_path = public, pg_temp`; raises `check_violation`, constraint `assistant_suggestion_context_immutable` | The context is set when the suggestion is created and never changes (0111's `assistant_suggestion_guard` covers the other content columns). No API path writes it, so no problem code maps it. `assistant_message` is append-only already (0111). |
+
+**Effect on deploy.** No stored value changes. Answers and suggestions stored before the deploy keep a NULL context. The API then re-checks their citations only (ADR-0059 §9 amendment), so for those rows a record that was given to the model but not cited is not re-checked. Every answer stored after the deploy is re-checked against every record it was generated from. The reference inventory (`apps/api/test/support/sensitive-reference-inventory.ts`) classifies both columns `not-served`.
 
 # P6 read-time classifications after round 8 (no migration)
 

@@ -8,12 +8,15 @@
 //   5. output handling (§5): plain text of at most 8,000 characters, citations limited to the items given (all of them
 //      when the model cites none), suggestions filtered by §6. A provider failure is `unavailable` with its code, never
 //      an empty answer (§11).
+//   6. the generation context (§5, §9 amendment of 2026-11-10; F-DG6-920): the record keys of EVERY record item given
+//      to the model, cited or not, stored beside the citations (0128 `context_records`) so the read-time re-check
+//      covers every record the answer was generated from, not only those the model chose to cite.
 // The model's output is text: it is never interpreted as a command, and nothing here writes (§7).
 import type { Db } from "@mth/db";
 import type { Principal } from "../access/index.ts";
 import { answerText, citationsFor, classifyPrompt, filterSuggestions } from "./guardrails.ts";
 import { buildModelRequest } from "./prompt.ts";
-import type { AssistantSettingRow, Citation, ModelProvider, ProviderErrorCode } from "./provider.ts";
+import type { AssistantSettingRow, Citation, ModelProvider, ProviderErrorCode, QuotedItem } from "./provider.ts";
 import { retrieve } from "./retrieval.ts";
 
 export type RefusalCode =
@@ -21,6 +24,26 @@ export type RefusalCode =
   | "assistant.refused.benefit_validation"
   | "assistant.refused.value_change"
   | "assistant.refused.evidence";
+
+/** The key of one record given to the model (0128 `p6_assistant_context_records_valid`): no version, no text. */
+export interface ContextRecord {
+  readonly recordType: Extract<Citation, { source: "record" }>["recordType"];
+  readonly recordId: string;
+}
+
+/** §5/§9 (F-DG6-920): the distinct record keys of every record item given to the model, in the order given. */
+export function contextRecordsOf(items: readonly QuotedItem[]): ContextRecord[] {
+  const seen = new Set<string>();
+  const out: ContextRecord[] = [];
+  for (const { citation: c } of items) {
+    if (c.source !== "record") continue;
+    const key = `${c.recordType}:${c.recordId}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push({ recordType: c.recordType, recordId: c.recordId });
+  }
+  return out;
+}
 
 /** A suggestion that passed the guardrails (§5, §6), ready to be stored on the answer. */
 export interface SuggestionDraft {
@@ -62,6 +85,8 @@ export type AnswerOutcome = { readonly dataItems: number; readonly droppedSugges
       readonly content: string;
       /** At least one (§5: those the model cites, else every item given). */
       readonly citations: readonly Citation[];
+      /** Every record item given to the model, cited or not (F-DG6-920); a superset of the record citations. */
+      readonly contextRecords: readonly ContextRecord[];
       readonly suggestions: readonly SuggestionDraft[];
       readonly latencyMs: number;
     }
@@ -112,6 +137,7 @@ export async function answer(input: AnswerInput): Promise<AnswerOutcome> {
     kind: "answer",
     content: `${content}${note}`,
     citations,
+    contextRecords: contextRecordsOf(items),
     suggestions: kept,
     latencyMs: result.latencyMs,
     dataItems: items.length,

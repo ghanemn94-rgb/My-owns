@@ -7157,6 +7157,8 @@ export interface AssistantMessageTable {
   error_code: string | null;
   content: string | null;
   citations: JsonDefault;
+  /** 0128 (T-DG6-BE-RG1, F-DG6-920): {recordType, recordId} of every record item given to the model (answers only); NULL before 0128. Never served. */
+  context_records: NullableJson;
   provider_kind: string | null;
   model_name: string | null;
   setting_version: number | null;
@@ -7178,6 +7180,8 @@ export interface AssistantSuggestionTable {
   fields: NullableJson;
   text_content: string | null;
   citations: Json;
+  /** 0128 (T-DG6-BE-RG1, F-DG6-920): the answer's generation context (record keys); NULL before 0128. Never served; immutable. */
+  context_records: NullableJson;
   status: Generated<string>;
   taken_at: NullableTimestamp;
   taken_by: string | null;
@@ -13243,6 +13247,7 @@ export const SCHEMA_COLUMNS = {
     "error_code",
     "content",
     "citations",
+    "context_records",
     "provider_kind",
     "model_name",
     "setting_version",
@@ -13263,6 +13268,7 @@ export const SCHEMA_COLUMNS = {
     "fields",
     "text_content",
     "citations",
+    "context_records",
     "status",
     "taken_at",
     "taken_by",

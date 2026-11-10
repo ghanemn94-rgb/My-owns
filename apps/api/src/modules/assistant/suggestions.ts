@@ -6,7 +6,8 @@
 //    transformation.read on the suggestion's transformation (else 404). Only a charter or decision-brief suggestion can
 //    become a draft (422 assistant.suggestion_not_draftable); then the target's own write permission in that
 //    transformation (charter.edit for `charter`, executive_decision.create for `T16`; else 403). A suggestion whose
-//    citations the caller can no longer read is withheld (ADR-0059 §9) and is not handed out either (404). Taken once:
+//    citations or generation context (0128; F-DG6-920) name a record the caller can no longer read is withheld
+//    (ADR-0059 §9) and is not handed out either (404). Taken once:
 //    422 assistant.suggestion_already_taken. If-Match = the suggestion's version (428 missing, 409 stale).
 //  - One transaction: the row lock, every check above re-done on the principal reloaded there (commit-time
 //    authorization; a grant revoked meanwhile is 403 and nothing is written), `proposed -> taken_to_draft` (0111:
@@ -39,11 +40,11 @@ import { etag, parse, problems, requireIfMatch, type ModuleDeps } from "../platf
 import {
   assistantSuggestionView,
   readableRecordKeys,
+  recordRefsOf,
   toSuggestionView,
   USE,
   type AssistantSuggestionView,
 } from "./conversations.ts";
-import type { Citation } from "./provider.ts";
 
 const TO_DRAFT = "/api/v1/assistant/suggestions/:suggestionId/to-draft";
 
@@ -145,8 +146,6 @@ async function loadOwn(db: DbOrTx, principal: Principal, id: string, lock: boole
   return row;
 }
 
-const citationsOf = (value: unknown): Citation[] => (Array.isArray(value) ? (value as Citation[]) : []);
-
 /**
  * Every check of the operation for `principal`, in the order of the ADR-0059 §10 table: assistant.use (403), own
  * suggestion (404), transformation.read (404), readable citations (404, the read-time rule of §9), draftable (422),
@@ -157,10 +156,10 @@ async function check(db: DbOrTx, principal: Principal, row: SuggestionRow): Prom
     type: "transformation",
     id: row.transformation_id,
   });
-  const citations = citationsOf(row.citations);
-  const readable = await readableRecordKeys(db, principal, citations);
-  if (citations.some((c) => c.source === "record" && !readable.has(`${c.recordType}:${c.recordId}`)))
-    throw problems.notFound();
+  // Every record the suggestion was generated from: its citations and its stored generation context (0128; F-DG6-920).
+  const records = recordRefsOf(row);
+  const readable = await readableRecordKeys(db, principal, records);
+  if (records.some((r) => !readable.has(`${r.recordType}:${r.recordId}`))) throw problems.notFound();
   const kind = row.target_record_type;
   if (kind !== "charter" && kind !== "T16") throw assistantSuggestionRefusals.notDraftable();
   await requireAction(

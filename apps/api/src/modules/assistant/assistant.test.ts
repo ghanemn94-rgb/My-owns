@@ -44,3 +44,37 @@ describe("assistant module (P6)", () => {
     expect(files.length - 1).toBeGreaterThanOrEqual(1);
   });
 });
+
+// T-DG6-BE-RG1 (F-DG6-920; ADR-0059 §5, §9): the records an answer was generated from. Pure; no database.
+describe("the generation context (ADR-0059 §9 amendment; F-DG6-920)", () => {
+  const r1 = "01a1c4a5-bfb0-745a-907d-f232a93be725";
+  const r2 = "01a1c4a5-bfb0-745a-907d-f232a93be726";
+  const record = (recordId: string) =>
+    ({ source: "record", recordType: "transformation", recordId, recordVersion: 1 }) as const;
+  const playbook = { source: "playbook", blockRef: "B0001", playbookVersion: "1.0" } as const;
+
+  it("contextRecordsOf keeps every record item given (cited or not), distinct, in order; no playbook block", async () => {
+    const { contextRecordsOf } = await import("./answer.ts");
+    const items = [record(r1), playbook, record(r2), record(r1)].map((citation, i) => ({
+      ref: i + 1,
+      citation,
+      title: "Synthetic title",
+      text: "Synthetic text",
+    }));
+    expect(contextRecordsOf(items)).toEqual([
+      { recordType: "transformation", recordId: r1 },
+      { recordType: "transformation", recordId: r2 },
+    ]);
+  });
+
+  it("recordRefsOf is the union of record citations and the stored context; NULL context falls back to citations", async () => {
+    const { recordRefsOf } = await import("./conversations.ts");
+    const context = [
+      { recordType: "transformation", recordId: r1 },
+      { recordType: "transformation", recordId: r2 },
+    ];
+    expect(recordRefsOf({ citations: [record(r1), playbook], context_records: context })).toEqual(context);
+    expect(recordRefsOf({ citations: [record(r1), playbook], context_records: null })).toEqual([context[0]]);
+    expect(recordRefsOf({ citations: [playbook], context_records: [] })).toEqual([]);
+  });
+});

@@ -747,6 +747,8 @@ export const SENSITIVE_REFERENCE_INVENTORY: readonly InventoryRow[] = [
     fix: "assistant/conversations.ts citationViews / withheld",
     exercise: "apps/api/test/integration/assistant/conversations.test.ts#withheld",
   },
+  // T-DG6-BE-RG1 (F-DG6-920; 0128): the generation context; read only by the ADR-0059 §9 re-check, never serialized.
+  notServed("assistant_message.context_records", "json", "every record given to the model (the §9 re-check input)"),
   secretRef("assistant_setting.credential_ref"),
   secretRef("assistant_setting_change.credential_ref"),
   {
@@ -759,6 +761,7 @@ export const SENSITIVE_REFERENCE_INVENTORY: readonly InventoryRow[] = [
     fix: "assistant module readable() check",
     exercise: "apps/api/test/integration/assistant/conversations.test.ts#withheld",
   },
+  notServed("assistant_suggestion.context_records", "json", "every record given to the model (the §9 re-check input)"),
   cannot("assistant_suggestion.fields", "json", "suggested field values of a draft form (text)"),
   {
     column: "audit_event.changes",

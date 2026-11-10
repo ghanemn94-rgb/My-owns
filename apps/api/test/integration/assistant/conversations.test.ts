@@ -110,7 +110,9 @@ const auditsOf = (id: string) =>
 
 /**
  * Appends one message directly (owner role; test-only), following the 0111 guards: the conversation steps by one and
- * flips awaiting_reply in the same transaction. Used to set up states the API reaches only over time.
+ * flips awaiting_reply in the same transaction. Used to set up states the API reaches only over time. An answer (and
+ * its suggestion) stores its generation context as 0128 requires: the record keys of its record citations, i.e. a
+ * model that cited every record it was given (T-DG6-BE-RG1; the uncited case is context-recheck.test.ts).
  */
 async function appendRaw(
   conversationId: string,
@@ -159,10 +161,15 @@ async function appendRaw(
         );
       } else {
         const answer = m.replyKind === "answer";
+        const context = JSON.stringify(
+          (m.citations ?? [])
+            .filter((c) => (c as Body).source === "record")
+            .map((c) => ({ recordType: (c as Body).recordType, recordId: (c as Body).recordId })),
+        );
         await client.query(
           `insert into assistant_message (id, conversation_id, organization_id, seq, author, reply_kind, content,
-             citations, provider_kind, setting_version, latency_ms, created_by)
-           values ($1, $2, $3, $4, 'assistant', $5, $6, $7::jsonb, $8, $9, $10, $11)`,
+             citations, provider_kind, setting_version, latency_ms, created_by, context_records)
+           values ($1, $2, $3, $4, 'assistant', $5, $6, $7::jsonb, $8, $9, $10, $11, $12::jsonb)`,
           [
             id,
             conversationId,
@@ -175,14 +182,16 @@ async function appendRaw(
             answer ? 1 : null,
             answer ? 0 : null,
             ownerId,
+            answer ? context : null,
           ],
         );
         if (m.suggestion) {
           const suggestionId = crypto.randomUUID();
           await client.query(
             `insert into assistant_suggestion (id, organization_id, transformation_id, conversation_id, message_id,
-               owner_user_id, ordinal, kind, target_record_type, fields, text_content, citations, created_by, updated_by)
-             values ($1, $2, $3, $4, $5, $6, 1, $7, $8, $9::jsonb, $10, $11::jsonb, $6, $6)`,
+               owner_user_id, ordinal, kind, target_record_type, fields, text_content, citations, created_by, updated_by,
+               context_records)
+             values ($1, $2, $3, $4, $5, $6, 1, $7, $8, $9::jsonb, $10, $11::jsonb, $6, $6, $12::jsonb)`,
             [
               suggestionId,
               org,
@@ -195,6 +204,7 @@ async function appendRaw(
               m.suggestion.fields ? JSON.stringify(m.suggestion.fields) : null,
               m.suggestion.text ?? null,
               JSON.stringify(m.citations ?? []),
+              context,
             ],
           );
           await client.query(

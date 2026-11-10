@@ -1,0 +1,153 @@
+# 2026-11-10T12:49:35Z BEFORE-FIX: tree acc5c2f72 product code (answer.ts, conversations.ts, suggestions.ts, schema.ts at HEAD; no 0128), with the BE-RG1 test file + fake-model citeRecords hook, and the code-security probe copied in; node v22.22.0; LANG=unset
+ M apps/api/test/support/fake-model.ts
+?? apps/api/test/integration/assistant/context-recheck.test.ts
+?? apps/api/test/integration/assistant/zz-sec-r1-assistant-uncited.test.ts
+?? docs/delivery/handbacks/DG6/T-DG6-BE-RG1-evidence/
+port-policy: PostgreSQL listening on port 31400 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-rg1
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwaot5k2_e3c9f104 (server_encoding UTF8); applied 119 migrations to a fresh database
+stdout | apps/api/test/integration/assistant/context-recheck.test.ts > ADR-0059 §9: the read-time re-check covers every record given to the model (F-DG6-920) > F-DG6-920: the answer cites one of two given records; the UNCITED one is revoked; the answer is withheld
+[BE-RG1 case 1] after revoking the uncited record: contentWithheld = [33mfalse[39m
+
+stdout | apps/api/test/integration/assistant/context-recheck.test.ts > ADR-0059 §9: the read-time re-check covers every record given to the model (F-DG6-920) > the cited record is revoked: the answer is withheld and that citation is readable false
+[BE-RG1 case 2] after revoking the cited record: contentWithheld = [33mtrue[39m
+
+stdout | apps/api/test/integration/assistant/context-recheck.test.ts > ADR-0059 §9: the read-time re-check covers every record given to the model (F-DG6-920) > nothing revoked: the answer stays readable, and its stored context lists both records given
+[BE-RG1 case 3] nothing revoked: contentWithheld = [33mfalse[39m
+
+stdout | apps/api/test/integration/assistant/context-recheck.test.ts > ADR-0059 §9: the read-time re-check covers every record given to the model (F-DG6-920) > nothing revoked: the answer stays readable, and its stored context lists both records given
+[BE-RG1 case 3] stored context_records: [90mundefined[39m
+
+stdout | apps/api/test/integration/assistant/context-recheck.test.ts > ADR-0059 §9: the read-time re-check covers every record given to the model (F-DG6-920) > a suggestion built from an answer whose uncited record becomes unreadable is withheld and cannot be taken (404)
+[BE-RG1 case 4] suggestion context holds the uncited benefit: [90mundefined[39m
+
+stdout | apps/api/test/integration/assistant/context-recheck.test.ts > ADR-0059 §9: the read-time re-check covers every record given to the model (F-DG6-920) > a suggestion built from an answer whose uncited record becomes unreadable is withheld and cannot be taken (404)
+[BE-RG1 case 4] after the uncited benefit became unreadable: answer withheld = [33mfalse[39m suggestions withheld = [false,false]
+
+ ❯ |integration| apps/api/test/integration/assistant/context-recheck.test.ts (5 tests | 4 failed) 5727ms
+   × ADR-0059 §9: the read-time re-check covers every record given to the model (F-DG6-920) > F-DG6-920: the answer cites one of two given records; the UNCITED one is revoked; the answer is withheld 219ms
+     → expected { …(16) } to match object { author: 'assistant', …(3) }
+(12 matching properties omitted from actual)
+   ✓ ADR-0059 §9: the read-time re-check covers every record given to the model (F-DG6-920) > the cited record is revoked: the answer is withheld and that citation is readable false 77ms
+   × ADR-0059 §9: the read-time re-check covers every record given to the model (F-DG6-920) > nothing revoked: the answer stays readable, and its stored context lists both records given 86ms
+     → expected undefined to deeply equal ArrayContaining{…}
+   × ADR-0059 §9: the read-time re-check covers every record given to the model (F-DG6-920) > a suggestion built from an answer whose uncited record becomes unreadable is withheld and cannot be taken (404) 169ms
+     → expected { …(16) } to match object { Object (content, contentWithheld) }
+(14 matching properties omitted from actual)
+   × ADR-0059 §9: the read-time re-check covers every record given to the model (F-DG6-920) > a row stored before 0128 (no context) falls back to its citations (ADR-0059 §9 amendment) 71ms
+     → constraint "assistant_message_context_records_required" of relation "assistant_message" does not exist
+stdout | apps/api/test/integration/assistant/zz-sec-r1-assistant-uncited.test.ts > SEC-R1 reproduction: an uncited record given to the model escapes the read-time re-check > after the grant on the uncited record is revoked, the stored answer (quoting it) is still served
+[SEC-R1] data block holds title 1: [33mtrue[39m title 2: [33mtrue[39m
+[SEC-R1] stored record citations: [{"source":"record","recordType":"transformation","recordId":"01a1c582-260b-7356-9d78-871eb41246d2","recordVersion":1,"readable":true}]
+
+stdout | apps/api/test/integration/assistant/zz-sec-r1-assistant-uncited.test.ts > SEC-R1 reproduction: an uncited record given to the model escapes the read-time re-check > after the grant on the uncited record is revoked, the stored answer (quoting it) is still served
+[SEC-R1] direct read of the uncited transformation after revocation: [33m404[39m
+
+stdout | apps/api/test/integration/assistant/zz-sec-r1-assistant-uncited.test.ts > SEC-R1 reproduction: an uncited record given to the model escapes the read-time re-check > after the grant on the uncited record is revoked, the stored answer (quoting it) is still served
+[SEC-R1] after revocation: contentWithheld = [33mfalse[39m content = Synthetic answer: Zephyrine synthetic program one and Zephyrine synthetic program two are both behind plan.
+
+ ✓ |integration| apps/api/test/integration/assistant/zz-sec-r1-assistant-uncited.test.ts (1 test) 4008ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/assistant/context-recheck.test.ts > ADR-0059 §9: the read-time re-check covers every record given to the model (F-DG6-920) > F-DG6-920: the answer cites one of two given records; the UNCITED one is revoked; the answer is withheld
+AssertionError: expected { …(16) } to match object { author: 'assistant', …(3) }
+(12 matching properties omitted from actual)
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[2m    "author": "assistant",[22m
+[32m-   "content": null,[39m
+[32m-   "contentWithheld": true,[39m
+[31m+   "content": "Synthetic answer: Zephyrine synthetic program one and Zephyrine synthetic program two are both behind plan.",[39m
+[31m+   "contentWithheld": false,[39m
+[2m    "replyKind": "answer",[22m
+[2m  }[22m
+
+ ❯ apps/api/test/integration/assistant/context-recheck.test.ts:150:19
+    148|     const reply = after.messages[1];
+    149|     console.log("[BE-RG1 case 1] after revoking the uncited record: co…
+    150|     expect(reply).toMatchObject({ author: "assistant", replyKind: "ans…
+       |                   ^
+    151|     // The citations are shown as they were (only the cited record, st…
+    152|     expect(reply.citations.filter((c: Body) => c.source === "record"))…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  |integration| apps/api/test/integration/assistant/context-recheck.test.ts > ADR-0059 §9: the read-time re-check covers every record given to the model (F-DG6-920) > nothing revoked: the answer stays readable, and its stored context lists both records given
+AssertionError: expected undefined to deeply equal ArrayContaining{…}
+
+[32m- Expected:[39m 
+ArrayContaining [
+  {
+    "recordId": "01a1c582-0c09-763d-bc87-352b39811432",
+    "recordType": "transformation",
+  },
+  {
+    "recordId": "01a1c582-0c0a-76f9-ace2-c192d0599c89",
+    "recordType": "transformation",
+  },
+]
+
+[31m+ Received:[39m 
+undefined
+
+ ❯ apps/api/test/integration/assistant/context-recheck.test.ts:189:21
+    187|       .context_records;
+    188|     console.log("[BE-RG1 case 3] stored context_records:", JSON.string…
+    189|     expect(context).toEqual(
+       |                     ^
+    190|       expect.arrayContaining([
+    191|         { recordType: "transformation", recordId: tA1 },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  |integration| apps/api/test/integration/assistant/context-recheck.test.ts > ADR-0059 §9: the read-time re-check covers every record given to the model (F-DG6-920) > a suggestion built from an answer whose uncited record becomes unreadable is withheld and cannot be taken (404)
+AssertionError: expected { …(16) } to match object { Object (content, contentWithheld) }
+(14 matching properties omitted from actual)
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[32m-   "content": null,[39m
+[32m-   "contentWithheld": true,[39m
+[31m+   "content": "Synthetic answer quoting the benefit's ramp.",[39m
+[31m+   "contentWithheld": false,[39m
+[2m  }[22m
+
+ ❯ apps/api/test/integration/assistant/context-recheck.test.ts:253:31
+    251|       JSON.stringify(after.suggestions.map((s: Body) => s.contentWithh…
+    252|     );
+    253|     expect(after.messages[1]).toMatchObject({ content: null, contentWi…
+       |                               ^
+    254|     expect(after.suggestions).toHaveLength(2);
+    255|     for (const s of after.suggestions as Body[])
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  |integration| apps/api/test/integration/assistant/context-recheck.test.ts > ADR-0059 §9: the read-time re-check covers every record given to the model (F-DG6-920) > a row stored before 0128 (no context) falls back to its citations (ADR-0059 §9 amendment)
+error: constraint "assistant_message_context_records_required" of relation "assistant_message" does not exist
+ ❯ node_modules/.pnpm/pg-pool@3.14.0_pg@8.16.3/node_modules/pg-pool/index.js:45:11
+ ❯ apps/api/test/integration/assistant/context-recheck.test.ts:282:5
+    280|     const id = reply.id as string;
+    281|     expect(id).toMatch(/^[0-9a-f-]{36}$/);
+    282|     await a.api.owner.query(`
+       |     ^
+    283|       DO $$ BEGIN
+    284|         ALTER TABLE assistant_message DROP CONSTRAINT assistant_messag…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  4 failed | 2 passed (6)
+   Start at  12:49:37
+   Duration  26.13s (transform 5.39s, setup 0ms, collect 12.03s, tests 9.73s, environment 0ms, prepare 60ms)
+
+exit=1

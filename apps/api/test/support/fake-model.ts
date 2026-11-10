@@ -9,8 +9,25 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import type { AddressInfo } from "node:net";
 
+/** One record item of the data block the request carried (ADR-0059 §5 `dataBlockMessage`). */
+export interface FakeDataRecord {
+  readonly ref: number;
+  readonly recordType: string;
+  readonly id: string;
+}
+
 export type FakeModelBehaviour =
-  | { readonly kind: "envelope"; readonly answer: string; readonly citations?: unknown; readonly suggestions?: unknown }
+  | {
+      readonly kind: "envelope";
+      readonly answer: string;
+      readonly citations?: unknown;
+      readonly suggestions?: unknown;
+      /**
+       * T-DG6-BE-RG1 (F-DG6-920): when set, `citations` are computed from the request instead: the refs of the record
+       * items of its data block that this predicate keeps (a model citing only a subset of what it was given).
+       */
+      readonly citeRecords?: (item: FakeDataRecord) => boolean;
+    }
   | { readonly kind: "text"; readonly content: string }
   | { readonly kind: "status"; readonly status: number }
   | { readonly kind: "raw"; readonly body: string }
@@ -122,11 +139,31 @@ export class FakeModel {
         contentType: req.headers["content-type"] ?? null,
         body,
       });
-      this.respond(res);
+      this.respond(res, body);
     });
   }
 
-  private respond(res: ServerResponse): void {
+  /** The record items of the request's data block (the message that starts with the ADR-0059 §5 header). */
+  static dataRecordsOf(body: Record<string, unknown> | null): FakeDataRecord[] {
+    const messages = Array.isArray(body?.["messages"]) ? (body["messages"] as { content?: unknown }[]) : [];
+    for (const m of messages) {
+      const content = typeof m.content === "string" ? m.content : "";
+      const nl = content.indexOf("\n");
+      if (!content.startsWith("DATA (") || nl < 0) continue;
+      const items = JSON.parse(content.slice(nl + 1)) as {
+        ref: number;
+        source: string;
+        recordType?: string;
+        id: string;
+      }[];
+      return items
+        .filter((i) => i.source === "record")
+        .map((i) => ({ ref: i.ref, recordType: i.recordType ?? "", id: i.id }));
+    }
+    return [];
+  }
+
+  private respond(res: ServerResponse, body: Record<string, unknown> | null = null): void {
     const b = this.behaviour;
     const completion = (content: string) =>
       JSON.stringify({
@@ -139,13 +176,15 @@ export class FakeModel {
       res.end(body);
     };
     switch (b.kind) {
-      case "envelope":
-        return send(
-          200,
-          completion(
-            JSON.stringify({ answer: b.answer, citations: b.citations ?? [], suggestions: b.suggestions ?? [] }),
-          ),
-        );
+      case "envelope": {
+        const citations =
+          b.citeRecords === undefined
+            ? (b.citations ?? [])
+            : FakeModel.dataRecordsOf(body)
+                .filter(b.citeRecords)
+                .map((i) => i.ref);
+        return send(200, completion(JSON.stringify({ answer: b.answer, citations, suggestions: b.suggestions ?? [] })));
+      }
       case "text":
         return send(200, completion(b.content));
       case "status":

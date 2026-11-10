@@ -24206,7 +24206,7 @@ paths:
     get:
       tags: [assistant]
       operationId: getAssistantConversation
-      summary: "One of the caller's own conversations with all its messages (at most 100) and suggestions (assistant.use; owner only, others 404). Every citation is re-checked through ReadScope for the caller at read time: an answer or suggestion citing a record the caller can no longer read is returned with content null and contentWithheld true, and that citation with readable false. Every assistant output carries label assistant_suggestion: a suggestion, never an approved fact. ADR-0059 §1, §9; REQ-S17-007."
+      summary: "One of the caller's own conversations with all its messages (at most 100) and suggestions (assistant.use; owner only, others 404). Every record an answer or suggestion was generated from is re-checked through ReadScope for the caller at read time: its citations and every other record given to the model (the stored generation context, never served; ADR-0059 §9 amendment, F-DG6-920; answers stored before migration 0128 are checked by their citations only). One the caller can no longer read makes the answer or suggestion return with content null and contentWithheld true; a citation of that record has readable false. Every assistant output carries label assistant_suggestion: a suggestion, never an approved fact. ADR-0059 §1, §9; REQ-S17-007."
       responses:
         "200":
           description: "OK."
@@ -41364,7 +41364,7 @@ components:
         refusalCode: { type: [string, "null"], enum: [assistant.refused.approval, assistant.refused.benefit_validation, assistant.refused.value_change, assistant.refused.evidence, null] }
         errorCode: { type: [string, "null"], enum: [assistant.provider_timeout, assistant.provider_unreachable, assistant.provider_error, assistant.provider_response_invalid, null] }
         content: { type: [string, "null"], maxLength: 8000, description: "Plain text, no markup. Null for refusal, no_sources, unavailable and interrupted replies, and when withheld." }
-        contentWithheld: { type: boolean }
+        contentWithheld: { type: boolean, description: "True when a record the answer was generated from (a citation, or any other record given to the model) is no longer readable by the caller; content is then null (ADR-0059 §9)." }
         citations: { type: array, maxItems: 20, items: { $ref: "#/components/schemas/AssistantCitation" } }
         providerKind: { oneOf: [{ $ref: "#/components/schemas/AssistantProviderKind" }, { type: "null" }] }
         modelName: { type: [string, "null"] }
@@ -41389,7 +41389,7 @@ components:
           description: "Text fields of the charter or the T16 decision brief only (ADR-0059 §6); never a money, rate, FTE, KPI, date, owner or option field."
           additionalProperties: { type: string, minLength: 1, maxLength: 4000 }
         textContent: { type: [string, "null"], maxLength: 4000 }
-        contentWithheld: { type: boolean }
+        contentWithheld: { type: boolean, description: "True when the answer is withheld or a record the suggestion was generated from (a citation, or any other record given to the model) is no longer readable by the caller; fields and textContent are then null (ADR-0059 §9)." }
         citations: { type: array, minItems: 1, maxItems: 20, items: { $ref: "#/components/schemas/AssistantCitation" } }
         status: { type: string, enum: [proposed, taken_to_draft] }
         takenAt: { $ref: "#/components/schemas/NullableTimestamp" }
