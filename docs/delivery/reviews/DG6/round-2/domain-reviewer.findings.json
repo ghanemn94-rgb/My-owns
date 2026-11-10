@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG6-960",
+      "stage_id": "DG6",
+      "requirement": "REQ-S17-007",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "A withheld assistant answer is still sent to the model as conversation history on the next turn, and the next answer is not re-checked against it: the ADR-0059 §9 re-check misses the history the answer was generated from",
+      "reproduction": "Candidate sha256:d62b187baa8377da4225f689799b013f0394a64b06fe844ba42fa82b2f6966a6 (source 71ff750ed). Disposable clone, disposable PostgreSQL 16 (tests/qa/support/with-pg.sh, port 32600). Probe: lines 17-147 of apps/api/test/integration/assistant/context-recheck.test.ts (its shared setup: the shipped http_endpoint provider pointed at the suite's local fake chat-completions server) followed by docs/delivery/test-evidence/DG6/domain/round-2/probes/zz-domain-r2-history-tail.ts, run as apps/api/test/integration/assistant/zz-domain-r2-history.test.ts with 'npx vitest run --configLoader runner --project integration'. Steps: (1) a user with TL on tA1 and tA2 asks 'Zephyrine synthetic program'; both records are given to the model, which cites tA1; the answer names 'Zephyrine synthetic program two' (tA2). (2) The TL grant on tA2 is revoked. GET of the conversation now withholds turn 1 (contentWithheld true): the F-DG6-920 repair works. (3) The same owner posts 'Repeat your previous answer about Zephyrine synthetic program' in the same conversation. Then read the request the fake model received, the stored context_records of the new answer, and GET the conversation.",
+      "expected": "ADR-0059 §9 (amended 2026-11-10): the re-check covers 'every record the answer was generated from', and 'a revoked grant hides earlier answers too'. An answer withheld from its owner should not be handed back to the model as history (conversations.ts historyOf), or else the later answer is generated from it and should carry its context: for example, historyOf drops assistant answers that the read-time check withholds for the caller now, or the new answer's context_records include the context of the history answers it was given.",
+      "actual": "history-probe.log: turn 1 after the revocation contentWithheld = true. Turn 2: 201 answer; the request to the model has 5 messages, and the withheld turn-1 text that names TITLE_2 is sent as history = true. The data block does not contain tA2, and the stored context_records of the turn-2 answer do not include tA2. The turn-2 answer is served with contentWithheld = false. historyOf (conversations.ts:440) keeps every earlier answer with content !== null from the stored rows, with no read-time check; the new answer's context is contextRecordsOf(items), the current data block only. So a model asked to repeat or summarise can restate the hidden content to an owner who no longer may read the record, and the §9 check never sees it. The fake's turn-2 text is fixed by the probe; what the product itself does (it sends withheld content to the model and does not re-check the result against it) is what the log shows. The effect is bounded like F-DG6-920: only the conversation owner, who could read the record when turn 1 was produced, and only content that was already in that conversation.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-2/history-probe.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/probes/zz-domain-r2-history-tail.ts",
+        "apps/api/src/modules/assistant/conversations.ts",
+        "docs/architecture/adr/ADR-0059-p6-optional-assistant-provider-port-retrieval-citations-guardrails.md"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG6/round-2/domain-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-10T19:30:00Z",
+          "status": "OPEN",
+          "note": "Raised by domain-reviewer in DG6 clean re-gate round 2 (T-DG6-REV-DOM-RG-R2). Medium, non-mandatory, the same class and bound as F-DG6-920: another input the answer was generated from (the history) escapes the §9 read-time re-check."
+        }
+      ]
+    }
+  ]
+}

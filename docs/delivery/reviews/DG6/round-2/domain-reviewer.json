@@ -1,0 +1,323 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG6",
+  "round": 2,
+  "candidate_id": "sha256:d62b187baa8377da4225f689799b013f0394a64b06fe844ba42fa82b2f6966a6",
+  "source_commit": "71ff750ed17ea281c99f20a85d9f9663bb07efb8",
+  "reviewer_role": "domain-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG6-T-DG6-REV-DOM-RG-R2-domain-reviewer-20261110T181358Z-a2e3763a",
+    "session_id": "a2e3763a-9623-40a3-a31a-d2454705bd74"
+  },
+  "implementation_author": [
+    "devops-engineer",
+    "backend-workflow-engineer",
+    "frontend-ux-engineer",
+    "kpi-benefits-engineer",
+    "solution-architect",
+    "transformation-analyst",
+    "qa-verifier",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "domain-reviewer authored no DG6 implementation, test, ADR, register row, repair (T-DG6-BE-RG1, T-DG6-FE-RG1) or delivery decision in the reviewed candidate. I formed this verdict from my own runs in this session. I did not open any other reviewer's round-2 record or evidence. I read the domain-reviewer round-1 record (my role's own, to re-use its structure and unchanged-area evidence), the two open findings in findings.json, and code-security's round-1 reproduction probe for F-DG6-920, as the assignment requires for re-running a finding's reproduction."
+  },
+  "assignment": "docs/delivery/assignments/DG6/round-2/domain-reviewer.md",
+  "requirements_checked": [
+    "REQ-DLV-038",
+    "REQ-S01-005",
+    "REQ-S02-006",
+    "REQ-S10-002",
+    "REQ-S10-004",
+    "REQ-S12-019",
+    "REQ-S12-023",
+    "REQ-S12-024",
+    "REQ-S13-011",
+    "REQ-S13-013",
+    "REQ-S15-001",
+    "REQ-S15-003",
+    "REQ-S15-007",
+    "REQ-S15-009",
+    "REQ-S15-010",
+    "REQ-S15-011",
+    "REQ-S15-012",
+    "REQ-S15-013",
+    "REQ-S15-014",
+    "REQ-S16-006",
+    "REQ-S16-007",
+    "REQ-S16-022",
+    "REQ-S16-023",
+    "REQ-S16-026",
+    "REQ-S16-027",
+    "REQ-S16-029",
+    "REQ-S16-030",
+    "REQ-S16-032",
+    "REQ-S17-001",
+    "REQ-S17-002",
+    "REQ-S17-003",
+    "REQ-S17-005",
+    "REQ-S17-006",
+    "REQ-S17-007",
+    "REQ-S17-008",
+    "REQ-S17-009",
+    "REQ-S17-010",
+    "REQ-S17-011",
+    "REQ-S20-001",
+    "REQ-S20-012",
+    "REQ-S20-013",
+    "REQ-S20-014",
+    "REQ-S20-017",
+    "REQ-S20-020",
+    "REQ-S20-021",
+    "REQ-S20-022",
+    "REQ-S20-029",
+    "REQ-S20-030"
+  ],
+  "checks_run": [
+    {
+      "id": "DOM-RG2-00-candidate",
+      "procedure": "Verify the frozen candidate: HEAD, the recomputed candidate ID, the commits between the source and the freeze, the product equality with ccd078e91, shallowness, the disposable clone and the Node versions.",
+      "command": "git rev-parse HEAD; node tools/gates/candidate.mjs --stage DG6; git diff --name-only 71ff750ed HEAD; git diff ccd078e91 71ff750ed -- . ':!docs/delivery' | wc -c; git rev-parse --is-shallow-repository; /opt/node22/bin/node -v",
+      "environment": "Repository /home/user/My-owns (complete, not shallow) at HEAD 228c229d4; Node 24.21.0. Disposable clone $TMPDIR/review-dg6 at 71ff750ed: git clone --shared with a sparse checkout that leaves out docs/delivery/{test-evidence,runs,handbacks,reviews,candidates}, and node_modules copied from the repository. Reason: the shared scratch volume had 214 MB free, and my first full clone failed with 'No space left on device'.",
+      "expected": "The candidate ID is sha256:d62b187b… over 2771 files. HEAD differs from the source commit only by freeze metadata. The product diff is empty.",
+      "actual": "candidate_id sha256:d62b187baa8377da4225f689799b013f0394a64b06fe844ba42fa82b2f6966a6, files 2771. HEAD is the freeze commit 228c229d4, not the source commit 71ff750ed. Between them are only the three round-2 assignments, the candidate manifest, progress.md and stages.json, so this is the expected freeze pattern and the recomputed ID matches. The product diff ccd078e91..71ff750ed outside docs/delivery is 0 bytes. The repository is not shallow. /opt/node22/bin/node reports v22.22.0, not the 22.22.2 named, so I claim no Node 22 result; all my runs used Node 24.21.0. The clone is sparse only in delivery-record folders that no product test reads, and the candidate ID was computed on the complete repository. My first clone attempt failed on the full disk (exit 1/128); I deleted it before making the sparse clone.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-2/candidate-check.log"
+      ]
+    },
+    {
+      "id": "DOM-RG2-01-validators",
+      "procedure": "Run the register check for DG6 and the historical validators for DG5 to DG1.",
+      "command": "node tools/gates/validate.mjs --register DG6; node tools/gates/validate.mjs --historical --stage DG5 (and DG4, DG3, DG2, DG1)",
+      "environment": "Repository at 228c229d4; Node 24.21.0.",
+      "expected": "All exit 0.",
+      "actual": "All six exit 0: 'PASS register rules at DG6' and 'PASS gate DGn (historical)' for n = 5, 4, 3, 2 and 1.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-2/val-registerDG6.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/val-historical-DG5.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/val-historical-DG4.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/val-historical-DG3.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/val-historical-DG2.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/val-historical-DG1.log"
+      ]
+    },
+    {
+      "id": "DOM-RG2-02-build-contrast",
+      "procedure": "Build every workspace package in the clone, then run the design-token contrast check (REQ-S15-003).",
+      "command": "pnpm -r build; pnpm --filter @mth/design-tokens run check:contrast",
+      "environment": "Clone at 71ff750ed; Node 24.21.0.",
+      "expected": "Both exit 0, with every allowed token pair at WCAG AA.",
+      "actual": "The build exits 0. Contrast: 'PASS contrast: 50 pairs meet WCAG AA; 3 prohibited pairs fail as documented', exit 0. The repair diff touches no token. #0078FF is still described as provisional, and the header still shows the provisional wordmark badge ('مؤقت' in the ar screenshot dom-r2-w1-assistant-withheld.png). Re-used from round 1: white small text on #0078FF is a prohibited pair that the UI never uses.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-2/build.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/contrast.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/screenshots/ar/dom-r2-w1-assistant-withheld.png"
+      ]
+    },
+    {
+      "id": "DOM-RG2-03-verify-F-DG6-920",
+      "procedure": "Verify F-DG6-920 adversarially. (1) Re-run code-security's round-1 reproduction unchanged on this candidate. (2) Run every assistant integration suite and the catalogue suite (0128). (3) Run a mutant that ignores row.context_records in recordRefsOf, which reverts the repair, against context-recheck.test.ts. (4) Review the repair diff line by line: answer.ts contextRecordsOf, conversations.ts recordRefsOf/withheld/readabilityOf on the conversation read and the post-message response, suggestions.ts check on take-to-draft, migration 0128, the fake model's citeRecords, the inventory, ADR-0059, the data dictionary and OpenAPI.",
+      "command": "QA_PG_PORT=32602 tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration apps/api/test/integration/assistant/zz-sec-r1-assistant-uncited.test.ts; QA_PG_PORT=32604 … apps/api/test/integration/assistant packages/db/test/integration/catalogue.test.ts; QA_PG_PORT=32606 … context-recheck.test.ts (mutant)",
+      "environment": "Clone at 71ff750ed; PostgreSQL 16.15 (disposable, UTF8/C, 120 migrations); Vitest 3.2.7 with --configLoader runner, because node_modules is read-only in the confined sandbox.",
+      "expected": "The repro's bug assertion no longer holds: the answer is withheld. The repair's suites pass, and the mutant fails them.",
+      "actual": "(1) f920-repro.log, exit 1 by design. The probe asserts the old defect. Its setup assertions still pass: both titles are in the data block, one record citation is stored, and a direct GET of the revoked uncited transformation returns 404. Then 'expect(reply.contentWithheld).toBe(false)' at line 159 fails with 'expected true to be false': after the revocation the answer has contentWithheld true and content null. That is the fixed behaviour, and no other assertion failed. (2) integration-assistant.log: 12 files, 171 tests passed, exit 0, with no stderr, skips or todos. It includes context-recheck 5/5, conversations 21, suggestions 12, injection, no-write and retrieval, the catalogue's 0128 cases, and my history probe (DOM-RG2-04). (3) mutant-f920.log: 2 failed of 5, exit 1. Case 1 (the uncited record revoked) and case 4 (the suggestion withheld, to-draft 404) fail, so the tests catch the revert. The source was restored and git status was clean. (4) Line review: all three read paths use recordRefsOf, the union of citations and context. Playbook citations no longer go through readable(), because citationViews only calls it for records. The context holds at most 20 keys, the same as retrieval MAX_ITEMS, so a full data block cannot breach the CHECK. The context must cover the citations; suggestions copy the answer's context and are immutable. context_records is never serialized: grep finds only conversations.ts and suggestions.ts reading it, and the inventory lists both columns as notServed. The pre-0128 fallback is disclosed consistently in ADR-0059 §9, the data dictionary and OpenAPI, and I accept it: no backfill is possible, and it affects only the owner of answers stored before the deploy. F-DG6-920 as raised is CLOSED_VERIFIED. A further input of the same kind (history) is F-DG6-960, see DOM-RG2-04.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-2/f920-repro.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/integration-assistant.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/mutant-f920.log"
+      ]
+    },
+    {
+      "id": "DOM-RG2-04-assistant-history-recheck",
+      "procedure": "Adversarial probe of the repaired §9 rule: is a withheld answer re-fed to the model as history on the next turn, and is the next answer re-checked against it? The probe combines the context-recheck.test.ts setup (lines 17-147) with my tail file. Turn 1 gives the model tA1 and tA2 and the fake cites tA1. Then tA2 is revoked, and the owner asks again in the same conversation.",
+      "command": "QA_PG_PORT=32600 MTH_PORT_POOL=32601-32649 tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration apps/api/test/integration/assistant/zz-domain-r2-history.test.ts",
+      "environment": "Clone at 71ff750ed; disposable PostgreSQL 16.15; the shipped http_endpoint provider pointed at the local fake chat-completions server (loopback test double, not a model).",
+      "expected": "ADR-0059 §9: a revoked grant hides earlier answers, and the re-check covers every record an answer was generated from. Withheld content should not be given back to the model, or the new answer should be re-checked against it.",
+      "actual": "1 passed, exit 0. The probe records observations and asserts only status 201. Turn 1 after the revocation has contentWithheld = true, so the F-DG6-920 repair holds. Turn 2: the request to the model has 5 messages, and the withheld turn-1 text naming 'Zephyrine synthetic program two' is sent as history = true. tA2 is not in the data block and not in the turn-2 context_records. The turn-2 answer is served with contentWithheld = false. historyOf (conversations.ts:440) takes stored answer content with no read-time check. A model asked to repeat its earlier answer can therefore restate hidden content, and §9 never sees it. Raised as F-DG6-960 (Medium, non-mandatory, the same class and bound as F-DG6-920: only the conversation owner, who could read the record when turn 1 was produced). Per D-192 a Medium cannot be accepted as an observation, so this check FAILs.",
+      "exit_status": 0,
+      "result": "FAIL",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-2/history-probe.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/probes/zz-domain-r2-history-tail.ts"
+      ]
+    },
+    {
+      "id": "DOM-RG2-05-verify-F-DG6-900",
+      "procedure": "Re-run the round-1 reproduction of F-DG6-900 on the demo-initialized stack in chromium-en and chromium-ar. My probe asserts the literal en/ar comparison-basis words in every E2 table. Then run the web explanation and assistant unit suites, and a mutant that restores the old labels.",
+      "command": "QA_PG_PORT=32610 E2E_API_PORT=32611 e2e/support/with-demo-stack.sh npx playwright test e2e/zz-domain-r2-demo-probe.spec.ts --workers=1; npx vitest run --configLoader runner --project unit-web apps/web/src/components/explanation apps/web/src/components/assistant; (mutant) same for explanation",
+      "environment": "Clone at 71ff750ed; demo-initialized stack (MTH_ENV=demo, AUTH_MODE=dev, synthetic International Roaming dataset), roaming.user.to through the dev sign-in; Playwright 1.56.1 with the pre-installed Chromium; E2E_SCREENSHOT_DIR set to my evidence directory.",
+      "expected": "The pending row no longer says a bare 'Validated'. The column says it is the comparison basis. Totals stay separate.",
+      "actual": "demo-probe.log: 2 passed, exit 0. In en and ar every E2 table is headed Period | Amount | 'Comparison basis' ('أساس المقارنة'). The pending row (1 Aug 2026 to 31 Aug 2026, SAR 99,000.00) reads 'Baseline and formula version validated by Finance' ('خط الأساس وإصدار المعادلة تحققت منهما المالية'), and the validated SAR 222,750.00 is a separate total. The panel still says a forecast or scenario is never realized value; dir=rtl in ar. The wording matches finance-validation.ts, where a value is validated only against a Finance-validated comparison basis (REQ-S08-008). web-unit.log: 3 files, 52 tests passed, exit 0. mutant-f900.log: restoring 'Basis'/'Validated' (and the ar equivalents) fails the two new en/ar cases (2 failed of 20, exit 1); restored afterwards. The probe saw no infrastructure term. F-DG6-900 is CLOSED_VERIFIED. FE-RG1 discloses that the new Arabic strings are not yet reviewed by a native speaker. They read correctly to me, but they stay on the provisional-Arabic path.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-2/demo-probe.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/probes/zz-domain-r2-demo-probe.spec.ts",
+        "docs/delivery/test-evidence/DG6/domain/round-2/web-unit.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/mutant-f900.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/screenshots/en/dom-r2-d1-e2-panel.png",
+        "docs/delivery/test-evidence/DG6/domain/round-2/screenshots/ar/dom-r2-d1-e2-panel.png",
+        "docs/delivery/test-evidence/DG6/domain/round-2/screenshots/en/dom-r2-d1-benefit-realized-basis.png",
+        "docs/delivery/test-evidence/DG6/domain/round-2/screenshots/ar/dom-r2-d1-benefit-realized-basis.png"
+      ]
+    },
+    {
+      "id": "DOM-RG2-06-withheld-notice-ui",
+      "procedure": "Render the FE-RG1 wording of the assistant withheld notices in the real built SPA in en and ar. The FE-RG1 handback (§7) says no e2e reaches this state. roaming.user.to signs in for real on the demo stack. The three assistant reads (the conversation list and availability, and one conversation) are stubbed in the browser with page.route, shaped as in openapi.yaml, because the assistant is off on the demo stack.",
+      "command": "QA_PG_PORT=32612 E2E_API_PORT=32613 e2e/support/with-demo-stack.sh npx playwright test e2e/zz-domain-r2-withheld-ui.spec.ts --workers=1",
+      "environment": "Clone at 71ff750ed; demo-initialized stack; chromium-en and chromium-ar; stubbed assistant responses (labelled as such in the probe).",
+      "expected": "Both notices say 'was based on a record', true for cited and uncited records, in en and ar, with no 'cites' wording left.",
+      "actual": "withheld-ui-probe.log: 2 passed, exit 0. en: 'This answer was based on a record you can no longer read, so it is hidden.' and 'This suggestion was based on a record you can no longer read, so it is hidden.' ar: 'استندت هذه الإجابة إلى سجل لم تعد تستطيع قراءته، لذلك هي مخفية.' and 'استند هذا الاقتراح إلى سجل لم تعد تستطيع قراءته، لذلك هو مخفي.'. dir=rtl, and the panel is labelled 'Assistant suggestion – not an approved fact'. Limit: the stub shows the rendering only. The server-side withholding is verified in DOM-RG2-03.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-2/withheld-ui-probe.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/probes/zz-domain-r2-withheld-ui.spec.ts",
+        "docs/delivery/test-evidence/DG6/domain/round-2/screenshots/en/dom-r2-w1-assistant-withheld.png",
+        "docs/delivery/test-evidence/DG6/domain/round-2/screenshots/ar/dom-r2-w1-assistant-withheld.png"
+      ]
+    },
+    {
+      "id": "DOM-RG2-07-integration-p6",
+      "procedure": "Re-run, on this candidate, the same 82 P6 integration files as my role's round-1 run. They cover the DG6 QA acceptance suites (A01, A02/A21, A12, A13, A14, A17, the S01-005 suite, A20, S15-014, A21, A22) and the P6 module suites: operations, automation including version-at-occurrence and backlog-enablement, assistant, integrations, evidence, deep links, deliverable confirmation, search, the security suites, audit append-only, the reference inventory, the version-bound tokens (z15), the served error texts (z13c) and the kill/restart drills.",
+      "command": "MTH_SECRET_QA_A17_WEBHOOK_SIGNING_SECRET=qa-a17-synthetic-signing-secret-0001 QA_PG_PORT=32640 MTH_PORT_POOL=32641-32649 tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration <82 files>",
+      "environment": "Clone at 71ff750ed; disposable PostgreSQL 16.15; host load about 17, with three reviews at once.",
+      "expected": "Every file passes.",
+      "actual": "Test Files 82 passed (82); Tests 834 passed, 1 todo (835); exit 0. Disclosed: (a) one stderr warn line, 'secret_ref.refused … reason not_bound', from webhooks.test.ts 'F-DG6-181 … signing secret's binding removed … is 401'. The test provokes it on purpose and passes. (b) The todo is the declared placeholder it.todo('PENDING T-DG6-BE-B …') in audit-events.test.ts. It is not run and is not a failure. There were no failures, skips or retries. Six 'PASS REQ-S16-030' lines were printed: SQL injection, rate limits on 7 classes, XSS round-trip, CSRF over 109 modules, .exe refused, oversize 413. The inventory suite passes with the two new not-served context_records rows. So the D-229 and D-228 surfaces show no named hidden id after the repair (see DOM-RG2-10).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-2/integration-p6.log"
+      ]
+    },
+    {
+      "id": "DOM-RG2-08-root-e2e-p6",
+      "procedure": "Run the 14 root P6 acceptance e2e specs (A12, A13 x2, A17 x2, A20 x5, A21 x2, A22 x2) in chromium-en and chromium-ar on the production-initialized stack. Specs that need a worker start it themselves. Re-run any failing spec alone.",
+      "command": "MTH_SECRET_QA_A17_WEBHOOK_SIGNING_SECRET=… QA_PG_PORT=32620 E2E_API_PORT=32621 MTH_PORT_POOL=32622-32639 apps/web/e2e/support/with-stack.sh npx playwright test <14 specs> --workers=1; then the same for e2e/a20-bilingual-shell.spec.ts alone",
+      "environment": "Clone at 71ff750ed; Playwright 1.56.1, pre-installed Chromium (PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers); production-initialized stack; E2E_SCREENSHOT_DIR=$TMPDIR/shots, with selected screenshots copied into evidence; host load up to about 17.",
+      "expected": "Everything passes apart from the declared skips.",
+      "actual": "Full run (root-p6-e2e.log): 262 passed, 18 skipped, 1 failed, 1 did not run, 36.2 min, exit 1. The failure is a20-bilingual-shell.spec.ts:124 (chromium-en), 0 ms: 'apiRequestContext._wrapApiCall: ENOENT … test-results/.playwright-artifacts-0/traces/…recording124.network'. That is a harness collision of my own making. I started my withheld-UI probe (DOM-RG2-06) in the same clone while this run was in progress, and Playwright clears test-results/ when it starts, which deleted this run's trace artifact folder. The 'did not run' entry is the next serial test in that file, A20 design tokens :189. Re-run of that spec alone (root-a20-bilingual-rerun.log): 4 passed (en and ar, both tests), exit 0. No test timed out. The 18 skips are a20-p6-axe.spec.ts's 9 declared detail screens x 2 languages, the same as in round 1, each with a stated reason and disclosed in the REQ-S15-012 note. Disclosed api.log tail lines: 'heartbeat_missed' operational exceptions (the production stack runs no worker; this is what A22 shows as Unknown/Stale, never green) and 'webhook delivery rejected header_missing' (A17's unsigned delivery, refused by design). Key results in both languages: A12-5, asked about Y, shows no Y text and, asked about X, cites X. A17: the data owner sees the KPI Stale with its last value and date, a stopped connector still lets a KPI be submitted by form, and the CSV/XLSX imports are staged then committed. A21: no AI and no external channel; the reminder reaches the inbox. A22 operations shows Stale/Unknown.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-2/root-p6-e2e.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/root-a20-bilingual-rerun.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/screenshots/en/a17-exception-data-owner.png",
+        "docs/delivery/test-evidence/DG6/domain/round-2/screenshots/ar/a17-exception-data-owner.png",
+        "docs/delivery/test-evidence/DG6/domain/round-2/screenshots/en/a17-connector-stopped.png",
+        "docs/delivery/test-evidence/DG6/domain/round-2/screenshots/ar/a17-connector-stopped.png",
+        "docs/delivery/test-evidence/DG6/domain/round-2/screenshots/en/a17-csv-staged.png",
+        "docs/delivery/test-evidence/DG6/domain/round-2/screenshots/ar/a17-csv-staged.png",
+        "docs/delivery/test-evidence/DG6/domain/round-2/screenshots/en/a22-p6-operations-stale.png",
+        "docs/delivery/test-evidence/DG6/domain/round-2/screenshots/ar/a22-p6-operations-stale.png"
+      ]
+    },
+    {
+      "id": "DOM-RG2-09-operating-logic-reused",
+      "procedure": "For areas the repair diff does not touch, I re-use my role's round-1 judgements and rest them on this round's re-runs (DOM-RG2-07 and 08). Areas: no implied external change (REQ-S01-005, S17-006, M0080); stale and failed data (REQ-S12-019, and its residual that the freshness scan reads only the newest period); Unknown never zero or green; imports staged and validated with lineage; connectors with credentials by reference; scope, evidence and deep links (REQ-S10-002/004, S13-013); notifications through the inbox (REQ-S12-023/024); REQ-S15-007 clause 3 (KPI-001 and 12.5% in Arabic exports); REQ-S15-014 clause 2 (the term scan); and the load and outputs (REQ-S20-029/030, REQ-DLV-038).",
+      "command": "(see DOM-RG2-07 and 08; round-1 records under docs/delivery/test-evidence/DG6/domain/round-1/)",
+      "environment": "Product tree 71ff750ed. The repair diff (98feb869..71ff750ed) changes only the assistant module, migration 0128, schema.ts, the inventory, the fake model, two en/ar catalogues (assistant and explanations), one p4 e2e spec, and the ADR, dictionary and OpenAPI texts.",
+      "expected": "The unchanged areas keep their round-1 behaviour.",
+      "actual": "Re-used from round 1, with the code unchanged by this diff: the external-change probe (TO confirm 403; a filename-only link 422; the state stays Unconfirmed in en and ar); the REQ-S15-007 literal export probe; the D-199 item 2 judgement of the load report: provisional targets on a stated sandbox host, never presented as Mobily capacity; the dashboard p95 not re-measured after BE-Z7B and the LOAD-T20 dataset gap are disclosed and accepted, with a re-measure recommended in DG7. The freshness residual stays repaired: the newest period with a value is used, and with no value the KPI is Unknown. Re-run on this candidate: the a17-s01-005, A17, A12, A21 and A22 integration and e2e suites pass (DOM-RG2-07/08). Plain-language explanations: the E2 panel is now correct (DOM-RG2-05), and the e2e S15-014 term scan of 21 routes passes in en and ar. I keep my round-1 acceptance of its not-found/not-demo caveat.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-2/integration-p6.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/root-p6-e2e.log",
+        "docs/delivery/test-evidence/DG6/domain/round-1/probe3.log",
+        "docs/delivery/test-evidence/DG6/domain/round-1/s15-007-probe2.log",
+        "docs/delivery/handbacks/DG6/T-DG6-DO-G-evidence/final/report.md"
+      ]
+    },
+    {
+      "id": "DOM-RG2-10-d229-d228",
+      "procedure": "Judge D-229 (connector configuration names stay cannot-name) and the D-228 (4) out-of-scope ruling on cross-organization ids. Look for a served column, response, channel or write path that names a sensitive record, including the new 0128 columns, and for token sequences that lose a hidden literal.",
+      "command": "grep -rn context_records apps packages; review of the conversations/suggestions serializers; reference-inventory, z13b, z13c and z15 suites in DOM-RG2-07",
+      "environment": "Clone at 71ff750ed.",
+      "expected": "No served path names a hidden id.",
+      "actual": "Not a defect. The repair adds context_records (record keys of sensitive records) to two tables. No serializer emits them: toMessageView and toSuggestionView build explicit field lists, the inventory classifies both columns as notServed, and context-recheck case 3 asserts that no contextRecords or context_records key appears in the response. The one new disclosure path I found is the history path of F-DG6-960, which re-surfaces content (not ids) to the owner. That is a §9 re-check gap, not a D-229/D-228 naming leak. The inventory, z13b/z13c and z15 suites pass on this candidate, so the edit, grant-change and concurrent-save sequences those suites drive lose no literal. I keep my round-1 judgement. D-229: a mapping can name an id only when an ADM_TECH configurer types one, the same class as any human free text (D-223). D-228 (4): every helper checks the reader's own organizations. I accept both, with my round-1 wording note: connector.read is held by TO, KDS, TD, AUD and ADM_TECH, not only by 'connector administrators'.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-2/integration-p6.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/integration-assistant.log"
+      ]
+    },
+    {
+      "id": "DOM-RG2-11-automation-decisions",
+      "procedure": "Judge D-203 to D-205 against the automation clauses (REQ-S12-019, REQ-S20-013), and D-194 to D-196, D-199 item 2, D-202 and D-238, on this candidate.",
+      "command": "automation-version-at-occurrence, automation-backlog-enablement, automation-engine and related suites (in DOM-RG2-07); reading decisions.md and ADR-0043's amendments",
+      "environment": "Clone at 71ff750ed; repository decisions.md.",
+      "expected": "The decisions are consistent with the master prompt and the playbook, and the residual race is documented and bounded.",
+      "actual": "Accepted, unchanged from round 1. The repair diff does not touch automation, and its suites pass here. D-203 takes no action on events before enablement. D-204 evaluates an event against the version at its occurrence, using the append-only ledger 0122/0123. D-205's kill switch stops pending events. The G4 commit-order race stays bounded: the action key is automationActionKey({ruleCode, triggerKey, ordinal}), with no version in it, so the same ordinal returns 'already'. It is acceptable as documented. Automations never decide a business approval. D-194, D-195, D-196, D-199 item 2 and D-202 are accepted as in round 1. D-238: the clean re-gate's round-1 findings were repaired by BE-RG1 and FE-RG1, and the register's acceptance texts are unchanged.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-2/integration-p6.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/val-registerDG6.log"
+      ]
+    },
+    {
+      "id": "DOM-RG2-12-honesty-source",
+      "procedure": "Check source fidelity and honest classification on the repair diff: the en/ar strings, ADR-0059 and the migration comments. Look for PMI, certification or official claims, and for any approval by the assistant or the engineering agent.",
+      "command": "git diff 98feb869c 71ff750ed -- . ':!docs/delivery' (line review)",
+      "environment": "Repository.",
+      "expected": "No overclaims, and no approval granted by the assistant.",
+      "actual": "None found. ADR-0059's amendment and migration 0128 both state that they grant no business, Finance or IT approval and imply no DG0–DG7 result. The new strings are only the basis labels, which now say that Finance validates the baseline and formula version, consistent with the playbook's benefits lifecycle and Finance validation (forecast is never validated value), and the two withheld notices. The assistant is still labelled 'assistant suggestion – not an approved fact' (screenshot). Nothing in the diff lets the assistant approve, validate a benefit, set a value or create evidence. The no-write suite passes.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-2/integration-assistant.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/screenshots/en/dom-r2-w1-assistant-withheld.png"
+      ]
+    },
+    {
+      "id": "DOM-RG2-13-environmental-residuals",
+      "procedure": "Record the environmental residuals on the offline and configuration surface, as the assignment instructs.",
+      "command": "(none)",
+      "environment": "Sandbox with no network, container runtime, live IdP, mail, messaging, object store or AI provider.",
+      "expected": "PASS on the offline surface, with each residual noted.",
+      "actual": "PASS on the offline surface. Live registry (REQ-DLV-042 AC-1, D-057) and live CI (REQ-DLV-025, D-058) were not exercised. Keycloak and a real IdP (D-049): only the bundled test issuer was used (the other-realm suite passes in DOM-RG2-07); the SAML broker is documented, not run. Connectors, outbound writes, channels and the assistant ran only through their test adapters, the local fake model and the shipped disabled configuration. The REQ-S20-029/030 figures are provisional sandbox measurements, not Mobily capacity. No Node 22.22.2 run was made (only v22.22.0 is present).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-2/integration-p6.log"
+      ]
+    }
+  ],
+  "findings": [
+    "F-DG6-960"
+  ],
+  "verdict": "FAIL",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG6/domain/round-2/candidate-check.log",
+    "docs/delivery/test-evidence/DG6/domain/round-2/history-probe.log",
+    "docs/delivery/test-evidence/DG6/domain/round-2/probes/zz-domain-r2-history-tail.ts",
+    "docs/delivery/test-evidence/DG6/domain/round-2/f920-repro.log",
+    "docs/delivery/test-evidence/DG6/domain/round-2/integration-assistant.log",
+    "docs/delivery/test-evidence/DG6/domain/round-2/mutant-f920.log",
+    "docs/delivery/test-evidence/DG6/domain/round-2/demo-probe.log",
+    "docs/delivery/test-evidence/DG6/domain/round-2/mutant-f900.log",
+    "docs/delivery/test-evidence/DG6/domain/round-2/web-unit.log",
+    "docs/delivery/test-evidence/DG6/domain/round-2/withheld-ui-probe.log",
+    "docs/delivery/test-evidence/DG6/domain/round-2/integration-p6.log",
+    "docs/delivery/test-evidence/DG6/domain/round-2/root-p6-e2e.log",
+    "docs/delivery/test-evidence/DG6/domain/round-2/root-a20-bilingual-rerun.log",
+    "docs/delivery/test-evidence/DG6/domain/round-2/build.log",
+    "docs/delivery/test-evidence/DG6/domain/round-2/contrast.log",
+    "docs/delivery/test-evidence/DG6/domain/round-2/val-registerDG6.log",
+    "docs/delivery/test-evidence/DG6/domain/round-2/val-historical-DG5.log"
+  ],
+  "reviewed_at": "2026-11-10T19:30:00Z",
+  "summary": "FAIL on candidate d62b187b (2771 files, source 71ff750ed, product equal to ccd078e91). Both open findings are CLOSED_VERIFIED. For F-DG6-920, the round-1 reproduction now sees the answer withheld, and a mutant reverting the fix fails context-recheck. For F-DG6-900, the demo stack shows 'Comparison basis: Baseline and formula version validated by Finance' in en and ar, and a mutant restoring the old labels fails the unit tests. My regression runs pass: 82 integration files (834 tests plus 1 declared todo) and the root P6 e2e in en and ar (262 passed, 18 declared skips). One failure in that e2e run was a trace-artifact ENOENT caused by my own concurrent probe; the spec re-run alone passed 4/4. I raise one new Medium finding, F-DG6-960: a withheld answer is still sent to the model as history on the next turn, and the new answer is not re-checked against it. So the ADR-0059 §9 rule that 'a revoked grant hides earlier answers' can be bypassed by asking the assistant to repeat itself. A Medium must be repaired before the gate (D-192), so the verdict is FAIL."
+}

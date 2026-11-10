@@ -1,0 +1,30 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG6-900",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Re-ran the round-1 reproduction on candidate d62b187b on the demo-initialized stack, roaming.user.to, synthetic 'Revenue uplift' benefit 01995000-4401-7000-8000-000000000001, chromium-en and chromium-ar (demo-probe.log, 2 passed, exit 0). The E2 panel's tables now head the third column 'Comparison basis' / 'أساس المقارنة', and the pending row (1 Aug 2026 to 31 Aug 2026, SAR 99,000.00, under 'Pending Finance validation (not realized)') reads 'Baseline and formula version validated by Finance' / 'خط الأساس وإصدار المعادلة تحققت منهما المالية', never a bare 'Validated'/'معتمد'. That matches the API meaning (finance-validation.ts: a value is validated only against a Finance-validated comparison basis). The pending SAR 99,000.00 is still not added to the validated SAR 222,750.00. Mutant: restoring the old en/ar labels ('Basis'/'Validated'/'Provisional', 'الأساس'/'معتمد'/'مؤقت') makes the two new explanation.test.tsx cases fail (mutant-f900.log, 2 failed of 20, exit 1). Restored afterwards; unmutated, the explanation and assistant web suites pass (web-unit.log, 52 passed).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-2/demo-probe.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/probes/zz-domain-r2-demo-probe.spec.ts",
+        "docs/delivery/test-evidence/DG6/domain/round-2/mutant-f900.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/web-unit.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/screenshots/en/dom-r2-d1-e2-panel.png",
+        "docs/delivery/test-evidence/DG6/domain/round-2/screenshots/ar/dom-r2-d1-e2-panel.png"
+      ]
+    },
+    {
+      "finding_id": "F-DG6-920",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Re-ran code-security's round-1 reproduction (zz-sec-r1-assistant-uncited.test.ts) unchanged on this candidate (f920-repro.log, exit 1 by design). It still sees both titles in the data block and stores one record citation, and the uncited transformation reads 404 after the revocation. Its bug assertion, 'expect(reply.contentWithheld).toBe(false)' at line 159, now fails because contentWithheld is true and content is null. That is the fixed behaviour; no other assertion failed. The repair's suites pass: context-recheck.test.ts 5/5, conversations, suggestions and the other assistant suites, plus the 0128 catalogue test (integration-assistant.log, 12 files, 171 tests, exit 0). Mutant: ignoring row.context_records in recordRefsOf (the fix reverted) fails context-recheck case 1 (an uncited record revoked) and case 4 (a suggestion is withheld and to-draft answers 404) (mutant-f920.log, 2 failed of 5, exit 1). Line-level review: the conversation read, the post-message response and take-to-draft all go through recordRefsOf. Migration 0128 requires the context on new rows (NOT VALID), and its shape check caps it at 20 keys, the same as retrieval's MAX_ITEMS. The context covers the citations, is immutable on suggestions, and is classified not-served in the reference inventory. No serializer exposes it. The pre-0128 fallback is documented in ADR-0059, the data dictionary and OpenAPI. The finding as raised (an uncited record given in the data block) is closed. A separate input the answer is generated from, the conversation history, still escapes the re-check. I raise that as new finding F-DG6-960, not as a reopening of this one.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-2/f920-repro.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/integration-assistant.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/mutant-f920.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-1/repro/zz-sec-r1-assistant-uncited.test.ts"
+      ]
+    }
+  ]
+}
