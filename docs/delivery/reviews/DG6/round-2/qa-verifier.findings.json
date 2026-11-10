@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG6-980",
+      "stage_id": "DG6",
+      "requirement": "REQ-S17-007",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "A withheld assistant answer is sent back to the model as conversation history, and a follow-up answer that repeats it is served readable: the ADR-0059 §9 re-check (repaired for F-DG6-920) does not cover the history input of §5",
+      "reproduction": "Candidate sha256:d62b187baa8377da4225f689799b013f0394a64b06fe844ba42fa82b2f6966a6 (source 71ff750ed). Disposable clone, disposable PostgreSQL 16 (tests/qa/support/with-pg.sh, port 32720). Probe docs/delivery/test-evidence/DG6/qa/tests/round-2/qa-rg-r2-assistant-history.test.ts, copied to apps/api/test/integration/assistant/ and run with 'npx vitest run --project integration <file>' (log docs/delivery/test-evidence/DG6/qa/round-2/30-probe-assistant-history-and-920-repro.log). Setup as the shipped context-recheck.test.ts: two transformations tA1 and tA2 of org A with search documents 'Quarzelline synthetic program one/two'; the shipped http_endpoint provider pointed at the suite's local fake chat-completions server (apps/api/test/support/fake-model.ts). A user holds TL on tA1 and on tA2. (1) The user asks 'Quarzelline synthetic program'; the fake answers 'Synthetic answer: Quarzelline synthetic program two has HIDDEN-FACT-7731 from program two.' citing every record given (A1). (2) The TL grant on tA2 is revoked: GET /api/v1/transformations/{tA2} answers 404, and GET of the conversation returns A1 with content null, contentWithheld true (the §9 re-check works for A1). (3) The user posts a second message in the same conversation, 'Quarzelline synthetic program: repeat your last answer'. The fake (wrapped in the probe only) answers with the text of the last assistant history message it was sent, as a model asked to repeat itself would, citing every record given.",
+      "expected": "ADR-0059 §9: an answer generated from a record the owner can no longer read is withheld, 'So a revoked grant hides earlier answers too'; the 2026-11-10 amendment: the re-check covers 'every record the answer was generated from'. REQ-S17-007: the assistant respects permissions. The withheld text of A1 should not be given to the model again after the owner lost access (for example historyOf applies the §9 readability of each earlier answer, or carries the context of the history answers into the new answer's context_records so that the new answer is re-checked against them), and no new answer should re-serve it.",
+      "actual": "conversations.ts historyOf (line 440, used at line 753) builds the history from the stored assistant_message.content of earlier answers without the §9 re-check. The request of post 2 carries A1's withheld text as an assistant history message (probe log: 'the request of post 2 carries the WITHHELD A1 text as history: true'), although its data block no longer holds tA2 ('program two: false'), so tA2's content reaches the model provider after the owner lost access. The new answer A2's citations and context_records name only tA1, which is still readable, so A2 is served with contentWithheld false and its content holds 'HIDDEN-FACT-7731 from program two' (probe log: 'A2: replyKind = answer contentWithheld = false content holds the withheld fact: true'), while A1 stays withheld. The two soft assertions of the probe fail by design for exactly these two facts. Bounded as F-DG6-920 was: only the conversation owner, who could read the record when A1 was produced, gets the text back, and only within the same conversation (at most the last 6 prompts and answers). The shipped suites cannot see it: the test adapter does not echo history, and context-recheck.test.ts posts one message per conversation. Severity: after the revocation the user is scoped to tA1 only and a query in that conversation returns tA2 content, so this touches the REQ-S17-007 A12 clause in the revocation case. I rate it Medium, not High, for the same reason F-DG6-920 was Medium: the only reader is the owner, who legitimately read the content before the revocation; no user who never had access can reach it (retrieval stays scoped, and conversations are owner-only).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/tests/round-2/qa-rg-r2-assistant-history.test.ts",
+        "docs/delivery/test-evidence/DG6/qa/round-2/30-probe-assistant-history-and-920-repro.log",
+        "apps/api/src/modules/assistant/conversations.ts",
+        "docs/architecture/adr/ADR-0059-p6-optional-assistant-provider-port-retrieval-citations-guardrails.md"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG6/round-2/qa-verifier.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-10T18:45:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG6 clean re-gate round 2 (T-DG6-REV-QA-RG-R2) while verifying the F-DG6-920 repair adversarially; reproduced on candidate d62b187b with the shipped http_endpoint provider and the local fake model. Medium, as F-DG6-920: a real authorization gap with a bounded effect (owner only, same conversation)."
+        }
+      ]
+    }
+  ]
+}

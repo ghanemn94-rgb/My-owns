@@ -1,0 +1,33 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG6-920",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:d62b187b...66a6 (source 71ff750ed), disposable clone and disposable PostgreSQL 16.15, with the shipped http_endpoint provider and the local fake model. (1) The round-1 reproduction, the code-security probe zz-sec-r1-assistant-uncited.test.ts copied unchanged: the request to the model still holds both records (title 1 true, title 2 true) and the stored record citations are only the cited one, but after the TL grant on the UNCITED transformation is revoked (direct GET 404) the conversation now returns the answer with contentWithheld true and content null. The probe asserts the old defect (line 159 expect(reply.contentWithheld).toBe(false)), so it now fails at exactly that assertion, by design: 'expected true to be false'. (2) The shipped context-recheck.test.ts: 5/5 (uncited revoked -> withheld, the uncited title and id not in the response; cited revoked -> withheld, readable false; nothing revoked -> readable, context lists both records, never served; a suggestion whose uncited benefit becomes sensitive -> withheld and take-to-draft 404, its context immutable even for the table owner; a pre-0128 NULL-context row falls back to its citations, the documented limit). (3) Mutant: recordRefsOf with the context ignored (conversations.ts, a disposable copy) makes cases 1 and 4 fail (2 failed, 3 passed), so the test catches a revert. (4) The integration suite ran twice in full (440/440 files, 4360 passed) with migration 0128 applied, the 0128 catalogue test, the assistant suites and contract.test.ts (932 of 932 operations validated). Line-level reading of the repair: the context is computed from every item given to the model (at most MAX_ITEMS = 20, the CHECK's bound), stored on the answer and each suggestion, read with selectAll on GET, re-checked on GET, on the post-message response (with the principal reloaded in transaction 2) and on take-to-draft; playbook citations never reach the readable predicate. The fix closes the finding as raised (an uncited record given to the model). A related path the repair does not cover, the conversation history of §5, is a separate mechanism and is raised as the new finding F-DG6-980.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-2/30-probe-assistant-history-and-920-repro.log",
+        "docs/delivery/test-evidence/DG6/qa/round-2/31-mutant-920-context-ignored.log",
+        "docs/delivery/test-evidence/DG6/qa/round-2/10-integration-run1-retry.log",
+        "docs/delivery/test-evidence/DG6/qa/round-2/11-integration-run2.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-1/repro/zz-sec-r1-assistant-uncited.test.ts",
+        "apps/api/test/integration/assistant/context-recheck.test.ts",
+        "packages/db/migrations/0128_p6_assistant_context_records.sql"
+      ]
+    },
+    {
+      "finding_id": "F-DG6-900",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:d62b187b...66a6 on the real demo-initialized stack (e2e/support/with-demo-stack.sh, SYNTHETIC International Roaming dataset), the round-1 sequence: roaming.user.to opens the benefit 01995000-4401-7000-8000-000000000001 and its realized-value explanation (E2). My probe zz-qa-rg-r2-f900-basis.spec.ts, 2/2 in chromium-en and chromium-ar. en: each of the three tables has the heads Period | Amount | Comparison basis; the pending row '1 Aug 2026 to 31 Aug 2026 | SAR 99,000.00' shows 'Baseline and formula version validated by Finance'; no cell is the bare 'Validated'; the pending SAR 99,000.00 is still not added to the realized SAR 222,750.00. ar: the column is 'أساس المقارنة' and the value 'خط الأساس وإصدار المعادلة تحققت منهما المالية', never the bare 'معتمد'; dir=rtl. Mutant: restoring the old en/ar explanations.json strings (in a disposable copy) makes the two new F-DG6-900 tests of explanation.test.tsx fail (2 failed, 18 passed). The shipped p4-benefits.spec.ts test 5, which now asserts the pending table's column and value, passed in chromium-en and chromium-ar in my product e2e run.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-2/32-repro-f900-demo.log",
+        "docs/delivery/test-evidence/DG6/qa/tests/round-2/zz-qa-rg-r2-f900-basis.spec.ts",
+        "docs/delivery/test-evidence/DG6/qa/round-2/33-mutant-f900-old-labels.log",
+        "docs/delivery/test-evidence/DG6/qa/round-2/20-e2e-product-unset-s1.log",
+        "apps/web/src/i18n/en/explanations.json",
+        "apps/web/src/i18n/ar/explanations.json"
+      ]
+    }
+  ]
+}
