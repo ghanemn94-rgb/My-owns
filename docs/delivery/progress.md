@@ -82,3 +82,13 @@ The first launch of the three round-2 reviews (runs `DG6-T-DG6-REV-{DOM,CS,QA}-R
 ## 2026-11-04: DG6 round-3 QA review aborted
 
 The round-3 QA run `DG6-T-DG6-REV-QA-R3-qa-verifier-20261104T123608Z-01cb5eae` ended with exit 143 (SIGTERM, `no-result-line`) and wrote no review record. A container restart happened while it ran. Its run record is kept as written. The runner had already auto-committed its verifications file (F-DG6-144, 200 and 201 CLOSED_VERIFIED), so its evidence is kept in the tree and committed. The continuation run T-DG6-REV-QA-R3B finishes the review on the same candidate `aa219bd2` (`assignments/DG6/round-3/qa-verifier-continuation.md`). The domain review (FAIL: F-DG6-220 High, 221 Low, 222 Medium) and the code-security review (PASS; 180 and 181 CLOSED_VERIFIED) are complete.
+
+## D-237 (2026-11-10, delivery-orchestrator; recorded here because decisions.md is frozen in the candidate until the gate is decided)
+
+**DG6 round 12: domain, code-security and QA all PASS on candidate `c05864ba` (source `2495e036c4d933788044756ab3c41415e3873cf3`), with no new finding.** F-DG6-700 (domain) and F-DG6-740 (QA) are CLOSED_VERIFIED. All 52 DG6 findings are CLOSED_VERIFIED. None is ACCEPTED_OBSERVATION, so there is no auditor acceptance sidecar to import.
+
+**Decision:** the release audit is therefore a single run, **T-DG6-AUDIT-R13** (round 13, same candidate). It writes its audit record and `docs/delivery/gates/DG6.json`. The two-part form of D-140 option 1 exists only to import the auditor's acceptance before the gate is written. The auditor may judge that a two-part audit is required; if so, the gate is BLOCKED and the audit is re-run in two parts.
+
+D-237 is copied into `decisions.md` only after the gate is decided. Product gate G6 never implies DG7.
+
+**Reopen if:** the audit BLOCKS.
