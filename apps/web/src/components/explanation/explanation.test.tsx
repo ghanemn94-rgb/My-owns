@@ -289,6 +289,54 @@ describe("E2 benefit realized value panel (acceptance: plain-language explanatio
       expectNoGreenNoZero(region);
     });
 
+  // F-DG6-900 (T-DG6-FE-RG1): the line's `basis` is its comparison basis (the baseline and formula version, validated by
+  // Finance or provisional), not the state of the value. A row under "Pending Finance validation (not realized)" must
+  // not read as a validated value: the column and its values name the comparison basis, in en and ar. The words are
+  // literal here (not read from the catalogue) so the test fails on the old "Basis" / "Validated" labels.
+  const BASIS_WORDS = {
+    en: {
+      column: "Comparison basis",
+      validated: "Baseline and formula version validated by Finance",
+      provisional: "Provisional: baseline or formula version not validated by Finance",
+    },
+    ar: {
+      column: "أساس المقارنة",
+      validated: "خط الأساس وإصدار المعادلة تحققت منهما المالية",
+      provisional: "مؤقت: خط الأساس أو إصدار المعادلة لم تتحقق منه المالية",
+    },
+  } as const;
+  for (const locale of LOCALES)
+    it(`(${locale}) a pending line's comparison basis is named as such, never a bare "Validated" (F-DG6-900)`, () => {
+      const provisionalLine = {
+        ...line(R(6), "2026-10-01", "2026-10-31", "12000.0000"),
+        basis: "provisional" as const,
+      };
+      const v = values({
+        submitted: series(
+          "submitted",
+          [line(R(4), "2026-07-01", "2026-09-30", "75000.0000"), provisionalLine],
+          known("87000.0000"),
+        ),
+      });
+      inLocale(locale, <BenefitRealizedExplanation values={v} kpiActual={null} />);
+      const region = open(locale, ex(locale).benefitRealized.value);
+      const pending = [...region.querySelectorAll("table")].find(
+        (tb) => tb.querySelector("caption")!.textContent === ex(locale).benefitRealized.group.pending,
+      )!;
+      const headers = [...pending.querySelectorAll("thead th")].map((th) => th.textContent);
+      expect(headers[2]).toBe(BASIS_WORDS[locale].column);
+      const basisCells = [...pending.querySelectorAll("tbody tr")].map(
+        (tr) => tr.querySelectorAll("td, th")[2]!.textContent,
+      );
+      expect(basisCells).toEqual([BASIS_WORDS[locale].validated, BASIS_WORDS[locale].provisional]);
+      // The bare state words of the old labels never appear as a pending row's basis.
+      for (const cell of basisCells)
+        expect(cell).not.toMatch(locale === "en" ? /^(Validated|Provisional)$/ : /^(معتمد|مؤقت)$/);
+      // The pending total is still not added to the validated total.
+      expect(region.querySelector("[data-total='pending']")!.textContent).toMatch(/87,000\.00/);
+      expect(region.querySelector("[data-total='validated']")!.textContent).toMatch(/350,000\.50/);
+    });
+
   it("a non-financial benefit: the KPI-actual words and its value; Unknown when it is stale", () => {
     const na = { status: "not_applicable" as const, amount: null, currency: null, reason: null };
     const v = values({

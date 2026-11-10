@@ -20,6 +20,7 @@ import { fileURLToPath } from "node:url";
 import { expect, test, type Locator, type Page } from "@playwright/test";
 import { asUser, syntheticUser, type SyntheticUser } from "./support/p3-journey-setup.ts";
 import {
+  SHOTS,
   SYN_RETAIL,
   apiSession,
   escape,
@@ -316,6 +317,23 @@ test("5. The Business Owner submits a measurement with evidence: pending, labell
     "250000.0000",
   );
   await shot(bo.page, lang, "p4ben-09-measurement-pending");
+  // F-DG6-900 (T-DG6-FE-RG1): the realized-value explanation (E2) lists this pending line under "Pending Finance
+  // validation (not realized)". Its third column is the line's comparison basis (step 4 validated the baseline), and
+  // it says so: "Comparison basis" / "Baseline and formula version validated by Finance", never a bare "Validated".
+  const e2 = bo.page.locator("[data-explanation='e2-benefit-realized']");
+  await e2.locator("button.explanation__toggle").click();
+  const pendingTable = e2.getByRole("region", { name: tr(lang, "explanations.benefitRealized.group.pending") });
+  await expect(pendingTable.locator("thead th").nth(2)).toHaveText(tr(lang, "explanations.benefitRealized.basis"));
+  const pendingRow = pendingTable.locator("tbody tr");
+  await expect(pendingRow).toHaveCount(1);
+  await expect(pendingRow.locator("td").nth(1)).toHaveText(
+    tr(lang, "explanations.benefitRealized.basisKind.validated"),
+  );
+  await expect(pendingTable.locator("[data-total='pending']")).toContainText("250,000.00");
+  await pendingTable.scrollIntoViewIfNeeded();
+  await shot(bo.page, lang, "p4ben-09b-explanation-pending-basis");
+  await e2.screenshot({ path: join(SHOTS, lang, "p4ben-09c-explanation-panel.png") });
+  await expectAccessible(bo.page, lang, "p4ben-09b-explanation-pending-basis");
   await go(bo.page, `/transformations/${tid}/benefits`);
   const realized = bo.page.locator("tr", { hasText: TITLE(lang) }).locator("[data-realized]");
   await expect(realized.locator("[data-part='validated'] [data-amount]")).toHaveAttribute("data-amount", "0.0000");

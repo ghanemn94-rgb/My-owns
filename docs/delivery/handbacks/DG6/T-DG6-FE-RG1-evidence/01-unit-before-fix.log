@@ -1,0 +1,67 @@
+
+ RUN  v3.2.7 /home/user/wt/dg6-fe-rg1/apps/web
+
+ ❯ |unit-web| src/components/explanation/explanation.test.tsx (20 tests | 2 failed) 4329ms
+   ✓ E1 weighted score panel (acceptance: plain-language explanation in en and ar) > complete (en): the formula in words, one row per criterion, the sum, version and period 198ms
+   ✓ E1 weighted score panel (acceptance: plain-language explanation in en and ar) > complete (ar): the formula in words, one row per criterion, the sum, version and period 32ms
+   ✓ E1 weighted score panel (acceptance: plain-language explanation in en and ar) > incomplete (en): names the missing criterion, no sum, never 0 or green 30ms
+   ✓ E1 weighted score panel (acceptance: plain-language explanation in en and ar) > incomplete (ar): names the missing criterion, no sum, never 0 or green 27ms
+   ✓ E1 weighted score panel (acceptance: plain-language explanation in en and ar) > unknown when the weight set is another version: the reason, no rows 16ms
+   ✓ E2 benefit realized value panel (acceptance: plain-language explanation in en and ar) > (en) the formula in words; validated, sustained and pending kept apart, each with its lines 38ms
+   ✓ E2 benefit realized value panel (acceptance: plain-language explanation in en and ar) > (ar) the formula in words; validated, sustained and pending kept apart, each with its lines 23ms
+   ✓ E2 benefit realized value panel (acceptance: plain-language explanation in en and ar) > (en) a group without lines is "no value yet", never 0; a line without an amount is Unknown 20ms
+   ✓ E2 benefit realized value panel (acceptance: plain-language explanation in en and ar) > (ar) a group without lines is "no value yet", never 0; a line without an amount is Unknown 19ms
+   × E2 benefit realized value panel (acceptance: plain-language explanation in en and ar) > (en) a pending line's comparison basis is named as such, never a bare "Validated" (F-DG6-900) 27ms
+     → expected 'Basis' to be 'Comparison basis' // Object.is equality
+   × E2 benefit realized value panel (acceptance: plain-language explanation in en and ar) > (ar) a pending line's comparison basis is named as such, never a bare "Validated" (F-DG6-900) 21ms
+     → expected 'الأساس' to be 'أساس المقارنة' // Object.is equality
+   ✓ E2 benefit realized value panel (acceptance: plain-language explanation in en and ar) > a non-financial benefit: the KPI-actual words and its value; Unknown when it is stale 22ms
+   ✓ E4 NPV, ROI and payback panel > (en) the three formulas in words, the per-period rows and the payback row 28ms
+   ✓ E4 NPV, ROI and payback panel > (ar) the three formulas in words, the per-period rows and the payback row 34ms
+   ✓ E4 NPV, ROI and payback panel > incomplete and revision-mismatch states: no rows, a reason, never 0 33ms
+   ✓ E4 NPV, ROI and payback panel > without a discount rate: no factor and no NPV, labelled, never 0 24ms
+   ✓ E5 health check score panel > (en) scored: the formula in words, counts, points, score, band, scheme version and date 20ms
+   ✓ E5 health check score panel > (ar) scored: the formula in words, counts, points, score, band, scheme version and date 19ms
+   ✓ E5 health check score panel > incomplete: no score and no band while a question is unanswered (never 0) 18ms
+   ✓ explanations catalogue > has the same keys in en and ar, Arabic text in Arabic, and the ADR-0061 §8 English words verbatim 6ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-web| src/components/explanation/explanation.test.tsx > E2 benefit realized value panel (acceptance: plain-language explanation in en and ar) > (en) a pending line's comparison basis is named as such, never a bare "Validated" (F-DG6-900)
+AssertionError: expected 'Basis' to be 'Comparison basis' // Object.is equality
+
+Expected: [32m"[7mComparison b[27masis"[39m
+Received: [31m"[7mB[27masis"[39m
+
+ ❯ src/components/explanation/explanation.test.tsx:324:26
+    322|       )!;
+    323|       const headers = [...pending.querySelectorAll("thead th")].map((t…
+    324|       expect(headers[2]).toBe(BASIS_WORDS[locale].column);
+       |                          ^
+    325|       const basisCells = [...pending.querySelectorAll("tbody tr")].map…
+    326|       expect(basisCells).toEqual([BASIS_WORDS[locale].validated, BASIS…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |unit-web| src/components/explanation/explanation.test.tsx > E2 benefit realized value panel (acceptance: plain-language explanation in en and ar) > (ar) a pending line's comparison basis is named as such, never a bare "Validated" (F-DG6-900)
+AssertionError: expected 'الأساس' to be 'أساس المقارنة' // Object.is equality
+
+Expected: [32m"أساس[7m المقارنة[27m"[39m
+Received: [31m"[7mال[27mأساس"[39m
+
+ ❯ src/components/explanation/explanation.test.tsx:324:26
+    322|       )!;
+    323|       const headers = [...pending.querySelectorAll("thead th")].map((t…
+    324|       expect(headers[2]).toBe(BASIS_WORDS[locale].column);
+       |                          ^
+    325|       const basisCells = [...pending.querySelectorAll("tbody tr")].map…
+    326|       expect(basisCells).toEqual([BASIS_WORDS[locale].validated, BASIS…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 18 passed (20)
+   Start at  13:53:22
+   Duration  6.42s (transform 295.69s, setup 154ms, collect 1.21s, tests 4.33s, environment 453ms, prepare 102ms)
+
