@@ -1,0 +1,23 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG6-740",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate c05864ba (source 2495e036), repair T-DG6-FE-Z16 (D-235, D-236). (1) My round-11 reproduction re-run on the real demo stack (e2e/support/with-demo-stack.sh, AUTH_MODE=dev, roaming.user.cm with a synthetic ADM_METHOD grant), chromium-en and chromium-ar, locale unset (run 40) and C.UTF-8 (run 41), 30/30 each. Step F is the round-11 sequence: another rule's draft is brought to the same row version, its token [restricted:<tagB>:1] is pasted into rule A's editor, and the author saves. The PATCH is refused 422 automation_rule.restricted_token_stale and A's row version and conditions are unchanged. Step F now asserts the opposite of what round 11 found. The form's one alert (role=alert, data-problem=automation_rule.restricted_token_stale, exactly one on the page) shows problems.automation_rule__restricted_token_stale: en 'A condition value is a restricted-record token that was not issued for this version as it now stands (...), so nothing was saved. The rule editor shows the version as it is stored now: ...', ar 'قيمة أحد الشروط رمز سجل مقيد ... لذلك لم يُحفظ أي شيء. يعرض محرر القواعد الإصدار بحالته المحفوظة الآن ...' (dir rtl). No [data-state=rule-changed-reapply] element appears, and the page text does not contain workflowsP5.rules.changedReapply. The form reloads A's own token. The next save sends only that token, returns 200 and clears the alert. New step F2 pastes a token in the retired pre-0127 form [restricted:<v>:1] and gets the same problem text, no 409 text, and nothing stored changes. Step E (a 409 after a concurrent save by the same author) still shows the bilingual 'This rule changed after you opened it ...' / 'تغيّرت هذه القاعدة بعد أن فتحتها ...' alert and NOT the stale-token text. Re-applying then saves 200 with the hidden literal kept. axe reports 0 serious/critical on E, F and F2. (2) Mutants, in a disposable clone: Z16R restores RulePage.tsx from 33db1a46 (pre-fix), and the candidate's rule-editor-tokens-z14.test.tsx fails 6 of 15 (the three Z16 cases in en and ar). Z16C routes a 409 to the stale-token alert and fails 2 (the 409 case in en and ar). The control run passes 15/15. (3) The new text is true wherever it can appear: restricted_token_stale is thrown only by resolveRestrictedTokens on PATCH .../versions/{n} (createRule passes stored=null and gets marker_unknown instead), and the only web caller of that PATCH is RulePage EditContent, which reloads the stored version before showing the text. A direct API client gets the API's English detail, which stays accurate (ADR-0051 amendment).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-12/40-e2e-demo-unset.log",
+        "docs/delivery/test-evidence/DG6/qa/round-12/41-e2e-demo-cutf8.log",
+        "docs/delivery/test-evidence/DG6/qa/round-12/shots/F-rule-editor-foreign-token-en.png",
+        "docs/delivery/test-evidence/DG6/qa/round-12/shots/F-rule-editor-foreign-token-ar.png",
+        "docs/delivery/test-evidence/DG6/qa/round-12/shots/F2-rule-editor-retired-token-ar.png",
+        "docs/delivery/test-evidence/DG6/qa/round-12/shots/E-rule-editor-409-reapply-en.png",
+        "docs/delivery/test-evidence/DG6/qa/round-12/22a-web-control-z14.log",
+        "docs/delivery/test-evidence/DG6/qa/round-12/23-mutant-Z16R-revert-rulepage.log",
+        "docs/delivery/test-evidence/DG6/qa/round-12/23b-mutant-Z16C-409-as-stale.log",
+        "docs/delivery/test-evidence/DG6/qa/tests/round-12/zz-qa-dg6r12-restricted-mywork-automation.spec.ts",
+        "docs/delivery/reviews/DG6/round-11/qa-verifier.findings.json"
+      ]
+    }
+  ]
+}
