@@ -1,0 +1,30 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG6-700",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Re-run on candidate c05864ba (source 2495e036; T-DG6-FE-Z16, D-235/D-236). I read the finding in full in findings.json and in my round-11 sidecar. (1) The round-11 reproduction on the production-initialized stack (apps/web/e2e/support/with-stack.sh), chromium-en and chromium-ar. My round-11 probe is kept and extended as probes/dom-r12-editor-tokens.spec.ts.txt, and its part C now asserts what the author is told. Run: 2 passed, rc 0 (probe-editor-tokens.log). A synthetic ADM_METHOD author, not admitted to S or H, publishes v1 [P, S, H] through the real dry run, submit, TO review and publish. In draft v2 the author removes S and saves three times (row version 4), then pastes the token shown for S on published v1. Result: PATCH If-Match 4 gives 422 automation_rule.restricted_token_stale, and v2 stays [P, H] at version 4. The form now shows one role=alert inside the form, with data-problem=automation_rule.restricted_token_stale and the catalogue text. EN: 'A condition value is a restricted-record token that was not issued for this version as it now stands (it comes from an earlier save, another version or another rule), so nothing was saved. The rule editor shows the version as it is stored now: re-apply your change using only the values shown for this version, and do not reuse a token copied from elsewhere.' AR: the same meaning ('… لذلك لم يُحفظ أي شيء. يعرض محرر القواعد الإصدار بحالته المحفوظة الآن …'). '[data-state=rule-changed-reapply]' is absent, and the text 'This rule changed after you opened it' / 'تغيّرت هذه القاعدة بعد أن فتحتها' appears nowhere on the page. The form reloads the stored version, so the pasted token is gone (C7). New cases, each 422 stale with the same alert and nothing stored: (D) a token copied from another rule's editor; (E) the retired pre-0127 form [restricted:<row version>:2]. (F) Doing what the text says, re-applying with this version's own values only, saves (200, v2 = [P, H, Q]) and clears the alert. Part B still shows the 409 'changed, re-apply' alert (hard assertion). Every sentence of the new text is true in this flow: nothing was saved, the editor shows the stored version, and the token came from another version, rule or earlier save. (2) Mutants. In the unit test, M1 (restore the 409/422 merge) and M2 (drop the stale-token FormAlert) each fail 6 of 15 tests (en and ar, three token paths), rc 1 (unit-z14-and-mutant.log). On the real UI, M1 was built into the SPA and my probe fails at C7 in en and ar ('the stale-token problem alert in the form', expected 1, received 0), rc 1 (probe-editor-mutant-m1.log). The clone and its dist were restored afterwards (empty git diff; the original dist moved back). Unmodified, the unit test passes 15/15 on Node 24.21.0 and on Node 22.22.0 (node22.log). Screenshots in en and ar: screens/{en,ar}/dom-r12-C4-after-save.png, dom-r12-C7-paste-again-after-save.png, dom-r12-D1-other-rule-token-after-save.png, dom-r12-E1-retired-form-after-save.png, dom-r12-F1-reapply-with-own-values.png and dom-r12-B1-after-409.png. Residual, not a defect: the API's English detail keeps 'reload the version and re-apply your change', which stays accurate for a direct API client. ADR-0051 part B records that difference. The stale refusal is thrown only on the version PATCH, and the editor is its only web caller, so the web text ('The rule editor shows …') is shown only where it is true. The Arabic is provisional (ADR-0051).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-12/probe-editor-tokens.log",
+        "docs/delivery/test-evidence/DG6/domain/round-12/probes/dom-r12-editor-tokens.spec.ts.txt",
+        "docs/delivery/test-evidence/DG6/domain/round-12/probe-editor-mutant-m1.log",
+        "docs/delivery/test-evidence/DG6/domain/round-12/unit-z14-and-mutant.log",
+        "docs/delivery/test-evidence/DG6/domain/round-12/node22.log",
+        "docs/delivery/test-evidence/DG6/domain/round-12/screens/en/dom-r12-C4-after-save.png",
+        "docs/delivery/test-evidence/DG6/domain/round-12/screens/ar/dom-r12-C4-after-save.png",
+        "docs/delivery/test-evidence/DG6/domain/round-12/screens/en/dom-r12-C7-paste-again-after-save.png",
+        "docs/delivery/test-evidence/DG6/domain/round-12/screens/ar/dom-r12-C7-paste-again-after-save.png",
+        "docs/delivery/test-evidence/DG6/domain/round-12/screens/en/dom-r12-D1-other-rule-token-after-save.png",
+        "docs/delivery/test-evidence/DG6/domain/round-12/screens/ar/dom-r12-D1-other-rule-token-after-save.png",
+        "docs/delivery/test-evidence/DG6/domain/round-12/screens/en/dom-r12-E1-retired-form-after-save.png",
+        "docs/delivery/test-evidence/DG6/domain/round-12/screens/ar/dom-r12-E1-retired-form-after-save.png",
+        "docs/delivery/test-evidence/DG6/domain/round-12/screens/en/dom-r12-F1-reapply-with-own-values.png",
+        "docs/delivery/test-evidence/DG6/domain/round-12/screens/ar/dom-r12-F1-reapply-with-own-values.png",
+        "docs/delivery/test-evidence/DG6/domain/round-12/screens/en/dom-r12-B1-after-409.png",
+        "docs/delivery/test-evidence/DG6/domain/round-12/screens/ar/dom-r12-B1-after-409.png",
+        "apps/web/src/pages/automation/RulePage.tsx"
+      ]
+    }
+  ]
+}

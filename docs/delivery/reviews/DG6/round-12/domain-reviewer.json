@@ -1,0 +1,328 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG6",
+  "round": 12,
+  "candidate_id": "sha256:c05864ba65f6319c0e9501cd80216a8d3f775eb07c7853744ecb8c1314f5023c",
+  "source_commit": "2495e036c4d933788044756ab3c41415e3873cf3",
+  "reviewer_role": "domain-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG6-T-DG6-REV-DOM-R12-domain-reviewer-20261110T031314Z-3c5aa74e",
+    "session_id": "3c5aa74e-8138-47bb-b27f-dd70c66b9691"
+  },
+  "implementation_author": [
+    "backend-workflow-engineer",
+    "frontend-ux-engineer",
+    "kpi-benefits-engineer",
+    "devops-engineer",
+    "solution-architect",
+    "qa-verifier"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I (domain-reviewer, session 3c5aa74e) authored no implementation in the DG6 scope, including the FE-Z16 repair. My only writes are this record, its verifications sidecar, and evidence under docs/delivery/test-evidence/DG6/domain/round-12/. Every probe, mutant and test run happened in a disposable clone ($TMPDIR/rv12), which I deleted afterwards. The runner removes the rest of my private $TMPDIR at the end of the run: the auto-mode classifier refused my sweep of the integration suites' leftover temp directories there. I formed this verdict without reading any other reviewer's round-12 record. Note: the assignment's record-format section says 'round: 7'. This is round 12 (the assignment's own title, path and task id), so I record 12, as in rounds 9 to 11."
+  },
+  "assignment": "docs/delivery/assignments/DG6/round-12/domain-reviewer.md",
+  "requirements_checked": [
+    "REQ-DLV-038",
+    "REQ-S01-005",
+    "REQ-S02-006",
+    "REQ-S10-002",
+    "REQ-S10-004",
+    "REQ-S12-019",
+    "REQ-S12-023",
+    "REQ-S12-024",
+    "REQ-S13-011",
+    "REQ-S13-013",
+    "REQ-S15-001",
+    "REQ-S15-003",
+    "REQ-S15-007",
+    "REQ-S15-009",
+    "REQ-S15-010",
+    "REQ-S15-011",
+    "REQ-S15-012",
+    "REQ-S15-013",
+    "REQ-S15-014",
+    "REQ-S16-006",
+    "REQ-S16-007",
+    "REQ-S16-022",
+    "REQ-S16-023",
+    "REQ-S16-026",
+    "REQ-S16-027",
+    "REQ-S16-029",
+    "REQ-S16-030",
+    "REQ-S16-032",
+    "REQ-S17-001",
+    "REQ-S17-002",
+    "REQ-S17-003",
+    "REQ-S17-005",
+    "REQ-S17-006",
+    "REQ-S17-007",
+    "REQ-S17-008",
+    "REQ-S17-009",
+    "REQ-S17-010",
+    "REQ-S17-011",
+    "REQ-S20-001",
+    "REQ-S20-012",
+    "REQ-S20-013",
+    "REQ-S20-014",
+    "REQ-S20-017",
+    "REQ-S20-020",
+    "REQ-S20-021",
+    "REQ-S20-022",
+    "REQ-S20-029",
+    "REQ-S20-030"
+  ],
+  "checks_run": [
+    {
+      "id": "DOM-R12-00-candidate",
+      "procedure": "Verify the frozen candidate in the repository and in a complete disposable clone at the source commit.",
+      "command": "git rev-parse HEAD; node tools/gates/candidate.mjs --stage DG6; git diff --name-only 2495e036 HEAD; git clone --shared --no-checkout /home/user/My-owns $TMPDIR/rv12 && git checkout 2495e036c4d933788044756ab3c41415e3873cf3; git rev-parse --is-shallow-repository; node tools/gates/candidate.mjs --stage DG6; git diff --stat 4288d7c0b 2495e036 -- . ':!docs/delivery'",
+      "environment": "Repository at HEAD 895b1e43b (the round-12 freeze commit); clone $TMPDIR/rv12 at 2495e036 (not shallow, full checkout); Node 24.21.0",
+      "expected": "candidate_id sha256:c05864ba…023c over 2769 files in both trees; the freeze commit adds only assignments, the manifest and stages.json",
+      "actual": "Both trees give sha256:c05864ba65f6319c0e9501cd80216a8d3f775eb07c7853744ecb8c1314f5023c over 2769 files, rc 0. HEAD is the freeze commit 895b1e43b, a child of the source commit 2495e036. Its diff is only the three round-12 assignments, the candidate manifest and stages.json, all excluded from the candidate, so the frozen candidate is the one assigned. The clone is not shallow. The product tree of 2495e036 equals 4288d7c0b's (empty diff outside docs/delivery), so V15 applies. To save disk (5.5 GB free, shared with two other reviewers), I deleted docs/delivery/{runs,test-evidence} in the clone only, after a grep showed that no test reads them except in comments. handbacks/ was kept, because the DLV-038 unit test reads it. node_modules: the repository's read-only root node_modules is symlinked into the clone, and the per-package node_modules (relative symlinks only) are copied with cp -P, so @mth/* resolve to the clone's own packages.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-12/candidate.log"
+      ]
+    },
+    {
+      "id": "DOM-R12-01-validators",
+      "procedure": "Run the historical gate validators for DG5 to DG1 and the DG6 register validator.",
+      "command": "for s in DG5 DG4 DG3 DG2 DG1; do node tools/gates/validate.mjs --historical --stage $s; done; node tools/gates/validate.mjs --register DG6 (each rc via PIPESTATUS)",
+      "environment": "Repository working tree at HEAD 895b1e43b; Node 24.21.0",
+      "expected": "PASS, rc 0 for each",
+      "actual": "PASS gate DG5, DG4, DG3, DG2 and DG1 (historical), and PASS register rules at DG6. All rc 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-12/validators.log"
+      ]
+    },
+    {
+      "id": "DOM-R12-02-build",
+      "procedure": "Build every package, typecheck the web and build the SPA in the clone.",
+      "command": "for p in packages/design-tokens packages/shared packages/config packages/reporting packages/db apps/api apps/worker; do (cd $p && pnpm run build); done; cd apps/web && npx tsc -p tsconfig.json --noEmit && npx vite build --configLoader runner",
+      "environment": "$TMPDIR/rv12 at 2495e036; Node 24.21.0; pnpm 10.33.0",
+      "expected": "rc 0 for every step",
+      "actual": "All nine steps rc 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-12/build.log"
+      ]
+    },
+    {
+      "id": "DOM-R12-03-F-DG6-700-real-ui",
+      "procedure": "Re-run the round-11 F-DG6-700 reproduction through the real rule editor in EN and AR on the production-initialized stack. Part C now asserts the message; new parts D (a token from another rule), E (the retired pre-0127 form) and F (a re-apply with this version's own values).",
+      "command": "E2E_PG_PORT=32400 E2E_API_PORT=32401 MTH_PORT_POOL=32402-32409 E2E_SCREENSHOT_DIR=…/round-12/screens apps/web/e2e/support/with-stack.sh npx playwright test --config playwright.config.ts e2e/zz-domain/dom-r12-editor-tokens.spec.ts --workers=1 (probe copied from probes/dom-r12-editor-tokens.spec.ts.txt into the clone only)",
+      "environment": "$TMPDIR/rv12, built SPA and API, production-initialized seed (dev sign-in, no worker); Chromium from /opt/pw-browsers; chromium-en and chromium-ar; Asia/Riyadh; synthetic data",
+      "expected": "A 422 restricted_token_stale stores nothing and shows the problem's own true en/ar text in one form alert, never 'This rule changed after you opened it'; a 409 still shows the 'changed, re-apply' alert",
+      "actual": "2 passed (en and ar), 2.2 min, rc 0. A (F-DG6-580 re-run) and B (409 gives the bilingual 'changed, re-apply' alert) pass. C, D and E all give 422 automation_rule.restricted_token_stale, and v2 stays [P, H] at row version 4. Exactly one alert appears in the form, with data-problem=automation_rule.restricted_token_stale and the catalogue text ('… so nothing was saved. The rule editor shows the version as it is stored now: re-apply your change using only the values shown for this version …' / '… لذلك لم يُحفظ أي شيء …'). No rule-changed-reapply element is shown, and the 'changed' text appears nowhere on the page. The pasted token is removed by the reload. F: re-applying with plain values saves (200, [P, H, Q]), and the alert clears. The screenshots show the red error alert in LTR and RTL. The 422 lines in the log are the by-design refusals. F-DG6-700 is CLOSED_VERIFIED (see the verifications sidecar).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-12/probe-editor-tokens.log",
+        "docs/delivery/test-evidence/DG6/domain/round-12/probes/dom-r12-editor-tokens.spec.ts.txt",
+        "docs/delivery/test-evidence/DG6/domain/round-12/screens/en/dom-r12-C4-after-save.png",
+        "docs/delivery/test-evidence/DG6/domain/round-12/screens/ar/dom-r12-C4-after-save.png",
+        "docs/delivery/test-evidence/DG6/domain/round-12/screens/en/dom-r12-D1-other-rule-token-after-save.png",
+        "docs/delivery/test-evidence/DG6/domain/round-12/screens/ar/dom-r12-D1-other-rule-token-after-save.png",
+        "docs/delivery/test-evidence/DG6/domain/round-12/screens/en/dom-r12-E1-retired-form-after-save.png",
+        "docs/delivery/test-evidence/DG6/domain/round-12/screens/ar/dom-r12-E1-retired-form-after-save.png",
+        "docs/delivery/test-evidence/DG6/domain/round-12/screens/en/dom-r12-F1-reapply-with-own-values.png",
+        "docs/delivery/test-evidence/DG6/domain/round-12/screens/ar/dom-r12-F1-reapply-with-own-values.png",
+        "docs/delivery/test-evidence/DG6/domain/round-12/screens/en/dom-r12-B1-after-409.png",
+        "docs/delivery/test-evidence/DG6/domain/round-12/screens/ar/dom-r12-B1-after-409.png"
+      ]
+    },
+    {
+      "id": "DOM-R12-04-mutants",
+      "procedure": "Revert the FE-Z16 fix and show that the unit test and my real-UI probe catch it.",
+      "command": "M1: perl restores isChangedSinceRead = 409 OR 422 stale, and makes isStaleToken always false. M2: perl deletes <FormAlert error={staleToken} namespaces={FED_NS} />. Each runs vitest --project unit-web rule-editor-tokens-z14.test.tsx, then cp restores RulePage.tsx. M1 real UI: mv dist dist.orig; vite build with M1; with-stack.sh (ports 32410-32419) runs my probe; then the dist is restored and git diff --stat -- apps packages is checked",
+      "environment": "$TMPDIR/rv12 (disposable); Node 24.21.0; jsdom; Chromium",
+      "expected": "Unmodified: 15/15. Each mutant makes the Z16 tests fail, and M1 makes the real-UI probe fail.",
+      "actual": "Unmodified: 15/15, rc 0. M1: 6 failed and 9 passed (the en and ar cases for a token from another version, another rule and the retired form), rc 1. M2: the same 6 fail, rc 1. M1 on the real UI: the mutant vite build exits rc 0; then my probe fails in en and ar at C7 ('the stale-token problem alert in the form': expected 1, received 0), rc 1. These non-zero exits are the mutants being caught, by design. Afterwards RulePage.tsx is byte-identical to the original (cmp), git diff --stat -- apps packages is empty, and the original dist is moved back. A first attempt at the mutant log printed a git diff --stat that listed the docs/delivery directories I had deleted in the clone, which made the log too large. I re-ran the unit mutants with the diff limited to apps/packages, and the cited log is that clean re-run (same results).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-12/unit-z14-and-mutant.log",
+        "docs/delivery/test-evidence/DG6/domain/round-12/probe-editor-mutant-m1.log"
+      ]
+    },
+    {
+      "id": "DOM-R12-05-node22",
+      "procedure": "Run the FE-Z16 unit test and the API restricted-token integration suites on Node 22.",
+      "command": "PATH=/opt/node22/bin:$PATH npx vitest run --configLoader runner --project unit-web apps/web/src/pages/automation/rule-editor-tokens-z14.test.tsx; QA_PG_PORT=32440 MTH_PORT_POOL=32441-32449 tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration access/automation-restricted-tokens-z15 z14 z13",
+      "environment": "$TMPDIR/rv12; /opt/node22/bin is Node v22.22.0 (the assignment says 22.22.2); PostgreSQL 16 disposable cluster",
+      "expected": "All pass, rc 0",
+      "actual": "Unit: 15/15, rc 0. Integration: 3 files, 23/23, rc 0. Node 22 is present, but as 22.22.0, not 22.22.2. The release line is the same; I report the exact version.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-12/node22.log"
+      ]
+    },
+    {
+      "id": "DOM-R12-06-unit",
+      "procedure": "Run the unit test files named in the DG6 register evidence (web and node), plus the FE-Z16 test.",
+      "command": "npx vitest run --configLoader runner --project unit-web --maxWorkers=2 <18 web files>; npx vitest run --configLoader runner --project unit-node --maxWorkers=2 <18 node files> apps/api/src/modules/notifications",
+      "environment": "$TMPDIR/rv12; Node 24.21.0; jsdom",
+      "expected": "All pass",
+      "actual": "unit-web: 18 files, 252/252, rc 0. unit-node: 18 files, 268/268, rc 0, including tests/qa/unit/dlv038-s20-029-load-report.test.ts (the handbacks directory was kept this time). The log header reads '17 + files' because wc -l counted the newlines of an 18-line list with no trailing newline; vitest reports 18 files. The extra notifications path matched no additional unit file.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-12/unit.log"
+      ]
+    },
+    {
+      "id": "DOM-R12-07-integration-register-dg6",
+      "procedure": "Run every integration test file named in the evidence of the 48 DG6 register rows.",
+      "command": "MTH_SECRET_QA_A17_WEBHOOK_SIGNING_SECRET=qa-a17-synthetic-signing-secret-0001 QA_PG_PORT=32420 MTH_PORT_POOL=32421-32429 tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration --maxWorkers=2 $(97 files, listed in int-register-dg6.files.txt)",
+      "environment": "$TMPDIR/rv12; PostgreSQL 16 disposable; Node 24.21.0; test adapters only (no real IdP, mail, messaging or AI provider); three reviews running at the same time (load average about 18 on 4 vCPU)",
+      "expected": "All pass",
+      "actual": "97/97 files: 1225 passed and 1 todo (1226), rc 0, 2370 s, in one pass with no retry. The todo is the pre-existing it.todo 'PENDING T-DG6-BE-B …' in audit/audit-events.test.ts, shown as '1 skipped' in that file's line, as in round 11 and in the orchestrator's V15. Every 'error' line in the log is a passing test title, a sweep summary ('allowed errors') or the response-validation count.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-12/int-register-dg6.log",
+        "docs/delivery/test-evidence/DG6/domain/round-12/int-register-dg6.files.txt"
+      ]
+    },
+    {
+      "id": "DOM-R12-08-e2e-domain-batch-1",
+      "procedure": "Real-UI e2e in EN and AR: A12 scope isolation, A17 failing connector and imports, A21 assistant off and degradation, A20 term scan, layout and brand, UX.",
+      "command": "MTH_PORT_POOL=32432-32439 MTH_SECRET_QA_A17_WEBHOOK_SIGNING_SECRET=qa-a17-synthetic-signing-secret-0001 E2E_PG_PORT=32430 E2E_API_PORT=32431 E2E_SCREENSHOT_DIR=$TMPDIR/shots1 apps/web/e2e/support/with-stack.sh npx playwright test --config playwright.config.ts e2e/a12-p6-scope-isolation e2e/a17-failing-connector-exception e2e/a17-import-and-integration e2e/a21-no-ai-operation e2e/a21-p6-degradation e2e/a20-s15-014-term-scan e2e/a20-p6-layout-brand e2e/a20-p6-ux --workers=1",
+      "environment": "$TMPDIR/rv12, built; with-stack.sh (no worker); Chromium; chromium-en and chromium-ar",
+      "expected": "All pass; Stale shown with the last value and its date, never zero or green",
+      "actual": "176 passed (24.0 min), 0 failed, 0 skipped, 0 flaky, rc 0, on the first run with no timeout. a17-exception-data-owner.png (AR, which I inspected) shows one open exception, connector.source_unavailable, raised once. Its linked KPI shows Stale (قديم) with last known value 250.75, dated 2026/01/31: never zero, never green. The other shots show a connector with Unknown counts and a staged CSV import validated before commit.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-12/e2e-domain-1.log",
+        "docs/delivery/test-evidence/DG6/domain/round-12/e2e-shots/en/a17-exception-data-owner.png",
+        "docs/delivery/test-evidence/DG6/domain/round-12/e2e-shots/ar/a17-exception-data-owner.png",
+        "docs/delivery/test-evidence/DG6/domain/round-12/e2e-shots/en/a17-connector-stopped.png",
+        "docs/delivery/test-evidence/DG6/domain/round-12/e2e-shots/ar/a17-connector-stopped.png",
+        "docs/delivery/test-evidence/DG6/domain/round-12/e2e-shots/en/a17-csv-staged.png",
+        "docs/delivery/test-evidence/DG6/domain/round-12/e2e-shots/ar/a17-csv-staged.png"
+      ]
+    },
+    {
+      "id": "DOM-R12-09-e2e-domain-batch-2",
+      "procedure": "Real-UI e2e in EN and AR: A22 operability, A13 automation recovery and connector run-once, A20 axe and bilingual shell, A15 reporting, A14 compare/reapply.",
+      "command": "MTH_PORT_POOL=32432-32439 MTH_SECRET_QA_A17_WEBHOOK_SIGNING_SECRET=qa-a17-synthetic-signing-secret-0001 E2E_PG_PORT=32430 E2E_API_PORT=32431 E2E_SCREENSHOT_DIR=$TMPDIR/shots2 apps/web/e2e/support/with-stack.sh npx playwright test --config playwright.config.ts e2e/a22-p6-operability e2e/a13-automation-recovery e2e/a13-connector-run-once e2e/a20-p6-axe e2e/a20-bilingual-shell e2e/a15-reporting e2e/a14-compare-reapply --workers=1",
+      "environment": "As DOM-R12-08",
+      "expected": "All pass; skips only the disclosed axe NOT SCANNED routes",
+      "actual": "90 passed and 18 skipped, 0 failed, 0 flaky, rc 0 (13.1 min). The 18 skips are the a20-p6-axe 'NOT SCANNED' detail screens, the same 9 routes in each language as in round 11: sensitive grant, deep-link landing, operational exception, webhook, outbound write, import, approval, benefit and walkthrough. The REQ-S15-012 note discloses them (QA-D §4), and other specs scan some of them (A17 imports, A12 deep link). Accepted as disclosed. The operations screen shows a stale heartbeat as Stale / قديم. A13 retries a failed execution from the screen without duplicating its actions.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-12/e2e-domain-2.log",
+        "docs/delivery/test-evidence/DG6/domain/round-12/e2e-shots/en/a22-p6-operations-stale.png",
+        "docs/delivery/test-evidence/DG6/domain/round-12/e2e-shots/ar/a22-p6-operations-stale.png",
+        "docs/delivery/test-evidence/DG6/domain/round-12/e2e-shots/en/a14-reapplied.png",
+        "docs/delivery/test-evidence/DG6/domain/round-12/e2e-shots/ar/a14-reapplied.png",
+        "docs/delivery/test-evidence/DG6/domain/round-12/e2e-shots/en/a13-connector-run-once.png",
+        "docs/delivery/test-evidence/DG6/domain/round-12/e2e-shots/ar/a13-connector-run-once.png"
+      ]
+    },
+    {
+      "id": "DOM-R12-10-e2e-demo-and-web-p6",
+      "procedure": "Demo-initialized stack: the A02 walkthroughs with the roaming.user.* role users and A21 with no AI. Production stack: the web P6 specs (360 px flows, draft recovery, compare/reapply, the 1,000-row register, integrations and imports, admin screens, 1440 layout).",
+      "command": "E2E_PG_PORT=32430 E2E_API_PORT=32431 MTH_PORT_POOL=32432-32439 e2e/support/with-demo-stack.sh npx playwright test --config playwright.config.ts e2e/a02-guided-walkthrough e2e/a02-demo-users-walkthrough e2e/a21-no-ai-operation --workers=1; apps/web/e2e/support/with-stack.sh npx playwright test --config playwright.config.ts apps/web/e2e/p6-flows-360 p6-draft-recovery p6-compare-reapply p6-register-1000 p6-integrations-imports p6-admin-screens p6-layout-1440 --workers=1",
+      "environment": "$TMPDIR/rv12; demo stack AUTH_MODE=dev with the roaming.user.* sign-in (D-165); production-initialized stack; Chromium; en and ar",
+      "expected": "All pass",
+      "actual": "Demo: 6 passed (2.9 min), rc 0. Web P6: 58 passed (7.8 min), 0 failed, skipped or flaky, rc 0. The AR 360 px approval decision (which I inspected) is RTL with no horizontal overflow. It says the decision is an in-product business decision recorded in the user's name, that the software never decides, and that the data is synthetic ('approves nothing real'). Also shown in en and ar: the draft restored after a reload, the filtered 1,000-row register, the deep link refused without naming the record, and the stopped connector's actionable error with the form and import fallbacks.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-12/e2e-demo.log",
+        "docs/delivery/test-evidence/DG6/domain/round-12/e2e-web-p6.log",
+        "docs/delivery/test-evidence/DG6/domain/round-12/e2e-shots/en/p6-360-approval-decision.png",
+        "docs/delivery/test-evidence/DG6/domain/round-12/e2e-shots/ar/p6-360-approval-decision.png",
+        "docs/delivery/test-evidence/DG6/domain/round-12/e2e-shots/en/p6-1440-home.png",
+        "docs/delivery/test-evidence/DG6/domain/round-12/e2e-shots/ar/p6-1440-home.png",
+        "docs/delivery/test-evidence/DG6/domain/round-12/e2e-shots/en/p6-deep-link-forbidden.png",
+        "docs/delivery/test-evidence/DG6/domain/round-12/e2e-shots/ar/p6-deep-link-forbidden.png",
+        "docs/delivery/test-evidence/DG6/domain/round-12/e2e-shots/en/fec-connector-actionable-error.png",
+        "docs/delivery/test-evidence/DG6/domain/round-12/e2e-shots/ar/fec-connector-actionable-error.png",
+        "docs/delivery/test-evidence/DG6/domain/round-12/e2e-shots/en/p6-draft-restored.png",
+        "docs/delivery/test-evidence/DG6/domain/round-12/e2e-shots/ar/p6-draft-restored.png",
+        "docs/delivery/test-evidence/DG6/domain/round-12/e2e-shots/en/p6-register-1000-filtered.png",
+        "docs/delivery/test-evidence/DG6/domain/round-12/e2e-shots/ar/p6-register-1000-filtered.png"
+      ]
+    },
+    {
+      "id": "DOM-R12-11-register-outputs-load",
+      "procedure": "Check the 48 DG6 register rows (status, evidence existence, deferrals), the load and export notes, and the orchestrator's V15 summary.",
+      "command": "python3 (csv parse + os.path.exists) on docs/delivery/requirements.csv; cat docs/delivery/test-evidence/DG6/orchestrator-final-4288d7c/{README.md,summary.txt}",
+      "environment": "Repository at HEAD",
+      "expected": "48 rows IMPLEMENTED with existing evidence; deferred re-runs re-run by me; load targets labelled provisional",
+      "actual": "48 rows, all IMPLEMENTED, 1109 evidence paths, 0 missing. requirements.csv is unchanged since round 11. 13 rows defer to the freeze verification or binding re-run (DLV-038, S10-002, S12-019, S15-007, S15-011, S15-014, S17-001, S17-007, S20-001, S20-012, S20-013, S20-017, S20-022). I re-ran what they defer (DOM-R12-06 to 10), and all pass. V15 on 4288d7c (the same product tree): 15/15 steps rc 0. The README discloses that a container restart interrupted e2e-cutf8, which was then re-run in full; I accept that. REQ-S20-029: labelled 'Provisional engineering targets, not verified Mobily capacity requirements', measured on one sandbox host. LOAD-T20's dataset gap (D-199 item 2) is disclosed, and I accept it as documented. REQ-S20-030: the slow simultaneous starts on the loaded host and DO-H's idle-host re-measurement (D-202) are disclosed; asynchronous jobs, progress to 100% and requester-only download are shown. Accepted, as in round 11. REQ-S12-019's residual (the freshness scan reads only the newest period) is disclosed and bounded, and the Stale display itself is correct (DOM-R12-08). Environmental residuals, recorded as PASS on the offline/config surface: the live registry (D-057), live CI (D-058), Keycloak and a real IdP (D-049), and external systems reached only through test adapters.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-12/register-outputs.log"
+      ]
+    },
+    {
+      "id": "DOM-R12-12-decisions-and-diff",
+      "procedure": "Review the whole diff since round 11 (33db1a46..2495e036). Judge D-194 to D-196, D-199 (2), D-202, D-203 to D-205, D-226 to D-236, D-229 and D-228 (4), and look for a misleading screen or a lost or misplaced literal.",
+      "command": "git diff 33db1a46ca498d917d9e33793e9771533269c446..2495e036c4d933788044756ab3c41415e3873cf3 (product and docs/delivery); git grep restrictedTokenStale( and fedPaths.version( at 2495e036; read RulePage.tsx EditContent, FormAlert (p4ui.tsx), problems.json en/ar, ADR-0051 part B, the FE-Z16 handback, D-235/D-236, findings.json",
+      "environment": "Source at 2495e036 and the runs above",
+      "expected": "The diff is limited to FE-Z16; nothing new mis-states state or leaks a literal; the decisions remain acceptable",
+      "actual": "The product diff is 5 files: RulePage.tsx, problems.json en/ar (one key), the z14 unit test, and ADR-0051 part B. There is no API, schema, migration or contract change. The docs/delivery diff is round-11 records, the FE-Z16 handback, assignment and evidence, V15, decisions, findings and stages. The stale refusal is thrown only in resolveRestrictedTokens on the version PATCH (versions.ts:510 and its retired-form branch), and RulePage EditContent is the only web caller. So the web text 'The rule editor shows the version as it is stored now' appears only where it is true. FormAlert shows the catalogue text, not the API detail. The page-level runner alert is cleared, so there is one alert (S-7), and it clears on the next submit. The Arabic is labelled provisional in ADR-0051, as for the other automation_rule restricted-token texts. No literal can be lost or misplaced: the refusal stores nothing (the probe compares the stored conditions before and after), and the reload never re-sends the pasted token. D-229 (connector configuration names stay cannot-name) and D-228 (4) (cross-organization ids out of scope): accepted, unchanged since round 10. No served column, response, notification channel or write path changed in this diff, and A12 isolation passes in en and ar (DOM-R12-07/08). D-194 to D-196, D-199 (2), D-202 and D-203: accepted, untouched. D-204: a late event is evaluated against the rule version in force and enabled at its occurrence. That keeps automation explainable and traceable to the configuration a person approved, and it meets REQ-S12-019 and REQ-S20-013 (the A13 suites are green). D-205: a rule disabled now stops its pending events. The residual commit-order race documented in ADR-0043 can only run an action of a rule a person had enabled, never a business approval (REQ-S12-026 refuses human-only actions), so it is acceptable as documented. D-235/D-236: repairing rather than accepting an untrue text was right, and the repair is verified (F-DG6-700 CLOSED_VERIFIED). No new finding.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-12/diff-since-r11.log",
+        "apps/web/src/pages/automation/RulePage.tsx",
+        "apps/api/src/modules/automation/versions.ts",
+        "docs/architecture/adr/ADR-0051-p6-authorization-boundary-read-scope-sensitive-records-deep-links.md"
+      ]
+    },
+    {
+      "id": "DOM-R12-13-source-fidelity-and-honesty",
+      "procedure": "Source fidelity and honesty on the P6 screens exercised in this round: playbook operating logic (B-blocks), master-prompt truthfulness clauses (M0080 'external change not confirmed'), provisional brand and wordmark, and the separation of business approvals from engineering gates.",
+      "command": "Visual inspection of the EN and AR screenshots cited in DOM-R12-03, 08, 09 and 10; the e2e suites a21-no-ai-operation, a21-p6-degradation, a20-p6-layout-brand and a17-* in DOM-R12-08",
+      "environment": "Production and demo stacks as above",
+      "expected": "No official PMI or Mobily claim; #0078FF and the wordmark shown as provisional; human decisions never automated; forecast never shown as validated; Unknown/Stale never zero or green",
+      "actual": "The header wordmark carries the 'Provisional' / 'مؤقت' chip in every screenshot. The rule editor lists the human decisions that cannot be automated (gate approval, business approval, investment, Finance attestation, executive ask, methodology migration), in line with the playbook's governance model, where gates are explicit approvals by people (B-blocks on the G1–G6 gates and T11). The approval dialog says the software never decides. The assistant is off by default, and the core flows and the report run without it (A21). A connector failure shows Stale with the last value and its date, never zero or green (REQ-S12-019). Nothing claims PMI certification or official Mobily branding. Demo data is labelled synthetic. Product gate G6 is not DG7. I granted no business, Finance or IT approval.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-12/screens/en/dom-r12-B1-after-409.png",
+        "docs/delivery/test-evidence/DG6/domain/round-12/e2e-shots/ar/p6-360-approval-decision.png",
+        "docs/delivery/test-evidence/DG6/domain/round-12/e2e-shots/ar/a17-exception-data-owner.png",
+        "docs/delivery/test-evidence/DG6/domain/round-12/e2e-domain-1.log"
+      ]
+    }
+  ],
+  "findings": [],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/reviews/DG6/round-12/domain-reviewer.verifications.json",
+    "docs/delivery/test-evidence/DG6/domain/round-12/candidate.log",
+    "docs/delivery/test-evidence/DG6/domain/round-12/validators.log",
+    "docs/delivery/test-evidence/DG6/domain/round-12/build.log",
+    "docs/delivery/test-evidence/DG6/domain/round-12/probe-editor-tokens.log",
+    "docs/delivery/test-evidence/DG6/domain/round-12/probes/dom-r12-editor-tokens.spec.ts.txt",
+    "docs/delivery/test-evidence/DG6/domain/round-12/probe-editor-mutant-m1.log",
+    "docs/delivery/test-evidence/DG6/domain/round-12/unit-z14-and-mutant.log",
+    "docs/delivery/test-evidence/DG6/domain/round-12/node22.log",
+    "docs/delivery/test-evidence/DG6/domain/round-12/unit.log",
+    "docs/delivery/test-evidence/DG6/domain/round-12/int-register-dg6.log",
+    "docs/delivery/test-evidence/DG6/domain/round-12/int-register-dg6.files.txt",
+    "docs/delivery/test-evidence/DG6/domain/round-12/e2e-domain-1.log",
+    "docs/delivery/test-evidence/DG6/domain/round-12/e2e-domain-2.log",
+    "docs/delivery/test-evidence/DG6/domain/round-12/e2e-demo.log",
+    "docs/delivery/test-evidence/DG6/domain/round-12/e2e-web-p6.log",
+    "docs/delivery/test-evidence/DG6/domain/round-12/register-outputs.log",
+    "docs/delivery/test-evidence/DG6/domain/round-12/diff-since-r11.log"
+  ],
+  "reviewed_at": "2026-11-10T04:33:00Z",
+  "summary": "PASS. F-DG6-700 is CLOSED_VERIFIED. On a 422 restricted_token_stale (a token from another version, another rule, or the retired form), the real rule editor now shows the problem's own true text in en and ar, never 'This rule changed after you opened it'. Nothing is stored, the form reloads, and a re-apply with this version's own values saves. A 409 keeps the 'changed, re-apply' alert. Two revert mutants are caught by the unit test, and M1 is also caught by my real-UI probe. Everything else passes: 97 register integration files (1225 tests + 1 pre-existing todo), unit 18 + 18 files, domain e2e 176 + 90 (18 disclosed axe skips), demo 6, web P6 58, Node 22 (22.22.0), the build and the validators. No new findings. Product gate G6 is not DG7; I granted no business, Finance or IT approval."
+}
