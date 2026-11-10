@@ -1,0 +1,22 @@
+# 22a-unit-node24-architecture-rerun  started 2026-11-10T04:01:17Z  cwd=/var/tmp/mth-run.RtlPw1/claude-0/r/w1  node=v24.21.0  LANG=<unset> LC_ALL=<unset>  load=19.80 20.30 19.06  commit=2495e036c4d933788044756ab3c41415e3873cf3
+$ npx vitest run --configLoader runner --project unit-node apps/api/src/architecture.test.ts
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.RtlPw1/claude-0/r/w1
+
+ ✓ |unit-node| apps/api/src/architecture.test.ts (141 tests) 42490ms
+   ✓ API module boundaries (ADR-0002) > every import respects dependsOn, public surfaces and allowed packages  25126ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > rule 4 reports exactly the diagnostics of a full ts.transpileModule, for every extension (F-DG5-102/145)  1626ms
+   ✓ package dependency direction (ADR-0002 rule 5) > packages/db imports only @mth/config and @mth/shared  1191ms
+   ✓ package dependency direction (ADR-0002 rule 5) > packages/shared imports no workspace package  2814ms
+   ✓ package dependency direction (ADR-0002 rule 5) > apps/web never imports @mth/db or @mth/config (browser bundle, no secrets)  9775ms
+   ✓ package dependency direction (ADR-0002 rule 5) > apps/worker imports no API code  761ms
+
+ Test Files  1 passed (1)
+      Tests  141 passed (141)
+   Start at  04:01:20
+   Duration  44.93s (transform 349ms, setup 0ms, collect 1.36s, tests 42.49s, environment 0ms, prepare 340ms)
+
+exit=0  finished 2026-11-10T04:02:05Z  load=20.07 20.29 19.12

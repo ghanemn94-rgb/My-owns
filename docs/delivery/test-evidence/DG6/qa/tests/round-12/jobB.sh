@@ -1,0 +1,7 @@
+cd /home/user/My-owns
+E2=docs/delivery/test-evidence/DG6/qa/tests/round-12/e2e-run.sh
+until grep -q "^exit=" docs/delivery/test-evidence/DG6/qa/round-12/40-e2e-demo-unset.log; do sleep 20; done
+ROOT="e2e/a03-modular-entry.spec.ts e2e/a04-kpi-update.spec.ts e2e/a06-configuration-change.spec.ts e2e/a07-historical-integrity.spec.ts e2e/a08-a09-gates-decisions.spec.ts e2e/a12-p6-scope-isolation.spec.ts e2e/a13-automation-recovery.spec.ts e2e/a13-connector-run-once.spec.ts e2e/a14-compare-reapply.spec.ts e2e/a15-reporting.spec.ts e2e/a16-health-launch.spec.ts e2e/a17-failing-connector-exception.spec.ts e2e/a17-import-and-integration.spec.ts e2e/a20-bilingual-shell.spec.ts e2e/a20-p6-axe.spec.ts e2e/a20-p6-layout-brand.spec.ts e2e/a20-p6-ux.spec.ts e2e/a20-s15-014-term-scan.spec.ts e2e/a21-no-ai-operation.spec.ts e2e/a21-p6-degradation.spec.ts e2e/a22-operations-jobs.spec.ts e2e/a22-p6-operability.spec.ts"
+$E2 50-e2e-root-unset unset 32560 32561 32560-32564 chromium-en chromium-ar -- $ROOT
+$E2 70-e2e-stack-probes-unset unset 32560 32561 32560-32564 chromium-en chromium-ar -- e2e/a17-failing-connector-exception.spec.ts e2e/a22-p6-operability.spec.ts e2e/zz-qa-dg6r12-exception-last-error.spec.ts e2e/zz-qa-dg6r12-aud-reflow.spec.ts e2e/zz-qa-dg6r12-breadcrumb-tab-order.spec.ts e2e/zz-qa-dg6r12-detail-axe.spec.ts e2e/zz-qa-dg6r12-xss-e2e.spec.ts
+$E2 30-e2e-product-cutf8 C.UTF-8 32560 32561 32560-32564 chromium-en chromium-ar -- apps/web/e2e

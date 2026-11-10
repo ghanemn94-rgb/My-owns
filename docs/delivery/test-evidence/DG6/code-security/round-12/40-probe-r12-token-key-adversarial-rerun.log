@@ -1,0 +1,26 @@
+# 40-probe-r12-token-key-adversarial-rerun  started 2026-11-10T03:35:08Z  node=v22.22.0  LANG=<unset> LC_ALL=<unset>  load=17.42 12.43 7.68  commit=2495e036c4d933788044756ab3c41415e3873cf3
+$ tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration apps/api/test/integration/access/cs-r11-token-key-adversarial.test.ts
+port-policy: PostgreSQL listening on port 32465 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.RtlPw1/claude-0/r/w1
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwa508l6_b846fd65 (server_encoding UTF8); applied 119 migrations to a fresh database
+stdout | apps/api/test/integration/access/cs-r11-token-key-adversarial.test.ts > CS-R11 adversarial probe of issuer-bound restricted tokens (BE-Z15, 0127) > (o1) observation: dry run on a chosen sample confirms a guessed hidden id (conditionsMet)
+O1 dry-run statuses [33m201[39m [33m201[39m conditionsMet [33mtrue[39m [33mfalse[39m outcome fail fail codes [90mundefined[39m [90mundefined[39m leaks [] []
+
+ ✓ |integration| apps/api/test/integration/access/cs-r11-token-key-adversarial.test.ts (8 tests) 8685ms
+   ✓ CS-R11 adversarial probe of issuer-bound restricted tokens (BE-Z15, 0127) > (k1) the per-row key is never served or audited  1126ms
+   ✓ CS-R11 adversarial probe of issuer-bound restricted tokens (BE-Z15, 0127) > (t1) malformed tokens are refused restricted_marker_unknown and store nothing  435ms
+   ✓ CS-R11 adversarial probe of issuer-bound restricted tokens (BE-Z15, 0127) > (t2) two concurrent identical saves: one 200, one 409; the hidden literal is kept  407ms
+   ✓ CS-R11 adversarial probe of issuer-bound restricted tokens (BE-Z15, 0127) > (t3) grant given and revoked between read and save: held tokens resolve to the same literal  678ms
+   ✓ CS-R11 adversarial probe of issuer-bound restricted tokens (BE-Z15, 0127) > (t4) two non-admitted readers see the same tag; the owner-admitted reader sees the literal  453ms
+   ✓ CS-R11 adversarial probe of issuer-bound restricted tokens (BE-Z15, 0127) > (o1) observation: dry run on a chosen sample confirms a guessed hidden id (conditionsMet)  400ms
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  03:35:15
+   Duration  48.28s (transform 11.47s, setup 0ms, collect 28.94s, tests 8.69s, environment 0ms, prepare 577ms)
+
+exit=0  finished 2026-11-10T03:36:06Z
+0

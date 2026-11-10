@@ -1,0 +1,269 @@
+// DOMAIN REVIEWER PROBE (DG6 round 12), disposable clone only (copied as e2e/zz-domain/dom-r12-editor-tokens.spec.ts).
+// SYNTHETIC data. Production-initialized dev stack (apps/web/e2e/support/with-stack.sh, no worker), chromium-en and
+// chromium-ar. D-233 through the REAL rule editor, by a synthetic ADM_METHOD author not admitted to sensitive records.
+// The round-10 probe dom-r10-editor-tokens.spec.ts.txt with its token literals moved to [restricted:<24 hex>:<k>]:
+//   A. F-DG6-580 re-run: [neq P, neq S, neq Q] (S sensitive); "Remove condition 1", "Save the draft" twice -> both 200,
+//      the form reloads after each, S is still tested.
+//   B. A concurrent change behind the open editor, then "Save the draft": 409 -> the bilingual re-apply alert.
+//   C. F-DG6-640 re-run, PUBLISHED -> DRAFT: v1 [neq P, neq S, neq H] (S, H sensitive) published through the real API
+//      state machine (dry run, submit, independent review, publish). Draft v2; in the editor the author removes S and
+//      saves three times (row version 4 = v1's). The author pastes the token shown for S on the published v1 page into a
+//      new condition of draft v2 and saves. Expected now: refused (422 restricted_token_stale), v2 stored unchanged
+//      [P, H], never [P, H, H]. The probe also records WHAT THE AUTHOR IS TOLD on that refusal, and re-applies once.
+// ROUND 12 (F-DG6-700 verification, T-DG6-FE-Z16): part C now ASSERTS what the author is told on the 422 stale refusal:
+//   the form alert carries data-problem=automation_rule.restricted_token_stale with the en/ar catalogue text
+//   problems.automation_rule__restricted_token_stale, and the 409 text workflowsP5.rules.changedReapply is NOT shown.
+//   D (new): a token copied from ANOTHER RULE (rule A's draft) pasted into rule C's draft -> 422 stale, same text, unchanged.
+//   E (new): the retired pre-0127 form [restricted:<rowversion>:<k>] -> 422 stale, same text, unchanged.
+//   F (new): after the refusal the author re-applies with this version's own values only (removes a plain condition)
+//   and saves -> 200, the alert clears.
+// Marking a record sensitive or reviewing a rule version is an access/configuration decision, never a business approval
+// (G1-G6). Nothing here touches DG0-DG7.
+import { expect, test, type Page } from "@playwright/test";
+import { apiSession, langOf, shot, signIn, SYN_RETAIL, tr } from "../../apps/web/e2e/support/ui.ts";
+import { syntheticUser } from "../../apps/web/e2e/support/p3-journey-setup.ts";
+import { psql } from "../support/a13-a22-stack.ts";
+
+const ORG = "01920000-0000-7000-9000-000000000001";
+const TOKEN_RE = /\[restricted:[0-9a-f]{24}:\d+\]/;
+const log = (s: string) => console.log(`DOMAIN-PROBE R12 ${s}`);
+test.describe.configure({ timeout: 900_000 });
+test.use({ actionTimeout: 60_000 });
+
+test("R12: issuer-bound tokens in the real rule editor", async ({ page, playwright }, info) => {
+  const lang = langOf(info);
+  const stamp = Date.now().toString(36);
+  const admin = await apiSession(playwright, "dev.admin");
+  const lead = await apiSession(playwright, "dev.lead");
+  const office = await apiSession(playwright, "dev.office");
+  const tid = (await lead.call<{ id: string }>("POST", "/api/v1/transformations", {
+    businessUnitId: SYN_RETAIL, name: `Synthetic domain R12 rule ${lang.toUpperCase()} ${stamp}`, mode: "end_to_end" })).id;
+  const T = `/api/v1/transformations/${tid}`;
+  const bo = await syntheticUser(admin, ORG, tid, `dev.domr12.bo.${lang}.${stamp}`, `Synthetic Benefit Owner R12 ${lang}`, "BO", lang);
+  const boApi = await apiSession(playwright, bo.username);
+  const names = new Map<string, string>();
+  const mk = async (n: string) => {
+    const b = await boApi.call<{ id: string }>("POST", `${T}/benefits`, {
+      title: `Synthetic DOMR12 ${n} ${lang} ${stamp}`, description: "Synthetic (domain probe).", benefitType: "revenue",
+      valueClass: "revenue_uplift", ownerUserId: bo.id, currency: "SAR", financialStatementLine: "Revenue - roaming" });
+    names.set(b.id, n);
+    return b.id;
+  };
+  const mask = (s: string) => { for (const [id, n] of names) s = s.replaceAll(id, `<${n}>`); return s; };
+  const P = await mk("P"), S = await mk("S"), Q = await mk("Q"), H = await mk("H");
+  const methodUser = async (suffix: string) => {
+    const username = `dev.domr12.${suffix}.${lang}.${stamp}`;
+    const id = (await syntheticUser(admin, ORG, tid, username, `Synthetic ${suffix} R12 ${lang}`, "BO", lang)).id;
+    await admin.call("POST", "/api/v1/role-assignments", { userId: id, roleCode: "ADM_METHOD", scope: { type: "organization", id: ORG },
+      reason: "Synthetic rule author for the domain probe (approves nothing real)" });
+    return { username, id, api: await apiSession(playwright, username) };
+  };
+  const author = await methodUser("method");
+  const R = "/api/v1/admin/automation-rules";
+  const newRule = (conds: string[], scope: Record<string, string> = { scopeLevel: "organization" }) => author.api.call<{ id: string }>("POST", R, {
+    code: `test.domr12.${lang}.${Math.random().toString(36).slice(2, 8)}`, nameEn: `Synthetic exclusion rule R12 ${stamp}`,
+    nameAr: `قاعدة استثناء تجريبية ${stamp}`, ...scope, organizationId: ORG, ownerUserId: author.id,
+    content: { triggerCodes: ["benefit.variance_evaluated"], conditions: conds.map((v) => ({ field: "benefitId", op: "neq", value: v })),
+      actions: [{ type: "create_task", parameters: { assigneeRole: "TL", messageKey: "automation.message.follow_up" } }], runAs: "service" } });
+  const ruleA = await newRule([P, S, Q]);
+  const ruleC = await newRule([P, S, H], { scopeLevel: "transformation", transformationId: tid });
+  for (const b of [S, H])
+    await office.call("PUT", `${T}/records/benefit/${b}/sensitivity`, { isSensitive: true, reason: "Synthetic commercially sensitive benefit" }, { ifMatch: 0 });
+  const stored = (ruleId: string, no: number) =>
+    mask(psql(`SELECT version || ' ' || conditions::text FROM automation_rule_version WHERE automation_rule_id = '${ruleId}' AND version_no = ${no}`)[0]!);
+  const label = tr(lang, "access.includesRestrictedRecords");
+  const form = (p: Page) => p.locator('[data-form="edit-rule-content"]');
+  const alertText = async () => {
+    const el = page.locator('[role="alert"]');
+    const n = await el.count();
+    const out: string[] = [];
+    for (let i = 0; i < n; i++) out.push(await el.nth(i).innerText());
+    return out;
+  };
+  const screen = async (step: string) => {
+    await page.waitForTimeout(1200);
+    const values = await page.locator('[data-form="edit-rule-content"] [data-condition-row] input').evaluateAll((els) => els.map((e) => (e as HTMLInputElement).value)).catch(() => []);
+    const text = await page.locator("main#main").innerText().catch(() => "");
+    const badges = await page.locator('[data-restricted-records="true"]').count();
+    log(`${lang} ${step} url=${page.url().replace(/.*\/admin/, "/admin")} formVersion=${(await form(page).count()) > 0 ? await form(page).getAttribute("data-form-version") : "(no form)"} EDITOR values=${mask(JSON.stringify(values))} badges=${badges} labelCount=${text.split(label).length - 1} secretTitle=${/DOMR12 [SH] /.test(text)} namesS=${text.includes(S)} alerts=${JSON.stringify(await alertText())}`);
+    await shot(page, lang, `dom-r12-${step}`);
+  };
+  const patches: { status: number; body: string }[] = [];
+  page.on("response", async (r) => {
+    if (r.request().method() === "PATCH" && r.url().includes("/automation-rules/")) {
+      const body = await r.text().catch(() => "");
+      patches.push({ status: r.status(), body });
+      log(`${lang} PATCH ${r.url().replace(/.*automation-rules\//, "")} If-Match=${r.request().headers()["if-match"] ?? ""} body=${mask(r.request().postData() ?? "")} -> ${r.status()} ${r.status() >= 400 ? mask(body).slice(0, 400) : ""}`);
+    }
+  });
+  await page.context().clearCookies();
+  await signIn(page, lang, author.username);
+  const save = async () => {
+    await form(page).getByRole("button", { name: tr(lang, "workflowsP5.rules.saveDraft") }).click();
+    await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(800);
+  };
+
+  // ---- A. F-DG6-580 re-run
+  await page.goto(`/admin/automation-rules/${ruleA.id}/versions/1`);
+  await page.waitForLoadState("networkidle");
+  await expect(page.locator("html")).toHaveAttribute("dir", lang === "ar" ? "rtl" : "ltr");
+  await expect(form(page)).toBeVisible({ timeout: 30_000 });
+  await screen("A1-read");
+  await page.getByRole("button", { name: tr(lang, "workflowsP5.rules.removeCondition", { n: 1 }) }).click();
+  await save();
+  await screen("A2-after-remove-and-save");
+  log(`${lang} A stored after save 1: ${stored(ruleA.id, 1)}`);
+  await save();
+  await screen("A3-after-second-save");
+  log(`${lang} A stored after save 2: ${stored(ruleA.id, 1)}`);
+  expect(stored(ruleA.id, 1), "A: S still tested after the second save").toContain("<S>");
+
+  // ---- B. 409 behind the open editor -> bilingual re-apply alert
+  await page.reload();
+  await page.waitForLoadState("networkidle");
+  const cur = await author.api.call<{ version: number; content: { conditions: unknown[] } } & Record<string, unknown>>("GET", `${R}/${ruleA.id}/versions/1`);
+  await author.api.call("PATCH", `${R}/${ruleA.id}/versions/1`, { content: { ...cur.content, conditions: [...cur.content.conditions, { field: "severity", op: "eq", value: "high" }] } }, { ifMatch: cur.version });
+  await page.getByRole("button", { name: tr(lang, "workflowsP5.rules.removeCondition", { n: 2 }) }).click();
+  await save();
+  await screen("B1-after-409");
+  log(`${lang} B stored: ${stored(ruleA.id, 1)}`);
+  await expect(page.locator('[data-state="rule-changed-reapply"]'), "B: the re-apply alert").toHaveText(tr(lang, "workflowsP5.rules.changedReapply"));
+  expect(stored(ruleA.id, 1), "B: S still tested").toContain("<S>");
+
+  // ---- C. published v1 -> draft v2 (F-DG6-640)
+  const V1 = `${R}/${ruleC.id}/versions/1`;
+  const sample = { triggerCode: "benefit.variance_evaluated", payload: { benefitId: Q, measurementId: crypto.randomUUID(), periodStart: "2026-01-01",
+    periodEnd: "2026-03-31", plannedAmount: "1000000.00", measuredAmount: "850000.00", variance: "-150000.00", offTrack: true } };
+  const dry = await author.api.call<{ outcome: string }>("POST", `${V1}/dry-runs`, sample);
+  log(`${lang} C dry run outcome=${dry.outcome}`);
+  let v = await author.api.call<{ version: number }>("GET", V1);
+  await author.api.call("POST", `${V1}/submit`, undefined, { ifMatch: v.version });
+  v = await author.api.call<{ version: number }>("GET", V1);
+  await office.call("POST", `${V1}/review`, { outcome: "approve", note: "Synthetic configuration review (domain probe)." }, { ifMatch: v.version });
+  const rule = await author.api.call<{ version: number }>("GET", `${R}/${ruleC.id}`);
+  await author.api.call("POST", `${V1}/publish`, undefined, { ifMatch: rule.version });
+  const rule2 = await author.api.call<{ version: number }>("GET", `${R}/${ruleC.id}`);
+  await author.api.call("POST", `${R}/${ruleC.id}/versions`, { changeSummary: "Synthetic draft v2 (domain probe R12)" }, { ifMatch: rule2.version });
+  log(`${lang} C v1 stored: ${stored(ruleC.id, 1)} | v2 stored: ${stored(ruleC.id, 2)}`);
+  await page.goto(`/admin/automation-rules/${ruleC.id}/versions/1`);
+  await page.waitForLoadState("networkidle");
+  await screen("C1-published-v1");
+  const v1Text = await page.locator('[data-content="read-only"] [data-condition="1"]').innerText();
+  const tokenOfS = TOKEN_RE.exec(v1Text)?.[0] ?? "";
+  log(`${lang} C token shown for S on published v1: ${tokenOfS} (line: ${JSON.stringify(v1Text)})`);
+  expect(tokenOfS).not.toBe("");
+  await page.goto(`/admin/automation-rules/${ruleC.id}/versions/2`);
+  await page.waitForLoadState("networkidle");
+  await expect(form(page)).toBeVisible({ timeout: 30_000 });
+  await screen("C2-draft-v2-read");
+  await page.getByRole("button", { name: tr(lang, "workflowsP5.rules.removeCondition", { n: 2 }) }).click();
+  await save();
+  await save();
+  await save();
+  await screen("C3-draft-v2-after-removing-S-and-3-saves");
+  const before = stored(ruleC.id, 2);
+  log(`${lang} C v2 stored before restore: ${before}`);
+  const pasteAndSave = async (step: string) => {
+    await form(page).getByRole("button", { name: tr(lang, "workflowsP5.rules.addCondition") }).click();
+    const row = form(page).locator("[data-condition-row]").last();
+    await row.locator("select").nth(0).selectOption("benefitId");
+    await row.locator("select").nth(1).selectOption("neq");
+    await row.locator("input").fill(tokenOfS);
+    await screen(`${step}-token-pasted`);
+    await save();
+    await screen(`${step}-after-save`);
+  };
+  await pasteAndSave("C4");
+  const after = stored(ruleC.id, 2);
+  log(`${lang} C v2 stored after pasting v1's token for S: ${after}`);
+  const last = patches.at(-1);
+  log(`${lang} C last PATCH status=${last?.status} problem=${mask(last?.body ?? "").slice(0, 500)}`);
+  const shown = await alertText();
+  log(`${lang} C what the author is told: ${JSON.stringify(shown)} | changedReapply=${JSON.stringify(tr(lang, "workflowsP5.rules.changedReapply"))}`);
+  // The author follows the instruction once: re-apply the change and save again.
+  await pasteAndSave("C5-reapply");
+  log(`${lang} C v2 stored after the re-apply: ${stored(ruleC.id, 2)} | alerts=${JSON.stringify(await alertText())}`);
+  await page.reload();
+  await page.waitForLoadState("networkidle");
+  await screen("C6-draft-v2-after-reload");
+  const staleText = tr(lang, "problems.automation_rule__restricted_token_stale");
+  const changedText = tr(lang, "workflowsP5.rules.changedReapply");
+  const expectStaleShown = async (where: string) => {
+    const a = form(page).locator('[role="alert"][data-problem="automation_rule.restricted_token_stale"]');
+    await expect(a, `${where}: the stale-token problem alert in the form`).toHaveCount(1);
+    await expect(a, `${where}: its text`).toContainText(staleText);
+    await expect(page.locator('[data-state="rule-changed-reapply"]'), `${where}: no "rule changed" alert`).toHaveCount(0);
+    expect(await page.locator("main#main").innerText(), `${where}: no "changed" text anywhere`).not.toContain(changedText);
+    expect(await page.locator('[data-problem="automation_rule.restricted_token_stale"]').count(), `${where}: one alert only`).toBe(1);
+  };
+  log(`${lang} C staleText(catalogue)=${JSON.stringify(staleText)}`);
+  expect(last?.status, "C: v1's token is refused").toBe(422);
+  expect(last?.body ?? "").toContain("automation_rule.restricted_token_stale");
+  expect(after, "C: v2 unchanged").toBe(before);
+  expect(stored(ruleC.id, 2), "C: v2 still unchanged after the re-apply").toBe(before);
+
+  // ---- C (asserted, round 12): repeat the paste on the fresh page and check what the author is told.
+  await pasteAndSave("C7-paste-again");
+  expect(patches.at(-1)?.status).toBe(422);
+  await expectStaleShown("C7");
+  // The form reloaded the stored version: the pasted token is gone.
+  const vals = await form(page).locator("[data-condition-row] input").evaluateAll((els) => els.map((e) => (e as HTMLInputElement).value));
+  log(`${lang} C7 form values after refusal: ${mask(JSON.stringify(vals))}`);
+  expect(vals).not.toContain(tokenOfS);
+  expect(stored(ruleC.id, 2)).toBe(before);
+
+  // ---- D. a token copied from ANOTHER RULE (rule A's draft v1 shows S as a token) pasted into rule C's draft v2.
+  await page.goto(`/admin/automation-rules/${ruleA.id}/versions/1`);
+  await page.waitForLoadState("networkidle");
+  const aVals = await form(page).locator("[data-condition-row] input").evaluateAll((els) => els.map((e) => (e as HTMLInputElement).value));
+  const tokenFromA = aVals.find((x) => TOKEN_RE.test(x)) ?? "";
+  log(`${lang} D token copied from rule A's editor: ${tokenFromA} (A values ${mask(JSON.stringify(aVals))})`);
+  expect(tokenFromA).not.toBe("");
+  await page.goto(`/admin/automation-rules/${ruleC.id}/versions/2`);
+  await page.waitForLoadState("networkidle");
+  await expect(form(page)).toBeVisible({ timeout: 30_000 });
+  const pasteValue = async (value: string, step: string) => {
+    await form(page).getByRole("button", { name: tr(lang, "workflowsP5.rules.addCondition") }).click();
+    const row = form(page).locator("[data-condition-row]").last();
+    await row.locator("select").nth(0).selectOption("benefitId");
+    await row.locator("select").nth(1).selectOption("neq");
+    await row.locator("input").fill(value);
+    await save();
+    await screen(step);
+  };
+  await pasteValue(tokenFromA, "D1-other-rule-token-after-save");
+  log(`${lang} D last PATCH status=${patches.at(-1)?.status} problem=${mask(patches.at(-1)?.body ?? "").slice(0, 300)}`);
+  expect(patches.at(-1)?.status).toBe(422);
+  expect(patches.at(-1)?.body ?? "").toContain("automation_rule.restricted_token_stale");
+  await expectStaleShown("D1");
+  expect(stored(ruleC.id, 2)).toBe(before);
+
+  // ---- E. the retired pre-0127 form [restricted:<rowversion>:<k>]
+  const rowVersion = Number(psql(`SELECT version FROM automation_rule_version WHERE automation_rule_id = '${ruleC.id}' AND version_no = 2`)[0]);
+  await page.reload();
+  await page.waitForLoadState("networkidle");
+  await pasteValue(`[restricted:${rowVersion}:2]`, "E1-retired-form-after-save");
+  log(`${lang} E last PATCH status=${patches.at(-1)?.status} problem=${mask(patches.at(-1)?.body ?? "").slice(0, 300)}`);
+  expect(patches.at(-1)?.status).toBe(422);
+  expect(patches.at(-1)?.body ?? "").toContain("automation_rule.restricted_token_stale");
+  await expectStaleShown("E1");
+  expect(stored(ruleC.id, 2)).toBe(before);
+
+  // ---- F. the author follows the text: re-apply with this version's own values only -> saves, alert clears.
+  const nBefore = await form(page).locator("[data-condition-row]").count();
+  await form(page).getByRole("button", { name: tr(lang, "workflowsP5.rules.addCondition") }).click();
+  const row = form(page).locator("[data-condition-row]").last();
+  await row.locator("select").nth(0).selectOption("benefitId");
+  await row.locator("select").nth(1).selectOption("neq");
+  await row.locator("input").fill(Q);
+  await save();
+  await screen("F1-reapply-with-own-values");
+  log(`${lang} F last PATCH status=${patches.at(-1)?.status}; stored ${stored(ruleC.id, 2)}; rows ${nBefore}->${await form(page).locator("[data-condition-row]").count()}`);
+  expect(patches.at(-1)?.status).toBe(200);
+  await expect(page.locator('[data-problem="automation_rule.restricted_token_stale"]')).toHaveCount(0);
+  await expect(page.locator('[data-state="rule-changed-reapply"]')).toHaveCount(0);
+  expect(stored(ruleC.id, 2)).toContain("<Q>");
+  expect(stored(ruleC.id, 2)).toContain("<H>");
+  expect(stored(ruleC.id, 2)).not.toContain("<S>");
+});

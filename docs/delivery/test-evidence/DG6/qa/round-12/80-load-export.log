@@ -1,0 +1,93 @@
+## 2026-11-10T05:26:21Z node v24.21.0 LANG=unset LC_ALL=unset load 8.44 9.04 10.91
+## cmd: echo loadavg $(cat /proc/loadavg); free -g | sed -n 2p; QA_PG_PORT=32596 MTH_PORT_POOL=32596-32599 API_PORT=32595 SKIP_A=1 OUT=/home/user/My-owns/docs/delivery/test-evidence/DG6/qa/round-12/load tests/qa/support/with-pg.sh bash /home/user/My-owns/docs/delivery/test-evidence/DG6/qa/tests/round-12/load-driver-r12.sh
+loadavg 8.44 9.04 10.91 3/463 9
+Mem:              15           6           7           0           2           8
+port-policy: PostgreSQL listening on port 32596 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+== qa load driver r12 start 2026-11-10T05:26:22Z; node v24.21.0
+host start: 2026-11-10T05:26:22Z loadavg 8.16 8.97 10.88 nproc 4 mem 16086 MB total, 9342 MB available
+6b2a9007e47b49640a497a356239cea1b79b5a0081a12c5e88dbf7f405bdff8a  deploy/load/generate.mjs
+7b860ee08890dcc88fdcc82615cd2bf7460bf11f9507348ee28a56d65985fca0  deploy/load/sessions.mjs
+34734caad8929e82cd99b5c9aafacd26533109c4bf213efc6e97e4903ab9b644  deploy/load/workload.mjs
+32f89b4a4f7110883a91be7941c37db21195c428c1906e244b5bf75a0c339368  deploy/load/report.mjs
+7865d9d3f1aa5d4063b72243ad52e795c485fcee78fe24c429663d5549ed154b  deploy/load/export-proof.mjs
+0a8d1c78d92765db962ca6dc4ae15883c0a491cf55b8975b1e86616f133bcb4b  deploy/load/rate-limits.mjs
+3cadaf0fe79a6ef64448f2d9fe6244ab64c0fc539a35a760b9fc36d0678122d5  apps/api/dist/main.js
+7833d87f9b94a30850b26585c90020c50e8d803d2816188e371e33ce00e2c9fe  apps/worker/dist/main.js
+33:export const START_TARGET_MS = 2000;
+== rate-limits.mjs (as deploy/load/README.md):
+mth-load rate limits: 5 P6 class budget(s) set to 100000/min (load stacks only; global and auth limits unchanged)
+ASSISTANT_RATE_LIMIT_PER_MINUTE=100000
+EXPORT_RATE_LIMIT_PER_MINUTE=100000
+SEARCH_RATE_LIMIT_PER_MINUTE=100000
+UPLOAD_RATE_LIMIT_PER_MINUTE=100000
+WEBHOOK_RATE_LIMIT_PER_MINUTE=100000
+
+################ Phase B: in-tree generator, profile default 2026-11-10T05:26:22Z
+host before-generate: 2026-11-10T05:26:22Z loadavg 8.16 8.97 10.88 nproc 4 mem 16086 MB total, 9336 MB available
+mth-db migrate: applied 119 migration(s)
+  },
+  "reindexRequested": true,
+  "seconds": 24.79
+}
+mth-load generate: next, run the search.reindex job once (deploy/load/README.md) so the search index is complete
+generate exit=0 wall_ms=26680
+{"users": 120, "singleton": true, "initiatives": 1000, "kpi_actuals": 10000, "random_seed": 20261027, "audit_events": 100000, "dataset_code": "mth_load_v1", "transformations": 50, "generator_version": "1.0.0"}
+audit_event 100000
+transformation 50
+initiative 1000
+kpi_actual 10000
+app_user 120
+database size 154 MB
+NOTICE:  UUIDCHECK mth: 770559 uuid values checked, 120 not RFC 9562
+  non-RFC methodology_coverage_link.id: 96 of 114
+  non-RFC procedure_step_definition.id: 24 of 62
+mth-load sessions: 100 synthetic load session(s) written to $TMPDIR/qa-load-r12/sessions.json (cookie mth_session, expiry 300 min); the file holds bearer credentials
+== reindex 2026-11-10T05:26:55Z
+search index: reindex completed jobs 1, types not idle 0 2026-11-10T05:27:08Z
+mth-load report: infrastructure captured to /home/user/My-owns/docs/delivery/test-evidence/DG6/qa/round-12/load/infrastructure.json
+== workload repetition 1 (warmup 60 s, steady 300 s) 2026-11-10T05:27:08Z
+host before-workload: 2026-11-10T05:27:08Z loadavg 7.56 8.71 10.70 nproc 4 mem 16086 MB total, 8847 MB available
+mth-load workload: repetition 1: 14918 steady-state request(s) (2947 warm-up, excluded) from 100 virtual users in 362.718 s
+workload exit=0
+host after-workload: 2026-11-10T05:33:27Z loadavg 3.70 5.08 8.39 nproc 4 mem 16086 MB total, 9001 MB available
+api error-level log lines: 0; worker: 0; rate-limit refusals: 0
+Key dashboard: highest p95 39.8 ms (within target)
+Export start: highest p95 34.8 ms (within target)
+Ordinary read incl. search: highest p95 18.1 ms (within target)
+report exit=0
+== export proof 1 2026-11-10T05:33:27Z
+host before-proof1: 2026-11-10T05:33:29Z loadavg 3.72 5.07 8.36 nproc 4 mem 16086 MB total, 9448 MB available
+mth-load export-proof qa-dg6-r12-1: 66 exports, 1 failed
+  part A (LOAD-T01, 250 initiatives): 16 exports
+    diagnostic xlsx: start 202 102.016 ms, done succeeded in 3213.78 ms, 6794 bytes, percents 0,0,0,0,0,0,0,0,0,0,0,95,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    tom xlsx: start 202 21.275 ms, done succeeded in 1818.073 ms, 7381 bytes, percents 0,0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    business_cases xlsx: start 202 16.862 ms, done succeeded in 1822.369 ms, 6548 bytes, percents 0,0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    roadmap xlsx: start 202 19.058 ms, done succeeded in 2101.041 ms, 27166 bytes, percents 0,0,0,0,0,0,0,1,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/raid xlsx: start 202 23.365 ms, done succeeded in 1811.631 ms, 28699 bytes, percents 0,0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/benefits xlsx: start 202 16.973 ms, done succeeded in 2073.091 ms, 18765 bytes, percents 0,0,0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/kpis xlsx: start 202 13.634 ms, done succeeded in 1812.44 ms, 4893 bytes, percents 0,0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/decisions xlsx: start 202 15.728 ms, done succeeded in 2069.569 ms, 10636 bytes, percents 0,0,0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/dependencies xlsx: start 202 14.284 ms, done succeeded in 1816.417 ms, 10329 bytes, percents 0,0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/actions xlsx: start 202 18.054 ms, done succeeded in 2079.491 ms, 4315 bytes, percents 0,0,0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/raid csv: start 202 12.297 ms, done succeeded in 1809.728 ms, 60328 bytes, percents 0,0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/benefits csv: start 202 16.655 ms, done succeeded in 2080.581 ms, 24383 bytes, percents 0,0,0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/kpis csv: start 202 15.473 ms, done succeeded in 2061.875 ms, 2063 bytes, percents 0,0,0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/decisions csv: start 202 14.155 ms, done succeeded in 1804.482 ms, 16719 bytes, percents 0,0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/dependencies csv: start 202 14.824 ms, done succeeded in 2064.181 ms, 18121 bytes, percents 0,0,0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/actions csv: start 202 17.951 ms, done succeeded in 1812.78 ms, 1173 bytes, percents 0,0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+  part B: 50 transformations, 50 distinct users, at once
+    LOAD-T20 FAIL: no sameScopeOther user for this transformation
+  start A {"count":16,"p50Ms":16.655,"p95Ms":102.016,"maxMs":102.016}
+  start B {"count":50,"p50Ms":391.278,"p95Ms":488.955,"maxMs":492.106}
+  completion A {"count":16,"p50Ms":1822.369,"p95Ms":3213.78,"maxMs":3213.78}
+  completion B {"count":50,"p50Ms":2179.405,"p95Ms":2664.741,"maxMs":4512.129}
+  largest file 60328 bytes; EXPORT_MAX_BYTES reopen candidates 0
+export-proof 1 exit=1
+host after-proof1: 2026-11-10T05:34:07Z loadavg 2.57 4.60 8.07 nproc 4 mem 16086 MB total, 10044 MB available
+api error-level log lines: 0; worker: 0; rate-limit refusals: 0
+export_job succeeded 428
+assembly attempts max 1, pending 0
+== qa load driver r12 end 2026-11-10T05:34:07Z
+exit=0
+## end 2026-11-10T05:34:08Z

@@ -1,0 +1,367 @@
++ mkclone w1
++ git clone -q --shared --no-checkout /home/user/My-owns /var/tmp/mth-run.RtlPw1/claude-0/r/w1
++ cd /var/tmp/mth-run.RtlPw1/claude-0/r/w1
++ git rev-parse --is-shallow-repository
+false
++ git sparse-checkout set --no-cone '/*' '!/docs/delivery/runs/' '!/docs/delivery/test-evidence/' '!/docs/delivery/handbacks/' /docs/delivery/handbacks/DG6/ '!/trading_agent/'
++ git checkout -q 2495e036c4d933788044756ab3c41415e3873cf3
++ git rev-parse HEAD
+2495e036c4d933788044756ab3c41415e3873cf3
++ node tools/gates/candidate.mjs --stage DG6
+{"stage":"DG6","source":"working-tree","candidate_id":"sha256:c05864ba65f6319c0e9501cd80216a8d3f775eb07c7853744ecb8c1314f5023c","files":2769}
++ cmp /home/user/My-owns/pnpm-lock.yaml /home/user/My-owns/node_modules/.pnpm/lock.yaml
++ echo LOCK-MATCH
+LOCK-MATCH
++ cmp pnpm-lock.yaml /home/user/My-owns/pnpm-lock.yaml
++ echo CLONE-LOCK-EQUAL
+CLONE-LOCK-EQUAL
++ cd /home/user/My-owns
++ for d in node_modules apps/*/node_modules packages/*/node_modules
++ '[' -e /var/tmp/mth-run.RtlPw1/claude-0/r/w1/node_modules ']'
+++ dirname node_modules
++ mkdir -p /var/tmp/mth-run.RtlPw1/claude-0/r/w1/.
++ cp -a node_modules /var/tmp/mth-run.RtlPw1/claude-0/r/w1/node_modules
++ for d in node_modules apps/*/node_modules packages/*/node_modules
++ '[' -e /var/tmp/mth-run.RtlPw1/claude-0/r/w1/apps/api/node_modules ']'
+++ dirname apps/api/node_modules
++ mkdir -p /var/tmp/mth-run.RtlPw1/claude-0/r/w1/apps/api
++ cp -a apps/api/node_modules /var/tmp/mth-run.RtlPw1/claude-0/r/w1/apps/api/node_modules
++ for d in node_modules apps/*/node_modules packages/*/node_modules
++ '[' -e /var/tmp/mth-run.RtlPw1/claude-0/r/w1/apps/web/node_modules ']'
+++ dirname apps/web/node_modules
++ mkdir -p /var/tmp/mth-run.RtlPw1/claude-0/r/w1/apps/web
++ cp -a apps/web/node_modules /var/tmp/mth-run.RtlPw1/claude-0/r/w1/apps/web/node_modules
++ for d in node_modules apps/*/node_modules packages/*/node_modules
++ '[' -e /var/tmp/mth-run.RtlPw1/claude-0/r/w1/apps/worker/node_modules ']'
+++ dirname apps/worker/node_modules
++ mkdir -p /var/tmp/mth-run.RtlPw1/claude-0/r/w1/apps/worker
++ cp -a apps/worker/node_modules /var/tmp/mth-run.RtlPw1/claude-0/r/w1/apps/worker/node_modules
++ for d in node_modules apps/*/node_modules packages/*/node_modules
++ '[' -e /var/tmp/mth-run.RtlPw1/claude-0/r/w1/packages/config/node_modules ']'
+++ dirname packages/config/node_modules
++ mkdir -p /var/tmp/mth-run.RtlPw1/claude-0/r/w1/packages/config
++ cp -a packages/config/node_modules /var/tmp/mth-run.RtlPw1/claude-0/r/w1/packages/config/node_modules
++ for d in node_modules apps/*/node_modules packages/*/node_modules
++ '[' -e /var/tmp/mth-run.RtlPw1/claude-0/r/w1/packages/db/node_modules ']'
+++ dirname packages/db/node_modules
++ mkdir -p /var/tmp/mth-run.RtlPw1/claude-0/r/w1/packages/db
++ cp -a packages/db/node_modules /var/tmp/mth-run.RtlPw1/claude-0/r/w1/packages/db/node_modules
++ for d in node_modules apps/*/node_modules packages/*/node_modules
++ '[' -e /var/tmp/mth-run.RtlPw1/claude-0/r/w1/packages/reporting/node_modules ']'
+++ dirname packages/reporting/node_modules
++ mkdir -p /var/tmp/mth-run.RtlPw1/claude-0/r/w1/packages/reporting
++ cp -a packages/reporting/node_modules /var/tmp/mth-run.RtlPw1/claude-0/r/w1/packages/reporting/node_modules
++ for d in node_modules apps/*/node_modules packages/*/node_modules
++ '[' -e /var/tmp/mth-run.RtlPw1/claude-0/r/w1/packages/shared/node_modules ']'
+++ dirname packages/shared/node_modules
++ mkdir -p /var/tmp/mth-run.RtlPw1/claude-0/r/w1/packages/shared
++ cp -a packages/shared/node_modules /var/tmp/mth-run.RtlPw1/claude-0/r/w1/packages/shared/node_modules
++ cd /var/tmp/mth-run.RtlPw1/claude-0/r/w1
++ ls -d node_modules apps/api/node_modules apps/web/node_modules apps/worker/node_modules packages/config/node_modules packages/db/node_modules packages/reporting/node_modules packages/shared/node_modules
+apps/api/node_modules
+apps/web/node_modules
+apps/worker/node_modules
+node_modules
+packages/config/node_modules
+packages/db/node_modules
+packages/reporting/node_modules
+packages/shared/node_modules
++ '[' -n '' ']'
++ pnpm -r --workspace-concurrency=2 build
+Scope: 8 of 9 workspace projects
+packages/design-tokens build$ tsc -p tsconfig.build.json && node src/cli.ts generate
+packages/shared build$ tsc -p tsconfig.build.json
+packages/design-tokens build: generated /var/tmp/mth-run.RtlPw1/claude-0/r/w1/packages/design-tokens/dist/tokens.css
+packages/design-tokens build: Done
+packages/shared build: Done
+apps/web build$ tsc -p tsconfig.json && vite build
+packages/config build$ tsc -p tsconfig.build.json
+packages/config build: Done
+packages/reporting build$ tsc -p tsconfig.build.json
+packages/reporting build: Done
+apps/web build: vite v7.3.7 building client environment for production...
+apps/web build: transforming...
+apps/web build: ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
+apps/web build: "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
+apps/web build: in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+apps/web build: ../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
+apps/web build: "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
+apps/web build:  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
+apps/web build:  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
+apps/web build: in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+apps/web build: ✓ 804 modules transformed.
+apps/web build: rendering chunks...
+apps/web build: computing gzip size...
+apps/web build: dist/index.html                                                        1.11 kB │ gzip:   0.48 kB
+apps/web build: dist/assets/ibm-plex-sans-latin-400-normal-CYLoc0-x.woff              22.10 kB
+apps/web build: dist/assets/ibm-plex-sans-latin-400-normal-CDDApCn2.woff2             22.59 kB
+apps/web build: dist/assets/ibm-plex-sans-latin-600-normal-Cu4Hd6ag.woff              23.88 kB
+apps/web build: dist/assets/ibm-plex-sans-latin-500-normal-BgVn5rGT.woff              23.92 kB
+apps/web build: dist/assets/ibm-plex-sans-latin-500-normal-6ng42L7E.woff2             24.18 kB
+apps/web build: dist/assets/ibm-plex-sans-latin-600-normal-CuJfVYMP.woff2             24.25 kB
+apps/web build: dist/assets/ibm-plex-sans-arabic-arabic-400-normal-BM00HIL5.woff2     42.88 kB
+apps/web build: dist/assets/ibm-plex-sans-arabic-arabic-400-normal-D-ylXcdQ.woff      44.18 kB
+apps/web build: dist/assets/ibm-plex-sans-arabic-arabic-500-normal-CVSLUoBh.woff2     45.49 kB
+apps/web build: dist/assets/ibm-plex-sans-arabic-arabic-600-normal-a0NpOJIw.woff2     45.73 kB
+apps/web build: dist/assets/ibm-plex-sans-arabic-arabic-600-normal-BQ7tCLaK.woff      46.83 kB
+apps/web build: dist/assets/ibm-plex-sans-arabic-arabic-500-normal-DCkCZrW1.woff      46.96 kB
+apps/web build: dist/assets/panels-BOxaP_-H.css                                        0.89 kB │ gzip:   0.37 kB
+apps/web build: dist/assets/integrations-CKRMmDWb.css                                  1.27 kB │ gzip:   0.51 kB
+apps/web build: dist/assets/RecordForm-D4B1akcy.css                                    1.51 kB │ gzip:   0.48 kB
+apps/web build: dist/assets/vendor-DXNDhYAL.css                                        1.52 kB │ gzip:   0.33 kB
+apps/web build: dist/assets/index-CowLZ_Uu.css                                        39.06 kB │ gzip:   6.91 kB
+apps/web build: dist/assets/TableScrollRegion-DUOvDBJ3.js                              0.39 kB │ gzip:   0.29 kB │ map:     1.87 kB
+apps/web build: dist/assets/api-CNGlqGIX.js                                            0.50 kB │ gzip:   0.32 kB │ map:     4.39 kB
+apps/web build: dist/assets/api-CuBkcHqo.js                                            0.55 kB │ gzip:   0.33 kB │ map:     6.96 kB
+apps/web build: dist/assets/P6NotAvailablePage-BgLcdnC0.js                             0.61 kB │ gzip:   0.38 kB │ map:     1.64 kB
+apps/web build: dist/assets/RestrictedRecordsLabel-0oZBL8th.js                         0.65 kB │ gzip:   0.40 kB │ map:     2.18 kB
+apps/web build: dist/assets/actions-CkViws5E.js                                        0.67 kB │ gzip:   0.46 kB │ map:     2.58 kB
+apps/web build: dist/assets/UnplacedFieldErrors-iPsSVxEY.js                            0.72 kB │ gzip:   0.43 kB │ map:     2.83 kB
+apps/web build: dist/assets/ExtensionBadge-BwKCeXzG.js                                 0.77 kB │ gzip:   0.42 kB │ map:     2.97 kB
+apps/web build: dist/assets/methodology-C1sYRf_3.js                                    0.81 kB │ gzip:   0.35 kB │ map:     3.93 kB
+apps/web build: dist/assets/api-Do4Fp_MA.js                                            0.92 kB │ gzip:   0.45 kB │ map:     3.99 kB
+apps/web build: dist/assets/vendor-CCMBgAGF.js                                         0.96 kB │ gzip:   0.52 kB │ map:     4.19 kB
+apps/web build: dist/assets/Badges-C8d1tPYF.js                                         0.99 kB │ gzip:   0.49 kB │ map:     3.78 kB
+apps/web build: dist/assets/api-ZXsiFBPG.js                                            1.00 kB │ gzip:   0.50 kB │ map:     4.11 kB
+apps/web build: dist/assets/api-BoGLQ9Kc.js                                            1.02 kB │ gzip:   0.57 kB │ map:     5.04 kB
+apps/web build: dist/assets/messages-qB6wdx8a.js                                       1.05 kB │ gzip:   0.62 kB │ map:     4.82 kB
+apps/web build: dist/assets/Section-BA7SxUuX.js                                        1.08 kB │ gzip:   0.51 kB │ map:     3.12 kB
+apps/web build: dist/assets/ui-Bv2Tv1xR.js                                             1.24 kB │ gzip:   0.74 kB │ map:     5.63 kB
+apps/web build: dist/assets/api-jkpTy1t0.js                                            1.31 kB │ gzip:   0.57 kB │ map:     5.60 kB
+apps/web build: dist/assets/dialogs-Bckm1HCP.js                                        1.35 kB │ gzip:   0.78 kB │ map:     5.11 kB
+apps/web build: dist/assets/api-CQLscHce.js                                            1.38 kB │ gzip:   0.59 kB │ map:     5.41 kB
+apps/web build: dist/assets/api-BnZ-Sp0L.js                                            1.40 kB │ gzip:   0.60 kB │ map:     5.81 kB
+apps/web build: dist/assets/useVersionedSave-Bs9sY59M.js                               1.44 kB │ gzip:   0.73 kB │ map:     7.63 kB
+apps/web build: dist/assets/ReasonDialog-C1q1G5Hn.js                                   1.47 kB │ gzip:   0.83 kB │ map:     6.32 kB
+apps/web build: dist/assets/People-DTaQXpe-.js                                         1.50 kB │ gzip:   0.83 kB │ map:     5.50 kB
+apps/web build: dist/assets/MigrationsEntryPage-lpccsO-Z.js                            1.66 kB │ gzip:   0.76 kB │ map:     4.17 kB
+apps/web build: dist/assets/ProvenanceBadge-DjQO_Wyy.js                                1.68 kB │ gzip:   0.76 kB │ map:     5.62 kB
+apps/web build: dist/assets/ui-sHHhlHxR.js                                             1.82 kB │ gzip:   0.93 kB │ map:     7.08 kB
+apps/web build: dist/assets/DeepLinkPage-CbUclt5N.js                                   1.83 kB │ gzip:   0.85 kB │ map:     5.67 kB
+apps/web build: dist/assets/AdminHomePage-pPDiCteQ.js                                  1.85 kB │ gzip:   0.80 kB │ map:     5.22 kB
+apps/web build: dist/assets/common-cGcX6Q_m.js                                         1.91 kB │ gzip:   0.87 kB │ map:     6.14 kB
+apps/web build: dist/assets/Amount-C8ho44u3.js                                         1.92 kB │ gzip:   0.75 kB │ map:     5.75 kB
+apps/web build: dist/assets/portfolio-C6bgCiXZ.js                                      1.99 kB │ gzip:   0.80 kB │ map:     8.70 kB
+apps/web build: dist/assets/TransformReadinessPage-CmAL1sc3.js                         2.13 kB │ gzip:   0.94 kB │ map:     5.59 kB
+apps/web build: dist/assets/ui-DYQKUSog.js                                             2.27 kB │ gzip:   0.99 kB │ map:     8.09 kB
+apps/web build: dist/assets/SecurityPage-DMFmqftk.js                                   2.41 kB │ gzip:   0.99 kB │ map:     5.97 kB
+apps/web build: dist/assets/DecisionLogPage-CzugIRWP.js                                2.45 kB │ gzip:   1.08 kB │ map:     6.60 kB
+apps/web build: dist/assets/p4api-Cpn7D7ix.js                                          2.57 kB │ gzip:   0.99 kB │ map:    12.20 kB
+apps/web build: dist/assets/api-ChgH2EW4.js                                            2.61 kB │ gzip:   1.27 kB │ map:    14.84 kB
+apps/web build: dist/assets/api-Bf5pLdZh.js                                            2.66 kB │ gzip:   1.01 kB │ map:    15.51 kB
+apps/web build: dist/assets/ApprovalRecordsPage--0Uk6cA0.js                            2.76 kB │ gzip:   1.17 kB │ map:     7.27 kB
+apps/web build: dist/assets/p3ui-C8rMN-dM.js                                           2.80 kB │ gzip:   1.27 kB │ map:    10.50 kB
+apps/web build: dist/assets/FormBuilderPage-ibEdvspo.js                                2.90 kB │ gzip:   1.16 kB │ map:     7.37 kB
+apps/web build: dist/assets/ui-DNCWP4LM.js                                             2.90 kB │ gzip:   1.19 kB │ map:     8.70 kB
+apps/web build: dist/assets/IdentityPage-_-2ECdx3.js                                   2.95 kB │ gzip:   1.03 kB │ map:     7.76 kB
+apps/web build: dist/assets/api-DAoLpvC4.js                                            3.05 kB │ gzip:   1.00 kB │ map:    24.30 kB
+apps/web build: dist/assets/api-DBv_TQqX.js                                            3.07 kB │ gzip:   0.87 kB │ map:    12.48 kB
+apps/web build: dist/assets/ui-CjPzLEkf.js                                             3.09 kB │ gzip:   1.43 kB │ map:    12.63 kB
+apps/web build: dist/assets/ui-BCaPQZEZ.js                                             3.12 kB │ gzip:   1.29 kB │ map:    10.02 kB
+apps/web build: dist/assets/P2Badges-DDOQSR5C.js                                       3.17 kB │ gzip:   1.11 kB │ map:     9.55 kB
+apps/web build: dist/assets/ReviewPoliciesPage-BwqBPeYF.js                             3.26 kB │ gzip:   1.26 kB │ map:     9.07 kB
+apps/web build: dist/assets/WalkthroughPage-xVSHtGK8.js                                3.27 kB │ gzip:   1.30 kB │ map:    10.04 kB
+apps/web build: dist/assets/ui-BRz3yC4Z.js                                             3.32 kB │ gzip:   1.43 kB │ map:    11.59 kB
+apps/web build: dist/assets/TransformationDashboardPage-B9q1Q-v-.js                    3.33 kB │ gzip:   1.31 kB │ map:     9.74 kB
+apps/web build: dist/assets/ExportDialog-BCBjgQCv.js                                   3.39 kB │ gzip:   1.42 kB │ map:    10.55 kB
+apps/web build: dist/assets/ui-Cn1EnnA0.js                                             3.40 kB │ gzip:   1.51 kB │ map:    17.70 kB
+apps/web build: dist/assets/ConfigPinsPage-BlWfZFkH.js                                 3.49 kB │ gzip:   1.12 kB │ map:     9.67 kB
+apps/web build: dist/assets/RevisionProposalsPage-DuV6gQJN.js                          3.50 kB │ gzip:   1.33 kB │ map:    10.12 kB
+apps/web build: dist/assets/MyDraftsPage-DrHbuWIz.js                                   3.62 kB │ gzip:   1.42 kB │ map:     9.84 kB
+apps/web build: dist/assets/api-DYCT7qLK.js                                            3.69 kB │ gzip:   1.12 kB │ map:    16.27 kB
+apps/web build: dist/assets/RowActions-BGIsh05o.js                                     3.70 kB │ gzip:   1.50 kB │ map:    14.01 kB
+apps/web build: dist/assets/HomeRegions-O0G6DhSn.js                                    3.88 kB │ gzip:   1.48 kB │ map:    14.06 kB
+apps/web build: dist/assets/CoveragePage-CNRXh0A0.js                                   3.94 kB │ gzip:   1.47 kB │ map:     9.61 kB
+apps/web build: dist/assets/RegisterTable-CHQz4vkI.js                                  3.97 kB │ gzip:   1.72 kB │ map:    15.40 kB
+apps/web build: dist/assets/JobsPage-BOIlBzOL.js                                       4.00 kB │ gzip:   1.64 kB │ map:    11.53 kB
+apps/web build: dist/assets/ui-CU9YQ4wC.js                                             4.02 kB │ gzip:   1.50 kB │ map:    14.45 kB
+apps/web build: dist/assets/api-CRvwZCDX.js                                            4.02 kB │ gzip:   1.06 kB │ map:    16.30 kB
+apps/web build: dist/assets/api-2jSimTfe.js                                            4.05 kB │ gzip:   1.40 kB │ map:    17.42 kB
+apps/web build: dist/assets/shared-DwV7gWlF.js                                         4.22 kB │ gzip:   1.55 kB │ map:    15.87 kB
+apps/web build: dist/assets/ReviewPage-FR_ntd5J.js                                     4.22 kB │ gzip:   1.58 kB │ map:    12.19 kB
+apps/web build: dist/assets/DataQualityPage-C4mWgBjp.js                                4.27 kB │ gzip:   1.75 kB │ map:    11.59 kB
+apps/web build: dist/assets/finance-DyWenv8q.js                                        4.29 kB │ gzip:   1.95 kB │ map:    17.86 kB
+apps/web build: dist/assets/DataTable-BdjrCAaN.js                                      4.45 kB │ gzip:   1.81 kB │ map:    17.14 kB
+apps/web build: dist/assets/SourceCoveragePage-DfP387QY.js                             4.49 kB │ gzip:   1.62 kB │ map:    13.32 kB
+apps/web build: dist/assets/CutoffPackPage-DyZ1KBh5.js                                 4.60 kB │ gzip:   1.64 kB │ map:    12.10 kB
+apps/web build: dist/assets/ui-DvD2uF3h.js                                             4.63 kB │ gzip:   1.56 kB │ map:    17.94 kB
+apps/web build: dist/assets/GatesPage-DcVpsXHw.js                                      4.64 kB │ gzip:   1.76 kB │ map:    15.54 kB
+apps/web build: dist/assets/slips-B7QLoZDI.js                                          4.71 kB │ gzip:   1.62 kB │ map:    15.19 kB
+apps/web build: dist/assets/api-CGBER5T3.js                                            4.73 kB │ gzip:   1.31 kB │ map:    19.33 kB
+apps/web build: dist/assets/ProceduresAdminPage-BpyXNIf8.js                            4.75 kB │ gzip:   1.90 kB │ map:    13.37 kB
+apps/web build: dist/assets/ui-Dg7SiKCO.js                                             4.86 kB │ gzip:   1.99 kB │ map:    18.55 kB
+apps/web build: dist/assets/common-DFge7b8y.js                                         4.91 kB │ gzip:   2.00 kB │ map:    18.65 kB
+apps/web build: dist/assets/ExecutiveOverviewPage-BlqCYDL-.js                          4.96 kB │ gzip:   2.11 kB │ map:    16.32 kB
+apps/web build: dist/assets/PresentationPage-BF-z1JXD.js                               4.97 kB │ gzip:   1.76 kB │ map:    13.85 kB
+apps/web build: dist/assets/api-32bl0QLb.js                                            4.98 kB │ gzip:   1.18 kB │ map:    21.17 kB
+apps/web build: dist/assets/GateConditionsPage-CklQ6Tb6.js                             5.14 kB │ gzip:   1.98 kB │ map:    14.69 kB
+apps/web build: dist/assets/Workspace-B3tJmxDs.js                                      5.15 kB │ gzip:   1.83 kB │ map:    17.27 kB
+apps/web build: dist/assets/api-BGLXe8Jm.js                                            5.19 kB │ gzip:   1.46 kB │ map:    22.83 kB
+apps/web build: dist/assets/MyWorkSections-byJFIoaP.js                                 5.21 kB │ gzip:   1.98 kB │ map:    16.64 kB
+apps/web build: dist/assets/MeetingsPage-Cfsc-pYn.js                                   5.39 kB │ gzip:   2.07 kB │ map:    15.41 kB
+apps/web build: dist/assets/HealthSchemesPage-BmsZHGNm.js                              5.45 kB │ gzip:   1.62 kB │ map:    14.18 kB
+apps/web build: dist/assets/EnvironmentPage-BFfXxBFh.js                                5.45 kB │ gzip:   1.83 kB │ map:    15.02 kB
+apps/web build: dist/assets/MigrationsPage-HB8Bf6e5.js                                 5.56 kB │ gzip:   1.85 kB │ map:    16.40 kB
+apps/web build: dist/assets/MappingsPage-ydAsY0TO.js                                   5.59 kB │ gzip:   2.11 kB │ map:    17.32 kB
+apps/web build: dist/assets/RagPolicyPage-CZGhrtkd.js                                  5.61 kB │ gzip:   2.30 kB │ map:    18.80 kB
+apps/web build: dist/assets/UploadPolicyPage-B1VrkLRN.js                               5.73 kB │ gzip:   2.18 kB │ map:    16.69 kB
+apps/web build: dist/assets/StudioFormDialog-CNVgNVWH.js                               5.73 kB │ gzip:   2.31 kB │ map:    21.76 kB
+apps/web build: dist/assets/RoleMappingsPage-D5111rG9.js                               5.88 kB │ gzip:   2.10 kB │ map:    16.99 kB
+apps/web build: dist/assets/StudioPage-D-M3MziH.js                                     5.98 kB │ gzip:   2.28 kB │ map:    18.93 kB
+apps/web build: dist/assets/RecordPage-CD_1uQsy.js                                     5.98 kB │ gzip:   2.14 kB │ map:    16.49 kB
+apps/web build: dist/assets/p4ui-Cgsvb-gQ.js                                           6.00 kB │ gzip:   2.55 kB │ map:    25.17 kB
+apps/web build: dist/assets/p6-WnThu3fE.js                                             6.06 kB │ gzip:   1.68 kB │ map:    32.65 kB
+apps/web build: dist/assets/SensitivityPanel-MGxPzkil.js                               6.17 kB │ gzip:   2.13 kB │ map:    18.46 kB
+apps/web build: dist/assets/DayNinetyTestPage-DdzOzfFl.js                              6.23 kB │ gzip:   2.23 kB │ map:    17.72 kB
+apps/web build: dist/assets/ExportsPage-DEyqCyFt.js                                    6.23 kB │ gzip:   2.30 kB │ map:    18.77 kB
+apps/web build: dist/assets/BlockPage-8No4dHDy.js                                      6.40 kB │ gzip:   2.28 kB │ map:    18.94 kB
+apps/web build: dist/assets/MyProceduresPage-CbDuXDQH.js                               6.59 kB │ gzip:   2.24 kB │ map:    19.97 kB
+apps/web build: dist/assets/ReadinessPage-B8UJXziC.js                                  6.62 kB │ gzip:   1.95 kB │ map:    17.41 kB
+apps/web build: dist/assets/ui-Dio65W6g.js                                             6.68 kB │ gzip:   2.47 kB │ map:    22.44 kB
+apps/web build: dist/assets/SearchPage-BkuJ-tL4.js                                     6.76 kB │ gzip:   2.57 kB │ map:    21.83 kB
+apps/web build: dist/assets/jobsOperations-D6TwOuIg.js                                 6.77 kB │ gzip:   2.07 kB │ map:    17.98 kB
+apps/web build: dist/assets/p4-D7Xcs5rJ.js                                             6.84 kB │ gzip:   2.10 kB │ map:    28.39 kB
+apps/web build: dist/assets/FormulaPreviewPage-Dwkd1IKS.js                             6.91 kB │ gzip:   2.16 kB │ map:    18.87 kB
+apps/web build: dist/assets/ServiceIdentitiesPages-CBkhtwhC.js                         6.95 kB │ gzip:   2.25 kB │ map:    19.30 kB
+apps/web build: dist/assets/MyWorkPage-BJZCnoEQ.js                                     6.95 kB │ gzip:   2.38 kB │ map:    21.17 kB
+apps/web build: dist/assets/ImprovementPage-DOju5ec9.js                                7.03 kB │ gzip:   2.48 kB │ map:    19.72 kB
+apps/web build: dist/assets/TransformationEditPage-BomSg8PG.js                         7.09 kB │ gzip:   2.77 kB │ map:    24.58 kB
+apps/web build: dist/assets/AreaPages-75PradT9.js                                      7.12 kB │ gzip:   2.11 kB │ map:    21.95 kB
+apps/web build: dist/assets/MigrationPage-CKgoLVjv.js                                  7.13 kB │ gzip:   2.36 kB │ map:    20.72 kB
+apps/web build: dist/assets/RaciPage-BOkMdJXZ.js                                       7.14 kB │ gzip:   2.87 kB │ map:    22.33 kB
+apps/web build: dist/assets/ApprovalRoutesPage-CyUf6CfT.js                             7.33 kB │ gzip:   2.50 kB │ map:    19.23 kB
+apps/web build: dist/assets/TeamPage-D-BjIrS8.js                                       7.41 kB │ gzip:   2.70 kB │ map:    24.93 kB
+apps/web build: dist/assets/EvidenceRegisterPage-Bm2xlGmJ.js                           7.61 kB │ gzip:   2.13 kB │ map:    20.92 kB
+apps/web build: dist/assets/ScoringDefaultsPage-N3NvwcNg.js                            7.61 kB │ gzip:   2.85 kB │ map:    24.45 kB
+apps/web build: dist/assets/MeasurementPage-DeRd9mXb.js                                7.78 kB │ gzip:   2.28 kB │ map:    17.84 kB
+apps/web build: dist/assets/DelegationsPage-DqTsT4W8.js                                8.17 kB │ gzip:   2.68 kB │ map:    24.15 kB
+apps/web build: dist/assets/SensitiveGrantsPages-DePawAIR.js                           8.18 kB │ gzip:   2.58 kB │ map:    22.84 kB
+apps/web build: dist/assets/ActionsPage-myCGPkPV.js                                    8.35 kB │ gzip:   2.69 kB │ map:    24.63 kB
+apps/web build: dist/assets/OwnerUpdatesPage-CH0D47NK.js                               8.38 kB │ gzip:   3.05 kB │ map:    26.58 kB
+apps/web build: dist/assets/TrainingPage-DziOtGrK.js                                   8.45 kB │ gzip:   2.78 kB │ map:    23.91 kB
+apps/web build: dist/assets/StoragePage-CYLNO_0k.js                                    8.52 kB │ gzip:   2.99 kB │ map:    26.96 kB
+apps/web build: dist/assets/CapacityPage-Bc47RcdG.js                                   8.56 kB │ gzip:   2.82 kB │ map:    29.12 kB
+apps/web build: dist/assets/api-CMVGzk1e.js                                            8.65 kB │ gzip:   3.21 kB │ map:    49.07 kB
+apps/web build: dist/assets/NotificationPreferencesPage-xtUdoqDZ.js                    8.73 kB │ gzip:   2.60 kB │ map:    25.38 kB
+apps/web build: dist/assets/OutboundWritesPage-DP1-AN1z.js                             8.75 kB │ gzip:   2.47 kB │ map:    23.02 kB
+apps/web build: dist/assets/TransformationListPage-UwalSH1g.js                         8.75 kB │ gzip:   2.85 kB │ map:    26.75 kB
+apps/web build: dist/assets/BusinessCasesPage-CT12gOv2.js                              8.77 kB │ gzip:   3.26 kB │ map:    26.50 kB
+apps/web build: dist/assets/TransformationCreatePage-DMUhcsU5.js                       8.92 kB │ gzip:   2.88 kB │ map:    27.98 kB
+apps/web build: dist/assets/ui-B1AaKVPz.js                                             9.04 kB │ gzip:   2.69 kB │ map:    32.95 kB
+apps/web build: dist/assets/AuditPages-BwI6ezoo.js                                     9.15 kB │ gzip:   2.79 kB │ map:    25.96 kB
+apps/web build: dist/assets/InterventionsPage-ZkqKEm6H.js                              9.24 kB │ gzip:   2.82 kB │ map:    26.33 kB
+apps/web build: dist/assets/DraftRecovery-BUikOlTF.js                                  9.29 kB │ gzip:   3.36 kB │ map:    40.61 kB
+apps/web build: dist/assets/KpisPage-DM7osn05.js                                       9.37 kB │ gzip:   2.84 kB │ map:    26.05 kB
+apps/web build: dist/assets/ChangeRequestsPage-BZERLGOH.js                             9.41 kB │ gzip:   3.08 kB │ map:    27.41 kB
+apps/web build: dist/assets/IndicatorsPage-C3N_fA-T.js                                 9.47 kB │ gzip:   2.96 kB │ map:    27.43 kB
+apps/web build: dist/assets/ImportsPage-h8bH-1U1.js                                    9.60 kB │ gzip:   3.09 kB │ map:    27.61 kB
+apps/web build: dist/assets/GroupsPage-CyRJDrp9.js                                     9.70 kB │ gzip:   3.04 kB │ map:    29.15 kB
+apps/web build: dist/assets/p5-Bso7Ucb-.js                                             9.87 kB │ gzip:   2.35 kB │ map:    41.04 kB
+apps/web build: dist/assets/KpiActualPage-B3zFXNiP.js                                 10.24 kB │ gzip:   3.07 kB │ map:    29.17 kB
+apps/web build: dist/assets/LessonsPage-DwX2P2jU.js                                   10.24 kB │ gzip:   3.31 kB │ map:    29.14 kB
+apps/web build: dist/assets/FailuresPage-B5AICDWS.js                                  10.38 kB │ gzip:   2.84 kB │ map:    27.10 kB
+apps/web build: dist/assets/FormSchemaPage-CKqyKsPE.js                                10.40 kB │ gzip:   3.59 kB │ map:    32.27 kB
+apps/web build: dist/assets/editing-B76y9DpH.js                                       10.44 kB │ gzip:   3.14 kB │ map:    34.79 kB
+apps/web build: dist/assets/ui-CMnHHGLm.js                                            10.45 kB │ gzip:   3.44 kB │ map:    36.11 kB
+apps/web build: dist/assets/ImportPage-DxhBA5vY.js                                    10.57 kB │ gzip:   3.27 kB │ map:    29.97 kB
+apps/web build: dist/assets/ReaderPage-BmOsvYAl.js                                    10.80 kB │ gzip:   3.05 kB │ map:    31.26 kB
+apps/web build: dist/assets/CalendarPage-Dn5rCpTV.js                                  10.98 kB │ gzip:   3.52 kB │ map:    34.33 kB
+apps/web build: dist/assets/ReportsPage-C52FLMYP.js                                   11.43 kB │ gzip:   3.37 kB │ map:    33.53 kB
+apps/web build: dist/assets/AssistantSettingsPage-B7EBI32x.js                         11.53 kB │ gzip:   3.28 kB │ map:    33.89 kB
+apps/web build: dist/assets/RaidPage-CYmx2HIZ.js                                      11.89 kB │ gzip:   3.55 kB │ map:    34.25 kB
+apps/web build: dist/assets/FinancialMetricsPage-jhgqrc5Q.js                          12.30 kB │ gzip:   3.42 kB │ map:    34.45 kB
+apps/web build: dist/assets/SnapshotPage-CGyl9NuL.js                                  12.58 kB │ gzip:   3.33 kB │ map:    36.52 kB
+apps/web build: dist/assets/ModularPage-s_bLzyVJ.js                                   12.73 kB │ gzip:   3.67 kB │ map:    35.51 kB
+apps/web build: dist/assets/NotificationChannelsPages-C7OU1WJz.js                     12.76 kB │ gzip:   4.01 kB │ map:    39.50 kB
+apps/web build: dist/assets/HealthCheckPage-B3Gf16Tp.js                               12.78 kB │ gzip:   3.89 kB │ map:    39.25 kB
+apps/web build: dist/assets/ChangeRequestPage-C8vVn_-1.js                             13.10 kB │ gzip:   3.97 kB │ map:    36.43 kB
+apps/web build: dist/assets/DashboardsPage-D4wKmpJ5.js                                13.17 kB │ gzip:   3.86 kB │ map:    38.53 kB
+apps/web build: dist/assets/OperationsPages-DsuFwKDF.js                               13.31 kB │ gzip:   3.49 kB │ map:    39.40 kB
+apps/web build: dist/assets/BauPage-Bv-aaff-.js                                       13.34 kB │ gzip:   3.92 kB │ map:    37.68 kB
+apps/web build: dist/assets/useListView-mOdWV4al.js                                   13.67 kB │ gzip:   4.24 kB │ map:    53.03 kB
+apps/web build: dist/assets/DispensationsPage-B3MO7Q7R.js                             13.77 kB │ gzip:   4.18 kB │ map:    40.91 kB
+apps/web build: dist/assets/BenefitFormulasPage-BhurgHf7.js                           13.98 kB │ gzip:   4.63 kB │ map:    44.72 kB
+apps/web build: dist/assets/WebhooksPage-CDPcj9Hu.js                                  14.05 kB │ gzip:   4.15 kB │ map:    40.66 kB
+apps/web build: dist/assets/RecordForm-CDLTDPpX.js                                    14.17 kB │ gzip:   4.98 kB │ map:    63.65 kB
+apps/web build: dist/assets/ControlsPage--m5Zw618.js                                  14.31 kB │ gzip:   3.91 kB │ map:    41.24 kB
+apps/web build: dist/assets/DecisionsPage-BB9rTCEa.js                                 14.32 kB │ gzip:   4.32 kB │ map:    42.35 kB
+apps/web build: dist/assets/KpiRestatementPages-DsfvC1Ka.js                           14.53 kB │ gzip:   4.05 kB │ map:    43.61 kB
+apps/web build: dist/assets/ConnectorFormPage-Cf8mf_Bo.js                             15.10 kB │ gzip:   4.40 kB │ map:    44.58 kB
+apps/web build: dist/assets/HandoverPage-AujMwO0J.js                                  15.17 kB │ gzip:   4.52 kB │ map:    43.31 kB
+apps/web build: dist/assets/AdoptionPage-BlIbqoGX.js                                  15.41 kB │ gzip:   4.36 kB │ map:    43.79 kB
+apps/web build: dist/assets/ApprovalsPage-ClowECDi.js                                 15.55 kB │ gzip:   4.42 kB │ map:    44.16 kB
+apps/web build: dist/assets/LaunchPlanPage-A_YmdbXk.js                                15.74 kB │ gzip:   4.38 kB │ map:    46.41 kB
+apps/web build: dist/assets/PhasesPage-D-aq0wIp.js                                    16.11 kB │ gzip:   4.74 kB │ map:    49.64 kB
+apps/web build: dist/assets/DecisionRightsPage-BaEANUBW.js                            16.31 kB │ gzip:   4.84 kB │ map:    46.97 kB
+apps/web build: dist/assets/RulesPage-BRy-BT4M.js                                     16.39 kB │ gzip:   4.41 kB │ map:    50.31 kB
+apps/web build: dist/assets/PortfolioPage-CWfE0Q-I.js                                 16.66 kB │ gzip:   5.60 kB │ map:    57.70 kB
+apps/web build: dist/assets/OrganizationsPage-DgQRLdCI.js                             17.06 kB │ gzip:   4.33 kB │ map:    52.81 kB
+apps/web build: dist/assets/ExecutiveDecisionsPage-DmcBUQfa.js                        17.08 kB │ gzip:   4.80 kB │ map:    49.99 kB
+apps/web build: dist/assets/DependenciesPage-CT_4WxMq.js                              17.13 kB │ gzip:   5.10 kB │ map:    55.65 kB
+apps/web build: dist/assets/StructurePages-XZZ0sPj0.js                                17.16 kB │ gzip:   3.95 kB │ map:    52.60 kB
+apps/web build: dist/assets/FinanceValidationPages-BkTVY1sP.js                        17.26 kB │ gzip:   4.95 kB │ map:    50.22 kB
+apps/web build: dist/assets/CorrectivePages-B5Ps79Na.js                               17.28 kB │ gzip:   4.68 kB │ map:    51.21 kB
+apps/web build: dist/assets/ForumsPage-DTwsboh1.js                                    17.30 kB │ gzip:   4.90 kB │ map:    49.40 kB
+apps/web build: dist/assets/KpiUpdatePage-B9g8xW_R.js                                 17.50 kB │ gzip:   5.31 kB │ map:    53.11 kB
+apps/web build: dist/assets/EvidencePage-BuxBPQwZ.js                                  17.60 kB │ gzip:   5.42 kB │ map:    53.27 kB
+apps/web build: dist/assets/panels--PrdDcwR.js                                        18.21 kB │ gzip:   5.19 kB │ map:    68.91 kB
+apps/web build: dist/assets/RulePage-CcCslIV9.js                                      18.36 kB │ gzip:   5.36 kB │ map:    55.43 kB
+apps/web build: dist/assets/CreateChangeRequest-CUhcwJ5A.js                           18.79 kB │ gzip:   6.05 kB │ map:    65.24 kB
+apps/web build: dist/assets/InstancePage-DFKHcPJz.js                                  18.80 kB │ gzip:   5.56 kB │ map:    61.34 kB
+apps/web build: dist/assets/CharterPage-DUM__tgl.js                                   19.64 kB │ gzip:   5.24 kB │ map:    55.14 kB
+apps/web build: dist/assets/ClosurePage-MjHcVA4z.js                                   21.61 kB │ gzip:   5.35 kB │ map:    64.50 kB
+apps/web build: dist/assets/BrandingPage-DqfFum5t.js                                  21.73 kB │ gzip:   5.75 kB │ map:    66.48 kB
+apps/web build: dist/assets/RoadmapPage-BkdyweqE.js                                   23.59 kB │ gzip:   6.32 kB │ map:    72.47 kB
+apps/web build: dist/assets/ConnectorsPage-a5MxFXkT.js                                23.67 kB │ gzip:   5.24 kB │ map:    62.06 kB
+apps/web build: dist/assets/FormsPage-CSQf5bKp.js                                     24.36 kB │ gzip:   6.71 kB │ map:    79.52 kB
+apps/web build: dist/assets/AssignmentsPage-oGfAHGbD.js                               24.51 kB │ gzip:   6.82 kB │ map:    75.55 kB
+apps/web build: dist/assets/DefinitionPage-De99G3op.js                                24.68 kB │ gzip:   6.12 kB │ map:    71.32 kB
+apps/web build: dist/assets/RegisterPages-COdlccgo.js                                 24.70 kB │ gzip:   5.96 kB │ map:    72.32 kB
+apps/web build: dist/assets/DiagnosePage-BB9QI2OK.js                                  25.07 kB │ gzip:   5.80 kB │ map:    73.04 kB
+apps/web build: dist/assets/GateP4-C3fULLHF.js                                        25.62 kB │ gzip:   6.50 kB │ map:    79.74 kB
+apps/web build: dist/assets/BenefitsPage-DMSclOOL.js                                  25.75 kB │ gzip:   7.21 kB │ map:    80.33 kB
+apps/web build: dist/assets/ExtensionEntry-6iMjw25Z.js                                26.37 kB │ gzip:   7.75 kB │ map:   100.49 kB
+apps/web build: dist/assets/DefinePage-D5nbdQw0.js                                    27.15 kB │ gzip:   7.04 kB │ map:    78.83 kB
+apps/web build: dist/assets/BenefitFormulaPage-DyUvkPLP.js                            27.32 kB │ gzip:   7.74 kB │ map:    88.15 kB
+apps/web build: dist/assets/benefit-realized-XjyXCqNw.js                              27.56 kB │ gzip:   8.73 kB │ map:   146.07 kB
+apps/web build: dist/assets/MeetingPage-BCDyMXHT.js                                   27.56 kB │ gzip:   6.81 kB │ map:    82.00 kB
+apps/web build: dist/assets/VersionPage-CozPCTpi.js                                   28.00 kB │ gzip:   7.35 kB │ map:    88.98 kB
+apps/web build: dist/assets/TransformationDetailPage-CZqoUGiw.js                      28.06 kB │ gzip:   8.00 kB │ map:    90.05 kB
+apps/web build: dist/assets/TraceabilityPage-xuUPQGxx.js                              28.79 kB │ gzip:   7.32 kB │ map:    89.87 kB
+apps/web build: dist/assets/BusinessCasePage-zgjIAbOk.js                              30.04 kB │ gzip:   8.68 kB │ map:    96.28 kB
+apps/web build: dist/assets/KpiPage-BBrM2Q0o.js                                       31.68 kB │ gzip:   7.84 kB │ map:    90.32 kB
+apps/web build: dist/assets/GateDetailPage-C93FNkkl.js                                32.55 kB │ gzip:   9.16 kB │ map:   108.20 kB
+apps/web build: dist/assets/ui-CxGyL602.js                                            34.21 kB │ gzip:   9.24 kB │ map:   119.42 kB
+apps/web build: dist/assets/BenefitPage-DMXehMRE.js                                   36.41 kB │ gzip:   8.90 kB │ map:   106.43 kB
+apps/web build: dist/assets/PrioritizationPage-BF7i7VKk.js                            40.28 kB │ gzip:  10.15 kB │ map:   132.11 kB
+apps/web build: dist/assets/DesignPage-B75AydFy.js                                    41.54 kB │ gzip:   9.17 kB │ map:   125.80 kB
+apps/web build: dist/assets/vendor-i18n-DIgLw1Ps.js                                   49.18 kB │ gzip:  16.30 kB │ map:   166.95 kB
+apps/web build: dist/assets/InitiativePage-BMoMfzfA.js                                71.12 kB │ gzip:  16.97 kB │ map:   229.37 kB
+apps/web build: dist/assets/vendor-tanstack-BC_PukRK.js                               85.98 kB │ gzip:  23.77 kB │ map:   376.13 kB
+apps/web build: dist/assets/vendor-forms-DLh3TFGs.js                                 152.26 kB │ gzip:  48.69 kB │ map:   891.20 kB
+apps/web build: dist/assets/vendor-react-BooCP96l.js                                 286.32 kB │ gzip:  91.97 kB │ map: 1,446.43 kB
+apps/web build: dist/assets/index-GB3pIwk7.js                                      1,820.58 kB │ gzip: 494.68 kB │ map: 1,741.19 kB
+apps/web build: ✓ built in 14.72s
+apps/web build: (!) Some chunks are larger than 500 kB after minification. Consider:
+apps/web build: - Using dynamic import() to code-split the application
+apps/web build: - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+apps/web build: - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+apps/web build: Done
+packages/db build$ tsc -p tsconfig.build.json
+packages/db build: Done
+apps/api build$ tsc -p tsconfig.build.json
+apps/worker build$ tsc -p tsconfig.build.json
+apps/worker build: Done
+apps/api build: Done
++ echo build-exit=0
+build-exit=0
++ git status --short
++ wc -l
+0
++ du -sh /var/tmp/mth-run.RtlPw1/claude-0/r/w1
+669M	/var/tmp/mth-run.RtlPw1/claude-0/r/w1
++ df -h /var/tmp/mth-run.RtlPw1/claude-0/r
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/vda        252G   36G  2.6G  94% /var/tmp/mth-run.RtlPw1/claude-0
++ set +x
+exit=0

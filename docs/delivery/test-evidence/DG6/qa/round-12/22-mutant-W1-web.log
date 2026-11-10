@@ -1,0 +1,811 @@
+## 2026-11-10T03:38:25Z node v24.21.0 LANG=unset LC_ALL=unset load 23.92 17.18 10.41
+## cmd: cat /var/tmp/mth-run.Cvumyb/claude-0/mut-W1.txt; git diff -- apps/web/src; npx vitest run --configLoader runner --project unit-web apps/web/src/pages/automation/rule-editor-tokens-z14.test.tsx apps/web/src/pages/automation/fed.test.tsx apps/web/src/components/sensitivity
+W1: patched apps/web/src/pages/automation/RulePage.tsx
+diff --git a/apps/web/src/pages/automation/RulePage.tsx b/apps/web/src/pages/automation/RulePage.tsx
+index ca848adbc..5d33323f7 100644
+--- a/apps/web/src/pages/automation/RulePage.tsx
++++ b/apps/web/src/pages/automation/RulePage.tsx
+@@ -484,7 +484,7 @@ function EditContent({
+             },
+           })
+           .then((saved) => {
+-            if (saved !== null) setForm({ from: saved.version, draft: loadDraft(saved) });
++            void saved;
+           });
+       }}
+     >
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.Cvumyb/claude-0/c2
+
+ ✓ |unit-web| src/pages/automation/fed.test.tsx (28 tests) 24795ms
+   ✓ REQ-S12-022: the jobs operations view > en: never-run is "Never run", a disabled job is "Disabled", the next run is a time  1491ms
+   ✓ REQ-S12-022: the jobs operations view > ar: never-run is "Never run", a disabled job is "Disabled", the next run is a time  838ms
+   ✓ REQ-S12-022: the jobs operations view > a non-admin gets the server's 403 as the no-permission state; run now posts the job  1236ms
+   ✓ REQ-S12-001 / S12-002: an automation rule > a draft's dry run is Not run; submit without it is the translated 422; enable sends the rule's If-Match  2092ms
+   ✓ REQ-S12-001 / S12-002: an automation rule > a dry run shows what each action would do and that nothing was created  1139ms
+   ✓ REQ-S12-001 / S12-002: an automation rule > en: T-DG6-BE-Z12B: a condition whose literal names a restricted record shows the restricted label  558ms
+   ✓ D-164 d: the dry-run sample comes from the trigger's samplePayload > en: the stubbed catalogue's sample is pre-filled with the rule's transformation and is sent as is  962ms
+   ✓ D-164 d: the dry-run sample comes from the trigger's samplePayload > ar: the stubbed catalogue's sample is pre-filled with the rule's transformation and is sent as is  845ms
+   ✓ REQ-S12-002: the failure queue > retry sends If-Match; 422 automation_failure.not_open is one translated alert  2025ms
+   ✓ T-DG6-BE-Z13C (D-228 (3), D-227, D-218): the restricted label on the failure queue and an execution > en: a failure whose key or error text is masked carries the item label; an unrelated one does not  964ms
+   ✓ T-DG6-BE-Z13C (D-228 (3), D-227, D-218): the restricted label on the failure queue and an execution > en: an execution whose trigger key is masked carries the item label  365ms
+   ✓ T-DG6-BE-Z13C (D-228 (3), D-227, D-218): the restricted label on the failure queue and an execution > ar: a failure whose key or error text is masked carries the item label; an unrelated one does not  1228ms
+   ✓ REQ-S06-002: a procedure instance > en: current step, assignee role, Unknown due date, missing inputs; completing is refused translated  1253ms
+   ✓ REQ-S06-002: a procedure instance > ar: current step, assignee role, Unknown due date, missing inputs; completing is refused translated  1587ms
+   ✓ REQ-S06-001: the procedure builder > validation lists every finding, translated by its code  1831ms
+   ✓ REQ-S12-025: notification preferences > the first save sends If-Match "0"; the quiet-hours refusal is translated  1516ms
+   ✓ REQ-S12-025: notification preferences > ar: the auditor reads the preferences but has no save action  302ms
+   ✓ REQ-S12-015: the meeting cut-off pack > "No reviewer assigned"; the review sends If-Match; 403 not_reviewer is translated  1365ms
+   ✓ REQ-S10-015: an approval route > in a sequential route step 2 is waiting and not notified until step 1 approves  397ms
+ ❯ |unit-web| src/pages/automation/rule-editor-tokens-z14.test.tsx (15 tests | 2 failed) 67726ms
+   × en: after a save the form reloads from the saved version, so the second save sends its tokens 11098ms
+     → expected '[restricted:3f9c0a7e51b2d48c6a0e9f17:…' to be '[restricted:b80d42e6a1c9375f0e2b8d64:…' // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head>[39m
+    [36m<title>[39m
+      [0mAutomation rule · Mobily Transformation Hub[0m
+    [36m</title>[39m
+  [36m</head>[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"app"[39m
+      [36m>[39m
+        [36m<a[39m
+          [33mclass[39m=[32m"skip-link"[39m
+          [33mhref[39m=[32m"#main"[39m
+        [36m>[39m
+          [0mSkip to main content[0m
+        [36m</a>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"app-header"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-controls[39m=[32m"_r_0_"[39m
+            [33maria-expanded[39m=[32m"false"[39m
+            [33mclass[39m=[32m"button button--ghost-inverse nav-toggle"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"icon"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"16"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.8"[39m
+              [33mviewBox[39m=[32m"0 0 20 20"[39m
+              [33mwidth[39m=[32m"16"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M3 5h14M3 10h14M3 15h14"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"visually-hidden"[39m
+            [36m>[39m
+              [0mShow or hide navigation[0m
+            [36m</span>[39m
+          [36m</button>[39m
+          [36m<a[39m
+            [33mclass[39m=[32m"wordmark"[39m
+            [33mdata-discover[39m=[32m"true"[39m
+            [33mdata-testid[39m=[32m"wordmark"[39m
+            [33mhref[39m=[32m"/"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"wordmark__name"[39m
+            [36m>[39m
+              [0mMobily Transformation Hub[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"badge badge--provisional"[39m
+              [33mdata-testid[39m=[32m"provisional-badge"[39m
+              [33mtitle[39m=[32m"Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values."[39m
+            [36m>[39m
+              [0mProvisional[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"visually-hidden"[39m
+            [36m>[39m
+              [0mProvisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values.[0m
+            [36m</span>[39m
+          [36m</a>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"app-header__spacer"[39m
+          [36m/>[39m
+          [36m<div[39m
+            [33maria-label[39m=[32m"Search records"[39m
+            [33mclass[39m=[32m"global-search"[39m
+            [33mrole[39m=[32m"search"[39m
+          [36m>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"visually-hidden"[39m
+              [33mfor[39m=[32m"_r_1_"[39m
+            [36m>[39m
+              [0mSearch for[0m
+            [36m</label>[39m
+            [36m<input[39m
+              [33maria-invalid[39m=[32m"false"[39m
+              [33mclass[39m=[32m"global-search__input"[39m
+              [33mdata-global-search[39m=[32m"true"[39m
+              [33menterkeyhint[39m=[32m"search"[39m
+              [33mid[39m=[32m"_r_1_"[39m
+              [33minputmode[39m=[32m"search"[39m
+              [33mmaxlength[39m=[32m"200"[39m
+              [33mplaceholder[39m=[32m"Search records"[39m
+              [33mtype[39m=[32m"text"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"Search records"[39m
+              [33mclass[39m=[32m"button button--ghost-inverse button--small"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mSearch[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"language-switch"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"Switch language to العربية"[39m
+              [33mclass[39m=[32m"button button--ghost-inverse button--small"[39m
+              [33mlang[39m=[32m"ar"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mالعربية[0m
+            [36m</button>[39m
+          [36m</span>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"user-box"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"user-box__name"[39m
+            [36m>[39m
+              [0mSynthetic Test User[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"user-box__org"[39m
+            [36m>[39m
+              [0mSynthetic Organization[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"button button--ghost-inverse button--small"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"icon"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"16"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.8"[39m
+              [33mviewBox[39m=[32m"0 0 20 20"[39m
+              [33mwidth[39m=[32m"16"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M8 4H4v12h4M12 6l4 4-4 4M16 10H8"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [36m<span[39m
+              [33mclass[39m=[32m"app-header__label"[39m
+            [36m>[39m
+              [0mSign out[0m
+            [36m</span>[39m
+          [36m</button>[39m
+        [36m</header>[39m
+        [36m<div[39m
+          [33maria-atomic[39m=[32m"true"[39m
+          [33maria-live[39m=[32m"polite"[39m
+          [33mclass[39m=[32m"app-notice language-switch__live"[39m
+          [33mlang[39m=[32m"en"[39m
+        [36m/>[39m
+        [36m...
+   ✓ en: after a 409 the form reloads the current version, says the rule changed (not the stale-token text), and never re-sends stale tokens  2152ms
+   ✓ en: an issuer-bound token shows the restricted label (D-226, Z15)  1843ms
+   ✓ en: a token pasted from another version of the rule gets the 422 problem text, not "this rule changed"; the form reloads the stored version (Z16)  5803ms
+   ✓ en: a token pasted from another rule gets the 422 problem text, not "this rule changed"; the form reloads the stored version (Z16)  4041ms
+   ✓ en: a token in the retired pre-0127 form gets the 422 problem text, not "this rule changed"; the form reloads the stored version (Z16)  3289ms
+   ✓ en: the stale-token problem text is true in the editor flow (Z16) 1ms
+   × ar: after a save the form reloads from the saved version, so the second save sends its tokens 7589ms
+     → expected '[restricted:3f9c0a7e51b2d48c6a0e9f17:…' to be '[restricted:b80d42e6a1c9375f0e2b8d64:…' // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"rtl"[39m
+  [33mlang[39m=[32m"ar"[39m
+[36m>[39m
+  [36m<head>[39m
+    [36m<title>[39m
+      [0mقاعدة أتمتة · منصة موبايلي للتحوّل[0m
+    [36m</title>[39m
+  [36m</head>[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"app"[39m
+      [36m>[39m
+        [36m<a[39m
+          [33mclass[39m=[32m"skip-link"[39m
+          [33mhref[39m=[32m"#main"[39m
+        [36m>[39m
+          [0mانتقل إلى المحتوى الرئيسي[0m
+        [36m</a>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"app-header"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-controls[39m=[32m"_r_14_"[39m
+            [33maria-expanded[39m=[32m"false"[39m
+            [33mclass[39m=[32m"button button--ghost-inverse nav-toggle"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"icon"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"16"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.8"[39m
+              [33mviewBox[39m=[32m"0 0 20 20"[39m
+              [33mwidth[39m=[32m"16"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M3 5h14M3 10h14M3 15h14"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"visually-hidden"[39m
+            [36m>[39m
+              [0mإظهار التنقل أو إخفاؤه[0m
+            [36m</span>[39m
+          [36m</button>[39m
+          [36m<a[39m
+            [33mclass[39m=[32m"wordmark"[39m
+            [33mdata-discover[39m=[32m"true"[39m
+            [33mdata-testid[39m=[32m"wordmark"[39m
+            [33mhref[39m=[32m"/"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"wordmark__name"[39m
+            [36m>[39m
+              [0mمنصة موبايلي للتحوّل[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"badge badge--provisional"[39m
+              [33mdata-testid[39m=[32m"provisional-badge"[39m
+              [33mtitle[39m=[32m"شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة."[39m
+            [36m>[39m
+              [0mمؤقت[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"visually-hidden"[39m
+            [36m>[39m
+              [0mشعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة.[0m
+            [36m</span>[39m
+          [36m</a>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"app-header__spacer"[39m
+          [36m/>[39m
+          [36m<div[39m
+            [33maria-label[39m=[32m"البحث في السجلات"[39m
+            [33mclass[39m=[32m"global-search"[39m
+            [33mrole[39m=[32m"search"[39m
+          [36m>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"visually-hidden"[39m
+              [33mfor[39m=[32m"_r_15_"[39m
+            [36m>[39m
+              [0mابحث عن[0m
+            [36m</label>[39m
+            [36m<input[39m
+              [33maria-invalid[39m=[32m"false"[39m
+              [33mclass[39m=[32m"global-search__input"[39m
+              [33mdata-global-search[39m=[32m"true"[39m
+              [33menterkeyhint[39m=[32m"search"[39m
+              [33mid[39m=[32m"_r_15_"[39m
+              [33minputmode[39m=[32m"search"[39m
+              [33mmaxlength[39m=[32m"200"[39m
+              [33mplaceholder[39m=[32m"ابحث في السجلات"[39m
+              [33mtype[39m=[32m"text"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"البحث في السجلات"[39m
+              [33mclass[39m=[32m"button button--ghost-inverse button--small"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mبحث[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"language-switch"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"تغيير اللغة إلى English"[39m
+              [33mclass[39m=[32m"button button--ghost-inverse button--small"[39m
+              [33mlang[39m=[32m"en"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mEnglish[0m
+            [36m</button>[39m
+          [36m</span>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"user-box"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"user-box__name"[39m
+            [36m>[39m
+              [0mSynthetic Test User[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"user-box__org"[39m
+            [36m>[39m
+              [0mجهة اصطناعية[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"button button--ghost-inverse button--small"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"icon"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"16"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.8"[39m
+              [33mviewBox[39m=[32m"0 0 20 20"[39m
+              [33mwidth[39m=[32m"16"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M8 4H4v12h4M12 6l4 4-4 4M16 10H8"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [36m<span[39m
+              [33mclass[39m=[32m"app-header__label"[39m
+            [36m>[39m
+              [0mتسجيل الخروج[0m
+            [36m</span>[39m
+          [36m</button>[39m
+        [36m</header>[39m
+        [36m<div[39m
+          [33maria-atomic[39m=[32m"true"[39m
+          [33maria-live[39m=[32m"polite"[39m
+          [33mclass[39m=[32m"app-notice language-switch__live"[39m
+          [33mlang[39m=[32m"ar"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"app-body"[39m
+        [36m>[39m
+          [3...
+   ✓ ar: after a 409 the form reloads the current version, says the rule changed (not the stale-token text), and never re-sends stale tokens  1494ms
+   ✓ ar: an issuer-bound token shows the restricted label (D-226, Z15)  756ms
+   ✓ ar: a token pasted from another version of the rule gets the 422 problem text, not "this rule changed"; the form reloads the stored version (Z16)  1321ms
+   ✓ ar: a token pasted from another rule gets the 422 problem text, not "this rule changed"; the form reloads the stored version (Z16)  1148ms
+   ✓ ar: a token in the retired pre-0127 form gets the 422 problem text, not "this rule changed"; the form reloads the stored version (Z16)  2132ms
+   ✓ ar: the stale-token problem text is true in the editor flow (Z16) 0ms
+   ✓ another 422 (not a stale token) keeps the author's draft and shows the problem text  1771ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-web| src/pages/automation/rule-editor-tokens-z14.test.tsx > en: after a save the form reloads from the saved version, so the second save sends its tokens
+AssertionError: expected '[restricted:3f9c0a7e51b2d48c6a0e9f17:…' to be '[restricted:b80d42e6a1c9375f0e2b8d64:…' // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"ltr"[39m
+  [33mlang[39m=[32m"en"[39m
+[36m>[39m
+  [36m<head>[39m
+    [36m<title>[39m
+      [0mAutomation rule · Mobily Transformation Hub[0m
+    [36m</title>[39m
+  [36m</head>[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"app"[39m
+      [36m>[39m
+        [36m<a[39m
+          [33mclass[39m=[32m"skip-link"[39m
+          [33mhref[39m=[32m"#main"[39m
+        [36m>[39m
+          [0mSkip to main content[0m
+        [36m</a>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"app-header"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-controls[39m=[32m"_r_0_"[39m
+            [33maria-expanded[39m=[32m"false"[39m
+            [33mclass[39m=[32m"button button--ghost-inverse nav-toggle"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"icon"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"16"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.8"[39m
+              [33mviewBox[39m=[32m"0 0 20 20"[39m
+              [33mwidth[39m=[32m"16"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M3 5h14M3 10h14M3 15h14"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"visually-hidden"[39m
+            [36m>[39m
+              [0mShow or hide navigation[0m
+            [36m</span>[39m
+          [36m</button>[39m
+          [36m<a[39m
+            [33mclass[39m=[32m"wordmark"[39m
+            [33mdata-discover[39m=[32m"true"[39m
+            [33mdata-testid[39m=[32m"wordmark"[39m
+            [33mhref[39m=[32m"/"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"wordmark__name"[39m
+            [36m>[39m
+              [0mMobily Transformation Hub[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"badge badge--provisional"[39m
+              [33mdata-testid[39m=[32m"provisional-badge"[39m
+              [33mtitle[39m=[32m"Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values."[39m
+            [36m>[39m
+              [0mProvisional[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"visually-hidden"[39m
+            [36m>[39m
+              [0mProvisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values.[0m
+            [36m</span>[39m
+          [36m</a>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"app-header__spacer"[39m
+          [36m/>[39m
+          [36m<div[39m
+            [33maria-label[39m=[32m"Search records"[39m
+            [33mclass[39m=[32m"global-search"[39m
+            [33mrole[39m=[32m"search"[39m
+          [36m>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"visually-hidden"[39m
+              [33mfor[39m=[32m"_r_1_"[39m
+            [36m>[39m
+              [0mSearch for[0m
+            [36m</label>[39m
+            [36m<input[39m
+              [33maria-invalid[39m=[32m"false"[39m
+              [33mclass[39m=[32m"global-search__input"[39m
+              [33mdata-global-search[39m=[32m"true"[39m
+              [33menterkeyhint[39m=[32m"search"[39m
+              [33mid[39m=[32m"_r_1_"[39m
+              [33minputmode[39m=[32m"search"[39m
+              [33mmaxlength[39m=[32m"200"[39m
+              [33mplaceholder[39m=[32m"Search records"[39m
+              [33mtype[39m=[32m"text"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"Search records"[39m
+              [33mclass[39m=[32m"button button--ghost-inverse button--small"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mSearch[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"language-switch"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"Switch language to العربية"[39m
+              [33mclass[39m=[32m"button button--ghost-inverse button--small"[39m
+              [33mlang[39m=[32m"ar"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mالعربية[0m
+            [36m</button>[39m
+          [36m</span>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"user-box"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"user-box__name"[39m
+            [36m>[39m
+              [0mSynthetic Test User[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"user-box__org"[39m
+            [36m>[39m
+              [0mSynthetic Organization[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"button button--ghost-inverse button--small"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"icon"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"16"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.8"[39m
+              [33mviewBox[39m=[32m"0 0 20 20"[39m
+              [33mwidth[39m=[32m"16"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M8 4H4v12h4M12 6l4 4-4 4M16 10H8"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [36m<span[39m
+              [33mclass[39m=[32m"app-header__label"[39m
+            [36m>[39m
+              [0mSign out[0m
+            [36m</span>[39m
+          [36m</button>[39m
+        [36m</header>[39m
+        [36m<div[39m
+          [33maria-atomic[39m=[32m"true"[39m
+          [33maria-live[39m=[32m"polite"[39m
+          [33mclass[39m=[32m"app-notice language-switch__live"[39m
+          [33mlang[39m=[32m"en"[39m
+        [36m/>[39m
+        [36m...
+
+Expected: [32m"[restricted:[7mb80d42e6a1c9375f0e2b8d64:1[27m]"[39m
+Received: [31m"[restricted:[7m3f9c0a7e51b2d48c6a0e9f17:2[27m]"[39m
+
+ ❯ src/pages/automation/rule-editor-tokens-z14.test.tsx:234:50
+    232|     fireEvent.click(await screen.findByRole("button", { name: t.rules.…
+    233|     await save(locale, requests, 1);
+    234|     await waitFor(() => expect(valueInputs()[0]).toBe(tok(3, 1)));
+       |                                                  ^
+    235|     await save(locale, requests, 2);
+    236|     const [p1, p2] = patchesOf(requests);
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../../c/node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../../c/node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../../../c/node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |unit-web| src/pages/automation/rule-editor-tokens-z14.test.tsx > ar: after a save the form reloads from the saved version, so the second save sends its tokens
+AssertionError: expected '[restricted:3f9c0a7e51b2d48c6a0e9f17:…' to be '[restricted:b80d42e6a1c9375f0e2b8d64:…' // Object.is equality
+
+Ignored nodes: comments, script, style
+[36m<html[39m
+  [33mdir[39m=[32m"rtl"[39m
+  [33mlang[39m=[32m"ar"[39m
+[36m>[39m
+  [36m<head>[39m
+    [36m<title>[39m
+      [0mقاعدة أتمتة · منصة موبايلي للتحوّل[0m
+    [36m</title>[39m
+  [36m</head>[39m
+  [36m<body>[39m
+    [36m<div>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"app"[39m
+      [36m>[39m
+        [36m<a[39m
+          [33mclass[39m=[32m"skip-link"[39m
+          [33mhref[39m=[32m"#main"[39m
+        [36m>[39m
+          [0mانتقل إلى المحتوى الرئيسي[0m
+        [36m</a>[39m
+        [36m<header[39m
+          [33mclass[39m=[32m"app-header"[39m
+        [36m>[39m
+          [36m<button[39m
+            [33maria-controls[39m=[32m"_r_14_"[39m
+            [33maria-expanded[39m=[32m"false"[39m
+            [33mclass[39m=[32m"button button--ghost-inverse nav-toggle"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"icon"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"16"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.8"[39m
+              [33mviewBox[39m=[32m"0 0 20 20"[39m
+              [33mwidth[39m=[32m"16"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M3 5h14M3 10h14M3 15h14"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"visually-hidden"[39m
+            [36m>[39m
+              [0mإظهار التنقل أو إخفاؤه[0m
+            [36m</span>[39m
+          [36m</button>[39m
+          [36m<a[39m
+            [33mclass[39m=[32m"wordmark"[39m
+            [33mdata-discover[39m=[32m"true"[39m
+            [33mdata-testid[39m=[32m"wordmark"[39m
+            [33mhref[39m=[32m"/"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"wordmark__name"[39m
+            [36m>[39m
+              [0mمنصة موبايلي للتحوّل[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"badge badge--provisional"[39m
+              [33mdata-testid[39m=[32m"provisional-badge"[39m
+              [33mtitle[39m=[32m"شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة."[39m
+            [36m>[39m
+              [0mمؤقت[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"visually-hidden"[39m
+            [36m>[39m
+              [0mشعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة.[0m
+            [36m</span>[39m
+          [36m</a>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"app-header__spacer"[39m
+          [36m/>[39m
+          [36m<div[39m
+            [33maria-label[39m=[32m"البحث في السجلات"[39m
+            [33mclass[39m=[32m"global-search"[39m
+            [33mrole[39m=[32m"search"[39m
+          [36m>[39m
+            [36m<label[39m
+              [33mclass[39m=[32m"visually-hidden"[39m
+              [33mfor[39m=[32m"_r_15_"[39m
+            [36m>[39m
+              [0mابحث عن[0m
+            [36m</label>[39m
+            [36m<input[39m
+              [33maria-invalid[39m=[32m"false"[39m
+              [33mclass[39m=[32m"global-search__input"[39m
+              [33mdata-global-search[39m=[32m"true"[39m
+              [33menterkeyhint[39m=[32m"search"[39m
+              [33mid[39m=[32m"_r_15_"[39m
+              [33minputmode[39m=[32m"search"[39m
+              [33mmaxlength[39m=[32m"200"[39m
+              [33mplaceholder[39m=[32m"ابحث في السجلات"[39m
+              [33mtype[39m=[32m"text"[39m
+              [33mvalue[39m=[32m""[39m
+            [36m/>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"البحث في السجلات"[39m
+              [33mclass[39m=[32m"button button--ghost-inverse button--small"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mبحث[0m
+            [36m</button>[39m
+          [36m</div>[39m
+          [36m<span[39m
+            [33mclass[39m=[32m"language-switch"[39m
+          [36m>[39m
+            [36m<button[39m
+              [33maria-label[39m=[32m"تغيير اللغة إلى English"[39m
+              [33mclass[39m=[32m"button button--ghost-inverse button--small"[39m
+              [33mlang[39m=[32m"en"[39m
+              [33mtype[39m=[32m"button"[39m
+            [36m>[39m
+              [0mEnglish[0m
+            [36m</button>[39m
+          [36m</span>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"user-box"[39m
+          [36m>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"user-box__name"[39m
+            [36m>[39m
+              [0mSynthetic Test User[0m
+            [36m</span>[39m
+            [36m<span[39m
+              [33mclass[39m=[32m"user-box__org"[39m
+            [36m>[39m
+              [0mجهة اصطناعية[0m
+            [36m</span>[39m
+          [36m</div>[39m
+          [36m<button[39m
+            [33mclass[39m=[32m"button button--ghost-inverse button--small"[39m
+            [33mtype[39m=[32m"button"[39m
+          [36m>[39m
+            [36m<svg[39m
+              [33maria-hidden[39m=[32m"true"[39m
+              [33mclass[39m=[32m"icon"[39m
+              [33mfill[39m=[32m"none"[39m
+              [33mfocusable[39m=[32m"false"[39m
+              [33mheight[39m=[32m"16"[39m
+              [33mstroke[39m=[32m"currentColor"[39m
+              [33mstroke-linecap[39m=[32m"round"[39m
+              [33mstroke-linejoin[39m=[32m"round"[39m
+              [33mstroke-width[39m=[32m"1.8"[39m
+              [33mviewBox[39m=[32m"0 0 20 20"[39m
+              [33mwidth[39m=[32m"16"[39m
+            [36m>[39m
+              [36m<path[39m
+                [33md[39m=[32m"M8 4H4v12h4M12 6l4 4-4 4M16 10H8"[39m
+              [36m/>[39m
+            [36m</svg>[39m
+            [0m [0m
+            [36m<span[39m
+              [33mclass[39m=[32m"app-header__label"[39m
+            [36m>[39m
+              [0mتسجيل الخروج[0m
+            [36m</span>[39m
+          [36m</button>[39m
+        [36m</header>[39m
+        [36m<div[39m
+          [33maria-atomic[39m=[32m"true"[39m
+          [33maria-live[39m=[32m"polite"[39m
+          [33mclass[39m=[32m"app-notice language-switch__live"[39m
+          [33mlang[39m=[32m"ar"[39m
+        [36m/>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"app-body"[39m
+        [36m>[39m
+          [3...
+
+Expected: [32m"[restricted:[7mb80d42e6a1c9375f0e2b8d64:1[27m]"[39m
+Received: [31m"[restricted:[7m3f9c0a7e51b2d48c6a0e9f17:2[27m]"[39m
+
+ ❯ src/pages/automation/rule-editor-tokens-z14.test.tsx:234:50
+    232|     fireEvent.click(await screen.findByRole("button", { name: t.rules.…
+    233|     await save(locale, requests, 1);
+    234|     await waitFor(() => expect(valueInputs()[0]).toBe(tok(3, 1)));
+       |                                                  ^
+    235|     await save(locale, requests, 2);
+    236|     const [p1, p2] = patchesOf(requests);
+ ❯ runWithExpensiveErrorDiagnosticsDisabled ../../../c/node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback ../../../c/node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback ../../../c/node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/wait-for.js:118:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  2 failed | 41 passed (43)
+   Start at  03:38:28
+   Duration  78.12s (transform 3026.09s, setup 1.31s, collect 34.72s, tests 92.52s, environment 4.03s, prepare 636ms)
+
+exit=1
+## end 2026-11-10T03:39:47Z

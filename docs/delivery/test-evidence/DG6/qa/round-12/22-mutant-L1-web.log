@@ -1,0 +1,144 @@
+## 2026-11-10T03:39:47Z node v24.21.0 LANG=unset LC_ALL=unset load 27.60 20.24 12.10
+## cmd: cat /var/tmp/mth-run.Cvumyb/claude-0/mut-L1.txt; git diff -- apps/web/src; npx vitest run --configLoader runner --project unit-web apps/web/src/pages/automation/rule-editor-tokens-z14.test.tsx apps/web/src/pages/automation/fed.test.tsx apps/web/src/components/sensitivity
+L1: patched apps/web/src/components/sensitivity/RestrictedRecordsLabel.tsx
+diff --git a/apps/web/src/components/sensitivity/RestrictedRecordsLabel.tsx b/apps/web/src/components/sensitivity/RestrictedRecordsLabel.tsx
+index f9fdd6288..95162990b 100644
+--- a/apps/web/src/components/sensitivity/RestrictedRecordsLabel.tsx
++++ b/apps/web/src/components/sensitivity/RestrictedRecordsLabel.tsx
+@@ -19,7 +19,7 @@ export function RestrictedRecordsLabel({
+ }) {
+   const { t } = useTranslation();
+   if (value !== true) return null;
+-  const hint = scope === "item" ? t("adminP6.restricted.hintItem") : t("adminP6.restricted.hint");
++  const hint = t("adminP6.restricted.hint");
+   return (
+     <span
+       className="status-chip status-chip--unknown status-chip--wrap"
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.Cvumyb/claude-0/c2
+
+ ❯ |unit-web| src/pages/automation/fed.test.tsx (28 tests | 4 failed) 20624ms
+   ✓ REQ-S12-022: the jobs operations view > en: never-run is "Never run", a disabled job is "Disabled", the next run is a time  1677ms
+   ✓ REQ-S12-022: the jobs operations view > ar: never-run is "Never run", a disabled job is "Disabled", the next run is a time 162ms
+   ✓ REQ-S12-022: the jobs operations view > a non-admin gets the server's 403 as the no-permission state; run now posts the job  348ms
+   ✓ REQ-S12-001 / S12-002: an automation rule > a draft's dry run is Not run; submit without it is the translated 422; enable sends the rule's If-Match  826ms
+   ✓ REQ-S12-001 / S12-002: an automation rule > a dry run shows what each action would do and that nothing was created  963ms
+   ✓ REQ-S12-001 / S12-002: an automation rule > ar: a starter says why it cannot be disabled and offers no disable action 133ms
+   × REQ-S12-001 / S12-002: an automation rule > en: T-DG6-BE-Z12B: a condition whose literal names a restricted record shows the restricted label 351ms
+     → expected 'This total includes records you are n…' to be 'This item refers to a record you are …' // Object.is equality
+   × REQ-S12-001 / S12-002: an automation rule > ar: T-DG6-BE-Z12B: a condition whose literal names a restricted record shows the restricted label 337ms
+     → expected 'يشمل هذا الإجمالي سجلات غير مسموح لك …' to be 'يشير هذا العنصر إلى سجل غير مسموح لك …' // Object.is equality
+   ✓ REQ-S12-001 / S12-002: an automation rule > T-DG6-BE-Z13: the builder sends each restricted token back wherever its condition sits (D-226) 1ms
+   ✓ REQ-S12-001 / S12-002: an automation rule > the builder body keeps the typed action settings and never sends a float 0ms
+   ✓ D-164 d: the dry-run sample comes from the trigger's samplePayload > en: the stubbed catalogue's sample is pre-filled with the rule's transformation and is sent as is  1444ms
+   ✓ D-164 d: the dry-run sample comes from the trigger's samplePayload > ar: the stubbed catalogue's sample is pre-filled with the rule's transformation and is sent as is  942ms
+   ✓ D-164 d: the dry-run sample comes from the trigger's samplePayload > an organization rule keeps the placeholder; without samplePayload the condition-field template is kept 39ms
+   ✓ REQ-S12-002: the failure queue > retry sends If-Match; 422 automation_failure.not_open is one translated alert  1551ms
+   × T-DG6-BE-Z13C (D-228 (3), D-227, D-218): the restricted label on the failure queue and an execution > en: a failure whose key or error text is masked carries the item label; an unrelated one does not 414ms
+     → expected 'This total includes records you are n…' to be 'This item refers to a record you are …' // Object.is equality
+   ✓ T-DG6-BE-Z13C (D-228 (3), D-227, D-218): the restricted label on the failure queue and an execution > en: an execution whose trigger key is masked carries the item label  470ms
+   × T-DG6-BE-Z13C (D-228 (3), D-227, D-218): the restricted label on the failure queue and an execution > ar: a failure whose key or error text is masked carries the item label; an unrelated one does not 295ms
+     → expected 'يشمل هذا الإجمالي سجلات غير مسموح لك …' to be 'يشير هذا العنصر إلى سجل غير مسموح لك …' // Object.is equality
+   ✓ T-DG6-BE-Z13C (D-228 (3), D-227, D-218): the restricted label on the failure queue and an execution > ar: an execution whose trigger key is masked carries the item label 161ms
+   ✓ T-DG6-BE-Z13C (D-228 (3), D-227, D-218): the restricted label on the failure queue and an execution > an execution without the marker shows no label  322ms
+   ✓ REQ-S06-002: a procedure instance > en: current step, assignee role, Unknown due date, missing inputs; completing is refused translated  1237ms
+   ✓ REQ-S06-002: a procedure instance > ar: current step, assignee role, Unknown due date, missing inputs; completing is refused translated  1662ms
+   ✓ REQ-S06-001: the procedure builder > a definition without a trigger or completion omits them, so the server refuses with its 422 codes 2ms
+   ✓ REQ-S06-001: the procedure builder > validation lists every finding, translated by its code  1646ms
+   ✓ REQ-S12-025: notification preferences > the first save sends If-Match "0"; the quiet-hours refusal is translated  678ms
+   ✓ REQ-S12-025: notification preferences > ar: the auditor reads the preferences but has no save action  435ms
+   ✓ REQ-S12-015: the meeting cut-off pack > "No reviewer assigned"; the review sends If-Match; 403 not_reviewer is translated  745ms
+   ✓ REQ-S10-015: an approval route > in a sequential route step 2 is waiting and not notified until step 1 approves  824ms
+   ✓ the slice D and E problem texts (ADR-0043 §9, ADR-0044 §10) > every refusal the FE-D screens can receive has its exact English text and an Arabic text 31ms
+ ✓ |unit-web| src/pages/automation/rule-editor-tokens-z14.test.tsx (15 tests) 53430ms
+   ✓ en: after a save the form reloads from the saved version, so the second save sends its tokens  6731ms
+   ✓ en: after a 409 the form reloads the current version, says the rule changed (not the stale-token text), and never re-sends stale tokens  3656ms
+   ✓ en: an issuer-bound token shows the restricted label (D-226, Z15)  1058ms
+   ✓ en: a token pasted from another version of the rule gets the 422 problem text, not "this rule changed"; the form reloads the stored version (Z16)  4368ms
+   ✓ en: a token pasted from another rule gets the 422 problem text, not "this rule changed"; the form reloads the stored version (Z16)  3923ms
+   ✓ en: a token in the retired pre-0127 form gets the 422 problem text, not "this rule changed"; the form reloads the stored version (Z16)  4339ms
+   ✓ ar: after a save the form reloads from the saved version, so the second save sends its tokens  1541ms
+   ✓ ar: after a 409 the form reloads the current version, says the rule changed (not the stale-token text), and never re-sends stale tokens  1809ms
+   ✓ ar: an issuer-bound token shows the restricted label (D-226, Z15)  774ms
+   ✓ ar: a token pasted from another version of the rule gets the 422 problem text, not "this rule changed"; the form reloads the stored version (Z16)  3052ms
+   ✓ ar: a token pasted from another rule gets the 422 problem text, not "this rule changed"; the form reloads the stored version (Z16)  2856ms
+   ✓ ar: a token in the retired pre-0127 form gets the 422 problem text, not "this rule changed"; the form reloads the stored version (Z16)  2734ms
+   ✓ another 422 (not a stale token) keeps the author's draft and shows the problem text  1078ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-web| src/pages/automation/fed.test.tsx > REQ-S12-001 / S12-002: an automation rule > en: T-DG6-BE-Z12B: a condition whose literal names a restricted record shows the restricted label
+AssertionError: expected 'This total includes records you are n…' to be 'This item refers to a record you are …' // Object.is equality
+
+Expected: [32m"This [7mitem refers to a[27m record you are not admitted to. The record and [7mits [27mvalues stay hidden."[39m
+Received: [31m"This [7mtotal includes[27m record[7ms[27m you are not admitted to. The [7mtotal is the same for every user; the individual [27mrecord[7ms[27m and values stay hidden."[39m
+
+ ❯ src/pages/automation/fed.test.tsx:351:94
+    349|       expect(first.querySelector("[data-restricted-records='true']")).…
+    350|       expect(first.textContent).toContain(catalogues[locale].access.in…
+    351|       expect(first.querySelector("[data-restricted-records='true']")?.…
+       |                                                                                              ^
+    352|         catalogues[locale].adminP6.restricted.hintItem,
+    353|       );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  |unit-web| src/pages/automation/fed.test.tsx > REQ-S12-001 / S12-002: an automation rule > ar: T-DG6-BE-Z12B: a condition whose literal names a restricted record shows the restricted label
+AssertionError: expected 'يشمل هذا الإجمالي سجلات غير مسموح لك …' to be 'يشير هذا العنصر إلى سجل غير مسموح لك …' // Object.is equality
+
+Expected: [32m"يش[7mير[27m هذا ال[7mعنصر إلى[27m سجل غير مسموح لك به، و[7mي[27mبقى السجل وقيمه مخفي[7mين[27m."[39m
+Received: [31m"يش[7mمل[27m هذا ال[7mإجمالي[27m سجل[7mات[27m غير مسموح لك به[7mا. الإجمالي واحد لجميع المستخدمين[27m، و[7mت[27mبقى السجل[7mات[27m وقيمه[7mا الفردية[27m مخفي[7mة[27m."[39m
+
+ ❯ src/pages/automation/fed.test.tsx:351:94
+    349|       expect(first.querySelector("[data-restricted-records='true']")).…
+    350|       expect(first.textContent).toContain(catalogues[locale].access.in…
+    351|       expect(first.querySelector("[data-restricted-records='true']")?.…
+       |                                                                                              ^
+    352|         catalogues[locale].adminP6.restricted.hintItem,
+    353|       );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  |unit-web| src/pages/automation/fed.test.tsx > T-DG6-BE-Z13C (D-228 (3), D-227, D-218): the restricted label on the failure queue and an execution > en: a failure whose key or error text is masked carries the item label; an unrelated one does not
+AssertionError: expected 'This total includes records you are n…' to be 'This item refers to a record you are …' // Object.is equality
+
+Expected: [32m"This [7mitem refers to a[27m record you are not admitted to. The record and [7mits [27mvalues stay hidden."[39m
+Received: [31m"This [7mtotal includes[27m record[7ms[27m you are not admitted to. The [7mtotal is the same for every user; the individual [27mrecord[7ms[27m and values stay hidden."[39m
+
+ ❯ src/pages/automation/fed.test.tsx:579:43
+    577|       const label = await found("[data-restricted-records='true']");
+    578|       expect(label.getAttribute("data-restricted-scope")).toBe("item");
+    579|       expect(label.getAttribute("title")).toBe(catalogues[locale].admi…
+       |                                           ^
+    580|       expect(label.textContent).toContain(catalogues[locale].access.in…
+    581|       expect(document.querySelectorAll("[data-restricted-records='true…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  |unit-web| src/pages/automation/fed.test.tsx > T-DG6-BE-Z13C (D-228 (3), D-227, D-218): the restricted label on the failure queue and an execution > ar: a failure whose key or error text is masked carries the item label; an unrelated one does not
+AssertionError: expected 'يشمل هذا الإجمالي سجلات غير مسموح لك …' to be 'يشير هذا العنصر إلى سجل غير مسموح لك …' // Object.is equality
+
+Expected: [32m"يش[7mير[27m هذا ال[7mعنصر إلى[27m سجل غير مسموح لك به، و[7mي[27mبقى السجل وقيمه مخفي[7mين[27m."[39m
+Received: [31m"يش[7mمل[27m هذا ال[7mإجمالي[27m سجل[7mات[27m غير مسموح لك به[7mا. الإجمالي واحد لجميع المستخدمين[27m، و[7mت[27mبقى السجل[7mات[27m وقيمه[7mا الفردية[27m مخفي[7mة[27m."[39m
+
+ ❯ src/pages/automation/fed.test.tsx:579:43
+    577|       const label = await found("[data-restricted-records='true']");
+    578|       expect(label.getAttribute("data-restricted-scope")).toBe("item");
+    579|       expect(label.getAttribute("title")).toBe(catalogues[locale].admi…
+       |                                           ^
+    580|       expect(label.textContent).toContain(catalogues[locale].access.in…
+    581|       expect(document.querySelectorAll("[data-restricted-records='true…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  4 failed | 39 passed (43)
+   Start at  03:39:50
+   Duration  63.25s (transform 1725.99s, setup 1.08s, collect 25.47s, tests 74.05s, environment 3.68s, prepare 493ms)
+
+exit=1
+## end 2026-11-10T03:40:54Z

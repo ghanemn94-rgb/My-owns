@@ -1,0 +1,36 @@
+## 2026-11-10T03:32:19Z node v24.21.0 LANG=unset LC_ALL=unset load 9.31 9.06 5.87
+## cmd: QA_PG_PORT=32550 MTH_PORT_POOL=32550-32554 tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration apps/api/test/integration/access/zz-qa-dg6r12-condition-token-resave.test.ts apps/api/test/integration/operations/zz-qa-dg6r12-concurrent-job-failure.test.ts
+port-policy: PostgreSQL listening on port 32550 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.Cvumyb/claude-0/c2
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwa4wj36_fe911629 (server_encoding UTF8); applied 119 migrations to a fresh database
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/access/zz-qa-dg6r12-condition-token-resave.test.ts [ apps/api/test/integration/access/zz-qa-dg6r12-condition-token-resave.test.ts ]
+ FAIL  |integration| apps/api/test/integration/operations/zz-qa-dg6r12-concurrent-job-failure.test.ts [ apps/api/test/integration/operations/zz-qa-dg6r12-concurrent-job-failure.test.ts ]
+Error: ENOENT: no such file or directory, open '/var/tmp/mth-run.Cvumyb/claude-0/c2/docs/api/openapi.yaml'
+ ❯ apps/api/test/support/contract.ts:24:34
+     22| }
+     23| 
+     24| export const openapi = parseYaml(readFileSync(OPENAPI_PATH, "utf8")) a…
+       |                                  ^
+     25| 
+     26| const ajv = new Ajv2020({ strict: false, allErrors: true, validateForm…
+ ❯ apps/api/test/support/harness.ts:18:1
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  no tests
+   Start at  03:32:22
+   Duration  24.23s (transform 10.01s, setup 0ms, collect 0ms, tests 0ms, environment 0ms, prepare 82ms)
+
+exit=1
+## end 2026-11-10T03:32:48Z

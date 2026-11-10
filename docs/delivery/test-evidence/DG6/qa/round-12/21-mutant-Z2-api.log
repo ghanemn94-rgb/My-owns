@@ -1,0 +1,446 @@
+## 2026-11-10T03:35:39Z node v24.21.0 LANG=unset LC_ALL=unset load 20.48 13.61 8.22
+## cmd: cat /var/tmp/mth-run.Cvumyb/claude-0/mut-Z2.txt; git diff -- apps/api/src; QA_PG_PORT=32555 MTH_PORT_POOL=32555-32559 tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration apps/api/test/integration/access/zz-qa-dg6r12-condition-token-resave.test.ts apps/api/test/integration/access/automation-restricted-tokens-z13.test.ts apps/api/test/integration/access/automation-restricted-tokens-z14.test.ts apps/api/test/integration/access/automation-restricted-tokens-z15.test.ts
+Z2: patched apps/api/src/modules/automation/versions.ts
+diff --git a/apps/api/src/modules/automation/versions.ts b/apps/api/src/modules/automation/versions.ts
+index 1ed9e2b99..0658008a9 100644
+--- a/apps/api/src/modules/automation/versions.ts
++++ b/apps/api/src/modules/automation/versions.ts
+@@ -507,7 +507,6 @@ export function resolveRestrictedTokens(
+       if (AUTOMATION_RESTRICTED_TOKEN_RETIRED_PATTERN.test(v)) throw automationRefusals.restrictedTokenStale(at);
+       throw automationRefusals.restrictedMarkerUnknown(at);
+     }
+-    if (!sameTag(m[1]!, expected)) throw automationRefusals.restrictedTokenStale(at);
+     const literal = positions.get(Number(m[2]));
+     if (literal === undefined) throw automationRefusals.restrictedMarkerUnknown(at);
+     return literal;
+port-policy: PostgreSQL listening on port 32555 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.Cvumyb/claude-0/c2
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwa50u58_32e044f7 (server_encoding UTF8); applied 119 migrations to a fresh database
+stdout | apps/api/test/integration/access/zz-qa-dg6r12-condition-token-resave.test.ts
+QA-R12 ids: hidden X=01a1c387-2d9d-7528-8cb6-b5698888df19 hidden Y=01a1c387-2e52-71f6-a343-3ebd73bfe72a hidden Z=01a1c387-2ef2-75ac-a935-0512ef02ad47 visible V=01a1c387-2ea2-720d-8592-9ddd1bf305b3
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r12-condition-token-resave.test.ts > QA-R12 F-DG6-560 re-run (round-8 P0-P3) on the version-bound token model > P0 control: changing only an unrelated condition keeps both hidden literals
+QA-R12 P0: author saw v1 [{"op":"neq","field":"benefitId","value":"[restricted:56130b3e28cd16a11079b1a8:1]"},{"op":"neq","field":"benefitId","value":"[restricted:56130b3e28cd16a11079b1a8:2]"},{"op":"eq","field":"severity","value":"high"}]; sent [{"op":"neq","field":"benefitId","value":"[restricted:56130b3e28cd16a11079b1a8:1]"},{"op":"neq","field":"benefitId","value":"[restricted:56130b3e28cd16a11079b1a8:2]"},{"op":"eq","field":"severity","value":"critical"}]; stored now [{"op":"neq","field":"benefitId","value":"01a1c387-2d9d-7528-8cb6-b5698888df19"},{"op":"neq","field":"benefitId","value":"01a1c387-2e52-71f6-a343-3ebd73bfe72a"},{"op":"eq","field":"severity","value":"critical"}]; author response v2 [{"op":"neq","field":"benefitId","value":"[restricted:7e02b9a9c3c121fb625c65a8:1]"},{"op":"neq","field":"benefitId","value":"[restricted:7e02b9a9c3c121fb625c65a8:2]"},{"op":"eq","field":"severity","value":"critical"}] marker true
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r12-condition-token-resave.test.ts > QA-R12 F-DG6-560 re-run (round-8 P0-P3) on the version-bound token model > P1: two restricted literals under one (field, op); delete the FIRST -> [Y]
+QA-R12 P1 delete first restricted: author saw v1 [{"op":"neq","field":"benefitId","value":"[restricted:e61847fdc09078fa11e0cb11:1]"},{"op":"neq","field":"benefitId","value":"[restricted:e61847fdc09078fa11e0cb11:2]"}]; sent [{"op":"neq","field":"benefitId","value":"[restricted:e61847fdc09078fa11e0cb11:2]"}]; stored now [{"op":"neq","field":"benefitId","value":"01a1c387-2e52-71f6-a343-3ebd73bfe72a"}]; author response v2 [{"op":"neq","field":"benefitId","value":"[restricted:1579402df0b4d2b0f7eef671:1]"}] marker true
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r12-condition-token-resave.test.ts > QA-R12 F-DG6-560 re-run (round-8 P0-P3) on the version-bound token model > P2: a visible literal then a restricted one; delete the visible one -> [Y]
+QA-R12 P2 delete visible first: author saw v1 [{"op":"neq","field":"benefitId","value":"01a1c387-2ea2-720d-8592-9ddd1bf305b3"},{"op":"neq","field":"benefitId","value":"[restricted:b14dd5196f6a7b0081e94d75:2]"}]; sent [{"op":"neq","field":"benefitId","value":"[restricted:b14dd5196f6a7b0081e94d75:2]"}]; stored now [{"op":"neq","field":"benefitId","value":"01a1c387-2e52-71f6-a343-3ebd73bfe72a"}]; author response v2 [{"op":"neq","field":"benefitId","value":"[restricted:5493dedbaabe78b90bba1ed9:1]"}] marker true
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r12-condition-token-resave.test.ts > QA-R12 F-DG6-560 re-run (round-8 P0-P3) on the version-bound token model > P3: an `in` list of two restricted literals; drop the first element -> [Y]
+QA-R12 P3 in-list drop first: author saw v1 [{"op":"in","field":"benefitId","value":["[restricted:e184ebb177fe46dd746daed6:1]","[restricted:e184ebb177fe46dd746daed6:2]"]}]; sent [{"op":"in","field":"benefitId","value":["[restricted:e184ebb177fe46dd746daed6:2]"]}]; stored now [{"op":"in","field":"benefitId","value":["01a1c387-2e52-71f6-a343-3ebd73bfe72a"]}]; author response v2 [{"op":"in","field":"benefitId","value":["[restricted:edacd8e601bf14791c6f4b1d:1]"]}] marker true
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r12-condition-token-resave.test.ts > QA-R12 round-9 adversarial token cases (D-226, D-228 (1)) on the version-bound token > P4 reorder: swap two restricted conditions and a visible one
+QA-R12 P4 reorder: author saw v1 [{"op":"neq","field":"benefitId","value":"[restricted:69aa750cde5d971ac3e8c50d:1]"},{"op":"eq","field":"severity","value":"high"},{"op":"neq","field":"benefitId","value":"[restricted:69aa750cde5d971ac3e8c50d:3]"}]; sent [{"op":"neq","field":"benefitId","value":"[restricted:69aa750cde5d971ac3e8c50d:3]"},{"op":"eq","field":"severity","value":"high"},{"op":"neq","field":"benefitId","value":"[restricted:69aa750cde5d971ac3e8c50d:1]"}]; stored now [{"op":"neq","field":"benefitId","value":"01a1c387-2e52-71f6-a343-3ebd73bfe72a"},{"op":"eq","field":"severity","value":"high"},{"op":"neq","field":"benefitId","value":"01a1c387-2d9d-7528-8cb6-b5698888df19"}]; author response v2 [{"op":"neq","field":"benefitId","value":"[restricted:f026be072ce47da797a5a726:1]"},{"op":"eq","field":"severity","value":"high"},{"op":"neq","field":"benefitId","value":"[restricted:f026be072ce47da797a5a726:3]"}] marker true
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r12-condition-token-resave.test.ts > QA-R12 round-9 adversarial token cases (D-226, D-228 (1)) on the version-bound token > P5 move: a scalar token into an `in` list of another condition, and a list token to a scalar with another field/op
+QA-R12 P5 move tokens: author saw v1 [{"op":"eq","field":"benefitId","value":"[restricted:ba8692ce3913bd7fd9877c39:1]"},{"op":"in","field":"benefitId","value":["01a1c387-2ea2-720d-8592-9ddd1bf305b3","[restricted:ba8692ce3913bd7fd9877c39:3]"]}]; sent [{"field":"benefitId","op":"in","value":["[restricted:ba8692ce3913bd7fd9877c39:1]","01a1c387-2ea2-720d-8592-9ddd1bf305b3"]},{"field":"severity","op":"neq","value":"[restricted:ba8692ce3913bd7fd9877c39:3]"}]; stored now [{"op":"in","field":"benefitId","value":["01a1c387-2d9d-7528-8cb6-b5698888df19","01a1c387-2ea2-720d-8592-9ddd1bf305b3"]},{"op":"neq","field":"severity","value":"01a1c387-2e52-71f6-a343-3ebd73bfe72a"}]; author response v2 [{"op":"in","field":"benefitId","value":["[restricted:280b90c83385e848c0c6bb4e:1]","01a1c387-2ea2-720d-8592-9ddd1bf305b3"]},{"op":"neq","field":"severity","value":"[restricted:280b90c83385e848c0c6bb4e:3]"}] marker true
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r12-condition-token-resave.test.ts > QA-R12 round-9 adversarial token cases (D-226, D-228 (1)) on the version-bound token > P5b duplicate: the same token sent twice stores the same literal twice (no other literal is touched)
+QA-R12 P5b duplicate token 1, drop token 2: author saw v1 [{"op":"neq","field":"benefitId","value":"[restricted:f006f3d62640dfdc6664a0ae:1]"},{"op":"neq","field":"benefitId","value":"[restricted:f006f3d62640dfdc6664a0ae:2]"}]; sent [{"op":"neq","field":"benefitId","value":"[restricted:f006f3d62640dfdc6664a0ae:1]"},{"op":"eq","field":"benefitId","value":"[restricted:f006f3d62640dfdc6664a0ae:1]"}]; stored now [{"op":"neq","field":"benefitId","value":"01a1c387-2d9d-7528-8cb6-b5698888df19"},{"op":"eq","field":"benefitId","value":"01a1c387-2d9d-7528-8cb6-b5698888df19"}]; author response v2 [{"op":"neq","field":"benefitId","value":"[restricted:28b897794256641f0583b909:1]"},{"op":"eq","field":"benefitId","value":"[restricted:28b897794256641f0583b909:2]"}] marker true
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r12-condition-token-resave.test.ts > QA-R12 round-9 adversarial token cases (D-226, D-228 (1)) on the version-bound token > P6 refusals: bare marker, unknown token, marker-like variants, a token on create; nothing stored changes
+QA-R12 P6 refusals (v=1): {"\"[restricted]\"":{"status":422,"code":"automation_rule.restricted_marker_unknown","pointer":"/content/conditions/1/value"},"\"[restricted:b854eb510ee39aae19966670:3]\"":{"status":422,"code":"automation_rule.restricted_marker_unknown","pointer":"/content/conditions/1/value"},"\"[restricted:b854eb510ee39aae19966670:9]\"":{"status":422,"code":"automation_rule.restricted_marker_unknown","pointer":"/content/conditions/1/value"},"\"[restricted:1:0]\"":{"status":422,"code":"automation_rule.restricted_marker_unknown","pointer":"/content/conditions/1/value"},"\"[restricted:1:01]\"":{"status":422,"code":"automation_rule.restricted_marker_unknown","pointer":"/content/conditions/1/value"},"\"[Restricted:1:1]\"":{"status":422,"code":"automation_rule.restricted_marker_unknown","pointer":"/content/conditions/1/value"},"\" [restricted:1:1]\"":{"status":422,"code":"automation_rule.restricted_marker_unknown","pointer":"/content/conditions/1/value"},"\"[restricted:1:1] \"":{"status":422,"code":"automation_rule.restricted_marker_unknown","pointer":"/content/conditions/1/value"},"\"[ restricted ]\"":{"status":422,"code":"automation_rule.restricted_marker_unknown","pointer":"/content/conditions/1/value"},"\"[restricted:1:1]x\"":{"status":422,"code":"automation_rule.restricted_marker_unknown","pointer":"/content/conditions/1/value"},"\"[restricted:1:10000]\"":{"status":422,"code":"automation_rule.restricted_marker_unknown","pointer":"/content/conditions/1/value"},"\"[restricted:1:1\"":{"status":422,"code":"automation_rule.restricted_marker_unknown","pointer":"/content/conditions/1/value"},"\"[restricted: 1:1]\"":{"status":422,"code":"automation_rule.restricted_marker_unknown","pointer":"/content/conditions/1/value"},"\"[restricted:1 :1]\"":{"status":422,"code":"automation_rule.restricted_marker_unknown","pointer":"/content/conditions/1/value"},"\"[restricted:01:1]\"":{"status":422,"code":"automation_rule.restricted_marker_unknown","pointer":"/content/conditions/1/value"},"in [T1, bare]":{"status":422,"code":"automation_rule.restricted_marker_unknown","pointer":"/content/conditions/0/value/1"},"create with [restricted:1:1]":{"status":422,"code":"automation_rule.restricted_marker_unknown"},"create with [restricted]":{"status":422,"code":"automation_rule.restricted_marker_unknown"}}
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r12-condition-token-resave.test.ts > QA-R12 round-9 adversarial token cases (D-226, D-228 (1)) on the version-bound token > P7 sensitivity changes between read and save: tokens resolved by position, nothing shifts or leaks
+QA-R12 P7: stored [{"op":"neq","field":"benefitId","value":"01a1c387-2ea2-720d-8592-9ddd1bf305b3"},{"op":"neq","field":"benefitId","value":"01a1c387-2d9d-7528-8cb6-b5698888df19"}]; response v2 [{"op":"neq","field":"benefitId","value":"[restricted:5f3bcdc09344171b917d15fd:1]"},{"op":"neq","field":"benefitId","value":"01a1c387-2d9d-7528-8cb6-b5698888df19"}]
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r12-condition-token-resave.test.ts > QA-R12 round-9 adversarial token cases (D-226, D-228 (1)) on the version-bound token > P8 concurrent saves from the same read: the second is refused 409 (If-Match), never applies stale tokens
+QA-R12 P8: statuses 409/200; codes version_conflict/undefined; stored [{"op":"neq","field":"benefitId","value":"01a1c387-2d9d-7528-8cb6-b5698888df19"},{"op":"eq","field":"severity","value":"high"}]
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r12-condition-token-resave.test.ts > QA-R12 round-9 adversarial token cases (D-226, D-228 (1)) on the version-bound token > P8 concurrent saves from the same read: the second is refused 409 (If-Match), never applies stale tokens
+QA-R12 P8 loser re-sent with If-Match 2: 200 undefined
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r12-condition-token-resave.test.ts > QA-R12 round-9 adversarial token cases (D-226, D-228 (1)) on the version-bound token > P10 a token pointing at a boolean position is refused
+QA-R12 P10: 422 automation_rule.restricted_marker_unknown
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r12-condition-token-resave.test.ts > QA-R12 round-9 adversarial token cases (D-226, D-228 (1)) on the version-bound token > P12 after edits the rule list, rule, version list and readable summary name no hidden id
+QA-R12 P12 reorder: author saw v1 [{"op":"in","field":"benefitId","value":["[restricted:7f8b719053a3be0409d98050:1]","[restricted:7f8b719053a3be0409d98050:2]"]},{"op":"neq","field":"benefitId","value":"[restricted:7f8b719053a3be0409d98050:3]"}]; sent [{"op":"neq","field":"benefitId","value":"[restricted:7f8b719053a3be0409d98050:3]"},{"op":"in","field":"benefitId","value":["[restricted:7f8b719053a3be0409d98050:1]","[restricted:7f8b719053a3be0409d98050:2]"]}]; stored now [{"op":"neq","field":"benefitId","value":"01a1c387-2e52-71f6-a343-3ebd73bfe72a"},{"op":"in","field":"benefitId","value":["01a1c387-2d9d-7528-8cb6-b5698888df19","01a1c387-2ef2-75ac-a935-0512ef02ad47"]}]; author response v2 [{"op":"neq","field":"benefitId","value":"[restricted:5870a8fb58ecda4de0c74fc1:1]"},{"op":"in","field":"benefitId","value":["[restricted:5870a8fb58ecda4de0c74fc1:2]","[restricted:5870a8fb58ecda4de0c74fc1:3]"]}] marker true
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r12-condition-token-resave.test.ts > QA-R12 round-9 adversarial token cases (D-226, D-228 (1)) on the version-bound token > P12 after edits the rule list, rule, version list and readable summary name no hidden id
+QA-R12 P12 summary {"en":"When Benefit deviates from its forecast, if benefitId is not a restricted record and benefitId is one of a restricted record, a restricted record: Create a task with an in-app reminder (TL). Runs as the service identity.","ar":"عند انحراف المنفعة عن توقعها، إذا كان benefitId لا يساوي سجل مقيد وbenefitId أحد القيم سجل مقيد، سجل مقيد: إنشاء مهمة مع تذكير داخل التطبيق (TL). يعمل بصفة هوية الخدمة."}
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r12-condition-token-resave.test.ts > QA-R12 F-DG6-580 class (D-231): a token reused across a save > P13 double save: save 1 removes condition 1; save 2 re-sends the same draft with the refreshed If-Match -> 422 stale, nothing changes
+QA-R12 P13: shown v1 ["01a1c387-2ea2-720d-8592-9ddd1bf305b3","[restricted:b1cca1355eaf6e0acee71f58:2]","[restricted:b1cca1355eaf6e0acee71f58:3]"]; save1 -> [{"op":"neq","field":"benefitId","value":"01a1c387-2d9d-7528-8cb6-b5698888df19"},{"op":"neq","field":"benefitId","value":"01a1c387-2ef2-75ac-a935-0512ef02ad47"}]; save2 (If-Match 2, same draft) -> 422 automation_rule.restricted_marker_unknown [{"pointer":"/content/conditions/1/value","code":"automation_rule.restricted_marker_unknown","message":"Restricted-record marker text that does not stand for a value of this version."}]; stored [{"op":"neq","field":"benefitId","value":"01a1c387-2d9d-7528-8cb6-b5698888df19"},{"op":"neq","field":"benefitId","value":"01a1c387-2ef2-75ac-a935-0512ef02ad47"}]
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r12-condition-token-resave.test.ts > QA-R12 F-DG6-580 class (D-231): a token reused across a save > P16 a grant given between read and save, plus a stale token: refused; after the grant the reader sees the literals and no token
+QA-R12 P16 stale after unmark: 422 automation_rule.restricted_marker_unknown; stored [{"op":"neq","field":"benefitId","value":"01a1c387-2e52-71f6-a343-3ebd73bfe72a"}]
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r12-condition-token-resave.test.ts > QA-R12 F-DG6-580 class (D-231): a token reused across a save > P17 ten successive saves, each built from the previous served response (the editor's path), keep every hidden literal
+QA-R12 P17 after 10 saves: stored [{"op":"in","field":"benefitId","value":["01a1c387-2d9d-7528-8cb6-b5698888df19","01a1c387-2ea2-720d-8592-9ddd1bf305b3","01a1c387-2e52-71f6-a343-3ebd73bfe72a"]},{"op":"eq","field":"severity","value":"high"},{"op":"neq","field":"benefitId","value":"01a1c387-2ef2-75ac-a935-0512ef02ad47"}]; shown v11 [{"op":"in","field":"benefitId","value":["[restricted:f50515849057abc89a4b0964:1]","01a1c387-2ea2-720d-8592-9ddd1bf305b3","[restricted:f50515849057abc89a4b0964:3]"]},{"op":"eq","field":"severity","value":"high"},{"op":"neq","field":"benefitId","value":"[restricted:f50515849057abc89a4b0964:5]"}]
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r12-condition-token-resave.test.ts > QA-R12 F-DG6-640 class (D-233): a token is bound to its issuing row and revision > P15 a token copied from another rule whose row version coincides is refused stale (F-DG6-640); B unchanged
+QA-R12 P15: A token [restricted:f7c8d54c1643e7fb6259ef48:1] sent to B token [restricted:9a10c67fbe0590b639126fcb:1] (v1) -> 200 undefined
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r12-condition-token-resave.test.ts > QA-R12 F-DG6-640 class (D-233): a token is bound to its issuing row and revision > P15b a token copied from the published version 1 into its draft version 2 is refused stale; the draft's own token resolves
+QA-R12 P15b v1 (row v4) [{"op":"neq","field":"benefitId","value":"[restricted:530bfabe2d2b828ccd054944:1]"},{"op":"neq","field":"benefitId","value":"[restricted:530bfabe2d2b828ccd054944:2]"}]; v2 (row v1) [{"op":"neq","field":"benefitId","value":"[restricted:8e2b0ef556dbc8e6c0dec0b6:1]"},{"op":"neq","field":"benefitId","value":"[restricted:8e2b0ef556dbc8e6c0dec0b6:2]"}]
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r12-condition-token-resave.test.ts > QA-R12 F-DG6-640 class (D-233): a token is bound to its issuing row and revision > P15b a token copied from the published version 1 into its draft version 2 is refused stale; the draft's own token resolves
+QA-R12 P15b pasted published token -> 200 undefined; v1-row token at v2's row version -> 409 version_conflict
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r12-condition-token-resave.test.ts > QA-R12 F-DG6-640 class (D-233): a token is bound to its issuing row and revision > P18 the key is never served or audited; tags are 24 hex, per row and per revision, and carry no fragment of the row id
+QA-R12 P18 tags: a@v1=02643b87066c98d44654fd60 a@v2=11c891155201072aa0db1aaf b@v1=312a92d03ff0e752d28d30bd; audits 2; key never found
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r12-condition-token-resave.test.ts > QA-R12 F-DG6-640 class (D-233): a token is bound to its issuing row and revision > P19 the key is immutable (0127 trigger) and every row has its own 32-byte key
+QA-R12 P19 direct key UPDATE -> automation_rule_version: restricted_token_key is set when the version is created and never changes
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r12-condition-token-resave.test.ts > QA-R12 F-DG6-640 class (D-233): a token is bound to its issuing row and revision > P19 the key is immutable (0127 trigger) and every row has its own 32-byte key
+QA-R12 P19 41 rows, 41 distinct 32-byte keys
+
+stdout | apps/api/test/integration/access/zz-qa-dg6r12-condition-token-resave.test.ts > QA-R12 F-DG6-640 class (D-233): a token is bound to its issuing row and revision > P20 eight concurrent saves from one read: one 200, seven 409; each loser re-sent with the refreshed If-Match is 422 stale
+QA-R12 P20 statuses [200,409,409,409,409,409,409,409]
+
+ ❯ |integration| apps/api/test/integration/access/zz-qa-dg6r12-condition-token-resave.test.ts (23 tests | 7 failed) 7363ms
+   ✓ QA-R12 F-DG6-560 re-run (round-8 P0-P3) on the version-bound token model > P0 control: changing only an unrelated condition keeps both hidden literals  607ms
+   ✓ QA-R12 F-DG6-560 re-run (round-8 P0-P3) on the version-bound token model > P1: two restricted literals under one (field, op); delete the FIRST -> [Y] 171ms
+   ✓ QA-R12 F-DG6-560 re-run (round-8 P0-P3) on the version-bound token model > P2: a visible literal then a restricted one; delete the visible one -> [Y] 110ms
+   ✓ QA-R12 F-DG6-560 re-run (round-8 P0-P3) on the version-bound token model > P3: an `in` list of two restricted literals; drop the first element -> [Y] 192ms
+   ✓ QA-R12 round-9 adversarial token cases (D-226, D-228 (1)) on the version-bound token > P4 reorder: swap two restricted conditions and a visible one 79ms
+   ✓ QA-R12 round-9 adversarial token cases (D-226, D-228 (1)) on the version-bound token > P5 move: a scalar token into an `in` list of another condition, and a list token to a scalar with another field/op 78ms
+   ✓ QA-R12 round-9 adversarial token cases (D-226, D-228 (1)) on the version-bound token > P5b duplicate: the same token sent twice stores the same literal twice (no other literal is touched) 71ms
+   ✓ QA-R12 round-9 adversarial token cases (D-226, D-228 (1)) on the version-bound token > P6 refusals: bare marker, unknown token, marker-like variants, a token on create; nothing stored changes  693ms
+   ✓ QA-R12 round-9 adversarial token cases (D-226, D-228 (1)) on the version-bound token > P7 sensitivity changes between read and save: tokens resolved by position, nothing shifts or leaks 186ms
+   × QA-R12 round-9 adversarial token cases (D-226, D-228 (1)) on the version-bound token > P8 concurrent saves from the same read: the second is refused 409 (If-Match), never applies stale tokens 216ms
+     → expected 200 to be 422 // Object.is equality
+   ✓ QA-R12 round-9 adversarial token cases (D-226, D-228 (1)) on the version-bound token > P9 a forged token for a position the author can read resolves to that visible literal (no disclosure) 74ms
+   ✓ QA-R12 round-9 adversarial token cases (D-226, D-228 (1)) on the version-bound token > P10 a token pointing at a boolean position is refused 42ms
+   ✓ QA-R12 round-9 adversarial token cases (D-226, D-228 (1)) on the version-bound token > P12 after edits the rule list, rule, version list and readable summary name no hidden id  409ms
+   × QA-R12 F-DG6-580 class (D-231): a token reused across a save > P13 double save: save 1 removes condition 1; save 2 re-sends the same draft with the refreshed If-Match -> 422 stale, nothing changes 95ms
+     → expected 'automation_rule.restricted_marker_unk…' to be 'automation_rule.restricted_token_stale' // Object.is equality
+   × QA-R12 F-DG6-580 class (D-231): a token reused across a save > P16 a grant given between read and save, plus a stale token: refused; after the grant the reader sees the literals and no token 228ms
+     → expected 'automation_rule.restricted_marker_unk…' to be 'automation_rule.restricted_token_stale' // Object.is equality
+   ✓ QA-R12 F-DG6-580 class (D-231): a token reused across a save > P17 ten successive saves, each built from the previous served response (the editor's path), keep every hidden literal  310ms
+   × QA-R12 F-DG6-640 class (D-233): a token is bound to its issuing row and revision > P14 same-row tokens of v-1 / v+1, a random tag, the retired form at the current version, case and length variants: refused; nothing changes 169ms
+     → [restricted:e75834b01bc7760ace01998f:1]: expected 200 to be 422 // Object.is equality
+   × QA-R12 F-DG6-640 class (D-233): a token is bound to its issuing row and revision > P15 a token copied from another rule whose row version coincides is refused stale (F-DG6-640); B unchanged 166ms
+     → expected 200 to be 422 // Object.is equality
+   × QA-R12 F-DG6-640 class (D-233): a token is bound to its issuing row and revision > P15b a token copied from the published version 1 into its draft version 2 is refused stale; the draft's own token resolves 238ms
+     → expected 200 to be 422 // Object.is equality
+   ✓ QA-R12 F-DG6-640 class (D-233): a token is bound to its issuing row and revision > P18 the key is never served or audited; tags are 24 hex, per row and per revision, and carry no fragment of the row id  326ms
+   ✓ QA-R12 F-DG6-640 class (D-233): a token is bound to its issuing row and revision > P19 the key is immutable (0127 trigger) and every row has its own 32-byte key 31ms
+   × QA-R12 F-DG6-640 class (D-233): a token is bound to its issuing row and revision > P20 eight concurrent saves from one read: one 200, seven 409; each loser re-sent with the refreshed If-Match is 422 stale 366ms
+     → expected 200 to be 422 // Object.is equality
+   ✓ QA-R12 F-DG6-640 class (D-233): a token is bound to its issuing row and revision > P21 tags do not depend on the reader: a second restricted reader's token for the same row and version resolves to the row's own literal 136ms
+ ❯ |integration| apps/api/test/integration/access/automation-restricted-tokens-z15.test.ts (7 tests | 4 failed) 4584ms
+   ✓ T-DG6-BE-Z15: restricted tokens are bound to their issuing rule-version row (D-233, F-DG6-640) > (a) the token is an opaque issuer tag: no row version, no row id, no hidden value; other rows issue other tags  602ms
+   × T-DG6-BE-Z15: restricted tokens are bound to their issuing rule-version row (D-233, F-DG6-640) > (b) F-DG6-640: a token copied from the published version 1 into its draft version 2 at the same row version is refused stale 937ms
+     → {"id":"01a1c387-5ed5-7389-b0c4-c82cc92a3a07","ruleId":"01a1c387-5e07-7444-8b65-acb10e2becee","versionNo":2,"status":"draft","content":{"triggerCodes":["benefit.variance_evaluated"],"conditions":[{"op":"neq","field":"benefitId","value":"01a1c387-5d89-7177-96f4-cb85ad74c1ed"},{"op":"neq","field":"benefitId","value":"[restricted:b28ca0aff120ba4d050cf222:2]"},{"op":"neq","field":"benefitId","value":"[: expected 200 to be 422 // Object.is equality
+   × T-DG6-BE-Z15: restricted tokens are bound to their issuing rule-version row (D-233, F-DG6-640) > (c) F-DG6-640: a token copied from another rule's version at the same row version is refused stale 763ms
+     → {"id":"01a1c387-624a-75ba-bc72-da5f81ff9615","ruleId":"01a1c387-6241-7432-8ec7-628e9138cd21","versionNo":1,"status":"draft","content":{"triggerCodes":["benefit.variance_evaluated"],"conditions":[{"op":"neq","field":"benefitId","value":"01a1c387-61a3-774c-a0af-181e99d23b60"},{"op":"neq","field":"benefitId","value":"[restricted:f141d2beb410cce1cec5e87c:2]"},{"op":"neq","field":"benefitId","value":"[: expected 200 to be 422 // Object.is equality
+   × T-DG6-BE-Z15: restricted tokens are bound to their issuing rule-version row (D-233, F-DG6-640) > (d) F-DG6-580: the same draft saved twice; the second save carries the first save's tokens and is refused 253ms
+     → {"id":"01a1c387-64bd-7061-aad1-33dcd1d6430e","ruleId":"01a1c387-64ba-73c9-a9bc-ea586e6eb28c","versionNo":1,"status":"draft","content":{"triggerCodes":["benefit.variance_evaluated"],"conditions":[{"op":"neq","field":"benefitId","value":"01a1c387-6491-700b-b921-89d2fddddca8"},{"op":"neq","field":"benefitId","value":"01a1c387-6491-700b-b921-89d2fddddca8"}],"actions":[{"type":"create_task","parameters: expected 200 to be 422 // Object.is equality
+   × T-DG6-BE-Z15: restricted tokens are bound to their issuing rule-version row (D-233, F-DG6-640) > (e) F-DG6-580: after a 409, the same draft re-sent with the refreshed If-Match is refused; S stays 234ms
+     → {"id":"01a1c387-6592-7578-8c9b-e30d51991f86","ruleId":"01a1c387-6591-7549-9e0e-7eec04d42b91","versionNo":1,"status":"draft","content":{"triggerCodes":["benefit.variance_evaluated"],"conditions":[{"op":"neq","field":"benefitId","value":"01a1c387-6577-73d0-bbdc-168726e1fad4"},{"op":"neq","field":"benefitId","value":"01a1c387-6577-73d0-bbdc-168726e1fad4"}],"actions":[{"type":"create_task","parameters: expected 200 to be 422 // Object.is equality
+   ✓ T-DG6-BE-Z15: restricted tokens are bound to their issuing rule-version row (D-233, F-DG6-640) > (f) the normal round trip keeps the hidden literal wherever the token now sits, and re-issues a fresh tag 284ms
+   ✓ T-DG6-BE-Z15: restricted tokens are bound to their issuing rule-version row (D-233, F-DG6-640) > (g) the retired D-231 form [restricted:<version>:<k>] is refused stale even at the current version 207ms
+ ✓ |integration| apps/api/test/integration/access/automation-restricted-tokens-z13.test.ts (11 tests) 2361ms
+ ❯ |integration| apps/api/test/integration/access/automation-restricted-tokens-z14.test.ts (5 tests | 4 failed) 2456ms
+   ✓ T-DG6-BE-Z14: restricted tokens are bound to their version (D-231, F-DG6-580) > read: a token names the row version it was issued from and the literal's position 297ms
+   × T-DG6-BE-Z14: restricted tokens are bound to their version (D-231, F-DG6-580) > (a) a second save of the same draft after removing an earlier condition is refused; S is never swapped 259ms
+     → {"id":"01a1c387-95b5-752c-8c9c-a29fc429d27e","ruleId":"01a1c387-95b3-73bd-9f45-5ea0867be62e","versionNo":1,"status":"draft","content":{"triggerCodes":["benefit.variance_evaluated"],"conditions":[{"op":"neq","field":"benefitId","value":"01a1c387-959a-755d-b7b4-23c15e102690"},{"op":"neq","field":"benefitId","value":"01a1c387-959a-755d-b7b4-23c15e102690"}],"actions":[{"type":"create_task","parameters: expected 200 to be 422 // Object.is equality
+   × T-DG6-BE-Z14: restricted tokens are bound to their version (D-231, F-DG6-580) > (b) two hidden literals: the stale second save is refused and S1, S2 stay in place 548ms
+     → {"id":"01a1c387-9762-750c-90fd-b144dc121d99","ruleId":"01a1c387-973f-7619-a56b-4b114250c1d6","versionNo":1,"status":"draft","content":{"triggerCodes":["benefit.variance_evaluated"],"conditions":[{"op":"neq","field":"benefitId","value":"[restricted:2da0fe22e5e9a375b041221c:1]"},{"op":"neq","field":"benefitId","value":"high"},{"op":"eq","field":"severity","value":"high"}],"actions":[{"type":"create_: expected 200 to be 422 // Object.is equality
+   × T-DG6-BE-Z14: restricted tokens are bound to their version (D-231, F-DG6-580) > (c) a re-save of the same draft after a 409 is refused; after a reload the change re-applies and S stays 498ms
+     → {"id":"01a1c387-9901-70b8-b321-23a45fd33ffc","ruleId":"01a1c387-98ff-72df-9057-9c0bfcdee623","versionNo":1,"status":"draft","content":{"triggerCodes":["benefit.variance_evaluated"],"conditions":[{"op":"neq","field":"benefitId","value":"01a1c387-98b4-73c8-86db-f059c82353cc"},{"op":"neq","field":"benefitId","value":"high"},{"op":"eq","field":"severity","value":"medium"}],"actions":[{"type":"create_t: expected 200 to be 422 // Object.is equality
+   × T-DG6-BE-Z14: restricted tokens are bound to their version (D-231, F-DG6-580) > (d) a token naming another version is refused even where the positions coincide; unknown text stays unknown 228ms
+     → {"id":"01a1c387-9abf-70ef-9571-0d1aebc47cd9","ruleId":"01a1c387-9aba-702f-98c0-2811cdd8740b","versionNo":1,"status":"draft","content":{"triggerCodes":["benefit.variance_evaluated"],"conditions":[{"op":"neq","field":"benefitId","value":"[restricted:b58cca38ec7310af25469c66:1]"},{"op":"eq","field":"severity","value":"low"}],"actions":[{"type":"create_task","parameters":{"messageKey":"automation.mess: expected 200 to be 422 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 15 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/access/automation-restricted-tokens-z14.test.ts > T-DG6-BE-Z14: restricted tokens are bound to their version (D-231, F-DG6-580) > (a) a second save of the same draft after removing an earlier condition is refused; S is never swapped
+AssertionError: {"id":"01a1c387-95b5-752c-8c9c-a29fc429d27e","ruleId":"01a1c387-95b3-73bd-9f45-5ea0867be62e","versionNo":1,"status":"draft","content":{"triggerCodes":["benefit.variance_evaluated"],"conditions":[{"op":"neq","field":"benefitId","value":"01a1c387-959a-755d-b7b4-23c15e102690"},{"op":"neq","field":"benefitId","value":"01a1c387-959a-755d-b7b4-23c15e102690"}],"actions":[{"type":"create_task","parameters: expected 200 to be 422 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 422[39m
+[31m+ 200[39m
+
+ ❯ expectStale apps/api/test/integration/access/automation-restricted-tokens-z14.test.ts:109:62
+    107|   send("PATCH", V(ruleId), { session: author.session, headers: ifm(ver…
+    108| function expectStale(res: Res<Body>, pointer: string) {
+    109|   expect(res.status, JSON.stringify(res.body).slice(0, 400)).toBe(422);
+       |                                                              ^
+    110|   expect(res.body.code).toBe("automation_rule.restricted_token_stale");
+    111|   expect(res.body.detail).toContain("reload the version and re-apply y…
+ ❯ apps/api/test/integration/access/automation-restricted-tokens-z14.test.ts:183:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/15]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/automation-restricted-tokens-z14.test.ts > T-DG6-BE-Z14: restricted tokens are bound to their version (D-231, F-DG6-580) > (b) two hidden literals: the stale second save is refused and S1, S2 stay in place
+AssertionError: {"id":"01a1c387-9762-750c-90fd-b144dc121d99","ruleId":"01a1c387-973f-7619-a56b-4b114250c1d6","versionNo":1,"status":"draft","content":{"triggerCodes":["benefit.variance_evaluated"],"conditions":[{"op":"neq","field":"benefitId","value":"[restricted:2da0fe22e5e9a375b041221c:1]"},{"op":"neq","field":"benefitId","value":"high"},{"op":"eq","field":"severity","value":"high"}],"actions":[{"type":"create_: expected 200 to be 422 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 422[39m
+[31m+ 200[39m
+
+ ❯ expectStale apps/api/test/integration/access/automation-restricted-tokens-z14.test.ts:109:62
+    107|   send("PATCH", V(ruleId), { session: author.session, headers: ifm(ver…
+    108| function expectStale(res: Res<Body>, pointer: string) {
+    109|   expect(res.status, JSON.stringify(res.body).slice(0, 400)).toBe(422);
+       |                                                              ^
+    110|   expect(res.body.code).toBe("automation_rule.restricted_token_stale");
+    111|   expect(res.body.detail).toContain("reload the version and re-apply y…
+ ❯ apps/api/test/integration/access/automation-restricted-tokens-z14.test.ts:227:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/15]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/automation-restricted-tokens-z14.test.ts > T-DG6-BE-Z14: restricted tokens are bound to their version (D-231, F-DG6-580) > (c) a re-save of the same draft after a 409 is refused; after a reload the change re-applies and S stays
+AssertionError: {"id":"01a1c387-9901-70b8-b321-23a45fd33ffc","ruleId":"01a1c387-98ff-72df-9057-9c0bfcdee623","versionNo":1,"status":"draft","content":{"triggerCodes":["benefit.variance_evaluated"],"conditions":[{"op":"neq","field":"benefitId","value":"01a1c387-98b4-73c8-86db-f059c82353cc"},{"op":"neq","field":"benefitId","value":"high"},{"op":"eq","field":"severity","value":"medium"}],"actions":[{"type":"create_t: expected 200 to be 422 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 422[39m
+[31m+ 200[39m
+
+ ❯ expectStale apps/api/test/integration/access/automation-restricted-tokens-z14.test.ts:109:62
+    107|   send("PATCH", V(ruleId), { session: author.session, headers: ifm(ver…
+    108| function expectStale(res: Res<Body>, pointer: string) {
+    109|   expect(res.status, JSON.stringify(res.body).slice(0, 400)).toBe(422);
+       |                                                              ^
+    110|   expect(res.body.code).toBe("automation_rule.restricted_token_stale");
+    111|   expect(res.body.detail).toContain("reload the version and re-apply y…
+ ❯ apps/api/test/integration/access/automation-restricted-tokens-z14.test.ts:287:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/15]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/automation-restricted-tokens-z14.test.ts > T-DG6-BE-Z14: restricted tokens are bound to their version (D-231, F-DG6-580) > (d) a token naming another version is refused even where the positions coincide; unknown text stays unknown
+AssertionError: {"id":"01a1c387-9abf-70ef-9571-0d1aebc47cd9","ruleId":"01a1c387-9aba-702f-98c0-2811cdd8740b","versionNo":1,"status":"draft","content":{"triggerCodes":["benefit.variance_evaluated"],"conditions":[{"op":"neq","field":"benefitId","value":"[restricted:b58cca38ec7310af25469c66:1]"},{"op":"eq","field":"severity","value":"low"}],"actions":[{"type":"create_task","parameters":{"messageKey":"automation.mess: expected 200 to be 422 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 422[39m
+[31m+ 200[39m
+
+ ❯ expectStale apps/api/test/integration/access/automation-restricted-tokens-z14.test.ts:109:62
+    107|   send("PATCH", V(ruleId), { session: author.session, headers: ifm(ver…
+    108| function expectStale(res: Res<Body>, pointer: string) {
+    109|   expect(res.status, JSON.stringify(res.body).slice(0, 400)).toBe(422);
+       |                                                              ^
+    110|   expect(res.body.code).toBe("automation_rule.restricted_token_stale");
+    111|   expect(res.body.detail).toContain("reload the version and re-apply y…
+ ❯ apps/api/test/integration/access/automation-restricted-tokens-z14.test.ts:335:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/15]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/automation-restricted-tokens-z15.test.ts > T-DG6-BE-Z15: restricted tokens are bound to their issuing rule-version row (D-233, F-DG6-640) > (b) F-DG6-640: a token copied from the published version 1 into its draft version 2 at the same row version is refused stale
+AssertionError: {"id":"01a1c387-5ed5-7389-b0c4-c82cc92a3a07","ruleId":"01a1c387-5e07-7444-8b65-acb10e2becee","versionNo":2,"status":"draft","content":{"triggerCodes":["benefit.variance_evaluated"],"conditions":[{"op":"neq","field":"benefitId","value":"01a1c387-5d89-7177-96f4-cb85ad74c1ed"},{"op":"neq","field":"benefitId","value":"[restricted:b28ca0aff120ba4d050cf222:2]"},{"op":"neq","field":"benefitId","value":"[: expected 200 to be 422 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 422[39m
+[31m+ 200[39m
+
+ ❯ expectStale apps/api/test/integration/access/automation-restricted-tokens-z15.test.ts:124:62
+    122| }
+    123| function expectStale(res: Res<Body>, pointer: string) {
+    124|   expect(res.status, JSON.stringify(res.body).slice(0, 400)).toBe(422);
+       |                                                              ^
+    125|   expect(res.body.code).toBe("automation_rule.restricted_token_stale");
+    126|   expect(res.body.errors[0].pointer).toBe(pointer);
+ ❯ apps/api/test/integration/access/automation-restricted-tokens-z15.test.ts:277:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/15]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/automation-restricted-tokens-z15.test.ts > T-DG6-BE-Z15: restricted tokens are bound to their issuing rule-version row (D-233, F-DG6-640) > (c) F-DG6-640: a token copied from another rule's version at the same row version is refused stale
+AssertionError: {"id":"01a1c387-624a-75ba-bc72-da5f81ff9615","ruleId":"01a1c387-6241-7432-8ec7-628e9138cd21","versionNo":1,"status":"draft","content":{"triggerCodes":["benefit.variance_evaluated"],"conditions":[{"op":"neq","field":"benefitId","value":"01a1c387-61a3-774c-a0af-181e99d23b60"},{"op":"neq","field":"benefitId","value":"[restricted:f141d2beb410cce1cec5e87c:2]"},{"op":"neq","field":"benefitId","value":"[: expected 200 to be 422 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 422[39m
+[31m+ 200[39m
+
+ ❯ expectStale apps/api/test/integration/access/automation-restricted-tokens-z15.test.ts:124:62
+    122| }
+    123| function expectStale(res: Res<Body>, pointer: string) {
+    124|   expect(res.status, JSON.stringify(res.body).slice(0, 400)).toBe(422);
+       |                                                              ^
+    125|   expect(res.body.code).toBe("automation_rule.restricted_token_stale");
+    126|   expect(res.body.errors[0].pointer).toBe(pointer);
+ ❯ apps/api/test/integration/access/automation-restricted-tokens-z15.test.ts:301:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/15]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/automation-restricted-tokens-z15.test.ts > T-DG6-BE-Z15: restricted tokens are bound to their issuing rule-version row (D-233, F-DG6-640) > (d) F-DG6-580: the same draft saved twice; the second save carries the first save's tokens and is refused
+AssertionError: {"id":"01a1c387-64bd-7061-aad1-33dcd1d6430e","ruleId":"01a1c387-64ba-73c9-a9bc-ea586e6eb28c","versionNo":1,"status":"draft","content":{"triggerCodes":["benefit.variance_evaluated"],"conditions":[{"op":"neq","field":"benefitId","value":"01a1c387-6491-700b-b921-89d2fddddca8"},{"op":"neq","field":"benefitId","value":"01a1c387-6491-700b-b921-89d2fddddca8"}],"actions":[{"type":"create_task","parameters: expected 200 to be 422 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 422[39m
+[31m+ 200[39m
+
+ ❯ expectStale apps/api/test/integration/access/automation-restricted-tokens-z15.test.ts:124:62
+    122| }
+    123| function expectStale(res: Res<Body>, pointer: string) {
+    124|   expect(res.status, JSON.stringify(res.body).slice(0, 400)).toBe(422);
+       |                                                              ^
+    125|   expect(res.body.code).toBe("automation_rule.restricted_token_stale");
+    126|   expect(res.body.errors[0].pointer).toBe(pointer);
+ ❯ apps/api/test/integration/access/automation-restricted-tokens-z15.test.ts:321:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/15]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/automation-restricted-tokens-z15.test.ts > T-DG6-BE-Z15: restricted tokens are bound to their issuing rule-version row (D-233, F-DG6-640) > (e) F-DG6-580: after a 409, the same draft re-sent with the refreshed If-Match is refused; S stays
+AssertionError: {"id":"01a1c387-6592-7578-8c9b-e30d51991f86","ruleId":"01a1c387-6591-7549-9e0e-7eec04d42b91","versionNo":1,"status":"draft","content":{"triggerCodes":["benefit.variance_evaluated"],"conditions":[{"op":"neq","field":"benefitId","value":"01a1c387-6577-73d0-bbdc-168726e1fad4"},{"op":"neq","field":"benefitId","value":"01a1c387-6577-73d0-bbdc-168726e1fad4"}],"actions":[{"type":"create_task","parameters: expected 200 to be 422 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 422[39m
+[31m+ 200[39m
+
+ ❯ expectStale apps/api/test/integration/access/automation-restricted-tokens-z15.test.ts:124:62
+    122| }
+    123| function expectStale(res: Res<Body>, pointer: string) {
+    124|   expect(res.status, JSON.stringify(res.body).slice(0, 400)).toBe(422);
+       |                                                              ^
+    125|   expect(res.body.code).toBe("automation_rule.restricted_token_stale");
+    126|   expect(res.body.errors[0].pointer).toBe(pointer);
+ ❯ apps/api/test/integration/access/automation-restricted-tokens-z15.test.ts:338:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/15]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/zz-qa-dg6r12-condition-token-resave.test.ts > QA-R12 round-9 adversarial token cases (D-226, D-228 (1)) on the version-bound token > P8 concurrent saves from the same read: the second is refused 409 (If-Match), never applies stale tokens
+AssertionError: expected 200 to be 422 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 422[39m
+[31m+ 200[39m
+
+ ❯ apps/api/test/integration/access/zz-qa-dg6r12-condition-token-resave.test.ts:346:27
+    344|     const resent = await patchV(id, cur.version, loser, loserBody, ra.…
+    345|     console.log(`QA-R12 P8 loser re-sent with If-Match ${cur.version}:…
+    346|     expect(resent.status).toBe(422);
+       |                           ^
+    347|     expect(resent.body?.code).toBe("automation_rule.restricted_token_s…
+    348|     expect(await storedOf(id)).toEqual(now);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/15]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/zz-qa-dg6r12-condition-token-resave.test.ts > QA-R12 F-DG6-580 class (D-231): a token reused across a save > P13 double save: save 1 removes condition 1; save 2 re-sends the same draft with the refreshed If-Match -> 422 stale, nothing changes
+AssertionError: expected 'automation_rule.restricted_marker_unk…' to be 'automation_rule.restricted_token_stale' // Object.is equality
+
+Expected: [32m"automation_rule.restricted_[7mtoken_stale[27m"[39m
+Received: [31m"automation_rule.restricted_[7mmarker_unknown[27m"[39m
+
+ ❯ apps/api/test/integration/access/zz-qa-dg6r12-condition-token-resave.test.ts:408:27
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/15]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/zz-qa-dg6r12-condition-token-resave.test.ts > QA-R12 F-DG6-580 class (D-231): a token reused across a save > P16 a grant given between read and save, plus a stale token: refused; after the grant the reader sees the literals and no token
+AssertionError: expected 'automation_rule.restricted_marker_unk…' to be 'automation_rule.restricted_token_stale' // Object.is equality
+
+Expected: [32m"automation_rule.restricted_[7mtoken_stale[27m"[39m
+Received: [31m"automation_rule.restricted_[7mmarker_unknown[27m"[39m
+
+ ❯ apps/api/test/integration/access/zz-qa-dg6r12-condition-token-resave.test.ts:430:30
+    428|       console.log(`QA-R12 P16 stale after unmark: ${res.status} ${res.…
+    429|       expect(res.status).toBe(422);
+    430|       expect(res.body?.code).toBe("automation_rule.restricted_token_st…
+       |                              ^
+    431|       expect((await storedOf(id)).map((x: Body) => x.value)).toEqual([…
+    432|       const now = await read(id);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/15]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/zz-qa-dg6r12-condition-token-resave.test.ts > QA-R12 F-DG6-640 class (D-233): a token is bound to its issuing row and revision > P14 same-row tokens of v-1 / v+1, a random tag, the retired form at the current version, case and length variants: refused; nothing changes
+AssertionError: [restricted:e75834b01bc7760ace01998f:1]: expected 200 to be 422 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 422[39m
+[31m+ 200[39m
+
+ ❯ apps/api/test/integration/access/zz-qa-dg6r12-condition-token-resave.test.ts:485:31
+    483|       const res = await patch(id, shown, [{ field: "benefitId", op: "n…
+    484|       out[tok] = `${res.status} ${res.body?.code}`;
+    485|       expect(res.status, tok).toBe(422);
+       |                               ^
+    486|       if (want === "stale") expect(res.body?.code, tok).toBe("automati…
+    487|       else if (want === "unknown") expect(res.body?.code, tok).toBe("a…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/15]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/zz-qa-dg6r12-condition-token-resave.test.ts > QA-R12 F-DG6-640 class (D-233): a token is bound to its issuing row and revision > P15 a token copied from another rule whose row version coincides is refused stale (F-DG6-640); B unchanged
+AssertionError: expected 200 to be 422 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 422[39m
+[31m+ 200[39m
+
+ ❯ apps/api/test/integration/access/zz-qa-dg6r12-condition-token-resave.test.ts:505:24
+    503|     const res = await patch(b, rb, [{ field: "benefitId", op: "neq", v…
+    504|     console.log(`QA-R12 P15: A token ${ra.content.conditions[0].value}…
+    505|     expect(res.status).toBe(422);
+       |                        ^
+    506|     expect(res.body?.code).toBe("automation_rule.restricted_token_stal…
+    507|     expect(await storedOf(b)).toEqual(before);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/15]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/zz-qa-dg6r12-condition-token-resave.test.ts > QA-R12 F-DG6-640 class (D-233): a token is bound to its issuing row and revision > P15b a token copied from the published version 1 into its draft version 2 is refused stale; the draft's own token resolves
+AssertionError: expected 200 to be 422 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 422[39m
+[31m+ 200[39m
+
+ ❯ apps/api/test/integration/access/zz-qa-dg6r12-condition-token-resave.test.ts:541:24
+    539|     console.log(`QA-R12 P15b pasted published token -> ${res.status} $…
+    540|     for (const r of [res, res2]) {
+    541|       expect(r.status).toBe(422);
+       |                        ^
+    542|       expect(r.body?.code).toBe("automation_rule.restricted_token_stal…
+    543|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/15]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/zz-qa-dg6r12-condition-token-resave.test.ts > QA-R12 F-DG6-640 class (D-233): a token is bound to its issuing row and revision > P20 eight concurrent saves from one read: one 200, seven 409; each loser re-sent with the refreshed If-Match is 422 stale
+AssertionError: expected 200 to be 422 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 422[39m
+[31m+ 200[39m
+
+ ❯ apps/api/test/integration/access/zz-qa-dg6r12-condition-token-resave.test.ts:628:24
+    626|       if (st[i] !== 409) continue;
+    627|       const r = await patchV(id, cur.version, shown, drafts[i]!, i % 2…
+    628|       expect(r.status).toBe(422);
+       |                        ^
+    629|       expect(r.body?.code).toBe("automation_rule.restricted_token_stal…
+    630|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/15]⎯
+
+
+ Test Files  3 failed | 1 passed (4)
+      Tests  15 failed | 31 passed (46)
+   Start at  03:35:43
+   Duration  63.41s (transform 10.49s, setup 0ms, collect 36.17s, tests 16.76s, environment 0ms, prepare 99ms)
+
+exit=1
+## end 2026-11-10T03:36:51Z

@@ -1,0 +1,71 @@
+DG6 rows: 48
+statuses: ['IMPLEMENTED']
+evidence paths: 1109 missing: 0
+defer to freeze verification/binding re-run: 13 ['REQ-DLV-038', 'REQ-S10-002', 'REQ-S12-019', 'REQ-S15-007', 'REQ-S15-011', 'REQ-S15-014', 'REQ-S17-001', 'REQ-S17-007', 'REQ-S20-001', 'REQ-S20-012', 'REQ-S20-013', 'REQ-S20-017', 'REQ-S20-022']
+
+## REQ-S20-029 ACCEPTANCE: A22;A13: the load report states the dataset, infrastructure and workload, and gives actual p95 figures for reads/updates and dashboards, with any miss against 2 s/4 s listed as a finding
+NOTES: Provisional engineering targets, not verified Mobily capacity requirements. Final production scale, availability and recovery objectives must be agreed with Mobily IT. DG6 analyst check (T-DG6-AN-P6B, base bc5bb7b32e16c37e41e99a769a5143646c2ec4e2): DO-G's final report states the dataset (50 transformations, 1,000 initiatives, 10,000 KPI-period actuals, 100,000 audit events, 120 users), the measured sandbox infrastructure (4 vCPU, 16 GB, PostgreSQL with fsync=off, a shared host, not production) and the 100-user workload, and gives the actual p95 per class over three repetitions (read 22.9 ms, update 34.9 ms, search 20.5 ms, dashboards 50.3 ms, export start 108.5 ms; independently recomputed), with no miss and so no p95 finding; caveats: getWorkstreamDashboard was not measured (the profile writes no workstream), the run used DO-F's patched copy of generate.mjs (sha256 6b2a9007...), which was not in the tree at that base; DO-Y1 has since shipped it byte-identical (next check), the report sits in the DO-G handback folder because docs/delivery/test-evidence/DG6/load/ was read-only to implementers, and QA-E's verification is pending. DG6 analyst check (T-DG6-AN-Z1, base 9ca69c3da, after the round-1 repairs of D-206 to D-208 and the round-2 repairs BE-Z1, ARCH-14 and BE-Z2/Z2B of D-209): DO-Y1 (F-DG6-101/F-DG6-142) applied DO-F's RFC-UUID patch unchanged. deploy/load/generate.mjs now sets the RFC 9562 v3 version and variant bits in loadId and in the SQL audit ids, and its sha256 is 
+
+## REQ-S20-030 ACCEPTANCE: A15;A13: exporting the full load dataset returns immediately with a job ID, progress rises to 100%, and the file downloads only for the requester
+NOTES: DG6 analyst check (T-DG6-AN-P6B, base bc5bb7b32e16c37e41e99a769a5143646c2ec4e2): left SPECIFIED as a real gap: on the full load dataset (D-199 item 2) both DO-G export proofs exit 1; job ids, progress to 100% and requester-only download hold on 66 of 66, and single exports start within 0.6 s, but 24 of 50 simultaneous starts took 2.0-2.3 s (48 of 50 in BE-S's proof) against ADR-0058 §7's reading of 'immediately' (within 2 s), on a loaded host and with no quiet-host run; DO-G and BE-S propose a Medium finding and a reopen candidate (the snapshot is assembled inside the request), which the orchestrator has not yet classified. DG6 analyst check (T-DG6-AN-P6C, base 350db3f20): IMPLEMENTED on DO-H's idle-host re-measurement (D-202): same dataset, generator copy, sessions, API binary and unchanged export-proof.mjs (START_TARGET_MS 2000) as DO-G proof 2, three repetitions on fresh databases at 1-minute load average 0.58-0.92 on 4 vCPU: 0 of 198 starts over 2 s (part B, 50 simultaneous starts, 0 of 150, p95 1,566 ms, max 1,578.571 ms; part A max 254 ms), 66/66 per repetition with 202 and a job id, progress non-decreasing to 100 and succeeded, requester download 200 with the stated byte count, and every other same-scope user (65/65) and AUD user (66/66) refused with 404 on the job and the download; the earlier misses were on a loaded host, and D-202 records no product change and no reopen. Caveats: export-proof.mjs still exits 1 in each repetition on one assertion, 'LOAD-T20 FAIL: no 
+
+## REQ-S12-019 ACCEPTANCE: A17;A22: a failing test connector produces one exception and the KPI shows Stale with its last value and date
+NOTES: DG6 analyst check (T-DG6-AN-P6A, base bc5bb7b32): REAL GAP, left SPECIFIED: one exception and the KPI panel's Stale with last value 250.75 and date 2026-01-31 pass, but the failing-connector test in tests/qa/integration/a17-import-and-integration.test.ts and e2e/a17-failing-connector-exception.spec.ts fail deterministically at this base because the operational exception's linked KPI shows freshness unknown with lastValue and lastValueAt null as soon as a later reporting period is open (QA-A2-F1; apps/api/src/modules/operations/exceptions.ts linkedKpiStatus reads only the newest period; reproduced as still failing in the BE-X3B, FE-X1B and DO-G merged-tree runs), so the last known value is not retained on the exception as the row requires; a product repair or an ADR-0053 §2 ruling is needed. DG6 analyst check (T-DG6-AN-P6C, base 350db3f20): IMPLEMENTED after the BE-X4 repair of QA-A2-F1: apps/api/src/modules/operations/exceptions.ts linkedKpiStatus now reads the KPI's latest open or closed period whose panel evaluation carries a value, so the exception keeps the last known value with its freshness label; BE-X4's new exception-last-known-value.test.ts (8/8, and 3 of its tests fail against the pre-fix code), the unedited QA A17 file (10/10, including 'failing connector (REQ-S12-019, A17)': one exception, Stale, 250.75, 2026-01-31) and the unedited e2e/a17-failing-connector-exception.spec.ts (en and ar, 2 passed) pass in BE-X4's logs; the one-exception and alert clause also passe
+
+## REQ-S15-014 ACCEPTANCE: A05;A20: the weighted score and benefit realized value show plain-language explanations in en and ar; non-admin screens show no stack traces or infrastructure terms
+NOTES: DG6 analyst check (T-DG6-AN-P6A, base bc5bb7b32): REAL GAP, left SPECIFIED: clause 1 is met (FE-F's apps/web/src/components/explanation/explanation.test.tsx shows the weighted-score and benefit-realized-value panels in plain language in en and ar, on KBE-B's packages/shared/src/explain view models), but no test asserts clause 2 'non-admin screens show no stack traces or infrastructure terms': ADR-0061 §8 assigns that term scan of every non-admin screen to QA-D, and QA-D's handback lists the row as NOT COVERED, so the clause has no executable evidence. DG6 analyst check (T-DG6-AN-P6C, base 350db3f20): IMPLEMENTED: clause 1 as before (explanation.test.tsx, 18/18 in DO-H's unit run on 879f84eaf); clause 2 'non-admin screens show no stack traces or infrastructure terms' is now asserted by QA-F: e2e/a20-s15-014-term-scan.spec.ts scans the 21 non-admin routes of the ADR-0061 §7.2 set in chromium-en and chromium-ar, each in the normal, forced-500 and network-failure states, for the ADR-0061 §8 term list (126 passed, 0 term hits, axe 0 serious/critical: e2e-term-scan-en-ar-final.log), a20-s15-014-no-infra-terms.test.ts asserts that real SQL and database-unreachable faults reach the client as a Problem with no §8 term (6/6), and a20-s15-014-term-list.test.ts pins the list (26/26); QA-F's mutations (stack or message in the 500 detail, ErrorState rendering the stack, an injected term) are all killed; both QA files also pass in DO-H's runs. Caveats (QA-F §3, §8): six routes (/l/:token, a
+
+## REQ-S17-007 ACCEPTANCE: A12: with a user scoped to X, an assistant query about Y returns no Y content; every answer lists cited record IDs and versions
+NOTES: DG6 analyst check (T-DG6-AN-P6B, base bc5bb7b32e16c37e41e99a769a5143646c2ec4e2): left SPECIFIED as a real gap: the API half of the acceptance passes (a user scoped to X who asks about Y gets no Y record sent, cited or stored, and record citations carry id and version: retrieval.test.ts and QA-B's A12 suite), but QA-B's proposed High defect D2 (F-DG6-QA-B-2) is unrepaired in this tree: useAssistantAvailability in apps/web/src/components/assistant/api.ts reads availability from GET /admin/assistant, which ordinary signed-in users (TL, BO, WL, FIN) get 403 on, so the in-app assistant is never offered to them and e2e A12-5 fails in en and ar; no repair task was found among BE-X1 to BE-X3B and FE-X1B. DG6 analyst check (T-DG6-AN-P6C, base 350db3f20): IMPLEMENTED after the BE-X5 repair of QA-B D2 (F-DG6-QA-B-2): listAssistantConversations (assistant.use) now returns assistantEnabled, and the web's useAssistantAvailability reads it instead of the admin-only GET /admin/assistant, so the assistant is offered to every signed-in holder of assistant.use while it is enabled and the setting stays readable only with assistant.configure or operations.read; in BE-X5's log the unedited e2e/a12-p6-scope-isolation.spec.ts passed 12/12, including A12-5 in chromium-en and chromium-ar (the X-scoped TL sees the launcher, asked about Y the panel shows no Y text, asked about X it cites X), while GET /admin/assistant still answers 403 for that user; conversations.test.ts adds 4 tests (no setting value 
+
+## REQ-S15-012 ACCEPTANCE: A20: an automated axe scan reports no serious or critical violations on key screens; the guided walkthrough can be completed by keyboard alone
+NOTES: DG6 analyst check (T-DG6-AN-P6A, base bc5bb7b32): the axe clause is e2e/a20-p6-axe.spec.ts (37 screens x 2 viewports x en/ar, 0 serious or critical), but 9 detail screens were skipped with reasons (QA-D §4), some of them scanned by other specs (A17 imports, A12 deep link); the keyboard clause is only partly proven: FE-F2's p6-walkthrough-keyboard.spec.ts (demo stack, en and ar, 2 passed) reaches all twelve step links by Tab and performs steps 1 and 10 by keyboard, and QA-D proves the main journeys by keyboard (KPI submit, KPI accept, approval decision, skip link, language switch), so the other ten walkthrough steps have not been completed by keyboard in a test.
+--- orchestrator V15
+hist 0
+install 0
+build 0
+typecheck 0
+lint 0
+format 0
+openapi 0
+contrast 0
+unit-unset 0
+unit-cutf8 0
+integration 0
+e2e-unset 0
+e2e-cutf8 0
+root 0
+demo 0
+README.md
+build.log
+build.rc
+contrast.log
+contrast.rc
+demo.log
+demo.rc
+e2e-cutf8.interrupted.log
+e2e-cutf8.log
+e2e-cutf8.rc
+e2e-unset.log
+e2e-unset.rc
+format.log
+format.rc
+hist.log
+hist.rc
+install.log
+install.rc
+integration.log
+integration.rc
+lint.log
+lint.rc
+openapi.log
+openapi.rc
+root.log
+root.rc
+summary.txt
+typecheck.log
+typecheck.rc
+unit-cutf8.log
+unit-cutf8.rc
+unit-unset.log
+unit-unset.rc

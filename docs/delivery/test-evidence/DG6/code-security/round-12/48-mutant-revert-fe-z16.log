@@ -1,0 +1,50 @@
+# 48-mutant-revert-fe-z16  started 2026-11-10T04:29:07Z node=v24.21.0 load=16.11 18.37 18.89 commit=2495e036c4d933788044756ab3c41415e3873cf3
+## mutant: apps/web/src/pages/automation/RulePage.tsx reverted to its round-11 content (33db1a46); the z14 test file and i18n are the candidate's
+ apps/web/src/pages/automation/RulePage.tsx | 32 +++++++++---------------------
+ 1 file changed, 9 insertions(+), 23 deletions(-)
+$ npx vitest run --configLoader runner --project unit-web apps/web/src/pages/automation/rule-editor-tokens-z14.test.tsx
+   ✓ en: after a save the form reloads from the saved version, so the second save sends its tokens  2001ms
+   ✓ en: after a 409 the form reloads the current version, says the rule changed (not the stale-token text), and never re-sends stale tokens  968ms
+   ✓ en: an issuer-bound token shows the restricted label (D-226, Z15)  512ms
+   × en: a token pasted from another version of the rule gets the 422 problem text, not "this rule changed"; the form reloads the stored version (Z16) 6131ms
+   × en: a token pasted from another rule gets the 422 problem text, not "this rule changed"; the form reloads the stored version (Z16) 6385ms
+   × en: a token in the retired pre-0127 form gets the 422 problem text, not "this rule changed"; the form reloads the stored version (Z16) 5936ms
+   ✓ en: the stale-token problem text is true in the editor flow (Z16) 0ms
+   ✓ ar: after a save the form reloads from the saved version, so the second save sends its tokens  1001ms
+   ✓ ar: after a 409 the form reloads the current version, says the rule changed (not the stale-token text), and never re-sends stale tokens  803ms
+   ✓ ar: an issuer-bound token shows the restricted label (D-226, Z15)  481ms
+   × ar: a token pasted from another version of the rule gets the 422 problem text, not "this rule changed"; the form reloads the stored version (Z16) 5826ms
+   × ar: a token pasted from another rule gets the 422 problem text, not "this rule changed"; the form reloads the stored version (Z16) 5784ms
+   × ar: a token in the retired pre-0127 form gets the 422 problem text, not "this rule changed"; the form reloads the stored version (Z16) 5463ms
+   ✓ ar: the stale-token problem text is true in the editor flow (Z16) 0ms
+   ✓ another 422 (not a stale token) keeps the author's draft and shows the problem text  1158ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  |unit-web| src/pages/automation/rule-editor-tokens-z14.test.tsx > en: a token pasted from another version of the rule gets the 422 problem text, not "this rule changed"; the form reloads the stored version (Z16)
+ FAIL  |unit-web| src/pages/automation/rule-editor-tokens-z14.test.tsx > en: a token pasted from another rule gets the 422 problem text, not "this rule changed"; the form reloads the stored version (Z16)
+ FAIL  |unit-web| src/pages/automation/rule-editor-tokens-z14.test.tsx > en: a token in the retired pre-0127 form gets the 422 problem text, not "this rule changed"; the form reloads the stored version (Z16)
+ FAIL  |unit-web| src/pages/automation/rule-editor-tokens-z14.test.tsx > ar: a token pasted from another version of the rule gets the 422 problem text, not "this rule changed"; the form reloads the stored version (Z16)
+ FAIL  |unit-web| src/pages/automation/rule-editor-tokens-z14.test.tsx > ar: a token pasted from another rule gets the 422 problem text, not "this rule changed"; the form reloads the stored version (Z16)
+ FAIL  |unit-web| src/pages/automation/rule-editor-tokens-z14.test.tsx > ar: a token in the retired pre-0127 form gets the 422 problem text, not "this rule changed"; the form reloads the stored version (Z16)
+ Test Files  1 failed (1)
+      Tests  6 failed | 9 passed (15)
+mutant-exit=1
+## restored; changed paths: 0
+$ (unmutated) same command
+ ✓ |unit-web| src/pages/automation/rule-editor-tokens-z14.test.tsx (15 tests) 22671ms
+   ✓ en: after a save the form reloads from the saved version, so the second save sends its tokens  3199ms
+   ✓ en: after a 409 the form reloads the current version, says the rule changed (not the stale-token text), and never re-sends stale tokens  917ms
+   ✓ en: an issuer-bound token shows the restricted label (D-226, Z15)  369ms
+   ✓ en: a token pasted from another version of the rule gets the 422 problem text, not "this rule changed"; the form reloads the stored version (Z16)  1433ms
+   ✓ en: a token pasted from another rule gets the 422 problem text, not "this rule changed"; the form reloads the stored version (Z16)  1382ms
+   ✓ en: a token in the retired pre-0127 form gets the 422 problem text, not "this rule changed"; the form reloads the stored version (Z16)  1351ms
+   ✓ ar: after a save the form reloads from the saved version, so the second save sends its tokens  1127ms
+   ✓ ar: after a 409 the form reloads the current version, says the rule changed (not the stale-token text), and never re-sends stale tokens  1350ms
+   ✓ ar: an issuer-bound token shows the restricted label (D-226, Z15)  616ms
+   ✓ ar: a token pasted from another version of the rule gets the 422 problem text, not "this rule changed"; the form reloads the stored version (Z16)  1294ms
+   ✓ ar: a token pasted from another rule gets the 422 problem text, not "this rule changed"; the form reloads the stored version (Z16)  1322ms
+   ✓ ar: a token in the retired pre-0127 form gets the 422 problem text, not "this rule changed"; the form reloads the stored version (Z16)  1181ms
+   ✓ another 422 (not a stale token) keeps the author's draft and shows the problem text  704ms
+ Test Files  1 passed (1)
+      Tests  15 passed (15)
+unmutated-exit=0
+finished 2026-11-10T04:30:34Z
