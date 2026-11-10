@@ -1,0 +1,58 @@
+# 2026-11-10T18:49:29Z MUTANT: en/ar explanations.json reverted to round-1 (98feb869c: 'Basis' / 'Validated'); the F-DG6-900 test must FAIL (Node v24.21.0, $TMPDIR/rv at 71ff750ed, load 18.07 16.65 12.38)
+ apps/web/src/i18n/ar/explanations.json | 6 +++---
+ apps/web/src/i18n/en/explanations.json | 6 +++---
+ 2 files changed, 6 insertions(+), 6 deletions(-)
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.CXw7xc/claude-0/rv
+
+ ❯ |unit-web| src/components/explanation/explanation.test.tsx (20 tests | 2 failed) 10612ms
+   × E2 benefit realized value panel (acceptance: plain-language explanation in en and ar) > (en) a pending line's comparison basis is named as such, never a bare "Validated" (F-DG6-900) 28ms
+     → expected 'Basis' to be 'Comparison basis' // Object.is equality
+   × E2 benefit realized value panel (acceptance: plain-language explanation in en and ar) > (ar) a pending line's comparison basis is named as such, never a bare "Validated" (F-DG6-900) 19ms
+     → expected 'الأساس' to be 'أساس المقارنة' // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-web| src/components/explanation/explanation.test.tsx > E2 benefit realized value panel (acceptance: plain-language explanation in en and ar) > (en) a pending line's comparison basis is named as such, never a bare "Validated" (F-DG6-900)
+AssertionError: expected 'Basis' to be 'Comparison basis' // Object.is equality
+
+Expected: [32m"[7mComparison b[27masis"[39m
+Received: [31m"[7mB[27masis"[39m
+
+ ❯ src/components/explanation/explanation.test.tsx:327:26
+    325|       )!;
+    326|       const headers = [...pending.querySelectorAll("thead th")].map((t…
+    327|       expect(headers[2]).toBe(BASIS_WORDS[locale].column);
+       |                          ^
+    328|       const basisCells = [...pending.querySelectorAll("tbody tr")].map(
+    329|         (tr) => tr.querySelectorAll("td, th")[2]!.textContent,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |unit-web| src/components/explanation/explanation.test.tsx > E2 benefit realized value panel (acceptance: plain-language explanation in en and ar) > (ar) a pending line's comparison basis is named as such, never a bare "Validated" (F-DG6-900)
+AssertionError: expected 'الأساس' to be 'أساس المقارنة' // Object.is equality
+
+Expected: [32m"أساس[7m المقارنة[27m"[39m
+Received: [31m"[7mال[27mأساس"[39m
+
+ ❯ src/components/explanation/explanation.test.tsx:327:26
+    325|       )!;
+    326|       const headers = [...pending.querySelectorAll("thead th")].map((t…
+    327|       expect(headers[2]).toBe(BASIS_WORDS[locale].column);
+       |                          ^
+    328|       const basisCells = [...pending.querySelectorAll("tbody tr")].map(
+    329|         (tr) => tr.querySelectorAll("td, th")[2]!.textContent,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 18 passed (20)
+   Start at  18:49:30
+   Duration  14.44s (transform 808.91s, setup 290ms, collect 1.94s, tests 10.61s, environment 585ms, prepare 114ms)
+
+exit=1
+# restore equal: yes

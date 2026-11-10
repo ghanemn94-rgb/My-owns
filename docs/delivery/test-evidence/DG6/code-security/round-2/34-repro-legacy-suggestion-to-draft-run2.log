@@ -1,0 +1,37 @@
+# 2026-11-10T18:24:16Z SEC-R2-L legacy (pre-0128) suggestion take-to-draft probe, run 2 (run 1's setup UPDATE was refused by 0111's assistant_suggestion_guard, so the probe now pauses that trigger too; log of run 1 kept as 34-...run1) (Node v22.22.0, cwd $TMPDIR/rv at 71ff750ed, load 3.62 3.93 2.74)
+port-policy: PostgreSQL listening on port 32650 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.CXw7xc/claude-0/rv
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwb0rjqn_78b9b74a (server_encoding UTF8); applied 120 migrations to a fresh database
+stdout | apps/api/test/integration/assistant/zz-sec-r2-legacy-suggestion-to-draft.test.ts > SEC-R2-L: a suggestion stored before 0128 cannot be taken to a draft > control: a suggestion stored after 0128 is taken to a draft (200)
+[SEC-R2-L] control (post-0128 row) to-draft status: [33m200[39m
+
+ ❯ |integration| apps/api/test/integration/assistant/zz-sec-r2-legacy-suggestion-to-draft.test.ts (2 tests | 1 failed) 4168ms
+   ✓ SEC-R2-L: a suggestion stored before 0128 cannot be taken to a draft > control: a suggestion stored after 0128 is taken to a draft (200) 149ms
+   × SEC-R2-L: a suggestion stored before 0128 cannot be taken to a draft > pre-0128 row (context NULL, the required CHECK NOT VALID as 0128 leaves it): to-draft fails 81ms
+     → assistant_suggestion: version must increase by exactly 1 on every update (optimistic concurrency, ADR-0003)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/assistant/zz-sec-r2-legacy-suggestion-to-draft.test.ts > SEC-R2-L: a suggestion stored before 0128 cannot be taken to a draft > pre-0128 row (context NULL, the required CHECK NOT VALID as 0128 leaves it): to-draft fails
+error: assistant_suggestion: version must increase by exactly 1 on every update (optimistic concurrency, ADR-0003)
+ ❯ node_modules/.pnpm/pg-pool@3.14.0_pg@8.16.3/node_modules/pg-pool/index.js:45:11
+ ❯ apps/api/test/integration/assistant/zz-sec-r2-legacy-suggestion-to-draft.test.ts:107:5
+    105|     const id = await charterSuggestion(session);
+    106|     expect(id).toMatch(/^[0-9a-f-]{36}$/);
+    107|     await a.api.owner.query(`
+       |     ^
+    108|       DO $$ BEGIN
+    109|         ALTER TABLE assistant_suggestion DROP CONSTRAINT assistant_sug…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  18:24:18
+   Duration  17.74s (transform 5.16s, setup 0ms, collect 9.53s, tests 4.17s, environment 0ms, prepare 58ms)
+
+exit=1

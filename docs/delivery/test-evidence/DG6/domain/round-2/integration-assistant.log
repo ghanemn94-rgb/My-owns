@@ -1,0 +1,70 @@
+port-policy: PostgreSQL listening on port 32604 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.GMFAkN/claude-0/review-dg6
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwb177li_8b9661b6 (server_encoding UTF8); applied 120 migrations to a fresh database
+ ✓ |integration| packages/db/test/integration/catalogue.test.ts (41 tests) 352ms
+ ✓ |integration| apps/api/test/integration/assistant/conversations.test.ts (21 tests) 7320ms
+   ✓ postAssistantMessage (ADR-0059 §9) > a conversation with 98 messages takes one last turn (100); then 422 assistant.conversation_full, nothing appended  302ms
+   ✓ postAssistantMessage (ADR-0059 §9) > when an `interrupted` reply must be appended first, at most 97 messages so far: 97 takes a turn, 99 is full  587ms
+   ✓ the rate-limit class `assistant` and the log line (ADR-0052 §4; ADR-0059 §9 rule 3) > over the per-minute budget a post is 429 with Retry-After; each post writes one log line without the prompt  541ms
+ ✓ |integration| apps/api/test/integration/assistant/settings.test.ts (17 tests) 4300ms
+ ✓ |integration| apps/api/test/integration/assistant/provider.test.ts (14 tests) 697ms
+   ✓ the HTTP adapter against the local fake (never live) > a stall before the response or inside the body is assistant.provider_timeout  613ms
+ ✓ |integration| apps/api/test/integration/assistant/suggestions.test.ts (12 tests) 6343ms
+   ✓ takeAssistantSuggestionToDraft (ADR-0059 §6, §10) > the owner takes a charter suggestion: a FormDraftCreate prefill, one audit event, nothing else written  503ms
+stdout | apps/api/test/integration/assistant/context-recheck.test.ts > ADR-0059 §9: the read-time re-check covers every record given to the model (F-DG6-920) > F-DG6-920: the answer cites one of two given records; the UNCITED one is revoked; the answer is withheld
+[BE-RG1 case 1] after revoking the uncited record: contentWithheld = [33mtrue[39m
+
+stdout | apps/api/test/integration/assistant/context-recheck.test.ts > ADR-0059 §9: the read-time re-check covers every record given to the model (F-DG6-920) > the cited record is revoked: the answer is withheld and that citation is readable false
+[BE-RG1 case 2] after revoking the cited record: contentWithheld = [33mtrue[39m
+
+stdout | apps/api/test/integration/assistant/context-recheck.test.ts > ADR-0059 §9: the read-time re-check covers every record given to the model (F-DG6-920) > nothing revoked: the answer stays readable, and its stored context lists both records given
+[BE-RG1 case 3] nothing revoked: contentWithheld = [33mfalse[39m
+
+stdout | apps/api/test/integration/assistant/context-recheck.test.ts > ADR-0059 §9: the read-time re-check covers every record given to the model (F-DG6-920) > nothing revoked: the answer stays readable, and its stored context lists both records given
+[BE-RG1 case 3] stored context_records: [{"recordId":"01a1c6c0-22ab-7557-beac-691c0f9db3df","recordType":"transformation"},{"recordId":"01a1c6c0-22ac-7484-80b6-35f0b8721a37","recordType":"transformation"}]
+
+stdout | apps/api/test/integration/assistant/context-recheck.test.ts > ADR-0059 §9: the read-time re-check covers every record given to the model (F-DG6-920) > a suggestion built from an answer whose uncited record becomes unreadable is withheld and cannot be taken (404)
+[BE-RG1 case 4] suggestion context holds the uncited benefit: true
+
+stdout | apps/api/test/integration/assistant/context-recheck.test.ts > ADR-0059 §9: the read-time re-check covers every record given to the model (F-DG6-920) > a suggestion built from an answer whose uncited record becomes unreadable is withheld and cannot be taken (404)
+[BE-RG1 case 4] after the uncited benefit became unreadable: answer withheld = [33mtrue[39m suggestions withheld = [true,true]
+
+stdout | apps/api/test/integration/assistant/context-recheck.test.ts > ADR-0059 §9: the read-time re-check covers every record given to the model (F-DG6-920) > a suggestion built from an answer whose uncited record becomes unreadable is withheld and cannot be taken (404)
+[BE-RG1 case 4] take-to-draft status: [33m404[39m
+
+ ✓ |integration| apps/api/test/integration/assistant/context-recheck.test.ts (5 tests) 5929ms
+ ✓ |integration| apps/api/test/integration/assistant/composition.test.ts (11 tests) 5636ms
+ ✓ |integration| apps/api/test/integration/assistant/injection.test.ts (5 tests) 5614ms
+ ✓ |integration| apps/api/test/integration/assistant/retrieval.test.ts (8 tests) 5760ms
+stdout | apps/api/test/integration/assistant/zz-domain-r2-history.test.ts > domain r2: a withheld answer and the history of the next turn > the withheld answer's text is (or is not) sent to the model as history; the next answer's withheld state
+[DOM-R2-H] turn 1 after revoking tA2: contentWithheld = [33mtrue[39m
+
+stdout | apps/api/test/integration/assistant/zz-domain-r2-history.test.ts > domain r2: a withheld answer and the history of the next turn > the withheld answer's text is (or is not) sent to the model as history; the next answer's withheld state
+[DOM-R2-H] turn 2 status [33m201[39m replyKind answer
+[DOM-R2-H] turn 2 request: messages = [33m5[39m ; withheld turn-1 text (names TITLE_2) sent as history = [33mtrue[39m
+[DOM-R2-H] turn 2 data block record ids include tA2 = [33mfalse[39m
+
+stdout | apps/api/test/integration/assistant/zz-domain-r2-history.test.ts > domain r2: a withheld answer and the history of the next turn > the withheld answer's text is (or is not) sent to the model as history; the next answer's withheld state
+[DOM-R2-H] turn 2 stored context_records include tA2 = [33mfalse[39m
+
+stdout | apps/api/test/integration/assistant/zz-domain-r2-history.test.ts > domain r2: a withheld answer and the history of the next turn > the withheld answer's text is (or is not) sent to the model as history; the next answer's withheld state
+[DOM-R2-H] turn 2 answer served: contentWithheld = [33mfalse[39m content = "Synthetic answer repeating the previous turn."
+
+ ✓ |integration| apps/api/test/integration/assistant/zz-domain-r2-history.test.ts (1 test) 5288ms
+ ✓ |integration| apps/api/test/integration/assistant/guardrails.test.ts (33 tests) 5819ms
+   ✓ A08/A10 through the API: refused, no retrieval, no provider call, nothing changed > every refused prompt (en and ar) gets its refusal and changes no business record  732ms
+ ✓ |integration| apps/api/test/integration/assistant/no-write.test.ts (3 tests) 5479ms
+   ✓ the assistant changes no business record (ADR-0059 §7 item 3) > answers, refusals, suggestions and to-draft leave every business table and the hashed tables unchanged  652ms
+
+ Test Files  12 passed (12)
+      Tests  171 passed (171)
+   Start at  18:36:28
+   Duration  106.21s (transform 8.73s, setup 0ms, collect 42.91s, tests 58.54s, environment 0ms, prepare 82ms)
+
+exit 0

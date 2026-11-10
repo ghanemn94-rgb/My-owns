@@ -1,0 +1,30 @@
+# 2026-11-10T18:24:51Z SEC-R2-L legacy (pre-0128) suggestion take-to-draft probe, run 3. Runs 1 and 2 (logs 34-...-run1/-run2) failed in the probe's own SETUP: the UPDATE that puts the row into the pre-0128 state was refused by 0111's assistant_suggestion_guard (run 1) and by the version-step trigger (run 2). Run 3 pauses all the table's user triggers for that one setup UPDATE. (Node v22.22.0, cwd $TMPDIR/rv at 71ff750ed, load 2.84 3.71 2.71)
+port-policy: PostgreSQL listening on port 32650 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.CXw7xc/claude-0/rv
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwb0sasj_e08cd88e (server_encoding UTF8); applied 120 migrations to a fresh database
+stdout | apps/api/test/integration/assistant/zz-sec-r2-legacy-suggestion-to-draft.test.ts > SEC-R2-L: a suggestion stored before 0128 cannot be taken to a draft > control: a suggestion stored after 0128 is taken to a draft (200)
+[SEC-R2-L] control (post-0128 row) to-draft status: [33m200[39m
+
+stdout | apps/api/test/integration/assistant/zz-sec-r2-legacy-suggestion-to-draft.test.ts > SEC-R2-L: a suggestion stored before 0128 cannot be taken to a draft > pre-0128 row (context NULL, the required CHECK NOT VALID as 0128 leaves it): to-draft fails
+[SEC-R2-L] legacy state: {"ctx_null":true,"status":"proposed","convalidated":false}
+
+stdout | apps/api/test/integration/assistant/zz-sec-r2-legacy-suggestion-to-draft.test.ts > SEC-R2-L: a suggestion stored before 0128 cannot be taken to a draft > pre-0128 row (context NULL, the required CHECK NOT VALID as 0128 leaves it): to-draft fails
+[SEC-R2-L] legacy row to-draft status: [33m422[39m body: {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"The change violates a data rule.","code":"validation.constraint","requestId":"01a1c6b4-f223-70bc-91f5-570b1d5f2b7b","errors":[{"pointer":"","code":"validation.constraint","message":"assistant_suggestion_context_records_required"}]}
+
+stdout | apps/api/test/integration/assistant/zz-sec-r2-legacy-suggestion-to-draft.test.ts > SEC-R2-L: a suggestion stored before 0128 cannot be taken to a draft > pre-0128 row (context NULL, the required CHECK NOT VALID as 0128 leaves it): to-draft fails
+[SEC-R2-L] legacy row after the call: {"status":"proposed","version":1}
+
+stdout | apps/api/test/integration/assistant/zz-sec-r2-legacy-suggestion-to-draft.test.ts > SEC-R2-L: a suggestion stored before 0128 cannot be taken to a draft > pre-0128 row (context NULL, the required CHECK NOT VALID as 0128 leaves it): to-draft fails
+[SEC-R2-L] direct owner UPDATE of the legacy row: 23514 assistant_suggestion_context_records_required
+
+ ✓ |integration| apps/api/test/integration/assistant/zz-sec-r2-legacy-suggestion-to-draft.test.ts (2 tests) 4546ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  18:24:53
+   Duration  16.71s (transform 4.42s, setup 0ms, collect 8.25s, tests 4.55s, environment 0ms, prepare 55ms)
+
+exit=0

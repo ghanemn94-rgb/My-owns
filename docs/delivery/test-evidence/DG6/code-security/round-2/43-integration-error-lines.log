@@ -1,0 +1,17 @@
+# 2026-11-10T20:19:13Z error-like lines in the four binding integration logs (12-*, 13-*), by class
+== 12-integration-lang-unset-shard1o2.log: /error|Error|ERR/: 7; level>=50 JSON: 2; stderr blocks: 4; x lines: 0; Hook timed out: 0; Unhandled: 0
+12:stderr | apps/api/test/integration/integrations/webhooks.test.ts > webhook endpoint administration (webhook.configure; ADR-0056 §7) > F-DG6-181: with the signing secret's binding removed, a correctly signed delivery is 401 and stores nothing
+13-{"level":"warn","event":"secret_ref.refused","consumer":"webhook_signing","organizationId":"01a1c6d1-f55b-74f9-bd07-196a099b5b39","provider":"env","name":"MTH_SECRET_TEST_WEBHOOK_SECRET_A","reason":"not_bound"}
+112:stderr | apps/api/test/integration/tasks/channel-fanout.test.ts > F-DG6-181: the worker resolves SMTP references only for the channel's own organization and host > a channel whose password reference is bound to another organization: smtp.secret_unavailable
+113-{"level":"warn","event":"secret_ref.refused","consumer":"smtp","organizationId":"01a1c6de-5d15-7415-a5ad-f861e7597ec1","provider":"env","name":"MTH_SECRET_Z2_FANOUT_SMTP_PASS","reason":"not_bound"}
+239:stderr | apps/api/test/integration/automation/automation-version-at-occurrence.test.ts
+240-{"level":"error","msg":"job run record failed","queue":"transformation.created","jobId":"5260184f-8a65-8def-8577-6d90040b829d","err":"driver has already been destroyed"}
+242:stderr | apps/api/test/integration/automation/automation-version-at-occurrence.test.ts
+243-{"level":"error","msg":"job run record failed","queue":"transformation.created","jobId":"be5010c6-75ce-804f-8fea-f43f76aff6c8","err":"driver has already been destroyed"}
+== 12-integration-lang-unset-shard2o2.log: /error|Error|ERR/: 13; level>=50 JSON: 0; stderr blocks: 0; x lines: 0; Hook timed out: 0; Unhandled: 0
+== 13-integration-lang-cutf8-shard1o2.log: /error|Error|ERR/: 5; level>=50 JSON: 0; stderr blocks: 2; x lines: 0; Hook timed out: 0; Unhandled: 0
+1264:stderr | apps/api/test/integration/integrations/webhooks.test.ts > webhook endpoint administration (webhook.configure; ADR-0056 §7) > F-DG6-181: with the signing secret's binding removed, a correctly signed delivery is 401 and stores nothing
+1265-{"level":"warn","event":"secret_ref.refused","consumer":"webhook_signing","organizationId":"01a1c70b-9265-7752-b7c8-1fdf08a3e8e5","provider":"env","name":"MTH_SECRET_TEST_WEBHOOK_SECRET_A","reason":"not_bound"}
+1296:stderr | apps/api/test/integration/tasks/channel-fanout.test.ts > F-DG6-181: the worker resolves SMTP references only for the channel's own organization and host > a channel whose password reference is bound to another organization: smtp.secret_unavailabl
+1297-{"level":"warn","event":"secret_ref.refused","consumer":"smtp","organizationId":"01a1c714-0e34-7678-bcc5-21a47896b89e","provider":"env","name":"MTH_SECRET_Z2_FANOUT_SMTP_PASS","reason":"not_bound"}
+== 13-integration-lang-cutf8-shard2o2.log: /error|Error|ERR/: 13; level>=50 JSON: 0; stderr blocks: 0; x lines: 0; Hook timed out: 0; Unhandled: 0

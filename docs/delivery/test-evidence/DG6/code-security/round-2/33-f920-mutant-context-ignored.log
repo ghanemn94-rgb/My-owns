@@ -1,0 +1,114 @@
+# 2026-11-10T18:22:52Z MUTANT: recordRefsOf ignores context_records (the F-DG6-920 fix reverted on the read and to-draft paths); context-recheck must FAIL (Node v22.22.0, cwd $TMPDIR/rv at 71ff750ed, LANG=<unset>, load 5.13 4.12 2.68)
+original sha256 b85efd34afa8039d472b2ce4444d1a8645662be8c57f39cf019a7c5ba7afe396
+diff --git a/apps/api/src/modules/assistant/conversations.ts b/apps/api/src/modules/assistant/conversations.ts
+index 9ec034a16..eb8d2ae0d 100644
+--- a/apps/api/src/modules/assistant/conversations.ts
++++ b/apps/api/src/modules/assistant/conversations.ts
+@@ -253,7 +253,7 @@ export function recordRefsOf(row: { citations: unknown; context_records: unknown
+   for (const c of citationsOf(row.citations))
+     if (c.source === "record") out.set(recordKey(c), { recordType: c.recordType, recordId: c.recordId });
+   const context: unknown = row.context_records;
+-  if (Array.isArray(context))
++  if (false && Array.isArray(context))
+     for (const r of context as ContextRecord[])
+       out.set(recordKey(r), { recordType: r.recordType, recordId: r.recordId });
+   return [...out.values()];
+port-policy: PostgreSQL listening on port 32650 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.CXw7xc/claude-0/rv
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwb0pr0e_682a3dbc (server_encoding UTF8); applied 120 migrations to a fresh database
+stdout | apps/api/test/integration/assistant/context-recheck.test.ts > ADR-0059 §9: the read-time re-check covers every record given to the model (F-DG6-920) > F-DG6-920: the answer cites one of two given records; the UNCITED one is revoked; the answer is withheld
+[BE-RG1 case 1] after revoking the uncited record: contentWithheld = [33mfalse[39m
+
+stdout | apps/api/test/integration/assistant/context-recheck.test.ts > ADR-0059 §9: the read-time re-check covers every record given to the model (F-DG6-920) > the cited record is revoked: the answer is withheld and that citation is readable false
+[BE-RG1 case 2] after revoking the cited record: contentWithheld = [33mtrue[39m
+
+stdout | apps/api/test/integration/assistant/context-recheck.test.ts > ADR-0059 §9: the read-time re-check covers every record given to the model (F-DG6-920) > nothing revoked: the answer stays readable, and its stored context lists both records given
+[BE-RG1 case 3] nothing revoked: contentWithheld = [33mfalse[39m
+
+stdout | apps/api/test/integration/assistant/context-recheck.test.ts > ADR-0059 §9: the read-time re-check covers every record given to the model (F-DG6-920) > nothing revoked: the answer stays readable, and its stored context lists both records given
+[BE-RG1 case 3] stored context_records: [{"recordId":"01a1c6b3-2ff9-7169-a132-86bd0e3201c1","recordType":"transformation"},{"recordId":"01a1c6b3-2ffa-73c5-8495-a5e2e677d168","recordType":"transformation"}]
+
+stdout | apps/api/test/integration/assistant/context-recheck.test.ts > ADR-0059 §9: the read-time re-check covers every record given to the model (F-DG6-920) > a suggestion built from an answer whose uncited record becomes unreadable is withheld and cannot be taken (404)
+[BE-RG1 case 4] suggestion context holds the uncited benefit: true
+
+stdout | apps/api/test/integration/assistant/context-recheck.test.ts > ADR-0059 §9: the read-time re-check covers every record given to the model (F-DG6-920) > a suggestion built from an answer whose uncited record becomes unreadable is withheld and cannot be taken (404)
+[BE-RG1 case 4] after the uncited benefit became unreadable: answer withheld = [33mfalse[39m suggestions withheld = [false,false]
+
+ ❯ |integration| apps/api/test/integration/assistant/context-recheck.test.ts (5 tests | 2 failed) 5052ms
+   × ADR-0059 §9: the read-time re-check covers every record given to the model (F-DG6-920) > F-DG6-920: the answer cites one of two given records; the UNCITED one is revoked; the answer is withheld 187ms
+     → expected { …(16) } to match object { author: 'assistant', …(3) }
+(12 matching properties omitted from actual)
+   ✓ ADR-0059 §9: the read-time re-check covers every record given to the model (F-DG6-920) > the cited record is revoked: the answer is withheld and that citation is readable false 78ms
+   ✓ ADR-0059 §9: the read-time re-check covers every record given to the model (F-DG6-920) > nothing revoked: the answer stays readable, and its stored context lists both records given 75ms
+   × ADR-0059 §9: the read-time re-check covers every record given to the model (F-DG6-920) > a suggestion built from an answer whose uncited record becomes unreadable is withheld and cannot be taken (404) 178ms
+     → expected { …(16) } to match object { Object (content, contentWithheld) }
+(14 matching properties omitted from actual)
+   ✓ ADR-0059 §9: the read-time re-check covers every record given to the model (F-DG6-920) > a row stored before 0128 (no context) falls back to its citations (ADR-0059 §9 amendment) 91ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/assistant/context-recheck.test.ts > ADR-0059 §9: the read-time re-check covers every record given to the model (F-DG6-920) > F-DG6-920: the answer cites one of two given records; the UNCITED one is revoked; the answer is withheld
+AssertionError: expected { …(16) } to match object { author: 'assistant', …(3) }
+(12 matching properties omitted from actual)
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[2m    "author": "assistant",[22m
+[32m-   "content": null,[39m
+[32m-   "contentWithheld": true,[39m
+[31m+   "content": "Synthetic answer: Zephyrine synthetic program one and Zephyrine synthetic program two are both behind plan.",[39m
+[31m+   "contentWithheld": false,[39m
+[2m    "replyKind": "answer",[22m
+[2m  }[22m
+
+ ❯ apps/api/test/integration/assistant/context-recheck.test.ts:160:19
+    158|     const reply = after.messages[1];
+    159|     console.log("[BE-RG1 case 1] after revoking the uncited record: co…
+    160|     expect(reply).toMatchObject({ author: "assistant", replyKind: "ans…
+       |                   ^
+    161|     // The citations are shown as they were (only the cited record, st…
+    162|     expect(reply.citations.filter((c: Body) => c.source === "record"))…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |integration| apps/api/test/integration/assistant/context-recheck.test.ts > ADR-0059 §9: the read-time re-check covers every record given to the model (F-DG6-920) > a suggestion built from an answer whose uncited record becomes unreadable is withheld and cannot be taken (404)
+AssertionError: expected { …(16) } to match object { Object (content, contentWithheld) }
+(14 matching properties omitted from actual)
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[32m-   "content": null,[39m
+[32m-   "contentWithheld": true,[39m
+[31m+   "content": "Synthetic answer quoting the benefit's ramp.",[39m
+[31m+   "contentWithheld": false,[39m
+[2m  }[22m
+
+ ❯ apps/api/test/integration/assistant/context-recheck.test.ts:266:31
+    264|       JSON.stringify(after.suggestions.map((s: Body) => s.contentWithh…
+    265|     );
+    266|     expect(after.messages[1]).toMatchObject({ content: null, contentWi…
+       |                               ^
+    267|     expect(after.suggestions).toHaveLength(2);
+    268|     for (const s of after.suggestions as Body[])
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 3 passed (5)
+   Start at  18:22:54
+   Duration  21.04s (transform 6.12s, setup 0ms, collect 11.66s, tests 5.05s, environment 0ms, prepare 119ms)
+
+exit=1
+# end 2026-11-10T18:23:15Z load 4.57 4.08 2.70
+# restore: sha256 b85efd34afa8039d472b2ce4444d1a8645662be8c57f39cf019a7c5ba7afe396 (equal to original: yes)
+?? apps/api/test/integration/assistant/zz-sec-r1-assistant-uncited.test.ts
+?? apps/api/test/integration/assistant/zz-sec-r2-assistant-history.test.ts
+TARGETED-DONE

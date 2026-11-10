@@ -1,0 +1,45 @@
+# 2026-11-10T19:23:04Z e2e/support/qa-stack.sh npx playwright test e2e/a12-p6-scope-isolation.spec.ts e2e/a21-no-ai-operation.spec.ts --workers=1 ($TMPDIR/rv at 71ff750ed; Node v24.21.0; E2E_SCREENSHOT_DIR=$TMPDIR/shots; load 19.01 18.31 18.07)
+port-policy: PostgreSQL listening on port 24361 (attempt 1)
+qa e2e cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+qa e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applied 120 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+port-policy: API listening on port 3060 (attempt 1)
+API:     http://localhost:3060
+healthz: {"status":"ok"}
+readyz:  {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+Running 14 tests using 1 worker
+
+  ✓   1 [chromium-en] › e2e/a12-p6-scope-isolation.spec.ts:243:1 › A12-1 search: the X-scoped user sees X's record and gets the empty state for Y's word (5.3s)
+  ✓   2 [chromium-en] › e2e/a12-p6-scope-isolation.spec.ts:264:1 › A12-2 deep link: a forwarded link to a Y record shows the refusal and no title; its recipient opens it (6.5s)
+  ✓   3 [chromium-en] › e2e/a12-p6-scope-isolation.spec.ts:289:1 › A12-3 evidence: Y's evidence page and download URL show nothing of Y to the X-scoped user (3.5s)
+  ✓   4 [chromium-en] › e2e/a12-p6-scope-isolation.spec.ts:310:1 › A12-4 exports: Y's reports page shows nothing of Y and an export of Y is refused (3.6s)
+A12-5 en: GET /api/v1/admin/assistant as dev.nobody -> 403 {"type":"urn:mth:problem:forbidden","title":"Forbidden","status":403,"detail":"You do not have permission for this action.","code":"forbidden","requestId":"01a1c6ea-a54d-7388-9f09-06fb3c6283b7"}; GET /api/v1/assistant/conversations -> 200
+  ✓   5 [chromium-en] › e2e/a12-p6-scope-isolation.spec.ts:370:1 › A12-5 assistant: asked about Y it shows no Y text; asked about X it cites X (7.1s)
+A12-6 en: existing session after revoke: search -> 401 {"type":"urn:mth:problem:unauthenticated","title":"Sign-in required","status":401,"code":"unauthenticated","requestId":"01a1c6ea-c5a7-773a-98e4-caebbdd0ab78"}
+A12-6 en: fresh session after revoke: search -> 200 {"items":[],"nextCursor":null,"indexedThrough":"2026-11-10T19:23:27.410Z","stale":false}; GET /transformations/Z -> 404
+  ✓   6 [chromium-en] › e2e/a12-p6-scope-isolation.spec.ts:396:1 › A12-6 revoked after indexing: Z's record is found while granted and gone after the revocation (no reindex) (6.6s)
+  ✓   7 [chromium-en] › e2e/a21-no-ai-operation.spec.ts:24:1 › A21: a report is generated in the UI from the records with no AI, external notification or export channel (6.6s)
+  ✓   8 [chromium-ar] › e2e/a12-p6-scope-isolation.spec.ts:243:1 › A12-1 search: the X-scoped user sees X's record and gets the empty state for Y's word (5.5s)
+  ✓   9 [chromium-ar] › e2e/a12-p6-scope-isolation.spec.ts:264:1 › A12-2 deep link: a forwarded link to a Y record shows the refusal and no title; its recipient opens it (6.0s)
+  ✓  10 [chromium-ar] › e2e/a12-p6-scope-isolation.spec.ts:289:1 › A12-3 evidence: Y's evidence page and download URL show nothing of Y to the X-scoped user (3.5s)
+  ✓  11 [chromium-ar] › e2e/a12-p6-scope-isolation.spec.ts:310:1 › A12-4 exports: Y's reports page shows nothing of Y and an export of Y is refused (2.9s)
+A12-5 ar: GET /api/v1/admin/assistant as dev.nobody -> 403 {"type":"urn:mth:problem:forbidden","title":"Forbidden","status":403,"detail":"You do not have permission for this action.","code":"forbidden","requestId":"01a1c6eb-5f37-75f8-8826-a7585f07156f"}; GET /api/v1/assistant/conversations -> 200
+  ✓  12 [chromium-ar] › e2e/a12-p6-scope-isolation.spec.ts:370:1 › A12-5 assistant: asked about Y it shows no Y text; asked about X it cites X (6.3s)
+A12-6 ar: existing session after revoke: search -> 401 {"type":"urn:mth:problem:unauthenticated","title":"Sign-in required","status":401,"code":"unauthenticated","requestId":"01a1c6eb-7c4a-724f-a436-cb68535f19ba"}
+A12-6 ar: fresh session after revoke: search -> 200 {"items":[],"nextCursor":null,"indexedThrough":"2026-11-10T19:24:18.369Z","stale":false}; GET /transformations/Z -> 404
+  ✓  13 [chromium-ar] › e2e/a12-p6-scope-isolation.spec.ts:396:1 › A12-6 revoked after indexing: Z's record is found while granted and gone after the revocation (no reindex) (6.3s)
+  ✓  14 [chromium-ar] › e2e/a21-no-ai-operation.spec.ts:24:1 › A21: a report is generated in the UI from the records with no AI, external notification or export channel (5.2s)
+
+  14 passed (1.6m)
+
+To open last HTML report run:
+[36m[39m
+[36m  npx playwright show-report[39m
+[36m[39m
+exit=0
+# end 2026-11-10T19:24:56Z load 17.43 17.71 17.86

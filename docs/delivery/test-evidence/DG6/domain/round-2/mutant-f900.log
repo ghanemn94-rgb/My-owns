@@ -1,0 +1,74 @@
+ apps/web/src/i18n/ar/explanations.json | 8 ++++----
+ apps/web/src/i18n/en/explanations.json | 8 ++++----
+ 2 files changed, 8 insertions(+), 8 deletions(-)
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.GMFAkN/claude-0/review-dg6
+
+ ❯ |unit-web| src/components/explanation/explanation.test.tsx (20 tests | 2 failed) 7073ms
+   ✓ E1 weighted score panel (acceptance: plain-language explanation in en and ar) > complete (en): the formula in words, one row per criterion, the sum, version and period  345ms
+   ✓ E1 weighted score panel (acceptance: plain-language explanation in en and ar) > complete (ar): the formula in words, one row per criterion, the sum, version and period 55ms
+   ✓ E1 weighted score panel (acceptance: plain-language explanation in en and ar) > incomplete (en): names the missing criterion, no sum, never 0 or green 48ms
+   ✓ E1 weighted score panel (acceptance: plain-language explanation in en and ar) > incomplete (ar): names the missing criterion, no sum, never 0 or green 84ms
+   ✓ E1 weighted score panel (acceptance: plain-language explanation in en and ar) > unknown when the weight set is another version: the reason, no rows 34ms
+   ✓ E2 benefit realized value panel (acceptance: plain-language explanation in en and ar) > (en) the formula in words; validated, sustained and pending kept apart, each with its lines 93ms
+   ✓ E2 benefit realized value panel (acceptance: plain-language explanation in en and ar) > (ar) the formula in words; validated, sustained and pending kept apart, each with its lines 70ms
+   ✓ E2 benefit realized value panel (acceptance: plain-language explanation in en and ar) > (en) a group without lines is "no value yet", never 0; a line without an amount is Unknown 38ms
+   ✓ E2 benefit realized value panel (acceptance: plain-language explanation in en and ar) > (ar) a group without lines is "no value yet", never 0; a line without an amount is Unknown 80ms
+   × E2 benefit realized value panel (acceptance: plain-language explanation in en and ar) > (en) a pending line's comparison basis is named as such, never a bare "Validated" (F-DG6-900) 39ms
+     → expected 'Basis' to be 'Comparison basis' // Object.is equality
+   × E2 benefit realized value panel (acceptance: plain-language explanation in en and ar) > (ar) a pending line's comparison basis is named as such, never a bare "Validated" (F-DG6-900) 49ms
+     → expected 'الأساس' to be 'أساس المقارنة' // Object.is equality
+   ✓ E2 benefit realized value panel (acceptance: plain-language explanation in en and ar) > a non-financial benefit: the KPI-actual words and its value; Unknown when it is stale 34ms
+   ✓ E4 NPV, ROI and payback panel > (en) the three formulas in words, the per-period rows and the payback row 35ms
+   ✓ E4 NPV, ROI and payback panel > (ar) the three formulas in words, the per-period rows and the payback row 61ms
+   ✓ E4 NPV, ROI and payback panel > incomplete and revision-mismatch states: no rows, a reason, never 0 117ms
+   ✓ E4 NPV, ROI and payback panel > without a discount rate: no factor and no NPV, labelled, never 0 40ms
+   ✓ E5 health check score panel > (en) scored: the formula in words, counts, points, score, band, scheme version and date 33ms
+   ✓ E5 health check score panel > (ar) scored: the formula in words, counts, points, score, band, scheme version and date 39ms
+   ✓ E5 health check score panel > incomplete: no score and no band while a question is unanswered (never 0) 24ms
+   ✓ explanations catalogue > has the same keys in en and ar, Arabic text in Arabic, and the ADR-0061 §8 English words verbatim 11ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-web| src/components/explanation/explanation.test.tsx > E2 benefit realized value panel (acceptance: plain-language explanation in en and ar) > (en) a pending line's comparison basis is named as such, never a bare "Validated" (F-DG6-900)
+AssertionError: expected 'Basis' to be 'Comparison basis' // Object.is equality
+
+Expected: [32m"[7mComparison b[27masis"[39m
+Received: [31m"[7mB[27masis"[39m
+
+ ❯ src/components/explanation/explanation.test.tsx:327:26
+    325|       )!;
+    326|       const headers = [...pending.querySelectorAll("thead th")].map((t…
+    327|       expect(headers[2]).toBe(BASIS_WORDS[locale].column);
+       |                          ^
+    328|       const basisCells = [...pending.querySelectorAll("tbody tr")].map(
+    329|         (tr) => tr.querySelectorAll("td, th")[2]!.textContent,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |unit-web| src/components/explanation/explanation.test.tsx > E2 benefit realized value panel (acceptance: plain-language explanation in en and ar) > (ar) a pending line's comparison basis is named as such, never a bare "Validated" (F-DG6-900)
+AssertionError: expected 'الأساس' to be 'أساس المقارنة' // Object.is equality
+
+Expected: [32m"أساس[7m المقارنة[27m"[39m
+Received: [31m"[7mال[27mأساس"[39m
+
+ ❯ src/components/explanation/explanation.test.tsx:327:26
+    325|       )!;
+    326|       const headers = [...pending.querySelectorAll("thead th")].map((t…
+    327|       expect(headers[2]).toBe(BASIS_WORDS[locale].column);
+       |                          ^
+    328|       const basisCells = [...pending.querySelectorAll("tbody tr")].map(
+    329|         (tr) => tr.querySelectorAll("td, th")[2]!.textContent,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 18 passed (20)
+   Start at  18:40:50
+   Duration  9.79s (transform 466.73s, setup 194ms, collect 1.63s, tests 7.07s, environment 519ms, prepare 83ms)
+
+exit 1
