@@ -24206,7 +24206,7 @@ paths:
     get:
       tags: [assistant]
       operationId: getAssistantConversation
-      summary: "One of the caller's own conversations with all its messages (at most 100) and suggestions (assistant.use; owner only, others 404). Every record an answer or suggestion was generated from is re-checked through ReadScope for the caller at read time: its citations and every other record given to the model (the stored generation context, never served; ADR-0059 §9 amendment, F-DG6-920; answers stored before migration 0128 are checked by their citations only). One the caller can no longer read makes the answer or suggestion return with content null and contentWithheld true; a citation of that record has readable false. Every assistant output carries label assistant_suggestion: a suggestion, never an approved fact. ADR-0059 §1, §9; REQ-S17-007."
+      summary: "One of the caller's own conversations with all its messages (at most 100) and suggestions (assistant.use; owner only, others 404). Every record an answer or suggestion was generated from is re-checked through ReadScope for the caller at read time: its citations and every other record given to the model, including the earlier answers given to it as conversation history (the stored generation context, never served; ADR-0059 §5 and §9 amendment, F-DG6-920, F-DG6-960/970/980; answers stored before migration 0128 are checked by their citations only). One the caller can no longer read makes the answer or suggestion return with content null and contentWithheld true; a citation of that record has readable false. Every assistant output carries label assistant_suggestion: a suggestion, never an approved fact. ADR-0059 §1, §9; REQ-S17-007."
       responses:
         "200":
           description: "OK."
@@ -24226,7 +24226,7 @@ paths:
     post:
       tags: [assistant]
       operationId: postAssistantMessage
-      summary: "Ask the assistant (assistant.use; owner only, others 404; If-Match = the conversation; rate-limit class assistant). Appends the prompt, then, outside any transaction, applies the refused-intent rule, retrieves only records the caller may read (search and ReadScope) and playbook passages, and calls the configured provider only when something was retrieved; then appends one reply (answer with citations, refusal, no_sources, unavailable) and its suggestions. Writes nothing outside the assistant tables. Audit assistant_conversation.message_posted, .reply_recorded, assistant_suggestion.created. 409 assistant.reply_pending or version conflict; 422 assistant.disabled, assistant.conversation_full. ADR-0059 §4-§9; REQ-S17-007, REQ-S17-008, REQ-S17-011."
+      summary: "Ask the assistant (assistant.use; owner only, others 404; If-Match = the conversation; rate-limit class assistant). Appends the prompt, then, outside any transaction, applies the refused-intent rule, retrieves only records the caller may read (search and ReadScope) and playbook passages, and calls the configured provider only when something was retrieved, with at most the last 6 prompts and answers of the conversation as history (an earlier answer withheld from the caller now is not sent; the new answer's stored generation context inherits the context of the answers sent, ADR-0059 §5, F-DG6-960/970/980); then appends one reply (answer with citations, refusal, no_sources, unavailable) and its suggestions. Writes nothing outside the assistant tables. Audit assistant_conversation.message_posted, .reply_recorded, assistant_suggestion.created. 409 assistant.reply_pending or version conflict; 422 assistant.disabled, assistant.conversation_full. ADR-0059 §4-§9; REQ-S17-007, REQ-S17-008, REQ-S17-011."
       security:
         - sessionCookie: []
           csrfToken: []
@@ -24259,7 +24259,7 @@ paths:
     post:
       tags: [assistant]
       operationId: takeAssistantSuggestionToDraft
-      summary: "Mark one's own charter or decision-brief suggestion as taken and return a form-draft prefill (assistant.use plus the target's write permission: charter.edit for charter, executive_decision.create for T16, re-checked at commit; transformation.read, else 404; If-Match = the suggestion). Writes nothing outside assistant_suggestion: the caller then creates the draft with createFormDraft, and a human edits, saves and submits the record. Audit assistant_suggestion.taken_to_draft. 422 assistant.suggestion_not_draftable, assistant.suggestion_already_taken. ADR-0059 §6; REQ-S17-008."
+      summary: "Mark one's own charter or decision-brief suggestion as taken and return a form-draft prefill (assistant.use plus the target's write permission: charter.edit for charter, executive_decision.create for T16, re-checked at commit; transformation.read, else 404; If-Match = the suggestion). Writes nothing outside assistant_suggestion: the caller then creates the draft with createFormDraft, and a human edits, saves and submits the record. A suggestion generated from a record the caller can no longer read (its citations or its stored generation context; a suggestion stored before migration 0128 by its citations) is 404. Audit assistant_suggestion.taken_to_draft. 422 assistant.suggestion_not_draftable, assistant.suggestion_already_taken. ADR-0059 §6; REQ-S17-008."
       security:
         - sessionCookie: []
           csrfToken: []
@@ -41364,7 +41364,7 @@ components:
         refusalCode: { type: [string, "null"], enum: [assistant.refused.approval, assistant.refused.benefit_validation, assistant.refused.value_change, assistant.refused.evidence, null] }
         errorCode: { type: [string, "null"], enum: [assistant.provider_timeout, assistant.provider_unreachable, assistant.provider_error, assistant.provider_response_invalid, null] }
         content: { type: [string, "null"], maxLength: 8000, description: "Plain text, no markup. Null for refusal, no_sources, unavailable and interrupted replies, and when withheld." }
-        contentWithheld: { type: boolean, description: "True when a record the answer was generated from (a citation, or any other record given to the model) is no longer readable by the caller; content is then null (ADR-0059 §9)." }
+        contentWithheld: { type: boolean, description: "True when a record the answer was generated from (a citation, any other record given to the model, or a record behind an earlier answer given to the model as history) is no longer readable by the caller; content is then null (ADR-0059 §5, §9). A withheld answer is not sent to the model again as history." }
         citations: { type: array, maxItems: 20, items: { $ref: "#/components/schemas/AssistantCitation" } }
         providerKind: { oneOf: [{ $ref: "#/components/schemas/AssistantProviderKind" }, { type: "null" }] }
         modelName: { type: [string, "null"] }
@@ -41389,7 +41389,7 @@ components:
           description: "Text fields of the charter or the T16 decision brief only (ADR-0059 §6); never a money, rate, FTE, KPI, date, owner or option field."
           additionalProperties: { type: string, minLength: 1, maxLength: 4000 }
         textContent: { type: [string, "null"], maxLength: 4000 }
-        contentWithheld: { type: boolean, description: "True when the answer is withheld or a record the suggestion was generated from (a citation, or any other record given to the model) is no longer readable by the caller; fields and textContent are then null (ADR-0059 §9)." }
+        contentWithheld: { type: boolean, description: "True when the answer is withheld or a record the suggestion was generated from (a citation, any other record given to the model, or a record behind an earlier answer given to the model as history) is no longer readable by the caller; fields and textContent are then null (ADR-0059 §5, §9)." }
         citations: { type: array, minItems: 1, maxItems: 20, items: { $ref: "#/components/schemas/AssistantCitation" } }
         status: { type: string, enum: [proposed, taken_to_draft] }
         takenAt: { $ref: "#/components/schemas/NullableTimestamp" }

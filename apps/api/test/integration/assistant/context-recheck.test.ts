@@ -296,18 +296,16 @@ describe("ADR-0059 §9: the read-time re-check covers every record given to the 
     // A third TL grant keeps assistant.use after both revocations below.
     const u = await userWithTl(tA1, tA2, a.y.b.transformationId);
     const { conversationId, reply } = await askCitingTa1(u.session);
-    // Put the reply into the state of an answer stored before 0128: context NULL, the required rule NOT VALID as
-    // 0128 leaves it (owner-only DDL on the scratch database; the append-only trigger is paused for this one row).
+    // Put the reply into the state of an answer stored before 0128: context NULL (owner-only DDL on the scratch
+    // database; the append-only trigger is paused for this one row). Since 0129 (T-DG6-BE-RG2, F-DG6-971) the rule
+    // that requires a context is a BEFORE INSERT trigger, so an UPDATE no longer needs the 0128 CHECK dropped first.
     const id = reply.id as string;
     expect(id).toMatch(/^[0-9a-f-]{36}$/);
     await a.api.owner.query(`
       DO $$ BEGIN
-        ALTER TABLE assistant_message DROP CONSTRAINT assistant_message_context_records_required;
         ALTER TABLE assistant_message DISABLE TRIGGER assistant_message_append_only;
         UPDATE assistant_message SET context_records = NULL WHERE id = '${id}';
         ALTER TABLE assistant_message ENABLE TRIGGER assistant_message_append_only;
-        ALTER TABLE assistant_message ADD CONSTRAINT assistant_message_context_records_required
-          CHECK (author <> 'assistant' OR reply_kind IS DISTINCT FROM 'answer' OR context_records IS NOT NULL) NOT VALID;
       END $$`);
     // Uncited revoked: the legacy row knows only its citations, so it stays readable (the documented limit).
     await revokeTl(u.id, tA2);

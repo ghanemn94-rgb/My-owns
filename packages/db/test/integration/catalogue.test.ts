@@ -1035,7 +1035,9 @@ describe("schema.ts matches the migrated database", () => {
       `SELECT c.relname AS rel, t.tgname, t.tgdeferrable AS deferrable, t.tginitdeferred AS deferred
        FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid
        WHERE NOT t.tgisinternal AND c.relname IN ('assistant_setting', 'assistant_setting_change', 'assistant_conversation', 'assistant_message', 'assistant_suggestion')
-         AND t.tgname <> 'assistant_suggestion_context_immutable' -- 0128's trigger: checked by the 0128 test below
+         AND t.tgname NOT IN ('assistant_suggestion_context_immutable', -- 0128's trigger: checked by the 0128 test below
+                              'assistant_message_context_records_required', -- 0129's triggers: the 0129 test below
+                              'assistant_suggestion_context_records_required')
        ORDER BY 1, 2`,
     );
     type Row = [string, string, boolean, boolean];
@@ -1129,7 +1131,7 @@ describe("schema.ts matches the migrated database", () => {
     expect(col).toEqual({ nullable: "NO", def: "(uuid_send(gen_random_uuid()) || uuid_send(gen_random_uuid()))" });
   });
 
-  it("0128: answers and suggestions store the record keys of every record given to the model; required on new rows, immutable (F-DG6-920)", async () => {
+  it("0128 (as amended by 0129): answers and suggestions store the record keys of every record given to the model; immutable (F-DG6-920)", async () => {
     const cols = await q<{ t: string; d: string; n: string }>(
       `SELECT table_name AS t, data_type AS d, is_nullable AS n FROM information_schema.columns
         WHERE table_schema = 'public' AND column_name = 'context_records' ORDER BY 1`,
@@ -1143,26 +1145,20 @@ describe("schema.ts matches the migrated database", () => {
         WHERE conrelid IN ('assistant_message'::regclass, 'assistant_suggestion'::regclass)
           AND conname LIKE 'assistant_%_context_records_%' ORDER BY conname`,
     );
-    // Rows stored before 0128 keep NULL (no backfill is possible), so "required" is a NOT VALID CHECK: enforced on
-    // every new row, not checked against existing rows (the 0027 precedent).
+    // The shape CHECKs (validated). "Required" is no longer a CHECK: 0129 made it a BEFORE INSERT trigger (below).
     expect(checks.map((c) => [c.name, c.validated])).toEqual([
-      ["assistant_message_context_records_required", false],
       ["assistant_message_context_records_valid", true],
-      ["assistant_suggestion_context_records_required", false],
       ["assistant_suggestion_context_records_valid", true],
     ]);
-    expect(checks[0]!.def).toBe(
-      "CHECK (((author <> 'assistant'::text) OR (reply_kind IS DISTINCT FROM 'answer'::text) OR (context_records IS NOT NULL))) NOT VALID",
-    );
+    expect(checks[0]!.def).toContain("p6_assistant_context_covers(context_records, citations)");
     expect(checks[1]!.def).toContain("p6_assistant_context_covers(context_records, citations)");
-    expect(checks[2]!.def).toBe("CHECK ((context_records IS NOT NULL)) NOT VALID");
     const triggers = await q<{ tgname: string; deferrable: boolean }>(
       `SELECT t.tgname, t.tgdeferrable AS deferrable FROM pg_trigger t
         WHERE NOT t.tgisinternal AND t.tgname = 'assistant_suggestion_context_immutable'
           AND t.tgrelid = 'assistant_suggestion'::regclass`,
     );
     expect(triggers).toEqual([{ tgname: "assistant_suggestion_context_immutable", deferrable: false }]);
-    // The shape: at most 20 distinct {recordType, recordId}; every record citation listed.
+    // The shape: distinct {recordType, recordId} keys (at most 1,000 since 0129); every record citation listed.
     const r = "01a1c4a5-bfb0-745a-907d-f232a93be725";
     const valid = async (p: unknown) =>
       (await q<{ ok: boolean }>(`SELECT p6_assistant_context_records_valid($1::jsonb) AS ok`, [JSON.stringify(p)]))[0]!
@@ -1192,6 +1188,52 @@ describe("schema.ts matches the migrated database", () => {
     expect(await covers([], cited)).toBe(false);
     expect(await covers([{ recordType: "benefit", recordId: r }], cited)).toBe(false);
     expect(await covers([], playbook)).toBe(true);
+  });
+
+  it("0129: the context is required on NEW rows only (BEFORE INSERT triggers, not CHECKs), and holds up to 1,000 keys (F-DG6-971, F-DG6-960/970/980)", async () => {
+    // F-DG6-971: a NOT VALID CHECK is still enforced on every UPDATE; a BEFORE INSERT trigger is not.
+    const required = await q<{ name: string }>(
+      `SELECT conname AS name FROM pg_constraint WHERE conname LIKE 'assistant_%_context_records_required'`,
+    );
+    expect(required).toEqual([]);
+    const triggers = await q<{ rel: string; tgname: string; type: number; deferrable: boolean; fn: string }>(
+      `SELECT c.relname AS rel, t.tgname, t.tgtype::int AS type, t.tgdeferrable AS deferrable, p.proname AS fn
+         FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid JOIN pg_proc p ON p.oid = t.tgfoid
+        WHERE NOT t.tgisinternal AND t.tgname LIKE 'assistant_%_context_records_required' ORDER BY 1`,
+    );
+    // tgtype 7 = ROW (1) | BEFORE (2) | INSERT (4): never UPDATE (16) or DELETE (8).
+    expect(triggers).toEqual([
+      {
+        rel: "assistant_message",
+        tgname: "assistant_message_context_records_required",
+        type: 7,
+        deferrable: false,
+        fn: "assistant_message_context_records_required",
+      },
+      {
+        rel: "assistant_suggestion",
+        tgname: "assistant_suggestion_context_records_required",
+        type: 7,
+        deferrable: false,
+        fn: "assistant_suggestion_context_records_required",
+      },
+    ]);
+    const [fn] = await q<{ src: string }>(
+      `SELECT prosrc AS src FROM pg_proc WHERE proname = 'assistant_message_context_records_required'`,
+    );
+    expect(fn?.src).toContain("NEW.author = 'assistant' AND NEW.reply_kind = 'answer' AND NEW.context_records IS NULL");
+    // The bound: 1,000 distinct keys, not 1,001.
+    const keys = (n: number) =>
+      Array.from({ length: n }, (_, i) => ({
+        recordType: "benefit",
+        recordId: `01a1c4a5-bfb0-745a-907d-${i.toString(16).padStart(12, "0")}`,
+      }));
+    const valid = async (p: unknown) =>
+      (await q<{ ok: boolean }>(`SELECT p6_assistant_context_records_valid($1::jsonb) AS ok`, [JSON.stringify(p)]))[0]!
+        .ok;
+    expect(await valid(keys(21))).toBe(true);
+    expect(await valid(keys(1000))).toBe(true);
+    expect(await valid(keys(1001))).toBe(false);
   });
 
   it("0123: the ledger records disables (source CHECK), has the occurrence-time lookup index, and its writer stays SECURITY DEFINER (D-204)", async () => {

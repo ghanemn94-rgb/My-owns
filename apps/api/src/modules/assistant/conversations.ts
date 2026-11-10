@@ -23,6 +23,9 @@
 //    and contentWithheld true (a citation of that record shows readable false; an uncited record is not named); its
 //    suggestions are withheld the same way. A record no longer in the search index is treated as unreadable (fail
 //    closed).
+//  - The history given to the model (§5) passes the same check first (F-DG6-960/970/980; historyFor): an earlier
+//    answer withheld from the caller now is not sent, and the new answer's stored context inherits the context of
+//    every earlier answer it was given, so a later revocation withholds it too.
 //  - Logging (§9 rule 3): one line per post with ids, kinds, codes, counts and latency; never prompt, answer or record
 //    text. Audit events carry ids, versions, kinds, codes and citation counts; never message text or a credential.
 // The assistant writes only its own tables and their audit events; nothing here approves anything (G1-G6) or touches
@@ -65,7 +68,14 @@ import {
   requireIfMatch,
   type ModuleDeps,
 } from "../platform/index.ts";
-import { answer, type AnswerOutcome, type ContextRecord, type SuggestionDraft } from "./answer.ts";
+import {
+  answer,
+  CONTEXT_RECORDS_MAX,
+  mergeContextRecords,
+  type AnswerOutcome,
+  type ContextRecord,
+  type SuggestionDraft,
+} from "./answer.ts";
 import { assistantSecretProviders, CITABLE_RECORD_TYPES, providerFor, type Citation } from "./provider.ts";
 import { loadSetting } from "./settings.ts";
 
@@ -436,17 +446,66 @@ async function messagesOf(db: DbOrTx, conversationId: string): Promise<MessageRo
     .execute();
 }
 
-/** The history of a prompt (§5): the last 6 user prompts and answers before `beforeSeq`; refusals and errors excluded. */
-function historyOf(messages: readonly MessageRow[], beforeSeq: number) {
-  return messages
-    .filter(
-      (m) =>
-        m.seq < beforeSeq &&
-        m.content !== null &&
-        (m.author === "user" || (m.author === "assistant" && m.reply_kind === "answer")),
-    )
-    .slice(-HISTORY_LIMIT)
-    .map((m) => ({ role: m.author === "user" ? ("user" as const) : ("assistant" as const), content: m.content! }));
+/**
+ * The history of a prompt (§5), re-checked (§9 RG2 addendum; F-DG6-960, F-DG6-970, F-DG6-980): the last 6 user
+ * prompts and answers before `beforeSeq` (refusals and errors excluded) that `principal`, the conversation's owner as
+ * reloaded for this request, may still read.
+ *  - Each earlier ANSWER goes through the same readability check as the read-time view (toMessageView: its record
+ *    citations and its stored context; a row stored before 0128 by its citations). An answer withheld from the caller
+ *    now is DROPPED: no text, no placeholder, so nothing about it reaches the model and no new answer can repeat it.
+ *    The owner's own prompts are kept (they are never withheld; getAssistantConversation serves them as they are).
+ *    The window is taken after the drop, so it still holds up to 6 messages the caller may read.
+ *  - `context` is every record the kept answers were generated from (their recordRefsOf, in history order). answer.ts
+ *    stores it in the new answer's context beside this turn's data block, so a later revocation withholds the new
+ *    answer too (inheritance; transitive, since each stored context already holds what it inherited).
+ *  - Bound: `context` stays within CONTEXT_RECORDS_MAX minus the data block's maximum (`dataBlockMax`). An answer whose
+ *    context would not fit is dropped like a withheld one (fail closed: the model is not given an answer whose
+ *    generation context could not be stored in full). With 0129's bound this never happens (answer.ts).
+ */
+async function historyFor(
+  db: DbOrTx,
+  principal: Principal,
+  messages: readonly MessageRow[],
+  beforeSeq: number,
+  dataBlockMax: number,
+): Promise<{ history: { role: "user" | "assistant"; content: string }[]; context: ContextRecord[] }> {
+  const candidates = messages.filter(
+    (m) =>
+      m.seq < beforeSeq &&
+      m.content !== null &&
+      (m.author === "user" || (m.author === "assistant" && m.reply_kind === "answer")),
+  );
+  const readable = await readabilityOf(
+    db,
+    principal,
+    candidates.filter((m) => m.author === "assistant"),
+  );
+  const window = candidates.filter((m) => m.author === "user" || !withheld(m, readable)).slice(-HISTORY_LIMIT);
+  // Newest first, so a bound that bites drops the OLDEST answers first.
+  const budget = CONTEXT_RECORDS_MAX - dataBlockMax;
+  const keys = new Set<string>();
+  const dropped = new Set<string>();
+  for (const m of [...window].reverse()) {
+    if (m.author !== "assistant") continue;
+    const refs = recordRefsOf(m);
+    const added = refs.filter((r) => !keys.has(recordKey(r)));
+    if (keys.size + added.length > budget) {
+      dropped.add(m.id);
+      continue;
+    }
+    for (const r of added) keys.add(recordKey(r));
+  }
+  const kept = window.filter((m) => !dropped.has(m.id));
+  const context = mergeContextRecords(
+    ...kept.filter((m) => m.author === "assistant").map((m) => recordRefsOf(m) as ContextRecord[]),
+  );
+  return {
+    history: kept.map((m) => ({
+      role: m.author === "user" ? ("user" as const) : ("assistant" as const),
+      content: m.content!,
+    })),
+    context,
+  };
 }
 
 function localeOf(request: FastifyRequest): "en" | "ar" {
@@ -750,8 +809,15 @@ export function registerAssistantConversationRoutes(app: FastifyInstance, { db, 
       if (provider === null || setting === undefined) {
         outcome = { kind: "interrupted", dataItems: 0, droppedSuggestions: 0 };
       } else {
-        const history = historyOf(await messagesOf(db, first.conversation.id), first.message.seq);
         try {
+          // The history is re-checked for the caller as reloaded in transaction 1 (§9; F-DG6-960/970/980).
+          const { history, context: historyContext } = await historyFor(
+            db,
+            first.fresh,
+            await messagesOf(db, first.conversation.id),
+            first.message.seq,
+            setting.max_context_records,
+          );
           outcome = await answer({
             db,
             principal: first.fresh,
@@ -762,6 +828,7 @@ export function registerAssistantConversationRoutes(app: FastifyInstance, { db, 
             },
             prompt: body.content,
             history,
+            historyContext,
             setting,
             provider,
             locale: localeOf(request),

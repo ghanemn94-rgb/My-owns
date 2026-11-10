@@ -1,0 +1,58 @@
+port-policy: PostgreSQL listening on port 31400 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-rg2
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwb8hju4_4c6ee70e (server_encoding UTF8); applied 121 migrations to a fresh database
+stdout | apps/api/test/integration/assistant/context-recheck.test.ts > ADR-0059 §9: the read-time re-check covers every record given to the model (F-DG6-920) > F-DG6-920: the answer cites one of two given records; the UNCITED one is revoked; the answer is withheld
+[BE-RG1 case 1] after revoking the uncited record: contentWithheld = [33mtrue[39m
+
+stdout | apps/api/test/integration/assistant/context-recheck.test.ts > ADR-0059 §9: the read-time re-check covers every record given to the model (F-DG6-920) > the cited record is revoked: the answer is withheld and that citation is readable false
+[BE-RG1 case 2] after revoking the cited record: contentWithheld = [33mtrue[39m
+
+stdout | apps/api/test/integration/assistant/context-recheck.test.ts > ADR-0059 §9: the read-time re-check covers every record given to the model (F-DG6-920) > nothing revoked: the answer stays readable, and its stored context lists both records given
+[BE-RG1 case 3] nothing revoked: contentWithheld = [33mfalse[39m
+
+stdout | apps/api/test/integration/assistant/context-recheck.test.ts > ADR-0059 §9: the read-time re-check covers every record given to the model (F-DG6-920) > nothing revoked: the answer stays readable, and its stored context lists both records given
+[BE-RG1 case 3] stored context_records: [{"recordId":"01a1c77a-4814-71af-b3ca-59a7bdaeac8b","recordType":"transformation"},{"recordId":"01a1c77a-4815-745a-9543-f5650a19b32b","recordType":"transformation"}]
+
+stdout | apps/api/test/integration/assistant/context-recheck.test.ts > ADR-0059 §9: the read-time re-check covers every record given to the model (F-DG6-920) > a suggestion built from an answer whose uncited record becomes unreadable is withheld and cannot be taken (404)
+[BE-RG1 case 4] suggestion context holds the uncited benefit: true
+
+stdout | apps/api/test/integration/assistant/context-recheck.test.ts > ADR-0059 §9: the read-time re-check covers every record given to the model (F-DG6-920) > a suggestion built from an answer whose uncited record becomes unreadable is withheld and cannot be taken (404)
+[BE-RG1 case 4] after the uncited benefit became unreadable: answer withheld = [33mtrue[39m suggestions withheld = [true,true]
+
+stdout | apps/api/test/integration/assistant/context-recheck.test.ts > ADR-0059 §9: the read-time re-check covers every record given to the model (F-DG6-920) > a suggestion built from an answer whose uncited record becomes unreadable is withheld and cannot be taken (404)
+[BE-RG1 case 4] take-to-draft status: [33m404[39m
+
+ ✓ |integration| apps/api/test/integration/assistant/context-recheck.test.ts (5 tests) 4213ms
+stdout | apps/api/test/integration/assistant/history-recheck.test.ts > ADR-0059 §5/§9: the history given to the model is re-checked, and inherited by the new answer (F-DG6-960/970/980) > F-DG6-960/970/980: a withheld answer is not sent to the model as history, and no new answer re-serves it
+[BE-RG2 case 1] the request of the follow-up carries the withheld A1 text: [33mfalse[39m | history roles: ["user"] | data block holds program two: [33mfalse[39m
+[BE-RG2 case 1] follow-up reply: contentWithheld = [33mfalse[39m | holds the withheld fact: [33mfalse[39m
+
+stdout | apps/api/test/integration/assistant/history-recheck.test.ts > ADR-0059 §5/§9: the history given to the model is re-checked, and inherited by the new answer (F-DG6-960/970/980) > inheritance: an answer generated with a history answer is withheld when that answer's context becomes unreadable
+[BE-RG2 case 2] A2 stored context_records: ["01a1c77a-5e34-736b-8794-dc8f595524f1","01a1c77a-5e32-702f-953b-6fed865d9e3c","01a1c77a-5e33-73c4-bbfd-3103607bfaa7"]
+
+stdout | apps/api/test/integration/assistant/history-recheck.test.ts > ADR-0059 §5/§9: the history given to the model is re-checked, and inherited by the new answer (F-DG6-960/970/980) > inheritance: an answer generated with a history answer is withheld when that answer's context becomes unreadable
+[BE-RG2 case 2] after revoking tA2: A1 withheld = [33mtrue[39m A2 withheld = [33mtrue[39m
+
+stdout | apps/api/test/integration/assistant/history-recheck.test.ts > ADR-0059 §5/§9: the history given to the model is re-checked, and inherited by the new answer (F-DG6-960/970/980) > a history answer stored before 0128 (context NULL) is checked by its citations before it is sent
+[BE-RG2 case 3] pre-0128 history answer re-sent after its cited record was revoked: [33mfalse[39m
+
+stdout | apps/api/test/integration/assistant/history-recheck.test.ts > F-DG6-971: a suggestion stored before 0128 can be taken to a draft; new rows still need a context (0129) > a pre-0128 suggestion (context NULL, readable citations) is taken to a draft (200)
+[BE-RG2 case 4] pre-0128 suggestion to-draft: [33m200[39m null
+
+stdout | apps/api/test/integration/assistant/history-recheck.test.ts > F-DG6-971: a suggestion stored before 0128 can be taken to a draft; new rows still need a context (0129) > a NEW suggestion or answer without a context is still refused at INSERT (and a context cannot be removed)
+[BE-RG2 case 5] INSERT without a context: suggestion -> 23514 assistant_suggestion_context_records_required | answer -> 23514 assistant_message_context_records_required
+
+ ✓ |integration| apps/api/test/integration/assistant/history-recheck.test.ts (5 tests) 3874ms
+
+ Test Files  2 passed (2)
+      Tests  10 passed (10)
+   Start at  22:00:28
+   Duration  19.86s (transform 3.89s, setup 0ms, collect 8.76s, tests 8.09s, environment 0ms, prepare 66ms)
+
+EXIT=0

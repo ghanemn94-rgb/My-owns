@@ -1,0 +1,201 @@
+port-policy: PostgreSQL listening on port 31400 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-rg2
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwb86xop_cf2585b9 (server_encoding UTF8); applied 121 migrations to a fresh database
+ ❯ |integration| packages/db/test/integration/catalogue.test.ts (42 tests | 1 failed) 176ms
+   ✓ schema.ts matches the migrated database > has exactly the same relations and columns as public 42ms
+   ✓ schema.ts matches the migrated database > 0025: an approved G1 decision is guarded by the deferred gate_decision_g1_agreements constraint trigger 2ms
+   ✓ schema.ts matches the migrated database > 0026 + 0059: product gate G4 is submittable (0026); G5 and G6 open with their evaluators (0059, ADR-0035 §2) 1ms
+   ✓ schema.ts matches the migrated database > 0027: benefit_calculation.rounding is a nullable jsonb object, bound to the row and required on new rows (ADR-0024 §6 item 11) 4ms
+   ✓ schema.ts matches the migrated database > 0029-0031: the P4 guards are attached (loop guard, one-accountable deferred guard, approval guards) 2ms
+   ✓ schema.ts matches the migrated database > 0033-0035: the P4 slice A guards are attached (deferred audit and consistency checks, append-only lineage) 2ms
+   ✓ schema.ts matches the migrated database > 0037-0038: the P4 slice B guards are attached (deferred audit and Finance-decision checks, append-only history) 2ms
+   ✓ schema.ts matches the migrated database > 0041-0042: the P4 slice E guards are attached (deferred audit, status guards, append-only signal log) 1ms
+   ✓ schema.ts matches the migrated database > 0044-0045: the P4 slice D guards are attached (deferred audit, status guards, frozen meetings, append-only logs) 2ms
+   ✓ schema.ts matches the migrated database > 0047-0048: the P4 slice F and G guards are attached (deferred audit, status guards, append-only history) 2ms
+   ✓ schema.ts matches the migrated database > 0051-0052: the P4 slice H guards are attached (deferred audit, status guards, append-only reviews, scope and assessments) 2ms
+   ✓ schema.ts matches the migrated database > 0055-0056: the P4 slices J and K guards are attached (deferred audit, allocation-set guard, inherited-record guard) 2ms
+   ✓ schema.ts matches the migrated database > 0062-0063: the P5 slice A guards are attached (deferred audit, Studio lifecycle, append-only runs and history) 1ms
+   ✓ schema.ts matches the migrated database > 0068-0070: the P5 slice B/C guards are attached (deferred audit, record references, append-only comments and links) 1ms
+   ✓ schema.ts matches the migrated database > 0071: form_custom_value_guard() keeps every 0068 rule and accepts a multiple choice as a list (T-DG5-BE-D; D-145) 2ms
+   ✓ schema.ts matches the migrated database > 0065: studio_default weight sets have no approver; p3_instantiate_transformation() pins scoring_defaults (T-DG5-KBE-A; D-142 Q12) 1ms
+   ✓ schema.ts matches the migrated database > 0074-0075: the P5 slice D/E guards are attached (deferred audit and effective-version checks, append-only history) 2ms
+   ✓ schema.ts matches the migrated database > 0080-0081: the P5 slice F guards are attached (immutable snapshots, creation-only children, deferred checks) 1ms
+   ✓ schema.ts matches the migrated database > 0126: report_snapshot_aggregate is creation-only and append-only, like the other snapshot children 1ms
+   ✓ schema.ts matches the migrated database > 0085-0086: the P5 slice G/H guards are attached (deferred audit and completeness checks, append-only children) 1ms
+   ✓ schema.ts matches the migrated database > 0089-0090: the P5 slice I/J guards are attached (deferred audit on branding, immutable catalogues and histories) 1ms
+   ✓ schema.ts matches the migrated database > 0098-0099: the P6 slice E/F guards are attached (deferred audit, record references, set-once deep links, trigger-written histories) 2ms
+   ✓ schema.ts matches the migrated database > 0101-0102: the P6 slice J/C guards are attached (deferred audit, state machines, trigger-written histories, append-only links, an unaudited heartbeat) 1ms
+   ✓ schema.ts matches the migrated database > 0104-0106: the P6 slice B/A guards are attached (deferred audit, state machines, trigger-written histories, append-only configuration versions, receipts and lineage, staged rows never deleted) 1ms
+   ✓ schema.ts matches the migrated database > 0108: the P6 slice H/G guards are attached (deferred audit on saved views, monotonic derived index rows, trigger-written history, append-only load marker) 1ms
+   ✓ schema.ts matches the migrated database > 0111: the P6 slice D guards are attached (deferred audit on the setting, conversations and suggestions; the message count checked at COMMIT; trigger-written setting history; append-only messages) 1ms
+   ✓ schema.ts matches the migrated database > 0122: the enablement ledger is append-only and written by its SECURITY DEFINER trigger on automation_rule (D-203 O-2) 2ms
+   ✓ schema.ts matches the migrated database > 0127: each rule version has its own 32-byte restricted-token key, drawn at insert and never changed (D-233) 10ms
+   ✓ schema.ts matches the migrated database > 0128 (as amended by 0129): answers and suggestions store the record keys of every record given to the model; immutable (F-DG6-920) 9ms
+   × schema.ts matches the migrated database > 0129: the context is required on NEW rows only (BEFORE INSERT triggers, not CHECKs), and holds up to 1,000 keys (F-DG6-971, F-DG6-960/970/980) 12ms
+     → expected false to be true // Object.is equality
+   ✓ schema.ts matches the migrated database > 0123: the ledger records disables (source CHECK), has the occurrence-time lookup index, and its writer stays SECURITY DEFINER (D-204) 2ms
+   ✓ schema.ts matches the migrated database > 0125: export_job counts its assembly attempts (NOT NULL, default 0, >= 0) and its guard checks the assigned snapshot's definition and the attempt step (F-DG6-sa12-1, F-DG6-sa12-3) 3ms
+   ✓ schema.ts matches the migrated database > 0113:the P6 slice I contrast report guards are attached (deferred audit on the report; the pair count checked at COMMIT from both tables; both append-only) 1ms
+   ✓ schema.ts matches the migrated database > 0097: the contributor tables are append-only and every content table of a draft records its writers (D-170) 3ms
+   ✓ schema.ts matches the migrated database > marks exactly the views as views 2ms
+   ✓ type and structure rules (ADR-0003, data dictionary global rules) > uses timestamptz only (no timestamp without time zone) and no floating point 9ms
+   ✓ type and structure rules (ADR-0003, data dictionary global rules) > gives every base table a primary key and uuid ids without defaults 8ms
+   ✓ type and structure rules (ADR-0003, data dictionary global rules) > gives every mutable business table a version column >= 1 defaulting to 1 19ms
+   ✓ type and structure rules (ADR-0003, data dictionary global rules) > stores money-bearing currency as char(3) with a code check 4ms
+   ✓ mth_app privileges are exactly the data dictionary's > matches per table 6ms
+   ✓ mth_app privileges are exactly the data dictionary's > has no CREATE on public and owns nothing 1ms
+   ✓ mth_app privileges are exactly the data dictionary's > can use the pg-boss schema without DDL 1ms
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts (105 tests) 62902ms
+   ✓ every operation, validated against the contract and the zod mirrors > kpi module operations (P2; kpi-exercises.ts, owned by kpi-benefits-engineer)  549ms
+   ✓ every operation, validated against the contract and the zod mirrors > P2 backend operations (p2-exercises.ts): every routed operation exercised with a success  2079ms
+   ✓ every operation, validated against the contract and the zod mirrors > P3 BE-B operations (p3-exercises-be-b.ts)  611ms
+   ✓ every operation, validated against the contract and the zod mirrors > P3 BE-C operations (p3-exercises-be-c.ts)  521ms
+   ✓ every operation, validated against the contract and the zod mirrors > P3 BE-D operations (p3-exercises-be-d.ts)  579ms
+   ✓ every operation, validated against the contract and the zod mirrors > P3 BE-E operations (p3-exercises-be-e.ts)  472ms
+   ✓ every operation, validated against the contract and the zod mirrors > P3 KBE-B operations (p3-exercises-kbe-b.ts)  341ms
+   ✓ every operation, validated against the contract and the zod mirrors > P3 KBE-C operations (p3-exercises-kbe-c.ts)  338ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-A operations (p4-exercises-be-a.ts)  305ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-B operations (p4-exercises-be-b.ts)  633ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-C operations (p4-exercises-be-c.ts)  452ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-D operations (p4-exercises-be-d.ts)  714ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-E operations (p4-exercises-be-e.ts)  321ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-F operations (p4-exercises-be-f.ts)  1104ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-G operations (p4-exercises-be-g.ts)  398ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-H operations (p4-exercises-be-h.ts)  687ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-I operations (p4-exercises-be-i.ts)  866ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-J operations (p4-exercises-be-j.ts)  456ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-K operations (p4-exercises-be-k.ts)  802ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-L operations (p4-exercises-be-l.ts)  699ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-M operations (p4-exercises-be-m.ts)  896ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 KBE-B operations (p4-exercises-kbe-b.ts)  466ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 KBE-C operations (p4-exercises-kbe-c.ts)  770ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 KBE-D operations (p4-exercises-kbe-d.ts)  418ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 KBE-D2 operations (p4-exercises-kbe-d2.ts)  484ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 KBE-E operations (p4-exercises-kbe-e.ts)  752ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 KBE-G operations (p4-exercises-kbe-g.ts)  824ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-A operations (p5-exercises-be-a.ts)  310ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-B operations (p5-exercises-be-b.ts)  368ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-B3 operations (p5-exercises-be-b3.ts)  593ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-C operations (p5-exercises-be-c.ts)  864ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-D operations (p5-exercises-be-d.ts)  350ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-E operations (p5-exercises-be-e.ts)  398ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-E2 operations (p5-exercises-be-e2.ts)  436ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-F operations (p5-exercises-be-f.ts)  475ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-F2 operations (p5-exercises-be-f2.ts)  1107ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-H operations (p5-exercises-be-h.ts)  520ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-H2 operations (p5-exercises-be-h2.ts)  408ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-I operations (p5-exercises-be-i.ts)  565ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-K operations (p5-exercises-be-k.ts)  449ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 KBE-C operations (p5-exercises-kbe-c.ts)  482ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 KBE-D operations (p5-exercises-kbe-d.ts)  467ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-M operations (p5-exercises-be-m.ts)  623ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-O operations (p5-exercises-be-o.ts)  376ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 KBE-E operations (p5-exercises-kbe-e.ts)  612ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 KBE-E2 operations (p5-exercises-kbe-e2.ts)  802ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 KBE-F operations (p5-exercises-kbe-f.ts)  376ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-P operations (p5-exercises-be-p.ts)  544ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-P2 operations (p5-exercises-be-p2.ts)  337ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 KBE-G2 operations (p5-exercises-kbe-g2.ts)  844ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-S operations (p5-exercises-be-s.ts)  2696ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-T2 operations (p5-exercises-be-t2.ts)  2405ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-B operations (p6-exercises-be-b.ts)  315ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-L operations (p6-exercises-be-l.ts)  795ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-M operations (p6-exercises-be-m.ts)  589ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-N operations (p6-exercises-be-n.ts)  695ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-Q operations (p6-exercises-be-q.ts)  484ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-T operations (p6-exercises-be-t.ts)  364ms
+   ✓ every operation, validated against the contract and the zod mirrors > every GET operation with a path parameter: a malformed id is a declared 400 at /params/<name>; nothing written  1945ms
+   ✓ every operation, validated against the contract and the zod mirrors > every operation but the OIDC callback: U+0000 in the query is a declared 400 invalid_character  4237ms
+   ✓ every operation, validated against the contract and the zod mirrors > every operation: an undeclared request media type is a declared 400 validation.content_type; nothing written  9258ms
+   ✓ every operation, validated against the contract and the zod mirrors > every operation: the rate limiter's 429 is a declared RateLimited problem (live, limits of 1 per minute)  3440ms
+ ✓ |integration| apps/api/test/integration/assistant/conversations.test.ts (21 tests) 3868ms
+ ✓ |integration| apps/api/test/integration/assistant/settings.test.ts (17 tests) 3085ms
+stdout | apps/api/test/integration/assistant/history-recheck.test.ts > ADR-0059 §5/§9: the history given to the model is re-checked, and inherited by the new answer (F-DG6-960/970/980) > F-DG6-960/970/980: a withheld answer is not sent to the model as history, and no new answer re-serves it
+[BE-RG2 case 1] the request of the follow-up carries the withheld A1 text: [33mfalse[39m | history roles: ["user"] | data block holds program two: [33mfalse[39m
+[BE-RG2 case 1] follow-up reply: contentWithheld = [33mfalse[39m | holds the withheld fact: [33mfalse[39m
+
+stdout | apps/api/test/integration/assistant/history-recheck.test.ts > ADR-0059 §5/§9: the history given to the model is re-checked, and inherited by the new answer (F-DG6-960/970/980) > inheritance: an answer generated with a history answer is withheld when that answer's context becomes unreadable
+[BE-RG2 case 2] A2 stored context_records: ["01a1c773-e401-74e8-a114-9bd22741d45b","01a1c773-e3ff-7289-9923-fbd28763205e","01a1c773-e400-74bb-be93-cea7239b47c9"]
+
+stdout | apps/api/test/integration/assistant/history-recheck.test.ts > ADR-0059 §5/§9: the history given to the model is re-checked, and inherited by the new answer (F-DG6-960/970/980) > inheritance: an answer generated with a history answer is withheld when that answer's context becomes unreadable
+[BE-RG2 case 2] after revoking tA2: A1 withheld = [33mtrue[39m A2 withheld = [33mtrue[39m
+
+stdout | apps/api/test/integration/assistant/history-recheck.test.ts > ADR-0059 §5/§9: the history given to the model is re-checked, and inherited by the new answer (F-DG6-960/970/980) > a history answer stored before 0128 (context NULL) is checked by its citations before it is sent
+[BE-RG2 case 3] pre-0128 history answer re-sent after its cited record was revoked: [33mfalse[39m
+
+stdout | apps/api/test/integration/assistant/history-recheck.test.ts > F-DG6-971: a suggestion stored before 0128 can be taken to a draft; new rows still need a context (0129) > a pre-0128 suggestion (context NULL, readable citations) is taken to a draft (200)
+[BE-RG2 case 4] pre-0128 suggestion to-draft: [33m200[39m null
+
+stdout | apps/api/test/integration/assistant/history-recheck.test.ts > F-DG6-971: a suggestion stored before 0128 can be taken to a draft; new rows still need a context (0129) > a NEW suggestion or answer without a context is still refused at INSERT (and a context cannot be removed)
+[BE-RG2 case 5] INSERT without a context: suggestion -> 23514 assistant_suggestion_context_records_required | answer -> 23514 assistant_message_context_records_required
+
+ ✓ |integration| apps/api/test/integration/assistant/history-recheck.test.ts (5 tests) 4003ms
+ ✓ |integration| apps/api/test/integration/assistant/provider.test.ts (14 tests) 645ms
+   ✓ the HTTP adapter against the local fake (never live) > a stall before the response or inside the body is assistant.provider_timeout  606ms
+ ✓ |integration| apps/api/test/integration/assistant/suggestions.test.ts (12 tests) 4619ms
+ ✓ |integration| apps/api/test/integration/assistant/composition.test.ts (11 tests) 3622ms
+stdout | apps/api/test/integration/assistant/context-recheck.test.ts > ADR-0059 §9: the read-time re-check covers every record given to the model (F-DG6-920) > F-DG6-920: the answer cites one of two given records; the UNCITED one is revoked; the answer is withheld
+[BE-RG1 case 1] after revoking the uncited record: contentWithheld = [33mtrue[39m
+
+stdout | apps/api/test/integration/assistant/context-recheck.test.ts > ADR-0059 §9: the read-time re-check covers every record given to the model (F-DG6-920) > the cited record is revoked: the answer is withheld and that citation is readable false
+[BE-RG1 case 2] after revoking the cited record: contentWithheld = [33mtrue[39m
+
+stdout | apps/api/test/integration/assistant/context-recheck.test.ts > ADR-0059 §9: the read-time re-check covers every record given to the model (F-DG6-920) > nothing revoked: the answer stays readable, and its stored context lists both records given
+[BE-RG1 case 3] nothing revoked: contentWithheld = [33mfalse[39m
+
+stdout | apps/api/test/integration/assistant/context-recheck.test.ts > ADR-0059 §9: the read-time re-check covers every record given to the model (F-DG6-920) > nothing revoked: the answer stays readable, and its stored context lists both records given
+[BE-RG1 case 3] stored context_records: [{"recordId":"01a1c774-28f3-77ca-b24b-ce46d8b67c1f","recordType":"transformation"},{"recordId":"01a1c774-28f4-7622-8045-817cdc882f66","recordType":"transformation"}]
+
+stdout | apps/api/test/integration/assistant/context-recheck.test.ts > ADR-0059 §9: the read-time re-check covers every record given to the model (F-DG6-920) > a suggestion built from an answer whose uncited record becomes unreadable is withheld and cannot be taken (404)
+[BE-RG1 case 4] suggestion context holds the uncited benefit: true
+
+stdout | apps/api/test/integration/assistant/context-recheck.test.ts > ADR-0059 §9: the read-time re-check covers every record given to the model (F-DG6-920) > a suggestion built from an answer whose uncited record becomes unreadable is withheld and cannot be taken (404)
+[BE-RG1 case 4] after the uncited benefit became unreadable: answer withheld = [33mtrue[39m suggestions withheld = [true,true]
+
+stdout | apps/api/test/integration/assistant/context-recheck.test.ts > ADR-0059 §9: the read-time re-check covers every record given to the model (F-DG6-920) > a suggestion built from an answer whose uncited record becomes unreadable is withheld and cannot be taken (404)
+[BE-RG1 case 4] take-to-draft status: [33m404[39m
+
+ ✓ |integration| apps/api/test/integration/assistant/context-recheck.test.ts (5 tests) 3910ms
+ ✓ |integration| apps/api/test/integration/assistant/injection.test.ts (5 tests) 3846ms
+ ✓ |integration| apps/api/test/integration/assistant/retrieval.test.ts (8 tests) 3777ms
+ ✓ |integration| packages/db/test/integration/migrate.test.ts (9 tests) 5331ms
+   ✓ mth-db migrate on a fresh database > applies every shipped migration, then reports up to date  2776ms
+ ✓ |integration| apps/api/test/integration/assistant/guardrails.test.ts (33 tests) 3618ms
+   ✓ A08/A10 through the API: refused, no retrieval, no provider call, nothing changed > every refused prompt (en and ar) gets its refusal and changes no business record  431ms
+ ✓ |integration| apps/api/test/integration/assistant/no-write.test.ts (3 tests) 3428ms
+   ✓ the assistant changes no business record (ADR-0059 §7 item 3) > answers, refusals, suggestions and to-draft leave every business table and the hashed tables unchanged  358ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| packages/db/test/integration/catalogue.test.ts > schema.ts matches the migrated database > 0129: the context is required on NEW rows only (BEFORE INSERT triggers, not CHECKs), and holds up to 1,000 keys (F-DG6-971, F-DG6-960/970/980)
+AssertionError: expected false to be true // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+ ❯ packages/db/test/integration/catalogue.test.ts:1234:35
+    1232|       (await q<{ ok: boolean }>(`SELECT p6_assistant_context_records_v…
+    1233|         .ok;
+    1234|     expect(await valid(keys(21))).toBe(true);
+       |                                   ^
+    1235|     expect(await valid(keys(1000))).toBe(true);
+    1236|     expect(await valid(keys(1001))).toBe(false);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 13 passed (14)
+      Tests  1 failed | 289 passed (290)
+   Start at  21:52:13
+   Duration  134.86s (transform 5.42s, setup 0ms, collect 24.91s, tests 106.83s, environment 0ms, prepare 53ms)
+
+EXIT=1

@@ -16,6 +16,12 @@ export interface FakeDataRecord {
   readonly id: string;
 }
 
+/** One chat message of a request (system, history, data block or prompt). */
+export interface FakeChatMessage {
+  readonly role: string;
+  readonly content: string;
+}
+
 export type FakeModelBehaviour =
   | {
       readonly kind: "envelope";
@@ -27,6 +33,11 @@ export type FakeModelBehaviour =
        * items of its data block that this predicate keeps (a model citing only a subset of what it was given).
        */
       readonly citeRecords?: (item: FakeDataRecord) => boolean;
+      /**
+       * T-DG6-BE-RG2 (F-DG6-960/970/980): when set, the answer text is computed from the request's chat messages
+       * instead of `answer` (for example a model that repeats its last answer from the history).
+       */
+      readonly answerFrom?: (messages: readonly FakeChatMessage[]) => string;
     }
   | { readonly kind: "text"; readonly content: string }
   | { readonly kind: "status"; readonly status: number }
@@ -143,6 +154,16 @@ export class FakeModel {
     });
   }
 
+  /** The chat messages of a request, in order (non-string contents are skipped). */
+  static messagesOf(body: Record<string, unknown> | null): FakeChatMessage[] {
+    const messages = Array.isArray(body?.["messages"])
+      ? (body["messages"] as { role?: unknown; content?: unknown }[])
+      : [];
+    return messages
+      .filter((m) => typeof m.role === "string" && typeof m.content === "string")
+      .map((m) => ({ role: m.role as string, content: m.content as string }));
+  }
+
   /** The record items of the request's data block (the message that starts with the ADR-0059 §5 header). */
   static dataRecordsOf(body: Record<string, unknown> | null): FakeDataRecord[] {
     const messages = Array.isArray(body?.["messages"]) ? (body["messages"] as { content?: unknown }[]) : [];
@@ -183,7 +204,8 @@ export class FakeModel {
             : FakeModel.dataRecordsOf(body)
                 .filter(b.citeRecords)
                 .map((i) => i.ref);
-        return send(200, completion(JSON.stringify({ answer: b.answer, citations, suggestions: b.suggestions ?? [] })));
+        const answer = b.answerFrom === undefined ? b.answer : b.answerFrom(FakeModel.messagesOf(body));
+        return send(200, completion(JSON.stringify({ answer, citations, suggestions: b.suggestions ?? [] })));
       }
       case "text":
         return send(200, completion(b.content));

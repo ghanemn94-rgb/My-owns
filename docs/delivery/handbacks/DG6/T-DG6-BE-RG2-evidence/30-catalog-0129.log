@@ -1,0 +1,49 @@
+# 2026-11-10T21:34:28Z catalogue of 0129 on a disposable PostgreSQL (temporary probe file packages/db/test/integration/zz-rg2-catalog.test.ts, removed after the run)
+port-policy: PostgreSQL listening on port 31400 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-rg2
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwb7k5ri_431965a3 (server_encoding UTF8); applied 121 migrations to a fresh database
+stdout | packages/db/test/integration/zz-rg2-catalog.test.ts > dumps the 0129 catalogue
+constraint | assistant_message | assistant_message_context_records_valid | validated=true | CHECK (((context_records IS NULL) OR ((author = 'assistant'::text) AND (reply_kind = 'answer'::text) AND p6_assistant_context_records_valid(context_records) AND p6_assistant_context_covers(context_records, citations))))
+constraint | assistant_setting | assistant_setting_max_context_records_check | validated=true | CHECK (((max_context_records >= 1) AND (max_context_records <= 20)))
+constraint | assistant_suggestion | assistant_suggestion_context_records_valid | validated=true | CHECK (((context_records IS NULL) OR (p6_assistant_context_records_valid(context_records) AND p6_assistant_context_covers(context_records, citations))))
+
+stdout | packages/db/test/integration/zz-rg2-catalog.test.ts > dumps the 0129 catalogue
+trigger | assistant_message_context_records_required | CREATE TRIGGER assistant_message_context_records_required BEFORE INSERT ON public.assistant_message FOR EACH ROW EXECUTE FUNCTION assistant_message_context_records_required()
+trigger | assistant_suggestion_context_immutable | CREATE TRIGGER assistant_suggestion_context_immutable BEFORE UPDATE ON public.assistant_suggestion FOR EACH ROW EXECUTE FUNCTION assistant_suggestion_context_immutable()
+trigger | assistant_suggestion_context_records_required | CREATE TRIGGER assistant_suggestion_context_records_required BEFORE INSERT ON public.assistant_suggestion FOR EACH ROW EXECUTE FUNCTION assistant_suggestion_context_records_required()
+
+stdout | packages/db/test/integration/zz-rg2-catalog.test.ts > dumps the 0129 catalogue
+function | assistant_message_context_records_required() | volatility=v | config={"search_path=public, pg_temp"}
+function | assistant_suggestion_context_immutable() | volatility=v | config={"search_path=public, pg_temp"}
+function | assistant_suggestion_context_records_required() | volatility=v | config={"search_path=public, pg_temp"}
+function | p6_assistant_context_covers(jsonb,jsonb) | volatility=i | config={"search_path=public, pg_catalog, pg_temp"}
+function | p6_assistant_context_records_valid(jsonb) | volatility=i | config={"search_path=public, pg_catalog, pg_temp"}
+
+stdout | packages/db/test/integration/zz-rg2-catalog.test.ts > dumps the 0129 catalogue
+comment | p6_assistant_context_records_valid | Assistant generation context (ADR-0059 §5, §9; F-DG6-920, F-DG6-960/970/980): at most 1,000 distinct {recordType, recordId} keys of the records given to the model, its own data block and the inherited context of the history answers given (0129).
+
+stdout | packages/db/test/integration/zz-rg2-catalog.test.ts > dumps the 0129 catalogue
+column-comment | assistant_message.context_records | T-DG6-BE-RG1/RG2 (F-DG6-920, F-DG6-960/970/980): record keys of every record the answer was generated from: each record item given to the model, then the inherited context of the history answers given; re-checked at read time with the citations. Required on every new answer (0129 BEFORE INSERT trigger); NULL on answers stored before 0128 (the citations are then the fallback). Never served.
+column-comment | assistant_suggestion.context_records | T-DG6-BE-RG1/RG2 (F-DG6-920, F-DG6-960/970/980): the context of the answer this suggestion belongs to; re-checked at read time and at take-to-draft with the citations. Required on every new suggestion (0129 BEFORE INSERT trigger); NULL on suggestions stored before 0128 (the citations are then the fallback; such a row can still be taken to a draft). Never served; immutable.
+
+stdout | packages/db/test/integration/zz-rg2-catalog.test.ts > dumps the 0129 catalogue
+grant | mth_app | assistant_message | INSERT
+grant | mth_app | assistant_message | SELECT
+grant | mth_app | assistant_suggestion | INSERT
+grant | mth_app | assistant_suggestion | SELECT
+grant | mth_app | assistant_suggestion | UPDATE
+
+ ✓ |integration| packages/db/test/integration/zz-rg2-catalog.test.ts (1 test) 25ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  21:34:30
+   Duration  3.68s (transform 34ms, setup 0ms, collect 163ms, tests 25ms, environment 0ms, prepare 56ms)
+
+EXIT=0

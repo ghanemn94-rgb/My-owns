@@ -78,3 +78,30 @@ describe("the generation context (ADR-0059 §9 amendment; F-DG6-920)", () => {
     expect(recordRefsOf({ citations: [playbook], context_records: [] })).toEqual([]);
   });
 });
+
+// T-DG6-BE-RG2 (F-DG6-960/970/980; ADR-0059 §5 Inherited context): the union of the data block and the history. Pure.
+describe("the inherited context (ADR-0059 §5; F-DG6-960/970/980)", () => {
+  const key = (n: number) => ({
+    recordType: "transformation" as const,
+    recordId: `01a1c4a5-bfb0-745a-907d-${n.toString(16).padStart(12, "0")}`,
+  });
+
+  it("mergeContextRecords keeps the data block first, then each history context, distinct", async () => {
+    const { mergeContextRecords } = await import("./answer.ts");
+    expect(mergeContextRecords([key(3)], [key(1), key(2)], [key(2), key(3), key(4)])).toEqual([
+      key(3),
+      key(1),
+      key(2),
+      key(4),
+    ]);
+    expect(mergeContextRecords()).toEqual([]);
+  });
+
+  it("CONTEXT_RECORDS_MAX is the largest union one conversation can produce (50 answers x 20 records)", async () => {
+    const { CONTEXT_RECORDS_MAX } = await import("./answer.ts");
+    const { MAX_MESSAGES } = await import("./conversations.ts");
+    // Every answer follows its own prompt, so at most half the messages are answers; each is given at most 20 records
+    // (0111 max_context_records <= 20; settings.ts maxContextRecords max 20).
+    expect(CONTEXT_RECORDS_MAX).toBe((MAX_MESSAGES / 2) * 20);
+  });
+});

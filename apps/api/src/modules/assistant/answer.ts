@@ -11,6 +11,10 @@
 //   6. the generation context (§5, §9 amendment of 2026-11-10; F-DG6-920): the record keys of EVERY record item given
 //      to the model, cited or not, stored beside the citations (0128 `context_records`) so the read-time re-check
 //      covers every record the answer was generated from, not only those the model chose to cite.
+//   7. the inherited context (§5, §9 RG2 addendum; F-DG6-960/970/980): the history given to the model holds earlier
+//      answers, so the stored context also lists every record each of THOSE was generated from (their context, or for
+//      a row stored before 0128 their record citations; conversations.ts historyFor). A later revocation of any of them
+//      then withholds this answer too. The history itself was already re-checked for the caller before it was given.
 // The model's output is text: it is never interpreted as a command, and nothing here writes (§7).
 import type { Db } from "@mth/db";
 import type { Principal } from "../access/index.ts";
@@ -31,17 +35,37 @@ export interface ContextRecord {
   readonly recordId: string;
 }
 
+/**
+ * The most record keys one stored generation context holds (0129 `p6_assistant_context_records_valid`). It is the
+ * bound of the union, so a context is never truncated: a conversation holds at most 100 messages, hence at most 50
+ * answers, each given at most 20 record items (0111 `max_context_records` <= 20), and an answer's context is the union
+ * of its own data block and the contexts of the earlier answers of the SAME conversation it was given as history
+ * (transitively), so it never exceeds 50 x 20 = 1,000 keys. conversations.ts historyFor still drops a history answer
+ * whose context would not fit beside a full data block (fail closed: the model is not given it), so the bound holds
+ * even if those limits change.
+ */
+export const CONTEXT_RECORDS_MAX = 1000;
+
 /** §5/§9 (F-DG6-920): the distinct record keys of every record item given to the model, in the order given. */
 export function contextRecordsOf(items: readonly QuotedItem[]): ContextRecord[] {
+  return mergeContextRecords(
+    items.flatMap(({ citation: c }) =>
+      c.source === "record" ? [{ recordType: c.recordType, recordId: c.recordId }] : [],
+    ),
+  );
+}
+
+/** The distinct record keys of `lists`, in order (first occurrence kept). */
+export function mergeContextRecords(...lists: readonly (readonly ContextRecord[])[]): ContextRecord[] {
   const seen = new Set<string>();
   const out: ContextRecord[] = [];
-  for (const { citation: c } of items) {
-    if (c.source !== "record") continue;
-    const key = `${c.recordType}:${c.recordId}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
-    out.push({ recordType: c.recordType, recordId: c.recordId });
-  }
+  for (const list of lists)
+    for (const r of list) {
+      const key = `${r.recordType}:${r.recordId}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push({ recordType: r.recordType, recordId: r.recordId });
+    }
   return out;
 }
 
@@ -67,6 +91,11 @@ export interface AnswerInput {
   readonly prompt: string;
   /** At most the last 6 prompts and answers of the conversation, oldest first (refusals and errors excluded). */
   readonly history: readonly { readonly role: "user" | "assistant"; readonly content: string }[];
+  /**
+   * Every record the earlier answers in `history` were generated from (F-DG6-960/970/980; conversations.ts
+   * historyFor): inherited into this answer's stored context.
+   */
+  readonly historyContext: readonly ContextRecord[];
   readonly setting: AssistantSettingRow;
   /** The provider of the enabled setting (providerFor; never null here). */
   readonly provider: ModelProvider;
@@ -85,7 +114,11 @@ export type AnswerOutcome = { readonly dataItems: number; readonly droppedSugges
       readonly content: string;
       /** At least one (§5: those the model cites, else every item given). */
       readonly citations: readonly Citation[];
-      /** Every record item given to the model, cited or not (F-DG6-920); a superset of the record citations. */
+      /**
+       * Every record the answer was generated from: each record item given to the model, cited or not (F-DG6-920),
+       * then the inherited context of the history answers given (F-DG6-960/970/980). A superset of the record
+       * citations; at most CONTEXT_RECORDS_MAX keys.
+       */
       readonly contextRecords: readonly ContextRecord[];
       readonly suggestions: readonly SuggestionDraft[];
       readonly latencyMs: number;
@@ -137,7 +170,7 @@ export async function answer(input: AnswerInput): Promise<AnswerOutcome> {
     kind: "answer",
     content: `${content}${note}`,
     citations,
-    contextRecords: contextRecordsOf(items),
+    contextRecords: mergeContextRecords(contextRecordsOf(items), input.historyContext),
     suggestions: kept,
     latencyMs: result.latencyMs,
     dataItems: items.length,
