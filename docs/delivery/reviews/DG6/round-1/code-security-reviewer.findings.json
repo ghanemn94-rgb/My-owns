@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG6-920",
+      "stage_id": "DG6",
+      "requirement": "REQ-S17-007",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "An assistant answer stays readable after the owner loses access to a record it was generated from, when the model cited only some of the records it was given: the ADR-0059 §9 read-time re-check covers only the model-chosen citations",
+      "reproduction": "Candidate sha256:b506084b2c497c82d6e4de07789d35314bf1b3e3bb83f1dd6bf420a6c4510451 (source 98feb869c). Disposable clone, disposable PostgreSQL 16 (tests/qa/support/with-pg.sh, port 32480). Probe docs/delivery/test-evidence/DG6/code-security/round-1/repro/zz-sec-r1-assistant-uncited.test.ts, copied to apps/api/test/integration/assistant/ and run with 'npx vitest run --project integration <file>' (log 30-repro-assistant-uncited.log). Setup: two transformations tA1 and tA2 of org A, each with its search document (titles 'Zephyrine synthetic program one/two'). The assistant is configured with the shipped http_endpoint provider pointing at the suite's local fake chat-completions server (test/support/fake-model.ts). A user holds TL on tA1 and TL on tA2. The fake model returns the documented envelope {answer: 'Synthetic answer: Zephyrine synthetic program one and Zephyrine synthetic program two are both behind plan.', citations: [1]}. A real model may cite a subset like this, and an instruction inside an uploaded text evidence file (REQ-S17-011) can also steer it to. Steps: (1) the user asks 'Zephyrine synthetic program'. The request sent to the model holds BOTH records (title 1: true, title 2: true), but the stored reply's record citations are only the cited one (guardrails.ts:192 citationsFor keeps the model's refs, answer.ts:105 stores them). (2) The TL grant on the UNCITED transformation is revoked; a direct GET of that transformation now answers 404. (3) GET /api/v1/assistant/conversations/{id}.",
+      "expected": "ADR-0059 §9: 'An answer that cites a record the owner can no longer read is returned with content: null, contentWithheld: true ... So a revoked grant hides earlier answers too.' ADR-0059 §5: citations are the records the answer 'was generated from'. REQ-S17-007: the assistant respects the same permissions. The answer was generated from both records, so after access to one of them is revoked it must be withheld (content null, contentWithheld true). Either every record item given to the model is kept for the read-time check (for example a stored context list beside the citations), or the answer is withheld when any given record becomes unreadable.",
+      "actual": "The reply is served with contentWithheld: false, and its content still holds the revoked transformation's title ('... Zephyrine synthetic program two are both behind plan.'). Its only record citation is the still-readable transformation, with readable: true. conversations.ts:255 toMessageView and :278 toSuggestionView decide 'withheld' only from the stored citations (conversations.ts:253 withheld), and readableRecordKeys (:312) re-checks only those. Records given to the model but not cited, which can include an evidence item's text excerpt of up to 8,000 characters (retrieval.ts recordText), are never re-checked. The shipped suites cannot see this: the test adapter always cites every item given (ADR-0059 'Test adapter': citedRefs = every ref), and the §9 test in conversations.test.ts:696-758 writes the citations directly. The effect is bounded: only the conversation owner, who could read the record when the answer was produced, keeps seeing it.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-1/repro/zz-sec-r1-assistant-uncited.test.ts",
+        "docs/delivery/test-evidence/DG6/code-security/round-1/30-repro-assistant-uncited.log",
+        "apps/api/src/modules/assistant/guardrails.ts",
+        "apps/api/src/modules/assistant/answer.ts",
+        "apps/api/src/modules/assistant/conversations.ts",
+        "docs/architecture/adr/ADR-0059-p6-optional-assistant-provider-port-retrieval-citations-guardrails.md"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG6/round-1/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-10T09:45:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in the DG6 clean re-gate round 1 (T-DG6-REV-CS-RG-R1), reproduced on candidate b506084b with the shipped http_endpoint provider and a local fake model."
+        }
+      ]
+    }
+  ]
+}
