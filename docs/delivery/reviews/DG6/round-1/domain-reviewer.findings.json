@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG6-900",
+      "stage_id": "DG6",
+      "requirement": "REQ-S15-014",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The realized-value explanation shows 'Basis: Validated' on a value that is pending Finance validation",
+      "reproduction": "Demo-initialized stack (e2e/support/with-demo-stack.sh, SYNTHETIC International Roaming dataset) on candidate b506084b (source 98feb869). Sign in as roaming.user.to and open the benefit page /transformations/<the roaming transformation>/benefits/01995000-4401-7000-8000-000000000001 (the synthetic 'Revenue uplift' benefit). Then open 'Show the explanation of the realized value': the E2 panel, apps/web/src/components/explanation/panels.tsx BenefitRealizedExplanation. Probe: docs/delivery/test-evidence/DG6/domain/round-1/probes/zz-domain-demo-probe.spec.ts, run in chromium-en and chromium-ar.",
+      "expected": "A plain-language explanation of the realized value (REQ-S15-014 clause 1) keeps pending and validated values clearly apart (Finance validation; 'forecast is never validated value'). A row under 'Pending Finance validation (not realized)' should not carry the bare word 'Validated'. Alternatively the column should say what is validated, for example 'Comparison basis: validated by Finance'.",
+      "actual": "In the 'Pending Finance validation (not realized)' table, the row '1 Aug 2026 to 31 Aug 2026 | SAR 99,000.00' shows Basis 'Validated' (ar: column 'الأساس', value 'معتمد'). The column holds the line's comparison basis: the baseline and formula version, validated or provisional (openapi listBenefitMeasurements: 'basis (validated or provisional)'), not the state of the value. The label 'Basis' does not say this, so a business reader sees 'Validated' on a value that the same panel says is not realized. Totals and states are correct: the pending SAR 99,000.00 is not added to the realized SAR 222,750.00. Only the wording is wrong; no value, total or state is.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-1/demo-probe.log",
+        "docs/delivery/test-evidence/DG6/domain/round-1/screenshots/en/dom-d1-benefit-realized-explained.png",
+        "docs/delivery/test-evidence/DG6/domain/round-1/screenshots/ar/dom-d1-benefit-realized-explained.png",
+        "docs/delivery/test-evidence/DG6/domain/round-1/probes/zz-domain-demo-probe.spec.ts"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG6/round-1/domain-reviewer.json",
+      "owner": "frontend-ux-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-10T09:00:00Z",
+          "status": "OPEN",
+          "note": "Raised by domain-reviewer in DG6 clean re-gate round 1 (T-DG6-REV-DOM-RG-R1). Low, non-mandatory: a wording defect in a plain-language explanation; no calculation is affected."
+        }
+      ]
+    }
+  ]
+}
