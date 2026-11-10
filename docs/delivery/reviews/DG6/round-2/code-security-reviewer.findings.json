@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG6-970",
+      "stage_id": "DG6",
+      "requirement": "REQ-S17-007",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "A withheld assistant answer is still sent to the model as conversation history after the revocation, and its text comes back in a new answer that is served unwithheld: the ADR-0059 §9 re-check (also as amended for F-DG6-920) does not cover the history channel",
+      "reproduction": "Candidate sha256:d62b187baa8377da4225f689799b013f0394a64b06fe844ba42fa82b2f6966a6 (source 71ff750ed17ea281c99f20a85d9f9663bb07efb8). Disposable clone, disposable PostgreSQL 16 (tests/qa/support/with-pg.sh, port 32650). Probe docs/delivery/test-evidence/DG6/code-security/round-2/repro/zz-sec-r2-assistant-history.test.ts, copied to apps/api/test/integration/assistant/ and run with 'npx vitest run --project integration <file>' (log 32-repro-assistant-history.log, exit 0: the probe passes when the defect is reproduced). Setup as context-recheck.test.ts: two transformations tA1 and tA2 of org A with search documents titled 'Zephyrine synthetic program one/two'; a user with TL on both. The shipped http_endpoint provider points at a loopback echo model: with no assistant turn in the history it answers a fixed text naming both records; otherwise it repeats its previous answer from the history (as a real model asked 'repeat that' does). Steps: (1) the user asks 'Zephyrine synthetic program'; the answer names both records. (2) The TL grant on tA2 is revoked; GET /api/v1/transformations/{tA2} answers 404, and GET /api/v1/assistant/conversations/{id} now withholds the turn-1 answer (contentWithheld true): the 0128 repair works for that row. (3) In the same conversation the user posts 'Please repeat your previous answer'.",
+      "expected": "ADR-0059 §9 (amended 2026-11-10): the re-check covers 'every record the answer was generated from', and 'a revoked grant hides earlier answers too'. REQ-S17-007 A12: 'with a user scoped to X, an assistant query about Y returns no Y content'. After the revocation the user is scoped to tA1 only, so text the server now withholds from them must neither be sent to the model again nor be served back through a new answer. For example: historyOf re-checks each earlier answer with the same readability predicate and drops (or blanks) withheld ones; or the new answer's stored context inherits the context records of the history answers it was given, so it is withheld when any of them becomes unreadable.",
+      "actual": "Turn 2's model request carries the withheld turn-1 answer, holding 'Zephyrine synthetic program two', in its history (assistant role): '[SEC-R2] turn-2 request: history (assistant role) holds the revoked title: true'. Its data block does not hold tA2. The turn-2 reply is stored with context_records [] and served with contentWithheld false and content 'As I said before: Synthetic answer: Zephyrine synthetic program one and Zephyrine synthetic program two are both behind plan.'. GET of the conversation afterwards: seq 2 withheld true, seq 4 withheld false, and the body contains the revoked title. Cause: conversations.ts:440-449 historyOf passes every earlier answer's stored content (up to 6 prompts and answers) to the model without the §9 re-check, and conversations.ts:753 builds it from the raw rows. answer.ts:140 stores as context only this turn's retrieval items (contextRecordsOf(items)), so an answer generated from history has no record of the records behind that history. The same holds before any revocation: an answer that repeats an earlier answer about tA2 stays readable after tA2 is revoked, even though the earlier answer is withheld. The suites cannot see this: context-recheck.test.ts asks one turn per conversation. The effect is bounded, as in F-DG6-920: only the conversation owner sees text they could read when it was produced, and only through the last 6 history messages. It does, however, also send the withheld text to the configured model provider after the revocation. Rated Medium and non-mandatory, consistent with F-DG6-920 (same bounded exposure). Retrieval isolation itself holds: the data block never holds tA2.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-2/repro/zz-sec-r2-assistant-history.test.ts",
+        "docs/delivery/test-evidence/DG6/code-security/round-2/32-repro-assistant-history.log",
+        "apps/api/src/modules/assistant/conversations.ts",
+        "apps/api/src/modules/assistant/answer.ts",
+        "apps/api/src/modules/assistant/prompt.ts",
+        "docs/architecture/adr/ADR-0059-p6-optional-assistant-provider-port-retrieval-citations-guardrails.md"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG6/round-2/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-10T18:55:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in the DG6 clean re-gate round 2 (T-DG6-REV-CS-RG-R2), reproduced on candidate d62b187b with the shipped http_endpoint provider and a loopback echo model. A distinct channel from F-DG6-920, whose own reproduction is fixed on this candidate."
+        }
+      ]
+    },
+    {
+      "id": "F-DG6-971",
+      "stage_id": "DG6",
+      "requirement": "REQ-S17-007",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "A suggestion stored before migration 0128 can never be taken to a draft: the NOT VALID CHECK assistant_suggestion_context_records_required is still enforced on UPDATE, contrary to the documented pre-0128 fallback",
+      "reproduction": "Candidate d62b187b (source 71ff750ed). Disposable clone and PostgreSQL 16 (port 32650). Probe docs/delivery/test-evidence/DG6/code-security/round-2/repro/zz-sec-r2-legacy-suggestion-to-draft.test.ts, copied to apps/api/test/integration/assistant/ (log 34-repro-legacy-suggestion-to-draft.log, exit 0: the probe passes when the defect is reproduced). The shipped http_endpoint provider and the suite's loopback fake model return a charter_draft suggestion on a focused conversation. Control: a suggestion stored after 0128 is taken to a draft, 200. Legacy case: one suggestion is put into the state of a row stored before 0128, by owner-only DDL on the scratch database, as context-recheck.test.ts case 5 does for a message. The DDL drops the required CHECK, pauses the table's user triggers for one UPDATE setting context_records NULL, then restores both, the CHECK again NOT VALID as 0128 leaves it; the state is checked (ctx_null true, status proposed, convalidated false). Then POST /api/v1/assistant/suggestions/{id}/to-draft with If-Match \"1\". The two earlier logs (-run1, -run2) failed in the probe's own setup UPDATE, refused by 0111's guard and the version-step trigger; they are not the reproduction.",
+      "expected": "ADR-0059 §9 amendment and the data dictionary ('P6 re-gate repair migration 0128', Effect on deploy): rows stored before 0128 keep a NULL context and fall back to their citations; the required CHECK is NOT VALID so that existing rows are not affected. A pre-0128 proposed charter or decision-brief suggestion whose citations are readable should still be takeable to a draft (200), as any other.",
+      "actual": "422 validation.constraint, errors[0].message 'assistant_suggestion_context_records_required' ('The change violates a data rule'); the row stays proposed, version 1. A direct owner UPDATE of the row fails with 23514 on the same constraint. PostgreSQL enforces a NOT VALID CHECK on every later INSERT and UPDATE of a row; only the validation of existing rows at ALTER time is skipped. takeAssistantSuggestionToDraft UPDATEs the row (suggestions.ts:208), so every pre-0128 suggestion is permanently untakeable. assistant_suggestion_context_immutable (0128) also prevents giving it a context later. Cause: 0128_p6_assistant_context_records.sql:75. assistant_message is append-only, so the same CHECK on messages has no such effect. Rated Low: assistant_suggestion (0111) and 0128 ship in the same unreleased P6 release, so no released installation holds such rows; only intermediate P6 builds do. The documented contract and the migration's design intent are nevertheless wrong. A fix could, for example, be a BEFORE INSERT trigger instead of the CHECK, or a CHECK that admits NULL when the row's created_at precedes the migration.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-2/repro/zz-sec-r2-legacy-suggestion-to-draft.test.ts",
+        "docs/delivery/test-evidence/DG6/code-security/round-2/34-repro-legacy-suggestion-to-draft.log",
+        "packages/db/migrations/0128_p6_assistant_context_records.sql",
+        "apps/api/src/modules/assistant/suggestions.ts",
+        "docs/architecture/data-dictionary.md",
+        "docs/architecture/adr/ADR-0059-p6-optional-assistant-provider-port-retrieval-citations-guardrails.md"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG6/round-2/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-10T18:55:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in the DG6 clean re-gate round 2 (T-DG6-REV-CS-RG-R2), reproduced on candidate d62b187b. Low, non-mandatory: it affects only suggestions stored before 0128, which no released installation holds."
+        }
+      ]
+    }
+  ]
+}

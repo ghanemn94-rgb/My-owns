@@ -1,0 +1,39 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG6-920",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified by its originating reviewer (code-security-reviewer, session 55761759) on candidate sha256:d62b187baa8377da4225f689799b013f0394a64b06fe844ba42fa82b2f6966a6 (source 71ff750ed; fix T-DG6-BE-RG1, commit 80314f134). I checked it at four levels.\n\n1. The fix, read line by line (git diff 98feb869c..71ff750ed).\n- 0128 adds context_records to assistant_message (answers only) and assistant_suggestion: at most 20 distinct {recordType, recordId}, the 12 search types, lower-case uuids, no text. It must cover every record citation (p6_assistant_context_covers), it is required on new rows (NOT VALID CHECKs) and a suggestion's context is immutable.\n- answer.ts:140 stores contextRecordsOf(items), every record item given to the model, cited or not. Retrieval gives at most MAX_ITEMS = 20 records (retrieval.ts:87, :157), which matches the 20 cap.\n- conversations.ts recordRefsOf is the union of the record citations and the context; NULL falls back to the citations. withheld() uses it in toMessageView and toSuggestionView. readabilityOf feeds it to readableRecordKeys for getAssistantConversation and for the postAssistantMessage response, the latter with the principal refreshed in transaction 2. suggestions.ts check() applies it at request start and again under the row lock at commit (404).\n- citationViews still calls readable() for record citations only, so playbook citations are unaffected. Suggestion citations are the answer's citations (guardrails.ts acceptSuggestion), so covers always holds and the insert cannot fail. The column is never serialized (the views are built field by field), and the inventory classifies both columns not-served.\n\n2. The round-1 reproduction, re-run unedited on this candidate (30-f920-round1-repro-on-candidate.log). That probe asserts the BUG; it now FAILS as intended ('after revocation: contentWithheld = true content = null'; expected true to be false). The data block still holds both records, and the direct read of the uncited one answers 404.\n\n3. The shipped suites (31-f920-context-recheck-suites.log): context-recheck.test.ts (cases 1-5), conversations.test.ts and the packages/db catalogue test (0128 rules) pass 67/67, exit 0. The full integration suite in both locales is checks SEC-R2-12/13 of my record.\n\n4. A mutant (33-f920-mutant-context-ignored.log): recordRefsOf ignores the stored context ('if (false && Array.isArray(context))'), which reverts the read path and take-to-draft to citations only. Case 1 (uncited revoked) and case 4 (uncited sensitive benefit, suggestions and to-draft) FAIL, 2 of 5, exit 1; cases 2, 3 and 5 pass as expected. The file was restored with an equal sha256.\n\nThe documented pre-0128 fallback (citations only) is acceptable for READS: what the model was given was never stored, and no released installation holds such rows. Two related defects are raised separately, because they are not this finding's reproduction:\n- F-DG6-970 (Medium): the conversation HISTORY carries a withheld answer back to the model and into a new, unwithheld answer.\n- F-DG6-971 (Low): a pre-0128 suggestion cannot be taken to a draft, because the NOT VALID CHECK is enforced on UPDATE.\nF-DG6-920 itself (uncited record items escape the re-check) is fixed: CLOSED_VERIFIED.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-2/30-f920-round1-repro-on-candidate.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-2/31-f920-context-recheck-suites.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-2/33-f920-mutant-context-ignored.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-1/repro/zz-sec-r1-assistant-uncited.test.ts",
+        "apps/api/src/modules/assistant/conversations.ts",
+        "apps/api/src/modules/assistant/answer.ts",
+        "apps/api/src/modules/assistant/suggestions.ts",
+        "packages/db/migrations/0128_p6_assistant_context_records.sql",
+        "apps/api/test/integration/assistant/context-recheck.test.ts"
+      ]
+    },
+    {
+      "finding_id": "F-DG6-900",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified by a qualified non-author reviewer (code-security-reviewer, session 55761759; I authored no implementation) on candidate sha256:d62b187baa8377da4225f689799b013f0394a64b06fe844ba42fa82b2f6966a6 (source 71ff750ed; fix T-DG6-FE-RG1, commit ccd078e91). I checked it at four levels.\n\n1. The fix: the en/ar explanations.json basis keys now read 'Comparison basis' / 'Baseline and formula version validated by Finance' / 'Provisional: baseline or formula version not validated by Finance'. In ar they read 'أساس المقارنة' / 'خط الأساس وإصدار المعادلة تحققت منهما المالية' / 'مؤقت: خط الأساس أو إصدار المعادلة لم تتحقق منه المالية'. The keys are used only by the E2 panel. No value, total or state logic changed.\n\n2. The round-1 reproduction: the domain reviewer's probe docs/delivery/test-evidence/DG6/domain/round-1/probes/zz-domain-demo-probe.spec.ts, re-run unedited on a demo-initialized stack (e2e/support/with-demo-stack.sh, synthetic International Roaming data). See 51-e2e-f900-domain-probe-demo-stack.log: 2 passed (chromium-en, chromium-ar), exit 0. On the same benefit 01995000-4401-7000-8000-000000000001 the pending row reads '1 Aug 2026 to 31 Aug 2026 SAR 99,000.00 Baseline and formula version validated by Finance' under the column 'Comparison basis', with no bare 'Validated'. The realized SAR 222,750.00 and pending SAR 99,000.00 are still kept apart, and Arabic is likewise. Screenshots are copied into my evidence.\n\n3. The shipped tests: explanation.test.tsx passes 20/20 (35-f900-explanation-test.log). apps/web/e2e/p4-benefits.spec.ts step 5, which now opens E2 on the pending measurement and asserts the column and value words, passes in en and ar within 20/20 (50-e2e-p4-benefits-p6-assistant.log).\n\n4. A mutant (36-f900-mutant-old-labels.log): both catalogues are restored to 98feb869c ('Basis' / 'Validated'). The two F-DG6-900 cases (en, ar) FAIL, 2 of 20, exit 1. The files were restored, and the sha256 values are equal.\n\nThe withheld notices of the assistant (also FE-RG1) now say 'was based on a record', which is true after the 0128 repair, in en and ar. F-DG6-900 is closed and verified (CLOSED_VERIFIED).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-2/51-e2e-f900-domain-probe-demo-stack.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-2/50-e2e-p4-benefits-p6-assistant.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-2/35-f900-explanation-test.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-2/36-f900-mutant-old-labels.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-2/screenshots/en-dom-d1-benefit-realized-explained.png",
+        "docs/delivery/test-evidence/DG6/code-security/round-2/screenshots/ar-dom-d1-benefit-realized-explained.png",
+        "docs/delivery/test-evidence/DG6/code-security/round-2/screenshots/en-p4ben-09c-explanation-panel.png",
+        "docs/delivery/test-evidence/DG6/domain/round-1/probes/zz-domain-demo-probe.spec.ts",
+        "apps/web/src/i18n/en/explanations.json",
+        "apps/web/src/i18n/ar/explanations.json"
+      ]
+    }
+  ]
+}
