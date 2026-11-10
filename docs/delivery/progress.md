@@ -96,3 +96,11 @@ D-237 is copied into `decisions.md` only after the gate is decided. Product gate
 ## D-238 (2026-11-10): DG6 clean re-gate
 
 The audit T-DG6-AUDIT-R13 BLOCKED (B1–B5). The user chose a clean re-gate. D-237 and D-238 are now recorded in `decisions.md` on branch `claude/mobily-transformation-platform-dg6-regate`, before its first freeze. **Next:** verify the carried tree (V16), then freeze round 1 and run three full reviews.
+
+## D-238 follow-up (2026-11-10): round 1 of the clean re-gate frozen
+
+- **Candidate:** `sha256:b506084b2c497c82d6e4de07789d35314bf1b3e3bb83f1dd6bf420a6c4510451` (2769 files, source `98feb869cd85671b3e95679e13bd255c421cb80d`).
+- **Write-once:** the check reports 0 errors for DG6 and DG5. `validate --historical --stage DG5` and `--register DG6` both PASS.
+- **No new verification run:** the product tree outside `docs/delivery` equals `4288d7c0b` byte for byte (`git diff` is empty). V15 (`test-evidence/DG6/orchestrator-final-4288d7c/`) verified that tree on all 15 steps, so it is not re-run.
+- **The provenance tag** `dg6-dev-history-3dd8316ff` could not be pushed (HTTP 403). The old branch `claude/mobily-transformation-platform-dg5-regate2` at `3dd8316ff` is the reference.
+- **Round 1:** full reviews by domain, code-security and qa (tasks `T-DG6-REV-*-RG-R1`). New finding ids are 900–959.
