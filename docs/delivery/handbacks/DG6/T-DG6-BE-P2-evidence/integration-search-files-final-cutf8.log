@@ -1,0 +1,30 @@
+port-policy: PostgreSQL listening on port 24890 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-p2
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvu3bsgt_75480817 (server_encoding UTF8); applied 107 migrations to a fresh database
+stdout | apps/api/test/integration/search/search-parity.test.ts > search parity (ADR-0057 §3): a hit iff the record's own view returns it > for every (reader, record) pair of the 12 types
+[search-parity] readers=61 records=36 pairs=2196 admitted=353 sensitive-pairs=366 mismatches=0 per-type={"transformation":{"hits":34,"misses":149},"initiative":{"hits":34,"misses":149},"deliverable":{"hits":34,"misses":149},"kpi_definition":{"hits":34,"misses":149},"benefit":{"hits":16,"misses":167},"evidence":{"hits":15,"misses":168},"business_case":{"hits":16,"misses":167},"raid_entry":{"hits":34,"misses":149},"decision":{"hits":34,"misses":149},"dependency":{"hits":34,"misses":149},"lesson":{"hits":34,"misses":149},"change_request":{"hits":34,"misses":149}}
+
+ ✓ |integration| apps/api/test/integration/search/search-parity.test.ts (2 tests) 32605ms
+   ✓ search parity (ADR-0057 §3): a hit iff the record's own view returns it > for every (reader, record) pair of the 12 types  18555ms
+ ✓ |integration| apps/api/test/integration/search/search.test.ts (19 tests) 13198ms
+   ✓ permission at query time (ADR-0057 §3; ADR-0051 §2) > a sensitive benefit: hidden from a member without a grant, shown after a grant, hidden again on the request after revocation  419ms
+   ✓ the query parameter (ADR-0057 §3, §10; ADR-0052 §2) > blank, missing, over 200 characters, U+0000, an unknown type or parameter -> 400 (before authorization)  317ms
+   ✓ freshness: indexedThrough, stale, 503 (ADR-0057 §2) > a type reindexing or failed makes the page stale; every requested type failed -> 503 search.index_unavailable  440ms
+   ✓ getSearchIndexStatus (ADR-0057 §2; operations.read) > the 12 states in the ADR order with their counters; AUD reads; 403 without operations.read; 401  429ms
+   ✓ the rate-limit class search (ADR-0052 §4) > over the class budget the next search is 429 rate_limited with Retry-After; other operations still pass  486ms
+ ✓ |integration| apps/api/test/integration/search/index-feed.test.ts (17 tests) 16121ms
+   ✓ the feed indexes the 12 record types with the ADR-0057 §1 columns only > one feed run per batch window: every row of each of the 12 types has exactly its document  590ms
+   ✓ the reindex > the reindex job runs as its own identity through defineJob  447ms
+
+ Test Files  3 passed (3)
+      Tests  38 passed (38)
+   Start at  22:03:56
+   Duration  109.93s (transform 12.93s, setup 0ms, collect 38.30s, tests 61.92s, environment 0ms, prepare 168ms)
+
+SEARCH-FILES C.UTF-8 exit=0

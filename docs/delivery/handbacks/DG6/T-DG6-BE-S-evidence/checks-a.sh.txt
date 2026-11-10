@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# T-DG6-BE-S chain A: the integration suite on a disposable cluster (ports 25910-25929). Node 24.21.0.
+cd /home/user/wt/dg6-be-s
+export PATH=/opt/nvm/versions/node/v24.21.0/bin:$PATH
+E=docs/delivery/handbacks/DG6/T-DG6-BE-S-evidence
+t0=$(date +%s); echo "== test-integration start $(date -u +%FT%TZ) node $(node -v)" >"$E/test-integration.log"
+QA_PG_PORT=25910 MTH_PORT_POOL=25911-25929 tests/qa/support/with-pg.sh pnpm test:integration >>"$E/test-integration.log" 2>&1
+rc=$?; echo "== test-integration exit=$rc wall_s=$(( $(date +%s)-t0 )) end $(date -u +%FT%TZ)" | tee -a "$E/test-integration.log" >>"$E/checks-summary.txt"

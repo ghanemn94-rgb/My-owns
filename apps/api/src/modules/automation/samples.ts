@@ -168,6 +168,23 @@ const SAMPLES: Readonly<Record<string, Readonly<Record<string, unknown>>>> = {
     transformationId: T,
     slipDays: 5,
   },
+  // T-DG6-BE-L2 (ADR-0055 §2, ADR-0053 §3): `connector.run_failed` v1 is registered (the trigger is BE-K2's catalogue row).
+  "connector.run_failed": {
+    connectorId: id(70),
+    connectorCode: "synthetic-kpi-source",
+    runId: id(71),
+    serviceIdentityId: id(72),
+    failureClass: "connector_unreachable",
+    errorCode: "connector.source_unavailable",
+    errorMessage: "The source system did not respond.",
+  },
+  // T-DG6-BE-K2 (ADR-0053 §3; 0117): the data.stale v1 payload is registered, so it serves a sample.
+  "data.stale": {
+    kpiId: id(73),
+    transformationId: T,
+    dataAsOf: "2026-01-04",
+    staleAfterDays: 45,
+  },
 };
 
 /**

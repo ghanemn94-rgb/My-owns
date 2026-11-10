@@ -1,0 +1,78 @@
+
+ RUN  v3.2.7 /var/tmp/mth-run.G5W10u/claude-0/headclone/apps/web
+
+ ❯ |unit-web| src/pages/admin/security/p6-admin-screens.test.tsx (33 tests | 1 failed) 9816ms
+   ✓ Administration > Audit (REQ-S16-032) > en: lists events read-only; a redacted event shows Redacted, never its reason  772ms
+   ✓ Administration > Audit (REQ-S16-032) > ar: lists events read-only; a redacted event shows Redacted, never its reason 206ms
+   ✓ Administration > Audit (REQ-S16-032) > an invalid filter shows one alert and sends nothing 137ms
+   ✓ Administration > Audit (REQ-S16-032) > the event detail shows the field changes, and Redacted instead of them when redacted  356ms
+   ✓ Administration > Security > Upload policy (REQ-S13-011) > en: the auditor reads the default policy with no form  361ms
+   ✓ Administration > Security > Upload policy (REQ-S13-011) > ar: the auditor reads the default policy with no form 109ms
+   ✓ Administration > Security > Upload policy (REQ-S13-011) > a technical admin narrows the policy: If-Match 0 creates it, with the organization query and a reason 217ms
+   ✓ Administration > Security > Upload policy (REQ-S13-011) > a 409 shows the translated conflict and reloads the policy 142ms
+   ✓ Administration > Security (rate limits) > shows each class with its per-minute budget, read-only  428ms
+   ✓ The deep-link landing (REQ-S12-024) > en: a 403 shows only the refusal text, nothing of the target  337ms
+   ✓ The deep-link landing (REQ-S12-024) > ar: a 403 shows only the refusal text, nothing of the target 38ms
+   ✓ The deep-link landing (REQ-S12-024) > a malformed token is never sent 25ms
+   ✓ The deep-link landing (REQ-S12-024) > an authorized link navigates inside the app; an unsafe path is never followed 58ms
+   ✓ Administration > Operations (REQ-S12-019) > en: an unknown heartbeat is Unknown, never Running  368ms
+   ✓ Administration > Operations (REQ-S12-019) > ar: an unknown heartbeat is Unknown, never Running 83ms
+   ✓ Administration > Operations (REQ-S12-019) > sends the two default statuses as repeated query parameters 35ms
+   ✓ Administration > Operations (REQ-S12-019) > a linked KPI without a value is Unknown (never 0) and keeps its label; acknowledge sends If-Match  454ms
+   ✓ Administration > Operations (REQ-S12-019) > a resolved exception is final: no action is offered 66ms
+   × Administration > Identity, Storage, Notifications (REQ-S16-007, REQ-S16-006, REQ-S12-023) > identity shows whether a client secret is configured, never a secret value 354ms
+     → expected <input id="_r_30_" …(9)></input> to be null
+   ✓ Administration > Identity, Storage, Notifications (REQ-S16-007, REQ-S16-006, REQ-S12-023) > storage states no public URL, takes secret references only, and tests before saving  500ms
+   ✓ Administration > Identity, Storage, Notifications (REQ-S16-007, REQ-S16-006, REQ-S12-023) > en: the inbox is always on; enterprise messaging cannot be enabled  655ms
+   ✓ Administration > Identity, Storage, Notifications (REQ-S16-007, REQ-S16-006, REQ-S12-023) > ar: the inbox is always on; enterprise messaging cannot be enabled 71ms
+   ✓ Administration > Identity, Storage, Notifications (REQ-S16-007, REQ-S16-006, REQ-S12-023) > the auditor (operations.read) reads storage read-only: no form, no test, no save 56ms
+   ✓ The sensitivity panel and the restricted-records label (REQ-S10-002) > a manager marks the record with a reason and If-Match 0 53ms
+   ✓ The sensitivity panel and the restricted-records label (REQ-S10-002) > en: a reader without the grant right sees the status only 11ms
+   ✓ The sensitivity panel and the restricted-records label (REQ-S10-002) > ar: a reader without the grant right sees the status only 9ms
+   ✓ The sensitivity panel and the restricted-records label (REQ-S10-002) > a record the caller cannot read (404) renders nothing 58ms
+   ✓ The sensitivity panel and the restricted-records label (REQ-S10-002) > en: the label shows only for includesRestrictedRecords true 11ms
+   ✓ The sensitivity panel and the restricted-records label (REQ-S10-002) > ar: the label shows only for includesRestrictedRecords true 9ms
+   ✓ The safe evidence preview (REQ-S13-011) > a PNG is an <img> of the preview route; never an iframe, object or embed 28ms
+   ✓ The safe evidence preview (REQ-S13-011) > drawing.svg is download-only (no inline content) 42ms
+   ✓ The safe evidence preview (REQ-S13-011) > report.pdf is download-only (no inline content) 30ms
+   ✓ The safe evidence preview (REQ-S13-011) > tool.exe.png.svg is download-only (no inline content) 35ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-web| src/pages/admin/security/p6-admin-screens.test.tsx > Administration > Identity, Storage, Notifications (REQ-S16-007, REQ-S16-006, REQ-S12-023) > identity shows whether a client secret is configured, never a secret value
+AssertionError: expected <input id="_r_30_" …(9)></input> to be null
+
+[32m- Expected:[39m 
+null
+
+[31m+ Received:[39m 
+<input
+  aria-invalid="false"
+  class="global-search__input"
+  data-global-search="true"
+  enterkeyhint="search"
+  id="_r_30_"
+  inputmode="search"
+  maxlength="200"
+  placeholder="Search records"
+  type="text"
+  value=""
+/>
+
+ ❯ src/pages/admin/security/p6-admin-screens.test.tsx:461:55
+    459|     expect(await screen.findByText("Configured (never shown)")).toBeTr…
+    460|     expect(screen.getByText("https://idp.example.invalid/realms/mth-te…
+    461|     expect(document.querySelector("input, textarea")).toBeNull();
+       |                                                       ^
+    462|   });
+    463| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 32 passed (33)
+   Start at  20:00:09
+   Duration  14.06s (transform 366.24s, setup 224ms, collect 3.03s, tests 9.82s, environment 539ms, prepare 136ms)
+
+exit=1

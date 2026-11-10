@@ -65,11 +65,89 @@ const OrganizationsPage = lazyPage(() =>
 );
 const UserDetailPage = lazyPage(() => import("../pages/admin/UsersPage.tsx").then((m) => m.UserDetailPage));
 const UsersPage = lazyPage(() => import("../pages/admin/UsersPage.tsx").then((m) => m.UsersPage));
+// T-DG6-FE-D (ADR-0057 §3): the global search results page.
+const SearchPage = lazyPage(() => import("../pages/search/SearchPage.tsx").then((m) => m.SearchPage));
+// T-DG6-FE-C (ADR-0055, ADR-0056; p6-work-split §B/A.9): Administration > Integrations (connectors, runs, mappings,
+// webhook endpoints, outbound writes) and Strategy and KPIs > Imports (upload, staged rows, commit, cancel, templates).
+const ConnectorsPage = lazyPage(() => import("../pages/integrations/ConnectorsPage.tsx").then((m) => m.ConnectorsPage));
+const ConnectorPage = lazyPage(() => import("../pages/integrations/ConnectorsPage.tsx").then((m) => m.ConnectorPage));
+const IntegrationRunPage = lazyPage(() =>
+  import("../pages/integrations/ConnectorsPage.tsx").then((m) => m.IntegrationRunPage),
+);
+const ConnectorCreatePage = lazyPage(() =>
+  import("../pages/integrations/ConnectorFormPage.tsx").then((m) => m.ConnectorCreatePage),
+);
+const ConnectorEditPage = lazyPage(() =>
+  import("../pages/integrations/ConnectorFormPage.tsx").then((m) => m.ConnectorEditPage),
+);
+const ConnectorMappingsPage = lazyPage(() =>
+  import("../pages/integrations/MappingsPage.tsx").then((m) => m.ConnectorMappingsPage),
+);
+const WebhooksPage = lazyPage(() => import("../pages/integrations/WebhooksPage.tsx").then((m) => m.WebhooksPage));
+const WebhookPage = lazyPage(() => import("../pages/integrations/WebhooksPage.tsx").then((m) => m.WebhookPage));
+const OutboundWritesEntryPage = lazyPage(() =>
+  import("../pages/integrations/OutboundWritesPage.tsx").then((m) => m.OutboundWritesEntryPage),
+);
+const OutboundWritesPage = lazyPage(() =>
+  import("../pages/integrations/OutboundWritesPage.tsx").then((m) => m.OutboundWritesPage),
+);
+const OutboundWritePage = lazyPage(() =>
+  import("../pages/integrations/OutboundWritesPage.tsx").then((m) => m.OutboundWritePage),
+);
+const ImportsEntryPage = lazyPage(() => import("../pages/imports/ImportsPage.tsx").then((m) => m.ImportsEntryPage));
+const ImportsPage = lazyPage(() => import("../pages/imports/ImportsPage.tsx").then((m) => m.ImportsPage));
+const ImportPage = lazyPage(() => import("../pages/imports/ImportPage.tsx").then((m) => m.ImportPage));
+// T-DG6-FE-E (ADR-0059 §3): Administration > AI assistant.
+const AssistantSettingsPage = lazyPage(() =>
+  import("../pages/admin/assistant/AssistantSettingsPage.tsx").then((m) => m.AssistantSettingsPage),
+);
 const AboutPage = lazyPage(() => import("../pages/AreaPages.tsx").then((m) => m.AboutPage));
 const AreaEntryPage = lazyPage(() => import("../pages/AreaPages.tsx").then((m) => m.AreaEntryPage));
 const AreaLandingPage = lazyPage(() => import("../pages/AreaPages.tsx").then((m) => m.AreaLandingPage));
 const NotFoundPage = lazyPage(() => import("../pages/AreaPages.tsx").then((m) => m.NotFoundPage));
 const P4BeingBuiltPage = lazyPage(() => import("../pages/AreaPages.tsx").then((m) => m.P4BeingBuiltPage));
+const P6NotAvailablePage = lazyPage(() =>
+  import("../components/P6NotAvailablePage.tsx").then((m) => m.P6NotAvailablePage),
+);
+// P6 slices E, F, J and C screens (T-DG6-FE-B; p6-work-split §E/F.12, §J/C.13).
+const AuditEventsPage = lazyPage(() => import("../pages/admin/audit/AuditPages.tsx").then((m) => m.AuditEventsPage));
+const AuditEventPage = lazyPage(() => import("../pages/admin/audit/AuditPages.tsx").then((m) => m.AuditEventPage));
+const SecurityPage = lazyPage(() => import("../pages/admin/security/SecurityPage.tsx").then((m) => m.SecurityPage));
+const UploadPolicyPage = lazyPage(() =>
+  import("../pages/admin/upload-policy/UploadPolicyPage.tsx").then((m) => m.UploadPolicyPage),
+);
+const SensitiveGrantsPage = lazyPage(() =>
+  import("../pages/admin/sensitive-grants/SensitiveGrantsPages.tsx").then((m) => m.SensitiveGrantsPage),
+);
+const SensitiveGrantPage = lazyPage(() =>
+  import("../pages/admin/sensitive-grants/SensitiveGrantsPages.tsx").then((m) => m.SensitiveGrantPage),
+);
+const DeepLinkPage = lazyPage(() => import("../pages/deep-link/DeepLinkPage.tsx").then((m) => m.DeepLinkPage));
+const OperationsPage = lazyPage(() =>
+  import("../pages/admin/operations/OperationsPages.tsx").then((m) => m.OperationsPage),
+);
+const OperationalExceptionPage = lazyPage(() =>
+  import("../pages/admin/operations/OperationsPages.tsx").then((m) => m.OperationalExceptionPage),
+);
+const ServiceIdentitiesPage = lazyPage(() =>
+  import("../pages/admin/service-identities/ServiceIdentitiesPages.tsx").then((m) => m.ServiceIdentitiesPage),
+);
+const ServiceIdentityPage = lazyPage(() =>
+  import("../pages/admin/service-identities/ServiceIdentitiesPages.tsx").then((m) => m.ServiceIdentityPage),
+);
+const IdentityPage = lazyPage(() => import("../pages/admin/identity/IdentityPage.tsx").then((m) => m.IdentityPage));
+const StoragePage = lazyPage(() => import("../pages/admin/storage/StoragePage.tsx").then((m) => m.StoragePage));
+const NotificationChannelsPage = lazyPage(() =>
+  import("../pages/admin/notification-channels/NotificationChannelsPages.tsx").then((m) => m.NotificationChannelsPage),
+);
+const NotificationChannelPage = lazyPage(() =>
+  import("../pages/admin/notification-channels/NotificationChannelsPages.tsx").then((m) => m.NotificationChannelPage),
+);
+const NotificationDeliveriesPage = lazyPage(() =>
+  import("../pages/admin/notification-channels/NotificationChannelsPages.tsx").then(
+    (m) => m.NotificationDeliveriesPage,
+  ),
+);
 const ApprovalDetailPage = lazyPage(() =>
   import("../pages/approvals/ApprovalsPage.tsx").then((m) => m.ApprovalDetailPage),
 );
@@ -334,6 +412,10 @@ const ApprovalRoutePage = lazyPage(() =>
 const GateConditionsPage = lazyPage(() =>
   import("../pages/approval-routes/GateConditionsPage.tsx").then((m) => m.GateConditionsPage),
 );
+// T-DG6-FE-D2 (ADR-0057 §6): "Your drafts", the caller's open drafts across transformations.
+const MyDraftsPage = lazyPage(() =>
+  import("../components/draft-recovery/MyDraftsPage.tsx").then((m) => m.MyDraftsPage),
+);
 const NotificationPreferencesPage = lazyPage(() =>
   import("../pages/notification-preferences/NotificationPreferencesPage.tsx").then(
     (m) => m.NotificationPreferencesPage,
@@ -455,9 +537,27 @@ export const P4_PLANNED_ROUTES: readonly { path: string; feature: string; owner:
  */
 export const P5_PLANNED_ROUTES: readonly { path: string; feature: string; owner: string }[] = [];
 
+/**
+ * The P6 screens of slices E, F, J and C (p6-plan §5.1 row FE-B; p6-work-split §E/F.12, §J/C.13), registered up front by
+ * T-DG6-FE-A. Each shows the "not available yet" placeholder (components/P6NotAvailablePage.tsx, `nav.p6.<feature>.*`)
+ * until FE-B replaces the element through an orchestrator merge and removes the entry here (F-DG4-160). The detail
+ * paths are registered too, so a link written by the backend (an operational-exception alert, ADR-0053 §6; a forwarded
+ * deep link, ADR-0051 §3) never leads to "page not found". `/l/:token` is the deep-link landing: it needs a session
+ * (RequireSession returns to it after sign-in) and re-authorizes on the server; the token is never a credential.
+ * The later P6 slices (A, B, D, G, H, I, K) append their routes here when their contracts exist.
+ * T-DG6-FE-B delivered every slice E, F, J and C screen (registered in `routes` below), so this seam is empty again and
+ * stays as a tested seam (like P4_PLANNED_ROUTES and P5_PLANNED_ROUTES).
+ */
+export const P6_PLANNED_ROUTES: readonly { path: string; feature: string; owner: string }[] = [];
+
 const p4PlannedRoutes: RouteObject[] = P4_PLANNED_ROUTES.map((r) => ({
   path: r.path,
   element: <P4BeingBuiltPage feature={r.feature} />,
+}));
+
+const p6PlannedRoutes: RouteObject[] = P6_PLANNED_ROUTES.map((r) => ({
+  path: r.path,
+  element: <P6NotAvailablePage feature={r.feature} />,
 }));
 
 export const routes: RouteObject[] = [
@@ -476,6 +576,7 @@ export const routes: RouteObject[] = [
       { path: "my-work/approvals", element: <ApprovalsPage /> },
       { path: "my-work/approvals/:approvalId", element: <ApprovalDetailPage /> },
       { path: "my-work/delegations", element: <DelegationsPage /> },
+      { path: "my-work/drafts", element: <MyDraftsPage /> }, // T-DG6-FE-D2
       { path: "admin/calendar", element: <CalendarPage /> },
       { path: "admin/jobs", element: <JobsPage /> },
       { path: "governance/groups", element: <GroupsPage /> },
@@ -601,6 +702,23 @@ export const routes: RouteObject[] = [
       { path: "admin/users", element: <UsersPage /> },
       { path: "admin/users/:id", element: <UserDetailPage /> },
       { path: "admin/assignments", element: <AssignmentsPage /> },
+      { path: "admin/assistant", element: <AssistantSettingsPage /> },
+      { path: "search", element: <SearchPage /> },
+      // T-DG6-FE-C: Administration > Integrations and Strategy and KPIs > Imports.
+      { path: "admin/integrations", element: <ConnectorsPage /> },
+      { path: "admin/integrations/connectors/new", element: <ConnectorCreatePage /> },
+      { path: "admin/integrations/connectors/:connectorId", element: <ConnectorPage /> },
+      { path: "admin/integrations/connectors/:connectorId/edit", element: <ConnectorEditPage /> },
+      { path: "admin/integrations/connectors/:connectorId/mappings", element: <ConnectorMappingsPage /> },
+      { path: "admin/integrations/connectors/:connectorId/runs/:runId", element: <IntegrationRunPage /> },
+      { path: "admin/integrations/webhooks", element: <WebhooksPage /> },
+      { path: "admin/integrations/webhooks/:webhookId", element: <WebhookPage /> },
+      { path: "admin/integrations/outbound-writes", element: <OutboundWritesEntryPage /> },
+      { path: "transformations/:id/outbound-writes", element: <OutboundWritesPage /> },
+      { path: "transformations/:id/outbound-writes/:writeId", element: <OutboundWritePage /> },
+      { path: "strategy-kpis/imports", element: <ImportsEntryPage /> },
+      { path: "transformations/:id/imports", element: <ImportsPage /> },
+      { path: "transformations/:id/imports/:importId", element: <ImportPage /> },
       { path: "about", element: <AboutPage /> },
       // P5 slice A (T-DG5-FE-B; p5-plan §5.1; ADR-0039, ADR-0040): the Playbook Studio (versions, the draft editor,
       // checks, review, publish, rollback, T06 scoring defaults, review policies, revision proposals), the source
@@ -681,7 +799,26 @@ export const routes: RouteObject[] = [
       { path: "admin/branding", element: <BrandingPage /> },
       { path: "admin/demo", element: <EnvironmentPage /> },
       { path: "walkthrough", element: <WalkthroughPage /> },
+      // P6 slices E, F, J and C (T-DG6-FE-B; p6-work-split §E/F.12, §J/C.13; ADR-0051 to ADR-0054). `/l/:token` is the
+      // deep-link landing behind RequireSession: the server re-authorizes every resolution (the token is no credential).
+      { path: "admin/audit", element: <AuditEventsPage /> },
+      { path: "admin/audit/:auditEventId", element: <AuditEventPage /> },
+      { path: "admin/security", element: <SecurityPage /> },
+      { path: "admin/upload-policy", element: <UploadPolicyPage /> },
+      { path: "admin/sensitive-grants", element: <SensitiveGrantsPage /> },
+      { path: "admin/sensitive-grants/:grantId", element: <SensitiveGrantPage /> },
+      { path: "l/:token", element: <DeepLinkPage /> },
+      { path: "admin/operations", element: <OperationsPage /> },
+      { path: "admin/operations/exceptions/:exceptionId", element: <OperationalExceptionPage /> },
+      { path: "admin/service-identities", element: <ServiceIdentitiesPage /> },
+      { path: "admin/service-identities/:serviceIdentityId", element: <ServiceIdentityPage /> },
+      { path: "admin/identity", element: <IdentityPage /> },
+      { path: "admin/storage", element: <StoragePage /> },
+      { path: "admin/notification-channels", element: <NotificationChannelsPage /> },
+      { path: "admin/notification-channels/:channelKind", element: <NotificationChannelPage /> },
+      { path: "admin/notification-deliveries", element: <NotificationDeliveriesPage /> },
       ...p4PlannedRoutes,
+      ...p6PlannedRoutes,
       ...landingRoutes,
       ...subEntryRoutes,
       { path: "*", element: <NotFoundPage /> },

@@ -1,0 +1,83 @@
+port-policy: PostgreSQL listening on port 24920 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-k2
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvu1xp4d_e3e3adae (server_encoding UTF8); applied 108 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/forms/form-records.test.ts (18 tests) 19290ms
+   ✓ draft saving (REQ-S05-001) > T01: a saved draft reopens with its payload, and with baseChanged after a concurrent edit  693ms
+   ✓ draft saving (REQ-S05-001) > T14: a saved draft reopens with its payload, and with baseChanged after a concurrent edit  355ms
+   ✓ export (REQ-S05-001) > T01: JSON and CSV rows in en and ar; decimals as strings; Unknown and Not computable marked, never 0  450ms
+   ✓ export (REQ-S05-001) > at most 5000 rows: 5000 export, 5001 is 422 form_export.too_large  10307ms
+stdout | apps/api/test/integration/request-io.test.ts > F-DG2-411: a stalled upload holds no pooled connection and no row lock > reviewer's R8: N stalled uploads (N = pool size) leave /me and /readyz answering promptly; nothing is stored
+BE17 R8: {"poolSize":5,"stalledUploads":5,"sessions":{"sessions":5,"visible":5,"idleInTx":0,"nonIdle":0},"me":{"status":200,"ms":8},"ready":{"status":200,"ms":24},"patch":{"status":200,"ms":70},"leftovers":[],"rows":0,"closeMs":1,"errors":[]}
+
+stdout | apps/api/test/integration/request-io.test.ts > F-DG2-411: a stalled upload holds no pooled connection and no row lock > an upload whose If-Match goes stale during the body: 409 version_conflict, no content row, no object
+BE17 stale-if-match: {"patchDuringBody":{"status":200,"ms":87},"patch":{"status":200,"ms":87},"upload":{"status":409,"type":"urn:mth:problem:version-conflict","title":"Version conflict","detail":"The record was changed by someone else. Review the current version and re-apply your change.","code":"version_conflict","requestId":"01a1898e-9f3b-733e-b6a5-f5890408144b","currentVersion":2},"rows":0,"files":[],"version":2,"closeMs":0}
+
+stdout | apps/api/test/integration/request-io.test.ts > F-DG2-411: a stalled upload holds no pooled connection and no row lock > valid uploads stay byte-exact with their sha256 (stored, recorded and downloaded), no temporary object left
+BE17 valid-uploads: {"out":[{"size":1,"status":200,"rows":1,"sha":true,"files":["01a1898e-a3f8-741c-9693-31cc25d0bae4"]},{"size":65536,"status":200,"rows":1,"sha":true,"files":["01a1898e-a475-7186-9b8a-384f014600c1"]},{"size":3145728,"status":200,"rows":1,"sha":true,"files":["01a1898e-a4f2-715b-9f11-bccbfe0dfb20"]}],"closeMs":5}
+
+stdout | apps/api/test/integration/request-io.test.ts > F-DG2-411: a stalled upload holds no pooled connection and no row lock > sweep: downloads to slow readers (N+1 paused readers, pool size N) hold no pooled connection
+BE17 slow-readers: {"poolSize":2,"readers":3,"bytesReceivedWhilePaused":[65536,65536,65536],"fileBytes":25165824,"me":{"status":200,"ms":15},"ready":{"status":200,"ms":27},"sessions":{"sessions":2,"visible":2,"idleInTx":0,"nonIdle":0},"closeMs":8}
+
+stdout | apps/api/test/integration/request-io.test.ts > F-DG2-411: a stalled upload holds no pooled connection and no row lock > defence in depth: an exhausted pool answers 503 after the bounded checkout wait (and /readyz 503), never a hang
+BE17 pool-exhausted: {"me":{"status":503,"ms":441},"meCode":"unavailable","ready":{"status":503,"ms":409},"meAfter":{"status":200,"ms":42},"closeMs":4}
+
+stdout | apps/api/test/integration/request-io.test.ts > F-DG2-412: an aborted or stalled body is never a 500 and never an error-level log > R6a stalled JSON body, requestTimeout 408: answered (if at all) below 500, logged below error level, nothing stored
+BE17 R6a: {"status":408,"classified":0,"completed":[],"errors":[],"rows":0,"files":[],"closeMs":1}
+
+stdout | apps/api/test/integration/request-io.test.ts > F-DG2-412: an aborted or stalled body is never a 500 and never an error-level log > R6d JSON body aborted by the client: answered (if at all) below 500, logged below error level, nothing stored
+BE17 R6d: {"status":null,"classified":32,"completed":[],"errors":[],"rows":0,"files":[],"closeMs":0}
+
+stdout | apps/api/test/integration/request-io.test.ts > F-DG2-412: an aborted or stalled body is never a 500 and never an error-level log > R6c stalled upload body, requestTimeout 408: answered (if at all) below 500, logged below error level, nothing stored
+BE17 R6c: {"status":408,"classified":0,"completed":[],"errors":[],"rows":0,"files":[],"closeMs":0}
+
+stdout | apps/api/test/integration/request-io.test.ts > F-DG2-412: an aborted or stalled body is never a 500 and never an error-level log > R6e upload body aborted by the client: answered (if at all) below 500, logged below error level, nothing stored
+BE17 R6e: {"status":null,"classified":25,"completed":[],"errors":[],"rows":0,"files":[],"closeMs":1}
+
+stdout | apps/api/test/integration/request-io.test.ts > F-DG2-412: an aborted or stalled body is never a 500 and never an error-level log > no over-match: a database-side ECONNRESET while the request body is still arriving is a 500 with an error log
+BE17 db-econnreset: {"status":500,"resets":4,"errors":[{"msg":"unhandled error","code":"ECONNRESET","message":"read ECONNRESET"}]}
+
+ ✓ |integration| apps/api/test/integration/request-io.test.ts (10 tests) 21577ms
+   ✓ F-DG2-411: a stalled upload holds no pooled connection and no row lock > reviewer's R8: N stalled uploads (N = pool size) leave /me and /readyz answering promptly; nothing is stored  2371ms
+   ✓ F-DG2-411: a stalled upload holds no pooled connection and no row lock > an upload whose If-Match goes stale during the body: 409 version_conflict, no content row, no object  1509ms
+   ✓ F-DG2-411: a stalled upload holds no pooled connection and no row lock > valid uploads stay byte-exact with their sha256 (stored, recorded and downloaded), no temporary object left  1262ms
+   ✓ F-DG2-411: a stalled upload holds no pooled connection and no row lock > sweep: downloads to slow readers (N+1 paused readers, pool size N) hold no pooled connection  2328ms
+   ✓ F-DG2-411: a stalled upload holds no pooled connection and no row lock > defence in depth: an exhausted pool answers 503 after the bounded checkout wait (and /readyz 503), never a hang  2036ms
+   ✓ F-DG2-412: an aborted or stalled body is never a 500 and never an error-level log > R6a stalled JSON body, requestTimeout 408: answered (if at all) below 500, logged below error level, nothing stored  2507ms
+   ✓ F-DG2-412: an aborted or stalled body is never a 500 and never an error-level log > R6d JSON body aborted by the client: answered (if at all) below 500, logged below error level, nothing stored  1294ms
+   ✓ F-DG2-412: an aborted or stalled body is never a 500 and never an error-level log > R6c stalled upload body, requestTimeout 408: answered (if at all) below 500, logged below error level, nothing stored  2443ms
+   ✓ F-DG2-412: an aborted or stalled body is never a 500 and never an error-level log > R6e upload body aborted by the client: answered (if at all) below 500, logged below error level, nothing stored  1109ms
+   ✓ F-DG2-412: an aborted or stalled body is never a 500 and never an error-level log > no over-match: a database-side ECONNRESET while the request body is still arriving is a 500 with an error log  1118ms
+ ✓ |integration| apps/api/test/integration/blank-text.test.ts (29 tests) 20988ms
+   ✓ blank free text is rejected (400 + pointer), nothing is written and nothing is audited > charter create with a blank field writes no charter  916ms
+   ✓ valid text still succeeds (stored as entered) and null still clears > charter: text with surrounding spaces is kept verbatim; null clears; each change is audited once  674ms
+   ✓ defense in depth: blank text already in the database is never 'present' (G1 readiness, pre-checks, thesis) > blank In scope, Case for change, thesis part and T01 texts read as missing  1046ms
+   ✓ invisible-only free text is blank (F-DG2-160) > Out of scope "‏" is 400 validation.blank at /outOfScope; nothing written, no audit  453ms
+   ✓ invisible-only free text is blank (F-DG2-160) > Out of scope "" is 400 validation.blank at /outOfScope; nothing written, no audit  468ms
+   ✓ invisible-only free text is blank (F-DG2-160) > Out of scope "⁠⁠⁠" is 400 validation.blank at /outOfScope; nothing written, no audit  760ms
+   ✓ invisible-only free text is blank (F-DG2-160) > Out of scope "؜" is 400 validation.blank at /outOfScope; nothing written, no audit  1000ms
+   ✓ invisible-only free text is blank (F-DG2-160) > Out of scope "️͏" is 400 validation.blank at /outOfScope; nothing written, no audit  1231ms
+   ✓ invisible-only free text is blank (F-DG2-160) > Out of scope "᠋᠏" is 400 validation.blank at /outOfScope; nothing written, no audit  950ms
+   ✓ invisible-only free text is blank (F-DG2-160) > Out of scope "\u0001" is 400 validation.blank at /outOfScope; nothing written, no audit  673ms
+   ✓ invisible-only free text is blank (F-DG2-160) > Out of scope "󠄀 ឴឵" is 400 validation.blank at /outOfScope; nothing written, no audit  891ms
+   ✓ invisible-only free text is blank (F-DG2-160) > Out of scope "𖿤" is 400 validation.blank at /outOfScope; nothing written, no audit  778ms
+   ✓ invisible-only free text is blank (F-DG2-160) > Out of scope "𝅙" is 400 validation.blank at /outOfScope; nothing written, no audit  888ms
+   ✓ invisible-only free text is blank (F-DG2-160) > Out of scope "𝅙𝅙" is 400 validation.blank at /outOfScope; nothing written, no audit  1055ms
+   ✓ invisible-only free text is blank (F-DG2-160) > Out of scope " 𖿤\t𝅙 " is 400 validation.blank at /outOfScope; nothing written, no audit  951ms
+   ✓ invisible-only free text is blank (F-DG2-160) > visible text that contains U+16FE4 or U+1D159 is accepted verbatim and counts as documented (F-DG2-230)  1764ms
+   ✓ invisible-only free text is blank (F-DG2-160) > an Arabic Out of scope with RLM marks is accepted verbatim, the pre-check reads pass and G1 does not list it  1455ms
+   ✓ invisible-only reasons are blank on every reason endpoint (F-DG2-160, T-DG2-BE7) > P2 register archive (T03 TOM gap): invisible reason is 400 at /reason; a valid reason archives  401ms
+   ✓ invisible-only reasons are blank on every reason endpoint (F-DG2-160, T-DG2-BE7) > evidence-link removal: invisible reason is 400 at /reason; a valid reason removes  543ms
+   ✓ invisible-only reasons are blank on every reason endpoint (F-DG2-160, T-DG2-BE7) > P1 transformation archive (reasonRequest): invisible reason is 400 at /reason; a valid reason archives  1022ms
+
+ Test Files  3 passed (3)
+      Tests  57 passed (57)
+   Start at  21:24:59
+   Duration  134.08s (transform 16.27s, setup 0ms, collect 53.99s, tests 61.86s, environment 1ms, prepare 344ms)
+
+exit=0

@@ -15,7 +15,7 @@
 // business approval. Retries and the failure queue are ADR-0008 §4's (5 attempts, then ops.failed).
 import { createHash } from "node:crypto";
 import { insertAuditEvent, sql, type AuditActor, type Db, type DbOrTx, type Tx } from "@mth/db";
-import { DEFAULTS } from "@mth/shared";
+import { DEFAULTS, type Permission } from "@mth/shared";
 import {
   decideDelivery,
   hhmm,
@@ -25,6 +25,15 @@ import {
   type DeliverySettings,
   type DigestMode,
 } from "@mth/shared/schemas";
+// T-DG6-BE-J (ADR-0053 §1): the job identity declarations and the service principal.
+import type { JobAttempt, JobHandler } from "./handlers/spec.ts";
+import {
+  isServiceIdentityError,
+  ServiceIdentityMissing,
+  ServiceScopeViolation,
+  type SensitiveAccess,
+  type ServicePrincipal,
+} from "./service-scope.ts";
 
 /**
  * A UUIDv7 (ADR-0003) from the database's mth_uuid_v7() (0010; EXECUTE granted to mth_app). The API generates its ids
@@ -67,6 +76,9 @@ export async function runOnce<T>(
     return { outcome: "done", result: await fn(tx) } as const;
   });
 }
+
+/** T-DG6-BE-I2 (ADR-0054 §3): the twin of tasks/service.ts INBOX_NOTIFICATION_CREATED_EVENT. */
+export const INBOX_NOTIFICATION_CREATED_EVENT = "inbox_notification.created";
 
 // ---------------------------------------------------------------------------------------------------------------
 // createWorkItemOnce: the twin of apps/api/src/modules/tasks/service.ts (keep the two identical except the id source; the
@@ -210,6 +222,16 @@ export async function createWorkItemOnce(tx: Tx, actor: AuditActor, input: WorkI
         delivery_state: { from: null, to: delivery.state }, // T-DG5-BE-L
         deliver_after: { from: null, to: delivery.deliverAfter?.toISOString() ?? null }, // T-DG5-BE-L
       },
+    });
+  if (notification)
+    // T-DG6-BE-I2 (ADR-0054 §3 step 1): the twin of the API's fan-out event line (tasks/service.ts).
+    await insertOutboxRow(tx, {
+      organizationId: input.organizationId,
+      aggregateType: "inbox_notification",
+      aggregateId: notificationId,
+      eventType: INBOX_NOTIFICATION_CREATED_EVENT,
+      payload: { notificationId, recipientUserId: input.assigneeUserId },
+      idempotencyKey: `inbox_notification.created:${notificationId}`,
     });
   return { outcome: "created", workItemId: id };
 }
@@ -491,7 +513,7 @@ export function failureRetryJobId(failureId: string, retryCount: number): string
 }
 
 function messageOf(err: unknown): string {
-  const m = err instanceof Error ? err.message : String(err);
+  const m = redactErrorText(err instanceof Error ? err.message : String(err)); // T-DG6-BE-K (ADR-0053 §4 item 4)
   const s = m.trim().length > 0 ? m : "error";
   return s.length > 2000 ? s.slice(0, 2000) : s;
 }
@@ -594,7 +616,7 @@ export async function captureJobFailure(db: Db, job: FailedJob): Promise<Capture
           job_data: JSON.stringify(
             job.data !== null && typeof job.data === "object" && !Array.isArray(job.data) ? job.data : {},
           ),
-          error_code: RETRIES_EXHAUSTED_CODE,
+          error_code: failureCodeOf(job.error), // T-DG6-BE-J: service_identity.* (ADR-0053 §1), else retries exhausted
           error_message: message,
           attempts,
           first_failed_at: sql<Date>`now()`,
@@ -623,6 +645,7 @@ export async function captureJobFailure(db: Db, job: FailedJob): Promise<Capture
           status: "open",
           attempts: Math.min(100, current.attempts + attempts),
           last_failed_at: sql<Date>`now()`,
+          error_code: failureCodeOf(job.error), // T-DG6-BE-J (ADR-0053 §1)
           error_message: message,
           job_id: job.jobId,
           version: current.version + 1,
@@ -646,6 +669,9 @@ export async function captureJobFailure(db: Db, job: FailedJob): Promise<Capture
       });
       result = { failureId: current.id, outcome: reopen ? "reopened" : "updated" };
     }
+    // T-DG6-BE-K (ADR-0053 §2): the job's operational exception, in the same transaction, once per failed job (a replay
+    // of the same pg-boss job id finds its ledger row and recurs nothing).
+    await raiseJobException(tx, actor, job, id.organizationId, result.failureId, message);
     // ADR-0043 §7: the internal job.failed event (starter 16, M0239), only when the job names an organization (an
     // outbox row needs one) and never for the consumer of job.failed itself (no failure loop).
     if (id.organizationId !== null && job.queue !== JOB_FAILED_QUEUE)
@@ -661,8 +687,20 @@ export async function captureJobFailure(db: Db, job: FailedJob): Promise<Capture
   });
 }
 
-/** A job succeeded: the `retrying` failure of its key (or whose retry sent this job id) is resolved. */
+/**
+ * A job succeeded: the `retrying` failure of its key (or whose retry sent this job id) is resolved, and (T-DG6-BE-K,
+ * ADR-0053 §2) the active `job_failed` exception of its queue and organization is resolved `recovered`.
+ */
 export async function settleRetriedJob(
+  db: Db,
+  job: Pick<FailedJob, "queue" | "jobId" | "data" | "createdOn">,
+): Promise<string | null> {
+  const settled = await settleRetriedFailure(db, job);
+  await recoverJobException(db, job);
+  return settled;
+}
+
+async function settleRetriedFailure(
   db: Db,
   job: Pick<FailedJob, "queue" | "jobId" | "data" | "createdOn">,
 ): Promise<string | null> {
@@ -854,4 +892,628 @@ async function insertOutboxRow(
       idempotency_key: e.idempotencyKey,
     })
     .execute();
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// Operational exceptions (ADR-0053 §2, §4, §8; REQ-S12-019; p6-work-split §J/C.3; T-DG6-BE-K). The worker twin of
+// apps/api/src/modules/operations/exceptions.ts `raiseOperationalException` / `recoverOperationalException` (ADR-0002
+// rule 5: the worker imports no API code; apps/api/test/integration/operations/exceptions.test.ts compares the rows the
+// two write). One ACTIVE exception per (organization, source kind, source code, failure class): lock 730305 on
+// "<organizationId or 'platform'>:<dedupKey>", then recur the active row or insert a new one, with one audit event, in
+// the transaction of the failure it reports. A resolved exception is final; a new failure opens a new one.
+//  - raiseJobException: called by captureJobFailure after the operational_failure write (the LAST attempt failed).
+//    The processed_message ledger (consumer `operations.job_failed`, key `<queue>:<pg-boss job id>`) makes a replay of
+//    the same failed job a no-op.
+//  - recoverJobException: called on every success (settleRetriedJob): the queue's active exception for the job's
+//    organization (NULL for a scheduled job) is resolved `recovered`, with no user.
+// The in-app alert on opening (ADR-0053 §6) is BE-K2's; `raiseOperationalExceptionTwin` returns `opened` for it.
+/** ADR-0016 §6 / apps/api platform/advisory-locks.ts `operationalExceptionUpsert` (the worker imports no API code). */
+export const OPERATIONAL_EXCEPTION_LOCK = 730305;
+export const JOB_EXCEPTION_LEDGER = "operations.job_failed";
+
+export interface ExceptionKey {
+  readonly organizationId: string | null;
+  readonly sourceKind: "job" | "connector" | "data_freshness" | "worker";
+  readonly sourceCode: string;
+  readonly failureClass:
+    | "job_failed"
+    | "connector_run_failed"
+    | "connector_unreachable"
+    | "connector_credentials_rejected"
+    | "data_stale"
+    | "heartbeat_missed";
+}
+
+export interface RaiseExceptionTwinInput extends ExceptionKey {
+  readonly errorCode: string;
+  /** Redacted here before it is stored (ADR-0053 §4 item 4). */
+  readonly errorMessage: string;
+  readonly serviceIdentityId?: string | null;
+  readonly operationalFailureId?: string | null;
+  readonly kpiLinks?: readonly { readonly kpiDefinitionId: string; readonly transformationId: string }[];
+}
+
+export interface RaiseTwinResult {
+  readonly exceptionId: string;
+  readonly outcome: "opened" | "recurred";
+}
+
+/**
+ * ADR-0053 §4: the redaction applied to an error text before it is stored in operational_exception.last_error_message
+ * and operational_failure.error_message. It removes private keys, access-key ids, AWS signature parameters, bearer
+ * tokens, JWTs, the deep-link token segment, URL credentials and the OIDC code/state/token parameters. The process-wide
+ * set of SecretProvider values is DO-D's (packages/config, ADR-0053 §4 item 1) and applies to log lines.
+ */
+export function redactErrorText(text: string): string {
+  return text
+    .replace(/-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]*?(?:-----END [A-Z ]*PRIVATE KEY-----|$)/g, "[secret]")
+    .replace(/\bAKIA[0-9A-Z]{16}\b/g, "[secret]")
+    .replace(/(X-Amz-(?:Signature|Credential|Security-Token))=[^&\s"']*/gi, "$1=[secret]")
+    .replace(/\bBearer\s+[A-Za-z0-9._~+/-]+=*/g, "Bearer [secret]")
+    .replace(/\beyJ[A-Za-z0-9_-]{4,}\.[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]*)?/g, "[secret]")
+    .replace(/\/links\/[A-Za-z0-9_-]{20,}/g, "/links/[token]")
+    .replace(/(\b[a-z][a-z0-9+.-]*:\/\/)[^\s/@:]+:[^\s/@]+@/gi, "$1[secret]@")
+    .replace(/([?&](?:code|state|id_token|access_token|refresh_token|password|secret)=)[^&\s"']*/gi, "$1[secret]");
+}
+
+const exceptionDedupKey = (k: ExceptionKey): string => `${k.sourceKind}:${k.sourceCode}:${k.failureClass}`;
+
+async function lockException(tx: Tx, k: ExceptionKey): Promise<string> {
+  const dedupKey = exceptionDedupKey(k);
+  await sql`SELECT pg_advisory_xact_lock(${OPERATIONAL_EXCEPTION_LOCK}::integer, hashtext(${`${k.organizationId ?? "platform"}:${dedupKey}`}::text))`.execute(
+    tx,
+  );
+  return dedupKey;
+}
+
+async function activeExceptionOf(tx: Tx, organizationId: string | null, dedupKey: string) {
+  return tx
+    .selectFrom("operational_exception")
+    .selectAll()
+    .where(sql<boolean>`organization_id IS NOT DISTINCT FROM ${organizationId}::uuid`)
+    .where("dedup_key", "=", dedupKey)
+    .where("status", "in", ["open", "acknowledged"])
+    .forUpdate()
+    .executeTakeFirst();
+}
+
+/** The twin of the API's raiseOperationalException (same rows, same audit actions; actor `actor`). */
+export async function raiseOperationalExceptionTwin(
+  tx: Tx,
+  actor: AuditActor,
+  input: RaiseExceptionTwinInput,
+): Promise<RaiseTwinResult> {
+  const dedupKey = await lockException(tx, input);
+  const redacted = redactErrorText(input.errorMessage);
+  const message = (redacted.trim().length > 0 ? redacted : "error").slice(0, 2000);
+  const current = await activeExceptionOf(tx, input.organizationId, dedupKey);
+  let result: RaiseTwinResult;
+  if (current === undefined) {
+    const id = await uuidv7(tx);
+    const row = await tx
+      .insertInto("operational_exception")
+      .values({
+        id,
+        organization_id: input.organizationId,
+        source_kind: input.sourceKind,
+        source_code: input.sourceCode,
+        failure_class: input.failureClass,
+        dedup_key: dedupKey,
+        service_identity_id: input.serviceIdentityId ?? null,
+        operational_failure_id: input.operationalFailureId ?? null,
+        first_occurred_at: sql<Date>`now()`,
+        last_occurred_at: sql<Date>`now()`,
+        last_error_code: input.errorCode,
+        last_error_message: message,
+        created_by: actor.actorUserId,
+        updated_by: actor.actorUserId,
+      })
+      .returning(["id", "version"])
+      .executeTakeFirstOrThrow();
+    await insertAuditEvent(tx, actor, {
+      action: "operational_exception.opened",
+      recordType: "operational_exception",
+      recordId: row.id,
+      organizationId: input.organizationId,
+      newVersion: row.version,
+      changes: {
+        dedup_key: { from: null, to: dedupKey },
+        status: { from: null, to: "open" },
+        last_error_code: { from: null, to: input.errorCode },
+        ...(input.kpiLinks && input.kpiLinks.length > 0
+          ? { kpi_definition_ids: { from: null, to: input.kpiLinks.map((k) => k.kpiDefinitionId) } }
+          : {}),
+      },
+    });
+    result = { exceptionId: row.id, outcome: "opened" };
+  } else {
+    const updated = await tx
+      .updateTable("operational_exception")
+      .set({
+        occurrence_count: current.occurrence_count + 1,
+        // T-DG6-BE-Z8 (F-DG6-380): the stored value is read in SQL, never round-tripped through a JavaScript Date
+        // (millisecond precision): a recurrence whose transaction started before a concurrent one committed (an older
+        // now()) keeps the stored microsecond value, so it never moves backwards and 0101's occurrence guard holds.
+        // The row is current: this runs under the exception's advisory lock and the FOR UPDATE read above.
+        last_occurred_at: sql<Date>`greatest(now(), operational_exception.last_occurred_at)`,
+        last_error_code: input.errorCode,
+        last_error_message: message,
+        ...(input.operationalFailureId ? { operational_failure_id: input.operationalFailureId } : {}),
+        version: current.version + 1,
+        updated_at: sql<Date>`now()`,
+        updated_by: actor.actorUserId,
+      })
+      .where("id", "=", current.id)
+      .where("version", "=", current.version)
+      .returning("version")
+      .executeTakeFirstOrThrow();
+    await insertAuditEvent(tx, actor, {
+      action: "operational_exception.recurred",
+      recordType: "operational_exception",
+      recordId: current.id,
+      organizationId: current.organization_id,
+      priorVersion: current.version,
+      newVersion: updated.version,
+      changes: {
+        occurrence_count: { from: current.occurrence_count, to: current.occurrence_count + 1 },
+        last_error_code: { from: current.last_error_code, to: input.errorCode },
+      },
+    });
+    result = { exceptionId: current.id, outcome: "recurred" };
+  }
+  if (input.organizationId !== null)
+    for (const k of input.kpiLinks ?? [])
+      await tx
+        .insertInto("operational_exception_kpi")
+        .values({
+          id: await uuidv7(tx),
+          operational_exception_id: result.exceptionId,
+          organization_id: input.organizationId,
+          transformation_id: k.transformationId,
+          kpi_definition_id: k.kpiDefinitionId,
+        })
+        .onConflict((oc) => oc.columns(["operational_exception_id", "kpi_definition_id"]).doNothing())
+        .execute();
+  return result;
+}
+
+/** The twin of the API's recoverOperationalException: the active exception, if any, resolved `recovered`. */
+export async function recoverOperationalExceptionTwin(
+  tx: Tx,
+  actor: AuditActor,
+  key: ExceptionKey,
+): Promise<string | null> {
+  const dedupKey = await lockException(tx, key);
+  const current = await activeExceptionOf(tx, key.organizationId, dedupKey);
+  if (current === undefined) return null;
+  const updated = await tx
+    .updateTable("operational_exception")
+    .set({
+      status: "resolved",
+      resolved_at: sql<Date>`now()`,
+      resolution: "recovered",
+      version: current.version + 1,
+      updated_at: sql<Date>`now()`,
+      updated_by: null,
+    })
+    .where("id", "=", current.id)
+    .where("version", "=", current.version)
+    .returning("version")
+    .executeTakeFirstOrThrow();
+  await insertAuditEvent(tx, actor, {
+    action: "operational_exception.resolved",
+    recordType: "operational_exception",
+    recordId: current.id,
+    organizationId: current.organization_id,
+    priorVersion: current.version,
+    newVersion: updated.version,
+    changes: { status: { from: current.status, to: "resolved" }, resolution: { from: null, to: "recovered" } },
+  });
+  return current.id;
+}
+
+const jobExceptionKey = (queue: string, organizationId: string | null): ExceptionKey => ({
+  organizationId,
+  sourceKind: "job",
+  sourceCode: queue,
+  failureClass: "job_failed",
+});
+
+/** The failure hook: open or recur the queue's `job_failed` exception, once per failed pg-boss job. */
+async function raiseJobException(
+  tx: Tx,
+  actor: AuditActor,
+  job: FailedJob,
+  organizationId: string | null,
+  failureId: string,
+  message: string,
+): Promise<RaiseTwinResult | null> {
+  const ledger = await tx
+    .insertInto("processed_message")
+    .values({
+      consumer: JOB_EXCEPTION_LEDGER,
+      idempotency_key: `${job.queue}:${job.jobId}`.slice(0, 200),
+      outcome: "done",
+    })
+    .onConflict((oc) => oc.doNothing())
+    .returning("consumer")
+    .executeTakeFirst();
+  if (!ledger) return null;
+  const identity = await tx
+    .selectFrom("service_identity")
+    .select("id")
+    .where("code", "=", jobIdentityCode(job.queue))
+    .executeTakeFirst();
+  return raiseOperationalExceptionTwin(tx, actor, {
+    ...jobExceptionKey(job.queue, organizationId),
+    errorCode: failureCodeOf(job.error),
+    errorMessage: message,
+    serviceIdentityId: identity?.id ?? null,
+    operationalFailureId: failureId,
+  });
+}
+
+/** Recovery on success: only when the queue has an active `job_failed` exception (one indexed read otherwise). */
+async function recoverJobException(db: Db, job: Pick<FailedJob, "queue" | "jobId" | "data" | "createdOn">) {
+  const active = await db
+    .selectFrom("operational_exception")
+    .select("id")
+    .where("dedup_key", "=", `job:${job.queue}:job_failed`)
+    .where("status", "in", ["open", "acknowledged"])
+    .limit(1)
+    .executeTakeFirst();
+  if (active === undefined) return null;
+  const id = await jobIdentity(db, job);
+  return db
+    .transaction()
+    .execute((tx) =>
+      recoverOperationalExceptionTwin(tx, jobActor(job.jobId), jobExceptionKey(job.queue, id.organizationId)),
+    );
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// Service identities of the job queues (ADR-0053 §1; REQ-S16-029; D-195 Q13; T-DG6-BE-J). Every queue of
+// apps/worker/src/queues/** declares ONE identity here: the read codes its DG4/DG5 handler already needs (the narrowest
+// set; never a configure, business-approval or Finance-validation code, which the 0101 guard refuses anyway), platform
+// scope (the job iterates organizations and builds one principal per organization), and whether sensitive records may
+// enter its aggregates (`aggregate_only`) or not at all (`none`). Migration 0114 seeds the same rows (one per queue,
+// audited, actor system, source migration); service-identities.test.ts requires the two to be equal. A queue added
+// later declares its identity in the same change and seeds it in a new migration (0115 the search jobs, 0116 the connector jobs, 0117 the
+// operations jobs). Administrators can only narrow or restore the GRANT (putServiceIdentity); the declaration changes
+// only through a migration.
+// At run time a job loads its row (`servicePrincipal`, or the context `defineJob` passes): a missing row fails the run
+// with `service_identity.missing`; a read outside the grant or the organization fails it with
+// `service_identity.out_of_scope` (`requireServiceRead`, service-scope.ts). The failure-queue row carries that code.
+export {
+  isServiceIdentityError,
+  requireServiceRead,
+  serviceReadScopeFor,
+  ServiceIdentityError,
+  ServiceIdentityMissing,
+  ServiceScopeViolation,
+  SERVICE_IDENTITY_MISSING,
+  SERVICE_IDENTITY_OUT_OF_SCOPE,
+  type ServicePrincipal,
+  type ServiceReadRow,
+  type ServiceReadScope,
+  type ServiceReadScopeColumns,
+  type ServiceReadUse,
+} from "./service-scope.ts";
+
+/** The failure-queue error code of a job error: the service-identity code, else retries exhausted. */
+function failureCodeOf(err: unknown): string {
+  return isServiceIdentityError(err) ? err.code : RETRIES_EXHAUSTED_CODE;
+}
+
+/** What a job identity declares (ADR-0053 §1 `defineJob({ queue, identity: { permissions, scope, sensitiveAccess } })`). */
+export interface JobIdentitySpec {
+  readonly permissions: readonly Permission[];
+  readonly scope: "platform";
+  readonly sensitiveAccess: SensitiveAccess;
+}
+
+export interface JobIdentityDeclaration extends JobIdentitySpec {
+  readonly queue: string;
+  readonly labelEn: string;
+  /** Arabic label (provisional wording, like every P6 Arabic text until reviewed). */
+  readonly labelAr: string;
+}
+
+const TR = "transformation.read" as const;
+const declare = (
+  queue: string,
+  permissions: readonly Permission[],
+  labelEn: string,
+  labelAr: string,
+  sensitiveAccess: SensitiveAccess = "none",
+): JobIdentityDeclaration =>
+  Object.freeze({
+    queue,
+    permissions: Object.freeze([...permissions]),
+    scope: "platform",
+    sensitiveAccess,
+    labelEn,
+    labelAr,
+  });
+
+/** One declaration per queue of apps/worker/src/queues/**, by queue name (40 at T-DG6-BE-J's revision; 42 with T-DG6-BE-P's; 47 with T-DG6-BE-K2's (two connector jobs of T-DG6-BE-L2 included); 49 with T-DG6-BE-I2's). */
+export const JOB_SERVICE_IDENTITIES: readonly JobIdentityDeclaration[] = Object.freeze([
+  declare(
+    "adoption.indicator_evaluated",
+    [TR, "user.read"],
+    "Job: adoption indicator evaluation",
+    "مهمة: تقييم مؤشرات التبني",
+  ),
+  declare(
+    "approval.escalation_scan",
+    [TR, "access.read"],
+    "Job: approval escalation scan",
+    "مهمة: فحص تصعيد الاعتمادات",
+  ),
+  declare(
+    "automation.evaluate",
+    [TR, "automation.read"],
+    "Job: automation rule evaluation",
+    "مهمة: تقييم قواعد الأتمتة",
+  ),
+  declare(
+    "automation.failure_retry",
+    ["automation.read", "job.read"],
+    "Job: failure-queue retry",
+    "مهمة: إعادة محاولة قائمة الإخفاقات",
+  ),
+  declare("automation.job_failed", ["job.read"], "Job: job failure recording", "مهمة: تسجيل إخفاق المهام"),
+  declare("automation.tick_daily", [TR, "automation.read"], "Job: daily automation tick", "مهمة: دورة الأتمتة اليومية"),
+  declare(
+    "automation.tick_hourly",
+    [TR, "automation.read"],
+    "Job: hourly automation tick",
+    "مهمة: دورة الأتمتة كل ساعة",
+  ),
+  declare(
+    "benefits.finance_queue",
+    [TR, "access.read"],
+    "Job: Finance validation queue routing",
+    "مهمة: توجيه قائمة التحقق المالي",
+  ),
+  declare(
+    "benefits.recalculate_pending",
+    [TR],
+    "Job: benefit recalculation",
+    "مهمة: إعادة حساب المنافع",
+    "aggregate_only",
+  ),
+  declare(
+    "benefits.value_decided",
+    [TR],
+    "Job: benefit value decision follow-up",
+    "مهمة: متابعة قرار قيمة المنفعة",
+    "aggregate_only",
+  ),
+  declare("branding.published", ["organization.read"], "Job: branding publication", "مهمة: نشر الهوية البصرية"),
+  declare("delegation.expiry_sweep", ["access.read"], "Job: delegation expiry sweep", "مهمة: إنهاء التفويضات المنتهية"),
+  declare("demo.reset", ["organization.read", TR], "Job: demo environment reset", "مهمة: إعادة ضبط بيئة العرض"),
+  declare(
+    "gate.condition_escalation_scan",
+    [TR, "access.read"],
+    "Job: gate condition escalation scan",
+    "مهمة: فحص تصعيد شروط البوابات",
+  ),
+  declare("gate.exception_expiry_scan", [TR], "Job: gate exception expiry scan", "مهمة: فحص انتهاء استثناءات البوابات"),
+  declare("gates.decided", [TR], "Job: gate decision follow-up", "مهمة: متابعة قرار البوابة"),
+  declare("gates.submitted", [TR, "access.read"], "Job: gate submission routing", "مهمة: توجيه تقديم البوابة"),
+  declare("governance.blocker_escalation", [TR, "access.read"], "Job: blocker escalation", "مهمة: تصعيد العوائق"),
+  declare(
+    "governance.blocker_escalation_scan",
+    [TR, "access.read"],
+    "Job: blocker escalation scan",
+    "مهمة: فحص تصعيد العوائق",
+  ),
+  declare("governance.decision_sla_scan", [TR, "access.read"], "Job: decision SLA scan", "مهمة: فحص مهل القرارات"),
+  declare(
+    "governance.meeting_cutoff_scan",
+    [TR, "access.read"],
+    "Job: meeting cut-off scan",
+    "مهمة: فحص مواعيد إقفال الاجتماعات",
+  ),
+  declare("governance.meeting_series_generate", [TR], "Job: meeting series generation", "مهمة: إنشاء سلاسل الاجتماعات"),
+  // T-DG6-BE-L2 (ADR-0055 §2; ADR-0053 §1-§2; 0116): the connector cadence slots (reads connectors) and the connector
+  // exception consumer (reads nothing; writes the operational exception of a failed or recovered connector run).
+  declare("integrations.connector_exception", [], "Job: connector run exceptions", "مهمة: استثناءات تشغيل الموصلات"),
+  declare(
+    "integrations.connector_run",
+    ["connector.read"],
+    "Job: connector cadence schedule",
+    "مهمة: جدول تشغيل الموصلات",
+  ),
+  declare("job_schedule.updated", ["job.read"], "Job: schedule re-registration", "مهمة: إعادة تسجيل الجداول"),
+  declare("jobs.run_now", ["job.read"], "Job: run-now dispatch", "مهمة: تشغيل المهمة الآن"),
+  // T-DG6-BE-K2 (ADR-0053 §2, §6; 0116): the freshness scan, the data.stale consumer and the alert sweep.
+  declare(
+    "kpi.freshness_scan",
+    [TR, "operations.read"],
+    "Job: KPI data freshness scan",
+    "مهمة: فحص حداثة بيانات مؤشرات الأداء",
+  ),
+  declare("kpi.recalculate", [TR], "Job: KPI recalculation", "مهمة: إعادة حساب مؤشرات الأداء"),
+  declare("kpi.reporting_period_open", [TR], "Job: reporting period opening", "مهمة: فتح فترة التقارير"),
+  declare("launch.day_ninety_tests", [TR], "Job: day-90 tests", "مهمة: اختبارات اليوم التسعين"),
+  declare("maintenance.purge_expired", [], "Job: expired session purge", "مهمة: حذف الجلسات المنتهية"),
+  declare("notification.digest", ["user.read"], "Job: notification digest", "مهمة: ملخص الإشعارات"),
+  // T-DG6-BE-I2 (ADR-0054 §3; 0121): the channel fan-out after commit and its delivery sweep. They read the
+  // notification, its recipient's address and active grants (whether the recipient can still read the target) and the
+  // organization's channel settings; they never hold notification_channel.configure (a configure code, refused).
+  declare(
+    "notifications.delivery_sweep",
+    [TR, "user.read", "access.read", "operations.read"],
+    "Job: notification delivery sweep",
+    "مهمة: متابعة تسليم الإشعارات",
+  ),
+  declare(
+    "notifications.fanout",
+    [TR, "user.read", "access.read", "operations.read"],
+    "Job: notification channel fan-out",
+    "مهمة: توزيع الإشعارات على القنوات",
+  ),
+  declare(
+    "operations.exception_alerts",
+    ["operations.read", "access.read"],
+    "Job: operational exception alerts",
+    "مهمة: تنبيهات الاستثناءات التشغيلية",
+  ),
+  declare(
+    "operations.exception_raise",
+    [TR, "operations.read"],
+    "Job: operational exception from stale data",
+    "مهمة: استثناء تشغيلي من بيانات متقادمة",
+  ),
+  declare("ops.failed", [], "Queue: failed jobs (dead letter)", "قائمة: المهام المخفقة"),
+  declare("portfolio.dependency_slip", [TR], "Job: dependency slip follow-up", "مهمة: متابعة تأخر الاعتماديات"),
+  declare(
+    "raid.corrective_adoption",
+    [TR, "user.read"],
+    "Job: corrective action for adoption",
+    "مهمة: إجراء تصحيحي للتبني",
+  ),
+  declare(
+    "raid.corrective_benefit",
+    [TR, "user.read"],
+    "Job: corrective action for a benefit",
+    "مهمة: إجراء تصحيحي لمنفعة",
+  ),
+  declare(
+    "raid.corrective_control",
+    [TR, "user.read"],
+    "Job: corrective action for a control",
+    "مهمة: إجراء تصحيحي لضابط",
+  ),
+  declare(
+    "raid.corrective_kpi",
+    [TR, "user.read"],
+    "Job: corrective action for a KPI",
+    "مهمة: إجراء تصحيحي لمؤشر أداء",
+  ),
+  declare("reports.export", [TR], "Job: report export", "مهمة: تصدير التقارير"),
+  declare("reports.owner_update_tasks", [TR], "Job: owner update tasks", "مهمة: مهام تحديث المالكين"),
+  // T-DG6-BE-P (ADR-0057 §2; 0115): the search index jobs. `none` here; their one declared exception (they read the
+  // ADR-0057 §1 indexed columns of sensitive records, never a value column) is enforced in search/documents.ts.
+  declare("search.index_feed", [TR], "Job: search index feed", "مهمة: تحديث فهرس البحث"),
+  declare("search.reindex", [TR], "Job: search reindex", "مهمة: إعادة بناء فهرس البحث"),
+  declare("sustainment.control_check_scan", [TR], "Job: control check scan", "مهمة: فحص فحوص الضوابط"),
+  declare("sustainment.review_scan", [TR], "Job: performance review scan", "مهمة: فحص مراجعات الأداء"),
+  declare(
+    "transformation.created",
+    [TR, "access.read", "methodology.read"],
+    "Job: new transformation set-up",
+    "مهمة: إعداد تحول جديد",
+  ),
+]);
+
+const JOB_IDENTITY_BY_QUEUE: ReadonlyMap<string, JobIdentityDeclaration> = new Map(
+  JOB_SERVICE_IDENTITIES.map((d) => [d.queue, d]),
+);
+
+/** The declaration of a queue's identity, or undefined when the queue declares none. */
+export function jobIdentityDeclaration(queue: string): JobIdentityDeclaration | undefined {
+  return JOB_IDENTITY_BY_QUEUE.get(queue);
+}
+
+/** The `service_identity.code` of a job queue. */
+export const jobIdentityCode = (queue: string): string => `job:${queue}`;
+
+/** A loaded `service_identity` row (what a run needs). */
+export interface LoadedServiceIdentity {
+  readonly id: string;
+  readonly code: string;
+  readonly scopeLevel: "platform" | "organization";
+  readonly organizationId: string | null;
+  readonly grantedPermissionCodes: readonly string[];
+  readonly sensitiveAccess: SensitiveAccess;
+}
+
+/** Loads a service identity by code; a missing row throws ServiceIdentityMissing (`service_identity.missing`). */
+export async function loadServiceIdentity(db: DbOrTx, code: string): Promise<LoadedServiceIdentity> {
+  const row = await db
+    .selectFrom("service_identity")
+    .select(["id", "code", "scope_level", "organization_id", "granted_permission_codes", "sensitive_access"])
+    .where("code", "=", code)
+    .executeTakeFirst();
+  if (row === undefined) throw new ServiceIdentityMissing();
+  return {
+    id: row.id,
+    code: row.code,
+    scopeLevel: row.scope_level as "platform" | "organization",
+    organizationId: row.organization_id,
+    grantedPermissionCodes: Object.freeze([...row.granted_permission_codes]),
+    sensitiveAccess: row.sensitive_access as SensitiveAccess,
+  };
+}
+
+/**
+ * The principal of a loaded identity for one organization. A platform identity acts in any organization (one principal
+ * per organization); an organization identity (a connector) only in its own, otherwise `service_identity.out_of_scope`.
+ */
+export function principalOfIdentity(identity: LoadedServiceIdentity, organizationId: string): ServicePrincipal {
+  if (identity.scopeLevel === "organization" && identity.organizationId !== organizationId)
+    throw new ServiceScopeViolation();
+  return Object.freeze({
+    kind: "service",
+    identityId: identity.id,
+    code: identity.code,
+    organizationId,
+    permissions: new Set(identity.grantedPermissionCodes),
+    sensitiveAccess: identity.sensitiveAccess,
+  });
+}
+
+/** ADR-0053 §1 `servicePrincipal`: loads the queue's identity row and builds its principal for `organizationId`. */
+export async function servicePrincipal(db: DbOrTx, queue: string, organizationId: string): Promise<ServicePrincipal> {
+  return principalOfIdentity(await loadServiceIdentity(db, jobIdentityCode(queue)), organizationId);
+}
+
+/** What `defineJob` passes to a handler: its loaded identity and a principal per organization. */
+export interface JobRunContext {
+  readonly identity: LoadedServiceIdentity;
+  principal(organizationId: string): ServicePrincipal;
+}
+
+export interface JobDefinition {
+  readonly queue: string;
+  /** Optional restatement of the queue's declaration at the definition site; it must equal JOB_SERVICE_IDENTITIES. */
+  readonly identity?: JobIdentitySpec;
+  readonly handle: (
+    db: Db,
+    data: unknown,
+    jobId: string,
+    attempt: JobAttempt | undefined,
+    run: JobRunContext,
+  ) => Promise<unknown>;
+}
+
+const sameSpec = (a: JobIdentitySpec, b: JobIdentitySpec): boolean =>
+  a.scope === b.scope &&
+  a.sensitiveAccess === b.sensitiveAccess &&
+  a.permissions.length === b.permissions.length &&
+  [...a.permissions].sort().every((p, i) => p === [...b.permissions].sort()[i]);
+
+/**
+ * ADR-0053 §1 `defineJob`: a job handler whose run starts by loading its service identity. A queue without a
+ * declaration is a programming error at definition time; a declaration restated here that differs from the registry is
+ * one too. At run time a missing identity row fails the run with `service_identity.missing` before the handler runs.
+ */
+export function defineJob(def: JobDefinition): JobHandler {
+  const declared = jobIdentityDeclaration(def.queue);
+  if (declared === undefined) throw new Error(`defineJob: queue ${def.queue} declares no service identity`);
+  if (def.identity !== undefined && !sameSpec(def.identity, declared))
+    throw new Error(`defineJob: the identity of ${def.queue} differs from its declaration in JOB_SERVICE_IDENTITIES`);
+  return Object.freeze({
+    queue: def.queue,
+    handle: async (db: Db, data: unknown, jobId: string, attempt?: JobAttempt) => {
+      const identity = await loadServiceIdentity(db, jobIdentityCode(def.queue));
+      return def.handle(db, data, jobId, attempt, {
+        identity,
+        principal: (organizationId) => principalOfIdentity(identity, organizationId),
+      });
+    },
+  });
 }

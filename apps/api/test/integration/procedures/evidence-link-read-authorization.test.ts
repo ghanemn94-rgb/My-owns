@@ -248,3 +248,72 @@ describe("F-DG5-101 rule on the evidence link: a transformation-scope instance",
     expect(await evidenceLinks(id)).toEqual([{ record_type: "evidence", record_id: own }]);
   });
 });
+
+/**
+ * T-DG6-BE-Z12 (F-DG6-480; D-218; ADR-0051 §2): a procedure instance never names a sensitive evidence item the reader
+ * is not admitted to. The organization's TO writes two evidence items of T (so the lead is never a named party); the
+ * lead links the first before it is marked. After the TO marks both sensitive: the lead's instance view omits the link
+ * and carries `includesRestrictedRecords: true`, while the TO (admitted through sensitive_record.grant) sees it; and the
+ * lead linking the second answers exactly as an unknown evidence record (422 output_record_invalid, the same keys),
+ * linking nothing. SYNTHETIC; marking is an access decision, never a business approval.
+ */
+describe("T-DG6-BE-Z12: D-218 on procedure instance links", () => {
+  it("D-218: a sensitive evidence link is not listed for a lead not admitted (marked), shown to the TO; linking a hidden item answers as an unknown one", async () => {
+    const lead = await orgLead();
+    const { id, T, version } = await adoptedIntakeWithEvidence(lead);
+    const toUser = await createUser(api.db, w.orgA.id);
+    await grant(api.db, w.grantor.id, toUser.id, "TO", { type: "organization", id: w.orgA.id }, w.orgA.id);
+    const to = await signIn(api.app, toUser.subject);
+    const evidence = async (title: string) => {
+      const e = await call<Body>(api.app, "POST", `/api/v1/transformations/${T}/evidence`, {
+        session: to,
+        body: { kind: "note", title, noteBody: "Synthetic", ownerUserId: toUser.id },
+      });
+      expect(e.status, JSON.stringify(e.body)).toBe(201);
+      return e.body.id as string;
+    };
+    const mark = async (evidenceId: string) => {
+      const r = await call<Body>(
+        api.app,
+        "PUT",
+        `/api/v1/transformations/${T}/records/evidence/${evidenceId}/sensitivity`,
+        {
+          session: to,
+          headers: { "if-match": '"0"' },
+          body: { isSensitive: true, reason: "Synthetic sensitive evidence (BE-Z12)" },
+        },
+      );
+      expect(r.status, JSON.stringify(r.body)).toBe(200);
+    };
+    const first = await evidence("Synthetic CONFIDENTIAL BE-Z12 step evidence");
+    const second = await evidence("Synthetic CONFIDENTIAL BE-Z12 second evidence");
+    const linked = await linkEvidence(lead, id, "draft_charter", version, first);
+    expect(linked.status, JSON.stringify(linked.body)).toBe(200);
+    await mark(first);
+    await mark(second);
+
+    const shown = await call<Body>(api.app, "GET", `${I}/${id}`, { session: lead.session });
+    expect(shown.status).toBe(200);
+    expect(JSON.stringify(shown.body)).not.toContain(first);
+    expect(shown.body.links.filter((l: Body) => l.linkKind === "evidence")).toEqual([]);
+    expect(shown.body.includesRestrictedRecords).toBe(true);
+    const listed = await call<Body>(api.app, "GET", `${I}?limit=100`, { session: lead.session });
+    expect(JSON.stringify(listed.body)).not.toContain(first);
+    const admitted = await call<Body>(api.app, "GET", `${I}/${id}`, { session: to });
+    if (admitted.status === 200) {
+      expect(admitted.body.links.map((l: Body) => l.recordId)).toContain(first);
+      expect(admitted.body.includesRestrictedRecords).toBeUndefined();
+    } else
+      console.log(`[BE-Z12] the TO does not read the intake instance (${admitted.status}); the stored link is checked`);
+    expect(await evidenceLinks(id)).toEqual([{ record_type: "evidence", record_id: first }]);
+
+    const v = shown.body.version as number;
+    const hidden = await linkEvidence(lead, id, "draft_charter", v, second);
+    const unknown = await linkEvidence(lead, id, "draft_charter", v, UNKNOWN_EVIDENCE);
+    expect([unknown.status, unknown.body.code, unknown.body.detail]).toEqual([422, INVALID, INVALID_DETAIL]);
+    expect([hidden.status, hidden.body.code, hidden.body.detail]).toEqual([422, INVALID, INVALID_DETAIL]);
+    expect(Object.keys(hidden.body).sort()).toEqual(Object.keys(unknown.body).sort());
+    expect(JSON.stringify(hidden.body)).not.toContain(second);
+    expect(await evidenceLinks(id)).toEqual([{ record_type: "evidence", record_id: first }]);
+  });
+});

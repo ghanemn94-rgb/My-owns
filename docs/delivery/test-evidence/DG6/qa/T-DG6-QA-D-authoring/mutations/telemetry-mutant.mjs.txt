@@ -1,0 +1,11 @@
+// qa-verifier mutation (disposable): simulates an outbound "telemetry" connection attempt by the API process to a
+// non-loopback documentation address (192.0.2.10, TEST-NET-1, unreachable offline). The connection log must record it
+// and connection-log-check.ts must FAIL the run.
+import net from "node:net";
+if ((process.argv[1] ?? "").endsWith("apps/api/dist/main.js")) {
+  setTimeout(() => {
+    const s = net.connect({ host: "192.0.2.10", port: 443 });
+    s.on("error", () => {});
+    setTimeout(() => s.destroy(), 2000);
+  }, 1500);
+}

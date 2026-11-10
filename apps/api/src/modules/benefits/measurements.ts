@@ -48,7 +48,7 @@ import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
 import type { Permission } from "@mth/shared";
 import { PROBLEM_TYPES } from "@mth/shared";
-import { principalOf, requireTransformationRead } from "../access/index.ts";
+import { principalOf, requireTransformationRead, restrictedIdsOf, type Principal } from "../access/index.ts";
 import { record } from "../audit/index.ts";
 import {
   ADVISORY_LOCK_CLASSES,
@@ -224,15 +224,21 @@ export async function evidenceOf(db: DbOrTx, measurementIds: readonly string[]):
   return out;
 }
 
-/** API measurements with lineage, evidence, their Finance validation and basis (one query per concern). */
+/**
+ * API measurements with lineage, evidence, their Finance validation and basis (one query per concern).
+ * T-DG6-BE-Z10 (F-DG6-420; D-218; ADR-0051 §2): `evidenceIds` omits a sensitive evidence item the reader is not
+ * admitted to, and the measurement then carries `includesRestrictedRecords: true` (no id, no count).
+ */
 export async function presentMeasurements(
   db: DbOrTx,
+  principal: Principal,
   rows: readonly BenefitMeasurementRow[],
 ): Promise<BenefitMeasurement[]> {
   if (rows.length === 0) return [];
   const ids = rows.map((r) => r.id);
   const inputs = await inputsOf(db, ids);
   const evidence = await evidenceOf(db, ids);
+  const hiddenEvidence = await restrictedIdsOf(db, principal, "evidence", [...evidence.values()].flat());
   const validations = await db
     .selectFrom("finance_validation")
     .select(["id", "benefit_measurement_id", "created_at"])
@@ -247,6 +253,8 @@ export async function presentMeasurements(
   const out: BenefitMeasurement[] = [];
   for (const r of rows) {
     const benefit = benefits.find((b) => b.id === r.benefit_id)!;
+    const linked = evidence.get(r.id) ?? [];
+    const evidenceIds = linked.filter((id) => !hiddenEvidence.has(id));
     out.push({
       id: r.id,
       benefitId: r.benefit_id,
@@ -270,7 +278,7 @@ export async function presentMeasurements(
       validatedAmount: r.validated_amount,
       basis: r.status === "validated" ? "validated" : await basisOf(db, benefit, r.formula_version_id),
       inputs: inputs.get(r.id) ?? [],
-      evidenceIds: evidence.get(r.id) ?? [],
+      evidenceIds,
       financeValidationId: validations.find((v) => v.benefit_measurement_id === r.id)?.id ?? null,
       submittedBy: r.submitted_by,
       submittedAt: isoOrNull(r.submitted_at),
@@ -281,13 +289,18 @@ export async function presentMeasurements(
       createdAt: iso(r.created_at),
       createdBy: r.created_by,
       updatedAt: iso(r.updated_at),
+      ...(evidenceIds.length !== linked.length ? { includesRestrictedRecords: true as const } : {}),
     });
   }
   return out;
 }
 
-export async function presentMeasurement(db: DbOrTx, row: BenefitMeasurementRow): Promise<BenefitMeasurement> {
-  return (await presentMeasurements(db, [row]))[0]!;
+export async function presentMeasurement(
+  db: DbOrTx,
+  principal: Principal,
+  row: BenefitMeasurementRow,
+): Promise<BenefitMeasurement> {
+  return (await presentMeasurements(db, principal, [row]))[0]!;
 }
 
 // ------------------------------------------------------------------------------------------------ formula lineage
@@ -893,7 +906,7 @@ export function registerBenefitMeasurementRoutes(app: FastifyInstance, { db }: M
       .limit(query.limit + 1)
       .execute();
     const page = paginate(rows, query.limit, (r) => [r.measurement_no], hash);
-    return { items: await presentMeasurements(db, page.items), nextCursor: page.nextCursor };
+    return { items: await presentMeasurements(db, principalOf(request), page.items), nextCursor: page.nextCursor };
   });
 
   app.post(LIST, { config: write }, async (request, reply) => {
@@ -903,7 +916,7 @@ export function registerBenefitMeasurementRoutes(app: FastifyInstance, { db }: M
       const body = parseBody(benefitMeasurementCreate, request.body);
       return maybeIdempotent(tx, request, ctx.userId, body, async () => {
         const row = await createMeasurement(tx, ctx, benefitId, body);
-        return { status: 201, body: await presentMeasurement(tx, row) };
+        return { status: 201, body: await presentMeasurement(tx, principalOf(request), row) };
       });
     });
     return sendCreated(request, reply, result, `/api/v1/transformations/${transformationId}/benefit-measurements`);
@@ -919,7 +932,7 @@ export function registerBenefitMeasurementRoutes(app: FastifyInstance, { db }: M
       .where("transformation_id", "=", transformationId)
       .executeTakeFirst();
     if (!row) throw problems.notFound();
-    return sendVersioned(reply, 200, await presentMeasurement(db, row));
+    return sendVersioned(reply, 200, await presentMeasurement(db, principalOf(request), row));
   });
 
   app.patch(MEASUREMENT_ITEM, { config: write }, async (request, reply) => {
@@ -927,7 +940,11 @@ export function registerBenefitMeasurementRoutes(app: FastifyInstance, { db }: M
     const body = await db
       .transaction()
       .execute(async (tx) =>
-        presentMeasurement(tx, await updateMeasurement(tx, request, transformationId, benefitMeasurementId)),
+        presentMeasurement(
+          tx,
+          principalOf(request),
+          await updateMeasurement(tx, request, transformationId, benefitMeasurementId),
+        ),
       );
     return sendVersioned(reply, 200, body);
   });
@@ -940,7 +957,11 @@ export function registerBenefitMeasurementRoutes(app: FastifyInstance, { db }: M
       const body = await db
         .transaction()
         .execute(async (tx) =>
-          presentMeasurement(tx, await submitMeasurement(tx, request, transformationId, benefitMeasurementId)),
+          presentMeasurement(
+            tx,
+            principalOf(request),
+            await submitMeasurement(tx, request, transformationId, benefitMeasurementId),
+          ),
         );
       return sendVersioned(reply, 200, body);
     },

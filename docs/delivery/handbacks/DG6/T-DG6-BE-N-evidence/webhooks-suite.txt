@@ -1,0 +1,28 @@
+port-policy: PostgreSQL listening on port 25220 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-n
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvucb0mk_957a2360 (server_encoding UTF8); applied 109 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/integrations/webhooks.test.ts (16 tests) 16035ms
+   ✓ receiveWebhook: a signed delivery is staged (ADR-0056 §7; REQ-S17-003) > answers 202 and stages 10 = 8 + 1 + 1 with its receipt and webhook run, as the connector's service identity  1411ms
+   ✓ receiveWebhook: a signed delivery is staged (ADR-0056 §7; REQ-S17-003) > applies the connector's field mappings and turns a JSON number into the row reason value_not_decimal  742ms
+   ✓ receiveWebhook: auto commit on behalf of the configured user (ADR-0056 §7 step 3) > commits the valid rows after the staging transaction, on behalf of the configured KDS  1416ms
+   ✓ receiveWebhook: auto commit on behalf of the configured user (ADR-0056 §7 step 3) > leaves the batch staged and records import_batch.auto_commit_refused when the commit-time re-check refuses  625ms
+   ✓ receiveWebhook: every authentication failure is the same 401 and stores nothing > refuses unsigned, wrongly signed, stale, malformed, unknown, disabled-endpoint and disabled-connector deliveries  1170ms
+   ✓ receiveWebhook: replay and delivery id reuse (exactly once) > answers 200 with the original result for the same delivery id and body; 409 for another body  988ms
+   ✓ receiveWebhook: replay and delivery id reuse (exactly once) > two concurrent deliveries with one id create one receipt and one batch  1087ms
+   ✓ rotateWebhookSecret: the previous secret is valid for the grace period only > accepts the new and the previous secret inside the grace period and refuses the previous one after it  2244ms
+   ✓ receiveWebhook: body limits and format > answers 400 webhook.payload_invalid for a signed body that is not JSON, not UTF-8 or not the documented shape  515ms
+   ✓ webhook endpoint administration (webhook.configure; ADR-0056 §7) > creates an active endpoint with a server-generated key and a SecretRef; one audit event; no secret value anywhere  556ms
+   ✓ webhook endpoint administration (webhook.configure; ADR-0056 §7) > lists the organization's endpoints newest first; the cursor walks every endpoint exactly once  364ms
+   ✓ webhook endpoint administration (webhook.configure; ADR-0056 §7) > refuses a secret value (422), a non-webhook connector (422), a bad tolerance (400) and an unknown connector (404)  302ms
+   ✓ webhook endpoint administration (webhook.configure; ADR-0056 §7) > rotates and disables with If-Match (428, 409), refuses a bad grace (422) and any change after disable (409)  514ms
+   ✓ webhook endpoint administration (webhook.configure; ADR-0056 §7) > AUD and KDS get 403 on every mutation, an outsider 404, no session 401; nothing is written  628ms
+
+ Test Files  1 passed (1)
+      Tests  16 passed (16)
+   Start at  02:15:17
+   Duration  55.18s (transform 13.57s, setup 0ms, collect 28.38s, tests 16.04s, environment 0ms, prepare 150ms)
+
+exit=0

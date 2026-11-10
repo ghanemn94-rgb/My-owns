@@ -152,14 +152,48 @@ export interface Candidate {
   readonly servicePermissionCodes: string[];
 }
 
+/** The ledger sources (0122, 0123) of a row that starts a DISABLED interval. */
+export const DISABLE_SOURCES = ["disable", "backfill_disable"] as const;
+
+/**
+ * The candidate rules of one trigger occurrence.
+ *
+ * Events (`outboxEventId` given; D-203, D-204; T-DG6-BE-X9, T-DG6-BE-X10): the event's STORED occurrence time is its
+ * outbox row's created_at, and the version that evaluates it is the one that was effective AND enabled at that time:
+ * per rule, the newest automation_rule_enablement row (migrations 0122, 0123) at or before the occurrence time, by
+ * (enabled_from, id). No such row (the event occurred before the rule's first enablement) or a disable row (it occurred
+ * while the rule was disabled) gives no candidate; otherwise that row's version evaluates the event, also when a newer
+ * version has been published since (it is then `superseded`, which 0074 still lets run). The ledger is append-only, so
+ * every evaluation and every replay of one event resolves the same version, and the execution UNIQUE (rule version,
+ * trigger key) keeps it to one execution per rule. Evaluation time is never used; both times are compared in SQL at
+ * their full (microsecond) precision. The rule must ALSO be enabled now: disabling a rule stops the actions of its
+ * not-yet-evaluated events (a kill switch), and the trigger must still be one of that version's triggers.
+ *
+ * Ticks (no `outboxEventId`): a tick's slot is its own occurrence, evaluated against the current effective version.
+ */
 export async function candidates(
   db: Db,
   triggerCode: string,
   where: { organizationId: string; transformationId: string | null } | null,
+  outboxEventId?: string,
 ): Promise<Candidate[]> {
+  // The version that evaluates the occurrence: for an event, the ledger's version at its occurrence time (NULL, so no
+  // join, before the first enablement or inside a disabled window); for a tick, the current effective version.
+  const versionAt =
+    outboxEventId === undefined
+      ? sql<string>`r.effective_version_id`
+      : sql<string>`(SELECT CASE WHEN e.source IN (${sql.join(DISABLE_SOURCES.map((x) => sql.lit(x)))})
+                                 THEN NULL ELSE e.automation_rule_version_id END
+                       FROM automation_rule_enablement e
+                      WHERE e.automation_rule_id = r.id
+                        AND e.enabled_from <= (SELECT o.created_at FROM outbox_event o WHERE o.id = ${outboxEventId}::uuid)
+                      ORDER BY e.enabled_from DESC, e.id DESC
+                      LIMIT 1)`;
   let q = db
     .selectFrom("automation_rule as r")
-    .innerJoin("automation_rule_version as v", "v.id", "r.effective_version_id")
+    .innerJoin("automation_rule_version as v", (join) =>
+      join.onRef("v.automation_rule_id", "=", "r.id").on("v.id", "=", versionAt),
+    )
     .select([
       "r.id as ruleId",
       "r.code as ruleCode",
@@ -175,7 +209,7 @@ export async function candidates(
     ])
     .where("r.enabled", "=", true)
     .where("r.origin", "=", "admin")
-    .where("v.status", "=", "published")
+    .where("v.status", "in", outboxEventId === undefined ? ["published"] : ["published", "superseded"])
     .where(sql<boolean>`${triggerCode} = ANY (v.trigger_codes)`);
   if (where !== null) {
     q = q.where("r.organization_id", "=", where.organizationId);
@@ -523,16 +557,47 @@ export async function executeRule(
 
 // ------------------------------------------------------------------------------------------------ entry points
 
-/** An outbox event on automation.evaluate: every candidate rule, in code order. */
+export const OCCURRENCE_UNKNOWN = "automation.occurrence_time_unknown";
+
+/**
+ * D-203 O-2: the stored occurrence time of an event, its outbox row's created_at (the time of the transaction that
+ * recorded it), never the evaluation time. The relay builds every envelope from its row and outbox rows are never
+ * deleted, so a missing row means the envelope did not come from the outbox: the job throws (pg-boss retries it, and
+ * its last attempt enters the failure queue), and no rule acts on an event whose occurrence time is unknown.
+ */
+export async function occurredAtOf(db: Db, outboxEventId: string): Promise<Date> {
+  if (!UUID.test(outboxEventId)) throw new Error(`${OCCURRENCE_UNKNOWN}: no outbox event ${outboxEventId}`);
+  const row = await db
+    .selectFrom("outbox_event")
+    .select("created_at")
+    .where("id", "=", outboxEventId)
+    .executeTakeFirst();
+  if (row === undefined) throw new Error(`${OCCURRENCE_UNKNOWN}: no outbox event ${outboxEventId}`);
+  return row.created_at;
+}
+
+/** An outbox event on automation.evaluate: every candidate rule (enabled when the event occurred), in code order. */
 export async function evaluateEvent(
   db: Db,
-  envelope: { eventType: string; idempotencyKey: string; organizationId: string; payload: Record<string, unknown> },
+  envelope: {
+    outboxEventId: string;
+    eventType: string;
+    idempotencyKey: string;
+    organizationId: string;
+    payload: Record<string, unknown>;
+  },
   jobId: string,
   attempt?: JobAttempt,
 ): Promise<ExecutionReport[]> {
   const t = new Map(Object.entries(envelope.payload)).get("transformationId");
   const transformationId = typeof t === "string" && UUID.test(t) ? t : null;
-  const rules = await candidates(db, envelope.eventType, { organizationId: envelope.organizationId, transformationId });
+  await occurredAtOf(db, envelope.outboxEventId); // throws when the occurrence time is unknown
+  const rules = await candidates(
+    db,
+    envelope.eventType,
+    { organizationId: envelope.organizationId, transformationId },
+    envelope.outboxEventId,
+  );
   const out: ExecutionReport[] = [];
   for (const c of rules)
     out.push(

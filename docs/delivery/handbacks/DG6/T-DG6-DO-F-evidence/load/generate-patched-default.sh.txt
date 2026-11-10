@@ -1,0 +1,15 @@
+set -euo pipefail
+cd /home/user/wt/dg6-do-f
+export PATH=/opt/nvm/versions/node/v24.21.0/bin:$PATH NODE_ENV=production
+A="postgresql://postgres@127.0.0.1:$PG_PORT/postgres"
+psql "$A" -q -v ON_ERROR_STOP=1 -c "DROP DATABASE mth WITH (FORCE)" -c "CREATE DATABASE mth OWNER mth_owner ENCODING 'UTF8' LC_COLLATE 'C' LC_CTYPE 'C' TEMPLATE template0"
+OWN="postgresql://postgres@127.0.0.1:$PG_PORT/mth?options=-c%20role%3Dmth_owner"
+DATABASE_OWNER_URL="$OWN" DATABASE_URL="postgresql://postgres@127.0.0.1:$PG_PORT/mth?options=-c%20role%3Dmth_app" node packages/db/dist/cli.js migrate | tail -1
+echo "patched generator sha256: $(sha256sum $TMPDIR/gen/deploy/load/generate.mjs)"
+echo "tree generator sha256:    $(sha256sum deploy/load/generate.mjs)"
+echo "== generate default (patched copy) start $(date -u +%FT%TZ)"
+s=$(date +%s%N)
+DATABASE_OWNER_URL="$OWN" node $TMPDIR/gen/deploy/load/generate.mjs --profile default
+echo "generate exit=$? wall_ms=$(( ($(date +%s%N) - s) / 1000000 )) end $(date -u +%FT%TZ)"
+D="postgresql://postgres@127.0.0.1:$PG_PORT/mth"
+psql "$D" -qAtc "select to_jsonb(m)-'generated_at' from load_dataset_marker m" -c "select count(*) from audit_event" -c "select count(*) filter (where id::text !~ '^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\$') as non_rfc, count(*) from initiative" -c "select count(*) filter (where id::text !~ '^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\$') as non_rfc, count(*) from transformation" -c "select count(*) filter (where id::text !~ '^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\$') as non_rfc_audit from audit_event" -c "select count(*) from deployment_environment" -c "select pg_size_pretty(pg_database_size('mth'))"

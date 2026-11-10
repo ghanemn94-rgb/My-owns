@@ -120,6 +120,8 @@ test("T14: a saved draft reopens, a save lists a new version, a comment and an a
   browser,
   playwright,
 }, info) => {
+  // Budget measured (F-DG6-144 sweep, T-DG6-FE-Z1B): in the DG6 QA round-2 full runs and T-DG6-FE-Z1's run1 (under load),
+  // this test's worst loaded run took 28.1 s; the budget is at least 2x that. Table: docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt.
   test.setTimeout(150_000);
   const lang = langOf(info);
   const bo = await asUser(browser, lang, owner.username);
@@ -220,6 +222,8 @@ test("T01: form tools on a diagnostic record (comment, attachment, history) and 
   page,
   browser,
 }, info) => {
+  // Budget measured (F-DG6-144 sweep, T-DG6-FE-Z1B): in the DG6 QA round-2 full runs and T-DG6-FE-Z1's run1 (under load),
+  // this test's worst loaded run took 20.3 s; the budget is at least 2x that. Table: docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt.
   test.setTimeout(120_000);
   const lang = langOf(info);
   const foreign = trackRequests(page);
@@ -322,6 +326,8 @@ test("Form builder: the twelve extension badges; an extension field added to T03
   page,
   playwright,
 }, info) => {
+  // Budget measured (F-DG6-144 sweep, T-DG6-FE-Z1B): in the DG6 QA round-2 full runs and T-DG6-FE-Z1's run1 (under load),
+  // this test's worst loaded run took 13.0 s; the budget is at least 2x that. Table: docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt.
   test.setTimeout(150_000);
   const lang = langOf(info);
   const foreign = trackRequests(page);

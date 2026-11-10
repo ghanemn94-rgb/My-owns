@@ -143,6 +143,8 @@ export const sustainmentReview = z.strictObject({
   createdBy: nullableUuid,
   updatedAt: timestamp,
   updatedBy: nullableUuid,
+  /** T-DG6-BE-Z12 (F-DG6-480; D-218): a reference to a record the reader is not admitted to was not named. */
+  includesRestrictedRecords: z.literal(true).optional(),
 });
 export type SustainmentReview = z.infer<typeof sustainmentReview>;
 export const sustainmentReviewPage = page(sustainmentReview);

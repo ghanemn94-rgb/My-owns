@@ -1,0 +1,161 @@
+diff --git a/apps/web/e2e/p4-adoption-bau.spec.ts b/apps/web/e2e/p4-adoption-bau.spec.ts
+index 0701314e2..87fdde076 100644
+--- a/apps/web/e2e/p4-adoption-bau.spec.ts
++++ b/apps/web/e2e/p4-adoption-bau.spec.ts
+@@ -301,6 +301,9 @@ test("4. Training 100 % with no observation shows proficiency Unknown; a form ob
+   await expect(page.locator("[data-respond]")).toBeVisible();
+   await page.locator("[data-respond]").click();
+   dialog = page.getByRole("dialog");
++  // The observation date defaults to today's Asia/Riyadh business date, the calendar the API selects the reporting
++  // period with (T-DG6-BE-X8: a UTC default fell in the previous month between 00:00 and 03:00 Riyadh on the 1st).
++  await expect(dialog.getByLabel(tr(lang, "adoptionP4.records.observedOn"))).toHaveValue(day(0));
+   await dialog.getByLabel(tr(lang, "adoptionP4.forms.subjectLabel")).fill(`Synthetic agent 7 ${lang}`);
+   await dialog.locator("[data-answer='q1']").selectOption("yes");
+   await submitOf(dialog).click();
+diff --git a/apps/web/src/lib/format.ts b/apps/web/src/lib/format.ts
+index 48198c643..c61546cae 100644
+--- a/apps/web/src/lib/format.ts
++++ b/apps/web/src/lib/format.ts
+@@ -146,6 +146,23 @@ function offsetMs(epoch: number, timeZone: string): number {
+   return wall - Math.floor(epoch / 1000) * 1000;
+ }
+ 
++/**
++ * Today's business date "YYYY-MM-DD" in `timeZone` (the organization's zone, default Asia/Riyadh), never the UTC or the
++ * browser's date. Between 00:00 and 03:00 Riyadh the UTC date is still the previous day (at a month boundary, the
++ * previous month), so a default taken from `toISOString()` would fall outside the period the API selects from the
++ * business date (`p4_business_date`; ADR-0025 §2). `now` is injected for tests.
++ */
++export function businessDateIn(timeZone: string, now: Date = new Date()): string {
++  const parts = new Intl.DateTimeFormat("en-US", {
++    timeZone,
++    year: "numeric",
++    month: "2-digit",
++    day: "2-digit",
++  }).formatToParts(now);
++  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "";
++  return `${get("year")}-${get("month")}-${get("day")}`;
++}
++
+ /**
+  * A business date "YYYY-MM-DD" (a calendar date in the transformation's zone, no time). Formatted as that calendar
+  * date, never shifted by the browser's or the server's offset. Null/invalid input yields null (the caller renders
+diff --git a/apps/web/src/lib/lib.test.ts b/apps/web/src/lib/lib.test.ts
+index 29e42d30c..a175efc78 100644
+--- a/apps/web/src/lib/lib.test.ts
++++ b/apps/web/src/lib/lib.test.ts
+@@ -16,7 +16,7 @@ import {
+   route,
+ } from "../test/fixtures.tsx";
+ import type { MethodologyCatalogue } from "../api/types.ts";
+-import { formatDateTime, formatDecimal, formatMoney, zonedLocalToUtcIso } from "./format.ts";
++import { businessDateIn, formatDateTime, formatDecimal, formatMoney, zonedLocalToUtcIso } from "./format.ts";
+ import { gateLabel, gateName } from "./methodology.ts";
+ import { charterUpdate, diagnosticItemUpdate, freeText } from "@mth/shared/schemas";
+ import { issueCode } from "../components/Form.tsx";
+@@ -69,6 +69,18 @@ describe("dates", () => {
+     expect(zonedLocalToUtcIso("2026-01-01", "UTC")).toBe("2026-01-01T00:00:00.000Z");
+     expect(zonedLocalToUtcIso("garbage", "UTC")).toBeNull();
+   });
++  it("today's business date is the organization zone's calendar date, also across a month boundary (T-DG6-BE-X8)", () => {
++    // 2026-10-31T21:30Z is 00:30 on 1 November in Riyadh (UTC+3): a new month there, still October in UTC.
++    const afterRiyadhMidnight = new Date("2026-10-31T21:30:00Z");
++    expect(businessDateIn("Asia/Riyadh", afterRiyadhMidnight)).toBe("2026-11-01");
++    expect(businessDateIn("UTC", afterRiyadhMidnight)).toBe("2026-10-31");
++    // The last Riyadh minute of October and the first: the boundary is Riyadh midnight (20:59 / 21:00 UTC).
++    expect(businessDateIn("Asia/Riyadh", new Date("2026-10-31T20:59:59Z"))).toBe("2026-10-31");
++    expect(businessDateIn("Asia/Riyadh", new Date("2026-10-31T21:00:00Z"))).toBe("2026-11-01");
++    // A year boundary, and a configured zone other than the default (the zone is configurable, never hardcoded).
++    expect(businessDateIn("Asia/Riyadh", new Date("2026-12-31T22:00:00Z"))).toBe("2027-01-01");
++    expect(businessDateIn("America/New_York", new Date("2026-11-01T02:00:00Z"))).toBe("2026-10-31");
++  });
+ });
+ 
+ describe("permission hints mirror the server rules", () => {
+diff --git a/apps/web/src/pages/adoption/FormsPage.tsx b/apps/web/src/pages/adoption/FormsPage.tsx
+index 7ffecc963..b46598041 100644
+--- a/apps/web/src/pages/adoption/FormsPage.tsx
++++ b/apps/web/src/pages/adoption/FormsPage.tsx
+@@ -8,11 +8,13 @@
+ import { useState } from "react";
+ import { useTranslation } from "react-i18next";
+ import { Link, useParams } from "react-router";
++import { DEFAULTS } from "@mth/shared";
+ import type { AssessmentQuestion } from "@mth/shared/calc";
+ import { ASSESSMENT_FORM_STATUSES } from "@mth/shared/schemas";
+ import { ApiError, api } from "../../api/client.ts";
+ import { useP4Refresh } from "../../api/p4.ts";
+ import { useLocale } from "../../app/locale.ts";
++import { useMe } from "../../auth/session.tsx";
+ import { beginSessionGuard } from "../../auth/sessionBound.ts";
+ import { Dialog, Field } from "../../components/Form.tsx";
+ import { Icon } from "../../components/Icon.tsx";
+@@ -21,6 +23,7 @@ import { RegisterTable, type RegisterColumn } from "../../components/RegisterTab
+ import { Section } from "../../components/Section.tsx";
+ import { QueryState } from "../../components/States.tsx";
+ import { useWorkspace, WorkspaceFrame } from "../../components/Workspace.tsx";
++import { businessDateIn } from "../../lib/format.ts";
+ import { fieldErrorMessage, pointerToField } from "../../lib/problem.ts";
+ import { DueDate, FormAlert, P4FormDialog, textOf, type P4FieldSpec } from "../my-work/p4ui.tsx";
+ import { useActionRunner } from "./actions.tsx";
+@@ -411,7 +414,12 @@ function RespondDialog({ form, onClose }: { form: AssessmentForm; onClose: () =>
+   const [groupId, setGroupId] = useState(form.stakeholderGroupId ?? "");
+   const [subjectUserId, setSubjectUserId] = useState("");
+   const [subjectLabel, setSubjectLabel] = useState("");
+-  const [observedOn, setObservedOn] = useState(new Date().toISOString().slice(0, 10));
++  const me = useMe();
++  // The default observation date is today's business date in the organization's zone (default Asia/Riyadh), the
++  // calendar the API selects the reporting period with; never the UTC date (wrong between 00:00 and 03:00 Riyadh).
++  const [observedOn, setObservedOn] = useState(() =>
++    businessDateIn(me.organization.defaultTimezone ?? DEFAULTS.timezone),
++  );
+   const [answers, setAnswers] = useState<Record<string, string>>({});
+   const [errors, setErrors] = useState<Record<string, string>>({});
+   const [serverError, setServerError] = useState<unknown>(null);
+diff --git a/apps/web/src/pages/adoption/adoption.test.tsx b/apps/web/src/pages/adoption/adoption.test.tsx
+index b9aab7899..130189d14 100644
+--- a/apps/web/src/pages/adoption/adoption.test.tsx
++++ b/apps/web/src/pages/adoption/adoption.test.tsx
+@@ -303,6 +303,42 @@ describe.each(["en", "ar"] as const)("adoption screens (%s)", (locale) => {
+     expect(body).not.toHaveProperty("proficiencyResult");
+   });
+ 
++  it("form: the default observation date is today's Riyadh business date, also just after midnight on the 1st (T-DG6-BE-X8)", async () => {
++    // 2026-10-31T21:30Z is 00:30 on 1 November in Riyadh: the API selects the November reporting period from the
++    // business date, so a UTC default (31 October) would put the observation outside it and leave proficiency Unknown.
++    vi.useFakeTimers({ toFake: ["Date"] });
++    vi.setSystemTime(new Date("2026-10-31T21:30:00Z"));
++    try {
++      const { requests } = mockApi(
++        ...p4Handlers(
++          locale,
++          ["proficiency.record", "assessment.respond"],
++          [
++            route("GET", new RegExp(`${esc(TRP)}/assessment-forms/${FORM_ID}$`), () => json(form())),
++            route("GET", new RegExp(`${esc(TRP)}/stakeholder-groups\\?`), () => page([group()])),
++            route("POST", new RegExp(`${esc(TRP)}/assessment-records$`), () => ({ status: 201, body: {} })),
++          ],
++        ),
++      );
++      renderApp(`/transformations/${TR_ID}/assessment-forms/${FORM_ID}`, { i18n: createI18n(locale) });
++      fireEvent.click(await screen.findByRole("button", { name: new RegExp(t("adoptionP4.forms.respond")) }));
++      const dialog = await screen.findByRole("dialog");
++      expect(within(dialog).getByLabelText(new RegExp(t("adoptionP4.records.observedOn")))).toHaveProperty(
++        "value",
++        "2026-11-01",
++      );
++      fireEvent.change(within(dialog).getByLabelText(t("adoptionP4.forms.subjectLabel")), {
++        target: { value: "Synthetic agent 7" },
++      });
++      fireEvent.change(dialog.querySelector("[data-answer='uses_queue']")!, { target: { value: "yes" } });
++      fireEvent.click(within(dialog).getByRole("button", { name: t("adoptionP4.forms.submitResponse") }));
++      await waitFor(() => expect(requests.some((r) => r.method === "POST")).toBe(true));
++      expect(requests.find((r) => r.method === "POST")!.body).toMatchObject({ observedOn: "2026-11-01" });
++    } finally {
++      vi.useRealTimers();
++    }
++  });
++
+   it("record page: answers are labelled from the version answered (getAssessmentFormVersion), a key the version lacks shows 'Unknown question'", async () => {
+     const RECORD_ID = "01920000-0000-7000-b000-0000000000a1";
+     // The form moved on to version 2 (relabelled); the record was answered on version 1.

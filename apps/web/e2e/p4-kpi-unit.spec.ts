@@ -22,6 +22,16 @@ import { SYN_RETAIL, apiSession, expectAccessible, langOf, shot, type ApiSession
 
 test.describe.configure({ mode: "serial" });
 
+// Budget (F-DG6-144, the F-DG5-145/146 carry-forward of D-193; p6-work-split §2 rules 13 and 15): 60 s for
+// every test and hook in this file that does not set its own. Measured in the DG6 QA round-2 full product
+// runs at a 1-minute load of 11-21 on 4 CPUs (docs/delivery/test-evidence/DG6/qa/round-2/06-e2e-product-*.log): the slowest default-budget test took 17.3 s.
+// T-DG6-FE-Z1's loaded full runs (both projects, both locale settings, CPU spinners): see
+// docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt. The budget is at least 2x the worst of
+// these, rounded up to 15 s, and never below 60 s.
+// T-DG6-FE-Z1B: raised from 60 s to 75 s. In the z1b loaded full runs (load 21-26, above the review's 11-21;
+// docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/z1b-*.log) the test in row :243 of z1b-budget-table-pass3.txt took 32.6 s; 2x rounded up to 15 s.
+test.setTimeout(75_000);
+
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
 const stamp = Date.now().toString(36);
 
@@ -195,6 +205,7 @@ interface ApiArea {
 }
 
 test("1. the worker calculates both KPIs; People & adoption carries the KPI's kpiUnit (KBE-R8)", async () => {
+  test.setTimeout(240_000); // two 90 s polls (below) plus the worker's start and stop
   // The e2e stack runs no worker: start the real one for this step, against the same database, then stop it.
   const worker: ChildProcess = spawn(process.execPath, ["apps/worker/dist/main.js"], {
     cwd: ROOT,
@@ -209,7 +220,9 @@ test("1. the worker calculates both KPIs; People & adoption carries the KPI's kp
       await expect
         .poll(
           async () => (await lead.call<{ actual: string | null }>("GET", `${T}/kpi-definitions/${k.id}/status`)).actual,
-          { timeout: 20_000, intervals: [500] },
+          // 90 s as in p4-benefits.spec.ts: the worker starts late in a full run and first drains the jobs the earlier specs
+          // queued with no worker running (20 s ran out on the C.UTF-8 run of b7a1a96a7, chromium-ar #415).
+          { timeout: 90_000, intervals: [500] },
         )
         .toBe(k.actual);
   } catch (e) {

@@ -5,6 +5,9 @@
 //   GET  /transformations/{t}/form-drafts/{draftId}           getFormDraft     (reopen; baseChanged)
 //   PUT  /transformations/{t}/form-drafts/{draftId}           updateFormDraft
 //   POST /transformations/{t}/form-drafts/{draftId}/close     closeFormDraft   (saved | discarded)
+//   GET  /me/form-drafts                                      listMyFormDrafts (P6, T-DG6-BE-Q2; ADR-0057 §6: the
+//        caller's OPEN drafts across transformations, newest first, for draft recovery; a draft of a transformation the
+//        caller can no longer read - ReadScope, transformation.read - is left out and not changed)
 // A draft is the author's partial request body (`payload`, a JSON object of at most 256 KiB) for a new record or an
 // existing one, with the record version it was started from. `open -> closed` ('saved' after the record write
 // succeeded, or 'discarded'); a closed draft never changes (form_draft_guard). One open draft per user and existing
@@ -33,14 +36,19 @@ import {
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
-import { auditContextOf, principalOf } from "../access/index.ts";
+import { auditContextOf, principalOf, readScopeFor, restrictedRecordRefs } from "../access/index.ts";
 import { record } from "../audit/index.ts";
 import {
+  HttpProblem,
+  cursorInstant,
+  cursorInstantValue,
+  cursorSchema,
+  cursorUuidText,
   decodeCursor,
   filterHash,
-  HttpProblem,
   iso,
   isoOrNull,
+  limitSchema,
   paginate,
   parse,
   parseBody,
@@ -55,6 +63,7 @@ import { assertWorking, loadRecordType, requireRecordWrite, requireTransformatio
 export const FORM_DRAFTS = "/api/v1/transformations/:transformationId/form-drafts";
 export const FORM_DRAFT = `${FORM_DRAFTS}/:draftId`;
 export const FORM_DRAFT_CLOSE = `${FORM_DRAFT}/close`;
+export const MY_FORM_DRAFTS = "/api/v1/me/form-drafts";
 const JSON_BODY = ["application/json"] as const;
 const tParams = z.strictObject({ transformationId: uuid });
 const dParams = z.strictObject({ transformationId: uuid, draftId: uuid });
@@ -182,6 +191,12 @@ async function createDraft(tx: Tx, request: FastifyRequest, transformationId: st
   checkPayload(body.payload);
   const recordId = body.recordId ?? null;
   const base = body.baseRecordVersion ?? null;
+  // A draft of a sensitive record the caller may not open: 404, as the record (ADR-0051 §2; T-DG6-BE-Y1 sweep).
+  if (
+    recordId !== null &&
+    (await restrictedRecordRefs(tx, principalOf(request), [{ recordType: rt.table_name!, recordId }])).size > 0
+  )
+    throw problems.notFound();
   if (recordId !== null && base !== null) {
     const current = await currentRecordVersion(tx, rt, transformationId, recordId);
     if (current === null) throw problems.notFound();
@@ -361,15 +376,104 @@ async function listDrafts(db: Db, request: FastifyRequest, transformationId: str
   if (query.recordType !== undefined) q = q.where("record_type", "=", query.recordType);
   if (query.status !== undefined) q = q.where("status", "=", query.status);
   if (after !== null)
-    q = q.where(sql<boolean>`(updated_at, id) < (${String(after[0])}::timestamptz, ${String(after[1])}::uuid)`);
+    q = q.where(sql<boolean>`(updated_at, id) < (${cursorInstantValue(after[0])}, ${cursorUuidText(after[1])}::uuid)`);
+  // The cursor keeps updated_at to the microsecond (T-DG6-BE-X7; platform/cursor.ts cursorInstant).
   const rows = await q
+    .select(cursorInstant("updated_at").as("cursor_at"))
     .orderBy("updated_at", "desc")
     .orderBy("id", "desc")
     .limit(query.limit + 1)
     .execute();
-  const page = paginate(rows, query.limit, (r) => [r.updated_at.toISOString(), r.id], hash);
+  const page = paginate(rows, query.limit, (r) => [r.cursor_at, r.id], hash);
   const items: FormDraft[] = [];
   for (const r of page.items) items.push(await present(db, r));
+  return { items, nextCursor: page.nextCursor };
+}
+
+const myDraftsQuery = z.strictObject({ cursor: cursorSchema, limit: limitSchema });
+const UUID_KEY = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** The contract's `MyFormDraft`: a recovery entry, without the payload (the editor reopens it with getFormDraft). */
+export interface MyFormDraft {
+  id: string;
+  transformationId: string;
+  transformationCode: string;
+  transformationName: string;
+  recordType: string;
+  recordId: string | null;
+  baseRecordVersion: number | null;
+  baseChanged: boolean;
+  version: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * listMyFormDrafts (ADR-0057 §6; REQ-S15-010 "unsaved drafts are recoverable"): the caller's open drafts in every
+ * transformation it can still read, newest first (`updated_at` desc, `id` desc; keyset cursor). The read boundary is
+ * the ReadScope port (ADR-0051 §1) for `transformation.read` on the draft's transformation, decided in SQL on this
+ * request, so a revoked assignment hides the draft on the next request. Nothing is written: a hidden draft stays
+ * stored, unchanged, and reappears if read access returns. This module is the only reader of `form_draft`
+ * (form-draft-readers.test.ts), so a draft never enters any total.
+ */
+async function listMyDrafts(db: Db, request: FastifyRequest) {
+  const query = parseQuery(myDraftsQuery, request.query);
+  const principal = principalOf(request);
+  const userId = principal.userId ?? null;
+  if (userId === null) throw problems.unauthenticated();
+  const hash = filterHash({ table: "form_draft", list: "me", status: "open" });
+  const after = decodeCursor(query.cursor, hash, 2);
+  if (after !== null && (Number.isNaN(Date.parse(String(after[0]))) || !UUID_KEY.test(String(after[1]))))
+    throw problems.badRequest(
+      "validation.cursor",
+      "The cursor is invalid or belongs to other filters.",
+      "/query/cursor",
+    );
+  const scope = await readScopeFor(db, principal, "transformation.read");
+  let q = db
+    .selectFrom("form_draft as d")
+    .innerJoin("transformation as t", "t.id", "d.transformation_id")
+    .selectAll("d")
+    .select(["t.code as transformation_code", "t.name as transformation_name"])
+    .where("d.owner_user_id", "=", userId)
+    .where("d.status", "=", "open")
+    .where(
+      scope.predicate({
+        recordType: null,
+        recordId: sql.ref<string>("t.id"),
+        organizationId: sql.ref<string>("t.organization_id"),
+        businessUnitId: sql.ref<string | null>("t.business_unit_id"),
+        transformationId: sql.ref<string | null>("t.id"),
+      }),
+    );
+  if (after !== null)
+    q = q.where(
+      sql<boolean>`(d.updated_at, d.id) < (${cursorInstantValue(after[0])}, ${cursorUuidText(after[1])}::uuid)`,
+    );
+  const rows = await q
+    .select(cursorInstant("d.updated_at").as("cursor_at"))
+    .orderBy("d.updated_at", "desc")
+    .orderBy("d.id", "desc")
+    .limit(query.limit + 1)
+    .execute();
+  const page = paginate(rows, query.limit, (r) => [r.cursor_at, r.id], hash);
+  const items: MyFormDraft[] = [];
+  for (const r of page.items) {
+    const d = await present(db, r);
+    items.push({
+      id: d.id,
+      transformationId: r.transformation_id,
+      transformationCode: r.transformation_code,
+      transformationName: r.transformation_name,
+      recordType: d.recordType,
+      recordId: d.recordId,
+      baseRecordVersion: d.baseRecordVersion,
+      baseChanged: d.baseChanged,
+      version: d.version,
+      createdAt: d.createdAt,
+      updatedAt: d.updatedAt,
+    });
+  }
   return { items, nextCursor: page.nextCursor };
 }
 
@@ -426,7 +530,13 @@ export function registerFormDraftRoutes(app: FastifyInstance, { db }: ModuleDeps
     return sendVersioned(reply, 200, body);
   });
 
+  // listMyFormDrafts (P6, T-DG6-BE-Q2): any signed-in user, own drafts only; ReadScope per draft in the query.
+  app.get(MY_FORM_DRAFTS, { config: { access: { permission: "authenticated" } } }, async (request) =>
+    listMyDrafts(db, request),
+  );
+
   return [
+    `GET ${MY_FORM_DRAFTS}`,
     `GET ${FORM_DRAFTS}`,
     `POST ${FORM_DRAFTS}`,
     `GET ${FORM_DRAFT}`,

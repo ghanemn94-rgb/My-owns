@@ -14,6 +14,7 @@ export {
   registerRegister,
   registerUpdaterOf, // T-DG5-BE-E2: each kit register's own update function, for the forms bulk edit (ADR-0041 §5)
   sendCreated,
+  unknownReference, // T-DG6-BE-Z12 (D-218): the answer to an unknown or hidden reference
   writableTransformation,
   type LooseRow,
   type RegisterUpdateInput,

@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import type {
   Branding,
+  BrandingContrastReport,
   BrandingSettings,
   BrandingTokens,
   BrandingVersion,
@@ -16,7 +17,7 @@ import { api } from "../../api/client.ts";
 import { SHELL_READ } from "../../app/shell-read.ts";
 import { shouldRetry } from "../../api/queries.ts";
 
-export type { Branding, BrandingSettings, BrandingTokens, BrandingVersion };
+export type { Branding, BrandingContrastReport, BrandingSettings, BrandingTokens, BrandingVersion };
 
 /** The `--mth-*` custom property of a token (the @mth/design-tokens naming rule: dots become dashes). */
 export const cssVarName = (token: string): string => `--mth-${token.replace(/\./g, "-")}`;
@@ -29,6 +30,8 @@ export const brandingPaths = {
   settings: `${v1}/admin/branding`, // getBrandingSettings, putBrandingSettings
   versions: `${v1}/admin/branding/versions`, // listBrandingVersions
   version: (n: number) => `${v1}/admin/branding/versions/${n}`, // getBrandingVersion
+  // T-DG6-FE-F (ADR-0061 §5): the contrast report of a published version.
+  contrast: (n: number) => `${v1}/admin/branding/versions/${n}/contrast`, // getBrandingVersionContrast
 };
 
 export const brandingKeys = {
@@ -37,6 +40,7 @@ export const brandingKeys = {
   tokens: ["p5", "feg", "branding", "tokens"] as const,
   settings: ["p5", "feg", "branding", "settings"] as const,
   versions: (cursor: string | null) => ["p5", "feg", "branding", "versions", cursor ?? ""] as const,
+  contrast: (n: number) => ["p5", "feg", "branding", "contrast", n] as const,
 };
 
 /** The current published branding, read at render time (version 0 = the shipped defaults). */
@@ -72,6 +76,20 @@ export function useBrandingVersions(cursor: string | null, enabled = true) {
     queryKey: brandingKeys.versions(cursor),
     queryFn: () => api.get<BrandingVersionPage>(brandingPaths.versions, { limit: 20, ...(cursor ? { cursor } : {}) }),
     enabled,
+    retry: shouldRetry,
+  });
+}
+
+/**
+ * The contrast report of a published branding version (T-DG6-FE-F; ADR-0061 §5; getBrandingVersionContrast):
+ * `recorded` = stored at publish (every pair passes, a database rule); `not_recorded` = a version published before the
+ * P6 contrast rule, evaluated now, whose `failingCount` may be above 0. Null version = nothing to read.
+ */
+export function useBrandingContrast(versionNo: number | null) {
+  return useQuery({
+    queryKey: brandingKeys.contrast(versionNo ?? 0),
+    queryFn: () => api.get<BrandingContrastReport>(brandingPaths.contrast(versionNo ?? 0)),
+    enabled: versionNo !== null && versionNo >= 1,
     retry: shouldRetry,
   });
 }

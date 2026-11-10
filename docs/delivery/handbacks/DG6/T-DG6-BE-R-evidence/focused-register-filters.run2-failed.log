@@ -1,0 +1,135 @@
+port-policy: PostgreSQL listening on port 25500 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-r
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvuhrskw_beba501e (server_encoding UTF8); applied 110 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/transformations/register-filters.test.ts (13 tests | 6 failed) 9932ms
+   × the 9 register-kit lists declare exactly the saved-view registry's sorts (ADR-0057 §4, §5) > RegisterSpec.sortColumns keys equal SAVED_VIEW_LISTS[listKey].sorts; searchColumns are text columns 64ms
+     → journey_pain_points.step_key: expected 'uuid' to be 'text' // Object.is equality
+   ✓ register-kit lists: absent parameters return the DG2 response (ADR-0057 §5) > every page of each of the 9 lists is byte-identical to the DG2 page (id ascending; the DG2 cursor and hash)  586ms
+   × register-kit lists: each sort key both ways pages through every row (ADR-0057 §5) > sort=<key> and sort=-<key> on each of the 9 lists: no duplicate, no gap, the database's order 2224ms
+     → contract: listJourneyPainPoints does not declare status 500 (declared: 200, 400, 401, 404, 429); body: {"type":"urn:mth:problem:internal","title":"Internal error","status":500,"code":"internal","requestId":"01a18b23-b7ec-7219-a0f2-5502833ef019"}
+   × register-kit lists: each sort key both ways pages through every row (ADR-0057 §5) > nulls sort last ascending and first descending (capability dimension, pain-point step, outcome rank) 121ms
+     → contract: listJourneyPainPoints does not declare status 500 (declared: 200, 400, 401, 404, 429); body: {"type":"urn:mth:problem:internal","title":"Internal error","status":500,"code":"internal","requestId":"01a18b23-b894-759f-a6e9-977a76755965"}
+   ✓ register-kit lists: each sort key both ways pages through every row (ADR-0057 §5) > includeArchived=true with a sort pages through the archived rows too  314ms
+   × register-kit lists: q over the declared searchColumns (ADR-0057 §5) > q returns exactly the rows with the substring in a declared column, case-insensitive; % and _ are literal 561ms
+     → contract: listJourneyPainPoints does not declare status 500 (declared: 200, 400, 401, 404, 429); body: {"type":"urn:mth:problem:internal","title":"Internal error","status":500,"code":"internal","requestId":"01a18b23-bc0e-75ae-bbe5-3425734e4814"}
+   ✓ register-kit lists: refusals (ADR-0057 §5; ADR-0007 §4) > an unknown sort is 400 at /query/sort; q outside 1-200 characters is 400 at /query/q  460ms
+   ✓ register-kit lists: refusals (ADR-0057 §5; ADR-0007 §4) > a cursor issued for another filter or sort is 400 at /query/cursor; a malformed keyset is 400  1063ms
+   × register-kit lists: refusals (ADR-0057 §5; ADR-0007 §4) > the kit registers without searchColumns/sortColumns still refuse q and sort (dependencies, actions, TOM workshops) 14ms
+     → dependencies?q=alpha: expected [ 400, 'validation.invalid_type' ] to deeply equal [ 400, 'validation.unknown_field' ]
+   × register-kit lists: read authorization is unchanged (REQ-S15-013 view:scoped) > AUD lists with q and a sort (200); a user without transformation.read gets 404 with them 248ms
+     → contract: listJourneyPainPoints does not declare status 500 (declared: 200, 400, 401, 404, 429); body: {"type":"urn:mth:problem:internal","title":"Internal error","status":500,"code":"internal","requestId":"01a18b23-c304-704a-a15f-eb4bc936e06a"}
+   ✓ listTransformations sort (ADR-0057 §5: -updatedAt, updatedAt, code, -code; the DG1 values kept) > sort absent: every page is byte-identical to the DG1 page (updatedAt:desc; the DG1 cursor and hash) 86ms
+   ✓ listTransformations sort (ADR-0057 §5: -updatedAt, updatedAt, code, -code; the DG1 values kept) > each ADR-0057 sort pages all rows in the database's order; it orders as its DG1 twin 274ms
+   ✓ listTransformations sort (ADR-0057 §5: -updatedAt, updatedAt, code, -code; the DG1 values kept) > the cursor is bound to the spelling sent; unknown sorts are 400 at /query/sort; malformed keysets 400 52ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/transformations/register-filters.test.ts > the 9 register-kit lists declare exactly the saved-view registry's sorts (ADR-0057 §4, §5) > RegisterSpec.sortColumns keys equal SAVED_VIEW_LISTS[listKey].sorts; searchColumns are text columns
+AssertionError: journey_pain_points.step_key: expected 'uuid' to be 'text' // Object.is equality
+
+Expected: [32m"text"[39m
+Received: [31m"uuid"[39m
+
+ ❯ apps/api/test/integration/transformations/register-filters.test.ts:231:101
+    229|         SELECT column_name, data_type FROM information_schema.columns …
+    230|       const typeOf = new Map(types.rows.map((r) => [r.column_name, r.d…
+    231|       for (const column of spec.searchColumns) expect(typeOf.get(colum…
+       |                                                                                                     ^
+    232|       for (const { column } of spec.sortColumns.values()) expect(typeO…
+    233|     }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  |integration| apps/api/test/integration/transformations/register-filters.test.ts > register-kit lists: each sort key both ways pages through every row (ADR-0057 §5) > sort=<key> and sort=-<key> on each of the 9 lists: no duplicate, no gap, the database's order
+Error: contract: listJourneyPainPoints does not declare status 500 (declared: 200, 400, 401, 404, 429); body: {"type":"urn:mth:problem:internal","title":"Internal error","status":500,"code":"internal","requestId":"01a18b23-b7ec-7219-a0f2-5502833ef019"}
+ ❯ assertContract apps/api/test/support/contract.ts:121:11
+    119|   const declared = op.responses[String(res.statusCode)] ?? op.response…
+    120|   if (!declared) {
+    121|     throw new Error(
+       |           ^
+    122|       `contract: ${op.operationId} does not declare status ${res.statu…
+    123|     );
+ ❯ call apps/api/test/support/harness.ts:188:5
+ ❯ walk apps/api/test/integration/transformations/register-filters.test.ts:197:17
+ ❯ apps/api/test/integration/transformations/register-filters.test.ts:272:25
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  |integration| apps/api/test/integration/transformations/register-filters.test.ts > register-kit lists: each sort key both ways pages through every row (ADR-0057 §5) > nulls sort last ascending and first descending (capability dimension, pain-point step, outcome rank)
+Error: contract: listJourneyPainPoints does not declare status 500 (declared: 200, 400, 401, 404, 429); body: {"type":"urn:mth:problem:internal","title":"Internal error","status":500,"code":"internal","requestId":"01a18b23-b894-759f-a6e9-977a76755965"}
+ ❯ assertContract apps/api/test/support/contract.ts:121:11
+    119|   const declared = op.responses[String(res.statusCode)] ?? op.response…
+    120|   if (!declared) {
+    121|     throw new Error(
+       |           ^
+    122|       `contract: ${op.operationId} does not declare status ${res.statu…
+    123|     );
+ ❯ call apps/api/test/support/harness.ts:188:5
+ ❯ walk apps/api/test/integration/transformations/register-filters.test.ts:197:17
+ ❯ apps/api/test/integration/transformations/register-filters.test.ts:299:23
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  |integration| apps/api/test/integration/transformations/register-filters.test.ts > register-kit lists: q over the declared searchColumns (ADR-0057 §5) > q returns exactly the rows with the substring in a declared column, case-insensitive; % and _ are literal
+Error: contract: listJourneyPainPoints does not declare status 500 (declared: 200, 400, 401, 404, 429); body: {"type":"urn:mth:problem:internal","title":"Internal error","status":500,"code":"internal","requestId":"01a18b23-bc0e-75ae-bbe5-3425734e4814"}
+ ❯ assertContract apps/api/test/support/contract.ts:121:11
+    119|   const declared = op.responses[String(res.statusCode)] ?? op.response…
+    120|   if (!declared) {
+    121|     throw new Error(
+       |           ^
+    122|       `contract: ${op.operationId} does not declare status ${res.statu…
+    123|     );
+ ❯ call apps/api/test/support/harness.ts:188:5
+ ❯ walk apps/api/test/integration/transformations/register-filters.test.ts:197:17
+ ❯ apps/api/test/integration/transformations/register-filters.test.ts:328:23
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  |integration| apps/api/test/integration/transformations/register-filters.test.ts > register-kit lists: refusals (ADR-0057 §5; ADR-0007 §4) > the kit registers without searchColumns/sortColumns still refuse q and sort (dependencies, actions, TOM workshops)
+AssertionError: dependencies?q=alpha: expected [ 400, 'validation.invalid_type' ] to deeply equal [ 400, 'validation.unknown_field' ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    400,[22m
+[32m-   "validation.unknown_field",[39m
+[31m+   "validation.invalid_type",[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/transformations/register-filters.test.ts:402:74
+    400|       for (const query of ["q=alpha", "sort=createdAt"]) {
+    401|         const res = await get(`${T}/${path}?${query}`);
+    402|         expect([res.status, errorOf(res.body).code], `${path}?${query}…
+       |                                                                          ^
+    403|       }
+    404|       expect((await get(`${T}/${path}`)).status).toBe(200);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  |integration| apps/api/test/integration/transformations/register-filters.test.ts > register-kit lists: read authorization is unchanged (REQ-S15-013 view:scoped) > AUD lists with q and a sort (200); a user without transformation.read gets 404 with them
+Error: contract: listJourneyPainPoints does not declare status 500 (declared: 200, 400, 401, 404, 429); body: {"type":"urn:mth:problem:internal","title":"Internal error","status":500,"code":"internal","requestId":"01a18b23-c304-704a-a15f-eb4bc936e06a"}
+ ❯ assertContract apps/api/test/support/contract.ts:121:11
+    119|   const declared = op.responses[String(res.statusCode)] ?? op.response…
+    120|   if (!declared) {
+    121|     throw new Error(
+       |           ^
+    122|       `contract: ${op.operationId} does not declare status ${res.statu…
+    123|     );
+ ❯ call apps/api/test/support/harness.ts:188:5
+ ❯ apps/api/test/integration/transformations/register-filters.test.ts:414:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  6 failed | 7 passed (13)
+   Start at  04:48:17
+   Duration  41.89s (transform 11.20s, setup 0ms, collect 23.15s, tests 9.93s, environment 0ms, prepare 138ms)
+

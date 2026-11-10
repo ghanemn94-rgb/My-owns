@@ -1,0 +1,46 @@
+--- deploy/load/generate.mjs	2026-10-30 07:35:53.978547913 +0000
++++ deploy/load/generate.mjs	2026-10-30 07:57:39.037179305 +0000
+@@ -163,10 +163,16 @@
+   };
+ }
+ 
+-/** A deterministic UUID for (seed, kind, ordinal): md5 of the key, as SQL's md5(key)::uuid computes it. */
++/**
++ * A deterministic UUID for (seed, kind, ordinal): the md5 of the key with the RFC 9562 version 3 (name-based, MD5) and
++ * variant bits set, so the API's UUID validation accepts it (a bare md5(key)::uuid is not a valid RFC UUID; T-DG6-DO-F).
++ */
++export function rfcUuidFromMd5Hex(h) {
++  const variant = ((parseInt(h[16], 16) & 0x3) | 0x8).toString(16);
++  return `${h.slice(0, 8)}-${h.slice(8, 12)}-3${h.slice(13, 16)}-${variant}${h.slice(17, 20)}-${h.slice(20, 32)}`;
++}
+ export function loadId(seed, kind, n) {
+-  const h = createHash("md5").update(`${DATASET_CODE}:${seed}:${kind}:${n}`, "utf8").digest("hex");
+-  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20, 32)}`;
++  return rfcUuidFromMd5Hex(createHash("md5").update(`${DATASET_CODE}:${seed}:${kind}:${n}`, "utf8").digest("hex"));
+ }
+ 
+ const pad = (n, w) => String(n).padStart(w, "0");
+@@ -1034,7 +1040,7 @@
+         if (ids.length === 0) continue;
+         const field = steppable.find((x) => x.table === table).field;
+         const ts = at(-60 + (round % 60), round);
+-        // The audit id is md5(dataset:seed:step:<record>:<new version>)::uuid, the same scheme as loadId.
++        // The audit id is md5(dataset:seed:step:<record>:<new version>) with the RFC 9562 v3 bits, as loadId.
+         await client.query(
+           `WITH upd AS (
+              UPDATE ${table} x
+@@ -1044,10 +1050,12 @@
+            INSERT INTO audit_event (id, occurred_at, organization_id, transformation_id, actor_type, actor_user_id,
+                                     action, record_type, record_id, prior_version, new_version, reason, request_id,
+                                     source, changes)
+-           SELECT md5($4 || ':step:' || upd.id || ':' || upd.version)::uuid, $3::timestamptz, upd.organization_id,
++           SELECT (substr(m.h, 1, 12) || '3' || substr(m.h, 14, 3)
++                   || substr('89ab', (('x' || substr(m.h, 17, 1))::bit(4)::int & 3) + 1, 1) || substr(m.h, 18))::uuid,
++                  $3::timestamptz, upd.organization_id,
+                   upd.transformation_id, 'user', upd.updated_by, $5, $6, upd.id, upd.version - 1, upd.version, $7,
+                   $8, 'cli', jsonb_build_object($9::text, jsonb_build_object('from', $2 || (upd.version - 1), 'to', $2 || upd.version))
+-             FROM upd`,
++             FROM upd, LATERAL (SELECT md5($4 || ':step:' || upd.id || ':' || upd.version) AS h) m`,
+           [ids, STEP_TEXT[table], ts, `${DATASET_CODE}:${seed}`, `${table}.update`, table, REASON, REQUEST_ID, field],
+         );
+       }

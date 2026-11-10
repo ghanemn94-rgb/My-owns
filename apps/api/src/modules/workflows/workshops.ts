@@ -38,6 +38,9 @@ import {
   problems,
   requireIfMatch,
   sendVersioned,
+  keysetPage,
+  pageQueryFields,
+  type SortKey,
 } from "../platform/index.ts";
 import {
   assertActiveUsers,
@@ -52,6 +55,9 @@ import { insertDesignDecision } from "./decisions.ts";
 
 const W = "/api/v1/transformations/:transformationId/tom-workshops/:workshopId";
 const wParams = z.strictObject({ transformationId: z.uuid(), workshopId: z.uuid() });
+const participantListQuery = z.strictObject({ ...pageQueryFields });
+/** The participants' page sort (T-DG6-BE-V): id. */
+const PARTICIPANT_SORT: readonly SortKey[] = [{ name: "id", type: "uuid" }];
 const pParams = z.strictObject({ transformationId: z.uuid(), workshopId: z.uuid(), participantId: z.uuid() });
 const iParams = z.strictObject({ transformationId: z.uuid(), workshopId: z.uuid(), itemId: z.uuid() });
 const FACILITATE: readonly WriteRule[] = [{ permission: "workshop.facilitate" }];
@@ -113,15 +119,12 @@ export function registerWorkshopRoutes(app: FastifyInstance, db: Db): string[] {
   // ---------------------------------------------------------------- participants
   app.get(`${W}/participants`, { config: read }, async (request) => {
     const { transformationId, workshopId } = parse(wParams, request.params, "params");
+    const query = parseQuery(participantListQuery, request.query);
     await requireTransformationRead(db, principalOf(request), transformationId);
     await workshopOf(db, transformationId, workshopId);
-    const rows = await db
-      .selectFrom("tom_workshop_participant")
-      .selectAll()
-      .where("workshop_id", "=", workshopId)
-      .orderBy("id")
-      .execute();
-    return { items: rows.map(toParticipant) };
+    const q = db.selectFrom("tom_workshop_participant").selectAll().where("workshop_id", "=", workshopId);
+    const page = await keysetPage(q, PARTICIPANT_SORT, query, { list: "tom-workshop-participants", workshopId });
+    return { items: page.items.map(toParticipant), nextCursor: page.nextCursor };
   });
 
   app.post(`${W}/participants`, { config: facilitate }, async (request, reply) => {

@@ -69,6 +69,7 @@ import {
 } from "./engine.ts";
 import { appliedFilters, asIdList, dashboardRefusal, organizationFilterShape, resolveFilters } from "./filters.ts";
 import { benefitInClass, extraStateLinesOf, isExtraState, lineEntersClassSum } from "./finance.ts";
+import { dashboardRestriction, restrictedFieldAfter, withoutRestrictedRefs } from "./restricted.ts";
 import { readableTransformations } from "./scope.ts";
 
 export const DASHBOARD_DRILLDOWN = "/api/v1/dashboard-drilldown";
@@ -651,7 +652,8 @@ export function registerDrilldownRoutes(app: FastifyInstance, { db }: ModuleDeps
       });
       const after = decodeCursor(query.cursor, hash, 1);
       return readOnly(db, async (tx) => {
-        const scope = await readableTransformations(tx, principalOf(request), query.organizationId, {
+        const principal = principalOf(request);
+        const scope = await readableTransformations(tx, principal, query.organizationId, {
           transformationIds,
           phase: query.phase ?? null,
           status: query.status ?? null,
@@ -665,7 +667,12 @@ export function registerDrilldownRoutes(app: FastifyInstance, { db }: ModuleDeps
           status: query.status,
         });
         const ctx = await loadDashboardContext(tx, scope, filters);
-        const d = await drill(
+        // P6 (T-DG6-BE-B2; ADR-0051 §2): the figures are the same for every reader; an item, input or evidence entry of
+        // a restricted record is not listed, and a restricted subject is refused like a subject outside the scope.
+        const restriction = await dashboardRestriction(tx, principal, ctx.facts);
+        if (query.subjectId !== undefined && restriction.hides("benefit", query.subjectId))
+          throw dashboardRefusal("dashboard.metric_subject_mismatch", "/subjectId");
+        const drilled = await drill(
           tx,
           ctx,
           computeAreas(ctx.facts, ctx.clock, ctx.policy),
@@ -675,6 +682,21 @@ export function registerDrilldownRoutes(app: FastifyInstance, { db }: ModuleDeps
           scope.map((t) => t.id),
           query.currency ?? null,
         );
+        // T-DG6-BE-Z7 (F-DG6-361): every item, input and evidence entry, of every metric, through the same rule (the
+        // facts' own lines, then SENSITIVE_CHILD_SOURCES); an evidence entry is also checked as its evidence item.
+        const d = {
+          ...drilled,
+          items: await withoutRestrictedRefs(tx, principal, restriction, drilled.items, (i) => [i]),
+          inputs: await withoutRestrictedRefs(tx, principal, restriction, drilled.inputs, (i) => [i]),
+          evidence: await withoutRestrictedRefs(tx, principal, restriction, drilled.evidence, (e) => [
+            e,
+            { recordType: "evidence", recordId: e.evidenceId },
+          ]),
+        };
+        const removed =
+          d.items.length !== drilled.items.length ||
+          d.inputs.length !== drilled.inputs.length ||
+          d.evidence.length !== drilled.evidence.length;
         // Offset pagination over the deterministic item order (the cursor is bound to the filters by its hash).
         const start = after ? Number(after[0]) : 0;
         const page = d.items.slice(start, start + query.limit);
@@ -690,6 +712,7 @@ export function registerDrilldownRoutes(app: FastifyInstance, { db }: ModuleDeps
           nextCursor: next,
           headlineBasis: d.headlineBasis,
           currency: query.currency ?? null,
+          ...restrictedFieldAfter(restriction, removed),
         };
       });
     },

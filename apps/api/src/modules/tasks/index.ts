@@ -14,6 +14,7 @@ import type { FastifyInstance } from "fastify";
 import type { ModuleDeps, ModuleRegistration } from "../platform/index.ts";
 import { registerTaskRoutes } from "./routes.ts";
 import { registerNotificationPolicyRoutes } from "./notification-policy.ts"; // P5 BE-L (stub by T-DG5-BE-A)
+import { registerDeepLinkRoutes } from "./deep-links.ts"; // P6 BE-C (stub by T-DG6-BE-A; ADR-0051 §3)
 
 export {
   closeWorkItemsOfSubject,
@@ -26,7 +27,19 @@ export {
   type WorkItemReassignResult,
   type WorkItemSourceRef,
 } from "./service.ts";
-export { SYSTEM_MANAGED_KINDS, taskRefusals, toInboxNotification, toWorkItem } from "./routes.ts";
+export { INBOX_RESTRICTED, SYSTEM_MANAGED_KINDS, taskRefusals, toInboxNotification, toWorkItem } from "./routes.ts";
+// P6 BE-C (ADR-0051 §3): the lazy deep-link issue the channel fan-out (ADR-0054) calls, and the target rule.
+export {
+  deepLinkTarget,
+  issueDeepLink,
+  readableTargets,
+  restrictedNotifications,
+  restrictedLinkChildren,
+  restrictedWorkItemLink,
+  restrictedWorkItems,
+  type DeepLinkTarget,
+  type IssuedDeepLink,
+} from "./deep-links.ts";
 // T-DG4-BE-R3 (BE-F2 handback §8 item 1; ADR-0032 amendment G1 item 5).
 export { followMeetingActionWorkItem, MEETING_ACTION_TASK, type FollowedAction } from "./meeting-action-follow.ts";
 // T-DG4-KBE-G2 (ADR-0037 §1 item 2, §7, §9): the open work items of one user, read-only (My Work, the header).
@@ -34,6 +47,10 @@ export { loadOpenWorkItems, type OpenWorkItemFact } from "./dashboard-facts.ts";
 
 /** Wiring hook called by the composition root (server.ts). */
 export function registerTasksModule(app: FastifyInstance, deps: ModuleDeps): ModuleRegistration {
-  const routes = [...registerTaskRoutes(app, deps), ...registerNotificationPolicyRoutes(app, deps)];
+  const routes = [
+    ...registerTaskRoutes(app, deps),
+    ...registerNotificationPolicyRoutes(app, deps),
+    ...registerDeepLinkRoutes(app, deps), // P6 BE-C
+  ];
   return Object.freeze({ module: "tasks", status: "active", deliversIn: "P4", routes: Object.freeze(routes) });
 }

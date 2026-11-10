@@ -1,0 +1,64 @@
+port-policy: PostgreSQL listening on port 31050 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+migrate exit 0 118 applied; 
+LAST MIGRATIONS
+{"id":126,"name":"0126_p6_report_snapshot_aggregate.sql","sha256":"0a7f11f46e1c3a70cfa341c3207d3f7c3b2d75ca32902d5190d7e973e141cd1d","applied_at":"2026-11-08T12:06:29.457Z","applied_by":"mth_owner"}
+{"id":125,"name":"0125_p6_export_assembly_attempts.sql","sha256":"b703f4c43a3077b46ee032ebdb6b493600e2d0e1d0d372c13fdca06b9f78f7d8","applied_at":"2026-11-08T12:06:29.456Z","applied_by":"mth_owner"}
+== TABLE report_snapshot_aggregate
+COLUMNS
+{"column_name":"id","data_type":"uuid","is_nullable":"NO","column_default":null,"ordinal_position":1}
+{"column_name":"organization_id","data_type":"uuid","is_nullable":"NO","column_default":null,"ordinal_position":2}
+{"column_name":"transformation_id","data_type":"uuid","is_nullable":"NO","column_default":null,"ordinal_position":3}
+{"column_name":"snapshot_id","data_type":"uuid","is_nullable":"NO","column_default":null,"ordinal_position":4}
+{"column_name":"section_key","data_type":"text","is_nullable":"NO","column_default":null,"ordinal_position":5}
+{"column_name":"record_type","data_type":"text","is_nullable":"NO","column_default":null,"ordinal_position":6}
+{"column_name":"record_id","data_type":"uuid","is_nullable":"NO","column_default":null,"ordinal_position":7}
+{"column_name":"created_at","data_type":"timestamp with time zone","is_nullable":"NO","column_default":"now()","ordinal_position":8}
+CONSTRAINTS
+report_snapshot_aggregate_key u => UNIQUE (snapshot_id, section_key, record_type, record_id)
+report_snapshot_aggregate_organization_id_fkey f => FOREIGN KEY (organization_id) REFERENCES organization(id) ON UPDATE RESTRICT ON DELETE RESTRICT
+report_snapshot_aggregate_pkey p => PRIMARY KEY (id)
+report_snapshot_aggregate_record_type_check c => CHECK ((record_type ~ '^[a-z][a-z0-9_]{1,63}$'::text))
+report_snapshot_aggregate_section_key_check c => CHECK ((section_key ~ '^[a-z][a-z0-9_]{0,63}$'::text))
+report_snapshot_aggregate_snapshot_fkey f => FOREIGN KEY (transformation_id, snapshot_id) REFERENCES report_snapshot(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT
+report_snapshot_aggregate_transformation_id_fkey f => FOREIGN KEY (transformation_id) REFERENCES transformation(id) ON UPDATE RESTRICT ON DELETE RESTRICT
+INDEXES
+CREATE UNIQUE INDEX report_snapshot_aggregate_key ON public.report_snapshot_aggregate USING btree (snapshot_id, section_key, record_type, record_id)
+CREATE UNIQUE INDEX report_snapshot_aggregate_pkey ON public.report_snapshot_aggregate USING btree (id)
+TRIGGERS
+report_snapshot_aggregate_append_only => CREATE TRIGGER report_snapshot_aggregate_append_only BEFORE DELETE OR UPDATE ON public.report_snapshot_aggregate FOR EACH ROW EXECUTE FUNCTION p2_append_only()
+report_snapshot_aggregate_append_only_truncate => CREATE TRIGGER report_snapshot_aggregate_append_only_truncate BEFORE TRUNCATE ON public.report_snapshot_aggregate FOR EACH STATEMENT EXECUTE FUNCTION p2_append_only()
+report_snapshot_aggregate_guard => CREATE TRIGGER report_snapshot_aggregate_guard BEFORE INSERT ON public.report_snapshot_aggregate FOR EACH ROW EXECUTE FUNCTION report_snapshot_child_guard()
+report_snapshot_aggregate_row_guard => CREATE TRIGGER report_snapshot_aggregate_row_guard BEFORE INSERT OR UPDATE ON public.report_snapshot_aggregate FOR EACH ROW EXECUTE FUNCTION p2_row_guard()
+GRANTS mth_app
+INSERT, SELECT
+== TABLE report_snapshot
+COLUMNS
+{"column_name":"aggregates_recorded","data_type":"boolean","is_nullable":"NO","column_default":"true","ordinal_position":38}
+TRIGGERS
+report_snapshot_aggregates_recorded_immutable => CREATE TRIGGER report_snapshot_aggregates_recorded_immutable BEFORE UPDATE ON public.report_snapshot FOR EACH ROW EXECUTE FUNCTION report_snapshot_aggregates_recorded_immutable()
+GRANTS mth_app
+INSERT, SELECT, UPDATE
+FUNCTION report_snapshot_aggregates_recorded_immutable
+config ["search_path=public, pg_temp"] secdef false constraint names report_snapshot_aggregates_recorded_immutable
+report_snapshot_child_guard constraint names 
+CHILD GUARD SRC
+
+DECLARE
+  s report_snapshot%ROWTYPE;
+BEGIN
+  SELECT * INTO s FROM report_snapshot WHERE id = NEW.snapshot_id;
+  IF NOT FOUND THEN
+    RETURN NEW; -- the foreign key reports it
+  END IF;
+  IF s.transformation_id <> NEW.transformation_id OR s.organization_id <> NEW.organization_id THEN
+    RAISE EXCEPTION '%: a child row belongs to its snapshot''s transformation', TG_TABLE_NAME
+      USING ERRCODE = 'check_violation', CONSTRAINT = TG_TABLE_NAME || '_same_transformation';
+  END IF;
+  IF s.status <> 'generated' OR s.created_at <> now() THEN
+    RAISE EXCEPTION '%: rows are written only in the transaction that creates the snapshot', TG_TABLE_NAME
+      USING ERRCODE = 'check_violation', CONSTRAINT = TG_TABLE_NAME || '_creation_only';
+  END IF;
+  RETURN NEW;
+END 
+FKs referencing report_snapshot_aggregate: []

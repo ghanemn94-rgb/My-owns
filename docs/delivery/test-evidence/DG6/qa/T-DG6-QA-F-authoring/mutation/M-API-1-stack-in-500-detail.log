@@ -1,0 +1,358 @@
+port-policy: PostgreSQL listening on port 27210 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.7UPnmG/claude-0/mut-api
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvvwixod_c565226c (server_encoding UTF8); applied 113 migrations to a fresh database
+ ❯ |integration| tests/qa/integration/a20-s15-014-no-infra-terms.test.ts (6 tests | 3 failed) 13149ms
+   ✓ REQ-S15-014 clause 2 (A20): a real server failure reaches the client without stack traces or infrastructure terms > control: the transformation list and detail answer 200 before the fault 207ms
+   × REQ-S15-014 clause 2 (A20): a real server failure reaches the client without stack traces or infrastructure terms > a real SQL failure (relation missing, 42P01) is a 500 internal problem with a request id and no §8 term 148ms
+     → {"type":"urn:mth:problem:internal","title":"Internal error","status":500,"detail":"error: relation \"transformation\" does not exist\n    at /var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/pg@8.16.3/node_modules/pg/lib/client.js:545:17\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at PostgresConnection.executeQuery (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:95:49)\n    at file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:35:28\n    at DefaultConnectionProvider.provideConnection (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/default-connection-provider.js:10:20)\n    at DefaultQueryExecutor.executeQuery (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16)\n    at SelectQueryBuilderImpl.execute (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/select-query-builder.js:318:24)\n    at Object.<anonymous> (/var/tmp/mth-run.7UPnmG/claude-0/mut-api/apps/api/src/modules/transformations/routes.ts:176:18)\n    at PostgresConnection.executeQuery (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:107:41)\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:35:28\n    at DefaultConnectionProvider.provideConnection (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/default-connection-provider.js:10:20)\n    at DefaultQueryExecutor.executeQuery (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16)\n    at SelectQueryBuilderImpl.execute (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/select-query-builder.js:318:24)\n    at Object.<anonymous> (/var/tmp/mth-run.7UPnmG/claude-0/mut-api/apps/api/src/modules/transformations/routes.ts:176:18)","code":"internal","requestId":"01a19038-9e68-77ea-a556-e4b3eb9a3309"}
+urn:mth:problem:internal
+Internal error
+error: relation "transformation" does not exist
+    at /var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/pg@8.16.3/node_modules/pg/lib/client.js:545:17
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at PostgresConnection.executeQuery (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:95:49)
+    at file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:35:28
+    at DefaultConnectionProvider.provideConnection (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/default-connection-provider.js:10:20)
+    at DefaultQueryExecutor.executeQuery (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16)
+    at SelectQueryBuilderImpl.execute (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/select-query-builder.js:318:24)
+    at Object.<anonymous> (/var/tmp/mth-run.7UPnmG/claude-0/mut-api/apps/api/src/modules/transformations/routes.ts:176:18)
+    at PostgresConnection.executeQuery (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:107:41)
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:35:28
+    at DefaultConnectionProvider.provideConnection (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/default-connection-provider.js:10:20)
+    at DefaultQueryExecutor.executeQuery (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16)
+    at SelectQueryBuilderImpl.execute (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/select-query-builder.js:318:24)
+    at Object.<anonymous> (/var/tmp/mth-run.7UPnmG/claude-0/mut-api/apps/api/src/modules/transformations/routes.ts:176:18)
+internal
+01a19038-9e68-77ea-a556-e4b3eb9a3309: expected [ …(7) ] to deeply equal []
+   × REQ-S15-014 clause 2 (A20): a real server failure reaches the client without stack traces or infrastructure terms > a real SQL failure on a write (CSRF-protected POST) leaks nothing either, and writes nothing 31ms
+     → {"type":"urn:mth:problem:internal","title":"Internal error","status":500,"detail":"error: relation \"transformation\" does not exist\n    at /var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/pg@8.16.3/node_modules/pg/lib/client.js:545:17\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at PostgresConnection.executeQuery (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:95:49)\n    at file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:35:28\n    at file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/kysely.js:947:20\n    at SingleConnectionProvider.#run (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/single-connection-provider.js:24:16)\n    at DefaultQueryExecutor.executeQuery (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16)\n    at SelectQueryBuilderImpl.execute (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/select-query-builder.js:318:24)\n    at SelectQueryBuilderImpl.executeTakeFirst (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/select-query-builder.js:322:26)\n    at nextTransformationCode (/var/tmp/mth-run.7UPnmG/claude-0/mut-api/apps/api/src/modules/transformations/repository.ts:67:13)\n    at PostgresConnection.executeQuery (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:107:41)\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:35:28\n    at file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/kysely.js:947:20\n    at SingleConnectionProvider.#run (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/single-connection-provider.js:24:16)\n    at DefaultQueryExecutor.executeQuery (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16)\n    at SelectQueryBuilderImpl.execute (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/select-query-builder.js:318:24)\n    at SelectQueryBuilderImpl.executeTakeFirst (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/select-query-builder.js:322:26)\n    at nextTransformationCode (/var/tmp/mth-run.7UPnmG/claude-0/mut-api/apps/api/src/modules/transformations/repository.ts:67:13)\n    at run (/var/tmp/mth-run.7UPnmG/claude-0/mut-api/apps/api/src/modules/transformations/routes.ts:222:38)","code":"internal","requestId":"01a19038-9ef8-7253-ab1c-012c05d5cad9"}
+urn:mth:problem:internal
+Internal error
+error: relation "transformation" does not exist
+    at /var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/pg@8.16.3/node_modules/pg/lib/client.js:545:17
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at PostgresConnection.executeQuery (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:95:49)
+    at file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:35:28
+    at file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/kysely.js:947:20
+    at SingleConnectionProvider.#run (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/single-connection-provider.js:24:16)
+    at DefaultQueryExecutor.executeQuery (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16)
+    at SelectQueryBuilderImpl.execute (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/select-query-builder.js:318:24)
+    at SelectQueryBuilderImpl.executeTakeFirst (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/select-query-builder.js:322:26)
+    at nextTransformationCode (/var/tmp/mth-run.7UPnmG/claude-0/mut-api/apps/api/src/modules/transformations/repository.ts:67:13)
+    at PostgresConnection.executeQuery (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:107:41)
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:35:28
+    at file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/kysely.js:947:20
+    at SingleConnectionProvider.#run (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/single-connection-provider.js:24:16)
+    at DefaultQueryExecutor.executeQuery (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16)
+    at SelectQueryBuilderImpl.execute (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/select-query-builder.js:318:24)
+    at SelectQueryBuilderImpl.executeTakeFirst (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/select-query-builder.js:322:26)
+    at nextTransformationCode (/var/tmp/mth-run.7UPnmG/claude-0/mut-api/apps/api/src/modules/transformations/repository.ts:67:13)
+    at run (/var/tmp/mth-run.7UPnmG/claude-0/mut-api/apps/api/src/modules/transformations/routes.ts:222:38)
+internal
+01a19038-9ef8-7253-ab1c-012c05d5cad9: expected [ …(7) ] to deeply equal []
+   × REQ-S15-014 clause 2 (A20): a real server failure reaches the client without stack traces or infrastructure terms > a real network failure (database port refuses, ECONNREFUSED) answers a problem with a request id and no §8 term 549ms
+     → {"type":"urn:mth:problem:internal","title":"Internal error","status":500,"detail":"Error: connect ECONNREFUSED 127.0.0.1:27249\n    at /var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/pg-pool@3.14.0_pg@8.16.3/node_modules/pg-pool/index.js:45:11\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at PostgresDriver.acquireConnection (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:21:24)\n    at RuntimeDriver.acquireConnection (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/runtime-driver.js:44:28)\n    at DefaultConnectionProvider.provideConnection (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/default-connection-provider.js:8:28)\n    at DefaultQueryExecutor.executeQuery (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16)\n    at SelectQueryBuilderImpl.execute (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/select-query-builder.js:318:24)\n    at SelectQueryBuilderImpl.executeTakeFirst (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/select-query-builder.js:322:26)\n    at resolveSession (/var/tmp/mth-run.7UPnmG/claude-0/mut-api/apps/api/src/modules/identity/sessions.ts:77:15)\n    at principalFor (/var/tmp/mth-run.7UPnmG/claude-0/mut-api/apps/api/src/modules/identity/routes.ts:131:21)","code":"internal","requestId":"01a19038-a0f2-72f4-b90e-534390705af4"}
+urn:mth:problem:internal
+Internal error
+Error: connect ECONNREFUSED 127.0.0.1:27249
+    at /var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/pg-pool@3.14.0_pg@8.16.3/node_modules/pg-pool/index.js:45:11
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at PostgresDriver.acquireConnection (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:21:24)
+    at RuntimeDriver.acquireConnection (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/runtime-driver.js:44:28)
+    at DefaultConnectionProvider.provideConnection (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/default-connection-provider.js:8:28)
+    at DefaultQueryExecutor.executeQuery (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16)
+    at SelectQueryBuilderImpl.execute (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/select-query-builder.js:318:24)
+    at SelectQueryBuilderImpl.executeTakeFirst (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/select-query-builder.js:322:26)
+    at resolveSession (/var/tmp/mth-run.7UPnmG/claude-0/mut-api/apps/api/src/modules/identity/sessions.ts:77:15)
+    at principalFor (/var/tmp/mth-run.7UPnmG/claude-0/mut-api/apps/api/src/modules/identity/routes.ts:131:21)
+internal
+01a19038-a0f2-72f4-b90e-534390705af4: expected [ …(8) ] to deeply equal []
+   ✓ REQ-S15-014 clause 2 (A20): a real server failure reaches the client without stack traces or infrastructure terms > negative control: an unknown API path is a 404 problem with no §8 term 4ms
+   ✓ REQ-S15-014 clause 2 (A20): a real server failure reaches the client without stack traces or infrastructure terms > negative control: a malformed JSON body is a 400 problem with no parser internals or §8 term 4ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/a20-s15-014-no-infra-terms.test.ts > REQ-S15-014 clause 2 (A20): a real server failure reaches the client without stack traces or infrastructure terms > a real SQL failure (relation missing, 42P01) is a 500 internal problem with a request id and no §8 term
+AssertionError: {"type":"urn:mth:problem:internal","title":"Internal error","status":500,"detail":"error: relation \"transformation\" does not exist\n    at /var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/pg@8.16.3/node_modules/pg/lib/client.js:545:17\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at PostgresConnection.executeQuery (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:95:49)\n    at file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:35:28\n    at DefaultConnectionProvider.provideConnection (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/default-connection-provider.js:10:20)\n    at DefaultQueryExecutor.executeQuery (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16)\n    at SelectQueryBuilderImpl.execute (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/select-query-builder.js:318:24)\n    at Object.<anonymous> (/var/tmp/mth-run.7UPnmG/claude-0/mut-api/apps/api/src/modules/transformations/routes.ts:176:18)\n    at PostgresConnection.executeQuery (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:107:41)\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:35:28\n    at DefaultConnectionProvider.provideConnection (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/default-connection-provider.js:10:20)\n    at DefaultQueryExecutor.executeQuery (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16)\n    at SelectQueryBuilderImpl.execute (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/select-query-builder.js:318:24)\n    at Object.<anonymous> (/var/tmp/mth-run.7UPnmG/claude-0/mut-api/apps/api/src/modules/transformations/routes.ts:176:18)","code":"internal","requestId":"01a19038-9e68-77ea-a556-e4b3eb9a3309"}
+urn:mth:problem:internal
+Internal error
+error: relation "transformation" does not exist
+    at /var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/pg@8.16.3/node_modules/pg/lib/client.js:545:17
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at PostgresConnection.executeQuery (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:95:49)
+    at file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:35:28
+    at DefaultConnectionProvider.provideConnection (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/default-connection-provider.js:10:20)
+    at DefaultQueryExecutor.executeQuery (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16)
+    at SelectQueryBuilderImpl.execute (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/select-query-builder.js:318:24)
+    at Object.<anonymous> (/var/tmp/mth-run.7UPnmG/claude-0/mut-api/apps/api/src/modules/transformations/routes.ts:176:18)
+    at PostgresConnection.executeQuery (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:107:41)
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:35:28
+    at DefaultConnectionProvider.provideConnection (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/default-connection-provider.js:10:20)
+    at DefaultQueryExecutor.executeQuery (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16)
+    at SelectQueryBuilderImpl.execute (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/select-query-builder.js:318:24)
+    at Object.<anonymous> (/var/tmp/mth-run.7UPnmG/claude-0/mut-api/apps/api/src/modules/transformations/routes.ts:176:18)
+internal
+01a19038-9e68-77ea-a556-e4b3eb9a3309: expected [ …(7) ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   {[39m
+[31m+     "context": "/pg/lib/client.js:545:17\\n at processTicksAndRejections (node:internal/process/task_queues:104:5)\\n at PostgresConnection.executeQuery (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:95:49)\\n at file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:35:28\\n at DefaultConnectionProvider.provideConnection (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/default-connection-provider.js:10:20)\\n at DefaultQueryExecutor.executeQuery (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16)\\n at SelectQueryBuilderImpl.execute (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/select-query-builder.js:318:24)\\n at Object.<anonymous> (/var/tmp/mth-run.7UPnmG/claude-0/mut-api/apps/api/src/modules/transformations/routes.ts:176:18)\\n at PostgresConnection.executeQuery (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:107:41)\\n at processTicksAndRejections (node:internal/process/task_queues:104:5)\\n at file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:35:28\\n at DefaultConnectionProvider.provideConnection (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/default-connection-provider.js:10:20)\\n at DefaultQueryExecutor.executeQuery (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16)\\n at SelectQueryBuilderImpl.execute (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/select-query-builder.js:318:24)\\n at Object.<anonymous> (/var/tmp/mth-run.7UPnmG/claude-0/mut-api/apps/api/src/modules/transformations/routes.ts:176:18)\",\"code\":\"internal\",\"requestId",[39m
+[31m+     "match": "at processTicksAndRejections (node:internal/process/task_queues:104:5)\\n    at PostgresConnection.executeQuery (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:95:49)\\n    at file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:35:28\\n    at DefaultConnectionProvider.provideConnection (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/default-connection-provider.js:10:20)\\n    at DefaultQueryExecutor.executeQuery (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16)\\n    at SelectQueryBuilderImpl.execute (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/select-query-builder.js:318:24)\\n    at Object.<anonymous> (/var/tmp/mth-run.7UPnmG/claude-0/mut-api/apps/api/src/modules/transformations/routes.ts:176:18)\\n    at PostgresConnection.executeQuery (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:107:41)\\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\\n    at file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:35:28\\n    at DefaultConnectionProvider.provideConnection (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/default-connection-provider.js:10:20)\\n    at DefaultQueryExecutor.executeQuery (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16)\\n    at SelectQueryBuilderImpl.execute (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/select-query-builder.js:318:24)\\n    at Object.<anonymous> (/var/tmp/mth-run.7UPnmG/claude-0/mut-api/apps/api/src/modules/transformations/routes.ts:176:18)",[39m
+[31m+     "pattern": "stack frame",[39m
+[31m+   },[39m
+[31m+   {[39m
+[31m+     "context": "rmation\\\" does not exist\\n at /var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/pg@8.16.3/node_modules/pg/lib/client.js:545:17\\n at processTicksAndReject",[39m
+[31m+     "match": "at /var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/pg@8.16.3/node_modules/pg/lib/client.js:545:17",[39m
+[31m+     "pattern": "stack frame (anonymous)",[39m
+[31m+   },[39m
+[31m+   {[39m
+[31m+     "context": "h-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/pg@8.16.3/node_modules/",[39m
+[31m+     "match": "node_modules",[39m
+[31m+     "pattern": "node_modules",[39m
+[31m+   },[39m
+[31m+   {[39m
+[31m+     "context": "dules/kysely/dist/esm/dialect/postgres/postgres-driver.js:95:49)\\n ",[39m
+[31m+     "match": "postgres",[39m
+[31m+     "pattern": "postgres",[39m
+[31m+   },[39m
+[31m+   {[39m
+[31m+     "context": "-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/d",[39m
+[31m+     "match": "kysely",[39m
+[31m+     "pattern": "Kysely",[39m
+[31m+   },[39m
+[31m+   {[39m
+[31m+     "context": "nternal Internal error error: relation \"transformation\" does not exist at /var/tmp/mth-run.7UPnm",[39m
+[31m+     "match": "relation \"transformation\" does not exist",[39m
+[31m+     "pattern": "PostgreSQL error sentence",[39m
+[31m+   },[39m
+[31m+   {[39m
+[31m+     "context": "ation\\\" does not exist\\n at /var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/pg@8.16.3/node_modules/pg/lib/client.js:545:17\\n at processTicksAn",[39m
+[31m+     "match": "/var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/pg@8.16.3/node_modules/pg/lib/client.js",[39m
+[31m+     "pattern": "file path",[39m
+[31m+   },[39m
+[31m+ ][39m
+
+ ❯ node_modules/.pnpm/pg@8.16.3/node_modules/pg/lib/client.js:545:17
+ ❯ PostgresConnection.executeQuery node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:95:49
+ ❯ node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:35:28
+ ❯ DefaultConnectionProvider.provideConnection node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/default-connection-provider.js:10:20
+ ❯ DefaultQueryExecutor.executeQuery node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16
+ ❯ SelectQueryBuilderImpl.execute node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/select-query-builder.js:318:24
+ ❯ Object.<anonymous> apps/api/src/modules/transformations/routes.ts:176:18
+    174|       q = q.where(sql<boolean>`(${sql.ref(sort.col)}, t.id) ${op} (${v…
+    175|     }
+    176|     const rows = await q
+       |                  ^
+    177|       .orderBy(sql.ref(sort.col), sort.dir)
+    178|       .orderBy("t.id", sort.dir)
+ ❯ PostgresConnection.executeQuery node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:107:41
+ ❯ node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:35:28
+ ❯ DefaultConnectionProvider.provideConnection node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/default-connection-provider.js:10:20
+ ❯ DefaultQueryExecutor.executeQuery node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16
+ ❯ SelectQueryBuilderImpl.execute node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/select-query-builder.js:318:24
+ ❯ Object.<anonymous> apps/api/src/modules/transformations/routes.ts:176:18
+ ❯ expectCleanProblem tests/qa/integration/a20-s15-014-no-infra-terms.test.ts:78:59
+ ❯ tests/qa/integration/a20-s15-014-no-infra-terms.test.ts:127:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |integration| tests/qa/integration/a20-s15-014-no-infra-terms.test.ts > REQ-S15-014 clause 2 (A20): a real server failure reaches the client without stack traces or infrastructure terms > a real SQL failure on a write (CSRF-protected POST) leaks nothing either, and writes nothing
+AssertionError: {"type":"urn:mth:problem:internal","title":"Internal error","status":500,"detail":"error: relation \"transformation\" does not exist\n    at /var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/pg@8.16.3/node_modules/pg/lib/client.js:545:17\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at PostgresConnection.executeQuery (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:95:49)\n    at file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:35:28\n    at file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/kysely.js:947:20\n    at SingleConnectionProvider.#run (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/single-connection-provider.js:24:16)\n    at DefaultQueryExecutor.executeQuery (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16)\n    at SelectQueryBuilderImpl.execute (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/select-query-builder.js:318:24)\n    at SelectQueryBuilderImpl.executeTakeFirst (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/select-query-builder.js:322:26)\n    at nextTransformationCode (/var/tmp/mth-run.7UPnmG/claude-0/mut-api/apps/api/src/modules/transformations/repository.ts:67:13)\n    at PostgresConnection.executeQuery (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:107:41)\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:35:28\n    at file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/kysely.js:947:20\n    at SingleConnectionProvider.#run (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/single-connection-provider.js:24:16)\n    at DefaultQueryExecutor.executeQuery (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16)\n    at SelectQueryBuilderImpl.execute (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/select-query-builder.js:318:24)\n    at SelectQueryBuilderImpl.executeTakeFirst (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/select-query-builder.js:322:26)\n    at nextTransformationCode (/var/tmp/mth-run.7UPnmG/claude-0/mut-api/apps/api/src/modules/transformations/repository.ts:67:13)\n    at run (/var/tmp/mth-run.7UPnmG/claude-0/mut-api/apps/api/src/modules/transformations/routes.ts:222:38)","code":"internal","requestId":"01a19038-9ef8-7253-ab1c-012c05d5cad9"}
+urn:mth:problem:internal
+Internal error
+error: relation "transformation" does not exist
+    at /var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/pg@8.16.3/node_modules/pg/lib/client.js:545:17
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at PostgresConnection.executeQuery (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:95:49)
+    at file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:35:28
+    at file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/kysely.js:947:20
+    at SingleConnectionProvider.#run (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/single-connection-provider.js:24:16)
+    at DefaultQueryExecutor.executeQuery (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16)
+    at SelectQueryBuilderImpl.execute (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/select-query-builder.js:318:24)
+    at SelectQueryBuilderImpl.executeTakeFirst (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/select-query-builder.js:322:26)
+    at nextTransformationCode (/var/tmp/mth-run.7UPnmG/claude-0/mut-api/apps/api/src/modules/transformations/repository.ts:67:13)
+    at PostgresConnection.executeQuery (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:107:41)
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:35:28
+    at file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/kysely.js:947:20
+    at SingleConnectionProvider.#run (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/single-connection-provider.js:24:16)
+    at DefaultQueryExecutor.executeQuery (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16)
+    at SelectQueryBuilderImpl.execute (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/select-query-builder.js:318:24)
+    at SelectQueryBuilderImpl.executeTakeFirst (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/select-query-builder.js:322:26)
+    at nextTransformationCode (/var/tmp/mth-run.7UPnmG/claude-0/mut-api/apps/api/src/modules/transformations/repository.ts:67:13)
+    at run (/var/tmp/mth-run.7UPnmG/claude-0/mut-api/apps/api/src/modules/transformations/routes.ts:222:38)
+internal
+01a19038-9ef8-7253-ab1c-012c05d5cad9: expected [ …(7) ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   {[39m
+[31m+     "context": "/pg/lib/client.js:545:17\\n at processTicksAndRejections (node:internal/process/task_queues:104:5)\\n at PostgresConnection.executeQuery (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:95:49)\\n at file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:35:28\\n at file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/kysely.js:947:20\\n at SingleConnectionProvider.#run (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/single-connection-provider.js:24:16)\\n at DefaultQueryExecutor.executeQuery (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16)\\n at SelectQueryBuilderImpl.execute (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/select-query-builder.js:318:24)\\n at SelectQueryBuilderImpl.executeTakeFirst (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/select-query-builder.js:322:26)\\n at nextTransformationCode (/var/tmp/mth-run.7UPnmG/claude-0/mut-api/apps/api/src/modules/transformations/repository.ts:67:13)\\n at PostgresConnection.executeQuery (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:107:41)\\n at processTicksAndRejections (node:internal/process/task_queues:104:5)\\n at file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:35:28\\n at file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/kysely.js:947:20\\n at SingleConnectionProvider.#run (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/single-connection-provider.js:24:16)\\n at DefaultQueryExecutor.executeQuery (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16)\\n at SelectQueryBuilderImpl.execute (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/select-query-builder.js:318:24)\\n at SelectQueryBuilderImpl.executeTakeFirst (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/select-query-builder.js:322:26)\\n at nextTransformationCode (/var/tmp/mth-run.7UPnmG/claude-0/mut-api/apps/api/src/modules/transformations/repository.ts:67:13)\\n at run (/var/tmp/mth-run.7UPnmG/claude-0/mut-api/apps/api/src/modules/transformations/routes.ts:222:38)\",\"code\":\"internal\",\"requestId",[39m
+[31m+     "match": "at processTicksAndRejections (node:internal/process/task_queues:104:5)\\n    at PostgresConnection.executeQuery (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:95:49)\\n    at file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:35:28\\n    at file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/kysely.js:947:20\\n    at SingleConnectionProvider.#run (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/single-connection-provider.js:24:16)\\n    at DefaultQueryExecutor.executeQuery (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16)\\n    at SelectQueryBuilderImpl.execute (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/select-query-builder.js:318:24)\\n    at SelectQueryBuilderImpl.executeTakeFirst (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/select-query-builder.js:322:26)\\n    at nextTransformationCode (/var/tmp/mth-run.7UPnmG/claude-0/mut-api/apps/api/src/modules/transformations/repository.ts:67:13)\\n    at PostgresConnection.executeQuery (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:107:41)\\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\\n    at file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:35:28\\n    at file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/kysely.js:947:20\\n    at SingleConnectionProvider.#run (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/single-connection-provider.js:24:16)\\n    at DefaultQueryExecutor.executeQuery (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16)\\n    at SelectQueryBuilderImpl.execute (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/select-query-builder.js:318:24)\\n    at SelectQueryBuilderImpl.executeTakeFirst (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/select-query-builder.js:322:26)\\n    at nextTransformationCode (/var/tmp/mth-run.7UPnmG/claude-0/mut-api/apps/api/src/modules/transformations/repository.ts:67:13)\\n    at run (/var/tmp/mth-run.7UPnmG/claude-0/mut-api/apps/api/src/modules/transformations/routes.ts:222:38)",[39m
+[31m+     "pattern": "stack frame",[39m
+[31m+   },[39m
+[31m+   {[39m
+[31m+     "context": "rmation\\\" does not exist\\n at /var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/pg@8.16.3/node_modules/pg/lib/client.js:545:17\\n at processTicksAndReject",[39m
+[31m+     "match": "at /var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/pg@8.16.3/node_modules/pg/lib/client.js:545:17",[39m
+[31m+     "pattern": "stack frame (anonymous)",[39m
+[31m+   },[39m
+[31m+   {[39m
+[31m+     "context": "h-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/pg@8.16.3/node_modules/",[39m
+[31m+     "match": "node_modules",[39m
+[31m+     "pattern": "node_modules",[39m
+[31m+   },[39m
+[31m+   {[39m
+[31m+     "context": "dules/kysely/dist/esm/dialect/postgres/postgres-driver.js:95:49)\\n ",[39m
+[31m+     "match": "postgres",[39m
+[31m+     "pattern": "postgres",[39m
+[31m+   },[39m
+[31m+   {[39m
+[31m+     "context": "-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/d",[39m
+[31m+     "match": "kysely",[39m
+[31m+     "pattern": "Kysely",[39m
+[31m+   },[39m
+[31m+   {[39m
+[31m+     "context": "nternal Internal error error: relation \"transformation\" does not exist at /var/tmp/mth-run.7UPnm",[39m
+[31m+     "match": "relation \"transformation\" does not exist",[39m
+[31m+     "pattern": "PostgreSQL error sentence",[39m
+[31m+   },[39m
+[31m+   {[39m
+[31m+     "context": "ation\\\" does not exist\\n at /var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/pg@8.16.3/node_modules/pg/lib/client.js:545:17\\n at processTicksAn",[39m
+[31m+     "match": "/var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/pg@8.16.3/node_modules/pg/lib/client.js",[39m
+[31m+     "pattern": "file path",[39m
+[31m+   },[39m
+[31m+ ][39m
+
+ ❯ node_modules/.pnpm/pg@8.16.3/node_modules/pg/lib/client.js:545:17
+ ❯ PostgresConnection.executeQuery node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:95:49
+ ❯ node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:35:28
+ ❯ node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/kysely.js:947:20
+ ❯ SingleConnectionProvider.#run node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/single-connection-provider.js:24:16
+ ❯ DefaultQueryExecutor.executeQuery node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16
+ ❯ SelectQueryBuilderImpl.execute node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/select-query-builder.js:318:24
+ ❯ SelectQueryBuilderImpl.executeTakeFirst node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/select-query-builder.js:322:26
+ ❯ nextTransformationCode apps/api/src/modules/transformations/repository.ts:67:13
+     65| export async function nextTransformationCode(tx: Tx, organizationId: s…
+     66|   await sql`SELECT pg_advisory_xact_lock(hashtextextended(${`trcode:${…
+     67|   const r = await tx
+       |             ^
+     68|     .selectFrom("transformation")
+     69|     .select(sql<number | null>`max((substring(code from '^TR-([0-9]+)$…
+ ❯ PostgresConnection.executeQuery node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:107:41
+ ❯ node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:35:28
+ ❯ node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/kysely.js:947:20
+ ❯ SingleConnectionProvider.#run node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/single-connection-provider.js:24:16
+ ❯ DefaultQueryExecutor.executeQuery node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16
+ ❯ SelectQueryBuilderImpl.execute node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/select-query-builder.js:318:24
+ ❯ SelectQueryBuilderImpl.executeTakeFirst node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/select-query-builder.js:322:26
+ ❯ nextTransformationCode apps/api/src/modules/transformations/repository.ts:67:13
+ ❯ run apps/api/src/modules/transformations/routes.ts:222:38
+ ❯ expectCleanProblem tests/qa/integration/a20-s15-014-no-infra-terms.test.ts:78:59
+ ❯ tests/qa/integration/a20-s15-014-no-infra-terms.test.ts:152:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |integration| tests/qa/integration/a20-s15-014-no-infra-terms.test.ts > REQ-S15-014 clause 2 (A20): a real server failure reaches the client without stack traces or infrastructure terms > a real network failure (database port refuses, ECONNREFUSED) answers a problem with a request id and no §8 term
+AssertionError: {"type":"urn:mth:problem:internal","title":"Internal error","status":500,"detail":"Error: connect ECONNREFUSED 127.0.0.1:27249\n    at /var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/pg-pool@3.14.0_pg@8.16.3/node_modules/pg-pool/index.js:45:11\n    at processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at PostgresDriver.acquireConnection (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:21:24)\n    at RuntimeDriver.acquireConnection (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/runtime-driver.js:44:28)\n    at DefaultConnectionProvider.provideConnection (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/default-connection-provider.js:8:28)\n    at DefaultQueryExecutor.executeQuery (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16)\n    at SelectQueryBuilderImpl.execute (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/select-query-builder.js:318:24)\n    at SelectQueryBuilderImpl.executeTakeFirst (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/select-query-builder.js:322:26)\n    at resolveSession (/var/tmp/mth-run.7UPnmG/claude-0/mut-api/apps/api/src/modules/identity/sessions.ts:77:15)\n    at principalFor (/var/tmp/mth-run.7UPnmG/claude-0/mut-api/apps/api/src/modules/identity/routes.ts:131:21)","code":"internal","requestId":"01a19038-a0f2-72f4-b90e-534390705af4"}
+urn:mth:problem:internal
+Internal error
+Error: connect ECONNREFUSED 127.0.0.1:27249
+    at /var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/pg-pool@3.14.0_pg@8.16.3/node_modules/pg-pool/index.js:45:11
+    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at PostgresDriver.acquireConnection (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:21:24)
+    at RuntimeDriver.acquireConnection (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/runtime-driver.js:44:28)
+    at DefaultConnectionProvider.provideConnection (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/default-connection-provider.js:8:28)
+    at DefaultQueryExecutor.executeQuery (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16)
+    at SelectQueryBuilderImpl.execute (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/select-query-builder.js:318:24)
+    at SelectQueryBuilderImpl.executeTakeFirst (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/select-query-builder.js:322:26)
+    at resolveSession (/var/tmp/mth-run.7UPnmG/claude-0/mut-api/apps/api/src/modules/identity/sessions.ts:77:15)
+    at principalFor (/var/tmp/mth-run.7UPnmG/claude-0/mut-api/apps/api/src/modules/identity/routes.ts:131:21)
+internal
+01a19038-a0f2-72f4-b90e-534390705af4: expected [ …(8) ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   {[39m
+[31m+     "context": "s/pg-pool/index.js:45:11\\n at processTicksAndRejections (node:internal/process/task_queues:104:5)\\n at PostgresDriver.acquireConnection (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:21:24)\\n at RuntimeDriver.acquireConnection (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/runtime-driver.js:44:28)\\n at DefaultConnectionProvider.provideConnection (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/default-connection-provider.js:8:28)\\n at DefaultQueryExecutor.executeQuery (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16)\\n at SelectQueryBuilderImpl.execute (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/select-query-builder.js:318:24)\\n at SelectQueryBuilderImpl.executeTakeFirst (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/select-query-builder.js:322:26)\\n at resolveSession (/var/tmp/mth-run.7UPnmG/claude-0/mut-api/apps/api/src/modules/identity/sessions.ts:77:15)\\n at principalFor (/var/tmp/mth-run.7UPnmG/claude-0/mut-api/apps/api/src/modules/identity/routes.ts:131:21)\",\"code\":\"internal\",\"requestId",[39m
+[31m+     "match": "at processTicksAndRejections (node:internal/process/task_queues:104:5)\\n    at PostgresDriver.acquireConnection (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:21:24)\\n    at RuntimeDriver.acquireConnection (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/runtime-driver.js:44:28)\\n    at DefaultConnectionProvider.provideConnection (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/default-connection-provider.js:8:28)\\n    at DefaultQueryExecutor.executeQuery (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16)\\n    at SelectQueryBuilderImpl.execute (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/select-query-builder.js:318:24)\\n    at SelectQueryBuilderImpl.executeTakeFirst (file:///var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/select-query-builder.js:322:26)\\n    at resolveSession (/var/tmp/mth-run.7UPnmG/claude-0/mut-api/apps/api/src/modules/identity/sessions.ts:77:15)\\n    at principalFor (/var/tmp/mth-run.7UPnmG/claude-0/mut-api/apps/api/src/modules/identity/routes.ts:131:21)",[39m
+[31m+     "pattern": "stack frame",[39m
+[31m+   },[39m
+[31m+   {[39m
+[31m+     "context": "NREFUSED 127.0.0.1:27249\\n at /var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/pg-pool@3.14.0_pg@8.16.3/node_modules/pg-pool/index.js:45:11\\n at processTicksAndReject",[39m
+[31m+     "match": "at /var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/pg-pool@3.14.0_pg@8.16.3/node_modules/pg-pool/index.js:45:11",[39m
+[31m+     "pattern": "stack frame (anonymous)",[39m
+[31m+   },[39m
+[31m+   {[39m
+[31m+     "context": "h-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/pg-pool@3.14.0_pg@8.16.",[39m
+[31m+     "match": "node_modules",[39m
+[31m+     "pattern": "node_modules",[39m
+[31m+   },[39m
+[31m+   {[39m
+[31m+     "context": ":500,\"detail\":\"Error: connect ECONNREFUSED 127.0.0.1:27249\\n at /var/",[39m
+[31m+     "match": "ECONNREFUSED",[39m
+[31m+     "pattern": "ECONNREFUSED",[39m
+[31m+   },[39m
+[31m+   {[39m
+[31m+     "context": "dules/kysely/dist/esm/dialect/postgres/postgres-driver.js:21:24)\\n ",[39m
+[31m+     "match": "postgres",[39m
+[31m+     "pattern": "postgres",[39m
+[31m+   },[39m
+[31m+   {[39m
+[31m+     "context": "-0/mut-api/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/d",[39m
+[31m+     "match": "kysely",[39m
+[31m+     "pattern": "Kysely",[39m
+[31m+   },[39m
+[31m+   {[39m
+[31m+     "context": ":\"Error: connect ECONNREFUSED 127.0.0.1:27249\\n at /var/tmp/mth-ru",[39m
+[31m+     "match": "127.0.0.1",[39m
+[31m+     "pattern": "127.0.0.1",[39m
+[31m+   },[39m
+[31m+   {[39m
+[31m+     "context": "EFUSED 127.0.0.1:27249\\n at /var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/pg-pool@3.14.0_pg@8.16.3/node_modules/pg-pool/index.js:45:11\\n at processTicksAnd",[39m
+[31m+     "match": "/var/tmp/mth-run.7UPnmG/claude-0/mut-api/node_modules/.pnpm/pg-pool@3.14.0_pg@8.16.3/node_modules/pg-pool/index.js",[39m
+[31m+     "pattern": "file path",[39m
+[31m+   },[39m
+[31m+ ][39m
+
+ ❯ node_modules/.pnpm/pg-pool@3.14.0_pg@8.16.3/node_modules/pg-pool/index.js:45:11
+ ❯ PostgresDriver.acquireConnection node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:21:24
+ ❯ RuntimeDriver.acquireConnection node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/runtime-driver.js:44:28
+ ❯ DefaultConnectionProvider.provideConnection node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/default-connection-provider.js:8:28
+ ❯ DefaultQueryExecutor.executeQuery node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16
+ ❯ SelectQueryBuilderImpl.execute node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/select-query-builder.js:318:24
+ ❯ SelectQueryBuilderImpl.executeTakeFirst node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/select-query-builder.js:322:26
+ ❯ resolveSession apps/api/src/modules/identity/sessions.ts:77:15
+     75| export async function resolveSession(db: DbOrTx, token: string): Promi…
+     76|   if (!/^[A-Za-z0-9_-]{43}$/.test(token)) return null;
+     77|   const row = await db
+       |               ^
+     78|     .selectFrom("session as s")
+     79|     .innerJoin("app_user as u", "u.id", "s.user_id")
+ ❯ principalFor apps/api/src/modules/identity/routes.ts:131:21
+ ❯ expectCleanProblem tests/qa/integration/a20-s15-014-no-infra-terms.test.ts:78:59
+ ❯ tests/qa/integration/a20-s15-014-no-infra-terms.test.ts:172:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 3 passed (6)
+   Start at  04:29:05
+   Duration  51.58s (transform 12.04s, setup 0ms, collect 29.57s, tests 13.15s, environment 0ms, prepare 132ms)
+

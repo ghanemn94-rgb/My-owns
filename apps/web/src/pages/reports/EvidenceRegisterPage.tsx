@@ -11,6 +11,7 @@ import { Link, useParams } from "react-router";
 import { useTransformation } from "../../api/queries.ts";
 import { useLocale } from "../../app/locale.ts";
 import { PageHeader, usePageTitle } from "../../components/Page.tsx";
+import { RestrictedRecordsLabel } from "../../components/sensitivity/RestrictedRecordsLabel.tsx";
 import { EmptyState, QueryState } from "../../components/States.tsx";
 import { formatBusinessDate, formatDateTime } from "../../lib/format.ts";
 import { useUserNames } from "../my-work/p4ui.tsx";
@@ -139,7 +140,8 @@ function RegisterTable({ tid, items }: { tid: string; items: EvidenceRegisterIte
                     ) : null}
                   </th>
                   <td>
-                    {e.links.length === 0 ? (
+                    {/* T-DG6-BE-Z10 (D-218): a link to a restricted record is omitted; the label says so. */}
+                    {e.links.length === 0 && e.includesRestrictedRecords !== true ? (
                       <span className="muted">{t("reportsP5.evidence.noLinks")}</span>
                     ) : (
                       <ul className="plain-list small">
@@ -148,6 +150,11 @@ function RegisterTable({ tid, items }: { tid: string; items: EvidenceRegisterIte
                             {t(`evidence.recordTypes.${l.recordType}`, { defaultValue: l.recordType })}
                           </li>
                         ))}
+                        {e.includesRestrictedRecords === true ? (
+                          <li data-restricted-link="true">
+                            <RestrictedRecordsLabel value scope="item" />
+                          </li>
+                        ) : null}
                       </ul>
                     )}
                   </td>

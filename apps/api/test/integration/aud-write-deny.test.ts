@@ -12,6 +12,7 @@ import { ifm, setupP2World, type P2World } from "../support/p2-fixtures.ts";
 import { P3_OPERATION_IDS } from "../support/p3-operations.ts";
 import { P4_OPERATION_IDS } from "../support/p4-operations.ts";
 import { P5_OPERATION_IDS } from "../support/p5-operations.ts";
+import { P6_OPERATION_IDS } from "../support/p6-operations.ts";
 
 /** The 33 P1 operations (DG1-approved, byte-stable); everything else in the contract is P2. */
 const P1_OPERATIONS = new Set([
@@ -53,12 +54,14 @@ const P1_OPERATIONS = new Set([
 // P3 operations (p3-operations.ts) are outside this P2 sweep; P3 has its own AUD sweep (p3-work-split.md). So are the P4
 // operations (p4-operations.ts, T-DG4-ARCH-01); each P4 slice tests AUD on its own operations (p4-work-split.md S-4).
 // T-DG5-ARCH-01: and the P5 operations (p5-operations.ts); each P5 slice tests AUD on its own (p5-work-split.md §2).
+// T-DG6-ARCH-01: and the P6 operations (p6-operations.ts); each P6 slice tests AUD on its own (p6-work-split.md §2).
 const P2_OPERATIONS = operations.filter(
   (o) =>
     !P1_OPERATIONS.has(o.operationId) &&
     !P3_OPERATION_IDS.has(o.operationId) &&
     !P4_OPERATION_IDS.has(o.operationId) &&
-    !P5_OPERATION_IDS.has(o.operationId),
+    !P5_OPERATION_IDS.has(o.operationId) &&
+    !P6_OPERATION_IDS.has(o.operationId),
 );
 const P2_MUTATIONS = P2_OPERATIONS.filter((o) => o.method !== "GET");
 const P2_READS = P2_OPERATIONS.filter((o) => o.method === "GET");

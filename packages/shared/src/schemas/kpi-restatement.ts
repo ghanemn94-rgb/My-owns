@@ -127,7 +127,10 @@ export const kpiRestatementReissueOffer = z.strictObject({
   createdAt: timestamp,
 });
 
-export const kpiRestatementReissueOfferList = z.strictObject({ items: z.array(kpiRestatementReissueOffer) });
+export const kpiRestatementReissueOfferList = z.strictObject({
+  items: z.array(kpiRestatementReissueOffer),
+  nextCursor: z.string().nullable(),
+});
 
 /**
  * Outbox `kpi_restatement.approved` v1 (ADR-0047 §3, §7): written by the approving transaction; consumed once by the

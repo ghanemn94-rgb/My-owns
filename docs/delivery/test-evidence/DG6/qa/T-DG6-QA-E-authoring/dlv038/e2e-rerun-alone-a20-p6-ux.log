@@ -1,0 +1,29 @@
+# HEAD 60535e99ed0d7fb6fbb67b9b7a8ed31aa47b2cdb 2026-10-31T05:01:06Z: spec re-run ALONE on a fresh stack
+# E2E_PG_PORT=27080 E2E_API_PORT=27081 MTH_PORT_POOL=27082-27089 E2E_SCREENSHOT_DIR=$TMPDIR/shots-re QA_EVIDENCE_DIR=$TMPDIR/shots-re-qa apps/web/e2e/support/with-stack.sh npx playwright test e2e/a20-p6-ux.spec.ts --workers=1 --reporter=list --output=$TMPDIR/pw-re-a20-p6-ux
+port-policy: PostgreSQL listening on port 27080 (attempt 1)
+e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applied 113 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+port-policy: API listening on port 27081 (attempt 1)
+API: http://localhost:27081 (APP_BASE_URL=http://localhost:27081, PORT=27081)
+{"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+
+Running 14 tests using 1 worker
+
+  ✓   1 [chromium-en] › e2e/a20-p6-ux.spec.ts:210:1 › REQ-S15-009 360 px: the Sponsor approves the submitted gate item G1 (9.9s)
+  ✓   2 [chromium-en] › e2e/a20-p6-ux.spec.ts:250:1 › REQ-S15-009 + REQ-S15-012 360 px, keyboard alone: the KPI owner submits a KPI actual (8.8s)
+  ✓   3 [chromium-en] › e2e/a20-p6-ux.spec.ts:289:1 › REQ-S15-007: an error returned by the API is shown in the selected language (an already-read reminder) (3.1s)
+  ✓   4 [chromium-en] › e2e/a20-p6-ux.spec.ts:322:1 › REQ-S15-012 keyboard alone: the reviewer accepts the KPI actual from the review queue (8.1s)
+  ✓   5 [chromium-en] › e2e/a20-p6-ux.spec.ts:352:1 › REQ-S15-012 keyboard alone: the Sponsor decides a business approval request (approve with rationale) (6.4s)
+  ✓   6 [chromium-en] › e2e/a20-p6-ux.spec.ts:383:1 › REQ-S15-012 / REQ-S20-020 keyboard: the skip link reaches main content and the language switch flips the direction (7.9s)
+  ✓   7 [chromium-en] › e2e/a20-p6-ux.spec.ts:422:1 › REQ-S15-003: rendered status chips carry a label and stay legible in greyscale (4.1s)
+  ✓   8 [chromium-ar] › e2e/a20-p6-ux.spec.ts:210:1 › REQ-S15-009 360 px: the Sponsor approves the submitted gate item G1 (7.8s)
+  ✓   9 [chromium-ar] › e2e/a20-p6-ux.spec.ts:250:1 › REQ-S15-009 + REQ-S15-012 360 px, keyboard alone: the KPI owner submits a KPI actual (8.7s)
+  ✓  10 [chromium-ar] › e2e/a20-p6-ux.spec.ts:289:1 › REQ-S15-007: an error returned by the API is shown in the selected language (an already-read reminder) (2.9s)
+  ✓  11 [chromium-ar] › e2e/a20-p6-ux.spec.ts:322:1 › REQ-S15-012 keyboard alone: the reviewer accepts the KPI actual from the review queue (9.8s)
+  ✓  12 [chromium-ar] › e2e/a20-p6-ux.spec.ts:352:1 › REQ-S15-012 keyboard alone: the Sponsor decides a business approval request (approve with rationale) (6.4s)
+  ✓  13 [chromium-ar] › e2e/a20-p6-ux.spec.ts:383:1 › REQ-S15-012 / REQ-S20-020 keyboard: the skip link reaches main content and the language switch flips the direction (6.9s)
+  ✓  14 [chromium-ar] › e2e/a20-p6-ux.spec.ts:422:1 › REQ-S15-003: rendered status chips carry a label and stay legible in greyscale (4.1s)
+
+  14 passed (1.8m)
+EXIT=0

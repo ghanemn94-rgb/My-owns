@@ -1,0 +1,144 @@
+port-policy: PostgreSQL listening on port 31050 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-z9
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw6lq5ap_6b37a3c2 (server_encoding UTF8); applied 118 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/access/sensitive-reach-dashboards-reports.test.ts (17 tests | 7 failed) 11753ms
+   ✓ F-DG6-360: the Executive Overview > TL and AUD: no item of the sensitive benefit, the same figures as the TO, includesRestrictedRecords true; the TO sees it (false) 182ms
+   ✓ F-DG6-361: every drill-down metric and value class > TL and AUD: no item, input or evidence entry of the benefit or its lines; the same value; flagged when something was omitted  6226ms
+   ✓ F-DG6-361: every drill-down metric and value class > the value.gap drill-down of the benefit's class lists its lines to the TO (false) and none to TL or AUD (true) 38ms
+   ✓ F-DG6-361: the Finance, adoption, transformation and workstream dashboards > TL and AUD: no mention of the benefit, the same figures as the TO, labelled; the TO sees it on the transformation and workstream dashboards 221ms
+   ✓ F-DG6-340: report totals that include a restricted value > live benefits register: TL and AUD get no row of the benefit, the same totals and includesRestrictedRecords true on its section; the TO gets the row and false 55ms
+   ✓ F-DG6-340: report totals that include a restricted value > snapshot benefits register: TL and AUD get no row of the benefit, the same totals and includesRestrictedRecords true on its section; the TO gets the row and false 20ms
+   ✓ F-DG6-340: report totals that include a restricted value > a register with no sensitive record (kpis) carries no member; the stored content never holds it and its hash is unchanged 27ms
+   ✓ F-DG6-340: report totals that include a restricted value > benefit-totals: the same totals for TL and TO, flagged true for TL and false for the TO (unchanged BE-B2 behaviour) 25ms
+   × F-DG6-400: report metrics sections whose aggregates include a restricted value > live executive_pack: metrics_transformation, metrics_ws_77 labelled true for TL and AUD, false for the TO; the same figures; non-aggregate sections unchanged 37ms
+     → TO metrics_transformation: expected undefined to be false // Object.is equality
+   × F-DG6-400: report metrics sections whose aggregates include a restricted value > snapshot executive_pack: metrics_transformation, metrics_ws_77 labelled true for TL and AUD, false for the TO; the same figures; non-aggregate sections unchanged 6ms
+     → TO metrics_transformation: expected undefined to be false // Object.is equality
+   × F-DG6-400: report metrics sections whose aggregates include a restricted value > live executive_dashboard: area_value, items_portfolio labelled true for TL and AUD, false for the TO; the same figures; non-aggregate sections unchanged 27ms
+     → TO area_value: expected undefined to be false // Object.is equality
+   × F-DG6-400: report metrics sections whose aggregates include a restricted value > snapshot executive_dashboard: area_value, items_portfolio labelled true for TL and AUD, false for the TO; the same figures; non-aggregate sections unchanged 8ms
+     → TO area_value: expected undefined to be false // Object.is equality
+   × F-DG6-400: report metrics sections whose aggregates include a restricted value > the stored content never holds the member and its hash is unchanged; the included records are kept beside it 5ms
+     → executive_pack: expected [] to deeply equal [ 'metrics_transformation', …(1) ]
+   ✓ F-DG6-400: report metrics sections whose aggregates include a restricted value > an aggregate row is append-only and written only by the snapshot's creating transaction 5ms
+   ✓ F-DG6-400: snapshots stored before the aggregate records were kept > the API refuses to change aggregates_recorded 1ms
+   × F-DG6-400: snapshots stored before the aggregate records were kept > a legacy executive pack: metrics_* labelled true for TL and AUD, false for the TO; update sections unchanged 43ms
+     → expected 'absent' to be false // Object.is equality
+   × F-DG6-400 sweep: the gate pack's unverified-evidence counts > criteria labelled true for TL and AUD, false for the TO, with the same counts 50ms
+     → expected undefined to be false // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-dashboards-reports.test.ts > F-DG6-400: report metrics sections whose aggregates include a restricted value > live executive_pack: metrics_transformation, metrics_ws_77 labelled true for TL and AUD, false for the TO; the same figures; non-aggregate sections unchanged
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-dashboards-reports.test.ts > F-DG6-400: report metrics sections whose aggregates include a restricted value > snapshot executive_pack: metrics_transformation, metrics_ws_77 labelled true for TL and AUD, false for the TO; the same figures; non-aggregate sections unchanged
+AssertionError: TO metrics_transformation: expected undefined to be false // Object.is equality
+
+[32m- Expected:[39m 
+false
+
+[31m+ Received:[39m 
+undefined
+
+ ❯ apps/api/test/integration/access/sensitive-reach-dashboards-reports.test.ts:430:89
+    428|       it(`${kind} ${code}: ${AGGREGATES[code]!.join(", ")} labelled tr…
+    429|         const admitted = await read(code, kind, to);
+    430|         for (const key of AGGREGATES[code]!) expect(flagOf(admitted, k…
+       |                                                                                         ^
+    431|         for (const [who, s] of NOT_ADMITTED()) {
+    432|           const doc = await read(code, kind, s);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-dashboards-reports.test.ts > F-DG6-400: report metrics sections whose aggregates include a restricted value > live executive_dashboard: area_value, items_portfolio labelled true for TL and AUD, false for the TO; the same figures; non-aggregate sections unchanged
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-dashboards-reports.test.ts > F-DG6-400: report metrics sections whose aggregates include a restricted value > snapshot executive_dashboard: area_value, items_portfolio labelled true for TL and AUD, false for the TO; the same figures; non-aggregate sections unchanged
+AssertionError: TO area_value: expected undefined to be false // Object.is equality
+
+[32m- Expected:[39m 
+false
+
+[31m+ Received:[39m 
+undefined
+
+ ❯ apps/api/test/integration/access/sensitive-reach-dashboards-reports.test.ts:430:89
+    428|       it(`${kind} ${code}: ${AGGREGATES[code]!.join(", ")} labelled tr…
+    429|         const admitted = await read(code, kind, to);
+    430|         for (const key of AGGREGATES[code]!) expect(flagOf(admitted, k…
+       |                                                                                         ^
+    431|         for (const [who, s] of NOT_ADMITTED()) {
+    432|           const doc = await read(code, kind, s);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-dashboards-reports.test.ts > F-DG6-400: report metrics sections whose aggregates include a restricted value > the stored content never holds the member and its hash is unchanged; the included records are kept beside it
+AssertionError: executive_pack: expected [] to deeply equal [ 'metrics_transformation', …(1) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [[39m
+[32m-   "metrics_transformation",[39m
+[32m-   "metrics_ws_77",[39m
+[32m- ][39m
+[31m+ [][39m
+
+ ❯ apps/api/test/integration/access/sensitive-reach-dashboards-reports.test.ts:469:59
+    467|         .where("record_id", "=", S.benefitId)
+    468|         .execute();
+    469|       expect(kept.map((k) => k.section_key).sort(), code).toEqual([...…
+       |                                                           ^
+    470|     }
+    471|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-dashboards-reports.test.ts > F-DG6-400: snapshots stored before the aggregate records were kept > a legacy executive pack: metrics_* labelled true for TL and AUD, false for the TO; update sections unchanged
+AssertionError: expected 'absent' to be false // Object.is equality
+
+[32m- Expected:[39m 
+false
+
+[31m+ Received:[39m 
+"absent"
+
+ ❯ apps/api/test/integration/access/sensitive-reach-dashboards-reports.test.ts:544:48
+    542|       Object.fromEntries(doc.sections.map((s: Body) => [s.key, s.inclu…
+    543|     const admitted = flags((await ok(path, to)).content);
+    544|     expect(admitted["metrics_transformation"]).toBe(false);
+       |                                                ^
+    545|     expect(admitted["update_transformation"]).toBe("absent");
+    546|     for (const [who, s] of NOT_ADMITTED()) {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-dashboards-reports.test.ts > F-DG6-400 sweep: the gate pack's unverified-evidence counts > criteria labelled true for TL and AUD, false for the TO, with the same counts
+AssertionError: expected undefined to be false // Object.is equality
+
+[32m- Expected:[39m 
+false
+
+[31m+ Received:[39m 
+undefined
+
+ ❯ apps/api/test/integration/access/sensitive-reach-dashboards-reports.test.ts:599:50
+    597|       expect(mark.status, JSON.stringify(mark.body)).toBe(200);
+    598|       const admitted = await criteria(to);
+    599|       expect(admitted.includesRestrictedRecords).toBe(false);
+       |                                                  ^
+    600|       for (const [who, s] of NOT_ADMITTED()) {
+    601|         const sec = await criteria(s);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 10 passed (17)
+   Start at  16:12:13
+   Duration  22.40s (transform 4.04s, setup 0ms, collect 7.65s, tests 11.75s, environment 0ms, prepare 59ms)
+
+exit=1

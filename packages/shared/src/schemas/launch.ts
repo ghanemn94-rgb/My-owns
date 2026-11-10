@@ -112,6 +112,8 @@ export const launchTask = z.strictObject({
   blockedBy: z.array(launchTaskRef).max(LAUNCH_TASK_MAX_PREDECESSORS),
   version,
   updatedAt: timestamp,
+  /** T-DG6-BE-Z12 (F-DG6-480; D-218): a reference to a record the reader is not admitted to was not named. */
+  includesRestrictedRecords: z.literal(true).optional(),
 });
 
 export const launchTaskPage = z.strictObject({

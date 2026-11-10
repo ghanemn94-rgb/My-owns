@@ -347,8 +347,9 @@ function SnapshotsSection({ tid }: { tid: string }) {
     <Section id="snapshots" title={t("reportsP5.snapshots.title")} intro={t("reportsP5.snapshots.intro")}>
       <div className="filters" role="group" aria-label={t("reportsP5.snapshots.filters")}>
         <div className="field">
+          {/* F-DG6-261: its own name, so it is never confused with the Generate form's required "Output". */}
           <label className="field__label" htmlFor="snapshot-filter-code">
-            {t("reportsP5.generate.output")}
+            {t("reportsP5.snapshots.filterOutput")}
           </label>
           <select id="snapshot-filter-code" value={code} onChange={(e) => setCode(e.target.value)}>
             <option value="">{t("reportsP5.generate.all")}</option>

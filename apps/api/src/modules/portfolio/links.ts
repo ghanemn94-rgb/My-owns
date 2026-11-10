@@ -50,6 +50,9 @@ import {
   requireIfMatch,
   sendVersioned,
   type ModuleDeps,
+  keysetPage,
+  pageQueryFields,
+  type SortKey,
 } from "../platform/index.ts";
 import { bumpStamps, openWrite, sendCreated, type WriteContext } from "../transformations/index.ts";
 import { assertEditable, fieldRule, readableInitiative, transitionProblem } from "./repository.ts";
@@ -59,7 +62,12 @@ const JSON_BODY = ["application/json"] as const;
 const EDIT = [{ permission: "initiative.edit" as const }];
 const idParams = z.strictObject({ initiativeId: z.uuid() });
 const linkParams = z.strictObject({ initiativeId: z.uuid(), linkId: z.uuid() });
-const listQuery = z.strictObject({ includeArchived: z.stringbool().default(false) });
+const listQuery = z.strictObject({ includeArchived: z.stringbool().default(false), ...pageQueryFields });
+/** The links' stable sort (ADR-0007 §4, T-DG6-BE-V): creation time, then id. */
+const LINK_SORT: readonly SortKey[] = [
+  { name: "created_at", type: "timestamptz" },
+  { name: "id", type: "uuid" },
+];
 
 /** The exact English text of ADR-0021 §2 (REQ-PB-040). */
 export const NOT_TOM_EVIDENCE =
@@ -551,8 +559,12 @@ export function registerInitiativeLinkRoutes(app: FastifyInstance, { db }: Modul
       await readableInitiative(db, request, initiativeId);
       let q = db.selectFrom(kind.table).selectAll().where("initiative_id", "=", initiativeId);
       if (!query.includeArchived) q = q.where("status", "=", "active");
-      const rows = await q.orderBy("created_at").orderBy("id").execute();
-      return { items: rows.map((r) => kind.present(r)) };
+      const page = await keysetPage(q, LINK_SORT, query, {
+        list: kind.segment,
+        initiativeId,
+        includeArchived: query.includeArchived,
+      });
+      return { items: page.items.map((r) => kind.present(r)), nextCursor: page.nextCursor };
     });
 
     app.post(path, { config: edit }, async (request, reply) => {

@@ -1,0 +1,113 @@
+$ QA_PG_PORT=25590 MTH_PORT_POOL=25591-25599 tests/qa/support/with-pg.sh npx vitest run --project integration apps/worker/test/integration/operations-freshness.test.ts apps/worker/test/integration/adoption-below-trajectory.test.ts
+port-policy: PostgreSQL listening on port 25590 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-n2
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvulbntf_b39389d9 (server_encoding UTF8); applied 110 migrations to a fresh database
+ ❯ |integration| apps/worker/test/integration/adoption-below-trajectory.test.ts (14 tests | 1 failed) 9979ms
+   × the event-to-queue registry (D-102) > kpi.deviation_evaluated fans out to RAID's and the adoption consumer; every other event keeps its one queue 53ms
+     → connector.run_failed: expected 'integrations.connector_exception' to be 'automation.evaluate' // Object.is equality
+   ✓ the event-to-queue registry (D-102) > job ids: the event id for one queue; distinct, deterministic UUIDs per (event, queue) for several 2ms
+   ✓ the outbox relay fans kpi.deviation_evaluated out (D-102) > one event reaches both consumers exactly once; a relay retry and a replayed send duplicate nothing  985ms
+   ✓ the outbox relay fans kpi.deviation_evaluated out (D-102) > all or none: when one queue's send fails, no job and no mark commit, and the failure is recorded 235ms
+   ✓ the outbox relay fans kpi.deviation_evaluated out (D-102) > an event type with no queue is a recorded relay failure; a single-queue event keeps job id = event id 130ms
+   ✓ adoption.indicator_evaluated (ADR-0033 §4) > red or amber and adverse: one intervention per link, scope and period, one adoption.check_failed each  408ms
+   ✓ adoption.indicator_evaluated (ADR-0033 §4) > green / favourable creates none 64ms
+   ✓ adoption.indicator_evaluated (ADR-0033 §4) > green / within creates none 82ms
+   ✓ adoption.indicator_evaluated (ADR-0033 §4) > unknown / unknown creates none 91ms
+   ✓ adoption.indicator_evaluated (ADR-0033 §4) > stale / unknown creates none 72ms
+   ✓ adoption.indicator_evaluated (ADR-0033 §4) > not_computable / unknown creates none 50ms
+   ✓ adoption.indicator_evaluated (ADR-0033 §4) > a removed link gets no intervention; two active links get one each 98ms
+   ✓ adoption.indicator_evaluated (ADR-0033 §4) > no active user in the owner chain: owner NULL (unassigned) and no work item; no calendar: due date NULL 87ms
+   ✓ adoption.indicator_evaluated (ADR-0033 §4) > refuses an event that does not match its evaluation (programming error, nothing written) 82ms
+ ❯ |integration| apps/worker/test/integration/operations-freshness.test.ts (7 tests | 2 failed) 11434ms
+   ✓ the catalogue triggers and starter 16 version 2 (ADR-0053 §3; 0116) > lists connector.run_failed and data.stale, admin-selectable events of M0239, each fed to the engine 15ms
+   × the catalogue triggers and starter 16 version 2 (ADR-0053 §3; 0116) > version 1 is unchanged published history (superseded); version 2 is effective with the three triggers 28ms
+     → expected [ …(5) ] to deeply equal [ …(5) ]
+   ✓ the catalogue triggers and starter 16 version 2 (ADR-0053 §3; 0116) > the guard refuses an application version that adds a trigger and accepts one that keeps version 2's set 55ms
+   × kpi.freshness_scan and operations.exception_raise (ADR-0053 §2; REQ-S12-019) > a KPI older than staleAfterDays -> one data_stale exception linked to it; the KPI still reads Stale with its last value and date 160ms
+     → expected [ { …(3) } ] to deeply equal [ { …(3) } ]
+   ✓ kpi.freshness_scan and operations.exception_raise (ADR-0053 §2; REQ-S12-019) > one alert per open, none per recurrence; fresh again -> recovered  322ms
+   ✓ kpi.freshness_scan and operations.exception_raise (ADR-0053 §2; REQ-S12-019) > platform exceptions alert every organization's holders; heartbeat_missed gets no second log line 70ms
+   ✓ kpi.freshness_scan and operations.exception_raise (ADR-0053 §2; REQ-S12-019) > a narrowed grant fails the scan with service_identity.out_of_scope; restoring it lets it run 74ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/worker/test/integration/adoption-below-trajectory.test.ts > the event-to-queue registry (D-102) > kpi.deviation_evaluated fans out to RAID's and the adoption consumer; every other event keeps its one queue
+AssertionError: connector.run_failed: expected 'integrations.connector_exception' to be 'automation.evaluate' // Object.is equality
+
+Expected: [32m"automation.evaluate"[39m
+Received: [31m"integrations.connector_exception"[39m
+
+ ❯ apps/worker/test/integration/adoption-below-trajectory.test.ts:305:42
+    303|       if (AUTOMATION_EVENT_QUEUES[eventType] === AUTOMATION_EVALUATE) {
+    304|         // At most one domain consumer, then the engine (an event with…
+    305|         expect(queues.at(-1), eventType).toBe(AUTOMATION_EVALUATE);
+       |                                          ^
+    306|         expect(queues.length, eventType).toBeLessThanOrEqual(2);
+    307|       } else expect(queues, eventType).toHaveLength(1);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |integration| apps/worker/test/integration/operations-freshness.test.ts > the catalogue triggers and starter 16 version 2 (ADR-0053 §3; 0116) > version 1 is unchanged published history (superseded); version 2 is effective with the three triggers
+AssertionError: expected [ …(5) ] to deeply equal [ …(5) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[33m@@ -1,7 +1,7 @@[39m
+[2m  [[22m
+[32m-   "01920006-0116-7000-8000-000000000001",[39m
+[31m+   "01920006-0117-7000-8000-000000000001",[39m
+[2m    "published",[22m
+[2m    [[22m
+[2m      "job.failed",[22m
+[2m      "connector.run_failed",[22m
+[2m      "data.stale",[22m
+
+ ❯ apps/worker/test/integration/operations-freshness.test.ts:330:81
+    328|     expect(v1!.actions).toEqual([{ type: "starter_handler", handlers: …
+    329|     expect(v1!.published_at).not.toBeNull();
+    330|     expect([v2!.id, v2!.status, v2!.trigger_codes, v2!.conditions, v2!…
+       |                                                                                 ^
+    331|       STARTER_16_V2,
+    332|       "published",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |integration| apps/worker/test/integration/operations-freshness.test.ts > kpi.freshness_scan and operations.exception_raise (ADR-0053 §2; REQ-S12-019) > a KPI older than staleAfterDays -> one data_stale exception linked to it; the KPI still reads Stale with its last value and date
+AssertionError: expected [ { …(3) } ] to deeply equal [ { …(3) } ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    {[22m
+[32m-     "automation_rule_version_id": "01920006-0116-7000-8000-000000000001",[39m
+[31m+     "automation_rule_version_id": "01920006-0117-7000-8000-000000000001",[39m
+[2m      "status": "succeeded",[22m
+[2m      "trigger_code": "data.stale",[22m
+[2m    },[22m
+[2m  ][22m
+
+ ❯ apps/worker/test/integration/operations-freshness.test.ts:492:19
+    490|       .where("trigger_key", "=", events[0]!.idempotency_key)
+    491|       .execute();
+    492|     expect(execs).toEqual([
+       |                   ^
+    493|       { automation_rule_version_id: STARTER_16_V2, trigger_code: "data…
+    494|     ]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  3 failed | 18 passed (21)
+   Start at  06:27:43
+   Duration  44.94s (transform 6.75s, setup 0ms, collect 12.94s, tests 21.41s, environment 0ms, prepare 494ms)
+
+exit=1

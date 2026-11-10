@@ -1,0 +1,186 @@
+port-policy: PostgreSQL listening on port 28500 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+== driver start 2026-11-02T01:08:12Z; git HEAD a973b5673e4e5787836f6e8320143cb5b0779521; node v24.21.0
+host driver-start: 2026-11-02T01:08:12Z loadavg 0.54 1.14 3.45 nproc 4
+uncommitted product file: ?? deploy/load/rate-limits.mjs
+6b2a9007e47b49640a497a356239cea1b79b5a0081a12c5e88dbf7f405bdff8a  deploy/load/generate.mjs
+7b860ee08890dcc88fdcc82615cd2bf7460bf11f9507348ee28a56d65985fca0  deploy/load/sessions.mjs
+7865d9d3f1aa5d4063b72243ad52e795c485fcee78fe24c429663d5549ed154b  deploy/load/export-proof.mjs
+0a8d1c78d92765db962ca6dc4ae15883c0a491cf55b8975b1e86616f133bcb4b  deploy/load/rate-limits.mjs
+5aa6313addb1058dfb5c3ad3ae64b979b2d8e6937511c340058d8c89b1e3d2e7  apps/api/dist/main.js
+42279ac53cbea3c95aa03a78e1505a3dba9f47d66dbc461a31c30c824c544675  apps/api/dist/modules/reporting/exports/jobs.js
+aeeaf33712f434bae7850174b5053ce981ea783da568efaa07cc705fe505ec3b  apps/api/dist/modules/reporting/exports/assembly.js
+221e1bca5ecc6e2783ef01acdeceb659d28fba13f57ef6215554ea0a20054a20  apps/worker/dist/main.js
+30c51a6dcf1a5ed032b87455eaf42f7348bf015f79194a2a22acca0c166c30f2  packages/db/dist/cli.js
+0123_p6_automation_rule_enablement_disable.sql
+0124_p6_export_live_selection_pending.sql
+33:export const START_TARGET_MS = 2000;
+mth-load rate limits: 5 P6 class budget(s) set to 100000/min (load stacks only; global and auth limits unchanged)
+ASSISTANT_RATE_LIMIT_PER_MINUTE=100000
+EXPORT_RATE_LIMIT_PER_MINUTE=100000
+SEARCH_RATE_LIMIT_PER_MINUTE=100000
+UPLOAD_RATE_LIMIT_PER_MINUTE=100000
+WEBHOOK_RATE_LIMIT_PER_MINUTE=100000
+
+################ repetition 1 of 3 2026-11-02T01:08:12Z
+NOTICE:  database "mth" does not exist, skipping
+mth-db migrate: applied 116 migration(s)
+migrate exit=0
+}
+mth-load generate: next, run the search.reindex job once (deploy/load/README.md) so the search index is complete
+generate exit=0 wall_ms=25064
+marker {"users": 120, "singleton": true, "initiatives": 1000, "kpi_actuals": 10000, "random_seed": 20261027, "audit_events": 100000, "dataset_code": "mth_load_v1", "transformations": 50, "generator_version": "1.0.0"}
+transformation 50
+initiative 1000
+raid_entry 1500
+audit_event 100000
+app_user 120
+export_job before proof 0
+mth-load sessions: 100 synthetic load session(s) written to $TMPDIR/doy2-rep-1/sessions.json (cookie mth_session, expiry 180 min); the file holds bearer credentials
+search index: reindex completed jobs 1, types not idle 0 2026-11-02T01:08:57Z
+idle wait: 25 s, ended by: load1 0.94 <= 1.0
+host rep-1-before-proof: 2026-11-02T01:09:24Z loadavg 0.94 1.17 3.29 nproc 4
+mth-load export-proof do-y2-rep-1: 66 exports, 1 failed
+  part A (LOAD-T01, 250 initiatives): 16 exports
+    diagnostic xlsx: start 202 113.602 ms, done succeeded in 1905.806 ms, 6795 bytes, percents 0,0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    tom xlsx: start 202 27.257 ms, done succeeded in 2118.737 ms, 7382 bytes, percents 0,0,0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    business_cases xlsx: start 202 22.948 ms, done succeeded in 1849.456 ms, 6548 bytes, percents 0,0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    roadmap xlsx: start 202 28.156 ms, done succeeded in 2130.13 ms, 27163 bytes, percents 0,0,0,0,0,0,0,90,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/raid xlsx: start 202 41.507 ms, done succeeded in 1851.594 ms, 28701 bytes, percents 0,0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/benefits xlsx: start 202 28.902 ms, done succeeded in 1856.833 ms, 18767 bytes, percents 0,0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/kpis xlsx: start 202 31.216 ms, done succeeded in 1858.085 ms, 4892 bytes, percents 0,0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/decisions xlsx: start 202 28.806 ms, done succeeded in 1855.176 ms, 10637 bytes, percents 0,0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/dependencies xlsx: start 202 27.186 ms, done succeeded in 2107.864 ms, 10333 bytes, percents 0,0,0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/actions xlsx: start 202 19.222 ms, done succeeded in 1856.081 ms, 4316 bytes, percents 0,0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/raid csv: start 202 26.862 ms, done succeeded in 1853.727 ms, 60328 bytes, percents 0,0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/benefits csv: start 202 20.122 ms, done succeeded in 2102.88 ms, 24383 bytes, percents 0,0,0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/kpis csv: start 202 23.273 ms, done succeeded in 1847.25 ms, 2063 bytes, percents 0,0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/decisions csv: start 202 27.57 ms, done succeeded in 1862.221 ms, 16719 bytes, percents 0,0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/dependencies csv: start 202 20.55 ms, done succeeded in 2110.861 ms, 18121 bytes, percents 0,0,0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/actions csv: start 202 16.597 ms, done succeeded in 1847.584 ms, 1173 bytes, percents 0,0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+  part B: 50 transformations, 50 distinct users, at once
+    LOAD-T20 FAIL: no sameScopeOther user for this transformation
+  start A {"count":16,"p50Ms":27.186,"p95Ms":113.602,"maxMs":113.602}
+  start B {"count":50,"p50Ms":717.679,"p95Ms":907.945,"maxMs":908.951}
+  completion A {"count":16,"p50Ms":1856.833,"p95Ms":2130.13,"maxMs":2130.13}
+  completion B {"count":50,"p50Ms":3842.967,"p95Ms":6001.577,"maxMs":6008.746}
+  largest file 60328 bytes; EXPORT_MAX_BYTES reopen candidates 0
+docs/delivery/handbacks/DG6/T-DG6-DO-Y2-evidence/driver.sh: line 33:   271 Killed                  ( while :; do
+    echo "$(date +%s) $(cut -d' ' -f1 /proc/loadavg)"; sleep 2;
+done ) > "$WORK/loadavg.txt"
+host rep-1-after-proof: 2026-11-02T01:10:04Z loadavg 1.73 1.31 3.25 nproc 4
+loadavg-1m during proof: samples 20 min 0.87 max 1.73 last 1.73
+rep 1 export-proof exit=1
+export_job succeeded 66
+first created -> last finished (s) 38.840; jobs 66; unfinished 0
+jobs with no snapshot 0
+api error-level log lines: 0; worker: 0; api 429 class lines: 0
+
+################ repetition 2 of 3 2026-11-02T01:10:04Z
+mth-db migrate: applied 116 migration(s)
+migrate exit=0
+}
+mth-load generate: next, run the search.reindex job once (deploy/load/README.md) so the search index is complete
+generate exit=0 wall_ms=25285
+marker {"users": 120, "singleton": true, "initiatives": 1000, "kpi_actuals": 10000, "random_seed": 20261027, "audit_events": 100000, "dataset_code": "mth_load_v1", "transformations": 50, "generator_version": "1.0.0"}
+transformation 50
+initiative 1000
+raid_entry 1500
+audit_event 100000
+app_user 120
+export_job before proof 0
+mth-load sessions: 100 synthetic load session(s) written to $TMPDIR/doy2-rep-2/sessions.json (cookie mth_session, expiry 180 min); the file holds bearer credentials
+search index: reindex completed jobs 1, types not idle 0 2026-11-02T01:10:48Z
+idle wait: 301 s, ended by: timeout
+host rep-2-before-proof: 2026-11-02T01:15:51Z loadavg 1.67 1.86 2.93 nproc 4
+mth-load export-proof do-y2-rep-2: 66 exports, 1 failed
+  part A (LOAD-T01, 250 initiatives): 16 exports
+    diagnostic xlsx: start 202 169.059 ms, done succeeded in 2135.85 ms, 6795 bytes, percents 0,0,0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    tom xlsx: start 202 32.976 ms, done succeeded in 1864.424 ms, 7380 bytes, percents 0,0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    business_cases xlsx: start 202 22.986 ms, done succeeded in 2128.203 ms, 6547 bytes, percents 0,0,0,0,0,0,0,95,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    roadmap xlsx: start 202 28.804 ms, done succeeded in 1853.712 ms, 27166 bytes, percents 0,0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/raid xlsx: start 202 30.77 ms, done succeeded in 1851.786 ms, 28701 bytes, percents 0,0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/benefits xlsx: start 202 23.929 ms, done succeeded in 2117.419 ms, 18764 bytes, percents 0,0,0,0,0,0,0,54,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/kpis xlsx: start 202 32.109 ms, done succeeded in 1858.43 ms, 4896 bytes, percents 0,0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/decisions xlsx: start 202 28.71 ms, done succeeded in 1859.97 ms, 10637 bytes, percents 0,0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/dependencies xlsx: start 202 22.724 ms, done succeeded in 1863.021 ms, 10330 bytes, percents 0,0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/actions xlsx: start 202 29.729 ms, done succeeded in 2122.281 ms, 4314 bytes, percents 0,0,0,0,0,0,0,90,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/raid csv: start 202 40.21 ms, done succeeded in 1869.502 ms, 60328 bytes, percents 0,0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/benefits csv: start 202 26.001 ms, done succeeded in 1848.991 ms, 24383 bytes, percents 0,0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/kpis csv: start 202 22.876 ms, done succeeded in 2119.253 ms, 2063 bytes, percents 0,0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/decisions csv: start 202 22.755 ms, done succeeded in 1844.595 ms, 16719 bytes, percents 0,0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/dependencies csv: start 202 25.382 ms, done succeeded in 1882.194 ms, 18121 bytes, percents 0,0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/actions csv: start 202 25.697 ms, done succeeded in 1853.814 ms, 1173 bytes, percents 0,0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+  part B: 50 transformations, 50 distinct users, at once
+    LOAD-T20 FAIL: no sameScopeOther user for this transformation
+  start A {"count":16,"p50Ms":26.001,"p95Ms":169.059,"maxMs":169.059}
+  start B {"count":50,"p50Ms":650.56,"p95Ms":869.29,"maxMs":873.999}
+  completion A {"count":16,"p50Ms":1863.021,"p95Ms":2135.85,"maxMs":2135.85}
+  completion B {"count":50,"p50Ms":4014.143,"p95Ms":4548.451,"maxMs":4659.014}
+  largest file 60328 bytes; EXPORT_MAX_BYTES reopen candidates 0
+docs/delivery/handbacks/DG6/T-DG6-DO-Y2-evidence/driver.sh: line 33:   808 Killed                  ( while :; do
+    echo "$(date +%s) $(cut -d' ' -f1 /proc/loadavg)"; sleep 2;
+done ) > "$WORK/loadavg.txt"
+host rep-2-after-proof: 2026-11-02T01:16:29Z loadavg 2.22 1.95 2.92 nproc 4
+loadavg-1m during proof: samples 19 min 1.51 max 2.22 last 2.22
+rep 2 export-proof exit=1
+export_job succeeded 66
+first created -> last finished (s) 37.275; jobs 66; unfinished 0
+jobs with no snapshot 0
+api error-level log lines: 0; worker: 0; api 429 class lines: 0
+
+################ repetition 3 of 3 2026-11-02T01:16:29Z
+mth-db migrate: applied 116 migration(s)
+migrate exit=0
+}
+mth-load generate: next, run the search.reindex job once (deploy/load/README.md) so the search index is complete
+generate exit=0 wall_ms=27942
+marker {"users": 120, "singleton": true, "initiatives": 1000, "kpi_actuals": 10000, "random_seed": 20261027, "audit_events": 100000, "dataset_code": "mth_load_v1", "transformations": 50, "generator_version": "1.0.0"}
+transformation 50
+initiative 1000
+raid_entry 1500
+audit_event 100000
+app_user 120
+export_job before proof 0
+mth-load sessions: 100 synthetic load session(s) written to $TMPDIR/doy2-rep-3/sessions.json (cookie mth_session, expiry 180 min); the file holds bearer credentials
+search index: reindex completed jobs 1, types not idle 0 2026-11-02T01:17:15Z
+idle wait: 301 s, ended by: timeout
+host rep-3-before-proof: 2026-11-02T01:22:19Z loadavg 3.27 3.27 3.26 nproc 4
+mth-load export-proof do-y2-rep-3: 66 exports, 1 failed
+  part A (LOAD-T01, 250 initiatives): 16 exports
+    diagnostic xlsx: start 202 112.967 ms, done succeeded in 2174.977 ms, 6795 bytes, percents 0,0,0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    tom xlsx: start 202 87.936 ms, done succeeded in 1911.385 ms, 7380 bytes, percents 0,0,0,0,0,0,95,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    business_cases xlsx: start 202 27.383 ms, done succeeded in 1858.105 ms, 6549 bytes, percents 0,0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    roadmap xlsx: start 202 19.218 ms, done succeeded in 2169.17 ms, 27166 bytes, percents 0,0,0,0,0,0,0,90,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/raid xlsx: start 202 31.854 ms, done succeeded in 1598.455 ms, 28701 bytes, percents 0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/benefits xlsx: start 202 28.311 ms, done succeeded in 2148.017 ms, 18766 bytes, percents 0,0,0,0,0,0,0,90,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/kpis xlsx: start 202 26.529 ms, done succeeded in 1860.654 ms, 4897 bytes, percents 0,0,0,0,0,0,90,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/decisions xlsx: start 202 26.076 ms, done succeeded in 1867.112 ms, 10637 bytes, percents 0,0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/dependencies xlsx: start 202 21.577 ms, done succeeded in 1856.845 ms, 10333 bytes, percents 0,0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/actions xlsx: start 202 39.131 ms, done succeeded in 1885.69 ms, 4317 bytes, percents 0,0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/raid csv: start 202 83.822 ms, done succeeded in 1886.74 ms, 60328 bytes, percents 0,0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/benefits csv: start 202 48.026 ms, done succeeded in 1872.56 ms, 24383 bytes, percents 0,0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/kpis csv: start 202 31.324 ms, done succeeded in 1858.284 ms, 2063 bytes, percents 0,0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/decisions csv: start 202 20.817 ms, done succeeded in 2114.035 ms, 16719 bytes, percents 0,0,0,0,0,0,0,95,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/dependencies csv: start 202 17.872 ms, done succeeded in 1850.237 ms, 18121 bytes, percents 0,0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+    registers/actions csv: start 202 21.869 ms, done succeeded in 1854.003 ms, 1173 bytes, percents 0,0,0,0,0,0,0,100, other {"getExport":404,"download":404}, aud {"getExport":404,"download":404}
+  part B: 50 transformations, 50 distinct users, at once
+    LOAD-T20 FAIL: no sameScopeOther user for this transformation
+  start A {"count":16,"p50Ms":27.383,"p95Ms":112.967,"maxMs":112.967}
+  start B {"count":50,"p50Ms":1035.117,"p95Ms":1312.592,"maxMs":1330.38}
+  completion A {"count":16,"p50Ms":1867.112,"p95Ms":2174.977,"maxMs":2174.977}
+  completion B {"count":50,"p50Ms":3702.284,"p95Ms":6176.772,"maxMs":6219.303}
+  largest file 60328 bytes; EXPORT_MAX_BYTES reopen candidates 0
+docs/delivery/handbacks/DG6/T-DG6-DO-Y2-evidence/driver.sh: line 33:  1344 Killed                  ( while :; do
+    echo "$(date +%s) $(cut -d' ' -f1 /proc/loadavg)"; sleep 2;
+done ) > "$WORK/loadavg.txt"
+host rep-3-after-proof: 2026-11-02T01:22:59Z loadavg 4.80 3.64 3.38 nproc 4
+loadavg-1m during proof: samples 20 min 3.27 max 4.80 last 4.80
+rep 3 export-proof exit=1
+export_job succeeded 66
+first created -> last finished (s) 39.397; jobs 66; unfinished 0
+jobs with no snapshot 0
+api error-level log lines: 0; worker: 0; api 429 class lines: 0
+host driver-end: 2026-11-02T01:22:59Z loadavg 4.80 3.64 3.38 nproc 4
+== driver end 2026-11-02T01:22:59Z; proofs overall exit 1 (0 = every assertion held in every repetition)
+driver exit 1 wall 889s

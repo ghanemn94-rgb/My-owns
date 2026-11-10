@@ -45,6 +45,7 @@ import { formatBusinessDate, formatDateTime, formatDecimal, formatMoney, formatP
 import { formatKpiValue, reasonText as kpiReasonText, times100 } from "../kpi/ui.tsx";
 import { useBusinessUnitTransformations, useDashboardPeriods, useDrilldown, type DashboardQuery } from "./api.ts";
 import { useReadableTransformations } from "../traceability/api.ts";
+import { RestrictedRecordsLabel } from "../../components/sensitivity/RestrictedRecordsLabel.tsx";
 
 /** The page namespace (its `problem.*` texts are read before `problems.*`). */
 export const NS = ["dashboards"] as const;
@@ -940,6 +941,7 @@ export function DrilldownPanel({
         <QueryState query={query}>
           {(d) => (
             <>
+              <RestrictedRecordsLabel value={d.includesRestrictedRecords} scope="total" />
               <dl className="details details--compact">
                 <div>
                   <dt>{t("dashboards.drill.value")}</dt>
@@ -1208,7 +1210,7 @@ export function useOrgQuery(state: FilterState): {
     // If the full list cannot be read, the unit's first page is the fallback (never "all" of the organization).
     const inUnit = readable.isError
       ? (unitAll.data?.items ?? []).map((r) => r.id)
-      : (readable.data ?? []).filter((r) => r.businessUnitId === state.bu).map((r) => r.id);
+      : (readable.data?.items ?? []).filter((r) => r.businessUnitId === state.bu).map((r) => r.id);
     const ids = state.tr.filter((x) => inUnit.includes(x));
     if (ids.length === 0) return { query: base, blocked: "none_matching", loading: false };
     return { query: { ...base, transformationId: ids }, blocked: null, loading: false };
@@ -1263,7 +1265,9 @@ export function FilterBar({
   const unitList = units.data ?? [];
   // T-DG4-FE-G2: only transformations the caller may read are offered (DG1 listTransformations is scope-filtered).
   const readable = useReadableTransformations(me.organization.id, orgWide);
-  const readableList = readable.data ?? [];
+  const readableList = readable.data?.items ?? [];
+  // F-DG5-125 (ADR-0061 §9): the page cap never cuts the list silently; the filter says how many it offers.
+  const readableIncomplete = readable.data?.complete === false;
   const trFull = state.tr.length >= MAX_TRANSFORMATION_FILTER;
 
   const chips: { key: keyof FilterState; label: string; id?: string }[] = [];
@@ -1344,7 +1348,7 @@ export function FilterBar({
               data-filter="transformation"
               value=""
               disabled={readable.isError || trFull}
-              aria-describedby={`${id}-tr-hint`}
+              aria-describedby={readableIncomplete ? `${id}-tr-hint ${id}-tr-incomplete` : `${id}-tr-hint`}
               onChange={(e) => {
                 if (e.target.value) set("tr", [...state.tr, e.target.value].join(","));
               }}
@@ -1368,6 +1372,11 @@ export function FilterBar({
                       max: MAX_TRANSFORMATION_FILTER,
                     })}
             </span>
+            {readableIncomplete ? (
+              <span id={`${id}-tr-incomplete`} className="small block" role="note" data-state="list-incomplete">
+                <Icon name="alert" /> {t("common.table.listIncomplete", { n: readableList.length })}
+              </span>
+            ) : null}
           </div>
         ) : null}
         {orgWide ? (

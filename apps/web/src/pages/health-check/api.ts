@@ -46,7 +46,7 @@ export function useHealthQuestions() {
 export function useHealthSchemes() {
   return useQuery({
     queryKey: healthKeys.schemes,
-    queryFn: async () => (await api.get<{ items: HealthCheckScheme[] }>(healthPaths.schemes)).items,
+    queryFn: () => fetchAllPages<HealthCheckScheme>(healthPaths.schemes),
     retry: shouldRetry,
   });
 }

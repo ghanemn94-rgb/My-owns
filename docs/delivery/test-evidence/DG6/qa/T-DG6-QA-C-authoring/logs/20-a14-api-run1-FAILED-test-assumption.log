@@ -1,0 +1,42 @@
+port-policy: PostgreSQL listening on port 26460 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /home/user/wt/dg6-qa-c
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvvfhf7b_be578842 (server_encoding UTF8); applied 113 migrations to a fresh database
+ ❯ |integration| tests/qa/integration/a14-p6-bulk-compare-reapply.test.ts (6 tests | 1 failed) 1486ms
+   ✓ REQ-S16-026: two users edit the same initiative; the second save gets 409, compare and reapply keep both > first save 200 (v2); the second, on v1, 409 version-conflict with currentVersion 2; nothing of it is written 143ms
+   × REQ-S16-026: two users edit the same initiative; the second save gets 409, compare and reapply keep both > compare v1->v2 names what the other user changed; values only for audit.read, withheld for an editor 82ms
+     → expected false to be true // Object.is equality
+   ✓ REQ-S16-026: two users edit the same initiative; the second save gets 409, compare and reapply keep both > reapply (only my changes, If-Match = current) succeeds as v3 and keeps the other user's change 118ms
+   ✓ REQ-S16-026: two users edit the same initiative; the second save gets 409, compare and reapply keep both > two simultaneous saves on the same version: exactly one 200, the other 409; the loser's text is not stored 35ms
+   ✓ REQ-S15-010 (A14): a bulk update touching stale records reports a conflict for those records only > four items, two stale (first and last): one error per stale item at its pointer, nothing saved 207ms
+   ✓ REQ-S15-010 (A14): a bulk update touching stale records reports a conflict for those records only > a bulk racing a single edit of one of its records: either the bulk is refused for that record, or the edit is 76ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/a14-p6-bulk-compare-reapply.test.ts > REQ-S16-026: two users edit the same initiative; the second save gets 409, compare and reapply keep both > compare v1->v2 names what the other user changed; values only for audit.read, withheld for an editor
+AssertionError: expected false to be true // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+ ❯ tests/qa/integration/a14-p6-bulk-compare-reapply.test.ts:97:42
+     95|     expect(asEditor.status, JSON.stringify(asEditor.body)).toBe(200);
+     96|     expect(asEditor.body).toMatchObject({ recordId: id, fromVersion: 1…
+     97|     expect(asEditor.body.valuesWithheld).toBe(true);
+       |                                          ^
+     98|     const editorKeys = (asEditor.body.fields as Loose[]).map((f) => f.…
+     99|     expect(editorKeys.length, "the changed fields are named").toBeGrea…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 passed (6)
+   Start at  20:32:01
+   Duration  15.25s (transform 5.31s, setup 0ms, collect 9.86s, tests 1.49s, environment 0ms, prepare 78ms)
+

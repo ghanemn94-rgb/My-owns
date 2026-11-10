@@ -186,6 +186,11 @@ export const kpiActual = z.strictObject({
   createdAt: timestamp,
   createdBy: uuid,
   updatedAt: timestamp,
+  /**
+   * T-DG6-BE-Z10 (F-DG6-420; D-218): true when a value's `evidenceIds` omit an evidence item the reader is not admitted
+   * to; label access.includesRestrictedRecords.
+   */
+  includesRestrictedRecords: z.literal(true).optional(),
 });
 export type KpiActual = z.infer<typeof kpiActual>;
 export const kpiActualPage = page(kpiActual);
@@ -277,9 +282,12 @@ export const ragOverrideInForce = z.strictObject({
   id: uuid,
   rag: kpiOverrideRag,
   reason: z.string(),
-  evidenceId: uuid,
+  /** T-DG6-BE-Z10B (F-DG6-420; D-218): null only when the evidence is an item the reader is not admitted to. */
+  evidenceId: nullableUuid,
   expiresAt: timestamp,
   createdBy: uuid,
+  /** The override has evidence the reader may not see (never "no evidence"); label access.includesRestrictedRecords. */
+  evidenceRestricted: z.literal(true).optional(),
 });
 
 export const kpiStatusExplanation = z.strictObject({
@@ -354,7 +362,11 @@ export const ragOverride = z.strictObject({
   calculatedRag: kpiRag,
   kpiEvaluationId: nullableUuid,
   reason: z.string(),
-  evidenceId: uuid,
+  /**
+   * The override's evidence. T-DG6-BE-Z10B (F-DG6-420; D-218): null only when the evidence item is one the reader is
+   * not admitted to (then `evidenceRestricted` and `includesRestrictedRecords` are true); stored evidence is mandatory.
+   */
+  evidenceId: nullableUuid,
   expiresAt: timestamp,
   inForce: z.boolean(),
   status: z.enum(["active", "revoked"]),
@@ -365,6 +377,10 @@ export const ragOverride = z.strictObject({
   createdAt: timestamp,
   createdBy: uuid,
   updatedAt: timestamp,
+  /** T-DG6-BE-Z10B: the override HAS evidence the reader may not see (never "no evidence"). */
+  evidenceRestricted: z.literal(true).optional(),
+  /** True when a reference was omitted for the reader (label access.includesRestrictedRecords). */
+  includesRestrictedRecords: z.literal(true).optional(),
 });
 export type RagOverride = z.infer<typeof ragOverride>;
 export const ragOverridePage = page(ragOverride);

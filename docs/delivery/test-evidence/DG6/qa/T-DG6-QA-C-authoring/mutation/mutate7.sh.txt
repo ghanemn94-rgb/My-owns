@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# qa-verifier T-DG6-QA-C mutation checks. Each mutant: a private copy of the tree under $TMPDIR, one product line
+# changed by sed (verified), one acceptance test file run against it. Expected: the test FAILS (non-zero exit).
+set -u
+export PATH=/opt/nvm/versions/node/v24.21.0/bin:$PATH
+BASE=$TMPDIR/mut
+OUT=$1
+run_mutant() {
+  local id=$1 port=$2 file=$3 pattern=$4 replacement=$5 test=$6
+  local dir=$TMPDIR/mut-$id
+  rm -rf "$dir"; cp -a "$BASE" "$dir"
+  local before after
+  before=$(grep -cF -- "$pattern" "$dir/$file")
+  python3 - "$dir/$file" "$pattern" "$replacement" <<'PY'
+import sys
+p, a, b = sys.argv[1:4]
+s = open(p).read()
+open(p, "w").write(s.replace(a, b))
+PY
+  after=$(grep -cF -- "$pattern" "$dir/$file")
+  {
+    echo "=== $id: $file"
+    echo "pattern occurrences before=$before after=$after"
+    echo "replace: $pattern"
+    echo "with:    $replacement"
+    echo "diff:"; diff <(cat "$BASE/$file") "$dir/$file"
+  } > "$OUT/$id.log"
+  ( cd "$dir" && QA_PG_PORT=$port MTH_PORT_POOL=$((port+1))-$((port+4)) timeout 560 tests/qa/support/with-pg.sh \
+      pnpm vitest run --configLoader runner --project integration "$test" ) >> "$OUT/$id.log" 2>&1
+  echo "MUTANT-TEST-EXIT=$?" >> "$OUT/$id.log"
+  rm -rf "$dir"
+}
+run_mutant M7-commit-partial-rows 26450 apps/api/src/modules/integrations/imports/commit.ts '  for (const r of valid) {' '  for (const r of valid.slice(0, 1)) {' tests/qa/integration/a13-p6-import-commit-kill-restart.test.ts &
+wait
+echo ALL-MUTANTS-DONE

@@ -1,0 +1,71 @@
+port-policy: PostgreSQL listening on port 28650 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+migrate exit 0 117 applied; 
+LAST MIGRATIONS
+{"id":125,"name":"0125_p6_export_assembly_attempts.sql","sha256":"b703f4c43a3077b46ee032ebdb6b493600e2d0e1d0d372c13fdca06b9f78f7d8","applied_at":"2026-11-02T03:00:44.355Z","applied_by":"mth_owner"}
+{"id":124,"name":"0124_p6_export_live_selection_pending.sql","sha256":"939a759268fb96b06108a510bcecc107207df419b15cb3e6d4e5baf6d346b433","applied_at":"2026-11-02T03:00:44.352Z","applied_by":"mth_owner"}
+{"id":123,"name":"0123_p6_automation_rule_enablement_disable.sql","sha256":"7523c8ccd162f482353c72962de51117a8df904da45c2a2ae989261fc5ebaf22","applied_at":"2026-11-02T03:00:44.350Z","applied_by":"mth_owner"}
+COLUMNS
+{"column_name":"snapshot_id","data_type":"uuid","is_nullable":"YES","column_default":null,"ordinal_position":4}
+{"column_name":"attempt_count","data_type":"smallint","is_nullable":"NO","column_default":"0","ordinal_position":10}
+{"column_name":"selection","data_type":"jsonb","is_nullable":"YES","column_default":null,"ordinal_position":26}
+{"column_name":"assembly_attempt_count","data_type":"integer","is_nullable":"NO","column_default":"0","ordinal_position":27}
+CONSTRAINTS
+export_job_assembly_attempt_count_check c => CHECK ((assembly_attempt_count >= 0))
+export_job_attempt_count_check c => CHECK (((attempt_count >= 0) AND (attempt_count <= 20)))
+export_job_audit_required t => TRIGGER DEFERRABLE INITIALLY DEFERRED
+export_job_cancel_complete c => CHECK ((((status = 'cancelled'::text) = (cancelled_at IS NOT NULL)) AND ((cancelled_at IS NULL) = (cancelled_by IS NULL))))
+export_job_cancelled_by_fkey f => FOREIGN KEY (cancelled_by) REFERENCES app_user(id) ON UPDATE RESTRICT ON DELETE RESTRICT
+export_job_content_type_check c => CHECK (((content_type IS NULL) OR (content_type = ANY (ARRAY['application/pdf'::text, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'::text, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'::text, 'application/vnd.openxmlformats-officedocument.presentationml.presentation'::text, 'text/csv; charset=utf-8'::text]))))
+export_job_content_type_matches c => CHECK (((content_type IS NULL) OR (content_type =
+CASE format
+    WHEN 'pdf'::text THEN 'application/pdf'::text
+    WHEN 'docx'::text THEN 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'::text
+    WHEN 'xlsx'::text THEN 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'::text
+    WHEN 'pptx'::text THEN 'application/vnd.openxmlformats-officedocument.presentationml.presentation'::text
+    ELSE 'text/csv; charset=utf-8'::text
+END)))
+export_job_created_by_fkey f => FOREIGN KEY (created_by) REFERENCES app_user(id) ON UPDATE RESTRICT ON DELETE RESTRICT
+export_job_error_code_check c => CHECK (((error_code IS NULL) OR (error_code = ANY (ARRAY['export.render_failed'::text, 'export.too_large'::text, 'export.source_unavailable'::text, 'export.retries_exhausted'::text, 'export.includes_restricted_records'::text, 'export.assembly_failed'::text]))))
+export_job_error_complete c => CHECK (((status = 'failed'::text) = (error_code IS NOT NULL)))
+export_job_file_complete c => CHECK ((((status = 'succeeded'::text) = (storage_key IS NOT NULL)) AND ((storage_key IS NULL) = (file_name IS NULL)) AND ((storage_key IS NULL) = (content_type IS NULL)) AND ((storage_key IS NULL) = (file_sha256 IS NULL)) AND ((storage_key IS NULL) = (file_size_bytes IS NULL))))
+export_job_file_name_check c => CHECK (((file_name IS NULL) OR (((char_length(file_name) >= 5) AND (char_length(file_name) <= 200)) AND (file_name ~ '^[A-Za-z0-9_.-]+$'::text))))
+export_job_file_sha256_check c => CHECK (((file_sha256 IS NULL) OR (file_sha256 ~ '^[0-9a-f]{64}$'::text)))
+export_job_file_size_bytes_check c => CHECK (((file_size_bytes IS NULL) OR ((file_size_bytes >= 1) AND (file_size_bytes <= 209715200))))
+export_job_format_check c => CHECK ((format = ANY (ARRAY['pdf'::text, 'docx'::text, 'xlsx'::text, 'pptx'::text, 'csv'::text])))
+export_job_idempotency_key u => UNIQUE (requested_by, idempotency_key)
+export_job_idempotency_key_check c => CHECK ((idempotency_key ~ '^[A-Za-z0-9_.:-]{8,128}$'::text))
+export_job_language_check c => CHECK ((language = ANY (ARRAY['en'::text, 'ar'::text])))
+export_job_organization_id_fkey f => FOREIGN KEY (organization_id) REFERENCES organization(id) ON UPDATE RESTRICT ON DELETE RESTRICT
+export_job_pkey p => PRIMARY KEY (id)
+export_job_requested_by_fkey f => FOREIGN KEY (requested_by) REFERENCES app_user(id) ON UPDATE RESTRICT ON DELETE RESTRICT
+export_job_requester_creates c => CHECK ((created_by = requested_by))
+export_job_selection_pending c => CHECK ((((snapshot_id IS NOT NULL) OR ((selection IS NOT NULL) AND (status = ANY (ARRAY['queued'::text, 'failed'::text, 'cancelled'::text])))) AND ((selection IS NULL) OR ((jsonb_typeof(selection) = 'object'::text) AND (jsonb_typeof((selection -> 'definitionCode'::text)) = 'string'::text)))))
+export_job_snapshot_fkey f => FOREIGN KEY (transformation_id, snapshot_id) REFERENCES report_snapshot(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT
+export_job_status_check c => CHECK ((status = ANY (ARRAY['queued'::text, 'running'::text, 'succeeded'::text, 'failed'::text, 'cancelled'::text])))
+export_job_storage_key_check c => CHECK (((storage_key IS NULL) OR (storage_key ~ '^exports/[A-Za-z0-9/_.-]{1,190}$'::text)))
+export_job_storage_key_key u => UNIQUE (storage_key)
+export_job_times c => CHECK ((((status <> ALL (ARRAY['running'::text, 'succeeded'::text])) OR (started_at IS NOT NULL)) AND ((status = ANY (ARRAY['succeeded'::text, 'failed'::text, 'cancelled'::text])) = (finished_at IS NOT NULL)) AND ((finished_at IS NULL) OR (started_at IS NULL) OR (finished_at >= started_at))))
+export_job_transformation_id_fkey f => FOREIGN KEY (transformation_id) REFERENCES transformation(id) ON UPDATE RESTRICT ON DELETE RESTRICT
+export_job_updated_by_fkey f => FOREIGN KEY (updated_by) REFERENCES app_user(id) ON UPDATE RESTRICT ON DELETE RESTRICT
+export_job_version_check c => CHECK ((version >= 1))
+INDEXES
+CREATE UNIQUE INDEX export_job_idempotency_key ON public.export_job USING btree (requested_by, idempotency_key)
+CREATE INDEX export_job_pending_assembly_idx ON public.export_job USING btree (created_at, id) WHERE ((snapshot_id IS NULL) AND (status = 'queued'::text))
+CREATE UNIQUE INDEX export_job_pkey ON public.export_job USING btree (id)
+CREATE INDEX export_job_requester_idx ON public.export_job USING btree (requested_by, created_at DESC, id DESC)
+CREATE UNIQUE INDEX export_job_storage_key_key ON public.export_job USING btree (storage_key)
+TRIGGERS
+export_job_audit_required => CREATE CONSTRAINT TRIGGER export_job_audit_required AFTER INSERT OR UPDATE ON public.export_job DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION p2_audit_required()
+export_job_guard => CREATE TRIGGER export_job_guard BEFORE INSERT OR UPDATE ON public.export_job FOR EACH ROW EXECUTE FUNCTION export_job_guard()
+export_job_row_guard => CREATE TRIGGER export_job_row_guard BEFORE INSERT OR UPDATE ON public.export_job FOR EACH ROW EXECUTE FUNCTION p2_row_guard()
+GRANTS
+INSERT
+SELECT
+UPDATE
+GUARD CONSTRAINT NAMES (from prosrc)
+config ["search_path=public, pg_temp"] secdef false
+export_job_created_queued export_job_format_offered export_job_request_immutable export_job_transition export_job_finished_frozen export_job_attempt_step export_job_assembly_attempt_step export_job_snapshot_exportable export_job_snapshot_selection
+insert rule: IF NEW.status <> 'queued' OR NEW.attempt_count <> 0 OR NEW.assembly_attempt_count <> 0 THEN
+definition check: IF NEW.selection IS NOT NULL AND s.definition_code IS DISTINCT FROM NEW.selection ->> 'definitionCode' THEN
+exit=0

@@ -19,6 +19,10 @@ import { localName, useLocale } from "./locale.ts";
 import { NAV_AREAS, NAV_SUBPAGES } from "./nav.ts";
 import { useMyNavigation, visibleAreaIds } from "./me-navigation.ts";
 import { ErrorState } from "../components/States.tsx";
+// T-DG6-FE-E (ADR-0059 §1, §3): the optional assistant slot; renders nothing unless the assistant is on.
+import { AssistantLauncher } from "../components/assistant/AssistantPanel.tsx";
+// T-DG6-FE-D (ADR-0057 §3): the global search box slot of the header.
+import { GlobalSearchBox } from "../pages/search/GlobalSearchBox.tsx";
 
 export function Shell() {
   const { t } = useTranslation();
@@ -100,6 +104,8 @@ export function Shell() {
         </button>
         <Wordmark productName={productName} logo={logo} />
         <div className="app-header__spacer" />
+        <GlobalSearchBox />
+        <AssistantLauncher />
         <LanguageSwitch signedIn onRefusedChange={setLanguageRefused} />
         <div className="user-box">
           <span className="user-box__name">{me.user.displayName}</span>

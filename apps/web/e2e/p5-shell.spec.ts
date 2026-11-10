@@ -10,6 +10,14 @@ import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
 import { expectAccessible, langOf, shot, signIn, tr, trackRequests } from "./support/ui.ts";
 
+// Budget (F-DG6-144, the F-DG5-145/146 carry-forward of D-193; p6-work-split §2 rules 13 and 15): 60 s per test.
+// Measured: run alone, both language projects, at a 1-minute load of 10-12 on 4 CPUs (three e2e stacks in
+// parallel), the slowest test took 5.2 s ([chromium-en] :60 P5: the playbook area landing page lists its §3 c...)
+// (docs/delivery/handbacks/DG6/T-DG6-FE-Y1-evidence/f144/measure-p5-shell.log). In the DG6 QA round-1 full runs
+// (docs/delivery/test-evidence/DG6/qa/round-1/06-e2e-product-*.log), its slowest test took 24.0 s.
+// The budget is at least 2x the larger of the two, rounded up to 15 s, and never below 60 s.
+test.setTimeout(60_000);
+
 const HERE = dirname(fileURLToPath(import.meta.url));
 
 /** The area landing pages and their §3 content ids, read from app/nav.ts's AREA_CONTENTS order via the catalogue. */

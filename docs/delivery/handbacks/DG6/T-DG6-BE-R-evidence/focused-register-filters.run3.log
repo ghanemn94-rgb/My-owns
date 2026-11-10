@@ -1,0 +1,22 @@
+port-policy: PostgreSQL listening on port 25500 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-r
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvuhtfx7_a342d341 (server_encoding UTF8); applied 110 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/transformations/register-filters.test.ts (13 tests) 13949ms
+   ✓ register-kit lists: absent parameters return the DG2 response (ADR-0057 §5) > every page of each of the 9 lists is byte-identical to the DG2 page (id ascending; the DG2 cursor and hash)  454ms
+   ✓ register-kit lists: each sort key both ways pages through every row (ADR-0057 §5) > sort=<key> and sort=-<key> on each of the 9 lists: no duplicate, no gap, the database's order  2830ms
+   ✓ register-kit lists: q over the declared searchColumns (ADR-0057 §5) > q returns exactly the rows with the substring in a declared column, case-insensitive; % and _ are literal  893ms
+   ✓ register-kit lists: refusals (ADR-0057 §5; ADR-0007 §4) > an unknown sort is 400 at /query/sort; q outside 1-200 characters is 400 at /query/q  594ms
+   ✓ register-kit lists: refusals (ADR-0057 §5; ADR-0007 §4) > a cursor issued for another filter or sort is 400 at /query/cursor; a malformed keyset is 400  1697ms
+   ✓ listTransformations sort (ADR-0057 §5: -updatedAt, updatedAt, code, -code; the DG1 values kept) > each ADR-0057 sort pages all rows in the database's order; it orders as its DG1 twin  549ms
+
+ Test Files  1 passed (1)
+      Tests  13 passed (13)
+   Start at  04:49:34
+   Duration  48.10s (transform 12.73s, setup 0ms, collect 25.22s, tests 13.95s, environment 0ms, prepare 172ms)
+

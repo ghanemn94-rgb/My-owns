@@ -37,6 +37,16 @@ import {
   P5_KPI_LAUNCH_HEALTH_ROLE_PERMISSIONS,
   P5_READER_DEMO_PERMISSIONS,
   P5_READER_DEMO_ROLE_PERMISSIONS,
+  P6_ACCESS_HARDENING_PERMISSIONS,
+  P6_ACCESS_HARDENING_ROLE_PERMISSIONS,
+  P6_OPERATIONS_CHANNELS_PERMISSIONS,
+  P6_OPERATIONS_CHANNELS_ROLE_PERMISSIONS,
+  P6_INTEGRATIONS_PERMISSIONS,
+  P6_INTEGRATIONS_ROLE_PERMISSIONS,
+  P6_SEARCH_PERMISSIONS,
+  P6_SEARCH_ROLE_PERMISSIONS,
+  P6_ASSISTANT_PERMISSIONS,
+  P6_ASSISTANT_ROLE_PERMISSIONS,
   PERMISSIONS,
   ROLES,
 } from "@mth/shared";
@@ -72,6 +82,14 @@ const sqlP5KpiLaunchHealth = readFileSync(
   "utf8",
 );
 const sqlP5ReaderDemo = readFileSync(`${defaultMigrationsDir()}/0091_p5_reader_branding_demo_permissions.sql`, "utf8");
+const sqlP6AccessHardening = readFileSync(`${defaultMigrationsDir()}/0100_p6_access_hardening_permissions.sql`, "utf8");
+const sqlP6OperationsChannels = readFileSync(
+  `${defaultMigrationsDir()}/0103_p6_operations_channels_permissions.sql`,
+  "utf8",
+);
+const sqlP6Integrations = readFileSync(`${defaultMigrationsDir()}/0107_p6_integrations_permissions.sql`, "utf8");
+const sqlP6Search = readFileSync(`${defaultMigrationsDir()}/0109_p6_search_productivity_permissions.sql`, "utf8");
+const sqlP6Assistant = readFileSync(`${defaultMigrationsDir()}/0112_p6_assistant_permissions.sql`, "utf8");
 const LATER_PERMISSION_SET: ReadonlySet<string> = new Set([
   ...Object.keys(P2_PERMISSIONS),
   ...Object.keys(P3_PERMISSIONS),
@@ -89,6 +107,11 @@ const LATER_PERMISSION_SET: ReadonlySet<string> = new Set([
   ...Object.keys(P5_REPORTING_PERMISSIONS),
   ...Object.keys(P5_KPI_LAUNCH_HEALTH_PERMISSIONS),
   ...Object.keys(P5_READER_DEMO_PERMISSIONS),
+  ...Object.keys(P6_ACCESS_HARDENING_PERMISSIONS),
+  ...Object.keys(P6_OPERATIONS_CHANNELS_PERMISSIONS),
+  ...Object.keys(P6_INTEGRATIONS_PERMISSIONS),
+  ...Object.keys(P6_SEARCH_PERMISSIONS),
+  ...Object.keys(P6_ASSISTANT_PERMISSIONS),
 ]);
 
 function section(header: string, text: string = sql): string {
@@ -176,6 +199,11 @@ describe("0018 seed equals the P2 part of permissions.ts", () => {
       ...P5_REPORTING_PERMISSIONS,
       ...P5_KPI_LAUNCH_HEALTH_PERMISSIONS,
       ...P5_READER_DEMO_PERMISSIONS,
+      ...P6_ACCESS_HARDENING_PERMISSIONS,
+      ...P6_OPERATIONS_CHANNELS_PERMISSIONS,
+      ...P6_INTEGRATIONS_PERMISSIONS,
+      ...P6_SEARCH_PERMISSIONS,
+      ...P6_ASSISTANT_PERMISSIONS,
     }).toEqual(PERMISSIONS);
   });
 
@@ -752,6 +780,219 @@ describe("0091 seed equals the P5 part of permissions.ts (slices I and J)", () =
   });
 });
 
+describe("0100 seed equals the P6 part of permissions.ts (slices E and F)", () => {
+  it("permission rows", () => {
+    const rows = [
+      ...section("INSERT INTO permission", sqlP6AccessHardening).matchAll(/^\s*\('([a-z_.]+)', '([a-z_]+)'/gm),
+    ].map((m) => [m[1], m[2]]);
+    expect(Object.fromEntries(rows)).toEqual(P6_ACCESS_HARDENING_PERMISSIONS);
+    expect(rows).toHaveLength(Object.keys(P6_ACCESS_HARDENING_PERMISSIONS).length);
+  });
+
+  it("role_permission links", () => {
+    const idToCode = new Map(
+      [...section("INSERT INTO role (").matchAll(/^\s*\('([0-9a-f-]{36})', '([A-Z_]+)'/gm)].map((m) => [m[1]!, m[2]!]),
+    );
+    const byRole: Record<string, string[]> = {};
+    for (const l of section("INSERT INTO role_permission", sqlP6AccessHardening).matchAll(
+      /\('([0-9a-f-]{36})', '([a-z_.]+)'\)/g,
+    ))
+      (byRole[idToCode.get(l[1]!)!] ??= []).push(l[2]!);
+    const sorted = (o: Record<string, readonly string[]>) =>
+      Object.fromEntries(
+        Object.entries(o)
+          .filter(([, p]) => p.length > 0)
+          .map(([c, p]) => [c, [...p].sort()]),
+      );
+    expect(sorted(byRole)).toEqual(sorted(P6_ACCESS_HARDENING_ROLE_PERMISSIONS));
+    for (const [code, perms] of Object.entries(P6_ACCESS_HARDENING_ROLE_PERMISSIONS))
+      for (const p of perms) expect(ROLES[code as keyof typeof ROLES].permissions).toContain(p);
+  });
+
+  it("no business approval or Finance validation; the grant right is TO and ADM_ACCESS only; AUD gets read codes only", () => {
+    for (const c of Object.values(P6_ACCESS_HARDENING_PERMISSIONS as Record<string, string>))
+      expect(["read", "configure"]).toContain(c);
+    const granters = Object.entries(P6_ACCESS_HARDENING_ROLE_PERMISSIONS)
+      .filter(([, p]) => (p as readonly string[]).includes("sensitive_record.grant"))
+      .map(([r]) => r);
+    expect(granters).toEqual(["TO", "ADM_ACCESS"]);
+    for (const p of P6_ACCESS_HARDENING_ROLE_PERMISSIONS.AUD) expect(P6_ACCESS_HARDENING_PERMISSIONS[p]).toBe("read");
+  });
+});
+
+describe("0103 seed equals the P6 part of permissions.ts (slices J and C)", () => {
+  it("permission rows", () => {
+    const rows = [
+      ...section("INSERT INTO permission", sqlP6OperationsChannels).matchAll(/^\s*\('([a-z_.]+)', '([a-z_]+)'/gm),
+    ].map((m) => [m[1], m[2]]);
+    expect(Object.fromEntries(rows)).toEqual(P6_OPERATIONS_CHANNELS_PERMISSIONS);
+    expect(rows).toHaveLength(Object.keys(P6_OPERATIONS_CHANNELS_PERMISSIONS).length);
+  });
+
+  it("role_permission links", () => {
+    const idToCode = new Map(
+      [...section("INSERT INTO role (").matchAll(/^\s*\('([0-9a-f-]{36})', '([A-Z_]+)'/gm)].map((m) => [m[1]!, m[2]!]),
+    );
+    const byRole: Record<string, string[]> = {};
+    for (const l of section("INSERT INTO role_permission", sqlP6OperationsChannels).matchAll(
+      /\('([0-9a-f-]{36})', '([a-z_.]+)'\)/g,
+    ))
+      (byRole[idToCode.get(l[1]!)!] ??= []).push(l[2]!);
+    const sorted = (o: Record<string, readonly string[]>) =>
+      Object.fromEntries(
+        Object.entries(o)
+          .filter(([, p]) => p.length > 0)
+          .map(([c, p]) => [c, [...p].sort()]),
+      );
+    expect(sorted(byRole)).toEqual(sorted(P6_OPERATIONS_CHANNELS_ROLE_PERMISSIONS));
+    for (const [code, perms] of Object.entries(P6_OPERATIONS_CHANNELS_ROLE_PERMISSIONS))
+      for (const p of perms) expect(ROLES[code as keyof typeof ROLES].permissions).toContain(p);
+  });
+
+  it("no business approval or Finance validation; configure codes are ADM_TECH only; AUD gets read codes only", () => {
+    for (const c of Object.values(P6_OPERATIONS_CHANNELS_PERMISSIONS as Record<string, string>))
+      expect(["read", "write", "configure"]).toContain(c);
+    for (const [role, perms] of Object.entries(P6_OPERATIONS_CHANNELS_ROLE_PERMISSIONS))
+      for (const p of perms as readonly (keyof typeof P6_OPERATIONS_CHANNELS_PERMISSIONS)[])
+        if (P6_OPERATIONS_CHANNELS_PERMISSIONS[p] === "configure") expect(role).toBe("ADM_TECH");
+    for (const p of P6_OPERATIONS_CHANNELS_ROLE_PERMISSIONS.AUD)
+      expect(P6_OPERATIONS_CHANNELS_PERMISSIONS[p]).toBe("read");
+  });
+});
+
+describe("0107 seed equals the P6 part of permissions.ts (slices B and A)", () => {
+  it("permission rows", () => {
+    const rows = [
+      ...section("INSERT INTO permission", sqlP6Integrations).matchAll(/^\s*\('([a-z_.]+)', '([a-z_]+)'/gm),
+    ].map((m) => [m[1], m[2]]);
+    expect(Object.fromEntries(rows)).toEqual(P6_INTEGRATIONS_PERMISSIONS);
+    expect(rows).toHaveLength(Object.keys(P6_INTEGRATIONS_PERMISSIONS).length);
+  });
+
+  it("role_permission links", () => {
+    const idToCode = new Map(
+      [...section("INSERT INTO role (").matchAll(/^\s*\('([0-9a-f-]{36})', '([A-Z_]+)'/gm)].map((m) => [m[1]!, m[2]!]),
+    );
+    const byRole: Record<string, string[]> = {};
+    for (const l of section("INSERT INTO role_permission", sqlP6Integrations).matchAll(
+      /\('([0-9a-f-]{36})', '([a-z_.]+)'\)/g,
+    ))
+      (byRole[idToCode.get(l[1]!)!] ??= []).push(l[2]!);
+    const sorted = (o: Record<string, readonly string[]>) =>
+      Object.fromEntries(
+        Object.entries(o)
+          .filter(([, p]) => p.length > 0)
+          .map(([c, p]) => [c, [...p].sort()]),
+      );
+    expect(sorted(byRole)).toEqual(sorted(P6_INTEGRATIONS_ROLE_PERMISSIONS));
+    for (const [code, perms] of Object.entries(P6_INTEGRATIONS_ROLE_PERMISSIONS))
+      for (const p of perms) expect(ROLES[code as keyof typeof ROLES].permissions).toContain(p);
+  });
+
+  it("no business approval or Finance validation; configure codes are ADM_TECH only; AUD reads only; ADM_TECH holds no import, outbound-write or external-change right; outbound_write.execute is TD only", () => {
+    for (const c of Object.values(P6_INTEGRATIONS_PERMISSIONS as Record<string, string>))
+      expect(["read", "write", "configure"]).toContain(c);
+    for (const [role, perms] of Object.entries(P6_INTEGRATIONS_ROLE_PERMISSIONS))
+      for (const p of perms as readonly (keyof typeof P6_INTEGRATIONS_PERMISSIONS)[])
+        if (P6_INTEGRATIONS_PERMISSIONS[p] === "configure") expect(role).toBe("ADM_TECH");
+    for (const p of P6_INTEGRATIONS_ROLE_PERMISSIONS.AUD) expect(P6_INTEGRATIONS_PERMISSIONS[p]).toBe("read");
+    expect(
+      P6_INTEGRATIONS_ROLE_PERMISSIONS.ADM_TECH.filter((p) => /^(import|outbound_write|external_change)\./.test(p)),
+    ).toEqual([]);
+    const executors = Object.entries(P6_INTEGRATIONS_ROLE_PERMISSIONS)
+      .filter(([, p]) => (p as readonly string[]).includes("outbound_write.execute"))
+      .map(([r]) => r);
+    expect(executors).toEqual(["TD"]);
+  });
+});
+
+describe("0109 seed equals the P6 part of permissions.ts (slices H and G)", () => {
+  it("permission rows", () => {
+    const rows = [...section("INSERT INTO permission", sqlP6Search).matchAll(/^\s*\('([a-z_.]+)', '([a-z_]+)'/gm)].map(
+      (m) => [m[1], m[2]],
+    );
+    expect(Object.fromEntries(rows)).toEqual(P6_SEARCH_PERMISSIONS);
+    expect(rows).toHaveLength(Object.keys(P6_SEARCH_PERMISSIONS).length);
+  });
+
+  it("role_permission links", () => {
+    const idToCode = new Map(
+      [...section("INSERT INTO role (").matchAll(/^\s*\('([0-9a-f-]{36})', '([A-Z_]+)'/gm)].map((m) => [m[1]!, m[2]!]),
+    );
+    const byRole: Record<string, string[]> = {};
+    for (const l of section("INSERT INTO role_permission", sqlP6Search).matchAll(
+      /\('([0-9a-f-]{36})', '([a-z_.]+)'\)/g,
+    ))
+      (byRole[idToCode.get(l[1]!)!] ??= []).push(l[2]!);
+    const sorted = (o: Record<string, readonly string[]>) =>
+      Object.fromEntries(
+        Object.entries(o)
+          .filter(([, p]) => p.length > 0)
+          .map(([c, p]) => [c, [...p].sort()]),
+      );
+    expect(sorted(byRole)).toEqual(sorted(P6_SEARCH_ROLE_PERMISSIONS));
+    for (const [code, perms] of Object.entries(P6_SEARCH_ROLE_PERMISSIONS))
+      for (const p of perms) expect(ROLES[code as keyof typeof ROLES].permissions).toContain(p);
+  });
+
+  it("write codes only, never business approval or Finance validation; AUD holds neither; every other role manages its own views; sharing is TL, BO, WL, TO, KDS, TD", () => {
+    expect(Object.values(P6_SEARCH_PERMISSIONS as Record<string, string>)).toEqual(["write", "write"]);
+    expect(P6_SEARCH_ROLE_PERMISSIONS.AUD).toEqual([]);
+    const managers = Object.entries(P6_SEARCH_ROLE_PERMISSIONS)
+      .filter(([, p]) => (p as readonly string[]).includes("saved_view.manage"))
+      .map(([r]) => r);
+    expect(managers).toHaveLength(13);
+    const sharers = Object.entries(P6_SEARCH_ROLE_PERMISSIONS)
+      .filter(([, p]) => (p as readonly string[]).includes("saved_view.share"))
+      .map(([r]) => r)
+      .sort();
+    expect(sharers).toEqual(["BO", "KDS", "TD", "TL", "TO", "WL"]);
+  });
+});
+
+describe("0112 seed equals the P6 part of permissions.ts (slice D, the assistant)", () => {
+  it("permission rows", () => {
+    const rows = [
+      ...section("INSERT INTO permission", sqlP6Assistant).matchAll(/^\s*\('([a-z_.]+)', '([a-z_]+)'/gm),
+    ].map((m) => [m[1], m[2]]);
+    expect(Object.fromEntries(rows)).toEqual(P6_ASSISTANT_PERMISSIONS);
+    expect(rows).toHaveLength(Object.keys(P6_ASSISTANT_PERMISSIONS).length);
+  });
+
+  it("role_permission links", () => {
+    const idToCode = new Map(
+      [...section("INSERT INTO role (").matchAll(/^\s*\('([0-9a-f-]{36})', '([A-Z_]+)'/gm)].map((m) => [m[1]!, m[2]!]),
+    );
+    const byRole: Record<string, string[]> = {};
+    for (const l of section("INSERT INTO role_permission", sqlP6Assistant).matchAll(
+      /\('([0-9a-f-]{36})', '([a-z_.]+)'\)/g,
+    ))
+      (byRole[idToCode.get(l[1]!)!] ??= []).push(l[2]!);
+    const sorted = (o: Record<string, readonly string[]>) =>
+      Object.fromEntries(
+        Object.entries(o)
+          .filter(([, p]) => p.length > 0)
+          .map(([c, p]) => [c, [...p].sort()]),
+      );
+    expect(sorted(byRole)).toEqual(sorted(P6_ASSISTANT_ROLE_PERMISSIONS));
+    for (const [code, perms] of Object.entries(P6_ASSISTANT_ROLE_PERMISSIONS))
+      for (const p of perms) expect(ROLES[code as keyof typeof ROLES].permissions).toContain(p);
+  });
+
+  it("no business approval or Finance validation; AUD holds neither code; every other role uses the assistant; ADM_TECH alone configures it", () => {
+    expect(P6_ASSISTANT_PERMISSIONS).toEqual({ "assistant.use": "write", "assistant.configure": "configure" });
+    expect(P6_ASSISTANT_ROLE_PERMISSIONS.AUD).toEqual([]);
+    const users = Object.entries(P6_ASSISTANT_ROLE_PERMISSIONS)
+      .filter(([, p]) => (p as readonly string[]).includes("assistant.use"))
+      .map(([r]) => r);
+    expect(users).toHaveLength(13);
+    const configurers = Object.entries(P6_ASSISTANT_ROLE_PERMISSIONS)
+      .filter(([, p]) => (p as readonly string[]).includes("assistant.configure"))
+      .map(([r]) => r);
+    expect(configurers).toEqual(["ADM_TECH"]);
+  });
+});
+
 /**
  * F-DG5-100: the P5 ids its stage left unused (planned gaps of the p5-plan §4 ranges, D-142). They are permanently
  * unused: a file in a gap would run at its lexical position on a fresh database but last on an upgraded one (the
@@ -764,13 +1005,15 @@ const P5_RETIRED_MIGRATION_IDS = [66, 67, 73, 77, 78, 79, 83, 84] as const;
 function numberingViolations(files: readonly { id: number; name: string }[]): string[] {
   const out: string[] = [];
   // D-089: 0058-0061 were the DG4 repair ids. P5 (p5-plan §4, D-142) used ids 0062-0097 with planned gaps, and
-  // 0094-0099 are held by the orchestrator for P5 repairs, so ids from 0058 may have gaps but stay at most 0099. Ids
-  // below 0058 stay contiguous from 0001; all ids strictly increase (listMigrationFiles refuses anything else).
+  // 0094-0099 were held by the orchestrator for P5 repairs. P6 (p6-plan §4, D-195) gives the six architecture tasks
+  // the ranges 0098-0127 and holds 0128-0133 for repairs, so ids from 0058 may have gaps but stay at most 0133
+  // (T-DG6-ARCH-01). Ids below 0058 stay contiguous from 0001; all ids strictly increase (listMigrationFiles refuses
+  // anything else).
   const REPAIR_FIRST = 58;
-  const REPAIR_LAST = 99;
+  const REPAIR_LAST = 133;
   const planned = files.filter((f) => f.id < REPAIR_FIRST).map((f) => f.id);
   if (planned.some((id, i) => id !== i + 1)) out.push(`ids below ${REPAIR_FIRST} are not contiguous from 0001`);
-  for (const f of files.filter((f) => f.id > REPAIR_LAST)) out.push(`${f.name}: above 0099`);
+  for (const f of files.filter((f) => f.id > REPAIR_LAST)) out.push(`${f.name}: above 0133`);
   // F-DG5-100: the eight P5 gaps are never filled, by any later stage or repair.
   for (const f of files.filter((f) => (P5_RETIRED_MIGRATION_IDS as readonly number[]).includes(f.id)))
     out.push(`${f.name}: id ${String(f.id).padStart(4, "0")} is a retired P5 gap (F-DG5-100)`);
@@ -801,6 +1044,20 @@ describe("migration files", () => {
         `${name}: id ${String(id).padStart(4, "0")} is a retired P5 gap (F-DG5-100)`,
       ]);
     }
-    expect(numberingViolations([...files, { id: 98, name: "0098_p5_repair.sql" }])).toEqual([]);
+    // T-DG6-ARCH-01: a free id of a P6 range is accepted; an id above the P6 repair block (0133) is not.
+    // T-DG6-ARCH-02: 0101 is now shipped, so the free-id example was 0104; T-DG6-ARCH-03 shipped 0104-0107, so it was
+    // 0108; T-DG6-ARCH-04 shipped 0108-0110, so it was 0111; T-DG6-ARCH-05 shipped 0111-0112, so it was 0113;
+    // T-DG6-ARCH-06 shipped 0113, so it was 0114; T-DG6-BE-J shipped 0114 (renumbered at the W6 merge), so it was 0115; T-DG6-BE-P shipped 0115, so it was 0116;
+    // T-DG6-BE-L2 shipped 0116, so it was 0117; T-DG6-BE-K2 shipped 0117 (renumbered from 0116 at the W9 merge), so it was 0118;
+    // T-DG6-BE-D shipped 0118 (on its branch; the orchestrator renumbers at the W10 merge if needed), so it was 0119;
+    // T-DG6-BE-W shipped 0119, so it was 0120; T-DG6-BE-S shipped 0120 (renumbered from 0119 at merge), so it was 0121;
+    // T-DG6-BE-I2 shipped 0121 (renumbered from 0120 at merge), so it was 0122; T-DG6-BE-X9 shipped 0122, so it was 0123;
+    // T-DG6-BE-X10 shipped 0123 (on its branch; the orchestrator renumbers at merge if needed), so it was 0124;
+    // T-DG6-BE-Y5 shipped 0124 (on its branch; the orchestrator renumbers at merge if needed), so it was 0125;
+    // T-DG6-BE-Y6 shipped 0125 (on its branch; the orchestrator renumbers at merge if needed), so it is 0126.
+    expect(numberingViolations([...files, { id: 126, name: "0126_p6_example.sql" }])).toEqual([]);
+    expect(numberingViolations([...files, { id: 134, name: "0134_p7_example.sql" }])).toEqual([
+      "0134_p7_example.sql: above 0133",
+    ]);
   });
 });

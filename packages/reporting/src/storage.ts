@@ -3,9 +3,13 @@
 //
 // The ADR-0010 filesystem driver pattern: write to a temporary name, fsync, atomic rename, fsync the directory, under
 // the configured evidence-store root with the key prefix `exports/`. Keys are opaque (`exports/<organizationId>/
-// <exportJobId>.<ext>`), never user file names. The S3-compatible driver arrives with evidence's in P6: configuring it
-// makes the store unavailable (never a silent fallback). P5 deletes no export file (retention is a later decision);
-// `discard` removes only a file whose job never recorded it (a cancelled or failed run).
+// <exportJobId>.<ext>`), never user file names. P5 deletes no export file (retention is a later decision); `discard`
+// removes only a file whose job never recorded it (a cancelled or failed run).
+// P6 (T-DG6-BE-H2; ADR-0054 §2): `ExportFileStore` is the export-file storage port. Export files stay in the filesystem
+// store under EVIDENCE_STORAGE_PATH: the saved Administration > Storage setting selects the EVIDENCE store only, because
+// `export_job` records no storage driver, so moving exports to an object store would strand every earlier file (a
+// per-job driver column is a later decision). EVIDENCE_STORAGE_DRIVER=s3 in the environment gives no export-file store:
+// configuring it makes this store unavailable (never a silent fallback).
 import { createHash } from "node:crypto";
 import { createReadStream } from "node:fs";
 import { mkdir, open, rename, rm, stat } from "node:fs/promises";
@@ -151,14 +155,16 @@ export class FilesystemExportStore implements ExportFileStore {
   }
 }
 
-/** The store for the configured evidence storage (ADR-0010 driver; `s3` is P6 and unavailable here). */
+/** The export-file store for the environment's storage driver (filesystem; `s3` has no export-file store). */
 export function createExportStore(storage: {
   readonly driver: "filesystem" | "s3";
   readonly path: string;
 }): ExportFileStore {
   if (storage.driver !== "filesystem") {
     const unavailable = (): never => {
-      throw new ExportStoreUnavailable("the s3 storage driver arrives in P6; export files need the filesystem driver");
+      throw new ExportStoreUnavailable(
+        "export files are stored only by the filesystem driver; EVIDENCE_STORAGE_DRIVER=s3 has no export-file store",
+      );
     };
     return {
       put: async () => unavailable(),

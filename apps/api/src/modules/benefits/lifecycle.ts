@@ -35,6 +35,7 @@ import {
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
+import { principalOf } from "../access/index.ts";
 import { record } from "../audit/index.ts";
 import {
   cursorSchema,
@@ -388,7 +389,9 @@ export function registerBenefitLifecycleRoutes(app: FastifyInstance, { db }: Mod
       const { transformationId, benefitId } = parseBenefitParams(request.params);
       const body = await db
         .transaction()
-        .execute(async (tx) => presentBenefit(tx, await advanceLifecycle(tx, request, transformationId, benefitId)));
+        .execute(async (tx) =>
+          presentBenefit(tx, principalOf(request), await advanceLifecycle(tx, request, transformationId, benefitId)),
+        );
       return sendVersioned(reply, 200, body);
     },
   );

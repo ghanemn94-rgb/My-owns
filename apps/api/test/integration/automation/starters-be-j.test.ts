@@ -14,9 +14,10 @@
 //    (TL, AUD), 404 outside scope, 400 on a bad limit.
 // Every value is SYNTHETIC; the gate decision is a demo decision by a test person that approves nothing real. No job
 // decides anything, and nothing touches the engineering gates DG0-DG7.
-import { sql } from "@mth/db";
+import { migrate, sql } from "@mth/db";
 import { randomUUID } from "node:crypto";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, inject, it } from "vitest";
+import { createScratchDatabase, dropScratchDatabase, roleUrl } from "../../../../../packages/db/test/helpers.ts";
 import { DOMAIN_HANDLERS } from "../../../../worker/src/handlers/index.ts";
 import { ruleAuthor } from "../../support/automation-failures.ts";
 import { DEPENDENCY_SLIP_KIND } from "../../../../worker/src/handlers/portfolio.ts";
@@ -385,8 +386,31 @@ describe("REQ-S12-012: critical dependency slips", () => {
   });
 });
 
-// Last in this file: it publishes a new effective version of starter 9 for this test database.
+// T-DG6-BE-X6: this describe PUBLISHES a new effective version of starter 9, a platform-scope row shared by every
+// organization (ADR-0044 §1; one row per code, automation_rule_code_key), which raises `minimumSlipDays` for every
+// later slip in the same database. The integration files of one run share the run database (one after another in a
+// single fork, in an order that changes between runs), so publishing it there leaked minimumSlipDays 7 into later
+// files (the contract exercise p5-exercises-be-j.ts recorded no 5-day slip: W5, W9, FE-X3 addendum 2). It therefore
+// runs on its OWN scratch database, migrated and dropped here (the scoring-defaults.test.ts pattern): the run
+// database's starter 9 is never changed by this file.
 describe("REQ-S12-012: a slip below the configured minimumSlipDays raises nothing (starter 9 version 2)", () => {
+  let scratchDb: string;
+  let api: TestApi;
+  let w: World;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const send = (m: string, u: string, o?: Parameters<typeof call>[3]): Promise<Res<any>> => call(api.app, m, u, o);
+  beforeAll(async () => {
+    const { adminUrl } = inject("mthDb");
+    scratchDb = await createScratchDatabase(adminUrl, "mth_slipmin");
+    await migrate(roleUrl(adminUrl, scratchDb, "mth_owner"));
+    api = await startApi({ database: scratchDb });
+    w = await seedWorld(api.db);
+  }, 120_000);
+  afterAll(async () => {
+    await api?.close();
+    if (scratchDb !== undefined) await dropScratchDatabase(inject("mthDb").adminUrl, scratchDb);
+  });
+
   it("v2 with minimumSlipDays 7 (reviewed and published): a 5-day slip raises nothing, an 8-day slip raises one", async () => {
     const R = "/api/v1/admin/automation-rules";
     const author = await ruleAuthor(api, w);

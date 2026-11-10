@@ -463,6 +463,28 @@ describe("REQ-S07-016 (c): approval recalculates Q1 once and offers the reissue 
     const offers = (await reissueOffers(api, k, id, k.s.auditor)).body.items as Body[];
     expect(offers.map((o) => o.snapshotId).sort()).toEqual([register.id, dashQ1].sort());
     expect(offers.some((o) => o.snapshotId === dashQ2)).toBe(false);
+    // T-DG6-BE-V (ADR-0007 §4a): the offers and the snapshot's pinned versions are cursor-paged. One item per page
+    // walks the same list in the same order as one page of 100; a forged cursor value is a 400, never a 500.
+    for (const url of [`${k.base}/kpi-restatements/${id}/reissue-offers`, `${S}/${register.id}/versions`]) {
+      const whole = (await call<Body>(api.app, "GET", `${url}?limit=100`, { session: k.s.auditor })).body;
+      expect([url, whole.items.length >= 2, whole.nextCursor]).toEqual([url, true, null]);
+      const stepped: Body[] = [];
+      let cursor: string | null = null;
+      let firstCursor: string | null = null;
+      do {
+        const q: string = cursor === null ? "limit=1" : `limit=1&cursor=${cursor}`;
+        const page = await call<Body>(api.app, "GET", `${url}?${q}`, { session: k.s.auditor });
+        expect([url, page.status]).toEqual([url, 200]);
+        stepped.push(...page.body.items);
+        cursor = page.body.nextCursor;
+        firstCursor ??= cursor;
+      } while (cursor !== null && stepped.length <= whole.items.length);
+      expect(stepped).toEqual(whole.items);
+      const { h, k: keys } = JSON.parse(Buffer.from(firstCursor!, "base64url").toString("utf8")) as Body;
+      const forged = Buffer.from(JSON.stringify({ k: keys.map(() => "x'; --"), h })).toString("base64url");
+      const refused = await call<Body>(api.app, "GET", `${url}?cursor=${forged}`, { session: k.s.auditor });
+      expect([url, refused.status, refused.body.errors?.[0]?.code]).toEqual([url, 400, "validation.cursor"]);
+    }
     const registerOffer = offers.find((o) => o.snapshotId === register.id)!;
     expect([registerOffer.definitionCode, registerOffer.issueVersion, registerOffer.periodLabel]).toEqual([
       "registers",

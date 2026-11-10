@@ -13,7 +13,7 @@
 import { createHash, randomBytes } from "node:crypto";
 import { readdirSync } from "node:fs";
 import { connect, createServer, type Server, type Socket } from "node:net";
-import { join } from "node:path";
+import { basename, join } from "node:path";
 import pg from "pg";
 import { afterAll, beforeAll, describe, expect, inject, it } from "vitest";
 import {
@@ -27,6 +27,12 @@ import {
   type World,
 } from "../support/harness.ts";
 import { setupP2World, type P2World } from "../support/p2-fixtures.ts";
+
+/**
+ * T-DG6-BE-D (ADR-0052 §1): uploads pass the allow-list by magic bytes plus extension, so a synthetic binary body is a
+ * PDF (`%PDF-` then random bytes, exactly `n` bytes, n >= 5) named `.pdf`; every byte after the signature stays random.
+ */
+const pdfBytes = (n: number): Buffer => Buffer.concat([Buffer.from("%PDF-", "latin1"), randomBytes(n - 5)]);
 
 interface LogLine {
   level: number;
@@ -149,7 +155,7 @@ function headOf(method: string, url: string, headers: Record<string, string | un
   return Buffer.from(`${method} ${url} HTTP/1.1\r\nHost: x\r\n${lines.join("\r\n")}\r\n\r\n`, "latin1");
 }
 const authHeaders = (s: Session) => ({ Cookie: s.cookie, Origin: new URL(APP_ORIGIN).origin, "X-CSRF-Token": s.csrf });
-function uploadHead(evidenceId: string, version: number, length: number, fileName = "synthetic.bin"): Buffer {
+function uploadHead(evidenceId: string, version: number, length: number, fileName = "synthetic.pdf"): Buffer {
   return headOf("POST", `${T}/evidence/${evidenceId}/content`, {
     ...authHeaders(p.lead.session),
     "If-Match": `"${version}"`,
@@ -238,7 +244,7 @@ describe("F-DG2-411: a stalled upload holds no pooled connection and no row lock
     const stalled: Client[] = [];
     for (const [i, f] of items.entries()) {
       const c = await openClient(port);
-      c.socket.write(uploadHead(f.id, f.version, 10 * MiB, `r8-${i}.bin`));
+      c.socket.write(uploadHead(f.id, f.version, 10 * MiB, `r8-${i}.pdf`));
       c.socket.write(Buffer.alloc(1024, 3));
       stalled.push(c);
     }
@@ -297,7 +303,7 @@ describe("F-DG2-411: a stalled upload holds no pooled connection and no row lock
   it("an upload whose If-Match goes stale during the body: 409 version_conflict, no content row, no object", async () => {
     const { api, port } = await fresh();
     const f = await newFile("Synthetic BE17 stale");
-    const content = randomBytes(256 * 1024);
+    const content = pdfBytes(256 * 1024);
     const c = await openClient(port);
     c.socket.write(uploadHead(f.id, f.version, content.length));
     c.socket.write(content.subarray(0, 1024));
@@ -343,11 +349,12 @@ describe("F-DG2-411: a stalled upload holds no pooled connection and no row lock
     const { api, port } = await fresh();
     const from = logLines.length;
     const out = [];
-    for (const size of [1, 64 * 1024, 3 * MiB]) {
+    // T-DG6-BE-D: 5 bytes, the smallest PDF body (was 1).
+    for (const size of [5, 64 * 1024, 3 * MiB]) {
       const f = await newFile(`Synthetic BE17 valid ${size}`);
-      const content = randomBytes(size);
+      const content = pdfBytes(size);
       const c = await openClient(port);
-      c.socket.write(Buffer.concat([uploadHead(f.id, f.version, content.length, `valid-${size}.bin`), content]));
+      c.socket.write(Buffer.concat([uploadHead(f.id, f.version, content.length, `valid-${size}.pdf`), content]));
       await waitFor(() => firstResponse(c.text()) !== null, 10_000);
       const res = firstResponse(c.text());
       c.socket.destroy();
@@ -358,7 +365,16 @@ describe("F-DG2-411: a stalled upload holds no pooled connection and no row lock
         headers: { cookie: p.auditor.session.cookie },
       });
       const files = storedFilesOf(f.id);
-      out.push({ size, status: res?.status, rows: rows.length, sha: rows[0]?.sha256 === sha256(content), files });
+      // T-DG6-DO-D (ADR-0053 §5): the diagnostic prints file names only; an absolute evidence-store path in the suite
+      // output fails the post-suite log scan.
+      const fileNames = files.map((x) => basename(x));
+      out.push({
+        size,
+        status: res?.status,
+        rows: rows.length,
+        sha: rows[0]?.sha256 === sha256(content),
+        files: fileNames,
+      });
       expect(res?.status).toBe(200);
       expect(JSON.parse(res!.body)).toMatchObject({ version: f.version + 1 });
       expect(rows).toHaveLength(1);
@@ -380,7 +396,7 @@ describe("F-DG2-411: a stalled upload holds no pooled connection and no row lock
     const from = logLines.length;
     // A file far larger than the loopback socket buffers, so each response really waits on its reader.
     const f = await newFile("Synthetic BE17 slow reader");
-    const content = randomBytes(24 * MiB);
+    const content = pdfBytes(24 * MiB);
     const up = await api.app.inject({
       method: "POST",
       url: `${T}/evidence/${f.id}/content`,
@@ -389,7 +405,7 @@ describe("F-DG2-411: a stalled upload holds no pooled connection and no row lock
         origin: new URL(APP_ORIGIN).origin,
         "x-csrf-token": p.lead.session.csrf,
         "if-match": `"${f.version}"`,
-        "x-file-name": "slow-reader.bin",
+        "x-file-name": "slow-reader.pdf",
         "content-type": "application/octet-stream",
       },
       payload: content,
@@ -503,7 +519,7 @@ describe("F-DG2-412: an aborted or stalled body is never a 500 and never an erro
       timeout: false,
       send: async (c, f) => {
         c.socket.write(uploadHead(f.id, f.version, 10 * MiB));
-        c.socket.write(randomBytes(2 * MiB));
+        c.socket.write(pdfBytes(2 * MiB));
         await sleep(300);
         c.socket.destroy();
       },

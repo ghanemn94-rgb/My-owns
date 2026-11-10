@@ -1,0 +1,47 @@
+port-policy: PostgreSQL listening on port 24640 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applied 107 migration(s)
+== host: 4 CPUs; Intel(R) Xeon(R) Processor @ 2.80GHz; MemTotal 16477352 kB; kernel 6.18.44-fc-v185; node v24.21.0
+== postgres: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+== generator sha256: 07a31ad5d5a84643823cd7dec6f1f65c9db3a8b9a38dabbaf83c6b85cfb9eda8
+== generate --profile default into load1  start 2026-10-29T15:50:34Z
+exit=0 wall=337.889637525 s  end 2026-10-29T15:56:12Z
+mth-db migrate: applied 107 migration(s)
+== generate --profile default into load2  start 2026-10-29T15:56:20Z
+exit=0 wall=419.253807568 s  end 2026-10-29T16:03:19Z
+== a second generate into the populated load2 (must be refused, exit 3)
+exit=3
+mth-load generate: failed: load_dataset_marker: the load dataset is generated only into an empty database without a production or demo marker (constraint load_dataset_marker_empty_database)
+DEFAULT PROFILE: ROW HASHES IDENTICAL (22 hash lines)
+-- select to_jsonb(m) - 'generated_at' from load_dataset_marker m
+{"users": 120, "singleton": true, "initiatives": 1000, "kpi_actuals": 10000, "random_seed": 20261027, "audit_events": 100000, "dataset_code": "mth_load_v1", "transformations": 50, "generator_version": "1.0.0"}
+-- select status, count(*) from kpi_actual group by 1 order by 1
+accepted|5977
+rejected|960
+submitted|3063
+-- select count(*) filter (where code='LOAD-T01') t01, count(*) total from transformation
+1|50
+-- select min(n), max(n) from (select count(*) n from initiative i join transformation t on t.id=i.transformation_id where t.code <> 'LOAD-T01' group by t.id) s
+15|16
+-- select r.code, count(*) from scoped_assignment a join role r on r.id=a.role_id group by 1 order by 1
+ADM_ACCESS|1
+AUD|14
+BO|51
+FIN|30
+KDS|42
+SP|50
+TL|92
+WL|66
+-- select count(*) from outbox_event where event_type='job.run_requested'
+1
+-- select count(*) from deployment_environment
+0
+-- select pg_size_pretty(pg_database_size(current_database()))
+154 MB
+mth-db migrate: applied 107 migration(s)
+== generate --profile register-1000 into load3  start 2026-10-29T16:03:34Z
+exit=0 wall=880.035591209 s  end 2026-10-29T16:18:14Z
+LOAD-R1K|1000
+LOAD-T01|250
+{"users": 120, "singleton": true, "initiatives": 2000, "kpi_actuals": 10000, "random_seed": 20261027, "audit_events": 105000, "dataset_code": "mth_load_v1", "transformations": 51, "generator_version": "1.0.0"}
+driver exit=0

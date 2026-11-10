@@ -1,0 +1,96 @@
+# mutation M6-log-scan-ignores-canaries, 2026-10-31T04:31:18Z, disposable clone /var/tmp/mth-run.yqkbFS/claude-0/mut at 60535e99ed0d7fb6fbb67b9b7a8ed31aa47b2cdb (+ the worktree's QA test files)
+# product source in the worktree is NOT changed; the clone file is reverted after the run
+# diff:
+diff --git a/deploy/scripts/log-scan.mjs b/deploy/scripts/log-scan.mjs
+index 4bc2c5a11..a850104c4 100644
+--- a/deploy/scripts/log-scan.mjs
++++ b/deploy/scripts/log-scan.mjs
+@@ -40,7 +40,7 @@ const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
+ /** Builds the full rule list: [class, RegExp] for the fixed patterns, the canaries, the store hosts and paths. */
+ export function buildRules({ canaries = [], storeHosts = [], storagePaths = [] } = {}) {
+   const rules = FIXED_PATTERNS.map(([name, re]) => [name, new RegExp(re.source, "g")]);
+-  for (const c of new Set(canaries)) if (c.length > 0) rules.push(["canary-secret", new RegExp(escapeRegExp(c), "g")]);
++  void canaries;
+   for (const h of new Set(storeHosts.map((x) => x.toLowerCase())))
+     if (h.length > 0)
+       rules.push(["object-store-host", new RegExp(`(?<![A-Za-z0-9.-])${escapeRegExp(h)}(?![A-Za-z0-9-])`, "gi")]);
+# command: QA_PG_PORT=27090 MTH_PORT_POOL=27091-27099 tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration tests/qa/integration/a22-p6-operability.test.ts -t "post-suite log scan"
+port-policy: PostgreSQL listening on port 27090 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.yqkbFS/claude-0/mut
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvvwlwm8_dd76faa6 (server_encoding UTF8); applied 113 migrations to a fresh database
+ ❯ |integration| tests/qa/integration/a22-p6-operability.test.ts (17 tests | 2 failed | 14 skipped) 7495ms
+   ↓ A22 logs (REQ-S20-022, REQ-S16-029): every API line is structured JSON; credentials, tokens and deep-link tokens are redacted > each request is logged as one JSON object with time, level, msg and the requestId the problem response carries
+   ↓ A22 logs (REQ-S20-022, REQ-S16-029): every API line is structured JSON; credentials, tokens and deep-link tokens are redacted > an Authorization bearer token, the session cookie, the CSRF header and a deep-link token never appear in a log line
+   ↓ A22 logs (REQ-S20-022, REQ-S16-029): every API line is structured JSON; credentials, tokens and deep-link tokens are redacted > an OIDC code/state in a query string is masked in the logged URL
+   ↓ A22 worker heartbeat (ADR-0053 §6): unknown before any beat, alive while beating, stale after it stops (never alive); the API raises one heartbeat_missed exception and one alert line, and resolves it when beats resume > no worker ever beat: unknown with no instances (never alive); a non-admin gets 403, an anonymous caller 401
+   ↓ A22 worker heartbeat (ADR-0053 §6): unknown before any beat, alive while beating, stale after it stops (never alive); the API raises one heartbeat_missed exception and one alert line, and resolves it when beats resume > the built worker beats: alive, one instance with its app version, queue count and a growing beat count; its log lines are JSON
+   ↓ A22 worker heartbeat (ADR-0053 §6): unknown before any beat, alive while beating, stale after it stops (never alive); the API raises one heartbeat_missed exception and one alert line, and resolves it when beats resume > after the worker stops and >90 s pass (rows aged), status is stale, never alive; the watch opens exactly one heartbeat_missed exception and writes one alert line
+   ↓ A22 worker heartbeat (ADR-0053 §6): unknown before any beat, alive while beating, stale after it stops (never alive); the API raises one heartbeat_missed exception and one alert line, and resolves it when beats resume > when beats resume: alive again with the old instance stale beside the new one; the alert sweep notifies the acknowledgers in-app once; the watch resolves the exception as recovered
+   ↓ A22 operational exceptions and error alerts (REQ-S12-019, REQ-S20-022): a failing connector opens one visible exception and one alert; acknowledge and resolve are authorized, version-checked and audited > one failing run -> exactly one open connector exception, visible to the technical admin and the auditor, not to a team lead
+   ↓ A22 operational exceptions and error alerts (REQ-S12-019, REQ-S20-022): a failing connector opens one visible exception and one alert; acknowledge and resolve are authorized, version-checked and audited > the alert sweep writes exactly one structured alert line (worker) and one in-app alert per acknowledger; a recurrence alerts nothing
+   ↓ A22 operational exceptions and error alerts (REQ-S12-019, REQ-S20-022): a failing connector opens one visible exception and one alert; acknowledge and resolve are authorized, version-checked and audited > acknowledge: 428 without If-Match, 409 version-conflict on a stale version, 403 for the auditor (read only), 422 operations.note_required on a short note; 200 with an audit event; a second acknowledge is 409 operations.exception_not_open
+   ↓ A22 operational exceptions and error alerts (REQ-S12-019, REQ-S20-022): a failing connector opens one visible exception and one alert; acknowledge and resolve are authorized, version-checked and audited > resolve: needs a note; 200 resolved (manual) with an audit event; a second resolve is refused 409 operations.exception_resolved
+   ↓ A22 health checks and admin job visibility (REQ-S20-022 'Health checks … admin job visibility'): liveness, readiness (ready and not ready), and the P6 operations jobs in the jobs view > GET /healthz is 200 {status: ok} without a session and carries X-Request-Id; GET /readyz is 200 ready with database ok and migrations ok
+   ↓ A22 health checks and admin job visibility (REQ-S20-022 'Health checks … admin job visibility'): liveness, readiness (ready and not ready), and the P6 operations jobs in the jobs view > negative: an API on an UNMIGRATED database answers /readyz 503 not_ready with migrations not ok, while /healthz stays 200
+   ↓ A22 health checks and admin job visibility (REQ-S20-022 'Health checks … admin job visibility'): liveness, readiness (ready and not ready), and the P6 operations jobs in the jobs view > the jobs view lists the operations alert sweep with its last success (it ran above), an outcome and a next run or an explicit reason; a team lead gets 403
+   × A22 post-suite log scan (REQ-S16-029 'a log scan after the test suite finds no secrets or storage URLs') > the scan over this suite's API and worker logs, with the canaries set, passes (exit 0) 16ms
+     → expected '' to contain 'mth-worker started'
+   × A22 post-suite log scan (REQ-S16-029 'a log scan after the test suite finds no secrets or storage URLs') > negative control: the same logs with one leaked canary fail (exit 1) and the scan never prints the value 151ms
+     → log-scan: PASS: 3 file(s), 22 line(s), 5 canary value(s), 7 fixed pattern(s), 0 store host(s), 0 storage path(s)
+: expected +0 to be 1 // Object.is equality
+   ✓ A22 post-suite log scan (REQ-S16-029 'a log scan after the test suite finds no secrets or storage URLs') > BLOCKED, never a pass: no canary with --require-canaries, or a docs/delivery path (exit 2) 212ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/a22-p6-operability.test.ts > A22 post-suite log scan (REQ-S16-029 'a log scan after the test suite finds no secrets or storage URLs') > the scan over this suite's API and worker logs, with the canaries set, passes (exit 0)
+AssertionError: expected '' to contain 'mth-worker started'
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- mth-worker started[39m
+
+ ❯ tests/qa/integration/a22-p6-operability.test.ts:588:31
+    586|   it("the scan over this suite's API and worker logs, with the canarie…
+    587|     expect(env.lines.length, "the suite wrote API lines").toBeGreaterT…
+    588|     expect(allWorkerOutput()).toContain("mth-worker started");
+       |                               ^
+    589|     const r = logScan(["--require-canaries", "--storage-path", env.api…
+    590|       ...CANARY_ENV,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |integration| tests/qa/integration/a22-p6-operability.test.ts > A22 post-suite log scan (REQ-S16-029 'a log scan after the test suite finds no secrets or storage URLs') > negative control: the same logs with one leaked canary fail (exit 1) and the scan never prints the value
+AssertionError: log-scan: PASS: 3 file(s), 22 line(s), 5 canary value(s), 7 fixed pattern(s), 0 store host(s), 0 storage path(s)
+: expected +0 to be 1 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 1[39m
+[31m+ 0[39m
+
+ ❯ tests/qa/integration/a22-p6-operability.test.ts:604:32
+    602|     );
+    603|     const r = logScan(["--require-canaries", bad], { ...CANARY_ENV });
+    604|     expect(r.status, r.output).toBe(1);
+       |                                ^
+    605|     expect(r.output).toContain("leak.log:1");
+    606|     expect(r.output).not.toContain(CANARY.s3);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed | 14 skipped (17)
+   Start at  04:31:23
+   Duration  42.80s (transform 12.19s, setup 0ms, collect 26.32s, tests 7.49s, environment 0ms, prepare 81ms)
+
+EXIT=1 (expected non-zero: the mutation must be detected)
+clone not clean after revert

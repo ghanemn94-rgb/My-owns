@@ -953,3 +953,213 @@ C = create; U = update; P = publish; Rv = review; Rs = request reset; own = the 
 - **AUD (read-only auditor):** every slice I/J mutation returns **403** for AUD and writes nothing: `putBrandingSettings`, `requestDemoReset`, and every Studio write to the reader namespaces. AUD reads the session-level entities. In `GET /me/navigation` AUD sees Administration read-only, because it holds `user.read` and `access.read` (the DG1 `ADMIN_PERMISSIONS` rule; ADR-0049 §9).
 - **Administration visibility (REQ-S03-007):** the Administration area is shown to holders of at least one of `methodology.publish`, `methodology.review`, `config_review_policy.configure`, `automation.configure`, `job.read`, `organization.manage`, `business_unit.manage`, `user.read`, `user.manage`, `access.read`, `access.assign`, `branding.configure` or `demo.reset`. A Workstream Lead holds none of them and does not see it.
 - **Technical administrators:** ADM_TECH configures branding and resets the demo database. Neither is a business approval, and neither changes a transformation's records outside the demo database.
+
+## 24. P6 implementation, slices E and F (DG6): sensitive records and explicit grants, deep links, evidence preview and upload policy, the rate-limit view and the global audit list
+
+- **Task:** T-DG6-ARCH-01 (solution-architect), 2026-10-26. **Sources:** ADR-0051 §2, §3, §4, §7; ADR-0052 §1, §2, §4, §8, §10; master prompt M0188, M0241, M0255, M0330, M0331; REQ-S10-002 "grant:TO,ADM (access admin)", REQ-S16-032 "view:AUD,ADM(scoped); modify:none", REQ-S16-023 "delete-finalized:none".
+- **Seed:** `0100_p6_access_hardening_permissions.sql`, equal to `P6_ACCESS_HARDENING_PERMISSIONS` / `P6_ACCESS_HARDENING_ROLE_PERMISSIONS` in `packages/shared/src/permissions.ts` (`packages/db/src/seed.test.ts`). A configurable starting point, not a Mobily-approved access policy.
+- **Separation:** no code here is a business approval or a Finance validation; the 0001 trigger still refuses any approval code for a technical-admin role. A sensitive-record grant is an access decision, never a G1–G6 business approval. Nobody modifies or deletes audit data (append-only for every role, including the owner).
+
+### 24.1 Permission codes
+
+| Code | Category | Meaning | Default roles |
+|---|---|---|---|
+| `sensitive_record.grant` | configure | Mark a benefit, business case or evidence item sensitive or not, and grant or revoke one user's explicit access to it. Structural (applies from an organization-level assignment, like `access.assign`) | TO, ADM_ACCESS |
+| `sensitive_record.read` | read | Read which records are sensitive and the grant list (metadata only, never the record) | TO, AUD, ADM_ACCESS |
+| `audit_event.read` | read | Administration > Audit and `GET /audit-events`, within the assigned scope (a technical admin's organization-level assignment covers organization-level events only) | AUD, ADM_TECH, ADM_ACCESS |
+| `upload_policy.configure` | configure | Narrow the allowed upload types and the size limit of the organization | ADM_TECH |
+| `security.read` | read | Read the upload policy and the rate-limit matrix (Administration > Security) | ADM_TECH, AUD |
+
+Reused codes: reading a record's sensitivity flag needs the record's own read; resolving a deep link needs a session and the target's read (re-checked on every call); previewing evidence uses the download rule (ADR-0051 §4: `transformation.read`, plus admission to a sensitive item or sensitive parent).
+
+### 24.2 Per-entity rights in P6 (slices E and F)
+
+Legend as in 8.3. **G** = grant/revoke, **M** = mark/unmark, **Rp** = read through the record, "session" = any signed-in user. A sensitive record itself is readable only by the parties of ADR-0051 §2 (active grantee, named party, holder of `sensitive_record.grant` at its scope).
+
+| Entity (table) | SP | TL | BO | WL | FIN | TO | KDS | TD | CM | SEC | AUD | ADM_METHOD | ADM_TECH | ADM_ACCESS |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Sensitivity flag (`record_sensitivity`) | Rp | Rp | Rp | Rp | Rp | V M | Rp | Rp | Rp | Rp | V | — | — | V M |
+| Sensitive-record grant (`sensitive_record_grant`) | — | — | — | — | — | V G | — | — | — | — | V | — | — | V G |
+| Sensitive benefit, business case or evidence (content) | party/grant | party/grant | party/grant | party/grant | party/grant | V (holds grant right) | party/grant | party/grant | party/grant | party/grant | grant only | — | — | — (no `transformation.read`) |
+| Deep link (`inbox_notification.link_token`; `GET /links/{token}`) | session + target read | session + target read | session + target read | session + target read | session + target read | session + target read | session + target read | session + target read | session + target read | session + target read | session + target read | session + target read | session + target read | session + target read |
+| Evidence preview (`GET …/evidence/{id}/preview`) | as download | as download | as download | as download | as download | as download | as download | as download | as download | as download | as download (read-only) | — | — | — |
+| Upload policy (`upload_policy`) | — | — | — | — | — | — | — | — | — | — | V | — | V E | — |
+| Rate-limit matrix (configuration; not stored) | — | — | — | — | — | — | — | — | — | — | V | — | V | — |
+| Global audit list (`audit_event`; `GET /audit-events`) | — | — | — | — | — | — | — | — | — | — | V (scope) | — | V (org-level; assigned transformations) | V (org-level; assigned transformations) |
+
+- **AUD (read-only auditor):** every slice E/F mutation returns **403** for AUD and writes nothing: mark or unmark sensitivity, grant, revoke, change the upload policy. AUD reads the flags, the grant list, the upload policy, the rate-limit matrix and the audit list in its scope. AUD is not admitted to a sensitive record's content by its role alone; a TO can grant it (ADR-0051 §2).
+- **Technical administrators:** ADM_ACCESS marks and grants by record id without `transformation.read` (it sees a record title only where ADR-0051 §2 admits it); ADM_TECH changes the upload policy. Neither is a business approval. Audit events of a sensitive record the caller is not admitted to show `changes` and `reason` as null (`redacted: true`).
+- **SoD:** nobody grants to themselves (`sensitive_record_grant_not_self`). No slice E/F operation approves anything.
+
+## 25. P6 implementation, slices J and C (DG6): operational exceptions, the worker heartbeat, service identities, identity settings, evidence storage and notification channels
+
+- **Task:** T-DG6-ARCH-02 (solution-architect), 2026-10-26. **Sources:** ADR-0053 §1, §2, §6, §9; ADR-0054 §1, §2, §3, §5; master prompt M0239, M0241, M0311, M0312, M0330; REQ-S12-019 "An exception is shown to admins and data owners", REQ-S12-023 "configure-channels:ADM", REQ-S16-006, REQ-S16-007 and REQ-S16-029 "configure:ADM(IT)".
+- **Seed:** `0103_p6_operations_channels_permissions.sql`, equal to `P6_OPERATIONS_CHANNELS_PERMISSIONS` / `P6_OPERATIONS_CHANNELS_ROLE_PERMISSIONS` in `packages/shared/src/permissions.ts` (`packages/db/src/seed.test.ts`). A configurable starting point, not a Mobily-approved access policy.
+- **Separation:** no code here is a business approval or a Finance validation; the 0001 trigger still refuses any approval code for a technical-admin role (probe PM04). A service identity can hold only `read` and `write` codes, never `configure`, `business_approval` or `finance_validation` (`service_identity_guard`, probes SI03–SI05). Acknowledging an operational exception or saving a storage or channel setting is an operational action, never a G1–G6 business approval.
+
+### 25.1 Permission codes
+
+| Code | Category | Meaning | Default roles |
+|---|---|---|---|
+| `operations.read` | read | Administration > Operations: operational exceptions (organization scope: the organization's and the platform's; transformation scope: those linked to a KPI of that transformation), the worker heartbeat and the service identities; also the GETs of Administration > Storage and > Notifications | ADM_TECH, TO, KDS, TD, AUD |
+| `operations.acknowledge` | write | Acknowledge or resolve an operational exception (with a note) | ADM_TECH, KDS |
+| `service_identity.configure` | configure | Narrow or restore the permissions granted to a job's or connector's service identity, within its declaration | ADM_TECH |
+| `identity.read` | read | Administration > Identity (read-only; never the client secret) | ADM_TECH, ADM_ACCESS, AUD |
+| `storage.configure` | configure | Read, change and test the installation's evidence-storage setting (organization-level assignment required) | ADM_TECH |
+| `notification_channel.configure` | configure | Read, change and test the organization's email and enterprise-messaging channels; read the delivery list | ADM_TECH |
+
+Reused codes: the in-app inbox (`/me/inbox`) is unchanged (any signed-in user, own notifications); a linked KPI in an exception detail is shown only when the caller can read it (`transformation.read` in its scope), else it is counted in `hiddenKpiCount`.
+
+### 25.2 Per-entity rights in P6 (slices J and C)
+
+Legend as in 8.3. **A** = acknowledge/resolve, **E** = edit (PUT), **T** = run a test, "sys" = written only by the system (worker, connector run, freshness scan, heartbeat watch).
+
+| Entity (table) | SP | TL | BO | WL | FIN | TO | KDS | TD | CM | SEC | AUD | ADM_METHOD | ADM_TECH | ADM_ACCESS |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Operational exception (`operational_exception`, events, KPI links) | — | — | — | — | — | V | V A | V | — | — | V | — | V A | — |
+| Worker heartbeat (`worker_heartbeat`) | — | — | — | — | — | V | V | V | — | — | V | — | V | — |
+| Service identity (`service_identity`) | — | — | — | — | — | V | V | V | — | — | V | — | V E | — |
+| Identity settings (configuration; not stored) | — | — | — | — | — | — | — | — | — | — | V | — | V | V |
+| Storage setting (`storage_setting`) | — | — | — | — | — | V | V | V | — | — | V | — | V E T | — |
+| Notification channel (`notification_channel`) | — | — | — | — | — | V | V | V | — | — | V | — | V E T | — |
+| Notification delivery (`notification_delivery`) | — | — | — | — | — | V | V | V | — | — | V | — | V | — |
+| In-app notification (`inbox_notification`, unchanged) | own | own | own | own | own | own | own | own | own | own | own | own | own | own |
+
+- **System writers:** exceptions are opened, recurred and auto-resolved (`recovered`) by "sys" with actor `service`; deliveries are written by the worker fan-out. No role creates either directly (D-195 Q12).
+- **AUD (read-only auditor):** every slice J/C mutation returns **403** for AUD and writes nothing: acknowledge, resolve, change a service identity's grant, save or test storage, save or test a channel. AUD reads every page above.
+- **Technical administrators:** ADM_TECH configures service identities, storage and channels and acknowledges exceptions; ADM_ACCESS reads the identity settings. Neither gains any business approval.
+- **SoD:** no slice J/C operation approves anything. A service identity cannot approve anything (invariant 1 of ADR-0053 §1).
+
+## 26. P6 implementation, slices B and A (DG6): connectors, integration runs, webhooks, staged imports, guarded outbound writes and the deliverable external-change confirmation
+
+- **Task:** T-DG6-ARCH-03 (solution-architect), 2026-10-26. **Sources:** ADR-0055 §1, §2, §5, §6, §9; ADR-0056 §6, §7, §9; master prompt M0080, M0334, M0335; REQ-S17-001 "configure:ADM; view-runs:ADM,KDS", REQ-S17-002 "import:KDS,ADM; view:scoped", REQ-S17-003 "import:KDS,ADM", REQ-S17-006 "execute-write:explicitly granted role only", REQ-S01-005 "complete-task:WL; confirm-external:evidence reviewer (BO or TD) or connector service identity; view:scoped".
+- **Seed:** `0107_p6_integrations_permissions.sql`, equal to `P6_INTEGRATIONS_PERMISSIONS` / `P6_INTEGRATIONS_ROLE_PERMISSIONS` in `packages/shared/src/permissions.ts` (`packages/db/src/seed.test.ts`). A configurable starting point, not a Mobily-approved access policy.
+- **Separation:** no code here is a business approval or a Finance validation; the 0001 trigger still refuses any approval code for a technical-admin role (probe PM05). A connector's service identity holds read/write codes only (`service_identity_guard`). Confirming an external change, committing an import or executing an outbound write is never a G1–G6 business approval; a committed KPI actual still goes through the DG4 review route.
+- **Interpretation of "ADM" in REQ-S17-002/003 (raised to the orchestrator):** the technical administrators hold no business-record write (REQ-S10-003; matrix row "Transformation: — (technical support only)"), so ADM_TECH gets connector and webhook configuration, not `import.*`. The KDS stages and commits imports. A later seed can grant `import.*` to another role if the business decides.
+
+### 26.1 Permission codes
+
+| Code | Category | Meaning | Default roles |
+|---|---|---|---|
+| `connector.read` | read | Administration > Integrations: connectors, configuration versions and mappings (credential references, never values), runs with counts, errors, retries and reconciliation, webhook endpoints; never staged row values | ADM_TECH, KDS, TD, TO, AUD |
+| `connector.configure` | configure | Create, change, enable, disable and test connectors and change their field mappings | ADM_TECH |
+| `connector.run` | write | Run a connector now; retry a failed run | ADM_TECH, KDS |
+| `webhook.configure` | configure | Create webhook endpoints, rotate their signing secret reference, disable them | ADM_TECH |
+| `import.read` | read | Staged imports, rows, row-level reasons, lineage; templates (scoped by the batch's transformation) | KDS, BO, TO, AUD |
+| `import.create` | write | Upload a CSV or XLSX file to staging | KDS |
+| `import.commit` | write | Commit the valid rows of a staged import (plus `kpi_actual.submit` at commit time), or cancel it | KDS |
+| `outbound_write.read` | read | Outbound writes and their confirmation state (scoped by transformation) | TD, KDS, TO, AUD |
+| `outbound_write.execute` | write | Execute a connector-defined downstream write; re-check its confirmation. Implied by no other code | TD |
+| `external_change.flag` | write | Flag a deliverable as an external change, change its type or description, withdraw it while unconfirmed | TL, BO, WL, TO |
+| `external_change.confirm` | write | Confirm an external change with reviewed (verified) evidence | BO, TD |
+
+Reused codes: `transformation.read` (every scoped read, through `ReadScope`); `kpi_actual.submit` (re-checked for the committer of an import, or for the configured user of an automatic commit); the DG2 `evidence.review` decides which evidence is verified. `receiveWebhook` needs no permission: it is authenticated by its signature and acts as the connector's service identity.
+
+### 26.2 Per-entity rights in P6 (slices B and A)
+
+Legend as in 8.3 (**C** create, **E** edit, **V** view), plus: **E** here also covers enable, disable, rotate a secret reference; **T** = run a test, **R** = run now or retry, **U** = upload, **K** = commit or cancel, **X** = execute or re-check, **F** = flag or withdraw, **Cf** = confirm, "sys" = written only by the system (worker, webhook receipt).
+
+| Entity (table) | SP | TL | BO | WL | FIN | TO | KDS | TD | CM | SEC | AUD | ADM_METHOD | ADM_TECH | ADM_ACCESS |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Connector and configuration versions (`connector`, `connector_config_version`) | — | — | — | — | — | V | V | V | — | — | V | — | C V E T | — |
+| IntegrationRun (`integration_run`, events) | — | — | — | — | — | V | V R | V | — | — | V | — | V R T | — |
+| Webhook endpoint (`webhook_endpoint`) | — | — | — | — | — | V | V | V | — | — | V | — | C V E | — |
+| Webhook receipt (`webhook_receipt`) | — | — | — | — | — | V | V | V | — | — | V | — | V | — |
+| Import batch, rows and lineage (`import_batch`, `import_row`, `import_row_commit`) | — | — | V | — | — | V | V U K | — | — | — | V | — | — | — |
+| Outbound write (`outbound_write`, events) | — | — | — | — | — | V | V | V X | — | — | V | — | — | — |
+| External-change flag and confirmation (`deliverable_external_change`, events) | V | V F | V F Cf | V F | V | V F | V | V Cf | V | V | V | — | — | — |
+
+- **Scope:** connector, run and webhook rights are organization-level (a transformation-level holder of `connector.read` sees only the connectors whose current configuration targets that transformation). Import, outbound-write and external-change rights are scoped by the record's transformation through `ReadScope`; "V" on the external-change row is the scoped `transformation.read` of the deliverable.
+- **System writers:** runs are started and finished by the worker (actor `service`, the connector's service identity); webhook receipts and their staged batches by `receiveWebhook`; a connector confirmation of an external change by the `confirmOutboundWrite` path (actor `service`).
+- **AUD (read-only auditor):** every slice B/A mutation returns **403** for AUD and writes nothing: create, change, enable, disable, test or run a connector; change mappings; create, rotate or disable a webhook; upload, commit or cancel an import; execute or re-check an outbound write; flag, withdraw or confirm an external change. AUD reads every row above.
+- **Technical administrators:** ADM_TECH configures, tests and runs connectors and configures webhooks; it holds no import, outbound-write or external-change right and gains no business approval. ADM_ACCESS and ADM_METHOD get nothing here.
+- **SoD:** outbound writes are executed by TD by default, not by the administrator who configured the connector. External changes are confirmed only by reviewed evidence (verified by someone other than its creator, `evidence_verified_rule`) or a confirmed connector result; task completion and the DG3 acceptance never confirm one.
+
+## 27. P6 implementation, slices H and G (DG6): global search, saved views, draft recovery, record comparison, help topics and the load run
+
+- **Task:** T-DG6-ARCH-04 (solution-architect), 2026-10-27. **Sources:** ADR-0057 §3, §4, §6, §7, §9, §10; ADR-0058 §4, §9; master prompt M0303, M0304, M0329, M0398; REQ-S15-010 "per underlying record permissions", REQ-S15-011 "view:scoped", REQ-S15-013 "view:scoped", REQ-S20-029 "run:devops-engineer; verify:qa-verifier", REQ-S20-030 "request:scoped users; download:requester with same scope".
+- **Seed:** `0109_p6_search_productivity_permissions.sql`, equal to `P6_SEARCH_PERMISSIONS` / `P6_SEARCH_ROLE_PERMISSIONS` in `packages/shared/src/permissions.ts` (`packages/db/src/seed.test.ts`). A configurable starting point, not a Mobily-approved access policy.
+- **Separation:** neither code is a business approval or a Finance validation; the 0001 trigger still refuses any approval code for a technical-admin role (probe PM04). Searching, saving or sharing a view, recovering a draft, comparing versions and reading help approve nothing (no G1–G6 business approval). No separation-of-duties rule applies.
+- **AUD stays read-only:** AUD searches (in its scope), lists and applies the saved views shared in its organization, and reads help topics; it holds neither code, so every saved-view write answers 403 for AUD (probe PM02; BE-Q's AUD test).
+
+### 27.1 Permission codes
+
+| Code | Category | Meaning | Default roles |
+|---|---|---|---|
+| `saved_view.manage` | write | Create, change, set as default and delete one's **own** saved list views; stop sharing one's own view | SP, TL, BO, WL, FIN, TO, KDS, TD, CM, SEC, ADM_TECH, ADM_ACCESS, ADM_METHOD (every role except AUD) |
+| `saved_view.share` | write | Share one's own view with one's organization (re-checked at commit time) | TL, BO, WL, TO, KDS, TD |
+
+Reused codes: the read permission of each record type's own view, through `ReadScope` with sensitivity (`searchRecords`, ADR-0057 §3); `transformation.read` (`listMyFormDrafts` per draft, `compareFormRecordVersions`); `audit.read` (comparison **values**, ADR-0057 §7; D-199 item 6: an editor of the record type gets field names only); `operations.read` (`getSearchIndexStatus`); `job.repair` (a reindex through `runJobNow`); the P5 form-draft rules (unchanged). `listHelpTopics` and `getHelpTopic` need only a session.
+
+### 27.2 Per-entity rights in P6 (slices H and G)
+
+Legend as in 8.3 (**C** create, **E** edit, **V** view), plus: **S** = share or unshare one's own view, **D** = delete one's own view, **A** = apply a view to a list (read), "sys" = written only by the system (search worker; load generator).
+
+| Entity (table) | SP | TL | BO | WL | FIN | TO | KDS | TD | CM | SEC | AUD | ADM_METHOD | ADM_TECH | ADM_ACCESS |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Search document (`search_document`, sys) | V¹ | V¹ | V¹ | V¹ | V¹ | V¹ | V¹ | V¹ | V¹ | V¹ | V¹ | V¹ | V¹ | V¹ |
+| Search index state (`search_index_state`, sys) | — | — | — | — | — | V² | V² | V² | — | — | V² | — | V² (reindex: `job.repair`) | — |
+| Saved view, own (`saved_view`, `saved_view_event`) | C V E D | C V E D S | C V E D S | C V E D S | C V E D | C V E D S | C V E D S | C V E D S | C V E D | C V E D | — | C V E D | C V E D | C V E D |
+| Saved view shared in the organization | V A | V A | V A | V A | V A | V A | V A | V A | V A | V A | V A | V A | V A | V A |
+| Own form drafts across transformations (`form_draft`, P5) | V³ | V³ | V³ | V³ | V³ | V³ | V³ | V³ | V³ | V³ | V³ | V³ | V³ | V³ |
+| Version comparison (audit trail) | V⁴ | V⁴ | V⁴ | V⁴ | V⁴ | V⁴ | V⁴ | V⁴ | V⁴ | V⁴ | V⁴ | V⁴ | V⁴ | V⁴ |
+| Help topic (`help_topic`) | V | V | V | V | V | V | V | V | V | V | V | V | V | V |
+| Load-dataset marker (`load_dataset_marker`, sys) | — | — | — | — | — | — | — | — | — | — | — | — | — | — |
+
+1. A search hit only for a record whose own view the user may open (scope, record permission, sensitivity grant or named party; ADR-0051, ADR-0057 §3). A role with no transformation scope sees no hit.
+2. Holders of `operations.read` as seeded by `0103` (ADR-0053; matrix §25.1: ADM_TECH, TO, KDS, TD, AUD).
+3. Only one's own drafts, and only in transformations one can still read; creating and changing drafts keeps the P5 rule (the record type's write permission), so AUD has none to list.
+4. Field names for every reader of the record; values only with the record type's write permission or `audit.read` in scope (ADR-0057 §7).
+
+- **Scope:** saved views belong to the owner's organization; a shared view of a transformation the reader cannot read is not listed for that reader. A view never widens what a list returns.
+- **The load run (REQ-S20-029, REQ-S20-030):** load sessions exist only in a database holding `load_dataset_marker` with `MTH_ENV=load` (ADR-0058 §4); load users act through their seeded scoped assignments; an export file downloads only for its requester (others, including AUD, 404; ADR-0046, ADR-0058 §7).
+
+## 28. P6 implementation, slice D (DG6): the optional assistant
+
+- **Task:** T-DG6-ARCH-05 (solution-architect), completed by its continuation T-DG6-ARCH-05B, 2026-10-27. **Sources:** ADR-0059 §3, §6, §9, §10; master prompt M0336, M0337, M0188; REQ-S17-009 "configure:ADM(IT-authorized)", REQ-S17-007 "use:signed-in users when enabled".
+- **Seed:** `0112_p6_assistant_permissions.sql`, equal to `P6_ASSISTANT_PERMISSIONS` / `P6_ASSISTANT_ROLE_PERMISSIONS` in `packages/shared/src/permissions.ts` (`packages/db/src/seed.test.ts`). A configurable starting point, not a Mobily-approved access policy.
+- **Separation:** neither code is a business approval or a Finance validation; the 0001 trigger still refuses any approval code for a technical-admin role (probe PM04). The assistant approves, validates, certifies and submits nothing (ADR-0059 §7, §8): it has no path to a G1–G6 business approval, a Finance validation or an IT approval. No separation-of-duties rule applies, because nothing here approves.
+- **IT authorization:** `assistant.configure` lets ADM_TECH enter the company's authorization reference and turn the assistant on. The product records the reference as entered and does not verify it with IT; holding the code is not itself an IT approval.
+- **AUD stays read-only:** AUD reads the assistant setting (through `operations.read`, `0103`), so it can see that AI is off and who turned it on; it holds neither code, so every assistant write, including starting a conversation, answers 403 for AUD (probe PM02; BE-T's AUD test). Whether AUD should also use the assistant read-only is an open question for the orchestrator (ADR-0059 Alternatives 5).
+
+### 28.1 Permission codes
+
+| Code | Category | Meaning | Default roles |
+|---|---|---|---|
+| `assistant.use` | write | Start one's **own** assistant conversations, ask questions, read one's own conversations, and take one's own charter or decision-brief suggestion to a draft prefill (plus the target's own write permission) | SP, TL, BO, WL, FIN, TO, KDS, TD, CM, SEC, ADM_TECH, ADM_ACCESS, ADM_METHOD (every role except AUD) |
+| `assistant.configure` | configure | Read and change the assistant setting; turn the assistant on (with an endpoint and an authorization reference) or off; re-checked at commit time under lock 730323 | ADM_TECH |
+
+Legend as in 8.3 (**C** create, **E** edit, **V** view), plus: **On** = turn the assistant on or off, **Q** = ask a question (post a message), **T** = take one's own suggestion to a draft prefill.
+
+| Entity (table) | SP | TL | BO | WL | FIN | TO | KDS | TD | CM | SEC | AUD | ADM_METHOD | ADM_TECH | ADM_ACCESS |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Assistant setting (`assistant_setting`, `assistant_setting_change`) | — | — | — | — | — | V¹ | V¹ | V¹ | — | — | V¹ | — | C V E On | — |
+| Own assistant conversation and its messages (`assistant_conversation`, `assistant_message`) | C V Q | C V Q | C V Q | C V Q | C V Q | C V Q | C V Q | C V Q | C V Q | C V Q | — | C V Q | C V Q | C V Q |
+| Own assistant suggestion (`assistant_suggestion`) | V T² | V T² | V T² | V T² | V T² | V T² | V T² | V T² | V T² | V T² | — | V T² | V T² | V T² |
+| Records retrieved for an answer (search documents, plain-text evidence excerpts) | V³ | V³ | V³ | V³ | V³ | V³ | V³ | V³ | V³ | V³ | — | V³ | V³ | V³ |
+
+1. Holders of `operations.read` as seeded by `0103` (matrix §25.1: ADM_TECH, TO, KDS, TD, AUD).
+2. Only for a `charter_draft` (needs `charter.edit`) or `decision_brief_draft` (needs `executive_decision.create`) suggestion, in a transformation the user can read; advice suggestions cannot be taken. Taking a suggestion writes only the suggestion; the human creates, saves and submits the draft through the P5 form-draft operations with the record type's own permission.
+3. Only records the user may open through their own view (scope, record permission, sensitivity grant or named party; ADR-0051, ADR-0057 §3), re-checked through `ReadScope` when a stored conversation is read; evidence text only with the evidence download authorization (ADR-0051 §4). `assistant.use` grants no record access.
+
+- **Scope:** a conversation belongs to its owner; nobody else, including administrators, lists or reads it through the API (others 404). The setting is installation-wide.
+
+## 29. P6 implementation, slices I and K (DG6): the branding contrast report and the explanation panels
+
+- **Task:** T-DG6-ARCH-06 (solution-architect), 2026-10-28. **Sources:** ADR-0061 §1, §5, §8, §10; master prompt M0300, M0301, M0304; REQ-S15-003 "view:all", REQ-S15-014 "view:scoped; view-technical:ADM".
+- **Seed:** none. Slice I adds **no permission code** and changes no role default (`packages/shared/src/permissions.ts` unchanged; `0113` seeds nothing). Slice K adds no permission.
+- **Separation:** nothing in slices I and K approves, validates or certifies; branding is configuration, never a business approval. The 0001 trigger still refuses any business-approval code for a technical-admin role (REQ-S10-003). No separation-of-duties rule applies.
+- **AUD stays read-only:** AUD holds no `branding.configure` (the P5 decision, §23) and gets 403 on `getBrandingVersionContrast` and on `putBrandingSettings`; an AUD assigned at the organization reads every contrast report of that organization through the global audit list (`/api/v1/audit-events`, `audit_event.read`, §24; the event has no transformation, so it targets the organization, ADR-0052 §8), where the `branding_contrast_report.recorded` event carries the report's after-state. AUD writes nothing. AUD sees the explanation panels of every value it can already read, read-only.
+
+### 29.1 Rights per entity
+
+Legend as in 8.3 (**C** create, **E** edit, **V** view), plus **P** = created only by the branding publish.
+
+| Entity (table) | SP | TL | BO | WL | FIN | TO | KDS | TD | CM | SEC | AUD | ADM_METHOD | ADM_TECH | ADM_ACCESS |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Branding contrast report and its pairs (`branding_contrast_report`, `branding_contrast_pair`) | — | — | — | — | — | — | — | — | — | — | V¹ | — | V P² | — |
+| Explanation panel of a calculated value (no table; built from the value's own read operations, ADR-0061 §8) | V³ | V³ | V³ | V³ | V³ | V³ | V³ | V³ | V³ | V³ | V³ | V³ | V³ | V³ |
+
+1. Through `/api/v1/audit-events` only (the event's after-state), not through `getBrandingVersionContrast`.
+2. `branding.configure` (seeded by `0091`): `getBrandingVersionContrast`; the report is written by `putBrandingSettings` in the publish transaction, never by its own operation, and is immutable.
+3. Exactly where the caller can read the value itself (scope, record permission, sensitivity grant; ADR-0051): the weighted score (`getInitiativeScores`), the benefit realized value (`getBenefitValues`, `getBenefit`), the KPI status (`getKpiStatus`), the financial metrics (`getBusinessCaseCashFlows` and the metrics), the health check (`getHealthCheck`) and the dashboard drill-downs. A panel adds no data the caller cannot already read. Technical details (token names, hashes, infrastructure terms) appear only on Administration screens (REQ-S15-014 "view-technical:ADM").

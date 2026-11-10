@@ -230,6 +230,11 @@ export const transformationDashboard = z.strictObject({
   timezone: z.string(),
   appliedFilters: dashboardFilters,
   areas: sixAreas,
+  /**
+   * D-196 item 4, D-199 (BE-B2's contract addition): present when the response includes a sensitive benefit or business
+   * case; true when the reader is not admitted to at least one of them (ADR-0051 §2; label access.includesRestrictedRecords).
+   */
+  includesRestrictedRecords: z.boolean().optional(),
 });
 export type TransformationDashboard = z.infer<typeof transformationDashboard>;
 
@@ -242,6 +247,11 @@ export const executiveOverview = z.strictObject({
   transformationCount: z.number().int().min(0),
   areas: sixAreas,
   transformations: z.array(dashboardTransformationRow),
+  /**
+   * Present when the response includes a sensitive benefit or business case: true when the reader is not admitted to
+   * at least one of them (ADR-0051 §2; label access.includesRestrictedRecords; T-DG6-BE-Z7, F-DG6-360).
+   */
+  includesRestrictedRecords: z.boolean().optional(),
 });
 export type ExecutiveOverview = z.infer<typeof executiveOverview>;
 
@@ -255,6 +265,11 @@ export const workstreamDashboard = z.strictObject({
   businessDate,
   appliedFilters: dashboardFilters,
   areas: sixAreas,
+  /**
+   * D-196 item 4, D-199 (BE-B2's contract addition): present when the response includes a sensitive benefit or business
+   * case; true when the reader is not admitted to at least one of them (ADR-0051 §2; label access.includesRestrictedRecords).
+   */
+  includesRestrictedRecords: z.boolean().optional(),
 });
 export type WorkstreamDashboard = z.infer<typeof workstreamDashboard>;
 
@@ -317,6 +332,11 @@ export const dashboardDrilldown = z.strictObject({
     .string()
     .regex(/^[A-Z]{3}$/)
     .nullable(),
+  /**
+   * D-196 item 4, D-199 (BE-B2's contract addition): present when the response includes a sensitive benefit or business
+   * case; true when the reader is not admitted to at least one of them (ADR-0051 §2; label access.includesRestrictedRecords).
+   */
+  includesRestrictedRecords: z.boolean().optional(),
 });
 export type DashboardDrilldown = z.infer<typeof dashboardDrilldown>;
 
@@ -453,6 +473,11 @@ export const financeDashboard = z.strictObject({
   pendingValidationCount: z.number().int().min(0),
   nonFinancialCount: z.number().int().min(0),
   transformations: z.array(dashboardTransformationRow),
+  /**
+   * D-196 item 4, D-199 (BE-B2's contract addition): present when the response includes a sensitive benefit or business
+   * case; true when the reader is not admitted to at least one of them (ADR-0051 §2; label access.includesRestrictedRecords).
+   */
+  includesRestrictedRecords: z.boolean().optional(),
 });
 export type FinanceDashboard = z.infer<typeof financeDashboard>;
 
@@ -498,7 +523,8 @@ export const myWorkItem = z.strictObject({
   section: myWorkSection,
   source: z.enum(["work_item", "action_item", "draft"]),
   recordType: z.string(),
-  recordId: uuid,
+  /** Null for a work item whose record the caller is not admitted to (T-DG6-BE-Z12B; D-222; ADR-0051 §2). */
+  recordId: uuid.nullable(),
   kind: z.string().nullable(),
   code: z.string().nullable(),
   label: z.string().nullable(),
@@ -508,6 +534,8 @@ export const myWorkItem = z.strictObject({
   href: z.string(),
   dueDate: nullableDate,
   overdue: z.boolean(),
+  /** True on a work item whose record the caller is not admitted to (label access.includesRestrictedRecords). */
+  includesRestrictedRecords: z.literal(true).optional(),
 });
 export type MyWorkItem = z.infer<typeof myWorkItem>;
 

@@ -82,6 +82,8 @@ export const notificationDigestItem = z.strictObject({
   messageParams: z.record(z.string(), z.unknown()),
   linkPath: z.string(),
   createdAt: timestamp,
+  /** T-DG6-BE-Z14 (D-226, D-231): the notification names a record the reader is not admitted to (redacted text). */
+  includesRestrictedRecords: z.literal(true).optional(),
 });
 
 export const notificationDigest = z.strictObject({

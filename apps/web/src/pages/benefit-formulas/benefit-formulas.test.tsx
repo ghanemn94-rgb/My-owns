@@ -181,7 +181,7 @@ function render(
     })),
     route("GET", /\/api\/v1\/benefit-formulas\?/, () => page([formula])),
     route("GET", new RegExp(`/benefit-formulas/${F_ID}$`), () => ({ status: 200, body: formula })),
-    route("GET", /\/versions$/, () => ({
+    route("GET", /\/versions(\?|$)/, () => ({
       status: 200,
       body: { items: formula.currentVersion ? [formula.currentVersion] : [] },
     })),

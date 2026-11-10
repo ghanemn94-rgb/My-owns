@@ -1,0 +1,75 @@
+port-policy: PostgreSQL listening on port 31351 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-z14
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw8vqjqn_82f39520 (server_encoding UTF8); applied 118 migrations to a fresh database
+stdout | apps/api/test/integration/tasks/digest-restricted-z14.test.ts
+[BE-Z14-DIGEST] tl2 PUT /me/notification-preferences (quiet hours now, daily digest) -> 200
+
+stdout | apps/api/test/integration/tasks/digest-restricted-z14.test.ts
+[BE-Z14-DIGEST] hidden benefit B01 01995000-4401-7000-8000-000000000001; finance validation 01995000-4501-7000-8000-000000000001
+
+stdout | apps/api/test/integration/tasks/digest-restricted-z14.test.ts
+[BE-Z14-DIGEST] notification 01a1befe-4cb7-724a-a411-d51897f5d09d: delivery decision (state held, deliver_after 2026-11-09T09:28:00.000Z)
+
+stdout | apps/api/test/integration/tasks/digest-restricted-z14.test.ts
+[BE-Z14-DIGEST] runDigestWindow -> [{"userId":"01a1befe-4c59-757c-a3d8-f668f0c86a49","outcome":"digested","digestId":"01a1befe-4cee-7c67-a553-d1cf5fb93e2e","count":1}]
+
+stdout | apps/api/test/integration/tasks/digest-restricted-z14.test.ts > T-DG6-BE-Z14: a digested notification about a restricted record (D-226, D-231) > the digest read applies the inbox redaction: inbox.restricted, params {}, the home link, the marker
+[BE-Z14-DIGEST] GET /me/notification-digests/{id} 200: {"id":"01a1befe-4cee-7c67-a553-d1cf5fb93e2e","windowStart":"2026-11-09T09:15:00.000Z","windowEnd":"2026-11-09T09:30:00.000Z","count":1,"items":[{"notificationId":"01a1befe-4cb7-724a-a411-d51897f5d09d","messageKey":"benefits.task.finance_validation_review","messageParams":{"periodEnd":"2026-07-31","benefitCode":"B01","periodStart":"2026-07-01"},"linkPath":"/transformations/01995000-0000-7000-8000-000000000001/finance-validations/01995000-4501-7000-8000-000000000001","createdAt":"2026-11-09T06:28:19.249Z"}]}
+
+stdout | apps/api/test/integration/tasks/digest-restricted-z14.test.ts > T-DG6-BE-Z14: a digested notification about a restricted record (D-226, D-231) > positive: after an explicit grant the same read shows the original text and link (access restored)
+[BE-Z14-DIGEST] TO grants tl2 the benefit -> 201 (TO user 01a1befe-4c06-7346-ac7d-7e36ec2b744a)
+
+ ❯ |integration| apps/api/test/integration/tasks/digest-restricted-z14.test.ts (4 tests | 1 failed) 5645ms
+   ✓ T-DG6-BE-Z14: a digested notification about a restricted record (D-226, D-231) > control: tl2 cannot read the benefit or its Finance validation 22ms
+   × T-DG6-BE-Z14: a digested notification about a restricted record (D-226, D-231) > the digest read applies the inbox redaction: inbox.restricted, params {}, the home link, the marker 20ms
+     → expected { …(5) } to deeply equal { …(6) }
+   ✓ T-DG6-BE-Z14: a digested notification about a restricted record (D-226, D-231) > negative: another user's digest is 404 and names nothing 5ms
+   ✓ T-DG6-BE-Z14: a digested notification about a restricted record (D-226, D-231) > positive: after an explicit grant the same read shows the original text and link (access restored) 33ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/tasks/digest-restricted-z14.test.ts > T-DG6-BE-Z14: a digested notification about a restricted record (D-226, D-231) > the digest read applies the inbox redaction: inbox.restricted, params {}, the home link, the marker
+AssertionError: expected { …(5) } to deeply equal { …(6) }
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[2m    "createdAt": "2026-11-09T06:28:19.249Z",[22m
+[32m-   "includesRestrictedRecords": true,[39m
+[32m-   "linkPath": "/transformations/01995000-0000-7000-8000-000000000001",[39m
+[32m-   "messageKey": "inbox.restricted",[39m
+[32m-   "messageParams": {},[39m
+[31m+   "linkPath": "/transformations/01995000-0000-7000-8000-000000000001/finance-validations/01995000-4501-7000-8000-000000000001",[39m
+[31m+   "messageKey": "benefits.task.finance_validation_review",[39m
+[31m+   "messageParams": {[39m
+[31m+     "benefitCode": "B01",[39m
+[31m+     "periodEnd": "2026-07-31",[39m
+[31m+     "periodStart": "2026-07-01",[39m
+[31m+   },[39m
+[2m    "notificationId": "01a1befe-4cb7-724a-a411-d51897f5d09d",[22m
+[2m  }[22m
+
+ ❯ apps/api/test/integration/tasks/digest-restricted-z14.test.ts:147:18
+    145|     const item = (digest.body.items as Body[]).find((x) => x.notificat…
+    146|     expect(item).toBeDefined();
+    147|     expect(item).toEqual({
+       |                  ^
+    148|       notificationId: S.noteId,
+    149|       messageKey: "inbox.restricted",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+   Start at  06:28:00
+   Duration  18.60s (transform 4.98s, setup 0ms, collect 9.23s, tests 5.64s, environment 0ms, prepare 76ms)
+
+exit=1

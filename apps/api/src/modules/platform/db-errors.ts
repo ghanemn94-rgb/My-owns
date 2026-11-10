@@ -3330,6 +3330,425 @@ export function mapP5BrandingError(error: PgErrorLike): HttpProblem | null {
   }
 }
 
+/**
+ * P6 slices E and F (T-DG6-BE-A; p6-work-split §E/F.1, exact; ADR-0051 §2, ADR-0052 §1): the 0098/0099 guards.
+ *   sensitive_record_grant_one_active_key                   -> 409 sensitive_grant.duplicate
+ *   sensitive_record_grant_not_self                         -> 422 sensitive_grant.not_self
+ *   sensitive_record_grant_transition                       -> 422 invalid_transition ("Only an active grant can be revoked.")
+ *   record_sensitivity_record_ref, sensitive_record_grant_record_ref -> 404 not_found (the record does not exist in the
+ *                                                              transformation; existence is not disclosed)
+ *   record_sensitivity_record_key, upload_policy_organization_key -> 409 version_conflict (a concurrent If-Match "0"
+ *                                                              create of the same row)
+ *   upload_policy_allowed_types, upload_policy_max_bytes    -> 400 validation
+ *   inbox_notification_deep_link_once, inbox_notification_link_token_key, evidence_content_detected_type,
+ *   evidence_content_detected_media_type                    -> 500: no business code ("unmapped"); the API never sends
+ *     values that violate them (BE-C and BE-D prove it). They are named here only because the generic SQLSTATE
+ *     fallbacks would otherwise answer 422 validation.constraint (23514) or 409 duplicate (23505) for them.
+ */
+export function mapP6AccessHardeningError(error: PgErrorLike): HttpProblem | null {
+  switch (error.constraint ?? "") {
+    case "sensitive_record_grant_one_active_key":
+      return problems.duplicate(
+        "sensitive_grant.duplicate",
+        "This person already has an active grant for this record.",
+      );
+    case "sensitive_record_grant_not_self":
+      return problems.businessRule("sensitive_grant.not_self", "You cannot grant access to yourself.");
+    case "sensitive_record_grant_transition":
+      return problems.invalidTransition("Only an active grant can be revoked.");
+    case "record_sensitivity_record_ref":
+    case "sensitive_record_grant_record_ref":
+      return problems.notFound();
+    case "record_sensitivity_record_key":
+    case "upload_policy_organization_key":
+      return new HttpProblem({
+        status: 409,
+        type: PROBLEM_TYPES.versionConflict,
+        code: "version_conflict",
+        title: "Version conflict",
+        detail: "The record was changed by someone else. Review the current version and re-apply your change.",
+      });
+    case "upload_policy_allowed_types":
+      return problems.validation([
+        {
+          pointer: "/allowedTypes",
+          code: "validation.upload_policy_allowed_types",
+          message: "Choose one or more of the allowed file types.",
+        },
+      ]);
+    case "upload_policy_max_bytes":
+      return problems.validation([
+        {
+          pointer: "/maxBytes",
+          code: "validation.upload_policy_max_bytes",
+          message: "The size limit must be between 1 and 26214400 bytes.",
+        },
+      ]);
+    case "inbox_notification_deep_link_once":
+    case "inbox_notification_link_token_key":
+    case "evidence_content_detected_type":
+    case "evidence_content_detected_media_type":
+      return problems.internal();
+    default:
+      return null;
+  }
+}
+
+/**
+ * P6 slices J and C (T-DG6-BE-K; p6-work-split §J/C.3, exact; ADR-0053 §2, ADR-0054 §4): the 0101/0102 guards.
+ *   operational_exception_transition                      -> 409 operations.exception_not_open
+ *   operational_exception_resolved_final                  -> 409 operations.exception_resolved
+ *   service_identity_grant_within_declaration, service_identity_permission_category
+ *                                                         -> 422 service_identity.grant_exceeds_declaration
+ *   storage_setting_s3_complete                           -> 422 storage.s3_incomplete
+ *   storage_setting_access_key_ref, storage_setting_secret_key_ref, notification_channel_username_ref,
+ *   notification_channel_password_ref                     -> 422 storage.secret_ref_invalid
+ *   notification_channel_email_complete, notification_channel_credentials_pair
+ *                                                         -> 422 notification_channel.email_incomplete
+ *   notification_channel_no_messaging_adapter             -> 422 notification_channel.adapter_unavailable
+ *   storage_setting_singleton_key, notification_channel_kind_key -> 409 version_conflict (a concurrent create)
+ * The services refuse first with the same codes; these are the database's last line.
+ */
+export function mapP6OperationsChannelsError(error: PgErrorLike): HttpProblem | null {
+  switch (error.constraint ?? "") {
+    case "operational_exception_transition":
+      return new HttpProblem({
+        status: 409,
+        type: PROBLEM_TYPES.invalidTransition,
+        code: "operations.exception_not_open",
+        title: "Invalid transition",
+        detail: "Only an open operational exception can be acknowledged.",
+      });
+    case "operational_exception_resolved_final":
+      return new HttpProblem({
+        status: 409,
+        type: PROBLEM_TYPES.invalidTransition,
+        code: "operations.exception_resolved",
+        title: "Invalid transition",
+        detail: "This operational exception is already resolved.",
+      });
+    case "service_identity_grant_within_declaration":
+    case "service_identity_permission_category":
+      return problems.businessRule(
+        "service_identity.grant_exceeds_declaration",
+        "A service identity can be granted only permissions that its job or connector declares.",
+      );
+    case "storage_setting_s3_complete":
+      return problems.businessRule(
+        "storage.s3_incomplete",
+        "The object store needs an endpoint, a region, a bucket and both credential references.",
+      );
+    case "storage_setting_access_key_ref":
+    case "storage_setting_secret_key_ref":
+    case "notification_channel_username_ref":
+    case "notification_channel_password_ref":
+      return problems.businessRule(
+        "storage.secret_ref_invalid",
+        "A credential must be a reference to a secret (provider and name), never the secret itself.",
+      );
+    case "notification_channel_email_complete":
+    case "notification_channel_credentials_pair":
+      return problems.businessRule(
+        "notification_channel.email_incomplete",
+        "Email needs an SMTP host, a port, a security mode and a sender address.",
+      );
+    case "notification_channel_no_messaging_adapter":
+      return problems.businessRule(
+        "notification_channel.adapter_unavailable",
+        "No adapter is installed for this channel. In-app notifications continue to work.",
+      );
+    case "storage_setting_singleton_key":
+    case "notification_channel_kind_key":
+      return new HttpProblem({
+        status: 409,
+        type: PROBLEM_TYPES.versionConflict,
+        code: "version_conflict",
+        title: "Version conflict",
+        detail: "The record was changed by someone else. Review the current version and re-apply your change.",
+      });
+    default:
+      return null;
+  }
+}
+
+/**
+ * P6 slices B and A (T-DG6-BE-L; p6-work-split §B/A.1, exact; ADR-0055 §9, ADR-0056 §9): the 0104-0106 guards. The
+ * API checks each rule before it writes, so these are the race and last-line answers.
+ *   connector_organization_code_key                                    -> 409 connector.code_taken
+ *   connector_config_version_credential_refs, _no_secret_settings      -> 422 connector.secret_value_refused
+ *   connector_config_version_field_mappings                            -> 422 connector.mappings_invalid
+ *   connector_config_version_adapter_shape, _outbound_test_only,
+ *     connector_config_version_adapter_settings_check (the 4 KiB size) -> 422 connector.adapter_settings_invalid
+ *   connector_config_version_target_shape                              -> 422 connector.target_invalid
+ *   integration_run_one_active                                         -> 409 connector.run_active
+ *   integration_run_one_retry_key, integration_run_retry_chain         -> 409 integration_run.not_retryable
+ *   outbound_write_idempotency_key                                     -> 409 outbound_write.idempotency_key_reused
+ *   outbound_write_action_allowed                                      -> 422 outbound_write.action_not_allowed
+ *   outbound_write_final, outbound_write_transition                    -> 409 outbound_write.final
+ *   deliverable_external_change_final                                  -> 409 external_change.already_confirmed
+ *   deliverable_external_change_evidence_verified                      -> 422 external_change.evidence_not_verified
+ *   webhook_endpoint_connector_kind                                    -> 422 webhook.connector_not_webhook
+ *   webhook_endpoint_final                                             -> 409 webhook.endpoint_disabled
+ *   webhook_receipt_delivery_key                                       -> 409 webhook.delivery_id_reused
+ *   import_batch_transition, import_batch_final                        -> 409 import.not_staged
+ *   import_batch_counts_match_rows                                     -> 500 (a defect, never a user error)
+ * The texts are ADR-0055 §9's and ADR-0056 §9's, English verbatim (the webhook and import ones as ADR-0056 states them).
+ */
+const IMPORT_NOT_STAGED = "Only a staged import can be committed or cancelled.";
+const WEBHOOK_DELIVERY_ID_REUSED = "This delivery id was already used with a different body.";
+const WEBHOOK_ENDPOINT_DISABLED = "This webhook endpoint is disabled.";
+/** Not in ADR-0056 §9's table (the contract names the code only); proposed in the T-DG6-BE-L handback. */
+const WEBHOOK_CONNECTOR_NOT_WEBHOOK = "A webhook endpoint can be created only for a webhook connector.";
+const sliceBaConflict = (code: string, detail: string): HttpProblem =>
+  new HttpProblem({ status: 409, type: PROBLEM_TYPES.invalidTransition, code, title: "Conflict", detail });
+const sliceBaRule = (code: string, detail: string, pointer = ""): HttpProblem =>
+  new HttpProblem({
+    status: 422,
+    type: PROBLEM_TYPES.validation,
+    code,
+    title: "Business rule violated",
+    detail,
+    errors: [{ pointer, code, message: detail }],
+  });
+
+export function mapP6IntegrationsError(error: PgErrorLike): HttpProblem | null {
+  switch (error.constraint ?? "") {
+    case "connector_organization_code_key":
+      return problems.duplicate(
+        "connector.code_taken",
+        "A connector with this code already exists in this organization.",
+      );
+    case "connector_config_version_credential_refs":
+    case "connector_config_version_no_secret_settings":
+      return sliceBaRule(
+        "connector.secret_value_refused",
+        "Credentials are stored only as references to a secret that IT holds. Enter a secret reference, not the secret itself.",
+        "/config/credentialRefs",
+      );
+    case "connector_config_version_field_mappings":
+      return sliceBaRule(
+        "connector.mappings_invalid",
+        "The field mappings are invalid: name each target field once, and give every source column a name.",
+        "/config/fieldMappings",
+      );
+    case "connector_config_version_adapter_shape":
+    case "connector_config_version_outbound_test_only":
+    case "connector_config_version_adapter_settings_check":
+      return sliceBaRule(
+        "connector.adapter_settings_invalid",
+        "These settings do not fit this connector type.",
+        "/config/adapterSettings",
+      );
+    case "connector_config_version_target_shape":
+      return sliceBaRule(
+        "connector.target_invalid",
+        "Choose a transformation of this organization as the import target.",
+        "/config/targetTransformationId",
+      );
+    case "integration_run_one_active":
+      return sliceBaConflict(
+        "connector.run_active",
+        "A run of this connector is already queued or running. Wait for it to finish.",
+      );
+    case "integration_run_one_retry_key":
+    case "integration_run_retry_chain":
+      return sliceBaConflict("integration_run.not_retryable", "Only a failed run can be retried, and only once.");
+    case "outbound_write_idempotency_key":
+      return problems.duplicate(
+        "outbound_write.idempotency_key_reused",
+        "This idempotency key was already used for a different request.",
+      );
+    case "outbound_write_action_allowed":
+      return sliceBaRule(
+        "outbound_write.action_not_allowed",
+        "The connector's current configuration does not allow this action.",
+      );
+    case "outbound_write_final":
+    case "outbound_write_transition":
+      return sliceBaConflict("outbound_write.final", "This write is already confirmed or failed and cannot change.");
+    case "deliverable_external_change_final":
+      return sliceBaConflict(
+        "external_change.already_confirmed",
+        "This external change is already confirmed. A confirmation never changes.",
+      );
+    case "deliverable_external_change_evidence_verified":
+      return sliceBaRule(
+        "external_change.evidence_not_verified",
+        "Only reviewed (verified) evidence confirms an external change. A filename-only link never does.",
+        "/evidenceId",
+      );
+    case "webhook_endpoint_connector_kind":
+      return sliceBaRule("webhook.connector_not_webhook", WEBHOOK_CONNECTOR_NOT_WEBHOOK, "/connectorId");
+    case "webhook_endpoint_final":
+      return sliceBaConflict("webhook.endpoint_disabled", WEBHOOK_ENDPOINT_DISABLED);
+    case "webhook_receipt_delivery_key":
+      return problems.duplicate("webhook.delivery_id_reused", WEBHOOK_DELIVERY_ID_REUSED);
+    case "import_batch_transition":
+    case "import_batch_final":
+      return sliceBaConflict("import.not_staged", IMPORT_NOT_STAGED);
+    case "import_batch_counts_match_rows":
+      return problems.internal();
+    default:
+      return null;
+  }
+}
+
+/**
+ * P6 slice H (T-DG6-BE-Q; p6-work-split §H/G.3, exact; ADR-0057 §4, §10): the 0108 saved_view guards. The API checks
+ * each rule before it writes (search/saved-views.ts), so these are the race and last-line answers.
+ *   saved_view_name_key                                           -> 409 saved_view.name_taken
+ *   saved_view_final                                              -> 409 saved_view.deleted
+ *   saved_view_owner_only                                         -> 403 saved_view.not_owner
+ *   saved_view_columns_valid, _filters_valid, _sort_valid          -> 400 (validation at /columns, /filters, /sort)
+ *   saved_view_one_default_key                                    -> 409 saved_view.default_conflict
+ *   saved_view_organization_matches,
+ *     saved_view_cross_transformation_lists                       -> 404 (the transformation is not the caller's)
+ * The texts are ADR-0057 §10's, English verbatim.
+ */
+export function mapP6SavedViewError(error: PgErrorLike): HttpProblem | null {
+  switch (error.constraint ?? "") {
+    case "saved_view_name_key":
+      return problems.duplicate("saved_view.name_taken", "You already have a view with this name for this list.");
+    case "saved_view_final":
+      return new HttpProblem({
+        status: 409,
+        type: PROBLEM_TYPES.invalidTransition,
+        code: "saved_view.deleted",
+        title: "Conflict",
+        detail: "This view was deleted.",
+      });
+    case "saved_view_owner_only":
+      return new HttpProblem({
+        status: 403,
+        type: PROBLEM_TYPES.forbidden,
+        code: "saved_view.not_owner",
+        title: "Forbidden",
+        detail: "Only the person who created this view can change it.",
+      });
+    case "saved_view_columns_valid":
+      return problems.badRequest("validation.format", "The view's columns are not valid.", "/columns");
+    case "saved_view_filters_valid":
+      return problems.badRequest("validation.format", "The view's filters are not valid.", "/filters");
+    case "saved_view_sort_valid":
+      return problems.badRequest("validation.format", "The view's sort is not valid.", "/sort");
+    case "saved_view_one_default_key":
+      return new HttpProblem({
+        status: 409,
+        type: PROBLEM_TYPES.versionConflict,
+        code: "saved_view.default_conflict",
+        title: "Conflict",
+        detail: "Another view was made the default for this list at the same time. Reload the list and try again.",
+      });
+    case "saved_view_organization_matches":
+    case "saved_view_cross_transformation_lists":
+      return problems.notFound();
+    default:
+      return null;
+  }
+}
+
+/**
+ * P6 slice D (T-DG6-BE-T; ADR-0059 §3, §9, §10): the 0111 guards of the assistant tables. The routes refuse first with
+ * the same codes (settings.ts, conversations.ts); these are the race and last-line answers.
+ *   assistant_setting_singleton_key, assistant_conversation_message_step,
+ *   assistant_message_sequence, assistant_message_seq_key            -> 409 version_conflict (a concurrent change)
+ *   assistant_setting_enable_complete                                 -> 422 assistant.enable_incomplete
+ *   assistant_setting_locked_while_enabled                            -> 422 assistant.locked_while_enabled
+ *   assistant_setting_endpoint_url                                    -> 422 assistant.endpoint_invalid
+ *   assistant_setting_credential_ref                                  -> 422 assistant.credential_ref_invalid
+ *   assistant_setting_test_adapter_shape                              -> 422 assistant.test_adapter_shape (proposed in
+ *                                                                        the BE-T handback; not in ADR-0059 §10)
+ *   assistant_conversation_message_count_check                        -> 422 assistant.conversation_full
+ *   assistant_setting_starts_disabled, assistant_setting_enabled_by_actor, assistant_conversation_owner_only,
+ *   assistant_conversation_identity_fixed, assistant_conversation_organization_matches,
+ *   assistant_conversation_messages_match, assistant_message_conversation_matches, assistant_message_user_shape,
+ *   assistant_message_reply_shape, assistant_message_citations_valid  -> 500 (a defect of the API, never a user error)
+ * The texts are ADR-0059 §10's, English verbatim.
+ */
+export function mapP6AssistantError(error: PgErrorLike): HttpProblem | null {
+  switch (error.constraint ?? "") {
+    case "assistant_setting_singleton_key":
+    case "assistant_conversation_message_step":
+    case "assistant_message_sequence":
+    case "assistant_message_seq_key":
+      return new HttpProblem({
+        status: 409,
+        type: PROBLEM_TYPES.versionConflict,
+        code: "version_conflict",
+        title: "Version conflict",
+        detail: "The record was changed by someone else. Review the current version and re-apply your change.",
+      });
+    case "assistant_setting_enable_complete":
+      return problems.businessRule(
+        "assistant.enable_incomplete",
+        "To turn the assistant on, enter the provider, the company authorization reference and, for an HTTP endpoint, the endpoint, the API style and the model.",
+      );
+    case "assistant_setting_locked_while_enabled":
+      return problems.businessRule(
+        "assistant.locked_while_enabled",
+        "Turn the assistant off before changing its provider, endpoint, API style, model, credential or authorization reference.",
+      );
+    case "assistant_setting_endpoint_url":
+      return problems.businessRule(
+        "assistant.endpoint_invalid",
+        "Enter the endpoint as an http or https address without a user name, password, query or fragment.",
+      );
+    case "assistant_setting_credential_ref":
+      return problems.businessRule(
+        "assistant.credential_ref_invalid",
+        "A credential must be a reference to a secret (provider and name), never the secret itself.",
+      );
+    case "assistant_setting_test_adapter_shape":
+      return problems.businessRule(
+        "assistant.test_adapter_shape",
+        "The test adapter takes no endpoint, API style or credential. Clear them, or choose the HTTP endpoint.",
+      );
+    case "assistant_conversation_message_count_check":
+      return problems.businessRule(
+        "assistant.conversation_full",
+        "This conversation has reached 100 messages. Start a new conversation.",
+      );
+    case "assistant_setting_starts_disabled":
+    case "assistant_setting_enabled_by_actor":
+    case "assistant_conversation_owner_only":
+    case "assistant_conversation_identity_fixed":
+    case "assistant_conversation_organization_matches":
+    case "assistant_conversation_messages_match":
+    case "assistant_message_conversation_matches":
+    case "assistant_message_user_shape":
+    case "assistant_message_reply_shape":
+    case "assistant_message_citations_valid":
+      return problems.internal();
+    default:
+      return null;
+  }
+}
+
+/** ADR-0061 §6 (exact English): the publish refusal of a branding version whose colours fail a declared pair. */
+export const BRANDING_CONTRAST_INSUFFICIENT_DETAIL =
+  "These colours do not meet the contrast rules: at least one text or control combination is below 4.5:1 (3:1 for large text and controls). Nothing was published.";
+
+/**
+ * P6 slice I (T-DG6-BE-W; ADR-0061 §1, §2, §6): the 0113 and 0119 guards of the branding contrast report. The publish
+ * route refuses first (admin/branding.ts, with one `errors` item per failing pair); these are the last-line answers.
+ *   branding_contrast_pair_passes,
+ *   branding_contrast_report_pairs_complete  -> 422 branding.contrast_insufficient (a stored pair always passes; a
+ *                                               report holds exactly its declared pairs)
+ *   branding_version_contrast_required       -> 500, the generic internal problem: the API always writes the report,
+ *                                               so a version without one is a defect, never a user error
+ */
+export function mapP6BrandingContrastError(error: PgErrorLike): HttpProblem | null {
+  switch (error.constraint ?? "") {
+    case "branding_contrast_pair_passes":
+    case "branding_contrast_report_pairs_complete":
+      return problems.businessRule("branding.contrast_insufficient", BRANDING_CONTRAST_INSUFFICIENT_DETAIL);
+    case "branding_version_contrast_required":
+      return problems.internal();
+    default:
+      return null;
+  }
+}
+
 export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
   const code = error.code;
   if (code === undefined || !SQLSTATE.test(code)) return null;
@@ -3369,6 +3788,18 @@ export function mapDatabaseGuardError(error: PgErrorLike): HttpProblem | null {
   if (p5DemoEnvironment !== null) return p5DemoEnvironment;
   const p5Branding = mapP5BrandingError(error); // P5 slice I (T-DG5-BE-R; ADR-0049 §8, §11)
   if (p5Branding !== null) return p5Branding;
+  const p6AccessHardening = mapP6AccessHardeningError(error); // P6 slices E/F (T-DG6-BE-A; ADR-0051 §2, ADR-0052 §1)
+  if (p6AccessHardening !== null) return p6AccessHardening;
+  const p6OperationsChannels = mapP6OperationsChannelsError(error); // P6 slices J/C (T-DG6-BE-K; ADR-0053 §2, ADR-0054 §4)
+  if (p6OperationsChannels !== null) return p6OperationsChannels;
+  const p6Integrations = mapP6IntegrationsError(error); // P6 slices B/A (T-DG6-BE-L; ADR-0055 §9, ADR-0056 §9)
+  if (p6Integrations !== null) return p6Integrations;
+  const p6SavedView = mapP6SavedViewError(error); // P6 slice H (T-DG6-BE-Q; ADR-0057 §4, §10)
+  if (p6SavedView !== null) return p6SavedView;
+  const p6Assistant = mapP6AssistantError(error); // P6 slice D (T-DG6-BE-T; ADR-0059 §10)
+  if (p6Assistant !== null) return p6Assistant;
+  const p6BrandingContrast = mapP6BrandingContrastError(error); // P6 slice I (T-DG6-BE-W; ADR-0061 §2, §6)
+  if (p6BrandingContrast !== null) return p6BrandingContrast;
   if (constraint.endsWith("_version_step"))
     return new HttpProblem({
       status: 409,

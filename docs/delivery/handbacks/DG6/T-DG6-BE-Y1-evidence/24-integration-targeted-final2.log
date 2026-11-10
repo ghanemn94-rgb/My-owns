@@ -1,0 +1,113 @@
+Sun Nov  1 22:40:23 UTC 2026
+port-policy: PostgreSQL listening on port 28120 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-y1
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvyeybxb_f10ed1a1 (server_encoding UTF8); applied 115 migrations to a fresh database
+stdout | tests/qa/integration/a12-p6-scope-isolation.test.ts > A12 P6 extension: a scope revoked AFTER indexing hides Y everywhere without a reindex > after the revocation (no reindex): no search hit, record 404, link 403, assistant reads no Y, old answer withheld
+A12 revoke: the existing session was ended by the revocation (401); probing with a fresh session
+
+ ✓ |integration| tests/qa/integration/a12-p6-scope-isolation.test.ts (26 tests) 14513ms
+   ✓ A12 search (REQ-S15-010, REQ-S10-004): a user scoped to X gets no Y hit > out of scope: Y's word, each Y title, Y's transformation filter and a type filter all give no Y hit  1484ms
+   ✓ A12 record reads and writes (REQ-S10-002, REQ-S02-006, REQ-S16-027) > a Business Owner on X reads no Y record: every Y record view is 403/404 and names nothing  491ms
+   ✓ A12 evidence URLs (REQ-S10-004, REQ-S13-013, REQ-S16-006) > Y's evidence: record, download and preview are refused to X's users under Y's and X's path, like a ghost id  812ms
+   ✓ A12 evidence URLs (REQ-S10-004, REQ-S13-013, REQ-S16-006) > uploads: an .exe and an oversized file are rejected; an SVG with script is never previewed (REQ-S13-011)  503ms
+   ✓ A12 exports (REQ-S10-004): X's export carries no Y record; Y's exports are unreachable > X's TL exports X's RAID register as CSV: X's risk is in the file, nothing of Y is  459ms
+   ✓ A12 P6 extension: a scope revoked AFTER indexing hides Y everywhere without a reindex > after the revocation (no reindex): no search hit, record 404, link 403, assistant reads no Y, old answer withheld  805ms
+ ✓ |integration| apps/api/test/integration/forms/form-schemas.test.ts (17 tests) 4866ms
+   ✓ REQ-S05-002: protected source columns and extension fields through the Studio pipeline > an extension field added to T03 passes preview and compatibility and publishes; the admin schema shows it  720ms
+   ✓ form schema reads (ADR-0041 §1, §2, §5) > a DG4-style transformation (no pin) reads forms v1; a pinned one reads its version; planned types -> 422  420ms
+   ✓ putFormRecordCustomFields / getFormRecordCustomFields (REQ-S16-010, REQ-S06-005) > a value violating its schema is refused before persistence (400 field code / 422), and nothing is written  554ms
+   ✓ the forms provider's affected records and migration items (ADR-0039 §5, ADR-0040 §2) > affected records count the records of the changed form per pinned transformation; a new required field is a migration item  832ms
+ ✓ |integration| apps/api/test/integration/benefits/measurements.test.ts (12 tests) 4755ms
+   ✓ create, read, list (ADR-0030 §2) > BO records a draft: 201, Location, ETag, basis, one audit event; list newest first; AUD reads  503ms
+   ✓ create, read, list (ADR-0030 §2) > the §11 refusals: step, value shape, unmonetised, period taken, period range, unknown evidence  701ms
+   ✓ submission (REQ-S08-016, REQ-S12-014 API half) > commit-time: a BO grant revoked while the submission waited is 403; still a draft  377ms
+   ✓ the formula engine and lineage (REQ-S08-004, REQ-S08-006, REQ-S08-008) > Δ attach × customers × ARPU = 0.02 × 100000 × 50 = 100000.0000; getBenefitMeasurement returns the lineage  410ms
+   ✓ the formula engine and lineage (REQ-S08-004, REQ-S08-006, REQ-S08-008) > REQ-S08-006: after a formula change, an older measurement keeps its formula version reference  447ms
+   ✓ the formula engine and lineage (REQ-S08-004, REQ-S08-006, REQ-S08-008) > a formula version of another formula is refused (422 validation.reference)  301ms
+ ✓ |integration| apps/api/test/integration/benefits/financial-metrics.test.ts (12 tests) 5229ms
+   ✓ REQ-S08-019: disabled by default; no NPV without a discount rate; 10 % gives the expected NPV to 2 decimals > walks every status of ADR-0047 §5 on one case, and every response names its assumptions and extension: true  985ms
+   ✓ REQ-S08-019: disabled by default; no NPV without a discount rate; 10 % gives the expected NPV to 2 decimals > enabled without assumptions is assumptions_missing; with assumptions and no cash flows, cash_flows_missing  331ms
+   ✓ cash flows (ADR-0047 §5): replaced as a whole, revisions kept, the case currency only > cash flows in USD for a SAR case: 422 financial_cash_flows.currency_mismatch (the database guard, mapped)  319ms
+   ✓ authorization, If-Match, audit and commit-time re-authorization (ADR-0047 §6) > ADM_METHOD switches the extension but gets 403 on the assumptions; FIN gets 403 on the switch; AUD 403 on every write  471ms
+   ✓ authorization, If-Match, audit and commit-time re-authorization (ADR-0047 §6) > If-Match: 428 when missing; "0" creates version 1 and is 409 once a row exists; a stale version is 409  575ms
+   ✓ authorization, If-Match, audit and commit-time re-authorization (ADR-0047 §6) > commit-time: a grant revoked while the PUT waited is 403; nothing written (settings and cash flows)  697ms
+   ✓ a user of another organization reads that organization's own settings (version 0), never another's  337ms
+ ✓ |integration| apps/api/test/integration/benefits/finance-validation.test.ts (9 tests) 4050ms
+   ✓ REQ-PB-013: only Finance decides, and the audit names the validator > BO, AUD and ADM-only get 403; FIN approves; two audit events by FIN; the task is done; validated +amount  881ms
+   ✓ REQ-PB-013: only Finance decides, and the audit names the validator > the queue task goes to the named Finance validator and is completed by the decision  325ms
+   ✓ the queue read > queued first, oldest first; status filter; AUD reads; outsider 404; cursor pages  552ms
+   ✓ decideBenefitBaseline (ADR-0029 §8; REQ-PB-013 baseline half) > FIN validates; the owner, BO, AUD and ADM-only are refused; a rejection needs a note; no baseline 422  592ms
+ ✓ |integration| apps/api/test/integration/benefits/overlaps.test.ts (11 tests) 2706ms
+ ✓ |integration| apps/api/test/integration/benefits/register.test.ts (17 tests) 1857ms
+ ✓ |integration| apps/api/test/integration/access/sensitive-reach.test.ts (10 tests) 2383ms
+   ✓ after marking: TL, AUD (no grant) are refused content; TO and the owner are admitted > F-DG6-123: the T14 form-record sub-resources are 404 for TL and AUD; 200 for TO and the owner  343ms
+   ✓ after marking: TL, AUD (no grant) are refused content; TO and the owner are admitted > sweep: the child item routes and the T14 export follow the same rule  333ms
+ ✓ |integration| apps/api/test/integration/forms/form-export-illustrative.test.ts (19 tests) 7859ms
+stdout | apps/api/test/integration/access/read-scope-parity.test.ts > ReadScope parity (ADR-0051 §1) > predicate <=> admits <=> record view, for every (reader, record) pair
+[read-scope-parity] readers=55 records=18 pairs=990 admitted=116 view-by-GET=495 view-by-record-decision=495 mismatches=0
+
+ ✓ |integration| apps/api/test/integration/access/read-scope-parity.test.ts (2 tests) 5032ms
+   ✓ ReadScope parity (ADR-0051 §1) > predicate <=> admits <=> record view, for every (reader, record) pair  3325ms
+ ✓ |integration| apps/api/test/integration/evidence/store-contract.test.ts (39 tests) 4746ms
+   ✓ EvidenceStore contract: filesystem (ADR-0054 §2) > round-trips a body above the 8 MiB multipart threshold byte for byte  669ms
+   ✓ EvidenceStore contract: s3 (in-process SigV4-verifying fake) (ADR-0054 §2) > round-trips a body above the 8 MiB multipart threshold byte for byte  1039ms
+   ✓ EvidenceStore contract: s3 (in-process SigV4-verifying fake) (ADR-0054 §2) > enforces maxBytes after a multipart part was already stored, and leaves nothing behind  401ms
+   ✓ S3 evidence store: adapter-specific behaviour (ADR-0054 §2) > writes a body up to 8 MiB with one PutObject to <key>.part, then CopyObject + DeleteObject on finalise  491ms
+   ✓ S3 evidence store: adapter-specific behaviour (ADR-0054 §2) > uses multipart upload above 8 MiB, buffering one part at a time  610ms
+   ✓ S3 evidence store: adapter-specific behaviour (ADR-0054 §2) > signs every request with SigV4 (the fake verified each), never sends an ACL and never uses a pre-signed query  351ms
+ ✓ |integration| apps/api/test/integration/access-derived-race.test.ts (4 tests) 5295ms
+ ✓ |integration| apps/api/test/integration/evidence/preview.test.ts (33 tests) 3688ms
+   ✓ REQ-S13-011 A12: an .exe or an oversized file is rejected > a file one byte over the limit is 413 evidence.too_large with maxBytes; nothing is stored  904ms
+   ✓ REQ-S13-011 A12: an .exe or an oversized file is rejected > HTML, a ZIP that is not OOXML and a macro-enabled workbook are refused  320ms
+ ✓ |integration| apps/api/test/integration/forms/form-records.test.ts (18 tests) 2875ms
+   ✓ export (REQ-S05-001) > at most 5000 rows: 5000 export, 5001 is 422 form_export.too_large  748ms
+ ✓ |integration| apps/api/test/integration/aud-write-deny.test.ts (128 tests) 4358ms
+ ✓ |integration| apps/api/test/integration/forms/form-framework.test.ts (16 tests) 2394ms
+   ✓ attachments (REQ-S05-001) > T14: an attachment persists in form_record_attachment and lists; removal needs a reason and If-Match  318ms
+ ✓ |integration| apps/api/test/integration/access/sensitive-reads.test.ts (15 tests) 2239ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts (30 tests) 1867ms
+ ✓ |integration| apps/api/test/integration/access-scope.test.ts (18 tests) 1329ms
+ ✓ |integration| apps/api/test/integration/access/sensitivity.test.ts (22 tests) 1296ms
+ ✓ |integration| apps/api/test/integration/benefits/corrections.test.ts (6 tests) 2289ms
+   ✓ REQ-S08-017: corrections are linked rows; the original stays visible > amend 240000.5 -> 239500 (delta -500.5); reverse -> 0.0000; three validated rows; nothing more after  561ms
+   ✓ REQ-S08-017: corrections are linked rows; the original stays visible > only an approved validation is corrected; FIN only; If-Match 428/409; a reason is required  337ms
+ ✓ |integration| apps/api/test/integration/forms/form-bulk-registers.test.ts (21 tests) 1834ms
+ ✓ |integration| apps/api/test/integration/evidence.test.ts (6 tests) 1182ms
+ ✓ |integration| apps/api/test/integration/access/sensitive-reads-ab-transcript.test.ts (5 tests) 1567ms
+ ✓ |integration| apps/api/test/integration/audit/audit-events.test.ts (15 tests | 1 skipped) 720ms
+ ✓ |integration| apps/api/test/integration/benefits/scenarios.test.ts (7 tests) 1708ms
+ ✓ |integration| apps/api/test/integration/evidence/evidence-register.test.ts (9 tests) 1417ms
+ ✓ |integration| apps/api/test/integration/benefits/slice-b-denials.test.ts (7 tests) 1805ms
+   ✓ F-DG4-100 (slice B): one authorization.denied per refused mutation, naming the permission > AUD: every slice B mutation is 403 with exactly one denial  307ms
+ ✓ |integration| apps/api/test/integration/benefits/lifecycle.test.ts (10 tests) 2005ms
+   ✓ advanceBenefitLifecycle (REQ-PB-074) > Correct needs a recovery plan; Sustain requires a BAU owner and a control cadence  336ms
+ ✓ |integration| apps/api/test/integration/benefits/totals.test.ts (7 tests) 2963ms
+   ✓ counted once (REQ-PB-058) and the initiative view > a 10 M SAR benefit allocated 60 % / 40 % to two initiatives is 10000000.0000 once; the view shows 60 %  699ms
+   ✓ classes, states, n/a (REQ-S08-009, REQ-S08-016, REQ-PB-076) > cash saving and avoided cost are separate lines; pending is not validated; CX is counted, never 0  580ms
+   ✓ open overlaps (REQ-S08-014) and the portfolio > a validated value of a benefit with an open overlap is on pendingOverlap, not in validated  432ms
+ ✓ |integration| apps/api/test/integration/evidence/ownership-transfer.test.ts (5 tests) 1550ms
+ ✓ |integration| apps/api/test/integration/forms/compare.test.ts (13 tests) 1704ms
+ ✓ |integration| apps/api/test/integration/benefits/valuation-methods.test.ts (6 tests) 1282ms
+   ✓ controlled monetisation (REQ-S08-010) > a SAR value on a CX benefit is rejected without an approved method, and accepted once Finance approves  315ms
+ ✓ |integration| apps/api/test/integration/forms/my-drafts.test.ts (7 tests) 586ms
+ ✓ |integration| apps/api/test/integration/benefits/values.test.ts (5 tests) 1268ms
+   ✓ REQ-S08-001: seven states kept apart > planned, forecast, measured, submitted, validated, rejected each with its own total; forecast never validated  447ms
+ ✓ |integration| apps/api/test/integration/benefits/allocations.test.ts (6 tests) 912ms
+ ✓ |integration| apps/api/test/integration/benefits/groups.test.ts (4 tests) 838ms
+ ✓ |integration| apps/api/test/integration/benefits/plan-value-read.test.ts (3 tests) 818ms
+ ✓ |integration| apps/api/test/integration/benefits/entity-group.test.ts (1 test) 1003ms
+   ✓ REQ-S16-017: the benefits entity group through the API > creates and reads each of the seven entities; AUD is refused every mutation and reads every record  554ms
+ ✓ |integration| apps/api/test/integration/forms/bulk-conflict-p6.test.ts (2 tests) 559ms
+
+ Test Files  40 passed (40)
+      Tests  602 passed | 1 todo (603)
+   Start at  22:40:28
+   Duration  246.65s (transform 13.48s, setup 0ms, collect 126.48s, tests 111.35s, environment 0ms, prepare 73ms)
+
+EXIT=0

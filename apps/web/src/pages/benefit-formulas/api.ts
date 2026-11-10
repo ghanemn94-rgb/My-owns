@@ -40,7 +40,7 @@ export function useBenefitFormula(tid: string, id: string) {
 export function useFormulaVersions(tid: string, id: string) {
   return useQuery({
     queryKey: p3Keys.benefitFormulaPart(tid, id, "versions"),
-    queryFn: async () => (await api.get<{ items: BenefitFormulaVersion[] }>(`${formulaUrl(id)}/versions`)).items,
+    queryFn: () => fetchAllPages<BenefitFormulaVersion>(`${formulaUrl(id)}/versions`),
     retry: shouldRetry,
   });
 }

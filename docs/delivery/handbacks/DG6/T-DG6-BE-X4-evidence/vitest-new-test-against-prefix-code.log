@@ -1,0 +1,115 @@
+port-policy: PostgreSQL listening on port 27100 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-x4
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvvw7zge_24c82d07 (server_encoding UTF8); applied 113 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/operations/exception-last-known-value.test.ts (8 tests | 3 failed) 1182ms
+   ✓ a linked KPI keeps its last known value while a later period is open (REQ-S12-019; ADR-0053 §2) > baseline: January is the newest period; the data owner sees Stale, 250.75 and the date 36ms
+   × a linked KPI keeps its last known value while a later period is open (REQ-S12-019; ADR-0053 §2) > a later open period WITHOUT an evaluation (the failing feed never filled it): still Stale, 250.75 and the date 37ms
+     → expected [ { …(7) } ] to deeply equal [ { …(7) } ]
+   ✓ a linked KPI keeps its last known value while a later period is open (REQ-S12-019; ADR-0053 §2) > parity with the DG4 panel for the period that holds the value; the panel's own default period is unchanged 63ms
+   × a linked KPI keeps its last known value while a later period is open (REQ-S12-019; ADR-0053 §2) > an Unknown evaluation of a later period, a later SCHEDULED period with a value and another transformation's value never hide or replace it 45ms
+     → expected { …(7) } to match object { freshness: 'stale', …(2) }
+(4 matching properties omitted from actual)
+   × a linked KPI keeps its last known value while a later period is open (REQ-S12-019; ADR-0053 §2) > a recalculation of the same period (higher run seq) gives that period's newest value 21ms
+     → expected { …(7) } to match object { freshness: 'stale', …(2) }
+(4 matching properties omitted from actual)
+   ✓ a linked KPI keeps its last known value while a later period is open (REQ-S12-019; ADR-0053 §2) > authorization is unchanged: the admin without transformation.read only counts it; another organization gets 404 29ms
+   ✓ a linked KPI keeps its last known value while a later period is open (REQ-S12-019; ADR-0053 §2) > a value in the later period then becomes the last value, Fresh with today's date 22ms
+   ✓ a linked KPI with no value in any period stays Unknown (never 0) > only Unknown evaluations: freshness unknown, lastValue and lastValueAt null 41ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/operations/exception-last-known-value.test.ts > a linked KPI keeps its last known value while a later period is open (REQ-S12-019; ADR-0053 §2) > a later open period WITHOUT an evaluation (the failing feed never filled it): still Stale, 250.75 and the date
+AssertionError: expected [ { …(7) } ] to deeply equal [ { …(7) } ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    {[22m
+[32m-     "freshness": "stale",[39m
+[31m+     "freshness": "unknown",[39m
+[2m      "kpiDefinitionId": "c3842f29-2831-49b8-bd7e-c527e5518f88",[22m
+[32m-     "lastValue": "250.75",[39m
+[32m-     "lastValueAt": "2026-01-30T21:00:00.000Z",[39m
+[31m+     "lastValue": null,[39m
+[31m+     "lastValueAt": null,[39m
+[2m      "name": "Synthetic connector-fed KPI",[22m
+[2m      "transformationId": "01a19030-67c8-73ae-ad2e-c028ad867fb5",[22m
+[2m      "unitKind": "count",[22m
+[2m    },[22m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/operations/exception-last-known-value.test.ts:305:29
+    303|     await period((await businessToday()).slice(0, 7), "open");
+    304|     const body = await linked(office);
+    305|     expect(body.linkedKpis).toEqual([
+       |                             ^
+    306|       {
+    307|         kpiDefinitionId: kpiId,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |integration| apps/api/test/integration/operations/exception-last-known-value.test.ts > a linked KPI keeps its last known value while a later period is open (REQ-S12-019; ADR-0053 §2) > an Unknown evaluation of a later period, a later SCHEDULED period with a value and another transformation's value never hide or replace it
+AssertionError: expected { …(7) } to match object { freshness: 'stale', …(2) }
+(4 matching properties omitted from actual)
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[32m-   "freshness": "stale",[39m
+[32m-   "lastValue": "250.75",[39m
+[32m-   "lastValueAt": "2026-01-30T21:00:00.000Z",[39m
+[31m+   "freshness": "unknown",[39m
+[31m+   "lastValue": null,[39m
+[31m+   "lastValueAt": null,[39m
+[2m  }[22m
+
+ ❯ apps/api/test/integration/operations/exception-last-known-value.test.ts:355:50
+    353|       await businessToday(),
+    354|     );
+    355|     expect((await linked(office)).linkedKpis[0]).toMatchObject(stale);
+       |                                                  ^
+    356|   });
+    357| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |integration| apps/api/test/integration/operations/exception-last-known-value.test.ts > a linked KPI keeps its last known value while a later period is open (REQ-S12-019; ADR-0053 §2) > a recalculation of the same period (higher run seq) gives that period's newest value
+AssertionError: expected { …(7) } to match object { freshness: 'stale', …(2) }
+(4 matching properties omitted from actual)
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[32m-   "freshness": "stale",[39m
+[32m-   "lastValue": "251.5",[39m
+[32m-   "lastValueAt": "2026-01-30T21:00:00.000Z",[39m
+[31m+   "freshness": "unknown",[39m
+[31m+   "lastValue": null,[39m
+[31m+   "lastValueAt": null,[39m
+[2m  }[22m
+
+ ❯ apps/api/test/integration/operations/exception-last-known-value.test.ts:360:50
+    358|   it("a recalculation of the same period (higher run seq) gives that p…
+    359|     await evaluate(slot(januaryId), "251.5", "2026-01-31");
+    360|     expect((await linked(office)).linkedKpis[0]).toMatchObject({ ...st…
+       |                                                  ^
+    361|   });
+    362| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 5 passed (8)
+   Start at  04:20:34
+   Duration  20.17s (transform 7.85s, setup 0ms, collect 14.09s, tests 1.18s, environment 0ms, prepare 80ms)
+

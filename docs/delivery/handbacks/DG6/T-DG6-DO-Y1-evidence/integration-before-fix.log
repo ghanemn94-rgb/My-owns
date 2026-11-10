@@ -1,0 +1,69 @@
+7470ea749005bcbf529be70351bbb87d696d277503de26c20132b1269ad9feee  deploy/load/generate.mjs
+port-policy: PostgreSQL listening on port 28300 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-do-y1
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvybs2yh_67d0efc1 (server_encoding UTF8); applied 115 migrations to a fresh database
+ ❯ |integration| packages/db/test/integration/load-dataset.test.ts (9 tests | 1 failed) 26698ms
+   ✓ deploy/load/generate.mjs (ADR-0058 §2) > two runs with one seed give identical row hashes  9515ms
+   ✓ deploy/load/generate.mjs (ADR-0058 §2) > the marker records exactly the stored counts, and audit_event holds exactly the marker's count 32ms
+   × deploy/load/generate.mjs (ADR-0058 §2) > every id the generator writes passes the API's z.uuid() (F-DG6-101, F-DG6-142) 120ms
+     → expected { rejected: 2088, sample: [ …(3) ] } to deeply equal { rejected: +0, sample: [] }
+   ✓ deploy/load/generate.mjs (ADR-0058 §2) > a second run into the populated database is refused by the 0108 guard and changes nothing 183ms
+   ✓ deploy/load/generate.mjs (ADR-0058 §2) > a different seed gives different rows  4881ms
+   ✓ deploy/load/generate.mjs (ADR-0058 §2) > imports nothing from the demo seed (D-195 seam 25) 1ms
+   ✓ mth-db refuses a load database (ADR-0058 §2) > bootstrap: exit 3, the exact refusal, nothing changed  5476ms
+   ✓ mth-db refuses a load database (ADR-0058 §2) > seed-demo: exit 3, the exact refusal, nothing changed (also with MTH_ENV=demo)  2008ms
+   ✓ mth-db refuses a load database (ADR-0058 §2) > an empty database without the marker is not refused by this rule (bootstrap still works)  4217ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| packages/db/test/integration/load-dataset.test.ts > deploy/load/generate.mjs (ADR-0058 §2) > every id the generator writes passes the API's z.uuid() (F-DG6-101, F-DG6-142)
+AssertionError: expected { rejected: 2088, sample: [ …(3) ] } to deeply equal { rejected: +0, sample: [] }
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[32m-   "rejected": 0,[39m
+[32m-   "sample": [],[39m
+[31m+   "rejected": 2088,[39m
+[31m+   "sample": [[39m
+[31m+     {[39m
+[31m+       "id": "d044310c-e30f-44b1-11b4-8c86cfb1c8fc",[39m
+[31m+       "t": "organization",[39m
+[31m+     },[39m
+[31m+     {[39m
+[31m+       "id": "aee1f19b-a2c7-a486-31d0-85c3ee72a46c",[39m
+[31m+       "t": "business_unit",[39m
+[31m+     },[39m
+[31m+     {[39m
+[31m+       "id": "4a292145-2f35-30a1-f875-2d7867d68d98",[39m
+[31m+       "t": "business_unit",[39m
+[31m+     },[39m
+[31m+   ],[39m
+[2m  }[22m
+
+ ❯ deploy/load/generate.test.mjs:119:75
+    117|       expect(rows.length).toBeGreaterThan(1000);
+    118|       const rejected = rows.filter((r) => !z.uuid().safeParse(r.id).su…
+    119|       expect({ rejected: rejected.length, sample: rejected.slice(0, 3)…
+       |                                                                           ^
+    120|     });
+    121|   });
+ ❯ withClient deploy/load/generate.test.mjs:45:12
+ ❯ deploy/load/generate.test.mjs:108:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 8 passed (9)
+   Start at  21:11:38
+   Duration  32.06s (transform 273ms, setup 0ms, collect 463ms, tests 26.70s, environment 0ms, prepare 93ms)
+
+exit 1

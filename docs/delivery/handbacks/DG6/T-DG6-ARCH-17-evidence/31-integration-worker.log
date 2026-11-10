@@ -1,0 +1,44 @@
+$ env -u LANG -u LC_ALL -u LANGUAGE QA_PG_PORT=31320 MTH_PORT_POOL=31320-31329 tests/qa/support/with-pg.sh npx vitest run --project integration apps/worker/test/integration/automation-failure-queue.test.ts apps/worker/test/integration/job-runs.test.ts apps/worker/test/integration/worker-attempt.test.ts apps/worker/test/integration/outbox.test.ts apps/worker/test/integration/starters.test.ts apps/worker/test/integration/restart.test.ts apps/worker/test/integration/schedules.test.ts apps/worker/test/integration/benefits-queue.test.ts apps/worker/test/integration/raid-corrective.test.ts apps/worker/test/integration/connector-failure-exception.test.ts apps/worker/test/integration/operations-freshness.test.ts apps/worker/test/integration/heartbeat.test.ts  (2026-11-09T00:26:10Z)
+port-policy: PostgreSQL listening on port 31320 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-arch-17
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw8it9ut_5e0d3e0f (server_encoding UTF8); applied 118 migrations to a fresh database
+ ✓ |integration| apps/worker/test/integration/operations-freshness.test.ts (11 tests) 2599ms
+ ✓ |integration| apps/worker/test/integration/starters.test.ts (25 tests) 3273ms
+ ✓ |integration| apps/worker/test/integration/raid-corrective.test.ts (10 tests) 3618ms
+   ✓ raid.corrective_control and raid.corrective_adoption through the production worker (REQ-S12-016) > a failed control check opens one owned case with a 5-working-day follow-up and one work item; replay and restart create none  998ms
+ ✓ |integration| apps/worker/test/integration/benefits-queue.test.ts (2 tests) 5570ms
+   ✓ benefits.finance_queue through the relay and the production worker (REQ-S12-014) > one queue item; a redelivery and a restarted worker write no second item  1594ms
+   ✓ benefits.recalculate_pending (REQ-S07-014, REQ-S12-006) > an accepted KPI actual gives one pending value per benefit and run; replay none; a newer value supersedes  615ms
+ ✓ |integration| apps/worker/test/integration/automation-failure-queue.test.ts (2 tests) 13880ms
+   ✓ REQ-S12-020: kill the worker mid-job and restart it > completes the job once; nothing enters the failure queue  5965ms
+   ✓ REQ-S12-020: after the retry limit the job is in the failure queue; a retry completes it once > captures the last attempt, keeps ops.failed, and resolves through the retry dispatcher  4726ms
+ ✓ |integration| apps/worker/test/integration/outbox.test.ts (10 tests) 4313ms
+   ✓ worker runtime: end to end, restarts and the dead-letter queue > relays and handles a created transformation, and survives a restart without losing the job  548ms
+   ✓ worker runtime: end to end, restarts and the dead-letter queue > moves a job that keeps failing to ops.failed after the bounded retries  1179ms
+ ✓ |integration| apps/worker/test/integration/connector-failure-exception.test.ts (2 tests) 3301ms
+   ✓ connector.run_failed: two consumers, one exception (ADR-0053 §2, §3; ADR-0055 §2; D-102) > fans out to the connector-exception consumer and the engine; exactly one open exception, one starter-16 v2 execution  351ms
+ ✓ |integration| apps/worker/test/integration/job-runs.test.ts (5 tests) 5635ms
+   ✓ REQ-S12-022: scheduled runs are stored, run now runs once > run now: dispatched after COMMIT, the handler runs once, one succeeded job_run; a replay sends nothing  1030ms
+   ✓ REQ-S12-022: scheduled runs are stored, run now runs once > a failing scheduled job: one failed job_run per attempt; the last one is exhausted and in the failure queue  1619ms
+ ✓ |integration| apps/worker/test/integration/restart.test.ts (1 test) 9313ms
+   ✓ kill the worker mid-job and restart it (REQ-S16-005, A13) > completes the job exactly once, with one task and one reminder  6555ms
+ ✓ |integration| apps/worker/test/integration/schedules.test.ts (2 tests) 2642ms
+ ✓ |integration| apps/worker/test/integration/heartbeat.test.ts (4 tests) 6469ms
+   ✓ the worker heartbeat writer (ADR-0053 §6) > inserts beat 1, moves forward by exactly one per beat, and beats on its own timer  1025ms
+   ✓ the worker heartbeat writer (ADR-0053 §6) > stop() ends the beats; a restart writes a new instance key and keeps the old row  2912ms
+ ✓ |integration| apps/worker/test/integration/worker-attempt.test.ts (1 test) 3854ms
+   ✓ worker.ts passes the job's attempt to its handler (T-DG4-BE-R2) > first attempt {retryCount 0, retryLimit 1} fails and is retried; the retry sees {1, 1}, the final attempt  1143ms
+
+ Test Files  12 passed (12)
+      Tests  75 passed (75)
+   Start at  00:26:12
+   Duration  86.56s (transform 8.11s, setup 0ms, collect 18.61s, tests 64.47s, environment 0ms, prepare 105ms)
+
+exit=0
+end 2026-11-09T00:27:40Z

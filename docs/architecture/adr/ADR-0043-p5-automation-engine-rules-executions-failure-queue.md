@@ -1,6 +1,6 @@
 # ADR-0043: Automation engine: versioned rules (trigger, conditions, actions, scope, owner, effective version), the action registry, dry run, enable/disable, execution history, the failure queue and repair, bounded retries with backoff, idempotency keys, service identity and per-action authorization, the human-only boundary, and the jobs operations view
 
-- **Status:** Proposed for P5 (DG5). Author: solution-architect (T-DG5-ARCH-03), 2026-10-14.
+- **Status:** Proposed for P5 (DG5). Author: solution-architect (T-DG5-ARCH-03), 2026-10-14. Amended later; see the amendments at the end (the latest: 2026-11-09, T-DG6-ARCH-17).
 - **Requirements (slice D of `docs/architecture/p5-plan.md`):** REQ-S12-001, REQ-S12-002, REQ-S12-003, REQ-S12-020, REQ-S12-021, REQ-S12-022, REQ-S12-026. ADR-0044 covers slice E (the sixteen starters as rules, approval routes, conditional approval, notification policy, cut-off packs, dependency slips).
 - **Sources (quoted where a design point has one):**
   - M0221 (§12): "Implement server-side event and schedule-driven automation with trigger, conditions, actions, scope, owner, effective version and execution history. Administrators need a readable rule builder, dry-run preview, enable/disable, retry and failure queue. Actions must respect the initiating/system service identity and the applicable permissions."
@@ -277,3 +277,135 @@ PostgreSQL evaluates CHECK constraints after every BEFORE trigger (`0097:205–2
 The row "Decide a rule-version review | `automation.review` | TO" is read as: TO, never an author of the version (its `authored_by` or any recorded contributor; 403 `automation_rule_version.self_review`).
 
 Requirement row: REQ-S12-002 (review where configured, M0155) and REQ-S06-007. Tests: `apps/api/test/integration/automation/rule-coauthor-review.test.ts` (4 tests) and the "0097" test of `packages/db/test/integration/catalogue.test.ts` (`:850`). A rule review is a configuration review, not a business approval. Nothing here grants a G1–G6 approval or touches the engineering gates DG0–DG7.
+
+## Amendment (2026-11-01, T-DG6-ARCH-09; D-203, D-204): §1, §5 and §7, which events a rule acts on, the version an event is evaluated against, and batched execution
+
+Sources: D-203 and D-204 (`docs/delivery/decisions.md`), the T-DG6-BE-X9 handback §2 and §6 (items 1, 3, 4, 5 and 6), and the merged tree at `c86e70ee2`: `packages/db/migrations/0122_p6_automation_rule_enablement.sql` (cited as `0122`), `apps/worker/src/automation/engine.ts` (`engine.ts`) and `apps/worker/src/worker.ts` (`worker.ts`). Nothing above is removed. Where this amendment and §1, §5 or §7 differ, this amendment wins. Handback §6 item 2 (the version switch) is not an open point any more: D-204 decides it (E2). T-DG6-BE-X10 implements E2 in parallel with this record; its handback had not landed when this amendment was written, so E2 states the decided behaviour and its constraints, not the code that implements it.
+
+### E1. A rule acts only on events that occurred while it was enabled (D-203 O-2; REQ-S12-001, REQ-S12-002)
+
+- **The rule.** An automation rule applies only to events whose **stored occurrence time** is at or after the moment the rule version that evaluates them became enabled. Enabling a rule therefore never acts on history, and an event that occurred while the rule was disabled is never acted on, however late it is evaluated (a backlog, a worker outage, a pg-boss retry, a failure-queue retry). This follows the versioning principle that a record keeps the configuration version in force when it was made (REQ-PB-093).
+- **The occurrence time** is `outbox_event.created_at` of the event's outbox row, i.e. the time of the transaction that recorded the domain change (ADR-0008). The envelope carries `outboxEventId`; the engine reads the row (`engine.ts` `occurredAtOf`). **The evaluation time is never used**, and the comparison is done in SQL, at the full microsecond precision of `timestamptz`, never through a JavaScript `Date`.
+- **The enablement time** comes from the append-only ledger `automation_rule_enablement` (`0122`; data dictionary "P6 pre-freeze repair migration 0122", ERD §1aa):
+  - written **only** by the `SECURITY DEFINER` trigger `automation_rule_enablement_record` (AFTER INSERT OR UPDATE on `automation_rule`, `PUBLIC` execute revoked); `mth_app` holds SELECT only;
+  - one row with `source = 'enable'` when a rule is inserted enabled or goes from `enabled = false` to `true`, and one row with `source = 'effective_version'` when the `effective_version_id` of an enabled rule changes (a publish while enabled, §4);
+  - **disabling writes nothing**; re-enabling writes a new row, so the newest row of a version is the moment it last became enabled;
+  - written in the same transaction as the audited rule update that causes it (the enable, or the publish). That update already writes its own audit event, so the ledger row writes none and `automation_rule` takes no extra version step (the `0098` `record_sensitivity_change` pattern);
+  - **backfill** (`source = 'backfill'`): one row for each rule enabled when `0122` ran, at the latest of three stored times: the effective version's `published_at`, the rule's newest `automation_rule.enable` audit event, and the rule's `created_at`. The migration's own clock is never used.
+- **Scope of the rule.** It governs the `automation.evaluate` path of §5, i.e. the **admin** rules (`candidates` filters `r.origin = 'admin'`). The sixteen starters keep their DG4/P5 queues and handlers unchanged (ADR-0044 §1); D-203 does not change them.
+- **Tests.** `apps/api/test/integration/automation/automation-backlog-enablement.test.ts` (QA-H's reproduction: 12 events recorded with no worker running, a rule then enabled, 0 executions for the 12 and exactly 1 for a new event; and the disable/re-enable window) and the "0122" test of `packages/db/test/integration/catalogue.test.ts`.
+
+### E2. The version an event is evaluated against: the one in force at its occurrence (D-204)
+
+- **The decision.** A late event is evaluated against the rule version that was **effective and enabled at its occurrence time**, found from the `automation_rule_enablement` ledger, **not** against the rule's current effective version. BE-X9's narrower reading (only the current effective version, so an event that occurred under version N and was evaluated after N+1 was published was acted on by neither) is replaced: it would let a backlog or an outage at a publish silently drop automations.
+- **What stays (D-203, unchanged):** an event that occurred while the rule was disabled, or before its first enablement, is never acted on by any version.
+- **Constraints on the implementation** (T-DG6-BE-X10 owns it):
+  - The version in force at an occurrence time `t` is derived from **stored times only**: the newest ledger row of the rule with `enabled_from <= t`, provided that the rule was not disabled between that row and `t`. The `0122` ledger records enablements and version changes but **not** disablements, so the disabled windows must come from a stored record (the rule's `automation_rule.disable` audit events, or a ledger column or row that BE-X10 adds). They are never inferred, and an unknown window is never treated as enabled.
+  - **Exactly-once is unchanged.** The execution's UNIQUE is per (rule version, trigger key) (`automation_execution_once_key`, EX04) and lock 730258 is keyed `<ruleVersionId>:<triggerKey>` (§7). Evaluating an event against version N after N+1 is published still gives at most one execution for that event and rule, because a given occurrence time selects exactly one version.
+  - The database already accepts an execution of a `superseded` version (`automation_execution_published_version` allows `published` and `superseded`, `0074`), so E2 needs no relaxation of EX01/EX02.
+  - The executed version's own content (conditions, actions, `run_as`, `service_permission_codes`) is used, never the current version's.
+- **BE-X10's work in progress (observed 03:44 UTC, uncommitted in its worktree, not merged; not a delivered design):** `0123_p6_automation_rule_enablement_disable.sql` adds **no column**. It widens the CHECK `automation_rule_enablement_source` with `disable` and `backfill_disable`, adds the index `automation_rule_enablement_rule_time_idx (automation_rule_id, enabled_from DESC, id DESC)`, replaces `automation_rule_enablement_record()` so that disabling an enabled rule writes a `disable` row for `OLD.effective_version_id`, and backfills past disables from their `automation_rule.disable` audit events. The engine then takes the newest ledger row at or before the occurrence time, ordered by (`enabled_from`, `id`): a disable row, or no row, means no candidate; otherwise that row's version evaluates the event. On a disable row, `enabled_from` is the moment the rule stopped. This satisfies the constraints above. When BE-X10's handback lands, the architect checks it against this list and amends the data dictionary (whose 0122 section describes the shipped file only).
+- **One point D-204 does not state** (raised to the orchestrator, not decided here): whether a late event that occurred while the rule was enabled is still acted on when the rule is **disabled at evaluation time**. The engine before BE-X10 filters `r.enabled = true` at evaluation. The consistent reading of "the version in force at occurrence" would act on it; the operational reading of "disable stops a rule" would not. BE-X10's handback should state which one it implemented, and the orchestrator records the choice.
+- **The required test** (BE-X10 assignment): an event occurs under version N, version N+1 is published before the event is evaluated, and the event is acted on exactly once, by version N; plus a disable/re-enable window.
+
+### E3. Unknown occurrence time
+
+An envelope whose outbox row is missing has no known occurrence time. The job throws `automation.occurrence_time_unknown` (`engine.ts` `OCCURRENCE_UNKNOWN`) and executes nothing; pg-boss retries it under `RETRY_POLICY` (§5), and the last attempt enters the failure queue (`operational_failure`, `source = 'job'`). An unknown occurrence time is **never** evaluated as "now". The relay builds every envelope from its outbox row and no code deletes outbox rows, so this path is a guard, not an expected flow. The code is an internal job error, not an HTTP problem code, so §9 and `openapi.yaml` are unchanged. Test: `automation-backlog-enablement.test.ts` › "an envelope without its outbox row…".
+
+### E4. Ticks are out of scope of E1 and E2
+
+The occurrence of an engine tick (`automation.tick_hourly`, `automation.tick_daily`) is its slot (`engine.ts` `tickSlot`; trigger key `<schedule code>:<slot>`, §5), and `candidates` is called without an `outboxEventId` for ticks, so the enablement cutoff does not apply. A tick evaluated late within the same slot still reaches a rule enabled during that slot, and a tick is evaluated against the current effective version. This is the P5 behaviour, unchanged, and not covered by D-203 or D-204.
+
+### E5. Batched, bounded-concurrency execution (D-203 O-1; REQ-S12-020, REQ-S20-029)
+
+- **§5 is amended:** a worker process no longer takes one job per queue per polling interval. Each captured queue fetches up to `WORKER_JOB_BATCH_SIZE` jobs per poll (default 8, 1–50) and runs at most `WORKER_JOB_CONCURRENCY` of them at once (default 4, 1–16, never above the batch size; the configuration loader refuses a larger value, naming the variable). A full batch polls again at once (`boss.notifyWorker`), skipping pg-boss's loop delay; a partial or empty batch waits the polling interval as before. The operations record of the two variables and the measured throughput is ADR-0058 amendment T1.
+- **Each job is settled on its own** (`worker.ts` `runJobBatch`: `boss.complete` or `boss.fail` per job), so retries, backoff and the dead-letter path (the failure queue on the last attempt, and the `job_run` row) stay **per job** exactly as in §5. A failing job of a full batch is retried alone; its neighbours complete once.
+- **Exactly-once never relied on serial execution** (several worker processes already ran one queue concurrently). It still rests on the three layers of §5: the execution UNIQUE (EX04), the action idempotency keys (AX02) and the effect's own key, with lock 730258 serialising one (rule version, trigger key).
+- **Service identities are unchanged:** every handler runs with its per-queue service principal (ADR-0053 §1).
+- **The two maintenance queues stay one job per fetch:** `platform.purge` (a daily purge) and `job_schedule.updated` (schedule re-registrations, applied in order).
+- **Database connections.** The worker pool grows to `max(5, WORKER_JOB_CONCURRENCY + 2)` connections (6 by default, was 5), so one busy queue never takes every connection.
+- **Tests:** `apps/worker/src/worker-batch.test.ts`, `apps/worker/test/integration/batch-settlement.test.ts` (real pg-boss: per-job retry and failure, the concurrency bound, full batches skip a 30 s polling interval), the O-1 case of `automation-backlog-enablement.test.ts` (240 events plus 60 concurrent replays give 240 executions, all `succeeded`, and 240 tasks), and `packages/config/src/load.test.ts`.
+
+### E6. Edge cases, documented and not tested
+
+- If a batch runs longer than pg-boss's expiry (`resolveWithinSeconds`, 15 min by default), or a settlement call itself fails (for example, the database is unreachable), pg-boss fails every job of the batch whose state is still below `completed`. That set can include a job this batch already moved to `retry`, whose retry count then rises by one more. The effect is an earlier move to the failure queue, never a duplicate effect: the three exactly-once layers still hold.
+- The defaults keep a batch far below the expiry. The settlement error is rethrown on purpose, so a job is never silently completed.
+- No repair is planned in P6. A finding against REQ-S12-020 would reopen it.
+
+Requirement rows: REQ-S12-001, REQ-S12-002, REQ-S12-020, REQ-S12-021 and REQ-S20-029. No HTTP operation changes (the operation count stays 932). Nothing here grants or records a business, Finance or IT approval, touches product gates G1–G6, or reads or writes the engineering gates DG0–DG7.
+
+## Amendment (2026-11-01, T-DG6-ARCH-10; D-204, D-205): §1, §5 and §7, the version at occurrence as built, the kill switch, and the ledger's interval history (`0123`)
+
+Sources: D-204 and D-205 (`docs/delivery/decisions.md`), the T-DG6-BE-X10 handback §2, §5 and §8, and the merged tree at `ff63e2215`: `packages/db/migrations/0123_p6_automation_rule_enablement_disable.sql` (cited as `0123`), `apps/worker/src/automation/engine.ts` (`engine.ts`, `candidates` and `DISABLE_SOURCES`) and `apps/api/src/modules/automation/rules.ts` (`setEnabled`). The facts below were checked against those files, not taken from the handback. Nothing above is removed. Where this amendment and the T-DG6-ARCH-09 amendment (E1, E2) differ, this amendment wins. In particular:
+
+- E1's bullet "**disabling writes nothing**; re-enabling writes a new row, so the newest row of a version is the moment it last became enabled" is replaced by G1: since `0123`, disabling writes a row.
+- E2's paragraph "BE-X10's work in progress" is replaced by G2: the design is now delivered.
+- E2's last open point ("One point D-204 does not state") is closed by G3: D-205 decides it.
+
+### G1. The ledger records disables, so its rows form the interval history (`0123`; D-204)
+
+- **Why.** The `0122` ledger recorded only the moments a rule became enabled and the version changes while it was enabled. After a disable and a re-enable, an event in the disabled window would resolve to the earlier enable row, so the state at a past instant could not be read from it. E2 required the disabled windows to come from a stored record, never inferred.
+- **The trigger.** `0123` replaces `automation_rule_enablement_record()` (`CREATE OR REPLACE`, same signature, still `SECURITY DEFINER` with `search_path = public, pg_temp`, `PUBLIC` execute revoked). Besides the `0122` rows, it writes one row with `source = 'disable'` when an `UPDATE` takes `enabled` from true to false. That row names the version that stopped (`OLD.effective_version_id`; never NULL, because `automation_rule_enabled_needs_version` holds for the old row), at `now()`, the disabling transaction's time.
+  - A no-op disable writes nothing. The API does not update the row (`setEnabled` returns early when the rule is already in the requested state), and the trigger condition needs `OLD.enabled`.
+  - The sixteen starters cannot be disabled (D-142 Q3, `automation.guarantee_protected`), so they never get a disable row.
+- **The backfill** (`source = 'backfill_disable'`). For each `automation_rule.disable` audit event that follows a ledger row of the same rule, `0123` inserts one row at the audit event's `occurred_at` (the disabling transaction's `now()`, the same instant the trigger would have stored), naming the version of the newest preceding ledger row. A disable that precedes the rule's first ledger row needs no row, because "no row" already means "not enabled". A disable whose preceding row is itself a disable is skipped. The migration's own clock is never used.
+- **The interval history.** Per rule, the rows ordered by (`enabled_from`, `id`) now partition time into intervals. Each starts at a row and ends at the next one:
+  - from an `enable`, `effective_version` or `backfill` row: the rule was enabled, on that row's version;
+  - from a `disable` or `backfill_disable` row: the rule was disabled;
+  - before the first row: the rule was not enabled (or its enablement predates `0122` and is not recorded, which is treated as not enabled, never as enabled; E1).
+- **The column name.** On a disable row, `enabled_from` is the moment the rule **stopped**. The column is not renamed: `0123` is forward-only and keeps `0122`'s shape, and readers must use `source` to interpret the row (data dictionary "P6 pre-freeze repair migration 0123").
+- **The lookup index.** `automation_rule_enablement_rule_time_idx (automation_rule_id, enabled_from DESC, id DESC)` serves the engine's "newest row at or before an instant" query.
+- **Unchanged.** The table stays append-only (`p2_attach_append_only`), written only by the trigger and the migrations, SELECT-only for `mth_app`. No `automation_rule` row changes (no version step, no audit event), and no column is added.
+
+### G2. D-204 as implemented: the version an event is evaluated against
+
+- **The rule** (`engine.ts` `candidates`, events only, i.e. an `outboxEventId` is given). Per rule, the engine takes the newest ledger row whose `enabled_from` is at or before the event's stored occurrence time (`outbox_event.created_at`), ordered by `enabled_from DESC, id DESC`. The comparison is a single SQL subquery at microsecond precision; the evaluation time is never used.
+  - **No row:** the event occurred before the rule's first enablement. No candidate (D-203).
+  - **A `disable` or `backfill_disable` row** (`DISABLE_SOURCES`): the event occurred while the rule was disabled. No candidate (D-203).
+  - **Otherwise:** that row's version evaluates the event, even if a newer version has been published since. The version may then be `published` or `superseded`, and the engine accepts both for events (the `0074` guard `automation_execution_published_version` already does).
+- **The trigger must be one of that version's triggers** (`trigger_codes`). If version N+1 adds a trigger, an event of that trigger that occurred under N is not acted on.
+- **The executed version's own content** (conditions, actions, `run_as`, `service_permission_codes`) is used, never the current version's, as E2 required.
+- **Exactly-once.** The ledger is append-only and the occurrence time is stored, so every evaluation, pg-boss retry, failure-queue retry and replay of one event resolves the same version (outside the residual race of G4). The execution UNIQUE per (rule version, trigger key) (`automation_execution_once_key`, EX04), lock 730258 (§7), the action keys (AX02) and the effects' keys are unchanged. One event therefore gives at most one execution per rule, never one per version.
+- **E2's constraints are met.** Stored times only; disabled windows from stored rows (G1), never inferred; no relaxation of EX01/EX02; exactly-once unchanged.
+- **Ticks** are unchanged (E4): they use the rule's current effective version and only `published` versions.
+- **Tests** (`apps/api/test/integration/automation/automation-version-at-occurrence.test.ts`, real API, relay and worker):
+  - "an event under v1, v2 published before evaluation: acted on exactly once, by v1, also when replayed" (the test D-204 requires);
+  - "disable/re-enable window across a version switch: v1 event by v1, window event by nobody, later event by v2";
+  - "kill switch: …" (G3);
+  - "each disable recorded under 0122 is backfilled at its audit event's time, with the version that stopped" (a scratch database migrated to `0122` first, then `0123`);
+  - "after 0123 the trigger writes a disable row (the version that stopped) and nothing for a no-op", including that `mth_app` cannot INSERT into the ledger;
+  - plus the "0123" test of `packages/db/test/integration/catalogue.test.ts` (the CHECK values, the index definition, and the writer still `SECURITY DEFINER` without `PUBLIC` execute).
+  - The BE-X9 disable/re-enable test in `automation-backlog-enablement.test.ts` now expects the ledger `enable`, `disable`, `enable`; its behavioural assertions are unchanged.
+  - BE-X10's negative control: with the pre-X10 engine, the two D-204 tests fail.
+
+### G3. The kill switch: a rule must also be enabled at evaluation (D-205)
+
+- **Decision (D-205).** A rule acts on an event only if it was enabled, on the resolved version, at the event's occurrence (G2) **and** it is still enabled when the event is evaluated (`candidates` keeps `r.enabled = true` for events). D-204 is read accordingly.
+- **Effect.** Disabling a rule stops at once every event of that rule that is evaluated while it is disabled, including events that occurred while it was enabled. An administrator can therefore stop a misbehaving rule during a backlog.
+  - An evaluation that finds no candidate completes its job, and nothing is kept for later. Re-enabling the rule does not bring those events back.
+  - The check is made at evaluation time. An event still queued when the rule is re-enabled is acted on, by the version in force at its occurrence (G2).
+  - The same holds if one envelope is evaluated again after a re-enable: an at-least-once redelivery by the relay, a pg-boss retry of the job after a transient error in another rule's actions, or a failure-queue retry of the job (§5). It can then be acted on, at most once per rule (EX04). This follows from D-205 and is documented here; it is not tested.
+- **What the kill switch does not change.** An event that occurred while the rule was disabled is never acted on by any version (D-203), whatever the rule's state at evaluation.
+- **Test:** "kill switch: an event that occurred while enabled is not acted on when the rule is disabled at evaluation".
+
+### G4. Residual race: a rule transaction that commits after the event is evaluated (D-205, accepted and documented)
+
+- **The race.** The ledger's `enabled_from` and the event's `outbox_event.created_at` are both transaction **start** times (`now()`), not commit times. Suppose a publish, enable or disable transaction on a rule starts before an event's transaction but commits only after the relay and the worker have already evaluated that event. The evaluation did not see the ledger row, yet the row's `enabled_from` is before the event's occurrence. A later evaluation of the same envelope (a redelivery or a retry, G3) can then resolve a different version or state than the first evaluation did.
+- **Bound.** The window is one short API transaction on the rule overlapping a full relay-and-evaluate cycle of the event, so it is bounded by the evaluation lag. BE-X9's cutoff (E1) had the same class of race.
+- **Why it is accepted (D-205).** In the race, no action is taken against a rule the administrator had not enabled at occurrence, and exactly-once still holds per (rule version, trigger key). It is not a Medium finding. A later evaluation that resolves a different version could give a second execution, by that other version, because the execution UNIQUE is per version. That is the race's worst case, and it needs both the overlap and a second evaluation of the same envelope.
+- **Not repaired, and why.** A full fix needs commit-ordered times, for example a per-rule lock taken both by the publish/enable/disable path and by the engine before it reads the ledger, or a commit-time sequence on both the outbox and the ledger. Either changes §7's lock design and the relay, so it is out of P6's pre-freeze scope. A finding against REQ-S12-001 or REQ-S12-021 would reopen it.
+- **Test:** none (untested, as BE-X10 §8 states).
+
+Requirement rows: REQ-S12-001, REQ-S12-002 and REQ-S12-021, with the versioning principle REQ-PB-093. No HTTP operation, error code, configuration variable or dependency changes (the operation count stays 932). Nothing here grants or records a business, Finance or IT approval, touches product gates G1–G6, or reads or writes the engineering gates DG0–DG7.
+
+## Amendment (2026-11-09, T-DG6-ARCH-17; D-226, D-228 (1)): §9, one refusal code for restricted-record marker text
+
+**Why.** T-DG6-BE-Z13 added a refusal to rule writes, and T-DG6-BE-Z13C fixed what its token means. ADR-0051 records the rule (amendment of 2026-11-09, part A). §9 lists this engine's refusals exactly, so the code is recorded here as well. The §9 table itself is left as it is. No code changes.
+
+- **Code:** 422 `automation_rule.restricted_marker_unknown`. **English text (exact):** "A condition value is restricted-record marker text that does not stand for a value of this version. Reload the version and keep each restricted value as shown, or remove it." The en and ar texts are in `apps/web/src/i18n/{en,ar}/problems.json` (Arabic provisional). The problem's field error carries a JSON pointer to the value, with the message "Restricted-record marker text that does not stand for a value of this version."
+- **Where:** `createAutomationRule` and `updateAutomationRuleVersion` (`automationRefusals.restrictedMarkerUnknown`, `apps/api/src/modules/automation/versions.ts`).
+- **When:** a condition literal, or an `in` element, is marker-like text (the bare `[restricted]`, a token `[restricted:k]`, or a case or space variant) and is not a token of the stored version. A token names position k among **all** literals of the stored version (D-228 (1)). It is unknown when there is no stored version (a create), or no string literal at that position. A known token is replaced by the stored literal, so marker text is never stored.
+- **Version binding (2026-11-09, T-DG6-BE-Z14, D-231).** A token is now `[restricted:<version>:<k>]`. A token whose `<version>` is not the version being replaced is refused 422 `automation_rule.restricted_token_stale` (`automationRefusals.restrictedTokenStale`) and is never resolved; the token text above (`[restricted:k]`) is the retired, unbound form and is refused as unknown. ADR-0051's amendment "version-bound automation tokens" holds the rule. **Issuer binding (2026-11-09, T-DG6-BE-Z15, D-233; F-DG6-640).** The token is now `[restricted:<tag>:<k>]`, where `<tag>` is an opaque keyed hash of the issuing rule-version row's id and row version (migration 0127). A token whose tag is not the tag of the row being replaced at the `If-Match` version (another version row, another rule, another row version), or one in the retired D-231 form `[restricted:<version>:<k>]`, is refused 422 `automation_rule.restricted_token_stale`. Part A of the same ADR-0051 amendment holds the rule.
+- **Condition values on read** (a reader who is not admitted to a record named by a literal sees the token in place) are ADR-0051's rule, not this engine's. Evaluation is unchanged: the engine always reads the stored literals.
+
+The operation count is unchanged (932). No configuration variable or dependency changes. This is an engineering design record. It grants no business, Finance or IT approval (G1–G6), and it implies no DG0–DG7 result.

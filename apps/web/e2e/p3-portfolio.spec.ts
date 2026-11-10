@@ -31,6 +31,19 @@ import {
 
 test.describe.configure({ mode: "serial" });
 
+// Budget (F-DG6-144, the F-DG5-145/146 carry-forward of D-193; p6-work-split §2 rules 13 and 15): 75 s per test.
+// Measured: run alone, both language projects, at a 1-minute load of 13-17 on 4 CPUs (three e2e stacks in
+// parallel), the slowest test took 22.8 s ([chromium-en] :272 the read-only auditor sees every FE-A screen wit...)
+// (docs/delivery/handbacks/DG6/T-DG6-FE-Y1-evidence/f144/measure-p3-portfolio.log). In the DG6 QA round-1 full runs
+// (docs/delivery/test-evidence/DG6/qa/round-1/06-e2e-product-*.log), its slowest test timed out at the default
+// 30 s (32.2 s reported), so at least that long.
+// The budget is at least 2x the larger of the two, rounded up to 15 s, and never below 60 s.
+// T-DG6-FE-Z1 (F-DG6-144, round 2): raised from 75 s to 90 s. In the DG6 QA round-2 full product runs
+// (docs/delivery/test-evidence/DG6/qa/round-2/06-e2e-product-*.log) its slowest test took 37.6 s; see docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt.
+// T-DG6-FE-Z1B: raised from 90 s to 105 s. In the z1b loaded full runs (load 21-26, above the review's 11-21;
+// docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/z1b-*.log) the test in row :141 of z1b-budget-table-pass1.txt took 48.5 s; 2x rounded up to 15 s. budget-table.txt has the rows.
+test.setTimeout(105_000);
+
 test.afterAll(async ({}, info) => {
   const lang = langOf(info);
   mkdirSync(join(SHOTS, lang), { recursive: true });

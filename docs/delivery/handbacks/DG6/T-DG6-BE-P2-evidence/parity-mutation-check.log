@@ -1,0 +1,117 @@
+port-policy: PostgreSQL listening on port 24850 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-p2
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvtzk5uv_d8252e11 (server_encoding UTF8); applied 107 migrations to a fresh database
+stdout | apps/api/test/integration/search/search-parity.test.ts > search parity (ADR-0057 §3): a hit iff the record's own view returns it > for every (reader, record) pair of the 12 types
+[search-parity] readers=61 records=36 pairs=2196 admitted=371 sensitive-pairs=366 mismatches=18 per-type={"transformation":{"hits":34,"misses":149},"initiative":{"hits":34,"misses":149},"deliverable":{"hits":34,"misses":149},"kpi_definition":{"hits":34,"misses":149},"benefit":{"hits":34,"misses":149},"evidence":{"hits":15,"misses":168},"business_case":{"hits":16,"misses":167},"raid_entry":{"hits":34,"misses":149},"decision":{"hits":34,"misses":149},"dependency":{"hits":34,"misses":149},"lesson":{"hits":34,"misses":149},"change_request":{"hits":34,"misses":149}}
+
+ ❯ |integration| apps/api/test/integration/search/search-parity.test.ts (2 tests | 2 failed) 27376ms
+   × search parity (ADR-0057 §3): a hit iff the record's own view returns it > for every (reader, record) pair of the 12 types 16996ms
+     → TL@tr:01a18950-dfc8-7412-988d-bf2fc92b481d x benefit(sensitive):01a18950-e0be-74bd-afbc-65283df91b92 search=true view=false (404)
+BO2@tr:01a18950-dfc8-7412-988d-bf2fc92b481d x benefit(sensitive):01a18950-e0be-74bd-afbc-65283df91b92 search=true view=false (404)
+FIN@tr:01a18950-dfc8-7412-988d-bf2fc92b481d x benefit(sensitive):01a18950-e0be-74bd-afbc-65283df91b92 search=true view=false (404)
+TL@tr:01a18950-e3c0-73ea-9ec1-84ddd5ee380f x benefit(sensitive):01a18950-e456-700f-b5e5-11fc7d563b3a search=true view=false (404)
+BO2@tr:01a18950-e3c0-73ea-9ec1-84ddd5ee380f x benefit(sensitive):01a18950-e456-700f-b5e5-11fc7d563b3a search=true view=false (404)
+FIN@tr:01a18950-e3c0-73ea-9ec1-84ddd5ee380f x benefit(sensitive):01a18950-e456-700f-b5e5-11fc7d563b3a search=true view=false (404)
+AUD@org:A x benefit(sensitive):01a18950-e0be-74bd-afbc-65283df91b92 search=true view=false (404)
+AUD@bu:a1 x benefit(sensitive):01a18950-e0be-74bd-afbc-65283df91b92 search=true view=false (404)
+SP@tr:T1 x benefit(sensitive):01a18950-e0be-74bd-afbc-65283df91b92 search=true view=false (404)
+TL@tr:T1 x benefit(sensitive):01a18950-e0be-74bd-afbc-65283df91b92 search=true view=false (404)
+BO@tr:T1 x benefit(sensitive):01a18950-e0be-74bd-afbc-65283df91b92 search=true view=false (404)
+FIN@tr:T1 x benefit(sensitive):01a18950-e0be-74bd-afbc-65283df91b92 search=true view=false (404)
+KDS@tr:T1 x benefit(sensitive):01a18950-e0be-74bd-afbc-65283df91b92 search=true view=false (404)
+TD@tr:T1 x benefit(sensitive):01a18950-e0be-74bd-afbc-65283df91b92 search=true view=false (404)
+CM@tr:T1 x benefit(sensitive):01a18950-e0be-74bd-afbc-65283df91b92 search=true view=false (404)
+SEC@tr:T1 x benefit(sensitive):01a18950-e0be-74bd-afbc-65283df91b92 search=true view=false (404)
+AUD@tr:T1 x benefit(sensitive):01a18950-e0be-74bd-afbc-65283df91b92 search=true view=false (404)
+world:auditor x benefit(sensitive):01a18950-e0be-74bd-afbc-65283df91b92 search=true view=false (404): expected [ …(18) ] to deeply equal []
+   × search parity (ADR-0057 §3): a hit iff the record's own view returns it > the sensitivity admissions are the expected ones (grant, revoked grant, party, TO, AUD, no transformation read) 25ms
+     → expected true to be false // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/search/search-parity.test.ts > search parity (ADR-0057 §3): a hit iff the record's own view returns it > for every (reader, record) pair of the 12 types
+AssertionError: TL@tr:01a18950-dfc8-7412-988d-bf2fc92b481d x benefit(sensitive):01a18950-e0be-74bd-afbc-65283df91b92 search=true view=false (404)
+BO2@tr:01a18950-dfc8-7412-988d-bf2fc92b481d x benefit(sensitive):01a18950-e0be-74bd-afbc-65283df91b92 search=true view=false (404)
+FIN@tr:01a18950-dfc8-7412-988d-bf2fc92b481d x benefit(sensitive):01a18950-e0be-74bd-afbc-65283df91b92 search=true view=false (404)
+TL@tr:01a18950-e3c0-73ea-9ec1-84ddd5ee380f x benefit(sensitive):01a18950-e456-700f-b5e5-11fc7d563b3a search=true view=false (404)
+BO2@tr:01a18950-e3c0-73ea-9ec1-84ddd5ee380f x benefit(sensitive):01a18950-e456-700f-b5e5-11fc7d563b3a search=true view=false (404)
+FIN@tr:01a18950-e3c0-73ea-9ec1-84ddd5ee380f x benefit(sensitive):01a18950-e456-700f-b5e5-11fc7d563b3a search=true view=false (404)
+AUD@org:A x benefit(sensitive):01a18950-e0be-74bd-afbc-65283df91b92 search=true view=false (404)
+AUD@bu:a1 x benefit(sensitive):01a18950-e0be-74bd-afbc-65283df91b92 search=true view=false (404)
+SP@tr:T1 x benefit(sensitive):01a18950-e0be-74bd-afbc-65283df91b92 search=true view=false (404)
+TL@tr:T1 x benefit(sensitive):01a18950-e0be-74bd-afbc-65283df91b92 search=true view=false (404)
+BO@tr:T1 x benefit(sensitive):01a18950-e0be-74bd-afbc-65283df91b92 search=true view=false (404)
+FIN@tr:T1 x benefit(sensitive):01a18950-e0be-74bd-afbc-65283df91b92 search=true view=false (404)
+KDS@tr:T1 x benefit(sensitive):01a18950-e0be-74bd-afbc-65283df91b92 search=true view=false (404)
+TD@tr:T1 x benefit(sensitive):01a18950-e0be-74bd-afbc-65283df91b92 search=true view=false (404)
+CM@tr:T1 x benefit(sensitive):01a18950-e0be-74bd-afbc-65283df91b92 search=true view=false (404)
+SEC@tr:T1 x benefit(sensitive):01a18950-e0be-74bd-afbc-65283df91b92 search=true view=false (404)
+AUD@tr:T1 x benefit(sensitive):01a18950-e0be-74bd-afbc-65283df91b92 search=true view=false (404)
+world:auditor x benefit(sensitive):01a18950-e0be-74bd-afbc-65283df91b92 search=true view=false (404): expected [ …(18) ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   "TL@tr:01a18950-dfc8-7412-988d-bf2fc92b481d x benefit(sensitive):01a18950-e0be-74bd-afbc-65283df91b92 search=true view=false (404)",[39m
+[31m+   "BO2@tr:01a18950-dfc8-7412-988d-bf2fc92b481d x benefit(sensitive):01a18950-e0be-74bd-afbc-65283df91b92 search=true view=false (404)",[39m
+[31m+   "FIN@tr:01a18950-dfc8-7412-988d-bf2fc92b481d x benefit(sensitive):01a18950-e0be-74bd-afbc-65283df91b92 search=true view=false (404)",[39m
+[31m+   "TL@tr:01a18950-e3c0-73ea-9ec1-84ddd5ee380f x benefit(sensitive):01a18950-e456-700f-b5e5-11fc7d563b3a search=true view=false (404)",[39m
+[31m+   "BO2@tr:01a18950-e3c0-73ea-9ec1-84ddd5ee380f x benefit(sensitive):01a18950-e456-700f-b5e5-11fc7d563b3a search=true view=false (404)",[39m
+[31m+   "FIN@tr:01a18950-e3c0-73ea-9ec1-84ddd5ee380f x benefit(sensitive):01a18950-e456-700f-b5e5-11fc7d563b3a search=true view=false (404)",[39m
+[31m+   "AUD@org:A x benefit(sensitive):01a18950-e0be-74bd-afbc-65283df91b92 search=true view=false (404)",[39m
+[31m+   "AUD@bu:a1 x benefit(sensitive):01a18950-e0be-74bd-afbc-65283df91b92 search=true view=false (404)",[39m
+[31m+   "SP@tr:T1 x benefit(sensitive):01a18950-e0be-74bd-afbc-65283df91b92 search=true view=false (404)",[39m
+[31m+   "TL@tr:T1 x benefit(sensitive):01a18950-e0be-74bd-afbc-65283df91b92 search=true view=false (404)",[39m
+[31m+   "BO@tr:T1 x benefit(sensitive):01a18950-e0be-74bd-afbc-65283df91b92 search=true view=false (404)",[39m
+[31m+   "FIN@tr:T1 x benefit(sensitive):01a18950-e0be-74bd-afbc-65283df91b92 search=true view=false (404)",[39m
+[31m+   "KDS@tr:T1 x benefit(sensitive):01a18950-e0be-74bd-afbc-65283df91b92 search=true view=false (404)",[39m
+[31m+   "TD@tr:T1 x benefit(sensitive):01a18950-e0be-74bd-afbc-65283df91b92 search=true view=false (404)",[39m
+[31m+   "CM@tr:T1 x benefit(sensitive):01a18950-e0be-74bd-afbc-65283df91b92 search=true view=false (404)",[39m
+[31m+   "SEC@tr:T1 x benefit(sensitive):01a18950-e0be-74bd-afbc-65283df91b92 search=true view=false (404)",[39m
+[31m+   "AUD@tr:T1 x benefit(sensitive):01a18950-e0be-74bd-afbc-65283df91b92 search=true view=false (404)",[39m
+[31m+   "world:auditor x benefit(sensitive):01a18950-e0be-74bd-afbc-65283df91b92 search=true view=false (404)",[39m
+[31m+ ][39m
+
+ ❯ apps/api/test/integration/search/search-parity.test.ts:171:47
+    169|         `sensitive-pairs=${sensitivePairs} mismatches=${mismatches.len…
+    170|     );
+    171|     expect(mismatches, mismatches.join("\n")).toEqual([]);
+       |                                               ^
+    172|     expect(pairs).toBe(readers.length * 36);
+    173|     // The fixture exercises both outcomes for every type.
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |integration| apps/api/test/integration/search/search-parity.test.ts > search parity (ADR-0057 §3): a hit iff the record's own view returns it > the sensitivity admissions are the expected ones (grant, revoked grant, party, TO, AUD, no transformation read)
+AssertionError: expected true to be false // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- false[39m
+[31m+ true[39m
+
+ ❯ apps/api/test/integration/search/search-parity.test.ts:194:40
+    192|     expect(await sees("WL@tr:T1", sb)).toBe(true); // active grant
+    193|     expect(await sees("SEC@tr:T1", se)).toBe(false); // revoked grant
+    194|     expect(await sees("TD@tr:T1", sb)).toBe(false); // a member withou…
+       |                                        ^
+    195|     expect(await sees("KDS@bu:a1", sb)).toBe(false); // granted but no…
+    196|     expect(await sees("TO@org:A", sb)).toBe(true); // sensitive_record…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  20:18:28
+   Duration  52.73s (transform 8.99s, setup 0ms, collect 17.36s, tests 27.38s, environment 0ms, prepare 114ms)
+

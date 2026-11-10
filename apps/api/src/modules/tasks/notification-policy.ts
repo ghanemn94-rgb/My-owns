@@ -11,7 +11,9 @@
 //   GET /me/notification-digests/{id}   one of one's own digests (tasks/digests.ts; registered here)
 // Every write: commit-time authorization (grants reloaded in the transaction), validation, If-Match (428 missing, 409
 // stale; "0" creates and is stale once a row exists), one audit event in the same transaction, no remote I/O.
-// With no preference and no policy nothing is held: the DG4 behaviour. In-app only (email and messaging: P6 adapters).
+// With no preference and no policy nothing is held: the DG4 behaviour. The policy governs external channels too
+// (T-DG6-BE-I2, ADR-0054 §3 item 6): a held notification fans out to an enabled channel only when it is released
+// (apps/worker handlers/notifications.ts, notifications.delivery_sweep), and a digested one only through its digest.
 //
 // `loadDeliveryInput` is the database half of the delivery decision used by createWorkItemOnce (service.ts); the
 // worker kit carries its twin (ADR-0002 rule 5; parity test in test/integration/tasks/notification-delivery.test.ts).

@@ -55,7 +55,8 @@ export const approval = z.strictObject({
   transformationId: uuid,
   approvalType: z.string(),
   subjectType: z.string(),
-  subjectId: uuid,
+  /** T-DG6-BE-Z12 (D-218): null when the subject is a record the reader is not admitted to. */
+  subjectId: uuid.nullable(),
   subjectVersion: version,
   roundNo: z.number().int().min(1),
   decisionRightId: uuid.nullable(),
@@ -82,6 +83,8 @@ export const approval = z.strictObject({
   version,
   createdAt: timestamp,
   updatedAt: timestamp,
+  /** T-DG6-BE-Z12 (F-DG6-480; D-218): a reference to a record the reader is not admitted to was not named. */
+  includesRestrictedRecords: z.literal(true).optional(),
 });
 export type Approval = z.infer<typeof approval>;
 export const approvalPage = z.strictObject({ items: z.array(approval), nextCursor: z.string().nullable() });
@@ -121,13 +124,16 @@ export const approvalDecisionRecord = z.strictObject({
   recordId: uuid,
   approvalKind: z.string(),
   subjectType: z.string(),
-  subjectId: uuid,
+  /** T-DG6-BE-Z12 (D-218): null when the subject is a record the reader is not admitted to. */
+  subjectId: uuid.nullable(),
   subjectVersion: z.number().int().nullable(),
   outcome: z.enum(["approved", "rejected", "changes_requested", "deferred", "revoked"]),
   rationale: z.string(),
   decidedBy: uuid,
   onBehalfOfUserId: uuid.nullable(),
   decidedAt: timestamp,
+  /** T-DG6-BE-Z12 (F-DG6-480; D-218): a reference to a record the reader is not admitted to was not named. */
+  includesRestrictedRecords: z.literal(true).optional(),
 });
 export type ApprovalDecisionRecord = z.infer<typeof approvalDecisionRecord>;
 export const approvalDecisionRecordPage = z.strictObject({

@@ -8,8 +8,19 @@
 //    make `loadConfig` throw a ConfigError. Entry points print its message and exit non-zero.
 //  - Error messages name the variable, never the value (secrets must not reach logs).
 import { readFileSync } from "node:fs";
+import { formatWithOptions } from "node:util";
 import { z } from "zod";
-import { AUTH_MODES, ENV_VARS, MTH_ENVS, SUPERVISE_INTERVAL_SECONDS, type EnvVarName } from "./index.ts";
+import { loadSecretBindings, type SecretBindings } from "./secret-bindings.ts";
+import {
+  AUTH_MODES,
+  ENV_VARS,
+  HEARTBEAT_INTERVAL_SECONDS,
+  JOB_BATCH_SIZE,
+  JOB_CONCURRENCY,
+  MTH_ENVS,
+  SUPERVISE_INTERVAL_SECONDS,
+  type EnvVarName,
+} from "./index.ts";
 
 export type Service = "api" | "worker" | "db-cli";
 
@@ -45,6 +56,15 @@ export interface AppConfig {
   readonly defaultTimezone: string;
   readonly defaultCurrency: string;
   readonly rateLimit: { readonly perMinute: number; readonly authPerMinute: number };
+  /** P6 (ADR-0052 §4): the per-minute budget of each rate-limit class, applied in addition to the global limit. */
+  readonly rateLimitClasses: RateLimitClassBudgets;
+  /** P6 (ADR-0052 §5): the directory of the built-in `file` SecretProvider, or null when unset. */
+  readonly secretsDir: string | null;
+  /**
+   * F-DG6-181 (ADR-0052 amendment of 2026-11-04 §A; D-209): the SecretRef binding manifest read from
+   * SECRET_BINDINGS_FILE at start; empty (nothing bound) when unset. The entry points hand it to setSecretBindings.
+   */
+  readonly secretBindings: SecretBindings;
   readonly logLevel: (typeof LOG_LEVELS)[number];
   readonly trustProxy: readonly string[];
   /**
@@ -55,8 +75,27 @@ export interface AppConfig {
   /** The demo reset's admin URL (ADR-0050 §6), or null. A secret: never logged. */
   readonly demoAdminDatabaseUrl: string | null;
   /** Worker-only settings (F-DG4-128). Always present; defaulted when unset. */
-  readonly worker: { readonly superviseIntervalSeconds: number };
+  readonly worker: {
+    readonly superviseIntervalSeconds: number;
+    /** P6 (ADR-0053 §6; T-DG6-DO-D): the worker_heartbeat cadence, WORKER_HEARTBEAT_SECONDS (default 30). */
+    readonly heartbeatSeconds: number;
+    /** D-203 O-1 (T-DG6-BE-X9): WORKER_JOB_BATCH_SIZE (default 8, 1-50). */
+    readonly jobBatchSize: number;
+    /** D-203 O-1 (T-DG6-BE-X9): WORKER_JOB_CONCURRENCY (default 4, 1-16, at most the batch size). */
+    readonly jobConcurrency: number;
+  };
 }
+
+/** The rate-limit classes of ADR-0052 §4 that have their own budget (global and auth are `rateLimit`). */
+export const RATE_LIMIT_CLASS_VARIABLES = {
+  upload: "UPLOAD_RATE_LIMIT_PER_MINUTE",
+  search: "SEARCH_RATE_LIMIT_PER_MINUTE",
+  assistant: "ASSISTANT_RATE_LIMIT_PER_MINUTE",
+  webhook: "WEBHOOK_RATE_LIMIT_PER_MINUTE",
+  export: "EXPORT_RATE_LIMIT_PER_MINUTE",
+} as const satisfies Record<string, EnvVarName>;
+export type BudgetedRateLimitClass = keyof typeof RATE_LIMIT_CLASS_VARIABLES;
+export type RateLimitClassBudgets = { readonly [K in BudgetedRateLimitClass]: number };
 
 type Env = Readonly<Record<string, string | undefined>>;
 
@@ -88,6 +127,18 @@ function readRaw(env: Env, name: EnvVarName, problems: string[]): string | undef
     }
   }
   return hasDirect ? direct : undefined;
+}
+
+/**
+ * ADR-0052 §5: the built-in `env` SecretProvider's read, exactly the ADR-0011 rule above: `NAME` or `NAME_FILE`
+ * (never both), empty strings unset. Returns undefined when neither is set; throws a ConfigError that names the
+ * variable, never the value, when both are set or the file cannot be read.
+ */
+export function readSecretVariable(name: string, env: Env = process.env): string | undefined {
+  const problems: string[] = [];
+  const value = readRaw(env, name as EnvVarName, problems);
+  if (problems.length > 0) throw new ConfigError(problems);
+  return value;
 }
 
 function isRequiredFor(name: EnvVarName, service: Service): boolean {
@@ -164,11 +215,37 @@ export function loadConfig(service: Service, env: Env = process.env): AppConfig 
   const defaultCurrency = field("DEFAULT_CURRENCY", z.string().regex(/^[A-Z]{3}$/, "must be an ISO 4217 code"));
   const perMinute = field("RATE_LIMIT_PER_MINUTE", positiveInt(1_000_000));
   const authPerMinute = field("AUTH_RATE_LIMIT_PER_MINUTE", positiveInt(1_000_000));
+  const classBudgets = Object.fromEntries(
+    Object.entries(RATE_LIMIT_CLASS_VARIABLES).map(([cls, name]) => [cls, field(name, positiveInt(1_000_000))]),
+  ) as { [K in BudgetedRateLimitClass]: number | undefined };
+  const secretsDir = field("SECRETS_DIR", z.string().min(1));
+  // F-DG6-181 (D-209): an unreadable or invalid manifest is a start error naming the entry and field, never content.
+  let secretBindings: SecretBindings | undefined;
+  try {
+    secretBindings = loadSecretBindings(env);
+  } catch (error) {
+    if (!(error instanceof ConfigError)) throw error;
+    problems.push(...error.problems);
+  }
   const logLevel = field("LOG_LEVEL", z.enum(LOG_LEVELS));
   const superviseIntervalSeconds = field(
     "WORKER_SUPERVISE_INTERVAL_SECONDS",
     z.coerce.number().int().min(SUPERVISE_INTERVAL_SECONDS.min).max(SUPERVISE_INTERVAL_SECONDS.max),
   );
+  const heartbeatSeconds = field(
+    "WORKER_HEARTBEAT_SECONDS",
+    z.coerce.number().int().min(HEARTBEAT_INTERVAL_SECONDS.min).max(HEARTBEAT_INTERVAL_SECONDS.max),
+  );
+  const jobBatchSize = field(
+    "WORKER_JOB_BATCH_SIZE",
+    z.coerce.number().int().min(JOB_BATCH_SIZE.min).max(JOB_BATCH_SIZE.max),
+  );
+  const jobConcurrency = field(
+    "WORKER_JOB_CONCURRENCY",
+    z.coerce.number().int().min(JOB_CONCURRENCY.min).max(JOB_CONCURRENCY.max),
+  );
+  if (jobBatchSize !== undefined && jobConcurrency !== undefined && jobConcurrency > jobBatchSize)
+    problems.push("WORKER_JOB_CONCURRENCY is invalid (must be at most WORKER_JOB_BATCH_SIZE)");
   const mthEnvSet = field("MTH_ENV", z.enum(MTH_ENVS));
   const demoAdminDatabaseUrl = field(
     "MTH_DEMO_ADMIN_DATABASE_URL",
@@ -195,6 +272,16 @@ export function loadConfig(service: Service, env: Env = process.env): AppConfig 
   // ADR-0005: the dev login must never be reachable in production.
   if (authMode === "dev" && nodeEnv === "production") {
     problems.push("AUTH_MODE=dev is refused when NODE_ENV=production");
+  }
+
+  // ADR-0058 §4 (T-DG6-DO-E): the synthetic load run measures the production code path only, so MTH_ENV=load needs
+  // NODE_ENV=production and AUTH_MODE=oidc (the dev login stays refused; load sessions are minted by
+  // deploy/load/sessions.mjs through the API's own createSession).
+  if (mthEnvSet === "load" && nodeEnv !== undefined && nodeEnv !== "production") {
+    problems.push("MTH_ENV=load needs NODE_ENV=production");
+  }
+  if (mthEnvSet === "load" && authMode !== undefined && authMode !== "oidc") {
+    problems.push("MTH_ENV=load needs AUTH_MODE=oidc");
   }
 
   // OIDC is all-or-nothing. With AUTH_MODE=oidc the API needs it (there is no other way to sign in).
@@ -228,6 +315,8 @@ export function loadConfig(service: Service, env: Env = process.env): AppConfig 
   }
 
   if (problems.length > 0) throw new ConfigError(problems);
+  // ADR-0053 §4 (T-DG6-DO-D): the secrets and the storage path just read join the process-wide log redaction set.
+  registerConfigRedaction(env, storagePath);
 
   return Object.freeze({
     service,
@@ -244,12 +333,57 @@ export function loadConfig(service: Service, env: Env = process.env): AppConfig 
     defaultTimezone: defaultTimezone!,
     defaultCurrency: defaultCurrency!,
     rateLimit: { perMinute: perMinute!, authPerMinute: authPerMinute! },
+    rateLimitClasses: Object.freeze({ ...classBudgets }) as RateLimitClassBudgets,
+    secretsDir: secretsDir ?? null,
+    secretBindings: secretBindings!,
     logLevel: logLevel!,
     trustProxy,
-    worker: { superviseIntervalSeconds: superviseIntervalSeconds! },
+    worker: {
+      superviseIntervalSeconds: superviseIntervalSeconds!,
+      heartbeatSeconds: heartbeatSeconds!,
+      jobBatchSize: jobBatchSize!,
+      jobConcurrency: jobConcurrency!,
+    },
     mthEnv: mthEnv!,
     demoAdminDatabaseUrl: demoAdminDatabaseUrl ?? null,
   });
+}
+
+// ------------------------------------------------------------------------------------------------ MTH_ENV=load
+// ADR-0058 §4 (T-DG6-DO-E): the API and the worker refuse to start (EX_CONFIG) when MTH_ENV=load and the database has
+// no load_dataset_marker row, and when MTH_ENV is production or demo and the database HAS one. So load sessions can
+// never exist in a production database, and the synthetic load dataset never runs as production or demo.
+
+/** The refusal when MTH_ENV=load and the database holds no load dataset (ADR-0058 §4, exact text). */
+export const LOAD_ENV_NEEDS_MARKER = "MTH_ENV=load needs a database generated by deploy/load/generate.mjs.";
+/** The refusal when MTH_ENV is production or demo and the database holds the load dataset (ADR-0058 §4, exact text). */
+export const LOAD_MARKER_REFUSES_ENV =
+  "This database holds the synthetic load dataset and cannot run as production or demo.";
+export const LOAD_DATASET_REFUSALS = Object.freeze([LOAD_ENV_NEEDS_MARKER, LOAD_MARKER_REFUSES_ENV] as const);
+
+/**
+ * The start-up refusal for this environment and database, or null when the process may start. `hasLoadMarker` is
+ * whether the database's load_dataset_marker table holds its row (`SELECT EXISTS (SELECT 1 FROM load_dataset_marker)`).
+ * development and test are not refused either way (the harness's own databases).
+ */
+export function loadDatasetStartupRefusal(mthEnv: AppConfig["mthEnv"], hasLoadMarker: boolean): string | null {
+  if (mthEnv === "load" && !hasLoadMarker) return LOAD_ENV_NEEDS_MARKER;
+  if ((mthEnv === "production" || mthEnv === "demo") && hasLoadMarker) return LOAD_MARKER_REFUSES_ENV;
+  return null;
+}
+
+/**
+ * Reads the marker through `query` (the process's own database connection) and throws a ConfigError with the refusal
+ * text when the process must not start. Entry points call it after connecting, before serving, and exit 78 (EX_CONFIG)
+ * on a ConfigError as they do for every configuration problem.
+ */
+export async function assertLoadDatasetEnvironment(
+  mthEnv: AppConfig["mthEnv"],
+  query: (text: string) => Promise<{ rows: readonly { readonly present?: unknown }[] }>,
+): Promise<void> {
+  const { rows } = await query("SELECT EXISTS (SELECT 1 FROM load_dataset_marker) AS present");
+  const refusal = loadDatasetStartupRefusal(mthEnv, rows[0]?.present === true);
+  if (refusal !== null) throw new ConfigError([refusal]);
 }
 
 /** Names of the variables a service reads that are secrets (for redaction and for `.env.example`). */
@@ -272,4 +406,220 @@ export function isLoopbackHost(url: URL): boolean {
 export function secureOriginAllowed(appBaseUrl: URL, nodeEnv: string): boolean {
   if (nodeEnv !== "production") return true;
   return appBaseUrl.protocol === "https:" || isLoopbackHost(appBaseUrl);
+}
+
+// ------------------------------------------------------------------------------------------------ log redaction
+// P6 (ADR-0053 §4; REQ-S16-029 "never expose secrets or private evidence URLs … in logs"; T-DG6-DO-D). One
+// process-wide redaction set, applied to every API log line (pino `hooks.streamWrite`, server.ts) and every worker
+// console line (installConsoleRedaction, apps/worker/src/main.ts):
+//   1. secrets: every value resolved through a SecretProvider (withSecretRedaction wraps the registry) and every
+//      secret variable loadConfig reads (with the password of a postgres URL) is replaced by "[secret]";
+//   2. storage: the fields storageKey, storage_key, key, Key, Bucket, bucket, endpoint and s3_* are censored by path
+//      ("[redacted]", at any depth); a URL whose host is a registered object-store endpoint becomes "[storage-url]"; an
+//      absolute path under EVIDENCE_STORAGE_PATH becomes "[storage-path]"; the X-Amz-Signature, X-Amz-Credential and
+//      X-Amz-Security-Token query parameters are removed;
+//   3. tokens: the deep-link token segment (/links/<token> -> /links/[token]) and the OIDC code, state, id_token,
+//      access_token and refresh_token parameters; bearer tokens, JWTs, private-key blocks and AWS access-key ids too.
+// The header paths (authorization, cookie, x-csrf-token, set-cookie, x-mth-signature) stay pino `redact` paths
+// (REDACTED_LOG_PATHS). Request and response bodies are never logged.
+
+export const SECRET_CENSOR = "[secret]";
+export const PATH_CENSOR = "[redacted]";
+export const STORAGE_URL_CENSOR = "[storage-url]";
+export const STORAGE_PATH_CENSOR = "[storage-path]";
+
+/** The pino `redact` paths of the API logger (ADR-0053 §4 item 3: the DG1 four plus the webhook signature). */
+export const REDACTED_LOG_PATHS: readonly string[] = [
+  "req.headers.authorization",
+  "req.headers.cookie",
+  'req.headers["x-csrf-token"]',
+  'res.headers["set-cookie"]',
+  'req.headers["x-mth-signature"]',
+];
+
+/** The object keys censored by path at any depth (ADR-0053 §4 item 2), plus every key starting with `s3_`. */
+export const REDACTED_LOG_KEYS: ReadonlySet<string> = new Set([
+  "storageKey",
+  "storage_key",
+  "key",
+  "Key",
+  "Bucket",
+  "bucket",
+  "endpoint",
+]);
+
+/** A secret shorter than this is not registered: replacing a 1–3 character string would censor ordinary text. */
+export const MIN_REDACTED_SECRET_LENGTH = 4;
+
+const redactedSecrets = new Set<string>();
+let secretsByLength: string[] = [];
+const storageHosts = new Set<string>();
+const storagePaths = new Set<string>();
+
+function addSecretForm(value: string): void {
+  if (value.length < MIN_REDACTED_SECRET_LENGTH || redactedSecrets.has(value)) return;
+  redactedSecrets.add(value);
+  secretsByLength = [...redactedSecrets].sort((a, b) => b.length - a.length);
+}
+
+/**
+ * Registers a secret value: its occurrences in any later log line print "[secret]". The JSON-escaped and
+ * percent-encoded forms are registered too, so the value is also found inside a serialized string or a URL.
+ */
+export function registerRedactedSecret(value: string): void {
+  if (typeof value !== "string") return;
+  addSecretForm(value);
+  addSecretForm(JSON.stringify(value).slice(1, -1));
+  addSecretForm(encodeURIComponent(value));
+}
+
+/** Registers an object-store endpoint (ADR-0054 §2): any URL on its host (and port) prints "[storage-url]". */
+export function registerRedactedStorageEndpoint(endpoint: string | URL): void {
+  let url: URL;
+  try {
+    url = typeof endpoint === "string" ? new URL(endpoint) : endpoint;
+  } catch {
+    return;
+  }
+  if (url.host !== "") storageHosts.add(url.host.toLowerCase());
+}
+
+/** Registers a private storage directory (EVIDENCE_STORAGE_PATH): any absolute path under it prints "[storage-path]". */
+export function registerRedactedStoragePath(path: string): void {
+  const trimmed = path.replace(/\/+$/, "");
+  if (trimmed.startsWith("/") && trimmed.length > 1) storagePaths.add(trimmed);
+}
+
+/** Empties the redaction set (unit tests only; a running process never forgets a secret). */
+export function clearLogRedactionForTests(): void {
+  redactedSecrets.clear();
+  secretsByLength = [];
+  storageHosts.clear();
+  storagePaths.clear();
+}
+
+const escapeRegExp = (s: string): string => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const TOKEN_RULES: readonly (readonly [RegExp, string])[] = [
+  [/-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]*?(?:-----END [A-Z ]*PRIVATE KEY-----|$)/g, SECRET_CENSOR],
+  [/\bAKIA[0-9A-Z]{16}\b/g, SECRET_CENSOR],
+  [/\bBearer\s+[A-Za-z0-9._~+/-]+=*/g, `Bearer ${SECRET_CENSOR}`],
+  [/\beyJ[A-Za-z0-9_-]{4,}\.[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]*)?/g, SECRET_CENSOR],
+  [/\/links\/[A-Za-z0-9_-]{16,}/g, "/links/[token]"],
+  [/([?&](?:code|state|id_token|access_token|refresh_token)=)[^&\s"'#\\]*/g, `$1${PATH_CENSOR}`],
+];
+
+/** Removes the X-Amz-Signature, X-Amz-Credential and X-Amz-Security-Token query parameters (ADR-0053 §4 item 2). */
+function removeAmzParameters(text: string): string {
+  if (!/X-Amz-/i.test(text)) return text;
+  // Only inside the URL-like token that carries the parameter, so ordinary text around it is untouched.
+  return text.replace(/[^\s"'<>\\]*X-Amz-[^\s"'<>\\]*/gi, (token) =>
+    token
+      .replace(/([?&])X-Amz-(?:Signature|Credential|Security-Token)=[^&#]*/gi, "$1")
+      .replace(/([?&])&+/g, "$1")
+      .replace(/[?&]+(?=$|#)/, ""),
+  );
+}
+
+/** The text-level redaction of ADR-0053 §4 (secrets, storage URLs and paths, tokens). Idempotent. */
+export function redactText(text: string): string {
+  let out = text;
+  for (const secret of secretsByLength) if (out.includes(secret)) out = out.split(secret).join(SECRET_CENSOR);
+  for (const host of storageHosts)
+    out = out.replace(
+      new RegExp(`\\b[a-z][a-z0-9+.-]*://${escapeRegExp(host)}(?![A-Za-z0-9.-])[^\\s"'<>\\\\]*`, "gi"),
+      STORAGE_URL_CENSOR,
+    );
+  for (const dir of storagePaths)
+    out = out.replace(new RegExp(`${escapeRegExp(dir)}(?=[/"'\\s\\\\]|$)[^\\s"'<>\\\\]*`, "g"), STORAGE_PATH_CENSOR);
+  out = removeAmzParameters(out);
+  for (const [pattern, replacement] of TOKEN_RULES) out = out.replace(pattern, replacement);
+  return out;
+}
+
+const isRedactedKey = (key: string): boolean => REDACTED_LOG_KEYS.has(key) || key.startsWith("s3_");
+
+function censorKeys(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(censorKeys);
+  if (value === null || typeof value !== "object") return value;
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(value)) out[k] = isRedactedKey(k) ? PATH_CENSOR : censorKeys(v);
+  return out;
+}
+
+const REDACTED_KEY_IN_JSON = /"(?:storageKey|storage_key|key|Key|Bucket|bucket|endpoint|s3_[^"]*)"\s*:/;
+
+/**
+ * One log line, redacted: the censored keys by path (when the line is a JSON object that has one), then the text rules.
+ * A line that is not JSON gets the text rules only. The trailing newline is kept.
+ */
+export function redactLogLine(line: string): string {
+  let out = line;
+  if (REDACTED_KEY_IN_JSON.test(out)) {
+    const newline = out.endsWith("\n") ? "\n" : "";
+    try {
+      out = JSON.stringify(censorKeys(JSON.parse(out))) + newline;
+    } catch {
+      // Not one JSON document: the text rules below still apply.
+    }
+  }
+  return redactText(out);
+}
+
+interface RedactableSecretValue {
+  reveal(): string;
+}
+interface RedactableSecretProvider {
+  readonly id: string;
+  get(name: string): Promise<RedactableSecretValue | undefined>;
+}
+
+/**
+ * ADR-0053 §4 item 1: wraps a SecretProvider registry (ADR-0052 §5) so every provider registered on it adds each value
+ * it resolves to the redaction set before returning it. The registry object is returned (same identity).
+ */
+export function withSecretRedaction<R extends { register(provider: RedactableSecretProvider): void }>(registry: R): R {
+  const register = registry.register.bind(registry);
+  registry.register = (provider: RedactableSecretProvider) => {
+    const wrapped: RedactableSecretProvider = Object.assign(Object.create(provider) as RedactableSecretProvider, {
+      async get(name: string) {
+        const value = await provider.get(name);
+        if (value !== undefined) registerRedactedSecret(value.reveal());
+        return value;
+      },
+    });
+    register(wrapped);
+  };
+  return registry;
+}
+
+type ConsoleMethod = "log" | "info" | "warn" | "error" | "debug";
+
+/** The worker's line sink (it logs through console): every console line is redacted before it is written. */
+export function installConsoleRedaction(target: Pick<Console, ConsoleMethod> = console): void {
+  for (const method of ["log", "info", "warn", "error", "debug"] as const) {
+    const original = target[method].bind(target);
+    target[method] = (...args: unknown[]) => original(redactLogLine(formatWithOptions({ colors: false }, ...args)));
+  }
+}
+
+/** Registers the secrets and the storage path loadConfig read (ADR-0053 §4 items 1 and 2). */
+function registerConfigRedaction(env: Env, storagePath: string | undefined): void {
+  for (const name of secretVariableNames()) {
+    let value: string | undefined;
+    try {
+      value = readRaw(env, name, []);
+    } catch {
+      value = undefined;
+    }
+    if (value === undefined) continue;
+    registerRedactedSecret(value);
+    try {
+      const url = new URL(value);
+      if (url.password !== "") registerRedactedSecret(decodeURIComponent(url.password));
+    } catch {
+      // Not a URL: the whole value is registered above.
+    }
+  }
+  if (storagePath !== undefined) registerRedactedStoragePath(storagePath);
 }

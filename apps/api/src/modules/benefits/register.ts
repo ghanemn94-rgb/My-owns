@@ -52,7 +52,20 @@ import type { FastifyInstance, FastifyRequest } from "fastify";
 import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
 import type { Permission } from "@mth/shared";
-import { denialOf, holdsAnywhere, principalOf, requireTransformationRead, resolveTarget } from "../access/index.ts";
+import {
+  denialOf,
+  holdsAnywhere,
+  principalOf,
+  readScopeFor,
+  requireSensitiveRead,
+  requireTransformationRead,
+  resolveTarget,
+  hideRestrictedRefs,
+  keptRestrictedRef,
+  refIsRestricted,
+  restrictedIdsOf,
+  type Principal,
+} from "../access/index.ts";
 import { record } from "../audit/index.ts";
 import {
   cursorSchema,
@@ -80,6 +93,7 @@ import {
   sendCreated,
   type RegisterUpdater,
   type WriteContext,
+  unknownReference,
 } from "../transformations/index.ts";
 import { countingFor, NOT_COUNTED } from "./counting.ts";
 
@@ -162,7 +176,8 @@ export async function readBenefitRow(
   transformationId: string,
   benefitId: string,
 ): Promise<BenefitRow> {
-  await requireTransformationRead(db, principalOf(request), transformationId);
+  const principal = principalOf(request);
+  const target = await requireTransformationRead(db, principal, transformationId);
   const row = await db
     .selectFrom("benefit")
     .selectAll()
@@ -170,6 +185,13 @@ export async function readBenefitRow(
     .where("transformation_id", "=", transformationId)
     .executeTakeFirst();
   if (!row) throw problems.notFound();
+  // P6 (ADR-0051 §1, §2; T-DG6-BE-B2): a sensitive benefit the caller is not admitted to is 404, like any unreadable
+  // record; this covers the benefit GET and every benefit sub-resource read that loads its benefit here.
+  await requireSensitiveRead(db, principal, "benefit", row.id, target, [
+    row.owner_user_id,
+    row.finance_validator_user_id,
+    row.created_by,
+  ]);
   return row;
 }
 
@@ -447,12 +469,21 @@ export function toBenefit(
   };
 }
 
-/** API benefits with their counting status and realization state (one query per concern, not per row). */
-export async function presentBenefits(db: DbOrTx, rows: readonly BenefitRow[]): Promise<Benefit[]> {
+/**
+ * API benefits with their counting status and realization state (one query per concern, not per row).
+ * T-DG6-BE-Z12 (F-DG6-480; D-218): `parentBenefitId` (a sensitive parent) and `businessCaseLineId` (a line of a
+ * sensitive business case) that name a record the principal is not admitted to are null, and the benefit carries
+ * `includesRestrictedRecords: true` (the open child depends on its parent: the marker says one exists).
+ */
+export async function presentBenefits(
+  db: DbOrTx,
+  principal: Principal,
+  rows: readonly BenefitRow[],
+): Promise<Benefit[]> {
   const ids = rows.map((r) => r.id);
   const counting = await countingFor(db, ids);
   const facts = await realizationFor(db, rows);
-  return rows.map((r) => {
+  const shown = rows.map((r) => {
     const c = counting.get(r.id);
     return toBenefit(
       r,
@@ -460,10 +491,12 @@ export async function presentBenefits(db: DbOrTx, rows: readonly BenefitRow[]): 
       stateOf(facts.get(r.id)),
     );
   });
+  const parents = await hideRestrictedRefs(db, principal, "benefit", shown, "parentBenefitId");
+  return hideRestrictedRefs(db, principal, "business_case_line", parents, "businessCaseLineId");
 }
 
-export async function presentBenefit(db: DbOrTx, row: BenefitRow): Promise<Benefit> {
-  return (await presentBenefits(db, [row]))[0]!;
+export async function presentBenefit(db: DbOrTx, principal: Principal, row: BenefitRow): Promise<Benefit> {
+  return (await presentBenefits(db, principal, [row]))[0]!;
 }
 
 // ------------------------------------------------------------------------------------------------ BE-M: initiatives[]
@@ -503,9 +536,14 @@ export async function registerInitiativesOf(
 }
 // ------------------------------------------------------------------------------------------------ end BE-M block
 
-/** T14 register rows (ADR-0029 §4): the ten columns plus step, realization state and counting status. */
+/**
+ * T14 register rows (ADR-0029 §4): the ten columns plus step, realization state and counting status.
+ * T-DG6-BE-Z10 (F-DG6-420; D-218; ADR-0051 §2): `latestEvidenceIds` and `evidenceCount` count only the evidence the
+ * reader is admitted to (no hidden id, no hidden count); the row then carries `includesRestrictedRecords: true`.
+ */
 export async function presentRegisterRows(
   db: DbOrTx,
+  principal: Principal,
   rows: readonly BenefitRow[],
 ): Promise<(BenefitRegisterRow & { initiatives: InitiativeRef[] })[]> {
   if (rows.length === 0) return [];
@@ -520,10 +558,17 @@ export async function presentRegisterRows(
     .orderBy("created_at", "desc")
     .orderBy("id", "desc")
     .execute();
+  const hiddenEvidence = await restrictedIdsOf(
+    db,
+    principal,
+    "evidence",
+    evidence.map((e) => e.evidence_id),
+  );
   return rows.map((r) => {
     const c = counting.get(r.id);
     const f = facts.get(r.id)!;
-    const mine = evidence.filter((e) => e.benefit_id === r.id);
+    const linked = evidence.filter((e) => e.benefit_id === r.id);
+    const mine = linked.filter((e) => !hiddenEvidence.has(e.evidence_id));
     return {
       id: r.id,
       code: r.code,
@@ -552,6 +597,7 @@ export async function presentRegisterRows(
       currency: r.currency.trim(),
       version: r.version,
       initiatives: initiativesOf.get(r.id) ?? [], // BE-M (ADR-0038 §8)
+      ...(mine.length !== linked.length ? { includesRestrictedRecords: true as const } : {}),
     };
   });
 }
@@ -802,12 +848,16 @@ export async function checkBenefitRules(
 
   // Business-case line: a benefit line of this transformation, backing at most one active benefit.
   if (touched("business_case_line_id") && merged.business_case_line_id !== null) {
-    const line = await tx
-      .selectFrom("business_case_line")
-      .select(["id", "line_kind"])
-      .where("id", "=", merged.business_case_line_id)
-      .where("transformation_id", "=", t)
-      .executeTakeFirst();
+    // T-DG6-BE-Z12 (D-218): a line of a sensitive case the writer is not admitted to answers as an unknown line.
+    const hiddenLine = await refIsRestricted(tx, ctx.principal, "business_case_line", merged.business_case_line_id);
+    const line = hiddenLine
+      ? undefined
+      : await tx
+          .selectFrom("business_case_line")
+          .select(["id", "line_kind"])
+          .where("id", "=", merged.business_case_line_id)
+          .where("transformation_id", "=", t)
+          .executeTakeFirst();
     if (!line || line.line_kind !== "benefit")
       throw benefitRule(
         "benefit.case_line_invalid",
@@ -830,6 +880,9 @@ export async function checkBenefitRules(
 
   // Parent/child, one level (ADR-0029 §6).
   if (touched("parent_benefit_id") && merged.parent_benefit_id !== null) {
+    // T-DG6-BE-Z12 (F-DG6-480; D-218): a sensitive parent the writer is not admitted to answers as an unknown id.
+    if (await refIsRestricted(tx, ctx.principal, "benefit", merged.parent_benefit_id))
+      throw unknownReference("benefit", "/parentBenefitId");
     const parent = await tx
       .selectFrom("benefit")
       .select(["id", "parent_benefit_id", "currency"])
@@ -999,7 +1052,26 @@ async function updateBenefit(
   const expected = input.expected();
   const current = await lockBenefit(tx, transformationId, benefitId);
   checkBenefitVersion(current, expected);
-  const changes = columnsOf(body);
+  const sent = columnsOf(body);
+  // T-DG6-BE-Z12 (D-218 re-save rule, `keptRestrictedRef`): a writer not admitted to the stored parent or case line was
+  // shown null, so sending null keeps the stored reference (the column is dropped from the change set).
+  const sentMap = new Map(Object.entries(sent));
+  const storedMap = new Map(Object.entries(current));
+  const kept = new Set<string>();
+  for (const [column, recordType] of [
+    ["parent_benefit_id", "benefit"],
+    ["business_case_line_id", "business_case_line"],
+  ] as const) {
+    if (!sentMap.has(column) || sentMap.get(column) !== null) continue;
+    const stored = storedMap.get(column);
+    if (
+      (await keptRestrictedRef(tx, ctx.principal, recordType, typeof stored === "string" ? stored : null, null)) !==
+      null
+    )
+      kept.add(column);
+  }
+  const changes =
+    kept.size === 0 ? sent : (Object.fromEntries(Object.entries(sent).filter(([k]) => !kept.has(k))) as typeof sent);
   // A Finance-validated (or rejected) baseline that changes goes back to unvalidated in the same update (ADR-0029 §8).
   const changeMap = new Map(Object.entries(changes));
   const currentMap = new Map(Object.entries(current));
@@ -1093,10 +1165,29 @@ export function registerBenefitRegisterRoutes(app: FastifyInstance, { db }: Modu
   app.get(BENEFITS, { config: read }, async (request) => {
     const transformationId = parseTransformationParam(request.params);
     const query = parseQuery(listQuery, request.query);
-    await requireTransformationRead(db, principalOf(request), transformationId);
+    const principal = principalOf(request);
+    await requireTransformationRead(db, principal, transformationId);
     const hash = filterHash({ table: "benefit", transformationId, step: query.lifecycleStep, status: query.status });
     const after = decodeCursor(query.cursor, hash, 1);
-    let q = db.selectFrom("benefit").selectAll().where("transformation_id", "=", transformationId);
+    // P6 (ADR-0051 §1; T-DG6-BE-B2): the ReadScope drops a sensitive benefit the caller is not admitted to.
+    const scope = await readScopeFor(db, principal, "transformation.read");
+    let q = db
+      .selectFrom("benefit")
+      .selectAll()
+      .where("transformation_id", "=", transformationId)
+      .where(
+        scope.predicate({
+          recordType: "benefit",
+          recordId: sql.ref("benefit.id"),
+          organizationId: sql.ref("benefit.organization_id"),
+          transformationId: sql.ref("benefit.transformation_id"),
+          partyUserIds: [
+            sql.ref("benefit.owner_user_id"),
+            sql.ref("benefit.finance_validator_user_id"),
+            sql.ref("benefit.created_by"),
+          ],
+        }),
+      );
     q = q.where("status", "=", query.status ?? "active");
     if (query.lifecycleStep !== undefined) q = q.where("lifecycle_step", "=", query.lifecycleStep);
     if (after) q = q.where("id", ">", String(after[0]));
@@ -1105,7 +1196,7 @@ export function registerBenefitRegisterRoutes(app: FastifyInstance, { db }: Modu
       .limit(query.limit + 1)
       .execute();
     const page = paginate(rows, query.limit, (r) => [r.id], hash);
-    return { items: await presentRegisterRows(db, page.items), nextCursor: page.nextCursor };
+    return { items: await presentRegisterRows(db, principalOf(request), page.items), nextCursor: page.nextCursor };
   });
 
   app.post(BENEFITS, { config: write }, async (request, reply) => {
@@ -1115,7 +1206,7 @@ export function registerBenefitRegisterRoutes(app: FastifyInstance, { db }: Modu
       const body = parseBody(benefitCreate, request.body);
       return maybeIdempotent(tx, request, ctx.userId, body, async () => ({
         status: 201,
-        body: await presentBenefit(tx, await createBenefit(tx, ctx, body)),
+        body: await presentBenefit(tx, ctx.principal, await createBenefit(tx, ctx, body)),
       }));
     });
     return sendCreated(request, reply, result);
@@ -1124,14 +1215,16 @@ export function registerBenefitRegisterRoutes(app: FastifyInstance, { db }: Modu
   app.get(BENEFIT_ITEM, { config: read }, async (request, reply) => {
     const { transformationId, benefitId } = parseBenefitParams(request.params);
     const row = await readBenefitRow(db, request, transformationId, benefitId);
-    return sendVersioned(reply, 200, await presentBenefit(db, row));
+    return sendVersioned(reply, 200, await presentBenefit(db, principalOf(request), row));
   });
 
   app.patch(BENEFIT_ITEM, { config: write }, async (request, reply) => {
     const { transformationId, benefitId } = parseBenefitParams(request.params);
     const body = await db
       .transaction()
-      .execute(async (tx) => presentBenefit(tx, await updateBenefit(tx, request, transformationId, benefitId)));
+      .execute(async (tx) =>
+        presentBenefit(tx, principalOf(request), await updateBenefit(tx, request, transformationId, benefitId)),
+      );
     return sendVersioned(reply, 200, body);
   });
 
@@ -1139,7 +1232,9 @@ export function registerBenefitRegisterRoutes(app: FastifyInstance, { db }: Modu
     const { transformationId, benefitId } = parseBenefitParams(request.params);
     const body = await db
       .transaction()
-      .execute(async (tx) => presentBenefit(tx, await archiveBenefit(tx, request, transformationId, benefitId)));
+      .execute(async (tx) =>
+        presentBenefit(tx, principalOf(request), await archiveBenefit(tx, request, transformationId, benefitId)),
+      );
     return sendVersioned(reply, 200, body);
   });
 

@@ -1,0 +1,58 @@
+// T-DG6-FE-Z2 probe (temporary; removed after the run, its copy is kept in the handback evidence). F-DG6-261: replays
+// qa-verifier's deterministic reproduction (GET /report-definitions held back) with a02 step 10's NEW actions, and the
+// OLD locator (`getByLabel(Output).first()`) against the renamed product label. SYNTHETIC data only.
+import { expect, test, type Page } from "@playwright/test";
+import { SYN_RETAIL, apiSession, fieldLabel, langOf, signIn, tr } from "../apps/web/e2e/support/ui.ts";
+
+test.describe.configure({ mode: "serial" });
+test.setTimeout(180_000);
+
+async function open(page: Page, tid: string, delayMs: number) {
+  await page.unroute("**/report-definitions**").catch(() => undefined);
+  if (delayMs > 0)
+    await page.route("**/report-definitions**", async (route) => {
+      await new Promise((r) => setTimeout(r, delayMs));
+      await route.continue();
+    });
+  await page.goto(`/transformations/${tid}/reports`);
+  await expect(page.locator("main#main h1")).toBeVisible();
+}
+const state = (page: Page) =>
+  page.evaluate(() => ({
+    generate: (document.getElementById("report-definition") as HTMLSelectElement | null)?.value ?? null,
+    filter: (document.getElementById("snapshot-filter-code") as HTMLSelectElement | null)?.value ?? null,
+  }));
+
+test("a02 step 10 under a late definitions answer", async ({ page, playwright }, info) => {
+  const lang = langOf(info);
+  const lead = await apiSession(playwright, "dev.lead");
+  const { id: tid } = await lead.call<{ id: string }>("POST", "/api/v1/transformations", {
+    businessUnitId: SYN_RETAIL,
+    name: `Synthetic FE-Z2 reports ${lang} ${Date.now().toString(36)}`,
+    mode: "end_to_end",
+  });
+  await signIn(page, lang, "dev.lead");
+  const label = fieldLabel(lang, "reportsP5.generate.output");
+  for (const delayMs of [0, 4_000, 8_000]) {
+    // NEW step 10 actions
+    await open(page, tid, delayMs);
+    const generate = page.locator("form[data-form='generate-report']");
+    const output = generate.getByLabel(label);
+    await expect(output.locator("option[value='charter']")).toHaveCount(1, { timeout: 30_000 });
+    await output.selectOption("charter");
+    await expect(output).toHaveValue("charter");
+    const button = generate.getByRole("button", { name: tr(lang, "reportsP5.generate.submit") });
+    await expect(button).toBeEnabled();
+    const after = { delayMs, ...(await state(page)), enabled: await button.isEnabled() };
+    console.log(`FE-Z2 PROBE ${lang} new-step10 ${JSON.stringify(after)}`);
+    expect(after).toMatchObject({ generate: "charter", filter: "", enabled: true });
+    // OLD locator against the renamed label: only the Generate form's select carries the name "Output" now.
+    await open(page, tid, delayMs);
+    await page.getByLabel(label).first().selectOption("charter", { timeout: 20_000 });
+    const old = { delayMs, ...(await state(page)) };
+    console.log(`FE-Z2 PROBE ${lang} old-locator ${JSON.stringify(old)} names=${await page.getByLabel(label).count()}`);
+    expect(old).toMatchObject({ generate: "charter", filter: "" });
+    expect(await page.getByLabel(label).count()).toBe(1);
+    await expect(page.getByLabel(tr(lang, "reportsP5.snapshots.filterOutput"))).toHaveCount(1);
+  }
+});

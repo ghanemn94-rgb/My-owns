@@ -76,7 +76,7 @@ The request (`snapshot_id`, `requested_by`, `format`, `language`, `idempotency_k
 
 **Flow.**
 
-1. `POST /exports` (`export.create`; body `snapshotId` or a live `report` selection, `format`, `language`; header `Idempotency-Key`, else a server key): in one transaction, re-check `transformation.read` and `export.create` in the snapshot's transformation, validate, insert the job (`queued`), its progress row and the audit event `export_job.create`; after COMMIT, `boss.send('reports.export', { exportJobId }, { singletonKey: exportJobId })`. A repeated request with the same key returns the existing job with 200 (UNIQUE `export_job_idempotency_key`, EJ03); a new job returns 202.
+1. `POST /exports` (`export.create`; body `snapshotId` or a live `report` selection, `format`, `language`; header `Idempotency-Key`, else a server key): in one transaction, re-check `transformation.read` and `export.create` in the snapshot's transformation, validate, insert the job (`queued`), its progress row, the audit event `export_job.create` and the outbox event `export_job.requested` (payload `{ exportJobId }`, idempotency key `export_job.requested:<id>`, ADR-0008); the outbox relay hands it to the queue `reports.export` after COMMIT (`REPORTS_EVENT_QUEUES` in `apps/worker/src/queues/reports.ts`). *(Corrected 2026-11-02, T-DG6-ARCH-12: this step first said `boss.send('reports.export', …)` after COMMIT; the code has used the outbox event since DG5, `jobs.ts` `enqueueExportRequested`.)* For a **live selection**, the start writes no snapshot and no outbox event; see the amendments of 2026-11-01 (H2) and 2026-11-02 (R3). A repeated request with the same key returns the existing job with 200 (UNIQUE `export_job_idempotency_key`, EJ03); a new job returns 202.
 2. Worker `reports.export` (queue declared by BE-M in `apps/worker/src/queues/reports.ts`, standard `RETRY_POLICY`): under lock **730264** on the job id, `queued → running` (audited, actor `service`); re-check that the requester still holds `transformation.read` and `export.create` in the transformation, else `failed` with `export.source_unavailable` (not retried); load the snapshot content and the label table **outside** any transaction; render, updating progress per section; store the file (outside any transaction); then in one transaction `running → succeeded` with the file fields, progress `done` and the audit event.
 3. A thrown error before the last attempt moves the job `running → queued` (audited) and rethrows, so pg-boss retries with backoff; on the last attempt the job becomes `failed` with `export.retries_exhausted` and the failure is captured in the failure queue (ADR-0043 §5, BE-I's capture lines) before rethrowing to `ops.failed`. A rendering error that retrying cannot fix (a renderer's own validation error) is `failed` with `export.render_failed` at once; a file above 200 MiB is `failed` with `export.too_large`.
 4. `POST /exports/{id}/cancel` (requester, `If-Match`): `queued`/`running` → `cancelled`; the worker checks the status between sections and stops without storing a file.
@@ -236,3 +236,239 @@ Requirement row: REQ-S13-006. Nothing here touches product gates G1–G6 or the 
 
 - Every OOXML writer (DOCX, PPTX, XLSX) replaces the characters XML 1.0 cannot carry (C0 controls other than tab, LF and CR; lone surrogates; U+FFFE and U+FFFF) with U+FFFD, through the shared `packages/reporting/src/xml-chars.ts` (`xmlSafe`), and checks the finished package (`assertWellFormedChars`). A package that still holds such a character is a `RenderError` (`export.render_failed`): no file is stored and the job does not report succeeded.
 - Stored record text is not changed; the input rule (`hasInvalidCharacter`, ADR-0007) is unchanged.
+
+## Amendment (2026-11-01, T-DG6-ARCH-11; D-207, F-DG6-147): §2, §5 and §6, a live selection is assembled after the start, not in it
+
+Sources: D-207 (`docs/delivery/decisions.md`, read verbatim), F-DG6-147, and the T-DG6-BE-Y4 handback (its measurement: about 55 % of a live-selection start was report assembly, and trimming it did not bring 50 simultaneous starts under 2 s). The implementation is T-DG6-BE-Y5's. This amendment records the design that D-207 decides. Where it differs from §2, §5 or §6 above, it wins. Nothing else above is removed. When this amendment was written (main checkout at `8268ac5a6`), BE-Y5 had not yet written its migration or code, so it cites no file lines. The names below (`live_selection`, the CHECK, the index and the watch) are the architecture's. If the merged files use other names, the orchestrator reconciles them with this text at merge (handback Q4). **Reconciled on 2026-11-02 by T-DG6-ARCH-12 with what T-DG6-BE-Y5 shipped (amendment R below): where H1–H6 and R differ, R wins.**
+
+### H1. What changes in §2
+
+§2 said: "An export of a live report first generates a snapshot from the request (ADR-0045 §2) and exports that." That still holds, but **the generation no longer happens in the request**:
+
+- An export still renders exactly one stored snapshot, and the file still equals a stored, reproducible content. Nothing is ever rendered from a live query.
+- For a live selection, the snapshot is assembled **after** the 202, by the snapshot watch (H3). Until then the job has no snapshot (`snapshotId` is `null`).
+- **Data-as-of** is the assembly time, recorded on the snapshot (`report_snapshot.as_of`) as before (D-207 (5)). It is not the request time. A user who starts an export reads the data-as-of from the snapshot, not from the job's `createdAt`.
+- **Exports of an existing snapshot (`snapshotId` in the body) are unchanged** (D-207 (5)). They have a snapshot from the INSERT, and they are never touched by the watch.
+
+### H2. The start (§5 Flow step 1, live selection) — reconciled by R3
+
+`createExport` with a `report` selection (D-207 (1)):
+
+1. **Synchronously, before any write**, as in DG5: validate the body (`ExportCreate`, the definition offers the format), resolve the transformation from the subject, check `transformation.read`, `export.create` and `report.generate`, and run the restricted-source check. **D-199's 403 `export.includes_restricted_records` is unchanged**: a start that DG5/DG6 refused with 403 is still refused with 403, before the 202, and writes nothing. How that check is computed without an assembled snapshot is BE-Y5's to implement and test, and the `sensitive-reads` tests stay unchanged (BE-Y5 assignment). It is listed as Q1 in the handback.
+2. **In one transaction**, after the grants are reloaded (commit-time re-authorization, unchanged): insert the job (`queued`, `snapshot_id` NULL, `live_selection` = the validated selection), its progress row (`stage = queued`, `percent = 0`) and the audit event `export_job.create`. **No snapshot and no `export_job.requested` outbox event are written here.**
+3. Answer **202** with the job. `snapshotId` is `null`, and `GET /exports/{id}` shows the same until assembly. No new progress stage is added: a pending job is `queued` at 0 %.
+
+An idempotent replay (same requester and `Idempotency-Key`) **compares the stored selection** (`live_selection`, `format` and `language`) with the request, not the snapshot (D-207 (3)). It answers 200 with the job whether or not the job has been assembled yet. A different request under the same key is still the DG5 refusal `idempotency.key_reused`.
+
+### H3. The snapshot watch (new; D-207 (2)) — reconciled by R4 and R5
+
+- **Where.** The watch runs in the **API process**, not in the worker. The assemblers are API code (`apps/api/src/modules/reporting/reports/assemblers/*.ts`). ADR-0002 rule 5 lets packages depend in one direction only (`apps/*` → `packages/*`), so `apps/worker` cannot import `apps/api`. This is the reason ADR-0046 §1 gives for keeping renderers in `@mth/reporting`, and the reason ADR-0055 §2 gives for running connector runs in the API.
+- **The precedent: the connector run watch** (ADR-0055 §2, "The run", as amended on 2026-10-30 by T-DG6-ARCH-07). That watch is `connectorRunWatchStep` in `apps/api/src/modules/integrations/runs.ts`. `integrations/index.ts` starts it at `onReady` and stops it at `onClose`. It is not started under `NODE_ENV=test`, where suites drive the step directly. Several API replicas are safe because of the claim and the state transition. The snapshot watch follows the same pattern from the `reporting` module's `index.ts`. Its step is exported, so suites drive it directly. It polls every **1 s**, because a user is waiting on an interactive export and the connector watch's 10 s is too slow. BE-Y5 may change the interval if a measurement justifies it, and must state it in its handback.
+- **The claim.** For each pending job (`status = 'queued'` and `snapshot_id IS NULL`, served by `export_job_pending_assembly_idx`, oldest `created_at` first), one transaction runs:
+  1. `SELECT … FOR UPDATE SKIP LOCKED` on the job row. A job locked by another watcher is skipped, so several API replicas never assemble the same job.
+  2. Re-check the requester's access on fresh grants: `transformation.read`, `export.create` and `report.generate` in the job's transformation.
+  3. Assemble the selection (database reads only, no remote I/O) and insert the snapshot with the requester as `created_by`, together with its sources, versions and evidence, as in DG5. Also run the restricted-source check on the assembled snapshot's sources.
+  4. Set `export_job.snapshot_id` (version step, audit event `export_job.assemble`).
+  5. **Only then** write the `export_job.requested` outbox event. The relay hands it to `reports.export` after COMMIT, and the worker's flow (§5 steps 2–5) is unchanged.
+
+  A crash or restart before COMMIT rolls everything back, and the job is still pending, so the next watch tick resumes it. The row lock and the `snapshot_id IS NULL` predicate make sure a job is assembled **at most once**, and the guard's "assigned once" rule backs this up (H4).
+- **Access lost between the start and the assembly** (D-207 (2)). If step 2 fails, or step 3 finds a restricted source, the same transaction moves the job `queued → failed` with `error_code = 'export.source_unavailable'` and `finished_at`, and writes the audit event `export_job.fail`. No snapshot is written, no outbox event is written, and **no file is ever written**. `export.source_unavailable` is the existing DG5 code, and it already has its en/ar text in the web catalogue. It has the same meaning as the worker's re-check in §5 step 2. So the error-code set and the contract enum do not change (Q2 in the handback).
+- **An assembly error** (an assembler throws) rolls the transaction back, and the job stays pending for the next tick. A selection whose assembly fails the same way repeatedly is bounded by BE-Y5. The design point is that it ends `failed` with `export.render_failed` and never loops silently (Q3).
+- **Cancel.** `POST /exports/{id}/cancel` on a pending job moves it `queued → cancelled` (unchanged). If the watch holds the row at that moment, the cancel waits for it. The cancel then sees the new `version` and gets the usual 409, and the client re-reads and cancels again. A cancelled pending job is never assembled, because the claim takes only `queued` jobs.
+- **No new lock class.** The claim is the row lock with `SKIP LOCKED`, so ADR-0016's registry gets no new number. The worker's lock 730264 is unchanged.
+- **Attribution.** The watch's job writes are made by the API process on behalf of the requester. They use the service-actor pattern of the worker's job transitions (§5 step 2, "actor `service`"), with the requester recorded as in `export-runner.ts`'s `jobActor`. The snapshot stays the requester's (`created_by`), so its ADR-0045 issue and discard rights are the same as in DG5.
+
+### H4. Physical model: migration `0124` (D-207 (4)) — superseded by R1 and R2 (shipped names)
+
+`0124` is the next id above `0123` on BE-Y5's branch (D-196). The seed free-id example in `packages/db/src/seed.test.ts` moves to `0125`. The data dictionary ("P6 round-1 repair migration 0124") and the ERD (§1ab) record:
+
+- `export_job.snapshot_id` becomes **nullable**. The composite FK `export_job_snapshot_fkey` is unchanged, and a NULL is not checked (MATCH SIMPLE).
+- New column `export_job.live_selection jsonb NULL`. It holds the validated `ExportLiveSelection` (`definitionCode`, optional `subjectId`, `reportingPeriodId` and `parameters`). It is NULL for the export of an existing snapshot. Its shape is checked by zod before the write (typed JSON, never an unvalidated blob), and the database bounds it with the CHECK `export_job_live_selection_shape` (an object of at most 8,192 bytes, the bound of `report_snapshot.parameters`).
+- New CHECK `export_job_snapshot_pending`. A job names a snapshot or a selection. A job without a snapshot is only `queued` (pending), `failed` (access lost) or `cancelled`. `running` and `succeeded` therefore always have a snapshot, and the worker's flow never sees a NULL.
+- `export_job_guard()` is replaced:
+  - on INSERT, a NULL `snapshot_id` needs a `live_selection` whose definition offers the format;
+  - `snapshot_id` may change only once, from NULL to a snapshot, while the job is `queued`;
+  - that snapshot must be in the job's transformation, not discarded, of the selection's definition, and offer the format;
+  - `live_selection` never changes;
+  - every other DG5 rule is unchanged (request fixed, transitions, finished jobs frozen, each start is the next attempt).
+- New partial index `export_job_pending_assembly_idx` on `(created_at, id) WHERE status = 'queued' AND snapshot_id IS NULL`, for the watch's claim.
+
+Rows written before `0124` all have a snapshot and a NULL `live_selection`, and they satisfy both CHECKs, so no backfill is needed.
+
+### H5. Contract (D-207 (3); owned by T-DG6-BE-Y5) — superseded by R5 (the error-code enum changed)
+
+`ExportJob.snapshotId` becomes `{ type: [string, "null"] }` (a UUID, or `null` until the snapshot is assigned). It stays in `required`. The operations, status codes, the `ExportCreate` body and the error-code enum are unchanged. This document does not edit `docs/api/openapi.yaml`, the zod mirrors or the web client. BE-Y5 owns them (its assignment, "Contract change"). The change is a breaking change of a DG5 response field type (D-207 decides it), so it is raised as such in the handback.
+
+### H6. §6 authorization, restated
+
+The live-selection row of the §6 table still needs `export.create`, `transformation.read` and `report.generate`. They are checked **twice**: at the start (synchronously, with D-199's 403) and again at assembly (H3 step 2). A loss of access between the two gives a failed job and no file. Download is unchanged (requester only; `transformation.read` re-checked; others 404).
+
+Requirement rows: REQ-S13-005 ("Long export -> async job with progress"), REQ-S20-030 (ADR-0058 amendment T2). Nothing here touches product gates G1–G6 or the engineering gates DG0–DG7.
+
+## Amendment (2026-11-02, T-DG6-ARCH-12; D-207, F-DG6-147): reconciliation of H1–H6 with what T-DG6-BE-Y5 shipped
+
+Sources: D-207 (read verbatim), the T-DG6-ARCH-11 handback (its questions Q1–Q4) and the T-DG6-BE-Y5 handback. The design was checked against the shipped files at the integrated `HEAD` `a973b5673`:
+
+- `packages/db/migrations/0124_p6_export_live_selection_pending.sql`;
+- `apps/api/src/modules/reporting/exports/assembly.ts`, `jobs.ts` and `routes.ts`;
+- `apps/api/src/modules/reporting/reports/snapshots.ts`;
+- `packages/shared/src/schemas/export-jobs.ts`;
+- `docs/api/openapi.yaml` (`ExportJob`).
+
+The physical model was read from the catalogue of a disposable PostgreSQL 16 database with all 116 migrations applied (`docs/delivery/handbacks/DG6/T-DG6-ARCH-12-evidence/01-catalog-0124.log`). **Where H1–H6 and this amendment differ, this amendment wins.** H1 (an export renders exactly one stored snapshot; data-as-of is the assembly time, `report_snapshot.as_of`; exports of an existing snapshot are unchanged) and H6 (the permissions are checked at the start and again at assembly) hold as written.
+
+### R1. Names
+
+| H1–H6 said | Shipped (binding) |
+|---|---|
+| column `live_selection` | column `export_job.selection jsonb NULL` |
+| CHECKs `export_job_live_selection_shape` and `export_job_snapshot_pending` | one CHECK, `export_job_selection_pending` (R2) |
+| file `0124_p6_export_job_pending_snapshot.sql` | `0124_p6_export_live_selection_pending.sql` |
+| "the snapshot watch", started from the `reporting` module's `index.ts` | **the export assembly watch**: `startExportAssemblyWatch` / `exportAssemblyWatchStep` in `reporting/exports/assembly.ts`, started at `onReady` and stopped at `onClose` by `reporting/exports/routes.ts` |
+| index `export_job_pending_assembly_idx` | unchanged name: `(created_at, id) WHERE ((snapshot_id IS NULL) AND (status = 'queued'))` |
+
+### R2. Physical model (supersedes H4)
+
+- `export_job.snapshot_id` is nullable. The composite FK `export_job_snapshot_fkey` `(transformation_id, snapshot_id)` → `report_snapshot (transformation_id, id)` is unchanged (MATCH SIMPLE, so a NULL is not checked). **That FK is what keeps an assigned snapshot in the job's transformation.**
+- `export_job.selection jsonb NULL` is the stored `ExportLiveSelection`: only the members the request carried, from `definitionCode`, `subjectId`, `reportingPeriodId` and `parameters` (`selectionToStore`). It is NULL for an export of an existing snapshot.
+- CHECK `export_job_selection_pending`, as `pg_get_constraintdef` prints it:
+  `CHECK ((((snapshot_id IS NOT NULL) OR ((selection IS NOT NULL) AND (status = ANY (ARRAY['queued'::text, 'failed'::text, 'cancelled'::text])))) AND ((selection IS NULL) OR ((jsonb_typeof(selection) = 'object'::text) AND (jsonb_typeof((selection -> 'definitionCode'::text)) = 'string'::text)))))`.
+  A job without a snapshot carries a selection and is `queued`, `failed` or `cancelled`, so `running` and `succeeded` always have a snapshot. A selection is an object with a string `definitionCode`.
+- **No database size bound on `selection`** (H4 asked for 8,192 bytes). The architect accepts what shipped. The selection is bounded and validated before it is written: zod `exportLiveSelection` is a strict object, and the synchronous `checkReportRequest` → `resolveRequest` refuses parameters above `REPORT_MAX_PARAMETER_BYTES` (8,192) with 422 `report.parameters_invalid`. The watch re-parses the stored value with the same zod schema before use (`storedSelection`). The request-body limit of ADR-0052 §4 bounds it too. This is typed, validated JSON, not an unvalidated blob.
+- `export_job_error_code_check` gains `export.includes_restricted_records` and `export.assembly_failed`. **The closed set changes**, which supersedes H3's "the error-code set … do[es] not change" (R5).
+- `export_job_guard()` is replaced (`CREATE OR REPLACE`, the same trigger):
+  - **INSERT with a NULL snapshot:** the selection's `definitionCode` must name a `report_definition` that offers the format (`export_job_format_offered`).
+  - **UPDATE:** `requested_by`, `format`, `language`, `idempotency_key` and `selection` never change. A non-NULL `snapshot_id` never changes. A NULL `snapshot_id` changes to a snapshot only while both `OLD.status` and `NEW.status` are `queued` (`export_job_request_immutable`).
+  - **An assigned snapshot** is checked as on INSERT: it is not discarded (`export_job_snapshot_exportable`), and its definition offers the format.
+  - Transitions, the frozen finished job and the attempt step are unchanged.
+  - **An assigned snapshot's `definition_code` must equal `selection ->> 'definitionCode'`** when the job carries a selection (`export_job_snapshot_selection`, migration `0125`; amendment S2). The application also guarantees it: the watch inserts the snapshot from the stored selection in the same transaction that assigns it. _(Corrected 2026-11-02, T-DG6-ARCH-13: this bullet first said the guard does not check it, as `0124` shipped, and proposed the database check to the owner as a Low finding. T-DG6-BE-Y6 shipped it in `0125`, F-DG6-sa12-1.)_
+  - `0125` also adds the column `assembly_attempt_count` and the guard rules `export_job_assembly_attempt_step` and the stricter `export_job_created_queued` (amendment S1).
+- No row changes and no backfill. `mth_app` keeps INSERT, SELECT and UPDATE on `export_job`.
+
+### R3. The start, as shipped (supersedes H2 where they differ; answers Q1)
+
+**Q1 is answered: D-199's 403 is computed synchronously without an assembled snapshot in the common case, and with a discarded read-only assembly otherwise.** In `createExport`, `requireUnrestrictedLiveSelection`:
+
+1. calls `transformationHasRestricted`, one indexed query on `record_sensitivity` (`record_sensitivity_transformation_idx`) through the same `restrictedAmong` admission rule. If the requester is restricted from **no** record of the transformation, no assembly can include a restricted record, so nothing is assembled in the request;
+2. otherwise assembles the report read-only in the request, exactly as before D-207. Its sources decide the 403 `export.includes_restricted_records`, and the assembly is discarded.
+
+So every DG5/DG6 403 case is kept. `sensitive-reads.test.ts` keeps its 403 assertions, with one case now reading the snapshot id from GET after a watch step. The cost for ADR-0058 T2: a requester restricted from some record of the transformation still pays the assembly in the request (ADR-0058 amendment T3).
+
+The remaining checks stay synchronous: the definition, the subject's transformation (404 for an unknown subject), `export.create` and `report.generate`, `export.format_not_offered`, and the report request's own 422 `report.*` refusals (`checkReportRequest`). One transaction then re-checks the permissions on reloaded grants and writes the job (`snapshot_id` NULL, `selection`), its progress row and `export_job.create`, with no snapshot and no outbox event. The answer is 202 with `snapshotId: null`, and the route then wakes the watch (`kick`).
+
+**Idempotent replay** (`sameRequest`): `format` and `language` must be equal. For a live body, the stored selection must match: `definitionCode`, `subjectId`, `reportingPeriodId`, and `parameters` compared as canonical JSON. Before D-207 the live comparison ignored `parameters`. A snapshot-id body under a live job's key (or the reverse) is 422 `idempotency.key_reused`. A job created before `0124` has no stored selection, so replaying its key with a live body is 422. This is a deploy-boundary edge only.
+
+**Download** of a job with no snapshot answers as before: 409 `export.not_ready` while pending, 422 `export.failed` once failed.
+
+### R4. The export assembly watch, as shipped (supersedes H3 where they differ)
+
+- **Who drives it.** Every API process, every `EXPORT_ASSEMBLY_INTERVAL_MS` = **1,000 ms**, plus a `kick` right after a pending 202. It runs at most one step at a time per process. A step runs `EXPORT_ASSEMBLY_CONCURRENCY` = **2** claim loops, each of at most `EXPORT_ASSEMBLY_BATCH` = 50 jobs, and the next tick continues. It is not started under `NODE_ENV=test`, where suites call `exportAssemblyWatchStep`, nor by a route-only instance. The four `EXPORT_ASSEMBLY_*` values are code constants exported from `assembly.ts`, not environment variables. Changing one is a code change backed by a measurement.
+- **One committed attempt, then one transaction per job** (`assembleNextExport`). Both transactions run on **one pooled connection**, which holds the job's `exportJob` advisory lock as a **session** lock from the claim to the end of the job (amendment S3). _(Corrected 2026-11-02, T-DG6-ARCH-13: this bullet first said "one transaction per job", whose claim took `pg_try_advisory_xact_lock`. T-DG6-BE-Y6 shipped the attempt step 0 and the session lock, F-DG6-sa12-3.)_
+  0. **Claim and count the attempt, in its own transaction, committed before anything is assembled.** The oldest pending job (`snapshot_id IS NULL AND status = 'queued'`, ordered by `created_at, id`), `FOR UPDATE SKIP LOCKED`. Then `pg_try_advisory_lock` (session level) on the **existing** class `exportJob` (**730264**, ADR-0016), the class that cancel and the worker hold. It is tried and never waited for, so a job that cancel or another watcher holds is skipped. **ADR-0016 still gets no new number** (H3), but the claim is the row lock **plus** that try-lock, not the row lock alone. If the job's `assembly_attempt_count` has reached `EXPORT_ASSEMBLY_MAX_ERRORS`, the job fails here with `export.assembly_failed`. Otherwise `assembly_attempt_count` + 1 and version + 1, audited `export_job.assembly_attempt` (changes `assembly_attempt_count` from → to), and COMMIT.
+  1. **Re-read.** In the job transaction, the job `FOR UPDATE` at the counted version, still pending. If it is not (no writer changes it while the session lock is held), the watch leaves it.
+  2. **Access check** on the current grants: an active user who holds `transformation.read`, `export.create` and `report.generate` in the job's transformation. Otherwise the job fails with `export.source_unavailable`.
+  3. **Assembly.** `assembleReport` runs on its **own read-only REPEATABLE READ connection** while the session lock is held. It is not part of the job transaction (H3 said "in the transaction"). It makes database reads only and no remote I/O. Its `asOf` becomes the snapshot's data-as-of. A refusal of the report itself (any 4xx `HttpProblem`: subject, period or parameters 422, `report.too_large`, a 404 subject or output) fails the job with `export.assembly_failed`.
+  4. **Commit-time access check** on grants reloaded after the assembly. A loss of access fails the job with `export.source_unavailable`.
+  5. **D-199 on the assembly's actual sources** (`restrictedAmong`). A restricted source fails the job with **`export.includes_restricted_records`** (H3 said `export.source_unavailable`; R5).
+  6. **Writes:**
+     - the snapshot (`insertGeneratedSnapshot`: the same rows and the same `report_snapshot.generate` audit event as `generateSnapshot`, `created_by` = the requester);
+     - `snapshot_id` with version + 1 (audit `export_job.assemble`, changes `snapshot_id` null → id);
+     - the `export_job.requested` outbox event.
+
+     The worker's flow (§5 steps 2–5) is unchanged.
+- **Every failure** is `queued → failed` with `error_code` and `finished_at`, version + 1, audited `export_job.fail` with the prior and new version, in the transaction that found it (step 0 for a job at the bound, otherwise the job transaction). No snapshot, no outbox event and no file is written.
+- **Attribution** (`ASSEMBLY_ACTOR`): `actorType = 'service'`, `actorUserId = null`, `onBehalfOfUserId` = the requester, `requestId = export_job:<id>`. This applies to `export_job.assembly_attempt`, `export_job.assemble`, `export_job.fail` and the snapshot's `report_snapshot.generate`.
+- **Bounded retry (answers Q3).** Every attempt is counted on the job (`export_job.assembly_attempt_count`, `0125`) and committed in step 0, before the assembly starts. An unexpected error, meaning anything but a report refusal, rolls back only the job transaction (steps 1–6). The job stays pending for the next tick, and its attempt stays counted. A crash that kills the process during the assembly leaves it counted too. When a claim finds the count at `EXPORT_ASSEMBLY_MAX_ERRORS` = **3**, it fails the job with **`export.assembly_failed`** instead of assembling it again. H3 proposed `export.render_failed`, but that code stays the worker's renderer error (§5 step 3). A committed outcome (assembled or failed) ends the pending state. So a pending job with a count of 3 has had three started attempts, none of which committed an outcome. **The bound holds per job, across restarts and across API processes**: a job's assembly is attempted at most 3 times. _(Corrected 2026-11-02, T-DG6-ARCH-13: this bullet first said that the count was in memory per process, that a restart started it again, and that the bound held per process lifetime. F-DG6-sa12-3; amendment S3.)_
+- **At most once.** The snapshot, the assignment and the outbox event commit together in the job transaction. The attempt count commits before it, in step 0. The guard refuses a second assignment, and the outbox key `export_job.requested:<id>` is unique. A crash before the job transaction's COMMIT leaves the job pending, with its attempt counted. _(Corrected 2026-11-02, T-DG6-ARCH-13: this bullet first said that the claim commits together with the snapshot.)_
+- **Cancel** takes the job's advisory lock (blocking) and then reads the row. If the watch holds the job, the cancel waits until the watch releases its session lock. That happens after the job transaction ends, committed or rolled back, or when the watch's connection is lost. It then answers with the new version, so the client's stale `If-Match` gets 409, and the client re-reads. A job being cancelled is skipped by the watch's try-lock. A cancelled job is never claimed.
+- **Pool use.** Each concurrent claim holds two connections: the session connection, which carries step 0 and the job transaction, and the assembly's read connection. So the watch uses up to 4 connections per API process at the default concurrency, out of the API pool of 20 (`apps/api/src/main.ts`, `createPool(…, { max: 20 })`).
+
+### R5. Error codes (answers Q2) and contract (supersedes H5)
+
+**Q2 is answered.** Access lost between the start and the assembly fails the job with the existing `export.source_unavailable`, as H3 said. A restricted source found only at assembly uses the dedicated job code `export.includes_restricted_records`, D-199's code, now also stored on a job. A failed assembly uses the new job code `export.assembly_failed`. **The contract enum changes:** `ExportJob.errorCode` in `docs/api/openapi.yaml` and `EXPORT_ERROR_CODES` in `packages/shared/src/schemas/export-jobs.ts` gain both codes. `ExportJob.snapshotId` is `NullableUuid` and stays required. Operations and status codes are unchanged. Both changes are D-207 (3) consequences, raised by ARCH-11 and BE-Y5 as breaking changes of a DG5 response.
+
+Job error codes added to §8. These are stored in `export_job.error_code` and shown translated. The English texts are exact and equal `apps/web/src/i18n/en/problems.json`. The Arabic texts are in `ar/problems.json`.
+
+| Where | Code | English text (exact) |
+|---|---|---|
+| job (assembly) | `export.includes_restricted_records` | This report includes records you cannot see, so it cannot be exported for you. |
+| job (assembly) | `export.assembly_failed` | The report could not be assembled from the current records (its subject or period changed, or it became too large); start a new export. |
+
+(The table's first column is not an HTTP status. These are job codes, not responses. `fee.test.tsx` reads this table's rows whose first column is `job (assembly)`. It checks that they are exactly these two codes, that their English text equals this table and that their Arabic text differs and contains Arabic, and it pins the number of codes it reads to 26: the 24 of ADR-0045 §11 and this ADR's §8 (its table rows and its four job error codes), plus these two. _(Corrected 2026-11-02, T-DG6-ARCH-13: this parenthesis first said that the test pinned 24 and did not read this table. T-DG6-BE-Y6 extended the test, F-DG6-sa12-2.)_)
+
+**Web.** A job with `snapshotId === null` shows no snapshot link. It shows "Preparing the report: its snapshot is assembled from the current records before the file is produced." while queued and "No snapshot was produced." once failed or cancelled, in en and ar (`ExportsPage.tsx`, `reportsP5.json`).
+
+### R6. §5 and §6 restated
+
+- §5 "The request … never changes (EJ18)" now reads: the request never changes, except that a NULL `snapshot_id` is assigned exactly once while the job is `queued` (R2).
+- §5 Flow step 1 no longer says `boss.send`. It was corrected in place, with a note, because the code has written the outbox event since DG5.
+- §6 audit actions per job transition: `export_job.create|assembly_attempt|assemble|start|retry|succeed|fail|cancel`. A pending job's `assembly_attempt`, `assemble` and `fail` are written by the watch, with the service actor on behalf of the requester. `export_job.assembly_attempt` is not a status transition: it records the counted attempt (version + 1, `0125`). _(Corrected 2026-11-02, T-DG6-ARCH-13: `assembly_attempt` added, T-DG6-BE-Y6.)_
+
+### R7. Q4 (names) is closed
+
+BE-Y5 shipped other names than H4's (R1). This amendment, the data dictionary ("P6 round-1 repair migration 0124", rewritten to the shipped catalogue) and the ERD (§1ab) now use the shipped names.
+
+Requirement rows: REQ-S13-005, REQ-S20-030, REQ-S10-004 (the export half). This is an engineering design record. Nothing here grants a business, Finance or IT approval (G1–G6), and nothing implies a DG0–DG7 result.
+
+
+## Amendment (2026-11-02, T-DG6-ARCH-13; F-DG6-sa12-1, F-DG6-sa12-2, F-DG6-sa12-3): R2, R4, R5 and R6 against what T-DG6-BE-Y6 shipped
+
+Sources: the T-DG6-BE-Y6 handback (its sections "Schema (for the data dictionary owner, solution-architect)" and "ADR-0046 text now untrue (for the architect)"). The design was checked against the shipped files at the integrated `HEAD` `c7dda5121`:
+
+- `packages/db/migrations/0125_p6_export_assembly_attempts.sql`;
+- `apps/api/src/modules/reporting/exports/assembly.ts`;
+- `apps/api/src/modules/reporting/exports/jobs.ts` (`lockExportJob`, `cancelExport`);
+- `apps/worker/src/reports/export-runner.ts` (`lockedJob`);
+- `apps/web/src/pages/reports/fee.test.tsx`.
+
+The physical model was read from the catalogue of a disposable PostgreSQL 16.15 database with all 117 migrations applied (`docs/delivery/handbacks/DG6/T-DG6-ARCH-13-evidence/01-catalog-0125.log`). R2, R4, R5 and R6 were **corrected in place**, each with a dated note. This section records what changed and why. Where R1–R7 and this section differ, this section wins.
+
+### S1. Physical model: migration `0125`
+
+- **Column** `export_job.assembly_attempt_count integer NOT NULL DEFAULT 0`, with CHECK `export_job_assembly_attempt_count_check`: `CHECK ((assembly_attempt_count >= 0))`.
+  - It counts the assembly attempts of a pending live selection that were started.
+  - Only the export assembly watch writes it, with version + 1 and the audit action `export_job.assembly_attempt`.
+  - Rows that exist when `0125` runs get 0, so a job that is still pending starts its count then.
+  - It is not in the API: `ExportJob` (`docs/api/openapi.yaml`, `packages/shared/src/schemas/export-jobs.ts`) is unchanged.
+  - It is separate from `attempt_count`, the worker's render attempts (0–20), which is unchanged.
+- **`export_job_guard()` is replaced** (`CREATE OR REPLACE`; the same trigger, `search_path = public, pg_temp`, not `SECURITY DEFINER`). Every `0124` rule is kept. Its constraint names, as read from the function source, are `export_job_created_queued`, `export_job_format_offered`, `export_job_request_immutable`, `export_job_transition`, `export_job_finished_frozen`, `export_job_attempt_step`, `export_job_assembly_attempt_step`, `export_job_snapshot_exportable` and `export_job_snapshot_selection`. Three of them are new or changed:
+  - **`export_job_created_queued`** (stricter): a job is inserted `queued` with `attempt_count = 0` **and** `assembly_attempt_count = 0`.
+  - **`export_job_assembly_attempt_step`** (new): on UPDATE, `assembly_attempt_count` changes only to `OLD + 1`, and only while the job is pending: `OLD.status` and `NEW.status` are both `queued`, and `OLD.snapshot_id` and `NEW.snapshot_id` are both NULL. So a count never moves with a status or snapshot change, and a finished job stays frozen (`export_job_finished_frozen`).
+  - **`export_job_snapshot_selection`** (new; S2).
+- No index, no privilege change (`mth_app` keeps INSERT, SELECT and UPDATE on `export_job`), no new table and no new relationship.
+
+### S2. The assigned snapshot's definition (F-DG6-sa12-1)
+
+H4 asked for this check, and R2 recorded that `0124` did not ship it. `0125` ships it. When a snapshot is checked, the guard raises `check_violation` with constraint `export_job_snapshot_selection` if the job carries a stored `selection` and the snapshot's `definition_code` IS DISTINCT FROM `selection ->> 'definitionCode'`. A snapshot is checked on an INSERT with a snapshot, and on the pending NULL → snapshot assignment. An export of an existing snapshot has a NULL `selection`, so this check does not apply to it. The check runs after `export_job_snapshot_exportable` and before the format check.
+
+### S3. The persisted attempt and the session lock (F-DG6-sa12-3)
+
+- **What changed.** R4's bounded retry was an in-memory count per process. A job whose assembly killed the process was retried after every restart without bound. The count is now on the job, and it is counted and committed in its own transaction before the assembly starts (R4 step 0).
+- **Why a session lock.** Between step 0's COMMIT and step 1 the row is not locked. The session-level `exportJob` lock keeps every other watcher out during that gap: their try-lock fails, so they skip the job. It also keeps cancel waiting, as before. With a transaction-level lock, two watchers racing on one job could each count an attempt, and a healthy job could reach the bound without ever failing. The lock is released in a `finally` with `pg_advisory_unlock`. A connection lost with its process loses the lock with it.
+- **No lock-order deadlock (checked in the code):**
+  - cancel (`lockExportJob`) and the worker (`lockedJob`) take `pg_advisory_xact_lock` (blocking), and read or lock the row only after that;
+  - the watch holds the row lock only while it **tries** the advisory lock in step 0, and never waits for it;
+  - in step 1 the watch waits only for the row lock, while it holds the advisory lock. Nobody else holds that row lock without the advisory lock, apart from another watcher's short step-0 claim, which never waits.
+- **ADR-0016.** Class `exportJob` (730264) gets no new number. Its registry row now names the watch and its session use (ADR-0016, corrected the same day). This is the second session-level use of a registered class, after `demoReset` (730271).
+- **One observable difference.** The generic `p2_row_guard` and `p2_audit_required` make each counted attempt a versioned, audited mutation. So a live job assembled at its first attempt ends assembly at **version 3** (1 created, 2 attempt, 3 assigned), not 2, and its audit trail has one more row. A job failed in its job transaction is at version 3 too (1, 2, 3 failed). The API contract is unchanged, because the version is already an opaque ETag. A client that held version 1 already got 409 after the assembly.
+- **The cost for ADR-0058.** The start (the 202) does not change. Each assembly gains one short committed transaction and one audit row (ADR-0058 amendment T4).
+
+### S4. The problem-text pin (F-DG6-sa12-2)
+
+`fee.test.tsx` now reads R5's `job (assembly)` rows (R5 parenthesis, corrected). Its pin moved from 24 to 26. The English texts of the two codes already equalled R5, so no en or ar string changed.
+
+### S5. Code that contradicts this ADR (proposed to its owner, not changed here)
+
+- **Proposed finding (Low, not a mandatory violation; owner backend-workflow-engineer; REQ-S13-005):** the header comment of `apps/api/src/modules/reporting/exports/assembly.ts` lists "4. D-199 on the assembly's actual sources" before "5. the access re-check on grants reloaded after the assembly". The code, like R4 steps 4 and 5, re-checks access first and applies D-199 second. A job whose requester both lost access and has a restricted source therefore fails with `export.source_unavailable`, not `export.includes_restricted_records`. The behaviour matches R4; only the comment's order is wrong. Expected: the comment lists the steps in the code's order.
+
+### S6. History of this ADR's amendment R
+
+| Date | Task | Where | Change |
+|---|---|---|---|
+| 2026-11-02 | T-DG6-ARCH-12 | R1–R7 | reconciled H1–H6 with T-DG6-BE-Y5 (`0124`) |
+| 2026-11-02 | T-DG6-ARCH-13 | R2 | the definition check (`export_job_snapshot_selection`) now exists; `0125`'s column and guard rules referenced |
+| 2026-11-02 | T-DG6-ARCH-13 | R4 | step 0 (the counted, committed attempt), the session lock, the re-read (step 1), step 3 "while the session lock is held … not part of the job transaction" (was "while the claim is held … not part of the claim transaction"), the failure transaction, the persisted bound, at most once, cancel and pool wording, attribution of `export_job.assembly_attempt` |
+| 2026-11-02 | T-DG6-ARCH-13 | R5 | `fee.test.tsx` reads this table; pin 26 |
+| 2026-11-02 | T-DG6-ARCH-13 | R6 | audit action `export_job.assembly_attempt` |
+
+Requirement rows: REQ-S13-005, REQ-S20-030. This is an engineering design record. Nothing here grants a business, Finance or IT approval (G1–G6), and nothing implies a DG0–DG7 result.

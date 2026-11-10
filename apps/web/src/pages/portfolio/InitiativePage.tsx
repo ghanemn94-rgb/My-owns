@@ -66,6 +66,8 @@ import { TemplateProvenance } from "../../components/provenance-badge/Provenance
 import { TableScrollRegion } from "../../components/TableScrollRegion.tsx";
 // T-DG5-FE-RG1 (F-DG5-120; REQ-S12-012): the critical dependency slips that affect this initiative (forecast impact).
 import { DependencySlipsSection } from "../dependencies/slips.tsx";
+// T-DG6-FE-D2 (ADR-0057 §6; REQ-S15-010, REQ-S15-011): the T05 editor autosaves to the server draft; restore or discard.
+import { RecordDraftRecovery } from "../../components/draft-recovery/DraftRecovery.tsx";
 
 const READ_ONLY_STATUSES: ReadonlySet<string> = new Set(["cancelled", "completed"]);
 
@@ -477,23 +479,43 @@ function T05Card({ initiative: i, readOnly }: { initiative: Initiative; readOnly
         canWrite={canEdit}
         refresh={refresh}
       />
-      {editing ? (
-        <RecordDialog<Initiative>
-          title={t("portfolio.card.editTitle", { code: i.code })}
-          namespaces={PORTFOLIO_NS}
-          fields={fields}
-          record={i}
-          updateSchema={initiativeUpdate}
-          updateUrl={(r) => `/api/v1/initiatives/${r.id}`}
-          people={people}
-          submitLabel={t("common.action.save")}
-          onSaved={async () => {
-            if (!(await refresh())) return;
-            setEditing(false);
-          }}
-          onCancel={() => setEditing(false)}
-        />
-      ) : null}
+      {/* T-DG6-FE-D2: draft recovery around the T05 editor (one named block). */}
+      <RecordDraftRecovery
+        tid={ws.tid}
+        recordType="T05"
+        record={i}
+        fields={fields}
+        enabled={canEdit}
+        editing={editing}
+        onEdit={setEditing}
+      >
+        {(draft) => (
+          <RecordDialog<Initiative>
+            key={draft.key}
+            title={t("portfolio.card.editTitle", { code: i.code })}
+            namespaces={PORTFOLIO_NS}
+            fields={fields}
+            record={i}
+            updateSchema={initiativeUpdate}
+            updateUrl={(r) => `/api/v1/initiatives/${r.id}`}
+            people={people}
+            submitLabel={t("common.action.save")}
+            initialValues={draft.initialValues}
+            onValuesChange={draft.onValuesChange}
+            onSaved={async () => {
+              await draft.saved();
+              if (!(await refresh())) return;
+              setEditing(false);
+            }}
+            onCancel={() => {
+              void draft.left();
+              setEditing(false);
+            }}
+          >
+            {draft.status}
+          </RecordDialog>
+        )}
+      </RecordDraftRecovery>
     </Section>
   );
 }

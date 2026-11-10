@@ -31,6 +31,16 @@ import {
 
 test.describe.configure({ mode: "serial" });
 
+// Budget (F-DG6-144, the F-DG5-145/146 carry-forward of D-193; p6-work-split §2 rules 13 and 15): 60 s for
+// every test and hook in this file that does not set its own. Measured in the DG6 QA round-2 full product
+// runs at a 1-minute load of 11-21 on 4 CPUs (docs/delivery/test-evidence/DG6/qa/round-2/06-e2e-product-*.log): the slowest default-budget test took 23.9 s.
+// T-DG6-FE-Z1's loaded full runs (both projects, both locale settings, CPU spinners): see
+// docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt. The budget is at least 2x the worst of
+// these, rounded up to 15 s, and never below 60 s.
+// T-DG6-FE-Z1B: raised from 60 s to 105 s. In the z1b loaded full runs (load 21-26, above the review's 11-21;
+// docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/z1b-*.log) the test in row :315 of z1b-budget-table-pass1.txt took 47.1 s; 2x rounded up to 15 s. budget-table.txt has the rows.
+test.setTimeout(105_000);
+
 let tidA = "";
 let tidB = "";
 let codeA = "";
@@ -351,6 +361,8 @@ async function timed<T>(label: string, step: () => Promise<T>): Promise<T> {
 }
 
 test("6a. 390 px wide: no page-level horizontal scroll", async ({ browser }, info) => {
+  // Budget measured (F-DG6-144 sweep, T-DG6-FE-Z1B): in the DG6 QA round-2 full runs and T-DG6-FE-Z1's run1 (under load),
+  // this test's worst loaded run took 15.6 s; the budget is at least 2x that. Table: docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt.
   test.setTimeout(60_000);
   const lang = langOf(info);
   const to = await asUser(browser, lang, "dev.office");
@@ -369,7 +381,11 @@ test("6a. 390 px wide: no page-level horizontal scroll", async ({ browser }, inf
 });
 
 test("6b. 200 % text: no page-level horizontal scroll", async ({ browser }, info) => {
-  test.setTimeout(60_000);
+  // Budget measured (F-DG6-144 sweep, T-DG6-FE-Z1B): in the DG6 QA round-2 full runs and T-DG6-FE-Z1's run1 (under load),
+  // this test's worst loaded run took 24.9 s; the budget is at least 2x that. Table: docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt.
+  // T-DG6-FE-Z1B: raised from 60 s to 90 s. In the z1b loaded full runs (load 21-26, above the review's 11-21;
+  // docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/z1b-*.log) the test in row :381 of z1b-budget-table-pass1.txt took 43.5 s; 2x rounded up to 15 s. budget-table.txt has the rows.
+  test.setTimeout(90_000);
   const lang = langOf(info);
   const to = await asUser(browser, lang, "dev.office");
   const page = to.page;

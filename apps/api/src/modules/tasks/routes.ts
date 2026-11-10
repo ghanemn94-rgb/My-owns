@@ -6,16 +6,24 @@
 //   GET  /me/inbox                          the caller's reminders, newest first, with the unread count
 //   POST /me/inbox/{notificationId}/read    mark one of the caller's reminders read, once (If-Match; others: 404).
 //                                           422 inbox.already_read
+// P6 (T-DG6-BE-C; ADR-0051 §3): GET /me/inbox redacts, at read time, the message of an item whose target the recipient
+// can no longer read (`inbox.restricted`, params {}); deep-links.ts holds the rule and the resolver.
 // Reads need a session and no permission: an item is visible to its assignee only. The two actions are bodiless
 // (no config.consumes, the activateKpiDefinition precedent); each re-resolves the session inside its transaction
 // (commit-time authorisation: 401 when the session ended), checks If-Match (428/409), and writes its audit event in
 // the same transaction. An AUD user holds no item, so every write by one is refused like anyone else's.
-import { sql, type InboxNotificationRow, type Tx, type WorkItemRow } from "@mth/db";
+import { sql, type DbOrTx, type InboxNotificationRow, type Tx, type WorkItemRow } from "@mth/db";
 import { uuid, type InboxNotification, type WorkItem } from "@mth/shared/schemas";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { auditContextOf, organizationsWith, principalOf, refreshPrincipal } from "../access/index.ts";
 import { record } from "../audit/index.ts";
+import {
+  restrictedNotifications,
+  restrictedNotificationView,
+  restrictedWorkItemLink,
+  restrictedWorkItems,
+} from "./deep-links.ts";
 import {
   cursorSchema,
   decodeCursor,
@@ -63,6 +71,9 @@ export const taskRefusals = {
   alreadyRead: () => problems.businessRule("inbox.already_read", "This reminder is already marked as read."),
 } as const;
 
+/** The redacted message of an inbox item whose target the recipient can no longer read (ADR-0051 §3). */
+export const INBOX_RESTRICTED = { messageKey: "inbox.restricted", messageParams: {} } as const;
+
 const paramsOf = (value: unknown) =>
   (value !== null && typeof value === "object" ? value : {}) as WorkItem["messageParams"];
 
@@ -86,6 +97,32 @@ export const toWorkItem = (r: WorkItemRow): WorkItem => ({
   version: r.version,
 });
 
+/**
+ * A work item as returned to its assignee. `restricted` (T-DG6-BE-Z4 text; T-DG6-BE-Z12B ids, D-218/D-222; ADR-0051
+ * §2, §3): the subject or the stored link names a record the assignee is not admitted to, so the text is the inbox's
+ * `inbox.restricted`, the subject id is null (the type is kept), the link is the transformation home and the item
+ * carries `includesRestrictedRecords: true`. Its id, status and version stay, so the assignee can still complete it.
+ */
+const workItemFor = (r: WorkItemRow, restricted: boolean): WorkItem =>
+  restricted
+    ? {
+        ...toWorkItem(r),
+        ...INBOX_RESTRICTED,
+        periodLabel: null,
+        subjectId: null,
+        linkPath: restrictedWorkItemLink(r.transformation_id),
+        includesRestrictedRecords: true,
+      }
+    : toWorkItem(r);
+
+/** The reach decision of work-item rows (one per batch; T-DG6-BE-Z12B). */
+const restrictedRows = (db: DbOrTx, request: FastifyRequest, rows: readonly WorkItemRow[]) =>
+  restrictedWorkItems(
+    db,
+    principalOf(request),
+    rows.map((r) => ({ subjectType: r.subject_type, subjectId: r.subject_id, linkPath: r.link_path })),
+  );
+
 export const toInboxNotification = (r: InboxNotificationRow): InboxNotification => ({
   id: r.id,
   transformationId: r.transformation_id,
@@ -97,6 +134,16 @@ export const toInboxNotification = (r: InboxNotificationRow): InboxNotification 
   createdAt: iso(r.created_at),
   version: r.version,
 });
+
+/**
+ * A notification as returned to its recipient (T-DG6-BE-Z13, F-DG6-540; D-218, D-222 (1), D-226; ADR-0051 §2, §3).
+ * `restricted` (`restrictedNotifications`): the text is `inbox.restricted` with params {}, the link is the
+ * transformation home (else My Work) and the item carries `includesRestrictedRecords: true`; its id, work item id, read
+ * state and version stay, so the recipient can still mark it read. The stored row is never modified (access restored =
+ * text and link restored).
+ */
+const notificationFor = (r: InboxNotificationRow, restricted: boolean): InboxNotification =>
+  restrictedNotificationView(toInboxNotification(r), r.transformation_id, restricted);
 
 const stringBool = z.stringbool({ truthy: ["true"], falsy: ["false"] });
 const workItemQuery = z.strictObject({
@@ -265,7 +312,11 @@ export function registerTaskRoutes(app: FastifyInstance, { db }: ModuleDeps): st
       .limit(query.limit + 1)
       .execute();
     const page = paginate(rows, query.limit, (r) => [Number(r.status_rank), String(r.due_rank), r.id], hash);
-    return { items: page.items.map(toWorkItem), nextCursor: page.nextCursor };
+    // T-DG6-BE-Z4 / T-DG6-BE-Z12B (ADR-0051 §2, §3; D-218, D-222): a work item about a record the caller is not
+    // admitted to keeps its id, status and version; its subject id is null, its link the transformation home, its text
+    // the inbox's `inbox.restricted`, and it carries the marker.
+    const restricted = await restrictedRows(db, request, page.items);
+    return { items: page.items.map((r, i) => workItemFor(r, restricted.at(i) === true)), nextCursor: page.nextCursor };
   });
 
   app.get(ITEM, { config: session }, async (request, reply) => {
@@ -279,13 +330,19 @@ export function registerTaskRoutes(app: FastifyInstance, { db }: ModuleDeps): st
       .where("assignee_user_id", "=", userId)
       .executeTakeFirst();
     if (!row) throw problems.notFound();
-    return sendVersioned(reply, 200, toWorkItem(row));
+    const [restricted] = await restrictedRows(db, request, [row]);
+    return sendVersioned(reply, 200, workItemFor(row, restricted === true));
   });
 
   app.post(COMPLETE, { config: session }, async (request, reply) => {
     const { workItemId } = parse(itemParams, request.params, "params");
-    const row = await db.transaction().execute((tx) => completeItem(tx, request, workItemId));
-    return sendVersioned(reply, 200, toWorkItem(row));
+    // The assignee completes a restricted item as any other; the response is redacted as the reads are (D-222).
+    const item = await db.transaction().execute(async (tx) => {
+      const row = await completeItem(tx, request, workItemId);
+      const [restricted] = await restrictedRows(tx, request, [row]);
+      return workItemFor(row, restricted === true);
+    });
+    return sendVersioned(reply, 200, item);
   });
 
   app.get(INBOX, { config: session }, async (request) => {
@@ -315,13 +372,22 @@ export function registerTaskRoutes(app: FastifyInstance, { db }: ModuleDeps): st
       .where("delivery_state", "=", "delivered") // T-DG5-BE-L: the unread count of the listed rows
       .where("read_at", "is", null)
       .executeTakeFirstOrThrow();
-    return { items: page.items.map(toInboxNotification), nextCursor: page.nextCursor, unreadCount: Number(unread.n) };
+    // P6 (T-DG6-BE-C; ADR-0051 §3; REQ-S12-024) and T-DG6-BE-Z13 (D-218, D-226): read-time redaction. An item about
+    // a record the recipient may not see is returned as `notificationFor` describes; the stored row is never modified.
+    const restricted = await restrictedNotifications(db, principalOf(request), page.items);
+    const items = page.items.map((r, i) => notificationFor(r, restricted.at(i) === true));
+    return { items, nextCursor: page.nextCursor, unreadCount: Number(unread.n) };
   });
 
   app.post(READ, { config: session }, async (request, reply) => {
     const { notificationId } = parse(notificationParams, request.params, "params");
-    const row = await db.transaction().execute((tx) => markRead(tx, request, notificationId));
-    return sendVersioned(reply, 200, toInboxNotification(row));
+    // T-DG6-BE-Z13 (F-DG6-540; D-226): the response is redacted as the inbox list is.
+    const item = await db.transaction().execute(async (tx) => {
+      const row = await markRead(tx, request, notificationId);
+      const [restricted] = await restrictedNotifications(tx, principalOf(request), [row]);
+      return notificationFor(row, restricted === true);
+    });
+    return sendVersioned(reply, 200, item);
   });
 
   return [`GET ${ME_ITEMS}`, `GET ${ITEM}`, `POST ${COMPLETE}`, `GET ${INBOX}`, `POST ${READ}`];

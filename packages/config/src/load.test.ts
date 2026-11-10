@@ -2,7 +2,20 @@ import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { ConfigError, isLoopbackHost, loadConfig, secureOriginAllowed, SUPERVISE_INTERVAL_SECONDS } from "./index.ts";
+import {
+  assertLoadDatasetEnvironment,
+  ConfigError,
+  HEARTBEAT_INTERVAL_SECONDS,
+  JOB_BATCH_SIZE,
+  JOB_CONCURRENCY,
+  LOAD_ENV_NEEDS_MARKER,
+  LOAD_MARKER_REFUSES_ENV,
+  loadDatasetStartupRefusal,
+  isLoopbackHost,
+  loadConfig,
+  secureOriginAllowed,
+  SUPERVISE_INTERVAL_SECONDS,
+} from "./index.ts";
 
 const base = {
   NODE_ENV: "test",
@@ -39,9 +52,17 @@ describe("loadConfig", () => {
 
     it("defaults to the 60 s cadence pg-boss documents when unset or empty", () => {
       expect(SUPERVISE_INTERVAL_SECONDS).toEqual({ min: 1, max: 600, default: 60 });
-      expect(loadConfig("worker", worker).worker).toEqual({ superviseIntervalSeconds: 60 });
+      expect(loadConfig("worker", worker).worker).toEqual({
+        superviseIntervalSeconds: 60,
+        heartbeatSeconds: 30,
+        jobBatchSize: 8,
+        jobConcurrency: 4,
+      });
       expect(loadConfig("worker", { ...worker, WORKER_SUPERVISE_INTERVAL_SECONDS: "" }).worker).toEqual({
         superviseIntervalSeconds: 60,
+        heartbeatSeconds: 30,
+        jobBatchSize: 8,
+        jobConcurrency: 4,
       });
     });
 
@@ -65,6 +86,57 @@ describe("loadConfig", () => {
         expect(problems[0]).toMatch(/^WORKER_SUPERVISE_INTERVAL_SECONDS is invalid/);
       },
     );
+  });
+
+  describe("WORKER_HEARTBEAT_SECONDS (ADR-0053 §6; T-DG6-DO-D)", () => {
+    const worker = { NODE_ENV: "test", DATABASE_URL: base.DATABASE_URL };
+
+    it("defaults to 30 s and accepts 1-30", () => {
+      expect(HEARTBEAT_INTERVAL_SECONDS).toEqual({ min: 1, max: 30, default: 30 });
+      expect(loadConfig("worker", worker).worker.heartbeatSeconds).toBe(30);
+      expect(loadConfig("worker", { ...worker, WORKER_HEARTBEAT_SECONDS: "1" }).worker.heartbeatSeconds).toBe(1);
+      expect(loadConfig("worker", { ...worker, WORKER_HEARTBEAT_SECONDS: "15" }).worker.heartbeatSeconds).toBe(15);
+    });
+
+    it.each(["0", "31", "90", "1.5", "abc"])("refuses %s, naming the variable", (value) => {
+      const problems = problemsOf(() => loadConfig("worker", { ...worker, WORKER_HEARTBEAT_SECONDS: value }));
+      expect(problems).toHaveLength(1);
+      expect(problems[0]).toMatch(/^WORKER_HEARTBEAT_SECONDS is invalid/);
+    });
+  });
+
+  describe("WORKER_JOB_BATCH_SIZE and WORKER_JOB_CONCURRENCY (D-203 O-1; T-DG6-BE-X9)", () => {
+    const worker = { NODE_ENV: "test", DATABASE_URL: base.DATABASE_URL };
+
+    it("default to 8 per fetch and 4 at once, and accept values in range", () => {
+      expect(JOB_BATCH_SIZE).toEqual({ min: 1, max: 50, default: 8 });
+      expect(JOB_CONCURRENCY).toEqual({ min: 1, max: 16, default: 4 });
+      const d = loadConfig("worker", worker).worker;
+      expect([d.jobBatchSize, d.jobConcurrency]).toEqual([8, 4]);
+      const c = loadConfig("worker", { ...worker, WORKER_JOB_BATCH_SIZE: "50", WORKER_JOB_CONCURRENCY: "16" }).worker;
+      expect([c.jobBatchSize, c.jobConcurrency]).toEqual([50, 16]);
+      const one = loadConfig("worker", { ...worker, WORKER_JOB_BATCH_SIZE: "1", WORKER_JOB_CONCURRENCY: "1" }).worker;
+      expect([one.jobBatchSize, one.jobConcurrency]).toEqual([1, 1]);
+    });
+
+    it.each(["0", "51", "2.5", "abc"])("refuses batch size %s, naming the variable", (value) => {
+      const problems = problemsOf(() => loadConfig("worker", { ...worker, WORKER_JOB_BATCH_SIZE: value }));
+      expect(problems).toHaveLength(1);
+      expect(problems[0]).toMatch(/^WORKER_JOB_BATCH_SIZE is invalid/);
+    });
+
+    it.each(["0", "17", "1.5", "abc"])("refuses concurrency %s, naming the variable", (value) => {
+      const problems = problemsOf(() => loadConfig("worker", { ...worker, WORKER_JOB_CONCURRENCY: value }));
+      expect(problems).toHaveLength(1);
+      expect(problems[0]).toMatch(/^WORKER_JOB_CONCURRENCY is invalid/);
+    });
+
+    it("refuses a concurrency above the batch size", () => {
+      const problems = problemsOf(() =>
+        loadConfig("worker", { ...worker, WORKER_JOB_BATCH_SIZE: "2", WORKER_JOB_CONCURRENCY: "3" }),
+      );
+      expect(problems).toEqual(["WORKER_JOB_CONCURRENCY is invalid (must be at most WORKER_JOB_BATCH_SIZE)"]);
+    });
   });
 
   it("refuses AUTH_MODE=dev with NODE_ENV=production (ADR-0005)", () => {
@@ -227,5 +299,86 @@ describe("MTH_ENV and MTH_DEMO_ADMIN_DATABASE_URL (ADR-0050)", () => {
       loadConfig("db-cli", { NODE_ENV: "test", DATABASE_OWNER_URL: url, MTH_DEMO_ADMIN_DATABASE_URL_FILE: file })
         .demoAdminDatabaseUrl,
     ).toBe(url);
+  });
+});
+
+// T-DG6-DO-E (ADR-0058 §4; D-195 Q9, D-199 item 9): MTH_ENV=load, the synthetic load run.
+describe("MTH_ENV=load (ADR-0058 §4)", () => {
+  const loadBase = {
+    NODE_ENV: "production",
+    AUTH_MODE: "oidc",
+    APP_BASE_URL: "https://hub.example.invalid",
+    DATABASE_URL: "postgresql://mth_app:x@127.0.0.1:5432/mth_load",
+    OIDC_ISSUER_URL: "https://idp.example.invalid/realms/mth",
+    OIDC_CLIENT_ID: "mth",
+    OIDC_CLIENT_SECRET: "synthetic-test-value",
+    MTH_ENV: "load",
+  };
+
+  it("is accepted with NODE_ENV=production and AUTH_MODE=oidc, for the API, the worker and the CLI", () => {
+    expect(loadConfig("api", loadBase).mthEnv).toBe("load");
+    expect(loadConfig("worker", loadBase).mthEnv).toBe("load");
+    expect(
+      loadConfig("db-cli", { NODE_ENV: "production", DATABASE_OWNER_URL: "postgres://o@h/d", MTH_ENV: "load" }).mthEnv,
+    ).toBe("load");
+  });
+
+  it("needs NODE_ENV=production (a development or test build measures the wrong code path)", () => {
+    for (const nodeEnv of ["development", "test"])
+      expect(
+        problemsOf(() =>
+          loadConfig("worker", { ...loadBase, NODE_ENV: nodeEnv, APP_BASE_URL: "http://localhost:3000" }),
+        ),
+      ).toEqual(["MTH_ENV=load needs NODE_ENV=production"]);
+  });
+
+  it("needs AUTH_MODE=oidc: the dev login is never the load path (and stays refused in production)", () => {
+    expect(problemsOf(() => loadConfig("api", { ...loadBase, AUTH_MODE: "dev" }))).toEqual([
+      "AUTH_MODE=dev is refused when NODE_ENV=production",
+      "MTH_ENV=load needs AUTH_MODE=oidc",
+    ]);
+    expect(
+      problemsOf(() =>
+        loadConfig("worker", {
+          ...loadBase,
+          NODE_ENV: "test",
+          AUTH_MODE: "dev",
+          APP_BASE_URL: "http://localhost:3000",
+        }),
+      ),
+    ).toEqual(["MTH_ENV=load needs NODE_ENV=production", "MTH_ENV=load needs AUTH_MODE=oidc"]);
+  });
+
+  it("the two start-up refusals, with their exact texts", () => {
+    expect(LOAD_ENV_NEEDS_MARKER).toBe("MTH_ENV=load needs a database generated by deploy/load/generate.mjs.");
+    expect(LOAD_MARKER_REFUSES_ENV).toBe(
+      "This database holds the synthetic load dataset and cannot run as production or demo.",
+    );
+    expect(loadDatasetStartupRefusal("load", false)).toBe(LOAD_ENV_NEEDS_MARKER);
+    expect(loadDatasetStartupRefusal("load", true)).toBeNull();
+    expect(loadDatasetStartupRefusal("production", true)).toBe(LOAD_MARKER_REFUSES_ENV);
+    expect(loadDatasetStartupRefusal("demo", true)).toBe(LOAD_MARKER_REFUSES_ENV);
+    expect(loadDatasetStartupRefusal("production", false)).toBeNull();
+    expect(loadDatasetStartupRefusal("demo", false)).toBeNull();
+    for (const env of ["development", "test"] as const) {
+      expect(loadDatasetStartupRefusal(env, true)).toBeNull();
+      expect(loadDatasetStartupRefusal(env, false)).toBeNull();
+    }
+  });
+
+  it("assertLoadDatasetEnvironment reads the marker and throws a ConfigError carrying the refusal", async () => {
+    const seen: string[] = [];
+    const db = (present: boolean) => async (text: string) => {
+      seen.push(text);
+      return { rows: [{ present }] };
+    };
+    await expect(assertLoadDatasetEnvironment("load", db(true))).resolves.toBeUndefined();
+    await expect(assertLoadDatasetEnvironment("production", db(false))).resolves.toBeUndefined();
+    const refused = await assertLoadDatasetEnvironment("load", db(false)).catch((e: unknown) => e);
+    expect(refused).toBeInstanceOf(ConfigError);
+    expect((refused as ConfigError).problems).toEqual([LOAD_ENV_NEEDS_MARKER]);
+    const prod = await assertLoadDatasetEnvironment("production", db(true)).catch((e: unknown) => e);
+    expect((prod as ConfigError).problems).toEqual([LOAD_MARKER_REFUSES_ENV]);
+    expect(seen.every((q) => q === "SELECT EXISTS (SELECT 1 FROM load_dataset_marker) AS present")).toBe(true);
   });
 });

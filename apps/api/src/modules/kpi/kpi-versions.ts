@@ -43,7 +43,7 @@ import { ENGINE_VERSION, FORMULA_DECIMAL as Decimal } from "@mth/shared/calc";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
-import { principalOf, requireTransformationRead, type ResolvedTarget } from "../access/index.ts";
+import { principalOf, requireTransformationRead, type Principal, type ResolvedTarget } from "../access/index.ts";
 import { record, type AuditContext } from "../audit/index.ts";
 import {
   cursorSchema,
@@ -863,7 +863,7 @@ export interface KpiApprovalSubjectProvider {
 export interface KpiApprovalPort {
   readonly requestApproval: (tx: Tx, audit: AuditContext, input: KpiApprovalRequestInput) => Promise<ApprovalRow>;
   readonly registerSubject: (approvalType: string, provider: KpiApprovalSubjectProvider) => void;
-  readonly present: (db: DbOrTx, rows: readonly ApprovalRow[]) => Promise<Approval[]>;
+  readonly present: (db: DbOrTx, principal: Principal, rows: readonly ApprovalRow[]) => Promise<Approval[]>;
 }
 
 /**
@@ -1100,7 +1100,7 @@ export function registerKpiVersionRoutes(
       if (approvals === null) throw unwiredApprovals();
       return requestVersionApproval(ctx, approvals, kpiVersionId, expected, body.requestNote ?? null);
     });
-    const [presented] = await approvals!.present(db, [row]);
+    const [presented] = await approvals!.present(db, principalOf(request), [row]);
     return sendVersioned(reply, 201, presented!, `/api/v1/approvals/${row.id}`);
   });
 

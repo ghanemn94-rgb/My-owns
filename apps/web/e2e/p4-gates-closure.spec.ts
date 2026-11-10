@@ -36,6 +36,16 @@ import {
 
 test.describe.configure({ mode: "serial" });
 
+// Budget (F-DG6-144, the F-DG5-145/146 carry-forward of D-193; p6-work-split §2 rules 13 and 15): 75 s for
+// every test and hook in this file that does not set its own. Measured in the DG6 QA round-2 full product
+// runs at a 1-minute load of 11-21 on 4 CPUs (docs/delivery/test-evidence/DG6/qa/round-2/06-e2e-product-*.log): 6. Modular G3 took 30.8 s, a timeout at the default 30 s (06-e2e-product-unset-en.log and 06b), so at least that long; 26.0 s with a 120 s budget (06c).
+// T-DG6-FE-Z1's loaded full runs (both projects, both locale settings, CPU spinners): see
+// docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt. The budget is at least 2x the worst of
+// these, rounded up to 15 s, and never below 60 s.
+// T-DG6-FE-Z1B: raised from 75 s to 120 s. In the z1b loaded full runs (load 21-26, above the review's 11-21;
+// docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/z1b-*.log) the test in row :426 of z1b-budget-table-pass2.txt took 57.8 s; 2x rounded up to 15 s.
+test.setTimeout(120_000);
+
 let tid = "";
 let mid = "";
 let T = "";
@@ -124,6 +134,8 @@ async function passGate(base: string, code: string, submitter: ApiSession, appro
 }
 
 test.beforeAll(async ({ playwright }, info) => {
+  // Budget measured (F-DG6-144 sweep, T-DG6-FE-Z1B): in the DG6 QA round-2 full runs and T-DG6-FE-Z1's run1 (under load),
+  // the hook is timed inside the test it precedes; the slowest test after it in this file took 40.3 s; the budget is at least 2x that. Table: docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt.
   test.setTimeout(240_000);
   const lang = langOf(info);
   lead = await apiSession(playwright, "dev.lead");
@@ -668,7 +680,11 @@ test("9. the auditor sees read-only views; 390 px wide and 200 % text without pa
   // D-173 (T-DG5-BE-X1's disclosure): 16-18 s unloaded (D-171) but 29.5-30.2 s under review load, so the 30 s default
   // left no headroom; 60 s keeps more than 2x headroom over the worst measured run. Test reliability only: nothing
   // asserted changes.
-  test.setTimeout(60_000);
+  // F-DG6-144: raised to 90 s, at least 2x its worst loaded time (40.3 s in the DG6 QA round-2 full product runs,
+  // docs/delivery/test-evidence/DG6/qa/round-2/06-e2e-product-*.log; T-DG6-FE-Z1-evidence/budget-table.txt), rounded up to 15 s.
+  // T-DG6-FE-Z1B: raised from 90 s to 150 s. In the z1b loaded full runs (load 21-26, above the review's 11-21;
+  // docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/z1b-*.log) the test in row :675 of z1b-budget-table-pass2.txt took 72.0 s; 2x rounded up to 15 s.
+  test.setTimeout(150_000);
   const lang = langOf(info);
   const audUi = await asUser(browser, lang, auditor.username);
   const page = audUi.page;

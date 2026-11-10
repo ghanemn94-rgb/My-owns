@@ -28,11 +28,19 @@ const P5_AUTOMATION_JOBS = [
   "gate.condition_escalation_scan",
   "governance.meeting_cutoff_scan",
   "notification.digest",
+  "notifications.delivery_sweep", // T-DG6-BE-I2 (0121)
 ];
 // Seeded by 0080 (T-DG5-ARCH-04; ADR-0045 §6, §10); unhandled until KBE-D registers the owner-update task handler.
 const P5_REPORT_JOBS = ["reports.owner_update_tasks"];
 // T-DG5-ARCH-05 (0086; ADR-0048 §4): the Day-90 test task job, handled once BE-P2 fills the launch worker stub.
 const P5_LAUNCH_JOBS = ["launch.day_ninety_tests"];
+// T-DG6-BE-P (0115; ADR-0057 §2): the search index feed and the weekly reindex; this test passes no search handler.
+const P6_SEARCH_JOBS = ["search.index_feed", "search.reindex"];
+// T-DG6-BE-L2 (0116; ADR-0055 §2): the connector cadence job; this test passes no integrations handler.
+const P6_CONNECTOR_JOBS = ["integrations.connector_run"];
+// T-DG6-BE-K2 (0117; ADR-0053 §2, §6): the KPI freshness scan and the exception alerts; this test passes no
+// operations handler.
+const P6_OPERATIONS_JOBS = ["kpi.freshness_scan", "operations.exception_alerts"];
 // The rows are listed by code (ORDER BY code; ASCII codes, so the default sort is the same order).
 const unhandledOf = (...codes: string[]) => [...codes].sort();
 const GOVERNANCE_JOBS = [
@@ -117,6 +125,9 @@ describe("job schedule registration (ADR-0025 §3)", () => {
         ...P5_AUTOMATION_JOBS,
         ...P5_REPORT_JOBS,
         ...P5_LAUNCH_JOBS,
+        ...P6_SEARCH_JOBS,
+        ...P6_CONNECTOR_JOBS,
+        ...P6_OPERATIONS_JOBS,
       ),
     });
     const s = await schedules();
@@ -144,6 +155,9 @@ describe("job schedule registration (ADR-0025 §3)", () => {
         ...P5_AUTOMATION_JOBS,
         ...P5_REPORT_JOBS,
         ...P5_LAUNCH_JOBS,
+        ...P6_SEARCH_JOBS,
+        ...P6_CONNECTOR_JOBS,
+        ...P6_OPERATIONS_JOBS,
       ),
     });
     const s = await schedules();

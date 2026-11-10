@@ -53,7 +53,7 @@ describe("evidence module (P2)", () => {
     ]);
   });
 
-  it("registers the thirteen contract routes, each declaring its access (T-DG5-BE-O: the register and versions)", async () => {
+  it("registers the fourteen contract routes, each declaring its access (T-DG5-BE-O: the register and versions; T-DG6-BE-D: the preview)", async () => {
     const app = Fastify({ logger: false });
     const routes: { key: string; access: unknown }[] = [];
     app.addHook("onRoute", (r) => {
@@ -63,13 +63,14 @@ describe("evidence module (P2)", () => {
     const registration = mod.registerEvidenceModule(app, deps);
     await app.ready();
     expect(routes.map((r) => r.key).sort()).toEqual([...registration.routes].sort());
-    expect(registration.routes).toHaveLength(13);
+    expect(registration.routes).toHaveLength(14);
     for (const r of routes) expect(r.access, r.key).toBeTruthy();
     expect(routes.find((r) => r.key.endsWith("/review"))?.access).toEqual({ permission: "evidence.review" });
     expect(routes.find((r) => r.key.endsWith("/evidence-register"))?.access).toEqual({
       permission: "transformation.read",
     });
     expect(routes.find((r) => r.key.endsWith("/versions"))?.access).toEqual({ permission: "transformation.read" });
+    expect(routes.find((r) => r.key.endsWith("/preview"))?.access).toEqual({ permission: "transformation.read" });
     await app.close();
   });
 

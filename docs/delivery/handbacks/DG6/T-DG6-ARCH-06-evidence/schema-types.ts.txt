@@ -1,0 +1,58 @@
+export interface BrandingContrastReportTable {
+  id: string;
+  organization_id: string;
+  branding_version_no: number;
+  rules: string;
+  token_source_sha256: string;
+  pair_count: number;
+  created_at: TimestampDefault;
+  created_by: string;
+}
+
+export interface BrandingContrastPairTable {
+  id: string;
+  report_id: string;
+  ordinal: number;
+  fg_token: string;
+  bg_token: string;
+  use: string;
+  fg_hex: string;
+  bg_hex: string;
+  ratio: string;
+  threshold: string;
+  usage_note: string;
+  created_at: TimestampDefault;
+}
+
+export interface Database {
+  branding_contrast_report: BrandingContrastReportTable;
+  branding_contrast_pair: BrandingContrastPairTable;
+}
+
+export type BrandingContrastReportRow = Selectable<BrandingContrastReportTable>;
+export type BrandingContrastPairRow = Selectable<BrandingContrastPairTable>;
+// ---- SCHEMA_COLUMNS entries
+  branding_contrast_report: [
+    "id",
+    "organization_id",
+    "branding_version_no",
+    "rules",
+    "token_source_sha256",
+    "pair_count",
+    "created_at",
+    "created_by",
+  ],
+  branding_contrast_pair: [
+    "id",
+    "report_id",
+    "ordinal",
+    "fg_token",
+    "bg_token",
+    "use",
+    "fg_hex",
+    "bg_hex",
+    "ratio",
+    "threshold",
+    "usage_note",
+    "created_at",
+  ],

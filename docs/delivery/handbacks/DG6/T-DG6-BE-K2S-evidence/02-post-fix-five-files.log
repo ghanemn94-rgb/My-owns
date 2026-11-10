@@ -1,0 +1,23 @@
+port-policy: PostgreSQL listening on port 25450 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-k2s
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvuh0fv3_50223cb2 (server_encoding UTF8); applied 110 migrations to a fresh database
+ ✓ |integration| apps/worker/test/integration/starters.test.ts (25 tests) 7068ms
+ ✓ |integration| apps/worker/test/integration/adoption-below-trajectory.test.ts (14 tests) 6584ms
+   ✓ the outbox relay fans kpi.deviation_evaluated out (D-102) > one event reaches both consumers exactly once; a relay retry and a replayed send duplicate nothing  496ms
+ ✓ |integration| apps/worker/test/integration/schedules.test.ts (2 tests) 5484ms
+ ✓ |integration| apps/worker/test/integration/operations-freshness.test.ts (7 tests) 5635ms
+ ✓ |integration| apps/worker/test/integration/connector-failure-exception.test.ts (2 tests) 6979ms
+   ✓ connector.run_failed: two consumers, one exception (ADR-0053 §2, §3; ADR-0055 §2; D-102) > fans out to the connector-exception consumer and the engine; exactly one open exception, one starter-16 v2 execution  782ms
+   ✓ connector.run_failed: two consumers, one exception (ADR-0053 §2, §3; ADR-0055 §2; D-102) > a later final failure of the same connector recurs the one exception (count 2), never opens a second  1110ms
+
+ Test Files  5 passed (5)
+      Tests  50 passed (50)
+   Start at  04:27:01
+   Duration  49.72s (transform 4.08s, setup 0ms, collect 8.87s, tests 31.75s, environment 0ms, prepare 115ms)
+

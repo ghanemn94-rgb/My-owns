@@ -1,7 +1,6 @@
 // Dependency Map (T08) API hooks (T-DG3-FE-B; ADR-0023 §4-§5). The T08 rows live on the canonical dependency record at
 // /api/v1/dependencies (the DG2 paths under /transformations/{id}/dependencies are not used here). Keys: p3Keys.
 import { useQuery } from "@tanstack/react-query";
-import { api } from "../../api/client.ts";
 import { fetchAllPages, p3Keys, shouldRetry } from "../../api/queries.ts";
 import type { T08Dependency } from "../roadmap/api.ts";
 
@@ -36,7 +35,7 @@ export function useT08Dependencies(tid: string) {
 export function useDependencyTypes() {
   return useQuery({
     queryKey: p3Keys.dependencyTypes,
-    queryFn: async () => (await api.get<{ items: DependencyType[] }>("/api/v1/dependency-types")).items,
+    queryFn: () => fetchAllPages<DependencyType>("/api/v1/dependency-types"),
     retry: shouldRetry,
   });
 }

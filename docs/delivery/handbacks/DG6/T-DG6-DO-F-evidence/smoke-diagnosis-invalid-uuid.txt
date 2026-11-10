@@ -1,0 +1,36 @@
+user 3e23f9e4-d64e-496c-0562-938142305301 t affbdb8f-7186-5075-5472-f0e356199bdc i 7d096717-8234-f08f-559d-a277969b1351
+== GET /api/v1/initiatives/7d096717-8234-f08f-559d-a277969b1351
+{"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"The request is not valid.","code":"validation","requestId":"01a18bcf-7858-724a-8837-b6a81d0e644d","errors":[{"pointer":"/params/initiativeId","code":"validation.invalid_format","message":"Invalid UUID"}]}
+== GET /api/v1/transformations/affbdb8f-7186-5075-5472-f0e356199bdc
+{"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"The request is not valid.","code":"validation","requestId":"01a18bcf-7880-760d-8ed7-888917052d4f","errors":[{"pointer":"/params/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}]}
+== GET /api/v1/overview
+{"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"The request is not valid.","code":"validation","requestId":"01a18bcf-7896-747b-b99d-612d6f02a9a9","errors":[{"pointer":"/query/organizationId","code":"validation.invalid_type","message":"Invalid input: expected string, received undefined"}]}
+== GET /api/v1/dashboards/finance
+{"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"The request is not valid.","code":"validation","requestId":"01a18bcf-78af-7588-98d1-2f50372f10e6","errors":[{"pointer":"/query/organizationId","code":"validation.invalid_type","message":"Invalid input: expected string, received undefined"}]}
+== GET /api/v1/initiatives?transformationId=affbdb8f-7186-5075-5472-f0e356199bdc&limit=5&sort=code
+{"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"The request is not valid.","code":"validation","requestId":"01a18bcf-78c7-7729-a074-1520d2ccba8d","errors":[{"pointer":"/query/transformationId","code":"validation.invalid_format","message":"Invalid UUID"}]}
+== POST saved view
+{"type":"urn:mth:problem:csrf","title":"CSRF check failed","status":403,"detail":"The Origin header does not match the application origin.","code":"csrf","requestId":"01a18bcf-78e5-75ee-878b-98d059efb000"}
+ADM_ACCESS|saved_view.manage
+ADM_METHOD|saved_view.manage
+ADM_TECH|saved_view.manage
+AUD|
+BO|saved_view.share,saved_view.manage,export.create,report.generate,form_record.comment
+CM|saved_view.manage,form_record.comment,export.create,report.generate
+FIN|report.generate,form_record.comment,export.create,saved_view.manage
+KDS|export.create,report.generate,form_record.comment,saved_view.manage,saved_view.share
+SEC|saved_view.manage,export.create,report.generate
+SP|form_record.comment,report.generate,export.create,saved_view.manage
+TD|export.create,report.generate,saved_view.share,saved_view.manage,form_record.comment
+TL|form_record.comment,report.generate,export.create,initiative.edit,saved_view.manage,saved_view.share
+TO|form_record.comment,initiative.edit,report.generate,export.create,saved_view.manage,saved_view.share
+WL|report.generate,export.create,initiative.edit,saved_view.manage,saved_view.share,form_record.comment
+01920006-0400-7000-8000-000000000001|transformation|idle|954|2026-10-30 07:55:00.236798+00||||||2|2026-10-30 07:44:47.00987+00|2026-10-30 07:55:00.236798+00
+01920006-0400-7000-8000-000000000004|benefit|idle|70860|||||||21|2026-10-30 07:44:47.00987+00|2026-10-30 07:55:33.307112+00
+ERROR:  column "status" does not exist
+LINE 1: select status, count(*) from pgboss.job where name like 'sea...
+               ^
+HINT:  Perhaps you meant to reference the column "job.state".
+{"level":"info","msg":"job schedules registered","scheduled":["approval.escalation_scan","automation.tick_daily","automation.tick_hourly","delegation.expiry_sweep","gate.condition_escalation_scan","gate.exception_expiry_scan","governance.blocker_escalation_scan","governance.decision_sla_scan","governance.meeting_cutoff_scan","governance.meeting_series_generate","integrations.connector_run","kpi.freshness_scan","kpi.reporting_period_open","launch.day_ninety_tests","notification.digest","operations.exception_alerts","reports.owner_update_tasks","search.index_feed","search.reindex","sustainment.control_check_scan","sustainment.review_scan"],"unscheduled":[],"unhandled":[]}
+{"level":"info","msg":"job schedules registered","scheduled":["approval.escalation_scan","automation.tick_daily","automation.tick_hourly","delegation.expiry_sweep","gate.condition_escalation_scan","gate.exception_expiry_scan","governance.blocker_escalation_scan","governance.decision_sla_scan","governance.meeting_cutoff_scan","governance.meeting_series_generate","integrations.connector_run","kpi.freshness_scan","kpi.reporting_period_open","launch.day_ninety_tests","notification.digest","operations.exception_alerts","reports.owner_update_tasks","search.index_feed","search.reindex","sustainment.control_check_scan","sustainment.review_scan"],"unscheduled":[],"unhandled":[]}
+{"level":"info","msg":"job handled","queue":"search.index_feed","jobId":"442eba7a-1b9e-4609-89b1-8b221dc9d30a","attempt":{"retryCount":0,"retryLimit":5},"outcome":{"types":[{"recordType":"transformation","outcome":"indexed","events":50,"upserted":50,"deleted":0,"lastAuditSeq":"954","errorCode":null},{"recordType":"initiative","outcome":"indexed","events":10000,"upserted":10000,"deleted":0,"lastAuditSeq":"43360","errorCode":null},{"recordType":"kpi_definition","outcome":"indexed","events":10000,"upserted":10000,"deleted":0,"lastAuditSeq":"62860","errorCode":null},{"recordType":"benefit","outcome":"indexed","events":10000,"upserted":8000,"deleted":0,"lastAuditSeq":"70860","errorCode":null},{"recordType":"raid_entry","outcome":"indexed","events":1500,"upserted":1500,"deleted":0,"lastAuditSeq":"25216","errorCode":null},{"recordType":"dependency","outcome":"indexed","events":500,"upserted":500,"deleted":0,"lastAuditSeq":"25223","errorCode":null},{"recordType":"decision","outcome":"indexed","events":500,"upserted":500,"deleted":0,"lastAuditSeq":"25230","errorCode":null},{"recordType":"deliverable","outcome":"indexed","events":1000,"upserted":1000,"deleted":0,"lastAuditSeq":"25245","errorCode":null},{"recordType":"evidence","outcome":"indexed","events":1000,"upserted":1000,"deleted":0,"lastAuditSeq":"25260","errorCode":null},{"recordType":"business_case","outcome":"indexed","events":0,"upserted":0,"deleted":0,"lastAuditSeq":"0","errorCode":null},{"recordType":"lesson","outcome":"indexed","events":0,"upserted":0,"deleted":0,"lastAuditSeq":"0","errorCode":null},{"recordType":"change_request","outcome":"indexed","events":0,"upserted":0,"deleted":0,"lastAuditSeq":"0","errorCode":null}]}}

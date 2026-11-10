@@ -52,7 +52,7 @@ import { Decimal } from "decimal.js";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
-import { principalOf, requireTransformationRead } from "../access/index.ts";
+import { hideRestrictedRefs, keptRestrictedRef, principalOf, requireTransformationRead } from "../access/index.ts";
 import { record } from "../audit/index.ts";
 import { createConfigResolver, type ConfigResolver } from "../methodology/index.ts";
 import {
@@ -531,6 +531,15 @@ async function putAnswer(
     .where("question_code", "=", questionCode)
     .forUpdate()
     .executeTakeFirst();
+  // T-DG6-BE-Z10B (F-DG6-420; D-218; the Day-90 rule): an assessor not admitted to the stored evidence (shown to them as
+  // `evidenceId: null`) keeps it on a re-save; only another evidence id sent explicitly replaces it.
+  next.evidence_id = await keptRestrictedRef(
+    tx,
+    principalOf(request),
+    "evidence",
+    existing?.evidence_id,
+    body.evidenceId,
+  );
 
   let answered = a.answered_count;
   if (!existing) {
@@ -796,6 +805,16 @@ export function registerHealthAssessmentRoutes(
   const readOnly = <T>(fn: (tx: Tx) => Promise<T>) =>
     db.transaction().setIsolationLevel("repeatable read").setAccessMode("read only").execute(fn);
 
+  /**
+   * T-DG6-BE-Z10 / Z10B (F-DG6-420; D-218): an answer's evidence the reader is not admitted to is shown as evidenceId
+   * null with includesRestrictedRecords, in the item read AND in every write response (create, PATCH, answer, actions,
+   * submit), so a write never echoes a restricted id the read would hide.
+   */
+  const shown = async (request: FastifyRequest, body: HealthCheck): Promise<HealthCheck> => ({
+    ...body,
+    answers: await hideRestrictedRefs(db, principalOf(request), "evidence", body.answers, "evidenceId"),
+  });
+
   app.get(HEALTH_CHECKS, { config: read }, async (request) => {
     const { transformationId } = parse(transformationParams, request.params, "params");
     const query = parseQuery(listQuery, request.query);
@@ -823,14 +842,14 @@ export function registerHealthAssessmentRoutes(
       const id = await createAssessment(tx, request, transformationId, resolver);
       return presentHealthCheck(tx, transformationId, id);
     });
-    return sendVersioned(reply, 201, body, `${request.url.split("?")[0]!}/${body.id}`);
+    return sendVersioned(reply, 201, await shown(request, body), `${request.url.split("?")[0]!}/${body.id}`);
   });
 
   app.get(HEALTH_CHECK, { config: read }, async (request, reply) => {
     const { transformationId, assessmentId } = parse(assessmentParams, request.params, "params");
     await requireTransformationRead(db, principalOf(request), transformationId);
     const body = await readOnly((tx) => presentHealthCheck(tx, transformationId, assessmentId));
-    return sendVersioned(reply, 200, body);
+    return sendVersioned(reply, 200, await shown(request, body));
   });
 
   app.patch(HEALTH_CHECK, { config: assess }, async (request, reply) => {
@@ -839,7 +858,7 @@ export function registerHealthAssessmentRoutes(
       await updateAssessment(tx, request, transformationId, assessmentId);
       return presentHealthCheck(tx, transformationId, assessmentId);
     });
-    return sendVersioned(reply, 200, body);
+    return sendVersioned(reply, 200, await shown(request, body));
   });
 
   app.put(HEALTH_CHECK_ANSWER, { config: assess }, async (request, reply) => {
@@ -848,7 +867,7 @@ export function registerHealthAssessmentRoutes(
       await putAnswer(tx, request, transformationId, assessmentId, questionCode);
       return presentHealthCheck(tx, transformationId, assessmentId);
     });
-    return sendVersioned(reply, 200, body);
+    return sendVersioned(reply, 200, await shown(request, body));
   });
 
   app.put(HEALTH_CHECK_ACTIONS, { config: assess }, async (request, reply) => {
@@ -857,7 +876,7 @@ export function registerHealthAssessmentRoutes(
       await putActions(tx, request, transformationId, assessmentId);
       return presentHealthCheck(tx, transformationId, assessmentId);
     });
-    return sendVersioned(reply, 200, body);
+    return sendVersioned(reply, 200, await shown(request, body));
   });
 
   app.post(HEALTH_CHECK_SUBMIT, { config: action }, async (request, reply) => {
@@ -866,7 +885,7 @@ export function registerHealthAssessmentRoutes(
       await submitAssessment(tx, request, transformationId, assessmentId);
       return presentHealthCheck(tx, transformationId, assessmentId);
     });
-    return sendVersioned(reply, 200, body);
+    return sendVersioned(reply, 200, await shown(request, body));
   });
 
   return [

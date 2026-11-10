@@ -61,6 +61,7 @@ import {
   type DashboardContext,
 } from "./engine.ts";
 import { appliedFilters, asIdList, drilldownHref, organizationFilterShape, resolveFilters } from "./filters.ts";
+import { dashboardRestriction } from "./restricted.ts";
 import { readableTransformations } from "./scope.ts";
 
 export const FINANCE_DASHBOARD = "/api/v1/dashboards/finance";
@@ -321,7 +322,8 @@ export function registerFinanceDashboardRoutes(app: FastifyInstance, { db }: Mod
       const query = parseQuery(financeQuery, request.query);
       const transformationIds = asIdList(query.transformationId);
       return readOnly(db, async (tx) => {
-        const scope = await readableTransformations(tx, principalOf(request), query.organizationId, {
+        const principal = principalOf(request);
+        const scope = await readableTransformations(tx, principal, query.organizationId, {
           transformationIds,
           phase: query.phase ?? null,
           status: query.status ?? null,
@@ -335,6 +337,8 @@ export function registerFinanceDashboardRoutes(app: FastifyInstance, { db }: Mod
           status: query.status,
         });
         const ctx = await loadDashboardContext(tx, scope, filters);
+        // P6 (T-DG6-BE-B2; ADR-0051 §2): same figures for every reader, labelled when they include restricted records.
+        const restriction = await dashboardRestriction(tx, principal, ctx.facts);
         const results = computeAreas(ctx.facts, ctx.clock, ctx.policy);
         const areas = presentAreas(ctx, results, await loadAreaDefinitions(tx), {
           drillTransformationIds: transformationIds,
@@ -393,6 +397,7 @@ export function registerFinanceDashboardRoutes(app: FastifyInstance, { db }: Mod
             name: t.name,
             areaStatuses: areaStatuses(computeAreas(factsOfTransformation(ctx.facts, t.id), ctx.clock, ctx.policy)),
           })),
+          ...restriction.field,
         };
       });
     },

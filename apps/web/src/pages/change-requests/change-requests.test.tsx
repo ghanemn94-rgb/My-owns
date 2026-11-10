@@ -143,7 +143,7 @@ function render(locale: "en" | "ar", path: string, extra: Handler[] = []) {
         headers: { ETag: '"0"' },
       })),
       route("GET", /\/api\/v1\/initiatives\?/, () => page([INI])),
-      route("GET", new RegExp(`/api/v1/initiatives/${INI.id}/milestones$`), () => ({
+      route("GET", new RegExp(`/api/v1/initiatives/${INI.id}/milestones(\\?|$)`), () => ({
         status: 200,
         body: {
           items: [

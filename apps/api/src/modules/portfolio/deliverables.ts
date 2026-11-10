@@ -34,6 +34,9 @@ import {
   problems,
   sendVersioned,
   type ModuleDeps,
+  keysetPage,
+  pageQueryFields,
+  type SortKey,
 } from "../platform/index.ts";
 import { assertActiveUsers, bumpStamps, loose, openWrite, type LooseRow } from "../transformations/index.ts";
 import { checkVersion, dateText, forbiddenProblem, JSON_BODY, lockForWrite, transitionProblem } from "./waves.ts";
@@ -326,7 +329,12 @@ async function decideDeliverable(tx: Tx, request: FastifyRequest, id: string): P
 
 const iParams = z.strictObject({ initiativeId: z.uuid() });
 const dParams = z.strictObject({ deliverableId: z.uuid() });
-const listQuery = z.strictObject({ includeArchived: z.stringbool().default(false) });
+const listQuery = z.strictObject({ includeArchived: z.stringbool().default(false), ...pageQueryFields });
+/** The page sort of one initiative's deliverables (ADR-0007 §4, T-DG6-BE-V): ordinal, then id. */
+const DELIVERABLE_SORT: readonly SortKey[] = [
+  { name: "ordinal", type: "integer" },
+  { name: "id", type: "uuid" },
+];
 const ITEM = "/api/v1/deliverables/:deliverableId";
 const COLLECTION = "/api/v1/initiatives/:initiativeId/deliverables";
 
@@ -336,9 +344,29 @@ export function registerDeliverableRoutes(app: FastifyInstance, { db }: ModuleDe
     const { initiativeId } = parse(iParams, request.params, "params");
     const query = parseQuery(listQuery, request.query);
     const ini = await readableInitiative(db, request, initiativeId);
-    const rows = await loadDeliverables(db, ini.transformation_id, [initiativeId], query.includeArchived);
-    const active = rows.filter((r) => r.status === "active").length;
-    return { items: rows.map(toDeliverable), countWarning: deliverableCountWarning(active) };
+    let q = db
+      .selectFrom("deliverable")
+      .selectAll()
+      .where("transformation_id", "=", ini.transformation_id)
+      .where("initiative_id", "=", initiativeId);
+    if (!query.includeArchived) q = q.where("status", "=", "active");
+    const page = await keysetPage(q, DELIVERABLE_SORT, query, {
+      list: "deliverables",
+      initiativeId,
+      includeArchived: query.includeArchived,
+    });
+    // The 3-7 warning counts every active deliverable of the initiative, not the page.
+    const { active } = await db
+      .selectFrom("deliverable")
+      .select((eb) => eb.fn.countAll<string>().as("active"))
+      .where("initiative_id", "=", initiativeId)
+      .where("status", "=", "active")
+      .executeTakeFirstOrThrow();
+    return {
+      items: page.items.map(toDeliverable),
+      nextCursor: page.nextCursor,
+      countWarning: deliverableCountWarning(Number(active)),
+    };
   });
 
   app.post(

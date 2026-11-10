@@ -1,0 +1,67 @@
+$ (clean clone at 4edfe8faa, without BE-Q2 changes) QA_PG_PORT=25793 MTH_PORT_POOL=25794-25799 tests/qa/support/with-pg.sh npx vitest run --project integration apps/api/test/integration/assistant/conversations.test.ts
+port-policy: PostgreSQL listening on port 25793 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.NC6AaE/claude-0/head-clone
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvv2rr6n_c0953446 (server_encoding UTF8); applied 110 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/assistant/conversations.test.ts (17 tests | 1 failed) 6821ms
+   ✓ off means no call (REQ-S17-009; ADR-0059 §3) > with no setting row: create is 422 assistant.disabled, the list is empty and readable 55ms
+   ✓ off means no call (REQ-S17-009; ADR-0059 §3) > an http endpoint saved but DISABLED gets zero requests: post and create answer 422; history stays readable 230ms
+   ✓ off means no call (REQ-S17-009; ADR-0059 §3) > enabled with the HTTP endpoint, BE-T's stub seam answers no_sources and still sends nothing to the model 113ms
+   ✓ authorization and ownership (ADR-0059 §10) > AUD and a user without assistant.use get 403 on every conversation route 59ms
+   ✓ authorization and ownership (ADR-0059 §10) > another user's conversation is 404 on read and post, and never listed 58ms
+   ✓ authorization and ownership (ADR-0059 §10) > a focus transformation the caller cannot read is 404 (TL on tA1 asks about tA2); a readable one is accepted 59ms
+   ✓ authorization and ownership (ADR-0059 §10) > create: validation (400), version 1 with no message, Location and ETag, one audit event 34ms
+   ✓ authorization and ownership (ADR-0059 §10) > create re-checks assistant.use at commit: revoked while waiting is 403 and nothing is created 45ms
+   ✓ postAssistantMessage (ADR-0059 §9) > validation (400), If-Match (428 missing, 409 stale), then one turn: prompt + reply, two versions, two audit events 105ms
+   ✓ postAssistantMessage (ADR-0059 §9) > post re-checks assistant.use at commit: revoked while waiting is 403 and nothing is appended 55ms
+   ✓ postAssistantMessage (ADR-0059 §9) > a reply still awaited is 409 assistant.reply_pending; one awaited past the timeout + 60 s is recovered as `interrupted` 69ms
+   ✓ postAssistantMessage (ADR-0059 §9) > a conversation with 98 messages takes one last turn (100); then 422 assistant.conversation_full, nothing appended 216ms
+   ✓ postAssistantMessage (ADR-0059 §9) > when an `interrupted` reply must be appended first, at most 97 messages so far: 97 takes a turn, 99 is full  555ms
+   ✓ the list (cursor-paginated, own only, updatedAt desc then id desc) > pages with a stable order; a tampered cursor is 400; the transformation filter applies 181ms
+   ✓ the read-time ReadScope re-check (ADR-0059 §9; REQ-S17-007) > an answer citing a record the owner can no longer read is withheld (content null, readable false), with its suggestion 135ms
+   ✓ the read-time ReadScope re-check (ADR-0059 §9; REQ-S17-007) > a citation of a record that is not (or no longer) indexed is treated as unreadable (fail closed) 162ms
+   × the rate-limit class `assistant` and the log line (ADR-0052 §4; ADR-0059 §9 rule 3) > over the per-minute budget a post is 429 with Retry-After; each post writes one log line without the prompt 719ms
+     → expected { …(8) } to match object { …(5) }
+(3 matching properties omitted from actual)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/assistant/conversations.test.ts > the rate-limit class `assistant` and the log line (ADR-0052 §4; ADR-0059 §9 rule 3) > over the per-minute budget a post is 429 with Retry-After; each post writes one log line without the prompt
+AssertionError: expected { …(8) } to match object { …(5) }
+(3 matching properties omitted from actual)
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[2m    "conversationId": "01a18d3d-c6da-7248-af34-080c81749456",[22m
+[32m-   "dataItems": 0,[39m
+[31m+   "dataItems": 1,[39m
+[2m    "droppedSuggestions": 0,[22m
+[2m    "messageSeq": 2,[22m
+[32m-   "replyKind": "no_sources",[39m
+[31m+   "replyKind": "answer",[39m
+[2m  }[22m
+
+ ❯ apps/api/test/integration/assistant/conversations.test.ts:670:32
+    668|       expect(assistantLines).toHaveLength(2);
+    669|       const parsed = JSON.parse(assistantLines[0]!) as Body;
+    670|       expect(parsed.assistant).toMatchObject({
+       |                                ^
+    671|         conversationId: conv.body.id,
+    672|         messageSeq: 2,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 16 passed (17)
+   Start at  14:36:07
+   Duration  31.05s (transform 8.87s, setup 0ms, collect 17.72s, tests 6.82s, environment 0ms, prepare 155ms)
+
+exit=1

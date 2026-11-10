@@ -1,0 +1,109 @@
+# BEFORE-FIX (item 2): apps/api/src/modules/operations/exceptions.ts apps/api/src/modules/operations/routes.ts apps/api/src/modules/integrations/routes.ts apps/api/src/modules/integrations/connectors.ts apps/api/test/support/sensitive-reference-inventory.ts written back to HEAD d6d185d30 via git show HEAD:<path>; kept: the new test served-error-text-restricted-z13c.test.ts and the widened catalog pattern in sensitive-reference-inventory.test.ts
+port-policy: PostgreSQL listening on port 31252 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-z13c
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw8gtzx2_22bfecdd (server_encoding UTF8); applied 118 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/access/served-error-text-restricted-z13c.test.ts (4 tests | 2 failed) 1123ms
+   × D-228 (2): served error texts that embed a hidden record id show the restricted marker > operational exception: lastErrorMessage (job failure) is redacted in list, get, acknowledge and resolve 52ms
+     → expected { …(22) } to match object { …(2) }
+(21 matching properties omitted from actual)
+   × D-228 (2): served error texts that embed a hidden record id show the restricted marker > integration run: errorMessage and the actionable error's params are redacted in the test run, list, detail and connector 138ms
+     → expected { …(24) } to match object { …(2) }
+(27 matching properties omitted from actual)
+   ✓ D-228 (2): served error texts that embed a hidden record id show the restricted marker > execution history: errorDetail naming the benefit is redacted for AUD (list and get) 91ms
+   ✓ D-228 (2): served error texts that embed a hidden record id show the restricted marker > after an explicit grant, the same readers see the real error texts and no marker 103ms
+stdout | apps/api/test/integration/access/sensitive-reference-inventory.test.ts > T-DG6-BE-Z12: the sensitive-reference inventory matches the schema (F-DG6-480 class) > every reference column of the catalog is classified, with its kind, and no row is stale
+[BE-Z12 inventory] catalog: fk=54 uuid=59 json=84 array=2 text=77
+
+stdout | apps/api/test/integration/access/sensitive-reference-inventory.test.ts > T-DG6-BE-Z12: the sensitive-reference inventory matches the schema (F-DG6-480 class) > every operation, exercise and status is real
+[BE-Z12 inventory] redacted=56 holder-restricted=54 cannot-name=135 D-219=2 not-served=22 own-input=3
+
+ ❯ |integration| apps/api/test/integration/access/sensitive-reference-inventory.test.ts (2 tests | 1 failed) 96ms
+   × T-DG6-BE-Z12: the sensitive-reference inventory matches the schema (F-DG6-480 class) > every reference column of the catalog is classified, with its kind, and no row is stale 91ms
+     → a reference column of the schema is not in the inventory: expected [ …(4) ] to deeply equal []
+   ✓ T-DG6-BE-Z12: the sensitive-reference inventory matches the schema (F-DG6-480 class) > every operation, exercise and status is real 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reference-inventory.test.ts > T-DG6-BE-Z12: the sensitive-reference inventory matches the schema (F-DG6-480 class) > every reference column of the catalog is classified, with its kind, and no row is stale
+AssertionError: a reference column of the schema is not in the inventory: expected [ …(4) ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   "automation_execution.error_detail (text)",[39m
+[31m+   "operational_failure.error_message (text)",[39m
+[31m+   "operational_exception.last_error_message (text)",[39m
+[31m+   "integration_run.error_message (text)",[39m
+[31m+ ][39m
+
+ ❯ apps/api/test/integration/access/sensitive-reference-inventory.test.ts:105:81
+    103|     for (const k of found.values()) counts.set(k, (counts.get(k) ?? 0)…
+    104|     console.log(`[BE-Z12 inventory] catalog: ${[...counts].map(([k, n]…
+    105|     expect(missing, "a reference column of the schema is not in the in…
+       |                                                                                 ^
+    106|     expect(stale, "an inventory row names a column the schema does not…
+    107|     expect(wrongKind).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/served-error-text-restricted-z13c.test.ts > D-228 (2): served error texts that embed a hidden record id show the restricted marker > operational exception: lastErrorMessage (job failure) is redacted in list, get, acknowledge and resolve
+AssertionError: expected { …(22) } to match object { …(2) }
+(21 matching properties omitted from actual)
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[32m-   "includesRestrictedRecords": true,[39m
+[32m-   "lastErrorMessage": "benefit [restricted] is not in organization 01a1bd80-3b0f-750e-ba70-7c9928b658b0",[39m
+[31m+   "lastErrorMessage": "benefit 01a1bd80-3c1c-7506-9976-159e8454618b is not in organization 01a1bd80-3b0f-750e-ba70-7c9928b658b0",[39m
+[2m  }[22m
+
+ ❯ apps/api/test/integration/access/served-error-text-restricted-z13c.test.ts:163:64
+    161|     };
+    162|     const list = ok(await send("GET", `${EXC}?organizationId=${w.orgA.…
+    163|     expect(list.items.find((e: Body) => e.id === S.exception)).toMatch…
+       |                                                                ^
+    164|     const unrelated = list.items.find((e: Body) => e.id === S.otherExc…
+    165|     expect(unrelated.lastErrorMessage).toBe("synthetic unrelated fault…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/served-error-text-restricted-z13c.test.ts > D-228 (2): served error texts that embed a hidden record id show the restricted marker > integration run: errorMessage and the actionable error's params are redacted in the test run, list, detail and connector
+AssertionError: expected { …(24) } to match object { …(2) }
+(27 matching properties omitted from actual)
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[32m-   "errorMessage": StringContaining "z13c-[restricted]",[39m
+[32m-   "includesRestrictedRecords": true,[39m
+[31m+   "errorMessage": "The secret reference z13c-01a1bd80-3c1c-7506-9976-159e8454618b could not be resolved. {name=z13c-01a1bd80-3c1c-7506-9976-159e8454618b}",[39m
+[2m  }[22m
+
+ ❯ apps/api/test/integration/access/served-error-text-restricted-z13c.test.ts:251:20
+    249|     const masked = expect.stringContaining(`z13c-${MARKER}`);
+    250|     const expected = { errorMessage: masked, includesRestrictedRecords…
+    251|     expect(tested).toMatchObject(expected);
+       |                    ^
+    252|     const list = ok(await send("GET", `/api/v1/admin/connectors/${S.co…
+    253|     expect(list.items.find((r: Body) => r.id === S.run)).toMatchObject…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  3 failed | 3 passed (6)
+   Start at  23:30:47
+   Duration  14.70s (transform 4.51s, setup 0ms, collect 9.50s, tests 1.22s, environment 0ms, prepare 59ms)
+
+exit=1

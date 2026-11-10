@@ -25,6 +25,7 @@ import {
   automationRuleDisable,
   automationRuleListQuery,
   automationRuleUpdate,
+  type AutomationCondition,
   type AutomationRule,
 } from "@mth/shared/schemas";
 import type { FastifyInstance, FastifyRequest } from "fastify";
@@ -58,7 +59,15 @@ import {
 } from "../platform/index.ts";
 import { loadCatalogueRows, type CatalogueRows } from "./catalogue.ts";
 import { refuseHumanOnlyActions } from "./human-only.ts";
-import { automationRefusals, contentOfRow, insertDraftVersion, summarize, validateContent } from "./versions.ts";
+import {
+  automationRefusals,
+  contentOfRow,
+  insertDraftVersion,
+  redactConditionLiterals,
+  resolveRestrictedTokens,
+  summarize,
+  validateContent,
+} from "./versions.ts";
 
 const JSON_BODY = ["application/json"] as const;
 export const RULES = "/api/v1/admin/automation-rules";
@@ -160,13 +169,19 @@ export async function loadRuleForWrite(tx: Tx, request: FastifyRequest, ruleId: 
 
 interface RuleFacts {
   readonly versions: ReadonlyMap<string, AutomationRuleVersionRow>;
+  /** The effective version's conditions as the reader is shown them (T-DG6-BE-Z12B, D-222). */
+  readonly shown: ReadonlyMap<string, { conditions: AutomationCondition[]; restricted: boolean }>;
   readonly open: ReadonlyMap<string, number>;
   readonly catalogue: CatalogueRows;
 }
 
-async function loadRuleFacts(db: DbOrTx, rules: readonly AutomationRuleRow[]): Promise<RuleFacts> {
+async function loadRuleFacts(
+  db: DbOrTx,
+  principal: Principal,
+  rules: readonly AutomationRuleRow[],
+): Promise<RuleFacts> {
   const catalogue = await loadCatalogueRows(db);
-  if (rules.length === 0) return { versions: new Map(), open: new Map(), catalogue };
+  if (rules.length === 0) return { versions: new Map(), shown: new Map(), open: new Map(), catalogue };
   const effective = rules.map((r) => r.effective_version_id).filter((id): id is string => id !== null);
   const [versions, open] = await Promise.all([
     effective.length === 0
@@ -183,8 +198,14 @@ async function loadRuleFacts(db: DbOrTx, rules: readonly AutomationRuleRow[]): P
       .where("status", "in", ["draft", "in_review", "approved"])
       .execute(),
   ]);
+  const redacted = await redactConditionLiterals(
+    db,
+    principal,
+    versions.map((v) => ({ conditions: contentOfRow(v).conditions, issuer: v })),
+  );
   return {
     versions: new Map(versions.map((v) => [v.id, v])),
+    shown: new Map(versions.map((v, i) => [v.id, redacted.at(i)!])),
     open: new Map(open.map((o) => [o.automation_rule_id, o.version_no])),
     catalogue,
   };
@@ -192,6 +213,7 @@ async function loadRuleFacts(db: DbOrTx, rules: readonly AutomationRuleRow[]): P
 
 function presentRule(r: AutomationRuleRow, f: RuleFacts): AutomationRule {
   const effective = r.effective_version_id === null ? undefined : f.versions.get(r.effective_version_id);
+  const shown = effective === undefined ? undefined : f.shown.get(effective.id);
   return {
     id: r.id,
     code: r.code,
@@ -212,14 +234,18 @@ function presentRule(r: AutomationRuleRow, f: RuleFacts): AutomationRule {
     effectiveVersionId: r.effective_version_id,
     effectiveVersionNo: effective?.version_no ?? null,
     openVersionNo: f.open.get(r.id) ?? null,
-    summary: effective === undefined ? null : summarize(contentOfRow(effective), f.catalogue),
+    summary:
+      effective === undefined
+        ? null
+        : summarize({ ...contentOfRow(effective), conditions: shown?.conditions ?? [] }, f.catalogue),
     version: r.version,
     updatedAt: iso(r.updated_at),
+    ...(shown?.restricted === true ? { includesRestrictedRecords: true as const } : {}),
   };
 }
 
-export async function toRule(db: DbOrTx, row: AutomationRuleRow): Promise<AutomationRule> {
-  return presentRule(row, await loadRuleFacts(db, [row]));
+export async function toRule(db: DbOrTx, principal: Principal, row: AutomationRuleRow): Promise<AutomationRule> {
+  return presentRule(row, await loadRuleFacts(db, principal, [row]));
 }
 
 // ------------------------------------------------------------------------------------------------ writes
@@ -264,12 +290,9 @@ async function createRule(
   }
   if (!mayConfigureIn(principal, body.organizationId)) throw automationRefusals.scopeInvalid();
   await assertActiveOwner(tx, body.ownerUserId, body.organizationId);
-  const content = validateContent(
-    { origin: "admin", code: body.code },
-    body.content,
-    await loadCatalogueRows(tx),
-    null,
-  );
+  // T-DG6-BE-Z13 (D-226): a new rule has no stored version, so no token exists; marker text is refused, never stored.
+  const sent = resolveRestrictedTokens(null, body.content);
+  const content = validateContent({ origin: "admin", code: body.code }, sent, await loadCatalogueRows(tx), null);
   const taken = await tx.selectFrom("automation_rule").select("id").where("code", "=", body.code).executeTakeFirst();
   if (taken !== undefined) throw automationRefusals.codeTaken();
   const id = uuidv7();
@@ -448,38 +471,38 @@ export function registerAutomationRuleRoutes(app: FastifyInstance, { db }: Modul
       .limit(query.limit + 1)
       .execute();
     const pageRows = paginate(rows, query.limit, (r) => [r.code], hash);
-    const facts = await loadRuleFacts(db, pageRows.items);
+    const facts = await loadRuleFacts(db, principal, pageRows.items);
     return { items: pageRows.items.map((r) => presentRule(r, facts)), nextCursor: pageRows.nextCursor };
   });
 
   app.post(RULES, { config: { ...configure, consumes: JSON_BODY } }, async (request, reply) => {
     const { rule } = await db.transaction().execute((tx) => createRule(tx, request));
-    return sendVersioned(reply, 201, await toRule(db, rule), rulePath(rule.id));
+    return sendVersioned(reply, 201, await toRule(db, principalOf(request), rule), rulePath(rule.id));
   });
 
   app.get(ONE, { config: read }, async (request, reply) => {
     const { ruleId } = parse(ruleParams, request.params, "params");
     const principal = principalOf(request);
     requireRuleReader(principal);
-    return sendVersioned(reply, 200, await toRule(db, await loadRuleForRead(db, principal, ruleId)));
+    return sendVersioned(reply, 200, await toRule(db, principal, await loadRuleForRead(db, principal, ruleId)));
   });
 
   app.patch(ONE, { config: { ...configure, consumes: JSON_BODY } }, async (request, reply) => {
     const { ruleId } = parse(ruleParams, request.params, "params");
     const row = await db.transaction().execute((tx) => updateRule(tx, request, ruleId));
-    return sendVersioned(reply, 200, await toRule(db, row));
+    return sendVersioned(reply, 200, await toRule(db, principalOf(request), row));
   });
 
   app.post(ENABLE, { config: configure }, async (request, reply) => {
     const { ruleId } = parse(ruleParams, request.params, "params");
     const row = await db.transaction().execute((tx) => setEnabled(tx, request, ruleId, true));
-    return sendVersioned(reply, 200, await toRule(db, row));
+    return sendVersioned(reply, 200, await toRule(db, principalOf(request), row));
   });
 
   app.post(DISABLE, { config: { ...configure, consumes: JSON_BODY } }, async (request, reply) => {
     const { ruleId } = parse(ruleParams, request.params, "params");
     const row = await db.transaction().execute((tx) => setEnabled(tx, request, ruleId, false));
-    return sendVersioned(reply, 200, await toRule(db, row));
+    return sendVersioned(reply, 200, await toRule(db, principalOf(request), row));
   });
 
   return [`GET ${RULES}`, `POST ${RULES}`, `GET ${ONE}`, `PATCH ${ONE}`, `POST ${ENABLE}`, `POST ${DISABLE}`];

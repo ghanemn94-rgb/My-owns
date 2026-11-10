@@ -100,14 +100,30 @@ const gateDecidedPayload = (transformationId: string, gateCode = "G3") => ({
   scaleScopeItemIds: [],
   conditionIds: [],
 });
-const envelope = (organizationId: string, payload: Record<string, unknown>, eventType = "gate.decided") => ({
-  outboxEventId: crypto.randomUUID(),
-  eventType,
-  schemaVersion: 1,
-  idempotencyKey: `${eventType}:${crypto.randomUUID()}`,
-  organizationId,
-  payload,
-});
+/**
+ * An envelope as the relay delivers it, with its outbox row (T-DG6-BE-X9, D-203 O-2: the engine reads the event's
+ * stored occurrence time, outbox_event.created_at; written here after the test's rule was enabled).
+ */
+async function envelope(organizationId: string, payload: Record<string, unknown>, eventType = "gate.decided") {
+  const outboxEventId = crypto.randomUUID();
+  const idempotencyKey = `${eventType}:${crypto.randomUUID()}`;
+  await api.db
+    .insertInto("outbox_event")
+    .values({
+      id: outboxEventId,
+      organization_id: organizationId,
+      aggregate_type: "synthetic",
+      aggregate_id: crypto.randomUUID(),
+      event_type: eventType,
+      schema_version: 1,
+      payload: JSON.stringify(payload),
+      idempotency_key: idempotencyKey,
+      // Already published: the relay never delivers it a second time to the real queues.
+      published_at: new Date(),
+    })
+    .execute();
+  return { outboxEventId, eventType, schemaVersion: 1, idempotencyKey, organizationId, payload };
+}
 const handler = (queue: string) => AUTOMATION_HANDLERS.find((h) => h.queue === queue)!;
 
 /** Creates, dry-runs, submits, has TO review, publishes and (optionally) enables an admin rule through the API. */
@@ -223,7 +239,7 @@ describe("REQ-S12-001: each execution is recorded with rule version, trigger eve
       },
       sample: { triggerCode: "gate.decided", payload: gateDecidedPayload(txA) },
     });
-    const ev = envelope(w.orgA.id, gateDecidedPayload(txA));
+    const ev = await envelope(w.orgA.id, gateDecidedPayload(txA));
     const reports = await handler("automation.evaluate").handle(api.db, ev, "job-1", { retryCount: 0, retryLimit: 5 });
     expect(reports).toEqual(
       expect.arrayContaining([expect.objectContaining({ ruleCode: rule.code, outcome: "succeeded" })]),
@@ -294,12 +310,12 @@ describe("REQ-S12-001: each execution is recorded with rule version, trigger eve
       },
     );
     expect(expected.status).toBe(200);
-    const withCalendar = envelope(w.orgA.id, gateDecidedPayload(txA));
+    const withCalendar = await envelope(w.orgA.id, gateDecidedPayload(txA));
     await handler("automation.evaluate").handle(api.db, withCalendar, "job-1b");
     const dated = (await executionsOf(rule.id)).find((e) => e.trigger_key === withCalendar.idempotencyKey)!;
     expect((await tasksOf(dated.id))[0]!.due_date).toBe(expected.body.dueDate);
 
-    const other = envelope(w.orgA.id, gateDecidedPayload(txA, "G2"));
+    const other = await envelope(w.orgA.id, gateDecidedPayload(txA, "G2"));
     await handler("automation.evaluate").handle(api.db, other, "job-2");
     const skipped = (await executionsOf(rule.id)).find((e) => e.trigger_key === other.idempotencyKey)!;
     expect(skipped).toMatchObject({ status: "skipped", conditions_met: false, error_code: null });
@@ -319,11 +335,11 @@ describe("REQ-S12-001: each execution is recorded with rule version, trigger eve
       scopeLevel: "transformation",
       transformationId: txA,
     });
-    await evaluateEvent(api.db, envelope(w.orgA.id, gateDecidedPayload(txA2)), "job-3");
-    await evaluateEvent(api.db, envelope(w.orgB.id, gateDecidedPayload(txB)), "job-4");
+    await evaluateEvent(api.db, await envelope(w.orgA.id, gateDecidedPayload(txA2)), "job-3");
+    await evaluateEvent(api.db, await envelope(w.orgB.id, gateDecidedPayload(txB)), "job-4");
     expect(await executionsOf(off.id)).toEqual([]);
     expect(await executionsOf(scoped.id)).toEqual([]);
-    await evaluateEvent(api.db, envelope(w.orgA.id, gateDecidedPayload(txA)), "job-5");
+    await evaluateEvent(api.db, await envelope(w.orgA.id, gateDecidedPayload(txA)), "job-5");
     expect(await executionsOf(off.id)).toEqual([]);
     expect((await executionsOf(scoped.id)).map((e) => e.status)).toEqual(["succeeded"]);
   });
@@ -375,9 +391,9 @@ describe("REQ-S12-021: the same event x3 -> one execution, one action, one task"
       },
       sample: { triggerCode: "gate.decided", payload: gateDecidedPayload(txA) },
     });
-    const ev = envelope(w.orgA.id, gateDecidedPayload(txA));
+    const ev = await envelope(w.orgA.id, gateDecidedPayload(txA));
     for (let i = 0; i < 3; i += 1) await handler("automation.evaluate").handle(api.db, ev, `job-r${i}`);
-    const ev2 = envelope(w.orgA.id, gateDecidedPayload(txA));
+    const ev2 = await envelope(w.orgA.id, gateDecidedPayload(txA));
     await Promise.all([1, 2, 3].map((i) => handler("automation.evaluate").handle(api.db, ev2, `job-c${i}`)));
     for (const key of [ev.idempotencyKey, ev2.idempotencyKey]) {
       const execs = (await executionsOf(rule.id)).filter((e) => e.trigger_key === key);

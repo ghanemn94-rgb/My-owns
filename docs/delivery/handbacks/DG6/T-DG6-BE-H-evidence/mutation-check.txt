@@ -1,0 +1,22 @@
+Mutation check of the fake's SigV4 verifier (T-DG6-BE-H), 2026-10-28 ~18:47 UTC.
+Procedure: in apps/api/test/support/fake-s3.ts the signature comparison
+  if (expected.length !== given.length || !timingSafeEqual(expected, given))
+was temporarily replaced by
+  if (false && (expected.length !== given.length || !timingSafeEqual(expected, given)))
+then the file was restored from a byte copy (cmp: identical; "RESTORED").
+Command (both runs):
+  QA_PG_PORT=23851 MTH_PORT_POOL=23852-23899 tests/qa/support/with-pg.sh npx vitest run --project integration apps/api/test/integration/evidence/store-contract.test.ts
+
+== normal
+      Tests  39 passed (39)
+== mutant
+   × S3 evidence store: adapter-specific behaviour (ADR-0054 §2) > the fake refuses an anonymous GET, a pre-signed query and a tampered signature (403)
+   × S3 evidence store: adapter-specific behaviour (ADR-0054 §2) > a wrong secret key, an unknown access key or an unresolvable reference is EvidenceStoreUnavailable, naming no secret
+      Tests  2 failed | 37 passed (39)
+RESTORED
+
+Disclosure: a first version of the tamper test still passed under this mutant (its replay omitted signed SDK headers,
+which the fake refuses for a different reason). It was rewritten to send a correctly signed GET (200) and the same
+request with one signature character changed (403 SignatureDoesNotMatch); the result above is for the rewritten test.
+The verifier is also checked against AWS's published S3 "GET Object" example signature (f0e8bdb8…bdb41), test
+"the fake's SigV4 verifier reproduces AWS's published S3 example signature".

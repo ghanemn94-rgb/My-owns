@@ -497,6 +497,10 @@ export interface EvidenceContentTable {
   file_name: string;
   uploaded_by: string;
   uploaded_at: TimestampDefault;
+  // P6 (0099; ADR-0052 §1, REQ-S13-011): the type the magic-byte check found; NULL for files stored before P6.
+  detected_type: string | null;
+  // P6 (0102; ADR-0054 §2, REQ-S16-006): which store holds the bytes; every row stored before P6 is 'filesystem'.
+  storage_driver: Generated<string>;
 }
 
 export interface EvidenceLinkTable {
@@ -1947,6 +1951,10 @@ export interface InboxNotificationTable extends Stamps {
   deliver_after: NullableTimestamp;
   digest_id: string | null;
   is_digest: Generated<boolean>;
+  // P6 (0098; ADR-0051 §3, REQ-S12-024): the opaque deep-link token and the record it points to; each set once.
+  link_token: string | null;
+  target_record_type: string | null;
+  target_record_id: string | null;
 }
 
 export interface AccessGroupTable extends Stamps {
@@ -5263,6 +5271,8 @@ export interface AutomationRuleVersionTable {
   created_by: string | null;
   updated_at: TimestampDefault;
   updated_by: string | null;
+  /** 0127 (T-DG6-BE-Z15, D-233): per-row secret HMAC key of the restricted token tag. Never served; immutable. */
+  restricted_token_key: Generated<Buffer>;
 }
 
 export interface AutomationDryRunTable {
@@ -5579,6 +5589,20 @@ export interface ReportSnapshotTable {
   created_by: string;
   updated_at: TimestampDefault;
   updated_by: string;
+  /** 0126 (T-DG6-BE-Z9, F-DG6-400): true when the snapshot's aggregate records are in report_snapshot_aggregate. */
+  aggregates_recorded: Generated<boolean>;
+}
+
+/** 0126 (T-DG6-BE-Z9, F-DG6-400): a record a section's aggregate figures include (append-only; not a source). */
+export interface ReportSnapshotAggregateTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  snapshot_id: string;
+  section_key: string;
+  record_type: string;
+  record_id: string;
+  created_at: TimestampDefault;
 }
 
 export interface ReportSnapshotSourceTable {
@@ -5673,7 +5697,8 @@ export interface ExportJobTable {
   id: string;
   organization_id: string;
   transformation_id: string;
-  snapshot_id: string;
+  /** 0124 (D-207): NULL while a live selection is pending assembly (then `selection` is set). */
+  snapshot_id: string | null;
   requested_by: string;
   format: string;
   language: string;
@@ -5695,6 +5720,10 @@ export interface ExportJobTable {
   created_by: string;
   updated_at: TimestampDefault;
   updated_by: string | null;
+  /** 0124 (D-207): the stored live selection (ExportLiveSelection), NULL for an export of an existing snapshot. */
+  selection: NullableJson;
+  /** 0125 (F-DG6-sa12-3): assembly attempts of a pending live selection, counted before each assembly (>= 0). */
+  assembly_attempt_count: Generated<number>;
 }
 
 export interface ExportJobProgressTable {
@@ -5714,6 +5743,7 @@ export interface Database {
   report_snapshot_source: ReportSnapshotSourceTable;
   report_snapshot_version: ReportSnapshotVersionTable;
   report_snapshot_evidence: ReportSnapshotEvidenceTable;
+  report_snapshot_aggregate: ReportSnapshotAggregateTable;
   owner_update: OwnerUpdateTable;
   owner_update_revision: OwnerUpdateRevisionTable;
   export_job: ExportJobTable;
@@ -5725,6 +5755,7 @@ export type ReportSnapshotRow = Selectable<ReportSnapshotTable>;
 export type ReportSnapshotSourceRow = Selectable<ReportSnapshotSourceTable>;
 export type ReportSnapshotVersionRow = Selectable<ReportSnapshotVersionTable>;
 export type ReportSnapshotEvidenceRow = Selectable<ReportSnapshotEvidenceTable>;
+export type ReportSnapshotAggregateRow = Selectable<ReportSnapshotAggregateTable>;
 export type OwnerUpdateRow = Selectable<OwnerUpdateTable>;
 export type OwnerUpdateRevisionRow = Selectable<OwnerUpdateRevisionTable>;
 export type ExportJobRow = Selectable<ExportJobTable>;
@@ -6268,6 +6299,967 @@ export interface Database {
 export type MethodologyVersionContributorRow = Selectable<MethodologyVersionContributorTable>;
 export type AutomationRuleVersionContributorRow = Selectable<AutomationRuleVersionContributorTable>;
 
+// ---- P6 slices E and F (migrations 0098-0100; T-DG6-ARCH-01; ADR-0051, ADR-0052): sensitive records and their explicit
+// grants, the organization upload policy, and the append-only histories written by database triggers. The deep-link
+// columns of inbox_notification and the detected type of evidence_content are on their P2/P4 interfaces above.
+export interface RecordSensitivityTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  record_type: string;
+  record_id: string;
+  is_sensitive: boolean;
+  reason: string;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface RecordSensitivityChangeTable {
+  id: string;
+  record_sensitivity_id: string;
+  organization_id: string;
+  transformation_id: string;
+  record_type: string;
+  record_id: string;
+  record_version: number;
+  is_sensitive: boolean;
+  reason: string;
+  changed_by: string;
+  changed_at: Timestamp;
+}
+
+export interface SensitiveRecordGrantTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  record_type: string;
+  record_id: string;
+  grantee_user_id: string;
+  reason: string;
+  status: Generated<string>;
+  revoked_at: NullableTimestamp;
+  revoked_by: string | null;
+  revoke_reason: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface UploadPolicyTable {
+  id: string;
+  organization_id: string;
+  allowed_types: string[];
+  max_bytes: ColumnType<string, string | number, string | number>;
+  reason: string;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface UploadPolicyChangeTable {
+  id: string;
+  upload_policy_id: string;
+  organization_id: string;
+  record_version: number;
+  allowed_types: string[];
+  max_bytes: string;
+  reason: string;
+  changed_by: string;
+  changed_at: Timestamp;
+}
+
+export interface Database {
+  record_sensitivity: RecordSensitivityTable;
+  record_sensitivity_change: RecordSensitivityChangeTable;
+  sensitive_record_grant: SensitiveRecordGrantTable;
+  upload_policy: UploadPolicyTable;
+  upload_policy_change: UploadPolicyChangeTable;
+}
+
+export type RecordSensitivityRow = Selectable<RecordSensitivityTable>;
+export type RecordSensitivityChangeRow = Selectable<RecordSensitivityChangeTable>;
+export type SensitiveRecordGrantRow = Selectable<SensitiveRecordGrantTable>;
+export type UploadPolicyRow = Selectable<UploadPolicyTable>;
+export type UploadPolicyChangeRow = Selectable<UploadPolicyChangeTable>;
+
+// ---------------------------------------------------------------------------------------------------------------
+// P6 slices J and C (0101-0102, T-DG6-ARCH-02; ADR-0053, ADR-0054). Each *_change / *_event table is append-only and
+// written by a trigger; operational_exception_kpi is append-only; worker_heartbeat is telemetry (not audited).
+
+export interface ServiceIdentityTable {
+  id: string;
+  code: string;
+  subject_kind: string;
+  queue_name: string | null;
+  connector_id: string | null;
+  scope_level: string;
+  organization_id: string | null;
+  declared_permission_codes: string[];
+  granted_permission_codes: string[];
+  sensitive_access: Generated<string>;
+  label_en: string;
+  label_ar: string;
+  reason: string;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string | null;
+  updated_at: TimestampDefault;
+  updated_by: string | null;
+}
+
+export interface ServiceIdentityChangeTable {
+  id: string;
+  service_identity_id: string;
+  record_version: number;
+  declared_permission_codes: string[];
+  granted_permission_codes: string[];
+  sensitive_access: string;
+  reason: string;
+  changed_by: string | null;
+  changed_at: Timestamp;
+}
+
+export interface OperationalExceptionTable {
+  id: string;
+  organization_id: string | null;
+  source_kind: string;
+  source_code: string;
+  failure_class: string;
+  dedup_key: string;
+  service_identity_id: string | null;
+  operational_failure_id: string | null;
+  status: Generated<string>;
+  occurrence_count: Generated<number>;
+  first_occurred_at: Timestamp;
+  last_occurred_at: Timestamp;
+  last_error_code: string;
+  last_error_message: string;
+  acknowledged_at: Timestamp | null;
+  acknowledged_by: string | null;
+  acknowledge_note: string | null;
+  resolved_at: Timestamp | null;
+  resolved_by: string | null;
+  resolution: string | null;
+  resolution_note: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string | null;
+  updated_at: TimestampDefault;
+  updated_by: string | null;
+}
+
+export interface OperationalExceptionEventTable {
+  id: string;
+  operational_exception_id: string;
+  record_version: number;
+  event_kind: string;
+  status: string;
+  occurrence_count: number;
+  error_code: string;
+  actor_user_id: string | null;
+  note: string | null;
+  occurred_at: Timestamp;
+}
+
+export interface OperationalExceptionKpiTable {
+  id: string;
+  operational_exception_id: string;
+  organization_id: string;
+  transformation_id: string;
+  kpi_definition_id: string;
+  linked_at: TimestampDefault;
+}
+
+export interface WorkerHeartbeatTable {
+  id: string;
+  instance_key: string;
+  app_version: string;
+  started_at: Timestamp;
+  last_beat_at: Timestamp;
+  beat_count: ColumnType<string, string | number | undefined, string | number>;
+  queue_count: number;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  updated_at: TimestampDefault;
+}
+
+export interface StorageSettingTable {
+  id: string;
+  singleton: Generated<boolean>;
+  driver: string;
+  s3_endpoint: string | null;
+  s3_region: string | null;
+  s3_bucket: string | null;
+  s3_key_prefix: string | null;
+  s3_force_path_style: Generated<boolean>;
+  s3_access_key_ref: NullableJson;
+  s3_secret_key_ref: NullableJson;
+  reason: string;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface StorageSettingChangeTable {
+  id: string;
+  storage_setting_id: string;
+  record_version: number;
+  driver: string;
+  s3_endpoint: string | null;
+  s3_region: string | null;
+  s3_bucket: string | null;
+  s3_key_prefix: string | null;
+  s3_force_path_style: boolean;
+  s3_access_key_ref: NullableJson;
+  s3_secret_key_ref: NullableJson;
+  reason: string;
+  changed_by: string;
+  changed_at: Timestamp;
+}
+
+export interface NotificationChannelTable {
+  id: string;
+  organization_id: string;
+  channel_kind: string;
+  enabled: Generated<boolean>;
+  smtp_host: string | null;
+  smtp_port: number | null;
+  smtp_security: string | null;
+  smtp_username_ref: NullableJson;
+  smtp_password_ref: NullableJson;
+  from_address: string | null;
+  reason: string;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface NotificationChannelChangeTable {
+  id: string;
+  notification_channel_id: string;
+  organization_id: string;
+  record_version: number;
+  channel_kind: string;
+  enabled: boolean;
+  smtp_host: string | null;
+  smtp_port: number | null;
+  smtp_security: string | null;
+  smtp_username_ref: NullableJson;
+  smtp_password_ref: NullableJson;
+  from_address: string | null;
+  reason: string;
+  changed_by: string;
+  changed_at: Timestamp;
+}
+
+export interface NotificationDeliveryTable {
+  id: string;
+  organization_id: string;
+  inbox_notification_id: string;
+  channel_kind: string;
+  status: Generated<string>;
+  attempts: Generated<number>;
+  last_attempt_at: Timestamp | null;
+  sent_at: Timestamp | null;
+  skip_reason: string | null;
+  error_code: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string | null;
+  updated_at: TimestampDefault;
+  updated_by: string | null;
+}
+
+export interface Database {
+  service_identity: ServiceIdentityTable;
+  service_identity_change: ServiceIdentityChangeTable;
+  operational_exception: OperationalExceptionTable;
+  operational_exception_event: OperationalExceptionEventTable;
+  operational_exception_kpi: OperationalExceptionKpiTable;
+  worker_heartbeat: WorkerHeartbeatTable;
+  storage_setting: StorageSettingTable;
+  storage_setting_change: StorageSettingChangeTable;
+  notification_channel: NotificationChannelTable;
+  notification_channel_change: NotificationChannelChangeTable;
+  notification_delivery: NotificationDeliveryTable;
+}
+
+export type ServiceIdentityRow = Selectable<ServiceIdentityTable>;
+export type ServiceIdentityChangeRow = Selectable<ServiceIdentityChangeTable>;
+export type OperationalExceptionRow = Selectable<OperationalExceptionTable>;
+export type OperationalExceptionEventRow = Selectable<OperationalExceptionEventTable>;
+export type OperationalExceptionKpiRow = Selectable<OperationalExceptionKpiTable>;
+export type WorkerHeartbeatRow = Selectable<WorkerHeartbeatTable>;
+export type StorageSettingRow = Selectable<StorageSettingTable>;
+export type StorageSettingChangeRow = Selectable<StorageSettingChangeTable>;
+export type NotificationChannelRow = Selectable<NotificationChannelTable>;
+export type NotificationChannelChangeRow = Selectable<NotificationChannelChangeTable>;
+export type NotificationDeliveryRow = Selectable<NotificationDeliveryTable>;
+
+// ---- P6 slices B and A (migrations 0104-0106; T-DG6-ARCH-03; ADR-0055, ADR-0056): connectors, configuration versions,
+// integration runs, outbound writes, webhook endpoints and receipts, staged imports and lineage, and the deliverable
+// external-change confirmation. Generated from the migrated catalogue (handback evidence gen-dictionary.ts).
+export interface ConnectorTable {
+  id: string;
+  organization_id: string;
+  code: string;
+  name_en: string;
+  name_ar: string;
+  adapter_kind: string;
+  target_kind: string;
+  status: Generated<string>;
+  config_version_no: number;
+  status_reason: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface ConnectorConfigVersionTable {
+  id: string;
+  organization_id: string;
+  connector_id: string;
+  version_no: number;
+  source_system_id: string;
+  endpoint_url: string | null;
+  credential_refs: JsonDefault;
+  field_mappings: JsonDefault;
+  target_transformation_id: string | null;
+  cadence: string;
+  retry_max_attempts: Generated<number>;
+  retry_backoff_seconds: Generated<number>;
+  commit_mode: Generated<string>;
+  commit_on_behalf_of: string | null;
+  outbound_actions: Generated<string[]>;
+  reconciliation_rule: Generated<string>;
+  adapter_settings: JsonDefault;
+  reason: string;
+  created_at: TimestampDefault;
+  created_by: string;
+}
+
+export interface ConnectorChangeTable {
+  id: string;
+  connector_id: string;
+  record_version: number;
+  status: string;
+  config_version_no: number;
+  status_reason: string | null;
+  name_en: string;
+  name_ar: string;
+  changed_by: string;
+  changed_at: Timestamp;
+}
+
+export interface IntegrationRunTable {
+  id: string;
+  organization_id: string;
+  connector_id: string;
+  config_version_no: number;
+  trigger_kind: string;
+  status: Generated<string>;
+  attempt_no: Generated<number>;
+  retry_of_run_id: string | null;
+  idempotency_key: string;
+  requested_by: string | null;
+  service_identity_id: string;
+  queued_at: Timestamp;
+  started_at: NullableTimestamp;
+  finished_at: NullableTimestamp;
+  rows_read: number | null;
+  rows_staged: number | null;
+  rows_committed: number | null;
+  rows_rejected: number | null;
+  rows_duplicate: number | null;
+  error_count: number | null;
+  error_code: string | null;
+  error_message: string | null;
+  reconciliation_status: Generated<string>;
+  source_row_count: number | null;
+  source_control_total: string | null;
+  staged_control_total: string | null;
+  import_batch_id: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string | null;
+  updated_at: TimestampDefault;
+  updated_by: string | null;
+}
+
+export interface IntegrationRunEventTable {
+  id: string;
+  integration_run_id: string;
+  record_version: number;
+  status: string;
+  rows_read: number | null;
+  rows_staged: number | null;
+  rows_committed: number | null;
+  rows_rejected: number | null;
+  rows_duplicate: number | null;
+  error_count: number | null;
+  error_code: string | null;
+  occurred_at: Timestamp;
+}
+
+export interface OutboundWriteTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  connector_id: string;
+  config_version_no: number;
+  action_code: string;
+  deliverable_id: string;
+  idempotency_key: string;
+  payload: Json;
+  payload_sha256: string;
+  status: Generated<string>;
+  attempt_count: Generated<number>;
+  last_attempt_at: NullableTimestamp;
+  external_reference: string | null;
+  confirmed_at: NullableTimestamp;
+  failure_code: string | null;
+  failure_message: string | null;
+  requested_by: string;
+  service_identity_id: string;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string | null;
+}
+
+export interface OutboundWriteEventTable {
+  id: string;
+  outbound_write_id: string;
+  record_version: number;
+  status: string;
+  attempt_count: number;
+  external_reference: string | null;
+  failure_code: string | null;
+  actor_user_id: string | null;
+  occurred_at: Timestamp;
+}
+
+export interface WebhookEndpointTable {
+  id: string;
+  organization_id: string;
+  connector_id: string;
+  endpoint_key: string;
+  label: string;
+  signing_secret_ref: Json;
+  previous_secret_ref: NullableJson;
+  previous_valid_until: NullableTimestamp;
+  secret_rotated_at: NullableTimestamp;
+  tolerance_seconds: Generated<number>;
+  status: Generated<string>;
+  disabled_at: NullableTimestamp;
+  disabled_by: string | null;
+  disable_reason: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface WebhookEndpointChangeTable {
+  id: string;
+  webhook_endpoint_id: string;
+  record_version: number;
+  status: string;
+  signing_secret_ref: Json;
+  previous_secret_ref: NullableJson;
+  previous_valid_until: NullableTimestamp;
+  tolerance_seconds: number;
+  changed_by: string;
+  changed_at: Timestamp;
+}
+
+export interface WebhookReceiptTable {
+  id: string;
+  organization_id: string;
+  webhook_endpoint_id: string;
+  delivery_id: string;
+  signed_at: Timestamp;
+  received_at: Timestamp;
+  secret_slot: string;
+  body_sha256: string;
+  body_bytes: number;
+  item_count: number;
+  created_at: TimestampDefault;
+}
+
+export interface ImportBatchTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  target_kind: string;
+  template_version: string;
+  form_schema_version_id: string;
+  source_kind: string;
+  connector_id: string | null;
+  integration_run_id: string | null;
+  webhook_receipt_id: string | null;
+  file_name: string | null;
+  media_type: string | null;
+  byte_size: number | null;
+  content_sha256: string | null;
+  status: Generated<string>;
+  rows_total: number | null;
+  rows_valid: number | null;
+  rows_invalid: number | null;
+  rows_duplicate: number | null;
+  rows_committed: number | null;
+  failure_code: string | null;
+  commit_mode: Generated<string>;
+  on_behalf_of_user_id: string | null;
+  committed_at: NullableTimestamp;
+  committed_by: string | null;
+  cancelled_at: NullableTimestamp;
+  cancelled_by: string | null;
+  cancel_reason: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string | null;
+  updated_at: TimestampDefault;
+  updated_by: string | null;
+}
+
+export interface ImportBatchEventTable {
+  id: string;
+  import_batch_id: string;
+  record_version: number;
+  status: string;
+  rows_total: number | null;
+  rows_valid: number | null;
+  rows_invalid: number | null;
+  rows_duplicate: number | null;
+  rows_committed: number | null;
+  failure_code: string | null;
+  actor_user_id: string | null;
+  occurred_at: Timestamp;
+}
+
+export interface ImportRowTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  import_batch_id: string;
+  row_number: number;
+  source_record_id: string | null;
+  raw: Json;
+  normalized: NullableJson;
+  duplicate_key: string | null;
+  validation_status: string;
+  duplicate_of_row_id: string | null;
+  reasons: JsonDefault;
+  commit_status: Generated<string>;
+  created_at: TimestampDefault;
+  updated_at: TimestampDefault;
+}
+
+export interface ImportRowCommitTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  import_batch_id: string;
+  import_row_id: string;
+  target_record_type: string;
+  target_record_id: string;
+  target_value_no: number | null;
+  committed_at: Timestamp;
+}
+
+export interface DeliverableExternalChangeTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  deliverable_id: string;
+  is_external_change: Generated<boolean>;
+  change_type: string;
+  description: string | null;
+  confirmation_status: Generated<string>;
+  confirmation_source: string | null;
+  evidence_id: string | null;
+  outbound_write_id: string | null;
+  connector_id: string | null;
+  source_system_id: string | null;
+  source_reference: string | null;
+  source_confirmed_at: NullableTimestamp;
+  service_identity_id: string | null;
+  confirmed_at: NullableTimestamp;
+  confirmed_by: string | null;
+  confirmation_note: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string | null;
+}
+
+export interface DeliverableExternalChangeEventTable {
+  id: string;
+  deliverable_external_change_id: string;
+  record_version: number;
+  is_external_change: boolean;
+  change_type: string;
+  confirmation_status: string;
+  confirmation_source: string | null;
+  evidence_id: string | null;
+  outbound_write_id: string | null;
+  source_reference: string | null;
+  actor_user_id: string | null;
+  occurred_at: Timestamp;
+}
+
+export interface Database {
+  connector: ConnectorTable;
+  connector_config_version: ConnectorConfigVersionTable;
+  connector_change: ConnectorChangeTable;
+  integration_run: IntegrationRunTable;
+  integration_run_event: IntegrationRunEventTable;
+  outbound_write: OutboundWriteTable;
+  outbound_write_event: OutboundWriteEventTable;
+  webhook_endpoint: WebhookEndpointTable;
+  webhook_endpoint_change: WebhookEndpointChangeTable;
+  webhook_receipt: WebhookReceiptTable;
+  import_batch: ImportBatchTable;
+  import_batch_event: ImportBatchEventTable;
+  import_row: ImportRowTable;
+  import_row_commit: ImportRowCommitTable;
+  deliverable_external_change: DeliverableExternalChangeTable;
+  deliverable_external_change_event: DeliverableExternalChangeEventTable;
+}
+
+export type ConnectorRow = Selectable<ConnectorTable>;
+export type ConnectorConfigVersionRow = Selectable<ConnectorConfigVersionTable>;
+export type ConnectorChangeRow = Selectable<ConnectorChangeTable>;
+export type IntegrationRunRow = Selectable<IntegrationRunTable>;
+export type IntegrationRunEventRow = Selectable<IntegrationRunEventTable>;
+export type OutboundWriteRow = Selectable<OutboundWriteTable>;
+export type OutboundWriteEventRow = Selectable<OutboundWriteEventTable>;
+export type WebhookEndpointRow = Selectable<WebhookEndpointTable>;
+export type WebhookEndpointChangeRow = Selectable<WebhookEndpointChangeTable>;
+export type WebhookReceiptRow = Selectable<WebhookReceiptTable>;
+export type ImportBatchRow = Selectable<ImportBatchTable>;
+export type ImportBatchEventRow = Selectable<ImportBatchEventTable>;
+export type ImportRowRow = Selectable<ImportRowTable>;
+export type ImportRowCommitRow = Selectable<ImportRowCommitTable>;
+export type DeliverableExternalChangeRow = Selectable<DeliverableExternalChangeTable>;
+export type DeliverableExternalChangeEventRow = Selectable<DeliverableExternalChangeEventTable>;
+
+// ---- P6 slices H and G (0108; T-DG6-ARCH-04; ADR-0057, ADR-0058). Generated from the migrated catalogue
+// (docs/delivery/handbacks/DG6/T-DG6-ARCH-04-evidence/gen-dictionary.ts). bigint columns are strings (pg returns int8 as text).
+
+export interface SearchDocumentTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  record_type: string;
+  record_id: string;
+  record_version: number;
+  code: string | null;
+  title: string;
+  summary: string | null;
+  record_status: string | null;
+  is_archived: Generated<boolean>;
+  source_audit_seq: string;
+  search_en: GeneratedTsvector;
+  search_ar: GeneratedTsvector;
+  search_simple: GeneratedTsvector;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  updated_at: TimestampDefault;
+}
+
+export interface SearchIndexStateTable {
+  id: string;
+  record_type: string;
+  status: Generated<string>;
+  last_audit_seq: Generated<string>;
+  last_incremental_at: NullableTimestamp;
+  reindex_started_at: NullableTimestamp;
+  reindex_finished_at: NullableTimestamp;
+  documents_count: number | null;
+  last_error_code: string | null;
+  last_error_at: NullableTimestamp;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  updated_at: TimestampDefault;
+}
+
+export interface SavedViewTable {
+  id: string;
+  organization_id: string;
+  owner_user_id: string;
+  list_key: string;
+  transformation_id: string | null;
+  name: string;
+  visibility: Generated<string>;
+  columns: Json;
+  filters: JsonDefault;
+  sort: JsonDefault;
+  is_default: Generated<boolean>;
+  shared_at: NullableTimestamp;
+  shared_by: string | null;
+  status: Generated<string>;
+  deleted_at: NullableTimestamp;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface SavedViewEventTable {
+  id: string;
+  saved_view_id: string;
+  record_version: number;
+  name: string;
+  visibility: string;
+  columns: Json;
+  filters: Json;
+  sort: Json;
+  is_default: boolean;
+  status: string;
+  actor_user_id: string;
+  occurred_at: Timestamp;
+}
+
+export interface HelpTopicTable {
+  id: string;
+  topic_key: string;
+  screen_key: string;
+  ordinal: number;
+  title_en: string;
+  title_ar: string;
+  body_en: string;
+  body_ar: string;
+  arabic_provisional: boolean;
+  source_refs: string[];
+  created_at: TimestampDefault;
+}
+
+export interface LoadDatasetMarkerTable {
+  singleton: Generated<boolean>;
+  dataset_code: string;
+  generator_version: string;
+  random_seed: string;
+  transformations: number;
+  initiatives: number;
+  kpi_actuals: number;
+  audit_events: number;
+  users: number;
+  generated_at: TimestampDefault;
+}
+
+export interface Database {
+  search_document: SearchDocumentTable;
+  search_index_state: SearchIndexStateTable;
+  saved_view: SavedViewTable;
+  saved_view_event: SavedViewEventTable;
+  help_topic: HelpTopicTable;
+  load_dataset_marker: LoadDatasetMarkerTable;
+}
+
+export type SearchDocumentRow = Selectable<SearchDocumentTable>;
+export type SearchIndexStateRow = Selectable<SearchIndexStateTable>;
+export type SavedViewRow = Selectable<SavedViewTable>;
+export type SavedViewEventRow = Selectable<SavedViewEventTable>;
+export type HelpTopicRow = Selectable<HelpTopicTable>;
+export type LoadDatasetMarkerRow = Selectable<LoadDatasetMarkerTable>;
+
+// ---- P6 slice D (0111; T-DG6-ARCH-05; ADR-0059). Generated from the migrated catalogue
+// (docs/delivery/handbacks/DG6/T-DG6-ARCH-05-evidence/gen-dictionary.ts). The assistant's own tables only.
+
+export interface AssistantSettingTable {
+  id: string;
+  singleton: Generated<boolean>;
+  enabled: Generated<boolean>;
+  provider_kind: string | null;
+  endpoint_url: string | null;
+  api_style: string | null;
+  model_name: string | null;
+  credential_ref: NullableJson;
+  authorization_reference: string | null;
+  request_timeout_ms: Generated<number>;
+  max_output_tokens: Generated<number>;
+  max_context_records: Generated<number>;
+  enabled_at: NullableTimestamp;
+  enabled_by: string | null;
+  reason: string;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface AssistantSettingChangeTable {
+  id: string;
+  assistant_setting_id: string;
+  record_version: number;
+  enabled: boolean;
+  provider_kind: string | null;
+  endpoint_url: string | null;
+  api_style: string | null;
+  model_name: string | null;
+  credential_ref: NullableJson;
+  authorization_reference: string | null;
+  request_timeout_ms: number;
+  max_output_tokens: number;
+  max_context_records: number;
+  enabled_at: NullableTimestamp;
+  enabled_by: string | null;
+  reason: string;
+  changed_by: string;
+  changed_at: Timestamp;
+}
+
+export interface AssistantConversationTable {
+  id: string;
+  organization_id: string;
+  owner_user_id: string;
+  transformation_id: string | null;
+  title: string;
+  message_count: Generated<number>;
+  awaiting_reply: Generated<boolean>;
+  awaiting_since: NullableTimestamp;
+  last_message_at: NullableTimestamp;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface AssistantMessageTable {
+  id: string;
+  conversation_id: string;
+  organization_id: string;
+  seq: number;
+  author: string;
+  reply_kind: string | null;
+  refusal_code: string | null;
+  error_code: string | null;
+  content: string | null;
+  citations: JsonDefault;
+  provider_kind: string | null;
+  model_name: string | null;
+  setting_version: number | null;
+  latency_ms: number | null;
+  created_at: TimestampDefault;
+  created_by: string;
+}
+
+export interface AssistantSuggestionTable {
+  id: string;
+  organization_id: string;
+  transformation_id: string;
+  conversation_id: string;
+  message_id: string;
+  owner_user_id: string;
+  ordinal: number;
+  kind: string;
+  target_record_type: string | null;
+  fields: NullableJson;
+  text_content: string | null;
+  citations: Json;
+  status: Generated<string>;
+  taken_at: NullableTimestamp;
+  taken_by: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string;
+}
+
+export interface Database {
+  assistant_setting: AssistantSettingTable;
+  assistant_setting_change: AssistantSettingChangeTable;
+  assistant_conversation: AssistantConversationTable;
+  assistant_message: AssistantMessageTable;
+  assistant_suggestion: AssistantSuggestionTable;
+}
+
+export type AssistantSettingRow = Selectable<AssistantSettingTable>;
+export type AssistantSettingChangeRow = Selectable<AssistantSettingChangeTable>;
+export type AssistantConversationRow = Selectable<AssistantConversationTable>;
+export type AssistantMessageRow = Selectable<AssistantMessageTable>;
+export type AssistantSuggestionRow = Selectable<AssistantSuggestionTable>;
+
+// ------------------------------------------------------------------------------------------------ P6 slice I (0113)
+// The contrast report of a published branding version (T-DG6-ARCH-06; ADR-0061 §1). Both tables are append-only.
+
+export interface BrandingContrastReportTable {
+  id: string;
+  organization_id: string;
+  branding_version_no: number;
+  rules: string;
+  token_source_sha256: string;
+  pair_count: number;
+  created_at: TimestampDefault;
+  created_by: string;
+}
+
+export interface BrandingContrastPairTable {
+  id: string;
+  report_id: string;
+  ordinal: number;
+  fg_token: string;
+  bg_token: string;
+  use: string;
+  fg_hex: string;
+  bg_hex: string;
+  /** numeric(4,2), rounded down (floor2); a decimal string. */
+  ratio: string;
+  /** numeric(2,1): 4.5 for text, 3.0 for large-text and ui; a decimal string. */
+  threshold: string;
+  usage_note: string;
+  created_at: TimestampDefault;
+}
+
+export interface Database {
+  branding_contrast_report: BrandingContrastReportTable;
+  branding_contrast_pair: BrandingContrastPairTable;
+}
+
+export type BrandingContrastReportRow = Selectable<BrandingContrastReportTable>;
+export type BrandingContrastPairRow = Selectable<BrandingContrastPairTable>;
+
+// ---------------------------------------------------------------------------------------------------------------
+// P6 pre-freeze repair (0122, T-DG6-BE-X9; D-203 O-2): the moment a rule's effective version became enabled.
+// Append-only, written only by the trigger automation_rule_enablement_record (the application role reads it).
+
+export interface AutomationRuleEnablementTable {
+  id: string;
+  automation_rule_id: string;
+  automation_rule_version_id: string;
+  enabled_from: Timestamp;
+  /** 'enable' | 'effective_version' | 'backfill' (0122) | 'disable' | 'backfill_disable' (0123, D-204): a disable row starts a disabled interval */
+  source: string;
+}
+
+export interface Database {
+  automation_rule_enablement: AutomationRuleEnablementTable;
+}
+
+export type AutomationRuleEnablementRow = Selectable<AutomationRuleEnablementTable>;
+
 /**
  * Runtime column catalogue of `Database`. The compiler forces it to list exactly the interface's columns (both
  * directions, see the assertions below), and the integration test compares it with information_schema, so the
@@ -6696,6 +7688,8 @@ export const SCHEMA_COLUMNS = {
     "file_name",
     "uploaded_by",
     "uploaded_at",
+    "detected_type",
+    "storage_driver",
   ],
   evidence_link: [
     "id",
@@ -8069,6 +9063,9 @@ export const SCHEMA_COLUMNS = {
     "deliver_after",
     "digest_id",
     "is_digest",
+    "link_token",
+    "target_record_type",
+    "target_record_id",
     "version",
     "created_at",
     "updated_at",
@@ -10766,6 +11763,7 @@ export const SCHEMA_COLUMNS = {
     "created_by",
     "updated_at",
     "updated_by",
+    "restricted_token_key",
   ],
   automation_dry_run: [
     "id",
@@ -11027,6 +12025,7 @@ export const SCHEMA_COLUMNS = {
     "created_by",
     "updated_at",
     "updated_by",
+    "aggregates_recorded",
   ],
   report_snapshot_source: [
     "id",
@@ -11064,6 +12063,16 @@ export const SCHEMA_COLUMNS = {
     "content_revision",
     "content_sha256",
     "review_status",
+    "created_at",
+  ],
+  report_snapshot_aggregate: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "snapshot_id",
+    "section_key",
+    "record_type",
+    "record_id",
     "created_at",
   ],
   owner_update: [
@@ -11137,6 +12146,8 @@ export const SCHEMA_COLUMNS = {
     "created_by",
     "updated_at",
     "updated_by",
+    "selection",
+    "assembly_attempt_count",
   ],
   export_job_progress: [
     "export_job_id",
@@ -11523,6 +12534,769 @@ export const SCHEMA_COLUMNS = {
   walkthrough_step: ["code", "ordinal", "title_en", "title_ar", "area_code", "completion_rule", "source_ref"],
   methodology_version_contributor: ["methodology_version_id", "user_id", "first_written_at"],
   automation_rule_version_contributor: ["automation_rule_version_id", "user_id", "first_written_at"],
+  record_sensitivity: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "record_type",
+    "record_id",
+    "is_sensitive",
+    "reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  record_sensitivity_change: [
+    "id",
+    "record_sensitivity_id",
+    "organization_id",
+    "transformation_id",
+    "record_type",
+    "record_id",
+    "record_version",
+    "is_sensitive",
+    "reason",
+    "changed_by",
+    "changed_at",
+  ],
+  sensitive_record_grant: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "record_type",
+    "record_id",
+    "grantee_user_id",
+    "reason",
+    "status",
+    "revoked_at",
+    "revoked_by",
+    "revoke_reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  upload_policy: [
+    "id",
+    "organization_id",
+    "allowed_types",
+    "max_bytes",
+    "reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  upload_policy_change: [
+    "id",
+    "upload_policy_id",
+    "organization_id",
+    "record_version",
+    "allowed_types",
+    "max_bytes",
+    "reason",
+    "changed_by",
+    "changed_at",
+  ],
+  service_identity: [
+    "id",
+    "code",
+    "subject_kind",
+    "queue_name",
+    "connector_id",
+    "scope_level",
+    "organization_id",
+    "declared_permission_codes",
+    "granted_permission_codes",
+    "sensitive_access",
+    "label_en",
+    "label_ar",
+    "reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  service_identity_change: [
+    "id",
+    "service_identity_id",
+    "record_version",
+    "declared_permission_codes",
+    "granted_permission_codes",
+    "sensitive_access",
+    "reason",
+    "changed_by",
+    "changed_at",
+  ],
+  operational_exception: [
+    "id",
+    "organization_id",
+    "source_kind",
+    "source_code",
+    "failure_class",
+    "dedup_key",
+    "service_identity_id",
+    "operational_failure_id",
+    "status",
+    "occurrence_count",
+    "first_occurred_at",
+    "last_occurred_at",
+    "last_error_code",
+    "last_error_message",
+    "acknowledged_at",
+    "acknowledged_by",
+    "acknowledge_note",
+    "resolved_at",
+    "resolved_by",
+    "resolution",
+    "resolution_note",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  operational_exception_event: [
+    "id",
+    "operational_exception_id",
+    "record_version",
+    "event_kind",
+    "status",
+    "occurrence_count",
+    "error_code",
+    "actor_user_id",
+    "note",
+    "occurred_at",
+  ],
+  operational_exception_kpi: [
+    "id",
+    "operational_exception_id",
+    "organization_id",
+    "transformation_id",
+    "kpi_definition_id",
+    "linked_at",
+  ],
+  worker_heartbeat: [
+    "id",
+    "instance_key",
+    "app_version",
+    "started_at",
+    "last_beat_at",
+    "beat_count",
+    "queue_count",
+    "version",
+    "created_at",
+    "updated_at",
+  ],
+  storage_setting: [
+    "id",
+    "singleton",
+    "driver",
+    "s3_endpoint",
+    "s3_region",
+    "s3_bucket",
+    "s3_key_prefix",
+    "s3_force_path_style",
+    "s3_access_key_ref",
+    "s3_secret_key_ref",
+    "reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  storage_setting_change: [
+    "id",
+    "storage_setting_id",
+    "record_version",
+    "driver",
+    "s3_endpoint",
+    "s3_region",
+    "s3_bucket",
+    "s3_key_prefix",
+    "s3_force_path_style",
+    "s3_access_key_ref",
+    "s3_secret_key_ref",
+    "reason",
+    "changed_by",
+    "changed_at",
+  ],
+  notification_channel: [
+    "id",
+    "organization_id",
+    "channel_kind",
+    "enabled",
+    "smtp_host",
+    "smtp_port",
+    "smtp_security",
+    "smtp_username_ref",
+    "smtp_password_ref",
+    "from_address",
+    "reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  notification_channel_change: [
+    "id",
+    "notification_channel_id",
+    "organization_id",
+    "record_version",
+    "channel_kind",
+    "enabled",
+    "smtp_host",
+    "smtp_port",
+    "smtp_security",
+    "smtp_username_ref",
+    "smtp_password_ref",
+    "from_address",
+    "reason",
+    "changed_by",
+    "changed_at",
+  ],
+  notification_delivery: [
+    "id",
+    "organization_id",
+    "inbox_notification_id",
+    "channel_kind",
+    "status",
+    "attempts",
+    "last_attempt_at",
+    "sent_at",
+    "skip_reason",
+    "error_code",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  connector: [
+    "id",
+    "organization_id",
+    "code",
+    "name_en",
+    "name_ar",
+    "adapter_kind",
+    "target_kind",
+    "status",
+    "config_version_no",
+    "status_reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  connector_config_version: [
+    "id",
+    "organization_id",
+    "connector_id",
+    "version_no",
+    "source_system_id",
+    "endpoint_url",
+    "credential_refs",
+    "field_mappings",
+    "target_transformation_id",
+    "cadence",
+    "retry_max_attempts",
+    "retry_backoff_seconds",
+    "commit_mode",
+    "commit_on_behalf_of",
+    "outbound_actions",
+    "reconciliation_rule",
+    "adapter_settings",
+    "reason",
+    "created_at",
+    "created_by",
+  ],
+  connector_change: [
+    "id",
+    "connector_id",
+    "record_version",
+    "status",
+    "config_version_no",
+    "status_reason",
+    "name_en",
+    "name_ar",
+    "changed_by",
+    "changed_at",
+  ],
+  integration_run: [
+    "id",
+    "organization_id",
+    "connector_id",
+    "config_version_no",
+    "trigger_kind",
+    "status",
+    "attempt_no",
+    "retry_of_run_id",
+    "idempotency_key",
+    "requested_by",
+    "service_identity_id",
+    "queued_at",
+    "started_at",
+    "finished_at",
+    "rows_read",
+    "rows_staged",
+    "rows_committed",
+    "rows_rejected",
+    "rows_duplicate",
+    "error_count",
+    "error_code",
+    "error_message",
+    "reconciliation_status",
+    "source_row_count",
+    "source_control_total",
+    "staged_control_total",
+    "import_batch_id",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  integration_run_event: [
+    "id",
+    "integration_run_id",
+    "record_version",
+    "status",
+    "rows_read",
+    "rows_staged",
+    "rows_committed",
+    "rows_rejected",
+    "rows_duplicate",
+    "error_count",
+    "error_code",
+    "occurred_at",
+  ],
+  outbound_write: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "connector_id",
+    "config_version_no",
+    "action_code",
+    "deliverable_id",
+    "idempotency_key",
+    "payload",
+    "payload_sha256",
+    "status",
+    "attempt_count",
+    "last_attempt_at",
+    "external_reference",
+    "confirmed_at",
+    "failure_code",
+    "failure_message",
+    "requested_by",
+    "service_identity_id",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  outbound_write_event: [
+    "id",
+    "outbound_write_id",
+    "record_version",
+    "status",
+    "attempt_count",
+    "external_reference",
+    "failure_code",
+    "actor_user_id",
+    "occurred_at",
+  ],
+  webhook_endpoint: [
+    "id",
+    "organization_id",
+    "connector_id",
+    "endpoint_key",
+    "label",
+    "signing_secret_ref",
+    "previous_secret_ref",
+    "previous_valid_until",
+    "secret_rotated_at",
+    "tolerance_seconds",
+    "status",
+    "disabled_at",
+    "disabled_by",
+    "disable_reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  webhook_endpoint_change: [
+    "id",
+    "webhook_endpoint_id",
+    "record_version",
+    "status",
+    "signing_secret_ref",
+    "previous_secret_ref",
+    "previous_valid_until",
+    "tolerance_seconds",
+    "changed_by",
+    "changed_at",
+  ],
+  webhook_receipt: [
+    "id",
+    "organization_id",
+    "webhook_endpoint_id",
+    "delivery_id",
+    "signed_at",
+    "received_at",
+    "secret_slot",
+    "body_sha256",
+    "body_bytes",
+    "item_count",
+    "created_at",
+  ],
+  import_batch: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "target_kind",
+    "template_version",
+    "form_schema_version_id",
+    "source_kind",
+    "connector_id",
+    "integration_run_id",
+    "webhook_receipt_id",
+    "file_name",
+    "media_type",
+    "byte_size",
+    "content_sha256",
+    "status",
+    "rows_total",
+    "rows_valid",
+    "rows_invalid",
+    "rows_duplicate",
+    "rows_committed",
+    "failure_code",
+    "commit_mode",
+    "on_behalf_of_user_id",
+    "committed_at",
+    "committed_by",
+    "cancelled_at",
+    "cancelled_by",
+    "cancel_reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  import_batch_event: [
+    "id",
+    "import_batch_id",
+    "record_version",
+    "status",
+    "rows_total",
+    "rows_valid",
+    "rows_invalid",
+    "rows_duplicate",
+    "rows_committed",
+    "failure_code",
+    "actor_user_id",
+    "occurred_at",
+  ],
+  import_row: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "import_batch_id",
+    "row_number",
+    "source_record_id",
+    "raw",
+    "normalized",
+    "duplicate_key",
+    "validation_status",
+    "duplicate_of_row_id",
+    "reasons",
+    "commit_status",
+    "created_at",
+    "updated_at",
+  ],
+  import_row_commit: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "import_batch_id",
+    "import_row_id",
+    "target_record_type",
+    "target_record_id",
+    "target_value_no",
+    "committed_at",
+  ],
+  deliverable_external_change: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "deliverable_id",
+    "is_external_change",
+    "change_type",
+    "description",
+    "confirmation_status",
+    "confirmation_source",
+    "evidence_id",
+    "outbound_write_id",
+    "connector_id",
+    "source_system_id",
+    "source_reference",
+    "source_confirmed_at",
+    "service_identity_id",
+    "confirmed_at",
+    "confirmed_by",
+    "confirmation_note",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  deliverable_external_change_event: [
+    "id",
+    "deliverable_external_change_id",
+    "record_version",
+    "is_external_change",
+    "change_type",
+    "confirmation_status",
+    "confirmation_source",
+    "evidence_id",
+    "outbound_write_id",
+    "source_reference",
+    "actor_user_id",
+    "occurred_at",
+  ],
+  search_document: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "record_type",
+    "record_id",
+    "record_version",
+    "code",
+    "title",
+    "summary",
+    "record_status",
+    "is_archived",
+    "source_audit_seq",
+    "search_en",
+    "search_ar",
+    "search_simple",
+    "version",
+    "created_at",
+    "updated_at",
+  ],
+  search_index_state: [
+    "id",
+    "record_type",
+    "status",
+    "last_audit_seq",
+    "last_incremental_at",
+    "reindex_started_at",
+    "reindex_finished_at",
+    "documents_count",
+    "last_error_code",
+    "last_error_at",
+    "version",
+    "created_at",
+    "updated_at",
+  ],
+  saved_view: [
+    "id",
+    "organization_id",
+    "owner_user_id",
+    "list_key",
+    "transformation_id",
+    "name",
+    "visibility",
+    "columns",
+    "filters",
+    "sort",
+    "is_default",
+    "shared_at",
+    "shared_by",
+    "status",
+    "deleted_at",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  saved_view_event: [
+    "id",
+    "saved_view_id",
+    "record_version",
+    "name",
+    "visibility",
+    "columns",
+    "filters",
+    "sort",
+    "is_default",
+    "status",
+    "actor_user_id",
+    "occurred_at",
+  ],
+  help_topic: [
+    "id",
+    "topic_key",
+    "screen_key",
+    "ordinal",
+    "title_en",
+    "title_ar",
+    "body_en",
+    "body_ar",
+    "arabic_provisional",
+    "source_refs",
+    "created_at",
+  ],
+  load_dataset_marker: [
+    "singleton",
+    "dataset_code",
+    "generator_version",
+    "random_seed",
+    "transformations",
+    "initiatives",
+    "kpi_actuals",
+    "audit_events",
+    "users",
+    "generated_at",
+  ],
+  assistant_setting: [
+    "id",
+    "singleton",
+    "enabled",
+    "provider_kind",
+    "endpoint_url",
+    "api_style",
+    "model_name",
+    "credential_ref",
+    "authorization_reference",
+    "request_timeout_ms",
+    "max_output_tokens",
+    "max_context_records",
+    "enabled_at",
+    "enabled_by",
+    "reason",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  assistant_setting_change: [
+    "id",
+    "assistant_setting_id",
+    "record_version",
+    "enabled",
+    "provider_kind",
+    "endpoint_url",
+    "api_style",
+    "model_name",
+    "credential_ref",
+    "authorization_reference",
+    "request_timeout_ms",
+    "max_output_tokens",
+    "max_context_records",
+    "enabled_at",
+    "enabled_by",
+    "reason",
+    "changed_by",
+    "changed_at",
+  ],
+  assistant_conversation: [
+    "id",
+    "organization_id",
+    "owner_user_id",
+    "transformation_id",
+    "title",
+    "message_count",
+    "awaiting_reply",
+    "awaiting_since",
+    "last_message_at",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  assistant_message: [
+    "id",
+    "conversation_id",
+    "organization_id",
+    "seq",
+    "author",
+    "reply_kind",
+    "refusal_code",
+    "error_code",
+    "content",
+    "citations",
+    "provider_kind",
+    "model_name",
+    "setting_version",
+    "latency_ms",
+    "created_at",
+    "created_by",
+  ],
+  assistant_suggestion: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "conversation_id",
+    "message_id",
+    "owner_user_id",
+    "ordinal",
+    "kind",
+    "target_record_type",
+    "fields",
+    "text_content",
+    "citations",
+    "status",
+    "taken_at",
+    "taken_by",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  branding_contrast_report: [
+    "id",
+    "organization_id",
+    "branding_version_no",
+    "rules",
+    "token_source_sha256",
+    "pair_count",
+    "created_at",
+    "created_by",
+  ],
+  branding_contrast_pair: [
+    "id",
+    "report_id",
+    "ordinal",
+    "fg_token",
+    "bg_token",
+    "use",
+    "fg_hex",
+    "bg_hex",
+    "ratio",
+    "threshold",
+    "usage_note",
+    "created_at",
+  ],
+  automation_rule_enablement: ["id", "automation_rule_id", "automation_rule_version_id", "enabled_from", "source"],
 } as const satisfies { readonly [T in keyof Database]: readonly (keyof Database[T] & string)[] };
 
 // Compile-time completeness: every interface column is listed (the `satisfies` above covers the other direction).

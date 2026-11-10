@@ -1,0 +1,659 @@
+// Administration > Integrations: create a connector, or edit its names and configuration (T-DG6-FE-C; ADR-0055 §1;
+// REQ-S17-001 "Admins configure connectors in the UI"). connector.configure (ADM_TECH) only; everyone else gets the
+// no-permission state, and the server decides anyway.
+//  - A connector is created disabled at configuration version 1; a configuration change is a new version, and the
+//    connector is "Not verified" again until a test run succeeds on it.
+//  - Credentials are secret references (provider and name) that IT provisions; the form never asks for a value, and the
+//    server refuses one (connector.secret_value_refused).
+//  - Field mappings are edited on their own screen (they are a configuration version too); this form keeps them.
+//  - One form-level alert; If-Match is the connector's version (409 shows the conflict and reloads it).
+//  - F-DG6-222: a 400 validation answer's field errors are placed on the fields they name. A reference IT has not bound
+//    to this connector (D-209: validation.secret_ref_not_bound at /config/credentialRefs/<purpose>) marks that
+//    credential row and says why, in the user's language; an error the form shows no field for is said in the alert.
+import { useState, type FormEvent } from "react";
+import { useTranslation } from "react-i18next";
+import { useParams } from "react-router";
+import { apiRequest, ApiError } from "../../api/client.ts";
+import { useAllTransformations } from "../../api/queries.ts";
+import { canAnywhere } from "../../auth/permissions.ts";
+import { useMe } from "../../auth/session.tsx";
+import { useSessionBoundAction, useSessionNavigate } from "../../auth/sessionBound.ts";
+import { Field } from "../../components/Form.tsx";
+import { Icon } from "../../components/Icon.tsx";
+import { FormProblemAlert } from "../../components/UnplacedFieldErrors.tsx";
+import { PageHeader, usePageTitle } from "../../components/Page.tsx";
+import { NoPermissionState, QueryState } from "../../components/States.tsx";
+import { fieldErrorMessage, placeFieldErrors, type UnplacedFieldError } from "../../lib/problem.ts";
+import { useSelectedOrganization } from "../admin/UsersPage.tsx";
+import {
+  CONNECTOR_ADAPTER_KINDS,
+  CONNECTOR_CADENCES,
+  integrationPaths,
+  useConnector,
+  useIntegrationsRefresh,
+  type Connector,
+  type ConnectorAdapterKind,
+  type ConnectorCadence,
+  type ConnectorConfigInput,
+  type ConnectorTargetKind,
+} from "./api.ts";
+
+interface CredentialRow {
+  key: string;
+  provider: string;
+  name: string;
+}
+
+export interface ConnectorFormValues {
+  code: string;
+  nameEn: string;
+  nameAr: string;
+  adapterKind: ConnectorAdapterKind;
+  targetKind: ConnectorTargetKind;
+  sourceSystemId: string;
+  endpointUrl: string;
+  credentials: CredentialRow[];
+  targetTransformationId: string;
+  cadence: ConnectorCadence;
+  retryMaxAttempts: string;
+  retryBackoffSeconds: string;
+  commitMode: "manual" | "auto";
+  commitOnBehalfOf: string;
+  outboundStatusPush: boolean;
+  reconciliationRule: "none" | "row_count" | "row_count_and_total";
+  adapterMode: "healthy" | "failing" | "stopped";
+  adapterConfirm: "immediate" | "never";
+  reason: string;
+}
+
+type ErrorKey = keyof ConnectorFormValues | `credential.${number}` | `credentialSecret.${number}`;
+type Errors = Partial<Record<ErrorKey, string>>;
+
+/** The form fields a server field error may name at the top level of the body (POST/PUT connector). */
+const TOP_FIELDS = new Set<ErrorKey>(["code", "nameEn", "nameAr"]);
+/** The configuration fields (`/config/<name>`) the form shows with an error slot. */
+const CONFIG_FIELDS = new Set<ErrorKey>([
+  "sourceSystemId",
+  "endpointUrl",
+  "targetTransformationId",
+  "retryMaxAttempts",
+  "retryBackoffSeconds",
+  "commitOnBehalfOf",
+  "reason",
+]);
+
+/** "a~1b~0c" -> "a/b~c" (RFC 6901). */
+const unescapePointerToken = (token: string) => token.replace(/~1/g, "/").replace(/~0/g, "~");
+
+/**
+ * F-DG6-222: the form field a server field error's pointer names, for the submitted values `v`, or null when the form
+ * shows no field for it (then the alert says it). `/config/credentialRefs/<purpose>[/…]` is the credential row of that
+ * purpose (its secret-name field: the value to change or to ask IT to bind); `/config/endpointUrl` only while the
+ * endpoint field is shown (an HTTP pull connector); every other configuration field likewise only while shown.
+ */
+export function connectorFieldOf(v: ConnectorFormValues, pointer: string): ErrorKey | null {
+  const cred = /^\/config\/credentialRefs\/([^/]+)(?:\/.*)?$/.exec(pointer);
+  if (cred) {
+    const purpose = unescapePointerToken(cred[1]!);
+    const i = v.credentials.findIndex((r) => r.key === purpose);
+    return i >= 0 ? `credentialSecret.${i}` : null;
+  }
+  const top = /^\/([A-Za-z]+)$/.exec(pointer);
+  if (top && TOP_FIELDS.has(top[1] as ErrorKey)) return top[1] as ErrorKey;
+  const inConfig = /^\/config\/([A-Za-z]+)$/.exec(pointer);
+  if (!inConfig || !CONFIG_FIELDS.has(inConfig[1] as ErrorKey)) return null;
+  const field = inConfig[1] as ErrorKey;
+  if (field === "endpointUrl" && v.adapterKind !== "http_pull") return null;
+  if (field === "targetTransformationId" && v.targetKind !== "kpi_actual") return null;
+  if (field === "commitOnBehalfOf" && v.commitMode !== "auto") return null;
+  return field;
+}
+
+const blank = (): ConnectorFormValues => ({
+  code: "",
+  nameEn: "",
+  nameAr: "",
+  adapterKind: "test_adapter",
+  targetKind: "kpi_actual",
+  sourceSystemId: "",
+  endpointUrl: "",
+  credentials: [],
+  targetTransformationId: "",
+  cadence: "manual",
+  retryMaxAttempts: "2",
+  retryBackoffSeconds: "60",
+  commitMode: "manual",
+  commitOnBehalfOf: "",
+  outboundStatusPush: false,
+  reconciliationRule: "row_count",
+  adapterMode: "healthy",
+  adapterConfirm: "immediate",
+  reason: "",
+});
+
+function fromConnector(c: Connector): ConnectorFormValues {
+  const cfg = c.config;
+  const mode = cfg.adapterSettings["mode"];
+  const confirm = cfg.adapterSettings["confirm"];
+  return {
+    code: c.code,
+    nameEn: c.nameEn,
+    nameAr: c.nameAr,
+    adapterKind: c.adapterKind,
+    targetKind: c.targetKind,
+    sourceSystemId: cfg.sourceSystemId,
+    endpointUrl: cfg.endpointUrl ?? "",
+    credentials: Object.entries(cfg.credentialRefs).map(([key, r]) => ({ key, provider: r.provider, name: r.name })),
+    targetTransformationId: cfg.targetTransformationId ?? "",
+    cadence: cfg.cadence,
+    retryMaxAttempts: String(cfg.retryMaxAttempts),
+    retryBackoffSeconds: String(cfg.retryBackoffSeconds),
+    commitMode: cfg.commitMode,
+    commitOnBehalfOf: cfg.commitOnBehalfOf ?? "",
+    outboundStatusPush: cfg.outboundActions.includes("deliverable_status_push"),
+    reconciliationRule: cfg.reconciliationRule,
+    adapterMode: mode === "failing" || mode === "stopped" ? mode : "healthy",
+    adapterConfirm: confirm === "never" ? "never" : "immediate",
+    reason: "",
+  };
+}
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** The configuration body from the form, or the field errors (problem codes or `integrations.form.*` keys). */
+export function toConfig(
+  v: ConnectorFormValues,
+  keepSettings: Readonly<Record<string, unknown>> = {},
+  keepMappings: ConnectorConfigInput["fieldMappings"] = [],
+): { ok: true; config: ConnectorConfigInput } | { ok: false; errors: Errors } {
+  const errors: Errors = {};
+  if (!/^[A-Za-z0-9][A-Za-z0-9_.:/-]{0,199}$/.test(v.sourceSystemId.trim()))
+    errors.sourceSystemId = "integrations.form.sourceSystemIdInvalid";
+  if (v.adapterKind === "http_pull" && !/^https:\/\/\S{1,492}$/.test(v.endpointUrl.trim()))
+    errors.endpointUrl = "integrations.form.httpsRequired";
+  if (v.targetKind === "kpi_actual" && !UUID.test(v.targetTransformationId))
+    errors.targetTransformationId = "validation.required";
+  const attempts = /^\d$/.test(v.retryMaxAttempts.trim()) ? Number(v.retryMaxAttempts) : NaN;
+  if (!(attempts >= 0 && attempts <= 5)) errors.retryMaxAttempts = "integrations.form.attemptsRange";
+  const backoff = /^\d{2,4}$/.test(v.retryBackoffSeconds.trim()) ? Number(v.retryBackoffSeconds) : NaN;
+  if (!(backoff >= 10 && backoff <= 3600)) errors.retryBackoffSeconds = "integrations.form.backoffRange";
+  if (v.commitMode === "auto" && !UUID.test(v.commitOnBehalfOf.trim()))
+    errors.commitOnBehalfOf = "integrations.form.userIdRequired";
+  const credentialRefs: Record<string, { provider: string; name: string }> = {};
+  v.credentials.forEach((row, i) => {
+    const ok =
+      /^[a-z][a-z0-9_]{0,31}$/.test(row.key) &&
+      /^[a-z][a-z0-9_]{0,31}$/.test(row.provider) &&
+      /^[A-Za-z_][A-Za-z0-9_./-]{0,127}$/.test(row.name) &&
+      !(row.key in credentialRefs);
+    if (!ok) errors[`credential.${i}`] = "integrations.form.credentialInvalid";
+    else credentialRefs[row.key] = { provider: row.provider, name: row.name };
+  });
+  if (v.reason.trim().length < 3) errors.reason = "admin.reason_required";
+  if (Object.keys(errors).length > 0) return { ok: false, errors };
+  const adapterSettings: Record<string, unknown> =
+    v.adapterKind === "test_adapter"
+      ? { ...keepSettings, mode: v.adapterMode, confirm: v.adapterConfirm }
+      : { ...keepSettings };
+  return {
+    ok: true,
+    config: {
+      sourceSystemId: v.sourceSystemId.trim(),
+      endpointUrl: v.adapterKind === "http_pull" ? v.endpointUrl.trim() : null,
+      credentialRefs,
+      fieldMappings: [...keepMappings],
+      targetTransformationId: v.targetKind === "kpi_actual" ? v.targetTransformationId : null,
+      cadence: v.cadence,
+      retryMaxAttempts: attempts,
+      retryBackoffSeconds: backoff,
+      commitMode: v.commitMode,
+      commitOnBehalfOf: v.commitMode === "auto" ? v.commitOnBehalfOf.trim() : null,
+      outboundActions: v.adapterKind === "test_adapter" && v.outboundStatusPush ? ["deliverable_status_push"] : [],
+      reconciliationRule: v.reconciliationRule,
+      adapterSettings,
+      reason: v.reason,
+    },
+  };
+}
+
+export function ConnectorCreatePage() {
+  const { t } = useTranslation();
+  const me = useMe();
+  usePageTitle(t("integrations.connectors.new"));
+  if (!canAnywhere(me, "connector.configure")) return <NoPermissionState />;
+  return (
+    <div className="page" data-p6-screen="integrations-connector-new">
+      <PageHeader
+        title={t("integrations.connectors.new")}
+        crumbs={[
+          { label: t("nav.areas.admin.label"), to: "/admin" },
+          { label: t("integrations.title"), to: "/admin/integrations" },
+          { label: t("integrations.connectors.new") },
+        ]}
+      />
+      <ConnectorForm connector={null} />
+    </div>
+  );
+}
+
+export function ConnectorEditPage() {
+  const { t } = useTranslation();
+  const me = useMe();
+  const { connectorId = "" } = useParams();
+  usePageTitle(t("integrations.connector.edit"));
+  const q = useConnector(connectorId);
+  if (!canAnywhere(me, "connector.configure")) return <NoPermissionState />;
+  return (
+    <div className="page" data-p6-screen="integrations-connector-edit">
+      <PageHeader
+        title={t("integrations.connector.edit")}
+        crumbs={[
+          { label: t("nav.areas.admin.label"), to: "/admin" },
+          { label: t("integrations.title"), to: "/admin/integrations" },
+          {
+            label: q.data?.code ?? t("integrations.connector.title"),
+            to: `/admin/integrations/connectors/${connectorId}`,
+          },
+          { label: t("integrations.connector.edit") },
+        ]}
+      />
+      <QueryState query={q}>{(c) => <ConnectorForm key={c.version} connector={c} />}</QueryState>
+    </div>
+  );
+}
+
+function ConnectorForm({ connector }: { connector: Connector | null }) {
+  const { t } = useTranslation();
+  const org = useSelectedOrganization();
+  const begin = useSessionBoundAction();
+  const cancelNavigate = useSessionNavigate();
+  const refresh = useIntegrationsRefresh();
+  const transformations = useAllTransformations({ sort: "updatedAt:desc" });
+  const [values, setValues] = useState<ConnectorFormValues>(() => (connector ? fromConnector(connector) : blank()));
+  const [errors, setErrors] = useState<Errors>({});
+  const [formError, setFormError] = useState<unknown>(null);
+  const [unplaced, setUnplaced] = useState<UnplacedFieldError[]>([]);
+  const [busy, setBusy] = useState(false);
+  const editing = connector !== null;
+  // T-DG6-FE-Z3 (F-DG6-281; REQ-S17-001): the stored target of a kpi_actual connector stays visible and selectable
+  // when it is not among the transformations this user can list (a technical administrator without
+  // transformation.read, ADR-0051 §7). Only its id is shown: no further read is made, so nothing more is disclosed.
+  const storedTargetId = connector?.config.targetTransformationId ?? "";
+  const storedTargetUnlisted =
+    storedTargetId !== "" && !(transformations.data ?? []).some((x) => x.id === storedTargetId);
+  const set =
+    <K extends keyof ConnectorFormValues>(key: K) =>
+    (e: { target: { value: string } }) =>
+      setValues((v) => ({ ...v, [key]: e.target.value as ConnectorFormValues[K] }));
+  const errorText = (key: keyof Errors) => {
+    const code = errors[key];
+    if (!code) return undefined;
+    return code.startsWith("integrations.") ? t(code) : fieldErrorMessage(t, code);
+  };
+  const setCredential = (i: number, patch: Partial<CredentialRow>) =>
+    setValues((v) => ({ ...v, credentials: v.credentials.map((r, j) => (j === i ? { ...r, ...patch } : r)) }));
+
+  const submit = async (e: FormEvent) => {
+    e.preventDefault();
+    setFormError(null);
+    setUnplaced([]);
+    const errs: Errors = {};
+    if (!editing && !/^[a-z][a-z0-9_-]{1,62}$/.test(values.code)) errs.code = "integrations.form.codeInvalid";
+    if (values.nameEn.trim() === "") errs.nameEn = "validation.required";
+    if (values.nameAr.trim() === "") errs.nameAr = "validation.required";
+    const parsed = toConfig(
+      values,
+      connector
+        ? Object.fromEntries(
+            Object.entries(connector.config.adapterSettings).filter(([k]) => k !== "mode" && k !== "confirm"),
+          )
+        : {},
+      connector ? [...connector.config.fieldMappings] : [],
+    );
+    if (!parsed.ok || Object.keys(errs).length > 0) {
+      setErrors({ ...errs, ...(parsed.ok ? {} : parsed.errors) });
+      return;
+    }
+    setErrors({});
+    const action = begin();
+    setBusy(true);
+    try {
+      const res = editing
+        ? await apiRequest<Connector>(integrationPaths.connector(connector.id), {
+            method: "PUT",
+            body: { nameEn: values.nameEn.trim(), nameAr: values.nameAr.trim(), config: parsed.config },
+            ifMatch: connector.version,
+          })
+        : await apiRequest<Connector>(integrationPaths.connectors, {
+            method: "POST",
+            body: {
+              organizationId: org.organizationId,
+              code: values.code,
+              nameEn: values.nameEn.trim(),
+              nameAr: values.nameAr.trim(),
+              adapterKind: values.adapterKind,
+              targetKind: values.targetKind,
+              config: parsed.config,
+            },
+          });
+      if (action.stale()) return;
+      setBusy(false);
+      await refresh();
+      action.navigate(`/admin/integrations/connectors/${res.data.id}`);
+    } catch (err) {
+      if (action.stale(err)) return;
+      setBusy(false);
+      setFormError(err);
+      const placed = placeFieldErrors(err, (pointer) => connectorFieldOf(values, pointer));
+      setErrors(placed.byField);
+      setUnplaced(placed.unplaced);
+      if (err instanceof ApiError && err.status === 409 && editing) await refresh();
+    }
+  };
+
+  return (
+    <section className="card" aria-labelledby="connector-form-h">
+      <h2 id="connector-form-h" className="card__title">
+        {editing ? t("integrations.connector.edit") : t("integrations.connectors.new")}
+      </h2>
+      <p className="small muted">{t("integrations.form.intro")}</p>
+      <form className="stack" onSubmit={(e) => void submit(e)} noValidate aria-busy={busy} data-connector-form>
+        {formError ? <FormProblemAlert error={formError} unplaced={unplaced} /> : null}
+        <Field
+          label={t("integrations.field.code")}
+          hint={editing ? t("integrations.form.fixedAfterCreate") : t("integrations.form.codeHint")}
+          error={errorText("code")}
+          required={!editing}
+        >
+          {(c) => (
+            <input {...c} dir="ltr" value={values.code} maxLength={63} onChange={set("code")} disabled={editing} />
+          )}
+        </Field>
+        <Field label={t("integrations.field.nameEn")} error={errorText("nameEn")} required>
+          {(c) => <input {...c} dir="ltr" lang="en" value={values.nameEn} maxLength={200} onChange={set("nameEn")} />}
+        </Field>
+        <Field label={t("integrations.field.nameAr")} error={errorText("nameAr")} required>
+          {(c) => <input {...c} dir="rtl" lang="ar" value={values.nameAr} maxLength={200} onChange={set("nameAr")} />}
+        </Field>
+        <Field
+          label={t("integrations.field.adapterKind")}
+          hint={editing ? t("integrations.form.fixedAfterCreate") : t("integrations.form.adapterHint")}
+        >
+          {(c) => (
+            <select {...c} value={values.adapterKind} onChange={set("adapterKind")} disabled={editing}>
+              {CONNECTOR_ADAPTER_KINDS.map((k) => (
+                <option key={k} value={k}>
+                  {t(`integrations.adapter.${k}`)}
+                </option>
+              ))}
+            </select>
+          )}
+        </Field>
+        <Field
+          label={t("integrations.field.targetKind")}
+          hint={editing ? t("integrations.form.fixedAfterCreate") : undefined}
+        >
+          {(c) => (
+            <select {...c} value={values.targetKind} onChange={set("targetKind")} disabled={editing}>
+              <option value="kpi_actual">{t("integrations.target.kpi_actual")}</option>
+              <option value="none">{t("integrations.target.none")}</option>
+            </select>
+          )}
+        </Field>
+        <Field
+          label={t("integrations.field.sourceSystemId")}
+          hint={t("integrations.form.sourceSystemIdHint")}
+          error={errorText("sourceSystemId")}
+          required
+        >
+          {(c) => (
+            <input {...c} dir="ltr" value={values.sourceSystemId} maxLength={200} onChange={set("sourceSystemId")} />
+          )}
+        </Field>
+        {values.adapterKind === "http_pull" ? (
+          <Field label={t("integrations.field.endpointUrl")} error={errorText("endpointUrl")} required>
+            {(c) => (
+              <input
+                {...c}
+                dir="ltr"
+                type="url"
+                value={values.endpointUrl}
+                maxLength={500}
+                onChange={set("endpointUrl")}
+              />
+            )}
+          </Field>
+        ) : null}
+        {values.adapterKind === "test_adapter" ? (
+          <>
+            <Field label={t("integrations.field.adapterMode")} hint={t("integrations.form.adapterModeHint")}>
+              {(c) => (
+                <select {...c} value={values.adapterMode} onChange={set("adapterMode")}>
+                  {(["healthy", "failing", "stopped"] as const).map((m) => (
+                    <option key={m} value={m}>
+                      {t(`integrations.adapterMode.${m}`)}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </Field>
+            <Field label={t("integrations.field.adapterConfirm")} hint={t("integrations.form.adapterConfirmHint")}>
+              {(c) => (
+                <select {...c} value={values.adapterConfirm} onChange={set("adapterConfirm")}>
+                  <option value="immediate">{t("integrations.adapterConfirm.immediate")}</option>
+                  <option value="never">{t("integrations.adapterConfirm.never")}</option>
+                </select>
+              )}
+            </Field>
+          </>
+        ) : null}
+        {values.targetKind === "kpi_actual" ? (
+          <Field
+            label={t("integrations.field.targetTransformation")}
+            hint={storedTargetUnlisted ? t("integrations.field.targetStoredUnlistedHint") : undefined}
+            error={errorText("targetTransformationId")}
+            required
+          >
+            {(c) => (
+              <select {...c} value={values.targetTransformationId} onChange={set("targetTransformationId")}>
+                <option value="">{t("common.form.choose")}</option>
+                {storedTargetUnlisted ? (
+                  <option value={storedTargetId} data-stored-target>
+                    {transformations.isPending
+                      ? t("integrations.field.targetStored", { id: storedTargetId })
+                      : t("integrations.field.targetUnreadable", { id: storedTargetId })}
+                  </option>
+                ) : null}
+                {(transformations.data ?? []).map((x) => (
+                  <option key={x.id} value={x.id}>
+                    {x.code} · {x.name}
+                  </option>
+                ))}
+              </select>
+            )}
+          </Field>
+        ) : null}
+        <fieldset className="fieldset" data-credentials-editor>
+          <legend>{t("integrations.credentials.title")}</legend>
+          <p className="small muted">{t("integrations.credentials.hint")}</p>
+          {values.credentials.map((row, i) => (
+            <div
+              className="integrations-credential"
+              key={i}
+              data-credential-row={row.key}
+              data-invalid={errors[`credential.${i}`] || errors[`credentialSecret.${i}`] ? "true" : undefined}
+            >
+              <Field label={t("integrations.credentials.purpose")} error={errorText(`credential.${i}`)}>
+                {(c) => (
+                  <input
+                    {...c}
+                    dir="ltr"
+                    value={row.key}
+                    maxLength={32}
+                    onChange={(e) => setCredential(i, { key: e.target.value })}
+                  />
+                )}
+              </Field>
+              <Field label={t("integrations.credentials.provider")}>
+                {(c) => (
+                  <input
+                    {...c}
+                    dir="ltr"
+                    autoComplete="off"
+                    value={row.provider}
+                    maxLength={32}
+                    onChange={(e) => setCredential(i, { provider: e.target.value })}
+                  />
+                )}
+              </Field>
+              <Field label={t("integrations.credentials.secretName")} error={errorText(`credentialSecret.${i}`)}>
+                {(c) => (
+                  <input
+                    {...c}
+                    dir="ltr"
+                    autoComplete="off"
+                    value={row.name}
+                    maxLength={128}
+                    onChange={(e) => setCredential(i, { name: e.target.value })}
+                  />
+                )}
+              </Field>
+              <button
+                type="button"
+                className="button button--secondary button--small"
+                onClick={() => setValues((v) => ({ ...v, credentials: v.credentials.filter((_, j) => j !== i) }))}
+              >
+                {t("integrations.credentials.remove")}
+                <span className="visually-hidden">: {row.key}</span>
+              </button>
+            </div>
+          ))}
+          {values.credentials.length < 8 ? (
+            <button
+              type="button"
+              className="button button--secondary button--small"
+              onClick={() =>
+                setValues((v) => ({ ...v, credentials: [...v.credentials, { key: "", provider: "env", name: "" }] }))
+              }
+            >
+              <Icon name="plus" /> {t("integrations.credentials.add")}
+            </button>
+          ) : null}
+        </fieldset>
+        <Field label={t("integrations.field.cadence")}>
+          {(c) => (
+            <select {...c} value={values.cadence} onChange={set("cadence")}>
+              {CONNECTOR_CADENCES.map((k) => (
+                <option key={k} value={k}>
+                  {t(`integrations.cadence.${k}`)}
+                </option>
+              ))}
+            </select>
+          )}
+        </Field>
+        <Field
+          label={t("integrations.field.retryMaxAttempts")}
+          hint={t("integrations.form.attemptsRange")}
+          error={errorText("retryMaxAttempts")}
+          required
+        >
+          {(c) => (
+            <input
+              {...c}
+              dir="ltr"
+              inputMode="numeric"
+              value={values.retryMaxAttempts}
+              onChange={set("retryMaxAttempts")}
+            />
+          )}
+        </Field>
+        <Field
+          label={t("integrations.field.retryBackoffSeconds")}
+          hint={t("integrations.form.backoffRange")}
+          error={errorText("retryBackoffSeconds")}
+          required
+        >
+          {(c) => (
+            <input
+              {...c}
+              dir="ltr"
+              inputMode="numeric"
+              value={values.retryBackoffSeconds}
+              onChange={set("retryBackoffSeconds")}
+            />
+          )}
+        </Field>
+        <Field label={t("integrations.field.commitMode")} hint={t("integrations.form.commitModeHint")}>
+          {(c) => (
+            <select {...c} value={values.commitMode} onChange={set("commitMode")}>
+              <option value="manual">{t("integrations.commitMode.manual")}</option>
+              <option value="auto">{t("integrations.commitMode.auto")}</option>
+            </select>
+          )}
+        </Field>
+        {values.commitMode === "auto" ? (
+          <Field
+            label={t("integrations.field.commitOnBehalfOf")}
+            hint={t("integrations.form.commitOnBehalfOfHint")}
+            error={errorText("commitOnBehalfOf")}
+            required
+          >
+            {(c) => (
+              <input
+                {...c}
+                dir="ltr"
+                value={values.commitOnBehalfOf}
+                maxLength={36}
+                onChange={set("commitOnBehalfOf")}
+              />
+            )}
+          </Field>
+        ) : null}
+        <Field label={t("integrations.field.reconciliationRule")}>
+          {(c) => (
+            <select {...c} value={values.reconciliationRule} onChange={set("reconciliationRule")}>
+              {(["none", "row_count", "row_count_and_total"] as const).map((k) => (
+                <option key={k} value={k}>
+                  {t(`integrations.reconciliationRule.${k}`)}
+                </option>
+              ))}
+            </select>
+          )}
+        </Field>
+        {values.adapterKind === "test_adapter" ? (
+          <label className="checkbox">
+            <input
+              type="checkbox"
+              checked={values.outboundStatusPush}
+              onChange={(e) => setValues((v) => ({ ...v, outboundStatusPush: e.target.checked }))}
+            />
+            {t("integrations.form.outboundStatusPush")}
+          </label>
+        ) : null}
+        <Field
+          label={t("integrations.field.reason")}
+          hint={t("common.form.reasonHint")}
+          error={errorText("reason")}
+          required
+        >
+          {(c) => <textarea {...c} rows={3} value={values.reason} maxLength={1000} onChange={set("reason")} />}
+        </Field>
+        <div className="toolbar">
+          <button type="submit" className="button button--primary" disabled={busy}>
+            {busy ? t("integrations.form.saving") : t("integrations.form.save")}
+          </button>
+          <button
+            type="button"
+            className="button button--secondary"
+            disabled={busy}
+            onClick={() =>
+              cancelNavigate(editing ? `/admin/integrations/connectors/${connector.id}` : "/admin/integrations")
+            }
+          >
+            {t("integrations.form.cancel")}
+          </button>
+        </div>
+      </form>
+    </section>
+  );
+}

@@ -21,6 +21,7 @@ import { Section } from "../../components/Section.tsx";
 import { QueryState } from "../../components/States.tsx";
 import { useWorkspace, WorkspaceFrame } from "../../components/Workspace.tsx";
 import { Icon } from "../../components/Icon.tsx";
+import { RestrictedRecordsLabel } from "../../components/sensitivity/RestrictedRecordsLabel.tsx";
 import { useBenefitFormulas } from "../benefit-formulas/api.ts";
 import { useKpiDictionary } from "../kpi/api.ts";
 import { P4FormDialog, ReadOnlyNote, type P4Values } from "../my-work/p4ui.tsx";
@@ -213,8 +214,16 @@ function Register() {
     {
       id: "evidence",
       header: t("benefitsP4.col.evidence"),
+      // T-DG6-BE-Z10 (D-218): the count covers only the evidence the reader is admitted to; the label marks the rest.
       cell: (b) => (
-        <span data-evidence-count={b.evidenceCount}>{t("benefitsP4.evidenceCount", { count: b.evidenceCount })}</span>
+        <span className="block">
+          <span data-evidence-count={b.evidenceCount}>{t("benefitsP4.evidenceCount", { count: b.evidenceCount })}</span>
+          {b.includesRestrictedRecords === true ? (
+            <span className="block">
+              <RestrictedRecordsLabel value scope="item" />
+            </span>
+          ) : null}
+        </span>
       ),
       sortValue: (b) => b.evidenceCount,
     },

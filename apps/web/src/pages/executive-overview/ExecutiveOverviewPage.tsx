@@ -12,6 +12,7 @@ import { PageHeader, usePageTitle } from "../../components/Page.tsx";
 import { Section } from "../../components/Section.tsx";
 import { LoadingState, QueryState } from "../../components/States.tsx";
 import { useExecutiveOverview } from "../dashboards/api.ts";
+import { ExecutiveHomeRegions } from "./ExecutiveRegions.tsx";
 import {
   AreaGrid,
   BlockedFilterNote,
@@ -24,6 +25,7 @@ import {
   useFilterState,
   useOrgQuery,
 } from "../dashboards/ui.tsx";
+import { RestrictedRecordsLabel } from "../../components/sensitivity/RestrictedRecordsLabel.tsx";
 
 export function ExecutiveOverviewPage() {
   const { t } = useTranslation();
@@ -44,6 +46,17 @@ export function ExecutiveOverviewPage() {
           </Link>
         }
       />
+      {/* T-DG6-FE-F2 (REQ-S15-001; ADR-0061 §4.1): key decisions, key outcomes and next actions above the fold. */}
+      <ExecutiveHomeRegions
+        data={org.blocked ? undefined : query.data}
+        state={
+          org.blocked || (query.isError && !query.data)
+            ? "unavailable"
+            : org.loading || query.isPending
+              ? "loading"
+              : null
+        }
+      />
       <FilterBar state={state} set={set} clear={clear} applied={query.data?.appliedFilters ?? null} orgWide />
       {org.blocked ? (
         <BlockedFilterNote reason={org.blocked} />
@@ -53,6 +66,7 @@ export function ExecutiveOverviewPage() {
         <QueryState query={query}>
           {(d) => (
             <>
+              <RestrictedRecordsLabel value={d.includesRestrictedRecords} scope="total" />
               <GeneratedNote at={d.generatedAt} onRefresh={() => void query.refetch()} />
               <p data-transformation-count={d.transformationCount}>
                 <strong>{t("dashboards.overview.count", { count: d.transformationCount })}</strong>

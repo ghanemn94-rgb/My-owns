@@ -9,12 +9,18 @@
 // group never double counts by default. The counted member must be a member (422 benefit_group.counted_not_member);
 // members join or leave through updateBenefit (`benefitGroupId`), and the counted member cannot leave while it is the
 // counted one (register.ts, 422 benefit_group.counted_member_leaving).
+//
+// T-DG6-BE-Z10 (F-DG6-420; D-218; ADR-0051 §2): a reader not admitted to a sensitive member never receives its id.
+// The member is omitted from `memberBenefitIds`; when it is the counted member, `countedBenefitId` is null and the
+// neutral marker `countedBenefitRestricted: true` says a member is counted (the group's meaning: never "none named");
+// either way the group carries `includesRestrictedRecords: true`. An admitted reader gets every id and no marker.
+// Writes are unchanged: a PATCH without `countedBenefitId` keeps the counted member the reader cannot see.
 import { diffFields, sql, type BenefitGroupRow, type DbOrTx, type Tx } from "@mth/db";
 import { benefitGroupCreate, benefitGroupUpdate, type BenefitGroup } from "@mth/shared/schemas";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
-import { principalOf, requireTransformationRead } from "../access/index.ts";
+import { principalOf, requireTransformationRead, restrictedIdsOf, type Principal } from "../access/index.ts";
 import { record } from "../audit/index.ts";
 import {
   cursorSchema,
@@ -53,7 +59,11 @@ export const GROUP_AUDIT_FIELDS = [
   "status",
 ] as const satisfies readonly (keyof BenefitGroupRow & string)[];
 
-export async function presentGroups(db: DbOrTx, rows: readonly BenefitGroupRow[]): Promise<BenefitGroup[]> {
+export async function presentGroups(
+  db: DbOrTx,
+  principal: Principal,
+  rows: readonly BenefitGroupRow[],
+): Promise<BenefitGroup[]> {
   if (rows.length === 0) return [];
   const members = await db
     .selectFrom("benefit")
@@ -65,23 +75,35 @@ export async function presentGroups(db: DbOrTx, rows: readonly BenefitGroupRow[]
     )
     .orderBy("code")
     .execute();
-  return rows.map((g) => ({
-    id: g.id,
-    transformationId: g.transformation_id,
-    code: g.code,
-    title: g.title,
-    description: g.description,
-    countedBenefitId: g.counted_benefit_id,
-    memberBenefitIds: members.filter((m) => m.benefit_group_id === g.id).map((m) => m.id),
-    status: g.status as BenefitGroup["status"],
-    archivedAt: isoOrNull(g.archived_at),
-    archivedBy: g.archived_by,
-    archiveReason: g.archive_reason,
-    version: g.version,
-    createdAt: iso(g.created_at),
-    createdBy: g.created_by,
-    updatedAt: iso(g.updated_at),
-  }));
+  const hidden = await restrictedIdsOf(db, principal, "benefit", [
+    ...members.map((m) => m.id),
+    ...rows.map((g) => g.counted_benefit_id),
+  ]);
+  return rows.map((g) => {
+    const all = members.filter((m) => m.benefit_group_id === g.id).map((m) => m.id);
+    const memberBenefitIds = all.filter((id) => !hidden.has(id));
+    const countedHidden = g.counted_benefit_id !== null && hidden.has(g.counted_benefit_id);
+    const restricted = countedHidden || memberBenefitIds.length !== all.length;
+    return {
+      id: g.id,
+      transformationId: g.transformation_id,
+      code: g.code,
+      title: g.title,
+      description: g.description,
+      countedBenefitId: countedHidden ? null : g.counted_benefit_id,
+      ...(countedHidden ? { countedBenefitRestricted: true as const } : {}),
+      memberBenefitIds,
+      status: g.status as BenefitGroup["status"],
+      archivedAt: isoOrNull(g.archived_at),
+      archivedBy: g.archived_by,
+      archiveReason: g.archive_reason,
+      version: g.version,
+      createdAt: iso(g.created_at),
+      createdBy: g.created_by,
+      updatedAt: iso(g.updated_at),
+      ...(restricted ? { includesRestrictedRecords: true as const } : {}),
+    };
+  });
 }
 
 const groupParams = z.strictObject({ transformationId: z.uuid(), benefitGroupId: z.uuid() });
@@ -196,7 +218,7 @@ export function registerBenefitGroupRoutes(app: FastifyInstance, { db }: ModuleD
       .limit(query.limit + 1)
       .execute();
     const page = paginate(rows, query.limit, (r) => [r.id], hash);
-    return { items: await presentGroups(db, page.items), nextCursor: page.nextCursor };
+    return { items: await presentGroups(db, principalOf(request), page.items), nextCursor: page.nextCursor };
   });
 
   app.post(GROUPS, { config: write }, async (request, reply) => {
@@ -206,7 +228,7 @@ export function registerBenefitGroupRoutes(app: FastifyInstance, { db }: ModuleD
       const body = parseBody(benefitGroupCreate, request.body);
       return maybeIdempotent(tx, request, ctx.userId, body, async () => ({
         status: 201,
-        body: (await presentGroups(tx, [await createGroup(tx, ctx, body)]))[0]!,
+        body: (await presentGroups(tx, principalOf(request), [await createGroup(tx, ctx, body)]))[0]!,
       }));
     });
     return sendCreated(request, reply, result);
@@ -222,13 +244,13 @@ export function registerBenefitGroupRoutes(app: FastifyInstance, { db }: ModuleD
       .where("transformation_id", "=", transformationId)
       .executeTakeFirst();
     if (!row) throw problems.notFound();
-    return sendVersioned(reply, 200, (await presentGroups(db, [row]))[0]!);
+    return sendVersioned(reply, 200, (await presentGroups(db, principalOf(request), [row]))[0]!);
   });
 
   app.patch(GROUP_ITEM, { config: write }, async (request, reply) => {
     const body = await db
       .transaction()
-      .execute(async (tx) => (await presentGroups(tx, [await updateGroup(tx, request)]))[0]!);
+      .execute(async (tx) => (await presentGroups(tx, principalOf(request), [await updateGroup(tx, request)]))[0]!);
     return sendVersioned(reply, 200, body);
   });
 

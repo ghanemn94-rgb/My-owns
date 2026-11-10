@@ -1,0 +1,64 @@
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-kbe-a
+
+ ✓ |unit-node| apps/api/src/modules/kpi/kpi.test.ts (45 tests) 12986ms
+   ✓ kpi module (P2) > registers exactly the 24 P2 kpi operations, the 11 P3 business-case, the 13 T09, the 18 P4 KBE-B, the P4 KBE-C, the ARCH-R1 and the P5 KBE-E operations, and reports them  652ms
+   ✓ kpi module (P2) > its declared boundary holds, and a planted bypass or undeclared dependency would be caught  12058ms
+ ✓ |unit-node| apps/api/src/modules/kpi/import-target.test.ts (4 tests) 20ms
+ ❯ |unit-node| apps/api/src/server.test.ts (6 tests | 1 failed) 13936ms
+   × route registration > declares access on every /api route and on the health endpoints 6405ms
+     → Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+   ✓ route registration > registers dev login only in AUTH_MODE=dev; production configuration refuses dev mode entirely  4944ms
+   ✓ session cookie security in production (F-DG1-112) > the loader fails closed at startup on a plain-http, non-loopback APP_BASE_URL 17ms
+   ✓ session cookie security in production (F-DG1-112) > the API refuses to start even with a hand-built configuration that bypassed the loader 233ms
+   ✓ session cookie security in production (F-DG1-112) > an https production origin starts  1492ms
+   ✓ module composition (D-048, P2) > wires the P2 business modules (each registering routes) and keeps reporting a route-free scaffold until P5  834ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts (141 tests) 98137ms
+   ✓ API module boundaries (ADR-0002) > the six §16 business modules all exist, each with its own test suite (A12; D-048)  539ms
+   ✓ API module boundaries (ADR-0002) > every import respects dependsOn, public surfaces and allowed packages  71111ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > rule 4 reports exactly the diagnostics of a full ts.transpileModule, for every extension (F-DG5-102/145)  1514ms
+   ✓ package dependency direction (ADR-0002 rule 5) > packages/db imports only @mth/config and @mth/shared  1601ms
+   ✓ package dependency direction (ADR-0002 rule 5) > packages/shared imports no workspace package  4760ms
+   ✓ package dependency direction (ADR-0002 rule 5) > apps/web never imports @mth/db or @mth/config (browser bundle, no secrets)  15623ms
+   ✓ package dependency direction (ADR-0002 rule 5) > apps/worker imports no API code  1259ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-node| apps/api/src/server.test.ts > route registration > declares access on every /api route and on the health endpoints
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ apps/api/src/server.test.ts:24:3
+     22| 
+     23| describe("route registration", () => {
+     24|   it("declares access on every /api route and on the health endpoints"…
+       |   ^
+     25|     const routes = await routesFor({ AUTH_MODE: "dev" });
+     26|     const governed = routes.filter(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯
+
+Vitest caught 1 unhandled error during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯⎯⎯ Unhandled Error ⎯⎯⎯⎯⎯⎯⎯
+Error: [vitest-worker]: Timeout calling "onTaskUpdate"
+ ❯ Object.onTimeoutError node_modules/.pnpm/vitest@3.2.7_@types+node@22.18.0_jsdom@27.0.0_yaml@2.8.1/node_modules/vitest/dist/chunks/rpc.-pEldfrD.js:53:10
+ ❯ Timeout._onTimeout node_modules/.pnpm/vitest@3.2.7_@types+node@22.18.0_jsdom@27.0.0_yaml@2.8.1/node_modules/vitest/dist/chunks/index.B521nVV-.js:59:62
+ ❯ listOnTimeout node:internal/timers:685:17
+ ❯ processTimers node:internal/timers:618:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+
+ Test Files  1 failed | 3 passed (4)
+      Tests  1 failed | 195 passed (196)
+     Errors  1 error
+   Start at  21:35:24
+   Duration  104.37s (transform 34.75s, setup 0ms, collect 117.30s, tests 125.08s, environment 1ms, prepare 1.69s)
+

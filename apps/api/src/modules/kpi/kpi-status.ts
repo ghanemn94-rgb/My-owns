@@ -16,7 +16,7 @@ import { resolveThresholds, withReadTimeStaleness, type KpiReasonCode, type KpiV
 import { canonicalDecimal, KPI_SCOPE_KINDS, type KpiStatus } from "@mth/shared/schemas";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { principalOf, requireTransformationRead } from "../access/index.ts";
+import { principalOf, requireTransformationRead, restrictedIdsOf, type Principal } from "../access/index.ts";
 import {
   cursorSchema,
   decodeCursor,
@@ -259,6 +259,25 @@ async function dbNow(db: DbOrTx): Promise<Date> {
   return r.rows[0]!.now;
 }
 
+/**
+ * T-DG6-BE-Z10B (F-DG6-420; D-218): the override in force names its evidence only to a reader admitted to it; otherwise
+ * `evidenceId` is null and `evidenceRestricted` is true (the override and its RAG stay shown: they are open facts).
+ */
+async function shownStatuses(db: DbOrTx, principal: Principal, items: readonly KpiStatus[]): Promise<KpiStatus[]> {
+  const hidden = await restrictedIdsOf(
+    db,
+    principal,
+    "evidence",
+    items.map((s) => s.override?.evidenceId),
+  );
+  if (hidden.size === 0) return [...items];
+  return items.map((s) =>
+    s.override !== null && s.override.evidenceId !== null && hidden.has(s.override.evidenceId)
+      ? { ...s, override: { ...s.override, evidenceId: null, evidenceRestricted: true as const } }
+      : s,
+  );
+}
+
 export function registerKpiStatusRoutes(app: FastifyInstance, deps: ModuleDeps): string[] {
   const { db } = deps;
   const read = { access: { permission: "transformation.read" as const } };
@@ -279,7 +298,7 @@ export function registerKpiStatusRoutes(app: FastifyInstance, deps: ModuleDeps):
       .executeTakeFirst()) as KpiDefinitionRow | undefined;
     if (!def) throw problems.notFound();
     const scope = { kind: query.scopeKind ?? "transformation", id: query.scopeId ?? transformationId };
-    return statusOf(
+    const status = await statusOf(
       db,
       def,
       target.organizationId,
@@ -288,6 +307,7 @@ export function registerKpiStatusRoutes(app: FastifyInstance, deps: ModuleDeps):
       await dbNow(db),
       await businessDateOf(db, target.organizationId),
     );
+    return (await shownStatuses(db, principalOf(request), [status]))[0]!;
   });
 
   app.get(ALL, { config: read }, async (request) => {
@@ -316,7 +336,7 @@ export function registerKpiStatusRoutes(app: FastifyInstance, deps: ModuleDeps):
     const items: KpiStatus[] = [];
     for (const { sort_key: _k, ...def } of page.items)
       items.push(await statusOf(db, def as KpiDefinitionRow, target.organizationId, scope, null, now, businessDate));
-    return { items, nextCursor: page.nextCursor };
+    return { items: await shownStatuses(db, principalOf(request), items), nextCursor: page.nextCursor };
   });
 
   return [`GET ${ONE}`, `GET ${ALL}`];

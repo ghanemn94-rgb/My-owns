@@ -40,7 +40,7 @@ import {
   type ModuleDeps,
 } from "../platform/index.ts";
 import { cursorKey, FORM_RECORD, recordParams, requireRecordRead, type RecordParams } from "./history.ts";
-import { assertWorking, loadRecordType, recordExists } from "./record-types.ts";
+import { assertWorking, loadRecordType, requireRecordVisible } from "./record-types.ts";
 
 export const COMMENTS = `${FORM_RECORD}/comments`;
 const JSON_BODY = ["application/json"] as const;
@@ -115,7 +115,7 @@ async function createComment(tx: Tx, request: FastifyRequest, p: RecordParams): 
   assertWorking(rt);
   const actor = await requireCommentWrite(tx, request, p.transformationId);
   const body = parseBody(formRecordCommentCreate, request.body);
-  if (!(await recordExists(tx, rt, p.transformationId, p.recordId))) throw problems.notFound();
+  await requireRecordVisible(tx, request, rt, p.transformationId, p.recordId); // ADR-0051 §2 (F-DG6-123)
   const parentId = body.parentCommentId ?? null;
   if (parentId !== null) {
     const parent = await tx

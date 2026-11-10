@@ -24,6 +24,8 @@ describe("tasks module (P4)", () => {
           "GET /api/v1/admin/notification-policy",
           "PUT /api/v1/admin/notification-policy",
           "GET /api/v1/me/notification-digests/:digestId",
+          // T-DG6-BE-C (ADR-0051 §3): the deep-link resolver (tasks/deep-links.ts).
+          "GET /api/v1/links/:token",
         ].sort(),
       );
     } finally {

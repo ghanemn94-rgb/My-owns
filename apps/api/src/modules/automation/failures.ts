@@ -29,6 +29,7 @@ import {
   auditContextOf,
   denialOf,
   holdsAnywhere,
+  maskRestrictedIdsInFields,
   organizationsWith,
   principalOf,
   refreshPrincipal,
@@ -147,6 +148,28 @@ export function presentFailure(f: OperationalFailureRow, principal: Principal): 
     updatedAt: iso(f.updated_at),
   };
 }
+
+/**
+ * T-DG6-BE-Z13B (D-227; D-218): the entries as served. The idempotency key (an outbox key such as
+ * `benefit.value_validated:<financeValidationId>`) and the error message can embed a record id; an id of a sensitive
+ * record, or of a child that carries one's values, the reader is not admitted to is replaced by the restricted marker
+ * and the entry carries `includesRestrictedRecords: true`. The stored row is unchanged.
+ */
+export async function shownFailures(
+  db: DbOrTx,
+  principal: Principal,
+  rows: readonly OperationalFailureRow[],
+): Promise<OperationalFailure[]> {
+  return maskRestrictedIdsInFields(
+    db,
+    principal,
+    rows.map((f) => presentFailure(f, principal)),
+    ["idempotencyKey", "errorMessage"],
+  );
+}
+
+const shownFailure = async (db: DbOrTx, principal: Principal, row: OperationalFailureRow) =>
+  (await shownFailures(db, principal, [row]))[0]!;
 
 /** `automation.read` or `job.read` held at any scope, else 403. */
 function requireReader(principal: Principal): void {
@@ -361,7 +384,11 @@ export function registerAutomationFailureRoutes(app: FastifyInstance, deps: Modu
       .execute();
     const pageRows = paginate(rows, query.limit, (r) => [Number(r.rank_key), r.failed_key, r.id], hash);
     return {
-      items: pageRows.items.map(({ rank_key: _r, failed_key: _f, ...f }) => presentFailure(f, principal)),
+      items: await shownFailures(
+        db,
+        principal,
+        pageRows.items.map(({ rank_key: _r, failed_key: _f, ...f }) => f),
+      ),
       nextCursor: pageRows.nextCursor,
     };
   });
@@ -370,19 +397,19 @@ export function registerAutomationFailureRoutes(app: FastifyInstance, deps: Modu
     const { failureId } = parse(failureParams, request.params, "params");
     const principal = principalOf(request);
     requireReader(principal);
-    return sendVersioned(reply, 200, presentFailure(await loadForRead(db, principal, failureId), principal));
+    return sendVersioned(reply, 200, await shownFailure(db, principal, await loadForRead(db, principal, failureId)));
   });
 
   app.post(RETRY, { config: repair }, async (request, reply) => {
     const { failureId } = parse(failureParams, request.params, "params");
     const row = await db.transaction().execute((tx) => retryFailure(tx, request, failureId));
-    return sendVersioned(reply, 200, presentFailure(row, principalOf(request)));
+    return sendVersioned(reply, 200, await shownFailure(db, principalOf(request), row));
   });
 
   app.post(DISMISS, { config: { ...repair, consumes: JSON_BODY } }, async (request, reply) => {
     const { failureId } = parse(failureParams, request.params, "params");
     const row = await db.transaction().execute((tx) => dismissFailure(tx, request, failureId));
-    return sendVersioned(reply, 200, presentFailure(row, principalOf(request)));
+    return sendVersioned(reply, 200, await shownFailure(db, principalOf(request), row));
   });
 
   return [

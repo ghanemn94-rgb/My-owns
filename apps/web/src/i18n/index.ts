@@ -119,6 +119,34 @@ import enLaunchHealthP5 from "./en/launchHealthP5.json" with { type: "json" };
 // the demo labels, the environment screen and the guided walkthrough.
 import arPlaybookP5 from "./ar/playbookP5.json" with { type: "json" };
 import enPlaybookP5 from "./en/playbookP5.json" with { type: "json" };
+// P6 slice E (T-DG6-FE-A; ADR-0051 §2): the restricted-records label of totals (`access.includesRestrictedRecords`).
+// All Arabic of the P6 blocks (here, nav, problems, myWork) is provisional: see ./provisional-ar-p6.ts (JSON has no comments).
+import arAccess from "./ar/access.json" with { type: "json" };
+import enAccess from "./en/access.json" with { type: "json" };
+// P6 slice D (T-DG6-FE-E; ADR-0059): the optional assistant panel and Administration > AI assistant. Its Arabic is
+// provisional (components/assistant/provisional-ar.ts; ADR-0059 §1, §8, §10).
+import arAssistant from "./ar/assistant.json" with { type: "json" };
+import enAssistant from "./en/assistant.json" with { type: "json" };
+// P6 slices E, F, J and C screens (T-DG6-FE-B): Administration > Audit, Security, Sensitive grants, Operations, Identity,
+// Storage, Notifications; the sensitivity panel, the evidence preview and the deep-link landing. Arabic provisional.
+import arAdminP6 from "./ar/adminP6.json" with { type: "json" };
+import enAdminP6 from "./en/adminP6.json" with { type: "json" };
+// P6 slice H (T-DG6-FE-D; ADR-0057): search, saved views, filter chips and contextual help. Its Arabic is provisional
+// (components/saved-views/provisional-ar.ts).
+import arProductivity from "./ar/productivity.json" with { type: "json" };
+import enProductivity from "./en/productivity.json" with { type: "json" };
+// P6 slices B and A (T-DG6-FE-C; ADR-0055, ADR-0056): Administration > Integrations, Strategy and KPIs > Imports and the
+// deliverable's external-change confirmation. Their Arabic is provisional (pages/integrations/provisional-ar.ts).
+import arIntegrations from "./ar/integrations.json" with { type: "json" };
+import enIntegrations from "./en/integrations.json" with { type: "json" };
+import arImports from "./ar/imports.json" with { type: "json" };
+import enImports from "./en/imports.json" with { type: "json" };
+import arExternalChange from "./ar/externalChange.json" with { type: "json" };
+import enExternalChange from "./en/externalChange.json" with { type: "json" };
+// P6 slice I (T-DG6-FE-F; ADR-0061 §8): the explanation panels (E1, E2, E4, E5) and the Branding Settings contrast
+// report. Its Arabic is provisional (./provisional-ar-p6.ts, source "fe-f").
+import arExplanations from "./ar/explanations.json" with { type: "json" };
+import enExplanations from "./en/explanations.json" with { type: "json" };
 
 /** Namespace files per locale; the key-parity test walks exactly these. */
 export const catalogues = {
@@ -171,6 +199,14 @@ export const catalogues = {
     reportsP5: arReportsP5,
     launchHealthP5: arLaunchHealthP5,
     playbookP5: arPlaybookP5,
+    access: arAccess,
+    assistant: arAssistant,
+    adminP6: arAdminP6,
+    productivity: arProductivity,
+    integrations: arIntegrations,
+    imports: arImports,
+    externalChange: arExternalChange,
+    explanations: arExplanations,
   },
   en: {
     common: enCommon,
@@ -221,6 +257,14 @@ export const catalogues = {
     reportsP5: enReportsP5,
     launchHealthP5: enLaunchHealthP5,
     playbookP5: enPlaybookP5,
+    access: enAccess,
+    assistant: enAssistant,
+    adminP6: enAdminP6,
+    productivity: enProductivity,
+    integrations: enIntegrations,
+    imports: enImports,
+    externalChange: enExternalChange,
+    explanations: enExplanations,
   },
 } as const;
 

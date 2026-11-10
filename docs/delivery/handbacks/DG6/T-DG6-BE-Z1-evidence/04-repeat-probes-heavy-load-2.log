@@ -1,0 +1,41 @@
+load: 16 CPU spinners (timeout 200 s) on 4 vCPU + 3 parallel clusters; start 2026-11-03T23:39:25Z loadavg 6.17 3.69 1.92 21/181 58
+port-policy: PostgreSQL listening on port 28906 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-z1
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw1bxzu3_f37ec8a6 (server_encoding UTF8); applied 117 migrations to a fresh database
+stdout | apps/api/test/integration/reporting/zz-z1-guard-repeat.test.ts > BE-Z1 probe: the 0125 guard test's sequence, repeated > fixed: 40 repetitions, step([job]) assembles the job each time
+BE-Z1 guard-sequence variant fixed: misses 0 of 40 []
+
+stdout | apps/api/test/integration/reporting/zz-z1-guard-repeat.test.ts > BE-Z1 probe: the 0125 guard test's sequence, repeated > as-is: 40 repetitions, step([job]) assembles the job each time
+BE-Z1 guard-sequence variant as-is: misses 0 of 40 []
+
+ ✓ |integration| apps/api/test/integration/reporting/zz-z1-guard-repeat.test.ts (20 tests) 40576ms
+   ✓ D-207 (1): a live selection is accepted with no snapshot > 202 with snapshotId null; the job, its stored selection, progress and audit event; no snapshot, no outbox event  696ms
+   ✓ D-207 (2): the watch assembles, then the worker exports > assembled once (requester's snapshot, service actor on behalf of the requester), outbox event, worker succeeds, download 200  568ms
+   ✓ D-207 (2): access lost between the start and the assembly gives a failed job and no file > a record marked sensitive meanwhile: failed export.includes_restricted_records, no snapshot, no file; an admitted requester still exports  583ms
+   ✓ F-DG6-sa12-3: the assembly attempts are counted on the job, so the bound survives restarts (0125) > a job whose assembly kills the process is attempted at most 3 times across restarts, then fails export.assembly_failed  13049ms
+   ✓ F-DG6-sa12-3: the assembly attempts are counted on the job, so the bound survives restarts (0125) > the attempt is committed before the assembly starts: a kill right after counting leaves it counted, and the next process assembles once  2376ms
+   ✓ F-DG6-sa12-1 and the attempt step: the 0125 export_job_guard > the assembly attempt count is 0 on insert and steps by exactly 1, only while the job is pending  365ms
+   ✓ exactly once: two watchers race > two concurrent steps over 6 pending jobs assemble each exactly once (one snapshot, one outbox event, one assemble audit each)  597ms
+   ✓ BE-Z1 probe: the 0125 guard test's sequence, repeated > fixed: 40 repetitions, step([job]) assembles the job each time  9022ms
+   ✓ BE-Z1 probe: the 0125 guard test's sequence, repeated > as-is: 40 repetitions, step([job]) assembles the job each time  7831ms
+stdout | apps/api/test/integration/workflows/zz-z1-xmin-repeat.test.ts > BE-Z1 probe: round-2 submit and approval.resubmit share one transaction, repeated > 40 resubmissions: auditXmin(...)[1] is the resubmit's xmin every time
+BE-Z1 xmin probe: misses 0 of 40; heap order differed 40 times [{"i":0,"resubmitX":"1634","submitX":["1632","1634"],"heap":["1634","1632"]},{"i":1,"resubmitX":"1639","submitX":["1637","1639"],"heap":["1639","1637"]},{"i":2,"resubmitX":"1644","submitX":["1642","1644"],"heap":["1644","1642"]},{"i":3,"resubmitX":"1649","submitX":["1647","1649"],"heap":["1649","1647"]},{"i":4,"resubmitX":"1654","submitX":["1652","1654"],"heap":["1654","1652"]},{"i":5,"resubmitX":"1659","submitX":["1657","1659"],"heap":["1659","1657"]},{"i":6,"resubmitX":"1664","submitX":["1662","1664"],"heap":["1664","1662"]},{"i":7,"resubmitX":"1669","submitX":["1667","1669"],"heap":["1669","1667"]},{"i":8,"resubmitX":"1674","submitX":["1672","1674"],"heap":["1674","1672"]},{"i":9,"resubmitX":"1679","submitX":["1677","1679"],"heap":["1679","1677"]},{"i":10,"resubmitX":"1684","submitX":["1682","1684"],"heap":["1684","1682"]},{"i":11,"resubmitX":"1689","submitX":["1687","1689"],"heap":["1689","1687"]},{"i":12,"resubmitX":"1694","submitX":["1692","1694"],"heap":["1694","1692"]},{"i":13,"resubmitX":"1699","submitX":["1697","1699"],"heap":["1699","1697"]},{"i":14,"resubmitX":"1704","submitX":["1702","1704"],"heap":["1704","1702"]},{"i":15,"resubmitX":"1709","submitX":["1707","1709"],"heap":["1709","1707"]},{"i":16,"resubmitX":"1714","submitX":["1712","1714"],"heap":["1714","1712"]},{"i":17,"resubmitX":"1719","submitX":["1717","1719"],"heap":["1719","1717"]},{"i":18,"resubmitX":"1724","submitX":["1722","1724"],"heap":["1724","1722"]},{"i":19,"resubmitX":"1729","submitX":["1727","1729"],"heap":["1729","1727"]},{"i":20,"resubmitX":"1734","submitX":["1732","1734"],"heap":["1734","1732"]},{"i":21,"resubmitX":"1739","submitX":["1737","1739"],"heap":["1739","1737"]},{"i":22,"resubmitX":"1744","submitX":["1742","1744"],"heap":["1744","1742"]},{"i":23,"resubmitX":"1749","submitX":["1747","1749"],"heap":["1749","1747"]},{"i":24,"resubmitX":"1754","submitX":["1752","1754"],"heap":["1754","1752"]},{"i":25,"resubmitX":"1759","submitX":["1757","1759"],"heap":["1759","1757"]},{"i":26,"resubmitX":"1764","submitX":["1762","1764"],"heap":["1764","1762"]},{"i":27,"resubmitX":"1769","submitX":["1767","1769"],"heap":["1769","1767"]},{"i":28,"resubmitX":"1774","submitX":["1772","1774"],"heap":["1774","1772"]},{"i":29,"resubmitX":"1779","submitX":["1777","1779"],"heap":["1779","1777"]},{"i":30,"resubmitX":"1784","submitX":["1782","1784"],"heap":["1784","1782"]},{"i":31,"resubmitX":"1789","submitX":["1787","1789"],"heap":["1789","1787"]},{"i":32,"resubmitX":"1794","submitX":["1792","1794"],"heap":["1794","1792"]},{"i":33,"resubmitX":"1799","submitX":["1797","1799"],"heap":["1799","1797"]},{"i":34,"resubmitX":"1804","submitX":["1802","1804"],"heap":["1804","1802"]},{"i":35,"resubmitX":"1809","submitX":["1807","1809"],"heap":["1809","1807"]},{"i":36,"resubmitX":"1814","submitX":["1812","1814"],"heap":["1814","1812"]},{"i":37,"resubmitX":"1819","submitX":["1817","1819"],"heap":["1819","1817"]},{"i":38,"resubmitX":"1824","submitX":["1822","1824"],"heap":["1824","1822"]},{"i":39,"resubmitX":"1829","submitX":["1827","1829"],"heap":["1829","1827"]}]
+
+ ✓ |integration| apps/api/test/integration/workflows/zz-z1-xmin-repeat.test.ts (7 tests) 14198ms
+   ✓ (a) round-2 resubmission through submitChangeRequest (ADR-0026 amendment A4) > one open approval, round 2, bound to the request's new version; the Sponsor's decision succeeds; round-1 version is 409  901ms
+   ✓ (d) commit-time authorization (S-4) > the requester revoked between the request and its commit: resubmit and withdraw are 403; nothing is written  572ms
+   ✓ BE-Z1 probe: round-2 submit and approval.resubmit share one transaction, repeated > 40 resubmissions: auditXmin(...)[1] is the resubmit's xmin every time  9411ms
+
+ Test Files  2 passed (2)
+      Tests  27 passed (27)
+   Start at  23:39:32
+   Duration  131.53s (transform 22.20s, setup 0ms, collect 67.77s, tests 54.77s, environment 0ms, prepare 500ms)
+
+vitest exit 0
+end 2026-11-03T23:41:49Z loadavg 19.72 10.24 4.62 20/373 842

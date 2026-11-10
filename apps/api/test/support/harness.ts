@@ -4,7 +4,7 @@
 //
 // Reusable by qa-verifier suites (tests/qa/integration/**): import { startApi, seedWorld, signIn } from here.
 import { randomBytes } from "node:crypto";
-import { mkdtempSync } from "node:fs";
+import { appendFileSync, mkdirSync, mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { loadConfig, type AppConfig } from "@mth/config";
@@ -48,9 +48,30 @@ export function testConfig(env: Record<string, string> = {}): AppConfig {
     AUTH_MODE: "dev",
     RATE_LIMIT_PER_MINUTE: "100000",
     AUTH_RATE_LIMIT_PER_MINUTE: "100000",
+    // P6 (T-DG6-BE-E; ADR-0052 §4): the rate-limit class budgets, raised like the two above so functional suites that
+    // upload many files a minute are not throttled; the defaults and the 429s are tested in admin/security.test.ts.
+    UPLOAD_RATE_LIMIT_PER_MINUTE: "100000",
+    SEARCH_RATE_LIMIT_PER_MINUTE: "100000",
+    ASSISTANT_RATE_LIMIT_PER_MINUTE: "100000",
+    WEBHOOK_RATE_LIMIT_PER_MINUTE: "100000",
+    EXPORT_RATE_LIMIT_PER_MINUTE: "100000",
     EVIDENCE_STORAGE_PATH: testEvidenceDir(),
     ...env,
   });
+}
+
+/**
+ * T-DG6-DO-D (ADR-0053 §5): with MTH_TEST_LOG_DIR set (the CI integration job and the post-suite log scan), every API
+ * this process starts without its own logStream writes its log lines, as composed by server.ts (redaction included),
+ * to `<dir>/api-<pid>.log`, which deploy/scripts/log-scan.mjs scans after the suite. Unset (the default): no logger,
+ * exactly as before.
+ */
+function runLogFile(): ServerOptions["logStream"] | undefined {
+  const dir = process.env["MTH_TEST_LOG_DIR"];
+  if (dir === undefined || dir === "") return undefined;
+  mkdirSync(dir, { recursive: true });
+  const file = join(dir, `api-${process.pid}.log`);
+  return { write: (line: string) => appendFileSync(file, line) };
 }
 
 export async function startApi(
@@ -77,11 +98,12 @@ export async function startApi(
     options.database ? { DATABASE_URL: roleUrl(adminUrl, options.database, "mth_app"), ...options.env } : options.env,
   );
   const pool = createPool(config.databaseUrl!, { max: 5, applicationName: "api-test", ...options.pool });
+  const logStream = options.logStream ?? runLogFile();
   const { app, db, routes } = await buildServer({
     config,
     pool,
-    logger: options.logStream !== undefined,
-    ...(options.logStream !== undefined ? { logStream: options.logStream } : {}),
+    logger: logStream !== undefined,
+    ...(logStream !== undefined ? { logStream } : {}),
     webRoot: null,
     ...options.server,
     ...(options.oidc !== undefined ? { oidc: options.oidc } : {}),
@@ -385,5 +407,7 @@ export interface P3ExerciseContext {
 export type P4ExerciseContext = P3ExerciseContext;
 /** The P5 per-task contract seams (p5-work-split §2 rule 14; T-DG5-BE-A): the same validating client. */
 export type P5ExerciseContext = P3ExerciseContext;
+/** The P6 per-task contract seams (p6-work-split §2 rule 16; T-DG6-BE-A): the same validating client. */
+export type P6ExerciseContext = P3ExerciseContext;
 
 export { createDb, createPool };

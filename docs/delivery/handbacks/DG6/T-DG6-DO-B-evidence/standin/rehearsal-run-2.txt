@@ -1,0 +1,128 @@
+Fri Oct 30 18:43:14 UTC 2026
+port-policy: PostgreSQL listening on port 26251 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applied 113 migration(s)
+  "bootstrapped": true,
+  "adminUserId": "01a18e1f-c2fc-7709-8cc2-5cd76aef89d7",
+readyz: {"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+idp:    http://127.0.0.1:26262/realms/mth-test
+load before: 20.77 18.32 16.04
+
+Running 4 tests using 1 worker
+
+  ✘  1 [chromium-en] › e2e/identity/keycloak-login.spec.ts:40:3 › REQ-S16-007: Keycloak test realm sign-in; another realm is refused › signs in through realm mth-test and gets a session (1.0m)
+  ✘  2 [chromium-en] › e2e/identity/keycloak-login.spec.ts:59:3 › REQ-S16-007: Keycloak test realm sign-in; another realm is refused › refuses the authorization response and token of realm mth-other: token_invalid, no session (1.0m)
+  ✓  3 [chromium-ar] › e2e/identity/keycloak-login.spec.ts:40:3 › REQ-S16-007: Keycloak test realm sign-in; another realm is refused › signs in through realm mth-test and gets a session (3.4s)
+  ✘  4 [chromium-ar] › e2e/identity/keycloak-login.spec.ts:59:3 › REQ-S16-007: Keycloak test realm sign-in; another realm is refused › refuses the authorization response and token of realm mth-other: token_invalid, no session (1.0m)
+
+
+  1) [chromium-en] › e2e/identity/keycloak-login.spec.ts:40:3 › REQ-S16-007: Keycloak test realm sign-in; another realm is refused › signs in through realm mth-test and gets a session 
+
+    [31mTest timeout of 60000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 60000ms exceeded.
+    Call log:
+    [2m  - waiting for getByRole('link', { name: 'Sign in with corporate account', exact: true })[22m
+
+
+      48 |     const lang = langOf(info);
+      49 |     await page.goto("/login");
+    > 50 |     await page.getByRole("link", { name: tr(lang, "auth.oidcButton"), exact: true }).click();
+         |                                                                                      ^
+      51 |     await page.waitForURL((u) => u.origin === cfg.idpOrigin.origin && u.pathname.startsWith(realmPath(HUB_REALM)));
+      52 |     await submitKeycloakLogin(page, HUB_REALM, cfg);
+      53 |     await page.waitForURL((u) => u.origin !== cfg.idpOrigin.origin && !u.pathname.startsWith("/login"));
+        at /home/user/wt/dg6-do-b/e2e/identity/keycloak-login.spec.ts:50:86
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../../var/tmp/mth-run.tcYJ0X/claude-0/dob-rehearse.9oOqKP/pw-out/e2e-identity-keycloak-logi-50293-mth-test-and-gets-a-session-chromium-en/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../../var/tmp/mth-run.tcYJ0X/claude-0/dob-rehearse.9oOqKP/pw-out/e2e-identity-keycloak-logi-50293-mth-test-and-gets-a-session-chromium-en/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../../../var/tmp/mth-run.tcYJ0X/claude-0/dob-rehearse.9oOqKP/pw-out/e2e-identity-keycloak-logi-50293-mth-test-and-gets-a-session-chromium-en/trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace ../../../../var/tmp/mth-run.tcYJ0X/claude-0/dob-rehearse.9oOqKP/pw-out/e2e-identity-keycloak-logi-50293-mth-test-and-gets-a-session-chromium-en/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium-en] › e2e/identity/keycloak-login.spec.ts:59:3 › REQ-S16-007: Keycloak test realm sign-in; another realm is refused › refuses the authorization response and token of realm mth-other: token_invalid, no session 
+
+    [31mTest timeout of 60000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 60000ms exceeded.
+    Call log:
+    [2m  - waiting for getByRole('link', { name: 'Sign in with corporate account', exact: true })[22m
+
+
+      77 |
+      78 |     await page.goto("/login");
+    > 79 |     await page.getByRole("link", { name: tr(lang, "auth.oidcButton"), exact: true }).click();
+         |                                                                                      ^
+      80 |     await page.waitForURL((u) => u.origin === cfg.idpOrigin.origin && u.pathname.startsWith(realmPath(FOREIGN_REALM)));
+      81 |     await submitKeycloakLogin(page, FOREIGN_REALM, cfg);
+      82 |
+        at /home/user/wt/dg6-do-b/e2e/identity/keycloak-login.spec.ts:79:86
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../../var/tmp/mth-run.tcYJ0X/claude-0/dob-rehearse.9oOqKP/pw-out/e2e-identity-keycloak-logi-d22df-er-token-invalid-no-session-chromium-en/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../../var/tmp/mth-run.tcYJ0X/claude-0/dob-rehearse.9oOqKP/pw-out/e2e-identity-keycloak-logi-d22df-er-token-invalid-no-session-chromium-en/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../../../var/tmp/mth-run.tcYJ0X/claude-0/dob-rehearse.9oOqKP/pw-out/e2e-identity-keycloak-logi-d22df-er-token-invalid-no-session-chromium-en/trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace ../../../../var/tmp/mth-run.tcYJ0X/claude-0/dob-rehearse.9oOqKP/pw-out/e2e-identity-keycloak-logi-d22df-er-token-invalid-no-session-chromium-en/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) [chromium-ar] › e2e/identity/keycloak-login.spec.ts:59:3 › REQ-S16-007: Keycloak test realm sign-in; another realm is refused › refuses the authorization response and token of realm mth-other: token_invalid, no session 
+
+    [31mTest timeout of 60000ms exceeded.[39m
+
+    Error: page.waitForURL: Test timeout of 60000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation until "load"
+    ============================================================
+
+      78 |     await page.goto("/login");
+      79 |     await page.getByRole("link", { name: tr(lang, "auth.oidcButton"), exact: true }).click();
+    > 80 |     await page.waitForURL((u) => u.origin === cfg.idpOrigin.origin && u.pathname.startsWith(realmPath(FOREIGN_REALM)));
+         |                ^
+      81 |     await submitKeycloakLogin(page, FOREIGN_REALM, cfg);
+      82 |
+      83 |     await page.waitForURL((u) => u.pathname === "/login" && u.searchParams.get("error") === "token_invalid");
+        at /home/user/wt/dg6-do-b/e2e/identity/keycloak-login.spec.ts:80:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../../var/tmp/mth-run.tcYJ0X/claude-0/dob-rehearse.9oOqKP/pw-out/e2e-identity-keycloak-logi-d22df-er-token-invalid-no-session-chromium-ar/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../../var/tmp/mth-run.tcYJ0X/claude-0/dob-rehearse.9oOqKP/pw-out/e2e-identity-keycloak-logi-d22df-er-token-invalid-no-session-chromium-ar/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../../../var/tmp/mth-run.tcYJ0X/claude-0/dob-rehearse.9oOqKP/pw-out/e2e-identity-keycloak-logi-d22df-er-token-invalid-no-session-chromium-ar/trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace ../../../../var/tmp/mth-run.tcYJ0X/claude-0/dob-rehearse.9oOqKP/pw-out/e2e-identity-keycloak-logi-d22df-er-token-invalid-no-session-chromium-ar/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3 failed
+    [chromium-en] › e2e/identity/keycloak-login.spec.ts:40:3 › REQ-S16-007: Keycloak test realm sign-in; another realm is refused › signs in through realm mth-test and gets a session 
+    [chromium-en] › e2e/identity/keycloak-login.spec.ts:59:3 › REQ-S16-007: Keycloak test realm sign-in; another realm is refused › refuses the authorization response and token of realm mth-other: token_invalid, no session 
+    [chromium-ar] › e2e/identity/keycloak-login.spec.ts:59:3 › REQ-S16-007: Keycloak test realm sign-in; another realm is refused › refuses the authorization response and token of realm mth-other: token_invalid, no session 
+  1 passed (3.2m)
+playwright exit=1 wall=195408 ms; load after: 18.05 18.41 16.54
+---- audit and identities (database mth_dob_rehearse)
+user_identity http://127.0.0.1:26262/realms/mth-test 5f0c7a52-1d1e-4c9a-9a51-6a0d0e5a0001
+audit session.create 1
+session_rows 1
+---- api.log (tail)
+---- idp.log
+standin-idp (TEST ONLY, NOT Keycloak) http://127.0.0.1:26262/realms/{mth-test,mth-other}
+exit=1

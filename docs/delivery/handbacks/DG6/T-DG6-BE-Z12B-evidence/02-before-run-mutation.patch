@@ -1,0 +1,71 @@
+diff --git a/apps/api/src/modules/methodology/revision-impact.ts b/apps/api/src/modules/methodology/revision-impact.ts
+index 28fb802c8..3585a4ca0 100644
+--- a/apps/api/src/modules/methodology/revision-impact.ts
++++ b/apps/api/src/modules/methodology/revision-impact.ts
+@@ -532,8 +532,7 @@ export function registerRevisionProposalRoutes(app: FastifyInstance, { db }: Mod
+       const shown = toRevisionProposal(row);
+       const r = await redactRestrictedIds(db, principal, {
+         impact: shown.impact,
+-        validationReport: shown.validationReport,
+-      });
++      }); // BE-Z12B BEFORE-RUN MUTATION: validationReport not redacted
+       items.push(r.restricted ? { ...shown, ...r.value, includesRestrictedRecords: true as const } : shown);
+     }
+     return { items, nextCursor: pageRows.nextCursor };
+diff --git a/apps/api/src/modules/procedures/steps.ts b/apps/api/src/modules/procedures/steps.ts
+index e25f8a86c..9d13f22f7 100644
+--- a/apps/api/src/modules/procedures/steps.ts
++++ b/apps/api/src/modules/procedures/steps.ts
+@@ -1119,6 +1119,7 @@ export async function presentInstance(
+     "subjectRecordId",
+   );
+   const inputs = await redactRestrictedIds(db, principal, view.inputValues);
++  if (view.links.length >= 0) return view; // BE-Z12B BEFORE-RUN MUTATION
+   if (hiddenLinks.size === 0 && !("includesRestrictedRecords" in subject!) && !inputs.restricted) return view;
+   return {
+     ...view,
+diff --git a/apps/api/src/modules/reporting/modular.ts b/apps/api/src/modules/reporting/modular.ts
+index e7297eba4..5bd5ff89f 100644
+--- a/apps/api/src/modules/reporting/modular.ts
++++ b/apps/api/src/modules/reporting/modular.ts
+@@ -402,7 +402,7 @@ async function shownInherited(
+   principal: Principal,
+   items: readonly InheritedRecord[],
+ ): Promise<InheritedRecord[]> {
+-  return hideRestrictedRefs(db, principal, "evidence", items, "evidenceId");
++  void hideRestrictedRefs; void db; void principal; return [...items]; // BE-Z12B BEFORE-RUN MUTATION
+ }
+ 
+ /** Registers this file's routes and returns them as "METHOD /path". */
+diff --git a/apps/api/src/modules/sustainment/controls.ts b/apps/api/src/modules/sustainment/controls.ts
+index 2d55f3ef6..0e153d939 100644
+--- a/apps/api/src/modules/sustainment/controls.ts
++++ b/apps/api/src/modules/sustainment/controls.ts
+@@ -753,13 +753,7 @@ export function registerControlRoutes(app: FastifyInstance, { db }: ModuleDeps):
+     const page = paginate(rows, query.limit, (r) => [r.id], hash);
+     // T-DG6-BE-Z12 (F-DG6-480; D-218): a review of a transition decision the reader is not admitted to (the decision of a
+     // sensitive benefit carries its values) keeps its subject kind with `transitionDecisionId: null`, marked.
+-    const items = await hideRestrictedRefs(
+-      db,
+-      principalOf(request),
+-      "transition_decision",
+-      page.items.map(toReview),
+-      "transitionDecisionId",
+-    );
++    const items = page.items.map(toReview); // BE-Z12B BEFORE-RUN MUTATION
+     return { items, nextCursor: page.nextCursor };
+   });
+ 
+diff --git a/apps/api/src/modules/workflows/approvals.ts b/apps/api/src/modules/workflows/approvals.ts
+index 861770d70..fa51c28b2 100644
+--- a/apps/api/src/modules/workflows/approvals.ts
++++ b/apps/api/src/modules/workflows/approvals.ts
+@@ -446,7 +446,7 @@ const toEscalation = (e: ApprovalEscalationRow) => ({
+  * benefit's transition decision carries its values) keeps its type with `subjectId: null`, marked.
+  */
+ export async function toApprovals(db: DbOrTx, principal: Principal, rows: readonly ApprovalRow[]): Promise<Approval[]> {
+-  return hideRestrictedTypedRefs(db, principal, await approvalsOf(db, rows), "subjectType", "subjectId");
++  void hideRestrictedTypedRefs; void principal; return approvalsOf(db, rows); // BE-Z12B BEFORE-RUN MUTATION
+ }
+ 
+ async function approvalsOf(db: DbOrTx, rows: readonly ApprovalRow[]): Promise<Approval[]> {

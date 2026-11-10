@@ -27,10 +27,12 @@ import { PageHeader, usePageTitle } from "../../components/Page.tsx";
 import { RegisterTable, type RegisterColumn } from "../../components/RegisterTable.tsx";
 import { Section } from "../../components/Section.tsx";
 import { QueryState } from "../../components/States.tsx";
+import { RestrictedRecordsLabel } from "../../components/sensitivity/RestrictedRecordsLabel.tsx";
 import { formatDateTime } from "../../lib/format.ts";
 import { renderMessage } from "./messages.ts";
 import { DueDate, FormAlert } from "./p4ui.tsx";
 import { MyWorkSections } from "../dashboards/MyWorkSections.tsx";
+import { MyWorkHomeRegions } from "./HomeRegions.tsx";
 
 /**
  * The pending state of the My Work sections: a plain busy note, not the shared role="status" LoadingState. My Work is
@@ -67,6 +69,10 @@ export function MyWorkPage() {
         <Link className="button button--secondary button--small" to="/my-work/delegations">
           <Icon name="dot" /> {t("nav.sub.delegations")}
         </Link>
+        {/* T-DG6-FE-D2 (ADR-0057 §6): the caller's open drafts across transformations. */}
+        <Link className="button button--secondary button--small" to="/my-work/drafts">
+          <Icon name="pencil" /> {t("productivity.drafts.link")}
+        </Link>
         {canReadTransformations ? (
           <Link className="button button--secondary button--small" to="/transformations">
             {t("common.myWork.openTransformations")}
@@ -74,6 +80,8 @@ export function MyWorkPage() {
         ) : null}
       </nav>
       {!canReadTransformations ? <p className="muted">{t("common.myWork.noBusinessAccess")}</p> : null}
+      {/* T-DG6-FE-F2 (REQ-S15-001; ADR-0061 §4.1): key decisions, key outcomes and next actions above the fold. */}
+      <MyWorkHomeRegions />
       {/* T-DG4-FE-G (REQ-S03-008): the sections of getMyWork and the upcoming deadlines. */}
       <MyWorkSections />
       <WorkItemsSection />
@@ -298,6 +306,8 @@ function InboxSection() {
                           <Link className="link" to={n.linkPath}>
                             {text}
                           </Link>
+                          {/* T-DG6-BE-Z13 (D-218, D-226): about a record I am not admitted to; links home only. */}
+                          <RestrictedRecordsLabel value={n.includesRestrictedRecords} scope="item" />
                           <span className="block small muted">{formatDateTime(n.createdAt, locale)}</span>
                         </div>
                         {n.readAt ? null : (

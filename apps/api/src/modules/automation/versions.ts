@@ -13,14 +13,19 @@
 // missing, 409 stale); one audit event per row written, in the same transaction; no remote I/O. A version's content
 // changes only while it is a draft; published versions never change (the 0074 guard refuses it again). A configuration
 // review of a rule version is not a business approval, and no rule can automate one (REQ-S12-026).
-import { createHash } from "node:crypto";
+import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 import { sql, type AutomationRuleRow, type AutomationRuleVersionRow, type DbOrTx, type Tx } from "@mth/db";
 import { APPROVAL_CATEGORIES, PERMISSIONS, PROBLEM_TYPES, type Permission } from "@mth/shared";
 import {
   AUTOMATION_DECIMAL_PATTERN,
+  AUTOMATION_RESTRICTED_TOKEN_PATTERN,
+  AUTOMATION_RESTRICTED_TOKEN_RETIRED_PATTERN,
+  AUTOMATION_RESTRICTED_TOKEN_TAG_HEX_LENGTH,
+  automationRestrictedToken,
   automationRuleVersionCreate,
   automationRuleVersionUpdate,
   emptyStarterParameters,
+  looksLikeRestrictedMarker,
   normalizeAutomationContent,
   STARTER_PARAMETER_SCHEMAS,
   type AutomationCondition,
@@ -33,7 +38,7 @@ import {
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
-import { auditContextOf, principalOf } from "../access/index.ts";
+import { auditContextOf, principalOf, restrictedIdsAmong, uuidsIn, type Principal } from "../access/index.ts";
 import { record } from "../audit/index.ts";
 import {
   cursorSchema,
@@ -77,6 +82,42 @@ export const automationRefusals = {
       "automation_rule.condition_invalid",
       "A condition must test a field of the trigger with a valid operator and value.",
     ),
+  // T-DG6-BE-Z13 (D-226): a marker that does not map to a hidden literal of the stored version is never stored.
+  restrictedMarkerUnknown: (pointer: string) =>
+    new HttpProblem({
+      status: 422,
+      type: PROBLEM_TYPES.validation,
+      code: "automation_rule.restricted_marker_unknown",
+      title: "Business rule violated",
+      detail:
+        "A condition value is restricted-record marker text that does not stand for a value of this version. Reload the version and keep each restricted value as shown, or remove it.",
+      errors: [
+        {
+          pointer,
+          code: "automation_rule.restricted_marker_unknown",
+          message: "Restricted-record marker text that does not stand for a value of this version.",
+        },
+      ],
+    }),
+  // T-DG6-BE-Z14, T-DG6-BE-Z15 (D-231, D-233; F-DG6-580, F-DG6-640): a token issued by another version row, another
+  // rule or another row version is never resolved against this version's positions; the writer must reload the
+  // version and re-apply the change.
+  restrictedTokenStale: (pointer: string) =>
+    new HttpProblem({
+      status: 422,
+      type: PROBLEM_TYPES.validation,
+      code: "automation_rule.restricted_token_stale",
+      title: "Business rule violated",
+      detail:
+        "A condition value is a restricted-record token that was not issued for this version as it now stands (it comes from an earlier save, another version or another rule): reload the version and re-apply your change.",
+      errors: [
+        {
+          pointer,
+          code: "automation_rule.restricted_token_stale",
+          message: "Restricted-record token not issued for this version as it now stands.",
+        },
+      ],
+    }),
   actionParametersInvalid: () =>
     problems.businessRule(
       "automation_rule.action_parameters_invalid",
@@ -304,12 +345,175 @@ const OP_AR: Readonly<Record<string, string>> = {
   absent: "غير موجود",
 };
 
+/** A restricted token in the readable summary (T-DG6-BE-Z12B, D-226): a neutral phrase, never the literal. */
+const literalText = (v: string, lang: "en" | "ar"): string =>
+  !AUTOMATION_RESTRICTED_TOKEN_PATTERN.test(v) ? v : lang === "en" ? "a restricted record" : "سجل مقيد";
+
 const valueText = (v: AutomationCondition["value"], lang: "en" | "ar"): string => {
   if (v === undefined) return "";
-  if (Array.isArray(v)) return ` ${v.join(lang === "en" ? ", " : "، ")}`;
+  if (Array.isArray(v)) return ` ${v.map((x) => literalText(x, lang)).join(lang === "en" ? ", " : "، ")}`;
   if (typeof v === "boolean") return lang === "en" ? ` ${v ? "true" : "false"}` : ` ${v ? "صحيح" : "خطأ"}`;
-  return ` ${v}`;
+  return ` ${literalText(v, lang)}`;
 };
+
+// ------------------------------------------------------------------------------------------------ restricted literals
+
+/** Every string literal of a set of conditions in reading order (a string value, then each `in` element), with a setter. */
+function mapLiterals(
+  conditions: readonly AutomationCondition[],
+  f: (literal: string, at: string) => string,
+): AutomationCondition[] {
+  return conditions.map((c, i): AutomationCondition => {
+    if (typeof c.value === "string") return { ...c, value: f(c.value, `/content/conditions/${i}/value`) };
+    if (Array.isArray(c.value))
+      return { ...c, value: c.value.map((x, j) => f(x, `/content/conditions/${i}/value/${j}`)) };
+    return c;
+  });
+}
+
+/**
+ * T-DG6-BE-Z13C (D-228 (1)): the 1-based position of every literal of a set of conditions among **all** its literals,
+ * in reading order (a scalar value, string or boolean, counts as one; each `in` list element counts as one; a condition
+ * without a value counts none). The position depends only on the stored version, never on what the reader is admitted
+ * to, so a grant or sensitivity change between an author's read and save cannot shift a token. It discloses nothing the
+ * reader does not already see (the number of conditions and list elements). Returns the string literal at each position.
+ */
+function literalPositions(conditions: readonly AutomationCondition[]): Map<number, string> {
+  const out = new Map<number, string>();
+  let k = 0;
+  for (const c of conditions) {
+    if (Array.isArray(c.value)) for (const x of c.value) out.set(++k, x);
+    else if (typeof c.value === "string") out.set(++k, c.value);
+    else if (typeof c.value === "boolean") ++k;
+  }
+  return out;
+}
+
+/** `mapLiterals` with the D-228 (1) position of each string literal. */
+function mapLiteralsAt(
+  conditions: readonly AutomationCondition[],
+  f: (literal: string, position: number) => string,
+): AutomationCondition[] {
+  let k = 0;
+  return conditions.map((c): AutomationCondition => {
+    if (Array.isArray(c.value)) return { ...c, value: c.value.map((x) => f(x, ++k)) };
+    if (typeof c.value === "string") return { ...c, value: f(c.value, ++k) };
+    if (typeof c.value === "boolean") ++k;
+    return c;
+  });
+}
+
+/**
+ * T-DG6-BE-Z15 (F-DG6-640; D-233; ADR-0051 §2 amendment D-231 part A): the rule-version row a restricted token is
+ * issued from. `restricted_token_key` is the row's own secret key (0127: 32 random bytes drawn at insert, immutable,
+ * never served, audited or logged).
+ */
+export interface RestrictedTokenIssuer {
+  readonly id: string;
+  readonly version: number;
+  readonly restricted_token_key: Buffer;
+}
+
+const RESTRICTED_TOKEN_TAG_DOMAIN = "mth.automation.restricted-token.v1";
+
+/**
+ * T-DG6-BE-Z15 (D-233): the issuer tag of a token, the first 96 bits (24 lowercase hex digits) of
+ * HMAC-SHA256(row key, domain LF row id LF row version). It changes with every revision of the row and differs between
+ * rows (each has its own key, and the id is in the message), so a token names the row and the revision it was issued
+ * from. Without the key it cannot be computed or checked, and it discloses neither the row id nor any literal (HMAC is
+ * a pseudo-random function of its message). 96 bits make an accidental match between two issuers negligible.
+ */
+export function restrictedTokenTag(issuer: RestrictedTokenIssuer): string {
+  return createHmac("sha256", issuer.restricted_token_key)
+    .update(`${RESTRICTED_TOKEN_TAG_DOMAIN}\n${issuer.id}\n${issuer.version}`)
+    .digest("hex")
+    .slice(0, AUTOMATION_RESTRICTED_TOKEN_TAG_HEX_LENGTH);
+}
+
+/** Constant-time comparison of two issuer tags (both are 24 hex digits when they reach here). */
+const sameTag = (a: string, b: string): boolean =>
+  a.length === b.length && timingSafeEqual(Buffer.from(a, "latin1"), Buffer.from(b, "latin1"));
+
+/**
+ * T-DG6-BE-Z12B, T-DG6-BE-Z13, T-DG6-BE-Z13C, T-DG6-BE-Z15 (F-DG6-480, F-DG6-520/541/560, F-DG6-640; D-218, D-222,
+ * D-226, D-228 (1), D-233; ADR-0051 §2): a rule condition may compare a field (`benefitId`, for one) to a literal uuid.
+ * For each set of conditions, every literal (a string value, or an element of an `in` list) that contains the id of a
+ * sensitive record, or of a child that carries one's values, the principal is not admitted to is shown as the opaque
+ * token `[restricted:<tag>:<k>]` (`<tag>` = the issuer tag of the row the set was read from, at the row version it was
+ * read at, D-233; k = the literal's 1-based position among **all** literals of the stored version, D-228 (1)), in place,
+ * and `restricted` is true. `tokens` maps each token shown back to its stored literal (never serialized). The stored
+ * conditions, the content hash and the audit trail are unchanged. One policy decision for the whole batch.
+ */
+export async function redactConditionLiterals(
+  db: DbOrTx,
+  principal: Principal,
+  sets: readonly { readonly conditions: readonly AutomationCondition[]; readonly issuer: RestrictedTokenIssuer }[],
+): Promise<{ conditions: AutomationCondition[]; restricted: boolean; tokens: Map<string, string> }[]> {
+  const hidden = await restrictedIdsAmong(db, principal, [...uuidsIn(sets.map((x) => x.conditions))]);
+  const isHidden = (v: string) => [...uuidsIn(v)].some((id) => hidden.has(id));
+  return sets.map(({ conditions, issuer }) => {
+    const tokens = new Map<string, string>();
+    if (hidden.size === 0) return { conditions: [...conditions], restricted: false, tokens };
+    let tag: string | undefined;
+    const out = mapLiteralsAt(conditions, (v, k) => {
+      if (!isHidden(v)) return v;
+      tag ??= restrictedTokenTag(issuer);
+      const token = automationRestrictedToken(tag, k);
+      tokens.set(token, v);
+      return token;
+    });
+    return { conditions: out, restricted: tokens.size > 0, tokens };
+  });
+}
+
+/**
+ * T-DG6-BE-Z13 — the re-save rule of D-226 (supersedes the ordinal pairing of D-222 (2)). Every literal of the sent
+ * conditions that looks like restricted marker text must be a token the writer is shown for the stored version
+ * (`stored`: the row being replaced, at the If-Match version; null on a rule create, where no token exists). A token
+ * whose issuer tag is not the tag of that row at that row version (another version row, another rule, another row
+ * version; D-231, D-233), or a token in the retired D-231 form `[restricted:<version>:<k>]`, is refused 422
+ * `automation_rule.restricted_token_stale`. A token of the stored row is replaced by the stored literal at the token's
+ * position (D-228 (1)), wherever the condition now sits (any condition, any list position, any order). A token left
+ * out is simply removed. An unknown position, the bare marker text `[restricted]`, or any other marker-like text is
+ * refused with 422 `automation_rule.restricted_marker_unknown` (en/ar problem text), so marker text is never stored as
+ * a literal. A writer admitted to the record is never shown a token and edits the literal freely.
+ */
+export function resolveRestrictedTokens(
+  stored: { readonly conditions: readonly AutomationCondition[]; readonly issuer: RestrictedTokenIssuer } | null,
+  sent: AutomationRuleContentInput,
+): AutomationRuleContentInput {
+  const conditions = sent.conditions ?? [];
+  let any = false;
+  mapLiterals(conditions, (v) => {
+    if (looksLikeRestrictedMarker(v)) any = true;
+    return v;
+  });
+  if (!any) return sent;
+  // D-228 (1): a token names a position of the stored version, so it is resolved against every string literal of that
+  // version, not only the ones hidden from the writer now. A record that became hidden after the read keeps the other
+  // tokens in place (the writer sends its plain id back, D-223); a record that became visible after the read is still
+  // reached by the token the writer holds. Resolving a position the writer can read discloses nothing.
+  // D-231, D-233 (F-DG6-580, F-DG6-640): a token names the row and the revision it was issued from (its issuer tag).
+  // Only a token of the row being replaced, at the version being replaced (the caller has already checked If-Match
+  // against `stored.issuer.version`), is resolved; a token of any other row or revision is refused and never resolved
+  // against this row's positions, so a hidden literal is never swapped for another literal.
+  const positions = stored === null ? new Map<number, string>() : literalPositions(stored.conditions);
+  const expected = stored === null ? null : restrictedTokenTag(stored.issuer);
+  const merged = mapLiterals(conditions, (v, at) => {
+    if (!looksLikeRestrictedMarker(v)) return v;
+    const m = AUTOMATION_RESTRICTED_TOKEN_PATTERN.exec(v);
+    if (expected === null) throw automationRefusals.restrictedMarkerUnknown(at);
+    if (m === null) {
+      if (AUTOMATION_RESTRICTED_TOKEN_RETIRED_PATTERN.test(v)) throw automationRefusals.restrictedTokenStale(at);
+      throw automationRefusals.restrictedMarkerUnknown(at);
+    }
+    if (!sameTag(m[1]!, expected)) throw automationRefusals.restrictedTokenStale(at);
+    const literal = positions.get(Number(m[2]));
+    if (literal === undefined) throw automationRefusals.restrictedMarkerUnknown(at);
+    return literal;
+  });
+  return { ...sent, conditions: merged };
+}
 
 const lookup = (m: Readonly<Record<string, string>>, k: string): string => new Map(Object.entries(m)).get(k) ?? k;
 
@@ -378,11 +582,18 @@ function presentDryRun(d: DryRunRow): AutomationDryRun {
 /** Versions as the contract's AutomationRuleVersion (newest dry run each; whether a pass run covers the content). */
 export async function toRuleVersions(
   db: DbOrTx,
+  principal: Principal,
   rows: readonly AutomationRuleVersionRow[],
   catalogue?: CatalogueRows,
 ): Promise<AutomationRuleVersion[]> {
   if (rows.length === 0) return [];
   const cat = catalogue ?? (await loadCatalogueRows(db));
+  // T-DG6-BE-Z12B (D-222): condition literals naming a record the reader is not admitted to are shown as the marker.
+  const shown = await redactConditionLiterals(
+    db,
+    principal,
+    rows.map((v) => ({ conditions: contentOfRow(v).conditions, issuer: v })),
+  );
   const runs = await db
     .selectFrom("automation_dry_run")
     .select([
@@ -410,8 +621,9 @@ export async function toRuleVersions(
     if (!latest.has(r.automation_rule_version_id)) latest.set(r.automation_rule_version_id, r);
     if (r.outcome === "pass") passFor.add(`${r.automation_rule_version_id}:${r.content_sha256}`);
   }
-  return rows.map((v) => {
-    const content = contentOfRow(v);
+  return rows.map((v, i) => {
+    const redacted = shown.at(i)!;
+    const content = { ...contentOfRow(v), conditions: redacted.conditions };
     const last = latest.get(v.id);
     return {
       id: v.id,
@@ -442,12 +654,17 @@ export async function toRuleVersions(
       summary: summarize(content, cat),
       version: v.version,
       updatedAt: iso(v.updated_at),
+      ...(redacted.restricted ? { includesRestrictedRecords: true as const } : {}),
     };
   });
 }
 
-export async function toRuleVersion(db: DbOrTx, row: AutomationRuleVersionRow): Promise<AutomationRuleVersion> {
-  const [one] = await toRuleVersions(db, [row]);
+export async function toRuleVersion(
+  db: DbOrTx,
+  principal: Principal,
+  row: AutomationRuleVersionRow,
+): Promise<AutomationRuleVersion> {
+  const [one] = await toRuleVersions(db, principal, [row]);
   if (one === undefined) throw new Error("toRuleVersion: no row");
   return one;
 }
@@ -591,10 +808,15 @@ async function updateVersion(
   const current = await loadVersionRow(tx, rule.id, versionNo, true);
   if (current.version !== expected) throw problems.versionConflict(current.version);
   if (current.status !== "draft") throw automationRefusals.notEditable();
-  const content =
+  // T-DG6-BE-Z13 (D-226): each restricted token maps back to its hidden stored literal; unknown marker text is refused.
+  const sent =
     body.content === undefined
+      ? undefined
+      : resolveRestrictedTokens({ conditions: contentOfRow(current).conditions, issuer: current }, body.content);
+  const content =
+    sent === undefined
       ? contentOfRow(current)
-      : validateContent(rule, body.content, await loadCatalogueRows(tx), contentOfRow(current));
+      : validateContent(rule, sent, await loadCatalogueRows(tx), contentOfRow(current));
   const updated = await tx
     .updateTable("automation_rule_version")
     .set({
@@ -662,13 +884,18 @@ export function registerAutomationVersionRoutes(app: FastifyInstance, { db }: Mo
       .limit(query.limit + 1)
       .execute();
     const pageRows = paginate(rows, query.limit, (r) => [r.version_no], hash);
-    return { items: await toRuleVersions(db, pageRows.items), nextCursor: pageRows.nextCursor };
+    return { items: await toRuleVersions(db, principal, pageRows.items), nextCursor: pageRows.nextCursor };
   });
 
   app.post(VERSIONS, { config: { ...configure, consumes: JSON_BODY } }, async (request, reply) => {
     const { ruleId } = parse(ruleParams, request.params, "params");
     const row = await db.transaction().execute((tx) => createVersion(tx, request, ruleId));
-    return sendVersioned(reply, 201, await toRuleVersion(db, row), versionPath(ruleId, row.version_no));
+    return sendVersioned(
+      reply,
+      201,
+      await toRuleVersion(db, principalOf(request), row),
+      versionPath(ruleId, row.version_no),
+    );
   });
 
   app.get(VERSION, { config: read }, async (request, reply) => {
@@ -676,13 +903,13 @@ export function registerAutomationVersionRoutes(app: FastifyInstance, { db }: Mo
     const principal = principalOf(request);
     requireRuleReader(principal);
     const rule = await loadRuleForRead(db, principal, ruleId);
-    return sendVersioned(reply, 200, await toRuleVersion(db, await loadVersionRow(db, rule.id, versionNo)));
+    return sendVersioned(reply, 200, await toRuleVersion(db, principal, await loadVersionRow(db, rule.id, versionNo)));
   });
 
   app.patch(VERSION, { config: { ...configure, consumes: JSON_BODY } }, async (request, reply) => {
     const { ruleId, versionNo } = parse(versionParams, request.params, "params");
     const row = await db.transaction().execute((tx) => updateVersion(tx, request, ruleId, versionNo));
-    return sendVersioned(reply, 200, await toRuleVersion(db, row));
+    return sendVersioned(reply, 200, await toRuleVersion(db, principalOf(request), row));
   });
 
   return [`GET ${VERSIONS}`, `POST ${VERSIONS}`, `GET ${VERSION}`, `PATCH ${VERSION}`];

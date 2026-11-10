@@ -1,0 +1,1451 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - link "انتقل إلى المحتوى الرئيسي" [ref=e4] [cursor=pointer]:
+    - /url: "#main"
+  - banner [ref=e5]:
+    - 'link "منصة موبايلي للتحوّل مؤقت شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة." [ref=e6] [cursor=pointer]':
+      - /url: /
+      - generic [ref=e7]: منصة موبايلي للتحوّل
+      - 'generic "شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة." [ref=e8]': مؤقت
+      - generic [ref=e9]: "شعار نصي مؤقت: لم يُقدَّم شعار رسمي. الألوان رموز تصميم مؤقتة وليست ألوان علامة موبايلي المعتمدة."
+    - search "البحث في السجلات" [ref=e10]:
+      - generic [ref=e11]: ابحث عن
+      - textbox "ابحث عن" [ref=e12]:
+        - /placeholder: ابحث في السجلات
+      - button "البحث في السجلات" [ref=e13] [cursor=pointer]: بحث
+    - button "تغيير اللغة إلى English" [ref=e15] [cursor=pointer]: English
+    - generic [ref=e16]:
+      - generic [ref=e17]: Synthetic User Without Roles
+      - generic [ref=e18]: مؤسسة تطوير تجريبية (بيانات اصطناعية)
+    - button "تسجيل الخروج" [ref=e19] [cursor=pointer]:
+      - img [ref=e20]
+      - generic [ref=e22]: تسجيل الخروج
+  - generic [ref=e24]:
+    - navigation "التنقل الرئيسي" [ref=e25]:
+      - list [ref=e26]:
+        - listitem [ref=e27]:
+          - link "عملي" [ref=e28] [cursor=pointer]:
+            - /url: /my-work
+            - generic [ref=e29]: عملي
+          - list "عملي" [ref=e30]:
+            - listitem [ref=e31]:
+              - link "المهام وصندوق الوارد" [ref=e32] [cursor=pointer]:
+                - /url: /my-work
+            - listitem [ref=e33]:
+              - link "الموافقات" [ref=e34] [cursor=pointer]:
+                - /url: /my-work/approvals
+            - listitem [ref=e35]:
+              - link "التفويضات" [ref=e36] [cursor=pointer]:
+                - /url: /my-work/delegations
+            - listitem [ref=e37]:
+              - link "تفضيلات الإشعارات" [ref=e38] [cursor=pointer]:
+                - /url: /my-work/notification-preferences
+        - listitem [ref=e39]:
+          - link "النظرة التنفيذية" [ref=e40] [cursor=pointer]:
+            - /url: /executive-overview
+            - generic [ref=e41]: النظرة التنفيذية
+          - list "النظرة التنفيذية" [ref=e42]:
+            - listitem [ref=e43]:
+              - link "لوحات المؤشرات" [ref=e44] [cursor=pointer]:
+                - /url: /dashboards
+            - listitem [ref=e45]:
+              - link "سياسة ألوان الحالة" [ref=e46] [cursor=pointer]:
+                - /url: /dashboards/rag-policy
+        - listitem [ref=e47]:
+          - link "التحوّلات" [ref=e48] [cursor=pointer]:
+            - /url: /transformations
+            - generic [ref=e49]: التحوّلات
+        - listitem [ref=e50]:
+          - link "الدليل والإجراءات" [ref=e51] [cursor=pointer]:
+            - /url: /playbook
+            - generic [ref=e52]: الدليل والإجراءات
+          - list "الدليل والإجراءات" [ref=e53]:
+            - listitem [ref=e54]:
+              - link "خطوات المراحل وقائمة المراجعة" [ref=e55] [cursor=pointer]:
+                - /url: /playbook/phases
+            - listitem [ref=e56]:
+              - link "قارئ الدليل" [ref=e57] [cursor=pointer]:
+                - /url: /playbook/reader
+            - listitem [ref=e58]:
+              - link "إجراءاتي" [ref=e59] [cursor=pointer]:
+                - /url: /playbook/procedures
+            - listitem [ref=e60]:
+              - link "خطة الإطلاق لمدة 90 يومًا" [ref=e61] [cursor=pointer]:
+                - /url: /playbook/launch-plan
+            - listitem [ref=e62]:
+              - link "فحص سلامة التحوّل" [ref=e63] [cursor=pointer]:
+                - /url: /playbook/health-check
+        - listitem [ref=e64]:
+          - link "الاستراتيجية ومؤشرات الأداء" [ref=e65] [cursor=pointer]:
+            - /url: /strategy-kpis
+            - generic [ref=e66]: الاستراتيجية ومؤشرات الأداء
+          - list "الاستراتيجية ومؤشرات الأداء" [ref=e67]:
+            - listitem [ref=e68]:
+              - link "مؤشرات الأداء" [ref=e69] [cursor=pointer]:
+                - /url: /strategy-kpis/kpis
+        - listitem [ref=e70]:
+          - link "نموذج التشغيل المستهدف" [ref=e71] [cursor=pointer]:
+            - /url: /target-operating-model
+            - generic [ref=e72]: نموذج التشغيل المستهدف
+        - listitem [ref=e73]:
+          - link "المبادرات وخرائط الطريق" [ref=e74] [cursor=pointer]:
+            - /url: /initiatives-roadmaps
+            - generic [ref=e75]: المبادرات وخرائط الطريق
+          - list "المبادرات وخرائط الطريق" [ref=e76]:
+            - listitem [ref=e77]:
+              - link "المحافظ" [ref=e78] [cursor=pointer]:
+                - /url: /portfolios
+            - listitem [ref=e79]:
+              - link "تحديثات المسؤولين" [ref=e80] [cursor=pointer]:
+                - /url: /initiatives-roadmaps/updates
+        - listitem [ref=e81]:
+          - link "الحوكمة" [ref=e82] [cursor=pointer]:
+            - /url: /governance
+            - generic [ref=e83]: الحوكمة
+          - list "الحوكمة" [ref=e84]:
+            - listitem [ref=e85]:
+              - link "المجموعات" [ref=e86] [cursor=pointer]:
+                - /url: /governance/groups
+            - listitem [ref=e87]:
+              - link "المنتديات" [ref=e88] [cursor=pointer]:
+                - /url: /governance/forums
+            - listitem [ref=e89]:
+              - link "الاجتماعات" [ref=e90] [cursor=pointer]:
+                - /url: /governance/meetings
+            - listitem [ref=e91]:
+              - link "القرارات التنفيذية (T16)" [ref=e92] [cursor=pointer]:
+                - /url: /governance/executive-decisions
+            - listitem [ref=e93]:
+              - link "طلبات التغيير" [ref=e94] [cursor=pointer]:
+                - /url: /governance/change-requests
+        - listitem [ref=e95]:
+          - link "المخاطر والإجراءات" [ref=e96] [cursor=pointer]:
+            - /url: /risks-actions
+            - generic [ref=e97]: المخاطر والإجراءات
+          - list "المخاطر والإجراءات" [ref=e98]:
+            - listitem [ref=e99]:
+              - link "سجل المخاطر والافتراضات والمشكلات والاعتماديات (T15)" [ref=e100] [cursor=pointer]:
+                - /url: /risks-actions/raid
+            - listitem [ref=e101]:
+              - link "سجل الإجراءات" [ref=e102] [cursor=pointer]:
+                - /url: /risks-actions/actions
+            - listitem [ref=e103]:
+              - link "الإجراءات التصحيحية" [ref=e104] [cursor=pointer]:
+                - /url: /risks-actions/corrective-actions
+        - listitem [ref=e105]:
+          - link "المنافع والمالية" [ref=e106] [cursor=pointer]:
+            - /url: /benefits-finance
+            - generic [ref=e107]: المنافع والمالية
+          - list "المنافع والمالية" [ref=e108]:
+            - listitem [ref=e109]:
+              - link "سجل المنافع (T14)" [ref=e110] [cursor=pointer]:
+                - /url: /benefits-finance/benefits
+        - listitem [ref=e111]:
+          - link "التغيير والتبنّي" [ref=e112] [cursor=pointer]:
+            - /url: /change-adoption
+            - generic [ref=e113]: التغيير والتبنّي
+          - list "التغيير والتبنّي" [ref=e114]:
+            - listitem [ref=e115]:
+              - link "خطة التبنّي (T13)" [ref=e116] [cursor=pointer]:
+                - /url: /change-adoption/adoption
+        - listitem [ref=e117]:
+          - link "الأدلة والتقارير" [ref=e118] [cursor=pointer]:
+            - /url: /evidence-reports
+            - generic [ref=e119]: الأدلة والتقارير
+          - list "الأدلة والتقارير" [ref=e120]:
+            - listitem [ref=e121]:
+              - link "التقارير واللقطات" [ref=e122] [cursor=pointer]:
+                - /url: /evidence-reports/reports
+            - listitem [ref=e123]:
+              - link "التصدير" [ref=e124] [cursor=pointer]:
+                - /url: /evidence-reports/exports
+            - listitem [ref=e125]:
+              - link "وضع العرض التقديمي" [ref=e126] [cursor=pointer]:
+                - /url: /evidence-reports/presentation
+            - listitem [ref=e127]:
+              - link "سجل الأدلة" [ref=e128] [cursor=pointer]:
+                - /url: /evidence-reports/evidence-register
+        - listitem [ref=e129]:
+          - link "العمليات الاعتيادية والتحسين" [ref=e130] [cursor=pointer]:
+            - /url: /bau-improvement
+            - generic [ref=e131]: العمليات الاعتيادية والتحسين
+          - list "العمليات الاعتيادية والتحسين" [ref=e132]:
+            - listitem [ref=e133]:
+              - link "مجالات الأداء" [ref=e134] [cursor=pointer]:
+                - /url: /bau-improvement/bau
+            - listitem [ref=e135]:
+              - link "قائمة التحسين المستمر" [ref=e136] [cursor=pointer]:
+                - /url: /bau-improvement/improvement
+            - listitem [ref=e137]:
+              - link "الدروس المستفادة" [ref=e138] [cursor=pointer]:
+                - /url: /bau-improvement/lessons
+            - listitem [ref=e139]:
+              - link "البحث في الدروس" [ref=e140] [cursor=pointer]:
+                - /url: /lessons
+      - paragraph [ref=e141]:
+        - link "حول هذا المنتج" [ref=e142] [cursor=pointer]:
+          - /url: /about
+    - main [ref=e143]:
+      - generic [ref=e144]:
+        - generic [ref=e147]:
+          - heading "مرحبًا، Synthetic User Without Roles" [level=1] [ref=e148]
+          - paragraph [ref=e149]: إجراءاتك ومسوداتك ومراجعاتك ومواعيدك النهائية في مكان واحد.
+        - navigation "صفحات عملي" [ref=e150]:
+          - link "الموافقات" [ref=e151] [cursor=pointer]:
+            - /url: /my-work/approvals
+            - img [ref=e152]
+            - text: الموافقات
+          - link "التفويضات" [ref=e154] [cursor=pointer]:
+            - /url: /my-work/delegations
+            - img [ref=e155]
+            - text: التفويضات
+          - link "مسوداتك" [ref=e157] [cursor=pointer]:
+            - /url: /my-work/drafts
+            - img [ref=e158]
+            - text: مسوداتك
+          - link "افتح سجل التحوّلات" [ref=e160] [cursor=pointer]:
+            - /url: /transformations
+        - generic [ref=e161]:
+          - region "القرارات الرئيسية" [ref=e162]:
+            - heading "القرارات الرئيسية" [level=2] [ref=e163]:
+              - img [ref=e164]
+              - text: القرارات الرئيسية
+            - paragraph [ref=e166]: موافقات الأعمال والقرارات التي تنتظرك.
+            - paragraph [ref=e167]: لا توجد موافقة أعمال أو قرار ينتظرك.
+          - region "النتائج الرئيسية" [ref=e168]:
+            - heading "النتائج الرئيسية" [level=2] [ref=e169]:
+              - img [ref=e170]
+              - text: النتائج الرئيسية
+            - paragraph [ref=e172]: تحديثات النتائج المطلوبة منك (القيم الفعلية لمؤشرات الأداء ومتابعة المنافع) والسجلات التي تنتظر مراجعتك.
+            - paragraph [ref=e173]:
+              - strong [ref=e174]: "تحديثات مطلوبة منك: 63"
+              - link "فتح التحديثات الناقصة" [ref=e175] [cursor=pointer]:
+                - /url: "#mw-missing_updates"
+            - paragraph [ref=e176]:
+              - strong [ref=e177]: "بانتظار مراجعتك: 0"
+              - link "فتح المراجعات" [ref=e178] [cursor=pointer]:
+                - /url: "#mw-reviews"
+            - list [ref=e179]:
+              - listitem [ref=e180]:
+                - 'link "تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e181] [cursor=pointer]':
+                  - /url: /transformations/01a19032-4953-737e-8c64-812add64a879/owner-updates
+                - generic [ref=e183]:
+                  - img [ref=e184]
+                  - generic [ref=e186]: غير معروف
+              - listitem [ref=e187]:
+                - 'link "تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e188] [cursor=pointer]':
+                  - /url: /transformations/01a19032-4953-737e-8c64-812add64a879/owner-updates
+                - generic [ref=e190]:
+                  - img [ref=e191]
+                  - generic [ref=e193]: غير معروف
+              - listitem [ref=e194]:
+                - 'link "تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e195] [cursor=pointer]':
+                  - /url: /transformations/01a19032-4953-737e-8c64-812add64a879/owner-updates
+                - generic [ref=e197]:
+                  - img [ref=e198]
+                  - generic [ref=e200]: غير معروف
+          - region "الإجراءات التالية" [ref=e201]:
+            - heading "الإجراءات التالية" [level=2] [ref=e202]:
+              - img [ref=e203]
+              - text: الإجراءات التالية
+            - paragraph [ref=e205]: مواعيدك القادمة، الأقرب أولًا، والإجراءات المسندة إليك.
+            - paragraph [ref=e206]: لا يوجد إجراء مسند إليك ولا موعد قادم.
+        - generic [ref=e207]:
+          - region "المواعيد القادمة" [ref=e208]:
+            - heading "المواعيد القادمة" [level=2] [ref=e210]
+            - generic [ref=e211]: العناصر المفتوحة المستحقة خلال 10 أيام عمل من 31‏/10‏/2026؛ ويُشار إلى المتأخرة.
+            - paragraph [ref=e212]: لا توجد مواعيد قادمة.
+          - navigation "أقسام عملي" [ref=e213]:
+            - list [ref=e214]:
+              - listitem [ref=e215]:
+                - link "الإجراءات المسندة 0" [ref=e216] [cursor=pointer]:
+                  - /url: "#mw-assigned_actions"
+                  - text: الإجراءات المسندة
+                  - generic [ref=e217]: "0"
+              - listitem [ref=e218]:
+                - link "المسودات 0" [ref=e219] [cursor=pointer]:
+                  - /url: "#mw-drafts"
+                  - text: المسودات
+                  - generic [ref=e220]: "0"
+              - listitem [ref=e221]:
+                - link "المراجعات 0" [ref=e222] [cursor=pointer]:
+                  - /url: "#mw-reviews"
+                  - text: المراجعات
+                  - generic [ref=e223]: "0"
+              - listitem [ref=e224]:
+                - link "الموافقات 0" [ref=e225] [cursor=pointer]:
+                  - /url: "#mw-approvals"
+                  - text: الموافقات
+                  - generic [ref=e226]: "0"
+              - listitem [ref=e227]:
+                - link "التحديثات الناقصة 63" [ref=e228] [cursor=pointer]:
+                  - /url: "#mw-missing_updates"
+                  - text: التحديثات الناقصة
+                  - generic [ref=e229]: "63"
+              - listitem [ref=e230]:
+                - link "أخرى 0" [ref=e231] [cursor=pointer]:
+                  - /url: "#mw-other"
+                  - text: أخرى
+                  - generic [ref=e232]: "0"
+          - region "الإجراءات المسندة" [ref=e233]:
+            - heading "الإجراءات المسندة" [level=2] [ref=e235]
+            - generic [ref=e236]: الإجراءات والمهام المسندة إليك.
+            - paragraph [ref=e237]: "العناصر: 0 (المعروض: 0)"
+            - generic [ref=e238]:
+              - generic [ref=e239]:
+                - generic [ref=e240]:
+                  - generic [ref=e241]: بحث
+                  - searchbox "بحث" [ref=e242]
+                - button "الأعمدة" [ref=e244] [cursor=pointer]:
+                  - img [ref=e245]
+                  - text: الأعمدة
+              - generic [ref=e247]:
+                - img [ref=e248]
+                - paragraph [ref=e251]: لا يوجد شيء هنا
+          - region "المسودات" [ref=e252]:
+            - heading "المسودات" [level=2] [ref=e254]
+            - generic [ref=e255]: السجلات التي بدأتها ولم تقدّمها.
+            - paragraph [ref=e256]: "العناصر: 0 (المعروض: 0)"
+            - generic [ref=e257]:
+              - generic [ref=e258]:
+                - generic [ref=e259]:
+                  - generic [ref=e260]: بحث
+                  - searchbox "بحث" [ref=e261]
+                - button "الأعمدة" [ref=e263] [cursor=pointer]:
+                  - img [ref=e264]
+                  - text: الأعمدة
+              - generic [ref=e266]:
+                - img [ref=e267]
+                - paragraph [ref=e270]: لا يوجد شيء هنا
+          - region "المراجعات" [ref=e271]:
+            - heading "المراجعات" [level=2] [ref=e273]
+            - generic [ref=e274]: سجلات بانتظار مراجعتك.
+            - paragraph [ref=e275]: "العناصر: 0 (المعروض: 0)"
+            - generic [ref=e276]:
+              - generic [ref=e277]:
+                - generic [ref=e278]:
+                  - generic [ref=e279]: بحث
+                  - searchbox "بحث" [ref=e280]
+                - button "الأعمدة" [ref=e282] [cursor=pointer]:
+                  - img [ref=e283]
+                  - text: الأعمدة
+              - generic [ref=e285]:
+                - img [ref=e286]
+                - paragraph [ref=e289]: لا يوجد شيء هنا
+          - region "الموافقات" [ref=e290]:
+            - heading "الموافقات" [level=2] [ref=e292]
+            - generic [ref=e293]: الموافقات والقرارات التجارية بانتظارك.
+            - paragraph [ref=e294]: "العناصر: 0 (المعروض: 0)"
+            - generic [ref=e295]:
+              - generic [ref=e296]:
+                - generic [ref=e297]:
+                  - generic [ref=e298]: بحث
+                  - searchbox "بحث" [ref=e299]
+                - button "الأعمدة" [ref=e301] [cursor=pointer]:
+                  - img [ref=e302]
+                  - text: الأعمدة
+              - generic [ref=e304]:
+                - img [ref=e305]
+                - paragraph [ref=e308]: لا يوجد شيء هنا
+          - region "التحديثات الناقصة" [ref=e309]:
+            - heading "التحديثات الناقصة" [level=2] [ref=e311]
+            - generic [ref=e312]: "التحديثات المطلوبة منك: القيم الفعلية لمؤشرات الأداء ومتابعة المنافع والمراجعات وفحوص الضوابط."
+            - paragraph [ref=e313]: "العناصر: 63 (المعروض: 25)"
+            - generic [ref=e314]:
+              - generic [ref=e315]:
+                - generic [ref=e316]:
+                  - generic [ref=e317]: بحث
+                  - searchbox "بحث" [ref=e318]
+                - button "الأعمدة" [ref=e320] [cursor=pointer]:
+                  - img [ref=e321]
+                  - text: الأعمدة
+              - region "التحديثات الناقصة (جدول قابل للتمرير)" [ref=e323]:
+                - table "التحديثات الناقصة" [ref=e324]:
+                  - caption [ref=e325]: التحديثات الناقصة
+                  - rowgroup [ref=e326]:
+                    - row "العنصر غير مرتّب المصدر غير مرتّب الاستحقاق مرتّب تصاعديًا" [ref=e327]:
+                      - columnheader "العنصر غير مرتّب" [ref=e328]:
+                        - button "العنصر غير مرتّب" [ref=e329] [cursor=pointer]:
+                          - text: العنصر
+                          - img [ref=e330]
+                          - generic [ref=e332]: غير مرتّب
+                      - columnheader "المصدر غير مرتّب" [ref=e333]:
+                        - button "المصدر غير مرتّب" [ref=e334] [cursor=pointer]:
+                          - text: المصدر
+                          - img [ref=e335]
+                          - generic [ref=e337]: غير مرتّب
+                      - columnheader "الاستحقاق مرتّب تصاعديًا" [ref=e338]:
+                        - button "الاستحقاق مرتّب تصاعديًا" [ref=e339] [cursor=pointer]:
+                          - text: الاستحقاق
+                          - img [ref=e340]
+                          - generic [ref=e342]: مرتّب تصاعديًا
+                  - rowgroup [ref=e343]:
+                    - 'row "تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل مهمة غير معروف" [ref=e344]':
+                      - 'rowheader "تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e345]':
+                        - 'link "تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e346] [cursor=pointer]':
+                          - /url: /transformations/01a19032-4953-737e-8c64-812add64a879/owner-updates
+                      - cell "مهمة" [ref=e347]
+                      - cell "غير معروف" [ref=e348]:
+                        - generic [ref=e349]:
+                          - img [ref=e350]
+                          - generic [ref=e352]: غير معروف
+                    - 'row "تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل مهمة غير معروف" [ref=e353]':
+                      - 'rowheader "تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e354]':
+                        - 'link "تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e355] [cursor=pointer]':
+                          - /url: /transformations/01a19032-4953-737e-8c64-812add64a879/owner-updates
+                      - cell "مهمة" [ref=e356]
+                      - cell "غير معروف" [ref=e357]:
+                        - generic [ref=e358]:
+                          - img [ref=e359]
+                          - generic [ref=e361]: غير معروف
+                    - 'row "تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل مهمة غير معروف" [ref=e362]':
+                      - 'rowheader "تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e363]':
+                        - 'link "تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e364] [cursor=pointer]':
+                          - /url: /transformations/01a19032-4953-737e-8c64-812add64a879/owner-updates
+                      - cell "مهمة" [ref=e365]
+                      - cell "غير معروف" [ref=e366]:
+                        - generic [ref=e367]:
+                          - img [ref=e368]
+                          - generic [ref=e370]: غير معروف
+                    - 'row "تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل مهمة غير معروف" [ref=e371]':
+                      - 'rowheader "تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e372]':
+                        - 'link "تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e373] [cursor=pointer]':
+                          - /url: /transformations/01a19032-4953-737e-8c64-812add64a879/owner-updates
+                      - cell "مهمة" [ref=e374]
+                      - cell "غير معروف" [ref=e375]:
+                        - generic [ref=e376]:
+                          - img [ref=e377]
+                          - generic [ref=e379]: غير معروف
+                    - 'row "تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل مهمة غير معروف" [ref=e380]':
+                      - 'rowheader "تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e381]':
+                        - 'link "تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e382] [cursor=pointer]':
+                          - /url: /transformations/01a19032-4953-737e-8c64-812add64a879/owner-updates
+                      - cell "مهمة" [ref=e383]
+                      - cell "غير معروف" [ref=e384]:
+                        - generic [ref=e385]:
+                          - img [ref=e386]
+                          - generic [ref=e388]: غير معروف
+                    - 'row "تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل مهمة غير معروف" [ref=e389]':
+                      - 'rowheader "تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e390]':
+                        - 'link "تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e391] [cursor=pointer]':
+                          - /url: /transformations/01a19032-4953-737e-8c64-812add64a879/owner-updates
+                      - cell "مهمة" [ref=e392]
+                      - cell "غير معروف" [ref=e393]:
+                        - generic [ref=e394]:
+                          - img [ref=e395]
+                          - generic [ref=e397]: غير معروف
+                    - 'row "تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل مهمة غير معروف" [ref=e398]':
+                      - 'rowheader "تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e399]':
+                        - 'link "تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e400] [cursor=pointer]':
+                          - /url: /transformations/01a19032-4953-737e-8c64-812add64a879/owner-updates
+                      - cell "مهمة" [ref=e401]
+                      - cell "غير معروف" [ref=e402]:
+                        - generic [ref=e403]:
+                          - img [ref=e404]
+                          - generic [ref=e406]: غير معروف
+                    - 'row "تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل مهمة غير معروف" [ref=e407]':
+                      - 'rowheader "تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e408]':
+                        - 'link "تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e409] [cursor=pointer]':
+                          - /url: /transformations/01a19032-4953-737e-8c64-812add64a879/owner-updates
+                      - cell "مهمة" [ref=e410]
+                      - cell "غير معروف" [ref=e411]:
+                        - generic [ref=e412]:
+                          - img [ref=e413]
+                          - generic [ref=e415]: غير معروف
+                    - 'row "تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل مهمة غير معروف" [ref=e416]':
+                      - 'rowheader "تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e417]':
+                        - 'link "تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e418] [cursor=pointer]':
+                          - /url: /transformations/01a19032-4953-737e-8c64-812add64a879/owner-updates
+                      - cell "مهمة" [ref=e419]
+                      - cell "غير معروف" [ref=e420]:
+                        - generic [ref=e421]:
+                          - img [ref=e422]
+                          - generic [ref=e424]: غير معروف
+                    - 'row "تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل مهمة غير معروف" [ref=e425]':
+                      - 'rowheader "تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e426]':
+                        - 'link "تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e427] [cursor=pointer]':
+                          - /url: /transformations/01a19032-4953-737e-8c64-812add64a879/owner-updates
+                      - cell "مهمة" [ref=e428]
+                      - cell "غير معروف" [ref=e429]:
+                        - generic [ref=e430]:
+                          - img [ref=e431]
+                          - generic [ref=e433]: غير معروف
+              - navigation "التنقل بين الصفحات" [ref=e434]:
+                - generic [ref=e435]: الصفحة 1 من 3 · 10 من 25 صفوف
+                - generic [ref=e436]:
+                  - generic [ref=e437]: عدد الصفوف في الصفحة
+                  - combobox "عدد الصفوف في الصفحة" [ref=e438]:
+                    - option "10" [selected]
+                    - option "25"
+                    - option "50"
+                    - option "100"
+                - button "السابق" [disabled] [ref=e439]
+                - button "التالي" [ref=e440] [cursor=pointer]
+            - button "تحميل المزيد" [ref=e441] [cursor=pointer]
+          - region "أخرى" [ref=e442]:
+            - heading "أخرى" [level=2] [ref=e444]
+            - generic [ref=e445]: إشعارات ومهام أخرى.
+            - paragraph [ref=e446]: "العناصر: 0 (المعروض: 0)"
+            - generic [ref=e447]:
+              - generic [ref=e448]:
+                - generic [ref=e449]:
+                  - generic [ref=e450]: بحث
+                  - searchbox "بحث" [ref=e451]
+                - button "الأعمدة" [ref=e453] [cursor=pointer]:
+                  - img [ref=e454]
+                  - text: الأعمدة
+              - generic [ref=e456]:
+                - img [ref=e457]
+                - paragraph [ref=e460]: لا يوجد شيء هنا
+        - region "المهام" [ref=e461]:
+          - generic [ref=e462]:
+            - heading "المهام" [level=2] [ref=e463]
+            - generic [ref=e465]:
+              - generic [ref=e466]: عرض
+              - combobox "عرض" [ref=e467]:
+                - option "مفتوحة" [selected]
+                - option "منجزة"
+                - option "ملغاة"
+          - generic [ref=e468]: الأعمال المسندة إليك. ترتبط كل مهمة بسجلها. تُغلق مهام الموافقة تلقائيًا عند البتّ في الموافقة.
+          - generic [ref=e469]:
+            - generic [ref=e470]:
+              - generic [ref=e471]:
+                - generic [ref=e472]: بحث
+                - searchbox "بحث" [ref=e473]
+              - button "الأعمدة" [ref=e475] [cursor=pointer]:
+                - img [ref=e476]
+                - text: الأعمدة
+            - region "المهام (جدول قابل للتمرير)" [ref=e478]:
+              - table "المهام" [ref=e479]:
+                - caption [ref=e480]: المهام
+                - rowgroup [ref=e481]:
+                  - row "المهمة غير مرتّب النوع غير مرتّب الاستحقاق مرتّب تصاعديًا الفترة غير مرتّب الحالة غير مرتّب تاريخ الإنشاء غير مرتّب الإجراءات" [ref=e482]:
+                    - columnheader "المهمة غير مرتّب" [ref=e483]:
+                      - button "المهمة غير مرتّب" [ref=e484] [cursor=pointer]:
+                        - text: المهمة
+                        - img [ref=e485]
+                        - generic [ref=e487]: غير مرتّب
+                    - columnheader "النوع غير مرتّب" [ref=e488]:
+                      - button "النوع غير مرتّب" [ref=e489] [cursor=pointer]:
+                        - text: النوع
+                        - img [ref=e490]
+                        - generic [ref=e492]: غير مرتّب
+                    - columnheader "الاستحقاق مرتّب تصاعديًا" [ref=e493]:
+                      - button "الاستحقاق مرتّب تصاعديًا" [ref=e494] [cursor=pointer]:
+                        - text: الاستحقاق
+                        - img [ref=e495]
+                        - generic [ref=e497]: مرتّب تصاعديًا
+                    - columnheader "الفترة غير مرتّب" [ref=e498]:
+                      - button "الفترة غير مرتّب" [ref=e499] [cursor=pointer]:
+                        - text: الفترة
+                        - img [ref=e500]
+                        - generic [ref=e502]: غير مرتّب
+                    - columnheader "الحالة غير مرتّب" [ref=e503]:
+                      - button "الحالة غير مرتّب" [ref=e504] [cursor=pointer]:
+                        - text: الحالة
+                        - img [ref=e505]
+                        - generic [ref=e507]: غير مرتّب
+                    - columnheader "تاريخ الإنشاء غير مرتّب" [ref=e508]:
+                      - button "تاريخ الإنشاء غير مرتّب" [ref=e509] [cursor=pointer]:
+                        - text: تاريخ الإنشاء
+                        - img [ref=e510]
+                        - generic [ref=e512]: غير مرتّب
+                    - columnheader "الإجراءات" [ref=e513]
+                - rowgroup [ref=e514]:
+                  - 'row "تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل تحديث منظَّم مستحق لفترة التقارير غير معروف 2026-01 مفتوحة 31‏/10‏/2026 07:34 تعليم كمنجزة : تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e515]':
+                    - 'rowheader "تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e516]':
+                      - 'link "تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e517] [cursor=pointer]':
+                        - /url: /transformations/01a19032-4953-737e-8c64-812add64a879/owner-updates
+                    - cell "تحديث منظَّم مستحق لفترة التقارير" [ref=e518]
+                    - cell "غير معروف" [ref=e519]:
+                      - generic [ref=e520]:
+                        - img [ref=e521]
+                        - generic [ref=e523]: غير معروف
+                    - cell "2026-01" [ref=e524]
+                    - cell "مفتوحة" [ref=e525]:
+                      - generic [ref=e526]: مفتوحة
+                    - cell "31‏/10‏/2026 07:34" [ref=e527]
+                    - 'cell "تعليم كمنجزة : تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e528]':
+                      - 'button "تعليم كمنجزة : تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e529] [cursor=pointer]':
+                        - img [ref=e530]
+                        - text: تعليم كمنجزة
+                        - generic [ref=e532]: ": تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل"
+                  - 'row "تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل تحديث منظَّم مستحق لفترة التقارير غير معروف 2026-01 مفتوحة 31‏/10‏/2026 07:34 تعليم كمنجزة : تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e533]':
+                    - 'rowheader "تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e534]':
+                      - 'link "تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e535] [cursor=pointer]':
+                        - /url: /transformations/01a19032-49eb-764e-acb6-562788282bdc/owner-updates
+                    - cell "تحديث منظَّم مستحق لفترة التقارير" [ref=e536]
+                    - cell "غير معروف" [ref=e537]:
+                      - generic [ref=e538]:
+                        - img [ref=e539]
+                        - generic [ref=e541]: غير معروف
+                    - cell "2026-01" [ref=e542]
+                    - cell "مفتوحة" [ref=e543]:
+                      - generic [ref=e544]: مفتوحة
+                    - cell "31‏/10‏/2026 07:34" [ref=e545]
+                    - 'cell "تعليم كمنجزة : تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e546]':
+                      - 'button "تعليم كمنجزة : تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e547] [cursor=pointer]':
+                        - img [ref=e548]
+                        - text: تعليم كمنجزة
+                        - generic [ref=e550]: ": تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل"
+                  - 'row "تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل تحديث منظَّم مستحق لفترة التقارير غير معروف 2026-01 مفتوحة 31‏/10‏/2026 07:34 تعليم كمنجزة : تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e551]':
+                    - 'rowheader "تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e552]':
+                      - 'link "تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e553] [cursor=pointer]':
+                        - /url: /transformations/01a19032-fabd-74d9-94d8-5e9893b34584/owner-updates
+                    - cell "تحديث منظَّم مستحق لفترة التقارير" [ref=e554]
+                    - cell "غير معروف" [ref=e555]:
+                      - generic [ref=e556]:
+                        - img [ref=e557]
+                        - generic [ref=e559]: غير معروف
+                    - cell "2026-01" [ref=e560]
+                    - cell "مفتوحة" [ref=e561]:
+                      - generic [ref=e562]: مفتوحة
+                    - cell "31‏/10‏/2026 07:34" [ref=e563]
+                    - 'cell "تعليم كمنجزة : تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e564]':
+                      - 'button "تعليم كمنجزة : تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e565] [cursor=pointer]':
+                        - img [ref=e566]
+                        - text: تعليم كمنجزة
+                        - generic [ref=e568]: ": تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل"
+                  - 'row "تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل تحديث منظَّم مستحق لفترة التقارير غير معروف 2026-10 مفتوحة 31‏/10‏/2026 07:34 تعليم كمنجزة : تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e569]':
+                    - 'rowheader "تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e570]':
+                      - 'link "تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e571] [cursor=pointer]':
+                        - /url: /transformations/01a19032-4953-737e-8c64-812add64a879/owner-updates
+                    - cell "تحديث منظَّم مستحق لفترة التقارير" [ref=e572]
+                    - cell "غير معروف" [ref=e573]:
+                      - generic [ref=e574]:
+                        - img [ref=e575]
+                        - generic [ref=e577]: غير معروف
+                    - cell "2026-10" [ref=e578]
+                    - cell "مفتوحة" [ref=e579]:
+                      - generic [ref=e580]: مفتوحة
+                    - cell "31‏/10‏/2026 07:34" [ref=e581]
+                    - 'cell "تعليم كمنجزة : تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e582]':
+                      - 'button "تعليم كمنجزة : تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e583] [cursor=pointer]':
+                        - img [ref=e584]
+                        - text: تعليم كمنجزة
+                        - generic [ref=e586]: ": تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل"
+                  - 'row "تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل تحديث منظَّم مستحق لفترة التقارير غير معروف 2026-10 مفتوحة 31‏/10‏/2026 07:34 تعليم كمنجزة : تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e587]':
+                    - 'rowheader "تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e588]':
+                      - 'link "تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e589] [cursor=pointer]':
+                        - /url: /transformations/01a19032-49eb-764e-acb6-562788282bdc/owner-updates
+                    - cell "تحديث منظَّم مستحق لفترة التقارير" [ref=e590]
+                    - cell "غير معروف" [ref=e591]:
+                      - generic [ref=e592]:
+                        - img [ref=e593]
+                        - generic [ref=e595]: غير معروف
+                    - cell "2026-10" [ref=e596]
+                    - cell "مفتوحة" [ref=e597]:
+                      - generic [ref=e598]: مفتوحة
+                    - cell "31‏/10‏/2026 07:34" [ref=e599]
+                    - 'cell "تعليم كمنجزة : تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e600]':
+                      - 'button "تعليم كمنجزة : تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e601] [cursor=pointer]':
+                        - img [ref=e602]
+                        - text: تعليم كمنجزة
+                        - generic [ref=e604]: ": تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل"
+                  - 'row "تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل تحديث منظَّم مستحق لفترة التقارير غير معروف 2026-10 مفتوحة 31‏/10‏/2026 07:34 تعليم كمنجزة : تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e605]':
+                    - 'rowheader "تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e606]':
+                      - 'link "تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e607] [cursor=pointer]':
+                        - /url: /transformations/01a19032-fabd-74d9-94d8-5e9893b34584/owner-updates
+                    - cell "تحديث منظَّم مستحق لفترة التقارير" [ref=e608]
+                    - cell "غير معروف" [ref=e609]:
+                      - generic [ref=e610]:
+                        - img [ref=e611]
+                        - generic [ref=e613]: غير معروف
+                    - cell "2026-10" [ref=e614]
+                    - cell "مفتوحة" [ref=e615]:
+                      - generic [ref=e616]: مفتوحة
+                    - cell "31‏/10‏/2026 07:34" [ref=e617]
+                    - 'cell "تعليم كمنجزة : تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e618]':
+                      - 'button "تعليم كمنجزة : تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e619] [cursor=pointer]':
+                        - img [ref=e620]
+                        - text: تعليم كمنجزة
+                        - generic [ref=e622]: ": تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل"
+                  - 'row "تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل تحديث منظَّم مستحق لفترة التقارير غير معروف 2042-01 مفتوحة 31‏/10‏/2026 07:34 تعليم كمنجزة : تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e623]':
+                    - 'rowheader "تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e624]':
+                      - 'link "تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e625] [cursor=pointer]':
+                        - /url: /transformations/01a19032-4953-737e-8c64-812add64a879/owner-updates
+                    - cell "تحديث منظَّم مستحق لفترة التقارير" [ref=e626]
+                    - cell "غير معروف" [ref=e627]:
+                      - generic [ref=e628]:
+                        - img [ref=e629]
+                        - generic [ref=e631]: غير معروف
+                    - cell "2042-01" [ref=e632]
+                    - cell "مفتوحة" [ref=e633]:
+                      - generic [ref=e634]: مفتوحة
+                    - cell "31‏/10‏/2026 07:34" [ref=e635]
+                    - 'cell "تعليم كمنجزة : تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e636]':
+                      - 'button "تعليم كمنجزة : تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e637] [cursor=pointer]':
+                        - img [ref=e638]
+                        - text: تعليم كمنجزة
+                        - generic [ref=e640]: ": تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل"
+                  - 'row "تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل تحديث منظَّم مستحق لفترة التقارير غير معروف 2042-01 مفتوحة 31‏/10‏/2026 07:34 تعليم كمنجزة : تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e641]':
+                    - 'rowheader "تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e642]':
+                      - 'link "تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e643] [cursor=pointer]':
+                        - /url: /transformations/01a19032-49eb-764e-acb6-562788282bdc/owner-updates
+                    - cell "تحديث منظَّم مستحق لفترة التقارير" [ref=e644]
+                    - cell "غير معروف" [ref=e645]:
+                      - generic [ref=e646]:
+                        - img [ref=e647]
+                        - generic [ref=e649]: غير معروف
+                    - cell "2042-01" [ref=e650]
+                    - cell "مفتوحة" [ref=e651]:
+                      - generic [ref=e652]: مفتوحة
+                    - cell "31‏/10‏/2026 07:34" [ref=e653]
+                    - 'cell "تعليم كمنجزة : تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e654]':
+                      - 'button "تعليم كمنجزة : تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e655] [cursor=pointer]':
+                        - img [ref=e656]
+                        - text: تعليم كمنجزة
+                        - generic [ref=e658]: ": تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل"
+                  - 'row "تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل تحديث منظَّم مستحق لفترة التقارير غير معروف 2042-01 مفتوحة 31‏/10‏/2026 07:34 تعليم كمنجزة : تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e659]':
+                    - 'rowheader "تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e660]':
+                      - 'link "تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e661] [cursor=pointer]':
+                        - /url: /transformations/01a19032-fabd-74d9-94d8-5e9893b34584/owner-updates
+                    - cell "تحديث منظَّم مستحق لفترة التقارير" [ref=e662]
+                    - cell "غير معروف" [ref=e663]:
+                      - generic [ref=e664]:
+                        - img [ref=e665]
+                        - generic [ref=e667]: غير معروف
+                    - cell "2042-01" [ref=e668]
+                    - cell "مفتوحة" [ref=e669]:
+                      - generic [ref=e670]: مفتوحة
+                    - cell "31‏/10‏/2026 07:34" [ref=e671]
+                    - 'cell "تعليم كمنجزة : تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e672]':
+                      - 'button "تعليم كمنجزة : تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e673] [cursor=pointer]':
+                        - img [ref=e674]
+                        - text: تعليم كمنجزة
+                        - generic [ref=e676]: ": تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل"
+                  - 'row "تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل تحديث منظَّم مستحق لفترة التقارير غير معروف 2042-02 مفتوحة 31‏/10‏/2026 07:34 تعليم كمنجزة : تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e677]':
+                    - 'rowheader "تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e678]':
+                      - 'link "تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e679] [cursor=pointer]':
+                        - /url: /transformations/01a19032-4953-737e-8c64-812add64a879/owner-updates
+                    - cell "تحديث منظَّم مستحق لفترة التقارير" [ref=e680]
+                    - cell "غير معروف" [ref=e681]:
+                      - generic [ref=e682]:
+                        - img [ref=e683]
+                        - generic [ref=e685]: غير معروف
+                    - cell "2042-02" [ref=e686]
+                    - cell "مفتوحة" [ref=e687]:
+                      - generic [ref=e688]: مفتوحة
+                    - cell "31‏/10‏/2026 07:34" [ref=e689]
+                    - 'cell "تعليم كمنجزة : تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e690]':
+                      - 'button "تعليم كمنجزة : تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل" [ref=e691] [cursor=pointer]':
+                        - img [ref=e692]
+                        - text: تعليم كمنجزة
+                        - generic [ref=e694]: ": تحديث منظَّم مستحق لفترة التقارير: افتح السجل لمعرفة التفاصيل"
+            - navigation "التنقل بين الصفحات" [ref=e695]:
+              - generic [ref=e696]: الصفحة 1 من 7 · 10 من 63 صفوف
+              - generic [ref=e697]:
+                - generic [ref=e698]: عدد الصفوف في الصفحة
+                - combobox "عدد الصفوف في الصفحة" [ref=e699]:
+                  - option "10" [selected]
+                  - option "25"
+                  - option "50"
+                  - option "100"
+              - button "السابق" [disabled] [ref=e700]
+              - button "التالي" [ref=e701] [cursor=pointer]
+        - region "صندوق الوارد" [ref=e702]:
+          - generic [ref=e703]:
+            - heading "صندوق الوارد" [level=2] [ref=e704]
+            - generic [ref=e706]:
+              - checkbox "غير المقروءة فقط" [ref=e707]
+              - text: غير المقروءة فقط
+          - generic [ref=e708]: تذكيرات بالقرارات والنتائج والبنود المتأخرة. تعليم التذكير كمقروء لا يغيّر السجل.
+          - status [ref=e709]:
+            - strong [ref=e710]: "التذكيرات غير المقروءة: 63"
+          - list "صندوق الوارد" [ref=e711]:
+            - listitem [ref=e712]:
+              - generic [ref=e713]:
+                - generic [ref=e714]:
+                  - img [ref=e715]
+                  - text: غير مقروء
+                - 'link "مهمة: افتح السجل لمعرفة التفاصيل" [ref=e717] [cursor=pointer]':
+                  - /url: /transformations/01a19032-fabd-74d9-94d8-5e9893b34584/owner-updates
+                - generic [ref=e718]: 31‏/10‏/2026 07:34
+              - 'button "تعليم كمقروء : مهمة: افتح السجل لمعرفة التفاصيل" [ref=e719] [cursor=pointer]':
+                - text: تعليم كمقروء
+                - generic [ref=e720]: ": مهمة: افتح السجل لمعرفة التفاصيل"
+            - listitem [ref=e721]:
+              - generic [ref=e722]:
+                - generic [ref=e723]:
+                  - img [ref=e724]
+                  - text: غير مقروء
+                - 'link "مهمة: افتح السجل لمعرفة التفاصيل" [ref=e726] [cursor=pointer]':
+                  - /url: /transformations/01a19032-49eb-764e-acb6-562788282bdc/owner-updates
+                - generic [ref=e727]: 31‏/10‏/2026 07:34
+              - 'button "تعليم كمقروء : مهمة: افتح السجل لمعرفة التفاصيل" [ref=e728] [cursor=pointer]':
+                - text: تعليم كمقروء
+                - generic [ref=e729]: ": مهمة: افتح السجل لمعرفة التفاصيل"
+            - listitem [ref=e730]:
+              - generic [ref=e731]:
+                - generic [ref=e732]:
+                  - img [ref=e733]
+                  - text: غير مقروء
+                - 'link "مهمة: افتح السجل لمعرفة التفاصيل" [ref=e735] [cursor=pointer]':
+                  - /url: /transformations/01a19032-4953-737e-8c64-812add64a879/owner-updates
+                - generic [ref=e736]: 31‏/10‏/2026 07:34
+              - 'button "تعليم كمقروء : مهمة: افتح السجل لمعرفة التفاصيل" [ref=e737] [cursor=pointer]':
+                - text: تعليم كمقروء
+                - generic [ref=e738]: ": مهمة: افتح السجل لمعرفة التفاصيل"
+            - listitem [ref=e739]:
+              - generic [ref=e740]:
+                - generic [ref=e741]:
+                  - img [ref=e742]
+                  - text: غير مقروء
+                - 'link "مهمة: افتح السجل لمعرفة التفاصيل" [ref=e744] [cursor=pointer]':
+                  - /url: /transformations/01a19032-fabd-74d9-94d8-5e9893b34584/owner-updates
+                - generic [ref=e745]: 31‏/10‏/2026 07:34
+              - 'button "تعليم كمقروء : مهمة: افتح السجل لمعرفة التفاصيل" [ref=e746] [cursor=pointer]':
+                - text: تعليم كمقروء
+                - generic [ref=e747]: ": مهمة: افتح السجل لمعرفة التفاصيل"
+            - listitem [ref=e748]:
+              - generic [ref=e749]:
+                - generic [ref=e750]:
+                  - img [ref=e751]
+                  - text: غير مقروء
+                - 'link "مهمة: افتح السجل لمعرفة التفاصيل" [ref=e753] [cursor=pointer]':
+                  - /url: /transformations/01a19032-49eb-764e-acb6-562788282bdc/owner-updates
+                - generic [ref=e754]: 31‏/10‏/2026 07:34
+              - 'button "تعليم كمقروء : مهمة: افتح السجل لمعرفة التفاصيل" [ref=e755] [cursor=pointer]':
+                - text: تعليم كمقروء
+                - generic [ref=e756]: ": مهمة: افتح السجل لمعرفة التفاصيل"
+            - listitem [ref=e757]:
+              - generic [ref=e758]:
+                - generic [ref=e759]:
+                  - img [ref=e760]
+                  - text: غير مقروء
+                - 'link "مهمة: افتح السجل لمعرفة التفاصيل" [ref=e762] [cursor=pointer]':
+                  - /url: /transformations/01a19032-4953-737e-8c64-812add64a879/owner-updates
+                - generic [ref=e763]: 31‏/10‏/2026 07:34
+              - 'button "تعليم كمقروء : مهمة: افتح السجل لمعرفة التفاصيل" [ref=e764] [cursor=pointer]':
+                - text: تعليم كمقروء
+                - generic [ref=e765]: ": مهمة: افتح السجل لمعرفة التفاصيل"
+            - listitem [ref=e766]:
+              - generic [ref=e767]:
+                - generic [ref=e768]:
+                  - img [ref=e769]
+                  - text: غير مقروء
+                - 'link "مهمة: افتح السجل لمعرفة التفاصيل" [ref=e771] [cursor=pointer]':
+                  - /url: /transformations/01a19032-fabd-74d9-94d8-5e9893b34584/owner-updates
+                - generic [ref=e772]: 31‏/10‏/2026 07:34
+              - 'button "تعليم كمقروء : مهمة: افتح السجل لمعرفة التفاصيل" [ref=e773] [cursor=pointer]':
+                - text: تعليم كمقروء
+                - generic [ref=e774]: ": مهمة: افتح السجل لمعرفة التفاصيل"
+            - listitem [ref=e775]:
+              - generic [ref=e776]:
+                - generic [ref=e777]:
+                  - img [ref=e778]
+                  - text: غير مقروء
+                - 'link "مهمة: افتح السجل لمعرفة التفاصيل" [ref=e780] [cursor=pointer]':
+                  - /url: /transformations/01a19032-49eb-764e-acb6-562788282bdc/owner-updates
+                - generic [ref=e781]: 31‏/10‏/2026 07:34
+              - 'button "تعليم كمقروء : مهمة: افتح السجل لمعرفة التفاصيل" [ref=e782] [cursor=pointer]':
+                - text: تعليم كمقروء
+                - generic [ref=e783]: ": مهمة: افتح السجل لمعرفة التفاصيل"
+            - listitem [ref=e784]:
+              - generic [ref=e785]:
+                - generic [ref=e786]:
+                  - img [ref=e787]
+                  - text: غير مقروء
+                - 'link "مهمة: افتح السجل لمعرفة التفاصيل" [ref=e789] [cursor=pointer]':
+                  - /url: /transformations/01a19032-4953-737e-8c64-812add64a879/owner-updates
+                - generic [ref=e790]: 31‏/10‏/2026 07:34
+              - 'button "تعليم كمقروء : مهمة: افتح السجل لمعرفة التفاصيل" [ref=e791] [cursor=pointer]':
+                - text: تعليم كمقروء
+                - generic [ref=e792]: ": مهمة: افتح السجل لمعرفة التفاصيل"
+            - listitem [ref=e793]:
+              - generic [ref=e794]:
+                - generic [ref=e795]:
+                  - img [ref=e796]
+                  - text: غير مقروء
+                - 'link "مهمة: افتح السجل لمعرفة التفاصيل" [ref=e798] [cursor=pointer]':
+                  - /url: /transformations/01a19032-fabd-74d9-94d8-5e9893b34584/owner-updates
+                - generic [ref=e799]: 31‏/10‏/2026 07:34
+              - 'button "تعليم كمقروء : مهمة: افتح السجل لمعرفة التفاصيل" [ref=e800] [cursor=pointer]':
+                - text: تعليم كمقروء
+                - generic [ref=e801]: ": مهمة: افتح السجل لمعرفة التفاصيل"
+            - listitem [ref=e802]:
+              - generic [ref=e803]:
+                - generic [ref=e804]:
+                  - img [ref=e805]
+                  - text: غير مقروء
+                - 'link "مهمة: افتح السجل لمعرفة التفاصيل" [ref=e807] [cursor=pointer]':
+                  - /url: /transformations/01a19032-49eb-764e-acb6-562788282bdc/owner-updates
+                - generic [ref=e808]: 31‏/10‏/2026 07:34
+              - 'button "تعليم كمقروء : مهمة: افتح السجل لمعرفة التفاصيل" [ref=e809] [cursor=pointer]':
+                - text: تعليم كمقروء
+                - generic [ref=e810]: ": مهمة: افتح السجل لمعرفة التفاصيل"
+            - listitem [ref=e811]:
+              - generic [ref=e812]:
+                - generic [ref=e813]:
+                  - img [ref=e814]
+                  - text: غير مقروء
+                - 'link "مهمة: افتح السجل لمعرفة التفاصيل" [ref=e816] [cursor=pointer]':
+                  - /url: /transformations/01a19032-4953-737e-8c64-812add64a879/owner-updates
+                - generic [ref=e817]: 31‏/10‏/2026 07:34
+              - 'button "تعليم كمقروء : مهمة: افتح السجل لمعرفة التفاصيل" [ref=e818] [cursor=pointer]':
+                - text: تعليم كمقروء
+                - generic [ref=e819]: ": مهمة: افتح السجل لمعرفة التفاصيل"
+            - listitem [ref=e820]:
+              - generic [ref=e821]:
+                - generic [ref=e822]:
+                  - img [ref=e823]
+                  - text: غير مقروء
+                - 'link "مهمة: افتح السجل لمعرفة التفاصيل" [ref=e825] [cursor=pointer]':
+                  - /url: /transformations/01a19032-fabd-74d9-94d8-5e9893b34584/owner-updates
+                - generic [ref=e826]: 31‏/10‏/2026 07:34
+              - 'button "تعليم كمقروء : مهمة: افتح السجل لمعرفة التفاصيل" [ref=e827] [cursor=pointer]':
+                - text: تعليم كمقروء
+                - generic [ref=e828]: ": مهمة: افتح السجل لمعرفة التفاصيل"
+            - listitem [ref=e829]:
+              - generic [ref=e830]:
+                - generic [ref=e831]:
+                  - img [ref=e832]
+                  - text: غير مقروء
+                - 'link "مهمة: افتح السجل لمعرفة التفاصيل" [ref=e834] [cursor=pointer]':
+                  - /url: /transformations/01a19032-49eb-764e-acb6-562788282bdc/owner-updates
+                - generic [ref=e835]: 31‏/10‏/2026 07:34
+              - 'button "تعليم كمقروء : مهمة: افتح السجل لمعرفة التفاصيل" [ref=e836] [cursor=pointer]':
+                - text: تعليم كمقروء
+                - generic [ref=e837]: ": مهمة: افتح السجل لمعرفة التفاصيل"
+            - listitem [ref=e838]:
+              - generic [ref=e839]:
+                - generic [ref=e840]:
+                  - img [ref=e841]
+                  - text: غير مقروء
+                - 'link "مهمة: افتح السجل لمعرفة التفاصيل" [ref=e843] [cursor=pointer]':
+                  - /url: /transformations/01a19032-4953-737e-8c64-812add64a879/owner-updates
+                - generic [ref=e844]: 31‏/10‏/2026 07:34
+              - 'button "تعليم كمقروء : مهمة: افتح السجل لمعرفة التفاصيل" [ref=e845] [cursor=pointer]':
+                - text: تعليم كمقروء
+                - generic [ref=e846]: ": مهمة: افتح السجل لمعرفة التفاصيل"
+            - listitem [ref=e847]:
+              - generic [ref=e848]:
+                - generic [ref=e849]:
+                  - img [ref=e850]
+                  - text: غير مقروء
+                - 'link "مهمة: افتح السجل لمعرفة التفاصيل" [ref=e852] [cursor=pointer]':
+                  - /url: /transformations/01a19032-fabd-74d9-94d8-5e9893b34584/owner-updates
+                - generic [ref=e853]: 31‏/10‏/2026 07:34
+              - 'button "تعليم كمقروء : مهمة: افتح السجل لمعرفة التفاصيل" [ref=e854] [cursor=pointer]':
+                - text: تعليم كمقروء
+                - generic [ref=e855]: ": مهمة: افتح السجل لمعرفة التفاصيل"
+            - listitem [ref=e856]:
+              - generic [ref=e857]:
+                - generic [ref=e858]:
+                  - img [ref=e859]
+                  - text: غير مقروء
+                - 'link "مهمة: افتح السجل لمعرفة التفاصيل" [ref=e861] [cursor=pointer]':
+                  - /url: /transformations/01a19032-49eb-764e-acb6-562788282bdc/owner-updates
+                - generic [ref=e862]: 31‏/10‏/2026 07:34
+              - 'button "تعليم كمقروء : مهمة: افتح السجل لمعرفة التفاصيل" [ref=e863] [cursor=pointer]':
+                - text: تعليم كمقروء
+                - generic [ref=e864]: ": مهمة: افتح السجل لمعرفة التفاصيل"
+            - listitem [ref=e865]:
+              - generic [ref=e866]:
+                - generic [ref=e867]:
+                  - img [ref=e868]
+                  - text: غير مقروء
+                - 'link "مهمة: افتح السجل لمعرفة التفاصيل" [ref=e870] [cursor=pointer]':
+                  - /url: /transformations/01a19032-4953-737e-8c64-812add64a879/owner-updates
+                - generic [ref=e871]: 31‏/10‏/2026 07:34
+              - 'button "تعليم كمقروء : مهمة: افتح السجل لمعرفة التفاصيل" [ref=e872] [cursor=pointer]':
+                - text: تعليم كمقروء
+                - generic [ref=e873]: ": مهمة: افتح السجل لمعرفة التفاصيل"
+            - listitem [ref=e874]:
+              - generic [ref=e875]:
+                - generic [ref=e876]:
+                  - img [ref=e877]
+                  - text: غير مقروء
+                - 'link "مهمة: افتح السجل لمعرفة التفاصيل" [ref=e879] [cursor=pointer]':
+                  - /url: /transformations/01a19032-fabd-74d9-94d8-5e9893b34584/owner-updates
+                - generic [ref=e880]: 31‏/10‏/2026 07:34
+              - 'button "تعليم كمقروء : مهمة: افتح السجل لمعرفة التفاصيل" [ref=e881] [cursor=pointer]':
+                - text: تعليم كمقروء
+                - generic [ref=e882]: ": مهمة: افتح السجل لمعرفة التفاصيل"
+            - listitem [ref=e883]:
+              - generic [ref=e884]:
+                - generic [ref=e885]:
+                  - img [ref=e886]
+                  - text: غير مقروء
+                - 'link "مهمة: افتح السجل لمعرفة التفاصيل" [ref=e888] [cursor=pointer]':
+                  - /url: /transformations/01a19032-49eb-764e-acb6-562788282bdc/owner-updates
+                - generic [ref=e889]: 31‏/10‏/2026 07:34
+              - 'button "تعليم كمقروء : مهمة: افتح السجل لمعرفة التفاصيل" [ref=e890] [cursor=pointer]':
+                - text: تعليم كمقروء
+                - generic [ref=e891]: ": مهمة: افتح السجل لمعرفة التفاصيل"
+            - listitem [ref=e892]:
+              - generic [ref=e893]:
+                - generic [ref=e894]:
+                  - img [ref=e895]
+                  - text: غير مقروء
+                - 'link "مهمة: افتح السجل لمعرفة التفاصيل" [ref=e897] [cursor=pointer]':
+                  - /url: /transformations/01a19032-4953-737e-8c64-812add64a879/owner-updates
+                - generic [ref=e898]: 31‏/10‏/2026 07:34
+              - 'button "تعليم كمقروء : مهمة: افتح السجل لمعرفة التفاصيل" [ref=e899] [cursor=pointer]':
+                - text: تعليم كمقروء
+                - generic [ref=e900]: ": مهمة: افتح السجل لمعرفة التفاصيل"
+            - listitem [ref=e901]:
+              - generic [ref=e902]:
+                - generic [ref=e903]:
+                  - img [ref=e904]
+                  - text: غير مقروء
+                - 'link "مهمة: افتح السجل لمعرفة التفاصيل" [ref=e906] [cursor=pointer]':
+                  - /url: /transformations/01a19032-fabd-74d9-94d8-5e9893b34584/owner-updates
+                - generic [ref=e907]: 31‏/10‏/2026 07:34
+              - 'button "تعليم كمقروء : مهمة: افتح السجل لمعرفة التفاصيل" [ref=e908] [cursor=pointer]':
+                - text: تعليم كمقروء
+                - generic [ref=e909]: ": مهمة: افتح السجل لمعرفة التفاصيل"
+            - listitem [ref=e910]:
+              - generic [ref=e911]:
+                - generic [ref=e912]:
+                  - img [ref=e913]
+                  - text: غير مقروء
+                - 'link "مهمة: افتح السجل لمعرفة التفاصيل" [ref=e915] [cursor=pointer]':
+                  - /url: /transformations/01a19032-49eb-764e-acb6-562788282bdc/owner-updates
+                - generic [ref=e916]: 31‏/10‏/2026 07:34
+              - 'button "تعليم كمقروء : مهمة: افتح السجل لمعرفة التفاصيل" [ref=e917] [cursor=pointer]':
+                - text: تعليم كمقروء
+                - generic [ref=e918]: ": مهمة: افتح السجل لمعرفة التفاصيل"
+            - listitem [ref=e919]:
+              - generic [ref=e920]:
+                - generic [ref=e921]:
+                  - img [ref=e922]
+                  - text: غير مقروء
+                - 'link "مهمة: افتح السجل لمعرفة التفاصيل" [ref=e924] [cursor=pointer]':
+                  - /url: /transformations/01a19032-4953-737e-8c64-812add64a879/owner-updates
+                - generic [ref=e925]: 31‏/10‏/2026 07:34
+              - 'button "تعليم كمقروء : مهمة: افتح السجل لمعرفة التفاصيل" [ref=e926] [cursor=pointer]':
+                - text: تعليم كمقروء
+                - generic [ref=e927]: ": مهمة: افتح السجل لمعرفة التفاصيل"
+            - listitem [ref=e928]:
+              - generic [ref=e929]:
+                - generic [ref=e930]:
+                  - img [ref=e931]
+                  - text: غير مقروء
+                - 'link "مهمة: افتح السجل لمعرفة التفاصيل" [ref=e933] [cursor=pointer]':
+                  - /url: /transformations/01a19032-fabd-74d9-94d8-5e9893b34584/owner-updates
+                - generic [ref=e934]: 31‏/10‏/2026 07:34
+              - 'button "تعليم كمقروء : مهمة: افتح السجل لمعرفة التفاصيل" [ref=e935] [cursor=pointer]':
+                - text: تعليم كمقروء
+                - generic [ref=e936]: ": مهمة: افتح السجل لمعرفة التفاصيل"
+            - listitem [ref=e937]:
+              - generic [ref=e938]:
+                - generic [ref=e939]:
+                  - img [ref=e940]
+                  - text: غير مقروء
+                - 'link "مهمة: افتح السجل لمعرفة التفاصيل" [ref=e942] [cursor=pointer]':
+                  - /url: /transformations/01a19032-49eb-764e-acb6-562788282bdc/owner-updates
+                - generic [ref=e943]: 31‏/10‏/2026 07:34
+              - 'button "تعليم كمقروء : مهمة: افتح السجل لمعرفة التفاصيل" [ref=e944] [cursor=pointer]':
+                - text: تعليم كمقروء
+                - generic [ref=e945]: ": مهمة: افتح السجل لمعرفة التفاصيل"
+            - listitem [ref=e946]:
+              - generic [ref=e947]:
+                - generic [ref=e948]:
+                  - img [ref=e949]
+                  - text: غير مقروء
+                - 'link "مهمة: افتح السجل لمعرفة التفاصيل" [ref=e951] [cursor=pointer]':
+                  - /url: /transformations/01a19032-4953-737e-8c64-812add64a879/owner-updates
+                - generic [ref=e952]: 31‏/10‏/2026 07:34
+              - 'button "تعليم كمقروء : مهمة: افتح السجل لمعرفة التفاصيل" [ref=e953] [cursor=pointer]':
+                - text: تعليم كمقروء
+                - generic [ref=e954]: ": مهمة: افتح السجل لمعرفة التفاصيل"
+            - listitem [ref=e955]:
+              - generic [ref=e956]:
+                - generic [ref=e957]:
+                  - img [ref=e958]
+                  - text: غير مقروء
+                - 'link "مهمة: افتح السجل لمعرفة التفاصيل" [ref=e960] [cursor=pointer]':
+                  - /url: /transformations/01a19032-fabd-74d9-94d8-5e9893b34584/owner-updates
+                - generic [ref=e961]: 31‏/10‏/2026 07:34
+              - 'button "تعليم كمقروء : مهمة: افتح السجل لمعرفة التفاصيل" [ref=e962] [cursor=pointer]':
+                - text: تعليم كمقروء
+                - generic [ref=e963]: ": مهمة: افتح السجل لمعرفة التفاصيل"
+            - listitem [ref=e964]:
+              - generic [ref=e965]:
+                - generic [ref=e966]:
+                  - img [ref=e967]
+                  - text: غير مقروء
+                - 'link "مهمة: افتح السجل لمعرفة التفاصيل" [ref=e969] [cursor=pointer]':
+                  - /url: /transformations/01a19032-49eb-764e-acb6-562788282bdc/owner-updates
+                - generic [ref=e970]: 31‏/10‏/2026 07:34
+              - 'button "تعليم كمقروء : مهمة: افتح السجل لمعرفة التفاصيل" [ref=e971] [cursor=pointer]':
+                - text: تعليم كمقروء
+                - generic [ref=e972]: ": مهمة: افتح السجل لمعرفة التفاصيل"
+            - listitem [ref=e973]:
+              - generic [ref=e974]:
+                - generic [ref=e975]:
+                  - img [ref=e976]
+                  - text: غير مقروء
+                - 'link "مهمة: افتح السجل لمعرفة التفاصيل" [ref=e978] [cursor=pointer]':
+                  - /url: /transformations/01a19032-4953-737e-8c64-812add64a879/owner-updates
+                - generic [ref=e979]: 31‏/10‏/2026 07:34
+              - 'button "تعليم كمقروء : مهمة: افتح السجل لمعرفة التفاصيل" [ref=e980] [cursor=pointer]':
+                - text: تعليم كمقروء
+                - generic [ref=e981]: ": مهمة: افتح السجل لمعرفة التفاصيل"
+            - listitem [ref=e982]:
+              - generic [ref=e983]:
+                - generic [ref=e984]:
+                  - img [ref=e985]
+                  - text: غير مقروء
+                - 'link "مهمة: افتح السجل لمعرفة التفاصيل" [ref=e987] [cursor=pointer]':
+                  - /url: /transformations/01a19032-fabd-74d9-94d8-5e9893b34584/owner-updates
+                - generic [ref=e988]: 31‏/10‏/2026 07:34
+              - 'button "تعليم كمقروء : مهمة: افتح السجل لمعرفة التفاصيل" [ref=e989] [cursor=pointer]':
+                - text: تعليم كمقروء
+                - generic [ref=e990]: ": مهمة: افتح السجل لمعرفة التفاصيل"
+            - listitem [ref=e991]:
+              - generic [ref=e992]:
+                - generic [ref=e993]:
+                  - img [ref=e994]
+                  - text: غير مقروء
+                - 'link "مهمة: افتح السجل لمعرفة التفاصيل" [ref=e996] [cursor=pointer]':
+                  - /url: /transformations/01a19032-49eb-764e-acb6-562788282bdc/owner-updates
+                - generic [ref=e997]: 31‏/10‏/2026 07:34
+              - 'button "تعليم كمقروء : مهمة: افتح السجل لمعرفة التفاصيل" [ref=e998] [cursor=pointer]':
+                - text: تعليم كمقروء
+                - generic [ref=e999]: ": مهمة: افتح السجل لمعرفة التفاصيل"
+            - listitem [ref=e1000]:
+              - generic [ref=e1001]:
+                - generic [ref=e1002]:
+                  - img [ref=e1003]
+                  - text: غير مقروء
+                - 'link "مهمة: افتح السجل لمعرفة التفاصيل" [ref=e1005] [cursor=pointer]':
+                  - /url: /transformations/01a19032-4953-737e-8c64-812add64a879/owner-updates
+                - generic [ref=e1006]: 31‏/10‏/2026 07:34
+              - 'button "تعليم كمقروء : مهمة: افتح السجل لمعرفة التفاصيل" [ref=e1007] [cursor=pointer]':
+                - text: تعليم كمقروء
+                - generic [ref=e1008]: ": مهمة: افتح السجل لمعرفة التفاصيل"
+            - listitem [ref=e1009]:
+              - generic [ref=e1010]:
+                - generic [ref=e1011]:
+                  - img [ref=e1012]
+                  - text: غير مقروء
+                - 'link "مهمة: افتح السجل لمعرفة التفاصيل" [ref=e1014] [cursor=pointer]':
+                  - /url: /transformations/01a19032-fabd-74d9-94d8-5e9893b34584/owner-updates
+                - generic [ref=e1015]: 31‏/10‏/2026 07:34
+              - 'button "تعليم كمقروء : مهمة: افتح السجل لمعرفة التفاصيل" [ref=e1016] [cursor=pointer]':
+                - text: تعليم كمقروء
+                - generic [ref=e1017]: ": مهمة: افتح السجل لمعرفة التفاصيل"
+            - listitem [ref=e1018]:
+              - generic [ref=e1019]:
+                - generic [ref=e1020]:
+                  - img [ref=e1021]
+                  - text: غير مقروء
+                - 'link "مهمة: افتح السجل لمعرفة التفاصيل" [ref=e1023] [cursor=pointer]':
+                  - /url: /transformations/01a19032-49eb-764e-acb6-562788282bdc/owner-updates
+                - generic [ref=e1024]: 31‏/10‏/2026 07:34
+              - 'button "تعليم كمقروء : مهمة: افتح السجل لمعرفة التفاصيل" [ref=e1025] [cursor=pointer]':
+                - text: تعليم كمقروء
+                - generic [ref=e1026]: ": مهمة: افتح السجل لمعرفة التفاصيل"
+            - listitem [ref=e1027]:
+              - generic [ref=e1028]:
+                - generic [ref=e1029]:
+                  - img [ref=e1030]
+                  - text: غير مقروء
+                - 'link "مهمة: افتح السجل لمعرفة التفاصيل" [ref=e1032] [cursor=pointer]':
+                  - /url: /transformations/01a19032-4953-737e-8c64-812add64a879/owner-updates
+                - generic [ref=e1033]: 31‏/10‏/2026 07:34
+              - 'button "تعليم كمقروء : مهمة: افتح السجل لمعرفة التفاصيل" [ref=e1034] [cursor=pointer]':
+                - text: تعليم كمقروء
+                - generic [ref=e1035]: ": مهمة: افتح السجل لمعرفة التفاصيل"
+            - listitem [ref=e1036]:
+              - generic [ref=e1037]:
+                - generic [ref=e1038]:
+                  - img [ref=e1039]
+                  - text: غير مقروء
+                - 'link "مهمة: افتح السجل لمعرفة التفاصيل" [ref=e1041] [cursor=pointer]':
+                  - /url: /transformations/01a19032-fabd-74d9-94d8-5e9893b34584/owner-updates
+                - generic [ref=e1042]: 31‏/10‏/2026 07:34
+              - 'button "تعليم كمقروء : مهمة: افتح السجل لمعرفة التفاصيل" [ref=e1043] [cursor=pointer]':
+                - text: تعليم كمقروء
+                - generic [ref=e1044]: ": مهمة: افتح السجل لمعرفة التفاصيل"
+            - listitem [ref=e1045]:
+              - generic [ref=e1046]:
+                - generic [ref=e1047]:
+                  - img [ref=e1048]
+                  - text: غير مقروء
+                - 'link "مهمة: افتح السجل لمعرفة التفاصيل" [ref=e1050] [cursor=pointer]':
+                  - /url: /transformations/01a19032-49eb-764e-acb6-562788282bdc/owner-updates
+                - generic [ref=e1051]: 31‏/10‏/2026 07:34
+              - 'button "تعليم كمقروء : مهمة: افتح السجل لمعرفة التفاصيل" [ref=e1052] [cursor=pointer]':
+                - text: تعليم كمقروء
+                - generic [ref=e1053]: ": مهمة: افتح السجل لمعرفة التفاصيل"
+            - listitem [ref=e1054]:
+              - generic [ref=e1055]:
+                - generic [ref=e1056]:
+                  - img [ref=e1057]
+                  - text: غير مقروء
+                - 'link "مهمة: افتح السجل لمعرفة التفاصيل" [ref=e1059] [cursor=pointer]':
+                  - /url: /transformations/01a19032-4953-737e-8c64-812add64a879/owner-updates
+                - generic [ref=e1060]: 31‏/10‏/2026 07:34
+              - 'button "تعليم كمقروء : مهمة: افتح السجل لمعرفة التفاصيل" [ref=e1061] [cursor=pointer]':
+                - text: تعليم كمقروء
+                - generic [ref=e1062]: ": مهمة: افتح السجل لمعرفة التفاصيل"
+            - listitem [ref=e1063]:
+              - generic [ref=e1064]:
+                - generic [ref=e1065]:
+                  - img [ref=e1066]
+                  - text: غير مقروء
+                - 'link "مهمة: افتح السجل لمعرفة التفاصيل" [ref=e1068] [cursor=pointer]':
+                  - /url: /transformations/01a19032-fabd-74d9-94d8-5e9893b34584/owner-updates
+                - generic [ref=e1069]: 31‏/10‏/2026 07:34
+              - 'button "تعليم كمقروء : مهمة: افتح السجل لمعرفة التفاصيل" [ref=e1070] [cursor=pointer]':
+                - text: تعليم كمقروء
+                - generic [ref=e1071]: ": مهمة: افتح السجل لمعرفة التفاصيل"
+            - listitem [ref=e1072]:
+              - generic [ref=e1073]:
+                - generic [ref=e1074]:
+                  - img [ref=e1075]
+                  - text: غير مقروء
+                - 'link "مهمة: افتح السجل لمعرفة التفاصيل" [ref=e1077] [cursor=pointer]':
+                  - /url: /transformations/01a19032-49eb-764e-acb6-562788282bdc/owner-updates
+                - generic [ref=e1078]: 31‏/10‏/2026 07:34
+              - 'button "تعليم كمقروء : مهمة: افتح السجل لمعرفة التفاصيل" [ref=e1079] [cursor=pointer]':
+                - text: تعليم كمقروء
+                - generic [ref=e1080]: ": مهمة: افتح السجل لمعرفة التفاصيل"
+            - listitem [ref=e1081]:
+              - generic [ref=e1082]:
+                - generic [ref=e1083]:
+                  - img [ref=e1084]
+                  - text: غير مقروء
+                - 'link "مهمة: افتح السجل لمعرفة التفاصيل" [ref=e1086] [cursor=pointer]':
+                  - /url: /transformations/01a19032-4953-737e-8c64-812add64a879/owner-updates
+                - generic [ref=e1087]: 31‏/10‏/2026 07:34
+              - 'button "تعليم كمقروء : مهمة: افتح السجل لمعرفة التفاصيل" [ref=e1088] [cursor=pointer]':
+                - text: تعليم كمقروء
+                - generic [ref=e1089]: ": مهمة: افتح السجل لمعرفة التفاصيل"
+            - listitem [ref=e1090]:
+              - generic [ref=e1091]:
+                - generic [ref=e1092]:
+                  - img [ref=e1093]
+                  - text: غير مقروء
+                - 'link "مهمة: افتح السجل لمعرفة التفاصيل" [ref=e1095] [cursor=pointer]':
+                  - /url: /transformations/01a19032-fabd-74d9-94d8-5e9893b34584/owner-updates
+                - generic [ref=e1096]: 31‏/10‏/2026 07:34
+              - 'button "تعليم كمقروء : مهمة: افتح السجل لمعرفة التفاصيل" [ref=e1097] [cursor=pointer]':
+                - text: تعليم كمقروء
+                - generic [ref=e1098]: ": مهمة: افتح السجل لمعرفة التفاصيل"
+            - listitem [ref=e1099]:
+              - generic [ref=e1100]:
+                - generic [ref=e1101]:
+                  - img [ref=e1102]
+                  - text: غير مقروء
+                - 'link "مهمة: افتح السجل لمعرفة التفاصيل" [ref=e1104] [cursor=pointer]':
+                  - /url: /transformations/01a19032-49eb-764e-acb6-562788282bdc/owner-updates
+                - generic [ref=e1105]: 31‏/10‏/2026 07:34
+              - 'button "تعليم كمقروء : مهمة: افتح السجل لمعرفة التفاصيل" [ref=e1106] [cursor=pointer]':
+                - text: تعليم كمقروء
+                - generic [ref=e1107]: ": مهمة: افتح السجل لمعرفة التفاصيل"
+            - listitem [ref=e1108]:
+              - generic [ref=e1109]:
+                - generic [ref=e1110]:
+                  - img [ref=e1111]
+                  - text: غير مقروء
+                - 'link "مهمة: افتح السجل لمعرفة التفاصيل" [ref=e1113] [cursor=pointer]':
+                  - /url: /transformations/01a19032-4953-737e-8c64-812add64a879/owner-updates
+                - generic [ref=e1114]: 31‏/10‏/2026 07:34
+              - 'button "تعليم كمقروء : مهمة: افتح السجل لمعرفة التفاصيل" [ref=e1115] [cursor=pointer]':
+                - text: تعليم كمقروء
+                - generic [ref=e1116]: ": مهمة: افتح السجل لمعرفة التفاصيل"
+            - listitem [ref=e1117]:
+              - generic [ref=e1118]:
+                - generic [ref=e1119]:
+                  - img [ref=e1120]
+                  - text: غير مقروء
+                - 'link "مهمة: افتح السجل لمعرفة التفاصيل" [ref=e1122] [cursor=pointer]':
+                  - /url: /transformations/01a19032-fabd-74d9-94d8-5e9893b34584/owner-updates
+                - generic [ref=e1123]: 31‏/10‏/2026 07:34
+              - 'button "تعليم كمقروء : مهمة: افتح السجل لمعرفة التفاصيل" [ref=e1124] [cursor=pointer]':
+                - text: تعليم كمقروء
+                - generic [ref=e1125]: ": مهمة: افتح السجل لمعرفة التفاصيل"
+            - listitem [ref=e1126]:
+              - generic [ref=e1127]:
+                - generic [ref=e1128]:
+                  - img [ref=e1129]
+                  - text: غير مقروء
+                - 'link "مهمة: افتح السجل لمعرفة التفاصيل" [ref=e1131] [cursor=pointer]':
+                  - /url: /transformations/01a19032-49eb-764e-acb6-562788282bdc/owner-updates
+                - generic [ref=e1132]: 31‏/10‏/2026 07:34
+              - 'button "تعليم كمقروء : مهمة: افتح السجل لمعرفة التفاصيل" [ref=e1133] [cursor=pointer]':
+                - text: تعليم كمقروء
+                - generic [ref=e1134]: ": مهمة: افتح السجل لمعرفة التفاصيل"
+            - listitem [ref=e1135]:
+              - generic [ref=e1136]:
+                - generic [ref=e1137]:
+                  - img [ref=e1138]
+                  - text: غير مقروء
+                - 'link "مهمة: افتح السجل لمعرفة التفاصيل" [ref=e1140] [cursor=pointer]':
+                  - /url: /transformations/01a19032-4953-737e-8c64-812add64a879/owner-updates
+                - generic [ref=e1141]: 31‏/10‏/2026 07:34
+              - 'button "تعليم كمقروء : مهمة: افتح السجل لمعرفة التفاصيل" [ref=e1142] [cursor=pointer]':
+                - text: تعليم كمقروء
+                - generic [ref=e1143]: ": مهمة: افتح السجل لمعرفة التفاصيل"
+            - listitem [ref=e1144]:
+              - generic [ref=e1145]:
+                - generic [ref=e1146]:
+                  - img [ref=e1147]
+                  - text: غير مقروء
+                - 'link "مهمة: افتح السجل لمعرفة التفاصيل" [ref=e1149] [cursor=pointer]':
+                  - /url: /transformations/01a19032-fabd-74d9-94d8-5e9893b34584/owner-updates
+                - generic [ref=e1150]: 31‏/10‏/2026 07:34
+              - 'button "تعليم كمقروء : مهمة: افتح السجل لمعرفة التفاصيل" [ref=e1151] [cursor=pointer]':
+                - text: تعليم كمقروء
+                - generic [ref=e1152]: ": مهمة: افتح السجل لمعرفة التفاصيل"
+            - listitem [ref=e1153]:
+              - generic [ref=e1154]:
+                - generic [ref=e1155]:
+                  - img [ref=e1156]
+                  - text: غير مقروء
+                - 'link "مهمة: افتح السجل لمعرفة التفاصيل" [ref=e1158] [cursor=pointer]':
+                  - /url: /transformations/01a19032-49eb-764e-acb6-562788282bdc/owner-updates
+                - generic [ref=e1159]: 31‏/10‏/2026 07:34
+              - 'button "تعليم كمقروء : مهمة: افتح السجل لمعرفة التفاصيل" [ref=e1160] [cursor=pointer]':
+                - text: تعليم كمقروء
+                - generic [ref=e1161]: ": مهمة: افتح السجل لمعرفة التفاصيل"
+            - listitem [ref=e1162]:
+              - generic [ref=e1163]:
+                - generic [ref=e1164]:
+                  - img [ref=e1165]
+                  - text: غير مقروء
+                - 'link "مهمة: افتح السجل لمعرفة التفاصيل" [ref=e1167] [cursor=pointer]':
+                  - /url: /transformations/01a19032-4953-737e-8c64-812add64a879/owner-updates
+                - generic [ref=e1168]: 31‏/10‏/2026 07:34
+              - 'button "تعليم كمقروء : مهمة: افتح السجل لمعرفة التفاصيل" [ref=e1169] [cursor=pointer]':
+                - text: تعليم كمقروء
+                - generic [ref=e1170]: ": مهمة: افتح السجل لمعرفة التفاصيل"
+            - listitem [ref=e1171]:
+              - generic [ref=e1172]:
+                - generic [ref=e1173]:
+                  - img [ref=e1174]
+                  - text: غير مقروء
+                - 'link "مهمة: افتح السجل لمعرفة التفاصيل" [ref=e1176] [cursor=pointer]':
+                  - /url: /transformations/01a19032-fabd-74d9-94d8-5e9893b34584/owner-updates
+                - generic [ref=e1177]: 31‏/10‏/2026 07:34
+              - 'button "تعليم كمقروء : مهمة: افتح السجل لمعرفة التفاصيل" [ref=e1178] [cursor=pointer]':
+                - text: تعليم كمقروء
+                - generic [ref=e1179]: ": مهمة: افتح السجل لمعرفة التفاصيل"
+            - listitem [ref=e1180]:
+              - generic [ref=e1181]:
+                - generic [ref=e1182]:
+                  - img [ref=e1183]
+                  - text: غير مقروء
+                - 'link "مهمة: افتح السجل لمعرفة التفاصيل" [ref=e1185] [cursor=pointer]':
+                  - /url: /transformations/01a19032-49eb-764e-acb6-562788282bdc/owner-updates
+                - generic [ref=e1186]: 31‏/10‏/2026 07:34
+              - 'button "تعليم كمقروء : مهمة: افتح السجل لمعرفة التفاصيل" [ref=e1187] [cursor=pointer]':
+                - text: تعليم كمقروء
+                - generic [ref=e1188]: ": مهمة: افتح السجل لمعرفة التفاصيل"
+            - listitem [ref=e1189]:
+              - generic [ref=e1190]:
+                - generic [ref=e1191]:
+                  - img [ref=e1192]
+                  - text: غير مقروء
+                - 'link "مهمة: افتح السجل لمعرفة التفاصيل" [ref=e1194] [cursor=pointer]':
+                  - /url: /transformations/01a19032-4953-737e-8c64-812add64a879/owner-updates
+                - generic [ref=e1195]: 31‏/10‏/2026 07:34
+              - 'button "تعليم كمقروء : مهمة: افتح السجل لمعرفة التفاصيل" [ref=e1196] [cursor=pointer]':
+                - text: تعليم كمقروء
+                - generic [ref=e1197]: ": مهمة: افتح السجل لمعرفة التفاصيل"
+            - listitem [ref=e1198]:
+              - generic [ref=e1199]:
+                - generic [ref=e1200]:
+                  - img [ref=e1201]
+                  - text: غير مقروء
+                - 'link "مهمة: افتح السجل لمعرفة التفاصيل" [ref=e1203] [cursor=pointer]':
+                  - /url: /transformations/01a19032-fabd-74d9-94d8-5e9893b34584/owner-updates
+                - generic [ref=e1204]: 31‏/10‏/2026 07:34
+              - 'button "تعليم كمقروء : مهمة: افتح السجل لمعرفة التفاصيل" [ref=e1205] [cursor=pointer]':
+                - text: تعليم كمقروء
+                - generic [ref=e1206]: ": مهمة: افتح السجل لمعرفة التفاصيل"
+            - listitem [ref=e1207]:
+              - generic [ref=e1208]:
+                - generic [ref=e1209]:
+                  - img [ref=e1210]
+                  - text: غير مقروء
+                - 'link "مهمة: افتح السجل لمعرفة التفاصيل" [ref=e1212] [cursor=pointer]':
+                  - /url: /transformations/01a19032-49eb-764e-acb6-562788282bdc/owner-updates
+                - generic [ref=e1213]: 31‏/10‏/2026 07:34
+              - 'button "تعليم كمقروء : مهمة: افتح السجل لمعرفة التفاصيل" [ref=e1214] [cursor=pointer]':
+                - text: تعليم كمقروء
+                - generic [ref=e1215]: ": مهمة: افتح السجل لمعرفة التفاصيل"
+            - listitem [ref=e1216]:
+              - generic [ref=e1217]:
+                - generic [ref=e1218]:
+                  - img [ref=e1219]
+                  - text: غير مقروء
+                - 'link "مهمة: افتح السجل لمعرفة التفاصيل" [ref=e1221] [cursor=pointer]':
+                  - /url: /transformations/01a19032-4953-737e-8c64-812add64a879/owner-updates
+                - generic [ref=e1222]: 31‏/10‏/2026 07:34
+              - 'button "تعليم كمقروء : مهمة: افتح السجل لمعرفة التفاصيل" [ref=e1223] [cursor=pointer]':
+                - text: تعليم كمقروء
+                - generic [ref=e1224]: ": مهمة: افتح السجل لمعرفة التفاصيل"
+            - listitem [ref=e1225]:
+              - generic [ref=e1226]:
+                - generic [ref=e1227]:
+                  - img [ref=e1228]
+                  - text: غير مقروء
+                - 'link "مهمة: افتح السجل لمعرفة التفاصيل" [ref=e1230] [cursor=pointer]':
+                  - /url: /transformations/01a19032-fabd-74d9-94d8-5e9893b34584/owner-updates
+                - generic [ref=e1231]: 31‏/10‏/2026 07:34
+              - 'button "تعليم كمقروء : مهمة: افتح السجل لمعرفة التفاصيل" [ref=e1232] [cursor=pointer]':
+                - text: تعليم كمقروء
+                - generic [ref=e1233]: ": مهمة: افتح السجل لمعرفة التفاصيل"
+            - listitem [ref=e1234]:
+              - generic [ref=e1235]:
+                - generic [ref=e1236]:
+                  - img [ref=e1237]
+                  - text: غير مقروء
+                - 'link "مهمة: افتح السجل لمعرفة التفاصيل" [ref=e1239] [cursor=pointer]':
+                  - /url: /transformations/01a19032-49eb-764e-acb6-562788282bdc/owner-updates
+                - generic [ref=e1240]: 31‏/10‏/2026 07:34
+              - 'button "تعليم كمقروء : مهمة: افتح السجل لمعرفة التفاصيل" [ref=e1241] [cursor=pointer]':
+                - text: تعليم كمقروء
+                - generic [ref=e1242]: ": مهمة: افتح السجل لمعرفة التفاصيل"
+            - listitem [ref=e1243]:
+              - generic [ref=e1244]:
+                - generic [ref=e1245]:
+                  - img [ref=e1246]
+                  - text: غير مقروء
+                - 'link "مهمة: افتح السجل لمعرفة التفاصيل" [ref=e1248] [cursor=pointer]':
+                  - /url: /transformations/01a19032-4953-737e-8c64-812add64a879/owner-updates
+                - generic [ref=e1249]: 31‏/10‏/2026 07:34
+              - 'button "تعليم كمقروء : مهمة: افتح السجل لمعرفة التفاصيل" [ref=e1250] [cursor=pointer]':
+                - text: تعليم كمقروء
+                - generic [ref=e1251]: ": مهمة: افتح السجل لمعرفة التفاصيل"
+            - listitem [ref=e1252]:
+              - generic [ref=e1253]:
+                - generic [ref=e1254]:
+                  - img [ref=e1255]
+                  - text: غير مقروء
+                - 'link "مهمة: افتح السجل لمعرفة التفاصيل" [ref=e1257] [cursor=pointer]':
+                  - /url: /transformations/01a19032-fabd-74d9-94d8-5e9893b34584/owner-updates
+                - generic [ref=e1258]: 31‏/10‏/2026 07:34
+              - 'button "تعليم كمقروء : مهمة: افتح السجل لمعرفة التفاصيل" [ref=e1259] [cursor=pointer]':
+                - text: تعليم كمقروء
+                - generic [ref=e1260]: ": مهمة: افتح السجل لمعرفة التفاصيل"
+            - listitem [ref=e1261]:
+              - generic [ref=e1262]:
+                - generic [ref=e1263]:
+                  - img [ref=e1264]
+                  - text: غير مقروء
+                - 'link "مهمة: افتح السجل لمعرفة التفاصيل" [ref=e1266] [cursor=pointer]':
+                  - /url: /transformations/01a19032-49eb-764e-acb6-562788282bdc/owner-updates
+                - generic [ref=e1267]: 31‏/10‏/2026 07:34
+              - 'button "تعليم كمقروء : مهمة: افتح السجل لمعرفة التفاصيل" [ref=e1268] [cursor=pointer]':
+                - text: تعليم كمقروء
+                - generic [ref=e1269]: ": مهمة: افتح السجل لمعرفة التفاصيل"
+            - listitem [ref=e1270]:
+              - generic [ref=e1271]:
+                - generic [ref=e1272]:
+                  - img [ref=e1273]
+                  - text: غير مقروء
+                - 'link "مهمة: افتح السجل لمعرفة التفاصيل" [ref=e1275] [cursor=pointer]':
+                  - /url: /transformations/01a19032-4953-737e-8c64-812add64a879/owner-updates
+                - generic [ref=e1276]: 31‏/10‏/2026 07:34
+              - 'button "تعليم كمقروء : مهمة: افتح السجل لمعرفة التفاصيل" [ref=e1277] [cursor=pointer]':
+                - text: تعليم كمقروء
+                - generic [ref=e1278]: ": مهمة: افتح السجل لمعرفة التفاصيل"
+```

@@ -35,7 +35,7 @@ import { sql } from "kysely";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
-import { denialOf, principalOf, requireTransformationRead } from "../access/index.ts";
+import { denialOf, principalOf, requireTransformationRead, restrictedIdsOf } from "../access/index.ts";
 import { record, type AuditContext } from "../audit/index.ts";
 import {
   cursorSchema,
@@ -1068,7 +1068,16 @@ export function registerPhaseStepRoutes(app: FastifyInstance, { db }: ModuleDeps
       .limit(query.limit + 1)
       .execute();
     const page = paginate(rows, query.limit, (r) => [r.id], hash);
-    return { items: page.items.map(toPhaseStepEvidence), nextCursor: page.nextCursor };
+    // T-DG6-BE-Z10B (F-DG6-420; D-218): a link to an evidence item the reader is not admitted to is not listed (as in
+    // listEvidenceLinks): the row exists only to name that item. The cursor still advances over it.
+    const hidden = await restrictedIdsOf(
+      db,
+      principalOf(request),
+      "evidence",
+      page.items.map((r) => r.evidence_id),
+    );
+    const items = page.items.filter((r) => !hidden.has(r.evidence_id)).map(toPhaseStepEvidence);
+    return { items, nextCursor: page.nextCursor };
   });
 
   app.post(

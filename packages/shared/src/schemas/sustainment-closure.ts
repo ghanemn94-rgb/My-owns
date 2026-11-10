@@ -106,6 +106,11 @@ export const closureRecord = z.strictObject({
   closureNote: z.string().min(1).max(2000).nullable(),
   closedAt: timestamp,
   closedBy: uuid,
+  /**
+   * T-DG6-BE-Z10B (F-DG6-420; D-218): true when a benefit entry of the snapshot was omitted for the reader (the stored
+   * snapshot is unchanged); label access.includesRestrictedRecords.
+   */
+  includesRestrictedRecords: z.literal(true).optional(),
 });
 export type ClosureRecord = z.infer<typeof closureRecord>;
 export const closureRecordPage = page(closureRecord);

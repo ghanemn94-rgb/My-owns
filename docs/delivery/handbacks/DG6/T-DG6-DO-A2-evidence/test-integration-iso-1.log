@@ -1,0 +1,107 @@
+port-policy: PostgreSQL listening on port 23940 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /home/user/wt/dg6-do-a2
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvq67ul4_03e6f9d7 (server_encoding UTF8); applied 102 migrations to a fresh database
+stdout | apps/api/test/integration/hardening/integrity-sweep.test.ts > REQ-S16-023 part 1: finalized records cannot be destructively deleted (ADR-0052 §9.1) > its evidence: removing the evidence link returns 409 and changes nothing
+[integrity-sweep] removeEvidenceLink on approved-G1 evidence: 200 undefined
+
+stdout | apps/api/test/integration/hardening/integrity-sweep.test.ts > REQ-S16-023 part 1: finalized records cannot be destructively deleted (ADR-0052 §9.1) > its evidence: archiving the evidence item returns 409 and changes nothing
+[integrity-sweep] archiveEvidence on approved-G1 evidence: 200 undefined
+
+stdout | apps/api/test/integration/hardening/integrity-sweep.test.ts > REQ-S16-023 part 4: required ownership and canonical references on every P6 table (ADR-0052 §9.4) > every P6 table exists, and every uuid *_id column is a foreign key, a trigger-guarded record reference, or a history copy of one
+[integrity-sweep] P6 tables: 32; *_id columns: 84; foreign-key columns: 128; record_ref-guarded tables: record_sensitivity, sensitive_record_grant; unguarded: deliverable_external_change_event.evidence_id, deliverable_external_change_event.outbound_write_id, import_row_commit.target_record_id, record_sensitivity_change.record_id
+[integrity-sweep] P6 tables with a nullable organization_id: operational_exception, service_identity
+
+ ❯ |integration| apps/api/test/integration/hardening/integrity-sweep.test.ts (19 tests | 1 failed) 4940ms
+   ✓ REQ-S16-023 part 1: finalized records cannot be destructively deleted (ADR-0052 §9.1) > the approved G1 decision's submission snapshot holds the evidence item 19ms
+   ✓ REQ-S16-023 part 1: finalized records cannot be destructively deleted (ADR-0052 §9.1) > an approved gate decision: the contract has no delete operation, and mth_app cannot DELETE it (42501) 28ms
+   ✓ REQ-S16-023 part 1: finalized records cannot be destructively deleted (ADR-0052 §9.1) > its evidence: removing the evidence link returns 409 and changes nothing 38ms
+   ✓ REQ-S16-023 part 1: finalized records cannot be destructively deleted (ADR-0052 §9.1) > its evidence: archiving the evidence item returns 409 and changes nothing 59ms
+   ✓ REQ-S16-023 part 1: finalized records cannot be destructively deleted (ADR-0052 §9.1) > its evidence: the contract has no DELETE for evidence, and mth_app cannot DELETE evidence rows (42501) 12ms
+   × REQ-S16-023 part 1: finalized records cannot be destructively deleted (ADR-0052 §9.1) > every DELETE operation of the contract is listed, and no finalized-record table grants DELETE to mth_app 4ms
+     → expected [ 'retireDependencyType', …(1) ] to deeply equal [ 'retireDependencyType' ]
+   ✓ REQ-S16-023 part 2: an illegal status transition returns 422 invalid_transition (ADR-0052 §9.2) > P6 sensitive grant: revoked -> revoked (revoke again) is 422; the grant keeps version 2 and its two audit events 263ms
+   ✓ REQ-S16-023 part 2: an illegal status transition returns 422 invalid_transition (ADR-0052 §9.2) > DG1 transformation: active -> closed by a status edit is 422; nothing written 86ms
+   ✓ REQ-S16-023 part 2: an illegal status transition returns 422 invalid_transition (ADR-0052 §9.2) > DG2 diagnostic finding: confirmed -> archived by a status edit is 422; nothing written 104ms
+   ✓ REQ-S16-023 part 2: an illegal status transition returns 422 invalid_transition (ADR-0052 §9.2) > DG3 T08 dependency: resolved -> at_risk is 422; nothing written 282ms
+   ✓ REQ-S16-023 part 2: an illegal status transition returns 422 invalid_transition (ADR-0052 §9.2) > DG4 stakeholder champion: removed -> removed (remove again) is 422; nothing written 186ms
+   ✓ REQ-S16-023 part 3: a duplicate unique key returns 409 (ADR-0052 §9.3) > P6 sensitive_record_grant_one_active_key: a second active grant is 409 sensitive_grant.duplicate; nothing written 144ms
+   ✓ REQ-S16-023 part 3: a duplicate unique key returns 409 (ADR-0052 §9.3) > P6 record_sensitivity_record_key: a second create with If-Match "0" is 409 version_conflict; nothing written 78ms
+   ✓ REQ-S16-023 part 3: a duplicate unique key returns 409 (ADR-0052 §9.3) > DG1 organization_code_key: a second organization with the same code is 409; nothing written 61ms
+   ✓ REQ-S16-023 part 3: a duplicate unique key returns 409 (ADR-0052 §9.3) > DG5 automation_rule code key: a second rule with the same code is 409 automation_rule.code_taken; nothing written 84ms
+   ✓ REQ-S16-023 part 3: a duplicate unique key returns 409 (ADR-0052 §9.3) > DG4 stakeholder_champion active key: the same person twice is 409 stakeholder_champion.exists; nothing written 192ms
+   ✓ REQ-S16-023 part 4: required ownership and canonical references on every P6 table (ADR-0052 §9.4) > every P6 table exists, and every uuid *_id column is a foreign key, a trigger-guarded record reference, or a history copy of one 36ms
+   ✓ REQ-S16-023 part 4: required ownership and canonical references on every P6 table (ADR-0052 §9.4) > a dangling record reference through the API: a grant on a missing record is 404 not_found; nothing written 69ms
+   ✓ REQ-S16-023 part 4: required ownership and canonical references on every P6 table (ADR-0052 §9.4) > a missing owner is refused by the database: a sensitive grant without its grantee fails NOT NULL as mth_app 55ms
+ ❯ |integration| apps/api/test/integration/methodology/reader-search-provenance.test.ts (15 tests | 1 failed) 1740ms
+   ✓ searchMethodology (REQ-S03-010; ADR-0049 §3) > searching "value pools" returns the Diagnose blocks, ranked, with plain-text snippets and highlights 48ms
+   ✓ searchMethodology (REQ-S03-010; ADR-0049 §3) > an Arabic query returns hits from search_ar (and the English column does not match it) 17ms
+   × searchMethodology (REQ-S03-010; ADR-0049 §3) > q of 1 character (or blank, missing, too long, NUL) gives 400 validation.search_query 27ms
+     → expected [ 400, 'validation.invalid_type' ] to deeply equal [ 400, 'validation.search_query' ]
+   ✓ searchMethodology (REQ-S03-010; ADR-0049 §3) > decodes the private sentinels into highlight offsets in UTF-16 code units 0ms
+   ✓ searchMethodology (REQ-S03-010; ADR-0049 §3) > with transformationId: the pinned version is named, and an unreadable transformation is 404 54ms
+   ✓ getMethodologyProvenance (REQ-PB-001, REQ-PB-077; ADR-0049 §5) > statement.textEn equals B0004 verbatim; realizeNote contains the BRM alignment; no claim of official status 136ms
+   ✓ getMethodologyProvenance (REQ-PB-001, REQ-PB-077; ADR-0049 §5) > a version's provenance.note is shown beside the statement, which never changes; pinned read 404 without access 69ms
+   ✓ listMethodologyElements and listGuidingQuestions (REQ-PB-002, REQ-PB-011; ADR-0049 §2) > every B0158-B0162 element returns provenance=custom_extension (50 rows); none is labelled a PMI standard 148ms
+   ✓ listMethodologyElements and listGuidingQuestions (REQ-PB-002, REQ-PB-011; ADR-0049 §2) > the four questions render verbatim in en (with ar); each of the 16 templates has exactly one questionTag 31ms
+   ✓ listMethodologyElements and listGuidingQuestions (REQ-PB-002, REQ-PB-011; ADR-0049 §2) > a version's profile overrides resolve per version, with overridden = true; other versions keep the seed 50ms
+   ✓ the reader namespaces in Studio (ADR-0049 §6, §11) > profile.phase.diagnose with a questionTag gives 422 methodology_reader.invalid_override (and the other refusals) 183ms
+   ✓ the reader namespaces in Studio (ADR-0049 §6, §11) > a note claiming certification gives 422 methodology_reader.prohibited_text (and a DG0-DG7 name too) 111ms
+   ✓ the reader namespaces in Studio (ADR-0049 §6, §11) > valid reader edits are accepted with one audit event each; If-Match is required (428) and current (409) 156ms
+   ✓ the reader namespaces in Studio (ADR-0049 §6, §11) > AUD gets 403 on these Studio writes; TO too; nothing is written 77ms
+   ✓ the reader namespaces in Studio (ADR-0049 §6, §11) > the database guard is the last line, with the same codes (methodology_element_reader_*) 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/hardening/integrity-sweep.test.ts > REQ-S16-023 part 1: finalized records cannot be destructively deleted (ADR-0052 §9.1) > every DELETE operation of the contract is listed, and no finalized-record table grants DELETE to mth_app
+AssertionError: expected [ 'retireDependencyType', …(1) ] to deeply equal [ 'retireDependencyType' ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    "retireDependencyType",[22m
+[31m+   "deleteSavedView",[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/hardening/integrity-sweep.test.ts:195:21
+    193|     const deletes = operations.filter((o) => o.method === "DELETE").ma…
+    194|     // At HEAD the contract's only DELETE is retireDependencyType (a c…
+    195|     expect(deletes).toEqual(["retireDependencyType"]);
+       |                     ^
+    196|     const granted = await api.owner.query<{ table_name: string }>(
+    197|       `SELECT table_name FROM information_schema.role_table_grants
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |integration| apps/api/test/integration/methodology/reader-search-provenance.test.ts > searchMethodology (REQ-S03-010; ADR-0049 §3) > q of 1 character (or blank, missing, too long, NUL) gives 400 validation.search_query
+AssertionError: expected [ 400, 'validation.invalid_type' ] to deeply equal [ 400, 'validation.search_query' ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    400,[22m
+[32m-   "validation.search_query",[39m
+[31m+   "validation.invalid_type",[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/methodology/reader-search-provenance.test.ts:164:77
+    162|       expect(r.body.errors[0].message).toBe(detail);
+    163|     }
+    164|     expect(fieldCode(await req("GET", `${M}/search`, { session: nobody…
+       |                                                                             ^
+    165|     expect(fieldCode(await req("GET", `${M}/search?q=ab&q=cd`, { sessi…
+    166|       400,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  2 failed | 32 passed (34)
+   Start at  04:13:46
+   Duration  30.81s (transform 7.94s, setup 0ms, collect 18.18s, tests 6.68s, environment 0ms, prepare 184ms)
+
+exit=1

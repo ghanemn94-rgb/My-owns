@@ -1,0 +1,118 @@
+// P6 slice F (T-DG6-BE-E; ADR-0052 §8; REQ-S16-032): the global audit API, listAuditEvents and getAuditEvent, the
+// read side of Administration > Audit. Audit data is read-only: no write operation exists, and mth_app holds only
+// INSERT and SELECT on audit_event, whose trigger refuses UPDATE/DELETE/TRUNCATE for every role (0003; probe AU01–AU03).
+//
+// audit cannot import access: access depends on audit (ADR-0002 rule 5; modules.ts), so the import would close a
+// cycle. The authorization this file needs is passed in by the composition root as AuditRouteAccess (the
+// GateFactsProvider pattern; D-197 item 5):
+//   - organizationAccess: does the organization exist, and does the caller hold audit_event.read at any scope in it;
+//   - readFilter: the caller's audit_event.read boundary (ADR-0006 scopeFilter) over an event's target, so AUD
+//     (inherits downward) sees its organizations, units and transformations, and ADM_TECH / ADM_ACCESS
+//     (non-inheriting; audit_event.read is not structural) see organization-level events and the transformations they
+//     are assigned to;
+//   - restrictedRecords: which records are sensitive and not admitted to the caller (ADR-0051 §2), OR are children
+//     that carry such a record's values (benefit measurements and the other benefit value rows, business-case lines,
+//     evidence links and contents, form comments/attachments/custom values/drafts, the sensitivity flag and grants;
+//     access/sensitive-reach.ts, T-DG6-BE-Y1, F-DG6-122); their events are listed with changes and reason null and
+//     redacted true. Actor, action, time, record id and versions remain.
+//   - restrictedIdsAmong (T-DG6-BE-Z10; F-DG6-420; D-218): which of the uuids named in an event's `changes` are such
+//     records; the event of an OPEN record whose changes name one (a group's counted member, an ask's blocker) is
+//     redacted the same way, so a restricted record's id never appears in a changed value.
+import { auditEventListQuery, uuid, type GlobalAuditEvent } from "@mth/shared/schemas";
+import type { FastifyInstance, FastifyRequest } from "fastify";
+import { z } from "zod";
+import { parse, parseQuery, problems, type ModuleDeps } from "../platform/index.ts";
+import {
+  findAuditEvent,
+  queryAuditEvents,
+  type AuditEventRow,
+  type AuditEventTargetColumns,
+  type AuditScopePredicate,
+} from "./index.ts";
+
+/** "allowed": audit_event.read somewhere in the organization; "forbidden": nowhere; "not_found": no organization. */
+export type AuditOrganizationAccess = "allowed" | "forbidden" | "not_found";
+
+/** A record an audit event is about, for the sensitivity redaction. */
+export interface AuditRecordRef {
+  readonly recordType: string;
+  readonly recordId: string;
+  readonly transformationId: string | null;
+  /** The event's changes: the owner of a child row that no longer exists is read from them (fail-closed). */
+  readonly changes?: unknown;
+}
+
+/** The key of a record in `restrictedRecords`' answer. */
+export function auditRecordKey(ref: { readonly recordType: string; readonly recordId: string }): string {
+  return `${ref.recordType}:${ref.recordId}`;
+}
+
+/** The access functions the audit routes use, injected by server.ts (each counts as a policy decision). */
+export interface AuditRouteAccess {
+  organizationAccess(request: FastifyRequest, organizationId: string): Promise<AuditOrganizationAccess>;
+  readFilter(request: FastifyRequest, cols: AuditEventTargetColumns): ReturnType<AuditScopePredicate>;
+  /** The `auditRecordKey`s of the given records that are sensitive and that the caller is not admitted to. */
+  restrictedRecords(request: FastifyRequest, refs: readonly AuditRecordRef[]): Promise<ReadonlySet<string>>;
+  /** The uuids among `ids` that name a record (of any sensitive or child type) the caller is not admitted to. */
+  restrictedIdsAmong(request: FastifyRequest, ids: readonly string[]): Promise<ReadonlySet<string>>;
+}
+
+const UUID_ANYWHERE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
+
+/**
+ * Every uuid named in an audit event's `changes`, lower-cased: a bare uuid, `<recordType>:<uuid>`, or one inside a
+ * compound text (a dedupe key such as `corrective.follow_up:<caseId>:<userId>`).
+ */
+export function uuidsInChanges(changes: unknown): string[] {
+  const out = new Set<string>();
+  const walk = (v: unknown): void => {
+    if (typeof v === "string") for (const m of v.matchAll(UUID_ANYWHERE)) out.add(m[0].toLowerCase());
+    else if (Array.isArray(v)) v.forEach(walk);
+    else if (v !== null && typeof v === "object") Object.values(v).forEach(walk);
+  };
+  walk(changes);
+  return [...out];
+}
+
+const eventParams = z.strictObject({ auditEventId: uuid });
+
+/** Applies the ADR-0051 §2 redaction to rows already inside the caller's audit scope. */
+async function redact(
+  access: AuditRouteAccess,
+  request: FastifyRequest,
+  rows: readonly AuditEventRow[],
+): Promise<GlobalAuditEvent[]> {
+  const restricted = await access.restrictedRecords(request, rows);
+  const named = rows.filter((r) => !restricted.has(auditRecordKey(r))).flatMap((r) => uuidsInChanges(r.changes));
+  const hiddenIds = named.length === 0 ? new Set<string>() : await access.restrictedIdsAmong(request, named);
+  return rows.map((row) =>
+    restricted.has(auditRecordKey(row)) || uuidsInChanges(row.changes).some((id) => hiddenIds.has(id))
+      ? { ...row, reason: null, changes: null, redacted: true }
+      : { ...row, redacted: false },
+  );
+}
+
+/** Registers this file's routes and returns them as "METHOD /path". */
+export function registerAuditRoutes(app: FastifyInstance, { db }: ModuleDeps, access: AuditRouteAccess): string[] {
+  const read = { access: { permission: "audit_event.read" } } as const;
+
+  app.get("/api/v1/audit-events", { config: read }, async (request) => {
+    const query = parseQuery(auditEventListQuery, request.query);
+    const allowed = await access.organizationAccess(request, query.organizationId);
+    if (allowed === "not_found") throw problems.notFound();
+    if (allowed === "forbidden") throw problems.forbidden();
+    const page = await queryAuditEvents(db, (cols) => access.readFilter(request, cols), query);
+    return { items: await redact(access, request, page.items), nextCursor: page.nextCursor };
+  });
+
+  app.get("/api/v1/audit-events/:auditEventId", { config: read }, async (request) => {
+    const { auditEventId } = parse(eventParams, request.params, "params");
+    const row = await findAuditEvent(db, (cols) => access.readFilter(request, cols), auditEventId);
+    // Missing and out of scope are the same 404 (ADR-0006: existence is not disclosed).
+    if (row === undefined) throw problems.notFound();
+    const [event] = await redact(access, request, [row]);
+    return event;
+  });
+
+  return ["GET /api/v1/audit-events", "GET /api/v1/audit-events/:auditEventId"];
+}

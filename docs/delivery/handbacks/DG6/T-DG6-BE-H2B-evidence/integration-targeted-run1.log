@@ -1,0 +1,27 @@
+port-policy: PostgreSQL listening on port 25350 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-h2
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvugmug1_c91d37e8 (server_encoding UTF8); applied 110 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/evidence/store-contract.test.ts (39 tests) 2844ms
+   ✓ EvidenceStore contract: filesystem (ADR-0054 §2) > round-trips a body above the 8 MiB multipart threshold byte for byte  432ms
+   ✓ EvidenceStore contract: s3 (in-process SigV4-verifying fake) (ADR-0054 §2) > round-trips a body above the 8 MiB multipart threshold byte for byte  643ms
+   ✓ S3 evidence store: adapter-specific behaviour (ADR-0054 §2) > uses multipart upload above 8 MiB, buffering one part at a time  338ms
+ ✓ |integration| apps/api/test/integration/evidence/preview.test.ts (33 tests) 4783ms
+   ✓ REQ-S13-011 A12: an .exe or an oversized file is rejected > a file one byte over the limit is 413 evidence.too_large with maxBytes; nothing is stored  692ms
+   ✓ previewEvidenceContent (ADR-0052 §2) > photo.jpg: 200 with exactly the §2 headers and the stored bytes  455ms
+   ✓ previewEvidenceContent (ADR-0052 §2) > authorization is the download's: outsider 404, AUD 200, in-scope reader not admitted to a sensitive item 403  358ms
+ ✓ |integration| apps/api/test/integration/admin/storage.test.ts (12 tests) 5698ms
+ ✓ |integration| apps/api/test/integration/evidence/evidence-register.test.ts (9 tests) 2132ms
+   ✓ REQ-S13-010: the evidence register and versions > lists every active link across evidence_link and the domain link tables; a removed link disappears  369ms
+ ✓ |integration| apps/api/test/integration/evidence/ownership-transfer.test.ts (5 tests) 2093ms
+
+ Test Files  5 passed (5)
+      Tests  98 passed (98)
+   Start at  04:16:27
+   Duration  47.63s (transform 8.07s, setup 0ms, collect 23.99s, tests 17.55s, environment 0ms, prepare 90ms)
+

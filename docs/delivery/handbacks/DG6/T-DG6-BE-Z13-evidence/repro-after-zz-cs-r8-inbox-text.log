@@ -1,0 +1,81 @@
+port-policy: PostgreSQL listening on port 31150 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-z13
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw8c02t1_1708e0a7 (server_encoding UTF8); applied 118 migrations to a fresh database
+stdout | tests/qa/integration/zz-cs-r8-inbox-text.test.ts
+[CS-R8-INBOX] hidden benefit B01 01995000-4401-7000-8000-000000000001; finance validation 01995000-4501-7000-8000-000000000001
+
+stdout | tests/qa/integration/zz-cs-r8-inbox-text.test.ts
+[CS-R8-INBOX] child ids of the hidden benefit: 15
+
+stdout | tests/qa/integration/zz-cs-r8-inbox-text.test.ts > CS-R8 P1: inbox notification about a restricted record > tl2 gets 404 on the benefit and the Finance validation (control)
+[CS-R8-INBOX] tl2 GET benefit 404; tl2 GET finance validation 404 not_found; TO GET finance validation 200
+
+stdout | tests/qa/integration/zz-cs-r8-inbox-text.test.ts > CS-R8 P1: inbox notification about a restricted record > work item (BE-Z12B control), inbox list and mark-read never name a hidden id or the restricted record's code
+[CS-R8-INBOX] GET /me/work-items 200: subjectType=finance_validation subjectId=null linkPath=/transformations/01995000-0000-7000-8000-000000000001 key=inbox.restricted params={} marker=true
+
+stdout | tests/qa/integration/zz-cs-r8-inbox-text.test.ts > CS-R8 P1: inbox notification about a restricted record > work item (BE-Z12B control), inbox list and mark-read never name a hidden id or the restricted record's code
+[CS-R8-INBOX] GET /me/inbox 200: key=inbox.restricted params={} linkPath=/transformations/01995000-0000-7000-8000-000000000001 keys=id,transformationId,workItemId,linkPath,messageKey,messageParams,readAt,createdAt,version,includesRestrictedRecords
+
+stdout | tests/qa/integration/zz-cs-r8-inbox-text.test.ts > CS-R8 P1: inbox notification about a restricted record > work item (BE-Z12B control), inbox list and mark-read never name a hidden id or the restricted record's code
+[CS-R8-INBOX] GET /me/work 200: names=[]
+
+stdout | tests/qa/integration/zz-cs-r8-inbox-text.test.ts > CS-R8 P1: inbox notification about a restricted record > work item (BE-Z12B control), inbox list and mark-read never name a hidden id or the restricted record's code
+[CS-R8-INBOX] POST /me/inbox/{id}/read 200: key=inbox.restricted params={} linkPath=/transformations/01995000-0000-7000-8000-000000000001
+
+stdout | tests/qa/integration/zz-cs-r8-inbox-text.test.ts > CS-R8 P1: inbox notification about a restricted record > work item (BE-Z12B control), inbox list and mark-read never name a hidden id or the restricted record's code
+[CS-R8-INBOX] GET /me/inbox after read: key=inbox.restricted params={} linkPath=/transformations/01995000-0000-7000-8000-000000000001
+
+stdout | tests/qa/integration/zz-cs-r8-inbox-text.test.ts > CS-R8 P1: inbox notification about a restricted record > work item (BE-Z12B control), inbox list and mark-read never name a hidden id or the restricted record's code
+[CS-R8-INBOX] TO GET benefit 200 code=B01
+[CS-R8-INBOX] P1 leaks (0):
+
+
+stdout | tests/qa/integration/zz-cs-r8-inbox-text.test.ts > CS-R8 P1b: benefit-overlap notification through the real producer (API POST /benefit-overlaps) > a Finance recipient not admitted to the sensitive benefit gets neither its code nor the overlap id
+[CS-R8-INBOX] P1b TL POST benefit Synthetic CONFIDENTIAL CS-R8 overlap benefit -> 201 B04
+
+stdout | tests/qa/integration/zz-cs-r8-inbox-text.test.ts > CS-R8 P1b: benefit-overlap notification through the real producer (API POST /benefit-overlaps) > a Finance recipient not admitted to the sensitive benefit gets neither its code nor the overlap id
+[CS-R8-INBOX] P1b TL POST benefit Synthetic open CS-R8 overlap benefit -> 201 B05
+
+stdout | tests/qa/integration/zz-cs-r8-inbox-text.test.ts > CS-R8 P1b: benefit-overlap notification through the real producer (API POST /benefit-overlaps) > a Finance recipient not admitted to the sensitive benefit gets neither its code nor the overlap id
+[CS-R8-INBOX] P1b TL POST benefit-overlaps -> 201 01a1bd04-77db-76b0-bd42-41e523ce8224
+
+stdout | tests/qa/integration/zz-cs-r8-inbox-text.test.ts > CS-R8 P1b: benefit-overlap notification through the real producer (API POST /benefit-overlaps) > a Finance recipient not admitted to the sensitive benefit gets neither its code nor the overlap id
+[CS-R8-INBOX] P1b overlap work items: [{"wi":"01a1bd04-77e2-714e-b0d6-b84f19fc80f5","assignee":"01995000-0000-7000-8000-000000000014","note":"01a1bd04-77e4-77db-92ec-1d9079d2e786","state":"delivered"}]
+
+stdout | tests/qa/integration/zz-cs-r8-inbox-text.test.ts > CS-R8 P1b: benefit-overlap notification through the real producer (API POST /benefit-overlaps) > a Finance recipient not admitted to the sensitive benefit gets neither its code nor the overlap id
+[CS-R8-INBOX] P1b recipient 01995000-0000-7000-8000-000000000014: GET sensitive benefit 404; GET overlap 404; work item subjectId=null key=inbox.restricted marker=true; inbox key=inbox.restricted params={} linkPath=/transformations/01995000-0000-7000-8000-000000000001
+[CS-R8-INBOX] P1b leaks (0):
+
+
+stdout | tests/qa/integration/zz-cs-r8-inbox-text.test.ts > CS-R8 P1c: mark-read of a notification the inbox list DOES redact (corrective case, raid.ts:416-429 shape) > POST /me/inbox/{id}/read returns the same redaction as GET /me/inbox
+[CS-R8-INBOX] P1c: the demo has no corrective case; using a benefit-route notification (ROUTES) instead
+
+stdout | tests/qa/integration/zz-cs-r8-inbox-text.test.ts > CS-R8 P1c: mark-read of a notification the inbox list DOES redact (corrective case, raid.ts:416-429 shape) > POST /me/inbox/{id}/read returns the same redaction as GET /me/inbox
+[CS-R8-INBOX] P1c tl2 GET case 404; GET /me/inbox key=inbox.restricted params={} linkPath=/transformations/01995000-0000-7000-8000-000000000001
+
+stdout | tests/qa/integration/zz-cs-r8-inbox-text.test.ts > CS-R8 P1c: mark-read of a notification the inbox list DOES redact (corrective case, raid.ts:416-429 shape) > POST /me/inbox/{id}/read returns the same redaction as GET /me/inbox
+[CS-R8-INBOX] P1c POST /me/inbox/{id}/read 200: key=inbox.restricted params={} linkPath=/transformations/01995000-0000-7000-8000-000000000001
+
+stdout | tests/qa/integration/zz-cs-r8-inbox-text.test.ts > CS-R8 P2: text columns that hold a hidden id (outside the inventory's fk/uuid/array/json catalog) > lists every text/varchar column holding the hidden benefit's id or a child id
+[CS-R8-INBOX] text/varchar columns scanned: 1702; columns holding a hidden id (5):
+finance_validation.idempotency_key (2)
+inbox_notification.dedupe_key (2)
+inbox_notification.link_path (2)
+work_item.dedupe_key (2)
+work_item.link_path (2)
+
+ ✓ |integration| tests/qa/integration/zz-cs-r8-inbox-text.test.ts (5 tests) 5620ms
+   ✓ CS-R8 P2: text columns that hold a hidden id (outside the inventory's fk/uuid/array/json catalog) > lists every text/varchar column holding the hidden benefit's id or a child id  519ms
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  21:15:33
+   Duration  16.65s (transform 4.40s, setup 0ms, collect 7.91s, tests 5.62s, environment 0ms, prepare 57ms)
+
+exit 0

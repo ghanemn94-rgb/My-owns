@@ -1,0 +1,104 @@
+port-policy: PostgreSQL listening on port 26001 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-i2
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvv5i317_89ae4be6 (server_encoding UTF8); applied 112 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/tasks/channel-fanout.test.ts (10 tests | 3 failed) 2448ms
+   ✓ A21: no channel configured (REQ-S12-023) > writes no delivery and no ledger row; the workflow completes and the notification is in the inbox 240ms
+   ✓ A21: no channel configured (REQ-S12-023) > a disabled channel row is in-app only too 183ms
+   × email enabled: one notification -> one sent delivery, exactly once > sends one message to the recipient, with the deep link and no messageParams value; audited 199ms
+     → expected 'لديك إشعار جديد في صندوق الوارد.\n\nا…' to contain 'You have a new notification in your i…'
+   ✓ email enabled: one notification -> one sent delivery, exactly once > a relay replay, a handler retry and a sweep create no second delivery and send no second message 159ms
+   ✓ email enabled: one notification -> one sent delivery, exactly once > two concurrent consumers of the same event send exactly one message 135ms
+   × email enabled: one notification -> one sent delivery, exactly once > a restricted recipient gets the inbox.restricted text; a disabled recipient is skipped without a send 138ms
+     → expected 'لم تعد لديك صلاحية الوصول إلى هذا الع…' to contain 'You no longer have access to this ite…'
+   ✓ a send failure never rolls back or blocks the workflow > a final failure stays failed, opens the queue's job_failed exception, and the workflow's rows stay committed  337ms
+   ✓ a send failure never rolls back or blocks the workflow > a retryable failure is retried by the sweep after its backoff, then sent once 285ms
+   × the delivery policy is respected (ADR-0044 §5) > a held (quiet-hours) notification fans out only when the digest job releases it 63ms
+     → no audit_event for notification_preference f1ec62e3-691d-436f-b34c-10fa35949212 at version 1 (ADR-0004: every mutation writes its audit event in the same transaction)
+   ✓ the job identities (ADR-0053 §1; 0120) > a narrowed grant fails the run with service_identity.out_of_scope before anything is written 251ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/tasks/channel-fanout.test.ts > email enabled: one notification -> one sent delivery, exactly once > sends one message to the recipient, with the deep link and no messageParams value; audited
+AssertionError: expected 'لديك إشعار جديد في صندوق الوارد.\n\nا…' to contain 'You have a new notification in your i…'
+
+- Expected
++ Received
+
+- You have a new notification in your inbox.
++ لديك إشعار جديد في صندوق الوارد.
++
++ افتحه في Transformation Hub: https://hub.example.invalid/links/RythNLyvFoeltm0htnvEzlnE53SUR1StOhW2dcge2Sk
++ سيُطلب منك تسجيل الدخول، ولا يُفتح العنصر إلا إذا كانت لديك صلاحية الوصول إليه.
++
++ أُرسلت هذه الرسالة تلقائياً من Transformation Hub. يحتوي صندوق الوارد داخل التطبيق على جميع إشعاراتك.
+
+ ❯ apps/api/test/integration/tasks/channel-fanout.test.ts:248:18
+    246|     expect(token).not.toBeNull();
+    247|     expect(body).toContain(`https://hub.example.invalid/links/${token}…
+    248|     expect(body).toContain("You have a new notification in your inbox.…
+       |                  ^
+    249|     expect(smtp.messages[0]!.data).not.toContain("SYNTHETIC-SECRET-PAR…
+    250|     const actions = (
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |integration| apps/api/test/integration/tasks/channel-fanout.test.ts > email enabled: one notification -> one sent delivery, exactly once > a restricted recipient gets the inbox.restricted text; a disabled recipient is skipped without a send
+AssertionError: expected 'لم تعد لديك صلاحية الوصول إلى هذا الع…' to contain 'You no longer have access to this ite…'
+
+- Expected
++ Received
+
+- You no longer have access to this item.
++ لم تعد لديك صلاحية الوصول إلى هذا العنصر.
++
++ افتحه في Transformation Hub: https://hub.example.invalid/links/lS9QalOrWwo0Bgx7g5LcUNiVkdwEjqVQ5d00DUVCz00
++ سيُطلب منك تسجيل الدخول، ولا يُفتح العنصر إلا إذا كانت لديك صلاحية الوصول إليه.
++
++ أُرسلت هذه الرسالة تلقائياً من Transformation Hub. يحتوي صندوق الوارد داخل التطبيق على جميع إشعاراتك.
+
+ ❯ apps/api/test/integration/tasks/channel-fanout.test.ts:313:18
+    311|     expect(smtp.messages).toHaveLength(1);
+    312|     const text = decodedBody(smtp.messages[0]!.data);
+    313|     expect(text).toContain("You no longer have access to this item.");
+       |                  ^
+    314|     expect(text).not.toContain("You have a new notification in your in…
+    315| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |integration| apps/api/test/integration/tasks/channel-fanout.test.ts > the delivery policy is respected (ADR-0044 §5) > a held (quiet-hours) notification fans out only when the digest job releases it
+error: no audit_event for notification_preference f1ec62e3-691d-436f-b34c-10fa35949212 at version 1 (ADR-0004: every mutation writes its audit event in the same transaction)
+ ❯ node_modules/.pnpm/pg@8.16.3/node_modules/pg/lib/client.js:545:17
+ ❯ PostgresConnection.executeQuery node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:95:49
+ ❯ node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:35:28
+ ❯ DefaultConnectionProvider.provideConnection node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/default-connection-provider.js:10:20
+ ❯ DefaultQueryExecutor.executeQuery node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16
+ ❯ InsertQueryBuilder.execute node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/insert-query-builder.js:1106:24
+ ❯ apps/api/test/integration/tasks/channel-fanout.test.ts:420:5
+    418|         hourCycle: "h23",
+    419|       }).format(new Date(Date.now() + offsetMinutes * 60_000));
+    420|     await api.db
+       |     ^
+    421|       .insertInto("notification_preference")
+    422|       .values({
+ ❯ PostgresConnection.executeQuery node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:107:41
+ ❯ node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:35:28
+ ❯ DefaultConnectionProvider.provideConnection node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/default-connection-provider.js:10:20
+ ❯ DefaultQueryExecutor.executeQuery node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16
+ ❯ InsertQueryBuilder.execute node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-builder/insert-query-builder.js:1106:24
+ ❯ apps/api/test/integration/tasks/channel-fanout.test.ts:420:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 7 passed (10)
+   Start at  15:52:35
+   Duration  21.24s (transform 7.08s, setup 0ms, collect 13.41s, tests 2.45s, environment 0ms, prepare 82ms)
+

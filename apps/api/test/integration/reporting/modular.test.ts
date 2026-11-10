@@ -537,3 +537,53 @@ describe("S-4: authorization, If-Match and audit on every write", () => {
     expect(await inheritedRows(mw)).toEqual([]);
   });
 });
+
+/**
+ * T-DG6-BE-Z12B (F-DG6-480; D-218; ADR-0051 §2): inherited_record.evidence_id. An inherited evidence record whose
+ * evidence is then marked sensitive stays listed (the record is open: its kind, label and provenance) for a reader not
+ * admitted to the evidence (AUD: no grant, not a named party), with `evidenceId: null` and `includesRestrictedRecords:
+ * true`; the TO (sensitive_record.grant) and the TL (the evidence's creator and owner, a named party) still see the id.
+ * SYNTHETIC; marking a record sensitive is an access decision, never a business approval.
+ */
+describe("T-DG6-BE-Z12B: D-218 on inherited_record.evidence_id", () => {
+  it("inherited evidence marked sensitive: AUD sees the record without the evidence id (marked); TO and TL see it", async () => {
+    const mw = await seedModularWorld(api, w);
+    const evidenceId = await addEvidence(send, mw, false);
+    const R = `${mw.base}/inherited-records`;
+    const ev = await send("POST", R, {
+      session: mw.s.tl,
+      body: { kind: "evidence", evidenceId, sourceDescription: "Synthetic: prior programme archive (BE-Z12B)" },
+    });
+    expect(ev.status, JSON.stringify(ev.body)).toBe(201);
+    const id = (ev.body as { id: string }).id;
+    const marked = await send("PUT", `${mw.base}/records/evidence/${evidenceId}/sensitivity`, {
+      session: mw.s.to,
+      headers: ifm(0),
+      body: { isSensitive: true, reason: "Synthetic commercially sensitive evidence (BE-Z12B)" },
+    });
+    expect(marked.status, JSON.stringify(marked.body)).toBe(200);
+    expect((await send("GET", `${mw.base}/evidence/${evidenceId}`, { session: mw.s.auditor })).status).toBe(404);
+
+    const list = await send("GET", `${R}?limit=100`, { session: mw.s.auditor });
+    expect(list.status).toBe(200);
+    const listed = (list.body as { items: { id: string }[] }).items.find((i) => i.id === id);
+    expect(listed, "the inherited record stays listed").toMatchObject({
+      kind: "evidence",
+      label: "inherited",
+      evidenceId: null,
+      includesRestrictedRecords: true,
+    });
+    expect(JSON.stringify(list.body)).not.toContain(evidenceId);
+    const one = await send("GET", `${R}/${id}`, { session: mw.s.auditor });
+    expect(one.status).toBe(200);
+    expect(one.body).toMatchObject({ kind: "evidence", evidenceId: null, includesRestrictedRecords: true });
+    expect(JSON.stringify(one.body)).not.toContain(evidenceId);
+
+    for (const s of [mw.s.to, mw.s.tl]) {
+      const admitted = await send("GET", `${R}/${id}`, { session: s });
+      expect(admitted.status).toBe(200);
+      expect((admitted.body as { evidenceId: string }).evidenceId).toBe(evidenceId);
+      expect((admitted.body as { includesRestrictedRecords?: true }).includesRestrictedRecords).toBeUndefined();
+    }
+  });
+});

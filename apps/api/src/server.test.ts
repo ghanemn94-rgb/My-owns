@@ -32,7 +32,13 @@ describe("route registration", () => {
       .filter((r) => (r.access as { public?: boolean }).public)
       .map((r) => r.key)
       .sort();
-    expect(publicRoutes).toEqual(["GET /healthz", "GET /readyz", "POST /api/v1/auth/dev-login"]);
+    // T-DG6-BE-N (ADR-0056 §7): + the signed webhook receiver, session-less and authenticated by its signature only.
+    expect(publicRoutes).toEqual([
+      "GET /healthz",
+      "GET /readyz",
+      "POST /api/v1/auth/dev-login",
+      "POST /api/v1/webhooks/:endpointKey",
+    ]);
   });
 
   it("registers dev login only in AUTH_MODE=dev; production configuration refuses dev mode entirely", async () => {
@@ -123,7 +129,16 @@ describe("module composition (D-048, P2)", () => {
         "automation",
         "launch",
         "health",
+        // P6 (T-DG6-BE-A; p6-plan §3 seam 21): route-free scaffolds until their owners fill them.
+        "integrations",
+        "search",
+        "assistant",
+        "operations",
       ]);
+      for (const m of ["integrations", "search", "assistant", "operations"]) {
+        const reg = modules.find((x) => x.module === m);
+        expect(reg).toMatchObject({ status: reg!.routes.length > 0 ? "active" : "scaffold", deliversIn: "P6" });
+      }
       // A P5 module is a scaffold until its first route file is filled, then active (T-DG5-BE-H: automation routes
       // its rules, versions and catalogue; the others stay scaffolds until their owners fill them).
       for (const m of ["forms", "procedures", "automation", "launch", "health"]) {
@@ -136,7 +151,8 @@ describe("module composition (D-048, P2)", () => {
       // P4: tasks routes the five My Work and inbox operations; the other P4 modules are route-free until filled.
       // T-DG5-BE-L: + the five P5 notification operations (preferences, policy, own digest; ADR-0044 §5).
       expect(modules.find((m) => m.module === "tasks")).toMatchObject({ status: "active", deliversIn: "P4" });
-      expect(modules.find((m) => m.module === "tasks")!.routes).toHaveLength(10);
+      // T-DG6-BE-C (ADR-0051 §3): + resolveDeepLink (tasks/deep-links.ts).
+      expect(modules.find((m) => m.module === "tasks")!.routes).toHaveLength(11);
       // P3 (T-DG3-BE-A): the portfolio module is active and registers routes (readiness, hierarchy, dispensations).
       expect(modules.find((m) => m.module === "portfolio")).toMatchObject({ status: "active", deliversIn: "P3" });
       expect(modules.find((m) => m.module === "portfolio")!.routes.length).toBeGreaterThan(0);

@@ -1,0 +1,65 @@
+# T-DG6-DO-G: export-proof summaries (node proof-summary.mjs.txt <json>; generated 2026-10-31T00:55:00Z)
+## docs/delivery/handbacks/DG6/T-DG6-DO-G-evidence/final/export-proof.json
+label final; started 2026-10-31T00:22:12.471Z; finished 2026-10-31T00:53:49.090Z
+summary {"exports":66,"failed":51,"startA":{"count":16,"p50Ms":145.327,"p95Ms":548.365,"maxMs":548.365},"startB":{"count":50,"p50Ms":138.533,"p95Ms":486.403,"maxMs":682.512},"completionA":{"count":16,"p50Ms":1795.201,"p95Ms":899999.895,"maxMs":899999.895},"completionB":{"count":2,"p50Ms":1364.636,"p95Ms":3400.385,"maxMs":3400.385},"largestFileBytes":60328,"reopenCandidates":0}
+partA: exports 16; with a failure 2; audSameScope false
+  startStatus {"202":16}; finalStatus {"queued":2,"succeeded":14}; download {"200":14,"undefined":2}
+  last percent {"0":2,"100":14}; percent non-decreasing {"true":16}
+  sameScopeOtherStatuses {"{\"getExport\":404,\"download\":404}":16}
+  audStatuses {"{\"getExport\":404,\"download\":404}":16}
+  audSameScope {"undefined":16}
+  failures: {"getExport timeout":2,"status queued":2,"last percent 0":2}
+partB: exports 50; with a failure 49; audSameScope per export
+  startStatus {"202":2,"401":48}; finalStatus {"succeeded":2,"undefined":48}; download {"200":2,"undefined":48}
+  last percent {"100":2,"undefined":48}; percent non-decreasing {"true":50}
+  sameScopeOtherStatuses {"{\"getExport\":404,\"download\":404}":1,"undefined":48,"{\"getExport\":401,\"download\":401}":1}
+  audStatuses {"{\"getExport\":404,\"download\":404}":2,"undefined":48}
+  audSameScope {"false":37,"true":13}
+  failures: {"createExport 401 unauthenticated":48,"sameScopeOther getExport 401 (expected 404)":1,"sameScopeOther download 401 (expected 404)":1}
+## docs/delivery/handbacks/DG6/T-DG6-DO-G-evidence/final/export-proof-idle-queue.json
+label final-idle-queue; started 2026-10-31T00:42:30.447Z; finished 2026-10-31T00:44:46.383Z
+summary {"exports":66,"failed":24,"startA":{"count":16,"p50Ms":187.32,"p95Ms":519.501,"maxMs":519.501},"startB":{"count":50,"p50Ms":1998.3,"p95Ms":2249.879,"maxMs":2265.159},"completionA":{"count":16,"p50Ms":1644.435,"p95Ms":3324.13,"maxMs":3324.13},"completionB":{"count":50,"p50Ms":49885.093,"p95Ms":95921.696,"maxMs":100156.847},"largestFileBytes":60328,"reopenCandidates":0}
+partA: exports 16; with a failure 0; audSameScope false
+  startStatus {"202":16}; finalStatus {"succeeded":16}; download {"200":16}
+  last percent {"100":16}; percent non-decreasing {"true":16}
+  sameScopeOtherStatuses {"{\"getExport\":404,\"download\":404}":16}
+  audStatuses {"{\"getExport\":404,\"download\":404}":16}
+  audSameScope {"undefined":16}
+  failures: {}
+partB: exports 50; with a failure 24; audSameScope per export
+  startStatus {"202":50}; finalStatus {"succeeded":50}; download {"200":50}
+  last percent {"100":50}; percent non-decreasing {"true":50}
+  sameScopeOtherStatuses {"{\"getExport\":404,\"download\":404}":49,"undefined":1}
+  audStatuses {"{\"getExport\":404,\"download\":404}":50}
+  audSameScope {"false":37,"true":13}
+  failures: {"createExport took <ms> > <ms>":24,"no sameScopeOther user for this transformation":1}
+## docs/delivery/handbacks/DG6/T-DG6-BE-S-evidence/export-proof-after.json
+label after; started 2026-10-30T15:08:09.161Z; finished 2026-10-30T15:10:24.765Z
+summary {"exports":66,"failed":48,"startA":{"count":16,"p50Ms":153.593,"p95Ms":597.383,"maxMs":597.383},"startB":{"count":50,"p50Ms":2803.467,"p95Ms":3259.147,"maxMs":3262.497},"completionA":{"count":16,"p50Ms":1766.807,"p95Ms":3257.239,"maxMs":3257.239},"completionB":{"count":50,"p50Ms":48898.107,"p95Ms":94991.985,"maxMs":99060.02},"largestFileBytes":60328,"reopenCandidates":0}
+partA: exports 16; with a failure 0; audSameScope false
+  startStatus {"202":16}; finalStatus {"succeeded":16}; download {"200":16}
+  last percent {"100":16}; percent non-decreasing {"true":16}
+  sameScopeOtherStatuses {"{\"getExport\":404,\"download\":404}":16}
+  audStatuses {"{\"getExport\":404,\"download\":404}":16}
+  audSameScope {"undefined":16}
+  failures: {}
+partB: exports 50; with a failure 48; audSameScope per export
+  startStatus {"202":50}; finalStatus {"succeeded":50}; download {"200":50}
+  last percent {"100":50}; percent non-decreasing {"true":50}
+  sameScopeOtherStatuses {"{\"getExport\":404,\"download\":404}":49,"undefined":1}
+  audStatuses {"{\"getExport\":404,\"download\":404}":50}
+  audSameScope {"false":37,"true":13}
+  failures: {"createExport took <ms> > <ms>":48,"no sameScopeOther user for this transformation":1}
+
+# Why proof 1 (driver.sh, after the 3 repetitions) is not a valid product measurement for completion and part B
+createExport 202 accepted during the 3 repetitions (warm-up + steady), from the samples: 2019
+reports.export jobs handled by the worker of rep1: 360
+reports.export jobs handled by the worker of rep2: 369
+reports.export jobs handled by the worker of rep3: 370
+reports.export jobs handled by the worker of proof: 938
+export_job rows succeeded at the end of driver.sh: export_job succeeded 2037
+So about 920 harness export jobs were queued ahead of the proof's 66 (the worker is stopped after each repetition, as in run-1).
+Part A (one requester, exports in sequence) waited for each job: 2 of 16 hit the proof's 900 s poll timeout still 'queued'; part A ended about 00:52Z.
+SESSION_IDLE_MINUTES defaults to 30 (packages/config/src/index.ts) and each request slides idle_expires_at to now()+30 min (apps/api/src/modules/identity/sessions.ts touchSession).
+The 48 part-B users had been idle since the workload ended at 00:22:09Z, so their sessions expired about 00:52Z: 48 x 401 unauthenticated (correct product behaviour).
+The 2 part-B starts that got 202 are exactly part A's requester and same-scope user (still active): LOAD-T01 3e23f9e4…, LOAD-T30 119faf06…; the 1 sameScopeOther 401 is a part-B witness whose session had expired likewise.

@@ -1,0 +1,12 @@
+--- e2e/a12-p6-scope-isolation.spec.ts	2026-10-31 05:31:14.731819075 +0000
++++ /var/tmp/mth-run.Vz44Ls/claude-0/mut/e2e/m3-a12-scope-leak.spec.ts	2026-10-31 05:33:55.148999395 +0000
+@@ -176,6 +176,9 @@
+     },
+     { expect: 201 },
+   );
++  // MUTATION (T-DG6-QA-G): authorization leaks Y to the X-scoped user (a TL assignment on Y as well).
++  await admin.call("POST", "/api/v1/role-assignments", { userId: nobody.userId, roleCode: "TL",
++    scope: { type: "transformation", id: Y.id }, reason: "Synthetic QA-G mutation: leak Y" }, { expect: 201 });
+   const xRisk = `Synthetic ${xWord} supplier risk`;
+   const yRisk = `Synthetic ${yWord} confidential tariff risk`;
+   await risk(office, X.id, xRisk, office.userId);

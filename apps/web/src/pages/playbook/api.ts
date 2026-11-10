@@ -7,8 +7,9 @@
 // source of truth. The verbatim English text is shown as returned; the Arabic is a provisional translation
 // (`arProvisional`) and is labelled so. The reader writes nothing; Launch is slice C's `launchProcedureInstance`.
 import { useQuery } from "@tanstack/react-query";
+import { PAGINATION } from "@mth/shared";
 import { api } from "../../api/client.ts";
-import { fetchAllPages, shouldRetry } from "../../api/queries.ts";
+import { ALL_PAGES_MAX_PAGES, fetchAllPages, shouldRetry } from "../../api/queries.ts";
 
 export type PhaseCode = "diagnose" | "define" | "design" | "mobilize" | "transform" | "realize";
 export const PHASE_CODES: readonly PhaseCode[] = ["diagnose", "define", "design", "mobilize", "transform", "realize"];
@@ -63,6 +64,7 @@ export interface TemplateSourceLinkList {
   readonly templateCode: string;
   readonly methodologyVersion: MethodologyVersionRef;
   readonly items: readonly TemplateSourceLink[];
+  readonly nextCursor: string | null;
 }
 
 export interface SearchHighlight {
@@ -211,10 +213,28 @@ export function useMethodologyBlockLinks(ref: string | undefined, query: ReaderQ
   });
 }
 
+/** Every page of a template's source blocks (cursor-paged; T-DG6-BE-V), kept as one list answer. */
+async function allTemplateSourceLinks(code: string, query: ReaderQuery): Promise<TemplateSourceLinkList> {
+  const path = readerPaths.templateSourceLinks(code);
+  const first = await api.get<TemplateSourceLinkList>(path, { ...query, limit: PAGINATION.maxLimit });
+  const items = [...first.items];
+  let cursor = first.nextCursor;
+  for (let i = 1; cursor && i < ALL_PAGES_MAX_PAGES; i++) {
+    const page: TemplateSourceLinkList = await api.get<TemplateSourceLinkList>(path, {
+      ...query,
+      limit: PAGINATION.maxLimit,
+      cursor,
+    });
+    items.push(...page.items);
+    cursor = page.nextCursor;
+  }
+  return { ...first, items, nextCursor: cursor ?? null };
+}
+
 export function useTemplateSourceLinks(code: string | undefined, query: ReaderQuery = {}) {
   return useQuery({
     queryKey: readerKeys.templateSourceLinks(code ?? "", query),
-    queryFn: () => api.get<TemplateSourceLinkList>(readerPaths.templateSourceLinks(code!), query),
+    queryFn: () => allTemplateSourceLinks(code!, query),
     enabled: Boolean(code),
     retry: shouldRetry,
     staleTime: 300_000,

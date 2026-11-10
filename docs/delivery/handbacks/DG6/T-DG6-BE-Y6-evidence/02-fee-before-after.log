@@ -1,0 +1,21 @@
+Mon Nov  2 02:10:10 UTC 2026
+PERTURBATION (only key export__assembly_failed): en text prefixed with PERTURBED, so it no longer equals ADR-0046 R5
+ apps/web/src/i18n/en/problems.json | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+--- OLD test (HEAD fee.test.tsx, pin 24):
+
+ Test Files  1 passed (1)
+      Tests  2 passed | 17 skipped (19)
+   Start at  02:10:10
+   Duration  6.77s (transform 284.06s, setup 178ms, collect 2.96s, tests 2.90s, environment 420ms, prepare 122ms)
+
+old-exit=0
+--- NEW test (pin 26, R5 job rows bound):
+   ✓ slice F problem texts (ADR-0045 §11, ADR-0046 §8) > reads every table row and job error code 3ms
+   × slice F problem texts (ADR-0045 §11, ADR-0046 §8) > each code has the ADR's exact English text and a different Arabic text 25ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: export.assembly_failed: expected 'PERTURBED The report could not be ass…' to be 'The report could not be assembled fro…' // Object.is equality
+Expected: [32m"The report could not be assembled from the current records (its subject or period changed, or it became too large); start a new export."[39m
+Received: [31m"[7mPERTURBED [27mThe report could not be assembled from the current records (its subject or period changed, or it became too large); start a new export."[39m
+      Tests  1 failed | 1 passed | 17 skipped (19)
+new-exit=1

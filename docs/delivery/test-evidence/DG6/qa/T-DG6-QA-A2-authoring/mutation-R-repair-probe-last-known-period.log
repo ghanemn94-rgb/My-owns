@@ -1,0 +1,32 @@
+# mutation R-repair-probe-last-known-period (2026-10-31T00:35:35.861456Z)
+# sandbox: /var/tmp/mth-run.5RKIDK/claude-0/mutq (minimal copy of HEAD 88aa129a8a17421a910a566b7b7bf4fd201114c0; product source untouched in the worktree)
+# file: apps/api/src/modules/operations/exceptions.ts
+# '    .where("status", "in", ["open", "closed"])\n    .orderBy("period_end", "desc")' -> '    .where("status", "in", ["open", "closed"])\n    .where((eb) => eb.exists(eb.selectFrom("kpi_evaluation as qa_e").select("qa_e.kpi_definition_id").whereRef("qa_e.reporting_period_id", "=", "reporting_period.id").where("qa_e.kpi_definition_id", "=", def.id).where("qa_e.scope_kind", "=", "transformation").where("qa_e.scope_id", "=", link.transformation_id))) // QA PROBE\n    .orderBy("period_end", "desc")'
+# diff:
+--- /var/tmp/mth-run.5RKIDK/claude-0/mutq/apps/api/src/modules/operations/exceptions.ts.orig	2026-10-31 00:35:35.862594233 +0000
++++ /var/tmp/mth-run.5RKIDK/claude-0/mutq/apps/api/src/modules/operations/exceptions.ts	2026-10-31 00:35:35.865126746 +0000
+@@ -368,6 +368,7 @@
+     .where("organization_id", "=", link.organization_id)
+     .where("frequency", "=", def.frequency)
+     .where("status", "in", ["open", "closed"])
++    .where((eb) => eb.exists(eb.selectFrom("kpi_evaluation as qa_e").select("qa_e.kpi_definition_id").whereRef("qa_e.reporting_period_id", "=", "reporting_period.id").where("qa_e.kpi_definition_id", "=", def.id).where("qa_e.scope_kind", "=", "transformation").where("qa_e.scope_id", "=", link.transformation_id))) // QA PROBE
+     .orderBy("period_end", "desc")
+     .limit(1)
+     .executeTakeFirst();
+# command (cwd sandbox): QA_PG_PORT=27020 MTH_PORT_POOL=27021-27039 tests/qa/support/with-pg.sh pnpm vitest run --configLoader runner --project integration tests/qa/integration/a17-import-and-integration.test.ts -t "failing connector"
+port-policy: PostgreSQL listening on port 27020 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.5RKIDK/claude-0/mutq
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvvo6siz_e1269b6d (server_encoding UTF8); applied 113 migrations to a fresh database
+ ✓ |integration| tests/qa/integration/a17-import-and-integration.test.ts (10 tests | 9 skipped) 22818ms
+   ✓ failing connector (REQ-S12-019, A17): one exception, the KPI shows Stale with its last value and date, no silent data change > the failure chain opens exactly one operational exception linked to the stale KPI; nothing in the KPI data changes  14173ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed | 9 skipped (10)
+   Start at  00:35:41
+   Duration  46.95s (transform 8.98s, setup 0ms, collect 18.71s, tests 22.82s, environment 0ms, prepare 347ms)
+
+
+exit=0

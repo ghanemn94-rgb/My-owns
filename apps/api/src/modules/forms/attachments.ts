@@ -30,7 +30,16 @@ import {
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
-import { auditContextOf, commitTimeDenial, refreshPrincipal, requireAction, requireRead } from "../access/index.ts";
+import {
+  auditContextOf,
+  commitTimeDenial,
+  principalOf,
+  refreshPrincipal,
+  requireAction,
+  requireRead,
+  restrictedRecordRefs,
+  withoutRestricted,
+} from "../access/index.ts";
 import { record } from "../audit/index.ts";
 import {
   cursorSchema,
@@ -50,7 +59,7 @@ import {
   type ModuleDeps,
 } from "../platform/index.ts";
 import { cursorKey, FORM_RECORD, recordParams, requireRecordRead, type RecordParams } from "./history.ts";
-import { assertWorking, loadRecordType, recordExists, requireRecordWrite } from "./record-types.ts";
+import { assertWorking, loadRecordType, requireRecordVisible, requireRecordWrite } from "./record-types.ts";
 
 export const ATTACHMENTS = `${FORM_RECORD}/attachments`;
 export const ATTACHMENT_REMOVE = `${ATTACHMENTS}/:attachmentId/remove`;
@@ -199,7 +208,7 @@ async function attach(tx: Tx, request: FastifyRequest, p: RecordParams): Promise
   const { store, recordTypeColumn } = storeOf(rt);
   const actor = await requireAttachmentWrite(tx, request, p, rt, store);
   const body = parseBody(formRecordAttachmentCreate, request.body);
-  if (!(await recordExists(tx, rt, p.transformationId, p.recordId))) throw problems.notFound();
+  await requireRecordVisible(tx, request, rt, p.transformationId, p.recordId); // ADR-0051 §2 (F-DG6-123)
   const ev = await tx
     .selectFrom("evidence")
     .select(["id", "status"])
@@ -207,6 +216,9 @@ async function attach(tx: Tx, request: FastifyRequest, p: RecordParams): Promise
     .where("transformation_id", "=", p.transformationId)
     .executeTakeFirst();
   if (ev === undefined) throw attachmentRefusals.evidenceUnknown();
+  // A sensitive evidence item the caller may not open is an unknown one (ADR-0051 §2; F-DG6-123).
+  if ((await restrictedRecordRefs(tx, principalOf(request), [{ recordType: "evidence", recordId: ev.id }])).size > 0)
+    throw attachmentRefusals.evidenceUnknown();
   if (ev.status !== "active") throw attachmentRefusals.evidenceArchived();
   const id = uuidv7();
   await tx
@@ -249,7 +261,7 @@ async function remove(tx: Tx, request: FastifyRequest, p: z.infer<typeof removeP
   const actor = await requireAttachmentWrite(tx, request, p, rt, store);
   const { reason } = parseBody(formRecordAttachmentRemove, request.body);
   const expected = requireIfMatch(request);
-  if (!(await recordExists(tx, rt, p.transformationId, p.recordId))) throw problems.notFound();
+  await requireRecordVisible(tx, request, rt, p.transformationId, p.recordId); // ADR-0051 §2 (F-DG6-123)
   const current = await tx
     .selectFrom(store as "form_record_attachment")
     .selectAll()
@@ -327,7 +339,12 @@ export function registerFormAttachmentRoutes(app: FastifyInstance, { db }: Modul
       .limit(query.limit + 1)
       .execute();
     const pageOf = paginate(rows, query.limit, (r) => [r.id], hash);
-    return { items: pageOf.items.map((r) => toAttachment(store, rt.code, r)), nextCursor: pageOf.nextCursor };
+    // An attachment of a sensitive evidence item the caller may not open is absent (ADR-0051 §2: its title is content).
+    const visible = await withoutRestricted(db, principalOf(request), pageOf.items, (r) => ({
+      recordType: "evidence",
+      recordId: r.evidence_id,
+    }));
+    return { items: visible.map((r) => toAttachment(store, rt.code, r)), nextCursor: pageOf.nextCursor };
   });
 
   app.post(ATTACHMENTS, { config: { ...read, consumes: JSON_BODY } }, async (request, reply) => {

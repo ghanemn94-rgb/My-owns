@@ -21,6 +21,7 @@ import {
   auditContextOf,
   commitTimeDenial,
   denialOf,
+  hideRestrictedRefs,
   principalOf,
   refreshPrincipal,
   requireAction,
@@ -146,7 +147,11 @@ export function registerGateConditionRoutes(app: FastifyInstance, { db }: Module
       .limit(query.limit + 1)
       .execute();
     const page = paginate(rows, query.limit, (r) => [r.due_date, r.id], hash);
-    return { items: page.items.map(toTracked), nextCursor: page.nextCursor };
+    // T-DG6-BE-Z10 (F-DG6-420; D-218): a closure's evidence the reader is not admitted to is shown as evidenceId null.
+    return {
+      items: await hideRestrictedRefs(db, principalOf(request), "evidence", page.items.map(toTracked), "evidenceId"),
+      nextCursor: page.nextCursor,
+    };
   });
 
   app.post(
@@ -241,7 +246,13 @@ export function registerGateConditionRoutes(app: FastifyInstance, { db }: Module
           "done",
         );
       });
-      const view = await loadTrackedCondition(db, transformationId, conditionId);
+      const loaded = await loadTrackedCondition(db, transformationId, conditionId);
+      // T-DG6-BE-Z10B (F-DG6-420; D-218): the write response follows the list's rule (the closure evidence is named only
+      // to a reader admitted to it), so a write never echoes a restricted id the list would hide.
+      const view =
+        loaded === null
+          ? null
+          : (await hideRestrictedRefs(db, principalOf(request), "evidence", [loaded], "evidenceId"))[0]!;
       return reply
         .status(201)
         .header("location", `/api/v1/transformations/${transformationId}/gate-conditions?status=closed`)

@@ -77,3 +77,33 @@ Purpose: section 0.1 of the master prompt. This records what the build environme
 | 2026-09-29 | The Claude Code CLI (2.1.284) in this environment registers the processes its Bash tool spawns in the cgroup `/sys/fs/cgroup/memory/process_api`, so the process sandbox binds that directory read-write (D-030). Inside the sandbox the CLI keeps only `CAP_SETFCAP`, which its own Bash sandbox needs to map uid 0 into a user namespace. | Found while building the process sandbox. The previous user experiment had shown that the Bash tool fails without the cgroup bind. |
 | 2026-09-29 | The auto permission mode is not available for `claude-haiku-4-5` in `-p` runs here: file writes then ask for a permission that cannot be granted. | Seen in a sandbox plumbing experiment. Agents always run with the orchestrator's model (`claude-opus-5-5`), where auto mode works. |
 | 2026-09-28 | The orchestrator runs candidate checks through `tools/gates/sandbox-run.sh` (bubblewrap; D-026). CI installs `bubblewrap` and sets `kernel.apparmor_restrict_unprivileged_userns=0` on the hosted Ubuntu 24.04 runner. | Here the orchestrator runs as root, so bubblewrap creates its namespaces without unprivileged user namespaces. A hosted CI runner is unprivileged and needs them. The CI step is **unverified** until the first workflow run on the branch reports: this session has no GitHub Actions access. |
+
+## P6 residuals: live integrations not exercised in this environment
+
+Written by T-DG6-DO-C (devops-engineer) on 2026-10-29, against tree `135ff1d`, under p6-work-split §J/C.12 and
+§2 rule 14. Each integration below ships with its port, a local test double and contract tests. None of them has
+been exercised against a live corporate system here. None is called "live", "integrated with Mobily" or "tested
+against production". In each row, the "IT supplies" column is a configuration slot that Mobily IT fills; no row
+records an IT approval.
+
+Environment facts behind this table, from `docs/delivery/handbacks/DG6/T-DG6-DO-C-evidence/environment-facts.txt`:
+
+- Docker client 29.3.1 and Compose v5.1.1 are present.
+- `docker info` exits 1 inside the agent sandbox ("permission denied while trying to connect to the docker API at
+  unix:///var/run/docker.sock"), so no container could be run by this task.
+- Outbound HTTPS works through the egress proxy for `raw.githubusercontent.com` and `hub.docker.com`.
+- `github.com` and `api.github.com` answer 403 ("GitHub access to this repository is not enabled for this session").
+
+| Integration | What is proven here, and how | Residual: not exercised | What Mobily IT supplies | Guide |
+|---|---|---|---|---|
+| **Corporate identity provider (OIDC)** | The OIDC code flow with PKCE against the local fake OP (`apps/api/test/support/fake-idp.ts`). Issuer, audience and key rejection with a second issuer `mth-other` (BE-G, ADR-0054 §1). | Sign-in through Mobily's IdP | Issuer URL (https), client ID, client secret (as `OIDC_CLIENT_SECRET_FILE`), redirect URI registration, the `email` and `name` claims, and group → role mapping input | `docs/operations/configuration.md` |
+| **Keycloak test realm e2e** (REQ-S16-007) | Realm `mth-test` ships (`deploy/keycloak/realm-mth-test.json`). The image pin moves to `quay.io/keycloak/keycloak` by digest (D-197 item 1; DO-B). | **BLOCKED wherever no container runtime exists.** In this sandbox the Docker daemon is not reachable (above), so the Keycloak e2e (`mth-test` login, `mth-other` token refused) cannot run. The cross-realm rejection is carried by BE-G's integration test (D-195 Q5, D-049). | A host with a container runtime, to run the `test-idp` profile | `docs/operations/configuration.md`; DO-B's e2e |
+| **Brokered SAML** | Nothing executable: the hub is OIDC-only and has no SAML code (ADR-0054 §1). Keycloak as the SAML → OIDC broker is a documented configuration. | The whole brokered path: no SAML IdP exists here | The corporate SAML IdP metadata, its signing certificate and rotation, and the attribute mappings for `email` and `name` | `docs/operations/identity-saml-broker.md` (DO-B; **not yet written** at `135ff1d`) |
+| **IT object store (S3-compatible)** (REQ-S16-006) | The `@aws-sdk/client-s3` adapter and the filesystem adapter pass one contract suite. The S3 run is against the in-process, SigV4-verifying fake (`apps/api/test/support/fake-s3.ts`; BE-H). No URL is returned anywhere. | Any real object store, including the SeaweedFS 4.51 test store (Apache-2.0, verified 2026-10-29; not bundled), which could not be run here (no container runtime). Driver selection and Administration > Storage are BE-H2 (not on `135ff1d`). | Endpoint (https), region, a private bucket, an optional key prefix, a least-privilege access key pair as secret references, and the CA if it is corporate | `docs/operations/storage.md` |
+| **SMTP relay** (REQ-S12-023) | The nodemailer 10.2.1 adapter against the in-process fake SMTP (`apps/api/test/support/fake-smtp.ts`; BE-I): plain, STARTTLS, AUTH refused, a drop mid-DATA. A21: no channel means in-app only. Fan-out exactly once is BE-I2 (not on `135ff1d`). | Any real relay; DKIM, SPF and DMARC; delivery to real mailboxes | Relay host and port, security mode, optional credentials as secret references, sender address, and the CA if it is corporate | `docs/operations/notifications.md` |
+| **Enterprise messaging** | Port only. Enabling it is refused (422 `notification_channel.adapter_unavailable`; CHECK `notification_channel_no_messaging_adapter`). | No adapter ships in P6 | — (a later release would add an adapter) | `docs/operations/notifications.md` |
+| **Corporate data source (`http_pull` connector)** | ADR-0055 §1: the port and a contract test against a local fake HTTP source (BE-L2, planned). The `test_adapter` is the local adapter of M0335. | Any corporate source (M0334 "when access is supplied") | The source endpoint (https), its credential as a secret reference, the field mapping, and the network route | ADR-0055; handover guide for connectors (owner: slice B) |
+| **AI model endpoint (optional assistant)** | ADR-0059: the provider port, against a local fake chat-completions server (`apps/api/test/support/fake-model.ts`; BE-T, planned). The assistant is disabled by default (M0337; ADR-0059 §3). | Any IT-hosted model endpoint | The endpoint, model name and credential reference of an IT-approved provider, if Mobily chooses to enable the assistant | ADR-0059; row to be confirmed by BE-T's handback |
+
+A row's proof cell names the task that delivers it. "Planned" or "not on `135ff1d`" means that the proof had not been
+merged when this table was written. The orchestrator updates the row when that task's handback is merged.

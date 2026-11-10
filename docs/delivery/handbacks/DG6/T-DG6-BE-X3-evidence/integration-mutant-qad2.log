@@ -1,0 +1,97 @@
+port-policy: PostgreSQL listening on port 26904 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-x3
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvvoblo9_df14e4f4 (server_encoding UTF8); applied 113 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/assistant/composition.test.ts (9 tests | 3 failed) 4685ms
+   ✓ buildServer hands its SecretProvider registry to the assistant (BE-X2 handback §5) > a set credential reference reaches the model as `authorization: Bearer`; the value is never in a response 218ms
+   ✓ buildServer hands its SecretProvider registry to the assistant (BE-X2 handback §5) > an unset reference sends nothing: `unavailable` with assistant.provider_error 141ms
+   ✓ buildServer registers the two retrieval ports (ADR-0059 §4; BE-U's composition lines) > the playbook port gives a reader of no record the playbook passages on 'case for change' 97ms
+   ✓ buildServer registers the two retrieval ports (ADR-0059 §4; BE-U's composition lines) > both ports are the ones buildServer set (each register function returns it; restored at once) 0ms
+   ✓ the API connection log is installed by buildServer (QA-D-1, QA-D-2; ADR-0059 §12) > logs the call to the model as the api process, with the destination only 2ms
+   × the API connection log is installed by buildServer (QA-D-1, QA-D-2; ADR-0059 §12) > a TCP attempt that never connects is logged with the requested host and port, not nulls (QA-D-2) 9ms
+     → expected undefined to match object { process: 'api', …(2) }
+   × the API connection log is installed by buildServer (QA-D-1, QA-D-2; ADR-0059 §12) > a connection refused on loopback keeps its host, address and port 3ms
+     → expected undefined to match object { process: 'api', …(3) }
+   ✓ the API connection log is installed by buildServer (QA-D-1, QA-D-2; ADR-0059 §12) > a failed lookup is logged with the host asked for; no address or port was dialled 1ms
+   × the API connection log is installed by buildServer (QA-D-1, QA-D-2; ADR-0059 §12) > is held per app: a second app on the same file keeps it after closing; the last holder's close removes it 335ms
+     → expected +0 to be 1 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/assistant/composition.test.ts > the API connection log is installed by buildServer (QA-D-1, QA-D-2; ADR-0059 §12) > a TCP attempt that never connects is logged with the requested host and port, not nulls (QA-D-2)
+AssertionError: expected undefined to match object { process: 'api', …(2) }
+
+[32m- Expected:[39m 
+{
+  "address": "192.0.2.10",
+  "host": "192.0.2.10",
+  "process": "api",
+}
+
+[31m+ Received:[39m 
+undefined
+
+ ❯ apps/api/test/integration/assistant/composition.test.ts:218:18
+    216|     await attempt(UNREACHABLE);
+    217|     const line = readLines(logFile).find((l) => l.channel === "net.cli…
+    218|     expect(line).toMatchObject({ process: "api", host: UNREACHABLE.hos…
+       |                  ^
+    219|   });
+    220| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |integration| apps/api/test/integration/assistant/composition.test.ts > the API connection log is installed by buildServer (QA-D-1, QA-D-2; ADR-0059 §12) > a connection refused on loopback keeps its host, address and port
+AssertionError: expected undefined to match object { process: 'api', …(3) }
+
+[32m- Expected:[39m 
+{
+  "address": "127.0.0.1",
+  "host": "127.0.0.1",
+  "port": 35237,
+  "process": "api",
+}
+
+[31m+ Received:[39m 
+undefined
+
+ ❯ apps/api/test/integration/assistant/composition.test.ts:232:18
+    230|     await attempt({ host: "127.0.0.1", port: probe });
+    231|     const line = readLines(logFile).find((l) => l.channel === "net.cli…
+    232|     expect(line).toMatchObject({ process: "api", host: "127.0.0.1", ad…
+       |                  ^
+    233|   });
+    234| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |integration| apps/api/test/integration/assistant/composition.test.ts > the API connection log is installed by buildServer (QA-D-1, QA-D-2; ADR-0059 §12) > is held per app: a second app on the same file keeps it after closing; the last holder's close removes it
+AssertionError: expected +0 to be 1 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 1[39m
+[31m+ 0[39m
+
+ ❯ apps/api/test/integration/assistant/composition.test.ts:255:37
+    253|       readLines(file).filter((l) => l.channel === "net.client.socket" …
+    254|     await attempt({ host: "192.0.2.11", port: 4431 });
+    255|     expect(countFor(logFile, 4431)).toBe(1); // still logged (the suit…
+       |                                     ^
+    256|     // A third app on a file of its own: its close is that file's last…
+    257|     const ownFile = newLogFile("own.jsonl");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed | 6 passed (9)
+   Start at  00:39:25
+   Duration  25.63s (transform 8.00s, setup 0ms, collect 15.72s, tests 4.69s, environment 0ms, prepare 182ms)
+

@@ -1,0 +1,21 @@
+// Summarise an export-proof JSON: summary, failures grouped by message, statuses of the access checks.
+import { readFileSync } from "node:fs";
+for (const f of process.argv.slice(2)) {
+  const j = JSON.parse(readFileSync(f, "utf8"));
+  console.log(`## ${f}\nlabel ${j.label}; started ${j.startedAt}; finished ${j.finishedAt}`);
+  console.log("summary", JSON.stringify(j.summary));
+  for (const part of ["partA", "partB"]) {
+    const p = j[part];
+    const ex = p.exports;
+    const fails = {};
+    for (const e of ex) for (const m of e.failures) { const k = String(m).replace(/[0-9.]+ ?ms/g, "<ms>"); fails[k] = (fails[k] ?? 0) + 1; }
+    for (const m of p.failures ?? []) { const k = "part-level: " + m; fails[k] = (fails[k] ?? 0) + 1; }
+    const count = (fn) => { const c = {}; for (const e of ex) { const v = fn(e); const k = typeof v === "object" && v !== null ? JSON.stringify(v) : String(v); c[k] = (c[k] ?? 0) + 1; } return JSON.stringify(c); };
+    console.log(`${part}: exports ${ex.length}; with a failure ${ex.filter((e) => e.failures.length).length}; audSameScope ${p.audSameScope ?? "per export"}`);
+    console.log(`  startStatus ${count((e) => e.startStatus)}; finalStatus ${count((e) => e.finalStatus)}; download ${count((e) => e.downloadStatus)}`);
+    console.log(`  last percent ${count((e) => e.percents?.at(-1))}; percent non-decreasing ${count((e) => (e.percents ?? []).every((v, i, a) => i === 0 || v >= a[i - 1]))}`);
+    const keys = ["sameScopeOtherStatuses", "audStatuses", "audSameScope"];
+    for (const k of keys) console.log(`  ${k} ${count((e) => e[k])}`);
+    console.log("  failures:", JSON.stringify(fails));
+  }
+}

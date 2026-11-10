@@ -1,0 +1,44 @@
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-e2
+
+ ❯ |unit-node| packages/reporting/src/branding-layout.test.ts (5 tests | 1 failed) 10476ms
+   × PDF > a configured branding: the name, a header band in the primary colour, the header and footer lines, B0004 5350ms
+     → Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+   ✓ PDF > version 0 (no colour): no band, and no header or footer line is invented  2237ms
+   ✓ PDF > an invalid colour is ignored (no band), never drawn  1891ms
+   ✓ DOCX and PPTX > DOCX: the header line in the body, the footer line and B0004 in the page footer 205ms
+   ✓ DOCX and PPTX > PPTX: the header, the footer and B0004 on the closing 'About this file' slide  768ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts (141 tests) 56539ms
+   ✓ API module boundaries (ADR-0002) > every import respects dependsOn, public surfaces and allowed packages  37933ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > rule 4 reports exactly the diagnostics of a full ts.transpileModule, for every extension (F-DG5-102/145)  2035ms
+   ✓ package dependency direction (ADR-0002 rule 5) > packages/db imports only @mth/config and @mth/shared  2005ms
+   ✓ package dependency direction (ADR-0002 rule 5) > packages/shared imports no workspace package  2662ms
+   ✓ package dependency direction (ADR-0002 rule 5) > apps/web never imports @mth/db or @mth/config (browser bundle, no secrets)  9649ms
+   ✓ package dependency direction (ADR-0002 rule 5) > apps/worker imports no API code  768ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-node| packages/reporting/src/branding-layout.test.ts > PDF > a configured branding: the name, a header band in the primary colour, the header and footer lines, B0004
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ packages/reporting/src/branding-layout.test.ts:26:3
+     24| 
+     25| describe("PDF", () => {
+     26|   it("a configured branding: the name, a header band in the primary co…
+       |   ^
+     27|     const r = await render(doc(), { ...options("pdf", "en"), branding:…
+     28|     const text = lines(readPdf(r.bytes));
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 145 passed (146)
+   Start at  09:10:11
+   Duration  60.68s (transform 6.33s, setup 0ms, collect 14.78s, tests 67.02s, environment 0ms, prepare 457ms)
+
+exit 1

@@ -42,6 +42,12 @@ const ENQUEUED: Readonly<Record<string, string>> = {
   "branding.published": "api admin/branding.ts",
   "dependency.slipped": "api portfolio/slip-events.ts (starter 9; registered by T-DG5-BE-T5)",
   "report_snapshot.issued": "api reporting/reports/snapshots.ts (written ONLY once registered; guarded, see below)",
+  // T-DG6-BE-L2 (ADR-0055 §2, ADR-0053 §2-§3): a connector run's last failure and its recovery.
+  "connector.run_failed": "api integrations/runs.ts",
+  "connector.run_recovered": "api integrations/runs.ts",
+  "data.stale": "worker handlers/operations.ts (kpi.freshness_scan; T-DG6-BE-K2, ADR-0053 §3)",
+  // T-DG6-BE-I2 (ADR-0054 §3 step 1): one per notification createWorkItemOnce writes; consumer notifications.fanout.
+  "inbox_notification.created": "api tasks/service.ts, worker kit.ts (createWorkItemOnce)",
 };
 
 /**
@@ -65,10 +71,12 @@ const OUTBOX_WRITE_SITES: Readonly<Record<string, number>> = {
   "apps/api/src/modules/reporting/exports/jobs.ts": 1,
   "apps/api/src/modules/reporting/reports/snapshots.ts": 1,
   "apps/api/src/modules/sustainment/controls.ts": 1,
+  "apps/api/src/modules/tasks/service.ts": 1, // T-DG6-BE-I2: inbox_notification.created (tasks may not import jobs)
   "apps/api/src/modules/workflows/gates.ts": 1,
   "apps/worker/src/handlers/adoption.ts": 1,
   "apps/worker/src/handlers/benefits.ts": 1,
   "apps/worker/src/handlers/kpi.ts": 1,
+  "apps/worker/src/handlers/operations.ts": 1, // T-DG6-BE-K2: data.stale
   "apps/worker/src/kit.ts": 1,
 };
 

@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+cd /home/user/wt/dg6-do-f
+E=docs/delivery/handbacks/DG6/T-DG6-DO-FB-evidence
+S=$E/checks-summary.txt
+run() { name=$1; shift; echo "== $name: $* ($(date -u +%FT%TZ))" >> $S; st=$(date +%s); "$@" > $E/$name.log 2>&1; rc=$?; echo "$name exit=$rc wall=$(( $(date +%s)-st ))s" >> $S; }
+run typecheck pnpm -r typecheck
+run build pnpm -r build
+run lint pnpm lint
+run openapi-lint pnpm openapi:lint
+run harness-node-test node --test deploy/load/harness.node-test.mjs
+run test-unit-locale-unset env -u LANG -u LC_ALL -u LC_CTYPE -u LANGUAGE -u LC_MESSAGES pnpm test
+run test-unit-c-utf8 env LANG=C.UTF-8 LC_ALL=C.UTF-8 pnpm test
+run test-integration env QA_PG_PORT=25670 MTH_PORT_POOL=25671-25699 tests/qa/support/with-pg.sh pnpm test:integration
+echo "== chain done $(date -u +%FT%TZ)" >> $S

@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# T-DG6-DO-G acceptance items 1 and 2 (run sequentially). Each line of checks-summary.txt: name, exit, wall seconds.
+cd /home/user/wt/dg6-do-g
+export PATH=/opt/nvm/versions/node/v24.21.0/bin:$PATH
+E=docs/delivery/handbacks/DG6/T-DG6-DO-G-evidence/checks
+run() { # name, command...
+  local name="$1"; shift
+  local s=$(date +%s)
+  { echo "# $(date -u +%FT%TZ) node $(node -v); load average $(cut -d' ' -f1-3 /proc/loadavg)"; echo "# \$ $*"; } >"$E/$name.log"
+  "$@" >>"$E/$name.log" 2>&1
+  local rc=$?
+  echo "# exit=$rc $(date -u +%FT%TZ); load average $(cut -d' ' -f1-3 /proc/loadavg)" >>"$E/$name.log"
+  echo "$name exit=$rc wall_s=$(($(date +%s) - s)) end=$(date -u +%FT%TZ)" >>"$E/checks-summary.txt"
+}
+run lint pnpm lint
+run openapi-lint pnpm openapi:lint
+run prettier bash -c 'git ls-files -co --exclude-standard -z | xargs -0 npx prettier --check --ignore-unknown'
+run typecheck pnpm -r typecheck
+run build pnpm -r build
+run test-unit-locale-unset env -u LANG -u LC_ALL -u LC_CTYPE -u LANGUAGE -u LC_MESSAGES pnpm test
+run test-unit-c-utf8 env LANG=C.UTF-8 LC_ALL=C.UTF-8 pnpm test
+echo "chain-a done $(date -u +%FT%TZ)" >>"$E/checks-summary.txt"

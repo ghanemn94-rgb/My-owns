@@ -41,6 +41,8 @@ export {
 export { auditContextOf, commitTimeDenial, principalOf, refreshPrincipal, type PrincipalResolver } from "./request.ts";
 export { grantCreatorAdminRoles, grantCreatorTransformationRoles } from "./assignments.ts";
 export { registerDeniedMutationAudit } from "./denials.ts";
+// F-DG6-181 (T-DG6-BE-Z2): the `secret_ref.refused` audit of a SecretRef binding refusal (ADR-0052 amendment §D).
+export { registerSecretRefusalAudit } from "./secret-refusals.ts";
 export {
   actsOnBehalfOf,
   holds,
@@ -65,5 +67,48 @@ export {
   type RoutedParty,
 } from "./role-mappings.ts";
 export { actsFor, delegatorsOf } from "./delegations.ts";
+// P6 slice E (T-DG6-BE-A stubs; ADR-0051 §1, §2): the ReadScope port (BE-B fills read-scope.ts; everything it exports
+// is re-exported here, so later slices import it from access) and the sensitivity routes, registered by server.ts.
+export * from "./read-scope.ts";
+export {
+  isMarkedSensitive,
+  loadSensitiveRecord,
+  loadSensitiveRecords,
+  registerSensitivityRoutes,
+  requireSensitiveRead,
+  SENSITIVE_RECORD_PARTY_COLUMNS,
+  sensitiveAdmits,
+  sensitivityRefusals,
+  type SensitiveRecordRow,
+} from "./sensitivity.ts";
+// T-DG6-BE-Y1 (F-DG6-121..123; ADR-0051 §2): the one helper for every route that reaches a sensitive record's children.
+export {
+  hideRestrictedRefs,
+  hideRestrictedRefLists,
+  hideRestrictedTypedRefs,
+  hiddenIdsInTexts,
+  maskHiddenIds,
+  maskRestrictedIdsInFields,
+  isSensitiveRecordType,
+  keptRestrictedRef,
+  reachKey,
+  reachRefsOfParams,
+  recordRefSensitivity,
+  redactRestrictedIds,
+  registerSensitiveReachGuard,
+  requireRecordReach,
+  restrictedIdsAmong,
+  restrictedIdsOf,
+  refIsRestricted,
+  restrictedRecordRefs,
+  SENSITIVE_CHILD_SOURCES,
+  SENSITIVE_REACH_PARAMS,
+  sensitiveOwnersOf,
+  uuidsIn,
+  withoutRestricted,
+  type ReachRef,
+} from "./sensitive-reach.ts";
 // REQ-S10-003 (D-094; T-DG4-BE-B2): the technical-admin-only 403 on gate and Finance approval endpoints.
 export { isTechnicalAdminOnly, TECHNICAL_ADMIN_ROLES, technicalAdminRefusal } from "./technical-admin.ts";
+// P6 slice J (T-DG6-BE-J; ADR-0053 §1): service identities (load, read gate, the grant change); routes in admin.
+export * from "./service-identities.ts";

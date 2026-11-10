@@ -159,7 +159,7 @@ export function useSnapshotSources(tid: string, id: string) {
 export function useSnapshotVersions(tid: string, id: string) {
   return useQuery({
     queryKey: reportKeys.snapshotPart(tid, id, "versions"),
-    queryFn: () => api.get<{ items: ReportSnapshotVersion[] }>(reportPaths.versions(tid, id)),
+    queryFn: async () => ({ items: await fetchAllPages<ReportSnapshotVersion>(reportPaths.versions(tid, id)) }),
     enabled: Boolean(tid && id),
     ...opts,
   });

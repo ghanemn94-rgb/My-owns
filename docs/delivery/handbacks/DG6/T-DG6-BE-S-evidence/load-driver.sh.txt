@@ -1,0 +1,101 @@
+#!/usr/bin/env bash
+# T-DG6-BE-S: the before/after measurement of the two fixes and the ADR-0058 §7 export proof on the synthetic load
+# dataset. Run INSIDE tests/qa/support/with-pg.sh (a disposable cluster created and deleted in this process tree;
+# TEST_DATABASE_ADMIN_URL), because separate shell commands here don't share a network namespace (DO-F §7):
+#
+#   QA_PG_PORT=25930 MTH_PORT_POOL=25931-25935 tests/qa/support/with-pg.sh bash <this file>
+#
+# Configurations (same database, same host, run back to back; each with a freshly started API and worker):
+#   before   0010's p2_audit_required body + the API build from before the change (apps/api/dist/before, a copy of the
+#            integrated HEAD's build taken before any edit)
+#   code     0010's body + the new API build (batched snapshot child INSERTs)
+#   sql      0119's body + the old API build
+#   after    0119's body + the new API build: the tree as handed back; this run is the export proof
+# The function body is switched with CREATE OR REPLACE on this throwaway database only (fn-before-0010.sql.txt,
+# fn-after-0119.sql.txt: they differ in exactly one line). Nothing is tuned between configurations. Processes are
+# stopped by their own PIDs only. The OIDC issuer is never contacted (sessions are minted by sessions.mjs).
+set -euo pipefail
+cd /home/user/wt/dg6-be-s
+export PATH=/opt/nvm/versions/node/v24.21.0/bin:$PATH
+E=docs/delivery/handbacks/DG6/T-DG6-BE-S-evidence
+GEN="$TMPDIR/gen/deploy/load/generate.mjs" # DO-F's generate-rfc-uuid.patch applied to a scratch copy (sha256 below)
+API_PORT=25940
+ADMIN="$TEST_DATABASE_ADMIN_URL"
+BASE_PG="${ADMIN%/postgres}"
+url() { echo "$BASE_PG/mth?options=-c%20role%3D$1"; }
+D="$BASE_PG/mth"
+WORK="$TMPDIR/loadrun"; mkdir -p "$WORK/evidence"
+
+echo "== driver start $(date -u +%FT%TZ); git HEAD $(git rev-parse HEAD) (plus the uncommitted BE-S changes)"
+sha256sum "$GEN" deploy/load/generate.mjs deploy/load/sessions.mjs deploy/load/export-proof.mjs \
+  apps/api/dist/before/modules/reporting/reports/snapshots.js apps/api/dist/modules/reporting/reports/snapshots.js
+grep -c 'for (const chunk of batches' apps/api/dist/before/modules/reporting/reports/snapshots.js apps/api/dist/modules/reporting/reports/snapshots.js || true
+
+psql "$ADMIN" -q -v ON_ERROR_STOP=1 -c "CREATE ROLE mth_owner NOLOGIN" -c "CREATE ROLE mth_app NOLOGIN" \
+  -c "CREATE DATABASE mth OWNER mth_owner ENCODING 'UTF8' LC_COLLATE 'C' LC_CTYPE 'C' TEMPLATE template0"
+export NODE_ENV=production
+DATABASE_OWNER_URL="$(url mth_owner)" DATABASE_URL="$(url mth_app)" node packages/db/dist/cli.js migrate | tail -1
+echo "== generate default (patched copy) start $(date -u +%FT%TZ)"
+s=$(date +%s%N)
+DATABASE_OWNER_URL="$(url mth_owner)" node "$GEN" --profile default | grep -v '^hash ' | tail -8
+echo "generate exit=$? wall_ms=$(( ($(date +%s%N) - s) / 1000000 )) end $(date -u +%FT%TZ) (with 0119 applied)"
+psql "$D" -qAtc "select count(*) as audit_events from audit_event" -c "select count(*) from initiative" -c "select pg_size_pretty(pg_database_size('mth'))"
+
+export MTH_ENV=load AUTH_MODE=oidc LOG_LEVEL=warn APP_BASE_URL="http://localhost:$API_PORT" PORT="$API_PORT"
+export OIDC_ISSUER_URL="https://idp.example.invalid/realms/mth-load" OIDC_CLIENT_ID=mth-load OIDC_CLIENT_SECRET=not-used-load-run
+DATABASE_URL="$(url mth_app)" DATABASE_OWNER_URL="$(url mth_owner)"; export DATABASE_URL DATABASE_OWNER_URL
+export EVIDENCE_STORAGE_DRIVER=filesystem EVIDENCE_STORAGE_PATH="$WORK/evidence"
+unset RATE_LIMIT_PER_MINUTE AUTH_RATE_LIMIT_PER_MINUTE SEARCH_RATE_LIMIT_PER_MINUTE EXPORT_RATE_LIMIT_PER_MINUTE
+
+API_PID="" WORKER_PID=""
+stop() {
+  for p in $API_PID $WORKER_PID; do kill -TERM "$p" 2>/dev/null || true; done
+  for p in $API_PID $WORKER_PID; do for _ in $(seq 1 100); do kill -0 "$p" 2>/dev/null || break; sleep 0.1; done; done
+  for p in $API_PID $WORKER_PID; do kill -KILL "$p" 2>/dev/null || true; done
+  API_PID="" WORKER_PID=""
+}
+trap stop EXIT
+start() { # $1 label, $2 API entry
+  node apps/worker/dist/main.js >>"$WORK/worker-$1.log" 2>&1 </dev/null &
+  WORKER_PID=$!
+  node "$2" >>"$WORK/api-$1.log" 2>&1 </dev/null &
+  API_PID=$!
+  for _ in $(seq 1 120); do curl -fsS "http://localhost:$API_PORT/readyz" >/dev/null 2>&1 && return 0; sleep 0.5; done
+  echo "API not ready"; tail -50 "$WORK/api-$1.log"; return 1
+}
+
+echo "== sessions $(date -u +%FT%TZ)"
+node deploy/load/sessions.mjs --duration-minutes 180 --out "$WORK/sessions.json"
+echo "== search index: the worker runs the generator's requested search.reindex first (so it loads no measured run)"
+start index apps/api/dist/main.js
+for _ in $(seq 1 360); do
+  n=$(psql "$D" -qAtc "select count(*) from pgboss.job where name = 'search.reindex' and state = 'completed'")
+  t=$(psql "$D" -qAtc "select count(*) from search_index_state where status <> 'idle'")
+  [ "$n" -ge 1 ] && [ "$t" = 0 ] && break
+  sleep 5
+done
+echo "search index: reindex completed jobs $n, types not idle $t $(date -u +%FT%TZ)"
+stop
+
+for cfg in before code sql after; do
+  case $cfg in
+    before) fn=fn-before-0010.sql.txt api=apps/api/dist/before/main.js ;;
+    code) fn=fn-before-0010.sql.txt api=apps/api/dist/main.js ;;
+    sql) fn=fn-after-0119.sql.txt api=apps/api/dist/before/main.js ;;
+    after) fn=fn-after-0119.sql.txt api=apps/api/dist/main.js ;;
+  esac
+  echo "== configuration $cfg: $fn, $api $(date -u +%FT%TZ); load average $(cut -d' ' -f1-3 /proc/loadavg)"
+  psql "$(url mth_owner)" -q -v ON_ERROR_STOP=1 -f "$E/$fn"
+  psql "$D" -qAtc "select 'function: ' || CASE WHEN prosrc LIKE '%TG_TABLE_NAME::text COLLATE \"default\"%' THEN '0119' ELSE '0010' END from pg_proc where proname = 'p2_audit_required'"
+  start "$cfg" "$api"
+  set +e
+  node deploy/load/export-proof.mjs --sessions "$WORK/sessions.json" --base-url "http://127.0.0.1:$API_PORT" \
+    --db-url "$D" --out "$E/export-proof-$cfg.json" --label "$cfg"
+  rc=$?
+  set -e
+  echo "configuration $cfg export-proof exit=$rc $(date -u +%FT%TZ); load average $(cut -d' ' -f1-3 /proc/loadavg)"
+  stop
+  echo "api error-level log lines: $(grep -c '"level":50' "$WORK/api-$cfg.log" || true); worker: $(grep -c '"level":50' "$WORK/worker-$cfg.log" || true)"
+done
+psql "$D" -qAtc "select status, count(*) from export_job group by 1 order by 1"
+echo "== driver end $(date -u +%FT%TZ)"

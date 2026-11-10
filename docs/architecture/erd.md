@@ -1937,6 +1937,290 @@ erDiagram
 
 The column lists, the 20 triggers and the functions are in the data dictionary, section "P5 repair migration 0097 and the round-1 repairs (DG5)".
 
+## 1t. P6 slices E and F: sensitive records and grants, deep-link tokens, upload policy and detected content types (migrations 0098–0100; T-DG6-ARCH-01; ADR-0051, ADR-0052)
+
+Three new mutable tables carry the P2 guards (`_row_guard`, deferred `_audit_required`): `record_sensitivity`, `sensitive_record_grant` and `upload_policy`. Two append-only histories (`record_sensitivity_change`, `upload_policy_change`) are written only by `SECURITY DEFINER` triggers; mth_app reads them. `inbox_notification` (DG4) gains three nullable, set-once deep-link columns, and `evidence_content` (DG2) one nullable `detected_type`. No mth_app DELETE grant on any of them. `0100` adds permission rows only. The data dictionary ("P6 tables, slices E and F") lists every column, constraint, index and trigger.
+
+```mermaid
+erDiagram
+    transformation ||--o{ record_sensitivity : "flags of its records"
+    benefit |o--o| record_sensitivity : "record_type = benefit (checked by trigger)"
+    business_case |o--o| record_sensitivity : "record_type = business_case (checked by trigger)"
+    evidence |o--o| record_sensitivity : "record_type = evidence (checked by trigger)"
+    record_sensitivity ||--o{ record_sensitivity_change : "one history row per version"
+    transformation ||--o{ sensitive_record_grant : "grants on its records"
+    app_user ||--o{ sensitive_record_grant : "grantee (at most one active per record)"
+    organization ||--o| upload_policy : "narrowed policy (none = default)"
+    upload_policy ||--o{ upload_policy_change : "one history row per version"
+    evidence ||--o{ evidence_content : "detected_type (P6 uploads), NULL before P6"
+    inbox_notification }o--o| benefit : "target_record_* (set once, no FK)"
+```
+
+`record_sensitivity (record_type, record_id)` and `sensitive_record_grant (record_type, record_id)` are polymorphic references to `benefit`, `business_case` or `evidence` in the same transformation, checked by `p6_sensitive_record_ref_guard()` (no FK, because the target table varies). `inbox_notification.target_record_*` is an informational pointer used only to re-authorize (ADR-0051 §3); it has no FK and may name any record type. The link token is an opaque identifier, not a credential.
+
+### 1t.1 P6 entity register (slices E and F) → tables
+
+| Entity | Table(s) | PK | Owner (column) | Writers | Status field | `version` | API module |
+|---|---|---|---|---|---|---|---|
+| Record sensitivity (S10-002) | `record_sensitivity` (+ `record_sensitivity_change`) | `id`; `(record_type, record_id)` unique | `created_by` | `sensitive_record.grant` | `is_sensitive` | yes (history append-only) | access |
+| Sensitive-record grant (S10-002) | `sensitive_record_grant` | `id`; one active per `(record_type, record_id, grantee_user_id)` | `created_by` (granter), `grantee_user_id` | `sensitive_record.grant` | `status` (active, revoked) | yes | access |
+| Deep link (S12-024) | `inbox_notification.link_token`, `target_record_type`, `target_record_id` | `inbox_notification.id`; `link_token` unique | `recipient_user_id` | API (lazy issue, lock 730301) | — (set once) | the notification's | tasks |
+| Upload policy (S13-011) | `upload_policy` (+ `upload_policy_change`) | `id`; `organization_id` unique | `created_by` | `upload_policy.configure` | — | yes (history append-only) | evidence (admin) |
+| Checked file type (S13-011) | `evidence_content.detected_type` | `evidence_content.id` | `uploaded_by` | evidence upload | — | no (append-only revisions) | evidence |
+| Audit event (S16-032) | `audit_event` (unchanged, `0003`) | `id`; `seq` unique | `actor_user_id` | every mutation | — | `prior_version`/`new_version` of the record | audit |
+
+## 1u. P6 slices J and C: service identities, operational exceptions, worker heartbeat, storage setting, notification channels and deliveries (migrations 0101–0103; T-DG6-ARCH-02; ADR-0053, ADR-0054)
+
+Six new mutable tables carry the P2 guards. Five are audited (`_row_guard`, deferred `_audit_required`): `service_identity`, `operational_exception`, `storage_setting`, `notification_channel` and `notification_delivery`. `worker_heartbeat` has the row guard (version step) and is **not** audited (telemetry, ADR-0053 §6). Four append-only histories are written only by SECURITY DEFINER triggers (`service_identity_change`, `operational_exception_event`, `storage_setting_change`, `notification_channel_change`), and `operational_exception_kpi` is an append-only link table. `evidence_content` gains `storage_driver` (default `filesystem`). `0103` adds six permission codes. The column lists are in `data-dictionary.md` ("P6 tables, slices J and C").
+
+```mermaid
+erDiagram
+    organization |o--o{ service_identity : "connector identities (job identities: platform scope)"
+    service_identity ||--o{ service_identity_change : "one history row per version"
+    organization |o--o{ operational_exception : "NULL organization = platform (worker, platform jobs)"
+    service_identity |o--o{ operational_exception : "identity the failing run acted as"
+    operational_failure |o--o{ operational_exception : "latest failure-queue row (jobs)"
+    operational_exception ||--o{ operational_exception_event : "one event per version"
+    operational_exception ||--o{ operational_exception_kpi : "KPIs it makes stale"
+    kpi_definition ||--o{ operational_exception_kpi : "same organization and transformation (trigger)"
+    storage_setting ||--o{ storage_setting_change : "one history row per version (singleton)"
+    evidence ||--o{ evidence_content : "storage_driver: the store holding the bytes"
+    organization ||--o{ notification_channel : "at most one per channel kind"
+    notification_channel ||--o{ notification_channel_change : "one history row per version"
+    inbox_notification ||--o{ notification_delivery : "at most one per channel kind (idempotency)"
+```
+
+`service_identity.connector_id` has no foreign key yet: ADR-0055's migration adds it when `connector` exists. `worker_heartbeat` has no relationship (one row per worker process).
+
+### 1u.1 P6 entity register (slices J and C) → tables
+
+| Entity | Table(s) | PK | Owner (column) | Writers | Status field | `version` | API module |
+|---|---|---|---|---|---|---|---|
+| Service identity (S16-029) | `service_identity` (+ `service_identity_change`) | `id`; `code` unique | `created_by` (NULL for migration rows) | migrations (jobs), connector creation, `service_identity.configure` (grant only) | — | yes (history append-only) | operations |
+| Operational exception (S12-019) | `operational_exception` (+ `operational_exception_event`, `operational_exception_kpi`) | `id`; one active per `(organization_id, dedup_key)` | — (system-raised) | worker, connector runs, freshness scan, heartbeat watch; `operations.acknowledge` | `status` (open, acknowledged, resolved) | yes (events append-only) | operations |
+| Worker heartbeat (A22) | `worker_heartbeat` | `id`; `instance_key` unique | — | worker | — | yes (not audited) | operations |
+| Storage setting (S16-006) | `storage_setting` (+ `storage_setting_change`) | `id`; singleton | `created_by` | `storage.configure` | — | yes (history append-only) | evidence (admin) |
+| Store of a file (S16-006) | `evidence_content.storage_driver` | `evidence_content.id` | `uploaded_by` | evidence upload | — | no (append-only revisions) | evidence |
+| Notification channel (S12-023) | `notification_channel` (+ `notification_channel_change`) | `id`; `(organization_id, channel_kind)` unique | `created_by` | `notification_channel.configure` | `enabled` | yes (history append-only) | tasks (channels) |
+| Notification delivery (S12-023) | `notification_delivery` | `id`; `(inbox_notification_id, channel_kind)` unique | — (system) | worker fan-out | `status` (pending, sent, failed, skipped) | yes | tasks (channels) |
+
+## 1v. P6 slices B and A: connectors, configuration versions, integration runs, outbound writes, the deliverable external-change confirmation, webhook endpoints and receipts, staged imports and lineage (migrations 0104–0107; T-DG6-ARCH-03; ADR-0055, ADR-0056)
+
+Six new mutable tables carry the P2 guards and are audited (`_row_guard`, deferred `_audit_required`): `connector`, `integration_run`, `outbound_write`, `deliverable_external_change`, `webhook_endpoint` and `import_batch`. Six append-only histories are written only by SECURITY DEFINER triggers (`connector_change`, `integration_run_event`, `outbound_write_event`, `deliverable_external_change_event`, `webhook_endpoint_change`, `import_batch_event`). `connector_config_version`, `webhook_receipt` and `import_row_commit` are append-only records written by the application. `import_row` is inserted while its batch is staging and afterwards only its `commit_status` moves (column grant); it is never deleted. `0107` adds eleven permission codes. The column lists are in `data-dictionary.md` ("P6 tables, slices B and A").
+
+```mermaid
+erDiagram
+    organization ||--o{ connector : "unique (organization_id, code)"
+    connector ||--|{ connector_config_version : "numbered 1, 2, 3 (append-only); current = config_version_no (deferred FK)"
+    connector ||--o{ connector_change : "one history row per version"
+    connector ||--|| service_identity : "connector:<id> (FK added here)"
+    transformation |o--o{ connector_config_version : "target transformation (kpi_actual connectors)"
+    connector ||--o{ integration_run : "one active run; unique idempotency key"
+    connector_config_version ||--o{ integration_run : "the configuration it used"
+    service_identity ||--o{ integration_run : "acts as the connector's identity"
+    integration_run |o--o| integration_run : "retry_of_run_id (at most one retry)"
+    integration_run ||--o{ integration_run_event : "one event per version"
+    integration_run |o--o| import_batch : "the batch the run staged"
+    connector ||--o{ outbound_write : "unique (connector_id, idempotency_key)"
+    deliverable ||--o{ outbound_write : "deliverable_status_push"
+    outbound_write ||--o{ outbound_write_event : "one event per version"
+    deliverable ||--o| deliverable_external_change : "flag and separate confirmation"
+    evidence |o--o{ deliverable_external_change : "reviewed (verified) evidence confirms"
+    outbound_write |o--o{ deliverable_external_change : "a confirmed connector result confirms"
+    deliverable_external_change ||--o{ deliverable_external_change_event : "one event per version"
+    connector ||--o{ webhook_endpoint : "webhook connectors only"
+    webhook_endpoint ||--o{ webhook_endpoint_change : "one history row per version"
+    webhook_endpoint ||--o{ webhook_receipt : "unique (endpoint, delivery id)"
+    webhook_receipt ||--o| import_batch : "one batch per receipt"
+    transformation ||--o{ import_batch : "one target transformation"
+    methodology_version ||--o{ import_batch : "the pinned form schema version"
+    import_batch ||--o{ import_batch_event : "one event per version"
+    import_batch ||--|{ import_row : "row_number unique per batch"
+    import_row |o--o| import_row : "duplicate_of_row_id (same batch and key)"
+    import_row ||--o| import_row_commit : "lineage of a committed row"
+    kpi_actual ||--o{ import_row_commit : "target record (trigger-checked value number)"
+```
+
+`import_row_commit.target_record_id` has no declared foreign key (the target is polymorphic by `target_record_type`; `kpi_actual` is the only value); the trigger `import_row_commit_guard` requires the named KPI actual value in the same transformation (probe IM16).
+
+### 1v.1 P6 entity register (slices B and A) → tables
+
+| Entity | Table(s) | PK | Owner (column) | Writers | Status field | `version` | API module |
+|---|---|---|---|---|---|---|---|
+| Connector (S17-001) | `connector` (+ `connector_change`) | `id`; `(organization_id, code)` unique | `created_by` | `connector.configure` | `status` (disabled, enabled) | yes (history append-only) | integrations |
+| Connector configuration version (S17-001) | `connector_config_version` | `id`; `(connector_id, version_no)` unique | `created_by` | `connector.configure` | — | no (append-only) | integrations |
+| IntegrationRun (S16-022, S17-001) | `integration_run` (+ `integration_run_event`) | `id`; `(connector_id, idempotency_key)` unique | `requested_by`; `service_identity_id` | worker (service), `connector.run`, `connector.configure` (test), webhook receipt | `status` (queued, running, succeeded, failed, cancelled) | yes (events append-only) | integrations |
+| Outbound write (S17-006) | `outbound_write` (+ `outbound_write_event`) | `id`; `(connector_id, idempotency_key)` unique | `requested_by` | `outbound_write.execute` | `status` (requested, pending_confirmation, confirmed, failed) | yes (events append-only) | integrations |
+| External-change confirmation (S01-005) | `deliverable_external_change` (+ `deliverable_external_change_event`) | `id`; `deliverable_id` unique | `created_by`; `confirmed_by` or `service_identity_id` | `external_change.flag`, `external_change.confirm`, the connector-confirmation path | `confirmation_status` (unconfirmed, confirmed) | yes (events append-only) | portfolio |
+| Webhook endpoint (S17-003) | `webhook_endpoint` (+ `webhook_endpoint_change`) | `id`; `endpoint_key` unique | `created_by` | `webhook.configure` | `status` (active, disabled) | yes (history append-only) | integrations |
+| Webhook receipt (S17-003) | `webhook_receipt` | `id`; `(webhook_endpoint_id, delivery_id)` unique | — (signed sender; service actor) | `receiveWebhook` | — | no (append-only) | integrations |
+| Import batch (S17-002) | `import_batch` (+ `import_batch_event`) | `id`; `webhook_receipt_id` unique | `created_by` (uploads), `committed_by` | `import.create`, `import.commit`, webhook and connector staging | `status` (staging, staged, committed, cancelled, failed) | yes (events append-only) | integrations (imports) |
+| Import row (S17-002) | `import_row` | `id`; `(import_batch_id, row_number)` unique; one valid row per `(import_batch_id, duplicate_key)` | — (the batch's) | staging; commit (`commit_status` only) | `validation_status`, `commit_status` | no (covered by the batch's audit) | integrations (imports) |
+| Lineage (S17-002) | `import_row_commit` | `id`; `import_row_id` unique | — (the batch's committer) | commit | — | no (append-only) | integrations (imports) |
+
+## 1w. P6 slices H and G: the derived search index and its state, saved views, the help catalogue and the load-dataset marker (migrations 0108–0110; T-DG6-ARCH-04; ADR-0057, ADR-0058)
+
+One new mutable table carries the full P2 guards and is audited (`_row_guard`, deferred `_audit_required`): `saved_view`, with its append-only history `saved_view_event` written only by the SECURITY DEFINER trigger `saved_view_history`. Two tables are version-stepped by `p2_row_guard` but **not audited**, because they are derived or telemetry (the `worker_heartbeat` precedent): `search_document` (one rebuildable document per indexed record, written only by the search index job; monotonic by `search_document_guard`) and `search_index_state` (12 seeded rows; `search_index_state_guard`). `help_topic` is a seeded catalogue, read-only to the application. `load_dataset_marker` is an append-only singleton written once into an empty load database. `0109` adds two permission codes; `0110` adds eight indexes (no table change). The column lists are in `data-dictionary.md` ("P6 tables, slices H and G").
+
+```mermaid
+erDiagram
+    organization ||--o{ search_document : "scope key (copied, immutable)"
+    transformation ||--o{ search_document : "scope key; a transformation document is its own"
+    search_document }o--|| search_index_state : "record_type (12 types; logical link, no FK)"
+    organization ||--o{ saved_view : "the owner's organization"
+    app_user ||--o{ saved_view : "owner = created_by; only the owner changes"
+    transformation |o--o{ saved_view : "optional: the view's transformation"
+    saved_view ||--o{ saved_view_event : "one history row per version"
+```
+
+`search_document.record_id` has no declared foreign key: the indexed record is polymorphic by `record_type` (12 tables). The document is a derived copy; the index job deletes it when its record no longer exists, and permission is decided at query time through `ReadScope` (ADR-0057 §3), never from the document. `help_topic` and `load_dataset_marker` reference no other table.
+
+### 1w.1 P6 entity register (slices H and G) → tables
+
+| Entity | Table(s) | PK | Owner (column) | Writers | Status field | `version` | API module |
+|---|---|---|---|---|---|---|---|
+| Search document (S15-010, S10-004) | `search_document` | `id`; `(record_type, record_id)` unique | — (derived) | worker search handlers (service identity) | `is_archived` (copied from the record) | yes, stepped; not audited | search |
+| Search index state (S15-010) | `search_index_state` | `id`; `record_type` unique | — | worker search handlers | `status` (idle, reindexing, failed) | yes, stepped; not audited | search |
+| Saved view (S15-010, S15-013) | `saved_view` (+ `saved_view_event`) | `id`; one active `(owner, list, transformation, lower(name))`; one default per `(owner, list, transformation)` | `owner_user_id` (= `created_by`) | the owner (`saved_view.manage`; share: `saved_view.share`) | `status` (active, deleted); `visibility` (personal, shared) | yes (history append-only) | search |
+| Help topic (S15-010) | `help_topic` | `id`; `topic_key` unique; `(screen_key, ordinal)` unique | — | migrations only | — | no (read-only catalogue) | search |
+| Load-dataset marker (S20-029) | `load_dataset_marker` | `singleton` | — | `deploy/load/generate.mjs` (mth_owner) | — | no (append-only) | none (deploy/load) |
+
+## 1x. P6 slice D: the optional assistant: its setting and history, conversations, messages and suggestions (migrations 0111–0112; T-DG6-ARCH-05, completed by T-DG6-ARCH-05B; ADR-0059)
+
+Three new mutable tables carry the full P2 guards and are audited (`_row_guard`, deferred `_audit_required`): `assistant_setting` (at most one row, `assistant_setting_singleton_key`; **no row is seeded, and no row means the assistant is off**), with its append-only history `assistant_setting_change` written only by the SECURITY DEFINER trigger `assistant_setting_history`; `assistant_conversation` (one user's own conversation; every UPDATE appends exactly one message, `assistant_conversation_guard`, and the deferred trigger `assistant_conversation_messages_match` checks at COMMIT that `message_count` equals the number of messages); and `assistant_suggestion` (`proposed` → `taken_to_draft`, final; content immutable). `assistant_message` is append-only (no UPDATE or DELETE grant; `p2_append_only`), covered by its conversation's audit event. No table here is referenced by any DG1–DG5 table, and no trigger here writes outside these five tables. `0112` adds two permission codes and fourteen role links. The column lists are in `data-dictionary.md` ("P6 tables, slice D").
+
+```mermaid
+erDiagram
+    app_user |o--o| assistant_setting : "enabled_by (stamped when enabled)"
+    assistant_setting ||--o{ assistant_setting_change : "one history row per version"
+    organization ||--o{ assistant_conversation : "the owner's organization"
+    app_user ||--o{ assistant_conversation : "owner = created_by; only the owner changes"
+    transformation |o--o{ assistant_conversation : "optional focus"
+    assistant_conversation ||--o{ assistant_message : "seq 1..100, append-only"
+    assistant_message ||--o{ assistant_suggestion : "(conversation_id, message_id); an answer only; ordinal 1..5"
+    assistant_conversation ||--o{ assistant_suggestion : "the conversation's transformation and owner"
+    transformation ||--o{ assistant_suggestion : "= the conversation's focus"
+```
+
+Citations (`assistant_message.citations`, `assistant_suggestion.citations`) are JSON arrays of record ids and versions or playbook block references, checked by `p6_assistant_citations_valid`; they declare no foreign key, because the cited record is polymorphic by `recordType` (the 12 search record types, as `search_document`) and a citation records the version that was read, which may later change. Whether the owner may still read a cited record is decided at read time through `ReadScope` (ADR-0059 §9), never from the citation.
+
+### 1x.1 P6 entity register (slice D) → tables
+
+| Entity | Table(s) | PK | Owner (column) | Writers | Status field | `version` | API module |
+|---|---|---|---|---|---|---|---|
+| Assistant setting (S17-009) | `assistant_setting` (+ `assistant_setting_change`) | `id`; `singleton` unique (at most one row) | — (installation-wide) | ADM_TECH (`assistant.configure`; lock 730323) | `enabled` (false → true → false) | yes (history append-only) | assistant |
+| Assistant conversation (S17-007) | `assistant_conversation` | `id` | `owner_user_id` (= `created_by`) | the owner (`assistant.use`) | `awaiting_reply` | yes, one step per message | assistant |
+| Assistant message (S17-007, S17-008, S17-011) | `assistant_message` | `id`; `(conversation_id, seq)` unique | `created_by` (the conversation's owner) | the owner's requests (`assistant.use`) | `reply_kind` (answer, refusal, no_sources, unavailable, interrupted) | no (append-only; the conversation's version covers it) | assistant |
+| Assistant suggestion (S17-007, S17-008) | `assistant_suggestion` | `id`; `(message_id, ordinal)` unique | `owner_user_id` (= `created_by`) | the owner (`assistant.use`; to draft: plus the target's write permission) | `status` (proposed, taken_to_draft) | yes | assistant |
+
+## 1y. P6 slice I: the contrast report of a published branding version (migration 0113; T-DG6-ARCH-06; ADR-0061)
+
+Two new append-only tables, written only by the branding publish (`putBrandingSettings`) in the transaction that inserts the branding version, under the existing lock `brandingPublish` 730270: `branding_contrast_report` (at most one per branding version, `branding_contrast_report_version_key`; a composite foreign key to `branding_version (organization_id, version_no)`, so a report names an existing version of its own organization; audited by record id, deferred `_audit_required`; the deferred trigger `branding_contrast_report_pairs_complete` checks at COMMIT that it has exactly `pair_count` pairs numbered 1..`pair_count`) and `branding_contrast_pair` (one evaluated token pair; `CHECK (ratio >= threshold)`, so a stored pair always passes). Neither table is referenced by any DG1–DG5 table, and `0113` changes no existing table: a branding version published before P6 has no report. The rule that every new branding version has a report ships with BE-W's API change (ADR-0061 §2). The column lists are in `data-dictionary.md` ("P6 tables, slice I").
+
+```mermaid
+erDiagram
+    organization ||--o{ branding_contrast_report : "the version's organization"
+    branding_version ||--o| branding_contrast_report : "(organization_id, version_no) = (organization_id, branding_version_no); at most one"
+    app_user ||--o{ branding_contrast_report : "created_by (the publishing administrator)"
+    branding_contrast_report ||--|{ branding_contrast_pair : "exactly pair_count pairs, ordinal 1..pair_count, append-only"
+```
+
+### 1y.1 P6 entity register (slice I) → tables
+
+| Entity | Table(s) | PK | Owner (column) | Writers | Status field | `version` | API module |
+|---|---|---|---|---|---|---|---|
+| Branding contrast report (S15-003) | `branding_contrast_report` (+ `branding_contrast_pair`) | `id`; `(organization_id, branding_version_no)` unique; `(report_id, ordinal)` unique | `created_by` | ADM_TECH through the branding publish (`branding.configure`; lock 730270) | none (immutable; `recorded` / `not_recorded` is derived at read time) | no (append-only) | admin (branding) |
+
+## 1z. P6 implementer migrations 0114–0121: no new entity
+
+Recorded by T-DG6-ARCH-07 (2026-10-30). The implementer migrations of DG6 add no table, column or relationship, so the diagrams above are unchanged. They seed job service identities and schedules (`0114_p6_job_service_identities.sql`, `0115_p6_search_index_jobs.sql`, `0116_p6_connector_run_jobs.sql`, `0121_p6_notification_fanout_jobs.sql`). They also seed the operations triggers and starter 16 version 2 (`0117_p6_operations_triggers_freshness.sql`), and add or replace guards on existing tables (`0118_p6_evidence_content_detected_type_required.sql` on `evidence_content`, `0119_p6_branding_version_contrast_required.sql` on `branding_version`, `0120_p6_audit_required_index_use.sql` for `p2_audit_required()`). The data dictionary section "P6 implementer migrations (0114–0121, DG6)" lists the rows and functions. The ids are the shipped file names after the merge renumbering of D-196 item 2 (BE-J 0113 → 0114, BE-K2 0116 → 0117, BE-S 0119 → 0120, BE-I2 0120 → 0121).
+
+## 1aa. P6 pre-freeze repair migration 0122: the automation rule enablement ledger (T-DG6-ARCH-09, 2026-11-01; ADR-0043 amendment E1, E2)
+
+One new append-only table, `automation_rule_enablement` (`0122_p6_automation_rule_enablement.sql`, T-DG6-BE-X9; D-203 O-2). It records the moment each version of an automation rule became enabled, and the worker evaluates an event only against a rule version that became enabled at or before the event's stored occurrence time (`outbox_event.created_at`; D-204 decides that a late event is evaluated against the version in force at its occurrence). Its rows are written only by the `SECURITY DEFINER` trigger `automation_rule_enablement_record` on `automation_rule`, in the transaction of the audited enable or publish that causes them; `mth_app` reads only. The composite foreign key `(automation_rule_id, automation_rule_version_id)` → `automation_rule_version (automation_rule_id, id)` (deferred) guarantees that a row names a version of its own rule. No existing table changes. T-DG6-BE-X10 (D-204) completes the ledger with the disabled windows: `0123_p6_automation_rule_enablement_disable.sql` adds no column and no relationship, so the diagram is unchanged; it adds the `source` values `disable` and `backfill_disable` (the rule stopped, on the named version), so the rows of a rule form its interval history (§1aa.2; ADR-0043 amendment G1). The column list is in `data-dictionary.md` ("P6 pre-freeze repair migration 0122").
+
+```mermaid
+erDiagram
+    automation_rule ||--o{ automation_rule_enablement : "enabled_from per enable or effective-version change, append-only"
+    automation_rule_version ||--o{ automation_rule_enablement : "(automation_rule_id, automation_rule_version_id), deferred"
+```
+
+### 1aa.1 P6 entity register (0122) → tables
+
+| Entity | Table(s) | PK | Owner (column) | Writers | Status field | `version` | API module |
+|---|---|---|---|---|---|---|---|
+| Automation rule enablement (REQ-S12-001, REQ-S12-002) | `automation_rule_enablement` | `id` | none (derived from `automation_rule`) | only the trigger `automation_rule_enablement_record`, on the enable or publish of a rule (`automation.configure`, the existing audited rule update) | none (`source`: `enable`, `effective_version`, `backfill`; since `0123` also `disable`, `backfill_disable`) | no (append-only) | none (read by the worker) |
+
+### 1aa.2 P6 pre-freeze repair migration 0123: disables in the ledger (T-DG6-ARCH-10, 2026-11-01; ADR-0043 amendment G1–G3)
+
+`0123_p6_automation_rule_enablement_disable.sql` (T-DG6-BE-X10; D-204, D-205) adds no table, column or relationship, so the §1aa diagram is unchanged. Its changes to `automation_rule_enablement`:
+
+- the trigger function `automation_rule_enablement_record()` now also writes a `disable` row, naming the version that stopped, when an enabled rule is disabled;
+- the backfill writes a `backfill_disable` row for each earlier disable found in the audit trail after a ledger row of the same rule;
+- the `source` CHECK accepts `disable` and `backfill_disable`;
+- the index `automation_rule_enablement_rule_time_idx` serves the lookup of the newest row at or before an event's occurrence time.
+
+On a disable row, `enabled_from` is the moment the rule stopped. The relationship labels of §1aa are read with that in mind: a row is written per enable, effective-version change **or disable**. The column list is in `data-dictionary.md` ("P6 pre-freeze repair migration 0123").
+
+## 1ab. P6 round-1 repair migration 0124: an export job's snapshot is assigned after the start (T-DG6-ARCH-11, 2026-11-01; reconciled with the shipped file by T-DG6-ARCH-12, 2026-11-02; ADR-0046 amendments H and R, D-207)
+
+`0124_p6_export_live_selection_pending.sql` (T-DG6-BE-Y5; D-207, F-DG6-147; the next id above `0123`, D-196) adds no table and no relationship.
+
+- **The relationship changes cardinality.** The existing slice F relationship `report_snapshot ||--o{ export_job` (§1o) now gives an export job **zero or one** snapshot.
+- **A live-selection job** is created with `snapshot_id` NULL and the new column `selection` (the stored `ExportLiveSelection`). The API process's export assembly watch (`reporting/exports/assembly.ts`) assigns its snapshot once, after assembly. Until then the job is `queued`. Otherwise it ends `cancelled`, or `failed` without a snapshot, with `export.source_unavailable` (access lost), `export.includes_restricted_records` (a restricted source at assembly) or `export.assembly_failed`.
+- **`running` and `succeeded` always have a snapshot** (CHECK `export_job_selection_pending`).
+- **The assigned snapshot stays in the job's transformation** through the unchanged composite FK `export_job_snapshot_fkey (transformation_id, snapshot_id)`.
+- **An export of an existing snapshot is unchanged.**
+
+The column list, the CHECKs, the partial index `export_job_pending_assembly_idx` and the replaced `export_job_guard()` are in `data-dictionary.md` ("P6 round-1 repair migration 0124"), as read from the migrated catalogue.
+
+```mermaid
+erDiagram
+    report_snapshot |o--o{ export_job : "exported in one format and language; snapshot_id NULL while a live selection is pending assembly, assigned once"
+```
+
+### 1ab.1 P6 entity register (0124) → tables
+
+| Entity | Table(s) | PK | Owner (column) | Writers | Status field | `version` | API module |
+|---|---|---|---|---|---|---|---|
+| Export job (S13-005, S13-009, S20-030), amended | `export_job` (new column `selection`; `snapshot_id` nullable) + `export_job_progress` | `id` (requester, idempotency key unique) | `requested_by` | `export.create`; the export assembly watch (assign the snapshot, or fail the pending job; since `0125` also count each assembly attempt, §1ab.2; service actor on behalf of the requester); the requester (cancel); the worker | `status` (unchanged: queued, running, succeeded, failed, cancelled); `stage` (unchanged) | yes (progress without audit) | reporting |
+
+### 1ab.2 P6 round-1 repair migration 0125: the assembly attempt count and the definition check (T-DG6-ARCH-13, 2026-11-02; ADR-0046 amendment S)
+
+`0125_p6_export_assembly_attempts.sql` (T-DG6-BE-Y6; F-DG6-sa12-1, F-DG6-sa12-3; the next id above `0124`, D-196) adds no table and no relationship, so the §1ab diagram is unchanged. Its changes to `export_job`:
+
+- **New column `assembly_attempt_count`** (`integer NOT NULL DEFAULT 0`, CHECK `export_job_assembly_attempt_count_check` ≥ 0). It is the number of started assembly attempts of a pending live selection. The export assembly watch counts each attempt and commits it before it assembles, so the bound of 3 (`EXPORT_ASSEMBLY_MAX_ERRORS`) holds per job across restarts. The count is not in the API.
+- **The replaced `export_job_guard()`:**
+  - a job is created with no assembly attempt (`export_job_created_queued`);
+  - the count steps by + 1 only while the job is `queued` with no snapshot (`export_job_assembly_attempt_step`);
+  - a snapshot assigned to a job with a stored selection must be of that selection's definition (`export_job_snapshot_selection`). Together with the unchanged composite FK, an assigned snapshot is therefore in the job's transformation **and** of its selected definition.
+- **The writer register gains one write** (the §1ab.1 row is amended): the export assembly watch also counts an attempt (version + 1, audit `export_job.assembly_attempt`, service actor on behalf of the requester).
+
+The column list, the CHECK and the guard's constraint names are in `data-dictionary.md` ("P6 round-1 repair migration 0125"), as read from the migrated catalogue.
+
+### 1ab.3 P6 round-6 repair migration 0126: the records a report section's aggregate includes (T-DG6-ARCH-16, 2026-11-08; ADR-0045 amendment of 2026-11-08, ADR-0051 §2)
+
+`0126_p6_report_snapshot_aggregate.sql` (T-DG6-BE-Z9; F-DG6-400; the next id above `0125`, D-196) adds one snapshot child table and one column:
+
+- **`report_snapshot_aggregate`** (new) has one row per (snapshot, section, record) for each record whose values a section's aggregate figures include without naming it. These are the executive pack `metrics_<subject>`, the executive dashboard `area_value` and `items_portfolio`, and the gate pack `criteria`.
+  - Like the other snapshot children, it is written only by the snapshot's creating transaction and is append-only. The composite FK `(transformation_id, snapshot_id)` keeps it in the snapshot's transformation.
+  - `record_id` is polymorphic (`record_type` is `benefit`, `business_case` or `evidence`), so it has no FK.
+  - It is **not** a source. It decides only the read-time restricted flag (ADR-0051 §2), and it is never shown or exported.
+- **`report_snapshot.aggregates_recorded`** (new, boolean, immutable) is false for snapshots stored before `0126`. Their flag is decided conservatively (`legacyAggregates`).
+
+T-DG6-BE-Z10 to BE-Z12B added no table and no relationship. Their read-time rules for references to restricted records are in ADR-0051 (amendment of 2026-11-08). The column list, constraints and triggers are in `data-dictionary.md` ("P6 round-6 repair migration 0126"), as read from the migrated catalogue.
+
+```mermaid
+erDiagram
+    report_snapshot ||--o{ report_snapshot_aggregate : "records an aggregate section includes (append-only; not a source)"
+    organization ||--o{ report_snapshot_aggregate : "organization"
+    transformation ||--o{ report_snapshot_aggregate : "same transformation as the snapshot"
+```
+
+| Entity | Table(s) | PK | Owner (column) | Writers | Status field | `version` | API module |
+|---|---|---|---|---|---|---|---|
+| Snapshot aggregate records (S13-007; S10-002) | `report_snapshot_aggregate` | `id` (snapshot, section, record unique) | — | the snapshot's creating transaction | — | append-only | reporting |
+
 ## 2. Conceptual model, all §16 entity groups
 
 ### 2.1 Identity and access (REQ-S16-011; final gate DG4)
@@ -2211,11 +2495,11 @@ erDiagram
 
 | Entity | Table | Stage |
 |---|---|---|
-| FormSchemaVersion | `form_schema_version` | P2/P5 (ADR-0014) |
+| FormSchemaVersion | `methodology_version` rows with `key = 'forms'` (`0011`, seeded v1 `0068`), pinned per transformation by `transformation_config_pin` kind `form_schema` (`0063`; corrected by T-DG6-ARCH-03, ADR-0055 §7: no table `form_schema_version` exists) | P2/P5 (ADR-0014, ADR-0041) |
 | AutomationRuleVersion | `automation_rule_version` | P5 |
-| Job | `pgboss.job` (+ `pgboss.schedule`), plus `outbox_event` and `processed_message` | **P1** (queue, outbox, ledger) |
-| Notification | `notification` (in-app inbox) | P4 |
-| IntegrationRun | `integration_run` | P6 |
+| Job | `pgboss.job` (+ `pgboss.schedule`), plus `outbox_event` and `processed_message`; P5 `job_schedule` and `job_run` (`0074`) | **P1** (queue, outbox, ledger); P5 run history |
+| Notification | `inbox_notification` (in-app inbox, `0028`; corrected by T-DG6-ARCH-03, ADR-0055 §7: no table `notification` exists) | P4 |
+| IntegrationRun | `integration_run` (`0104`; ERD §1v, ADR-0055 §2) | P6 |
 | ReportSnapshot | `report_snapshot` (immutable once issued) | P5 |
 | AuditEvent | `audit_event` | **P1** |
 

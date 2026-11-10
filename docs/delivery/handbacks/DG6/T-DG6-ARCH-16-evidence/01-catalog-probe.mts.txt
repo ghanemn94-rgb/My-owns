@@ -1,0 +1,32 @@
+import { spawnSync } from "node:child_process";
+import { createRequire } from "node:module";
+const root = process.argv[2]!;
+const gs = await import(root + "/packages/db/test/global-setup.ts");
+const pg = createRequire(root + "/packages/db/package.json")("pg");
+const admin = process.env.TEST_DATABASE_ADMIN_URL!;
+const db = await gs.createScratchDatabase(admin, "arch16");
+const owner = gs.roleUrl(admin, db, "mth_owner");
+const r = spawnSync(process.execPath, ["--conditions=@mth/source", root + "/packages/db/src/cli.ts", "migrate"], { env: { ...process.env, NODE_ENV: "test", DATABASE_OWNER_URL: owner }, encoding: "utf8" });
+console.log("migrate exit", r.status, (r.stdout.match(/applying/g) ?? []).length, "applied;", r.stderr.slice(-400));
+const c = new pg.Client({ connectionString: gs.roleUrl(admin, db, null) }); await c.connect();
+const q = async (s: string) => (await c.query(s)).rows;
+console.log("LAST MIGRATIONS"); for (const x of await q(`SELECT * FROM schema_migration ORDER BY 1 DESC LIMIT 2`)) console.log(JSON.stringify(x));
+for (const t of ["report_snapshot_aggregate", "report_snapshot"]) {
+  console.log("== TABLE", t);
+  const cols = t === "report_snapshot" ? ` AND column_name='aggregates_recorded'` : "";
+  console.log("COLUMNS"); for (const x of await q(`SELECT column_name, data_type, is_nullable, column_default, ordinal_position FROM information_schema.columns WHERE table_name='${t}'${cols} ORDER BY ordinal_position`)) console.log(JSON.stringify(x));
+  if (t === "report_snapshot_aggregate") {
+    console.log("CONSTRAINTS"); for (const x of await q(`SELECT conname, contype, pg_get_constraintdef(oid) d FROM pg_constraint WHERE conrelid='${t}'::regclass ORDER BY 1`)) console.log(x.conname, x.contype, "=>", x.d);
+    console.log("INDEXES"); for (const x of await q(`SELECT indexdef FROM pg_indexes WHERE tablename='${t}' ORDER BY indexname`)) console.log(x.indexdef);
+  }
+  console.log("TRIGGERS"); for (const x of await q(`SELECT tgname, pg_get_triggerdef(oid) d FROM pg_trigger WHERE tgrelid='${t}'::regclass AND NOT tgisinternal ${t === "report_snapshot" ? "AND tgname LIKE '%aggregates%'" : ""} ORDER BY 1`)) console.log(x.tgname, "=>", x.d);
+  console.log("GRANTS mth_app"); console.log((await q(`SELECT privilege_type FROM information_schema.role_table_grants WHERE table_name='${t}' AND grantee='mth_app' ORDER BY 1`)).map((x: any) => x.privilege_type).join(", "));
+}
+console.log("FUNCTION report_snapshot_aggregates_recorded_immutable");
+const f = (await q(`SELECT proconfig, prosecdef, prosrc FROM pg_proc WHERE proname='report_snapshot_aggregates_recorded_immutable'`))[0];
+console.log("config", JSON.stringify(f.proconfig), "secdef", f.prosecdef, "constraint names", [...new Set([...f.prosrc.matchAll(/CONSTRAINT = '([a-z_]+)'/g)].map((m: any) => m[1]))].join(" "));
+const cg = (await q(`SELECT prosrc FROM pg_proc WHERE proname='report_snapshot_child_guard'`))[0];
+console.log("report_snapshot_child_guard constraint names", [...new Set([...cg.prosrc.matchAll(/CONSTRAINT = '([a-z_]+)'/g)].map((m: any) => m[1]))].join(" "));
+console.log("CHILD GUARD SRC"); console.log(cg.prosrc);
+console.log("FKs referencing report_snapshot_aggregate:", JSON.stringify(await q(`SELECT conname FROM pg_constraint WHERE confrelid='report_snapshot_aggregate'::regclass`)));
+await c.end(); await gs.dropScratchDatabase(admin, db);

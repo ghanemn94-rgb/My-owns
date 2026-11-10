@@ -46,6 +46,7 @@ import {
 } from "@mth/shared/schemas";
 import type { Selectable } from "kysely";
 import type { z } from "zod";
+import { hideRestrictedRefs, hideRestrictedTypedRefs } from "../access/index.ts";
 import { HttpProblem, iso, isoOrNull } from "../platform/index.ts";
 import { loadGoodOutcomeEvaluations, type GoodOutcomeEvaluation } from "./good-outcome.ts";
 import {
@@ -53,6 +54,7 @@ import {
   assertCatalogueCode,
   assertSameTransformation,
   loose,
+  registerSortColumns,
   type LooseRow,
   type RegisterSpec,
 } from "./register-kit.ts";
@@ -139,6 +141,11 @@ export const strategicGuardrailRegister: RegisterSpec<GuardrailRow, StrategicGua
   table: "strategic_guardrail",
   path: `${T}/strategic-guardrails`,
   idParam: "strategicGuardrailId",
+  searchColumns: ["title", "category", "statement"],
+  sortColumns: registerSortColumns([
+    ["title", "title", "text"],
+    ["category", "category", "text"],
+  ]),
   writeRules: [{ permission: "charter.edit" }],
   createSchema: strategicGuardrailCreate,
   updateSchema: strategicGuardrailUpdate,
@@ -193,6 +200,11 @@ export const outcomeRegister: RegisterSpec<OutcomeRow, Outcome> = {
   table: "outcome",
   path: `${T}/outcomes`,
   idParam: "outcomeId",
+  searchColumns: ["statement", "description"],
+  sortColumns: registerSortColumns([
+    ["statement", "statement", "text"],
+    ["topRank", "top_rank", "integer"],
+  ]),
   writeRules: [{ permission: "outcome.edit" }],
   createSchema: outcomeCreate,
   updateSchema: outcomeUpdate,
@@ -251,6 +263,8 @@ export const diagnosticItemRegister: RegisterSpec<DiagnosticItemRow, DiagnosticI
   table: "diagnostic_item",
   path: `${T}/diagnostic-items`,
   idParam: "diagnosticItemId",
+  searchColumns: ["dimension_code", "current_state", "root_cause", "impact_text"],
+  sortColumns: registerSortColumns([["dimensionCode", "dimension_code", "text"]]),
   writeRules: [{ permission: "diagnostic.edit" }, { permission: "diagnostic.contribute", scope: "own" }],
   createSchema: diagnosticItemCreate,
   updateSchema: diagnosticItemUpdate,
@@ -322,6 +336,11 @@ export const diagnosticFindingRegister: RegisterSpec<FindingRow, DiagnosticFindi
   table: "diagnostic_finding",
   path: `${T}/diagnostic-findings`,
   idParam: "diagnosticFindingId",
+  searchColumns: ["workstream_code", "statement", "detail"],
+  sortColumns: registerSortColumns([
+    ["workstreamCode", "workstream_code", "text"],
+    ["kind", "kind", "text"],
+  ]),
   writeRules: [{ permission: "diagnostic.edit" }, { permission: "diagnostic.contribute", scope: "own" }],
   createSchema: diagnosticFindingCreate,
   updateSchema: diagnosticFindingUpdate,
@@ -380,6 +399,11 @@ export const workstreamOutputRegister: RegisterSpec<OutputRow, WorkstreamOutput>
   table: "diagnostic_workstream_output",
   path: `${T}/workstream-outputs`,
   idParam: "diagnosticWorkstreamOutputId",
+  searchColumns: ["workstream_code", "title", "note"],
+  sortColumns: registerSortColumns([
+    ["workstreamCode", "workstream_code", "text"],
+    ["title", "title", "text"],
+  ]),
   writeRules: [{ permission: "diagnostic.edit" }, { permission: "diagnostic.contribute", scope: "own" }],
   createSchema: workstreamOutputCreate,
   updateSchema: workstreamOutputUpdate,
@@ -408,6 +432,15 @@ export const workstreamOutputRegister: RegisterSpec<OutputRow, WorkstreamOutput>
   },
   auditFields: [...OUTPUT_COLS.map(([, c]) => c), "status"],
   archive: {},
+  // T-DG6-BE-Z10B (F-DG6-420; D-218): a linked record or evidence item the reader is not admitted to is not named.
+  redact: async (db, principal, items) =>
+    hideRestrictedRefs(
+      db,
+      principal,
+      "evidence",
+      await hideRestrictedTypedRefs(db, principal, items as WorkstreamOutput[], "recordType", "recordId"),
+      "evidenceId",
+    ),
 };
 
 // ------------------------------------------------------------------------------------------------ T03
@@ -433,17 +466,22 @@ export const toTomGap = (r: TomGapRow): TomGap => ({
   status: r.status as TomGap["status"],
   ...archiveOf(r),
 });
-/** T03: a row without a TOM dimension is a 422 template violation (B0058), checked here and by NOT NULL. */
-const tomGapCreateLenient = tomGapCreate.partial({ dimensionCode: true });
+/**
+ * T03: a row needs its TOM dimension (B0058). On create the contract's TomGapCreate requires dimensionCode, so its
+ * absence is the uniform 400 validation body (F-DG6-146; REQ-S16-027; ADR-0051 §5 case 4); `check` still refuses a row
+ * whose dimension would be null (422, and NOT NULL in the table) for any other path.
+ */
 export const tomGapRegister: RegisterSpec<TomGapRow, TomGap> = {
   table: "tom_gap",
   path: `${T}/tom-gaps`,
   idParam: "tomGapId",
+  searchColumns: ["dimension_code", "current_state", "target_state", "gap"],
+  sortColumns: registerSortColumns([["dimensionCode", "dimension_code", "text"]]),
   writeRules: [{ permission: "tom.edit" }, { permission: "tom.contribute", scope: "own" }],
-  createSchema: tomGapCreateLenient,
+  createSchema: tomGapCreate,
   updateSchema: tomGapUpdate,
   toApi: toTomGap,
-  insertValues: (b: z.infer<typeof tomGapCreateLenient>) => ({ dimension_code: null, ...pick(b, TOM_GAP_COLS) }),
+  insertValues: (b: z.infer<typeof tomGapCreate>) => pick(b, TOM_GAP_COLS),
   updateValues: (b: z.infer<typeof tomGapUpdate>) => pick(b, TOM_GAP_COLS),
   check: async (m, ctx) => {
     if ((col(m, "dimension_code") ?? null) === null)
@@ -506,6 +544,11 @@ export const capabilityRegister: RegisterSpec<CapabilityRow, CapabilityHeatmapEn
   table: "capability",
   path: `${T}/capability-heatmap`,
   idParam: "capabilityId",
+  searchColumns: ["name", "description", "dimension_code"],
+  sortColumns: registerSortColumns([
+    ["name", "name", "text"],
+    ["dimensionCode", "dimension_code", "text"],
+  ]),
   writeRules: [{ permission: "tom.edit" }, { permission: "tom.contribute", scope: "own" }],
   createSchema: capabilityHeatmapEntryCreate,
   updateSchema: capabilityHeatmapEntryUpdate,
@@ -561,6 +604,11 @@ export const journeyRegister: RegisterSpec<JourneyRow, Journey> = {
   table: "journey",
   path: `${T}/journeys`,
   idParam: "journeyId",
+  searchColumns: ["name", "description"],
+  sortColumns: registerSortColumns([
+    ["name", "name", "text"],
+    ["kind", "kind", "text"],
+  ]),
   writeRules: [{ permission: "tom.edit" }, { permission: "tom.contribute", scope: "own" }],
   createSchema: journeyCreate,
   updateSchema: journeyUpdate,
@@ -604,6 +652,8 @@ export const journeyPainPointRegister: RegisterSpec<PainPointRow, JourneyPainPoi
   table: "journey_pain_point",
   path: `${T}/journeys/:journeyId/pain-points`,
   idParam: "painPointId",
+  searchColumns: ["description"],
+  sortColumns: registerSortColumns([["stepKey", "step_key", "uuid"]]),
   parent: { param: "journeyId", column: "journey_id", table: "journey", archivable: true },
   writeRules: [{ permission: "tom.edit" }, { permission: "tom.contribute", scope: "own" }],
   createSchema: journeyPainPointCreate,

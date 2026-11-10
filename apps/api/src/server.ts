@@ -13,19 +13,55 @@
 //      stricter on auth), then the not-found handler, which the limiter meters too;
 //   3. the failed-authorization audit hook, health routes, identity (authentication + CSRF hook), then the modules;
 //   4. the built SPA, when present, from the same origin (no CDN).
-import { existsSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { existsSync, readFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import cookie from "@fastify/cookie";
 import helmet, { type FastifyHelmetOptions } from "@fastify/helmet";
 import rateLimit from "@fastify/rate-limit";
 import fastifyStatic from "@fastify/static";
 import type { AppConfig } from "@mth/config";
+// ADR-0053 §4 (T-DG6-DO-D): the log redaction set and its line redactor.
+import { REDACTED_LOG_PATHS, redactLogLine, withSecretRedaction } from "@mth/config";
+// T-DG6-BE-X3 (QA-D-1; ADR-0059 §12): the A21 connection log of the API process (a test instrument).
+import { CONNECTION_LOG_VARIABLE, installConnectionLog, type ConnectionLogHandle } from "@mth/config";
 import { createDb, listMigrationFiles, type Db, type MigrationFile } from "@mth/db";
-import Fastify, { type FastifyBaseLogger, type FastifyInstance, type FastifyRequest } from "fastify";
+import Fastify, { LogController, type FastifyBaseLogger, type FastifyInstance, type FastifyRequest } from "fastify";
 import type pg from "pg";
-import { registerAccessP2Routes, registerAccessP4Routes, registerDeniedMutationAudit } from "./modules/access/index.ts";
-import { colorTokens, deriveDarkerShade, tokenSource, tokensAreProvisional } from "@mth/design-tokens";
-import { registerAdminRoutes, registerBrandingRoutes, registerEnvironmentRoutes } from "./modules/admin/index.ts";
+import {
+  principalOf,
+  registerAccessP2Routes,
+  registerAccessP4Routes,
+  registerDeniedMutationAudit,
+  registerSecretRefusalAudit,
+  registerSensitiveReachGuard,
+  registerSensitivityRoutes,
+  resolveTarget,
+  restrictedIdsAmong,
+  restrictedRecordRefs,
+  scopeFilter,
+} from "./modules/access/index.ts";
+import {
+  checkBrandingContrast,
+  colorTokens,
+  contrastPointer,
+  deriveDarkerShade,
+  tokenSource,
+  tokensAreProvisional,
+} from "@mth/design-tokens";
+import {
+  registerAdminRoutes,
+  registerBrandingRoutes,
+  registerEnvironmentRoutes,
+  registerIdentityAdminRoutes,
+  registerNotificationChannelRoutes,
+  registerSecurityRoutes,
+  registerServiceIdentityRoutes,
+  registerStorageAdminRoutes,
+  registerUploadPolicyRoutes,
+} from "./modules/admin/index.ts";
+import { registerAuditRoutes } from "./modules/audit/index.ts";
 import {
   RateLimitSubjects,
   registerIdentity,
@@ -34,6 +70,14 @@ import {
   type OidcService,
 } from "./modules/identity/index.ts";
 import { registerEvidenceModule } from "./modules/evidence/index.ts";
+// BE-H2 (ADR-0054 §2): the driver-selecting evidence store and the storage test's target and setting reads, wired here
+// (the composition root) and injected into admin/storage.ts, which may not import evidence.
+import {
+  loadEffectiveStorage,
+  s3SettingsKey,
+  SelectingEvidenceStore,
+  storageTestTarget,
+} from "./modules/evidence/store.ts";
 import { loadKpiP3GateFacts, registerKpiModule } from "./modules/kpi/index.ts";
 import { createConfigResolver, registerMethodologyModule } from "./modules/methodology/index.ts";
 import { registerOrganizationRoutes, registerCalendarRoutes } from "./modules/organization/index.ts";
@@ -44,11 +88,39 @@ import { pinNewTransformationToForms, registerFormsModule, setFormBulkUpdaters }
 // T-DG5-BE-H (ADR-0043 §2): the AutomationActionRegistry port and the action descriptors of their owning modules.
 import { createAutomationActionRegistry, setAutomationActionRegistry } from "./modules/automation/registry.ts";
 import { TASK_AUTOMATION_ACTIONS } from "./modules/tasks/automation-actions.ts";
+import { createEmailChannel } from "./modules/tasks/channels/email.ts"; // BE-I (ADR-0054 §3)
+import { renderTestMessage } from "./modules/tasks/channels/render.ts"; // BE-I (ADR-0054 §3)
 import { registerHealthCheckSchemeProvider, registerHealthModule } from "./modules/health/index.ts";
 import { registerLaunchModule } from "./modules/launch/index.ts";
 import { launchPlanGenerator } from "./modules/launch/port.ts";
 import { registerLaunchPlanPort } from "./modules/automation/ports/launch-plan.ts";
 import { registerProceduresModule, wireProcedureApprovals } from "./modules/procedures/index.ts";
+// P6 modules (p6-plan §3 seam 21; T-DG6-BE-A): each registers its route files (stubs until their owners fill them).
+import { registerAssistantModule, setAssistantSecretProviders } from "./modules/assistant/index.ts";
+// T-DG6-BE-X3: BE-U's two assistant read ports (ADR-0059 §4; the D-197 injected-port precedent: assistant imports
+// neither evidence nor methodology).
+import {
+  registerAssistantEvidenceTextPort,
+  registerAssistantPlaybookPassagePort,
+  type EvidenceTextPort as AssistantEvidenceTextPort,
+  type PlaybookPassagePort as AssistantPlaybookPassagePort,
+} from "./modules/assistant/retrieval.ts";
+import { createEvidenceTextPort } from "./modules/evidence/text-excerpt.ts";
+import { createPlaybookPassagePort } from "./modules/methodology/playbook-passages.ts";
+import { registerIntegrationsModule } from "./modules/integrations/index.ts";
+// T-DG6-BE-M (ADR-0056 §1): the ImportTargetRegistry port; the connector mappings read the template columns from it.
+import { createImportTargetRegistry, setImportTargetRegistry } from "./modules/integrations/imports/targets.ts";
+import { setConnectorTargetColumnsSource } from "./modules/integrations/connectors.ts";
+import { createKpiActualImportTarget } from "./modules/kpi/import-target.ts";
+import { setOutboundConfirmationPort } from "./modules/integrations/outbound.ts"; // BE-O (ADR-0055 §6)
+import { setConnectorSecretProviders } from "./modules/integrations/secret-refs.ts"; // BE-X2 (ADR-0052 §5)
+import { requireEvidenceRead } from "./modules/evidence/access.ts"; // BE-O (ADR-0051 §4 read decision)
+import {
+  recordConnectorConfirmation,
+  setExternalChangeEvidenceGate,
+} from "./modules/portfolio/deliverable-confirmation.ts"; // BE-O (ADR-0055 §6)
+import { registerOperationsModule } from "./modules/operations/index.ts";
+import { registerSearchModule } from "./modules/search/index.ts";
 // P4 modules (p4-plan §2 seam 19; T-DG4-BE-A): each registers its route files (stubs until their owners fill them).
 import { registerAdoptionModule, updateStakeholderGroup } from "./modules/adoption/index.ts";
 import { registerBenefitsModule, updateBenefitRecord } from "./modules/benefits/index.ts";
@@ -66,7 +138,11 @@ import {
 import {
   createClientErrorHandler,
   createFrameworkErrorHandler,
+  createSecretProviderRegistry,
+  organizationCodeLookup,
   createJsonBodyParser,
+  registerBuiltInSecretProviders,
+  registerRateLimitClasses,
   DEFAULT_CONSUMES,
   DEFAULT_REQUEST_TIMEOUT_MS,
   DEFAULT_SHUTDOWN_GRACE_MS,
@@ -83,6 +159,7 @@ import {
   restrictParserTo,
   type InFlight,
   type ModuleRegistration,
+  type SecretProviderRegistry,
   type SecurityHeaders,
 } from "./modules/platform/index.ts";
 import { registerReportingModule } from "./modules/reporting/index.ts";
@@ -206,6 +283,71 @@ export interface RouteRecord {
   readonly access: unknown;
   /** The request media types the route accepts (F-DG2-320). */
   readonly consumes: readonly string[];
+  /** P6 (ADR-0052 §4): the route's rate-limit class, or null (the global limit only). */
+  readonly rateLimitClass: string | null;
+}
+
+// T-DG6-BE-X3 (QA-D-1; ADR-0059 §12 "one call each in apps/api/src/server.ts and apps/worker/src/main.ts"): the API's
+// connection log is installed by the composition root. buildServer may compose more than one app in one process (the
+// test harness builds one per suite, sometimes two at once), so the subscription is shared per log file and counted:
+// each app holds it until it closes, and the last close removes it. With MTH_CONNECTION_LOG unset or empty, or
+// NODE_ENV=production (one warning), installConnectionLog writes nothing and nothing is held.
+const apiConnectionLogs = new Map<string, { handle: ConnectionLogHandle; holders: number }>();
+
+/** Opens (or joins) the API connection log for one composed app; returns its release (idempotent). */
+function holdApiConnectionLog(nodeEnv: string): () => void {
+  const file = process.env[CONNECTION_LOG_VARIABLE] ?? "";
+  let entry = apiConnectionLogs.get(file);
+  if (entry === undefined) {
+    const handle = installConnectionLog("api", { env: { [CONNECTION_LOG_VARIABLE]: file, NODE_ENV: nodeEnv } });
+    if (handle === null) return () => undefined;
+    entry = { handle, holders: 0 };
+    apiConnectionLogs.set(file, entry);
+  }
+  const held = entry;
+  held.holders += 1;
+  let released = false;
+  return () => {
+    if (released) return;
+    released = true;
+    held.holders -= 1;
+    if (held.holders === 0) {
+      held.handle.uninstall();
+      apiConnectionLogs.delete(file);
+    }
+  };
+}
+
+// T-DG6-BE-X3B: BE-U's two retrieval ports are process-wide (assistant/retrieval.ts) and each one captures the `db` of
+// the app that built it. A process normally composes one app; the test harness composes several and closes them in any
+// order, and a port left behind by a closed app reads through a destroyed pool ("driver has already been destroyed",
+// a 500 on postAssistantMessage). So each composed app holds its pair here: the newest open app's pair is registered,
+// and when an app closes while its pair is still the registered one, the newest remaining app's pair (or none)
+// replaces it. A pair registered by someone else (a test's own ports) is left as it is.
+interface AssistantPortPair {
+  readonly evidence: AssistantEvidenceTextPort;
+  readonly playbook: AssistantPlaybookPassagePort;
+}
+const assistantPortHolders: AssistantPortPair[] = [];
+
+/** Registers one app's retrieval ports; returns their release (idempotent). */
+function holdAssistantPorts(pair: AssistantPortPair): () => void {
+  assistantPortHolders.push(pair);
+  registerAssistantEvidenceTextPort(pair.evidence);
+  registerAssistantPlaybookPassagePort(pair.playbook);
+  let released = false;
+  return () => {
+    if (released) return;
+    released = true;
+    const at = assistantPortHolders.indexOf(pair);
+    if (at !== -1) assistantPortHolders.splice(at, 1);
+    const next = assistantPortHolders[assistantPortHolders.length - 1] ?? null;
+    // Reading the current port means swapping it out; it is put back unless it is this app's own.
+    const evidence = registerAssistantEvidenceTextPort(null);
+    registerAssistantEvidenceTextPort(evidence === pair.evidence ? (next?.evidence ?? null) : evidence);
+    const playbook = registerAssistantPlaybookPassagePort(null);
+    registerAssistantPlaybookPassagePort(playbook === pair.playbook ? (next?.playbook ?? null) : playbook);
+  };
 }
 
 export async function buildServer(options: ServerOptions): Promise<{
@@ -214,6 +356,8 @@ export async function buildServer(options: ServerOptions): Promise<{
   routes: readonly RouteRecord[];
   modules: readonly ModuleRegistration[];
   inFlight: InFlight;
+  /** P6 (ADR-0052 §5): the SecretProvider registry of this process (BE-E registers the env and file providers). */
+  secrets: SecretProviderRegistry;
 }> {
   const { config, pool } = options;
   if (!config.appBaseUrl) throw new Error("APP_BASE_URL is required by the API");
@@ -234,18 +378,15 @@ export async function buildServer(options: ServerOptions): Promise<{
         : {
             level: config.logLevel,
             ...(options.logStream ? { stream: options.logStream } : {}),
-            redact: {
-              paths: [
-                "req.headers.authorization",
-                "req.headers.cookie",
-                'req.headers["x-csrf-token"]',
-                'res.headers["set-cookie"]',
-              ],
-              censor: "[redacted]",
-            },
+            // ADR-0053 §4 (T-DG6-DO-D): the header paths (the DG1 four plus x-mth-signature) are censored by pino;
+            // every serialized line then passes the process-wide redaction set (SecretProvider values, configuration
+            // secrets, storage keys, URLs and paths, link tokens, OIDC parameters) before it is written.
+            redact: { paths: [...REDACTED_LOG_PATHS], censor: "[redacted]" },
+            hooks: { streamWrite: redactLogLine },
           },
     genReqId,
-    requestIdLogLabel: "requestId",
+    // T-DG6-DO-A2: fastify 5.12 deprecates the top-level `requestIdLogLabel` (FSTDEP024); same label, same log lines.
+    logController: new LogController({ requestIdLogLabel: "requestId" }),
     bodyLimit: JSON_BODY_LIMIT_BYTES,
     trustProxy: config.trustProxy.length > 0 ? [...config.trustProxy] : false,
     // F-DG2-290: strict percent-decoding; an undecodable component is refused by the central preHandler check.
@@ -268,6 +409,9 @@ export async function buildServer(options: ServerOptions): Promise<{
     forceCloseConnections: "idle",
   });
   appLog = app.log;
+  // T-DG6-BE-X3 (QA-D-1): the connection log, held by this app until it closes (holdApiConnectionLog above).
+  const releaseConnectionLog = holdApiConnectionLog(config.nodeEnv);
+  app.addHook("onClose", async () => releaseConnectionLog());
   // F-DG2-290: JSON bodies are read as raw bytes and decoded as strict UTF-8 (never rewritten to U+FFFD), then parsed
   // by Fastify's default JSON parser (same empty/invalid-JSON errors and prototype-poisoning protection). Registered on
   // the root instance, so every module inherits it; the evidence octet-stream parser is separate.
@@ -290,6 +434,7 @@ export async function buildServer(options: ServerOptions): Promise<{
         url: r.url,
         access: r.config?.access,
         consumes: r.config?.consumes ?? DEFAULT_CONSUMES,
+        rateLimitClass: r.config?.rateLimitClass ?? null,
       });
   });
 
@@ -310,6 +455,11 @@ export async function buildServer(options: ServerOptions): Promise<{
   // live session (within the idle timeout) maps to the authenticated subject; everything else - no cookie, forged,
   // expired or revoked - is keyed by the client IP, so rotating fake cookies cannot open fresh buckets.
   const rateLimitSubjects = new RateLimitSubjects(config.session.idleMinutes * 60_000);
+  const rateLimitKey = (request: FastifyRequest) => {
+    const token = request.cookies?.[cookieName];
+    const subject = token ? rateLimitSubjects.subjectOf(token) : null;
+    return subject ? `u:${subject}` : `ip:${request.ip}`;
+  };
   await app.register(rateLimit, {
     global: true,
     max: config.rateLimit.perMinute,
@@ -317,11 +467,7 @@ export async function buildServer(options: ServerOptions): Promise<{
     // Keyed by the authenticated subject (user id) of a validated session, or else the client IP (TRUST_PROXY decides
     // which X-Forwarded-For hops count). Decided without a database lookup, so floods are refused before any query.
     // In-process store (ADR-0007 T-3); a PostgreSQL store comes with multi-instance P6.
-    keyGenerator: (request: FastifyRequest) => {
-      const token = request.cookies?.[cookieName];
-      const subject = token ? rateLimitSubjects.subjectOf(token) : null;
-      return subject ? `u:${subject}` : `ip:${request.ip}`;
-    },
+    keyGenerator: rateLimitKey,
     allowList: (request: FastifyRequest) => request.url === "/healthz" || request.url === "/readyz",
     errorResponseBuilder: () => problems.rateLimited(),
   });
@@ -330,14 +476,20 @@ export async function buildServer(options: ServerOptions): Promise<{
   // documented form; same key, store and limit). Its 429, like the unmatched 404 itself, belongs to no operation and is
   // outside the contract by design (ADR-0007 §5b).
   registerNotFoundHandler(app, { spaFallback: webRoot !== null, preHandler: app.rateLimit() });
+  // P6 (T-DG6-BE-E; ADR-0052 §4): the rate-limit classes, each in addition to the global limit, same key.
+  registerRateLimitClasses(app, config.rateLimitClasses, rateLimitKey);
 
   registerDeniedMutationAudit(app, db);
+  registerSecretRefusalAudit(app, db); // F-DG6-181 (T-DG6-BE-Z2): audits a SecretRef binding refusal
   registerHealthRoutes(app, pool, options.migrationFiles ?? listMigrationFiles());
   const deps = { db, config };
   registerIdentity(app, deps, {
     rateLimitSubjects,
     ...(options.oidc !== undefined ? { oidc: options.oidc } : {}),
   });
+  // T-DG6-BE-Y1 (ADR-0051 §2; F-DG6-121..123): before any business route, the guard that answers 404 when a path
+  // parameter names a sensitive record, or a record carrying its values, that the caller is not admitted to.
+  registerSensitiveReachGuard(app, db);
   registerOrganizationRoutes(app, deps);
   registerTransformationRoutes(app, deps);
   registerAdminRoutes(app, deps);
@@ -346,7 +498,18 @@ export async function buildServer(options: ServerOptions): Promise<{
   // re-derives the ADR-0009 §3 shades from the same single token source at read time.
   registerBrandingRoutes(
     app,
-    { colorTokens, tokensAreProvisional, derived: tokenSource.derived, deriveDarkerShade },
+    {
+      colorTokens,
+      tokensAreProvisional,
+      derived: tokenSource.derived,
+      deriveDarkerShade,
+      // T-DG6-BE-W (ADR-0061 §1): the runtime contrast rule and the SHA-256 of the tokens.json bytes read at start-up.
+      checkBrandingContrast: (primary, secondary) =>
+        checkBrandingContrast(primary, secondary).map((p) => ({ ...p, pointer: contrastPointer(p) })),
+      tokenSourceSha256: createHash("sha256")
+        .update(readFileSync(createRequire(import.meta.url).resolve("@mth/design-tokens/tokens.json")))
+        .digest("hex"),
+    },
     deps,
   );
   // P4 (T-DG4-BE-A; ADR-0025, ADR-0026): business calendars (organization), job schedules (jobs) and the BE-B access
@@ -359,6 +522,52 @@ export async function buildServer(options: ServerOptions): Promise<{
   registerJobOperationRoutes(app, deps);
   registerNavigationRoutes(app, deps);
   registerEnvironmentRoutes(app, deps);
+  // P6 (T-DG6-BE-A stubs; p6-plan §5.1, p6-work-split §E/F.1): the route files outside the four P6 modules that the
+  // composition root registers. Each owner fills its own file; these lines do not change, except that BE-E fills the
+  // members of the audit routes' access port on its line (audit cannot import access: ADR-0002 rule 5).
+  registerSensitivityRoutes(app, deps); // BE-B: record sensitivity and sensitive-record grants (ADR-0051 §2)
+  registerUploadPolicyRoutes(app, deps); // BE-D: the upload policy (ADR-0052 §1)
+  registerSecurityRoutes(app, deps); // BE-E: the security view, rate-limit classes (ADR-0052 §4)
+  registerAuditRoutes(app, deps, {
+    // BE-E: the global audit API (ADR-0052 §8). The access port (D-197 item 5): audit_event.read per ADR-0006, and the
+    // ADR-0051 §2 redaction: the §2 clause over the event's record and the sensitive owner of a child record
+    // (access/sensitive-reach.ts; T-DG6-BE-Y1, F-DG6-122).
+    organizationAccess: async (request, organizationId) => {
+      const principal = principalOf(request);
+      principal.tracker.decisions += 1;
+      if (!(await resolveTarget(db, { type: "organization", id: organizationId }))) return "not_found";
+      const holds = principal.grants.some(
+        (g) => g.organizationId === organizationId && g.permissions.has("audit_event.read"),
+      );
+      return holds ? "allowed" : "forbidden";
+    },
+    readFilter: (request, cols) => scopeFilter(principalOf(request), "audit_event.read", cols),
+    restrictedRecords: (request, refs) => restrictedRecordRefs(db, principalOf(request), refs),
+    restrictedIdsAmong: (request, ids) => restrictedIdsAmong(db, principalOf(request), ids),
+  });
+  registerIdentityAdminRoutes(app, deps); // BE-G: Administration > Identity (slice C)
+  // BE-H2: Administration > Storage (slice C). admin may not import evidence, so the setting read and the storage test's
+  // target are injected; the evidence module's store selects the driver per upload and per content row (ADR-0054 §2).
+  const evidenceStore = new SelectingEvidenceStore({
+    db,
+    environment: config.evidenceStorage,
+    secrets: () => secrets,
+  });
+  registerStorageAdminRoutes(app, deps, {
+    secrets: () => secrets,
+    storage: {
+      load: (d) => loadEffectiveStorage(d, config.evidenceStorage),
+      settingsKey: s3SettingsKey,
+      testTarget: (driver, s3) => storageTestTarget(driver, s3, config.evidenceStorage, secrets),
+    },
+  });
+  // BE-I: Administration > Notifications (slice C). admin may not import tasks, so the email adapter and the test
+  // renderer of tasks/channels/** are injected here; the SecretProvider registry (created below) is read at request time.
+  registerNotificationChannelRoutes(app, deps, {
+    secrets: () => secrets,
+    channels: { createEmailChannel, renderTestMessage },
+  });
+  registerServiceIdentityRoutes(app, deps); // BE-J: Administration > Service identities (slice J)
   // P3 (ADR-0021 §1): workflows' G4 evaluators read portfolio and kpi facts through this provider (dependency
   // injection; workflows never imports portfolio). The kpi part is kpi's P3 loader (KBE-C, kpi/p3-gate-facts.ts).
   const gateFacts: GateFactsProvider = {
@@ -443,6 +652,58 @@ export async function buildServer(options: ServerOptions): Promise<{
   const automationActions = createAutomationActionRegistry();
   for (const descriptor of TASK_AUTOMATION_ACTIONS) automationActions.register(descriptor); // tasks (BE-H)
   setAutomationActionRegistry(automationActions);
+  // P6 wiring points (p6-plan §2, §5.1, §5.3; p6-work-split §E/F.1; T-DG6-BE-A).
+  //  - SecretProvider (ADR-0052 §5): the registry of this process. BE-E registers the built-in `env` and `file`
+  //    providers on the line below it (`secrets.register(...)`); an IT-supplied adapter is registered the same way. The
+  //    worker's composition (apps/worker/src/main.ts) gets its own registry when a job first needs a secret.
+  //  - ReadScope (ADR-0051 §1): BE-B's `readScopeFor` in access/read-scope.ts, re-exported by access/index.ts. Modules
+  //    import it from access directly (every P6 module depends on access); nothing is wired here. The worker's job
+  //    identities (ADR-0053, BE-J) receive it through the job kit, not through this file.
+  //  - ImportTargetRegistry (p6-plan §2; ARCH-03 defines it in integrations, BE-M creates it): the registry line goes
+  //    below this block, and each domain adds one registration line below it (KBE-A: kpi's import target first), so
+  //    integrations imports no domain module (the AutomationActionRegistry pattern above).
+  //  - NotificationChannel (ARCH-02; BE-I, tasks/channels/**): the channel registry line goes below this block (the
+  //    in-app channel first, then the email adapter when configured); fan-out runs in the worker after commit.
+  //  - ModelProvider (ARCH-05; BE-T, assistant/provider.ts): the provider line goes below this block (the local test
+  //    adapter, or the HTTP adapter when configured); with nothing configured the assistant stays disabled.
+  // ADR-0053 §4 item 1 (DO-D): every value a registered provider resolves joins the log redaction set.
+  // F-DG6-181 (T-DG6-BE-Z2; ADR-0052 amendment of 2026-11-04 §E): every resolve names its use and is checked against
+  // the process's binding manifest (set by main.ts from SECRET_BINDINGS_FILE) with the setting's organization code.
+  const secrets = withSecretRedaction(
+    createSecretProviderRegistry({
+      organizationCodeOf: organizationCodeLookup(db),
+      warn: (line) => app.log.warn(line, "secret_ref.refused"),
+    }),
+  );
+  registerBuiltInSecretProviders(secrets, { secretsDir: config.secretsDir }); // BE-E: env and file (ADR-0052 §5)
+  // T-DG6-BE-X2 (F-DG6-QA-A-1): the integrations module resolves connector credentials and webhook signing secrets
+  // through this process's registry (secret-refs.ts); without this line every reference is unresolvable.
+  setConnectorSecretProviders(secrets);
+  // T-DG6-BE-X3 (the BE-X2 handback §5): the assistant's HTTP adapter resolves its credential reference through the
+  // same registry (assistant/provider.ts); without this line a configured `credentialRef` never resolves and every
+  // call that needs it fails with assistant.provider_error before anything is sent.
+  setAssistantSecretProviders(secrets);
+  // T-DG6-BE-X3: BE-U's two retrieval ports (ADR-0059 §4 items 2 and 3). Without them the running assistant gives the
+  // model no evidence text and no playbook passage. The evidence port reads content through the driver-selecting
+  // store above and re-applies the evidence read decision (ADR-0051 §4) for the asking user. Held by this app until it
+  // closes (holdAssistantPorts above; T-DG6-BE-X3B).
+  const releaseAssistantPorts = holdAssistantPorts({
+    evidence: createEvidenceTextPort(db, evidenceStore),
+    playbook: createPlaybookPassagePort(db),
+  });
+  app.addHook("onClose", async () => releaseAssistantPorts());
+  // T-DG6-BE-M: the ImportTargetRegistry line; each import target's owner adds one registration line below it
+  // (KBE-A: kpi_actual.v1). The connector mappings' target columns come from the registered templates (ADR-0056 §9).
+  const importTargets = createImportTargetRegistry();
+  setImportTargetRegistry(importTargets);
+  setConnectorTargetColumnsSource((kind) => importTargets.columnsOf(kind));
+  importTargets.register(createKpiActualImportTarget()); // T-DG6-KBE-A: kpi_actual.v1 (ADR-0056 §4-§6, §9)
+  // T-DG6-BE-O: a confirmed deliverable_status_push confirms its flagged deliverable (connector_result; integrations
+  // imports no portfolio code), and a reviewed-evidence confirmation cites only evidence the confirmer may read.
+  setOutboundConfirmationPort({
+    onConfirmed: async (tx, ctx, confirmed) => void (await recordConnectorConfirmation(tx, ctx, confirmed)),
+  });
+  setExternalChangeEvidenceGate(requireEvidenceRead);
   const modules: ModuleRegistration[] = [
     registerWorkflowsModule(app, deps, { gateFacts, t08ScheduleFlags }),
     // T-DG4-KBE-C (D-095): kpi requests kpi_version_activation approvals through workflows' approval service, passed
@@ -456,7 +717,7 @@ export async function buildServer(options: ServerOptions): Promise<{
     }),
     registerReportingModule(app, deps),
     registerMethodologyModule(app, deps, { configResolver }),
-    registerEvidenceModule(app, deps),
+    registerEvidenceModule(app, deps, evidenceStore), // BE-H2: the driver-selecting store above
     registerPortfolioModule(app, deps),
     // P4 modules (p4-plan §2 seam 19): tasks is active (BE-A); the others report "scaffold" until a route exists.
     registerTasksModule(app, deps),
@@ -471,6 +732,11 @@ export async function buildServer(options: ServerOptions): Promise<{
     registerAutomationModule(app, deps),
     registerLaunchModule(app, deps),
     registerHealthModule(app, deps),
+    // P6 modules (p6-plan §3 seam 21): each reports "scaffold" until a route exists.
+    registerIntegrationsModule(app, deps),
+    registerSearchModule(app, deps),
+    registerAssistantModule(app, deps),
+    registerOperationsModule(app, deps),
   ];
 
   if (webRoot) {
@@ -478,5 +744,5 @@ export async function buildServer(options: ServerOptions): Promise<{
   }
 
   await app.ready();
-  return { app, db, routes, modules, inFlight };
+  return { app, db, routes, modules, inFlight, secrets };
 }

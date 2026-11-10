@@ -1,0 +1,70 @@
+// qa-verifier T-DG6-QA-D mutation harness (disposable, $TMPDIR). The integration project of the root vitest.config.ts,
+// plus ONE in-memory source transform selected by QA_MUTATION: it rewrites one product module AS LOADED BY THE TEST
+// PROCESS ONLY. No product file on disk is changed. An anchor that is not found aborts the run (no silent no-op).
+import { defineConfig } from "/home/user/wt/dg6-qa-d/node_modules/vitest/dist/config.js";
+
+const ROOT = "/home/user/wt/dg6-qa-d";
+const MUTATIONS = {
+  // A21 / REQ-S12-023: the fan-out treats every channel row (also a DISABLED one) as enabled.
+  "fanout-ignores-disabled": {
+    file: "apps/worker/src/handlers/notifications.ts",
+    from: '.where("enabled", "=", true)\n    .orderBy("channel_kind")',
+    to: '.orderBy("channel_kind")',
+  },
+  // A21 / REQ-S17-009: a fresh install reports the assistant as enabled.
+  "assistant-default-on": {
+    file: "apps/api/src/modules/assistant/settings.ts",
+    from: "configured: false,\n      enabled: false,",
+    to: "configured: false,\n      enabled: true,",
+  },
+  // A21 / outbound writes: a disabled connector is not refused.
+  "outbound-ignores-disabled": {
+    file: "apps/api/src/modules/integrations/outbound.ts",
+    from: 'if (connector.status !== "enabled") throw outboundRefusals.disabled();',
+    to: "",
+  },
+  // A20 / REQ-S15-013: the register's q filter is ignored on the server.
+  "register-ignores-q": {
+    file: "apps/api/src/modules/portfolio/initiatives.ts",
+    from: "if (query.q) {",
+    to: "if (false) {",
+  },
+};
+const m = MUTATIONS[process.env.QA_MUTATION ?? ""];
+if (!m) throw new Error(`QA_MUTATION must be one of ${Object.keys(MUTATIONS).join(", ")}`);
+let applied = 0;
+const plugin = {
+  name: "qa-mutation",
+  enforce: "pre",
+  transform(code, id) {
+    if (!id.startsWith(`${ROOT}/${m.file}`)) return null;
+    if (!code.includes(m.from)) throw new Error(`mutation anchor not found in ${m.file}`);
+    applied += 1;
+    process.stderr.write(`[qa-mutation] ${process.env.QA_MUTATION} applied to ${m.file}\n`);
+    return code.replace(m.from, m.to);
+  },
+};
+export default defineConfig({
+  root: ROOT,
+  plugins: [plugin],
+  test: {
+    projects: [
+      {
+        plugins: [plugin],
+        resolve: { conditions: ["@mth/source"] },
+        ssr: { resolve: { conditions: ["@mth/source"], externalConditions: ["@mth/source"] } },
+        test: {
+          name: "integration",
+          root: ROOT,
+          environment: "node",
+          include: ["tests/qa/integration/**/*.test.ts"],
+          globalSetup: [`${ROOT}/packages/db/test/global-setup.ts`],
+          pool: "forks",
+          poolOptions: { forks: { singleFork: true } },
+          testTimeout: 30000,
+          hookTimeout: 30000,
+        },
+      },
+    ],
+  },
+});

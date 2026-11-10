@@ -59,7 +59,7 @@ export const roadmapWave = z.strictObject({
   ...stamps,
 });
 export type RoadmapWave = z.infer<typeof roadmapWave>;
-export const roadmapWaveList = z.strictObject({ items: z.array(roadmapWave) });
+export const roadmapWaveList = z.strictObject({ items: z.array(roadmapWave), nextCursor: z.string().nullable() });
 
 // ------------------------------------------------------------------------------------------------ T08 dependencies
 
@@ -79,7 +79,7 @@ export const dependencyType = z.strictObject({
   version,
 });
 export type DependencyType = z.infer<typeof dependencyType>;
-export const dependencyTypeList = z.strictObject({ items: z.array(dependencyType) });
+export const dependencyTypeList = z.strictObject({ items: z.array(dependencyType), nextCursor: z.string().nullable() });
 
 export const T08_DEPENDENCY_STATUSES = ["open", "at_risk", "resolved", "archived"] as const;
 
@@ -141,7 +141,7 @@ export const resourceRole = z.strictObject({
   ...stamps,
 });
 export type ResourceRole = z.infer<typeof resourceRole>;
-export const resourceRoleList = z.strictObject({ items: z.array(resourceRole) });
+export const resourceRoleList = z.strictObject({ items: z.array(resourceRole), nextCursor: z.string().nullable() });
 
 /** OpenAPI `Capacity`: available FTE of one role in one month. */
 export const capacity = z.strictObject({

@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+export PATH=/opt/nvm/versions/node/v24.21.0/bin:$PATH
+cd /home/user/wt/dg6-do-f
+E=docs/delivery/handbacks/DG6/T-DG6-DO-FB-evidence/node24
+S=$E/checks-summary.txt
+echo "== part B: node $(node --version) at $(command -v node) ($(date -u +%FT%TZ))" >> $S
+run() { name=$1; shift; echo "== $name: $* ($(date -u +%FT%TZ))" >> $S; st=$(date +%s); "$@" > $E/$name.log 2>&1; rc=$?; echo "$name exit=$rc wall=$(( $(date +%s)-st ))s" >> $S; }
+run build pnpm -r build
+run test-unit-locale-unset env -u LANG -u LC_ALL -u LC_CTYPE -u LANGUAGE -u LC_MESSAGES pnpm test
+run test-unit-c-utf8 env LANG=C.UTF-8 LC_ALL=C.UTF-8 pnpm test
+run test-integration env QA_PG_PORT=25670 MTH_PORT_POOL=25671-25699 tests/qa/support/with-pg.sh pnpm test:integration
+run validate-dg5-historical node tools/gates/validate.mjs --historical --stage DG5
+echo "== part B done $(date -u +%FT%TZ)" >> $S

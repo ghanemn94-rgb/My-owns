@@ -4,9 +4,15 @@
 // runs as. Human decisions (approve a gate, decide an approval or an investment, attest a Finance value, decide an
 // executive ask or a methodology migration) are listed as NOT automatable and cannot be chosen; the server refuses them
 // again (422 automation_rule.human_only_action) and the database a third time.
-import { AUTOMATION_CONDITION_OPS, AUTOMATION_MESSAGE_KEYS, HUMAN_ONLY_ACTION_CODES } from "@mth/shared/schemas";
+import {
+  AUTOMATION_CONDITION_OPS,
+  AUTOMATION_MESSAGE_KEYS,
+  AUTOMATION_RESTRICTED_TOKEN_PATTERN,
+  HUMAN_ONLY_ACTION_CODES,
+} from "@mth/shared/schemas";
 import { useTranslation } from "react-i18next";
 import { useLocale } from "../../app/locale.ts";
+import { RestrictedRecordsLabel } from "../../components/sensitivity/RestrictedRecordsLabel.tsx";
 import { pick } from "./ui.tsx";
 import type { AutomationCatalogue } from "./api.ts";
 
@@ -28,6 +34,20 @@ export interface ContentDraft {
   actions: ActionDraft[];
   runAs: "initiating_user" | "service";
   servicePermissionCodes: string;
+}
+
+/**
+ * T-DG6-BE-Z12B, T-DG6-BE-Z13 (D-222, D-226; ADR-0051 §2): whether a condition's literal (or an element of its list) is
+ * an opaque restricted token `[restricted:<tag>:<k>]` (D-231, D-233: the tag binds it to the rule-version row and the
+ * row version it was issued from; the web never computes or parses it) the server showed in place of a value that
+ * names a record the reader is
+ * not admitted to. The label follows the token, never a value that merely equals marker text. Saving the token back,
+ * wherever the condition now sits, keeps the hidden value on the server; removing it removes the value.
+ */
+export function conditionIsRestricted(c: { value?: unknown }): boolean {
+  const isToken = (x: unknown) => typeof x === "string" && AUTOMATION_RESTRICTED_TOKEN_PATTERN.test(x.trim());
+  if (typeof c.value === "string") return c.value.split(",").some(isToken);
+  return Array.isArray(c.value) && c.value.some(isToken);
 }
 
 /** The role parameter of each automatic admin action (D-146). */
@@ -222,6 +242,7 @@ export function ContentEditor({
                 disabled={c.op === "present" || c.op === "absent"}
                 onChange={(e) => setCondition(i, { value: e.target.value })}
               />
+              <RestrictedRecordsLabel value={conditionIsRestricted(c)} scope="item" />
             </div>
             <button
               type="button"

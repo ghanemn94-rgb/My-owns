@@ -6,7 +6,10 @@
 #
 # Services:  db -> migrate (one-shot) -> api (+ SPA) and worker        (default)
 #            keycloak: TEST IdP with realm mth-test (SYNTHETIC users)  (profile: test-idp)
+#                      + realm mth-other: a foreign issuer the hub must REFUSE (negative e2e; ADR-0054 §1)
 #            smoke: in-network smoke test (login, create, read)        (profile: smoke)
+#            load-generate, load-sessions: the SYNTHETIC load dataset and the load sessions of a load run
+#                                                                       (profile: load; off by default; ADR-0058)
 # Variant:   compose.no-egress.yaml marks the network `internal: true` (no route to the internet).
 #
 # Prerequisites (from the repository root):
@@ -93,6 +96,8 @@ services:
       DEFAULT_CURRENCY: ${MTH_DEFAULT_CURRENCY:-SAR}
       LOG_LEVEL: ${MTH_LOG_LEVEL:-info}
       TRUST_PROXY: ${MTH_TRUST_PROXY:-}
+      # production (the default for NODE_ENV=production) unless a load stack sets MTH_ENV=load (ADR-0058 §4).
+      MTH_ENV: ${MTH_ENV:-production}
     secrets: [database_url, oidc_client_secret, test_idp_ca]
     volumes: ["evidence:/var/lib/mth/evidence"]
     ports: ["${MTH_API_BIND:-127.0.0.1}:${MTH_API_PORT:-3000}:3000"]
@@ -117,6 +122,8 @@ services:
       EVIDENCE_STORAGE_PATH: /var/lib/mth/evidence
       DEFAULT_TIMEZONE: ${MTH_DEFAULT_TIMEZONE:-Asia/Riyadh}
       LOG_LEVEL: ${MTH_LOG_LEVEL:-info}
+      # production (the default for NODE_ENV=production) unless a load stack sets MTH_ENV=load (ADR-0058 §4).
+      MTH_ENV: ${MTH_ENV:-production}
     secrets: [database_url]
     volumes: ["evidence:/var/lib/mth/evidence"]
     depends_on:
@@ -127,7 +134,8 @@ services:
 
   keycloak:
     profiles: ["test-idp"]
-    image: quay.io/keycloak/keycloak:26.4
+    # Vendor-documented registry (quay.io), pinned by digest through deploy/images.lock.json (ADR-0054 §1, D-197).
+    image: quay.io/keycloak/keycloak:26.8.1@sha256:a78d6b79572168cb25886b80a8b5b8d4ed4390743e3eecb810538683e209dd6b
     restart: unless-stopped
     # Secrets are read from files at start and exported only into Keycloak's own process; the realm file references
     # them as ${...} placeholders, so the repository holds no credential.
@@ -151,6 +159,9 @@ services:
     secrets: [oidc_client_secret, test_idp_user_password, test_idp_admin_password, test_idp_cert, test_idp_key]
     volumes:
       - ../keycloak/realm-mth-test.json:/opt/keycloak/data/import/realm-mth-test.json:ro
+      # SYNTHETIC negative-test realm. The hub is never configured for it: e2e/identity/keycloak-login.spec.ts signs in
+      # there and proves that its authorization response and token are refused (REQ-S16-007).
+      - ../keycloak/realm-mth-other.json:/opt/keycloak/data/import/realm-mth-other.json:ro
     ports: ["${MTH_TEST_IDP_BIND:-127.0.0.1}:${MTH_TEST_IDP_PORT:-8443}:8443"]
     healthcheck:
       # The image has no curl; bash's /dev/tcp proves the HTTPS listener is up. The smoke test additionally waits for
@@ -181,6 +192,57 @@ services:
     volumes: ["../scripts/smoke.mjs:/smoke/smoke.mjs:ro"]
     depends_on:
       api: { condition: service_healthy }
+
+  # ---------------------------------------------------------------------------------------------- profile: load
+  # The SYNTHETIC load dataset mth_load_v1 and the load sessions (ADR-0058 §2, §4; deploy/load/README.md). Off by
+  # default. Run it ONLY as its own Compose project (its own empty volume), never against a production or demo
+  # database: the generator writes its marker first and the 0108 guard refuses any database that is not empty and
+  # unmarked. A load stack is a sandbox measurement setup, not Mobily production infrastructure and not HA.
+  #   docker compose -p mth-load -f deploy/compose/compose.yaml up -d --wait db migrate
+  #   docker compose -p mth-load -f deploy/compose/compose.yaml --profile load run --rm load-generate
+  #   MTH_ENV=load docker compose -p mth-load -f deploy/compose/compose.yaml -f deploy/compose/compose.load.yaml \
+  #     up -d --wait api worker      # compose.load.yaml: the P6 rate-limit class budgets raised (T-DG6-DO-Y2)
+  #   MTH_LOAD_OUT_DIR=$TMPDIR/mth-load docker compose -p mth-load -f deploy/compose/compose.yaml --profile load \
+  #     run --rm load-sessions
+  load-generate:
+    <<: *app
+    profiles: ["load"]
+    restart: "no"
+    entrypoint: ["node", "/app/deploy/load/generate.mjs"]
+    command: ["--profile", "${MTH_LOAD_PROFILE:-default}"]
+    environment:
+      NODE_ENV: production
+      MTH_ENV: load
+      DATABASE_OWNER_URL_FILE: /run/secrets/database_owner_url
+    secrets: [database_owner_url]
+    volumes: ["../load:/app/deploy/load:ro"]
+    depends_on:
+      db: { condition: service_healthy }
+      migrate: { condition: service_completed_successfully }
+
+  load-sessions:
+    <<: *app
+    profiles: ["load"]
+    restart: "no"
+    entrypoint: ["node", "/app/deploy/load/sessions.mjs"]
+    command: ["--duration-minutes", "${MTH_LOAD_DURATION_MINUTES:-60}"]
+    environment:
+      NODE_ENV: production
+      MTH_ENV: load
+      AUTH_MODE: oidc
+      APP_BASE_URL: ${MTH_APP_BASE_URL:-http://localhost:3000}
+      DATABASE_URL_FILE: /run/secrets/database_url
+      OIDC_ISSUER_URL: ${MTH_OIDC_ISSUER_URL:-https://keycloak:8443/realms/mth-test}
+      OIDC_CLIENT_ID: ${MTH_OIDC_CLIENT_ID:-mth-hub}
+      OIDC_CLIENT_SECRET_FILE: /run/secrets/oidc_client_secret
+      # The cookies file goes to the run's temporary directory on the host (bind mount), never into the repository.
+      TMPDIR: /load-out
+    secrets: [database_url, oidc_client_secret]
+    volumes:
+      - "../load:/app/deploy/load:ro"
+      - "${MTH_LOAD_OUT_DIR:-/tmp/mth-load}:/load-out"
+    depends_on:
+      db: { condition: service_healthy }
 
 volumes:
   pgdata:

@@ -1,0 +1,23 @@
+port-policy: PostgreSQL listening on port 26165 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-v
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvvd2ehd_3a909738 (server_encoding UTF8); applied 112 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/workflows/approval-routes.test.ts (9 tests) 9323ms
+   ✓ sequential route (REQ-S10-015) > step 2 has no work item or notification until step 1 approves; the last step decides the approval  2367ms
+   ✓ sequential route (REQ-S10-015) > the requester never decides a step (403 approval_route.self_decision) and gets no step task  980ms
+   ✓ sequential route (REQ-S10-015) > commit-time re-authorization: a BO whose grant is revoked after sign-in is refused, nothing written  793ms
+   ✓ parallel route (REQ-S10-015) > every step is notified at once; one person decides at most one step; request changes -> next round  1392ms
+   ✓ parallel route (REQ-S10-015) > a reject on one step cancels the other open step and rejects the approval  494ms
+   ✓ DG4 single-step approvals are unchanged (regression) > no route (any): no steps, the DG4 decision route decides it  420ms
+   ✓ withdrawal and the admin route list > withdrawing a routed approval cancels its open steps  372ms
+
+ Test Files  1 passed (1)
+      Tests  9 passed (9)
+   Start at  19:24:20
+   Duration  41.02s (transform 9.54s, setup 0ms, collect 23.01s, tests 9.32s, environment 0ms, prepare 173ms)
+

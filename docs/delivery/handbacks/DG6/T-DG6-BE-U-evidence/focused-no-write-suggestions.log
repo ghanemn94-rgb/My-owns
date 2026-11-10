@@ -1,0 +1,25 @@
+port-policy: PostgreSQL listening on port 25700 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-u
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvup553e_13d4099c (server_encoding UTF8); applied 110 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/assistant/suggestions.test.ts (12 tests) 30856ms
+   ✓ output handling (ADR-0059 §5) > cited refs are limited to the items given; at most 5 suggestions; invalid kinds and fields are dropped  830ms
+   ✓ output handling (ADR-0059 §5) > an answer that cites nothing cites every item given; plain text content is the answer with no suggestion  639ms
+   ✓ takeAssistantSuggestionToDraft (ADR-0059 §6, §10) > the owner takes a charter suggestion: a FormDraftCreate prefill, one audit event, nothing else written  1012ms
+   ✓ takeAssistantSuggestionToDraft (ADR-0059 §6, §10) > advice is not draftable (422); AUD and a user without assistant.use get 403; another user's id is 404  375ms
+   ✓ takeAssistantSuggestionToDraft (ADR-0059 §6, §10) > authorization is re-checked at commit: a grant revoked meanwhile is 403 and nothing is written  323ms
+   ✓ takeAssistantSuggestionToDraft (ADR-0059 §6, §10) > a suggestion whose citations the owner can no longer read is withheld and cannot be taken (404)  366ms
+   ✓ the mapping table equals the P5 form definitions' keys (ADR-0059 §6) > the test adapter's own charter suggestion round-trips (no network)  449ms
+ ✓ |integration| apps/api/test/integration/assistant/no-write.test.ts (3 tests) 21802ms
+   ✓ the assistant changes no business record (ADR-0059 §7 item 3) > answers, refusals, suggestions and to-draft leave every business table and the hashed tables unchanged  2118ms
+
+ Test Files  2 passed (2)
+      Tests  15 passed (15)
+   Start at  08:14:37
+   Duration  122.66s (transform 18.98s, setup 0ms, collect 53.97s, tests 52.66s, environment 0ms, prepare 239ms)
+

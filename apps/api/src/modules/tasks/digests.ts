@@ -6,11 +6,15 @@
 // `digestWindow` advisory-lock class (platform/advisory-locks.ts) once per user and 15-minute window. Digested
 // notifications are not in the inbox list (only `delivered` rows are); they are read here. Reads only; in-app only
 // (D-142 Q11).
+// T-DG6-BE-Z14 (D-226, D-231; code-security observation 600; ADR-0051 §3): a digested notification about a record the
+// reader is not admitted to is returned as the inbox returns it (`restrictedNotificationView`): `inbox.restricted`,
+// params {}, the transformation home as link, and `includesRestrictedRecords: true`. One reach decision per read.
 import { type NotificationDigest } from "@mth/shared/schemas";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { principalOf } from "../access/index.ts";
 import { iso, parse, parseQuery, problems, type ModuleDeps } from "../platform/index.ts";
+import { restrictedNotifications, restrictedNotificationView } from "./deep-links.ts";
 
 export const DIGEST_PATH = "/api/v1/me/notification-digests/:digestId";
 /** The in-app link of a digest notification (relative; 0028 CHECK). */
@@ -35,24 +39,41 @@ export function registerDigestRoutes(app: FastifyInstance, { db }: ModuleDeps): 
     if (!digest) throw problems.notFound();
     const items = await db
       .selectFrom("inbox_notification")
-      .select(["id", "message_key", "message_params", "link_path", "created_at"])
+      .select([
+        "id",
+        "message_key",
+        "message_params",
+        "link_path",
+        "created_at",
+        "transformation_id",
+        "target_record_type",
+        "target_record_id",
+        "work_item_id",
+      ])
       .where("digest_id", "=", digest.id)
       .where("recipient_user_id", "=", principal.userId)
       .orderBy("created_at")
       .orderBy("id")
       .execute();
+    const restricted = await restrictedNotifications(db, principal, items);
     const body: NotificationDigest = {
       id: digest.id,
       windowStart: iso(digest.window_start),
       windowEnd: iso(digest.window_end),
       count: digest.notification_count,
-      items: items.map((n) => ({
-        notificationId: n.id,
-        messageKey: n.message_key,
-        messageParams: paramsOf(n.message_params),
-        linkPath: n.link_path,
-        createdAt: iso(n.created_at),
-      })),
+      items: items.map((n, i) =>
+        restrictedNotificationView(
+          {
+            notificationId: n.id,
+            messageKey: n.message_key,
+            messageParams: paramsOf(n.message_params),
+            linkPath: n.link_path,
+            createdAt: iso(n.created_at),
+          },
+          n.transformation_id,
+          restricted.at(i) === true,
+        ),
+      ),
     };
     return body;
   });

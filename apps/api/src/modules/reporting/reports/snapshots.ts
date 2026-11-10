@@ -50,7 +50,7 @@ import {
   type Principal,
   type ResolvedTarget,
 } from "../../access/index.ts";
-import { record } from "../../audit/index.ts";
+import { record, type AuditContext } from "../../audit/index.ts";
 import { createConfigResolver } from "../../methodology/index.ts";
 import { ADVISORY_LOCK_CLASSES, iso, isoOrNull, problems } from "../../platform/index.ts";
 import { assemblerOf, type AssembledOutput, type Assembler } from "./assembler.ts";
@@ -118,16 +118,29 @@ async function requireWriteAtCommit(
 
 // ------------------------------------------------------------------------------------------------ canonical JSON
 
-/** Code-point order (not UTF-16 code units; they differ only above U+FFFF). */
-function compareCodePoints(a: string, b: string): number {
-  const x = Array.from(a, (c) => c.codePointAt(0) ?? 0);
-  const y = Array.from(b, (c) => c.codePointAt(0) ?? 0);
-  const n = Math.min(x.length, y.length);
+/**
+ * Code-point order (not UTF-16 code units; they differ only above U+FFFF). Only the sign is used (the key sort).
+ * T-DG6-BE-Y4 (F-DG6-147): allocation-free. The two strings are compared by UTF-16 code unit up to the first
+ * difference; there the units are "fixed up" so that surrogates (code points >= U+10000) sort above U+E000-U+FFFF,
+ * which gives exactly code-point order for well-formed strings. A prefix in code units is a prefix in code points,
+ * so the length difference has the same sign. Same order as the earlier Array.from comparison, so the canonical JSON
+ * and every stored content_sha256 are unchanged (reports.test.ts pins both).
+ */
+export function compareCodePoints(a: string, b: string): number {
+  const n = Math.min(a.length, b.length);
   for (let i = 0; i < n; i += 1) {
-    const d = (x.at(i) ?? 0) - (y.at(i) ?? 0);
-    if (d !== 0) return d;
+    const x = a.charCodeAt(i);
+    const y = b.charCodeAt(i);
+    if (x !== y) return fixUp(x) - fixUp(y);
   }
-  return x.length - y.length;
+  return a.length - b.length;
+}
+
+/** U+D800-U+DFFF (surrogates) above U+E000-U+FFFF; BMP order otherwise unchanged. */
+function fixUp(unit: number): number {
+  if (unit >= 0xe000) return unit - 0x800;
+  if (unit >= 0xd800) return unit + 0x2000;
+  return unit;
 }
 
 /**
@@ -250,6 +263,16 @@ async function resolveRequest(db: DbOrTx, req: ReportRequest): Promise<Resolved>
     parameters,
     storedParameters: parameters as Record<string, unknown>,
   };
+}
+
+/**
+ * T-DG6-BE-Y5 (D-207): the request checks of an assembly alone (definition, subject, period and parameters: the 422
+ * refusals of ADR-0045 §11, and 404 for an unknown transformation or an output without an assembler), read-only and
+ * without assembling. createExport runs them in the request for a live selection, so those refusals stay synchronous
+ * while the assembly itself runs after the 202.
+ */
+export async function checkReportRequest(db: DbOrTx, req: ReportRequest): Promise<void> {
+  await resolveRequest(db, req);
 }
 
 // ------------------------------------------------------------------------------------------------ assembly
@@ -404,10 +427,23 @@ async function lockSeries(
   );
 }
 
+/**
+ * Rows per multi-row INSERT of a snapshot's children (T-DG6-BE-S). 500 rows of at most 11 columns stay far below
+ * PostgreSQL's 65,535 bind parameters per statement.
+ */
+export const INSERT_BATCH = 500;
+
+/** Splits rows into consecutive chunks of at most INSERT_BATCH, in order (no empty chunk). */
+export function batches<T>(rows: readonly T[], size: number = INSERT_BATCH): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < rows.length; i += size) out.push(rows.slice(i, i + size));
+  return out;
+}
+
 /** Inserts a generated snapshot and its captured children; one audit event (the children are covered by it, RC01). */
 async function insertSnapshot(
   tx: Tx,
-  request: FastifyRequest,
+  ctx: AuditContext,
   userId: string,
   a: Assembly,
   reissue: { readonly of: ReportSnapshotRow; readonly reason: string } | null,
@@ -446,31 +482,32 @@ async function insertSnapshot(
     .executeTakeFirstOrThrow();
   const base = { organization_id: r.organizationId, transformation_id: r.transformation.id, snapshot_id: id };
   // Sources: one row per record (UNIQUE per snapshot and record; a record used by two sections keeps its first).
+  // Written in multi-row INSERTs of at most INSERT_BATCH rows (T-DG6-BE-S, DO-F run-1: one INSERT per row was the
+  // largest cost of a live-selection createExport); the rows, their ids' order and the triggers they fire are unchanged.
   const seen = new Set<string>();
+  const sourceRows = [];
   for (const s of a.output.sources) {
     const k = `${s.recordType}:${s.recordId}`;
     if (seen.has(k)) continue;
     seen.add(k);
-    await tx
-      .insertInto("report_snapshot_source")
-      .values({
-        ...base,
-        id: uuidv7(),
-        section_key: s.sectionKey,
-        record_type: s.recordType,
-        record_id: s.recordId,
-        record_version: s.recordVersion,
-        record_updated_at:
-          s.recordUpdatedAt === null
-            ? null
-            : s.recordUpdatedAt instanceof Date
-              ? iso(s.recordUpdatedAt)
-              : s.recordUpdatedAt,
-        approval_state: s.approvalState,
-        validation_state: s.validationState,
-      })
-      .execute();
+    sourceRows.push({
+      ...base,
+      id: uuidv7(),
+      section_key: s.sectionKey,
+      record_type: s.recordType,
+      record_id: s.recordId,
+      record_version: s.recordVersion,
+      record_updated_at:
+        s.recordUpdatedAt === null
+          ? null
+          : s.recordUpdatedAt instanceof Date
+            ? iso(s.recordUpdatedAt)
+            : s.recordUpdatedAt,
+      approval_state: s.approvalState,
+      validation_state: s.validationState,
+    });
   }
+  for (const chunk of batches(sourceRows)) await tx.insertInto("report_snapshot_source").values(chunk).execute();
   // Versions: the methodology version always; then the assembler's configuration and calculation versions.
   const versions = [
     {
@@ -482,42 +519,57 @@ async function insertSnapshot(
     ...a.output.versions,
   ];
   const seenVersion = new Set<string>();
+  const versionRows = [];
   for (const v of versions) {
     const k = `${v.versionKind}:${v.referenceKey}`;
     if (seenVersion.has(k)) continue;
     seenVersion.add(k);
-    await tx
-      .insertInto("report_snapshot_version")
-      .values({
-        ...base,
-        id: uuidv7(),
-        version_kind: v.versionKind,
-        reference_id: v.referenceId,
-        reference_key: v.referenceKey,
-        version_label: v.versionLabel,
-      })
-      .execute();
+    versionRows.push({
+      ...base,
+      id: uuidv7(),
+      version_kind: v.versionKind,
+      reference_id: v.referenceId,
+      reference_key: v.referenceKey,
+      version_label: v.versionLabel,
+    });
   }
+  for (const chunk of batches(versionRows)) await tx.insertInto("report_snapshot_version").values(chunk).execute();
   const seenEvidence = new Set<string>();
+  const evidenceRows = [];
   for (const e of a.output.evidence) {
     const k = `${e.sectionKey}:${e.evidenceId}`;
     if (seenEvidence.has(k)) continue;
     seenEvidence.add(k);
-    await tx
-      .insertInto("report_snapshot_evidence")
-      .values({
-        ...base,
-        id: uuidv7(),
-        section_key: e.sectionKey,
-        evidence_id: e.evidenceId,
-        content_id: e.contentId,
-        content_revision: e.contentRevision,
-        content_sha256: e.contentSha256,
-        review_status: e.reviewStatus,
-      })
-      .execute();
+    evidenceRows.push({
+      ...base,
+      id: uuidv7(),
+      section_key: e.sectionKey,
+      evidence_id: e.evidenceId,
+      content_id: e.contentId,
+      content_revision: e.contentRevision,
+      content_sha256: e.contentSha256,
+      review_status: e.reviewStatus,
+    });
   }
-  await record(tx, auditContextOf(request), {
+  for (const chunk of batches(evidenceRows)) await tx.insertInto("report_snapshot_evidence").values(chunk).execute();
+  // T-DG6-BE-Z9 (F-DG6-400; migration 0126): the records each aggregate section's figures include, beside the content
+  // (which, with its contentSha256, is unchanged). They only decide the read-time label (restricted.ts); not sources.
+  const seenAggregate = new Set<string>();
+  const aggregateRows = [];
+  for (const g of a.output.aggregates ?? []) {
+    const k = `${g.sectionKey}:${g.recordType}:${g.recordId}`;
+    if (seenAggregate.has(k)) continue;
+    seenAggregate.add(k);
+    aggregateRows.push({
+      ...base,
+      id: uuidv7(),
+      section_key: g.sectionKey,
+      record_type: g.recordType,
+      record_id: g.recordId,
+    });
+  }
+  for (const chunk of batches(aggregateRows)) await tx.insertInto("report_snapshot_aggregate").values(chunk).execute();
+  await record(tx, ctx, {
     action: reissue === null ? "report_snapshot.generate" : "report_snapshot.reissue",
     recordType: "report_snapshot",
     recordId: id,
@@ -543,6 +595,22 @@ async function insertSnapshot(
   return row;
 }
 
+/**
+ * T-DG6-BE-Y4 (F-DG6-147): the snapshot of an assembly written inside the CALLER's write transaction, by the actor the
+ * caller authorized at commit time (`report.generate` on reloaded grants); the rows and the `report_snapshot.generate`
+ * audit event are exactly those of generateSnapshot. T-DG6-BE-Y5 (D-207): the caller passes the audit context, because
+ * the export assembly watch (exports/assembly.ts) writes a live selection's snapshot with no request: its actor is the
+ * service acting on behalf of the requester, who stays the snapshot's `created_by`.
+ */
+export function insertGeneratedSnapshot(
+  tx: Tx,
+  ctx: AuditContext,
+  userId: string,
+  a: Assembly,
+): Promise<ReportSnapshotRow> {
+  return insertSnapshot(tx, ctx, userId, a, null);
+}
+
 /** POST …/reports/{code}/generate: assembly (read-only), then the write transaction. */
 export async function generateSnapshot(
   db: Db,
@@ -553,7 +621,7 @@ export async function generateSnapshot(
   const a = await assembleReport(db, req);
   return db.transaction().execute(async (tx) => {
     const actor = await requireWriteAtCommit(tx, request, req.transformationId, "report.generate");
-    return insertSnapshot(tx, request, actor.userId, a, null);
+    return insertSnapshot(tx, auditContextOf(request), actor.userId, a, null);
   });
 }
 
@@ -779,6 +847,6 @@ export async function reissueSnapshot(
     const s = await lockedSnapshot(tx, transformationId, snapshotId);
     if (s.version !== expected) throw problems.versionConflict(s.version);
     if (s.status !== "issued") throw reportRefusals.notIssued();
-    return insertSnapshot(tx, request, actor.userId, a, { of: s, reason });
+    return insertSnapshot(tx, auditContextOf(request), actor.userId, a, { of: s, reason });
   });
 }

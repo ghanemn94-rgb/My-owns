@@ -20,6 +20,7 @@ import { principalOf } from "../../access/index.ts";
 import { loadAdoptionDashboardIndicators } from "../../adoption/index.ts";
 import { parseQuery, type ModuleDeps } from "../../platform/index.ts";
 import { kpiActualValue } from "./areas.ts";
+import { dashboardRestriction, withoutRestrictedItems } from "./restricted.ts";
 import {
   areaStatuses,
   computeAreas,
@@ -70,7 +71,8 @@ export function registerAdoptionDashboardRoutes(app: FastifyInstance, { db }: Mo
       const query = parseQuery(adoptionQuery, request.query);
       const transformationIds = asIdList(query.transformationId);
       return readOnly(db, async (tx) => {
-        const scope = await readableTransformations(tx, principalOf(request), query.organizationId, {
+        const principal = principalOf(request);
+        const scope = await readableTransformations(tx, principal, query.organizationId, {
           transformationIds,
           phase: query.phase ?? null,
           status: query.status ?? null,
@@ -86,10 +88,18 @@ export function registerAdoptionDashboardRoutes(app: FastifyInstance, { db }: Mo
         const ids = scope.map((t) => t.id);
         const ctx = await loadDashboardContext(tx, scope, filters);
         const results = computeAreas(ctx.facts, ctx.clock, ctx.policy);
-        const areas = presentAreas(ctx, results, await loadAreaDefinitions(tx), {
-          drillTransformationIds: transformationIds,
-          workstream: false,
-        });
+        // T-DG6-BE-Z7B (F-DG6-361 "every dashboard"): the adoption area's items go through the same rule as every other
+        // dashboard (an item that is, or is a part of, a restricted record is not listed). Its items are adoption KPIs
+        // today, none of them a sensitive record type or child, so the response is unchanged; the filter is the guard.
+        const areas = await withoutRestrictedItems(
+          tx,
+          principal,
+          presentAreas(ctx, results, await loadAreaDefinitions(tx), {
+            drillTransformationIds: transformationIds,
+            workstream: false,
+          }),
+          await dashboardRestriction(tx, principal, ctx.facts),
+        );
         const targetOf = new Map(
           (await loadAdoptionDashboardIndicators(tx, ids)).map((i) => [i.metricLinkId, i.targetId]),
         );

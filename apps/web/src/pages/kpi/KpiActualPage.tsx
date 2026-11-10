@@ -325,10 +325,17 @@ function ReviewQueue() {
       header: t("kpiP4.field.kpi"),
       rowHeader: true,
       hideable: false,
+      // T-DG6-FE-F2 (REQ-S15-009; ADR-0061 §4.2): the review actions sit in this first cell, under the KPI name, so at
+      // 360 px they are at the row's start edge (LTR and RTL) and never need the table to be scrolled sideways.
       cell: (a) => (
-        <Link className="link" to={`/transformations/${ws.tid}/kpis/${a.kpiDefinitionId}/actuals/${a.id}`}>
-          {kpiOf(a.kpiDefinitionId)?.definition.name ?? t("kpiP4.field.kpi")}
-        </Link>
+        <>
+          <Link className="link" to={`/transformations/${ws.tid}/kpis/${a.kpiDefinitionId}/actuals/${a.id}`}>
+            {kpiOf(a.kpiDefinitionId)?.definition.name ?? t("kpiP4.field.kpi")}
+          </Link>
+          <span className="block" data-review-actions>
+            <ReviewActions actual={a} kpiName={kpiOf(a.kpiDefinitionId)?.definition.name ?? ""} />
+          </span>
+        </>
       ),
       sortValue: (a) => kpiOf(a.kpiDefinitionId)?.definition.name,
     },
@@ -377,12 +384,6 @@ function ReviewQueue() {
         </span>
       ),
       sortValue: (a) => a.submittedAt,
-    },
-    {
-      id: "actions",
-      header: t("common.field.actions"),
-      hideable: false,
-      cell: (a) => <ReviewActions actual={a} kpiName={kpiOf(a.kpiDefinitionId)?.definition.name ?? ""} />,
     },
   ];
   return (

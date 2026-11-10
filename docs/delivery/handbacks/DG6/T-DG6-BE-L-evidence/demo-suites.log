@@ -1,0 +1,26 @@
+port-policy: PostgreSQL listening on port 24105 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-l
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvsttd66_0f85b69e (server_encoding UTF8); applied 106 migrations to a fresh database
+ ✓ |integration| packages/db/test/integration/demo-numbers.test.ts (10 tests) 6270ms
+   ✓ §J.3: recomputed values equal the seeded values (from the stored rows, with the engines) > is deterministic: a second seed into a fresh database gives the same counts and checksum  2801ms
+ ✓ |integration| packages/db/test/integration/demo-roaming.test.ts (69 tests) 7833ms
+   ✓ REQ-S18-001 (with BE-S): the roaming dataset is deterministic > a second seed into a fresh database gives identical record counts and checksum  3508ms
+ ✓ |integration| packages/db/test/integration/demo.test.ts (9 tests) 65779ms
+   ✓ REQ-S18-003: the empty production initialization and the seed-demo refusals > after the production path, demo_seed_record is empty and no demo user exists  3189ms
+   ✓ REQ-S18-003: the empty production initialization and the seed-demo refusals > seed-demo with MTH_ENV=production exits 3 and changes nothing (on an empty, a production-marked and a non-empty database)  7384ms
+   ✓ REQ-S18-003: the empty production initialization and the seed-demo refusals > seed-demo on an unmarked database that is not empty exits 3 and changes nothing  3686ms
+   ✓ REQ-S18-003: the empty production initialization and the seed-demo refusals > a second seed-demo exits 3 (use reset-demo), and bootstrap refuses a demo database (exit 3)  7769ms
+   ✓ REQ-S18-003: the empty production initialization and the seed-demo refusals > the guard refuses in the library too (DemoRefused, exit code 3), before any write  2303ms
+   ✓ REQ-S18-001: seed, then reset twice: identical record counts and checksums > with the synthetic test dataset (library): counts and checksum identical across seed, reset, reset  8976ms
+   ✓ REQ-S18-001: seed, then reset twice: identical record counts and checksums > through the CLI (the shipped dataset): seed-demo, then reset-demo twice gives identical counts and checksums  17853ms
+   ✓ REQ-S18-001: seed, then reset twice: identical record counts and checksums > reset-demo refusals exit 3 and drop nothing: MTH_ENV not demo, no admin URL, a production target  9124ms
+   ✓ REQ-S18-001: seed, then reset twice: identical record counts and checksums > the checksum depends on the registered rows' content (a changed value changes it)  2781ms
+
+ Test Files  3 passed (3)
+      Tests  88 passed (88)
+   Start at  00:49:54
+   Duration  86.45s (transform 1.31s, setup 0ms, collect 2.73s, tests 79.88s, environment 0ms, prepare 67ms)
+

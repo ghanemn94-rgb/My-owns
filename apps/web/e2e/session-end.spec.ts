@@ -34,6 +34,14 @@ import {
 
 test.describe.configure({ mode: "serial" });
 
+// Budget (F-DG6-144, the F-DG5-145/146 carry-forward of D-193; p6-work-split §2 rules 13 and 15): 60 s per test.
+// Measured: run alone, both language projects, at a 1-minute load of 13-16 on 4 CPUs (three e2e stacks in
+// parallel), the slowest test took 12.8 s ([chromium-en] :335 a 403 is not a session end: a refused change kee...)
+// (docs/delivery/handbacks/DG6/T-DG6-FE-Y1-evidence/f144/measure-session-end.log). In the DG6 QA round-1 full runs
+// (docs/delivery/test-evidence/DG6/qa/round-1/06-e2e-product-*.log), its slowest test took 19.5 s.
+// The budget is at least 2x the larger of the two, rounded up to 15 s, and never below 60 s.
+test.setTimeout(60_000);
+
 const NOBODY = "01920000-0000-7000-9000-000000000205";
 const DEFAULT_LIMITS = process.env["E2E_DEFAULT_RATE_LIMITS"] === "1";
 
@@ -94,6 +102,36 @@ function watch(page: Page) {
   return state;
 }
 
+/**
+ * F-DG5-145/146 (ADR-0061 §9): sign-in lands on My Work, which reads its lists page by page. Attach before signing in;
+ * `settled()` then waits until that paging has settled (no API request in flight for 500 ms, and nothing in the main
+ * region still says it is loading) before the session is ended elsewhere, so a late page read cannot be what notices
+ * the end. It waits only; every step and assertion of the tests is unchanged.
+ */
+function apiPaging(page: Page, lang: Lang) {
+  const inFlight = new Set<object>();
+  let last = Date.now();
+  const isApi = (url: string) => new URL(url).pathname.startsWith("/api/");
+  page.on("request", (r) => {
+    if (!isApi(r.url())) return;
+    inFlight.add(r);
+    last = Date.now();
+  });
+  const done = (r: object) => {
+    if (inFlight.delete(r)) last = Date.now();
+  };
+  page.on("requestfinished", done);
+  page.on("requestfailed", done);
+  return {
+    async settled() {
+      await expect(page.locator("main#main").getByText(tr(lang, "common.state.loading"), { exact: true })).toHaveCount(
+        0,
+      );
+      await expect.poll(() => inFlight.size === 0 && Date.now() - last >= 500, { intervals: [100] }).toBe(true);
+    },
+  };
+}
+
 /** Ends the browser's session from outside the page, as a sign-out in another tab does. */
 async function signOutElsewhere(page: Page): Promise<number> {
   return page.evaluate(async () => {
@@ -150,7 +188,9 @@ test("signed out in another tab, then an in-app link: one landing on sign-in wit
   const watched = watch(page);
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
+  const paging = apiPaging(page, lang);
   await signIn(page, lang, "dev.lead");
+  await paging.settled();
   expect(await signOutElsewhere(page)).toBe(200);
   const meAt = watched.me;
   await page
@@ -250,7 +290,9 @@ test(`after a session end, another browser context from the same IP can still si
   const lang = langOf(info);
   const first = await newLangPage(browser, lang);
   const watched = watch(first.page);
+  const paging = apiPaging(first.page, lang);
   await signIn(first.page, lang, "dev.office");
+  await paging.settled();
   expect(await signOutElsewhere(first.page)).toBe(200);
   const meAt = watched.me;
   await first.page
@@ -401,6 +443,7 @@ test("a session end on the sign-in page: the next user to sign in in the tab nev
   expect(leadList.items.map((i) => i.id)).not.toContain(record.id);
 
   // A: the sign-in page, its wordmark link (pushes an in-document /login entry), then the development sign-in.
+  const paging = apiPaging(page, lang);
   await page.goto("/login?returnTo=%2Ftransformations");
   await page.getByTestId("wordmark").click();
   await expect(page).toHaveURL(/\/login$/);
@@ -418,6 +461,7 @@ test("a session end on the sign-in page: the next user to sign in in the tab nev
   await page.waitForURL("**/transformations");
   await expect(page.getByText(marker)).toBeVisible();
   await shot(page, lang, "fe13-user-a-sees-record");
+  await paging.settled(); // My Work's paging (sign-in landed there) and the list's reads have settled
 
   // A's session ends elsewhere; the history returns to the earlier in-document /login entry (same document).
   expect(await signOutElsewhere(page)).toBe(200);

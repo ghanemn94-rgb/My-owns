@@ -1,6 +1,7 @@
 // Optimistic-concurrency save for versioned records (ADR-0007 §6, REQ-S16-026): sends only changed fields with
 // If-Match; on 409 nothing was written, so the hook loads the latest version and lets the screen offer
-// "re-apply my change on the latest version" or "discard".
+// "re-apply my change on the latest version" or "discard". T-DG6-FE-D2 (ADR-0057 §7): `compareSides` and the `keys`
+// of `reapply` give the three-way compare and reapply of components/compare/**.
 import { useState } from "react";
 import { api, ApiError } from "../api/client.ts";
 import { useSessionBoundAction, type SessionBoundAction } from "../auth/sessionBound.ts";
@@ -86,12 +87,29 @@ export function useVersionedSave<R extends Versioned, V>(options: {
     error,
     busy,
     save,
-    /** Re-applies the user's values on top of the latest version (a new If-Match). */
-    reapply: async (values: V) => {
+    /**
+     * T-DG6-FE-D2 (ADR-0057 §7): the three sides of the compare panel (components/compare/CompareChanges.tsx): B the
+     * record as loaded, M the user's values, C the latest record from the fresh GET (null when it could not be loaded).
+     */
+    compareSides: (values: V): { base: V; mine: V; current: V | null } | null =>
+      conflict
+        ? {
+            base: options.toValues(base),
+            mine: values,
+            current: conflict.latest ? options.toValues(conflict.latest) : null,
+          }
+        : null,
+    /**
+     * Re-applies the user's values on top of the latest version (a new If-Match). With `keys` (T-DG6-FE-D2, ADR-0057
+     * §7: my changes plus the conflicts resolved "mine"), only those fields are sent; a field only the other user
+     * changed is never sent, so their change stays intact.
+     */
+    reapply: async (values: V, keys?: readonly string[]) => {
       const latest = conflict?.latest;
       if (!latest) return { outcome: "error" } as SaveResult;
       // Only the user's own changes (relative to the version they edited) go on top of the latest version.
-      const mine = options.diff(options.toValues(base), values);
+      const all = options.diff(options.toValues(base), values);
+      const mine = keys ? Object.fromEntries(Object.entries(all).filter(([k]) => keys.includes(k))) : all;
       setConflict(null);
       setBase(latest);
       return send(mine, latest);

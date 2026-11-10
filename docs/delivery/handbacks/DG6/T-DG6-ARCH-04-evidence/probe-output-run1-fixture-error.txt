@@ -1,0 +1,29 @@
+port-policy: PostgreSQL listening on port 23701 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+migrations shipped: 102 (0001_identity_access.sql .. 0110_p6_register_filter_indexes.sql)
+PASS  G00 slice H/G migrations 0108-0110 present directly above 0107 (D-196); nothing above 0110  -- ids >= 98: 98,99,100,101,102,103,104,105,106,107,108,109,110
+PASS  G01 fresh database: 0001..last apply  -- applied 102: 0107_p6_integrations_permissions.sql, 0108_p6_search_saved_views_help.sql, 0109_p6_search_productivity_permissions.sql, 0110_p6_register_filter_indexes.sql
+error: null value in column "business_unit_id" of relation "transformation" violates not-null constraint
+    at /home/user/My-owns/node_modules/.pnpm/pg@8.16.3/node_modules/pg/lib/client.js:545:17
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async seedP1 (file:///home/user/My-owns/docs/delivery/handbacks/DG6/T-DG6-ARCH-04-evidence/probe.ts:101:3)
+    at async main (file:///home/user/My-owns/docs/delivery/handbacks/DG6/T-DG6-ARCH-04-evidence/probe.ts:156:5) {
+  length: 584,
+  severity: 'ERROR',
+  code: '23502',
+  detail: 'Failing row contains (01990000-0000-7000-8000-00000000000a, 01990000-0000-7000-8000-000000000008, null, SYN-T2, Synthetic other transformation, null, end_to_end, null, null, draft, diagnose, null, null, Asia/Riyadh, SAR, null, null, null, 1, 2026-10-27 01:15:44.674088+00, 01990000-0000-7000-8000-000000000009, 2026-10-27 01:15:44.674088+00, 01990000-0000-7000-8000-000000000009).',
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: 'public',
+  table: 'transformation',
+  column: 'business_unit_id',
+  dataType: undefined,
+  constraint: undefined,
+  file: 'execMain.c',
+  line: '2057',
+  routine: 'ExecConstraints'
+}
+Terminated

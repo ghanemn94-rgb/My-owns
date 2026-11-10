@@ -222,6 +222,8 @@ test.describe.serial("A06 configuration change", () => {
     browser,
     playwright,
   }, info) => {
+    // Budget measured (F-DG6-144 sweep, T-DG6-FE-Z1B): in the DG6 QA round-2 root e2e runs (under load),
+    // this test's worst loaded run took 1.4 min (84 s); the budget is at least 2x that. Table: docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt.
     test.setTimeout(300_000);
     const lang = langOf(info);
     const foreign = trackRequests(page);
@@ -468,6 +470,8 @@ test.describe.serial("A06 configuration change", () => {
   test("a field added to T13 in Studio can be entered on a stakeholder record of a new transformation", async ({
     browser,
   }, info) => {
+    // Budget measured (F-DG6-144 sweep, T-DG6-FE-Z1B): in the DG6 QA round-2 root e2e runs (under load),
+    // this test's worst loaded run took 6.8 s; the budget is at least 2x that. Table: docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt.
     test.setTimeout(120_000);
     const lang = langOf(info);
     expect(W?.txB, "the first test published the T13 field").toBeTruthy();

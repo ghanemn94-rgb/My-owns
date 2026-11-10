@@ -32,8 +32,8 @@ _Updated by the delivery-orchestrator at every step change. On resumption, run `
   - **10 review rounds** (D-117 to D-140). Two history repairs were authorized by the user: D-136, restoring 33 deleted run files (write-once), and D-140, re-ordering the approval commit after the findings import.
   - **Open follow-up (D-140):** before the next gate audit, propose a decided fix for the auditor-sidecar ordering problem.
 - **DG5 (P5 "Configuration automation and outputs") is APPROVED** (D-193) on branch `claude/mobily-transformation-platform-dg5-regate2`: gate `docs/delivery/gates/DG5.json`, candidate `sha256:55a411ae…` (2207 files, source `660f40c`), 78/78 DG5-final requirements. `validate --stage DG5`, `--historical --stage DG5` and `--pipeline` exit 0. DG6 carry-forward items and process lessons are listed in D-193.
-- **DG6 (P6 "Integration and system hardening") is BUILDING** (D-194): 48 DG6-final requirements; the planning task T-DG6-ARCH-00 runs first.
-- **Next action:** T-DG6-ARCH-00 writes `docs/architecture/p6-plan.md`; then the slice architecture tasks and implementer waves. The earlier DG5 branches (`claude/mobily-transformation-platform-regate` at `ac68d1b`, `claude/mobily-transformation-platform-dg5-regate` at `5a7c189`) are kept as provenance.
+- **DG6: FIXING after round 8** on `6cda8b33` (D-226): 460, 480 closed; new 520/541/560 (automation re-save, one defect), 540 (inbox), 561 (label copy, Low).
+- **Next action:** BE-Z13 repair, then V12, then freeze round 9.
 ## DG2 scope (P2 — diagnose, define and design)
 
 32 DG2-final requirements. Entity group (REQ-S16-013): DiagnosticFinding, Baseline, Evidence, ValuePool, Outcome, StrategicGuardrail. Templates: T01 Current-State Diagnostic (REQ-PB-026, 6 pre-seeded dimensions, Confidence H/M/L), T02 Outcome & KPI Tree (REQ-PB-034, 7 cols, target-date required), T03 TOM Gap Matrix (REQ-PB-039, dimension required), T04 Design Decision Log (REQ-PB-043, D-01… IDs, Status defaults Open). Charter (REQ-PB-029, 14 fields, versioned, thesis + 5 scope sanity checks). TOM canvas 10 dimensions (REQ-PB-038/041/042), capability heatmap (REQ-PB-024), journey/process maps (REQ-PB-025). North Star single-current (REQ-PB-033), good-outcome test (REQ-PB-036), guardrails (REQ-PB-037). Six diagnostic workstreams (REQ-PB-023). Product gates G1/G2/G3 (REQ-PB-016/017/018, REQ-S04-003/004/005): missing/filename-only evidence blocks (REQ-S13-012), wrong/submitter approver → 403, superseded version → 409. Expanded role catalogue incl. read-only auditor (REQ-S10-001). E2E Diagnose→Design + P2 evidence (REQ-DLV-034). **G1–G6 are product/business gates and never imply an engineering DG approval.**
@@ -63,3 +63,36 @@ None. DG0, DG1, DG2 and DG3 are APPROVED on this branch, and `--pipeline` exits 
 ## D-192 follow-up (2026-10-26): the first decision run BLOCKED on a findings.json mirror
 
 `T-DG5-RG2-AUDIT-D` (round 4) BLOCKED on one record condition: `findings.json` had no `acceptance` object for F-DG5-120 and 121 (`import-findings.mjs` sets the status but not this mirror; for F-DG4-148 it was added by hand). The orchestrator added both objects in the F-DG4-148 shape; the `accepted_by` errors are gone from `validate --stage DG5`. A second decision run `T-DG5-RG2-AUDIT-D2` (round 5, same candidate) writes the gate.
+
+## D-198 (2026-10-26): W3 stopped by a container restart
+
+All four W3 runs (ARCH-03, BE-B, BE-E, FE-A) were stopped by a container restart. Their run folders are kept as `*-orphaned`; ARCH-03's partial work is the WIP commit `d206925` (its handback still had PENDING placeholders); BE-B, BE-E and FE-A had written their handbacks, but their final checks are unconfirmed, and their work is WIP-committed on their branches. Continuation runs T-DG6-{ARCH-03,BE-B,BE-E,FE-A}B review the WIP, finish and run every acceptance check. Recorded in `decisions.md` with the next merge.
+
+## 2026-11-02: T-DG6-ARCH-11 run record incomplete (orchestrator note)
+
+- **What happened:** `run-agent.sh` for `DG6-T-DG6-ARCH-11-solution-architect-20261101T230117Z-114368f1` exited **1** after the agent's own turn ended. The transcript's last records are `result: success` and `task_summary`.
+- **Missing:** the runner's post-run steps did not complete. The run folder has no `meta.json`, and `transcript.jsonl` is not gzipped. The likely cause is the runner's post-run snapshot or git step failing while the orchestrator merged other branches into the same checkout (ARCH-11 ran in the main checkout). Not proven.
+- **Kept as is:** the handback is complete, and the four document edits match it. They were committed as delivered (204260d3f), together with the run folder as found.
+- **Consequence:** for this one documents-only run, this note stands in for the missing run metadata. Later documents-only tasks run in their own worktree, so that merges cannot overlap a run's post-processing.
+
+## 2026-11-02: DG6 round-2 reviewers aborted by a container restart
+
+The first launch of the three round-2 reviews (runs `DG6-T-DG6-REV-{DOM,CS,QA}-R2-*-20261102T0929*`/`T0930*`) ended at 09:43Z with exit 143 (SIGTERM, `no-result-line`), about 14 minutes in, when the session's container was restarted. No review record was written. Their run records are kept as written; the runner auto-committed their run records and one code-security repro file (kept as committed); the rest of their partial evidence was moved out of the tree (it is not review evidence). The three reviews are relaunched on the same candidate `cf40705b` with the same assignments.
+
+## 2026-11-04: DG6 round-3 QA review aborted
+
+The round-3 QA run `DG6-T-DG6-REV-QA-R3-qa-verifier-20261104T123608Z-01cb5eae` ended with exit 143 (SIGTERM, `no-result-line`) and wrote no review record. A container restart happened while it ran. Its run record is kept as written. The runner had already auto-committed its verifications file (F-DG6-144, 200 and 201 CLOSED_VERIFIED), so its evidence is kept in the tree and committed. The continuation run T-DG6-REV-QA-R3B finishes the review on the same candidate `aa219bd2` (`assignments/DG6/round-3/qa-verifier-continuation.md`). The domain review (FAIL: F-DG6-220 High, 221 Low, 222 Medium) and the code-security review (PASS; 180 and 181 CLOSED_VERIFIED) are complete.
+
+## D-237 (2026-11-10, delivery-orchestrator; recorded here because decisions.md is frozen in the candidate until the gate is decided)
+
+**DG6 round 12: domain, code-security and QA all PASS on candidate `c05864ba` (source `2495e036c4d933788044756ab3c41415e3873cf3`), with no new finding.** F-DG6-700 (domain) and F-DG6-740 (QA) are CLOSED_VERIFIED. All 52 DG6 findings are CLOSED_VERIFIED. None is ACCEPTED_OBSERVATION, so there is no auditor acceptance sidecar to import.
+
+**Decision:** the release audit is therefore a single run, **T-DG6-AUDIT-R13** (round 13, same candidate). It writes its audit record and `docs/delivery/gates/DG6.json`. The two-part form of D-140 option 1 exists only to import the auditor's acceptance before the gate is written. The auditor may judge that a two-part audit is required; if so, the gate is BLOCKED and the audit is re-run in two parts.
+
+D-237 is copied into `decisions.md` only after the gate is decided. Product gate G6 never implies DG7.
+
+**Reopen if:** the audit BLOCKS.
+
+## D-238 (2026-11-10): DG6 clean re-gate
+
+The audit T-DG6-AUDIT-R13 BLOCKED (B1–B5). The user chose a clean re-gate. D-237 and D-238 are now recorded in `decisions.md` on branch `claude/mobily-transformation-platform-dg6-regate`, before its first freeze. **Next:** verify the carried tree (V16), then freeze round 1 and run three full reviews.

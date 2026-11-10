@@ -30,7 +30,7 @@ import {
   UNKNOWN_NOT_COMPUTABLE,
   VALIDATED,
 } from "./provisional.ts";
-import { canonicalReportJson, reportContentSha256 } from "./snapshots.ts";
+import { canonicalReportJson, compareCodePoints, reportContentSha256 } from "./snapshots.ts";
 
 describe("rule 1: benefit value states (ADR-0030)", () => {
   it.each([
@@ -188,6 +188,39 @@ describe("canonical content JSON and its SHA-256 (ADR-0045 §3, ADR-0039 §1 rul
     // U+FFFF sorts before U+1F600 by code point (UTF-16 code-unit order would put the emoji first).
     expect(canonicalReportJson({ "\u{1F600}": 1, "￿": 2 })).toBe('{"￿":2,"\u{1F600}":1}');
     expect(() => canonicalReportJson({ a: 0.1 })).toThrow(/integers/);
+  });
+
+  it("T-DG6-BE-Y4: the allocation-free comparator orders exactly as the code-point arrays do (sign of every pair)", () => {
+    // The reference: the earlier implementation (Array.from code points, element-wise, then length).
+    const reference = (a: string, b: string) => {
+      const x = Array.from(a, (c) => c.codePointAt(0) ?? 0);
+      const y = Array.from(b, (c) => c.codePointAt(0) ?? 0);
+      // T-DG6-BE-Y5: element access through entries()/at(), not x[i] (the ADR-0002 boundary walk flags computed members).
+      for (const [i, v] of x.slice(0, Math.min(x.length, y.length)).entries()) {
+        const w = y.at(i)!;
+        if (v !== w) return v - w;
+      }
+      return x.length - y.length;
+    };
+    const units = [
+      "a",
+      "z",
+      "A",
+      "_",
+      "é",
+      "ع",
+      "\u{D7FF}",
+      "\u{E000}",
+      "\u{FFFF}",
+      "\u{10000}",
+      "\u{1F600}",
+      "\u{10FFFF}",
+    ];
+    const words = [""];
+    for (const u of units) for (const v of ["", ...units]) words.push(u + v);
+    for (const a of words)
+      for (const b of words)
+        expect(Math.sign(compareCodePoints(a, b)), `${a} vs ${b}`).toBe(Math.sign(reference(a, b)));
   });
 
   it("a worked document: same content -> same hash on every run; any change -> another hash", () => {

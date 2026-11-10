@@ -46,7 +46,10 @@ import {
 import { record, type AuditContext } from "../audit/index.ts";
 import {
   ADVISORY_LOCK_CLASSES,
+  cursorInstant,
+  cursorInstantValue,
   cursorSchema,
+  cursorUuidText,
   decodeCursor,
   filterHash,
   idempotencyKeySchema,
@@ -532,16 +535,20 @@ async function list(db: ModuleDeps["db"], request: FastifyRequest) {
   if (q.procedureCode !== undefined) query = query.where("pi.procedure_code", "=", q.procedureCode);
   if (after !== null) {
     const [at, id] = after;
-    query = query.where(sql<boolean>`(pi.launched_at, pi.id) < (${String(at)}::timestamptz, ${String(id)}::uuid)`);
+    query = query.where(
+      sql<boolean>`(pi.launched_at, pi.id) < (${cursorInstantValue(at)}, ${cursorUuidText(id)}::uuid)`,
+    );
   }
-  const rows: ProcedureInstanceRow[] = await query
+  // The cursor keeps launched_at to the microsecond (T-DG6-BE-X7; platform/cursor.ts cursorInstant).
+  const rows: (ProcedureInstanceRow & { cursor_at: string })[] = await query
+    .select(cursorInstant("pi.launched_at").as("cursor_at"))
     .orderBy("pi.launched_at", "desc")
     .orderBy("pi.id", "desc")
     .limit(q.limit + 1)
     .execute();
-  const page = paginate(rows, q.limit, (r) => [r.launched_at.toISOString(), r.id], hash);
+  const page = paginate(rows, q.limit, (r) => [r.cursor_at, r.id], hash);
   const items = [];
-  for (const r of page.items) items.push(await presentInstance(db, await loadBundle(db, r)));
+  for (const r of page.items) items.push(await presentInstance(db, principalOf(request), await loadBundle(db, r)));
   return { items, nextCursor: page.nextCursor };
 }
 
@@ -570,7 +577,7 @@ export function registerProcedureInstanceRoutes(app: FastifyInstance, { db }: Mo
       const created = await db.transaction().execute(async (tx) => {
         const run = async () => {
           const b = await launch(tx, request);
-          return { status: 201, body: await presentInstance(tx, b) };
+          return { status: 201, body: await presentInstance(tx, principal, b) };
         };
         return key === undefined || userId === null
           ? run()
@@ -590,13 +597,13 @@ export function registerProcedureInstanceRoutes(app: FastifyInstance, { db }: Mo
     if (i === undefined) throw problems.notFound();
     // D-167: also readable in T by whoever reads T, when one of its steps adopted T (to act on that step).
     await requireInstanceOrAdoptedRead(db, principalOf(request), i);
-    return sendVersioned(reply, 200, await presentInstance(db, await loadBundle(db, i)));
+    return sendVersioned(reply, 200, await presentInstance(db, principalOf(request), await loadBundle(db, i)));
   });
 
   const respond = (run: (tx: Tx, request: FastifyRequest) => Promise<InstanceBundle>) =>
     async function handler(request: FastifyRequest, reply: FastifyReply) {
       const b = await db.transaction().execute((tx) => run(tx, request));
-      return sendVersioned(reply, 200, await presentInstance(db, b));
+      return sendVersioned(reply, 200, await presentInstance(db, principalOf(request), b));
     };
   app.patch(
     `${ONE}/inputs`,

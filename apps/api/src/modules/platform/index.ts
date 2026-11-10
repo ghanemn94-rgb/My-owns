@@ -18,12 +18,23 @@ export {
 export { etag, iso, isoOrNull, requireIfMatch, sendVersioned } from "./http.ts";
 export {
   canonicalJson,
+  cursorInstant,
+  cursorInstantText,
+  cursorInstantValue,
   cursorSchema,
+  cursorUuidText,
   decodeCursor,
+  decodeKeysetCursor,
   encodeCursor,
   filterHash,
+  keysetHash,
+  keysetPage,
   limitSchema,
+  memoryPage,
+  pageQueryFields,
   paginate,
+  type PageRequest,
+  type SortKey,
 } from "./cursor.ts";
 export {
   IDEMPOTENCY_TTL_HOURS,
@@ -47,6 +58,14 @@ export {
   type PlatformOptions,
   type RawBodyState,
   type RouteAccess,
+} from "./hooks.ts";
+// P6 (T-DG6-BE-E; ADR-0052 §4): the rate-limit classes.
+export {
+  RATE_LIMIT_CLASSES,
+  rateLimitClass,
+  registerRateLimitClasses,
+  type RateLimitClassSpec,
+  type RateLimitKey,
 } from "./hooks.ts";
 export {
   BAD_URL_DETAIL,
@@ -120,3 +139,37 @@ export {
   type BenefitFormulaVersionChange,
   type MaterialChangePort,
 } from "./material-change.ts";
+// P6 (ADR-0052 §5): the SecretProvider port and registry (T-DG6-BE-A) and the built-in env and file providers (BE-E).
+export {
+  BUILT_IN_SECRET_PROVIDER_IDS,
+  createSecretProviderRegistry,
+  envSecretProvider,
+  fileSecretProvider,
+  registerBuiltInSecretProviders,
+  ENV_SECRET_PREFIX,
+  SECRET_PLACEHOLDER,
+  SECRET_REF_NAMESPACE_CODE,
+  SECRET_REF_NAMESPACE_MESSAGE,
+  secretRefInNamespace,
+  secretValue,
+  SecretProviderError,
+  type SecretProvider,
+  type OrganizationCodeOf,
+  type SecretProviderRegistry,
+  type SecretProviderRegistryOptions,
+  type SecretRef,
+  type SecretRefusalLogLine,
+  type SecretUse,
+  type SecretValue,
+} from "./secrets.ts";
+// F-DG6-120 and F-DG6-181: the write-time SecretRef checks every consumer runs (400 validation: the namespace, then the
+// binding; a binding refusal is audited as secret_ref.refused by access/secret-refusals.ts).
+export {
+  assertSecretRefInNamespace,
+  assertSecretRefsBound,
+  secretRefusalOf,
+  type RefusedSecretRef,
+  type SecretRefEntry,
+  type SecretRefusal,
+} from "./secret-namespace.ts";
+export { organizationCodeLookup } from "./organization-code.ts";

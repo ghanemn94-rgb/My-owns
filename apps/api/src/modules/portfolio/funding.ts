@@ -35,14 +35,23 @@ import { Decimal } from "decimal.js";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
-import { grantApplies, principalOf, requireTransformationRead } from "../access/index.ts";
+import {
+  grantApplies,
+  principalOf,
+  requireTransformationRead,
+  restrictedIdsOf,
+  type Principal,
+} from "../access/index.ts";
 import { record } from "../audit/index.ts";
 import {
+  HttpProblem,
+  cursorInstant,
+  cursorInstantValue,
   cursorSchema,
+  cursorUuidText,
   decodeCursor,
   etag,
   filterHash,
-  HttpProblem,
   iso,
   limitSchema,
   paginate,
@@ -119,8 +128,23 @@ export function toFundingDecision(r: FundingDecisionRow, decisionCode: string): 
   };
 }
 
-async function present(db: DbOrTx, rows: readonly FundingDecisionRow[]): Promise<FundingDecision[]> {
+/**
+ * T-DG6-BE-Z10 (F-DG6-420; D-218; ADR-0051 §2): the decision's business case is part of its meaning, so a case the
+ * reader is not admitted to is shown as the neutral marker `businessCaseId: null`, `businessCaseRestricted: true`, and
+ * the decision carries `includesRestrictedRecords: true`. An admitted reader gets the id and no marker.
+ */
+async function present(
+  db: DbOrTx,
+  principal: Principal,
+  rows: readonly FundingDecisionRow[],
+): Promise<FundingDecision[]> {
   if (rows.length === 0) return [];
+  const hiddenCases = await restrictedIdsOf(
+    db,
+    principal,
+    "business_case",
+    rows.map((r) => r.business_case_id),
+  );
   const codes = await db
     .selectFrom("decision")
     .select(["id", "code"])
@@ -131,7 +155,16 @@ async function present(db: DbOrTx, rows: readonly FundingDecisionRow[]): Promise
     )
     .execute();
   const byId = new Map(codes.map((c) => [c.id, c.code]));
-  return rows.map((r) => toFundingDecision(r, byId.get(r.decision_id)!));
+  return rows.map((r) => {
+    const d = toFundingDecision(r, byId.get(r.decision_id)!);
+    if (r.business_case_id === null || !hiddenCases.has(r.business_case_id)) return d;
+    return {
+      ...d,
+      businessCaseId: null,
+      businessCaseRestricted: true as const,
+      includesRestrictedRecords: true as const,
+    };
+  });
 }
 
 // ------------------------------------------------------------------------------------------------ rules
@@ -341,17 +374,18 @@ export function registerFundingRoutes(app: FastifyInstance, { db }: ModuleDeps):
     if (after)
       q = q.where((eb) =>
         eb.or([
-          eb("decided_at", "<", new Date(String(after[0]))),
-          eb.and([eb("decided_at", "=", new Date(String(after[0]))), eb("id", "<", String(after[1]))]),
+          eb("decided_at", "<", cursorInstantValue(after[0])),
+          eb.and([eb("decided_at", "=", cursorInstantValue(after[0])), eb("id", "<", cursorUuidText(after[1]))]),
         ]),
       );
     const rows = await q
+      .select(cursorInstant("decided_at").as("cursor_at"))
       .orderBy("decided_at", "desc")
       .orderBy("id", "desc")
       .limit(query.limit + 1)
       .execute();
-    const page = paginate(rows, query.limit, (r) => [r.decided_at.toISOString(), r.id], hash);
-    return { items: await present(db, page.items), nextCursor: page.nextCursor };
+    const page = paginate(rows, query.limit, (r) => [r.cursor_at, r.id], hash);
+    return { items: await present(db, principalOf(request), page.items), nextCursor: page.nextCursor };
   });
 
   app.post(COLLECTION, { config: approve }, async (request, reply) => {
@@ -375,7 +409,7 @@ export function registerFundingRoutes(app: FastifyInstance, { db }: ModuleDeps):
       .executeTakeFirst();
     if (!row) throw problems.notFound();
     await requireTransformationRead(db, principalOf(request), row.transformation_id);
-    return (await present(db, [row]))[0]!;
+    return (await present(db, principalOf(request), [row]))[0]!;
   });
 
   return [`GET ${COLLECTION}`, `POST ${COLLECTION}`, `GET ${ITEM}`];

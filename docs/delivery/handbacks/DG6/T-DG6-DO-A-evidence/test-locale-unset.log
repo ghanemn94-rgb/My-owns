@@ -1,0 +1,1382 @@
+Tue Oct 27 01:22:24 UTC 2026
+
+> mobily-transformation-hub@0.1.0 test /home/user/wt/dg6-do-a
+> s=0; vitest run --project unit-node || s=1; vitest run --project unit-web || s=1; vitest run --project unit-formula-nocodegen || s=1; exit $s
+
+
+ RUN  v3.2.4 /home/user/wt/dg6-do-a
+
+ ✓ |unit-node| packages/db/src/seed.test.ts (62 tests) 106ms
+ ✓ |unit-node| apps/api/src/modules/reporting/dashboards/areas.test.ts (35 tests) 339ms
+ ✓ |unit-node| packages/shared/src/formula/formula.test.ts (140 tests) 73ms
+ ✓ |unit-node| packages/shared/src/schemas/schemas.test.ts (69 tests) 225ms
+ ✓ |unit-node| packages/shared/src/formula/fuzz.test.ts (111 tests) 6807ms
+   ✓ fuzz: no uncaught exception, no code execution > 10 000 random byte strings (0–255, up to 80 bytes)  1388ms
+   ✓ fuzz: no uncaught exception, no code execution > 10 000 random UTF-16 strings including astral code points and lone surrogates  1228ms
+   ✓ fuzz: no uncaught exception, no code execution > 20 000 random strings over the grammar alphabet reach parser, type checker and evaluator  2508ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > every file of the engine's import closure gets the engine-source lint rules (eslint.config.js)  1134ms
+   ✓ source scan: no dynamic code in packages/shared/src/formula (ADR-0024 §6) > ESLint refuses the round-5 handler forms (G1, G2, A1, A2), F1 and every lintable probe-table row in an engine source  524ms
+ ✓ |unit-node| packages/shared/src/health/scoring.test.ts (29 tests) 371ms
+ ✓ |unit-node| apps/api/src/modules/platform/media-types.test.ts (57 tests) 111ms
+ ✓ |unit-node| apps/api/src/modules/reporting/dashboards/n4-value-basis.test.ts (12 tests) 76ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts (141 tests) 11657ms
+   ✓ API module boundaries (ADR-0002) > every import respects dependsOn, public surfaces and allowed packages  6132ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > rule 4 reports exactly the diagnostics of a full ts.transpileModule, for every extension (F-DG5-102/145)  373ms
+   ✓ package dependency direction (ADR-0002 rule 5) > packages/shared imports no workspace package  710ms
+   ✓ package dependency direction (ADR-0002 rule 5) > apps/web never imports @mth/db or @mth/config (browser bundle, no secrets)  3472ms
+ ✓ |unit-node| apps/api/src/modules/workflows/workflows.test.ts (14 tests) 1046ms
+   ✓ workflows module (P2) > its declared boundary holds, and an undeclared dependency would be caught  992ms
+ ✓ |unit-node| packages/shared/src/forms/validate.test.ts (103 tests) 28ms
+ ✓ |unit-node| packages/shared/src/value.test.ts (29 tests) 197ms
+ ✓ |unit-node| apps/api/src/modules/benefits/totals.test.ts (15 tests) 38ms
+ ✓ |unit-node| apps/api/src/modules/kpi/rules.test.ts (30 tests) 45ms
+ ✓ |unit-node| packages/shared/src/notifications/delivery.test.ts (15 tests) 2963ms
+   ✓ properties (seeded; Asia/Riyadh, America/New_York, Asia/Kolkata) > urgent is always delivered at once; a held notification is never released before it was created  777ms
+   ✓ properties (seeded; Asia/Riyadh, America/New_York, Asia/Kolkata) > a release is outside quiet hours, on a working day when the policy says so, and at a digest time when one is on  1104ms
+   ✓ properties (seeded; Asia/Riyadh, America/New_York, Asia/Kolkata) > delivered at once only when no rule applies at that instant  908ms
+ ✓ |unit-node| apps/api/src/modules/kpi/totals.test.ts (20 tests) 15ms
+stderr | apps/api/src/modules/admin/branding.test.ts > version 0 defaults and the zod mirrors (REQ-S01-002) > each mirror accepts what its contract component accepts and rejects an extra member
+unknown format "date-time" ignored in schema at path "#/components/schemas/Timestamp"
+unknown format "date-time" ignored in schema at path "#/components/schemas/Timestamp"
+unknown format "uuid" ignored in schema at path "#/components/schemas/Uuid"
+unknown format "uuid" ignored in schema at path "#/components/schemas/Uuid"
+unknown format "date-time" ignored in schema at path "#/components/schemas/Timestamp"
+unknown format "date-time" ignored in schema at path "#/components/schemas/Timestamp"
+unknown format "uuid" ignored in schema at path "#/components/schemas/Uuid"
+unknown format "uuid" ignored in schema at path "#/components/schemas/Uuid"
+
+ ✓ |unit-node| apps/api/src/modules/admin/branding.test.ts (12 tests) 192ms
+ ✓ |unit-node| packages/shared/src/scoring.test.ts (36 tests) 506ms
+   ✓ property: all 5^5 integer score combinations under v1 equal an independent BigInt rational computation > stored value, 2-digit display and 0–100 view all match for 3125 combinations  463ms
+ ✓ |unit-node| packages/shared/src/kpi/rag.test.ts (38 tests) 21ms
+ ✓ |unit-node| packages/shared/src/finance/metrics.test.ts (21 tests) 4117ms
+   ✓ properties (seeded) > NPV equals the precision-200 oracle rounded once half-up to 2 decimals (both timings)  1556ms
+   ✓ properties (seeded) > end_of_period NPV = beginning_of_period NPV / (1 + r), before rounding  993ms
+   ✓ properties (seeded) > a conventional set (outflows only at t = 0, beginning of period) has an NPV that never rises with the rate  1040ms
+   ✓ properties (seeded) > ROI equals the precision-200 oracle rounded half-up to 6 decimals; payback equals an integer (BigInt) oracle  489ms
+ ✓ |unit-node| apps/api/src/modules/reporting/dashboards/k1-value-class.test.ts (7 tests) 16ms
+ ✓ |unit-node| apps/api/src/modules/benefits/register-rules.test.ts (45 tests) 29ms
+ ✓ |unit-node| apps/api/src/modules/kpi/kpi.test.ts (44 tests) 1503ms
+   ✓ kpi module (P2) > its declared boundary holds, and a planted bypass or undeclared dependency would be caught  1370ms
+ ✓ |unit-node| packages/shared/src/kpi/a05.test.ts (17 tests) 30ms
+ ✓ |unit-node| packages/shared/src/kpi/property.test.ts (11 tests) 939ms
+ ✓ |unit-node| apps/api/src/modules/portfolio/schedule.test.ts (23 tests) 13ms
+ ✓ |unit-node| apps/api/src/modules/benefits/d2-rules.test.ts (15 tests) 18ms
+ ✓ |unit-node| packages/reporting/src/provenance-illustrative.test.ts (24 tests) 6245ms
+   ✓ the illustrative label of a demo snapshot (F-DG5-qa-c-2; ADR-0050 §2 (d)) > PDF en: in the header and on every page  826ms
+   ✓ the illustrative label of a demo snapshot (F-DG5-qa-c-2; ADR-0050 §2 (d)) > PDF ar: in the header and on every page  1586ms
+   ✓ the illustrative label of a demo snapshot (F-DG5-qa-c-2; ADR-0050 §2 (d)) > production (no `synthetic` member): no format prints the label in any language  2183ms
+   ✓ the illustrative label of a demo snapshot (F-DG5-qa-c-2; ADR-0050 §2 (d)) > the label is translated (no missing label key in either language)  1045ms
+ ✓ |unit-node| packages/shared/src/adoption/measures.test.ts (24 tests) 480ms
+ ✓ |unit-node| apps/api/src/modules/platform/platform.test.ts (19 tests) 130ms
+ ✓ |unit-node| apps/api/src/modules/workflows/g4.test.ts (10 tests) 13ms
+ ✓ |unit-node| apps/api/src/modules/reporting/reports/assemblers/kbe-d2.test.ts (13 tests) 41ms
+ ✓ |unit-node| apps/api/src/modules/reporting/reports/provisional.test.ts (22 tests) 24ms
+ ✓ |unit-node| packages/shared/src/kpi/formula-binding.test.ts (26 tests) 17ms
+ ✓ |unit-node| packages/shared/src/kpi/status.test.ts (25 tests) 12ms
+ ✓ |unit-node| packages/shared/src/kpi/periods.test.ts (26 tests) 10ms
+ ✓ |unit-node| packages/config/src/load.test.ts (33 tests) 176ms
+ ✓ |unit-node| apps/api/src/modules/identity/navigation.test.ts (12 tests) 14ms
+ ✓ |unit-node| apps/api/src/modules/automation/content.test.ts (8 tests) 14ms
+ ✓ |unit-node| packages/reporting/src/csv.test.ts (12 tests) 54ms
+ ✓ |unit-node| apps/api/src/modules/evidence/evidence.test.ts (13 tests) 361ms
+ ✓ |unit-node| packages/design-tokens/src/tokens.test.ts (21 tests) 49ms
+ ✓ |unit-node| tests/qa/unit/a05-calc-units.test.ts (15 tests) 41ms
+ ✓ |unit-node| packages/reporting/src/pdf/pdf.test.ts (13 tests) 9729ms
+   ✓ renderPdf: Arabic (REQ-S13-009) > has a right-to-left base direction: /Lang (ar-SA), /Direction /R2L, right-aligned text, mirrored tables  1126ms
+   ✓ renderPdf: Arabic (REQ-S13-009) > embeds IBM Plex Sans Arabic (every font is an embedded subset of it, with its TrueType program)  941ms
+   ✓ renderPdf: Arabic (REQ-S13-009) > identifiers and numbers keep their left-to-right order inside Arabic text (text extraction)  866ms
+   ✓ renderPdf: Arabic (REQ-S13-009) > a multi-word Arabic phrase reads right to left, word by word (the leftmost word is the last one)  823ms
+   ✓ renderPdf: Arabic (REQ-S13-009) > the glyph-run check: the drawn Arabic word uses GSUB's joined forms, not the isolated forms  881ms
+   ✓ renderPdf: Arabic (REQ-S13-009) > a provisional value prints مؤقت, an Unknown value prints غير معروف and no number, never 0  767ms
+   ✓ renderPdf: Arabic (REQ-S13-009) > a generated snapshot carries مسودة — ليس تقريراً صادراً on every page  831ms
+   ✓ renderPdf: English (REQ-S13-009, REQ-S13-008) > is left to right: /Lang (en-GB), no R2L preference, left-aligned text, IBM Plex Sans embedded  326ms
+   ✓ renderPdf: English (REQ-S13-009, REQ-S13-008) > a generated snapshot carries 'Draft — not an issued report'; an issued one its version and no Draft line  553ms
+   ✓ renderPdf: content and pagination (REQ-S13-005) > prints every row of a long register once, repeats the table header on each page, and numbers the pages  1788ms
+ ✓ |unit-node| packages/shared/src/forms/calculated.test.ts (22 tests) 20ms
+ ✓ |unit-node| packages/shared/src/adoption/form-schema.test.ts (8 tests) 13ms
+ ✓ |unit-node| apps/api/src/modules/kpi/formulas.test.ts (10 tests) 27ms
+ ✓ |unit-node| packages/reporting/src/pptx.test.ts (5 tests) 477ms
+ ✓ |unit-node| apps/api/src/modules/reporting/reports/assemblers/executive-pack.test.ts (13 tests) 13ms
+ ✓ |unit-node| packages/shared/src/reports/content-labels.test.ts (5 tests) 107ms
+ ✓ |unit-node| apps/api/src/server.test.ts (6 tests) 1064ms
+   ✓ route registration > declares access on every /api route and on the health endpoints  443ms
+   ✓ route registration > registers dev login only in AUTH_MODE=dev; production configuration refuses dev mode entirely  310ms
+ ✓ |unit-node| packages/shared/src/time/cron-next.test.ts (9 tests) 1682ms
+   ✓ nextCronRun (ADR-0043 §6) > property: for each seeded cron and zone, the result is the FIRST matching whole minute strictly after now  1139ms
+   ✓ nextCronRun (ADR-0043 §6) > never a guessed time: no match in 366 days, an invalid cron or an unknown zone is null  306ms
+ ✓ |unit-node| apps/api/src/modules/automation/outbox-registry.test.ts (5 tests) 85ms
+ ✓ |unit-node| packages/shared/src/schemas/missing-links.test.ts (10 tests) 19ms
+ ✓ |unit-node| packages/shared/src/governance/recurrence.test.ts (19 tests) 14ms
+ ✓ |unit-node| packages/shared/src/forms/field-types.test.ts (39 tests) 25ms
+ ✓ |unit-node| packages/shared/src/time/working-days.test.ts (19 tests) 36ms
+ ✓ |unit-node| packages/shared/src/kpi/aggregate.test.ts (20 tests) 12ms
+ ✓ |unit-node| apps/api/src/modules/health/assessments.test.ts (19 tests) 34ms
+ ✓ |unit-node| apps/api/src/modules/procedures/definitions.test.ts (8 tests) 34ms
+ ✓ |unit-node| packages/reporting/src/xlsx/xlsx.test.ts (11 tests) 208ms
+ ✓ |unit-node| apps/api/src/modules/reporting/reports/assemblers/table-totals.test.ts (16 tests) 19ms
+ ✓ |unit-node| apps/api/src/modules/kpi/kbe-c.test.ts (9 tests) 11ms
+ ✓ |unit-node| apps/api/src/modules/reporting/dashboards/finance.test.ts (12 tests) 9ms
+ ✓ |unit-node| apps/api/src/request-encoding.test.ts (11 tests) 66ms
+ ✓ |unit-node| tests/qa/unit/a22-s21-001-text-scan.test.ts (7 tests) 188ms
+ ✓ |unit-node| packages/shared/src/forms/property.test.ts (6 tests) 839ms
+ ✓ |unit-node| packages/reporting/src/layout/layout.test.ts (11 tests) 386ms
+ ✓ |unit-node| apps/api/src/modules/access/rules.test.ts (12 tests) 7ms
+ ❯ |unit-node| deploy/scripts/tests/dep-audit.vitest.mjs (30 tests | 1 failed) 268ms
+   ✓ version ranges (npm syntax subset) > orders versions by SemVer precedence, pre-releases before their release 2ms
+   ✓ version ranges (npm syntax subset) > 5.6.1 in "<5.12.2" is true 1ms
+   ✓ version ranges (npm syntax subset) > 5.12.2 in "<5.12.2" is false 0ms
+   ✓ version ranges (npm syntax subset) > 0.28.7 in ">=0.26.0 <=0.28.11" is true 0ms
+   ✓ version ranges (npm syntax subset) > 0.25.0 in ">=0.26.0 <=0.28.11" is false 0ms
+   ✓ version ranges (npm syntax subset) > 7.9.0 in ">=7.7.0 <7.13.2" is true 0ms
+   ✓ version ranges (npm syntax subset) > 1.2.5 in "<1.0.0 || >=1.2.0 <1.2.6" is true 0ms
+   ✓ version ranges (npm syntax subset) > 1.1.0 in "<1.0.0 || >=1.2.0 <1.2.6" is false 6ms
+   ✓ version ranges (npm syntax subset) > 3.0.0 in "*" is true 0ms
+   ✓ version ranges (npm syntax subset) > 3.0.0 in "" is true 0ms
+   ✓ version ranges (npm syntax subset) > 1.5.0 in "1.0.0 - 2.0.0" is true 0ms
+   ✓ version ranges (npm syntax subset) > 2.0.1 in "1.0.0 - 2.0.0" is false 0ms
+   ✓ version ranges (npm syntax subset) > 1.2.3 in "1.2.3" is true 1ms
+   ✓ version ranges (npm syntax subset) > 1.2.3 in "= 1.2.3" is true 0ms
+   ✓ version ranges (npm syntax subset) > 1.2.3 in ">= 1.2.0 < 1.3.0" is true 0ms
+   ✓ version ranges (npm syntax subset) > 2.0.0-rc.1 in "<2.0.0" is true 0ms
+   ✓ version ranges (npm syntax subset) > refuses "^1.0.0" instead of guessing 1ms
+   ✓ version ranges (npm syntax subset) > refuses "~1.2.0" instead of guessing 0ms
+   ✓ version ranges (npm syntax subset) > refuses "1.x" instead of guessing 0ms
+   ✓ version ranges (npm syntax subset) > refuses ">=1.2" instead of guessing 0ms
+   ✓ audit() on the synthetic fixtures > reads npm library components with their mth:scope and skips containers 1ms
+   ✓ audit() on the synthetic fixtures > negative fixture: a High and a Critical advisory matching shipped entries fail the check 1ms
+   ✓ audit() on the synthetic fixtures > clean fixture: passes; a development-only Critical and a shipped Moderate are listed, not failing 0ms
+   ✓ audit() on the synthetic fixtures > a shipped component the snapshot never queried is Unknown and fails (never a silent pass) 0ms
+   ✓ audit() on the synthetic fixtures > refuses a snapshot without its source or retrieval date 1ms
+   ✓ dep-audit.mjs command line (offline) > exits 1 on the negative fixture and names the matching advisory and the snapshot age 51ms
+   ✓ dep-audit.mjs command line (offline) > exits 0 on the clean fixture 44ms
+   ✓ dep-audit.mjs command line (offline) > exits 1 when --max-age-days is exceeded, and 2 on a range it cannot evaluate 82ms
+   ✓ the committed tree > a dated snapshot is committed with its source and retrieval date 2ms
+   × the committed tree > no High/Critical advisory in the committed snapshot matches a shipped component of the committed SBOM 69ms
+     → snapshot: deploy/advisories/snapshot-2026-10-27.json; source: https://registry.npmjs.org/-/npm/v1/security/advisories/bulk
+snapshot retrieved 2026-10-27T01:12:11.669Z; age 0 day(s)
+this is the OFFLINE snapshot check, not the live registry audit (CI job dependency-audit)
+High/Critical advisories on shipped components (20):
+  HIGH     @fastify/static@8.2.0 (runtime) in "<=10.1.0": @fastify/static vulnerable to route guard bypass via path traversal https://github.com/advisories/GHSA-83w8-p2f5-377r
+  HIGH     fastify@5.6.1 (runtime) in "<5.7.2": Fastify's Content-Type header tab character allows body validation bypass https://github.com/advisories/GHSA-jx2c-rxcm-jvmq
+  HIGH     fastify@5.6.1 (runtime) in ">=5.3.2 <=5.8.4": Fastify has a Body Schema Validation Bypass via Leading Space in Content-Type Header https://github.com/advisories/GHSA-247c-9743-5963
+  HIGH     fastify@5.6.1 (runtime) in "<5.12.2": fastify vulnerable to request body replacement via an async validation result collision https://github.com/advisories/GHSA-667r-xxjv-c9mm
+  HIGH     fastify@5.6.1 (runtime) in ">=4.0.0 <5.12.2": fastify vulnerable to authentication bypass via malformed URLs reaching encapsulated not-found handlers https://github.com/advisories/GHSA-p68q-wchp-6fh7
+  HIGH     fastify@5.6.1 (runtime) in "<5.12.2": fastify vulnerable to request validation bypass via skipped boolean false schemas https://github.com/advisories/GHSA-hwr6-493r-vm6h
+  HIGH     fastify@5.6.1 (runtime) in "<5.12.2": fastify vulnerable to header validation bypass via incomplete schema case normalization https://github.com/advisories/GHSA-9q9j-q6p8-xq58
+  HIGH     image-size@1.2.1 (runtime) in ">=1.2.0 <=2.0.2": image-size: JXL and HEIF parsers allow denial of service through infinite loops https://github.com/advisories/GHSA-5p2g-fcmc-qvqq
+  HIGH     image-size@1.2.1 (runtime) in ">=0.6.3 <=2.0.2": image-size: ICNS parser allows denial of service through an infinite loop https://github.com/advisories/GHSA-w3rx-r6r6-pgpr
+  HIGH     kysely@0.28.7 (runtime) in ">=0.26.0 <=0.28.11": SQL Injection via unsanitized JSON path keys when ignoring/silencing compilation errors or using `Kysely<any>`. https://github.com/advisories/GHSA-wmrf-hv6w-mr66
+  HIGH     kysely@0.28.7 (runtime) in "<=0.28.13": Kysely has a MySQL SQL Injection via Insufficient Backslash Escaping in `sql.lit(string)` usage or similar methods that append string literal values into the compiled SQL strings https://github.com/advisories/GHSA-8cpq-38p9-67gx
+  HIGH     kysely@0.28.7 (runtime) in ">=0.26.0 <0.28.17": Kysely: JSON-path traversal injection via unsanitized path-leg metacharacters in `JSONPathBuilder.key()` / `.at()` https://github.com/advisories/GHSA-pv5w-4p9q-p3v2
+  HIGH     react-router@7.9.0 (bundled) in ">=7.0.0 <=7.11.0": React Router vulnerable to XSS via Open Redirects https://github.com/advisories/GHSA-2w69-qvjg-hvjx
+  HIGH     react-router@7.9.0 (bundled) in ">=7.0.0 <=7.14.1": React Router's vendored turbo-stream v2 allows arbitrary constructor invocation via TYPE_ERROR deserialization leading to Unauth RCE https://github.com/advisories/GHSA-49rj-9fvp-4h2h
+  HIGH     react-router@7.9.0 (bundled) in ">=7.7.0 <7.13.2": React Router vulnerable to XSS in unstable RSC redirect handling via javascript: redirect targets https://github.com/advisories/GHSA-8646-j5j9-6r62
+  HIGH     react-router@7.9.0 (bundled) in ">=7.0.0 <7.15.0": React Router vulnerable to DoS via unbounded path expansion in __manifest endpoint https://github.com/advisories/GHSA-8x6r-g9mw-2r78
+  HIGH     react-router@7.9.0 (bundled) in ">=7.0.0 <7.14.0": React Router vulnerable to Denial of Service via reflected user input in single-fetch https://github.com/advisories/GHSA-rxv8-25v2-qmq8
+  HIGH     react-router@7.9.0 (bundled) in ">=7.0.0 <7.18.0": React Router: Unauthenticated Denial of Service via Inefficient Route Matching https://github.com/advisories/GHSA-chx6-hx7r-mcp5
+  HIGH     react-router@7.9.0 (bundled) in ">=7.0.0 <7.12.0": React Router SSR XSS in ScrollRestoration https://github.com/advisories/GHSA-8v8x-cx79-35w7
+  HIGH     zod@4.1.12 (runtime) in "<4.6.6": Zod can exhaust memory while validating oversized constrained collections https://github.com/advisories/GHSA-mrhx-c7xc-m3w5
+not failing (development-only or below High): 40 {"moderate/runtime":12,"moderate/development":9,"low/runtime":5,"moderate/bundled":6,"critical/development":3,"high/development":4,"low/development":1}
+FAIL: 20 High/Critical match(es) on shipped components, 0 shipped component(s) not covered
+: expected 'snapshot: deploy/advisories/snapshot-…' to contain 'PASS:'
+ ✓ |unit-node| apps/api/src/modules/reporting/reports/assemblers/kbe-c2.test.ts (9 tests) 12ms
+ ✓ |unit-node| packages/shared/src/schemas/scoring-defaults.test.ts (12 tests) 19ms
+ ✓ |unit-node| apps/api/src/modules/platform/secrets.test.ts (15 tests) 33ms
+ ✓ |unit-node| apps/api/src/modules/kpi/p3-gate-facts.test.ts (9 tests) 26ms
+ ✓ |unit-node| packages/shared/src/schedule/critical-path.test.ts (13 tests) 13ms
+ ✓ |unit-node| apps/api/src/modules/platform/incomplete-body.test.ts (10 tests) 60ms
+ ✓ |unit-node| apps/api/src/modules/platform/db-errors.test.ts (7 tests) 13ms
+ ✓ |unit-node| packages/shared/src/kpi/change.test.ts (22 tests) 27ms
+ ✓ |unit-node| apps/api/src/modules/raid/raid.test.ts (7 tests) 52ms
+ ✓ |unit-node| apps/api/src/modules/portfolio/sequencing.test.ts (9 tests) 11ms
+ ✓ |unit-node| packages/shared/src/kpi/types.test.ts (40 tests) 31ms
+ ✓ |unit-node| apps/api/src/modules/methodology/methodology.test.ts (4 tests) 1062ms
+   ✓ methodology module (P2) > its declared boundary holds, and an undeclared dependency would be caught  1027ms
+ ✓ |unit-node| apps/api/src/modules/procedures/outputs/outputs.test.ts (8 tests) 8ms
+ ✓ |unit-node| packages/shared/src/kpi/measures.test.ts (30 tests) 14ms
+ ✓ |unit-node| apps/api/src/modules/portfolio/budget.test.ts (13 tests) 12ms
+ ✓ |unit-node| apps/api/src/modules/platform/db-errors-p4.test.ts (5 tests) 11ms
+ ✓ |unit-node| packages/reporting/src/xml-chars.test.ts (13 tests) 528ms
+ ✓ |unit-node| packages/shared/src/kpi/trajectory.test.ts (14 tests) 10ms
+ ✓ |unit-node| apps/api/src/modules/platform/db-errors-p5.test.ts (3 tests) 7ms
+ ✓ |unit-node| apps/api/src/modules/platform/advisory-locks.test.ts (3 tests) 68ms
+ ✓ |unit-node| apps/api/src/modules/reporting/reports/assemblers/kbe-d4.test.ts (8 tests) 29ms
+ ✓ |unit-node| apps/api/src/modules/transformations/good-outcome.test.ts (7 tests) 11ms
+(node:1833) [FSTDEP022] FastifyWarning: The router options for constraints property access is deprecated. Please use "options.routerOptions" instead for accessing router options. The router options will be removed in `fastify@6`.
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ |unit-node| apps/api/src/modules/platform/framework-errors.test.ts (6 tests) 40ms
+ ✓ |unit-node| apps/api/src/modules/access/read-scope.test.ts (9 tests) 18ms
+ ✓ |unit-node| packages/db/src/demo/guard.test.ts (9 tests) 14ms
+ ✓ |unit-node| apps/api/src/modules/methodology/studio-core.test.ts (7 tests) 14ms
+ ✓ |unit-node| apps/api/src/modules/platform/connection-hygiene.test.ts (6 tests) 73ms
+ ✓ |unit-node| apps/api/src/modules/raid/corrective.test.ts (4 tests) 11ms
+ ✓ |unit-node| packages/reporting/src/docx.test.ts (4 tests) 859ms
+   ✓ renderDocx > Arabic paragraphs are bidi, Arabic runs are rtl with ar-SA, tables are visually right to left  342ms
+ ✓ |unit-node| apps/api/src/modules/tasks/tasks.test.ts (5 tests) 29ms
+ ✓ |unit-node| packages/shared/src/schedule/working-day-slip.test.ts (11 tests) 21ms
+ ✓ |unit-node| packages/shared/src/schemas/corrective.test.ts (10 tests) 24ms
+ ✓ |unit-node| packages/shared/src/schemas/report.test.ts (6 tests) 47ms
+ ✓ |unit-node| apps/api/src/modules/health/health.test.ts (4 tests) 114ms
+ ✓ |unit-node| apps/api/src/modules/kpi/restatement-reconciliation.test.ts (4 tests) 19ms
+ ✓ |unit-node| packages/db/src/demo/data/dataset-helpers.test.ts (8 tests) 46ms
+ ✓ |unit-node| apps/api/src/modules/reporting/reporting.test.ts (4 tests) 3021ms
+   ✓ reporting module (P1 scaffold, D-048) > its declared boundary holds, and a planted bypass or undeclared dependency would be caught  2946ms
+ ✓ |unit-node| packages/shared/src/schemas/roadmap.test.ts (6 tests) 57ms
+ ✓ |unit-node| packages/shared/src/forms/normalize.test.ts (18 tests) 29ms
+ ✓ |unit-node| packages/reporting/src/branding-layout.test.ts (5 tests) 2579ms
+   ✓ PDF > a configured branding: the name, a header band in the primary colour, the header and footer lines, B0004  1241ms
+   ✓ PDF > version 0 (no colour): no band, and no header or footer line is invented  414ms
+   ✓ PDF > an invalid colour is ignored (no band), never drawn  550ms
+ ✓ |unit-node| apps/api/src/modules/platform/db-errors-p4-meetings.test.ts (4 tests) 14ms
+ ✓ |unit-node| apps/api/src/modules/platform/request-encoding.test.ts (7 tests) 6ms
+ ✓ |unit-node| packages/shared/src/text-scan/text-scan.test.ts (77 tests) 29ms
+ ✓ |unit-node| packages/reporting/src/storage.test.ts (4 tests) 119ms
+ ✓ |unit-node| apps/api/src/modules/platform/db-errors-p6.test.ts (14 tests) 12ms
+ ✓ |unit-node| apps/api/src/modules/platform/db-errors-p5-cutoff-pack.test.ts (4 tests) 13ms
+ ✓ |unit-node| apps/api/src/modules/portfolio/readiness-transform.test.ts (4 tests) 18ms
+ ✓ |unit-node| apps/api/src/modules/platform/db-errors-p5-restatements.test.ts (5 tests) 8ms
+ ✓ |unit-node| apps/api/src/modules/platform/in-flight.test.ts (4 tests) 315ms
+ ✓ |unit-node| packages/db/src/migrate.test.ts (3 tests) 12ms
+ ✓ |unit-node| apps/api/src/modules/automation/samples.test.ts (4 tests) 28ms
+ ✓ |unit-node| packages/reporting/src/injection.test.ts (4 tests) 155ms
+ ✓ |unit-node| apps/api/src/modules/automation/conditions.test.ts (4 tests) 8ms
+ ✓ |unit-node| apps/api/src/modules/launch/day-ninety.test.ts (3 tests) 51ms
+ ✓ |unit-node| packages/shared/src/kpi/purity.test.ts (14 tests) 52ms
+ ✓ |unit-node| apps/api/src/modules/platform/db-errors-p5-owner-updates.test.ts (4 tests) 12ms
+ ✓ |unit-node| apps/api/src/modules/transformations/thesis.test.ts (4 tests) 9ms
+ ✓ |unit-node| apps/api/src/modules/workflows/t08-cycle-problem.test.ts (2 tests) 3ms
+ ✓ |unit-node| apps/api/src/modules/identity/oidc-claims.test.ts (5 tests) 13ms
+ ✓ |unit-node| apps/api/src/modules/platform/health.test.ts (2 tests) 36ms
+ ✓ |unit-node| apps/api/src/modules/platform/secrets-registry.test.ts (3 tests) 10ms
+ ✓ |unit-node| apps/api/src/modules/platform/db-errors-p5-reports.test.ts (3 tests) 11ms
+ ✓ |unit-node| packages/db/src/demo/coverage.test.ts (3 tests) 10ms
+ ✓ |unit-node| apps/api/src/modules/launch/plan-dates.test.ts (5 tests) 22ms
+ ✓ |unit-node| apps/worker/src/reports/export-runner.test.ts (2 tests) 9ms
+ ✓ |unit-node| apps/api/src/modules/methodology/compatibility.test.ts (3 tests) 18ms
+ ✓ |unit-node| packages/reporting/src/labels.test.ts (3 tests) 6ms
+ ✓ |unit-node| apps/api/src/modules/portfolio/capacity.test.ts (4 tests) 22ms
+ ✓ |unit-node| apps/worker/src/handlers/demo.test.ts (2 tests) 56ms
+ ✓ |unit-node| apps/api/src/modules/sustainment/sustainment.test.ts (2 tests) 55ms
+ ✓ |unit-node| apps/api/src/modules/governance/raci.test.ts (2 tests) 7ms
+ ✓ |unit-node| apps/api/src/modules/governance/governance.test.ts (2 tests) 200ms
+ ✓ |unit-node| apps/api/src/modules/transformations/exclusions.test.ts (19 tests) 4ms
+ ✓ |unit-node| apps/api/src/modules/benefits/benefits.test.ts (2 tests) 80ms
+ ✓ |unit-node| apps/api/src/modules/integrations/integrations.test.ts (2 tests) 14ms
+ ✓ |unit-node| apps/api/src/modules/adoption/adoption.test.ts (2 tests) 77ms
+ ✓ |unit-node| apps/api/src/modules/operations/operations.test.ts (2 tests) 46ms
+ ✓ |unit-node| apps/api/src/modules/transformations/transitions.test.ts (2 tests) 14ms
+ ✓ |unit-node| apps/api/src/modules/assistant/assistant.test.ts (2 tests) 71ms
+ ✓ |unit-node| apps/api/src/modules/automation/automation.test.ts (2 tests) 68ms
+ ✓ |unit-node| apps/api/src/modules/search/search.test.ts (2 tests) 14ms
+ ✓ |unit-node| apps/api/src/modules/procedures/procedures.test.ts (2 tests) 68ms
+ ✓ |unit-node| apps/api/src/modules/launch/launch.test.ts (2 tests) 25ms
+ ✓ |unit-node| apps/api/src/modules/platform/db-errors-p5-demo.test.ts (11 tests) 18ms
+ ✓ |unit-node| apps/api/src/modules/forms/forms.test.ts (2 tests) 40ms
+ ✓ |unit-node| apps/api/src/modules/methodology/source-coverage.test.ts (1 test) 6ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-node| deploy/scripts/tests/dep-audit.vitest.mjs > the committed tree > no High/Critical advisory in the committed snapshot matches a shipped component of the committed SBOM
+AssertionError: snapshot: deploy/advisories/snapshot-2026-10-27.json; source: https://registry.npmjs.org/-/npm/v1/security/advisories/bulk
+snapshot retrieved 2026-10-27T01:12:11.669Z; age 0 day(s)
+this is the OFFLINE snapshot check, not the live registry audit (CI job dependency-audit)
+High/Critical advisories on shipped components (20):
+  HIGH     @fastify/static@8.2.0 (runtime) in "<=10.1.0": @fastify/static vulnerable to route guard bypass via path traversal https://github.com/advisories/GHSA-83w8-p2f5-377r
+  HIGH     fastify@5.6.1 (runtime) in "<5.7.2": Fastify's Content-Type header tab character allows body validation bypass https://github.com/advisories/GHSA-jx2c-rxcm-jvmq
+  HIGH     fastify@5.6.1 (runtime) in ">=5.3.2 <=5.8.4": Fastify has a Body Schema Validation Bypass via Leading Space in Content-Type Header https://github.com/advisories/GHSA-247c-9743-5963
+  HIGH     fastify@5.6.1 (runtime) in "<5.12.2": fastify vulnerable to request body replacement via an async validation result collision https://github.com/advisories/GHSA-667r-xxjv-c9mm
+  HIGH     fastify@5.6.1 (runtime) in ">=4.0.0 <5.12.2": fastify vulnerable to authentication bypass via malformed URLs reaching encapsulated not-found handlers https://github.com/advisories/GHSA-p68q-wchp-6fh7
+  HIGH     fastify@5.6.1 (runtime) in "<5.12.2": fastify vulnerable to request validation bypass via skipped boolean false schemas https://github.com/advisories/GHSA-hwr6-493r-vm6h
+  HIGH     fastify@5.6.1 (runtime) in "<5.12.2": fastify vulnerable to header validation bypass via incomplete schema case normalization https://github.com/advisories/GHSA-9q9j-q6p8-xq58
+  HIGH     image-size@1.2.1 (runtime) in ">=1.2.0 <=2.0.2": image-size: JXL and HEIF parsers allow denial of service through infinite loops https://github.com/advisories/GHSA-5p2g-fcmc-qvqq
+  HIGH     image-size@1.2.1 (runtime) in ">=0.6.3 <=2.0.2": image-size: ICNS parser allows denial of service through an infinite loop https://github.com/advisories/GHSA-w3rx-r6r6-pgpr
+  HIGH     kysely@0.28.7 (runtime) in ">=0.26.0 <=0.28.11": SQL Injection via unsanitized JSON path keys when ignoring/silencing compilation errors or using `Kysely<any>`. https://github.com/advisories/GHSA-wmrf-hv6w-mr66
+  HIGH     kysely@0.28.7 (runtime) in "<=0.28.13": Kysely has a MySQL SQL Injection via Insufficient Backslash Escaping in `sql.lit(string)` usage or similar methods that append string literal values into the compiled SQL strings https://github.com/advisories/GHSA-8cpq-38p9-67gx
+  HIGH     kysely@0.28.7 (runtime) in ">=0.26.0 <0.28.17": Kysely: JSON-path traversal injection via unsanitized path-leg metacharacters in `JSONPathBuilder.key()` / `.at()` https://github.com/advisories/GHSA-pv5w-4p9q-p3v2
+  HIGH     react-router@7.9.0 (bundled) in ">=7.0.0 <=7.11.0": React Router vulnerable to XSS via Open Redirects https://github.com/advisories/GHSA-2w69-qvjg-hvjx
+  HIGH     react-router@7.9.0 (bundled) in ">=7.0.0 <=7.14.1": React Router's vendored turbo-stream v2 allows arbitrary constructor invocation via TYPE_ERROR deserialization leading to Unauth RCE https://github.com/advisories/GHSA-49rj-9fvp-4h2h
+  HIGH     react-router@7.9.0 (bundled) in ">=7.7.0 <7.13.2": React Router vulnerable to XSS in unstable RSC redirect handling via javascript: redirect targets https://github.com/advisories/GHSA-8646-j5j9-6r62
+  HIGH     react-router@7.9.0 (bundled) in ">=7.0.0 <7.15.0": React Router vulnerable to DoS via unbounded path expansion in __manifest endpoint https://github.com/advisories/GHSA-8x6r-g9mw-2r78
+  HIGH     react-router@7.9.0 (bundled) in ">=7.0.0 <7.14.0": React Router vulnerable to Denial of Service via reflected user input in single-fetch https://github.com/advisories/GHSA-rxv8-25v2-qmq8
+  HIGH     react-router@7.9.0 (bundled) in ">=7.0.0 <7.18.0": React Router: Unauthenticated Denial of Service via Inefficient Route Matching https://github.com/advisories/GHSA-chx6-hx7r-mcp5
+  HIGH     react-router@7.9.0 (bundled) in ">=7.0.0 <7.12.0": React Router SSR XSS in ScrollRestoration https://github.com/advisories/GHSA-8v8x-cx79-35w7
+  HIGH     zod@4.1.12 (runtime) in "<4.6.6": Zod can exhaust memory while validating oversized constrained collections https://github.com/advisories/GHSA-mrhx-c7xc-m3w5
+not failing (development-only or below High): 40 {"moderate/runtime":12,"moderate/development":9,"low/runtime":5,"moderate/bundled":6,"critical/development":3,"high/development":4,"low/development":1}
+FAIL: 20 High/Critical match(es) on shipped components, 0 shipped component(s) not covered
+: expected 'snapshot: deploy/advisories/snapshot-…' to contain 'PASS:'
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- PASS:[39m
+[31m+ snapshot: deploy/advisories/snapshot-2026-10-27.json; source: https://registry.npmjs.org/-/npm/v1/security/advisories/bulk[39m
+[31m+ snapshot retrieved 2026-10-27T01:12:11.669Z; age 0 day(s)[39m
+[31m+ this is the OFFLINE snapshot check, not the live registry audit (CI job dependency-audit)[39m
+[31m+ High/Critical advisories on shipped components (20):[39m
+[31m+   HIGH     @fastify/static@8.2.0 (runtime) in "<=10.1.0": @fastify/static vulnerable to route guard bypass via path traversal https://github.com/advisories/GHSA-83w8-p2f5-377r[39m
+[31m+   HIGH     fastify@5.6.1 (runtime) in "<5.7.2": Fastify's Content-Type header tab character allows body validation bypass https://github.com/advisories/GHSA-jx2c-rxcm-jvmq[39m
+[31m+   HIGH     fastify@5.6.1 (runtime) in ">=5.3.2 <=5.8.4": Fastify has a Body Schema Validation Bypass via Leading Space in Content-Type Header https://github.com/advisories/GHSA-247c-9743-5963[39m
+[31m+   HIGH     fastify@5.6.1 (runtime) in "<5.12.2": fastify vulnerable to request body replacement via an async validation result collision https://github.com/advisories/GHSA-667r-xxjv-c9mm[39m
+[31m+   HIGH     fastify@5.6.1 (runtime) in ">=4.0.0 <5.12.2": fastify vulnerable to authentication bypass via malformed URLs reaching encapsulated not-found handlers https://github.com/advisories/GHSA-p68q-wchp-6fh7[39m
+[31m+   HIGH     fastify@5.6.1 (runtime) in "<5.12.2": fastify vulnerable to request validation bypass via skipped boolean false schemas https://github.com/advisories/GHSA-hwr6-493r-vm6h[39m
+[31m+   HIGH     fastify@5.6.1 (runtime) in "<5.12.2": fastify vulnerable to header validation bypass via incomplete schema case normalization https://github.com/advisories/GHSA-9q9j-q6p8-xq58[39m
+[31m+   HIGH     image-size@1.2.1 (runtime) in ">=1.2.0 <=2.0.2": image-size: JXL and HEIF parsers allow denial of service through infinite loops https://github.com/advisories/GHSA-5p2g-fcmc-qvqq[39m
+[31m+   HIGH     image-size@1.2.1 (runtime) in ">=0.6.3 <=2.0.2": image-size: ICNS parser allows denial of service through an infinite loop https://github.com/advisories/GHSA-w3rx-r6r6-pgpr[39m
+[31m+   HIGH     kysely@0.28.7 (runtime) in ">=0.26.0 <=0.28.11": SQL Injection via unsanitized JSON path keys when ignoring/silencing compilation errors or using `Kysely<any>`. https://github.com/advisories/GHSA-wmrf-hv6w-mr66[39m
+[31m+   HIGH     kysely@0.28.7 (runtime) in "<=0.28.13": Kysely has a MySQL SQL Injection via Insufficient Backslash Escaping in `sql.lit(string)` usage or similar methods that append string literal values into the compiled SQL strings https://github.com/advisories/GHSA-8cpq-38p9-67gx[39m
+[31m+   HIGH     kysely@0.28.7 (runtime) in ">=0.26.0 <0.28.17": Kysely: JSON-path traversal injection via unsanitized path-leg metacharacters in `JSONPathBuilder.key()` / `.at()` https://github.com/advisories/GHSA-pv5w-4p9q-p3v2[39m
+[31m+   HIGH     react-router@7.9.0 (bundled) in ">=7.0.0 <=7.11.0": React Router vulnerable to XSS via Open Redirects https://github.com/advisories/GHSA-2w69-qvjg-hvjx[39m
+[31m+   HIGH     react-router@7.9.0 (bundled) in ">=7.0.0 <=7.14.1": React Router's vendored turbo-stream v2 allows arbitrary constructor invocation via TYPE_ERROR deserialization leading to Unauth RCE https://github.com/advisories/GHSA-49rj-9fvp-4h2h[39m
+[31m+   HIGH     react-router@7.9.0 (bundled) in ">=7.7.0 <7.13.2": React Router vulnerable to XSS in unstable RSC redirect handling via javascript: redirect targets https://github.com/advisories/GHSA-8646-j5j9-6r62[39m
+[31m+   HIGH     react-router@7.9.0 (bundled) in ">=7.0.0 <7.15.0": React Router vulnerable to DoS via unbounded path expansion in __manifest endpoint https://github.com/advisories/GHSA-8x6r-g9mw-2r78[39m
+[31m+   HIGH     react-router@7.9.0 (bundled) in ">=7.0.0 <7.14.0": React Router vulnerable to Denial of Service via reflected user input in single-fetch https://github.com/advisories/GHSA-rxv8-25v2-qmq8[39m
+[31m+   HIGH     react-router@7.9.0 (bundled) in ">=7.0.0 <7.18.0": React Router: Unauthenticated Denial of Service via Inefficient Route Matching https://github.com/advisories/GHSA-chx6-hx7r-mcp5[39m
+[31m+   HIGH     react-router@7.9.0 (bundled) in ">=7.0.0 <7.12.0": React Router SSR XSS in ScrollRestoration https://github.com/advisories/GHSA-8v8x-cx79-35w7[39m
+[31m+   HIGH     zod@4.1.12 (runtime) in "<4.6.6": Zod can exhaust memory while validating oversized constrained collections https://github.com/advisories/GHSA-mrhx-c7xc-m3w5[39m
+[31m+ not failing (development-only or below High): 40 {"moderate/runtime":12,"moderate/development":9,"low/runtime":5,"moderate/bundled":6,"critical/development":3,"high/development":4,"low/development":1}[39m
+[31m+ FAIL: 20 High/Critical match(es) on shipped components, 0 shipped component(s) not covered[39m
+[31m+[39m
+
+ ❯ deploy/scripts/tests/dep-audit.vitest.mjs:156:26
+    154|   it("no High/Critical advisory in the committed snapshot matches a sh…
+    155|     const r = run();
+    156|     expect(r.out, r.out).toContain("PASS:");
+       |                          ^
+    157|     expect(r.status, r.out).toBe(0);
+    158|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 155 passed (156)
+      Tests  1 failed | 2454 passed (2455)
+   Start at  01:22:25
+   Duration  111.54s (transform 8.69s, setup 0ms, collect 209.39s, tests 65.51s, environment 34ms, prepare 15.27s)
+
+
+ RUN  v3.2.4 /home/user/wt/dg6-do-a
+
+ ✓ |unit-web| src/pages/traceability/traceability.test.tsx (32 tests) 17365ms
+   ✓ Traceability (en) > graph: clickable nodes, orphan flags, allocation totals, unseen links counted; orphan report  1407ms
+   ✓ Traceability (en) > impact of a KPI definition: affected benefit (value affected), dashboards and areas, hidden count  642ms
+   ✓ Traceability (en) > allocation set: 100 % total, 0 % unallocated; a 110 % share is refused with the translated message  1417ms
+   ✓ Traceability (en) > creates a trace link with its statement and a decimal share  643ms
+   ✓ Traceability (ar) > graph: clickable nodes, orphan flags, allocation totals, unseen links counted; orphan report  1030ms
+   ✓ Traceability (ar) > impact of a KPI definition: affected benefit (value affected), dashboards and areas, hidden count  405ms
+   ✓ Traceability (ar) > allocation set: 100 % total, 0 % unallocated; a 110 % share is refused with the translated message  475ms
+   ✓ Traceability (ar) > creates a trace link with its statement and a decimal share  651ms
+   ✓ Traceability (ar) > read-only users get no write control  364ms
+   ✓ Modular entry (en) > missing links with the waiver in force; G2 Inherited, never Approved; inherited records labelled  744ms
+   ✓ Modular entry (en) > records an inherited evidence item and withdraws one with If-Match  592ms
+   ✓ Modular entry (ar) > missing links with the waiver in force; G2 Inherited, never Approved; inherited records labelled  405ms
+   ✓ Modular entry (ar) > records an inherited evidence item and withdraws one with If-Match  661ms
+   ✓ Portfolios and workstreams (en) > workstreams list WS-nn codes; assigning an initiative twice shows the translated refusal  1359ms
+   ✓ Portfolios and workstreams (en) > portfolio: placing a transformation already in a portfolio shows the translated refusal  600ms
+   ✓ Portfolios and workstreams (en) > portfolios list is read-only without portfolio.manage  375ms
+   ✓ Portfolios and workstreams (ar) > workstreams list WS-nn codes; assigning an initiative twice shows the translated refusal  985ms
+   ✓ RAG policy and transformation chip (en) > first save of the default policy sends If-Match "0"; a stale save says nothing was saved  640ms
+   ✓ RAG policy and transformation chip (en) > the transformation chip is repeatable, offers readable transformations and sends each id  970ms
+   ✓ RAG policy and transformation chip (ar) > an invalid ratio is caught before sending; a threshold-order refusal is translated  318ms
+   ✓ RAG policy and transformation chip (ar) > the transformation chip is repeatable, offers readable transformations and sends each id  420ms
+ ✓ |unit-web| src/pages/gates/g5-g6.test.tsx (35 tests) 19992ms
+   ✓ G5 view (en) > lists the G5 missing item translated with the risk code, and the exceptions with expiry and coverage  1514ms
+   ✓ G5 view (en) > requests an exception with all five REQ-S04-013 fields; a missing expiry is refused before sending  1269ms
+   ✓ G5 view (en) > a refused G5 submission lists 'Risk closure' by its translated label, never the English detail  599ms
+   ✓ G5 view (en) > a G5 approval needs the scale scope: nothing is sent without one; the scope goes with the decision  1427ms
+   ✓ G5 view (en) > a frozen submission shows its exception lines and the nine-field review table, Under review  1219ms
+   ✓ G5 view (ar) > lists the G5 missing item translated with the risk code, and the exceptions with expiry and coverage  410ms
+   ✓ G5 view (ar) > requests an exception with all five REQ-S04-013 fields; a missing expiry is refused before sending  902ms
+   ✓ G5 view (ar) > a G5 approval needs the scale scope: nothing is sent without one; the scope goes with the decision  633ms
+   ✓ G5 view (ar) > a frozen submission shows its exception lines and the nine-field review table, Under review  639ms
+   ✓ Modular G3 waiver on the gate page (en) > the submission shows the missing-links items and the waiver used; a revoked waiver's refusal is translated without params (an older server): the text shown before, no placeholder  877ms
+   ✓ Modular G3 waiver on the gate page (en) > the submission shows the missing-links items and the waiver used; a revoked waiver's refusal is translated with params.date (ADR-0038 Q1): the date localized  537ms
+   ✓ Modular G3 waiver on the gate page (en) > a G3 submission refused for missing links lists each item translated  307ms
+   ✓ Modular G3 waiver on the gate page (ar) > the submission shows the missing-links items and the waiver used; a revoked waiver's refusal is translated without params (an older server): the text shown before, no placeholder  594ms
+   ✓ Modular G3 waiver on the gate page (ar) > the submission shows the missing-links items and the waiver used; a revoked waiver's refusal is translated with params.date (ADR-0038 Q1): the date localized  518ms
+   ✓ G3 submit dialog coverage warning (en) > end_to_end: incomplete outputs covered by accepted exceptions (canSubmit true) are not announced as a refusal; a live view that cannot be submitted is  543ms
+   ✓ G3 submit dialog coverage warning (en) > modular: incomplete outputs covered by accepted exceptions (canSubmit true) are not announced as a refusal; a live view that cannot be submitted is  409ms
+   ✓ G3 submit dialog coverage warning (ar) > end_to_end: incomplete outputs covered by accepted exceptions (canSubmit true) are not announced as a refusal; a live view that cannot be submitted is  370ms
+   ✓ G3 submit dialog coverage warning (ar) > modular: incomplete outputs covered by accepted exceptions (canSubmit true) are not announced as a refusal; a live view that cannot be submitted is  338ms
+   ✓ G3 submit dialog coverage warning (ar) > every mandatory output complete: neither note  444ms
+   ✓ G5 scale transitions and risk dispositions (en) > scaling before G5 is approved shows the translated invalid-transition that names G5  533ms
+   ✓ G5 scale transitions and risk dispositions (en) > an open High-impact risk without a disposition is flagged; proposing one sends the four fields  784ms
+   ✓ G5 scale transitions and risk dispositions (en) > a pending disposition is shown as pending, not as closed; an approved one completes the row  444ms
+   ✓ G5 scale transitions and risk dispositions (en) > the approved scope and the transitions name units by code and locale name, an inactive unit labelled; a new transition offers only selectable units  368ms
+   ✓ G5 scale transitions and risk dispositions (en) > scaling outside the approved G5 scope shows the translated scale.outside_approved_scope refusal  535ms
+   ✓ G5 scale transitions and risk dispositions (ar) > scaling before G5 is approved shows the translated invalid-transition that names G5  672ms
+   ✓ G5 scale transitions and risk dispositions (ar) > a pending disposition is shown as pending, not as closed; an approved one completes the row  447ms
+   ✓ G5 scale transitions and risk dispositions (ar) > scaling outside the approved G5 scope shows the translated scale.outside_approved_scope refusal  308ms
+ ✓ |unit-web| src/pages/transformations/transformations.test.tsx (21 tests) 8134ms
+   ✓ after create (F-DG1-004) > shows the created record when the server lets the creator read it  1024ms
+   ✓ after create (F-DG1-004) > explains, in English, that the draft was created but cannot be opened (server 404), instead of 'Not found'  412ms
+   ✓ after create (F-DG1-004) > explains the same in Arabic (RTL), using the glossary term for Transformation  366ms
+   ✓ truly out-of-scope records keep the correct localized message > 404 without a just-created record: 'Not found' (en) / 'غير موجود' (ar), nothing disclosed  312ms
+   ✓ P1 close rule in the edit form (F-DG1-001, T-DG1-FE3) > en: the rendered status select for an active record has no Closed option  379ms
+   ✓ derived creator assignment on the audit trail (F-DG1-008) > an action the catalogue does not know stays readable and is explicitly marked (en and ar)  315ms
+   ✓ effective permissions refresh after create (F-DG1-210) > English: Edit, Archive and the audit trail appear after create, without a reload  1163ms
+   ✓ effective permissions refresh after create (F-DG1-210) > Arabic (RTL): the same controls and the audit trail appear after create, without a reload  1157ms
+   ✓ effective permissions refresh after create (F-DG1-210) > does not over-grant: if the refreshed server answer adds nothing, Archive and the audit trail stay hidden  645ms
+   ✓ effective permissions refresh after create (F-DG1-210) > a failed /me refresh never blocks the navigation; the UI stays fail-safe (no controls offered)  398ms
+ ✓ |unit-web| src/auth/session-bound.test.tsx (36 tests) 17844ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en) > Y1: a create whose post-create GET /me returns B: B is not navigated and never sees A's code or name  1382ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en) > Y1c: the same create under one identity still lands on the created record  695ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en) > Y1c (the 2 s window passes during the page load): one revalidation, sent first, for the GETs after the window  458ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en) > Y1c (not visible to the creator): the creator still gets 'created, but you cannot open it' with the 201's code  344ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en) > an edit whose identity changes between its awaits: B is not navigated to A's record and keeps nothing of A's  820ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en) > an organization create whose identity changes between its awaits: B is not navigated to A's new organization  833ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en) > a user create whose identity changes between its awaits: B is not navigated to A's new user  769ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (en) > sanity: the organization and user creates under one identity still navigate to the new record  391ms
+   ✓ F-DG2-570 the header and the data of ONE identity on in-app navigation (en) > N1: B signed in elsewhere, no focus event: opening A's record asks GET /me first; B's header above B's answer  479ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar) > Y1: a create whose post-create GET /me returns B: B is not navigated and never sees A's code or name  711ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar) > Y1c: the same create under one identity still lands on the created record  305ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar) > Y1c (the 2 s window passes during the page load): one revalidation, sent first, for the GETs after the window  403ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar) > an edit whose identity changes between its awaits: B is not navigated to A's record and keeps nothing of A's  551ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar) > an organization create whose identity changes between its awaits: B is not navigated to A's new organization  696ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar) > a user create whose identity changes between its awaits: B is not navigated to A's new user  470ms
+   ✓ F-DG2-530/580 no effect of A's action after a further await once the tab is B's (ar) > sanity: the organization and user creates under one identity still navigate to the new record  664ms
+   ✓ F-DG2-570 the header and the data of ONE identity on in-app navigation (ar) > N1: B signed in elsewhere, no focus event: opening A's record asks GET /me first; B's header above B's answer  324ms
+   ✓ F-DG2-570 the header and the data of ONE identity on in-app navigation (ar) > N2: opening the list: B's header with B's list and B's permissions, never A's header or A's empty-state  662ms
+   ✓ the convention: no raw navigate or cache write in app code (T-DG2-FE15) > the ESLint rule refuses a raw navigate, a raw cache write and a useNavigate import in a page  2941ms
+ ✓ |unit-web| src/pages/p2.test.tsx (56 tests) 43352ms
+   ✓ Diagnose > shows the six T01 dimensions with Unknown for missing values, and value pools that are never 0  3025ms
+   ✓ Diagnose > shows the totals as Unknown when no pool is quantified  1091ms
+   ✓ Diagnose > renders the six workstreams with their key questions  906ms
+   ✓ Diagnose > edits a T01 row with only the changed fields and If-Match  2334ms
+   ✓ Diagnose > a 409 on save writes nothing, compares, and re-applies on the current version  1285ms
+   ✓ Diagnose > a 400 validation.blank shows a localized message on its field ('en')  1345ms
+   ✓ Diagnose > a 400 validation.blank shows a localized message on its field ('ar')  1643ms
+   ✓ Diagnose > an invisible-only value is blocked client-side with validation.blank ('en')  1136ms
+   ✓ Diagnose > an invisible-only value is blocked client-side with validation.blank ('ar')  1377ms
+   ✓ Diagnose > a whitespace-only T01 value is an inline blank error and sends nothing ('en')  1569ms
+   ✓ Diagnose > a whitespace-only T01 value is an inline blank error and sends nothing ('ar')  1455ms
+   ✓ Diagnose > T01: an emptied field is sent as an explicit null; visible text is sent verbatim  1346ms
+   ✓ Define > shows the good outcome test per outcome with pass / fail / unknown and localized reasons  849ms
+   ✓ Define > sets the North Star with one sentence and no If-Match the first time  708ms
+   ✓ Define: KPI activation (F-DG2-201) > offers Activate on a draft KPI, states the unmet precondition on 422, then activates with If-Match  367ms
+   ✓ Define: KPI activation (F-DG2-201) > Arabic: the Activate action and the 422 reason are in Arabic  563ms
+   ✓ Define: KPI activation (F-DG2-201) > an active KPI shows Active and offers no Activate  394ms
+   ✓ Charter > shows the 14 fields, the thesis, the five scope checks with pre-checks and the top-outcomes warning  533ms
+   ✓ Charter > scope pre-check: an empty Out of scope reads as failing (EN and AR)  751ms
+   ✓ Charter > thesis: an empty part is Incomplete and no sentence is composed (F-DG2-203)  377ms
+   ✓ Charter > thesis: the four parts compose the B0037 sentence (EN and AR)  502ms
+   ✓ Charter > North Star (field 5): a superseded statement is never shown as the current one  348ms
+   ✓ Charter > compares a version with the previous one  409ms
+   ✓ Charter > create: a whitespace Case for change is an inline blank error and creates nothing ('en')  438ms
+   ✓ Charter > create: a whitespace Case for change is an inline blank error and creates nothing ('ar')  383ms
+   ✓ Charter > edit: a whitespace Out of scope is an inline blank error, sends nothing and keeps the value (en)  507ms
+   ✓ Charter > edit: a whitespace Out of scope is an inline blank error, sends nothing and keeps the value (ar)  469ms
+   ✓ Charter > edit: emptying a filled field sends null; visible text is verbatim (en)  485ms
+   ✓ Charter > edit: emptying a filled field sends null; visible text is verbatim (ar)  591ms
+   ✓ Charter > edit: a change summary alone is not a change (never a content-free version)  462ms
+   ✓ Design > shows the ten canvas boxes and the per-dimension view  863ms
+   ✓ Design > converts an unresolved workshop item into a design decision with If-Match  779ms
+   ✓ Decisions (T04) > reads the log with kind=design and shows D-codes, options A/B/C and Open status  512ms
+   ✓ Decisions (T04) > creates a design decision with inline options and an idempotency key  363ms
+   ✓ Gates (business approval) > lists G1-G6 as business approvals with live readiness, and never mentions the engineering gates  790ms
+   ✓ Gates (business approval) > shows unverified evidence as unverified, the failing outcome at G2, and submits with If-Match  519ms
+   ✓ Gates (business approval) > the approver's decision: rationale required; 403 and 409 problems in words  990ms
+   ✓ Gates (business approval) > gate list titles: the verbatim B0023 name once, never the code twice (EN and AR)  563ms
+   ✓ Gates (business approval) > gate detail heading: the verbatim B0023 name once (EN and AR)  864ms
+   ✓ Evidence > uploads a revision as octet-stream with a percent-encoded file name and If-Match  1012ms
+   ✓ Evidence > never offers review to the creator; a filename reference can only be rejected  1009ms
+   ✓ read-only auditor (AUD) > team: no write control and a read-only note  477ms
+ ✓ |unit-web| src/pages/reports/fee.test.tsx (17 tests) 9724ms
+   ✓ REQ-S13-007 / S13-008: one snapshot > en: draft banner, Provisional label, Unknown and Stale without a number, shared content labels  1265ms
+   ✓ REQ-S13-007 / S13-008: one snapshot > issue sends If-Match; the 409 series_changed is translated and stays visible after the reload  370ms
+   ✓ REQ-S13-007 / S13-008: one snapshot > an issued snapshot offers the reissue (a reason is required) and opens the new snapshot  1074ms
+   ✓ REQ-S13-005: exports > the export form offers only the output's formats and sends an Idempotency-Key  422ms
+   ✓ REQ-S13-005: exports > en: the list shows progress, a failed job's translated error, and cancel with If-Match  480ms
+   ✓ REQ-S09-011: owner updates > en: "No update submitted" without an update; writing creates then submits with If-Match  859ms
+   ✓ REQ-S09-011: owner updates > a saved draft is labelled not submitted; 403 owner_update.not_owner is translated  379ms
+   ✓ REQ-S10-013: presentation mode > is live by default; a snapshot of another meeting is the translated 422  478ms
+   ✓ REQ-S13-010: the evidence register > en: a file shows its SHA-256, v2 and both versions; a note shows no checksum and "Not stated"  527ms
+   ✓ REQ-S13-010: the evidence register > ar: a file shows its SHA-256, v2 and both versions; a note shows no checksum and "Not stated"  371ms
+   ✓ REQ-S13-004: generate > posts the register output with its filters and opens the generated snapshot  731ms
+ ✓ |unit-web| src/pages/automation/fed.test.tsx (20 tests) 8558ms
+   ✓ REQ-S12-022: the jobs operations view > en: never-run is "Never run", a disabled job is "Disabled", the next run is a time  1030ms
+   ✓ REQ-S12-022: the jobs operations view > a non-admin gets the server's 403 as the no-permission state; run now posts the job  491ms
+   ✓ REQ-S12-001 / S12-002: an automation rule > a draft's dry run is Not run; submit without it is the translated 422; enable sends the rule's If-Match  1329ms
+   ✓ REQ-S12-001 / S12-002: an automation rule > a dry run shows what each action would do and that nothing was created  405ms
+   ✓ D-164 d: the dry-run sample comes from the trigger's samplePayload > en: the stubbed catalogue's sample is pre-filled with the rule's transformation and is sent as is  351ms
+   ✓ D-164 d: the dry-run sample comes from the trigger's samplePayload > ar: the stubbed catalogue's sample is pre-filled with the rule's transformation and is sent as is  309ms
+   ✓ REQ-S12-002: the failure queue > retry sends If-Match; 422 automation_failure.not_open is one translated alert  588ms
+   ✓ REQ-S06-002: a procedure instance > en: current step, assignee role, Unknown due date, missing inputs; completing is refused translated  551ms
+   ✓ REQ-S06-001: the procedure builder > validation lists every finding, translated by its code  576ms
+   ✓ REQ-S12-025: notification preferences > the first save sends If-Match "0"; the quiet-hours refusal is translated  443ms
+   ✓ REQ-S12-015: the meeting cut-off pack > "No reviewer assigned"; the review sends If-Match; 403 not_reviewer is translated  456ms
+   ✓ REQ-S10-015: an approval route > in a sequential route step 2 is waiting and not notified until step 1 approves  398ms
+ ✓ |unit-web| src/lib/auditChanges.test.ts (125 tests) 698ms
+ ✓ |unit-web| src/pages/benefits/benefits.test.tsx (33 tests) 12283ms
+   ✓ benefits screens (en) > T14 register: ten columns; Value (SAR) n/a and Unknown never 0; Realized kept apart with pending labelled  2074ms
+   ✓ benefits screens (en) > totals (F-DG4-121, D-117): gross and net are labelled profit and cash; revenue uplift and avoided cost sit beside gross, never summed  307ms
+   ✓ benefits screens (en) > totals (F-DG4-121): a beside-gross class with no line shows no value, never 0  326ms
+   ✓ benefits screens (en) > lifecycle: six steps with question and output, missing outputs listed, only the allowed next step offered  518ms
+   ✓ benefits screens (en) > allocations: percent and unallocated share; the replace sends fractions with If-Match  508ms
+   ✓ benefits screens (en) > allocations above 100 %: the preview warns and the server's 422 is translated in the one form alert  559ms
+   ✓ benefits screens (en) > values: seven states apart; measurements before Measure are explained (a delivered enabler is not realized value)  304ms
+   ✓ benefits screens (en) > measurements: a validated value offers no edit; the 409 validated_immutable is translated  442ms
+   ✓ benefits screens (en) > Finance decision: six items, the decision body with If-Match; labelled Finance validation, never DG0-DG7  715ms
+   ✓ benefits screens (en) > Finance decision: the content_incomplete 422 and a Business Owner's 403 are translated  313ms
+   ✓ benefits screens (en) > read-only (auditor): Finance item without decide, register without create  618ms
+   ✓ benefits screens (en) > scenarios: every value is labelled with its scenario kind  421ms
+   ✓ benefits screens (en) > measurement lineage: inputs with KPI value versions, a provisional basis labelled  524ms
+   ✓ benefits screens (ar) > T14 register: ten columns; Value (SAR) n/a and Unknown never 0; Realized kept apart with pending labelled  327ms
+   ✓ benefits screens (ar) > Finance decision: six items, the decision body with If-Match; labelled Finance validation, never DG0-DG7  330ms
+ ✓ |unit-web| src/auth/session-generation.test.tsx (26 tests) 12493ms
+   ✓ F-DG2-530 a write in flight across an identity change (en) > X3: A's PATCH answered after B's /me is not written into B's cache, not shown, and does not navigate B  1302ms
+   ✓ F-DG2-530 a write in flight across an identity change (en) > X3b: the same after a session END here and B's sign-in: A's late answer never lands  591ms
+   ✓ F-DG2-530 a write in flight across an identity change (en) > an archive in flight across an identity change: A's archived record never lands in B's cache  997ms
+   ✓ F-DG2-530 a write in flight across an identity change (en) > an organization save in flight across an identity change: A's change is never stored under B  984ms
+   ✓ F-DG2-530 a write in flight across an identity change (en) > a user save in flight across an identity change: A's change is never stored under B  1010ms
+   ✓ F-DG2-530 a write in flight across an identity change (en) > a same-person new session: the in-flight save is dropped silently, the draft is kept and usable  648ms
+   ✓ F-DG2-530 a write in flight across an identity change (en) > a language save retried after a 409 is never written for the identity that replaced A  323ms
+   ✓ F-DG2-530 X6: refocus and reconnect revalidate GET /me first (en) > after B signs in elsewhere, a refocus within /me's staleTime shows B's header with B's data, never A's  616ms
+   ✓ F-DG2-530 X6: refocus and reconnect revalidate GET /me first (en) > the same identity: a refocus refetches /me once, then the stale page queries; nothing when all is fresh  398ms
+   ✓ F-DG2-530 a write in flight across an identity change (ar) > X3: A's PATCH answered after B's /me is not written into B's cache, not shown, and does not navigate B  552ms
+   ✓ F-DG2-530 a write in flight across an identity change (ar) > X3b: the same after a session END here and B's sign-in: A's late answer never lands  473ms
+   ✓ F-DG2-530 a write in flight across an identity change (ar) > an archive in flight across an identity change: A's archived record never lands in B's cache  556ms
+   ✓ F-DG2-530 a write in flight across an identity change (ar) > an organization save in flight across an identity change: A's change is never stored under B  531ms
+   ✓ F-DG2-530 a write in flight across an identity change (ar) > a user save in flight across an identity change: A's change is never stored under B  564ms
+   ✓ F-DG2-530 a write in flight across an identity change (ar) > a same-person new session: the in-flight save is dropped silently, the draft is kept and usable  444ms
+   ✓ F-DG2-530 a write in flight across an identity change (ar) > a language save retried after a 409 is never written for the identity that replaced A  337ms
+   ✓ F-DG2-530 X6: refocus and reconnect revalidate GET /me first (ar) > the same identity: a refocus refetches /me once, then the stale page queries; nothing when all is fresh  369ms
+ ✓ |unit-web| src/pages/playbook/feg.test.tsx (19 tests) 4560ms
+   ✓ the playbook reader > en: About, questions, badges and the Realize note; B0004 stays verbatim in English  626ms
+   ✓ a block and its links > en: B0031 shows its table, the T01 register link with badges, the requirement ID and Launch  466ms
+   ✓ Branding Settings > en: publishes with If-Match "0", then a stale save shows the conflict; a 422 is shown by its code  608ms
+   ✓ the walkthrough and the environment screen > en: outside a demo database the walkthrough shows environment.not_demo; in one it lists 12 steps  456ms
+   ✓ the walkthrough and the environment screen > the reset of a production database is refused with environment.not_demo, sent with If-Match  385ms
+ ✓ |unit-web| src/pages/dashboards/dashboards.test.tsx (29 tests) 6006ms
+   ✓ Dashboards (en) > transformation dashboard: six areas, distinct value states, provisional Arabic, drill-down  774ms
+   ✓ Dashboards (en) > Executive Overview: organizationId and the period filter reach the server; window and as-of shown  521ms
+   ✓ Dashboards (en) > Finance dashboard: per-class lines, gross and net, an Unknown net is never 0, non-financial is n/a  391ms
+   ✓ Dashboards (en) > Finance dashboard drill-downs (ADR-0037 K1): every class line drills by valueClass; a net line is gross − implementation cost with its two inputs, never a drillable total  396ms
+   ✓ Dashboards (en) > workspace header: every element Unknown where data is missing; one click opens the RAID register  385ms
+   ✓ Dashboards (en) > My Work: sections with totals, the KPI update under Missing updates, a draft labelled not submitted, deadlines  640ms
+   ✓ Dashboards (en) > the dashboards hub lists the six dashboards and /dashboards/executive opens the Executive Overview  476ms
+   ✓ Dashboards (ar) > Finance dashboard drill-downs (ADR-0037 K1): every class line drills by valueClass; a net line is gross − implementation cost with its two inputs, never a drillable total  319ms
+ ✓ |unit-web| src/app/p5-shell.test.tsx (29 tests) 4904ms
+   ✓ REQ-S03-007: the area landing pages and their §3 contents > en: playbook lands on its §3 contents with where each one lives  970ms
+   ✓ P5 navigation entries and route placeholders (D-144 item 1) > Administration shows the Studio entries only with methodology.read, and is shown to the methodology admin  575ms
+ ✓ |unit-web| src/pages/studio/studio.test.tsx (21 tests) 4588ms
+   ✓ Studio home > ar: lists versions with their state; a draft is labelled not published; New draft for the admin  795ms
+   ✓ Version page: pipeline, elements, diff, affected records > shows Not run / Stale / Pass per check of the current content, never passed by default  507ms
+   ✓ Version page: pipeline, elements, diff, affected records > renaming G3's label sends PUT with If-Match; changing an approver to ADM_METHOD shows the translated refusal  375ms
+   ✓ Scoring defaults > edits weights to 30/20/20/15/15 (total 100.00) and a Feasibility descriptor; saves a draft with If-Match  504ms
+   ✓ Source coverage > ar: shows the ten sets in source order with their counts, and runs the check for the version  434ms
+ ✓ |unit-web| src/pages/portfolio/portfolio.test.tsx (32 tests) 8757ms
+   ✓ Portfolio (en) > lists code, name, wave, owners and three separate columns: proposed rank, selection and funding  875ms
+   ✓ Portfolio (en) > creates a draft at any time: POST /initiatives with the transformation and an Idempotency-Key  369ms
+   ✓ Initiative Card (en) > shows all 14 T05 fields in the source order and the 3-7 deliverables warning (a warning, not a block)  306ms
+   ✓ Initiative Card (en) > submit refused: 'Case for change not yet approved (G1)…' is the dialog's one translated alert  432ms
+   ✓ Initiative Card (en) > launch refused: 'North Star, outcomes and target state not yet approved', then 'Selected - unfunded…'  303ms
+   ✓ Initiative Card (en) > select is a labelled business approval: rationale required, If-Match, no 'on behalf of' control  390ms
+   ✓ Initiative Card (en) > a gap link to another TOM record shows 'A project portfolio is not a Target Operating Model…'  305ms
+   ✓ Initiative Card (ar) > launch refused: 'North Star, outcomes and target state not yet approved', then 'Selected - unfunded…'  467ms
+   ✓ Initiative Card (ar) > select is a labelled business approval: rationale required, If-Match, no 'on behalf of' control  333ms
+ ✓ |unit-web| src/pages/change-requests/change-requests.test.tsx (15 tests) 3652ms
+   ✓ change requests (en) > lists a draft as a saved draft and an automatic request by its origin; the policy reads 'no threshold'  588ms
+   ✓ change requests (en) > the first policy save sends If-Match "0"; an out-of-range value shows the translated refusal  425ms
+   ✓ change requests (en) > raising a schedule rebaseline: the forecast is shown separately, the preview names the preserved G4 approval  392ms
+   ✓ change requests (en) > a returned request offers round 2; a non-requester is told so and the 403 is translated  442ms
+ ✓ |unit-web| src/pages/team/team.test.tsx (10 tests) 4597ms
+   ✓ Team (English LTR) > shows the six governance roles with B0018 accountability text verbatim and who holds each  810ms
+   ✓ Team (English LTR) > lists team members with the accountability on each assignment, sortable and filterable  368ms
+   ✓ Team (English LTR) > a Transformation Lead assigns a Workstream Lead: Idempotency-Key, reason, accountability preview  345ms
+   ✓ Team (English LTR) > shows a 403 from the server in words; nothing is assigned  336ms
+   ✓ Team assign dialog: accountability preview follows the selected role (F-DG2-430) > en: WL on open, then KDS, TD, none and WL again, in StrictMode with no React warning  401ms
+   ✓ Team assign dialog: accountability preview follows the selected role (F-DG2-430) > ar: WL on open, then KDS, TD, none and WL again, in StrictMode with no React warning  369ms
+   ✓ Team: the success notice follows a language switch, 'en' → 'ar' > the notice is shown in the language now on screen, not the one it was created in  503ms
+   ✓ Team: the success notice follows a language switch, 'ar' → 'en' > the notice is shown in the language now on screen, not the one it was created in  383ms
+ ✓ |unit-web| src/pages/health-check/fef.test.tsx (23 tests) 5694ms
+   ✓ REQ-S14-001/002, PB-091/092: the health check (en) > 24 answers: Incomplete (24/25), no score and no band; the scoring assumption is shown  640ms
+   ✓ REQ-S14-001/002, PB-091/092: the health check (en) > submitting without three actions shows the translated 422  739ms
+   ✓ REQ-S14-001/002, PB-091/092: the health check (ar) > submitting without three actions shows the translated 422  491ms
+   ✓ REQ-PB-086, S14-004: the launch plan (en) > lists tasks with 'Blocked by' and the non-working-day warning; a new start date sends If-Match  454ms
+   ✓ REQ-PB-087: the Day-90 leadership test (en) > five of six answered: Incomplete (5/6); completing is the translated 422  429ms
+   ✓ REQ-S08-005: the formula preview (en) > the revenue uplift is in SAR, never 'SAR per customer', and a missing ARPU is Not computable  348ms
+   ✓ REQ-S08-019: the optional financial metrics (en) > labelled an extension; with no discount rate NPV is not shown and is never 0  346ms
+   ✓ REQ-S07-016: KPI restatement (en) > a Stale side has no number; the decision refusal is translated and sends If-Match  400ms
+ ✓ |unit-web| src/pages/p2-blank-forms.test.tsx (52 tests) 17984ms
+   ✓ gate submission note (en) > a whitespace-only note is refused inline and nothing is sent  680ms
+   ✓ gate submission note (en) > visible text is sent verbatim; an empty note is omitted  467ms
+   ✓ gate submission note (ar) > visible text is sent verbatim; an empty note is omitted  369ms
+   ✓ gate decision rationale and comments (en) > a whitespace-only rationale is refused inline and nothing is sent  394ms
+   ✓ gate decision rationale and comments (en) > a invisible-only rationale is refused inline and nothing is sent  314ms
+   ✓ gate decision rationale and comments (en) > a invisible (long enough for min 3)-only rationale is refused inline and nothing is sent  304ms
+   ✓ gate decision rationale and comments (en) > a whitespace-only comment is refused inline (focus on it) and nothing is sent  362ms
+   ✓ gate decision rationale and comments (en) > a invisible-only comment is refused inline (focus on it) and nothing is sent  368ms
+   ✓ gate decision rationale and comments (en) > visible text is sent verbatim; empty comments are omitted; an empty rationale stays 'too short'  310ms
+   ✓ gate decision rationale and comments (ar) > visible text is sent verbatim; empty comments are omitted; an empty rationale stays 'too short'  303ms
+   ✓ gate decision rationale and comments (ar) > a server 400 validation.blank on /rationale lands on the field  324ms
+   ✓ journey step editor (en) > a whitespace-only actor is refused inline (not turned into null) and nothing is sent  811ms
+   ✓ journey step editor (en) > several blank fields: each gets the message and focus goes to the first (name)  378ms
+   ✓ journey step editor (en) > visible text is sent verbatim; emptied optional text is null; an empty name is required  566ms
+   ✓ journey step editor (ar) > a whitespace-only actor is refused inline (not turned into null) and nothing is sent  349ms
+   ✓ journey step editor (ar) > a invisible-only actor is refused inline (not turned into null) and nothing is sent  319ms
+   ✓ journey step editor (ar) > several blank fields: each gets the message and focus goes to the first (name)  367ms
+   ✓ journey step editor (ar) > visible text is sent verbatim; emptied optional text is null; an empty name is required  436ms
+   ✓ Finance validation note and archive reason (en) > note: a whitespace-only note is refused inline and nothing is sent  661ms
+   ✓ Finance validation note and archive reason (en) > note: a invisible-only note is refused inline and nothing is sent  303ms
+   ✓ Finance validation note and archive reason (en) > note: empty is 'required'; visible text is sent verbatim  304ms
+   ✓ Finance validation note and archive reason (en) > reason: empty keeps 'too short'; visible text is sent verbatim  321ms
+   ✓ Finance validation note and archive reason (ar) > note: a invisible-only note is refused inline and nothing is sent  365ms
+   ✓ Finance validation note and archive reason (ar) > note: empty is 'required'; visible text is sent verbatim  348ms
+   ✓ Finance validation note and archive reason (ar) > reason: a server 400 validation.blank on /reason is the field message, not a generic error  370ms
+   ✓ Finance validation note and archive reason (ar) > reason: a server 400 validation.invalid_character on /reason is the localized field message  347ms
+   ✓ North Star statement (en) > a whitespace-only statement is refused inline and nothing is sent  514ms
+   ✓ P1 transformation edit: server validation.blank on /name (en) > is the localized field message, not only a generic failure  420ms
+ ✓ |unit-web| src/pages/kpi/kpi.test.tsx (27 tests) 6568ms
+   ✓ KPI screens (en) > RAG panel: the seven elements, the threshold version named, and the override beside the calculated RAG  595ms
+   ✓ KPI screens (en) > the status overview shows Unknown KPIs grey and labelled (no zero in the list)  394ms
+   ✓ KPI screens (en) > four-step update: submits once, then lists downstream views, 'review pending' and 'Finance review pending'  771ms
+   ✓ KPI screens (en) > a second entry for the same KPI and period is value version 2 of the same slot (If-Match)  308ms
+   ✓ KPI screens (en) > a 409 on submit is the form's one alert: nothing was saved, the latest data is loaded  305ms
+   ✓ KPI screens (en) > review queue: the reviewer accepts with If-Match; the submitter of a value is not offered a decision  426ms
+   ✓ KPI screens (en) > an actual: a submitted value says it is not used until accepted; a draft is labelled not submitted  465ms
+   ✓ KPI screens (en) > data quality: an open finding is resolved with a note and If-Match  624ms
+   ✓ KPI screens (ar) > a 409 on submit is the form's one alert: nothing was saved, the latest data is loaded  367ms
+ ✓ |unit-web| src/auth/session-identity.test.tsx (18 tests) 6070ms
+   ✓ F-DG2-500 a session end on the sign-in page (en) > W5: Back to /login after A's session ends, B signs in with the development form: B never sees A's records  906ms
+   ✓ F-DG2-500 a session end on the sign-in page (en) > W5b (OIDC mode): B signs in in another tab and this tab's /me re-probe brings B: B never sees A's records  507ms
+   ✓ F-DG2-500 sign-out here and 403 (en) > signing out here clears everything; B signing in afterwards never sees A's records  729ms
+   ✓ F-DG2-500 a session end on the sign-in page (ar) > W5: Back to /login after A's session ends, B signs in with the development form: B never sees A's records  550ms
+   ✓ F-DG2-500 a session end on the sign-in page (ar) > W5b (OIDC mode): B signs in in another tab and this tab's /me re-probe brings B: B never sees A's records  473ms
+   ✓ F-DG2-500 sign-out here and 403 (ar) > signing out here clears everything; B signing in afterwards never sees A's records  626ms
+ ✓ |unit-web| src/pages/render-time-language.test.tsx (28 tests) 12039ms
+   ✓ journey step editor, 'en' → 'ar' > a field error on a step follows the switch  1200ms
+   ✓ journey step editor, 'en' → 'ar' > the form-level "Step N:" error follows the switch (prefix and message)  694ms
+   ✓ journey step editor, 'ar' → 'en' > a field error on a step follows the switch  503ms
+   ✓ journey step editor, 'ar' → 'en' > the form-level "Step N:" error follows the switch (prefix and message)  472ms
+   ✓ row-action note and reason dialog, 'en' → 'ar' > the Finance validation note's 'required' follows the switch  873ms
+   ✓ row-action note and reason dialog, 'en' → 'ar' > the Finance validation choice's 'required' follows the switch  599ms
+   ✓ row-action note and reason dialog, 'en' → 'ar' > the archive reason's 'too short' follows the switch  534ms
+   ✓ row-action note and reason dialog, 'ar' → 'en' > the Finance validation note's 'required' follows the switch  537ms
+   ✓ row-action note and reason dialog, 'ar' → 'en' > the Finance validation choice's 'required' follows the switch  464ms
+   ✓ row-action note and reason dialog, 'ar' → 'en' > the archive reason's 'too short' follows the switch  550ms
+   ✓ gate dialogs, 'en' → 'ar' > the submission note's field error follows the switch  555ms
+   ✓ gate dialogs, 'en' → 'ar' > the decision rationale's field error follows the switch  329ms
+   ✓ gate dialogs, 'ar' → 'en' > the decision rationale's field error follows the switch  384ms
+   ✓ North Star statement, 'en' → 'ar' > the statement's field error follows the switch  618ms
+   ✓ North Star statement, 'ar' → 'en' > the statement's field error follows the switch  360ms
+   ✓ evidence dialogs, 'en' → 'ar' > upload without a file: 'required' follows the switch  657ms
+   ✓ evidence dialogs, 'en' → 'ar' > a link without a record type or record: both 'required' messages follow the switch  385ms
+   ✓ evidence dialogs, 'ar' → 'en' > upload without a file: 'required' follows the switch  444ms
+   ✓ evidence dialogs, 'ar' → 'en' > a link without a record type or record: both 'required' messages follow the switch  404ms
+ ✓ |unit-web| src/components/form-framework/form-framework.test.tsx (16 tests) 4363ms
+   ✓ form framework on T14 (en) > shows inline help and the extension fields; Save draft stores a draft labelled not submitted  821ms
+   ✓ form framework on T14 (en) > a conflicting concurrent save returns a recoverable conflict and re-applies on the current version  323ms
+   ✓ form framework on T14 (en) > history lists versions with changed fields; comments post and reply; attachments need a reason to remove  370ms
+   ✓ form framework on T14 (ar) > history lists versions with changed fields; comments post and reply; attachments need a reason to remove  406ms
+ ✓ |unit-web| src/pages/adoption/adoption.test.tsx (22 tests) 6935ms
+   ✓ adoption screens (en) > T13: the seven columns, influence separate from impact, closed lists, provisional Arabic flag  1011ms
+   ✓ adoption screens (en) > interventions: below-trajectory row shows Unassigned and Unknown due date with its reason  409ms
+   ✓ adoption screens (en) > indicators: all seven by name; a measure without data is Unknown, never 0  429ms
+   ✓ adoption screens (en) > training vs proficiency: 100 % completion beside proficiency Unknown (not adopted)  409ms
+   ✓ adoption screens (en) > T04 decision page lists a champion's constraint through ?decisionId=  465ms
+   ✓ adoption screens (en) > form: a proficiency observation is submitted with its stakeholder group; the API derives the result  853ms
+   ✓ adoption screens (en) > record page: answers are labelled from the version answered (getAssessmentFormVersion), a key the version lacks shows 'Unknown question'  444ms
+   ✓ adoption screens (en) > AUD sees the plan read-only (no write control)  397ms
+   ✓ adoption screens (ar) > T13: the seven columns, influence separate from impact, closed lists, provisional Arabic flag  354ms
+ ✓ |unit-web| src/pages/portfolio/fe-e.test.tsx (18 tests) 6623ms
+   ✓ Funding decisions (en) > is a labelled business approval with no 'on behalf of' control; rationale required; POST with an Idempotency-Key  991ms
+   ✓ Funding decisions (en) > the BE-E 422s are the dialog's one translated alert; funding.amount_invalid is also inline at /amount  370ms
+   ✓ Funding decisions (ar) > is a labelled business approval with no 'on behalf of' control; rationale required; POST with an Idempotency-Key  344ms
+   ✓ Funding decisions (ar) > the BE-E 422s are the dialog's one translated alert; funding.amount_invalid is also inline at /amount  395ms
+   ✓ Deliverables and milestones on the card (en) > creates (Idempotency-Key), edits (If-Match) and archives (reason, If-Match) a deliverable  577ms
+   ✓ Deliverables and milestones on the card (en) > creates a milestone with its wave and forecast, and edits it with If-Match  339ms
+   ✓ Deliverables and milestones on the card (en) > a cancelled initiative shows deliverables, milestones and funding with no write control  323ms
+   ✓ Deliverables and milestones on the card (en) > the card edit form translates initiative.planned_range specifically (RecordDialog namespaces)  356ms
+   ✓ Deliverables and milestones on the card (ar) > creates (Idempotency-Key), edits (If-Match) and archives (reason, If-Match) a deliverable  414ms
+   ✓ Deliverables and milestones on the card (ar) > creates a milestone with its wave and forecast, and edits it with If-Match  312ms
+   ✓ Deliverables and milestones on the card (ar) > the card edit form translates initiative.planned_range specifically (RecordDialog namespaces)  354ms
+ ✓ |unit-web| src/app/app.test.tsx (24 tests) 8398ms
+   ✓ bilingual shell > a navigation body that is not the contract's shape is an error, never an empty or a full list  3061ms
+   ✓ bilingual shell > hides Administration from a Workstream Lead, and the admin route shows no-permission  334ms
+   ✓ bilingual shell > an area with delivered screens is not labelled planned: Risks and Actions lists its §3 contents  803ms
+   ✓ bilingual shell > a partial area (Governance) leads into the Gates tab of each transformation; its portfolio view stays planned  499ms
+   ✓ transformations > lists transformations with a sortable code column and removable filter chips  655ms
+   ✓ transformations > detail shows the workspace header with Unknown for data from later stages  551ms
+   ✓ transformations > edit: a 409 writes nothing, shows compare, and re-applies on the current version  546ms
+ ✓ |unit-web| src/pages/procedures/instance-output.test.tsx (13 tests) 3838ms
+   ✓ create output (record_baseline): choose the baseline produced natively > en: lists only eligible baselines, links the native screen, sends outputRecordId with If-Match  815ms
+   ✓ create output (record_baseline): choose the baseline produced natively > ar: lists only eligible baselines, links the native screen, sends outputRecordId with If-Match  334ms
+   ✓ create output (record_baseline): choose the baseline produced natively > ar: no eligible baseline yet: says so, offers the native screen; the server's 422 output_required is shown by code  340ms
+   ✓ link output > en: complete_canvas offers only ready TOM canvas cells and sends the chosen one  308ms
+ ✓ |unit-web| src/pages/my-work/my-work.test.tsx (20 tests) 5117ms
+   ✓ My Work (en) > renders tasks and reminders from messageKey + messageParams; Unknown due dates; system-managed tasks  756ms
+   ✓ My Work (en) > marks a task done and a reminder read with bodiless POSTs and If-Match  569ms
+   ✓ My Work (ar) > marks a task done and a reminder read with bodiless POSTs and If-Match  483ms
+   ✓ Calendar, jobs and groups (en) > calendar: read-only without calendar.configure; the calculator shows Unknown with its reason  414ms
+   ✓ Calendar, jobs and groups (en) > jobs: no permission without job.read; job.configure edits a schedule with If-Match  653ms
+   ✓ Calendar, jobs and groups (en) > groups: membership grants no permission (stated); group.manage creates a group  454ms
+stderr | src/components/form-framework/extension-fields.test.tsx > REQ-PB-011 template header on the native forms (en) > T12: the form header carries the template's provenance strip (/raci)
+Error handled by React Router default ErrorBoundary: TypeError: raci.deliverables is not iterable
+    at RaciGrid [90m(/home/user/wt/dg6-do-a/[39mapps/web/src/pages/raci/RaciPage.tsx:124:25[90m)[39m
+    at Object.react_stack_bottom_frame [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:25904:20[90m)[39m
+    at renderWithHooks [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:7662:22[90m)[39m
+    at updateFunctionComponent [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:10166:19[90m)[39m
+    at beginWork [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:11778:18[90m)[39m
+    at runWithFiberInDEV [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:874:13[90m)[39m
+    at performUnitOfWork [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:17641:22[90m)[39m
+    at workLoopSync [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:17469:41[90m)[39m
+    at renderRootSync [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:17450:11[90m)[39m
+    at performWorkOnRoot [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:16504:11[90m)[39m
+Error handled by React Router default ErrorBoundary: TypeError: raci.deliverables is not iterable
+    at RaciGrid [90m(/home/user/wt/dg6-do-a/[39mapps/web/src/pages/raci/RaciPage.tsx:124:25[90m)[39m
+    at Object.react_stack_bottom_frame [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:25904:20[90m)[39m
+    at renderWithHooks [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:7662:22[90m)[39m
+    at updateFunctionComponent [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:10166:19[90m)[39m
+    at beginWork [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:11778:18[90m)[39m
+    at runWithFiberInDEV [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:874:13[90m)[39m
+    at performUnitOfWork [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:17641:22[90m)[39m
+    at workLoopSync [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:17469:41[90m)[39m
+    at renderRootSync [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:17450:11[90m)[39m
+    at performWorkOnRoot [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:16583:35[90m)[39m
+TypeError: raci.deliverables is not iterable
+    at RaciGrid [90m(/home/user/wt/dg6-do-a/[39mapps/web/src/pages/raci/RaciPage.tsx:124:25[90m)[39m
+    at Object.react_stack_bottom_frame [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:25904:20[90m)[39m
+    at renderWithHooks [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:7662:22[90m)[39m
+    at updateFunctionComponent [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:10166:19[90m)[39m
+    at beginWork [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:11778:18[90m)[39m
+    at runWithFiberInDEV [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:874:13[90m)[39m
+    at performUnitOfWork [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:17641:22[90m)[39m
+    at workLoopSync [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:17469:41[90m)[39m
+    at renderRootSync [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:17450:11[90m)[39m
+    at performWorkOnRoot [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:16583:35[90m)[39m {
+  [stack]: [36m[Getter/Setter][39m,
+  [message]: [32m'raci.deliverables is not iterable'[39m
+}
+
+The above error occurred in the <RaciGrid> component.
+
+React will try to recreate this component tree from scratch using the error boundary you provided, RenderErrorBoundary.
+
+React Router caught the following error during render TypeError: raci.deliverables is not iterable
+    at RaciGrid [90m(/home/user/wt/dg6-do-a/[39mapps/web/src/pages/raci/RaciPage.tsx:124:25[90m)[39m
+    at Object.react_stack_bottom_frame [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:25904:20[90m)[39m
+    at renderWithHooks [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:7662:22[90m)[39m
+    at updateFunctionComponent [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:10166:19[90m)[39m
+    at beginWork [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:11778:18[90m)[39m
+    at runWithFiberInDEV [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:874:13[90m)[39m
+    at performUnitOfWork [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:17641:22[90m)[39m
+    at workLoopSync [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:17469:41[90m)[39m
+    at renderRootSync [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:17450:11[90m)[39m
+    at performWorkOnRoot [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:16583:35[90m)[39m
+
+stderr | src/components/form-framework/extension-fields.test.tsx > REQ-PB-011 template header on the native forms (en) > T14: the form header carries the template's provenance strip (/benefits)
+Error handled by React Router default ErrorBoundary: TypeError: Cannot read properties of undefined (reading 'length')
+    at TotalsView [90m(/home/user/wt/dg6-do-a/[39mapps/web/src/pages/benefits/Totals.tsx:49:26[90m)[39m
+    at Object.react_stack_bottom_frame [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:25904:20[90m)[39m
+    at renderWithHooks [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:7662:22[90m)[39m
+    at updateFunctionComponent [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:10166:19[90m)[39m
+    at beginWork [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:11778:18[90m)[39m
+    at runWithFiberInDEV [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:874:13[90m)[39m
+    at performUnitOfWork [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:17641:22[90m)[39m
+    at workLoopSync [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:17469:41[90m)[39m
+    at renderRootSync [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:17450:11[90m)[39m
+    at performWorkOnRoot [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:16504:11[90m)[39m
+Error handled by React Router default ErrorBoundary: TypeError: Cannot read properties of undefined (reading 'length')
+    at TotalsView [90m(/home/user/wt/dg6-do-a/[39mapps/web/src/pages/benefits/Totals.tsx:49:26[90m)[39m
+    at Object.react_stack_bottom_frame [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:25904:20[90m)[39m
+    at renderWithHooks [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:7662:22[90m)[39m
+    at updateFunctionComponent [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:10166:19[90m)[39m
+    at beginWork [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:11778:18[90m)[39m
+    at runWithFiberInDEV [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:874:13[90m)[39m
+    at performUnitOfWork [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:17641:22[90m)[39m
+    at workLoopSync [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:17469:41[90m)[39m
+    at renderRootSync [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:17450:11[90m)[39m
+    at performWorkOnRoot [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:16583:35[90m)[39m
+TypeError: Cannot read properties of undefined (reading 'length')
+    at TotalsView [90m(/home/user/wt/dg6-do-a/[39mapps/web/src/pages/benefits/Totals.tsx:49:26[90m)[39m
+    at Object.react_stack_bottom_frame [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:25904:20[90m)[39m
+    at renderWithHooks [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:7662:22[90m)[39m
+    at updateFunctionComponent [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:10166:19[90m)[39m
+    at beginWork [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:11778:18[90m)[39m
+    at runWithFiberInDEV [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:874:13[90m)[39m
+    at performUnitOfWork [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:17641:22[90m)[39m
+    at workLoopSync [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:17469:41[90m)[39m
+    at renderRootSync [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:17450:11[90m)[39m
+    at performWorkOnRoot [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:16583:35[90m)[39m {
+  [stack]: [36m[Getter/Setter][39m,
+  [message]: [32m"Cannot read properties of undefined (reading 'length')"[39m
+}
+
+The above error occurred in the <TotalsView> component.
+
+React will try to recreate this component tree from scratch using the error boundary you provided, RenderErrorBoundary.
+
+React Router caught the following error during render TypeError: Cannot read properties of undefined (reading 'length')
+    at TotalsView [90m(/home/user/wt/dg6-do-a/[39mapps/web/src/pages/benefits/Totals.tsx:49:26[90m)[39m
+    at Object.react_stack_bottom_frame [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:25904:20[90m)[39m
+    at renderWithHooks [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:7662:22[90m)[39m
+    at updateFunctionComponent [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:10166:19[90m)[39m
+    at beginWork [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:11778:18[90m)[39m
+    at runWithFiberInDEV [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:874:13[90m)[39m
+    at performUnitOfWork [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:17641:22[90m)[39m
+    at workLoopSync [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:17469:41[90m)[39m
+    at renderRootSync [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:17450:11[90m)[39m
+    at performWorkOnRoot [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:16583:35[90m)[39m
+
+stderr | src/components/form-framework/extension-fields.test.tsx > REQ-PB-011 template header on the native forms (ar) > T12: the form header carries the template's provenance strip (/raci)
+Error handled by React Router default ErrorBoundary: TypeError: raci.deliverables is not iterable
+    at RaciGrid [90m(/home/user/wt/dg6-do-a/[39mapps/web/src/pages/raci/RaciPage.tsx:124:25[90m)[39m
+    at Object.react_stack_bottom_frame [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:25904:20[90m)[39m
+    at renderWithHooks [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:7662:22[90m)[39m
+    at updateFunctionComponent [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:10166:19[90m)[39m
+    at beginWork [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:11778:18[90m)[39m
+    at runWithFiberInDEV [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:874:13[90m)[39m
+    at performUnitOfWork [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:17641:22[90m)[39m
+    at workLoopSync [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:17469:41[90m)[39m
+    at renderRootSync [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:17450:11[90m)[39m
+    at performWorkOnRoot [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:16504:11[90m)[39m
+Error handled by React Router default ErrorBoundary: TypeError: raci.deliverables is not iterable
+    at RaciGrid [90m(/home/user/wt/dg6-do-a/[39mapps/web/src/pages/raci/RaciPage.tsx:124:25[90m)[39m
+    at Object.react_stack_bottom_frame [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:25904:20[90m)[39m
+    at renderWithHooks [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:7662:22[90m)[39m
+    at updateFunctionComponent [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:10166:19[90m)[39m
+    at beginWork [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:11778:18[90m)[39m
+    at runWithFiberInDEV [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:874:13[90m)[39m
+    at performUnitOfWork [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:17641:22[90m)[39m
+    at workLoopSync [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:17469:41[90m)[39m
+    at renderRootSync [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:17450:11[90m)[39m
+    at performWorkOnRoot [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:16583:35[90m)[39m
+TypeError: raci.deliverables is not iterable
+    at RaciGrid [90m(/home/user/wt/dg6-do-a/[39mapps/web/src/pages/raci/RaciPage.tsx:124:25[90m)[39m
+    at Object.react_stack_bottom_frame [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:25904:20[90m)[39m
+    at renderWithHooks [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:7662:22[90m)[39m
+    at updateFunctionComponent [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:10166:19[90m)[39m
+    at beginWork [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:11778:18[90m)[39m
+    at runWithFiberInDEV [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:874:13[90m)[39m
+    at performUnitOfWork [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:17641:22[90m)[39m
+    at workLoopSync [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:17469:41[90m)[39m
+    at renderRootSync [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:17450:11[90m)[39m
+    at performWorkOnRoot [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:16583:35[90m)[39m {
+  [stack]: [36m[Getter/Setter][39m,
+  [message]: [32m'raci.deliverables is not iterable'[39m
+}
+
+The above error occurred in the <RaciGrid> component.
+
+React will try to recreate this component tree from scratch using the error boundary you provided, RenderErrorBoundary.
+
+React Router caught the following error during render TypeError: raci.deliverables is not iterable
+    at RaciGrid [90m(/home/user/wt/dg6-do-a/[39mapps/web/src/pages/raci/RaciPage.tsx:124:25[90m)[39m
+    at Object.react_stack_bottom_frame [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:25904:20[90m)[39m
+    at renderWithHooks [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:7662:22[90m)[39m
+    at updateFunctionComponent [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:10166:19[90m)[39m
+    at beginWork [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:11778:18[90m)[39m
+    at runWithFiberInDEV [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:874:13[90m)[39m
+    at performUnitOfWork [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:17641:22[90m)[39m
+    at workLoopSync [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:17469:41[90m)[39m
+    at renderRootSync [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:17450:11[90m)[39m
+    at performWorkOnRoot [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:16583:35[90m)[39m
+
+ ✓ |unit-web| src/pages/benefit-formulas/benefit-formulas.test.tsx (18 tests) 5422ms
+   ✓ T09 benefit formulas (en) > register: the six T09 columns with confidence H/M/L; examples marked illustrative with 100000 and 500000 SAR per year  1007ms
+   ✓ T09 benefit formulas (en) > builder: an undefined variable shows translated, with its position, before saving; nothing is sent  806ms
+   ✓ T09 benefit formulas (en) > builder: a fraction is entered as percent and stored as a fraction; a version is saved with If-Match  304ms
+   ✓ T09 benefit formulas (en) > builder: a 409 shows the standard conflict panel; nothing was saved  354ms
+   ✓ T09 benefit formulas (en) > Finance validation of a version: a business approval by FIN; the author cannot; translated refusal  307ms
+stderr | src/components/form-framework/extension-fields.test.tsx > REQ-PB-011 template header on the native forms (ar) > T14: the form header carries the template's provenance strip (/benefits)
+Error handled by React Router default ErrorBoundary: TypeError: Cannot read properties of undefined (reading 'length')
+    at TotalsView [90m(/home/user/wt/dg6-do-a/[39mapps/web/src/pages/benefits/Totals.tsx:49:26[90m)[39m
+    at Object.react_stack_bottom_frame [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:25904:20[90m)[39m
+    at renderWithHooks [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:7662:22[90m)[39m
+    at updateFunctionComponent [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:10166:19[90m)[39m
+    at beginWork [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:11778:18[90m)[39m
+    at runWithFiberInDEV [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:874:13[90m)[39m
+    at performUnitOfWork [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:17641:22[90m)[39m
+    at workLoopSync [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:17469:41[90m)[39m
+    at renderRootSync [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:17450:11[90m)[39m
+    at performWorkOnRoot [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:16504:11[90m)[39m
+Error handled by React Router default ErrorBoundary: TypeError: Cannot read properties of undefined (reading 'length')
+    at TotalsView [90m(/home/user/wt/dg6-do-a/[39mapps/web/src/pages/benefits/Totals.tsx:49:26[90m)[39m
+    at Object.react_stack_bottom_frame [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:25904:20[90m)[39m
+    at renderWithHooks [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:7662:22[90m)[39m
+    at updateFunctionComponent [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:10166:19[90m)[39m
+    at beginWork [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:11778:18[90m)[39m
+    at runWithFiberInDEV [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:874:13[90m)[39m
+    at performUnitOfWork [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:17641:22[90m)[39m
+    at workLoopSync [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:17469:41[90m)[39m
+    at renderRootSync [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:17450:11[90m)[39m
+    at performWorkOnRoot [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:16583:35[90m)[39m
+TypeError: Cannot read properties of undefined (reading 'length')
+    at TotalsView [90m(/home/user/wt/dg6-do-a/[39mapps/web/src/pages/benefits/Totals.tsx:49:26[90m)[39m
+    at Object.react_stack_bottom_frame [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:25904:20[90m)[39m
+    at renderWithHooks [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:7662:22[90m)[39m
+    at updateFunctionComponent [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:10166:19[90m)[39m
+    at beginWork [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:11778:18[90m)[39m
+    at runWithFiberInDEV [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:874:13[90m)[39m
+    at performUnitOfWork [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:17641:22[90m)[39m
+    at workLoopSync [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:17469:41[90m)[39m
+    at renderRootSync [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:17450:11[90m)[39m
+    at performWorkOnRoot [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:16583:35[90m)[39m {
+  [stack]: [36m[Getter/Setter][39m,
+  [message]: [32m"Cannot read properties of undefined (reading 'length')"[39m
+}
+
+The above error occurred in the <TotalsView> component.
+
+React will try to recreate this component tree from scratch using the error boundary you provided, RenderErrorBoundary.
+
+React Router caught the following error during render TypeError: Cannot read properties of undefined (reading 'length')
+    at TotalsView [90m(/home/user/wt/dg6-do-a/[39mapps/web/src/pages/benefits/Totals.tsx:49:26[90m)[39m
+    at Object.react_stack_bottom_frame [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:25904:20[90m)[39m
+    at renderWithHooks [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:7662:22[90m)[39m
+    at updateFunctionComponent [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:10166:19[90m)[39m
+    at beginWork [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:11778:18[90m)[39m
+    at runWithFiberInDEV [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:874:13[90m)[39m
+    at performUnitOfWork [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:17641:22[90m)[39m
+    at workLoopSync [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:17469:41[90m)[39m
+    at renderRootSync [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:17450:11[90m)[39m
+    at performWorkOnRoot [90m(/home/user/wt/dg6-do-a/[39mnode_modules/[4m.pnpm[24m/react-dom@19.2.0_react@19.2.0/node_modules/[4mreact-dom[24m/cjs/react-dom-client.development.js:16583:35[90m)[39m
+
+ ✓ |unit-web| src/components/form-framework/extension-fields.test.tsx (39 tests) 11118ms
+   ✓ T13 extension fields (en) > the record view shows the stored value; Form tools offers the field with its value  786ms
+   ✓ T13 extension fields (en) > Form tools: an out-of-range value names the limit and sends nothing; a valid one is saved with If-Match  607ms
+   ✓ T13 extension fields (en) > a server range refusal in Form tools names the limit (the server's validation.decimal)  378ms
+   ✓ T13 extension fields (en) > create: the field is offered; out of range stops the create; a valid value is stored with If-Match 0  624ms
+   ✓ T13 extension fields (en) > create: a server refusal of the values after the create is shown by its problem code  642ms
+   ✓ T13 extension fields (en) > an AUD-like reader sees the value and a read-only Form tools; the create form has no inputs to offer  336ms
+   ✓ T13 extension fields (ar) > create: the field is offered; out of range stops the create; a valid value is stored with If-Match 0  575ms
+   ✓ T13 extension fields (ar) > create: a server refusal of the values after the create is shown by its problem code  438ms
+   ✓ REQ-PB-011 template header on the native forms (en) > T02: the form header carries the template's provenance strip (/define)  389ms
+   ✓ REQ-PB-011 template header on the native forms (en) > T03: the form header carries the template's provenance strip (/design)  397ms
+   ✓ REQ-PB-011 template header on the native forms (en) > T04: the form header carries the template's provenance strip (/decisions)  385ms
+   ✓ REQ-PB-011 template header on the native forms (en) > T07: the form header carries the template's provenance strip (/roadmap)  494ms
+   ✓ REQ-PB-011 template header on the native forms (en) > T08: the form header carries the template's provenance strip (/dependencies)  411ms
+   ✓ REQ-PB-011 template header on the native forms (en) > T09: the form header carries the template's provenance strip (/benefit-formulas)  374ms
+   ✓ REQ-PB-011 template header on the native forms (en) > T11: the form header carries the template's provenance strip (/decision-rights)  382ms
+   ✓ REQ-PB-011 template header on the native forms (en) > T12: the form header carries the template's provenance strip (/raci)  411ms
+   ✓ REQ-PB-011 template header on the native forms (en) > T14: the form header carries the template's provenance strip (/benefits)  365ms
+   ✓ REQ-PB-011 template header on the native forms (en) > T15: the form header carries the template's provenance strip (/raid)  390ms
+   ✓ REQ-PB-011 template header on the native forms (en) > T16: the form header carries the template's provenance strip (/executive-decisions)  371ms
+ ✓ |unit-web| src/pages/business-cases/business-cases.test.tsx (18 tests) 6702ms
+   ✓ business cases (en) > register: levels, Finance baseline states with text (Stale is never green) and drafts  931ms
+   ✓ business cases (en) > detail: all ten sections, totals with gross / cost / net apart, net Unknown (never 0), roll-up by reference  636ms
+   ✓ business cases (en) > sections: saves only the changed section with If-Match; blank text is refused inline and nothing is sent  490ms
+   ✓ business cases (en) > sections: a 409 shows the standard conflict panel (nothing saved) with the current values  349ms
+   ✓ business cases (en) > lines: exactly one class from one select; the value basis follows the class; a 422 is translated  420ms
+   ✓ business cases (en) > Finance validation: a business approval for FIN who did not author the case; If-Match; translated 403  424ms
+   ✓ business cases (ar) > sections: saves only the changed section with If-Match; blank text is refused inline and nothing is sent  451ms
+   ✓ business cases (ar) > lines: exactly one class from one select; the value basis follows the class; a 422 is translated  329ms
+   ✓ business cases (ar) > Finance validation: a business approval for FIN who did not author the case; If-Match; translated 403  428ms
+ ✓ |unit-web| src/pages/meetings/governance.test.tsx (20 tests) 5631ms
+   ✓ governance screens (en) > forums: the five layers with their verbatim source cadence; Arabic labelled provisional  614ms
+   ✓ governance screens (en) > series editor: 'future meetings only' must be confirmed; the result lists the kept meetings  788ms
+   ✓ governance screens (en) > meeting: the brief lists missing elements; quorum not configured is never 'met'; no engineering gate named  469ms
+   ✓ governance screens (en) > T16 log: nine columns; an earlier record shows Unknown for what it lacks; the overdue filter asks the server  461ms
+   ✓ governance screens (en) > recording an Outcome is labelled a business decision and sends If-Match  502ms
+   ✓ governance screens (en) > escalations: a routing error is a visible row; a rule without a stored row is labelled Default  416ms
+stderr | src/components/form-framework/extension-hosts-twelve.test.tsx > extension fields on the twelve FE-C3 hosts (en) > charter: the input renders in the create form and the record view; Form tools saves with If-Match
+Each child in a list should have a unique "key" prop.
+
+Check the render method of `select`. It was passed a child from Field. See https://react.dev/link/warning-keys for more information.
+
+ ✓ |unit-web| src/pages/raid/raid.test.tsx (18 tests) 5780ms
+   ✓ RAID and actions screens (en) > T15 register: nine columns, Probability n/a outside Risk, per-type mitigation header, Dependency links to T08  722ms
+   ✓ RAID and actions screens (en) > Dependency form: 'To' initiative required, no probability; nothing is sent without it  332ms
+   ✓ RAID and actions screens (en) > action register: source, follow-up date and overdue flag; edit sends If-Match  1131ms
+   ✓ RAID and actions screens (en) > corrective case: source and benefit step, owner Unassigned, follow-up Unknown with reason, signals never green  395ms
+   ✓ RAID and actions screens (en) > rules: a rule without a stored row is labelled Default; saving it creates the row (POST, no If-Match)  418ms
+   ✓ RAID and actions screens (ar) > action register: source, follow-up date and overdue flag; edit sends If-Match  641ms
+ ✓ |unit-web| src/components/form-framework/extension-hosts-twelve.test.tsx (24 tests) 13044ms
+   ✓ extension fields on the twelve FE-C3 hosts (en) > evidence: the input renders in the create form and the record view; Form tools saves with If-Match  1065ms
+   ✓ extension fields on the twelve FE-C3 hosts (en) > baseline: the input renders in the create form and the record view; Form tools saves with If-Match  846ms
+   ✓ extension fields on the twelve FE-C3 hosts (en) > value_pool: the input renders in the create form and the record view; Form tools saves with If-Match  536ms
+   ✓ extension fields on the twelve FE-C3 hosts (en) > resource_plan: the input renders in the create form and the record view; Form tools saves with If-Match  642ms
+   ✓ extension fields on the twelve FE-C3 hosts (en) > funding_approval: the input renders in the create form and the record view; Form tools saves with If-Match  713ms
+   ✓ extension fields on the twelve FE-C3 hosts (en) > change_request: the input renders in the create form and the record view; Form tools saves with If-Match  577ms
+   ✓ extension fields on the twelve FE-C3 hosts (en) > meeting_record: the input renders in the create form and the record view; Form tools saves with If-Match  646ms
+   ✓ extension fields on the twelve FE-C3 hosts (en) > corrective_plan: the input renders in the create form and the record view; Form tools saves with If-Match  576ms
+   ✓ extension fields on the twelve FE-C3 hosts (en) > bau_handover: the input renders in the create form and the record view; Form tools saves with If-Match  555ms
+   ✓ extension fields on the twelve FE-C3 hosts (en) > control: the input renders in the create form and the record view; Form tools saves with If-Match  625ms
+   ✓ extension fields on the twelve FE-C3 hosts (en) > charter: the input renders in the create form and the record view; Form tools saves with If-Match  696ms
+   ✓ extension fields on the twelve FE-C3 hosts (en) > tom_canvas: the input renders in the create form and the record view; Form tools saves with If-Match  516ms
+   ✓ extension fields on the twelve FE-C3 hosts (ar) > evidence: the input renders in the create form and the record view; Form tools saves with If-Match  313ms
+   ✓ extension fields on the twelve FE-C3 hosts (ar) > baseline: the input renders in the create form and the record view; Form tools saves with If-Match  448ms
+   ✓ extension fields on the twelve FE-C3 hosts (ar) > value_pool: the input renders in the create form and the record view; Form tools saves with If-Match  539ms
+   ✓ extension fields on the twelve FE-C3 hosts (ar) > resource_plan: the input renders in the create form and the record view; Form tools saves with If-Match  470ms
+   ✓ extension fields on the twelve FE-C3 hosts (ar) > funding_approval: the input renders in the create form and the record view; Form tools saves with If-Match  345ms
+   ✓ extension fields on the twelve FE-C3 hosts (ar) > meeting_record: the input renders in the create form and the record view; Form tools saves with If-Match  342ms
+   ✓ extension fields on the twelve FE-C3 hosts (ar) > corrective_plan: the input renders in the create form and the record view; Form tools saves with If-Match  405ms
+   ✓ extension fields on the twelve FE-C3 hosts (ar) > bau_handover: the input renders in the create form and the record view; Form tools saves with If-Match  305ms
+   ✓ extension fields on the twelve FE-C3 hosts (ar) > control: the input renders in the create form and the record view; Form tools saves with If-Match  403ms
+   ✓ extension fields on the twelve FE-C3 hosts (ar) > charter: the input renders in the create form and the record view; Form tools saves with If-Match  381ms
+stderr | src/pages/dashboards/kpiUnit.test.tsx > N5 surfaces (en): every KPI value is formatted by its kind > the adoption dashboard: each indicator row and the area items
+Encountered two children with the same key, `01920000-0000-7000-9000-0000000a0f01`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+Encountered two children with the same key, `01920000-0000-7000-9000-0000000a0f01`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | src/pages/dashboards/kpiUnit.test.tsx > N5 surfaces (ar): every KPI value is formatted by its kind > the adoption dashboard: each indicator row and the area items
+Encountered two children with the same key, `01920000-0000-7000-9000-0000000a0f01`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+Encountered two children with the same key, `01920000-0000-7000-9000-0000000a0f01`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+ ✓ |unit-web| src/pages/dashboards/kpiUnit.test.tsx (26 tests) 3523ms
+   ✓ N5 surfaces (en): every KPI value is formatted by its kind > T10: Outcomes (F1, F3), People & adoption (F2, Stale F2), the F4 gap, and the KPI drill-down  1064ms
+   ✓ N5 surfaces (en): every KPI value is formatted by its kind > Executive Overview: the Outcomes and People & adoption areas  464ms
+   ✓ N5 surfaces (en): every KPI value is formatted by its kind > the adoption dashboard: each indicator row and the area items  454ms
+   ✓ N5 surfaces (ar): every KPI value is formatted by its kind > T10: Outcomes (F1, F3), People & adoption (F2, Stale F2), the F4 gap, and the KPI drill-down  361ms
+ ✓ |unit-web| src/pages/prioritization/prioritization.test.tsx (20 tests) 7769ms
+   ✓ prioritization (en) > ranked table: an incomplete score is 'incomplete' (never a number), 3.30 complete; 0–100 shows 57.5 with its label  980ms
+   ✓ prioritization (en) > scorecard: 6 is refused inline and nothing is sent; 4 is POSTed as the integer; the weighted score is read-only 'incomplete'  648ms
+   ✓ prioritization (en) > weight sets: the live total refuses 95% and 105%; 100% is accepted and POSTed as decimal strings  321ms
+   ✓ prioritization (en) > weight sets: the proposer is never offered approval; another approver's approval is a business approval with If-Match; 403 SoD is translated  746ms
+   ✓ prioritization (en) > weight set approval: a 409 shows the conflict banner and reloads  379ms
+   ✓ prioritization (en) > overrides: a reason is required (missing and invisible-only are refused, nothing sent); with a reason it is POSTed  378ms
+   ✓ prioritization (en) > the read-only auditor sees the data and no enabled write control  327ms
+   ✓ prioritization (ar) > ranked table: an incomplete score is 'incomplete' (never a number), 3.30 complete; 0–100 shows 57.5 with its label  440ms
+   ✓ prioritization (ar) > scorecard: 6 is refused inline and nothing is sent; 4 is POSTed as the integer; the weighted score is read-only 'incomplete'  502ms
+   ✓ prioritization (ar) > weight sets: the proposer is never offered approval; another approver's approval is a business approval with If-Match; 403 SoD is translated  470ms
+   ✓ prioritization (ar) > weight set approval: a 409 shows the conflict banner and reloads  329ms
+   ✓ prioritization (ar) > overrides: a reason is required (missing and invisible-only are refused, nothing sent); with a reason it is POSTed  338ms
+ ✓ |unit-web| src/app/p6-shell.test.tsx (12 tests) 2075ms
+   ✓ P6 navigation entries and route placeholders (slices E, F, J, C) > en: an Administration placeholder states it is not available yet and loads no data  711ms
+   ✓ P6 navigation entries and route placeholders (slices E, F, J, C) > Administration lists the P6 entries for their holders only (a UI hint; the server decides)  471ms
+ ✓ |unit-web| src/pages/gates/g4.test.tsx (16 tests) 5858ms
+   ✓ G4 refusal item by item (en) > two initiatives without owners: two separate translated 'Owners' items, never the joined English message  978ms
+   ✓ G4 refusal item by item (en) > without a usable gate view: one translated line per refused criterion, never the English message  361ms
+   ✓ G4 refusal item by item (ar) > two initiatives without owners: two separate translated 'Owners' items, never the joined English message  375ms
+   ✓ G4 refusal item by item (ar) > without a usable gate view: one translated line per refused criterion, never the English message  364ms
+   ✓ G4 view (en) > a refused submission shows the 422 list with the initiative names, translated  312ms
+   ✓ G4 view (en) > the decision's 403 urn:mth:problem:forbidden is translated  395ms
+   ✓ G4 view (en) > the decision's 403 urn:mth:problem:forbidden is translated  351ms
+   ✓ G4 view (en) > the decision's 409 urn:mth:problem:version-conflict is translated  360ms
+   ✓ G4 view (ar) > the decision's 409 urn:mth:problem:version-conflict is translated  473ms
+ ✓ |unit-web| src/pages/actions/ScheduleNetworkPanel.test.tsx (16 tests) 8049ms
+   ✓ schedule network panel (en) > computed (ADR-0031 §8 fixture): P = 18, path INI-01 → INI-02 → INI-04, INI-03 float 6 not critical  1137ms
+   ✓ schedule network panel (en) > not computable (missing duration): the reason and INI-03 listed; no critical styling or label at all  406ms
+   ✓ schedule network panel (en) > record a duration: getInitiativeSchedule 404 → POST without If-Match; 409 initiative_schedule.exists re-reads the row and the next save is a PATCH with its ETag  610ms
+   ✓ schedule network panel (en) > change a duration: If-Match is the getInitiativeSchedule ETag; a stale version is a 409 (nothing saved), the row is re-read and shown, the next save sends the re-read ETag  710ms
+   ✓ schedule network panel (en) > a recorded row with a null duration is a change (PATCH), and an emptied note is sent as null  566ms
+   ✓ schedule network panel (en) > a failed read shows its error and a retry; nothing can be saved until the row is read  490ms
+   ✓ schedule network panel (ar) > computed (ADR-0031 §8 fixture): P = 18, path INI-01 → INI-02 → INI-04, INI-03 float 6 not critical  344ms
+   ✓ schedule network panel (ar) > record a duration: getInitiativeSchedule 404 → POST without If-Match; 409 initiative_schedule.exists re-reads the row and the next save is a PATCH with its ETag  664ms
+   ✓ schedule network panel (ar) > change a duration: If-Match is the getInitiativeSchedule ETag; a stale version is a 409 (nothing saved), the row is re-read and shown, the next save sends the re-read ETag  704ms
+   ✓ schedule network panel (ar) > a recorded row with a null duration is a change (PATCH), and an emptied note is sent as null  587ms
+   ✓ schedule network panel (ar) > a failed read shows its error and a retry; nothing can be saved until the row is read  493ms
+ ✓ |unit-web| src/components/form-framework/extension-hosts.test.tsx (12 tests) 8284ms
+   ✓ extension fields on the remaining forms (en) > lesson (P4 dialog): out of range sends nothing; a valid value is stored after the create with If-Match 0  1222ms
+   ✓ extension fields on the remaining forms (en) > business case (custom dialog): a valid value is stored after the create; a later refusal stays on the register  1067ms
+   ✓ extension fields on the remaining forms (en) > BAU handover register: a reader sees the stored value and Unknown for a missing one, never 0  870ms
+   ✓ extension fields on the remaining forms (en) > T01 fill dialog (a dimension without an item): the value is checked, then stored after the create  1257ms
+   ✓ extension fields on the remaining forms (ar) > lesson (P4 dialog): out of range sends nothing; a valid value is stored after the create with If-Match 0  371ms
+   ✓ extension fields on the remaining forms (ar) > business case (custom dialog): a valid value is stored after the create; a later refusal stays on the register  333ms
+   ✓ extension fields on the remaining forms (ar) > T01 fill dialog (a dimension without an item): the value is checked, then stored after the create  742ms
+   ✓ REQ-PB-011 template header on T05 and T06 (en) > T05: the initiative card's header carries the template's provenance strip  429ms
+   ✓ REQ-PB-011 template header on T05 and T06 (en) > T06: the scorecard's header carries the template's provenance strip  469ms
+ ✓ |unit-web| src/pages/studio/route-editor.test.tsx (10 tests) 3374ms
+   ✓ the route editor in the element dialog > en: configures a two-step sequential route with the keyboard-operable list and sends it with If-Match  1761ms
+   ✓ the route editor in the element dialog > ar: configures a two-step sequential route with the keyboard-operable list and sends it with If-Match  770ms
+ ✓ |unit-web| src/pages/raci/governance.test.tsx (19 tests) 5331ms
+   ✓ Governance (en) > RACI: edits a row with the cell selects and saves it as one PATCH with If-Match  1142ms
+   ✓ Governance (en) > role mapping: an unmapped governance role shows the visible routing error  450ms
+   ✓ Governance (en) > decision rights: seeded rows; the due-date preview shows Unknown with its reason  511ms
+   ✓ Governance (en) > Transform readiness lists what is missing and links to the fix  402ms
+ ✓ |unit-web| src/pages/methodology-migrations/migrations.test.tsx (8 tests) 2399ms
+   ✓ Migration page > ar: lists the new required field and the required G2 re-approval; history stays unchanged  572ms
+   ✓ Migrations of a transformation and its pins > plans a migration to a newer published version and lists the required re-approvals  459ms
+   ✓ Migrations of a transformation and its pins > the pins page shows the pinned version and an empty history  339ms
+ ✓ |unit-web| src/pages/my-work/message-keys.test.ts (97 tests) 1245ms
+ ✓ |unit-web| src/auth/session-end.test.tsx (12 tests) 8163ms
+   ✓ session end while the app is open (en) > a 401 on navigation lands once on sign-in with the message; signing in again returns to the page  1181ms
+   ✓ session end while the app is open (en) > a 401 on a dialog mutation (the commit-time upload refusal) closes the dialog and lands once on sign-in  1160ms
+   ✓ session end while the app is open (en) > a sign-out elsewhere noticed by the next /me probe lands once on sign-in, never on the stale shell  468ms
+   ✓ session end while the app is open (en) > a 403 (forbidden) is never treated as a session end  660ms
+   ✓ session end while the app is open (ar) > a 401 on navigation lands once on sign-in with the message; signing in again returns to the page  821ms
+   ✓ session end while the app is open (ar) > a 401 on a dialog mutation (the commit-time upload refusal) closes the dialog and lands once on sign-in  767ms
+   ✓ session end while the app is open (ar) > a sign-out elsewhere noticed by the next /me probe lands once on sign-in, never on the stale shell  467ms
+   ✓ session end while the app is open (ar) > a 403 (forbidden) is never treated as a session end  674ms
+   ✓ session end under <StrictMode> (as in production) > still lands exactly once on sign-in  741ms
+   ✓ sign-in page and the cached identity > decides 'already signed in' only from a fresh /me, never from a stale cache  371ms
+   ✓ sign-in page and the cached identity > signing out here shows 'signed out', not 'session ended', and no /me loop  365ms
+ ✓ |unit-web| src/pages/benefits/plan-values.test.tsx (15 tests) 9622ms
+   ✓ plan-value editing (en) > Edit reads getBenefitPlanValue, pre-fills the form and PATCHes the changed member with the read's If-Match  829ms
+   ✓ plan-value editing (en) > a 409 (changed by someone else after the read) is a conflict: the record is re-read, If-Match never moves under the typed values  315ms
+   ✓ plan-value editing (en) > a failed read (500) shows its state in the section and no form; Cancel removes it  3176ms
+   ✓ plan-value editing (ar) > a 409 (changed by someone else after the read) is a conflict: the record is re-read, If-Match never moves under the typed values  312ms
+   ✓ plan-value editing (ar) > a failed read (500) shows its state in the section and no form; Cancel removes it  3199ms
+ ✓ |unit-web| src/pages/capacity/fe-e.test.tsx (13 tests) 5039ms
+   ✓ capacity editing (en) > creates a role; a taken code (409) is the form's translated alert; then the role is created  936ms
+   ✓ capacity editing (en) > edits a role's labels and archives it, each with If-Match  421ms
+   ✓ capacity editing (en) > creates a capacity row with a decimal FTE string; a duplicate (409) is translated  312ms
+   ✓ capacity editing (en) > creates a demand; after the save the plan is re-read and the conflict with its shortfall appears; Unknown stays Unknown  497ms
+   ✓ capacity editing (ar) > creates a capacity row with a decimal FTE string; a duplicate (409) is translated  413ms
+   ✓ capacity editing (ar) > creates a demand; after the save the plan is re-read and the conflict with its shortfall appears; Unknown stays Unknown  514ms
+ ✓ |unit-web| src/pages/approvals/approvals.test.tsx (16 tests) 4773ms
+   ✓ Approvals (en) > lists my approvals; an Unknown due date shows Unknown with its reason, never a date  538ms
+   ✓ Approvals (en) > offers exactly four outcomes; defer needs a date; the decision sends subjectVersion with If-Match  626ms
+   ✓ Delegations (en) > records a delegation with Asia/Riyadh wall-clock times sent as UTC; a loop 422 is translated  505ms
+   ✓ Delegations (en) > revokes with a reason and If-Match; a read-only user sees no action  365ms
+ ✓ |unit-web| src/pages/actions/BudgetPanel.test.tsx (18 tests) 10211ms
+   ✓ budget panel (en) > lines in their own currency with Unknown for an empty amount; totals per currency, Unknown with reason  1525ms
+   ✓ budget panel (en) > no active line: the budget is Unknown 'No budget lines' (no_budget_lines), never a total of 0  301ms
+   ✓ budget panel (en) > create: decimal strings, empty amounts omitted (Unknown), an invalid amount is refused inline with the §11 text  624ms
+   ✓ budget panel (en) > a refusal is translated: 409 budget_line.duplicate on create keeps the dialog with the §11 text  735ms
+   ✓ budget panel (en) > edit sends only the changed member with If-Match of the version seen; a stale version is a 409 (nothing saved, lines re-read)  775ms
+   ✓ budget panel (en) > archive sends the reason with If-Match; 422 budget_line.archived is translated in the dialog  733ms
+   ✓ budget panel (en) > the auditor (no budget.edit) sees the panel read-only: no add, edit or archive control  658ms
+   ✓ budget panel (ar) > lines in their own currency with Unknown for an empty amount; totals per currency, Unknown with reason  736ms
+   ✓ budget panel (ar) > create: decimal strings, empty amounts omitted (Unknown), an invalid amount is refused inline with the §11 text  513ms
+   ✓ budget panel (ar) > a refusal is translated: 409 budget_line.duplicate on create keeps the dialog with the §11 text  602ms
+   ✓ budget panel (ar) > edit sends only the changed member with If-Match of the version seen; a stale version is a 409 (nothing saved, lines re-read)  883ms
+   ✓ budget panel (ar) > archive sends the reason with If-Match; 422 budget_line.archived is translated in the dialog  526ms
+   ✓ budget panel (ar) > the auditor (no budget.edit) sees the panel read-only: no add, edit or archive control  584ms
+ ✓ |unit-web| src/pages/bau/sustain.test.tsx (14 tests) 7869ms
+   ✓ BAU and improvement screens (en) > handover checklist marks data access missing; submit 422 names it in the shown language  1326ms
+   ✓ BAU and improvement screens (en) > only the receiving owner is offered accept, labelled a business approval  802ms
+   ✓ BAU and improvement screens (en) > after reopening, the area shows the original handover acceptance and closure date  565ms
+   ✓ BAU and improvement screens (en) > a failed check links to its recovery action; an unknown review signal is Unknown, never on track  958ms
+   ✓ BAU and improvement screens (en) > CI backlog stays visible and editable after the transformation is closed  820ms
+   ✓ BAU and improvement screens (en) > lesson search finds a published lesson of another transformation  478ms
+   ✓ BAU and improvement screens (ar) > handover checklist marks data access missing; submit 422 names it in the shown language  434ms
+   ✓ BAU and improvement screens (ar) > only the receiving owner is offered accept, labelled a business approval  665ms
+   ✓ BAU and improvement screens (ar) > after reopening, the area shows the original handover acceptance and closure date  321ms
+   ✓ BAU and improvement screens (ar) > a failed check links to its recovery action; an unknown review signal is Unknown, never on track  346ms
+   ✓ BAU and improvement screens (ar) > CI backlog stays visible and editable after the transformation is closed  377ms
+ ✓ |unit-web| src/pages/dashboards/valueHeadlines.test.tsx (26 tests) 11573ms
+   ✓ Value headlines by basis (D-119; F-DG4-122/123) (en) > t10: profit-and-cash headlines labelled with their basis; top line and non-cash beside, labelled, never summed; the gap reads 100 %  1226ms
+   ✓ Value headlines by basis (D-119; F-DG4-122/123) (en) > overview: profit-and-cash headlines labelled with their basis; top line and non-cash beside, labelled, never summed; the gap reads 100 %  721ms
+   ✓ Value headlines by basis (D-119; F-DG4-122/123) (en) > finance: profit-and-cash headlines labelled with their basis; top line and non-cash beside, labelled, never summed; the gap reads 100 %  561ms
+   ✓ Value headlines by basis (D-119; F-DG4-122/123) (en) > header: profit-and-cash headlines labelled with their basis; top line and non-cash beside, labelled, never summed; the gap reads 100 %  696ms
+   ✓ Value headlines by basis (D-119; F-DG4-122/123) (en) > t10: every headline drills as the contract says (profit and cash without valueClass; top line revenue_uplift; non-cash avoided_cost)  1146ms
+   ✓ Value headlines by basis (D-119; F-DG4-122/123) (en) > overview: every headline drills as the contract says (profit and cash without valueClass; top line revenue_uplift; non-cash avoided_cost)  649ms
+   ✓ Value headlines by basis (D-119; F-DG4-122/123) (en) > finance: every headline drills as the contract says (profit and cash without valueClass; top line revenue_uplift; non-cash avoided_cost)  790ms
+   ✓ Value headlines by basis (D-119; F-DG4-122/123) (en) > header: every headline drills as the contract says (profit and cash without valueClass; top line revenue_uplift; non-cash avoided_cost)  671ms
+   ✓ Value headlines by basis (D-119; F-DG4-122/123) (ar) > t10: every headline drills as the contract says (profit and cash without valueClass; top line revenue_uplift; non-cash avoided_cost)  790ms
+   ✓ Value headlines by basis (D-119; F-DG4-122/123) (ar) > overview: every headline drills as the contract says (profit and cash without valueClass; top line revenue_uplift; non-cash avoided_cost)  659ms
+   ✓ Value headlines by basis (D-119; F-DG4-122/123) (ar) > finance: every headline drills as the contract says (profit and cash without valueClass; top line revenue_uplift; non-cash avoided_cost)  796ms
+   ✓ Value headlines by basis (D-119; F-DG4-122/123) (ar) > header: every headline drills as the contract says (profit and cash without valueClass; top line revenue_uplift; non-cash avoided_cost)  334ms
+ ✓ |unit-web| src/pages/closure/closure.test.tsx (11 tests) 4895ms
+   ✓ closure page (en) > shows the four statuses side by side and the value-pending labels; never 'successful'  681ms
+   ✓ closure page (en) > closing a value-pending initiative shows the translated 422 closure.value_validation_pending  622ms
+   ✓ closure page (en) > closing the transformation without G6 shows the translated refusal  486ms
+   ✓ closure page (en) > a returned decision offers 'Submit again (round 2)'; a non-requester's withdrawal is refused, translated  312ms
+   ✓ closure page (en) > creates a transition decision with the residual owner and monitoring (a draft until submitted)  416ms
+   ✓ closure page (ar) > closing a value-pending initiative shows the translated 422 closure.value_validation_pending  338ms
+   ✓ closure page (ar) > closing the transformation without G6 shows the translated refusal  342ms
+   ✓ closure page (ar) > a returned decision offers 'Submit again (round 2)'; a non-requester's withdrawal is refused, translated  364ms
+   ✓ closure page (ar) > creates a transition decision with the residual owner and monitoring (a draft until submitted)  458ms
+ ✓ |unit-web| src/lib/lib.test.ts (24 tests) 674ms
+ ✓ |unit-web| src/pages/dispensations/dispensations.test.tsx (12 tests) 6655ms
+   ✓ Dispensations (en) > lists waivers and inherited approvals; unverified evidence is shown as unverified; recorder cannot decide  1081ms
+   ✓ Dispensations (en) > a waiver needs a reason and an expiry: refused inline, nothing sent; then sent with its scope  788ms
+   ✓ Dispensations (en) > an inherited approval (Modular) needs the approving body, the date and evidence; 422s are translated  748ms
+   ✓ Dispensations (en) > deciding is a labelled business approval; the delegated-decision 422 and the recorder 403 are translated  631ms
+   ✓ Dispensations (en) > revoking an accepted dispensation needs a reason and is a business approval  421ms
+   ✓ Dispensations (en) > the read-only auditor sees the register with no enabled write control  334ms
+   ✓ Dispensations (ar) > a waiver needs a reason and an expiry: refused inline, nothing sent; then sent with its scope  303ms
+   ✓ Dispensations (ar) > an inherited approval (Modular) needs the approving body, the date and evidence; 422s are translated  496ms
+   ✓ Dispensations (ar) > deciding is a labelled business approval; the delegated-decision 422 and the recorder 403 are translated  378ms
+ ✓ |unit-web| src/pages/gates/g1-agreements.test.tsx (10 tests) 6193ms
+   ✓ G1 agreements step (en) > approving G1 needs the three labelled confirmations; then sends agreements with all three true  1358ms
+   ✓ G1 agreements step (en) > a non-approve outcome on G1 sends no agreements (even after ticking them)  817ms
+   ✓ G1 agreements step (en) > approving another gate (G2) shows no confirmations and sends no agreements  382ms
+   ✓ G1 agreements step (en) > the server's 422 gate.g1_agreements_required is the one form-level alert, with the missing confirmations  479ms
+   ✓ G1 agreements step (en) > the server's 422 gate.agreements_not_applicable is translated as the one form-level alert  399ms
+   ✓ G1 agreements step (ar) > approving G1 needs the three labelled confirmations; then sends agreements with all three true  480ms
+   ✓ G1 agreements step (ar) > a non-approve outcome on G1 sends no agreements (even after ticking them)  409ms
+   ✓ G1 agreements step (ar) > the server's 422 gate.g1_agreements_required is the one form-level alert, with the missing confirmations  339ms
+   ✓ G1 agreements step (ar) > the server's 422 gate.agreements_not_applicable is translated as the one form-level alert  338ms
+ ✓ |unit-web| src/i18n/problems-p6.test.ts (10 tests) 1763ms
+ ✓ |unit-web| src/components/table-regions.test.tsx (9 tests) 2768ms
+   ✓ no bare table wrapper in the web source > no element uses the class table-scroll (no stylesheet defines it, so it is not a scroll container)  391ms
+   ✓ no bare table wrapper in the web source > every table.table / table--compact is rendered inside a scroll region (TableScrollRegion, TableRegion or a .table-wrap region)  304ms
+ ✓ |unit-web| src/api/all-transformations.test.tsx (9 tests) 3350ms
+   ✓ launch-procedure transformation picker (en) > P1 offers all 250 transformations over three pages, the last one included (en)  1309ms
+   ✓ launch-procedure transformation picker (ar) > P1 offers all 250 transformations over three pages, the last one included (ar)  640ms
+ ✓ |unit-web| src/i18n/problems-slices-hijk.test.ts (18 tests) 2000ms
+ ✓ |unit-web| src/pages/gates/readiness-covered.test.tsx (14 tests) 3746ms
+   ✓ readiness line with accepted exceptions (en) > gate page: an approved gate whose missing output is covered says so in the readiness line; ready follows it  1021ms
+   ✓ readiness line with accepted exceptions (en) > gates list: the G1 chip says the rest is covered and is on track  500ms
+ ✓ |unit-web| src/pages/dashboards/n4Value.test.tsx (9 tests) 4162ms
+   ✓ N4 value screens (D-122; F-DG4-126/127) (en) > t10: the Value RAG shows each basis's gap with its own status; the area is the worst (Red); no cross-basis gap  999ms
+   ✓ N4 value screens (D-122; F-DG4-126/127) (en) > overview: the Value RAG shows each basis's gap with its own status; the area is the worst (Red); no cross-basis gap  601ms
+   ✓ N4 value screens (D-122; F-DG4-126/127) (en) > Finance: the top-line gap headline sits beside, labelled; its drill-down shows its basis and currency (SAR)  852ms
+ ✓ |unit-web| src/lib/auditChanges.p5.test.ts (15 tests) 804ms
+ ✓ |unit-web| src/app/p3-seams.test.tsx (10 tests) 3877ms
+   ✓ P3 routes > workspace tabs (en) > the workspace tabs include the P3 tabs, labelled from their own namespaces  885ms
+   ✓ P3 routes > workspace tabs (ar) > the workspace tabs include the P3 tabs, labelled from their own namespaces  418ms
+   ✓ P3 navigation areas > en /initiatives-roadmaps leads into the Initiatives and Roadmaps tab of each transformation  921ms
+   ✓ P3 navigation areas > ar /initiatives-roadmaps leads into the المبادرات وخرائط الطريق tab of each transformation  342ms
+   ✓ P3 navigation areas > en /benefits-finance leads into the Benefits and Finance tab of each transformation  339ms
+   ✓ P3 navigation areas > ar /benefits-finance leads into the المنافع والمالية tab of each transformation  519ms
+ ✓ |unit-web| src/pages/form-builder/form-builder.test.tsx (8 tests) 4747ms
+   ✓ form builder (en) > lists the native forms; the twelve extension record types carry the Extension badge  874ms
+   ✓ form builder (en) > adds an extension field in an open draft with PUT, origin admin, its type and If-Match on the draft  1037ms
+   ✓ form builder (en) > deleting a protected source column shows the server's refusal, translated  721ms
+   ✓ form builder (en) > an auditor and a published version get a read-only view  346ms
+   ✓ form builder (ar) > adds an extension field in an open draft with PUT, origin admin, its type and If-Match on the draft  524ms
+   ✓ form builder (ar) > deleting a protected source column shows the server's refusal, translated  356ms
+ ✓ |unit-web| src/pages/roadmap/roadmap.test.tsx (14 tests) 8663ms
+   ✓ roadmap (en) > shows the four source waves verbatim (English source also shown in Arabic) with overlapping horizons  713ms
+   ✓ roadmap (en) > moving a milestone PATCHes the forecast with If-Match and the timeline, table and board all show the new date from one refetch  655ms
+   ✓ roadmap (en) > a 409 on moving a milestone shows the conflict notice and reloads the roadmap  1286ms
+   ✓ roadmap (en) > re-approving a date requires a reason; then it is POSTed with If-Match  977ms
+   ✓ roadmap (en) > deliverable acceptance sends the AcceptanceDecision with If-Match (no 'on behalf of' control)  704ms
+   ✓ roadmap (ar) > moving a milestone PATCHes the forecast with If-Match and the timeline, table and board all show the new date from one refetch  680ms
+   ✓ roadmap (ar) > a 409 on moving a milestone shows the conflict notice and reloads the roadmap  700ms
+   ✓ roadmap (ar) > re-approving a date requires a reason; then it is POSTed with If-Match  560ms
+   ✓ roadmap (ar) > deliverable acceptance sends the AcceptanceDecision with If-Match (no 'on behalf of' control)  575ms
+ ✓ |unit-web| src/pages/dependencies/dependencies.test.tsx (12 tests) 7491ms
+   ✓ dependencies (en) > shows the seven T08 columns, an External source, the type label and the needed-by conflict flag  1426ms
+   ✓ dependencies (en) > a cycle is refused and shown as the translated message with the path INI-01 → INI-02 → INI-03 → INI-01  642ms
+   ✓ dependencies (en) > an External source is sent as {kind: external, label}  711ms
+   ✓ dependencies (en) > dependency types: system types are undeletable; an administrator may retire a custom type  517ms
+   ✓ dependencies (en) > the read-only auditor sees the map and no write control  378ms
+   ✓ dependencies (ar) > a cycle is refused and shown as the translated message with the path INI-01 → INI-02 → INI-03 → INI-01  717ms
+   ✓ dependencies (ar) > an External source is sent as {kind: external, label}  467ms
+   ✓ dependencies (ar) > dependency types: system types are undeletable; an administrator may retire a custom type  396ms
+   ✓ dependencies (ar) > a system type's 422 dependency_type.system_undeletable is translated  424ms
+ ✓ |unit-web| src/components/LanguageSwitch.test.tsx (10 tests) 5538ms
+   ✓ a refused language save, 'en' → other ('403 csrf') > keeps ar on screen and says, in ar, that it was not saved  1288ms
+   ✓ a refused language save, 'ar' → other ('403 csrf') > keeps en on screen and says, in en, that it was not saved  656ms
+   ✓ a refused language save, 'en' → other ('403 forbidden') > keeps ar on screen and says, in ar, that it was not saved  473ms
+   ✓ a refused language save, 'ar' → other ('503') > keeps en on screen and says, in en, that it was not saved  605ms
+   ✓ the live region and the persisted preference > a successful save never flips back to the previous language while the PUT is in flight  326ms
+   ✓ the live region and the persisted preference > en: the notice is a warning banner below the header, not inside it  308ms
+ ✓ |unit-web| src/pages/transformations/modeGuidance.test.tsx (5 tests) 3096ms
+   ✓ New transformation: mode guidance (English LTR) > shows When to use and How for the selected mode and switches with the mode  1325ms
+   ✓ New transformation: mode guidance (English LTR) > Modular requires an entry phase before anything is sent  413ms
+   ✓ New transformation: mode guidance (English LTR) > a server validation error on the entry phase is shown on that field  364ms
+stderr | src/pages/dashboards/percentKpi.test.tsx > F-DG4-125 surfaces (en): every percentage KPI reads 12 % > T10: the Outcomes and People & adoption items, the Stale last value, and the drill-down
+Encountered two children with the same key, `outcome_kpi-01920000-0000-7000-9000-00000000a001`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | src/pages/dashboards/percentKpi.test.tsx > F-DG4-125 surfaces (en): every percentage KPI reads 12 % > T10: the Outcomes and People & adoption items, the Stale last value, and the drill-down
+Encountered two children with the same key, `outcome_kpi-01920000-0000-7000-9000-00000000a001`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | src/pages/dashboards/percentKpi.test.tsx > F-DG4-125 surfaces (en): every percentage KPI reads 12 % > T10: the Outcomes and People & adoption items, the Stale last value, and the drill-down
+Encountered two children with the same key, `outcome_kpi-01920000-0000-7000-9000-00000000a001`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+ ✓ |unit-web| src/pages/playbook/reader-tables.test.tsx (8 tests) 3557ms
+   ✓ the reader shows tables, not Markdown (en) > R1 + R2: the B0024 panel is a table cell and the block list has no Markdown (en)  1132ms
+   ✓ the reader shows tables, not Markdown (en) > R3: B0016 is a callout table holding the whole sentence; B0003's <br> is an element (en)  527ms
+   ✓ the reader shows tables, not Markdown (en) > R4: a snippet from a table shows no Markdown and keeps the mark on the matched word (en)  385ms
+stderr | src/pages/dashboards/percentKpi.test.tsx > F-DG4-125 surfaces (en): every percentage KPI reads 12 % > Executive Overview: the Outcomes and People & adoption areas
+Encountered two children with the same key, `outcome_kpi-01920000-0000-7000-9000-00000000a001`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | src/pages/dashboards/percentKpi.test.tsx > F-DG4-125 surfaces (en): every percentage KPI reads 12 % > the adoption dashboard: the indicator row and the area items
+Encountered two children with the same key, `outcome_kpi-01920000-0000-7000-9000-00000000a001`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+ ✓ |unit-web| src/pages/phases/phases.test.tsx (6 tests) 4470ms
+   ✓ phase workspace (en) > lists the six phases in order, the objective, Unknown owners and the review queue; never moves a gate  808ms
+   ✓ phase workspace (en) > a step with no record is read with ETag "0" and its first save sends If-Match "0"  1184ms
+   ✓ phase workspace (en) > requesting review with an unmet completion rule shows the translated 422  304ms
+   ✓ phase workspace (ar) > a step with no record is read with ETag "0" and its first save sends If-Match "0"  678ms
+stderr | src/pages/dashboards/percentKpi.test.tsx > F-DG4-125 surfaces (ar): every percentage KPI reads 12 % > T10: the Outcomes and People & adoption items, the Stale last value, and the drill-down
+Encountered two children with the same key, `outcome_kpi-01920000-0000-7000-9000-00000000a001`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | src/pages/dashboards/percentKpi.test.tsx > F-DG4-125 surfaces (ar): every percentage KPI reads 12 % > T10: the Outcomes and People & adoption items, the Stale last value, and the drill-down
+Encountered two children with the same key, `outcome_kpi-01920000-0000-7000-9000-00000000a001`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | src/pages/dashboards/percentKpi.test.tsx > F-DG4-125 surfaces (ar): every percentage KPI reads 12 % > T10: the Outcomes and People & adoption items, the Stale last value, and the drill-down
+Encountered two children with the same key, `outcome_kpi-01920000-0000-7000-9000-00000000a001`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | src/pages/dashboards/percentKpi.test.tsx > F-DG4-125 surfaces (ar): every percentage KPI reads 12 % > Executive Overview: the Outcomes and People & adoption areas
+Encountered two children with the same key, `outcome_kpi-01920000-0000-7000-9000-00000000a001`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+stderr | src/pages/dashboards/percentKpi.test.tsx > F-DG4-125 surfaces (ar): every percentage KPI reads 12 % > the adoption dashboard: the indicator row and the area items
+Encountered two children with the same key, `outcome_kpi-01920000-0000-7000-9000-00000000a001`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+
+ ✓ |unit-web| src/pages/dashboards/percentKpi.test.tsx (12 tests) 4514ms
+   ✓ F-DG4-125 surfaces (en): every percentage KPI reads 12 % > T10: the Outcomes and People & adoption items, the Stale last value, and the drill-down  1478ms
+   ✓ F-DG4-125 surfaces (en): every percentage KPI reads 12 % > Executive Overview: the Outcomes and People & adoption areas  659ms
+   ✓ F-DG4-125 surfaces (en): every percentage KPI reads 12 % > the adoption dashboard: the indicator row and the area items  481ms
+   ✓ F-DG4-125 surfaces (ar): every percentage KPI reads 12 % > T10: the Outcomes and People & adoption items, the Stale last value, and the drill-down  583ms
+ ✓ |unit-web| src/pages/dashboards/buFilter.test.tsx (22 tests) 3938ms
+   ✓ business-unit chip and its 50-transformation limit (F-DG4-144) (en) > overview: a unit of 120 is blocked (too_many), and no dashboard request is sent  661ms
+   ✓ business-unit chip and its 50-transformation limit (F-DG4-144) (en) > finance: a unit of 120 is blocked (too_many), and no dashboard request is sent  448ms
+ ✓ |unit-web| src/pages/gates/inherited-approval.test.tsx (16 tests) 4344ms
+   ✓ inherited-approval annotation (en) > Gates list: G1 pending_verification (counts false) is a badge next to 'Not submitted'  750ms
+   ✓ inherited-approval annotation (en) > gate view: an accepted inherited approval is a labelled row beside the 'Not submitted' status  562ms
+ ✓ |unit-web| src/auth/session-wait.test.tsx (6 tests) 4509ms
+   ✓ F-DG4-146 page GETs wait for the identity check in flight (en) > W1: a navigation after B signed in elsewhere sends no page GET, and shows nothing of B's, while /me is held  1072ms
+   ✓ F-DG4-146 page GETs wait for the identity check in flight (en) > W2: a refetch past SESSION_RECHECK_MS is not sent while the revalidation /me is held; one /me, first  945ms
+   ✓ F-DG4-146 page GETs wait for the identity check in flight (ar) > W1: a navigation after B signed in elsewhere sends no page GET, and shows nothing of B's, while /me is held  816ms
+   ✓ F-DG4-146 page GETs wait for the identity check in flight (ar) > W2: a refetch past SESSION_RECHECK_MS is not sent while the revalidation /me is held; one /me, first  875ms
+ ✓ |unit-web| src/i18n/glossary.test.ts (8 tests) 2158ms
+ ✓ |unit-web| src/components/demo-label/FormHeaders.test.tsx (40 tests) 2347ms
+ ✓ |unit-web| src/pages/dashboards/valueRagLineState.test.tsx (8 tests) 2592ms
+   ✓ Value RAG lines by status (F-DG4-143) (en) > t10: an n/a line reads Not applicable with its reason, an unknown line Unknown, a valued line its gap  792ms
+   ✓ Value RAG lines by status (F-DG4-143) (en) > overview: an n/a line reads Not applicable with its reason, an unknown line Unknown, a valued line its gap  492ms
+   ✓ Value RAG lines by status (F-DG4-143) (ar) > t10: an n/a line reads Not applicable with its reason, an unknown line Unknown, a valued line its gap  306ms
+ ✓ |unit-web| src/i18n/i18n.test.ts (11 tests) 2378ms
+ ✓ |unit-web| src/pages/kpi/kpi-periods.test.tsx (6 tests) 9864ms
+   ✓ KPI update periods (en) > a Lead or KPI owner chooses an open period that is not the current one, from the transformation's list  1230ms
+   ✓ KPI update periods (en) > a transformation-scoped KPI owner (no organization.read) gets the same choice  314ms
+   ✓ KPI update periods (en) > no open period of the KPI's frequency: the form says so; a failed list is an error, never an empty choice  3440ms
+   ✓ KPI update periods (ar) > a Lead or KPI owner chooses an open period that is not the current one, from the transformation's list  446ms
+   ✓ KPI update periods (ar) > no open period of the KPI's frequency: the form says so; a failed list is an error, never an empty choice  3313ms
+ ✓ |unit-web| src/pages/dependencies/slips.test.tsx (8 tests) 3461ms
+   ✓ critical dependency slips on the Dependencies page (en) > names the dependency, the slip in days, the reason and each dependent's forecast finish before -> after  1344ms
+   ✓ critical dependency slips on the Dependencies page (ar) > names the dependency, the slip in days, the reason and each dependent's forecast finish before -> after  355ms
+ ✓ |unit-web| src/pages/roadmap/fe-e.test.tsx (8 tests) 5469ms
+   ✓ wave editing (en) > edits planned dates (overlap accepted) with If-Match; the source text is read-only and never sent  1324ms
+   ✓ wave editing (en) > 422 roadmap_wave.planned_range is inline at the planned end and translated  574ms
+   ✓ wave editing (en) > adds a non-source wave with its bilingual texts (POST, Idempotency-Key)  962ms
+   ✓ wave editing (ar) > edits planned dates (overlap accepted) with If-Match; the source text is read-only and never sent  497ms
+   ✓ wave editing (ar) > 422 roadmap_wave.planned_range is inline at the planned end and translated  304ms
+   ✓ wave editing (ar) > adds a non-source wave with its bilingual texts (POST, Idempotency-Key)  813ms
+ ✓ |unit-web| src/components/RecordForm.alerts.test.tsx (16 tests) 2425ms
+   ✓ record form: one alert per distinct form error (en) > dialog > a 400 whose only field error has pointer "" says its message once, in one live region  478ms
+ ✓ |unit-web| src/pages/dispensations/modular-waiver.test.tsx (7 tests) 3773ms
+   ✓ Modular G3 waiver (en) > labels a Modular G3 waiver as the waiver of the missing links; End-to-End keeps the DG3 label  945ms
+   ✓ Modular G3 waiver (en) > offers the waiver with the Modular hint and sends a G3 waiver without an initiative  717ms
+   ✓ Modular G3 waiver (en) > any other Modular waiver shows the DG3 refusal, translated  350ms
+   ✓ Modular G3 waiver (ar) > any other Modular waiver shows the DG3 refusal, translated  314ms
+ ✓ |unit-web| src/pages/actions/ExecutionPanel.test.tsx (12 tests) 14056ms
+   ✓ execution panel (en) > milestone slip in working days (+5, −5, 0) beside calendar days; a missing date is Unknown with its reason  1510ms
+   ✓ execution panel (en) > deliverable acceptance, demand without capacity (Unknown), dependency without impact (Unknown), decisions  740ms
+   ✓ execution panel (en) > critical-path membership: a label when computed; null is Unknown with no critical styling  701ms
+   ✓ execution panel (en) > the initiative page holds the slot: budget lines, execution and schedule network, in its on-this-page navigation  695ms
+   ✓ execution panel (en) > an answer outside the contract is the panel's error state; the rest of the initiative page still renders  3271ms
+   ✓ execution panel (ar) > milestone slip in working days (+5, −5, 0) beside calendar days; a missing date is Unknown with its reason  686ms
+   ✓ execution panel (ar) > deliverable acceptance, demand without capacity (Unknown), dependency without impact (Unknown), decisions  956ms
+   ✓ execution panel (ar) > critical-path membership: a label when computed; null is Unknown with no critical styling  490ms
+   ✓ execution panel (ar) > the initiative page holds the slot: budget lines, execution and schedule network, in its on-this-page navigation  621ms
+   ✓ execution panel (ar) > an answer outside the contract is the panel's error state; the rest of the initiative page still renders  3290ms
+ ✓ |unit-web| src/components/States.test.tsx (15 tests) 2762ms
+   ✓ explicit states in en > loading is a polite live region with a text label  336ms
+ ✓ |unit-web| src/pages/readiness/readiness.test.tsx (4 tests) 3068ms
+   ✓ Readiness (en) > lists the missing diagnostic areas by name, the gates and the translated sequencing blockers  1147ms
+ ✓ |unit-web| src/i18n/problems-p5.test.ts (5 tests) 2447ms
+ ✓ |unit-web| src/pages/capacity/capacity.test.tsx (6 tests) 3627ms
+   ✓ capacity (en) > the role × month grid shows decimal FTE, the conflict with its shortfall, and Unknown capacity as Unknown (never 0)  813ms
+   ✓ capacity (en) > committing a demand POSTs with If-Match; a 409 shows the conflict notice and reloads  717ms
+   ✓ capacity (ar) > committing a demand POSTs with If-Match; a 409 shows the conflict notice and reloads  485ms
+ ✓ |unit-web| src/pages/procedures/launch-permission.test.tsx (4 tests) 2293ms
+   ✓ My procedures launch offer (en) > L1 without procedure.launch: a read-only note, no launch form and no Launch button (en)  1127ms
+ ✓ |unit-web| src/pages/reports/snapshot-labels.test.tsx (7 tests) 1227ms
+ ✓ |unit-web| src/components/RouteFallback.test.tsx (8 tests) 2218ms
+   ✓ route fallback (en) > lazyPage shows the load error, not a blank area, when the chunk cannot be fetched  354ms
+   ✓ route fallback (ar) > lazyPage shows the load error, not a blank area, when the chunk cannot be fetched  341ms
+ ✓ |unit-web| src/test/react-warning-guard.test.tsx (4 tests) 2392ms
+ ✓ |unit-web| src/styles/styles.test.ts (7 tests) 3185ms
+ ✓ |unit-web| src/pages/business-cases/problem-codes.test.ts (4 tests) 839ms
+ ✓ |unit-web| src/test/harness-config.test.ts (3 tests) 2370ms
+ ✓ |unit-web| src/app/me-navigation.test.ts (3 tests) 2012ms
+
+ Test Files  96 passed (96)
+      Tests  1768 passed (1768)
+   Start at  01:24:17
+   Duration  290.68s (transform 354.65s, setup 15.16s, collect 155.63s, tests 596.71s, environment 62.56s, prepare 10.36s)
+
+
+ RUN  v3.2.4 /home/user/wt/dg6-do-a
+
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/codegen.nocodegen.test.ts (10 tests) 22ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/formula.test.ts (140 tests) 133ms
+ ✓ |unit-formula-nocodegen| packages/shared/src/formula/fuzz.test.ts (111 tests | 2 skipped) 5885ms
+   ✓ fuzz: no uncaught exception, no code execution > 10 000 random byte strings (0–255, up to 80 bytes)  1610ms
+   ✓ fuzz: no uncaught exception, no code execution > 10 000 random UTF-16 strings including astral code points and lone surrogates  1564ms
+   ✓ fuzz: no uncaught exception, no code execution > 20 000 random strings over the grammar alphabet reach parser, type checker and evaluator  2680ms
+
+ Test Files  3 passed (3)
+      Tests  259 passed | 2 skipped (261)
+   Start at  01:29:09
+   Duration  6.94s (transform 477ms, setup 0ms, collect 1.18s, tests 6.04s, environment 0ms, prepare 337ms)
+
+ ELIFECYCLE  Test failed. See above for more details.
+EXIT=1
+Tue Oct 27 01:29:16 UTC 2026

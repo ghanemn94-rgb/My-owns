@@ -59,6 +59,39 @@ export const automationConditionValue = z.union([
   z.array(freeText(1, 500)).min(1).max(50),
 ]);
 
+/**
+ * T-DG6-BE-Z12B, T-DG6-BE-Z13 (F-DG6-480, F-DG6-520/541/560; D-218, D-222, D-226; ADR-0051 §2): the bare restricted
+ * marker text. It is never shown on its own any more and never stored: a write that sends it as a literal (or anything
+ * else that looks like marker text but is not a token of the stored version) is refused with 422
+ * `automation_rule.restricted_marker_unknown`.
+ */
+export const AUTOMATION_RESTRICTED_LITERAL = "[restricted]";
+
+/**
+ * D-226, D-231, D-233 (F-DG6-580, F-DG6-640): the opaque issuer-bound token a condition literal is shown as when it
+ * names a sensitive record (or a child that carries one's values) the reader is not admitted to:
+ * `[restricted:<tag>:<k>]`.
+ * - `<tag>` is the issuer tag: 24 lowercase hex digits, computed by the server only (a keyed hash of the issuing
+ *   rule-version row's id and its row version, ADR-0051 amendment D-231 part A). It names the row and the revision the
+ *   token was issued from, and discloses neither the row id nor any hidden value. Clients treat it as opaque.
+ * - `k` is the literal's 1-based position among **all** literals of that stored version, in reading order (conditions
+ *   in order; a scalar value counts as one, each `in` list element as one), so it does not shift when a grant or
+ *   sensitivity changes (D-228 (1)); it reveals nothing about the record.
+ * A version update maps each token it receives back to the stored literal at that position wherever the condition now
+ * sits, but only when `<tag>` is the tag of the row being replaced at the If-Match version. A token issued by another
+ * version row, another rule or another row version (and any token in the retired D-231 form
+ * `[restricted:<version>:<k>]`) is refused 422 `automation_rule.restricted_token_stale` and is never resolved against
+ * another row's positions. A token that is left out is simply removed.
+ */
+export const automationRestrictedToken = (tag: string, k: number): string => `[restricted:${tag}:${k}]`;
+/** The length of the issuer tag in hex digits (96 bits: an accidental match between two issuers is negligible). */
+export const AUTOMATION_RESTRICTED_TOKEN_TAG_HEX_LENGTH = 24;
+export const AUTOMATION_RESTRICTED_TOKEN_PATTERN = /^\[restricted:([0-9a-f]{24}):([1-9][0-9]{0,3})\]$/;
+/** The retired D-231 form `[restricted:<version>:<k>]`: issued by an earlier release, refused stale (D-233). */
+export const AUTOMATION_RESTRICTED_TOKEN_RETIRED_PATTERN = /^\[restricted:[1-9][0-9]{0,9}:[1-9][0-9]{0,3}\]$/;
+/** True for a token, the bare marker, or any other text that looks like marker text (refused unless a known token). */
+export const looksLikeRestrictedMarker = (v: string): boolean => /^\s*\[\s*restricted\b/i.test(v);
+
 export const automationCondition = z.strictObject({
   field: z.string().regex(AUTOMATION_CONDITION_FIELD_PATTERN, "validation.condition_field"),
   op: z.enum(AUTOMATION_CONDITION_OPS),
@@ -271,6 +304,8 @@ export const automationRule = z.strictObject({
   summary: automationRuleSummary.nullable(),
   version,
   updatedAt: timestamp,
+  /** True when the summary shows a condition literal as the restricted marker (label access.includesRestrictedRecords). */
+  includesRestrictedRecords: z.literal(true).optional(),
 });
 export type AutomationRule = z.infer<typeof automationRule>;
 export const automationRulePage = page(automationRule);
@@ -350,6 +385,8 @@ export const automationRuleVersion = z.strictObject({
   summary: automationRuleSummary,
   version,
   updatedAt: timestamp,
+  /** True when a condition literal is shown as a restricted token (D-226; label access.includesRestrictedRecords). */
+  includesRestrictedRecords: z.literal(true).optional(),
 });
 export type AutomationRuleVersion = z.infer<typeof automationRuleVersion>;
 export const automationRuleVersionPage = page(automationRuleVersion);
@@ -392,6 +429,11 @@ export const automationExecution = z.strictObject({
   startedAt: timestamp,
   finishedAt: nullableTimestamp,
   actionResults: z.array(automationActionResult),
+  /**
+   * D-227: true when the trigger key, an action result's idempotency key or the error detail shows the restricted
+   * marker in place of a record id the reader is not admitted to (label access.includesRestrictedRecords).
+   */
+  includesRestrictedRecords: z.literal(true).optional(),
 });
 export type AutomationExecution = z.infer<typeof automationExecution>;
 export const automationExecutionPage = page(automationExecution);
@@ -430,6 +472,11 @@ export const operationalFailure = z.strictObject({
   allowedActions: z.array(z.enum(["retry", "dismiss"])),
   version,
   updatedAt: timestamp,
+  /**
+   * D-227: true when the idempotency key or the error message shows the restricted marker in place of a record id the
+   * reader is not admitted to (label access.includesRestrictedRecords).
+   */
+  includesRestrictedRecords: z.literal(true).optional(),
 });
 export type OperationalFailure = z.infer<typeof operationalFailure>;
 export const operationalFailurePage = page(operationalFailure);

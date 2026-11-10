@@ -22,7 +22,7 @@
 // - T-DG4-BE-R3 (p4-work-split JK.10 item 3; ADR-0038 §10 "404 outside scope"): a caller who never could read the
 //   transformation gets 404 on every write too, as on the workstream writes of portfolio/structure.ts; a right revoked
 //   while the request waited is still the commit-time 403.
-import type { InheritedRecordRow, Tx } from "@mth/db";
+import type { DbOrTx, InheritedRecordRow, Tx } from "@mth/db";
 import {
   deriveMissingLinks,
   gateLabelOf,
@@ -41,7 +41,7 @@ import { PROBLEM_TYPES } from "@mth/shared";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
-import { principalOf, requireTransformationRead } from "../access/index.ts";
+import { hideRestrictedRefs, principalOf, requireTransformationRead, type Principal } from "../access/index.ts";
 import { record } from "../audit/index.ts";
 import {
   cursorSchema,
@@ -70,7 +70,7 @@ import {
   sendCreated,
   type WriteContext,
 } from "../transformations/index.ts";
-import { hrefOf, readOnly } from "./traceability.ts";
+import { hrefOf, readOnly, restrictedBenefitIds } from "./traceability.ts";
 
 const T_BASE = "/api/v1/transformations/:transformationId";
 const MISSING = `${T_BASE}/missing-links`;
@@ -200,10 +200,29 @@ function itemHref(transformationId: string, i: DerivedMissingLink): string {
 }
 
 /** ADR-0038 §7.3: the report of one transformation (read-only; nothing stored). */
-export async function buildMissingLinks(tx: Tx, transformationId: string): Promise<MissingLinks> {
+/**
+ * The missing links for one reader. ADR-0051 §2 (T-DG6-BE-Z5, F-DG6-300): the per-record item of a benefit the reader
+ * is not admitted to (`benefit_outcome_link_missing`, a WARNING whose label is "<code> <title>" and whose href is the
+ * benefit) is OMITTED, with no placeholder and no count: no verdict depends on a warning (the Modular G3 precondition
+ * reads only the blocking items, which never name a benefit). `benefit_missing` is still decided over every active
+ * benefit, restricted or not, so it never claims "no benefit" while one exists (truthful, and it names no record).
+ */
+export async function buildMissingLinks(tx: Tx, principal: Principal, transformationId: string): Promise<MissingLinks> {
   const entry = await loadModularEntryFacts(tx, transformationId);
   if (entry === null) throw problems.notFound();
-  const facts = await loadMissingLinkFacts(tx, transformationId);
+  const all = await loadMissingLinkFacts(tx, transformationId);
+  const hidden = await restrictedBenefitIds(
+    tx,
+    principal,
+    all.benefits.map((b) => b.id),
+  );
+  const facts =
+    hidden.size === 0
+      ? all
+      : {
+          ...all,
+          benefits: all.benefits.map((b) => (hidden.has(b.id) ? { ...b, hasUpstream: true, label: "" } : b)),
+        };
   const inherited = await loadInheritedApprovalFacts(tx, transformationId);
   const instances = await tx
     .selectFrom("gate_instance")
@@ -374,6 +393,18 @@ async function withdrawInheritedRecord(
 
 // ------------------------------------------------------------------------------------------------ routes
 
+/**
+ * T-DG6-BE-Z10B (F-DG6-420; D-218): an inherited record whose evidence item the reader is not admitted to shows
+ * `evidenceId: null` and `includesRestrictedRecords: true` (the record itself is open: its label, kind and source).
+ */
+async function shownInherited(
+  db: DbOrTx,
+  principal: Principal,
+  items: readonly InheritedRecord[],
+): Promise<InheritedRecord[]> {
+  return hideRestrictedRefs(db, principal, "evidence", items, "evidenceId");
+}
+
 /** Registers this file's routes and returns them as "METHOD /path". */
 export function registerModularRoutes(app: FastifyInstance, { db }: ModuleDeps): string[] {
   const read = { access: { permission: "transformation.read" as const } };
@@ -382,7 +413,8 @@ export function registerModularRoutes(app: FastifyInstance, { db }: ModuleDeps):
   app.get(MISSING, { config: read }, async (request): Promise<MissingLinks> => {
     const { transformationId } = parse(tParams, request.params, "params");
     await requireTransformationRead(db, principalOf(request), transformationId);
-    return readOnly(db, (tx) => buildMissingLinks(tx, transformationId));
+    const principal = principalOf(request);
+    return readOnly(db, (tx) => buildMissingLinks(tx, principal, transformationId));
   });
 
   app.get(RECORDS, { config: read }, async (request) => {
@@ -412,7 +444,7 @@ export function registerModularRoutes(app: FastifyInstance, { db }: ModuleDeps):
             (r) => r.createdAt > String(after[0]) || (r.createdAt === String(after[0]) && r.id > String(after[1])),
           );
     const page = paginate(rest.slice(0, query.limit + 1), query.limit, (r) => [r.createdAt, r.id], hash);
-    return { items: page.items, nextCursor: page.nextCursor };
+    return { items: await shownInherited(db, principalOf(request), page.items), nextCursor: page.nextCursor };
   });
 
   // T-DG4-BE-R3 (ADR-0038 amendment B3): one inherited record, active or withdrawn, so createInheritedRecord's
@@ -430,7 +462,8 @@ export function registerModularRoutes(app: FastifyInstance, { db }: ModuleDeps):
         .executeTakeFirst(),
     );
     if (!row) throw problems.notFound();
-    return sendVersioned(reply, 200, toInheritedRecord(row));
+    const [shown] = await shownInherited(db, principalOf(request), [toInheritedRecord(row)]);
+    return sendVersioned(reply, 200, shown!);
   });
 
   app.post(RECORDS, { config: write }, async (request, reply) => {
@@ -440,7 +473,7 @@ export function registerModularRoutes(app: FastifyInstance, { db }: ModuleDeps):
       const body = parseBody(inheritedRecordCreate, request.body);
       return maybeIdempotent(tx, request, ctx.userId, body, async () => ({
         status: 201,
-        body: await createInheritedRecord(ctx, body),
+        body: (await shownInherited(tx, ctx.principal, [await createInheritedRecord(ctx, body)]))[0]!,
       }));
     });
     return sendCreated(request, reply, result, `/api/v1/transformations/${transformationId}/inherited-records`);
@@ -448,9 +481,10 @@ export function registerModularRoutes(app: FastifyInstance, { db }: ModuleDeps):
 
   app.post(RECORD_WITHDRAW, { config: write }, async (request, reply) => {
     const { transformationId, inheritedRecordId } = parse(wParams, request.params, "params");
-    const body = await db
-      .transaction()
-      .execute((tx) => withdrawInheritedRecord(tx, request, transformationId, inheritedRecordId));
+    const body = await db.transaction().execute(async (tx) => {
+      const r = await withdrawInheritedRecord(tx, request, transformationId, inheritedRecordId);
+      return (await shownInherited(tx, principalOf(request), [r]))[0]!;
+    });
     return sendVersioned(reply, 200, body);
   });
 

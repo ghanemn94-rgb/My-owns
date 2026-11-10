@@ -38,7 +38,15 @@ import type { FastifyInstance } from "fastify";
 import type { Selectable } from "kysely";
 import type { RevisionProposalTable } from "@mth/db";
 import { v7 as uuidv7 } from "uuid";
-import { grantApplies, loadGrants, principalOf, scopeFilter, targetFor, type ResolvedTarget } from "../access/index.ts";
+import {
+  grantApplies,
+  loadGrants,
+  principalOf,
+  redactRestrictedIds,
+  scopeFilter,
+  targetFor,
+  type ResolvedTarget,
+} from "../access/index.ts";
 import { record, type AuditContext } from "../audit/index.ts";
 import {
   cursorSchema,
@@ -516,7 +524,19 @@ export function registerRevisionProposalRoutes(app: FastifyInstance, { db }: Mod
       .limit(query.limit + 1)
       .execute();
     const pageRows = paginate(rows, query.limit, (r) => [r.id], hash);
-    return { items: pageRows.items.map(toRevisionProposal), nextCursor: pageRows.nextCursor };
+    // T-DG6-BE-Z12 (F-DG6-480; D-218): a formula revision's impact names each affected benefit by id; an entry naming
+    // a benefit the reader is not admitted to is dropped from the shown impact (its counts are unchanged, ADR-0051 §2
+    // "Totals and rollups"), and the proposal is marked. The stored impact and its hash are unchanged.
+    const items: RevisionProposal[] = [];
+    for (const row of pageRows.items) {
+      const shown = toRevisionProposal(row);
+      const r = await redactRestrictedIds(db, principal, {
+        impact: shown.impact,
+        validationReport: shown.validationReport,
+      });
+      items.push(r.restricted ? { ...shown, ...r.value, includesRestrictedRecords: true as const } : shown);
+    }
+    return { items, nextCursor: pageRows.nextCursor };
   });
 
   return [`GET ${REVISION_PROPOSALS}`];

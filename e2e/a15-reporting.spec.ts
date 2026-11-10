@@ -86,6 +86,8 @@ const opened: Api[] = [];
 test.describe.configure({ mode: "serial" });
 
 test.beforeAll(async ({ playwright, baseURL }, info) => {
+  // Budget measured (F-DG6-144 sweep, T-DG6-FE-Z1B): in the DG6 QA round-2 full runs and T-DG6-FE-Z1's run1 (under load),
+  // the hook is timed inside the test it precedes; the slowest test after it in this file took 14.6 s; the budget is at least 2x that. Table: docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt.
   test.setTimeout(120_000);
   const lang = projectLang(info.project.name);
   const base = baseURL!;
@@ -142,6 +144,8 @@ test.afterAll(async () => {
 test("A15: the lead generates the risk-filtered RAID register in the page language; the snapshot holds exactly the selected records; the export is recorded", async ({
   page,
 }, info) => {
+  // Budget measured (F-DG6-144 sweep, T-DG6-FE-Z1B): in the DG6 QA round-2 full runs and T-DG6-FE-Z1's run1 (under load),
+  // this test's worst loaded run took 14.6 s; the budget is at least 2x that. Table: docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt.
   test.setTimeout(120_000);
   const project = info.project.name;
   const lang = projectLang(project);
@@ -162,7 +166,7 @@ test("A15: the lead generates the risk-filtered RAID register in the page langua
   await expect(page.getByRole("heading", { level: 1, name: ui.reports.title })).toBeVisible();
 
   // The twelve outputs are offered by their labels in the page language (never the other language's).
-  // The "Generate a report" section (the snapshot list below has its own "Output" filter).
+  // The "Generate a report" section (the snapshot list below has its own "Filter by output" select).
   const gen = page.locator("section").filter({ has: page.getByRole("heading", { name: ui.generate.title }) });
   const output = gen.getByLabel(new RegExp(`^${esc(ui.generate.output)}`));
   await expect(output).toBeVisible();

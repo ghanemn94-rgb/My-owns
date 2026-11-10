@@ -1,0 +1,37 @@
+# cmd: QA_PG_PORT=23851 MTH_PORT_POOL=23852-23859 tests/qa/support/with-pg.sh npx vitest run --project integration apps/api/test/integration/hardening/integrity-sweep.test.ts apps/api/test/integration/access/sensitive-reads.test.ts apps/api/test/integration/access/sensitive-reads-ab-transcript.test.ts apps/api/test/integration/evidence.test.ts apps/api/test/integration/evidence/evidence-register.test.ts
+# start Tue Oct 27 03:32:04 UTC 2026
+port-policy: PostgreSQL listening on port 23851 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.4 /home/user/wt/dg6-be-f2
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvq4q8uj_ccdd56c8 (server_encoding UTF8); applied 102 migrations to a fresh database
+stdout | apps/api/test/integration/hardening/integrity-sweep.test.ts > REQ-S16-023 part 1: finalized records cannot be destructively deleted (ADR-0052 §9.1) > its evidence: removing the evidence link returns 409 evidence.finalized and changes nothing
+[integrity-sweep] removeEvidenceLink on approved-G1 evidence: 409 evidence.finalized
+
+stdout | apps/api/test/integration/hardening/integrity-sweep.test.ts > REQ-S16-023 part 1: finalized records cannot be destructively deleted (ADR-0052 §9.1) > its evidence: archiving the evidence item returns 409 evidence.finalized and changes nothing
+[integrity-sweep] archiveEvidence on approved-G1 evidence: 409 evidence.finalized
+
+stdout | apps/api/test/integration/hardening/integrity-sweep.test.ts > REQ-S16-023 part 1: finalized records cannot be destructively deleted (ADR-0052 §9.1) > every DELETE operation of the contract is listed, and no finalized-record table grants DELETE to mth_app
+[integrity-sweep] tables with DELETE granted to mth_app: idempotency_record, oidc_login_state, search_document, session, user_identity
+
+stdout | apps/api/test/integration/hardening/integrity-sweep.test.ts > REQ-S16-023 part 4: required ownership and canonical references on every P6 table (ADR-0052 §9.4) > every P6 table exists, and every uuid *_id column is a foreign key, a trigger-guarded record reference, or a history copy of one
+[integrity-sweep] P6 tables: 32; *_id columns: 84; foreign-key columns: 128; record_ref-guarded tables: record_sensitivity, sensitive_record_grant; unguarded: deliverable_external_change_event.evidence_id, deliverable_external_change_event.outbound_write_id, import_row_commit.target_record_id, record_sensitivity_change.record_id
+[integrity-sweep] P6 tables with a nullable organization_id: operational_exception, service_identity
+
+ ✓ |integration| apps/api/test/integration/hardening/integrity-sweep.test.ts (23 tests) 3831ms
+   ✓ REQ-S16-023 part 1: finalized records cannot be destructively deleted (ADR-0052 §9.1) > evidence cited only by a submission without an approved decision (rejected) is archived and unlinked normally  676ms
+ ✓ |integration| apps/api/test/integration/access/sensitive-reads.test.ts (15 tests) 1671ms
+ ✓ |integration| apps/api/test/integration/evidence/evidence-register.test.ts (9 tests) 1133ms
+ ✓ |integration| apps/api/test/integration/evidence.test.ts (6 tests) 953ms
+ ✓ |integration| apps/api/test/integration/access/sensitive-reads-ab-transcript.test.ts (5 tests) 929ms
+
+ Test Files  5 passed (5)
+      Tests  58 passed (58)
+   Start at  03:32:06
+   Duration  28.46s (transform 4.60s, setup 0ms, collect 16.54s, tests 8.52s, environment 0ms, prepare 73ms)
+
+exit=0 end Tue Oct 27 03:32:34 UTC 2026

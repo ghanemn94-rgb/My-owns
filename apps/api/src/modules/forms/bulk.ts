@@ -39,7 +39,14 @@ import { HttpProblem, parse, parseBody, problems, type ModuleDeps } from "../pla
 import { registerUpdaterOf, type RegisterUpdater } from "../transformations/index.ts";
 import { currentRecordVersion } from "./drafts.ts";
 import { extensionDefinitions, mapFormDbError, resolveForm, type ResolvedFormField } from "./provider.ts";
-import { assertWorking, formRefusals, loadRecordType, recordExists, requireRecordWrite } from "./record-types.ts";
+import {
+  assertWorking,
+  formRefusals,
+  loadRecordType,
+  recordVisible,
+  requireRecordVisible,
+  requireRecordWrite,
+} from "./record-types.ts";
 
 export const FORM_BULK = "/api/v1/transformations/:transformationId/form-records/:recordType/bulk";
 const JSON_BODY = ["application/json"] as const;
@@ -121,6 +128,7 @@ function fieldProblem(index: number, field: string, code: FieldValueCode) {
  */
 async function deferredProblems(
   tx: Tx,
+  request: FastifyRequest,
   index: number,
   checks: readonly DeferredCheck[],
   transformationId: string,
@@ -135,7 +143,8 @@ async function deferredProblems(
         .selectAll()
         .where("code", "=", c.targetRecordType)
         .executeTakeFirst();
-      if (target === undefined || !(await recordExists(tx, target, transformationId, c.id)))
+      // A sensitive record the caller may not open is an unknown reference (ADR-0051 §2; F-DG6-123).
+      if (target === undefined || !(await recordVisible(tx, request, target, transformationId, c.id)))
         errors.push(fieldProblem(index, c.field, "validation.reference"));
     } else if (c.kind === "attachment") {
       const found = await tx
@@ -235,6 +244,8 @@ async function bulkUpdate(tx: Tx, request: FastifyRequest, p: z.infer<typeof par
   for (const [index, item] of byId) {
     const current = await currentRecordVersion(tx, rt, p.transformationId, item.recordId, true);
     if (current === null) throw problems.notFound();
+    // A sensitive record the caller may not open: 404 before its version is disclosed (ADR-0051 §2; F-DG6-123).
+    await requireRecordVisible(tx, request, rt, p.transformationId, item.recordId);
     if (current !== item.version) stale.push({ index, recordId: item.recordId, currentVersion: current });
   }
   if (stale.length > 0) throw bulkRefusals.conflict(stale.sort((a, b) => a.index - b.index));
@@ -265,6 +276,7 @@ async function bulkUpdate(tx: Tx, request: FastifyRequest, p: z.infer<typeof par
         organizationId: t.organization_id,
         userId: actor.userId,
         audit,
+        request,
       });
     result.push({ recordId: item.recordId, version });
   }
@@ -285,6 +297,7 @@ async function writeCustomValues(
     organizationId: string;
     userId: string;
     audit: ReturnType<typeof auditContextOf>;
+    request: FastifyRequest;
   },
 ): Promise<void> {
   const current = await tx
@@ -312,7 +325,7 @@ async function writeCustomValues(
       ? formRefusals.customFieldRequired()
       : formRefusals.customFieldUnknown();
   }
-  const errors = await deferredProblems(tx, index, v.checks, c.transformationId, c.organizationId);
+  const errors = await deferredProblems(tx, c.request, index, v.checks, c.transformationId, c.organizationId);
   if (errors.length > 0) throw problems.validation(errors);
   const next = Object.fromEntries(Object.entries(v.values).filter(([, x]) => x !== null));
   let row: FormCustomValueRow;

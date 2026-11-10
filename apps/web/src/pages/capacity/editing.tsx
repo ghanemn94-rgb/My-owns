@@ -49,8 +49,7 @@ export type CapacityRow = {
 export function useResourceRoles(tid: string) {
   return useQuery({
     queryKey: [...p3Keys.capacity(tid), "roles"] as const,
-    queryFn: async () =>
-      (await api.get<{ items: ResourceRole[] }>(`/api/v1/transformations/${tid}/resource-roles`)).items,
+    queryFn: () => fetchAllPages<ResourceRole>(`/api/v1/transformations/${tid}/resource-roles`),
     enabled: Boolean(tid),
     retry: shouldRetry,
   });
@@ -222,8 +221,8 @@ export function RolesSection({ onConflict }: { onConflict: () => void }) {
           record={editing.r}
           updateUrl={(r) => `/api/v1/transformations/${tid}/resource-roles/${r.id}`}
           loadLatest={async (r) => {
-            const all = await api.get<{ items: ResourceRole[] }>(`/api/v1/transformations/${tid}/resource-roles`);
-            const latest = all.items.find((x) => x.id === r.id);
+            const all = await fetchAllPages<ResourceRole>(`/api/v1/transformations/${tid}/resource-roles`);
+            const latest = all.find((x) => x.id === r.id);
             if (!latest) throw new Error("role not found");
             return latest;
           }}

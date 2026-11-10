@@ -21,6 +21,7 @@ import { useP4Refresh } from "../../api/p4.ts";
 import { useLocale } from "../../app/locale.ts";
 import { useMe } from "../../auth/session.tsx";
 import { Icon } from "../../components/Icon.tsx";
+import { RestrictedRecordsLabel } from "../../components/sensitivity/RestrictedRecordsLabel.tsx";
 import { usePeople } from "../../components/People.tsx";
 import { RegisterTable, type RegisterColumn } from "../../components/RegisterTable.tsx";
 import { Section } from "../../components/Section.tsx";
@@ -135,8 +136,10 @@ function Groups() {
     {
       id: "members",
       header: t("benefitsP4.groups.members"),
+      // T-DG6-BE-Z10 (F-DG6-420; D-218): a member the reader is not admitted to is not in memberBenefitIds; the group
+      // then carries includesRestrictedRecords and shows the neutral label (never a link that ends in 404).
       cell: (g) =>
-        g.memberBenefitIds.length === 0 ? (
+        g.memberBenefitIds.length === 0 && g.includesRestrictedRecords !== true ? (
           <span className="muted">{t("benefitsP4.groups.noMembers")}</span>
         ) : (
           <ul className="plain-list">
@@ -145,6 +148,11 @@ function Groups() {
                 <BenefitRef tid={ws.tid} id={id} label={index.label(id)} />
               </li>
             ))}
+            {g.includesRestrictedRecords === true ? (
+              <li data-restricted-member="true">
+                <RestrictedRecordsLabel value scope="item" />
+              </li>
+            ) : null}
           </ul>
         ),
     },
@@ -155,6 +163,11 @@ function Groups() {
         g.countedBenefitId ? (
           <span data-counted-member={g.countedBenefitId}>
             <BenefitRef tid={ws.tid} id={g.countedBenefitId} label={index.label(g.countedBenefitId)} />
+          </span>
+        ) : g.countedBenefitRestricted === true ? (
+          // A member is counted, but the reader is not admitted to it (D-218): the label, never "none counted".
+          <span data-counted-member="restricted">
+            <RestrictedRecordsLabel value scope="item" />
           </span>
         ) : (
           <span className="status-chip status-chip--unknown status-chip--wrap" data-counted-member="none">
@@ -236,13 +249,21 @@ function Groups() {
           fields={[
             { name: "title", label: t("benefitsP4.field.title"), kind: "text", required: true, max: 300 },
             { name: "description", label: t("benefitsP4.field.description"), kind: "textarea", max: 4000 },
-            {
-              name: "countedBenefitId",
-              label: t("benefitsP4.groups.counted"),
-              kind: "select",
-              hint: t("benefitsP4.groups.countedHint"),
-              options: dialog.g.memberBenefitIds.map((id) => ({ value: id, label: index.label(id) ?? id.slice(-4) })),
-            },
+            // T-DG6-BE-Z10 (D-218): a restricted counted member cannot be seen, so it is not offered for change here.
+            ...(dialog.g.countedBenefitRestricted === true
+              ? []
+              : [
+                  {
+                    name: "countedBenefitId",
+                    label: t("benefitsP4.groups.counted"),
+                    kind: "select" as const,
+                    hint: t("benefitsP4.groups.countedHint"),
+                    options: dialog.g.memberBenefitIds.map((id) => ({
+                      value: id,
+                      label: index.label(id) ?? id.slice(-4),
+                    })),
+                  },
+                ]),
           ]}
           initial={{
             title: dialog.g.title,
@@ -260,7 +281,10 @@ function Groups() {
             if (textOf(v["title"]) !== g.title) body["title"] = textOf(v["title"]);
             if ((textOf(v["description"]) ?? null) !== g.description)
               body["description"] = textOf(v["description"]) ?? null;
-            if (((v["countedBenefitId"] as string) || null) !== g.countedBenefitId)
+            if (
+              g.countedBenefitRestricted !== true &&
+              ((v["countedBenefitId"] as string) || null) !== g.countedBenefitId
+            )
               body["countedBenefitId"] = (v["countedBenefitId"] as string) || null;
             return Object.keys(body).length === 0 ? { fieldErrors: { title: "validation.empty_patch" } } : body;
           }}

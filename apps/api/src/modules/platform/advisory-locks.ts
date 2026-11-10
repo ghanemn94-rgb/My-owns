@@ -120,6 +120,45 @@ export const ADVISORY_LOCK_CLASSES = {
   brandingPublish: 730270,
   /** The demo seed or reset of a demo deployment (demo CLI and worker; a SESSION lock on the maintenance database "postgres", because the reset drops and re-creates the demo database). One class-wide key: "demo". */
   demoReset: 730271,
+  // P6 block of T-DG6-ARCH-01 (730300-730304; p6-plan §4, ADR-0051 §6). 730302-730304 are RESERVED for this block:
+  // never allocated to another block, and listed here only once a resource uses it.
+  /** One sensitive record's flag and explicit grants (access sensitivity: mark/unmark, grant, revoke; at most one active grant per record and grantee is also held by the unique index sensitive_record_grant_one_active_key; taken by the 0098 triggers record_sensitivity_guard and sensitive_record_grant_guard). Key: "<recordType>:<recordId>". */
+  sensitiveRecordGrant: 730300,
+  /** Issuing the deep-link token of one inbox notification (tasks deep links: lazy issue for a notification written without one; set-once is also held by the 0098 trigger inbox_notification_deep_link_guard, which takes the same lock, and the unique index inbox_notification_link_token_key). Key: "<notificationId>". */
+  deepLinkIssue: 730301,
+  // P6 block of T-DG6-ARCH-02 (730305-730309; p6-plan §4, ADR-0053 §8, ADR-0054 §6). 730308-730309 are RESERVED for this
+  // block: never allocated to another block, and listed here only once a resource uses it.
+  /** Opening or recurring the operational exception of one source and failure class (operations: the worker failure hook, the connector run, the freshness scan and the heartbeat watch; one active row per key is also held by the unique index operational_exception_one_active_key). Key: "<organizationId or 'platform'>:<dedupKey>". */
+  operationalExceptionUpsert: 730305,
+  /** One channel delivery of one notification (tasks channels: the fan-out handler's claim before a send and the state change after it; once per notification and channel is also held by notification_delivery_once_key). Key: "<notificationId>:<channelKind>". */
+  channelDelivery: 730306,
+  /** The evidence-storage setting and its connection test (evidence storage: a setting change and a test never interleave). One class-wide key: "storage". */
+  storageSetting: 730307,
+  // P6 block of T-DG6-ARCH-03 (730310-730317; p6-plan §4, ADR-0055 §8, ADR-0056 §8). 730315-730317 are RESERVED for this
+  // block: never allocated to another block, and listed here only once a resource uses it.
+  /** One connector's runs (integrations: queueing a run, a retry or a test, and the worker's start and finish of a run; one active run per connector is also held by the unique index integration_run_one_active, and one run per idempotency key by integration_run_idempotency_key). Key: "<connectorId>". */
+  connectorRun: 730310,
+  /** One import batch's staging end, commit and cancel (integrations imports: the commit through the ImportTargetRegistry never interleaves with a cancel or a second commit; the counts are re-checked by the 0105 trigger import_batch_guard). Key: "<importBatchId>". */
+  importCommit: 730311,
+  /** One webhook delivery (integrations webhooks: the receipt and its staged batch; one receipt per endpoint and delivery id is also held by webhook_receipt_delivery_key). Key: "<webhookEndpointId>:<deliveryId>". */
+  webhookReceipt: 730312,
+  /** One outbound write (integrations outbound: create, dispatch result and confirmation re-check never interleave; one write per connector and idempotency key is also held by outbound_write_idempotency_key). Key: "<connectorId>:<idempotencyKey>". */
+  outboundWrite: 730313,
+  /** One deliverable's external-change flag and confirmation (portfolio: flag, withdraw and confirm by evidence or connector result never interleave; one row per deliverable is also held by deliverable_external_change_deliverable_key). Key: "<deliverableId>". */
+  deliverableConfirmation: 730314,
+  // P6 block of T-DG6-ARCH-04 (730318-730322; p6-plan §4, ADR-0057 §10). 730320-730322 are RESERVED for this block:
+  // never allocated to another block, and listed here only once a resource uses it (730320 "draft upsert" stays
+  // unallocated: the P5 unique index form_draft_open_record_key already serializes drafts and P6 adds no draft write).
+  /** One indexed record type's full reindex and incremental feed run (search worker handlers: a reindex and a feed batch of the same record type never interleave; the consumed sequence never goes back except to 0 at a reindex start, also held by the 0108 trigger search_index_state_guard). Key: "<recordType>". */
+  searchReindex: 730318,
+  /** One saved view's share and unshare (search saved views: the share decision re-checks saved_view.share at commit time and never interleaves with the owner's edit or delete; the shared shape is also held by saved_view_shared_shape and the 0108 trigger saved_view_guard). Key: "<savedViewId>". */
+  savedViewShare: 730319,
+  // P6 block of T-DG6-ARCH-05 (730323-730325; p6-plan §4, ADR-0059 §10). 730324-730325 are RESERVED for this block:
+  // never allocated to another block, and listed here only once a resource uses it.
+  /** The assistant setting (assistant settings: a put, an enable and a disable never interleave, and the enable re-checks assistant.configure and the completeness of the setting at commit time; one row is also held by assistant_setting_singleton_key and the locked-while-enabled rule by the 0111 trigger assistant_setting_guard). One class-wide key: "assistant". */
+  assistantSetting: 730323,
+  // P6 block of T-DG6-ARCH-06 (730326-730327; p6-plan §4, ADR-0061 §10). Both are RESERVED for this block and not
+  // allocated: the branding contrast report is written by the publish transaction under brandingPublish (730270).
 } as const;
 
 export type AdvisoryLockClassName = keyof typeof ADVISORY_LOCK_CLASSES;

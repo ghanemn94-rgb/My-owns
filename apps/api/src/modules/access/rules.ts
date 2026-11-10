@@ -49,6 +49,10 @@ export const STRUCTURAL_PERMISSIONS: ReadonlySet<Permission> = new Set<Permissio
   "role.read",
   "access.read",
   "access.assign",
+  // P6 slice E (T-DG6-BE-B; ADR-0051 §7): an ADM_ACCESS organization-level assignment covers the organization's
+  // transformations for these two codes only; it never gives transformation.read (titles stay redacted, §2).
+  "sensitive_record.grant",
+  "sensitive_record.read",
 ]);
 
 /** Permission -> category as a Map: module source looks up runtime keys only through a Map (F-DG1-124). */

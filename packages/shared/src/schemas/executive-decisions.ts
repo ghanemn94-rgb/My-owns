@@ -161,6 +161,13 @@ export const executiveDecision = z.strictObject({
   createdBy: uuid,
   updatedAt: timestamp,
   updatedBy: uuid,
+  /**
+   * T-DG6-BE-Z10 (F-DG6-420; D-218): present (true) when the blocker is a record the reader is not admitted to;
+   * `blockerRecordId` is then null (its id is never returned).
+   */
+  blockerRecordRestricted: z.literal(true).optional(),
+  /** True when the blocker was omitted for the reader (label access.includesRestrictedRecords). */
+  includesRestrictedRecords: z.literal(true).optional(),
 });
 export type ExecutiveDecision = z.infer<typeof executiveDecision>;
 export const executiveDecisionPage = z.strictObject({

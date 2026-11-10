@@ -57,7 +57,9 @@ import {
   principalOf,
   requireTransformationRead,
   resolveParty,
+  restrictedIdsOf,
   routingRefusals,
+  type Principal,
   type ResolvedTarget,
 } from "../access/index.ts";
 import { record } from "../audit/index.ts";
@@ -184,7 +186,7 @@ export const actualRefusals = {
 } as const;
 
 /** The fields a value of each nature needs (the {expectedFields} of kpi_actual.value_shape). */
-const EXPECTED_FIELDS: ReadonlyMap<string, string> = new Map([
+export const EXPECTED_FIELDS: ReadonlyMap<string, string> = new Map([
   ["flow", "a value"],
   ["stock", "a value"],
   ["ratio", "a numerator and a denominator"],
@@ -195,8 +197,16 @@ const EXPECTED_FIELDS: ReadonlyMap<string, string> = new Map([
 
 const dec = (v: string | null): string | null => (v === null ? null : canonicalDecimal(v));
 
-/** The slots with their values, evidence links and reviews (each in value-number order). */
-export async function presentActuals(db: DbOrTx, rows: readonly KpiActualRow[]): Promise<KpiActual[]> {
+/**
+ * The slots with their values, evidence links and reviews (each in value-number order).
+ * T-DG6-BE-Z10 (F-DG6-420; D-218; ADR-0051 §2): a value's `evidenceIds` omit an evidence item the reader is not
+ * admitted to, and the slot then carries `includesRestrictedRecords: true`.
+ */
+export async function presentActuals(
+  db: DbOrTx,
+  principal: Principal,
+  rows: readonly KpiActualRow[],
+): Promise<KpiActual[]> {
   if (rows.length === 0) return [];
   const ids = rows.map((r) => r.id);
   const [values, evidence, reviews] = await Promise.all([
@@ -210,12 +220,24 @@ export async function presentActuals(db: DbOrTx, rows: readonly KpiActualRow[]):
       .execute(),
     db.selectFrom("kpi_actual_review").selectAll().where("kpi_actual_id", "in", ids).orderBy("value_no").execute(),
   ]);
+  const hiddenEvidence = await restrictedIdsOf(
+    db,
+    principal,
+    "evidence",
+    evidence.map((e) => e.evidence_id),
+  );
   const evidenceOf = new Map<string, string[]>();
+  const restrictedSlots = new Set<string>();
   for (const e of evidence) {
+    if (hiddenEvidence.has(e.evidence_id)) {
+      restrictedSlots.add(e.kpi_actual_id);
+      continue;
+    }
     const key = `${e.kpi_actual_id}:${e.value_no}`;
     evidenceOf.set(key, [...(evidenceOf.get(key) ?? []), e.evidence_id]);
   }
   return rows.map((r) => ({
+    ...(restrictedSlots.has(r.id) ? { includesRestrictedRecords: true as const } : {}),
     id: r.id,
     transformationId: r.transformation_id,
     kpiDefinitionId: r.kpi_definition_id,
@@ -268,6 +290,75 @@ export async function presentActuals(db: DbOrTx, rows: readonly KpiActualRow[]):
     createdBy: r.created_by,
     updatedAt: iso(r.updated_at),
   }));
+}
+
+// ------------------------------------------------------------------------------------------------ import lineage (read)
+
+/**
+ * Where a value version came from when a controlled import created it (ADR-0056 §6 "The KPI actual's detail shows
+ * 'Imported from {file or source} row {n}'"; REQ-S17-002; T-DG6-KBE-A, read lines only). `source` is the file name of
+ * an upload, else the source kind (`webhook`, `connector`); the text is rendered from i18n at render time with these
+ * params, never stored as a sentence. A value entered by form has no entry.
+ */
+export interface KpiActualImportLineage {
+  readonly kpiActualId: string;
+  readonly valueNo: number;
+  readonly importBatchId: string;
+  readonly importRowId: string;
+  readonly sourceKind: "csv_upload" | "xlsx_upload" | "webhook" | "connector";
+  readonly source: string;
+  readonly rowNumber: number;
+  readonly sourceRecordId: string | null;
+  readonly contentSha256: string | null;
+  readonly committedAt: string;
+}
+
+/** The import lineage of the given slots, keyed `<kpiActualId>:<valueNo>` (read-only; the transformation's rows only). */
+export async function importLineageOf(
+  db: DbOrTx,
+  transformationId: string,
+  kpiActualIds: readonly string[],
+): Promise<Map<string, KpiActualImportLineage>> {
+  const out = new Map<string, KpiActualImportLineage>();
+  if (kpiActualIds.length === 0) return out;
+  const rows = await db
+    .selectFrom("import_row_commit as c")
+    .innerJoin("import_row as r", "r.id", "c.import_row_id")
+    .innerJoin("import_batch as b", "b.id", "c.import_batch_id")
+    .select([
+      "c.target_record_id",
+      "c.target_value_no",
+      "c.import_batch_id",
+      "c.import_row_id",
+      "c.committed_at",
+      "r.row_number",
+      "r.source_record_id",
+      "b.source_kind",
+      "b.file_name",
+      "b.content_sha256",
+    ])
+    .where("c.transformation_id", "=", transformationId)
+    .where("c.target_record_type", "=", "kpi_actual")
+    .where("c.target_record_id", "in", [...kpiActualIds])
+    .orderBy("c.committed_at")
+    .execute();
+  for (const r of rows) {
+    const valueNo = r.target_value_no ?? 1;
+    const sourceKind = r.source_kind as KpiActualImportLineage["sourceKind"];
+    out.set(`${r.target_record_id}:${valueNo}`, {
+      kpiActualId: r.target_record_id,
+      valueNo,
+      importBatchId: r.import_batch_id,
+      importRowId: r.import_row_id,
+      sourceKind,
+      source: r.file_name ?? sourceKind,
+      rowNumber: r.row_number,
+      sourceRecordId: r.source_record_id,
+      contentSha256: r.content_sha256,
+      committedAt: iso(r.committed_at),
+    });
+  }
+  return out;
 }
 
 // ------------------------------------------------------------------------------------------------ reads and helpers
@@ -340,10 +431,17 @@ export async function reviewersOf(
   return out;
 }
 
-/** The record-level submit rule: the KPI's owner or steward, or the assignee of its open kpi_update_due item. */
-async function assertMaySubmit(tx: Tx, def: KpiDefinitionRow, userId: string): Promise<void> {
-  if (def.owner_user_id === userId || def.steward_user_id === userId) return;
-  const assigned = await tx
+/**
+ * The record-level submit rule, read-only: the KPI's owner or steward, or the assignee of its open kpi_update_due item.
+ * Also the import target's `import.row.not_kpi_updater` check (T-DG6-KBE-A; ADR-0056 §4).
+ */
+export async function maySubmitActuals(
+  db: DbOrTx,
+  def: Pick<KpiDefinitionRow, "id" | "owner_user_id" | "steward_user_id">,
+  userId: string,
+): Promise<boolean> {
+  if (def.owner_user_id === userId || def.steward_user_id === userId) return true;
+  const assigned = await db
     .selectFrom("work_item")
     .select("id")
     .where("kind", "=", "kpi_update_due")
@@ -352,7 +450,11 @@ async function assertMaySubmit(tx: Tx, def: KpiDefinitionRow, userId: string): P
     .where("assignee_user_id", "=", userId)
     .where("status", "=", "open")
     .executeTakeFirst();
-  if (!assigned) throw actualRefusals.notOwner();
+  return assigned !== undefined;
+}
+
+async function assertMaySubmit(tx: Tx, def: KpiDefinitionRow, userId: string): Promise<void> {
+  if (!(await maySubmitActuals(tx, def, userId))) throw actualRefusals.notOwner();
 }
 
 interface ValueColumns {
@@ -435,7 +537,17 @@ function checkPeriod(def: KpiDefinitionRow, period: ReportingPeriodRow): void {
 const linkOf = (transformationId: string, kpiDefinitionId: string, actualId: string) =>
   `/transformations/${transformationId}/kpis/${kpiDefinitionId}/actuals/${actualId}`;
 
-const actor = (ctx: WriteContext) =>
+/**
+ * The part of a write context the first-value submission uses (T-DG6-KBE-A): a route passes its WriteContext; the
+ * controlled-import target (import-target.ts, ADR-0056 §6) passes the commit transaction's context. No request object
+ * and no principal are read on this path; authorization is the caller's commit-time re-check.
+ */
+export type SubmissionContext = Pick<
+  WriteContext,
+  "tx" | "userId" | "audit" | "transformationId" | "organizationId" | "target"
+>;
+
+const actor = (ctx: SubmissionContext) =>
   ({ actorType: "user", actorUserId: ctx.userId, requestId: ctx.audit.requestId, source: "api" }) as const;
 
 /** Changes of the one audit event of a user action: the slot's status fields plus the value that was entered. */
@@ -477,7 +589,7 @@ interface EntryContext {
   readonly businessDate: string;
 }
 
-async function entryContext(ctx: WriteContext, kpiDefinitionId: string): Promise<EntryContext> {
+async function entryContext(ctx: SubmissionContext, kpiDefinitionId: string): Promise<EntryContext> {
   const def = await ctx.tx
     .selectFrom("kpi_definition")
     .selectAll()
@@ -497,7 +609,7 @@ const targetStatus = (version: KpiVersionRow, action: "save_draft" | "submit") =
   action === "save_draft" ? "draft" : version.submission_route === "direct_accept" ? "accepted" : "submitted";
 
 /** Reviewer ids for a submission on the review route (422 when unmapped or nobody can decide; nothing written). */
-async function reviewersForSubmission(ctx: WriteContext, version: KpiVersionRow): Promise<string[]> {
+async function reviewersForSubmission(ctx: SubmissionContext, version: KpiVersionRow): Promise<string[]> {
   const party = version.reviewer_party_code!;
   const reviewers = await reviewersOf(ctx.tx, ctx.transformationId, party, ctx.target);
   if (reviewers === "unmapped") throw routingRefusals.roleUnmapped(await partyLabel(ctx.tx, party));
@@ -507,7 +619,7 @@ async function reviewersForSubmission(ctx: WriteContext, version: KpiVersionRow)
 }
 
 async function insertValue(
-  ctx: WriteContext,
+  ctx: SubmissionContext,
   slot: KpiActualRow,
   e: EntryContext,
   cols: ValueColumns,
@@ -545,7 +657,7 @@ async function insertValue(
 }
 
 /** After the slot reached `status`: the review row and outbox of an acceptance, or the review tasks of a submission. */
-async function afterStatus(ctx: WriteContext, slot: KpiActualRow, e: EntryContext, reviewers: readonly string[]) {
+async function afterStatus(ctx: SubmissionContext, slot: KpiActualRow, e: EntryContext, reviewers: readonly string[]) {
   if (slot.status === "accepted") {
     await insertReview(ctx.tx, slot, "direct_accept", null, {
       userId: ctx.userId,
@@ -578,8 +690,13 @@ const actionOf = (status: string) =>
       ? "kpi_actual.submit"
       : "kpi_actual.save_draft";
 
-async function submitFirstValue(
-  ctx: WriteContext,
+/**
+ * The DG4 routine update (submitKpiActual): the first value of a slot, with every DG4 rule, route, review task, audit
+ * event and (direct-accept route) outbox event. Exported for the controlled-import target (T-DG6-KBE-A; ADR-0056 §6
+ * "the same function submitKpiActual calls"); its behaviour is unchanged.
+ */
+export async function submitFirstValue(
+  ctx: SubmissionContext,
   kpiDefinitionId: string,
   b: z.output<typeof kpiActualEntry>,
 ): Promise<KpiActualRow> {
@@ -657,7 +774,7 @@ async function submitFirstValue(
 }
 
 async function auditSlot(
-  ctx: WriteContext,
+  ctx: SubmissionContext,
   action: string,
   before: KpiActualRow | null,
   after: KpiActualRow,
@@ -932,8 +1049,8 @@ async function rejectValue(ctx: WriteContext, id: string, expected: number, reas
 
 // ------------------------------------------------------------------------------------------------ routes
 
-async function submission(db: DbOrTx, row: KpiActualRow): Promise<KpiActualSubmission> {
-  const [actual] = await presentActuals(db, [row]);
+async function submission(db: DbOrTx, principal: Principal, row: KpiActualRow): Promise<KpiActualSubmission> {
+  const [actual] = await presentActuals(db, principal, [row]);
   const { downstream, financeReview } = await downstreamOf(db, row.transformation_id, row.kpi_definition_id);
   return { actual: actual!, reviewPending: row.status === "submitted", downstream, financeReview };
 }
@@ -987,7 +1104,7 @@ export function registerKpiActualRoutes(app: FastifyInstance, deps: ModuleDeps):
       .limit(query.limit + 1)
       .execute();
     const page = paginate(rows, query.limit, (r) => [r.period_end, r.id], hash);
-    return { items: await presentActuals(db, page.items), nextCursor: page.nextCursor };
+    return { items: await presentActuals(db, principalOf(request), page.items), nextCursor: page.nextCursor };
   });
 
   app.post(DEF_ACTUALS, { config: write(SUBMIT) }, async (request, reply) => {
@@ -1000,7 +1117,7 @@ export function registerKpiActualRoutes(app: FastifyInstance, deps: ModuleDeps):
     return sendSubmission(
       reply,
       201,
-      await submission(db, row),
+      await submission(db, principalOf(request), row),
       `/api/v1/transformations/${transformationId}/kpi-actuals/${row.id}`,
     );
   });
@@ -1010,7 +1127,7 @@ export function registerKpiActualRoutes(app: FastifyInstance, deps: ModuleDeps):
     await requireTransformationRead(db, principalOf(request), transformationId);
     const row = await findSlot(db, transformationId, kpiActualId);
     if (!row) throw problems.notFound();
-    const [body] = await presentActuals(db, [row]);
+    const [body] = await presentActuals(db, principalOf(request), [row]);
     reply.header("ETag", `"${row.version}"`);
     return reply.code(200).send(body);
   });
@@ -1023,7 +1140,7 @@ export function registerKpiActualRoutes(app: FastifyInstance, deps: ModuleDeps):
       const body = parseBody(kpiActualValueEntry, request.body);
       return addValue(ctx, kpiActualId, expected, body);
     });
-    return sendSubmission(reply, 200, await submission(db, row));
+    return sendSubmission(reply, 200, await submission(db, principalOf(request), row));
   });
 
   app.post(`${ACTUAL_ITEM}/submit`, { config: write(SUBMIT, false) }, async (request, reply) => {
@@ -1033,7 +1150,7 @@ export function registerKpiActualRoutes(app: FastifyInstance, deps: ModuleDeps):
       const expected = requireIfMatch(request);
       return submitDraft(ctx, kpiActualId, expected);
     });
-    return sendSubmission(reply, 200, await submission(db, row));
+    return sendSubmission(reply, 200, await submission(db, principalOf(request), row));
   });
 
   for (const [suffix, decideFn] of [
@@ -1055,7 +1172,7 @@ export function registerKpiActualRoutes(app: FastifyInstance, deps: ModuleDeps):
         const expected = requireIfMatch(request);
         return decideFn(ctx, kpiActualId, expected, request);
       });
-      const [body] = await presentActuals(db, [row]);
+      const [body] = await presentActuals(db, principalOf(request), [row]);
       reply.header("ETag", `"${row.version}"`);
       return reply.code(200).send(body);
     });
@@ -1111,6 +1228,7 @@ export function registerKpiActualRoutes(app: FastifyInstance, deps: ModuleDeps):
     return {
       items: await presentActuals(
         db,
+        principalOf(request),
         page.items.map(({ sort_key: _k, ...r }) => r as KpiActualRow),
       ),
       nextCursor: page.nextCursor,

@@ -52,7 +52,9 @@ import {
   principalOf,
   refreshPrincipal,
   requireAction,
+  reachKey,
   requireTransformationRead,
+  restrictedRecordRefs,
   technicalAdminRefusal,
   type Principal,
   type ResolvedTarget,
@@ -352,9 +354,28 @@ export function toExecutiveDecision(
   };
 }
 
-/** The API shape of executive decision rows, with their options, escalation level and the overdue flag. */
-export async function toExecutiveDecisions(db: DbOrTx, rows: readonly DecisionRow[]): Promise<ExecutiveDecision[]> {
+/**
+ * The API shape of executive decision rows, with their options, escalation level and the overdue flag.
+ * T-DG6-BE-Z10 (F-DG6-420; D-218; ADR-0051 §2): an ask's blocker the reader is not admitted to (a sensitive record, or
+ * a child that carries its values, such as the variance case of a sensitive benefit) is the neutral marker
+ * `blockerRecordId: null`, `blockerRecordRestricted: true` (its type stays: no identifier), and the decision carries
+ * `includesRestrictedRecords: true`.
+ */
+export async function toExecutiveDecisions(
+  db: DbOrTx,
+  principal: Principal,
+  rows: readonly DecisionRow[],
+): Promise<ExecutiveDecision[]> {
   if (rows.length === 0) return [];
+  const blockerRef = (r: DecisionRow) =>
+    r.blocker_record_type === null || r.blocker_record_id === null
+      ? null
+      : { recordType: r.blocker_record_type, recordId: r.blocker_record_id };
+  const hiddenBlockers = await restrictedRecordRefs(
+    db,
+    principal,
+    rows.map(blockerRef).filter((x): x is { recordType: string; recordId: string } => x !== null),
+  );
   const ids = rows.map((r) => r.id);
   const options = await db.selectFrom("decision_option").selectAll().where("decision_id", "in", ids).execute();
   const levels = await db
@@ -364,14 +385,22 @@ export async function toExecutiveDecisions(db: DbOrTx, rows: readonly DecisionRo
     .groupBy("decision_id")
     .execute();
   const today = await organizationBusinessToday(db, rows[0]!.organization_id);
-  return rows.map((r) =>
-    toExecutiveDecision(
+  return rows.map((r) => {
+    const d = toExecutiveDecision(
       r,
       options.filter((o) => o.decision_id === r.id),
       levels.find((l) => l.decision_id === r.id)?.lvl ?? 0,
       today,
-    ),
-  );
+    );
+    const ref = blockerRef(r);
+    if (ref === null || !hiddenBlockers.has(reachKey(ref))) return d;
+    return {
+      ...d,
+      blockerRecordId: null,
+      blockerRecordRestricted: true as const,
+      includesRestrictedRecords: true as const,
+    };
+  });
 }
 
 export async function loadExecutiveDecision(
@@ -525,7 +554,7 @@ export async function createExecutiveAsk(tx: Tx, ctx: T16Context, f: ExecutiveAs
     ]);
   if (blockerType !== null && blockerId !== null) {
     await lockBlockerAsk(tx, ctx.target.transformationId, blockerType, blockerId);
-    if (!(await blockerExists(tx, ctx.target.transformationId, blockerType, blockerId)))
+    if (!(await blockerExists(tx, ctx.principal, ctx.target.transformationId, blockerType, blockerId)))
       throw executiveDecisionRefusals.blockerNotFound();
     const open = await blockerAskOpen(tx, ctx.target.transformationId, blockerType, blockerId);
     if (open !== null) throw executiveDecisionRefusals.blockerAskOpen(open.code);
@@ -1044,7 +1073,7 @@ export function registerExecutiveDecisionRoutes(app: FastifyInstance, { db }: Mo
       .limit(query.limit + 1)
       .execute();
     const page = paginate(rows, query.limit, (r) => [r.id], hash);
-    return { items: await toExecutiveDecisions(db, page.items), nextCursor: page.nextCursor };
+    return { items: await toExecutiveDecisions(db, principalOf(request), page.items), nextCursor: page.nextCursor };
   });
 
   app.post(LOG, { config: { access: { permission: CREATE }, consumes: JSON_BODY } }, async (request, reply) => {
@@ -1060,7 +1089,7 @@ export function registerExecutiveDecisionRoutes(app: FastifyInstance, { db }: Mo
       );
       return loadExecutiveDecision(tx, transformationId, id);
     });
-    const [out] = await toExecutiveDecisions(db, [row]);
+    const [out] = await toExecutiveDecisions(db, principalOf(request), [row]);
     return sendVersioned(reply, 201, out!, `/api/v1/transformations/${transformationId}/executive-decisions/${row.id}`);
   });
 
@@ -1068,7 +1097,7 @@ export function registerExecutiveDecisionRoutes(app: FastifyInstance, { db }: Mo
     const { transformationId, decisionId } = parse(decisionParams, request.params, "params");
     await requireTransformationRead(db, principalOf(request), transformationId);
     const row = await loadExecutiveDecision(db, transformationId, decisionId);
-    const [out] = await toExecutiveDecisions(db, [row]);
+    const [out] = await toExecutiveDecisions(db, principalOf(request), [row]);
     return sendVersioned(reply, 200, out!);
   });
 
@@ -1084,7 +1113,7 @@ export function registerExecutiveDecisionRoutes(app: FastifyInstance, { db }: Mo
         expected: () => requireIfMatch(request),
       }),
     );
-    const [out] = await toExecutiveDecisions(db, [row]);
+    const [out] = await toExecutiveDecisions(db, principalOf(request), [row]);
     return sendVersioned(reply, 200, out!);
   });
 
@@ -1102,7 +1131,7 @@ export function registerExecutiveDecisionRoutes(app: FastifyInstance, { db }: Mo
         expected,
       );
     });
-    const [out] = await toExecutiveDecisions(db, [row]);
+    const [out] = await toExecutiveDecisions(db, principalOf(request), [row]);
     return sendVersioned(reply, 200, out!);
   });
 

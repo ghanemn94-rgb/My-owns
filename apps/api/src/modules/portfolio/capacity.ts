@@ -55,6 +55,9 @@ import {
   problems,
   sendVersioned,
   type ModuleDeps,
+  keysetPage,
+  pageQueryFields,
+  type SortKey,
 } from "../platform/index.ts";
 import { assertActiveUsers, bumpStamps, openWrite } from "../transformations/index.ts";
 import { loadScheduleFacts } from "./roadmap.ts";
@@ -533,6 +536,12 @@ const tParams = z.strictObject({ transformationId: z.uuid() });
 const roleParams = z.strictObject({ transformationId: z.uuid(), resourceRoleId: z.uuid() });
 const capParams = z.strictObject({ capacityId: z.uuid() });
 const ROLES = "/api/v1/transformations/:transformationId/resource-roles";
+const roleListQuery = z.strictObject({ ...pageQueryFields });
+/** The roles' page sort (T-DG6-BE-V): code, then id. */
+const ROLE_SORT: readonly SortKey[] = [
+  { name: "code", type: "text" },
+  { name: "id", type: "uuid" },
+];
 const ROLE = `${ROLES}/:resourceRoleId`;
 const CAPACITY = "/api/v1/capacity";
 const CAPACITY_ITEM = `${CAPACITY}/:capacityId`;
@@ -545,15 +554,11 @@ export function registerCapacityRoutes(app: FastifyInstance, { db }: ModuleDeps)
 
   app.get(ROLES, { config: read }, async (request) => {
     const { transformationId } = parse(tParams, request.params, "params");
-    parseQuery(z.strictObject({}), request.query);
+    const query = parseQuery(roleListQuery, request.query);
     await requireTransformationRead(db, principalOf(request), transformationId);
-    const rows = await db
-      .selectFrom("resource_role")
-      .selectAll()
-      .where("transformation_id", "=", transformationId)
-      .orderBy("code")
-      .execute();
-    return { items: rows.map(toResourceRole) };
+    const q = db.selectFrom("resource_role").selectAll().where("transformation_id", "=", transformationId);
+    const page = await keysetPage(q, ROLE_SORT, query, { list: "resource-roles", transformationId });
+    return { items: page.items.map(toResourceRole), nextCursor: page.nextCursor };
   });
 
   app.post(ROLES, { config: edit }, async (request, reply) => {

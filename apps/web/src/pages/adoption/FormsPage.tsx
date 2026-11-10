@@ -8,11 +8,13 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router";
+import { DEFAULTS } from "@mth/shared";
 import type { AssessmentQuestion } from "@mth/shared/calc";
 import { ASSESSMENT_FORM_STATUSES } from "@mth/shared/schemas";
 import { ApiError, api } from "../../api/client.ts";
 import { useP4Refresh } from "../../api/p4.ts";
 import { useLocale } from "../../app/locale.ts";
+import { useMe } from "../../auth/session.tsx";
 import { beginSessionGuard } from "../../auth/sessionBound.ts";
 import { Dialog, Field } from "../../components/Form.tsx";
 import { Icon } from "../../components/Icon.tsx";
@@ -21,6 +23,7 @@ import { RegisterTable, type RegisterColumn } from "../../components/RegisterTab
 import { Section } from "../../components/Section.tsx";
 import { QueryState } from "../../components/States.tsx";
 import { useWorkspace, WorkspaceFrame } from "../../components/Workspace.tsx";
+import { businessDateIn } from "../../lib/format.ts";
 import { fieldErrorMessage, pointerToField } from "../../lib/problem.ts";
 import { DueDate, FormAlert, P4FormDialog, textOf, type P4FieldSpec } from "../my-work/p4ui.tsx";
 import { useActionRunner } from "./actions.tsx";
@@ -411,7 +414,12 @@ function RespondDialog({ form, onClose }: { form: AssessmentForm; onClose: () =>
   const [groupId, setGroupId] = useState(form.stakeholderGroupId ?? "");
   const [subjectUserId, setSubjectUserId] = useState("");
   const [subjectLabel, setSubjectLabel] = useState("");
-  const [observedOn, setObservedOn] = useState(new Date().toISOString().slice(0, 10));
+  const me = useMe();
+  // The default observation date is today's business date in the organization's zone (default Asia/Riyadh), the
+  // calendar the API selects the reporting period with; never the UTC date (wrong between 00:00 and 03:00 Riyadh).
+  const [observedOn, setObservedOn] = useState(() =>
+    businessDateIn(me.organization.defaultTimezone ?? DEFAULTS.timezone),
+  );
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [serverError, setServerError] = useState<unknown>(null);

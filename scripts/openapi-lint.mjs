@@ -19,7 +19,9 @@ try {
 if (!String(api.openapi).startsWith("3.1")) problems.push(`openapi must be 3.1.x, got ${api.openapi}`);
 
 const UNSAFE = new Set(["post", "put", "patch", "delete"]);
-const PUBLIC_UNSAFE = new Set(["devLogin"]); // login-CSRF is handled by the Origin check (ADR-0005)
+// devLogin: login-CSRF is handled by the Origin check (ADR-0005). receiveWebhook: session-less and CSRF-exempt,
+// authenticated by its HMAC signature, timestamp window and delivery id (ADR-0056 §7; p6-plan §3 row 12; T-DG6-ARCH-03).
+const PUBLIC_UNSAFE = new Set(["devLogin", "receiveWebhook"]);
 const seen = new Set();
 for (const [path, item] of Object.entries(api.paths ?? {})) {
   for (const [method, op] of Object.entries(item)) {

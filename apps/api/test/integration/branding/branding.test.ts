@@ -443,7 +443,7 @@ describe("render-time reads: name, tokens and the logo change without a restart 
   it("a new name is returned in en and ar; a new primary colour changes brand.primary and the derived action shade", async () => {
     const res = await put(
       tech,
-      settings({ productNameEn: "Synthetic Hub", productNameAr: "المنصة التجريبية", primaryColour: "#00A651" }),
+      settings({ productNameEn: "Synthetic Hub", productNameAr: "المنصة التجريبية", primaryColour: "#008A44" }),
       `"${await head()}"`,
     );
     expect(res.status).toBe(200);
@@ -451,12 +451,12 @@ describe("render-time reads: name, tokens and the logo change without a restart 
     expect(cur.body).toMatchObject({
       productNameEn: "Synthetic Hub",
       productNameAr: "المنصة التجريبية",
-      primaryColour: "#00A651",
+      primaryColour: "#008A44",
     });
     const tokens = await call<Body>(api.app, "GET", TOKENS, { session: lead });
     const byName = new Map((tokens.body.tokens as Body[]).map((t) => [t.name, t.value]));
-    expect(byName.get("brand.primary")).toBe("#00A651");
-    const shade = deriveDarkerShade("#00A651", ["#FFFFFF", "#F5F8FC"], 4.5);
+    expect(byName.get("brand.primary")).toBe("#008A44");
+    const shade = deriveDarkerShade("#008A44", ["#FFFFFF", "#F5F8FC"], 4.5);
     expect(shade).not.toBe("#006DE9");
     expect(byName.get("action.primary")).toBe(shade);
   });
@@ -592,7 +592,7 @@ describe("the next generated report carries the current branding and the provena
     const before = await pdf("en");
     const beforeLines = lines(readPdf(before));
     expect(beforeLines.some((l) => l.includes(DEFAULT_EN))).toBe(true);
-    expect(fillsWith(before, "0 1 0")).toBe(false);
+    expect(fillsWith(before, "0 0 1")).toBe(false);
     // The provenance footer (B0004, verbatim from the playbook catalogue) is on every file, also at version 0.
     expect(
       beforeLines.some((l) => l.includes("Practical synthesis inspired by PMI Organizational Transformation")),
@@ -603,7 +603,7 @@ describe("the next generated report carries the current branding and the provena
       settings({
         productNameEn: "Synthetic Roaming Hub",
         productNameAr: "منصة التجوال التجريبية",
-        primaryColour: "#00FF00",
+        primaryColour: "#0000FF", // P6 (ADR-0061 §1): #00FF00 fails the contrast rule; pure blue passes
         reportHeaderEn: "Synthetic header line",
         reportHeaderAr: "عنوان تجريبي",
         reportFooterEn: "Synthetic footer line",
@@ -622,7 +622,7 @@ describe("the next generated report carries the current branding and the provena
     expect(enLines.some((l) => l.includes("Practical synthesis inspired by PMI Organizational Transformation"))).toBe(
       true,
     );
-    expect(fillsWith(en, "0 1 0")).toBe(true);
+    expect(fillsWith(en, "0 0 1")).toBe(true);
     const ar = readPdf(await pdf("ar"));
     expect(drawsArabic(ar, "التجوال")).toBe(true);
     expect(drawsArabic(ar, "موبايلي")).toBe(false);

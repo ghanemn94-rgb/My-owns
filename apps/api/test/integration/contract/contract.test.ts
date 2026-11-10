@@ -149,6 +149,29 @@ import { exerciseP5BeROperations, P5_MIRRORS_BE_R } from "./p5-exercises-be-r.ts
 import { exerciseP5BeR2Operations, P5_MIRRORS_BE_R2 } from "./p5-exercises-be-r2.ts"; // T-DG5-BE-R2
 import { exerciseP5BeSOperations, P5_MIRRORS_BE_S } from "./p5-exercises-be-s.ts";
 import { exerciseP5BeT2Operations, P5_MIRRORS_BE_T2 } from "./p5-exercises-be-t2.ts"; // T-DG5-BE-T2
+// P6 seams (p6-work-split §2 rule 16; T-DG6-BE-A): one stub per P6 API task, filled by its owner.
+import { exerciseP6BeBOperations, P6_MIRRORS_BE_B } from "./p6-exercises-be-b.ts";
+import { exerciseP6BeCOperations, P6_MIRRORS_BE_C } from "./p6-exercises-be-c.ts";
+import { exerciseP6BeDOperations, P6_MIRRORS_BE_D } from "./p6-exercises-be-d.ts";
+import { exerciseP6BeEOperations, P6_MIRRORS_BE_E } from "./p6-exercises-be-e.ts";
+import { exerciseP6BeGOperations, P6_MIRRORS_BE_G } from "./p6-exercises-be-g.ts";
+import { exerciseP6BeHOperations, P6_MIRRORS_BE_H } from "./p6-exercises-be-h.ts";
+import { exerciseP6BeH2Operations, P6_MIRRORS_BE_H2 } from "./p6-exercises-be-h2.ts";
+import { exerciseP6BeIOperations, P6_MIRRORS_BE_I } from "./p6-exercises-be-i.ts";
+import { exerciseP6BeI2Operations, P6_MIRRORS_BE_I2 } from "./p6-exercises-be-i2.ts";
+import { exerciseP6BeJOperations, P6_MIRRORS_BE_J } from "./p6-exercises-be-j.ts";
+import { exerciseP6BeKOperations, P6_MIRRORS_BE_K } from "./p6-exercises-be-k.ts";
+import { exerciseP6BeLOperations, P6_MIRRORS_BE_L } from "./p6-exercises-be-l.ts";
+import { exerciseP6BeMOperations, P6_MIRRORS_BE_M } from "./p6-exercises-be-m.ts";
+import { exerciseP6KbeAOperations, P6_MIRRORS_KBE_A } from "./p6-exercises-kbe-a.ts";
+import { exerciseP6BeNOperations, P6_MIRRORS_BE_N } from "./p6-exercises-be-n.ts";
+import { exerciseP6BeOOperations, P6_MIRRORS_BE_O } from "./p6-exercises-be-o.ts";
+import { exerciseP6BePOperations, P6_MIRRORS_BE_P } from "./p6-exercises-be-p.ts";
+import { exerciseP6BeQOperations, P6_MIRRORS_BE_Q } from "./p6-exercises-be-q.ts";
+import { exerciseP6BeTOperations, P6_MIRRORS_BE_T } from "./p6-exercises-be-t.ts";
+import { exerciseP6BeUOperations, P6_MIRRORS_BE_U } from "./p6-exercises-be-u.ts";
+import { exerciseP6BeWOperations, P6_MIRRORS_BE_W } from "./p6-exercises-be-w.ts";
+import { exerciseP6BeX1Operations, P6_MIRRORS_BE_X1 } from "./p6-exercises-be-x1.ts"; // T-DG6-BE-X1
 import {
   exerciseInvalidCharacterQuery,
   exerciseMalformedPathParams,
@@ -371,6 +394,29 @@ const ZOD_MIRRORS: Record<string, z.ZodType> = {
   ...P5_MIRRORS_BE_R2, // T-DG5-BE-R2
   ...P5_MIRRORS_BE_S,
   ...P5_MIRRORS_BE_T2, // T-DG5-BE-T2
+  // P6 operations: each task's mirrors come from its own seam file (p6-work-split §2 rule 16).
+  ...P6_MIRRORS_BE_B,
+  ...P6_MIRRORS_BE_C,
+  ...P6_MIRRORS_BE_D,
+  ...P6_MIRRORS_BE_E,
+  ...P6_MIRRORS_BE_G,
+  ...P6_MIRRORS_BE_H,
+  ...P6_MIRRORS_BE_H2,
+  ...P6_MIRRORS_BE_I,
+  ...P6_MIRRORS_BE_I2,
+  ...P6_MIRRORS_BE_J,
+  ...P6_MIRRORS_BE_K,
+  ...P6_MIRRORS_BE_L,
+  ...P6_MIRRORS_BE_M,
+  ...P6_MIRRORS_KBE_A,
+  ...P6_MIRRORS_BE_N,
+  ...P6_MIRRORS_BE_O,
+  ...P6_MIRRORS_BE_P,
+  ...P6_MIRRORS_BE_Q,
+  ...P6_MIRRORS_BE_T,
+  ...P6_MIRRORS_BE_U,
+  ...P6_MIRRORS_BE_W,
+  ...P6_MIRRORS_BE_X1,
 };
 
 let api: TestApi;
@@ -820,6 +866,74 @@ describe("every operation, validated against the contract and the zod mirrors", 
     await exerciseP5BeT2Operations(p3());
   }); // T-DG5-BE-T2
 
+  // P6 seams (p6-work-split §2 rule 16; T-DG6-BE-A): each task's routed operations, through the same validating client.
+  it("P6 BE-B operations (p6-exercises-be-b.ts)", async () => {
+    await exerciseP6BeBOperations(p3());
+  });
+  it("P6 BE-C operations (p6-exercises-be-c.ts)", async () => {
+    await exerciseP6BeCOperations(p3());
+  });
+  it("P6 BE-D operations (p6-exercises-be-d.ts)", async () => {
+    await exerciseP6BeDOperations(p3());
+  });
+  it("P6 BE-E operations (p6-exercises-be-e.ts)", async () => {
+    await exerciseP6BeEOperations(p3());
+  });
+  it("P6 BE-G operations (p6-exercises-be-g.ts)", async () => {
+    await exerciseP6BeGOperations(p3());
+  });
+  it("P6 BE-H operations (p6-exercises-be-h.ts)", async () => {
+    await exerciseP6BeHOperations(p3());
+  });
+  it("P6 BE-H2 operations (p6-exercises-be-h2.ts)", async () => {
+    await exerciseP6BeH2Operations(p3());
+  });
+  it("P6 BE-I operations (p6-exercises-be-i.ts)", async () => {
+    await exerciseP6BeIOperations(p3());
+  });
+  it("P6 BE-I2 operations (p6-exercises-be-i2.ts)", async () => {
+    await exerciseP6BeI2Operations(p3());
+  });
+  it("P6 BE-J operations (p6-exercises-be-j.ts)", async () => {
+    await exerciseP6BeJOperations(p3());
+  });
+  it("P6 BE-K operations (p6-exercises-be-k.ts)", async () => {
+    await exerciseP6BeKOperations(p3());
+  });
+  it("P6 BE-L operations (p6-exercises-be-l.ts)", async () => {
+    await exerciseP6BeLOperations(p3());
+  });
+  it("P6 BE-M operations (p6-exercises-be-m.ts)", async () => {
+    await exerciseP6BeMOperations(p3());
+  });
+  it("P6 KBE-A operations (p6-exercises-kbe-a.ts)", async () => {
+    await exerciseP6KbeAOperations(p3());
+  });
+  it("P6 BE-N operations (p6-exercises-be-n.ts)", async () => {
+    await exerciseP6BeNOperations(p3());
+  });
+  it("P6 BE-O operations (p6-exercises-be-o.ts)", async () => {
+    await exerciseP6BeOOperations(p3());
+  });
+  it("P6 BE-P operations (p6-exercises-be-p.ts)", async () => {
+    await exerciseP6BePOperations(p3());
+  });
+  it("P6 BE-Q operations (p6-exercises-be-q.ts)", async () => {
+    await exerciseP6BeQOperations(p3());
+  });
+  it("P6 BE-T operations (p6-exercises-be-t.ts)", async () => {
+    await exerciseP6BeTOperations(p3());
+  });
+  it("P6 BE-U operations (p6-exercises-be-u.ts)", async () => {
+    await exerciseP6BeUOperations(p3());
+  });
+  it("P6 BE-W operations (p6-exercises-be-w.ts)", async () => {
+    await exerciseP6BeWOperations(p3());
+  });
+  it("P6 BE-X1 declared 403s of the evidence reads (p6-exercises-be-x1.ts)", async () => {
+    await exerciseP6BeX1Operations(p3());
+  }); // T-DG6-BE-X1 (F-DG6-QA-B-1)
+
   // T-DG2-ARCH-02 (ADR-0007 §5a): every operation that validates input declares 400.
   it("every GET operation with a path parameter: a malformed id is a declared 400 at /params/<name>; nothing written", async () => {
     // A fresh session: `office` signed out in "transformations and audit".
@@ -967,12 +1081,55 @@ describe("every operation, validated against the contract and the zod mirrors", 
     // T-DG5-KBE-G2: + createHealthCheck, updateHealthCheck, putHealthCheckAnswer, putHealthCheckActions (4 JSON bodies;
     // listHealthChecks and getHealthCheck are GETs, submitHealthCheck is bodiless). T-DG5-BE-R: + putBrandingSettings
     // (1 JSON body). T-DG5-BE-E3, T-DG5-KBE-H: none. Sum (D-160): 386 + 4 (KBE-G2) + 1 (BE-R) = 391.
-    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([391, 390, 1]);
+    // T-DG6-BE-B: + putRecordSensitivity, createSensitiveGrant, revokeSensitiveGrant (3 JSON bodies; the other three
+    // are GETs). 391 + 3 = 394 (the orchestrator reconciles the parallel W3 deltas at merge). W6 merge (D-201): T-DG6-BE-H
+    // + 2 JSON bodies (storage), T-DG6-BE-J + putServiceIdentity (1 JSON body); ARCH-06 and BE-I none. 394 + 3 = 397.
+    // T-DG6-BE-L: + createConnector, putConnector, enableConnector, disableConnector, testConnector,
+    // putConnectorMappings (6 JSON bodies; listConnectors, getConnector, getConnectorMappings are GETs). 397 + 6 = 403
+    // (the orchestrator reconciles the parallel W7 deltas at merge). W7 merge: T-DG6-BE-K + acknowledge and resolve an
+    // operational exception (2 JSON bodies). 403 + 2 = 405.
+    // T-DG6-BE-L2: + runConnector, retryIntegrationRun (2 JSON bodies; listIntegrationRuns and getIntegrationRun are
+    // GETs). 405 + 2 = 407 (the orchestrator reconciles the parallel W9 deltas at merge).
+    // T-DG6-BE-M2: + createImport (text/csv and the XLSX media type: the first non-JSON, non-octet-stream request
+    // bodies), commitImport, cancelImport (2 JSON bodies; the five other import operations are GETs). 407 + 3 = 410;
+    // JSON 406 + 2 = 408. W10 merge: T-DG6-BE-D + putUploadPolicy (1 JSON body; getUploadPolicy and previewEvidenceContent
+    // are GETs): 410 + 1 = 411; JSON 408 + 1 = 409.
+    // JSON 406 + 2 = 408 (the orchestrator reconciles the parallel W10 deltas at merge).
+    // T-DG6-BE-N: + createWebhookEndpoint, rotateWebhookSecret, disableWebhookEndpoint, receiveWebhook (4 JSON bodies;
+    // listWebhookEndpoints and getWebhookEndpoint are GETs). 410 + 4 = 414; JSON 408 + 4 = 412 (the orchestrator
+    // reconciles the parallel deltas at merge).
+    // T-DG6-BE-Q: + createSavedView, putSavedView, shareSavedView (3 JSON bodies; listSavedViews and getSavedView are
+    // GETs, deleteSavedView is bodiless). 410 + 3 = 413; JSON 408 + 3 = 411 (the orchestrator reconciles the parallel
+    // deltas at merge).
+    // T-DG6-BE-T: + putAssistantSetting, enableAssistant, disableAssistant, createAssistantConversation,
+    // postAssistantMessage (5 JSON bodies; the three other assistant operations are GETs). 410 + 5 = 415; JSON 408 + 5
+    // = 413 (the orchestrator reconciles the parallel deltas at merge).
+    // W10/W11 merge (orchestrator, measured on the merged tree): BE-N, BE-Q and BE-T add 12 JSON bodies. 411 + 12 = 423;
+    // JSON 409 + 12 = 421.
+    // T-DG6-BE-N2: + executeOutboundWrite, confirmOutboundWrite (2 JSON bodies; listOutboundWrites and getOutboundWrite
+    // are GETs). 423 + 2 = 425; JSON 421 + 2 = 423 (the orchestrator reconciles the parallel deltas at merge).
+    // T-DG6-BE-H2B (continuing T-DG6-BE-H2): + putStorageSetting, testStorageSetting (2 JSON bodies; getStorageSetting
+    // is a GET). 423 + 2 = 425; JSON 421 + 2 = 423 (the orchestrator reconciles the parallel deltas at merge).
+    // Merge (orchestrator, measured): BE-N2 and BE-H2B together: 423 + 4 = 427; JSON 421 + 4 = 425.
+    // T-DG6-BE-O: + putDeliverableExternalChange, confirmDeliverableExternalChange (2 JSON bodies;
+    // getDeliverableConfirmation is a GET). 425 + 2 = 427; JSON 423 + 2 = 425 (reconciled at merge).
+    // Merge (orchestrator, measured): BE-O, BE-E2 and BE-U together: 427 + 2 = 429; JSON 425 + 2 = 427.
+    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([429, 427, 1]);
+    expect([byType("text/csv"), byType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")]).toEqual([
+      1, 1,
+    ]);
+    expect(declaredRequestMediaTypes(operations.find((o) => o.operationId === "createImport")!)).toEqual([
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "text/csv",
+    ]);
     expect(declaredRequestMediaTypes(operations.find((o) => o.operationId === "uploadEvidenceContent")!)).toEqual([
       "application/octet-stream",
     ]);
   });
 
+  // Budget measured, not guessed (D-173 rule): this sweep sends one request per body operation (932 operations at the
+  // DG6 freeze). Alone on an idle host it took 13.3 s (orchestrator, pre-freeze run); in the full integration project the
+  // files run in parallel and both copies (contract, response-validation) exceeded the 30 s default. 90 s leaves headroom.
   it("every operation: an undeclared request media type is a declared 400 validation.content_type; nothing written", async () => {
     const checked = await exerciseUndeclaredMediaTypes({ api, world: w, session: admin }, operations);
     const live = operations.filter((o) => !P2_PENDING_OPERATIONS.has(o.operationId));
@@ -984,7 +1141,7 @@ describe("every operation, validated against the contract and the zod mirrors", 
     );
     expect(checked.bodyOperations.length + checked.getOperations.length).toBe(live.length);
     expect(checked.bodyOperations).toContain("uploadEvidenceContent");
-  });
+  }, 90_000);
 
   // T-DG2-ARCH-03 (ADR-0007 §5b): every status the platform layer can return is declared on the operation.
   it("the contract: every operation declares each platform status derived from its route (ADR-0007 §5b)", () => {
@@ -997,9 +1154,11 @@ describe("every operation, validated against the contract and the zod mirrors", 
     expect(byId("createCharter")).toEqual([400, 401, 403, 429]);
     expect(byId("updateTransformation")).toEqual([400, 401, 403, 409, 428, 429]);
     // Every governed route feeds the derivation with its declared access (public or a permission).
+    // T-DG6-ARCH-03: + receiveWebhook, the session-less, CSRF-exempt webhook receiver authenticated by its signature
+    // (ADR-0056 §7; p6-plan §3 row 12). It declares its own 401 webhook.unauthenticated.
     const publicIds = operations.filter((o) => !platformStatuses(o, api.routes, openapi).includes(401));
     expect(publicIds.map((o) => o.operationId).sort()).toEqual(
-      ["completeOidcLogin", "devLogin", "getHealth", "getReadiness", "startOidcLogin"].sort(),
+      ["completeOidcLogin", "devLogin", "getHealth", "getReadiness", "receiveWebhook", "startOidcLogin"].sort(),
     );
   });
 
@@ -1048,8 +1207,14 @@ describe("every operation, validated against the contract and the zod mirrors", 
     // + 39 P5 operations of slices D and E (T-DG5-ARCH-03; pending in p5-pending-be-h/h2/i/i2/j/k/l/l2.ts)
     // + 26 P5 operations of slice F (T-DG5-ARCH-04; pending in p5-pending-kbe-c/kbe-d/be-m/be-o.ts)
     // + 38 P5 operations of slices G and H (T-DG5-ARCH-05; pending in p5-pending-kbe-e/kbe-e2/kbe-f/be-p/be-p2/kbe-g/kbe-g2.ts)
-    // + 19 P5 operations of slices I and J (T-DG5-ARCH-06; pending in p5-pending-be-q/q2/r/r2/s/t2.ts).
+    // + 19 P5 operations of slices I and J (T-DG5-ARCH-06; pending in p5-pending-be-q/q2/r/r2/s/t2.ts)
+    // + 13 P6 operations of slices E and F (T-DG6-ARCH-01; pending in p6-pending-be-b/c/d/e.ts).
+    // + 17 P6 operations of slices J and C (T-DG6-ARCH-02; pending in p6-pending-be-g/h2/i/i2/j/k.ts).
+    // + 34 P6 operations of slices B and A (T-DG6-ARCH-03; pending in p6-pending-be-l/l2/m2/n/n2/o.ts).
+    // + 12 P6 operations of slices H and G (T-DG6-ARCH-04; pending in p6-pending-be-p/q/q2.ts).
+    // + 9 P6 operations of slice D (T-DG6-ARCH-05; pending in p6-pending-be-t/u.ts).
+    // + 1 P6 operation of slice I (T-DG6-ARCH-06; pending in p6-pending-be-w.ts).
     // A new operation needs a contract change first.
-    expect(operations).toHaveLength(846);
+    expect(operations).toHaveLength(932);
   });
 });

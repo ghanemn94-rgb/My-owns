@@ -259,6 +259,8 @@ describe.each(LANGS)("REQ-PB-086, S14-004: the launch plan (%s)", (lang) => {
           items: [
             TASK(1, { status: "in_progress" }),
             TASK(2, { predecessors: [ref], blockedBy: [ref], nonWorkingDay: true, dueDate: "2026-11-27" }),
+            // T-DG6-BE-Z12 (D-218): an output the reader is not admitted to.
+            TASK(3, { outputRecordType: "benefit", outputRecordId: null, includesRestrictedRecords: true }),
           ],
           nextCursor: null,
         }),
@@ -288,6 +290,10 @@ describe.each(LANGS)("REQ-PB-086, S14-004: the launch plan (%s)", (lang) => {
     expect(document.querySelector("[data-status='non-working-day']")!.textContent).toContain(
       L(lang).launch.nonWorkingDay,
     );
+    // T-DG6-BE-Z12 (D-218): the restricted label, never "missing", for a restricted output.
+    const label = document.querySelector("[data-restricted-records='true']")!;
+    expect(label).toBeTruthy();
+    expect(label.closest("td")!.textContent).not.toContain(L(lang).launch.outputMissing);
     fireEvent.change(screen.getByLabelText(L(lang).launch.changeStart), { target: { value: "2026-10-08" } });
     fireEvent.click(screen.getByRole("button", { name: L(lang).launch.redate }));
     await waitFor(() => expect(requests.some((r) => r.method === "PATCH")).toBe(true));

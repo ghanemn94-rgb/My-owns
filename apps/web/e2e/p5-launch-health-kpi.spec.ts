@@ -44,6 +44,8 @@ test("Launch plan: generate from a start date, re-date by +7 days, the predecess
   browser,
   playwright,
 }, info) => {
+  // Budget measured (F-DG6-144 sweep, T-DG6-FE-Z1B): in the DG6 QA round-2 full runs and T-DG6-FE-Z1's run1 (under load),
+  // this test's worst loaded run took 22.1 s; the budget is at least 2x that. Table: docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt.
   test.setTimeout(240_000);
   const lang = langOf(info);
   const foreign = trackRequests(page);
@@ -151,6 +153,8 @@ test("Health check: Incomplete (24/25) with no band, 17 / 25 in band 16-20, the 
   page,
   playwright,
 }, info) => {
+  // Budget measured (F-DG6-144 sweep, T-DG6-FE-Z1B): in the DG6 QA round-2 full runs and T-DG6-FE-Z1's run1 (under load),
+  // this test's worst loaded run took 24.2 s; the budget is at least 2x that. Table: docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt.
   test.setTimeout(240_000);
   const lang = langOf(info);
   const lead = await apiSession(playwright, "dev.lead");
@@ -198,14 +202,14 @@ test("Health check: Incomplete (24/25) with no band, 17 / 25 in band 16-20, the 
     await page
       .getByLabel(tr(lang, "launchHealthP5.health.actionText", { n }), { exact: true })
       .fill(`Synthetic action ${n}`);
-  // Wait for the save AND the reload of the assessment (its version steps), so Submit sends the current If-Match.
+  // Wait for the save, then for the SAVED version of the assessment to appear on screen (F-DG5-151, ADR-0061 §9; not
+  // for any GET, which an earlier read could answer), so Submit sends the current If-Match.
   const saved = page.waitForResponse((r) => r.request().method() === "PUT" && /\/actions$/.test(r.url()));
-  const reloaded = page.waitForResponse(
-    (r) => r.request().method() === "GET" && new RegExp(`/health-checks/${aid}$`).test(r.url()),
-  );
   await page.getByRole("button", { name: tr(lang, "launchHealthP5.health.saveActions"), exact: true }).click();
-  expect((await saved).status()).toBe(200);
-  await reloaded;
+  const savedResponse = await saved;
+  expect(savedResponse.status()).toBe(200);
+  const { version: savedVersion } = (await savedResponse.json()) as { version: number };
+  await expect(page.locator(`[data-assessment-version='${savedVersion}']`)).toBeVisible();
   await expect(page.locator("[data-form='health-actions'] [role='alert']")).toHaveCount(0);
   await page.getByRole("button", { name: tr(lang, "launchHealthP5.health.submit"), exact: true }).click();
   await expect(page.locator("[data-assessment-status='submitted']")).toBeVisible();
@@ -227,6 +231,8 @@ test("Formula preview, financial metrics and KPI restatement: SAR and Not comput
   page,
   playwright,
 }, info) => {
+  // Budget measured (F-DG6-144 sweep, T-DG6-FE-Z1B): in the DG6 QA round-2 full runs and T-DG6-FE-Z1's run1 (under load),
+  // this test's worst loaded run took 12.2 s; the budget is at least 2x that. Table: docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt.
   test.setTimeout(240_000);
   const lang = langOf(info);
   const lead = await apiSession(playwright, "dev.lead");

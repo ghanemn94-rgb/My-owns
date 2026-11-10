@@ -530,7 +530,8 @@ export function describeAuditValue(t: TFunction, field: string, value: unknown):
 export function describeAuditChange(
   t: TFunction,
   field: string,
-  change: { readonly from: unknown; readonly to: unknown },
+  // T-DG6-DO-A2: optional sides, as the shared audit schema infers them since zod 4.6 (an absent side reads as undefined).
+  change: { readonly from?: unknown; readonly to?: unknown },
 ): AuditFieldChange {
   const key = auditFieldKey(field);
   const label = FIELDS[key] ? t(`transformations.audit.field.${key}`, { defaultValue: "" }) || null : null;
@@ -545,7 +546,7 @@ export function describeAuditChange(
 /** Fields in a stable, readable order (the catalogue order above), unknown fields last. */
 export function describeAuditChanges(
   t: TFunction,
-  changes: Readonly<Record<string, { readonly from: unknown; readonly to: unknown }>>,
+  changes: Readonly<Record<string, { readonly from?: unknown; readonly to?: unknown }>>,
 ): AuditFieldChange[] {
   const order = Object.keys(FIELDS);
   const rank = (f: string) => {

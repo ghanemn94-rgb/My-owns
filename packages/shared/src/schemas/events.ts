@@ -173,6 +173,73 @@ export type ExportJobRequestedV1 = z.infer<typeof exportJobRequestedV1>;
 export const demoResetRequestedV1 = z.strictObject({ requestedBy: uuid, latestRunNo: z.number().int().min(0) });
 export type DemoResetRequestedV1 = z.infer<typeof demoResetRequestedV1>;
 
+/**
+ * P6 slice B (T-DG6-BE-L2; ADR-0055 §2 step 4, §4; ADR-0053 §2, §3): a connector run failed for the LAST time (no
+ * automatic retry left), or a connector succeeded again after a failure. `integrations` never imports `operations`
+ * (apps/api/src/modules.ts), so the run reports through the outbox: the worker's `integrations.connector_exception`
+ * consumer opens or recurs (failed) or resolves `recovered` (recovered) the connector's operational exception with the
+ * BE-K kit twin under lock 730305; `connector.run_failed` is also the catalogue trigger of ADR-0053 §3 (BE-K2).
+ * Key `connector.run_failed:<runId>` / `connector.run_recovered:<runId>`. `errorMessage` is the stored run message
+ * (the ADR-0055 §4 "why" text and its parameters; never a source's response text or a secret).
+ */
+export const connectorRunFailedV1 = z.strictObject({
+  connectorId: uuid,
+  connectorCode: z.string().regex(/^[a-z][a-z0-9_-]{1,62}$/),
+  runId: uuid,
+  serviceIdentityId: uuid,
+  failureClass: z.enum(["connector_run_failed", "connector_unreachable", "connector_credentials_rejected"]),
+  errorCode: z
+    .string()
+    .regex(/^[a-z][a-z0-9_.]*$/)
+    .max(100),
+  errorMessage: z.string().min(1).max(2000),
+  /**
+   * T-DG6-BE-X2 (F-DG6-QA-A-2; ADR-0053 §2 "connector classes: the KPIs the connector's mappings feed", ADR-0055): the
+   * KPIs of the connector's import target that the failing run feeds, computed by the API in the run's failing
+   * transaction, so the consumer (whose job identity reads no business record) links them to the exception. Optional:
+   * an event written before this field existed links none.
+   */
+  kpiLinks: z
+    .array(z.strictObject({ kpiDefinitionId: uuid, transformationId: uuid }))
+    .max(100)
+    .optional(),
+});
+export type ConnectorRunFailedV1 = z.infer<typeof connectorRunFailedV1>;
+export const connectorRunRecoveredV1 = z.strictObject({
+  connectorId: uuid,
+  connectorCode: z.string().regex(/^[a-z][a-z0-9_-]{1,62}$/),
+  runId: uuid,
+});
+export type ConnectorRunRecoveredV1 = z.infer<typeof connectorRunRecoveredV1>;
+
+/**
+ * P6 slice J (T-DG6-BE-K2; ADR-0053 §2, §3): a KPI's DG4 freshness became `stale` (ADR-0028 read-time rule, unchanged).
+ * Written by the worker's kpi.freshness_scan once per stale episode, key `data.stale:<kpiId>:<dataAsOf>`; consumers
+ * operations.exception_raise (starter 16 version 2: the `data_stale` operational exception, linked to the KPI) and
+ * automation.evaluate (admin rules; condition field `kpiId`). `dataAsOf` is the business date of the last accepted
+ * data; nothing here writes or clears a KPI value. Approves nothing.
+ */
+export const dataStaleV1 = z.strictObject({
+  kpiId: uuid,
+  transformationId: uuid,
+  dataAsOf: z.iso.date(),
+  staleAfterDays: z.number().int().min(1).max(3650),
+});
+export type DataStaleV1 = z.infer<typeof dataStaleV1>;
+
+/**
+ * T-DG6-BE-I2 (ADR-0054 §3 step 1; REQ-S12-023): one in-app notification was written, in its producing transaction
+ * (apps/api tasks/service.ts createWorkItemOnce and its worker twin in apps/worker/src/kit.ts). Consumer
+ * notifications.fanout (apps/worker queues/notifications.ts): it fans the notification out to the organization's
+ * ENABLED external channels after commit; with no channel row it writes nothing (A21). Ids only: never a title, a
+ * message text or an address.
+ */
+export const inboxNotificationCreatedV1 = z.strictObject({
+  notificationId: uuid,
+  recipientUserId: uuid,
+});
+export type InboxNotificationCreatedV1 = z.infer<typeof inboxNotificationCreatedV1>;
+
 export const OUTBOX_EVENT_SCHEMAS = {
   "transformation.created": { 1: transformationCreatedV1, 2: transformationCreatedV2 },
   "job_schedule.updated": { 1: jobScheduleUpdatedV1 },
@@ -216,6 +283,14 @@ export const OUTBOX_EVENT_SCHEMAS = {
   // T-DG5-BE-J (ADR-0044 §7, §8), registered by T-DG5-BE-T5 (D-167): a critical dependency slipped; consumers
   // portfolio.dependency_slip (starter 9, REQ-S12-012) and automation.evaluate (apps/worker queues/portfolio.ts, automation.ts).
   "dependency.slipped": { 1: dependencySlippedV1 },
+  // T-DG6-BE-L2 (ADR-0055 §2, ADR-0053 §2-§3): a connector run's last failure and its recovery; consumer
+  // integrations.connector_exception (apps/worker queues/integrations.ts).
+  "connector.run_failed": { 1: connectorRunFailedV1 },
+  "connector.run_recovered": { 1: connectorRunRecoveredV1 },
+  // T-DG6-BE-K2 (ADR-0053 §3): consumers operations.exception_raise and automation.evaluate (apps/worker queues).
+  "data.stale": { 1: dataStaleV1 },
+  // T-DG6-BE-I2 (ADR-0054 §3): consumer notifications.fanout (apps/worker queues/notifications.ts).
+  "inbox_notification.created": { 1: inboxNotificationCreatedV1 },
 } as const;
 export type OutboxEventType = keyof typeof OUTBOX_EVENT_SCHEMAS;
 

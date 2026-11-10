@@ -1,0 +1,117 @@
+port-policy: PostgreSQL listening on port 23711 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+migrations shipped: 99 (0001_identity_access.sql .. 0107_p6_integrations_permissions.sql)
+PASS  G00 slice B/A migrations 0104-0107 present directly above 0103 (D-196); nothing above 0107  -- ids >= 98: 98,99,100,101,102,103,104,105,106,107
+PASS  G01 fresh database: 0001..last apply  -- applied 99: 0103_p6_operations_channels_permissions.sql, 0104_p6_connectors_runs_outbound_writes.sql, 0105_p6_imports_lineage_webhooks.sql, 0106_p6_deliverable_external_change.sql, 0107_p6_integrations_permissions.sql
+PASS  G02 P5 database populated (0001-0097; a synthetic transformation instantiated by the DG3 function, a KPI, 2 deliverables, 3 evidence items, 9 KPI actual values)  -- applied 89; {"d":2,"e":3,"v":9}
+PASS  G03 P6 (0098..last, including slice B/A 0104-0107) over the P5 database apply  -- applied 10: 0098_p6_sensitive_records_deep_links.sql, 0099_p6_upload_policy_content_types.sql, 0100_p6_access_hardening_permissions.sql, 0101_p6_operations_service_identities.sql, 0102_p6_storage_notification_channels.sql, 0103_p6_operations_channels_permissions.sql, 0104_p6_connectors_runs_outbound
+PASS  G04 the upgrade leaves existing rows as they were: the deliverables byte-identical (no external-change flag = not flagged); no connector, run, import, webhook, outbound write or confirmation row  -- {"d":"5d027a5662026fcfcb480ebc1c6503e4","n":0}
+PASS  G05 the announced foreign keys exist (service_identity.connector_id -> connector, integration_run.import_batch_id -> import_batch, connector current config, deferred)  -- found 3
+PASS  CN01 create a connector disabled at configuration version 1, with its configuration, audit and connector service identity, in one transaction  -- committed
+PASS  CN02 a connector without its audit event fails at COMMIT  -- 23000 connector_audit_required no audit_event for connector 01990000-0000-7000-8000-000000000127 at version 1 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  CN03 a connector without configuration version 1 fails at COMMIT (deferred foreign key to its current configuration)  -- 23503 connector_current_config_fkey insert or update on table "connector" violates foreign key constraint "connector_current_config_fkey"
+PASS  CN04 a connector created enabled is refused  -- 23514 connector_transition connector: a connector is created disabled, at configuration version 1
+PASS  CN05 configuration versions are numbered without gaps (3 after 1 refused)  -- 23514 connector_config_version_sequence connector_config_version: versions are numbered 1, 2, 3 ... without gaps (expected 2)
+PASS  CN06 a credential reference carrying a value is refused (references only)  -- 23514 connector_config_version_credential_refs new row for relation "connector_config_version" violates check constraint "connector_config_version_credential_refs"
+PASS  CN07 adapter settings with a secret-like key are refused  -- 23514 connector_config_version_no_secret_settings new row for relation "connector_config_version" violates check constraint "connector_config_version_no_secret_settings"
+PASS  CN08 a test adapter needs mode healthy, failing or stopped  -- 23514 connector_config_version_adapter_shape connector_config_version: a test adapter needs adapter_settings.mode healthy, failing or stopped
+PASS  CN09 field mappings naming one target twice are refused  -- 23514 connector_config_version_field_mappings new row for relation "connector_config_version" violates check constraint "connector_config_version_field_mappings"
+PASS  CN10 a configuration version is append-only (UPDATE refused)  -- 42501 permission denied for table connector_config_version
+PASS  CN11 configuration version 2 (failing mode) and the connector moved to it and enabled, version 2, audited  -- committed
+PASS  CN12 a connector update that does not step the version by 1 is refused  -- 23514 connector_version_step connector: version must increase by exactly 1 on every update (optimistic concurrency, ADR-0003)
+PASS  CN13 the code and adapter kind never change  -- 23514 connector_identity_fixed connector: code, adapter kind and target kind never change
+PASS  CN14 connector_change is append-only (UPDATE and DELETE refused)  -- 42501 connector_change is append-only: DELETE is not allowed
+PASS  CN15 the application cannot write connector_change directly  -- 42501 permission denied for table connector_change
+PASS  CN16 a service identity naming no existing connector is refused (foreign key from 0101, added here)  -- 23503 service_identity_connector_fkey insert or update on table "service_identity" violates foreign key constraint "service_identity_connector_fkey"
+PASS  IR01 a manual run is queued as the connector's own service identity  -- committed
+PASS  IR02 a second active run of the same connector is refused (one active run per connector)  -- 23505 integration_run_one_active duplicate key value violates unique constraint "integration_run_one_active"
+PASS  IR03 a replayed idempotency key is refused (exactly once)  -- 23505 integration_run_idempotency_key duplicate key value violates unique constraint "integration_run_idempotency_key"
+PASS  IR04 queued -> succeeded is refused (it must run first)  -- 23514 integration_run_transition integration_run: queued -> succeeded is not allowed
+PASS  IR05 a run without its audit event fails at COMMIT  -- 23000 integration_run_audit_required no audit_event for integration_run 01990000-0000-7000-8000-000000000136 at version 2 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  IR06 queued -> running -> failed with an actionable error code and Unknown (NULL) counts  -- committed
+PASS  IR07 a finished run never changes  -- 23514 integration_run_final integration_run: a finished run never changes (a retry is a new run)
+PASS  IR08 a retry with the wrong attempt number is refused  -- 23514 integration_run_retry_chain integration_run: a retry follows a failed run of the same connector, as its next attempt
+PASS  IR09 a retry of the failed run as attempt 2 (retry history is the chain)  -- committed
+PASS  IR10 a failed run is retried at most once (UNIQUE retry_of_run_id)  -- 23505 integration_run_one_retry_key duplicate key value violates unique constraint "integration_run_one_retry_key"
+PASS  IR11 a succeeded run needs every count (read, staged, rejected, duplicates, errors)  -- 23514 integration_run_success_counts new row for relation "integration_run" violates check constraint "integration_run_success_counts"
+PASS  IR12 committed + rejected + duplicates never exceed staged  -- 23514 integration_run_count_order new row for relation "integration_run" violates check constraint "integration_run_count_order"
+PASS  IR13 a matched reconciliation needs the source row count  -- 23514 integration_run_reconciliation_shape new row for relation "integration_run" violates check constraint "integration_run_reconciliation_shape"
+PASS  IR14 the retry succeeds with counts 10 read / 10 staged / 8 committed / 1 rejected / 1 duplicate / 1 error and a matched reconciliation (last success)  -- committed
+PASS  IR15 integration_run_event is append-only  -- 42501 integration_run_event is append-only: UPDATE is not allowed
+PASS  IR16 the run's history is trigger-written (queued>running>failed)  -- queued>running>failed
+PASS  IR17 a second connector (webhook, KPI target) with its identity  -- committed
+PASS  IR18 a run cannot act as another connector's service identity  -- 23514 integration_run_service_identity integration_run: a run acts as its own connector's service identity
+PASS  OW01 a write on a connector whose configuration does not allow the action is refused  -- 23514 outbound_write_action_allowed outbound_write: the connector must be enabled and its current configuration must allow the action
+PASS  OW02 an allowed write is created 'requested' with no attempt  -- committed
+PASS  OW03 the same idempotency key on the same connector is refused (one downstream effect)  -- 23505 outbound_write_idempotency_key duplicate key value violates unique constraint "outbound_write_idempotency_key"
+PASS  OW04 'confirmed' without the downstream reference of a confirmed response is refused  -- 23514 outbound_write_confirmed_shape new row for relation "outbound_write" violates check constraint "outbound_write_confirmed_shape"
+PASS  OW05 dispatched with no confirmed response: requested -> pending_confirmation (attempt 1)  -- committed
+PASS  OW06 pending_confirmation -> requested is refused  -- 23514 outbound_write_transition outbound_write: pending_confirmation -> requested is not allowed
+PASS  OW07 the payload never changes  -- 23514 outbound_write_identity_fixed outbound_write: the action, subject, payload and idempotency key never change
+PASS  OW08 an attempt count jumping by 2 is refused  -- 23514 outbound_write_attempt_step outbound_write: each dispatch counts once
+PASS  OW09 a confirmed response with its reference: pending_confirmation -> confirmed  -- committed
+PASS  OW10 a confirmed write never changes  -- 23514 outbound_write_final outbound_write: a confirmed or failed write never changes
+PASS  OW11 a write without its audit event fails at COMMIT  -- 23000 outbound_write_audit_required no audit_event for outbound_write 01990000-0000-7000-8000-00000000015b at version 1 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  DX01 a flag created already confirmed is refused  -- 23514 deliverable_external_change_transition deliverable_external_change: a deliverable is flagged unconfirmed
+PASS  DX02 flag both deliverables as external changes: Unconfirmed  -- committed
+PASS  DX03 one flag per deliverable  -- 23505 deliverable_external_change_deliverable_key duplicate key value violates unique constraint "deliverable_external_change_deliverable_key"
+PASS  DX04 a change of the deliverable itself (acceptance submitted, superuser fixture) leaves the confirmation Unconfirmed (no DG3 path writes it)  -- unconfirmed
+PASS  DX05 a filename-only link (file_reference) never confirms  -- 23514 deliverable_external_change_evidence_verified deliverable_external_change: only verified evidence of the same transformation confirms (a filename-only link never does)
+PASS  DX06 unreviewed evidence never confirms  -- 23514 deliverable_external_change_evidence_verified deliverable_external_change: only verified evidence of the same transformation confirms (a filename-only link never does)
+PASS  DX07 a confirmation without its audit event fails at COMMIT  -- 23000 deliverable_external_change_audit_required no audit_event for deliverable_external_change 01990000-0000-7000-8000-00000000015c at version 2 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  DX08 reviewed (verified) evidence confirms and records its source  -- committed
+PASS  DX09 a confirmed external change never changes  -- 23514 deliverable_external_change_final deliverable_external_change: a confirmed external change never changes
+PASS  DX10 a second write for deliverable 2, left pending confirmation  -- committed
+PASS  DX11 a write still pending confirmation never confirms  -- 23514 deliverable_external_change_connector_confirmed deliverable_external_change: a connector confirmation copies a confirmed outbound write of this deliverable
+PASS  DX12 a confirmed write of ANOTHER deliverable never confirms  -- 23514 deliverable_external_change_connector_confirmed deliverable_external_change: a connector confirmation copies a confirmed outbound write of this deliverable
+PASS  DX13 a confirmed test-adapter result for this deliverable confirms, with connector, source system id, reference and time  -- committed
+PASS  DX14 the confirmation history is append-only  -- 42501 deliverable_external_change_event is append-only: DELETE is not allowed
+PASS  WH01 an endpoint on a non-webhook connector is refused  -- 23514 webhook_endpoint_connector_kind webhook_endpoint: the owning connector must be a webhook connector
+PASS  WH02 an endpoint whose secret is not a SecretRef is refused  -- 23514 webhook_endpoint_secret_ref new row for relation "webhook_endpoint" violates check constraint "webhook_endpoint_secret_ref"
+PASS  WH03 an active endpoint with one secret reference  -- committed
+PASS  WH04 a rotation keeping the old reference for more than 7 days is refused  -- 23514 webhook_endpoint_rotation webhook_endpoint: a rotation keeps the old reference as the previous one, valid for at most 7 days
+PASS  WH05 a rotation to a new reference, the old one valid for 24 h  -- committed
+PASS  WH06 an accepted delivery inside the window is recorded  -- committed
+PASS  WH07 a replayed delivery id is refused (replay and idempotency backstop)  -- 23505 webhook_receipt_delivery_key duplicate key value violates unique constraint "webhook_receipt_delivery_key"
+PASS  WH08 a delivery signed outside the endpoint's window (6 min) is refused  -- 23514 webhook_receipt_accepted_only webhook_receipt: only an active endpoint accepts a delivery, inside its time window and with a valid secret slot
+PASS  WH09 the previous secret after its validity is refused  -- 23514 webhook_receipt_accepted_only webhook_receipt: only an active endpoint accepts a delivery, inside its time window and with a valid secret slot
+PASS  WH10 a receipt is append-only  -- 42501 permission denied for table webhook_receipt
+PASS  IM01 a batch that does not pin the transformation's form schema version is refused  -- 23514 import_batch_form_schema_pinned import_batch: the batch pins the form schema version the transformation uses (ADR-0039 §3)
+PASS  IM02 a CSV upload with the XLSX media type is refused  -- 23514 import_batch_source_shape new row for relation "import_batch" violates check constraint "import_batch_source_shape"
+PASS  IM03 a file over 10 MiB is refused  -- 23514 import_batch_byte_size_check new row for relation "import_batch" violates check constraint "import_batch_byte_size_check"
+PASS  IM04 a CSV batch is created staging, pinned to the form schema version  -- committed
+PASS  IM05 stage 10 rows: 8 valid, 1 invalid (row-level reason), 1 in-batch duplicate pointing at its first row  -- committed
+PASS  IM06 a second VALID row with the same duplicate key is refused (in-batch duplicate invariant)  -- 23505 import_row_one_valid_per_key duplicate key value violates unique constraint "import_row_one_valid_per_key"
+PASS  IM07 a raw cell stored as a number (a spreadsheet double) is refused  -- 23514 import_row_raw new row for relation "import_row" violates check constraint "import_row_raw"
+PASS  IM08 a valid row with a reason, or an invalid row without one, is refused  -- 23514 import_row_valid_shape new row for relation "import_row" violates check constraint "import_row_valid_shape"
+PASS  IM09 a reason code outside import.row.* is refused  -- 23514 import_row_reasons new row for relation "import_row" violates check constraint "import_row_reasons"
+PASS  IM10 staged counts that do not add up to the rows are refused  -- 23514 import_batch_counts_match_rows import_batch: the staged total equals the number of staged rows
+PASS  IM11 the batch is staged: total 10 = 8 valid + 1 invalid + 1 duplicate  -- committed
+PASS  IM12 no row is added after staging  -- 23514 import_row_batch_staging import_row: rows are added only while the batch is staging
+PASS  IM13 a row is committed only with its lineage record  -- 23514 import_row_lineage_required import_row: a row is committed only with its lineage record
+PASS  IM14 a staged row's values never change (column grant)  -- 42501 permission denied for table import_row
+PASS  IM15 lineage for the invalid row is refused (only valid rows commit)  -- 23514 import_row_commit_valid_only import_row_commit: only a valid, pending row of a staged batch is committed
+PASS  IM16 lineage naming a KPI actual value that does not exist is refused  -- 23503 import_row_commit_target_exists import_row_commit: the lineage names an existing KPI actual value of the same transformation
+PASS  IM17 a commit whose count differs from the committed rows is refused  -- 23514 import_batch_counts_match_rows import_batch: the committed count equals the number of committed rows
+PASS  IM18 commit: 8 lineage records, 8 rows committed, 2 not committed, the batch committed with 8 (lineage to batch and source row)  -- committed
+PASS  IM19 lineage: 8 committed rows, each to its own KPI actual, each with its source row id  -- {"n":8,"t":8,"s":"SRC-2"}
+PASS  IM20 a committed batch never changes  -- 23514 import_batch_final import_batch: a committed, cancelled or failed batch never changes
+PASS  IM21 staged rows are never deleted  -- 42501 import_row: staged rows are never deleted (a cancelled batch keeps them)
+PASS  IM22 lineage is append-only  -- 42501 import_row_commit is append-only: UPDATE is not allowed
+PASS  IM23 a batch without its audit event fails at COMMIT  -- 23000 import_batch_audit_required no audit_event for import_batch 01990000-0000-7000-8000-000000000196 at version 1 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  IM24 a webhook batch needs its receipt, its connector and the JSON media type  -- 23514 import_batch_source_shape new row for relation "import_batch" violates check constraint "import_batch_source_shape"
+PASS  IM25 a webhook batch from the accepted receipt, auto-committed on behalf of a named user  -- committed
+PASS  IM26 one batch per webhook receipt  -- 23505 import_batch_webhook_receipt_key duplicate key value violates unique constraint "import_batch_webhook_receipt_key"
+PASS  IM27 history of a batch is append-only  -- 42501 import_batch_event is append-only: DELETE is not allowed
+PASS  WH11 an endpoint is disabled with a reason  -- committed
+PASS  WH12 a disabled endpoint accepts no delivery  -- 23514 webhook_receipt_accepted_only webhook_receipt: only an active endpoint accepts a delivery, inside its time window and with a valid secret slot
+PASS  WH13 a disabled endpoint never changes  -- 23514 webhook_endpoint_final webhook_endpoint: a disabled endpoint never changes (create a new endpoint)
+        0107 seed: connector.configure(configure)=ADM_TECH; connector.read(read)=ADM_TECH,AUD,KDS,TD,TO; connector.run(write)=ADM_TECH,KDS; external_change.confirm(write)=BO,TD; external_change.flag(write)=BO,TL,TO,WL; import.commit(write)=KDS; import.create(write)=KDS; import.read(read)=AUD,BO,KDS,TO; outbound_write.execute(write)=TD; outbound_write.read(read)=AUD,KDS,TD,TO; webhook.configure(configure)=ADM_TECH
+PASS  PM01 0107 seeds 11 codes, none business_approval or finance_validation  -- 11 codes
+PASS  PM02 AUD gets read codes only (connector.read, import.read, outbound_write.read)  -- connector.read,import.read,outbound_write.read
+PASS  PM03 ADM_TECH gets connector and webhook rights only (no import, outbound-write or external-change right)  -- connector.configure,connector.read,connector.run,webhook.configure
+PASS  PM04 outbound_write.execute is held by exactly one role by default (TD)  -- TD
+PASS  PM05 the technical-admin trigger still refuses a business-approval code for ADM_TECH (REQ-S10-003)  -- 23514 role_permission_no_admin_approver technical administrator role ADM_TECH cannot hold approval permission gate.decide (separation of duties)
+
+110/110 PASS
+EXIT=0

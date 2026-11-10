@@ -51,6 +51,9 @@ import {
   requireIfMatch,
   sendVersioned,
   type ModuleDeps,
+  keysetPage,
+  pageQueryFields,
+  type SortKey,
 } from "../platform/index.ts";
 import { bumpStamps, openWrite } from "../transformations/index.ts";
 import { capacityFlagSource, scheduleFlagSource } from "./capacity.ts";
@@ -501,6 +504,13 @@ function compareItems(a: PrioritizationView["items"][number], b: PrioritizationV
 
 // ------------------------------------------------------------------------------------------------ routes
 
+/** The weight sets' page sort (T-DG6-BE-V): newest version first, then id. */
+const WEIGHT_SET_SORT: readonly SortKey[] = [
+  { name: "version_no", type: "integer", desc: true },
+  { name: "id", type: "uuid", desc: true },
+];
+const weightSetListQuery = z.strictObject({ ...pageQueryFields });
+
 export function registerPrioritizationRoutes(app: FastifyInstance, { db }: ModuleDeps): readonly string[] {
   const WS = `${T_BASE}/weight-sets`;
 
@@ -513,14 +523,11 @@ export function registerPrioritizationRoutes(app: FastifyInstance, { db }: Modul
 
   app.get(WS, { config: { access: { permission: "transformation.read" } } }, async (request) => {
     const { transformationId } = parse(tParams, request.params, "params");
+    const query = parseQuery(weightSetListQuery, request.query);
     await requireTransformationRead(db, principalOf(request), transformationId);
-    const rows = await db
-      .selectFrom("scoring_weight_set")
-      .selectAll()
-      .where("transformation_id", "=", transformationId)
-      .orderBy("version_no", "desc")
-      .execute();
-    return { items: await presentSets(db, rows) };
+    const q = db.selectFrom("scoring_weight_set").selectAll().where("transformation_id", "=", transformationId);
+    const page = await keysetPage(q, WEIGHT_SET_SORT, query, { list: "weight-sets", transformationId });
+    return { items: await presentSets(db, page.items), nextCursor: page.nextCursor };
   });
 
   app.post(

@@ -67,6 +67,38 @@ jobs:
       - run: pnpm openapi:lint
       - run: pnpm check:no-cdn
 
+  # devops-engineer (T-DG6-DO-A, ADR-0052 §6, REQ-S16-030 "dependency checks"; D-195 Q10). The LIVE audit asks the
+  # configured registry's advisory service: a High or Critical advisory on a production dependency fails the job.
+  # The offline step compares the committed SBOM with the dated snapshot deploy/advisories/snapshot-<date>.json (it
+  # also runs in `pnpm test`); it prints the snapshot age and is never a substitute for the live audit. In a network
+  # without the registry's advisory service the live step fails (BLOCKED), it is not skipped. Refresh the snapshot
+  # where the service is reachable: node deploy/scripts/dep-audit.mjs --refresh (docs/operations/dependency-audit.md).
+  dependency-audit:
+    needs: delivery-gates
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24"
+      - name: pnpm at the packageManager version (real binary on PATH; no install scripts)
+        run: npm install --global --ignore-scripts "$(node -p 'require("./package.json").packageManager.split("+")[0]')"
+      - name: bubblewrap for the sandboxed installer (ephemeral runner; allow unprivileged user namespaces for bwrap)
+        run: |
+          sudo apt-get update -q && sudo apt-get install -y -q --no-install-recommends bubblewrap
+          if [ -e /proc/sys/kernel/apparmor_restrict_unprivileged_userns ]; then
+            sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          fi
+      - name: Install (sandboxed, frozen lockfile; BLOCKED without bubblewrap - never an unsandboxed fallback)
+        run: deploy/scripts/ci-install-deps.sh
+      - name: SBOM and licence inventory match the lockfile (the offline check reads the SBOM)
+        run: node licenses/generate-sbom.mjs --check
+      - name: Live dependency audit (registry advisory service; High/Critical on a production dependency fails)
+        run: pnpm audit --audit-level high --prod
+      - name: Offline SBOM check against the committed dated advisory snapshot (prints the snapshot age)
+        if: ${{ !cancelled() }}
+        run: node deploy/scripts/dep-audit.mjs
+
   integration:
     needs: verify
     runs-on: ubuntu-24.04
@@ -148,9 +180,10 @@ jobs:
           retention-days: 14
 
   # devops-engineer (T-DG1-DEVOPS, ADR-0011/ADR-0013): packaging checks, the one application image, and the Compose
-  # clean-start / test-IdP login / no-egress smoke. Depends on delivery-gates through integration and e2e.
+  # clean-start / test-IdP login / no-egress smoke. Depends on delivery-gates through integration and e2e, and on
+  # dependency-audit, so no image is built or pushed while a High/Critical advisory is open (T-DG6-DO-A).
   images:
-    needs: [integration, e2e]
+    needs: [integration, e2e, dependency-audit]
     runs-on: ubuntu-24.04
     env:
       MTH_APP_IMAGE: mth-app:ci-${{ github.sha }}

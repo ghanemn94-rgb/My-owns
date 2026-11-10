@@ -1,0 +1,72 @@
+port-policy: PostgreSQL listening on port 23711 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+migrations shipped: 104 (0001_identity_access.sql .. 0112_p6_assistant_permissions.sql)
+PASS  G00 slice D migrations 0111-0112 present directly above 0110 (D-196); nothing above 0112  -- ids >= 98: 98,99,100,101,102,103,104,105,106,107,108,109,110,111,112
+PASS  G01 fresh database: 0001..last apply  -- applied 104: 0109_p6_search_productivity_permissions.sql, 0110_p6_register_filter_indexes.sql, 0111_p6_assistant.sql, 0112_p6_assistant_permissions.sql
+PASS  G01b a fresh install has no assistant_setting row, i.e. the assistant is disabled (REQ-S17-009 'The default install has AI ... off')  -- {"s":0,"c":0}
+PASS  G02 P5 database populated (0001-0097; 2 transformations, one instantiated by the DG3 function with its gates; 12 initiatives; 3 users)  -- applied 89; {"i":12,"t":2,"u":3,"g":6}
+PASS  G03 P6 (0098..last, including slice D 0111-0112) over the P5 database apply  -- applied 15: 0098_p6_sensitive_records_deep_links.sql, 0099_p6_upload_policy_content_types.sql, 0100_p6_access_hardening_permissions.sql, 0101_p6_operations_service_identities.sql, 0102_p6_storage_notification_channels.sql, 0103_p6_operations_channels_permissions.sql, 0104_p6_connectors_runs_outbound
+PASS  G04 the upgrade leaves existing rows as they were (initiatives, transformations and gate instances byte-identical, audit count unchanged); no assistant row (AI disabled)  -- identical; {"settings":0,"conversations":0,"messages":0,"suggestions":0}
+PASS  AS01 a setting is created disabled (enabling is its own audited step)  -- 23514 assistant_setting_starts_disabled assistant_setting: the setting is created disabled; enabling is a separate step
+PASS  AS02 missing audit fails at COMMIT (assistant_setting_audit_required)  -- 23000 assistant_setting_audit_required no audit_event for assistant_setting 01990000-0000-7000-8000-000000000100 at version 1 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  AS03 a disabled setting with its audit event commits  -- committed
+PASS  AS04 at most one setting row (assistant_setting_singleton_key)  -- 23505 assistant_setting_singleton_key duplicate key value violates unique constraint "assistant_setting_singleton_key"
+PASS  AS05 a non-stepping version fails (assistant_setting_version_step)  -- 23514 assistant_setting_version_step assistant_setting: version must increase by exactly 1 on every update (optimistic concurrency, ADR-0003)
+PASS  AS06 enabling without an authorization reference is refused (assistant_setting_enable_complete)  -- 23514 assistant_setting_enable_complete new row for relation "assistant_setting" violates check constraint "assistant_setting_enable_complete"
+PASS  AS07 enabling the HTTP adapter without a model name is refused (assistant_setting_enable_complete)  -- 23514 assistant_setting_enable_complete new row for relation "assistant_setting" violates check constraint "assistant_setting_enable_complete"
+FAIL  AS08 enabling without the enabled stamp is refused (assistant_setting_enabled_stamp)  -- 23514 assistant_setting_enabled_by_actor assistant_setting: the enabler is the actor of the enabling change
+PASS  AS09 the enabler is the actor of the enabling change (assistant_setting_enabled_by_actor)  -- 23514 assistant_setting_enabled_by_actor assistant_setting: the enabler is the actor of the enabling change
+PASS  AS10a an endpoint URL with user information, a query, a fragment or a non-HTTP scheme is refused (https://user:pw@ai.internal.example/v1)  -- 23514 assistant_setting_endpoint_url new row for relation "assistant_setting" violates check constraint "assistant_setting_endpoint_url"
+PASS  AS10b an endpoint URL with user information, a query, a fragment or a non-HTTP scheme is refused (https://ai.internal.example/v1?key=SECRET)  -- 23514 assistant_setting_endpoint_url new row for relation "assistant_setting" violates check constraint "assistant_setting_endpoint_url"
+PASS  AS10c an endpoint URL with user information, a query, a fragment or a non-HTTP scheme is refused (ftp://ai.internal.example/v1)  -- 23514 assistant_setting_endpoint_url new row for relation "assistant_setting" violates check constraint "assistant_setting_endpoint_url"
+PASS  AS10d an endpoint URL with user information, a query, a fragment or a non-HTTP scheme is refused (https://ai.internal.example/v1#x)  -- 23514 assistant_setting_endpoint_url new row for relation "assistant_setting" violates check constraint "assistant_setting_endpoint_url"
+PASS  AS11 a credential VALUE is refused; only a SecretRef {provider, name} is stored (assistant_setting_credential_ref)  -- 23514 assistant_setting_credential_ref new row for relation "assistant_setting" violates check constraint "assistant_setting_credential_ref"
+PASS  AS12 the test adapter carries no endpoint, API style or credential (assistant_setting_test_adapter_shape)  -- 23514 assistant_setting_test_adapter_shape new row for relation "assistant_setting" violates check constraint "assistant_setting_test_adapter_shape"
+PASS  AS13 enabling with provider, endpoint, API style, model and authorization reference, stamped by the actor, commits  -- committed
+PASS  AS14a while enabled, endpoint_url cannot change (assistant_setting_locked_while_enabled)  -- 23514 assistant_setting_locked_while_enabled assistant_setting: turn the assistant off before changing its provider, endpoint, model, credential or authorization reference
+PASS  AS14b while enabled, model_name cannot change (assistant_setting_locked_while_enabled)  -- 23514 assistant_setting_locked_while_enabled assistant_setting: turn the assistant off before changing its provider, endpoint, model, credential or authorization reference
+PASS  AS14c while enabled, authorization_reference cannot change (assistant_setting_locked_while_enabled)  -- 23514 assistant_setting_locked_while_enabled assistant_setting: turn the assistant off before changing its provider, endpoint, model, credential or authorization reference
+PASS  AS14d while enabled, credential_ref cannot change (assistant_setting_locked_while_enabled)  -- 23514 assistant_setting_locked_while_enabled assistant_setting: turn the assistant off before changing its provider, endpoint, model, credential or authorization reference
+PASS  AS14e while enabled, provider_kind cannot change (assistant_setting_locked_while_enabled)  -- 23514 assistant_setting_locked_while_enabled assistant_setting: turn the assistant off before changing its provider, endpoint, model, credential or authorization reference
+PASS  AS15 while enabled, the timeout and the limits can change (audited)  -- committed
+PASS  AS16 disabling clears the stamp and commits  -- committed
+PASS  AS17 the trigger writes one history row per version (1 created, 2 enabled, 3 limits, 4 disabled)  -- 1:false,2:true,3:true,4:false
+PASS  AS18 UPDATE on assistant_setting_change is refused (append-only)  -- 42501 permission denied for table assistant_setting_change
+PASS  AS19 DELETE on assistant_setting_change is refused even for the owner role (append-only)  -- 42501 assistant_setting_change is append-only: DELETE is not allowed
+PASS  AS20 mth_app cannot DELETE the setting (no grant)  -- 42501 permission denied for table assistant_setting
+PASS  CV01 missing audit fails at COMMIT (assistant_conversation_audit_required)  -- 23000 assistant_conversation_audit_required no audit_event for assistant_conversation 01990000-0000-7000-8000-000000000108 at version 1 (ADR-0004: every mutation writes its audit event in the same transaction)
+FAIL  CV02 a conversation focused on a transformation, and one without focus, commit with their audit events  -- 42703 record "new" has no field "conversation_id"
+PASS  CV03 the conversation belongs to its owner's organization (assistant_conversation_organization_matches)  -- 23514 assistant_conversation_organization_matches assistant_conversation: the conversation belongs to its owner's organization
+PASS  CV04 the focused transformation is in the conversation's organization (p2_row_guard)  -- 23514 assistant_conversation_organization_matches assistant_conversation: organization_id must equal the transformation's organization
+PASS  CV05 a conversation starts empty (assistant_conversation_starts_empty)  -- 23514 assistant_conversation_starts_empty new row for relation "assistant_conversation" violates check constraint "assistant_conversation_starts_empty"
+FAIL  CV06 a user message then an answer citing a record and a playbook block commit (each with the conversation update and its audit event)  --  Cannot read properties of undefined (reading 'version')
+FAIL  CV07 missing audit for the conversation update fails at COMMIT  --  Cannot read properties of undefined (reading 'message_count')
+FAIL  CV08 a message without the conversation update that counts it is refused (assistant_message_sequence)  -- 23503 assistant_message_conversation_id_fkey insert or update on table "assistant_message" violates foreign key constraint "assistant_message_conversation_id_fkey"
+FAIL  CV09 a conversation update without its message fails at COMMIT (assistant_conversation_messages_match)  --  Cannot read properties of undefined (reading 'version')
+FAIL  CV10 a reply while no user message awaits one is refused (assistant_conversation_message_step: the flag must flip)  --  Cannot read properties of undefined (reading 'awaiting_reply')
+FAIL  CV11 an update that appends two messages at once is refused (assistant_conversation_message_step)  --  Cannot read properties of undefined (reading 'version')
+FAIL  CV12 only the owner adds to a conversation (assistant_conversation_owner_only)  --  Cannot read properties of undefined (reading 'version')
+FAIL  CV13 a non-stepping conversation version fails (assistant_conversation_version_step)  --  Cannot read properties of undefined (reading 'version')
+FAIL  CV14 UPDATE on assistant_message is refused (append-only)  -- 42501 permission denied for table assistant_message
+FAIL  CV15 DELETE on assistant_message is refused even for the owner role (append-only)  -- committed, but the guard should have refused it
+FAIL  CV16a an answer without any citation is refused (assistant_message_reply_shape / _citations_valid / CHECK)  --  Cannot read properties of undefined (reading 'version')
+FAIL  CV16b a refusal that carries content is refused (assistant_message_reply_shape / _citations_valid / CHECK)  --  Cannot read properties of undefined (reading 'version')
+FAIL  CV16c a refusal without a refusal code is refused (assistant_message_reply_shape / _citations_valid / CHECK)  --  Cannot read properties of undefined (reading 'version')
+FAIL  CV16d an answer that carries a refusal code is refused (assistant_message_reply_shape / _citations_valid / CHECK)  --  Cannot read properties of undefined (reading 'version')
+FAIL  CV16e an unknown refusal code is refused (assistant_message_reply_shape / _citations_valid / CHECK)  --  Cannot read properties of undefined (reading 'version')
+FAIL  CV16f an HTTP-adapter answer without a model name is refused (assistant_message_reply_shape / _citations_valid / CHECK)  --  Cannot read properties of undefined (reading 'version')
+FAIL  CV16g a no_sources reply with citations is refused (assistant_message_reply_shape / _citations_valid / CHECK)  --  Cannot read properties of undefined (reading 'version')
+FAIL  CV17 a user message cannot carry citations (assistant_message_user_shape)  --  Cannot read properties of undefined (reading 'version')
+FAIL  CV18 a user message longer than 4000 characters is refused (assistant_message_user_shape)  --  Cannot read properties of undefined (reading 'version')
+FAIL  CV19a a citation list with a record type outside the 12 search types is refused (assistant_message_citations_valid)  --  Cannot read properties of undefined (reading 'version')
+FAIL  CV19b a citation list with an extra key (record text smuggled into a citation) is refused (assistant_message_citations_valid)  --  Cannot read properties of undefined (reading 'version')
+FAIL  CV19c a citation list with a record version 0 is refused (assistant_message_citations_valid)  --  Cannot read properties of undefined (reading 'version')
+FAIL  CV19d a citation list with a playbook version other than 1.0 is refused (assistant_message_citations_valid)  --  Cannot read properties of undefined (reading 'version')
+FAIL  CV19e a citation list with a block reference above B0165 is refused (assistant_message_citations_valid)  --  Cannot read properties of undefined (reading 'version')
+FAIL  CV19f a citation list with a duplicate citation is refused (assistant_message_citations_valid)  --  Cannot read properties of undefined (reading 'version')
+FAIL  CV19g a citation list with more than 20 citations is refused (assistant_message_citations_valid)  --  Cannot read properties of undefined (reading 'version')
+FAIL  CV20 the other reply kinds commit: refusal (code, no content), no_sources, unavailable (error code), interrupted  --  Cannot read properties of undefined (reading 'version')
+TypeError: Cannot read properties of undefined (reading 'n')
+    at main (file:///home/user/My-owns/docs/delivery/handbacks/DG6/T-DG6-ARCH-05-evidence/probe.ts:382:117)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+EXIT=2

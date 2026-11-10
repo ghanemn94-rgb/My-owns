@@ -1,0 +1,28 @@
+port-policy: PostgreSQL listening on port 23701 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+migrations shipped: 92 (0001_identity_access.sql .. 0100_p6_access_hardening_permissions.sql)
+PASS  G00 slice E/F migrations 0098-0100 present; 0101-0103 left free for the slice's implementers  -- ids >= 95: 95,96,97,98,99,100
+PASS  G01 fresh database: 0001..last apply  -- applied 92: 0097_p5_config_review_contributors.sql, 0098_p6_sensitive_records_deep_links.sql, 0099_p6_upload_policy_content_types.sql, 0100_p6_access_hardening_permissions.sql
+error: new row for relation "benefit" violates check constraint "benefit_mapping_required"
+    at /home/user/My-owns/node_modules/.pnpm/pg@8.16.3/node_modules/pg/lib/client.js:545:17
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async fixture (file:///home/user/My-owns/docs/delivery/handbacks/DG6/T-DG6-ARCH-01-evidence/probe.ts:130:5)
+    at async main (file:///home/user/My-owns/docs/delivery/handbacks/DG6/T-DG6-ARCH-01-evidence/probe.ts:184:3) {
+  length: 842,
+  severity: 'ERROR',
+  code: '23514',
+  detail: 'Failing row contains (01990000-0000-7000-8000-0000000000b1, 01990000-0000-7000-8000-000000000001, 01990000-0000-7000-8000-000000000005, B01, Synthetic sensitive benefit, Synthetic, cost, cash_saving, 01990000-0000-7000-8000-000000000003, null, t, null, null, null, null, null, null, null, null, null, null, unvalidated, null, null, null, null, null, null, null, null, null, null, null, SAR, 1250000.5000, null, null, null, null, null, null, 0, identify, null, null, null, null, null, active, null, null, null, 1, 2026-10-26 14:23:12.974721+00, 01990000-0000-7000-8000-000000000003, 2026-10-26 14:23:12.974721+00, 01990000-0000-7000-8000-000000000003).',
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: 'public',
+  table: 'benefit',
+  column: undefined,
+  dataType: undefined,
+  constraint: 'benefit_mapping_required',
+  file: 'execMain.c',
+  line: '2109',
+  routine: 'ExecConstraints'
+}

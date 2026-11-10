@@ -29,6 +29,9 @@ import {
   parseQuery,
   problems,
   sendVersioned,
+  keysetPage,
+  pageQueryFields,
+  type SortKey,
 } from "../platform/index.ts";
 import {
   assertActiveUsers,
@@ -293,14 +296,26 @@ const iParams = z.strictObject({ initiativeId: z.uuid() });
 const mParams = z.strictObject({ milestoneId: z.uuid() });
 const ITEM = "/api/v1/milestones/:milestoneId";
 const COLLECTION = "/api/v1/initiatives/:initiativeId/milestones";
+const listQuery = z.strictObject({ ...pageQueryFields });
+/** One initiative's milestones by forecast date (none last, as ORDER BY puts NULL), then id (T-DG6-BE-V). */
+const MILESTONE_SORT: readonly SortKey[] = [
+  { name: "forecast_date", type: "date", expr: sql`coalesce(forecast_date, 'infinity'::date)` },
+  { name: "id", type: "uuid" },
+];
 
 /** Registers the milestone routes and returns them as "METHOD /path". */
 export function registerMilestoneRoutes(app: FastifyInstance, { db }: ModuleDeps): readonly string[] {
   app.get(COLLECTION, { config: { access: { permission: "transformation.read" } } }, async (request) => {
     const { initiativeId } = parse(iParams, request.params, "params");
-    parseQuery(z.strictObject({}), request.query);
+    const query = parseQuery(listQuery, request.query);
     const ini = await readableInitiative(db, request, initiativeId);
-    return { items: (await loadMilestones(db, ini.transformation_id, [initiativeId])).map(toMilestone) };
+    const q = db
+      .selectFrom("milestone")
+      .selectAll()
+      .where("transformation_id", "=", ini.transformation_id)
+      .where("initiative_id", "=", initiativeId);
+    const page = await keysetPage(q, MILESTONE_SORT, query, { list: "milestones", initiativeId });
+    return { items: page.items.map(toMilestone), nextCursor: page.nextCursor };
   });
 
   app.post(

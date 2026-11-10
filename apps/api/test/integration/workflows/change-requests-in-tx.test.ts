@@ -63,6 +63,9 @@ const auditXmin = async (recordId: string, action: string) =>
       .select(sql<string>`xmin::text`.as("x"))
       .where("record_id", "=", recordId)
       .where("action", "=", action)
+      // Oldest first (F-DG6-200): callers index the result, and heap order is not insertion order under load.
+      .orderBy("occurred_at")
+      .orderBy("seq")
       .execute()
   ).map((r) => r.x);
 

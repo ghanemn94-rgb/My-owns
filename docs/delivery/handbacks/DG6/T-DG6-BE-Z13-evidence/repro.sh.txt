@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# repro.sh <phase:before|after>  — copies the round-8 reproductions into the tree, runs them on a disposable PG, removes them
+cd /home/user/wt/dg6-be-z13
+P=$1; E=docs/delivery/handbacks/DG6/T-DG6-BE-Z13-evidence
+export PATH=/opt/nvm/versions/node/v24.21.0/bin:$PATH
+unset LANG LC_ALL
+export QA_PG_PORT=31150 MTH_PORT_POOL=31151-31199
+CS=docs/delivery/test-evidence/DG6/code-security/round-8/repro
+cp $CS/zz-cs-r8-automation-resave.test.ts tests/qa/integration/
+cp $CS/zz-cs-r8-inbox-text.test.ts tests/qa/integration/
+cp docs/delivery/test-evidence/DG6/domain/round-8/r1662/dom-r8-condition-resave.test.ts.txt apps/api/test/integration/access/zz-dom-r8-condition-resave.test.ts
+cp docs/delivery/test-evidence/DG6/qa/tests/round-8/zz-qa-dg6r8b-condition-resave-pairing.test.ts apps/api/test/integration/access/
+cp docs/delivery/test-evidence/DG6/qa/tests/round-8/zz-qa-dg6r8-condition-ordinal-resave.test.ts apps/api/test/integration/access/
+for t in tests/qa/integration/zz-cs-r8-automation-resave.test.ts tests/qa/integration/zz-cs-r8-inbox-text.test.ts apps/api/test/integration/access/zz-dom-r8-condition-resave.test.ts apps/api/test/integration/access/zz-qa-dg6r8b-condition-resave-pairing.test.ts apps/api/test/integration/access/zz-qa-dg6r8-condition-ordinal-resave.test.ts; do
+  n=$(basename $t .test.ts)
+  tests/qa/support/with-pg.sh npx vitest run --project integration $t > $E/repro-$P-$n.log 2>&1
+  echo "exit $?" >> $E/repro-$P-$n.log
+  echo "$n: $(tail -1 $E/repro-$P-$n.log)"
+done
+rm -f tests/qa/integration/zz-cs-r8-*.test.ts apps/api/test/integration/access/zz-dom-r8-condition-resave.test.ts apps/api/test/integration/access/zz-qa-dg6r8*.test.ts

@@ -20,6 +20,7 @@ import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { RunningWorker } from "../../../apps/worker/src/index.ts";
 import { testEvidenceDir } from "../../../apps/api/test/support/harness.ts";
+import { exportAssemblyWatchStep } from "../../../apps/api/src/modules/reporting/exports/assembly.ts";
 import {
   CHILD_APP_NAME,
   childWorker,
@@ -113,6 +114,10 @@ describe("A13 export job: one job per Idempotency-Key; a killed worker restarts 
       expect(again.body.id).toBe(job.id);
       const rows = await env.su.query("SELECT count(*)::int AS n FROM export_job WHERE transformation_id = $1", [tId]);
       expect(rows.rows[0].n, "one export job").toBe(1);
+      // T-DG6-BE-Y5 (D-207): the live selection is assembled by the API process's export assembly watch (no timer under
+      // NODE_ENV=test) before its outbox event exists; a second step finds nothing to do.
+      await exportAssemblyWatchStep(env.api.db, { onlyJobIds: [job.id] });
+      expect(await exportAssemblyWatchStep(env.api.db, { onlyJobIds: [job.id] })).toEqual([]);
       const events = await outboxOf(env.api, job.id, "export_job.requested");
       expect(events.length, "one export_job.requested event").toBe(1);
     },

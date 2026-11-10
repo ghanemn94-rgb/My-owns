@@ -1,0 +1,193 @@
+# AFTER FIX: z15 + z14 + z13 + z12b + domain round-10 probe (UNMODIFIED) + db catalogue/migrate; Mon Nov  9 14:47:49 UTC 2026
+port-policy: PostgreSQL listening on port 31402 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-z15
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw9dlc6q_0913a30a (server_encoding UTF8); applied 119 migrations to a fresh database
+ ❯ |integration| packages/db/test/integration/catalogue.test.ts (39 tests | 1 failed) 190ms
+   ✓ schema.ts matches the migrated database > has exactly the same relations and columns as public 44ms
+   ✓ schema.ts matches the migrated database > 0025: an approved G1 decision is guarded by the deferred gate_decision_g1_agreements constraint trigger 2ms
+   ✓ schema.ts matches the migrated database > 0026 + 0059: product gate G4 is submittable (0026); G5 and G6 open with their evaluators (0059, ADR-0035 §2) 1ms
+   ✓ schema.ts matches the migrated database > 0027: benefit_calculation.rounding is a nullable jsonb object, bound to the row and required on new rows (ADR-0024 §6 item 11) 5ms
+   ✓ schema.ts matches the migrated database > 0029-0031: the P4 guards are attached (loop guard, one-accountable deferred guard, approval guards) 3ms
+   ✓ schema.ts matches the migrated database > 0033-0035: the P4 slice A guards are attached (deferred audit and consistency checks, append-only lineage) 3ms
+   ✓ schema.ts matches the migrated database > 0037-0038: the P4 slice B guards are attached (deferred audit and Finance-decision checks, append-only history) 3ms
+   ✓ schema.ts matches the migrated database > 0041-0042: the P4 slice E guards are attached (deferred audit, status guards, append-only signal log) 3ms
+   ✓ schema.ts matches the migrated database > 0044-0045: the P4 slice D guards are attached (deferred audit, status guards, frozen meetings, append-only logs) 4ms
+   ✓ schema.ts matches the migrated database > 0047-0048: the P4 slice F and G guards are attached (deferred audit, status guards, append-only history) 4ms
+   ✓ schema.ts matches the migrated database > 0051-0052: the P4 slice H guards are attached (deferred audit, status guards, append-only reviews, scope and assessments) 3ms
+   ✓ schema.ts matches the migrated database > 0055-0056: the P4 slices J and K guards are attached (deferred audit, allocation-set guard, inherited-record guard) 3ms
+   ✓ schema.ts matches the migrated database > 0062-0063: the P5 slice A guards are attached (deferred audit, Studio lifecycle, append-only runs and history) 3ms
+   ✓ schema.ts matches the migrated database > 0068-0070: the P5 slice B/C guards are attached (deferred audit, record references, append-only comments and links) 3ms
+   ✓ schema.ts matches the migrated database > 0071: form_custom_value_guard() keeps every 0068 rule and accepts a multiple choice as a list (T-DG5-BE-D; D-145) 3ms
+   ✓ schema.ts matches the migrated database > 0065: studio_default weight sets have no approver; p3_instantiate_transformation() pins scoring_defaults (T-DG5-KBE-A; D-142 Q12) 2ms
+   × schema.ts matches the migrated database > 0074-0075: the P5 slice D/E guards are attached (deferred audit and effective-version checks, append-only history) 20ms
+     → expected [ …(57) ] to deeply equal [ …(56) ]
+   ✓ schema.ts matches the migrated database > 0080-0081: the P5 slice F guards are attached (immutable snapshots, creation-only children, deferred checks) 2ms
+   ✓ schema.ts matches the migrated database > 0126: report_snapshot_aggregate is creation-only and append-only, like the other snapshot children 1ms
+   ✓ schema.ts matches the migrated database > 0085-0086: the P5 slice G/H guards are attached (deferred audit and completeness checks, append-only children) 3ms
+   ✓ schema.ts matches the migrated database > 0089-0090: the P5 slice I/J guards are attached (deferred audit on branding, immutable catalogues and histories) 2ms
+   ✓ schema.ts matches the migrated database > 0098-0099: the P6 slice E/F guards are attached (deferred audit, record references, set-once deep links, trigger-written histories) 3ms
+   ✓ schema.ts matches the migrated database > 0101-0102: the P6 slice J/C guards are attached (deferred audit, state machines, trigger-written histories, append-only links, an unaudited heartbeat) 2ms
+   ✓ schema.ts matches the migrated database > 0104-0106: the P6 slice B/A guards are attached (deferred audit, state machines, trigger-written histories, append-only configuration versions, receipts and lineage, staged rows never deleted) 2ms
+   ✓ schema.ts matches the migrated database > 0108: the P6 slice H/G guards are attached (deferred audit on saved views, monotonic derived index rows, trigger-written history, append-only load marker) 1ms
+   ✓ schema.ts matches the migrated database > 0111: the P6 slice D guards are attached (deferred audit on the setting, conversations and suggestions; the message count checked at COMMIT; trigger-written setting history; append-only messages) 1ms
+   ✓ schema.ts matches the migrated database > 0122: the enablement ledger is append-only and written by its SECURITY DEFINER trigger on automation_rule (D-203 O-2) 3ms
+   ✓ schema.ts matches the migrated database > 0123: the ledger records disables (source CHECK), has the occurrence-time lookup index, and its writer stays SECURITY DEFINER (D-204) 3ms
+   ✓ schema.ts matches the migrated database > 0125: export_job counts its assembly attempts (NOT NULL, default 0, >= 0) and its guard checks the assigned snapshot's definition and the attempt step (F-DG6-sa12-1, F-DG6-sa12-3) 4ms
+   ✓ schema.ts matches the migrated database > 0113:the P6 slice I contrast report guards are attached (deferred audit on the report; the pair count checked at COMMIT from both tables; both append-only) 1ms
+   ✓ schema.ts matches the migrated database > 0097: the contributor tables are append-only and every content table of a draft records its writers (D-170) 3ms
+   ✓ schema.ts matches the migrated database > marks exactly the views as views 2ms
+   ✓ type and structure rules (ADR-0003, data dictionary global rules) > uses timestamptz only (no timestamp without time zone) and no floating point 8ms
+   ✓ type and structure rules (ADR-0003, data dictionary global rules) > gives every base table a primary key and uuid ids without defaults 8ms
+   ✓ type and structure rules (ADR-0003, data dictionary global rules) > gives every mutable business table a version column >= 1 defaulting to 1 18ms
+   ✓ type and structure rules (ADR-0003, data dictionary global rules) > stores money-bearing currency as char(3) with a code check 4ms
+   ✓ mth_app privileges are exactly the data dictionary's > matches per table 7ms
+   ✓ mth_app privileges are exactly the data dictionary's > has no CREATE on public and owns nothing 2ms
+   ✓ mth_app privileges are exactly the data dictionary's > can use the pg-boss schema without DDL 1ms
+ ✓ |integration| apps/api/test/integration/access/automation-restricted-tokens-z13.test.ts (11 tests) 1622ms
+ ✓ |integration| apps/api/test/integration/access/automation-restricted-tokens-z15.test.ts (7 tests) 1914ms
+   ✓ T-DG6-BE-Z15: restricted tokens are bound to their issuing rule-version row (D-233, F-DG6-640) > (a) the token is an opaque issuer tag: no row version, no row id, no hidden value; other rows issue other tags  321ms
+   ✓ T-DG6-BE-Z15: restricted tokens are bound to their issuing rule-version row (D-233, F-DG6-640) > (b) F-DG6-640: a token copied from the published version 1 into its draft version 2 at the same row version is refused stale  323ms
+stdout | apps/api/test/integration/zz-domain/dom-r10-token-binding.test.ts > DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (g) F-DG6-580 reproduction: the same form saved twice; the 2nd save is refused 422 stale and S stays
+DOM-R10 (g) shown [{"op":"neq","field":"benefitId","value":"<P>"},{"op":"neq","field":"benefitId","value":"[restricted:366c929585a3aafc5ac6422a:2]"},{"op":"neq","field":"benefitId","value":"<Q>"}] version [33m1[39m flag [33mtrue[39m
+
+stdout | apps/api/test/integration/zz-domain/dom-r10-token-binding.test.ts > DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (g2) a 409 from a concurrent tab, then the same draft re-sent with the refreshed If-Match: refused, S stays
+DOM-R10 (g2) tab1 stale If-Match [33m409[39m version_conflict
+
+stdout | apps/api/test/integration/zz-domain/dom-r10-token-binding.test.ts > DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (g2) a 409 from a concurrent tab, then the same draft re-sent with the refreshed If-Match: refused, S stays
+DOM-R10 (g2) tab1 resend with fresh If-Match [33m422[39m automation_rule.restricted_token_stale
+
+stdout | apps/api/test/integration/zz-domain/dom-r10-token-binding.test.ts > DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (g2) a 409 from a concurrent tab, then the same draft re-sent with the refreshed If-Match: refused, S stays
+DOM-R10 (g2) stored [{"op":"neq","field":"benefitId","value":"<S>"},{"op":"neq","field":"benefitId","value":"<Q>"}]
+
+stdout | apps/api/test/integration/zz-domain/dom-r10-token-binding.test.ts > DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (e) bare, retired, unknown and marker-like text are refused 422 and nothing is stored
+DOM-R10 (e) "[restricted]" status [33m422[39m code automation_rule.restricted_marker_unknown pointer /content/conditions/1/value
+
+stdout | apps/api/test/integration/zz-domain/dom-r10-token-binding.test.ts > DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (e) bare, retired, unknown and marker-like text are refused 422 and nothing is stored
+DOM-R10 (e) "[restricted:2]" status [33m422[39m code automation_rule.restricted_marker_unknown pointer /content/conditions/1/value
+
+stdout | apps/api/test/integration/zz-domain/dom-r10-token-binding.test.ts > DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (e) bare, retired, unknown and marker-like text are refused 422 and nothing is stored
+DOM-R10 (e) "[restricted:1:9]" status [33m422[39m code automation_rule.restricted_token_stale pointer /content/conditions/1/value
+
+stdout | apps/api/test/integration/zz-domain/dom-r10-token-binding.test.ts > DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (f) a grant between read and save keeps S
+DOM-R10 (f) save [33m200[39m [{"op":"neq","field":"benefitId","value":"<H>"},{"op":"neq","field":"benefitId","value":"<Q>"}]
+
+stdout | apps/api/test/integration/zz-domain/dom-r10-token-binding.test.ts > DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (i) CROSS-RULE: a token copied from rule A into rule B's draft at the same row version is refused or keeps S
+DOM-R10 (i) rule A shown [{"op":"neq","field":"benefitId","value":"<P>"},{"op":"neq","field":"benefitId","value":"[restricted:de0811b8ae6955b7f775fd88:2]"}] v [33m1[39m | rule B shown [{"op":"neq","field":"benefitId","value":"<Q>"},{"op":"neq","field":"benefitId","value":"[restricted:fc58932d5a3a888238e9e20b:2]"}] v [33m1[39m
+DOM-R10 (i) token of S copied from A: [restricted:de0811b8ae6955b7f775fd88:2] | B's own token of H2: [restricted:fc58932d5a3a888238e9e20b:2]
+
+stdout | apps/api/test/integration/zz-domain/dom-r10-token-binding.test.ts > DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (i) CROSS-RULE: a token copied from rule A into rule B's draft at the same row version is refused or keeps S
+DOM-R10 (i) save B [33m422[39m automation_rule.restricted_token_stale response undefined flag [90mundefined[39m
+
+stdout | apps/api/test/integration/zz-domain/dom-r10-token-binding.test.ts > DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (i) CROSS-RULE: a token copied from rule A into rule B's draft at the same row version is refused or keeps S
+DOM-R10 (i) B stored [{"op":"neq","field":"benefitId","value":"<Q>"},{"op":"neq","field":"benefitId","value":"<H2>"}]
+
+stdout | apps/api/test/integration/zz-domain/dom-r10-token-binding.test.ts > DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (j) PUBLISHED -> DRAFT: a token copied from published v1 into draft v2 after positions shifted
+DOM-R10 (j) published v1 shown [{"op":"neq","field":"benefitId","value":"<P>"},{"op":"neq","field":"benefitId","value":"[restricted:32ac840b84e424cff3f936a2:2]"},{"op":"neq","field":"benefitId","value":"[restricted:32ac840b84e424cff3f936a2:3]"}] row version [33m4[39m status published
+
+stdout | apps/api/test/integration/zz-domain/dom-r10-token-binding.test.ts > DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (j) PUBLISHED -> DRAFT: a token copied from published v1 into draft v2 after positions shifted
+DOM-R10 (j) draft v2 shown [{"op":"neq","field":"benefitId","value":"<P>"},{"op":"neq","field":"benefitId","value":"[restricted:c4553fee1577d5aed9dc01e2:2]"},{"op":"neq","field":"benefitId","value":"[restricted:c4553fee1577d5aed9dc01e2:3]"}] row version [33m1[39m
+
+stdout | apps/api/test/integration/zz-domain/dom-r10-token-binding.test.ts > DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (j) PUBLISHED -> DRAFT: a token copied from published v1 into draft v2 after positions shifted
+DOM-R10 (j) draft v2 after removal and re-saves [{"op":"neq","field":"benefitId","value":"<P>"},{"op":"neq","field":"benefitId","value":"[restricted:fe1eff6bfaa115d66527c7eb:2]"}] row version [33m4[39m | v1 row version [33m4[39m
+
+stdout | apps/api/test/integration/zz-domain/dom-r10-token-binding.test.ts > DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (j) PUBLISHED -> DRAFT: a token copied from published v1 into draft v2 after positions shifted
+DOM-R10 (j) save v2 with v1's token [restricted:32ac840b84e424cff3f936a2:2] -> [33m422[39m automation_rule.restricted_token_stale response undefined flag [90mundefined[39m
+
+stdout | apps/api/test/integration/zz-domain/dom-r10-token-binding.test.ts > DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (j) PUBLISHED -> DRAFT: a token copied from published v1 into draft v2 after positions shifted
+DOM-R10 (j) v2 stored [{"op":"neq","field":"benefitId","value":"<P>"},{"op":"neq","field":"benefitId","value":"<H>"}]
+
+ ❯ |integration| apps/api/test/integration/zz-domain/dom-r10-token-binding.test.ts (6 tests | 2 failed) 1371ms
+   × DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (g) F-DG6-580 reproduction: the same form saved twice; the 2nd save is refused 422 stale and S stays 190ms
+     → expected '[restricted:366c929585a3aafc5ac6422a:…' to be '[restricted:1:2]' // Object.is equality
+   ✓ DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (g2) a 409 from a concurrent tab, then the same draft re-sent with the refreshed If-Match: refused, S stays 172ms
+   × DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (e) bare, retired, unknown and marker-like text are refused 422 and nothing is stored 154ms
+     → expected 'automation_rule.restricted_token_stale' to be 'automation_rule.restricted_marker_unk…' // Object.is equality
+   ✓ DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (f) a grant between read and save keeps S 122ms
+   ✓ DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (i) CROSS-RULE: a token copied from rule A into rule B's draft at the same row version is refused or keeps S 178ms
+   ✓ DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (j) PUBLISHED -> DRAFT: a token copied from published v1 into draft v2 after positions shifted 261ms
+ ✓ |integration| apps/api/test/integration/access/sensitive-reference-pending-z12b.test.ts (7 tests) 970ms
+ ✓ |integration| apps/api/test/integration/access/automation-restricted-tokens-z14.test.ts (5 tests) 1198ms
+ ✓ |integration| packages/db/test/integration/migrate.test.ts (9 tests) 4350ms
+   ✓ mth-db migrate on a fresh database > applies every shipped migration, then reports up to date  2055ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| packages/db/test/integration/catalogue.test.ts > schema.ts matches the migrated database > 0074-0075: the P5 slice D/E guards are attached (deferred audit and effective-version checks, append-only history)
+AssertionError: expected [ …(57) ] to deeply equal [ …(56) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[33m@@ -136,10 +136,16 @@[39m
+[2m      "automation_rule_version_row_guard",[22m
+[2m      false,[22m
+[2m      false,[22m
+[2m    ],[22m
+[2m    [[22m
+[31m+     "automation_rule_version",[39m
+[31m+     "automation_rule_version_token_key_immutable",[39m
+[31m+     false,[39m
+[31m+     false,[39m
+[31m+   ],[39m
+[31m+   [[39m
+[2m      "dependency_slip",[22m
+[2m      "dependency_slip_append_only",[22m
+[2m      false,[22m
+[2m      false,[22m
+[2m    ],[22m
+
+ ❯ packages/db/test/integration/catalogue.test.ts:688:74
+    686|       return x < y ? -1 : x > y ? 1 : 0;
+    687|     });
+    688|     expect(rows.map((r) => [r.rel, r.tgname, r.deferrable, r.deferred]…
+       |                                                                          ^
+    689|   });
+    690| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |integration| apps/api/test/integration/zz-domain/dom-r10-token-binding.test.ts > DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (g) F-DG6-580 reproduction: the same form saved twice; the 2nd save is refused 422 stale and S stays
+AssertionError: expected '[restricted:366c929585a3aafc5ac6422a:…' to be '[restricted:1:2]' // Object.is equality
+
+Expected: [32m"[restricted:[7m1[27m:2]"[39m
+Received: [31m"[restricted:[7m366c929585a3aafc5ac6422a[27m:2]"[39m
+
+ ❯ apps/api/test/integration/zz-domain/dom-r10-token-binding.test.ts:148:47
+    146|     const shown = await read(id);
+    147|     log("(g) shown", mask(shown.content.conditions), "version", shown.…
+    148|     expect(shown.content.conditions[1].value).toBe(`[restricted:${show…
+       |                                               ^
+    149|     const form = { ...shown.content, conditions: shown.content.conditi…
+    150|     const first = await patch(id, shown.version, form);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |integration| apps/api/test/integration/zz-domain/dom-r10-token-binding.test.ts > DOM-R10 probe: version-bound tokens (D-231) under ordinary and adversarial sequences > (e) bare, retired, unknown and marker-like text are refused 422 and nothing is stored
+AssertionError: expected 'automation_rule.restricted_token_stale' to be 'automation_rule.restricted_marker_unk…' // Object.is equality
+
+Expected: [32m"automation_rule.restricted_[7mmarker_unknown[27m"[39m
+Received: [31m"automation_rule.restricted_[7mtoken_stale[27m"[39m
+
+ ❯ apps/api/test/integration/zz-domain/dom-r10-token-binding.test.ts:204:30
+    202|       log("(e)", JSON.stringify(bad), "status", res.status, "code", re…
+    203|       expect(res.status).toBe(422);
+    204|       expect(res.body?.code).toBe(code);
+       |                              ^
+    205|     }
+    206|     expect(await stored(id)).toEqual(before);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  2 failed | 5 passed (7)
+      Tests  3 failed | 81 passed (84)
+   Start at  14:47:50
+   Duration  28.72s (transform 4.48s, setup 0ms, collect 14.15s, tests 11.62s, environment 0ms, prepare 60ms)
+
+EXIT=1

@@ -1,0 +1,49 @@
+=== M2-no-stale-recovery: apps/api/src/modules/integrations/runs.ts
+pattern occurrences before=1 after=0
+replace: OR (r.status = 'running' AND r.started_at <
+with:    OR (false AND r.started_at <
+diff:
+984c984
+<          OR (r.status = 'running' AND r.started_at < ${now} - make_interval(secs => ${STALE_RUNNING_SECONDS})))
+---
+>          OR (false AND r.started_at < ${now} - make_interval(secs => ${STALE_RUNNING_SECONDS})))
+port-policy: PostgreSQL listening on port 26455 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.C0myCF/claude-0/mut-M2-no-stale-recovery
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvvg9i2w_ada8c6df (server_encoding UTF8); applied 113 migrations to a fresh database
+ ❯ |integration| tests/qa/integration/a13-p6-connector-run-kill-restart.test.ts (1 test | 1 failed) 268147ms
+   × A13 (REQ-S20-013): the process executing a connector run is killed mid-run and restarted > the killed run stages nothing and stays `running` with Unknown counts; the restarted watch finishes it once 258238ms
+     → Error: timed out after 240000 ms waiting for the restarted watch finishes the run
+[{"id":"01a18e98-7b66-710f-b29e-167ba65001df","organization_id":"01a18e98-701a-7063-9ab4-d966ac54e3e8","connector_id":"01a18e98-7a67-7764-94a4-671744d4d733","config_version_no":1,"trigger_kind":"manual","status":"running","attempt_no":1,"retry_of_run_id":null,"idempotency_key":"manual:01a18e98-7b33-764f-bb9b-ad8e6cfe5877","requested_by":"01a18e98-70d9-7157-8a9b-9ba55bfbabbc","service_identity_id":"01a18e98-7a76-72b9-9bad-31642ebcdbdd","queued_at":"2026-10-30T20:55:20.140Z","started_at":"2026-10-30T20:55:29.938Z","finished_at":null,"rows_read":null,"rows_staged":null,"rows_committed":null,"rows_rejected":null,"rows_duplicate":null,"error_count":null,"error_code":null,"error_message":null,"reconciliation_status":"not_checked","source_row_count":null,"source_control_total":null,"staged_control_total":null,"import_batch_id":null,"version":2,"created_at":"2026-10-30T20:55:20.140Z","created_by":"01a18e98-70d9-7157-8a9b-9ba55bfbabbc","updated_at":"2026-10-30T20:55:29.938Z","updated_by":null}]
+child:
+READY
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/a13-p6-connector-run-kill-restart.test.ts > A13 (REQ-S20-013): the process executing a connector run is killed mid-run and restarted > the killed run stages nothing and stays `running` with Unknown counts; the restarted watch finishes it once
+Error: Error: timed out after 240000 ms waiting for the restarted watch finishes the run
+[{"id":"01a18e98-7b66-710f-b29e-167ba65001df","organization_id":"01a18e98-701a-7063-9ab4-d966ac54e3e8","connector_id":"01a18e98-7a67-7764-94a4-671744d4d733","config_version_no":1,"trigger_kind":"manual","status":"running","attempt_no":1,"retry_of_run_id":null,"idempotency_key":"manual:01a18e98-7b33-764f-bb9b-ad8e6cfe5877","requested_by":"01a18e98-70d9-7157-8a9b-9ba55bfbabbc","service_identity_id":"01a18e98-7a76-72b9-9bad-31642ebcdbdd","queued_at":"2026-10-30T20:55:20.140Z","started_at":"2026-10-30T20:55:29.938Z","finished_at":null,"rows_read":null,"rows_staged":null,"rows_committed":null,"rows_rejected":null,"rows_duplicate":null,"error_count":null,"error_code":null,"error_message":null,"reconciliation_status":"not_checked","source_row_count":null,"source_control_total":null,"staged_control_total":null,"import_batch_id":null,"version":2,"created_at":"2026-10-30T20:55:20.140Z","created_by":"01a18e98-70d9-7157-8a9b-9ba55bfbabbc","updated_at":"2026-10-30T20:55:29.938Z","updated_by":null}]
+child:
+READY
+
+ ❯ tests/qa/integration/a13-p6-connector-run-kill-restart.test.ts:188:15
+    186|         240_000,
+    187|       ).catch(async (e) => {
+    188|         throw new Error(`${String(e)}\n${JSON.stringify(await runsOf()…
+       |               ^
+    189|       });
+    190| 
+ ❯ tests/qa/integration/a13-p6-connector-run-kill-restart.test.ts:180:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  20:53:50
+   Duration  347.99s (transform 30.72s, setup 0ms, collect 63.49s, tests 268.15s, environment 0ms, prepare 446ms)
+
+MUTANT-TEST-EXIT=1

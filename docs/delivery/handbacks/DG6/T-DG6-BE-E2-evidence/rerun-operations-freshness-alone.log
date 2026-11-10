@@ -1,0 +1,80 @@
+port-policy: PostgreSQL listening on port 25402 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-e2
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvur7wpu_92b509f0 (server_encoding UTF8); applied 110 migrations to a fresh database
+ ❯ |integration| apps/worker/test/integration/operations-freshness.test.ts (7 tests | 2 failed) 10587ms
+   ✓ the catalogue triggers and starter 16 version 2 (ADR-0053 §3; 0116) > lists connector.run_failed and data.stale, admin-selectable events of M0239, each fed to the engine 33ms
+   × the catalogue triggers and starter 16 version 2 (ADR-0053 §3; 0116) > version 1 is unchanged published history (superseded); version 2 is effective with the three triggers 21ms
+     → expected [ …(5) ] to deeply equal [ …(5) ]
+   ✓ the catalogue triggers and starter 16 version 2 (ADR-0053 §3; 0116) > the guard refuses an application version that adds a trigger and accepts one that keeps version 2's set 59ms
+   × kpi.freshness_scan and operations.exception_raise (ADR-0053 §2; REQ-S12-019) > a KPI older than staleAfterDays -> one data_stale exception linked to it; the KPI still reads Stale with its last value and date 223ms
+     → expected [ { …(3) } ] to deeply equal [ { …(3) } ]
+   ✓ kpi.freshness_scan and operations.exception_raise (ADR-0053 §2; REQ-S12-019) > one alert per open, none per recurrence; fresh again -> recovered 184ms
+   ✓ kpi.freshness_scan and operations.exception_raise (ADR-0053 §2; REQ-S12-019) > platform exceptions alert every organization's holders; heartbeat_missed gets no second log line 55ms
+   ✓ kpi.freshness_scan and operations.exception_raise (ADR-0053 §2; REQ-S12-019) > a narrowed grant fails the scan with service_identity.out_of_scope; restoring it lets it run 68ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/worker/test/integration/operations-freshness.test.ts > the catalogue triggers and starter 16 version 2 (ADR-0053 §3; 0116) > version 1 is unchanged published history (superseded); version 2 is effective with the three triggers
+AssertionError: expected [ …(5) ] to deeply equal [ …(5) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[33m@@ -1,7 +1,7 @@[39m
+[2m  [[22m
+[32m-   "01920006-0116-7000-8000-000000000001",[39m
+[31m+   "01920006-0117-7000-8000-000000000001",[39m
+[2m    "published",[22m
+[2m    [[22m
+[2m      "job.failed",[22m
+[2m      "connector.run_failed",[22m
+[2m      "data.stale",[22m
+
+ ❯ apps/worker/test/integration/operations-freshness.test.ts:330:81
+    328|     expect(v1!.actions).toEqual([{ type: "starter_handler", handlers: …
+    329|     expect(v1!.published_at).not.toBeNull();
+    330|     expect([v2!.id, v2!.status, v2!.trigger_codes, v2!.conditions, v2!…
+       |                                                                                 ^
+    331|       STARTER_16_V2,
+    332|       "published",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |integration| apps/worker/test/integration/operations-freshness.test.ts > kpi.freshness_scan and operations.exception_raise (ADR-0053 §2; REQ-S12-019) > a KPI older than staleAfterDays -> one data_stale exception linked to it; the KPI still reads Stale with its last value and date
+AssertionError: expected [ { …(3) } ] to deeply equal [ { …(3) } ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    {[22m
+[32m-     "automation_rule_version_id": "01920006-0116-7000-8000-000000000001",[39m
+[31m+     "automation_rule_version_id": "01920006-0117-7000-8000-000000000001",[39m
+[2m      "status": "succeeded",[22m
+[2m      "trigger_code": "data.stale",[22m
+[2m    },[22m
+[2m  ][22m
+
+ ❯ apps/worker/test/integration/operations-freshness.test.ts:492:19
+    490|       .where("trigger_key", "=", events[0]!.idempotency_key)
+    491|       .execute();
+    492|     expect(execs).toEqual([
+       |                   ^
+    493|       { automation_rule_version_id: STARTER_16_V2, trigger_code: "data…
+    494|     ]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 5 passed (7)
+   Start at  09:12:46
+   Duration  35.63s (transform 7.04s, setup 0ms, collect 12.67s, tests 10.59s, environment 0ms, prepare 141ms)
+
+exit 1

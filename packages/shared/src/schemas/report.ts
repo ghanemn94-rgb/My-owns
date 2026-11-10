@@ -217,6 +217,16 @@ const sectionBase = {
   key: reportSectionKey,
   titleKey: reportI18nKey,
   sources: z.array(reportRecordRef),
+  /**
+   * T-DG6-BE-Z7B (F-DG6-340; ADR-0051 §2 "Totals and rollups"; D-195 Q3): a READ-TIME member, set per reader by the
+   * API when the section references a marked-sensitive record (a row, an item or a source) or, T-DG6-BE-Z9
+   * (F-DG6-400), when its aggregate figures include one (the executive pack's metrics, the executive dashboard's value
+   * area and portfolio items, the gate pack's unverified-evidence counts): `true` when the reader is not admitted to
+   * at least one of them (its rows are omitted; its totals and metrics are unchanged and labelled "Includes restricted
+   * records"), `false` when the reader is admitted to all. The assemblers never set it, so stored content and its
+   * `contentSha256` are unchanged.
+   */
+  includesRestrictedRecords: z.boolean().optional(),
 };
 
 const fieldsSection = z.strictObject({ ...sectionBase, kind: z.literal("fields"), fields: z.array(reportField) });
@@ -473,7 +483,10 @@ export const reportSnapshotVersion = z.strictObject({
   versionLabel: z.string(),
 });
 export type ReportSnapshotVersion = z.infer<typeof reportSnapshotVersion>;
-export const reportSnapshotVersionList = z.strictObject({ items: z.array(reportSnapshotVersion) });
+export const reportSnapshotVersionList = z.strictObject({
+  items: z.array(reportSnapshotVersion),
+  nextCursor: z.string().nullable(),
+});
 
 export const reportSnapshotEvidenceItem = z.strictObject({
   sectionKey: z.string(),

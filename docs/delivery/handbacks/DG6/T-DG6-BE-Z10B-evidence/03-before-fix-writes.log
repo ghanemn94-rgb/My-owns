@@ -1,0 +1,158 @@
+port-policy: PostgreSQL listening on port 31052 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-z10b
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw6qzm3t_3b168d07 (server_encoding UTF8); applied 118 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/access/sensitive-reach-id-refs-writes.test.ts (5 tests | 5 failed) 6136ms
+   × listEvidenceVersions: the sensitivity reach check (T-DG6-BE-Z10B) > TL (not admitted) gets 404 on the sensitive item's versions, as on the item; TLA and the TO read them; TL reads an open item's 33ms
+     → {"items":[],"nextCursor":null}: expected 200 to be 404 // Object.is equality
+   × the Day-90 re-save rule (keptRestrictedRef; D-218) > TL's re-save (null or absent) keeps the hidden evidence; another id replaces it; the admitted writer clears it 181ms
+     → expected null to be '01a1b74f-50fc-7719-ba4c-ac56bb335a8f' // Object.is equality
+   × health checks: answer re-save rule and write responses (T-DG6-BE-Z10B) > TL's answer re-save keeps the hidden evidence; the PATCH and answer responses never name it to TL; TLA sees it 115ms
+     → expected '{"id":"01a1b74f-5249-711c-aac5-b2925d…' not to contain '01a1b74f-50fc-7719-ba4c-ac56bb335a8f'
+   × agenda materials: list redaction and the re-save rule (T-DG6-BE-Z10B) > TL reads the materials without E (marked) and a re-save of the list keeps E; TLA sees E 173ms
+     → expected [ …(2) ] to deeply equal [ Array(1) ]
+   × register-kit write responses: a workstream output (T-DG6-BE-Z10B) > TL's PATCH response and reads show evidenceId null with the marker; the stored link stays; TLA sees it 50ms
+     → expected '01a1b74f-50fc-7719-ba4c-ac56bb335a8f' to be null
+ ❯ |integration| apps/api/test/integration/workflows/gate-conditions.test.ts (6 tests | 1 failed) 2115ms
+   ✓ v1: conditional G5 within its scope (REQ-S04-011 A08; DG4 behaviour re-run) > a conditional G5 limited to one BU blocks a scale transition for another BU; no scope -> 422  550ms
+   ✓ the Studio switch (ADR-0044 §3; D-142 Q2) > catalogue default: on for G5 only 265ms
+   ✓ the Studio switch (ADR-0044 §3; D-142 Q2) > switched off in a published v2: conditions -> 422 gate.conditional_approval_disabled, nothing written 271ms
+   ✓ the Studio switch (ADR-0044 §3; D-142 Q2) > switched on explicitly in a v2: conditions are accepted 218ms
+   ✓ tracked to closure (listGateConditions, closeGateCondition) > open / overdue / closed; only the owner closes, once; AUD reads but cannot close 271ms
+   × the close response never names a restricted evidence item (T-DG6-BE-Z10B; F-DG6-420; D-218) > the owner (not admitted) closes citing a sensitive evidence item: the 201 body shows evidenceId null and the marker; the TO sees the id 268ms
+     → expected { …(14) } to match object { …(4) }
+(11 matching properties omitted from actual)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-id-refs-writes.test.ts > listEvidenceVersions: the sensitivity reach check (T-DG6-BE-Z10B) > TL (not admitted) gets 404 on the sensitive item's versions, as on the item; TLA and the TO read them; TL reads an open item's
+AssertionError: {"items":[],"nextCursor":null}: expected 200 to be 404 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 404[39m
+[31m+ 200[39m
+
+ ❯ apps/api/test/integration/access/sensitive-reach-id-refs-writes.test.ts:96:56
+     94|     expect((await get(`${base}/evidence/${S.e}`, tl)).status).toBe(404…
+     95|     const denied = await get(`${base}/evidence/${S.e}/versions`, tl);
+     96|     expect(denied.status, JSON.stringify(denied.body)).toBe(404);
+       |                                                        ^
+     97|     expect(JSON.stringify(denied.body)).not.toContain("CONFIDENTIAL");
+     98|     for (const s of [tla, to]) expect((await get(`${base}/evidence/${S…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-id-refs-writes.test.ts > the Day-90 re-save rule (keptRestrictedRef; D-218) > TL's re-save (null or absent) keeps the hidden evidence; another id replaces it; the admitted writer clears it
+AssertionError: expected null to be '01a1b74f-50fc-7719-ba4c-ac56bb335a8f' // Object.is equality
+
+[32m- Expected:[39m 
+"01a1b74f-50fc-7719-ba4c-ac56bb335a8f"
+
+[31m+ Received:[39m 
+null
+
+ ❯ apps/api/test/integration/access/sensitive-reach-id-refs-writes.test.ts:142:32
+    140|     expect(resaveNull.status, JSON.stringify(resaveNull.body).slice(0,…
+    141|     expect(JSON.stringify(resaveNull.body)).not.toContain(S.e);
+    142|     expect(await stored(code)).toBe(S.e);
+       |                                ^
+    143| 
+    144|     const resaveAbsent = await put(tl, code, { answer: "no", comment: …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-id-refs-writes.test.ts > health checks: answer re-save rule and write responses (T-DG6-BE-Z10B) > TL's answer re-save keeps the hidden evidence; the PATCH and answer responses never name it to TL; TLA sees it
+AssertionError: expected '{"id":"01a1b74f-5249-711c-aac5-b2925d…' not to contain '01a1b74f-50fc-7719-ba4c-ac56bb335a8f'
+
+Expected: [32m"01a1b74f-50fc-7719-ba4c-ac56bb335a8f"[39m
+Received: [31m"{"id":"01a1b74f-5249-711c-aac5-b2925d8f83b4","transformationId":"01995000-0000-7000-8000-000000000001","sequenceNo":2,"schemeVersionId":"01920005-0860-7000-8000-000000000001","schemeVersionNo":1,"assessmentDate":"2026-11-06","ownerUserId":"01a1b74f-504c-723f-9e45-65a2b0f01eca","status":"draft","completion":{"answered":1,"total":25,"complete":false},"score":null,"scoreMax":null,"band":null,"scoringAssumption":true,"previousAssessmentId":"01995000-1055-7000-8000-000000000001","submittedAt":null,"submittedBy":null,"version":3,"createdAt":"2026-11-07T18:39:51.360Z","updatedAt":"2026-11-07T18:39:51.440Z","answers":[{"questionCode":"q01","response":"yes","evidenceNote":null,"evidenceId":"01a1b74f-50fc-7719-ba4c-ac56bb335a8f","ownerUserId":null,"actionNote":null,"answeredBy":"01a1b74f-504c-723f-9e45-65a2b0f01eca","updatedAt":"2026-11-07T18:39:51.404Z"}],"actions":[]}"[39m
+
+ ❯ apps/api/test/integration/access/sensitive-reach-id-refs-writes.test.ts:192:46
+    190|     });
+    191|     expect(patched.status, JSON.stringify(patched.body).slice(0, 400))…
+    192|     expect(JSON.stringify(patched.body)).not.toContain(S.e);
+       |                                              ^
+    193|     const tlAnswer = patched.body.answers.find((a: Body) => a.question…
+    194|     expect(tlAnswer.evidenceId).toBeNull();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-id-refs-writes.test.ts > agenda materials: list redaction and the re-save rule (T-DG6-BE-Z10B) > TL reads the materials without E (marked) and a re-save of the list keeps E; TLA sees E
+AssertionError: expected [ …(2) ] to deeply equal [ Array(1) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[31m+   "01a1b74f-50fc-7719-ba4c-ac56bb335a8f",[39m
+[2m    "01a1b74f-5123-77ad-8e12-3af617ff445d",[22m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/access/sensitive-reach-id-refs-writes.test.ts:254:39
+    252|     const seen = await get(items, tl);
+    253|     const mine = seen.body.items.find((i: Body) => i.id === created.bo…
+    254|     expect(mine.materialsEvidenceIds).toEqual([S.o]);
+       |                                       ^
+    255|     expect(mine.includesRestrictedRecords).toBe(true);
+    256|     expect(JSON.stringify(seen.body)).not.toContain(S.e);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-id-refs-writes.test.ts > register-kit write responses: a workstream output (T-DG6-BE-Z10B) > TL's PATCH response and reads show evidenceId null with the marker; the stored link stays; TLA sees it
+AssertionError: expected '01a1b74f-50fc-7719-ba4c-ac56bb335a8f' to be null
+
+[32m- Expected:[39m 
+null
+
+[31m+ Received:[39m 
+"01a1b74f-50fc-7719-ba4c-ac56bb335a8f"
+
+ ❯ apps/api/test/integration/access/sensitive-reach-id-refs-writes.test.ts:295:37
+    293|     });
+    294|     expect(patched.status, JSON.stringify(patched.body).slice(0, 300))…
+    295|     expect(patched.body.evidenceId).toBeNull();
+       |                                     ^
+    296|     expect(patched.body.includesRestrictedRecords).toBe(true);
+    297|     const row = await sql<{ id: string }>`SELECT evidence_id::text AS …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  |integration| apps/api/test/integration/workflows/gate-conditions.test.ts > the close response never names a restricted evidence item (T-DG6-BE-Z10B; F-DG6-420; D-218) > the owner (not admitted) closes citing a sensitive evidence item: the 201 body shows evidenceId null and the marker; the TO sees the id
+AssertionError: expected { …(14) } to match object { …(4) }
+(11 matching properties omitted from actual)
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[32m-   "evidenceId": null,[39m
+[31m+   "evidenceId": "01a1b74f-6692-72d6-9449-f34712e46eee",[39m
+[2m    "id": "01a1b74f-667b-7058-a941-2a5bb59f6561",[22m
+[32m-   "includesRestrictedRecords": true,[39m
+[2m    "status": "closed",[22m
+[2m  }[22m
+
+ ❯ apps/api/test/integration/workflows/gate-conditions.test.ts:240:25
+    238|     });
+    239|     expect(closed.status, JSON.stringify(closed.body)).toBe(201);
+    240|     expect(closed.body).toMatchObject({ id: c.id, status: "closed", ev…
+       |                         ^
+    241|     expect(JSON.stringify(closed.body)).not.toContain(ev.body.id);
+    242|     const stored = await api.db
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  6 failed | 5 passed (11)
+   Start at  18:39:33
+   Duration  23.16s (transform 4.47s, setup 0ms, collect 11.24s, tests 8.25s, environment 0ms, prepare 50ms)
+
+EXIT=1

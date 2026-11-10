@@ -32,6 +32,12 @@ import {
 } from "../support/harness.ts";
 import { setupP2World, type P2World } from "../support/p2-fixtures.ts";
 
+/**
+ * T-DG6-BE-D (ADR-0052 §1): uploads pass the allow-list by magic bytes plus extension, so a synthetic binary body is a
+ * PDF (`%PDF-` then random bytes, exactly `n` bytes, n >= 5) named `.pdf`; every byte after the signature stays random.
+ */
+const pdfBytes = (n: number): Buffer => Buffer.concat([Buffer.from("%PDF-", "latin1"), randomBytes(n - 5)]);
+
 const logLines: Array<{ level: number; msg: string; requestId?: string }> = [];
 const logStream = {
   write(line: string) {
@@ -219,7 +225,7 @@ function uploadHead(o: UploadHead): Buffer {
     Origin: new URL(APP_ORIGIN).origin,
     "X-CSRF-Token": session && o.csrf !== false ? session.csrf : undefined,
     "If-Match": o.version === null ? undefined : `"${o.version ?? 1}"`,
-    "X-File-Name": o.fileName ?? "synthetic.bin",
+    "X-File-Name": o.fileName ?? "synthetic.pdf",
     "Content-Type": o.contentType ?? "application/octet-stream",
     ...(o.framing === "chunked" ? { "Transfer-Encoding": "chunked" } : { "Content-Length": String(o.length ?? 0) }),
     ...(o.keepAlive === false ? { Connection: "close" } : {}),
@@ -568,7 +574,7 @@ describe("a client that aborts mid-upload leaves no partial object and no leaked
       const errorsBefore = errorLogs().length;
       const client = await openClient(basePort);
       await write(client, uploadHead({ evidenceId: f.id, version: f.version, framing, length: 10 * MiB }));
-      const piece = randomBytes(256 * 1024);
+      const piece = pdfBytes(256 * 1024);
       for (let i = 0; i < 8; i += 1) await write(client, framing === "chunked" ? chunkOf(piece) : piece);
       await sleep(300); // the handler is streaming into the store
       client.socket.destroy();
@@ -590,7 +596,7 @@ describe("a client that aborts mid-upload leaves no partial object and no leaked
         headers: {
           "if-match": `"${f.version}"`,
           "content-type": "application/octet-stream",
-          "x-file-name": "after-abort.bin",
+          "x-file-name": "after-abort.txt",
         },
         body: Buffer.from("synthetic after abort"),
       });
@@ -604,7 +610,7 @@ describe("a client that aborts mid-upload leaves no partial object and no leaked
 describe("normal traffic is unchanged", () => {
   it("a valid 3 MiB upload over a real socket is stored byte-exact with its sha256, and the keep-alive connection serves the next request", async () => {
     const f = await newEvidence("file", "Synthetic valid upload");
-    const bytes = randomBytes(3 * MiB);
+    const bytes = pdfBytes(3 * MiB);
     const client = await openClient(basePort);
     await write(
       client,
@@ -654,7 +660,7 @@ describe("shutdown is bounded", () => {
         client,
         uploadHead({ evidenceId: f.id, version: f.version, framing: "content-length", length: 10 * MiB }),
       );
-      await write(client, randomBytes(256 * 1024));
+      await write(client, pdfBytes(256 * 1024));
       await sleep(300); // headers and part of the body are in; the client then sends nothing more
       const c = await timedClose(api, 15_000);
       console.log(`SWEEP-CLOSE ${JSON.stringify({ label: "stalled upload in flight (default grace 5 s)", ...c })}`);
@@ -674,7 +680,7 @@ describe("shutdown is bounded", () => {
     const { api, port } = await fresh({ shutdownGraceMs: 4_000 });
     try {
       const f = await newEvidence("file", "Synthetic in-flight upload");
-      const bytes = randomBytes(2 * MiB);
+      const bytes = pdfBytes(2 * MiB);
       const client = await openClient(port);
       await write(
         client,
@@ -711,7 +717,7 @@ describe("shutdown is bounded", () => {
       const errorsBefore = errorLogs().length;
       const client = await openClient(port);
       await write(client, uploadHead({ evidenceId: f.id, version: f.version, framing: "chunked" }));
-      await write(client, chunkOf(randomBytes(64 * 1024)));
+      await write(client, chunkOf(pdfBytes(64 * 1024)));
       const closedMs = await waitFor(() => client.serverClosedAt !== null, 6_000);
       console.log(
         `SWEEP ${JSON.stringify({ path: "stalled body, requestTimeout 1.5 s", status: statusesOf(client.text()), closedMs })}`,
@@ -779,7 +785,7 @@ describe("shutdown is bounded", () => {
         client,
         uploadHead({ evidenceId: f.id, version: f.version, framing: "content-length", length: 10 * MiB }),
       );
-      await write(client, randomBytes(256 * 1024));
+      await write(client, pdfBytes(256 * 1024));
       await sleep(500);
       const t0 = Date.now();
       proc.kill("SIGTERM");

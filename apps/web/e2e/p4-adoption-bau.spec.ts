@@ -34,6 +34,19 @@ import {
 
 test.describe.configure({ mode: "serial" });
 
+// Budget (F-DG6-144, the F-DG5-145/146 carry-forward of D-193; p6-work-split §2 rules 13 and 15): 105 s per test.
+// Measured: run alone, both language projects, at a 1-minute load of 23-37 on 4 CPUs (three e2e stacks in
+// parallel), the slowest test took 49.0 s ([chromium-en] :331 6. BAU handover: data access missing is refused;...)
+// (docs/delivery/handbacks/DG6/T-DG6-FE-Y1-evidence/f144/measure-p4-adoption-bau.log). In the DG6 QA round-1 full runs
+// (docs/delivery/test-evidence/DG6/qa/round-1/06-e2e-product-*.log), its slowest test timed out at the default
+// 30 s (30.9 s reported), so at least that long.
+// The budget is at least 2x the larger of the two, rounded up to 15 s, and never below 60 s.
+// T-DG6-FE-Z1B (F-DG6-144, round 2): raised from 105 s to 120 s; in T-DG6-FE-Z1's run1 loaded full runs
+// (docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/run1-*-chromium-*.log, load 15-23) 6. BAU handover took 35.6-52.6 s (52.6 s, unset, chromium-en), so 2x is 105.2 s.
+// T-DG6-FE-Z1B: raised from 120 s to 180 s. In the z1b loaded full runs (load 21-26, above the review's 11-21;
+// docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/z1b-*.log) the test in row :362 of z1b-budget-table-pass1.txt took 90.0 s; 2x rounded up to 15 s. budget-table.txt has the rows.
+test.setTimeout(180_000);
+
 let tid = "";
 let tid2 = "";
 let T = "";
@@ -301,6 +314,9 @@ test("4. Training 100 % with no observation shows proficiency Unknown; a form ob
   await expect(page.locator("[data-respond]")).toBeVisible();
   await page.locator("[data-respond]").click();
   dialog = page.getByRole("dialog");
+  // The observation date defaults to today's Asia/Riyadh business date, the calendar the API selects the reporting
+  // period with (T-DG6-BE-X8: a UTC default fell in the previous month between 00:00 and 03:00 Riyadh on the 1st).
+  await expect(dialog.getByLabel(tr(lang, "adoptionP4.records.observedOn"))).toHaveValue(day(0));
   await dialog.getByLabel(tr(lang, "adoptionP4.forms.subjectLabel")).fill(`Synthetic agent 7 ${lang}`);
   await dialog.locator("[data-answer='q1']").selectOption("yes");
   await submitOf(dialog).click();

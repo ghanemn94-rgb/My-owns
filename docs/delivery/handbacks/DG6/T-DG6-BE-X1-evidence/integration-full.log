@@ -1,0 +1,1153 @@
+port-policy: PostgreSQL listening on port 26570 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+> mobily-transformation-hub@0.1.0 test:integration /home/user/wt/dg6-be-x1
+> vitest run --project integration
+
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-x1
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvvibrgr_713f5135 (server_encoding UTF8); applied 113 migrations to a fresh database
+ ✓ |integration| packages/db/test/integration/catalogue.test.ts (35 tests) 736ms
+   ✓ schema.ts matches the migrated database > has exactly the same relations and columns as public  476ms
+stdout | tests/qa/integration/a02-a21-complete-lifecycle.test.ts > REQ-S09-011: the executive pack's workstream section holds the submitted update and current metrics > the generated pack contains the workstream lead's update text and the current canonical metrics, without manual editing
+A02 executive pack sections: [["update_transformation",643],["metrics_transformation",5328],["update_ws_01",2808],["metrics_ws_01",2726]]
+
+stdout | tests/qa/integration/a02-a21-complete-lifecycle.test.ts > REQ-S09-011: the executive pack's workstream section holds the submitted update and current metrics > the generated pack contains the workstream lead's update text and the current canonical metrics, without manual editing
+A02 pack values [{"key":"value_planned_profit_and_cash_sar","value":null,"currency":"SAR"},{"key":"value_forecast_profit_and_cash_sar","value":null,"currency":"SAR"},{"key":"value_submitted_profit_and_cash_sar","value":null,"currency":"SAR"},{"key":"value_validated_profit_and_cash_sar","value":null,"currency":"SAR"},{"key":"value_gap_profit_and_cash_sar","value":null,"currency":"SAR"},{"key":"value_planned_top_line_sar","value":"0","currency":"SAR"},{"key":"value_forecast_top_line_sar","value":"0","currency":"SAR"},{"key":"value_submitted_top_line_sar","value":"0","currency":"SAR"},{"key":"value_validated_top_line_sar","value":"0","currency":"SAR"},{"key":"value_gap_top_line","value":null,"currency":null}] canonical [["value_planned_profit_and_cash_sar",null],["value_forecast_profit_and_cash_sar",null],["value_submitted_profit_and_cash_sar",null],["value_validated_profit_and_cash_sar",null],["value_planned_top_line_sar","0"],["value_forecast_top_line_sar","0"],["value_submitted_top_line_sar","0"],["value_validated_top_line_sar","0"]]
+
+stdout | tests/qa/integration/a02-a21-complete-lifecycle.test.ts > REQ-S06-003 / REQ-S06-002: the ten seeded procedures > the ten procedures exist as published definitions after initialization
+A02 procedures: [{"c":"new_transformation_intake","n":"New transformation intake","scope":{"level":"organization","descriptionEn":"One organization; the transformation does not exist yet.","descriptionAr":"منظمة واحدة؛ التحول غير موجود بعد."},"launch":["SP","TL","TO"],"inputs":[["transformationName",null,true],["caseForChange",null,true]],"steps":[["capture_intake","task","TL",null,{"recordType":"transformation","mode":"create"},["transformationName","caseForChange"],false,null],["draft_charter","task","TL",null,{"recordType":"charter","mode":"link"},[],false,null],["confirm_sponsor","approval","TL","SP",{"recordType":"approval","mode":"create"},[],false,null]]},{"c":"baseline_validation","n":"Baseline validation","scope":{"level":"transformation","descriptionEn":"One baseline of one transformation.","descriptionAr":"خط أساس واحد لتحول واحد."},"launch":["TL","BO","FIN","TO"],"inputs":[["metric",null,true],["value",null,true],["unit",null,true],["baselineDate",null,true],["source",null,true]],"steps":[["record_baseline","task","TL",null,{"recordType":"baseline","mode":"create"},["metric","value","unit","baselineDate","source"],true,null],["validate_baseline","task","FIN",null,{"recordType":"baseline","mode":"advance"},[],false,null]]},{"c":"kpi_submission","n":"KPI submission","scope":{"level":"transformation","descriptionEn":"One KPI and one reporting period.","descriptionAr":"مؤشر واحد وفترة تقرير واحدة."},"launch":["BO","KDS","TO"],"inputs":[["period",null,true]],"steps":[["submit_actual","task","BO",null,{"recordType":"kpi_actual","mode":"create"},["period"],false,null],["accept_actual","task","KDS",null,{"recordType":"kpi_actual","mode":"advance"},[],false,null]]},{"c":"tom_approval","n":"TOM approval","scope":{"level":"transformation","descriptionEn":"The TOM canvas of one transformation.","descriptionAr":"لوحة نموذج التشغيل لتحول واحد."},"launch":["TL","TO"],"inputs":[],"steps":[["complete_canvas","task","TL",null,{"recordType":"tom_canvas_cell","mode":"link"},[],false,null],["business_review","task","BO",null,null,[],false,null],["technology_review","task","TD",null,null,[],false,null],["sponsor_approval","approval","TL","SP",{"recordType":"approval","mode":"create"},[],false,null]]},{"c":"initiative_prioritization","n":"Initiative prioritization","scope":{"level":"transformation","descriptionEn":"The candidate initiatives of one transformation.","descriptionAr":"المبادرات المرشحة لتحول واحد."},"launch":["TL","TO"],"inputs":[],"steps":[["score_initiatives","task","TL",null,null,[],false,null],["record_ranking","task","TO",null,{"recordType":"ranking_snapshot","mode":"create"},[],false,null],["approve_ranking","approval","TL","SP",{"recordType":"approval","mode":"create"},[],false,null]]},{"c":"gate_review","n":"Gate review","scope":{"level":"transformation","descriptionEn":"One gate of one transformation.","descriptionAr":"بوابة واحدة لتحول واحد."},"launch":["TL","TO"],"inputs":[["gateCode",null,true],["financeReviewRequired",null,true]],"steps":[["prepare_submission","task","TL",null,{"recordType":"gate_submission","mode":"create"},["gateCode"],true,null],["criteria_review","task","TO",null,null,[],false,null],["finance_review","task","FIN",null,null,[],false,{"inputKey":"financeReviewRequired","operator":"eq","value":"yes"}],["gate_decision","approval","TL","SP",{"recordType":"gate_submission","mode":"advance"},[],false,null]]},{"c":"scope_target_change","n":"Scope/target change","scope":{"level":"transformation","descriptionEn":"One approved record of one transformation.","descriptionAr":"سجل معتمد واحد لتحول واحد."},"launch":["TL","BO","TO"],"inputs":[["reason",null,true]],"steps":[["raise_change","task","TL",null,{"recordType":"change_request","mode":"create"},["reason"],false,null],["assess_impact","task","TO",null,null,[],false,null],["decide_change","approval","TL","SP",{"recordType":"change_request","mode":"advance"},[],false,null]]},{"c":"benefit_validation","n":"Benefit validation","scope":{"level":"transformation","descriptionEn":"One benefit of one transformation.","descriptionAr":"منفعة واحدة لتحول واحد."},"launch":["TL","BO","FIN","TO"],"inputs":[["belowTarget",null,true]],"steps":[["measure_benefit","task","BO",null,null,[],false,null],["attach_evidence","task","BO",null,{"recordType":"evidence","mode":"link"},[],true,null],["finance_validation","task","FIN",null,{"recordType":"finance_validation","mode":"create"},[],false,null],["recovery_plan","task","TL",null,null,["belowTarget"],false,{"inputKey":"belowTarget","operator":"eq","value":"yes"}]]},{"c":"executive_escalation","n":"Executive escalation","scope":{"level":"transformation","descriptionEn":"One escalated decision of one transformation.","descriptionAr":"قرار مصعّد واحد لتحول واحد."},"launch":["TL","TO"],"inputs":[["whyNow",null,true]],"steps":[["raise_escalation","task","TL",null,{"recordType":"decision","mode":"create"},["whyNow"],false,null],["executive_decision","approval","TL","SP",{"recordType":"decision","mode":"advance"},[],false,null],["communicate_decision","task","TL",null,null,[],false,null]]},{"c":"bau_handover","n":"BAU handover","scope":{"level":"transformation","descriptionEn":"One performance area of one transformation.","descriptionAr":"مجال أداء واحد لتحول واحد."},"launch":["TL","BO","TO"],"inputs":[],"steps":[["prepare_handover","task","TL",null,{"recordType":"bau_handover","mode":"create"},[],true,null],["accept_handover","approval","TL","BO",{"recordType":"bau_handover","mode":"advance"},[],false,null],["schedule_reviews","task","TO",null,null,[],false,null]]}]
+
+stdout | tests/qa/integration/a02-a21-complete-lifecycle.test.ts > REQ-S18-002: seed coverage of the demo dataset > the dataset run's coverage finds at least one record per listed condition; spot checks on persisted rows agree
+A02 seed coverage: {"gate.g1":1,"gate.g2":1,"gate.g3":1,"gate.g4":1,"gate.g5":1,"gate.g6":1,"phase.1":5,"phase.2":3,"phase.3":4,"phase.4":5,"phase.5":4,"phase.6":4,"kpi.stale":1,"adoption.gap":1,"bau.handover":1,"template.t01":6,"template.t02":3,"template.t03":3,"template.t04":1,"template.t05":3,"template.t06":15,"template.t07":4,"template.t08":1,"template.t09":3,"template.t10":6,"template.t11":4,"template.t12":6,"template.t13":1,"template.t14":3,"template.t15":1,"template.t16":4,"benefit.shared":1,"approval.pending":2,"dashboard.area_1":3,"dashboard.area_2":3,"dashboard.area_3":3,"dashboard.area_4":1,"dashboard.area_5":1,"dashboard.area_6":2,"decision.overdue":1,"evidence.missing":18,"tom.dimension_01":1,"tom.dimension_02":1,"tom.dimension_03":1,"tom.dimension_04":1,"tom.dimension_05":1,"tom.dimension_06":1,"tom.dimension_07":1,"tom.dimension_08":1,"tom.dimension_09":1,"tom.dimension_10":1,"health_assessment.submitted":1} complete=true
+
+stdout | tests/qa/integration/a02-a21-complete-lifecycle.test.ts > REQ-S06-003: each of the ten procedures can be launched and completed in the A02 scenario > drives every instance through its steps with the native workflows; every one ends completed
+A02 procedures driven: {
+ "new_transformation_intake": "completed",
+ "baseline_validation": "completed",
+ "kpi_submission": "completed",
+ "tom_approval": "completed",
+ "initiative_prioritization": "completed",
+ "gate_review": "completed",
+ "scope_target_change": "completed",
+ "benefit_validation": "completed",
+ "executive_escalation": "completed",
+ "bau_handover": "completed"
+}
+
+ ✓ |integration| tests/qa/integration/a02-a21-complete-lifecycle.test.ts (13 tests) 20504ms
+   ✓ REQ-S18-004: the demo role users of the demo database > every seeded demo role user signs in through the demo IdP path and is a synthetic user of the demo organization  360ms
+   ✓ A02 / REQ-S20-002 / REQ-S18-004: one transformation through the twelve walkthrough steps, natively > each step is false before its native workflow and true after it; all twelve end completed on persisted records  6950ms
+   ✓ REQ-S06-003 / REQ-S06-002: the ten seeded procedures > a baseline-validation instance shows its current step and assignee; completing it creates a validated baseline linked to it  346ms
+   ✓ REQ-S06-003 / REQ-S06-002: the ten seeded procedures > each of the ten procedures can be launched in the A02 scenario's transformation (organization scope for intake)  642ms
+   ✓ REQ-S06-003: each of the ten procedures can be launched and completed in the A02 scenario > drives every instance through its steps with the native workflows; every one ends completed  4789ms
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts (105 tests) 112807ms
+   ✓ every operation, validated against the contract and the zod mirrors > transformations and audit  619ms
+   ✓ every operation, validated against the contract and the zod mirrors > kpi module operations (P2; kpi-exercises.ts, owned by kpi-benefits-engineer)  1069ms
+   ✓ every operation, validated against the contract and the zod mirrors > P2 backend operations (p2-exercises.ts): every routed operation exercised with a success  5042ms
+   ✓ every operation, validated against the contract and the zod mirrors > P3 BE-A operations (p3-exercises-be-a.ts): readiness, outcome hierarchy, gate dispensations  395ms
+   ✓ every operation, validated against the contract and the zod mirrors > P3 BE-B operations (p3-exercises-be-b.ts)  1156ms
+   ✓ every operation, validated against the contract and the zod mirrors > P3 BE-C operations (p3-exercises-be-c.ts)  812ms
+   ✓ every operation, validated against the contract and the zod mirrors > P3 BE-D operations (p3-exercises-be-d.ts)  1362ms
+   ✓ every operation, validated against the contract and the zod mirrors > P3 BE-E operations (p3-exercises-be-e.ts)  1218ms
+   ✓ every operation, validated against the contract and the zod mirrors > P3 KBE-B operations (p3-exercises-kbe-b.ts)  758ms
+   ✓ every operation, validated against the contract and the zod mirrors > P3 KBE-C operations (p3-exercises-kbe-c.ts)  768ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-A operations (p4-exercises-be-a.ts)  1025ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-B operations (p4-exercises-be-b.ts)  1532ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-C operations (p4-exercises-be-c.ts)  1199ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-D operations (p4-exercises-be-d.ts)  2252ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-E operations (p4-exercises-be-e.ts)  1022ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-F operations (p4-exercises-be-f.ts)  1615ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-G operations (p4-exercises-be-g.ts)  1039ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-H operations (p4-exercises-be-h.ts)  1126ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-I operations (p4-exercises-be-i.ts)  1039ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-J operations (p4-exercises-be-j.ts)  1256ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-K operations (p4-exercises-be-k.ts)  2331ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-L operations (p4-exercises-be-l.ts)  1310ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-M operations (p4-exercises-be-m.ts)  1458ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 KBE-B operations (p4-exercises-kbe-b.ts)  617ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 KBE-C operations (p4-exercises-kbe-c.ts)  947ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 KBE-D operations (p4-exercises-kbe-d.ts)  531ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 KBE-D2 operations (p4-exercises-kbe-d2.ts)  739ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 KBE-E operations (p4-exercises-kbe-e.ts)  1683ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 KBE-F operations (p4-exercises-kbe-f.ts)  590ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 KBE-G operations (p4-exercises-kbe-g.ts)  1195ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-A operations (p5-exercises-be-a.ts)  899ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-B operations (p5-exercises-be-b.ts)  1021ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-B3 operations (p5-exercises-be-b3.ts)  1630ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-C operations (p5-exercises-be-c.ts)  1658ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 KBE-A operations (p5-exercises-kbe-a.ts)  450ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-D operations (p5-exercises-be-d.ts)  534ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-E operations (p5-exercises-be-e.ts)  1229ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-E2 operations (p5-exercises-be-e2.ts)  1383ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-F operations (p5-exercises-be-f.ts)  1731ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-F2 operations (p5-exercises-be-f2.ts)  1865ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-H operations (p5-exercises-be-h.ts)  624ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-H2 operations (p5-exercises-be-h2.ts)  618ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-I operations (p5-exercises-be-i.ts)  691ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-J operations (p5-exercises-be-j.ts)  301ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-K operations (p5-exercises-be-k.ts)  836ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-L operations (p5-exercises-be-l.ts)  333ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-L2 operations (p5-exercises-be-l2.ts)  453ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 KBE-C operations (p5-exercises-kbe-c.ts)  833ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 KBE-D operations (p5-exercises-kbe-d.ts)  1206ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-M operations (p5-exercises-be-m.ts)  1831ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-O operations (p5-exercises-be-o.ts)  1964ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 KBE-E operations (p5-exercises-kbe-e.ts)  1368ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 KBE-E2 operations (p5-exercises-kbe-e2.ts)  1293ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 KBE-F operations (p5-exercises-kbe-f.ts)  506ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-P operations (p5-exercises-be-p.ts)  667ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-P2 operations (p5-exercises-be-p2.ts)  745ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 KBE-G2 operations (p5-exercises-kbe-g2.ts)  1404ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-Q operations (p5-exercises-be-q.ts)  586ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-R operations (p5-exercises-be-r.ts)  592ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-S operations (p5-exercises-be-s.ts)  4717ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-T2 operations (p5-exercises-be-t2.ts)  4433ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-B operations (p6-exercises-be-b.ts)  506ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-D operations (p6-exercises-be-d.ts)  435ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-H2 operations (p6-exercises-be-h2.ts)  417ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-I operations (p6-exercises-be-i.ts)  377ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-K operations (p6-exercises-be-k.ts)  347ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-L operations (p6-exercises-be-l.ts)  1755ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-M operations (p6-exercises-be-m.ts)  1025ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-N operations (p6-exercises-be-n.ts)  1274ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-Q operations (p6-exercises-be-q.ts)  705ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-T operations (p6-exercises-be-t.ts)  646ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-X1 declared 403s of the evidence reads (p6-exercises-be-x1.ts)  469ms
+   ✓ every operation, validated against the contract and the zod mirrors > every GET operation with a path parameter: a malformed id is a declared 400 at /params/<name>; nothing written  2853ms
+   ✓ every operation, validated against the contract and the zod mirrors > every operation but the OIDC callback: U+0000 in the query is a declared 400 invalid_character  5291ms
+   ✓ every operation, validated against the contract and the zod mirrors > every operation: an undeclared request media type is a declared 400 validation.content_type; nothing written  11874ms
+   ✓ every operation, validated against the contract and the zod mirrors > every operation: the rate limiter's 429 is a declared RateLimited problem (live, limits of 1 per minute)  4953ms
+ ✓ |integration| tests/qa/integration/a07-historical-integrity.test.ts (12 tests) 19567ms
+   ✓ A07 historical integrity: target, formula, methodology and restatement changes leave history intact > REQ-S07-016: a prospective target change (100 -> 120, approved) leaves last quarter's RAG unchanged; history intact  986ms
+   ✓ A07 historical integrity: target, formula, methodology and restatement changes leave history intact > REQ-S06-008: a methodology change requiring G2 re-approval is migrated; the approved G2 decision and pack stay intact  695ms
+   ✓ A07 historical integrity: target, formula, methodology and restatement changes leave history intact > REQ-S07-016: a restatement of Q1 needs authority; the Q1 report issued earlier is unchanged; a reissue is version 2 > a Q1 restatement decided without kpi_restatement.approve (TL) or by its requester is rejected and changes nothing  398ms
+   ✓ A07 historical integrity: target, formula, methodology and restatement changes leave history intact > REQ-S07-016: a restatement of Q1 needs authority; the Q1 report issued earlier is unchanged; a reissue is version 2 > approved by an authority (BO): Q1 is restated, the Q1 report issued earlier is unchanged, a reissue creates version 2  617ms
+   ✓ REQ-S06-009: rollback restores a prior version; records created under the rolled-back version remain > after rolling forms back, a T13 value stored under the rolled-back version is retrievable and the audit trail shows the rollback  746ms
+   ✓ REQ-PB-093: changed scoring defaults apply to new transformations; an existing one keeps its weight set and rubric > defaults totalling 95% are refused at publish; 30/20/20/15/15 with a new Feasibility rubric reach only new transformations  1134ms
+   ✓ REQ-S14-003: an N/A scheme without its own bands is refused; existing assessments keep their scheme version and band > adding N/A while keeping the four source bands fails the preview (own bands required) and cannot be published  659ms
+ ✓ |integration| tests/qa/integration/a06-configuration-change.test.ts (27 tests) 12046ms
+   ✓ A06 forms: an admin adds T13 fields and publishes; a new transformation uses them, an old one stays pinned > REQ-S06-004/REQ-S05-002/REQ-S06-005: draft edits are validated, protected source columns cannot be deleted or retyped  499ms
+   ✓ A06 forms: an admin adds T13 fields and publishes; a new transformation uses them, an old one stays pinned > REQ-S06-007: the diff lists the added field; publish without preview or without the configured review is rejected  418ms
+   ✓ A06 forms: an admin changes the validation rule; the changed rule rejects a value it previously accepted > REQ-S06-004/REQ-S20-006: max 100 -> 50 published; a new transformation refuses 80, the v2-pinned record keeps accepting it  385ms
+   ✓ A06 methodology: invariants, source coverage and the updated approval route > REQ-S06-004/REQ-S10-015/REQ-S12-018: the route change is reviewed (impact + review task) and published  436ms
+   ✓ A06 methodology: invariants, source coverage and the updated approval route > REQ-S06-004/REQ-S20-006: a G3 submission of a NEW transformation is routed to the new approver (BO); the existing one keeps SP  1559ms
+   ✓ A06 version 3: a parallel route and a changed G2 criterion; deliberate migration of an existing transformation > REQ-S10-015: after publishing a parallel route, both approvers of a new submission are notified at once  519ms
+   ✓ A06 procedures (REQ-S06-001, REQ-S06-003) > REQ-S06-001/REQ-S06-004: the procedure with a parallel and a conditional step publishes and runs on a new transformation  419ms
+ ✓ |integration| tests/qa/integration/a08-gate-controls.test.ts (31 tests) 11854ms
+   ✓ A08 missing evidence blocks submission (REQ-PB-015, REQ-S20-008, REQ-S04-012) > REQ-S04-012: with exactly one missing mandatory item the 422 lists exactly that item  746ms
+   ✓ A08 missing evidence blocks submission (REQ-PB-015, REQ-S20-008, REQ-S04-012) > REQ-S04-012: with a valid (accepted, unexpired) exception the submission succeeds and its snapshot records the exception  317ms
+   ✓ A08 unauthorized and stale approval are rejected (REQ-PB-015, REQ-S20-008, REQ-S04-009/010, REQ-S10-014) > REQ-S04-010: Under Review -> Changes Requested -> (resubmit) Submitted -> Deferred -> Submitted -> Rejected -> Submitted -> Approved, each with an audit event  415ms
+   ✓ A08 unauthorized and stale approval are rejected (REQ-PB-015, REQ-S20-008, REQ-S04-009/010, REQ-S10-014) > REQ-PB-015, REQ-S10-014: approving a stale (superseded) submission number is 409; the stored decision carries the submission it decided  444ms
+   ✓ A08 unauthorized and stale approval are rejected (REQ-PB-015, REQ-S20-008, REQ-S04-009/010, REQ-S10-014) > the submitter who also holds the approver role cannot decide their own submission (403)  319ms
+   ✓ A08 snapshot and task independence (REQ-S04-002) > completing every Diagnose phase task leaves G1 Draft with no submission  676ms
+   ✓ A08 snapshot and task independence (REQ-S04-002) > editing a record after submission does not change the snapshot shown to approvers  729ms
+   ✓ A08 waiver expiry (REQ-S04-013) > after expiry the covered evidence item is reported missing again and blocks submission  783ms
+   ✓ A08 G5 Scale and G6 Sustain on a transformation taken there natively (REQ-PB-020, REQ-S04-007, REQ-S03-004, REQ-PB-021, REQ-S04-008) > REQ-PB-020, REQ-S04-007: G5 with an open High-impact risk and no disposition is refused, listing 'Risk closure'  334ms
+   ✓ A08 G5 Scale and G6 Sustain on a transformation taken there natively (REQ-PB-020, REQ-S04-007, REQ-S03-004, REQ-PB-021, REQ-S04-008) > REQ-PB-021, REQ-S04-008: G6 without an accepted BAU handover is refused, listing 'Ownership transfer'  463ms
+   ✓ A08 G5 Scale and G6 Sustain on a transformation taken there natively (REQ-PB-020, REQ-S04-007, REQ-S03-004, REQ-PB-021, REQ-S04-008) > REQ-S04-008: a product G6 approval (API and its worker consumer) changes nothing under docs/delivery/  369ms
+   ✓ A08 approvals: rationale, request version, separation of duties, stale version, outcomes (REQ-S10-014/016/017/018) > REQ-S10-014: a decision without rationale is refused (missing 400, blank 422 approval.rationale_required); the stored record includes the request version  1239ms
+ ✓ |integration| tests/qa/integration/a09-decision-escalation.test.ts (17 tests) 5236ms
+   ✓ A09 working-day SLAs on a configured business calendar (REQ-PB-066, REQ-S10-006) > REQ-PB-066: a Business scope change approval gets a due date 5 working days after it is raised on the default calendar (weekend and configured holiday skipped)  501ms
+   ✓ A09 approval timers escalate but never approve (REQ-S10-019) > after the due date plus retries the approval is escalated exactly once and remains undecided  442ms
+   ✓ A09 a blocker red for N cycles gets exactly one executive ask (REQ-PB-082) > N = 2: two consecutive red cycles produce exactly one open T16 ask with decision, owner and deadline; re-running creates none  942ms
+   ✓ A09 committee workflow: quorum, immutable minutes, actions in My Work (REQ-S10-011) > no decision below quorum; published minutes are immutable; actions appear in the owners' My Work  981ms
+   ✓ A09 time semantics and default currency (REQ-S15-008) > REQ-S15-008: a KPI actual for period 2026-10 keeps observation period 2026-10, the Asia/Riyadh business date of its entry and a UTC event timestamp  462ms
+ ✓ |integration| apps/api/test/integration/kpi/benefit-formulas.test.ts (16 tests) 5211ms
+   ✓ T09 register (REQ-PB-056) > the six T09 columns persist; BF-nn codes; the formula is the current version's expression  374ms
+   ✓ T09 register (REQ-PB-056) > confidence outside H/M/L -> 400 (create and PATCH), nothing written; the DB CHECK refuses it too  408ms
+   ✓ calculations and lineage > records inputs with kind/unit/currency/period/source, assumptions and period; Unknown never 0; append-only  460ms
+   ✓ Finance validation of the benefit logic (REQ-PB-055) > FIN validates or rejects with a note; the author gets 403; final once recorded; If-Match 428/409  397ms
+   ✓ every mutation: AUD 403, If-Match, audit, archive > the read-only auditor gets 403 (audited) on every T09 mutation, whatever the body  418ms
+   ✓ every mutation: AUD 403, If-Match, audit, archive > If-Match: 428 without, 409 stale on PATCH, archive and new version; archive guards; audit events  442ms
+   ✓ every mutation: AUD 403, If-Match, audit, archive > authorization is re-checked at commit time (archive): a grant revoked after authentication -> 403, nothing written  383ms
+   ✓ every mutation: AUD 403, If-Match, audit, archive > authorization is re-checked at commit time (new version): a grant revoked after authentication -> 403, nothing written  324ms
+   ✓ loadKpiP3GateFacts: the kpi half of the G4 GateFactsProvider > cases with sections and baseline state (incl. Stale); each financial benefit line's current version state  311ms
+ ✓ |integration| apps/api/test/integration/procedures/seeded-procedures.test.ts (13 tests) 6903ms
+   ✓ baseline_validation creates, validates and links a baseline (REQ-S06-002, A02 part) > completing it creates a baseline, the FIN step validates it, and the validated baseline is linked  310ms
+   ✓ baseline_validation creates, validates and links a baseline (REQ-S06-002, A02 part) > refuses a baseline from before the launch, from another transformation, or already another instance's output  726ms
+   ✓ tom_approval: a linked canvas cell, parallel reviews and the Sponsor's approval > links a ready canvas cell, runs both reviews in parallel and completes when the Sponsor approves  369ms
+   ✓ kpi_submission: a KPI actual submitted, then accepted, through the DG4 review route > links the submitted actual and completes once its reviewer accepted it  421ms
+   ✓ scope_target_change: a change request raised, assessed and decided by its business approver > links the submitted request and completes when the Sponsor approves the step after deciding the request  790ms
+   ✓ gate_review: the G1 submission prepared, reviewed and decided by its business approver > links the G1 submission; the finance review is not applicable; the step approval needs the gate decision  1154ms
+   ✓ bau_handover: prepared, accepted by the receiving business owner, then the recurring reviews > links the handover; the BO's step approval needs the handover accepted; the TO closes the procedure  620ms
+   ✓ benefit_validation: evidence and the Finance validation in parallel; no recovery when on target > links the evidence and the Finance decision; the recovery plan is not applicable  479ms
+   ✓ initiative_prioritization: scores, the ranking snapshot and the Sponsor's approval > links the ranking snapshot the TO recorded and completes when the Sponsor approves  547ms
+stdout | tests/qa/integration/a12-p6-scope-isolation.test.ts > A12 P6 extension: a scope revoked AFTER indexing hides Y everywhere without a reindex > after the revocation (no reindex): no search hit, record 404, link 403, assistant reads no Y, old answer withheld
+A12 revoke: the existing session was ended by the revocation (401); probing with a fresh session
+
+ ✓ |integration| tests/qa/integration/a12-p6-scope-isolation.test.ts (26 tests) 7582ms
+   ✓ A12 search (REQ-S15-010, REQ-S10-004): a user scoped to X gets no Y hit > out of scope: Y's word, each Y title, Y's transformation filter and a type filter all give no Y hit  339ms
+ ✓ |integration| apps/api/test/integration/portfolio/prioritization.test.ts (17 tests) 7297ms
+   ✓ scores (REQ-PB-047, REQ-PB-048, REQ-S09-001) > score 6 -> 400; 0, 2.5 and '4' -> 400; a weightedScore property -> 400 (read-only); nothing written  403ms
+   ✓ scores (REQ-PB-047, REQ-PB-048, REQ-S09-001) > 5,4,3,2,1 under v1 -> stored 3.3000, shown 3.30, 0-100 view 57.5 with its label; appended with its cause; audited  340ms
+   ✓ scores (REQ-PB-047, REQ-PB-048, REQ-S09-001) > PATCH: If-Match 428/409; clearing (null) makes it incomplete again; duplicate POST 409; AUD 403 on POST and PATCH  308ms
+   ✓ rankings and history (REQ-S09-005, REQ-S09-003) > snapshot: deterministic tie-break, incomplete unranked, submitted -> ranked with audit; v2 activation -> history shows 'weight version 2' as the cause of the rank change  669ms
+   ✓ rankings and history (REQ-S09-005, REQ-S09-003) > score cause lists the criteria; relative cause when another initiative moved  430ms
+   ✓ overrides (REQ-S09-005) > an override without a reason is rejected (missing/empty -> 400 at /reason; blank/invisible -> 422); the proposer cannot approve; approved applies with 'override: <reason>'; revoke; AUD 403; If-Match  932ms
+   ✓ every BE-D mutation re-authorises inside its transaction (BE18A) > weight sets, scores, rankings and overrides: 403 at commit and nothing changes  755ms
+   ✓ comparison view (REQ-S09-004) > axes, filters (status, completeness, funding, flag) and injected sequencing/capacity flags  346ms
+   ✓ comparison view (REQ-S09-004) > more than 500 initiatives -> 422 prioritization.portfolio_too_large  1218ms
+ ✓ |integration| apps/api/test/integration/integrations/webhooks.test.ts (16 tests) 7217ms
+   ✓ receiveWebhook: a signed delivery is staged (ADR-0056 §7; REQ-S17-003) > answers 202 and stages 10 = 8 + 1 + 1 with its receipt and webhook run, as the connector's service identity  624ms
+   ✓ receiveWebhook: auto commit on behalf of the configured user (ADR-0056 §7 step 3) > commits the valid rows after the staging transaction, on behalf of the configured KDS  460ms
+   ✓ receiveWebhook: auto commit on behalf of the configured user (ADR-0056 §7 step 3) > leaves the batch staged and records import_batch.auto_commit_refused when the commit-time re-check refuses  1065ms
+   ✓ receiveWebhook: every authentication failure is the same 401 and stores nothing > refuses unsigned, wrongly signed, stale, malformed, unknown, disabled-endpoint and disabled-connector deliveries  634ms
+   ✓ receiveWebhook: replay and delivery id reuse (exactly once) > answers 200 with the original result for the same delivery id and body; 409 for another body  386ms
+   ✓ rotateWebhookSecret: the previous secret is valid for the grace period only > accepts the new and the previous secret inside the grace period and refuses the previous one after it  771ms
+   ✓ receiveWebhook: body limits and format > refuses a body over 1 MiB with 413 webhook.payload_too_large and stores nothing  373ms
+   ✓ receiveWebhook: body limits and format > answers 400 webhook.payload_invalid for a signed body that is not JSON, not UTF-8 or not the documented shape  553ms
+   ✓ webhook endpoint administration (webhook.configure; ADR-0056 §7) > creates an active endpoint with a server-generated key and a SecretRef; one audit event; no secret value anywhere  399ms
+ ✓ |integration| apps/api/test/integration/integrations/connectors.test.ts (20 tests) 2011ms
+ ✓ |integration| apps/api/test/integration/portfolio/roadmap.test.ts (12 tests) 4819ms
+   ✓ roadmap waves (T07, REQ-PB-050) > editable columns only: dates, owner, notes with If-Match (428/409), audited; source text 400 and DB-immutable; AUD 403; seeded not archivable  315ms
+   ✓ roadmap waves (T07, REQ-PB-050) > teams add non-source waves (201, version 1, audited); overlapping horizons and dates are accepted; duplicate code 409; AUD 403  353ms
+   ✓ roadmap waves (T07, REQ-PB-050) > commit-time authorisation on wave create and update (403 after the lock wait, audited, nothing written)  303ms
+   ✓ deliverables: submit and acceptance (ADR-0023 §2) > create (version 1, audited, AUD 403), list with the 3-7 count warning, read, edit with If-Match, archive  446ms
+   ✓ deliverables: submit and acceptance (ADR-0023 §2) > submit (initiative.edit, If-Match, audited) then acceptance by the executive owner; never the submitter; not-owner 403; AUD 403  421ms
+   ✓ deliverables: submit and acceptance (ADR-0023 §2) > a delegate of the executive owner accepts on their behalf (audited as such); never for the submitter  439ms
+   ✓ deliverables: submit and acceptance (ADR-0023 §2) > commit-time authorisation on deliverable create, update, submit and acceptance  467ms
+   ✓ milestones: approved vs forecast (ADR-0023 §2-§3, REQ-S09-006) > create (initiative.edit or roadmap.edit; no approved date), approve-date (roadmap.approve, reason), re-approval audited, variance computed  549ms
+   ✓ milestones: approved vs forecast (ADR-0023 §2-§3, REQ-S09-006) > moving the forecast: If-Match 428, stale 409 with currentVersion, AUD 403, achieved needs an actual date, audited  337ms
+   ✓ milestones: approved vs forecast (ADR-0023 §2-§3, REQ-S09-006) > commit-time authorisation on milestone create, update and approve-date  366ms
+   ✓ GET /transformations/{id}/roadmap: one read model (REQ-S09-006) > waves, initiatives, milestones, deliverables and initiative dependencies with versions and flags; a moved milestone shows at once  350ms
+ ✓ |integration| tests/qa/integration/a13-durable-automation.test.ts (12 tests) 54966ms
+   ✓ REQ-S12-020: killing the worker mid-job and restarting completes the job once > a real worker process is SIGKILLed inside the rule's action; the restarted worker completes it exactly once  3586ms
+   ✓ REQ-S12-001: each execution is recorded with rule version, trigger event and outcome > the execution history names the rule, its version, the trigger event and the outcome, per action  867ms
+   ✓ REQ-S12-002: a dry-run creates no tasks > evaluates the draft against a sample event and writes no task, notification, execution or outbox event  21576ms
+   ✓ REQ-S12-020 + REQ-S12-002: after the retry limit the execution lands in the failure queue; it succeeds on retry without duplicating actions > bounded retries: after 1 + retryLimit attempts ONE rule-execution entry is in the queue; the task is not doubled  1604ms
+   ✓ REQ-S12-020 + REQ-S12-002: after the retry limit the execution lands in the failure queue; it succeeds on retry without duplicating actions > an admin retries it from the queue: it succeeds once; completed actions are not repeated; a second retry is refused  3597ms
+   ✓ REQ-S12-020 + REQ-S12-002: after the retry limit the execution lands in the failure queue; it succeeds on retry without duplicating actions > both queue entries of one failed execution (the job entry and the rule-execution entry) are retried: one task, one reminder  7104ms
+   ✓ REQ-S12-020 + REQ-S12-002: after the retry limit the execution lands in the failure queue; it succeeds on retry without duplicating actions > a dismissed failure records who and why, adds no effect, and can no longer be retried  1550ms
+   ✓ REQ-S12-021: replaying the same event three times yields one reminder, one action and one approval task > the admin rule's event re-relayed x3 and re-delivered x3: one execution, one task (action), one reminder  2467ms
+   ✓ REQ-S12-021: replaying the same event three times yields one reminder, one action and one approval task > a gate submission's event re-relayed x3 and re-delivered x3 to every consumer: one approval task  4028ms
+   ✓ REQ-S12-026: saving a rule with action 'approve gate' is rejected; all automatic preparation and reminder rules run > every human-only action type is refused with 422 automation_rule.human_only_action and nothing is saved  593ms
+   ✓ REQ-S12-026: saving a rule with action 'approve gate' is rejected; all automatic preparation and reminder rules run > the sixteen starters (preparation, routing, calculation, reminders) are all enabled, cannot be disabled, and run  869ms
+ ✓ |integration| apps/api/test/integration/methodology/studio-review-publish.test.ts (14 tests) 6108ms
+   ✓ submitConfigReview and decideConfigReview (ADR-0039 §5, §8) > submit records the request, the proposal and one task per TO holder (never the requester); approve; tasks close  899ms
+   ✓ publishConfigVersion (ADR-0039 §1, §5, §6, §13; REQ-S06-007, REQ-S02-001) > publish without the required review -> 422 config_version.review_required; after approval it publishes, immutable  672ms
+   ✓ publishConfigVersion (ADR-0039 §1, §5, §6, §13; REQ-S06-007, REQ-S02-001) > scoring defaults that total 95 % -> 422 config_version.weights_total (REQ-PB-093); 100 % publishes  313ms
+   ✓ rollbackConfigVersion (ADR-0039 §7; REQ-S06-009) > restores an earlier version as a new version; later records stay retrievable; the audit trail shows the rollback  536ms
+   ✓ authorization (REQ-S06-010; ADR-0039 §9) > the methodology admin who publishes a change gets 403 approving a funding reallocation  581ms
+   ✓ authorization (REQ-S06-010; ADR-0039 §9) > re-checks authorization at commit time: a grant revoked mid-request gives 403 and writes nothing  1005ms
+ ✓ |integration| apps/api/test/integration/workflows/change-requests.test.ts (10 tests) 4918ms
+   ✓ change-control policy (REQ-S09-010 thresholds; change_control.configure) > version 0 with null thresholds when none; If-Match "0" creates; 428/409; 422 out of range; AUD 403; outside 404  479ms
+   ✓ change requests: create, read, edit, withdraw (S-4) > draft CR-nn with ETag 1; AUD 403; outside and ADM-only 404; exact 400/409/422 refusals; one audit event per mutation  550ms
+   ✓ REQ-S09-010: schedule rebaseline through change control > approved_date stays until a person approves; the forecast is shown separately; a moved subject is 409 and applies nothing  323ms
+   ✓ REQ-S09-010: schedule rebaseline through change control > with no policy the DG3 re-approval is unchanged; beyond a configured threshold it is 422, within it 200; budget likewise  361ms
+   ✓ REQ-S07-015: a KPI target change (preview, refusal, approval, the old version readable) > the preview lists the bound benefit and the approved G2 decision; a direct second activation is 422; after BO's approval v2 is active and v1 readable  479ms
+   ✓ REQ-S04-014: a new version of an approved G4 benefit formula creates one change request > one automatic benefit_logic request routed to Finance; the DG3 response unchanged; G4 decision and snapshot byte-identical  1201ms
+   ✓ S-4 commit-time authorization and S-1 free text > raise, edit, submit, withdraw and the policy: a TL revoked mid-request gets 403 and nothing is written  321ms
+ ✓ |integration| apps/api/test/integration/search/saved-views.test.ts (30 tests) 2201ms
+   ✓ validation: the registry, names, defaults > setting a default clears the previous one (its own version step and audit event)  399ms
+stdout | apps/api/test/integration/connection-hygiene.test.ts > an over-limit upload (413 evidence.too_large) closes its connection and never stalls app.close() > 30 MiB chunked, written without backpressure like the audit repro: 413, Connection: close, server closes, 0 connections, app.close() prompt
+SWEEP {"path":"upload 30 MiB chunked over the limit","status":413,"code":"evidence.too_large","connection":"close","serverCloseMs":0,"connectionsZeroMs":497}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > an over-limit upload (413 evidence.too_large) closes its connection and never stalls app.close() > 30 MiB chunked, written without backpressure like the audit repro: 413, Connection: close, server closes, 0 connections, app.close() prompt
+SWEEP-CLOSE {"label":"after upload 30 MiB chunked over the limit","ms":0,"completed":true}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > an over-limit upload (413 evidence.too_large) closes its connection and never stalls app.close() > 30 MiB content-length, written without backpressure like the audit repro: 413, Connection: close, server closes, 0 connections, app.close() prompt
+SWEEP {"path":"upload 30 MiB content-length over the limit","status":413,"code":"evidence.too_large","connection":"close","serverCloseMs":0,"connectionsZeroMs":499}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > an over-limit upload (413 evidence.too_large) closes its connection and never stalls app.close() > 30 MiB content-length, written without backpressure like the audit repro: 413, Connection: close, server closes, 0 connections, app.close() prompt
+SWEEP-CLOSE {"label":"after upload 30 MiB content-length over the limit","ms":0,"completed":true}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+SWEEP {"path":"upload 401 no session","status":401,"code":"unauthenticated","connection":"close","serverCloseMs":0,"connectionsZeroMs":0}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+SWEEP {"path":"upload 403 no CSRF token","status":403,"code":"csrf","connection":"close","serverCloseMs":0,"connectionsZeroMs":0}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+SWEEP {"path":"upload 404 unknown evidence","status":404,"code":"not_found","connection":"close","serverCloseMs":0,"connectionsZeroMs":0}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+SWEEP {"path":"upload 409 stale If-Match","status":409,"code":"version_conflict","connection":"close","serverCloseMs":0,"connectionsZeroMs":0}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+SWEEP {"path":"upload 428 no If-Match","status":428,"code":"precondition_required","connection":"close","serverCloseMs":0,"connectionsZeroMs":0}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+SWEEP {"path":"upload 400 bad X-File-Name","status":400,"code":"validation.file_name","connection":"close","serverCloseMs":1,"connectionsZeroMs":0}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+SWEEP {"path":"upload 422 not a file","status":422,"code":"validation.evidence.not_a_file","connection":"close","serverCloseMs":0,"connectionsZeroMs":0}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+SWEEP {"path":"upload 400 undeclared media type (text/plain)","status":400,"code":"validation.content_type","connection":"close","serverCloseMs":0,"connectionsZeroMs":0}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+SWEEP {"path":"upload 401 Content-Length 30 MiB","status":401,"code":"unauthenticated","connection":"close","serverCloseMs":0,"connectionsZeroMs":0}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+SWEEP {"path":"upload 428 Content-Length 30 MiB","status":428,"code":"precondition_required","connection":"close","serverCloseMs":0,"connectionsZeroMs":0}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+SWEEP {"path":"JSON over bodyLimit, chunked","status":400,"code":"validation.body_too_large","connection":"close","serverCloseMs":0,"connectionsZeroMs":0}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+SWEEP {"path":"JSON over bodyLimit, Content-Length","status":400,"code":"validation.body_too_large","connection":"close","serverCloseMs":0,"connectionsZeroMs":0}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+SWEEP {"path":"unmatched route 404, chunked","status":404,"code":"not_found","connection":"close","serverCloseMs":0,"connectionsZeroMs":0}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+SWEEP {"path":"unmatched route 404, Content-Length 30 MiB","status":404,"code":"not_found","connection":"close","serverCloseMs":0,"connectionsZeroMs":1}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+SWEEP {"path":"router-level 400 bad URL (FST_ERR_BAD_URL), chunked","status":400,"code":"validation.format","connection":"close","serverCloseMs":0,"connectionsZeroMs":0}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt
+SWEEP-CLOSE {"label":"after the refusals sweep","ms":1,"completed":true}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a response sent before the body is read closes the connection and never drains the (unbounded) body > app.close() while a refused client (403, no CSRF token) KEEPS SENDING its body completes promptly
+SWEEP-CLOSE {"label":"while a refused (403) client keeps sending its body","ms":0,"completed":true}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a client that aborts mid-upload leaves no partial object and no leaked socket > content-length: 2 MiB of a 10 MiB upload, then the client destroys the socket
+SWEEP {"path":"client abort mid-upload content-length","connectionsZeroMs":32,"partialFilesGoneMs":0}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > a client that aborts mid-upload leaves no partial object and no leaked socket > chunked: 2 MiB of a 10 MiB upload, then the client destroys the socket
+SWEEP {"path":"client abort mid-upload chunked","connectionsZeroMs":25,"partialFilesGoneMs":26}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > shutdown is bounded > app.close() with a STALLED upload in flight completes within the grace period (default 5 s); the stalled socket is closed by the server
+SWEEP-CLOSE {"label":"stalled upload in flight (default grace 5 s)","ms":5000,"completed":true}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > shutdown is bounded > an in-flight upload that finishes within the grace period completes normally (200, stored byte-exact, Connection: close), then app.close() returns
+SWEEP-CLOSE {"label":"in-flight upload finishing during shutdown","ms":658,"completed":true}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > shutdown is bounded > a body that stalls outside shutdown is cut by Node's requestTimeout (408, connection closed), nothing stored, no error log
+SWEEP {"path":"stalled body, requestTimeout 1.5 s","status":["HTTP/1.1 408"],"closedMs":1748}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > shutdown is bounded > SIGTERM: the API process (src/main.ts) exits 0 within the grace period with a stalled upload in flight
+SWEEP-CLOSE {"label":"SIGTERM with a stalled upload (main.ts)","ms":5202,"exitCode":0}
+
+stdout | apps/api/test/integration/connection-hygiene.test.ts > unmatched-route 404s are rate limited (audit round 10 observation P3) > a flood on unmatched routes gets 429 rate_limited after the limit (same key and limit as the routes); the SPA fallback still serves index.html
+SWEEP {"path":"unmatched-route flood, limit 4/min","statuses":[404,404,404,429]}
+
+ ✓ |integration| apps/api/test/integration/connection-hygiene.test.ts (13 tests) 27892ms
+   ✓ an over-limit upload (413 evidence.too_large) closes its connection and never stalls app.close() > 30 MiB chunked, written without backpressure like the audit repro: 413, Connection: close, server closes, 0 connections, app.close() prompt  2706ms
+   ✓ an over-limit upload (413 evidence.too_large) closes its connection and never stalls app.close() > 30 MiB content-length, written without backpressure like the audit repro: 413, Connection: close, server closes, 0 connections, app.close() prompt  1024ms
+   ✓ a response sent before the body is read closes the connection and never drains the (unbounded) body > upload route 401/403/404/409/428/400/422, JSON bodyLimit (CL and chunked), media type, unmatched 404, bad URL; then app.close() is prompt  908ms
+   ✓ a response sent before the body is read closes the connection and never drains the (unbounded) body > app.close() while a refused client (403, no CSRF token) KEEPS SENDING its body completes promptly  692ms
+   ✓ a client that aborts mid-upload leaves no partial object and no leaked socket > content-length: 2 MiB of a 10 MiB upload, then the client destroys the socket  418ms
+   ✓ a client that aborts mid-upload leaves no partial object and no leaked socket > chunked: 2 MiB of a 10 MiB upload, then the client destroys the socket  431ms
+   ✓ normal traffic is unchanged > a valid 3 MiB upload over a real socket is stored byte-exact with its sha256, and the keep-alive connection serves the next request  1017ms
+   ✓ shutdown is bounded > app.close() with a STALLED upload in flight completes within the grace period (default 5 s); the stalled socket is closed by the server  5647ms
+   ✓ shutdown is bounded > an in-flight upload that finishes within the grace period completes normally (200, stored byte-exact, Connection: close), then app.close() returns  1988ms
+   ✓ shutdown is bounded > a body that stalls outside shutdown is cut by Node's requestTimeout (408, connection closed), nothing stored, no error log  2103ms
+   ✓ shutdown is bounded > SIGTERM: the API process (src/main.ts) exits 0 within the grace period with a stalled upload in flight  9462ms
+   ✓ unmatched-route 404s are rate limited (audit round 10 observation P3) > a flood on unmatched routes gets 429 rate_limited after the limit (same key and limit as the routes); the SPA fallback still serves index.html  795ms
+ ✓ |integration| apps/api/test/integration/adoption/indicators.test.ts (14 tests) 4656ms
+   ✓ adoption metric links (REQ-S16-020 AdoptionMetricLink; ADR-0033 §3, §9, §10) > each §10 refusal with its exact text, before any write  303ms
+   ✓ below trajectory → exactly one corrective intervention (REQ-PB-069, REQ-PB-071 A11; ADR-0033 §4) > D-102 parity: the worker twin writes the same rows as BE-H's API service for the same input  386ms
+ ✓ |integration| apps/api/test/integration/registers.test.ts (23 tests) 3728ms
+   ✓ starter structure (ADR-0016 §4; REQ-S12-004, REQ-PB-003) > both End-to-End and Modular creates get the pin, six T01 rows, ten canvas boxes and six gates, each audited  346ms
+ ✓ |integration| apps/api/test/integration/workflows/phases.test.ts (14 tests) 4614ms
+   ✓ the phase catalogue (REQ-PB-014) > GET /phases: exactly six phases in order; names, purposes and key outputs equal B0021; objectives equal the phase blocks  408ms
+   ✓ guided phase steps (REQ-S04-001) > each of the six phases shows steps, required evidence, owners (Unknown when unassigned) and a review queue  390ms
+   ✓ guided phase steps (REQ-S04-001) > an unmet completion rule cannot be put in review or accepted (422); SQL cannot bypass the rule  345ms
+   ✓ guided phase steps (REQ-S04-001) > the owner cannot accept their own step (403); a non-owner cannot progress it (403); an owner is required (422)  304ms
+   ✓ guided phase steps (REQ-S04-001) > the review queue: one task per reviewer-role holder (never the owner); accept closes them and enables the next owned step once  514ms
+   ✓ steps never move a gate (REQ-S04-002: completing every phase task leaves the gate Draft) > completing all five Diagnose steps leaves G1 draft, with no submission and an unchanged gate instance  447ms
+   ✓ authorization, If-Match and audit on every write (S-4) > If-Match: 428 when missing, 409 when stale; If-Match "0" on an existing row is 409; creates are version 1  373ms
+ ✓ |integration| apps/api/test/integration/integrations/runs.test.ts (15 tests) 3659ms
+   ✓ the A17 run with the local test adapter (REQ-S17-001) > queues, runs and records 10 read, 10 staged, 8/1/1, reconciliation matched and the last success  331ms
+   ✓ failing: bounded retries with backoff, then exactly one operational exception (REQ-S17-005) > retries up to the bound, raises one exception, shows the actionable error, and recovers  506ms
+   ✓ authorization and refusals (ADR-0055 §9) > KDS and ADM_TECH run; AUD and TD get 403; an outsider 404; anonymous 401; nothing is written  508ms
+   ✓ authorization and refusals (ADR-0055 §9) > the commit-time re-check: a right lost while the request waits is 403 and nothing is written  404ms
+stdout | apps/api/test/integration/hardening/integrity-sweep.test.ts > REQ-S16-023 part 1: finalized records cannot be destructively deleted (ADR-0052 §9.1) > its evidence: removing the evidence link returns 409 evidence.finalized and changes nothing
+[integrity-sweep] removeEvidenceLink on approved-G1 evidence: 409 evidence.finalized
+
+stdout | apps/api/test/integration/hardening/integrity-sweep.test.ts > REQ-S16-023 part 1: finalized records cannot be destructively deleted (ADR-0052 §9.1) > its evidence: archiving the evidence item returns 409 evidence.finalized and changes nothing
+[integrity-sweep] archiveEvidence on approved-G1 evidence: 409 evidence.finalized
+
+stdout | apps/api/test/integration/hardening/integrity-sweep.test.ts > REQ-S16-023 part 1: finalized records cannot be destructively deleted (ADR-0052 §9.1) > every DELETE operation of the contract is listed, and no finalized-record table grants DELETE to mth_app
+[integrity-sweep] tables with DELETE granted to mth_app: idempotency_record, oidc_login_state, search_document, session, user_identity
+
+stdout | apps/api/test/integration/hardening/integrity-sweep.test.ts > REQ-S16-023 part 4: required ownership and canonical references on every P6 table (ADR-0052 §9.4) > every P6 table exists, and every uuid *_id column is a foreign key, a trigger-guarded record reference, or a history copy of one
+[integrity-sweep] P6 tables: 32; *_id columns: 84; foreign-key columns: 128; record_ref-guarded tables: record_sensitivity, sensitive_record_grant; unguarded: deliverable_external_change_event.evidence_id, deliverable_external_change_event.outbound_write_id, import_row_commit.target_record_id, record_sensitivity_change.record_id
+[integrity-sweep] P6 tables with a nullable organization_id: operational_exception, service_identity
+
+ ✓ |integration| apps/api/test/integration/hardening/integrity-sweep.test.ts (23 tests) 6389ms
+   ✓ REQ-S16-023 part 1: finalized records cannot be destructively deleted (ADR-0052 §9.1) > evidence cited only by a submission without an approved decision (rejected) is archived and unlinked normally  1401ms
+   ✓ REQ-S16-023 part 2: an illegal status transition returns 422 invalid_transition (ADR-0052 §9.2) > P6 sensitive grant: revoked -> revoked (revoke again) is 422; the grant keeps version 2 and its two audit events  484ms
+   ✓ REQ-S16-023 part 2: an illegal status transition returns 422 invalid_transition (ADR-0052 §9.2) > DG3 T08 dependency: resolved -> at_risk is 422; nothing written  583ms
+ ✓ |integration| apps/api/test/integration/media-types.test.ts (21 tests) 3591ms
+   ✓ JSON operations accept only application/json (F-DG2-320) > createEvidence sent text/plain or application/octet-stream, in each framing: 400; nothing created  495ms
+   ✓ JSON operations accept only application/json (F-DG2-320) > an If-Match update (PATCH) sent application/octet-stream: 400; the record is unchanged  504ms
+   ✓ the media-type check and the parser lookup agree for every spelling (F-DG2-351) > every OWS/whitespace spelling of octet-stream reaches the octet parser: stored byte-exact (sha256), downloadable  512ms
+   ✓ the media-type check and the parser lookup agree for every spelling (F-DG2-351) > every OWS/whitespace spelling of application/json reaches the JSON parser: accepted and stored verbatim  354ms
+ ✓ |integration| apps/api/test/integration/forms/form-schemas.test.ts (17 tests) 2998ms
+   ✓ REQ-S05-002: protected source columns and extension fields through the Studio pipeline > an extension field added to T03 passes preview and compatibility and publishes; the admin schema shows it  328ms
+   ✓ REQ-S05-002: protected source columns and extension fields through the Studio pipeline > the other definition-time refusals of ADR-0041 §10, each with its exact code and text  339ms
+   ✓ the forms provider's affected records and migration items (ADR-0039 §5, ADR-0040 §2) > affected records count the records of the changed form per pinned transformation; a new required field is a migration item  336ms
+ ✓ |integration| apps/api/test/integration/search/index-feed.test.ts (17 tests) 7424ms
+ ✓ |integration| apps/api/test/integration/kpi/business-cases.test.ts (17 tests) 5755ms
+   ✓ transformation case: the ten B0085 sections (REQ-PB-053) > all ten sections persist and read back; missingSections clears once lines and owners exist  858ms
+   ✓ initiative cases and the roll-up (REQ-PB-054, REQ-S05-005) > the total equals the distinct lines once; editing an initiative line changes the roll-up without duplication  380ms
+   ✓ lines: exactly one class (REQ-PB-053, REQ-S05-005) > two classes -> 400 at /class; class/kind and class/value-basis mismatch -> 422; value rules  477ms
+   ✓ Finance validation of the baseline (REQ-PB-055 part) > FIN validates; the author is refused 403; the hash is stored; a baseline change shows Stale  751ms
+ ✓ |integration| apps/api/test/integration/methodology/methodology-migrations.test.ts (9 tests) 7382ms
+   ✓ REQ-S06-008: pinned until a deliberate, approved migration; history never rewritten > v2 published: the transformation still renders v1; the plan lists the G2 re-approval; execution moves only the pin  2698ms
+   ✓ REQ-S06-008: pinned until a deliberate, approved migration; history never rewritten > the preview lists the new required field (forms provider) and needs an input before submit  491ms
+   ✓ decisions, refusals and authorization > requester deciding -> 403 self_approval; decideApproval on the type -> 422 decide_through_record; request changes and resubmit  489ms
+   ✓ decisions, refusals and authorization > a moved pin -> 409 pin_moved; not approved -> 422 not_approved; target invalid; open exists; withdraw  467ms
+   ✓ decisions, refusals and authorization > an approved migration whose pin moved is not executed (409 pin_moved, nothing written)  537ms
+   ✓ decisions, refusals and authorization > withdrawing a submitted migration withdraws its approval too  468ms
+   ✓ decisions, refusals and authorization > AUD and TL get 403 on every write, outsiders 404; If-Match 428/409; reads by methodology.read and transformation.read  1127ms
+   ✓ decisions, refusals and authorization > authorization is re-checked at commit time: a grant revoked while the request waits -> 403, nothing written  409ms
+   ✓ decisions, refusals and authorization > lock class 730252 serialises concurrent creates: exactly one migration, the other 409 open_exists  316ms
+ ✓ |integration| apps/api/test/integration/integrations/outbound.test.ts (22 tests) 3350ms
+   ✓ authorization (outbound_write.execute: TD only; outbound_write.read) > outsiders get 404 on reads, a TD elsewhere 404 on writes; a reader without outbound_write.read 403; AUD, TO, KDS read  305ms
+   ✓ authorization (outbound_write.execute: TD only; outbound_write.read) > the commit-time re-check: a right lost while the request waits is 403 and nothing is written  374ms
+ ✓ |integration| apps/api/test/integration/reporting/headline-basis.test.ts (8 tests) 9114ms
+   ✓ F-DG4-123: the value headlines on one basis (DOM-GROSS world) > profit-and-cash planned 90, revenue uplift 300, avoided cost 45, gap 1 and Red, on all four surfaces; 435 nowhere  1593ms
+   ✓ F-DG4-123: the value headlines on one basis (DOM-GROSS world) > variant A: only revenue uplift and avoided cost -> profit-and-cash n/a (never 0 or green), 300 and 45 still shown  1219ms
+   ✓ F-DG4-123: the value headlines on one basis (DOM-GROSS world) > variant B: a margin benefit whose only line is outside the window -> profit-and-cash planned is a known zero, gap n/a nothing_planned  911ms
+   ✓ F-DG4-123: the value headlines on one basis (DOM-GROSS world) > variant C: a revenue line without an amount makes only the top-line headline unknown  603ms
+   ✓ F-DG4-123: the value headlines on one basis (DOM-GROSS world) > drill invariant per currency (SAR and USD), in every state, on all four surfaces  1905ms
+   ✓ F-DG4-123: the value headlines on one basis (DOM-GROSS world) > a drill-down's headlineBasis follows its class: profit_and_cash, top_line, non_cash or null  423ms
+   ✓ F-DG4-123: the value headlines on one basis (DOM-GROSS world) > F-DG4-105 (probe GC): USD with no profit-and-cash benefit beside SAR with one: every figure drills to its own currency only  1916ms
+ ✓ |integration| apps/api/test/integration/methodology/scoring-defaults.test.ts (14 tests) 5903ms
+   ✓ REQ-PB-093: the admin publishes new default weights and rubric; new transformations start with them > the admin changes the Feasibility rubric text and the weights to 30/20/20/15/15 in a draft and publishes it  361ms
+   ✓ REQ-PB-093: the admin publishes new default weights and rubric; new transformations start with them > publishing defaults that total 95% (or 105%) is refused 422 config_version.weights_total; the draft stays a draft  342ms
+ ✓ |integration| apps/api/test/integration/health/assessments.test.ts (15 tests) 12428ms
+   ✓ REQ-PB-091 / REQ-S14-002: the 25 questions, incomplete assessments and the three actions > the 25 questions render verbatim (B0150), in order, each with a provisional Arabic text  665ms
+   ✓ REQ-PB-091 / REQ-S14-002: the 25 questions, incomplete assessments and the three actions > REQ-S14-002: 24 answers give completion {answered: 24, total: 25}, score null and band null; submit gives 422 incomplete  771ms
+   ✓ REQ-PB-091 / REQ-S14-002: the 25 questions, incomplete assessments and the three actions > submitting a complete assessment without three actions gives 422 health_check.actions_required  513ms
+   ✓ REQ-PB-091 / REQ-S14-002: the 25 questions, incomplete assessments and the three actions > reassessments are tracked in sequence; at most one draft (409 draft_exists)  1086ms
+   ✓ REQ-S14-001 / REQ-PB-092: score and the four B0152 bands > 25 answers with 17 Yes give score 17, out of 25, band 16-20, and scoringAssumption true  1204ms
+   ✓ REQ-S14-001 / REQ-PB-092: score and the four B0152 bands > scores 21, 16, 10 and 9 map to the four B0152 texts verbatim  2588ms
+   ✓ REQ-S14-001 / REQ-PB-092: score and the four B0152 bands > the database refuses a submitted score that differs from its own computation (500, nothing written)  665ms
+   ✓ REQ-S14-003 (A07 part): existing assessments keep their scheme version and band > an assessment submitted under v1 keeps v1, its score and its band after v2 is published and the pin migrated  1320ms
+   ✓ REQ-S14-003 (A07 part): existing assessments keep their scheme version and band > a v1 draft refuses N/A (422 response_not_allowed); an all-N/A v2 assessment is not computable (422)  710ms
+   ✓ authorization, If-Match, audit and commit-time re-authorization > AUD, SP and WL get 403 on every write; an outsider 404; nothing is written  433ms
+   ✓ authorization, If-Match, audit and commit-time re-authorization > If-Match: 428 when missing, 409 when stale, on every write; two leaders answering at once get one 409  301ms
+   ✓ authorization, If-Match, audit and commit-time re-authorization > one audit event per mutated row, in the same transaction  439ms
+ ✓ |integration| apps/api/test/integration/dependencies/t08.test.ts (19 tests) 5149ms
+   ✓ T08 columns, From external, types > the seven T08 columns round-trip; version 1, ETag and Location; audited; listed and read  389ms
+   ✓ T08 columns, From external, types > From `external` with a label is accepted (no edge); a label-less external From is 400  332ms
+   ✓ T08 columns, From external, types > a self-dependency is 422; an initiative of another transformation is 422; From initiative needs its id (400)  366ms
+   ✓ dependency types (REQ-PB-052) > add, relabel, retire a custom type: configure only (AUD and TL 403), If-Match 428/409, audited, duplicate 409  369ms
+   ✓ cycles (REQ-S09-008, REQ-PB-051) > two DATABASE connections inserting A→B and B→A concurrently: exactly one commits (dependency_acyclic)  371ms
+ ❯ |integration| apps/api/test/integration/assistant/conversations.test.ts (17 tests | 1 failed) 4819ms
+   ✓ off means no call (REQ-S17-009; ADR-0059 §3) > with no setting row: create is 422 assistant.disabled, the list is empty and readable 21ms
+   ✓ off means no call (REQ-S17-009; ADR-0059 §3) > an http endpoint saved but DISABLED gets zero requests: post and create answer 422; history stays readable 108ms
+   ✓ off means no call (REQ-S17-009; ADR-0059 §3) > enabled with the HTTP endpoint, BE-T's stub seam answers no_sources and still sends nothing to the model 64ms
+   ✓ authorization and ownership (ADR-0059 §10) > AUD and a user without assistant.use get 403 on every conversation route 41ms
+   ✓ authorization and ownership (ADR-0059 §10) > another user's conversation is 404 on read and post, and never listed 38ms
+   ✓ authorization and ownership (ADR-0059 §10) > a focus transformation the caller cannot read is 404 (TL on tA1 asks about tA2); a readable one is accepted 26ms
+   ✓ authorization and ownership (ADR-0059 §10) > create: validation (400), version 1 with no message, Location and ETag, one audit event 31ms
+   ✓ authorization and ownership (ADR-0059 §10) > create re-checks assistant.use at commit: revoked while waiting is 403 and nothing is created 49ms
+   ✓ postAssistantMessage (ADR-0059 §9) > validation (400), If-Match (428 missing, 409 stale), then one turn: prompt + reply, two versions, two audit events 89ms
+   ✓ postAssistantMessage (ADR-0059 §9) > post re-checks assistant.use at commit: revoked while waiting is 403 and nothing is appended 67ms
+   ✓ postAssistantMessage (ADR-0059 §9) > a reply still awaited is 409 assistant.reply_pending; one awaited past the timeout + 60 s is recovered as `interrupted` 124ms
+   ✓ postAssistantMessage (ADR-0059 §9) > a conversation with 98 messages takes one last turn (100); then 422 assistant.conversation_full, nothing appended 201ms
+   ✓ postAssistantMessage (ADR-0059 §9) > when an `interrupted` reply must be appended first, at most 97 messages so far: 97 takes a turn, 99 is full  341ms
+   ✓ the list (cursor-paginated, own only, updatedAt desc then id desc) > pages with a stable order; a tampered cursor is 400; the transformation filter applies 88ms
+   ✓ the read-time ReadScope re-check (ADR-0059 §9; REQ-S17-007) > an answer citing a record the owner can no longer read is withheld (content null, readable false), with its suggestion 58ms
+   ✓ the read-time ReadScope re-check (ADR-0059 §9; REQ-S17-007) > a citation of a record that is not (or no longer) indexed is treated as unreadable (fail closed) 20ms
+   × the rate-limit class `assistant` and the log line (ADR-0052 §4; ADR-0059 §9 rule 3) > over the per-minute budget a post is 429 with Retry-After; each post writes one log line without the prompt 346ms
+     → expected { …(8) } to match object { …(5) }
+(3 matching properties omitted from actual)
+ ✓ |integration| apps/api/test/integration/oidc.test.ts (33 tests) 4790ms
+ ✓ |integration| apps/worker/test/integration/starters.test.ts (25 tests) 3753ms
+ ✓ |integration| apps/api/test/integration/methodology/studio-checks.test.ts (17 tests) 2550ms
+ ✓ |integration| apps/api/test/integration/procedures/procedure-instances.test.ts (10 tests) 4072ms
+   ✓ parallel, conditional and approval steps (a published Studio definition) > a running instance stays on its definition version when a newer version is published  922ms
+   ✓ authorization, If-Match and refusals > step writes: 428 without If-Match, 409 when stale, AUD 403, not_active, skip and assign rules, cancel  353ms
+ ✓ |integration| apps/api/test/integration/kpi/import-target.test.ts (9 tests) 2253ms
+   ✓ the A17 8/1/1 fixture as CSV (REQ-S17-002, REQ-S17-003) > stages 10 = 8 + 1 + 1, commits 8 KPI actuals through DG4 with 8 lineage rows; the 2 others keep their reasons  493ms
+   ✓ the A17 8/1/1 fixture as XLSX (REQ-S17-002, REQ-S17-003) > stages 10 = 8 + 1 + 1, commits 8 KPI actuals through DG4 with 8 lineage rows; the 2 others keep their reasons  343ms
+ ✓ |integration| tests/qa/integration/a10-benefit-integrity.test.ts (16 tests) 4501ms
+   ✓ A10: unvalidated or forecast value never appears as validated actual > REQ-PB-075, REQ-S08-016: a submitted value stays pending; approval raises the validated total by exactly the approved amount  434ms
+   ✓ A10: unvalidated or forecast value never appears as validated actual > REQ-S08-001: a forecast amount never appears in the validated total; a rejected measurement is kept and shown rejected  328ms
+   ✓ A10: unvalidated or forecast value never appears as validated actual > REQ-S08-014: two benefits with the same driver and period raise a warning and stay out of validated totals until Finance resolves  584ms
+   ✓ A10: unvalidated or forecast value never appears as validated actual > REQ-S08-015, REQ-PB-013: a validation lacking a measurement period is rejected; non-Finance 403; the audit records the validator  355ms
+   ✓ A10: unvalidated or forecast value never appears as validated actual > REQ-S08-017: an in-place edit of a validated value is 409; a reversal nets the total and both records stay visible  339ms
+ ✓ |integration| apps/api/test/integration/kpi-restatements/restatements.test.ts (9 tests) 2813ms
+   ✓ REQ-S07-016 (a): a KPI change applies prospectively > a target change approved through a change request and activated while Q2 is scheduled leaves Q1's latest evaluation and RAG unchanged; the next opened period uses the new version  630ms
+   ✓ withdrawKpiRestatement and the shared mutation rules > AUD 403 on every write; If-Match 428/409; one audit event per mutation; commit-time re-authorization  317ms
+ ✓ |integration| apps/api/test/integration/reporting/exports.test.ts (16 tests) 2518ms
+   ✓ exactly once: idempotency, a killed worker, retries > a renderer's own validation error fails the job at once with export.render_failed (never retried)  385ms
+ ✓ |integration| apps/api/test/integration/branding/branding.test.ts (26 tests) 5660ms
+   ✓ the next generated report carries the current branding and the provenance footer (REQ-S01-002, REQ-S15-004, REQ-PB-001; the worker's export runner) > version 0: an Arabic export's header carries «منصة موبايلي للتحوّل» (as GET /branding), an English one the English name  2582ms
+   ✓ the next generated report carries the current branding and the provenance footer (REQ-S01-002, REQ-S15-004, REQ-PB-001; the worker's export runner) > version 0: the shipped name in the header and no brand band; after a PUT: the new name (en, ar) and colour  1520ms
+   ✓ the next generated report carries the current branding and the provenance footer (REQ-S01-002, REQ-S15-004, REQ-PB-001; the worker's export runner) > a configured version: the DOCX and PPTX headers carry its own names (en, ar), never the shipped ones  431ms
+ ✓ |integration| apps/api/test/integration/kpi-restatements/decisions.test.ts (4 tests) 2396ms
+   ✓ REQ-S07-016 (c): approval recalculates Q1 once and offers the reissue of the Q1 report issued earlier > the issued report is unchanged; one offer per affected snapshot; reissue + issue gives issueVersion 2; v1 superseded and unchanged; three replays write one run and one set of offers  741ms
+ ✓ |integration| apps/api/test/integration/reporting/kbe-c2-assemblers.test.ts (8 tests) 2412ms
+   ✓ gate_pack: every criterion of the gate with its state and evidence (REQ-S13-004; REQ-S13-005 content) > a submitted G1: the criteria recorded with the submission, each with its state, and the submission's evidence  356ms
+   ✓ business_cases (REQ-S13-004, REQ-S13-008; D-117, D-119, D-122) > lines and totals as the DG3 routes show them; unvalidated formula -> provisional; formula and engine versions  332ms
+ ✓ |integration| apps/api/test/integration/kpi/kpi-resources.test.ts (23 tests) 1796ms
+ ✓ |integration| apps/api/test/integration/forms/form-records.test.ts (18 tests) 3228ms
+   ✓ export (REQ-S05-001) > at most 5000 rows: 5000 export, 5001 is 422 form_export.too_large  927ms
+ ✓ |integration| tests/qa/integration/a05-calculation-correctness.test.ts (17 tests) 5733ms
+   ✓ A05: higher/lower/band measures and RAG from the trajectory (REQ-S07-002, REQ-S07-007) > REQ-S07-007: actual below the red threshold of the approved trajectory is Red; a new threshold version recomputes RAG  349ms
+   ✓ A05: higher/lower/band measures and RAG from the trajectory (REQ-S07-002, REQ-S07-007) > REQ-S07-002: lower-is-better 80 against 90 is favourable (green); higher-is-better 80 against 90 is adverse (not green)  344ms
+   ✓ A05: aggregation, formulas and currency/decimal precision > REQ-S07-010: two business-unit ratios 1/10 and 9/10 roll up to 0.50 (weighted), not the mean of percentages  321ms
+   ✓ A05: aggregation, formulas and currency/decimal precision > REQ-S16-025: 0.1 + 0.2 SAR sums to exactly 0.30; 100000 x 0.02 x 50 SAR equals exactly 100000.00  823ms
+   ✓ A05: aggregation, formulas and currency/decimal precision > REQ-S08-006: a benefit value drills to the formula version and input actual versions; a formula change keeps the old reference  709ms
+   ✓ A05: decimal SAR budgets, working-day slip, critical path and business dates > REQ-S09-007: budget/actual/forecast use decimal SAR; forecast slip vs approved date is shown in working days  502ms
+   ✓ A05: decimal SAR budgets, working-day slip, critical path and business dates > REQ-S09-009: the fixture network's critical path is the expected chain; with a missing duration no path is claimed  446ms
+ ✓ |integration| apps/api/test/integration/automation/automation-rules.test.ts (13 tests) 3021ms
+   ✓ rule versions (ADR-0043 §1, §4) > one open version per rule; a new draft copies the effective version; content edits rehash; published never changes  617ms
+ ✓ |integration| apps/api/test/integration/operations/exceptions.test.ts (13 tests) 1750ms
+ ✓ |integration| apps/api/test/integration/portfolio/transitions.test.ts (21 tests) 14081ms
+   ✓ submit (draft -> submitted) > REQ-PB-007/REQ-PB-022: before G1 -> 422 invalid-transition with the exact G1 text; errors[] lists every failing precondition; nothing written  690ms
+   ✓ submit (draft -> submitted) > REQ-PB-006: without an outcome/KPI link -> 'Outcome before activity' validation error at /outcomeContributions; accepted once a link exists  453ms
+   ✓ submit (draft -> submitted) > Modular: an accepted inherited approval of G1 with verified evidence satisfies submit (never a gate decision)  574ms
+   ✓ withdraw and cancel > withdraw: submitted or ranked -> draft with a reason; draft -> 422 not_withdrawable; no reason -> 400  609ms
+   ✓ withdraw and cancel > cancel: any non-terminal status -> cancelled with reason and stamps; launched or cancelled -> 422 not_cancellable  1448ms
+   ✓ selection (REQ-S09-003): a recorded business approval; ranking never selects; selection never funds > ranking never selects; select writes a portfolio_selection row and shows 'Selected - unfunded'  821ms
+   ✓ selection (REQ-S09-003): a recorded business approval; ranking never selects; selection never funds > deselect: selected or funded -> ranked with a rationale; ranked or launched -> 422 not_deselectable  1034ms
+   ✓ selection (REQ-S09-003): a recorded business approval; ranking never selects; selection never funds > ADR-0021 §6 (T-DG3-ARCH-03): select/deselect on someone's behalf -> 422 selection.on_behalf_not_supported, even under an active delegation; nothing written  695ms
+   ✓ launch (funded -> launched) > REQ-PB-004 (acceptance): End-to-End launch -> 422 'North Star, outcomes and target state not yet approved'; after G2 and G3 approval the same call succeeds  1036ms
+   ✓ launch (funded -> launched) > direction is checked BEFORE funding: a selected-unfunded End-to-End initiative gets the sequencing reason, errors[] lists both  540ms
+   ✓ launch (funded -> launched) > 'Selected - unfunded' cannot launch (also after a rejected/deferred or revoked funding decision); other statuses are not launchable  1230ms
+   ✓ launch (funded -> launched) > End-to-End: an accepted waiver of G3 (G2 approved) satisfies the direction rule for launch; the gate stays unapproved  434ms
+   ✓ launch (funded -> launched) > Modular: a funded initiative launches without G2/G3 (not held to the End-to-End rule); WL (no initiative.launch) gets 403  379ms
+   ✓ every transition: If-Match 428/409 and AUD 403 (audited denial, nothing written) > submit: 428 without If-Match, 409 stale, 403 for AUD, 404 for an unknown id  421ms
+   ✓ every transition: If-Match 428/409 and AUD 403 (audited denial, nothing written) > withdraw: 428 without If-Match, 409 stale, 403 for AUD, 404 for an unknown id  408ms
+   ✓ every transition: If-Match 428/409 and AUD 403 (audited denial, nothing written) > select: 428 without If-Match, 409 stale, 403 for AUD, 404 for an unknown id  431ms
+   ✓ every transition: If-Match 428/409 and AUD 403 (audited denial, nothing written) > deselect: 428 without If-Match, 409 stale, 403 for AUD, 404 for an unknown id  584ms
+   ✓ every transition: If-Match 428/409 and AUD 403 (audited denial, nothing written) > launch: 428 without If-Match, 409 stale, 403 for AUD, 404 for an unknown id  527ms
+   ✓ every transition: If-Match 428/409 and AUD 403 (audited denial, nothing written) > cancel: 428 without If-Match, 409 stale, 403 for AUD, 404 for an unknown id  821ms
+   ✓ latestFundingState() (ADR-0023 §7): the latest funding decision decides, fail closed > none -> unfunded; approved -> funded; deferred after approved -> unfunded; revoked -> revoked  491ms
+ ✓ |integration| apps/api/test/integration/raid/corrective-cases.test.ts (15 tests) 2490ms
+   ✓ createCorrectiveCase: a Value Review finding (ADR-0031 §5.5; REQ-PB-085 create:BO,TL,FIN) > AUD 403; ADM-only and outsiders 404 on every operation; nothing written  372ms
+ ✓ |integration| apps/api/test/integration/methodology/reader-search-provenance.test.ts (15 tests) 1471ms
+ ✓ |integration| apps/api/test/integration/reporting/finance-drilldown-k1.test.ts (13 tests) 6610ms
+   ✓ K1 item 4: every Finance class line equals the decimal sum of its drill-down's records > for each of the 42 class lines the drill-down (metric value.<state>, valueClass <class>) sums to the line, over every page  1408ms
+   ✓ REQ-S13-001: a user scoped to X sees no Y record or figure in the value-class drill-downs > every value-state metric, with and without each value class, holds X only  1833ms
+ ✓ |integration| apps/api/test/integration/workflows/gate-exceptions.test.ts (14 tests) 8996ms
+   ✓ submission with missing mandatory evidence (REQ-S04-012) > the gate page lists the missing items; one missing item -> 422 listing exactly it (DG2 form); nothing written  783ms
+   ✓ submission with missing mandatory evidence (REQ-S04-012) > with accepted unexpired exceptions -> 201; the snapshot and the frozen criterion rows record each exception  589ms
+   ✓ submission with missing mandatory evidence (REQ-S04-012) > a pending, rejected or other-criterion exception does not cover (422 as in DG2)  416ms
+   ✓ the waiver record (REQ-S04-013) > the requester cannot decide (403); a non-approver cannot (403); ADM-only 403; AUD 403 on every write  389ms
+   ✓ the waiver record (REQ-S04-013) > one hop of delegation: a delegate holding gate_exception.decide decides for the approver (recorded on behalf)  319ms
+   ✓ expiry (REQ-S04-013; clock injected) > after expires_on the exception no longer covers: the live view and the submission report the criterion missing again  444ms
+   ✓ expiry (REQ-S04-013; clock injected) > approving a submission whose recorded exception has expired -> 422 gate.exception_expired; changes requested is allowed  1023ms
+   ✓ expiry (REQ-S04-013; clock injected) > approving a submission whose recorded exception was revoked -> 422 gate.exception_revoked (exact text); nothing written; reject allowed  687ms
+   ✓ expiry (REQ-S04-013; clock injected) > revoked AND expired reports the revoke; an unrevoked, unexpired exception still lets the approver approve  1252ms
+   ✓ expiry (REQ-S04-013; clock injected) > the injected clock also moves the create check: an expiry before the injected business date -> 422  743ms
+   ✓ revoke, withdraw and concurrency (ADR-0035 §4, §11) > revoke needs a reason (400) and an accepted exception (422); after revoke the criterion is missing again  966ms
+   ✓ revoke, withdraw and concurrency (ADR-0035 §4, §11) > withdraw: the requester only, pending only, If-Match 428/409; decision If-Match 428/409  465ms
+   ✓ revoke, withdraw and concurrency (ADR-0035 §4, §11) > the approver gets one gate_exception_to_decide item on request; it is done once decided; list filters  372ms
+ ✓ |integration| apps/api/test/integration/workflows/g5-g6.test.ts (13 tests) 4792ms
+   ✓ G5 Scale (REQ-PB-020, REQ-PB-015) > an open High-impact risk without an approved disposition: 422 whose detail and errors list 'Risk closure'; nothing written  632ms
+   ✓ G5 Scale (REQ-PB-020, REQ-PB-015) > an approved disposition completes Risk closure (a pending one does not; a medium risk never counts)  721ms
+   ✓ G5 Scale (REQ-PB-020, REQ-PB-015) > G5 configured to BO: an SP decision is 403 gate.not_approver, a BO decision with the scale scope is 201  407ms
+   ✓ G5 Scale (REQ-PB-020, REQ-PB-015) > the scale-scope rules (ADR-0035 §5): required with a G5 approval, refused elsewhere, items inside the organization  442ms
+   ✓ G6 Sustain (REQ-PB-021, REQ-S04-008, REQ-S04-002) > without an accepted BAU handover: 422 listing 'Ownership transfer'; nothing written  359ms
+   ✓ G6 Sustain (REQ-PB-021, REQ-S04-008, REQ-S04-002) > with every fact: 201 with a frozen g6 snapshot; an edit afterwards leaves it unchanged; the SP approval changes no phase, closes nothing and writes no DG delivery record  1358ms
+ ✓ |integration| apps/api/test/integration/automation/automation-engine.test.ts (9 tests) 3784ms
+   ✓ REQ-S12-001: each execution is recorded with rule version, trigger event and outcome > an enabled admin rule on gate.decided records one execution and creates its task; conditions not met -> skipped  955ms
+   ✓ REQ-S12-001: each execution is recorded with rule version, trigger event and outcome > never runs a disabled rule, another organization's event, or a transformation rule on another transformation  406ms
+   ✓ REQ-S12-021: the same event x3 -> one execution, one action, one task > sequential and concurrent replays create exactly one of each  743ms
+   ✓ retries (ADR-0043 §5; ADR-0008 §4) > a thrown error leaves the execution running; the last attempt marks it failed; a redelivery resumes and completes once  324ms
+   ✓ engine ticks (ADR-0043 §2: automation.tick_hourly / automation.tick_daily) > runs a tick rule once per slot, whatever the number of deliveries  439ms
+ ✓ |integration| apps/worker/test/integration/adoption-below-trajectory.test.ts (14 tests) 5358ms
+   ✓ the outbox relay fans kpi.deviation_evaluated out (D-102) > one event reaches both consumers exactly once; a relay retry and a replayed send duplicate nothing  600ms
+ ✓ |integration| apps/api/test/integration/tasks/work-items.test.ts (18 tests) 2710ms
+   ✓ My Work items (S-4) > the assignee lists, reads and completes; nobody else sees or completes it  311ms
+stdout | apps/api/test/integration/request-io.test.ts > F-DG2-411: a stalled upload holds no pooled connection and no row lock > reviewer's R8: N stalled uploads (N = pool size) leave /me and /readyz answering promptly; nothing is stored
+BE17 R8: {"poolSize":5,"stalledUploads":5,"sessions":{"sessions":5,"visible":5,"idleInTx":0,"nonIdle":0},"me":{"status":200,"ms":6},"ready":{"status":200,"ms":3},"patch":{"status":200,"ms":30},"leftovers":[],"rows":0,"closeMs":0,"errors":[]}
+
+stdout | apps/api/test/integration/request-io.test.ts > F-DG2-411: a stalled upload holds no pooled connection and no row lock > an upload whose If-Match goes stale during the body: 409 version_conflict, no content row, no object
+BE17 stale-if-match: {"patchDuringBody":{"status":200,"ms":63},"patch":{"status":200,"ms":63},"upload":{"status":409,"type":"urn:mth:problem:version-conflict","title":"Version conflict","detail":"The record was changed by someone else. Review the current version and re-apply your change.","code":"version_conflict","requestId":"01a18ed7-aaeb-7309-bd20-70c453d0b3c3","currentVersion":2},"rows":0,"files":[],"version":2,"closeMs":3}
+
+stdout | apps/api/test/integration/request-io.test.ts > F-DG2-411: a stalled upload holds no pooled connection and no row lock > valid uploads stay byte-exact with their sha256 (stored, recorded and downloaded), no temporary object left
+BE17 valid-uploads: {"out":[{"size":5,"status":200,"rows":1,"sha":true,"files":["01a18ed7-ad95-76c4-8ea1-decd685f658d"]},{"size":65536,"status":200,"rows":1,"sha":true,"files":["01a18ed7-ade1-724c-bff0-90d0ed84927b"]},{"size":3145728,"status":200,"rows":1,"sha":true,"files":["01a18ed7-aeb0-7293-96f0-3c8ff24212ee"]}],"closeMs":3}
+
+stdout | apps/api/test/integration/request-io.test.ts > F-DG2-411: a stalled upload holds no pooled connection and no row lock > sweep: downloads to slow readers (N+1 paused readers, pool size N) hold no pooled connection
+BE17 slow-readers: {"poolSize":2,"readers":3,"bytesReceivedWhilePaused":[65536,65536,65536],"fileBytes":25165824,"me":{"status":200,"ms":69},"ready":{"status":200,"ms":64},"sessions":{"sessions":2,"visible":2,"idleInTx":0,"nonIdle":0},"closeMs":0}
+
+stdout | apps/api/test/integration/request-io.test.ts > F-DG2-411: a stalled upload holds no pooled connection and no row lock > defence in depth: an exhausted pool answers 503 after the bounded checkout wait (and /readyz 503), never a hang
+BE17 pool-exhausted: {"me":{"status":503,"ms":432},"meCode":"unavailable","ready":{"status":503,"ms":404},"meAfter":{"status":200,"ms":17},"closeMs":3}
+
+stdout | apps/api/test/integration/request-io.test.ts > F-DG2-412: an aborted or stalled body is never a 500 and never an error-level log > R6a stalled JSON body, requestTimeout 408: answered (if at all) below 500, logged below error level, nothing stored
+BE17 R6a: {"status":408,"classified":0,"completed":[],"errors":[],"rows":0,"files":[],"closeMs":0}
+
+stdout | apps/api/test/integration/request-io.test.ts > F-DG2-412: an aborted or stalled body is never a 500 and never an error-level log > R6d JSON body aborted by the client: answered (if at all) below 500, logged below error level, nothing stored
+BE17 R6d: {"status":null,"classified":32,"completed":[],"errors":[],"rows":0,"files":[],"closeMs":0}
+
+stdout | apps/api/test/integration/request-io.test.ts > F-DG2-412: an aborted or stalled body is never a 500 and never an error-level log > R6c stalled upload body, requestTimeout 408: answered (if at all) below 500, logged below error level, nothing stored
+BE17 R6c: {"status":408,"classified":0,"completed":[],"errors":[],"rows":0,"files":[],"closeMs":1}
+
+stdout | apps/api/test/integration/request-io.test.ts > F-DG2-412: an aborted or stalled body is never a 500 and never an error-level log > R6e upload body aborted by the client: answered (if at all) below 500, logged below error level, nothing stored
+BE17 R6e: {"status":null,"classified":27,"completed":[],"errors":[],"rows":0,"files":[],"closeMs":0}
+
+stdout | apps/api/test/integration/request-io.test.ts > F-DG2-412: an aborted or stalled body is never a 500 and never an error-level log > no over-match: a database-side ECONNRESET while the request body is still arriving is a 500 with an error log
+BE17 db-econnreset: {"status":500,"resets":4,"errors":[{"msg":"unhandled error","code":"ECONNRESET","message":"read ECONNRESET"}]}
+
+ ✓ |integration| apps/api/test/integration/request-io.test.ts (10 tests) 15853ms
+   ✓ F-DG2-411: a stalled upload holds no pooled connection and no row lock > reviewer's R8: N stalled uploads (N = pool size) leave /me and /readyz answering promptly; nothing is stored  2016ms
+   ✓ F-DG2-411: a stalled upload holds no pooled connection and no row lock > an upload whose If-Match goes stale during the body: 409 version_conflict, no content row, no object  708ms
+   ✓ F-DG2-411: a stalled upload holds no pooled connection and no row lock > valid uploads stay byte-exact with their sha256 (stored, recorded and downloaded), no temporary object left  723ms
+   ✓ F-DG2-411: a stalled upload holds no pooled connection and no row lock > sweep: downloads to slow readers (N+1 paused readers, pool size N) hold no pooled connection  1912ms
+   ✓ F-DG2-411: a stalled upload holds no pooled connection and no row lock > defence in depth: an exhausted pool answers 503 after the bounded checkout wait (and /readyz 503), never a hang  1928ms
+   ✓ F-DG2-412: an aborted or stalled body is never a 500 and never an error-level log > R6a stalled JSON body, requestTimeout 408: answered (if at all) below 500, logged below error level, nothing stored  2251ms
+   ✓ F-DG2-412: an aborted or stalled body is never a 500 and never an error-level log > R6d JSON body aborted by the client: answered (if at all) below 500, logged below error level, nothing stored  1105ms
+   ✓ F-DG2-412: an aborted or stalled body is never a 500 and never an error-level log > R6c stalled upload body, requestTimeout 408: answered (if at all) below 500, logged below error level, nothing stored  2737ms
+   ✓ F-DG2-412: an aborted or stalled body is never a 500 and never an error-level log > R6e upload body aborted by the client: answered (if at all) below 500, logged below error level, nothing stored  970ms
+   ✓ F-DG2-412: an aborted or stalled body is never a 500 and never an error-level log > no over-match: a database-side ECONNRESET while the request body is still arriving is a 500 with an error log  749ms
+ ✓ |integration| apps/api/test/integration/launch/launch-plan.test.ts (11 tests) 3485ms
+   ✓ tasks, predecessors and re-dating (REQ-S14-004) > a task whose predecessor is incomplete returns blockedBy naming it; completing it clears blockedBy  452ms
+   ✓ tasks, predecessors and re-dating (REQ-S14-004) > moving the start date by +7 days moves every unstarted task by 7 and leaves completed tasks unchanged  492ms
+   ✓ tasks, predecessors and re-dating (REQ-S14-004) > a loop gives 422 launch_task.predecessor_cycle; a task of another plan gives 422 .predecessor_other_plan  361ms
+   ✓ tasks, predecessors and re-dating (REQ-S14-004) > createLaunchTask: a custom task at version 1; 400, 403, 404 and validation.user_invalid  331ms
+   ✓ the S12-004 LaunchPlanPort (ADR-0044 §1) > is registered in the API process; replayed three times it gives one plan dated from the start date  342ms
+ ✓ |integration| apps/api/test/integration/integrations/imports.test.ts (11 tests) 4041ms
+   ✓ the A17 8/1/1 fixture through the API as CSV (REQ-S17-002, REQ-S17-003) > stages 10 = 8 + 1 + 1, commits 8 with provenance, and keeps the 2 others visible with their reasons  643ms
+   ✓ the A17 8/1/1 fixture through the API as XLSX (REQ-S17-002, REQ-S17-003) > stages 10 = 8 + 1 + 1, commits 8 with provenance, and keeps the 2 others visible with their reasons  953ms
+   ✓ commitImport rules (ADR-0056 §6, §9) > import.revalidation_failed when a slot is filled between staging and commit; nothing is written  358ms
+ ✓ |integration| apps/api/test/integration/sustainment/controls.test.ts (15 tests) 3812ms
+   ✓ control checks: a failed check emits one control_check.failed (REQ-S11-008) > an ownerless control's check goes to the BAU owner; its failure event carries ownerUserId null  568ms
+   ✓ sustainment reviews: the assignee completes (ADR-0034 §6, §9) > only the assignee completes; final afterwards; work item closed; AUD 403, ADM 404, If-Match 428/409  414ms
+   ✓ sustainment reviews: the assignee completes (ADR-0034 §6, §9) > parity (D-102 (2)): the worker's review twin writes the same rows as the API's scheduleAreaReview  372ms
+ ✓ |integration| apps/api/test/integration/portfolio/structure.test.ts (18 tests) 3870ms
+   ✓ workstreams (ADR-0038 §9) > AUD and BO get 403 on every write; another organization 404; nothing written  386ms
+ ✓ |integration| apps/api/test/integration/sustainment/handovers.test.ts (11 tests) 4996ms
+   ✓ submission validates every M0217 item (REQ-S11-005) > a handover missing data access is 422 bau_handover.incomplete naming 'data access'; no state change  841ms
+   ✓ only the receiving owner accepts or returns (REQ-S11-005) > anyone other than the receiving owner gets 403; the receiving owner's acceptance succeeds  481ms
+   ✓ preparation rules, gates and concurrency > one handover in progress per cycle (409); only an establishing or reopened area (422); AUD 403; ADM 404  432ms
+   ✓ preparation rules, gates and concurrency > If-Match: missing 428, stale 409 on every handover mutation  402ms
+ ✓ |integration| apps/api/test/integration/methodology/studio-drafts.test.ts (18 tests) 2867ms
+   ✓ createConfigDraft (ADR-0039 §4) > one open draft per kind and key: 409 config_version.draft_exists; a non-published base 422; unknown 404  417ms
+ ✓ |integration| apps/api/test/integration/governance/executive-decisions.test.ts (17 tests) 2262ms
+ ✓ |integration| apps/api/test/integration/approvals/approvals.test.ts (17 tests) 4934ms
+   ✓ request (ADR-0026 §4, §5) > SLA types: next SteerCo is Unknown (never guessed); urgent needs a reason and a configured route; release plan without a milestone is Unknown  808ms
+   ✓ decide (REQ-S10-014, REQ-S10-016, REQ-S10-017, REQ-S10-018) > REQ-S10-014: a decision without rationale is rejected; the stored record includes the request version  520ms
+   ✓ decide (REQ-S10-014, REQ-S10-016, REQ-S10-017, REQ-S10-018) > REQ-S10-018: 'request changes' returns the item to the requester without closing it; resubmit opens round 2  391ms
+   ✓ decide (REQ-S10-014, REQ-S10-016, REQ-S10-017, REQ-S10-018) > commit-time authorization: a decide right revoked (or a session ended) while the request waits is refused  447ms
+ ✓ |integration| apps/api/test/integration/portfolio/deliverable-confirmation.test.ts (14 tests) 3476ms
+   ✓ REQ-S01-005: only reviewed evidence or a confirmed connector result confirms an external change > (d) a confirmed test-adapter outbound write confirms it with connector, source system id, reference and time  415ms
+   ✓ authorization > the commit-time re-check: a right lost while the request waits on the lock is 403 and nothing is written  409ms
+ ✓ |integration| apps/api/test/integration/blank-text.test.ts (29 tests) 6984ms
+   ✓ defense in depth: blank text already in the database is never 'present' (G1 readiness, pre-checks, thesis) > blank In scope, Case for change, thesis part and T01 texts read as missing  504ms
+   ✓ invisible-only free text is blank (F-DG2-160) > Out of scope "‏" is 400 validation.blank at /outOfScope; nothing written, no audit  352ms
+   ✓ invisible-only free text is blank (F-DG2-160) > Out of scope "" is 400 validation.blank at /outOfScope; nothing written, no audit  311ms
+   ✓ invisible-only free text is blank (F-DG2-160) > Out of scope "⁠⁠⁠" is 400 validation.blank at /outOfScope; nothing written, no audit  476ms
+   ✓ invisible-only free text is blank (F-DG2-160) > Out of scope "𖿤" is 400 validation.blank at /outOfScope; nothing written, no audit  304ms
+   ✓ invisible-only reasons are blank on every reason endpoint (F-DG2-160, T-DG2-BE7) > evidence-link removal: invisible reason is 400 at /reason; a valid reason removes  302ms
+   ✓ invisible-only reasons are blank on every reason endpoint (F-DG2-160, T-DG2-BE7) > P1 transformation archive (reasonRequest): invisible reason is 400 at /reason; a valid reason archives  367ms
+ ✓ |integration| apps/api/test/integration/automation/automation-lifecycle.test.ts (12 tests) 3170ms
+   ✓ dry run (REQ-S12-002: a dry-run creates no tasks) > a non-draft version -> 409 not_editable; AUD and TO 403; commit-time re-authorization (nothing written)  679ms
+   ✓ submit, review where configured, publish, discard (REQ-S12-002; M0155) > submit needs a pass dry run of the current content; it opens one review task per reviewer, never the author's  480ms
+   ✓ submit, review where configured, publish, discard (REQ-S12-002; M0155) > publish with review required and none -> 422 review_required; after review, publish writes the rule row (D-145)  330ms
+ ✓ |integration| apps/api/test/integration/sustainment/transition-decisions.test.ts (10 tests) 3304ms
+   ✓ create (ADR-0034 §3, §12) > 422 monitoring_after_end, benefit_validated and validation.reference (exact texts); nothing written  470ms
+   ✓ decision through the canonical approval (ADR-0034 §3; ADR-0026 §4) > reject: rejected and final; withdrawing a decision in approval withdraws its approval (nothing left undecidable)  307ms
+   ✓ REQ-S11-007: forecast stays forecast; monitoring tasks for the residual owner (ADR-0034 §3, §6) > parity (D-102 (2)): the worker's runMonitoringScan writes the same rows as the API's scheduleMonitoringReviews  430ms
+ ✓ |integration| apps/api/test/integration/gates/g4.test.ts (5 tests) 7273ms
+   ✓ G4 submission refused with the missing items named (ADR-0021 §7) > 422 gate_criteria_incomplete names 'Owners', 'Finance validation', the initiative without a gap link, the missing funding and capacity commitment; nothing written  1600ms
+   ✓ G4 submission refused with the missing items named (ADR-0021 §7) > an empty portfolio is 'Initiative cards' (g4.portfolio_empty); a capacity over-allocation and Unknown are conflicts  1573ms
+   ✓ G4 treats an Unknown schedule as a missing item (D-079; ADR-0021 §7, §11 item 3) > 'Schedule unknown: DEP-nn' refuses the submission; a mitigation or the missing date clears it  1072ms
+   ✓ G4 end to end with distinct synthetic TL, FIN, SP and capacity-owner users > TL submits; FIN validates and funds; the capacity owner commits; 403/403/409 hold; SP approves -> phase transform  1583ms
+   ✓ G4 end to end with distinct synthetic TL, FIN, SP and capacity-owner users > the submitter cannot decide G4, even holding the approver role (403 gate.submitter_cannot_decide)  895ms
+ ✓ |integration| apps/api/test/integration/adoption/assessment-records.test.ts (10 tests) 2295ms
+   ✓ authorisation (ADR-0033 §9) > AUD 403 on writes; ADM-only and outsiders 404; another transformation 404; commit-time 403  314ms
+ ✓ |integration| apps/api/test/integration/workflows/modular-waiver.test.ts (17 tests) 12770ms
+   ✓ ADR-0021 W1: the one changed condition of createGateDispensation > a Modular G3 waiver with no initiative: 201 pending, version 1, audited gate_dispensation.create  601ms
+   ✓ ADR-0038 B1 at G3 submission > criteria met, links missing, an accepted waiver in force → 201 with modularLinks in the snapshot; report unchanged  463ms
+   ✓ ADR-0038 B1 at G3 submission > only the outcome link missing: missing lists it alone  429ms
+   ✓ ADR-0038 B1 at G3 submission > links supplied: no modularLinks member even with a waiver in force (the snapshot is the DG3 one)  390ms
+   ✓ ADR-0038 B1 at G3 submission > which waiver: the latest expiry, ties broken by the greatest id  1331ms
+   ✓ ADR-0038 B1 at G3 submission > pending, rejected, revoked or expired (injected exception clock) waivers → 422 gate.modular_links_missing; nothing written  3323ms
+   ✓ ADR-0038 B1 at G3 approval > the waiver in force: approval 201, G3 approved; the decision is the SP's  563ms
+   ✓ ADR-0038 B1 at G3 approval > revoked after submission → 422 gate.modular_waiver_revoked with the revoke date; a later waiver does not rescue it; reject stays allowed  1084ms
+   ✓ ADR-0038 B1 at G3 approval > expired by approval time (injected clock) → 422 gate.modular_waiver_expired with the expiry date; nothing written  366ms
+   ✓ ADR-0038 B1 at G3 approval > revoked and expired: the revoke is reported  422ms
+   ✓ ADR-0038 B1 at G3 approval > a Modular G3 submitted with its links (no modularLinks) is decided exactly as before  346ms
+   ✓ ADR-0038 amendment Q1: params.date on the two Modular waiver refusals (T-DG4-BE-R4) > revoked: params = { date: the revoke's business date }, the date in detail  449ms
+   ✓ ADR-0038 amendment Q1: params.date on the two Modular waiver refusals (T-DG4-BE-R4) > expired: params = { date: expires_on }, the date in detail  356ms
+   ✓ ADR-0038 amendment Q1: params.date on the two Modular waiver refusals (T-DG4-BE-R4) > A/B transcript (T-DG4-BE-R4): the revoked and expired approval refusals and the submission refusal  1044ms
+   ✓ ADR-0038 amendment Q1: params.date on the two Modular waiver refusals (T-DG4-BE-R4) > no other problem gains the member: the G3 submission refusal without a waiver has no params  422ms
+ ✓ |integration| tests/qa/integration/a11-bau-sustain.test.ts (17 tests) 9143ms
+   ✓ A11 BAU and sustainment on a natively governed transformation > REQ-PB-020: G1-G5 were passed natively; the transformation is in Realize and G6 is still Draft  348ms
+   ✓ A11 BAU and sustainment on a natively governed transformation > setup: a performance area with a linked KPI and an ownerless control, created through the API  327ms
+ ✓ |integration| apps/api/test/integration/branding/contrast.test.ts (18 tests) 2214ms
+ ✓ |integration| apps/api/test/integration/adoption/assessment-forms.test.ts (10 tests) 2482ms
+   ✓ authorisation (ADR-0033 §9) > AUD, TL and FIN 403 on writes; ADM-only and outsiders 404; another transformation 404; commit-time 403  307ms
+   ✓ authorisation (ADR-0033 §9) > commit-time 403 on create, edit, retire, invite and cancel; nothing written  308ms
+ ✓ |integration| apps/api/test/integration/environment/walkthrough.test.ts (16 tests) 10899ms
+   ✓ each step's rule becomes true after the native workflow writes its record (ADR-0050 §7) > 5 prioritize and approve mobilization: an initiative scored, then the Sponsor's G4 decision (synthetic)  328ms
+   ✓ each step's rule becomes true after the native workflow writes its record (ADR-0050 §7) > 8 validate benefit: a submitted measurement is not enough; FIN's approval validates it (synthetic)  365ms
+   ✓ each step's rule becomes true after the native workflow writes its record (ADR-0050 §7) > 9 resolve executive decision: an open ask is not resolved; the owner records the outcome  394ms
+   ✓ each step's rule becomes true after the native workflow writes its record (ADR-0050 §7) > 11 and 12: the receiving owner accepts the handover; then only a check performed after it continues monitoring  353ms
+ ✓ |integration| apps/api/test/integration/automation/automation-failures.test.ts (9 tests) 1899ms
+   ✓ REQ-S12-003: an out-of-scope action fails with automation.action_forbidden and appears in the failure queue > a rule on transformation A configured to create a task in transformation B fails at once, never retried  323ms
+ ✓ |integration| apps/worker/test/integration/operations-freshness.test.ts (7 tests) 3305ms
+ ✓ |integration| apps/api/test/integration/adoption/interventions.test.ts (8 tests) 1933ms
+ ✓ |integration| tests/qa/integration/a11-adoption.test.ts (12 tests) 2201ms
+ ✓ |integration| apps/api/test/integration/environment/demo-gate-history.test.ts (4 tests) 5236ms
+ ✓ |integration| apps/api/test/integration/procedures/intake-adoption.test.ts (12 tests) 1870ms
+   ✓ Rule A through the API: the intake adopts its transformation > capture_intake adopts T on every step not started, with one audit event each; the instance stays organization-scope  315ms
+   ✓ Rule A through the API: the intake adopts its transformation > with a Sponsor assigned and mapped on T, confirm_sponsor requests its approval on T; the Sponsor decides; the instance completes  451ms
+   ✓ Rule A through the API: the intake adopts its transformation > without a mapped Sponsor, confirm_sponsor waits truthfully unrouted; once T's Sponsor is mapped the next action requests it  353ms
+ ✓ |integration| apps/api/test/integration/reporting/modular.test.ts (14 tests) 3355ms
+   ✓ REQ-PB-005 / REQ-S03-005: Modular entry at Design with an inherited G2 approval > G2 is labelled inherited (never approved); baseline and outcome link are missing until supplied  526ms
+   ✓ REQ-S03-005: labelled inherited records > inherited evidence and baseline are listed with provenance and the inherited label, beside the prior approval  321ms
+   ✓ REQ-S03-005: labelled inherited records > End-to-End → 422 inherited_record.not_modular; prior_approval → 422 use_dispensation; nothing written  412ms
+   ✓ REQ-S03-005: labelled inherited records > validation: 400 for a missing id or blank text; 422 for a record outside the transformation; 409 duplicate  330ms
+ ✓ |integration| apps/api/test/integration/transformations/register-filters.test.ts (13 tests) 4547ms
+   ✓ register-kit lists: each sort key both ways pages through every row (ADR-0057 §5) > sort=<key> and sort=-<key> on each of the 9 lists: no duplicate, no gap, the database's order  1156ms
+   ✓ register-kit lists: q over the declared searchColumns (ADR-0057 §5) > q returns exactly the rows with the substring in a declared column, case-insensitive; % and _ are literal  421ms
+   ✓ register-kit lists: refusals (ADR-0057 §5; ADR-0007 §4) > a cursor issued for another filter or sort is 400 at /query/cursor; a malformed keyset is 400  671ms
+ ✓ |integration| tests/qa/integration/a16-health-check.test.ts (13 tests) 5059ms
+   ✓ REQ-PB-091: all 25 questions render verbatim (B0150) > a new assessment lists 25 unanswered questions and its answers carry response, evidence, owner and action  449ms
+   ✓ REQ-S14-002 / REQ-PB-091: an unanswered question makes the assessment incomplete, with no score or band > 24 answers: completion 24/25, complete false, score null and band null (API band=null)  361ms
+   ✓ REQ-PB-091: submission without three actions is rejected > no actions -> 422 health_check.actions_required; two actions -> still 422; three -> submitted  406ms
+   ✓ REQ-PB-092: scores 21, 16, 10 and 9 map to the four B0152 band texts verbatim; reassessments are tracked > each submitted score shows the band whose text is the playbook's, verbatim  1455ms
+   ✓ REQ-S16-021 (HealthAssessment) and the mutation rules: authorization, concurrency, audit > concurrency: an answer without If-Match is 428, with a stale version 409; each accepted write is audited  833ms
+   ✓ REQ-S14-003: a scheme that adds N/A must bring its own bands; existing assessments keep their scheme and band > with its own bands (the source bands removed) it publishes; v1 and every existing assessment keep their scheme, score and band  464ms
+ ✓ |integration| apps/api/test/integration/benefits/measurements.test.ts (12 tests) 3014ms
+   ✓ create, read, list (ADR-0030 §2) > BO records a draft: 201, Location, ETag, basis, one audit event; list newest first; AUD reads  307ms
+   ✓ create, read, list (ADR-0030 §2) > the §11 refusals: step, value shape, unmonetised, period taken, period range, unknown evidence  342ms
+   ✓ submission (REQ-S08-016, REQ-S12-014 API half) > submit needs the period and evidence; If-Match 428/409; one audit event and one outbox event; pending only  369ms
+ ✓ |integration| apps/api/test/integration/reporting/owner-updates.test.ts (7 tests) 1699ms
+ ✓ |integration| apps/api/test/integration/automation/starters-be-j.test.ts (9 tests) 2307ms
+   ✓ REQ-S12-001: the gate starters (5 request, 6 and 7 events) > a committed submission records one execution of starter 5; starters 6 and 7 record one each, replay x3 none  617ms
+   ✓ REQ-S12-012: a slip below the configured minimumSlipDays raises nothing (starter 9 version 2) > v2 with minimumSlipDays 7 (reviewed and published): a 5-day slip raises nothing, an 8-day slip raises one  343ms
+ ✓ |integration| apps/api/test/integration/benefits/financial-metrics.test.ts (12 tests) 2714ms
+   ✓ REQ-S08-019: disabled by default; no NPV without a discount rate; 10 % gives the expected NPV to 2 decimals > walks every status of ADR-0047 §5 on one case, and every response names its assumptions and extension: true  488ms
+ ✓ |integration| apps/api/test/integration/transformations.test.ts (30 tests) 1747ms
+ ✓ |integration| apps/api/test/integration/tasks/notification-delivery.test.ts (11 tests) 1148ms
+ ✓ |integration| apps/api/test/integration/search/search.test.ts (19 tests) 5275ms
+   ✓ the rate-limit class search (ADR-0052 §4) > over the class budget the next search is 429 rate_limited with Retry-After; other operations still pass  357ms
+ ✓ |integration| apps/worker/test/integration/raid-corrective.test.ts (10 tests) 5893ms
+   ✓ raid.corrective_control and raid.corrective_adoption through the production worker (REQ-S12-016) > a failed control check opens one owned case with a 5-working-day follow-up and one work item; replay and restart create none  1007ms
+ ✓ |integration| packages/db/test/integration/demo-numbers.test.ts (10 tests) 7491ms
+   ✓ §J.3: recomputed values equal the seeded values (from the stored rows, with the engines) > is deterministic: a second seed into a fresh database gives the same counts and checksum  3116ms
+stdout | apps/api/test/integration/hardening/route-inventory.test.ts > REQ-S02-006: the route-inventory sweep over every mutating operation of the contract (ADR-0051 §5) > the inventory: eligible = every unsafe operation minus the pending aggregate and the two named exclusions
+[route-inventory] contract unsafe operations 486; pending (not routed) 0 (none); excluded devLogin, receiveWebhook; eligible 484
+
+stdout | apps/api/test/integration/hardening/route-inventory.test.ts > REQ-S02-006: the route-inventory sweep over every mutating operation of the contract (ADR-0051 §5) > case 1, unauthenticated (no session cookie): 401 unauthenticated, nothing persisted
+[route-inventory] case 1 unauthenticated: 484 eligible operations swept; statuses {"401":484}; audit rows besides authorization.denied 160 -> 160; tables fingerprinted 334, changed 0 (none)
+
+stdout | apps/api/test/integration/hardening/route-inventory.test.ts > REQ-S02-006: the route-inventory sweep over every mutating operation of the contract (ADR-0051 §5) > case 2, CSRF (a session without X-CSRF-Token): 403 csrf, nothing persisted
+[route-inventory] case 2 csrf: 484 eligible operations swept; statuses {"403":484}; audit rows besides authorization.denied 160 -> 160; tables fingerprinted 334, changed 0 (none)
+
+stdout | apps/api/test/integration/hardening/route-inventory.test.ts > REQ-S02-006: the route-inventory sweep over every mutating operation of the contract (ADR-0051 §5) > case 3a, unauthorized (org A member with no assignment, valid CSRF, valid request): 403 or 404, never 2xx, nothing persisted
+[route-inventory] case 3a unauthorized (no assignment): 481 eligible operations swept; statuses {"403":137,"404":344}; audit rows besides authorization.denied 160 -> 160; tables fingerprinted 334, changed 0 (none)
+
+stdout | apps/api/test/integration/hardening/route-inventory.test.ts > REQ-S02-006: the route-inventory sweep over every mutating operation of the contract (ADR-0051 §5) > case 3a, unauthorized (org A member with no assignment, valid CSRF, valid request): 403 or 404, never 2xx, nothing persisted
+[route-inventory] case 3a: 312 of 481 operations address a real record of org A by path; 3 caller-scoped operations excluded (logout, updateMyPreferences, previewFormula)
+
+stdout | apps/api/test/integration/hardening/route-inventory.test.ts > REQ-S02-006: the route-inventory sweep over every mutating operation of the contract (ADR-0051 §5) > case 3b, unauthorized (a user of org B holding every role there) on org A's records: 403 or 404, nothing persisted
+[route-inventory] case 3b unauthorized (other organization): 312 eligible operations swept; statuses {"403":70,"404":242}; audit rows besides authorization.denied 160 -> 160; tables fingerprinted 334, changed 0 (none)
+
+stdout | apps/api/test/integration/hardening/route-inventory.test.ts > REQ-S02-006: the route-inventory sweep over every mutating operation of the contract (ADR-0051 §5) > case 4, invalid input (authorized session): 400 with the uniform validation body, never 2xx or 500, nothing persisted
+[route-inventory] case 4 invalid input: 482 eligible operations swept; statuses {"400":481,"422":1}; audit rows besides authorization.denied 160 -> 160; tables fingerprinted 334, changed 0 (none)
+[route-inventory] case 4 invalid input: reported deviations (handback findings): 4:createTomGap
+
+stdout | apps/api/test/integration/hardening/route-inventory.test.ts > REQ-S02-006: the route-inventory sweep over every mutating operation of the contract (ADR-0051 §5) > case 4, invalid input (authorized session): 400 with the uniform validation body, never 2xx or 500, nothing persisted
+[route-inventory] case 4: 482 operations by input kind {"body-not-an-object":2,"missing-required-property":115,"malformed-path-id":340,"malformed-path-parameter":25}; excluded (no invalid input possible): logout, requestDemoReset
+
+stdout | apps/api/test/integration/hardening/route-inventory.test.ts > REQ-S02-006: the route-inventory sweep over every mutating operation of the contract (ADR-0051 §5) > positive control (runs last): the same generated requests, sent by an authorized user, succeed and are detected as written
+[route-inventory] positive control: 18 of 62 generated transformation-scoped creates succeeded for an authorized user (statuses {"201":18,"400":5,"403":1,"404":2,"422":36}; the others are refused by business rules on the minimal synthetic body, e.g. a referenced record that does not exist); audit rows 160 -> 179; tables changed 22
+
+ ✓ |integration| apps/api/test/integration/hardening/route-inventory.test.ts (9 tests) 28435ms
+   ✓ REQ-S02-006: the route-inventory sweep over every mutating operation of the contract (ADR-0051 §5) > every case-3 and case-4 exclusion is derived, pinned and named  1430ms
+   ✓ REQ-S02-006: the route-inventory sweep over every mutating operation of the contract (ADR-0051 §5) > case 1, unauthenticated (no session cookie): 401 unauthenticated, nothing persisted  3360ms
+   ✓ REQ-S02-006: the route-inventory sweep over every mutating operation of the contract (ADR-0051 §5) > case 2, CSRF (a session without X-CSRF-Token): 403 csrf, nothing persisted  5585ms
+   ✓ REQ-S02-006: the route-inventory sweep over every mutating operation of the contract (ADR-0051 §5) > case 3a, unauthorized (org A member with no assignment, valid CSRF, valid request): 403 or 404, never 2xx, nothing persisted  4153ms
+   ✓ REQ-S02-006: the route-inventory sweep over every mutating operation of the contract (ADR-0051 §5) > case 3b, unauthorized (a user of org B holding every role there) on org A's records: 403 or 404, nothing persisted  3257ms
+   ✓ REQ-S02-006: the route-inventory sweep over every mutating operation of the contract (ADR-0051 §5) > case 4, invalid input (authorized session): 400 with the uniform validation body, never 2xx or 500, nothing persisted  6501ms
+   ✓ REQ-S02-006: the route-inventory sweep over every mutating operation of the contract (ADR-0051 §5) > positive control (runs last): the same generated requests, sent by an authorized user, succeed and are detected as written  1148ms
+ ✓ |integration| apps/api/test/integration/reporting/report-snapshots.test.ts (11 tests) 2287ms
+   ✓ REQ-S13-007: issue, immutability after a later KPI change, reissue as version 2 > the issued snapshot keeps the old values and kpi_version; the issued reissue is v2 and v1 is superseded unchanged  331ms
+ ✓ |integration| apps/api/test/integration/procedures/procedure-definitions.test.ts (8 tests) 5677ms
+   ✓ putProcedureDefinition and the slice A pipeline (REQ-S06-001) > a definition with a conditional and a parallel step validates, is saved in a draft, previewed, reviewed (TO) and published  1583ms
+   ✓ putProcedureDefinition and the slice A pipeline (REQ-S06-001) > an edit after preview returns the draft to editing with a new hash (the procedure rows are hashed)  964ms
+   ✓ the ADR-0042 §10 refusals > missing trigger -> trigger_required; missing completion -> completion_required; validate reports every finding  370ms
+   ✓ the ADR-0042 §10 refusals > ADM_METHOD or AUD as a responsible role -> role_not_allowed; the other builder rules  372ms
+   ✓ the ADR-0042 §10 refusals > removing a seeded procedure -> 422 source_protected; an admin-authored one is marked removed  835ms
+   ✓ authorization and concurrency of the definition writes > AUD and a business role get 403 on every write; If-Match 428 and 409; 404 for an unknown or non-procedure version  441ms
+   ✓ authorization and concurrency of the definition writes > commit-time authorization: methodology.configure revoked while the request waits -> 403; nothing written  379ms
+ ✓ |integration| apps/api/test/integration/dg2-repairs.test.ts (13 tests) 2796ms
+   ✓ F-DG2-205 sequential product gates (REQ-S04-005, B0009, B0023) > End-to-End: G2 and G3 cannot be submitted before their predecessor is approved (422 gate.out_of_sequence), nothing written  464ms
+ ✓ |integration| apps/api/test/integration/adoption/stakeholder-groups.test.ts (11 tests) 1891ms
+   ✓ authorization (ADR-0033 §9; S-4) > AUD is 403 on every write; ADM-only and outsiders 404 on every read and write; nothing is written  343ms
+ ✓ |integration| apps/api/test/integration/calendar/calendar.test.ts (13 tests) 1629ms
+ ✓ |integration| tests/qa/integration/a11-value-closure.test.ts (11 tests) 3134ms
+   ✓ A11 REQ-S08-002: completing the enabling deliverable marks the benefit 'enabled - not yet measured' > REQ-S08-002: realization state enabled_not_yet_measured; validated value stays zero (nothing validated)  311ms
+   ✓ A11 REQ-PB-074: Measure needs the Plan outputs; Sustain needs a BAU owner and a control cadence > REQ-PB-074: at Measure, Sustain without a BAU owner and control cadence is 422; with both it succeeds  385ms
+   ✓ A11 REQ-PB-085: a benefit below plan creates one corrective action; repeated evaluation does not duplicate it > REQ-PB-085: two below-plan validated values and a redelivery leave exactly one open case for the benefit  454ms
+   ✓ A11 REQ-PB-085: a KPI deviation persisting two cycles under a two-cycle rule creates one case; the third updates it > REQ-PB-085: red in cycle 1 -> no case; red in cycle 2 -> one case; red in cycle 3 -> the same case updated  525ms
+ ✓ |integration| apps/api/test/integration/tasks/channel-fanout.test.ts (10 tests) 2135ms
+ ✓ |integration| apps/api/test/integration/reporting/kbe-d2-assemblers.test.ts (6 tests) 2500ms
+   ✓ handover (REQ-S13-004; ADR-0045 §3) > contains the handover, its area's controls, its evidence and the M0217 items; the four approval states  417ms
+ ✓ |integration| apps/api/test/integration/forms/form-framework.test.ts (16 tests) 1771ms
+ ✓ |integration| apps/api/test/integration/governance/raci-matrices.test.ts (12 tests) 3181ms
+   ✓ governance matrix approval (REQ-S10-007 'versioned, approved changes'; REQ-PB-067 'approve: SP') > submit freezes the version and routes it to the Sponsor; the Sponsor approves it; a later edit returns it to draft  434ms
+   ✓ governance matrix approval (REQ-S10-007 'versioned, approved changes'; REQ-PB-067 'approve: SP') > T11: TL submits (decision_right.configure); a rejection returns the matrix to draft and unfreezes the rows  300ms
+   ✓ REQ-PB-008: Transform readiness (operating model before execution) > not ready when the charter decision rights or T11 are empty; ready once they are completed; DG3 readiness unchanged  441ms
+ ✓ |integration| apps/api/test/integration/integrations/import-staging.test.ts (10 tests) 789ms
+ ✓ |integration| apps/api/test/integration/kpi-p4/versions.test.ts (10 tests) 1722ms
+ ✓ |integration| apps/api/test/integration/health/health-schemes.test.ts (7 tests) 2569ms
+   ✓ listHealthCheckSchemes and getHealthCheckScheme (REQ-S14-001, REQ-PB-092, REQ-S14-003) > a draft is not a published scheme: 404; a version of another kind: 404; malformed id 400; 401  328ms
+   ✓ REQ-S14-003: a scheme with N/A needs its own bands (ADR-0048 §6, §9) > N/A with the source bands fails its preview with 422 health_scheme.own_bands_required and cannot be published  464ms
+   ✓ REQ-S14-003: a scheme with N/A needs its own bands (ADR-0048 §6, §9) > with its own bands and percent_of_applicable it previews, passes compatibility, is reviewed and publishes  993ms
+   ✓ REQ-S14-003: a scheme with N/A needs its own bands (ADR-0048 §6, §9) > refuses element edits that break the scheme rules first, with the §9 codes  321ms
+ ✓ |integration| apps/worker/test/integration/kpi-recalculate.test.ts (5 tests) 5817ms
+   ✓ kpi.recalculate through the relay and the production worker (REQ-S07-013, REQ-S12-006) > writes one run; a redelivery and a restarted worker write no second run  1011ms
+   ✓ kpi.recalculate: a failure on the last attempt is recorded as a failed run (ADR-0027 §8 step 4; T-DG4-KBE-R1) > through the production worker: the attempt that pg-boss retries records nothing, the final attempt records the failed run and the job dead-letters  1455ms
+ ✓ |integration| tests/qa/integration/a04-kpi-propagation.test.ts (8 tests) 26490ms
+   ✓ A04: submit, accept, propagate once; the benefit stays pending > REQ-S07-013, REQ-S12-006: the worker makes exactly one calculation run and one pending benefit value with one queue item  8817ms
+   ✓ A04: submit, accept, propagate once; the benefit stays pending > REQ-S07-012: with review configured, a submitted actual is not used until accepted; after acceptance one run  3327ms
+   ✓ A04: dashboards are scoped and filtered on the server > REQ-S13-001: a user scoped to transformation X sees nothing of Y on any of the six dashboards  573ms
+   ✓ A04: dashboards are scoped and filtered on the server > REQ-S13-002: a Q1 filter changes every tile to Q1 values  8956ms
+ ✓ |integration| apps/api/test/integration/sustainment/status-model.test.ts (9 tests) 2305ms
+   ✓ labels (ADR-0034 §2; REQ-PB-009, REQ-S11-006) > REQ-PB-009: delivery Complete without a validated benefit is 'Delivered — value validation pending'  730ms
+stdout | apps/api/test/integration/operations/service-identity-scope.test.ts > a job's identity cannot read records outside its scope (REQ-S16-029; A12) > for every business-record job identity, organization A's reads admit no row of organization B
+service-identity scope: 37 job identities, 0 rows of organization B admitted
+
+stdout | apps/api/test/integration/operations/service-identity-scope.test.ts > the worker twin equals the API ReadScope (ADR-0053 §1 parity; ADR-0051 §1) > selects the same rows and admits the same records, for every identity in both organizations
+service-scope parity: 1176 (identity, organization, permission, record) pairs, 0 mismatches
+
+ ✓ |integration| apps/api/test/integration/operations/service-identity-scope.test.ts (10 tests) 2086ms
+   ✓ the 0114 seed (ADR-0053 §1) > has one platform job identity per declaration, granted = declared, each with its audit event  314ms
+   ✓ the worker twin equals the API ReadScope (ADR-0053 §1 parity; ADR-0051 §1) > selects the same rows and admits the same records, for every identity in both organizations  860ms
+ ✓ |integration| apps/api/test/integration/governance/meetings.test.ts (12 tests) 2046ms
+ ✓ |integration| apps/api/test/integration/evidence/preview.test.ts (33 tests) 3529ms
+   ✓ REQ-S13-011 A12: an .exe or an oversized file is rejected > a file one byte over the limit is 413 evidence.too_large with maxBytes; nothing is stored  972ms
+ ✓ |integration| apps/api/test/integration/groups/groups.test.ts (9 tests) 1808ms
+   ✓ governance parties and role mappings (ADR-0026 §2; REQ-S10-008) > create: role_mapping.assign (TL, TO); WL, AUD 403; one active mapping per party; targets validated; audited  302ms
+ ✓ |integration| apps/api/test/integration/assistant/settings.test.ts (17 tests) 3856ms
+ ✓ |integration| apps/api/test/integration/governance/agenda.test.ts (11 tests) 2264ms
+   ✓ authorization (ADR-0032 §9) > AUD 403 on every write, reads in scope; ADM-only and another organization 404  309ms
+ ✓ |integration| apps/api/test/integration/gates.test.ts (12 tests) 4390ms
+   ✓ starter structure and live readiness > a new transformation has six gate instances (G1-G6), draft, approver SP; G5-G6 are enabled (0059) but out of sequence  430ms
+   ✓ starter structure and live readiness > REQ-S13-012: evidence that is only a filename (or an inaccessible link) leaves g1.diagnostic incomplete  540ms
+   ✓ submission and decision (business approval by a person) > the submitter cannot decide, even when they hold the approver role (403 gate.submitter_cannot_decide)  469ms
+   ✓ G2 Direction readiness (REQ-PB-036 failing outcomes, REQ-PB-037 guardrails) > lists every outcome whose good outcome test is not passing (ids + criteria); zero guardrails blocks submission  762ms
+   ✓ decision outcome text is cut on a code-point boundary (F-DG2-260) > a rationale with an emoji at the 8000 boundary: the decision is recorded and outcome_text has no U+FFFD  405ms
+ ✓ |integration| apps/api/test/integration/access/sensitivity.test.ts (22 tests) 1461ms
+ ✓ |integration| apps/api/test/integration/governance/decision-rights.test.ts (11 tests) 1741ms
+ ✓ |integration| apps/api/test/integration/governance/meeting-series.test.ts (11 tests) 1973ms
+ ✓ |integration| apps/api/test/integration/integrations/s16-022-entity-group.test.ts (6 tests) 5421ms
+   ✓ REQ-S16-022: each entity of the group is created and read through the API with authorization enforced > FormSchemaVersion: a Studio form_schema version published through the API, read by getFormSchemaAdmin  342ms
+   ✓ REQ-S16-022: each entity of the group is created and read through the API with authorization enforced > Notification: a KPI actual submitted on a review route notifies the reviewer, read by listMyInbox  486ms
+   ✓ REQ-S16-022: each entity of the group is created and read through the API with authorization enforced > IntegrationRun: runConnector, read by getIntegrationRun  359ms
+   ✓ REQ-S16-022: each entity of the group is created and read through the API with authorization enforced > ReportSnapshot and AuditEvent: issueReportSnapshot, read by getReportSnapshot; its audit event by getAuditEvent  392ms
+ ✓ |integration| tests/qa/integration/a16-launch-plan.test.ts (11 tests) 1563ms
+   ✓ REQ-PB-087: the Day-90 leadership test > five answers: incomplete (5/6) and completion is refused; AUD cannot answer  301ms
+ ✓ |integration| tests/qa/integration/a22-operational-readiness.test.ts (8 tests) 39011ms
+   ✓ REQ-S12-022: the jobs view shows last success and next run for each scheduled job; a non-admin gets 403 > after a run, the job shows its last success, last outcome and the run in its history  1040ms
+   ✓ REQ-S18-003 / REQ-S18-001: production and demo databases are separate, and a production database stays clean > production initialization (mth-db bootstrap): zero demo records, zero demo users; GET /environment is production  1198ms
+   ✓ REQ-S18-003 / REQ-S18-001: production and demo databases are separate, and a production database stays clean > the demo seed command exits with an error in production mode, on a production database and on a non-empty one; nothing changes  5782ms
+   ✓ REQ-S18-003 / REQ-S18-001: production and demo databases are separate, and a production database stays clean > a separately initialized demo database: seeded, reported synthetic; reset twice gives identical counts and checksums; the production database is untouched  17643ms
+   ✓ REQ-S18-003 / REQ-S18-001: production and demo databases are separate, and a production database stays clean > the in-app demo reset is refused in a production database (409 environment.not_demo)  888ms
+ ✓ |integration| apps/api/test/integration/invalid-utf8.test.ts (14 tests) 3071ms
+   ✓ a JSON body with invalid UTF-8 is 400 validation.json, the same with Content-Length and chunked > charter create: 400 for every invalid sequence and framing; no charter, no audit row, no U+FFFD stored  766ms
+   ✓ valid UTF-8 round-trips verbatim; one BOM is accepted and stripped > Arabic and emoji text, with Content-Length and chunked: stored and audited byte for byte  560ms
+ ✓ |integration| apps/api/test/integration/portfolio/capacity.test.ts (7 tests) 3199ms
+   ✓ the conflict rule (ADR-0023 §6) > over-allocated with the decimal shortfall; Unknown without a capacity row; a cancelled initiative's demand does not count  614ms
+   ✓ the conflict rule (ADR-0023 §6) > the prioritization view carries the capacity flags (DEFAULT_FLAG_SOURCES wired), on the item and its initiative  497ms
+   ✓ validation, authorization, If-Match and audit of every capacity mutation > capacity: FTE is a decimal string (numbers, 3 decimals, negatives -> 400), month is YYYY-MM-01, one active row per role and month  389ms
+   ✓ validation, authorization, If-Match and audit of every capacity mutation > demand: planned -> committed -> released; 422s for the wrong state; commit needs capacity.commit (TL 403, TO 200); audit  421ms
+   ✓ validation, authorization, If-Match and audit of every capacity mutation > BE18A: every capacity mutation re-authorises at commit - a grant revoked while the request waits is 403, nothing written  547ms
+stdout | apps/api/test/integration/contract/response-validation.test.ts > REQ-S16-027: every operation's responses validated against the contract (ADR-0052 §7) > every operation outside the pending aggregate returned at least one validated response in the contract suite
+[response-validation] 9933 validated responses; 932 of 932 live operations (0 pending excluded); 4284 distinct (operationId, status) pairs; operations without a validated response: 0
+
+stdout | apps/api/test/integration/contract/response-validation.test.ts > REQ-S16-027: every operation's responses validated against the contract (ADR-0052 §7) > every validated error response is application/problem+json and a Problem; every 400 is the uniform validation body
+[response-validation] 7076 validated error responses; 4463 validated 400 responses, all uniform validation bodies
+
+stdout | apps/api/test/integration/contract/response-validation.test.ts > REQ-S16-027: every operation's responses validated against the contract (ADR-0052 §7) > invalid input returns the uniform 400 body in every module (a validated 400 per OpenAPI tag)
+[response-validation] modules (OpenAPI tags) with a validated uniform 400: 119/119
+
+stdout | apps/api/test/integration/contract/response-validation.test.ts > REQ-S16-027: every operation's responses validated against the contract (ADR-0052 §7) > an explicit invalid body per module: 400 urn:mth:problem:validation with JSON-pointer errors
+[response-validation] explicit invalid-body: modules without a 400: none
+[response-validation] explicit invalid-body samples: 73 modules with a uniform 400 (access:createRoleAssignment, adoption-indicators:createAdoptionMetricLink, adoption-interventions:createAdoptionIntervention, approvals:requestApproval, assessment-forms:createAssessmentForm, assessment-records:createAssessmentRecord, assistant:putAssistantSetting, automation:createAutomationRule, bau-handovers:createBauHandover, benefit-formulas:checkBenefitFormula, benefit-groups:createBenefitGroup, benefit-overlaps:createBenefitOverlap, benefit-scenarios:createBenefitScenario, benefit-valuation-methods:createBenefitValuationMethod, benefits:createBenefit, branding:putBrandingSettings, business-cases:createBusinessCase, capacity:createResourceRole, change-requests:putChangeControlPolicy, charter:createCharter, closure:closeTransformation, controls:createControl, corrective-actions:createCorrectiveCase, decision-rights:createDecisionRight, decisions:createDependency, delegations:createDelegation, dependencies:createT08Dependency, design:createTomGap, diagnose:createValuePool, direction:createStrategicGuardrail, escalations:createEscalationRule, evidence:createEvidence, executive-decisions:createExecutiveDecision, exports:createExport, financial-metrics:putFinancialMetricEnablement, forms:createFormDraft, formula-previews:previewFormula, forums:createForum, gate-exceptions:createGateException, health-checks:createHealthCheck, improvement-items:createImprovementItem, integrations:createConnector, kpi:createKpiDefinition, launch-plans:generateLaunchPlan, lessons:createLesson, me:updateMyPreferences, meeting-series:createMeetingSeries, meetings:createMeeting, methodology-migrations:createMethodologyMigration, modular-entry:createInheritedRecord, notifications:putMyNotificationPreferences, organizations:createOrganization, owner-updates:createOwnerUpdate, performance-areas:createPerformanceArea, platform-admin:putStorageSetting, portfolio:createInitiative, prioritization:createWeightSet, procedures:validateProcedureDefinition, raci:createRaciDeliverable, raid:createRaidEntry, risk-dispositions:createRiskDisposition, roadmap:createRoadmapWave, role-mappings:createRoleMapping, scale:createScaleTransition, search:createSavedView, security:putUploadPolicy, stakeholder-groups:createStakeholderGroup, studio:createConfigDraft, traceability:createTraceLink, transformations:createTransformation, transition-decisions:createTransitionDecision, users:createUser, workstreams:createWorkstream); refused before validation (authorization first): none
+
+stdout | apps/api/test/integration/contract/response-validation.test.ts > REQ-S16-027: every operation's responses validated against the contract (ADR-0052 §7) > an unauthorized call returns 403 (or the ADR-0006 404 for an unreadable record): every transformation read by a user without an assignment
+[response-validation] unauthorized transformation reads: 124 operations; statuses {"403":1,"404":123}
+
+stdout | apps/api/test/integration/contract/response-validation.test.ts > REQ-S16-027: every operation's responses validated against the contract (ADR-0052 §7) > an unauthorized call returns 403: the auditor (AUD, read-only) is refused every write that needs a business permission
+[response-validation] auditor write sweep: 478 permissioned writes; statuses {"400":32,"403":312,"404":134}; modules with a 403 forbidden: 94
+
+stdout | apps/api/test/integration/contract/response-validation.test.ts > REQ-S16-027: every operation's responses validated against the contract (ADR-0052 §7) > an unauthorized call is refused in every module with a business-permission route (the two sweeps and the suite)
+[response-validation] modules with a business-permission route: 111; refused an unauthorized call: 111; not reached: none
+
+stdout | apps/api/test/integration/contract/response-validation.test.ts > REQ-S16-027: every operation's responses validated against the contract (ADR-0052 §7) > pagination: every list operation declares nextCursor, and every validated list success carries it
+[response-validation] list operations: 219; cursor-paginated 198 (260 validated 200s, all with nextCursor); unpaginated, pinned and reported: 21
+
+ ❯ |integration| apps/api/test/integration/contract/response-validation.test.ts (113 tests | 2 failed) 130208ms
+   ✓ route coverage > maps every governed Fastify route to an OpenAPI operation with the same method, and back 9ms
+   ✓ route coverage > declares access on every governed route (public or a permission) 14ms
+   ✓ every operation, validated against the contract and the zod mirrors > health 11ms
+   ✓ every operation, validated against the contract and the zod mirrors > auth + me 151ms
+   ✓ every operation, validated against the contract and the zod mirrors > organizations and business units 127ms
+   ✓ every operation, validated against the contract and the zod mirrors > users, roles, permissions and assignments 107ms
+   ✓ every operation, validated against the contract and the zod mirrors > transformations and audit 239ms
+   ✓ every operation, validated against the contract and the zod mirrors > branding tokens (getBrandingTokens): authenticated-only, provisional provenance, contract + zod valid 18ms
+   ✓ every operation, validated against the contract and the zod mirrors > kpi module operations (P2; kpi-exercises.ts, owned by kpi-benefits-engineer)  733ms
+   ✓ every operation, validated against the contract and the zod mirrors > P2 backend operations (p2-exercises.ts): every routed operation exercised with a success  3241ms
+   ✓ every operation, validated against the contract and the zod mirrors > P3 BE-A operations (p3-exercises-be-a.ts): readiness, outcome hierarchy, gate dispensations  305ms
+   ✓ every operation, validated against the contract and the zod mirrors > P3 BE-B operations (p3-exercises-be-b.ts)  793ms
+   ✓ every operation, validated against the contract and the zod mirrors > P3 BE-C operations (p3-exercises-be-c.ts)  678ms
+   ✓ every operation, validated against the contract and the zod mirrors > P3 BE-D operations (p3-exercises-be-d.ts)  910ms
+   ✓ every operation, validated against the contract and the zod mirrors > P3 BE-E operations (p3-exercises-be-e.ts)  533ms
+   ✓ every operation, validated against the contract and the zod mirrors > P3 KBE-B operations (p3-exercises-kbe-b.ts)  329ms
+   ✓ every operation, validated against the contract and the zod mirrors > P3 KBE-C operations (p3-exercises-kbe-c.ts)  541ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-A operations (p4-exercises-be-a.ts)  413ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-B operations (p4-exercises-be-b.ts)  844ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-C operations (p4-exercises-be-c.ts)  521ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-D operations (p4-exercises-be-d.ts)  976ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-E operations (p4-exercises-be-e.ts)  549ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-F operations (p4-exercises-be-f.ts)  1987ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-G operations (p4-exercises-be-g.ts)  662ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-H operations (p4-exercises-be-h.ts)  1231ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-I operations (p4-exercises-be-i.ts)  1260ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-J operations (p4-exercises-be-j.ts)  1215ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-K operations (p4-exercises-be-k.ts)  1585ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-L operations (p4-exercises-be-l.ts)  1159ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-M operations (p4-exercises-be-m.ts)  1198ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 KBE-B operations (p4-exercises-kbe-b.ts)  663ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 KBE-C operations (p4-exercises-kbe-c.ts)  1036ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 KBE-D operations (p4-exercises-kbe-d.ts)  637ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 KBE-D2 operations (p4-exercises-kbe-d2.ts)  618ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 KBE-E operations (p4-exercises-kbe-e.ts)  1034ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 KBE-F operations (p4-exercises-kbe-f.ts) 284ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 KBE-G operations (p4-exercises-kbe-g.ts)  1252ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-A operations (p5-exercises-be-a.ts)  844ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-B operations (p5-exercises-be-b.ts)  616ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-B2 operations (p5-exercises-be-b2.ts) 175ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-B3 operations (p5-exercises-be-b3.ts)  1139ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-C operations (p5-exercises-be-c.ts)  1224ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 KBE-A operations (p5-exercises-kbe-a.ts)  494ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-D operations (p5-exercises-be-d.ts)  474ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-E operations (p5-exercises-be-e.ts)  503ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-E2 operations (p5-exercises-be-e2.ts)  1755ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-F operations (p5-exercises-be-f.ts)  1455ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-F2 operations (p5-exercises-be-f2.ts)  2330ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-G operations (p5-exercises-be-g.ts) 133ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-H operations (p5-exercises-be-h.ts)  684ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-H2 operations (p5-exercises-be-h2.ts)  559ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-I operations (p5-exercises-be-i.ts)  1115ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-I2 operations (p5-exercises-be-i2.ts) 152ms
+   × every operation, validated against the contract and the zod mirrors > P5 BE-J operations (p5-exercises-be-j.ts) 220ms
+     → expected [] to have a length of 1 but got +0
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-K operations (p5-exercises-be-k.ts)  854ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-L operations (p5-exercises-be-l.ts)  353ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-L2 operations (p5-exercises-be-l2.ts)  422ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 KBE-C operations (p5-exercises-kbe-c.ts)  872ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 KBE-D operations (p5-exercises-kbe-d.ts)  868ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-M operations (p5-exercises-be-m.ts)  893ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-N operations (p5-exercises-be-n.ts) 0ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-O operations (p5-exercises-be-o.ts)  584ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 KBE-E operations (p5-exercises-kbe-e.ts)  886ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 KBE-E2 operations (p5-exercises-kbe-e2.ts)  1351ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 KBE-F operations (p5-exercises-kbe-f.ts)  559ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-P operations (p5-exercises-be-p.ts)  757ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-P2 operations (p5-exercises-be-p2.ts)  476ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 KBE-G operations (p5-exercises-kbe-g.ts) 65ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 KBE-G2 operations (p5-exercises-kbe-g2.ts)  1232ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-Q operations (p5-exercises-be-q.ts)  585ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-Q2 operations (p5-exercises-be-q2.ts) 247ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-R operations (p5-exercises-be-r.ts)  310ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-R2 operations (p5-exercises-be-r2.ts) 36ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-S operations (p5-exercises-be-s.ts)  3896ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-T2 operations (p5-exercises-be-t2.ts)  3047ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-B operations (p6-exercises-be-b.ts)  568ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-C operations (p6-exercises-be-c.ts) 117ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-D operations (p6-exercises-be-d.ts)  417ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-E operations (p6-exercises-be-e.ts) 168ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-G operations (p6-exercises-be-g.ts) 55ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-H operations (p6-exercises-be-h.ts) 0ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-H2 operations (p6-exercises-be-h2.ts) 294ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-I operations (p6-exercises-be-i.ts)  534ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-I2 operations (p6-exercises-be-i2.ts) 199ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-J operations (p6-exercises-be-j.ts) 224ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-K operations (p6-exercises-be-k.ts)  316ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-L operations (p6-exercises-be-l.ts)  1141ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-M operations (p6-exercises-be-m.ts)  684ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 KBE-A operations (p6-exercises-kbe-a.ts) 0ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-N operations (p6-exercises-be-n.ts)  881ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-O operations (p6-exercises-be-o.ts)  357ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-P operations (p6-exercises-be-p.ts) 99ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-Q operations (p6-exercises-be-q.ts)  647ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-T operations (p6-exercises-be-t.ts)  678ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-U operations (p6-exercises-be-u.ts) 238ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-W operations (p6-exercises-be-w.ts) 117ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-X1 declared 403s of the evidence reads (p6-exercises-be-x1.ts) 276ms
+   ✓ every operation, validated against the contract and the zod mirrors > every GET operation with a path parameter: a malformed id is a declared 400 at /params/<name>; nothing written  5154ms
+   ✓ every operation, validated against the contract and the zod mirrors > the contract: every operation but the OIDC callback declares 400 (ADR-0007 §5a) 2ms
+   ✓ every operation, validated against the contract and the zod mirrors > every operation but the OIDC callback: U+0000 in the query is a declared 400 invalid_character  13051ms
+   ✓ every operation, validated against the contract and the zod mirrors > the contract: every route accepts exactly the request media types its operation declares 117ms
+   × every operation, validated against the contract and the zod mirrors > every operation: an undeclared request media type is a declared 400 validation.content_type; nothing written 30005ms
+     → Test timed out in 30000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+   ✓ every operation, validated against the contract and the zod mirrors > the contract: every operation declares each platform status derived from its route (ADR-0007 §5b) 246ms
+   ✓ every operation, validated against the contract and the zod mirrors > every operation: the rate limiter's 429 is a declared RateLimited problem (live, limits of 1 per minute)  4817ms
+   ✓ every operation, validated against the contract and the zod mirrors > covers every operation with at least one success and every successful body with its zod mirror 3ms
+   ✓ REQ-S16-027: every operation's responses validated against the contract (ADR-0052 §7) > every operation outside the pending aggregate returned at least one validated response in the contract suite 14ms
+   ✓ REQ-S16-027: every operation's responses validated against the contract (ADR-0052 §7) > every validated error response is application/problem+json and a Problem; every 400 is the uniform validation body 7ms
+   ✓ REQ-S16-027: every operation's responses validated against the contract (ADR-0052 §7) > invalid input returns the uniform 400 body in every module (a validated 400 per OpenAPI tag) 28ms
+   ✓ REQ-S16-027: every operation's responses validated against the contract (ADR-0052 §7) > an explicit invalid body per module: 400 urn:mth:problem:validation with JSON-pointer errors  918ms
+   ✓ REQ-S16-027: every operation's responses validated against the contract (ADR-0052 §7) > an unauthorized call returns 403 (or the ADR-0006 404 for an unreadable record): every transformation read by a user without an assignment  828ms
+   ✓ REQ-S16-027: every operation's responses validated against the contract (ADR-0052 §7) > an unauthorized call returns 403: the auditor (AUD, read-only) is refused every write that needs a business permission  6189ms
+   ✓ REQ-S16-027: every operation's responses validated against the contract (ADR-0052 §7) > an unauthorized call is refused in every module with a business-permission route (the two sweeps and the suite) 119ms
+   ✓ REQ-S16-027: every operation's responses validated against the contract (ADR-0052 §7) > pagination: every list operation declares nextCursor, and every validated list success carries it 8ms
+ ✓ |integration| apps/api/test/integration/raid/register.test.ts (15 tests) 1528ms
+ ✓ |integration| apps/worker/test/integration/gates.test.ts (8 tests) 4355ms
+   ✓ gate.submitted -> approver tasks (REQ-S12-009) > one task per required approver referencing the snapshot; redelivery none; supersession cancels; the decider's task is done  1051ms
+   ✓ gate.decided -> enable the next phase and the approved scope (REQ-S12-010) > G2 approval creates the four Design steps and their tasks once; a redelivery creates none  1320ms
+   ✓ gate.decided -> enable the next phase and the approved scope (REQ-S12-010) > a G5 approval creates tasks only for its approved scope item and condition (a second initiative gets none)  333ms
+   ✓ parity and wiring (D-102) > the worker's approver resolution equals the API's canDecide for the same people  411ms
+   ✓ gate.exception_expiry_scan (REQ-S04-013) > notifies the requester and the approver exactly once after expiry; a second scan none; status and gate unchanged  816ms
+stdout | apps/api/test/integration/methodology/studio-coauthor-review.test.ts > F-DG5-100: a co-author never decides the configured review of the content they wrote > the co-author's approval of their own content should be 403 config_review.self_review
+co-author review decision [33m403[39m config_review.self_review publish [33m422[39m config_version.review_required
+
+ ✓ |integration| apps/api/test/integration/methodology/studio-coauthor-review.test.ts (9 tests) 5492ms
+   ✓ F-DG5-100: a co-author never decides the configured review of the content they wrote > the co-author's approval of their own content should be 403 config_review.self_review  354ms
+   ✓ F-DG5-100: a co-author never decides the configured review of the content they wrote > deciding a round does not make the reviewer an author: the same TO decides the next round  336ms
+ ✓ |integration| apps/api/test/integration/portfolio/dispensations.test.ts (7 tests) 2446ms
+   ✓ waivers (End-to-End launch sequencing) > create: 201 pending, version 1, audited; reason/expiry required, G1 never waived, no past expiry, AUD 403  361ms
+   ✓ waivers (End-to-End launch sequencing) > decide: 428/409, AUD 403, not the recorder (403), only the gate's approver (403); accepted unblocks launch  329ms
+   ✓ waivers (End-to-End launch sequencing) > revoke: only accepted ones, by the approver with a reason; If-Match; AUD 403; the blocker returns  307ms
+   ✓ inherited approvals (Modular entry) > need body, date and evidence; count only when the evidence is VERIFIED and another person accepted them  339ms
+   ✓ the gate list and gate view inheritedApproval annotation (ADR-0021 §5; F-DG3-120) > pending_verification → accepted (counts) → revoked; G1 stays draft and no gate decision is ever written  639ms
+ ✓ |integration| apps/api/test/integration/admin/storage.test.ts (13 tests) 4048ms
+ ✓ |integration| apps/api/test/integration/tasks/deep-links.test.ts (13 tests) 1081ms
+stdout | apps/api/test/integration/commit-time-auth.test.ts > F-DG2-440: an upload is authorised again at commit time (session re-resolved, grants reloaded) > Q1 the uploader's only grant is revoked while the body streams: 403 forbidden, audited as authorization.denied, nothing committed or stored
+BE18 Q1 {"during":["01a18ee2-44c9-73ff-a540-d1c5beb875e6.part"],"revoked":1,"response":{"status":403,"code":"forbidden"},"after":{"rows":[],"version":1,"current":null,"files":[],"uploads":0},"denials":[{"record_type":"transformation","record_id":"01a18ee2-4348-779d-9457-e5469e6ed90f","reason":"POST /api/v1/transformations/:transformationId/evidence/:evidenceId/content requires transformation.read"}]}
+
+stdout | apps/api/test/integration/commit-time-auth.test.ts > F-DG2-440: an upload is authorised again at commit time (session re-resolved, grants reloaded) > Q1b the uploading session is logged out while the body streams: 401 unauthenticated, nothing committed or stored
+BE18 Q1b {"logout":200,"me":401,"response":{"status":401,"code":"unauthenticated"},"after":{"rows":[],"version":1,"current":null,"files":[],"uploads":0}}
+
+stdout | apps/api/test/integration/commit-time-auth.test.ts > F-DG2-440: an upload is authorised again at commit time (session re-resolved, grants reloaded) > the uploading session reaches its idle expiry while the body streams: 401 unauthenticated, nothing committed or stored
+BE18 idle-expiry {"expired":1,"response":{"status":401,"code":"unauthenticated"},"after":{"rows":[],"version":1,"current":null,"files":[],"uploads":0}}
+
+stdout | apps/api/test/integration/commit-time-auth.test.ts > F-DG2-440: an upload is authorised again at commit time (session re-resolved, grants reloaded) > the uploading session reaches its absolute expiry while the body streams: 401 unauthenticated, nothing committed or stored
+BE18 absolute-expiry {"expired":1,"response":{"status":401,"code":"unauthenticated"},"after":{"rows":[],"version":1,"current":null,"files":[],"uploads":0}}
+
+stdout | apps/api/test/integration/commit-time-auth.test.ts > F-DG2-441: no transaction is open while the API waits on the IdP > Q7 never-answering IdP, pool max 3: three concurrent logins hold no connection or transaction; a signed-in user's /me stays prompt; the logins end in 302 idp_unavailable
+BE18 Q7 {"pgActivityAt1s":[{"state":"idle","n":3}],"me":200,"meMs":15,"logins":[{"status":302,"location":"/login?error=idp_unavailable","ms":4007},{"status":302,"location":"/login?error=idp_unavailable","ms":4007},{"status":302,"location":"/login?error=idp_unavailable","ms":4007}]}
+
+ ✓ |integration| apps/api/test/integration/commit-time-auth.test.ts (8 tests) 9405ms
+   ✓ F-DG2-440: an upload is authorised again at commit time (session re-resolved, grants reloaded) > Q1 the uploader's only grant is revoked while the body streams: 403 forbidden, audited as authorization.denied, nothing committed or stored  664ms
+   ✓ F-DG2-440: an upload is authorised again at commit time (session re-resolved, grants reloaded) > Q1b the uploading session is logged out while the body streams: 401 unauthenticated, nothing committed or stored  716ms
+   ✓ F-DG2-440: an upload is authorised again at commit time (session re-resolved, grants reloaded) > the uploading session reaches its idle expiry while the body streams: 401 unauthenticated, nothing committed or stored  742ms
+   ✓ F-DG2-440: an upload is authorised again at commit time (session re-resolved, grants reloaded) > the uploading session reaches its absolute expiry while the body streams: 401 unauthenticated, nothing committed or stored  627ms
+   ✓ F-DG2-440: an upload is authorised again at commit time (session re-resolved, grants reloaded) > the uploader's user account is disabled while the body streams: 401, nothing committed  670ms
+   ✓ F-DG2-440: an upload is authorised again at commit time (session re-resolved, grants reloaded) > positive control: an upload whose session and grant stay valid commits (200), byte-exact, audited once  510ms
+   ✓ F-DG2-440: an upload is authorised again at commit time (session re-resolved, grants reloaded) > a grant revoked and granted again (a new assignment) while the body streams: the commit sees the CURRENT grants and succeeds  547ms
+   ✓ F-DG2-441: no transaction is open while the API waits on the IdP > Q7 never-answering IdP, pool max 3: three concurrent logins hold no connection or transaction; a signed-in user's /me stays prompt; the logins end in 302 idp_unavailable  4277ms
+ ✓ |integration| apps/api/test/integration/governance/cutoff-pack.test.ts (12 tests) 2145ms
+ ✓ |integration| apps/api/test/integration/admin/notification-channels.test.ts (11 tests) 1042ms
+ ✓ |integration| apps/api/test/integration/invalid-character.test.ts (20 tests) 2352ms
+ ✓ |integration| apps/api/test/integration/benefits/finance-validation.test.ts (9 tests) 2516ms
+   ✓ REQ-PB-013: only Finance decides, and the audit names the validator > BO, AUD and ADM-only get 403; FIN approves; two audit events by FIN; the task is done; validated +amount  491ms
+   ✓ REQ-PB-013: only Finance decides, and the audit names the validator > the queue task goes to the named Finance validator and is completed by the decision  316ms
+ ✓ |integration| apps/api/test/integration/benefits/overlaps.test.ts (11 tests) 2062ms
+ ✓ |integration| apps/api/test/integration/reporting/kpi-unit-outcomes.test.ts (9 tests) 2521ms
+   ✓ D-124 items 2-3 (ADR-0037 N5): a KPI-derived dashboard value says its unit kind apart from its label > F4: the value gap (planned 70, nothing validated) is the computed ratio 1 with kpiUnit null; money and counts are null  380ms
+stdout | apps/api/test/integration/portfolio/initiatives-filters.test.ts > the query plan of sort=code (0110 initiative_code_sort_idx; logged, not timed) > EXPLAIN of the route's sort=code page query uses initiative_code_sort_idx
+EXPLAIN listInitiatives sort=code (1,000 initiatives in the transformation):
+Limit  (cost=0.28..21.06 rows=101 width=600)
+  ->  Index Scan using initiative_code_sort_idx on initiative  (cost=0.28..206.03 rows=1000 width=600)
+        Index Cond: (transformation_id = '01a18ee2-d57b-75dd-ab79-296d836cfbe8'::uuid)
+
+ ✓ |integration| apps/api/test/integration/portfolio/initiatives-filters.test.ts (21 tests) 5287ms
+   ✓ listInitiatives: absent parameters return the DG5 response (ADR-0057 §5; p6-work-split §H/G.14 item 7) > every page is byte-identical to the DG5 page: order updated_at desc, id desc; the DG5 cursor and hash  1230ms
+   ✓ listInitiatives filters return exactly the matching set (A20; ADR-0057 §5) > executiveOwnerUserId and workstreamLeadUserId, alone and combined with q and a sort  652ms
+ ✓ |integration| apps/api/test/integration/delegations/delegations.test.ts (13 tests) 4121ms
+   ✓ delegated approvals (REQ-S10-010; ADR-0026 §3 rules 6-9) > after expiry B loses the capability (at once, before any sweep); the sweep then marks it expired, once  2316ms
+ ✓ |integration| apps/api/test/integration/hardening/list-pagination.test.ts (4 tests) 2116ms
+   ✓ T-DG6-BE-V: the 17 formerly unbounded lists are cursor-paginated (ADR-0007 §4a, D-199) > initiative children: milestones (NULL forecast last), deliverables (countWarning over the whole list), links  513ms
+   ✓ T-DG6-BE-V: the 17 formerly unbounded lists are cursor-paginated (ADR-0007 §4a, D-199) > transformation lists: waves, resource roles, weight sets (newest first), workshop participants  488ms
+   ✓ T-DG6-BE-V: the 17 formerly unbounded lists are cursor-paginated (ADR-0007 §4a, D-199) > benefit formula versions: newest first across pages  423ms
+   ✓ T-DG6-BE-V: the 17 formerly unbounded lists are cursor-paginated (ADR-0007 §4a, D-199) > catalogues: dependency types, health-check schemes, approval routes, template source links  359ms
+ ✓ |integration| apps/api/test/integration/benefits/register.test.ts (17 tests) 1445ms
+ ✓ |integration| apps/api/test/integration/evidence/store-contract.test.ts (39 tests) 4312ms
+   ✓ EvidenceStore contract: filesystem (ADR-0054 §2) > round-trips a body above the 8 MiB multipart threshold byte for byte  665ms
+   ✓ EvidenceStore contract: s3 (in-process SigV4-verifying fake) (ADR-0054 §2) > round-trips a body above the 8 MiB multipart threshold byte for byte  1155ms
+   ✓ EvidenceStore contract: s3 (in-process SigV4-verifying fake) (ADR-0054 §2) > enforces maxBytes after a multipart part was already stored, and leaves nothing behind  631ms
+   ✓ S3 evidence store: adapter-specific behaviour (ADR-0054 §2) > uses multipart upload above 8 MiB, buffering one part at a time  529ms
+stdout | apps/api/test/integration/access/read-scope-parity.test.ts > ReadScope parity (ADR-0051 §1) > predicate <=> admits <=> record view, for every (reader, record) pair
+[read-scope-parity] readers=55 records=18 pairs=990 admitted=116 view-by-GET=495 view-by-record-decision=495 mismatches=0
+
+ ✓ |integration| apps/api/test/integration/access/read-scope-parity.test.ts (2 tests) 5215ms
+   ✓ ReadScope parity (ADR-0051 §1) > predicate <=> admits <=> record view, for every (reader, record) pair  3597ms
+ ✓ |integration| apps/api/test/integration/kpi-p4/actuals.test.ts (11 tests) 1637ms
+ ✓ |integration| apps/api/test/integration/tasks/email-adapter-contract.test.ts (14 tests) 1074ms
+ ✓ |integration| apps/api/test/integration/governance/forums.test.ts (12 tests) 1384ms
+ ✓ |integration| apps/api/test/integration/methodology/playbook-blocks.test.ts (8 tests) 789ms
+ ✓ |integration| packages/db/test/integration/demo-roaming.test.ts (69 tests) 8999ms
+   ✓ REQ-S18-001 (with BE-S): the roaming dataset is deterministic > a second seed into a fresh database gives identical record counts and checksum  4364ms
+ ✓ |integration| tests/qa/integration/a13-jobs-rerun.test.ts (5 tests) 33026ms
+   ✓ A13 export job: one job per Idempotency-Key; a killed worker restarts and completes it once with one file; replays add nothing > a worker process SIGKILLed inside the job's final transaction, then restarted, completes the job ONCE with ONE file  24050ms
+   ✓ A13 export job: one job per Idempotency-Key; a killed worker restarts and completes it once with one file; replays add nothing > the export_job.requested event replayed three times changes nothing: same file, same version, no new file  1393ms
+   ✓ A13 Day-90 job: run now, re-delivered x3 and re-run after a worker restart -> one day_ninety_test_due item per holder > a plan started 2026-01-01 (Day 90 = 2026-04-01, reached): one item per holder, unchanged by re-runs and a restart  3164ms
+   ✓ A13 health check (no job exists, ADR-0048 §8): the retried submit leaves one submitted assessment, one score, three actions > the same submit replayed, and two concurrent submits, change nothing after the first  931ms
+ ✓ |integration| apps/api/test/integration/access/sensitive-reads.test.ts (15 tests) 2805ms
+   ✓ REQ-S10-002: a sensitive benefit is hidden from a workstream member without the grant > benefit list and GET: absent / 404 for the member and AUD; visible to the owner, the creator and the TO  498ms
+ ✓ |integration| apps/api/test/integration/environment/environment.test.ts (14 tests) 11162ms
+   ✓ GET /environment (REQ-S18-001, REQ-PB-089) > returns synthetic: false in production (production-marked, and unmarked fails safe to production)  307ms
+   ✓ the worker's demo.reset job (ADR-0050 §6) > acknowledges before the drop, then re-creates and re-seeds the database (requested_via api); a redelivery does nothing  3593ms
+ ✓ |integration| apps/api/test/integration/audit/audit-events.test.ts (15 tests | 1 skipped) 723ms
+ ✓ |integration| apps/worker/test/integration/sustainment-scans.test.ts (5 tests) 2229ms
+   ✓ sustainment.review_scan after closure (REQ-S11-004, REQ-S03-002, REQ-PB-083) > the closed transformation's BAU area gets its next review on time, once; its linked KPI accepts an actual  1022ms
+ ✓ |integration| apps/api/test/integration/methodology/catalogue-versions.test.ts (6 tests) 4908ms
+   ✓ the DG2-DG4 catalogue of methodology versions after v1 (ADR-0039 §2, §3; D-155) > test 1: a help-text-only v2; a new transformation pinned to v2 gets the same catalogue as v1 by code/key and count  371ms
+   ✓ the DG2-DG4 catalogue of methodology versions after v1 (ADR-0039 §2, §3; D-155) > test 2: a v3 label override is returned for its element, and only for it  407ms
+ ✓ |integration| tests/qa/integration/a15-snapshots-and-packs.test.ts (15 tests) 10467ms
+   ✓ REQ-S13-007: after a later KPI change, the issued snapshot still shows the old values and their versions > a PDF (en) of the issued snapshot exported after the change shows the old target and the issue  827ms
+   ✓ REQ-S13-007: after a later KPI change, the issued snapshot still shows the old values and their versions > a PDF (ar) of the issued snapshot exported after the change shows the old target and the issue  1830ms
+   ✓ REQ-S09-011: the executive pack's workstream section has the submitted update text and current metrics > pdf (en) prints the submitted update text and the workstream  1079ms
+   ✓ REQ-S09-011: the executive pack's workstream section has the submitted update text and current metrics > pdf (ar) prints the submitted update text and the workstream  1239ms
+   ✓ REQ-S09-011: the executive pack's workstream section has the submitted update text and current metrics > pptx (ar) prints the submitted update text and the workstream  417ms
+   ✓ REQ-S10-013 / REQ-S12-015: meeting presentation, issued meeting pack and the cut-off draft agenda > the issued meeting pack remains the snapshot after a later change; the live view follows the change  2277ms
+ ✓ |integration| apps/api/test/integration/portfolio/budget.test.ts (13 tests) 1232ms
+ ✓ |integration| apps/api/test/integration/assistant/suggestions.test.ts (12 tests) 5359ms
+ ✓ |integration| apps/api/test/integration/reporting/finance-adoption.test.ts (9 tests) 3172ms
+   ✓ REQ-S13-001: a user scoped to X sees no Y record or figure on the Finance and adoption dashboards > no tile, total or drill-down holds a Y record or figure  462ms
+ ✓ |integration| packages/db/test/integration/demo.test.ts (9 tests) 68884ms
+   ✓ REQ-S18-003: the empty production initialization and the seed-demo refusals > after the production path, demo_seed_record is empty and no demo user exists  4206ms
+   ✓ REQ-S18-003: the empty production initialization and the seed-demo refusals > seed-demo with MTH_ENV=production exits 3 and changes nothing (on an empty, a production-marked and a non-empty database)  9786ms
+   ✓ REQ-S18-003: the empty production initialization and the seed-demo refusals > seed-demo on an unmarked database that is not empty exits 3 and changes nothing  3637ms
+   ✓ REQ-S18-003: the empty production initialization and the seed-demo refusals > a second seed-demo exits 3 (use reset-demo), and bootstrap refuses a demo database (exit 3)  7892ms
+   ✓ REQ-S18-003: the empty production initialization and the seed-demo refusals > the guard refuses in the library too (DemoRefused, exit code 3), before any write  2278ms
+   ✓ REQ-S18-001: seed, then reset twice: identical record counts and checksums > with the synthetic test dataset (library): counts and checksum identical across seed, reset, reset  8870ms
+   ✓ REQ-S18-001: seed, then reset twice: identical record counts and checksums > through the CLI (the shipped dataset): seed-demo, then reset-demo twice gives identical counts and checksums  17404ms
+   ✓ REQ-S18-001: seed, then reset twice: identical record counts and checksums > reset-demo refusals exit 3 and drop nothing: MTH_ENV not demo, no admin URL, a production target  9605ms
+   ✓ REQ-S18-001: seed, then reset twice: identical record counts and checksums > the checksum depends on the registered rows' content (a changed value changes it)  2716ms
+ ✓ |integration| apps/api/test/integration/assistant/provider.test.ts (14 tests) 667ms
+   ✓ the HTTP adapter against the local fake (never live) > a stall before the response or inside the body is assistant.provider_timeout  610ms
+ ✓ |integration| tests/qa/integration/a13-starter-jobs.test.ts (4 tests) 8568ms
+   ✓ REQ-S12-004: one transformation -> one set of phase checklists and role tasks; a retry creates no duplicates; the 90-day tasks are dated from the start date > create with launchPlan.startDate, let the worker run, replay the event x3: nothing is added  2219ms
+   ✓ REQ-S12-004: one transformation -> one set of phase checklists and role tasks; a retry creates no duplicates; the 90-day tasks are dated from the start date > without the plan flag, no plan and no launch task are created  552ms
+   ✓ REQ-S12-015: cut-off creates one draft agenda (pack); it is not published without review > the cut-off job creates ONE draft pack per meeting, again-runs add none; publishing waits for the chair's review  2440ms
+ ✓ |integration| apps/api/test/integration/reporting/registers-report.test.ts (5 tests) 3451ms
+   ✓ ADR-0045 §1: each register returns exactly its list route's rows for the same filters > actions (overdue filter), decisions, dependencies, KPIs and benefits equal their list routes  497ms
+   ✓ size limit (ADR-0045 §1) > 5,001 rows -> 422 report.too_large and nothing written; the live report is refused the same way  985ms
+ ✓ |integration| apps/api/test/integration/raid/actions.test.ts (9 tests) 3223ms
+   ✓ actions linked to RAID entries (ADR-0031 §4) > an action on a Dependency entry links dependencyId; listRaidEntryActions lists only that entry's actions  310ms
+   ✓ the action register (ADR-0031 §4) > commit-time: a grant revoked while an action update waited is 403; nothing written  398ms
+ ✓ |integration| apps/api/test/integration/launch/day-ninety.test.ts (10 tests) 3099ms
+   ✓ putDayNinetyResponse and completeDayNinetyTest (REQ-PB-087) > refuses AUD, TO and WL (403), an outsider (404); If-Match gives 428/409; a bad body or code gives 400  460ms
+   ✓ evidence suggestions (ADR-0048 §4: pre-filled links, never answers) > lists at most 5 records per question from its record types, with their state  811ms
+ ✓ |integration| apps/api/test/integration/portfolio/links.test.ts (12 tests) 3426ms
+   ✓ gap links (REQ-PB-040, REQ-PB-046) > accepts 1..n links to a TOM gap and a diagnosed finding, each audited; no_gap_link clears and returns  411ms
+   ✓ gap links (REQ-PB-040, REQ-PB-046) > G3 completeness is identical with and without initiatives and gap links (TOM is not the portfolio)  672ms
+   ✓ decision links (T05 'Required decisions', one decision model) > links a canonical decision of the transformation; foreign 422, duplicate 409; removable  416ms
+   ✓ authorization on every link mutation > AUD gets 403 on the three creates and the three removes (audited denial, nothing written); a 404 for no access  344ms
+ ❯ |integration| apps/api/test/integration/access-scope.test.ts (18 tests | 18 skipped) 71ms
+   ↓ cross-scope READ is denied by the policy function (404, existence not disclosed) > TO of organization A reads every transformation in A (inherits downward), none in B
+   ↓ cross-scope READ is denied by the policy function (404, existence not disclosed) > TO of organization B cannot read organization A's records
+   ↓ cross-scope READ is denied by the policy function (404, existence not disclosed) > TL granted at BU a1 (non-inheriting) sees no transformation below a1, and none in the sibling a2
+   ↓ cross-scope READ is denied by the policy function (404, existence not disclosed) > a transformation-scope grant covers exactly that transformation
+   ↓ cross-scope READ is denied by the policy function (404, existence not disclosed) > technical administrators cannot read business records at all
+   ↓ cross-scope READ is denied by the policy function (404, existence not disclosed) > a user without grants sees nothing, and an unknown id is indistinguishable from a forbidden one
+   ↓ list filtering happens in SQL through the same rules > returns exactly the readable set per principal
+   ↓ cross-scope WRITE is denied (404 when unreadable, 403 when readable but not permitted) > TO of B cannot update or archive A's transformation, and nothing is written
+   ↓ cross-scope WRITE is denied (404 when unreadable, 403 when readable but not permitted) > an auditor can read but not update (403) and the denial itself is audited
+   ↓ cross-scope WRITE is denied (404 when unreadable, 403 when readable but not permitted) > TL at BU a1 may create in a1 but not in the sibling a2 (BU unreadable -> 404) nor in org B
+   ↓ cross-scope WRITE is denied (404 when unreadable, 403 when readable but not permitted) > an auditor can read the BU but may not create in it (403)
+   ↓ revocation applies to the next request (grants are loaded per request) > revoking the TO grant removes access immediately
+   ↓ revocation applies to the next request (grants are loaded per request) > future-dated and expired grants do not apply
+   ↓ a business-unit-scoped creator can work on what it create

@@ -18,8 +18,12 @@ import {
   auditContextOf,
   grantCreatorTransformationRoles,
   principalOf,
+  reachKey,
   requireAction,
   requireRead,
+  restrictedIdsAmong,
+  restrictedRecordRefs,
+  uuidsIn,
   scopeFilter,
   targetFor,
 } from "../access/index.ts";
@@ -55,7 +59,21 @@ import {
 } from "./repository.ts";
 
 const idParams = z.strictObject({ transformationId: uuid });
-const listQuery = z.strictObject({ ...transformationListQuery.shape, cursor: cursorSchema, limit: limitSchema });
+/**
+ * ADR-0057 §5 (T-DG6-BE-R): `sort` also takes -updatedAt, updatedAt, code, -code. The DG1 values (updatedAt:desc, ...)
+ * stay accepted with their DG1 meaning, and the default stays updatedAt:desc, so an absent `sort` keeps today's order
+ * and cursor. Anything else is 400 at /query/sort.
+ */
+const P6_TRANSFORMATION_SORTS = ["-updatedAt", "updatedAt", "code", "-code"] as const;
+const transformationSort = z
+  .enum([...transformationListQuery.shape.sort.unwrap().options, ...P6_TRANSFORMATION_SORTS])
+  .default("updatedAt:desc");
+const listQuery = z.strictObject({
+  ...transformationListQuery.shape,
+  sort: transformationSort,
+  cursor: cursorSchema,
+  limit: limitSchema,
+});
 const auditQuery = z.strictObject({ cursor: cursorSchema, limit: limitSchema });
 
 /**
@@ -87,7 +105,18 @@ const SORTS: ReadonlyMap<string, SortSpec> = new Map<string, SortSpec>([
   ["name:desc", { col: "t.name", dir: "desc" }],
   ["code:asc", { col: "t.code", dir: "asc" }],
   ["code:desc", { col: "t.code", dir: "desc" }],
+  // ADR-0057 §5 spellings (the cursor stays bound to the spelling sent: filterHash covers `sort`).
+  ["-updatedAt", { col: "t.updated_at", dir: "desc" }],
+  ["updatedAt", { col: "t.updated_at", dir: "asc" }],
+  ["code", { col: "t.code", dir: "asc" }],
+  ["-code", { col: "t.code", dir: "desc" }],
 ]);
+
+/** An ISO instant (millisecond part) that the calendar accepts as written (2026-02-31 is refused, not rolled over). */
+function isRoundTripInstant(iso: string): boolean {
+  const time = Date.parse(iso);
+  return !Number.isNaN(time) && new Date(time).toISOString() === iso;
+}
 
 export function registerTransformationRoutes(app: FastifyInstance, { db }: ModuleDeps): void {
   registerTransformationP2Routes(app, db);
@@ -129,6 +158,21 @@ export function registerTransformationRoutes(app: FastifyInstance, { db }: Modul
       q = q.where((eb) => eb.or([eb("t.code", "ilike", like), eb("t.name", "ilike", like)]));
     }
     if (after) {
+      // A hand-made cursor of the right filters must not reach the casts below with another shape (400, not 500).
+      const [keyValue, keyId] = after;
+      const shapeOk =
+        typeof keyValue === "string" &&
+        typeof keyId === "string" &&
+        uuid.safeParse(keyId).success &&
+        (sort.col !== "t.updated_at" ||
+          (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}Z$/.test(keyValue) &&
+            isRoundTripInstant(keyValue.slice(0, 23) + "Z")));
+      if (!shapeOk)
+        throw problems.badRequest(
+          "validation.cursor",
+          "The cursor is invalid or belongs to other filters.",
+          "/query/cursor",
+        );
       const op = sort.dir === "desc" ? sql.raw("<") : sql.raw(">");
       const value = sort.col === "t.updated_at" ? sql`${String(after[0])}::timestamptz` : sql`${String(after[0])}`;
       q = q.where(sql<boolean>`(${sql.ref(sort.col)}, t.id) ${op} (${value}, ${String(after[1])}::uuid)`);
@@ -421,7 +465,25 @@ export function registerTransformationRoutes(app: FastifyInstance, { db }: Modul
         id: transformationId,
       });
       await requireAction(db, principal, "audit.read", target);
-      return listTransformationAudit(db, transformationId, query);
+      const page = await listTransformationAudit(db, transformationId, query);
+      // ADR-0051 §2 (T-DG6-BE-Y1, F-DG6-121): the events of a sensitive record the caller is not admitted to, and of
+      // the records that carry its values, keep actor, action, time, record id and versions, never the changed values
+      // or the reason (the same redaction as /audit-events; the shared helper access/sensitive-reach.ts).
+      // T-DG6-BE-Z10 (F-DG6-420; D-218): so is the event of an open record whose changes name such a record's id.
+      const restricted = await restrictedRecordRefs(db, principal, page.items);
+      const open = page.items.filter((e) => !restricted.has(reachKey(e)));
+      const hiddenIds = await restrictedIdsAmong(
+        db,
+        principal,
+        open.flatMap((e) => [...uuidsIn(e.changes)]),
+      );
+      if (restricted.size === 0 && hiddenIds.size === 0) return page;
+      const hides = (e: (typeof page.items)[number]) =>
+        restricted.has(reachKey(e)) || [...uuidsIn(e.changes)].some((id) => hiddenIds.has(id));
+      return {
+        nextCursor: page.nextCursor,
+        items: page.items.map((e) => (hides(e) ? { ...e, reason: null, changes: null } : e)),
+      };
     },
   );
 }

@@ -1,0 +1,52 @@
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-i2
+
+ ✓ |unit-node| packages/db/src/seed.test.ts (68 tests) 215ms
+ ✓ |unit-node| apps/api/src/modules/automation/outbox-registry.test.ts (5 tests) 124ms
+ ❯ |unit-node| apps/worker/src/service-identities.test.ts (6 tests | 1 failed) 108ms
+   × job service identities (ADR-0053 §1) > declares exactly one identity per queue of apps/worker/src/queues/** 39ms
+     → expected [ …(49) ] to have a length of 47 but got 49
+   ✓ job service identities (ADR-0053 §1) > migrations 0114 and 0115 seed exactly the declarations (code, queue, codes, sensitive access, labels) 38ms
+   ✓ job service identities (ADR-0053 §1) > every declared code is a known read or write permission; no configure, approval or Finance code 19ms
+   ✓ job service identities (ADR-0053 §1) > defineJob refuses a queue without a declaration and a restated identity that differs 2ms
+   ✓ job service identities (ADR-0053 §1) > a platform identity acts per organization; an organization identity only in its own 4ms
+   ✓ job service identities (ADR-0053 §1) > the refusals carry the exact ADR-0053 §2 codes and English texts 1ms
+ ✓ |unit-node| apps/worker/src/handlers/notifications.test.ts (8 tests) 13ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts (141 tests) 17555ms
+   ✓ API module boundaries (ADR-0002) > every import respects dependsOn, public surfaces and allowed packages  11082ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > rule 4 reports exactly the diagnostics of a full ts.transpileModule, for every extension (F-DG5-102/145)  469ms
+   ✓ package dependency direction (ADR-0002 rule 5) > packages/db imports only @mth/config and @mth/shared  370ms
+   ✓ package dependency direction (ADR-0002 rule 5) > packages/shared imports no workspace package  1056ms
+   ✓ package dependency direction (ADR-0002 rule 5) > apps/web never imports @mth/db or @mth/config (browser bundle, no secrets)  3729ms
+   ✓ package dependency direction (ADR-0002 rule 5) > apps/worker imports no API code  333ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-node| apps/worker/src/service-identities.test.ts > job service identities (ADR-0053 §1) > declares exactly one identity per queue of apps/worker/src/queues/**
+AssertionError: expected [ …(49) ] to have a length of 47 but got 49
+
+- Expected
++ Received
+
+- 47
++ 49
+
+ ❯ apps/worker/src/service-identities.test.ts:109:22
+    107|     expect(new Set(declared).size).toBe(declared.length);
+    108|     expect([...declared].sort()).toEqual([...queues].sort());
+    109|     expect(declared).toHaveLength(47); // 40 (T-DG6-BE-J) + two search…
+       |                      ^
+    110|   });
+    111| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 4 passed (5)
+      Tests  1 failed | 227 passed (228)
+   Start at  15:54:16
+   Duration  19.21s (transform 5.32s, setup 0ms, collect 13.63s, tests 18.02s, environment 1ms, prepare 872ms)
+

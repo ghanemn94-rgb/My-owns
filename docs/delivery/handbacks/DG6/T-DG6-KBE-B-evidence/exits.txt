@@ -1,0 +1,14 @@
+typecheck exit=0
+build exit=0
+lint exit=0
+prettier exit=123
+openapi:lint exit=0
+prettier (run 2, after --write on the two files) exit=0
+shared typecheck+build after prettier --write exit=0
+eslint explain+calc after prettier --write exit=0
+pnpm test (locale unset) exit=1
+unit-web rerun of the 4 failed files alone (locale unset) exit=1
+CONTROL: same 4 files with calc.ts at HEAD (no explain export) exit=1
+validate --historical --stage DG5 (end) exit=0
+unit-node rerun of the 6 timed-out files alone (C.UTF-8) exit=1
+integration (QA_PG_PORT=25150 MTH_PORT_POOL=25151-25199) STOPPED at the 90-min background limit ~02:01 UTC; no exit code; per-test lines: 1574 passed, 13 failed

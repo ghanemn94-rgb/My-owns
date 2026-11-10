@@ -45,7 +45,14 @@ import {
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
-import { principalOf, requireTransformationRead } from "../access/index.ts";
+import {
+  keptRestrictedRef,
+  principalOf,
+  reachKey,
+  requireTransformationRead,
+  restrictedRecordRefs,
+  type Principal,
+} from "../access/index.ts";
 import { record } from "../audit/index.ts";
 import {
   iso,
@@ -305,7 +312,12 @@ async function suggestionsFor(db: DbOrTx, transformationId: string, types: reado
 
 // ------------------------------------------------------------------------------------------------ presenter
 
-export async function presentTest(db: DbOrTx, transformationId: string): Promise<DayNinetyTest> {
+/**
+ * T-DG6-BE-Z10 (F-DG6-420; D-218; ADR-0051 §2): a suggestion of a record the reader is not admitted to (a sensitive
+ * evidence item, or any sensitive record or value child) is not offered, and a response's evidence the reader is not
+ * admitted to is shown as `evidenceId: null`; the test then carries `includesRestrictedRecords: true`.
+ */
+export async function presentTest(db: DbOrTx, principal: Principal, transformationId: string): Promise<DayNinetyTest> {
   const test = await findTest(db, transformationId);
   const [questions, responses] = await Promise.all([
     db
@@ -320,9 +332,27 @@ export async function presentTest(db: DbOrTx, transformationId: string): Promise
       .execute(),
   ]);
   const byQuestion = new Map(responses.map((r) => [r.question_code, r]));
+  const suggestions = new Map<string, DayNinetySuggestion[]>();
+  for (const q of questions)
+    suggestions.set(q.code, await suggestionsFor(db, transformationId, q.evidence_record_types));
+  const hidden = await restrictedRecordRefs(db, principal, [
+    ...[...suggestions.values()].flat().map((x) => ({ recordType: x.recordType, recordId: x.recordId })),
+    ...responses
+      .filter((r) => r.evidence_id !== null)
+      .map((r) => ({ recordType: "evidence", recordId: r.evidence_id! })),
+  ]);
+  let restricted = false;
+  const visibleEvidence = (id: string | null): string | null => {
+    if (id === null || !hidden.has(reachKey({ recordType: "evidence", recordId: id }))) return id;
+    restricted = true;
+    return null;
+  };
   const out = [];
   for (const q of questions) {
     const r = byQuestion.get(q.code);
+    const offered = suggestions.get(q.code) ?? [];
+    const visibleSuggestions = offered.filter((x) => !hidden.has(reachKey(x)));
+    if (visibleSuggestions.length !== offered.length) restricted = true;
     out.push({
       code: q.code,
       ordinal: q.ordinal,
@@ -333,12 +363,12 @@ export async function presentTest(db: DbOrTx, transformationId: string): Promise
         ? {
             answer: r.answer as "yes" | "no",
             comment: r.comment,
-            evidenceId: r.evidence_id,
+            evidenceId: visibleEvidence(r.evidence_id),
             respondedBy: r.responded_by,
             updatedAt: iso(r.updated_at),
           }
         : null,
-      evidenceSuggestions: await suggestionsFor(db, transformationId, q.evidence_record_types),
+      evidenceSuggestions: visibleSuggestions,
     });
   }
   return {
@@ -355,6 +385,7 @@ export async function presentTest(db: DbOrTx, transformationId: string): Promise
     completedAt: isoOrNull(test.completed_at),
     completedBy: test.completed_by,
     version: test.version,
+    ...(restricted ? { includesRestrictedRecords: true as const } : {}),
   };
 }
 
@@ -388,12 +419,12 @@ async function putResponse(
   const body = parseBody(dayNinetyResponsePut, request.body);
   const expected = requireIfMatch(request);
   const test = await lockOpenTest(tx, transformationId, expected);
-  const evidenceId = body.evidenceId ?? null;
-  if (evidenceId !== null) {
+  const sentEvidenceId = body.evidenceId ?? null;
+  if (sentEvidenceId !== null) {
     const ev = await tx
       .selectFrom("evidence")
       .select("id")
-      .where("id", "=", evidenceId)
+      .where("id", "=", sentEvidenceId)
       .where("transformation_id", "=", transformationId)
       .where("archived_at", "is", null)
       .executeTakeFirst();
@@ -408,6 +439,15 @@ async function putResponse(
     .where("question_code", "=", questionCode)
     .forUpdate()
     .executeTakeFirst();
+  // T-DG6-BE-Z10B (F-DG6-420; D-218): a re-save by a responder not admitted to the stored evidence (shown to them as
+  // `evidenceId: null`) keeps that evidence; only another evidence id sent explicitly replaces it (keptRestrictedRef).
+  const evidenceId = await keptRestrictedRef(
+    tx,
+    principalOf(request),
+    "evidence",
+    existing?.evidence_id,
+    sentEvidenceId,
+  );
 
   let answered = test.answered_count;
   if (!existing) {
@@ -570,7 +610,7 @@ export function registerDayNinetyRoutes(app: FastifyInstance, { db }: ModuleDeps
       .transaction()
       .setIsolationLevel("repeatable read")
       .setAccessMode("read only")
-      .execute(async (tx) => presentTest(tx, transformationId));
+      .execute(async (tx) => presentTest(tx, principalOf(request), transformationId));
     return sendVersioned(reply, 200, body);
   });
 
@@ -578,7 +618,7 @@ export function registerDayNinetyRoutes(app: FastifyInstance, { db }: ModuleDeps
     const { transformationId, questionCode } = parse(responseParams, request.params, "params");
     const body = await db.transaction().execute(async (tx) => {
       await putResponse(tx, request, transformationId, questionCode);
-      return presentTest(tx, transformationId);
+      return presentTest(tx, principalOf(request), transformationId);
     });
     return sendVersioned(reply, 200, body);
   });
@@ -587,7 +627,7 @@ export function registerDayNinetyRoutes(app: FastifyInstance, { db }: ModuleDeps
     const transformationId = parseTransformationParam(request.params);
     const body = await db.transaction().execute(async (tx) => {
       await complete(tx, request, transformationId);
-      return presentTest(tx, transformationId);
+      return presentTest(tx, principalOf(request), transformationId);
     });
     return sendVersioned(reply, 200, body);
   });

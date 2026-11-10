@@ -25,6 +25,7 @@ import { CORRECTIVE_CONSUMERS, RAID_HANDLERS } from "../../src/handlers/raid.ts"
 import { ensureQueues, QUEUE_FOR_EVENT, QUEUES_FOR_EVENT, queuesForEvents } from "../../src/queues/index.ts";
 import { fanOutJobId, jobsForEvent, relayOnce } from "../../src/relay.ts";
 import { AUTOMATION_EVENT_QUEUES } from "../../src/queues/automation.ts";
+import { CONNECTOR_EXCEPTION_QUEUE } from "../../src/handlers/integrations.ts";
 
 const AUTOMATION_EVALUATE = "automation.evaluate";
 import { startWorker, type RunningWorker } from "../../src/worker.ts";
@@ -308,6 +309,11 @@ describe("the event-to-queue registry (D-102)", () => {
       expect(QUEUE_FOR_EVENT[eventType]).toBe(queues[0]);
     }
     expect(QUEUE_FOR_EVENT["kpi.deviation_evaluated"]).toBe(CORRECTIVE_CONSUMERS.kpi);
+    // T-DG6-BE-K2S (ADR-0053 §2, §3; ADR-0055 §2): connector.run_failed feeds BOTH its domain consumer (the connector's
+    // operational exception, BE-L2) and the engine (the catalogue trigger of admin rules and starter 16 v2), in that
+    // order; connector.run_recovered (no catalogue trigger) keeps its one queue.
+    expect(QUEUES_FOR_EVENT["connector.run_failed"]).toEqual([CONNECTOR_EXCEPTION_QUEUE, AUTOMATION_EVALUATE]);
+    expect(QUEUES_FOR_EVENT["connector.run_recovered"]).toEqual([CONNECTOR_EXCEPTION_QUEUE]);
     expect(queuesForEvents([{ a: "q1" }, { a: "q2", b: "q3" }, { a: "q1" }])).toEqual({ a: ["q1", "q2"], b: ["q3"] });
   });
 

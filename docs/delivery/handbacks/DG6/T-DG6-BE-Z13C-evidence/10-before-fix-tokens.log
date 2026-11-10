@@ -1,0 +1,248 @@
+# BEFORE-FIX (item 1), re-run after making the hidden-race read assertion soft: versions.ts, rules.ts, shared automation.ts written back to HEAD d6d185d30 via git show HEAD:<path>; the new/updated tests kept
+port-policy: PostgreSQL listening on port 31250 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-z13c
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw8gc5oh_6ac66d88 (server_encoding UTF8); applied 118 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/access/automation-restricted-tokens-z13.test.ts (11 tests | 6 failed) 1754ms
+   × T-DG6-BE-Z13: restricted condition tokens (D-226) > read: each hidden literal is an opaque token in reading order, marked; the summary names no record 49ms
+     → expected [ { op: 'in', …(2) }, …(1) ] to deeply equal [ { field: 'benefitId', …(2) }, …(1) ]
+   ✓ T-DG6-BE-Z13: restricted condition tokens (D-226) > removing an earlier condition keeps the hidden literal of the condition kept (F-DG6-541, F-DG6-520 (c)) 69ms
+   ✓ T-DG6-BE-Z13: restricted condition tokens (D-226) > reordering two hidden literals keeps each with its own condition (F-DG6-560 P1) 47ms
+   ✓ T-DG6-BE-Z13: restricted condition tokens (D-226) > removing the restricted condition itself removes its literal and keeps the rest 38ms
+   × T-DG6-BE-Z13: restricted condition tokens (D-226) > in-list: removing the open element and reordering the hidden ones keeps both (F-DG6-520 (b), F-DG6-560 P3) 35ms
+     → expected [ '[restricted:1]', …(2) ] to deeply equal [ '[restricted:1]', …(2) ]
+   × T-DG6-BE-Z13: restricted condition tokens (D-226) > in-list: removing a hidden element removes exactly that literal 26ms
+     → {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"A condition value is restricted-record marker text that does not stand for a value of this version. Reload the version and keep each restricted value as shown, or remove it.","code":"automation_rule.restricted_marker_unknown","requestId":"01a1bd73-874f-75ce-9015-7b92abb62910","errors":[{"pointer":"/content/conditions/0/value/1","code":"automation_rule.restricted_marker_unknown","message":"Restricted-record marker text that does not stand for a value of this version."}]}: expected 422 to be 200 // Object.is equality
+   ✓ T-DG6-BE-Z13: restricted condition tokens (D-226) > negative: an unknown token, the bare marker or other marker text is refused 422 and nothing is stored 258ms
+   ✓ T-DG6-BE-Z13: restricted condition tokens (D-226) > negative: a writer without automation.configure is refused before any token is resolved 13ms
+   × T-DG6-BE-Z13: restricted condition tokens (D-226) > race (D-228 (1)): a record that becomes hidden between the read and the save shifts no token 57ms
+     → expected [ '[restricted:1]', …(3) ] to deeply equal [ '[restricted:1]', …(3) ]
+     → expected [ { op: 'neq', …(2) }, …(3) ] to deeply equal [ { field: 'benefitId', …(2) }, …(3) ]
+   × T-DG6-BE-Z13: restricted condition tokens (D-226) > race (D-228 (1)): a record that becomes visible between the read and the save keeps its literal 67ms
+     → {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"A condition value is restricted-record marker text that does not stand for a value of this version. Reload the version and keep each restricted value as shown, or remove it.","code":"automation_rule.restricted_marker_unknown","requestId":"01a1bd73-88d4-76cc-bd45-27645718dfe5","errors":[{"pointer":"/content/conditions/2/value","code":"automation_rule.restricted_marker_unknown","message":"Restricted-record marker text that does not stand for a value of this version."}]}: expected 422 to be 200 // Object.is equality
+   × T-DG6-BE-Z13: restricted condition tokens (D-226) > positive: after an explicit grant the author reads the real values; a token still names its position 51ms
+     → expected [ …(3) ] to deeply equal [ …(2) ]
+ ❯ |integration| apps/api/test/integration/access/sensitive-reference-pending-z12b.test.ts (7 tests | 1 failed) 1208ms
+   ✓ T-DG6-BE-Z12B: the PENDING inventory rows, seeded (F-DG6-480; D-218) > control: TL, AUD and SP get 404 on the benefit and its decision; the TO and BO read both 102ms
+   ✓ T-DG6-BE-Z12B: the PENDING inventory rows, seeded (F-DG6-480; D-218) > approval.subject_id: the SP's approval of the restricted decision names no subject id (marked) 55ms
+   ✓ T-DG6-BE-Z12B: the PENDING inventory rows, seeded (F-DG6-480; D-218) > sustainment_review.transition_decision_id: TL and AUD see the review without the decision id (marked) 27ms
+   ✓ T-DG6-BE-Z12B: the PENDING inventory rows, seeded (F-DG6-480; D-218) > procedure_instance.subject_record_id and input_values: TL sees the instance without the benefit id (marked) 63ms
+   × T-DG6-BE-Z12B: automation_rule_version.conditions (D-222, D-226) > the author, not admitted, sees a token in place of each hidden literal, the label in the summary, marked 36ms
+     → expected [ { op: 'eq', …(2) }, …(2) ] to deeply equal [ { field: 'benefitId', …(2) }, …(2) ]
+   ✓ T-DG6-BE-Z12B: automation_rule_version.conditions (D-222, D-226) > a re-save that sends the tokens back keeps each hidden literal; an unrelated edit still applies 82ms
+   ✓ T-DG6-BE-Z12B: automation_rule_version.conditions (D-222, D-226) > positive: with an explicit grant the author sees the literals again (next request) 51ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/access/automation-restricted-tokens-z13.test.ts > T-DG6-BE-Z13: restricted condition tokens (D-226) > read: each hidden literal is an opaque token in reading order, marked; the summary names no record
+AssertionError: expected [ { op: 'in', …(2) }, …(1) ] to deeply equal [ { field: 'benefitId', …(2) }, …(1) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[33m@@ -3,11 +3,11 @@[39m
+[2m      "field": "benefitId",[22m
+[2m      "op": "in",[22m
+[2m      "value": [[22m
+[2m        "[restricted:1]",[22m
+[2m        "01a1bd73-851f-73ba-921f-0119d669fa3a",[22m
+[32m-       "[restricted:3]",[39m
+[31m+       "[restricted:2]",[39m
+[2m      ],[22m
+[2m    },[22m
+[2m    {[22m
+[2m      "field": "severity",[22m
+[2m      "op": "eq",[22m
+
+ ❯ apps/api/test/integration/access/automation-restricted-tokens-z13.test.ts:168:36
+    166|     const one = ok(await send("GET", V(rules.get("listReorder")!), { s…
+    167|     // D-228 (1): k is the position among all literals (S1 = 1, P = 2,…
+    168|     expect(one.content.conditions).toEqual([{ field: "benefitId", op: …
+       |                                    ^
+    169|     expect(one.includesRestrictedRecords).toBe(true);
+    170|     expect(one.summary.en).toContain("a restricted record");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/automation-restricted-tokens-z13.test.ts > T-DG6-BE-Z13: restricted condition tokens (D-226) > in-list: removing the open element and reordering the hidden ones keeps both (F-DG6-520 (b), F-DG6-560 P3)
+AssertionError: expected [ '[restricted:1]', …(2) ] to deeply equal [ '[restricted:1]', …(2) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    "[restricted:1]",[22m
+[2m    "01a1bd73-851f-73ba-921f-0119d669fa3a",[22m
+[32m-   "[restricted:3]",[39m
+[31m+   "[restricted:2]",[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/access/automation-restricted-tokens-z13.test.ts:208:47
+    206|   it("in-list: removing the open element and reordering the hidden one…
+    207|     const { shown, res, ruleId } = await resave("listReorder", (s) => …
+    208|     expect(shown.content.conditions[0].value).toEqual([T1, id.P, T3]);
+       |                                               ^
+    209|     ok(res);
+    210|     expect((await stored(ruleId)).conditions).toEqual([{ field: "benef…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/8]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/automation-restricted-tokens-z13.test.ts > T-DG6-BE-Z13: restricted condition tokens (D-226) > in-list: removing a hidden element removes exactly that literal
+AssertionError: {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"A condition value is restricted-record marker text that does not stand for a value of this version. Reload the version and keep each restricted value as shown, or remove it.","code":"automation_rule.restricted_marker_unknown","requestId":"01a1bd73-874f-75ce-9015-7b92abb62910","errors":[{"pointer":"/content/conditions/0/value/1","code":"automation_rule.restricted_marker_unknown","message":"Restricted-record marker text that does not stand for a value of this version."}]}: expected 422 to be 200 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 200[39m
+[31m+ 422[39m
+
+ ❯ ok apps/api/test/integration/access/automation-restricted-tokens-z13.test.ts:50:62
+     48| const send = (m: string, u: string, o?: Parameters<typeof call>[3]) =>…
+     49| const ok = (res: Res<Body>, status = 200) => {
+     50|   expect(res.status, JSON.stringify(res.body).slice(0, 600)).toBe(stat…
+       |                                                              ^
+     51|   return res.body as Body;
+     52| };
+ ❯ apps/api/test/integration/access/automation-restricted-tokens-z13.test.ts:215:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/8]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/automation-restricted-tokens-z13.test.ts > T-DG6-BE-Z13: restricted condition tokens (D-226) > race (D-228 (1)): a record that becomes hidden between the read and the save shifts no token
+AssertionError: expected [ '[restricted:1]', …(3) ] to deeply equal [ '[restricted:1]', …(3) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    "[restricted:1]",[22m
+[2m    "01a1bd73-8539-764b-b0a4-0b299014f326",[22m
+[32m-   "[restricted:3]",[39m
+[31m+   "[restricted:2]",[39m
+[2m    "high",[22m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/access/automation-restricted-tokens-z13.test.ts:283:69
+    281|     const shown = ok(await send("GET", V(ruleId), { session: author.se…
+    282|     // Soft, so the save below is still exercised (and its stored lite…
+    283|     expect.soft(shown.content.conditions.map((x: Cond) => x.value)).to…
+       |                                                                     ^
+    284|     // A Transformation Office lead marks H sensitive before the autho…
+    285|     ok(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/8]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/automation-restricted-tokens-z13.test.ts > T-DG6-BE-Z13: restricted condition tokens (D-226) > race (D-228 (1)): a record that becomes hidden between the read and the save shifts no token
+AssertionError: expected [ { op: 'neq', …(2) }, …(3) ] to deeply equal [ { field: 'benefitId', …(2) }, …(3) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[33m@@ -10,11 +10,11 @@[39m
+[2m      "value": "01a1bd73-8539-764b-b0a4-0b299014f326",[22m
+[2m    },[22m
+[2m    {[22m
+[2m      "field": "benefitId",[22m
+[2m      "op": "neq",[22m
+[32m-     "value": "01a1bd73-8504-72fe-9ba3-93c00a590b05",[39m
+[31m+     "value": "01a1bd73-8539-764b-b0a4-0b299014f326",[39m
+[2m    },[22m
+[2m    {[22m
+[2m      "field": "severity",[22m
+[2m      "op": "eq",[22m
+[2m      "value": "low",[22m
+
+ ❯ apps/api/test/integration/access/automation-restricted-tokens-z13.test.ts:304:47
+    302|     });
+    303|     const body = ok(res);
+    304|     expect((await stored(ruleId)).conditions).toEqual([
+       |                                               ^
+    305|       { field: "benefitId", op: "neq", value: id.S1 },
+    306|       { field: "benefitId", op: "neq", value: id.H },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/8]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/automation-restricted-tokens-z13.test.ts > T-DG6-BE-Z13: restricted condition tokens (D-226) > race (D-228 (1)): a record that becomes visible between the read and the save keeps its literal
+AssertionError: {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"A condition value is restricted-record marker text that does not stand for a value of this version. Reload the version and keep each restricted value as shown, or remove it.","code":"automation_rule.restricted_marker_unknown","requestId":"01a1bd73-88d4-76cc-bd45-27645718dfe5","errors":[{"pointer":"/content/conditions/2/value","code":"automation_rule.restricted_marker_unknown","message":"Restricted-record marker text that does not stand for a value of this version."}]}: expected 422 to be 200 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 200[39m
+[31m+ 422[39m
+
+ ❯ ok apps/api/test/integration/access/automation-restricted-tokens-z13.test.ts:50:62
+     48| const send = (m: string, u: string, o?: Parameters<typeof call>[3]) =>…
+     49| const ok = (res: Res<Body>, status = 200) => {
+     50|   expect(res.status, JSON.stringify(res.body).slice(0, 600)).toBe(stat…
+       |                                                              ^
+     51|   return res.body as Body;
+     52| };
+ ❯ apps/api/test/integration/access/automation-restricted-tokens-z13.test.ts:345:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/8]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/automation-restricted-tokens-z13.test.ts > T-DG6-BE-Z13: restricted condition tokens (D-226) > positive: after an explicit grant the author reads the real values; a token still names its position
+AssertionError: expected [ …(3) ] to deeply equal [ …(2) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[31m+   "01a1bd73-84c2-73dc-afc8-7a8991dc6222",[39m
+[31m+   "01a1bd73-851f-73ba-921f-0119d669fa3a",[39m
+[2m    "01a1bd73-8504-72fe-9ba3-93c00a590b05",[22m
+[32m-   "01a1bd73-84c2-73dc-afc8-7a8991dc6222",[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/access/automation-restricted-tokens-z13.test.ts:374:45
+    372|     }
+    373|     const one = ok(await send("GET", V(rules.get("listReorder")!), { s…
+    374|     expect(one.content.conditions[0].value).toEqual([id.S2, id.S1]);
+       |                                             ^
+    375|     expect(one.includesRestrictedRecords).toBeUndefined();
+    376|     const earlier = ok(await send("GET", V(rules.get("removeEarlier")!…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/8]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reference-pending-z12b.test.ts > T-DG6-BE-Z12B: automation_rule_version.conditions (D-222, D-226) > the author, not admitted, sees a token in place of each hidden literal, the label in the summary, marked
+AssertionError: expected [ { op: 'eq', …(2) }, …(2) ] to deeply equal [ { field: 'benefitId', …(2) }, …(2) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[33m@@ -7,11 +7,11 @@[39m
+[2m    {[22m
+[2m      "field": "benefitId",[22m
+[2m      "op": "in",[22m
+[2m      "value": [[22m
+[2m        "01a1bd73-91e5-7061-9083-6aadb0a534b0",[22m
+[32m-       "[restricted:3]",[39m
+[31m+       "[restricted:2]",[39m
+[2m      ],[22m
+[2m    },[22m
+[2m    {[22m
+[2m      "field": "severity",[22m
+[2m      "op": "eq",[22m
+
+ ❯ apps/api/test/integration/access/sensitive-reference-pending-z12b.test.ts:269:36
+    267|   it("the author, not admitted, sees a token in place of each hidden l…
+    268|     const one = ok(await send("GET", `${V()}/1`, { session: admin.sess…
+    269|     expect(one.content.conditions).toEqual([
+       |                                    ^
+    270|       // T-DG6-BE-Z13, T-DG6-BE-Z13C (D-226, D-228 (1)): opaque per-ve…
+    271|       { field: "benefitId", op: "eq", value: "[restricted:1]" },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/8]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  7 failed | 11 passed (18)
+   Start at  23:16:55
+   Duration  15.74s (transform 4.30s, setup 0ms, collect 9.54s, tests 2.96s, environment 0ms, prepare 54ms)
+
+exit=1

@@ -2,7 +2,8 @@
 //   /transformations/{id}/evidence                      list, create (evidence.create)
 //   /transformations/{id}/evidence/{evidenceId}         get, update (evidence.create, own rows only), archive (own rows,
 //                                                       or evidence.review)
-//   .../evidence/{evidenceId}/content                   download (transformation.read) / upload a revision (own rows)
+//   .../evidence/{evidenceId}/content                   download (transformation.read and ADR-0051 §4, access.ts) /
+//                                                       upload a revision (own rows)
 //   .../evidence/{evidenceId}/review                    verify or reject (evidence.review; never the creator, the
 //                                                       content author or the uploader of the current revision)
 //   /transformations/{id}/evidence-links                list, create (evidence.create + edit rights on the record)
@@ -15,7 +16,7 @@
 // Separation of duties (F-DG2-140, REQ-S13-012): nobody verifies content they supplied. The content author is kept in
 // evidence.content_authored_by by the 0019 trigger, which also refuses such a review (the last line of defence).
 import { diffFields, sql, type Db, type EvidenceRow, type Tx } from "@mth/db";
-import type { Permission } from "@mth/shared";
+import { PROBLEM_TYPES, type Permission } from "@mth/shared";
 import {
   evidenceCreate,
   evidenceLinkCreate,
@@ -33,8 +34,11 @@ import { z } from "zod";
 import {
   denialOf,
   principalOf,
+  readScopeFor,
   requireRecordWrite,
   requireTransformationRead,
+  restrictedRecordRefs,
+  reachKey,
   type ResolvedTarget,
   type WriteRule,
 } from "../access/index.ts";
@@ -72,13 +76,30 @@ import {
   type LooseRow,
   type RegisterSpec,
 } from "../transformations/index.ts";
+import {
+  evidenceParentForbidden,
+  evidenceParentsAdmittedSql,
+  evidenceReadDecision,
+  requireEvidenceRead,
+} from "./access.ts"; // P6 BE-C (ADR-0051 §4)
+import {
+  ContentInspector,
+  decideUpload,
+  effectiveUploadPolicy,
+  inspectedBody,
+  mediaTypeOf,
+  tooLarge,
+} from "./content-policy.ts"; // P6 BE-D (ADR-0052 §1)
+import { registerEvidencePreviewRoutes } from "./preview.ts"; // P6 BE-D (ADR-0052 §2)
 import { registerEvidenceRegisterRoutes } from "./register.ts";
 import { toEvidence, toEvidenceLink } from "./repository.ts";
 import {
-  EVIDENCE_MAX_BYTES,
   EvidenceStoreUnavailable,
   EvidenceTooLarge,
   evidenceStoreFor,
+  finalisesLocally,
+  settleUpload,
+  storageDriverOf,
   STALE_TEMPORARY_AGE_MS,
   type EvidenceStore,
 } from "./store.ts";
@@ -227,6 +248,8 @@ export const EVIDENCE_MODULE_ROUTES = [
   // T-DG5-BE-O (ADR-0045 §8; REQ-S13-010): the evidence register and the versions list (register.ts).
   `GET ${T}/evidence-register`,
   `GET ${ITEM}/versions`,
+  // T-DG6-BE-D (ADR-0052 §2; REQ-S13-011): the safe inline preview (preview.ts).
+  `GET ${ITEM}/preview`,
 ] as const;
 
 export const EVIDENCE_MODULE: ModuleRegistration = Object.freeze({
@@ -266,14 +289,8 @@ export function decodeFileName(raw: string | undefined): string | undefined {
 }
 
 function storeProblem(err: unknown): HttpProblem | null {
-  if (err instanceof EvidenceTooLarge)
-    return new HttpProblem({
-      status: 413,
-      type: "urn:mth:problem:validation",
-      code: "evidence.too_large",
-      title: "Content too large",
-      detail: `Evidence content is limited to ${err.maxBytes} bytes per revision.`,
-    });
+  // P6 (T-DG6-BE-D; ADR-0052 §1; D-198): the DG2 code and text, `maxBytes` now the policy's limit, sent as params.
+  if (err instanceof EvidenceTooLarge) return tooLarge(err.maxBytes);
   if (err instanceof EvidenceStoreUnavailable) return problems.unavailable();
   return null;
 }
@@ -418,18 +435,202 @@ export function registerEvidenceModule(
     void (app.hasDecorator("inFlight") ? app.inFlight.track(sweep) : sweep);
   });
 
-  registerRegister(app, db, evidenceRegister);
+  // P6 (T-DG6-BE-B2; ADR-0051 §1, §2): the metadata list and GET are registered below with the sensitivity clause; the
+  // register kit keeps create and update. P6 (T-DG6-BE-F2; ADR-0052 §9.1): archive is registered below with the
+  // finalized-evidence rule, which needs the write transaction (the kit's `archive.refuse` is synchronous).
+  registerRegister(app, db, { ...evidenceRegister, ops: { list: false, get: false, archive: false } });
+  registerEvidenceMetadataReads(app, db);
+  registerEvidenceArchiveRoute(app, db);
   registerContentRoutes(app, db, store);
   registerReviewRoute(app, db);
   registerLinkRoutes(app, db);
   registerEvidenceRegisterRoutes(app, db); // T-DG5-BE-O (ADR-0045 §8): the evidence register and versions
+  registerEvidencePreviewRoutes(app, db, store); // P6 BE-D (ADR-0052 §2): the safe inline preview
   return EVIDENCE_MODULE;
+}
+
+// ------------------------------------------------------------------------------------------------ finalized evidence (P6)
+
+/**
+ * REQ-S16-023 "protect finalized records and evidence from destructive deletion" (ADR-0052 §9.1; D-199, T-DG6-BE-F2):
+ * evidence that supports an approved gate decision is finalized. 409 `evidence.finalized` refuses archiving the item
+ * and removing the link that the approved submission's evidence snapshot cites. Nothing is written.
+ */
+export const evidenceFinalized = () =>
+  new HttpProblem({
+    status: 409,
+    type: PROBLEM_TYPES.invalidTransition,
+    code: "evidence.finalized",
+    title: "Finalized evidence",
+    detail: "This evidence supports an approved gate decision and cannot be archived or unlinked.",
+  });
+
+/**
+ * True when the evidence snapshot of a gate submission of this transformation that holds an `approved` gate decision
+ * cites the item (`evidence[].evidenceId`). With `record` (`<recordType>:<recordId>`, a link's target), only that
+ * citation counts, so the item's other links stay removable.
+ *
+ * The citing submissions are read FOR SHARE first. A concurrent decision on one of them (gate_decision_guard locks its
+ * submission FOR UPDATE) waits for this transaction, or this read waits for that decision's commit. The decision is
+ * then read in its own statement, which sees that commit (READ COMMITTED), so an archive or unlink never misses an
+ * approval committed before it. (An archive that commits while the submission is still pending is allowed, as before:
+ * the rule protects evidence of an approved decision; the decide path does not re-check evidence status.) The gate
+ * paths never lock evidence rows, so the order evidence, then submission, cannot deadlock with them.
+ */
+export async function supportsApprovedGateDecision(
+  tx: Tx,
+  transformationId: string,
+  cited: { readonly evidenceId: string; readonly record?: string },
+): Promise<boolean> {
+  const containment = JSON.stringify({ evidence: [cited] });
+  const citing = await tx
+    .selectFrom("gate_submission")
+    .select("id")
+    .where("transformation_id", "=", transformationId)
+    .where(sql<boolean>`snapshot @> ${containment}::jsonb`)
+    .forShare()
+    .execute();
+  if (citing.length === 0) return false;
+  const approved = await tx
+    .selectFrom("gate_decision")
+    .select("id")
+    .where(
+      "gate_submission_id",
+      "in",
+      citing.map((s) => s.id),
+    )
+    .where("outcome", "=", "approved")
+    .executeTakeFirst();
+  return approved !== undefined;
+}
+
+/**
+ * archiveEvidence: the register kit's archive (same access, order of checks, write, audit event and body), plus the
+ * finalized rule after the version and archived checks: 404 -> 403 -> 400 (reason) -> 428/409 (If-Match) -> 422
+ * (archived) -> 409 `evidence.finalized`.
+ */
+function registerEvidenceArchiveRoute(app: FastifyInstance, db: Db): void {
+  app.post(`${ITEM}/archive`, { config: { access: { permission: "evidence.create" } } }, async (request, reply) => {
+    const { transformationId, evidenceId } = parse(itemParams, request.params, "params");
+    const row = await db.transaction().execute(async (tx) => {
+      await requireTransformationRead(tx, principalOf(request), transformationId);
+      const ctx = await openWrite(
+        tx,
+        request,
+        transformationId,
+        ARCHIVE,
+        await ownershipOf(tx, transformationId, evidenceId),
+      );
+      const { reason } = parseBody(reasonRequest, request.body);
+      const current = await lockEvidence(tx, request, transformationId, evidenceId);
+      if (await supportsApprovedGateDecision(tx, transformationId, { evidenceId })) throw evidenceFinalized();
+      const updated = await tx
+        .updateTable("evidence")
+        .set({
+          status: "archived",
+          archived_at: sql<Date>`now()`,
+          archived_by: ctx.userId,
+          archive_reason: reason,
+          ...bumpStamps(ctx.userId),
+        })
+        .where("id", "=", current.id)
+        .where("version", "=", current.version)
+        .returningAll()
+        .executeTakeFirstOrThrow();
+      await record(tx, ctx.audit, {
+        action: "evidence.archive",
+        recordType: "evidence",
+        recordId: current.id,
+        organizationId: ctx.organizationId,
+        transformationId,
+        priorVersion: current.version,
+        newVersion: updated.version,
+        reason,
+        changes: { status: { from: current.status ?? null, to: "archived" } },
+      });
+      return updated;
+    });
+    return sendVersioned(reply, 200, toEvidence(row));
+  });
+}
+
+// ------------------------------------------------------------------------------------------------ metadata reads (P6)
+
+const metadataListQuery = z.strictObject({
+  includeArchived: z.stringbool().default(false),
+  cursor: cursorSchema,
+  limit: limitSchema,
+});
+
+/**
+ * GET /transformations/{id}/evidence and GET .../evidence/{evidenceId} (T-DG6-BE-B2; ADR-0051 §1, §2; REQ-S10-002):
+ * the register kit's list and GET, unchanged for every non-sensitive item (same query, cursor, order and body), plus
+ * the sensitivity clause: the list drops a sensitive item the caller is not admitted to (`ReadScope.predicate`), and
+ * its GET is 404 like any unreadable record (`requireSensitiveRead`). The named parties of evidence are its owner and
+ * its creator. Evidence of a sensitive parent record (ADR-0051 §4, T-DG6-BE-C): omitted from the list, 403
+ * evidence.parent_forbidden on the GET (evidence/access.ts).
+ */
+function registerEvidenceMetadataReads(app: FastifyInstance, db: Db): void {
+  const read = { access: { permission: "transformation.read" as const } };
+
+  app.get(`${T}/evidence`, { config: read }, async (request) => {
+    const { transformationId } = parse(tParams, request.params, "params");
+    const query = parseQuery(metadataListQuery, request.query);
+    const principal = principalOf(request);
+    await requireTransformationRead(db, principal, transformationId);
+    const scope = await readScopeFor(db, principal, "transformation.read");
+    const hash = filterHash({ includeArchived: query.includeArchived, parent: null });
+    const after = decodeCursor(query.cursor, hash, 1);
+    let q = db
+      .selectFrom("evidence")
+      .selectAll()
+      .where("transformation_id", "=", transformationId)
+      .where(
+        scope.predicate({
+          recordType: "evidence",
+          recordId: sql.ref("evidence.id"),
+          organizationId: sql.ref("evidence.organization_id"),
+          transformationId: sql.ref("evidence.transformation_id"),
+          partyUserIds: [sql.ref("evidence.owner_user_id"), sql.ref("evidence.created_by")],
+        }),
+      )
+      .where(await evidenceParentsAdmittedSql(db, principal, sql.ref("evidence.id"))); // P6 BE-C: ADR-0051 §4 rule 3
+    if (!query.includeArchived) q = q.where("status", "<>", "archived");
+    if (after) q = q.where("id", ">", String(after[0]));
+    const rows = await q
+      .orderBy("id")
+      .limit(query.limit + 1)
+      .execute();
+    const page = paginate(rows, query.limit, (r) => [r.id], hash);
+    return { items: page.items.map((r) => toEvidence(r)), nextCursor: page.nextCursor };
+  });
+
+  app.get(ITEM, { config: read }, async (request, reply) => {
+    const { transformationId, evidenceId } = parse(itemParams, request.params, "params");
+    const principal = principalOf(request);
+    // P6 (T-DG6-BE-C; ADR-0051 §4): the one evidence decision. A sensitive item itself stays 404 (§2, BE-B2); a
+    // sensitive parent the caller is not admitted to is 403 evidence.parent_forbidden, as on the download.
+    const { target, row, refusal } = await evidenceReadDecision(db, principal, transformationId, evidenceId);
+    if (refusal === "item")
+      throw problems
+        .notFound()
+        .withDenial({ ...denialOf("transformation.read", target), recordType: "evidence", recordId: row.id });
+    if (refusal === "parent")
+      throw evidenceParentForbidden().withDenial({
+        ...denialOf("transformation.read", target),
+        recordType: "evidence",
+        recordId: row.id,
+      });
+    return sendVersioned(reply, 200, toEvidence(row));
+  });
 }
 
 function registerContentRoutes(app: FastifyInstance, db: Db, store: EvidenceStore): void {
   app.get(`${ITEM}/content`, { config: { access: { permission: "transformation.read" } } }, async (request, reply) => {
     const { transformationId, evidenceId } = parse(itemParams, request.params, "params");
-    await requireTransformationRead(db, principalOf(request), transformationId);
+    // P6 (T-DG6-BE-C; ADR-0051 §4): the item's and its parents' authorization; 404 out of scope, 403
+    // evidence.parent_forbidden for an in-scope caller not admitted to a sensitive item or sensitive parent.
+    await requireEvidenceRead(db, principalOf(request), transformationId, evidenceId);
     const content = await db
       .selectFrom("evidence as e")
       .innerJoin("evidence_content as c", (j) =>
@@ -470,10 +671,14 @@ function registerContentRoutes(app: FastifyInstance, db: Db, store: EvidenceStor
   //      and the audit event; the object is finalised (atomic rename, local I/O only) as the last step before COMMIT,
   //      as before BE17, so a committed content row never points at a missing object.
   //   Any failure after phase 2 started discards the temporary and the final object.
-  const uploadConfig = { access: { permission: "evidence.create" }, consumes: [OCTET_STREAM_MEDIA_TYPE] } as const;
+  const uploadConfig = {
+    access: { permission: "evidence.create" },
+    consumes: [OCTET_STREAM_MEDIA_TYPE],
+    rateLimitClass: "upload",
+  } as const; // P6 BE-E: ADR-0052 §4 upload class
   app.post(`${ITEM}/content`, { config: uploadConfig }, async (request, reply) => {
     const { transformationId, evidenceId } = parse(itemParams, request.params, "params");
-    const { organizationId, fileName, body } = await db.transaction().execute(async (tx) => {
+    const { organizationId, fileName, body, maxBytes } = await db.transaction().execute(async (tx) => {
       // Replacing the stored content is an edit: only the item's creator or named owner (F-DG2-140).
       await requireTransformationRead(tx, principalOf(request), transformationId);
       const seen = await tx
@@ -509,7 +714,9 @@ function registerContentRoutes(app: FastifyInstance, db: Db, store: EvidenceStor
         throw problems.badRequest("validation.body_required", "Send the file bytes as application/octet-stream.");
       // F-DG2-320 (defence in depth): only the raw request byte stream is ever stored, never a parsed value.
       if (!isRawByteBody(body)) throw undeclaredMediaTypeProblem(uploadConfig.consumes);
-      return { organizationId: ctx.organizationId, fileName, body };
+      // P6 (T-DG6-BE-D; ADR-0052 §1): the organization's effective policy sets the size limit enforced while streaming.
+      const { maxBytes } = await effectiveUploadPolicy(tx, ctx.organizationId);
+      return { organizationId: ctx.organizationId, fileName, body, maxBytes };
     });
 
     const contentId = uuidv7();
@@ -517,7 +724,16 @@ function registerContentRoutes(app: FastifyInstance, db: Db, store: EvidenceStor
     try {
       // Phase 2: no connection, no transaction. An incomplete body (client abort, requestTimeout) is mapped centrally
       // (platform/hooks.ts isIncompleteBodyError): 400 validation.malformed_request, below error level.
-      const stored = await store.receive(key, body, EVIDENCE_MAX_BYTES);
+      // P6 (T-DG6-BE-D; ADR-0052 §1): the inspector sees exactly the bytes the store hashes and size-checks; the type is
+      // decided only after the store accepted the size (detection after the size check), never from Content-Type.
+      const inspector = new ContentInspector();
+      const stored = await store.receive(key, inspectedBody(body, inspector), maxBytes);
+      const detection = inspector.finish();
+      // P6 (T-DG6-BE-H2; §2 rule 4): an object-store finalise (copy + delete) is remote I/O, so it runs here, before
+      // the transaction; the filesystem rename stays the last local step inside it (T-DG2-BE17). Either way a committed
+      // content row never points at a missing object, and a failure below discards both objects.
+      const localFinalise = finalisesLocally(store, key);
+      if (!localFinalise) await store.finalise(key);
       const row = await db.transaction().execute(async (tx) => {
         const ctx = await openWrite(
           tx,
@@ -530,6 +746,10 @@ function registerContentRoutes(app: FastifyInstance, db: Db, store: EvidenceStor
         const current = await checkEvidenceVersion(tx, request, transformationId, evidenceId, true);
         if (current.kind !== "file")
           throw ruleProblem("evidence.not_a_file", "Only file evidence has stored content.", "");
+        // P6 (T-DG6-BE-D; ADR-0052 §1): the allow-list decision against the policy as it stands at commit time (a
+        // policy narrowed while the body streamed applies); 413/422 here store nothing (the temporary is discarded).
+        const policy = await effectiveUploadPolicy(tx, ctx.organizationId);
+        const detectedType = decideUpload(fileName, detection, stored.size, policy);
         const last = await tx
           .selectFrom("evidence_content")
           .select((eb) => eb.fn.max<number>("revision").as("n"))
@@ -547,9 +767,12 @@ function registerContentRoutes(app: FastifyInstance, db: Db, store: EvidenceStor
             storage_key: stored.key,
             sha256: stored.sha256,
             size_bytes: String(stored.size),
-            content_type: "application/octet-stream",
+            content_type: mediaTypeOf(detectedType), // P6: the canonical media type (0099 detected_media_type)
+            detected_type: detectedType,
             file_name: fileName,
             uploaded_by: ctx.userId,
+            // P6 (T-DG6-BE-H2; ADR-0054 §2): the driver that wrote the bytes; every read opens the store it names.
+            storage_driver: storageDriverOf(store, key),
           })
           .execute();
         const updated = await tx
@@ -571,11 +794,13 @@ function registerContentRoutes(app: FastifyInstance, db: Db, store: EvidenceStor
             ...(diffFields(current, updated, ["current_content_id", "file_name", "review_status"]) ?? {}),
             contentRevision: { from: revision - 1 || null, to: revision },
             contentSize: { from: null, to: stored.size },
+            contentType: { from: null, to: detectedType },
           },
         });
-        await store.finalise(key);
+        if (localFinalise) await store.finalise(key);
         return updated;
       });
+      settleUpload(store, key);
       return sendVersioned(reply, 200, toEvidence(row));
     } catch (err) {
       await store.discardUncommitted(key).catch(() => undefined);
@@ -670,7 +895,22 @@ function registerLinkRoutes(app: FastifyInstance, db: Db): void {
       .limit(query.limit + 1)
       .execute();
     const page = paginate(rows, query.limit, (r) => [r.id], hash);
-    return { items: page.items.map(toEvidenceLink), nextCursor: page.nextCursor };
+    // T-DG6-BE-Z10 (F-DG6-420; D-218; ADR-0051 §2): a link whose evidence item or linked record is restricted for the
+    // reader is not listed (lists omit the row; no count), so neither id reaches a reader who gets 404 on it.
+    const hidden = await restrictedRecordRefs(
+      db,
+      principalOf(request),
+      page.items.flatMap((r) => [
+        { recordType: "evidence", recordId: r.evidence_id },
+        { recordType: r.record_type, recordId: r.record_id },
+      ]),
+    );
+    const items = page.items.filter(
+      (r) =>
+        !hidden.has(reachKey({ recordType: "evidence", recordId: r.evidence_id })) &&
+        !hidden.has(reachKey({ recordType: r.record_type, recordId: r.record_id })),
+    );
+    return { items: items.map(toEvidenceLink), nextCursor: page.nextCursor };
   });
 
   app.post(LINKS, { config: { access: { permission: "evidence.create" } } }, async (request, reply) => {
@@ -768,6 +1008,14 @@ function registerLinkRoutes(app: FastifyInstance, db: Db): void {
         if (current.version !== expected) throw problems.versionConflict(current.version);
         if (current.status === "removed")
           throw problems.businessRule("evidence_link.already_removed", "The link is already removed.");
+        // P6 (T-DG6-BE-F2; ADR-0052 §9.1): the link an approved gate submission's evidence snapshot cites is final.
+        if (
+          await supportsApprovedGateDecision(tx, transformationId, {
+            evidenceId: current.evidence_id,
+            record: `${current.record_type}:${current.record_id}`,
+          })
+        )
+          throw evidenceFinalized();
         const updated = await tx
           .updateTable("evidence_link")
           .set({

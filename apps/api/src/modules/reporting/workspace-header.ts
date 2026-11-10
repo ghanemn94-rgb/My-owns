@@ -39,7 +39,7 @@ import {
 } from "./dashboards/engine.ts";
 import { resolveFilters } from "./dashboards/filters.ts";
 import { readableTransformation } from "./dashboards/scope.ts";
-import { readableTransformationIds, workItemOf } from "./my-work.ts";
+import { readableTransformationIds, presentWorkItems } from "./my-work.ts";
 import { workflowsReadPort } from "./ports.ts";
 
 export const WORKSPACE_HEADER = "/api/v1/transformations/:transformationId/summary";
@@ -169,7 +169,8 @@ export function registerWorkspaceHeaderRoutes(app: FastifyInstance, { db }: Modu
             overdueCount: results.decisions.overdueCount,
           },
           nextActions: {
-            items: own.slice(0, HEADER_LIST_MAX).map((w) => workItemOf(w, filters.businessDate)),
+            // T-DG6-BE-Z12B (D-222): the same redaction as My Work for an item about a restricted record.
+            items: await presentWorkItems(tx, principal, own.slice(0, HEADER_LIST_MAX), filters.businessDate),
             missingMandatoryCount: gate === null ? null : gate.missingMandatoryCount,
           },
         };

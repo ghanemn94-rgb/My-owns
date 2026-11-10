@@ -1,0 +1,36 @@
+# HEAD 60535e99ed0d7fb6fbb67b9b7a8ed31aa47b2cdb + QA-EB files; npx vitest run --configLoader runner --project unit-node tests/qa/unit/dlv038-s20-029-load-report.test.ts
+
+ RUN  v3.2.7 /home/user/wt/dg6-qa-e
+
+ ❯ |unit-node| tests/qa/unit/dlv038-s20-029-load-report.test.ts (6 tests | 1 failed) 8333ms
+   × REQ-S20-029: the DG6 load report's p95 figures equal an independent recomputation from the raw samples > three repetitions, each with steady-state samples of the five classes 8328ms
+     → Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+   ✓ REQ-S20-029: the DG6 load report's p95 figures equal an independent recomputation from the raw samples > every stated p95 and count (6 groups x 3 repetitions) equals the recomputation to the microsecond 1ms
+   ✓ REQ-S20-029: the DG6 load report's p95 figures equal an independent recomputation from the raw samples > each class is judged against its target (2 s, dashboards 4 s); a class over target is a listed miss, and 'no miss' is claimed only when none is over 0ms
+   ✓ REQ-S20-029: the report states the dataset, the infrastructure and the workload > dataset: 50 transformations, 1,000 initiatives, 10,000 KPI-period actuals, 100,000 audit events (marker and counts at capture) 1ms
+   ✓ REQ-S20-029: the report states the dataset, the infrastructure and the workload > infrastructure: CPUs, memory, Node, PostgreSQL with its non-default settings, and the not-production caveat 1ms
+   ✓ REQ-S20-029: the report states the dataset, the infrastructure and the workload > workload: 100 concurrent users, warm-up excluded, a 600 s steady state, three repetitions with the same seed 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-node| tests/qa/unit/dlv038-s20-029-load-report.test.ts > REQ-S20-029: the DG6 load report's p95 figures equal an independent recomputation from the raw samples > three repetitions, each with steady-state samples of the five classes
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ tests/qa/unit/dlv038-s20-029-load-report.test.ts:70:3
+     68|   const counts = new Map<string, number[]>();
+     69| 
+     70|   it("three repetitions, each with steady-state samples of the five cl…
+       |   ^
+     71|     expect(summary.repetitions.map((r: { name: string }) => r.name)).t…
+     72|     for (const rep of REPS) {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 passed (6)
+   Start at  04:25:53
+   Duration  9.34s (transform 110ms, setup 0ms, collect 154ms, tests 8.33s, environment 0ms, prepare 279ms)
+
+EXIT=1

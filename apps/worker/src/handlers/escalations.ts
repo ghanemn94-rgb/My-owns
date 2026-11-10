@@ -531,6 +531,16 @@ export interface BlockerEvaluation {
   readonly decisionId: string | null;
 }
 
+/**
+ * The title of the ask of a corrective case that belongs to a benefit (T-DG6-BE-Z5, F-DG6-280; ADR-0051 §2). The ask
+ * and its notification are read by every transformation reader, while the case (a child of the benefit) is not: the
+ * ask names the case by its own code only (language-neutral, like every blocker name: user data, not a system
+ * sentence), never by its title (which the corrective consumer may have taken from the benefit's title) nor by the
+ * benefit's code. Applied whether or not the benefit is sensitive now, because a benefit can be marked sensitive after
+ * its ask exists and the ask's title is never rewritten.
+ */
+export const benefitCaseAskTitle = (caseCode: string): string => caseCode;
+
 /** The blocker's name, the title of its ask (ADR-0032 §8.3 step 3). */
 async function blockerName(tx: Tx, type: BlockerRecordType, id: string): Promise<string | null> {
   switch (type) {
@@ -544,10 +554,15 @@ async function blockerName(tx: Tx, type: BlockerRecordType, id: string): Promise
         (await tx.selectFrom("dependency").select("description").where("id", "=", id).executeTakeFirst())
           ?.description ?? null
       );
-    case "corrective_case":
-      return (
-        (await tx.selectFrom("corrective_case").select("title").where("id", "=", id).executeTakeFirst())?.title ?? null
-      );
+    case "corrective_case": {
+      const c = await tx
+        .selectFrom("corrective_case")
+        .select(["code", "title", "benefit_id"])
+        .where("id", "=", id)
+        .executeTakeFirst();
+      if (c === undefined) return null;
+      return c.benefit_id === null ? c.title : benefitCaseAskTitle(c.code);
+    }
     case "initiative":
       return (await tx.selectFrom("initiative").select("name").where("id", "=", id).executeTakeFirst())?.name ?? null;
     case "milestone":

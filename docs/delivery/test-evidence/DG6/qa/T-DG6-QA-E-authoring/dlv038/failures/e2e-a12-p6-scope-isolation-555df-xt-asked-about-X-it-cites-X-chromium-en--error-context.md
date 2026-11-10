@@ -1,0 +1,389 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - link "Skip to main content" [ref=e4] [cursor=pointer]:
+    - /url: "#main"
+  - banner [ref=e5]:
+    - 'link "Mobily Transformation Hub Provisional Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values." [ref=e6] [cursor=pointer]':
+      - /url: /
+      - generic [ref=e7]: Mobily Transformation Hub
+      - 'generic "Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values." [ref=e8]': Provisional
+      - generic [ref=e9]: "Provisional wordmark: no official logo has been supplied. Colours are provisional design tokens, not verified Mobily brand values."
+    - search "Search records" [ref=e10]:
+      - generic [ref=e11]: Search for
+      - textbox "Search for" [ref=e12]:
+        - /placeholder: Search records
+      - button "Search records" [ref=e13] [cursor=pointer]: Search
+    - button "Switch language to العربية" [ref=e15] [cursor=pointer]: العربية
+    - generic [ref=e16]:
+      - generic [ref=e17]: Synthetic User Without Roles
+      - generic [ref=e18]: Synthetic Dev Organization
+    - button "Sign out" [ref=e19] [cursor=pointer]:
+      - img [ref=e20]
+      - generic [ref=e22]: Sign out
+  - generic [ref=e24]:
+    - navigation "Primary navigation" [ref=e25]:
+      - list [ref=e26]:
+        - listitem [ref=e27]:
+          - link "My Work" [ref=e28] [cursor=pointer]:
+            - /url: /my-work
+            - generic [ref=e29]: My Work
+          - list "My Work" [ref=e30]:
+            - listitem [ref=e31]:
+              - link "Tasks and inbox" [ref=e32] [cursor=pointer]:
+                - /url: /my-work
+            - listitem [ref=e33]:
+              - link "Approvals" [ref=e34] [cursor=pointer]:
+                - /url: /my-work/approvals
+            - listitem [ref=e35]:
+              - link "Delegations" [ref=e36] [cursor=pointer]:
+                - /url: /my-work/delegations
+            - listitem [ref=e37]:
+              - link "Notification preferences" [ref=e38] [cursor=pointer]:
+                - /url: /my-work/notification-preferences
+        - listitem [ref=e39]:
+          - link "Executive Overview" [ref=e40] [cursor=pointer]:
+            - /url: /executive-overview
+            - generic [ref=e41]: Executive Overview
+          - list "Executive Overview" [ref=e42]:
+            - listitem [ref=e43]:
+              - link "Dashboards" [ref=e44] [cursor=pointer]:
+                - /url: /dashboards
+            - listitem [ref=e45]:
+              - link "RAG policy" [ref=e46] [cursor=pointer]:
+                - /url: /dashboards/rag-policy
+        - listitem [ref=e47]:
+          - link "Transformations" [ref=e48] [cursor=pointer]:
+            - /url: /transformations
+            - generic [ref=e49]: Transformations
+        - listitem [ref=e50]:
+          - link "Playbook and Procedures" [ref=e51] [cursor=pointer]:
+            - /url: /playbook
+            - generic [ref=e52]: Playbook and Procedures
+          - list "Playbook and Procedures" [ref=e53]:
+            - listitem [ref=e54]:
+              - link "Phase steps and review queue" [ref=e55] [cursor=pointer]:
+                - /url: /playbook/phases
+            - listitem [ref=e56]:
+              - link "Playbook reader" [ref=e57] [cursor=pointer]:
+                - /url: /playbook/reader
+            - listitem [ref=e58]:
+              - link "My procedures" [ref=e59] [cursor=pointer]:
+                - /url: /playbook/procedures
+            - listitem [ref=e60]:
+              - link "90-day launch plan" [ref=e61] [cursor=pointer]:
+                - /url: /playbook/launch-plan
+            - listitem [ref=e62]:
+              - link "Health check" [ref=e63] [cursor=pointer]:
+                - /url: /playbook/health-check
+        - listitem [ref=e64]:
+          - link "Strategy and KPIs" [ref=e65] [cursor=pointer]:
+            - /url: /strategy-kpis
+            - generic [ref=e66]: Strategy and KPIs
+          - list "Strategy and KPIs" [ref=e67]:
+            - listitem [ref=e68]:
+              - link "KPIs" [ref=e69] [cursor=pointer]:
+                - /url: /strategy-kpis/kpis
+        - listitem [ref=e70]:
+          - link "Target Operating Model" [ref=e71] [cursor=pointer]:
+            - /url: /target-operating-model
+            - generic [ref=e72]: Target Operating Model
+        - listitem [ref=e73]:
+          - link "Initiatives and Roadmaps" [ref=e74] [cursor=pointer]:
+            - /url: /initiatives-roadmaps
+            - generic [ref=e75]: Initiatives and Roadmaps
+          - list "Initiatives and Roadmaps" [ref=e76]:
+            - listitem [ref=e77]:
+              - link "Portfolios" [ref=e78] [cursor=pointer]:
+                - /url: /portfolios
+            - listitem [ref=e79]:
+              - link "Owner updates" [ref=e80] [cursor=pointer]:
+                - /url: /initiatives-roadmaps/updates
+        - listitem [ref=e81]:
+          - link "Governance" [ref=e82] [cursor=pointer]:
+            - /url: /governance
+            - generic [ref=e83]: Governance
+          - list "Governance" [ref=e84]:
+            - listitem [ref=e85]:
+              - link "Groups" [ref=e86] [cursor=pointer]:
+                - /url: /governance/groups
+            - listitem [ref=e87]:
+              - link "Forums" [ref=e88] [cursor=pointer]:
+                - /url: /governance/forums
+            - listitem [ref=e89]:
+              - link "Meetings" [ref=e90] [cursor=pointer]:
+                - /url: /governance/meetings
+            - listitem [ref=e91]:
+              - link "Executive decisions (T16)" [ref=e92] [cursor=pointer]:
+                - /url: /governance/executive-decisions
+            - listitem [ref=e93]:
+              - link "Change requests" [ref=e94] [cursor=pointer]:
+                - /url: /governance/change-requests
+        - listitem [ref=e95]:
+          - link "Risks and Actions" [ref=e96] [cursor=pointer]:
+            - /url: /risks-actions
+            - generic [ref=e97]: Risks and Actions
+          - list "Risks and Actions" [ref=e98]:
+            - listitem [ref=e99]:
+              - link "RAID (T15)" [ref=e100] [cursor=pointer]:
+                - /url: /risks-actions/raid
+            - listitem [ref=e101]:
+              - link "Action register" [ref=e102] [cursor=pointer]:
+                - /url: /risks-actions/actions
+            - listitem [ref=e103]:
+              - link "Corrective actions" [ref=e104] [cursor=pointer]:
+                - /url: /risks-actions/corrective-actions
+        - listitem [ref=e105]:
+          - link "Benefits and Finance" [ref=e106] [cursor=pointer]:
+            - /url: /benefits-finance
+            - generic [ref=e107]: Benefits and Finance
+          - list "Benefits and Finance" [ref=e108]:
+            - listitem [ref=e109]:
+              - link "Benefits register (T14)" [ref=e110] [cursor=pointer]:
+                - /url: /benefits-finance/benefits
+        - listitem [ref=e111]:
+          - link "Change and Adoption" [ref=e112] [cursor=pointer]:
+            - /url: /change-adoption
+            - generic [ref=e113]: Change and Adoption
+          - list "Change and Adoption" [ref=e114]:
+            - listitem [ref=e115]:
+              - link "Adoption plan (T13)" [ref=e116] [cursor=pointer]:
+                - /url: /change-adoption/adoption
+        - listitem [ref=e117]:
+          - link "Evidence and Reports" [ref=e118] [cursor=pointer]:
+            - /url: /evidence-reports
+            - generic [ref=e119]: Evidence and Reports
+          - list "Evidence and Reports" [ref=e120]:
+            - listitem [ref=e121]:
+              - link "Reports and snapshots" [ref=e122] [cursor=pointer]:
+                - /url: /evidence-reports/reports
+            - listitem [ref=e123]:
+              - link "Exports" [ref=e124] [cursor=pointer]:
+                - /url: /evidence-reports/exports
+            - listitem [ref=e125]:
+              - link "Presentation mode" [ref=e126] [cursor=pointer]:
+                - /url: /evidence-reports/presentation
+            - listitem [ref=e127]:
+              - link "Evidence register" [ref=e128] [cursor=pointer]:
+                - /url: /evidence-reports/evidence-register
+        - listitem [ref=e129]:
+          - link "BAU and Improvement" [ref=e130] [cursor=pointer]:
+            - /url: /bau-improvement
+            - generic [ref=e131]: BAU and Improvement
+          - list "BAU and Improvement" [ref=e132]:
+            - listitem [ref=e133]:
+              - link "Performance areas" [ref=e134] [cursor=pointer]:
+                - /url: /bau-improvement/bau
+            - listitem [ref=e135]:
+              - link "Improvement backlog" [ref=e136] [cursor=pointer]:
+                - /url: /bau-improvement/improvement
+            - listitem [ref=e137]:
+              - link "Lessons" [ref=e138] [cursor=pointer]:
+                - /url: /bau-improvement/lessons
+            - listitem [ref=e139]:
+              - link "Lesson search" [ref=e140] [cursor=pointer]:
+                - /url: /lessons
+      - paragraph [ref=e141]:
+        - link "About this product" [ref=e142] [cursor=pointer]:
+          - /url: /about
+    - main [ref=e143]:
+      - generic [ref=e144]:
+        - generic [ref=e147]:
+          - heading "Welcome, Synthetic User Without Roles" [level=1] [ref=e148]
+          - paragraph [ref=e149]: Your actions, drafts, reviews and deadlines in one place.
+        - navigation "My Work pages" [ref=e150]:
+          - link "Approvals" [ref=e151] [cursor=pointer]:
+            - /url: /my-work/approvals
+            - img [ref=e152]
+            - text: Approvals
+          - link "Delegations" [ref=e154] [cursor=pointer]:
+            - /url: /my-work/delegations
+            - img [ref=e155]
+            - text: Delegations
+          - link "Your drafts" [ref=e157] [cursor=pointer]:
+            - /url: /my-work/drafts
+            - img [ref=e158]
+            - text: Your drafts
+          - link "Open the transformations register" [ref=e160] [cursor=pointer]:
+            - /url: /transformations
+        - generic [ref=e161]:
+          - region "Key decisions" [ref=e162]:
+            - heading "Key decisions" [level=2] [ref=e163]:
+              - img [ref=e164]
+              - text: Key decisions
+            - paragraph [ref=e166]: Business approvals and decisions waiting for you.
+            - paragraph [ref=e167]: No business approval or decision is waiting for you.
+          - region "Key outcomes" [ref=e168]:
+            - heading "Key outcomes" [level=2] [ref=e169]:
+              - img [ref=e170]
+              - text: Key outcomes
+            - paragraph [ref=e172]: Outcome updates you owe (KPI actuals, benefit monitoring) and records waiting for your review.
+            - paragraph [ref=e173]: No outcome update or review is waiting for you.
+          - region "Next actions" [ref=e174]:
+            - heading "Next actions" [level=2] [ref=e175]:
+              - img [ref=e176]
+              - text: Next actions
+            - paragraph [ref=e178]: Your next deadlines, earliest first, and the actions assigned to you.
+            - paragraph [ref=e179]: No action is assigned to you and no deadline is coming up.
+        - generic [ref=e180]:
+          - region "Upcoming deadlines" [ref=e181]:
+            - heading "Upcoming deadlines" [level=2] [ref=e183]
+            - generic [ref=e184]: Open items due within 10 working days of 31 Oct 2026; overdue ones are flagged.
+            - paragraph [ref=e185]: No upcoming deadline.
+          - navigation "My Work sections" [ref=e186]:
+            - list [ref=e187]:
+              - listitem [ref=e188]:
+                - link "Assigned actions 0" [ref=e189] [cursor=pointer]:
+                  - /url: "#mw-assigned_actions"
+                  - text: Assigned actions
+                  - generic [ref=e190]: "0"
+              - listitem [ref=e191]:
+                - link "Drafts 0" [ref=e192] [cursor=pointer]:
+                  - /url: "#mw-drafts"
+                  - text: Drafts
+                  - generic [ref=e193]: "0"
+              - listitem [ref=e194]:
+                - link "Reviews 0" [ref=e195] [cursor=pointer]:
+                  - /url: "#mw-reviews"
+                  - text: Reviews
+                  - generic [ref=e196]: "0"
+              - listitem [ref=e197]:
+                - link "Approvals 0" [ref=e198] [cursor=pointer]:
+                  - /url: "#mw-approvals"
+                  - text: Approvals
+                  - generic [ref=e199]: "0"
+              - listitem [ref=e200]:
+                - link "Missing updates 0" [ref=e201] [cursor=pointer]:
+                  - /url: "#mw-missing_updates"
+                  - text: Missing updates
+                  - generic [ref=e202]: "0"
+              - listitem [ref=e203]:
+                - link "Other 0" [ref=e204] [cursor=pointer]:
+                  - /url: "#mw-other"
+                  - text: Other
+                  - generic [ref=e205]: "0"
+          - region "Assigned actions" [ref=e206]:
+            - heading "Assigned actions" [level=2] [ref=e208]
+            - generic [ref=e209]: Actions and tasks assigned to you.
+            - paragraph [ref=e210]: "Items: 0 (shown: 0)"
+            - generic [ref=e211]:
+              - generic [ref=e212]:
+                - generic [ref=e213]:
+                  - generic [ref=e214]: Search
+                  - searchbox "Search" [ref=e215]
+                - button "Columns" [ref=e217] [cursor=pointer]:
+                  - img [ref=e218]
+                  - text: Columns
+              - generic [ref=e220]:
+                - img [ref=e221]
+                - paragraph [ref=e224]: Nothing here
+          - region "Drafts" [ref=e225]:
+            - heading "Drafts" [level=2] [ref=e227]
+            - generic [ref=e228]: Records you started and have not submitted.
+            - paragraph [ref=e229]: "Items: 0 (shown: 0)"
+            - generic [ref=e230]:
+              - generic [ref=e231]:
+                - generic [ref=e232]:
+                  - generic [ref=e233]: Search
+                  - searchbox "Search" [ref=e234]
+                - button "Columns" [ref=e236] [cursor=pointer]:
+                  - img [ref=e237]
+                  - text: Columns
+              - generic [ref=e239]:
+                - img [ref=e240]
+                - paragraph [ref=e243]: Nothing here
+          - region "Reviews" [ref=e244]:
+            - heading "Reviews" [level=2] [ref=e246]
+            - generic [ref=e247]: Records waiting for your review.
+            - paragraph [ref=e248]: "Items: 0 (shown: 0)"
+            - generic [ref=e249]:
+              - generic [ref=e250]:
+                - generic [ref=e251]:
+                  - generic [ref=e252]: Search
+                  - searchbox "Search" [ref=e253]
+                - button "Columns" [ref=e255] [cursor=pointer]:
+                  - img [ref=e256]
+                  - text: Columns
+              - generic [ref=e258]:
+                - img [ref=e259]
+                - paragraph [ref=e262]: Nothing here
+          - region "Approvals" [ref=e263]:
+            - heading "Approvals" [level=2] [ref=e265]
+            - generic [ref=e266]: Business approvals and decisions waiting for you.
+            - paragraph [ref=e267]: "Items: 0 (shown: 0)"
+            - generic [ref=e268]:
+              - generic [ref=e269]:
+                - generic [ref=e270]:
+                  - generic [ref=e271]: Search
+                  - searchbox "Search" [ref=e272]
+                - button "Columns" [ref=e274] [cursor=pointer]:
+                  - img [ref=e275]
+                  - text: Columns
+              - generic [ref=e277]:
+                - img [ref=e278]
+                - paragraph [ref=e281]: Nothing here
+          - region "Missing updates" [ref=e282]:
+            - heading "Missing updates" [level=2] [ref=e284]
+            - generic [ref=e285]: "Updates you owe: KPI actuals, benefit monitoring, reviews and control checks."
+            - paragraph [ref=e286]: "Items: 0 (shown: 0)"
+            - generic [ref=e287]:
+              - generic [ref=e288]:
+                - generic [ref=e289]:
+                  - generic [ref=e290]: Search
+                  - searchbox "Search" [ref=e291]
+                - button "Columns" [ref=e293] [cursor=pointer]:
+                  - img [ref=e294]
+                  - text: Columns
+              - generic [ref=e296]:
+                - img [ref=e297]
+                - paragraph [ref=e300]: Nothing here
+          - region "Other" [ref=e301]:
+            - heading "Other" [level=2] [ref=e303]
+            - generic [ref=e304]: Other notices and tasks.
+            - paragraph [ref=e305]: "Items: 0 (shown: 0)"
+            - generic [ref=e306]:
+              - generic [ref=e307]:
+                - generic [ref=e308]:
+                  - generic [ref=e309]: Search
+                  - searchbox "Search" [ref=e310]
+                - button "Columns" [ref=e312] [cursor=pointer]:
+                  - img [ref=e313]
+                  - text: Columns
+              - generic [ref=e315]:
+                - img [ref=e316]
+                - paragraph [ref=e319]: Nothing here
+        - region "Tasks" [ref=e320]:
+          - generic [ref=e321]:
+            - heading "Tasks" [level=2] [ref=e322]
+            - generic [ref=e324]:
+              - generic [ref=e325]: Show
+              - combobox "Show" [ref=e326]:
+                - option "Open" [selected]
+                - option "Done"
+                - option "Cancelled"
+          - generic [ref=e327]: Work assigned to you. Each task links to its record. Approval tasks close by themselves when the approval is decided.
+          - generic [ref=e328]:
+            - generic [ref=e329]:
+              - generic [ref=e330]:
+                - generic [ref=e331]: Search
+                - searchbox "Search" [ref=e332]
+              - button "Columns" [ref=e334] [cursor=pointer]:
+                - img [ref=e335]
+                - text: Columns
+            - generic [ref=e337]:
+              - img [ref=e338]
+              - generic [ref=e340]:
+                - paragraph [ref=e341]: No open tasks
+                - paragraph [ref=e342]: New tasks appear here when an approval, a KPI update or another action is assigned to you.
+        - region "Inbox" [ref=e343]:
+          - generic [ref=e344]:
+            - heading "Inbox" [level=2] [ref=e345]
+            - generic [ref=e347]:
+              - checkbox "Unread only" [ref=e348]
+              - text: Unread only
+          - generic [ref=e349]: Reminders about decisions, outcomes and overdue items. Marking a reminder as read does not change the record.
+          - status [ref=e350]:
+            - strong [ref=e351]: "Unread reminders: 0"
+          - paragraph [ref=e352]: Your inbox is empty.
+```

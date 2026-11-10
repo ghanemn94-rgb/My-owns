@@ -41,11 +41,19 @@ import {
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
-import { principalOf, requireTransformationRead } from "../access/index.ts";
+import {
+  principalOf,
+  reachKey,
+  requireTransformationRead,
+  restrictedRecordRefs,
+  withoutRestricted,
+  type Principal,
+} from "../access/index.ts";
 import { record } from "../audit/index.ts";
 import {
   cursorSchema,
   decodeCursor,
+  HttpProblem,
   filterHash,
   iso,
   isoOrNull,
@@ -151,9 +159,30 @@ export function toScenarioValue(r: BenefitScenarioValueRow, kind: BenefitScenari
   };
 }
 
-export async function presentScenarios(db: DbOrTx, rows: readonly BenefitScenarioRow[]): Promise<BenefitScenario[]> {
+/**
+ * The benefits among `benefitIds` whose values the principal may not see: a sensitive benefit the caller is not admitted
+ * to (ADR-0051 §2; the reader gets 404 on it). One policy decision; one query when nothing is marked sensitive.
+ */
+async function hiddenBenefits(db: DbOrTx, principal: Principal, benefitIds: readonly string[]): Promise<Set<string>> {
+  const refs = [...new Set(benefitIds)].map((id) => ({ recordType: "benefit", recordId: id }));
+  const restricted = await restrictedRecordRefs(db, principal, refs);
+  return new Set(refs.filter((r) => restricted.has(reachKey(r))).map((r) => r.recordId));
+}
+
+/**
+ * The scenarios with their labelled values, as `principal` may see them (T-DG6-BE-Z3; ADR-0051 §2; REQ-S10-002): a
+ * value of a sensitive benefit the caller is not admitted to is OMITTED from `values` (not 403, no placeholder, no
+ * count), exactly as the benefit itself is absent from the caller's lists. The scenario carries no total, so no
+ * derived figure can include a hidden value. Every route that returns a scenario (list, item, create, update) uses
+ * this presenter.
+ */
+export async function presentScenarios(
+  db: DbOrTx,
+  principal: Principal,
+  rows: readonly BenefitScenarioRow[],
+): Promise<BenefitScenario[]> {
   if (rows.length === 0) return [];
-  const values = await db
+  const all = await db
     .selectFrom("benefit_scenario_value")
     .selectAll()
     .where(
@@ -164,6 +193,12 @@ export async function presentScenarios(db: DbOrTx, rows: readonly BenefitScenari
     .orderBy("benefit_id")
     .orderBy("period_start")
     .execute();
+  const hidden = await hiddenBenefits(
+    db,
+    principal,
+    all.map((v) => v.benefit_id),
+  );
+  const values = hidden.size === 0 ? all : all.filter((v) => !hidden.has(v.benefit_id));
   return rows.map((s) => {
     const kind = s.kind as BenefitScenarioKind;
     return {
@@ -348,9 +383,31 @@ async function shareLockBenefit(tx: Tx, transformationId: string, benefitId: str
     .executeTakeFirst();
 }
 
+/**
+ * The answer of a value naming a benefit the caller may not see: the very problem `assertSameTransformation` gives for
+ * a benefit that does not exist in the transformation (422 validation.reference at /benefitId), so a write discloses
+ * neither the existence nor the currency of a sensitive benefit (ADR-0051 §2; T-DG6-BE-Z3).
+ */
+const unknownBenefit = () =>
+  new HttpProblem({
+    status: 422,
+    type: "urn:mth:problem:validation",
+    code: "validation.reference",
+    title: "Business rule violated",
+    detail: "The referenced record does not exist in this transformation.",
+    errors: [
+      {
+        pointer: "/benefitId",
+        code: "validation.reference",
+        message: "No benefit with this id in this transformation.",
+      },
+    ],
+  });
+
 async function createValue(
   tx: Tx,
   ctx: WriteContext,
+  principal: Principal,
   benefitScenarioId: string,
   body: z.infer<typeof benefitScenarioValueCreate>,
 ) {
@@ -359,6 +416,7 @@ async function createValue(
   if (scenario.status === "archived") throw scenarioRefusals.archived();
   const benefit = await shareLockBenefit(tx, transformationId, body.benefitId);
   if (!benefit) await assertSameTransformation(tx, "benefit", transformationId, body.benefitId, "/benefitId");
+  if ((await hiddenBenefits(tx, principal, [benefit!.id])).size > 0) throw unknownBenefit();
   const facts: ValueFacts = {
     periodStart: body.periodStart,
     periodEnd: body.periodEnd,
@@ -470,7 +528,12 @@ export function registerBenefitScenarioRoutes(app: FastifyInstance, { db }: Modu
       .limit(query.limit + 1)
       .execute();
     const page = paginate(rows, query.limit, (r) => [r.id], hash);
-    return { items: await presentScenarios(db, page.items), nextCursor: page.nextCursor };
+    // ADR-0051 §2 (T-DG6-BE-Y1 sweep): the row of a sensitive record the caller is not admitted to is absent.
+    const visible = await withoutRestricted(db, principalOf(request), page.items, (r) => ({
+      recordType: "benefit_scenario",
+      recordId: r.id,
+    }));
+    return { items: await presentScenarios(db, principalOf(request), visible), nextCursor: page.nextCursor };
   });
 
   app.post(SCENARIOS, { config: write }, async (request, reply) => {
@@ -480,7 +543,7 @@ export function registerBenefitScenarioRoutes(app: FastifyInstance, { db }: Modu
       const body = parseBody(benefitScenarioCreate, request.body);
       return maybeIdempotent(tx, request, ctx.userId, body, async () => ({
         status: 201,
-        body: (await presentScenarios(tx, [await createScenario(tx, ctx, body)]))[0]!,
+        body: (await presentScenarios(tx, principalOf(request), [await createScenario(tx, ctx, body)]))[0]!,
       }));
     });
     return sendCreated(request, reply, result);
@@ -496,13 +559,15 @@ export function registerBenefitScenarioRoutes(app: FastifyInstance, { db }: Modu
       .where("transformation_id", "=", transformationId)
       .executeTakeFirst();
     if (!row) throw problems.notFound();
-    return sendVersioned(reply, 200, (await presentScenarios(db, [row]))[0]!);
+    return sendVersioned(reply, 200, (await presentScenarios(db, principalOf(request), [row]))[0]!);
   });
 
   app.patch(SCENARIO_ITEM, { config: write }, async (request, reply) => {
     const body = await db
       .transaction()
-      .execute(async (tx) => (await presentScenarios(tx, [await updateScenario(tx, request)]))[0]!);
+      .execute(
+        async (tx) => (await presentScenarios(tx, principalOf(request), [await updateScenario(tx, request)]))[0]!,
+      );
     return sendVersioned(reply, 200, body);
   });
 
@@ -511,7 +576,9 @@ export function registerBenefitScenarioRoutes(app: FastifyInstance, { db }: Modu
     const result = await db.transaction().execute(async (tx) => {
       const ctx = await openBenefitWrite(tx, request, transformationId, BENEFIT_SCENARIO_EDIT);
       const body = parseBody(benefitScenarioValueCreate, request.body);
-      return maybeIdempotent(tx, request, ctx.userId, body, () => createValue(tx, ctx, benefitScenarioId, body));
+      return maybeIdempotent(tx, request, ctx.userId, body, () =>
+        createValue(tx, ctx, principalOf(request), benefitScenarioId, body),
+      );
     });
     return sendCreated(
       request,

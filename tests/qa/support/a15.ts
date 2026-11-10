@@ -11,6 +11,7 @@ import { lines, plain, readPdf, type ReadPdf } from "../../../packages/reporting
 import { FilesystemExportStore } from "../../../packages/reporting/src/storage.ts";
 import { readXlsx, type ReadWorkbook } from "../../../packages/reporting/src/xlsx/read.ts";
 import { runExport } from "../../../apps/worker/src/reports/export-runner.ts";
+import { exportAssemblyWatchStep } from "../../../apps/api/src/modules/reporting/exports/assembly.ts";
 import { call, testEvidenceDir, type Session, type TestApi } from "../../../apps/api/test/support/harness.ts";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -33,6 +34,9 @@ export const ok = (res: { status: number; body: unknown }, status: number, what:
 
 /** One delivery of the export job's `export_job.requested` outbox event to the worker's runner (first attempt). */
 export async function runWorker(api: TestApi, exportJobId: string, retryCount = 0): Promise<Body> {
+  // T-DG6-BE-Y5 (D-207): a live selection is assembled by the API process's export assembly watch (NODE_ENV=test runs
+  // no timer) before its outbox event exists; for a job that already has its snapshot this step does nothing.
+  await exportAssemblyWatchStep(api.db, { onlyJobIds: [exportJobId] });
   const row = await api.db
     .selectFrom("outbox_event")
     .selectAll()

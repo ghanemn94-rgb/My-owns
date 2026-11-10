@@ -1,0 +1,75 @@
+port-policy: PostgreSQL listening on port 23701 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+migrations shipped: 92 (0001_identity_access.sql .. 0100_p6_access_hardening_permissions.sql)
+PASS  G00 slice E/F migrations 0098-0100 present; 0101-0103 left free for the slice's implementers  -- ids >= 95: 95,96,97,98,99,100
+PASS  G01 fresh database: 0001..last apply  -- applied 92: 0097_p5_config_review_contributors.sql, 0098_p6_sensitive_records_deep_links.sql, 0099_p6_upload_policy_content_types.sql, 0100_p6_access_hardening_permissions.sql
+PASS  G02 P5 database populated (0001-0097; a synthetic transformation instantiated by the DG3 function, 2 benefits, a business case, 2 evidence items, a pre-P6 octet-stream file, 2 notifications)  -- applied 89; {"t":1,"b":2,"i":2}
+PASS  G03 P6 slice E/F over the P5 database: 0098..last apply  -- applied 3: 0098_p6_sensitive_records_deep_links.sql, 0099_p6_upload_policy_content_types.sql, 0100_p6_access_hardening_permissions.sql
+PASS  G04 the upgrade leaves every existing row as it was: notifications without token, the pre-P6 file unchecked (detected_type NULL), no sensitivity, grant or policy row, the benefit at version 1  -- {"i":2,"e":1,"s":0,"g":0,"u":0,"bv":1}
+PASS  RS01 mark a benefit sensitive with its audit event (mth_app)  -- 01990000-0000-7000-8000-000000000100
+PASS  RS02 the insert wrote history version 1 (trigger)  -- [{"version":1,"is_sensitive":true}]
+PASS  RS03 a sensitivity row without its audit event fails at COMMIT  -- 23000 record_sensitivity_audit_required no audit_event for record_sensitivity 01990000-0000-7000-8000-000000000102 at version 1 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  RS04 a new row must start at version 1  -- 23514 record_sensitivity_version_step record_sensitivity: a new row starts at version 1
+PASS  RS05 an update must step the version by exactly 1  -- 23514 record_sensitivity_version_step record_sensitivity: version must increase by exactly 1 on every update (optimistic concurrency, ADR-0003)
+PASS  RS06 an update without its audit event fails at COMMIT  -- 23000 record_sensitivity_audit_required no audit_event for record_sensitivity 01990000-0000-7000-8000-000000000100 at version 2 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  RS07 unmark (version 2, audited)  -- version 2
+PASS  RS08 history holds both versions (true, false)  -- [{"version":1,"is_sensitive":true},{"version":2,"is_sensitive":false}]
+PASS  RS09 a record type outside benefit, business_case, evidence is refused  -- 23514 record_sensitivity_record_type record_sensitivity: record_type charter cannot be marked sensitive
+PASS  RS10 a record that does not exist in the transformation is refused  -- 23503 record_sensitivity_record_ref record_sensitivity: business_case 01990000-0000-7000-8000-0000000000b1 does not exist in transformation 01990000-0000-7000-8000-000000000005
+PASS  RS11 one sensitivity row per record (duplicate -> unique violation)  -- 23505 record_sensitivity_record_key duplicate key value violates unique constraint "record_sensitivity_record_key"
+PASS  RS12 the record a sensitivity row marks is immutable  -- 23514 record_sensitivity_record_immutable record_sensitivity: the record it marks is immutable
+PASS  RS13 a business case and an evidence item can be marked too  -- business_case, evidence
+PASS  RS14 mth_app cannot delete a sensitivity row  -- 42501 permission denied for table record_sensitivity
+PASS  RS15 mth_app cannot write the history directly  -- 42501 permission denied for table record_sensitivity_change
+PASS  RS16 mth_app cannot update the history  -- 42501 permission denied for table record_sensitivity_change
+PASS  RS17 the history is append-only even for the owner (UPDATE)  -- 42501 record_sensitivity_change is append-only: UPDATE is not allowed
+PASS  RS18 the history is append-only even for the owner (DELETE)  -- 42501 record_sensitivity_change is append-only: DELETE is not allowed
+PASS  GR01 grant a user explicit access to a benefit (active, audited)  -- 01990000-0000-7000-8000-00000000010d
+PASS  GR02 at most one active grant per record and grantee  -- 23505 sensitive_record_grant_one_active_key duplicate key value violates unique constraint "sensitive_record_grant_one_active_key"
+PASS  GR03 a grant starts active  -- 23514 sensitive_record_grant_transition sensitive_record_grant: a grant starts active
+PASS  GR04 nobody grants to themselves  -- 23514 sensitive_record_grant_not_self new row for relation "sensitive_record_grant" violates check constraint "sensitive_record_grant_not_self"
+PASS  GR05 a grant without its audit event fails at COMMIT  -- 23000 sensitive_record_grant_audit_required no audit_event for sensitive_record_grant 01990000-0000-7000-8000-000000000112 at version 1 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  GR06 a grant on a missing record is refused  -- 23503 sensitive_record_grant_record_ref sensitive_record_grant: benefit 01990000-0000-7000-8000-000000000113 does not exist in transformation 01990000-0000-7000-8000-000000000005
+PASS  GR07 revoking needs revoked_at, revoked_by and a reason together  -- 23514 sensitive_record_grant_revoke_complete new row for relation "sensitive_record_grant" violates check constraint "sensitive_record_grant_revoke_complete"
+PASS  GR08 the grantee of a grant is immutable  -- 23514 sensitive_record_grant_immutable sensitive_record_grant: the record, grantee and reason of a grant are immutable
+PASS  GR09 a grant update must step the version  -- 23514 sensitive_record_grant_version_step sensitive_record_grant: version must increase by exactly 1 on every update (optimistic concurrency, ADR-0003)
+PASS  GR10 revoke (active -> revoked, version 2, audited)  -- revoked
+PASS  GR11 revoked is terminal (revoked -> active refused)  -- 23514 sensitive_record_grant_transition sensitive_record_grant: revoked -> active is not a permitted transition (active -> revoked only)
+PASS  GR12 after a revocation the same user can be granted again (a new row)  -- 01990000-0000-7000-8000-000000000116
+PASS  GR13 mth_app cannot delete a grant  -- 42501 permission denied for table sensitive_record_grant
+PASS  GR14 a grant on a record type outside the three is refused  -- 23514 sensitive_record_grant_record_type sensitive_record_grant: record_type kpi_definition cannot be marked sensitive
+PASS  DL01 issue a token for a pre-P6 notification (set once, version step, audited)  -- AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAb
+PASS  DL02 the token is never changed once set  -- 23514 inbox_notification_deep_link_once inbox_notification: the deep-link token and target are set once and never changed
+PASS  DL03 the target is never changed once set  -- 23514 inbox_notification_deep_link_once inbox_notification: the deep-link token and target are set once and never changed
+PASS  DL04 a token is 43 base64url characters  -- 23514 inbox_notification_link_token_format new row for relation "inbox_notification" violates check constraint "inbox_notification_link_token_format"
+PASS  DL05 tokens are unique  -- 23505 inbox_notification_link_token_key duplicate key value violates unique constraint "inbox_notification_link_token_key"
+PASS  DL06 target type and id come together  -- 23514 inbox_notification_target_pair new row for relation "inbox_notification" violates check constraint "inbox_notification_target_pair"
+PASS  DL07 the token update still needs its audit event (existing guard)  -- 23000 inbox_notification_audit_required no audit_event for inbox_notification 01990000-0000-7000-8000-0000000000a2 at version 2 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  UP01 an organization upload policy (narrower list, 10 MiB, audited)  -- 01990000-0000-7000-8000-00000000011a
+PASS  UP02 the insert wrote history version 1  -- [{"version":1,"allowed_types":["pdf","png"],"m":"10485760"}]
+PASS  UP03 a type outside the closed set (exe) is refused  -- 23514 upload_policy_allowed_types new row for relation "upload_policy" violates check constraint "upload_policy_allowed_types"
+PASS  UP04 an empty allow-list is refused  -- 23514 upload_policy_allowed_types new row for relation "upload_policy" violates check constraint "upload_policy_allowed_types"
+PASS  UP05 a NULL inside the allow-list is refused  -- 23514 upload_policy_allowed_types new row for relation "upload_policy" violates check constraint "upload_policy_allowed_types"
+PASS  UP06 max_bytes above 25 MiB (26214401) is refused  -- 23514 upload_policy_max_bytes new row for relation "upload_policy" violates check constraint "upload_policy_max_bytes"
+PASS  UP07 one policy per organization  -- 23505 upload_policy_organization_key duplicate key value violates unique constraint "upload_policy_organization_key"
+PASS  UP08 a policy update without its audit event fails at COMMIT  -- 23000 upload_policy_audit_required no audit_event for upload_policy 01990000-0000-7000-8000-00000000011a at version 2 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  UP09 widen to all ten types at the 25 MiB ceiling (version 2)  -- version 2
+PASS  UP10 the policy history is append-only (owner UPDATE)  -- 42501 upload_policy_change is append-only: UPDATE is not allowed
+PASS  UP11 mth_app cannot delete the policy  -- 42501 permission denied for table upload_policy
+PASS  EC01 a checked PNG: detected_type png with content_type image/png  -- 01990000-0000-7000-8000-00000000011e
+PASS  EC02 a detected type with a different content type is refused  -- 23514 evidence_content_detected_media_type new row for relation "evidence_content" violates check constraint "evidence_content_detected_media_type"
+PASS  EC03 a detected type outside the closed set (exe) is refused  -- 23514 evidence_content_detected_type new row for relation "evidence_content" violates check constraint "evidence_content_detected_type"
+PASS  EC04 until BE-D's 0101, the DG2 upload row (octet-stream, no detected type) still inserts  -- 01990000-0000-7000-8000-000000000121
+PASS  EC05 p6_upload_media_type maps the ten types and nothing else  -- csv=text/csv,docx=application/vnd.openxmlformats-officedocument.wordprocessingml.document,gif=image/gif,jpeg=image/jpeg,pdf=application/pdf,png=image/png,pptx=application/vnd.openxmlformats-officedocument.presentationml.presentation,svg=image/svg+xml,txt=text/plain,xlsx=application/vnd.openxmlformat
+PASS  EC06 evidence_content stays append-only (mth_app UPDATE of the pre-P6 row)  -- 42501 permission denied for table evidence_content
+PASS  EC07 a checked SVG is stored as image/svg+xml (download-only is the API's rule)  -- 01990000-0000-7000-8000-000000000122
+PASS  AU01 an UPDATE on audit_event by the application role fails  -- 42501 permission denied for table audit_event
+PASS  AU02 a DELETE on audit_event by the application role fails  -- 42501 permission denied for table audit_event
+PASS  AU03 audit_event is append-only for the owner too  -- 42501 audit_event is append-only: UPDATE is not allowed
+PASS  PM01 five P6 E/F permission codes with their categories  -- audit_event.read:read,security.read:read,sensitive_record.grant:configure,sensitive_record.read:read,upload_policy.configure:configure
+PASS  PM02 role defaults: TO and ADM_ACCESS grant; TO, AUD, ADM_ACCESS read flags; AUD, ADM_TECH, ADM_ACCESS read audit; ADM_TECH configures uploads; ADM_TECH and AUD read security  -- ADM_ACCESS:audit_event.read,ADM_ACCESS:sensitive_record.grant,ADM_ACCESS:sensitive_record.read,ADM_TECH:audit_event.read,ADM_TECH:security.read,ADM_TECH:upload_policy.configure,AUD:audit_event.read,AUD:security.read,AUD:sensitive_record.read,TO:sensitive_record.grant,TO:sensitive_record.read
+PASS  PM03 AUD holds only read permissions after 0100  -- non-read AUD links: 0
+PASS  PM04 a technical admin can still never hold a business approval (0001 trigger)  -- 23514 role_permission_no_admin_approver technical administrator role ADM_ACCESS cannot hold approval permission gate.decide (separation of duties)
+PASS  LK01 the guards declare 730300 (sensitive grant, both tables) and 730301 (deep-link issue)  -- inbox_notification_deep_link_guard,record_sensitivity_guard,sensitive_record_grant_guard
+
+70/70 PASS

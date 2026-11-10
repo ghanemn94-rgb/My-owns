@@ -27,6 +27,7 @@ import { errorMessage, fieldErrorMessage, fieldErrorMessages } from "../../lib/p
 import { ExtensionNote } from "../../components/form-framework/ExtensionBadge.tsx";
 // T-DG5-FE-C3 (D-164; REQ-S06-004, F-DG5-QA-A-2): extension fields entered and shown through the form framework.
 import { extensionToolsColumn, useExtensionCreate } from "../../components/form-framework/index.ts";
+import { EvidencePreviewAction } from "../../components/evidence-preview/EvidencePreview.tsx";
 
 /** Upload limit of one revision (apps/api evidence store: 25 MiB); checked before sending, re-checked by the server. */
 const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
@@ -190,6 +191,7 @@ function EvidenceRegister() {
       hideable: false,
       cell: (e) => (
         <span className="row-actions">
+          <EvidencePreviewAction tid={ws.tid} evidence={e} />
           {e.kind === "file" && e.currentContentId ? (
             <a className="button button--link button--small" href={`${base}/${e.id}/content`} download>
               <Icon name="chevronDown" /> {t("evidence.download")}

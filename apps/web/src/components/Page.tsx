@@ -1,8 +1,9 @@
 // Page scaffolding: a document title per page (screen-reader orientation), one <h1>, optional breadcrumbs and actions.
 import { useEffect, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router";
 import { DemoFormBadge } from "./demo-label/DemoLabels.tsx";
+// T-DG6-FE-D (ADR-0057 §9): the breadcrumb trail is the shared component (bdi-isolated labels, aria-current).
+import { Breadcrumbs, type Crumb } from "./breadcrumbs/Breadcrumbs.tsx";
 
 export function usePageTitle(title: string): void {
   const { t } = useTranslation();
@@ -12,10 +13,7 @@ export function usePageTitle(title: string): void {
   }, [title, product]);
 }
 
-export interface Crumb {
-  readonly label: string;
-  readonly to?: string;
-}
+export type { Crumb };
 
 export function PageHeader({
   title,
@@ -35,20 +33,9 @@ export function PageHeader({
    */
   demoBadge?: boolean;
 }) {
-  const { t } = useTranslation();
   return (
     <div className="page-header">
-      {crumbs && crumbs.length > 0 ? (
-        <nav aria-label={t("common.a11y.breadcrumbs")} className="breadcrumbs">
-          <ol>
-            {crumbs.map((c, i) => (
-              <li key={`${c.label}-${i}`}>
-                {c.to ? <Link to={c.to}>{c.label}</Link> : <span aria-current="page">{c.label}</span>}
-              </li>
-            ))}
-          </ol>
-        </nav>
-      ) : null}
+      {crumbs && crumbs.length > 0 ? <Breadcrumbs crumbs={crumbs} /> : null}
       <div className="page-header__row">
         <div>
           <h1 className="page-header__title">{title}</h1>

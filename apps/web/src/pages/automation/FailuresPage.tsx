@@ -12,6 +12,7 @@ import { useLocale } from "../../app/locale.ts";
 import { PageHeader, usePageTitle } from "../../components/Page.tsx";
 import { RegisterTable, type RegisterColumn } from "../../components/RegisterTable.tsx";
 import { Section } from "../../components/Section.tsx";
+import { RestrictedRecordsLabel } from "../../components/sensitivity/RestrictedRecordsLabel.tsx";
 import { QueryState } from "../../components/States.tsx";
 import { formatDateTime } from "../../lib/format.ts";
 import { fedPaths, useExecution, useExecutions, useFailures, useFedRefresh, type OperationalFailure } from "./api.ts";
@@ -95,10 +96,15 @@ export function FailuresPage() {
     {
       id: "key",
       header: t("workflowsP5.failures.key"),
+      // T-DG6-BE-Z13C (D-228 (3), D-227, D-218): the key or error text shows "[restricted]" in place of a record the
+      // reader is not admitted to; the item says so with the label.
       cell: (f) => (
-        <bdi dir="ltr" className="code small">
-          {f.idempotencyKey}
-        </bdi>
+        <span className="block">
+          <bdi dir="ltr" className="code small">
+            {f.idempotencyKey}
+          </bdi>{" "}
+          <RestrictedRecordsLabel value={f.includesRestrictedRecords} scope="item" />
+        </span>
       ),
     },
     {
@@ -164,7 +170,8 @@ export function FailuresPage() {
       {dismissing ? (
         <Section id="dismiss" title={t("workflowsP5.failures.dismissTitle")}>
           <p className="small">
-            <bdi dir="ltr">{dismissing.idempotencyKey}</bdi>
+            <bdi dir="ltr">{dismissing.idempotencyKey}</bdi>{" "}
+            <RestrictedRecordsLabel value={dismissing.includesRestrictedRecords} scope="item" />
           </p>
           <NoteForm
             id="dismiss-failure"
@@ -310,6 +317,7 @@ export function ExecutionPage() {
                   <span className="block small muted">
                     <bdi dir="ltr">{x.triggerKey}</bdi>
                   </span>
+                  <RestrictedRecordsLabel value={x.includesRestrictedRecords} scope="item" />
                 </dd>
                 <dt>{t("workflowsP5.rules.runAs")}</dt>
                 <dd>{t(`workflowsP5.runAs.${x.runAs}`)}</dd>

@@ -1,0 +1,203 @@
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-y2
+
+ ❯ |unit-node| apps/api/src/modules/platform/secrets.test.ts (39 tests | 20 failed) 188ms
+   ✓ SecretValue never prints its value > String(), template literals and concatenation print [secret]; reveal() returns the value 3ms
+   ✓ SecretValue never prints its value > JSON.stringify prints [secret], also nested 1ms
+   ✓ SecretValue never prints its value > util.inspect (console.log) does not show the value 1ms
+   ✓ SecretValue never prints its value > a pino log line (Fastify's logger) prints [secret] in a field and in the message 130ms
+   ✓ the env provider (ADR-0011 rule) > reads NAME 0ms
+   ✓ the env provider (ADR-0011 rule) > reads NAME_FILE, without one trailing newline 1ms
+   ✓ the env provider (ADR-0011 rule) > neither set (or empty) resolves undefined 0ms
+   ✓ the env provider (ADR-0011 rule) > NAME and NAME_FILE both set: a configuration error naming the variable only 1ms
+   ✓ the env provider (ADR-0011 rule) > an unreadable NAME_FILE names the variable, not the path or a value 1ms
+   × the env provider (ADR-0011 rule) > a name that is not a variable name resolves undefined (the same answer as an unset secret) 10ms
+     → secret provider "env": "smtp password" is not a variable name
+   × the env provider (ADR-0011 rule) > never resolves a platform variable, even when it is set (F-DG6-120) 7ms
+     → expected ResolvedSecret{} to be undefined
+   × the env provider (ADR-0011 rule) > a platform variable's _FILE is not reachable through the namespace either 1ms
+     → expected ResolvedSecret{} to be undefined
+   ✓ the file provider (SECRETS_DIR) > reads a plain file name under the directory; a missing file resolves undefined 3ms
+   × the file provider (SECRETS_DIR) > paths and dot names resolve nothing (no traversal out of SECRETS_DIR) 1ms
+     → secret provider "file": "../etc/passwd" is not a plain file name
+   × the file provider (SECRETS_DIR) > a symbolic link that leaves SECRETS_DIR resolves nothing (F-DG6-120) 3ms
+     → expected ResolvedSecret{} to be undefined
+   × the file provider (SECRETS_DIR) > a SECRETS_DIR that holds a platform secret file (e.g. /run/secrets) is a configuration error (F-DG6-120) 8ms
+     → expected a refusal
+   ✓ the file provider (SECRETS_DIR) > without SECRETS_DIR it is a configuration error, never a silent empty value 0ms
+   ✓ registration (the server.ts line) > registers env then file; a reference resolves through the registry 2ms
+   ✓ registration (the server.ts line) > with no new variable set nothing is read: env with an empty environment resolves nothing 0ms
+   ✓ the SecretRef namespace (F-DG6-120; write time and resolve time share it) > env MTH_SECRET_SMTP_PASSWORD -> true 0ms
+   ✓ the SecretRef namespace (F-DG6-120; write time and resolve time share it) > env MTH_SECRET_1 -> true 0ms
+   ✓ the SecretRef namespace (F-DG6-120; write time and resolve time share it) > env MTH_SECRET_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA -> true 0ms
+   × the SecretRef namespace (F-DG6-120; write time and resolve time share it) > env MTH_SECRET_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA -> false 2ms
+     → expected true to be false // Object.is equality
+   × the SecretRef namespace (F-DG6-120; write time and resolve time share it) > env OIDC_CLIENT_SECRET -> false 1ms
+     → expected true to be false // Object.is equality
+   × the SecretRef namespace (F-DG6-120; write time and resolve time share it) > env DATABASE_URL -> false 1ms
+     → expected true to be false // Object.is equality
+   × the SecretRef namespace (F-DG6-120; write time and resolve time share it) > env DATABASE_OWNER_URL -> false 0ms
+     → expected true to be false // Object.is equality
+   × the SecretRef namespace (F-DG6-120; write time and resolve time share it) > env MTH_DEMO_ADMIN_DATABASE_URL -> false 1ms
+     → expected true to be false // Object.is equality
+   × the SecretRef namespace (F-DG6-120; write time and resolve time share it) > env MTH_SECRETS_DIR -> false 1ms
+     → expected true to be false // Object.is equality
+   × the SecretRef namespace (F-DG6-120; write time and resolve time share it) > env MTH_SECRET_ -> false 0ms
+     → expected true to be false // Object.is equality
+   × the SecretRef namespace (F-DG6-120; write time and resolve time share it) > env MTH_SECRET__X -> false 1ms
+     → expected true to be false // Object.is equality
+   × the SecretRef namespace (F-DG6-120; write time and resolve time share it) > env MTH_SECRET_TOKEN_FILE -> false 1ms
+     → expected true to be false // Object.is equality
+   × the SecretRef namespace (F-DG6-120; write time and resolve time share it) > env mth_secret_token -> false 0ms
+     → expected true to be false // Object.is equality
+   ✓ the SecretRef namespace (F-DG6-120; write time and resolve time share it) > file connector-token -> true 0ms
+   ✓ the SecretRef namespace (F-DG6-120; write time and resolve time share it) > file smtp.password -> true 0ms
+   × the SecretRef namespace (F-DG6-120; write time and resolve time share it) > file ../database_url -> false 1ms
+     → expected true to be false // Object.is equality
+   × the SecretRef namespace (F-DG6-120; write time and resolve time share it) > file a/b -> false 0ms
+     → expected true to be false // Object.is equality
+   × the SecretRef namespace (F-DG6-120; write time and resolve time share it) > file .env -> false 0ms
+     → expected true to be false // Object.is equality
+   × the SecretRef namespace (F-DG6-120; write time and resolve time share it) > file .. -> false 0ms
+     → expected true to be false // Object.is equality
+   ✓ the SecretRef namespace (F-DG6-120; write time and resolve time share it) > vault kv/connectors/feed -> true 0ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 20 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-node| apps/api/src/modules/platform/secrets.test.ts > the env provider (ADR-0011 rule) > a name that is not a variable name resolves undefined (the same answer as an unset secret)
+SecretProviderError: secret provider "env": "smtp password" is not a variable name
+ ❯ Object.get apps/api/src/modules/platform/secrets.ts:115:31
+    113|     get(name) {
+    114|       if (!ENV_SECRET_NAME.test(name))
+    115|         return Promise.reject(new SecretProviderError(`secret provider…
+       |                               ^
+    116|       try {
+    117|         const value = readSecretVariable(name, env);
+ ❯ apps/api/src/modules/platform/secrets.test.ts:112:40
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/20]⎯
+
+ FAIL  |unit-node| apps/api/src/modules/platform/secrets.test.ts > the env provider (ADR-0011 rule) > never resolves a platform variable, even when it is set (F-DG6-120)
+AssertionError: expected ResolvedSecret{} to be undefined
+
+[32m- Expected:[39m 
+undefined
+
+[31m+ Received:[39m 
+ResolvedSecret {}
+
+ ❯ apps/api/src/modules/platform/secrets.test.ts:131:80
+    129|     };
+    130|     const provider = envSecretProvider(platform);
+    131|     for (const name of Object.keys(platform)) expect(await provider.ge…
+       |                                                                                ^
+    132|   });
+    133| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/20]⎯
+
+ FAIL  |unit-node| apps/api/src/modules/platform/secrets.test.ts > the env provider (ADR-0011 rule) > a platform variable's _FILE is not reachable through the namespace either
+AssertionError: expected ResolvedSecret{} to be undefined
+
+[32m- Expected:[39m 
+undefined
+
+[31m+ Received:[39m 
+ResolvedSecret {}
+
+ ❯ apps/api/src/modules/platform/secrets.test.ts:137:98
+    135|     const file = join(dir, "platform-oidc");
+    136|     writeFileSync(file, VALUE);
+    137|     expect(await envSecretProvider({ OIDC_CLIENT_SECRET_FILE: file }).…
+       |                                                                                                  ^
+    138|     expect(await envSecretProvider({ OIDC_CLIENT_SECRET_FILE: file }).…
+    139|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/20]⎯
+
+ FAIL  |unit-node| apps/api/src/modules/platform/secrets.test.ts > the file provider (SECRETS_DIR) > paths and dot names resolve nothing (no traversal out of SECRETS_DIR)
+SecretProviderError: secret provider "file": "../etc/passwd" is not a plain file name
+ ❯ Object.get apps/api/src/modules/platform/secrets.ts:137:15
+    135|       if (dir === null) throw new ConfigError([`SECRETS_DIR is not set…
+    136|       if (!FILE_SECRET_NAME.test(name))
+    137|         throw new SecretProviderError(`secret provider "file": "${name…
+       |               ^
+    138|       let content: string;
+    139|       try {
+ ❯ apps/api/src/modules/platform/secrets.test.ts:154:29
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/20]⎯
+
+ FAIL  |unit-node| apps/api/src/modules/platform/secrets.test.ts > the file provider (SECRETS_DIR) > a symbolic link that leaves SECRETS_DIR resolves nothing (F-DG6-120)
+AssertionError: expected ResolvedSecret{} to be undefined
+
+[32m- Expected:[39m 
+undefined
+
+[31m+ Received:[39m 
+ResolvedSecret {}
+
+ ❯ apps/api/src/modules/platform/secrets.test.ts:166:44
+    164|       writeFileSync(join(linked, "inside"), VALUE);
+    165|       const provider = fileSecretProvider(linked, {});
+    166|       expect(await provider.get("escape")).toBeUndefined();
+       |                                            ^
+    167|       expect((await provider.get("inside"))?.reveal()).toBe(VALUE);
+    168|       rmSync(linked, { recursive: true, force: true });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/20]⎯
+
+ FAIL  |unit-node| apps/api/src/modules/platform/secrets.test.ts > the file provider (SECRETS_DIR) > a SECRETS_DIR that holds a platform secret file (e.g. /run/secrets) is a configuration error (F-DG6-120)
+Error: expected a refusal
+ ❯ refusal apps/api/src/modules/platform/secrets.test.ts:36:9
+     34|     return message;
+     35|   }
+     36|   throw new Error("expected a refusal");
+       |         ^
+     37| }
+     38| 
+ ❯ apps/api/src/modules/platform/secrets.test.ts:182:25
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/20]⎯
+
+ FAIL  |unit-node| apps/api/src/modules/platform/secrets.test.ts > the SecretRef namespace (F-DG6-120; write time and resolve time share it) > env MTH_SECRET_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA -> false
+ FAIL  |unit-node| apps/api/src/modules/platform/secrets.test.ts > the SecretRef namespace (F-DG6-120; write time and resolve time share it) > env OIDC_CLIENT_SECRET -> false
+ FAIL  |unit-node| apps/api/src/modules/platform/secrets.test.ts > the SecretRef namespace (F-DG6-120; write time and resolve time share it) > env DATABASE_URL -> false
+ FAIL  |unit-node| apps/api/src/modules/platform/secrets.test.ts > the SecretRef namespace (F-DG6-120; write time and resolve time share it) > env DATABASE_OWNER_URL -> false
+ FAIL  |unit-node| apps/api/src/modules/platform/secrets.test.ts > the SecretRef namespace (F-DG6-120; write time and resolve time share it) > env MTH_DEMO_ADMIN_DATABASE_URL -> false
+ FAIL  |unit-node| apps/api/src/modules/platform/secrets.test.ts > the SecretRef namespace (F-DG6-120; write time and resolve time share it) > env MTH_SECRETS_DIR -> false
+ FAIL  |unit-node| apps/api/src/modules/platform/secrets.test.ts > the SecretRef namespace (F-DG6-120; write time and resolve time share it) > env MTH_SECRET_ -> false
+ FAIL  |unit-node| apps/api/src/modules/platform/secrets.test.ts > the SecretRef namespace (F-DG6-120; write time and resolve time share it) > env MTH_SECRET__X -> false
+ FAIL  |unit-node| apps/api/src/modules/platform/secrets.test.ts > the SecretRef namespace (F-DG6-120; write time and resolve time share it) > env MTH_SECRET_TOKEN_FILE -> false
+ FAIL  |unit-node| apps/api/src/modules/platform/secrets.test.ts > the SecretRef namespace (F-DG6-120; write time and resolve time share it) > env mth_secret_token -> false
+ FAIL  |unit-node| apps/api/src/modules/platform/secrets.test.ts > the SecretRef namespace (F-DG6-120; write time and resolve time share it) > file ../database_url -> false
+ FAIL  |unit-node| apps/api/src/modules/platform/secrets.test.ts > the SecretRef namespace (F-DG6-120; write time and resolve time share it) > file a/b -> false
+ FAIL  |unit-node| apps/api/src/modules/platform/secrets.test.ts > the SecretRef namespace (F-DG6-120; write time and resolve time share it) > file .env -> false
+ FAIL  |unit-node| apps/api/src/modules/platform/secrets.test.ts > the SecretRef namespace (F-DG6-120; write time and resolve time share it) > file .. -> false
+AssertionError: expected true to be false // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- false[39m
+[31m+ true[39m
+
+ ❯ apps/api/src/modules/platform/secrets.test.ts:248:54
+    246|     ["vault", "kv/connectors/feed", true],
+    247|   ] as const)("%s %s -> %s", (provider, name, expected) => {
+    248|     expect(secretRefInNamespace({ provider, name })).toBe(expected);
+       |                                                      ^
+    249|   });
+    250| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/20]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  20 failed | 19 passed (39)
+   Start at  21:16:34
+   Duration  2.20s (transform 444ms, setup 0ms, collect 690ms, tests 188ms, environment 0ms, prepare 224ms)
+

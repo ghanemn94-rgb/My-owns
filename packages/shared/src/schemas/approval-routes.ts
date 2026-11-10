@@ -36,6 +36,7 @@ export type ApprovalRouteDefinition = z.infer<typeof approvalRouteDefinition>;
 export const approvalRouteDefinitionList = z.strictObject({
   methodologyVersionId: uuid,
   items: z.array(approvalRouteDefinition),
+  nextCursor: z.string().nullable(),
 });
 export type ApprovalRouteDefinitionList = z.infer<typeof approvalRouteDefinitionList>;
 
@@ -92,9 +93,12 @@ export const trackedGateCondition = z.strictObject({
   closedAt: timestamp.nullable(),
   closedBy: uuid.nullable(),
   closureNote: z.string().nullable(),
+  /** Null when none, or when it is an evidence item the reader is not admitted to (T-DG6-BE-Z10, D-218). */
   evidenceId: uuid.nullable(),
   escalatedAt: timestamp.nullable(),
   escalatedToUserId: uuid.nullable(),
+  /** True when the closure's evidence was omitted for the reader (label access.includesRestrictedRecords). */
+  includesRestrictedRecords: z.literal(true).optional(),
 });
 export type TrackedGateCondition = z.infer<typeof trackedGateCondition>;
 

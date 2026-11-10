@@ -29,8 +29,30 @@ const TONE_CLASS: Record<ChipTone, string> = {
   closed: "lifecycle-chip lifecycle-chip--closed",
 };
 
-/** A status chip: tone + icon + translated label (the label is always present). */
-export function Chip({ tone, icon, label, data }: { tone: ChipTone; icon: IconName; label: string; data?: string }) {
+/**
+ * A status chip: tone + icon + translated label (the label is always present). `wrap` (F-DG6-143) is for a sentence-
+ * long label: the chip wraps inside its container (`.status-chip--wrap`) instead of widening the page at 360 px.
+ */
+export function Chip({
+  tone,
+  icon,
+  label,
+  data,
+  wrap = false,
+}: {
+  tone: ChipTone;
+  icon: IconName;
+  label: string;
+  data?: string;
+  wrap?: boolean;
+}) {
+  if (wrap) {
+    return (
+      <span className={`${TONE_CLASS[tone]} status-chip--wrap`} data-status={data ?? ""}>
+        <Icon name={icon} /> <span>{label}</span>
+      </span>
+    );
+  }
   return (
     <span className={TONE_CLASS[tone]} data-status={data ?? ""}>
       <Icon name={icon} /> {label}
@@ -66,6 +88,8 @@ export interface Runner {
       body?: unknown;
       ifMatch?: number;
       idempotencyKey?: string;
+      /** Called after the refresh when the action fails (T-DG6-BE-Z14: the rule editor reloads its form). */
+      onError?: (e: unknown) => void | Promise<void>;
     },
   ) => Promise<T | null>;
   /** The form-level alert (one per form; S-7). */
@@ -78,7 +102,13 @@ export function useRunner(refresh: () => Promise<unknown>): Runner {
   const [error, setError] = useState<unknown>(null);
   const run = async <T,>(
     url: string,
-    options: { method?: "POST" | "PATCH" | "PUT"; body?: unknown; ifMatch?: number; idempotencyKey?: string },
+    options: {
+      method?: "POST" | "PATCH" | "PUT";
+      body?: unknown;
+      ifMatch?: number;
+      idempotencyKey?: string;
+      onError?: (e: unknown) => void | Promise<void>;
+    },
   ): Promise<T | null> => {
     const action = beginSessionGuard();
     setBusy(true);
@@ -98,6 +128,7 @@ export function useRunner(refresh: () => Promise<unknown>): Runner {
       if (action.stale(e)) return null;
       setError(e);
       if (e instanceof ApiError && (e.status === 409 || e.status === 422)) await refresh();
+      if (options.onError !== undefined && !action.stale()) await options.onError(e);
       return null;
     } finally {
       if (action.current()) setBusy(false);

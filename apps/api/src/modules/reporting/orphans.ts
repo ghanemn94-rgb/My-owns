@@ -10,7 +10,7 @@
 import { traceDirection, traceNodeType, type OrphanItem } from "@mth/shared/schemas";
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { principalOf, requireTransformationRead } from "../access/index.ts";
+import { principalOf, requireTransformationRead, withoutRestricted } from "../access/index.ts";
 import {
   cursorSchema,
   decodeCursor,
@@ -70,7 +70,14 @@ export function registerOrphanRoutes(app: FastifyInstance, { db }: ModuleDeps): 
       missing: query.missing,
     });
     const after = decodeCursor(query.cursor, hash, 2);
-    const all = await readOnly(db, (tx) => loadOrphans(tx, transformationId));
+    // T-DG6-BE-Z12 (found by the inventory-seeded sweep; ADR-0051 §2, D-218): a sensitive record the reader is not
+    // admitted to (a benefit with no links) is not listed: its id, code and label would disclose it.
+    const all = await withoutRestricted(
+      db,
+      principalOf(request),
+      await readOnly(db, (tx) => loadOrphans(tx, transformationId)),
+      (i) => ({ recordType: i.recordType, recordId: i.recordId }),
+    );
     const filtered = all.filter(
       (i) =>
         (query.recordType === undefined || i.recordType === query.recordType) &&

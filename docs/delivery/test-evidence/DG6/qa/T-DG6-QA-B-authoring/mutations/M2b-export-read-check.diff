@@ -1,0 +1,12 @@
+diff --git a/home/user/wt/dg6-qa-b/apps/api/src/modules/reporting/exports/jobs.ts b/var/tmp/mth-run.1KiDgR/claude-0/qa-b-mut/apps/api/src/modules/reporting/exports/jobs.ts
+index 1b66a7f..6f3fde4 100644
+--- a/home/user/wt/dg6-qa-b/apps/api/src/modules/reporting/exports/jobs.ts
++++ b/var/tmp/mth-run.1KiDgR/claude-0/qa-b-mut/apps/api/src/modules/reporting/exports/jobs.ts
+@@ -170,6 +170,7 @@ function requesterOf(principal: Principal): string {
+ 
+ /** True when the principal can still read the transformation (counts as a policy decision). */
+ async function canRead(db: DbOrTx, principal: Principal, transformationId: string): Promise<boolean> {
++  if (transformationId) return true;
+   return (await authorize(db, principal, "transformation.read", { type: "transformation", id: transformationId }))
+     .allowed;
+ }

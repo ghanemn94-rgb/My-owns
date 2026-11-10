@@ -27,7 +27,7 @@ import { freeText, type ClosureBasis, type ClosureRecord } from "@mth/shared/sch
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { v7 as uuidv7 } from "uuid";
 import { z } from "zod";
-import { principalOf, requireTransformationRead } from "../access/index.ts";
+import { principalOf, redactRestrictedIds, requireTransformationRead, type Principal } from "../access/index.ts";
 import { record } from "../audit/index.ts";
 import {
   ADVISORY_LOCK_CLASSES,
@@ -113,6 +113,17 @@ const toClosureRecord = (r: ClosureRow): ClosureRecord => ({
   closedAt: iso(r.closed_at as Date),
   closedBy: r.closed_by,
 });
+
+/**
+ * T-DG6-BE-Z10B (F-DG6-420; D-218; found by code reading: the demo has no closure): a closure record's frozen snapshot
+ * lists each benefit the value check saw, with its validated measurement and transition decision ids. A benefit entry
+ * the reader is not admitted to is omitted from the shown snapshot (`redactRestrictedIds`), and the record carries
+ * `includesRestrictedRecords: true`; the stored snapshot and the closure's basis are unchanged.
+ */
+async function shownClosure(db: DbOrTx, principal: Principal, record: ClosureRecord): Promise<ClosureRecord> {
+  const r = await redactRestrictedIds(db, principal, record.snapshot);
+  return r.restricted ? { ...record, snapshot: r.value, includesRestrictedRecords: true as const } : record;
+}
 
 async function findClosure(db: DbOrTx, id: string): Promise<ClosureRecord> {
   const row = await db.selectFrom("closure_record").selectAll().where("id", "=", id).executeTakeFirstOrThrow();
@@ -356,7 +367,13 @@ export function registerClosureRoutes(app: FastifyInstance, { db }: ModuleDeps):
       const { initiativeId } = parse(initiativeParams, request.params, "params");
       const body = await db
         .transaction()
-        .execute(async (tx) => findClosure(tx, await closeInitiative(tx, request, initiativeId)));
+        .execute(async (tx) =>
+          shownClosure(
+            tx,
+            principalOf(request),
+            await findClosure(tx, await closeInitiative(tx, request, initiativeId)),
+          ),
+        );
       return reply.code(201).send(body);
     },
   );
@@ -368,7 +385,13 @@ export function registerClosureRoutes(app: FastifyInstance, { db }: ModuleDeps):
       const transformationId = parseTransformationParam(request.params);
       const body = await db
         .transaction()
-        .execute(async (tx) => findClosure(tx, await closeTransformation(tx, request, transformationId)));
+        .execute(async (tx) =>
+          shownClosure(
+            tx,
+            principalOf(request),
+            await findClosure(tx, await closeTransformation(tx, request, transformationId)),
+          ),
+        );
       return reply.code(201).send(body);
     },
   );
@@ -386,7 +409,10 @@ export function registerClosureRoutes(app: FastifyInstance, { db }: ModuleDeps):
       .limit(query.limit + 1)
       .execute()) as ClosureRow[];
     const page = paginate(rows, query.limit, (r) => [r.id], hash);
-    return { items: page.items.map(toClosureRecord), nextCursor: page.nextCursor };
+    const principal = principalOf(request);
+    const items: ClosureRecord[] = [];
+    for (const r of page.items) items.push(await shownClosure(db, principal, toClosureRecord(r)));
+    return { items, nextCursor: page.nextCursor };
   });
 
   return [`POST ${INITIATIVE_CLOSE}`, `POST ${TRANSFORMATION_CLOSE}`, `GET ${CLOSURE_RECORDS}`];

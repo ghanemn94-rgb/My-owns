@@ -7,7 +7,7 @@ import { tomCanvasCellUpdate, type TomCanvasCell } from "@mth/shared/schemas";
 import type { FastifyInstance } from "fastify";
 import type { Selectable } from "kysely";
 import { z } from "zod";
-import { principalOf, requireTransformationRead } from "../access/index.ts";
+import { principalOf, requireTransformationRead, restrictedIdsOf, type Principal } from "../access/index.ts";
 import { record } from "../audit/index.ts";
 import { toEvidence } from "../evidence/index.ts";
 import { toTomDimension } from "../methodology/index.ts";
@@ -39,8 +39,12 @@ export const toTomCanvasCell = (r: CellRow): TomCanvasCell => ({
   updatedBy: r.updated_by,
 });
 
-/** The canvas of a transformation: one view per TOM dimension in source order (only `dimensionCode` when given). */
-export async function canvasViews(db: DbOrTx, transformationId: string, dimensionCode?: string) {
+/**
+ * The canvas of a transformation: one view per TOM dimension in source order (only `dimensionCode` when given).
+ * T-DG6-BE-Z10B (F-DG6-420; D-218; ADR-0051 §2): an evidence item linked to a box that the reader is not admitted to
+ * is not listed (its title is content too), and that box's view carries `includesRestrictedRecords: true`.
+ */
+export async function canvasViews(db: DbOrTx, principal: Principal, transformationId: string, dimensionCode?: string) {
   let cellsQ = db
     .selectFrom("tom_canvas_cell as c")
     .innerJoin("tom_dimension as d", "d.code", "c.dimension_code")
@@ -93,6 +97,12 @@ export async function canvasViews(db: DbOrTx, transformationId: string, dimensio
       .orderBy("e.id")
       .execute(),
   ]);
+  const hidden = await restrictedIdsOf(
+    db,
+    principal,
+    "evidence",
+    evidence.map((e) => e.id),
+  );
   const decisionViews = await decisionsWithOptions(db, decisions);
   const dimByCode = new Map(dims.map((d) => [d.code, d]));
   return cells.map(({ ordinal: _o, ...cell }) => ({
@@ -101,7 +111,12 @@ export async function canvasViews(db: DbOrTx, transformationId: string, dimensio
     gaps: gaps.filter((g) => g.dimension_code === cell.dimension_code).map(toTomGap),
     decisions: decisionViews.filter((d) => d.tomDimensionCode === cell.dimension_code),
     dependencies: dependencies.filter((d) => d.tom_dimension_code === cell.dimension_code).map(toDependency),
-    evidence: evidence.filter((e) => e.linked_cell_id === cell.id).map(({ linked_cell_id: _l, ...e }) => toEvidence(e)),
+    evidence: evidence
+      .filter((e) => e.linked_cell_id === cell.id && !hidden.has(e.id))
+      .map(({ linked_cell_id: _l, ...e }) => toEvidence(e)),
+    ...(evidence.some((e) => e.linked_cell_id === cell.id && hidden.has(e.id))
+      ? { includesRestrictedRecords: true as const }
+      : {}),
   }));
 }
 
@@ -111,7 +126,7 @@ export function registerCanvasRoutes(app: FastifyInstance, db: Db): string[] {
   app.get(C, { config: read }, async (request) => {
     const { transformationId } = parse(z.strictObject({ transformationId: z.uuid() }), request.params, "params");
     await requireTransformationRead(db, principalOf(request), transformationId);
-    const cells = await canvasViews(db, transformationId);
+    const cells = await canvasViews(db, principalOf(request), transformationId);
     if (cells.length !== 10) throw problems.notFound();
     return { cells };
   });
@@ -119,7 +134,7 @@ export function registerCanvasRoutes(app: FastifyInstance, db: Db): string[] {
   app.get(`${C}/:dimensionCode`, { config: read }, async (request, reply) => {
     const { transformationId, dimensionCode } = parse(cellParams, request.params, "params");
     await requireTransformationRead(db, principalOf(request), transformationId);
-    const [view] = await canvasViews(db, transformationId, dimensionCode);
+    const [view] = await canvasViews(db, principalOf(request), transformationId, dimensionCode);
     if (!view) throw problems.notFound();
     reply.header("ETag", `"${view.cell.version}"`);
     return view;
@@ -173,7 +188,7 @@ export function registerCanvasRoutes(app: FastifyInstance, db: Db): string[] {
         changes: diffFields(current, updated, ["current_design", "target_design", "owner_user_id", "status"]),
       });
     });
-    const [view] = await canvasViews(db, transformationId, dimensionCode);
+    const [view] = await canvasViews(db, principalOf(request), transformationId, dimensionCode);
     if (!view) throw problems.notFound();
     reply.header("ETag", `"${view.cell.version}"`);
     return view;

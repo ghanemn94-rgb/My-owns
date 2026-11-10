@@ -1,0 +1,96 @@
+port-policy: PostgreSQL listening on port 28901 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-z4
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw2ghkti_a7b80799 (server_encoding UTF8); applied 117 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/access/sensitive-reach-registers.test.ts (5 tests | 4 failed) 2144ms
+   × ADR-0051 §2: a sensitive benefit's register rows (F-DG6-220) > negative: TL, AUD and BO2 get 404 on the benefit; its case, decision and link are absent and 404 203ms
+     → TL: expected [ …(2) ] to not include '01a1a7d7-9e7d-77a4-b058-0fb078ff5ed5'
+   × ADR-0051 §2: a sensitive benefit's register rows (F-DG6-220) > negative: BO2 (holds every write permission) gets 404 on each write naming a child, and nothing changes 32ms
+     → PATCH /api/v1/transformations/01a1a7d7-9b9b-7509-8508-35ffa4a9ca55/corrective-actions/01a1a7d7-9e7d-77a4-b058-0fb078ff5ed5 {"id":"01a1a7d7-9e7d-77a4-b058-0fb078ff5ed5","transformationId":"01a1a7d7-9b9b-7509-8508-35ffa4a9ca55","code":"CA-912801","sourceKind":"benefit_variance","sourceScopeKey":"01a1a7d7-9d68-771c-b4de-39293a763e57","kpiDefinitionId":null,"kpiScopeKind":null,"kpiScopeId":null,"benefitId":"01a1a7d7-9d68-771c-b4de-39293a763e57","benefitLifecycleStep":"identify","sourceRecordType":null,"sourceRecordId":null,"title":"Synthetic CONFIDENTIAL tariff uplift variance","recoveryPlan":"Synthetic overwrite","ownerUserId":"01a1a7d7-9ba3-7643-bcc7-6c9ad6770561","ownerStatus":"assigned","followUpDate":"2030-01-15","followUpUnknownReason":null,"status":"open","consecutiveOffTrack":2,"signalCount":2,"lastSignalAt":null,"closedAt":null,"closedBy":null,"closureNote":null,"createdSource":"worker","version":2,"createdAt":"2026-11-04T18:34:48.317Z","createdBy":null,"updatedAt":"2026-11-04T18:34:48.598Z","updatedBy":"01a1a7d7-9ba3-7643-bcc7-6c9ad6770561"}: expected 200 to be 404 // Object.is equality
+   × ADR-0051 §2: a sensitive benefit's register rows (F-DG6-220) > negative: BO2's work items, inbox, My Work and deep links about the case and decision say inbox.restricted 19ms
+     → expected { …(2) } to deeply equal { key: 'inbox.restricted', params: {} }
+   ✓ ADR-0051 §2: a sensitive benefit's register rows (F-DG6-220) > positive: the TO (sensitive_record.grant) and BO (the owner) list and read every row 223ms
+   × ADR-0051 §2: a sensitive benefit's register rows (F-DG6-220) > positive: BO2 and TL with an explicit grant see the rows and texts again (next request); AUD still does not 344ms
+     → expected [ …(2) ] to not include '01a1a7d7-9e7d-77a4-b058-0fb078ff5ed5'
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-registers.test.ts > ADR-0051 §2: a sensitive benefit's register rows (F-DG6-220) > negative: TL, AUD and BO2 get 404 on the benefit; its case, decision and link are absent and 404
+AssertionError: TL: expected [ …(2) ] to not include '01a1a7d7-9e7d-77a4-b058-0fb078ff5ed5'
+ ❯ apps/api/test/integration/access/sensitive-reach-registers.test.ts:256:32
+    254|       const o = await observe(s);
+    255|       expect(o.benefit, who).toBe(404);
+    256|       expect(o.cases, who).not.toContain(S.caseId);
+       |                                ^
+    257|       expect(o.decisions, who).not.toContain(S.decisionId);
+    258|       expect(o.decisionsOfBenefit, who).toEqual([]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-registers.test.ts > ADR-0051 §2: a sensitive benefit's register rows (F-DG6-220) > negative: BO2 (holds every write permission) gets 404 on each write naming a child, and nothing changes
+AssertionError: PATCH /api/v1/transformations/01a1a7d7-9b9b-7509-8508-35ffa4a9ca55/corrective-actions/01a1a7d7-9e7d-77a4-b058-0fb078ff5ed5 {"id":"01a1a7d7-9e7d-77a4-b058-0fb078ff5ed5","transformationId":"01a1a7d7-9b9b-7509-8508-35ffa4a9ca55","code":"CA-912801","sourceKind":"benefit_variance","sourceScopeKey":"01a1a7d7-9d68-771c-b4de-39293a763e57","kpiDefinitionId":null,"kpiScopeKind":null,"kpiScopeId":null,"benefitId":"01a1a7d7-9d68-771c-b4de-39293a763e57","benefitLifecycleStep":"identify","sourceRecordType":null,"sourceRecordId":null,"title":"Synthetic CONFIDENTIAL tariff uplift variance","recoveryPlan":"Synthetic overwrite","ownerUserId":"01a1a7d7-9ba3-7643-bcc7-6c9ad6770561","ownerStatus":"assigned","followUpDate":"2030-01-15","followUpUnknownReason":null,"status":"open","consecutiveOffTrack":2,"signalCount":2,"lastSignalAt":null,"closedAt":null,"closedBy":null,"closureNote":null,"createdSource":"worker","version":2,"createdAt":"2026-11-04T18:34:48.317Z","createdBy":null,"updatedAt":"2026-11-04T18:34:48.598Z","updatedBy":"01a1a7d7-9ba3-7643-bcc7-6c9ad6770561"}: expected 200 to be 404 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 404[39m
+[31m+ 200[39m
+
+ ❯ apps/api/test/integration/access/sensitive-reach-registers.test.ts:303:70
+    301|     for (const [method, url, body] of writes) {
+    302|       const r = await send(method, url, { session: s, headers: ifm(1),…
+    303|       expect(r.status, `${method} ${url} ${JSON.stringify(r.body)}`).t…
+       |                                                                      ^
+    304|     }
+    305|     // A create naming the sensitive benefit answers as for an unknown…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-registers.test.ts > ADR-0051 §2: a sensitive benefit's register rows (F-DG6-220) > negative: BO2's work items, inbox, My Work and deep links about the case and decision say inbox.restricted
+AssertionError: expected { …(2) } to deeply equal { key: 'inbox.restricted', params: {} }
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[32m-   "key": "inbox.restricted",[39m
+[32m-   "params": {},[39m
+[31m+   "key": "raid.task.corrective_follow_up",[39m
+[31m+   "params": {[39m
+[31m+     "caseCode": "CA-SYNTH",[39m
+[31m+   },[39m
+[2m  }[22m
+
+ ❯ apps/api/test/integration/access/sensitive-reach-registers.test.ts:344:66
+    342|       const it1 = items.find((x) => x.id === id);
+    343|       expect(it1, id).toBeDefined();
+    344|       expect({ key: it1.messageKey, params: it1.messageParams }).toEqu…
+       |                                                                  ^
+    345|       const one = ok(await send("GET", `/api/v1/work-items/${id}`, { s…
+    346|       expect({ key: one.messageKey, params: one.messageParams }).toEqu…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/sensitive-reach-registers.test.ts > ADR-0051 §2: a sensitive benefit's register rows (F-DG6-220) > positive: BO2 and TL with an explicit grant see the rows and texts again (next request); AUD still does not
+AssertionError: expected [ …(2) ] to not include '01a1a7d7-9e7d-77a4-b058-0fb078ff5ed5'
+ ❯ apps/api/test/integration/access/sensitive-reach-registers.test.ts:422:27
+    420|     expect(mine.find((x) => x.recordId === S.caseId).messageKey).toBe(…
+    421|     const aud = await observe(c.b.s.auditor);
+    422|     expect(aud.cases).not.toContain(S.caseId);
+       |                           ^
+    423|     expect(aud.caseItem).toBe(404);
+    424|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 1 passed (5)
+   Start at  18:34:31
+   Duration  18.13s (transform 6.13s, setup 0ms, collect 11.45s, tests 2.14s, environment 0ms, prepare 78ms)
+

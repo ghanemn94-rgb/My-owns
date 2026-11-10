@@ -31,6 +31,9 @@ import {
   problems,
   requireIfMatch,
   sendVersioned,
+  keysetPage,
+  pageQueryFields,
+  type SortKey,
 } from "../platform/index.ts";
 
 const JSON_BODY = ["application/json"] as const;
@@ -276,6 +279,13 @@ async function retireType(tx: Tx, request: FastifyRequest, code: string): Promis
 
 const BASE = "/api/v1/dependency-types";
 const cParams = z.strictObject({ dependencyTypeCode: typeCode });
+const typeListQuery = z.strictObject({ ...pageQueryFields });
+/** The catalogue's page sort, as `loadDependencyTypes` (T-DG6-BE-V): ordinal, code, then id. */
+const TYPE_SORT: readonly SortKey[] = [
+  { name: "ordinal", type: "integer" },
+  { name: "code", type: "text" },
+  { name: "id", type: "uuid" },
+];
 
 /** The catalogue by ordinal, retired types included (they stay on existing rows). */
 export function loadDependencyTypes(db: DbOrTx): Promise<TypeRow[]> {
@@ -286,8 +296,11 @@ export function loadDependencyTypes(db: DbOrTx): Promise<TypeRow[]> {
 export function registerDependencyTypeRoutes(app: FastifyInstance, db: DbOrTx): string[] {
   app.get(BASE, { config: { access: { permission: "authenticated" } } }, async (request) => {
     principalOf(request);
-    parseQuery(z.strictObject({}), request.query);
-    return { items: (await loadDependencyTypes(db)).map(toDependencyType) };
+    const query = parseQuery(typeListQuery, request.query);
+    const page = await keysetPage(db.selectFrom("dependency_type").selectAll(), TYPE_SORT, query, {
+      list: "dependency-types",
+    });
+    return { items: page.items.map(toDependencyType), nextCursor: page.nextCursor };
   });
 
   app.post(

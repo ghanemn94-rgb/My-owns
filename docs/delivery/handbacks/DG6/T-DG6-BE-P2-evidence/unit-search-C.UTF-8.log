@@ -1,0 +1,27 @@
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-p2
+
+ ✓ |unit-node| apps/api/src/modules/search/search.test.ts (2 tests) 279ms
+ ✓ |unit-node| apps/api/src/modules/search/query.test.ts (5 tests) 27ms
+ ✓ |unit-node| apps/api/src/server.test.ts (6 tests) 7600ms
+   ✓ route registration > declares access on every /api route and on the health endpoints  2161ms
+   ✓ route registration > registers dev login only in AUTH_MODE=dev; production configuration refuses dev mode entirely  2304ms
+   ✓ session cookie security in production (F-DG1-112) > an https production origin starts  1081ms
+   ✓ module composition (D-048, P2) > wires the P2 business modules (each registering routes) and keeps reporting a route-free scaffold until P5  1848ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts (141 tests) 50776ms
+   ✓ API module boundaries (ADR-0002) > every import respects dependsOn, public surfaces and allowed packages  29749ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > rule 4 reports exactly the diagnostics of a full ts.transpileModule, for every extension (F-DG5-102/145)  1622ms
+   ✓ package dependency direction (ADR-0002 rule 5) > packages/db imports only @mth/config and @mth/shared  2853ms
+   ✓ package dependency direction (ADR-0002 rule 5) > packages/shared imports no workspace package  2717ms
+   ✓ package dependency direction (ADR-0002 rule 5) > apps/web never imports @mth/db or @mth/config (browser bundle, no secrets)  10704ms
+   ✓ package dependency direction (ADR-0002 rule 5) > apps/worker imports no API code  1513ms
+
+ Test Files  4 passed (4)
+      Tests  154 passed (154)
+   Start at  22:06:56
+   Duration  54.25s (transform 19.19s, setup 0ms, collect 45.98s, tests 58.68s, environment 1ms, prepare 1.02s)
+
+UNIT(C.UTF-8) exit=0

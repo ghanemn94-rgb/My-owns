@@ -15,6 +15,7 @@ import { Field } from "../../components/Form.tsx";
 import { PageHeader, usePageTitle } from "../../components/Page.tsx";
 import { Section } from "../../components/Section.tsx";
 import { QueryState } from "../../components/States.tsx";
+import { RestrictedRecordsLabel } from "../../components/sensitivity/RestrictedRecordsLabel.tsx";
 import { formatDateTime } from "../../lib/format.ts";
 import { ReadOnlyNote } from "../my-work/p4ui.tsx";
 import { renderMessage } from "../my-work/messages.ts";
@@ -336,7 +337,9 @@ export function DigestPage() {
                       i.messageKey,
                       i.messageParams as Record<string, string | number | boolean | null>,
                     )}
-                  </Link>{" "}
+                  </Link>
+                  {/* T-DG6-BE-Z14 (D-226, D-231): about a record I am not admitted to; links home only. */}
+                  <RestrictedRecordsLabel value={i.includesRestrictedRecords} scope="item" />{" "}
                   <span className="small muted">{formatDateTime(i.createdAt, locale)}</span>
                 </li>
               ))}

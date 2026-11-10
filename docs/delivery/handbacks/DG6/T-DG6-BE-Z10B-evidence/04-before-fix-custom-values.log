@@ -1,0 +1,47 @@
+port-policy: PostgreSQL listening on port 31053 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-z10b
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw6r22nd_ef708e90 (server_encoding UTF8); applied 118 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/forms/custom-values-restricted.test.ts (1 test | 1 failed) 618ms
+   × custom-field values naming a restricted record (T-DG6-BE-Z10B; D-218) > TL reads them without the restricted id (marked); a re-save keeps it; the TO sees it 73ms
+     → expected { minutes: [ …(2) ], …(1) } to match object { …(2) }
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/forms/custom-values-restricted.test.ts > custom-field values naming a restricted record (T-DG6-BE-Z10B; D-218) > TL reads them without the restricted id (marked); a re-save keeps it; the TO sees it
+AssertionError: expected { minutes: [ …(2) ], …(1) } to match object { …(2) }
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[2m    "minutes": [[22m
+[31m+     "01a1b750-fa4f-7111-b6a1-6975dc18923c",[39m
+[2m      "01a1b750-fa69-76b9-90e0-dc40c6ec1555",[22m
+[2m    ],[22m
+[32m-   "source": null,[39m
+[31m+   "source": "01a1b750-fa4f-7111-b6a1-6975dc18923c",[39m
+[2m  }[22m
+
+ ❯ apps/api/test/integration/forms/custom-values-restricted.test.ts:80:30
+     78|     const seen = await call<Body>(api.app, "GET", url(), { session: tl…
+     79|     expect(seen.status, JSON.stringify(seen.body).slice(0, 400)).toBe(…
+     80|     expect(seen.body.values).toMatchObject({ minutes: [o], source: nul…
+       |                              ^
+     81|     expect(seen.body.includesRestrictedRecords).toBe(true);
+     82|     expect(JSON.stringify(seen.body)).not.toContain(e);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  18:41:28
+   Duration  11.83s (transform 3.95s, setup 0ms, collect 7.60s, tests 618ms, environment 0ms, prepare 87ms)
+
+EXIT=1

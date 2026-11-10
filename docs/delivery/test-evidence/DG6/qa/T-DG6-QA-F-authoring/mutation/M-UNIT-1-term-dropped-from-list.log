@@ -1,0 +1,65 @@
+
+ RUN  v3.2.7 /var/tmp/mth-run.7UPnmG/claude-0/mut-api
+
+ ❯ |unit-node| tests/qa/unit/a20-s15-014-term-list.test.ts (26 tests | 2 failed) 22ms
+   × REQ-S15-014 clause 2: the ADR-0061 §8 term list > names every ADR-0061 §8 term (nothing dropped) 11ms
+     → SMTP: expected [ 'stack frame', …(25) ] to include 'SMTP'
+   ✓ REQ-S15-014 clause 2: the ADR-0061 §8 term list > detects stack frame in a leaked message 1ms
+   ✓ REQ-S15-014 clause 2: the ADR-0061 §8 term list > detects node_modules in a leaked message 1ms
+   ✓ REQ-S15-014 clause 2: the ADR-0061 §8 term list > detects ECONNREFUSED in a leaked message 0ms
+   ✓ REQ-S15-014 clause 2: the ADR-0061 §8 term list > detects ETIMEDOUT in a leaked message 0ms
+   ✓ REQ-S15-014 clause 2: the ADR-0061 §8 term list > detects SQLSTATE in a leaked message 0ms
+   ✓ REQ-S15-014 clause 2: the ADR-0061 §8 term list > detects PostgreSQL in a leaked message 0ms
+   ✓ REQ-S15-014 clause 2: the ADR-0061 §8 term list > detects postgres in a leaked message 0ms
+   ✓ REQ-S15-014 clause 2: the ADR-0061 §8 term list > detects Kysely in a leaked message 0ms
+   ✓ REQ-S15-014 clause 2: the ADR-0061 §8 term list > detects Fastify in a leaked message 0ms
+   ✓ REQ-S15-014 clause 2: the ADR-0061 §8 term list > detects pino in a leaked message 0ms
+   ✓ REQ-S15-014 clause 2: the ADR-0061 §8 term list > detects mth_app in a leaked message 0ms
+   ✓ REQ-S15-014 clause 2: the ADR-0061 §8 term list > detects mth_owner in a leaked message 0ms
+   ✓ REQ-S15-014 clause 2: the ADR-0061 §8 term list > detects outbox in a leaked message 0ms
+   ✓ REQ-S15-014 clause 2: the ADR-0061 §8 term list > detects advisory lock in a leaked message 0ms
+   ✓ REQ-S15-014 clause 2: the ADR-0061 §8 term list > detects localhost in a leaked message 0ms
+   ✓ REQ-S15-014 clause 2: the ADR-0061 §8 term list > detects 127.0.0.1 in a leaked message 0ms
+   ✓ REQ-S15-014 clause 2: the ADR-0061 §8 term list > detects TypeError in a leaked message 0ms
+   ✓ REQ-S15-014 clause 2: the ADR-0061 §8 term list > detects ReferenceError in a leaked message 0ms
+   ✓ REQ-S15-014 clause 2: the ADR-0061 §8 term list > detects [object Object] in a leaked message 0ms
+   ✓ REQ-S15-014 clause 2: the ADR-0061 §8 term list > detects S3 in a leaked message 2ms
+   ✓ REQ-S15-014 clause 2: the ADR-0061 §8 term list > detects bucket in a leaked message 0ms
+   × REQ-S15-014 clause 2: the ADR-0061 §8 term list > detects SMTP in a leaked message 1ms
+     → expected [] to include 'SMTP'
+   ✓ REQ-S15-014 clause 2: the ADR-0061 §8 term list > detects SQL in error context and file paths (the assignment's additions) 0ms
+   ✓ REQ-S15-014 clause 2: the ADR-0061 §8 term list > flags every line of the hostile diagnostics body the e2e scan serves 1ms
+   ✓ REQ-S15-014 clause 2: the ADR-0061 §8 term list > does not flag ordinary SYNTHETIC screen text in English and Arabic 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-node| tests/qa/unit/a20-s15-014-term-list.test.ts > REQ-S15-014 clause 2: the ADR-0061 §8 term list > names every ADR-0061 §8 term (nothing dropped)
+AssertionError: SMTP: expected [ 'stack frame', …(25) ] to include 'SMTP'
+ ❯ tests/qa/unit/a20-s15-014-term-list.test.ts:38:53
+     36|   it("names every ADR-0061 §8 term (nothing dropped)", () => {
+     37|     const names = TERM_PATTERNS.map((p) => p.name);
+     38|     for (const [term] of ADR_8) expect(names, term).toContain(term);
+       |                                                     ^
+     39|   });
+     40| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |unit-node| tests/qa/unit/a20-s15-014-term-list.test.ts > REQ-S15-014 clause 2: the ADR-0061 §8 term list > detects SMTP in a leaked message
+AssertionError: expected [] to include 'SMTP'
+ ❯ tests/qa/unit/a20-s15-014-term-list.test.ts:42:53
+     40| 
+     41|   it.each(ADR_8)("detects %s in a leaked message", (term, sample) => {
+     42|     expect(scanTerms(sample).map((h) => h.pattern)).toContain(term);
+       |                                                     ^
+     43|   });
+     44| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 24 passed (26)
+   Start at  04:28:47
+   Duration  1.06s (transform 80ms, setup 0ms, collect 65ms, tests 22ms, environment 0ms, prepare 165ms)
+

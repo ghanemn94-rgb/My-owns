@@ -2,14 +2,54 @@
 
 ## Runtime: no outbound internet needed
 
-The `api`, `worker` and `migrate` processes need exactly two services, both inside company infrastructure:
-**PostgreSQL** and the **corporate OIDC IdP**. The application makes no other outbound calls. It uses no telemetry,
-analytics, CDN, remote fonts (IBM Plex is bundled) or update checks.
+A default installation needs exactly two services, both inside company infrastructure:
 
-Later, optional integrations (SMTP, connectors, an AI endpoint) will be off by default and configured by IT. Each one
-will be listed here when it exists.
+- **PostgreSQL**, used by `api`, `worker` and `migrate`;
+- the **corporate OIDC IdP**, used by `api` only. A SAML-only IdP sits behind an OIDC broker that IT runs
+  ([identity-saml-broker.md](identity-saml-broker.md)). The hub still talks only OIDC, to the configured issuer.
 
-How this is proven:
+The application uses no telemetry, analytics, CDN, remote fonts (IBM Plex is bundled) or update checks. The
+assistant setting's `telemetryEnabled` is the constant `false`.
+
+### Optional outbound destinations (P6): each off unless IT configures it
+
+This release also ships the integrations below. **Each is off in a fresh install** and makes no connection until an
+administrator configures it with values Mobily IT supplies. None of them has a builder-hosted or public default.
+Each is proven only against a local fake in this release, and none is claimed to be connected to a Mobily system.
+
+| Destination | Off until | Process that connects | Where it is set | Guide |
+|---|---|---|---|---|
+| **SMTP relay** (the email channel) | an email channel is configured and enabled for an organization | `worker` (notifications) and `api` (the "test to me" message) | Administration > Notifications, per organization: host and port | [notifications.md](notifications.md) §2, §7 |
+| **Connector source endpoint** (`http_pull` adapter) | an `http_pull` connector is created and enabled, or tested | `api` only: the test, and the run watch that executes due runs. The worker only queues the scheduled slots. | Administration > Integrations, per organization: the connector's `endpointUrl` | ADR-0055 §1, §3 |
+| **S3-compatible object store** | a candidate `s3` setting is tested, or the storage setting is switched to `s3`. With no `storage_setting` row the environment default applies, `filesystem` in every shipped profile. | `api` only. Export files stay on the filesystem driver, and the worker makes no object-store connection. | Administration > Storage, installation-wide: the endpoint | [storage.md](storage.md) §3, §7 |
+| **Assistant model endpoint** (`http_endpoint` provider) | the assistant setting is enabled with `http_endpoint`. With it disabled, no provider is built. | `api` only. The worker has no assistant code. | Administration > AI assistant, installation-wide: `endpointUrl` (https required in production) | ADR-0059 §2, §3 |
+
+They are **not** outbound destinations:
+
+- **Webhooks** are inbound only: a sender IT authorizes posts to `POST /api/v1/webhooks/{endpointKey}` on the API.
+  The hub never calls the sender, and the signing secret is never sent anywhere.
+- **Outbound writes** run only on the local `test_adapter` in this release (migration 0104 refuses outbound actions
+  on other adapter kinds), so they open no connection. The `http_pull` adapter answers them `rejected` without any I/O.
+
+**Where they may connect is controlled in two places:**
+
+1. **The secret binding's `hosts`** ([configuration.md](configuration.md), "The binding", D-209). Each secret that one
+   of these settings names must be bound by IT in `SECRET_BINDINGS_FILE`, to one consumer (`smtp`, `connector`,
+   `storage` or `assistant`), one scope and 1–16 hosts. A setting pointed at a host not listed is refused when it is
+   saved or tested (`validation.secret_ref_host_not_bound`), and a secret is resolved for a use only when that use's
+   host matches. This control limits where a **secret** can be sent. It does not stop a setting that names no secret
+   (an SMTP relay without AUTH, an `http_pull` connector or an assistant endpoint without a credential) from
+   connecting to the host an administrator enters.
+2. **The deployment's network egress policy** (firewall, Kubernetes `NetworkPolicy`, proxy allow-list). It is the
+   control for where the `api` and `worker` processes may connect **at all**. Allow only PostgreSQL, the IdP and the
+   destinations IT actually configures above, from the processes listed. The product has no egress allow-list of its
+   own for credential-less endpoints.
+
+For a test run, setting `MTH_CONNECTION_LOG` to a file path makes the `api` and `worker` processes log every outbound
+connection attempt (host, address and port only). It is a test instrument: it is ignored, with a warning, when
+`NODE_ENV=production`, and it does not replace a network capture.
+
+How the default installation is proven to need no outbound internet:
 
 1. **Compose no-egress variant.** `deploy/compose/compose.no-egress.yaml` marks the project network
    `internal: true`. The containers can reach each other but have no route off the host, and published ports are

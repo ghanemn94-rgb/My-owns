@@ -303,6 +303,42 @@ describe.each(["en", "ar"] as const)("adoption screens (%s)", (locale) => {
     expect(body).not.toHaveProperty("proficiencyResult");
   });
 
+  it("form: the default observation date is today's Riyadh business date, also just after midnight on the 1st (T-DG6-BE-X8)", async () => {
+    // 2026-10-31T21:30Z is 00:30 on 1 November in Riyadh: the API selects the November reporting period from the
+    // business date, so a UTC default (31 October) would put the observation outside it and leave proficiency Unknown.
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-10-31T21:30:00Z"));
+    try {
+      const { requests } = mockApi(
+        ...p4Handlers(
+          locale,
+          ["proficiency.record", "assessment.respond"],
+          [
+            route("GET", new RegExp(`${esc(TRP)}/assessment-forms/${FORM_ID}$`), () => json(form())),
+            route("GET", new RegExp(`${esc(TRP)}/stakeholder-groups\\?`), () => page([group()])),
+            route("POST", new RegExp(`${esc(TRP)}/assessment-records$`), () => ({ status: 201, body: {} })),
+          ],
+        ),
+      );
+      renderApp(`/transformations/${TR_ID}/assessment-forms/${FORM_ID}`, { i18n: createI18n(locale) });
+      fireEvent.click(await screen.findByRole("button", { name: new RegExp(t("adoptionP4.forms.respond")) }));
+      const dialog = await screen.findByRole("dialog");
+      expect(within(dialog).getByLabelText(new RegExp(t("adoptionP4.records.observedOn")))).toHaveProperty(
+        "value",
+        "2026-11-01",
+      );
+      fireEvent.change(within(dialog).getByLabelText(t("adoptionP4.forms.subjectLabel")), {
+        target: { value: "Synthetic agent 7" },
+      });
+      fireEvent.change(dialog.querySelector("[data-answer='uses_queue']")!, { target: { value: "yes" } });
+      fireEvent.click(within(dialog).getByRole("button", { name: t("adoptionP4.forms.submitResponse") }));
+      await waitFor(() => expect(requests.some((r) => r.method === "POST")).toBe(true));
+      expect(requests.find((r) => r.method === "POST")!.body).toMatchObject({ observedOn: "2026-11-01" });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("record page: answers are labelled from the version answered (getAssessmentFormVersion), a key the version lacks shows 'Unknown question'", async () => {
     const RECORD_ID = "01920000-0000-7000-b000-0000000000a1";
     // The form moved on to version 2 (relabelled); the record was answered on version 1.

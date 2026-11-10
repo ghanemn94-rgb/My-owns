@@ -136,15 +136,23 @@ export function freeText(min: number, max: number) {
  * F-DG2-231 / F-DG2-260: a value that contains U+0000 or a lone surrogate is rejected with
  * `validation.invalid_character` (and not also as blank).
  * Declared after `BLANK_TEXT_CODE`/`hasVisibleContent` so the schemas below never read them in their TDZ.
+ * T-DG6-DO-A2: since zod 4.6 a string's `min`/`max` count Unicode code points (a surrogate pair is one, a lone
+ * surrogate is one), not UTF-16 units, so "`min` already failed" is measured the same way here.
  */
 function trimmedText(min: number, max: number) {
+  const belowMin = (v: string) => codePointCount(v) < min;
   return z
     .string()
     .trim()
     .min(min)
     .max(max)
-    .refine((v) => v.length < min || !hasInvalidCharacter(v), INVALID_CHARACTER_CODE)
-    .refine((v) => v.length < min || hasInvalidCharacter(v) || hasVisibleContent(v), BLANK_TEXT_CODE);
+    .refine((v) => belowMin(v) || !hasInvalidCharacter(v), INVALID_CHARACTER_CODE)
+    .refine((v) => belowMin(v) || hasInvalidCharacter(v) || hasVisibleContent(v), BLANK_TEXT_CODE);
+}
+
+/** The number of Unicode code points of `v`, as zod (≥ 4.6) counts a string's length: a lone surrogate counts as one. */
+function codePointCount(v: string): number {
+  return Array.from(v).length;
 }
 export const name = trimmedText(1, 200);
 export const reason = trimmedText(3, 1000);

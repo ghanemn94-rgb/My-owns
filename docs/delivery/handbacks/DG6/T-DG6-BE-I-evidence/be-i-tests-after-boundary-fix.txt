@@ -1,0 +1,19 @@
+port-policy: PostgreSQL listening on port 23920 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-i
+
+[integration] PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1); database mth_test_mvsiggv5_b08764ed (server_encoding UTF8); applied 104 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/admin/notification-channels.test.ts (11 tests) 4854ms
+   ✓ reads > AUD and TO read through operations.read; a user without either code gets 403; another organization's admin 403  366ms
+   ✓ putNotificationChannel > creates with If-Match "0", updates with the version, audits each change with prior and new version  406ms
+   ✓ putNotificationChannel > refusals: each ADR-0054 §4 code, and nothing is written  318ms
+   ✓ putNotificationChannel > commit-time re-authorization: the configure right revoked between load and commit is 403 and nothing is written  327ms
+   ✓ testNotificationChannel > 422 not_configured until email is enabled; then one message to the caller's own address and an audit event  496ms
+ ✓ |integration| apps/api/test/integration/tasks/email-adapter-contract.test.ts (14 tests) 1104ms
+
+ Test Files  2 passed (2)
+      Tests  25 passed (25)
+   Start at  19:31:56
+   Duration  36.98s (transform 9.38s, setup 0ms, collect 22.78s, tests 5.96s, environment 0ms, prepare 267ms)
+

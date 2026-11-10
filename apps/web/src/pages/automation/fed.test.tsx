@@ -19,6 +19,7 @@ import { dirname, join } from "node:path";
 import { cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Permission } from "@mth/shared";
+import { AUTOMATION_RESTRICTED_LITERAL } from "@mth/shared/schemas";
 import { createI18n, catalogues } from "../../i18n/index.ts";
 import {
   ORG_ID,
@@ -32,7 +33,7 @@ import {
   route,
 } from "../../test/fixtures.tsx";
 import { toBody, toDraft } from "../procedure-builder/DefinitionPage.tsx";
-import { toContentBody, toContentDraft } from "./ContentEditor.tsx";
+import { conditionIsRestricted, toContentBody, toContentDraft } from "./ContentEditor.tsx";
 import { SAMPLE_TRANSFORMATION_PLACEHOLDER, dryRunTemplate } from "./RulePage.tsx";
 
 beforeEach(() => localStorage.clear());
@@ -324,6 +325,59 @@ describe("REQ-S12-001 / S12-002: an automation rule", () => {
     expect(document.documentElement.dir).toBe("rtl");
   });
 
+  for (const locale of ["en", "ar"] as const) {
+    it(`${locale}: T-DG6-BE-Z12B: a condition whose literal names a restricted record shows the restricted label`, async () => {
+      // D-226 (ADR-0051 §2): the server shows the literal as an opaque token and marks the version; a value that only
+      // equals the bare marker text gets no label (T-DG6-BE-Z13).
+      const restricted = {
+        ...content,
+        conditions: [
+          { field: "gateCode", op: "eq", value: "[restricted:b80d42e6a1c9375f0e2b8d64:1]" },
+          { field: "outcome", op: "eq", value: "approved" },
+          { field: "outcome", op: "neq", value: AUTOMATION_RESTRICTED_LITERAL },
+        ],
+      };
+      mockApi(
+        meRoute(ADM_METHOD, locale),
+        ...ruleRoutes(
+          rule(),
+          ruleVersion({ status: "in_review", content: restricted, includesRestrictedRecords: true }),
+        ),
+      );
+      renderApp(`/admin/automation/rules/${RULE_ID}`, { i18n: createI18n(locale) });
+      const first = await found("[data-condition='0']");
+      expect(first.querySelector("[data-restricted-records='true']")).not.toBeNull();
+      expect(first.textContent).toContain(catalogues[locale].access.includesRestrictedRecords);
+      expect(first.querySelector("[data-restricted-records='true']")?.getAttribute("title")).toBe(
+        catalogues[locale].adminP6.restricted.hintItem,
+      );
+      expect(document.querySelector("[data-condition='1'] [data-restricted-records]")).toBeNull();
+      expect(document.querySelector("[data-condition='2'] [data-restricted-records]")).toBeNull();
+    });
+  }
+
+  it("T-DG6-BE-Z13: the builder sends each restricted token back wherever its condition sits (D-226)", () => {
+    const draft = toContentDraft({
+      ...content,
+      runAs: "service",
+      conditions: [
+        { field: "gateCode", op: "eq", value: "[restricted:b80d42e6a1c9375f0e2b8d64:1]" },
+        { field: "outcome", op: "in", value: ["approved", "[restricted:b80d42e6a1c9375f0e2b8d64:2]"] },
+        { field: "outcome", op: "neq", value: AUTOMATION_RESTRICTED_LITERAL },
+      ],
+    });
+    expect(conditionIsRestricted(draft.conditions[0]!)).toBe(true);
+    expect(conditionIsRestricted(draft.conditions[1]!)).toBe(true);
+    // The bare marker text is not a token: no label (the server refuses it on save).
+    expect(conditionIsRestricted(draft.conditions[2]!)).toBe(false);
+    // The author removes the first condition: the label follows the token to its new position.
+    draft.conditions = draft.conditions.slice(1, 2);
+    expect(conditionIsRestricted(draft.conditions[0]!)).toBe(true);
+    expect(toContentBody(draft)["conditions"]).toEqual([
+      { field: "outcome", op: "in", value: ["approved", "[restricted:b80d42e6a1c9375f0e2b8d64:2]"] },
+    ]);
+  });
+
   it("the builder body keeps the typed action settings and never sends a float", () => {
     const d = toContentDraft(content as Parameters<typeof toContentDraft>[0]);
     d.actions[0]!.dueInWorkingDays = "5";
@@ -448,6 +502,121 @@ describe("REQ-S12-002: the failure queue", () => {
     const alert = await screen.findByRole("alert");
     expect(alert.textContent).toContain(catalogues.en.problems.automation_failure__not_open);
     expect(requests.find((r) => r.url.endsWith("/retry"))!.headers["if-match"]).toBe('"7"');
+  });
+});
+
+describe("T-DG6-BE-Z13C (D-228 (3), D-227, D-218): the restricted label on the failure queue and an execution", () => {
+  const base = {
+    source: "job",
+    organizationId: ORG_ID,
+    executionId: null,
+    jobScheduleCode: null,
+    queueName: "raid.corrective_benefit",
+    jobId: "job-1",
+    errorCode: "job.failed",
+    attempts: 6,
+    firstFailedAt: "2026-10-16T08:00:00Z",
+    lastFailedAt: "2026-10-16T08:00:00Z",
+    status: "open",
+    retryCount: 0,
+    lastRetryBy: null,
+    lastRetryAt: null,
+    resolvedAt: null,
+    dismissedBy: null,
+    dismissedAt: null,
+    dismissReason: null,
+    allowedActions: ["dismiss"],
+    version: 3,
+    updatedAt: "2026-10-16T08:00:00Z",
+  };
+  const restricted = {
+    ...base,
+    id: "01920000-0000-7000-b100-000000000311",
+    idempotencyKey: "benefit.variance_evaluated:[restricted]",
+    errorMessage: "benefit [restricted] is not in organization",
+    includesRestrictedRecords: true,
+  };
+  const plain = {
+    ...base,
+    id: "01920000-0000-7000-b100-000000000312",
+    queueName: "gates.decided",
+    idempotencyKey: "gate.decided:01920000-0000-7000-b100-000000000999",
+    errorMessage: "synthetic unrelated fault",
+  };
+  const EXECUTION_ID = "01920000-0000-7000-b100-000000000411";
+  const execution = {
+    id: EXECUTION_ID,
+    ruleId: "01920000-0000-7000-b100-000000000412",
+    ruleCode: "starter.kpi_deviation",
+    versionId: "01920000-0000-7000-b100-000000000413",
+    versionNo: 1,
+    triggerCode: "benefit.variance_evaluated",
+    triggerKey: "benefit.variance_evaluated:[restricted]",
+    organizationId: ORG_ID,
+    transformationId: TR_ID,
+    runAs: "service",
+    initiatingUserId: null,
+    status: "succeeded",
+    conditionsMet: true,
+    attemptNo: 1,
+    errorCode: null,
+    errorDetail: null,
+    startedAt: "2026-10-16T08:00:00Z",
+    finishedAt: "2026-10-16T08:00:01Z",
+    actionResults: [],
+    includesRestrictedRecords: true,
+  };
+
+  for (const locale of ["en", "ar"] as const) {
+    it(`${locale}: a failure whose key or error text is masked carries the item label; an unrelated one does not`, async () => {
+      mockApi(
+        meRoute(["organization.read", "automation.read", "automation.repair"], locale),
+        route("GET", /\/admin\/automation-failures/, ok({ items: [restricted, plain], nextCursor: null })),
+      );
+      renderApp("/admin/automation/failures", { i18n: createI18n(locale) });
+      const label = await found("[data-restricted-records='true']");
+      expect(label.getAttribute("data-restricted-scope")).toBe("item");
+      expect(label.getAttribute("title")).toBe(catalogues[locale].adminP6.restricted.hintItem);
+      expect(label.textContent).toContain(catalogues[locale].access.includesRestrictedRecords);
+      expect(document.querySelectorAll("[data-restricted-records='true']")).toHaveLength(1);
+      expect(label.closest("tr")?.textContent).toContain(restricted.idempotencyKey);
+      expect(label.closest("tr")?.textContent).not.toContain(plain.idempotencyKey);
+      // The dismiss form names the item and repeats the label.
+      fireEvent.click(
+        screen.getByRole("button", {
+          name: `${catalogues[locale].workflowsP5.failures.dismiss}: ${restricted.idempotencyKey}`,
+        }),
+      );
+      await waitFor(() => expect(document.querySelectorAll("[data-restricted-records='true']")).toHaveLength(2));
+      expect(document.documentElement.dir).toBe(locale === "ar" ? "rtl" : "ltr");
+    });
+
+    it(`${locale}: an execution whose trigger key is masked carries the item label`, async () => {
+      mockApi(
+        meRoute(["organization.read", "automation.read"], locale),
+        route("GET", new RegExp(`/admin/automation-executions/${EXECUTION_ID}$`), ok(execution)),
+      );
+      renderApp(`/admin/automation/executions/${EXECUTION_ID}`, { i18n: createI18n(locale) });
+      const facts = await found("[data-execution-status]");
+      const label = await waitFor(() => {
+        const el = facts.querySelector("[data-restricted-records='true']");
+        if (!el) throw new Error("no label");
+        return el;
+      });
+      expect(label.getAttribute("data-restricted-scope")).toBe("item");
+      expect(label.textContent).toContain(catalogues[locale].access.includesRestrictedRecords);
+    });
+  }
+
+  it("an execution without the marker shows no label", async () => {
+    const { includesRestrictedRecords: _drop, ...open } = { ...execution, triggerKey: "benefit.variance_evaluated:x" };
+    mockApi(
+      meRoute(["organization.read", "automation.read"]),
+      route("GET", new RegExp(`/admin/automation-executions/${EXECUTION_ID}$`), ok(open)),
+    );
+    renderApp(`/admin/automation/executions/${EXECUTION_ID}`, { i18n: createI18n("en") });
+    await found("[data-execution-status]");
+    expect(document.querySelector("[data-restricted-records]")).toBeNull();
   });
 });
 

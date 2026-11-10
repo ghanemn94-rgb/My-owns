@@ -13,6 +13,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { p5Paths, useConfigElements } from "../../api/p5.ts";
 import { useLocale } from "../../app/locale.ts";
+import { Unknown } from "../../components/Badges.tsx";
 import { EmptyState, QueryState } from "../../components/States.tsx";
 import { Section, TextCell } from "../../components/Section.tsx";
 import { type P4Values } from "../my-work/p4ui.tsx";
@@ -30,6 +31,7 @@ import {
   TEXT_ATTRIBUTES,
   attrText,
   elementLabel,
+  useVersionDiff,
   type ConfigElement,
   type ConfigVersion,
 } from "./api.ts";
@@ -202,6 +204,20 @@ export function ElementsSection({
     profiles.data?.items.find((p) => p.elementRef === `${e.elementType}.${e.stableKey}`);
   const [editing, setEditing] = useState<ConfigElement | null>(null);
   const [adding, setAdding] = useState(false);
+  // F-DG5-121 (ADR-0061 §9): "Changed" means the value differs from the base version, so a version with a base reads
+  // its change from the version diff (the Differences section's own query), not from "the version has a row". A
+  // version without a base (the first of its kind) has nothing to differ from: its rows read "Set in this version".
+  const diff = useVersionDiff(version.basedOnVersionId ? version.id : undefined);
+  const changeOf = (e: ConfigElement): string | null => {
+    if (e.removed) return t("studio.elements.removed");
+    if (version.basedOnVersionId) {
+      if (!diff.data) return null;
+      const entry = diff.data.entries.find((x) => x.elementType === e.elementType && x.stableKey === e.stableKey);
+      return entry ? t(`studio.diff.kind.${entry.change}`) : t("studio.elements.unchanged");
+    }
+    if (e.origin === "admin") return t("studio.elements.added");
+    return e.overridden ? t("studio.elements.setInVersion") : t("studio.elements.unchanged");
+  };
 
   if (types.length === 0)
     return (
@@ -344,6 +360,11 @@ export function ElementsSection({
           {t("studio.elements.includeRemoved")}
         </label>
       </div>
+      {version.basedOnVersionId ? (
+        <p className="small muted" data-legend="changed">
+          {t("studio.diff.changedLegend")}
+        </p>
+      ) : null}
       <QueryState
         query={elements}
         isEmpty={(rows) => rows.length === 0}
@@ -397,14 +418,13 @@ export function ElementsSection({
                       <td>
                         <TextCell value={attrText(e, locale === "ar" ? "helpAr" : "helpEn")} />
                       </td>
-                      <td>
-                        {e.removed
-                          ? t("studio.elements.removed")
-                          : e.overridden
-                            ? t("studio.elements.overridden")
-                            : e.origin === "admin"
-                              ? t("studio.elements.added")
-                              : t("studio.elements.unchanged")}
+                      <td data-element-change>
+                        {changeOf(e) ??
+                          (diff.isError ? (
+                            <Unknown hint={t("studio.elements.changeUnknown")} />
+                          ) : (
+                            <span className="muted">{t("common.state.loading")}</span>
+                          ))}
                       </td>
                       {editable ? (
                         <td>

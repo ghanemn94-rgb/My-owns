@@ -1,0 +1,12 @@
+port-policy: PostgreSQL listening on port 25870 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+PASS  G00 0119 is the highest shipped file on this branch  -- last: 0119_p6_branding_version_contrast_required.sql
+PASS  G01 0001..0118 apply  -- applied 110
+PASS  G02 only 0119 applies over 0118  -- 0119_p6_branding_version_contrast_required.sql
+PASS  G03 the version published before 0119 and its head are byte-identical; no report is backfilled  -- identical; {"reports":0,"pairs":0}
+PASS  G04 the constraint trigger is on branding_version, DEFERRABLE INITIALLY DEFERRED  -- [{"tgdeferrable":true,"tginitdeferred":true,"relname":"branding_version"}]
+PASS  RQ01 a version without its report fails at COMMIT  -- 23000 branding_version_contrast_required branding_version 2 of organization 01990000-0000-7000-8000-000000000001 has no contrast report (ADR-0061 §1.3)
+PASS  RQ02 a version with its report commits  -- committed
+PASS  RQ03 version 1 (before the rule) is still there without a report; version 2 has one  -- versions [1,2]; reports for v1: 0
+
+8/8 PASS

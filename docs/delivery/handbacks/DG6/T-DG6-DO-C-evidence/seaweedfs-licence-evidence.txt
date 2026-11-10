@@ -1,0 +1,57 @@
+# SeaweedFS licence and version evidence (T-DG6-DO-C), fetched 2026-10-29T02:46Z through the session egress proxy
+
+## 1. LICENSE at the repository root (official source repository github.com/seaweedfs/seaweedfs)
+URL: https://raw.githubusercontent.com/seaweedfs/seaweedfs/master/LICENSE  HTTP 200
+sha256 of the fetched bytes: d789d433cc11da163273d1e39be2e8fa67642f9a58ef220d3f258fa9c14ef613  (11337 bytes)
+First lines:
+                                 Apache License
+                           Version 2.0, January 2004
+                        http://www.apache.org/licenses/
+
+## 2. README.md licence section and image name
+URL: https://raw.githubusercontent.com/seaweedfs/seaweedfs/master/README.md  HTTP 200, sha256 66935667e2f5c7106a44129d1eaf18a91f3bced4f4d394b6f76f538a988d65b2
+392:# License #
+393-
+394-Licensed under the Apache License, Version 2.0 (the "License");
+395-you may not use this file except in compliance with the License.
+412:SeaweedFS is an independent Apache-licensed open source project with its ongoing development made
+Docker section (the image the official README documents):
+## Docker ##
+
+```bash
+docker run -p 8333:8333 -v weed-data:/data \
+  -e AWS_ACCESS_KEY_ID=admin \
+  -e AWS_SECRET_ACCESS_KEY=secret \
+  -e S3_BUCKET=my-bucket \
+  chrislusf/seaweedfs
+```
+Enterprise note (a separate commercial edition; NOT what this document names):
+For enterprise users, please visit [seaweedfs.com](https://seaweedfs.com) for the SeaweedFS Enterprise Edition,
+which has advanced features, including data recovery, self-healing storage,
+customizable erasure coding, EC vacuum and repair, etc.
+Note on README line 89: weed mini 'issues presigned URLs' as a feature of the store; the hub never requests or uses them (ADR-0010 §2, D-195 Q2).
+
+## 3. Version on the default branch
+URL: https://raw.githubusercontent.com/seaweedfs/seaweedfs/master/weed/util/version/constants.go  HTTP 200, sha256 a1b6d04fe5ca471975629edc7347c77bfd30887ee2888cb55c05ba69bddcfb50
+11:	MAJOR_VERSION  = int32(4)
+12:	MINOR_VERSION  = int32(51)
+
+## 4. Docker Hub tags of chrislusf/seaweedfs (name filter 4.5)
+URL: https://hub.docker.com/v2/repositories/chrislusf/seaweedfs/tags?page_size=20&name=4.5  HTTP 200, sha256 42d0c39dc10cd776eb456db7029652ca48d1c78c665aa1fdf875a7d6ddf82ac0
+  4.51 2026-10-26T05:13:01.671353Z sha256:f7a49e3f3972ebed5be2ed4befa4a0c68eb7bdddba6e692d42729ceb545134b8
+  4.51_full 2026-10-26T05:12:55.747446Z sha256:0ca1f13e8707729209f8bf7f5c27dbbacb3c7f1e05c6c1d6bcb87e8db1de738a
+  4.51_large_disk 2026-10-26T05:12:42.149767Z sha256:f44a1d38dd2da974a16ccb26f9f9447152fd1c101ca03032e88819c6318d7bf6
+  4.51_large_disk_rocksdb 2026-10-26T05:12:38.518721Z sha256:58fb940cc65fe91970ccbc1018b98c277d5299ffc4e08202f83c2dbdbead62cf
+  4.51_large_disk_full 2026-10-26T05:12:38.360194Z sha256:3b106135c29add56917f261056bffe5753326c0b4995f4f6525395c78aa19980
+  4.51_large_disk_foundationdb 2026-10-25T19:59:08.513926Z sha256:919b7aacc1155ce8d4581a644bbc8f8f1835cdce5a9ee2290c123bff4aafe699
+  4.50_large_disk 2026-10-25T04:47:07.490063Z sha256:24078c252608c8a97c097d4e6b7d93a41293069790bdbd59bd98dd2ccf912bb7
+  4.50_large_disk_rocksdb 2026-10-25T04:46:52.639958Z sha256:f6c0e41cac89fccc6f67dc7b46a0c7515c75372e3b8a64ba54e37a93bcfbdf54
+  4.50_large_disk_full 2026-10-25T04:46:46.759209Z sha256:b3b766f292a90dd561686791788a59e355b410150e53909b08de53d5dea5d199
+  4.50_full 2026-10-25T04:46:46.416944Z sha256:e2d9c669ba02148c7dd21b666dda2f3fd68511f73dfda1677a398cdce0a0a6bb
+  4.50 2026-10-25T04:46:45.877121Z sha256:c2658820e763294a9e9de7b36c81e59b879e3459148351aee4e31a126ca64860
+  4.50_large_disk_foundationdb 2026-10-25T03:26:52.47366Z sha256:3e91fbaae36d272b9c07d38469de6472402f028992bc606b1fe201071857bd72
+
+## 5. Not obtained
+- https://github.com/seaweedfs/seaweedfs/releases/latest and api.github.com: HTTP 403 'GitHub access to this repository is not enabled for this session'. So the GitHub release page for 4.51 was NOT read; the version rests on the Docker Hub tag (4.51, 2026-10-26) and constants.go on master (4.51).
+- No published support window or LTS policy was found in the README; none is claimed. The support window is [UNVERIFIED].
+- The digest above is the tag's digest as reported by Docker Hub's API on the fetch date. It is NOT written into deploy/images.lock.json: SeaweedFS is not bundled or pinned by the product (IT test aid only).

@@ -1,0 +1,17 @@
+Thu Oct 29 17:03:07 UTC 2026
+cmd: LANG=C.UTF-8 LC_ALL=C.UTF-8 npx vitest run --project unit-node apps/api/src/architecture.test.ts apps/api/src/server.test.ts
+ ✓ |unit-node| apps/api/src/server.test.ts (6 tests) 6220ms
+   ✓ route registration > declares access on every /api route and on the health endpoints  3221ms
+   ✓ route registration > registers dev login only in AUTH_MODE=dev; production configuration refuses dev mode entirely  1233ms
+   ✓ session cookie security in production (F-DG1-112) > an https production origin starts  857ms
+   ✓ module composition (D-048, P2) > wires the P2 business modules (each registering routes) and keeps reporting a route-free scaffold until P5  656ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts (141 tests) 44840ms
+   ✓ API module boundaries (ADR-0002) > every import respects dependsOn, public surfaces and allowed packages  24887ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > rule 4 reports exactly the diagnostics of a full ts.transpileModule, for every extension (F-DG5-102/145)  1317ms
+   ✓ package dependency direction (ADR-0002 rule 5) > packages/db imports only @mth/config and @mth/shared  1176ms
+   ✓ package dependency direction (ADR-0002 rule 5) > packages/shared imports no workspace package  4592ms
+   ✓ package dependency direction (ADR-0002 rule 5) > apps/web never imports @mth/db or @mth/config (browser bundle, no secrets)  10816ms
+   ✓ package dependency direction (ADR-0002 rule 5) > apps/worker imports no API code  887ms
+ Test Files  2 passed (2)
+      Tests  147 passed (147)
+exit=0

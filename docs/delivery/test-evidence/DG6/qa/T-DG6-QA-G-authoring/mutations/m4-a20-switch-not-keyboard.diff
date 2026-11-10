@@ -1,0 +1,14 @@
+--- e2e/a20-p6-ux.spec.ts	2026-10-31 05:31:25.035998634 +0000
++++ /var/tmp/mth-run.Vz44Ls/claude-0/mut/e2e/m4-a20-switch-not-keyboard.spec.ts	2026-10-31 05:33:55.149153164 +0000
+@@ -366,6 +366,11 @@
+   page,
+ }, info) => {
+   const lang = langOf(info);
++  // MUTATION (T-DG6-QA-G): the language switch is not reachable by keyboard (tabindex -1 on every render).
++  await page.addInitScript(() => {
++    const strip = () => document.querySelectorAll("header button[lang]").forEach((b) => b.setAttribute("tabindex", "-1"));
++    new MutationObserver(strip).observe(document, { subtree: true, childList: true });
++  });
+   await signIn(page, lang, "dev.lead");
+   await page.goto("/my-work");
+   await expect(page.locator("main#main h1")).toBeVisible();

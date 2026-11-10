@@ -642,6 +642,8 @@ describe("schema.ts matches the migrated database", () => {
          'gate_condition_closure', 'gate_condition_escalation', 'notification_policy', 'notification_preference',
          'notification_digest', 'meeting_cutoff_pack', 'dependency_slip')
          AND t.tgname NOT LIKE '%contributor%' -- 0097's triggers: checked by the 0097 test below
+         AND t.tgname <> 'automation_rule_enablement_record' -- 0122's trigger: checked by the 0122 test below
+         AND t.tgname <> 'automation_rule_version_token_key_immutable' -- 0127's trigger: checked by the 0127 test below
        ORDER BY 1, 2`,
     );
     type Row = [string, string, boolean, boolean];
@@ -709,6 +711,8 @@ describe("schema.ts matches the migrated database", () => {
       ["owner_update_revision", "owner_update_revision_append_only", false, false],
       ["owner_update_revision", "owner_update_revision_append_only_truncate", false, false],
       ["owner_update_revision", "owner_update_revision_row_guard", false, false],
+      // 0126 (T-DG6-BE-Z9, F-DG6-400): aggregates_recorded never changes after the insert.
+      ["report_snapshot", "report_snapshot_aggregates_recorded_immutable", false, false],
       ["report_snapshot", "report_snapshot_audit_required", true, true],
       ["report_snapshot", "report_snapshot_guard", false, false],
       ["report_snapshot", "report_snapshot_row_guard", false, false],
@@ -728,6 +732,21 @@ describe("schema.ts matches the migrated database", () => {
       ["report_snapshot_version", "report_snapshot_version_row_guard", false, false],
     ];
     expect(rows.map((r) => [r.rel, r.tgname, r.deferrable, r.deferred])).toEqual(expected);
+  });
+
+  it("0126: report_snapshot_aggregate is creation-only and append-only, like the other snapshot children", async () => {
+    const rows = await q<{ rel: string; tgname: string; deferrable: boolean; deferred: boolean }>(
+      `SELECT c.relname AS rel, t.tgname, t.tgdeferrable AS deferrable, t.tginitdeferred AS deferred
+       FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid
+       WHERE NOT t.tgisinternal AND c.relname = 'report_snapshot_aggregate'
+       ORDER BY 1, 2`,
+    );
+    expect(rows.map((r) => [r.rel, r.tgname, r.deferrable, r.deferred])).toEqual([
+      ["report_snapshot_aggregate", "report_snapshot_aggregate_append_only", false, false],
+      ["report_snapshot_aggregate", "report_snapshot_aggregate_append_only_truncate", false, false],
+      ["report_snapshot_aggregate", "report_snapshot_aggregate_guard", false, false],
+      ["report_snapshot_aggregate", "report_snapshot_aggregate_row_guard", false, false],
+    ]);
   });
 
   it("0085-0086: the P5 slice G/H guards are attached (deferred audit and completeness checks, append-only children)", async () => {
@@ -820,6 +839,8 @@ describe("schema.ts matches the migrated database", () => {
       ["branding_version", "branding_version_append_only", false, false],
       ["branding_version", "branding_version_append_only_truncate", false, false],
       ["branding_version", "branding_version_audit_required", true, true],
+      // 0119 (T-DG6-BE-W; ADR-0061 §2): a version inserted after it has its contrast report at COMMIT.
+      ["branding_version", "branding_version_contrast_required", true, true],
       ["branding_version", "branding_version_guard", false, false],
       ["branding_version", "branding_version_row_guard", false, false],
       ["demo_dataset_run", "demo_dataset_run_append_only", false, false],
@@ -843,6 +864,335 @@ describe("schema.ts matches the migrated database", () => {
       ["source_foundation", "source_foundation_append_only_truncate", false, false],
       ["walkthrough_step", "walkthrough_step_append_only", false, false],
       ["walkthrough_step", "walkthrough_step_append_only_truncate", false, false],
+    ];
+    expect(rows.map((r) => [r.rel, r.tgname, r.deferrable, r.deferred])).toEqual(expected);
+  });
+
+  it("0098-0099: the P6 slice E/F guards are attached (deferred audit, record references, set-once deep links, trigger-written histories)", async () => {
+    const rows = await q<{ rel: string; tgname: string; deferrable: boolean; deferred: boolean }>(
+      `SELECT c.relname AS rel, t.tgname, t.tgdeferrable AS deferrable, t.tginitdeferred AS deferred
+       FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid
+       WHERE NOT t.tgisinternal AND (c.relname IN ('record_sensitivity', 'record_sensitivity_change', 'sensitive_record_grant',
+         'upload_policy', 'upload_policy_change') OR t.tgname = 'inbox_notification_deep_link_guard')
+       ORDER BY 1, 2`,
+    );
+    type Row = [string, string, boolean, boolean];
+    const expected: Row[] = [
+      ["inbox_notification", "inbox_notification_deep_link_guard", false, false],
+      ["record_sensitivity", "record_sensitivity_audit_required", true, true],
+      ["record_sensitivity", "record_sensitivity_guard", false, false],
+      ["record_sensitivity", "record_sensitivity_history", false, false],
+      ["record_sensitivity", "record_sensitivity_record_ref", false, false],
+      ["record_sensitivity", "record_sensitivity_row_guard", false, false],
+      ["record_sensitivity_change", "record_sensitivity_change_append_only", false, false],
+      ["record_sensitivity_change", "record_sensitivity_change_append_only_truncate", false, false],
+      ["sensitive_record_grant", "sensitive_record_grant_audit_required", true, true],
+      ["sensitive_record_grant", "sensitive_record_grant_guard", false, false],
+      ["sensitive_record_grant", "sensitive_record_grant_record_ref", false, false],
+      ["sensitive_record_grant", "sensitive_record_grant_row_guard", false, false],
+      ["upload_policy", "upload_policy_audit_required", true, true],
+      ["upload_policy", "upload_policy_history", false, false],
+      ["upload_policy", "upload_policy_row_guard", false, false],
+      ["upload_policy_change", "upload_policy_change_append_only", false, false],
+      ["upload_policy_change", "upload_policy_change_append_only_truncate", false, false],
+    ];
+    expect(rows.map((r) => [r.rel, r.tgname, r.deferrable, r.deferred])).toEqual(expected);
+  });
+
+  it("0101-0102: the P6 slice J/C guards are attached (deferred audit, state machines, trigger-written histories, append-only links, an unaudited heartbeat)", async () => {
+    const rows = await q<{ rel: string; tgname: string; deferrable: boolean; deferred: boolean }>(
+      `SELECT c.relname AS rel, t.tgname, t.tgdeferrable AS deferrable, t.tginitdeferred AS deferred
+       FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid
+       WHERE NOT t.tgisinternal AND c.relname IN ('notification_channel', 'notification_channel_change', 'notification_delivery', 'operational_exception', 'operational_exception_event', 'operational_exception_kpi', 'service_identity', 'service_identity_change', 'storage_setting', 'storage_setting_change', 'worker_heartbeat')
+       ORDER BY 1, 2`,
+    );
+    type Row = [string, string, boolean, boolean];
+    const expected: Row[] = [
+      ["notification_channel", "notification_channel_audit_required", true, true],
+      ["notification_channel", "notification_channel_history", false, false],
+      ["notification_channel", "notification_channel_row_guard", false, false],
+      ["notification_channel_change", "notification_channel_change_append_only", false, false],
+      ["notification_channel_change", "notification_channel_change_append_only_truncate", false, false],
+      ["notification_delivery", "notification_delivery_audit_required", true, true],
+      ["notification_delivery", "notification_delivery_guard", false, false],
+      ["notification_delivery", "notification_delivery_row_guard", false, false],
+      ["operational_exception", "operational_exception_audit_required", true, true],
+      ["operational_exception", "operational_exception_guard", false, false],
+      ["operational_exception", "operational_exception_history", false, false],
+      ["operational_exception", "operational_exception_row_guard", false, false],
+      ["operational_exception_event", "operational_exception_event_append_only", false, false],
+      ["operational_exception_event", "operational_exception_event_append_only_truncate", false, false],
+      ["operational_exception_kpi", "operational_exception_kpi_append_only", false, false],
+      ["operational_exception_kpi", "operational_exception_kpi_append_only_truncate", false, false],
+      ["operational_exception_kpi", "operational_exception_kpi_guard", false, false],
+      ["service_identity", "service_identity_audit_required", true, true],
+      ["service_identity", "service_identity_guard", false, false],
+      ["service_identity", "service_identity_history", false, false],
+      ["service_identity", "service_identity_row_guard", false, false],
+      ["service_identity_change", "service_identity_change_append_only", false, false],
+      ["service_identity_change", "service_identity_change_append_only_truncate", false, false],
+      ["storage_setting", "storage_setting_audit_required", true, true],
+      ["storage_setting", "storage_setting_history", false, false],
+      ["storage_setting", "storage_setting_row_guard", false, false],
+      ["storage_setting_change", "storage_setting_change_append_only", false, false],
+      ["storage_setting_change", "storage_setting_change_append_only_truncate", false, false],
+      ["worker_heartbeat", "worker_heartbeat_guard", false, false],
+      ["worker_heartbeat", "worker_heartbeat_row_guard", false, false],
+    ];
+    expect(rows.map((r) => [r.rel, r.tgname, r.deferrable, r.deferred])).toEqual(expected);
+  });
+
+  it("0104-0106: the P6 slice B/A guards are attached (deferred audit, state machines, trigger-written histories, append-only configuration versions, receipts and lineage, staged rows never deleted)", async () => {
+    const rows = await q<{ rel: string; tgname: string; deferrable: boolean; deferred: boolean }>(
+      `SELECT c.relname AS rel, t.tgname, t.tgdeferrable AS deferrable, t.tginitdeferred AS deferred
+       FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid
+       WHERE NOT t.tgisinternal AND c.relname IN ('connector', 'connector_change', 'connector_config_version', 'deliverable_external_change', 'deliverable_external_change_event', 'import_batch', 'import_batch_event', 'import_row', 'import_row_commit', 'integration_run', 'integration_run_event', 'outbound_write', 'outbound_write_event', 'webhook_endpoint', 'webhook_endpoint_change', 'webhook_receipt')
+       ORDER BY 1, 2`,
+    );
+    type Row = [string, string, boolean, boolean];
+    const expected: Row[] = [
+      ["connector", "connector_audit_required", true, true],
+      ["connector", "connector_guard", false, false],
+      ["connector", "connector_history", false, false],
+      ["connector", "connector_row_guard", false, false],
+      ["connector_change", "connector_change_append_only", false, false],
+      ["connector_change", "connector_change_append_only_truncate", false, false],
+      ["connector_config_version", "connector_config_version_append_only", false, false],
+      ["connector_config_version", "connector_config_version_append_only_truncate", false, false],
+      ["connector_config_version", "connector_config_version_guard", false, false],
+      ["deliverable_external_change", "deliverable_external_change_audit_required", true, true],
+      ["deliverable_external_change", "deliverable_external_change_guard", false, false],
+      ["deliverable_external_change", "deliverable_external_change_history", false, false],
+      ["deliverable_external_change", "deliverable_external_change_row_guard", false, false],
+      ["deliverable_external_change_event", "deliverable_external_change_event_append_only", false, false],
+      ["deliverable_external_change_event", "deliverable_external_change_event_append_only_truncate", false, false],
+      ["import_batch", "import_batch_audit_required", true, true],
+      ["import_batch", "import_batch_guard", false, false],
+      ["import_batch", "import_batch_history", false, false],
+      ["import_batch", "import_batch_row_guard", false, false],
+      ["import_batch_event", "import_batch_event_append_only", false, false],
+      ["import_batch_event", "import_batch_event_append_only_truncate", false, false],
+      ["import_row", "import_row_guard", false, false],
+      ["import_row", "import_row_no_delete", false, false],
+      ["import_row", "import_row_no_truncate", false, false],
+      ["import_row", "import_row_row_guard", false, false],
+      ["import_row_commit", "import_row_commit_append_only", false, false],
+      ["import_row_commit", "import_row_commit_append_only_truncate", false, false],
+      ["import_row_commit", "import_row_commit_guard", false, false],
+      ["integration_run", "integration_run_audit_required", true, true],
+      ["integration_run", "integration_run_guard", false, false],
+      ["integration_run", "integration_run_history", false, false],
+      ["integration_run", "integration_run_row_guard", false, false],
+      ["integration_run_event", "integration_run_event_append_only", false, false],
+      ["integration_run_event", "integration_run_event_append_only_truncate", false, false],
+      ["outbound_write", "outbound_write_audit_required", true, true],
+      ["outbound_write", "outbound_write_guard", false, false],
+      ["outbound_write", "outbound_write_history", false, false],
+      ["outbound_write", "outbound_write_row_guard", false, false],
+      ["outbound_write_event", "outbound_write_event_append_only", false, false],
+      ["outbound_write_event", "outbound_write_event_append_only_truncate", false, false],
+      ["webhook_endpoint", "webhook_endpoint_audit_required", true, true],
+      ["webhook_endpoint", "webhook_endpoint_guard", false, false],
+      ["webhook_endpoint", "webhook_endpoint_history", false, false],
+      ["webhook_endpoint", "webhook_endpoint_row_guard", false, false],
+      ["webhook_endpoint_change", "webhook_endpoint_change_append_only", false, false],
+      ["webhook_endpoint_change", "webhook_endpoint_change_append_only_truncate", false, false],
+      ["webhook_receipt", "webhook_receipt_append_only", false, false],
+      ["webhook_receipt", "webhook_receipt_append_only_truncate", false, false],
+      ["webhook_receipt", "webhook_receipt_guard", false, false],
+    ];
+    expect(rows.map((r) => [r.rel, r.tgname, r.deferrable, r.deferred])).toEqual(expected);
+  });
+
+  it("0108: the P6 slice H/G guards are attached (deferred audit on saved views, monotonic derived index rows, trigger-written history, append-only load marker)", async () => {
+    const rows = await q<{ rel: string; tgname: string; deferrable: boolean; deferred: boolean }>(
+      `SELECT c.relname AS rel, t.tgname, t.tgdeferrable AS deferrable, t.tginitdeferred AS deferred
+       FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid
+       WHERE NOT t.tgisinternal AND c.relname IN ('help_topic', 'load_dataset_marker', 'saved_view', 'saved_view_event', 'search_document', 'search_index_state')
+       ORDER BY 1, 2`,
+    );
+    type Row = [string, string, boolean, boolean];
+    const expected: Row[] = [
+      ["load_dataset_marker", "load_dataset_marker_append_only", false, false],
+      ["load_dataset_marker", "load_dataset_marker_append_only_truncate", false, false],
+      ["load_dataset_marker", "load_dataset_marker_guard", false, false],
+      ["saved_view", "saved_view_audit_required", true, true],
+      ["saved_view", "saved_view_guard", false, false],
+      ["saved_view", "saved_view_history", false, false],
+      ["saved_view", "saved_view_row_guard", false, false],
+      ["saved_view_event", "saved_view_event_append_only", false, false],
+      ["saved_view_event", "saved_view_event_append_only_truncate", false, false],
+      ["search_document", "search_document_guard", false, false],
+      ["search_document", "search_document_row_guard", false, false],
+      ["search_index_state", "search_index_state_guard", false, false],
+      ["search_index_state", "search_index_state_row_guard", false, false],
+    ];
+    expect(rows.map((r) => [r.rel, r.tgname, r.deferrable, r.deferred])).toEqual(expected);
+  });
+
+  it("0111: the P6 slice D guards are attached (deferred audit on the setting, conversations and suggestions; the message count checked at COMMIT; trigger-written setting history; append-only messages)", async () => {
+    const rows = await q<{ rel: string; tgname: string; deferrable: boolean; deferred: boolean }>(
+      `SELECT c.relname AS rel, t.tgname, t.tgdeferrable AS deferrable, t.tginitdeferred AS deferred
+       FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid
+       WHERE NOT t.tgisinternal AND c.relname IN ('assistant_setting', 'assistant_setting_change', 'assistant_conversation', 'assistant_message', 'assistant_suggestion')
+       ORDER BY 1, 2`,
+    );
+    type Row = [string, string, boolean, boolean];
+    const expected: Row[] = [
+      ["assistant_conversation", "assistant_conversation_audit_required", true, true],
+      ["assistant_conversation", "assistant_conversation_guard", false, false],
+      ["assistant_conversation", "assistant_conversation_messages_match", true, true],
+      ["assistant_conversation", "assistant_conversation_row_guard", false, false],
+      ["assistant_message", "assistant_message_append_only", false, false],
+      ["assistant_message", "assistant_message_append_only_truncate", false, false],
+      ["assistant_message", "assistant_message_counted", true, true],
+      ["assistant_message", "assistant_message_guard", false, false],
+      ["assistant_setting", "assistant_setting_audit_required", true, true],
+      ["assistant_setting", "assistant_setting_guard", false, false],
+      ["assistant_setting", "assistant_setting_history", false, false],
+      ["assistant_setting", "assistant_setting_row_guard", false, false],
+      ["assistant_setting_change", "assistant_setting_change_append_only", false, false],
+      ["assistant_setting_change", "assistant_setting_change_append_only_truncate", false, false],
+      ["assistant_suggestion", "assistant_suggestion_audit_required", true, true],
+      ["assistant_suggestion", "assistant_suggestion_guard", false, false],
+      ["assistant_suggestion", "assistant_suggestion_row_guard", false, false],
+    ];
+    expect(rows.map((r) => [r.rel, r.tgname, r.deferrable, r.deferred])).toEqual(expected);
+  });
+
+  it("0122: the enablement ledger is append-only and written by its SECURITY DEFINER trigger on automation_rule (D-203 O-2)", async () => {
+    const rows = await q<{ rel: string; tgname: string; deferrable: boolean; deferred: boolean }>(
+      `SELECT c.relname AS rel, t.tgname, t.tgdeferrable AS deferrable, t.tginitdeferred AS deferred
+       FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid
+       WHERE NOT t.tgisinternal AND (c.relname = 'automation_rule_enablement' OR t.tgname = 'automation_rule_enablement_record')
+       ORDER BY 1, 2`,
+    );
+    expect(rows.map((r) => [r.rel, r.tgname, r.deferrable, r.deferred])).toEqual([
+      ["automation_rule", "automation_rule_enablement_record", false, false],
+      ["automation_rule_enablement", "automation_rule_enablement_append_only", false, false],
+      ["automation_rule_enablement", "automation_rule_enablement_append_only_truncate", false, false],
+    ]);
+    const [fn] = await q<{ definer: boolean; public_exec: boolean }>(
+      `SELECT p.prosecdef AS definer, has_function_privilege('public', p.oid, 'EXECUTE') AS public_exec
+         FROM pg_proc p WHERE p.proname = 'automation_rule_enablement_record'`,
+    );
+    expect(fn).toEqual({ definer: true, public_exec: false });
+  });
+
+  it("0127: each rule version has its own 32-byte restricted-token key, drawn at insert and never changed (D-233)", async () => {
+    const rows = await q<{ tgname: string; deferrable: boolean }>(
+      `SELECT t.tgname, t.tgdeferrable AS deferrable FROM pg_trigger t
+        WHERE NOT t.tgisinternal AND t.tgname = 'automation_rule_version_token_key_immutable'
+          AND t.tgrelid = 'automation_rule_version'::regclass`,
+    );
+    expect(rows).toEqual([{ tgname: "automation_rule_version_token_key_immutable", deferrable: false }]);
+    // The starter versions written by earlier migrations each got their own key when the column was added.
+    const [keys] = await q<{ n: number; distinct_keys: number; short: number }>(
+      `SELECT count(*)::int AS n, count(DISTINCT restricted_token_key)::int AS distinct_keys,
+              count(*) FILTER (WHERE octet_length(restricted_token_key) <> 32)::int AS short
+         FROM automation_rule_version`,
+    );
+    expect(keys!.n).toBeGreaterThan(0);
+    expect(keys).toEqual({ n: keys!.n, distinct_keys: keys!.n, short: 0 });
+    const client = await owner.pool.connect();
+    try {
+      await client.query("BEGIN");
+      const [row] = (
+        await client.query<{ id: string; version: number }>("SELECT id, version FROM automation_rule_version LIMIT 1")
+      ).rows;
+      await client.query("SAVEPOINT s");
+      const changed = await client
+        .query("UPDATE automation_rule_version SET restricted_token_key = $2, version = version + 1 WHERE id = $1", [
+          row!.id,
+          Buffer.alloc(32, 7),
+        ])
+        .then(
+          () => "updated",
+          (e: { constraint?: string }) => e.constraint,
+        );
+      expect(changed).toBe("automation_rule_version_token_key_immutable");
+      await client.query("ROLLBACK TO SAVEPOINT s");
+    } finally {
+      await client.query("ROLLBACK");
+      client.release();
+    }
+    const [check] = await q<{ def: string }>(
+      `SELECT pg_get_constraintdef(c.oid) AS def FROM pg_constraint c
+        WHERE c.conname = 'automation_rule_version_token_key_length' AND c.conrelid = 'automation_rule_version'::regclass`,
+    );
+    expect(check?.def).toBe("CHECK ((octet_length(restricted_token_key) = 32))");
+    const [col] = await q<{ nullable: string; def: string }>(
+      `SELECT is_nullable AS nullable, column_default AS def FROM information_schema.columns
+        WHERE table_name = 'automation_rule_version' AND column_name = 'restricted_token_key'`,
+    );
+    expect(col).toEqual({ nullable: "NO", def: "(uuid_send(gen_random_uuid()) || uuid_send(gen_random_uuid()))" });
+  });
+
+  it("0123: the ledger records disables (source CHECK), has the occurrence-time lookup index, and its writer stays SECURITY DEFINER (D-204)", async () => {
+    const [check] = await q<{ def: string }>(
+      `SELECT pg_get_constraintdef(c.oid) AS def FROM pg_constraint c
+        WHERE c.conname = 'automation_rule_enablement_source' AND c.conrelid = 'automation_rule_enablement'::regclass`,
+    );
+    for (const source of ["enable", "effective_version", "backfill", "disable", "backfill_disable"])
+      expect(check?.def).toContain(`'${source}'::text`);
+    const [idx] = await q<{ def: string }>(
+      `SELECT pg_get_indexdef(i.indexrelid) AS def FROM pg_index i JOIN pg_class c ON c.oid = i.indexrelid
+        WHERE c.relname = 'automation_rule_enablement_rule_time_idx'`,
+    );
+    expect(idx?.def).toContain("(automation_rule_id, enabled_from DESC, id DESC)");
+    const [fn] = await q<{ definer: boolean; public_exec: boolean; src: string }>(
+      `SELECT p.prosecdef AS definer, has_function_privilege('public', p.oid, 'EXECUTE') AS public_exec, p.prosrc AS src
+         FROM pg_proc p WHERE p.proname = 'automation_rule_enablement_record'`,
+    );
+    expect(fn).toMatchObject({ definer: true, public_exec: false });
+    expect(fn?.src).toContain("'disable'");
+  });
+
+  it("0125: export_job counts its assembly attempts (NOT NULL, default 0, >= 0) and its guard checks the assigned snapshot's definition and the attempt step (F-DG6-sa12-1, F-DG6-sa12-3)", async () => {
+    const [col] = await q<{ data_type: string; is_nullable: string; column_default: string }>(
+      `SELECT data_type, is_nullable, column_default FROM information_schema.columns
+        WHERE table_schema = 'public' AND table_name = 'export_job' AND column_name = 'assembly_attempt_count'`,
+    );
+    expect(col).toEqual({ data_type: "integer", is_nullable: "NO", column_default: "0" });
+    const [check] = await q<{ def: string }>(
+      `SELECT pg_get_constraintdef(c.oid) AS def FROM pg_constraint c
+        WHERE c.conname = 'export_job_assembly_attempt_count_check' AND c.conrelid = 'export_job'::regclass`,
+    );
+    expect(check?.def).toBe("CHECK ((assembly_attempt_count >= 0))");
+    const [fn] = await q<{ src: string }>(`SELECT p.prosrc AS src FROM pg_proc p WHERE p.proname = 'export_job_guard'`);
+    // The 0124 rules stay; 0125 adds the snapshot/selection definition match and the attempt step.
+    for (const name of [
+      "export_job_created_queued",
+      "export_job_request_immutable",
+      "export_job_transition",
+      "export_job_finished_frozen",
+      "export_job_attempt_step",
+      "export_job_snapshot_exportable",
+      "export_job_format_offered",
+      "export_job_snapshot_selection",
+      "export_job_assembly_attempt_step",
+    ])
+      expect(fn?.src, name).toContain(`'${name}'`);
+    expect(fn?.src).toContain("s.definition_code IS DISTINCT FROM NEW.selection ->> 'definitionCode'");
+  });
+
+  it("0113:the P6 slice I contrast report guards are attached (deferred audit on the report; the pair count checked at COMMIT from both tables; both append-only)", async () => {
+    const rows = await q<{ rel: string; tgname: string; deferrable: boolean; deferred: boolean }>(
+      `SELECT c.relname AS rel, t.tgname, t.tgdeferrable AS deferrable, t.tginitdeferred AS deferred
+       FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid
+       WHERE NOT t.tgisinternal AND c.relname IN ('branding_contrast_report', 'branding_contrast_pair')
+       ORDER BY 1, 2`,
+    );
+    type Row = [string, string, boolean, boolean];
+    const expected: Row[] = [
+      ["branding_contrast_pair", "branding_contrast_pair_append_only", false, false],
+      ["branding_contrast_pair", "branding_contrast_pair_append_only_truncate", false, false],
+      ["branding_contrast_pair", "branding_contrast_pair_report_complete", true, true],
+      ["branding_contrast_report", "branding_contrast_report_append_only", false, false],
+      ["branding_contrast_report", "branding_contrast_report_append_only_truncate", false, false],
+      ["branding_contrast_report", "branding_contrast_report_audit_required", true, true],
+      ["branding_contrast_report", "branding_contrast_report_pairs_complete", true, true],
+      ["branding_contrast_report", "branding_contrast_report_row_guard", false, false],
     ];
     expect(rows.map((r) => [r.rel, r.tgname, r.deferrable, r.deferred])).toEqual(expected);
   });
@@ -1110,6 +1460,36 @@ describe("type and structure rules (ADR-0003, data dictionary global rules)", ()
       "launch_task_predecessor",
       // P5 slices I and J (0089-0090, T-DG5-ARCH-06; ADR-0049, ADR-0050): the branding head row only.
       "branding_setting",
+      // P6 slices E and F (0098-0099, T-DG6-ARCH-01; ADR-0051, ADR-0052). The two histories carry record_version.
+      "record_sensitivity",
+      "sensitive_record_grant",
+      "upload_policy",
+      // P6 slices J and C (0101-0102, T-DG6-ARCH-02; ADR-0053, ADR-0054). The histories carry record_version;
+      // worker_heartbeat is version-stepped but not audited (telemetry).
+      "service_identity",
+      "operational_exception",
+      "worker_heartbeat",
+      "storage_setting",
+      "notification_channel",
+      "notification_delivery",
+      // P6 slices B and A (0104-0106, T-DG6-ARCH-03; ADR-0055, ADR-0056). The histories carry record_version;
+      // connector_config_version is numbered by version_no (append-only), import_row has no version (column grant).
+      "connector",
+      "integration_run",
+      "outbound_write",
+      "webhook_endpoint",
+      "import_batch",
+      "deliverable_external_change",
+      // P6 slices H and G (0108, T-DG6-ARCH-04; ADR-0057). saved_view is audited and its history carries record_version;
+      // search_document and search_index_state are version-stepped but not audited (a derived index and its telemetry).
+      "search_document",
+      "search_index_state",
+      "saved_view",
+      // P6 slice D (0111, T-DG6-ARCH-05; ADR-0059). All three audited; the setting history carries record_version;
+      // assistant_message is append-only and numbered by seq (no version column).
+      "assistant_setting",
+      "assistant_conversation",
+      "assistant_suggestion",
     ];
     const rows = await q<{ t: string; d: string }>(
       `SELECT table_name AS t, column_default AS d FROM information_schema.columns
@@ -1421,6 +1801,7 @@ describe("mth_app privileges are exactly the data dictionary's", () => {
       report_snapshot_source: "INSERT,SELECT",
       report_snapshot_version: "INSERT,SELECT",
       report_snapshot_evidence: "INSERT,SELECT",
+      report_snapshot_aggregate: "INSERT,SELECT", // 0126 (T-DG6-BE-Z9): append-only, like the other children
       owner_update: SIU,
       owner_update_revision: "INSERT,SELECT",
       export_job: SIU,
@@ -1460,6 +1841,67 @@ describe("mth_app privileges are exactly the data dictionary's", () => {
       playbook_block_link: "SELECT",
       source_foundation: "SELECT",
       walkthrough_step: "SELECT",
+      // P6 slices E and F (0098-0100): still no DELETE anywhere; the sensitivity flag, grants and upload policy are
+      // updated in place with If-Match; their histories are written only by SECURITY DEFINER triggers (SELECT only).
+      record_sensitivity: SIU,
+      record_sensitivity_change: "SELECT",
+      sensitive_record_grant: SIU,
+      upload_policy: SIU,
+      upload_policy_change: "SELECT",
+      // P6 slices J and C (0101-0102): still no DELETE anywhere. service_identity has table-level INSERT and SELECT and a
+      // COLUMN-level UPDATE of the grant only (not listed in role_table_grants; probe SI12). Histories: SELECT only.
+      service_identity: "INSERT,SELECT",
+      service_identity_change: "SELECT",
+      operational_exception: SIU,
+      operational_exception_event: "SELECT",
+      operational_exception_kpi: "INSERT,SELECT",
+      worker_heartbeat: SIU,
+      storage_setting: SIU,
+      storage_setting_change: "SELECT",
+      notification_channel: SIU,
+      notification_channel_change: "SELECT",
+      notification_delivery: SIU,
+      // P6 slices B and A (0104-0106): still no DELETE anywhere. Configuration versions, webhook receipts and lineage are
+      // append-only (INSERT and SELECT); import_row has a COLUMN-level UPDATE of commit_status and updated_at only (probe
+      // IM14). Histories: SELECT only.
+      connector: SIU,
+      connector_config_version: "INSERT,SELECT",
+      connector_change: "SELECT",
+      integration_run: SIU,
+      integration_run_event: "SELECT",
+      outbound_write: SIU,
+      outbound_write_event: "SELECT",
+      webhook_endpoint: SIU,
+      webhook_endpoint_change: "SELECT",
+      webhook_receipt: "INSERT,SELECT",
+      import_batch: SIU,
+      import_batch_event: "SELECT",
+      import_row: "INSERT,SELECT",
+      import_row_commit: "INSERT,SELECT",
+      deliverable_external_change: SIU,
+      deliverable_external_change_event: "SELECT",
+      // P6 slices H and G (0108, T-DG6-ARCH-04; ADR-0057, ADR-0058): the derived search index is also deletable by the
+      // index job; the index states are seeded (no INSERT); saved views are soft-deleted (no DELETE); help topics and the
+      // load marker are read-only to the application; histories SELECT only.
+      search_document: "DELETE,INSERT,SELECT,UPDATE",
+      search_index_state: "SELECT,UPDATE",
+      saved_view: SIU,
+      saved_view_event: "SELECT",
+      help_topic: "SELECT",
+      load_dataset_marker: "SELECT",
+      // P6 slice D (0111, T-DG6-ARCH-05; ADR-0059): no DELETE anywhere; messages are append-only (INSERT and SELECT);
+      // the setting history is SELECT only (trigger-written).
+      assistant_setting: SIU,
+      assistant_setting_change: "SELECT",
+      assistant_conversation: SIU,
+      assistant_message: "INSERT,SELECT",
+      assistant_suggestion: SIU,
+      // P6 slice I (0113; T-DG6-ARCH-06, ADR-0061 §2): the contrast report of a published branding version, append-only.
+      branding_contrast_report: "INSERT,SELECT",
+      branding_contrast_pair: "INSERT,SELECT",
+      // P6 pre-freeze repair (0122; T-DG6-BE-X9, D-203 O-2): the enablement ledger is written only by its SECURITY
+      // DEFINER trigger on automation_rule (SELECT only).
+      automation_rule_enablement: "SELECT",
     });
   });
 

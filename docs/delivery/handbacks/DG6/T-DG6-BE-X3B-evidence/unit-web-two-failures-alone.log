@@ -1,0 +1,108 @@
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-x3
+
+ ❯ |unit-web| src/app/axe-scope.test.ts (4 tests | 1 failed) 4844ms
+   ✓ axe scope (ADR-0061 §7.2) > finds the P6 routes of the router (the DG5 baseline is not empty and the router adds routes in P6) 2ms
+   × axe scope (ADR-0061 §7.2) > lists every route added to router.tsx in P6 in e2e/support/p6-axe-screens.ts 24ms
+     → add these routes to P6_AXE_ROUTES in e2e/support/p6-axe-screens.ts: expected [ '/my-work/drafts' ] to deeply equal []
+   ✓ axe scope (ADR-0061 §7.2) > names only routes the router registers, each once, with a name and a user 9ms
+   ✓ axe scope (ADR-0061 §7.2) > keeps P6_AXE_ROUTES to P6 routes (a DG1-DG5 screen belongs to the key flows or the P5 reflow spec) 0ms
+ ❯ |unit-web| src/pages/admin/security/p6-admin-screens.test.tsx (33 tests | 1 failed) 7575ms
+   ✓ Administration > Audit (REQ-S16-032) > en: lists events read-only; a redacted event shows Redacted, never its reason  820ms
+   ✓ Administration > Audit (REQ-S16-032) > ar: lists events read-only; a redacted event shows Redacted, never its reason 204ms
+   ✓ Administration > Audit (REQ-S16-032) > an invalid filter shows one alert and sends nothing 157ms
+   ✓ Administration > Audit (REQ-S16-032) > the event detail shows the field changes, and Redacted instead of them when redacted  364ms
+   ✓ Administration > Security > Upload policy (REQ-S13-011) > en: the auditor reads the default policy with no form  368ms
+   ✓ Administration > Security > Upload policy (REQ-S13-011) > ar: the auditor reads the default policy with no form 63ms
+   ✓ Administration > Security > Upload policy (REQ-S13-011) > a technical admin narrows the policy: If-Match 0 creates it, with the organization query and a reason 183ms
+   ✓ Administration > Security > Upload policy (REQ-S13-011) > a 409 shows the translated conflict and reloads the policy 193ms
+   ✓ Administration > Security (rate limits) > shows each class with its per-minute budget, read-only  437ms
+   ✓ The deep-link landing (REQ-S12-024) > en: a 403 shows only the refusal text, nothing of the target  352ms
+   ✓ The deep-link landing (REQ-S12-024) > ar: a 403 shows only the refusal text, nothing of the target 41ms
+   ✓ The deep-link landing (REQ-S12-024) > a malformed token is never sent 22ms
+   ✓ The deep-link landing (REQ-S12-024) > an authorized link navigates inside the app; an unsafe path is never followed 74ms
+   ✓ Administration > Operations (REQ-S12-019) > en: an unknown heartbeat is Unknown, never Running  366ms
+   ✓ Administration > Operations (REQ-S12-019) > ar: an unknown heartbeat is Unknown, never Running 56ms
+   ✓ Administration > Operations (REQ-S12-019) > sends the two default statuses as repeated query parameters 47ms
+   ✓ Administration > Operations (REQ-S12-019) > a linked KPI without a value is Unknown (never 0) and keeps its label; acknowledge sends If-Match  450ms
+   ✓ Administration > Operations (REQ-S12-019) > a resolved exception is final: no action is offered 67ms
+   × Administration > Identity, Storage, Notifications (REQ-S16-007, REQ-S16-006, REQ-S12-023) > identity shows whether a client secret is configured, never a secret value 339ms
+     → expected <input id="_r_30_" …(9)></input> to be null
+   ✓ Administration > Identity, Storage, Notifications (REQ-S16-007, REQ-S16-006, REQ-S12-023) > storage states no public URL, takes secret references only, and tests before saving  520ms
+   ✓ Administration > Identity, Storage, Notifications (REQ-S16-007, REQ-S16-006, REQ-S12-023) > en: the inbox is always on; enterprise messaging cannot be enabled  678ms
+   ✓ Administration > Identity, Storage, Notifications (REQ-S16-007, REQ-S16-006, REQ-S12-023) > ar: the inbox is always on; enterprise messaging cannot be enabled 102ms
+   ✓ Administration > Identity, Storage, Notifications (REQ-S16-007, REQ-S16-006, REQ-S12-023) > the auditor (operations.read) reads storage read-only: no form, no test, no save 51ms
+   ✓ The sensitivity panel and the restricted-records label (REQ-S10-002) > a manager marks the record with a reason and If-Match 0 51ms
+   ✓ The sensitivity panel and the restricted-records label (REQ-S10-002) > en: a reader without the grant right sees the status only 11ms
+   ✓ The sensitivity panel and the restricted-records label (REQ-S10-002) > ar: a reader without the grant right sees the status only 10ms
+   ✓ The sensitivity panel and the restricted-records label (REQ-S10-002) > a record the caller cannot read (404) renders nothing 59ms
+   ✓ The sensitivity panel and the restricted-records label (REQ-S10-002) > en: the label shows only for includesRestrictedRecords true 10ms
+   ✓ The sensitivity panel and the restricted-records label (REQ-S10-002) > ar: the label shows only for includesRestrictedRecords true 11ms
+   ✓ The safe evidence preview (REQ-S13-011) > a PNG is an <img> of the preview route; never an iframe, object or embed 25ms
+   ✓ The safe evidence preview (REQ-S13-011) > drawing.svg is download-only (no inline content) 41ms
+   ✓ The safe evidence preview (REQ-S13-011) > report.pdf is download-only (no inline content) 33ms
+   ✓ The safe evidence preview (REQ-S13-011) > tool.exe.png.svg is download-only (no inline content) 40ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-web| src/app/axe-scope.test.ts > axe scope (ADR-0061 §7.2) > lists every route added to router.tsx in P6 in e2e/support/p6-axe-screens.ts
+AssertionError: add these routes to P6_AXE_ROUTES in e2e/support/p6-axe-screens.ts: expected [ '/my-work/drafts' ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   "/my-work/drafts",[39m
+[31m+ ][39m
+
+ ❯ src/app/axe-scope.test.ts:236:91
+    234|     const listed = new Set(P6_AXE_ROUTES.map((s) => s.route));
+    235|     const missing = p6Routes.filter((p) => !listed.has(p)).sort();
+    236|     expect(missing, "add these routes to P6_AXE_ROUTES in e2e/support/…
+       |                                                                                           ^
+    237|   });
+    238| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |unit-web| src/pages/admin/security/p6-admin-screens.test.tsx > Administration > Identity, Storage, Notifications (REQ-S16-007, REQ-S16-006, REQ-S12-023) > identity shows whether a client secret is configured, never a secret value
+AssertionError: expected <input id="_r_30_" …(9)></input> to be null
+
+[32m- Expected:[39m 
+null
+
+[31m+ Received:[39m 
+<input
+  aria-invalid="false"
+  class="global-search__input"
+  data-global-search="true"
+  enterkeyhint="search"
+  id="_r_30_"
+  inputmode="search"
+  maxlength="200"
+  placeholder="Search records"
+  type="text"
+  value=""
+/>
+
+ ❯ src/pages/admin/security/p6-admin-screens.test.tsx:461:55
+    459|     expect(await screen.findByText("Configured (never shown)")).toBeTr…
+    460|     expect(screen.getByText("https://idp.example.invalid/realms/mth-te…
+    461|     expect(document.querySelector("input, textarea")).toBeNull();
+       |                                                       ^
+    462|   });
+    463| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  2 failed | 35 passed (37)
+   Start at  01:43:12
+   Duration  15.97s (transform 453.55s, setup 517ms, collect 10.72s, tests 12.42s, environment 1.11s, prepare 303ms)
+
+exit 1

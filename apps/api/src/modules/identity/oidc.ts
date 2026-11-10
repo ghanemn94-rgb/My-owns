@@ -12,6 +12,39 @@ import { sha256 } from "./sessions.ts";
 
 export const LOGIN_STATE_TTL_MINUTES = 10;
 
+/**
+ * Thrown by `assertIssuerAndAudience`. Its message names the failed rule only, never a claim value or the token
+ * (ADR-0053 §4: tokens and claims are never logged), because the callback logs the error it catches.
+ */
+export class IdTokenRejected extends Error {
+  readonly rule: "issuer" | "audience" | "authorized_party";
+
+  constructor(rule: "issuer" | "audience" | "authorized_party") {
+    super(`ID token refused: the ${rule.replace("_", " ")} check failed`);
+    this.name = "IdTokenRejected";
+    this.rule = rule;
+  }
+}
+
+/**
+ * ADR-0054 §1 (T-DG6-BE-G; REQ-S16-007): the explicit post-validation check of the claims openid-client returns,
+ * in addition to (never instead of) its own checks. `iss` must equal the configured issuer EXACTLY (no
+ * normalisation: a token from another realm of the same server has another issuer); `aud` (a string or an array)
+ * must contain the client id; and when `aud` holds more than one value, `azp` must equal the client id.
+ * Throws `IdTokenRejected`; the caller turns it into the existing `token_invalid` path.
+ */
+export function assertIssuerAndAudience(
+  claims: { iss?: unknown; aud?: unknown; azp?: unknown },
+  expected: { issuer: string; clientId: string },
+): void {
+  if (typeof claims.iss !== "string" || claims.iss !== expected.issuer) throw new IdTokenRejected("issuer");
+  const aud = typeof claims.aud === "string" ? [claims.aud] : claims.aud;
+  if (!Array.isArray(aud) || aud.length === 0 || !aud.every((a) => typeof a === "string"))
+    throw new IdTokenRejected("audience");
+  if (!aud.includes(expected.clientId)) throw new IdTokenRejected("audience");
+  if (aud.length > 1 && claims.azp !== expected.clientId) throw new IdTokenRejected("authorized_party");
+}
+
 /** A login prepared outside any transaction (`prepareLogin`); `saveLoginState` persists it. */
 export interface PreparedLogin {
   readonly url: URL;
@@ -44,12 +77,25 @@ export class OidcService {
     return this.oidc.issuerUrl.href;
   }
 
+  /** The client id, which is also the one accepted ID-token audience (ADR-0054 §1). */
+  get clientId(): string {
+    return this.oidc.clientId;
+  }
+
   async configuration_(): Promise<client.Configuration> {
     if (!this.configuration) {
       this.configuration = client
         .discovery(this.oidc.issuerUrl, this.oidc.clientId, this.oidc.clientSecret, undefined, {
           ...(this.allowHttp ? { execute: [client.allowInsecureRequests] } : {}),
           timeout: this.discoveryTimeoutSeconds,
+        })
+        .then((configuration) => {
+          // ADR-0054 §1 (T-DG6-BE-G): verify the ID token's JWS signature against the configured issuer's JWKS.
+          // openid-client does not do it by default for a token received directly from the token endpoint (OIDC
+          // Core §3.1.3.7 lets a client rely on TLS instead), so without this a token signed by another realm's key
+          // would be accepted. The JWKS is fetched lazily, during the code exchange, outside any transaction.
+          client.enableNonRepudiationChecks(configuration);
+          return configuration;
         })
         .catch((err: unknown) => {
           this.configuration = null; // retry on the next login
@@ -128,7 +174,11 @@ export class OidcService {
     return { ok: false, reason: pending ? "browser_mismatch" : "state_invalid" };
   }
 
-  /** Exchange the code and validate the ID token (issuer, audience, nonce, expiry, PKCE). Returns its claims. */
+  /**
+   * Exchange the code and validate the ID token (signature against the issuer's JWKS, issuer, audience, nonce,
+   * expiry, PKCE). Returns its claims. The explicit issuer and audience check (ADR-0054 §1) runs after
+   * openid-client's own validation; any failure throws, and the callback takes the `token_invalid` path.
+   */
   async exchange(callbackUrl: URL, checks: { state: string; nonce: string; codeVerifier: string }) {
     const config = await this.configuration_();
     const tokens = await client.authorizationCodeGrant(config, callbackUrl, {
@@ -139,6 +189,7 @@ export class OidcService {
     });
     const claims = tokens.claims();
     if (!claims) throw new Error("no ID token claims");
+    assertIssuerAndAudience(claims, { issuer: this.issuer, clientId: this.oidc.clientId });
     return claims;
   }
 

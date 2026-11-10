@@ -1,0 +1,99 @@
+port-policy: PostgreSQL listening on port 31150 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-z13
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mw8c0h00_a9740ef0 (server_encoding UTF8); applied 118 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/access/zz-dom-r8-condition-resave.test.ts (3 tests | 3 failed) 1244ms
+   × DOM-R8 probe: the D-222 re-save after the author removes an open literal before a hidden one > (a) control: the author is shown [eq marker, in [P, marker], severity eq high] 46ms
+     → expected { op: 'in', field: 'benefitId', …(1) } to deeply equal { field: 'benefitId', op: 'in', …(1) }
+   × DOM-R8 probe: the D-222 re-save after the author removes an open literal before a hidden one > (b) removing the open id P from the in-list keeps the hidden S in that list 53ms
+     → {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"A condition value is restricted-record marker text that does not stand for a value of this version. Reload the version and keep each restricted value as shown, or remove it.","code":"automation_rule.restricted_marker_unknown","requestId":"01a1bd04-b4f4-761a-8a78-0d03f4b7e8a7","errors":[{"pointer":"/content/conditions/1/value/0","code":"automation_rule.restricted_marker_unknown","message":"Restricted-record marker text that does not stand for a value of this version."}]}: expected 422 to be 200 // Object.is equality
+   × DOM-R8 probe: the D-222 re-save after the author removes an open literal before a hidden one > (c) removing an earlier condition with the same field and operator keeps the later hidden literal 34ms
+     → expected [ { op: 'neq', …(2) }, …(1) ] to deeply equal [ { field: 'benefitId', …(2) }, …(1) ]
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/access/zz-dom-r8-condition-resave.test.ts > DOM-R8 probe: the D-222 re-save after the author removes an open literal before a hidden one > (a) control: the author is shown [eq marker, in [P, marker], severity eq high]
+AssertionError: expected { op: 'in', field: 'benefitId', …(1) } to deeply equal { field: 'benefitId', op: 'in', …(1) }
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[2m    "field": "benefitId",[22m
+[2m    "op": "in",[22m
+[2m    "value": [[22m
+[2m      "01a1bd04-b361-740f-a87d-c21591f82b02",[22m
+[32m-     "[restricted]",[39m
+[31m+     "[restricted:2]",[39m
+[2m    ],[22m
+[2m  }[22m
+
+ ❯ apps/api/test/integration/access/zz-dom-r8-condition-resave.test.ts:195:39
+    193|   it("(a) control: the author is shown [eq marker, in [P, marker], sev…
+    194|     const one = ok(await send("GET", `${V()}/1`, { session: admin.sess…
+    195|     expect(one.content.conditions[1]).toEqual({
+       |                                       ^
+    196|       field: "benefitId",
+    197|       op: "in",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/zz-dom-r8-condition-resave.test.ts > DOM-R8 probe: the D-222 re-save after the author removes an open literal before a hidden one > (b) removing the open id P from the in-list keeps the hidden S in that list
+AssertionError: {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"A condition value is restricted-record marker text that does not stand for a value of this version. Reload the version and keep each restricted value as shown, or remove it.","code":"automation_rule.restricted_marker_unknown","requestId":"01a1bd04-b4f4-761a-8a78-0d03f4b7e8a7","errors":[{"pointer":"/content/conditions/1/value/0","code":"automation_rule.restricted_marker_unknown","message":"Restricted-record marker text that does not stand for a value of this version."}]}: expected 422 to be 200 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 200[39m
+[31m+ 422[39m
+
+ ❯ ok apps/api/test/integration/access/zz-dom-r8-condition-resave.test.ts:54:62
+     52| const send = (m: string, u: string, o?: Parameters<typeof call>[3]) =>…
+     53| const ok = (res: Res<Body>, status = 200) => {
+     54|   expect(res.status, JSON.stringify(res.body).slice(0, 600)).toBe(stat…
+       |                                                              ^
+     55|   return res.body as Body;
+     56| };
+ ❯ apps/api/test/integration/access/zz-dom-r8-condition-resave.test.ts:207:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/zz-dom-r8-condition-resave.test.ts > DOM-R8 probe: the D-222 re-save after the author removes an open literal before a hidden one > (c) removing an earlier condition with the same field and operator keeps the later hidden literal
+AssertionError: expected [ { op: 'neq', …(2) }, …(1) ] to deeply equal [ { field: 'benefitId', …(2) }, …(1) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[33m@@ -5,8 +5,8 @@[39m
+[2m      "value": "01a1bd04-b361-740f-a87d-c21591f82b02",[22m
+[2m    },[22m
+[2m    {[22m
+[2m      "field": "benefitId",[22m
+[2m      "op": "neq",[22m
+[32m-     "value": "[restricted]",[39m
+[31m+     "value": "[restricted:1]",[39m
+[2m    },[22m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/access/zz-dom-r8-condition-resave.test.ts:251:38
+    249|     const Vr = `${R}/${rule.id}/versions`;
+    250|     const shown = ok(await send("GET", `${Vr}/1`, { session: admin.ses…
+    251|     expect(shown.content.conditions).toEqual([
+       |                                      ^
+    252|       { field: "benefitId", op: "neq", value: P.benefitId },
+    253|       { field: "benefitId", op: "neq", value: AUTOMATION_RESTRICTED_LI…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed (3)
+   Start at  21:15:51
+   Duration  13.20s (transform 4.72s, setup 0ms, collect 8.59s, tests 1.24s, environment 0ms, prepare 54ms)
+
+exit 1

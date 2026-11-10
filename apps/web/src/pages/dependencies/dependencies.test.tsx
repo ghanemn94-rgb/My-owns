@@ -83,7 +83,7 @@ function handlers(
 ) {
   return [
     route("GET", /\/api\/v1\/dependencies\?/, () => page(rows)),
-    route("GET", /\/api\/v1\/dependency-types$/, () => ({ status: 200, body: { items: TYPES } })),
+    route("GET", /\/api\/v1\/dependency-types(\?|$)/, () => ({ status: 200, body: { items: TYPES } })),
     route("GET", new RegExp(`${esc(TR)}/roadmap$`), () => ({ status: 200, body: view() })),
   ];
 }
@@ -197,7 +197,7 @@ describe.each(["en", "ar"] as const)("dependencies (%s)", (locale) => {
 
   it("a system type's 422 dependency_type.system_undeletable is translated", async () => {
     renderWorkspace("dependencies", locale, ADMIN, [
-      route("GET", /\/api\/v1\/dependency-types$/, () => ({
+      route("GET", /\/api\/v1\/dependency-types(\?|$)/, () => ({
         status: 200,
         body: { items: [{ ...TYPES[5], isSystem: false }] },
       })),

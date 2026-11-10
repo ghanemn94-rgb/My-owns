@@ -34,6 +34,10 @@ import {
   requireIfMatch,
   sendVersioned,
   type ModuleDeps,
+  keysetPage,
+  pageQueryFields,
+  parseQuery,
+  type SortKey,
 } from "../platform/index.ts";
 import { openWrite, type WriteContext } from "../transformations/index.ts";
 import {
@@ -51,6 +55,12 @@ import {
 } from "./benefit-formulas.ts";
 
 export const VERSIONS = `${FORMULA_ITEM}/versions`;
+const versionListQuery = z.strictObject({ ...pageQueryFields });
+/** The versions' page sort (T-DG6-BE-V): newest first, then id. */
+const VERSION_SORT: readonly SortKey[] = [
+  { name: "version_no", type: "integer", desc: true },
+  { name: "id", type: "uuid", desc: true },
+];
 export const VERSION_ITEM = `${VERSIONS}/:versionNo`;
 
 // ------------------------------------------------------------------------------------------------ params and reads
@@ -193,15 +203,12 @@ export function registerFormulaVersionRoutes(app: FastifyInstance, { db }: Modul
 
   app.get(VERSIONS, { config: read }, async (request) => {
     const formulaId = parse(z.strictObject({ benefitFormulaId: z.uuid() }), request.params, "params").benefitFormulaId;
+    const query = parseQuery(versionListQuery, request.query);
     const transformationId = await formulaTransformation(db, formulaId);
     await requireTransformationRead(db, principalOf(request), transformationId);
-    const rows = await db
-      .selectFrom("benefit_formula_version")
-      .selectAll()
-      .where("formula_id", "=", formulaId)
-      .orderBy("version_no", "desc")
-      .execute();
-    return { items: await presentVersions(db, rows) };
+    const q = db.selectFrom("benefit_formula_version").selectAll().where("formula_id", "=", formulaId);
+    const page = await keysetPage(q, VERSION_SORT, query, { list: "benefit-formula-versions", formulaId });
+    return { items: await presentVersions(db, page.items), nextCursor: page.nextCursor };
   });
 
   app.post(

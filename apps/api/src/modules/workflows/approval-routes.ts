@@ -62,6 +62,8 @@ import {
   problems,
   requireIfMatch,
   type ModuleDeps,
+  memoryPage,
+  pageQueryFields,
 } from "../platform/index.ts";
 import { createWorkItemOnce } from "../tasks/index.ts";
 import { approvalRefusals, decideApprovalInTx, subjectVersionOf } from "./approvals.ts";
@@ -686,7 +688,7 @@ const stepParams = z.strictObject({
     .regex(/^[1-6]$/, "validation.step_no")
     .transform(Number),
 });
-const listQuery = z.strictObject({ versionId: uuid.optional() });
+const listQuery = z.strictObject({ versionId: uuid.optional(), ...pageQueryFields });
 
 /** Registers this file's routes and returns them as "METHOD /path". */
 export function registerApprovalRouteRoutes(app: FastifyInstance, { db }: ModuleDeps): string[] {
@@ -715,7 +717,16 @@ export function registerApprovalRouteRoutes(app: FastifyInstance, { db }: Module
           message: "Choose a published methodology or procedure version.",
         },
       ]);
-    return { methodologyVersionId: version.id, items: await routesOfVersion(db, version) };
+    // The routes are resolved from the published configuration, not read from one table: the page is cut from the
+    // resolved list in route-key order (the route key identifies a route within its version; T-DG6-BE-V).
+    const page = memoryPage(
+      await routesOfVersion(db, version),
+      (r) => [r.routeKey],
+      query,
+      { list: "approval-routes", methodologyVersionId: version.id },
+      "routeKey",
+    );
+    return { methodologyVersionId: version.id, items: page.items, nextCursor: page.nextCursor };
   });
 
   app.get(ROUTE, { config: { access: { permission: "transformation.read" } } }, async (request, reply) => {

@@ -261,6 +261,7 @@ export const benefitMeasurement = z.strictObject({
   validatedAmount: decimal.nullable(),
   basis: z.enum(["validated", "provisional"]),
   inputs: z.array(benefitMeasurementInput),
+  /** The linked evidence the reader is admitted to (T-DG6-BE-Z10, D-218: a restricted item's id is omitted). */
   evidenceIds: z.array(uuid),
   financeValidationId: nullableUuid,
   submittedBy: nullableUuid,
@@ -272,6 +273,8 @@ export const benefitMeasurement = z.strictObject({
   createdAt: timestamp,
   createdBy: uuid,
   updatedAt: timestamp,
+  /** True when a linked evidence item was omitted for the reader (label access.includesRestrictedRecords). */
+  includesRestrictedRecords: z.literal(true).optional(),
 });
 export type BenefitMeasurement = z.infer<typeof benefitMeasurement>;
 export const benefitMeasurementPage = page(benefitMeasurement);
@@ -328,6 +331,11 @@ export const financeValidation = z.strictObject({
   createdAt: timestamp,
   createdBy: uuid,
   updatedAt: timestamp,
+  /**
+   * T-DG6-BE-Z10 (F-DG6-420; D-218): true when `content.evidence` omits an evidence item the reader is not admitted to
+   * (the stored snapshot is unchanged); label access.includesRestrictedRecords.
+   */
+  includesRestrictedRecords: z.literal(true).optional(),
 });
 export type FinanceValidation = z.infer<typeof financeValidation>;
 export const financeValidationPage = page(financeValidation);
@@ -359,6 +367,11 @@ export const benefitTotals = z.strictObject({
   nonFinancialCount: z.number().int().min(0),
   excluded: z.array(z.strictObject({ benefitId: uuid, code: z.string(), reason: benefitExclusionReason })),
   computedAt: timestamp,
+  /**
+   * D-196 item 4, D-199 (BE-B2's contract addition): present when the response includes a sensitive benefit or business
+   * case; true when the reader is not admitted to at least one of them (ADR-0051 §2; label access.includesRestrictedRecords).
+   */
+  includesRestrictedRecords: z.boolean().optional(),
 });
 export type BenefitTotals = z.infer<typeof benefitTotals>;
 

@@ -26,6 +26,14 @@ const FILES = [
   "deploy/ci/ci.yml",
 ];
 const FAKE = (c) => `sha256:${c.repeat(64)}`; // TEST-ONLY placeholder digests
+// The keycloak tag is read from the committed lock (it moves with the vendor's releases, ADR-0054 §1), never hard-coded.
+const KC_IMAGE = (() => {
+  const kc = JSON.parse(readFileSync(join(root, "deploy/images.lock.json"), "utf8")).images.find(
+    (i) => i.id === "keycloak",
+  );
+  return `${kc.ref}:${kc.tag}`;
+})();
+const reEsc = (x) => x.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&");
 const REF_FILES = [
   "deploy/docker/Dockerfile",
   "deploy/compose/compose.yaml",
@@ -122,7 +130,7 @@ test("C3 keycloak BLOCKED (blockedReason, null digest), others pinned: --apply s
   assert.match(c.out, /^BLOCKED +keycloak \(test-ci\)/m);
   assert.equal((c.out.match(/^PINNED /gm) ?? []).length, 3);
   assert.match(c.out, /FAIL: keycloak .*BLOCKED, not pinned/);
-  assert.match(c.out, /compose\.yaml: quay\.io\/keycloak\/keycloak:26\.4 has no digest/);
+  assert.match(c.out, new RegExp(`compose\\.yaml: ${reEsc(KC_IMAGE)} has no digest`));
 });
 
 test("C4 structure: blockedReason together with a digest is contradictory", () => {
@@ -212,7 +220,7 @@ printf '{"digest":"sha256:%064d"}\\n' "$d"
   const env = { PATH: `${bin}:${process.env.PATH}` };
   const r = pin(t, ["--resolve"], env);
   assert.equal(r.status, 1, r.out);
-  assert.match(r.out, /BLOCKED quay\.io\/keycloak\/keycloak:26\.4: .*CONNECT 403/);
+  assert.match(r.out, new RegExp(`BLOCKED ${reEsc(KC_IMAGE)}: .*CONNECT 403`));
   const l = lockOf(t);
   const kc = l.images.find((i) => i.id === "keycloak");
   assert.equal(kc.digest, null);
@@ -275,7 +283,7 @@ test("C10 runner WITH quay.io: --resolve --missing pins ONLY keycloak, --apply, 
   const d = stubDocker(true);
   const r = pin(t, ["--resolve", "--missing"], d.env);
   assert.equal(r.status, 0, r.out);
-  assert.equal(d.calls().trim(), "quay.io/keycloak/keycloak:26.4", "only the missing image is resolved");
+  assert.equal(d.calls().trim(), KC_IMAGE, "only the missing image is resolved");
   const l = lockOf(t);
   const kc = l.images.find((i) => i.id === "keycloak");
   assert.match(kc.digest, /^sha256:0+7$/);
@@ -298,7 +306,7 @@ test("C11 runner WITHOUT quay.io: --resolve --missing exits 1, keycloak stays nu
   const d = stubDocker(false);
   const r = pin(t, ["--resolve", "--missing"], d.env);
   assert.equal(r.status, 1, r.out);
-  assert.equal(d.calls().trim(), "quay.io/keycloak/keycloak:26.4");
+  assert.equal(d.calls().trim(), KC_IMAGE);
   const kc = lockOf(t).images.find((i) => i.id === "keycloak");
   assert.equal(kc.digest, null, "never fabricated");
   assert.match(kc.blockedReason, /^BLOCKED: --resolve at .*CONNECT 403/);

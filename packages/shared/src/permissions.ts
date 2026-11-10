@@ -305,6 +305,100 @@ export const P5_READER_DEMO_PERMISSIONS = {
   "demo.reset": "configure",
 } as const satisfies Record<string, PermissionCategory>;
 
+/**
+ * P6 slices E and F (seeded by 0100; ADR-0051 §7, ADR-0052 §9; T-DG6-ARCH-01). A configurable starting point, not a
+ * Mobily-approved access policy. sensitive_record.grant marks a benefit, business case or evidence item sensitive and
+ * grants or revokes explicit access (REQ-S10-002 "grant:TO,ADM (access admin)"); sensitive_record.read reads the flags
+ * and the grant list, never the record itself; audit_event.read is Administration > Audit and /api/v1/audit-events
+ * (REQ-S16-032 "view:AUD,ADM(scoped)"); upload_policy.configure changes the upload allow-list and size limit;
+ * security.read reads the upload policy and the rate-limit matrix. No code is a business_approval or
+ * finance_validation code; AUD gets read codes only.
+ */
+export const P6_ACCESS_HARDENING_PERMISSIONS = {
+  "sensitive_record.grant": "configure",
+  "sensitive_record.read": "read",
+  "audit_event.read": "read",
+  "upload_policy.configure": "configure",
+  "security.read": "read",
+} as const satisfies Record<string, PermissionCategory>;
+
+/**
+ * P6 slices J and C (seeded by 0103; ADR-0053 §9, ADR-0054 §5; T-DG6-ARCH-02). A configurable starting point, not a
+ * Mobily-approved access policy. operations.read reads Administration > Operations (operational exceptions, the worker
+ * heartbeat, the service identities; REQ-S12-019 "shown to admins and data owners"); operations.acknowledge
+ * acknowledges or resolves an exception; service_identity.configure narrows or restores a job's or connector's grant
+ * (REQ-S16-029); identity.read reads Administration > Identity, never the client secret (REQ-S16-007);
+ * storage.configure reads, changes and tests the evidence-storage setting (REQ-S16-006); notification_channel.configure
+ * reads, changes and tests the notification channels (REQ-S12-023). No code is a business_approval or
+ * finance_validation code; AUD gets read codes only.
+ */
+export const P6_OPERATIONS_CHANNELS_PERMISSIONS = {
+  "operations.read": "read",
+  "operations.acknowledge": "write",
+  "service_identity.configure": "configure",
+  "identity.read": "read",
+  "storage.configure": "configure",
+  "notification_channel.configure": "configure",
+} as const satisfies Record<string, PermissionCategory>;
+
+/**
+ * P6 slices B and A (seeded by 0107; ADR-0055 §9, ADR-0056 §9; T-DG6-ARCH-03). A configurable starting point, not a
+ * Mobily-approved access policy. connector.read reads Administration > Integrations (connectors, configuration
+ * versions, runs, counts, reconciliation, errors; never staged row values; REQ-S17-001 "view-runs:ADM,KDS");
+ * connector.configure creates, changes, enables, disables and tests connectors and mappings ("configure:ADM");
+ * connector.run runs a connector now or retries a failed run; webhook.configure manages webhook endpoints and their
+ * secret references; import.read, import.create and import.commit are the staged imports (REQ-S17-002 "import:KDS,ADM":
+ * KDS; the technical administrators hold no business-record write, REQ-S10-003); outbound_write.read and
+ * outbound_write.execute are the guarded downstream writes (REQ-S17-006 "execute-write: explicitly granted role only":
+ * TD alone); external_change.flag and external_change.confirm are the deliverable external-change flag and its
+ * confirmation with reviewed evidence (REQ-S01-005 "confirm-external: evidence reviewer (BO or TD)"). No code is a
+ * business_approval or finance_validation code; AUD gets read codes only.
+ */
+export const P6_INTEGRATIONS_PERMISSIONS = {
+  "connector.read": "read",
+  "connector.configure": "configure",
+  "connector.run": "write",
+  "webhook.configure": "configure",
+  "import.read": "read",
+  "import.create": "write",
+  "import.commit": "write",
+  "outbound_write.read": "read",
+  "outbound_write.execute": "write",
+  "external_change.flag": "write",
+  "external_change.confirm": "write",
+} as const satisfies Record<string, PermissionCategory>;
+
+/**
+ * P6 slices H and G permissions (seeded by 0109; T-DG6-ARCH-04; ADR-0057 §9). saved_view.manage: create, change, set as
+ * default and delete one's OWN saved list views; saved_view.share: share one's own view with the organization. Search,
+ * help topics and one's own drafts need no new code (search admits exactly what the record views admit, through
+ * ReadScope). No business_approval or finance_validation code; AUD gets neither (it applies shared views read-only).
+ */
+export const P6_SEARCH_PERMISSIONS = {
+  "saved_view.manage": "write",
+  "saved_view.share": "write",
+} as const satisfies Record<string, PermissionCategory>;
+
+/**
+ * P6 slice D (seeded by 0112; ADR-0059 §9): the optional assistant. `assistant.use` opens one's own conversations and
+ * takes one's own draft suggestions to a draft prefill (retrieval admits exactly what the caller's record-view
+ * permissions admit, through ReadScope); `assistant.configure` reads and changes the assistant setting and turns it on
+ * or off. Neither is an approval: the assistant approves, validates, certifies and changes nothing (REQ-S17-008).
+ */
+export const P6_ASSISTANT_PERMISSIONS = {
+  "assistant.use": "write",
+  "assistant.configure": "configure",
+} as const satisfies Record<string, PermissionCategory>;
+
+/** Every P6 permission block (each P6 architecture task appends its block here and to PERMISSIONS). */
+export const P6_PERMISSIONS = {
+  ...P6_ACCESS_HARDENING_PERMISSIONS,
+  ...P6_OPERATIONS_CHANNELS_PERMISSIONS,
+  ...P6_INTEGRATIONS_PERMISSIONS,
+  ...P6_SEARCH_PERMISSIONS,
+  ...P6_ASSISTANT_PERMISSIONS,
+} as const satisfies Record<string, PermissionCategory>;
+
 export const PERMISSIONS = {
   ...P1_PERMISSIONS,
   ...P2_PERMISSIONS,
@@ -323,6 +417,7 @@ export const PERMISSIONS = {
   ...P5_REPORTING_PERMISSIONS,
   ...P5_KPI_LAUNCH_HEALTH_PERMISSIONS,
   ...P5_READER_DEMO_PERMISSIONS,
+  ...P6_PERMISSIONS,
 } as const satisfies Record<string, PermissionCategory>;
 export type Permission = keyof typeof PERMISSIONS;
 export const PERMISSION_CODES = Object.keys(PERMISSIONS) as Permission[];
@@ -758,6 +853,125 @@ export const P5_READER_DEMO_ROLE_PERMISSIONS = {
   ADM_METHOD: [],
 } as const satisfies Record<string, readonly (keyof typeof P5_READER_DEMO_PERMISSIONS)[]>;
 
+/**
+ * P6 slices E and F role defaults (seeded by 0100; ADR-0051 §7, ADR-0052 §9). TO and ADM_ACCESS grant; TO, AUD and
+ * ADM_ACCESS read the sensitivity metadata; AUD, ADM_TECH and ADM_ACCESS read the global audit list (a technical admin's
+ * organization-level assignment does not inherit downward, so it sees organization-level events only: ADR-0052 §8);
+ * ADM_TECH configures uploads; ADM_TECH and AUD read the security settings.
+ */
+export const P6_ACCESS_HARDENING_ROLE_PERMISSIONS = {
+  SP: [],
+  TL: [],
+  BO: [],
+  WL: [],
+  FIN: [],
+  TO: ["sensitive_record.grant", "sensitive_record.read"],
+  KDS: [],
+  TD: [],
+  CM: [],
+  SEC: [],
+  AUD: ["sensitive_record.read", "audit_event.read", "security.read"],
+  ADM_TECH: ["audit_event.read", "upload_policy.configure", "security.read"],
+  ADM_ACCESS: ["sensitive_record.grant", "sensitive_record.read", "audit_event.read"],
+  ADM_METHOD: [],
+} as const satisfies Record<string, readonly (keyof typeof P6_ACCESS_HARDENING_PERMISSIONS)[]>;
+
+/**
+ * P6 slices J and C role defaults (seeded by 0103; ADR-0053 §9, ADR-0054 §5). ADM_TECH, TO, KDS, TD and AUD read
+ * Administration > Operations; ADM_TECH and KDS acknowledge and resolve exceptions; ADM_TECH, ADM_ACCESS and AUD read
+ * Administration > Identity; ADM_TECH alone configures service identities, storage and notification channels.
+ */
+export const P6_OPERATIONS_CHANNELS_ROLE_PERMISSIONS = {
+  SP: [],
+  TL: [],
+  BO: [],
+  WL: [],
+  FIN: [],
+  TO: ["operations.read"],
+  KDS: ["operations.read", "operations.acknowledge"],
+  TD: ["operations.read"],
+  CM: [],
+  SEC: [],
+  AUD: ["operations.read", "identity.read"],
+  ADM_TECH: [
+    "operations.read",
+    "operations.acknowledge",
+    "service_identity.configure",
+    "identity.read",
+    "storage.configure",
+    "notification_channel.configure",
+  ],
+  ADM_ACCESS: ["identity.read"],
+  ADM_METHOD: [],
+} as const satisfies Record<string, readonly (keyof typeof P6_OPERATIONS_CHANNELS_PERMISSIONS)[]>;
+
+/**
+ * P6 slices B and A role defaults (seeded by 0107; ADR-0055 §9, ADR-0056 §9). ADM_TECH configures connectors and
+ * webhooks and runs connectors; KDS runs connectors and stages, commits and cancels imports; TD alone executes outbound
+ * writes and, with BO, confirms external changes with reviewed evidence; TL, BO, WL and TO flag external changes;
+ * ADM_TECH, KDS, TD, TO and AUD read connectors; KDS, BO, TO and AUD read imports; TD, KDS, TO and AUD read outbound
+ * writes.
+ */
+export const P6_INTEGRATIONS_ROLE_PERMISSIONS = {
+  SP: [],
+  TL: ["external_change.flag"],
+  BO: ["import.read", "external_change.flag", "external_change.confirm"],
+  WL: ["external_change.flag"],
+  FIN: [],
+  TO: ["connector.read", "import.read", "outbound_write.read", "external_change.flag"],
+  KDS: ["connector.read", "connector.run", "import.read", "import.create", "import.commit", "outbound_write.read"],
+  TD: ["connector.read", "outbound_write.read", "outbound_write.execute", "external_change.confirm"],
+  CM: [],
+  SEC: [],
+  AUD: ["connector.read", "import.read", "outbound_write.read"],
+  ADM_TECH: ["connector.read", "connector.configure", "connector.run", "webhook.configure"],
+  ADM_ACCESS: [],
+  ADM_METHOD: [],
+} as const satisfies Record<string, readonly (keyof typeof P6_INTEGRATIONS_PERMISSIONS)[]>;
+
+/**
+ * P6 slices H and G role defaults (seeded by 0109; ADR-0057 §9): every role except AUD manages its own saved views;
+ * TL, BO, WL, TO, KDS and TD may also share them with their organization.
+ */
+export const P6_SEARCH_ROLE_PERMISSIONS = {
+  SP: ["saved_view.manage"],
+  TL: ["saved_view.manage", "saved_view.share"],
+  BO: ["saved_view.manage", "saved_view.share"],
+  WL: ["saved_view.manage", "saved_view.share"],
+  FIN: ["saved_view.manage"],
+  TO: ["saved_view.manage", "saved_view.share"],
+  KDS: ["saved_view.manage", "saved_view.share"],
+  TD: ["saved_view.manage", "saved_view.share"],
+  CM: ["saved_view.manage"],
+  SEC: ["saved_view.manage"],
+  AUD: [],
+  ADM_TECH: ["saved_view.manage"],
+  ADM_ACCESS: ["saved_view.manage"],
+  ADM_METHOD: ["saved_view.manage"],
+} as const satisfies Record<string, readonly (keyof typeof P6_SEARCH_PERMISSIONS)[]>;
+
+/**
+ * P6 slice D role defaults (seeded by 0112; ADR-0059 §9): every role except AUD uses the assistant (AUD stays read-only:
+ * a conversation is a write of the caller's own rows, the saved_view.manage precedent); ADM_TECH alone configures it.
+ * Reading the setting is also open to operations.read holders (0103), AUD included.
+ */
+export const P6_ASSISTANT_ROLE_PERMISSIONS = {
+  SP: ["assistant.use"],
+  TL: ["assistant.use"],
+  BO: ["assistant.use"],
+  WL: ["assistant.use"],
+  FIN: ["assistant.use"],
+  TO: ["assistant.use"],
+  KDS: ["assistant.use"],
+  TD: ["assistant.use"],
+  CM: ["assistant.use"],
+  SEC: ["assistant.use"],
+  AUD: [],
+  ADM_TECH: ["assistant.use", "assistant.configure"],
+  ADM_ACCESS: ["assistant.use"],
+  ADM_METHOD: ["assistant.use"],
+} as const satisfies Record<string, readonly (keyof typeof P6_ASSISTANT_PERMISSIONS)[]>;
+
 export const ROLES = {
   SP: {
     kind: "source",
@@ -777,6 +991,8 @@ export const ROLES = {
       ...P5_AUTOMATION_ROLE_PERMISSIONS.SP,
       ...P5_REPORTING_ROLE_PERMISSIONS.SP,
       ...P5_KPI_LAUNCH_HEALTH_ROLE_PERMISSIONS.SP,
+      ...P6_SEARCH_ROLE_PERMISSIONS.SP,
+      ...P6_ASSISTANT_ROLE_PERMISSIONS.SP,
     ],
   },
   TL: {
@@ -803,6 +1019,9 @@ export const ROLES = {
       ...P5_AUTOMATION_ROLE_PERMISSIONS.TL,
       ...P5_REPORTING_ROLE_PERMISSIONS.TL,
       ...P5_KPI_LAUNCH_HEALTH_ROLE_PERMISSIONS.TL,
+      ...P6_INTEGRATIONS_ROLE_PERMISSIONS.TL,
+      ...P6_SEARCH_ROLE_PERMISSIONS.TL,
+      ...P6_ASSISTANT_ROLE_PERMISSIONS.TL,
     ],
   },
   BO: {
@@ -825,6 +1044,9 @@ export const ROLES = {
       ...P5_AUTOMATION_ROLE_PERMISSIONS.BO,
       ...P5_REPORTING_ROLE_PERMISSIONS.BO,
       ...P5_KPI_LAUNCH_HEALTH_ROLE_PERMISSIONS.BO,
+      ...P6_INTEGRATIONS_ROLE_PERMISSIONS.BO,
+      ...P6_SEARCH_ROLE_PERMISSIONS.BO,
+      ...P6_ASSISTANT_ROLE_PERMISSIONS.BO,
     ],
   },
   WL: {
@@ -845,6 +1067,9 @@ export const ROLES = {
       ...P5_AUTOMATION_ROLE_PERMISSIONS.WL,
       ...P5_REPORTING_ROLE_PERMISSIONS.WL,
       ...P5_KPI_LAUNCH_HEALTH_ROLE_PERMISSIONS.WL,
+      ...P6_INTEGRATIONS_ROLE_PERMISSIONS.WL,
+      ...P6_SEARCH_ROLE_PERMISSIONS.WL,
+      ...P6_ASSISTANT_ROLE_PERMISSIONS.WL,
     ],
   },
   FIN: {
@@ -865,6 +1090,8 @@ export const ROLES = {
       ...P5_AUTOMATION_ROLE_PERMISSIONS.FIN,
       ...P5_REPORTING_ROLE_PERMISSIONS.FIN,
       ...P5_KPI_LAUNCH_HEALTH_ROLE_PERMISSIONS.FIN,
+      ...P6_SEARCH_ROLE_PERMISSIONS.FIN,
+      ...P6_ASSISTANT_ROLE_PERMISSIONS.FIN,
     ],
   },
   TO: {
@@ -890,6 +1117,11 @@ export const ROLES = {
       ...P5_AUTOMATION_ROLE_PERMISSIONS.TO,
       ...P5_REPORTING_ROLE_PERMISSIONS.TO,
       ...P5_KPI_LAUNCH_HEALTH_ROLE_PERMISSIONS.TO,
+      ...P6_OPERATIONS_CHANNELS_ROLE_PERMISSIONS.TO,
+      ...P6_ACCESS_HARDENING_ROLE_PERMISSIONS.TO,
+      ...P6_INTEGRATIONS_ROLE_PERMISSIONS.TO,
+      ...P6_SEARCH_ROLE_PERMISSIONS.TO,
+      ...P6_ASSISTANT_ROLE_PERMISSIONS.TO,
     ],
   },
   KDS: {
@@ -909,6 +1141,10 @@ export const ROLES = {
       ...P5_AUTOMATION_ROLE_PERMISSIONS.KDS,
       ...P5_REPORTING_ROLE_PERMISSIONS.KDS,
       ...P5_KPI_LAUNCH_HEALTH_ROLE_PERMISSIONS.KDS,
+      ...P6_OPERATIONS_CHANNELS_ROLE_PERMISSIONS.KDS,
+      ...P6_INTEGRATIONS_ROLE_PERMISSIONS.KDS,
+      ...P6_SEARCH_ROLE_PERMISSIONS.KDS,
+      ...P6_ASSISTANT_ROLE_PERMISSIONS.KDS,
     ],
   },
   TD: {
@@ -923,6 +1159,10 @@ export const ROLES = {
       ...P5_AUTOMATION_ROLE_PERMISSIONS.TD,
       ...P5_REPORTING_ROLE_PERMISSIONS.TD,
       ...P5_KPI_LAUNCH_HEALTH_ROLE_PERMISSIONS.TD,
+      ...P6_OPERATIONS_CHANNELS_ROLE_PERMISSIONS.TD,
+      ...P6_INTEGRATIONS_ROLE_PERMISSIONS.TD,
+      ...P6_SEARCH_ROLE_PERMISSIONS.TD,
+      ...P6_ASSISTANT_ROLE_PERMISSIONS.TD,
     ],
   },
   CM: {
@@ -936,6 +1176,8 @@ export const ROLES = {
       ...P5_AUTOMATION_ROLE_PERMISSIONS.CM,
       ...P5_REPORTING_ROLE_PERMISSIONS.CM,
       ...P5_KPI_LAUNCH_HEALTH_ROLE_PERMISSIONS.CM,
+      ...P6_SEARCH_ROLE_PERMISSIONS.CM,
+      ...P6_ASSISTANT_ROLE_PERMISSIONS.CM,
     ],
   },
   SEC: {
@@ -950,6 +1192,8 @@ export const ROLES = {
       ...P5_AUTOMATION_ROLE_PERMISSIONS.SEC,
       ...P5_REPORTING_ROLE_PERMISSIONS.SEC,
       ...P5_KPI_LAUNCH_HEALTH_ROLE_PERMISSIONS.SEC,
+      ...P6_SEARCH_ROLE_PERMISSIONS.SEC,
+      ...P6_ASSISTANT_ROLE_PERMISSIONS.SEC,
     ],
   },
   AUD: {
@@ -964,6 +1208,11 @@ export const ROLES = {
       ...P5_STUDIO_ROLE_PERMISSIONS.AUD,
       ...P5_FORMS_PROCEDURES_ROLE_PERMISSIONS.AUD,
       ...P5_AUTOMATION_ROLE_PERMISSIONS.AUD,
+      ...P6_ACCESS_HARDENING_ROLE_PERMISSIONS.AUD,
+      ...P6_OPERATIONS_CHANNELS_ROLE_PERMISSIONS.AUD,
+      ...P6_INTEGRATIONS_ROLE_PERMISSIONS.AUD,
+      ...P6_SEARCH_ROLE_PERMISSIONS.AUD,
+      ...P6_ASSISTANT_ROLE_PERMISSIONS.AUD,
     ],
   },
   // Technical administrators: configuration only, no business-record access and never an approver
@@ -981,6 +1230,11 @@ export const ROLES = {
       ...P5_FORMS_PROCEDURES_ROLE_PERMISSIONS.ADM_TECH,
       ...P5_AUTOMATION_ROLE_PERMISSIONS.ADM_TECH,
       ...P5_READER_DEMO_ROLE_PERMISSIONS.ADM_TECH,
+      ...P6_OPERATIONS_CHANNELS_ROLE_PERMISSIONS.ADM_TECH,
+      ...P6_ACCESS_HARDENING_ROLE_PERMISSIONS.ADM_TECH,
+      ...P6_INTEGRATIONS_ROLE_PERMISSIONS.ADM_TECH,
+      ...P6_SEARCH_ROLE_PERMISSIONS.ADM_TECH,
+      ...P6_ASSISTANT_ROLE_PERMISSIONS.ADM_TECH,
     ],
   },
   ADM_ACCESS: {
@@ -997,6 +1251,10 @@ export const ROLES = {
       ...P4_ROLE_PERMISSIONS.ADM_ACCESS,
       ...P5_FORMS_PROCEDURES_ROLE_PERMISSIONS.ADM_ACCESS,
       ...P5_AUTOMATION_ROLE_PERMISSIONS.ADM_ACCESS,
+      ...P6_ACCESS_HARDENING_ROLE_PERMISSIONS.ADM_ACCESS,
+      ...P6_OPERATIONS_CHANNELS_ROLE_PERMISSIONS.ADM_ACCESS,
+      ...P6_SEARCH_ROLE_PERMISSIONS.ADM_ACCESS,
+      ...P6_ASSISTANT_ROLE_PERMISSIONS.ADM_ACCESS,
     ],
   },
   ADM_METHOD: {
@@ -1011,6 +1269,8 @@ export const ROLES = {
       ...P5_FORMS_PROCEDURES_ROLE_PERMISSIONS.ADM_METHOD,
       ...P5_AUTOMATION_ROLE_PERMISSIONS.ADM_METHOD,
       ...P5_KPI_LAUNCH_HEALTH_ROLE_PERMISSIONS.ADM_METHOD,
+      ...P6_SEARCH_ROLE_PERMISSIONS.ADM_METHOD,
+      ...P6_ASSISTANT_ROLE_PERMISSIONS.ADM_METHOD,
     ],
   },
 } as const satisfies Record<string, RoleDefinition>;

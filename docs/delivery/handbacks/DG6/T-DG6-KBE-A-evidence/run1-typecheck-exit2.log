@@ -1,0 +1,25 @@
+Scope: 8 of 9 workspace projects
+packages/shared typecheck$ tsc -p tsconfig.json
+packages/design-tokens typecheck$ tsc -p tsconfig.json
+packages/design-tokens typecheck: Done
+packages/shared typecheck: Done
+apps/web typecheck$ tsc -p tsconfig.json && tsc -p tsconfig.e2e.json
+packages/config typecheck$ tsc -p tsconfig.json
+packages/reporting typecheck$ tsc -p tsconfig.json
+packages/config typecheck: Done
+packages/reporting typecheck: Done
+apps/web typecheck: Done
+packages/db typecheck$ tsc -p tsconfig.json
+packages/db typecheck: Done
+apps/api typecheck$ tsc -p tsconfig.json
+apps/worker typecheck$ tsc -p tsconfig.json
+apps/worker typecheck: Done
+apps/api typecheck: test/integration/kpi/import-target.test.ts(347,88): error TS4111: Property 'value' comes from an index signature, so it must be accessed with ['value'].
+apps/api typecheck: test/integration/kpi/import-target.test.ts(631,69): error TS2322: Type 'Partial<Record<string, string>>' is not assignable to type 'Readonly<Record<string, string | null>>'.
+apps/api typecheck:   'string' index signatures are incompatible.
+apps/api typecheck:     Type 'string | undefined' is not assignable to type 'string | null'.
+apps/api typecheck:       Type 'undefined' is not assignable to type 'string | null'.
+apps/api typecheck: Failed
+/home/user/wt/dg6-kbe-a/apps/api:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @mth/api@0.1.0 typecheck: `tsc -p tsconfig.json`
+Exit status 2

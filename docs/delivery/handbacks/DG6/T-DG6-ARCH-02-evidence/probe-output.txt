@@ -1,0 +1,86 @@
+port-policy: PostgreSQL listening on port 23701 (attempt 1)
+qa disposable cluster: PostgreSQL 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+migrations shipped: 95 (0001_identity_access.sql .. 0103_p6_operations_channels_permissions.sql)
+PASS  G00 slice J/C migrations 0101-0103 present directly above 0100 (D-196); nothing above 0103  -- ids >= 98: 98,99,100,101,102,103
+PASS  G01 fresh database: 0001..last apply  -- applied 95: 0100_p6_access_hardening_permissions.sql, 0101_p6_operations_service_identities.sql, 0102_p6_storage_notification_channels.sql, 0103_p6_operations_channels_permissions.sql
+PASS  G02 P5 database populated (0001-0097; a synthetic transformation instantiated by the DG3 function, 2 KPI definitions in 2 organizations, a pre-P6 evidence file, 2 notifications)  -- applied 89; {"k":2,"e":1,"i":2}
+PASS  G03 P6 (0098..last, including slice J/C 0101-0103) over the P5 database apply  -- applied 6: 0098_p6_sensitive_records_deep_links.sql, 0099_p6_upload_policy_content_types.sql, 0100_p6_access_hardening_permissions.sql, 0101_p6_operations_service_identities.sql, 0102_p6_storage_notification_channels.sql, 0103_p6_operations_channels_permissions.sql
+PASS  G04 the upgrade leaves existing rows as they were: the pre-P6 file is on 'filesystem'; no identity, exception, heartbeat, storage, channel or delivery row (= DG5 behaviour: filesystem storage, in-app only); the KPI at version 1  -- {"d":"filesystem","si":0,"oe":0,"wh":0,"st":0,"nc":0,"nd":0,"kv":1}
+PASS  SI01 a migration (owner) declares a platform job identity with read and write codes, audited  -- 01990000-0000-7000-8000-000000000100
+PASS  SI02 the application cannot declare a job identity  -- 42501 service_identity_job_by_migration service_identity: a job identity is declared by a migration only
+PASS  SI03 a business-approval code is refused even for a migration  -- 23514 service_identity_permission_category service_identity: gate.decide is not a read or write permission (a service identity never holds a configuration, business-approval or Finance-validation right)
+PASS  SI04 a configure code is refused (storage.configure)  -- 23514 service_identity_permission_category service_identity: storage.configure is not a read or write permission (a service identity never holds a configuration, business-approval or Finance-validation right)
+PASS  SI05 an unknown code is refused  -- 23514 service_identity_permission_category service_identity: no.such_permission is not a read or write permission (a service identity never holds a configuration, business-approval or Finance-validation right)
+PASS  SI06 the application creates a connector identity (organization scope), audited  -- 01990000-0000-7000-8000-000000000106
+PASS  SI07 missing audit fails at COMMIT (connector identity)  -- 23000 service_identity_audit_required no audit_event for service_identity 01990000-0000-7000-8000-000000000109 at version 1 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  SI08 a connector identity cannot have platform scope  -- 23514 service_identity_subject_shape new row for relation "service_identity" violates check constraint "service_identity_subject_shape"
+PASS  SI09 the code must name the queue  -- 23514 service_identity_subject_shape new row for relation "service_identity" violates check constraint "service_identity_subject_shape"
+PASS  SI10 the application narrows the grant (version + 1, audited); the history holds 2 rows  -- history rows 2
+PASS  SI11 a grant beyond the declaration is refused  -- 23514 service_identity_grant_within_declaration new row for relation "service_identity" violates check constraint "service_identity_grant_within_declaration"
+PASS  SI12 the application cannot change the declaration (column privilege)  -- 42501 permission denied for table service_identity
+PASS  SI13 a non-stepping version fails  -- 23514 service_identity_version_step service_identity: version must increase by exactly 1 on every update (optimistic concurrency, ADR-0003)
+PASS  SI14 missing audit on an update fails at COMMIT  -- 23000 service_identity_audit_required no audit_event for service_identity 01990000-0000-7000-8000-000000000100 at version 3 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  SI15 UPDATE on service_identity_change fails (append-only)  -- 42501 service_identity_change is append-only: UPDATE is not allowed
+PASS  SI16 DELETE on service_identity_change fails (append-only)  -- 42501 service_identity_change is append-only: DELETE is not allowed
+PASS  SI17 the application cannot write the history  -- 42501 permission denied for table service_identity_change
+PASS  OE01 a job failure opens a platform exception (open, 1 occurrence), audited; event 'opened'  -- opened
+PASS  OE02 a second ACTIVE exception with the same key is refused, also for platform rows (NULLS NOT DISTINCT)  -- 23505 operational_exception_one_active_key duplicate key value violates unique constraint "operational_exception_one_active_key"
+PASS  OE03 the dedup key must equal source_kind:source_code:failure_class  -- 23514 operational_exception_dedup_key new row for relation "operational_exception" violates check constraint "operational_exception_dedup_key"
+PASS  OE04 the failure class must match the source kind  -- 23514 operational_exception_class_shape new row for relation "operational_exception" violates check constraint "operational_exception_class_shape"
+PASS  OE05 an exception cannot be created acknowledged  -- 23514 operational_exception_transition operational_exception: an exception is created open, with one occurrence
+PASS  OE06 missing audit fails at COMMIT  -- 23000 operational_exception_audit_required no audit_event for operational_exception 01990000-0000-7000-8000-000000000116 at version 1 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  OE07 a recurrence counts once (2 occurrences), event 'recurred'  -- occurrence_count 2
+PASS  OE08 a recurrence cannot count twice  -- 23514 operational_exception_occurrence_step operational_exception: each recurrence counts once and moves last_occurred_at forward
+PASS  OE09 a non-stepping version fails  -- 23514 operational_exception_version_step operational_exception: version must increase by exactly 1 on every update (optimistic concurrency, ADR-0003)
+PASS  OE10 acknowledge (open -> acknowledged), event 'acknowledged'  -- acknowledged
+PASS  OE11 acknowledged -> open is refused  -- 23514 operational_exception_transition operational_exception: acknowledged -> open is not allowed
+PASS  OE12 a manual resolution needs the resolver and a note  -- 23514 operational_exception_resolved_complete new row for relation "operational_exception" violates check constraint "operational_exception_resolved_complete"
+PASS  OE13 a 'recovered' resolution has no user  -- 23514 operational_exception_resolved_complete new row for relation "operational_exception" violates check constraint "operational_exception_resolved_complete"
+PASS  OE14 resolve manually with a note; the event history is opened,recurred,acknowledged,resolved  -- opened,recurred,acknowledged,resolved
+PASS  OE15 a resolved exception never changes  -- 23514 operational_exception_resolved_final operational_exception: a resolved exception never changes (a new failure opens a new exception)
+PASS  OE16 after resolution a new failure of the same key opens a NEW exception  -- 01990000-0000-7000-8000-00000000011a
+PASS  OE17 the source never changes  -- 23514 operational_exception_identity_fixed operational_exception: the source, failure class and first occurrence never change
+PASS  OE18 UPDATE on operational_exception_event fails (append-only)  -- 42501 operational_exception_event is append-only: UPDATE is not allowed
+PASS  OE19 DELETE on operational_exception_event fails (append-only)  -- 42501 operational_exception_event is append-only: DELETE is not allowed
+PASS  OE20 a worker exception belongs to no organization  -- 23514 operational_exception_class_shape new row for relation "operational_exception" violates check constraint "operational_exception_class_shape"
+PASS  OEK01 a data-stale exception links its KPI (same organization and transformation)  -- linked
+PASS  OEK02 another organization's KPI cannot be linked  -- 23503 operational_exception_kpi_same_scope operational_exception_kpi: the KPI and the exception must belong to the same organization (and the KPI to the named transformation)
+PASS  OEK03 a KPI is linked once per exception  -- 23505 operational_exception_kpi_key duplicate key value violates unique constraint "operational_exception_kpi_key"
+PASS  OEK04 the links are append-only (DELETE)  -- 42501 operational_exception_kpi is append-only: DELETE is not allowed
+PASS  WH01 a beat is written and advanced WITHOUT an audit event (telemetry, not audited)  -- 2 beats
+PASS  WH02 a beat cannot skip or go back  -- 23514 worker_heartbeat_forward worker_heartbeat: a beat moves forward by exactly one (a restarted worker writes a new instance key)
+PASS  WH03 a non-stepping version fails  -- 23514 worker_heartbeat_version_step worker_heartbeat: version must increase by exactly 1 on every update (optimistic concurrency, ADR-0003)
+PASS  ST01 an s3 setting without credentials is refused  -- 23514 storage_setting_s3_complete new row for relation "storage_setting" violates check constraint "storage_setting_s3_complete"
+PASS  ST02 a SecretRef carrying a value is refused  -- 23514 storage_setting_secret_key_ref new row for relation "storage_setting" violates check constraint "storage_setting_secret_key_ref"
+PASS  ST03 missing audit fails at COMMIT  -- 23000 storage_setting_audit_required no audit_event for storage_setting 01990000-0000-7000-8000-000000000126 at version 1 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  ST04 a complete s3 setting (references only) commits, audited  -- 01990000-0000-7000-8000-000000000127
+PASS  ST05 at most one storage setting  -- 23505 storage_setting_singleton_key duplicate key value violates unique constraint "storage_setting_singleton_key"
+PASS  ST06 a non-stepping version fails  -- 23514 storage_setting_version_step storage_setting: version must increase by exactly 1 on every update (optimistic concurrency, ADR-0003)
+PASS  ST07 back to filesystem (version + 1, audited); history 2 rows  -- history 2
+PASS  ST08 UPDATE on storage_setting_change fails (append-only)  -- 42501 storage_setting_change is append-only: UPDATE is not allowed
+PASS  ST09 an evidence row names a known store only  -- 23514 evidence_content_storage_driver new row for relation "evidence_content" violates check constraint "evidence_content_storage_driver"
+PASS  NC01 enabling email without a host is refused  -- 23514 notification_channel_email_complete new row for relation "notification_channel" violates check constraint "notification_channel_email_complete"
+PASS  NC02 enterprise messaging can never be enabled (no adapter ships)  -- 23514 notification_channel_no_messaging_adapter new row for relation "notification_channel" violates check constraint "notification_channel_no_messaging_adapter"
+PASS  NC03 a username without a password reference is refused  -- 23514 notification_channel_credentials_pair new row for relation "notification_channel" violates check constraint "notification_channel_credentials_pair"
+PASS  NC04 missing audit fails at COMMIT  -- 23000 notification_channel_audit_required no audit_event for notification_channel 01990000-0000-7000-8000-000000000130 at version 1 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  NC05 a complete email channel commits, audited  -- 01990000-0000-7000-8000-000000000131
+PASS  NC06 one channel per organization and kind  -- 23505 notification_channel_kind_key duplicate key value violates unique constraint "notification_channel_kind_key"
+PASS  NC07 the channel kind never changes  -- 23514 notification_channel_kind_fixed notification_channel: the channel kind never changes
+PASS  NC08 a non-stepping version fails  -- 23514 notification_channel_version_step notification_channel: version must increase by exactly 1 on every update (optimistic concurrency, ADR-0003)
+PASS  NC09 DELETE on notification_channel_change fails (append-only)  -- 42501 notification_channel_change is append-only: DELETE is not allowed
+PASS  ND01 a pending email delivery for a notification commits, audited  -- 01990000-0000-7000-8000-000000000135
+PASS  ND02 a replay creates nothing: one delivery per (notification, channel)  -- 23505 notification_delivery_once_key duplicate key value violates unique constraint "notification_delivery_once_key"
+PASS  ND03 the notification must belong to the delivery's organization  -- 23503 notification_delivery_same_organization notification_delivery: the notification belongs to another organization
+PASS  ND04 missing audit fails at COMMIT  -- 23000 notification_delivery_audit_required no audit_event for notification_delivery 01990000-0000-7000-8000-00000000013a at version 1 (ADR-0004: every mutation writes its audit event in the same transaction)
+PASS  ND05 a failure needs its error code  -- 23514 notification_delivery_failed_complete new row for relation "notification_delivery" violates check constraint "notification_delivery_failed_complete"
+PASS  ND06 pending -> failed -> pending -> sent, one attempt counted per send  -- sent after 2 attempts
+PASS  ND07 a sent delivery is final  -- 23514 notification_delivery_final notification_delivery: a sent delivery is final
+PASS  ND08 an attempt counts exactly once  -- 23514 notification_delivery_attempt_step notification_delivery: each send attempt counts exactly once
+PASS  ND09 a delivery can be skipped at creation with its reason (channel disabled)  -- 01990000-0000-7000-8000-000000000141
+PASS  ND10 a delivery cannot be created sent  -- 23514 notification_delivery_transition notification_delivery: a delivery is created pending (or skipped), with no attempt
+PASS  PM01 six P6 J/C permission codes with their categories  -- identity.read:read,notification_channel.configure:configure,operations.acknowledge:write,operations.read:read,service_identity.configure:configure,storage.configure:configure
+PASS  PM02 role defaults: operations.read ADM_TECH/TO/KDS/TD/AUD; acknowledge ADM_TECH/KDS; identity.read ADM_TECH/ADM_ACCESS/AUD; configure codes ADM_TECH only  -- ADM_ACCESS:identity.read,ADM_TECH:identity.read,ADM_TECH:notification_channel.configure,ADM_TECH:operations.acknowledge,ADM_TECH:operations.read,ADM_TECH:service_identity.configure,ADM_TECH:storage.configure,AUD:identity.read,AUD:operations.read,KDS:operations.acknowledge,KDS:operations.read,TD:oper
+PASS  PM03 AUD holds only read permissions after 0103  -- non-read AUD links: 0
+PASS  PM04 a technical admin can still never hold a business approval (0001 trigger)  -- 23514 role_permission_no_admin_approver technical administrator role ADM_TECH cannot hold approval permission gate.decide (separation of duties)
+
+81/81 PASS

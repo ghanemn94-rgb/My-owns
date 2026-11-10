@@ -66,11 +66,16 @@ import {
   denialOf,
   grantApplies,
   loadGrants,
+  hideRestrictedTypedRefs,
   principalOf,
+  reachKey,
+  redactRestrictedIds,
+  refIsRestricted,
   refreshPrincipal,
   requireAction,
   requireRead,
   resolveTarget,
+  restrictedRecordRefs,
   type Principal,
   type ResolvedTarget,
 } from "../access/index.ts";
@@ -1044,6 +1049,8 @@ export interface ProcedureInstanceView {
   readonly cancelReason: string | null;
   readonly version: number;
   readonly updatedAt: string;
+  /** T-DG6-BE-Z12 (D-218): present when a link, the subject or an input naming a restricted record is not shown. */
+  readonly includesRestrictedRecords?: true;
 }
 
 /** One step as the contract's ProcedureStepInstance (`today` = the organization's business date, for overdue). */
@@ -1090,7 +1097,39 @@ export function presentStep(
 const NEXT = "procedures.next_action";
 
 /** The instance as the contract's ProcedureInstance (M0153's six items, ADR-0042 §3). */
-export async function presentInstance(db: DbOrTx, b: InstanceBundle): Promise<ProcedureInstanceView> {
+/**
+ * T-DG6-BE-Z12 (F-DG6-480; D-218): the instance as `principal` may see it. A link to a record the principal is not
+ * admitted to (a sensitive benefit, business case, evidence item, or a child that carries one's values, such as a
+ * Finance validation) is not listed: the link exists only to name that record (as BE-Z10B's phase-step evidence). The
+ * subject keeps its type with `subjectRecordId` null, an input value naming such a record is redacted
+ * (`redactRestrictedIds`), and the view carries `includesRestrictedRecords: true`. The stored instance is unchanged.
+ */
+export async function presentInstance(
+  db: DbOrTx,
+  principal: Principal,
+  b: InstanceBundle,
+): Promise<ProcedureInstanceView> {
+  const view = await presentInstanceUnredacted(db, b);
+  const hiddenLinks = await restrictedRecordRefs(db, principal, view.links);
+  const [subject] = await hideRestrictedTypedRefs(
+    db,
+    principal,
+    [{ subjectRecordType: view.subjectRecordType, subjectRecordId: view.subjectRecordId }],
+    "subjectRecordType",
+    "subjectRecordId",
+  );
+  const inputs = await redactRestrictedIds(db, principal, view.inputValues);
+  if (hiddenLinks.size === 0 && !("includesRestrictedRecords" in subject!) && !inputs.restricted) return view;
+  return {
+    ...view,
+    subjectRecordId: subject!.subjectRecordId,
+    inputValues: inputs.value,
+    links: view.links.filter((l) => !hiddenLinks.has(reachKey(l))),
+    includesRestrictedRecords: true as const,
+  };
+}
+
+async function presentInstanceUnredacted(db: DbOrTx, b: InstanceBundle): Promise<ProcedureInstanceView> {
   const i = b.instance;
   const today = await businessToday(db, i.organization_id);
   const inputs = inputsOf(i);
@@ -1437,6 +1476,10 @@ async function linkEvidence(tx: Tx, request: FastifyRequest): Promise<InstanceBu
   // reloaded in this transaction, after openStep's locks; refused like an unknown evidence record, with the read
   // gate's denial for the failed-mutation audit (`authorization.denied`). An unknown id is left to the link guard.
   if (ev !== undefined) await requireOutputRead(tx, acting.principal, ev.transformation_id);
+  // T-DG6-BE-Z12 (F-DG6-480; D-218): a sensitive evidence item the person is not admitted to is refused like an
+  // evidence item they cannot read (the same unknown-record refusal).
+  if (ev !== undefined && (await refIsRestricted(tx, acting.principal, "evidence", body.evidenceId)))
+    throw refusal("procedure_step.output_record_invalid");
   await insertLink(tx, acting.audit, bundle.instance, step, "evidence", "evidence", body.evidenceId);
   return finish(tx, acting.audit, await reload(tx, bundle), "step_evidence");
 }
@@ -1507,7 +1550,7 @@ export function registerProcedureStepRoutes(app: FastifyInstance, { db }: Module
   ) =>
     app.post(path, { config }, async (request, reply) => {
       const b = await db.transaction().execute((tx) => run(tx, request));
-      return sendVersioned(reply, 200, await presentInstance(db, b));
+      return sendVersioned(reply, 200, await presentInstance(db, principalOf(request), b));
     });
   route(`${STEP}/complete`, act, completeStep);
   route(`${STEP}/skip`, act, skipStep);

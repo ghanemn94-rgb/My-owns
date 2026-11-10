@@ -3679,6 +3679,7 @@ The P1 migrations create three views, owned by `mth_owner`. `mth_app` has `SELEC
 - **Purpose:** One owned task in My Work with an i18n message and a relative deep link (REQ-S12-005, REQ-S03-008; ADR-0025 §4). The dedupe key makes a duplicate creation impossible (REQ-S16-005).
 - **Migration:** `0028_p4_calendar_jobs_work_items.sql`. **API module:** `tasks`. **Who writes:** `tasks/service.ts` `createWorkItemOnce` (domain services, job handlers); the assignee completes. **Lifecycle:** open → done | cancelled (final).
 - **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+- **Read-time rule (P6 round 8; no stored change):** `link_path` (redacted: any id in the link, including an action on a restricted corrective case). See "P6 read-time classifications after round 8" at the end of this file (added 2026-11-09, T-DG6-ARCH-17).
 
 | Column | Type | Null | Default | Column constraints |
 |---|---|---|---|---|
@@ -3728,6 +3729,7 @@ The P1 migrations create three views, owned by `mth_owner`. `mth_app` has `SELEC
 - **Purpose:** In-app reminder with a direct link (REQ-S12-005; ADR-0025 §4). No email or messaging channel in P4.
 - **Migration:** `0028_p4_calendar_jobs_work_items.sql`. **API module:** `tasks`. **Who writes:** `createWorkItemOnce`; the recipient marks it read. **Lifecycle:** unread → read (once).
 - **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+- **Read-time rule (P6 round 8; no stored change):** `link_path`, `message_params`, `target_record_id` (redacted). See "P6 read-time classifications after round 8" at the end of this file (added 2026-11-09, T-DG6-ARCH-17).
 
 | Column | Type | Null | Default | Column constraints |
 |---|---|---|---|---|
@@ -5964,6 +5966,7 @@ Written by T-DG4-ARCH-04 (solution-architect), 2026-10-09. Binding design: ADR-0
 - **Purpose:** A recovery plan / corrective-action case (REQ-PB-085, REQ-S12-016; ADR-0031 §5): at most one case that is not closed per source; one case ever per failed check; worker cases have no human author (service audit actor).
 - **Migration:** `0041_p4_raid_actions_corrective.sql`. **API module:** `raid`. **Who writes:** the worker consumers (kpi_deviation, benefit_variance, adoption_check, control_check); `corrective_action.manage` (TL, BO, FIN) for value_review cases and person updates. **Lifecycle:** open ⇄ in_progress; open | in_progress → closed (final; needs an owner).
 - **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+- **Read-time rule (P6 round 8; no stored change):** `source_scope_key` (redacted). See "P6 read-time classifications after round 8" at the end of this file (added 2026-11-09, T-DG6-ARCH-17).
 
 | Column | Type | Null | Default | Column constraints |
 |---|---|---|---|---|
@@ -10098,6 +10101,7 @@ Generated from the catalogue of a freshly migrated database by `docs/delivery/ha
 - **Purpose:** One version of a rule: triggers, conditions, actions, identity, service permissions, parameters, content hash, review and publication (REQ-S12-001, REQ-S12-002; ADR-0043 §1, §4).
 - **Migration:** `0074_p5_automation_engine.sql`. **API module:** `automation`. **Who writes:** `automation.configure` (content, submit, publish, discard), `automation.review` (review); starter v1 by migration. **Lifecycle:** draft → in_review → approved → published → superseded; discarded; content frozen outside draft; versioned.
 - **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+- **Read-time rule (P6 round 8; no stored change):** `conditions` (redacted: literals shown as `[restricted:<tag>:<k>]` tokens, D-231, D-233; `<tag>` is the issuer tag keyed by `restricted_token_key`, see "P6 round-10 repair migration 0127"). See "P6 read-time classifications after round 8" at the end of this file (added 2026-11-09, T-DG6-ARCH-17).
 
 | Column | Type | Null | Default | Column constraints |
 |---|---|---|---|---|
@@ -10128,6 +10132,7 @@ Generated from the catalogue of a freshly migrated database by `docs/delivery/ha
 | created_by | uuid | NULL |  | FK → app_user(id) |
 | updated_at | timestamp with time zone | NOT NULL | `now()` |  |
 | updated_by | uuid | NULL |  | FK → app_user(id) |
+| restricted_token_key | bytea | NOT NULL | `(uuid_send(gen_random_uuid()) \|\| uuid_send(gen_random_uuid()))` | `CHECK ((octet_length(restricted_token_key) = 32))`; _added by 0127 (T-DG6-BE-Z15, D-233): the row's secret HMAC key of the restricted token tag; never served, audited or logged; immutable_ |
 
 **Table constraints:**
 
@@ -10152,6 +10157,7 @@ Generated from the catalogue of a freshly migrated database by `docs/delivery/ha
 - `automation_rule_version_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `automation_rule_version_guard()`
 - `automation_rule_version_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
 - `automation_rule_version_sod_contributor` and four contributor-recording triggers: _added by 0097, 2026-10-18_; listed in section "P5 repair migration 0097"
+- `automation_rule_version_token_key_immutable`: BEFORE UPDATE FOR EACH ROW → `automation_rule_version_token_key_immutable()`; _added by 0127, 2026-11-09_; listed in section "P6 round-10 repair migration 0127"
 
 ## automation_dry_run
 
@@ -10193,6 +10199,7 @@ Generated from the catalogue of a freshly migrated database by `docs/delivery/ha
 - **Purpose:** One evaluation of one rule version for one trigger occurrence: identity, outcome, attempt, error (REQ-S12-001, REQ-S12-021; ADR-0043 §5).
 - **Migration:** `0074_p5_automation_engine.sql`. **API module:** `automation`. **Who writes:** the worker (service identity); retry by `automation.repair`. **Lifecycle:** running → succeeded | skipped | failed; failed → running (retry); versioned.
 - **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+- **Read-time rule (P6 round 8; no stored change):** `trigger_key`, `error_detail` (redacted). See "P6 read-time classifications after round 8" at the end of this file (added 2026-11-09, T-DG6-ARCH-17).
 
 | Column | Type | Null | Default | Column constraints |
 |---|---|---|---|---|
@@ -10245,6 +10252,7 @@ Generated from the catalogue of a freshly migrated database by `docs/delivery/ha
 - **Purpose:** The outcome of one action of one execution attempt with its idempotency key and produced record (REQ-S12-021; ADR-0043 §5).
 - **Migration:** `0074_p5_automation_engine.sql`. **API module:** `automation`. **Who writes:** the worker. **Lifecycle:** append-only.
 - **`mth_app` privileges:** INSERT, SELECT.
+- **Read-time rule (P6 round 8; no stored change):** `idempotency_key` (redacted). See "P6 read-time classifications after round 8" at the end of this file (added 2026-11-09, T-DG6-ARCH-17).
 
 | Column | Type | Null | Default | Column constraints |
 |---|---|---|---|---|
@@ -10318,6 +10326,7 @@ Generated from the catalogue of a freshly migrated database by `docs/delivery/ha
 - **Purpose:** The failure queue: failed rule executions and jobs with the original idempotency key and job data, retries and dismissal (REQ-S12-002, REQ-S12-020, REQ-S12-022; M0239; ADR-0043 §5).
 - **Migration:** `0074_p5_automation_engine.sql`. **API module:** `automation`. **Who writes:** the worker (capture, retry outcome); `automation.repair` / `job.repair` (retry, dismiss). **Lifecycle:** open → retrying → resolved | open; open → dismissed; versioned.
 - **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+- **Read-time rule (P6 round 8; no stored change):** `idempotency_key`, `error_message` (redacted). See "P6 read-time classifications after round 8" at the end of this file (added 2026-11-09, T-DG6-ARCH-17).
 
 | Column | Type | Null | Default | Column constraints |
 |---|---|---|---|---|
@@ -10727,6 +10736,7 @@ Generated from the catalogue of a freshly migrated database by `docs/delivery/ha
 ## report_snapshot
 
 - **Purpose:** One assembled output with its as-of time, reporting period, content, methodology version, approval state and provisional/unknown counts; issue, reissue as a new version, discard (REQ-S13-007, REQ-S13-008; ADR-0045 §2-§5).
+- **Changed by `0126`:** the column `aggregates_recorded` and the trigger `report_snapshot_aggregates_recorded_immutable`, plus the child table `report_snapshot_aggregate`. See "P6 round-6 repair migration 0126" (added 2026-11-08, T-DG6-ARCH-16).
 - **Migration:** `0080_p5_reports_snapshots_updates.sql`. **API module:** `reporting`. **Who writes:** `report.generate` (generate, reissue's assembly), `report.issue` (issue, reissue, discard). **Lifecycle:** generated → issued | discarded; issued → superseded by a reissue; content immutable after INSERT; never deleted; versioned.
 - **`mth_app` privileges:** INSERT, SELECT, UPDATE.
 
@@ -12410,3 +12420,2176 @@ _Amended 2026-10-19, T-DG5-ARCH-R6 (D-174, F-DG5-123; T-DG5-BE-Y1):_ the demo al
 **Updated rows** (P2 version step and one audit event each, with the product's verb): `initiative` status `draft → submitted → ranked → selected → funded`, and `→ launched` after G4 (`initiative.submit`, `.rank`, `.select`, `.fund`, `.launch`); `business_case` `validate_baseline` for BC-02..BC-04; `resource_demand` `commit`; `milestone` `approve_date`. Each initiative card now also has `scope_in` (`roaming.ts:734`). Each chain's benefit line and cash investment line is written with `business_case_id` = that chain's initiative case (`business-cases.ts:590`, `caseIdOfLine`); the amounts are unchanged. The seed writes no outbox row for any of these (ADR-0050 D14).
 
 **G4 missing-item codes.** This dictionary does not list the G4 missing-item codes. They are defined in ADR-0021 §7, and the new code `g4.no_approved_initiative` ('No initiative in the approved portfolio', pointer `/initiatives`) is defined in ADR-0035 amendment E2 and in the ADR-0021 amendment of 2026-10-18. It is a value of the existing `Warning.code` (free text), stored in the `detail` JSON of `gate_submission_criterion` and in the submission snapshot. No column changes.
+
+# P6 tables, slices E and F (migrations 0098–0100, DG6)
+
+Written by T-DG6-ARCH-01 (ADR-0051, ADR-0052). The table sections below are generated from the catalogue of a freshly migrated database (`docs/delivery/handbacks/DG6/T-DG6-ARCH-01-evidence/gen-dictionary.ts`), so they match the migrations exactly. `0100` adds only permission rows (five codes and their role defaults; ADR-0051 §7, ADR-0052 §10).
+
+## record_sensitivity
+
+- **Purpose:** Whether one benefit, business case or evidence item is sensitive, with the reason (REQ-S10-002; ADR-0051 §2). No row = not sensitive.
+- **Migration:** `0098_p6_sensitive_records_deep_links.sql`. **API module:** `access`. **Who writes:** `sensitive_record.grant` (TO, ADM_ACCESS) through putRecordSensitivity. **Lifecycle:** one per record; created by If-Match "0"; flag switched by UPDATE (never DELETE); versioned and audited; lock 730300.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| record_type | text | NOT NULL |  |  |
+| record_id | uuid | NOT NULL |  |  |
+| is_sensitive | boolean | NOT NULL |  |  |
+| reason | text | NOT NULL |  | `CHECK (((char_length(reason) >= 3) AND (char_length(reason) <= 1000)))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `record_sensitivity_record_key` (UNIQUE): `UNIQUE (record_type, record_id)`
+- `record_sensitivity_record_type` (CHECK): `CHECK ((record_type = ANY (ARRAY['benefit', 'business_case', 'evidence'])))`
+
+**Indexes:**
+
+- `record_sensitivity_transformation_idx`: `(transformation_id, record_type) WHERE is_sensitive`
+
+**Triggers:**
+
+- `record_sensitivity_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `record_sensitivity_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `record_sensitivity_guard()`
+- `record_sensitivity_history`: AFTER INSERT OR UPDATE FOR EACH ROW → `record_sensitivity_history()`
+- `record_sensitivity_record_ref`: BEFORE INSERT FOR EACH ROW → `p6_sensitive_record_ref_guard()`
+- `record_sensitivity_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## record_sensitivity_change
+
+- **Purpose:** Append-only history of every version of a sensitivity flag (ADR-0051 §2).
+- **Migration:** `0098_p6_sensitive_records_deep_links.sql`. **API module:** `access`. **Who writes:** the SECURITY DEFINER trigger `record_sensitivity_history` only. **Lifecycle:** append-only; one row per record_sensitivity version.
+- **`mth_app` privileges:** SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| record_sensitivity_id | uuid | NOT NULL |  | FK → record_sensitivity(id) |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| record_type | text | NOT NULL |  | `CHECK ((record_type = ANY (ARRAY['benefit', 'business_case', 'evidence'])))` |
+| record_id | uuid | NOT NULL |  |  |
+| record_version | integer | NOT NULL |  | `CHECK ((record_version >= 1))` |
+| is_sensitive | boolean | NOT NULL |  |  |
+| reason | text | NOT NULL |  | `CHECK (((char_length(reason) >= 3) AND (char_length(reason) <= 1000)))` |
+| changed_by | uuid | NOT NULL |  | FK → app_user(id) |
+| changed_at | timestamp with time zone | NOT NULL |  |  |
+
+**Table constraints:**
+
+- `record_sensitivity_change_version_key` (UNIQUE): `UNIQUE (record_sensitivity_id, record_version)`
+
+**Triggers:**
+
+- `record_sensitivity_change_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `record_sensitivity_change_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+
+## sensitive_record_grant
+
+- **Purpose:** An explicit grant that admits one user to one sensitive record (REQ-S10-002; ADR-0051 §2).
+- **Migration:** `0098_p6_sensitive_records_deep_links.sql`. **API module:** `access`. **Who writes:** `sensitive_record.grant` (TO, ADM_ACCESS) through createSensitiveGrant and revokeSensitiveGrant. **Lifecycle:** active -> revoked (terminal); at most one active grant per record and grantee; versioned and audited; lock 730300.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| record_type | text | NOT NULL |  |  |
+| record_id | uuid | NOT NULL |  |  |
+| grantee_user_id | uuid | NOT NULL |  | FK → app_user(id) |
+| reason | text | NOT NULL |  | `CHECK (((char_length(reason) >= 3) AND (char_length(reason) <= 1000)))` |
+| status | text | NOT NULL | `'active'` |  |
+| revoked_at | timestamp with time zone | NULL |  |  |
+| revoked_by | uuid | NULL |  | FK → app_user(id) |
+| revoke_reason | text | NULL |  | `CHECK (((revoke_reason IS NULL) OR ((char_length(revoke_reason) >= 3) AND (char_length(revoke_reason) <= 1000))))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `sensitive_record_grant_not_self` (CHECK): `CHECK ((grantee_user_id <> created_by))`
+- `sensitive_record_grant_record_type` (CHECK): `CHECK ((record_type = ANY (ARRAY['benefit', 'business_case', 'evidence'])))`
+- `sensitive_record_grant_revoke_complete` (CHECK): `CHECK ((((status = 'revoked') = (revoked_at IS NOT NULL)) AND ((revoked_at IS NULL) = (revoked_by IS NULL)) AND ((revoked_at IS NULL) = (revoke_reason IS NULL))))`
+- `sensitive_record_grant_status` (CHECK): `CHECK ((status = ANY (ARRAY['active', 'revoked'])))`
+
+**Indexes:**
+
+- `sensitive_record_grant_grantee_idx`: `(grantee_user_id, record_type) WHERE (status = 'active')`
+- `sensitive_record_grant_one_active_key`: `UNIQUE (record_type, record_id, grantee_user_id) WHERE (status = 'active')`
+- `sensitive_record_grant_transformation_idx`: `(transformation_id, created_at DESC, id DESC)`
+
+**Triggers:**
+
+- `sensitive_record_grant_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `sensitive_record_grant_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `sensitive_record_grant_guard()`
+- `sensitive_record_grant_record_ref`: BEFORE INSERT FOR EACH ROW → `p6_sensitive_record_ref_guard()`
+- `sensitive_record_grant_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## upload_policy
+
+- **Purpose:** The organization's narrowed upload allow-list and size limit (REQ-S13-011; ADR-0052 §1). No row = the default (ten types, 26214400 bytes).
+- **Migration:** `0099_p6_upload_policy_content_types.sql`. **API module:** `evidence (admin)`. **Who writes:** `upload_policy.configure` (ADM_TECH) through putUploadPolicy. **Lifecycle:** one per organization; created by If-Match "0"; versioned and audited.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| allowed_types | text[] | NOT NULL |  |  |
+| max_bytes | bigint | NOT NULL |  |  |
+| reason | text | NOT NULL |  | `CHECK (((char_length(reason) >= 3) AND (char_length(reason) <= 1000)))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `upload_policy_allowed_types` (CHECK): `CHECK ((((cardinality(allowed_types) >= 1) AND (cardinality(allowed_types) <= 10)) AND (allowed_types <@ ARRAY['pdf', 'docx', 'xlsx', 'pptx', 'csv', 'txt', 'png', 'jpeg', 'gif', 'svg']) AND (array_position(allowed_types, NULL) IS NULL)))`
+- `upload_policy_max_bytes` (CHECK): `CHECK (((max_bytes >= 1) AND (max_bytes <= 26214400)))`
+- `upload_policy_organization_key` (UNIQUE): `UNIQUE (organization_id)`
+
+**Triggers:**
+
+- `upload_policy_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `upload_policy_history`: AFTER INSERT OR UPDATE FOR EACH ROW → `upload_policy_history()`
+- `upload_policy_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## upload_policy_change
+
+- **Purpose:** Append-only history of every version of an upload policy (ADR-0052 §1).
+- **Migration:** `0099_p6_upload_policy_content_types.sql`. **API module:** `evidence (admin)`. **Who writes:** the SECURITY DEFINER trigger `upload_policy_history` only. **Lifecycle:** append-only; one row per upload_policy version.
+- **`mth_app` privileges:** SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| upload_policy_id | uuid | NOT NULL |  | FK → upload_policy(id) |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| record_version | integer | NOT NULL |  | `CHECK ((record_version >= 1))` |
+| allowed_types | text[] | NOT NULL |  |  |
+| max_bytes | bigint | NOT NULL |  |  |
+| reason | text | NOT NULL |  |  |
+| changed_by | uuid | NOT NULL |  | FK → app_user(id) |
+| changed_at | timestamp with time zone | NOT NULL |  |  |
+
+**Table constraints:**
+
+- `upload_policy_change_version_key` (UNIQUE): `UNIQUE (upload_policy_id, record_version)`
+
+**Triggers:**
+
+- `upload_policy_change_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `upload_policy_change_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+
+## Columns and triggers added to earlier tables (0098, 0099)
+
+| Table (owner) | Column or object | Type / kind | Rule |
+|---|---|---|---|
+| `inbox_notification` (DG4 0028) | `link_token` | text NULL | 43 base64url characters (`inbox_notification_link_token_format`); unique when set (`inbox_notification_link_token_key`, partial unique index); an opaque identifier, never a credential (ADR-0051 §3) |
+| `inbox_notification` | `target_record_type` | text NULL | `^[a-z][a-z0-9_]{0,63}$` (`inbox_notification_target_record_type_format`) |
+| `inbox_notification` | `target_record_id` | uuid NULL | set together with `target_record_type` (`inbox_notification_target_pair`) |
+| `inbox_notification` | `inbox_notification_deep_link_guard` | BEFORE UPDATE trigger, row | the token and the target are set at most once (NULL → value) and never changed (`inbox_notification_deep_link_once`); takes lock 730301 (`deepLinkIssue`) when the token changes |
+| `evidence_content` (DG2 0012) | `detected_type` | text NULL | NULL (files stored before P6, "not checked") or one of `pdf`, `docx`, `xlsx`, `pptx`, `csv`, `txt`, `png`, `jpeg`, `gif`, `svg` (`evidence_content_detected_type`); when set, `content_type = p6_upload_media_type(detected_type)` (`evidence_content_detected_media_type`) |
+
+Rows written before `0098`/`0099` keep NULL in every new column (probe G04). `evidence_content` stays append-only (DG2 0012).
+
+## P6 functions (0098, 0099)
+
+| Function | Migration | Purpose | Callable by `mth_app` |
+|---|---|---|---|
+| `p6_sensitive_record_ref_guard()` | 0098 | trigger: the `record_type` is `benefit`, `business_case` or `evidence` and `record_id` exists in that table in the row's transformation | trigger only (`PUBLIC` revoked) |
+| `record_sensitivity_guard()` | 0098 | trigger: lock 730300 per record; the marked record is immutable | trigger only |
+| `record_sensitivity_history()` | 0098 | SECURITY DEFINER trigger: writes one `record_sensitivity_change` row per insert and update | trigger only (`PUBLIC` revoked) |
+| `sensitive_record_grant_guard()` | 0098 | trigger: lock 730300 per record; inserted active; active → revoked only; record, grantee and reason immutable | trigger only |
+| `inbox_notification_deep_link_guard()` | 0098 | trigger: set-once token and target; lock 730301 | trigger only |
+| `p6_upload_media_type(text)` | 0099 | IMMUTABLE: the canonical media type of each of the ten upload types; NULL otherwise | EXECUTE (granted) |
+| `upload_policy_history()` | 0099 | SECURITY DEFINER trigger: writes one `upload_policy_change` row per insert and update | trigger only (`PUBLIC` revoked) |
+
+# P6 tables, slices J and C (migrations 0101–0103, DG6)
+
+Written by T-DG6-ARCH-02 (ADR-0053, ADR-0054). The table sections below are generated from the catalogue of a freshly migrated database (`docs/delivery/handbacks/DG6/T-DG6-ARCH-02-evidence/gen-dictionary.ts`, output `dictionary-section.md`), so they match the migrations exactly. `0103` adds only permission rows (six codes and thirteen role links; permissions matrix §25). `service_identity` additionally grants `mth_app` a COLUMN-level UPDATE of `granted_permission_codes`, `reason`, `version`, `updated_at` and `updated_by` only (not shown in the table-level privileges line; probe SI12).
+
+## service_identity
+
+- **Purpose:** The constrained service identity of one job queue or connector: the declared permission ceiling, the effective grant, the scope and sensitive access (REQ-S16-029; ADR-0053 §1).
+- **Migration:** `0101_p6_operations_service_identities.sql`. **API module:** `operations (access)`. **Who writes:** job rows: a migration only (owner check); connector rows: the connector's creation (ADR-0055); the grant: `service_identity.configure` (ADM_TECH) through putServiceIdentity (column-level UPDATE). **Lifecycle:** one per code; declaration fixed outside migrations; grant narrowed or restored; versioned and audited.
+- **`mth_app` privileges:** INSERT, SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| code | text | NOT NULL |  |  |
+| subject_kind | text | NOT NULL |  | `CHECK ((subject_kind = ANY (ARRAY['job', 'connector'])))` |
+| queue_name | text | NULL |  | `CHECK (((queue_name IS NULL) OR ((queue_name ~ '^[a-z_]+\.[a-z_.]+$') AND (char_length(queue_name) <= 100))))` |
+| connector_id | uuid | NULL |  |  |
+| scope_level | text | NOT NULL |  | `CHECK ((scope_level = ANY (ARRAY['platform', 'organization'])))` |
+| organization_id | uuid | NULL |  | FK → organization(id) |
+| declared_permission_codes | text[] | NOT NULL |  | `CHECK (((cardinality(declared_permission_codes) <= 40) AND (array_position(declared_permission_codes, NULL) IS NULL)))` |
+| granted_permission_codes | text[] | NOT NULL |  | `CHECK ((array_position(granted_permission_codes, NULL) IS NULL))` |
+| sensitive_access | text | NOT NULL | `'none'` | `CHECK ((sensitive_access = ANY (ARRAY['none', 'aggregate_only'])))` |
+| label_en | text | NOT NULL |  | `CHECK (((char_length(label_en) >= 1) AND (char_length(label_en) <= 200)))` |
+| label_ar | text | NOT NULL |  | `CHECK (((char_length(label_ar) >= 1) AND (char_length(label_ar) <= 200)))` |
+| reason | text | NOT NULL |  | `CHECK (((char_length(reason) >= 3) AND (char_length(reason) <= 1000)))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `service_identity_code_format` (CHECK): `CHECK ((code ~ '^(job|connector):[a-z0-9][a-z0-9_.:-]{0,119}$'))`
+- `service_identity_code_key` (UNIQUE): `UNIQUE (code)`
+- `service_identity_grant_within_declaration` (CHECK): `CHECK ((granted_permission_codes <@ declared_permission_codes))`
+- `service_identity_scope_shape` (CHECK): `CHECK (((scope_level = 'platform') = (organization_id IS NULL)))`
+- `service_identity_subject_shape` (CHECK): `CHECK ((((subject_kind = 'job') AND (queue_name IS NOT NULL) AND (connector_id IS NULL) AND (code = ('job:' || queue_name))) OR ((subject_kind = 'connector') AND (connector_id IS NOT NULL) AND (queue_name IS NULL) AND (scope_level = 'organization') AND (code = ('connector:' || (connector_id))))))`
+
+**Indexes:**
+
+- `service_identity_organization_idx`: `(organization_id, code)`
+
+**Triggers:**
+
+- `service_identity_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `service_identity_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `service_identity_guard()`
+- `service_identity_history`: AFTER INSERT OR UPDATE FOR EACH ROW → `service_identity_history()`
+- `service_identity_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## service_identity_change
+
+- **Purpose:** Append-only history of every version of a service identity (ADR-0053 §1).
+- **Migration:** `0101_p6_operations_service_identities.sql`. **API module:** `operations (access)`. **Who writes:** the SECURITY DEFINER trigger `service_identity_history` only. **Lifecycle:** append-only; one row per service_identity version.
+- **`mth_app` privileges:** SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| service_identity_id | uuid | NOT NULL |  | FK → service_identity(id) |
+| record_version | integer | NOT NULL |  | `CHECK ((record_version >= 1))` |
+| declared_permission_codes | text[] | NOT NULL |  |  |
+| granted_permission_codes | text[] | NOT NULL |  |  |
+| sensitive_access | text | NOT NULL |  |  |
+| reason | text | NOT NULL |  |  |
+| changed_by | uuid | NULL |  | FK → app_user(id) |
+| changed_at | timestamp with time zone | NOT NULL |  |  |
+
+**Table constraints:**
+
+- `service_identity_change_version_key` (UNIQUE): `UNIQUE (service_identity_id, record_version)`
+
+**Triggers:**
+
+- `service_identity_change_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `service_identity_change_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+
+## operational_exception
+
+- **Purpose:** One visible operational exception per source and failure class while active (REQ-S12-019, M0239; ADR-0053 §2).
+- **Migration:** `0101_p6_operations_service_identities.sql`. **API module:** `operations`. **Who writes:** the worker failure hook, the connector run, the freshness scan and the API heartbeat watch (actor service; lock 730305); acknowledge and resolve: `operations.acknowledge` (ADM_TECH, KDS). **Lifecycle:** open -> acknowledged | resolved; acknowledged -> resolved; resolved is final; one active row per (organization, dedup key); versioned and audited.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+- **Read-time rule (P6 round 8; no stored change):** `last_error_message` (redacted). See "P6 read-time classifications after round 8" at the end of this file (added 2026-11-09, T-DG6-ARCH-17).
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NULL |  | FK → organization(id) |
+| source_kind | text | NOT NULL |  | `CHECK ((source_kind = ANY (ARRAY['job', 'connector', 'data_freshness', 'worker'])))` |
+| source_code | text | NOT NULL |  | `CHECK ((((char_length(source_code) >= 1) AND (char_length(source_code) <= 200)) AND (source_code ~ '^[a-z0-9][a-z0-9_.:-]*$')))` |
+| failure_class | text | NOT NULL |  | `CHECK ((failure_class = ANY (ARRAY['job_failed', 'connector_run_failed', 'connector_unreachable', 'connector_credentials_rejected', 'data_stale', 'heartbeat_missed'])))` |
+| dedup_key | text | NOT NULL |  |  |
+| service_identity_id | uuid | NULL |  | FK → service_identity(id) |
+| operational_failure_id | uuid | NULL |  | FK → operational_failure(id) |
+| status | text | NOT NULL | `'open'` | `CHECK ((status = ANY (ARRAY['open', 'acknowledged', 'resolved'])))` |
+| occurrence_count | integer | NOT NULL | `1` | `CHECK ((occurrence_count >= 1))` |
+| first_occurred_at | timestamp with time zone | NOT NULL |  |  |
+| last_occurred_at | timestamp with time zone | NOT NULL |  |  |
+| last_error_code | text | NOT NULL |  | `CHECK ((((char_length(last_error_code) >= 1) AND (char_length(last_error_code) <= 100)) AND (last_error_code ~ '^[a-z][a-z0-9_.]*$')))` |
+| last_error_message | text | NOT NULL |  | `CHECK (((char_length(last_error_message) >= 1) AND (char_length(last_error_message) <= 2000)))` |
+| acknowledged_at | timestamp with time zone | NULL |  |  |
+| acknowledged_by | uuid | NULL |  | FK → app_user(id) |
+| acknowledge_note | text | NULL |  | `CHECK (((acknowledge_note IS NULL) OR ((char_length(acknowledge_note) >= 3) AND (char_length(acknowledge_note) <= 1000))))` |
+| resolved_at | timestamp with time zone | NULL |  |  |
+| resolved_by | uuid | NULL |  | FK → app_user(id) |
+| resolution | text | NULL |  | `CHECK (((resolution IS NULL) OR (resolution = ANY (ARRAY['manual', 'recovered']))))` |
+| resolution_note | text | NULL |  | `CHECK (((resolution_note IS NULL) OR ((char_length(resolution_note) >= 3) AND (char_length(resolution_note) <= 1000))))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `operational_exception_ack_complete` (CHECK): `CHECK ((((acknowledged_at IS NULL) = (acknowledged_by IS NULL)) AND ((acknowledge_note IS NULL) OR (acknowledged_at IS NOT NULL)) AND ((status <> 'acknowledged') OR (acknowledged_at IS NOT NULL)) AND ((status <> 'open') OR (acknowledged_at IS NULL))))`
+- `operational_exception_class_shape` (CHECK): `CHECK ((((source_kind = 'job') AND (failure_class = 'job_failed')) OR ((source_kind = 'connector') AND (failure_class = ANY (ARRAY['connector_run_failed', 'connector_unreachable', 'connector_credentials_rejected'])) AND (organization_id IS NOT NULL)) OR ((source_kind = 'data_freshness') AND (failure_class = 'data_stale') AND (organization_id IS NOT NULL)) OR ((source_kind = 'worker') AND (failure_class = 'heartbeat_missed') AND (organization_id IS NULL))))`
+- `operational_exception_dedup_key` (CHECK): `CHECK ((dedup_key = ((((source_kind || ':') || source_code) || ':') || failure_class)))`
+- `operational_exception_resolved_complete` (CHECK): `CHECK ((((status = 'resolved') = (resolved_at IS NOT NULL)) AND ((resolved_at IS NULL) = (resolution IS NULL)) AND ((resolution IS DISTINCT FROM 'manual') OR ((resolved_by IS NOT NULL) AND (resolution_note IS NOT NULL))) AND ((resolution IS DISTINCT FROM 'recovered') OR (resolved_by IS NULL)) AND ((resolved_at IS NOT NULL) OR ((resolved_by IS NULL) AND (resolution_note IS NULL)))))`
+- `operational_exception_times` (CHECK): `CHECK ((last_occurred_at >= first_occurred_at))`
+
+**Indexes:**
+
+- `operational_exception_list_idx`: `(organization_id, status, last_occurred_at DESC, id DESC)`
+- `operational_exception_one_active_key`: `UNIQUE (organization_id, dedup_key) NULLS NOT DISTINCT WHERE (status = ANY (ARRAY['open', 'acknowledged']))`
+
+**Triggers:**
+
+- `operational_exception_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `operational_exception_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `operational_exception_guard()`
+- `operational_exception_history`: AFTER INSERT OR UPDATE FOR EACH ROW → `operational_exception_history()`
+- `operational_exception_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## operational_exception_event
+
+- **Purpose:** Append-only event history of an operational exception: opened, recurred, acknowledged, resolved, updated (ADR-0053 §2).
+- **Migration:** `0101_p6_operations_service_identities.sql`. **API module:** `operations`. **Who writes:** the SECURITY DEFINER trigger `operational_exception_history` only. **Lifecycle:** append-only; one row per operational_exception version.
+- **`mth_app` privileges:** SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| operational_exception_id | uuid | NOT NULL |  | FK → operational_exception(id) |
+| record_version | integer | NOT NULL |  | `CHECK ((record_version >= 1))` |
+| event_kind | text | NOT NULL |  | `CHECK ((event_kind = ANY (ARRAY['opened', 'recurred', 'acknowledged', 'resolved', 'updated'])))` |
+| status | text | NOT NULL |  |  |
+| occurrence_count | integer | NOT NULL |  |  |
+| error_code | text | NOT NULL |  |  |
+| actor_user_id | uuid | NULL |  | FK → app_user(id) |
+| note | text | NULL |  |  |
+| occurred_at | timestamp with time zone | NOT NULL |  |  |
+
+**Table constraints:**
+
+- `operational_exception_event_version_key` (UNIQUE): `UNIQUE (operational_exception_id, record_version)`
+
+**Triggers:**
+
+- `operational_exception_event_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `operational_exception_event_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+
+## operational_exception_kpi
+
+- **Purpose:** Which KPI definitions an operational exception makes stale (same organization and transformation; ADR-0053 §2).
+- **Migration:** `0101_p6_operations_service_identities.sql`. **API module:** `operations`. **Who writes:** the exception's raising code, in its open or recur transaction (whose audit event lists the KPI ids). **Lifecycle:** append-only; at most one link per exception and KPI.
+- **`mth_app` privileges:** INSERT, SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| operational_exception_id | uuid | NOT NULL |  | FK → operational_exception(id) |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| kpi_definition_id | uuid | NOT NULL |  | FK → kpi_definition(id) |
+| linked_at | timestamp with time zone | NOT NULL | `now()` |  |
+
+**Table constraints:**
+
+- `operational_exception_kpi_key` (UNIQUE): `UNIQUE (operational_exception_id, kpi_definition_id)`
+
+**Indexes:**
+
+- `operational_exception_kpi_transformation_idx`: `(transformation_id, kpi_definition_id)`
+
+**Triggers:**
+
+- `operational_exception_kpi_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `operational_exception_kpi_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+- `operational_exception_kpi_guard`: BEFORE INSERT FOR EACH ROW → `operational_exception_kpi_guard()`
+
+## worker_heartbeat
+
+- **Purpose:** The liveness beat of one worker process (A22; ADR-0053 §6). Telemetry, not a business record.
+- **Migration:** `0101_p6_operations_service_identities.sql`. **API module:** `operations`. **Who writes:** the worker every WORKER_HEARTBEAT_SECONDS (default 30). **Lifecycle:** one per worker instance key; each beat advances beat_count by exactly 1; version-stepped, NOT audited.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| instance_key | text | NOT NULL |  | `CHECK ((instance_key ~ '^[A-Za-z0-9][A-Za-z0-9_.:-]{0,99}$'))` |
+| app_version | text | NOT NULL |  | `CHECK (((char_length(app_version) >= 1) AND (char_length(app_version) <= 50)))` |
+| started_at | timestamp with time zone | NOT NULL |  |  |
+| last_beat_at | timestamp with time zone | NOT NULL |  |  |
+| beat_count | bigint | NOT NULL | `1` | `CHECK ((beat_count >= 1))` |
+| queue_count | integer | NOT NULL |  | `CHECK (((queue_count >= 0) AND (queue_count <= 1000)))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+
+**Table constraints:**
+
+- `worker_heartbeat_instance_key` (UNIQUE): `UNIQUE (instance_key)`
+- `worker_heartbeat_times` (CHECK): `CHECK ((last_beat_at >= started_at))`
+
+**Triggers:**
+
+- `worker_heartbeat_guard`: BEFORE UPDATE FOR EACH ROW → `worker_heartbeat_guard()`
+- `worker_heartbeat_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## storage_setting
+
+- **Purpose:** The installation's evidence-storage setting: driver and, for s3, endpoint, region, bucket, prefix and credential references (REQ-S16-006; ADR-0054 §2). No row = the environment default.
+- **Migration:** `0102_p6_storage_notification_channels.sql`. **API module:** `evidence (admin)`. **Who writes:** `storage.configure` (ADM_TECH) through putStorageSetting (after a passing testStorageSetting; lock 730307). **Lifecycle:** at most one row (singleton); created by If-Match "0"; versioned and audited.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| singleton | boolean | NOT NULL | `true` |  |
+| driver | text | NOT NULL |  | `CHECK ((driver = ANY (ARRAY['filesystem', 's3'])))` |
+| s3_endpoint | text | NULL |  | `CHECK (((s3_endpoint IS NULL) OR ((s3_endpoint ~ '^https?://[^/?#@[:space:]]+(:[0-9]{1,5})?/?$') AND (char_length(s3_endpoint) <= 300))))` |
+| s3_region | text | NULL |  | `CHECK (((s3_region IS NULL) OR (s3_region ~ '^[a-z0-9][a-z0-9-]{0,62}$')))` |
+| s3_bucket | text | NULL |  | `CHECK (((s3_bucket IS NULL) OR (s3_bucket ~ '^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$')))` |
+| s3_key_prefix | text | NULL |  | `CHECK (((s3_key_prefix IS NULL) OR (s3_key_prefix ~ '^[a-z0-9][a-z0-9_/-]{0,99}$')))` |
+| s3_force_path_style | boolean | NOT NULL | `true` |  |
+| s3_access_key_ref | jsonb | NULL |  |  |
+| s3_secret_key_ref | jsonb | NULL |  |  |
+| reason | text | NOT NULL |  | `CHECK (((char_length(reason) >= 3) AND (char_length(reason) <= 1000)))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `storage_setting_access_key_ref` (CHECK): `CHECK (p6_secret_ref_valid(s3_access_key_ref))`
+- `storage_setting_s3_complete` (CHECK): `CHECK (((driver <> 's3') OR ((s3_endpoint IS NOT NULL) AND (s3_region IS NOT NULL) AND (s3_bucket IS NOT NULL) AND (s3_access_key_ref IS NOT NULL) AND (s3_secret_key_ref IS NOT NULL))))`
+- `storage_setting_secret_key_ref` (CHECK): `CHECK (p6_secret_ref_valid(s3_secret_key_ref))`
+- `storage_setting_singleton` (CHECK): `CHECK (singleton)`
+- `storage_setting_singleton_key` (UNIQUE): `UNIQUE (singleton)`
+
+**Triggers:**
+
+- `storage_setting_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `storage_setting_history`: AFTER INSERT OR UPDATE FOR EACH ROW → `storage_setting_history()`
+- `storage_setting_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## storage_setting_change
+
+- **Purpose:** Append-only history of every version of the storage setting (ADR-0054 §2).
+- **Migration:** `0102_p6_storage_notification_channels.sql`. **API module:** `evidence (admin)`. **Who writes:** the SECURITY DEFINER trigger `storage_setting_history` only. **Lifecycle:** append-only; one row per storage_setting version.
+- **`mth_app` privileges:** SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| storage_setting_id | uuid | NOT NULL |  | FK → storage_setting(id) |
+| record_version | integer | NOT NULL |  | `CHECK ((record_version >= 1))` |
+| driver | text | NOT NULL |  |  |
+| s3_endpoint | text | NULL |  |  |
+| s3_region | text | NULL |  |  |
+| s3_bucket | text | NULL |  |  |
+| s3_key_prefix | text | NULL |  |  |
+| s3_force_path_style | boolean | NOT NULL |  |  |
+| s3_access_key_ref | jsonb | NULL |  |  |
+| s3_secret_key_ref | jsonb | NULL |  |  |
+| reason | text | NOT NULL |  |  |
+| changed_by | uuid | NOT NULL |  | FK → app_user(id) |
+| changed_at | timestamp with time zone | NOT NULL |  |  |
+
+**Table constraints:**
+
+- `storage_setting_change_version_key` (UNIQUE): `UNIQUE (storage_setting_id, record_version)`
+
+**Triggers:**
+
+- `storage_setting_change_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `storage_setting_change_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+
+## notification_channel
+
+- **Purpose:** One optional external notification channel of an organization: email (SMTP with credential references) or enterprise messaging (port only, never enabled in P6) (REQ-S12-023; ADR-0054 §3). No row = in-app only.
+- **Migration:** `0102_p6_storage_notification_channels.sql`. **API module:** `tasks (channels)`. **Who writes:** `notification_channel.configure` (ADM_TECH) through putNotificationChannel. **Lifecycle:** one per (organization, channel kind); created by If-Match "0"; kind never changes; versioned and audited.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| channel_kind | text | NOT NULL |  | `CHECK ((channel_kind = ANY (ARRAY['email', 'enterprise_messaging'])))` |
+| enabled | boolean | NOT NULL | `false` |  |
+| smtp_host | text | NULL |  | `CHECK (((smtp_host IS NULL) OR (smtp_host ~ '^[A-Za-z0-9]([A-Za-z0-9.-]{0,251}[A-Za-z0-9])?$')))` |
+| smtp_port | integer | NULL |  | `CHECK (((smtp_port IS NULL) OR ((smtp_port >= 1) AND (smtp_port <= 65535))))` |
+| smtp_security | text | NULL |  | `CHECK (((smtp_security IS NULL) OR (smtp_security = ANY (ARRAY['starttls', 'tls', 'none']))))` |
+| smtp_username_ref | jsonb | NULL |  |  |
+| smtp_password_ref | jsonb | NULL |  |  |
+| from_address | text | NULL |  | `CHECK (((from_address IS NULL) OR ((char_length(from_address) <= 254) AND (from_address ~ '^[^@[:space:]<>]+@[^@[:space:]<>]+\.[^@[:space:]<>]+$'))))` |
+| reason | text | NOT NULL |  | `CHECK (((char_length(reason) >= 3) AND (char_length(reason) <= 1000)))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `notification_channel_credentials_pair` (CHECK): `CHECK (((smtp_username_ref IS NULL) = (smtp_password_ref IS NULL)))`
+- `notification_channel_email_complete` (CHECK): `CHECK (((channel_kind <> 'email') OR (NOT enabled) OR ((smtp_host IS NOT NULL) AND (smtp_port IS NOT NULL) AND (smtp_security IS NOT NULL) AND (from_address IS NOT NULL))))`
+- `notification_channel_kind_key` (UNIQUE): `UNIQUE (organization_id, channel_kind)`
+- `notification_channel_no_messaging_adapter` (CHECK): `CHECK (((channel_kind <> 'enterprise_messaging') OR ((NOT enabled) AND (smtp_host IS NULL) AND (smtp_port IS NULL) AND (smtp_security IS NULL) AND (smtp_username_ref IS NULL) AND (smtp_password_ref IS NULL) AND (from_address IS NULL))))`
+- `notification_channel_password_ref` (CHECK): `CHECK (p6_secret_ref_valid(smtp_password_ref))`
+- `notification_channel_username_ref` (CHECK): `CHECK (p6_secret_ref_valid(smtp_username_ref))`
+
+**Triggers:**
+
+- `notification_channel_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `notification_channel_history`: AFTER INSERT OR UPDATE FOR EACH ROW → `notification_channel_history()`
+- `notification_channel_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## notification_channel_change
+
+- **Purpose:** Append-only history of every version of a notification channel (ADR-0054 §3).
+- **Migration:** `0102_p6_storage_notification_channels.sql`. **API module:** `tasks (channels)`. **Who writes:** the SECURITY DEFINER trigger `notification_channel_history` only. **Lifecycle:** append-only; one row per notification_channel version.
+- **`mth_app` privileges:** SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| notification_channel_id | uuid | NOT NULL |  | FK → notification_channel(id) |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| record_version | integer | NOT NULL |  | `CHECK ((record_version >= 1))` |
+| channel_kind | text | NOT NULL |  |  |
+| enabled | boolean | NOT NULL |  |  |
+| smtp_host | text | NULL |  |  |
+| smtp_port | integer | NULL |  |  |
+| smtp_security | text | NULL |  |  |
+| smtp_username_ref | jsonb | NULL |  |  |
+| smtp_password_ref | jsonb | NULL |  |  |
+| from_address | text | NULL |  |  |
+| reason | text | NOT NULL |  |  |
+| changed_by | uuid | NOT NULL |  | FK → app_user(id) |
+| changed_at | timestamp with time zone | NOT NULL |  |  |
+
+**Table constraints:**
+
+- `notification_channel_change_version_key` (UNIQUE): `UNIQUE (notification_channel_id, record_version)`
+
+**Triggers:**
+
+- `notification_channel_change_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `notification_channel_change_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+
+## notification_delivery
+
+- **Purpose:** One external delivery of one inbox notification on one channel: the idempotency backstop of the fan-out (ADR-0054 §3). No message text or address is stored.
+- **Migration:** `0102_p6_storage_notification_channels.sql`. **API module:** `tasks (channels)`. **Who writes:** the worker fan-out handler (actor service; lock 730306). **Lifecycle:** pending -> sent | failed | skipped; failed -> pending (retry); sent and skipped are final; one per (notification, channel); versioned and audited.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+- **Read-time rule (P6 round 8; no stored change):** `skip_reason` (`recipient_restricted` is not set by the shipped worker). See "P6 read-time classifications after round 8" at the end of this file (added 2026-11-09, T-DG6-ARCH-17).
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| inbox_notification_id | uuid | NOT NULL |  | FK → inbox_notification(id) |
+| channel_kind | text | NOT NULL |  | `CHECK ((channel_kind = ANY (ARRAY['email', 'enterprise_messaging'])))` |
+| status | text | NOT NULL | `'pending'` | `CHECK ((status = ANY (ARRAY['pending', 'sent', 'failed', 'skipped'])))` |
+| attempts | smallint | NOT NULL | `0` | `CHECK (((attempts >= 0) AND (attempts <= 20)))` |
+| last_attempt_at | timestamp with time zone | NULL |  |  |
+| sent_at | timestamp with time zone | NULL |  |  |
+| skip_reason | text | NULL |  | `CHECK (((skip_reason IS NULL) OR (skip_reason = ANY (ARRAY['no_address', 'recipient_restricted', 'channel_disabled', 'recipient_disabled']))))` |
+| error_code | text | NULL |  | `CHECK (((error_code IS NULL) OR (((char_length(error_code) >= 1) AND (char_length(error_code) <= 100)) AND (error_code ~ '^[a-z][a-z0-9_.]*$'))))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `notification_delivery_attempted` (CHECK): `CHECK (((attempts = 0) = (last_attempt_at IS NULL)))`
+- `notification_delivery_failed_complete` (CHECK): `CHECK (((status <> 'failed') OR ((error_code IS NOT NULL) AND (last_attempt_at IS NOT NULL))))`
+- `notification_delivery_once_key` (UNIQUE): `UNIQUE (inbox_notification_id, channel_kind)`
+- `notification_delivery_sent_complete` (CHECK): `CHECK (((status = 'sent') = (sent_at IS NOT NULL)))`
+- `notification_delivery_skipped_complete` (CHECK): `CHECK (((status = 'skipped') = (skip_reason IS NOT NULL)))`
+
+**Indexes:**
+
+- `notification_delivery_status_idx`: `(status, updated_at, id)`
+
+**Triggers:**
+
+- `notification_delivery_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `notification_delivery_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `notification_delivery_guard()`
+- `notification_delivery_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+
+## Columns added to earlier tables (0102)
+
+- `evidence_content.storage_driver` text NOT NULL DEFAULT 'filesystem', CHECK `evidence_content_storage_driver` (`filesystem` | `s3`): which store holds the bytes; every row stored before P6 is `filesystem` (ADR-0054 §2; probe G04, ST09).
+
+## P6 functions (0101, 0102)
+
+- `service_identity_guard()`, `service_identity_history()` (SECURITY DEFINER), `operational_exception_guard()`, `operational_exception_history()` (SECURITY DEFINER), `operational_exception_kpi_guard()`, `worker_heartbeat_guard()` (0101).
+- `p6_secret_ref_valid(jsonb)` (IMMUTABLE; EXECUTE granted to `mth_app`): a SecretRef has exactly the string keys `provider` and `name`, never a value; `storage_setting_history()`, `notification_channel_history()` (both SECURITY DEFINER; the latter also refuses a change of `channel_kind`), `notification_delivery_guard()` (0102).
+
+# P6 tables, slices B and A (migrations 0104–0107, DG6)
+
+Written by T-DG6-ARCH-03 (ADR-0055, ADR-0056). The table sections below are generated from the catalogue of a freshly migrated database (`docs/delivery/handbacks/DG6/T-DG6-ARCH-03-evidence/gen-dictionary.ts`, output `dictionary-section.md`), so they match the migrations exactly. `0107` adds only permission rows (eleven codes and twenty-six role links; permissions matrix §26). `import_row` grants `mth_app` a COLUMN-level UPDATE of `commit_status` and `updated_at` only (probe IM14). Sixteen tables: six mutable, versioned and audited (`connector`, `integration_run`, `outbound_write`, `webhook_endpoint`, `import_batch`, `deliverable_external_change`); six trigger-written append-only histories (`connector_change`, `integration_run_event`, `outbound_write_event`, `webhook_endpoint_change`, `import_batch_event`, `deliverable_external_change_event`); three append-only record tables (`connector_config_version`, `webhook_receipt`, `import_row_commit`); and `import_row` (staged rows: insert while staging, then only the commit status moves; never deleted).
+
+## connector
+
+- **Purpose:** One connector of an organization: adapter kind (test_adapter, webhook, http_pull), target kind (kpi_actual, none), status and its current configuration version (REQ-S17-001, M0334; ADR-0055 §1).
+- **Migration:** `0104_p6_connectors_runs_outbound_writes.sql`. **API module:** `integrations`. **Who writes:** `connector.configure` (ADM_TECH) through createConnector, putConnector, enableConnector, disableConnector; creation also writes configuration version 1 and the connector's service identity (ADR-0053 §1) in the same transaction. **Lifecycle:** created disabled at configuration version 1; disabled <-> enabled; code, adapter kind and target kind fixed; versioned and audited.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| code | text | NOT NULL |  | `CHECK ((code ~ '^[a-z][a-z0-9_-]{1,62}$'))` |
+| name_en | text | NOT NULL |  | `CHECK (((char_length(name_en) >= 1) AND (char_length(name_en) <= 200)))` |
+| name_ar | text | NOT NULL |  | `CHECK (((char_length(name_ar) >= 1) AND (char_length(name_ar) <= 200)))` |
+| adapter_kind | text | NOT NULL |  | `CHECK ((adapter_kind = ANY (ARRAY['test_adapter', 'webhook', 'http_pull'])))` |
+| target_kind | text | NOT NULL |  | `CHECK ((target_kind = ANY (ARRAY['kpi_actual', 'none'])))` |
+| status | text | NOT NULL | `'disabled'` | `CHECK ((status = ANY (ARRAY['disabled', 'enabled'])))` |
+| config_version_no | integer | NOT NULL |  | `CHECK ((config_version_no >= 1))` |
+| status_reason | text | NULL |  | `CHECK (((status_reason IS NULL) OR ((char_length(status_reason) >= 3) AND (char_length(status_reason) <= 1000))))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `connector_current_config_fkey` (FK): `FOREIGN KEY (id, config_version_no) REFERENCES connector_config_version(connector_id, version_no) ON UPDATE RESTRICT ON DELETE RESTRICT DEFERRABLE INITIALLY DEFERRED`
+- `connector_organization_code_key` (UNIQUE): `UNIQUE (organization_id, code)`
+- `connector_organization_id_id_key` (UNIQUE): `UNIQUE (organization_id, id)`
+- `connector_webhook_target` (CHECK): `CHECK (((adapter_kind <> 'webhook') OR (target_kind = 'kpi_actual')))`
+
+**Indexes:**
+
+- `connector_list_idx`: `(organization_id, status, code)`
+
+**Triggers:**
+
+- `connector_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `connector_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `connector_guard()`
+- `connector_history`: AFTER INSERT OR UPDATE FOR EACH ROW → `connector_history()`
+- `connector_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## connector_config_version
+
+- **Purpose:** One immutable configuration version of a connector: source system id, credential REFERENCES, field mappings, target transformation, cadence, retry bound, commit mode, outbound actions, reconciliation rule, adapter settings (ADR-0055 §1).
+- **Migration:** `0104_p6_connectors_runs_outbound_writes.sql`. **API module:** `integrations`. **Who writes:** `connector.configure` (ADM_TECH) through createConnector, putConnector and putConnectorMappings (each change is a new version). **Lifecycle:** append-only; numbered 1, 2, 3 … per connector without gaps.
+- **`mth_app` privileges:** INSERT, SELECT.
+- **Read-time rule (P6 round 8; no stored change):** `credential_refs`, `field_mappings` (cannot-name, D-229). See "P6 read-time classifications after round 8" at the end of this file (added 2026-11-09, T-DG6-ARCH-17).
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| connector_id | uuid | NOT NULL |  | FK → connector(id) |
+| version_no | integer | NOT NULL |  | `CHECK ((version_no >= 1))` |
+| source_system_id | text | NOT NULL |  | `CHECK ((((char_length(source_system_id) >= 1) AND (char_length(source_system_id) <= 200)) AND (source_system_id ~ '^[A-Za-z0-9][A-Za-z0-9_.:/-]*$')))` |
+| endpoint_url | text | NULL |  | `CHECK (((endpoint_url IS NULL) OR ((endpoint_url ~ '^https://[^/?#@[:space:]]+') AND (char_length(endpoint_url) <= 500))))` |
+| credential_refs | jsonb | NOT NULL | `'{}'::jsonb` |  |
+| field_mappings | jsonb | NOT NULL | `'[]'::jsonb` |  |
+| target_transformation_id | uuid | NULL |  | FK → transformation(id) |
+| cadence | text | NOT NULL |  | `CHECK ((cadence = ANY (ARRAY['manual', 'hourly', 'daily', 'weekly'])))` |
+| retry_max_attempts | smallint | NOT NULL | `3` | `CHECK (((retry_max_attempts >= 0) AND (retry_max_attempts <= 5)))` |
+| retry_backoff_seconds | integer | NOT NULL | `60` | `CHECK (((retry_backoff_seconds >= 10) AND (retry_backoff_seconds <= 3600)))` |
+| commit_mode | text | NOT NULL | `'manual'` | `CHECK ((commit_mode = ANY (ARRAY['manual', 'auto'])))` |
+| commit_on_behalf_of | uuid | NULL |  | FK → app_user(id) |
+| outbound_actions | text[] | NOT NULL | `'{}'[]` | `CHECK ((outbound_actions <@ ARRAY['deliverable_status_push']))` |
+| reconciliation_rule | text | NOT NULL | `'row_count'` | `CHECK ((reconciliation_rule = ANY (ARRAY['none', 'row_count', 'row_count_and_total'])))` |
+| adapter_settings | jsonb | NOT NULL | `'{}'::jsonb` | `CHECK (((jsonb_typeof(adapter_settings) = 'object') AND (octet_length((adapter_settings)) <= 4096)))` |
+| reason | text | NOT NULL |  | `CHECK (((char_length(reason) >= 3) AND (char_length(reason) <= 1000)))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `connector_config_version_commit_mode` (CHECK): `CHECK (((commit_mode = 'auto') = (commit_on_behalf_of IS NOT NULL)))`
+- `connector_config_version_credential_refs` (CHECK): `CHECK (p6_credential_refs_valid(credential_refs))`
+- `connector_config_version_field_mappings` (CHECK): `CHECK (p6_field_mappings_valid(field_mappings))`
+- `connector_config_version_no_key` (UNIQUE): `UNIQUE (connector_id, version_no)`
+- `connector_config_version_no_secret_settings` (CHECK): `CHECK (p6_settings_without_secret_keys(adapter_settings))`
+
+**Triggers:**
+
+- `connector_config_version_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `connector_config_version_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+- `connector_config_version_guard`: BEFORE INSERT FOR EACH ROW → `connector_config_version_guard()`
+
+## connector_change
+
+- **Purpose:** Append-only history of every version of a connector (status, current configuration, names).
+- **Migration:** `0104_p6_connectors_runs_outbound_writes.sql`. **API module:** `integrations`. **Who writes:** the SECURITY DEFINER trigger `connector_history` only. **Lifecycle:** append-only; one row per connector version.
+- **`mth_app` privileges:** SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| connector_id | uuid | NOT NULL |  | FK → connector(id) |
+| record_version | integer | NOT NULL |  | `CHECK ((record_version >= 1))` |
+| status | text | NOT NULL |  |  |
+| config_version_no | integer | NOT NULL |  |  |
+| status_reason | text | NULL |  |  |
+| name_en | text | NOT NULL |  |  |
+| name_ar | text | NOT NULL |  |  |
+| changed_by | uuid | NOT NULL |  | FK → app_user(id) |
+| changed_at | timestamp with time zone | NOT NULL |  |  |
+
+**Table constraints:**
+
+- `connector_change_version_key` (UNIQUE): `UNIQUE (connector_id, record_version)`
+
+**Triggers:**
+
+- `connector_change_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `connector_change_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+
+## integration_run
+
+- **Purpose:** IntegrationRun (REQ-S16-022): one run of a connector with its trigger, attempt, counts (read, staged, committed, rejected, duplicates, errors), error code and redacted message, and reconciliation (REQ-S17-001; ADR-0055 §2).
+- **Migration:** `0104_p6_connectors_runs_outbound_writes.sql`. **API module:** `integrations`. **Who writes:** the worker connector-run handler (actor service, as the connector's service identity; lock 730310); runConnector, retryIntegrationRun, testConnector and the webhook receipt create it queued. **Lifecycle:** queued -> running | cancelled; running -> succeeded | failed; finished rows never change; one active run per connector; at most one retry per failed run; versioned and audited.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+- **Read-time rule (P6 round 8; no stored change):** `idempotency_key`, `error_message` (redacted). See "P6 read-time classifications after round 8" at the end of this file (added 2026-11-09, T-DG6-ARCH-17).
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| connector_id | uuid | NOT NULL |  | FK → connector(id) |
+| config_version_no | integer | NOT NULL |  |  |
+| trigger_kind | text | NOT NULL |  | `CHECK ((trigger_kind = ANY (ARRAY['schedule', 'manual', 'retry', 'test', 'webhook'])))` |
+| status | text | NOT NULL | `'queued'` | `CHECK ((status = ANY (ARRAY['queued', 'running', 'succeeded', 'failed', 'cancelled'])))` |
+| attempt_no | smallint | NOT NULL | `1` | `CHECK (((attempt_no >= 1) AND (attempt_no <= 6)))` |
+| retry_of_run_id | uuid | NULL |  | FK → integration_run(id) |
+| idempotency_key | text | NOT NULL |  | `CHECK ((((char_length(idempotency_key) >= 8) AND (char_length(idempotency_key) <= 200)) AND (idempotency_key ~ '^[A-Za-z0-9][A-Za-z0-9_.:-]*$')))` |
+| requested_by | uuid | NULL |  | FK → app_user(id) |
+| service_identity_id | uuid | NOT NULL |  | FK → service_identity(id) |
+| queued_at | timestamp with time zone | NOT NULL |  |  |
+| started_at | timestamp with time zone | NULL |  |  |
+| finished_at | timestamp with time zone | NULL |  |  |
+| rows_read | integer | NULL |  | `CHECK (((rows_read IS NULL) OR (rows_read >= 0)))` |
+| rows_staged | integer | NULL |  | `CHECK (((rows_staged IS NULL) OR (rows_staged >= 0)))` |
+| rows_committed | integer | NULL |  | `CHECK (((rows_committed IS NULL) OR (rows_committed >= 0)))` |
+| rows_rejected | integer | NULL |  | `CHECK (((rows_rejected IS NULL) OR (rows_rejected >= 0)))` |
+| rows_duplicate | integer | NULL |  | `CHECK (((rows_duplicate IS NULL) OR (rows_duplicate >= 0)))` |
+| error_count | integer | NULL |  | `CHECK (((error_count IS NULL) OR (error_count >= 0)))` |
+| error_code | text | NULL |  | `CHECK (((error_code IS NULL) OR (((char_length(error_code) >= 1) AND (char_length(error_code) <= 100)) AND (error_code ~ '^[a-z][a-z0-9_.]*$'))))` |
+| error_message | text | NULL |  | `CHECK (((error_message IS NULL) OR ((char_length(error_message) >= 1) AND (char_length(error_message) <= 2000))))` |
+| reconciliation_status | text | NOT NULL | `'not_checked'` | `CHECK ((reconciliation_status = ANY (ARRAY['not_checked', 'matched', 'mismatched', 'not_applicable'])))` |
+| source_row_count | integer | NULL |  | `CHECK (((source_row_count IS NULL) OR (source_row_count >= 0)))` |
+| source_control_total | numeric(24,6) | NULL |  |  |
+| staged_control_total | numeric(24,6) | NULL |  |  |
+| import_batch_id | uuid | NULL |  | FK → import_batch(id) |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `integration_run_config_fkey` (FK): `FOREIGN KEY (connector_id, config_version_no) REFERENCES connector_config_version(connector_id, version_no) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `integration_run_connector_org_fkey` (FK): `FOREIGN KEY (organization_id, connector_id) REFERENCES connector(organization_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `integration_run_count_order` (CHECK): `CHECK ((((rows_staged IS NULL) OR (rows_read IS NULL) OR (rows_staged <= rows_read)) AND ((rows_staged IS NULL) OR (((COALESCE(rows_committed, 0) + COALESCE(rows_rejected, 0)) + COALESCE(rows_duplicate, 0)) <= rows_staged))))`
+- `integration_run_failure_shape` (CHECK): `CHECK ((((status = 'failed') = (error_code IS NOT NULL)) AND ((error_message IS NULL) OR (error_code IS NOT NULL))))`
+- `integration_run_idempotency_key` (UNIQUE): `UNIQUE (connector_id, idempotency_key)`
+- `integration_run_one_retry_key` (UNIQUE): `UNIQUE (retry_of_run_id)`
+- `integration_run_reconciliation_shape` (CHECK): `CHECK ((((reconciliation_status = ANY (ARRAY['matched', 'mismatched'])) = (source_row_count IS NOT NULL)) AND ((staged_control_total IS NULL) OR (source_control_total IS NOT NULL))))`
+- `integration_run_requester` (CHECK): `CHECK (((trigger_kind <> ALL (ARRAY['manual', 'test'])) OR (requested_by IS NOT NULL)))`
+- `integration_run_retry_shape` (CHECK): `CHECK ((((trigger_kind = 'retry') = (retry_of_run_id IS NOT NULL)) AND ((retry_of_run_id IS NULL) = (attempt_no = 1))))`
+- `integration_run_status_shape` (CHECK): `CHECK ((((status = 'queued') AND (started_at IS NULL) AND (finished_at IS NULL)) OR ((status = 'running') AND (started_at IS NOT NULL) AND (finished_at IS NULL)) OR ((status = 'cancelled') AND (started_at IS NULL) AND (finished_at IS NULL)) OR ((status = ANY (ARRAY['succeeded', 'failed'])) AND (finished_at IS NOT NULL))))`
+- `integration_run_success_counts` (CHECK): `CHECK (((status <> 'succeeded') OR ((rows_read IS NOT NULL) AND (rows_staged IS NOT NULL) AND (rows_rejected IS NOT NULL) AND (rows_duplicate IS NOT NULL) AND (error_count IS NOT NULL))))`
+- `integration_run_times` (CHECK): `CHECK ((((started_at IS NULL) OR (started_at >= queued_at)) AND ((finished_at IS NULL) OR ((started_at IS NOT NULL) AND (finished_at >= started_at)))))`
+
+**Indexes:**
+
+- `integration_run_last_success_idx`: `(connector_id, finished_at DESC) WHERE (status = 'succeeded')`
+- `integration_run_list_idx`: `(connector_id, queued_at DESC, id DESC)`
+- `integration_run_one_active`: `UNIQUE (connector_id) WHERE (status = ANY (ARRAY['queued', 'running']))`
+
+**Triggers:**
+
+- `integration_run_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `integration_run_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `integration_run_guard()`
+- `integration_run_history`: AFTER INSERT OR UPDATE FOR EACH ROW → `integration_run_history()`
+- `integration_run_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## integration_run_event
+
+- **Purpose:** Append-only status history of an integration run.
+- **Migration:** `0104_p6_connectors_runs_outbound_writes.sql`. **API module:** `integrations`. **Who writes:** the SECURITY DEFINER trigger `integration_run_history` only. **Lifecycle:** append-only; one row per integration_run version.
+- **`mth_app` privileges:** SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| integration_run_id | uuid | NOT NULL |  | FK → integration_run(id) |
+| record_version | integer | NOT NULL |  | `CHECK ((record_version >= 1))` |
+| status | text | NOT NULL |  |  |
+| rows_read | integer | NULL |  |  |
+| rows_staged | integer | NULL |  |  |
+| rows_committed | integer | NULL |  |  |
+| rows_rejected | integer | NULL |  |  |
+| rows_duplicate | integer | NULL |  |  |
+| error_count | integer | NULL |  |  |
+| error_code | text | NULL |  |  |
+| occurred_at | timestamp with time zone | NOT NULL |  |  |
+
+**Table constraints:**
+
+- `integration_run_event_version_key` (UNIQUE): `UNIQUE (integration_run_id, record_version)`
+
+**Triggers:**
+
+- `integration_run_event_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `integration_run_event_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+
+## outbound_write
+
+- **Purpose:** One guarded downstream write (REQ-S17-006, M0335): a connector-defined action on a deliverable with an idempotency key, marked confirmed only with the reference of a confirmed response (ADR-0055 §5).
+- **Migration:** `0104_p6_connectors_runs_outbound_writes.sql`. **API module:** `integrations`. **Who writes:** `outbound_write.execute` (TD) through executeOutboundWrite and confirmOutboundWrite; the dispatch result by the same request after the transaction (lock 730313). **Lifecycle:** requested -> pending_confirmation | confirmed | failed; pending_confirmation -> confirmed | failed; confirmed and failed final; one per (connector, idempotency key); versioned and audited.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+- **Read-time rule (P6 round 8; no stored change):** `idempotency_key` (redacted). See "P6 read-time classifications after round 8" at the end of this file (added 2026-11-09, T-DG6-ARCH-17).
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| connector_id | uuid | NOT NULL |  | FK → connector(id) |
+| config_version_no | integer | NOT NULL |  |  |
+| action_code | text | NOT NULL |  | `CHECK ((action_code = 'deliverable_status_push'))` |
+| deliverable_id | uuid | NOT NULL |  |  |
+| idempotency_key | text | NOT NULL |  | `CHECK ((((char_length(idempotency_key) >= 8) AND (char_length(idempotency_key) <= 200)) AND (idempotency_key ~ '^[A-Za-z0-9][A-Za-z0-9_.:-]*$')))` |
+| payload | jsonb | NOT NULL |  | `CHECK (((jsonb_typeof(payload) = 'object') AND (octet_length((payload)) <= 16384)))` |
+| payload_sha256 | character(64) | NOT NULL |  | `CHECK ((payload_sha256 ~ '^[0-9a-f]{64}$'))` |
+| status | text | NOT NULL | `'requested'` | `CHECK ((status = ANY (ARRAY['requested', 'pending_confirmation', 'confirmed', 'failed'])))` |
+| attempt_count | smallint | NOT NULL | `0` | `CHECK (((attempt_count >= 0) AND (attempt_count <= 10)))` |
+| last_attempt_at | timestamp with time zone | NULL |  |  |
+| external_reference | text | NULL |  | `CHECK (((external_reference IS NULL) OR ((char_length(external_reference) >= 1) AND (char_length(external_reference) <= 200))))` |
+| confirmed_at | timestamp with time zone | NULL |  |  |
+| failure_code | text | NULL |  | `CHECK (((failure_code IS NULL) OR (((char_length(failure_code) >= 1) AND (char_length(failure_code) <= 100)) AND (failure_code ~ '^[a-z][a-z0-9_.]*$'))))` |
+| failure_message | text | NULL |  | `CHECK (((failure_message IS NULL) OR ((char_length(failure_message) >= 1) AND (char_length(failure_message) <= 2000))))` |
+| requested_by | uuid | NOT NULL |  | FK → app_user(id) |
+| service_identity_id | uuid | NOT NULL |  | FK → service_identity(id) |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `outbound_write_attempt_shape` (CHECK): `CHECK ((((attempt_count = 0) = (last_attempt_at IS NULL)) AND ((status = 'requested') OR (attempt_count >= 1))))`
+- `outbound_write_config_fkey` (FK): `FOREIGN KEY (connector_id, config_version_no) REFERENCES connector_config_version(connector_id, version_no) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `outbound_write_confirmed_shape` (CHECK): `CHECK ((((status = 'confirmed') = (confirmed_at IS NOT NULL)) AND ((status <> 'confirmed') OR (external_reference IS NOT NULL))))`
+- `outbound_write_connector_org_fkey` (FK): `FOREIGN KEY (organization_id, connector_id) REFERENCES connector(organization_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `outbound_write_deliverable_fkey` (FK): `FOREIGN KEY (transformation_id, deliverable_id) REFERENCES deliverable(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `outbound_write_failed_shape` (CHECK): `CHECK ((((status = 'failed') = (failure_code IS NOT NULL)) AND ((failure_message IS NULL) OR (failure_code IS NOT NULL))))`
+- `outbound_write_idempotency_key` (UNIQUE): `UNIQUE (connector_id, idempotency_key)`
+
+**Indexes:**
+
+- `outbound_write_deliverable_idx`: `(deliverable_id, created_at DESC)`
+- `outbound_write_list_idx`: `(transformation_id, created_at DESC, id DESC)`
+
+**Triggers:**
+
+- `outbound_write_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `outbound_write_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `outbound_write_guard()`
+- `outbound_write_history`: AFTER INSERT OR UPDATE FOR EACH ROW → `outbound_write_history()`
+- `outbound_write_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## outbound_write_event
+
+- **Purpose:** Append-only status history of an outbound write.
+- **Migration:** `0104_p6_connectors_runs_outbound_writes.sql`. **API module:** `integrations`. **Who writes:** the SECURITY DEFINER trigger `outbound_write_history` only. **Lifecycle:** append-only; one row per outbound_write version.
+- **`mth_app` privileges:** SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| outbound_write_id | uuid | NOT NULL |  | FK → outbound_write(id) |
+| record_version | integer | NOT NULL |  | `CHECK ((record_version >= 1))` |
+| status | text | NOT NULL |  |  |
+| attempt_count | smallint | NOT NULL |  |  |
+| external_reference | text | NULL |  |  |
+| failure_code | text | NULL |  |  |
+| actor_user_id | uuid | NULL |  | FK → app_user(id) |
+| occurred_at | timestamp with time zone | NOT NULL |  |  |
+
+**Table constraints:**
+
+- `outbound_write_event_version_key` (UNIQUE): `UNIQUE (outbound_write_id, record_version)`
+
+**Triggers:**
+
+- `outbound_write_event_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `outbound_write_event_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+
+## webhook_endpoint
+
+- **Purpose:** One signed webhook endpoint of a webhook connector: the endpoint key, the signing secret REFERENCE (and the previous one during a rotation), the timestamp tolerance (REQ-S17-003; ADR-0056 §7).
+- **Migration:** `0105_p6_imports_lineage_webhooks.sql`. **API module:** `integrations`. **Who writes:** `webhook.configure` (ADM_TECH) through createWebhookEndpoint, rotateWebhookSecret, disableWebhookEndpoint. **Lifecycle:** active -> disabled (final); a rotation keeps the old reference for at most 7 days; versioned and audited.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| connector_id | uuid | NOT NULL |  |  |
+| endpoint_key | text | NOT NULL |  | `CHECK ((endpoint_key ~ '^[A-Za-z0-9_-]{32,64}$'))` |
+| label | text | NOT NULL |  | `CHECK (((char_length(label) >= 1) AND (char_length(label) <= 200)))` |
+| signing_secret_ref | jsonb | NOT NULL |  |  |
+| previous_secret_ref | jsonb | NULL |  |  |
+| previous_valid_until | timestamp with time zone | NULL |  |  |
+| secret_rotated_at | timestamp with time zone | NULL |  |  |
+| tolerance_seconds | integer | NOT NULL | `300` | `CHECK (((tolerance_seconds >= 30) AND (tolerance_seconds <= 900)))` |
+| status | text | NOT NULL | `'active'` | `CHECK ((status = ANY (ARRAY['active', 'disabled'])))` |
+| disabled_at | timestamp with time zone | NULL |  |  |
+| disabled_by | uuid | NULL |  | FK → app_user(id) |
+| disable_reason | text | NULL |  | `CHECK (((disable_reason IS NULL) OR ((char_length(disable_reason) >= 3) AND (char_length(disable_reason) <= 1000))))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `webhook_endpoint_connector_org_fkey` (FK): `FOREIGN KEY (organization_id, connector_id) REFERENCES connector(organization_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `webhook_endpoint_disabled_shape` (CHECK): `CHECK ((((status = 'disabled') = (disabled_at IS NOT NULL)) AND ((disabled_at IS NULL) = (disabled_by IS NULL)) AND ((disabled_at IS NULL) = (disable_reason IS NULL))))`
+- `webhook_endpoint_key_key` (UNIQUE): `UNIQUE (endpoint_key)`
+- `webhook_endpoint_previous_secret_ref` (CHECK): `CHECK (p6_secret_ref_valid(previous_secret_ref))`
+- `webhook_endpoint_previous_shape` (CHECK): `CHECK ((((previous_secret_ref IS NULL) = (previous_valid_until IS NULL)) AND ((previous_secret_ref IS NULL) OR (secret_rotated_at IS NOT NULL)) AND ((previous_secret_ref IS NULL) OR (previous_secret_ref <> signing_secret_ref))))`
+- `webhook_endpoint_secret_ref` (CHECK): `CHECK (((signing_secret_ref IS NOT NULL) AND p6_secret_ref_valid(signing_secret_ref)))`
+
+**Indexes:**
+
+- `webhook_endpoint_list_idx`: `(organization_id, status, created_at DESC, id DESC)`
+
+**Triggers:**
+
+- `webhook_endpoint_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `webhook_endpoint_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `webhook_endpoint_guard()`
+- `webhook_endpoint_history`: AFTER INSERT OR UPDATE FOR EACH ROW → `webhook_endpoint_history()`
+- `webhook_endpoint_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## webhook_endpoint_change
+
+- **Purpose:** Append-only history of every version of a webhook endpoint.
+- **Migration:** `0105_p6_imports_lineage_webhooks.sql`. **API module:** `integrations`. **Who writes:** the SECURITY DEFINER trigger `webhook_endpoint_history` only. **Lifecycle:** append-only; one row per webhook_endpoint version.
+- **`mth_app` privileges:** SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| webhook_endpoint_id | uuid | NOT NULL |  | FK → webhook_endpoint(id) |
+| record_version | integer | NOT NULL |  | `CHECK ((record_version >= 1))` |
+| status | text | NOT NULL |  |  |
+| signing_secret_ref | jsonb | NOT NULL |  |  |
+| previous_secret_ref | jsonb | NULL |  |  |
+| previous_valid_until | timestamp with time zone | NULL |  |  |
+| tolerance_seconds | integer | NOT NULL |  |  |
+| changed_by | uuid | NOT NULL |  | FK → app_user(id) |
+| changed_at | timestamp with time zone | NOT NULL |  |  |
+
+**Table constraints:**
+
+- `webhook_endpoint_change_version_key` (UNIQUE): `UNIQUE (webhook_endpoint_id, record_version)`
+
+**Triggers:**
+
+- `webhook_endpoint_change_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `webhook_endpoint_change_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+
+## webhook_receipt
+
+- **Purpose:** One ACCEPTED webhook delivery (signature valid, inside the window): the replay and idempotency backstop (ADR-0056 §7). Rejected requests are not stored.
+- **Migration:** `0105_p6_imports_lineage_webhooks.sql`. **API module:** `integrations`. **Who writes:** receiveWebhook (no session; signature-authenticated; lock 730312), in the transaction that creates its staged batch. **Lifecycle:** append-only; one per (endpoint, delivery id).
+- **`mth_app` privileges:** INSERT, SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| webhook_endpoint_id | uuid | NOT NULL |  | FK → webhook_endpoint(id) |
+| delivery_id | text | NOT NULL |  | `CHECK ((delivery_id ~ '^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$'))` |
+| signed_at | timestamp with time zone | NOT NULL |  |  |
+| received_at | timestamp with time zone | NOT NULL |  |  |
+| secret_slot | text | NOT NULL |  | `CHECK ((secret_slot = ANY (ARRAY['current', 'previous'])))` |
+| body_sha256 | character(64) | NOT NULL |  | `CHECK ((body_sha256 ~ '^[0-9a-f]{64}$'))` |
+| body_bytes | integer | NOT NULL |  | `CHECK (((body_bytes >= 2) AND (body_bytes <= 1048576)))` |
+| item_count | integer | NOT NULL |  | `CHECK (((item_count >= 0) AND (item_count <= 5000)))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+
+**Table constraints:**
+
+- `webhook_receipt_delivery_key` (UNIQUE): `UNIQUE (webhook_endpoint_id, delivery_id)`
+- `webhook_receipt_window` (CHECK): `CHECK ((((received_at - signed_at) >= '-00:15:00'::interval) AND ((received_at - signed_at) <= '00:15:00'::interval)))`
+
+**Indexes:**
+
+- `webhook_receipt_list_idx`: `(webhook_endpoint_id, received_at DESC, id DESC)`
+
+**Triggers:**
+
+- `webhook_receipt_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `webhook_receipt_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+- `webhook_receipt_guard`: BEFORE INSERT FOR EACH ROW → `webhook_receipt_guard()`
+
+## import_batch
+
+- **Purpose:** One staged import into one transformation and target kind, pinned to the transformation's form schema version (REQ-S17-002; ADR-0056 §2).
+- **Migration:** `0105_p6_imports_lineage_webhooks.sql`. **API module:** `integrations (imports)`. **Who writes:** `import.create` (KDS) through createImport; the webhook receipt and the connector run (service); commit and cancel: `import.commit` (KDS) through commitImport and cancelImport, or the auto commit on behalf of the configured user (lock 730311). **Lifecycle:** staging -> staged | failed; staged -> committed | cancelled; final states never change; versioned and audited.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| target_kind | text | NOT NULL |  | `CHECK ((target_kind = 'kpi_actual'))` |
+| template_version | text | NOT NULL |  | `CHECK ((template_version ~ '^[a-z][a-z0-9_]*\.v[1-9][0-9]*$'))` |
+| form_schema_version_id | uuid | NOT NULL |  | FK → methodology_version(id) |
+| source_kind | text | NOT NULL |  | `CHECK ((source_kind = ANY (ARRAY['csv_upload', 'xlsx_upload', 'webhook', 'connector'])))` |
+| connector_id | uuid | NULL |  | FK → connector(id) |
+| integration_run_id | uuid | NULL |  | FK → integration_run(id) |
+| webhook_receipt_id | uuid | NULL |  | FK → webhook_receipt(id) |
+| file_name | text | NULL |  | `CHECK (((file_name IS NULL) OR ((char_length(file_name) >= 1) AND (char_length(file_name) <= 255))))` |
+| media_type | text | NULL |  | `CHECK (((media_type IS NULL) OR (media_type = ANY (ARRAY['text/csv', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/json']))))` |
+| byte_size | integer | NULL |  | `CHECK (((byte_size IS NULL) OR ((byte_size >= 1) AND (byte_size <= 10485760))))` |
+| content_sha256 | character(64) | NULL |  | `CHECK (((content_sha256 IS NULL) OR (content_sha256 ~ '^[0-9a-f]{64}$')))` |
+| status | text | NOT NULL | `'staging'` | `CHECK ((status = ANY (ARRAY['staging', 'staged', 'committed', 'cancelled', 'failed'])))` |
+| rows_total | integer | NULL |  | `CHECK (((rows_total IS NULL) OR ((rows_total >= 0) AND (rows_total <= 5000))))` |
+| rows_valid | integer | NULL |  | `CHECK (((rows_valid IS NULL) OR (rows_valid >= 0)))` |
+| rows_invalid | integer | NULL |  | `CHECK (((rows_invalid IS NULL) OR (rows_invalid >= 0)))` |
+| rows_duplicate | integer | NULL |  | `CHECK (((rows_duplicate IS NULL) OR (rows_duplicate >= 0)))` |
+| rows_committed | integer | NULL |  | `CHECK (((rows_committed IS NULL) OR (rows_committed >= 0)))` |
+| failure_code | text | NULL |  | `CHECK (((failure_code IS NULL) OR (((char_length(failure_code) >= 1) AND (char_length(failure_code) <= 100)) AND (failure_code ~ '^[a-z][a-z0-9_.]*$'))))` |
+| commit_mode | text | NOT NULL | `'manual'` | `CHECK ((commit_mode = ANY (ARRAY['manual', 'auto'])))` |
+| on_behalf_of_user_id | uuid | NULL |  | FK → app_user(id) |
+| committed_at | timestamp with time zone | NULL |  |  |
+| committed_by | uuid | NULL |  | FK → app_user(id) |
+| cancelled_at | timestamp with time zone | NULL |  |  |
+| cancelled_by | uuid | NULL |  | FK → app_user(id) |
+| cancel_reason | text | NULL |  | `CHECK (((cancel_reason IS NULL) OR ((char_length(cancel_reason) >= 3) AND (char_length(cancel_reason) <= 1000))))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `import_batch_cancelled_shape` (CHECK): `CHECK ((((status = 'cancelled') = (cancelled_at IS NOT NULL)) AND ((cancelled_at IS NULL) = (cancel_reason IS NULL)) AND ((cancelled_by IS NULL) OR (cancelled_at IS NOT NULL))))`
+- `import_batch_commit_mode` (CHECK): `CHECK (((commit_mode = 'auto') = (on_behalf_of_user_id IS NOT NULL)))`
+- `import_batch_committed_shape` (CHECK): `CHECK ((((status = 'committed') = (committed_at IS NOT NULL)) AND ((status = 'committed') = (rows_committed IS NOT NULL)) AND ((rows_committed IS NULL) OR (rows_committed <= rows_valid)) AND ((committed_by IS NULL) OR (committed_at IS NOT NULL)) AND ((status <> 'committed') OR (committed_by IS NOT NULL) OR (commit_mode = 'auto'))))`
+- `import_batch_counts` (CHECK): `CHECK ((((status = 'staging') AND (rows_total IS NULL) AND (rows_valid IS NULL) AND (rows_invalid IS NULL) AND (rows_duplicate IS NULL)) OR ((status = 'failed') AND (rows_total IS NULL)) OR ((status = ANY (ARRAY['staged', 'committed', 'cancelled'])) AND (rows_total IS NOT NULL) AND (((rows_valid + rows_invalid) + rows_duplicate) = rows_total))))`
+- `import_batch_failed_shape` (CHECK): `CHECK (((status = 'failed') = (failure_code IS NOT NULL)))`
+- `import_batch_source_shape` (CHECK): `CHECK ((((source_kind = ANY (ARRAY['csv_upload', 'xlsx_upload'])) AND (file_name IS NOT NULL) AND (media_type IS NOT NULL) AND (byte_size IS NOT NULL) AND (content_sha256 IS NOT NULL) AND (connector_id IS NULL) AND (integration_run_id IS NULL) AND (webhook_receipt_id IS NULL) AND (created_by IS NOT NULL) AND (commit_mode = 'manual') AND (media_type =
+CASE source_kind
+    WHEN 'csv_upload' THEN 'text/csv'
+    ELSE 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+END)) OR ((source_kind = 'webhook') AND (webhook_receipt_id IS NOT NULL) AND (connector_id IS NOT NULL) AND (integration_run_id IS NULL) AND (file_name IS NULL) AND (media_type = 'application/json') AND (created_by IS NULL)) OR ((source_kind = 'connector') AND (connector_id IS NOT NULL) AND (integration_run_id IS NOT NULL) AND (webhook_receipt_id IS NULL) AND (file_name IS NULL) AND (created_by IS NULL))))`
+- `import_batch_transformation_id_id_key` (UNIQUE): `UNIQUE (transformation_id, id)`
+- `import_batch_webhook_receipt_key` (UNIQUE): `UNIQUE (webhook_receipt_id)`
+
+**Indexes:**
+
+- `import_batch_connector_idx`: `(connector_id, created_at DESC) WHERE (connector_id IS NOT NULL)`
+- `import_batch_list_idx`: `(transformation_id, created_at DESC, id DESC)`
+
+**Triggers:**
+
+- `import_batch_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `import_batch_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `import_batch_guard()`
+- `import_batch_history`: AFTER INSERT OR UPDATE FOR EACH ROW → `import_batch_history()`
+- `import_batch_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## import_batch_event
+
+- **Purpose:** Append-only status and count history of an import batch.
+- **Migration:** `0105_p6_imports_lineage_webhooks.sql`. **API module:** `integrations (imports)`. **Who writes:** the SECURITY DEFINER trigger `import_batch_history` only. **Lifecycle:** append-only; one row per import_batch version.
+- **`mth_app` privileges:** SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| import_batch_id | uuid | NOT NULL |  | FK → import_batch(id) |
+| record_version | integer | NOT NULL |  | `CHECK ((record_version >= 1))` |
+| status | text | NOT NULL |  |  |
+| rows_total | integer | NULL |  |  |
+| rows_valid | integer | NULL |  |  |
+| rows_invalid | integer | NULL |  |  |
+| rows_duplicate | integer | NULL |  |  |
+| rows_committed | integer | NULL |  |  |
+| failure_code | text | NULL |  |  |
+| actor_user_id | uuid | NULL |  | FK → app_user(id) |
+| occurred_at | timestamp with time zone | NOT NULL |  |  |
+
+**Table constraints:**
+
+- `import_batch_event_version_key` (UNIQUE): `UNIQUE (import_batch_id, record_version)`
+
+**Triggers:**
+
+- `import_batch_event_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `import_batch_event_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+
+## import_row
+
+- **Purpose:** One staged source row: raw cells as text, normalized values, duplicate key, validation status and row-level reason codes (REQ-S17-002; ADR-0056 §3–§5).
+- **Migration:** `0105_p6_imports_lineage_webhooks.sql`. **API module:** `integrations (imports)`. **Who writes:** the staging step of createImport, the webhook receipt and the connector run; the commit moves commit_status (column-level UPDATE). **Lifecycle:** inserted while the batch is staging; then only commit_status pending -> committed | not_committed; never deleted; covered by the batch's audit events.
+- **`mth_app` privileges:** INSERT, SELECT; UPDATE on (commit_status, updated_at) only.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| import_batch_id | uuid | NOT NULL |  |  |
+| row_number | integer | NOT NULL |  | `CHECK (((row_number >= 1) AND (row_number <= 100000)))` |
+| source_record_id | text | NULL |  | `CHECK (((source_record_id IS NULL) OR ((char_length(source_record_id) >= 1) AND (char_length(source_record_id) <= 200))))` |
+| raw | jsonb | NOT NULL |  |  |
+| normalized | jsonb | NULL |  | `CHECK (((normalized IS NULL) OR (jsonb_typeof(normalized) = 'object')))` |
+| duplicate_key | text | NULL |  | `CHECK (((duplicate_key IS NULL) OR ((char_length(duplicate_key) >= 1) AND (char_length(duplicate_key) <= 400))))` |
+| validation_status | text | NOT NULL |  | `CHECK ((validation_status = ANY (ARRAY['valid', 'invalid', 'duplicate_in_batch', 'duplicate_committed'])))` |
+| duplicate_of_row_id | uuid | NULL |  | FK → import_row(id) |
+| reasons | jsonb | NOT NULL | `'[]'::jsonb` |  |
+| commit_status | text | NOT NULL | `'pending'` | `CHECK ((commit_status = ANY (ARRAY['pending', 'committed', 'not_committed'])))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+
+**Table constraints:**
+
+- `import_row_batch_fkey` (FK): `FOREIGN KEY (transformation_id, import_batch_id) REFERENCES import_batch(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `import_row_duplicate_shape` (CHECK): `CHECK (((validation_status = 'duplicate_in_batch') = (duplicate_of_row_id IS NOT NULL)))`
+- `import_row_number_key` (UNIQUE): `UNIQUE (import_batch_id, row_number)`
+- `import_row_raw` (CHECK): `CHECK (p6_import_raw_valid(raw))`
+- `import_row_reasons` (CHECK): `CHECK (p6_import_reasons_valid(reasons))`
+- `import_row_valid_shape` (CHECK): `CHECK ((((validation_status = 'valid') = (normalized IS NOT NULL)) AND ((validation_status = 'valid') = (jsonb_array_length(reasons) = 0)) AND ((validation_status = 'valid') OR (commit_status <> 'committed')) AND ((validation_status <> ALL (ARRAY['valid', 'duplicate_in_batch', 'duplicate_committed'])) OR (duplicate_key IS NOT NULL))))`
+
+**Indexes:**
+
+- `import_row_one_valid_per_key`: `UNIQUE (import_batch_id, duplicate_key) WHERE (validation_status = 'valid')`
+- `import_row_status_idx`: `(import_batch_id, validation_status, row_number)`
+
+**Triggers:**
+
+- `import_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `import_row_guard()`
+- `import_row_no_delete`: BEFORE DELETE FOR EACH ROW → `import_row_no_delete()`
+- `import_row_no_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `import_row_no_delete()`
+- `import_row_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## import_row_commit
+
+- **Purpose:** Lineage: a committed row -> the KPI actual (and value number) it created through the DG4 submission path (REQ-S17-002; ADR-0056 §6).
+- **Migration:** `0105_p6_imports_lineage_webhooks.sql`. **API module:** `integrations (imports)`. **Who writes:** commitImport through the `ImportTargetRegistry` target (KBE-A), in the commit transaction. **Lifecycle:** append-only; one per committed row.
+- **`mth_app` privileges:** INSERT, SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| import_batch_id | uuid | NOT NULL |  |  |
+| import_row_id | uuid | NOT NULL |  | FK → import_row(id) |
+| target_record_type | text | NOT NULL |  | `CHECK ((target_record_type = 'kpi_actual'))` |
+| target_record_id | uuid | NOT NULL |  |  |
+| target_value_no | smallint | NULL |  | `CHECK (((target_value_no IS NULL) OR (target_value_no >= 1)))` |
+| committed_at | timestamp with time zone | NOT NULL |  |  |
+
+**Table constraints:**
+
+- `import_row_commit_batch_fkey` (FK): `FOREIGN KEY (transformation_id, import_batch_id) REFERENCES import_batch(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `import_row_commit_row_key` (UNIQUE): `UNIQUE (import_row_id)`
+
+**Indexes:**
+
+- `import_row_commit_target_idx`: `(target_record_type, target_record_id)`
+
+**Triggers:**
+
+- `import_row_commit_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `import_row_commit_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+- `import_row_commit_guard`: BEFORE INSERT FOR EACH ROW → `import_row_commit_guard()`
+
+## deliverable_external_change
+
+- **Purpose:** The external-change flag of a deliverable and its separate confirmation state with provenance (REQ-S01-005, M0080; ADR-0055 §6).
+- **Migration:** `0106_p6_deliverable_external_change.sql`. **API module:** `portfolio`. **Who writes:** flag and withdraw: `external_change.flag` (TL, BO, WL, TO); confirm with reviewed evidence: `external_change.confirm` (BO, TD); confirm with a connector result: the confirmOutboundWrite path as the connector's service identity (lock 730314). **Lifecycle:** unconfirmed -> confirmed (final); one per deliverable; versioned and audited.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| deliverable_id | uuid | NOT NULL |  |  |
+| is_external_change | boolean | NOT NULL | `true` |  |
+| change_type | text | NOT NULL |  | `CHECK ((change_type = ANY (ARRAY['customer_system', 'network_upgrade', 'procurement_transaction', 'other'])))` |
+| description | text | NULL |  | `CHECK (((description IS NULL) OR ((char_length(description) >= 1) AND (char_length(description) <= 2000))))` |
+| confirmation_status | text | NOT NULL | `'unconfirmed'` | `CHECK ((confirmation_status = ANY (ARRAY['unconfirmed', 'confirmed'])))` |
+| confirmation_source | text | NULL |  | `CHECK (((confirmation_source IS NULL) OR (confirmation_source = ANY (ARRAY['reviewed_evidence', 'connector_result']))))` |
+| evidence_id | uuid | NULL |  |  |
+| outbound_write_id | uuid | NULL |  | FK → outbound_write(id) |
+| connector_id | uuid | NULL |  | FK → connector(id) |
+| source_system_id | text | NULL |  | `CHECK (((source_system_id IS NULL) OR ((char_length(source_system_id) >= 1) AND (char_length(source_system_id) <= 200))))` |
+| source_reference | text | NULL |  | `CHECK (((source_reference IS NULL) OR ((char_length(source_reference) >= 1) AND (char_length(source_reference) <= 200))))` |
+| source_confirmed_at | timestamp with time zone | NULL |  |  |
+| service_identity_id | uuid | NULL |  | FK → service_identity(id) |
+| confirmed_at | timestamp with time zone | NULL |  |  |
+| confirmed_by | uuid | NULL |  | FK → app_user(id) |
+| confirmation_note | text | NULL |  | `CHECK (((confirmation_note IS NULL) OR ((char_length(confirmation_note) >= 3) AND (char_length(confirmation_note) <= 2000))))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `deliverable_external_change_confirmed_flagged` (CHECK): `CHECK (((confirmation_status = 'unconfirmed') OR is_external_change))`
+- `deliverable_external_change_deliverable_fkey` (FK): `FOREIGN KEY (transformation_id, deliverable_id) REFERENCES deliverable(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `deliverable_external_change_deliverable_key` (UNIQUE): `UNIQUE (deliverable_id)`
+- `deliverable_external_change_evidence_fkey` (FK): `FOREIGN KEY (transformation_id, evidence_id) REFERENCES evidence(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `deliverable_external_change_other_described` (CHECK): `CHECK (((change_type <> 'other') OR (description IS NOT NULL)))`
+- `deliverable_external_change_source_shape` (CHECK): `CHECK ((((confirmation_status = 'unconfirmed') AND (confirmation_source IS NULL) AND (evidence_id IS NULL) AND (outbound_write_id IS NULL) AND (connector_id IS NULL) AND (source_system_id IS NULL) AND (source_reference IS NULL) AND (source_confirmed_at IS NULL) AND (service_identity_id IS NULL) AND (confirmed_at IS NULL) AND (confirmed_by IS NULL) AND (confirmation_note IS NULL)) OR ((confirmation_status = 'confirmed') AND (confirmation_source = 'reviewed_evidence') AND (evidence_id IS NOT NULL) AND (confirmed_by IS NOT NULL) AND (confirmed_at IS NOT NULL) AND (outbound_write_id IS NULL) AND (connector_id IS NULL) AND (source_system_id IS NULL) AND (source_reference IS NULL) AND (source_confirmed_at IS NULL) AND (service_identity_id IS NULL)) OR ((confirmation_status = 'confirmed') AND (confirmation_source = 'connector_result') AND (outbound_write_id IS NOT NULL) AND (connector_id IS NOT NULL) AND (source_system_id IS NOT NULL) AND (source_reference IS NOT NULL) AND (source_confirmed_at IS NOT NULL) AND (service_identity_id IS NOT NULL) AND (confirmed_at IS NOT NULL) AND (confirmed_by IS NULL) AND (evidence_id IS NULL))))`
+
+**Indexes:**
+
+- `deliverable_external_change_list_idx`: `(transformation_id, confirmation_status) WHERE is_external_change`
+
+**Triggers:**
+
+- `deliverable_external_change_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `deliverable_external_change_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `deliverable_external_change_guard()`
+- `deliverable_external_change_history`: AFTER INSERT OR UPDATE FOR EACH ROW → `deliverable_external_change_history()`
+- `deliverable_external_change_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## deliverable_external_change_event
+
+- **Purpose:** Append-only history of the flag and its confirmation.
+- **Migration:** `0106_p6_deliverable_external_change.sql`. **API module:** `portfolio`. **Who writes:** the SECURITY DEFINER trigger `deliverable_external_change_history` only. **Lifecycle:** append-only; one row per deliverable_external_change version.
+- **`mth_app` privileges:** SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| deliverable_external_change_id | uuid | NOT NULL |  | FK → deliverable_external_change(id) |
+| record_version | integer | NOT NULL |  | `CHECK ((record_version >= 1))` |
+| is_external_change | boolean | NOT NULL |  |  |
+| change_type | text | NOT NULL |  |  |
+| confirmation_status | text | NOT NULL |  |  |
+| confirmation_source | text | NULL |  |  |
+| evidence_id | uuid | NULL |  |  |
+| outbound_write_id | uuid | NULL |  |  |
+| source_reference | text | NULL |  |  |
+| actor_user_id | uuid | NULL |  | FK → app_user(id) |
+| occurred_at | timestamp with time zone | NOT NULL |  |  |
+
+**Table constraints:**
+
+- `deliverable_external_change_event_version_key` (UNIQUE): `UNIQUE (deliverable_external_change_id, record_version)`
+
+**Triggers:**
+
+- `deliverable_external_change_event_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `deliverable_external_change_event_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+
+## Columns and constraints added to earlier tables (0104, 0105)
+
+- `service_identity`: foreign key `service_identity_connector_fkey` (`connector_id` → `connector(id)`), announced by `0101` (probe CN16).
+- `connector`: the deferred foreign key `connector_current_config_fkey` (`(id, config_version_no)` → `connector_config_version(connector_id, version_no)`, DEFERRABLE INITIALLY DEFERRED; probe CN03).
+- `integration_run`: foreign key `integration_run_import_batch_fkey` (`import_batch_id` → `import_batch(id)`), added by `0105`.
+
+## P6 functions (0104, 0105, 0106)
+
+- `p6_credential_refs_valid(jsonb)`, `p6_field_mappings_valid(jsonb)`, `p6_settings_without_secret_keys(jsonb)` (IMMUTABLE; EXECUTE granted to `mth_app`): at most 8 named SecretRefs; at most 100 `{source, target}` mappings with unique targets; no secret-like settings key (0104).
+- `connector_config_version_guard()`, `connector_guard()`, `connector_history()` (SECURITY DEFINER), `integration_run_guard()`, `integration_run_history()` (SECURITY DEFINER), `outbound_write_guard()`, `outbound_write_history()` (SECURITY DEFINER) (0104).
+- `p6_import_raw_valid(jsonb)`, `p6_import_reasons_valid(jsonb)` (IMMUTABLE; EXECUTE granted to `mth_app`); `webhook_endpoint_guard()`, `webhook_endpoint_history()` (SECURITY DEFINER), `webhook_receipt_guard()`, `import_batch_guard()`, `import_batch_history()` (SECURITY DEFINER), `import_row_guard()`, `import_row_no_delete()`, `import_row_commit_guard()` (0105).
+- `deliverable_external_change_guard()`, `deliverable_external_change_history()` (SECURITY DEFINER) (0106).
+
+# P6 tables, slices H and G (migrations 0108–0110, DG6)
+
+Written by T-DG6-ARCH-04 (ADR-0057, ADR-0058). The table sections below are generated from the catalogue of a freshly migrated database (`docs/delivery/handbacks/DG6/T-DG6-ARCH-04-evidence/gen-dictionary.ts`, output `dictionary-section.md`), so they match the migrations exactly. `0109` adds only permission rows (two codes and nineteen role links; permissions matrix §27). `0110` adds only indexes on earlier tables (listed below). Six tables: one mutable, versioned and audited (`saved_view`) with its trigger-written append-only history (`saved_view_event`); two version-stepped but not audited (`search_document`, a derived index written only by the search job; `search_index_state`, its per-type telemetry with 12 seeded rows); a read-only seeded catalogue (`help_topic`, 11 bilingual topics, the Arabic labelled provisional); and an append-only singleton (`load_dataset_marker`).
+
+## search_document
+
+- **Purpose:** One DERIVED search document per indexed record (12 record types): scope keys, code, title, text summary, record status, the record version and the audit sequence it reflects, and stored generated tsvectors over the english, arabic and simple configurations (REQ-S15-010, REQ-S10-004; ADR-0057 §1-§2). No money, rate, KPI or FTE value is indexed.
+- **Migration:** `0108_p6_search_saved_views_help.sql`. **API module:** `search`. **Who writes:** the worker search handlers only (`search.index_feed`, `search.reindex`; BE-P), as the search service identity (ADR-0053); never a user request. **Lifecycle:** upserted from the audit-event feed; never goes back to an older audit sequence or record version; deleted when its record no longer exists; version-stepped, not audited (a derived copy).
+- **`mth_app` privileges:** DELETE, INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| record_type | text | NOT NULL |  |  |
+| record_id | uuid | NOT NULL |  |  |
+| record_version | integer | NOT NULL |  | `CHECK ((record_version >= 1))` |
+| code | text | NULL |  | `CHECK (((code IS NULL) OR ((char_length(code) >= 1) AND (char_length(code) <= 40))))` |
+| title | text | NOT NULL |  | `CHECK (((char_length(title) >= 1) AND (char_length(title) <= 500)))` |
+| summary | text | NULL |  | `CHECK (((summary IS NULL) OR ((char_length(summary) >= 1) AND (char_length(summary) <= 1000))))` |
+| record_status | text | NULL |  | `CHECK (((record_status IS NULL) OR (record_status ~ '^[a-z][a-z0-9_]{0,39}$')))` |
+| is_archived | boolean | NOT NULL | `false` |  |
+| source_audit_seq | bigint | NOT NULL |  | `CHECK ((source_audit_seq >= 0))` |
+| search_en | tsvector | NULL | `to_tsvector('english'::regconfig, ((((COALESCE(code, '') || ' ') || title) || ' ') || COALESCE(summary, '')))` |  |
+| search_ar | tsvector | NULL | `to_tsvector('arabic'::regconfig, ((((COALESCE(code, '') || ' ') || title) || ' ') || COALESCE(summary, '')))` |  |
+| search_simple | tsvector | NULL | `to_tsvector('simple'::regconfig, ((((COALESCE(code, '') || ' ') || title) || ' ') || COALESCE(summary, '')))` |  |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+
+**Table constraints:**
+
+- `search_document_record_key` (UNIQUE): `UNIQUE (record_type, record_id)`
+- `search_document_record_type` (CHECK): `CHECK (p6_search_record_type_valid(record_type))`
+- `search_document_transformation_self` (CHECK): `CHECK (((record_type <> 'transformation') OR (record_id = transformation_id)))`
+
+**Indexes:**
+
+- `search_document_ar_idx`: `CREATE INDEX search_document_ar_idx ON public.search_document USING gin (search_ar)`
+- `search_document_en_idx`: `CREATE INDEX search_document_en_idx ON public.search_document USING gin (search_en)`
+- `search_document_scope_idx`: `(organization_id, transformation_id, record_type)`
+- `search_document_simple_idx`: `CREATE INDEX search_document_simple_idx ON public.search_document USING gin (search_simple)`
+
+**Triggers:**
+
+- `search_document_guard`: BEFORE UPDATE FOR EACH ROW → `search_document_guard()`
+- `search_document_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## search_index_state
+
+- **Purpose:** Per indexed record type: the consumed audit sequence, the last incremental run, the last full reindex, the document count (NULL = Unknown) and the last error code (ADR-0057 §2).
+- **Migration:** `0108_p6_search_saved_views_help.sql`. **API module:** `search`. **Who writes:** the worker search handlers only (BE-P); read by getSearchIndexStatus. **Lifecycle:** 12 seeded rows; idle <-> reindexing | failed; the sequence goes back only to 0 when a full reindex starts; version-stepped, not audited (telemetry).
+- **`mth_app` privileges:** SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| record_type | text | NOT NULL |  |  |
+| status | text | NOT NULL | `'idle'` | `CHECK ((status = ANY (ARRAY['idle', 'reindexing', 'failed'])))` |
+| last_audit_seq | bigint | NOT NULL | `0` | `CHECK ((last_audit_seq >= 0))` |
+| last_incremental_at | timestamp with time zone | NULL |  |  |
+| reindex_started_at | timestamp with time zone | NULL |  |  |
+| reindex_finished_at | timestamp with time zone | NULL |  |  |
+| documents_count | integer | NULL |  | `CHECK (((documents_count IS NULL) OR (documents_count >= 0)))` |
+| last_error_code | text | NULL |  | `CHECK (((last_error_code IS NULL) OR (last_error_code ~ '^[a-z][a-z0-9_.]{2,79}$')))` |
+| last_error_at | timestamp with time zone | NULL |  |  |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+
+**Table constraints:**
+
+- `search_index_state_failed_coded` (CHECK): `CHECK ((((status = 'failed') = (last_error_code IS NOT NULL)) AND ((last_error_code IS NULL) = (last_error_at IS NULL))))`
+- `search_index_state_finished_after` (CHECK): `CHECK (((reindex_finished_at IS NULL) OR (reindex_started_at IS NULL) OR (reindex_finished_at >= reindex_started_at)))`
+- `search_index_state_record_type` (CHECK): `CHECK (p6_search_record_type_valid(record_type))`
+- `search_index_state_record_type_key` (UNIQUE): `UNIQUE (record_type)`
+- `search_index_state_reindexing_started` (CHECK): `CHECK (((status <> 'reindexing') OR (reindex_started_at IS NOT NULL)))`
+
+**Triggers:**
+
+- `search_index_state_guard`: BEFORE UPDATE FOR EACH ROW → `search_index_state_guard()`
+- `search_index_state_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## saved_view
+
+- **Purpose:** A user's named configuration of one of 12 lists: visible columns, filters, sort, default flag; personal or shared in the owner's organization (REQ-S15-010, REQ-S15-013; ADR-0057 §4).
+- **Migration:** `0108_p6_search_saved_views_help.sql`. **API module:** `search (saved views)`. **Who writes:** the owner, holding `saved_view.manage` (every role except AUD), through createSavedView, putSavedView, deleteSavedView; sharing: the owner holding `saved_view.share` (TL, BO, WL, TO, KDS, TD) through shareSavedView (lock 730319). **Lifecycle:** active -> deleted (final); owner, list and transformation fixed; versioned and audited.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| owner_user_id | uuid | NOT NULL |  | FK → app_user(id) |
+| list_key | text | NOT NULL |  | `CHECK ((list_key = ANY (ARRAY['transformations', 'initiatives', 'strategic_guardrails', 'outcomes', 'diagnostic_items', 'diagnostic_findings', 'workstream_outputs', 'tom_gaps', 'capability_heatmap', 'journeys', 'journey_pain_points', 'search'])))` |
+| transformation_id | uuid | NULL |  | FK → transformation(id) |
+| name | text | NOT NULL |  | `CHECK (((char_length(name) >= 1) AND (char_length(name) <= 120)))` |
+| visibility | text | NOT NULL | `'personal'` | `CHECK ((visibility = ANY (ARRAY['personal', 'shared'])))` |
+| columns | jsonb | NOT NULL |  |  |
+| filters | jsonb | NOT NULL | `'{}'::jsonb` |  |
+| sort | jsonb | NOT NULL | `'[]'::jsonb` |  |
+| is_default | boolean | NOT NULL | `false` |  |
+| shared_at | timestamp with time zone | NULL |  |  |
+| shared_by | uuid | NULL |  | FK → app_user(id) |
+| status | text | NOT NULL | `'active'` | `CHECK ((status = ANY (ARRAY['active', 'deleted'])))` |
+| deleted_at | timestamp with time zone | NULL |  |  |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `saved_view_columns_valid` (CHECK): `CHECK (p6_saved_view_columns_valid(columns))`
+- `saved_view_cross_transformation_lists` (CHECK): `CHECK (((list_key <> 'transformations') OR (transformation_id IS NULL)))`
+- `saved_view_deleted_not_default` (CHECK): `CHECK (((status = 'active') OR (NOT is_default)))`
+- `saved_view_deleted_shape` (CHECK): `CHECK (((status = 'deleted') = (deleted_at IS NOT NULL)))`
+- `saved_view_filters_valid` (CHECK): `CHECK (p6_saved_view_filters_valid(filters))`
+- `saved_view_owner_is_creator` (CHECK): `CHECK ((owner_user_id = created_by))`
+- `saved_view_shared_shape` (CHECK): `CHECK ((((visibility = 'shared') = (shared_at IS NOT NULL)) AND ((shared_at IS NULL) = (shared_by IS NULL))))`
+- `saved_view_sort_valid` (CHECK): `CHECK (p6_saved_view_sort_valid(sort))`
+
+**Indexes:**
+
+- `saved_view_name_key`: `UNIQUE (owner_user_id, list_key, COALESCE(transformation_id, '00000000-0000-0000-0000-000000000000'::uuid), lower(name)) WHERE (status = 'active')`
+- `saved_view_one_default_key`: `UNIQUE (owner_user_id, list_key, COALESCE(transformation_id, '00000000-0000-0000-0000-000000000000'::uuid)) WHERE ((status = 'active') AND is_default)`
+- `saved_view_owner_idx`: `(owner_user_id, list_key, updated_at DESC) WHERE (status = 'active')`
+- `saved_view_shared_idx`: `(organization_id, list_key) WHERE ((status = 'active') AND (visibility = 'shared'))`
+
+**Triggers:**
+
+- `saved_view_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `saved_view_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `saved_view_guard()`
+- `saved_view_history`: AFTER INSERT OR UPDATE FOR EACH ROW → `saved_view_history()`
+- `saved_view_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## saved_view_event
+
+- **Purpose:** Append-only history of every version of a saved view.
+- **Migration:** `0108_p6_search_saved_views_help.sql`. **API module:** `search (saved views)`. **Who writes:** the SECURITY DEFINER trigger `saved_view_history` only. **Lifecycle:** append-only; one row per saved_view version.
+- **`mth_app` privileges:** SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| saved_view_id | uuid | NOT NULL |  | FK → saved_view(id) |
+| record_version | integer | NOT NULL |  | `CHECK ((record_version >= 1))` |
+| name | text | NOT NULL |  |  |
+| visibility | text | NOT NULL |  |  |
+| columns | jsonb | NOT NULL |  |  |
+| filters | jsonb | NOT NULL |  |  |
+| sort | jsonb | NOT NULL |  |  |
+| is_default | boolean | NOT NULL |  |  |
+| status | text | NOT NULL |  |  |
+| actor_user_id | uuid | NOT NULL |  | FK → app_user(id) |
+| occurred_at | timestamp with time zone | NOT NULL |  |  |
+
+**Table constraints:**
+
+- `saved_view_event_version_key` (UNIQUE): `UNIQUE (saved_view_id, record_version)`
+
+**Triggers:**
+
+- `saved_view_event_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `saved_view_event_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+
+## help_topic
+
+- **Purpose:** The contextual help catalogue: topic and screen keys, English and Arabic title and body (the Arabic labelled provisional), source references (REQ-S15-010; ADR-0057 §8).
+- **Migration:** `0108_p6_search_saved_views_help.sql`. **API module:** `search (help topics)`. **Who writes:** migrations only (mth_owner); mth_app reads. **Lifecycle:** seeded; a correction is a later migration.
+- **`mth_app` privileges:** SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| topic_key | text | NOT NULL |  | `CHECK (((topic_key ~ '^[a-z][a-z0-9_]*(\.[a-z0-9_]+)*$') AND (char_length(topic_key) <= 80)))` |
+| screen_key | text | NOT NULL |  | `CHECK (((screen_key ~ '^[a-z][a-z0-9_]*(\.[a-z0-9_]+)*$') AND (char_length(screen_key) <= 80)))` |
+| ordinal | integer | NOT NULL |  | `CHECK (((ordinal >= 1) AND (ordinal <= 999)))` |
+| title_en | text | NOT NULL |  | `CHECK (((char_length(title_en) >= 1) AND (char_length(title_en) <= 120)))` |
+| title_ar | text | NOT NULL |  | `CHECK (((char_length(title_ar) >= 1) AND (char_length(title_ar) <= 160)))` |
+| body_en | text | NOT NULL |  | `CHECK (((char_length(body_en) >= 1) AND (char_length(body_en) <= 2000)))` |
+| body_ar | text | NOT NULL |  | `CHECK (((char_length(body_ar) >= 1) AND (char_length(body_ar) <= 2400)))` |
+| arabic_provisional | boolean | NOT NULL |  |  |
+| source_refs | text[] | NOT NULL |  | `CHECK ((((cardinality(source_refs) >= 1) AND (cardinality(source_refs) <= 6)) AND (array_to_string(source_refs, ',') ~ '^(M0[0-9]{3}\|B0[0-9]{3}\|REQ-S[0-9]{2}-[0-9]{3})(,(M0[0-9]{3}\|B0[0-9]{3}\|REQ-S[0-9]{2}-[0-9]{3}))*$')))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+
+**Table constraints:**
+
+- `help_topic_screen_ordinal_key` (UNIQUE): `UNIQUE (screen_key, ordinal)`
+- `help_topic_topic_key` (UNIQUE): `UNIQUE (topic_key)`
+
+## load_dataset_marker
+
+- **Purpose:** At most one row naming the synthetic load dataset a database holds: code, generator version, seed and sizes (REQ-S20-029; ADR-0058 §2, §4).
+- **Migration:** `0108_p6_search_saved_views_help.sql`. **API module:** `none (deploy/load)`. **Who writes:** deploy/load/generate.mjs (DO-E) as mth_owner, into an empty database without a deployment_environment row. **Lifecycle:** append-only; written once.
+- **`mth_app` privileges:** SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| singleton | boolean | NOT NULL | `true` | PK; `CHECK (singleton)` |
+| dataset_code | text | NOT NULL |  | `CHECK ((dataset_code = 'mth_load_v1'))` |
+| generator_version | text | NOT NULL |  | `CHECK ((generator_version ~ '^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$'))` |
+| random_seed | bigint | NOT NULL |  | `CHECK ((random_seed >= 0))` |
+| transformations | integer | NOT NULL |  | `CHECK ((transformations >= 1))` |
+| initiatives | integer | NOT NULL |  | `CHECK ((initiatives >= 0))` |
+| kpi_actuals | integer | NOT NULL |  | `CHECK ((kpi_actuals >= 0))` |
+| audit_events | integer | NOT NULL |  | `CHECK ((audit_events >= 0))` |
+| users | integer | NOT NULL |  | `CHECK ((users >= 1))` |
+| generated_at | timestamp with time zone | NOT NULL | `now()` |  |
+
+**Triggers:**
+
+- `load_dataset_marker_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `load_dataset_marker_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+- `load_dataset_marker_guard`: BEFORE INSERT FOR EACH ROW → `load_dataset_marker_guard()`
+
+## Indexes added to earlier tables (0110)
+
+- `initiative`: `initiative_owner_idx` `(transformation_id, executive_owner_user_id) WHERE executive_owner_user_id IS NOT NULL`; `initiative_lead_idx` `(transformation_id, workstream_lead_user_id) WHERE workstream_lead_user_id IS NOT NULL`; `initiative_code_sort_idx` `(transformation_id, code, id)`; `initiative_name_sort_idx` `(transformation_id, lower(name), id)`; `initiative_planned_end_sort_idx` `(transformation_id, planned_end, id)` (ADR-0057 §5).
+- `transformation`: `transformation_code_sort_idx` `(organization_id, code, id)`; `transformation_updated_sort_idx` `(organization_id, updated_at, id)` (ADR-0057 §5).
+- `audit_event`: `audit_event_feed_idx` `(seq) INCLUDE (record_type, record_id)`, partial on the 12 indexed record types (the search feed, ADR-0057 §2).
+
+## P6 functions (0108)
+
+- `p6_search_record_type_valid(text)`, `p6_saved_view_columns_valid(jsonb)`, `p6_saved_view_filters_valid(jsonb)`, `p6_saved_view_sort_valid(jsonb)` (IMMUTABLE SQL; used by CHECK constraints): the 12 indexed record types; 1–50 distinct camelCase column keys; at most 20 camelCase filter keys, each a string of 1–200 characters or 1–20 such strings; at most 3 distinct `{key, direction: asc|desc}` sort entries.
+- `search_document_guard()`, `search_index_state_guard()`, `saved_view_guard()`, `saved_view_history()` (SECURITY DEFINER), `load_dataset_marker_guard()`.
+
+# P6 tables, slice D (migrations 0111–0112, DG6)
+
+Written by T-DG6-ARCH-05 (ADR-0059, the optional assistant); placed here by its continuation T-DG6-ARCH-05B. The table sections below are generated from the catalogue of a freshly migrated database (`docs/delivery/handbacks/DG6/T-DG6-ARCH-05-evidence/gen-dictionary.ts`, output `dictionary-section.md`; regenerated by T-DG6-ARCH-05B and byte-identical), so they match the migrations exactly. `0112` adds only permission rows (two codes and fourteen role links; permissions matrix §28). Five tables: three mutable, versioned and audited (`assistant_setting`, at most one row and no row seeded, so a fresh install has AI off; `assistant_conversation`; `assistant_suggestion`), the setting's trigger-written append-only history (`assistant_setting_change`), and the append-only `assistant_message`. No column holds money, a rate, FTE or a KPI value (ADR-0059 §11).
+
+## assistant_setting
+
+- **Purpose:** At most one row: whether the optional assistant is on, its provider (http_endpoint | test_adapter), the IT-provided endpoint, API style and model, the credential as a SecretRef (never a value), the company authorization reference, the limits, and who turned it on and when (REQ-S17-009; ADR-0059 §3). No row = disabled.
+- **Migration:** `0111_p6_assistant.sql`. **API module:** `assistant`. **Who writes:** ADM_TECH holding `assistant.configure`, through putAssistantSetting, enableAssistant, disableAssistant (lock 730323). **Lifecycle:** created disabled; disabled <-> enabled; while enabled the provider, endpoint, API style, model, credential and authorization reference are fixed; versioned and audited.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| singleton | boolean | NOT NULL | `true` |  |
+| enabled | boolean | NOT NULL | `false` |  |
+| provider_kind | text | NULL |  | `CHECK (((provider_kind IS NULL) OR (provider_kind = ANY (ARRAY['http_endpoint', 'test_adapter']))))` |
+| endpoint_url | text | NULL |  |  |
+| api_style | text | NULL |  | `CHECK (((api_style IS NULL) OR (api_style = 'openai_chat_completions')))` |
+| model_name | text | NULL |  | `CHECK (((model_name IS NULL) OR (model_name ~ '^[A-Za-z0-9][A-Za-z0-9._:/-]{0,199}$')))` |
+| credential_ref | jsonb | NULL |  |  |
+| authorization_reference | text | NULL |  | `CHECK (((authorization_reference IS NULL) OR ((char_length(authorization_reference) >= 3) AND (char_length(authorization_reference) <= 200))))` |
+| request_timeout_ms | integer | NOT NULL | `30000` | `CHECK (((request_timeout_ms >= 1000) AND (request_timeout_ms <= 120000)))` |
+| max_output_tokens | integer | NOT NULL | `1024` | `CHECK (((max_output_tokens >= 64) AND (max_output_tokens <= 8192)))` |
+| max_context_records | smallint | NOT NULL | `8` | `CHECK (((max_context_records >= 1) AND (max_context_records <= 20)))` |
+| enabled_at | timestamp with time zone | NULL |  |  |
+| enabled_by | uuid | NULL |  | FK → app_user(id) |
+| reason | text | NOT NULL |  | `CHECK (((char_length(reason) >= 3) AND (char_length(reason) <= 1000)))` |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `assistant_setting_credential_ref` (CHECK): `CHECK (p6_secret_ref_valid(credential_ref))`
+- `assistant_setting_enable_complete` (CHECK): `CHECK (((NOT enabled) OR ((provider_kind IS NOT NULL) AND (authorization_reference IS NOT NULL) AND ((provider_kind = 'test_adapter') OR ((endpoint_url IS NOT NULL) AND (api_style IS NOT NULL) AND (model_name IS NOT NULL))))))`
+- `assistant_setting_enabled_stamp` (CHECK): `CHECK (((enabled = (enabled_at IS NOT NULL)) AND ((enabled_at IS NULL) = (enabled_by IS NULL))))`
+- `assistant_setting_endpoint_url` (CHECK): `CHECK (((endpoint_url IS NULL) OR ((char_length(endpoint_url) <= 2048) AND (endpoint_url ~ '^https?://[A-Za-z0-9]([A-Za-z0-9.-]{0,251}[A-Za-z0-9])?(:[0-9]{1,5})?(/[^?#[:space:]]*)?$'))))`
+- `assistant_setting_singleton` (CHECK): `CHECK (singleton)`
+- `assistant_setting_singleton_key` (UNIQUE): `UNIQUE (singleton)`
+- `assistant_setting_test_adapter_shape` (CHECK): `CHECK (((provider_kind IS DISTINCT FROM 'test_adapter') OR ((endpoint_url IS NULL) AND (api_style IS NULL) AND (credential_ref IS NULL))))`
+
+**Triggers:**
+
+- `assistant_setting_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `assistant_setting_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `assistant_setting_guard()`
+- `assistant_setting_history`: AFTER INSERT OR UPDATE FOR EACH ROW → `assistant_setting_history()`
+- `assistant_setting_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## assistant_setting_change
+
+- **Purpose:** Append-only history of every version of the assistant setting (the audited enable and disable trail with their reasons).
+- **Migration:** `0111_p6_assistant.sql`. **API module:** `assistant`. **Who writes:** the SECURITY DEFINER trigger `assistant_setting_history` only. **Lifecycle:** append-only; one row per assistant_setting version.
+- **`mth_app` privileges:** SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| assistant_setting_id | uuid | NOT NULL |  | FK → assistant_setting(id) |
+| record_version | integer | NOT NULL |  | `CHECK ((record_version >= 1))` |
+| enabled | boolean | NOT NULL |  |  |
+| provider_kind | text | NULL |  |  |
+| endpoint_url | text | NULL |  |  |
+| api_style | text | NULL |  |  |
+| model_name | text | NULL |  |  |
+| credential_ref | jsonb | NULL |  |  |
+| authorization_reference | text | NULL |  |  |
+| request_timeout_ms | integer | NOT NULL |  |  |
+| max_output_tokens | integer | NOT NULL |  |  |
+| max_context_records | smallint | NOT NULL |  |  |
+| enabled_at | timestamp with time zone | NULL |  |  |
+| enabled_by | uuid | NULL |  | FK → app_user(id) |
+| reason | text | NOT NULL |  |  |
+| changed_by | uuid | NOT NULL |  | FK → app_user(id) |
+| changed_at | timestamp with time zone | NOT NULL |  |  |
+
+**Table constraints:**
+
+- `assistant_setting_change_version_key` (UNIQUE): `UNIQUE (assistant_setting_id, record_version)`
+
+**Triggers:**
+
+- `assistant_setting_change_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `assistant_setting_change_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+
+## assistant_conversation
+
+- **Purpose:** A user's own assistant conversation, optionally focused on one transformation: title, message count (at most 100), whether a reply is awaited (REQ-S17-007; ADR-0059 §5).
+- **Migration:** `0111_p6_assistant.sql`. **API module:** `assistant`. **Who writes:** its owner, holding `assistant.use` (every role except AUD), through createAssistantConversation and postAssistantMessage. **Lifecycle:** every update appends exactly one message and flips awaiting_reply; owner, transformation and title fixed; versioned and audited (the audit event of each update covers the message appended with it).
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| owner_user_id | uuid | NOT NULL |  | FK → app_user(id) |
+| transformation_id | uuid | NULL |  | FK → transformation(id) |
+| title | text | NOT NULL |  | `CHECK (((char_length(title) >= 1) AND (char_length(title) <= 200)))` |
+| message_count | smallint | NOT NULL | `0` | `CHECK (((message_count >= 0) AND (message_count <= 100)))` |
+| awaiting_reply | boolean | NOT NULL | `false` |  |
+| awaiting_since | timestamp with time zone | NULL |  |  |
+| last_message_at | timestamp with time zone | NULL |  |  |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `assistant_conversation_awaiting_shape` (CHECK): `CHECK ((awaiting_reply = (awaiting_since IS NOT NULL)))`
+- `assistant_conversation_last_message_shape` (CHECK): `CHECK (((message_count = 0) = (last_message_at IS NULL)))`
+- `assistant_conversation_owner_is_creator` (CHECK): `CHECK ((owner_user_id = created_by))`
+- `assistant_conversation_starts_empty` (CHECK): `CHECK (((version > 1) OR ((message_count = 0) AND (NOT awaiting_reply))))`
+
+**Indexes:**
+
+- `assistant_conversation_owner_idx`: `(owner_user_id, updated_at DESC, id DESC)`
+
+**Triggers:**
+
+- `assistant_conversation_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `assistant_conversation_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `assistant_conversation_guard()`
+- `assistant_conversation_messages_match`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `assistant_conversation_messages_match()`
+- `assistant_conversation_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## assistant_message
+
+- **Purpose:** One message of a conversation: the user's prompt as typed, or the assistant's reply (answer with content and at least one citation; refusal with its code; no_sources; unavailable with an error code; interrupted). Citations are record ids and versions or playbook block references; retrieved record text is never stored (REQ-S17-007, REQ-S17-008, REQ-S17-011; ADR-0059 §5, §8).
+- **Migration:** `0111_p6_assistant.sql`. **API module:** `assistant`. **Who writes:** postAssistantMessage only, in the transaction of the conversation update that counts it (the owner is the row's created_by). **Lifecycle:** append-only.
+- **`mth_app` privileges:** INSERT, SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| conversation_id | uuid | NOT NULL |  | FK → assistant_conversation(id) |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| seq | smallint | NOT NULL |  | `CHECK (((seq >= 1) AND (seq <= 100)))` |
+| author | text | NOT NULL |  | `CHECK ((author = ANY (ARRAY['user', 'assistant'])))` |
+| reply_kind | text | NULL |  | `CHECK (((reply_kind IS NULL) OR (reply_kind = ANY (ARRAY['answer', 'refusal', 'no_sources', 'unavailable', 'interrupted']))))` |
+| refusal_code | text | NULL |  | `CHECK (((refusal_code IS NULL) OR (refusal_code = ANY (ARRAY['assistant.refused.approval', 'assistant.refused.benefit_validation', 'assistant.refused.value_change', 'assistant.refused.evidence']))))` |
+| error_code | text | NULL |  | `CHECK (((error_code IS NULL) OR (error_code = ANY (ARRAY['assistant.provider_timeout', 'assistant.provider_unreachable', 'assistant.provider_error', 'assistant.provider_response_invalid']))))` |
+| content | text | NULL |  | `CHECK (((content IS NULL) OR ((char_length(content) >= 1) AND (char_length(content) <= 8000))))` |
+| citations | jsonb | NOT NULL | `'[]'::jsonb` |  |
+| provider_kind | text | NULL |  | `CHECK (((provider_kind IS NULL) OR (provider_kind = ANY (ARRAY['http_endpoint', 'test_adapter']))))` |
+| model_name | text | NULL |  | `CHECK (((model_name IS NULL) OR ((char_length(model_name) >= 1) AND (char_length(model_name) <= 200))))` |
+| setting_version | integer | NULL |  | `CHECK (((setting_version IS NULL) OR (setting_version >= 1)))` |
+| latency_ms | integer | NULL |  | `CHECK (((latency_ms IS NULL) OR ((latency_ms >= 0) AND (latency_ms <= 600000))))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `assistant_message_citations_valid` (CHECK): `CHECK (p6_assistant_citations_valid(citations))`
+- `assistant_message_conversation_id_id_key` (UNIQUE): `UNIQUE (conversation_id, id)`
+- `assistant_message_reply_shape` (CHECK): `CHECK (((author <> 'assistant') OR
+CASE reply_kind
+    WHEN 'answer' THEN ((content IS NOT NULL) AND (jsonb_array_length(citations) >= 1) AND (provider_kind IS NOT NULL) AND (setting_version IS NOT NULL) AND (latency_ms IS NOT NULL) AND (refusal_code IS NULL) AND (error_code IS NULL) AND ((model_name IS NOT NULL) OR (provider_kind = 'test_adapter')))
+    WHEN 'refusal' THEN ((refusal_code IS NOT NULL) AND (content IS NULL) AND (citations = '[]'::jsonb) AND (error_code IS NULL) AND (provider_kind IS NULL) AND (model_name IS NULL) AND (setting_version IS NULL) AND (latency_ms IS NULL))
+    WHEN 'no_sources' THEN ((content IS NULL) AND (citations = '[]'::jsonb) AND (refusal_code IS NULL) AND (error_code IS NULL) AND (provider_kind IS NULL) AND (model_name IS NULL) AND (latency_ms IS NULL))
+    WHEN 'unavailable' THEN ((error_code IS NOT NULL) AND (content IS NULL) AND (citations = '[]'::jsonb) AND (refusal_code IS NULL) AND (provider_kind IS NOT NULL) AND (setting_version IS NOT NULL))
+    WHEN 'interrupted' THEN ((content IS NULL) AND (citations = '[]'::jsonb) AND (refusal_code IS NULL) AND (error_code IS NULL) AND (provider_kind IS NULL) AND (model_name IS NULL) AND (setting_version IS NULL) AND (latency_ms IS NULL))
+    ELSE false
+END))`
+- `assistant_message_seq_key` (UNIQUE): `UNIQUE (conversation_id, seq)`
+- `assistant_message_user_shape` (CHECK): `CHECK (((author <> 'user') OR ((reply_kind IS NULL) AND (refusal_code IS NULL) AND (error_code IS NULL) AND (provider_kind IS NULL) AND (model_name IS NULL) AND (setting_version IS NULL) AND (latency_ms IS NULL) AND (citations = '[]'::jsonb) AND (content IS NOT NULL) AND (char_length(content) <= 4000))))`
+
+**Triggers:**
+
+- `assistant_message_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `assistant_message_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+- `assistant_message_counted`: CONSTRAINT AFTER INSERT DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `assistant_conversation_messages_match()`
+- `assistant_message_guard`: BEFORE INSERT FOR EACH ROW → `assistant_message_guard()`
+
+## assistant_suggestion
+
+- **Purpose:** A labelled suggestion on an answer: a charter or T16 decision-brief draft (text fields only) or advice (a recovery action, missing evidence), with its citations (REQ-S17-007, REQ-S17-008; ADR-0059 §6).
+- **Migration:** `0111_p6_assistant.sql`. **API module:** `assistant`. **Who writes:** postAssistantMessage (created proposed with the answer); the owner through takeAssistantSuggestionToDraft (proposed -> taken_to_draft). **Lifecycle:** proposed -> taken_to_draft (final; draft kinds only); content never changes; versioned and audited.
+- **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| conversation_id | uuid | NOT NULL |  | FK → assistant_conversation(id) |
+| message_id | uuid | NOT NULL |  |  |
+| owner_user_id | uuid | NOT NULL |  | FK → app_user(id) |
+| ordinal | smallint | NOT NULL |  | `CHECK (((ordinal >= 1) AND (ordinal <= 5)))` |
+| kind | text | NOT NULL |  | `CHECK ((kind = ANY (ARRAY['charter_draft', 'decision_brief_draft', 'recovery_action', 'missing_evidence'])))` |
+| target_record_type | text | NULL |  | `CHECK (((target_record_type IS NULL) OR (target_record_type = ANY (ARRAY['charter', 'T16']))))` |
+| fields | jsonb | NULL |  |  |
+| text_content | text | NULL |  | `CHECK (((text_content IS NULL) OR ((char_length(text_content) >= 1) AND (char_length(text_content) <= 4000))))` |
+| citations | jsonb | NOT NULL |  |  |
+| status | text | NOT NULL | `'proposed'` | `CHECK ((status = ANY (ARRAY['proposed', 'taken_to_draft'])))` |
+| taken_at | timestamp with time zone | NULL |  |  |
+| taken_by | uuid | NULL |  | FK → app_user(id) |
+| version | integer | NOT NULL | `1` | `CHECK ((version >= 1))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+| updated_at | timestamp with time zone | NOT NULL | `now()` |  |
+| updated_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `assistant_suggestion_citations_valid` (CHECK): `CHECK ((p6_assistant_citations_valid(citations) AND (jsonb_array_length(citations) >= 1)))`
+- `assistant_suggestion_draftable` (CHECK): `CHECK (((status = 'proposed') OR (kind = ANY (ARRAY['charter_draft', 'decision_brief_draft']))))`
+- `assistant_suggestion_kind_shape` (CHECK): `CHECK (
+CASE kind
+    WHEN 'charter_draft' THEN ((target_record_type = 'charter') AND (fields IS NOT NULL) AND p6_assistant_draft_fields_valid('charter', fields) AND (text_content IS NULL))
+    WHEN 'decision_brief_draft' THEN ((target_record_type = 'T16') AND (fields IS NOT NULL) AND p6_assistant_draft_fields_valid('T16', fields) AND (text_content IS NULL))
+    ELSE ((target_record_type IS NULL) AND (fields IS NULL) AND (text_content IS NOT NULL))
+END)`
+- `assistant_suggestion_message_fk` (FK): `FOREIGN KEY (conversation_id, message_id) REFERENCES assistant_message(conversation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `assistant_suggestion_ordinal_key` (UNIQUE): `UNIQUE (message_id, ordinal)`
+- `assistant_suggestion_owner_is_creator` (CHECK): `CHECK ((owner_user_id = created_by))`
+- `assistant_suggestion_taken_shape` (CHECK): `CHECK ((((status = 'taken_to_draft') = (taken_at IS NOT NULL)) AND ((taken_at IS NULL) = (taken_by IS NULL))))`
+
+**Indexes:**
+
+- `assistant_suggestion_conversation_idx`: `(conversation_id, message_id, ordinal)`
+
+**Triggers:**
+
+- `assistant_suggestion_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `assistant_suggestion_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `assistant_suggestion_guard()`
+- `assistant_suggestion_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## P6 functions (0111)
+
+- `p6_assistant_citations_valid(jsonb)`, `p6_assistant_draft_fields_valid(text, jsonb)` (IMMUTABLE SQL; used by CHECK constraints): citations are at most 20 distinct `{source: record, recordType (one of the 12 search record types), recordId, recordVersion ≥ 1}` or `{source: playbook, blockRef B0001–B0165, playbookVersion "1.0"}` with no other key; draft fields are text fields of the charter or the T16 decision brief only.
+- `assistant_setting_guard()`, `assistant_setting_history()` (SECURITY DEFINER), `assistant_conversation_guard()`, `assistant_message_guard()`, `assistant_conversation_messages_match()` (deferred), `assistant_suggestion_guard()`.
+
+# P6 tables, slice I (migration 0113, DG6)
+
+Written by T-DG6-ARCH-06 (ADR-0061 §1–§2, the contrast report of a published branding version). The table sections below are generated from the catalogue of a freshly migrated database (`docs/delivery/handbacks/DG6/T-DG6-ARCH-06-evidence/gen-dictionary.ts`, output `dictionary-section.md`), so they match the migration exactly. Two append-only tables, both written only by the branding publish in the transaction that inserts the version: `branding_contrast_report` (audited by record id; at most one per branding version, by a composite foreign key to `branding_version (organization_id, version_no)`) and `branding_contrast_pair` (a stored pair always passes its threshold). `0113` seeds no row and adds no permission. The ratio and threshold are `numeric` display measurements (contrast ratios), not money or rates.
+
+## branding_contrast_report
+
+- **Purpose:** The WCAG 2.x AA contrast report of one published branding version: the rule set, the SHA-256 of the token source it was computed from and the number of declared pairs (REQ-S15-003; ADR-0061 §1-§2). At most one per version.
+- **Migration:** `0113_p6_branding_contrast_reports.sql`. **API module:** `admin (branding)`. **Who writes:** the branding publish (putBrandingSettings, ADM_TECH holding `branding.configure`), in the transaction that inserts the version, under lock 730270 (BE-W). **Lifecycle:** append-only; audited (record id); exactly pair_count pairs at COMMIT.
+- **`mth_app` privileges:** INSERT, SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| branding_version_no | integer | NOT NULL |  | `CHECK ((branding_version_no >= 1))` |
+| rules | text | NOT NULL |  | `CHECK ((rules = 'wcag2x-aa-v1'))` |
+| token_source_sha256 | text | NOT NULL |  | `CHECK ((token_source_sha256 ~ '^[0-9a-f]{64}$'))` |
+| pair_count | integer | NOT NULL |  | `CHECK (((pair_count >= 1) AND (pair_count <= 500)))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+| created_by | uuid | NOT NULL |  | FK → app_user(id) |
+
+**Table constraints:**
+
+- `branding_contrast_report_version_fkey` (FK): `FOREIGN KEY (organization_id, branding_version_no) REFERENCES branding_version(organization_id, version_no) ON UPDATE RESTRICT ON DELETE RESTRICT`
+- `branding_contrast_report_version_key` (UNIQUE): `UNIQUE (organization_id, branding_version_no)`
+
+**Triggers:**
+
+- `branding_contrast_report_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `branding_contrast_report_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+- `branding_contrast_report_audit_required`: CONSTRAINT AFTER INSERT OR UPDATE DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `p2_audit_required()`
+- `branding_contrast_report_pairs_complete`: CONSTRAINT AFTER INSERT DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `branding_contrast_report_pairs_complete()`
+- `branding_contrast_report_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## branding_contrast_pair
+
+- **Purpose:** One evaluated token pair of a contrast report: foreground and background token names and colours, the use (text, large-text, ui), the ratio rounded down to two decimals and the threshold (4.5 or 3.0). A stored pair always passes (ADR-0061 §2).
+- **Migration:** `0113_p6_branding_contrast_reports.sql`. **API module:** `admin (branding)`. **Who writes:** the branding publish, with its report (BE-W). **Lifecycle:** append-only; covered by its report's audit event.
+- **`mth_app` privileges:** INSERT, SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| report_id | uuid | NOT NULL |  | FK → branding_contrast_report(id) |
+| ordinal | integer | NOT NULL |  | `CHECK ((ordinal >= 1))` |
+| fg_token | text | NOT NULL |  | `CHECK (((char_length(fg_token) <= 80) AND (fg_token ~ '^[a-z]+(\.[a-z0-9-]+)+$')))` |
+| bg_token | text | NOT NULL |  | `CHECK (((char_length(bg_token) <= 80) AND (bg_token ~ '^[a-z]+(\.[a-z0-9-]+)+$')))` |
+| use | text | NOT NULL |  | `CHECK ((use = ANY (ARRAY['text', 'large-text', 'ui'])))` |
+| fg_hex | text | NOT NULL |  | `CHECK ((fg_hex ~ '^#[0-9A-F]{6}$'))` |
+| bg_hex | text | NOT NULL |  | `CHECK ((bg_hex ~ '^#[0-9A-F]{6}$'))` |
+| ratio | numeric(4,2) | NOT NULL |  | `CHECK (((ratio >= (1)::numeric) AND (ratio <= (21)::numeric)))` |
+| threshold | numeric(2,1) | NOT NULL |  |  |
+| usage_note | text | NOT NULL |  | `CHECK (((char_length(usage_note) >= 1) AND (char_length(usage_note) <= 200)))` |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+
+**Table constraints:**
+
+- `branding_contrast_pair_ordinal_key` (UNIQUE): `UNIQUE (report_id, ordinal)`
+- `branding_contrast_pair_pair_key` (UNIQUE): `UNIQUE (report_id, fg_token, bg_token, use)`
+- `branding_contrast_pair_passes` (CHECK): `CHECK ((ratio >= threshold))`
+- `branding_contrast_pair_threshold_for_use` (CHECK): `CHECK ((((use = 'text') AND (threshold = 4.5)) OR ((use = ANY (ARRAY['large-text', 'ui'])) AND (threshold = 3.0))))`
+
+**Triggers:**
+
+- `branding_contrast_pair_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `branding_contrast_pair_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+- `branding_contrast_pair_report_complete`: CONSTRAINT AFTER INSERT DEFERRABLE INITIALLY DEFERRED FOR EACH ROW → `branding_contrast_report_pairs_complete()`
+
+
+## P6 functions (0113)
+
+- `branding_contrast_report_pairs_complete()` (deferred constraint trigger function, on both tables): at COMMIT a report has exactly `pair_count` pairs, numbered 1..`pair_count`; fired by the report INSERT and by every pair INSERT.
+
+# P6 implementer migrations (0114–0121, DG6): no new table
+
+Recorded by T-DG6-ARCH-07 (2026-10-30) from the shipped files (`ls packages/db/migrations`). The orchestrator renumbered four of them at merge (D-196 item 2, D-201): BE-J 0113 → 0114, BE-K2 0116 → 0117, BE-S 0119 → 0120 and BE-I2 0120 → 0121. None of these migrations adds or alters a table or a column, so no table section above changes. They add seed rows (each with its audit event), and functions or triggers on existing tables:
+
+| File | Task | Rows seeded | Functions and triggers |
+| --- | --- | --- | --- |
+| `0114_p6_job_service_identities.sql` | BE-J | 40 `service_identity` rows, `job:<queue>`, one per queue of `apps/worker/src/queues/**` (`apps/worker/src/kit.ts` `JOB_SERVICE_IDENTITIES`; `aggregate_only` for the two benefit recalculations, `none` otherwise) | none |
+| `0115_p6_search_index_jobs.sql` | BE-P | `job_schedule` and `service_identity` rows for `search.index_feed` and `search.reindex` (`sensitive_access = 'none'`; the declared exception of ADR-0057 §2 is in `reason`) | none |
+| `0116_p6_connector_run_jobs.sql` | BE-L2 | `job_schedule` `integrations.connector_run` (every minute); identities `job:integrations.connector_run` (`connector.read`) and `job:integrations.connector_exception` (no code) | none |
+| `0117_p6_operations_triggers_freshness.sql` | BE-K2 | `automation_trigger` rows `connector.run_failed` and `data.stale`; starter 16 `automation_rule_version` 2 (`{job.failed, connector.run_failed, data.stale}`); `job_schedule` `kpi.freshness_scan` (hourly) and `operations.exception_alerts` (every minute); their identities | `automation_rule_version_guard()` replaced (0074): a migration may seed a starter version whose trigger set extends version 1's; an application insert that changes a starter's triggers is still refused (`automation_rule_version_starter_fixed`) |
+| `0118_p6_evidence_content_detected_type_required.sql` | BE-D | none | `evidence_content_detected_type_required()` and its BEFORE INSERT trigger on `evidence_content`: a new row needs `detected_type` (ADR-0052 §1) |
+| `0119_p6_branding_version_contrast_required.sql` | BE-W | none | `branding_version_contrast_required()` and its deferred constraint trigger AFTER INSERT on `branding_version`: at COMMIT a new version has its `branding_contrast_report` (ADR-0061 §2) |
+| `0120_p6_audit_required_index_use.sql` | BE-S | none | `p2_audit_required()` replaced: the deferred audit check uses `audit_event_record_idx` again (ADR-0058 §6); its behaviour is unchanged |
+| `0121_p6_notification_fanout_jobs.sql` | BE-I2 | `job_schedule` `notifications.delivery_sweep` (every minute); identities `job:notifications.fanout` and `job:notifications.delivery_sweep` (read codes only) | none |
+
+# P6 pre-freeze repair migration 0122 (DG6)
+
+Recorded by T-DG6-ARCH-09 (2026-11-01) from the shipped file `packages/db/migrations/0122_p6_automation_rule_enablement.sql` (T-DG6-BE-X9; D-203 O-2; ADR-0043 amendment E1). It adds one table and one trigger on `automation_rule`. No existing table, column or row changes. T-DG6-BE-X10 (D-204; ADR-0043 amendment E2) completes the ledger with the disabled windows. This section describes `0122` as shipped. Migration `0123` (T-DG6-BE-X10, merged) adds no column but widens the `source` CHECK, adds an index, replaces the trigger function so that disabling writes a row, and backfills past disables: see the next section, "P6 pre-freeze repair migration 0123 (DG6)", which wins where the two differ.
+
+## automation_rule_enablement
+
+- **Purpose:** The moment each version of an automation rule became enabled: when the rule was inserted enabled, when it went from disabled to enabled, or when its effective version changed while it was enabled. The worker evaluates an event only against a rule version that became enabled at or before the event's stored occurrence time (`outbox_event.created_at`), so enabling a rule never acts on history (D-203, D-204; ADR-0043 amendment E1, E2).
+- **Migration:** `0122_p6_automation_rule_enablement.sql`. **API module:** none. **Reader:** the worker (`apps/worker/src/automation/engine.ts` `candidates`). **Who writes:** only the trigger `automation_rule_enablement_record` (below), in the transaction of the audited rule update that causes the row; no application writer. **Lifecycle:** append-only (`p2_attach_append_only`). Not audited separately: the causing `automation_rule` update writes its own audit event (the `0098` `record_sensitivity_change` pattern).
+- **`mth_app` privileges:** SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PRIMARY KEY (`mth_uuid_v7()` in the trigger and the backfill) |
+| automation_rule_id | uuid | NOT NULL |  | FK → automation_rule(id) ON DELETE RESTRICT ON UPDATE RESTRICT |
+| automation_rule_version_id | uuid | NOT NULL |  | part of the composite FK below |
+| enabled_from | timestamp with time zone | NOT NULL |  | the trigger writes `now()` (the transaction time of the causing update) |
+| source | text | NOT NULL |  | CHECK `automation_rule_enablement_source`: `source IN ('enable', 'effective_version', 'backfill')` |
+
+**Table constraints:**
+
+- `automation_rule_enablement_pkey` (PRIMARY KEY): `(id)`
+- `automation_rule_enablement_automation_rule_id_fkey` (FOREIGN KEY): `(automation_rule_id)` → `automation_rule(id)` ON DELETE RESTRICT ON UPDATE RESTRICT
+- `automation_rule_enablement_version_fkey` (FOREIGN KEY): `(automation_rule_id, automation_rule_version_id)` → `automation_rule_version(automation_rule_id, id)` ON DELETE RESTRICT ON UPDATE RESTRICT, DEFERRABLE INITIALLY DEFERRED (a seeded starter and its version 1 reference each other, like `automation_rule`'s own effective-version key)
+- `automation_rule_enablement_source` (CHECK): see the column
+
+**Indexes:**
+
+- `automation_rule_enablement_rule_idx`: `(automation_rule_id, automation_rule_version_id, enabled_from DESC)`
+
+**Triggers:**
+
+- `automation_rule_enablement_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `automation_rule_enablement_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+
+## Trigger added to an earlier table (0122)
+
+| Table (owner) | Trigger | When | Function |
+|---|---|---|---|
+| `automation_rule` (P5 0074) | `automation_rule_enablement_record` | AFTER INSERT OR UPDATE, row, not deferred | `automation_rule_enablement_record()` |
+
+The trigger is excluded from the `0074` trigger pin of `catalogue.test.ts` and checked by its own "0122" test, which pins the three triggers above as not deferrable.
+
+## P6 function (0122)
+
+| Function | Migration | What it does | `mth_app` |
+|---|---|---|---|
+| `automation_rule_enablement_record()` | 0122 | `SECURITY DEFINER`, `search_path = public, pg_temp`. When `NEW.enabled` and `NEW.effective_version_id IS NOT NULL`, and the operation is an INSERT, or `OLD.enabled` was false, or the effective version changed: inserts one row with `enabled_from = now()` and `source = 'enable'` (INSERT, or disabled → enabled) or `'effective_version'` (a version change while enabled). Disabling writes nothing. Returns NULL. | none (`PUBLIC` execute revoked; runs only through the trigger) |
+
+## Backfill (0122)
+
+One row per rule that was enabled when `0122` ran, with `source = 'backfill'`, for its effective version, at `GREATEST` of three stored times: the effective version's `published_at`, the newest `audit_event.occurred_at` with `record_type = 'automation_rule'`, the rule's id and `action = 'automation_rule.enable'`, and the rule's `created_at` (a seeded starter is created enabled). The migration's own clock is never used. No `automation_rule` row changes, so there is no version step and no audit event.
+
+# P6 pre-freeze repair migration 0123 (DG6)
+
+Recorded by T-DG6-ARCH-10 (2026-11-01) from the shipped file `packages/db/migrations/0123_p6_automation_rule_enablement_disable.sql` (T-DG6-BE-X10; D-204, D-205; ADR-0043 amendment G1, G2). It changes the table `automation_rule_enablement` of `0122` (above) without adding a column or a relationship, so that its rows form the full interval history of each rule: enabled on a version, or disabled. Where this section and the `0122` section differ, this section wins.
+
+## automation_rule_enablement: changes in 0123
+
+- **Purpose (amended):** The moments each automation rule became enabled on a version, changed its effective version while enabled, or was disabled. Per rule, the rows ordered by (`enabled_from`, `id`) partition time into intervals; each starts at a row and ends at the next. The worker evaluates an event against the rule version of the newest row at or before the event's stored occurrence time (`outbox_event.created_at`); a disable row, or no row, means the rule was not enabled then and the event is not acted on (D-203, D-204). The rule must also be enabled at evaluation (D-205, ADR-0043 amendment G3).
+- **Migration:** `0122_p6_automation_rule_enablement.sql`, amended by `0123_p6_automation_rule_enablement_disable.sql`. Writers, lifecycle and `mth_app` privileges (SELECT) are unchanged.
+
+| Column | Change in 0123 |
+|---|---|
+| enabled_from | No type change. Its meaning depends on `source`: on an `enable`, `effective_version` or `backfill` row it is the moment the rule became enabled on that version; on a `disable` or `backfill_disable` row it is the moment the rule **stopped**. The column is not renamed (forward-only migrations); read `source` to interpret it. |
+| automation_rule_version_id | No type change. On a disable row it names the version that stopped (`OLD.effective_version_id`, never NULL). |
+| source | CHECK `automation_rule_enablement_source` is replaced: `source IN ('enable', 'effective_version', 'backfill', 'disable', 'backfill_disable')` |
+
+**`source` values:**
+
+| Value | Written by | Meaning of the row |
+|---|---|---|
+| `enable` | trigger (0122) | the rule was inserted enabled, or went from disabled to enabled, on this version |
+| `effective_version` | trigger (0122) | the effective version of an enabled rule changed (a publish while enabled) |
+| `backfill` | migration `0122` | the rule was enabled when `0122` ran (see "Backfill (0122)") |
+| `disable` | trigger (0123) | an enabled rule was disabled; the version is the one that stopped |
+| `backfill_disable` | migration `0123` | a disable recorded only in the audit trail before `0123` (see "Backfill (0123)") |
+
+The engine treats `disable` and `backfill_disable` as the start of a disabled interval (`engine.ts` `DISABLE_SOURCES`).
+
+**Indexes (added):**
+
+- `automation_rule_enablement_rule_time_idx`: `(automation_rule_id, enabled_from DESC, id DESC)`, the engine's lookup of the newest row of a rule at or before an instant. `automation_rule_enablement_rule_idx` (0122) is kept.
+
+## P6 function (0123)
+
+| Function | Migration | What it does | `mth_app` |
+|---|---|---|---|
+| `automation_rule_enablement_record()` | 0122, replaced by 0123 | `CREATE OR REPLACE`, same signature; still `SECURITY DEFINER`, `search_path = public, pg_temp`. The `0122` branch is unchanged (`enable` / `effective_version` rows). New branch: on an `UPDATE` with `OLD.enabled` true and `NEW.enabled` false, inserts one row with `automation_rule_version_id = OLD.effective_version_id`, `enabled_from = now()` and `source = 'disable'`. An update that does not change `enabled` from true to false writes no disable row (the API writes nothing for a no-op disable). Returns NULL. | none (`PUBLIC` execute revoked again; runs only through the trigger) |
+
+The trigger `automation_rule_enablement_record` on `automation_rule` is unchanged (AFTER INSERT OR UPDATE, row, not deferred). The "0123" test of `packages/db/test/integration/catalogue.test.ts` checks the five CHECK values, the index definition, and that the function is `SECURITY DEFINER`, has no `PUBLIC` execute and contains the disable branch.
+
+## Backfill (0123)
+
+One row with `source = 'backfill_disable'` for each `audit_event` with `record_type = 'automation_rule'` and `action = 'automation_rule.disable'` that follows a ledger row of the same rule (`enabled_from <= occurred_at`), when that preceding row is not itself a disable row. The row's `enabled_from` is the audit event's `occurred_at` (the disabling transaction's `now()`, the instant the trigger would have stored) and its version is that of the preceding row. Rows are inserted in (`occurred_at`, `seq`) order. A disable that precedes the rule's first ledger row gets no row, because no row already means "not enabled". The migration's own clock is never used. No `automation_rule` row changes, so there is no version step and no audit event.
+
+# P6 round-1 repair migration 0124 (DG6)
+
+First recorded by T-DG6-ARCH-11 (2026-11-01) from D-207 (F-DG6-147), before the file existed. **Rewritten by T-DG6-ARCH-12 (2026-11-02) to match the shipped `packages/db/migrations/0124_p6_export_live_selection_pending.sql`** (T-DG6-BE-Y5). The constraint, index and trigger texts below are `pg_get_constraintdef` / `pg_indexes.indexdef` output from a disposable PostgreSQL 16.15 database with all 116 migrations applied (`docs/delivery/handbacks/DG6/T-DG6-ARCH-12-evidence/01-catalog-0124.log`). The design is ADR-0046 amendment R (which reconciles H1–H6). The names `live_selection`, `export_job_live_selection_shape` and `export_job_snapshot_pending` of the first version were never shipped. The migration changes the table `export_job` of `0081` (P5 tables, slice F) without adding a table or a relationship. Where this section and the `0081` section differ, this section wins. The seed free-id example in `packages/db/src/seed.test.ts` moved to `0125`, and moves to `0126` with migration `0125` (next section). Where this section and "P6 round-1 repair migration 0125" differ, that section wins.
+
+## export_job: changes in 0124
+
+- **Purpose (amended):** One export of one snapshot in one format and language. A **live-selection** export is created without a snapshot and with its stored selection. The API process's export assembly watch (`apps/api/src/modules/reporting/exports/assembly.ts`, ADR-0046 R4) assigns the snapshot once, after assembling it, and only then writes the `export_job.requested` outbox event for the worker. An export of an existing snapshot has its snapshot from the INSERT, as in DG5.
+- **Who writes (amended):** `export.create` (create), the export assembly watch (assign the snapshot, or fail a pending job; service actor on behalf of the requester), the requester (cancel), and the worker (start, retry, finish).
+- **Lifecycle (states unchanged):** queued → running → succeeded | failed | queued (retry) | cancelled. A pending job (no snapshot) also goes queued → failed (`export.source_unavailable`, `export.includes_restricted_records` or `export.assembly_failed`) or queued → cancelled.
+- **Immutability:** the request is immutable, except that `snapshot_id` is assigned once. The table is versioned. `mth_app` privileges are unchanged (INSERT, SELECT, UPDATE).
+
+| Column | Type | Null | Default | Change in 0124 |
+|---|---|---|---|---|
+| snapshot_id | uuid | **NULL** (was NOT NULL) |  | NULL only while a live-selection job is pending assembly, or after it failed or was cancelled before assembly (CHECK `export_job_selection_pending`). Assigned once, from NULL to a snapshot, while `queued` (`export_job_guard()`). The FK `export_job_snapshot_fkey` is unchanged: `FOREIGN KEY (transformation_id, snapshot_id) REFERENCES report_snapshot(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`. It keeps an assigned snapshot in the job's transformation. A NULL is not checked (MATCH SIMPLE). |
+| selection | jsonb | NULL |  | **New.** The stored `ExportLiveSelection` of the request: only the members it carried, from `definitionCode`, `subjectId`, `reportingPeriodId` and `parameters`. It is validated by zod `exportLiveSelection` (`@mth/shared/schemas`, a strict object) and by `checkReportRequest`, whose parameters are at most 8,192 bytes (422 `report.parameters_invalid`), before the write. NULL for the export of an existing snapshot. Never changes. An idempotent replay compares it with the request (D-207 (3)). There is no database size bound (ADR-0046 R2). |
+
+**Table constraints (added or replaced):**
+
+- `export_job_selection_pending` (CHECK, new): `CHECK ((((snapshot_id IS NOT NULL) OR ((selection IS NOT NULL) AND (status = ANY (ARRAY['queued'::text, 'failed'::text, 'cancelled'::text])))) AND ((selection IS NULL) OR ((jsonb_typeof(selection) = 'object'::text) AND (jsonb_typeof((selection -> 'definitionCode'::text)) = 'string'::text)))))`. A job without a snapshot carries a selection and is `queued`, `failed` or `cancelled`, so `running` and `succeeded` always have a snapshot. A selection is an object with a string `definitionCode`.
+- `export_job_error_code_check` (CHECK, replaced): `CHECK (((error_code IS NULL) OR (error_code = ANY (ARRAY['export.render_failed'::text, 'export.too_large'::text, 'export.source_unavailable'::text, 'export.retries_exhausted'::text, 'export.includes_restricted_records'::text, 'export.assembly_failed'::text]))))`. Two codes are added: `export.includes_restricted_records` (a restricted source found at assembly, D-199) and `export.assembly_failed` (the report could no longer be assembled, or 3 started assembly attempts without an outcome, counted on the job since `0125`). _(Corrected 2026-11-02, T-DG6-ARCH-13: this first said "3 unexpected assembly errors in one process".)_
+
+Every other DG5 constraint of `export_job` is kept unchanged, including `export_job_idempotency_key`, `export_job_error_complete`, `export_job_times` and `export_job_file_complete`.
+
+**Indexes (added):**
+
+- `export_job_pending_assembly_idx`: `CREATE INDEX export_job_pending_assembly_idx ON public.export_job USING btree (created_at, id) WHERE ((snapshot_id IS NULL) AND (status = 'queued'::text))`. It serves the watch's claim of the oldest pending job (`FOR UPDATE SKIP LOCKED`).
+
+**Triggers (unchanged):** `export_job_guard` (BEFORE INSERT OR UPDATE, `export_job_guard()`), `export_job_row_guard` (`p2_row_guard()`) and the deferred constraint trigger `export_job_audit_required` (`p2_audit_required()`).
+
+**Backfill:** none. Every row written before `0124` has a snapshot and a NULL `selection`, and it satisfies the new CHECK.
+
+## P6 function (0124)
+
+| Function | Migration | What it does | `mth_app` |
+|---|---|---|---|
+| `export_job_guard()` | 0081, replaced by 0124 | `CREATE OR REPLACE`, same signature and trigger. **INSERT:** created `queued` with no attempt (`export_job_created_queued`, unchanged). With a NULL snapshot, the selection's `definitionCode` must name a `report_definition` that offers the format (`export_job_format_offered`). With a snapshot, the snapshot is not discarded (`export_job_snapshot_exportable`) and its definition offers the format (unchanged). **UPDATE:** `requested_by`, `format`, `language`, `idempotency_key` and `selection` never change. A non-NULL `snapshot_id` never changes. A NULL `snapshot_id` may become a snapshot only while `OLD.status` and `NEW.status` are both `queued` (`export_job_request_immutable`). An assigned snapshot is checked as on INSERT (not discarded, format offered). Transitions, the finished-job freeze and the attempt step are unchanged. **Not checked by the `0124` guard:** that the assigned snapshot's `definition_code` equals `selection ->> 'definitionCode'`. The application guarantees it, because the watch inserts the snapshot from the stored selection in the assigning transaction. **Replaced again by `0125`**, which adds that check (`export_job_snapshot_selection`) and the assembly attempt rules ("P6 round-1 repair migration 0125"). | via trigger |
+
+## P6 validation rules (0124)
+
+| Layer | What it checks |
+|---|---|
+| Database | `export_job_selection_pending`, the replaced `export_job_error_code_check`, the composite FK (same transformation) and `export_job_guard()` (snapshot assigned once, while queued; selection immutable; assigned snapshot exportable in the format). |
+| API, request (`jobs.ts` `createExport`) | Zod `exportCreate` / `exportLiveSelection`. Definition, subject's transformation, `export.create`, `report.generate`, `export.format_not_offered`, the report request's 422 `report.*` refusals (`checkReportRequest`, parameters ≤ 8,192 bytes), and D-199's synchronous 403 (`transformationHasRestricted`, then a discarded read-only assembly only if the requester is restricted from some record). Commit-time re-authorization on reloaded grants. The contract has `ExportJob.snapshotId` as a UUID or `null`, with two more `errorCode` values (`docs/api/openapi.yaml`, `packages/shared/src/schemas/export-jobs.ts`). |
+| Watch (`assembly.ts`, API process) | As `0124` shipped it: claim `FOR UPDATE SKIP LOCKED` plus `pg_try_advisory_xact_lock` on class `exportJob` (730264). Access check before and after the assembly. The stored selection re-parsed by zod. D-199 on the assembled sources. Then the snapshot, the assignment (`export_job.assemble`) and the `export_job.requested` outbox event, in one transaction. Every failure is `queued → failed` with `export_job.fail`. Settings: `EXPORT_ASSEMBLY_INTERVAL_MS` 1,000, `EXPORT_ASSEMBLY_CONCURRENCY` 2, `EXPORT_ASSEMBLY_BATCH` 50, `EXPORT_ASSEMBLY_MAX_ERRORS` 3. **Superseded by `0125`** ("P6 validation rules (0125)"): the count is persisted per job, the attempt is committed on its own first, and the lock is a session lock. _(Corrected 2026-11-02, T-DG6-ARCH-13: this row first said `EXPORT_ASSEMBLY_MAX_ERRORS` 3 "per job, per process".)_ |
+
+# P6 round-1 repair migration 0125 (DG6)
+
+Recorded by T-DG6-ARCH-13 (2026-11-02) from the shipped `packages/db/migrations/0125_p6_export_assembly_attempts.sql` (T-DG6-BE-Y6; F-DG6-sa12-1, F-DG6-sa12-3). The column, constraint, index, trigger and grant texts below are `information_schema` / `pg_get_constraintdef` / `pg_indexes.indexdef` / `pg_get_triggerdef` output, and the guard's constraint names were read from `pg_proc.prosrc`. All come from a disposable PostgreSQL 16.15 database with all 117 migrations applied (`docs/delivery/handbacks/DG6/T-DG6-ARCH-13-evidence/01-catalog-0125.log`). The design is ADR-0046 amendment S (with R2, R4 and R6 as corrected). The migration changes the table `export_job` of `0081` and `0124` without adding a table or a relationship. Where this section and the `0081` or `0124` sections differ, this section wins. The seed free-id example in `packages/db/src/seed.test.ts` moves to `0126`.
+
+## export_job: changes in 0125
+
+- **Who writes (amended):** `export.create` (create); the export assembly watch (count an assembly attempt, assign the snapshot, or fail a pending job; service actor on behalf of the requester); the requester (cancel); and the worker (start, retry, finish).
+- **Lifecycle (states unchanged):** as in `0124`. A pending job (`queued`, no snapshot) may also step `assembly_attempt_count` by one per started assembly attempt, without a status change. Each step is versioned (+ 1) and audited `export_job.assembly_attempt`.
+- **Versions (observable):** a live job assembled at its first attempt is at version 3 after assembly (1 created, 2 attempt, 3 assigned), and a job failed in its job transaction is also at version 3. `ExportJob` in the API is unchanged.
+- **`mth_app` privileges:** unchanged (INSERT, SELECT, UPDATE). No new index.
+
+| Column | Type | Null | Default | Change in 0125 |
+|---|---|---|---|---|
+| assembly_attempt_count | integer | NOT NULL | `0` | **New** (ordinal 27). The assembly attempts of a pending live selection that were started: each is counted and committed in its own transaction before the assembly starts (ADR-0046 R4 step 0). When a claim finds it at `EXPORT_ASSEMBLY_MAX_ERRORS` (3), the job fails with `export.assembly_failed` instead of being assembled again, so the bound holds per job across restarts and API processes. 0 on insert (`export_job_created_queued`). It changes only by + 1, only while the job is `queued` with no snapshot before and after (`export_job_assembly_attempt_step`). Written only by the watch. Not in the API. It is separate from `attempt_count` (the worker's render attempts, smallint 0–20, unchanged). Rows that existed when `0125` ran got 0. |
+
+**Table constraints (added):**
+
+- `export_job_assembly_attempt_count_check` (CHECK, new): `CHECK ((assembly_attempt_count >= 0))`.
+
+Every other constraint of `export_job` is unchanged, including `export_job_selection_pending`, `export_job_error_code_check` (the six codes of `0124`), `export_job_snapshot_fkey` and `export_job_attempt_count_check` (`CHECK (((attempt_count >= 0) AND (attempt_count <= 20)))`).
+
+**Indexes (unchanged):** `export_job_pkey`, `export_job_idempotency_key`, `export_job_storage_key_key`, `export_job_requester_idx` and `export_job_pending_assembly_idx` (`(created_at, id) WHERE ((snapshot_id IS NULL) AND (status = 'queued'::text))`).
+
+**Triggers (unchanged):** `export_job_guard` (BEFORE INSERT OR UPDATE, `export_job_guard()`), `export_job_row_guard` (`p2_row_guard()`) and the deferred constraint trigger `export_job_audit_required` (`p2_audit_required()`).
+
+**Backfill:** none. The column default gives every existing row 0. No other row changes.
+
+## P6 function (0125)
+
+| Function | Migration | What it does | `mth_app` |
+|---|---|---|---|
+| `export_job_guard()` | 0081, replaced by 0124, replaced by 0125 | `CREATE OR REPLACE`, same signature and trigger; `search_path = public, pg_temp`; not `SECURITY DEFINER`. Every `0124` rule is kept. Its constraint names are `export_job_created_queued`, `export_job_format_offered`, `export_job_request_immutable`, `export_job_transition`, `export_job_finished_frozen`, `export_job_attempt_step`, `export_job_assembly_attempt_step`, `export_job_snapshot_exportable` and `export_job_snapshot_selection`. **INSERT:** created `queued` with `attempt_count = 0` **and** `assembly_attempt_count = 0` (`export_job_created_queued`, stricter). **UPDATE:** `assembly_attempt_count` may change only to `OLD + 1`, while `OLD.status` and `NEW.status` are both `queued` and `OLD.snapshot_id` and `NEW.snapshot_id` are both NULL (`export_job_assembly_attempt_step`, new). **An assigned snapshot** (an INSERT with a snapshot, or the pending NULL → snapshot assignment) is not discarded (`export_job_snapshot_exportable`). If the job carries a `selection`, the snapshot's `definition_code` must not be distinct from `selection ->> 'definitionCode'` (`export_job_snapshot_selection`, new, F-DG6-sa12-1). Its definition must offer the format (`export_job_format_offered`). | via trigger |
+
+## P6 validation rules (0125)
+
+| Layer | What it checks |
+|---|---|
+| Database | `export_job_assembly_attempt_count_check` (≥ 0) and the replaced `export_job_guard()`: no attempt at insert, an attempt steps by + 1 only while pending, and an assigned snapshot is of the stored selection's definition. These are added to the `0124` rules, which are kept. |
+| Watch (`assembly.ts`, API process) | It runs on **one pooled connection** per job, which holds class `exportJob` (730264) as a **session** lock: `pg_try_advisory_lock`, only tried, taken at the claim and released with `pg_advisory_unlock` in a `finally`. **Step 0, its own committed transaction:** claim the oldest pending job `FOR UPDATE SKIP LOCKED`, then the try-lock. At `assembly_attempt_count` ≥ `EXPORT_ASSEMBLY_MAX_ERRORS` (3), fail the job `export.assembly_failed` (`export_job.fail`). Otherwise count the attempt (+ 1, version + 1, `export_job.assembly_attempt`) and COMMIT before assembling. **Steps 1–6, one transaction:** re-read the job `FOR UPDATE` at the counted version, then exactly the `0124` flow (access check, assembly on its own read-only connection, commit-time access check, D-199, then the snapshot, the assignment `export_job.assemble` and the `export_job.requested` outbox event together). Every failure is `queued → failed` with `export_job.fail`. Settings are unchanged: `EXPORT_ASSEMBLY_INTERVAL_MS` 1,000, `EXPORT_ASSEMBLY_CONCURRENCY` 2, `EXPORT_ASSEMBLY_BATCH` 50, `EXPORT_ASSEMBLY_MAX_ERRORS` 3 (per job, persisted). |
+| Integration tests | `packages/db/test/integration/catalogue.test.ts` "0125: …" (the column, its CHECK, the guard's constraint names and the definition comparison); `apps/api/test/integration/reporting/exports-assembly.test.ts` (the bound across fresh module copies, the attempt committed before the assembly, the session lock held between the two transactions and released after, and the guard step). |
+
+# P6 round-6 repair migration 0126 (DG6)
+
+Recorded by T-DG6-ARCH-16 (2026-11-08; F-DG6-460) from the shipped `packages/db/migrations/0126_p6_report_snapshot_aggregate.sql` (T-DG6-BE-Z9; F-DG6-400). The column, constraint, index, trigger and grant texts below are `information_schema` / `pg_get_constraintdef` / `pg_indexes.indexdef` / `pg_get_triggerdef` output. They come from a disposable PostgreSQL 16.15 database with all 118 migrations applied (`docs/delivery/handbacks/DG6/T-DG6-ARCH-16-evidence/01-catalog-0126.log`). The design is ADR-0045 §3 (amendment of 2026-11-08) and ADR-0051 §2 (amendment of 2026-11-08, part A). The migration adds one table and one column to `report_snapshot` (0080, "P5 tables, slice F"). Where this section and the `0080` section differ, this section wins. T-DG6-BE-Z10 to BE-Z12B shipped no migration. Their changes to what the API returns for references to restricted records are read-time rules, recorded in ADR-0051 (amendment of 2026-11-08) and checked by `apps/api/test/support/sensitive-reference-inventory.ts`. No stored column changed.
+
+## report_snapshot_aggregate
+
+- **Purpose:** The records whose values a report section's aggregate figures include without naming them. One row per (snapshot, section, record). The rows feed only the read-time `includesRestrictedRecords` of the section (ADR-0051 §2, D-195 Q3):
+  - the executive pack's `metrics_<subject>` and the executive dashboard's `area_value`: the dashboard facts' benefits and business cases;
+  - the executive dashboard's `items_portfolio`: the benefits allocated to each listed initiative;
+  - the gate pack's `criteria`: the evidence items counted as unverified.
+- **Not a source:**
+  - never shown;
+  - never listed by `listReportSnapshotSources`;
+  - not read by the D-199 export refusal (`exports/jobs.ts` reads `report_snapshot_source`);
+  - never part of `content` or `content_sha256`.
+- **Migration:** `0126_p6_report_snapshot_aggregate.sql`. **API module:** `reporting` (`reports/restricted.ts` reads it, and the snapshot writer inserts it).
+- **Who writes:** the snapshot's creating transaction only (`report_snapshot_child_guard`: same organization and transformation as the snapshot, which must be `generated` and created in this transaction).
+- **Lifecycle:** append-only, never updated or deleted. It has no audit event of its own: `report_snapshot.generate` covers it, as for `report_snapshot_source`.
+- **`mth_app` privileges:** INSERT, SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| id | uuid | NOT NULL |  | PK |
+| organization_id | uuid | NOT NULL |  | FK → organization(id) |
+| transformation_id | uuid | NOT NULL |  | FK → transformation(id) |
+| snapshot_id | uuid | NOT NULL |  |  |
+| section_key | text | NOT NULL |  | `CHECK ((section_key ~ '^[a-z][a-z0-9_]{0,63}$'))` |
+| record_type | text | NOT NULL |  | `CHECK ((record_type ~ '^[a-z][a-z0-9_]{1,63}$'))` |
+| record_id | uuid | NOT NULL |  |  |
+| created_at | timestamp with time zone | NOT NULL | `now()` |  |
+
+`record_type` is the audit record type (the table name): `benefit`, `business_case` or `evidence` for the sections above. `record_id` has no foreign key, because it is polymorphic. The reference inventory classifies it under its uuid class.
+
+**Table constraints:**
+
+- `report_snapshot_aggregate_key` (UNIQUE): `UNIQUE (snapshot_id, section_key, record_type, record_id)`
+- `report_snapshot_aggregate_snapshot_fkey` (FK): `FOREIGN KEY (transformation_id, snapshot_id) REFERENCES report_snapshot(transformation_id, id) ON UPDATE RESTRICT ON DELETE RESTRICT`
+
+**Indexes:** `report_snapshot_aggregate_pkey` (`id`) and `report_snapshot_aggregate_key`: `UNIQUE (snapshot_id, section_key, record_type, record_id)`. The key also serves the read by snapshot.
+
+**Triggers:**
+
+- `report_snapshot_aggregate_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `report_snapshot_aggregate_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+- `report_snapshot_aggregate_guard`: BEFORE INSERT FOR EACH ROW → `report_snapshot_child_guard()` (raises `report_snapshot_aggregate_same_transformation` or `report_snapshot_aggregate_creation_only`)
+- `report_snapshot_aggregate_row_guard`: BEFORE INSERT OR UPDATE FOR EACH ROW → `p2_row_guard()`
+
+## report_snapshot: changes in 0126
+
+| Column | Type | Null | Default | Change in 0126 |
+|---|---|---|---|---|
+| aggregates_recorded | boolean | NOT NULL | `true` | **New** (ordinal 38). It is true when the snapshot's aggregate records are in `report_snapshot_aggregate`, which holds for every snapshot written since `0126` (the column default). It is false for the snapshots that existed when `0126` ran: the column was added with default `false` and then given default `true`. For those, the API labels the aggregate sections conservatively, from every record of the section's types marked sensitive in the snapshot's transformation (`legacyAggregates`, `reporting/reports/restricted.ts`). That may over-label and never under-labels. Immutable after insert (`report_snapshot_aggregates_recorded_immutable`). Not in the API. |
+
+**Triggers (added):**
+
+- `report_snapshot_aggregates_recorded_immutable`: BEFORE UPDATE FOR EACH ROW → `report_snapshot_aggregates_recorded_immutable()`
+
+Every other column, constraint, index and trigger of `report_snapshot` is unchanged. `mth_app` privileges are unchanged (INSERT, SELECT, UPDATE).
+
+**Backfill:** none. The only existing-row change is `aggregates_recorded = false` on the snapshots stored before `0126`. Content and `content_sha256` are unchanged.
+
+## P6 function (0126)
+
+| Function | Migration | What it does | `mth_app` |
+|---|---|---|---|
+| `report_snapshot_aggregates_recorded_immutable()` | 0126 | `search_path = public, pg_temp`; not `SECURITY DEFINER`. On UPDATE it raises `check_violation` with constraint `report_snapshot_aggregates_recorded_immutable` when `aggregates_recorded` changes. So no update can turn a recorded snapshot into a legacy one, or the reverse. | via trigger |
+
+`report_snapshot_child_guard()` (0080) is reused unchanged for the new table.
+
+## P6 validation rules (0126)
+
+| Layer | What it checks |
+|---|---|
+| Database | The `section_key` and `record_type` patterns, the per-snapshot UNIQUE key, the composite FK (same transformation), `report_snapshot_child_guard()` (creation transaction only), append-only, and the immutable `aggregates_recorded`. |
+| API, write (snapshot creation) | The assembler's `aggregates: AggregateRef[]` are inserted in the snapshot's creating transaction, beside `report_snapshot_source`. Content and `contentSha256` are unchanged. |
+| API, read (`documentForReader`) | The flag of each aggregate section is decided from its references plus its aggregate records, per reader: true, false, or absent when none is sensitive. When `aggregates_recorded` is false, the records come from `legacyAggregates`. |
+| Integration tests | `packages/db/test/integration/catalogue.test.ts` "0126: …" (the triggers, the privileges and the immutable column), and `apps/api/test/integration/access/sensitive-reach-dashboards-reports.test.ts` (T-DG6-BE-Z9: the flag on live and stored snapshots, the legacy rule, and the content hash unchanged). |
+
+
+# P6 round-10 repair migration 0127 (DG6)
+
+Recorded by T-DG6-BE-Z15 (2026-11-09; F-DG6-640; D-233) from the shipped `packages/db/migrations/0127_p6_automation_restricted_token_key.sql`. The column default and the CHECK text below are `information_schema` / `pg_get_constraintdef` output, asserted by `packages/db/test/integration/catalogue.test.ts` ("0127: …") on a disposable PostgreSQL with all migrations applied. The design is ADR-0051, amendment "version-bound automation tokens" (2026-11-09), part A. The migration adds one column, one CHECK and one trigger to `automation_rule_version` (0074, "P5 tables, slices D and E"). No table is new, no row changes except the new column, and no grant changes: `mth_app` keeps INSERT, SELECT and UPDATE on the table.
+
+| Item | Text | Purpose |
+| --- | --- | --- |
+| Column `automation_rule_version.restricted_token_key` | `bytea NOT NULL DEFAULT (uuid_send(gen_random_uuid()) \|\| uuid_send(gen_random_uuid()))` | The row's own secret key for the issuer tag of its restricted condition tokens (`[restricted:<tag>:<k>]`; `restrictedTokenTag`, `apps/api/src/modules/automation/versions.ts`). It holds 32 bytes, 244 of them random bits from PostgreSQL's strong random source (core since PostgreSQL 13, no extension). `ADD COLUMN` evaluated the volatile default once per existing row, so each existing version, the starters included, has its own key. Never served, never audited (the version audit diff covers the content columns only), never logged, never copied into a new version. |
+| CHECK `automation_rule_version_token_key_length` | `CHECK ((octet_length(restricted_token_key) = 32))` | A key is exactly 32 bytes. |
+| Function and trigger `automation_rule_version_token_key_immutable` | `BEFORE UPDATE … FOR EACH ROW`, `SET search_path = public, pg_temp`; raises `check_violation`, constraint `automation_rule_version_token_key_immutable` | The key is set when the version is inserted and never changes. A changed key would turn every token the row ever issued stale. No API path writes it, so no problem code maps it. |
+
+**Effect on deploy.** Every token issued by the previous release (`[restricted:<version>:<k>]`, D-231) is refused 422 `automation_rule.restricted_token_stale`. The rule editor then reloads the version and asks the author to re-apply the change. No stored condition changes.
+
+# P6 read-time classifications after round 8 (no migration)
+
+Recorded by T-DG6-ARCH-17 (2026-11-09; D-228 (5)) from the shipped code of T-DG6-BE-Z13, BE-Z13B and BE-Z13C (D-226 to D-229). **None of these tasks shipped a migration**: every column below keeps its type, constraints, triggers and privileges as recorded in its own section. What changed is what the API returns to a reader who is not admitted to a sensitive record (ADR-0051 §2), and how the reference inventory (`apps/api/test/support/sensitive-reference-inventory.ts`) classifies the column. The design is ADR-0051 (amendment of 2026-11-09) and ADR-0054 (amendment of 2026-11-09).
+
+**Terms.**
+- **Hidden id:** the id of a benefit, business case or evidence item marked sensitive, or of a `SENSITIVE_CHILD_SOURCES` child that carries one's values (a measurement, Finance validation, benefit overlap, corrective case, …), that the reader is not admitted to by the ADR-0051 §2 clause. Ids of another organization are out of scope (D-228 (4)).
+- **Masked:** each hidden id inside the text is replaced by `[restricted]` (`RESTRICTED_ID_MARKER`), and the response item carries `includesRestrictedRecords: true`. Helpers `maskHiddenIds`, `hiddenIdsInTexts` and `maskRestrictedIdsInFields` (`apps/api/src/modules/access/sensitive-reach.ts`).
+- **The stored value never changes**, and an admitted reader sees it in full with no member.
+
+**Inventory catalogue (BE-Z13 to BE-Z13C).** Besides the FK, uuid, `uuid[]` and `json`/`jsonb` columns of the T-DG6-ARCH-16 section, the catalogue now includes every **text** column whose name matches `(^|_)(link_path|href|key|error_message|error_detail)$` (kind `"text"`). At BE-Z13C: fk 54, uuid 59, json 84, array 2, text 77. Statuses: `redacted` 60, `holder-restricted` 54, `cannot-name` 135, `D-219` 2, `not-served` 22, `own-input` 3, `open` 0 (`docs/delivery/handbacks/DG6/T-DG6-BE-Z13C-evidence/13-after-fix-error-texts.log`).
+
+## Columns whose response changed or that were classified
+
+| Table.column | Kind | What it can hold | Served as (OpenAPI) | Status and read-time rule | Task; decision | Exercise |
+|---|---|---|---|---|---|---|
+| `automation_rule_version.conditions` | json | a condition literal may compare `benefitId` to a uuid | `AutomationRuleContent.conditions[].value` of every rule-version and rule response | redacted. A literal (or `in` element) containing a hidden id is shown as the token `[restricted:<tag>:<k>]` (format of D-231 and D-233; D-226 first shipped `[restricted:k]`). `<tag>` is the issuer tag: 24 lowercase hex digits of HMAC-SHA256 keyed by the row's `restricted_token_key` over the row's id and row version. It is opaque, and discloses neither the id nor any literal. k = its 1-based position among **all** literals of the stored version (string or boolean scalar = one, each `in` element = one, no value = none). The version and rule carry the member. On write, a token whose tag is the tag of the row being replaced at the `If-Match` version is mapped back to the stored string literal at position k. A token of another version row, another rule or another row version, or one in the retired form `[restricted:<version>:<k>]`, is 422 `automation_rule.restricted_token_stale`. An unknown position, the bare `[restricted]` or marker-like text is 422 `automation_rule.restricted_marker_unknown`, so marker text is never stored. `contentSha256` is unchanged. | BE-Z13, BE-Z13C, BE-Z14, BE-Z15; D-226, D-228 (1) (supersedes D-222 (2)), D-231, D-233 | `automation-restricted-tokens-z13.test.ts`, `automation-restricted-tokens-z14.test.ts`, `automation-restricted-tokens-z15.test.ts`, `sensitive-reference-pending-z12b.test.ts` |
+| `inbox_notification.link_path` | text | the route of the notification's record (benefit, Finance validation, overlap, action, …) | `InboxNotification.linkPath` (`listMyInbox`, `markInboxNotificationRead`); the resolver | redacted. Restricted notification (ADR-0051 §3 as corrected): `linkPath` = `/transformations/<transformationId>` (else `/my-work`); `resolveDeepLink` answers 403 `deep_link.forbidden`. | BE-Z13, BE-Z13B; D-226, D-227 (3) | `inbox-restricted-z13.test.ts`, `action-register-restricted-z13b.test.ts` |
+| `inbox_notification.message_params` | json | codes and labels of the subject | `InboxNotification.messageParams` | redacted: `{}` with `messageKey` `inbox.restricted` for a restricted notification. | BE-Z13; D-226 | `inbox-restricted-z13.test.ts` |
+| `inbox_notification.target_record_id` | uuid | any record a notification targets | not serialized; decides restriction for the inbox and the resolver | redacted (as above). | BE-Z13; D-226 | `inbox-restricted-z13.test.ts` |
+| `work_item.link_path` | text | the route of the item's record | `WorkItem.linkPath`, `MyWorkItem.href` (`listMyWorkItems`, `getWorkItem`, `completeWorkItem`, `getMyWork`, `getWorkspaceHeader`) | redacted. Any id in the link, and an action id whose corrective case is restricted, makes the item restricted: transformation home link, `subjectId: null`, `inbox.restricted`, member. | BE-Z13, BE-Z13B; D-222 (1), D-227 (3) | `inbox-restricted-z13.test.ts`, `action-register-restricted-z13b.test.ts` |
+| `operational_failure.idempotency_key` | text | the job's outbox key, e.g. `benefit.variance_evaluated:<measurementId>` | `OperationalFailure.idempotencyKey` (`listAutomationFailures`, `getAutomationFailure`, `retryAutomationFailure`, `dismissAutomationFailure`) | redacted: masked. The failure queue shows the item label on the row and in the dismiss form. | BE-Z13B, BE-Z13C; D-227 (1), D-228 (3) | `served-keys-restricted-z13b.test.ts` |
+| `operational_failure.error_message` | text | the job's error text, e.g. `benefit <id> is not in organization <id>` | `OperationalFailure.errorMessage` (same operations) | redacted: masked. | BE-Z13B (masked), BE-Z13C (classified); D-228 (2) | `served-keys-restricted-z13b.test.ts` |
+| `automation_execution.trigger_key` | text | the trigger event's key | `AutomationExecution.triggerKey` (`listAutomationExecutions`, `getAutomationExecution`) | redacted: masked. The execution detail shows the item label next to it. | BE-Z13B, BE-Z13C; D-227 (1), D-228 (3) | `served-keys-restricted-z13b.test.ts` |
+| `automation_execution.error_detail` | text | a handler's error text | `AutomationExecution.errorDetail` (same operations) | redacted: masked. | BE-Z13B (masked), BE-Z13C (classified); D-228 (2) | `served-error-text-restricted-z13c.test.ts` |
+| `automation_action_result.idempotency_key` | text | `<ruleCode>:<triggerKey>:<ordinal>` | `AutomationExecution.actionResults[].idempotencyKey` (same operations) | redacted: masked; the execution carries the member. | BE-Z13B; D-227 (1) | `served-keys-restricted-z13b.test.ts` |
+| `integration_run.idempotency_key` | text | `manual:<userId>:<caller's Idempotency-Key>`, `retry:<runId>`, schedule slots | `IntegrationRun.idempotencyKey` (`listIntegrationRuns`, `runConnector`, `getIntegrationRun`, `retryIntegrationRun`, `testConnector`; `lastRun` of `listConnectors`, `createConnector`, `getConnector`, `putConnector`, `enableConnector`, `disableConnector`) | redacted: masked. The run detail shows the item label next to it. | BE-Z13B, BE-Z13C; D-227 (1), D-228 (3) | `served-keys-restricted-z13b.test.ts` |
+| `integration_run.error_message` | text | the why text with a `{name=…}` / `{column=…}` tail (configuration text) | `IntegrationRun.errorMessage` (same operations); `ConnectorActionableError.params` parsed from it (`getIntegrationRun`, every connector response) | redacted: masked; a masked params value also sets `ConnectorActionableError.includesRestrictedRecords`, and the actionable-error panel shows the item label. | BE-Z13C; D-228 (2), (3) | `served-error-text-restricted-z13c.test.ts` |
+| `operational_exception.last_error_message` | text | a failed job's, connector run's or channel send's error text | `OperationalException.lastErrorMessage`, `OperationalExceptionDetail.lastErrorMessage` (`listOperationalExceptions`, `getOperationalException`, `acknowledgeOperationalException`, `resolveOperationalException`) | redacted: masked. The Operations screen shows the catalogue text of `lastErrorCode`, never this column (F-DG6-221), so no label is needed there. | BE-Z13C; D-228 (2) | `served-error-text-restricted-z13c.test.ts` |
+| `outbound_write.idempotency_key` | text | the integration caller's key (free text) | `OutboundWrite.idempotencyKey` (`listOutboundWrites`, `executeOutboundWrite` incl. replay, `getOutboundWrite`, `confirmOutboundWrite`) | redacted: masked. | BE-Z13B; D-227 (1) | `served-keys-restricted-z13b.test.ts` |
+| `corrective_case.source_scope_key` | text | the case's own benefit id, a KPI scope, a check id, or `value_review:<finding reference>` | `CorrectiveCase.sourceScopeKey` (`listCorrectiveCases`, `createCorrectiveCase`, `getCorrectiveCase`, `updateCorrectiveCase`, `closeCorrectiveCase`) | redacted: masked. (A case whose own benefit is restricted was already 404 or absent.) | BE-Z13B; D-227 (1) | `served-keys-restricted-z13b.test.ts` |
+| `connector_config_version.credential_refs` | json | secret references (provider and name) | `ConnectorConfig.credentialRefs` | cannot-name, **not masked**: a name is set only through IT's secret manifest or by connector administrators, who already see it; the run error text that repeats it is masked (above). | BE-Z13C §7; D-229 | — |
+| `connector_config_version.field_mappings` | json | column mappings (source, target) | `ConnectorConfig.fieldMappings` | cannot-name, **not masked** (same reason). | BE-Z13C §7; D-229 | — |
+
+The exercise files are under `apps/api/test/integration/access/` (`automation-restricted-tokens-z13`, `sensitive-reference-pending-z12b`, `served-keys-restricted-z13b`, `served-error-text-restricted-z13c`) and `apps/api/test/integration/tasks/` (`inbox-restricted-z13`, `action-register-restricted-z13b`).
+
+The other 65 of the 71 text `key` / `*_key` columns that BE-Z13B classified are `holder-restricted` (for example `corrective_signal.source_event_key`, served only under a case route that answers 404 when the case's benefit is restricted), `cannot-name` (codes, or keys their writers build from non-sensitive ids) or `not-served`. Each row of the inventory gives its reason.
+
+## notification_delivery: the restricted channel send
+
+No column changed. A recipient who is not admitted to the notification's record (ADR-0054, amendment of 2026-11-09; D-227 (2)) is **sent** the `inbox.restricted` text with the transformation home link and no link token, so the delivery follows `pending` → `sent` | `failed`. `skip_reason = 'recipient_restricted'` stays allowed by the column's CHECK and by the contract enum, but the shipped worker does not set it. No message text is stored, as before.
+
+## P6 validation rules (round 8, read-time)
+
+| Layer | What it checks |
+|---|---|
+| Database | Unchanged. No migration in T-DG6-BE-Z13 to BE-Z13C. |
+| API, read | `redactConditionLiterals` (tokens by position); `restrictedNotifications` → `notificationFor`; `restrictedWorkItems` (link ids, action → case); `maskRestrictedIdsInFields` on the keys and error texts above; `shownActionable` on the actionable error's params. |
+| API, write | `resolveRestrictedTokens` on `createAutomationRule` and `updateAutomationRuleVersion` (422 `automation_rule.restricted_marker_unknown`; 422 `automation_rule.restricted_token_stale` for a token issued from another version, D-231, T-DG6-BE-Z14). |
+| Worker | `recipientCanRead` with `restrictedForRecipient` (`SENSITIVE_CHILD_SOURCES_TWIN`, active explicit grants only): a restricted channel message carries `inbox.restricted`, no params, the home link and no token. |
+| Integration tests | The exercise files above, plus `apps/api/test/integration/tasks/channel-fanout-restricted-z13b.test.ts` (channel send) and `apps/api/test/integration/access/sensitive-reference-inventory.test.ts` (catalogue, statuses, `KNOWN_OPEN` and `KNOWN_PENDING` empty). |

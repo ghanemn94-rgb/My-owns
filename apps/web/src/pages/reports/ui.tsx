@@ -21,6 +21,7 @@ import { useLocale } from "../../app/locale.ts";
 import { beginSessionGuard } from "../../auth/sessionBound.ts";
 import { Icon, type IconName } from "../../components/Icon.tsx";
 import { PageHeader, usePageTitle, type Crumb } from "../../components/Page.tsx";
+import { RestrictedRecordsLabel } from "../../components/sensitivity/RestrictedRecordsLabel.tsx";
 import { EmptyState, QueryState } from "../../components/States.tsx";
 import { formatBusinessDate, formatDateTime, formatDecimal, formatMoney, formatPercent } from "../../lib/format.ts";
 import { FormAlert } from "../my-work/p4ui.tsx";
@@ -237,9 +238,29 @@ function SectionView({ section: s }: { section: ReportSection }) {
           </ul>
         );
       break;
-    case "table":
+    case "table": {
+      // F-DG6-440 (ADR-0051 §2 "Totals and rollups"; D-195 Q3): the totals are the same for every reader, so they are
+      // shown even when no row is (every row restricted for this reader, or none recorded): the table then carries its
+      // header, one row with the empty text and the totals row, as the exporters do (@mth/reporting sectionBlocks).
+      const totalsRow =
+        s.totals.length > 0 ? (
+          <tfoot>
+            <tr data-totals="true">
+              {s.columns.map((c, j) => {
+                const total = s.totals.find((x) => x.columnKey === c.key);
+                return j === 0 && !total ? (
+                  <th key={c.key} scope="row">
+                    {t("reportsP5.total")}
+                  </th>
+                ) : (
+                  <td key={c.key}>{total ? <ReportValueView value={total.value} /> : null}</td>
+                );
+              })}
+            </tr>
+          </tfoot>
+        ) : null;
       body =
-        s.rows.length === 0 ? (
+        s.rows.length === 0 && totalsRow === null ? (
           <p className="muted" data-empty-table={s.key}>
             {emptyText(s.emptyKey)}
           </p>
@@ -257,42 +278,38 @@ function SectionView({ section: s }: { section: ReportSection }) {
                 </tr>
               </thead>
               <tbody>
-                {s.rows.map((r) => (
-                  <tr key={r.recordId} data-record={r.recordId}>
-                    {r.cells.map((cell, j) => (
-                      <td key={s.columns[j]?.key ?? j}>
-                        <ReportValueView value={cell} />
-                      </td>
-                    ))}
+                {s.rows.length === 0 ? (
+                  <tr data-empty-row="true">
+                    <td colSpan={s.columns.length} className="muted" data-empty-table={s.key}>
+                      {emptyText(s.emptyKey)}
+                    </td>
                   </tr>
-                ))}
+                ) : (
+                  s.rows.map((r) => (
+                    <tr key={r.recordId} data-record={r.recordId}>
+                      {r.cells.map((cell, j) => (
+                        <td key={s.columns[j]?.key ?? j}>
+                          <ReportValueView value={cell} />
+                        </td>
+                      ))}
+                    </tr>
+                  ))
+                )}
               </tbody>
-              {s.totals.length > 0 ? (
-                <tfoot>
-                  <tr data-totals="true">
-                    {s.columns.map((c, j) => {
-                      const total = s.totals.find((x) => x.columnKey === c.key);
-                      return j === 0 && !total ? (
-                        <th key={c.key} scope="row">
-                          {t("reportsP5.total")}
-                        </th>
-                      ) : (
-                        <td key={c.key}>{total ? <ReportValueView value={total.value} /> : null}</td>
-                      );
-                    })}
-                  </tr>
-                </tfoot>
-              ) : null}
+              {totalsRow}
             </table>
           </div>
         );
       break;
+    }
   }
   return (
     <section className="card" aria-labelledby={headingId} data-report-section={s.key} data-section-kind={s.kind}>
       <h3 id={headingId} className="card__title">
         {title}
       </h3>
+      {/* T-DG6-BE-Z7B (F-DG6-340; ADR-0051 §2): its totals or metrics include a value whose row is not shown. */}
+      <RestrictedRecordsLabel value={s.includesRestrictedRecords} scope="total" />
       {body}
     </section>
   );

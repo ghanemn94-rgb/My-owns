@@ -1,0 +1,67 @@
+{
+  "realm": "mth-other",
+  "displayName": "MTH OTHER realm (SYNTHETIC; a foreign issuer whose tokens the hub must refuse)",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "resetPasswordAllowed": false,
+  "rememberMe": false,
+  "loginWithEmailAllowed": false,
+  "duplicateEmailsAllowed": false,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": true,
+  "accessTokenLifespan": 300,
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 36000,
+  "defaultSignatureAlgorithm": "RS256",
+  "attributes": {
+    "mth.notice": "NEGATIVE-TEST realm for the Mobily Transformation Hub (ADR-0054 §1, REQ-S16-007). The hub is configured for realm mth-test only; this realm exists so the e2e can prove that an authorization response and ID token from ANOTHER realm of the same server are refused (/login?error=token_invalid, no session). It deliberately reuses the client id mth-hub and the same client-secret placeholder, so the only differences are the issuer and the realm's own signing keys. Every user is SYNTHETIC; no real people, no real credentials. Secrets are injected at start from environment placeholders and are never stored in this file. Never configure the hub against this realm."
+  },
+  "clients": [
+    {
+      "clientId": "mth-hub",
+      "name": "Mobily Transformation Hub (foreign-realm negative test)",
+      "description": "Same client id as realm mth-test on purpose: a matching client id must not be enough for the hub to accept a token from another issuer.",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "${MTH_TEST_OIDC_CLIENT_SECRET}",
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "frontchannelLogout": true,
+      "redirectUris": ["${MTH_APP_BASE_URL}/api/v1/auth/callback"],
+      "webOrigins": [],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "${MTH_APP_BASE_URL}/*"
+      }
+    }
+  ],
+  "users": [
+    {
+      "id": "7a1e3c90-2b4d-4e6f-8a01-6b0e0f6b0001",
+      "username": "other.user",
+      "email": "other.user@example.invalid",
+      "emailVerified": true,
+      "firstName": "Synthetic",
+      "lastName": "Foreign Realm User",
+      "enabled": true,
+      "attributes": { "mth.synthetic": ["true"] },
+      "credentials": [{ "type": "password", "value": "${MTH_TEST_USER_PASSWORD}", "temporary": false }]
+    },
+    {
+      "id": "7a1e3c90-2b4d-4e6f-8a01-6b0e0f6b0002",
+      "username": "smoke.admin",
+      "email": "smoke.admin@example.invalid",
+      "emailVerified": true,
+      "firstName": "Synthetic",
+      "lastName": "Same Name, Other Realm",
+      "enabled": true,
+      "attributes": { "mth.synthetic": ["true"] },
+      "credentials": [{ "type": "password", "value": "${MTH_TEST_USER_PASSWORD}", "temporary": false }]
+    }
+  ]
+}

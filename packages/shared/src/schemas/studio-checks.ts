@@ -58,7 +58,7 @@ export const configDiffEntry = z.strictObject({
   elementType: z.string(),
   stableKey: z.string(),
   change: z.enum(["added", "removed", "changed"]),
-  fields: z.array(z.strictObject({ field: z.string(), from: z.unknown(), to: z.unknown() })),
+  fields: z.array(z.strictObject({ field: z.string(), from: z.unknown().optional(), to: z.unknown().optional() })),
 });
 export type ConfigDiffEntry = z.infer<typeof configDiffEntry>;
 

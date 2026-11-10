@@ -1,0 +1,20 @@
+port-policy: PostgreSQL listening on port 24605 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applied 107 migration(s)
+-- SELECT 1 FROM audit_event a WHERE a.record_type = 'initiative'::name AND a.record_id = '00000000-0000-0000-0000-000000000000'::uuid AND a.new_version = 3
+Index Scan using audit_event_record_idx on audit_event a  (cost=0.27..21.52 rows=1 width=4)
+  Index Cond: (record_id = '00000000-0000-0000-0000-000000000000'::uuid)
+  Filter: ((record_type = 'initiative'::name) AND (new_version = 3))
+-- SELECT 1 FROM audit_event a WHERE a.record_type = 'initiative'::text AND a.record_id = '00000000-0000-0000-0000-000000000000'::uuid AND a.new_version = 3
+Index Scan using audit_event_record_idx on audit_event a  (cost=0.27..8.29 rows=1 width=4)
+  Index Cond: ((record_type = 'initiative'::text) AND (record_id = '00000000-0000-0000-0000-000000000000'::uuid))
+  Filter: (new_version = 3)
+-- p2_audit_required source:
+9:    WHERE a.record_type = TG_TABLE_NAME AND a.record_id = rid AND (v IS NULL OR a.new_version = v)
+-- indexes on audit_event:
+CREATE UNIQUE INDEX audit_event_pkey ON public.audit_event USING btree (id)
+CREATE UNIQUE INDEX audit_event_seq_key ON public.audit_event USING btree (seq)
+CREATE INDEX audit_event_transformation_idx ON public.audit_event USING btree (transformation_id, seq DESC)
+CREATE INDEX audit_event_record_idx ON public.audit_event USING btree (record_type, record_id, seq DESC)
+CREATE INDEX audit_event_org_time_idx ON public.audit_event USING btree (organization_id, occurred_at DESC)
+CREATE INDEX audit_event_feed_idx ON public.audit_event USING btree (seq) INCLUDE (record_type, record_id) WHERE (record_type = ANY (ARRAY['transformation'::text, 'initiative'::text, 'kpi_definition'::text, 'benefit'::text, 'raid_entry'::text, 'dependency'::text, 'decision'::text, 'deliverable'::text, 'evidence'::text, 'business_case'::text, 'lesson'::text, 'change_request'::text]))

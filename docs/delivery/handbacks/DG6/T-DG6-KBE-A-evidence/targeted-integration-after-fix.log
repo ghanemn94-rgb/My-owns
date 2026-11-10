@@ -1,0 +1,25 @@
+port-policy: PostgreSQL listening on port 24803 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/wt/dg6-kbe-a
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvu0y31m_69fe3e63 (server_encoding UTF8); applied 107 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/integrations/connectors.test.ts (20 tests) 7095ms
+   ✓ putConnector, mappings, enable and disable > enable and disable: the status machine, the reason, and the queued runs of a disabled connector are cancelled  308ms
+   ✓ putConnector, mappings, enable and disable > every mutation is 403 for AUD and KDS (readers), 404 for an outsider; nothing is written  467ms
+   ✓ reads: list, get and the transformation-level reader > lists by code with a cursor; AUD and KDS read; an outsider gets 403; an unknown organization 404  342ms
+ ✓ |integration| apps/api/test/integration/kpi/import-target.test.ts (9 tests) 8716ms
+   ✓ the A17 8/1/1 fixture as CSV (REQ-S17-002, REQ-S17-003) > stages 10 = 8 + 1 + 1, commits 8 KPI actuals through DG4 with 8 lineage rows; the 2 others keep their reasons  1846ms
+   ✓ the A17 8/1/1 fixture as XLSX (REQ-S17-002, REQ-S17-003) > stages 10 = 8 + 1 + 1, commits 8 KPI actuals through DG4 with 8 lineage rows; the 2 others keep their reasons  1463ms
+   ✓ row reasons of the KPI rules (ADR-0056 §4, §5) > gives each reason with its field and params, and stages every row (none is dropped)  684ms
+   ✓ duplicate_committed against a form-entered actual (ADR-0056 §5) > a row whose DG4 slot already exists is isolated with the existing actual's status  325ms
+   ✓ validateRow and existingKeys are read-only; commitRow goes through DG4 > a slot filled between staging and commit: DG4 refuses (409) and the whole commit writes nothing  518ms
+
+ Test Files  2 passed (2)
+      Tests  29 passed (29)
+   Start at  20:57:17
+   Duration  82.30s (transform 17.80s, setup 0ms, collect 50.30s, tests 15.81s, environment 0ms, prepare 364ms)
+

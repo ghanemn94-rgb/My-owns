@@ -10,6 +10,7 @@
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useParams } from "react-router";
+import { api, ApiError } from "../../api/client.ts";
 import { useAllTransformations } from "../../api/queries.ts";
 import { useLocale } from "../../app/locale.ts";
 import { canAnywhere } from "../../auth/permissions.ts";
@@ -19,7 +20,8 @@ import { RegisterTable, type RegisterColumn } from "../../components/RegisterTab
 import { Section } from "../../components/Section.tsx";
 import { QueryState } from "../../components/States.tsx";
 import { formatDateTime } from "../../lib/format.ts";
-import { ReadOnlyNote, useUserNames } from "../my-work/p4ui.tsx";
+import { RestrictedRecordsLabel } from "../../components/sensitivity/RestrictedRecordsLabel.tsx";
+import { FormAlert, ReadOnlyNote, useUserNames } from "../my-work/p4ui.tsx";
 import {
   fedPaths,
   useCatalogue,
@@ -34,9 +36,15 @@ import {
   type AutomationRule,
   type AutomationRuleVersion,
 } from "./api.ts";
-import { ContentEditor, toContentBody, toContentDraft, type ContentDraft } from "./ContentEditor.tsx";
+import {
+  conditionIsRestricted,
+  ContentEditor,
+  toContentBody,
+  toContentDraft,
+  type ContentDraft,
+} from "./ContentEditor.tsx";
 import { AutomationLinks, EnabledChip } from "./RulesPage.tsx";
-import { Chip, HumanDecisionNote, NoteForm, StatusChip, pick, useRunner, type Runner } from "./ui.tsx";
+import { Chip, FED_NS, HumanDecisionNote, NoteForm, StatusChip, codeOf, pick, useRunner, type Runner } from "./ui.tsx";
 
 export const VERSION_STATUS_CHIP = {
   draft: ["draft", "pencil"],
@@ -363,9 +371,13 @@ function ContentView({ version: v, catalogue }: { version: AutomationRuleVersion
         {(c.conditions ?? []).length === 0
           ? t("workflowsP5.rules.noConditions")
           : c.conditions.map((x, i) => (
-              <bdi key={i} dir="ltr" className="block code">
-                {x.field} {x.op} {x.value === undefined ? "" : JSON.stringify(x.value)}
-              </bdi>
+              <span key={i} className="block" data-condition={i}>
+                <bdi dir="ltr" className="code">
+                  {x.field} {x.op} {x.value === undefined ? "" : JSON.stringify(x.value)}
+                </bdi>
+                {/* T-DG6-BE-Z12B (D-222): a literal naming a record the reader is not admitted to is the marker. */}
+                <RestrictedRecordsLabel value={conditionIsRestricted(x)} scope="item" />
+              </span>
             ))}
       </dd>
       <dt>{t("workflowsP5.rules.thenTitle")}</dt>
@@ -398,6 +410,21 @@ function ContentView({ version: v, catalogue }: { version: AutomationRuleVersion
   );
 }
 
+/** The editor's form state of a served version. */
+const loadDraft = (v: AutomationRuleVersion): ContentDraft =>
+  toContentDraft(v.content as unknown as Parameters<typeof toContentDraft>[0]);
+
+/** A 409: the version changed after the form read it. */
+const isChangedSinceRead = (e: unknown): boolean => e instanceof ApiError && e.status === 409;
+
+/**
+ * A 422 for a restricted token not issued by this version as it now stands (D-231, D-233). If-Match matched, so the
+ * rule did NOT change: the token was pasted from another version or another rule, or issued before migration 0127
+ * (T-DG6-FE-Z16, F-DG6-700, F-DG6-740; D-235).
+ */
+const isStaleToken = (e: unknown): boolean =>
+  e instanceof ApiError && e.status === 422 && codeOf(e) === "automation_rule.restricted_token_stale";
+
 function EditContent({
   rule: r,
   version: v,
@@ -413,26 +440,64 @@ function EditContent({
   // D-181: every transformation the user may see (all pages): a rule action's target past the first 100 is shown and
   // can be chosen.
   const transformations = useAllTransformations({ sort: "code:asc" });
-  const [draft, setDraft] = useState<ContentDraft>(() =>
-    toContentDraft(v.content as unknown as Parameters<typeof toContentDraft>[0]),
-  );
+  // T-DG6-BE-Z14 (D-231, F-DG6-580): the form always holds the content of one served version, and saves with that
+  // version as If-Match, so the restricted tokens it sends (`[restricted:<tag>:<k>]`, opaque, D-233) are those of the version they
+  // replace. After a save it reloads from the saved version's response; after a 409 or a stale-token 422 it reloads the
+  // current version. It never re-sends tokens of an earlier version. T-DG6-FE-Z16 (D-235): a 409 says that the rule
+  // changed and asks the author to re-apply the change; a stale-token 422 (the rule did not change) shows the
+  // problem's own text, in this form's one alert.
+  const [form, setForm] = useState<{ from: number; draft: ContentDraft }>(() => ({
+    from: v.version,
+    draft: loadDraft(v),
+  }));
+  const [changed, setChanged] = useState(false);
+  const [staleToken, setStaleToken] = useState<unknown>(null);
+  const draft = form.draft;
+  const setDraft = (next: ContentDraft) => setForm((f) => ({ ...f, draft: next }));
+  const reloadCurrent = async () => {
+    const current = await api.get<AutomationRuleVersion>(fedPaths.version(r.id, v.versionNo));
+    setForm({ from: current.version, draft: loadDraft(current) });
+  };
   return (
     <form
       className="form"
       noValidate
       data-form="edit-rule-content"
+      data-form-version={form.from}
       onSubmit={(e) => {
         e.preventDefault();
-        void runner.run(fedPaths.version(r.id, v.versionNo), {
-          method: "PATCH",
-          body: { content: toContentBody(draft) },
-          ifMatch: v.version,
-        });
+        setChanged(false);
+        setStaleToken(null);
+        void runner
+          .run<AutomationRuleVersion>(fedPaths.version(r.id, v.versionNo), {
+            method: "PATCH",
+            body: { content: toContentBody(draft) },
+            ifMatch: form.from,
+            onError: async (err) => {
+              const conflict = isChangedSinceRead(err);
+              const stale = isStaleToken(err);
+              if (!conflict && !stale) return;
+              runner.clear();
+              if (conflict) setChanged(true);
+              else setStaleToken(err);
+              await reloadCurrent().catch(() => undefined);
+            },
+          })
+          .then((saved) => {
+            if (saved !== null) setForm({ from: saved.version, draft: loadDraft(saved) });
+          });
       }}
     >
+      {changed ? (
+        <p className="banner banner--warning" role="alert" data-state="rule-changed-reapply">
+          {t("workflowsP5.rules.changedReapply")}
+        </p>
+      ) : null}
+      <FormAlert error={staleToken} namespaces={FED_NS} />
       <QueryState query={transformations}>
         {(items) => (
           <ContentEditor
+            key={form.from}
             value={draft}
             onChange={setDraft}
             catalogue={catalogue}

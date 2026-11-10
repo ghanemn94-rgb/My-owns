@@ -34,8 +34,7 @@ export function useBusinessCase(tid: string, id: string) {
 export function useCaseLines(tid: string, id: string) {
   return useQuery({
     queryKey: p3Keys.businessCasePart(tid, id, "lines"),
-    queryFn: async () =>
-      (await api.get<{ items: BusinessCaseLine[] }>(`${caseUrl(id)}/lines`, { includeArchived: "true" })).items,
+    queryFn: () => fetchAllPages<BusinessCaseLine>(`${caseUrl(id)}/lines`, { includeArchived: "true" }),
     retry: shouldRetry,
   });
 }

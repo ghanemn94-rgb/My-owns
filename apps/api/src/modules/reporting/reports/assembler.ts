@@ -91,6 +91,19 @@ export interface EvidenceRef {
   readonly reviewStatus: "unverified" | "verified" | "rejected";
 }
 
+/**
+ * T-DG6-BE-Z9 (F-DG6-400; ADR-0051 §2 "Totals and rollups"; D-195 Q3): a record whose value a section's AGGREGATE
+ * figures include although the section names it nowhere (not a row, an item or a source): e.g. a benefit of the
+ * dashboard facts behind an executive pack's `metrics_<subject>` headlines. It is not a source and is never shown: it
+ * only decides the read-time `includesRestrictedRecords` member of that section (restricted.ts). A live report reads
+ * it from the assembly; a stored snapshot keeps it in `report_snapshot_aggregate` (migration 0126).
+ */
+export interface AggregateRef {
+  readonly sectionKey: string;
+  readonly recordType: string;
+  readonly recordId: string;
+}
+
 export interface AssembledOutput {
   readonly subject: { readonly code: string | null; readonly label: string };
   readonly approvalState: ReportApprovalState;
@@ -98,6 +111,8 @@ export interface AssembledOutput {
   readonly sources: readonly SourceRecord[];
   readonly versions: readonly VersionRef[];
   readonly evidence: readonly EvidenceRef[];
+  /** The records each aggregate section's figures include beyond its own references (absent: none). */
+  readonly aggregates?: readonly AggregateRef[];
 }
 
 export interface Assembler {

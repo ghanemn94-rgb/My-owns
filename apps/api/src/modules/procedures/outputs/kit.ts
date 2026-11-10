@@ -33,7 +33,7 @@
 // code). The whole completion rolls back on any refusal.
 import { sql, type DbOrTx } from "@mth/db";
 import type { Permission } from "@mth/shared";
-import { requireRead, type Principal } from "../../access/index.ts";
+import { refIsRestricted, requireRead, type Principal } from "../../access/index.ts";
 import { HttpProblem, problems } from "../../platform/index.ts";
 import type { ProcedureOutputAdapter, ProcedureOutputContext } from "../steps.ts";
 
@@ -154,6 +154,9 @@ export async function requireNamedRecordRead(
   const row = res.rows[0];
   if (row === undefined) return;
   await requireOutputRead(tx, principal, row.transformation_id);
+  // T-DG6-BE-Z12 (F-DG6-480; D-218): a sensitive record (or a child of one, such as a Finance validation) the person is
+  // not admitted to is refused like a record they cannot read.
+  if (await refIsRestricted(tx, principal, recordType, recordId)) throw outputRecordInvalid();
 }
 
 /**

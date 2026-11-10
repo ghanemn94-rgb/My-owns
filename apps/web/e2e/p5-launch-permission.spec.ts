@@ -16,6 +16,8 @@ test("1. the auditor gets a read-only note, not a launch form; the server still 
   page,
   playwright,
 }, info) => {
+  // Budget measured (F-DG6-144 sweep, T-DG6-FE-Z1B): in the DG6 QA round-2 full runs and T-DG6-FE-Z1's run1 (under load),
+  // this test's worst loaded run took 5.5 s; the budget is at least 2x that. Table: docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt.
   test.setTimeout(120_000);
   const lang = langOf(info);
   const lead = await apiSession(playwright, "dev.lead");
@@ -64,6 +66,8 @@ test("2. a launching role (Transformation Lead) still gets the form with an enab
   page,
   playwright,
 }, info) => {
+  // Budget measured (F-DG6-144 sweep, T-DG6-FE-Z1B): in the DG6 QA round-2 full runs and T-DG6-FE-Z1's run1 (under load),
+  // this test's worst loaded run took 7.4 s; the budget is at least 2x that. Table: docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt.
   test.setTimeout(120_000);
   const lang = langOf(info);
   const lead = await apiSession(playwright, "dev.lead");

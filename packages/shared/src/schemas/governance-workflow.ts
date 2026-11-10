@@ -103,6 +103,11 @@ export const agendaItem = z.strictObject({
   createdBy: uuid,
   updatedAt: timestamp,
   updatedBy: uuid,
+  /**
+   * T-DG6-BE-Z10B (F-DG6-420; D-218): true when a material named an evidence item the reader is not admitted to; it is
+   * omitted from `materialsEvidenceIds` and a re-save of the list keeps it (label access.includesRestrictedRecords).
+   */
+  includesRestrictedRecords: z.literal(true).optional(),
 });
 export type AgendaItem = z.infer<typeof agendaItem>;
 export const agendaItemPage = page(agendaItem);
@@ -222,6 +227,8 @@ export const meetingOutput = z.strictObject({
   note: z.string().min(1).max(4000).nullable(),
   createdAt: timestamp,
   createdBy: uuid,
+  /** T-DG6-BE-Z12 (F-DG6-480; D-218): a reference to a record the reader is not admitted to was not named. */
+  includesRestrictedRecords: z.literal(true).optional(),
 });
 export type MeetingOutput = z.infer<typeof meetingOutput>;
 export const meetingOutputPage = page(meetingOutput);

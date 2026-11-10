@@ -39,6 +39,14 @@ import {
 
 test.describe.configure({ mode: "serial" });
 
+// Budget (F-DG6-144, the F-DG5-145/146 carry-forward of D-193; p6-work-split §2 rules 13 and 15): 60 s for
+// every test and hook in this file that does not set its own. Measured in the DG6 QA round-2 full product
+// runs at a 1-minute load of 11-21 on 4 CPUs (docs/delivery/test-evidence/DG6/qa/round-2/06-e2e-product-*.log): the default-budget test took 16.0 s.
+// T-DG6-FE-Z1's loaded full runs (both projects, both locale settings, CPU spinners): see
+// docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt. The budget is at least 2x the worst of
+// these, rounded up to 15 s, and never below 60 s.
+test.setTimeout(60_000);
+
 let tid = "";
 const ini: { id: string; code: string; name: string }[] = [
   { id: "", code: "", name: "Synthetic roaming bundle relaunch" },
@@ -106,6 +114,8 @@ async function throughG3(lead: ApiSession, office: ApiSession, sponsor: ApiSessi
 test("setup: a G4-ready portfolio of two selected initiatives (synthetic, through the real API)", async ({
   playwright,
 }, info) => {
+  // Budget measured (F-DG6-144 sweep, T-DG6-FE-Z1B): in the DG6 QA round-2 full runs and T-DG6-FE-Z1's run1 (under load),
+  // this test's worst loaded run took 12.5 s; the budget is at least 2x that. Table: docs/delivery/handbacks/DG6/T-DG6-FE-Z1-evidence/budget-table.txt.
   test.setTimeout(180_000);
   const lang = langOf(info);
   const lead = await apiSession(playwright, "dev.lead");

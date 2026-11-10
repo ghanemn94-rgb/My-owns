@@ -1,0 +1,62 @@
+$ (clean clone 4edfe8faa) with-pg.sh npx vitest run --project integration apps/api/test/integration/admin/security.test.ts
+port-policy: PostgreSQL listening on port 25793 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.NC6AaE/claude-0/head-clone
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvv3s6e3_f2922219 (server_encoding UTF8); applied 110 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/admin/security.test.ts (8 tests | 1 failed) 3653ms
+   × getSecurityRateLimits > ADM_TECH and AUD read every class with its configured budget, key and operations (ADR-0052 §4) 50ms
+     → expected { classes: [ { …(5) }, …(6) ] } to deeply equal { classes: [ { …(5) }, …(6) ] }
+   ✓ getSecurityRateLimits > refuses everyone else with 403 (TO, no role, another organization, an unknown organization) and bad input with 400 253ms
+   ✓ getSecurityRateLimits > is read-only: neither the contract nor the server has a write on the matrix 1ms
+   ✓ class budgets are configuration > defaults to ADR-0052 §4 and reads each variable 7ms
+   ✓ class budgets are configuration > refuses a budget that is not a positive integer, naming the variable 9ms
+   ✓ the routes in each class are the operations the matrix lists > every route that declares a class maps to an operation id of that class, and back 15ms
+   ✓ the upload class, in addition to the global limit (REQ-S16-030 rate limiting) > over the class budget the next upload is 429 rate_limited with Retry-After; other operations and users still pass  1401ms
+   ✓ the upload class, in addition to the global limit (REQ-S16-030 rate limiting) > the global limit still applies to a class route: over the global budget an upload is 429 before its class budget  382ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/admin/security.test.ts > getSecurityRateLimits > ADM_TECH and AUD read every class with its configured budget, key and operations (ADR-0052 §4)
+AssertionError: expected { classes: [ { …(5) }, …(6) ] } to deeply equal { classes: [ { …(5) }, …(6) ] }
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[33m@@ -46,11 +46,13 @@[39m
+[2m        "variable": "ASSISTANT_RATE_LIMIT_PER_MINUTE",[22m
+[2m      },[22m
+[2m      {[22m
+[2m        "keyedBy": "endpoint_key",[22m
+[2m        "name": "webhook",[22m
+[32m-       "operationIds": [],[39m
+[31m+       "operationIds": [[39m
+[31m+         "receiveWebhook",[39m
+[31m+       ],[39m
+[2m        "perMinute": 6001,[22m
+[2m        "variable": "WEBHOOK_RATE_LIMIT_PER_MINUTE",[22m
+[2m      },[22m
+[2m      {[22m
+[2m        "keyedBy": "user_or_ip",[22m
+
+ ❯ apps/api/test/integration/admin/security.test.ts:62:22
+     60|     // Global and auth are the harness's 100000; the class budgets are…
+     61|     // are pinned in "class budgets are configuration" below, and the …
+     62|     expect(res.body).toEqual({
+       |                      ^
+     63|       classes: [
+     64|         {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 passed (8)
+   Start at  15:04:27
+   Duration  38.39s (transform 11.48s, setup 0ms, collect 26.05s, tests 3.65s, environment 0ms, prepare 181ms)
+
+exit=1

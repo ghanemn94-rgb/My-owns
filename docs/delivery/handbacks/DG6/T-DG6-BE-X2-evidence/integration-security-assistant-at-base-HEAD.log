@@ -1,0 +1,106 @@
+# Base check: the tracked files I changed set to HEAD fb4dfe173 content (git show), these two files run, my patch re-applied (diff sha256 identical before/after). The new untracked test files were present but not run here.
+port-policy: PostgreSQL listening on port 26600 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /home/user/wt/dg6-be-x2
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mvvkqzy2_535d6737 (server_encoding UTF8); applied 113 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/assistant/conversations.test.ts (17 tests | 1 failed) 5052ms
+   ✓ off means no call (REQ-S17-009; ADR-0059 §3) > with no setting row: create is 422 assistant.disabled, the list is empty and readable 33ms
+   ✓ off means no call (REQ-S17-009; ADR-0059 §3) > an http endpoint saved but DISABLED gets zero requests: post and create answer 422; history stays readable 170ms
+   ✓ off means no call (REQ-S17-009; ADR-0059 §3) > enabled with the HTTP endpoint, BE-T's stub seam answers no_sources and still sends nothing to the model 87ms
+   ✓ authorization and ownership (ADR-0059 §10) > AUD and a user without assistant.use get 403 on every conversation route 52ms
+   ✓ authorization and ownership (ADR-0059 §10) > another user's conversation is 404 on read and post, and never listed 43ms
+   ✓ authorization and ownership (ADR-0059 §10) > a focus transformation the caller cannot read is 404 (TL on tA1 asks about tA2); a readable one is accepted 42ms
+   ✓ authorization and ownership (ADR-0059 §10) > create: validation (400), version 1 with no message, Location and ETag, one audit event 27ms
+   ✓ authorization and ownership (ADR-0059 §10) > create re-checks assistant.use at commit: revoked while waiting is 403 and nothing is created 38ms
+   ✓ postAssistantMessage (ADR-0059 §9) > validation (400), If-Match (428 missing, 409 stale), then one turn: prompt + reply, two versions, two audit events 94ms
+   ✓ postAssistantMessage (ADR-0059 §9) > post re-checks assistant.use at commit: revoked while waiting is 403 and nothing is appended 58ms
+   ✓ postAssistantMessage (ADR-0059 §9) > a reply still awaited is 409 assistant.reply_pending; one awaited past the timeout + 60 s is recovered as `interrupted` 95ms
+   ✓ postAssistantMessage (ADR-0059 §9) > a conversation with 98 messages takes one last turn (100); then 422 assistant.conversation_full, nothing appended 217ms
+   ✓ postAssistantMessage (ADR-0059 §9) > when an `interrupted` reply must be appended first, at most 97 messages so far: 97 takes a turn, 99 is full  419ms
+   ✓ the list (cursor-paginated, own only, updatedAt desc then id desc) > pages with a stable order; a tampered cursor is 400; the transformation filter applies 70ms
+   ✓ the read-time ReadScope re-check (ADR-0059 §9; REQ-S17-007) > an answer citing a record the owner can no longer read is withheld (content null, readable false), with its suggestion 61ms
+   ✓ the read-time ReadScope re-check (ADR-0059 §9; REQ-S17-007) > a citation of a record that is not (or no longer) indexed is treated as unreadable (fail closed) 27ms
+   × the rate-limit class `assistant` and the log line (ADR-0052 §4; ADR-0059 §9 rule 3) > over the per-minute budget a post is 429 with Retry-After; each post writes one log line without the prompt 321ms
+     → expected { …(8) } to match object { …(5) }
+(3 matching properties omitted from actual)
+ ❯ |integration| apps/api/test/integration/admin/security.test.ts (8 tests | 1 failed) 1047ms
+   × getSecurityRateLimits > ADM_TECH and AUD read every class with its configured budget, key and operations (ADR-0052 §4) 13ms
+     → expected { classes: [ { …(5) }, …(6) ] } to deeply equal { classes: [ { …(5) }, …(6) ] }
+   ✓ getSecurityRateLimits > refuses everyone else with 403 (TO, no role, another organization, an unknown organization) and bad input with 400 50ms
+   ✓ getSecurityRateLimits > is read-only: neither the contract nor the server has a write on the matrix 1ms
+   ✓ class budgets are configuration > defaults to ADR-0052 §4 and reads each variable 3ms
+   ✓ class budgets are configuration > refuses a budget that is not a positive integer, naming the variable 4ms
+   ✓ the routes in each class are the operations the matrix lists > every route that declares a class maps to an operation id of that class, and back 2ms
+   ✓ the upload class, in addition to the global limit (REQ-S16-030 rate limiting) > over the class budget the next upload is 429 rate_limited with Retry-After; other operations and users still pass  514ms
+   ✓ the upload class, in addition to the global limit (REQ-S16-030 rate limiting) > the global limit still applies to a class route: over the global budget an upload is 429 before its class budget 156ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/admin/security.test.ts > getSecurityRateLimits > ADM_TECH and AUD read every class with its configured budget, key and operations (ADR-0052 §4)
+AssertionError: expected { classes: [ { …(5) }, …(6) ] } to deeply equal { classes: [ { …(5) }, …(6) ] }
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[33m@@ -46,11 +46,13 @@[39m
+[2m        "variable": "ASSISTANT_RATE_LIMIT_PER_MINUTE",[22m
+[2m      },[22m
+[2m      {[22m
+[2m        "keyedBy": "endpoint_key",[22m
+[2m        "name": "webhook",[22m
+[32m-       "operationIds": [],[39m
+[31m+       "operationIds": [[39m
+[31m+         "receiveWebhook",[39m
+[31m+       ],[39m
+[2m        "perMinute": 6001,[22m
+[2m        "variable": "WEBHOOK_RATE_LIMIT_PER_MINUTE",[22m
+[2m      },[22m
+[2m      {[22m
+[2m        "keyedBy": "user_or_ip",[22m
+
+ ❯ apps/api/test/integration/admin/security.test.ts:62:22
+     60|     // Global and auth are the harness's 100000; the class budgets are…
+     61|     // are pinned in "class budgets are configuration" below, and the …
+     62|     expect(res.body).toEqual({
+       |                      ^
+     63|       classes: [
+     64|         {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |integration| apps/api/test/integration/assistant/conversations.test.ts > the rate-limit class `assistant` and the log line (ADR-0052 §4; ADR-0059 §9 rule 3) > over the per-minute budget a post is 429 with Retry-After; each post writes one log line without the prompt
+AssertionError: expected { …(8) } to match object { …(5) }
+(3 matching properties omitted from actual)
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[2m    "conversationId": "01a18f0a-58ef-712c-890f-f09ca68b3a06",[22m
+[32m-   "dataItems": 0,[39m
+[31m+   "dataItems": 1,[39m
+[2m    "droppedSuggestions": 0,[22m
+[2m    "messageSeq": 2,[22m
+[32m-   "replyKind": "no_sources",[39m
+[31m+   "replyKind": "answer",[39m
+[2m  }[22m
+
+ ❯ apps/api/test/integration/assistant/conversations.test.ts:670:32
+    668|       expect(assistantLines).toHaveLength(2);
+    669|       const parsed = JSON.parse(assistantLines[0]!) as Body;
+    670|       expect(parsed.assistant).toMatchObject({
+       |                                ^
+    671|         conversationId: conv.body.id,
+    672|         messageSeq: 2,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  2 failed | 23 passed (25)
+   Start at  22:59:25
+   Duration  19.89s (transform 4.62s, setup 0ms, collect 10.42s, tests 6.10s, environment 0ms, prepare 77ms)
+
+# exit (base run) recorded in handback

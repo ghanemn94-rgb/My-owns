@@ -61,8 +61,7 @@ export function useKpiRestatementReconciliation(tid: string, rid: string, versio
 export function useKpiRestatementOffers(tid: string, rid: string, enabled: boolean) {
   return useQuery({
     queryKey: [...restatementKeys.one(tid, rid), "reissue-offers"],
-    queryFn: async () =>
-      (await api.get<{ items: KpiRestatementReissueOffer[] }>(restatementPaths.reissueOffers(tid, rid))).items,
+    queryFn: () => fetchAllPages<KpiRestatementReissueOffer>(restatementPaths.reissueOffers(tid, rid)),
     enabled: Boolean(tid && rid) && enabled,
     retry: shouldRetry,
   });

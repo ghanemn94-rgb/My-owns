@@ -55,6 +55,8 @@ export default defineConfig({
             "apps/worker/src/**/*.test.ts",
             "packages/*/src/**/*.test.ts",
             "tests/qa/unit/**/*.test.ts",
+            // ADR-0052 §6: the offline dependency audit runs in `pnpm test` (T-DG6-DO-A)
+            "deploy/scripts/tests/**/*.vitest.mjs",
           ],
           exclude: [...configDefaults.exclude, NOCODEGEN_CANARY],
         },

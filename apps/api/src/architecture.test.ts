@@ -56,6 +56,7 @@ import {
   P3_MODULES,
   P4_MODULES,
   P5_MODULES,
+  P6_MODULES,
   SECTION16_MODULES,
   type ApiModule,
 } from "./modules.ts";
@@ -152,6 +153,42 @@ describe("API module boundaries (ADR-0002)", () => {
     for (const m of P5_MODULES) expect(API_MODULES[m].dependsOn as readonly string[], m).not.toContain("workflows");
   });
 
+  it("the P6 modules exist, each with its own test suite; access imports none of them (p6-plan §2, §3 seam 21)", () => {
+    expect([...P6_MODULES]).toEqual(["integrations", "search", "assistant", "operations"]);
+    for (const m of P6_MODULES)
+      expect(
+        readdirSync(join(MODULES_DIR, m)).some((f) => f.endsWith(".test.ts")),
+        `${m} has its own test suite`,
+      ).toBe(true);
+    // The ReadScope port lives in access (ADR-0051 §1), which every P6 module calls and which reads none of them.
+    expect([...API_MODULES.access.dependsOn].sort()).toEqual(["audit", "platform"]);
+    for (const m of P6_MODULES) expect(API_MODULES[m].dependsOn as readonly string[], m).toContain("access");
+    // integrations imports no domain module: each domain registers its import target into the ImportTargetRegistry in
+    // server.ts (kpi first). Only the leaves it needs.
+    expect([...API_MODULES.integrations.dependsOn].sort()).toEqual([
+      "access",
+      "audit",
+      "jobs",
+      "methodology",
+      "organization",
+      "platform",
+      "tasks",
+      "transformations",
+    ]);
+    // assistant reads only through search and ReadScope: no module that writes business records (REQ-S17-008).
+    expect([...API_MODULES.assistant.dependsOn].sort()).toEqual(["access", "audit", "platform", "search"]);
+    // operations hears of failed runs through the outbox, so integrations never imports it (and the reverse).
+    expect(API_MODULES.integrations.dependsOn as readonly string[]).not.toContain("operations");
+    expect(API_MODULES.operations.dependsOn as readonly string[]).not.toContain("integrations");
+    // No P1-P5 module imports a P6 module (P6 extends DG1-DG5 additively, p6-plan §3).
+    for (const m of Object.keys(API_MODULES) as ApiModule[])
+      if (!P6_MODULES.includes(m))
+        for (const p6 of P6_MODULES)
+          expect(API_MODULES[m].dependsOn as readonly string[], `${m} -> ${p6}`).not.toContain(p6);
+    // No P6 module imports workflows (no P6 path decides a business approval).
+    for (const m of P6_MODULES) expect(API_MODULES[m].dependsOn as readonly string[], m).not.toContain("workflows");
+  });
+
   it("workflows reaches kpi and evidence (G1-G3 evaluators), and none of them reaches back (no cycle)", () => {
     // P4 (T-DG4-BE-A): + organization (working-day due dates) and tasks (approval work items), both leaves.
     expect([...API_MODULES.workflows.dependsOn].sort()).toEqual([
@@ -182,16 +219,27 @@ describe("API module boundaries (ADR-0002)", () => {
     expect([...SECTION16_MODULES["formulas/KPI"]]).toEqual(["kpi", "benefits", "health"]);
     expect([...SECTION16_MODULES.transformations]).toEqual(["transformations", "launch"]);
     expect([...SECTION16_MODULES.workflows]).toEqual(["workflows", "procedures", "automation"]);
-    expect([...SECTION16_MODULES.admin]).toEqual(["admin", "forms"]);
+    // P6 (p6-plan §3 seam 21, T-DG6-BE-A): integrations and operations join admin, search and assistant reporting.
+    expect([...SECTION16_MODULES.admin]).toEqual(["admin", "forms", "integrations", "operations"]);
+    expect([...SECTION16_MODULES.reporting]).toEqual(["reporting", "search", "assistant"]);
     expect(
       Object.values(SECTION16_MODULES)
         .flat()
         .filter((m) => P5_MODULES.includes(m))
         .sort(),
     ).toEqual([...P5_MODULES].sort());
+    expect(
+      Object.values(SECTION16_MODULES)
+        .flat()
+        .filter((m) => P6_MODULES.includes(m))
+        .sort(),
+    ).toEqual([...P6_MODULES].sort());
     for (const [area, mods] of Object.entries(SECTION16_MODULES)) {
       for (const m of mods) {
-        expect([...P1_MODULES, ...P4_MODULES, ...P5_MODULES], `${area}: ${m} is a P1, P4 or P5 module`).toContain(m);
+        expect(
+          [...P1_MODULES, ...P4_MODULES, ...P5_MODULES, ...P6_MODULES],
+          `${area}: ${m} is a P1, P4, P5 or P6 module`,
+        ).toContain(m);
         expect(suitesOf(m).length, `${area}: ${m} has its own test suite`).toBeGreaterThan(0);
       }
     }

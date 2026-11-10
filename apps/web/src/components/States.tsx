@@ -1,5 +1,8 @@
 // Explicit data states (ADR-0009 §8, REQ-S15-011): loading, empty, error, stale, conflict and no-permission. Every
 // state has a text label and an icon, a live-region role, and never renders a missing value as 0 or green.
+// T-DG6-FE-D2 (ADR-0057 §9): the stale state says "This information may be out of date. Last updated {time}." and the
+// conflict state "Someone else saved this record after you opened it. Compare the changes before saving again."
+// (`StaleBanner`, `ConflictState`, `ConflictPanel`); the six-state component test is six-states.test.tsx (en and ar).
 import type { UseQueryResult } from "@tanstack/react-query";
 import { useEffect, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
@@ -84,7 +87,7 @@ export function StaleBanner({ updatedAt, onRetry }: { updatedAt: number; onRetry
       <span className="status-chip status-chip--stale">
         <Icon name="clock" /> {t("common.status.stale")}
       </span>
-      <span>{when ? t("common.state.staleSince", { when }) : t("common.state.staleUnknown")}</span>
+      <span>{when ? t("common.state.staleUpdated", { time: when }) : t("common.state.staleUnknown")}</span>
       {onRetry ? (
         <button type="button" className="button button--secondary button--small" onClick={onRetry}>
           <Icon name="refresh" /> {t("common.action.retry")}
@@ -106,6 +109,25 @@ export function NoPermissionState({ error }: { error?: unknown }) {
           {notFound ? t("common.state.notFoundTitle") : t("common.state.noPermissionTitle")}
         </p>
         <p className="state__body">{notFound ? t("common.state.notFoundBody") : t("common.state.noPermissionBody")}</p>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * The conflict state of a view (ADR-0057 §9): the record was saved by someone else after this view opened it (a 409,
+ * a draft whose base moved, an inline cell). Nothing was saved; `action` offers the compare (components/compare/**).
+ */
+export function ConflictState({ detail, action }: { detail?: string; action?: ReactNode }) {
+  const { t } = useTranslation();
+  return (
+    <div className="state state--conflict banner banner--warning" role="alert" data-state="conflict">
+      <Icon name="alert" />
+      <div>
+        <p className="state__title">{t("common.conflict.title")}</p>
+        <p className="state__body">{t("common.conflict.lead")}</p>
+        {detail ? <p className="state__meta">{detail}</p> : null}
+        {action ? <div className="state__action">{action}</div> : null}
       </div>
     </div>
   );
@@ -148,6 +170,7 @@ export function ConflictPanel({
       <h2 id="conflict-title" className="conflict__title">
         <Icon name="alert" /> {t("common.conflict.title")}
       </h2>
+      <p>{t("common.conflict.lead")}</p>
       <p>
         {t("common.conflict.body", {
           yours: yourVersion,

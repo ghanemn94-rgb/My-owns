@@ -208,6 +208,13 @@ describe("Diagnose", () => {
     const conflict = await within(dialog).findByRole("alert");
     expect(conflict.dataset["state"]).toBe("conflict");
     expect(conflict.textContent).toContain("Changed by someone else");
+    // T-DG6-FE-D2 (ADR-0057 §7): the root cause was changed by both, so the user chooses which value to keep; the
+    // current state only they changed is not sent.
+    expect(
+      (within(conflict).getByRole("button", { name: "Re-apply my change on the current version" }) as HTMLButtonElement)
+        .disabled,
+    ).toBe(true);
+    fireEvent.click(within(conflict).getByRole("radio", { name: "Keep mine" }));
     fireEvent.click(within(conflict).getByRole("button", { name: "Re-apply my change on the current version" }));
     await waitFor(() => expect(patches).toBe(2));
     const second = requests.filter((r) => r.method === "PATCH")[1]!;
@@ -958,6 +965,26 @@ describe("Design", () => {
     for (const heading of ["TOM Gap Matrix (T03)", "Decisions", "Dependencies", "Evidence"])
       expect(within(view).getByRole("heading", { name: heading })).toBeTruthy();
     expect(within(view).getByText("Synthetic target design")).toBeTruthy();
+  });
+
+  it("T-DG6-BE-Z10B (D-218): a box whose linked evidence is restricted shows the restricted label, never 'none linked'", async () => {
+    render(`/transformations/${TR_ID}/design`, [
+      ...base(leadGrants()),
+      route("GET", /\/tom-canvas$/, () => ({
+        status: 200,
+        body: {
+          cells: Array.from({ length: 10 }, (_, i) =>
+            i === 0 ? { ...canvasCell(i), evidence: [], includesRestrictedRecords: true } : canvasCell(i),
+          ),
+        },
+      })),
+    ]);
+    const canvas = await screen.findByRole("list", { name: "TOM Canvas boxes" });
+    fireEvent.click(within(canvas).getAllByRole("button", { name: /^Open dimension view/ })[0]!);
+    const view = await screen.findByRole("region", { name: /^Dimension view:/ });
+    const label = view.querySelector("[data-restricted-records='true']");
+    expect(label?.textContent).toContain("Includes restricted records");
+    expect(within(view).queryByText(createI18n("en").t("evidence.noneLinked"))).toBeNull();
   });
 
   it("converts an unresolved workshop item into a design decision with If-Match", async () => {

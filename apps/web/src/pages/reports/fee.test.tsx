@@ -480,6 +480,56 @@ describe("REQ-S13-005: exports", () => {
       expect(requests.find((r) => r.url.endsWith("/cancel"))!.headers["if-match"]).toBe('"3"');
     });
   }
+
+  // T-DG6-BE-Y5 (D-207): a live-selection export has no snapshot until the API assembles it (snapshotId null).
+  for (const locale of ["en", "ar"] as const) {
+    it(`${locale}: a pending live-selection export shows "Preparing the report" and no snapshot link; one failed first shows its translated error`, async () => {
+      const base = {
+        transformationId: TR_ID,
+        snapshotId: null,
+        format: "csv",
+        language: "en",
+        stage: "queued",
+        percent: 0,
+        sectionsDone: 0,
+        sectionsTotal: null,
+        attemptCount: 0,
+        startedAt: null,
+        fileName: null,
+        contentType: null,
+        fileSha256: null,
+        fileSizeBytes: null,
+        cancelledAt: null,
+        createdAt: "2026-10-16T10:00:00Z",
+      };
+      const pending = { ...base, id: UUIDX(621), status: "queued", finishedAt: null, errorCode: null, version: 1 };
+      const refused = {
+        ...base,
+        id: UUIDX(622),
+        status: "failed",
+        finishedAt: "2026-10-16T10:00:02Z",
+        errorCode: "export.includes_restricted_records",
+        version: 2,
+      };
+      mockApi(
+        meRoute(["transformation.read", "export.create"], locale),
+        route("GET", /\/api\/v1\/exports/, ok(page([pending, refused]))),
+        usersRoute,
+      );
+      renderApp("/evidence-reports/exports", { i18n: createI18n(locale) });
+      const c = locale === "en" ? en : ar;
+      const wait = await found(`[data-export-pending-snapshot='${pending.id}']`);
+      expect(wait.textContent).toBe(c.exports.preparing);
+      const none = await found(`[data-export-pending-snapshot='${refused.id}']`);
+      expect(none.textContent).toBe(c.exports.noSnapshot);
+      const pendingRow = document.querySelector(`[data-export-row='${pending.id}']`)!;
+      expect(pendingRow.querySelector("a[href*='/reports/']")).toBeNull();
+      expect(pendingRow.textContent).not.toContain("null");
+      const err = await found(`[data-export-error='export.includes_restricted_records']`);
+      expect(err.textContent).toContain(catalogues[locale].problems.export__includes_restricted_records);
+      expect(document.documentElement.dir).toBe(locale === "ar" ? "rtl" : "ltr");
+    });
+  }
 });
 
 describe("REQ-S09-011: owner updates", () => {
@@ -745,6 +795,7 @@ function adrText(n: string): string {
   return readFileSync(join(dir, file), "utf8");
 }
 const ROW = /^\|\s*4\d\d\s*\|\s*`([a-z_][a-z0-9_.]*)`\s*\|\s*(.*?)\s*\|\s*$/;
+const JOB_ROW = /^\|\s*job \(assembly\)\s*\|\s*`([a-z_][a-z0-9_.]*)`\s*\|\s*(.*?)\s*\|\s*$/;
 
 describe("slice F problem texts (ADR-0045 §11, ADR-0046 §8)", () => {
   const rows = new Map<string, string>();
@@ -755,9 +806,18 @@ describe("slice F problem texts (ADR-0045 §11, ADR-0046 §8)", () => {
     }
   // ADR-0046 §8's job error codes are given in a sentence: `code` "text".
   for (const m of adrText("0046").matchAll(/`(export\.[a-z_]+)` "([^"]+)"/g)) rows.set(m[1]!, m[2]!);
+  // ADR-0046 R5's assembly job codes (D-207) are table rows whose first column is `job (assembly)`, not a status
+  // (T-DG6-BE-Y6, F-DG6-sa12-2).
+  const assemblyRows = new Map<string, string>();
+  for (const line of adrText("0046").split("\n")) {
+    const m = JOB_ROW.exec(line);
+    if (m) assemblyRows.set(m[1]!, m[2]!);
+  }
+  for (const [code, text] of assemblyRows) rows.set(code, text);
 
   it("reads every table row and job error code", () => {
-    expect(rows.size).toBe(24);
+    expect([...assemblyRows.keys()].sort()).toEqual(["export.assembly_failed", "export.includes_restricted_records"]);
+    expect(rows.size).toBe(26);
   });
 
   it("each code has the ADR's exact English text and a different Arabic text", () => {

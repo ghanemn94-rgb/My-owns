@@ -137,11 +137,17 @@ describe("GET /api/v1/me", () => {
         // TO = P1 defaults (0005) + P2 defaults (0018) + P3 defaults (0024) + P4 slice I/C defaults (0031) + P4 slice A
         // defaults (0036) + P4 slice E defaults (0043) + P4 slice D defaults (0046) + P4 slice F/G defaults
         // (0049) + P4 slice H defaults (0053) + P4 slices J/K defaults (0057) + P5 slice A defaults (0064) + P5 slices B/C defaults (0070),
-        // + P5 slices G/H defaults (0087: health_check.assess, launch_plan.edit), sorted.
+        // + P5 slices G/H defaults (0087: health_check.assess, launch_plan.edit)
+        // + P6 slices E/F defaults (0100: sensitive_record.grant, sensitive_record.read)
+        // + P6 slices J/C defaults (0103: operations.read)
+        // + P6 slices B/A defaults (0107: connector.read, external_change.flag, import.read, outbound_write.read)
+        // + P6 slices H/G defaults (0109: saved_view.manage, saved_view.share)
+        // + P6 slice D defaults (0112: assistant.use), sorted.
         permissions: [
           "action.edit",
           "approval.request",
           "assessment.respond",
+          "assistant.use",
           "audit.read",
           "automation.read",
           "automation.review",
@@ -153,6 +159,7 @@ describe("GET /api/v1/me", () => {
           "change_request.raise",
           "charter.edit",
           "config_review_policy.configure",
+          "connector.read",
           "control.manage",
           "control_check.record",
           "corrective_rule.configure",
@@ -166,6 +173,7 @@ describe("GET /api/v1/me", () => {
           "evidence.review",
           "executive_decision.create",
           "export.create",
+          "external_change.flag",
           "form_record.comment",
           "forum.configure",
           "gate.configure",
@@ -173,6 +181,7 @@ describe("GET /api/v1/me", () => {
           "gate_condition.close",
           "group.manage",
           "health_check.assess",
+          "import.read",
           "improvement.edit",
           "inherited_record.record",
           "initiative.edit",
@@ -184,7 +193,9 @@ describe("GET /api/v1/me", () => {
           "methodology.read",
           "methodology.review",
           "notification.preferences",
+          "operations.read",
           "organization.read",
+          "outbound_write.read",
           "performance_area.manage",
           "phase_step.manage",
           "phase_step.progress",
@@ -204,6 +215,10 @@ describe("GET /api/v1/me", () => {
           "roadmap.edit",
           "role.read",
           "role_mapping.assign",
+          "saved_view.manage",
+          "saved_view.share",
+          "sensitive_record.grant",
+          "sensitive_record.read",
           "team.assign",
           "traceability.link",
           "transformation.archive",
