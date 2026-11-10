@@ -1,0 +1,69 @@
+$ QA_PG_PORT=32550 tests/qa/support/with-pg.sh npx vitest run --project integration apps/api/test/integration/access/qa-r1-token-sequences.test.ts (disposable hardlink copy rv2 of the candidate clone; probe copied from docs/delivery/test-evidence/DG6/qa/tests/round-1/)
+2026-11-10T08:54:29Z
+port-policy: PostgreSQL listening on port 32550 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.fPkrRG/claude-0/rv2
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwagev3b_7c4ff322 (server_encoding UTF8); applied 119 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/access/qa-r1-token-sequences.test.ts (5 tests | 2 failed) 6801ms
+   ✓ qa-verifier R1 probe: restricted-token sequences (D-226, D-228 (1), D-233) > (1) a duplicated token and a token in a mixed in-list both resolve to the hidden literal  820ms
+   × qa-verifier R1 probe: restricted-token sequences (D-226, D-228 (1), D-233) > (2) a token moved into an ordering condition, then a dry run: no response names the hidden id 768ms
+     → {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"A condition must test a field of the trigger with a valid operator and value.","code":"automation_rule.condition_invalid","requestId":"01a1c4ab-3439-770a-a4b5-ba195bcb555a"}: expected 422 to be 200 // Object.is equality
+   × qa-verifier R1 probe: restricted-token sequences (D-226, D-228 (1), D-233) > (3) draft v2 of a published v1, written by a writer without the grant, keeps the hidden literal 467ms
+     → {"type":"urn:mth:problem:precondition-required","title":"If-Match required","status":428,"detail":"Send the ETag of the version you are changing in If-Match, e.g. If-Match: \"3\".","code":"precondition_required","requestId":"01a1c4ab-369a-7503-accd-34d3080595f2"}: expected 428 to be 201 // Object.is equality
+   ✓ qa-verifier R1 probe: restricted-token sequences (D-226, D-228 (1), D-233) > (4) two concurrent saves with the same If-Match: one wins, the other changes nothing  406ms
+   ✓ qa-verifier R1 probe: restricted-token sequences (D-226, D-228 (1), D-233) > (5) a grant given between read and save, then revoked: the literal survives both transitions  1351ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/access/qa-r1-token-sequences.test.ts > qa-verifier R1 probe: restricted-token sequences (D-226, D-228 (1), D-233) > (2) a token moved into an ordering condition, then a dry run: no response names the hidden id
+AssertionError: {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"A condition must test a field of the trigger with a valid operator and value.","code":"automation_rule.condition_invalid","requestId":"01a1c4ab-3439-770a-a4b5-ba195bcb555a"}: expected 422 to be 200 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 200[39m
+[31m+ 422[39m
+
+ ❯ ok apps/api/test/integration/access/qa-r1-token-sequences.test.ts:56:62
+     54| const send = (m: string, u: string, o?: Parameters<typeof call>[3]) =>…
+     55| const ok = (res: Res<Body>, status = 200) => {
+     56|   expect(res.status, JSON.stringify(res.body).slice(0, 600)).toBe(stat…
+       |                                                              ^
+     57|   return res.body as Body;
+     58| };
+ ❯ apps/api/test/integration/access/qa-r1-token-sequences.test.ts:239:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |integration| apps/api/test/integration/access/qa-r1-token-sequences.test.ts > qa-verifier R1 probe: restricted-token sequences (D-226, D-228 (1), D-233) > (3) draft v2 of a published v1, written by a writer without the grant, keeps the hidden literal
+AssertionError: {"type":"urn:mth:problem:precondition-required","title":"If-Match required","status":428,"detail":"Send the ETag of the version you are changing in If-Match, e.g. If-Match: \"3\".","code":"precondition_required","requestId":"01a1c4ab-369a-7503-accd-34d3080595f2"}: expected 428 to be 201 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 201[39m
+[31m+ 428[39m
+
+ ❯ ok apps/api/test/integration/access/qa-r1-token-sequences.test.ts:56:62
+     54| const send = (m: string, u: string, o?: Parameters<typeof call>[3]) =>…
+     55| const ok = (res: Res<Body>, status = 200) => {
+     56|   expect(res.status, JSON.stringify(res.body).slice(0, 600)).toBe(stat…
+       |                                                              ^
+     57|   return res.body as Body;
+     58| };
+ ❯ apps/api/test/integration/access/qa-r1-token-sequences.test.ts:268:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 3 passed (5)
+   Start at  08:54:33
+   Duration  45.54s (transform 11.96s, setup 0ms, collect 29.77s, tests 6.80s, environment 0ms, prepare 291ms)
+
+EXIT=1

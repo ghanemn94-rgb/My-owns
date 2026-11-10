@@ -1,0 +1,30 @@
+$ QA_PG_PORT=32552 tests/qa/support/with-pg.sh npx vitest run --project integration apps/api/test/integration/access/qa-r1-token-sequences.test.ts (run 3, probe with status logging)
+2026-11-10T08:56:48Z
+port-policy: PostgreSQL listening on port 32552 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.fPkrRG/claude-0/rv2
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwaghvxd_700dab84 (server_encoding UTF8); applied 119 migrations to a fresh database
+stdout | apps/api/test/integration/access/qa-r1-token-sequences.test.ts > qa-verifier R1 probe: restricted-token sequences (D-226, D-228 (1), D-233) > (2) a token moved into an ordering condition, then a dry run: no response names the hidden id
+QA-R1 probe (2): dry-run status 201 outcome fail conditionsMet false findings [{"code":"automation_rule.action_parameters_invalid","pointer":"/actions/0","messageAr":"إعدادات الإجراء غير صالحة لنوعه.","messageEn":"The action's settings are not valid for its type."}]
+
+stdout | apps/api/test/integration/access/qa-r1-token-sequences.test.ts > qa-verifier R1 probe: restricted-token sequences (D-226, D-228 (1), D-233) > (4) two concurrent saves with the same If-Match: one wins, the other changes nothing
+QA-R1 probe (4): concurrent statuses 409/200; loser code version_conflict
+
+ ✓ |integration| apps/api/test/integration/access/qa-r1-token-sequences.test.ts (5 tests) 7518ms
+   ✓ qa-verifier R1 probe: restricted-token sequences (D-226, D-228 (1), D-233) > (1) a duplicated token and a token in a mixed in-list both resolve to the hidden literal  1536ms
+   ✓ qa-verifier R1 probe: restricted-token sequences (D-226, D-228 (1), D-233) > (2) a token moved into an ordering condition, then a dry run: no response names the hidden id  640ms
+   ✓ qa-verifier R1 probe: restricted-token sequences (D-226, D-228 (1), D-233) > (3) draft v2 of a published v1, written by a writer without the grant, keeps the hidden literal  670ms
+   ✓ qa-verifier R1 probe: restricted-token sequences (D-226, D-228 (1), D-233) > (4) two concurrent saves with the same If-Match: one wins, the other changes nothing  387ms
+   ✓ qa-verifier R1 probe: restricted-token sequences (D-226, D-228 (1), D-233) > (5) a grant given between read and save, then revoked: the literal survives both transitions  759ms
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  08:56:54
+   Duration  41.68s (transform 11.10s, setup 0ms, collect 26.51s, tests 7.52s, environment 0ms, prepare 198ms)
+
+EXIT=0

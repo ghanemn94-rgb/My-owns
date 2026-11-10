@@ -1,0 +1,13 @@
+diff --git a/apps/api/src/modules/automation/versions.ts b/apps/api/src/modules/automation/versions.ts
+index 1ed9e2b99..63db0347f 100644
+--- a/apps/api/src/modules/automation/versions.ts
++++ b/apps/api/src/modules/automation/versions.ts
+@@ -507,7 +507,7 @@ export function resolveRestrictedTokens(
+       if (AUTOMATION_RESTRICTED_TOKEN_RETIRED_PATTERN.test(v)) throw automationRefusals.restrictedTokenStale(at);
+       throw automationRefusals.restrictedMarkerUnknown(at);
+     }
+-    if (!sameTag(m[1]!, expected)) throw automationRefusals.restrictedTokenStale(at);
++    // MUTANT (code-security R1): issuer-tag check removed
+     const literal = positions.get(Number(m[2]));
+     if (literal === undefined) throw automationRefusals.restrictedMarkerUnknown(at);
+     return literal;

@@ -1,0 +1,444 @@
+{
+  "title": "code-security R1 short re-measurement (98feb869c product tree)",
+  "workloadVersion": "1.0.0",
+  "repetitions": [
+    {
+      "name": "rep-1",
+      "workloadVersion": "1.0.0",
+      "repetition": 1,
+      "only": null,
+      "seed": 20261027,
+      "users": 100,
+      "baseUrl": "http://127.0.0.1:32460",
+      "warmupSeconds": 60,
+      "steadySeconds": 180,
+      "started": "2026-11-10T11:43:43.680Z",
+      "ended": "2026-11-10T11:47:46.575Z",
+      "wallSeconds": 242.9,
+      "requestsTotal": 11715,
+      "requestsSteady": 8804,
+      "requestsWarmup": 2911,
+      "load1": {
+        "samples": 50,
+        "min": 13.12,
+        "max": 16.8,
+        "mean": 14.887399999999998
+      }
+    }
+  ],
+  "groups": [
+    {
+      "key": "read",
+      "label": "Ordinary read",
+      "targetMs": 2000,
+      "worstP95Micros": 92042,
+      "verdict": "within target",
+      "perRep": [
+        {
+          "count": 4429,
+          "errors": 0,
+          "conflicts": 0,
+          "p50": 15898,
+          "p95": 92042,
+          "p99": 226604,
+          "max": 846281
+        }
+      ]
+    },
+    {
+      "key": "update",
+      "label": "Ordinary update",
+      "targetMs": 2000,
+      "worstP95Micros": 153361,
+      "verdict": "within target",
+      "perRep": [
+        {
+          "count": 1269,
+          "errors": 0,
+          "conflicts": 0,
+          "p50": 34977,
+          "p95": 153361,
+          "p99": 332469,
+          "max": 748684
+        }
+      ]
+    },
+    {
+      "key": "search",
+      "label": "Search",
+      "targetMs": 2000,
+      "worstP95Micros": 96585,
+      "verdict": "within target",
+      "perRep": [
+        {
+          "count": 717,
+          "errors": 0,
+          "conflicts": 0,
+          "p50": 19815,
+          "p95": 96585,
+          "p99": 199222,
+          "max": 678623
+        }
+      ]
+    },
+    {
+      "key": "dashboard",
+      "label": "Key dashboard",
+      "targetMs": 4000,
+      "worstP95Micros": 191222,
+      "verdict": "within target",
+      "perRep": [
+        {
+          "count": 2195,
+          "errors": 0,
+          "conflicts": 0,
+          "p50": 50324,
+          "p95": 191222,
+          "p99": 364240,
+          "max": 833788
+        }
+      ]
+    },
+    {
+      "key": "export",
+      "label": "Export start",
+      "targetMs": 2000,
+      "worstP95Micros": 176872,
+      "verdict": "within target",
+      "perRep": [
+        {
+          "count": 194,
+          "errors": 0,
+          "conflicts": 0,
+          "p50": 45562,
+          "p95": 176872,
+          "p99": 309729,
+          "max": 337816
+        }
+      ]
+    },
+    {
+      "key": "read+search",
+      "label": "Ordinary read incl. search",
+      "targetMs": 2000,
+      "worstP95Micros": 92700,
+      "verdict": "within target",
+      "perRep": [
+        {
+          "count": 5146,
+          "errors": 0,
+          "conflicts": 0,
+          "p50": 16539,
+          "p95": 92700,
+          "p99": 224622,
+          "max": 846281
+        }
+      ]
+    }
+  ],
+  "perOperation": [
+    {
+      "operation": "createExport",
+      "cls": "export",
+      "perRep": [
+        {
+          "count": 194,
+          "errors": 0,
+          "conflicts": 0,
+          "p50": 45562,
+          "p95": 176872,
+          "p99": 309729,
+          "max": 337816
+        }
+      ]
+    },
+    {
+      "operation": "getExecutiveOverview",
+      "cls": "dashboard",
+      "perRep": [
+        {
+          "count": 542,
+          "errors": 0,
+          "conflicts": 0,
+          "p50": 59765,
+          "p95": 214426,
+          "p99": 418585,
+          "max": 774186
+        }
+      ]
+    },
+    {
+      "operation": "getFinanceDashboard",
+      "cls": "dashboard",
+      "perRep": [
+        {
+          "count": 562,
+          "errors": 0,
+          "conflicts": 0,
+          "p50": 55450,
+          "p95": 200480,
+          "p99": 342015,
+          "max": 833788
+        }
+      ]
+    },
+    {
+      "operation": "getInitiative",
+      "cls": "read",
+      "perRep": [
+        {
+          "count": 480,
+          "errors": 0,
+          "conflicts": 0,
+          "p50": 30926,
+          "p95": 121826,
+          "p99": 322719,
+          "max": 499889
+        }
+      ]
+    },
+    {
+      "operation": "getMe",
+      "cls": "read",
+      "perRep": [
+        {
+          "count": 527,
+          "errors": 0,
+          "conflicts": 0,
+          "p50": 14991,
+          "p95": 76943,
+          "p99": 331836,
+          "max": 681732
+        }
+      ]
+    },
+    {
+      "operation": "getMyNavigation",
+      "cls": "read",
+      "perRep": [
+        {
+          "count": 498,
+          "errors": 0,
+          "conflicts": 0,
+          "p50": 8665,
+          "p95": 62163,
+          "p99": 110224,
+          "max": 598482
+        }
+      ]
+    },
+    {
+      "operation": "getMyWork",
+      "cls": "dashboard",
+      "perRep": [
+        {
+          "count": 516,
+          "errors": 0,
+          "conflicts": 0,
+          "p50": 35614,
+          "p95": 161414,
+          "p99": 241783,
+          "max": 570225
+        }
+      ]
+    },
+    {
+      "operation": "getTransformation",
+      "cls": "read",
+      "perRep": [
+        {
+          "count": 508,
+          "errors": 0,
+          "conflicts": 0,
+          "p50": 13840,
+          "p95": 78581,
+          "p99": 245130,
+          "max": 403353
+        }
+      ]
+    },
+    {
+      "operation": "getTransformationDashboard",
+      "cls": "dashboard",
+      "perRep": [
+        {
+          "count": 575,
+          "errors": 0,
+          "conflicts": 0,
+          "p50": 50579,
+          "p95": 170016,
+          "p99": 368076,
+          "max": 813195
+        }
+      ]
+    },
+    {
+      "operation": "listFormRecordVersions",
+      "cls": "read",
+      "perRep": [
+        {
+          "count": 476,
+          "errors": 0,
+          "conflicts": 0,
+          "p50": 23380,
+          "p95": 96636,
+          "p99": 197640,
+          "max": 289021
+        }
+      ]
+    },
+    {
+      "operation": "listInitiatives",
+      "cls": "read",
+      "perRep": [
+        {
+          "count": 479,
+          "errors": 0,
+          "conflicts": 0,
+          "p50": 31181,
+          "p95": 139459,
+          "p99": 424950,
+          "max": 846281
+        }
+      ]
+    },
+    {
+      "operation": "listMyWorkItems",
+      "cls": "read",
+      "perRep": [
+        {
+          "count": 518,
+          "errors": 0,
+          "conflicts": 0,
+          "p50": 9754,
+          "p95": 59883,
+          "p99": 142476,
+          "max": 619831
+        }
+      ]
+    },
+    {
+      "operation": "listSavedViews",
+      "cls": "read",
+      "perRep": [
+        {
+          "count": 483,
+          "errors": 0,
+          "conflicts": 0,
+          "p50": 11394,
+          "p95": 62475,
+          "p99": 144958,
+          "max": 434723
+        }
+      ]
+    },
+    {
+      "operation": "listTransformations",
+      "cls": "read",
+      "perRep": [
+        {
+          "count": 460,
+          "errors": 0,
+          "conflicts": 0,
+          "p50": 11310,
+          "p95": 62862,
+          "p99": 150166,
+          "max": 378374
+        }
+      ]
+    },
+    {
+      "operation": "putSavedView",
+      "cls": "update",
+      "perRep": [
+        {
+          "count": 818,
+          "errors": 0,
+          "conflicts": 0,
+          "p50": 31635,
+          "p95": 138024,
+          "p99": 283304,
+          "max": 716437
+        }
+      ]
+    },
+    {
+      "operation": "searchRecords",
+      "cls": "search",
+      "perRep": [
+        {
+          "count": 717,
+          "errors": 0,
+          "conflicts": 0,
+          "p50": 19815,
+          "p95": 96585,
+          "p99": 199222,
+          "max": 678623
+        }
+      ]
+    },
+    {
+      "operation": "updateFormDraft",
+      "cls": "update",
+      "perRep": [
+        {
+          "count": 217,
+          "errors": 0,
+          "conflicts": 0,
+          "p50": 36710,
+          "p95": 168426,
+          "p99": 308570,
+          "max": 383147
+        }
+      ]
+    },
+    {
+      "operation": "updateInitiative",
+      "cls": "update",
+      "perRep": [
+        {
+          "count": 234,
+          "errors": 0,
+          "conflicts": 0,
+          "p50": 50840,
+          "p95": 191426,
+          "p99": 429497,
+          "max": 748684
+        }
+      ]
+    }
+  ],
+  "nonOkByRepOperationStatus": {},
+  "achievedShares": [
+    {
+      "key": "read",
+      "planned": 50,
+      "achieved": 50.3,
+      "n": 4429
+    },
+    {
+      "key": "update",
+      "planned": 15,
+      "achieved": 14.4,
+      "n": 1269
+    },
+    {
+      "key": "search",
+      "planned": 8,
+      "achieved": 8.1,
+      "n": 717
+    },
+    {
+      "key": "dashboard",
+      "planned": 25,
+      "achieved": 24.9,
+      "n": 2195
+    },
+    {
+      "key": "export",
+      "planned": 2,
+      "achieved": 2.2,
+      "n": 194
+    }
+  ]
+}

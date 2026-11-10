@@ -1,0 +1,4 @@
+# 2026-11-10T10:04:35Z The first pipeline (/var/tmp/mth-run.gYOKc9/claude-0/tests.sh, background task started about 08:41Z) could not be stopped with pkill: each Bash call runs in its own PID namespace, so the earlier pkill never reached it. It ran pnpm test concurrently with ta.sh (interleaving logs 10/11) and then started 12-integration-lang-unset at 09:44:43Z, which cannot finish before its 2-hour task limit (about 10:41Z). To stop it wasting CPU, rv's node_modules is now deleted, so that orphaned run fails fast. Logs 12-integration-lang-unset.log and 13-integration-lang-cutf8.log (if written) are therefore NOT gate evidence; the binding integration runs are 12c-* and 13c-* in $TMPDIR/rp.
+integ files passed so far in 12 before the stop: 50
+rm exit=0
+# 2026-11-10T10:25:30Z $TMPDIR/rv removed entirely (the orphaned run kept passing files from modules already loaded); rp is the only clone from here on.

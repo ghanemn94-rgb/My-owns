@@ -1,0 +1,48 @@
+# 2026-11-10T08:54:49Z re-run after adding ?organizationId= to the three organization-scoped admin routes; $TMPDIR/rp; Node v22.22.0; load 22.21 17.30 9.56
+port-policy: PostgreSQL listening on port 32480 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.gYOKc9/claude-0/rp
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwagfcsm_aa5785b5 (server_encoding UTF8); applied 119 migrations to a fresh database
+stdout | apps/api/test/integration/zz-sec-r1-p6-aud-valid-bodies.test.ts > SEC-R1 P6 AUD sweep with schema-valid bodies > every one of the 26 operations is refused 403 (404 only for a non-existent record) and writes nothing
+[SEC-R1 AUD valid-body sweep] 26 operations
+putRecordSensitivity PUT /api/v1/transformations/{tid}/records/benefit/c38c4067-6a14-4ee6-90ec-b8aa1acc9eb3/sensitivity -> 403 forbidden
+createSensitiveGrant POST /api/v1/admin/sensitive-grants -> 403 forbidden
+revokeSensitiveGrant POST /api/v1/admin/sensitive-grants/959834e4-5306-4903-8ed4-e2f34b9422dc/revoke -> 404 not_found
+putUploadPolicy PUT /api/v1/admin/upload-policy?organizationId=01a1c4ab-7710-7648-a78c-cc263cb13f4e -> 403 forbidden
+acknowledgeOperationalException POST /api/v1/admin/operations/exceptions/c32d86bb-5e0e-4f7b-9d71-75d22b9e8dce/acknowledge -> 404 not_found
+resolveOperationalException POST /api/v1/admin/operations/exceptions/5a90b253-a339-4bab-8101-39bf35277458/resolve -> 404 not_found
+putServiceIdentity PUT /api/v1/admin/service-identities/fcb073d7-1007-40ea-8251-c5b7280ecd81 -> 404 not_found
+putNotificationChannel PUT /api/v1/admin/notification-channels/email?organizationId=01a1c4ab-7710-7648-a78c-cc263cb13f4e -> 403 forbidden
+testNotificationChannel POST /api/v1/admin/notification-channels/email/test?organizationId=01a1c4ab-7710-7648-a78c-cc263cb13f4e -> 403 forbidden
+createConnector POST /api/v1/admin/connectors -> 403 forbidden
+putConnector PUT /api/v1/admin/connectors/81e386a2-5b0e-40d6-be05-fc2da0eb2b89 -> 404 not_found
+enableConnector POST /api/v1/admin/connectors/1270287f-bb85-4fd4-982a-e3ac9b03b3eb/enable -> 404 not_found
+disableConnector POST /api/v1/admin/connectors/6c328098-69b8-4b03-896c-27b6a5a5641d/disable -> 404 not_found
+putConnectorMappings PUT /api/v1/admin/connectors/04cb9775-f611-4221-8fed-3ab5b595e3f1/mappings -> 404 not_found
+commitImport POST /api/v1/transformations/{tid}/imports/40d771b1-585f-4536-93ed-49bff49ed2ea/commit -> 404 not_found
+cancelImport POST /api/v1/transformations/{tid}/imports/e2382876-e604-4615-8299-c25d85e22a96/cancel -> 404 not_found
+createWebhookEndpoint POST /api/v1/admin/webhooks -> 404 not_found
+rotateWebhookSecret POST /api/v1/admin/webhooks/ac4966ae-34d4-42c1-a1d1-638546237e2e/rotate-secret -> 404 not_found
+disableWebhookEndpoint POST /api/v1/admin/webhooks/62969c30-88d7-468b-a448-bf9895b42227/disable -> 404 not_found
+executeOutboundWrite POST /api/v1/transformations/{tid}/outbound-writes -> 403 forbidden
+confirmDeliverableExternalChange POST /api/v1/deliverables/48950282-5813-4839-8c07-719be44111c2/confirmation -> 404 not_found
+putDeliverableExternalChange PUT /api/v1/deliverables/7ee8ab25-f5db-47a2-8b22-6c01e9b2d0c3/external-change -> 404 not_found
+createSavedView POST /api/v1/saved-views -> 403 forbidden
+putSavedView PUT /api/v1/saved-views/6a8f8620-f970-4663-8482-3027efa0a082 -> 404 not_found
+shareSavedView POST /api/v1/saved-views/51ead7e3-5917-4b69-b761-a331d53d5f40/share -> 404 not_found
+createImport POST /api/v1/transformations/{tid}/imports (text/csv) -> 403 {"type":"urn:mth:problem:forbidden","title":"Forbidden","status":403,"detail":"You do not have permission for this action.","code":"forbidden","requestId":"01a1
+[SEC-R1 AUD valid-body sweep] NOT refused 403/404: 0
+
+[SEC-R1 AUD valid-body sweep] non-denial audit events by AUD: before 1, after 1
+
+ ✓ |integration| apps/api/test/integration/zz-sec-r1-p6-aud-valid-bodies.test.ts (1 test) 2885ms
+   ✓ SEC-R1 P6 AUD sweep with schema-valid bodies > every one of the 26 operations is refused 403 (404 only for a non-existent record) and writes nothing  859ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  08:54:56
+   Duration  38.80s (transform 9.77s, setup 0ms, collect 23.80s, tests 2.88s, environment 0ms, prepare 574ms)
+
+exit=0

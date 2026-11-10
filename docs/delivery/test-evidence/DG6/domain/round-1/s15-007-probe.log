@@ -1,0 +1,59 @@
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.2mup4C/claude-0/review-dg6
+
+stdout | packages/reporting/src/pdf/zz-domain-s15-007.test.ts > REQ-S15-007 clause 3 (literal): an Arabic export keeps 'KPI-001' and '12.5%' readable > markLtrStretches isolates both as LTR runs
+marked: "المؤشر ‎KPI-001‎ بلغ ‎12.5%‎ هذا الشهر"
+
+stdout | packages/reporting/src/pdf/zz-domain-s15-007.test.ts > REQ-S15-007 clause 3 (literal): an Arabic export keeps 'KPI-001' and '12.5%' readable > PDF (ar): text extraction reads KPI-001 and 12.5% in left-to-right order
+pdf lines: ["12.5 SARرهشلا اذه 12.5% غلب KPI-001 شرؤملاةرطاخمKPI-001"]
+
+stdout | packages/reporting/src/pdf/zz-domain-s15-007.test.ts > REQ-S15-007 clause 3 (literal): an Arabic export keeps 'KPI-001' and '12.5%' readable > docx (ar): the cell text keeps KPI-001 and 12.5% intact
+docx texts: ["KPI-001"," KPI-001 "," 12.5% ","12.5 SAR"]
+
+stdout | packages/reporting/src/pdf/zz-domain-s15-007.test.ts > REQ-S15-007 clause 3 (literal): an Arabic export keeps 'KPI-001' and '12.5%' readable > xlsx (ar): the cell text keeps KPI-001 and 12.5% intact
+xlsx texts: []
+
+stdout | packages/reporting/src/pdf/zz-domain-s15-007.test.ts > REQ-S15-007 clause 3 (literal): an Arabic export keeps 'KPI-001' and '12.5%' readable > pptx (ar): the cell text keeps KPI-001 and 12.5% intact
+pptx texts: ["12.5 SAR","المؤشر KPI-001 بلغ 12.5% هذا الشهر","KPI-001"]
+
+stdout | packages/reporting/src/pdf/zz-domain-s15-007.test.ts > REQ-S15-007 clause 3 (literal): an Arabic export keeps 'KPI-001' and '12.5%' readable > csv (ar): the cell text keeps KPI-001 and 12.5% intact
+csv: ["KPI-001,مخاطرة,المؤشر KPI-001 بلغ 12.5% هذا الشهر,12.5,متحقَّق منه\r"]
+
+ ❯ |unit-node| packages/reporting/src/pdf/zz-domain-s15-007.test.ts (6 tests | 1 failed) 3482ms
+   ✓ REQ-S15-007 clause 3 (literal): an Arabic export keeps 'KPI-001' and '12.5%' readable > markLtrStretches isolates both as LTR runs 3ms
+   ✓ REQ-S15-007 clause 3 (literal): an Arabic export keeps 'KPI-001' and '12.5%' readable > PDF (ar): text extraction reads KPI-001 and 12.5% in left-to-right order  2773ms
+   ✓ REQ-S15-007 clause 3 (literal): an Arabic export keeps 'KPI-001' and '12.5%' readable > docx (ar): the cell text keeps KPI-001 and 12.5% intact  499ms
+   × REQ-S15-007 clause 3 (literal): an Arabic export keeps 'KPI-001' and '12.5%' readable > xlsx (ar): the cell text keeps KPI-001 and 12.5% intact 127ms
+     → expected '' to contain 'KPI-001'
+   ✓ REQ-S15-007 clause 3 (literal): an Arabic export keeps 'KPI-001' and '12.5%' readable > pptx (ar): the cell text keeps KPI-001 and 12.5% intact 76ms
+   ✓ REQ-S15-007 clause 3 (literal): an Arabic export keeps 'KPI-001' and '12.5%' readable > csv (ar): the cell text keeps KPI-001 and 12.5% intact 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-node| packages/reporting/src/pdf/zz-domain-s15-007.test.ts > REQ-S15-007 clause 3 (literal): an Arabic export keeps 'KPI-001' and '12.5%' readable > xlsx (ar): the cell text keeps KPI-001 and 12.5% intact
+AssertionError: expected '' to contain 'KPI-001'
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- KPI-001[39m
+
+ ❯ packages/reporting/src/pdf/zz-domain-s15-007.test.ts:40:22
+     38|       const hit = texts.filter((t) => t.includes("KPI-001") || t.inclu…
+     39|       console.log(fmt, "texts:", JSON.stringify(hit.slice(0, 6)));
+     40|       expect(joined).toContain("KPI-001");
+       |                      ^
+     41|       expect(joined).toMatch(/12\.5‎?%|12\.5%/);
+     42|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 5 passed (6)
+   Start at  08:55:26
+   Duration  8.79s (transform 1.84s, setup 0ms, collect 3.52s, tests 3.48s, environment 0ms, prepare 160ms)
+

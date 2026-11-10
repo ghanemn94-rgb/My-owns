@@ -1,0 +1,77 @@
+# 2026-11-10T08:53:15Z $TMPDIR/rp; Node v22.22.0; load 23.26 15.69 8.26
+port-policy: PostgreSQL listening on port 32480 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.gYOKc9/claude-0/rp
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwagdbcm_1ed14f7d (server_encoding UTF8); applied 119 migrations to a fresh database
+stdout | apps/api/test/integration/zz-sec-r1-p6-aud-valid-bodies.test.ts > SEC-R1 P6 AUD sweep with schema-valid bodies > every one of the 26 operations is refused 403 (404 only for a non-existent record) and writes nothing
+[SEC-R1 AUD valid-body sweep] 26 operations
+putRecordSensitivity PUT /api/v1/transformations/{tid}/records/benefit/16fd3385-97d5-4bef-8815-f022459e4852/sensitivity -> 403 forbidden
+createSensitiveGrant POST /api/v1/admin/sensitive-grants -> 403 forbidden
+revokeSensitiveGrant POST /api/v1/admin/sensitive-grants/c676cb6b-0d0b-4ee5-a57d-d75290fccbe1/revoke -> 404 not_found
+putUploadPolicy PUT /api/v1/admin/upload-policy -> 400 validation
+acknowledgeOperationalException POST /api/v1/admin/operations/exceptions/ba70c113-7b93-42b7-8369-bf2aa2ea9e0f/acknowledge -> 404 not_found
+resolveOperationalException POST /api/v1/admin/operations/exceptions/075dc80a-3966-4680-9923-66b21c355200/resolve -> 404 not_found
+putServiceIdentity PUT /api/v1/admin/service-identities/960c6446-5d26-4f7a-a564-5f045ec034e2 -> 404 not_found
+putNotificationChannel PUT /api/v1/admin/notification-channels/email -> 400 validation
+testNotificationChannel POST /api/v1/admin/notification-channels/email/test -> 400 validation
+createConnector POST /api/v1/admin/connectors -> 403 forbidden
+putConnector PUT /api/v1/admin/connectors/5e13834f-5e90-4d80-802e-640dfbbf935d -> 404 not_found
+enableConnector POST /api/v1/admin/connectors/71823402-7338-454f-9b83-31deed89ba6e/enable -> 404 not_found
+disableConnector POST /api/v1/admin/connectors/3b36a9c6-b196-4281-9b51-05105372d5af/disable -> 404 not_found
+putConnectorMappings PUT /api/v1/admin/connectors/31b97e69-aa1f-4486-9964-966a854f577d/mappings -> 404 not_found
+commitImport POST /api/v1/transformations/{tid}/imports/c35a8b86-4933-4982-b5e5-eab4e4ccadbc/commit -> 404 not_found
+cancelImport POST /api/v1/transformations/{tid}/imports/fc67dc68-a39c-4325-9f96-c495e8c654da/cancel -> 404 not_found
+createWebhookEndpoint POST /api/v1/admin/webhooks -> 404 not_found
+rotateWebhookSecret POST /api/v1/admin/webhooks/4c2c2d1a-62e8-4174-9e57-90fc84a70274/rotate-secret -> 404 not_found
+disableWebhookEndpoint POST /api/v1/admin/webhooks/59d15e6a-5e62-44c3-a328-2fb09309d5c5/disable -> 404 not_found
+executeOutboundWrite POST /api/v1/transformations/{tid}/outbound-writes -> 403 forbidden
+confirmDeliverableExternalChange POST /api/v1/deliverables/76db5aa0-f8c0-4a92-8fdf-4f64c5d38762/confirmation -> 404 not_found
+putDeliverableExternalChange PUT /api/v1/deliverables/ad2af8b6-2281-434f-adc3-7664866107a5/external-change -> 404 not_found
+createSavedView POST /api/v1/saved-views -> 403 forbidden
+putSavedView PUT /api/v1/saved-views/d0d2c5d6-3158-470d-8914-edccca1b4606 -> 404 not_found
+shareSavedView POST /api/v1/saved-views/2ac4c80d-b6d2-4d9b-8c67-f42bdc8c0b22/share -> 404 not_found
+createImport POST /api/v1/transformations/{tid}/imports (text/csv) -> 403 {"type":"urn:mth:problem:forbidden","title":"Forbidden","status":403,"detail":"You do not have permission for this action.","code":"forbidden","requestId":"01a1
+[SEC-R1 AUD valid-body sweep] NOT refused 403/404: 3
+putUploadPolicy PUT /api/v1/admin/upload-policy -> 400 validation
+putNotificationChannel PUT /api/v1/admin/notification-channels/email -> 400 validation
+testNotificationChannel POST /api/v1/admin/notification-channels/email/test -> 400 validation
+[SEC-R1 AUD valid-body sweep] non-denial audit events by AUD: before 1, after 1
+
+ ❯ |integration| apps/api/test/integration/zz-sec-r1-p6-aud-valid-bodies.test.ts (1 test | 1 failed) 3382ms
+   × SEC-R1 P6 AUD sweep with schema-valid bodies > every one of the 26 operations is refused 403 (404 only for a non-existent record) and writes nothing 849ms
+     → expected [ …(3) ] to deeply equal []
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/zz-sec-r1-p6-aud-valid-bodies.test.ts > SEC-R1 P6 AUD sweep with schema-valid bodies > every one of the 26 operations is refused 403 (404 only for a non-existent record) and writes nothing
+AssertionError: expected [ …(3) ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   "putUploadPolicy PUT /api/v1/admin/upload-policy -> 400 validation",[39m
+[31m+   "putNotificationChannel PUT /api/v1/admin/notification-channels/email -> 400 validation",[39m
+[31m+   "testNotificationChannel POST /api/v1/admin/notification-channels/email/test -> 400 validation",[39m
+[31m+ ][39m
+
+ ❯ apps/api/test/integration/zz-sec-r1-p6-aud-valid-bodies.test.ts:147:17
+    145|     console.log(`[SEC-R1 AUD valid-body sweep] non-denial audit events…
+    146|     expect(Number(after.n)).toBe(Number(before.n));
+    147|     expect(bad).toEqual([]);
+       |                 ^
+    148|   }, 600_000);
+    149| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  08:53:21
+   Duration  48.21s (transform 12.33s, setup 0ms, collect 30.07s, tests 3.38s, environment 0ms, prepare 657ms)
+
+exit=1

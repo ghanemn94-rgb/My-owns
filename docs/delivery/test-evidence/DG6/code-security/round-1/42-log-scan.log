@@ -1,0 +1,13 @@
+# 2026-11-10T11:42:16Z node deploy/scripts/log-scan.mjs over copies (in $TMPDIR/scan; the scan refuses docs/delivery, D-138) of the integration logs 12c-* (3 shards) and 13c-* shards 1-2; no canary environment in this process (the integration suite's canaries are per-test values), so the fixed patterns, the store host and the storage-path classes apply
+12c-integration-lang-unset-shard1of3.log
+12c-integration-lang-unset-shard2of3.log
+12c-integration-lang-unset-shard3of3.log
+13c-integration-lang-cutf8-shard1of3.log
+13c-integration-lang-cutf8-shard2of3.log
+log-scan: PASS: 5 file(s), 6148 line(s), 0 canary value(s), 7 fixed pattern(s), 0 store host(s), 0 storage path(s)
+exit=0
+--- direct grep of 12 synthetic canary/secret literals from the test sources over the same logs (lines printed only when a value is found):
+end
+--- # 2026-11-10T12:07:16Z re-scan including 13c shard 3 (all six binding integration logs):
+log-scan: PASS: 6 file(s), 6805 line(s), 0 canary value(s), 7 fixed pattern(s), 0 store host(s), 0 storage path(s)
+exit=0

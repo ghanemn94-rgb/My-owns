@@ -1,0 +1,206 @@
+port-policy: PostgreSQL listening on port 32440 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.2mup4C/claude-0/review-dg6
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwahl4of_a6d11858 (server_encoding UTF8); applied 119 migrations to a fresh database
+stdout | apps/api/test/integration/hardening/integrity-sweep.test.ts > REQ-S16-023 part 1: finalized records cannot be destructively deleted (ADR-0052 §9.1) > its evidence: removing the evidence link returns 409 evidence.finalized and changes nothing
+[integrity-sweep] removeEvidenceLink on approved-G1 evidence: 409 evidence.finalized
+
+stdout | apps/api/test/integration/hardening/integrity-sweep.test.ts > REQ-S16-023 part 1: finalized records cannot be destructively deleted (ADR-0052 §9.1) > its evidence: archiving the evidence item returns 409 evidence.finalized and changes nothing
+[integrity-sweep] archiveEvidence on approved-G1 evidence: 409 evidence.finalized
+
+stdout | apps/api/test/integration/hardening/integrity-sweep.test.ts > REQ-S16-023 part 1: finalized records cannot be destructively deleted (ADR-0052 §9.1) > every DELETE operation of the contract is listed, and no finalized-record table grants DELETE to mth_app
+[integrity-sweep] tables with DELETE granted to mth_app: idempotency_record, oidc_login_state, search_document, session, user_identity
+
+stdout | apps/api/test/integration/hardening/integrity-sweep.test.ts > REQ-S16-023 part 4: required ownership and canonical references on every P6 table (ADR-0052 §9.4) > every P6 table exists, and every uuid *_id column is a foreign key, a trigger-guarded record reference, or a history copy of one
+[integrity-sweep] P6 tables: 33; *_id columns: 86; foreign-key columns: 130; record_ref-guarded tables: record_sensitivity, sensitive_record_grant; unguarded: deliverable_external_change_event.evidence_id, deliverable_external_change_event.outbound_write_id, import_row_commit.target_record_id, record_sensitivity_change.record_id
+[integrity-sweep] P6 tables with a nullable organization_id: operational_exception, service_identity
+
+ ✓ |integration| apps/api/test/integration/hardening/integrity-sweep.test.ts (23 tests) 12653ms
+   ✓ REQ-S16-023 part 1: finalized records cannot be destructively deleted (ADR-0052 §9.1) > evidence cited only by a submission without an approved decision (rejected) is archived and unlinked normally  3148ms
+   ✓ REQ-S16-023 part 2: an illegal status transition returns 422 invalid_transition (ADR-0052 §9.2) > P6 sensitive grant: revoked -> revoked (revoke again) is 422; the grant keeps version 2 and its two audit events  377ms
+   ✓ REQ-S16-023 part 2: an illegal status transition returns 422 invalid_transition (ADR-0052 §9.2) > DG1 transformation: active -> closed by a status edit is 422; nothing written  309ms
+   ✓ REQ-S16-023 part 2: an illegal status transition returns 422 invalid_transition (ADR-0052 §9.2) > DG3 T08 dependency: resolved -> at_risk is 422; nothing written  642ms
+   ✓ REQ-S16-023 part 2: an illegal status transition returns 422 invalid_transition (ADR-0052 §9.2) > DG4 stakeholder champion: removed -> removed (remove again) is 422; nothing written  692ms
+   ✓ REQ-S16-023 part 3: a duplicate unique key returns 409 (ADR-0052 §9.3) > P6 record_sensitivity_record_key: a second create with If-Match "0" is 409 version_conflict; nothing written  352ms
+   ✓ REQ-S16-023 part 3: a duplicate unique key returns 409 (ADR-0052 §9.3) > DG4 stakeholder_champion active key: the same person twice is 409 stakeholder_champion.exists; nothing written  464ms
+stdout | apps/api/test/integration/hardening/route-inventory.test.ts > REQ-S02-006: the route-inventory sweep over every mutating operation of the contract (ADR-0051 §5) > the inventory: eligible = every unsafe operation minus the pending aggregate and the two named exclusions
+[route-inventory] contract unsafe operations 486; pending (not routed) 0 (none); excluded devLogin, receiveWebhook; eligible 484
+
+stdout | apps/api/test/integration/hardening/route-inventory.test.ts > REQ-S02-006: the route-inventory sweep over every mutating operation of the contract (ADR-0051 §5) > case 1, unauthenticated (no session cookie): 401 unauthenticated, nothing persisted
+[route-inventory] case 1 unauthenticated: 484 eligible operations swept; statuses {"401":484}; audit rows besides authorization.denied 160 -> 160; tables fingerprinted 336, changed 0 (none)
+
+stdout | apps/api/test/integration/hardening/route-inventory.test.ts > REQ-S02-006: the route-inventory sweep over every mutating operation of the contract (ADR-0051 §5) > case 2, CSRF (a session without X-CSRF-Token): 403 csrf, nothing persisted
+[route-inventory] case 2 csrf: 484 eligible operations swept; statuses {"403":484}; audit rows besides authorization.denied 160 -> 160; tables fingerprinted 336, changed 0 (none)
+
+stdout | apps/api/test/integration/hardening/route-inventory.test.ts > REQ-S02-006: the route-inventory sweep over every mutating operation of the contract (ADR-0051 §5) > case 3a, unauthorized (org A member with no assignment, valid CSRF, valid request): 403 or 404, never 2xx, nothing persisted
+[route-inventory] case 3a unauthorized (no assignment): 481 eligible operations swept; statuses {"403":137,"404":344}; audit rows besides authorization.denied 160 -> 160; tables fingerprinted 336, changed 0 (none)
+
+stdout | apps/api/test/integration/hardening/route-inventory.test.ts > REQ-S02-006: the route-inventory sweep over every mutating operation of the contract (ADR-0051 §5) > case 3a, unauthorized (org A member with no assignment, valid CSRF, valid request): 403 or 404, never 2xx, nothing persisted
+[route-inventory] case 3a: 312 of 481 operations address a real record of org A by path; 3 caller-scoped operations excluded (logout, updateMyPreferences, previewFormula)
+
+stdout | apps/api/test/integration/hardening/route-inventory.test.ts > REQ-S02-006: the route-inventory sweep over every mutating operation of the contract (ADR-0051 §5) > case 3b, unauthorized (a user of org B holding every role there) on org A's records: 403 or 404, nothing persisted
+[route-inventory] case 3b unauthorized (other organization): 312 eligible operations swept; statuses {"403":70,"404":242}; audit rows besides authorization.denied 160 -> 160; tables fingerprinted 336, changed 0 (none)
+
+stdout | apps/api/test/integration/hardening/route-inventory.test.ts > REQ-S02-006: the route-inventory sweep over every mutating operation of the contract (ADR-0051 §5) > case 4, invalid input (authorized session): 400 with the uniform validation body, never 2xx or 500, nothing persisted
+[route-inventory] case 4 invalid input: 482 eligible operations swept; statuses {"400":482}; audit rows besides authorization.denied 160 -> 160; tables fingerprinted 336, changed 0 (none)
+
+stdout | apps/api/test/integration/hardening/route-inventory.test.ts > REQ-S02-006: the route-inventory sweep over every mutating operation of the contract (ADR-0051 §5) > case 4, invalid input (authorized session): 400 with the uniform validation body, never 2xx or 500, nothing persisted
+[route-inventory] case 4: 482 operations by input kind {"body-not-an-object":2,"missing-required-property":115,"malformed-path-id":340,"malformed-path-parameter":25}; excluded (no invalid input possible): logout, requestDemoReset
+
+stdout | apps/api/test/integration/hardening/route-inventory.test.ts > REQ-S02-006: the route-inventory sweep over every mutating operation of the contract (ADR-0051 §5) > positive control (runs last): the same generated requests, sent by an authorized user, succeed and are detected as written
+[route-inventory] positive control: 18 of 62 generated transformation-scoped creates succeeded for an authorized user (statuses {"201":18,"400":5,"403":1,"404":2,"422":36}; the others are refused by business rules on the minimal synthetic body, e.g. a referenced record that does not exist); audit rows 160 -> 179; tables changed 22
+
+ ✓ |integration| apps/api/test/integration/hardening/route-inventory.test.ts (10 tests) 75662ms
+   ✓ REQ-S02-006: the route-inventory sweep over every mutating operation of the contract (ADR-0051 §5) > every case-3 and case-4 exclusion is derived, pinned and named  2517ms
+   ✓ REQ-S02-006: the route-inventory sweep over every mutating operation of the contract (ADR-0051 §5) > the fingerprint ignores only the session's sliding idle expiry, whatever a case's duration (F-DG6-124/F-DG6-145)  1379ms
+   ✓ REQ-S02-006: the route-inventory sweep over every mutating operation of the contract (ADR-0051 §5) > case 1, unauthenticated (no session cookie): 401 unauthenticated, nothing persisted  9196ms
+   ✓ REQ-S02-006: the route-inventory sweep over every mutating operation of the contract (ADR-0051 §5) > case 2, CSRF (a session without X-CSRF-Token): 403 csrf, nothing persisted  13429ms
+   ✓ REQ-S02-006: the route-inventory sweep over every mutating operation of the contract (ADR-0051 §5) > case 3a, unauthorized (org A member with no assignment, valid CSRF, valid request): 403 or 404, never 2xx, nothing persisted  12540ms
+   ✓ REQ-S02-006: the route-inventory sweep over every mutating operation of the contract (ADR-0051 §5) > case 3b, unauthorized (a user of org B holding every role there) on org A's records: 403 or 404, nothing persisted  5167ms
+   ✓ REQ-S02-006: the route-inventory sweep over every mutating operation of the contract (ADR-0051 §5) > case 4, invalid input (authorized session): 400 with the uniform validation body, never 2xx or 500, nothing persisted  15404ms
+   ✓ REQ-S02-006: the route-inventory sweep over every mutating operation of the contract (ADR-0051 §5) > positive control (runs last): the same generated requests, sent by an authorized user, succeed and are detected as written  2122ms
+ ✓ |integration| apps/api/test/integration/access/sensitive-reads.test.ts (15 tests) 5651ms
+   ✓ before any record is marked: DG4/DG5 responses unchanged > lists every record to the workstream member, and no aggregate carries includesRestrictedRecords  800ms
+   ✓ REQ-S10-002: a sensitive benefit is hidden from a workstream member without the grant > benefit list and GET: absent / 404 for the member and AUD; visible to the owner, the creator and the TO  431ms
+   ✓ REQ-S10-002: a sensitive benefit is hidden from a workstream member without the grant > the benefit's sub-resource reads (values, lifecycle, enablers, allocations, measurements) are 404 too  385ms
+   ✓ REQ-S10-002: a sensitive benefit is hidden from a workstream member without the grant > visible to the member after a grant; hidden again after the revocation (next request)  359ms
+   ✓ REQ-S10-002: a sensitive benefit is hidden from a workstream member without the grant > business case: list, GET, totals, lines and financial metrics hidden from the member; the creator reads them  350ms
+   ✓ REQ-S10-004: export selection through the ReadScope > the owner's snapshot exported by the member (by snapshot id) is 403 too  436ms
+ ✓ |integration| apps/api/test/integration/audit/audit-events.test.ts (15 tests | 1 skipped) 2597ms
+   ✓ filters and pagination > filters by transformation, record, record type, actor and time  412ms
+   ✓ getAuditEvent: the same scope, 404 outside it > returns an event inside the caller's scope and 404 for one outside it, missing, or malformed  300ms
+ ✓ |integration| apps/api/test/integration/access/served-error-text-restricted-z13c.test.ts (4 tests) 4114ms
+   ✓ D-228 (2): served error texts that embed a hidden record id show the restricted marker > operational exception: lastErrorMessage (job failure) is redacted in list, get, acknowledge and resolve  699ms
+   ✓ D-228 (2): served error texts that embed a hidden record id show the restricted marker > integration run: errorMessage and the actionable error's params are redacted in the test run, list, detail and connector  1458ms
+   ✓ D-228 (2): served error texts that embed a hidden record id show the restricted marker > after an explicit grant, the same readers see the real error texts and no marker  423ms
+ ✓ |integration| apps/api/test/integration/access/automation-restricted-tokens-z15.test.ts (7 tests) 6027ms
+   ✓ T-DG6-BE-Z15: restricted tokens are bound to their issuing rule-version row (D-233, F-DG6-640) > (a) the token is an opaque issuer tag: no row version, no row id, no hidden value; other rows issue other tags  793ms
+   ✓ T-DG6-BE-Z15: restricted tokens are bound to their issuing rule-version row (D-233, F-DG6-640) > (b) F-DG6-640: a token copied from the published version 1 into its draft version 2 at the same row version is refused stale  1336ms
+   ✓ T-DG6-BE-Z15: restricted tokens are bound to their issuing rule-version row (D-233, F-DG6-640) > (c) F-DG6-640: a token copied from another rule's version at the same row version is refused stale  1001ms
+   ✓ T-DG6-BE-Z15: restricted tokens are bound to their issuing rule-version row (D-233, F-DG6-640) > (d) F-DG6-580: the same draft saved twice; the second save carries the first save's tokens and is refused  432ms
+   ✓ T-DG6-BE-Z15: restricted tokens are bound to their issuing rule-version row (D-233, F-DG6-640) > (e) F-DG6-580: after a 409, the same draft re-sent with the refreshed If-Match is refused; S stays  693ms
+   ✓ T-DG6-BE-Z15: restricted tokens are bound to their issuing rule-version row (D-233, F-DG6-640) > (f) the normal round trip keeps the hidden literal wherever the token now sits, and re-issues a fresh tag  565ms
+ ✓ |integration| apps/api/test/integration/identity.test.ts (13 tests) 1950ms
+   ✓ dev login (AUTH_MODE=dev) > does not exist (404) when AUTH_MODE=oidc  419ms
+   ✓ logout > uses the __Host- cookie with Secure on an https base URL  555ms
+stdout | apps/api/test/integration/security/sql-injection.test.ts > SQL injection (REQ-S16-030; ADR-0052 §11) > every free-text query parameter of the list and search operations: never 500, no extra rows
+  listUsers?q "' OR 1=1 --": 200, 0 row(s)
+  listUsers?q "'; DROP TABLE audit_event; --": 200, 0 row(s)
+  listUsers?q "1) OR (1=1": 200, 0 row(s)
+  listTransformations?q "' OR 1=1 --": 200, 1 row(s)
+  listTransformations?q "'; DROP TABLE audit_event; --": 200, 1 row(s)
+  listTransformations?q "1) OR (1=1": 200, 1 row(s)
+  listStrategicGuardrails?q "' OR 1=1 --": 200, 0 row(s)
+  listStrategicGuardrails?q "'; DROP TABLE audit_event; --": 200, 0 row(s)
+  listStrategicGuardrails?q "1) OR (1=1": 200, 0 row(s)
+  listOutcomes?q "' OR 1=1 --": 200, 0 row(s)
+  listOutcomes?q "'; DROP TABLE audit_event; --": 200, 0 row(s)
+  listOutcomes?q "1) OR (1=1": 200, 0 row(s)
+  listDiagnosticItems?q "' OR 1=1 --": 200, 0 row(s)
+  listDiagnosticItems?q "'; DROP TABLE audit_event; --": 200, 0 row(s)
+  listDiagnosticItems?q "1) OR (1=1": 200, 0 row(s)
+  listDiagnosticFindings?q "' OR 1=1 --": 200, 0 row(s)
+  listDiagnosticFindings?q "'; DROP TABLE audit_event; --": 200, 0 row(s)
+  listDiagnosticFindings?q "1) OR (1=1": 200, 0 row(s)
+  listWorkstreamOutputs?q "' OR 1=1 --": 200, 0 row(s)
+  listWorkstreamOutputs?q "'; DROP TABLE audit_event; --": 200, 0 row(s)
+  listWorkstreamOutputs?q "1) OR (1=1": 200, 0 row(s)
+  listTomGaps?q "' OR 1=1 --": 200, 1 row(s)
+  listTomGaps?q "'; DROP TABLE audit_event; --": 200, 1 row(s)
+  listTomGaps?q "1) OR (1=1": 200, 1 row(s)
+  listCapabilityHeatmapEntries?q "' OR 1=1 --": 200, 0 row(s)
+  listCapabilityHeatmapEntries?q "'; DROP TABLE audit_event; --": 200, 0 row(s)
+  listCapabilityHeatmapEntries?q "1) OR (1=1": 200, 0 row(s)
+  listJourneies?q "' OR 1=1 --": 200, 0 row(s)
+  listJourneies?q "'; DROP TABLE audit_event; --": 200, 0 row(s)
+  listJourneies?q "1) OR (1=1": 200, 0 row(s)
+  listJourneyPainPoints?q "' OR 1=1 --": 200, 0 row(s)
+  listJourneyPainPoints?q "'; DROP TABLE audit_event; --": 200, 0 row(s)
+  listJourneyPainPoints?q "1) OR (1=1": 200, 0 row(s)
+  listInitiatives?q "' OR 1=1 --": 200, 0 row(s)
+  listInitiatives?q "'; DROP TABLE audit_event; --": 200, 0 row(s)
+  listInitiatives?q "1) OR (1=1": 200, 0 row(s)
+  searchLessons?q "' OR 1=1 --": 200, 0 row(s)
+  searchLessons?q "'; DROP TABLE audit_event; --": 200, 0 row(s)
+  searchLessons?q "1) OR (1=1": 200, 0 row(s)
+  searchLessons?tag "' OR 1=1 --": 200, 0 row(s)
+  searchLessons?tag "'; DROP TABLE audit_event; --": 200, 0 row(s)
+  searchLessons?tag "1) OR (1=1": 200, 0 row(s)
+  searchMethodology?q "' OR 1=1 --": 200, 0 row(s)
+  searchMethodology?q "'; DROP TABLE audit_event; --": 200, 0 row(s)
+  searchMethodology?q "1) OR (1=1": 200, 14 row(s)
+  searchRecords?q "' OR 1=1 --": 200, 0 row(s)
+  searchRecords?q "'; DROP TABLE audit_event; --": 200, 0 row(s)
+  searchRecords?q "1) OR (1=1": 200, 0 row(s)
+  operations: listUsers(q), listTransformations(q), listStrategicGuardrails(q), listOutcomes(q), listDiagnosticItems(q), listDiagnosticFindings(q), listWorkstreamOutputs(q), listTomGaps(q), listCapabilityHeatmapEntries(q), listJourneies(q), listJourneyPainPoints(q), listInitiatives(q), searchLessons(q,tag), searchMethodology(q), searchRecords(q); 48 probes
+  declared but not served yet (400 validation for any value): none
+
+stdout | apps/api/test/integration/security/sql-injection.test.ts > SQL injection (REQ-S16-030; ADR-0052 §11) > clause summary
+PASS REQ-S16-030 SQL injection: 3 payloads in every free-text list/search query parameter and a body field: no 500, no extra rows, stored as text
+
+ ✓ |integration| apps/api/test/integration/security/sql-injection.test.ts (4 tests) 3853ms
+   ✓ SQL injection (REQ-S16-030; ADR-0052 §11) > free-text body fields store each payload as text; a served text filter matches it literally  501ms
+   ✓ SQL injection (REQ-S16-030; ADR-0052 §11) > every free-text query parameter of the list and search operations: never 500, no extra rows  1816ms
+stdout | apps/api/test/integration/security/rate-limits.test.ts > rate limiting (REQ-S16-030; ADR-0052 §4): each class with its budget set to 1 > clause summary
+PASS REQ-S16-030 rate limiting: 7 classes, 8 operations (global/getMe, auth/devLogin, upload/uploadEvidenceContent, upload/createImport, search/searchRecords, assistant/postAssistantMessage, webhook/receiveWebhook, export/createExport) at budget 1 -> second call 429 rate_limited with Retry-After; user-keyed classes counted per user; one class log line per refusal
+
+ ✓ |integration| apps/api/test/integration/security/rate-limits.test.ts (10 tests) 4683ms
+   ✓ rate limiting (REQ-S16-030; ADR-0052 §4): each class with its budget set to 1 > global (RATE_LIMIT_PER_MINUTE=1, getMe): the second call is 429 rate_limited with Retry-After  351ms
+   ✓ rate limiting (REQ-S16-030; ADR-0052 §4): each class with its budget set to 1 > auth (AUTH_RATE_LIMIT_PER_MINUTE=1, devLogin): the second call is 429 rate_limited with Retry-After  324ms
+   ✓ rate limiting (REQ-S16-030; ADR-0052 §4): each class with its budget set to 1 > upload (UPLOAD_RATE_LIMIT_PER_MINUTE=1, uploadEvidenceContent): the second call is 429 rate_limited with Retry-After  693ms
+   ✓ rate limiting (REQ-S16-030; ADR-0052 §4): each class with its budget set to 1 > upload (UPLOAD_RATE_LIMIT_PER_MINUTE=1, createImport): the second call is 429 rate_limited with Retry-After  726ms
+   ✓ rate limiting (REQ-S16-030; ADR-0052 §4): each class with its budget set to 1 > search (SEARCH_RATE_LIMIT_PER_MINUTE=1, searchRecords): the second call is 429 rate_limited with Retry-After  597ms
+   ✓ rate limiting (REQ-S16-030; ADR-0052 §4): each class with its budget set to 1 > assistant (ASSISTANT_RATE_LIMIT_PER_MINUTE=1, postAssistantMessage): the second call is 429 rate_limited with Retry-After  759ms
+   ✓ rate limiting (REQ-S16-030; ADR-0052 §4): each class with its budget set to 1 > webhook (WEBHOOK_RATE_LIMIT_PER_MINUTE=1, receiveWebhook): the second call is 429 rate_limited with Retry-After  687ms
+   ✓ rate limiting (REQ-S16-030; ADR-0052 §4): each class with its budget set to 1 > export (EXPORT_RATE_LIMIT_PER_MINUTE=1, createExport): the second call is 429 rate_limited with Retry-After  540ms
+ ✓ |integration| apps/api/test/integration/identity/other-realm.test.ts (13 tests) 14442ms
+   ✓ ID-token issuer, audience and signing-key rejection (ADR-0054 §1) > control: a token of the configured realm signs in (provisioned just in time)  1455ms
+ ✓ |integration| tests/qa/integration/a13-p6-connector-run-kill-restart.test.ts (1 test) 141018ms
+   ✓ A13 (REQ-S20-013): the process executing a connector run is killed mid-run and restarted > the killed run stages nothing and stays `running` with Unknown counts; the restarted watch finishes it once  124607ms
+ ✓ |integration| apps/api/test/integration/procedures/coverage.test.ts (4 tests) 1673ms
+   ✓ getMethodologyCoverage (REQ-S01-003) > authorization and refusals: methodology.read (AUD and ADM_METHOD read); 403 without it; 400; 404  372ms
+stdout | apps/api/test/integration/access/sensitive-reference-inventory.test.ts > T-DG6-BE-Z12: the sensitive-reference inventory matches the schema (F-DG6-480 class) > every reference column of the catalog is classified, with its kind, and no row is stale
+[BE-Z12 inventory] catalog: fk=54 uuid=59 json=84 array=2 text=77
+
+stdout | apps/api/test/integration/access/sensitive-reference-inventory.test.ts > T-DG6-BE-Z12: the sensitive-reference inventory matches the schema (F-DG6-480 class) > every operation, exercise and status is real
+[BE-Z12 inventory] redacted=60 holder-restricted=54 cannot-name=135 D-219=2 not-served=22 own-input=3
+
+ ✓ |integration| apps/api/test/integration/access/sensitive-reference-inventory.test.ts (2 tests) 249ms
+ ✓ |integration| tests/qa/integration/a13-p6-import-commit-kill-restart.test.ts (1 test) 18255ms
+   ✓ A13 (REQ-S20-013): the API process is killed during an import commit and restarted > the killed commit leaves the batch staged with nothing written; the retried commit commits once; a replay is refused  11071ms
+stdout | apps/api/test/integration/security/xss.test.ts > XSS in rich text (REQ-S16-030; ADR-0052 §3 payload set) > clause summary: every surface passed
+PASS REQ-S16-030 XSS in rich text: 6 payloads x 4 surfaces round-trip byte-identical
+
+ ✓ |integration| apps/api/test/integration/security/xss.test.ts (5 tests) 3911ms
+   ✓ XSS in rich text (REQ-S16-030; ADR-0052 §3 payload set) > (a) a P5 rich_text form field stores and returns each payload verbatim  661ms
+   ✓ XSS in rich text (REQ-S16-030; ADR-0052 §3 payload set) > (b) the T03 gap text stores and returns each payload verbatim  478ms
+   ✓ XSS in rich text (REQ-S16-030; ADR-0052 §3 payload set) > (d) an inbox-visible title (a meeting action's) reaches its owner's inbox verbatim  495ms
+stdout | apps/api/test/integration/security/csrf.test.ts > CSRF (REQ-S16-030; ADR-0052 §4) > one mutation per module: no Origin, a foreign Origin, no token or a wrong token -> 403 csrf; correct -> not csrf
+PASS REQ-S16-030 CSRF: 109 modules (contract tags), one mutation each, x 4 refusals -> 403 csrf; correct Origin and token -> not csrf
+  sample: access:createSensitiveGrant, actions:updateActionRegisterItem, adoption-indicators:createAdoptionMetricLink, adoption-interventions:createAdoptionIntervention, agenda-items:createAgendaItem, approval-routes:decideApprovalRouteStep, approvals:decideApproval, assessment-forms:createAssessmentForm, assessment-records:createAssessmentRecord, assistant:putAssistantSetting, attendance:recordMeetingAttendance, auth:logout, automation:dismissAutomationFailure, bau-handovers:createBauHandover, benefit-allocations:replaceBenefitAllocations, benefit-formulas:createBenefitFormula, benefit-groups:createBenefitGroup, benefit-measurements:updateBenefitMeasurement, benefit-overlaps:createBenefitOverlap, benefit-scenarios:updateBenefitScenarioValue, benefit-valuation-methods:createBenefitValuationMethod, benefits:removeBenefitEnabler, branding:putBrandingSettings, budget-lines:updateBudgetLine, business-cases:createBusinessCase, calendar:updateBusinessCalendar, capacity:createCapacity, change-requests:putChangeControlPolicy, charter:updateCharter, closure:closeInitiative, control-checks:recordControlCheck, controls:createControl, corrective-actions:createCorrectiveActionRule, dashboards:putDashboardRagPolicy, data-quality:resolveDataQualityFinding, day-90-tests:completeDayNinetyTest, decision-rights:createDecisionRight, decisions:createDecision, delegations:createDelegation, dependencies:createT08Dependency, design:createCapabilityHeatmapEntry, diagnose:createDiagnosticFinding, direction:setNorthStar, environment:requestDemoReset, escalations:createEscalationRule, evidence:createEvidence, executive-decisions:createExecutiveDecision, exports:createExport, finance-validations:amendFinanceValidation, financial-metrics:putFinancialMetricAssumptions, forms:createFormDraft, formula-previews:previewFormula, forums:createForum, gate-conditions:closeGateCondition, gate-exceptions:createGateException, gates:configureGateApprover, groups:updateGroup, health-checks:createHealthCheck, imports:createImport, improvement-items:createImprovementItem, integrations:createConnector, jobs:updateJobSchedule, kpi:createBaseline, kpi-actuals:acceptKpiActual, kpi-restatements:createKpiRestatement, kpi-versions:createKpiRagThreshold, launch-plans:updateLaunchPlan, lessons:createLesson, me:updateMyPreferences, meeting-series:createMeetingSeries, meetings:createMeeting, methodology:updateTomDimensionLabels, methodology-migrations:createMethodologyMigration, minutes:updateMeetingMinutes, modular-entry:createInheritedRecord, notifications:putNotificationPolicy, operations:acknowledgeOperationalException, organizations:updateBusinessUnit, owner-updates:createOwnerUpdate, performance-areas:createPerformanceArea, phases:updatePhaseStep, platform-admin:putNotificationChannel, portfolio:updateDeliverable, portfolios:createPortfolio, prioritization:createInitiativeScore, procedures:putProcedureDefinition, raci:submitGovernanceMatrix, rag-overrides:createRagOverride, raid:createRaidEntry, report-snapshots:discardReportSnapshot, reporting-periods:createReportingPeriod, reports:generateReportSnapshot, risk-dispositions:createRiskDisposition, roadmap:updateMilestone, role-mappings:createRoleMapping, scale:createScaleTransition, schedule-network:updateInitiativeSchedule, search:createSavedView, security:putUploadPolicy, stakeholder-groups:createChampionConstraint, status-model:setInitiativeAdoptionStatus, studio:updateConfigReviewPolicy, target-trajectories:createTargetTrajectory, tasks:markInboxNotificationRead, traceability:setOutcomeContributionAllocation, transformations:createTransformation, transition-decisions:createTransitionDecision, users:createUser, workstreams:createWorkstream
+
+ ✓ |integration| apps/api/test/integration/security/csrf.test.ts (3 tests) 12723ms
+   ✓ CSRF (REQ-S16-030; ADR-0052 §4) > one mutation per module: no Origin, a foreign Origin, no token or a wrong token -> 403 csrf; correct -> not csrf  12181ms
+stdout | apps/api/test/integration/security/uploads.test.ts > disallowed upload type (REQ-S16-030; ADR-0052 §1) > clause summary
+PASS REQ-S16-030 disallowed upload type: .exe -> 422 type_not_allowed; renamed .exe -> 422 type_mismatch
+
+stdout | apps/api/test/integration/security/uploads.test.ts > oversized upload (REQ-S16-030; ADR-0052 §1) > clause summary
+PASS REQ-S16-030 oversized upload: policy limit + 1 byte -> 413 evidence.too_large (default and narrowed)
+
+ ✓ |integration| apps/api/test/integration/security/uploads.test.ts (6 tests) 3712ms
+   ✓ disallowed upload type (REQ-S16-030; ADR-0052 §1) > an .exe is 422 evidence.type_not_allowed (also in upper case)  457ms
+   ✓ disallowed upload type (REQ-S16-030; ADR-0052 §1) > an .exe renamed .pdf is 422 evidence.type_mismatch (its bytes do not start %PDF-)  323ms
+   ✓ oversized upload (REQ-S16-030; ADR-0052 §1) > the default policy: 26214400 + 1 bytes is 413 evidence.too_large  1161ms
+   ✓ oversized upload (REQ-S16-030; ADR-0052 §1) > an IT-narrowed policy (1024 bytes): 1025 bytes is 413, exactly 1024 bytes is accepted  397ms
+ ✓ |integration| apps/api/test/integration/forms/bulk-conflict-p6.test.ts (2 tests) 1380ms
+
+ Test Files  18 passed (18)
+      Tests  137 passed | 1 todo (138)
+   Start at  09:27:25
+   Duration  459.84s (transform 16.88s, setup 0ms, collect 135.54s, tests 314.55s, environment 0ms, prepare 103ms)
+
