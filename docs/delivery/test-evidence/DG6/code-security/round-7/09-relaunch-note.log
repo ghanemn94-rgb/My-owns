@@ -1,0 +1,8 @@
+# 18:45Z first launch of pipe1/pipe2 used '( ... &)' inside a sandboxed command; the processes died with that command after writing only their header lines (04-typecheck.log, 12-*-shard*.log, 200 bytes each, no result). Removed and relaunched as harness background tasks at 2026-11-11T18:50:09Z.
+# 2026-11-11T18:52:23Z The relaunched LANG-unset integration pass (pipe2, 18:50Z) wrote to 12-*.log files that the cleanup 'rm' in the concurrently launched pipe1 command unlinked (a race in my own launch). Its output was unrecoverable, so I stopped that pass by removing its two clusters' postmaster.pid (PostgreSQL then shuts down). pipe2 continues with the C.UTF-8 pass; the LANG-unset pass is re-run separately (12-*.log).
+# Cluster logs of the stopped LANG-unset pass (read before with-pg.sh removed them), verbatim:
+#   qa-pg.Aq1CIe/pg.log: 2026-11-11 18:53:18.883 UTC [127] LOG:  performing immediate shutdown because data directory lock file is invalid
+#   qa-pg.Aq1CIe/pg.log: 2026-11-11 18:53:18.911 UTC [127] LOG:  database system is shut down
+#   qa-pg.wvb4Gq/pg.log: 2026-11-11 18:53:17.282 UTC [136] LOG:  received immediate shutdown request
+#   qa-pg.wvb4Gq/pg.log: 2026-11-11 18:53:17.335 UTC [136] LOG:  database system is shut down
+# The C.UTF-8 pass then ran 19:10-20:06Z (13-*.log) and the LANG-unset pass was re-run in full 20:07-20:40Z (12-*.log).

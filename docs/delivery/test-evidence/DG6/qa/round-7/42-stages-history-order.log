@@ -1,0 +1,39 @@
+## 2026-11-11T18:45:20Z HEAD 04569998d8cd9192d2b123d6488737cb1b6a53d5; read-only scan of docs/delivery/stages.json: history order, state vs last entry, transition legality (TRANSITIONS copied from tools/gates/lib/rules.mjs below)
+TRANSITIONS = {
+  PLANNED: ["BUILDING", "BLOCKED"],
+  BUILDING: ["REVIEWING", "BLOCKED"],
+  REVIEWING: ["FIXING", "VERIFYING", "BLOCKED"],
+  FIXING: ["REVIEWING", "VERIFYING", "BLOCKED"],
+  VERIFYING: ["APPROVED", "FIXING", "BLOCKED"],
+  APPROVED: ["FIXING"], // reopening an approved scope keeps its history
+  BLOCKED: ["PLANNED", "BUILDING", "REVIEWING", "FIXING", "VERIFYING"],
+};
+export const REGISTER_COLUMNS = [
+  "req_id", "class", "title", "source_ref", "source_heading", "template_id", "input_fields", "procedure",
+  "output", "owner_roles", "permissions", "automation", "screen_api", "acceptance", "increments",
+  "final_gate", "status", "evidence", "notes",
+];
+const OPTIONAL_COLUMNS = new
+DG0: state APPROVED, last entry APPROVED, 61 entries, out-of-order pairs: [(57, 'REVIEWING', '2026-09-30T15:45:00Z', 'FIXING', '2026-09-30T15:16:00Z')]
+DG1: state APPROVED, last entry APPROVED, 11 entries, out-of-order pairs: none
+DG2: state APPROVED, last entry APPROVED, 38 entries, out-of-order pairs: none
+DG3: state APPROVED, last entry APPROVED, 17 entries, out-of-order pairs: none
+DG4: state APPROVED, last entry APPROVED, 25 entries, out-of-order pairs: none
+DG5: state APPROVED, last entry APPROVED, 7 entries, out-of-order pairs: [(6, 'VERIFYING', '2026-10-26T12:00:00Z', 'APPROVED', '2026-10-26T06:30:00Z')]
+DG6: state REVIEWING, last entry REVIEWING, 14 entries, out-of-order pairs: none
+DG7: state PLANNED, last entry PLANNED, 1 entries, out-of-order pairs: none
+DG6 history (transitions):
+  [0] PLANNED 2026-09-28T11:30:00Z 
+  [1] BUILDING 2026-10-26T07:30:00Z DG6 starts after DG5 APPROVED (D-193, D-194): planning task T-DG6-ARCH-00 first.
+  [2] REVIEWING 2026-11-10T08:33:58Z Clean re-gate (D-238): round 1 frozen on candidate b506084b.
+  [3] FIXING 2026-11-10T12:33:11Z Re-gate round 1: QA and domain PASS, code-security FAIL (F-DG6-920 Medium); F-DG6-900 Low also open. Repairs T-DG6-BE-RG1 and T-DG6-FE-RG1.
+  [4] REVIEWING 2026-11-10T18:13:01Z Re-gate round 2 frozen on candidate d62b187b.
+  [5] FIXING 2026-11-10T21:21:06Z Re-gate round 2: domain FAIL (F-DG6-960), code-security FAIL (F-DG6-970, F-DG6-971); qa interrupted by a container restart (exit 143, no verdict record; its sidecars F-DG6-980 kept, write-once). F-DG6
+  [6] REVIEWING 2026-11-11T01:42:18Z Re-gate round 3 frozen on candidate 32e41b55.
+  [7] VERIFYING 2026-11-11T06:08:46Z Re-gate round 3 on 32e41b55: domain, code-security and qa all PASS; F-DG6-960/970/971/980 CLOSED_VERIFIED; no new finding. Release audit T-DG6-AUDIT-RG-R4 (round 4, single run: no finding awaits accep
+  [8] FIXING 2026-11-11T06:42:33Z Release audit T-DG6-AUDIT-RG-R4 (round 4) BLOCKED on F-DG6-990 (Low, seeded product text naming DG gates). Repair T-DG6-BE-RG3 (migration 0130; D-239). Entry recorded late (2026-11-11, after F-DG6-911
+  [9] REVIEWING 2026-11-11T11:32:40Z Re-gate round 5 frozen on candidate 5e819f7a.
+  [10] FIXING 2026-11-11T14:42:55Z Round 5 on 5e819f7a: code-security PASS; domain FAIL F-DG6-911; qa killed (exit 143), sidecar F-DG6-951 (same defect). Fixed in stages.json (e7cb240e7).
+  [11] REVIEWING 2026-11-11T14:42:56Z Round 6 on the same candidate 5e819f7a: domain and qa.
+  [12] FIXING 2026-11-11T18:35:32Z Round 6 on 5e819f7a: domain and qa PASS. D-240: the record fix of F-DG6-911/951 (e7cb240e7) lies after the candidate source_commit; decisions.md gains D-240 and DG6 is re-frozen for round 7.
+  [13] REVIEWING 2026-11-11T18:38:30Z Round 7 on the re-frozen candidate 10f71f24 (source d8868b2a5; D-240): domain, code-security and qa full reviews, each verifying F-DG6-911/951.

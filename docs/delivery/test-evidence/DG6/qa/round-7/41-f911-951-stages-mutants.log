@@ -1,0 +1,45 @@
+M1 removed 1 entry
+## 2026-11-11T18:50:10Z HEAD 04569998d8cd9192d2b123d6488737cb1b6a53d5 node v24.21.0; git status of stages.json: []
+### m0-control: node --import docs/delivery/test-evidence/DG6/qa/tests/round-6/stages-serve-mutant.mjs tools/gates/validate.mjs --historical --stage DG5
+PASS gate DG5 (historical)
+[stages-serve-mutant] served /var/tmp/mth-run.gu38YD/claude-0/mut/m0-control.json for 1 read(s) of stages.json
+rc=0
+### m0-control: node --import docs/delivery/test-evidence/DG6/qa/tests/round-6/stages-serve-mutant.mjs tools/gates/validate.mjs --historical --stage DG1
+PASS gate DG1 (historical)
+[stages-serve-mutant] served /var/tmp/mth-run.gu38YD/claude-0/mut/m0-control.json for 1 read(s) of stages.json
+rc=0
+### m0-control: node --import docs/delivery/test-evidence/DG6/qa/tests/round-6/stages-serve-mutant.mjs tools/gates/validate.mjs --pipeline
+PASS pipeline (active stage: DG6 REVIEWING)
+[stages-serve-mutant] served /var/tmp/mth-run.gu38YD/claude-0/mut/m0-control.json for 1 read(s) of stages.json
+rc=0
+### m1-no-0642-fixing: node --import docs/delivery/test-evidence/DG6/qa/tests/round-6/stages-serve-mutant.mjs tools/gates/validate.mjs --historical --stage DG5
+FAIL gate DG5 (historical) (1 problem)
+  - stages.json: DG6 illegal transition VERIFYING -> REVIEWING
+[stages-serve-mutant] served /var/tmp/mth-run.gu38YD/claude-0/mut/m1-no-0642-fixing.json for 1 read(s) of stages.json
+rc=1
+### m1-no-0642-fixing: node --import docs/delivery/test-evidence/DG6/qa/tests/round-6/stages-serve-mutant.mjs tools/gates/validate.mjs --historical --stage DG1
+FAIL gate DG1 (historical) (1 problem)
+  - stages.json: DG6 illegal transition VERIFYING -> REVIEWING
+[stages-serve-mutant] served /var/tmp/mth-run.gu38YD/claude-0/mut/m1-no-0642-fixing.json for 1 read(s) of stages.json
+rc=1
+### m1-no-0642-fixing: node --import docs/delivery/test-evidence/DG6/qa/tests/round-6/stages-serve-mutant.mjs tools/gates/validate.mjs --pipeline
+FAIL pipeline (active stage: DG6 REVIEWING) (1 problem)
+  - stages.json: DG6 illegal transition VERIFYING -> REVIEWING
+[stages-serve-mutant] served /var/tmp/mth-run.gu38YD/claude-0/mut/m1-no-0642-fixing.json for 1 read(s) of stages.json
+rc=1
+### m2-state-fixing: node --import docs/delivery/test-evidence/DG6/qa/tests/round-6/stages-serve-mutant.mjs tools/gates/validate.mjs --historical --stage DG5
+FAIL gate DG5 (historical) (1 problem)
+  - stages.json: DG6 state FIXING differs from last history entry REVIEWING
+[stages-serve-mutant] served /var/tmp/mth-run.gu38YD/claude-0/mut/m2-state-fixing.json for 1 read(s) of stages.json
+rc=1
+### m2-state-fixing: node --import docs/delivery/test-evidence/DG6/qa/tests/round-6/stages-serve-mutant.mjs tools/gates/validate.mjs --historical --stage DG1
+FAIL gate DG1 (historical) (1 problem)
+  - stages.json: DG6 state FIXING differs from last history entry REVIEWING
+[stages-serve-mutant] served /var/tmp/mth-run.gu38YD/claude-0/mut/m2-state-fixing.json for 1 read(s) of stages.json
+rc=1
+### m2-state-fixing: node --import docs/delivery/test-evidence/DG6/qa/tests/round-6/stages-serve-mutant.mjs tools/gates/validate.mjs --pipeline
+FAIL pipeline (active stage: DG6 FIXING) (1 problem)
+  - stages.json: DG6 state FIXING differs from last history entry REVIEWING
+[stages-serve-mutant] served /var/tmp/mth-run.gu38YD/claude-0/mut/m2-state-fixing.json for 1 read(s) of stages.json
+rc=1
+## after: git status of stages.json: []
