@@ -1,0 +1,421 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG6",
+  "round": 3,
+  "candidate_id": "sha256:32e41b5581a9beeba357a6c0dd5b50c414226910232ebfbb711c2178024376b5",
+  "source_commit": "f56f1b3d24c00d1803f6627c99b3f422a47b3014",
+  "reviewer_role": "qa-verifier",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG6-T-DG6-REV-QA-RG-R3-qa-verifier-20261111T014659Z-9aa58015",
+    "session_id": "9aa58015-f0cb-410b-af49-b3e7df0efc21"
+  },
+  "implementation_author": [
+    "solution-architect",
+    "backend-workflow-engineer",
+    "kpi-benefits-engineer",
+    "frontend-ux-engineer",
+    "transformation-analyst",
+    "devops-engineer",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "In this run qa-verifier authored no product implementation in the DG6 scope and changed no candidate file. The product (apps/**, packages/**, migrations, deploy/**, ADRs), including the reviewed repair T-DG6-BE-RG2, was written by the implementer roles listed. The candidate's acceptance suites under tests/qa/** and e2e/** were written before the freeze by earlier qa-verifier authoring tasks (T-DG6-QA-A to H). They are tests, not implementation; I judged them here as a reviewer, re-ran them and probed beyond them with my own tests, which stay outside the candidate under docs/delivery/test-evidence/DG6/qa/tests/round-3/ (and my round-1/round-2 probes, re-used unchanged). I formed this verdict without reading any other reviewer's round-3 record (the two other round-3 runs were auto-committed during my run; I did not open them). I read the other reviewers' round-2 sidecars and probes only because the assignment asks me to re-run the probes that raised the open findings."
+  },
+  "assignment": "docs/delivery/assignments/DG6/round-3/qa-verifier.md",
+  "requirements_checked": [
+    "REQ-DLV-038",
+    "REQ-S01-005",
+    "REQ-S02-006",
+    "REQ-S10-002",
+    "REQ-S10-004",
+    "REQ-S12-019",
+    "REQ-S12-023",
+    "REQ-S12-024",
+    "REQ-S13-011",
+    "REQ-S13-013",
+    "REQ-S15-001",
+    "REQ-S15-003",
+    "REQ-S15-007",
+    "REQ-S15-009",
+    "REQ-S15-010",
+    "REQ-S15-011",
+    "REQ-S15-012",
+    "REQ-S15-013",
+    "REQ-S15-014",
+    "REQ-S16-006",
+    "REQ-S16-007",
+    "REQ-S16-022",
+    "REQ-S16-023",
+    "REQ-S16-026",
+    "REQ-S16-027",
+    "REQ-S16-029",
+    "REQ-S16-030",
+    "REQ-S16-032",
+    "REQ-S17-001",
+    "REQ-S17-002",
+    "REQ-S17-003",
+    "REQ-S17-005",
+    "REQ-S17-006",
+    "REQ-S17-007",
+    "REQ-S17-008",
+    "REQ-S17-009",
+    "REQ-S17-010",
+    "REQ-S17-011",
+    "REQ-S20-001",
+    "REQ-S20-012",
+    "REQ-S20-013",
+    "REQ-S20-014",
+    "REQ-S20-017",
+    "REQ-S20-020",
+    "REQ-S20-021",
+    "REQ-S20-022",
+    "REQ-S20-029",
+    "REQ-S20-030"
+  ],
+  "checks_run": [
+    {
+      "id": "QA-RG-R3-00-candidate",
+      "procedure": "Verify the frozen candidate at start and end on the complete (non-shallow) working tree of the main repository, and over the full tree of the source commit; confirm the product tree equals a0cf22bba and that HEAD differs from the source commit only in docs/delivery.",
+      "command": "git rev-parse HEAD; git rev-parse --is-shallow-repository; node tools/gates/candidate.mjs --stage DG6; node tools/gates/candidate.mjs --stage DG6 --ref f56f1b3d24c00d1803f6627c99b3f422a47b3014; git diff a0cf22bba f56f1b3d2 -- . ':!docs/delivery'; git diff --name-only f56f1b3d2 HEAD -- . ':!docs/delivery'",
+      "environment": "Main repository /home/user/My-owns, Node 24.21.0; disposable clones rv and rv2 under $TMPDIR (shared objects, sparse checkout of the source commit)",
+      "expected": "candidate_id sha256:32e41b55...76b5 with 2773 files at start, over the source commit and at end; empty product diff; no file outside docs/delivery differs between the source commit and HEAD",
+      "actual": "Start (HEAD c31732980, not shallow): sha256:32e41b5581a9beeba357a6c0dd5b50c414226910232ebfbb711c2178024376b5, 2773 files, rc 0; --ref f56f1b3d2: the same id (computed in rv2's setup, source HEAD). git diff a0cf22bba..f56f1b3d2 outside docs/delivery: empty; f56f1b3d2..HEAD outside docs/delivery: none (HEAD adds the round-3 freeze and the interrupted-run records). End (05:57Z): the same id, 2773 files, rc 0. HEAD had moved to 9fa63d13f during my run: two auto-commits of the other reviewers' round-3 runs, 0 files outside docs/delivery (recorded in 00-candidate-end.log; I did not open those records). The disposable clones and the store copy were removed at the end.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-3/00-candidate-start.log",
+        "docs/delivery/test-evidence/DG6/qa/round-3/00-candidate-start-rv2.log",
+        "docs/delivery/test-evidence/DG6/qa/round-3/01-install-rv2.log",
+        "docs/delivery/test-evidence/DG6/qa/round-3/00-candidate-end.log",
+        "docs/delivery/test-evidence/DG6/qa/round-3/scripts/setup.sh"
+      ]
+    },
+    {
+      "id": "QA-RG-R3-01-open-findings",
+      "procedure": "Re-run the round-2 reproductions of F-DG6-960 (domain probe rebuilt from context-recheck.test.ts lines 1-147 + its tail), F-DG6-970 and F-DG6-971 (code-security probes, unchanged) and F-DG6-980 (my probe, unchanged) on the candidate with the shipped http_endpoint provider and the local fake model on a disposable PostgreSQL 16; then mutant M1 (conversations.ts and answer.ts reverted to 71ff750ed with git apply -R) and mutant M2 (migration 0129 removed); restore and confirm a clean clone.",
+      "command": "scripts/probes.sh (tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration <probe files> history-recheck.test.ts context-recheck.test.ts)",
+      "environment": "Disposable clone rv at f56f1b3d2, Node 24.21.0, disposable PostgreSQL 16.15 on port 32510 (MTH_PORT_POOL 32500-32599)",
+      "expected": "On the candidate: no withheld answer text in a later model request, no re-served withheld text, a pre-0128 suggestion taken to a draft; under M1/M2 the defects return",
+      "actual": "Candidate (log 30, exit 1 by design, 13 passed / 2 failed of 15): my F-DG6-980 probe passes ('carries the WITHHELD A1 text as history: false'; 'A2 ... content holds the withheld fact: false'); the domain probe passes ('sent as history = false', 4 messages where round 2 had 5); history-recheck 5/5 and context-recheck 5/5 pass. The two failures are code-security probes that assert the defect: zz-sec-r2-assistant-history fails on its 'GET body contains the revoked title' check because its fake returns a HARD-CODED text naming both titles when the history holds no assistant message (probe line 46), while its own log shows 'history holds the revoked title: false' and 'data block holds tA2: false'; zz-sec-r2-legacy-suggestion-to-draft fails in its own setup DDL ('constraint assistant_suggestion_context_records_required ... does not exist', removed by 0129); its control passes (200). M1 (log 32, exit 1): my round-2 probe again reports 'history: true' and 'content holds the withheld fact: true', the shipped history-recheck cases 1-3 fail, and P1-P5 of my round-3 probe fail. M2 (log 33, exit 1): the shipped case 4 gets 422 validation.constraint 'assistant_suggestion_context_records_required', and the code-security legacy probe reproduces the defect (422, row proposed v1). git status of the clone was empty afterwards (logs 34, 34b). Each finding verifies CLOSED_VERIFIED (qa-verifier.verifications.json).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S17-007", "REQ-S10-004", "REQ-S20-012"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-3/30-probes-findings-on-candidate.log",
+        "docs/delivery/test-evidence/DG6/qa/round-3/32-mutant-m1-history-fix-reverted.log",
+        "docs/delivery/test-evidence/DG6/qa/round-3/32-mutant-m1.applied",
+        "docs/delivery/test-evidence/DG6/qa/round-3/33-mutant-m2-no-0129.log",
+        "docs/delivery/test-evidence/DG6/qa/round-3/34-clone-restored.log",
+        "docs/delivery/test-evidence/DG6/qa/round-3/scripts/probes.sh",
+        "docs/delivery/reviews/DG6/round-3/qa-verifier.verifications.json"
+      ]
+    },
+    {
+      "id": "QA-RG-R3-02-repair-adversarial",
+      "procedure": "Line-level reading of the repair diff 71ff750ed..f56f1b3d2 (historyFor, mergeContextRecords, CONTEXT_RECORDS_MAX, the post handler, migration 0129, ADR-0059 and OpenAPI descriptions) and an independent probe of every path that feeds earlier turns or records to the model: P1 transitive inheritance past the 6-message window; P2 revocation committed during the model call; P3 inherited suggestion; P4 the code-security disclosure; P5 the 1,000-key bound at 50 answers; P6 the 0128->0129 window; P7 re-grant; P8 F-DG6-971 independently.",
+      "command": "tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration apps/api/test/integration/assistant/qa-rg-r3-history-adversarial.test.ts (copy of docs/delivery/test-evidence/DG6/qa/tests/round-3/qa-rg-r3-history-adversarial.test.ts)",
+      "environment": "Disposable clone rv, Node 24.21.0, disposable PostgreSQL 16.15 (ports 32510/32512), shipped http_endpoint provider + local fake model",
+      "expected": "No withheld text reaches the model or a served answer through any history path; inheritance is transitive; contexts are never truncated within the real limits; F-DG6-971 fixed without weakening the INSERT rule",
+      "actual": "Run 2 (log 31b): 8/8 pass, exit 0. P1: A6 (never given A1 directly) stores context [tA3, tA1, tA2]; after revoking tA2 all six answers are withheld and turn 7's request holds neither the hidden fact nor the title. P2: with the revocation committed inside the fake's response (after historyFor's check), the request still held A1 (it was readable then), but the reply is withheld both in the POST response and on GET. P3: the suggestion inherits the answer's context (equal), is withheld after revoking the inherited record, and to-draft answers 404. P4: after the revocation, 'Please repeat your previous answer' sends no title, hidden fact or id (data records 0, stored context []); under M1 the same request holds the title and fact. P5: 50 turns x 20 distinct records each; the turn-50 context has exactly 1,000 keys, 3 history answers were given, nothing was dropped; turn 51 is 422 assistant.conversation_full. P6 (characterisation): an answer stored as the RG1 code stored it (own data block only) that repeats a withheld answer stays readable and is sent as history after the revocation; this is the residual the handback and data dictionary disclose; it exists only in an installation that ran the unreleased RG1 build (DG6 not approved, nothing shipped), the same reasoning as the pre-0128 limit RG1 recorded, so not a defect of this candidate. P7: a re-grant restores the history. P8: the catalogue holds only *_context_records_valid as a constraint and the trigger assistant_suggestion_context_records_required with tgtype 7; a pre-0128 suggestion is taken to a draft (200, taken_to_draft, version 2, context NULL); setting a context later fails 23514 assistant_suggestion_context_immutable; an INSERT without a context fails 23514 assistant_suggestion_context_records_required. Code reading: answer.ts:142 is the only ModelProvider.complete call and postAssistantMessage the only caller of answer; the model gets only system text, history, data block and prompt. Disclosed failure: run 1 (log 31, exit 1, 6/7) failed P6 in my own probe's setup (the user had no grant on tA3, so A2 was a no_sources reply, which 0128 forbids to hold a context); fixed in the probe, not the product.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S17-007", "REQ-S17-011", "REQ-S10-004"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-3/31b-probe-qa-rg-r3-adversarial-run2.log",
+        "docs/delivery/test-evidence/DG6/qa/round-3/31-probe-qa-rg-r3-adversarial.log",
+        "docs/delivery/test-evidence/DG6/qa/tests/round-3/qa-rg-r3-history-adversarial.test.ts"
+      ]
+    },
+    {
+      "id": "QA-RG-R3-03-static",
+      "procedure": "Static checks in the disposable clone.",
+      "command": "pnpm -r build; pnpm -r typecheck; pnpm lint; pnpm openapi:lint; pnpm check:no-cdn; pnpm format:check; pnpm --filter @mth/design-tokens run check:contrast",
+      "environment": "Disposable clone rv (and rv2 for the second build), Node 24.21.0, offline install from a copy of the pnpm store",
+      "expected": "Each exits 0; OpenAPI 932 operations; contrast passes with only the documented prohibited pairs failing",
+      "actual": "build exit 0 in rv and rv2; typecheck 0; lint 0 (eslint --max-warnings=0); openapi:lint 0 'PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 932 operations'; check:no-cdn 0 'PASS no-cdn: scanned apps, packages'; format:check 0 'All matched files use Prettier code style!'; contrast 0 'PASS contrast: 50 pairs meet WCAG AA; 3 prohibited pairs fail as documented' (white text.inverse on #0078FF 4.09:1, not used for action buttons, which use action.primary; brand.primary #0078FF on surface.page 3.84:1, body links use action.primary; the decorative border.default divider 1.27:1). Install logs show only the expected 'Failed to create bin mth-db' warnings before the first build; the re-link after the build created both bins. The kernel reported one out-of-memory kill while rv2 was building; its build still exited 0 and every later run completed, so no result I cite depends on the killed process.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S15-003", "REQ-S16-027"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-3/02-build.log",
+        "docs/delivery/test-evidence/DG6/qa/round-3/02-build-rv2.log",
+        "docs/delivery/test-evidence/DG6/qa/round-3/01-install.log",
+        "docs/delivery/test-evidence/DG6/qa/round-3/03-static-typecheck.log",
+        "docs/delivery/test-evidence/DG6/qa/round-3/03-static-lint.log",
+        "docs/delivery/test-evidence/DG6/qa/round-3/03-static-openapi.log",
+        "docs/delivery/test-evidence/DG6/qa/round-3/03-static-nocdn.log",
+        "docs/delivery/test-evidence/DG6/qa/round-3/03-static-format.log",
+        "docs/delivery/test-evidence/DG6/qa/round-3/03-static-contrast.log"
+      ]
+    },
+    {
+      "id": "QA-RG-R3-04-unit",
+      "procedure": "pnpm test on Node 22 and Node 24, each with the locale unset and with LANG=LC_ALL=C.UTF-8.",
+      "command": "env -u LANG -u LC_ALL pnpm test; env LANG=C.UTF-8 LC_ALL=C.UTF-8 pnpm test (PATH /opt/node22/bin, then /opt/nvm/versions/node/v24.21.0/bin)",
+      "environment": "Disposable clone rv; Node 22.22.0 (the /opt/node22 install is 22.22.0, not the 22.22.2 the assignment names) and Node 24.21.0; writable node_modules in the clone, so the default Vitest config loader works",
+      "expected": "Exit 0 in all four settings",
+      "actual": "All four exit 0 on the first run: unit-node 191 files / 2906 tests, unit-web 125 / 2113, unit-formula-nocodegen 3 / 259 passed + 2 skipped (fuzz.test.ts, skipped by design in every run). No Vitest RPC timeout this round. stderr lines in passing tests, all benign and explained: ajv 'unknown format date-time/uuid ignored' (branding.test.ts mirror check), React duplicate-key warnings from the percentKpi/kpiUnit fixtures and a select in extension-hosts-twelve, the generic-mock ErrorBoundary lines of extension-fields.test.tsx, and the 'secret_ref.refused' warn log that secrets.test.ts expects.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-3/04-unit-node22-unset.log",
+        "docs/delivery/test-evidence/DG6/qa/round-3/04-unit-node22-cutf8.log",
+        "docs/delivery/test-evidence/DG6/qa/round-3/04-unit-node24-unset.log",
+        "docs/delivery/test-evidence/DG6/qa/round-3/04-unit-node24-cutf8.log"
+      ]
+    },
+    {
+      "id": "QA-RG-R3-05-integration-twice",
+      "procedure": "Full integration project twice on a disposable PostgreSQL (once with the locale unset, once C.UTF-8); record the migration count, contract.test.ts and the pending lists.",
+      "command": "tests/qa/support/with-pg.sh pnpm test:integration (run 1); env LANG=C.UTF-8 LC_ALL=C.UTF-8 tests/qa/support/with-pg.sh pnpm test:integration (run 2)",
+      "environment": "Disposable clone rv, Node 24.21.0, PostgreSQL 16.15 (UTF8, C collation), ports 32520 and 32524",
+      "expected": "Both runs exit 0; migrations 0001-0129 applied; contract.test.ts passes; every p6-pending-*.ts list empty",
+      "actual": "Run 1: 441/441 files, 4366 passed, 1 skipped, 1 todo (4368), exit 0, 2884 s. Run 2: 441/441 files, 4366 passed, 1 skipped, 1 todo, exit 0, 2768 s. Both: 'applied 121 migrations to a fresh database' (121 files, 0001 to 0129_p6_assistant_context_insert_rule, with the historical numbering gaps). contract/contract.test.ts 105/105; it prints no operation count, it asserts that every governed route maps to an OpenAPI operation and back and exercises every operation; the contract has 932 operationIds (openapi:lint 932; grep -c operationId 932). Every leaf p6-pending-be-*.ts list is empty (22 files); the 6 p6-pending-arch-* lists only spread those; route-inventory reports 'contract unsafe operations 486; pending (not routed) 0'. The 1 skip is the it.runIf pair in governance/presentation.test.ts (exactly one branch applies). The 1 todo is audit-events.test.ts:386 'PENDING T-DG6-BE-B: a caller admitted to the sensitive record ... sees it unredacted', a stale placeholder whose clause access/sensitive-reach.test.ts tests (passed); cosmetic. 'BE17 db-econnreset ... unhandled error ECONNRESET' is an injected-fault test's own output (request-io/connection tests pass). The catalogue test's 0129 case passes.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S16-022", "REQ-S16-023", "REQ-S16-027", "REQ-S16-032", "REQ-S02-006"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-3/10-integration-run1.log",
+        "docs/delivery/test-evidence/DG6/qa/round-3/11-integration-run2.log"
+      ]
+    },
+    {
+      "id": "QA-RG-R3-06-tests-qa-alone",
+      "procedure": "Run tests/qa on its own: integration and unit.",
+      "command": "tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration tests/qa/integration; npx vitest run --configLoader runner --project unit-node tests/qa/unit",
+      "environment": "Disposable clone rv, Node 24.21.0, PostgreSQL 16.15 port 32524",
+      "expected": "Exit 0",
+      "actual": "Integration 45/45 files, 437 tests passed, exit 0 (732 s). Unit 6/6 files, 61 tests, exit 0 (includes dlv038's load-report recomputation, which reads the DO-G final evidence that my sparse checkout includes).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-038", "REQ-S20-001", "REQ-S20-012", "REQ-S20-013", "REQ-S20-017", "REQ-S20-021", "REQ-S20-022"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-3/12-tests-qa-integration-alone.log",
+        "docs/delivery/test-evidence/DG6/qa/round-3/13-tests-qa-unit-alone.log"
+      ]
+    },
+    {
+      "id": "QA-RG-R3-07-reliability",
+      "procedure": "A13 kill-and-restart drills (reindex, connector run, import commit, channel delivery) in the integration runs and tests/qa alone; a worker burst showing the D-203 batch throughput without a duplicate execution (my round-1 probe, unchanged).",
+      "command": "tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration apps/worker/test/integration/qa-r1-worker-burst.test.ts (copy of tests/round-1/qa-r1-worker-burst.test.ts)",
+      "environment": "Disposable clone rv, Node 24.21.0, PostgreSQL 16.15 port 32516; WORKER_JOB_BATCH_SIZE/CONCURRENCY at their defaults 8/4 vs 1/1 inside the probe",
+      "expected": "Each drill: no duplicate effect, failed work recoverable; burst: every job exactly once, batching drains faster",
+      "actual": "Drills, all passing in runs 1 and 2 and in tests/qa alone: connector run (122.3 s: the killed run stages nothing and stays running with Unknown counts; the restarted watch finishes it once); channel send (8.5 s: stays pending and unaccepted, then sent once, never twice); reindex (9.1 s: no partial documents, completes once); import commit (4.4 s: batch stays staged, retried commit commits once, replay refused); plus the DG5 drills (killed worker mid-rule-action, export job once with one file, replays add nothing). Burst (log 36, 2/2, exit 0): N=400, batch 8 x 4 drained in 3078 ms (130.0 jobs/s) vs batch 1 x 1 in 11840 ms (33.8 jobs/s); two workers drained 400 in 1589 ms with 0 duplicates. Provisional figures from a shared sandbox host.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S20-013", "REQ-S17-006"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-3/12-tests-qa-integration-alone.log",
+        "docs/delivery/test-evidence/DG6/qa/round-3/11-integration-run2.log",
+        "docs/delivery/test-evidence/DG6/qa/round-3/36-probe-worker-burst.log",
+        "docs/delivery/test-evidence/DG6/qa/tests/round-1/qa-r1-worker-burst.test.ts"
+      ]
+    },
+    {
+      "id": "QA-RG-R3-08-e2e-product",
+      "procedure": "All product journeys (apps/web/e2e) on the real production-initialized stack, --workers=1, both Playwright projects (chromium-en, chromium-ar), once with the locale unset and once with C.UTF-8.",
+      "command": "apps/web/e2e/support/with-stack.sh npx playwright test --workers=1 --trace=off --reporter=list apps/web/e2e",
+      "environment": "Disposable clone rv2, Node 24.21.0, pre-installed Chromium (PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers), PostgreSQL 16.15 port 32540, API port 32545",
+      "expected": "Exit 0 in both locale settings",
+      "actual": "Unset: 556 passed, 2 skipped, exit 0 (1.0 h). C.UTF-8: 556 passed, 2 skipped, exit 0 (58.6 min). No failure, flake, retry or timeout in either log; the only warn lines are npm's 'Unknown project config' notices. The 2 skips per run are p6-walkthrough-keyboard (en, ar), which skips itself on a non-demo database and passed on the demo stack (QA-RG-R3-13). AUD read-only steps in the product journeys pass (e.g. p6-integrations-imports 'AUD read-only'). --trace=off removes a debugging artefact only.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S15-010", "REQ-S15-011", "REQ-S15-013", "REQ-S17-001", "REQ-S16-026", "REQ-S20-020"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-3/20-e2e-product-unset.log",
+        "docs/delivery/test-evidence/DG6/qa/round-3/24-e2e-product-cutf8.log"
+      ]
+    },
+    {
+      "id": "QA-RG-R3-09-e2e-root-acceptance",
+      "procedure": "The 22 root acceptance specs named in the assignment on with-stack.sh by explicit paths, --workers=1, chromium-en and chromium-ar, locale unset (inside e2e/support/a21-connection-log-run.sh, the A21 network capture) and C.UTF-8; then the A20 axe and layout specs again with QA_EVIDENCE_DIR in my evidence folder (their summaries default to test-results/, which later runs clear).",
+      "command": "e2e/support/a21-connection-log-run.sh npx playwright test --workers=1 --trace=off --reporter=list e2e/a03-modular-entry.spec.ts ... e2e/a22-p6-operability.spec.ts; apps/web/e2e/support/with-stack.sh npx playwright test ... (C.UTF-8); QA_EVIDENCE_DIR=... with-stack.sh npx playwright test e2e/a20-p6-axe.spec.ts e2e/a20-p6-layout-brand.spec.ts",
+      "environment": "rv2 (rv for the A20 re-run, ports 32560/32565), Node 24.21.0, Chromium; E2E_SCREENSHOT_DIR in my evidence folder; MTH_SECRET_QA_A17_WEBHOOK_SIGNING_SECRET=qa-a17-synthetic-signing-secret-0001 (synthetic test value)",
+      "expected": "Exit 0; axe no serious/critical; no outbound connection to a non-local host",
+      "actual": "Unset: 288 passed, 18 skipped, exit 0 (27.0 min); connection-log check 'PASS: every outbound connection of the logged Node processes went to a loopback address' (936 connections: 127.0.0.1 902, localhost 34). C.UTF-8: 288 passed, 18 skipped, exit 0 (24.0 min). The 18 skips per run are a20-p6-axe's 9 declared NOT SCANNED detail routes per language (sensitive grant, deep-link landing, operational exception, webhook, outbound write, import, approval, benefit, walkthrough), by that spec's design and disclosed in REQ-DLV-038; those screens are exercised by other specs and my 390 px axe probe. No failure, flake or timeout. A20 re-run (log 25): 82 passed, 18 skipped, exit 0; axe summaries: 76 screen/viewport entries per language (38 routes x 1366/360), 0 serious or critical violations. Visual review: ar a20-1440-home shows key decisions, key outcomes and next actions within 1440x900 without scrolling, RTL with the navigation on the right; en a20-1440-executive likewise; light surfaces, blue navigation, the 'Provisional' wordmark badge; timestamps shown in Asia/Riyadh time. A20-p6-ux passes the 360 px gate approval and KPI submission in en and ar, the localized API error, greyscale chips and the keyboard flows.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S15-001", "REQ-S15-003", "REQ-S15-007", "REQ-S15-009", "REQ-S15-012", "REQ-S15-014", "REQ-S17-009", "REQ-S20-020", "REQ-S20-021", "REQ-S12-019", "REQ-S17-002", "REQ-S17-003", "REQ-S17-005", "REQ-S20-012", "REQ-S20-014", "REQ-S20-017", "REQ-S20-022"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-3/22-e2e-root-unset.log",
+        "docs/delivery/test-evidence/DG6/qa/round-3/22-e2e-root-unset.connection-log.jsonl.gz",
+        "docs/delivery/test-evidence/DG6/qa/round-3/22-e2e-root-cutf8.log",
+        "docs/delivery/test-evidence/DG6/qa/round-3/25-e2e-a20-axe-layout-evidence.log",
+        "docs/delivery/test-evidence/DG6/qa/round-3/25-a20-axe-layout/axe-summary-chromium-en.json",
+        "docs/delivery/test-evidence/DG6/qa/round-3/25-a20-axe-layout/axe-summary-chromium-ar.json",
+        "docs/delivery/test-evidence/DG6/qa/round-3/25-a20-axe-layout/ar/a20-1440-home.png",
+        "docs/delivery/test-evidence/DG6/qa/round-3/25-a20-axe-layout/en/a20-1440-executive.png",
+        "docs/delivery/test-evidence/DG6/qa/round-3/scripts/seqB1.sh"
+      ]
+    },
+    {
+      "id": "QA-RG-R3-10-e2e-demo",
+      "procedure": "The three A02 demo specs on e2e/support/with-demo-stack.sh (AUTH_MODE=dev, D-165 dev sign-in), --workers=1, both projects, both locale settings.",
+      "command": "e2e/support/with-demo-stack.sh npx playwright test --workers=1 --trace=off --reporter=list e2e/a02-demo-labels.spec.ts e2e/a02-demo-users-walkthrough.spec.ts e2e/a02-guided-walkthrough.spec.ts",
+      "environment": "rv2, Node 24.21.0, Chromium, demo-initialized PostgreSQL 16.15",
+      "expected": "Exit 0",
+      "actual": "Unset: 10 passed, exit 0 (1.9 min). C.UTF-8: 10 passed, exit 0 (1.8 min). The guided lifecycle passes with AI disabled and external channels off (REQ-S17-010).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S17-010", "REQ-S20-021"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-3/23-e2e-demo-unset.log",
+        "docs/delivery/test-evidence/DG6/qa/round-3/23-e2e-demo-cutf8.log"
+      ]
+    },
+    {
+      "id": "QA-RG-R3-11-probe-p6-reflow-aud-xss-s17",
+      "procedure": "My round-1 e2e probes, unchanged: P6 screens at 360 px, 390 px and 200 % text (no horizontal scroll, no leak, axe at 390 px); AUD read-only pass over the P6 screens; XSS payloads in evidence notes render as text; a succeeded connector run's row counts and last success on screen.",
+      "command": "apps/web/e2e/support/with-stack.sh npx playwright test --workers=1 --trace=off --reporter=list apps/web/e2e/zz-qa-rg-r1-p6-reflow-aud.spec.ts apps/web/e2e/zz-qa-rg-r1-s17-001-run-ui.spec.ts",
+      "environment": "rv2 (probe specs copied in, removed afterwards; git status empty, log 34d), Node 24.21.0, Chromium, ports 32550/32555",
+      "expected": "All pass in en and ar",
+      "actual": "8 passed (2.7 min), exit 0: reflow 360/390/200 % en and ar; AUD read-only (no enabled mutation control; API mutations 403) en and ar; XSS as text en and ar; S17-001 counts and last success visible en and ar.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S15-009", "REQ-S16-030", "REQ-S17-001", "REQ-S15-012"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-3/38-probe-p6-reflow-aud-xss-s17.log",
+        "docs/delivery/test-evidence/DG6/qa/round-3/34d-rv2-after-seqD.log",
+        "docs/delivery/test-evidence/DG6/qa/tests/round-1/zz-qa-rg-r1-p6-reflow-aud.spec.ts",
+        "docs/delivery/test-evidence/DG6/qa/tests/round-1/zz-qa-rg-r1-s17-001-run-ui.spec.ts"
+      ]
+    },
+    {
+      "id": "QA-RG-R3-12-probe-restricted-tokens-and-d229",
+      "procedure": "Judge D-229 and D-228 (4): my round-1 restricted-token sequence probe re-run unchanged (duplicated token, token moved into an ordering condition then dry run, v2 draft by a writer without the grant, two concurrent saves with one If-Match, grant given and revoked between read and save); code reading of the connector configuration surface; the route-inventory cross-organization sweep.",
+      "command": "tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration apps/api/test/integration/access/qa-r1-token-sequences.test.ts (copy of tests/round-1/qa-r1-token-sequences.test.ts)",
+      "environment": "rv, Node 24.21.0, PostgreSQL 16.15 port 32514",
+      "expected": "No sequence loses or misplaces a hidden literal; no served column, response, notification channel or write path names a sensitive record to a reader who cannot read it",
+      "actual": "Not a defect, for either question. Token probe 5/5, exit 0: no response, dry-run list, version list or rule name exposes the hidden id, and the hidden literal is kept in every sequence. D-229: connector configuration names no sensitive record type (benefit, business case, evidence); fieldMappings are {source, target} with target limited to /^[a-z][a-zA-Z0-9_]{0,63}$/; the only free text is the mapping source column and the credential-ref names, set by connector administrators who also read them (connector.read); a sensitive id typed there would be a deliberate free-text act like any description field, and the product never serializes a record id into these columns. D-228 (4): route-inventory case 3b (a user of org B holding every role there) on org A's records: 312 operations, statuses 403 x 70 and 404 x 242, nothing persisted, in both integration runs. The repair diff does not touch these areas.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S10-002", "REQ-S10-004", "REQ-S16-029"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-3/35-probe-token-sequences.log",
+        "docs/delivery/test-evidence/DG6/qa/round-3/10-integration-run1.log",
+        "docs/delivery/test-evidence/DG6/qa/tests/round-1/qa-r1-token-sequences.test.ts"
+      ]
+    },
+    {
+      "id": "QA-RG-R3-13-probe-keyboard-walkthrough",
+      "procedure": "The shipped keyboard walkthrough spec and my round-1 probe that every walkthrough step's screen is operable by keyboard, on the demo stack.",
+      "command": "e2e/support/with-demo-stack.sh npx playwright test --workers=1 --trace=off --reporter=list apps/web/e2e/p6-walkthrough-keyboard.spec.ts apps/web/e2e/zz-qa-rg-r1-walkthrough-keyboard-reach.spec.ts",
+      "environment": "rv2, Node 24.21.0, Chromium, demo-initialized database",
+      "expected": "Pass in en and ar",
+      "actual": "4 passed (1.2 min), exit 0: the guided walkthrough completed by keyboard alone (en, ar) and every step's screen fully operable by keyboard (en, ar). Covers the REQ-S15-012 keyboard clause the register notes call partial.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S15-012", "REQ-S20-020"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-3/39-probe-walkthrough-keyboard-demo.log",
+        "docs/delivery/test-evidence/DG6/qa/tests/round-1/zz-qa-rg-r1-walkthrough-keyboard-reach.spec.ts"
+      ]
+    },
+    {
+      "id": "QA-RG-R3-14-probe-ar-export-literals",
+      "procedure": "My round-1 probe, unchanged: an Arabic export keeps 'KPI-001' and '12.5%' readable in PDF, DOCX, XLSX, PPTX and CSV.",
+      "command": "npx vitest run --configLoader runner --project unit-node packages/reporting/src/qa-r1-ar-export-literals.test.ts",
+      "environment": "rv, Node 24.21.0",
+      "expected": "6/6",
+      "actual": "6/6 pass, exit 0: the literal strings stay left-to-right runs in each format, and the real target text '12.5 %' keeps the % after the number in Arabic PDF and DOCX. Covers REQ-S15-007 clause 3, which the register notes call partly covered.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S15-007"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-3/37-probe-ar-export-literals.log",
+        "docs/delivery/test-evidence/DG6/qa/tests/round-1/qa-r1-ar-export-literals.test.ts"
+      ]
+    },
+    {
+      "id": "QA-RG-R3-15-load-async-export",
+      "procedure": "REQ-S20-029 and REQ-S20-030 with the in-tree deploy/load tools: generate the default profile, reindex, one workload repetition (warm-up 60 s, steady 300 s, 100 users), report.mjs, export-proof.mjs. Driver: my round-1 driver with names and port changed only.",
+      "command": "SKIP_A=1 API_PORT=32580 OUT=.../50-load tests/qa/support/with-pg.sh bash docs/delivery/test-evidence/DG6/qa/tests/round-3/load-driver-rg-r3.sh",
+      "environment": "rv, Node 24.21.0, PostgreSQL 16.15 port 32581, 4 vCPU / 16 GB shared sandbox host; rate-limit budgets raised for the load stack only (deploy/load/rate-limits.mjs)",
+      "expected": "A report stating dataset, infrastructure and workload with actual p95 per class against 2 s / 4 s; exports start immediately with a job id, progress to 100 %, download only for the requester. PROVISIONAL figures.",
+      "actual": "PROVISIONAL engineering figures on one shared sandbox host, not Mobily capacity. Dataset: 50 transformations, 1,000 initiatives, 10,000 KPI actuals, 100,000 audit events, 120 users, 154 MB; generator exit 0 in 21.5 s; reindex completed. Workload: 14,944 steady requests, 0 errors, 0 conflicts, 0 rate-limit refusals, 0 error-level log lines. Worst p95: read 13.4 ms, update 20.9 ms, search 12.1 ms, key dashboard 29.3 ms (the class the REQ-S20-029 note says was not re-measured after BE-Z7B), export start 23.5 ms; all within target, no miss. The host was lightly loaded at that moment (1-min load 1-3), so these figures are far lower than round 1's. Export proof: 66 exports; part A 16 on LOAD-T01, each start 202 (15-97 ms), completed in 1.8-3.2 s, progress ended at 100, the other same-scope user and AUD got 404 on the export and its download; part B 50 at once, start p95 411 ms, completion p95 2.28 s; 429 export jobs succeeded, at most 1 assembly attempt, 0 pending. export-proof.mjs exits 1 on 'LOAD-T20 FAIL: no sameScopeOther user for this transformation', the dataset gap the REQ-S20-030 notes disclose; it is neither latency nor access. The UUID check lists 120 non-RFC values in methodology_coverage_link.id and procedure_step_definition.id, written by migrations and product functions (as the load README documents), not by the generator. The driver's own exit is 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S20-029", "REQ-S20-030", "REQ-DLV-038"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-3/50-load-export.log",
+        "docs/delivery/test-evidence/DG6/qa/round-3/50-load/summary.json",
+        "docs/delivery/test-evidence/DG6/qa/round-3/50-load/report.md",
+        "docs/delivery/test-evidence/DG6/qa/round-3/50-load/infrastructure.json",
+        "docs/delivery/test-evidence/DG6/qa/round-3/50-load/export-proof-1.json",
+        "docs/delivery/test-evidence/DG6/qa/tests/round-3/load-driver-rg-r3.sh"
+      ]
+    },
+    {
+      "id": "QA-RG-R3-16-clause-reading",
+      "procedure": "Read each DG6-final acceptance text literally against the test that claims it and the register notes; re-run what the notes defer ('the binding re-run is the orchestrator's freeze verification') rather than trust it; probe the clauses the notes call partial.",
+      "environment": "Candidate source and the runs above",
+      "expected": "Each clause is asserted by a passing test on this candidate, or its partial disclosure is acceptable",
+      "actual": "The deferred binding re-runs (REQ-S12-019, REQ-S15-014, REQ-S17-007, REQ-S20-001/012/017/022, REQ-DLV-038) are done on this candidate by checks 05, 06, 08, 09 and 10, all green. REQ-S17-007 / REQ-S20-012 A12: tests/qa a12-p6-scope-isolation.test.ts asserts literally that X's TL asking about Y gets no Y record in the model input or the reply and every citation is an X record or playbook, and that a positive control cites X records with id and version; e2e A12-5 passes in en and ar; the history channel is now covered by checks 01 and 02. Partial disclosures now covered by my probes: REQ-S15-012 keyboard walkthrough (13), REQ-S17-001 counts on screen (11), REQ-S16-030 XSS e2e (11), REQ-S15-007 clause 3 literal strings (14), REQ-S20-029 dashboard class re-measured (15). Acceptable as disclosed: REQ-S13-013 post-handover download (ownership-transfer.test.ts passes in both integration runs); REQ-S16-022 entity matrix (s16-022-entity-group.test.ts passes; erd and data dictionary list each entity); REQ-S15-010 draft reload and REQ-S15-013 1,000-row register (p6-draft-recovery and p6-register-1000 pass in both product runs); REQ-S15-011 six states (six-states.test.tsx) with a cosmetic punctuation variance of the draft label across screens, same meaning, not a defect; REQ-S16-006 and REQ-S16-007 environmental (check 18).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-3/10-integration-run1.log",
+        "docs/delivery/test-evidence/DG6/qa/round-3/12-tests-qa-integration-alone.log",
+        "docs/delivery/test-evidence/DG6/qa/round-3/22-e2e-root-unset.log"
+      ]
+    },
+    {
+      "id": "QA-RG-R3-17-validators",
+      "procedure": "Register, pipeline and historical gate validation.",
+      "command": "node tools/gates/validate.mjs --register DG6; --pipeline; --historical --stage DG5; DG4; DG3; DG2; DG1",
+      "environment": "Main repository (read-only), Node 24.21.0, HEAD c31732980",
+      "expected": "PASS, exit 0 each",
+      "actual": "'PASS register rules at DG6'; 'PASS pipeline (active stage: DG6 REVIEWING)'; 'PASS gate DG5 (historical)', DG4, DG3, DG2 and DG1 likewise; each rc 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-3/40-validate-register_DG6.log",
+        "docs/delivery/test-evidence/DG6/qa/round-3/40-validate-pipeline.log",
+        "docs/delivery/test-evidence/DG6/qa/round-3/40-validate-historical_stage_DG5.log",
+        "docs/delivery/test-evidence/DG6/qa/round-3/40-validate-historical_stage_DG4.log",
+        "docs/delivery/test-evidence/DG6/qa/round-3/40-validate-historical_stage_DG3.log",
+        "docs/delivery/test-evidence/DG6/qa/round-3/40-validate-historical_stage_DG2.log",
+        "docs/delivery/test-evidence/DG6/qa/round-3/40-validate-historical_stage_DG1.log"
+      ]
+    },
+    {
+      "id": "QA-RG-R3-18-environmental-residuals",
+      "procedure": "Record the environmental residuals as the assignment directs: PASS on the offline/config surface with the residual noted.",
+      "environment": "Offline sandbox; no registry, CI, Keycloak/IdP, Mobily system, mail, messaging or AI provider reachable",
+      "expected": "Offline/config surfaces pass; residuals stated",
+      "actual": "Live registry (REQ-DLV-042 AC-1, D-057) and live CI (REQ-DLV-025 A24, D-058): not reachable; the offline install from the lockfile, the build and every gate check ran. Keycloak and a real enterprise IdP (D-049): the OIDC clauses of REQ-S16-007 are tested against the bundled test issuer in the integration runs (identity/other-realm.test.ts, 13 tests, passes in both runs); e2e/identity/keycloak-login.spec.ts needs a Keycloak container and was not run; the SAML broker is documented, not run. External systems: connectors, outbound writes, notification channels and the assistant were exercised only through their test adapters, the local fake model and the shipped 'disabled' configuration (ADR-0055, ADR-0054, ADR-0059); the A21 connection log shows loopback only. Evidence storage (REQ-S16-006): both adapters' contract tests (store-contract.test.ts, 39) pass; the S3 option runs against its in-process SigV4-verifying fake, not a cloud bucket. Production capacity: the REQ-S20-029/030 figures are provisional measurements on one sandbox host.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S16-006", "REQ-S16-007", "REQ-S17-009", "REQ-S20-029"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-3/10-integration-run1.log",
+        "docs/delivery/test-evidence/DG6/qa/round-3/22-e2e-root-unset.connection-log.jsonl.gz"
+      ]
+    }
+  ],
+  "findings": [],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/reviews/DG6/round-3/qa-verifier.md",
+    "docs/delivery/reviews/DG6/round-3/qa-verifier.verifications.json",
+    "docs/delivery/test-evidence/DG6/qa/round-3/00-candidate-start.log",
+    "docs/delivery/test-evidence/DG6/qa/round-3/00-candidate-end.log",
+    "docs/delivery/test-evidence/DG6/qa/round-3/30-probes-findings-on-candidate.log",
+    "docs/delivery/test-evidence/DG6/qa/round-3/31b-probe-qa-rg-r3-adversarial-run2.log",
+    "docs/delivery/test-evidence/DG6/qa/round-3/32-mutant-m1-history-fix-reverted.log",
+    "docs/delivery/test-evidence/DG6/qa/round-3/33-mutant-m2-no-0129.log",
+    "docs/delivery/test-evidence/DG6/qa/round-3/10-integration-run1.log",
+    "docs/delivery/test-evidence/DG6/qa/round-3/11-integration-run2.log",
+    "docs/delivery/test-evidence/DG6/qa/round-3/20-e2e-product-unset.log",
+    "docs/delivery/test-evidence/DG6/qa/round-3/24-e2e-product-cutf8.log",
+    "docs/delivery/test-evidence/DG6/qa/round-3/22-e2e-root-unset.log",
+    "docs/delivery/test-evidence/DG6/qa/round-3/22-e2e-root-cutf8.log",
+    "docs/delivery/test-evidence/DG6/qa/round-3/50-load/summary.json",
+    "docs/delivery/test-evidence/DG6/qa/tests/round-3/qa-rg-r3-history-adversarial.test.ts"
+  ],
+  "reviewed_at": "2026-11-11T06:05:00Z",
+  "summary": "PASS, with no new finding. All four open findings verify CLOSED_VERIFIED: F-DG6-960, F-DG6-970 and F-DG6-980 (one defect, the history channel) and F-DG6-971. Candidate sha256:32e41b55...76b5 (2773 files) is verified at start and end on the complete tree; its product tree equals a0cf22bba. The repair was read line by line and probed adversarially: transitive inheritance past the window, a revocation during the model call, inherited suggestions, the exact 1,000-key bound at 50 answers, re-grant, and the pre-0128 suggestion. Mutants that revert the fix are caught. The code-security probe's residual failure is its fake's hard-coded text, and the request it sends holds nothing revoked. The 0128->0129 window residual exists only where the unreleased RG1 build ran; it is not a defect of this candidate. Results: static 7/7; unit exit 0 on Node 22 and 24 in both locales; integration twice 441/441 files, 4366 passed; tests/qa alone 45 files / 437 tests; product e2e 556 + 2 skipped in each locale; root e2e 288 + 18 declared skips in each locale; A21 connection log loopback-only; demo 10/10 twice; axe 0 serious or critical; probes (reflow and AUD, keyboard walkthrough, tokens, Arabic export literals, worker burst) all pass; load and async export within the provisional targets; validators PASS. D-229 and D-228 (4): not defects. This is an engineering review only: it grants no business approval (G1-G6), and product G6 never implies DG7.",
+  "narrative": "docs/delivery/reviews/DG6/round-3/qa-verifier.md"
+}

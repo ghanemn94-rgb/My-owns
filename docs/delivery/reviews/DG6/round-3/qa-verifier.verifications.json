@@ -1,0 +1,55 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG6-980",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "My own finding, re-verified on candidate sha256:32e41b55 (source f56f1b3d2; product tree = a0cf22bba, git diff empty). (1) The round-2 reproduction, unchanged (docs/delivery/test-evidence/DG6/qa/tests/round-2/qa-rg-r2-assistant-history.test.ts; shipped http_endpoint provider, local fake model wrapped to echo the last assistant history message; disposable PostgreSQL 16, port 32510): after the TL grant on tA2 is revoked, A1 is withheld, and post 2 'repeat your last answer' now sends the request WITHOUT the withheld A1 text ('carries the WITHHELD A1 text as history: false'), the data block holds tA1 only, and A2 is served with contentWithheld false and does NOT contain the withheld fact ('content holds the withheld fact: false'); both soft assertions that failed by design in round 2 now hold; exit 0 for this file (log 30). (2) Mutant M1 (conversations.ts and answer.ts reverted to 71ff750ed by git apply -R; 0129 kept): the same probe fails again with exactly the round-2 facts ('history: true', 'A2 ... content holds the withheld fact: true'), and the shipped history-recheck.test.ts cases 1-3 fail (log 32); the clone was restored and git status was empty afterwards (logs 34, 34b). (3) Beyond the original sequence, my round-3 probe (qa-rg-r3-history-adversarial.test.ts, 8/8 pass on the candidate, log 31b; P1-P5 killed by M1, log 32): transitive inheritance past the 6-message window (A6 context [tA3, tA1, tA2]; after revoking tA2 all six answers are withheld and turn 7's request holds neither the hidden fact nor the title); a revocation committed WHILE the model call is in flight (after historyFor's check) still withholds the new answer both in the POST response and on GET; an inherited suggestion is withheld and to-draft answers 404; after a revocation a prompt retrieving no record sends nothing of the revoked record; the 1,000-key bound holds exactly (50 answers x 20 distinct records: turn-50 context 1,000 keys, no history drop, turn 51 refused 422 assistant.conversation_full); a re-grant restores the history. The one residual (P6): an answer stored by the RG1 code between 0128 and 0129 does not inherit and stays readable after the revocation; it is disclosed in the handback and the data dictionary, and exists only in an installation that ran the unreleased RG1 build, so I judge it not a defect of this candidate.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-3/30-probes-findings-on-candidate.log",
+        "docs/delivery/test-evidence/DG6/qa/round-3/31b-probe-qa-rg-r3-adversarial-run2.log",
+        "docs/delivery/test-evidence/DG6/qa/round-3/32-mutant-m1-history-fix-reverted.log",
+        "docs/delivery/test-evidence/DG6/qa/round-3/34-clone-restored.log",
+        "docs/delivery/test-evidence/DG6/qa/tests/round-2/qa-rg-r2-assistant-history.test.ts",
+        "docs/delivery/test-evidence/DG6/qa/tests/round-3/qa-rg-r3-history-adversarial.test.ts"
+      ]
+    },
+    {
+      "finding_id": "F-DG6-960",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified separately as a non-author. The domain reviewer's round-2 probe was rebuilt exactly as its sidecar describes (lines 1-147 of the candidate's apps/api/test/integration/assistant/context-recheck.test.ts, unchanged by the repair, whose diff starts at line 296, followed by docs/delivery/test-evidence/DG6/domain/round-2/probes/zz-domain-r2-history-tail.ts) and run in a disposable clone on a disposable PostgreSQL 16 (log 30): turn 1 after revoking tA2 is withheld (true); turn 2 'Repeat your previous answer about Zephyrine synthetic program' is 201 answer, and its request now has 4 messages with the withheld turn-1 text sent as history = false (round 2: true, 5 messages); the data block and the stored context hold no tA2. The test passes (its assertions are characterisation logs; the decisive line is 'sent as history = false'). Mutant M1 (fix reverted) re-opens the same channel in my own and the shipped tests (log 32). Inheritance, the in-flight revocation, the window and the bound are covered by my round-3 probe (log 31b, 8/8).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-3/30-probes-findings-on-candidate.log",
+        "docs/delivery/test-evidence/DG6/qa/round-3/32-mutant-m1-history-fix-reverted.log",
+        "docs/delivery/test-evidence/DG6/qa/round-3/31b-probe-qa-rg-r3-adversarial-run2.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/probes/zz-domain-r2-history-tail.ts"
+      ]
+    },
+    {
+      "finding_id": "F-DG6-970",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified separately as a non-author. The code-security round-2 probe docs/delivery/test-evidence/DG6/code-security/round-2/repro/zz-sec-r2-assistant-history.test.ts was run unchanged on the candidate (log 30). It FAILS by design, because it asserts the defect; exactly which assertion fails and why: '[SEC-R2] turn-2 request: history (assistant role) holds the revoked title: false' and 'data block holds tA2: false' (the fix: nothing of tA2 reached the model), yet the turn-2 reply is 'Synthetic answer: Zephyrine synthetic program one and Zephyrine synthetic program two are both behind plan.', stored context [], so the final GET contains the revoked title and the probe's 'GET body contains the revoked title' check is true. I judged the handback's disclosure myself: that reply text is the probe fake's HARD-CODED fallback for a request with no assistant message in its history (line 46 of the probe: `Synthetic answer: ${TITLE_1} and ${TITLE_2} are both behind plan.`), not text from the request. My P4 case reproduces the same sequence with a neutral fallback and inspects the full serialized request: after the revocation, the request for 'Please repeat your previous answer' contains neither TITLE_2, the hidden fact nor tA2's id, data records 0, stored context [] (log 31b, pass); under mutant M1 the same request contains TITLE_2 and the hidden fact (log 32). A real model cannot restate what it was not sent, so the residual failure is an artefact of the probe's fake. Disclosure accepted; closed.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-3/30-probes-findings-on-candidate.log",
+        "docs/delivery/test-evidence/DG6/qa/round-3/31b-probe-qa-rg-r3-adversarial-run2.log",
+        "docs/delivery/test-evidence/DG6/qa/round-3/32-mutant-m1-history-fix-reverted.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-2/repro/zz-sec-r2-assistant-history.test.ts"
+      ]
+    },
+    {
+      "finding_id": "F-DG6-971",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified as a non-author. The code-security probe zz-sec-r2-legacy-suggestion-to-draft.test.ts run unchanged on the candidate (log 30): its control passes (post-0128 suggestion to-draft 200); its legacy case FAILS in its own setup DDL, 'constraint \"assistant_suggestion_context_records_required\" of relation \"assistant_suggestion\" does not exist', because 0129 replaced that NOT VALID CHECK with a BEFORE INSERT trigger of the same name; that failure is the probe's setup, not the product. Equivalent independent reproduction, my P8 (log 31b, pass): the catalogue now holds only assistant_suggestion_context_records_valid as a constraint and the trigger assistant_suggestion_context_records_required with tgtype 7 (BEFORE INSERT ROW); a suggestion put into the pre-0128 state (context NULL; user triggers paused for one owner-only UPDATE) is taken to a draft: 200, row status taken_to_draft, version 2, context still NULL; an owner UPDATE that would give it a context later fails 23514 assistant_suggestion_context_immutable; an INSERT of a new suggestion without a context fails 23514 assistant_suggestion_context_records_required. The shipped history-recheck.test.ts cases 4-5 pass (log 30). Mutant M2 (0129 removed from the migration set): the shipped case 4 gets 422 validation.constraint 'assistant_suggestion_context_records_required' again and the code-security legacy probe reproduces the defect (422, row stays proposed v1), log 33; the file was restored (log 34).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-3/30-probes-findings-on-candidate.log",
+        "docs/delivery/test-evidence/DG6/qa/round-3/31b-probe-qa-rg-r3-adversarial-run2.log",
+        "docs/delivery/test-evidence/DG6/qa/round-3/33-mutant-m2-no-0129.log",
+        "docs/delivery/test-evidence/DG6/qa/round-3/34-clone-restored.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-2/repro/zz-sec-r2-legacy-suggestion-to-draft.test.ts"
+      ]
+    }
+  ]
+}
