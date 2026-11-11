@@ -1,0 +1,220 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG6",
+  "round": 7,
+  "candidate_id": "sha256:10f71f2418567878bffddfb004efbf342347029fd799dd3076af40aca32e2fc5",
+  "source_commit": "d8868b2a5c074b13c04693a88644c25ef2792583",
+  "reviewer_role": "domain-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG6-T-DG6-REV-DOM-RG-R7-domain-reviewer-20261111T184129Z-bef6b0c0",
+    "session_id": "bef6b0c0-955c-43be-a9f2-cc51ec599017"
+  },
+  "implementation_author": [
+    "devops-engineer",
+    "backend-workflow-engineer",
+    "frontend-ux-engineer",
+    "kpi-benefits-engineer",
+    "solution-architect",
+    "transformation-analyst",
+    "qa-verifier",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "domain-reviewer authored none of the following in the reviewed candidate: any DG6 implementation, test, ADR, register row, repair or delivery decision (D-240 included), and any stages.json change (e7cb240e7 included). I formed this verdict from my own runs in this session. I did not open any other reviewer's round-7 record or evidence. I read my own role's round-5 and round-6 records, to re-use their structure and their judgements on unchanged areas. I also read F-DG6-911, F-DG6-951, F-DG6-952 and F-DG6-990 in findings.json, which carries each finding's full text as raised."
+  },
+  "assignment": "docs/delivery/assignments/DG6/round-7/domain-reviewer.md",
+  "requirements_checked": [
+    "REQ-DLV-038", "REQ-S01-005", "REQ-S02-006", "REQ-S10-002", "REQ-S10-004", "REQ-S12-019", "REQ-S12-023", "REQ-S12-024",
+    "REQ-S13-011", "REQ-S13-013", "REQ-S15-001", "REQ-S15-003", "REQ-S15-007", "REQ-S15-009", "REQ-S15-010", "REQ-S15-011",
+    "REQ-S15-012", "REQ-S15-013", "REQ-S15-014", "REQ-S16-006", "REQ-S16-007", "REQ-S16-022", "REQ-S16-023", "REQ-S16-026",
+    "REQ-S16-027", "REQ-S16-029", "REQ-S16-030", "REQ-S16-032", "REQ-S17-001", "REQ-S17-002", "REQ-S17-003", "REQ-S17-005",
+    "REQ-S17-006", "REQ-S17-007", "REQ-S17-008", "REQ-S17-009", "REQ-S17-010", "REQ-S17-011", "REQ-S20-001", "REQ-S20-012",
+    "REQ-S20-013", "REQ-S20-014", "REQ-S20-017", "REQ-S20-020", "REQ-S20-021", "REQ-S20-022", "REQ-S20-029", "REQ-S20-030"
+  ],
+  "checks_run": [
+    {
+      "id": "DOM-RG7-00-candidate",
+      "procedure": "Verify the frozen candidate. Recompute the candidate ID on the complete repository. Confirm that HEAD differs from source_commit only in metadata. Confirm that both 3c8b9a3..d8868b2a5 and 60787d89f..d8868b2a5 are empty outside docs/delivery. Compare the old manifest (5e819f7a) with the new one (10f71f24) file by file. Read and judge D-240. Build a disposable clone.",
+      "command": "git rev-parse HEAD; node tools/gates/candidate.mjs --stage DG6; git diff 3c8b9a3acfe657348249feb297b52cf208324a07 d8868b2a5c074b13c04693a88644c25ef2792583 -- . ':!docs/delivery' | wc -c; git diff 60787d89ffa2562d491af424bc1024b4e3bc2d57 d8868b2a5c074b13c04693a88644c25ef2792583 -- . ':!docs/delivery' | wc -c; git diff d8868b2a5 HEAD -- . ':!docs/delivery' | wc -c; python3 manifest compare (manifest-diff.txt); (clone) pnpm -r build",
+      "environment": "Repository /home/user/My-owns (complete, not shallow); Node 24.21.0. The disposable clone $TMPDIR/review-dg6 is a git clone --shared checked out at d8868b2a5. Its sparse checkout leaves out docs/delivery/{test-evidence,runs,handbacks,reviews,candidates} and trading_agent, which no product test reads. node_modules was copied with cp -a because it is read-only in the sandbox. The clone was removed after the run.",
+      "expected": "The candidate ID is sha256:10f71f24..., with 2775 files. Every product diff is empty. The only manifest change against 5e819f7a is docs/delivery/decisions.md (D-240). The build exits 0.",
+      "actual": "candidate_id sha256:10f71f2418567878bffddfb004efbf342347029fd799dd3076af40aca32e2fc5, 2775 files, exit 0. HEAD is 04569998d, the round-7 freeze commit, a descendant of d8868b2a5. It adds only the round-7 assignments, the new manifest and stages.json, all metadata excluded from the candidate. The product diff d8868b2a5..HEAD is 0 bytes. The product diffs 3c8b9a3..d8868b2a5 and 60787d89f..d8868b2a5 are both 0 bytes, so the product tree equals the one V18 verified. Manifest comparison: 2775 files on each side, and the only changed entry is docs/delivery/decisions.md, whose only change is the D-240 row. D-240 is accurate. It matches the round-5 and round-6 records and findings.json, and it states the ancestry rule correctly: e7cb240e7 is not an ancestor of 3c8b9a3 but is an ancestor of d8868b2a5. The F-DG6-952 timestamps it quotes match my own scan. I accept D-240 as the right remedy: the re-freeze is metadata-only, and it is the only way to put the record fix inside a frozen candidate without rewriting write-once history. The build exits 0. The only lines containing 'error' are the asset name 'UnplacedFieldErrors-….js' and the zod comment notices from Rollup, none of which is an error. /opt/node22/bin/node is v22.22.0, not 22.22.2, so I claim no Node 22.22.2 run.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-7/candidate-check.txt",
+        "docs/delivery/test-evidence/DG6/domain/round-7/manifest-diff.txt",
+        "docs/delivery/test-evidence/DG6/domain/round-7/build.log"
+      ]
+    },
+    {
+      "id": "DOM-RG7-01-validators-and-stages",
+      "procedure": "Run --historical for DG5 to DG1, --pipeline and --register DG6 at HEAD. Check every stage's stages.json history: whether the state equals the last entry, whether the transitions are legal and whether the timestamps are monotone. Check DG6's candidate, manifest and round entries. Judge F-DG6-952.",
+      "command": "for s in DG5 DG4 DG3 DG2 DG1; do node tools/gates/validate.mjs --historical --stage $s; done; node tools/gates/validate.mjs --pipeline; node tools/gates/validate.mjs --register DG6; python3 consistency scan (stages-consistency.log)",
+      "environment": "Repository at HEAD 04569998d; Node 24.21.0; run at 18:45Z. The load average was 10-20 because the three reviews run at the same time.",
+      "expected": "All seven validators exit 0. The DG6 history is legal and monotone, and its state matches its last entry.",
+      "actual": "--historical DG5, DG4, DG3, DG2 and DG1 each print 'PASS gate DGn (historical)'; --pipeline prints 'PASS pipeline (active stage: DG6 REVIEWING)'; --register DG6 prints 'PASS register rules at DG6'. All exit 0. One extra line in validate-exits.txt, 'tail: option used in invalid context -- 3', comes from a malformed display command I typed after the exit codes were recorded. It is not validator output. DG6: 14 entries, PLANNED -> BUILDING -> REVIEWING -> FIXING -> REVIEWING -> FIXING -> REVIEWING -> VERIFYING -> FIXING (06:42:33Z, recorded late) -> REVIEWING -> FIXING -> REVIEWING -> FIXING (18:35:32Z, D-240) -> REVIEWING (18:38:30Z, round 7). Every transition is legal, the timestamps are monotone, and the state REVIEWING equals the last entry. candidate.frozen_at, the manifest's frozen_at and source_commit, and the round-7 entry all agree. gates/DG6.json still records the round-4 BLOCKED decision. F-DG6-952: my scan agrees that the histories of DG0 and DG5 are not monotone, and that DG1-DG4 and DG6 are. I agree that it is a Low documentation drift in the histories of APPROVED gates, with no effect on any gate decision, the product or this candidate. Rewriting approved gates' history would break write-once records. Accepting it as an observation is right; only the release-auditor can concur. Note: findings.json already shows 952 as ACCEPTED_OBSERVATION after only qa's round-6 sidecar entry. Under the protocol, it is accepted only once the release-auditor adds its entry. The auditor should confirm this at the audit.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-7/validate-exits.txt",
+        "docs/delivery/test-evidence/DG6/domain/round-7/validate-historical-DG5.log",
+        "docs/delivery/test-evidence/DG6/domain/round-7/validate-historical-DG4.log",
+        "docs/delivery/test-evidence/DG6/domain/round-7/validate-historical-DG3.log",
+        "docs/delivery/test-evidence/DG6/domain/round-7/validate-historical-DG2.log",
+        "docs/delivery/test-evidence/DG6/domain/round-7/validate-historical-DG1.log",
+        "docs/delivery/test-evidence/DG6/domain/round-7/validate-pipeline.log",
+        "docs/delivery/test-evidence/DG6/domain/round-7/validate-register-DG6.log",
+        "docs/delivery/test-evidence/DG6/domain/round-7/stages-consistency.log"
+      ]
+    },
+    {
+      "id": "DOM-RG7-02-verify-F-DG6-911-951",
+      "procedure": "Re-run the round-5 reproduction of F-DG6-911 and F-DG6-951 on this candidate. Serve each revision's stages.json in memory: 8754f809d, the round-5 freeze, which is the fix-reverted mutant; e7cb240e7, the fix; d8868b2a5, the source_commit; and 04569998d, HEAD. Run --historical DG5 and DG1 for each, and --pipeline for the mutant and the source. Confirm that the fix is an ancestor of source_commit. No file is changed.",
+      "command": "STAGES_REV=<rev> node --import ./docs/delivery/test-evidence/DG6/domain/round-7/stages-serve-rev.mjs tools/gates/validate.mjs --historical --stage DG5|DG1 (and --pipeline); git merge-base --is-ancestor e7cb240e7 d8868b2a5",
+      "environment": "Repository; Node 24.21.0.",
+      "expected": "The mutant fails with 'DG6 illegal transition VERIFYING -> REVIEWING', exit 1. The fix, the source and HEAD pass, exit 0. The fix is an ancestor of source_commit.",
+      "actual": "8754f809d: --historical DG5 and DG1, and --pipeline, each FAIL with exactly 'stages.json: DG6 illegal transition VERIFYING -> REVIEWING' and exit 1. These are the expected non-zero exits of the mutant. e7cb240e7, d8868b2a5 and 04569998d: PASS, exit 0 (--pipeline on d8868b2a5: 'PASS pipeline (active stage: DG6 FIXING)'). e7cb240e7 is an ancestor of d8868b2a5 and not of 3c8b9a3. F-DG6-911 and F-DG6-951 are CLOSED_VERIFIED on this candidate (domain-reviewer.verifications.json).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-7/validators-by-revision.log",
+        "docs/delivery/test-evidence/DG6/domain/round-7/pipeline-by-revision.log",
+        "docs/delivery/test-evidence/DG6/domain/round-7/stages-serve-rev.mjs",
+        "docs/delivery/test-evidence/DG6/domain/round-7/fix-ancestry.txt"
+      ]
+    },
+    {
+      "id": "DOM-RG7-03-integration-p6-and-f990-regression",
+      "procedure": "Re-run the 125 P6 integration files of my round-5/6 list on this candidate, together with three probes. The list covers: access and sensitivity (z12b, z13, z13b, z13c, z15, sensitive-reads, the reference inventory); the assistant (composition, conversations, guardrails, history-recheck, injection, no-write, provider, retrieval, settings, suggestions); integrations and webhooks; imports; notifications and channel fan-out; automation (version at occurrence, enablement ledger, disable-stops-pending); operations and freshness; the text scans, including seeded-texts; and the QA suites A01, A12, A17 (including s01-005 external change) and A22. The probes are the round-4 audit probe zz-aud-r4-served-dg-labels.test.ts (the F-DG6-990 regression check) and my round-5 probes zz-domain-r5-served-dg-labels and zz-domain-r5-audit-history-scope, all copied into the clone, not into the candidate.",
+      "command": "MTH_SECRET_QA_A17_WEBHOOK_SIGNING_SECRET=qa-a17-synthetic-signing-secret-0001 QA_PG_PORT=32400 MTH_PORT_POOL=32401-32419 tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration $(cat integration-p6.files.txt)",
+      "environment": "The clone at d8868b2a5; a disposable PostgreSQL 16.15 (UTF8/C), production-initialized, migrated to the latest version (0130 included); Node 24.21.0. --configLoader runner is used because node_modules is read-only in the sandbox. The load average was 13-20 on 4 vCPU. During the run the kernel reported that it OOM-killed a process in the shared session limit; vitest completed every file regardless.",
+      "expected": "Every file passes, and the audit probe finds 0 served strings naming DG0-DG7.",
+      "actual": "Test Files 128 passed (128); Tests 1432 passed | 1 todo (1433); exit 0; 2183 s. No failure, timeout or retry. The OOM notice did not cost any file or test: all 128 files report ✓ and the totals equal the file list. '[AUD-R4 dg] served strings naming DG0-DG7: 0' (F-DG6-990 holds). The zz-domain-r5 probes pass: no served DG name, decision or ADR id in configuration endpoints, and audit history stays scoped. Disclosures: (a) two stderr lines 'secret_ref.refused … not_bound', in webhooks.test.ts and channel-fanout.test.ts, are refusals the tests provoke on purpose, and both tests pass. (b) The todo, shown as '15 tests | 1 skipped' for audit-events.test.ts, is the declared it.todo and does not run. (c) Three 'npm warn Unknown project config' lines come from the npm CLI and do not affect the result. I did not re-run the F-DG6-990 mutant with 0130 removed: the finding is CLOSED_VERIFIED and that migration has not changed, so my round-5 mutant evidence (mutant-m0130-api.log, mutant-m0130-ui.log) still applies.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-7/integration-p6.log",
+        "docs/delivery/test-evidence/DG6/domain/round-7/integration-p6.files.txt",
+        "docs/delivery/test-evidence/DG6/audit/round-4/probes/zz-aud-r4-served-dg-labels.test.ts",
+        "docs/delivery/test-evidence/DG6/domain/round-5/mutant-m0130-api.log"
+      ]
+    },
+    {
+      "id": "DOM-RG7-04-root-e2e-p6-en-ar",
+      "procedure": "Run the 14 root P6 acceptance e2e specs, plus my round-7 UI probe, in chromium-en and chromium-ar on the production-initialized stack. The specs are: A12 scope isolation; A13 automation recovery and the connector run; A17 failing connector, and import and integration; A20 bilingual shell; P6 axe; layout and brand; P6 UX and the S15-014 term scan; A21 no-AI and degradation; and A22 jobs and operability. The probe opens 18 P6 screens in each language as the synthetic dev.admin. They include the screens that render the texts 0130 reworded: Jobs, the kpi.freshness_scan job operation, Procedure builder, and the kpi_submission and benefit_validation definitions, whose validation rules load into form fields. The probe checks direction against the language, the absence of any DG0-DG7 line (input values included) and of any 'undefined', 'NaN', '[object Object]' or 'null', and that the assistant shows Off. I inspected the screenshots myself.",
+      "command": "PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers MTH_SECRET_QA_A17_WEBHOOK_SIGNING_SECRET=qa-a17-synthetic-signing-secret-0001 E2E_SCREENSHOT_DIR=$TMPDIR/shots QA_EVIDENCE_DIR=$TMPDIR/qaev QA_PG_PORT=32430 E2E_API_PORT=32431 MTH_PORT_POOL=32432-32449 apps/web/e2e/support/with-stack.sh npx playwright test $(cat root-p6-e2e.specs.txt) --workers=1",
+      "environment": "The clone at d8868b2a5, with my probe copied into e2e/ (the probe is not part of the candidate). Playwright with the pre-installed Chromium (no install). The production-initialized stack. E2E_SCREENSHOT_DIR points at writable scratch, as the assignment instructs, and the screenshots are copied into the evidence directory. All users are synthetic. Load average 14-18.",
+      "expected": "All tests pass in en and ar, except the declared skips. The probe finds 0 DG lines and 0 leaks on every screen.",
+      "actual": "266 passed, 18 skipped, 0 failed, exit 0, 32.4 min. No re-run was needed, nothing was flaky and there were no retries. All 18 skips are a20-p6-axe's 9 declared detail screens with route parameters, times 2 languages, as in rounds 1 to 6 and as disclosed in REQ-S15-012. Other log lines: 2 'NOTICE trigger qa_a13_fault_in … does not exist, skipping' and 2 'NOTICE database mth_fresh_qa_a21_{en,ar} does not exist, skipping' come from the specs' idempotent PostgreSQL cleanup, and there are 3 npm config warnings. The probe reports 18 screens in each language, 'DG lines 0, placeholder-leak lines 0'. Visual inspection, EN Jobs: the job descriptions are in business terms, with no gate, ADR or decision id. Some descriptions cite register ids such as '(REQ-S10-019)'. That is an existing technical-administration text carried from DG2-DG5, and no source rule forbids it, so it is an observation, not a finding. EN procedure kpi_submission: validation rules 'The KPI actual-submission rules apply unchanged.' AR benefit_validation: the 0130 Arabic wording, RTL, with the title marked as a provisional translation. AR a17-exception-data-owner: one open exception ('connector unreachable', 1 occurrence), and the linked KPI shown as Stale (قديم) with its last value 250.75 and date 2026/01/31, never zero or green. EN a17-connector-failing: 'The newest run failed', why, what to do, the native fallbacks 'Enter the KPI actual by form' and 'Import a file', and Unknown run counts, never 0. Credentials are shown only as references, and the test-adapter honesty banner is present. AR assistant: status متوقف (Off), telemetry off. The provisional wordmark (Provisional / مؤقت) appears in both languages.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-7/root-p6-e2e.log",
+        "docs/delivery/test-evidence/DG6/domain/round-7/root-p6-e2e.specs.txt",
+        "docs/delivery/test-evidence/DG6/domain/round-7/probes/zz-domain-r7-p6-screens.spec.ts",
+        "docs/delivery/test-evidence/DG6/domain/round-7/screenshots/en/zz-r7-jobs.png",
+        "docs/delivery/test-evidence/DG6/domain/round-7/screenshots/ar/zz-r7-jobs.png",
+        "docs/delivery/test-evidence/DG6/domain/round-7/screenshots/en/zz-r7-procedure-kpi-submission.png",
+        "docs/delivery/test-evidence/DG6/domain/round-7/screenshots/ar/zz-r7-procedure-kpi-submission.png",
+        "docs/delivery/test-evidence/DG6/domain/round-7/screenshots/en/zz-r7-procedure-benefit-validation.png",
+        "docs/delivery/test-evidence/DG6/domain/round-7/screenshots/ar/zz-r7-procedure-benefit-validation.png",
+        "docs/delivery/test-evidence/DG6/domain/round-7/screenshots/en/zz-r7-job-freshness-scan.png",
+        "docs/delivery/test-evidence/DG6/domain/round-7/screenshots/ar/zz-r7-job-freshness-scan.png",
+        "docs/delivery/test-evidence/DG6/domain/round-7/screenshots/en/zz-r7-automation-rules.png",
+        "docs/delivery/test-evidence/DG6/domain/round-7/screenshots/ar/zz-r7-automation-rules.png",
+        "docs/delivery/test-evidence/DG6/domain/round-7/screenshots/en/a17-connector-failing.png",
+        "docs/delivery/test-evidence/DG6/domain/round-7/screenshots/ar/a17-connector-failing.png",
+        "docs/delivery/test-evidence/DG6/domain/round-7/screenshots/en/a17-exception-data-owner.png",
+        "docs/delivery/test-evidence/DG6/domain/round-7/screenshots/ar/a17-exception-data-owner.png",
+        "docs/delivery/test-evidence/DG6/domain/round-7/screenshots/en/a17-csv-staged.png",
+        "docs/delivery/test-evidence/DG6/domain/round-7/screenshots/ar/a17-csv-staged.png",
+        "docs/delivery/test-evidence/DG6/domain/round-7/screenshots/en/a17-connector-stopped.png",
+        "docs/delivery/test-evidence/DG6/domain/round-7/screenshots/ar/a17-connector-stopped.png",
+        "docs/delivery/test-evidence/DG6/domain/round-7/screenshots/en/zz-r7-assistant-off.png",
+        "docs/delivery/test-evidence/DG6/domain/round-7/screenshots/ar/zz-r7-assistant-off.png",
+        "docs/delivery/test-evidence/DG6/domain/round-7/screenshots/en/zz-r7-search.png",
+        "docs/delivery/test-evidence/DG6/domain/round-7/screenshots/ar/zz-r7-search.png",
+        "docs/delivery/test-evidence/DG6/domain/round-7/screenshots/en/a22-p6-operations-stale.png",
+        "docs/delivery/test-evidence/DG6/domain/round-7/screenshots/ar/a22-p6-operations-stale.png"
+      ]
+    },
+    {
+      "id": "DOM-RG7-05-operating-logic-and-repair-diff",
+      "procedure": "Judge the operating-logic clauses on this candidate, resting on DOM-RG7-03/04, which ran the suites myself. The product tree equals 60787d89f, which is also the product tree of round 5/6, so for unchanged code I re-use my round-1 to round-6 line-level judgements, re-confirmed by this round's runs. The repair diff 60787d89f..d8868b2a5 outside docs/delivery is empty. The real repair of F-DG6-990 (0130, seeded-texts.test.ts, data-dictionary.md) is unchanged since my round-5 line-level review. I re-read 0130's header and its job-text step. I searched apps/web/src for DG0-DG7 outside comments and found none. I re-ran the deferred items the register leaves to the orchestrator's freeze verification, and read V18 (orchestrator-final-60787d8).",
+      "command": "None (judgement over DOM-RG7-03/04, the source and V18)",
+      "environment": "Product tree d8868b2a5 (= 60787d89f); the runs of DOM-RG7-03/04; docs/delivery/test-evidence/DG6/orchestrator-final-60787d8.",
+      "expected": "Each clause holds in en and ar. Every register disclosure is acceptable.",
+      "actual": "Each clause holds.\n\nNo implied external change (REQ-S01-005, S17-006, M0080): a17-s01-005 passes. Completing a task never claims an external change, and the deliverable stays 'external change not confirmed' until a result is confirmed.\n\nStale and failed data (REQ-S12-019): one exception, Stale with the last value and its date, and the linked KPIs, in en and ar. The register's residual (the freshness scan reads the newest period that has a value; where none exists the KPI shows Unknown) is bounded, and I accept it.\n\nUnknown, never zero or green: the connector, run and import screens show Unknown, never 0.\n\nImports and integration (REQ-S17-001..003, 005; A17): A17 passes staging, validation, duplicate detection, no commit on a partial failure, lineage back to the batch and row, and native forms and imports with every connector stopped.\n\nScope (REQ-S10-002/004, S13-013; A12): passes in en and ar. Search, a deep link refused without showing the title, evidence access after an ownership transfer, and the A12-5 assistant.\n\nNotifications and the assistant (REQ-S12-023/024; A21): the in-app inbox works with no channel configured. The assistant is off by default and drafts only. It never approves, validates a benefit, sets a value or creates evidence.\n\nThe 0130 repair: wording only. Rows are rewritten only on an exact match with the seeded text, versions step, there is one audit event per row with {from, to}, and nothing is approved. D-239's five append-only audit_event.reason texts carry task and decision ids, not gate names, and no reader route serves them. Keeping them preserves the append-only audit, so I accept it.\n\nDeferrals re-run: S12-019 (A17 e2e and integration), S15-014 (the term scan across 21 routes, each in normal, forced-500 and network-failure states, en and ar) and S17-007 (A12-5 and the assistant suites) all pass in my runs. The rest are covered by V18 (15/15 steps exit 0; integration 4370 passed, 1 skipped, 1 todo; e2e 556+556; root 288; demo 10) on the identical product tree.\n\nAccepted disclosed limits:\n- the S15-014 not-found and not-demo states;\n- LOAD-T20's dataset gap (D-199 item 2);\n- the REQ-S20-029/030 targets, labelled provisional and not Mobily capacity.\n\nREQ-DLV-038: the P6 outputs and their evidence exist as the register claims (--register DG6 PASS).\n\nProduct gates G1-G6 never relate to DG0-DG7, and my probe finds no DG label on any of the 36 screen renders.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-7/integration-p6.log",
+        "docs/delivery/test-evidence/DG6/domain/round-7/root-p6-e2e.log",
+        "docs/delivery/test-evidence/DG6/orchestrator-final-60787d8/summary.txt",
+        "docs/delivery/test-evidence/DG6/orchestrator-final-60787d8/README.md",
+        "docs/delivery/test-evidence/DG6/domain/round-7/screenshots/en/a17-xlsx-committed.png",
+        "docs/delivery/test-evidence/DG6/domain/round-7/screenshots/ar/a17-xlsx-committed.png",
+        "packages/db/migrations/0130_p6_seeded_text_business_terms.sql"
+      ]
+    },
+    {
+      "id": "DOM-RG7-06-d229-d228",
+      "procedure": "Judge D-229 (connector configuration names stay cannot-name) and the D-228 (4) out-of-scope ruling on cross-organization ids. Look for a served column, response, notification channel or write path that names a sensitive record, and for a token sequence that loses or misplaces a hidden literal after edits, grant changes or concurrent saves. Re-rely on my reading of apps/worker/src/handlers/notifications.ts (unchanged) and on the access suites re-run in DOM-RG7-03.",
+      "command": "None (judgement over DOM-RG7-03)",
+      "environment": "The clone at d8868b2a5; DOM-RG7-03.",
+      "expected": "No path names a restricted record to a reader without the grant.",
+      "actual": "Not a defect. At send time, the channel fan-out checks restrictedForRecipient against the target, the work item's subject and the link. A restricted message carries the inbox.restricted key, no message parameters, and a link to the transformation home only, so email or messaging names nothing. channel-fanout's 'a restricted recipient gets the inbox.restricted text' passes. So do z13/z13b/z13c (served keys and error texts), z15 (version-bound restricted tokens across edits, grant changes and concurrent saves), z12b and the sensitive-reference inventory, so no token sequence loses or misplaces a hidden literal. D-229: a mapping or credential name can name an id only if an administrator who already sees that configuration types it in, so I accept it. D-228 (4): every helper checks against the reader's own organizations, so I accept it. My judgement is unchanged from rounds 3, 5 and 6.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-7/integration-p6.log"
+      ]
+    },
+    {
+      "id": "DOM-RG7-07-decisions",
+      "procedure": "Judge D-194 to D-196, D-199 item 2, D-202, D-203 to D-205, D-239 and D-240 against the master prompt's automation clauses (REQ-S12-019, REQ-S20-013) and the playbook.",
+      "command": "None",
+      "environment": "Repository; the runs above.",
+      "expected": "Each decision is accepted, or a finding is raised.",
+      "actual": "All accepted. D-203: the batch and concurrency are bounded (defaults 8 and 4), and no action runs on events from before enablement. D-204: a late event is evaluated against the rule version in force and enabled at its occurrence, read from the 0122/0123 ledger, and the version-at-occurrence suite passes. D-205: disabling a rule stops its pending events. The residual commit-order race documented in ADR-0043 is bounded: the action key is idempotent, a duplicate yields 'already', and an automation never decides a G1-G6 business approval. It is acceptable as documented and meets REQ-S12-019 and REQ-S20-013. D-194 to D-196, D-199 item 2 and D-202 are unchanged from my earlier rounds. D-239 is accepted, as in DOM-RG7-05. D-240 is accepted, as in DOM-RG7-00.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-7/integration-p6.log",
+        "docs/delivery/test-evidence/DG6/domain/round-7/manifest-diff.txt"
+      ]
+    },
+    {
+      "id": "DOM-RG7-08-environmental-residuals",
+      "procedure": "Record the environmental residuals on the offline and configuration surface, as the assignment instructs.",
+      "command": "None",
+      "environment": "A sandbox with no network, container runtime, live IdP, mail server, messaging service, object store or AI provider.",
+      "expected": "PASS on the offline surface, with each residual noted.",
+      "actual": "PASS on the offline surface. Not exercised: the live registry (REQ-DLV-042 AC-1, D-057), live CI (REQ-DLV-025, D-058), and Keycloak or a real enterprise IdP (D-049). Only the bundled test issuer was used; the SAML broker is documented, not run. Connectors, outbound writes, notification channels and the assistant ran only through their test adapters and the shipped disabled configuration. The REQ-S20-029/030 figures are provisional sandbox measurements, not Mobily capacity. There was no Node 22.22.2 run, because only v22.22.0 is present.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-7/build.log"
+      ]
+    }
+  ],
+  "findings": [],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG6/domain/round-7/candidate-check.txt",
+    "docs/delivery/test-evidence/DG6/domain/round-7/manifest-diff.txt",
+    "docs/delivery/test-evidence/DG6/domain/round-7/validate-exits.txt",
+    "docs/delivery/test-evidence/DG6/domain/round-7/validators-by-revision.log",
+    "docs/delivery/test-evidence/DG6/domain/round-7/pipeline-by-revision.log",
+    "docs/delivery/test-evidence/DG6/domain/round-7/stages-consistency.log",
+    "docs/delivery/test-evidence/DG6/domain/round-7/integration-p6.log",
+    "docs/delivery/test-evidence/DG6/domain/round-7/root-p6-e2e.log",
+    "docs/delivery/test-evidence/DG6/domain/round-7/probes/zz-domain-r7-p6-screens.spec.ts",
+    "docs/delivery/reviews/DG6/round-7/domain-reviewer.verifications.json"
+  ],
+  "reviewed_at": "2026-11-11T20:10:00Z",
+  "summary": "PASS on candidate 10f71f24 (source d8868b2a5). F-DG6-911 and F-DG6-951 are CLOSED_VERIFIED here. The fix e7cb240e7 is an ancestor of source_commit. The fix-reverted mutant (8754f809d) fails with 'VERIFYING -> REVIEWING', and the source and HEAD pass. --historical DG1-DG5, --pipeline and --register DG6 all exit 0. The product tree equals 60787d89f and 3c8b9a3; the only candidate change is the D-240 row, which I accept. F-DG6-990 regression: 0 served DG strings, and 0 DG lines on 18 screens in each of en and ar. F-DG6-952: I agree with accepting it as an observation (the release-auditor must concur). Re-runs: integration 128/128 files, 1432 passed + 1 todo; root P6 e2e plus my probe, 266 passed, 18 declared axe skips, 0 failed. No new finding."
+}

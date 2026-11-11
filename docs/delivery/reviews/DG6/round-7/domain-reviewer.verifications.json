@@ -1,0 +1,34 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG6-911",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate 10f71f24 (source d8868b2a5c074b13c04693a88644c25ef2792583). The fix e7cb240e742320935f4c7e01b26f143b8bd656c9 is an ancestor of this source_commit, and it is not an ancestor of the earlier source 3c8b9a3, as D-240 states (fix-ancestry.txt). The fix adds one FIXING entry at 2026-11-11T06:42:33Z between VERIFYING 06:08:46Z and REVIEWING 11:32:40Z, with a note that it was recorded late. I re-ran the round-5 reproduction with each revision's stages.json served in memory, without changing any file. At 8754f809d, the round-5 freeze (the fix-reverted mutant), --historical DG5 and DG1 print 'DG6 illegal transition VERIFYING -> REVIEWING' and exit 1, so the validator catches the reverted fix. At e7cb240e7, d8868b2a5 and 04569998d (HEAD, the round-7 freeze) the same runs exit 0 (validators-by-revision.log). At HEAD 04569998d, --historical DG5, DG4, DG3, DG2 and DG1, --pipeline and --register DG6 all exit 0 (validate-exits.txt). DG6's stages.json history now has 14 entries, every transition is legal, the timestamps are monotone, the state REVIEWING equals the last entry, and the candidate, manifest and round-7 entry agree on 10f71f24, d8868b2a5 and frozen_at 18:38:30Z (stages-consistency.log). Disclosure: the 'tail: option used in invalid context -- 3' line in validate-exits.txt comes from my own malformed shell display command, which ran after the validators had written their exit codes. It is not validator output.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-7/validators-by-revision.log",
+        "docs/delivery/test-evidence/DG6/domain/round-7/stages-serve-rev.mjs",
+        "docs/delivery/test-evidence/DG6/domain/round-7/fix-ancestry.txt",
+        "docs/delivery/test-evidence/DG6/domain/round-7/validate-exits.txt",
+        "docs/delivery/test-evidence/DG6/domain/round-7/validate-historical-DG5.log",
+        "docs/delivery/test-evidence/DG6/domain/round-7/validate-historical-DG1.log",
+        "docs/delivery/test-evidence/DG6/domain/round-7/stages-consistency.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG6-951",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "This is the same defect as F-DG6-911; qa-verifier raised it in its round-5 sidecar. Its reproduction is --pipeline and --historical DG5..DG1 exiting 1 at 8754f809d. I re-ran it on this candidate. With 8754f809d's stages.json served in memory (the mutant), --pipeline prints 'FAIL pipeline (active stage: DG6 REVIEWING) (1 problem) - stages.json: DG6 illegal transition VERIFYING -> REVIEWING' and exits 1. With the source_commit d8868b2a5's stages.json it prints 'PASS pipeline (active stage: DG6 FIXING)' and exits 0 (pipeline-by-revision.log). At HEAD 04569998d, --pipeline prints 'PASS pipeline (active stage: DG6 REVIEWING)', and --historical DG5, DG4, DG3, DG2 and DG1 each print 'PASS gate DGn (historical)'; all exit 0. The fix commit e7cb240e7 lies inside this candidate's history. gates/DG6.json still records the round-4 BLOCKED decision for 32e41b55: no FAIL or BLOCKED was turned into an approval.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-7/pipeline-by-revision.log",
+        "docs/delivery/test-evidence/DG6/domain/round-7/validate-pipeline.log",
+        "docs/delivery/test-evidence/DG6/domain/round-7/validate-exits.txt",
+        "docs/delivery/test-evidence/DG6/domain/round-7/validate-historical-DG4.log",
+        "docs/delivery/test-evidence/DG6/domain/round-7/validate-historical-DG3.log",
+        "docs/delivery/test-evidence/DG6/domain/round-7/validate-historical-DG2.log",
+        "docs/delivery/test-evidence/DG6/domain/round-7/fix-ancestry.txt"
+      ]
+    }
+  ]
+}
