@@ -1,0 +1,130 @@
+# 2026-11-11T06:36:32Z orchestrator final verification V17 (docs/delivery/test-evidence/DG6/orchestrator-final-a0cf22b) on a0cf22bba
+--- product tree a0cf22bba vs the candidate source f56f1b3d2: all differing paths:
+     33 A	docs/delivery/test-evidence/DG6/orchestrator-final-a0cf22b/…
+(all under docs/delivery/test-evidence: meta-excluded)
+--- every .rc:
+build.rc 0
+contrast.rc 0
+demo.rc 0
+e2e-cutf8.rc 0
+e2e-unset.rc 0
+format.rc 0
+hist.rc 0
+install.rc 0
+integration.rc 0
+lint.rc 0
+openapi.rc 0
+root.rc 0
+typecheck.rc 0
+unit-cutf8.rc 0
+unit-unset.rc 0
+steps: 15; non-zero: 0
+--- run.sh steps:
+step hist node tools/gates/validate.mjs --historical --stage DG5
+step install pnpm install --frozen-lockfile
+step build pnpm -r build
+step typecheck pnpm -r typecheck
+step lint pnpm lint
+step format pnpm format:check
+step openapi pnpm openapi:lint
+step contrast pnpm --filter @mth/design-tokens run check:contrast
+step unit-unset env -u LANG -u LC_ALL -u LC_CTYPE pnpm test
+step unit-cutf8 env LANG=C.UTF-8 LC_ALL=C.UTF-8 pnpm test
+step integration env $X QA_PG_PORT=29200 MTH_PORT_POOL=29201-29249 tests/qa/support/with-pg.sh pnpm test:integration
+step e2e-unset env -u LANG -u LC_ALL -u LC_CTYPE $X QA_PG_PORT=29350 E2E_API_PORT=29351 MTH_PORT_POOL=29352-29390 apps/web/e2e/support/with-stack.sh npx playwright test apps/web/e2e --workers=1
+step e2e-cutf8 env $X LANG=C.UTF-8 LC_ALL=C.UTF-8 QA_PG_PORT=29350 E2E_API_PORT=29351 MTH_PORT_POOL=29352-29390 apps/web/e2e/support/with-stack.sh npx playwright test apps/web/e2e --workers=1
+step root bash -c "$X QA_PG_PORT=29360 E2E_API_PORT=29361 MTH_PORT_POOL=29362-29399 apps/web/e2e/support/with-stack.sh npx playwright test \$(ls e2e/*.spec.ts | grep -v /a02-) --workers=1"
+step demo bash -c 'QA_PG_PORT=29400 E2E_API_PORT=29401 MTH_PORT_POOL=29402-29430 e2e/support/with-demo-stack.sh npx playwright test e2e/a02-*.spec.ts --workers=1'
+--- totals grepped from the logs:
+integration.log: Test Files  441 passed (441)
+integration.log:      Tests  4366 passed | 1 skipped | 1 todo (4368)
+unit-unset.log: Test Files  191 passed (191)
+unit-unset.log:      Tests  2906 passed (2906)
+unit-unset.log: Test Files  125 passed (125)
+unit-unset.log:      Tests  2113 passed (2113)
+unit-unset.log: Test Files  3 passed (3)
+unit-unset.log:      Tests  259 passed | 2 skipped (261)
+unit-cutf8.log: Test Files  191 passed (191)
+unit-cutf8.log:      Tests  2906 passed (2906)
+unit-cutf8.log: Test Files  125 passed (125)
+unit-cutf8.log:      Tests  2113 passed (2113)
+unit-cutf8.log: Test Files  3 passed (3)
+unit-cutf8.log:      Tests  259 passed | 2 skipped (261)
+e2e-unset:  2 skipped; 556 passed (1.1h);
+e2e-cutf8:  2 skipped; 556 passed (1.1h);
+root:  18 skipped; 288 passed (23.0m);
+demo:  10 passed (1.9m);
+PASS gate DG5 (historical)
+PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 932 operations
+PASS    14.72:1  min 4.5  text       text.primary #142438 on surface.page #F5F8FC  (body text on the page)
+PASS    15.68:1  min 4.5  text       text.primary #142438 on surface.card #FFFFFF  (body text on cards, tables, forms)
+PASS     5.93:1  min 4.5  text       text.secondary #526174 on surface.page #F5F8FC  (secondary text on the page)
+PASS     6.32:1  min 4.5  text       text.secondary #526174 on surface.card #FFFFFF  (secondary text on cards)
+PASS    10.52:1  min 4.5  text       brand.deep #003B73 on surface.page #F5F8FC  (headings on the page)
+PASS    11.21:1  min 4.5  text       brand.deep #003B73 on surface.card #FFFFFF  (headings on cards)
+PASS     4.81:1  min 4.5  text       text.inverse #FFFFFF on action.primary #006DE9  (primary action button)
+PASS     7.05:1  min 4.5  text       text.inverse #FFFFFF on action.primary-hover #0055B6  (primary action button, hover/pressed)
+PASS     4.81:1  min 4.5  text       action.primary #006DE9 on surface.card #FFFFFF  (links and secondary buttons on cards)
+PASS     4.51:1  min 4.5  text       action.primary #006DE9 on surface.page #F5F8FC  (links on the page)
+PASS     4.81:1  min 3.0  ui         focus.ring #006DE9 on surface.card #FFFFFF  (focus indicator on cards)
+PASS     4.51:1  min 3.0  ui         focus.ring #006DE9 on surface.page #F5F8FC  (focus indicator on the page)
+PASS     4.53:1  min 3.0  ui         nav.text #FFFFFF on nav.background #0071F1  (focus indicator inside navigation)
+PASS     3.68:1  min 3.0  ui         border.control #7A8699 on surface.card #FFFFFF  (form control boundaries on cards)
+PASS     3.46:1  min 3.0  ui         border.control #7A8699 on surface.page #F5F8FC  (form control boundaries on the page)
+PASS     4.09:1  min 3.0  ui         brand.primary #0078FF on surface.card #FFFFFF  (selected-state accents and large headings only (never small text))
+PASS     3.84:1  min 3.0  large-text brand.primary #0078FF on surface.page #F5F8FC  (large accent text only)
+PASS     4.53:1  min 4.5  text       nav.text #FFFFFF on nav.background #0071F1  (navigation items)
+PASS     4.53:1  min 4.5  text       nav.text-muted #FFFFFF on nav.background #0071F1  (navigation section labels)
+PASS    11.21:1  min 4.5  text       nav.selected-text #003B73 on nav.selected-background #FFFFFF  (selected navigation item)
+PASS    11.21:1  min 4.5  text       text.inverse #FFFFFF on header.gradient-start #003B73  (header text, gradient start)
+PASS     8.16:1  min 4.5  text       text.inverse #FFFFFF on header.gradient-end #0A4F96  (header text, gradient end)
+PASS    13.75:1  min 4.5  text       text.primary #142438 on surface.selected #E8F1FC  (selected table row)
+PASS     9.83:1  min 4.5  text       brand.deep #003B73 on surface.selected #E8F1FC  (selected chip)
+PASS     5.75:1  min 4.5  text       status.on-track.fg #1A6B3C on status.on-track.bg #E6F4EA  (status chip On track)
+PASS     6.63:1  min 4.5  text       status.at-risk.fg #7A4B00 on status.at-risk.bg #FFF1D6  (status chip At risk)
+PASS     6.83:1  min 4.5  text       status.off-track.fg #A11B1B on status.off-track.bg #FDECEC  (status chip Off track)
+PASS     6.61:1  min 4.5  text       status.unknown.fg #4A5565 on status.unknown.bg #EDF0F4  (status chip Unknown)
+PASS     7.18:1  min 4.5  text       status.stale.fg #5A3E8C on status.stale.bg #F0EBFA  (status chip Stale)
+PASS     6.53:1  min 4.5  text       status.on-track.fg #1A6B3C on surface.card #FFFFFF  (status icon/label on a card)
+PASS     7.41:1  min 4.5  text       status.at-risk.fg #7A4B00 on surface.card #FFFFFF  (status icon/label on a card)
+PASS     7.81:1  min 4.5  text       status.off-track.fg #A11B1B on surface.card #FFFFFF  (status icon/label on a card)
+PASS     7.55:1  min 4.5  text       status.unknown.fg #4A5565 on surface.card #FFFFFF  (status icon/label on a card)
+PASS     8.39:1  min 4.5  text       status.stale.fg #5A3E8C on surface.card #FFFFFF  (status icon/label on a card)
+PASS     6.83:1  min 4.5  text       feedback.error.fg #A11B1B on feedback.error.bg #FDECEC  (error banner)
+PASS     7.81:1  min 4.5  text       feedback.error.fg #A11B1B on surface.card #FFFFFF  (field error message)
+PASS     6.63:1  min 4.5  text       feedback.warning.fg #7A4B00 on feedback.warning.bg #FFF1D6  (warning/conflict/stale banner)
+PASS     5.75:1  min 4.5  text       feedback.success.fg #1A6B3C on feedback.success.bg #E6F4EA  (success banner)
+PASS     9.83:1  min 4.5  text       feedback.info.fg #003B73 on feedback.info.bg #E8F1FC  (information banner)
+PASS     6.63:1  min 4.5  text       badge.provisional.fg #7A4B00 on badge.provisional.bg #FFF1D6  (Provisional badge next to the wordmark)
+PASS    14.04:1  min 4.5  text       text.primary #142438 on feedback.warning.bg #FFF1D6  (body text inside warning banners)
+PASS    13.72:1  min 4.5  text       text.primary #142438 on feedback.error.bg #FDECEC  (body text inside error banners)
+PASS    13.75:1  min 4.5  text       text.primary #142438 on feedback.info.bg #E8F1FC  (body text inside information banners)
+PASS     5.53:1  min 4.5  text       text.secondary #526174 on status.unknown.bg #EDF0F4  (secondary text on neutral chips)
+PASS     7.81:1  min 4.5  text       text.inverse #FFFFFF on feedback.error.fg #A11B1B  (destructive action button (archive, revoke))
+PASS    11.21:1  min 4.5  text       text.inverse #FFFFFF on brand.deep #003B73  (current phase in the phase stepper)
+PASS    13.80:1  min 4.5  text       text.primary #142438 on feedback.success.bg #E6F4EA  (body text inside success banners)
+PASS     5.54:1  min 4.5  text       text.secondary #526174 on surface.selected #E8F1FC  (secondary text in selected rows)
+PASS     3.23:1  min 3.0  ui         border.control #7A8699 on surface.selected #E8F1FC  (control boundaries inside selected rows)
+PASS    10.03:1  min 3.0  ui         badge.provisional.bg #FFF1D6 on header.gradient-start #003B73  (provisional badge shape against the header)
+PASS contrast: 50 pairs meet WCAG AA; 3 prohibited pairs fail as documented
+--- failure markers per log (✘, ×, ' FAIL ', 'N failed', flaky, 'Hook timed out', Unhandled, ELIFECYCLE, 'retry #'):
+build.log: 0
+contrast.log: 0
+demo.log: 0
+e2e-cutf8.log: 0
+e2e-unset.log: 0
+format.log: 0
+hist.log: 0
+install.log: 0
+integration.log: 1
+lint.log: 0
+openapi.log: 0
+root.log: 0
+typecheck.log: 0
+unit-cutf8.log: 1
+unit-unset.log: 1
+the hits, verbatim (each is the text of a passing test):
+integration.log:1853:stdout | apps/api/test/integration/reporting/table-totals-demo.test.ts > REQ-S13-006 on the demo dataset: a system SUM total remains a formula whose cached value is the screen's total > registers {register: "b
+unit-cutf8.log:1049:   ✓ capacity (en) > the role × month grid shows decimal FTE, the conflict with its shortfall, and Unknown capacity as Unknown (never 0)  604ms
+unit-unset.log:1026:   ✓ capacity (en) > the role × month grid shows decimal FTE, the conflict with its shortfall, and Unknown capacity as Unknown (never 0)  597ms
+--- the worktree it ran in (/home/user/wt/verify) is at a0cf22bba and clean now: a0cf22bba, 0 status lines

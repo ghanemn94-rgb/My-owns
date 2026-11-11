@@ -1,0 +1,47 @@
+# 2026-11-11T06:35:41Z write-once and the clean re-gate method (repository read-only, HEAD 10b71858f679cc5295d9dcf0a0c4b5419cae5318)
+--- (1) D/M/R/T/C statuses under reviews/DG6, runs/DG6, candidates/DG6, assignments/DG6/round-* in 8480971a28373e0841d889794cfacde99d347987..HEAD (with -m --full-history):
+(end; count 0)
+commits in 8480971a28373e0841d889794cfacde99d347987..HEAD: 30; merges: 0; first-parent chain linear: yes
+--- (2) the assignment files were never modified after their first commit (each has exactly one commit touching it):
+docs/delivery/assignments/DG6/round-1/code-security-reviewer.md commits=1 sha256=e4e0fa878d4dcc21
+docs/delivery/assignments/DG6/round-1/domain-reviewer.md commits=1 sha256=aec93d17688fac28
+docs/delivery/assignments/DG6/round-1/qa-verifier.md commits=1 sha256=fd9f38337a833384
+docs/delivery/assignments/DG6/round-2/code-security-reviewer.md commits=1 sha256=ea822e8182709932
+docs/delivery/assignments/DG6/round-2/domain-reviewer.md commits=1 sha256=493aef330cb5fdcf
+docs/delivery/assignments/DG6/round-2/qa-verifier.md commits=1 sha256=80322f14d89e6cf3
+docs/delivery/assignments/DG6/round-3/code-security-reviewer.md commits=1 sha256=c422538c99ea0317
+docs/delivery/assignments/DG6/round-3/domain-reviewer.md commits=1 sha256=dbf1d6b0cb39735b
+docs/delivery/assignments/DG6/round-3/qa-verifier.md commits=1 sha256=76d872228465fd33
+docs/delivery/assignments/DG6/round-4/release-auditor.md commits=1 sha256=b17aee8c8e946320
+--- (3) re-gate base: 8480971a28373e0841d889794cfacde99d347987 is the parent of d756000bd: 8480971a28373e0841d889794cfacde99d347987
+old head 3dd8316ffcc7d1594143f378586c8cd0b8d4748f present as a commit: commit
+tree outside docs/delivery, 3dd8316ffcc7d1594143f378586c8cd0b8d4748f vs d756000bd: 0 files differ
+at d756000bd: reviews/DG6 files 0, candidates/DG6 0, assignments/DG6/round-* 0
+runs/DG6 at the base: 0 dirs; at d756000bd: 161 dirs; base..d756000bd statuses under runs/DG6:     917 A 
+review/audit run dirs at d756000bd: 0
+runs/DG6 dirs at the old head 3dd8316ffcc7d1594143f378586c8cd0b8d4748f: 205, of which review/audit: 44
+--- (4) product diff old head 3dd8316ffcc7d1594143f378586c8cd0b8d4748f -> candidate source f56f1b3d2 (outside docs/delivery): the re-gate repairs only:
+ apps/api/src/modules/assistant/answer.ts           |  61 ++-
+ apps/api/src/modules/assistant/assistant.test.ts   |  61 +++
+ apps/api/src/modules/assistant/conversations.ts    | 171 ++++++--
+ apps/api/src/modules/assistant/suggestions.ts      |  15 +-
+ .../integration/assistant/context-recheck.test.ts  | 320 +++++++++++++++
+ .../integration/assistant/conversations.test.ts    |  20 +-
+ .../integration/assistant/history-recheck.test.ts  | 434 +++++++++++++++++++++
+ apps/api/test/support/fake-model.ts                |  81 +++-
+ .../test/support/sensitive-reference-inventory.ts  |   3 +
+ apps/web/e2e/p4-benefits.spec.ts                   |  18 +
+ .../components/explanation/explanation.test.tsx    |  48 +++
+ apps/web/src/i18n/ar/assistant.json                |   4 +-
+ apps/web/src/i18n/ar/explanations.json             |   6 +-
+ apps/web/src/i18n/en/assistant.json                |   4 +-
+ apps/web/src/i18n/en/explanations.json             |   6 +-
+ docs/api/openapi.yaml                              |  10 +-
+ ...provider-port-retrieval-citations-guardrails.md |  36 +-
+ docs/architecture/data-dictionary.md               |  36 ++
+ .../0128_p6_assistant_context_records.sql          |  89 +++++
+ .../0129_p6_assistant_context_insert_rule.sql      |  81 ++++
+ packages/db/src/schema.ts                          |   6 +
+ packages/db/test/integration/catalogue.test.ts     | 108 +++++
+ 22 files changed, 1539 insertions(+), 79 deletions(-)
+--- (5) findings.json / stages.json at d756000bd: DG6 findings 0, DG6 state ['BUILDING']

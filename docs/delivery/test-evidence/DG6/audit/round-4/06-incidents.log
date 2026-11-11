@@ -1,0 +1,39 @@
+# 2026-11-11T06:36:07Z incidents and orchestrator decisions, judged from history (repository read-only, HEAD 10b71858f679cc5295d9dcf0a0c4b5419cae5318)
+=== (a) round-2 qa-verifier run killed (exit 143)
+{'exit_code': 143, 'subtype': 'no-result-line', 'is_error': True, 'started_at': '2026-11-10T18:14:04Z', 'finished_at': '2026-11-10T21:20:04Z', 'external_config_changed': []}
+tool_authored: ['docs/delivery/reviews/DG6/round-2/qa-verifier.findings.json', 'docs/delivery/reviews/DG6/round-2/qa-verifier.verifications.json', 'docs/delivery/test-evidence/DG6/qa/tests/round-2/qa-rg-r2-assistant-history.test.ts', 'docs/delivery/test-evidence/DG6/qa/tests/round-2/zz-qa-rg-r2-f900-basis.spec.ts']
+auto-commit: 356553f2a run: DG6-T-DG6-REV-QA-RG-R2-qa-verifier-20261110T181404Z-201c57a6 (review evidence, auto-committed by run-agent.sh)
+round-2/qa-verifier.json ever in history: 1 commits
+F-DG6-980 first imported in: 620301c30 DG6 re-gate round 2: import findings (F-DG6-960/970/980 same history-channel defect, F-DG6-971); 900 and 920 CLOSED_VERIFIED
+F-DG6-900/920 verification in findings.json since 620301c30: by {'F-DG6-900': 'urity-reviewer-20261110T181401Z-55761759', 'F-DG6-920': 'urity-reviewer-20261110T181401Z-55761759'}
+stages.json round-2 records before/after 10b71858f:
+  10b71858f^ ['domain-reviewer', 'code-security-reviewer', 'qa-verifier']
+  10b71858f ['domain-reviewer', 'code-security-reviewer']
+round-2 listed qa record since its freeze commit 228c229d4: 7
+=== (b) the first round-3 attempts (killed by a container restart)
+DG6-T-DG6-REV-CS-RG-R3-code-security-reviewer-20261111T014305Z-0cbae4a1: files=settings.json stderr.log transcript.jsonl  transcript_lines=129 first=2026-11-11T01:43:09.536Z last=2026-11-11T01:45:25.166Z write_or_edit_calls=0
+DG6-T-DG6-REV-DOM-RG-R3-domain-reviewer-20261111T014302Z-262b73f7: files=settings.json stderr.log transcript.jsonl  transcript_lines=90 first=2026-11-11T01:43:06.477Z last=2026-11-11T01:44:32.342Z write_or_edit_calls=0
+DG6-T-DG6-REV-QA-RG-R3-qa-verifier-20261111T014308Z-b8fb82c1: files=settings.json stderr.log transcript.jsonl  transcript_lines=114 first=2026-11-11T01:43:12.610Z last=2026-11-11T01:44:47.296Z write_or_edit_calls=0
+committed in: c31732980 2026-11-11 01:46:39 +0000 DG6 re-gate round 3: keep the three reviewer runs interrupted by a container restart (no verdict records); partial evidence moved to round-3-interrupted-20261111
+round-3-interrupted evidence files ever committed under another path before c31732980: 0 commits
+relaunched runs started: DG6-T-DG6-REV-DOM-RG-R3-domain-reviewer-20261111T014653Z-2c1ec3f6 DG6-T-DG6-REV-CS-RG-R3-code-security-reviewer-20261111T014656Z-9abcdd72 DG6-T-DG6-REV-QA-RG-R3-qa-verifier-20261111T014659Z-9aa58015 
+relaunch assignment sha256 equals the committed (unchanged) round-3 assignment: see 02-provenance.log ('assignment sha ok: True'); each round-3 assignment has 1 commit (05-writeonce-regate.log)
+=== (c) fix_revision and verification-block alignment (8eebed1cd)
+8eebed1cd 2026-11-11 06:06:28 +0000 DG6 re-gate round 3: import verifications (960/970/971/980 CLOSED_VERIFIED), record fix_revision for 900/920/960/970/971/980
+
+ docs/delivery/findings.json | 184 +++++++++++++++++++++++++++++++++++++++++---
+ 1 file changed, 174 insertions(+), 10 deletions(-)
+validator selection (rules.mjs collectVerifications): within a round, the first sidecar in file-name order wins unless a later one is FAIL; round-3 file order: code-security-reviewer.verifications.json domain-reviewer.verifications.json qa-verifier.verifications.json 
+all round-3 verifications PASS/CLOSED_VERIFIED and findings.json mirrors the code-security sidecar (evidence, note, invocation): see 03-findings.log
+history entries added for the alignment carry at=03:25:00Z (the sidecar time), while the commit is 06:06:28Z:
+  F-DG6-960 [('2026-11-11T03:25:00Z', 'verification record aligned to the code-security-reviewer ro')]
+  F-DG6-970 [('2026-11-11T03:25:00Z', 'verification record aligned to the code-security-reviewer ro')]
+  F-DG6-971 [('2026-11-11T03:25:00Z', 'verification record aligned to the code-security-reviewer ro')]
+  F-DG6-980 [('2026-11-11T03:25:00Z', 'verification record aligned to the code-security-reviewer ro')]
+D-238 'Then' said: any new finding is repaired with import-findings --fix (records fix_revision) before it is verified. fix_revision of 900/920 absent at their verification import 620301c30 and added in 8eebed1cd (03-findings.log trace and the commit diff); the values are the integration commits of the repairs and pass all three anchors.
+=== (d) the orchestrator verification worktree
+/home/user/My-owns    10b71858f [claude/mobily-transformation-platform-dg6-regate]
+/home/user/wt/verify  a0cf22bba (detached HEAD)
+verify worktree HEAD a0cf22bbad0468ee9fa06fdacfbcfab4a204fe9b, clean: 0 lines; worktree admin dir mtime 2026-11-10 22:07:42, round-3 freeze 2026-11-11T01:42:18Z, reviews ran 01:46:53Z-06:02:02Z; external_config_changed of every round-3 run: [] (02-provenance.log)
+--- clarification of '(a) round-2/qa-verifier.json ever in history: 1 commits' (that count used --all):
+on this branch (8480971a..HEAD): 0 commits; the one --all commit is 204cb7ff6 run: DG6-T-DG6-REV-QA-R2-qa-verifier-20261102T094507Z-198e5e6c (review evidence, auto-committed by run-agent.s, on branch(es):  claude/mobily-transformation-platform-dg5-regate2 remotes/origin/claude/mobily-transformation-platform-dg5-regate2 , i.e. the old DG6 history (D-238), not this branch.
