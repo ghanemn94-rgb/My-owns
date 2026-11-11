@@ -1,0 +1,62 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG6-970",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified by its originating reviewer (code-security-reviewer, session 9abcdd72) on candidate sha256:32e41b5581a9beeba357a6c0dd5b50c414226910232ebfbb711c2178024376b5 (source f56f1b3d2; product tree equal to a0cf22bba, which integrates fix T-DG6-BE-RG2).\n\n1. The fix, read line by line (git diff 71ff750ed..f56f1b3d2).\n- conversations.ts historyFor (:465-509) replaces historyOf. It runs readabilityOf for first.fresh (the principal reloaded in transaction 1) over every earlier assistant answer. It drops each answer that withheld() hides: the same predicate toMessageView uses, over citations and context, with citations only for a pre-0128 row. The 6-message window is taken after the drop. Then it returns the union of recordRefsOf of the kept answers.\n- answer.ts:173 stores mergeContextRecords(contextRecordsOf(items), input.historyContext), so the stored context is the data block plus the inherited context. Suggestions store outcome.contextRecords (conversations.ts suggestionContext), so they inherit too.\n- The only call of ModelProvider.complete is answer.ts:142, and postAssistantMessage is the only caller of answer() (grep). No other path feeds earlier turns to the model.\n\n2. My round-2 reproduction, unedited (30-round2-repros-unedited-on-candidate.log, exit 1 as expected, because it asserts the defect). It fails at its first defect assertion: 'turn-2 request: history (assistant role) holds the revoked title: false'. Its turn-2 reply still names TITLE_2, with stored context_records [], so the GET body contains the title. This is the probe's own fake: on a turn with no assistant message in the history, it answers a hard-coded text naming both titles, which the request did not carry (data block without tA2, history without A1). The implementer's disclosure is therefore accurate.\n\n3. A corrected probe (repro/zz-sec-r3-history-channel.test.ts R3-1). The only change is that the echo names only the titles in the data block it was actually sent. It passes (31-…log): the turn-2 request roles are [system,user,user,user] (A1 dropped) and hold no revoked title. The reply is 'nothing in the data block names a program', and the GET body holds no revoked title.\n\n4. R3-2 checks something the shipped suite does not: transitivity beyond the 6-message window. By turn 5, A1 is no longer in the history, yet A5's stored context is [tA3, tA1, tA2]. After revoking tA2, all five answers are withheld and the GET body holds neither the title nor the id. The turn-6 history holds only the owner's prompts, and no revoked text.\n\n5. The other reviewers' round-2 probes (35-…log, exit 0): QA's (unedited) gives 're-sent false' and 'A2 holds the withheld fact false'. The domain probe (assembled as raised) gives 'sent as history = false'.\n\n6. Mutants, restored afterwards with git status empty:\n- M1 keeps withheld answers in the history. R3-1 FAILS (32-…log): the request carries the revoked title. Defence 2 still withheld the reply, which shows the defence in depth.\n- M2 removes the inheritance. R3-2 FAILS (33-…log): A5 context is [tA3].\n\n7. Shipped suites (history-recheck, context-recheck, conversations, suggestions) pass 48/48. The full integration suite passes in both locales.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-3/30-round2-repros-unedited-on-candidate.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/31-r3-probe-and-shipped-assistant-suites.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/32-mutant-m1-history-not-rechecked.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/33-mutant-m2-no-inheritance.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/35-other-reviewers-round2-probes.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/repro/zz-sec-r3-history-channel.test.ts",
+        "docs/delivery/test-evidence/DG6/code-security/round-2/repro/zz-sec-r2-assistant-history.test.ts",
+        "apps/api/src/modules/assistant/conversations.ts",
+        "apps/api/src/modules/assistant/answer.ts"
+      ]
+    },
+    {
+      "finding_id": "F-DG6-960",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified by a qualified non-author (code-security-reviewer, session 9abcdd72) on candidate sha256:32e41b5581a9beeba357a6c0dd5b50c414226910232ebfbb711c2178024376b5 (source f56f1b3d2). This is the same defect as F-DG6-970, and the same fix (T-DG6-BE-RG2, historyFor and the inherited context); see that entry for the line-level reading and the mutants.\n\nThe domain reviewer's round-2 probe was re-run as it was raised: lines 1-147 of the candidate's context-recheck.test.ts, unchanged since round 2 (the RG2 diff touches only its case 5 at :296+), followed by docs/delivery/test-evidence/DG6/domain/round-2/probes/zz-domain-r2-history-tail.ts (sha256 5c72b594…). It exits 0 (35-other-reviewers-round2-probes.log). After revoking tA2, turn 1 is withheld. Turn 2's request has 4 messages, and the 'withheld turn-1 text (names TITLE_2) sent as history' is false. The data block does not include tA2.\n\nThe domain probe's fake now answers a fixed 'repeating' text, so whether a repeat is withheld is shown by my R3-1 and R3-2 and the shipped history-recheck case 2: an answer generated with a history answer inherits its context, and it is withheld when that context is revoked. Both pass, and mutant M2 is caught. The finding's suggested remedy is implemented: historyFor drops answers the read-time check withholds, and the new answer's context_records include the context of the history answers.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-3/35-other-reviewers-round2-probes.log",
+        "docs/delivery/test-evidence/DG6/domain/round-2/probes/zz-domain-r2-history-tail.ts",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/31-r3-probe-and-shipped-assistant-suites.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/33-mutant-m2-no-inheritance.log",
+        "apps/api/src/modules/assistant/conversations.ts"
+      ]
+    },
+    {
+      "finding_id": "F-DG6-980",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified by a qualified non-author (code-security-reviewer, session 9abcdd72) on candidate sha256:32e41b5581a9beeba357a6c0dd5b50c414226910232ebfbb711c2178024376b5 (source f56f1b3d2). This is the same defect as F-DG6-970, and the same fix (T-DG6-BE-RG2); see that entry.\n\nThe QA reviewer's round-2 probe, docs/delivery/test-evidence/DG6/qa/tests/round-2/qa-rg-r2-assistant-history.test.ts (sha256 9d5f1342…), was copied unedited into the disposable clone and run with the integration project. It exits 0, and both soft assertions that failed by design in round 2 now hold (35-other-reviewers-round2-probes.log):\n- 'the request of post 2 carries the WITHHELD A1 text as history: false';\n- 'A2: replyKind = answer contentWithheld = false content holds the withheld fact: false'.\nA1 stays withheld. The program-two data is not in the data block of post 2. Mutant M1 (withheld history answers kept) makes my equivalent R3-1 fail on the request content (32-…log).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-3/35-other-reviewers-round2-probes.log",
+        "docs/delivery/test-evidence/DG6/qa/tests/round-2/qa-rg-r2-assistant-history.test.ts",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/32-mutant-m1-history-not-rechecked.log",
+        "apps/api/src/modules/assistant/conversations.ts"
+      ]
+    },
+    {
+      "finding_id": "F-DG6-971",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified by its originating reviewer (code-security-reviewer, session 9abcdd72) on candidate sha256:32e41b5581a9beeba357a6c0dd5b50c414226910232ebfbb711c2178024376b5 (source f56f1b3d2).\n\n1. The fix. Migration 0129 drops both *_context_records_required NOT VALID CHECKs of 0128. It recreates them as BEFORE INSERT FOR EACH ROW triggers of the same names, which raise 23514 with CONSTRAINT set to the same name. So an UPDATE of a pre-0128 row passes, and a new row without a context is refused exactly as before. assistant_suggestion_context_immutable (0128) is unchanged.\n\n2. My round-2 probe, unedited (30-…log, exit 1). The control passes (200). The legacy case fails in its own setup: 'constraint \"assistant_suggestion_context_records_required\" … does not exist', because its DDL drops a CHECK that 0129 removed. That is not a reproduction either way, as the implementer disclosed.\n\n3. A corrected probe (R3-3, 31-…log, exit 0). Its setup is state-agnostic: it drops and re-adds the CHECK only if it exists. On the candidate the installed rule is {checks:0, triggers:1}.\n- R3-3a: a pre-0128 suggestion is taken to a draft (200); the row becomes taken_to_draft, version 2, context still NULL.\n- R3-3b: a pre-0128 suggestion whose cited record was revoked gives 404 and stays proposed v1 (fail closed).\n- R3-3c: a NEW suggestion without a context gives 23514 assistant_suggestion_context_records_required.\n\n4. Mutant M3 removes 0129's suggestion part, so 0128's NOT VALID CHECK stays. R3-3a FAILS with 422 validation.constraint, the original defect (34-…log), and R3-3b and R3-3c still pass. The migration was restored with git status empty.\n\n5. Upgrade path (40-upgrade-0128-0129.log, run 2, exit 0). A scratch database migrated to 0128 has both CHECKs NOT VALID and the bound at 20. Applying 0129 as an upgrade leaves no CHECK, the two triggers with tgtype 7, and the bound 1000 accepted / 1001 refused, identical to a fresh 0001-0129 database. Run 1 (40-upgrade-0128-0129-run1.log, exit 1) failed only on my probe's own over-strict 'every id contiguous from 0001' assertion. The 8 missing ids are the retired P5 gaps of F-DG5-100 (seed.test.ts), and P6's 0098-0129 range is contiguous.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-3/30-round2-repros-unedited-on-candidate.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/31-r3-probe-and-shipped-assistant-suites.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/34-mutant-m3-0129-suggestion-reverted.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/40-upgrade-0128-0129.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/40-upgrade-0128-0129-run1.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/repro/zz-sec-r3-history-channel.test.ts",
+        "docs/delivery/test-evidence/DG6/code-security/round-3/repro/zz-sec-r3-upgrade-0128-0129.test.ts",
+        "packages/db/migrations/0129_p6_assistant_context_insert_rule.sql"
+      ]
+    }
+  ]
+}
