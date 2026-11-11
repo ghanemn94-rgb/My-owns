@@ -1,0 +1,50 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG6-960",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "My own finding. Re-ran its round-2 sequence on candidate 32e41b55 (source f56f1b3d), disposable clone and PostgreSQL 16.15, the shipped http_endpoint provider pointed at the local fake chat-completions server (a loopback test double, not a model). This time the fake is an ECHO model: it answers with the text of the last assistant message in its history, else a fixed text that names no record (probes/zz-domain-r3-history-tail.ts appended to lines 17-147 of context-recheck.test.ts, which are unchanged by the repair; history-probe.log, 12/12 passed, exit 0, with history-recheck 5/5 and context-recheck 5/5 in the same run). R1 (the round-2 sequence): turn 1 is withheld after tA2 is revoked; the turn-2 request is [system, user, user, user], i.e. the withheld answer is dropped and only the owner's own prompt, the data block and the new prompt are sent; history holds TITLE_2 = false; tA2 is not in the data block; the reply is the neutral text, served unwithheld, and the GET body does not name TITLE_2. R2 (adversarial, beyond the repair's own tests): A1 is generated from tA1+tA2, then A2..A5 are generated from tA3 only with the echo carrying A1's text forward; every stored context A1..A5 includes tA2 (inheritance is transitive); after revoking tA2 all five answers are withheld, although A1 is outside the 6-message window of the later turns; turn 6 is sent no TITLE_2 and serves none. R3: restoring the grant makes the answers readable again (no permanent loss). Mutants: M1 (historyFor keeps withheld answers) fails 5 of 7 (history-recheck cases 1-3, my R1 and R2; mutant-m1-history-drop.log, exit 1); M2 (no inherited context) fails history-recheck case 2 and my R2 (mutant-m2-inheritance.log, exit 1). Both were restored. Line review of the repair (answer.ts, conversations.ts historyFor, 0129): the history is re-checked with the same withheld()/readabilityOf predicate as the read-time view, for first.fresh (the principal reloaded in transaction 1), before answer() calls the provider; answer.ts is the only caller of ModelProvider.complete and postAssistantMessage the only caller of answer (grep). Suggestions store outcome.contextRecords, so they inherit too.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-3/history-probe.log",
+        "docs/delivery/test-evidence/DG6/domain/round-3/probes/zz-domain-r3-history-tail.ts",
+        "docs/delivery/test-evidence/DG6/domain/round-3/mutant-m1-history-drop.log",
+        "docs/delivery/test-evidence/DG6/domain/round-3/mutant-m2-inheritance.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG6-970",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Re-ran code-security's round-2 probe zz-sec-r2-assistant-history.test.ts unchanged on this candidate (round2-repros.log). It exits as a failure by design, because it asserts the defect: the one failing assertion is line 191 expect(historyHasTitle2).toBe(true), which now receives false. Its log: 'history (assistant role) holds the revoked title: false', 'data block holds tA2: false', turn-2 stored context_records []. The probe's later output, a turn-2 reply naming TITLE_2, comes from the probe's own echo server: when the request carries no assistant message (now the case, because the withheld answer is dropped) it answers a hard-coded 'Synthetic answer: ... one and ... two are both behind plan.' (lines 43-46 of the probe). So the title was produced by the test double without being in the request, not by the product. I confirmed this independently: with my echo model, whose fallback names no record, nothing names TITLE_2 (history-probe.log, R1). I agree with the T-DG6-BE-RG2 handback's disclosure. The same echo-model scenario, mutants and line review as for F-DG6-960 apply (same defect).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-3/round2-repros.log",
+        "docs/delivery/test-evidence/DG6/domain/round-3/history-probe.log",
+        "docs/delivery/test-evidence/DG6/domain/round-3/mutant-m1-history-drop.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG6-980",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Re-ran QA's round-2 probe qa-rg-r2-assistant-history.test.ts unchanged on this candidate (round2-repros.log): 1/1 passed. Its two soft assertions (the defect observations) now hold the fixed values: 'the request of post 2 carries the WITHHELD A1 text as history: false', 'data block of post 2 holds program one: true program two: false', 'A2 ... contentWithheld = false content holds the withheld fact: false', and A1 is still withheld. The same echo-model scenario (history-probe.log), mutants (M1, M2) and line review as for F-DG6-960 apply.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-3/round2-repros.log",
+        "docs/delivery/test-evidence/DG6/domain/round-3/history-probe.log",
+        "docs/delivery/test-evidence/DG6/domain/round-3/mutant-m2-inheritance.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG6-971",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Re-ran code-security's round-2 reproduction zz-sec-r2-legacy-suggestion-to-draft.test.ts on this candidate (round2-repros.log). Unchanged, its control passes (200) and its legacy case fails in its own setup: 'constraint \"assistant_suggestion_context_records_required\" of relation \"assistant_suggestion\" does not exist' at its DROP CONSTRAINT, because 0129 removed that CHECK. That is not a product failure. My adaptation, probes/zz-domain-r3-legacy-suggestion.test.ts, changes only the setup (pause the user triggers for one UPDATE that sets context_records NULL; the state query reads pg_trigger) and asserts the fixed outcome: 2/2 passed. Legacy state {ctx_null:true, status:proposed, check_exists:false, trigger_exists:true}; POST /to-draft with If-Match 1 is 200, version 2, taken_to_draft, with the draft payload mapped; the row's citations are readable. The later direct owner UPDATE is refused by assistant_suggestion_final (the row is no longer proposed), which is the expected state guard and no longer the 23514 context rule. history-recheck case 5 (passing) shows that a NEW suggestion or answer without a context is still refused at INSERT, and that a context cannot be removed. Mutant M3 restores the 0128 NOT VALID CHECK on suggestions at the end of 0129 in the clone: history-recheck case 4 fails with 422 validation.constraint 'assistant_suggestion_context_records_required' (mutant-m3-0129.log, exit 1); restored afterwards. The 0129 catalogue test passes in my P6 integration run (integration-p6.log).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-3/round2-repros.log",
+        "docs/delivery/test-evidence/DG6/domain/round-3/probes/zz-domain-r3-legacy-suggestion.test.ts",
+        "docs/delivery/test-evidence/DG6/domain/round-3/mutant-m3-0129.log",
+        "docs/delivery/test-evidence/DG6/domain/round-3/integration-p6.log"
+      ]
+    }
+  ]
+}
