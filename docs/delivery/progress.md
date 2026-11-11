@@ -126,3 +126,7 @@ The audit T-DG6-AUDIT-R13 BLOCKED (B1–B5). The user chose a clean re-gate. D-2
 ## 2026-11-11: F-DG6-990 repaired, V18 green, round 5 freeze
 - T-DG6-BE-RG3 integrated at 60787d89f (migration 0130, served-seed text scan; D-239). V18 on 60787d8: 15/15 exit 0 (integration 4370, e2e 556+556, root 288, demo 10). Evidence `test-evidence/DG6/orchestrator-final-60787d8/`.
 - Next: freeze round 5, full reviews by all three reviewers plus verification of F-DG6-990, then the release audit.
+
+## 2026-11-11: round 5, F-DG6-911 (domain, Medium) — stages.json transition
+- Domain round 5: FAIL on F-DG6-911: the DG6 history jumped VERIFYING -> REVIEWING at the round-5 freeze, with no FIXING entry for the round-4 audit BLOCK, so every `--historical` validator failed. F-DG6-990 verified CLOSED_VERIFIED by domain.
+- Fixed in `stages.json` (meta-excluded; the candidate is unchanged): a FIXING entry inserted at 06:42:33Z (the audit record commit), with a note that it was recorded late. `--historical` DG1-DG5 re-run after the fix (exit codes in the commit).
