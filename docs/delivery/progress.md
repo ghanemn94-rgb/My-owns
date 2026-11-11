@@ -111,3 +111,9 @@ The audit T-DG6-AUDIT-R13 BLOCKED (B1–B5). The user chose a clean re-gate. D-2
 - Repairs: T-DG6-BE-RG1 (80314f134; migration 0128, re-check over citations ∪ context) and T-DG6-FE-RG1 (ccd078e91; basis label, assistant withheld notices). Not recorded in decisions.md, to keep the candidate stable; recorded here and in the handbacks.
 - V16 on ccd078e91: 15/15 exit 0 (integration 4360; e2e 556 + 556; root 288; demo 10). Evidence: test-evidence/DG6/orchestrator-final-ccd078e/.
 - Round 2 frozen: candidate sha256:d62b187b… (2771 files, source 71ff750ed). Reviewers T-DG6-REV-{DOM,CS,QA}-RG-R2. Next: import round 2; fix with `import-findings --fix` if needed; else the release audit.
+
+## 2026-11-11: DG6 clean re-gate round 3
+
+- Round 2 on d62b187b: domain FAIL (F-DG6-960), code-security FAIL (F-DG6-970 Medium, F-DG6-971 Low), qa interrupted by a container restart (exit 143, no verdict record; sidecar F-DG6-980 imported). 960/970/980: one history-channel defect. F-DG6-900 and F-DG6-920 CLOSED_VERIFIED.
+- Repair T-DG6-BE-RG2 (a0cf22bba; migration 0129). V17 on a0cf22bba: 15/15 exit 0 (integration 4366; e2e 556 + 556; root 288; demo 10).
+- Round 3 frozen: candidate sha256:32e41b55… (2773 files, source f56f1b3d2). Reviewers T-DG6-REV-{DOM,CS,QA}-RG-R3.

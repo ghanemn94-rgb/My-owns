@@ -1853,7 +1853,7 @@
       "id": "DG6",
       "stage": "P6",
       "name": "Integration and system hardening",
-      "state": "FIXING",
+      "state": "REVIEWING",
       "depends_on": [
         "DG5"
       ],
@@ -1871,10 +1871,10 @@
         ]
       },
       "candidate": {
-        "candidate_id": "sha256:d62b187baa8377da4225f689799b013f0394a64b06fe844ba42fa82b2f6966a6",
-        "source_commit": "71ff750ed17ea281c99f20a85d9f9663bb07efb8",
-        "frozen_at": "2026-11-10T18:13:01Z",
-        "manifest_path": "docs/delivery/candidates/DG6/d62b187baa8377da.manifest.json"
+        "candidate_id": "sha256:32e41b5581a9beeba357a6c0dd5b50c414226910232ebfbb711c2178024376b5",
+        "source_commit": "f56f1b3d24c00d1803f6627c99b3f422a47b3014",
+        "frozen_at": "2026-11-11T01:42:18Z",
+        "manifest_path": "docs/delivery/candidates/DG6/32e41b5581a9beeb.manifest.json"
       },
       "review_rounds": [
         {
@@ -1900,6 +1900,18 @@
             "qa-verifier": "docs/delivery/reviews/DG6/round-2/qa-verifier.json"
           },
           "note": "DG6 clean re-gate round 2 on candidate d62b187b (2771 files, source 71ff750): round-1 repairs T-DG6-BE-RG1 (F-DG6-920, migration 0128) and T-DG6-FE-RG1 (F-DG6-900) integrated; V16 on ccd078e91 15/15 exit 0, product tree equal. Full reviews plus verification of F-DG6-900 and F-DG6-920."
+        },
+        {
+          "round": 3,
+          "candidate_id": "sha256:32e41b5581a9beeba357a6c0dd5b50c414226910232ebfbb711c2178024376b5",
+          "frozen_at": "2026-11-11T01:42:18Z",
+          "source_commit": "f56f1b3d24c00d1803f6627c99b3f422a47b3014",
+          "records": {
+            "domain-reviewer": "docs/delivery/reviews/DG6/round-3/domain-reviewer.json",
+            "code-security-reviewer": "docs/delivery/reviews/DG6/round-3/code-security-reviewer.json",
+            "qa-verifier": "docs/delivery/reviews/DG6/round-3/qa-verifier.json"
+          },
+          "note": "DG6 clean re-gate round 3 on candidate 32e41b55 (2773 files, source f56f1b3): repair T-DG6-BE-RG2 (F-DG6-960/970/980, F-DG6-971; migration 0129) integrated; V17 on a0cf22bba 15/15 exit 0, product tree equal. Round 2 qa run was interrupted (exit 143, no verdict record); full reviews by all three."
         }
       ],
       "gate_record": "docs/delivery/gates/DG6.json",
@@ -1933,6 +1945,11 @@
           "state": "FIXING",
           "at": "2026-11-10T21:21:06Z",
           "note": "Re-gate round 2: domain FAIL (F-DG6-960), code-security FAIL (F-DG6-970, F-DG6-971); qa interrupted by a container restart (exit 143, no verdict record; its sidecars F-DG6-980 kept, write-once). F-DG6-900 and F-DG6-920 CLOSED_VERIFIED. 960/970/980 are one defect (assistant history channel). Repair T-DG6-BE-RG2."
+        },
+        {
+          "state": "REVIEWING",
+          "at": "2026-11-11T01:42:18Z",
+          "note": "Re-gate round 3 frozen on candidate 32e41b55."
         }
       ]
     },
