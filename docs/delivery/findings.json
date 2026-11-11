@@ -14325,29 +14325,39 @@
           "at": "2026-11-11T13:45:00Z",
           "status": "CLOSED_VERIFIED",
           "note": "verified by code-security-reviewer round 5: PASS"
+        },
+        {
+          "at": "2026-11-11T18:40:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 6: PASS"
         }
       ],
       "verification": {
-        "by_role": "code-security-reviewer",
+        "by_role": "qa-verifier",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG6-T-DG6-REV-CS-RG-R5-code-security-reviewer-20261111T113350Z-13303d85",
-          "session_id": "13303d85-9d48-41ae-9a4b-4aad738d0383"
+          "run_id": "DG6-T-DG6-REV-QA-RG-R6-qa-verifier-20261111T144416Z-130c1666",
+          "session_id": "130c1666-d41b-4af5-a115-a668bf9d0887"
         },
-        "at": "2026-11-11T13:45:00Z",
+        "at": "2026-11-11T18:40:00Z",
         "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG6/code-security/round-5/30-f990-served-probes.log",
-          "docs/delivery/test-evidence/DG6/code-security/round-5/30c-f990-served-probe-run3.log",
-          "docs/delivery/test-evidence/DG6/code-security/round-5/31b-upgrade-0130-run2.log",
-          "docs/delivery/test-evidence/DG6/code-security/round-5/32-mutant-m1-no-0130.log",
-          "docs/delivery/test-evidence/DG6/code-security/round-5/33-mutant-m1-restored.log",
-          "docs/delivery/test-evidence/DG6/code-security/round-5/repro/zz-sec-r5-served-text.test.ts",
-          "docs/delivery/test-evidence/DG6/code-security/round-5/repro/zz-sec-r5-upgrade-0130.test.ts",
-          "docs/delivery/test-evidence/DG6/code-security/round-5/scripts/mutants.sh",
+          "docs/delivery/test-evidence/DG6/qa/round-6/30-f990-audit-probe-and-scan-on-candidate.log",
+          "docs/delivery/test-evidence/DG6/qa/round-6/31-probe-qa-rg-r5-seeded-0130.log",
+          "docs/delivery/test-evidence/DG6/qa/round-6/32-mutant-m1-no-0130.log",
+          "docs/delivery/test-evidence/DG6/qa/round-6/32-mutant-m1.applied",
+          "docs/delivery/test-evidence/DG6/qa/round-6/33-mutant-m2-0130-without-freshness.log",
+          "docs/delivery/test-evidence/DG6/qa/round-6/33-mutant-m2.applied",
+          "docs/delivery/test-evidence/DG6/qa/round-6/34-clone-restored.log",
+          "docs/delivery/test-evidence/DG6/qa/round-6/35-db-text-scan-demo-stack.log",
+          "docs/delivery/test-evidence/DG6/qa/round-6/35b-db-text-scan-production-stack.log",
+          "docs/delivery/test-evidence/DG6/qa/round-6/36-probe-f990-rendered-screens.log",
+          "docs/delivery/test-evidence/DG6/qa/tests/round-5/qa-rg-r5-seeded-0130.test.ts",
+          "docs/delivery/test-evidence/DG6/qa/tests/round-5/zz-qa-rg-r5-served-text-ui.spec.ts",
+          "docs/delivery/test-evidence/DG6/qa/tests/round-5/qa-rg-r5-db-text-scan.sh",
           "docs/delivery/test-evidence/DG6/audit/round-4/probes/zz-aud-r4-served-dg-labels.test.ts"
         ],
-        "note": "Verified on candidate sha256:5e819f7a579dbf98eb78f7f8e326a7ad57d939ed6a0762e3bea912f6dc735ed6 (source 3c8b9a3acfe657348249feb297b52cf208324a07). I read the finding in full in findings.json and in the round-4 release-auditor sidecar.\n(1) The audit's round-4 probe was re-run UNEDITED on this candidate, on a real API with a disposable PostgreSQL 16 migrated 0001-0130 (production-initialized). It finds 'served strings naming DG0-DG7: 0' and exits 0; round 4 found 24 (30-f990-served-probes.log).\nThat probe's own 400s (the bare service-identities list and getProcedureDefinition called by id) hid two endpoint families, so I wrote an extended probe. It adds the service identities WITH organizationId, every identity's detail, and getProcedureDefinition by code for the current version and for BOTH seeded configuration versions (versionId 0069 v1 and 0095 v2). Every served string is tested with the product rule itself (mentionsEngineeringGate, the 0089 mirror) and with the audit regex. Result (run 3, 30c): 101 endpoints, all 200; 5322 strings; 0 gate hits, 0 audit-regex hits, 0 internal-reference hits; exit 0.\nRuns 1 and 2 (30, 30b) failed on my probe's own wrong call shapes. Run 1 called the detail by id, run 2 used the parameter name 'configVersionId' instead of 'versionId'. Both are disclosed; neither is a product defect.\n(2) Mutant M1 reverts the fix: migration 0130 is removed from the clone.\n- The shipped seeded-texts scan fails: test 1 gets 142 hits; test 2 finds no reword audit; test 4 cannot find the reword file.\n- The unedited audit probe finds 24 again.\n- With 0130 restored, the same files pass 5/5 and the probe finds 0 (32-, 33-mutant logs). The fix is what the tests see.\n(3) Migration 0130 reviewed line by line, plus an adversarial upgrade probe (31b, 2/2 pass): 0130 applied as an UPGRADE over a demo-initialized database at 0129.\n- A job description an administrator changed is left alone: no version step, no audit event.\n- A seeded job that an administrator had stepped to version 2 is reworded to version 3, with exactly one audit event (prior 2, new 3, the exact {from, to}).\n- A job service identity a person changed (updated_by set) is left alone.\n- service_identity_change keeps the old reason and gains the new one at the new record_version (append-only).\n- Re-applying the SQL adds 0 audit events (exact-match guards).\n- Audit counts: 17/3/4/12/48, plus the two untouched rows, matching the 17/3/5/12/49 of the fresh path.\n- On the demo-initialized database every remaining gate-rule hit is history: audit 'from' values, service_identity_change, and the five D-239 audit reasons. One more hit is the gate-submission snapshot note 'unrelated to the engineering delivery gates DG0-DG7', a DG2 disclaimer that D-165 accepted (API data no screen renders) and that is listed in REPORTED_EXISTING_FINDINGS.\n(4) I accept the D-239 ruling. The five audit_event.reason texts are append-only audit history (0003/ADR-0004); rewriting them would break a stronger invariant. They state no gate status and tie no G1-G6 to DG0-DG7. The scan admits them only by exact text.\nOne precision: D-239 says they 'do not name a DG0-DG7 gate', but the product's own rule does match their task ids (T-DG5-ARCH-02 contains 'DG5-'), as the scan's own header says. That is a wording point in the decision record, not a defect.\nThe new scan (d) covers every text, array and JSON column of every public table, so a new seeded column is scanned automatically. Its non-vacuity case passed in the mutant."
+        "note": "Verified as a non-author on candidate sha256:5e819f7a579dbf98eb78f7f8e326a7ad57d939ed6a0762e3bea912f6dc735ed6 (source 3c8b9a3ac; product tree equal to 60787d89f, git diff empty). Read in full in findings.json and docs/delivery/reviews/DG6/round-4/release-auditor.findings.json. (1) The round-4 reproduction, unchanged: the release auditor's probe zz-aud-r4-served-dg-labels.test.ts in a disposable clone, on a disposable PostgreSQL 16.15 migrated 0001-0130 (122 files), prints 'served strings naming DG0-DG7: 0' (round 4: 24) and passes; the shipped scan (d) seeded-texts.test.ts passes 4/4 in the same run (log 30, exit 0). Scan (d) also passes in both full integration runs. (2) Mutants that revert the fix are caught (both exit 1 by design): M1 (0130 removed) brings back exactly the audit's 24 served strings and fails 3 of the 4 scan tests (142 seeded violations; no reword audit events; the non-vacuity case cannot find 0130) (log 32); M2 (0130 without its kpi.freshness_scan row, a partial revert) leaves 2 served strings (that job's description in listJobSchedules and listJobOperations), and the scan fails on that one seeded value and on the changed audit counts (log 33). The clone was clean afterwards (logs 34, 34a). (3) My probe qa-rg-r5-seeded-0130.test.ts (log 31, 2/2 pass): P1 on a database migrated to 0129 and then changed as a user could have changed it, applying 0130 alone: rows a user touched (a service identity with updated_by set; a job description that is no longer the seeded text) are left byte for byte; kpi.freshness_scan, whose cron a user changed, is reworded with a version step from the user's version and the cron kept; every other column of the five tables equals its pre-0130 value; all earlier audit_event and service_identity_change rows are byte-identical; 0130 adds exactly the expected reword events (actor system, source migration); a second migrate applies nothing. P2: every parameterless GET of the contract as an administrator and as an auditor serves no string naming DG0-DG7. (4) Rendered screens (zz-qa-rg-r5-served-text-ui.spec.ts on with-stack.sh, log 36, 2/2 pass first time): Jobs, Job operations, all 49 service identities and all 16 automation rules, 68 screens per language, en and ar: 0 hits in visible text or form values. (5) Independent SQL scan of every text, array and JSON column of both stack databases (logs 35, 35b): no current value names DG0-DG7. The remaining matches are append-only history (the 'from' side of audit changes, the five audit_event.reason texts D-239 keeps, service_identity_change), the gate-submission snapshot disclaimer 'unrelated to the engineering delivery gates DG0-DG7' in demo data (a machine note inside the stored snapshot that no web screen renders; the allowlisted REPORTED_EXISTING_FINDINGS note), and, in demo data only, the current reason of the demo connector's service identity, 'The service identity of the synthetic demo connector demo-kpi-test-source (ADR-0053 §1).' (packages/db/src/demo/data/connectors.ts:91). That reason cites an ADR, not a DG gate, so the F-DG6-990 clause (no DG0-DG7 in served text) holds; I record it as an observation in my record, not as a defect. I agree with D-239 on the five audit reasons: they carry task and decision ids in the append-only trail (ADR-0004), and rewriting the trail would break a stronger invariant. One more observation: 0130 sets job_schedule.updated_by to NULL on the reworded kpi.freshness_scan row even where a user had changed its cron, so the row no longer names that user as its last updater; the user's change stays in the audit trail and the migration's own audit event names the system as the actor, so no history is lost."
       }
     },
     {
@@ -14372,7 +14382,7 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG6/round-5/domain-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-11T12:42:14Z",
@@ -14383,10 +14393,45 @@
           "at": "2026-11-11T14:42:40Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at e7cb240e742320935f4c7e01b26f143b8bd656c9"
+        },
+        {
+          "at": "2026-11-11T15:57:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 6: PASS"
+        },
+        {
+          "at": "2026-11-11T18:40:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 6: PASS"
         }
       ],
       "fix_revision": "e7cb240e742320935f4c7e01b26f143b8bd656c9",
-      "fix_summary": "stages.json: FIXING entry inserted for the round-4 audit BLOCK (meta-excluded; candidate unchanged); --historical DG1-DG5 exit 0 after the fix"
+      "fix_summary": "stages.json: FIXING entry inserted for the round-4 audit BLOCK (meta-excluded; candidate unchanged); --historical DG1-DG5 exit 0 after the fix",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG6-T-DG6-REV-QA-RG-R6-qa-verifier-20261111T144416Z-130c1666",
+          "session_id": "130c1666-d41b-4af5-a115-a668bf9d0887"
+        },
+        "at": "2026-11-11T18:40:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG6/qa/round-6/40-validate-historical_stage_DG5.log",
+          "docs/delivery/test-evidence/DG6/qa/round-6/40b-validate-historical_stage_DG5-rerun.log",
+          "docs/delivery/test-evidence/DG6/qa/round-6/40-validate-historical_stage_DG4.log",
+          "docs/delivery/test-evidence/DG6/qa/round-6/40-validate-historical_stage_DG3.log",
+          "docs/delivery/test-evidence/DG6/qa/round-6/40-validate-historical_stage_DG2.log",
+          "docs/delivery/test-evidence/DG6/qa/round-6/40-validate-historical_stage_DG1.log",
+          "docs/delivery/test-evidence/DG6/qa/round-6/40-validate-pipeline.log",
+          "docs/delivery/test-evidence/DG6/qa/round-6/40-validate-register_DG6.log",
+          "docs/delivery/test-evidence/DG6/qa/round-6/41-f911-951-stages-mutants.log",
+          "docs/delivery/test-evidence/DG6/qa/tests/round-6/stages-serve-mutant.mjs",
+          "docs/delivery/test-evidence/DG6/qa/round-6/42-stages-history-order.log",
+          "docs/delivery/stages.json"
+        ],
+        "note": "Verified as a non-author on candidate sha256:5e819f7a579dbf98eb78f7f8e326a7ad57d939ed6a0762e3bea912f6dc735ed6 (source 3c8b9a3ac; stages.json is meta-excluded, so the fix e7cb240e7 does not change the candidate: candidate.mjs gives the same id over the working tree and over the source commit, 2775 files). Read in full in findings.json and docs/delivery/reviews/DG6/round-5/domain-reviewer.findings.json. (1) The round-5 reproduction re-run on the fixed repository (HEAD c9eca6539, Node 24.21.0): validate.mjs --historical --stage DG5, DG4, DG3, DG2 and DG1 each print 'PASS gate DGn (historical)' and exit 0 (round 5: FAIL 'DG6 illegal transition VERIFYING -> REVIEWING', exit 1); --pipeline prints 'PASS pipeline (active stage: DG6 REVIEWING)', exit 0; --register DG6 PASS. The first DG5 log's header shows HEAD 3c07fa84e because the orchestrator's c9eca6539 commit (state field FIXING -> REVIEWING) landed during that run; I re-ran it at c9eca6539: PASS, exit 0 (log 40b). (2) Mutants served in memory to the unchanged validator (node --import stages-serve-mutant.mjs; the repository is not changed; log 41): M1 removes only the DG6 entry {FIXING, 2026-11-11T06:42:33Z}, which reverts the fix: --historical DG5, DG1 and --pipeline each FAIL with exactly 'stages.json: DG6 illegal transition VERIFYING -> REVIEWING', exit 1; M2 puts back the state field of 3c07fa84e (FIXING while the last entry is REVIEWING): all three FAIL with 'DG6 state FIXING differs from last history entry REVIEWING', exit 1; the control M0 (HEAD content re-serialized) PASSES all three, exit 0. So the validator catches a revert, and the added entry alone is what makes it pass. (3) Consistency of the fix: the DG6 history now reads ... REVIEWING (round 3) -> VERIFYING 06:08:46Z -> FIXING 06:42:33Z (the commit time of the round-4 audit record 9610047bc; the note says it was recorded late, after F-DG6-911) -> REVIEWING 11:32:40Z (round-5 freeze) -> FIXING 14:42:55Z -> REVIEWING 14:42:56Z (round 6); all legal transitions, in time order; state REVIEWING equals the last entry; candidate, review_rounds 5 and 6 and gates/DG6.json (still BLOCKED, round 4) agree. The scan for other inconsistencies found two out-of-order timestamps in the approved gates DG0 and DG5 (not DG6, no gate decision depends on them): reported separately as F-DG6-952 (Low)."
+      }
     },
     {
       "id": "F-DG6-951",
@@ -14413,7 +14458,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG6/round-5/qa-verifier.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-11T14:35:00Z",
@@ -14424,10 +14469,87 @@
           "at": "2026-11-11T14:42:40Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at e7cb240e742320935f4c7e01b26f143b8bd656c9"
+        },
+        {
+          "at": "2026-11-11T15:57:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 6: PASS"
+        },
+        {
+          "at": "2026-11-11T18:40:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 6: PASS"
         }
       ],
       "fix_revision": "e7cb240e742320935f4c7e01b26f143b8bd656c9",
-      "fix_summary": "stages.json: FIXING entry inserted for the round-4 audit BLOCK (meta-excluded; candidate unchanged); --historical DG1-DG5 exit 0 after the fix"
+      "fix_summary": "stages.json: FIXING entry inserted for the round-4 audit BLOCK (meta-excluded; candidate unchanged); --historical DG1-DG5 exit 0 after the fix",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG6-T-DG6-REV-QA-RG-R6-qa-verifier-20261111T144416Z-130c1666",
+          "session_id": "130c1666-d41b-4af5-a115-a668bf9d0887"
+        },
+        "at": "2026-11-11T18:40:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG6/qa/round-6/40-validate-pipeline.log",
+          "docs/delivery/test-evidence/DG6/qa/round-6/40b-validate-historical_stage_DG5-rerun.log",
+          "docs/delivery/test-evidence/DG6/qa/round-6/40-validate-historical_stage_DG1.log",
+          "docs/delivery/test-evidence/DG6/qa/round-6/41-f911-951-stages-mutants.log",
+          "docs/delivery/test-evidence/DG6/qa/tests/round-6/stages-serve-mutant.mjs",
+          "docs/delivery/test-evidence/DG6/qa/round-6/42-stages-history-order.log"
+        ],
+        "note": "My own round-5 finding (the same defect as F-DG6-911), verified on the same evidence. Read in full in findings.json and docs/delivery/reviews/DG6/round-5/qa-verifier.findings.json. Its reproduction was --pipeline plus --historical --stage DG5..DG1, all exit 1 at 8754f809d. On the fixed repository (HEAD c9eca6539) all six exit 0 ('PASS pipeline (active stage: DG6 REVIEWING)', 'PASS gate DGn (historical)'), and --register DG6 passes (logs 40, 40b). The revert mutant M1 (the one added entry removed) brings back exactly the round-5 problem in --pipeline and --historical (exit 1), and M2 (the 3c07fa84e state field) is caught by the state-vs-last-entry rule (log 41). The audit's BLOCKED decision stays recorded in gates/DG6.json and the FIXING period of T-DG6-BE-RG3 is now in the history, which is what my finding asked for."
+      }
+    },
+    {
+      "id": "F-DG6-952",
+      "stage_id": "DG6",
+      "requirement": "REQ-DLV-015",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "stages.json history timestamps out of order in two approved gates: DG5 VERIFYING stamped 2026-10-26T12:00:00Z before APPROVED at 06:30:00Z (committed at 04:34Z), DG0 REVIEWING 15:45:00Z before FIXING 15:16:00Z; the validator does not check the order",
+      "reproduction": "Main repository at HEAD c9eca65394134efabf896a2854705a26dfa0d1bf, read-only: a Python scan of docs/delivery/stages.json comparing each history entry's `at` with the previous one (the assignment asks the reviewer to confirm that 'nothing else in stages.json is inconsistent' after the F-DG6-911/951 fix). DG6's own history is in order (12 entries; the late FIXING entry of 06:42:33Z equals the commit time of the round-4 audit record, 9610047bc). Two earlier stages are not: (1) DG5 history[5] {VERIFYING, at 2026-10-26T12:00:00Z} is followed by history[6] {APPROVED, at 2026-10-26T06:30:00Z}; the VERIFYING entry was added by commit 5df7ea660 at 2026-10-26T04:34:41Z, so its time is about 7.5 hours after the commit that wrote it, and after the approval. (2) DG0 history[56] {REVIEWING, at 2026-09-30T15:45:00Z} is followed by history[57] {FIXING, at 2026-09-30T15:16:00Z}; the REVIEWING entry was written by commit 57d7a53f2 at 14:51:02Z (also a future time), and the FIXING entry by ffa3fae5a at 15:23:21Z. tools/gates/lib/rules.mjs checks the transition order and that the state equals the last entry (lines 111-113), but not that `at` is non-decreasing, so --historical DG1-DG5 and --pipeline all PASS (logs 40-*).",
+      "expected": "REQ-DLV-015: stages.json records each gate's state machine. Each history entry's time is the time the state change happened, so the entries are in time order and no entry is dated after the commit that writes it (as the F-DG6-911 fix did: its late entry carries the real time of the audit record and says it was recorded late).",
+      "actual": "Two entries in approved gates carry times that cannot be right: DG5's VERIFYING is dated after DG5's APPROVED and after the commit that wrote it; DG0's round-28 REVIEWING is dated after the FIXING that follows it. Nothing in DG6 is affected, no gate decision depends on these times, and every validator passes; this is documentation drift in delivery records with no behavioural effect (Low, not mandatory). It is outside the candidate (stages.json is meta-excluded). Repair direction (the orchestrator decides): correct the two times to the commit times with a note, or accept as an observation; a validator check that `at` never decreases would prevent a recurrence.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-6/42-stages-history-order.log",
+        "docs/delivery/stages.json",
+        "tools/gates/lib/rules.mjs",
+        "docs/delivery/test-evidence/DG6/qa/round-6/40-validate-pipeline.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG6/round-6/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "ACCEPTED_OBSERVATION",
+      "history": [
+        {
+          "at": "2026-11-11T17:30:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in T-DG6-REV-QA-RG-R6 (round 6) on candidate 5e819f7a while verifying the F-DG6-911/951 fix. Low, not mandatory, not blocking: delivery-record timestamps in two approved gates; no product, candidate or gate-decision effect. Owner delivery-orchestrator (the only role that writes stages.json; the F-DG6-911/951 precedent)."
+        },
+        {
+          "at": "2026-11-11T18:40:00Z",
+          "status": "ACCEPTED_OBSERVATION",
+          "note": "verified by qa-verifier round 6: PASS"
+        }
+      ],
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG6-T-DG6-REV-QA-RG-R6-qa-verifier-20261111T144416Z-130c1666",
+          "session_id": "130c1666-d41b-4af5-a115-a668bf9d0887"
+        },
+        "at": "2026-11-11T18:40:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG6/qa/round-6/42-stages-history-order.log",
+          "docs/delivery/test-evidence/DG6/qa/round-6/40-validate-pipeline.log"
+        ],
+        "note": "My own Low, non-mandatory finding of this round, proposed for acceptance as an observation (it takes effect only if the release auditor adds the same acceptance). Rationale: the two out-of-order timestamps are in the histories of DG0 and DG5, which are APPROVED and closed. They change no gate decision, transition or validator result (--historical DG1-DG5 and --pipeline PASS), and they do not touch DG6 or the candidate. Correcting them is optional delivery-record hygiene. A validator rule that `at` never decreases would stop it recurring, and the orchestrator may still correct the two times with a note."
+      }
     }
   ]
 }
