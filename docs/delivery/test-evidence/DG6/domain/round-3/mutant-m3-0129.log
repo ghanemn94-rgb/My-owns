@@ -1,0 +1,76 @@
+MUTANT M3: 0129's suggestion INSERT trigger replaced again by the 0128 NOT VALID CHECK
+diff --git a/packages/db/migrations/0129_p6_assistant_context_insert_rule.sql b/packages/db/migrations/0129_p6_assistant_context_insert_rule.sql
+index 3fdef3228..a151a99b6 100644
+--- a/packages/db/migrations/0129_p6_assistant_context_insert_rule.sql
++++ b/packages/db/migrations/0129_p6_assistant_context_insert_rule.sql
+@@ -79,3 +79,6 @@ COMMENT ON COLUMN assistant_message.context_records IS
+   'T-DG6-BE-RG1/RG2 (F-DG6-920, F-DG6-960/970/980): record keys of every record the answer was generated from: each record item given to the model, then the inherited context of the history answers given; re-checked at read time with the citations. Required on every new answer (0129 BEFORE INSERT trigger); NULL on answers stored before 0128 (the citations are then the fallback). Never served.';
+ COMMENT ON COLUMN assistant_suggestion.context_records IS
+   'T-DG6-BE-RG1/RG2 (F-DG6-920, F-DG6-960/970/980): the context of the answer this suggestion belongs to; re-checked at read time and at take-to-draft with the citations. Required on every new suggestion (0129 BEFORE INSERT trigger); NULL on suggestions stored before 0128 (the citations are then the fallback; such a row can still be taken to a draft). Never served; immutable.';
++-- DOMAIN MUTANT M3 (disposable clone only): restore the 0128 NOT VALID CHECK on suggestions (reverts F-DG6-971's fix)
++DROP TRIGGER assistant_suggestion_context_records_required ON assistant_suggestion;
++ALTER TABLE assistant_suggestion ADD CONSTRAINT assistant_suggestion_context_records_required CHECK (context_records IS NOT NULL) NOT VALID;
+port-policy: PostgreSQL listening on port 32420 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.8Z5Vlk/claude-0/review-dg6
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwbh47mn_5959c7f2 (server_encoding UTF8); applied 121 migrations to a fresh database
+stdout | apps/api/test/integration/assistant/history-recheck.test.ts > ADR-0059 §5/§9: the history given to the model is re-checked, and inherited by the new answer (F-DG6-960/970/980) > F-DG6-960/970/980: a withheld answer is not sent to the model as history, and no new answer re-serves it
+[BE-RG2 case 1] the request of the follow-up carries the withheld A1 text: [33mfalse[39m | history roles: ["user"] | data block holds program two: [33mfalse[39m
+[BE-RG2 case 1] follow-up reply: contentWithheld = [33mfalse[39m | holds the withheld fact: [33mfalse[39m
+
+stdout | apps/api/test/integration/assistant/history-recheck.test.ts > ADR-0059 §5/§9: the history given to the model is re-checked, and inherited by the new answer (F-DG6-960/970/980) > inheritance: an answer generated with a history answer is withheld when that answer's context becomes unreadable
+[BE-RG2 case 2] A2 stored context_records: ["01a1c857-a3be-70f8-b4f6-3f1fdbdab05b","01a1c857-a3b3-75ff-b300-edf16cfecdf2","01a1c857-a3b7-753b-8507-948c2a69bcc8"]
+
+stdout | apps/api/test/integration/assistant/history-recheck.test.ts > ADR-0059 §5/§9: the history given to the model is re-checked, and inherited by the new answer (F-DG6-960/970/980) > inheritance: an answer generated with a history answer is withheld when that answer's context becomes unreadable
+[BE-RG2 case 2] after revoking tA2: A1 withheld = [33mtrue[39m A2 withheld = [33mtrue[39m
+
+stdout | apps/api/test/integration/assistant/history-recheck.test.ts > ADR-0059 §5/§9: the history given to the model is re-checked, and inherited by the new answer (F-DG6-960/970/980) > a history answer stored before 0128 (context NULL) is checked by its citations before it is sent
+[BE-RG2 case 3] pre-0128 history answer re-sent after its cited record was revoked: [33mfalse[39m
+
+stdout | apps/api/test/integration/assistant/history-recheck.test.ts > F-DG6-971: a suggestion stored before 0128 can be taken to a draft; new rows still need a context (0129) > a pre-0128 suggestion (context NULL, readable citations) is taken to a draft (200)
+[BE-RG2 case 4] pre-0128 suggestion to-draft: [33m422[39m "validation.constraint"
+
+stdout | apps/api/test/integration/assistant/history-recheck.test.ts > F-DG6-971: a suggestion stored before 0128 can be taken to a draft; new rows still need a context (0129) > a NEW suggestion or answer without a context is still refused at INSERT (and a context cannot be removed)
+[BE-RG2 case 5] INSERT without a context: suggestion -> 23514 assistant_suggestion_context_records_required | answer -> 23514 assistant_message_context_records_required
+
+ ❯ |integration| apps/api/test/integration/assistant/history-recheck.test.ts (5 tests | 1 failed) 7520ms
+   ✓ ADR-0059 §5/§9: the history given to the model is re-checked, and inherited by the new answer (F-DG6-960/970/980) > F-DG6-960/970/980: a withheld answer is not sent to the model as history, and no new answer re-serves it  381ms
+   ✓ ADR-0059 §5/§9: the history given to the model is re-checked, and inherited by the new answer (F-DG6-960/970/980) > inheritance: an answer generated with a history answer is withheld when that answer's context becomes unreadable 240ms
+   ✓ ADR-0059 §5/§9: the history given to the model is re-checked, and inherited by the new answer (F-DG6-960/970/980) > a history answer stored before 0128 (context NULL) is checked by its citations before it is sent 196ms
+   × F-DG6-971: a suggestion stored before 0128 can be taken to a draft; new rows still need a context (0129) > a pre-0128 suggestion (context NULL, readable citations) is taken to a draft (200) 197ms
+     → {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"The change violates a data rule.","code":"validation.constraint","requestId":"01a1c857-a795-708d-bac8-49a396c6ad5c","errors":[{"pointer":"","code":"validation.constraint","message":"assistant_suggestion_context_records_required"}]}: expected 422 to be 200 // Object.is equality
+   ✓ F-DG6-971: a suggestion stored before 0128 can be taken to a draft; new rows still need a context (0129) > a NEW suggestion or answer without a context is still refused at INSERT (and a context cannot be removed) 105ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/assistant/history-recheck.test.ts > F-DG6-971: a suggestion stored before 0128 can be taken to a draft; new rows still need a context (0129) > a pre-0128 suggestion (context NULL, readable citations) is taken to a draft (200)
+AssertionError: {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"The change violates a data rule.","code":"validation.constraint","requestId":"01a1c857-a795-708d-bac8-49a396c6ad5c","errors":[{"pointer":"","code":"validation.constraint","message":"assistant_suggestion_context_records_required"}]}: expected 422 to be 200 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 200[39m
+[31m+ 422[39m
+
+ ❯ apps/api/test/integration/assistant/history-recheck.test.ts:365:54
+    363|       JSON.stringify(taken.body?.code ?? null),
+    364|     );
+    365|     expect(taken.status, JSON.stringify(taken.body)).toBe(200);
+       |                                                      ^
+    366|     expect(taken.body.suggestion).toMatchObject({ id, status: "taken_t…
+    367|     expect(taken.body.draft).toMatchObject({
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 passed (5)
+   Start at  02:02:02
+   Duration  27.75s (transform 7.52s, setup 0ms, collect 15.11s, tests 7.52s, environment 0ms, prepare 71ms)
+
+exit 1

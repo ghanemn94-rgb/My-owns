@@ -1,0 +1,45 @@
+# 2026-11-11T03:14:40Z F-DG6-980 QA round-2 probe (unedited; soft assertions hold when FIXED) and F-DG6-960 domain round-2 probe (context-recheck.test.ts lines 1-147 + the tail, as raised; observations only) (Node v22.22.0, $TMPDIR/rv at f56f1b3d2, load 6.41 5.64 7.17)
+9d5f1342107f487d187a58217ab013d04a2b6429b984085e1d830160384425e9  /home/user/My-owns/docs/delivery/test-evidence/DG6/qa/tests/round-2/qa-rg-r2-assistant-history.test.ts
+5c72b59477b00602754148ac8f5dc625aecd65782dd28ca1407354c6523b6095  /home/user/My-owns/docs/delivery/test-evidence/DG6/domain/round-2/probes/zz-domain-r2-history-tail.ts
+port-policy: PostgreSQL listening on port 32465 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.ccKYO2/claude-0/rv
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwbjpnod_937fe962 (server_encoding UTF8); applied 121 migrations to a fresh database
+stdout | apps/api/test/integration/assistant/zz-domain-r2-history.test.ts > domain r2: a withheld answer and the history of the next turn > the withheld answer's text is (or is not) sent to the model as history; the next answer's withheld state
+[DOM-R2-H] turn 1 after revoking tA2: contentWithheld = [33mtrue[39m
+
+stdout | apps/api/test/integration/assistant/zz-domain-r2-history.test.ts > domain r2: a withheld answer and the history of the next turn > the withheld answer's text is (or is not) sent to the model as history; the next answer's withheld state
+[DOM-R2-H] turn 2 status [33m201[39m replyKind answer
+[DOM-R2-H] turn 2 request: messages = [33m4[39m ; withheld turn-1 text (names TITLE_2) sent as history = [33mfalse[39m
+[DOM-R2-H] turn 2 data block record ids include tA2 = [33mfalse[39m
+
+stdout | apps/api/test/integration/assistant/zz-domain-r2-history.test.ts > domain r2: a withheld answer and the history of the next turn > the withheld answer's text is (or is not) sent to the model as history; the next answer's withheld state
+[DOM-R2-H] turn 2 stored context_records include tA2 = [33mfalse[39m
+
+stdout | apps/api/test/integration/assistant/zz-domain-r2-history.test.ts > domain r2: a withheld answer and the history of the next turn > the withheld answer's text is (or is not) sent to the model as history; the next answer's withheld state
+[DOM-R2-H] turn 2 answer served: contentWithheld = [33mfalse[39m content = "Synthetic answer repeating the previous turn."
+
+stdout | apps/api/test/integration/assistant/qa-rg-r2-assistant-history.test.ts > QA-RG-R2: the history of a withheld answer (ADR-0059 §5 history vs §9 re-check) > after A1 is withheld, the next post re-sends A1's text to the model and a repeated answer A2 is served readable
+[QA-RG-R2 hist] direct read of program two after revocation: [33m404[39m
+
+stdout | apps/api/test/integration/assistant/qa-rg-r2-assistant-history.test.ts > QA-RG-R2: the history of a withheld answer (ADR-0059 §5 history vs §9 re-check) > after A1 is withheld, the next post re-sends A1's text to the model and a repeated answer A2 is served readable
+[QA-RG-R2 hist] A1 after revocation: contentWithheld = [33mtrue[39m
+
+stdout | apps/api/test/integration/assistant/qa-rg-r2-assistant-history.test.ts > QA-RG-R2: the history of a withheld answer (ADR-0059 §5 history vs §9 re-check) > after A1 is withheld, the next post re-sends A1's text to the model and a repeated answer A2 is served readable
+[QA-RG-R2 hist] the request of post 2 carries the WITHHELD A1 text as history: [33mfalse[39m
+[QA-RG-R2 hist] data block of post 2 holds program one: [33mtrue[39m program two: [33mfalse[39m
+
+stdout | apps/api/test/integration/assistant/qa-rg-r2-assistant-history.test.ts > QA-RG-R2: the history of a withheld answer (ADR-0059 §5 history vs §9 re-check) > after A1 is withheld, the next post re-sends A1's text to the model and a repeated answer A2 is served readable
+[QA-RG-R2 hist] A2: replyKind = answer contentWithheld = [33mfalse[39m content holds the withheld fact: [33mfalse[39m
+[QA-RG-R2 hist] A1 still withheld: [33mtrue[39m
+
+
+ Test Files  2 passed (2)
+      Tests  2 passed (2)
+   Start at  03:14:42
+   Duration  24.97s (transform 6.11s, setup 0ms, collect 13.60s, tests 8.03s, environment 0ms, prepare 82ms)
+
+exit=0
+# end 2026-11-11T03:15:07Z

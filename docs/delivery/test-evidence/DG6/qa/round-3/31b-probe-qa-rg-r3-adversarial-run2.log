@@ -1,0 +1,84 @@
+## start 2026-11-11T01:58:40Z node v24.21.0 cwd /var/tmp/mth-run.Ydob4z/claude-0/rv load: 10.97 8.40 4.31
+## cmd: tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration apps/api/test/integration/assistant/qa-rg-r3-history-adversarial.test.ts
+port-policy: PostgreSQL listening on port 32512 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.Ydob4z/claude-0/rv
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwbgzyip_c1e74c2d (server_encoding UTF8); applied 121 migrations to a fresh database
+stdout | apps/api/test/integration/assistant/qa-rg-r3-history-adversarial.test.ts > QA-RG-R3: adversarial checks of the RG2 history repair (ADR-0059 §5/§9) > P1: transitive inheritance past the 6-message window
+[QA-RG-R3 P1] last request: assistant history messages = [33m3[39m
+
+stdout | apps/api/test/integration/assistant/qa-rg-r3-history-adversarial.test.ts > QA-RG-R3: adversarial checks of the RG2 history repair (ADR-0059 §5/§9) > P1: transitive inheritance past the 6-message window
+[QA-RG-R3 P1] A6 context: ["tA3","tA1","tA2"]
+
+stdout | apps/api/test/integration/assistant/qa-rg-r3-history-adversarial.test.ts > QA-RG-R3: adversarial checks of the RG2 history repair (ADR-0059 §5/§9) > P1: transitive inheritance past the 6-message window
+[QA-RG-R3 P1] withheld after revoking tA2: [true,true,true,true,true,true]
+
+stdout | apps/api/test/integration/assistant/qa-rg-r3-history-adversarial.test.ts > QA-RG-R3: adversarial checks of the RG2 history repair (ADR-0059 §5/§9) > P1: transitive inheritance past the 6-message window
+[QA-RG-R3 P1] turn-7 request holds HIDDEN: [33mfalse[39m TITLE_2: [33mfalse[39m
+
+stdout | apps/api/test/integration/assistant/qa-rg-r3-history-adversarial.test.ts > QA-RG-R3: adversarial checks of the RG2 history repair (ADR-0059 §5/§9) > P2: a revocation that commits while the model call is in flight still withholds the new answer
+[QA-RG-R3 P2] revoked during the call: [33mtrue[39m | the request (checked before the revocation) held A1: [33mtrue[39m | reply as served by the POST: contentWithheld = [33mtrue[39m holds HIDDEN: [33mfalse[39m
+
+stdout | apps/api/test/integration/assistant/qa-rg-r3-history-adversarial.test.ts > QA-RG-R3: adversarial checks of the RG2 history repair (ADR-0059 §5/§9) > P2: a revocation that commits while the model call is in flight still withholds the new answer
+[QA-RG-R3 P2] GET after: withheld = [true,true]
+
+stdout | apps/api/test/integration/assistant/qa-rg-r3-history-adversarial.test.ts > QA-RG-R3: adversarial checks of the RG2 history repair (ADR-0059 §5/§9) > P3: a suggestion of an answer that inherited context is withheld and cannot be taken to a draft after revocation
+[QA-RG-R3 P3] A2 data block ids: [] suggestion: 01a1c854-9747-76fd-b7c5-63f0fdc47aba
+
+stdout | apps/api/test/integration/assistant/qa-rg-r3-history-adversarial.test.ts > QA-RG-R3: adversarial checks of the RG2 history repair (ADR-0059 §5/§9) > P3: a suggestion of an answer that inherited context is withheld and cannot be taken to a draft after revocation
+[QA-RG-R3 P3] suggestion after revoking tA1: contentWithheld = [33mtrue[39m
+
+stdout | apps/api/test/integration/assistant/qa-rg-r3-history-adversarial.test.ts > QA-RG-R3: adversarial checks of the RG2 history repair (ADR-0059 §5/§9) > P3: a suggestion of an answer that inherited context is withheld and cannot be taken to a draft after revocation
+[QA-RG-R3 P3] to-draft after revocation: [33m404[39m not_found
+
+stdout | apps/api/test/integration/assistant/qa-rg-r3-history-adversarial.test.ts > QA-RG-R3: adversarial checks of the RG2 history repair (ADR-0059 §5/§9) > P4: after the revocation a prompt that retrieves no record sends nothing of the revoked record
+[QA-RG-R3 P4] request holds TITLE_2: [33mfalse[39m HIDDEN: [33mfalse[39m tA2 id: [33mfalse[39m | data records: [33m0[39m | stored context: [] | reply: "Synthetic answer: there is no earlier answer to repeat."
+
+stdout | apps/api/test/integration/assistant/qa-rg-r3-history-adversarial.test.ts > QA-RG-R3: adversarial checks of the RG2 history repair (ADR-0059 §5/§9) > P5: the 1,000-key bound: 50 answers x 20 distinct records are stored in full; turn 51 is refused
+[QA-RG-R3 P5] data block sizes min/max: [33m20[39m [33m20[39m | history answers on turn 50: [33m3[39m | turn-50 context length: [33m1000[39m
+
+stdout | apps/api/test/integration/assistant/qa-rg-r3-history-adversarial.test.ts > QA-RG-R3: adversarial checks of the RG2 history repair (ADR-0059 §5/§9) > P5: the 1,000-key bound: 50 answers x 20 distinct records are stored in full; turn 51 is refused
+[QA-RG-R3 P5] turn 51: [33m422[39m assistant.conversation_full
+
+stdout | apps/api/test/integration/assistant/qa-rg-r3-history-adversarial.test.ts > QA-RG-R3: adversarial checks of the RG2 history repair (ADR-0059 §5/§9) > P6: the disclosed 0128 -> 0129 window (characterisation only)
+[QA-RG-R3 P6] A2 own data block: ["01a1c854-9445-74d7-ba6d-85a0bc832abe"] | stored (RG2) context: ["01a1c854-9445-74d7-ba6d-85a0bc832abe","tA1","tA2","002b3aa4-a861-462d-9fef-7d671df6eba3","002f3f11-1696-4ce3-9c3b-7d76b6cebd79","0059ab03-4742-4a9a-994a-e065477af9a5","009a365b-3ad7-4289-80a5-b9ebaea04685","00a66997-04ce-4238-a2bb-3ca2a6115a9f","010e29d1-7fe9-4d15-8719-cbd974650566","0162c5f7-4dfa-4dd8-8bdb-429bbdea155f","0204f90b-06cb-4108-aeb2-b62c75165406","04c0ddb9-6671-461a-9b37-8f6920d62871","05392508-3a5b-445d-8802-67c8f9cf4bd1","0581769b-5e32-4d5d-8a3c-914e175c0020","05f170d4-1f1c-4bce-9dc8-e5838538d2fb","061472b5-2502-4453-91be-469e637abcda","079569f2-62f1-4ecc-9477-3d9b96b8b905","07a6d49f-d4c8-479b-aded-342037d3ee23","07b2fd64-5a08-4f39-85e3-2fb565b23d1a","0850676a-fd2a-4868-8f51-f1ae46aacee8"]
+
+stdout | apps/api/test/integration/assistant/qa-rg-r3-history-adversarial.test.ts > QA-RG-R3: adversarial checks of the RG2 history repair (ADR-0059 §5/§9) > P6: the disclosed 0128 -> 0129 window (characterisation only)
+[QA-RG-R3 P6] an RG1-stored repeat (no inherited context) after the revocation: contentWithheld = [33mfalse[39m holds HIDDEN: [33mtrue[39m
+
+stdout | apps/api/test/integration/assistant/qa-rg-r3-history-adversarial.test.ts > QA-RG-R3: adversarial checks of the RG2 history repair (ADR-0059 §5/§9) > P6: the disclosed 0128 -> 0129 window (characterisation only)
+[QA-RG-R3 P6] turn-3 request holds HIDDEN (via the RG1-stored A2): [33mtrue[39m
+
+stdout | apps/api/test/integration/assistant/qa-rg-r3-history-adversarial.test.ts > QA-RG-R3: adversarial checks of the RG2 history repair (ADR-0059 §5/§9) > P8: F-DG6-971 independently: a pre-0128 suggestion is taken to a draft; INSERT without a context and removing one fail
+[QA-RG-R3 P8] constraints: ["assistant_suggestion_context_records_valid"] | triggers: [{"tgname":"assistant_suggestion_context_records_required","tgtype":7}]
+
+stdout | apps/api/test/integration/assistant/qa-rg-r3-history-adversarial.test.ts > QA-RG-R3: adversarial checks of the RG2 history repair (ADR-0059 §5/§9) > P8: F-DG6-971 independently: a pre-0128 suggestion is taken to a draft; INSERT without a context and removing one fail
+[QA-RG-R3 P8] pre-0128 suggestion to-draft: [33m200[39m {"suggestion":{"id":"01a1c854-b150-768e-8a82-15cf599d5bfc","conversationId":"01a1c854-b0e3-778e-b148-b870f4b75403","messageId":"01a1c854-b146-7739-8093-51b6c4b0
+
+stdout | apps/api/test/integration/assistant/qa-rg-r3-history-adversarial.test.ts > QA-RG-R3: adversarial checks of the RG2 history repair (ADR-0059 §5/§9) > P8: F-DG6-971 independently: a pre-0128 suggestion is taken to a draft; INSERT without a context and removing one fail
+[QA-RG-R3 P8] row after: {"status":"taken_to_draft","version":2,"context_records":null}
+
+stdout | apps/api/test/integration/assistant/qa-rg-r3-history-adversarial.test.ts > QA-RG-R3: adversarial checks of the RG2 history repair (ADR-0059 §5/§9) > P8: F-DG6-971 independently: a pre-0128 suggestion is taken to a draft; INSERT without a context and removing one fail
+[QA-RG-R3 P8] owner UPDATE setting a context on the pre-0128 row: 23514 assistant_suggestion_context_immutable
+
+stdout | apps/api/test/integration/assistant/qa-rg-r3-history-adversarial.test.ts > QA-RG-R3: adversarial checks of the RG2 history repair (ADR-0059 §5/§9) > P8: F-DG6-971 independently: a pre-0128 suggestion is taken to a draft; INSERT without a context and removing one fail
+[QA-RG-R3 P8] INSERT of a new suggestion without a context: 23514 assistant_suggestion_context_records_required
+
+stdout | apps/api/test/integration/assistant/qa-rg-r3-history-adversarial.test.ts > QA-RG-R3: adversarial checks of the RG2 history repair (ADR-0059 §5/§9) > P7: a re-grant restores the history (no permanent drop), and refusals are never in the history
+[QA-RG-R3 P7] after re-grant the history holds A1 again: [33mtrue[39m
+
+ ✓ |integration| apps/api/test/integration/assistant/qa-rg-r3-history-adversarial.test.ts (8 tests) 16497ms
+   ✓ QA-RG-R3: adversarial checks of the RG2 history repair (ADR-0059 §5/§9) > P1: transitive inheritance past the 6-message window  461ms
+   ✓ QA-RG-R3: adversarial checks of the RG2 history repair (ADR-0059 §5/§9) > P5: the 1,000-key bound: 50 answers x 20 distinct records are stored in full; turn 51 is refused  6028ms
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  01:58:44
+   Duration  34.80s (transform 6.38s, setup 0ms, collect 13.53s, tests 16.50s, environment 0ms, prepare 167ms)
+
+## end 2026-11-11T01:59:22Z rc=0

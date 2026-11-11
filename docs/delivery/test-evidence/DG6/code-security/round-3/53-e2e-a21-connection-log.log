@@ -1,0 +1,35 @@
+# 2026-11-11T02:34:31Z e2e/support/a21-connection-log-run.sh npx playwright test e2e/a21-p6-degradation.spec.ts --workers=1 ($TMPDIR/rv at f56f1b3d2; Node v24.21.0; E2E_SCREENSHOT_DIR=$TMPDIR/shots; load 16.07 16.13 14.74)
+port-policy: PostgreSQL listening on port 32470 (attempt 1)
+e2e database mth: server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applied 121 migration(s)
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+port-policy: API listening on port 32480 (attempt 1)
+API: http://localhost:32480 (APP_BASE_URL=http://localhost:32480, PORT=32480)
+{"status":"ready","checks":{"database":"ok","migrations":"ok"}}
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+Running 4 tests using 1 worker
+
+NOTICE:  database "mth_fresh_qa_a21_en" does not exist, skipping
+  ✓  1 [chromium-en] › e2e/a21-p6-degradation.spec.ts:163:1 › A21 / REQ-S17-009: Administration shows the assistant off (not configured), telemetry off, and every channel not enabled (15.3s)
+  ✓  2 [chromium-en] › e2e/a21-p6-degradation.spec.ts:234:1 › A21 / REQ-S12-023: with no channel configured the reviewer finds the reminder in the inbox, follows it and accepts the actual (7.0s)
+NOTICE:  database "mth_fresh_qa_a21_ar" does not exist, skipping
+  ✓  3 [chromium-ar] › e2e/a21-p6-degradation.spec.ts:163:1 › A21 / REQ-S17-009: Administration shows the assistant off (not configured), telemetry off, and every channel not enabled (12.8s)
+  ✓  4 [chromium-ar] › e2e/a21-p6-degradation.spec.ts:234:1 › A21 / REQ-S12-023: with no channel configured the reviewer finds the reminder in the inbox, follows it and accepts the actual (4.9s)
+
+  4 passed (46.1s)
+
+To open last HTML report run:
+[36m[39m
+[36m  npx playwright show-report[39m
+[36m[39m
+---- connection-log check
+connection log: /var/tmp/mth-run.ccKYO2/claude-0/rv/test-results/qa-a21-p6/connection-log.jsonl
+lines: 119; by process: {"qa-preload:db/dist/cli.js":4,"qa-preload:lib/common/process.js":45,"qa-preload:api/dist/main.js":35,"api":35}
+destinations (host|address:port -> count): {"127.0.0.1|127.0.0.1:32470":74,"localhost|-:32499":22,"localhost|127.0.0.1:32499":22,"127.0.0.1|127.0.0.1:32480":1}
+allow-list beyond loopback: []
+PASS: every outbound connection of the logged Node processes went to a loopback address
+exit=0
+# end 2026-11-11T02:35:36Z load 15.60 16.04 14.81

@@ -1,0 +1,133 @@
+MUTANT M2: the inherited context reverted (contextRecords = this turn's data block only)
+diff --git a/apps/api/src/modules/assistant/answer.ts b/apps/api/src/modules/assistant/answer.ts
+index 4cb09b0fd..738795c2e 100644
+--- a/apps/api/src/modules/assistant/answer.ts
++++ b/apps/api/src/modules/assistant/answer.ts
+@@ -170,7 +170,7 @@ export async function answer(input: AnswerInput): Promise<AnswerOutcome> {
+     kind: "answer",
+     content: `${content}${note}`,
+     citations,
+-    contextRecords: mergeContextRecords(contextRecordsOf(items), input.historyContext),
++    contextRecords: contextRecordsOf(items),
+     suggestions: kept,
+     latencyMs: result.latencyMs,
+     dataItems: items.length,
+port-policy: PostgreSQL listening on port 32410 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.8Z5Vlk/claude-0/review-dg6
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwbh0sn7_1925f1e5 (server_encoding UTF8); applied 121 migrations to a fresh database
+stdout | apps/api/test/integration/assistant/history-recheck.test.ts > ADR-0059 §5/§9: the history given to the model is re-checked, and inherited by the new answer (F-DG6-960/970/980) > F-DG6-960/970/980: a withheld answer is not sent to the model as history, and no new answer re-serves it
+[BE-RG2 case 1] the request of the follow-up carries the withheld A1 text: [33mfalse[39m | history roles: ["user"] | data block holds program two: [33mfalse[39m
+[BE-RG2 case 1] follow-up reply: contentWithheld = [33mfalse[39m | holds the withheld fact: [33mfalse[39m
+
+stdout | apps/api/test/integration/assistant/history-recheck.test.ts > ADR-0059 §5/§9: the history given to the model is re-checked, and inherited by the new answer (F-DG6-960/970/980) > inheritance: an answer generated with a history answer is withheld when that answer's context becomes unreadable
+[BE-RG2 case 2] A2 stored context_records: ["01a1c855-619a-70ea-a08f-4e039c34b324"]
+
+stdout | apps/api/test/integration/assistant/history-recheck.test.ts > ADR-0059 §5/§9: the history given to the model is re-checked, and inherited by the new answer (F-DG6-960/970/980) > a history answer stored before 0128 (context NULL) is checked by its citations before it is sent
+[BE-RG2 case 3] pre-0128 history answer re-sent after its cited record was revoked: [33mfalse[39m
+
+stdout | apps/api/test/integration/assistant/history-recheck.test.ts > F-DG6-971: a suggestion stored before 0128 can be taken to a draft; new rows still need a context (0129) > a pre-0128 suggestion (context NULL, readable citations) is taken to a draft (200)
+[BE-RG2 case 4] pre-0128 suggestion to-draft: [33m200[39m null
+
+stdout | apps/api/test/integration/assistant/history-recheck.test.ts > F-DG6-971: a suggestion stored before 0128 can be taken to a draft; new rows still need a context (0129) > a NEW suggestion or answer without a context is still refused at INSERT (and a context cannot be removed)
+[BE-RG2 case 5] INSERT without a context: suggestion -> 23514 assistant_suggestion_context_records_required | answer -> 23514 assistant_message_context_records_required
+
+ ❯ |integration| apps/api/test/integration/assistant/history-recheck.test.ts (5 tests | 1 failed) 22151ms
+   ✓ ADR-0059 §5/§9: the history given to the model is re-checked, and inherited by the new answer (F-DG6-960/970/980) > F-DG6-960/970/980: a withheld answer is not sent to the model as history, and no new answer re-serves it  466ms
+   × ADR-0059 §5/§9: the history given to the model is re-checked, and inherited by the new answer (F-DG6-960/970/980) > inheritance: an answer generated with a history answer is withheld when that answer's context becomes unreadable 233ms
+     → expected [ { …(2) } ] to deeply equal [ { …(2) }, { …(2) }, { …(2) } ]
+   ✓ ADR-0059 §5/§9: the history given to the model is re-checked, and inherited by the new answer (F-DG6-960/970/980) > a history answer stored before 0128 (context NULL) is checked by its citations before it is sent 141ms
+   ✓ F-DG6-971: a suggestion stored before 0128 can be taken to a draft; new rows still need a context (0129) > a pre-0128 suggestion (context NULL, readable citations) is taken to a draft (200) 114ms
+   ✓ F-DG6-971: a suggestion stored before 0128 can be taken to a draft; new rows still need a context (0129) > a NEW suggestion or answer without a context is still refused at INSERT (and a context cannot be removed) 177ms
+stdout | apps/api/test/integration/assistant/zz-domain-r3-history.test.ts > domain r3: the history channel after T-DG6-BE-RG2 > R1: round-2 sequence with an echo model: nothing withheld is re-sent or re-served
+[DOM-R3-R1] turn 1 after revoking tA2: contentWithheld = [33mtrue[39m
+
+stdout | apps/api/test/integration/assistant/zz-domain-r3-history.test.ts > domain r3: the history channel after T-DG6-BE-RG2 > R1: round-2 sequence with an echo model: nothing withheld is re-sent or re-served
+[DOM-R3-R1] turn 2 request roles = ["system","user","user","user"]
+[DOM-R3-R1] turn 2 history holds TITLE_2 = [33mfalse[39m
+[DOM-R3-R1] turn 2 reply withheld = [33mfalse[39m content = "Synthetic neutral answer with no record named."
+
+stdout | apps/api/test/integration/assistant/zz-domain-r3-history.test.ts > domain r3: the history channel after T-DG6-BE-RG2 > R1: round-2 sequence with an echo model: nothing withheld is re-sent or re-served
+[DOM-R3-R1] GET after turn 2 names TITLE_2 = [33mfalse[39m
+
+stdout | apps/api/test/integration/assistant/zz-domain-r3-history.test.ts > domain r3: the history channel after T-DG6-BE-RG2 > R2: transitive inheritance past the 6-message window; R3: restoring the grant
+[DOM-R3-R2] answers A1..A5 stored context includes tA2 = [true,false,false,false,false]
+
+ ❯ |integration| apps/api/test/integration/assistant/zz-domain-r3-history.test.ts (2 tests | 1 failed) 5428ms
+   ✓ domain r3: the history channel after T-DG6-BE-RG2 > R1: round-2 sequence with an echo model: nothing withheld is re-sent or re-served 297ms
+   × domain r3: the history channel after T-DG6-BE-RG2 > R2: transitive inheritance past the 6-message window; R3: restoring the grant 310ms
+     → expected [ true, false, false, false, false ] to deeply equal [ true, true, true, true, true ]
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/assistant/history-recheck.test.ts > ADR-0059 §5/§9: the history given to the model is re-checked, and inherited by the new answer (F-DG6-960/970/980) > inheritance: an answer generated with a history answer is withheld when that answer's context becomes unreadable
+AssertionError: expected [ { …(2) } ] to deeply equal [ { …(2) }, { …(2) }, { …(2) } ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    {[22m
+[2m      "recordId": "01a1c855-619a-70ea-a08f-4e039c34b324",[22m
+[2m      "recordType": "transformation",[22m
+[2m    },[22m
+[32m-   {[39m
+[32m-     "recordId": "01a1c855-6197-7309-94e9-3a4d0047f1cc",[39m
+[32m-     "recordType": "transformation",[39m
+[32m-   },[39m
+[32m-   {[39m
+[32m-     "recordId": "01a1c855-6199-748f-821f-af9a89e9f3c8",[39m
+[32m-     "recordType": "transformation",[39m
+[32m-   },[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/assistant/history-recheck.test.ts:272:21
+    270|     console.log("[BE-RG2 case 2] A2 stored context_records:", JSON.str…
+    271|     // The new answer's context: its own data block first, then the co…
+    272|     expect(context).toEqual([
+       |                     ^
+    273|       { recordType: "transformation", recordId: tA3 },
+    274|       { recordType: "transformation", recordId: tA1 },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |integration| apps/api/test/integration/assistant/zz-domain-r3-history.test.ts > domain r3: the history channel after T-DG6-BE-RG2 > R2: transitive inheritance past the 6-message window; R3: restoring the grant
+AssertionError: expected [ true, false, false, false, false ] to deeply equal [ true, true, true, true, true ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    true,[22m
+[32m-   true,[39m
+[32m-   true,[39m
+[32m-   true,[39m
+[32m-   true,[39m
+[31m+   false,[39m
+[31m+   false,[39m
+[31m+   false,[39m
+[31m+   false,[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/assistant/zz-domain-r3-history.test.ts:243:23
+    241|     );
+    242|     console.log("[DOM-R3-R2] answers A1..A5 stored context includes tA…
+    243|     expect(ctxHasTa2).toEqual([true, true, true, true, true]);
+       |                       ^
+    244|     await revokeTl(u.id, tA2);
+    245|     const g = await getConversation(u.session, conversationId);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  2 failed | 5 passed (7)
+   Start at  01:59:23
+   Duration  50.83s (transform 6.62s, setup 0ms, collect 18.65s, tests 27.58s, environment 0ms, prepare 91ms)
+
+exit 1

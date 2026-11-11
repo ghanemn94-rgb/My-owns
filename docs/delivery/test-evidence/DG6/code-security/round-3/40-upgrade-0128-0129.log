@@ -1,0 +1,32 @@
+# 2026-11-11T03:15:44Z SEC-R3 migration upgrade probe, run 2 (run 1 failed only on its own over-strict 'every id contiguous from 0001' assertion; corrected to the P6 range, see 40-upgrade-0128-0129-run1.log) (Node v22.22.0, $TMPDIR/rv at f56f1b3d2, load 6.09 5.72 7.09)
+port-policy: PostgreSQL listening on port 32465 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.ccKYO2/claude-0/rv
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwbjr0vo_1c202655 (server_encoding UTF8); applied 121 migrations to a fresh database
+stdout | packages/db/test/integration/zz-sec-r3-upgrade-0128-0129.test.ts > SEC-R3: 0129 as an upgrade over a 0128 database > 0128 -> 0129 upgrade gives the same rule as the fresh path; ids contiguous
+[SEC-R3-UPG] migrations: [33m121[39m first 0001_identity_access.sql last 0129_p6_assistant_context_insert_rule.sql
+[SEC-R3-UPG] missing ids: [66,67,73,77,78,79,83,84]
+
+stdout | packages/db/test/integration/zz-sec-r3-upgrade-0128-0129.test.ts > SEC-R3: 0129 as an upgrade over a 0128 database > 0128 -> 0129 upgrade gives the same rule as the fresh path; ids contiguous
+[SEC-R3-UPG] at 0128: {"checks":[{"conname":"assistant_message_context_records_required","convalidated":false},{"conname":"assistant_suggestion_context_records_required","convalidated":false}],"triggers":[],"bound":{"ok1000":false,"ok1001":false}}
+
+stdout | packages/db/test/integration/zz-sec-r3-upgrade-0128-0129.test.ts > SEC-R3: 0129 as an upgrade over a 0128 database > 0128 -> 0129 upgrade gives the same rule as the fresh path; ids contiguous
+[SEC-R3-UPG] upgrade applied: ["0129_p6_assistant_context_insert_rule.sql"]
+
+stdout | packages/db/test/integration/zz-sec-r3-upgrade-0128-0129.test.ts > SEC-R3: 0129 as an upgrade over a 0128 database > 0128 -> 0129 upgrade gives the same rule as the fresh path; ids contiguous
+[SEC-R3-UPG] after upgrade: {"checks":[],"triggers":[{"tgname":"assistant_message_context_records_required","type":7},{"tgname":"assistant_suggestion_context_records_required","type":7}],"bound":{"ok1000":true,"ok1001":false}}
+
+stdout | packages/db/test/integration/zz-sec-r3-upgrade-0128-0129.test.ts > SEC-R3: 0129 as an upgrade over a 0128 database > 0128 -> 0129 upgrade gives the same rule as the fresh path; ids contiguous
+[SEC-R3-UPG] fresh: {"checks":[],"triggers":[{"tgname":"assistant_message_context_records_required","type":7},{"tgname":"assistant_suggestion_context_records_required","type":7}],"bound":{"ok1000":true,"ok1001":false}}
+
+ ✓ |integration| packages/db/test/integration/zz-sec-r3-upgrade-0128-0129.test.ts (1 test) 6707ms
+   ✓ SEC-R3: 0129 as an upgrade over a 0128 database > 0128 -> 0129 upgrade gives the same rule as the fresh path; ids contiguous  6587ms
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  03:15:46
+   Duration  10.85s (transform 95ms, setup 0ms, collect 167ms, tests 6.71s, environment 0ms, prepare 66ms)
+
+exit=0

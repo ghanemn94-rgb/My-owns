@@ -1,0 +1,82 @@
+## start 2026-11-11T01:55:59Z node v24.21.0 cwd /var/tmp/mth-run.Ydob4z/claude-0/rv load: 9.99 6.06 2.89
+## cmd: tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration apps/api/test/integration/assistant/qa-rg-r3-history-adversarial.test.ts
+port-policy: PostgreSQL listening on port 32510 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.Ydob4z/claude-0/rv
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwbgwimi_0aa2083f (server_encoding UTF8); applied 121 migrations to a fresh database
+stdout | apps/api/test/integration/assistant/qa-rg-r3-history-adversarial.test.ts > QA-RG-R3: adversarial checks of the RG2 history repair (ADR-0059 §5/§9) > P1: transitive inheritance past the 6-message window
+[QA-RG-R3 P1] last request: assistant history messages = [33m3[39m
+
+stdout | apps/api/test/integration/assistant/qa-rg-r3-history-adversarial.test.ts > QA-RG-R3: adversarial checks of the RG2 history repair (ADR-0059 §5/§9) > P1: transitive inheritance past the 6-message window
+[QA-RG-R3 P1] A6 context: ["tA3","tA1","tA2"]
+
+stdout | apps/api/test/integration/assistant/qa-rg-r3-history-adversarial.test.ts > QA-RG-R3: adversarial checks of the RG2 history repair (ADR-0059 §5/§9) > P1: transitive inheritance past the 6-message window
+[QA-RG-R3 P1] withheld after revoking tA2: [true,true,true,true,true,true]
+
+stdout | apps/api/test/integration/assistant/qa-rg-r3-history-adversarial.test.ts > QA-RG-R3: adversarial checks of the RG2 history repair (ADR-0059 §5/§9) > P1: transitive inheritance past the 6-message window
+[QA-RG-R3 P1] turn-7 request holds HIDDEN: [33mfalse[39m TITLE_2: [33mfalse[39m
+
+stdout | apps/api/test/integration/assistant/qa-rg-r3-history-adversarial.test.ts > QA-RG-R3: adversarial checks of the RG2 history repair (ADR-0059 §5/§9) > P2: a revocation that commits while the model call is in flight still withholds the new answer
+[QA-RG-R3 P2] revoked during the call: [33mtrue[39m | the request (checked before the revocation) held A1: [33mtrue[39m | reply as served by the POST: contentWithheld = [33mtrue[39m holds HIDDEN: [33mfalse[39m
+
+stdout | apps/api/test/integration/assistant/qa-rg-r3-history-adversarial.test.ts > QA-RG-R3: adversarial checks of the RG2 history repair (ADR-0059 §5/§9) > P2: a revocation that commits while the model call is in flight still withholds the new answer
+[QA-RG-R3 P2] GET after: withheld = [true,true]
+
+stdout | apps/api/test/integration/assistant/qa-rg-r3-history-adversarial.test.ts > QA-RG-R3: adversarial checks of the RG2 history repair (ADR-0059 §5/§9) > P3: a suggestion of an answer that inherited context is withheld and cannot be taken to a draft after revocation
+[QA-RG-R3 P3] A2 data block ids: [] suggestion: 01a1c852-233d-77be-b6cd-17e77ee6788b
+
+stdout | apps/api/test/integration/assistant/qa-rg-r3-history-adversarial.test.ts > QA-RG-R3: adversarial checks of the RG2 history repair (ADR-0059 §5/§9) > P3: a suggestion of an answer that inherited context is withheld and cannot be taken to a draft after revocation
+[QA-RG-R3 P3] suggestion after revoking tA1: contentWithheld = [33mtrue[39m
+
+stdout | apps/api/test/integration/assistant/qa-rg-r3-history-adversarial.test.ts > QA-RG-R3: adversarial checks of the RG2 history repair (ADR-0059 §5/§9) > P3: a suggestion of an answer that inherited context is withheld and cannot be taken to a draft after revocation
+[QA-RG-R3 P3] to-draft after revocation: [33m404[39m not_found
+
+stdout | apps/api/test/integration/assistant/qa-rg-r3-history-adversarial.test.ts > QA-RG-R3: adversarial checks of the RG2 history repair (ADR-0059 §5/§9) > P4: after the revocation a prompt that retrieves no record sends nothing of the revoked record
+[QA-RG-R3 P4] request holds TITLE_2: [33mfalse[39m HIDDEN: [33mfalse[39m tA2 id: [33mfalse[39m | data records: [33m0[39m | stored context: [] | reply: "Synthetic answer: there is no earlier answer to repeat."
+
+stdout | apps/api/test/integration/assistant/qa-rg-r3-history-adversarial.test.ts > QA-RG-R3: adversarial checks of the RG2 history repair (ADR-0059 §5/§9) > P5: the 1,000-key bound: 50 answers x 20 distinct records are stored in full; turn 51 is refused
+[QA-RG-R3 P5] data block sizes min/max: [33m20[39m [33m20[39m | history answers on turn 50: [33m3[39m | turn-50 context length: [33m1000[39m
+
+stdout | apps/api/test/integration/assistant/qa-rg-r3-history-adversarial.test.ts > QA-RG-R3: adversarial checks of the RG2 history repair (ADR-0059 §5/§9) > P5: the 1,000-key bound: 50 answers x 20 distinct records are stored in full; turn 51 is refused
+[QA-RG-R3 P5] turn 51: [33m422[39m assistant.conversation_full
+
+stdout | apps/api/test/integration/assistant/qa-rg-r3-history-adversarial.test.ts > QA-RG-R3: adversarial checks of the RG2 history repair (ADR-0059 §5/§9) > P7: a re-grant restores the history (no permanent drop), and refusals are never in the history
+[QA-RG-R3 P7] after re-grant the history holds A1 again: [33mtrue[39m
+
+ ❯ |integration| apps/api/test/integration/assistant/qa-rg-r3-history-adversarial.test.ts (7 tests | 1 failed) 11342ms
+   ✓ QA-RG-R3: adversarial checks of the RG2 history repair (ADR-0059 §5/§9) > P1: transitive inheritance past the 6-message window  548ms
+   ✓ QA-RG-R3: adversarial checks of the RG2 history repair (ADR-0059 §5/§9) > P2: a revocation that commits while the model call is in flight still withholds the new answer 167ms
+   ✓ QA-RG-R3: adversarial checks of the RG2 history repair (ADR-0059 §5/§9) > P3: a suggestion of an answer that inherited context is withheld and cannot be taken to a draft after revocation 214ms
+   ✓ QA-RG-R3: adversarial checks of the RG2 history repair (ADR-0059 §5/§9) > P4: after the revocation a prompt that retrieves no record sends nothing of the revoked record 155ms
+   ✓ QA-RG-R3: adversarial checks of the RG2 history repair (ADR-0059 §5/§9) > P5: the 1,000-key bound: 50 answers x 20 distinct records are stored in full; turn 51 is refused  4741ms
+   × QA-RG-R3: adversarial checks of the RG2 history repair (ADR-0059 §5/§9) > P6: the disclosed 0128 -> 0129 window (characterisation only) 152ms
+     → new row for relation "assistant_message" violates check constraint "assistant_message_context_records_valid"
+   ✓ QA-RG-R3: adversarial checks of the RG2 history repair (ADR-0059 §5/§9) > P7: a re-grant restores the history (no permanent drop), and refusals are never in the history 154ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/assistant/qa-rg-r3-history-adversarial.test.ts > QA-RG-R3: adversarial checks of the RG2 history repair (ADR-0059 §5/§9) > P6: the disclosed 0128 -> 0129 window (characterisation only)
+error: new row for relation "assistant_message" violates check constraint "assistant_message_context_records_valid"
+ ❯ node_modules/.pnpm/pg-pool@3.14.0_pg@8.16.3/node_modules/pg-pool/index.js:45:11
+ ❯ apps/api/test/integration/assistant/qa-rg-r3-history-adversarial.test.ts:325:5
+    323|     // Simulate RG1 storage of A2 (context = its own data block only, …
+    324|     // 0129 hold: owner-only DDL on the scratch database.
+    325|     await a.api.owner.query(`
+       |     ^
+    326|       DO $$ BEGIN
+    327|         ALTER TABLE assistant_message DISABLE TRIGGER USER;
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 6 passed (7)
+   Start at  01:56:03
+   Duration  30.32s (transform 6.68s, setup 0ms, collect 14.25s, tests 11.34s, environment 0ms, prepare 131ms)
+
+## end 2026-11-11T01:56:35Z rc=1

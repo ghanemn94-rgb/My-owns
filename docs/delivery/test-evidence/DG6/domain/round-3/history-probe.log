@@ -1,0 +1,86 @@
+port-policy: PostgreSQL listening on port 32400 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.8Z5Vlk/claude-0/review-dg6
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwbgyd12_61f943bd (server_encoding UTF8); applied 121 migrations to a fresh database
+stdout | apps/api/test/integration/assistant/history-recheck.test.ts > ADR-0059 §5/§9: the history given to the model is re-checked, and inherited by the new answer (F-DG6-960/970/980) > F-DG6-960/970/980: a withheld answer is not sent to the model as history, and no new answer re-serves it
+[BE-RG2 case 1] the request of the follow-up carries the withheld A1 text: [33mfalse[39m | history roles: ["user"] | data block holds program two: [33mfalse[39m
+[BE-RG2 case 1] follow-up reply: contentWithheld = [33mfalse[39m | holds the withheld fact: [33mfalse[39m
+
+stdout | apps/api/test/integration/assistant/history-recheck.test.ts > ADR-0059 §5/§9: the history given to the model is re-checked, and inherited by the new answer (F-DG6-960/970/980) > inheritance: an answer generated with a history answer is withheld when that answer's context becomes unreadable
+[BE-RG2 case 2] A2 stored context_records: ["01a1c853-80d3-74dc-a537-5a2a95c56e8e","01a1c853-80d0-7369-bd26-ababaaa1ccb0","01a1c853-80d2-74ed-9f1d-d42a807b660e"]
+
+stdout | apps/api/test/integration/assistant/history-recheck.test.ts > ADR-0059 §5/§9: the history given to the model is re-checked, and inherited by the new answer (F-DG6-960/970/980) > inheritance: an answer generated with a history answer is withheld when that answer's context becomes unreadable
+[BE-RG2 case 2] after revoking tA2: A1 withheld = [33mtrue[39m A2 withheld = [33mtrue[39m
+
+stdout | apps/api/test/integration/assistant/history-recheck.test.ts > ADR-0059 §5/§9: the history given to the model is re-checked, and inherited by the new answer (F-DG6-960/970/980) > a history answer stored before 0128 (context NULL) is checked by its citations before it is sent
+[BE-RG2 case 3] pre-0128 history answer re-sent after its cited record was revoked: [33mfalse[39m
+
+stdout | apps/api/test/integration/assistant/history-recheck.test.ts > F-DG6-971: a suggestion stored before 0128 can be taken to a draft; new rows still need a context (0129) > a pre-0128 suggestion (context NULL, readable citations) is taken to a draft (200)
+[BE-RG2 case 4] pre-0128 suggestion to-draft: [33m200[39m null
+
+stdout | apps/api/test/integration/assistant/history-recheck.test.ts > F-DG6-971: a suggestion stored before 0128 can be taken to a draft; new rows still need a context (0129) > a NEW suggestion or answer without a context is still refused at INSERT (and a context cannot be removed)
+[BE-RG2 case 5] INSERT without a context: suggestion -> 23514 assistant_suggestion_context_records_required | answer -> 23514 assistant_message_context_records_required
+
+ ✓ |integration| apps/api/test/integration/assistant/history-recheck.test.ts (5 tests) 6791ms
+   ✓ ADR-0059 §5/§9: the history given to the model is re-checked, and inherited by the new answer (F-DG6-960/970/980) > F-DG6-960/970/980: a withheld answer is not sent to the model as history, and no new answer re-serves it  394ms
+   ✓ ADR-0059 §5/§9: the history given to the model is re-checked, and inherited by the new answer (F-DG6-960/970/980) > inheritance: an answer generated with a history answer is withheld when that answer's context becomes unreadable  310ms
+stdout | apps/api/test/integration/assistant/context-recheck.test.ts > ADR-0059 §9: the read-time re-check covers every record given to the model (F-DG6-920) > F-DG6-920: the answer cites one of two given records; the UNCITED one is revoked; the answer is withheld
+[BE-RG1 case 1] after revoking the uncited record: contentWithheld = [33mtrue[39m
+
+stdout | apps/api/test/integration/assistant/context-recheck.test.ts > ADR-0059 §9: the read-time re-check covers every record given to the model (F-DG6-920) > the cited record is revoked: the answer is withheld and that citation is readable false
+[BE-RG1 case 2] after revoking the cited record: contentWithheld = [33mtrue[39m
+
+stdout | apps/api/test/integration/assistant/context-recheck.test.ts > ADR-0059 §9: the read-time re-check covers every record given to the model (F-DG6-920) > nothing revoked: the answer stays readable, and its stored context lists both records given
+[BE-RG1 case 3] nothing revoked: contentWithheld = [33mfalse[39m
+
+stdout | apps/api/test/integration/assistant/context-recheck.test.ts > ADR-0059 §9: the read-time re-check covers every record given to the model (F-DG6-920) > nothing revoked: the answer stays readable, and its stored context lists both records given
+[BE-RG1 case 3] stored context_records: [{"recordId":"01a1c853-ac3e-732f-868a-10153f19f560","recordType":"transformation"},{"recordId":"01a1c853-ac3f-7381-907e-ba7c109c3413","recordType":"transformation"}]
+
+stdout | apps/api/test/integration/assistant/context-recheck.test.ts > ADR-0059 §9: the read-time re-check covers every record given to the model (F-DG6-920) > a suggestion built from an answer whose uncited record becomes unreadable is withheld and cannot be taken (404)
+[BE-RG1 case 4] suggestion context holds the uncited benefit: true
+
+stdout | apps/api/test/integration/assistant/context-recheck.test.ts > ADR-0059 §9: the read-time re-check covers every record given to the model (F-DG6-920) > a suggestion built from an answer whose uncited record becomes unreadable is withheld and cannot be taken (404)
+[BE-RG1 case 4] after the uncited benefit became unreadable: answer withheld = [33mtrue[39m suggestions withheld = [true,true]
+
+stdout | apps/api/test/integration/assistant/context-recheck.test.ts > ADR-0059 §9: the read-time re-check covers every record given to the model (F-DG6-920) > a suggestion built from an answer whose uncited record becomes unreadable is withheld and cannot be taken (404)
+[BE-RG1 case 4] take-to-draft status: [33m404[39m
+
+ ✓ |integration| apps/api/test/integration/assistant/context-recheck.test.ts (5 tests) 6071ms
+stdout | apps/api/test/integration/assistant/zz-domain-r3-history.test.ts > domain r3: the history channel after T-DG6-BE-RG2 > R1: round-2 sequence with an echo model: nothing withheld is re-sent or re-served
+[DOM-R3-R1] turn 1 after revoking tA2: contentWithheld = [33mtrue[39m
+
+stdout | apps/api/test/integration/assistant/zz-domain-r3-history.test.ts > domain r3: the history channel after T-DG6-BE-RG2 > R1: round-2 sequence with an echo model: nothing withheld is re-sent or re-served
+[DOM-R3-R1] turn 2 request roles = ["system","user","user","user"]
+[DOM-R3-R1] turn 2 history holds TITLE_2 = [33mfalse[39m
+[DOM-R3-R1] turn 2 reply withheld = [33mfalse[39m content = "Synthetic neutral answer with no record named."
+
+stdout | apps/api/test/integration/assistant/zz-domain-r3-history.test.ts > domain r3: the history channel after T-DG6-BE-RG2 > R1: round-2 sequence with an echo model: nothing withheld is re-sent or re-served
+[DOM-R3-R1] GET after turn 2 names TITLE_2 = [33mfalse[39m
+
+stdout | apps/api/test/integration/assistant/zz-domain-r3-history.test.ts > domain r3: the history channel after T-DG6-BE-RG2 > R2: transitive inheritance past the 6-message window; R3: restoring the grant
+[DOM-R3-R2] answers A1..A5 stored context includes tA2 = [true,true,true,true,true]
+
+stdout | apps/api/test/integration/assistant/zz-domain-r3-history.test.ts > domain r3: the history channel after T-DG6-BE-RG2 > R2: transitive inheritance past the 6-message window; R3: restoring the grant
+[DOM-R3-R2] after revoking tA2, answers A1..A5 contentWithheld = [true,true,true,true,true]
+
+stdout | apps/api/test/integration/assistant/zz-domain-r3-history.test.ts > domain r3: the history channel after T-DG6-BE-RG2 > R2: transitive inheritance past the 6-message window; R3: restoring the grant
+[DOM-R3-R2] turn 6 request roles = ["system","user","user","user","user","user","user","user"] history holds TITLE_2 = [33mfalse[39m
+[DOM-R3-R2] turn 6 reply withheld = [33mfalse[39m content = "Synthetic neutral answer with no record named."
+
+stdout | apps/api/test/integration/assistant/zz-domain-r3-history.test.ts > domain r3: the history channel after T-DG6-BE-RG2 > R2: transitive inheritance past the 6-message window; R3: restoring the grant
+[DOM-R3-R3] after restoring TL on tA2, answers contentWithheld = [false,false,false,false,false,false]
+
+ ✓ |integration| apps/api/test/integration/assistant/zz-domain-r3-history.test.ts (2 tests) 4345ms
+   ✓ domain r3: the history channel after T-DG6-BE-RG2 > R2: transitive inheritance past the 6-message window; R3: restoring the grant  398ms
+
+ Test Files  3 passed (3)
+      Tests  12 passed (12)
+   Start at  01:57:29
+   Duration  47.11s (transform 8.06s, setup 0ms, collect 23.68s, tests 17.21s, environment 0ms, prepare 191ms)
+
+exit 0

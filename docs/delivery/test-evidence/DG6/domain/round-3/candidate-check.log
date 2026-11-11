@@ -1,0 +1,17 @@
+$ git rev-parse HEAD
+c317329802d6bfdbb5e835b0c7e9be82f02b446c
+$ node tools/gates/candidate.mjs --stage DG6
+{"stage":"DG6","source":"working-tree","candidate_id":"sha256:32e41b5581a9beeba357a6c0dd5b50c414226910232ebfbb711c2178024376b5","files":2773}
+exit 0
+$ git diff --name-only f56f1b3d HEAD -- . :!docs/delivery | wc -l
+0
+$ git diff a0cf22bba f56f1b3d -- . :!docs/delivery | wc -c
+0
+$ git rev-parse --is-shallow-repository
+false
+$ ls /opt/node22/bin/node && /opt/node22/bin/node -v
+/opt/node22/bin/node
+v22.22.0
+$ clone HEAD
+f56f1b3d24c00d1803f6627c99b3f422a47b3014
+clone: git clone --shared, sparse checkout excluding docs/delivery/{test-evidence,runs,handbacks,reviews,candidates} and trading_agent; node_modules copied from the repository

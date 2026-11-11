@@ -1,0 +1,79 @@
+# 2026-11-11T02:02:29Z round-2 reproductions, UNEDITED (both assert the DEFECT: on a fixed tree they must FAIL) (Node v22.22.0, cwd $TMPDIR/rv at f56f1b3d2, LANG=<unset>, load 9.70 9.30 5.59)
+port-policy: PostgreSQL listening on port 32460 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.ccKYO2/claude-0/rv
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwbh4vv7_57644aba (server_encoding UTF8); applied 121 migrations to a fresh database
+stdout | apps/api/test/integration/assistant/zz-sec-r2-assistant-history.test.ts > SEC-R2: the conversation history carries a withheld answer's text to the model and into a served answer > after revocation, the withheld turn-1 answer is re-sent as history and resurfaces in an unwithheld turn-2 answer
+[SEC-R2] direct read of tA2 after revocation: [33m404[39m
+
+stdout | apps/api/test/integration/assistant/zz-sec-r2-assistant-history.test.ts > SEC-R2: the conversation history carries a withheld answer's text to the model and into a served answer > after revocation, the withheld turn-1 answer is re-sent as history and resurfaces in an unwithheld turn-2 answer
+[SEC-R2] turn-1 answer after revocation: contentWithheld = [33mtrue[39m
+
+stdout | apps/api/test/integration/assistant/zz-sec-r2-assistant-history.test.ts > SEC-R2: the conversation history carries a withheld answer's text to the model and into a served answer > after revocation, the withheld turn-1 answer is re-sent as history and resurfaces in an unwithheld turn-2 answer
+[SEC-R2] turn-2 request: history (assistant role) holds the revoked title: [33mfalse[39m
+[SEC-R2] turn-2 request: data block holds tA2: [33mfalse[39m
+[SEC-R2] turn-2 reply: replyKind = answer contentWithheld = [33mfalse[39m
+[SEC-R2] turn-2 reply content: "Synthetic answer: Zephyrine synthetic program one and Zephyrine synthetic program two are both behind plan."
+
+stdout | apps/api/test/integration/assistant/zz-sec-r2-assistant-history.test.ts > SEC-R2: the conversation history carries a withheld answer's text to the model and into a served answer > after revocation, the withheld turn-1 answer is re-sent as history and resurfaces in an unwithheld turn-2 answer
+[SEC-R2] GET conversation after turn 2: [{"seq":1,"author":"user","withheld":false},{"seq":2,"author":"assistant","withheld":true},{"seq":3,"author":"user","withheld":false},{"seq":4,"author":"assistant","withheld":false}]
+[SEC-R2] GET conversation body contains the revoked title: [33mtrue[39m
+
+stdout | apps/api/test/integration/assistant/zz-sec-r2-assistant-history.test.ts > SEC-R2: the conversation history carries a withheld answer's text to the model and into a served answer > after revocation, the withheld turn-1 answer is re-sent as history and resurfaces in an unwithheld turn-2 answer
+[SEC-R2] turn-2 stored context_records: []
+
+ ❯ |integration| apps/api/test/integration/assistant/zz-sec-r2-assistant-history.test.ts (1 test | 1 failed) 11468ms
+   × SEC-R2: the conversation history carries a withheld answer's text to the model and into a served answer > after revocation, the withheld turn-1 answer is re-sent as history and resurfaces in an unwithheld turn-2 answer 824ms
+     → expected false to be true // Object.is equality
+stdout | apps/api/test/integration/assistant/zz-sec-r2-legacy-suggestion-to-draft.test.ts > SEC-R2-L: a suggestion stored before 0128 cannot be taken to a draft > control: a suggestion stored after 0128 is taken to a draft (200)
+[SEC-R2-L] control (post-0128 row) to-draft status: [33m200[39m
+
+ ❯ |integration| apps/api/test/integration/assistant/zz-sec-r2-legacy-suggestion-to-draft.test.ts (2 tests | 1 failed) 14476ms
+   ✓ SEC-R2-L: a suggestion stored before 0128 cannot be taken to a draft > control: a suggestion stored after 0128 is taken to a draft (200)  381ms
+   × SEC-R2-L: a suggestion stored before 0128 cannot be taken to a draft > pre-0128 row (context NULL, the required CHECK NOT VALID as 0128 leaves it): to-draft fails 205ms
+     → constraint "assistant_suggestion_context_records_required" of relation "assistant_suggestion" does not exist
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/assistant/zz-sec-r2-assistant-history.test.ts > SEC-R2: the conversation history carries a withheld answer's text to the model and into a served answer > after revocation, the withheld turn-1 answer is re-sent as history and resurfaces in an unwithheld turn-2 answer
+AssertionError: expected false to be true // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+ ❯ apps/api/test/integration/assistant/zz-sec-r2-assistant-history.test.ts:191:30
+    189| 
+    190|     // The defect, asserted: revoked text was sent to the provider aft…
+    191|     expect(historyHasTitle2).toBe(true);
+       |                              ^
+    192|     expect(dataMsg?.content.includes(tA2) ?? false).toBe(false);
+    193|     expect(m[1]).toMatchObject({ contentWithheld: true });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |integration| apps/api/test/integration/assistant/zz-sec-r2-legacy-suggestion-to-draft.test.ts > SEC-R2-L: a suggestion stored before 0128 cannot be taken to a draft > pre-0128 row (context NULL, the required CHECK NOT VALID as 0128 leaves it): to-draft fails
+error: constraint "assistant_suggestion_context_records_required" of relation "assistant_suggestion" does not exist
+ ❯ node_modules/.pnpm/pg-pool@3.14.0_pg@8.16.3/node_modules/pg-pool/index.js:45:11
+ ❯ apps/api/test/integration/assistant/zz-sec-r2-legacy-suggestion-to-draft.test.ts:107:5
+    105|     const id = await charterSuggestion(session);
+    106|     expect(id).toMatch(/^[0-9a-f-]{36}$/);
+    107|     await a.api.owner.query(`
+       |     ^
+    108|       DO $$ BEGIN
+    109|         ALTER TABLE assistant_suggestion DROP CONSTRAINT assistant_sug…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  2 failed | 1 passed (3)
+   Start at  02:02:34
+   Duration  58.39s (transform 7.82s, setup 0ms, collect 25.02s, tests 25.94s, environment 0ms, prepare 340ms)
+
+exit=1
+# end 2026-11-11T02:03:38Z load 15.30 11.10 6.48

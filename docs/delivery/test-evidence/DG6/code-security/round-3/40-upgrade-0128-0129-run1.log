@@ -1,0 +1,43 @@
+# 2026-11-11T03:15:07Z SEC-R3 migration upgrade probe: 0001-0128 then 0129 on a scratch database vs fresh 0001-0129 (Node v22.22.0, $TMPDIR/rv at f56f1b3d2, load 6.76 5.77 7.17)
+port-policy: PostgreSQL listening on port 32465 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.ccKYO2/claude-0/rv
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwbjq8y3_dc7906b1 (server_encoding UTF8); applied 121 migrations to a fresh database
+stdout | packages/db/test/integration/zz-sec-r3-upgrade-0128-0129.test.ts > SEC-R3: 0129 as an upgrade over a 0128 database > 0128 -> 0129 upgrade gives the same rule as the fresh path; ids contiguous
+[SEC-R3-UPG] migrations: [33m121[39m first 0001_identity_access.sql last 0129_p6_assistant_context_insert_rule.sql
+
+ ❯ |integration| packages/db/test/integration/zz-sec-r3-upgrade-0128-0129.test.ts (1 test | 1 failed) 18ms
+   × SEC-R3: 0129 as an upgrade over a 0128 database > 0128 -> 0129 upgrade gives the same rule as the fresh path; ids contiguous 17ms
+     → expected false to be true // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| packages/db/test/integration/zz-sec-r3-upgrade-0128-0129.test.ts > SEC-R3: 0129 as an upgrade over a 0128 database > 0128 -> 0129 upgrade gives the same rule as the fresh path; ids contiguous
+AssertionError: expected false to be true // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+ ❯ packages/db/test/integration/zz-sec-r3-upgrade-0128-0129.test.ts:51:69
+     49|     console.log("[SEC-R3-UPG] migrations:", names.length, "first", nam…
+     50|     expect(ids.slice(-2)).toEqual([128, 129]);
+     51|     expect(ids.every((id, i) => i === 0 || id === ids[i - 1]! + 1)).to…
+       |                                                                     ^
+     52| 
+     53|     const dir = mkdtempSync(join(process.env["TMPDIR"] ?? "/tmp", "mig…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  03:15:10
+   Duration  4.63s (transform 119ms, setup 0ms, collect 199ms, tests 18ms, environment 0ms, prepare 62ms)
+
+exit=1
+# end 2026-11-11T03:15:15Z

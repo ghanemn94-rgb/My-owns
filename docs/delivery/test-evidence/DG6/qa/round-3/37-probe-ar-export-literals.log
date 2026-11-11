@@ -1,0 +1,40 @@
+## start 2026-11-11T04:43:33Z node v24.21.0 cwd /var/tmp/mth-run.Ydob4z/claude-0/rv load: 2.04 2.26 2.51
+## cmd: npx vitest run --configLoader runner --project unit-node packages/reporting/src/qa-r1-ar-export-literals.test.ts
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.Ydob4z/claude-0/rv
+
+stdout | packages/reporting/src/qa-r1-ar-export-literals.test.ts > REQ-S15-007 clause 3 (literal): an Arabic export keeps 'KPI-001' and '12.5%' readable > PDF (text extraction of the drawn lines)
+QA-R1 ar-export PDF lines with KPI-001: ["12.5%12.5% ةبسنب KPI-001 شرؤمةرطاخمKPI-001"]
+QA-R1 ar-export PDF lines with 12.5%: ["12.5%12.5% ةبسنب KPI-001 شرؤمةرطاخمKPI-001"]
+
+stdout | packages/reporting/src/qa-r1-ar-export-literals.test.ts > REQ-S15-007 clause 3 (literal): an Arabic export keeps 'KPI-001' and '12.5%' readable > DOCX (each literal is one left-to-right run)
+QA-R1 ar-export DOCX LTR runs with the literals: ["KPI-001"," KPI-001 "," 12.5%","12.5%"]
+
+stdout | packages/reporting/src/qa-r1-ar-export-literals.test.ts > REQ-S15-007 clause 3 (literal): an Arabic export keeps 'KPI-001' and '12.5%' readable > XLSX (stored cell text)
+QA-R1 ar-export XLSX cells with the literals: ["KPI-001","مؤشر KPI-001 بنسبة 12.5%","12.5"]
+
+stdout | packages/reporting/src/qa-r1-ar-export-literals.test.ts > REQ-S15-007 clause 3 (literal): an Arabic export keeps 'KPI-001' and '12.5%' readable > PPTX (slide text)
+QA-R1 ar-export PPTX runs with the literals: ["12.5%","مؤشر KPI-001 بنسبة 12.5%","KPI-001"]
+
+stdout | packages/reporting/src/qa-r1-ar-export-literals.test.ts > REQ-S15-007 clause 3 (literal): an Arabic export keeps 'KPI-001' and '12.5%' readable > CSV (UTF-8 text)
+QA-R1 ar-export CSV lines with the literals: ["KPI-001,مخاطرة,مؤشر KPI-001 بنسبة 12.5%,12.5,متحقَّق منه"]
+
+stdout | packages/reporting/src/qa-r1-ar-export-literals.test.ts > REQ-S15-007 clause 3 (literal): an Arabic export keeps 'KPI-001' and '12.5%' readable > the real KPI-register target text (kpiTargetText '12.5 %') in an Arabic PDF and DOCX keeps the % after the number
+QA-R1 ar-export PDF lines for the target text '12.5 %': ["1 SAR12.5 %ةرطاخمKPI-001"]
+
+stdout | packages/reporting/src/qa-r1-ar-export-literals.test.ts > REQ-S15-007 clause 3 (literal): an Arabic export keeps 'KPI-001' and '12.5%' readable > the real KPI-register target text (kpiTargetText '12.5 %') in an Arabic PDF and DOCX keeps the % after the number
+QA-R1 ar-export DOCX runs for '12.5 %': [{"rtl":false,"text":"12.5 %"}]; paragraph bidi true
+
+ ✓ |unit-node| packages/reporting/src/qa-r1-ar-export-literals.test.ts (6 tests) 1656ms
+   ✓ REQ-S15-007 clause 3 (literal): an Arabic export keeps 'KPI-001' and '12.5%' readable > PDF (text extraction of the drawn lines)  754ms
+   ✓ REQ-S15-007 clause 3 (literal): an Arabic export keeps 'KPI-001' and '12.5%' readable > the real KPI-register target text (kpiTargetText '12.5 %') in an Arabic PDF and DOCX keeps the % after the number  709ms
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  04:43:33
+   Duration  3.57s (transform 891ms, setup 0ms, collect 1.64s, tests 1.66s, environment 0ms, prepare 76ms)
+
+## end 2026-11-11T04:43:37Z rc=0

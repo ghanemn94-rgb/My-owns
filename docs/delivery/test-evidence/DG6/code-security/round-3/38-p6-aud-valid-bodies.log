@@ -1,0 +1,47 @@
+# 2026-11-11T03:13:41Z round-1 P6 AUD valid-body sweep, unchanged (the round-1 re-run version) (Node v22.22.0, $TMPDIR/rv at f56f1b3d2, load 4.94 5.37 7.19)
+port-policy: PostgreSQL listening on port 32465 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.ccKYO2/claude-0/rv
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwbjodrw_910561fa (server_encoding UTF8); applied 121 migrations to a fresh database
+stdout | apps/api/test/integration/zz-sec-r1-p6-aud-valid-bodies.test.ts > SEC-R1 P6 AUD sweep with schema-valid bodies > every one of the 26 operations is refused 403 (404 only for a non-existent record) and writes nothing
+[SEC-R1 AUD valid-body sweep] 26 operations
+putRecordSensitivity PUT /api/v1/transformations/{tid}/records/benefit/6d46aaec-c5a7-417d-8ad6-fcef736e57c4/sensitivity -> 403 forbidden
+createSensitiveGrant POST /api/v1/admin/sensitive-grants -> 403 forbidden
+revokeSensitiveGrant POST /api/v1/admin/sensitive-grants/f1137b55-fc2e-44fb-b0a8-dd5fee84be4a/revoke -> 404 not_found
+putUploadPolicy PUT /api/v1/admin/upload-policy?organizationId=01a1c899-1278-7703-91ed-80ea9a1898a3 -> 403 forbidden
+acknowledgeOperationalException POST /api/v1/admin/operations/exceptions/d8dcaf28-ec63-451d-928a-d54d659d49b7/acknowledge -> 404 not_found
+resolveOperationalException POST /api/v1/admin/operations/exceptions/62dcb51d-19c1-4a09-919e-6fd027403660/resolve -> 404 not_found
+putServiceIdentity PUT /api/v1/admin/service-identities/256ccd79-5029-4ed5-af80-c092a0e482d6 -> 404 not_found
+putNotificationChannel PUT /api/v1/admin/notification-channels/email?organizationId=01a1c899-1278-7703-91ed-80ea9a1898a3 -> 403 forbidden
+testNotificationChannel POST /api/v1/admin/notification-channels/email/test?organizationId=01a1c899-1278-7703-91ed-80ea9a1898a3 -> 403 forbidden
+createConnector POST /api/v1/admin/connectors -> 403 forbidden
+putConnector PUT /api/v1/admin/connectors/d73eb4d2-7e65-47f4-89ba-66a00c844b24 -> 404 not_found
+enableConnector POST /api/v1/admin/connectors/d8960465-c50d-4316-abbd-e283b5cd0967/enable -> 404 not_found
+disableConnector POST /api/v1/admin/connectors/87a9858f-22f4-4158-8926-9bd72209171e/disable -> 404 not_found
+putConnectorMappings PUT /api/v1/admin/connectors/f6937d89-b959-4f3f-bb8b-bd4bb7af465c/mappings -> 404 not_found
+commitImport POST /api/v1/transformations/{tid}/imports/f8770fca-eeaa-4541-9b2b-60f6ac5d23b0/commit -> 404 not_found
+cancelImport POST /api/v1/transformations/{tid}/imports/4586f919-8383-409b-926f-77646e396537/cancel -> 404 not_found
+createWebhookEndpoint POST /api/v1/admin/webhooks -> 404 not_found
+rotateWebhookSecret POST /api/v1/admin/webhooks/3aa23222-a619-49b9-9d71-70e52a3cab87/rotate-secret -> 404 not_found
+disableWebhookEndpoint POST /api/v1/admin/webhooks/adf23286-5569-437a-aa40-82df20787888/disable -> 404 not_found
+executeOutboundWrite POST /api/v1/transformations/{tid}/outbound-writes -> 403 forbidden
+confirmDeliverableExternalChange POST /api/v1/deliverables/5d2fb8c5-1e4a-43f2-b09c-c5933ab715be/confirmation -> 404 not_found
+putDeliverableExternalChange PUT /api/v1/deliverables/1fbe3c9f-69bd-4815-84ad-00d404186f11/external-change -> 404 not_found
+createSavedView POST /api/v1/saved-views -> 403 forbidden
+putSavedView PUT /api/v1/saved-views/006d9968-6ed5-4f17-b9b5-24afcb4087ff -> 404 not_found
+shareSavedView POST /api/v1/saved-views/a81b99d4-0517-4aeb-916d-4abb97d608af/share -> 404 not_found
+createImport POST /api/v1/transformations/{tid}/imports (text/csv) -> 403 {"type":"urn:mth:problem:forbidden","title":"Forbidden","status":403,"detail":"You do not have permission for this action.","code":"forbidden","requestId":"01a1
+[SEC-R1 AUD valid-body sweep] NOT refused 403/404: 0
+
+[SEC-R1 AUD valid-body sweep] non-denial audit events by AUD: before 1, after 1
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  03:13:43
+   Duration  14.82s (transform 5.85s, setup 0ms, collect 10.66s, tests 747ms, environment 0ms, prepare 51ms)
+
+exit=0
+# end 2026-11-11T03:13:58Z

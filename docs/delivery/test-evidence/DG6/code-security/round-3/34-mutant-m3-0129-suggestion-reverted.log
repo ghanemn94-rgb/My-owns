@@ -1,0 +1,86 @@
+# 2026-11-11T03:13:02Z MUTANT M3: 0129's suggestion rule reverted (0128 NOT VALID CHECK kept); R3-3a must FAIL (Node v22.22.0, cwd $TMPDIR/rv at f56f1b3d2, LANG=<unset>, load 4.54 5.39 7.29)
+ .../db/migrations/0129_p6_assistant_context_insert_rule.sql | 13 +------------
+ 1 file changed, 1 insertion(+), 12 deletions(-)
+diff --git a/packages/db/migrations/0129_p6_assistant_context_insert_rule.sql b/packages/db/migrations/0129_p6_assistant_context_insert_rule.sql
+index 3fdef3228..dc5b0d6f1 100644
+--- a/packages/db/migrations/0129_p6_assistant_context_insert_rule.sql
++++ b/packages/db/migrations/0129_p6_assistant_context_insert_rule.sql
+@@ -61,19 +61,8 @@ CREATE TRIGGER assistant_message_context_records_required BEFORE INSERT ON assis
+   FOR EACH ROW EXECUTE FUNCTION assistant_message_context_records_required();
+ 
+ -- ------------------------------------------------------------------------------------------------ assistant_suggestion
+-ALTER TABLE assistant_suggestion DROP CONSTRAINT assistant_suggestion_context_records_required;
++-- MUTANT M3: suggestion part of 0129 removed
+ 
+-CREATE FUNCTION assistant_suggestion_context_records_required() RETURNS trigger
+-LANGUAGE plpgsql SET search_path = public, pg_temp AS $$
+-BEGIN
+-  IF NEW.context_records IS NULL THEN
+-    RAISE EXCEPTION 'assistant_suggestion: a new suggestion stores the records its answer was generated from (context_records)'
+-      USING ERRCODE = 'check_violation', CONSTRAINT = 'assistant_suggestion_context_records_required';
+-  END IF;
+-  RETURN NEW;
+-END $$;
+-CREATE TRIGGER assistant_suggestion_context_records_required BEFORE INSERT ON assistant_suggestion
+-  FOR EACH ROW EXECUTE FUNCTION assistant_suggestion_context_records_required();
+ 
+ COMMENT ON COLUMN assistant_message.context_records IS
+   'T-DG6-BE-RG1/RG2 (F-DG6-920, F-DG6-960/970/980): record keys of every record the answer was generated from: each record item given to the model, then the inherited context of the history answers given; re-checked at read time with the citations. Required on every new answer (0129 BEFORE INSERT trigger); NULL on answers stored before 0128 (the citations are then the fallback). Never served.';
+port-policy: PostgreSQL listening on port 32460 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.ccKYO2/claude-0/rv
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwbjnjx4_8d2eb5c6 (server_encoding UTF8); applied 121 migrations to a fresh database
+stdout | apps/api/test/integration/assistant/zz-sec-r3-history-channel.test.ts > SEC-R3: F-DG6-971 pre-0128 suggestions after 0129 > R3-3a: a pre-0128 suggestion with readable citations is taken to a draft (200)
+[SEC-R3-3a] installed 'required' rule: {"checks":1,"triggers":0} | CHECK existed: true
+
+stdout | apps/api/test/integration/assistant/zz-sec-r3-history-channel.test.ts > SEC-R3: F-DG6-971 pre-0128 suggestions after 0129 > R3-3a: a pre-0128 suggestion with readable citations is taken to a draft (200)
+[SEC-R3-3a] pre-0128 to-draft: [33m422[39m "validation.constraint"
+
+stdout | apps/api/test/integration/assistant/zz-sec-r3-history-channel.test.ts > SEC-R3: F-DG6-971 pre-0128 suggestions after 0129 > R3-3b: a pre-0128 suggestion whose cited record is no longer readable is refused (fail closed)
+[SEC-R3-3b] pre-0128 to-draft after revocation: [33m404[39m "not_found"
+
+stdout | apps/api/test/integration/assistant/zz-sec-r3-history-channel.test.ts > SEC-R3: F-DG6-971 pre-0128 suggestions after 0129 > R3-3c: a NEW suggestion without a context is still refused at INSERT
+[SEC-R3-3c] INSERT of a new suggestion without a context: 23514 assistant_suggestion_context_records_required
+
+ ❯ |integration| apps/api/test/integration/assistant/zz-sec-r3-history-channel.test.ts (5 tests | 1 failed | 2 skipped) 4592ms
+   ↓ SEC-R3: the history channel after T-DG6-BE-RG2 (F-DG6-960/970/980) > R3-1: my round-2 sequence with a data-driven echo: no revoked text reaches the model or a served answer
+   ↓ SEC-R3: the history channel after T-DG6-BE-RG2 (F-DG6-960/970/980) > R3-2: inheritance is transitive beyond the 6-message window; a revocation withholds the whole chain
+   × SEC-R3: F-DG6-971 pre-0128 suggestions after 0129 > R3-3a: a pre-0128 suggestion with readable citations is taken to a draft (200) 215ms
+     → {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"The change violates a data rule.","code":"validation.constraint","requestId":"01a1c898-8d74-750b-b4a0-35436e420a8a","errors":[{"pointer":"","code":"validation.constraint","message":"assistant_suggestion_context_records_required"}]}: expected 422 to be 200 // Object.is equality
+   ✓ SEC-R3: F-DG6-971 pre-0128 suggestions after 0129 > R3-3b: a pre-0128 suggestion whose cited record is no longer readable is refused (fail closed) 117ms
+   ✓ SEC-R3: F-DG6-971 pre-0128 suggestions after 0129 > R3-3c: a NEW suggestion without a context is still refused at INSERT 115ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/assistant/zz-sec-r3-history-channel.test.ts > SEC-R3: F-DG6-971 pre-0128 suggestions after 0129 > R3-3a: a pre-0128 suggestion with readable citations is taken to a draft (200)
+AssertionError: {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"The change violates a data rule.","code":"validation.constraint","requestId":"01a1c898-8d74-750b-b4a0-35436e420a8a","errors":[{"pointer":"","code":"validation.constraint","message":"assistant_suggestion_context_records_required"}]}: expected 422 to be 200 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 200[39m
+[31m+ 422[39m
+
+ ❯ apps/api/test/integration/assistant/zz-sec-r3-history-channel.test.ts:314:54
+    312|     });
+    313|     console.log("[SEC-R3-3a] pre-0128 to-draft:", taken.status, JSON.s…
+    314|     expect(taken.status, JSON.stringify(taken.body)).toBe(200);
+       |                                                      ^
+    315|     const row = await a.api.owner.query(
+    316|       `SELECT status, version, context_records IS NULL AS ctx_null FRO…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 2 passed | 2 skipped (5)
+   Start at  03:13:04
+   Duration  19.39s (transform 5.75s, setup 0ms, collect 10.91s, tests 4.59s, environment 0ms, prepare 51ms)
+
+exit=1
+# end 2026-11-11T03:13:24Z load 4.23 5.26 7.19
+# restore check: git status --short (must be empty):
+(end)
+TARGETED-DONE

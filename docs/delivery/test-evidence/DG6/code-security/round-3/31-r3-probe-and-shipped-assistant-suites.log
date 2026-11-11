@@ -1,0 +1,125 @@
+# 2026-11-11T02:03:38Z round-3 verification probe zz-sec-r3-history-channel (asserts the FIXED behaviour) + shipped history-recheck, context-recheck, conversations, suggestions (Node v22.22.0, cwd $TMPDIR/rv at f56f1b3d2, LANG=<unset>, load 15.30 11.10 6.48)
+port-policy: PostgreSQL listening on port 32460 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.ccKYO2/claude-0/rv
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwbh6ecg_675b077b (server_encoding UTF8); applied 121 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/assistant/conversations.test.ts (21 tests) 11895ms
+   ✓ off means no call (REQ-S17-009; ADR-0059 §3) > an http endpoint saved but DISABLED gets zero requests: post and create answer 422; history stays readable  354ms
+   ✓ assistantEnabled: whether the assistant is on, for every holder of assistant.use (T-DG6-BE-X5; REQ-S17-007) > a TL without assistant.configure or operations.read: 403 on the setting, and the list says on/off and nothing else  473ms
+   ✓ postAssistantMessage (ADR-0059 §9) > a conversation with 98 messages takes one last turn (100); then 422 assistant.conversation_full, nothing appended  1198ms
+   ✓ postAssistantMessage (ADR-0059 §9) > when an `interrupted` reply must be appended first, at most 97 messages so far: 97 takes a turn, 99 is full  674ms
+   ✓ the rate-limit class `assistant` and the log line (ADR-0052 §4; ADR-0059 §9 rule 3) > over the per-minute budget a post is 429 with Retry-After; each post writes one log line without the prompt  979ms
+stdout | apps/api/test/integration/assistant/history-recheck.test.ts > ADR-0059 §5/§9: the history given to the model is re-checked, and inherited by the new answer (F-DG6-960/970/980) > F-DG6-960/970/980: a withheld answer is not sent to the model as history, and no new answer re-serves it
+[BE-RG2 case 1] the request of the follow-up carries the withheld A1 text: [33mfalse[39m | history roles: ["user"] | data block holds program two: [33mfalse[39m
+[BE-RG2 case 1] follow-up reply: contentWithheld = [33mfalse[39m | holds the withheld fact: [33mfalse[39m
+
+stdout | apps/api/test/integration/assistant/history-recheck.test.ts > ADR-0059 §5/§9: the history given to the model is re-checked, and inherited by the new answer (F-DG6-960/970/980) > inheritance: an answer generated with a history answer is withheld when that answer's context becomes unreadable
+[BE-RG2 case 2] A2 stored context_records: ["01a1c859-89dc-7289-9bd4-727b5431c8fe","01a1c859-89da-7268-8ce6-cb841a2694b6","01a1c859-89db-715a-a724-f340a3fc2048"]
+
+stdout | apps/api/test/integration/assistant/history-recheck.test.ts > ADR-0059 §5/§9: the history given to the model is re-checked, and inherited by the new answer (F-DG6-960/970/980) > inheritance: an answer generated with a history answer is withheld when that answer's context becomes unreadable
+[BE-RG2 case 2] after revoking tA2: A1 withheld = [33mtrue[39m A2 withheld = [33mtrue[39m
+
+stdout | apps/api/test/integration/assistant/history-recheck.test.ts > ADR-0059 §5/§9: the history given to the model is re-checked, and inherited by the new answer (F-DG6-960/970/980) > a history answer stored before 0128 (context NULL) is checked by its citations before it is sent
+[BE-RG2 case 3] pre-0128 history answer re-sent after its cited record was revoked: [33mfalse[39m
+
+stdout | apps/api/test/integration/assistant/history-recheck.test.ts > F-DG6-971: a suggestion stored before 0128 can be taken to a draft; new rows still need a context (0129) > a pre-0128 suggestion (context NULL, readable citations) is taken to a draft (200)
+[BE-RG2 case 4] pre-0128 suggestion to-draft: [33m200[39m null
+
+stdout | apps/api/test/integration/assistant/history-recheck.test.ts > F-DG6-971: a suggestion stored before 0128 can be taken to a draft; new rows still need a context (0129) > a NEW suggestion or answer without a context is still refused at INSERT (and a context cannot be removed)
+[BE-RG2 case 5] INSERT without a context: suggestion -> 23514 assistant_suggestion_context_records_required | answer -> 23514 assistant_message_context_records_required
+
+ ✓ |integration| apps/api/test/integration/assistant/history-recheck.test.ts (5 tests) 8695ms
+   ✓ ADR-0059 §5/§9: the history given to the model is re-checked, and inherited by the new answer (F-DG6-960/970/980) > F-DG6-960/970/980: a withheld answer is not sent to the model as history, and no new answer re-serves it  604ms
+   ✓ ADR-0059 §5/§9: the history given to the model is re-checked, and inherited by the new answer (F-DG6-960/970/980) > inheritance: an answer generated with a history answer is withheld when that answer's context becomes unreadable  469ms
+stdout | apps/api/test/integration/assistant/zz-sec-r3-history-channel.test.ts > SEC-R3: the history channel after T-DG6-BE-RG2 (F-DG6-960/970/980) > R3-1: my round-2 sequence with a data-driven echo: no revoked text reaches the model or a served answer
+[SEC-R3-1] turn-1 reply: "Synthetic answer: Zephyrine synthetic program one and Zephyrine synthetic program two behind plan."
+
+stdout | apps/api/test/integration/assistant/zz-sec-r3-history-channel.test.ts > SEC-R3: the history channel after T-DG6-BE-RG2 (F-DG6-960/970/980) > R3-1: my round-2 sequence with a data-driven echo: no revoked text reaches the model or a served answer
+[SEC-R3-1] turn-2 status: [33m201[39m replyKind: answer
+[SEC-R3-1] model requests on turn 2: [33m1[39m | any holds the revoked title: [33mfalse[39m
+[SEC-R3-1] turn-2 history roles: [["system","user","user","user"]]
+[SEC-R3-1] turn-2 reply: "Synthetic answer: nothing in the data block names a program." withheld: [33mfalse[39m
+
+stdout | apps/api/test/integration/assistant/zz-sec-r3-history-channel.test.ts > SEC-R3: the history channel after T-DG6-BE-RG2 (F-DG6-960/970/980) > R3-1: my round-2 sequence with a data-driven echo: no revoked text reaches the model or a served answer
+[SEC-R3-1] GET: [{"seq":1,"author":"user","withheld":false},{"seq":2,"author":"assistant","withheld":true},{"seq":3,"author":"user","withheld":false},{"seq":4,"author":"assistant","withheld":false}]
+[SEC-R3-1] GET body holds the revoked title: [33mfalse[39m
+
+stdout | apps/api/test/integration/assistant/zz-sec-r3-history-channel.test.ts > SEC-R3: the history channel after T-DG6-BE-RG2 (F-DG6-960/970/980) > R3-2: inheritance is transitive beyond the 6-message window; a revocation withholds the whole chain
+[SEC-R3-2] turn 2: roles ["system","user","assistant","user","user"] | data titles ["Quillmora synthetic program three"] | A1 itself in the history: true
+
+stdout | apps/api/test/integration/assistant/zz-sec-r3-history-channel.test.ts > SEC-R3: the history channel after T-DG6-BE-RG2 (F-DG6-960/970/980) > R3-2: inheritance is transitive beyond the 6-message window; a revocation withholds the whole chain
+[SEC-R3-2] turn 3: roles ["system","user","assistant","user","assistant","user","user"] | data titles ["Quillmora synthetic program three"] | A1 itself in the history: true
+
+stdout | apps/api/test/integration/assistant/zz-sec-r3-history-channel.test.ts > SEC-R3: the history channel after T-DG6-BE-RG2 (F-DG6-960/970/980) > R3-2: inheritance is transitive beyond the 6-message window; a revocation withholds the whole chain
+[SEC-R3-2] turn 4: roles ["system","user","assistant","user","assistant","user","assistant","user","user"] | data titles ["Quillmora synthetic program three"] | A1 itself in the history: true
+
+stdout | apps/api/test/integration/assistant/zz-sec-r3-history-channel.test.ts > SEC-R3: the history channel after T-DG6-BE-RG2 (F-DG6-960/970/980) > R3-2: inheritance is transitive beyond the 6-message window; a revocation withholds the whole chain
+[SEC-R3-2] turn 5: roles ["system","user","assistant","user","assistant","user","assistant","user","user"] | data titles ["Quillmora synthetic program three"] | A1 itself in the history: false
+
+stdout | apps/api/test/integration/assistant/zz-sec-r3-history-channel.test.ts > SEC-R3: the history channel after T-DG6-BE-RG2 (F-DG6-960/970/980) > R3-2: inheritance is transitive beyond the 6-message window; a revocation withholds the whole chain
+[SEC-R3-2] A5 stored context ids (tA3, tA1, tA2 expected in some order): ["tA3","tA1","tA2"]
+
+stdout | apps/api/test/integration/assistant/zz-sec-r3-history-channel.test.ts > SEC-R3: the history channel after T-DG6-BE-RG2 (F-DG6-960/970/980) > R3-2: inheritance is transitive beyond the 6-message window; a revocation withholds the whole chain
+[SEC-R3-2] after revoking tA2, answers withheld: [true,true,true,true,true]
+[SEC-R3-2] GET body holds the revoked title: [33mfalse[39m | tA2 id: [33mfalse[39m
+
+stdout | apps/api/test/integration/assistant/zz-sec-r3-history-channel.test.ts > SEC-R3: the history channel after T-DG6-BE-RG2 (F-DG6-960/970/980) > R3-2: inheritance is transitive beyond the 6-message window; a revocation withholds the whole chain
+[SEC-R3-2] turn 6 roles: ["system","user","user","user","user","user","user","user"] | request holds the revoked title: [33mfalse[39m
+[SEC-R3-2] turn 6 reply: "Synthetic answer: Quillmora synthetic program three behind plan." withheld: [33mfalse[39m
+
+stdout | apps/api/test/integration/assistant/zz-sec-r3-history-channel.test.ts > SEC-R3: F-DG6-971 pre-0128 suggestions after 0129 > R3-3a: a pre-0128 suggestion with readable citations is taken to a draft (200)
+[SEC-R3-3a] installed 'required' rule: {"checks":0,"triggers":1} | CHECK existed: false
+
+stdout | apps/api/test/integration/assistant/zz-sec-r3-history-channel.test.ts > SEC-R3: F-DG6-971 pre-0128 suggestions after 0129 > R3-3a: a pre-0128 suggestion with readable citations is taken to a draft (200)
+[SEC-R3-3a] pre-0128 to-draft: [33m200[39m "taken_to_draft"
+
+stdout | apps/api/test/integration/assistant/zz-sec-r3-history-channel.test.ts > SEC-R3: F-DG6-971 pre-0128 suggestions after 0129 > R3-3a: a pre-0128 suggestion with readable citations is taken to a draft (200)
+[SEC-R3-3a] row after: {"status":"taken_to_draft","version":2,"ctx_null":true}
+
+stdout | apps/api/test/integration/assistant/zz-sec-r3-history-channel.test.ts > SEC-R3: F-DG6-971 pre-0128 suggestions after 0129 > R3-3b: a pre-0128 suggestion whose cited record is no longer readable is refused (fail closed)
+[SEC-R3-3b] pre-0128 to-draft after revocation: [33m404[39m "not_found"
+
+stdout | apps/api/test/integration/assistant/zz-sec-r3-history-channel.test.ts > SEC-R3: F-DG6-971 pre-0128 suggestions after 0129 > R3-3c: a NEW suggestion without a context is still refused at INSERT
+[SEC-R3-3c] INSERT of a new suggestion without a context: 23514 assistant_suggestion_context_records_required
+
+ ✓ |integration| apps/api/test/integration/assistant/zz-sec-r3-history-channel.test.ts (5 tests) 10017ms
+   ✓ SEC-R3: the history channel after T-DG6-BE-RG2 (F-DG6-960/970/980) > R3-2: inheritance is transitive beyond the 6-message window; a revocation withholds the whole chain  331ms
+ ✓ |integration| apps/api/test/integration/assistant/suggestions.test.ts (12 tests) 13038ms
+   ✓ takeAssistantSuggestionToDraft (ADR-0059 §6, §10) > the owner takes a charter suggestion: a FormDraftCreate prefill, one audit event, nothing else written  805ms
+   ✓ the mapping table equals the P5 form definitions' keys (ADR-0059 §6) > the test adapter's own charter suggestion round-trips (no network)  388ms
+stdout | apps/api/test/integration/assistant/context-recheck.test.ts > ADR-0059 §9: the read-time re-check covers every record given to the model (F-DG6-920) > F-DG6-920: the answer cites one of two given records; the UNCITED one is revoked; the answer is withheld
+[BE-RG1 case 1] after revoking the uncited record: contentWithheld = [33mtrue[39m
+
+stdout | apps/api/test/integration/assistant/context-recheck.test.ts > ADR-0059 §9: the read-time re-check covers every record given to the model (F-DG6-920) > the cited record is revoked: the answer is withheld and that citation is readable false
+[BE-RG1 case 2] after revoking the cited record: contentWithheld = [33mtrue[39m
+
+stdout | apps/api/test/integration/assistant/context-recheck.test.ts > ADR-0059 §9: the read-time re-check covers every record given to the model (F-DG6-920) > nothing revoked: the answer stays readable, and its stored context lists both records given
+[BE-RG1 case 3] nothing revoked: contentWithheld = [33mfalse[39m
+
+stdout | apps/api/test/integration/assistant/context-recheck.test.ts > ADR-0059 §9: the read-time re-check covers every record given to the model (F-DG6-920) > nothing revoked: the answer stays readable, and its stored context lists both records given
+[BE-RG1 case 3] stored context_records: [{"recordId":"01a1c85a-3343-718b-b112-adf1be1a26c6","recordType":"transformation"},{"recordId":"01a1c85a-3344-76cf-83d9-e33eb6b437a7","recordType":"transformation"}]
+
+stdout | apps/api/test/integration/assistant/context-recheck.test.ts > ADR-0059 §9: the read-time re-check covers every record given to the model (F-DG6-920) > a suggestion built from an answer whose uncited record becomes unreadable is withheld and cannot be taken (404)
+[BE-RG1 case 4] suggestion context holds the uncited benefit: true
+
+stdout | apps/api/test/integration/assistant/context-recheck.test.ts > ADR-0059 §9: the read-time re-check covers every record given to the model (F-DG6-920) > a suggestion built from an answer whose uncited record becomes unreadable is withheld and cannot be taken (404)
+[BE-RG1 case 4] after the uncited benefit became unreadable: answer withheld = [33mtrue[39m suggestions withheld = [true,true]
+
+stdout | apps/api/test/integration/assistant/context-recheck.test.ts > ADR-0059 §9: the read-time re-check covers every record given to the model (F-DG6-920) > a suggestion built from an answer whose uncited record becomes unreadable is withheld and cannot be taken (404)
+[BE-RG1 case 4] take-to-draft status: [33m404[39m
+
+ ✓ |integration| apps/api/test/integration/assistant/context-recheck.test.ts (5 tests) 12311ms
+   ✓ ADR-0059 §9: the read-time re-check covers every record given to the model (F-DG6-920) > a suggestion built from an answer whose uncited record becomes unreadable is withheld and cannot be taken (404)  320ms
+
+ Test Files  5 passed (5)
+      Tests  48 passed (48)
+   Start at  02:03:44
+   Duration  97.65s (transform 8.33s, setup 0ms, collect 34.07s, tests 55.96s, environment 0ms, prepare 298ms)
+
+exit=0
+# end 2026-11-11T02:05:26Z load 17.76 13.43 7.86
+# git status --short after removing the probe copies (must be empty):
+(end)
+TARGETED1-DONE

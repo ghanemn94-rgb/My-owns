@@ -1,0 +1,112 @@
+port-policy: PostgreSQL listening on port 32415 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.8Z5Vlk/claude-0/review-dg6
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwbh2owe_77009f67 (server_encoding UTF8); applied 121 migrations to a fresh database
+stdout | apps/api/test/integration/assistant/zz-sec-r2-assistant-history.test.ts > SEC-R2: the conversation history carries a withheld answer's text to the model and into a served answer > after revocation, the withheld turn-1 answer is re-sent as history and resurfaces in an unwithheld turn-2 answer
+[SEC-R2] direct read of tA2 after revocation: [33m404[39m
+
+stdout | apps/api/test/integration/assistant/zz-sec-r2-assistant-history.test.ts > SEC-R2: the conversation history carries a withheld answer's text to the model and into a served answer > after revocation, the withheld turn-1 answer is re-sent as history and resurfaces in an unwithheld turn-2 answer
+[SEC-R2] turn-1 answer after revocation: contentWithheld = [33mtrue[39m
+
+stdout | apps/api/test/integration/assistant/zz-sec-r2-assistant-history.test.ts > SEC-R2: the conversation history carries a withheld answer's text to the model and into a served answer > after revocation, the withheld turn-1 answer is re-sent as history and resurfaces in an unwithheld turn-2 answer
+[SEC-R2] turn-2 request: history (assistant role) holds the revoked title: [33mfalse[39m
+[SEC-R2] turn-2 request: data block holds tA2: [33mfalse[39m
+[SEC-R2] turn-2 reply: replyKind = answer contentWithheld = [33mfalse[39m
+[SEC-R2] turn-2 reply content: "Synthetic answer: Zephyrine synthetic program one and Zephyrine synthetic program two are both behind plan."
+
+stdout | apps/api/test/integration/assistant/zz-sec-r2-assistant-history.test.ts > SEC-R2: the conversation history carries a withheld answer's text to the model and into a served answer > after revocation, the withheld turn-1 answer is re-sent as history and resurfaces in an unwithheld turn-2 answer
+[SEC-R2] GET conversation after turn 2: [{"seq":1,"author":"user","withheld":false},{"seq":2,"author":"assistant","withheld":true},{"seq":3,"author":"user","withheld":false},{"seq":4,"author":"assistant","withheld":false}]
+[SEC-R2] GET conversation body contains the revoked title: [33mtrue[39m
+
+stdout | apps/api/test/integration/assistant/zz-sec-r2-assistant-history.test.ts > SEC-R2: the conversation history carries a withheld answer's text to the model and into a served answer > after revocation, the withheld turn-1 answer is re-sent as history and resurfaces in an unwithheld turn-2 answer
+[SEC-R2] turn-2 stored context_records: []
+
+ ❯ |integration| apps/api/test/integration/assistant/zz-sec-r2-assistant-history.test.ts (1 test | 1 failed) 4722ms
+   × SEC-R2: the conversation history carries a withheld answer's text to the model and into a served answer > after revocation, the withheld turn-1 answer is re-sent as history and resurfaces in an unwithheld turn-2 answer 464ms
+     → expected false to be true // Object.is equality
+stdout | apps/api/test/integration/assistant/qa-rg-r2-assistant-history.test.ts > QA-RG-R2: the history of a withheld answer (ADR-0059 §5 history vs §9 re-check) > after A1 is withheld, the next post re-sends A1's text to the model and a repeated answer A2 is served readable
+[QA-RG-R2 hist] direct read of program two after revocation: [33m404[39m
+
+stdout | apps/api/test/integration/assistant/qa-rg-r2-assistant-history.test.ts > QA-RG-R2: the history of a withheld answer (ADR-0059 §5 history vs §9 re-check) > after A1 is withheld, the next post re-sends A1's text to the model and a repeated answer A2 is served readable
+[QA-RG-R2 hist] A1 after revocation: contentWithheld = [33mtrue[39m
+
+stdout | apps/api/test/integration/assistant/qa-rg-r2-assistant-history.test.ts > QA-RG-R2: the history of a withheld answer (ADR-0059 §5 history vs §9 re-check) > after A1 is withheld, the next post re-sends A1's text to the model and a repeated answer A2 is served readable
+[QA-RG-R2 hist] the request of post 2 carries the WITHHELD A1 text as history: [33mfalse[39m
+[QA-RG-R2 hist] data block of post 2 holds program one: [33mtrue[39m program two: [33mfalse[39m
+
+stdout | apps/api/test/integration/assistant/qa-rg-r2-assistant-history.test.ts > QA-RG-R2: the history of a withheld answer (ADR-0059 §5 history vs §9 re-check) > after A1 is withheld, the next post re-sends A1's text to the model and a repeated answer A2 is served readable
+[QA-RG-R2 hist] A2: replyKind = answer contentWithheld = [33mfalse[39m content holds the withheld fact: [33mfalse[39m
+[QA-RG-R2 hist] A1 still withheld: [33mtrue[39m
+
+ ✓ |integration| apps/api/test/integration/assistant/qa-rg-r2-assistant-history.test.ts (1 test) 4964ms
+   ✓ QA-RG-R2: the history of a withheld answer (ADR-0059 §5 history vs §9 re-check) > after A1 is withheld, the next post re-sends A1's text to the model and a repeated answer A2 is served readable  327ms
+stdout | apps/api/test/integration/assistant/zz-domain-r3-legacy-suggestion.test.ts > SEC-R2-L: a suggestion stored before 0128 cannot be taken to a draft > control: a suggestion stored after 0128 is taken to a draft (200)
+[SEC-R2-L] control (post-0128 row) to-draft status: [33m200[39m
+
+stdout | apps/api/test/integration/assistant/zz-domain-r3-legacy-suggestion.test.ts > SEC-R2-L: a suggestion stored before 0128 cannot be taken to a draft > pre-0128 row (context NULL, the required CHECK NOT VALID as 0128 leaves it): to-draft fails
+[SEC-R2-L] legacy state: {"ctx_null":true,"status":"proposed","check_exists":false,"trigger_exists":true}
+
+stdout | apps/api/test/integration/assistant/zz-domain-r3-legacy-suggestion.test.ts > SEC-R2-L: a suggestion stored before 0128 cannot be taken to a draft > pre-0128 row (context NULL, the required CHECK NOT VALID as 0128 leaves it): to-draft fails
+[SEC-R2-L] legacy row to-draft status: [33m200[39m body: {"suggestion":{"id":"01a1c856-c190-76aa-ac43-b465c3a0f190","conversationId":"01a1c856-c164-7673-8e93-ac48005c5704","messageId":"01a1c856-c18b-76de-ac51-9c924a3b15d5","transformationId":"01a1c856-bcd1-75ea-b200-03160b66ff40","ordinal":1,"kind":"charter_draft","label":"assistant_suggestion","targetRecordType":"charter","fields":{"case_for_change":"Synthetic case for change (SEC-R2-L)."},"textContent":null,"contentWithheld":false,"citations":[{"source":"record","recordType":"benefit","recordId":"01a1c856-bd7e-77d1-95b4-69cd432aa872","recordVersion":1,"readable":true}],"status":"taken_to_draft","takenAt":"2026-11-11T02:01:31.309Z","version":2,"createdAt":"2026-11-11T02:01:31.272Z"},"transformationId":"01a1c856-bcd1-75ea-b200-03160b66ff40","draft":{"recordType":"charter","recordId":null,"baseRecordVersion":null,"payload":{"sourceFields":{"caseForChange":"Synthetic case for change (SEC-R2-L)."}}}}
+
+stdout | apps/api/test/integration/assistant/zz-domain-r3-legacy-suggestion.test.ts > SEC-R2-L: a suggestion stored before 0128 cannot be taken to a draft > pre-0128 row (context NULL, the required CHECK NOT VALID as 0128 leaves it): to-draft fails
+[SEC-R2-L] legacy row after the call: {"status":"taken_to_draft","version":2}
+
+stdout | apps/api/test/integration/assistant/zz-domain-r3-legacy-suggestion.test.ts > SEC-R2-L: a suggestion stored before 0128 cannot be taken to a draft > pre-0128 row (context NULL, the required CHECK NOT VALID as 0128 leaves it): to-draft fails
+[SEC-R2-L] direct owner UPDATE of the legacy row: 23514 assistant_suggestion_final
+
+ ✓ |integration| apps/api/test/integration/assistant/zz-domain-r3-legacy-suggestion.test.ts (2 tests) 4932ms
+stdout | apps/api/test/integration/assistant/zz-sec-r2-legacy-suggestion-to-draft.test.ts > SEC-R2-L: a suggestion stored before 0128 cannot be taken to a draft > control: a suggestion stored after 0128 is taken to a draft (200)
+[SEC-R2-L] control (post-0128 row) to-draft status: [33m200[39m
+
+ ❯ |integration| apps/api/test/integration/assistant/zz-sec-r2-legacy-suggestion-to-draft.test.ts (2 tests | 1 failed) 5383ms
+   ✓ SEC-R2-L: a suggestion stored before 0128 cannot be taken to a draft > control: a suggestion stored after 0128 is taken to a draft (200) 144ms
+   × SEC-R2-L: a suggestion stored before 0128 cannot be taken to a draft > pre-0128 row (context NULL, the required CHECK NOT VALID as 0128 leaves it): to-draft fails 139ms
+     → constraint "assistant_suggestion_context_records_required" of relation "assistant_suggestion" does not exist
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/assistant/zz-sec-r2-assistant-history.test.ts > SEC-R2: the conversation history carries a withheld answer's text to the model and into a served answer > after revocation, the withheld turn-1 answer is re-sent as history and resurfaces in an unwithheld turn-2 answer
+AssertionError: expected false to be true // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- true[39m
+[31m+ false[39m
+
+ ❯ apps/api/test/integration/assistant/zz-sec-r2-assistant-history.test.ts:191:30
+    189| 
+    190|     // The defect, asserted: revoked text was sent to the provider aft…
+    191|     expect(historyHasTitle2).toBe(true);
+       |                              ^
+    192|     expect(dataMsg?.content.includes(tA2) ?? false).toBe(false);
+    193|     expect(m[1]).toMatchObject({ contentWithheld: true });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |integration| apps/api/test/integration/assistant/zz-sec-r2-legacy-suggestion-to-draft.test.ts > SEC-R2-L: a suggestion stored before 0128 cannot be taken to a draft > pre-0128 row (context NULL, the required CHECK NOT VALID as 0128 leaves it): to-draft fails
+error: constraint "assistant_suggestion_context_records_required" of relation "assistant_suggestion" does not exist
+ ❯ node_modules/.pnpm/pg-pool@3.14.0_pg@8.16.3/node_modules/pg-pool/index.js:45:11
+ ❯ apps/api/test/integration/assistant/zz-sec-r2-legacy-suggestion-to-draft.test.ts:107:5
+    105|     const id = await charterSuggestion(session);
+    106|     expect(id).toMatch(/^[0-9a-f-]{36}$/);
+    107|     await a.api.owner.query(`
+       |     ^
+    108|       DO $$ BEGIN
+    109|         ALTER TABLE assistant_suggestion DROP CONSTRAINT assistant_sug…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed | 2 passed (4)
+      Tests  2 failed | 4 passed (6)
+   Start at  02:00:51
+   Duration  47.51s (transform 7.36s, setup 0ms, collect 22.00s, tests 20.00s, environment 0ms, prepare 120ms)
+
+exit 1

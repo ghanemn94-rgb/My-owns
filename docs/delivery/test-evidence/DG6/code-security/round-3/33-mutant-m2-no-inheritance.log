@@ -1,0 +1,78 @@
+# 2026-11-11T03:12:40Z MUTANT M2: the new answer does not inherit the history context (defence 2 reverted); R3-2 must FAIL (Node v22.22.0, cwd $TMPDIR/rv at f56f1b3d2, LANG=<unset>, load 3.96 5.35 7.31)
+ apps/api/src/modules/assistant/answer.ts | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+diff --git a/apps/api/src/modules/assistant/answer.ts b/apps/api/src/modules/assistant/answer.ts
+index 4cb09b0fd..5c523a038 100644
+--- a/apps/api/src/modules/assistant/answer.ts
++++ b/apps/api/src/modules/assistant/answer.ts
+@@ -170,7 +170,7 @@ export async function answer(input: AnswerInput): Promise<AnswerOutcome> {
+     kind: "answer",
+     content: `${content}${note}`,
+     citations,
+-    contextRecords: mergeContextRecords(contextRecordsOf(items), input.historyContext),
++    contextRecords: mergeContextRecords(contextRecordsOf(items)),
+     suggestions: kept,
+     latencyMs: result.latencyMs,
+     dataItems: items.length,
+port-policy: PostgreSQL listening on port 32460 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.ccKYO2/claude-0/rv
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwbjn33w_f2fe1d03 (server_encoding UTF8); applied 121 migrations to a fresh database
+stdout | apps/api/test/integration/assistant/zz-sec-r3-history-channel.test.ts > SEC-R3: the history channel after T-DG6-BE-RG2 (F-DG6-960/970/980) > R3-2: inheritance is transitive beyond the 6-message window; a revocation withholds the whole chain
+[SEC-R3-2] turn 2: roles ["system","user","assistant","user","user"] | data titles ["Quillmora synthetic program three"] | A1 itself in the history: true
+
+stdout | apps/api/test/integration/assistant/zz-sec-r3-history-channel.test.ts > SEC-R3: the history channel after T-DG6-BE-RG2 (F-DG6-960/970/980) > R3-2: inheritance is transitive beyond the 6-message window; a revocation withholds the whole chain
+[SEC-R3-2] turn 3: roles ["system","user","assistant","user","assistant","user","user"] | data titles ["Quillmora synthetic program three"] | A1 itself in the history: true
+
+stdout | apps/api/test/integration/assistant/zz-sec-r3-history-channel.test.ts > SEC-R3: the history channel after T-DG6-BE-RG2 (F-DG6-960/970/980) > R3-2: inheritance is transitive beyond the 6-message window; a revocation withholds the whole chain
+[SEC-R3-2] turn 4: roles ["system","user","assistant","user","assistant","user","assistant","user","user"] | data titles ["Quillmora synthetic program three"] | A1 itself in the history: true
+
+stdout | apps/api/test/integration/assistant/zz-sec-r3-history-channel.test.ts > SEC-R3: the history channel after T-DG6-BE-RG2 (F-DG6-960/970/980) > R3-2: inheritance is transitive beyond the 6-message window; a revocation withholds the whole chain
+[SEC-R3-2] turn 5: roles ["system","user","assistant","user","assistant","user","assistant","user","user"] | data titles ["Quillmora synthetic program three"] | A1 itself in the history: false
+
+stdout | apps/api/test/integration/assistant/zz-sec-r3-history-channel.test.ts > SEC-R3: the history channel after T-DG6-BE-RG2 (F-DG6-960/970/980) > R3-2: inheritance is transitive beyond the 6-message window; a revocation withholds the whole chain
+[SEC-R3-2] A5 stored context ids (tA3, tA1, tA2 expected in some order): ["tA3"]
+
+ ❯ |integration| apps/api/test/integration/assistant/zz-sec-r3-history-channel.test.ts (5 tests | 1 failed | 4 skipped) 4004ms
+   ↓ SEC-R3: the history channel after T-DG6-BE-RG2 (F-DG6-960/970/980) > R3-1: my round-2 sequence with a data-driven echo: no revoked text reaches the model or a served answer
+   × SEC-R3: the history channel after T-DG6-BE-RG2 (F-DG6-960/970/980) > R3-2: inheritance is transitive beyond the 6-message window; a revocation withholds the whole chain 364ms
+     → expected [ Array(1) ] to deeply equal ArrayContaining{…}
+   ↓ SEC-R3: F-DG6-971 pre-0128 suggestions after 0129 > R3-3a: a pre-0128 suggestion with readable citations is taken to a draft (200)
+   ↓ SEC-R3: F-DG6-971 pre-0128 suggestions after 0129 > R3-3b: a pre-0128 suggestion whose cited record is no longer readable is refused (fail closed)
+   ↓ SEC-R3: F-DG6-971 pre-0128 suggestions after 0129 > R3-3c: a NEW suggestion without a context is still refused at INSERT
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/assistant/zz-sec-r3-history-channel.test.ts > SEC-R3: the history channel after T-DG6-BE-RG2 (F-DG6-960/970/980) > R3-2: inheritance is transitive beyond the 6-message window; a revocation withholds the whole chain
+AssertionError: expected [ Array(1) ] to deeply equal ArrayContaining{…}
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- ArrayContaining [[39m
+[32m-   "01a1c898-388e-707b-8655-587fa8c05605",[39m
+[32m-   "01a1c898-388f-7699-9cd6-29536b4e9a3a",[39m
+[31m+ [[39m
+[2m    "01a1c898-3890-727e-b75f-241c50352af9",[22m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/assistant/zz-sec-r3-history-channel.test.ts:260:18
+    258|     console.log("[SEC-R3-2] A5 stored context ids (tA3, tA1, tA2 expec…
+    259|     expect(replies[4]!.content).toContain(TITLE_2);
+    260|     expect(ctx5).toEqual(expect.arrayContaining([tA1, tA2, tA3]));
+       |                  ^
+    261| 
+    262|     await revokeTl(u.id, tA2);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 skipped (5)
+   Start at  03:12:42
+   Duration  19.53s (transform 5.84s, setup 0ms, collect 11.26s, tests 4.00s, environment 0ms, prepare 77ms)
+
+exit=1
+# end 2026-11-11T03:13:02Z load 4.54 5.39 7.29

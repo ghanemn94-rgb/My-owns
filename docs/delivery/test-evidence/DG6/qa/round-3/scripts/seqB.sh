@@ -1,0 +1,19 @@
+#!/bin/bash
+# Sequence B in $TMPDIR/rv2: e2e (root, product, demo) in both locale settings, then the extra e2e probes.
+S=/home/user/My-owns/docs/delivery/test-evidence/DG6/qa/round-3/scripts
+E=/home/user/My-owns/docs/delivery/test-evidence/DG6/qa/round-3
+export RV=$TMPDIR/rv2
+export QA_PG_PORT=32540 E2E_PG_PORT=32540 E2E_API_PORT=32545
+export MTH_SECRET_QA_A17_WEBHOOK_SIGNING_SECRET=qa-a17-synthetic-signing-secret-0001
+ROOT_SPECS="e2e/a03-modular-entry.spec.ts e2e/a04-kpi-update.spec.ts e2e/a06-configuration-change.spec.ts e2e/a07-historical-integrity.spec.ts e2e/a08-a09-gates-decisions.spec.ts e2e/a12-p6-scope-isolation.spec.ts e2e/a13-automation-recovery.spec.ts e2e/a13-connector-run-once.spec.ts e2e/a14-compare-reapply.spec.ts e2e/a15-reporting.spec.ts e2e/a16-health-launch.spec.ts e2e/a17-failing-connector-exception.spec.ts e2e/a17-import-and-integration.spec.ts e2e/a20-bilingual-shell.spec.ts e2e/a20-p6-axe.spec.ts e2e/a20-p6-layout-brand.spec.ts e2e/a20-p6-ux.spec.ts e2e/a20-s15-014-term-scan.spec.ts e2e/a21-no-ai-operation.spec.ts e2e/a21-p6-degradation.spec.ts e2e/a22-operations-jobs.spec.ts e2e/a22-p6-operability.spec.ts"
+DEMO_SPECS="e2e/a02-demo-labels.spec.ts e2e/a02-demo-users-walkthrough.spec.ts e2e/a02-guided-walkthrough.spec.ts"
+PW="npx playwright test --workers=1 --trace=off --reporter=list"
+mkdir -p $E/22-root-a20-unset $E/22-root-a20-cutf8
+E2E_SCREENSHOT_DIR=$E/22-root-a20-unset QA_CONNECTION_LOG=$TMPDIR/conn-unset.jsonl $S/run.sh 22-e2e-root-unset node24 env -u LANG -u LC_ALL -u LC_CTYPE e2e/support/a21-connection-log-run.sh $PW $ROOT_SPECS
+gzip -c $TMPDIR/conn-unset.jsonl > $E/22-e2e-root-unset.connection-log.jsonl.gz 2>/dev/null
+$S/run.sh 20-e2e-product-unset node24 env -u LANG -u LC_ALL -u LC_CTYPE apps/web/e2e/support/with-stack.sh $PW apps/web/e2e
+$S/run.sh 23-e2e-demo-unset node24 env -u LANG -u LC_ALL -u LC_CTYPE e2e/support/with-demo-stack.sh $PW $DEMO_SPECS
+E2E_SCREENSHOT_DIR=$E/22-root-a20-cutf8 $S/run.sh 22-e2e-root-cutf8 node24 env LANG=C.UTF-8 LC_ALL=C.UTF-8 apps/web/e2e/support/with-stack.sh $PW $ROOT_SPECS
+$S/run.sh 24-e2e-product-cutf8 node24 env LANG=C.UTF-8 LC_ALL=C.UTF-8 apps/web/e2e/support/with-stack.sh $PW apps/web/e2e
+$S/run.sh 23-e2e-demo-cutf8 node24 env LANG=C.UTF-8 LC_ALL=C.UTF-8 e2e/support/with-demo-stack.sh $PW $DEMO_SPECS
+echo SEQB-DONE
