@@ -234,7 +234,7 @@
             "domain-reviewer": "docs/delivery/reviews/DG0/round-18/domain-reviewer.json",
             "code-security-reviewer": "docs/delivery/reviews/DG0/round-18/code-security-reviewer.json"
           },
-          "note": "Round 18: re-review after D-032. domain PASS; code-security FAIL — new F-DG0-152 (High, mandatory: cross-run isolation break via /proc/<peer>/root|cwd), F-DG0-153 (Low doc); verified F-DG0-150/151 CLOSED, re-accepted F-DG0-147, assessed F-DG0-149 read-only (stays OPEN). qa hit the account session limit before writing its verdict record: it wrote its sidecars (verified F-DG0-236/237 PASS, raised F-DG0-239 Low) but produced no qa-verifier.json, so its round-18 review is unbindable and re-runs in round 19; the committed sidecars are kept (write-once) but not imported. Repairs: D-033 (per-run Landlock domain, F-DG0-152), D-034 (write-once history repair), D-035 (validator tolerates pruned historical source_commits)."
+          "note": "Round 18: re-review after D-032. domain PASS; code-security FAIL \u2014 new F-DG0-152 (High, mandatory: cross-run isolation break via /proc/<peer>/root|cwd), F-DG0-153 (Low doc); verified F-DG0-150/151 CLOSED, re-accepted F-DG0-147, assessed F-DG0-149 read-only (stays OPEN). qa hit the account session limit before writing its verdict record: it wrote its sidecars (verified F-DG0-236/237 PASS, raised F-DG0-239 Low) but produced no qa-verifier.json, so its round-18 review is unbindable and re-runs in round 19; the committed sidecars are kept (write-once) but not imported. Repairs: D-033 (per-run Landlock domain, F-DG0-152), D-034 (write-once history repair), D-035 (validator tolerates pruned historical source_commits)."
         },
         {
           "round": 19,
@@ -570,7 +570,7 @@
         {
           "state": "FIXING",
           "at": "2026-09-30T10:05:00Z",
-          "note": "Round 19: domain PASS; code-security FAIL; qa FAIL. F-DG0-152 (High) CLOSED_VERIFIED (D-033 Landlock domain independently verified), plus F-DG0-150/151/153/236/237/239 CLOSED and F-DG0-147 accepted; D-034 history repair confirmed sound. Blocked on repairs to the round-18/19 infra changes: F-DG0-240 (Medium, qa) + F-DG0-155 (Low, sec) — D-035's findManifest tolerance also covers the gate round and checkCandidate never checks gate.source_commit in current mode, so a missing gate source_commit passes current-mode validation; F-DG0-154 (Medium, sec) + F-DG0-149 reopened — threat-model residual 7 wrongly narrowed /proc/sys to 'own-run' (it is host-global) and the shell-layer read-only claim is unsupported; F-DG0-156 (Low, sec) — the git allow-rules in .claude/settings.json reach sandboxed agents (contained)."
+          "note": "Round 19: domain PASS; code-security FAIL; qa FAIL. F-DG0-152 (High) CLOSED_VERIFIED (D-033 Landlock domain independently verified), plus F-DG0-150/151/153/236/237/239 CLOSED and F-DG0-147 accepted; D-034 history repair confirmed sound. Blocked on repairs to the round-18/19 infra changes: F-DG0-240 (Medium, qa) + F-DG0-155 (Low, sec) \u2014 D-035's findManifest tolerance also covers the gate round and checkCandidate never checks gate.source_commit in current mode, so a missing gate source_commit passes current-mode validation; F-DG0-154 (Medium, sec) + F-DG0-149 reopened \u2014 threat-model residual 7 wrongly narrowed /proc/sys to 'own-run' (it is host-global) and the shell-layer read-only claim is unsupported; F-DG0-156 (Low, sec) \u2014 the git allow-rules in .claude/settings.json reach sandboxed agents (contained)."
         },
         {
           "state": "REVIEWING",
@@ -660,12 +660,12 @@
         {
           "state": "FIXING",
           "at": "2026-09-30T15:16:00Z",
-          "note": "Round 28: domain PASS (0), code-security PASS (1 Low: F-DG0-171), qa PASS (1 Low: F-DG0-251) — the same residual, found independently. Verified F-DG0-250 CLOSED_VERIFIED. F-DG0-171/251: review_rounds[].source_commit (closure anchor 1, and the source findManifest recomputes the round manifest from) accepted an annotated-tag object id because commitPresent/isAncestor/manifestFromRef all peel a tag. Repair (D-045): checkReviewRounds requires objectType(r.source_commit)==='commit' when the object is present; a genuinely absent source_commit stays tolerated (round 18's D-034/D-035 orphan). Fourth and last commit-id field the gate depends on; the tag-object class is closed. Added 2 unit tests (round source_commit; head_commit_at_start). Gate+agent suites 105 pass."
+          "note": "Round 28: domain PASS (0), code-security PASS (1 Low: F-DG0-171), qa PASS (1 Low: F-DG0-251) \u2014 the same residual, found independently. Verified F-DG0-250 CLOSED_VERIFIED. F-DG0-171/251: review_rounds[].source_commit (closure anchor 1, and the source findManifest recomputes the round manifest from) accepted an annotated-tag object id because commitPresent/isAncestor/manifestFromRef all peel a tag. Repair (D-045): checkReviewRounds requires objectType(r.source_commit)==='commit' when the object is present; a genuinely absent source_commit stays tolerated (round 18's D-034/D-035 orphan). Fourth and last commit-id field the gate depends on; the tag-object class is closed. Added 2 unit tests (round source_commit; head_commit_at_start). Gate+agent suites 105 pass."
         },
         {
           "state": "REVIEWING",
           "at": "2026-09-30T15:19:30Z",
-          "note": "Round-28 findings repaired (D-045): a review round's source_commit must be a commit object when present, matching the D-037/D-044 rule for the gate source_commit, fix_revision and head_commit_at_start (F-DG0-171/251). Completes D-044's class — no remaining commit-id field. Census: all 27 present round source_commits are commit objects, round 18 is the known absent orphan; 0 new errors. Prefreeze all PASS; candidate re-frozen for review round 29."
+          "note": "Round-28 findings repaired (D-045): a review round's source_commit must be a commit object when present, matching the D-037/D-044 rule for the gate source_commit, fix_revision and head_commit_at_start (F-DG0-171/251). Completes D-044's class \u2014 no remaining commit-id field. Census: all 27 present round source_commits are commit objects, round 18 is the known absent orphan; 0 new errors. Prefreeze all PASS; candidate re-frozen for review round 29."
         },
         {
           "state": "VERIFYING",
@@ -718,7 +718,7 @@
             "code-security-reviewer": "docs/delivery/reviews/DG1/round-1/code-security-reviewer.json",
             "qa-verifier": "docs/delivery/reviews/DG1/round-1/qa-verifier.json"
           },
-          "note": "Clean re-gate round 1 on candidate 25c97340: domain PASS (3 Low doc findings), code-security FAIL (7 findings incl. 2 Medium mandatory product bugs F-DG1-140 BU re-parent cycle-under-concurrency and F-DG1-141 destination-parent authz, plus 142 rate-limit cookie bypass, 143 ajv deps/lint, 144 flaky web test, 145 views docs, 146 D-057 count), qa PASS (2 Low: 230 views, 231 register; 2 environmental checks BLOCKED — live-registry per D-057 and live-CI A24 per D-058). All 12 findings imported and repaired for round 2."
+          "note": "Clean re-gate round 1 on candidate 25c97340: domain PASS (3 Low doc findings), code-security FAIL (7 findings incl. 2 Medium mandatory product bugs F-DG1-140 BU re-parent cycle-under-concurrency and F-DG1-141 destination-parent authz, plus 142 rate-limit cookie bypass, 143 ajv deps/lint, 144 flaky web test, 145 views docs, 146 D-057 count), qa PASS (2 Low: 230 views, 231 register; 2 environmental checks BLOCKED \u2014 live-registry per D-057 and live-CI A24 per D-058). All 12 findings imported and repaired for round 2."
         },
         {
           "round": 2,
@@ -812,7 +812,7 @@
         {
           "state": "APPROVED",
           "at": "2026-10-01T23:50:00Z",
-          "note": "DG1 APPROVED. Clean re-gate (D-056 path C): a fresh base preceding any DG1 review evidence, driven through a single mechanically-valid gate in 4 rounds, with the 16-round dev history preserved in git (branch claude/mobily-transformation-platform-kwcc4i; tag dg1-dev-history-d1cb245). Round-4 gate: 3x PASS (domain, code-security, qa) + release-auditor PASS on candidate sha256:6e0c0db1 (395 files, source 642e6bfb). Genuine bugs found and fixed across the re-gate: F-DG1-140/141 (Medium mandatory product bugs — BU re-parent cycle-under-concurrency via migration 0009 DB guard + advisory lock, and destination-parent authz), F-DG1-142 (rate-limit cookie bypass → token-hash/IP keying), plus Low docs/deps/flaky-test/typecheck-coverage items; all 14 findings CLOSED_VERIFIED by non-authors. Zero unresolved Critical/High; zero unresolved mandatory. All 12 DG1-final requirements IMPLEMENTED and verified. Live-registry install effect (REQ-DLV-042 AC-1, D-057), live GitHub-Actions run (REQ-DLV-025 A24, D-058) and keycloak pinning (D-049) are documented environmental residuals with verified offline surfaces, never BLOCKED gate checks. validate.mjs --stage DG1 exit 0. This engineering gate grants no business, Finance or IT approval and implies nothing about product gates G1-G6. DG2 is now unblocked."
+          "note": "DG1 APPROVED. Clean re-gate (D-056 path C): a fresh base preceding any DG1 review evidence, driven through a single mechanically-valid gate in 4 rounds, with the 16-round dev history preserved in git (branch claude/mobily-transformation-platform-kwcc4i; tag dg1-dev-history-d1cb245). Round-4 gate: 3x PASS (domain, code-security, qa) + release-auditor PASS on candidate sha256:6e0c0db1 (395 files, source 642e6bfb). Genuine bugs found and fixed across the re-gate: F-DG1-140/141 (Medium mandatory product bugs \u2014 BU re-parent cycle-under-concurrency via migration 0009 DB guard + advisory lock, and destination-parent authz), F-DG1-142 (rate-limit cookie bypass \u2192 token-hash/IP keying), plus Low docs/deps/flaky-test/typecheck-coverage items; all 14 findings CLOSED_VERIFIED by non-authors. Zero unresolved Critical/High; zero unresolved mandatory. All 12 DG1-final requirements IMPLEMENTED and verified. Live-registry install effect (REQ-DLV-042 AC-1, D-057), live GitHub-Actions run (REQ-DLV-025 A24, D-058) and keycloak pinning (D-049) are documented environmental residuals with verified offline surfaces, never BLOCKED gate checks. validate.mjs --stage DG1 exit 0. This engineering gate grants no business, Finance or IT approval and implies nothing about product gates G1-G6. DG2 is now unblocked."
         }
       ]
     },
@@ -866,7 +866,7 @@
             "code-security-reviewer": "docs/delivery/reviews/DG2/round-2/code-security-reviewer.json",
             "qa-verifier": "docs/delivery/reviews/DG2/round-2/qa-verifier.json"
           },
-          "note": "DG2 gate review round 2 on the repaired candidate 089a2a2f (517 files, source eb8163e2). All 9 round-1 findings FIXED_PENDING_VERIFICATION: F-DG2-140 (evidence-verify SoD, migration 0019 content_authored_by+trigger), 141 (trajectory-approval SoD), 142 (evidence-link authz), 201 (KPI activate op + UI; G2 completes via e2e), 202 (register IMPLEMENTED, validate --register DG2 PASS), 203 (composed thesis + incomplete), 204 (charter current/stale North Star), 205 (phase-sequence integrity), 206 (qa-stack evidence env). Orchestrator pre-review verification: typecheck/build/lint/openapi(161)/register-DG2 exit 0; unit green; contrast PASS; integration 440/440; e2e 42 (incl. Define->G2 and Design->G3 in chromium-en AND chromium-ar); validate --historical --stage DG1 exit 0. All three reviewers (domain now with the exact finding schema; code-security; qa — qa also verifies its F-206 fix) verify their findings CLOSED on this candidate and re-review for regressions."
+          "note": "DG2 gate review round 2 on the repaired candidate 089a2a2f (517 files, source eb8163e2). All 9 round-1 findings FIXED_PENDING_VERIFICATION: F-DG2-140 (evidence-verify SoD, migration 0019 content_authored_by+trigger), 141 (trajectory-approval SoD), 142 (evidence-link authz), 201 (KPI activate op + UI; G2 completes via e2e), 202 (register IMPLEMENTED, validate --register DG2 PASS), 203 (composed thesis + incomplete), 204 (charter current/stale North Star), 205 (phase-sequence integrity), 206 (qa-stack evidence env). Orchestrator pre-review verification: typecheck/build/lint/openapi(161)/register-DG2 exit 0; unit green; contrast PASS; integration 440/440; e2e 42 (incl. Define->G2 and Design->G3 in chromium-en AND chromium-ar); validate --historical --stage DG1 exit 0. All three reviewers (domain now with the exact finding schema; code-security; qa \u2014 qa also verifies its F-206 fix) verify their findings CLOSED on this candidate and re-review for regressions."
         },
         {
           "round": 3,
@@ -974,7 +974,7 @@
             "code-security-reviewer": "docs/delivery/reviews/DG2/round-11/code-security-reviewer.json",
             "qa-verifier": "docs/delivery/reviews/DG2/round-11/qa-verifier.json"
           },
-          "note": "DG2 gate review round 11 on candidate 23e6c0a2 (547 files, source cbdb4f6), after the round-10 audit BLOCKED (D-071). It contains BE16 258b7e5 (a response sent before its body arrived closes the connection; bounded shutdown; requestTimeout; unmatched routes rate-limited) and the ADR-0007 §5b amendment. F-DG2-206 owner record corrected. All 28 DG2 findings CLOSED_VERIFIED. code-security reproduces the auditor defect at 7fd1a89c, raises it and verifies the BE16 fix on this candidate. Every reviewer discloses each failure in its cited logs. Orchestrator pre-review verification in both locale settings: all 32 steps exit 0, with no hidden failures in the logs. Disjoint id ranges: code-security 410-419, domain 420-429, qa 430-439."
+          "note": "DG2 gate review round 11 on candidate 23e6c0a2 (547 files, source cbdb4f6), after the round-10 audit BLOCKED (D-071). It contains BE16 258b7e5 (a response sent before its body arrived closes the connection; bounded shutdown; requestTimeout; unmatched routes rate-limited) and the ADR-0007 \u00a75b amendment. F-DG2-206 owner record corrected. All 28 DG2 findings CLOSED_VERIFIED. code-security reproduces the auditor defect at 7fd1a89c, raises it and verifies the BE16 fix on this candidate. Every reviewer discloses each failure in its cited logs. Orchestrator pre-review verification in both locale settings: all 32 steps exit 0, with no hidden failures in the logs. Disjoint id ranges: code-security 410-419, domain 420-429, qa 430-439."
         },
         {
           "round": 12,
@@ -986,7 +986,7 @@
             "code-security-reviewer": "docs/delivery/reviews/DG2/round-12/code-security-reviewer.json",
             "qa-verifier": "docs/delivery/reviews/DG2/round-12/qa-verifier.json"
           },
-          "note": "DG2 gate review round 12 on candidate 5dfecce4 (552 files, source 8488e7a). F-DG2-411 (no client I/O inside a database transaction; pool bounds) and F-DG2-412 (incomplete bodies are a declared 400 on every route), both fixed by BE17 eb455d3, and F-DG2-430 (pure state updaters plus a React-warning guard; FE9 644198a) are FIXED_PENDING_VERIFICATION (D-072). ADR-0007 §5b now lists the exhausted-pool 503 as out of contract by design. 29 DG2 findings CLOSED_VERIFIED. Orchestrator pre-review verification in both locale settings: all 32 steps exit 0, with no hidden failures. Disjoint id ranges: code-security 440-449, domain 450-459, qa 460-469."
+          "note": "DG2 gate review round 12 on candidate 5dfecce4 (552 files, source 8488e7a). F-DG2-411 (no client I/O inside a database transaction; pool bounds) and F-DG2-412 (incomplete bodies are a declared 400 on every route), both fixed by BE17 eb455d3, and F-DG2-430 (pure state updaters plus a React-warning guard; FE9 644198a) are FIXED_PENDING_VERIFICATION (D-072). ADR-0007 \u00a75b now lists the exhausted-pool 503 as out of contract by design. 29 DG2 findings CLOSED_VERIFIED. Orchestrator pre-review verification in both locale settings: all 32 steps exit 0, with no hidden failures. Disjoint id ranges: code-security 440-449, domain 450-459, qa 460-469."
         },
         {
           "round": 13,
@@ -1169,7 +1169,7 @@
         {
           "state": "REVIEWING",
           "at": "2026-10-07T01:51:41Z",
-          "note": "BE16 (connection-holding class, bounded shutdown) and the ADR-0007 §5b amendment integrated; D-071 recorded. Orchestrator verification green in both locale settings (unit 771x4 per setting, integration 583, e2e 60). Candidate frozen as 23e6c0a2 for gate review round 11."
+          "note": "BE16 (connection-holding class, bounded shutdown) and the ADR-0007 \u00a75b amendment integrated; D-071 recorded. Orchestrator verification green in both locale settings (unit 771x4 per setting, integration 583, e2e 60). Candidate frozen as 23e6c0a2 for gate review round 11."
         },
         {
           "state": "FIXING",
@@ -1179,7 +1179,7 @@
         {
           "state": "REVIEWING",
           "at": "2026-10-07T04:31:43Z",
-          "note": "Round-12 repairs integrated (D-072): BE17 eb455d3 (three-phase upload, pool bounds, central incomplete-body mapping), FE9 644198a (pure updaters, warning guard), ADR-0007 §5b 503 note. 29 CLOSED_VERIFIED, 3 FIXED_PENDING_VERIFICATION, 0 OPEN. Orchestrator verification green in both locale settings (unit 790x4 per setting, integration 600, e2e 60). Candidate frozen as 5dfecce4 for gate review round 12."
+          "note": "Round-12 repairs integrated (D-072): BE17 eb455d3 (three-phase upload, pool bounds, central incomplete-body mapping), FE9 644198a (pure updaters, warning guard), ADR-0007 \u00a75b 503 note. 29 CLOSED_VERIFIED, 3 FIXED_PENDING_VERIFICATION, 0 OPEN. Orchestrator verification green in both locale settings (unit 790x4 per setting, integration 600, e2e 60). Candidate frozen as 5dfecce4 for gate review round 12."
         },
         {
           "state": "FIXING",
@@ -1305,7 +1305,7 @@
             "code-security-reviewer": "docs/delivery/reviews/DG3/round-3/code-security-reviewer.json",
             "qa-verifier": "docs/delivery/reviews/DG3/round-3/qa-verifier.json"
           },
-          "note": "DG3 gate review round 3 on candidate f2b4c77a (757 files, source ce988e2). Repairs since round 2 (D-082, D-083): T-DG3-KBE-E (F-DG3-100 second pass: run-time no-codegen test project, import allowlist, host-global and constructor bans, ADR-0024 §6 rewritten) and T-DG3-FE-G (F-DG3-170/180: the inherited-approval badge wraps; new e2e layout spec). The manifest diff against 58ef3f47 is exactly their 10 modified + 3 added files and D-082/D-083. Orchestrator pre-freeze verification of the merged tree 048b8af: static checks exit 0; pnpm test 1587 + 190 (no-codegen) with the locale unset, C.UTF-8 and Node 22; integration 793/793; e2e 178/178 in chromium-en + chromium-ar under both locale settings; register DG3 and pipeline PASS. A full re-review: the round-2 code-security and qa runs are not gate evidence (D-082)."
+          "note": "DG3 gate review round 3 on candidate f2b4c77a (757 files, source ce988e2). Repairs since round 2 (D-082, D-083): T-DG3-KBE-E (F-DG3-100 second pass: run-time no-codegen test project, import allowlist, host-global and constructor bans, ADR-0024 \u00a76 rewritten) and T-DG3-FE-G (F-DG3-170/180: the inherited-approval badge wraps; new e2e layout spec). The manifest diff against 58ef3f47 is exactly their 10 modified + 3 added files and D-082/D-083. Orchestrator pre-freeze verification of the merged tree 048b8af: static checks exit 0; pnpm test 1587 + 190 (no-codegen) with the locale unset, C.UTF-8 and Node 22; integration 793/793; e2e 178/178 in chromium-en + chromium-ar under both locale settings; register DG3 and pipeline PASS. A full re-review: the round-2 code-security and qa runs are not gate evidence (D-082)."
         },
         {
           "round": 4,
@@ -1317,7 +1317,7 @@
             "code-security-reviewer": "docs/delivery/reviews/DG3/round-4/code-security-reviewer.json",
             "qa-verifier": "docs/delivery/reviews/DG3/round-4/qa-verifier.json"
           },
-          "note": "DG3 gate review round 4 on candidate 8376d762 (757 files, source 171a0b5). Repair since round 3 (D-084): T-DG3-KBE-F (F-DG3-100 third pass: EvalError rethrow across the engine's import closure, internal-failure rule in the tests, value.ts under the engine-source rules, import-closure test, ADR-0024 §6 corrected). The manifest diff against f2b4c77a is exactly its 9 files and D-084. Orchestrator pre-freeze verification of b54b2d6: static checks; pnpm test 1593 + 199/1 skipped with the locale unset, C.UTF-8 and Node 22; integration 793/793; e2e 178/178 in both locale settings; register and pipeline PASS. Full re-review by all three reviewers; code-security verifies F-DG3-100."
+          "note": "DG3 gate review round 4 on candidate 8376d762 (757 files, source 171a0b5). Repair since round 3 (D-084): T-DG3-KBE-F (F-DG3-100 third pass: EvalError rethrow across the engine's import closure, internal-failure rule in the tests, value.ts under the engine-source rules, import-closure test, ADR-0024 \u00a76 corrected). The manifest diff against f2b4c77a is exactly its 9 files and D-084. Orchestrator pre-freeze verification of b54b2d6: static checks; pnpm test 1593 + 199/1 skipped with the locale unset, C.UTF-8 and Node 22; integration 793/793; e2e 178/178 in both locale settings; register and pipeline PASS. Full re-review by all three reviewers; code-security verifies F-DG3-100."
         },
         {
           "round": 5,
@@ -1329,7 +1329,7 @@
             "code-security-reviewer": "docs/delivery/reviews/DG3/round-5/code-security-reviewer.json",
             "qa-verifier": "docs/delivery/reviews/DG3/round-5/qa-verifier.json"
           },
-          "note": "DG3 gate review round 5 on candidate dfedd62f (757 files, source 21e2742). Repair since round 4 (D-085): T-DG3-KBE-G (F-DG3-100 fourth pass: the EvalError-rethrow rule enforced statically in lint and the scan; no-unsafe-finally; asynchrony refused; ADR-0024 §6 corrected). The manifest diff against 8376d762 is exactly its 7 files and D-085. Orchestrator pre-freeze verification of fb64322: static checks; pnpm test 1614 + 220/1 skipped with the locale unset, C.UTF-8 and Node 22; integration 793/793; e2e 178/178 in both locale settings; register and pipeline PASS. Full re-review; code-security verifies F-DG3-100."
+          "note": "DG3 gate review round 5 on candidate dfedd62f (757 files, source 21e2742). Repair since round 4 (D-085): T-DG3-KBE-G (F-DG3-100 fourth pass: the EvalError-rethrow rule enforced statically in lint and the scan; no-unsafe-finally; asynchrony refused; ADR-0024 \u00a76 corrected). The manifest diff against 8376d762 is exactly its 7 files and D-085. Orchestrator pre-freeze verification of fb64322: static checks; pnpm test 1614 + 220/1 skipped with the locale unset, C.UTF-8 and Node 22; integration 793/793; e2e 178/178 in both locale settings; register and pipeline PASS. Full re-review; code-security verifies F-DG3-100."
         },
         {
           "round": 6,
@@ -1341,7 +1341,7 @@
             "code-security-reviewer": "docs/delivery/reviews/DG3/round-6/code-security-reviewer.json",
             "qa-verifier": "docs/delivery/reviews/DG3/round-6/qa-verifier.json"
           },
-          "note": "DG3 gate review round 6 on candidate 7049d793 (757 files, source c40232b). Repair since round 5 (D-086): T-DG3-KBE-H (F-DG3-100 fifth pass, meeting both options of the reviewer's final closure criterion; lint and scan only, ADR-0024 §6 rewritten; no engine source changed). Orchestrator pre-freeze verification of 43ca734: static checks; pnpm test 1651 + 256/2 skipped with the locale unset, C.UTF-8 and Node 22; integration 793/793; e2e 178/178 in both locale settings; register and pipeline PASS."
+          "note": "DG3 gate review round 6 on candidate 7049d793 (757 files, source c40232b). Repair since round 5 (D-086): T-DG3-KBE-H (F-DG3-100 fifth pass, meeting both options of the reviewer's final closure criterion; lint and scan only, ADR-0024 \u00a76 rewritten; no engine source changed). Orchestrator pre-freeze verification of 43ca734: static checks; pnpm test 1651 + 256/2 skipped with the locale unset, C.UTF-8 and Node 22; integration 793/793; e2e 178/178 in both locale settings; register and pipeline PASS."
         },
         {
           "round": 7,
@@ -1353,7 +1353,7 @@
             "code-security-reviewer": "docs/delivery/reviews/DG3/round-7/code-security-reviewer.json",
             "qa-verifier": "docs/delivery/reviews/DG3/round-7/qa-verifier.json"
           },
-          "note": "DG3 gate review round 7 on candidate f55095db (757 files, source d3e6fe6). Repair since round 6 (D-087): T-DG3-KBE-I (F-DG3-280: the lintText test lints every probe row; ADR-0024 §6 sentence exact). Orchestrator pre-freeze verification of e1764e8: static checks; pnpm test 1654 + 259/2 skipped with the locale unset, C.UTF-8 and Node 22; integration 793/793; e2e 178/178 in both locale settings; register and pipeline PASS."
+          "note": "DG3 gate review round 7 on candidate f55095db (757 files, source d3e6fe6). Repair since round 6 (D-087): T-DG3-KBE-I (F-DG3-280: the lintText test lints every probe row; ADR-0024 \u00a76 sentence exact). Orchestrator pre-freeze verification of e1764e8: static checks; pnpm test 1654 + 259/2 skipped with the locale unset, C.UTF-8 and Node 22; integration 793/793; e2e 178/178 in both locale settings; register and pipeline PASS."
         }
       ],
       "gate_record": "docs/delivery/gates/DG3.json",
@@ -1376,7 +1376,7 @@
         {
           "state": "FIXING",
           "at": "2026-10-08T07:54:40Z",
-          "note": "Round 1 on candidate 873115d9: all three verdicts PASS. qa (19 checks, all 32 requirements, e2e 200/200 in both locale settings, no findings), code-security (26 checks; raised F-DG3-100 Low: the formula engine's no-dynamic-code guards accept Reflect.construct/apply(Function), an aliased Function, computed ['constructor'] and createRequire; the engine itself has none) and domain (17 checks; raised F-DG3-120 Low: ADR-0021 §5's inheritedApproval annotation on the gate list is not built). Both imported OPEN; no Critical/High/mandatory. Round-2 repairs (D-080): T-DG3-KBE-D (F-100) and T-DG3-ARCH-05 (F-120), each in its own worktree."
+          "note": "Round 1 on candidate 873115d9: all three verdicts PASS. qa (19 checks, all 32 requirements, e2e 200/200 in both locale settings, no findings), code-security (26 checks; raised F-DG3-100 Low: the formula engine's no-dynamic-code guards accept Reflect.construct/apply(Function), an aliased Function, computed ['constructor'] and createRequire; the engine itself has none) and domain (17 checks; raised F-DG3-120 Low: ADR-0021 \u00a75's inheritedApproval annotation on the gate list is not built). Both imported OPEN; no Critical/High/mandatory. Round-2 repairs (D-080): T-DG3-KBE-D (F-100) and T-DG3-ARCH-05 (F-120), each in its own worktree."
         },
         {
           "state": "REVIEWING",
@@ -1406,7 +1406,7 @@
         {
           "state": "FIXING",
           "at": "2026-10-08T16:03:23Z",
-          "note": "Round 4 on candidate 8376d762: domain PASS and qa PASS (no findings; F-120/170/180 still hold); code-security FAIL: F-DG3-100 verification failed a third time (KBE-F closed both round-3 reasons, but ADR-0024 §6's 'every catch rethrows EvalError' is not enforced for a new handler: catch{}, finally-return and Promise.catch pass all three layers; three minor ADR inaccuracies). All runs exit 0 with no configuration change. Repair: T-DG3-KBE-G (enforce the rethrow rule in lint and the scan; correct §6)."
+          "note": "Round 4 on candidate 8376d762: domain PASS and qa PASS (no findings; F-120/170/180 still hold); code-security FAIL: F-DG3-100 verification failed a third time (KBE-F closed both round-3 reasons, but ADR-0024 \u00a76's 'every catch rethrows EvalError' is not enforced for a new handler: catch{}, finally-return and Promise.catch pass all three layers; three minor ADR inaccuracies). All runs exit 0 with no configuration change. Repair: T-DG3-KBE-G (enforce the rethrow rule in lint and the scan; correct \u00a76)."
         },
         {
           "state": "REVIEWING",
@@ -1416,7 +1416,7 @@
         {
           "state": "FIXING",
           "at": "2026-10-08T18:23:53Z",
-          "note": "Round 5 on candidate dfedd62f: domain and qa PASS; code-security FAIL: F-DG3-100 verification failed a fourth time (W1/W2/W4 now refused, but ADR-0024 §6's absolute claims are falsified by G1/G2 generator finally-yield and A1 Array.fromAsync with a destructured then). The reviewer gave a final closure criterion: (b) narrow §6 to enumerated claims and state the residual, or (a) also refuse G1/G2/A1 and drop the absolute wording. All runs exit 0, no configuration change. Repair: T-DG3-KBE-H does both."
+          "note": "Round 5 on candidate dfedd62f: domain and qa PASS; code-security FAIL: F-DG3-100 verification failed a fourth time (W1/W2/W4 now refused, but ADR-0024 \u00a76's absolute claims are falsified by G1/G2 generator finally-yield and A1 Array.fromAsync with a destructured then). The reviewer gave a final closure criterion: (b) narrow \u00a76 to enumerated claims and state the residual, or (a) also refuse G1/G2/A1 and drop the absolute wording. All runs exit 0, no configuration change. Repair: T-DG3-KBE-H does both."
         },
         {
           "state": "REVIEWING",
@@ -1426,7 +1426,7 @@
         {
           "state": "FIXING",
           "at": "2026-10-08T20:53:01Z",
-          "note": "Round 6 on candidate 7049d793: 3x PASS (domain, code-security, qa). code-security verified F-DG3-100 CLOSED against its final criterion and raised F-DG3-280 (Low, non-mandatory, not blocking: ADR-0024 §6 'Pinned by tests' overstates the lintText test, 48 of 99 probe rows linted). All runs exit 0, no configuration change. F-280 is OPEN, so the gate cannot pass; it is repaired (T-DG3-KBE-I) rather than accepted, since acceptance needs the user's approval."
+          "note": "Round 6 on candidate 7049d793: 3x PASS (domain, code-security, qa). code-security verified F-DG3-100 CLOSED against its final criterion and raised F-DG3-280 (Low, non-mandatory, not blocking: ADR-0024 \u00a76 'Pinned by tests' overstates the lintText test, 48 of 99 probe rows linted). All runs exit 0, no configuration change. F-280 is OPEN, so the gate cannot pass; it is repaired (T-DG3-KBE-I) rather than accepted, since acceptance needs the user's approval."
         },
         {
           "state": "REVIEWING",
@@ -1853,7 +1853,7 @@
       "id": "DG6",
       "stage": "P6",
       "name": "Integration and system hardening",
-      "state": "REVIEWING",
+      "state": "FIXING",
       "depends_on": [
         "DG5"
       ],
@@ -1942,7 +1942,7 @@
             "domain-reviewer": "docs/delivery/reviews/DG6/round-6/domain-reviewer.json",
             "qa-verifier": "docs/delivery/reviews/DG6/round-6/qa-verifier.json"
           },
-          "note": "DG6 clean re-gate round 6 on the same candidate 5e819f7a: domain and qa full reviews plus verification of F-DG6-911/951 (stages.json transition, fixed in e7cb240e7, meta-excluded) and, by qa, F-DG6-990. Code-security PASS of round 5 binds on this candidate."
+          "note": "DG6 clean re-gate round 6 on the same candidate 5e819f7a: domain and qa full reviews plus verification of F-DG6-911/951 (stages.json transition, fixed in e7cb240e7, meta-excluded) and, by qa, F-DG6-990. Code-security PASS of round 5 binds on this candidate. Result: domain PASS, qa PASS; F-DG6-911/951/990 verified closed; qa raised F-DG6-952 (Low, proposed observation). The 911/951 fix (e7cb240e7) is after this candidate's source_commit, so it cannot close here (D-240): re-freeze."
         }
       ],
       "gate_record": "docs/delivery/gates/DG6.json",
@@ -2006,6 +2006,11 @@
           "state": "REVIEWING",
           "at": "2026-11-11T14:42:56Z",
           "note": "Round 6 on the same candidate 5e819f7a: domain and qa."
+        },
+        {
+          "state": "FIXING",
+          "at": "2026-11-11T18:35:32Z",
+          "note": "Round 6 on 5e819f7a: domain and qa PASS. D-240: the record fix of F-DG6-911/951 (e7cb240e7) lies after the candidate source_commit; decisions.md gains D-240 and DG6 is re-frozen for round 7."
         }
       ]
     },
