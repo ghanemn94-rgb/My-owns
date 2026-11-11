@@ -1,0 +1,47 @@
+## start 2026-11-11T11:47:57Z node v24.21.0 cwd /var/tmp/mth-run.IQ0MWG/claude-0/rv load: 16.26 14.86 8.81
+## cmd: tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration apps/api/test/integration/text-scan/qa-rg-r5-seeded-0130.test.ts
+port-policy: PostgreSQL listening on port 32510 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.IQ0MWG/claude-0/rv
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwc21shb_c9cccffd (server_encoding UTF8); applied 122 migrations to a fresh database
+stdout | apps/api/test/integration/text-scan/qa-rg-r5-seeded-0130.test.ts > QA-RG-R5 P2: served text of every parameterless GET operation > no response names DG0-DG7 (admin and auditor)
+[QA-R5 P2] operations swept: 84 parameterless GET paths; calls 179; statuses {"200":145,"400":8,"403":17,"404":7,"409":2}
+[QA-R5 P2] gate hits: 0
+[QA-R5 P2] internal-reference hits (listed, judged in the record): 2
+[QA-R5 P2] REF admin GET /api/v1/branding/tokens.tokens[9].purpose: Primary navigation background (D-163, REQ-S15-004): brand.primary itself when white navigation text (nav.text, #FFFFFF = surface.card) reaches >= 4.5:1 on it, otherwise the lightest darker shade that does (HSV value steps of 0.1 %, hue and saturation kept; deriveNavigationBackground)
+[QA-R5 P2] REF auditor GET /api/v1/branding/tokens.tokens[9].purpose: Primary navigation background (D-163, REQ-S15-004): brand.primary itself when white navigation text (nav.text, #FFFFFF = surface.card) reaches >= 4.5:1 on it, otherwise the lightest darker shade that does (HSV value steps of 0.1 %, hue and saturation kept; deriveNavigationBackground)
+
+ ❯ |integration| apps/api/test/integration/text-scan/qa-rg-r5-seeded-0130.test.ts (2 tests | 1 failed) 17268ms
+   × QA-RG-R5 P1: 0130 row guards, versions, audit and append-only history > applies only to still-seeded rows, steps versions, audits, and never rewrites history 7247ms
+     → column v.version_number does not exist
+   ✓ QA-RG-R5 P2: served text of every parameterless GET operation > no response names DG0-DG7 (admin and auditor)  9655ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/text-scan/qa-rg-r5-seeded-0130.test.ts > QA-RG-R5 P1: 0130 row guards, versions, audit and append-only history > applies only to still-seeded rows, steps versions, audits, and never rewrites history
+error: column v.version_number does not exist
+ ❯ node_modules/.pnpm/pg-pool@3.14.0_pg@8.16.3/node_modules/pg-pool/index.js:45:11
+ ❯ q apps/api/test/integration/text-scan/qa-rg-r5-seeded-0130.test.ts:40:11
+     38| 
+     39| async function q<T extends pg.QueryResultRow = any>(pool: pg.Pool, sql…
+     40|   return (await pool.query<T>(sql, params)).rows;
+       |           ^
+     41| }
+     42| 
+ ❯ stable apps/api/test/integration/text-scan/qa-rg-r5-seeded-0130.test.ts:48:18
+ ❯ apps/api/test/integration/text-scan/qa-rg-r5-seeded-0130.test.ts:109:20
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  11:48:01
+   Duration  45.99s (transform 9.54s, setup 0ms, collect 20.59s, tests 17.27s, environment 0ms, prepare 408ms)
+
+## end 2026-11-11T11:48:53Z rc=1

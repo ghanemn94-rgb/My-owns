@@ -1,0 +1,63 @@
+## start 2026-11-11T11:43:06Z node v24.21.0 cwd /var/tmp/mth-run.IQ0MWG/claude-0/rv load: 16.52 10.41 5.50
+## cmd: tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration apps/api/test/integration/text-scan/qa-rg-r5-seeded-0130.test.ts
+port-policy: PostgreSQL listening on port 32510 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.IQ0MWG/claude-0/rv
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwc1vmnq_ff12820e (server_encoding UTF8); applied 122 migrations to a fresh databasesstdout | apps/api/test/integration/text-scan/qa-rg-r5-seeded-0130.test.ts > QA-RG-R5 P2: served text of every parameterless GET operation > no response names DG0-DG7 (admin and auditor)
+[QA-R5 P2] operations swept: 84 parameterless GET paths; calls 179; statuses {"200":143,"400":8,"403":17,"404":7,"409":2,"503":2}
+[QA-R5 P2] gate hits: 0
+[QA-R5 P2] internal-reference hits (listed, judged in the record): 2
+[QA-R5 P2] REF admin GET /api/v1/branding/tokens.tokens[9].purpose: Primary navigation background (D-163, REQ-S15-004): brand.primary itself when white navigation text (nav.text, #FFFFFF = surface.card) reaches >= 4.5:1 on it, otherwise the lightest darker shade that does (HSV value steps of 0.1 %, hue and saturation kept; deriveNavigationBackground)
+[QA-R5 P2] REF auditor GET /api/v1/branding/tokens.tokens[9].purpose: Primary navigation background (D-163, REQ-S15-004): brand.primary itself when white navigation text (nav.text, #FFFFFF = surface.card) reaches >= 4.5:1 on it, otherwise the lightest darker shade that does (HSV value steps of 0.1 %, hue and saturation kept; deriveNavigationBackground)
+
+ ❯ |integration| apps/api/test/integration/text-scan/qa-rg-r5-seeded-0130.test.ts (2 tests | 2 failed) 12283ms
+   × QA-RG-R5 P1: 0130 row guards, versions, audit and append-only history > applies only to still-seeded rows, steps versions, audits, and never rewrites history 288ms
+     → expected undefined to be '0130_p6_seeded_text_business_terms.sql' // Object.is equality
+   × QA-RG-R5 P2: served text of every parameterless GET operation > no response names DG0-DG7 (admin and auditor) 11255ms
+     → expected 84 to be greater than 100
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/text-scan/qa-rg-r5-seeded-0130.test.ts > QA-RG-R5 P1: 0130 row guards, versions, audit and append-only history > applies only to still-seeded rows, steps versions, audits, and never rewrites history
+AssertionError: expected undefined to be '0130_p6_seeded_text_business_terms.sql' // Object.is equality
+
+[32m- Expected:[39m 
+"0130_p6_seeded_text_business_terms.sql"
+
+[31m+ Received:[39m 
+undefined
+
+ ❯ apps/api/test/integration/text-scan/qa-rg-r5-seeded-0130.test.ts:73:20
+     71|     const files = readdirSync(defaultMigrationsDir()).filter((f) => /^…
+     72|     const reword = files.find((f) => f.endsWith("_p6_seeded_text_busin…
+     73|     expect(reword).toBe("0130_p6_seeded_text_business_terms.sql");
+       |                    ^
+     74|     for (const f of files) if (f < reword) cpSync(join(defaultMigratio…
+     75|     await migrate(roleUrl(adminUrl, db, "mth_owner"), { dir });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |integration| apps/api/test/integration/text-scan/qa-rg-r5-seeded-0130.test.ts > QA-RG-R5 P2: served text of every parameterless GET operation > no response names DG0-DG7 (admin and auditor)
+AssertionError: expected 84 to be greater than 100
+ ❯ apps/api/test/integration/text-scan/qa-rg-r5-seeded-0130.test.ts:222:25
+    220|     console.log(`[QA-R5 P2] internal-reference hits (listed, judged in…
+    221|     for (const h of refHits) console.log(`[QA-R5 P2] REF ${h.slice(0, …
+    222|     expect(gets.length).toBeGreaterThan(100);
+       |                         ^
+    223|     expect(gateHits).toEqual([]);
+    224|   }, 900_000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  11:43:14
+   Duration  44.06s (transform 9.29s, setup 0ms, collect 20.99s, tests 12.28s, environment 0ms, prepare 214ms)
+
+## end 2026-11-11T11:44:03Z rc=1

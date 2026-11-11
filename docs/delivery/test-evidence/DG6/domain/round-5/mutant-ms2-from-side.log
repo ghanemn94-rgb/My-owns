@@ -1,0 +1,201 @@
+MUTANT M-S2: the audit 'from' side is no longer skipped
+diff --git a/apps/api/test/integration/text-scan/seeded-texts.test.ts b/apps/api/test/integration/text-scan/seeded-texts.test.ts
+index d685eaef8..3b4e35c5e 100644
+--- a/apps/api/test/integration/text-scan/seeded-texts.test.ts
++++ b/apps/api/test/integration/text-scan/seeded-texts.test.ts
+@@ -55,7 +55,7 @@ function jsonTexts(value: unknown, skipFrom: boolean, depth = 0): string[] {
+   if (Array.isArray(value)) return value.flatMap((v) => jsonTexts(v, skipFrom, depth + 1));
+   if (value !== null && typeof value === "object")
+     return Object.entries(value).flatMap(([k, v]) =>
+-      skipFrom && depth === 1 && k === "from" ? [] : jsonTexts(v, skipFrom, depth + 1),
++      false /* MUTANT M-S2: never skip the from side */ && skipFrom && depth === 1 && k === "from" ? [] : jsonTexts(v, skipFrom, depth + 1),
+     );
+   return [];
+ }
+port-policy: PostgreSQL listening on port 32420 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.2AUWhk/claude-0/review-dg6
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwc3g4c0_d6171afe (server_encoding UTF8); applied 122 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/text-scan/seeded-texts.test.ts (4 tests | 1 failed | 3 skipped) 8603ms
+   × REQ-S21-001: text seeded by the migrations (scan d) > no seeded value names an engineering delivery gate (DG0-DG7) or cites a decision or ADR id 714ms
+     → expected [ …(142) ] to deeply equal []
+   ↓ REQ-S21-001: text seeded by the migrations (scan d) > the 0130 rewrites are versioned and audited, and the audit trail keeps the previous wording
+   ↓ REQ-S21-001: text seeded by the migrations (scan d) > the excluded service_identity_change history is served by no API route (it holds no SQL name in the API)
+   ↓ REQ-S21-001: text seeded by the migrations (scan d) > detects the F-DG6-990 texts on a database migrated WITHOUT 0130 (the scan is not vacuous)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/text-scan/seeded-texts.test.ts > REQ-S21-001: text seeded by the migrations (scan d) > no seeded value names an engineering delivery gate (DG0-DG7) or cites a decision or ADR id
+AssertionError: expected [ …(142) ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-eb56-715f-abb9-72caf9b8bf04: Keep the search index current from the audit trail: update the search document of every record changed since the last run (ADR-0057 §2). Indexes titles, codes and descriptions only; never approves anything.",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-eb56-7160-9562-8d481043b27f: Rebuild the search index of every indexed record type from the current records (ADR-0057 §2). Weekly, or on demand by a technical administrator; never approves anything.",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-eb56-7fbc-9816-d0c395f94957: Queue each enabled connector's scheduled run (hourly, daily or weekly) once per slot (ADR-0055 §2). Starts connector runs only; never approves anything.",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-eb56-70d5-9fcc-690b06c26817: Find KPIs whose last accepted data became stale (DG4 freshness rule, unchanged) and open one operational exception per KPI; resolve it when the data is fresh again. Never changes a KPI value; never approves anything.",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-eb56-743f-bcc3-1c305f0a8100: Alert once for each newly opened operational exception: one error log line and one in-app notification to each holder of operations.acknowledge (ADR-0053 §6). Never approves anything.",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-eb75-72f1-9af4-a502b0007ea5: Seeded starter: the DG4 behaviour (D-142 Q3).",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-eb75-72f1-9af4-a502b0007ea5: Seeded starter: the DG4 behaviour (D-142 Q3).",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-eb78-7626-b394-6032074f52f5: Seeded starter: the DG4 behaviour (D-142 Q3).",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-eb78-7626-b394-6032074f52f5: Seeded starter: the DG4 behaviour (D-142 Q3).",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-eb78-7924-9de8-d6859f9bf8d0: Seeded starter: the DG4 behaviour (D-142 Q3).",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-eb78-7924-9de8-d6859f9bf8d0: Seeded starter: the DG4 behaviour (D-142 Q3).",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-eb78-7bbf-8ab4-739389d80557: Seeded starter: the DG4 behaviour (D-142 Q3).",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-eb78-7bbf-8ab4-739389d80557: Seeded starter: the DG4 behaviour (D-142 Q3).",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-eb78-7825-ad35-5ad3468b3b4a: Seeded starter: the DG4 behaviour (D-142 Q3).",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-eb78-7825-ad35-5ad3468b3b4a: Seeded starter: the DG4 behaviour (D-142 Q3).",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-eb78-7551-9d84-527e4157613d: Seeded starter: the DG4 behaviour (D-142 Q3).",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-eb78-7551-9d84-527e4157613d: Seeded starter: the DG4 behaviour (D-142 Q3).",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-eb78-7fa9-87d6-3cbf501bccd9: Seeded starter: the DG4 behaviour (D-142 Q3).",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-eb78-7fa9-87d6-3cbf501bccd9: Seeded starter: the DG4 behaviour (D-142 Q3).",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-eb78-7d7d-98d9-55d11c4d138e: Seeded starter: the DG4 behaviour (D-142 Q3).",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-eb78-7d7d-98d9-55d11c4d138e: Seeded starter: the DG4 behaviour (D-142 Q3).",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-eb78-740f-bfda-e0b2bf507c9d: Seeded starter: the DG4 behaviour (D-142 Q3).",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-eb78-740f-bfda-e0b2bf507c9d: Seeded starter: the DG4 behaviour (D-142 Q3).",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-eb78-79c0-8b43-5ffc5b756c40: Seeded starter: the DG4 behaviour (D-142 Q3).",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-eb78-79c0-8b43-5ffc5b756c40: Seeded starter: the DG4 behaviour (D-142 Q3).",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-eb78-7563-a7e7-c79878510e1c: Seeded starter: the DG4 behaviour (D-142 Q3).",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-eb78-7563-a7e7-c79878510e1c: Seeded starter: the DG4 behaviour (D-142 Q3).",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-eb78-7b21-9ba3-17d4152a6a17: Seeded starter: the DG4 behaviour (D-142 Q3).",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-eb78-7b21-9ba3-17d4152a6a17: Seeded starter: the DG4 behaviour (D-142 Q3).",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-eb78-7e00-90ac-ecaf2912c582: Seeded starter: the DG4 behaviour (D-142 Q3).",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-eb78-7e00-90ac-ecaf2912c582: Seeded starter: the DG4 behaviour (D-142 Q3).",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-eb78-74ad-a4c7-d3406827d65a: Seeded starter: the DG4 behaviour (D-142 Q3).",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-eb78-74ad-a4c7-d3406827d65a: Seeded starter: the DG4 behaviour (D-142 Q3).",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-eb78-7b9d-a380-0ad5a9ec55e8: Seeded starter: the DG4 behaviour (D-142 Q3).",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-eb78-7b9d-a380-0ad5a9ec55e8: Seeded starter: the DG4 behaviour (D-142 Q3).",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-eb78-7a72-bde6-34c9512c5ec5: Seeded starter: the DG4 behaviour (D-142 Q3).",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-eb78-7a72-bde6-34c9512c5ec5: Seeded starter: the DG4 behaviour (D-142 Q3).",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-eb78-727b-93bf-50970998582d: Seeded starter version 2 (ADR-0053 §3): a connector run failure or stale KPI data also opens or recurs the visible operational exception; version 1 stays as history.",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-eb92-7daa-966d-d341d98d81b2: The DG4 actual-submission rules apply unchanged.",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-eb93-78e8-a49a-ff86560e3e79: The DG3 scoring and ranking rules apply unchanged.",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-ebbc-7a1e-bcb3-be44396bf84c: initiative_score_result (DG3 scoring engine)",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-eb93-7cb0-baac-fc8ade74275b: Missing mandatory evidence blocks submission unless an authorized exception is recorded (DG2-DG4 gate rules unchanged).",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-eb93-7c62-94fd-0248804832cd: The DG4 change-control and impact-assessment rules apply unchanged.",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-eb93-7656-90f9-0dd921ea3c32: Finance validation follows the DG4 rules; the validator is not the benefit owner.",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-eb93-7629-8785-9790e9537fd2: The DG4 BAU handover rules apply unchanged.",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-eb93-747d-90e0-6e3b381b0bed: The DG4 actual-submission rules apply unchanged.",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-eb93-7a8a-8660-a1fdbf1bb754: The DG3 scoring and ranking rules apply unchanged.",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-eb93-7afe-a208-e51e4bd58fba: Missing mandatory evidence blocks submission unless an authorized exception is recorded (DG2-DG4 gate rules unchanged).",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-eb93-7fef-b3e9-98f978a209ec: The DG4 change-control and impact-assessment rules apply unchanged.",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-eb93-7267-9e4f-4d095e99090c: Finance validation follows the DG4 rules; the validator is not the benefit owner.",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-eb93-76ed-b99b-68e3a6d6ed9a: The DG4 BAU handover rules apply unchanged.",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-ebb0-7d6f-9d79-efce4ce95cd1: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-ebb0-7d6f-9d79-efce4ce95cd1: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-ebb0-7ba9-824e-d1d2b640e88e: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-ebb0-7ba9-824e-d1d2b640e88e: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-ebb0-7645-aeee-d054e4147c85: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-ebb0-7645-aeee-d054e4147c85: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-ebb0-74d2-a34f-2bc448d1866f: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-ebb0-74d2-a34f-2bc448d1866f: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-ebb0-7a10-ad88-d833ee321f7a: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-ebb0-7a10-ad88-d833ee321f7a: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-ebb0-7ec7-a2ad-7feeed27911d: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-ebb0-7ec7-a2ad-7feeed27911d: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-ebb0-797d-b67f-8584638df9e5: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-ebb0-797d-b67f-8584638df9e5: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-ebb0-7fa4-9173-1ddad2307532: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-ebb0-7fa4-9173-1ddad2307532: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-ebb0-703f-90ea-4d32623eed0a: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-ebb0-703f-90ea-4d32623eed0a: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-ebb0-72aa-9897-07f4aab7ce44: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-ebb0-72aa-9897-07f4aab7ce44: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-ebb0-77d4-b489-9ceaad124094: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-ebb0-77d4-b489-9ceaad124094: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-ebb0-7af1-84b1-772f50e56e1e: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-ebb0-7af1-84b1-772f50e56e1e: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-ebb0-79df-a3b3-35919d3948c1: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-ebb0-79df-a3b3-35919d3948c1: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-ebb0-7eef-809b-402ccff27942: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-ebb0-7eef-809b-402ccff27942: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-ebb0-729e-9b68-f8dfcac6fd4d: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-ebb0-729e-9b68-f8dfcac6fd4d: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-ebb0-7232-b336-1e8aa37c81b8: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-ebb0-7232-b336-1e8aa37c81b8: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-ebb0-7ec5-91a6-eea083653484: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-ebb0-7ec5-91a6-eea083653484: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-ebb0-731f-a7ed-62ff780df2cc: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-ebb0-731f-a7ed-62ff780df2cc: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-ebb0-75f4-ad4e-9f14f364e37c: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-ebb0-75f4-ad4e-9f14f364e37c: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-ebb0-79e4-840f-c1e980e898a3: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-ebb0-79e4-840f-c1e980e898a3: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-ebb0-785e-88ad-be962a322498: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-ebb0-785e-88ad-be962a322498: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-ebb0-717d-bc82-746ee9322774: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-ebb0-717d-bc82-746ee9322774: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-ebb0-7804-a292-c5f32024f2bb: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-ebb0-7804-a292-c5f32024f2bb: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-ebb0-76e4-b435-63594e7125ad: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-ebb0-76e4-b435-63594e7125ad: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-ebb0-7bcd-a465-7c36e8dfeec6: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-ebb0-7bcd-a465-7c36e8dfeec6: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-ebb0-7dfd-9d64-162f3592ed3f: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-ebb0-7dfd-9d64-162f3592ed3f: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-ebb0-72f7-b9ea-c5fc9b02f91b: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-ebb0-72f7-b9ea-c5fc9b02f91b: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-ebb0-7fbc-a6ab-e5d5b1598df1: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-ebb0-7fbc-a6ab-e5d5b1598df1: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-ebb0-751d-ac1b-3d75e65d58b8: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-ebb0-751d-ac1b-3d75e65d58b8: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-ebb1-7d47-84e5-e115ab885591: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-ebb1-7d47-84e5-e115ab885591: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-ebb1-7f91-9415-5663c4fbfc0c: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-ebb1-7f91-9415-5663c4fbfc0c: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-ebb1-73f6-a7b4-7242ddf84e40: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-ebb1-73f6-a7b4-7242ddf84e40: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-ebb1-7645-b002-0cbb499310cc: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-ebb1-7645-b002-0cbb499310cc: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-ebb1-76c8-a732-9f35c1972a48: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-ebb1-76c8-a732-9f35c1972a48: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-ebb1-785d-9f07-cbc78f1175ab: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-ebb1-785d-9f07-cbc78f1175ab: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-ebb1-7a7f-b6aa-5873ae5453b4: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-ebb1-7a7f-b6aa-5873ae5453b4: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-ebb1-7c62-bb8a-61c1f95dd103: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-ebb1-7c62-bb8a-61c1f95dd103: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-ebb1-7795-a932-c3481fa16bfc: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-ebb1-7795-a932-c3481fa16bfc: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-ebb1-76d5-bd32-07e65e69072e: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-ebb1-76d5-bd32-07e65e69072e: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-ebb1-7110-9744-f2069378a5fd: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-ebb1-7110-9744-f2069378a5fd: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-ebb1-7a00-b86d-98cfd68c822a: Seeded declaration (0115; ADR-0053 §1). Declared exception (ADR-0057 §2, D-199): reads only the indexed columns (code, title, summary, status) of sensitive benefits, business cases and evidence; no value column; every reader is filtered at query time.",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-ebb1-76d4-9fef-7002df1ac7d8: Seeded declaration (0115; ADR-0053 §1). Declared exception (ADR-0057 §2, D-199): reads only the indexed columns (code, title, summary, status) of sensitive benefits, business cases and evidence; no value column; every reader is filtered at query time.",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-ebb1-7cd3-a866-fe110f978b13: Seeded declaration (0116; ADR-0053 §1, ADR-0055 §2).",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-ebb1-778d-a7ee-f85a5d692061: Seeded declaration (0116; ADR-0053 §1, ADR-0055 §2).",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-ebb1-70d0-9674-1a81360b4a61: Seeded declaration (0117; ADR-0053 §1): the narrowest read set the operations job needs.",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-ebb1-7412-864b-4a79d3323542: Seeded declaration (0117; ADR-0053 §1): the narrowest read set the operations job needs.",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-ebb1-7692-adbd-a67e3d2651ff: Seeded declaration (0117; ADR-0053 §1): the narrowest read set the operations job needs.",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-ebb1-7b00-9e00-0741b1f65b69: Seeded declaration (0121; ADR-0053 §1): the narrowest read set the notification channel job needs.",[39m
+[31m+   "internal_reference audit_event.changes#01a1ca93-ebb1-78d0-ae2b-eb7a249d919b: Seeded declaration (0121; ADR-0053 §1): the narrowest read set the notification channel job needs.",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-ebbc-77c9-8b67-43c21750121e: benefit_formula_version (DG3 formula engine)",[39m
+[31m+   "engineering_gate audit_event.changes#01a1ca93-ebbc-735d-b95e-8fc98ff0edd7: benefit_measurement (DG4 realized value)",[39m
+[31m+ ][39m
+
+ ❯ apps/api/test/integration/text-scan/seeded-texts.test.ts:125:23
+    123|     const { columns, hits } = await seededHits(latest);
+    124|     expect(columns).toBeGreaterThan(1000); // every text column of eve…
+    125|     expect(fmt(hits)).toEqual([]);
+       |                       ^
+    126|   });
+    127| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 skipped (4)
+   Start at  12:27:09
+   Duration  25.40s (transform 3.21s, setup 0ms, collect 6.73s, tests 8.60s, environment 0ms, prepare 78ms)
+
+exit 1

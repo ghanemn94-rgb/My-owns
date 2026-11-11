@@ -1,0 +1,16 @@
+ packages/db/migrations/0130_p6_seeded_text_business_terms.sql | 3 ---
+ 1 file changed, 3 deletions(-)
+diff --git a/packages/db/migrations/0130_p6_seeded_text_business_terms.sql b/packages/db/migrations/0130_p6_seeded_text_business_terms.sql
+index f290c0343..a4ba85a09 100644
+--- a/packages/db/migrations/0130_p6_seeded_text_business_terms.sql
++++ b/packages/db/migrations/0130_p6_seeded_text_business_terms.sql
+@@ -49,9 +49,6 @@
+ -- ---------------------------------------------------------------------------------------------------------------- 1
+ CREATE TEMPORARY TABLE p6_rg3_job_text (code text PRIMARY KEY, old_en text NOT NULL, new_en text NOT NULL) ON COMMIT DROP;
+ INSERT INTO p6_rg3_job_text VALUES
+-  ('kpi.freshness_scan',
+-   'Find KPIs whose last accepted data became stale (DG4 freshness rule, unchanged) and open one operational exception per KPI; resolve it when the data is fresh again. Never changes a KPI value; never approves anything.',
+-   'Find KPIs whose last accepted data became stale (the KPI freshness rule, unchanged) and open one operational exception per KPI; resolve it when the data is fresh again. Never changes a KPI value; never approves anything.'),
+   ('operations.exception_alerts',
+    'Alert once for each newly opened operational exception: one error log line and one in-app notification to each holder of operations.acknowledge (ADR-0053 §6). Never approves anything.',
+    'Alert once for each newly opened operational exception: one error log line and one in-app notification to each holder of operations.acknowledge. Never approves anything.'),

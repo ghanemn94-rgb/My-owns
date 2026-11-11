@@ -1,0 +1,122 @@
+# 2026-11-11T12:56:49Z SEC-R5 0130 upgrade probe, run 2 (administrator pre-states now written WITH their audit events; run 1 in 31-upgrade-0130.log failed on the deferred audit_required trigger at the probe's own unaudited setup write) (Node v22.22.0, load 10.47 12.81 15.46)
+87dbf461e46d727218b185f6c08b25030c9e98b28c3ba96f91177c7a35f4347c  /home/user/My-owns/docs/delivery/test-evidence/DG6/code-security/round-5/repro/zz-sec-r5-upgrade-0130.test.ts
+port-policy: PostgreSQL listening on port 32465 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.N8FAro/claude-0/rv
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwc4icwu_fdf78811 (server_encoding UTF8); applied 122 migrations to a fresh database
+stdout | packages/db/test/integration/zz-sec-r5-upgrade-0130.test.ts > SEC-R5: migration 0130 (F-DG6-990 repair) > U1: ids are forward-only; the P6 range 0098-0130 is contiguous
+[SEC-R5-UPG] migrations: [33m122[39m last 0130_p6_seeded_text_business_terms.sql
+
+stdout | packages/db/test/integration/zz-sec-r5-upgrade-0130.test.ts > SEC-R5: migration 0130 (F-DG6-990 repair) > U2-U5: upgrade over a demo-initialized 0129 database with administrator pre-states
+[SEC-R5-UPG] before 0130: [{"code":"kpi.freshness_scan","version":1,"d":"Find KPIs whose last accepted data became stale (DG4 freshness rule, unchanged) and open one operational exception per KPI; resolve it when the data is fresh again. Never changes a KPI value; never approves anything."},{"code":"search.index_feed","version":2,"d":"Keep the search index current from the audit trail: update the search document of every record changed since the last run (ADR-0057 §2). Indexes titles, codes and descriptions only; never approves anything."},{"code":"search.reindex","version":2,"d":"Admin wording kept as is (ADR-0057 note by the admin)."}]
+
+stdout | packages/db/test/integration/zz-sec-r5-upgrade-0130.test.ts > SEC-R5: migration 0130 (F-DG6-990 repair) > U2-U5: upgrade over a demo-initialized 0129 database with administrator pre-states
+[SEC-R5-UPG] demo DB at 0129, gate-rule rows: [33m167[39m
+
+stdout | packages/db/test/integration/zz-sec-r5-upgrade-0130.test.ts > SEC-R5: migration 0130 (F-DG6-990 repair) > U2-U5: upgrade over a demo-initialized 0129 database with administrator pre-states
+[SEC-R5-UPG] upgrade applied: ["0130_p6_seeded_text_business_terms.sql"]
+
+stdout | packages/db/test/integration/zz-sec-r5-upgrade-0130.test.ts > SEC-R5: migration 0130 (F-DG6-990 repair) > U2-U5: upgrade over a demo-initialized 0129 database with administrator pre-states
+[SEC-R5-UPG] after 0130: [{"code":"kpi.freshness_scan","version":2,"d":"Find KPIs whose last accepted data became stale (the KPI freshness rule, unchanged) and open one operational exception per KPI; resolve it when the data is fresh again. Never changes a KPI value; never approves anything.","updated_by":null},{"code":"search.index_feed","version":3,"d":"Keep the search index current from the audit trail: update the search document of every record changed since the last run. Indexes titles, codes and descriptions only; never approves anything.","updated_by":null},{"code":"search.reindex","version":2,"d":"Admin wording kept as is (ADR-0057 note by the admin).","updated_by":"01995000-0000-7000-8000-000000000011"}]
+
+stdout | packages/db/test/integration/zz-sec-r5-upgrade-0130.test.ts > SEC-R5: migration 0130 (F-DG6-990 repair) > U2-U5: upgrade over a demo-initialized 0129 database with administrator pre-states
+[SEC-R5-UPG] reword audit events by type: [["automation_rule_version",17],["form_source_field",3],["job_schedule",4],["procedure_definition",12],["service_identity",48]]
+
+stdout | packages/db/test/integration/zz-sec-r5-upgrade-0130.test.ts > SEC-R5: migration 0130 (F-DG6-990 repair) > U2-U5: upgrade over a demo-initialized 0129 database with administrator pre-states
+[SEC-R5-UPG] search.index_feed audit changes: {"description_en":{"to":"Keep the search index current from the audit trail: update the search document of every record changed since the last run. Indexes titles, codes and descriptions only; never approves anything.","from":"Keep the search index current from the audit trail: update the search document of every record changed since the last run (ADR-0057 §2). Indexes titles, codes and descriptions only; never approves anything."}}
+
+stdout | packages/db/test/integration/zz-sec-r5-upgrade-0130.test.ts > SEC-R5: migration 0130 (F-DG6-990 repair) > U2-U5: upgrade over a demo-initialized 0129 database with administrator pre-states
+[SEC-R5-UPG] person-changed identity after 0130: {"version":2,"reason":"Seeded declaration (0117; ADR-0053 §1): the narrowest read set the operations job needs."}
+
+stdout | packages/db/test/integration/zz-sec-r5-upgrade-0130.test.ts > SEC-R5: migration 0130 (F-DG6-990 repair) > U2-U5: upgrade over a demo-initialized 0129 database with administrator pre-states
+[SEC-R5-UPG] history of one reworded identity: [{"record_version":1,"reason":"Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs."},{"record_version":2,"reason":"Seeded declaration: the narrowest set of read permissions this job's handler needs."}]
+
+stdout | packages/db/test/integration/zz-sec-r5-upgrade-0130.test.ts > SEC-R5: migration 0130 (F-DG6-990 repair) > U2-U5: upgrade over a demo-initialized 0129 database with administrator pre-states
+[SEC-R5-UPG] audit events added by a second raw application: [33m0[39m
+
+stdout | packages/db/test/integration/zz-sec-r5-upgrade-0130.test.ts > SEC-R5: migration 0130 (F-DG6-990 repair) > U2-U5: upgrade over a demo-initialized 0129 database with administrator pre-states
+[SEC-R5-UPG] demo DB after 0130, gate-rule rows: [33m167[39m distinct:
+[SEC-R5-UPG]   GATE 16x audit_event.changes: Seeded starter: the DG4 behaviour (D-142 Q3).
+[SEC-R5-UPG]   GATE 1x audit_event.changes: Find KPIs whose last accepted data became stale (DG4 freshness rule, unchanged) and open one operational exception per KPI; resolve it when the data is fresh again. Never changes a KPI value; never approves anything.
+[SEC-R5-UPG]   GATE 1x audit_event.changes: benefit_formula_version (DG3 formula engine)
+[SEC-R5-UPG]   GATE 1x audit_event.changes: benefit_measurement (DG4 realized value)
+[SEC-R5-UPG]   GATE 1x audit_event.changes: initiative_score_result (DG3 scoring engine)
+[SEC-R5-UPG]   GATE 1x audit_event.reason: Seeded forms configuration v1 (T-DG5-ARCH-02)
+[SEC-R5-UPG]   GATE 1x audit_event.reason: Seeded procedures configuration v1 (T-DG5-ARCH-02)
+[SEC-R5-UPG]   GATE 1x audit_event.reason: Seeded procedures configuration v2: record_baseline assigned to TL (T-DG5-BE-T3, D-165)
+[SEC-R5-UPG]   GATE 2x audit_event.changes: Finance validation follows the DG4 rules; the validator is not the benefit owner.
+[SEC-R5-UPG]   GATE 2x audit_event.changes: Missing mandatory evidence blocks submission unless an authorized exception is recorded (DG2-DG4 gate rules unchanged).
+[SEC-R5-UPG]   GATE 2x audit_event.changes: The DG3 scoring and ranking rules apply unchanged.
+[SEC-R5-UPG]   GATE 2x audit_event.changes: The DG4 BAU handover rules apply unchanged.
+[SEC-R5-UPG]   GATE 2x audit_event.changes: The DG4 actual-submission rules apply unchanged.
+[SEC-R5-UPG]   GATE 2x audit_event.changes: The DG4 change-control and impact-assessment rules apply unchanged.
+[SEC-R5-UPG]   GATE 40x audit_event.changes: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.
+[SEC-R5-UPG]   GATE 40x service_identity_change.reason: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.
+[SEC-R5-UPG]   GATE 41x audit_event.reason: Seeded procedures configuration v2 (T-DG5-BE-T3, D-165)
+[SEC-R5-UPG]   GATE 4x gate_submission.snapshot: Product gate (business approval inside the product); unrelated to the engineering delivery gates DG0-DG7.
+[SEC-R5-UPG]   GATE 7x audit_event.reason: Seeded health-check scoring scheme v1 (T-DG5-ARCH-05)
+[SEC-R5-UPG] demo DB after 0130, internal-reference rows (observation): [33m26[39m
+[SEC-R5-UPG]   REF 1x audit_event.changes: Alert once for each newly opened operational exception: one error log line and one in-app notification to each holder of operations.acknowledge (ADR-0053 §6). N
+[SEC-R5-UPG]   REF 1x audit_event.changes: Keep the search index current from the audit trail: update the search document of every record changed since the last run (ADR-0057 §2). Indexes titles, codes a
+[SEC-R5-UPG]   REF 1x audit_event.changes: Queue each enabled connector's scheduled run (hourly, daily or weekly) once per slot (ADR-0055 §2). Starts connector runs only; never approves anything.
+[SEC-R5-UPG]   REF 1x audit_event.changes: Seeded starter version 2 (ADR-0053 §3): a connector run failure or stale KPI data also opens or recurs the visible operational exception; version 1 stays as his
+[SEC-R5-UPG]   REF 1x job_schedule.description_en: Admin wording kept as is (ADR-0057 note by the admin).
+[SEC-R5-UPG]   REF 1x service_identity.reason: Seeded declaration (0117; ADR-0053 §1): the narrowest read set the operations job needs.
+[SEC-R5-UPG]   REF 1x service_identity.reason: The service identity of the synthetic demo connector demo-kpi-test-source (ADR-0053 §1).
+[SEC-R5-UPG]   REF 1x service_identity_change.reason: The service identity of the synthetic demo connector demo-kpi-test-source (ADR-0053 §1).
+[SEC-R5-UPG]   REF 2x audit_event.changes: Seeded declaration (0115; ADR-0053 §1). Declared exception (ADR-0057 §2, D-199): reads only the indexed columns (code, title, summary, status) of sensitive bene
+[SEC-R5-UPG]   REF 2x audit_event.changes: Seeded declaration (0116; ADR-0053 §1, ADR-0055 §2).
+[SEC-R5-UPG]   REF 2x audit_event.changes: Seeded declaration (0117; ADR-0053 §1): the narrowest read set the operations job needs.
+[SEC-R5-UPG]   REF 2x audit_event.changes: Seeded declaration (0121; ADR-0053 §1): the narrowest read set the notification channel job needs.
+[SEC-R5-UPG]   REF 2x service_identity_change.reason: Seeded declaration (0115; ADR-0053 §1). Declared exception (ADR-0057 §2, D-199): reads only the indexed columns (code, title, summary, status) of sensitive bene
+[SEC-R5-UPG]   REF 2x service_identity_change.reason: Seeded declaration (0116; ADR-0053 §1, ADR-0055 §2).
+[SEC-R5-UPG]   REF 2x service_identity_change.reason: Seeded declaration (0121; ADR-0053 §1): the narrowest read set the notification channel job needs.
+[SEC-R5-UPG]   REF 4x service_identity_change.reason: Seeded declaration (0117; ADR-0053 §1): the narrowest read set the operations job needs.
+
+stdout | packages/db/test/integration/zz-sec-r5-upgrade-0130.test.ts > SEC-R5: migration 0130 (F-DG6-990 repair) > U2-U5: upgrade over a demo-initialized 0129 database with administrator pre-states
+[SEC-R5-UPG] fresh 0001-0130 + demo dataset, gate-rule rows: [33m167[39m distinct:
+[SEC-R5-UPG]   GATE 16x audit_event.changes: Seeded starter: the DG4 behaviour (D-142 Q3).
+[SEC-R5-UPG]   GATE 1x audit_event.changes: Find KPIs whose last accepted data became stale (DG4 freshness rule, unchanged) and open one operational exception per KPI; resolve it when the data is fresh again. Never changes a KPI value; never approves anything.
+[SEC-R5-UPG]   GATE 1x audit_event.changes: benefit_formula_version (DG3 formula engine)
+[SEC-R5-UPG]   GATE 1x audit_event.changes: benefit_measurement (DG4 realized value)
+[SEC-R5-UPG]   GATE 1x audit_event.changes: initiative_score_result (DG3 scoring engine)
+[SEC-R5-UPG]   GATE 1x audit_event.reason: Seeded forms configuration v1 (T-DG5-ARCH-02)
+[SEC-R5-UPG]   GATE 1x audit_event.reason: Seeded procedures configuration v1 (T-DG5-ARCH-02)
+[SEC-R5-UPG]   GATE 1x audit_event.reason: Seeded procedures configuration v2: record_baseline assigned to TL (T-DG5-BE-T3, D-165)
+[SEC-R5-UPG]   GATE 2x audit_event.changes: Finance validation follows the DG4 rules; the validator is not the benefit owner.
+[SEC-R5-UPG]   GATE 2x audit_event.changes: Missing mandatory evidence blocks submission unless an authorized exception is recorded (DG2-DG4 gate rules unchanged).
+[SEC-R5-UPG]   GATE 2x audit_event.changes: The DG3 scoring and ranking rules apply unchanged.
+[SEC-R5-UPG]   GATE 2x audit_event.changes: The DG4 BAU handover rules apply unchanged.
+[SEC-R5-UPG]   GATE 2x audit_event.changes: The DG4 actual-submission rules apply unchanged.
+[SEC-R5-UPG]   GATE 2x audit_event.changes: The DG4 change-control and impact-assessment rules apply unchanged.
+[SEC-R5-UPG]   GATE 40x audit_event.changes: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.
+[SEC-R5-UPG]   GATE 40x service_identity_change.reason: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.
+[SEC-R5-UPG]   GATE 41x audit_event.reason: Seeded procedures configuration v2 (T-DG5-BE-T3, D-165)
+[SEC-R5-UPG]   GATE 4x gate_submission.snapshot: Product gate (business approval inside the product); unrelated to the engineering delivery gates DG0-DG7.
+[SEC-R5-UPG]   GATE 7x audit_event.reason: Seeded health-check scoring scheme v1 (T-DG5-ARCH-05)
+[SEC-R5-UPG] fresh + demo, internal-reference rows (observation): [33m25[39m
+[SEC-R5-UPG]   REF 1x audit_event.changes: Alert once for each newly opened operational exception: one error log line and one in-app notification to each holder of operations.acknowledge (ADR-0053 §6). N
+[SEC-R5-UPG]   REF 1x audit_event.changes: Keep the search index current from the audit trail: update the search document of every record changed since the last run (ADR-0057 §2). Indexes titles, codes a
+[SEC-R5-UPG]   REF 1x audit_event.changes: Queue each enabled connector's scheduled run (hourly, daily or weekly) once per slot (ADR-0055 §2). Starts connector runs only; never approves anything.
+[SEC-R5-UPG]   REF 1x audit_event.changes: Rebuild the search index of every indexed record type from the current records (ADR-0057 §2). Weekly, or on demand by a technical administrator; never approves 
+[SEC-R5-UPG]   REF 1x audit_event.changes: Seeded starter version 2 (ADR-0053 §3): a connector run failure or stale KPI data also opens or recurs the visible operational exception; version 1 stays as his
+[SEC-R5-UPG]   REF 1x service_identity.reason: The service identity of the synthetic demo connector demo-kpi-test-source (ADR-0053 §1).
+[SEC-R5-UPG]   REF 1x service_identity_change.reason: The service identity of the synthetic demo connector demo-kpi-test-source (ADR-0053 §1).
+[SEC-R5-UPG]   REF 2x audit_event.changes: Seeded declaration (0115; ADR-0053 §1). Declared exception (ADR-0057 §2, D-199): reads only the indexed columns (code, title, summary, status) of sensitive bene
+[SEC-R5-UPG]   REF 2x audit_event.changes: Seeded declaration (0116; ADR-0053 §1, ADR-0055 §2).
+[SEC-R5-UPG]   REF 2x audit_event.changes: Seeded declaration (0121; ADR-0053 §1): the narrowest read set the notification channel job needs.
+[SEC-R5-UPG]   REF 2x service_identity_change.reason: Seeded declaration (0115; ADR-0053 §1). Declared exception (ADR-0057 §2, D-199): reads only the indexed columns (code, title, summary, status) of sensitive bene
+[SEC-R5-UPG]   REF 2x service_identity_change.reason: Seeded declaration (0116; ADR-0053 §1, ADR-0055 §2).
+[SEC-R5-UPG]   REF 2x service_identity_change.reason: Seeded declaration (0121; ADR-0053 §1): the narrowest read set the notification channel job needs.
+[SEC-R5-UPG]   REF 3x audit_event.changes: Seeded declaration (0117; ADR-0053 §1): the narrowest read set the operations job needs.
+[SEC-R5-UPG]   REF 3x service_identity_change.reason: Seeded declaration (0117; ADR-0053 §1): the narrowest read set the operations job needs.
+
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  12:56:53
+   Duration  21.76s (transform 1.78s, setup 0ms, collect 3.16s, tests 12.72s, environment 0ms, prepare 415ms)
+
+exit=0

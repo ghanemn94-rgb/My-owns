@@ -1,0 +1,29 @@
+$ git rev-parse HEAD
+8754f809db0a09e19ef67e7bf9f0dada4278e4fb
+$ node tools/gates/candidate.mjs --stage DG6
+{"stage":"DG6","source":"working-tree","candidate_id":"sha256:5e819f7a579dbf98eb78f7f8e326a7ad57d939ed6a0762e3bea912f6dc735ed6","files":2775}
+exit 0
+$ git log --oneline 3c8b9a3ac..HEAD
+8754f809d DG6 re-gate: freeze round 5 (candidate 5e819f7a) + round-5 review assignments
+$ git diff --name-only 3c8b9a3acfe657348249feb297b52cf208324a07 HEAD -- . :!docs/delivery | wc -l
+0
+$ git diff --name-only 3c8b9a3ac HEAD
+docs/delivery/assignments/DG6/round-5/code-security-reviewer.md
+docs/delivery/assignments/DG6/round-5/domain-reviewer.md
+docs/delivery/assignments/DG6/round-5/qa-verifier.md
+docs/delivery/candidates/DG6/5e819f7a579dbf98.manifest.json
+docs/delivery/stages.json
+$ git diff 60787d89ffa2562d491af424bc1024b4e3bc2d57 3c8b9a3acfe657348249feb297b52cf208324a07 -- . :!docs/delivery | wc -c
+0
+$ git diff --stat f56f1b3d (round-3 source) 3c8b9a3ac -- . :!docs/delivery
+ .../integration/text-scan/seeded-texts.test.ts     | 187 +++++++++++++++++++
+ docs/architecture/data-dictionary.md               |  21 +++
+ .../0130_p6_seeded_text_business_terms.sql         | 207 +++++++++++++++++++++
+ 3 files changed, 415 insertions(+)
+$ git rev-parse --is-shallow-repository
+false
+$ /opt/node22/bin/node -v
+v22.22.0
+$ clone HEAD
+3c8b9a3acfe657348249feb297b52cf208324a07
+clone: git clone --shared --no-checkout; sparse checkout excluding docs/delivery/{test-evidence,runs,handbacks,reviews,candidates} and trading_agent; checkout 3c8b9a3ac; node_modules copied (cp -a) from the repository

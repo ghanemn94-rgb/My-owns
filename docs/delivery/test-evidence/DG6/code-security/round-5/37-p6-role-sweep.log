@@ -1,0 +1,154 @@
+# 2026-11-11T12:57:54Z round-1 P6 role sweep, unchanged (pass 1 exits 1 BY DESIGN: 26 writes answer 400 to the empty body before the 403 gate; pass 2 is the valid-body file) (Node v22.22.0, $TMPDIR/rv at 3c8b9a3ac, load 10.89 12.51 15.17)
+892b97b8635d884ec2578689917ec200d27e93ba65d8a8afee093f5cba914bfc  /home/user/My-owns/docs/delivery/test-evidence/DG6/code-security/round-1/repro/zz-sec-r1-p6-role-sweep.test.ts
+port-policy: PostgreSQL listening on port 32465 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.N8FAro/claude-0/rv
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwc4jqb8_faef13a4 (server_encoding UTF8); applied 122 migrations to a fresh database
+stdout | apps/api/test/integration/zz-sec-r1-p6-role-sweep.test.ts > SEC-R1 P6 role sweep > AUD: every P6 mutating operation is refused (403, or 404 for a non-existent record) and writes nothing
+[SEC-R1 AUD sweep] 40 P6 mutating operations
+PUT /api/v1/transformations/{transformationId}/records/{recordType}/{recordId}/sensitivity putRecordSensitivity -> 400 validation (record params: recordType,recordId)
+POST /api/v1/admin/sensitive-grants createSensitiveGrant -> 400 validation (record params: none)
+POST /api/v1/admin/sensitive-grants/{grantId}/revoke revokeSensitiveGrant -> 400 validation (record params: grantId)
+PUT /api/v1/admin/upload-policy putUploadPolicy -> 400 validation (record params: none)
+POST /api/v1/admin/operations/exceptions/{exceptionId}/acknowledge acknowledgeOperationalException -> 400 validation (record params: exceptionId)
+POST /api/v1/admin/operations/exceptions/{exceptionId}/resolve resolveOperationalException -> 400 validation (record params: exceptionId)
+PUT /api/v1/admin/service-identities/{serviceIdentityId} putServiceIdentity -> 400 validation (record params: serviceIdentityId)
+PUT /api/v1/admin/storage putStorageSetting -> 403 forbidden (record params: none)
+POST /api/v1/admin/storage/test testStorageSetting -> 403 forbidden (record params: none)
+PUT /api/v1/admin/notification-channels/{channelKind} putNotificationChannel -> 400 validation (record params: channelKind)
+POST /api/v1/admin/notification-channels/{channelKind}/test testNotificationChannel -> 400 validation (record params: channelKind)
+POST /api/v1/admin/connectors createConnector -> 400 validation (record params: none)
+PUT /api/v1/admin/connectors/{connectorId} putConnector -> 400 validation (record params: connectorId)
+POST /api/v1/admin/connectors/{connectorId}/enable enableConnector -> 400 validation (record params: connectorId)
+POST /api/v1/admin/connectors/{connectorId}/disable disableConnector -> 400 validation (record params: connectorId)
+POST /api/v1/admin/connectors/{connectorId}/test testConnector -> 404 not_found (record params: connectorId)
+PUT /api/v1/admin/connectors/{connectorId}/mappings putConnectorMappings -> 400 validation (record params: connectorId)
+POST /api/v1/admin/connectors/{connectorId}/runs runConnector -> 404 not_found (record params: connectorId)
+POST /api/v1/admin/connectors/{connectorId}/runs/{runId}/retry retryIntegrationRun -> 404 not_found (record params: connectorId,runId)
+POST /api/v1/transformations/{transformationId}/imports createImport -> 400 validation (record params: none)
+POST /api/v1/transformations/{transformationId}/imports/{importId}/commit commitImport -> 400 validation (record params: importId)
+POST /api/v1/transformations/{transformationId}/imports/{importId}/cancel cancelImport -> 400 validation (record params: importId)
+POST /api/v1/admin/webhooks createWebhookEndpoint -> 400 validation (record params: none)
+POST /api/v1/admin/webhooks/{webhookId}/rotate-secret rotateWebhookSecret -> 400 validation (record params: webhookId)
+POST /api/v1/admin/webhooks/{webhookId}/disable disableWebhookEndpoint -> 400 validation (record params: webhookId)
+POST /api/v1/webhooks/{endpointKey} receiveWebhook -> 401 webhook.unauthenticated (record params: endpointKey)
+POST /api/v1/transformations/{transformationId}/outbound-writes executeOutboundWrite -> 400 validation (record params: none)
+POST /api/v1/transformations/{transformationId}/outbound-writes/{writeId}/confirm confirmOutboundWrite -> 403 forbidden (record params: writeId)
+POST /api/v1/deliverables/{deliverableId}/confirmation confirmDeliverableExternalChange -> 400 validation (record params: deliverableId)
+PUT /api/v1/deliverables/{deliverableId}/external-change putDeliverableExternalChange -> 400 validation (record params: deliverableId)
+POST /api/v1/saved-views createSavedView -> 400 validation (record params: none)
+PUT /api/v1/saved-views/{savedViewId} putSavedView -> 400 validation (record params: savedViewId)
+DELETE /api/v1/saved-views/{savedViewId} deleteSavedView -> 404 not_found (record params: savedViewId)
+POST /api/v1/saved-views/{savedViewId}/share shareSavedView -> 400 validation (record params: savedViewId)
+PUT /api/v1/admin/assistant putAssistantSetting -> 403 forbidden (record params: none)
+POST /api/v1/admin/assistant/enable enableAssistant -> 403 forbidden (record params: none)
+POST /api/v1/admin/assistant/disable disableAssistant -> 403 forbidden (record params: none)
+POST /api/v1/assistant/conversations createAssistantConversation -> 403 forbidden (record params: none)
+POST /api/v1/assistant/conversations/{conversationId}/messages postAssistantMessage -> 403 forbidden (record params: conversationId)
+POST /api/v1/assistant/suggestions/{suggestionId}/to-draft takeAssistantSuggestionToDraft -> 403 forbidden (record params: suggestionId)
+[SEC-R1 AUD sweep] NOT refused as expected: 26
+PUT /api/v1/transformations/{transformationId}/records/{recordType}/{recordId}/sensitivity putRecordSensitivity -> 400 validation (record params: recordType,recordId)
+POST /api/v1/admin/sensitive-grants createSensitiveGrant -> 400 validation (record params: none)
+POST /api/v1/admin/sensitive-grants/{grantId}/revoke revokeSensitiveGrant -> 400 validation (record params: grantId)
+PUT /api/v1/admin/upload-policy putUploadPolicy -> 400 validation (record params: none)
+POST /api/v1/admin/operations/exceptions/{exceptionId}/acknowledge acknowledgeOperationalException -> 400 validation (record params: exceptionId)
+POST /api/v1/admin/operations/exceptions/{exceptionId}/resolve resolveOperationalException -> 400 validation (record params: exceptionId)
+PUT /api/v1/admin/service-identities/{serviceIdentityId} putServiceIdentity -> 400 validation (record params: serviceIdentityId)
+PUT /api/v1/admin/notification-channels/{channelKind} putNotificationChannel -> 400 validation (record params: channelKind)
+POST /api/v1/admin/notification-channels/{channelKind}/test testNotificationChannel -> 400 validation (record params: channelKind)
+POST /api/v1/admin/connectors createConnector -> 400 validation (record params: none)
+PUT /api/v1/admin/connectors/{connectorId} putConnector -> 400 validation (record params: connectorId)
+POST /api/v1/admin/connectors/{connectorId}/enable enableConnector -> 400 validation (record params: connectorId)
+POST /api/v1/admin/connectors/{connectorId}/disable disableConnector -> 400 validation (record params: connectorId)
+PUT /api/v1/admin/connectors/{connectorId}/mappings putConnectorMappings -> 400 validation (record params: connectorId)
+POST /api/v1/transformations/{transformationId}/imports createImport -> 400 validation (record params: none)
+POST /api/v1/transformations/{transformationId}/imports/{importId}/commit commitImport -> 400 validation (record params: importId)
+POST /api/v1/transformations/{transformationId}/imports/{importId}/cancel cancelImport -> 400 validation (record params: importId)
+POST /api/v1/admin/webhooks createWebhookEndpoint -> 400 validation (record params: none)
+POST /api/v1/admin/webhooks/{webhookId}/rotate-secret rotateWebhookSecret -> 400 validation (record params: webhookId)
+POST /api/v1/admin/webhooks/{webhookId}/disable disableWebhookEndpoint -> 400 validation (record params: webhookId)
+POST /api/v1/transformations/{transformationId}/outbound-writes executeOutboundWrite -> 400 validation (record params: none)
+POST /api/v1/deliverables/{deliverableId}/confirmation confirmDeliverableExternalChange -> 400 validation (record params: deliverableId)
+PUT /api/v1/deliverables/{deliverableId}/external-change putDeliverableExternalChange -> 400 validation (record params: deliverableId)
+POST /api/v1/saved-views createSavedView -> 400 validation (record params: none)
+PUT /api/v1/saved-views/{savedViewId} putSavedView -> 400 validation (record params: savedViewId)
+POST /api/v1/saved-views/{savedViewId}/share shareSavedView -> 400 validation (record params: savedViewId)
+[SEC-R1 AUD sweep] non-denial audit events by AUD: before 1, after 1
+
+stdout | apps/api/test/integration/zz-sec-r1-p6-role-sweep.test.ts > SEC-R1 P6 role sweep > ADM-only: no P6 transformation-scoped read on an existing transformation; search finds nothing
+[SEC-R1 ADM sweep] 8 P6 transformation-scoped reads
+GET /api/v1/transformations/{transformationId}/records/{recordType}/{recordId}/sensitivity getRecordSensitivity -> 400 (record params: recordType,recordId)
+GET /api/v1/transformations/{transformationId}/evidence/{evidenceId}/preview previewEvidenceContent -> 404 (record params: evidenceId)
+GET /api/v1/transformations/{transformationId}/imports listImports -> 404 (record params: none)
+GET /api/v1/transformations/{transformationId}/imports/{importId} getImport -> 404 (record params: importId)
+GET /api/v1/transformations/{transformationId}/imports/{importId}/rows listImportRows -> 404 (record params: importId)
+GET /api/v1/transformations/{transformationId}/outbound-writes listOutboundWrites -> 404 (record params: none)
+GET /api/v1/transformations/{transformationId}/outbound-writes/{writeId} getOutboundWrite -> 404 (record params: writeId)
+GET /api/v1/transformations/{transformationId}/form-records/{recordType}/{recordId}/compare compareFormRecordVersions -> 400 (record params: recordType,recordId)
+[SEC-R1 ADM sweep] answered < 400: 0
+
+[SEC-R1 ADM sweep] search as ADM-only: 403 {"type":"urn:mth:problem:forbidden","title":"Forbidden","status":403,"detail":"You do not have permission for this action.","code":"forbidden","requestId":"01a1cab0-27f6-7524-9334-90504a71b958"}
+[SEC-R1 ADM sweep] search as AUD (control, reads org A): 200 items=1
+
+ ❯ |integration| apps/api/test/integration/zz-sec-r1-p6-role-sweep.test.ts (2 tests | 1 failed) 1703ms
+   × SEC-R1 P6 role sweep > AUD: every P6 mutating operation is refused (403, or 404 for a non-existent record) and writes nothing 524ms
+     → expected [ …(26) ] to deeply equal []
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/zz-sec-r1-p6-role-sweep.test.ts > SEC-R1 P6 role sweep > AUD: every P6 mutating operation is refused (403, or 404 for a non-existent record) and writes nothing
+AssertionError: expected [ …(26) ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   "PUT /api/v1/transformations/{transformationId}/records/{recordType}/{recordId}/sensitivity putRecordSensitivity -> 400 validation (record params: recordType,recordId)",[39m
+[31m+   "POST /api/v1/admin/sensitive-grants createSensitiveGrant -> 400 validation (record params: none)",[39m
+[31m+   "POST /api/v1/admin/sensitive-grants/{grantId}/revoke revokeSensitiveGrant -> 400 validation (record params: grantId)",[39m
+[31m+   "PUT /api/v1/admin/upload-policy putUploadPolicy -> 400 validation (record params: none)",[39m
+[31m+   "POST /api/v1/admin/operations/exceptions/{exceptionId}/acknowledge acknowledgeOperationalException -> 400 validation (record params: exceptionId)",[39m
+[31m+   "POST /api/v1/admin/operations/exceptions/{exceptionId}/resolve resolveOperationalException -> 400 validation (record params: exceptionId)",[39m
+[31m+   "PUT /api/v1/admin/service-identities/{serviceIdentityId} putServiceIdentity -> 400 validation (record params: serviceIdentityId)",[39m
+[31m+   "PUT /api/v1/admin/notification-channels/{channelKind} putNotificationChannel -> 400 validation (record params: channelKind)",[39m
+[31m+   "POST /api/v1/admin/notification-channels/{channelKind}/test testNotificationChannel -> 400 validation (record params: channelKind)",[39m
+[31m+   "POST /api/v1/admin/connectors createConnector -> 400 validation (record params: none)",[39m
+[31m+   "PUT /api/v1/admin/connectors/{connectorId} putConnector -> 400 validation (record params: connectorId)",[39m
+[31m+   "POST /api/v1/admin/connectors/{connectorId}/enable enableConnector -> 400 validation (record params: connectorId)",[39m
+[31m+   "POST /api/v1/admin/connectors/{connectorId}/disable disableConnector -> 400 validation (record params: connectorId)",[39m
+[31m+   "PUT /api/v1/admin/connectors/{connectorId}/mappings putConnectorMappings -> 400 validation (record params: connectorId)",[39m
+[31m+   "POST /api/v1/transformations/{transformationId}/imports createImport -> 400 validation (record params: none)",[39m
+[31m+   "POST /api/v1/transformations/{transformationId}/imports/{importId}/commit commitImport -> 400 validation (record params: importId)",[39m
+[31m+   "POST /api/v1/transformations/{transformationId}/imports/{importId}/cancel cancelImport -> 400 validation (record params: importId)",[39m
+[31m+   "POST /api/v1/admin/webhooks createWebhookEndpoint -> 400 validation (record params: none)",[39m
+[31m+   "POST /api/v1/admin/webhooks/{webhookId}/rotate-secret rotateWebhookSecret -> 400 validation (record params: webhookId)",[39m
+[31m+   "POST /api/v1/admin/webhooks/{webhookId}/disable disableWebhookEndpoint -> 400 validation (record params: webhookId)",[39m
+[31m+   "POST /api/v1/transformations/{transformationId}/outbound-writes executeOutboundWrite -> 400 validation (record params: none)",[39m
+[31m+   "POST /api/v1/deliverables/{deliverableId}/confirmation confirmDeliverableExternalChange -> 400 validation (record params: deliverableId)",[39m
+[31m+   "PUT /api/v1/deliverables/{deliverableId}/external-change putDeliverableExternalChange -> 400 validation (record params: deliverableId)",[39m
+[31m+   "POST /api/v1/saved-views createSavedView -> 400 validation (record params: none)",[39m
+[31m+   "PUT /api/v1/saved-views/{savedViewId} putSavedView -> 400 validation (record params: savedViewId)",[39m
+[31m+   "POST /api/v1/saved-views/{savedViewId}/share shareSavedView -> 400 validation (record params: savedViewId)",[39m
+[31m+ ][39m
+
+ ❯ apps/api/test/integration/zz-sec-r1-p6-role-sweep.test.ts:122:17
+    120|     console.log(`[SEC-R1 AUD sweep] non-denial audit events by AUD: be…
+    121|     expect(Number(after.n)).toBe(Number(before.n));
+    122|     expect(bad).toEqual([]);
+       |                 ^
+    123|   }, 600_000);
+    124| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  12:57:57
+   Duration  26.82s (transform 9.49s, setup 0ms, collect 19.24s, tests 1.70s, environment 0ms, prepare 104ms)
+
+exit=1
+# end 2026-11-11T12:58:26Z

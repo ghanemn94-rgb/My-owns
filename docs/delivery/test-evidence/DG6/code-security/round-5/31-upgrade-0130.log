@@ -1,0 +1,40 @@
+# 2026-11-11T12:54:18Z SEC-R5 0130 upgrade probe (demo-initialized 0129 database, administrator pre-states, idempotency, demo-data scan) (Node v22.22.0, $TMPDIR/rv at 3c8b9a3ac, load 11.85 13.93 16.20)
+port-policy: PostgreSQL listening on port 32465 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.N8FAro/claude-0/rv
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwc4f3gh_3d173939 (server_encoding UTF8); applied 122 migrations to a fresh database
+stdout | packages/db/test/integration/zz-sec-r5-upgrade-0130.test.ts > SEC-R5: migration 0130 (F-DG6-990 repair) > U1: ids are forward-only; the P6 range 0098-0130 is contiguous
+[SEC-R5-UPG] migrations: [33m122[39m last 0130_p6_seeded_text_business_terms.sql
+
+ ❯ |integration| packages/db/test/integration/zz-sec-r5-upgrade-0130.test.ts (2 tests | 1 failed) 7132ms
+   × SEC-R5: migration 0130 (F-DG6-990 repair) > U2-U5: upgrade over a demo-initialized 0129 database with administrator pre-states 6778ms
+     → no audit_event for job_schedule 01920006-0115-7000-8000-000000000002 at version 2 (ADR-0004: every mutation writes its audit event in the same transaction)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| packages/db/test/integration/zz-sec-r5-upgrade-0130.test.ts > SEC-R5: migration 0130 (F-DG6-990 repair) > U2-U5: upgrade over a demo-initialized 0129 database with administrator pre-states
+error: no audit_event for job_schedule 01920006-0115-7000-8000-000000000002 at version 2 (ADR-0004: every mutation writes its audit event in the same transaction)
+ ❯ node_modules/.pnpm/pg@8.16.3/node_modules/pg/lib/client.js:545:17
+ ❯ packages/db/test/integration/zz-sec-r5-upgrade-0130.test.ts:109:7
+    107|       const user = (await c.query<{ id: string }>(`SELECT id FROM app_…
+    108|       // (a) administrator-changed description (keeps "ADR-0057" so it…
+    109|       await c.query(
+       |       ^
+    110|         `UPDATE job_schedule SET description_en = 'Admin wording kept …
+    111|         [user],
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  12:54:21
+   Duration  15.08s (transform 1.54s, setup 0ms, collect 2.99s, tests 7.13s, environment 0ms, prepare 141ms)
+
+exit=1
+# end 2026-11-11T12:54:38Z
+# git status --short after removing the probes (must be empty):
+(end)
+PROBES-DONE

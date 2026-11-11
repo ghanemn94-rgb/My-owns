@@ -1,0 +1,37 @@
+# 2026-11-11T13:32:07Z error-line classification over the four binding integration logs (unique lines, counts)
+== 12-integration-lang-unset-shard1o2.log
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwc1raki_4a8057d9 (server_encoding UTF8); applied 122 migrations to a fresh database
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 220 passed (221)
+      Tests  1 failed | 2082 passed | 1 skipped | 1 todo (2085)
+exit=1
+-- lines matching ×|FAIL|Hook timed out|Unhandled|Timeout calling|ERR_|"level":"(error|warn|fatal)"|Error: (sorted, counted):
+      1 {"level":"warn","event":"secret_ref.refused","consumer":"webhook_signing","provider":"env","name":"MTH_SECRET_TEST_WEBHOOK_SECRET_A","reason":"not_bound"}
+      1 {"level":"warn","event":"secret_ref.refused","consumer":"smtp","provider":"env","name":"MTH_SECRET_Z2_FANOUT_SMTP_PASS","reason":"not_bound"}
+      1 SWEEP {"path":"router-level 400 bad URL (FST_ERR_BAD_URL), chunked","status":400,"code":"validation.format","connection":"close","serverCloseMs":0,"connectionsZeroMs":0}
+      1 Error: Test timed out in <n>ms.
+      1  FAIL  |integration| apps/api/test/integration/contract/response-validation.test.ts > every operation, validated against the contract and the zod mirrors > every operation but the OIDC callback: U+0000 in the query is a declared 400 invalid_character
+      1    × every operation, validated against the contract and the zod mirrors > every operation but the OIDC callback: U+0000 in the query is a declared 400 invalid_character <n>ms
+== 12-integration-lang-unset-shard2o2.log
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwc1rb5g_4fb19aee (server_encoding UTF8); applied 122 migrations to a fresh database
+ Test Files  221 passed (221)
+      Tests  2287 passed (2287)
+exit=0
+-- lines matching ×|FAIL|Hook timed out|Unhandled|Timeout calling|ERR_|"level":"(error|warn|fatal)"|Error: (sorted, counted):
+      1 stdout | apps/api/test/integration/reporting/table-totals-demo.test.ts > REQ-S13-006 on the demo dataset: a system SUM total remains a formula whose cached value is the screen's total > registers {register: "benefits"}: SUM(...) cached = GET /benefit-totals (c
+== 13-integration-lang-cutf8-shard1o2.log
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwc49g2t_2ae06d93 (server_encoding UTF8); applied 122 migrations to a fresh database
+ Test Files  221 passed (221)
+      Tests  2083 passed | 1 skipped | 1 todo (2085)
+exit=0
+-- lines matching ×|FAIL|Hook timed out|Unhandled|Timeout calling|ERR_|"level":"(error|warn|fatal)"|Error: (sorted, counted):
+      1 {"level":"warn","event":"secret_ref.refused","consumer":"webhook_signing","provider":"env","name":"MTH_SECRET_TEST_WEBHOOK_SECRET_A","reason":"not_bound"}
+      1 {"level":"warn","event":"secret_ref.refused","consumer":"smtp","provider":"env","name":"MTH_SECRET_Z2_FANOUT_SMTP_PASS","reason":"not_bound"}
+      1 SWEEP {"path":"router-level 400 bad URL (FST_ERR_BAD_URL), chunked","status":400,"code":"validation.format","connection":"close","serverCloseMs":0,"connectionsZeroMs":0}
+== 13-integration-lang-cutf8-shard2o2.log
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwc49gym_06b28f93 (server_encoding UTF8); applied 122 migrations to a fresh database
+ Test Files  221 passed (221)
+      Tests  2287 passed (2287)
+exit=0
+-- lines matching ×|FAIL|Hook timed out|Unhandled|Timeout calling|ERR_|"level":"(error|warn|fatal)"|Error: (sorted, counted):
+      1 stdout | apps/api/test/integration/reporting/table-totals-demo.test.ts > REQ-S13-006 on the demo dataset: a system SUM total remains a formula whose cached value is the screen's total > registers {register: "benefits"}: SUM(...) cached = GET /benefit-totals (c
