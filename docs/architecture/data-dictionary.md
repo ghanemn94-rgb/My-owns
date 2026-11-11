@@ -3631,6 +3631,7 @@ The P1 migrations create three views, owned by `mth_owner`. `mth_app` has `SELEC
 - **Purpose:** A recurring job of the scheduled-job kit: queue, five-field cron and timezone (REQ-S16-005; ADR-0025 §3). Platform-wide. Seeded: approval.escalation_scan, delegation.expiry_sweep, kpi.reporting_period_open (0028); sustainment.review_scan, sustainment.control_check_scan (0050); gate.exception_expiry_scan (0054); governance.meeting_series_generate, governance.decision_sla_scan, governance.blocker_escalation_scan (0060, ARCH-R1).
 - **Migration:** `0028_p4_calendar_jobs_work_items.sql`. **API module:** `jobs (worker registers it with pg-boss)`. **Who writes:** migrations insert; `job.configure` (ADM_TECH) updates enabled/cron/timezone. **Lifecycle:** enabled ⇄ disabled.
 - **`mth_app` privileges:** SELECT, UPDATE.
+- **Changed by `0130`:** stored data only (no schema change): `description_en` of `kpi.freshness_scan`, `operations.exception_alerts`, `search.index_feed`, `search.reindex` and `integrations.connector_run` reworded in business terms (version +1, audit `job_schedule.reword`). See "P6 re-gate repair migration 0130" (added 2026-11-11, T-DG6-BE-RG3).
 
 | Column | Type | Null | Default | Column constraints |
 |---|---|---|---|---|
@@ -9495,6 +9496,7 @@ Generated from the catalogue of a freshly migrated disposable database by `docs/
 - **Purpose:** The protected source columns (REQ-S05-002): one row per minimum field of M0129–M0144, verbatim English label, provisional Arabic label, fixed Studio field type and storage reference (ADR-0041 §2).
 - **Migration:** `0068_p5_form_schemas_framework.sql`. **API module:** `forms`. **Who writes:** migrations only. **Lifecycle:** seeded catalogue.
 - **`mth_app` privileges:** SELECT.
+- **Changed by `0130`:** stored data only: the `storage_ref` notes of three computed fields (T06 `weighted_result`, T09 `formula`, T14 `realized`) lose their engineering-gate annotation (audit `form_source_field.reword`). See "P6 re-gate repair migration 0130" (added 2026-11-11, T-DG6-BE-RG3).
 
 | Column | Type | Null | Default | Column constraints |
 |---|---|---|---|---|
@@ -9675,6 +9677,7 @@ Generated from the catalogue of a freshly migrated disposable database by `docs/
 - **Purpose:** One procedure in one version of the 'procedures' configuration with every M0152 part (REQ-S06-001, REQ-S16-015; ADR-0042 §1); the ten seeded procedures are product defaults (REQ-S06-003).
 - **Migration:** `0069_p5_procedures.sql`. **API module:** `procedures`. **Who writes:** `methodology.configure` (drafts only); seeds by migration. **Lifecycle:** written only while its version is a draft being edited; frozen with the version; versioned.
 - **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+- **Changed by `0130`:** stored data only: `validation_rules_en` (and two `validation_rules_ar`) of six seeded definitions in both seeded configuration versions (12 rows) reworded in business terms, by the migration role (version +1, audit `procedure_definition.reword`). See "P6 re-gate repair migration 0130" (added 2026-11-11, T-DG6-BE-RG3).
 
 | Column | Type | Null | Default | Column constraints |
 |---|---|---|---|---|
@@ -10101,6 +10104,7 @@ Generated from the catalogue of a freshly migrated database by `docs/delivery/ha
 - **Purpose:** One version of a rule: triggers, conditions, actions, identity, service permissions, parameters, content hash, review and publication (REQ-S12-001, REQ-S12-002; ADR-0043 §1, §4).
 - **Migration:** `0074_p5_automation_engine.sql`. **API module:** `automation`. **Who writes:** `automation.configure` (content, submit, publish, discard), `automation.review` (review); starter v1 by migration. **Lifecycle:** draft → in_review → approved → published → superseded; discarded; content frozen outside draft; versioned.
 - **`mth_app` privileges:** INSERT, SELECT, UPDATE.
+- **Changed by `0130`:** stored data only: `change_summary` of the 16 seeded starter versions 1 and of `starter.job_failed` version 2 reworded (version +1, audit `automation_rule_version.reword`); content and `content_sha256` unchanged. See "P6 re-gate repair migration 0130" (added 2026-11-11, T-DG6-BE-RG3).
 - **Read-time rule (P6 round 8; no stored change):** `conditions` (redacted: literals shown as `[restricted:<tag>:<k>]` tokens, D-231, D-233; `<tag>` is the issuer tag keyed by `restricted_token_key`, see "P6 round-10 repair migration 0127"). See "P6 read-time classifications after round 8" at the end of this file (added 2026-11-09, T-DG6-ARCH-17).
 
 | Column | Type | Null | Default | Column constraints |
@@ -12628,6 +12632,7 @@ Written by T-DG6-ARCH-02 (ADR-0053, ADR-0054). The table sections below are gene
 - **Purpose:** The constrained service identity of one job queue or connector: the declared permission ceiling, the effective grant, the scope and sensitive access (REQ-S16-029; ADR-0053 §1).
 - **Migration:** `0101_p6_operations_service_identities.sql`. **API module:** `operations (access)`. **Who writes:** job rows: a migration only (owner check); connector rows: the connector's creation (ADR-0055); the grant: `service_identity.configure` (ADM_TECH) through putServiceIdentity (column-level UPDATE). **Lifecycle:** one per code; declaration fixed outside migrations; grant narrowed or restored; versioned and audited.
 - **`mth_app` privileges:** INSERT, SELECT.
+- **Changed by `0130`:** stored data only: the seeded `reason` of the 49 job identities (where still seeded and never changed by a user) reworded in business terms (version +1, audit `service_identity.reword`; the history trigger adds a `service_identity_change` row). See "P6 re-gate repair migration 0130" (added 2026-11-11, T-DG6-BE-RG3).
 
 | Column | Type | Null | Default | Column constraints |
 |---|---|---|---|---|
@@ -14578,6 +14583,22 @@ Recorded by T-DG6-BE-RG2 (2026-11-10; F-DG6-971, F-DG6-960, F-DG6-970, F-DG6-980
 | Function `p6_assistant_context_records_valid(p jsonb)` (replaced) | IMMUTABLE SQL, `SET search_path = public, pg_catalog, pg_temp` | Unchanged except for the bound: a JSON array of **0–1,000** distinct objects (was 0–20), each exactly `{"recordType": <one of the 12 search record types>, "recordId": <lower-case uuid>}`. The context of a new answer is its own data block **plus** the inherited context of every history answer given to the model (ADR-0059 §5). One conversation holds at most 100 messages (at most 50 answers), and each answer is given at most 20 record items (`assistant_setting.max_context_records` ≤ 20). So 1,000 is the largest possible union, and a context is never truncated. The API also drops from the history any answer whose context would not fit (fail closed). |
 
 **Effect on deploy.** No stored value changes. A suggestion stored before 0128 can now be taken to a draft, through the citations fallback. Every answer stored after the deploy also lists the records of the earlier answers it was given as history, so a revocation of any of them withholds it too. Answers stored between 0128 and 0129 hold only their own data block. For them the API's history re-check (ADR-0059 §5) still keeps a withheld earlier answer from reaching the model again.
+
+# P6 re-gate repair migration 0130 (DG6)
+
+Recorded by T-DG6-BE-RG3 (2026-11-11; F-DG6-990; REQ-S21-001, M0007, M0412) from the shipped `packages/db/migrations/0130_p6_seeded_text_business_terms.sql`. The migration changes **stored seeded data only**: no table, column, constraint, trigger, function or grant changes. It rewrites descriptive texts that earlier migrations seeded and that named an engineering delivery gate (DG0-DG7) or an internal engineering record (decision id, ADR section, migration number). Each rewrite applies only while the stored text is still the seeded one (exact match), steps the row version where the table has one, and writes one audit event (actor `system`, source `migration`, action `<table>.reword`) whose `changes` hold the exact `{from, to}`, so the audit trail keeps the previous wording. No rule, value, trigger code, handler, grant, status, approval or permission changes. Asserted by `apps/api/test/integration/text-scan/seeded-texts.test.ts` (text scan (d)).
+
+| Table.column | Rows | Old (example) | New (example) | Why the change is allowed |
+| --- | --- | --- | --- | --- |
+| `job_schedule.description_en` | 5 | "... (DG4 freshness rule, unchanged) ..."; "... (ADR-0057 §2) ..." | "... (the KPI freshness rule, unchanged) ..."; the ADR citation removed | An ordinary versioned, audited row (0028 guards). |
+| `automation_rule_version.change_summary` | 17 | "Seeded starter: the DG4 behaviour (D-142 Q3)."; starter.job_failed v2 "... (ADR-0053 §3): ..." | "Seeded starter version 1: the released starter behaviour."; the ADR citation removed | A published/superseded version's **content** is immutable (`automation_rule_version_guard`: triggers, conditions, actions, action types, run-as, service permissions, parameters, `content_sha256`). `change_summary` is the version's descriptive note, outside that content and its hash, so the executed behaviour and every execution's pinned version are untouched. A new superseding version would leave version 1 served with the same note. |
+| `procedure_definition.validation_rules_en` / `_ar` | 12 (6 definitions x 2 seeded configuration versions) | "The DG4 actual-submission rules apply unchanged."; ar "... المعتمدة في المرحلة الرابعة ..." | "The KPI actual-submission rules apply unchanged."; ar "... المعتمدة دون تغيير." | A published procedure version is immutable to the application (`procedure_definition_guard`, changes only in a draft), protecting what a launched instance was pinned to. The guard admits the migration role (`p5_procedure_version_editable`) for seeded-data corrections. Wording only: the validation behaviour is in code and unchanged; both versions change identically, so their comparison is unchanged. Two Arabic texts named an engineering delivery stage ("the fourth/third stage"), which a reader could take for a methodology phase (M0412). |
+| `service_identity.reason` | 49 | "Seeded declaration (0114; ADR-0053 §1): ... the DG5 handler needs." | "Seeded declaration: the narrowest set of read permissions this job's handler needs." | Only rows with `updated_by IS NULL` and the seeded reason. The declaration and the grant are unchanged. `service_identity_change` (append-only, served by no route) keeps the earlier reasons and gets the new one through the 0101 history trigger. |
+| `form_source_field.storage_ref` | 3 | "initiative_score_result (DG3 scoring engine)" | "initiative_score_result (scoring engine)" | An internal storage note of `computed` fields (not served). Neither text holds a `table.column`, before or after, so the forms code (`compare.ts` `COLUMN_REF`) derives no column from it. No version column; each row still gets its audit event. |
+
+**Not changed (append-only history).** `audit_event` rows written by earlier migrations keep their `reason` texts, five of which cite engineering task ids (`T-DG5-ARCH-02`, `T-DG5-ARCH-05`, `T-DG5-BE-T3`) and a decision id (`D-165`); the audit trail is never rewritten (ADR-0004). They are listed in the scan's `REPORTED_AUDIT_REASONS` and reported in the T-DG6-BE-RG3 handback.
+
+**Effect on deploy.** The listed rows read in business terms; their versions step by one (an open edit form holding the old ETag gets the usual 412 and reloads). The incremental search index feed picks the changed rows up from the audit trail like any other change.
 
 # P6 read-time classifications after round 8 (no migration)
 

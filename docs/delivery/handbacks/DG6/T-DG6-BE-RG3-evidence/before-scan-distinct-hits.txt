@@ -1,0 +1,23 @@
+     16 engineering_gate automation_rule_version.change_summary: Seeded starter: the DG4 behaviour (D-142 Q3).
+      1 engineering_gate form_source_field.storage_ref: benefit_formula_version (DG3 formula engine)
+      1 engineering_gate form_source_field.storage_ref: benefit_measurement (DG4 realized value)
+      1 engineering_gate form_source_field.storage_ref: initiative_score_result (DG3 scoring engine)
+      1 engineering_gate job_schedule.description_en: Find KPIs whose last accepted data became stale (DG4 freshness rule, unchanged) and open one operational exception per KPI; resolve it when the data is fresh again. Never changes a KPI value; never approves anything.
+      2 engineering_gate procedure_definition.validation_rules_en: Finance validation follows the DG4 rules; the validator is not the benefit owner.
+      2 engineering_gate procedure_definition.validation_rules_en: Missing mandatory evidence blocks submission unless an authorized exception is recorded (DG2-DG4 gate rules unchanged).
+      2 engineering_gate procedure_definition.validation_rules_en: The DG3 scoring and ranking rules apply unchanged.
+      2 engineering_gate procedure_definition.validation_rules_en: The DG4 BAU handover rules apply unchanged.
+      2 engineering_gate procedure_definition.validation_rules_en: The DG4 actual-submission rules apply unchanged.
+      2 engineering_gate procedure_definition.validation_rules_en: The DG4 change-control and impact-assessment rules apply unchanged.
+     40 engineering_gate service_identity.reason: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.
+      1 internal_reference automation_rule_version.change_summary: Seeded starter version 2 (ADR-0053 §3): a connector run failure or stale KPI data also opens or recurs the visible operational exception; version 1 stays as history.
+     16 internal_reference automation_rule_version.change_summary: Seeded starter: the DG4 behaviour (D-142 Q3).
+      1 internal_reference job_schedule.description_en: Alert once for each newly opened operational exception: one error log line and one in-app notification to each holder of operations.acknowledge (ADR-0053 §6). Never approves anything.
+      1 internal_reference job_schedule.description_en: Keep the search index current from the audit trail: update the search document of every record changed since the last run (ADR-0057 §2). Indexes titles, codes and descriptions only; never approves anything.
+      1 internal_reference job_schedule.description_en: Queue each enabled connector's scheduled run (hourly, daily or weekly) once per slot (ADR-0055 §2). Starts connector runs only; never approves anything.
+      1 internal_reference job_schedule.description_en: Rebuild the search index of every indexed record type from the current records (ADR-0057 §2). Weekly, or on demand by a technical administrator; never approves anything.
+     40 internal_reference service_identity.reason: Seeded declaration (0114; ADR-0053 §1): the narrowest set of read permissions the DG5 handler needs.
+      2 internal_reference service_identity.reason: Seeded declaration (0115; ADR-0053 §1). Declared exception (ADR-0057 §2, D-199): reads only the indexed columns (code, title, summary, status) of sensitive benefits, business cases and evidence; no value column; every reader is filtered at query time.
+      2 internal_reference service_identity.reason: Seeded declaration (0116; ADR-0053 §1, ADR-0055 §2).
+      3 internal_reference service_identity.reason: Seeded declaration (0117; ADR-0053 §1): the narrowest read set the operations job needs.
+      2 internal_reference service_identity.reason: Seeded declaration (0121; ADR-0053 §1): the narrowest read set the notification channel job needs.
