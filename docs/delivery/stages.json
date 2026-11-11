@@ -1853,7 +1853,7 @@
       "id": "DG6",
       "stage": "P6",
       "name": "Integration and system hardening",
-      "state": "REVIEWING",
+      "state": "FIXING",
       "depends_on": [
         "DG5"
       ],
@@ -1929,10 +1929,20 @@
           "source_commit": "3c8b9a3acfe657348249feb297b52cf208324a07",
           "records": {
             "domain-reviewer": "docs/delivery/reviews/DG6/round-5/domain-reviewer.json",
-            "code-security-reviewer": "docs/delivery/reviews/DG6/round-5/code-security-reviewer.json",
-            "qa-verifier": "docs/delivery/reviews/DG6/round-5/qa-verifier.json"
+            "code-security-reviewer": "docs/delivery/reviews/DG6/round-5/code-security-reviewer.json"
           },
-          "note": "DG6 clean re-gate round 5 on candidate 5e819f7a (2775 files, source 3c8b9a3): audit round-4 repair T-DG6-BE-RG3 (F-DG6-990, migration 0130; D-239) integrated; V18 on 60787d89f 15/15 exit 0, product tree equal. Full reviews plus verification of F-DG6-990; then the release audit."
+          "note": "DG6 clean re-gate round 5 on candidate 5e819f7a (2775 files, source 3c8b9a3): audit round-4 repair T-DG6-BE-RG3 (F-DG6-990, migration 0130; D-239) integrated; V18 on 60787d89f 15/15 exit 0, product tree equal. Full reviews plus verification of F-DG6-990; then the release audit. Result: code-security PASS; domain FAIL (F-DG6-911); the qa-verifier run was killed by a container restart (exit 143) before writing qa-verifier.json, so round 5 lists no qa record (its committed sidecars stay; F-DG6-951 imported)."
+        },
+        {
+          "round": 6,
+          "candidate_id": "sha256:5e819f7a579dbf98eb78f7f8e326a7ad57d939ed6a0762e3bea912f6dc735ed6",
+          "frozen_at": "2026-11-11T11:32:40Z",
+          "source_commit": "3c8b9a3acfe657348249feb297b52cf208324a07",
+          "records": {
+            "domain-reviewer": "docs/delivery/reviews/DG6/round-6/domain-reviewer.json",
+            "qa-verifier": "docs/delivery/reviews/DG6/round-6/qa-verifier.json"
+          },
+          "note": "DG6 clean re-gate round 6 on the same candidate 5e819f7a: domain and qa full reviews plus verification of F-DG6-911/951 (stages.json transition, fixed in e7cb240e7, meta-excluded) and, by qa, F-DG6-990. Code-security PASS of round 5 binds on this candidate."
         }
       ],
       "gate_record": "docs/delivery/gates/DG6.json",
@@ -1986,6 +1996,16 @@
           "state": "REVIEWING",
           "at": "2026-11-11T11:32:40Z",
           "note": "Re-gate round 5 frozen on candidate 5e819f7a."
+        },
+        {
+          "state": "FIXING",
+          "at": "2026-11-11T14:42:55Z",
+          "note": "Round 5 on 5e819f7a: code-security PASS; domain FAIL F-DG6-911; qa killed (exit 143), sidecar F-DG6-951 (same defect). Fixed in stages.json (e7cb240e7)."
+        },
+        {
+          "state": "REVIEWING",
+          "at": "2026-11-11T14:42:56Z",
+          "note": "Round 6 on the same candidate 5e819f7a: domain and qa."
         }
       ]
     },

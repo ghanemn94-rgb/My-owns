@@ -130,3 +130,7 @@ The audit T-DG6-AUDIT-R13 BLOCKED (B1–B5). The user chose a clean re-gate. D-2
 ## 2026-11-11: round 5, F-DG6-911 (domain, Medium) — stages.json transition
 - Domain round 5: FAIL on F-DG6-911: the DG6 history jumped VERIFYING -> REVIEWING at the round-5 freeze, with no FIXING entry for the round-4 audit BLOCK, so every `--historical` validator failed. F-DG6-990 verified CLOSED_VERIFIED by domain.
 - Fixed in `stages.json` (meta-excluded; the candidate is unchanged): a FIXING entry inserted at 06:42:33Z (the audit record commit), with a note that it was recorded late. `--historical` DG1-DG5 re-run after the fix (exit codes in the commit).
+
+## 2026-11-11: round 5 result, round 6 launched
+- Round 5 on 5e819f7a: code-security PASS; domain FAIL (F-DG6-911); qa killed by a container restart (exit 143, no record) with sidecar finding F-DG6-951 (same defect). F-DG6-990 CLOSED_VERIFIED by domain and code-security.
+- F-DG6-911/951 recorded FIXED_PENDING_VERIFICATION at e7cb240e7. Round 6 on the same candidate: domain and qa (T-DG6-REV-{DOM,QA}-RG-R6).
