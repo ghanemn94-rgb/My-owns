@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG6-952",
+      "stage_id": "DG6",
+      "requirement": "REQ-DLV-015",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "stages.json history timestamps out of order in two approved gates: DG5 VERIFYING stamped 2026-10-26T12:00:00Z before APPROVED at 06:30:00Z (committed at 04:34Z), DG0 REVIEWING 15:45:00Z before FIXING 15:16:00Z; the validator does not check the order",
+      "reproduction": "Main repository at HEAD c9eca65394134efabf896a2854705a26dfa0d1bf, read-only: a Python scan of docs/delivery/stages.json comparing each history entry's `at` with the previous one (the assignment asks the reviewer to confirm that 'nothing else in stages.json is inconsistent' after the F-DG6-911/951 fix). DG6's own history is in order (12 entries; the late FIXING entry of 06:42:33Z equals the commit time of the round-4 audit record, 9610047bc). Two earlier stages are not: (1) DG5 history[5] {VERIFYING, at 2026-10-26T12:00:00Z} is followed by history[6] {APPROVED, at 2026-10-26T06:30:00Z}; the VERIFYING entry was added by commit 5df7ea660 at 2026-10-26T04:34:41Z, so its time is about 7.5 hours after the commit that wrote it, and after the approval. (2) DG0 history[56] {REVIEWING, at 2026-09-30T15:45:00Z} is followed by history[57] {FIXING, at 2026-09-30T15:16:00Z}; the REVIEWING entry was written by commit 57d7a53f2 at 14:51:02Z (also a future time), and the FIXING entry by ffa3fae5a at 15:23:21Z. tools/gates/lib/rules.mjs checks the transition order and that the state equals the last entry (lines 111-113), but not that `at` is non-decreasing, so --historical DG1-DG5 and --pipeline all PASS (logs 40-*).",
+      "expected": "REQ-DLV-015: stages.json records each gate's state machine. Each history entry's time is the time the state change happened, so the entries are in time order and no entry is dated after the commit that writes it (as the F-DG6-911 fix did: its late entry carries the real time of the audit record and says it was recorded late).",
+      "actual": "Two entries in approved gates carry times that cannot be right: DG5's VERIFYING is dated after DG5's APPROVED and after the commit that wrote it; DG0's round-28 REVIEWING is dated after the FIXING that follows it. Nothing in DG6 is affected, no gate decision depends on these times, and every validator passes; this is documentation drift in delivery records with no behavioural effect (Low, not mandatory). It is outside the candidate (stages.json is meta-excluded). Repair direction (the orchestrator decides): correct the two times to the commit times with a note, or accept as an observation; a validator check that `at` never decreases would prevent a recurrence.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-6/42-stages-history-order.log",
+        "docs/delivery/stages.json",
+        "tools/gates/lib/rules.mjs",
+        "docs/delivery/test-evidence/DG6/qa/round-6/40-validate-pipeline.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG6/round-6/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-11T17:30:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in T-DG6-REV-QA-RG-R6 (round 6) on candidate 5e819f7a while verifying the F-DG6-911/951 fix. Low, not mandatory, not blocking: delivery-record timestamps in two approved gates; no product, candidate or gate-decision effect. Owner delivery-orchestrator (the only role that writes stages.json; the F-DG6-911/951 precedent)."
+        }
+      ]
+    }
+  ]
+}
