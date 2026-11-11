@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG6-911",
+      "stage_id": "DG6",
+      "requirement": "REQ-DLV-015",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "stages.json records DG6 jumping VERIFYING -> REVIEWING at the round-5 freeze (no FIXING or BLOCKED entry for the round-4 audit BLOCK and the T-DG6-BE-RG3 repair), so every validator mode fails: --historical DG1-DG5 exit 1",
+      "reproduction": "Repository at HEAD 8754f809db0a09e19ef67e7bf9f0dada4278e4fb (the round-5 freeze commit over source 3c8b9a3acfe657348249feb297b52cf208324a07), Node 24.21.0: `node tools/gates/validate.mjs --historical --stage DG5` (and DG4, DG3, DG2, DG1). Each prints 'FAIL gate DGn (historical) (1 problem) - stages.json: DG6 illegal transition VERIFYING -> REVIEWING' and exits 1 (val-historical-DG5.log .. DG1.log). `git diff 3c8b9a3ac HEAD -- docs/delivery/stages.json` shows the freeze appended {state: REVIEWING, at: 2026-11-11T11:32:40Z} directly after {state: VERIFYING, at: 2026-11-11T06:08:46Z}; tools/gates/lib/rules.mjs TRANSITIONS allows VERIFYING -> APPROVED | FIXING | BLOCKED only. Control: the same five validators run with stages.json served in memory with one FIXING entry inserted between the two (stages-fixing-patch.mjs via `node --import`; the repository is not changed) all print 'PASS gate DGn (historical)', exit 0 (val-historical-with-fixing-entry.log), so this transition is the only cause.",
+      "expected": "REQ-DLV-015: the gate state machine is enforced and a stage history passes the validator. After the round-4 release audit BLOCKED DG6 (F-DG6-990) and the repair T-DG6-BE-RG3 was integrated (60787d89f), the DG6 history records that period (VERIFYING -> FIXING, or -> BLOCKED -> FIXING) before the round-5 freeze moves it to REVIEWING. The assignment states that `validate.mjs --historical --stage DG5` (and DG4..DG1) must pass.",
+      "actual": "The DG6 history goes VERIFYING (06:08:46Z, round-3 PASS / audit started) -> REVIEWING (11:32:40Z, round-5 freeze); the audit's BLOCK and the repair period are not recorded. All five historical validators exit 1, and `validate.mjs --stage DG6` at gate time would fail on the same rule. The register check (`--register DG6`) passes. stages.json is outside the candidate (candidate.mjs META_EXCLUDES), so the repair needs no new candidate: no product file, test or review is affected.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-5/val-historical-DG5.log",
+        "docs/delivery/test-evidence/DG6/domain/round-5/val-historical-DG1.log",
+        "docs/delivery/test-evidence/DG6/domain/round-5/val-historical-with-fixing-entry.log",
+        "docs/delivery/test-evidence/DG6/domain/round-5/stages-fixing-patch.mjs",
+        "docs/delivery/test-evidence/DG6/domain/round-5/candidate-check.log",
+        "docs/delivery/stages.json",
+        "tools/gates/lib/rules.mjs"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG6/round-5/domain-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-11T12:42:14Z",
+          "status": "OPEN",
+          "note": "Raised by domain-reviewer in T-DG6-REV-DOM-RG-R5 on candidate 5e819f7a. Owner is the delivery-orchestrator, who alone writes stages.json (no implementer role owns it; the findings schema admits this owner). Medium because the gate cannot be validated until it is repaired (D-192); it does not affect the product or the candidate ID. Repair direction (the owner decides): record the missing state change(s) in the DG6 history, then re-run the historical validators."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG6-990",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate 5e819f7a (source 3c8b9a3a; product tree = 60787d89f, repair T-DG6-BE-RG3, migration 0130). (1) The round-4 reproduction: the auditor's probe zz-aud-r4-served-dg-labels, run unchanged on a production-initialized database migrated 0001-0130, prints 'served strings naming DG0-DG7: 0', 1/1 passed. That probe has two blind spots on this candidate: its bare service-identities call and its procedure detail calls by id both answer 400. So I added zz-domain-r5-served-dg-labels. It reads job schedules (22), job operations (22), service identities with organizationId (49, list and each detail), automation rules (16) and every rule's versions, and procedure definitions of BOTH seeded configuration versions (10 + 10, list and each detail by code). Result: 0 gate-word hits, 0 DG0-DG7 tokens of any kind and 0 decision/ADR ids. The audit trail as AUD (48 events) and as ADM (16) holds 0 DG tokens. Exit 0 (f990-probe-after.log). (2) Mutant M-0130: with 0130 moved out of the clone, the auditor's probe finds 24 (the round-4 count) and mine finds 122 gate hits and 123 decision/ADR ids, exit 1 (mutant-m0130-api.log). My rendered-screen probe also fails in en and ar (mutant-m0130-ui.log). Restored afterwards; git status showed only my untracked probe files. (3) Rendered screens, en and ar, on the production-initialized stack: job operations, jobs, the kpi.freshness_scan page ('the KPI freshness rule, unchanged'), service identities and a seeded job identity ('Seeded declaration: the narrowest set of read permissions this job's handler needs.'), procedures kpi_submission (en 'The KPI actual-submission rules apply unchanged.', ar '... المعتمدة دون تغيير') and benefit_validation, and automation. 0 DG tokens and 0 internal ids on every screen, including form-control values; 2/2 passed (ui-seeded-text.log, screenshots). (4) The new scan seeded-texts.test.ts passes 4/4. Its two exclusions are each needed and exact: mutant M-S1 (the audit-reason allow-list emptied) fails with the five D-239 reasons, and M-S2 (the audit 'from' side not skipped) fails with 0130's own previous wording (mutant-ms1/ms2 logs). (5) D-239 accepted: the 51 history rows and the 86 reword events all have organization_id and transformation_id NULL (zz-domain-r5-audit-history-scope). The global audit API serves only rows with an organization, the transformation audit serves only that transformation's rows, and the forms history does not select reason. So no product route serves these texts, and rewriting the append-only trail would break ADR-0004. Read in full: findings.json, the round-4 release-auditor.findings.json, the T-DG6-BE-RG3 handback and D-239.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-5/f990-probe-after.log",
+        "docs/delivery/test-evidence/DG6/domain/round-5/probes/zz-domain-r5-served-dg-labels.test.ts",
+        "docs/delivery/test-evidence/DG6/domain/round-5/mutant-m0130-api.log",
+        "docs/delivery/test-evidence/DG6/domain/round-5/mutant-m0130-ui.log",
+        "docs/delivery/test-evidence/DG6/domain/round-5/ui-seeded-text.log",
+        "docs/delivery/test-evidence/DG6/domain/round-5/probes/zz-domain-r5-seeded-text.spec.ts",
+        "docs/delivery/test-evidence/DG6/domain/round-5/seeded-scan-and-history.log",
+        "docs/delivery/test-evidence/DG6/domain/round-5/probes/zz-domain-r5-audit-history-scope.test.ts",
+        "docs/delivery/test-evidence/DG6/domain/round-5/mutant-ms1-audit-reasons.log",
+        "docs/delivery/test-evidence/DG6/domain/round-5/mutant-ms2-from-side.log",
+        "docs/delivery/test-evidence/DG6/domain/round-5/screenshots/en/zz-r5-job-kpi-freshness-scan.png",
+        "docs/delivery/test-evidence/DG6/domain/round-5/screenshots/ar/zz-r5-job-kpi-freshness-scan.png",
+        "docs/delivery/test-evidence/DG6/domain/round-5/screenshots/en/zz-r5-procedure-kpi-submission.png",
+        "docs/delivery/test-evidence/DG6/domain/round-5/screenshots/ar/zz-r5-procedure-kpi-submission.png"
+      ]
+    }
+  ]
+}
