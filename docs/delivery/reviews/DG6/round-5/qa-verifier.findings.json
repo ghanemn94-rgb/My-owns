@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG6-951",
+      "stage_id": "DG6",
+      "requirement": "REQ-DLV-015",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "stages.json at the round-5 freeze commit records DG6 VERIFYING -> REVIEWING (the round-4 audit BLOCKED is not recorded as FIXING or BLOCKED), so validate.mjs --pipeline and every required --historical validation (DG5, DG4, DG3, DG2, DG1) exit 1",
+      "reproduction": "Main repository at HEAD 8754f809db0a09e19ef67e7bf9f0dada4278e4fb (the round-5 freeze commit; source commit of candidate sha256:5e819f7a579dbf98eb78f7f8e326a7ad57d939ed6a0762e3bea912f6dc735ed6 is 3c8b9a3ac), Node 24.21.0, read-only: `node tools/gates/validate.mjs --pipeline` prints 'FAIL pipeline (active stage: DG6 REVIEWING) (1 problem) - stages.json: DG6 illegal transition VERIFYING -> REVIEWING' and exits 1; `node tools/gates/validate.mjs --historical --stage DG5` (and DG4, DG3, DG2, DG1) print 'FAIL gate DGx (historical) (1 problem)' with the same single problem and exit 1 (logs 40-validate-*.log). `git diff 3c8b9a3ac HEAD -- docs/delivery/stages.json` shows the freeze commit changed DG6 state VERIFYING -> REVIEWING and appended the history entry {state: REVIEWING, at: 2026-11-11T11:32:40Z, note: 'Re-gate round 5 frozen on candidate 5e819f7a.'} directly after {state: VERIFYING, at: 2026-11-11T06:08:46Z}. The round-4 audit T-DG6-AUDIT-RG-R4 BLOCKED the gate (docs/delivery/gates/DG6.json decision BLOCKED) and the repair T-DG6-BE-RG3 followed, but no FIXING or BLOCKED state was recorded. tools/gates/lib/rules.mjs TRANSITIONS: VERIFYING -> APPROVED | FIXING | BLOCKED only. `node tools/gates/validate.mjs --register DG6` passes (it does not read the transition history).",
+      "expected": "The assignment requires `--historical --stage DG5` to pass, 'and so must --historical --stage DG4, DG3, DG2 and DG1', and lists `--pipeline` as a required register-and-pipeline check; CLAUDE.md: 'Validator: node tools/gates/validate.mjs --stage DGx (exits non-zero on failure). Run it against the previous approved gate (--historical) before starting implementation in each stage.' REQ-DLV-015: the gate state machine PLANNED, BUILDING, REVIEWING, FIXING, VERIFYING, APPROVED (BLOCKED on failure). A gate whose audit blocks and is repaired records VERIFYING -> FIXING (or BLOCKED) -> REVIEWING, as DG6 itself did after re-gate rounds 1 and 2 (REVIEWING -> FIXING -> REVIEWING), and as the precedent findings F-DG4-104 and F-DG4-124 (same defect class, Medium, owner delivery-orchestrator) required. All the validations should exit 0.",
+      "actual": "The DG6 history goes VERIFYING (06:08:46Z, 'Re-gate round 3 ... Release audit T-DG6-AUDIT-RG-R4') -> REVIEWING (11:32:40Z, round 5 frozen), an illegal transition; the audit's BLOCKED decision and the FIXING period of T-DG6-BE-RG3 are missing from the stage history. Every validation that loads stages.json transitions fails: --pipeline and --historical --stage DG5/DG4/DG3/DG2/DG1 each exit 1 with exactly this one problem. The candidate is not affected (stages.json is delivery metadata outside the 2775-file manifest), no product behaviour changes, and no FAIL or BLOCKED was converted into an approval (gates/DG6.json still records BLOCKED), so it is not a mandatory violation; but the required gate validations cannot pass on this commit, and the gate cannot pass until the stage history is corrected. Owner: delivery-orchestrator, the only role that writes stages.json (implementers may not; the assignment's implementer-only owner list has no role that can repair it, so I follow the findings schema and the F-DG4-104/124 precedent).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-5/40-validate-pipeline.log",
+        "docs/delivery/test-evidence/DG6/qa/round-5/40-validate-historical_stage_DG5.log",
+        "docs/delivery/test-evidence/DG6/qa/round-5/40-validate-historical_stage_DG4.log",
+        "docs/delivery/test-evidence/DG6/qa/round-5/40-validate-historical_stage_DG3.log",
+        "docs/delivery/test-evidence/DG6/qa/round-5/40-validate-historical_stage_DG2.log",
+        "docs/delivery/test-evidence/DG6/qa/round-5/40-validate-historical_stage_DG1.log",
+        "docs/delivery/test-evidence/DG6/qa/round-5/40-validate-register_DG6.log",
+        "docs/delivery/stages.json",
+        "tools/gates/lib/rules.mjs",
+        "docs/delivery/gates/DG6.json"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG6/round-5/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-11T14:35:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in T-DG6-REV-QA-RG-R5 (round 5) on candidate 5e819f7a at HEAD 8754f809d. Medium (D-192: repaired before the gate), not mandatory: delivery-record state history only; the product candidate is unaffected and every product check of this review is reported separately. Repair direction (the orchestrator decides): record the missing transition(s) of the round-4 audit BLOCKED and the T-DG6-BE-RG3 repair (for example VERIFYING -> FIXING -> REVIEWING, with their real times) in DG6's history, then re-run --pipeline and --historical --stage DG5..DG1."
+        }
+      ]
+    }
+  ]
+}

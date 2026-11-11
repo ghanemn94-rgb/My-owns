@@ -1,0 +1,25 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG6-990",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified as a non-author on candidate sha256:5e819f7a579dbf98eb78f7f8e326a7ad57d939ed6a0762e3bea912f6dc735ed6 (source 3c8b9a3ac; product tree equal to 60787d89f, git diff empty; 2775 files). Read in full in findings.json and docs/delivery/reviews/DG6/round-4/release-auditor.findings.json. (1) The round-4 reproduction, unchanged: the release auditor's probe zz-aud-r4-served-dg-labels.test.ts, copied into a disposable clone at apps/api/test/integration/assistant/, on a disposable PostgreSQL 16.15 migrated 0001-0130 (122 files), prints 'served strings naming DG0-DG7: 0' (round 4: 24) and passes; the shipped scan (d) seeded-texts.test.ts passes 4/4 in the same run (log 30, exit 0). (2) Mutants that revert the fix are caught: M1 (0130 removed) brings back exactly the audit's 24 served strings and fails 3 of the 4 shipped scan tests (142 seeded violations; no reword audit events; the non-vacuity case cannot find 0130) (log 32, exit 1 by design); M2 (0130 without its kpi.freshness_scan row, a partial revert) leaves 2 served strings (the job's description in listJobSchedules and listJobOperations), and the scan reports the one seeded value and the changed audit counts (log 33, exit 1 by design). The clone was restored and git status was empty afterwards (logs 34, 34b). (3) My own probe (qa-rg-r5-seeded-0130.test.ts, log 31b, 2/2 pass): P1 on a database migrated to 0129 and then changed as a user could have changed it, applying 0130 alone: a job identity touched by a user and a job description that is no longer the seeded text are left byte for byte; kpi.freshness_scan, whose cron a user changed, is reworded with a version step from the user's version (3) and its cron kept; every other column of the five tables (content, content_sha256, status, publication and authorship of automation versions; every non-text column of procedure definitions, identities and source fields) equals its pre-0130 value; all 160 earlier audit_event rows and 50 service_identity_change rows are byte-identical afterwards; 0130 adds exactly 4+17+12+48+3 reword events (actor system, source migration); a second migrate applies nothing. P2: every parameterless GET of the contract (84 paths, plus one detail call per list; 179 calls) as an administrator and as an auditor serves no string naming DG0-DG7 (NFKC copy included). (4) Rendered screens (zz-qa-rg-r5-served-text-ui.spec.ts on with-stack.sh, run 5, log 36e, 2 passed): Jobs, Job operations (with the reworded 'the KPI freshness rule, unchanged' shown in English), all 49 service identities and all 16 automation rules: 68 screens per language, en and ar, 0 hits in visible text or form values. Its runs 1-4 failed on my probe's own waits, pagination and a page dev.admin may not read (logs 36, 36b, 36c, 36d; explained in the record). (5) Independent SQL scan of every text, array and JSON column (1,831) of the production-initialized and the demo stack databases (logs 35c, 35d): no current value names DG0-DG7. The only matches are append-only history (the 'from' side of audit changes, the five audit_event.reason texts D-239 keeps, service_identity_change) and, in demo data only, the gate-submission snapshot disclaimer 'unrelated to the engineering delivery gates DG0-DG7', which is the allowlisted note of REPORTED_EXISTING_FINDINGS. I agree with D-239: the five audit reasons carry task and decision ids in the append-only trail (ADR-0004), and rewriting the trail would break a stronger invariant.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-5/30-f990-audit-probe-and-scan-on-candidate.log",
+        "docs/delivery/test-evidence/DG6/qa/round-5/31b-probe-qa-rg-r5-seeded-0130-run2.log",
+        "docs/delivery/test-evidence/DG6/qa/round-5/32-mutant-m1-no-0130.log",
+        "docs/delivery/test-evidence/DG6/qa/round-5/33-mutant-m2-0130-without-freshness.log",
+        "docs/delivery/test-evidence/DG6/qa/round-5/33-mutant-m2.applied",
+        "docs/delivery/test-evidence/DG6/qa/round-5/34-clone-restored.log",
+        "docs/delivery/test-evidence/DG6/qa/round-5/36e-probe-f990-rendered-screens-run5.log",
+        "docs/delivery/test-evidence/DG6/qa/round-5/35c-db-text-scan-demo-stack-run2.log",
+        "docs/delivery/test-evidence/DG6/qa/round-5/35d-db-text-scan-production-stack-run2.log",
+        "docs/delivery/test-evidence/DG6/qa/tests/round-5/qa-rg-r5-seeded-0130.test.ts",
+        "docs/delivery/test-evidence/DG6/qa/tests/round-5/zz-qa-rg-r5-served-text-ui.spec.ts",
+        "docs/delivery/test-evidence/DG6/qa/tests/round-5/qa-rg-r5-db-text-scan.sh",
+        "docs/delivery/test-evidence/DG6/audit/round-4/probes/zz-aud-r4-served-dg-labels.test.ts"
+      ]
+    }
+  ]
+}
