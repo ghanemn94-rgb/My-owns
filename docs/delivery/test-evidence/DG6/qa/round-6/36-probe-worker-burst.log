@@ -1,0 +1,27 @@
+## start 2026-11-11T17:25:15Z node v24.21.0 cwd /var/tmp/mth-run.cZDw42/claude-0/rv load: 2.95 1.92 2.13
+## cmd: tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration apps/worker/test/integration/qa-r1-worker-burst.test.ts
+port-policy: PostgreSQL listening on port 32516 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.cZDw42/claude-0/rv
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwce3iir_317c0ea5 (server_encoding UTF8); applied 122 migrations to a fresh database
+stdout | apps/worker/test/integration/qa-r1-worker-burst.test.ts > qa-verifier R1 worker burst (D-203 O-1, REQ-S20-013) > defaults vs batch-of-one: every job once, all completed; batching drains faster
+QA-R1 worker burst: N=400 handler 25 ms; batch 8 x 4 drained in 3173 ms (126.1 jobs/s); batch 1 x 1 in 12027 ms (33.3 jobs/s); load 2.8 2.0 2.1
+
+stdout | apps/worker/test/integration/qa-r1-worker-burst.test.ts > qa-verifier R1 worker burst (D-203 O-1, REQ-S20-013) > two workers on one queue (defaults): every job handled exactly once, all completed
+QA-R1 worker burst, two workers: N=400 drained in 1659 ms; duplicates 0
+
+ ✓ |integration| apps/worker/test/integration/qa-r1-worker-burst.test.ts (2 tests) 20896ms
+   ✓ qa-verifier R1 worker burst (D-203 O-1, REQ-S20-013) > defaults vs batch-of-one: every job once, all completed; batching drains faster  16104ms
+   ✓ qa-verifier R1 worker burst (D-203 O-1, REQ-S20-013) > two workers on one queue (defaults): every job handled exactly once, all completed  2053ms
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  17:25:17
+   Duration  28.39s (transform 1.95s, setup 0ms, collect 3.46s, tests 20.90s, environment 0ms, prepare 69ms)
+
+## end 2026-11-11T17:25:46Z rc=0

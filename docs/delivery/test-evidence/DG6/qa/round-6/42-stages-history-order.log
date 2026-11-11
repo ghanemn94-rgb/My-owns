@@ -1,0 +1,41 @@
+## 2026-11-11T17:25:24Z HEAD aaef2cf474411aae4cbfb1cdb5e371a1a3fa058d; read-only scan of docs/delivery/stages.json: history order per stage, state vs last entry
+DG0: state APPROVED, last entry APPROVED, 61 entries, out-of-order pairs: [(57, 'REVIEWING', '2026-09-30T15:45:00Z', 'FIXING', '2026-09-30T15:16:00Z')]
+DG1: state APPROVED, last entry APPROVED, 11 entries, out-of-order pairs: none
+DG2: state APPROVED, last entry APPROVED, 38 entries, out-of-order pairs: none
+DG3: state APPROVED, last entry APPROVED, 17 entries, out-of-order pairs: none
+DG4: state APPROVED, last entry APPROVED, 25 entries, out-of-order pairs: none
+DG5: state APPROVED, last entry APPROVED, 7 entries, out-of-order pairs: [(6, 'VERIFYING', '2026-10-26T12:00:00Z', 'APPROVED', '2026-10-26T06:30:00Z')]
+DG6: state REVIEWING, last entry REVIEWING, 12 entries, out-of-order pairs: none
+DG7: state PLANNED, last entry PLANNED, 1 entries, out-of-order pairs: none
+DG6 history:
+   PLANNED 2026-09-28T11:30:00Z 
+   BUILDING 2026-10-26T07:30:00Z DG6 starts after DG5 APPROVED (D-193, D-194): planning task T-DG6-ARCH-00 first.
+   REVIEWING 2026-11-10T08:33:58Z Clean re-gate (D-238): round 1 frozen on candidate b506084b.
+   FIXING 2026-11-10T12:33:11Z Re-gate round 1: QA and domain PASS, code-security FAIL (F-DG6-920 Medium); F-DG6-900 Low also open. Repairs T
+   REVIEWING 2026-11-10T18:13:01Z Re-gate round 2 frozen on candidate d62b187b.
+   FIXING 2026-11-10T21:21:06Z Re-gate round 2: domain FAIL (F-DG6-960), code-security FAIL (F-DG6-970, F-DG6-971); qa interrupted by a conta
+   REVIEWING 2026-11-11T01:42:18Z Re-gate round 3 frozen on candidate 32e41b55.
+   VERIFYING 2026-11-11T06:08:46Z Re-gate round 3 on 32e41b55: domain, code-security and qa all PASS; F-DG6-960/970/971/980 CLOSED_VERIFIED; no 
+   FIXING 2026-11-11T06:42:33Z Release audit T-DG6-AUDIT-RG-R4 (round 4) BLOCKED on F-DG6-990 (Low, seeded product text naming DG gates). Rep
+   REVIEWING 2026-11-11T11:32:40Z Re-gate round 5 frozen on candidate 5e819f7a.
+   FIXING 2026-11-11T14:42:55Z Round 5 on 5e819f7a: code-security PASS; domain FAIL F-DG6-911; qa killed (exit 143), sidecar F-DG6-951 (same 
+   REVIEWING 2026-11-11T14:42:56Z Round 6 on the same candidate 5e819f7a: domain and qa.
+## commits that introduced the out-of-order entries (git log -S):
+"at": "2026-10-26T12:00:00Z" -> 5df7ea660 committed 2026-10-26T04:34:41+00:00: DG5 corrected re-gate: round-3 domain acceptances imported (F-DG5-120, 121); VERIFYING; release-audit assignments (V round 3, D round 4)
+"at": "2026-10-26T06:30:00Z" -> 604fb5bcc committed 2026-10-26T05:43:03+00:00: DG5 APPROVED: stage state
+"at": "2026-09-30T15:45:00Z" -> 57d7a53f2 committed 2026-09-30T14:51:02+00:00: DG0: freeze round-28 candidate, round-28 assignments; state REVIEWING
+"at": "2026-09-30T15:16:00Z" -> ffa3fae5a committed 2026-09-30T15:23:21+00:00: DG0: freeze round-29 candidate, round-29 assignments; state REVIEWING
+"at": "2026-11-11T06:42:33Z" -> e7cb240e7 committed 2026-11-11T13:38:24+00:00: DG6 re-gate: stages.json FIXING entry for the round-4 audit BLOCK (F-DG6-911)
+## round-4 audit record commit (the time the late DG6 FIXING entry cites):
+9610047bc 2026-11-11T06:42:33+00:00 run: DG6-T-DG6-AUDIT-RG-R4-release-auditor-20261111T060928Z-11aff7a3 (review evidence, auto-committed by run-agent.sh)
+## validator rules on history (tools/gates/lib/rules.mjs 105-114):
+    for (const e of specPolicyErrors(s.candidate_spec)) errors.push(`stages.json: ${s.id} candidate_spec ${e}`);
+    const hist = s.history;
+    if (hist[0].state !== "PLANNED") errors.push(`stages.json: ${s.id} history must start at PLANNED`);
+    for (let i = 1; i < hist.length; i++) {
+      const from = hist[i - 1].state;
+      const to = hist[i].state;
+      if (!TRANSITIONS[from].includes(to)) errors.push(`stages.json: ${s.id} illegal transition ${from} -> ${to}`);
+    }
+    if (hist[hist.length - 1].state !== s.state) errors.push(`stages.json: ${s.id} state ${s.state} differs from last history entry ${hist[hist.length - 1].state}`);
+    for (const dep of s.depends_on) {
