@@ -117,3 +117,8 @@ The audit T-DG6-AUDIT-R13 BLOCKED (B1–B5). The user chose a clean re-gate. D-2
 - Round 2 on d62b187b: domain FAIL (F-DG6-960), code-security FAIL (F-DG6-970 Medium, F-DG6-971 Low), qa interrupted by a container restart (exit 143, no verdict record; sidecar F-DG6-980 imported). 960/970/980: one history-channel defect. F-DG6-900 and F-DG6-920 CLOSED_VERIFIED.
 - Repair T-DG6-BE-RG2 (a0cf22bba; migration 0129). V17 on a0cf22bba: 15/15 exit 0 (integration 4366; e2e 556 + 556; root 288; demo 10).
 - Round 3 frozen: candidate sha256:32e41b55… (2773 files, source f56f1b3d2). Reviewers T-DG6-REV-{DOM,CS,QA}-RG-R3.
+
+## 2026-11-11: DG6 clean re-gate round 3 result, release audit round 4
+- Round 3 on 32e41b55: domain PASS, code-security PASS, qa PASS (second attempt; the first was killed by a container restart). No new finding. F-DG6-960/970/971/980 CLOSED_VERIFIED.
+- Orchestrator record fixes before the audit: `fix_revision` recorded for F-DG6-900 (ccd078e91…), 920 (80314f134…), 960/970/971/980 (a0cf22bba…); the verification block of 960/970/971/980 set to the code-security-reviewer round-3 sidecar (the one the validator selects among three same-round PASS verifications); `stages.json` round 2 no longer lists the qa record that the killed run never wrote (the B5 class of defect).
+- State VERIFYING. Next: release audit T-DG6-AUDIT-RG-R4 (round 4, assignment `assignments/DG6/round-4/release-auditor.md`).

@@ -1853,7 +1853,7 @@
       "id": "DG6",
       "stage": "P6",
       "name": "Integration and system hardening",
-      "state": "REVIEWING",
+      "state": "VERIFYING",
       "depends_on": [
         "DG5"
       ],
@@ -1896,10 +1896,9 @@
           "source_commit": "71ff750ed17ea281c99f20a85d9f9663bb07efb8",
           "records": {
             "domain-reviewer": "docs/delivery/reviews/DG6/round-2/domain-reviewer.json",
-            "code-security-reviewer": "docs/delivery/reviews/DG6/round-2/code-security-reviewer.json",
-            "qa-verifier": "docs/delivery/reviews/DG6/round-2/qa-verifier.json"
+            "code-security-reviewer": "docs/delivery/reviews/DG6/round-2/code-security-reviewer.json"
           },
-          "note": "DG6 clean re-gate round 2 on candidate d62b187b (2771 files, source 71ff750): round-1 repairs T-DG6-BE-RG1 (F-DG6-920, migration 0128) and T-DG6-FE-RG1 (F-DG6-900) integrated; V16 on ccd078e91 15/15 exit 0, product tree equal. Full reviews plus verification of F-DG6-900 and F-DG6-920."
+          "note": "DG6 clean re-gate round 2 on candidate d62b187b (2771 files, source 71ff750): round-1 repairs T-DG6-BE-RG1 (F-DG6-920, migration 0128) and T-DG6-FE-RG1 (F-DG6-900) integrated; V16 on ccd078e91 15/15 exit 0, product tree equal. Full reviews plus verification of F-DG6-900 and F-DG6-920. The round-2 qa-verifier run was killed by a container restart (exit 143) before writing qa-verifier.json; its committed findings/verifications sidecars stay as evidence (F-DG6-980 imported; its verifications not imported, no record). No qa record exists for round 2."
         },
         {
           "round": 3,
@@ -1912,6 +1911,16 @@
             "qa-verifier": "docs/delivery/reviews/DG6/round-3/qa-verifier.json"
           },
           "note": "DG6 clean re-gate round 3 on candidate 32e41b55 (2773 files, source f56f1b3): repair T-DG6-BE-RG2 (F-DG6-960/970/980, F-DG6-971; migration 0129) integrated; V17 on a0cf22bba 15/15 exit 0, product tree equal. Round 2 qa run was interrupted (exit 143, no verdict record); full reviews by all three."
+        },
+        {
+          "round": 4,
+          "candidate_id": "sha256:32e41b5581a9beeba357a6c0dd5b50c414226910232ebfbb711c2178024376b5",
+          "frozen_at": "2026-11-11T01:42:18Z",
+          "source_commit": "f56f1b3d24c00d1803f6627c99b3f422a47b3014",
+          "records": {
+            "release-auditor": "docs/delivery/reviews/DG6/round-4/release-auditor.json"
+          },
+          "note": "DG6 clean re-gate round 4: the release-auditor single audit and decision run T-DG6-AUDIT-RG-R4 on the same candidate 32e41b55 (no finding awaits acceptance)."
         }
       ],
       "gate_record": "docs/delivery/gates/DG6.json",
@@ -1950,6 +1959,11 @@
           "state": "REVIEWING",
           "at": "2026-11-11T01:42:18Z",
           "note": "Re-gate round 3 frozen on candidate 32e41b55."
+        },
+        {
+          "state": "VERIFYING",
+          "at": "2026-11-11T06:08:46Z",
+          "note": "Re-gate round 3 on 32e41b55: domain, code-security and qa all PASS; F-DG6-960/970/971/980 CLOSED_VERIFIED; no new finding. Release audit T-DG6-AUDIT-RG-R4 (round 4, single run: no finding awaits acceptance)."
         }
       ]
     },
