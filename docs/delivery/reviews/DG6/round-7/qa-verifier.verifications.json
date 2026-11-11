@@ -1,0 +1,52 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG6-911",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:10f71f2418567878bffddfb004efbf342347029fd799dd3076af40aca32e2fc5 (source d8868b2a5c074b13c04693a88644c25ef2792583, which contains the fix e7cb240e7: git merge-base --is-ancestor rc=0, log 00-candidate-start-main). Read in full in findings.json and in the domain round-5 record that raised it. Reproduction re-run on the main repository at HEAD 04569998d (the round-7 freeze commit), Node 24.21.0: validate.mjs --historical --stage DG5, DG4, DG3, DG2, DG1 and --pipeline each PASS, exit 0 (logs 40-*). DG6's stages.json history (14 entries) has every transition legal under tools/gates/lib/rules.mjs TRANSITIONS (PLANNED, BUILDING, REVIEWING, FIXING, REVIEWING, FIXING, REVIEWING, VERIFYING, FIXING 06:42:33Z (the fix, noted as recorded late), REVIEWING, FIXING, REVIEWING, FIXING, REVIEWING), its times are non-decreasing, and the state REVIEWING equals the last entry (log 42). Mutants (stages.json served in memory with node --import, the repository is untouched; git status of stages.json empty before and after): M1 removes the 06:42:33Z FIXING entry (the fix reverted), and --historical DG5, DG1 and --pipeline each FAIL with exactly 'DG6 illegal transition VERIFYING -> REVIEWING', exit 1. M2 sets the DG6 state to FIXING while the last entry is REVIEWING: FAIL 'state FIXING differs from last history entry', exit 1. The control M0 passes all three with exit 0 (log 41). The validator therefore catches a regression of the fix.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-7/40-validate-historical_stage_DG5.log",
+        "docs/delivery/test-evidence/DG6/qa/round-7/40-validate-historical_stage_DG4.log",
+        "docs/delivery/test-evidence/DG6/qa/round-7/40-validate-historical_stage_DG3.log",
+        "docs/delivery/test-evidence/DG6/qa/round-7/40-validate-historical_stage_DG2.log",
+        "docs/delivery/test-evidence/DG6/qa/round-7/40-validate-historical_stage_DG1.log",
+        "docs/delivery/test-evidence/DG6/qa/round-7/40-validate-pipeline.log",
+        "docs/delivery/test-evidence/DG6/qa/round-7/41-f911-951-stages-mutants.log",
+        "docs/delivery/test-evidence/DG6/qa/round-7/42-stages-history-order.log",
+        "docs/delivery/test-evidence/DG6/qa/round-7/00-candidate-start-main.log",
+        "docs/delivery/test-evidence/DG6/qa/round-7/scripts/stages-mutants.sh",
+        "docs/delivery/test-evidence/DG6/qa/tests/round-6/stages-serve-mutant.mjs"
+      ]
+    },
+    {
+      "finding_id": "F-DG6-951",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "The same defect as F-DG6-911 (raised by my round-5 qa sidecar, read in full there and in findings.json); the same fix e7cb240e7, an ancestor of this candidate's source_commit d8868b2a5. Its reproduction (validate.mjs --pipeline and --historical --stage DG5..DG1 on the main repository) re-run at HEAD 04569998d, Node 24.21.0: all six PASS, exit 0 (logs 40-*); --register DG6 PASS, exit 0. Mutant M1 (the FIXING entry of the fix removed, served in memory) makes --pipeline and --historical DG5/DG1 FAIL with exactly 'DG6 illegal transition VERIFYING -> REVIEWING', exit 1; M2 (state not equal to the last entry) FAIL, exit 1; the control passes (log 41). Nothing else in DG6's history is inconsistent: transitions legal, times in order, state equals the last entry (log 42). The two out-of-order times in approved gates DG0 and DG5 are F-DG6-952, unchanged and unrelated to this fix.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-7/40-validate-pipeline.log",
+        "docs/delivery/test-evidence/DG6/qa/round-7/40-validate-historical_stage_DG5.log",
+        "docs/delivery/test-evidence/DG6/qa/round-7/40-validate-historical_stage_DG1.log",
+        "docs/delivery/test-evidence/DG6/qa/round-7/40-validate-register_DG6.log",
+        "docs/delivery/test-evidence/DG6/qa/round-7/41-f911-951-stages-mutants.log",
+        "docs/delivery/test-evidence/DG6/qa/round-7/42-stages-history-order.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG6-990",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Regression check on this candidate (product tree byte-identical to 60787d89f and to 3c8b9a3: both diffs outside docs/delivery are empty, log 00-candidate-start-main). In the disposable clone at d8868b2a5 on a disposable PostgreSQL (port 32510), the release auditor's round-4 probe zz-aud-r4-served-dg-labels.test.ts, unchanged, finds 0 served DG0-DG7 strings, and the shipped scan seeded-texts.test.ts passes 4/4 (5/5 together, exit 0, log 30). My round-5 probe of 0130's row guards, version steps, audit events, append-only history and every parameterless GET as admin and auditor passes 2/2 (log 31). Mutants: M1 (0130 removed) makes 4 of the 5 tests fail: the audit probe, scan (a), the 0130 audit assertion, and the not-vacuous test (it uses 0130 as its reference). Exit 1, log 32. M2 (0130 without its kpi.freshness_scan row) makes 3 of 5 fail: the audit probe, scan (a) and the audit assertion. Exit 1, log 33. Both expected failures show the tests catch a revert. The clone is restored and clean (log 34).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/qa/round-7/30-f990-audit-probe-and-scan-on-candidate.log",
+        "docs/delivery/test-evidence/DG6/qa/round-7/31-probe-qa-rg-r5-seeded-0130.log",
+        "docs/delivery/test-evidence/DG6/qa/round-7/32-mutant-m1-no-0130.log",
+        "docs/delivery/test-evidence/DG6/qa/round-7/33-mutant-m2-0130-without-freshness.log",
+        "docs/delivery/test-evidence/DG6/qa/round-7/34-clone-restored.log",
+        "docs/delivery/test-evidence/DG6/audit/round-4/probes/zz-aud-r4-served-dg-labels.test.ts",
+        "docs/delivery/test-evidence/DG6/qa/tests/round-5/qa-rg-r5-seeded-0130.test.ts"
+      ]
+    }
+  ]
+}
