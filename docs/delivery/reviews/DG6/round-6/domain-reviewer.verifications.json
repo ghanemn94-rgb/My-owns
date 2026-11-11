@@ -1,0 +1,36 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG6-911",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Re-ran the round-5 reproduction. At the round-5 freeze 8754f809d (the fix reverted: the mutant), --historical DG5 and DG1 print 'DG6 illegal transition VERIFYING -> REVIEWING' and exit 1. With the stages.json of e7cb240e7 (the fix: FIXING 2026-11-11T06:42:33Z between VERIFYING 06:08:46Z and REVIEWING 11:32:40Z, with a note saying it was recorded late) both exit 0. The comparison served each revision's stages.json in memory (stages-serve-rev.mjs); no file was changed. Disclosure: the commit that started this round, 3c07fa84e, brought a different inconsistency: DG6 'state' FIXING while the last history entry was REVIEWING. My first runs of --historical DG5, DG4 and DG3 (run1-*.log, 14:44Z) failed with exit 1 on 'DG6 state FIXING differs from last history entry REVIEWING'. The orchestrator corrected it during my run in c9eca6539 (14:46:42Z, state REVIEWING, stages.json only). At HEAD c9eca6539 all five --historical validators (DG5 to DG1), --pipeline and --register DG6 exit 0. The DG6 history is legal and monotone, and the state matches its last entry. The candidate, manifest and round 6 records point to existing files (stages-consistency.log). stages.json is excluded from the candidate, so the candidate ID is unchanged (5e819f7a, 2775 files).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-6/validators-by-revision.log",
+        "docs/delivery/test-evidence/DG6/domain/round-6/stages-serve-rev.mjs",
+        "docs/delivery/test-evidence/DG6/domain/round-6/validate-historical-DG5.log",
+        "docs/delivery/test-evidence/DG6/domain/round-6/validate-historical-DG1.log",
+        "docs/delivery/test-evidence/DG6/domain/round-6/validate-historical-exits.txt",
+        "docs/delivery/test-evidence/DG6/domain/round-6/validate-pipeline.log",
+        "docs/delivery/test-evidence/DG6/domain/round-6/stages-consistency.log",
+        "docs/delivery/test-evidence/DG6/domain/round-6/run1-validate-historical-DG5.log",
+        "docs/delivery/test-evidence/DG6/domain/round-6/head-at-final-validators.txt"
+      ]
+    },
+    {
+      "finding_id": "F-DG6-951",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "This is the same defect as F-DG6-911, raised by qa-verifier in its round-5 sidecar. Its reproduction is '--pipeline' and '--historical --stage DG5..DG1' exiting 1 on 'DG6 illegal transition VERIFYING -> REVIEWING' at 8754f809d. I re-ran it with that revision's stages.json served in memory: exit 1, the same problem (validators-by-revision.log). That run is the fix-reverted mutant. At HEAD c9eca6539: --pipeline prints 'PASS pipeline (active stage: DG6 REVIEWING)', exit 0. --historical DG5, DG4, DG3, DG2 and DG1 each print 'PASS gate DGn (historical)', exit 0, and --register DG6 passes, exit 0 (validate-historical-exits.txt). I disclose the transient 3c07fa84e state mismatch and its correction in c9eca6539, as for F-DG6-911. gates/DG6.json still records the round-4 BLOCKED decision for candidate 32e41b55, which is correct until the next audit. No FAIL or BLOCKED was turned into an approval.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/domain/round-6/validators-by-revision.log",
+        "docs/delivery/test-evidence/DG6/domain/round-6/validate-pipeline.log",
+        "docs/delivery/test-evidence/DG6/domain/round-6/validate-historical-exits.txt",
+        "docs/delivery/test-evidence/DG6/domain/round-6/validate-historical-DG4.log",
+        "docs/delivery/test-evidence/DG6/domain/round-6/validate-historical-DG3.log",
+        "docs/delivery/test-evidence/DG6/domain/round-6/validate-historical-DG2.log",
+        "docs/delivery/test-evidence/DG6/domain/round-6/stages-consistency.log"
+      ]
+    }
+  ]
+}
