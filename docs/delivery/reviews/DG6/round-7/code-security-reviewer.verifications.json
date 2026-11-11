@@ -1,0 +1,33 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG6-911",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:10f71f2418567878bffddfb004efbf342347029fd799dd3076af40aca32e2fc5 (source d8868b2a5c074b13c04693a88644c25ef2792583). I read the finding in full in findings.json and in the raising sidecar docs/delivery/reviews/DG6/round-5/domain-reviewer.findings.json.\n(1) Reproduction re-run. On the live repository at HEAD 04569998d (the round-7 freeze commit over d8868b2a5), Node 24.21.0: `validate.mjs --historical --stage` DG5, DG4, DG3, DG2 and DG1 each print 'PASS gate DGn (historical)' and exit 0; `--pipeline` prints 'PASS pipeline (active stage: DG6 REVIEWING)', exit 0; `--register DG6` PASS, exit 0 (45-validators.log). In round 5 the same commands exited 1 on 'DG6 illegal transition VERIFYING -> REVIEWING'.\n(2) The fix is inside this candidate's history. e7cb240e7 (stages.json and progress.md only, 13:38:24Z) is an ancestor of the source commit d8868b2a5 (01-candidate-identity.log). stages.json AS OF d8868b2a5 has the entry 8 {FIXING, 2026-11-11T06:42:33Z} and checks clean (46-stages-history.log, second part). Its time equals the commit time of the round-4 audit record, 9610047bc, 06:42:33Z, and its note says it was recorded late. That is honest and acceptable.\n(3) Mutant. My script (scripts/stages-check.mjs) removes only that FIXING entry from a copy under $TMPDIR and runs the validator's own loadStages(). The original gives no errors; the mutant gives exactly 'stages.json: DG6 illegal transition VERIFYING -> REVIEWING', the round-5 failure. The fix is what the validator sees.\n(4) Nothing else in DG6's history is inconsistent. 14 entries at HEAD, 13 at the source commit. Every transition is legal under rules.mjs TRANSITIONS, the state equals the last entry (REVIEWING at HEAD, FIXING at the source commit), and the times never decrease. The two out-of-order times are in the APPROVED gates DG5 and DG0 (F-DG6-952), not in DG6.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-7/45-validators.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-7/46-stages-history.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-7/scripts/stages-check.mjs",
+        "docs/delivery/test-evidence/DG6/code-security/round-7/01-candidate-identity.log",
+        "docs/delivery/reviews/DG6/round-5/domain-reviewer.findings.json",
+        "docs/delivery/stages.json",
+        "tools/gates/lib/rules.mjs"
+      ]
+    },
+    {
+      "finding_id": "F-DG6-951",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:10f71f2418567878bffddfb004efbf342347029fd799dd3076af40aca32e2fc5 (source d8868b2a5c074b13c04693a88644c25ef2792583). This is the same defect as F-DG6-911, raised by qa-verifier. I read it in full in findings.json and in docs/delivery/reviews/DG6/round-5/qa-verifier.findings.json.\nIts reproduction is `validate.mjs --pipeline` plus `--historical --stage` DG5..DG1. All six exit 0 on the live repository at HEAD 04569998d (45-validators.log): 'PASS pipeline (active stage: DG6 REVIEWING)' and 'PASS gate DGn (historical)' for n = 5..1.\nThe fix e7cb240e7 is an ancestor of the source commit d8868b2a5 (01-candidate-identity.log), so it lies inside this frozen candidate's history, as D-240 intends.\nThe mutant (removing the late FIXING entry, scripts/stages-check.mjs) brings back exactly the single problem the finding reported, through the validator's own loadStages().\nThe DG6 history is otherwise consistent: transitions are legal, the state equals the last entry, and the times are non-decreasing (46-stages-history.log). gates/DG6.json is not changed by this fix, and nothing turned a FAIL or BLOCKED into an approval.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-7/45-validators.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-7/46-stages-history.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-7/scripts/stages-check.mjs",
+        "docs/delivery/test-evidence/DG6/code-security/round-7/01-candidate-identity.log",
+        "docs/delivery/reviews/DG6/round-5/qa-verifier.findings.json",
+        "docs/delivery/stages.json"
+      ]
+    }
+  ]
+}

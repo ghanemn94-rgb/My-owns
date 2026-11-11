@@ -1,0 +1,511 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG6",
+  "round": 7,
+  "candidate_id": "sha256:10f71f2418567878bffddfb004efbf342347029fd799dd3076af40aca32e2fc5",
+  "source_commit": "d8868b2a5c074b13c04693a88644c25ef2792583",
+  "reviewer_role": "code-security-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG6-T-DG6-REV-CS-RG-R7-code-security-reviewer-20261111T184131Z-5fd9c5d0",
+    "session_id": "5fd9c5d0-4d54-4e67-9a31-3d5a49c84be4"
+  },
+  "implementation_author": [
+    "solution-architect",
+    "backend-workflow-engineer",
+    "kpi-benefits-engineer",
+    "frontend-ux-engineer",
+    "devops-engineer",
+    "transformation-analyst",
+    "qa-verifier",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I am code-security-reviewer, session 5fd9c5d0-4d54-4e67-9a31-3d5a49c84be4, task T-DG6-REV-CS-RG-R7. I verified the assignment's sha256 (e31a9f8f56480219025c674be6da98675dfd0cd267710c92d011b3e64ca96d58) and authored no implementation in the DG6 scope.\nAuthors: P6 and its repairs were built by solution-architect, backend-workflow-engineer (including T-DG6-BE-RG3, migration 0130), kpi-benefits-engineer, frontend-ux-engineer, devops-engineer and transformation-analyst. qa-verifier did the QA authoring, and delivery-orchestrator the integration and the stages.json record fix e7cb240e7.\nIndependence: I formed this verdict before reading any other reviewer's record for this round. During my run HEAD moved once, when the domain reviewer's round-7 run was auto-committed (31f54804d). I read only its commit subject and opened none of its files (90-cleanup.log).\nContext I read: the round-5 sidecars that raised F-DG6-911 (domain) and F-DG6-951 (qa); findings.json entries 911, 951, 952 and 990; D-238 to D-240; the orchestrator's V18 README and summary; my own round-1 to round-5 records and scripts.\nMethod: I modified no implementation source. Every product command ran in one disposable clone under this run's $TMPDIR ($TMPDIR/rv), which I removed afterwards (90-cleanup.log)."
+  },
+  "assignment": "docs/delivery/assignments/DG6/round-7/code-security-reviewer.md",
+  "requirements_checked": [
+    "REQ-S01-005",
+    "REQ-S02-006",
+    "REQ-S10-002",
+    "REQ-S10-004",
+    "REQ-S12-019",
+    "REQ-S12-023",
+    "REQ-S12-024",
+    "REQ-S13-011",
+    "REQ-S13-013",
+    "REQ-S15-010",
+    "REQ-S16-006",
+    "REQ-S16-007",
+    "REQ-S16-022",
+    "REQ-S16-023",
+    "REQ-S16-026",
+    "REQ-S16-027",
+    "REQ-S16-029",
+    "REQ-S16-030",
+    "REQ-S16-032",
+    "REQ-S17-001",
+    "REQ-S17-002",
+    "REQ-S17-003",
+    "REQ-S17-005",
+    "REQ-S17-006",
+    "REQ-S17-007",
+    "REQ-S17-008",
+    "REQ-S17-009",
+    "REQ-S17-010",
+    "REQ-S17-011",
+    "REQ-S20-012",
+    "REQ-S20-013",
+    "REQ-S20-014",
+    "REQ-S20-017",
+    "REQ-S20-022",
+    "REQ-S20-029",
+    "REQ-S20-030"
+  ],
+  "checks_run": [
+    {
+      "id": "SEC-R7-00-candidate-identity",
+      "procedure": "Confirm HEAD, the ancestry and the two product-tree equalities, and recompute the candidate on the complete (non-shallow) repository, both from the working tree and with --ref of the source commit. Diff the round-5 and round-7 manifests entry by entry.",
+      "command": "git rev-parse HEAD; git merge-base --is-ancestor; git diff 60787d89f..d8868b2a5 / 3c8b9a3ac..d8868b2a5 -- . ':!docs/delivery'; node tools/gates/candidate.mjs --stage DG6 [--ref d8868b2a5]; manifest entry diff",
+      "environment": "Live repository, read-only; Node v24.21.0; not shallow.",
+      "expected": "candidate sha256:10f71f24... over 2775 files; both product-tree diffs empty; decisions.md (D-240) is the only candidate change from 5e819f7a.",
+      "actual": "Both computations give sha256:10f71f2418567878bffddfb004efbf342347029fd799dd3076af40aca32e2fc5 over 2775 files, exit 0.\n- HEAD was 04569998d, the round-7 freeze commit. Its diff over d8868b2a5 is meta only: three assignments, the manifest and stages.json; 0 files outside docs/delivery.\n- git diff 60787d89f..d8868b2a5 and 3c8b9a3ac..d8868b2a5 outside docs/delivery: 0 lines each.\n- e7cb240e7 is an ancestor of d8868b2a5.\n- Manifest 5e819f7a vs 10f71f24: 2775 entries each, and the only differing entry is docs/delivery/decisions.md. Its diff is exactly the added D-240 row.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-7/01-candidate-identity.log"
+      ]
+    },
+    {
+      "id": "SEC-R7-01-environment-and-disclosures",
+      "procedure": "Record the environment and every place where I departed from the assignment's text or where my own procedure caused a re-run.",
+      "environment": "Sandbox host: 4 CPUs, 16 GiB RAM. The other two reviewers ran at the same time. Load ran 6-20, and free disk under $TMPDIR was 2.4-4.1 GiB.",
+      "expected": "Every departure stated.",
+      "actual": "(1) Node 22: the assignment names 22.22.2, but /opt/node22/bin holds v22.22.0. Node 22 is present, so the Node 22 runs used v22.22.0, not BLOCKED.\n(2) My clone has its own node_modules, installed offline into $TMPDIR, so it is writable. Vitest needed no --configLoader runner. E2E_SCREENSHOT_DIR was set to $TMPDIR/shots for the e2e.\n(3) My first launch of the static/unit and integration pipelines at 18:45Z used '( ... &)' inside a sandboxed command. The processes died with that command after writing only header lines.\n(4) Relaunching them as background tasks, the cleanup 'rm' in one task raced the other task's start and unlinked the new LANG-unset logs. I stopped that pass by removing its two clusters' postmaster.pid; PostgreSQL shut down at 18:53Z (cluster-log excerpt in 09-relaunch-note.log). I re-ran the LANG-unset pass in full afterwards. All of this is in 09-relaunch-note.log; no result of the lost runs is used.\n(5) The first typecheck was OOM-killed (exit 137) while the dead shards still held memory; it was re-run (SEC-R7-04).\n(6) The first lint failed on ENOENT for my own sweep probe file, which was copied in and removed while lint walked the tree; it was re-run (SEC-R7-05).\n(7) A '.claude/.cc-writes' bookkeeping directory that the CLI created in my evidence directory when my shell cwd was there was removed. It is not evidence.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-7/09-relaunch-note.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-7/01-candidate-identity.log"
+      ]
+    },
+    {
+      "id": "SEC-R7-02-install-build",
+      "procedure": "Make a disposable sparse clone at the source commit (no runs/handbacks/test-evidence except the DO-G evidence a unit test reads), install offline from a copy of the local pnpm store, and run pnpm -r build.",
+      "command": "scripts/setup.sh: git clone --shared; git sparse-checkout; pnpm install --frozen-lockfile --offline; pnpm -r build",
+      "environment": "$TMPDIR/rv at d8868b2a5; Node v24.21.0; pnpm 10.33.0; offline.",
+      "expected": "install and build exit 0",
+      "actual": "Clone at d8868b2a5c074b13c04693a88644c25ef2792583, 0 status lines. candidate --ref HEAD gives sha256:10f71f24... (2775).\n- Install exit 0. The 'Failed to create bin mth-db' warnings come before the build and are cured by the re-link after the build, which shows the bins present.\n- pnpm -r build exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-7/02-install.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-7/03-build.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-7/scripts/setup.sh"
+      ]
+    },
+    {
+      "id": "SEC-R7-04-typecheck",
+      "procedure": "pnpm -r typecheck; re-run with --workspace-concurrency=1 after the first run was OOM-killed.",
+      "command": "pnpm -r typecheck; pnpm -r --workspace-concurrency=1 typecheck",
+      "environment": "$TMPDIR/rv at d8868b2a5; Node v24.21.0. Run 1 at load ~10 with 2 dead integration shards still running. Run 2 at 19:45Z with 5 GiB available.",
+      "expected": "exit 0",
+      "actual": "Run 1 (04-typecheck.log): every package passed except apps/worker, which 'Killed' with exit 137. The kernel OOM killer acted; the harness reported 'the kernel killed at least one process for lack of memory'. No type error was reported.\nRun 2, serial (04b): every package 'Done', exit 0. The OOM kill is a resource event, not a type error.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-7/04-typecheck.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-7/04b-typecheck-rerun-serial.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-7/scripts/reruns.sh"
+      ]
+    },
+    {
+      "id": "SEC-R7-05-lint-format-openapi-nocdn",
+      "procedure": "pnpm lint (re-run once), pnpm format:check, pnpm openapi:lint plus a plain operationId count and the version line, pnpm check:no-cdn.",
+      "command": "pnpm lint; pnpm format:check; pnpm openapi:lint; grep -c operationId docs/api/openapi.yaml; pnpm check:no-cdn",
+      "environment": "$TMPDIR/rv at d8868b2a5; Node v24.21.0.",
+      "expected": "all exit 0; 932 operations; version 1.5.0-p6; no CDN",
+      "actual": "Lint run 1 (05) exited 2 on 'ENOENT ... apps/api/test/integration/zz-sec-r1-p6-aud-valid-bodies.test.ts'. That is my own sweep probe, which sweeps.sh copied in and removed while eslint walked the tree; it is not a product file. Lint run 2 (05b, clean tree, 0 status lines): 'eslint . --max-warnings=0', exit 0.\nThe others:\n- format:check: 'All matched files use Prettier code style!', exit 0.\n- openapi:lint: 'PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 932 operations', exit 0. Plain count 932; version 1.5.0-p6.\n- check:no-cdn: 'PASS no-cdn: scanned apps, packages', exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-7/05-lint.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-7/05b-lint-rerun.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-7/06-format.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-7/07-openapi-lint.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-7/08-no-cdn.log"
+      ]
+    },
+    {
+      "id": "SEC-R7-09-unit-node22",
+      "procedure": "pnpm test on Node 22 (unit-node, unit-web, unit-formula-nocodegen). The five tests that failed under load were re-run alone; both runs are reported.",
+      "command": "pnpm test; npx vitest run --project unit-web <5 files>",
+      "environment": "$TMPDIR/rv at d8868b2a5; Node v22.22.0; LANG/LC_ALL unset. The full run had load 10-20 (both integration shards running); the re-run had load ~17.",
+      "expected": "every test passes",
+      "actual": "The full run exited 1 (10-unit-node22.log):\n- unit-node 191/191 files, 2906/2906;\n- unit-formula-nocodegen 3 files, 259 passed + 2 skipped;\n- unit-web 120/125 files, 2108/2113.\nThe 5 unit-web failures are all load effects in files that took 37-87 s:\n- three 'Test timed out in 20000ms': kpiUnit (ar) T10, extension-hosts-twelve (en) control, prioritization (en) weight sets;\n- two findBy/waitFor misses: raid (ar) 'Unable to find role=link', and governance (en) 'expected null to be truthy'.\nThe re-run of those 5 files alone (10b) passed 5 files, 108/108, exit 0.\nThe 2 skips are the unit-formula-nocodegen skips, also present in the orchestrator's run.\nThe stderr lines 'raci.deliverables is not iterable', 'reading length' and the duplicate-key warnings come from passing error-boundary and fixture tests. They appear identically in my round-5 logs.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-7/10-unit-node22.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-7/10b-unit-node22-five-files-rerun.log"
+      ]
+    },
+    {
+      "id": "SEC-R7-10-unit-node24",
+      "procedure": "pnpm test on Node 24; the project with the vitest RPC error was re-run alone.",
+      "command": "pnpm test; npx vitest run --project unit-node",
+      "environment": "$TMPDIR/rv at d8868b2a5; Node v24.21.0; LANG/LC_ALL unset; load 17-20.",
+      "expected": "every test passes, exit 0",
+      "actual": "The full run exited 1 (11-unit-node24.log):\n- unit-node: 191/191 files and 2906/2906 tests passed, but vitest reported '1 error': an Unhandled Error '[vitest-worker]: Timeout calling \"onTaskUpdate\"'. This is the runner's RPC between the worker and the main process timing out under load, not a test assertion.\n- unit-web: 125/125 files, 2113/2113.\n- unit-formula-nocodegen: 3 files, 259 passed + 2 skipped.\nThe unit-node project re-run alone (11b) passed 191/191 files and 2906/2906, with no error, exit 0. The 'unknown format date-time/uuid ignored' lines are ajv notices from the contract unit tests.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-7/11-unit-node24.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-7/11b-unit-node24-unit-node-rerun.log"
+      ]
+    },
+    {
+      "id": "SEC-R7-11-integration-lang-unset",
+      "procedure": "Full integration suite on a disposable PostgreSQL 16 with LANG and LC_ALL unset, in 2 shards (includes contract/contract.test.ts and migrations 0001-0130). The one failing file was re-run alone three times, and the failure was diagnosed from the cluster log.",
+      "command": "LANG/LC_ALL unset; tests/qa/support/with-pg.sh pnpm test:integration --shard=k/2 (ports 32450, 32455); then the failing file alone x3 (port 32465)",
+      "environment": "$TMPDIR/rv at d8868b2a5; Node v22.22.0; PostgreSQL 16.15 (UTF8, C locale); 20:07-20:40Z, concurrently with the targeted e2e; load 6-16.",
+      "expected": "442 files pass; 122 migrations to 0130",
+      "actual": "Both shards report 'applied 122 migrations to a fresh database'.\n- Shard 2: 221/221 files, 2287 passed, exit 0.\n- Shard 1: 220/221 files, 2082 passed + 1 skipped + 1 todo, 1 failed, exit 1.\nThe failure is tests/qa/integration/a13-p6-import-commit-kill-restart.test.ts:153, 'a13c-child-api.ts exited (0) before READY: READY RESPONSE 200 {... status committed, rowsCommitted 3 ...}'. It is a test-harness race, not a product defect:\n- The cluster log, read while the shard ran and quoted in 12b, shows the FIRST child's session blocked on the injected pg_advisory_xact_lock_shared(7313016) inside its import_row_commit insert and ended by the drill's own killHard at 20:24:20.5. The kill phase and its assertions (still staged, rowsCommitted null, 0 lineage, 0 actuals) passed.\n- The failing line is the RESTART step, spawnChild for 'qa-a13c-imp-api2'. That child printed READY, committed once (exactly the expected 200 committed/3) and exited 0 between two 150 ms polls. spawnChild's probe (tests/qa/support/a13c.ts:51) tests exitCode before READY, so it threw.\nThe file run alone passed 3/3 (12b). It also passed in my C.UTF-8 pass, in both of my round-5 passes and in the orchestrator's V18.\nUnion: 442 files, 4369 passed + 1 failed (the harness race) + 1 skipped + 1 todo; with the re-run, 4370 tests have a passing run. The skip is governance/presentation.test.ts it.runIf(!hasMeetingPackAssembler), and the todo is the stale audit-events placeholder (both explained in my round 2).\nObservation, not a finding: the race at a13c.ts:51 can fail a gate run under load. Checking `out.includes(\"READY\")` before `exitCode` would remove it. It is test code with no product effect.\nThe error lines are classified in SEC-R7-15.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-7/12-integration-lang-unset-shard1o2.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-7/12-integration-lang-unset-shard2o2.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-7/12b-integration-a13-import-kill-rerun.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-7/scripts/integ.sh",
+        "docs/delivery/test-evidence/DG6/code-security/round-7/scripts/post.sh"
+      ]
+    },
+    {
+      "id": "SEC-R7-12-integration-lang-cutf8",
+      "procedure": "The full integration suite again with LANG=C.UTF-8, in 2 shards.",
+      "command": "LANG=C.UTF-8 tests/qa/support/with-pg.sh pnpm test:integration --shard=k/2 (ports 32450, 32455)",
+      "environment": "$TMPDIR/rv at d8868b2a5; Node v22.22.0; LANG=C.UTF-8; PostgreSQL 16.15; 19:10-20:06Z; load 10-20.",
+      "expected": "442 files pass; 122 migrations",
+      "actual": "Both shards report 'applied 122 migrations to a fresh database'.\n- Shard 1: 221/221 files, 2083 passed + 1 skipped + 1 todo, exit 0.\n- Shard 2: 221/221 files, 2287 passed, exit 0.\nUnion: 442 files, 4370 passed + 1 skipped + 1 todo, equal to orchestrator-final-60787d8 (integration 4370).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-7/13-integration-lang-cutf8-shard1o2.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-7/13-integration-lang-cutf8-shard2o2.log"
+      ]
+    },
+    {
+      "id": "SEC-R7-13-contract-pending-graph",
+      "procedure": "The contract test's response-validation counts from both integration passes; every p6-pending list evaluated by importing it; the worker must not import API code; the central media-type enforcement from each route's config.consumes.",
+      "command": "grep [response-validation] in 12-/13-*.log; node --experimental-strip-types scripts/pending.mts; grep worker imports",
+      "environment": "$TMPDIR/rv; Node v24.21.0.",
+      "expected": "932 of 932 operations validated; 0 pending; no worker -> api import",
+      "actual": "contract.test.ts reports '[response-validation] 11135 validated responses; 932 of 932 live operations (0 pending excluded); 4288 distinct (operationId, status) pairs; operations without a validated response: 0'. It does so in both passes. The route-inventory sweeps give 484/484 401 unauthenticated and 484/484 403 without CSRF, with 0 tables changed.\nPending lists: files=29, lists=29, non-empty=0.\nModule graph: no apps/worker/src import of apps/api or @mth/api, so the worker imports no API code.\nMedia types: the request media type is enforced centrally from each route's declared consumes (platform/hooks.ts:127, media-types.ts). This is unchanged since round 1.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-7/20-contract-pending-graph.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-7/scripts/pending.mts",
+        "docs/delivery/test-evidence/DG6/code-security/round-7/13-integration-lang-cutf8-shard1o2.log"
+      ]
+    },
+    {
+      "id": "SEC-R7-14-secrets",
+      "procedure": "Secret-shape scan of the candidate's product files at d8868b2a5 (git grep at the commit) and a list of tracked env/key files.",
+      "command": "git grep -nIE 'sk-...|AKIA...|BEGIN ... PRIVATE KEY|xox..|ghp_..|AIza..' d8868b2a5 -- . ':!docs/delivery' ':!trading_agent'",
+      "environment": "Live repository, read-only.",
+      "expected": "no real secret in the repository",
+      "actual": "There are 2768 files outside docs/delivery and trading_agent. The only key-shape hits are synthetic redaction-test fixtures: operations/exceptions.test.ts ('AKIAABCDEFGHIJKLMNOP', 'pa55word'), exception-redaction.test.ts (a truncated RSA header and 'AKIAABCDEFGHIJKLMNOP') and config redaction.test.ts. The only tracked env file is .env.example, with no secret, password, token or key value assigned.\nThe product tree is byte-identical to my round-5 scan.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-7/21-secrets-scan.log"
+      ]
+    },
+    {
+      "id": "SEC-R7-15-log-scan-and-error-lines",
+      "procedure": "Run the product's log scanner over copies of every test log of this round, grep directly for the synthetic secret literals and for key shapes, and classify every error-like line of the four binding integration logs.",
+      "command": "scripts/logscan.sh (node deploy/scripts/log-scan.mjs over $TMPDIR/scan copies; it refuses docs/delivery, D-138); scripts/errlines.sh",
+      "environment": "Copies in $TMPDIR/scan; Node v24.21.0.",
+      "expected": "log-scan PASS; no secret literal; every error line explained",
+      "actual": "log-scan: 'PASS: 19 file(s), 6447 line(s), 0 canary value(s), 7 fixed pattern(s), 0 store host(s), 0 storage path(s)', exit 0. 0 synthetic secret literals and 0 key shapes.\nThe error lines (43):\n- one 'secret_ref.refused' warn each for webhook_signing and smtp, per pass. The webhooks.test.ts (F-DG6-181) and channel fan-out tests assert these refusals.\n- the connection-hygiene SWEEP line for FST_ERR_BAD_URL, an intended 400.\n- the table-totals-demo stdout line, which matched only on 'SUM'.\n- one level-error 'job run record failed ... driver has already been destroyed' in C.UTF-8 shard 1, from automation-version-at-occurrence.test.ts teardown. afterAll closed the pool while a job_run row was being written; worker.ts logs and swallows a failed run record by design, and every test of the file passed. The same line and explanation are in my round 2.\n- the A13 harness race (SEC-R7-11).\nNo hook timeout and no unhandled error in either pass.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-7/42-log-scan.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-7/43-integration-error-lines.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-7/scripts/logscan.sh",
+        "docs/delivery/test-evidence/DG6/code-security/round-7/scripts/errlines.sh"
+      ]
+    },
+    {
+      "id": "SEC-R7-16-validators",
+      "procedure": "Run validate.mjs --historical for DG5, DG4, DG3, DG2 and DG1, plus --pipeline and --register DG6, on the live repository.",
+      "command": "node tools/gates/validate.mjs --historical --stage DG5|DG4|DG3|DG2|DG1; --pipeline; --register DG6",
+      "environment": "Live repository at HEAD 04569998d; Node v24.21.0; 18:46-19:00Z.",
+      "expected": "all exit 0",
+      "actual": "'PASS gate DG5 (historical)', and the same for DG4, DG3, DG2 and DG1, each exit 0. 'PASS pipeline (active stage: DG6 REVIEWING)', exit 0. 'PASS register rules at DG6', exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-7/45-validators.log"
+      ]
+    },
+    {
+      "id": "SEC-R7-17-f911-f951-verification",
+      "procedure": "Verify F-DG6-911 and F-DG6-951 adversarially (sidecar code-security-reviewer.verifications.json):\n- re-run the raising reproduction (the validators);\n- run an independent stages.json consistency check at HEAD and AS OF the source commit;\n- run a mutant that removes the late FIXING entry, using the validator's own loadStages().",
+      "command": "node scripts/stages-check.mjs <repo>; validators of SEC-R7-16",
+      "environment": "Live repository, read-only; the mutant on a copy under $TMPDIR; Node v24.21.0.",
+      "expected": "validators exit 0; DG6 history legal, state = last entry; the mutant reproduces the single round-5 problem",
+      "actual": "Both are CLOSED_VERIFIED.\n- The validators of SEC-R7-16 all pass. In round 5 they failed on 'DG6 illegal transition VERIFYING -> REVIEWING'.\n- DG6 has 14 entries at HEAD and 13 at d8868b2a5. Every transition is legal, the state equals the last entry, and the times are non-decreasing.\n- Entry 8 {FIXING, 06:42:33Z} equals the commit time of the round-4 audit record (9610047bc). Its note says it was recorded late, and it was added by e7cb240e7, an ancestor of the source commit.\n- Mutant: without entry 8, loadStages() returns exactly 'stages.json: DG6 illegal transition VERIFYING -> REVIEWING'. The original returns no errors.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-7/46-stages-history.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-7/45-validators.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-7/scripts/stages-check.mjs"
+      ]
+    },
+    {
+      "id": "SEC-R7-18-f952-judgement",
+      "procedure": "Judge F-DG6-952 (out-of-order history times in the APPROVED gates DG5 and DG0) and the orchestrator's proposal to accept it as an observation.",
+      "environment": "stages.json at HEAD and at d8868b2a5; findings.json.",
+      "expected": "A stated judgement.",
+      "actual": "I agree that F-DG6-952 is a Low, non-mandatory observation and that it should not be repaired by rewriting the history of approved gates. My scan reproduces exactly the two inversions qa reported: DG5 history[6] after [5], and DG0 history[57] after [56]. DG1-DG4 and DG6 are in order. No gate decision, transition or candidate depends on these times, and every validator passes. Rewriting approved history would weaken its append-only character more than the drift harms. A validator check that 'at' never decreases (rules.mjs:107-113) would prevent a recurrence. Only the release auditor can concur. I add no acceptance entry, because I am not its reporting specialist; this is my judgement.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-7/46-stages-history.log",
+        "docs/delivery/findings.json"
+      ]
+    },
+    {
+      "id": "SEC-R7-19-d240-judgement",
+      "procedure": "Read D-240 and judge the re-freeze.",
+      "environment": "decisions.md at d8868b2a5; manifests; git ancestry.",
+      "expected": "A stated judgement.",
+      "actual": "D-240 is sound.\n- The closure rule requires the fix to be an ancestor of the verifying round's source_commit. e7cb240e7 came after 3c8b9a3, so 911/951 could not close on 5e819f7a.\n- Re-freezing at d8868b2a5, which contains e7cb240e7, with the D-240 row as the only candidate change, is the minimal honest route: no product file changes (SEC-R7-00), and no earlier record is rewritten.\n- The ruling on F-DG6-952 is reasonable (SEC-R7-18). D-240 states the orchestrator's own error plainly.\nI find no defect.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-7/01-candidate-identity.log",
+        "docs/delivery/decisions.md"
+      ]
+    },
+    {
+      "id": "SEC-R7-20-f990-regression",
+      "procedure": "Regression check of the CLOSED_VERIFIED F-DG6-990 on this candidate:\n- the round-4 audit probe, unedited (sha256 2f1d6169...), on a real API;\n- my extended served-text probe;\n- mutant M1, which removes migration 0130, then the restore.",
+      "command": "scripts/probes.sh; scripts/mutants.sh",
+      "environment": "$TMPDIR/rv at d8868b2a5; Node v22.22.0; disposable PostgreSQL 16.15 on port 32465; production-initialized database 0001-0130.",
+      "expected": "0 served DG strings; the mutant fails the shipped scan and the probe; the restore passes",
+      "actual": "Audit probe: 'served strings naming DG0-DG7: 0'. Its 11 400s are the bare service-identities list and getProcedureDefinition by id, identical to round 5.\nExtended probe: 101 endpoints, 5322 strings, 0 gate-rule hits, 0 audit-regex hits, 0 internal-reference hits. 2/2 passed, exit 0.\nMutant M1 (0130 removed):\n- seeded-texts.test.ts fails 3 tests: 142 hits; no reword audit; the non-vacuity case finds no file;\n- the audit probe finds 24 again;\n- 4 failed, exit 1.\nRestored: 5/5 pass, the audit probe finds 0, and git status is empty. The result equals round 5.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-7/30-f990-served-probes.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-7/32-mutant-m1-no-0130.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-7/33-mutant-m1-restored.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-7/repro/zz-sec-r5-served-text.test.ts",
+        "docs/delivery/test-evidence/DG6/code-security/round-7/scripts/probes.sh",
+        "docs/delivery/test-evidence/DG6/code-security/round-7/scripts/mutants.sh",
+        "docs/delivery/test-evidence/DG6/audit/round-4/probes/zz-aud-r4-served-dg-labels.test.ts"
+      ]
+    },
+    {
+      "id": "SEC-R7-21-repair-diff-0130",
+      "procedure": "Line-level adversarial re-read of the repair diff. The assignment's diff 60787d89f..d8868b2a5 outside docs/delivery is empty, so I re-read the real repair f56f1b3d..60787d89f (0130, seeded-texts.test.ts, data-dictionary.md): version steps, row guards, audit events, append-only history, the scan's exclusions and any other served text naming DG0-DG7. I re-ran the 0130 upgrade probe.",
+      "command": "git diff f56f1b3d..d8868b2a5 -- . ':!docs/delivery'; scripts/probes.sh (zz-sec-r5-upgrade-0130.test.ts)",
+      "environment": "$TMPDIR/rv; Node v22.22.0; PostgreSQL 16.15.",
+      "expected": "0130 is wording-only, guarded, versioned, audited and idempotent, and it keeps history; the upgrade probe passes",
+      "actual": "No defect. The diff is the same 3 files and 415 lines I reviewed in round 5.\n- Each UPDATE matches the exact seeded text, and also: procedure_definition pinned to origin 'source' and the two seeded methodology versions; automation_rule_version to origin 'starter' with published_by and authored_by NULL; service_identity to subject_kind 'job' with updated_by NULL; form_source_field to its id and storage_kind 'computed'.\n- Each changed row steps 'version' where it has one and gets one audit event (actor system, source migration, prior/new version, exact {from, to}).\n- change_summary is outside the frozen version content and content_sha256.\n- Setting updated_by = NULL on a reworded job_schedule correctly attributes the last change to the system actor; the earlier editor stays in the audit trail.\nUpgrade probe (31): 2/2 pass.\n- U1: 122 migrations; 0098-0130 contiguous and forward-only.\n- U2-U5 over a demo-initialized 0129 database: administrator-changed rows are untouched; a stepped seeded row is reworded with prior 2 / new 3; reword events 17/3/4/12/48; service_identity_change keeps the old reason; a second raw application adds 0 events.\nResidual served text, re-used from round 5 and unchanged: only the D-165 separating disclaimer and append-only history name DG0-DG7. I keep my acceptance of D-239 on the five audit reasons, with the precision that the rule does match their task ids.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-7/31-upgrade-0130.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-7/repro/zz-sec-r5-upgrade-0130.test.ts",
+        "packages/db/migrations/0130_p6_seeded_text_business_terms.sql",
+        "apps/api/test/integration/text-scan/seeded-texts.test.ts"
+      ]
+    },
+    {
+      "id": "SEC-R7-22-p6-role-sweep",
+      "procedure": "Re-run the round-1 P6 role sweep and the AUD valid-body sweep unchanged: AUD on every P6 write, and ADM-only on the P6 transformation-scoped reads and on search.",
+      "command": "scripts/sweeps.sh (zz-sec-r1-p6-role-sweep.test.ts, zz-sec-r1-p6-aud-valid-bodies.test.ts)",
+      "environment": "$TMPDIR/rv at d8868b2a5; Node v22.22.0; disposable PostgreSQL on port 32465.",
+      "expected": "AUD: every P6 write 403 (404 for a non-existent record) and nothing written; ADM-only: nothing transformation-scoped",
+      "actual": "Pass 1 (37) exits 1 BY DESIGN, as in rounds 1-5. Its one failing assertion is 'AUD: every P6 mutating operation is refused (403...)'. The 26 listed writes answer 400 validation to the EMPTY body this pass sends, because schema validation precedes the 403 gate. The 'NOT refused as expected: 26' list is identical to round 5.\nIts ADM-only test passes: no P6 transformation-scoped read, and search is 403.\nPass 2 (38) sends schema-valid bodies: '26 operations; NOT refused 403/404: 0; non-denial audit events by AUD: before 1, after 1', exit 0. AUD cannot write anything in P6.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-7/37-p6-role-sweep.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-7/38-p6-aud-valid-bodies.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-7/scripts/sweeps.sh"
+      ]
+    },
+    {
+      "id": "SEC-R7-23-token-probes",
+      "procedure": "Re-run the restricted-token probes unchanged: the old-branch cs-r11 issuer-bound key probe and the QA r12 condition-token re-save probe.",
+      "command": "scripts/sweeps.sh (cs-r11-token-key-adversarial.test.ts, zz-qa-dg6r12-condition-token-resave.test.ts)",
+      "environment": "$TMPDIR/rv at d8868b2a5; Node v22.22.0.",
+      "expected": "all pass",
+      "actual": "2 files, 31/31 tests pass, exit 0, and git status is empty afterwards. They cover:\n- P0-P5b: edits, deletes, reorders, moves and duplicates keep each hidden literal;\n- P14/P15/P15b: other revisions, rules and versions are refused 422 stale;\n- P18/P19: the key is never served and is immutable, with 41 rows and 41 distinct keys;\n- P20: eight concurrent saves give one 200 and seven 409, and each loser's re-send is 422 stale;\n- P21: an admitted writer edits freely.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-7/39-token-probes.log"
+      ]
+    },
+    {
+      "id": "SEC-R7-24-open-questions-d228-d229",
+      "procedure": "Judge D-229 (connector configuration names stay cannot-name) and the D-228 (4) ruling that cross-organization ids are out of scope. Look for a served column, response, notification channel or write path that still names a sensitive record, or a token sequence that loses or misplaces a hidden literal. New this round: a probe of the automation dry-run's conditionsMet as a channel, and a source read of the action parameter schemas.",
+      "command": "repro/zz-sec-r7-dryrun-condition-oracle.test.ts (copied to apps/api/test/integration/access/ and removed); source read of versions.ts:348-523, dry-run.ts:120-230 and packages/shared/src/schemas/automation.ts:95-200",
+      "environment": "$TMPDIR/rv at d8868b2a5; Node v22.22.0; disposable PostgreSQL on port 32465.",
+      "expected": "No served path names a hidden record; any residual is within an accepted ruling.",
+      "actual": "No defect, so no finding.\n(a) Token sequences: SEC-R7-23 passes. Positions count every literal of the stored version. The tag is an HMAC over (row key, id, row version) and is resolved under If-Match, so edits, grant changes and concurrent saves cannot misplace a literal.\n(b) Action parameters cannot carry a sensitive record id. create_task, notify and escalate are strict schemas (role, message key, optional targetTransformationId); starter parameters are integers. The summary shows only the role.\n(c) Dry runs store and serve plannedActions and findings {code, pointer, field}, never a condition value. The probe's version read and dry-run list name the hidden id X nowhere.\n(d) The probe (40, 1/1, exit 0) confirms a 1-bit oracle. An ADM_METHOD author shown '[restricted:<tag>:1]' gets conditionsMet true for a sample with benefitId = X, and false for a visible id or a random uuid. To use it, the author must already hold X; UUIDv7 ids are not guessable, and the reply discloses no content.\nThis is the residual ADR-0051 already accepts at line 353 (BE-Z12 §3, D-223 (2)): 'A writer who already holds a hidden id learns that it names a restricted record.' My old-branch predecessor recorded the same 'o1' observation (39-token-probes.log). I judge it an observation.\n(e) D-229: connector field-mapping sources and SecretRef names are text that administrators or IT write and already see, not a reference the product creates. I accept cannot-name.\n(f) D-228 (4): markedInOrganizations covers every organization of the principal, so another organization's id resolves to nothing the caller could not already reach. I accept the out-of-scope ruling.\nThe product tree is unchanged since my round-3/5 judgement.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-7/40-dryrun-oracle-probe.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-7/repro/zz-sec-r7-dryrun-condition-oracle.test.ts",
+        "docs/delivery/test-evidence/DG6/code-security/round-7/39-token-probes.log",
+        "docs/architecture/adr/ADR-0051-p6-authorization-boundary-read-scope-sensitive-records-deep-links.md",
+        "apps/api/src/modules/automation/versions.ts",
+        "apps/api/src/modules/automation/dry-run.ts"
+      ]
+    },
+    {
+      "id": "SEC-R7-25-e2e-targeted",
+      "procedure": "Targeted e2e on the real stack, re-running the clauses the register defers to the freeze verification:\n- A12, P6 scope isolation including A12-5 assistant (REQ-S17-007, REQ-S20-012);\n- A22, the Jobs screen;\n- A17, failing connector to exception (REQ-S12-019, REQ-S20-017), with the synthetic webhook signing value.",
+      "command": "scripts/e2e.sh: e2e/support/qa-stack.sh npx playwright test e2e/a22-operations-jobs.spec.ts e2e/a12-p6-scope-isolation.spec.ts --workers=1; MTH_SECRET_QA_A17_WEBHOOK_SIGNING_SECRET=qa-a17-synthetic-signing-secret-0001 ... e2e/a17-failing-connector-exception.spec.ts",
+      "environment": "$TMPDIR/rv; Node v24.21.0; pre-installed Chromium (PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers, no install); E2E_SCREENSHOT_DIR=$TMPDIR/shots; ports 32470/32480 (pool 32451-32499); 20:07-20:11Z, concurrently with the LANG-unset integration.",
+      "expected": "all pass in chromium-en and chromium-ar",
+      "actual": "A12-1..A12-6 and A22: 14 passed (2.2m), exit 0.\nA17: 2 passed (36.7s), exit 0. The Stale KPI shows its last value and date, with one exception.\nThe only non-test lines are three 'npm warn Unknown project config' notices from npx. No retry, flake or skip.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-7/50-e2e-a22-a12.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-7/51-e2e-a17.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-7/scripts/e2e.sh"
+      ]
+    },
+    {
+      "id": "SEC-R7-26-reused-earlier-rounds",
+      "procedure": "State what I re-used from my own earlier rounds of this re-gate, and why that is sound.",
+      "environment": "The product tree of d8868b2a5 equals 3c8b9a3ac (my round 5) and 60787d89f byte for byte (SEC-R7-00).",
+      "expected": "Re-use only where the tree is unchanged; re-run whatever the repair can affect.",
+      "actual": "Re-used:\n- From round 1, the source review of the unchanged P6 areas: webhooks (signature, timestamp window, replay, body limits, rotation), connectors, imports and xlsx (formula injection, limits, duplicates, idempotent commit), evidence preview, exports, deep links, sensitive reach, operations, OIDC other-realm rejection, server.ts, and the worker engine and handlers (batch/concurrency 8/4, exactly-once, per-rule locks, the 0122/0123 enablement ledger, D-204, D-205 and the documented ADR-0043 commit-order residual). Also migrations 0098-0127, the REQ-S20-029/030 measurement and the AUD-permission listing.\n- From rounds 2-3, the 0128/0129 reading, the assistant history and inheritance mutants, and the p6-assistant and A21 e2e.\n- From round 5, the reading of the residual served texts (literal scan and demo database).\nRe-run here: everything a gate needs on this candidate. That is install, build, typecheck, lint, format, OpenAPI, no-CDN, unit on Node 22 and 24, integration in both locales with migrations 0001-0130 and the contract, the role sweeps, the token probes, the F-DG6-990 probes, the mutant, the 0130 upgrade probe, the A12/A22/A17 e2e, the validators, and the F-DG6-911/951 verification and mutant. I also added a new dry-run oracle probe.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/reviews/DG6/round-5/code-security-reviewer.json",
+        "docs/delivery/reviews/DG6/round-3/code-security-reviewer.json",
+        "docs/delivery/test-evidence/DG6/code-security/round-7/01-candidate-identity.log"
+      ]
+    },
+    {
+      "id": "SEC-R7-27-environment-residuals",
+      "procedure": "Record the environmental residuals the assignment names as NOT BLOCKED.",
+      "environment": "Sandbox, no network.",
+      "expected": "PASS on the offline/config surface, with the residual noted",
+      "actual": "- Live registry (REQ-DLV-042 AC-1, D-057) and live CI (REQ-DLV-025 A24, D-058): not reachable here.\n- Keycloak and a real enterprise IdP (D-049): the OIDC other-realm rejection (REQ-S16-007) passes against the bundled test issuer in both integration passes. The SAML broker is documented, not run.\n- External systems: there is no real Mobily system, mail server, messaging service or AI provider. Connectors, outbound writes, channels and the assistant ran through their test adapters and the shipped disabled configuration. A17 used the synthetic signing value.\n- Production capacity: the REQ-S20-029/030 targets are provisional engineering targets measured on one sandbox host, not verified Mobily capacity.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-7/51-e2e-a17.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-7/13-integration-lang-cutf8-shard1o2.log"
+      ]
+    },
+    {
+      "id": "SEC-R7-28-requirements",
+      "procedure": "Judge the 36 assigned requirements against their acceptance texts and the register notes on this candidate.",
+      "environment": "requirements.csv in the candidate and the evidence above.",
+      "expected": "Each requirement verifiable with evidence; the partial-coverage disclosures acceptable.",
+      "actual": "All 36 are satisfied with evidence on this candidate. The product tree is the one the orchestrator's V18 verified (integration 4370, e2e 556 + 556).\n- Deferred clauses: those the notes defer to the freeze verification were re-run here and pass. That covers A17 for REQ-S12-019 and REQ-S20-017, A12-5 for REQ-S17-007 and REQ-S20-012, and the full integration suite in both locales, which includes A13 for REQ-S20-013. The one A13 failure in the LANG-unset pass is the explained harness race, and the drill passed 3/3 alone and in C.UTF-8.\n- REQ-S16-032: the 0130 rewrites each carry one audit event with prior/new versions.\n- REQ-S16-023: integrity is kept; the upgrade probe shows untouched admin rows and kept history.\n- REQ-S16-026: P20 shows one 200 and seven 409 for eight concurrent saves.\n- REQ-S16-030 and the contract (REQ-S16-027): checked by the contract and the rate-limit sweep.\n- REQ-S16-007: the other-realm rejection is met; the Keycloak login is the D-049 residual.\n- REQ-S20-029/030: met with the round-1 sandbox measurement, as provisional targets.\nI judge the notes' partial-coverage disclosures acceptable.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/requirements.csv",
+        "docs/delivery/test-evidence/DG6/orchestrator-final-60787d8/README.md",
+        "docs/delivery/test-evidence/DG6/code-security/round-7/13-integration-lang-cutf8-shard1o2.log",
+        "docs/delivery/test-evidence/DG6/code-security/round-7/12b-integration-a13-import-kill-rerun.log"
+      ]
+    },
+    {
+      "id": "SEC-R7-29-head-moved-and-cleanup",
+      "procedure": "Record the HEAD movement during the run without reading other reviewers' files, and remove the disposable clone and scratch.",
+      "environment": "Live repository, read-only; $TMPDIR.",
+      "expected": "Clone clean at removal; any HEAD movement disclosed.",
+      "actual": "The clone at d8868b2a5 had 0 status lines and was removed, together with the store copy, the clusters and the test scratch directories. HEAD moved from 04569998d to 31f54804d, the auto-commit of the domain reviewer's round-7 run evidence. I opened none of its files. The candidate is unaffected (meta-excluded).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/code-security/round-7/90-cleanup.log"
+      ]
+    }
+  ],
+  "findings": [],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG6/code-security/round-7/01-candidate-identity.log",
+    "docs/delivery/test-evidence/DG6/code-security/round-7/02-install.log",
+    "docs/delivery/test-evidence/DG6/code-security/round-7/03-build.log",
+    "docs/delivery/test-evidence/DG6/code-security/round-7/04-typecheck.log",
+    "docs/delivery/test-evidence/DG6/code-security/round-7/04b-typecheck-rerun-serial.log",
+    "docs/delivery/test-evidence/DG6/code-security/round-7/05-lint.log",
+    "docs/delivery/test-evidence/DG6/code-security/round-7/05b-lint-rerun.log",
+    "docs/delivery/test-evidence/DG6/code-security/round-7/06-format.log",
+    "docs/delivery/test-evidence/DG6/code-security/round-7/07-openapi-lint.log",
+    "docs/delivery/test-evidence/DG6/code-security/round-7/08-no-cdn.log",
+    "docs/delivery/test-evidence/DG6/code-security/round-7/09-relaunch-note.log",
+    "docs/delivery/test-evidence/DG6/code-security/round-7/10-unit-node22.log",
+    "docs/delivery/test-evidence/DG6/code-security/round-7/10b-unit-node22-five-files-rerun.log",
+    "docs/delivery/test-evidence/DG6/code-security/round-7/11-unit-node24.log",
+    "docs/delivery/test-evidence/DG6/code-security/round-7/11b-unit-node24-unit-node-rerun.log",
+    "docs/delivery/test-evidence/DG6/code-security/round-7/12-integration-lang-unset-shard1o2.log",
+    "docs/delivery/test-evidence/DG6/code-security/round-7/12-integration-lang-unset-shard2o2.log",
+    "docs/delivery/test-evidence/DG6/code-security/round-7/12b-integration-a13-import-kill-rerun.log",
+    "docs/delivery/test-evidence/DG6/code-security/round-7/13-integration-lang-cutf8-shard1o2.log",
+    "docs/delivery/test-evidence/DG6/code-security/round-7/13-integration-lang-cutf8-shard2o2.log",
+    "docs/delivery/test-evidence/DG6/code-security/round-7/20-contract-pending-graph.log",
+    "docs/delivery/test-evidence/DG6/code-security/round-7/21-secrets-scan.log",
+    "docs/delivery/test-evidence/DG6/code-security/round-7/30-f990-served-probes.log",
+    "docs/delivery/test-evidence/DG6/code-security/round-7/31-upgrade-0130.log",
+    "docs/delivery/test-evidence/DG6/code-security/round-7/32-mutant-m1-no-0130.log",
+    "docs/delivery/test-evidence/DG6/code-security/round-7/33-mutant-m1-restored.log",
+    "docs/delivery/test-evidence/DG6/code-security/round-7/37-p6-role-sweep.log",
+    "docs/delivery/test-evidence/DG6/code-security/round-7/38-p6-aud-valid-bodies.log",
+    "docs/delivery/test-evidence/DG6/code-security/round-7/39-token-probes.log",
+    "docs/delivery/test-evidence/DG6/code-security/round-7/40-dryrun-oracle-probe.log",
+    "docs/delivery/test-evidence/DG6/code-security/round-7/42-log-scan.log",
+    "docs/delivery/test-evidence/DG6/code-security/round-7/43-integration-error-lines.log",
+    "docs/delivery/test-evidence/DG6/code-security/round-7/45-validators.log",
+    "docs/delivery/test-evidence/DG6/code-security/round-7/46-stages-history.log",
+    "docs/delivery/test-evidence/DG6/code-security/round-7/50-e2e-a22-a12.log",
+    "docs/delivery/test-evidence/DG6/code-security/round-7/51-e2e-a17.log",
+    "docs/delivery/test-evidence/DG6/code-security/round-7/90-cleanup.log",
+    "docs/delivery/test-evidence/DG6/code-security/round-7/repro/zz-sec-r5-served-text.test.ts",
+    "docs/delivery/test-evidence/DG6/code-security/round-7/repro/zz-sec-r5-upgrade-0130.test.ts",
+    "docs/delivery/test-evidence/DG6/code-security/round-7/repro/zz-sec-r7-dryrun-condition-oracle.test.ts",
+    "docs/delivery/test-evidence/DG6/code-security/round-7/scripts/stages-check.mjs",
+    "docs/delivery/test-evidence/DG6/code-security/round-7/scripts/setup.sh",
+    "docs/delivery/test-evidence/DG6/code-security/round-7/scripts/static.sh",
+    "docs/delivery/test-evidence/DG6/code-security/round-7/scripts/unit.sh",
+    "docs/delivery/test-evidence/DG6/code-security/round-7/scripts/integ.sh",
+    "docs/delivery/test-evidence/DG6/code-security/round-7/scripts/pipe1.sh",
+    "docs/delivery/test-evidence/DG6/code-security/round-7/scripts/pipe2.sh",
+    "docs/delivery/test-evidence/DG6/code-security/round-7/scripts/post.sh",
+    "docs/delivery/test-evidence/DG6/code-security/round-7/scripts/reruns.sh",
+    "docs/delivery/test-evidence/DG6/code-security/round-7/scripts/probes.sh",
+    "docs/delivery/test-evidence/DG6/code-security/round-7/scripts/sweeps.sh",
+    "docs/delivery/test-evidence/DG6/code-security/round-7/scripts/mutants.sh",
+    "docs/delivery/test-evidence/DG6/code-security/round-7/scripts/e2e.sh",
+    "docs/delivery/test-evidence/DG6/code-security/round-7/scripts/errlines.sh",
+    "docs/delivery/test-evidence/DG6/code-security/round-7/scripts/logscan.sh",
+    "docs/delivery/test-evidence/DG6/code-security/round-7/scripts/pending.mts",
+    "docs/delivery/reviews/DG6/round-7/code-security-reviewer.verifications.json"
+  ],
+  "reviewed_at": "2026-11-11T20:50:00Z",
+  "summary": "PASS, with no new finding. F-DG6-911 and F-DG6-951 (one defect) verify CLOSED_VERIFIED on candidate 10f71f24 (source d8868b2a5):\n- --historical DG1-DG5, --pipeline and --register DG6 all exit 0;\n- the fix e7cb240e7 is an ancestor of the source commit;\n- DG6's history is legal and consistent;\n- a mutant without the late FIXING entry brings back the exact round-5 failure.\nThe product tree equals 3c8b9a3ac and 60787d89f, and D-240 (decisions.md) is the only candidate change. I judge D-240 sound, and agree that F-DG6-952 is an acceptable observation.\nF-DG6-990 regression: the audit probe finds 0 served DG strings; mutant M1 brings back 142/24.\nAll required checks ran and pass:\n- build, typecheck (re-run after an OOM kill), lint (re-run after my own probe file interfered), format, OpenAPI (932, 1.5.0-p6) and no-CDN;\n- unit on Node 22 (5 load failures pass alone) and Node 24 (1 vitest RPC timeout passes alone);\n- integration in both locales: 442 files, 122 migrations to 0130, contract 932/932, 0 pending. One A13 failure in the LANG-unset pass is a diagnosed test-harness race (tests/qa/support/a13c.ts:51) with correct product behaviour; it passes 3/3 alone;\n- the sweeps, 31 token probes, the A12/A22/A17 e2e and the log scan.\nObservation: the automation dry-run's conditionsMet confirms a hidden condition id only to an author who already holds it. That is within ADR-0051's accepted D-223 (2) residual."
+}
