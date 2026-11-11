@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG6-990",
+      "stage_id": "DG6",
+      "requirement": "REQ-S21-001",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "Product screens serve seeded text that names engineering delivery gates (DG2-DG4): the P6 job 'kpi.freshness_scan' description says 'DG4 freshness rule', and P5 seeds say 'the DG4 behaviour' and 'The DG4/DG3 ... rules apply unchanged'",
+      "reproduction": "Candidate sha256:32e41b5581a9beeba357a6c0dd5b50c414226910232ebfbb711c2178024376b5 (source f56f1b3d24c00d1803f6627c99b3f422a47b3014). Complete clone ($TMPDIR/au, git clone --no-local), pnpm install --offline, pnpm -r build, a disposable PostgreSQL 16 (tests/qa/support/with-pg.sh, port 32610) with migrations 0001-0129 (production-initialized, no demo data). Probe docs/delivery/test-evidence/DG6/audit/round-4/probes/zz-aud-r4-served-dg-labels.test.ts, copied to apps/api/test/integration/assistant/ (to reuse be-u-fixtures' administrator) and run with 'npx vitest run --configLoader runner --project integration <file>' (log docs/delivery/test-evidence/DG6/audit/round-4/11-served-dg-labels.log). As the administrator it GETs /api/v1/admin/job-schedules, /api/v1/admin/jobs, /api/v1/admin/automation-rules (+ each rule's /versions) and /api/v1/procedure-definitions, and lists every served string that names DG0-DG7 as a word (finding and task ids F-DGx-/T-DGx- excluded). The web pages render these fields: apps/web/src/pages/calendar/JobsPage.tsx:47 and apps/web/src/pages/admin/jobsOperations.tsx:98/196 show descriptionEn as the job's name in English; apps/web/src/pages/procedure-builder/DefinitionPage.tsx:191 loads validationRulesEn into the definition form.",
+      "expected": "M0007: 'There are two different gate systems. DG0-DG7 are software delivery gates for your engineering team. G1-G6 are business transformation approvals inside the product. Keep their records, authority and meanings separate.' M0412 (REQ-S21-001): 'Source methodology phases are not software delivery stages.' REQ-S21-001 acceptance: 'a text scan of UI strings and export templates finds no DG0-DG7 references'. The product applies this rule to its own texts elsewhere: migration 0089 refuses reader text that 'names an engineering gate DG0-DG7'; apps/web/src/i18n/problems-p6.test.ts:189 'no P6 problem text names an engineering delivery gate (DG0-DG7)'; packages/shared/src/text-scan/corpus.ts treats '(DG3)' and 'gates: DG1, DG2.' as prohibited. Text a product user reads should describe the rule in business terms (for example 'the KPI freshness rule, unchanged', 'the released starter behaviour', 'the actual-submission rules apply unchanged'), as the Arabic counterparts already do.",
+      "actual": "24 served strings name an engineering delivery gate (11-served-dg-labels.log). (1) Introduced in P6 (migration 0117_p6_operations_triggers_freshness.sql:217): job_schedule 'kpi.freshness_scan' descriptionEn 'Find KPIs whose last accepted data became stale (DG4 freshness rule, unchanged) and open one operational exception per KPI; ...', served by listJobSchedules (items[11]) and listJobOperations (items[11]) and shown as the job's name on the English Jobs and Job operations pages. (2) Carried from P5: 16 seeded automation starter versions (0075_p5_starters_routes_policies.sql:74) serve changeSummary 'Seeded starter: the DG4 behaviour (D-142 Q3).' (an internal decision id as well); 6 seeded procedure definitions (0069_p5_procedures.sql:260-352) serve validationRulesEn 'The DG4 actual-submission rules apply unchanged.', 'The DG3 scoring and ranking rules apply unchanged.', '... (DG2-DG4 gate rules unchanged).', 'The DG4 change-control and impact-assessment rules apply unchanged.', 'Finance validation follows the DG4 rules; ...', 'The DG4 BAU handover rules apply unchanged.'. The Arabic counterparts do not name a DG gate (for example 0069:260 '... المعتمدة في المرحلة الرابعة ...'). No string states a DG status or ties G1-G6 to DG0-DG7, and no value, approval or permission is affected: this is wording. The A22 text scan (REQ-S21-001) passes because it covers the web catalogues, web source and export templates, not text seeded by migrations and served by the API. Not seen in the round-1 to round-3 reviews of this re-gate. Other seeded texts that name DG gates but whose fields I did not see served or rendered (0114:63 service_identity.reason 'the DG5 handler'; GET /api/v1/admin/service-identities answered 400 to the bare list call in my probe; 0068 storage_ref values) are listed in docs/delivery/test-evidence/DG6/audit/round-4/10-product-vs-engineering-gates.log section (2c) for the owner's check.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/audit/round-4/11-served-dg-labels.log",
+        "docs/delivery/test-evidence/DG6/audit/round-4/probes/zz-aud-r4-served-dg-labels.test.ts",
+        "docs/delivery/test-evidence/DG6/audit/round-4/10-product-vs-engineering-gates.log",
+        "packages/db/migrations/0117_p6_operations_triggers_freshness.sql",
+        "packages/db/migrations/0075_p5_starters_routes_policies.sql",
+        "packages/db/migrations/0069_p5_procedures.sql",
+        "apps/web/src/pages/calendar/JobsPage.tsx",
+        "apps/web/src/pages/admin/jobsOperations.tsx"
+      ],
+      "reported_by": "release-auditor",
+      "reported_in": "docs/delivery/reviews/DG6/round-4/release-auditor.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-11T06:37:00Z",
+          "status": "OPEN",
+          "note": "Raised by release-auditor in T-DG6-AUDIT-RG-R4 (round 4) on candidate 32e41b55, reproduced through the API on the real stack. Low, not mandatory (wording; no status, approval, value or access is affected), but unresolved: no specialist has judged it, so it cannot be accepted as an observation in this run and DG6 is BLOCKED on it. Repair direction (the owner decides): reword the seeded English texts in a new migration (versioned and audited like any configuration change), and extend the REQ-S21-001 scan to text seeded by migrations and served by the API. Whether the P5 part also concerns DG5 is for the orchestrator to judge (M0413); DG5's historical validation still passes."
+        }
+      ]
+    }
+  ]
+}
