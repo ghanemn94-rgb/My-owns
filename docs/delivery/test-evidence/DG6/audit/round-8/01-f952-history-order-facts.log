@@ -1,0 +1,73 @@
+# F-DG6-952 fact check: stages.json history order scan (release-auditor round 8)
+# repo HEAD af8d10096a9682eb62db7a3a034d6c5729e5793b; node v24.21.0; 2026-11-12T10:43:05Z
+# stages.json sha256 506fc45a16a2c8dcfe62190df8be20007f205bb8280ac9760520ed3ab99973d2
+DG0 state=APPROVED entries=61 out-of-order=1
+    [56] REVIEWING 2026-09-30T15:45:00Z > [57] FIXING 2026-09-30T15:16:00Z
+DG1 state=APPROVED entries=11 out-of-order=0
+DG2 state=APPROVED entries=38 out-of-order=0
+DG3 state=APPROVED entries=17 out-of-order=0
+DG4 state=APPROVED entries=25 out-of-order=0
+DG5 state=APPROVED entries=7 out-of-order=1
+    [5] VERIFYING 2026-10-26T12:00:00Z > [6] APPROVED 2026-10-26T06:30:00Z
+DG6 state=VERIFYING entries=15 out-of-order=0
+DG7 state=PLANNED entries=1 out-of-order=0
+
+# DG6 history
+0 PLANNED 2026-09-28T11:30:00Z
+1 BUILDING 2026-10-26T07:30:00Z
+2 REVIEWING 2026-11-10T08:33:58Z
+3 FIXING 2026-11-10T12:33:11Z
+4 REVIEWING 2026-11-10T18:13:01Z
+5 FIXING 2026-11-10T21:21:06Z
+6 REVIEWING 2026-11-11T01:42:18Z
+7 VERIFYING 2026-11-11T06:08:46Z
+8 FIXING 2026-11-11T06:42:33Z
+9 REVIEWING 2026-11-11T11:32:40Z
+10 FIXING 2026-11-11T14:42:55Z
+11 REVIEWING 2026-11-11T14:42:56Z
+12 FIXING 2026-11-11T18:35:32Z
+13 REVIEWING 2026-11-11T18:38:30Z
+14 VERIFYING 2026-11-12T10:36:02Z
+
+# commits that wrote the two out-of-order entries (git show, commit time, added 'at' lines)
+5df7ea660d9e0d8ff69ce64fc4375911233c1aec 2026-10-26T04:34:41+00:00 DG5 corrected re-gate: round-3 domain acceptances imported (F-DG5-120, 121); VERIFYING; release-audit assignments (V round 3, D round 4)
++          "at": "2026-10-26T12:00:00Z",
+57d7a53f2a9670936c9a09f027b5c586fb025a4e 2026-09-30T14:51:02+00:00 DG0: freeze round-28 candidate, round-28 assignments; state REVIEWING
++          "at": "2026-09-30T15:45:00Z",
+ffa3fae5a5fcf8e7195f616158244f3fe16db25f 2026-09-30T15:23:21+00:00 DG0: freeze round-29 candidate, round-29 assignments; state REVIEWING
++          "at": "2026-09-30T15:16:00Z",
++          "at": "2026-09-30T15:19:30Z",
+
+# tools/gates/lib/rules.mjs lines 103-113 (history checks: start PLANNED, legal transitions, state==last; no 'at' order check)
+  for (const s of doc.stages) {
+    if (s.stage !== "P" + s.id.slice(2)) errors.push(`stages.json: ${s.id} must map to P${s.id.slice(2)}`);
+    for (const e of specPolicyErrors(s.candidate_spec)) errors.push(`stages.json: ${s.id} candidate_spec ${e}`);
+    const hist = s.history;
+    if (hist[0].state !== "PLANNED") errors.push(`stages.json: ${s.id} history must start at PLANNED`);
+    for (let i = 1; i < hist.length; i++) {
+      const from = hist[i - 1].state;
+      const to = hist[i].state;
+      if (!TRANSITIONS[from].includes(to)) errors.push(`stages.json: ${s.id} illegal transition ${from} -> ${to}`);
+    }
+    if (hist[hist.length - 1].state !== s.state) errors.push(`stages.json: ${s.id} state ${s.state} differs from last history entry ${hist[hist.length - 1].state}`);
+
+# rules.mjs lines 565-583 (ACCEPTED_OBSERVATION: Low and non-mandatory only; release-auditor + specialist sidecar; acceptance mirror)
+    if (f.status === "ACCEPTED_OBSERVATION") {
+      if (f.severity !== "Low" || f.mandatory_violation) errors.push(`${where}: only Low, non-mandatory findings may be accepted as observations`);
+      // Acceptance is read from reviewer-authored sidecars (status_after ACCEPTED_OBSERVATION), latest entry per role.
+      const latestByRole = new Map();
+      for (const e of (verifications.all && verifications.all.get(f.id)) || []) {
+        const prev = latestByRole.get(e.role);
+        if (!prev || e.round > prev.round) latestByRole.set(e.role, e);
+      }
+      const accepting = [...latestByRole.values()].filter((e) => e.result === "PASS" && e.status_after === "ACCEPTED_OBSERVATION");
+      for (const e of accepting) {
+        const round = roundEntry(stage, e.roundDir);
+        checkInvocation(repo, stage.id, e.record.invocation_reference, e.role, errors, `${where} acceptance by ${e.role}`, {
+          assignment: e.record.assignment, notBefore: round && round.frozen_at, outputs: [e.recordPath, e.sidecar],
+          manifestPath: round && manifestPathFor(stage.id, round.candidate_id),
+        });
+      }
+      const roles = accepting.map((e) => e.role).sort();
+      if (!roles.includes(AUDITOR)) errors.push(`${where}: no release-auditor sidecar accepts it`);
+      if (!roles.some((r) => REQUIRED_REVIEWERS.includes(r))) errors.push(`${where}: no specialist reviewer sidecar accepts it`);

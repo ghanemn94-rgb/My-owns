@@ -1,0 +1,30 @@
+# product effect check: does any product source read docs/delivery/stages.json? (git grep at the source commit, excluding docs/ and tools/)
+d8868b2a5c074b13c04693a88644c25ef2792583:CLAUDE.md:36:- `stages.json` (stage state)
+d8868b2a5c074b13c04693a88644c25ef2792583:apps/api/test/integration/workflows/g5-g6.test.ts:11://    (docs/delivery/gates/**, stages.json, findings.json, reviews/**, decisions.md, requirements.csv; directory listing
+d8868b2a5c074b13c04693a88644c25ef2792583:apps/api/test/integration/workflows/g5-g6.test.ts:304:  "stages.json",
+d8868b2a5c074b13c04693a88644c25ef2792583:apps/api/test/integration/workflows/g5-g6.test.ts:398:    for (const required of ["stages.json ", "findings.json ", "gates/DG3.json ", "decisions.md ", "requirements.csv "])
+d8868b2a5c074b13c04693a88644c25ef2792583:tests/qa/integration/a08-gate-controls.test.ts:153:  "stages.json",
+d8868b2a5c074b13c04693a88644c25ef2792583:tests/qa/integration/a08-gate-controls.test.ts:829:    expect(Object.keys(before)).toEqual(expect.arrayContaining(["stages.json", "findings.json", "requirements.csv"]));
+(matches above; none = no product reference)
+# META_EXCLUDES in tools/gates/lib/candidate.mjs:
+9:export const META_EXCLUDES = [
+10-  "docs/delivery/reviews/**",
+11-  "docs/delivery/gates/**",
+12-  "docs/delivery/test-evidence/**",
+13-  "docs/delivery/runs/**",
+14-  "docs/delivery/candidates/**",
+15-  "docs/delivery/handbacks/**",
+16-  "docs/delivery/assignments/**",
+17-  "docs/delivery/findings.json",
+18-  "docs/delivery/progress.md",
+19-  "docs/delivery/stages.json",
+20-];
+21-
+--
+68:  const exclude = [...(spec.exclude || []), ...META_EXCLUDES];
+69-  return paths.filter((p) => matchesAny(p, include) && !matchesAny(p, exclude)).sort();
+70-}
+71-
+72-/**
+73- * A transient mount stub of a concurrently running agent's OS sandbox (F-DG0-146, F-DG0-236): bubblewrap creates an
+# validator places that read history[].at (expect none besides comments):
