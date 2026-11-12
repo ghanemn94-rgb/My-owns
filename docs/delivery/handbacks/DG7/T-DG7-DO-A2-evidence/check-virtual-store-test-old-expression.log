@@ -1,0 +1,99 @@
+# parser body temporarily replaced by the old expression d.replace(/_.*$/, "") with the lastIndexOf('@') split, as in assemble-runtime.sh l.128 at fbfb0b96a; file restored afterwards (sha256 checked)
+✖ P-1: names containing `_` are kept; only the peer suffix after the version is stripped (2.633051ms)
+✖ a runtime store with string_decoder and a peer-suffixed react-dom passes (module and CLI) (0.932157ms)
+✖ development, unknown-version and unparseable directories fail with exit 1 and are named (0.761574ms)
+✔ usage error and unreadable input exit 2 (BLOCKED), never 0 (55.403172ms)
+✔ assemble-runtime.sh uses this check and strips the pnpm metadata (P-1, P-2) (0.24495ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 2
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 115.26174
+
+✖ failing tests:
+
+test at deploy/scripts/tests/check-virtual-store.test.mjs:31:1
+✖ P-1: names containing `_` are kept; only the peer suffix after the version is stripped (2.633051ms)
+  AssertionError [ERR_ASSERTION]: string_decoder@1.1.1
+  + actual - expected
+  
+    {
+  +   name: 'strin',
+  +   version: 'string'
+  -   name: 'string_decoder',
+  -   version: '1.1.1'
+    }
+  
+      at TestContext.<anonymous> (file:///home/user/My-owns/deploy/scripts/tests/check-virtual-store.test.mjs:40:50)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: { name: 'strin', version: 'string' },
+    expected: { name: 'string_decoder', version: '1.1.1' },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at deploy/scripts/tests/check-virtual-store.test.mjs:52:1
+✖ a runtime store with string_decoder and a peer-suffixed react-dom passes (module and CLI) (0.932157ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    {
+  +   extra: [
+  +     '@scope+under_score@2.0.0',
+  +     'string_decoder@1.1.1'
+  +   ],
+  -   extra: [],
+      packages: 4,
+      shipped: 4
+    }
+  
+      at TestContext.<anonymous> (file:///home/user/My-owns/deploy/scripts/tests/check-virtual-store.test.mjs:59:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: { packages: 4, shipped: 4, extra: [ '@scope+under_score@2.0.0', 'string_decoder@1.1.1' ] },
+    expected: { packages: 4, shipped: 4, extra: [] },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at deploy/scripts/tests/check-virtual-store.test.mjs:66:1
+✖ development, unknown-version and unparseable directories fail with exit 1 and are named (0.761574ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+  +   'string_decoder@1.1.1',
+      'string_decoder@1.3.0',
+      'typescript@5.9.3',
+      'weird'
+    ]
+  
+      at TestContext.<anonymous> (file:///home/user/My-owns/deploy/scripts/tests/check-virtual-store.test.mjs:68:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'string_decoder@1.1.1', 'string_decoder@1.3.0', 'typescript@5.9.3', 'weird' ],
+    expected: [ 'string_decoder@1.3.0', 'typescript@5.9.3', 'weird' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+exit=1

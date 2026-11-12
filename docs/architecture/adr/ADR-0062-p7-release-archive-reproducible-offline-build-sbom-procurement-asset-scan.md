@@ -158,7 +158,7 @@ One line per regular file in the archive except `SHA256SUMS` itself: `<64 lowerc
   "sourceCommit": "<40 hex>",
   "rehearsal": false,
   "mtime": 946684800,
-  "tool": { "node": "24.21.0", "buildArchiveSha256": "<sha256 of build-archive.mjs + lib/tar.mjs>" },
+  "tool": { "buildArchiveSha256": "<sha256 of build-archive.mjs + lib/tar.mjs>" },
   "layout": [
     { "dir": "source", "role": "app", "files": 0, "rule": "candidate manifest at sourceCommit" },
     { "dir": "infra", "role": "infra", "files": 0, "rule": "ADR-0062 §2" },
@@ -173,6 +173,7 @@ One line per regular file in the archive except `SHA256SUMS` itself: `<64 lowerc
 - `candidateId` is **recomputed** by the build from the files it packs, with the same hash `tools/gates/lib/candidate.mjs` uses (imported, not copied).
 - The build fails when `--candidate <id>` is given and differs: `build-archive: the files at <commit> hash to <id>, not the expected <expected>`. This is how the payload archive is bound to the approved payload hash (p7-plan §4.1 step 4; R5).
 - `sourceCommit` is recorded as a traceability pointer only (CLAUDE.md).
+- **Amendment 2026-11-12 (D-246 Q1, T-DG7-DO-A2):** `tool.node` is removed from `ARCHIVE-MANIFEST.json`. As first written, the manifest recorded the running Node version, so the `.tar` bytes depended on it, contradicting §3 ("a pure function … on any platform"). The manifest's `tool` now holds only `buildArchiveSha256`. The Node and zlib versions that built the archive are recorded in `<name>.build-report.json` as `tool: { "node", "zlib", "buildArchiveSha256" }`, beside `archiveSha256` and `tarSha256`. §3 is unchanged.
 
 #### 4.3 `build-archive.mjs --verify <archive.tar.gz> --expect-sha256 <hex> [--candidate <id>]`
 

@@ -102,6 +102,18 @@ test("layout, manifest and README: four role directories, copies, exclusions, no
   assert.equal(m.demoData.demoChecksum, JSON.parse(readFileSync(join(DEMO_FIXTURE, "manifest.json"))).demoChecksum);
   const manifestText = files.get("ARCHIVE-MANIFEST.json").data.toString("utf8");
   assert.doesNotMatch(manifestText, /20\d\d-\d\d-\d\dT/, "no wall-clock time in the manifest");
+  // D-246 Q1 (ADR-0062 §4.2 amendment): no Node version in the archive, so the .tar bytes do not depend on it (§3);
+  // the Node and zlib versions are recorded in build-report.json instead.
+  assert.deepEqual(Object.keys(m.tool), ["buildArchiveSha256"]);
+  assert.match(m.tool.buildArchiveSha256, /^[0-9a-f]{64}$/);
+  assert.ok(!manifestText.includes(process.versions.node), "no Node version in the manifest");
+  const report = JSON.parse(readFileSync(join(first.archivePath, "..", `${first.name}.build-report.json`), "utf8"));
+  assert.deepEqual(report.tool, {
+    node: process.versions.node,
+    zlib: process.versions.zlib,
+    buildArchiveSha256: m.tool.buildArchiveSha256,
+  });
+  assert.equal(report.tarSha256, first.tarSha256);
   assert.equal(files.get("README.txt").data.toString("utf8"), ARCHIVE_README_TEXT.replace("<version>", m.version));
 });
 

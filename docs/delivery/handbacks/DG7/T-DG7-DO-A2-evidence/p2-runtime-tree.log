@@ -1,0 +1,38 @@
+# P-2 checks on the assembled runtime tree $TMPDIR/bfa/runtime
+$ ls -A runtime/node_modules
+.pnpm
+$ ls -A runtime/node_modules/.pnpm | grep -v @ (non-package entries)
+lock.yaml
+node_modules
+$ find runtime -type d -name .bin | wc -l
+0
+$ find runtime -name .modules.yaml -o -name '.pnpm-workspace-state*' | wc -l
+0
+$ grep -rlF '<assembly work dir $TMPDIR/bfa>' runtime | wc -l   (grep -r does not follow symlinks)
+0
+$ grep -rlF '/var/tmp/' runtime | wc -l
+0
+$ grep -rlE 'node_modules/\.bin' runtime  (references to .bin shims anywhere in the tree)
+$TMPDIR/bfa/runtime/node_modules/.pnpm/pg-pool@3.14.0_pg@8.16.3/node_modules/pg-pool/package.json
+$TMPDIR/bfa/runtime/node_modules/.pnpm/jpeg-exif@1.1.4/node_modules/jpeg-exif/package.json
+$TMPDIR/bfa/runtime/node_modules/.pnpm/isarray@1.0.0/node_modules/isarray/Makefile
+$TMPDIR/bfa/runtime/node_modules/.pnpm/pino@9.14.0/node_modules/pino/inc-version.sh
+$ grep -nE 'node_modules/\.bin' on those files
+17:    "test": " node_modules/.bin/mocha"
+7:    "test": "./node_modules/.bin/istanbul cover ./node_modules/mocha/bin/_mocha -report lcovonly -- -R spec && cat ./coverage/lcov.info | ./node_modules/cover
+8:    "lint": "./node_modules/.bin/eslint ./src/index.js ./test/index.test.js --fix",
+3:	@node_modules/.bin/tape test.js
+5:PATH=./node_modules/.bin:${PATH}
+$ ls runtime/node_modules/.pnpm | grep _   (names with '_': underscore in the name or a peer suffix)
+@tanstack+react-query@5.90.2_react@19.2.0
+@tanstack+react-table@8.21.3_react-dom@19.2.0_react@19.2.0__react@19.2.0
+ajv-formats@3.0.1_ajv@8.17.1
+i18next@26.4.2_typescript@6.0.2
+node_modules
+pg-pool@3.14.0_pg@8.16.3
+react-dom@19.2.0_react@19.2.0
+react-hook-form@7.62.0_react@19.2.0
+react-i18next@17.0.15_i18next@26.4.2_typescript@6.0.2__react-dom@19.2.0_react@19.2.0__react@19.2.0_typescript@6.0.2
+react-router@7.18.4_react-dom@19.2.0_react@19.2.0__react@19.2.0
+string_decoder@1.1.1
+use-sync-external-store@1.7.0_react@19.2.0

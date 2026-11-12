@@ -1,0 +1,23 @@
+$ date -u
+Thu Nov 12 15:59:30 UTC 2026
+$ time tools/release/build-from-archive.sh <archive> --sha256 60a81b83425c7416b401c7aa86052c8114c5f29f5161ad898c6c9e2d3ccf77e3 --store $TMPDIR/pnpm-store-root/v10 --work $TMPDIR/bfa --keep
+store $TMPDIR/pnpm-store-root
+checksum ok 60a81b83425c7416b401c7aa86052c8114c5f29f5161ad898c6c9e2d3ccf77e3
+step unpack         exit 0     0.4s  (no source/.git)
+namespace unshare --user --map-root-user --net (unshare from util-linux 2.39.3)
+probe tcp 1.1.1.1:443: failed (ENETUNREACH)
+probe dns registry.npmjs.org: failed (EAI_AGAIN)
+step install        exit 0     1.4s  (log $TMPDIR/bfa/logs/install.log)
+step build          exit 0   110.6s  (log $TMPDIR/bfa/logs/build.log)
+step assemble       exit 0     5.0s  (log $TMPDIR/bfa/logs/assemble.log)
+step check-no-cdn   exit 0     0.4s  (log $TMPDIR/bfa/logs/check-no-cdn.log)
+step scan-assets    exit 0    16.6s  (log $TMPDIR/bfa/logs/scan-assets.log)
+sha256 apps/web/dist/index.html d91b4a1310a2fb679371d20a7b6777e08c279f4222d01756c3196793bfea0e46
+sha256 runtime-tree-listing 98c33aa8bb94ea671b0ee09cb74a372d92fb6951198b548b162658ba4c1200f9
+total 134.5s
+build-from-archive: PASS
+
+real	2m14.503s
+user	3m3.694s
+sys	0m10.599s
+exit=0

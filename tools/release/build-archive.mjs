@@ -238,7 +238,9 @@ export async function buildArchive({ repo = REPO, commit, demoData, candidate, r
     sourceCommit: commit,
     rehearsal: Boolean(rehearsal),
     mtime,
-    tool: { node: process.versions.node, buildArchiveSha256: toolSha256() },
+    // No Node version here (D-246 Q1; ADR-0062 §4.2 amendment): the .tar bytes must not depend on it (§3).
+    // The Node and zlib versions that built the archive are in build-report.json `tool`.
+    tool: { buildArchiveSha256: toolSha256() },
     layout: [
       { dir: SOURCE_DIR, role: "app", files: count(SOURCE_DIR), rule: "candidate manifest at sourceCommit" },
       { dir: "infra", role: "infra", files: count("infra"), rule: "ADR-0062 §2" },
@@ -280,8 +282,7 @@ export async function buildArchive({ repo = REPO, commit, demoData, candidate, r
     rehearsal: Boolean(rehearsal),
     files: inner.length,
     layout: manifest.layout.map(({ dir, files }) => ({ dir, files })),
-    node: process.versions.node,
-    zlib: process.versions.zlib,
+    tool: { node: process.versions.node, zlib: process.versions.zlib, buildArchiveSha256: manifest.tool.buildArchiveSha256 },
     timingsMs: { readCommit: t1 - t0, total: Date.now() - t0 },
     builtAt: new Date().toISOString(),
   };

@@ -1,0 +1,223 @@
+#!/usr/bin/env bash
+# Local clean start WITHOUT containers (A18 first case, REQ-S19-010; docs/operations/clean-start.md §B).
+# For hosts where Docker is unavailable, and as the container-free half of the evidence. It uses the SAME pieces as the
+# image and Compose: deploy/scripts/assemble-runtime.sh (image layout), deploy/docker/entrypoint.sh (the `mth`
+# command), deploy/compose/db-init/10-mth-roles.sh (roles + database) and deploy/scripts/smoke.mjs (journey).
+#
+#   deploy/scripts/clean-start-local.sh [--include-worktree] [--keep] [--work DIR] [--log FILE]
+#
+#   --include-worktree  overlay uncommitted (tracked-modified and untracked, non-ignored) files onto the fresh clone
+#                       (pre-commit verification); without it the clone is exactly HEAD
+#   --keep              keep the work directory (cluster, clone, runtime tree) for inspection
+# Environment:
+#   PGBIN              PostgreSQL server binaries (default: newest /usr/lib/postgresql/*/bin)
+#   MTH_PNPM_STORE     pnpm store to install from (--store-dir); MTH_PNPM_OFFLINE=1 adds --offline (no network)
+#   MTH_LOCAL_PG_PORT  default 24340;  MTH_LOCAL_PORT (API) default 3100
+#   Port policy (tests/qa/support/pg-port.sh, F-DG2-310; docs/operations/clean-start.md "Harness port policy"):
+#   defaults lie below the Linux ephemeral range (32768-60999); a requested port is the STARTING point and, if
+#   postgres or the API fails to bind (EADDRINUSE, e.g. a client socket in TIME_WAIT), the run retries on a free port
+#   from MTH_PORT_POOL (default 25000-31999), up to MTH_PORT_RETRIES (10) times, logging each retry. Every URL and
+#   secret file is written with the port actually used. MTH_LOCAL_PG_STRICT_PORT=1 / MTH_LOCAL_STRICT_PORT=1 (or
+#   MTH_STRICT_PORT=1) turn a conflict into "BLOCKED" (exit 3) instead. Any other start failure: FAIL (exit 1).
+#
+# Phase A: production semantics (NODE_ENV=production, AUTH_MODE=oidc) from the assembled runtime tree:
+#          status/migrate/idempotent re-run, health + readiness, SPA served, dev login absent, seed-dev refused,
+#          AUTH_MODE=dev refused in production, IdP outage does not crash the API, first-organization bootstrap.
+# Phase B: first-case journey on a second fresh database with SYNTHETIC dev users (AUTH_MODE=dev; the only mode that
+#          needs no IdP): smoke.mjs admin/office flow + the worker consuming the transformation.created event.
+# Every step is timed; the script exits non-zero on the first failure. Nothing here needs network access except the
+# dependency install when MTH_PNPM_OFFLINE is not set.
+set -euo pipefail
+
+REPO="${MTH_REPO_ROOT:?}"
+INCLUDE_WT=0
+KEEP=0
+WORK=""
+LOG=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --include-worktree) INCLUDE_WT=1 ;;
+    --keep) KEEP=1 ;;
+    --work) WORK="$2"; shift ;;
+    --log) LOG="$2"; shift ;;
+    *) echo "usage: $0 [--include-worktree] [--keep] [--work DIR] [--log FILE]" >&2; exit 64 ;;
+  esac
+  shift
+done
+WORK="${WORK:-$(mktemp -d "${TMPDIR:-/tmp}/mth-clean-start.XXXXXX")}"
+mkdir -p "$WORK"
+WORK="$(cd "$WORK" && pwd)"
+chmod 0755 "$WORK"
+LOG="${LOG:-$WORK/clean-start.log}"
+exec > >(tee "$LOG") 2>&1
+
+PGBIN="${PGBIN:-$(ls -d /usr/lib/postgresql/*/bin 2>/dev/null | sort -V | tail -1)}"
+PG_PORT="${MTH_LOCAL_PG_PORT:-24340}"
+API_PORT="${MTH_LOCAL_PORT:-3100}"
+# shellcheck source=../../tests/qa/support/pg-port.sh
+. "$REPO/tests/qa/support/pg-port.sh"
+PG_PID=""
+API_PID=""
+WORKER_PID=""
+T_START=$(date +%s.%N)
+
+as_pg() { if [ "$(id -u)" = "0" ]; then unshare --user --map-user=1000 --map-group=1000 "$@"; else "$@"; fi; }
+stop() { for p in "$@"; do [ -n "$p" ] && kill "$p" 2>/dev/null || true; done; sleep 1; }
+cleanup() {
+  stop "$API_PID" "$WORKER_PID"
+  [ -n "$PG_PID" ] && kill "$PG_PID" 2>/dev/null || true
+  sleep 1
+  if [ "$KEEP" = 0 ]; then rm -f "$WORK/src" "$WORK/app"; rm -rf "$WORK/pg" "$WORK/secrets"; fi
+}
+trap cleanup EXIT
+
+STEP_T=0
+begin() { STEP_T=$(date +%s.%N); echo; echo "==> $*"; }
+end() { printf '<== ok (%.2f s)\n' "$(echo "$(date +%s.%N) - $STEP_T" | bc)"; }
+die() { echo "FAIL: $*"; exit 1; }
+expect_exit() { # expect_exit <code> <description> <command...>
+  local want="$1" what="$2"; shift 2
+  set +e; "$@"; local got=$?; set -e
+  [ "$got" = "$want" ] || die "$what: exit $got, expected $want"
+  echo "  $what: exit $got (expected $want)"
+}
+
+begin "environment facts"
+echo "  date (UTC):  $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+echo "  host:        $(uname -srm); $(nproc) vCPU; $(free -g | awk '/Mem:/{print $2" GiB RAM"}')"
+echo "  node:        $(node --version);  pnpm: $(pnpm --version)"
+echo "  postgres:    $("$PGBIN/postgres" --version)"
+echo "  repo HEAD:   $(git -C "$REPO" rev-parse HEAD)  (worktree overlay: $INCLUDE_WT)"
+echo "  lockfile:    sha256 $(sha256sum "$REPO/pnpm-lock.yaml" | cut -d' ' -f1)"
+[ -x "$PGBIN/initdb" ] || die "BLOCKED: PostgreSQL server binaries not found (set PGBIN)"
+end
+
+begin "1-4 (DERIVED, T-DG7-DO-A2): reuse the built source/ and the assembled runtime tree of build-from-archive.sh"
+echo "  NOT the repository script's steps 1-4 (fresh full clone does not fit the disk budget); see the handback"
+[ -n "${MTH_REUSE_SRC:-}" ] && [ -n "${MTH_REUSE_APP:-}" ] || die "BLOCKED: MTH_REUSE_SRC/MTH_REUSE_APP unset"
+ln -s "$MTH_REUSE_SRC" "$WORK/src"; ln -s "$MTH_REUSE_APP" "$WORK/app"
+echo "  src -> $MTH_REUSE_SRC"; echo "  app -> $MTH_REUSE_APP"
+ls -A "$WORK/app/node_modules"
+end
+
+
+begin "5. disposable PostgreSQL cluster (password auth on TCP) + roles/database via deploy/compose/db-init"
+mkdir -p "$WORK/secrets" && chmod 0755 "$WORK/secrets"
+rand() { openssl rand -hex 24; }
+for s in pg_superuser_password mth_owner_db_password mth_app_db_password; do rand >"$WORK/secrets/$s"; done
+chmod 0644 "$WORK/secrets"/*
+# UTF8 + C locale whatever the shell locale (T-DG2-BE9; ADR-0003 "Database encoding").
+as_pg "$PGBIN/initdb" -D "$WORK/pg" -U postgres --pwfile="$WORK/secrets/pg_superuser_password" \
+  --auth-local=trust --auth-host=scram-sha-256 --encoding=UTF8 --locale=C >/dev/null
+mth_pg_start "$PGBIN" "$WORK/pg" "$WORK/pg.log" "$PG_PORT" MTH_LOCAL_PG_STRICT_PORT PG_PID || exit 3
+PG_PORT="$MTH_PG_PORT"
+export PGHOST=127.0.0.1 PGPORT="$PG_PORT" PGUSER=postgres PGPASSWORD="$(cat "$WORK/secrets/pg_superuser_password")"
+psql -d postgres -qAtc "select version()"
+POSTGRES_USER=postgres MTH_DB_INIT_SECRETS_DIR="$WORK/secrets" bash "$WORK/src/deploy/compose/db-init/10-mth-roles.sh"
+psql -d postgres -v ON_ERROR_STOP=1 \
+  -qc "CREATE DATABASE mth_dev OWNER mth_owner ENCODING 'UTF8' LC_COLLATE 'C' LC_CTYPE 'C' TEMPLATE template0" \
+  -c "REVOKE ALL ON DATABASE mth_dev FROM PUBLIC" -c "GRANT CONNECT ON DATABASE mth_dev TO mth_app"
+unset PGPASSWORD
+OWNER_PW="$(cat "$WORK/secrets/mth_owner_db_password")"
+APP_PW="$(cat "$WORK/secrets/mth_app_db_password")"
+url() { printf 'postgres://%s:%s@127.0.0.1:%s/%s' "$1" "$2" "$PG_PORT" "$3"; }
+url mth_owner "$OWNER_PW" mth >"$WORK/secrets/database_owner_url"
+url mth_app "$APP_PW" mth >"$WORK/secrets/database_url"
+url mth_owner "$OWNER_PW" mth_dev >"$WORK/secrets/dev_database_owner_url"
+url mth_app "$APP_PW" mth_dev >"$WORK/secrets/dev_database_url"
+openssl rand -hex 24 >"$WORK/secrets/oidc_client_secret"
+end
+
+MTH=(sh "$WORK/src/deploy/docker/entrypoint.sh")
+export MTH_APP_ROOT="$WORK/app" MTH_HEALTHCHECK="$WORK/src/deploy/docker/healthcheck.mjs"
+base_env() {
+  env -i PATH="$PATH" HOME="$WORK" MTH_APP_ROOT="$MTH_APP_ROOT" MTH_HEALTHCHECK="$MTH_HEALTHCHECK" PORT="$API_PORT" \
+    DEFAULT_TIMEZONE=Asia/Riyadh DEFAULT_CURRENCY=SAR LOG_LEVEL=warn EVIDENCE_STORAGE_PATH="$WORK/evidence" "$@"
+}
+# spawn <logfile> <env/cmd...>: background process whose PID ($!) IS the service (subshell -> exec env -> exec sh -> exec node)
+spawn() { local logf="$1"; shift; ( exec env -i PATH="$PATH" HOME="$WORK" MTH_APP_ROOT="$MTH_APP_ROOT" \
+  MTH_HEALTHCHECK="$MTH_HEALTHCHECK" PORT="$API_PORT" DEFAULT_TIMEZONE=Asia/Riyadh DEFAULT_CURRENCY=SAR LOG_LEVEL=warn \
+  EVIDENCE_STORAGE_PATH="$WORK/evidence" "$@" ) >>"$logf" 2>&1 </dev/null & }
+port_free() { for _ in $(seq 1 40); do curl -s -o /dev/null "http://127.0.0.1:$API_PORT/healthz" || return 0; sleep 0.25; done; return 1; }
+mkdir -p "$WORK/evidence"
+# PROD/DEV carry APP_BASE_URL, so they are rebuilt whenever the API port changes (set_mode_env, launch_api).
+set_mode_env() {
+  PROD=(NODE_ENV=production AUTH_MODE=oidc APP_BASE_URL="http://localhost:$API_PORT"
+    DATABASE_URL_FILE="$WORK/secrets/database_url" DATABASE_OWNER_URL_FILE="$WORK/secrets/database_owner_url"
+    OIDC_ISSUER_URL=https://idp.mth-clean-start.invalid/realms/none OIDC_CLIENT_ID=mth-hub
+    OIDC_CLIENT_SECRET_FILE="$WORK/secrets/oidc_client_secret")
+  DEV=(NODE_ENV=development AUTH_MODE=dev APP_BASE_URL="http://localhost:$API_PORT"
+    DATABASE_URL_FILE="$WORK/secrets/dev_database_url" DATABASE_OWNER_URL_FILE="$WORK/secrets/dev_database_owner_url")
+}
+set_mode_env
+# start_api <PROD|DEV> <logfile>: api on API_PORT, or on another port after a bind conflict (port policy); the port
+# actually used is left in API_PORT (and in PROD/DEV). Sets API_PID.
+launch_api() {
+  API_PORT="$1"
+  set_mode_env
+  local -n mode="$START_MODE"
+  spawn "$START_LOG" "${mode[@]}" "${MTH[@]}" api
+  MTH_LAUNCHED_PID=$!
+}
+api_ready() { local -n mode="$START_MODE"; base_env "${mode[@]}" "${MTH[@]}" health /readyz >/dev/null 2>&1; }
+start_api() {
+  local rc=0
+  START_MODE="$1" START_LOG="$2"
+  mth_start_with_port_retry "API" "$API_PORT" MTH_LOCAL_STRICT_PORT API_PID "$START_LOG" 60 launch_api api_ready || rc=$?
+  [ "$rc" = 3 ] && exit 3
+  [ "$rc" = 0 ] || { tail -30 "$START_LOG"; die "API not ready"; }
+  API_PORT="$MTH_PORT"
+  set_mode_env
+}
+
+wait_ready() {
+  for _ in $(seq 1 120); do base_env "$@" "${MTH[@]}" health /readyz >/dev/null 2>&1 && return 0; sleep 0.5; done
+  return 1
+}
+code() { curl -s -o /dev/null -w '%{http_code}' "$@"; }
+
+begin "A1. mth db status on the empty database reports pending (exit 3)"
+expect_exit 3 "mth db status" base_env "${PROD[@]}" "${MTH[@]}" db status
+end
+begin "A2. mth migrate (fresh database), then again (idempotent)"
+base_env "${PROD[@]}" "${MTH[@]}" migrate
+base_env "${PROD[@]}" "${MTH[@]}" migrate | tail -1
+expect_exit 0 "mth db status" base_env "${PROD[@]}" "${MTH[@]}" db status
+end
+begin "A3. production refusals: seed-dev not in the image; AUTH_MODE=dev refused with NODE_ENV=production"
+expect_exit 64 "mth db seed-dev" base_env "${PROD[@]}" "${MTH[@]}" db seed-dev
+expect_exit 78 "mth api with AUTH_MODE=dev" base_env "${PROD[@]}" AUTH_MODE=dev "${MTH[@]}" api
+end
+begin "A4. start api + worker (production, OIDC) and wait for readiness"
+start_api PROD "$WORK/api-prod.log"
+spawn "$WORK/worker-prod.log" "${PROD[@]}" "${MTH[@]}" worker
+WORKER_PID=$!
+wait_ready "${PROD[@]}" || { tail -30 "$WORK/api-prod.log"; die "API not ready"; }
+echo "  /healthz: $(curl -s "http://127.0.0.1:$API_PORT/healthz")"
+echo "  /readyz:  $(curl -s "http://127.0.0.1:$API_PORT/readyz")"
+end
+begin "A5. production surface: SPA served, dev login absent (404), IdP outage -> login redirects with an error, no crash"
+[ "$(code "http://127.0.0.1:$API_PORT/")" = 200 ] || die "SPA index not served"
+curl -s "http://127.0.0.1:$API_PORT/" | grep -qi '<html' || die "SPA index is not HTML"
+echo "  GET / -> 200 text/html"
+c=$(code -X POST -H 'content-type: application/json' -H "origin: http://localhost:$API_PORT" \
+  -d '{"username":"dev.admin"}' "http://127.0.0.1:$API_PORT/api/v1/auth/dev-login")
+[ "$c" = 404 ] || die "dev-login returned $c in production"
+echo "  POST /api/v1/auth/dev-login -> 404"
+loc=$(curl -s -o /dev/null -w '%{redirect_url}' "http://127.0.0.1:$API_PORT/api/v1/auth/login")
+case "$loc" in *"/login?error=idp_unavailable"*) echo "  GET /api/v1/auth/login -> 302 $loc" ;; *) die "unexpected login redirect: $loc" ;; esac
+kill -0 "$API_PID" || die "API died after the IdP outage"
+[ "$(code "http://127.0.0.1:$API_PORT/api/v1/me")" = 401 ] || die "/me without a session is not 401"
+echo "  GET /api/v1/me (no session) -> 401"
+end
+begin "A6. first organization + administrator via mth db bootstrap; a second bootstrap is refused"
+base_env "${PROD[@]}" "${MTH[@]}" db bootstrap --org-code MTH-LOCAL --org-name-en "Local clean-start org (synthetic)" \
+  --org-name-ar "مؤسسة التشغيل المحلي (اصطناعية)" --admin-name "Synthetic Admin" --admin-email admin@example.invalid \
+  --admin-issuer https://idp.mth-clean-start.invalid/realms/none --admin-subject synthetic-admin-0001 | tail -8
+expect_exit 1 "second bootstrap" base_env "${PROD[@]}" "${MTH[@]}" db bootstrap --org-code MTH-TWO --org-name-en X \
+  --org-name-ar X --admin-name X --admin-issuer https://idp.mth-clean-start.invalid/realms/none --admin-subject x
+end
+stop "$API_PID" "$WORKER_PID"; API_PID=""; WORKER_PID=""
+port_free || die "phase A API did not stop"
+echo; echo "  phase A api/worker stopped (graceful SIGTERM)"
+printf '\nCLEAN START PHASE A (derived): PASS (total %.1f s; work dir %s; log %s)\n' "$(echo "$(date +%s.%N) - $T_START" | bc)" "$WORK" "$LOG"

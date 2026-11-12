@@ -222,7 +222,7 @@ jobs:
       - name: Install (sandboxed, frozen lockfile; BLOCKED without bubblewrap - never an unsandboxed fallback)
         run: deploy/scripts/ci-install-deps.sh
       - name: Deploy tooling self-tests (check-ci-needs negatives incl. status-function and gate-context bypasses; pin-images BLOCKED and --missing paths)
-        run: node --test deploy/scripts/tests/check-ci-needs.test.mjs deploy/scripts/tests/pin-images.test.mjs deploy/scripts/tests/log-scan.test.mjs
+        run: node --test deploy/scripts/tests/check-ci-needs.test.mjs deploy/scripts/tests/pin-images.test.mjs deploy/scripts/tests/log-scan.test.mjs deploy/scripts/tests/check-virtual-store.test.mjs
       - name: CI structure (gated on delivery-gates success; sandboxed installs only; actions pinned by SHA)
         run: node deploy/scripts/check-ci-needs.mjs
       - name: .env.example equals the ENV_VARS catalogue (names only, no values)
