@@ -53,6 +53,7 @@ import {
 import {
   registerAdminRoutes,
   registerBrandingRoutes,
+  type BrandingTokenSource,
   registerEnvironmentRoutes,
   registerIdentityAdminRoutes,
   registerNotificationChannelRoutes,
@@ -124,7 +125,15 @@ import { registerSearchModule } from "./modules/search/index.ts";
 // P7 modules (p7-plan §2, §5.1; T-DG7-BE-A): each registers its route files (stubs until their owners fill them).
 import { registerReleaseModule } from "./modules/release/index.ts";
 import { registerRetentionModule } from "./modules/retention/index.ts";
-import { registerTransferModule } from "./modules/transfer/index.ts";
+import {
+  createConfigBundleAdapterRegistry,
+  registerTransferModule,
+  setConfigBundleAdapters,
+} from "./modules/transfer/index.ts";
+import { METHODOLOGY_BUNDLE_ADAPTERS } from "./modules/methodology/config-bundle-adapter.ts";
+import { brandingBundleAdapter, uploadPolicyBundleAdapter } from "./modules/admin/config-bundle-adapters.ts";
+import { notificationPolicyBundleAdapter } from "./modules/tasks/config-bundle-adapter.ts";
+import { jobScheduleBundleAdapter } from "./modules/jobs/config-bundle-adapter.ts";
 // P4 modules (p4-plan §2 seam 19; T-DG4-BE-A): each registers its route files (stubs until their owners fill them).
 import { registerAdoptionModule, updateStakeholderGroup } from "./modules/adoption/index.ts";
 import { registerBenefitsModule, updateBenefitRecord } from "./modules/benefits/index.ts";
@@ -500,22 +509,20 @@ export async function buildServer(options: ServerOptions): Promise<{
   registerAccessP2Routes(app, deps);
   // T-DG5-BE-R (ADR-0049 §8): the versioned branding routes; the token route merges the current version's colours and
   // re-derives the ADR-0009 §3 shades from the same single token source at read time.
-  registerBrandingRoutes(
-    app,
-    {
-      colorTokens,
-      tokensAreProvisional,
-      derived: tokenSource.derived,
-      deriveDarkerShade,
-      // T-DG6-BE-W (ADR-0061 §1): the runtime contrast rule and the SHA-256 of the tokens.json bytes read at start-up.
-      checkBrandingContrast: (primary, secondary) =>
-        checkBrandingContrast(primary, secondary).map((p) => ({ ...p, pointer: contrastPointer(p) })),
-      tokenSourceSha256: createHash("sha256")
-        .update(readFileSync(createRequire(import.meta.url).resolve("@mth/design-tokens/tokens.json")))
-        .digest("hex"),
-    },
-    deps,
-  );
+  // T-DG7-BE-F: the same token source also binds the configuration-bundle branding adapter (registered below).
+  const brandingTokenSource: BrandingTokenSource = {
+    colorTokens,
+    tokensAreProvisional,
+    derived: tokenSource.derived,
+    deriveDarkerShade,
+    // T-DG6-BE-W (ADR-0061 §1): the runtime contrast rule and the SHA-256 of the tokens.json bytes read at start-up.
+    checkBrandingContrast: (primary, secondary) =>
+      checkBrandingContrast(primary, secondary).map((p) => ({ ...p, pointer: contrastPointer(p) })),
+    tokenSourceSha256: createHash("sha256")
+      .update(readFileSync(createRequire(import.meta.url).resolve("@mth/design-tokens/tokens.json")))
+      .digest("hex"),
+  };
+  registerBrandingRoutes(app, brandingTokenSource, deps);
   // P4 (T-DG4-BE-A; ADR-0025, ADR-0026): business calendars (organization), job schedules (jobs) and the BE-B access
   // route files (groups, role mappings, delegations). The workspace header is served by reporting (ADR-0037 §11).
   registerCalendarRoutes(app, deps);
@@ -720,6 +727,13 @@ export async function buildServer(options: ServerOptions): Promise<{
   //    registration line per owning module (p7-plan §5.3: BE-G's named wiring lines), and nothing else in this file.
   //  - EvidenceStore for transfer and retention (the port; p7-work-split §C.7, §E.7): the driver-selecting
   //    `evidenceStore` above is the one store; BE-C/BE-G pass it to their module on its registration line below.
+  const configBundleAdapters = createConfigBundleAdapterRegistry(); // T-DG7-BE-F (ADR-0065 §6)
+  setConfigBundleAdapters(configBundleAdapters);
+  for (const adapter of METHODOLOGY_BUNDLE_ADAPTERS) configBundleAdapters.register(adapter); // six Studio kinds, review policies
+  configBundleAdapters.register(notificationPolicyBundleAdapter); // tasks
+  configBundleAdapters.register(jobScheduleBundleAdapter); // jobs (always applied disabled)
+  configBundleAdapters.register(brandingBundleAdapter(brandingTokenSource)); // admin (no draft stage)
+  configBundleAdapters.register(uploadPolicyBundleAdapter); // admin
   const modules: ModuleRegistration[] = [
     registerWorkflowsModule(app, deps, { gateFacts, t08ScheduleFlags }),
     // T-DG4-KBE-C (D-095): kpi requests kpi_version_activation approvals through workflows' approval service, passed

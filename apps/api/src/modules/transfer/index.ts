@@ -11,6 +11,13 @@ import { MIGRATION_EXPORT_ROUTE_GUARDS, registerMigrationExportRoutes } from "./
 import { MIGRATION_IMPORT_ROUTE_GUARDS, registerMigrationImportRoutes } from "./import/routes.ts";
 
 export type { P7RouteGuard } from "./guards.ts";
+export {
+  configBundleAdapters,
+  createConfigBundleAdapterRegistry,
+  setConfigBundleAdapters,
+  type ConfigBundleAdapterRegistry,
+  type ConfigBundleKindAdapter,
+} from "./config-bundle/registry.ts";
 
 /** Every route guard of the module, by operation id (the P7 permission wiring; T-DG7-BE-A). */
 export const TRANSFER_ROUTE_GUARDS = Object.freeze({
