@@ -179,6 +179,9 @@ export const ADVISORY_LOCK_CLASSES = {
   retentionRun: 730410,
   // P7 block of T-DG7-ARCH-04 (730416-730417; p7-plan §4, ADR-0069 §8). Both are RESERVED for this block and not
   // allocated: the readiness checks and getDeploymentStatus only read, and the drills run outside the API.
+  // P7 block of T-DG7-ARCH-05 (730418-730419; p7-plan §4, ADR-0071 §8). Both are RESERVED for this block and not
+  // allocated: the register and About operations only read a build-time snapshot, and the release tools run outside
+  // the API.
 } as const;
 
 export type AdvisoryLockClassName = keyof typeof ADVISORY_LOCK_CLASSES;

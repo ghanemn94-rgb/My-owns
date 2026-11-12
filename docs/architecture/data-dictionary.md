@@ -15343,3 +15343,11 @@ T-DG7-ARCH-04 (ADR-0069, ADR-0070) adds no table and no column, so no table sect
 A gap is closed by **adding** a section (the T-DG7-ARCH-03 generator is the preferred form), never by rewriting a section a gate approved (D-243 Q13). The orchestrator or an ARCH repair writes it (p7-plan §5.3).
 
 Tables the slice B code reads, unchanged: `storage_setting` (0102), `worker_heartbeat` (0101), `schema_migration` (the migration runner's table, ADR-0003), `deployment_environment` (0090).
+
+# P7 slices I and H (no migration, DG7)
+
+T-DG7-ARCH-05 (ADR-0071, ADR-0072) adds no table and no column, so no table section follows. `0153`–`0155` stay free.
+
+- **The register snapshot is a build artefact, not a table.** `apps/api/scripts/register-snapshot.mjs` (BE-H) writes `apps/api/dist/release/register-snapshot.json` at build time from `docs/delivery/requirements.csv`. Format: ADR-0071 §2 (`schemaVersion` `mth-register-snapshot/1`, the source's SHA-256 and row count, and every row with its 19 columns verbatim). The API reads it from the file system and caches it per process. The database never holds the register.
+- **The external-dependency list is a build input, not a table.** It is `docs/handover/external-dependencies.json` (DOC-B, generated from the `environment.md` residual table; ADR-0072 §5). The snapshot step copies it into the snapshot.
+- **No product table is read** by `listRequirements`, `getRequirement` or `getReleaseAbout`, beyond the session and role tables of every authorized request.

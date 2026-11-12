@@ -1217,7 +1217,8 @@ describe("every operation, validated against the contract and the zod mirrors", 
     // + 19 P7 operations of slices C and D (T-DG7-ARCH-02; pending in p7-pending-be-c/d/f.ts).
     // + 10 P7 operations of slice E (T-DG7-ARCH-03; pending in p7-pending-be-g.ts).
     // + 1 P7 operation of slices B and F (T-DG7-ARCH-04; pending in p7-pending-be-b.ts).
+    // + 3 P7 operations of slices I and H (T-DG7-ARCH-05; pending in p7-pending-be-h.ts).
     // A new operation needs a contract change first.
-    expect(operations).toHaveLength(962);
+    expect(operations).toHaveLength(965);
   });
 });

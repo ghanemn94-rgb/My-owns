@@ -388,6 +388,8 @@ tags:
     description: Retention classes (every table in exactly one), retention runs and dry runs with their per-record action log, archived-record markers, and the read-only status of the backup sets the backup job reported (P7, ADR-0066, ADR-0067). Backups, restores and upgrades run outside the API, IT-run.
   - name: deployment
     description: The deployment status of this installation for its technical operators (configured base URL, release and contract versions, migration level, readiness detail of database, migrations, evidence storage and worker); read-only (P7, ADR-0069). Deployment, transfer and restore run outside the API, IT-run.
+  - name: release
+    description: The requirement register of this release and Administration > About, read-only, from a build-time snapshot of docs/delivery/requirements.csv (P7, ADR-0071). The register is maintained in the repository; nothing in the product edits it or reads a delivery record at run time, and nothing here is a DG0-DG7 gate decision or a G1-G6 business approval.
 security:
   - sessionCookie: []
 paths:
@@ -24976,6 +24978,71 @@ paths:
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/requirements:
+    get:
+      tags: [release]
+      operationId: listRequirements
+      summary: "The requirement register of this release, read-only, ordered by requirement id: one summary row per register row, filtered by class, status, area and final gate (operations.read; ADM_TECH, TO, KDS, TD, AUD). The rows come from the build-time register snapshot generated from docs/delivery/requirements.csv of the release (ADR-0071 §2), so the unfiltered list has the same row count and ids as that file. The register is maintained in the repository; nothing here edits it, and no row is a DG0-DG7 gate decision or a G1-G6 business approval. ADR-0071 §3; REQ-S02-003."
+      parameters:
+        - { name: class, in: query, required: false, schema: { $ref: "#/components/schemas/RequirementClass" } }
+        - { name: status, in: query, required: false, schema: { $ref: "#/components/schemas/RequirementStatus" } }
+        - { name: area, in: query, required: false, description: "The register area: the middle part of the requirement id (PB playbook, DLV delivery protocol, S01-S21 master prompt sections).", schema: { $ref: "#/components/schemas/RequirementArea" } }
+        - { name: finalGate, in: query, required: false, schema: { type: string, pattern: "^DG[0-7]$" } }
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RequirementPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "503":
+          description: "release.register_snapshot_unavailable: the build-time register snapshot is missing or does not parse (a build without its snapshot step). Never answered with an empty list."
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Problem" }
+  /api/v1/admin/requirements/{reqId}:
+    get:
+      tags: [release]
+      operationId: getRequirement
+      summary: "One register row with every column of docs/delivery/requirements.csv verbatim (title, source reference, procedure, acceptance, status, evidence, notes) (operations.read; ADM_TECH, TO, KDS, TD, AUD). Read-only, from the build-time snapshot. ADR-0071 §3; REQ-S02-003, REQ-S02-005."
+      parameters:
+        - { name: reqId, in: path, required: true, schema: { type: string, pattern: "^REQ-[A-Z0-9]+-[0-9]{3}$", maxLength: 16 } }
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Requirement" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "503":
+          description: "release.register_snapshot_unavailable (as listRequirements)."
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Problem" }
+  /api/v1/admin/about:
+    get:
+      tags: [release]
+      operationId: getReleaseAbout
+      summary: "Administration > About: the release and contract versions, the register snapshot identity (row count and SHA-256 of the requirements.csv it was built from), the register counts by status, every row not IMPLEMENTED with its notes (the missing dependency), every IMPLEMENTED row whose notes name a clause that completes with the DG7 gate record or the post-approval seal, and the remaining external configuration dependencies (operations.read; ADM_TECH, TO, KDS, TD, AUD). A missing snapshot or dependency list is reported as unavailable (null), never as zero or an empty list. Read-only. ADR-0071 §4; REQ-S02-005, REQ-S21-003."
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ReleaseAbout" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/RateLimited" }
 components:
   securitySchemes:
     sessionCookie:
@@ -42742,4 +42809,118 @@ components:
             newestBeatAt: { $ref: "#/components/schemas/NullableTimestamp" }
             staleAfterSeconds: { type: integer, minimum: 1 }
         environmentKind: { type: [string, "null"], enum: [production, demo, null], description: "The deployment_environment marker (0090); null before initialization." }
+        checkedAt: { $ref: "#/components/schemas/Timestamp" }
+    RequirementClass:
+      type: string
+      enum: [SOURCE, USER, ENGINEERING]
+    RequirementStatus:
+      type: string
+      enum: [PLANNED, SPECIFIED, IMPLEMENTED, BLOCKED]
+      description: "The register status vocabulary (master prompt §2, M0088). Only IMPLEMENTED is complete."
+    RequirementArea:
+      type: string
+      pattern: "^(PB|DLV|S(0[1-9]|1[0-9]|2[01]))$"
+    RequirementSummary:
+      type: object
+      description: "ADR-0071 §3. One register row without its long columns; every string is the register's text verbatim."
+      required: [reqId, class, area, title, sourceRef, finalGate, status, increments, hasNotes]
+      additionalProperties: false
+      properties:
+        reqId: { type: string, pattern: "^REQ-[A-Z0-9]+-[0-9]{3}$", maxLength: 16 }
+        class: { $ref: "#/components/schemas/RequirementClass" }
+        area: { $ref: "#/components/schemas/RequirementArea" }
+        title: { type: string, maxLength: 2000 }
+        sourceRef: { type: string, maxLength: 2000 }
+        finalGate: { type: string, pattern: "^DG[0-7]$" }
+        status: { $ref: "#/components/schemas/RequirementStatus" }
+        increments: { type: string, maxLength: 200, description: "The register's increments column (for example P5;P7)." }
+        hasNotes: { type: boolean, description: "True when the notes column is not empty (open getRequirement to read it)." }
+    RequirementPage:
+      type: object
+      required: [items, nextCursor, snapshot]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/RequirementSummary" } }
+        nextCursor: { type: [string, "null"] }
+        snapshot: { $ref: "#/components/schemas/RegisterSnapshotInfo" }
+    Requirement:
+      type: object
+      description: "ADR-0071 §3. Every column of the register row verbatim (the register's own column names in camelCase), plus the derived area."
+      required: [reqId, class, area, title, sourceRef, sourceHeading, templateId, inputFields, procedure, output, ownerRoles, permissions, automation, screenApi, acceptance, increments, finalGate, status, evidence, notes, snapshot]
+      additionalProperties: false
+      properties:
+        reqId: { type: string, pattern: "^REQ-[A-Z0-9]+-[0-9]{3}$", maxLength: 16 }
+        class: { $ref: "#/components/schemas/RequirementClass" }
+        area: { $ref: "#/components/schemas/RequirementArea" }
+        title: { type: string, maxLength: 2000 }
+        sourceRef: { type: string, maxLength: 2000 }
+        sourceHeading: { type: string, maxLength: 2000 }
+        templateId: { type: string, maxLength: 200 }
+        inputFields: { type: string, maxLength: 20000 }
+        procedure: { type: string, maxLength: 65536 }
+        output: { type: string, maxLength: 20000 }
+        ownerRoles: { type: string, maxLength: 2000 }
+        permissions: { type: string, maxLength: 2000 }
+        automation: { type: string, maxLength: 2000 }
+        screenApi: { type: string, maxLength: 2000 }
+        acceptance: { type: string, maxLength: 65536 }
+        increments: { type: string, maxLength: 200 }
+        finalGate: { type: string, pattern: "^DG[0-7]$" }
+        status: { $ref: "#/components/schemas/RequirementStatus" }
+        evidence: { type: string, maxLength: 262144, description: "Evidence paths as the register lists them; repository paths, shown as text (the product serves no delivery record)." }
+        notes: { type: string, maxLength: 262144, description: "For a row that is not IMPLEMENTED, the exact missing dependency (REQ-S02-005)." }
+        snapshot: { $ref: "#/components/schemas/RegisterSnapshotInfo" }
+    RegisterSnapshotInfo:
+      type: object
+      description: "The identity of the build-time register snapshot (ADR-0071 §2)."
+      required: [schemaVersion, sourcePath, sourceSha256, rowCount, generatedAt]
+      additionalProperties: false
+      properties:
+        schemaVersion: { type: string, enum: ["mth-register-snapshot/1"] }
+        sourcePath: { type: string, enum: [docs/delivery/requirements.csv] }
+        sourceSha256: { type: string, pattern: "^[0-9a-f]{64}$", description: "SHA-256 of the requirements.csv bytes the snapshot was generated from." }
+        rowCount: { type: integer, minimum: 0 }
+        generatedAt: { $ref: "#/components/schemas/Timestamp" }
+    ReleaseOpenItem:
+      type: object
+      required: [reqId, title, status, finalGate, notes]
+      additionalProperties: false
+      properties:
+        reqId: { type: string, pattern: "^REQ-[A-Z0-9]+-[0-9]{3}$", maxLength: 16 }
+        title: { type: string, maxLength: 2000 }
+        status: { $ref: "#/components/schemas/RequirementStatus" }
+        finalGate: { type: string, pattern: "^DG[0-7]$" }
+        notes: { type: string, maxLength: 262144, description: "The register notes verbatim: the missing dependency, or the clause that completes later." }
+    ExternalDependency:
+      type: object
+      description: "One remaining external configuration dependency (M0414), from docs/handover/external-dependencies.json at build time (ADR-0072 §5)."
+      required: [key, title, owner, status]
+      additionalProperties: false
+      properties:
+        key: { type: string, pattern: "^[a-z][a-z0-9_.-]{1,63}$" }
+        title: { type: string, maxLength: 500 }
+        owner: { type: string, maxLength: 200, description: "Who must supply it (for example Mobily IT)." }
+        status: { type: string, enum: [not_configured, not_verified, blocked] }
+    ReleaseAbout:
+      type: object
+      description: "ADR-0071 §4. Built from the build-time snapshot and the API's own versions; no delivery record is read at run time."
+      required: [appVersion, contractVersion, register, statusCounts, openItems, laterClauses, externalDependencies, checkedAt]
+      additionalProperties: false
+      properties:
+        appVersion: { type: string, maxLength: 50, description: "The API's package version, `unknown` when it cannot be read (the getDeploymentStatus rule)." }
+        contractVersion: { type: string, maxLength: 50 }
+        register: { oneOf: [{ $ref: "#/components/schemas/RegisterSnapshotInfo" }, { type: "null" }], description: "null when the snapshot is missing or does not parse (shown as Unavailable, never as an empty register)." }
+        statusCounts:
+          type: [object, "null"]
+          description: "Rows per status; every status of RequirementStatus is present (0 when none). null when register is null."
+          required: [PLANNED, SPECIFIED, IMPLEMENTED, BLOCKED]
+          additionalProperties: false
+          properties:
+            PLANNED: { type: integer, minimum: 0 }
+            SPECIFIED: { type: integer, minimum: 0 }
+            IMPLEMENTED: { type: integer, minimum: 0 }
+            BLOCKED: { type: integer, minimum: 0 }
+        openItems: { type: [array, "null"], items: { $ref: "#/components/schemas/ReleaseOpenItem" }, description: "Every row whose status is not IMPLEMENTED, ordered by reqId; null when register is null." }
+        laterClauses: { type: [array, "null"], items: { $ref: "#/components/schemas/ReleaseOpenItem" }, description: "IMPLEMENTED rows whose notes carry the marker `completes-after-gate:` (D-243 Q19; ADR-0071 §5), ordered by reqId; null when register is null." }
+        externalDependencies: { type: [array, "null"], items: { $ref: "#/components/schemas/ExternalDependency" }, description: "null when the build had no external-dependencies.json (Unknown, never 'none')." }
         checkedAt: { $ref: "#/components/schemas/Timestamp" }

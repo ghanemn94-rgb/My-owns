@@ -1142,3 +1142,307 @@ The product's own label stays the approved `integrations.json` key `not_verified
 - `NO_400_OPERATIONS` is not a skip list. Print it with its reason, and do not count it as an exclusion.
 - A credential is named, never shown. `connectors.md` must pass the ADR-0063 secret scan.
 - "Not verified" is the truth for every enterprise connector in this release. No text may say "live", "integrated with Mobily" or "tested against production".
+
+## §I. Slice I: traceability, in-app register and honest completion (T-DG7-ARCH-05; ADR-0071)
+
+### I.0 Already delivered by the architect (do not re-create)
+
+- `docs/architecture/adr/ADR-0071-p7-traceability-register-snapshot-about-release-notes-release-blockers-protocol-audit.md`.
+- **No migration.** `0153`–`0155` stay free. Slice I adds no table. A migration that a slice I or H implementer still needs takes the next free id above the highest shipped one (D-245 O9, D-248 O8).
+- **No permission code.** All three operations use the P6 code `operations.read` (the D-250 O1 precedent; permissions matrix §33). `P7_PERMISSIONS` is unchanged.
+- **Contract** (`docs/api/openapi.yaml`, `1.6.0-p7`, **965** operations):
+  - the tag `release`;
+  - `GET /api/v1/admin/requirements` `listRequirements`, `GET /api/v1/admin/requirements/{reqId}` `getRequirement`, `GET /api/v1/admin/about` `getReleaseAbout`;
+  - the schemas `RequirementClass`, `RequirementStatus`, `RequirementArea`, `RequirementSummary`, `RequirementPage`, `Requirement`, `RegisterSnapshotInfo`, `ReleaseOpenItem`, `ExternalDependency` and `ReleaseAbout`.
+
+  `pnpm openapi:lint` passes. Related files: the `p7-operations.ts` block, `p7-pending-arch-05.ts`, `p7-pending-be-h.ts` (all three operations), the aggregate `p7-pending.ts` import line, and the `contract.test.ts` count pin 965 with its comment line.
+- **Advisory locks:** 730418–730419 reserved, none allocated (registry comment, ADR-0016 §6 row).
+- **ERD** §1af, **data dictionary** "P7 slices I and H", **permissions matrix** §33.
+
+### I.1 BE-H: the snapshot, the register and About (backend-workflow; W7; after BE-A)
+
+**Creates:**
+
+| File | Purpose |
+| --- | --- |
+| `apps/api/scripts/register-snapshot.mjs` | ADR-0071 §2: strict parse, the output format `mth-register-snapshot/1`, `--check`, exit codes 0/1/2 (§2 rule 4). Exports `parseRegister(text)` and `buildSnapshot(...)` for the tests. Node built-ins only. |
+| `apps/api/scripts/register-snapshot.test.mjs` | T-I1, T-I2, T-I3 (`node --test`; listed in BE-H's handback command) |
+| `apps/api/src/modules/release/snapshot.ts` | `RegisterSnapshotSource` (`load(): Promise<Snapshot>`); the default source resolves `../../release/register-snapshot.json` relative to the compiled module (`dist/modules/release/snapshot.js` → `dist/release/register-snapshot.json`); the source-mode fallback resolves `apps/api/dist/release/register-snapshot.json` from the package root; lazy load, cache on success only, validation (G4) |
+| `apps/api/src/modules/release/about.ts` | `buildAbout(snapshot \| null, versions)`: §4 of ADR-0071 (counts, `openItems`, `laterClauses` with the marker `completes-after-gate:`, `externalDependencies`) |
+| `apps/api/src/modules/release/cursor.ts` | the opaque cursor (base64url of `{ after, filtersHash }`; a mismatch → 400) |
+| `apps/api/test/integration/release/register.test.ts` | T-I4, T-I5, T-I6 (real PostgreSQL for the session and roles) |
+| `apps/api/test/integration/release/about.test.ts` | T-I7 |
+| `apps/api/test/integration/contract/p7-exercises-be-h.ts` | the three operations exercised and validated (the P6 pattern) |
+
+**Modifies:**
+
+| File | Exactly what |
+| --- | --- |
+| `apps/api/src/modules/release/routes.ts` | the three routes behind G1–G8 (ADR-0071 §3), `registerReleaseRoutes(app, deps, source = defaultRegisterSnapshotSource())` |
+| `apps/api/src/modules/release/index.ts` | passes the source through; nothing else |
+| `apps/api/src/modules/release/release.test.ts` | T-I8 and T-I9 (unit) |
+| `apps/api/package.json` | the `build` script line of ADR-0071 §2.4 and nothing else |
+| `.dockerignore` | one line `!docs/delivery/requirements.csv`, directly after `docs/delivery` |
+| `apps/api/test/integration/contract/contract.test.ts` | the import and the `it(...)` hook for `p7-exercises-be-h.ts` |
+| `apps/api/test/support/p7-pending-be-h.ts` | removes each operation in the change that routes and exercises it; empty at the end |
+
+**Reads only:** `docs/delivery/requirements.csv` (the generator and its tests only, never the runtime), `docs/handover/external-dependencies.json` (when it exists; DOC-B creates it in W9), `apps/api/src/modules/platform/**` (the version helper of BE-B, if exported).
+
+**Boundary:** `release` imports only `platform` plumbing and the policy function (ADR-0002; p7-plan §2). It never imports a domain module, never queries a product table, and never opens a file under `docs/`.
+
+**Requests to FE-A (append-only merge, §5.3):**
+- `problems.json` key `release.register_snapshot_unavailable` (I.3);
+- the nav entries Administration > Requirement register (`/admin/requirements`) and Administration > About (`/admin/about`), visible with `operations.read`.
+
+### I.2 FE-C: the two screens (frontend-ux; W9; after FE-A and BE-H)
+
+**Creates:**
+- `apps/web/src/pages/admin/requirements/**`: list with the four filters, URL-synced; table; detail panel; snapshot line.
+- `apps/web/src/pages/admin/about/**`.
+- `apps/web/src/i18n/{en,ar}/release.json`: the I.3 texts.
+- Their unit tests: T-I15, T-I16.
+
+The Arabic of `release.json` is registered as provisional (the `provisional-ar*.ts` pattern; FE-C adds its own `apps/web/src/i18n/provisional-ar-p7-release.ts`).
+
+**Rules:**
+- A `null` is shown as the Unavailable or Unknown text, never as 0, an empty table or a success colour.
+- `openItems: []` alone shows the empty-state text.
+- Register text (titles, notes) is shown as plain text in the register's language (English) inside a `dir="ltr"` `lang="en"` element on the Arabic screen, with the I.3 note.
+
+### I.3 Exact texts
+
+**Operator and tool lines** (English; §2 rule 4):
+
+| Where | Exit or level | Line |
+| --- | --- | --- |
+| `register-snapshot.mjs` | 0 | `register-snapshot: wrote <out> (<n> rows, sha256 <first 12 hex>)` |
+| `register-snapshot.mjs` | 1 | `register-snapshot: <line>: <reason>` (reasons: `header differs from the 19 register columns`, `expected 19 fields, found <k>`, `invalid req_id '<id>'`, `duplicate req_id '<id>'`, `invalid class '<v>'`, `invalid status '<v>'`, `invalid final_gate '<v>'`, `unterminated quoted field`, `byte order mark not allowed`) |
+| `register-snapshot.mjs --check` | 1 | `register-snapshot: <snapshot> is stale: it was built from sha256 <a>, the register is sha256 <b>` |
+| `register-snapshot.mjs` | 2 | `register-snapshot: BLOCKED: <path> not found` |
+| API (`release/snapshot.ts`) | warn, once per process | `release: the register snapshot is unavailable (<reason>); the register and About show it as unavailable` |
+| `release-notes.mjs` | 1 | `release-notes: <req_id> is <status> but names no missing dependency in notes` / `release-notes: <req_id> is IMPLEMENTED without evidence` / `release-notes: docs/handover/release-notes.md is out of date (run with --write)` |
+| `release-notes.mjs` | 0 | `release-notes: <n> unfinished item(s), <m> later clause(s); wrote <out>` |
+
+**Problem text** (`problems.json`, FE-A; the Arabic is provisional):
+
+| Code | English | Arabic |
+| --- | --- | --- |
+| `release.register_snapshot_unavailable` | The requirement register of this release is not available. The build did not include its register snapshot. | سجل المتطلبات لهذا الإصدار غير متاح. لم يتضمن البناء لقطة السجل. |
+
+**Screen texts** (`release.json`; the Arabic is provisional until a qualified reviewer checks it, D-243 Q7):
+
+| Key | English | Arabic (provisional) |
+| --- | --- | --- |
+| `register.title` | Requirement register | سجل المتطلبات |
+| `register.intro` | The requirements of this release and their delivery status, read-only. The register is maintained in the repository. | متطلبات هذا الإصدار وحالة تسليمها، للقراءة فقط. يُدار السجل في المستودع. |
+| `register.snapshot` | Register snapshot: {rowCount} rows, SHA-256 {sha}… | لقطة السجل: {rowCount} صفًا، SHA-256 {sha}… |
+| `register.filter.class` / `.status` / `.area` / `.finalGate` | Class / Status / Area / Final gate | الفئة / الحالة / المجال / البوابة النهائية |
+| `register.col.id` / `.title` / `.increments` | Requirement / Title / Increments | المتطلب / العنوان / المراحل |
+| `register.notEngineeringApproval` | These are engineering delivery states, not business approvals. | هذه حالات تسليم هندسية، وليست موافقات أعمال. |
+| `register.englishOnly` | Register texts are kept in English, as in the repository. | تُحفظ نصوص السجل بالإنجليزية كما في المستودع. |
+| `register.unavailable` | The register of this release is not available. | سجل هذا الإصدار غير متاح. |
+| `register.empty` | No requirement matches these filters. | لا يوجد متطلب يطابق عوامل التصفية هذه. |
+| `status.PLANNED` / `SPECIFIED` / `IMPLEMENTED` / `BLOCKED` | Planned / Specified / Implemented / Blocked | مخطط / محدد / منفذ / محظور |
+| `about.title` | About this release | حول هذا الإصدار |
+| `about.appVersion` / `about.contractVersion` | Application version / API contract version | إصدار التطبيق / إصدار عقد الواجهة البرمجية |
+| `about.counts` | Requirements by status | المتطلبات حسب الحالة |
+| `about.openItems` | Unfinished items | البنود غير المكتملة |
+| `about.openItems.dependency` | Missing dependency | التبعية الناقصة |
+| `about.openItems.none` | Every requirement of this release is implemented. | جميع متطلبات هذا الإصدار منفذة. |
+| `about.laterClauses` | Clauses that complete after the engineering gate | بنود تكتمل بعد البوابة الهندسية |
+| `about.externalDependencies` | Remaining external configuration dependencies | تبعيات الإعداد الخارجية المتبقية |
+| `about.unknown` | Unknown: this build did not include the list. | غير معروف: لم يتضمن هذا البناء القائمة. |
+| `about.unavailable` | Unavailable | غير متاح |
+
+**Release-notes headings** (`release-notes.md`; the Arabic summary section is provisional):
+
+| English | Arabic (provisional) |
+| --- | --- |
+| Release identity | هوية الإصدار |
+| Requirements by status | المتطلبات حسب الحالة |
+| Unfinished items and release blockers | البنود غير المكتملة وعوائق الإصدار |
+| Clauses that complete after the engineering gate | بنود تكتمل بعد البوابة الهندسية |
+| Remaining external configuration dependencies | تبعيات الإعداد الخارجية المتبقية |
+| Provisional Arabic texts | النصوص العربية المؤقتة |
+| None: every requirement of this release is implemented. | لا يوجد: جميع متطلبات هذا الإصدار منفذة. |
+
+### I.4 Tests (each line states what it proves)
+
+| Test | File | Proves |
+| --- | --- | --- |
+| T-I1 | `register-snapshot.test.mjs` | On the tree's `requirements.csv`: `rowCount` and the id list equal an independent count of records and ids. Every field of every row equals the file's field byte for byte (multi-line fields included). `sourceSha256` equals `sha256(file)`. |
+| T-I2 | same | `--check` exits 0 on a fresh snapshot and 1 after one byte of the fixture register changes, with the I.3 line. |
+| T-I3 | same | Each I.3 refusal on a fixture: header, field count, id, duplicate, class, status, gate, unterminated quote, BOM → exit 1. A missing `--csv` → exit 2. `--deps` absent → `externalDependencies: null` (never `[]`). An invalid dependency entry → exit 1. |
+| T-I4 | `register.test.ts` | Unfiltered `listRequirements`, paged to the end, returns exactly the snapshot's ids in order, and their count equals `rowCount` (**the A01 clause**). Each filter alone and combined returns exactly the matching rows. A cursor reused with another filter → 400. `limit` 0 or 101 → 400. An unknown parameter → 400. |
+| T-I5 | same | `getRequirement` returns every column verbatim for a multi-line row. An unknown id → 404. A bad id → 400. All three operations: 200 for ADM_TECH, TO, KDS, TD and AUD; 403 for SP, TL, BO, WL, FIN, CM, SEC, ADM_ACCESS and ADM_METHOD; 401 without a session (G1, G2). |
+| T-I6 | same | With a missing or corrupt snapshot (wrong `schemaVersion`; `rowCount` ≠ rows): list and get → 503 `release.register_snapshot_unavailable`, never 200 with an empty page. After the file is fixed, the next request succeeds without a restart (G4). |
+| T-I7 | `about.test.ts` | On a fixture snapshot with one SPECIFIED, one BLOCKED and one IMPLEMENTED row carrying `completes-after-gate:`: `statusCounts` holds every status and its sum equals `rowCount`; `openItems` lists exactly the two rows with their notes; `laterClauses` lists exactly the marked row. Snapshot missing → `register`, `statusCounts`, `openItems` and `laterClauses` are `null` and the response is 200. `externalDependencies` `null` stays `null`. `appVersion` and `contractVersion` equal `getDeploymentStatus`'s values once BE-B is merged (otherwise the test is skipped by name and listed in the handback, never counted as passed). |
+| T-I8 | `release.test.ts` | `.dockerignore` contains `docs/delivery` followed by `!docs/delivery/requirements.csv`, and no other `!docs/delivery` line. `apps/api/package.json` `build` runs the generator into `dist/release/register-snapshot.json`. |
+| T-I9 | same | With a spy on `node:fs` open and read calls during a full request cycle of the three operations, the only path read is the snapshot path (G7). |
+| T-I10 | QA-D (freeze) | On the frozen candidate: `pnpm -r build` and then `assemble-runtime.sh` into a scratch directory; the runtime tree's `apps/api/dist/release/register-snapshot.json` has `sourceSha256` equal to the candidate's `requirements.csv` and `rowCount` equal to its record count (**D-243 Q11**). |
+| T-I11 | `tools/release/tests/release-notes.test.mjs` (DO-J) | On fixtures and on the tree: the "Unfinished items and release blockers" section lists exactly the rows that are not `IMPLEMENTED` (set equality); a non-`IMPLEMENTED` row with empty notes → exit 1; `--check` drift → exit 1; no clock is read (two runs, identical bytes); the dependency list `null` → the Unknown line. |
+| T-I12 | `tests/qa/integration/a24-register-rules.test.ts` (QA-D) | `checkRegister` (imported read-only from `tools/gates/lib/rules.mjs`) refuses a BLOCKED row with empty notes and an IMPLEMENTED row without evidence, each with its own message (**the A24 clause of REQ-S02-005**). |
+| T-I13 | DO-J (fixture) and QA-D (frozen register) | The six D-243 Q19 rows (REQ-DLV-021, DLV-010, S20-023, DLV-039, DLV-041, S20-028) carry `completes-after-gate:` and appear in `laterClauses` and the release notes. |
+| T-I14 | DOC-B (`check-handover.test.mjs`, ADR-0072 T-H9) | Every file under `docs/handover/` is in the candidate manifest, so the payload secret scan covers it. |
+| T-I15 | FE-C (`pages/admin/requirements/*.test.tsx`) | Filters map to query parameters. A 503 shows `register.unavailable`, not the empty text. Notes render as text (no HTML). The Arabic view keeps the register text LTR. |
+| T-I16 | FE-C (`pages/admin/about/*.test.tsx`) | `null` fields show `about.unknown` or `about.unavailable`; `openItems: []` shows `about.openItems.none`; no count is rendered as 0 when `statusCounts` is `null`. |
+| T-I17 | FE-D (`apps/web/e2e/p7-*.spec.ts`) | axe, RTL/LTR, 360 px and keyboard over both screens. |
+
+**The `release` module's guard table → test → owner** (ADR-0071 §3; D-251 item 3). BE-H copies the G1–G8 table into the header comment of `release/routes.ts`, replacing the stub's "no guard table here yet".
+
+| Guard | Clause | Test(s) | Owner |
+| --- | --- | --- | --- |
+| G1 | no session → 401 | T-I5; the contract suite's 401 sweep (`p7-exercises-be-h.ts`) | BE-H |
+| G2 | `operations.read` at installation scope → else 403; the five holders → 200 | T-I5 (all 14 roles) | BE-H |
+| G3 | parameters by contract pattern and enum; cursor bound to filters → else 400 | T-I4, T-I5; `response-validation.test.ts` (uniform 400 body) | BE-H |
+| G4 | missing or invalid snapshot → 503 (list, get) or `null` fields (About); retried, not cached | T-I6, T-I7 | BE-H |
+| G5 | read-only: GET only, no audit, no version | the contract (three GETs); T-I9 (no write path opened); `route-inventory.test.ts` | BE-H |
+| G6 | no sensitive data added; register text secret-scanned | ADR-0063 payload scan (DO-B, CI); `sensitive-reference-inventory.test.ts` stays green (no reference column read) | DO-B; BE-H |
+| G7 | only the snapshot file is read at run time | T-I9 | BE-H |
+| G8 | platform rate limit → 429 | the platform limiter tests (exist); `p7-exercises-be-h.ts` declares 429 like every read | BE-H |
+
+### I.5 Seams with other slices
+
+| Seam | Rule |
+| --- | --- |
+| **Register → AN-P7** | The analyst updates `requirements.csv` before the freeze, and writes the `completes-after-gate:` marker into the six Q19 rows' notes (ADR-0071 §5.3). The snapshot is never edited by hand. |
+| **Archive → A (DO-A)** | `requirements.csv` and `docs/handover/**` are already in the archive (ADR-0062 §2). No change. |
+| **Image build → orchestrator** | The `.dockerignore` exception is proven by the orchestrator's image build (D-243 Q1). Otherwise it is disclosed as BLOCKED (ADR-0071 Residual 2). |
+| **Versions → B (BE-B)** | `appVersion` and `contractVersion` follow the `getDeploymentStatus` rule. If BE-B exports a helper from `platform/index.ts`, BE-H uses it. Otherwise BE-H reads the same sources, and T-I7 compares them. |
+| **External dependencies → H (DOC-B)** | `external-dependencies.json` is DOC-B's (W9), after BE-H (W7). Until it exists, About and the release notes show Unknown. The freeze build includes it. |
+| **Release notes → M (DO-J)** | DO-J builds `release-notes.mjs` from ADR-0071 §5. The seal (ADR-0073) re-checks the archive copy. |
+| **Secret and claims scans → G (DO-B)** | Unchanged tools. The handover text is in their payload scope. |
+
+### I.6 Requirement → clause → test → owner
+
+| Requirement | Clause | Test(s) | Owner |
+| --- | --- | --- | --- |
+| REQ-S02-003 | "the in-app view lists the same row count and IDs as docs/delivery/requirements.csv for the release" | T-I1, T-I4, T-I10 | BE-H; QA-D |
+| REQ-S02-003 | "with filters by class, status and area" | T-I4, T-I15 | BE-H; FE-C |
+| REQ-S02-003 | "view:ADM,AUD,TO; edit:none in-app" | T-I5 (the role set of matrix §33; open question O1); no write operation exists (contract) | BE-H |
+| REQ-S02-003 | "the handover archive contains the register" | ADR-0062 archive manifest (DO-A, exists); A28 (ADR-0073) | DO-A; DO-J |
+| REQ-S02-005 | "the validator rejects a BLOCKED row with empty notes and an IMPLEMENTED row without evidence" | T-I12 | QA-D |
+| REQ-S02-005 | "release notes list every non-IMPLEMENTED row" | T-I11 | DO-J |
+| REQ-S02-005 | "in-app 'About' list unfinished items as such" | T-I7, T-I16 | BE-H; FE-C |
+| REQ-S02-005 | "no planned feature is labelled delivered" | T-I7 (status verbatim), T-I13, the claims scan (ADR-0063) | BE-H; DO-J; DO-B |
+| REQ-S21-003 | "at DG7 no register row is below IMPLEMENTED, or it is listed as a release blocker" | T-I11 (the section equals the rows not IMPLEMENTED); QA-D's release-blocker check; the auditor | DO-J; QA-D |
+| REQ-S21-003 | "the secret scan of the repository and the handover text finds no credentials" | `secret-scan.mjs --scope payload` and `--scope history` (DO-B, CI); T-I14 | DO-B; DOC-B |
+| REQ-S21-003 | "preserve the full platform scope" | AN-P7 register pass; About `statusCounts` | analyst; BE-H |
+
+### I.7 What the implementers must know
+
+- Never trim, normalize or re-encode a register field. Verbatim is the A01 clause.
+- `null` means unknown. Never send `[]` or `0` for something the build did not have.
+- The runtime reads one file. A test (T-I9) holds you to it.
+- No text calls a register status an approval, and none says the release "is approved".
+
+## §H. Slice H: the handover documentation set (T-DG7-ARCH-05; ADR-0072)
+
+### H.0 Already delivered by the architect (do not re-create)
+
+- `docs/architecture/adr/ADR-0072-p7-handover-documentation-set-language-rule-deployment-guide-role-matrix-known-limitations.md`.
+- No migration, permission or operation. The documents are not product rights (permissions matrix §33).
+
+### H.1 Owners and files
+
+| Task (wave) | Creates | Modifies | Reads only |
+| --- | --- | --- | --- |
+| **DOC-C** (backend-workflow; W8; after BE-G) | `tools/release/role-matrix.mjs`, `tools/release/tests/role-matrix.test.mjs` (T-H3), `docs/handover/role-matrix.md`, `docs/handover/automation-operations.md`, `docs/handover/automation-operations.ar-summary.md`, `tools/release/tests/automation-guide.test.mjs` (T-H6) | — | `packages/shared/src/permissions.ts`, `apps/worker/src/handlers/**`, ADR-0053, ADR-0067 |
+| **DOC-B** (devops; W9; after ARCH-04, ARCH-05) | `docs/handover/README.md`, `deployment.md`, `deployment.ar-summary.md`, `operator-guide.md`, `operator-guide.ar-summary.md`, `known-limitations.md`, `known-limitations.ar-summary.md`, `external-dependencies.json`, `arabic-review.json` (`[]`), `tools/release/known-limitations.mjs`, `tools/release/check-handover.mjs`, `tools/release/tests/check-handover.test.mjs` (T-H1, T-H2, T-H4, T-H7, T-H8, T-H9, T-I14) | `docs/handover/security-controls.md`: the HR-01, HR-02, HR-04 and HR-06 guide links only (D-247 O5) | `docs/delivery/environment.md`, the protocol-audit JSON, `docs/operations/**`, `deploy/scripts/drill/guide-keys.json` |
+| **DOC-A** (frontend-ux; W10; after FE-B, FE-C) | `docs/handover/guides/user/{en,ar}/*.md`, `docs/handover/guides/admin/{en,ar}/*.md` | — | the finished screens; `check-handover.mjs` (runs T-H5) |
+| **DO-F**, **DO-G** | `backup-restore.md`, `upgrades.md` (§E) | — | — |
+| **DO-J** | `release-notes.md` (ADR-0071 §5) | — | — |
+
+- **Index.** Every task that adds a file under `docs/handover/` before DOC-B requests its index line in its handback (§2 rule 10). DOC-B adds the lines for every file listed in ADR-0072 §1, including `security-controls.md` (D-247 O3).
+- **Order.** DOC-C (W8) precedes DOC-B (W9) precedes DOC-A (W10). DOC-B's `check-handover.mjs` must accept a tree without the `guides/` directory until DOC-A lands: T-H5 reports "no guides yet" as BLOCKED (exit 2), never as a pass. At the freeze it must pass.
+
+### H.2 Seams
+
+| Seam | Rule |
+| --- | --- |
+| **Deployment guide → B (DO-D)** | DOC-B owns the anchors that `guide-keys.json` cites. A missing anchor is requested in DO-D's handback (B.6). |
+| **B.5 guide texts** | DOC-B uses ADR-0069's B.5 texts (HA, sub-path, origin change, readiness, orchestration target) verbatim, in English and in the Arabic summary. |
+| **Security-controls matrix → G (DO-B)** | Only the link cells change. DO-B's matrix test must still pass (T-H8). |
+| **Known limitations → J (DO-I)** | Generated from the report that the orchestrator produces at the freeze (`protocol-audit.mjs --all --json`). The DO-I fixture is `T-DG7-DO-I-evidence/protocol-audit-all.json`. |
+| **External dependencies → I (BE-H, DO-J)** | `external-dependencies.json` feeds the snapshot (About) and the release notes. The block in `known-limitations.md` is generated from the same table. |
+| **Role matrix → seeds** | `permissions.ts` is the one source. `seed.test.ts` already pins it to the migrations. |
+
+### H.3 Exact texts (the Arabic is provisional, D-243 Q7)
+
+| Key | English | Arabic (provisional) |
+| --- | --- | --- |
+| Provisional marker (every Arabic file or section) | Arabic text: provisional. It has not been checked by a qualified Arabic reviewer. | النص العربي مؤقت. لم يراجعه مراجع عربي مؤهل. |
+| Summary-page header | This page summarizes the English guide <title>. The English guide is the complete text. | تلخص هذه الصفحة الدليل الإنجليزي <title>. الدليل الإنجليزي هو النص الكامل. |
+| Role matrix header | These roles and permissions are the platform's configurable starting point, not a Mobily-approved access policy. | هذه الأدوار والصلاحيات هي نقطة البداية القابلة للتهيئة في المنصة، وليست سياسة وصول معتمدة من موبايلي. |
+| Handover acceptance | Accepting this handover is a decision of Mobily IT, made outside the platform. This package is engineering evidence, not that acceptance. | قبول هذا التسليم قرار تتخذه تقنية المعلومات في موبايلي خارج المنصة. هذه الحزمة دليل هندسي وليست ذلك القبول. |
+| Protocol-audit disclosure (known limitations) | The delivery records of gates DG0–DG6 contain the historic protocol observations listed below, found by the protocol audit. None changed product behaviour. They are disclosed here, and no gate was reopened (decision D-249). | تتضمن سجلات التسليم للبوابات DG0–DG6 الملاحظات التاريخية المتعلقة بالبروتوكول المذكورة أدناه، والتي كشفها تدقيق البروتوكول. لم تغيّر أي منها سلوك المنتج. يُفصح عنها هنا، ولم يُعَد فتح أي بوابة (القرار D-249). |
+| External dependency, not verified | Not verified in this release. Mobily IT must supply and test it. | لم يُتحقق منه في هذا الإصدار. يجب أن توفره تقنية المعلومات في موبايلي وتختبره. |
+| Corporate IdP | Sign-in has been tested only with a synthetic identity provider. Connecting the corporate identity provider is an external dependency. | اختُبر تسجيل الدخول باستخدام مزوّد هوية اصطناعي فقط. ربط مزوّد الهوية المؤسسي تبعية خارجية. |
+
+### H.4 Tests
+
+T-H1–T-H9 as ADR-0072 §8 states them. Command: `node --test tools/release/tests/check-handover.test.mjs tools/release/tests/role-matrix.test.mjs tools/release/tests/automation-guide.test.mjs` (§2 rule 3: files, not a directory).
+
+### H.5 Requirement → clause → test → owner
+
+| Requirement | Clause | Test(s) | Owner |
+| --- | --- | --- | --- |
+| REQ-S19-011 | "the guide covers all seven topics" | T-H2 | DOC-B |
+| REQ-S19-011 | "the clean-environment transfer follows it without undocumented steps" | DO-D `config-trace.mjs` (T-B9, T-B11 D3); T-B14 | DO-D; DOC-B |
+| REQ-S19-011 | "accept:Mobily IT (external)" | the H.3 acceptance text; never claimed | DOC-B |
+| REQ-S19-015 | "the package contains all seven items" | T-H1 (the seven items mapped to files); A28 archive listing (ADR-0073) | DOC-B; DO-J |
+| REQ-S19-015 | "the coverage register equals docs/delivery/requirements.csv at the DG7 candidate" | identity: the archive ships the file (ADR-0062 §2); A28 byte check (ADR-0073); T-I10 for the in-app copy | DO-A; DO-J; QA-D |
+| REQ-S19-015 | "Guides are written in English and Arabic where user-facing" | T-H5, T-H7 (D-243 Q7) | DOC-A; DOC-B |
+| REQ-S19-015 | role matrix, automation guide, known limitations, release notes | T-H3, T-H6, T-H4, T-I11 | DOC-C; DOC-B; DO-J |
+
+### H.6 What the implementers must know
+
+- Every Arabic text is provisional, and says so. No agent adds an `arabic-review.json` entry.
+- Generated blocks are never edited by hand. Use `--write`, and let `--check` hold the line.
+- No guide says "certified", "compliant", "approved by Mobily" or "production-ready". Every external item reads "not verified in this release" (claims scan, §2 rule 8).
+
+## §J. Slice J: the gate protocol obligations through DG7 (16 rows; tooling recorded by T-DG7-ARCH-05; ADR-0071 §7)
+
+### J.0 What exists
+
+- `tools/release/protocol-audit.mjs` 1.0.0 (DO-I, D-249): checks C1–C9, 25 fixture tests.
+- The validator (`tools/gates/validate.mjs`: `--stage`, `--historical`, `--pipeline`, `--reconcile`), the gate records DG0–DG6, and `stages.json`.
+- The real run over DG0–DG6 reported the historic hits H1–H11, which the user decided to disclose, not reopen (D-249).
+- No new tool is specified here. The orchestrator owns the gate-time runs; tools under `tools/gates/**` are not changed by any P7 implementer.
+
+### J.1 How each row is evidenced
+
+"At the freeze" means run by the orchestrator on the DG7 candidate, with the log in `test-evidence/DG7/orchestrator/`. "Disclosure" means the D-249 block of `known-limitations.md` (ADR-0072 §5.2) plus the row's notes (AN-P7).
+
+| Row | Clause in short | Evidence | Who | Disclosure |
+| --- | --- | --- | --- | --- |
+| REQ-DLV-005 | a reviewer who authored the scope is refused | validator A23 test (exists) re-run; `validate --stage DG7` | orchestrator; auditor | — |
+| REQ-DLV-008 | no two concurrently active assignments share a writable file | protocol-audit **C4** `--all` at the freeze | orchestrator; auditor | H6/H7 (declared, not actual, shares; D-249 Q2) |
+| REQ-DLV-009 | at most four overlapping runs | **C1** `--all` | orchestrator | H1/H2 (five runs, twice in DG5 and once in DG6; 36 DG6 run directories without `meta.json`) |
+| REQ-DLV-010 | three specialist PASS and an audit per gate | gate records DG0–DG6; the DG7 gate (D-243 Q19: `completes-after-gate:`) | auditor | — |
+| REQ-DLV-011 | every assignment holds the ten elements | **C2** `--all` | orchestrator | H3 (elements missing by the tool's reading), H4 (one DG6 hash not recoverable) |
+| REQ-DLV-012 | five handback sections; no task with gaps reported complete | **C3**, **C6** `--all`; the auditor reads `progress.md` | orchestrator; auditor | H5 (headings), H9 (DG0 T-DG0-AN-01) |
+| REQ-DLV-014 | stage history through BUILDING, REVIEWING, VERIFYING, APPROVED | `validate --stage DG7`; **C9** | orchestrator | F-DG6-952 as its accepted observation |
+| REQ-DLV-018 | three failed fixes have a blocker entry | **C7** `--all` | orchestrator | H11 (F-DG3-100; D-085/D-086 recorded the closure criterion) |
+| REQ-DLV-021 | `gates/DG0.json`–`DG7.json` exist | the DG7 gate record; A28 (D-243 Q19: `completes-after-gate:`) | auditor; DO-J | — |
+| REQ-DLV-024 | `--historical` logged in test evidence before the first implementation run | **C5** `--all`; the DG7 `--historical` log placed in test evidence (D-249 H8) | orchestrator | H8 (DG0–DG6 runs stated in records without a log in test evidence) |
+| REQ-DLV-027 | automatic continuation; no approval claim | **C8**, **C9** `--all` | orchestrator; auditor | — (C8 clean over DG0–DG6) |
+| REQ-DLV-028 | six-element progress update per gate, matching candidate id | **C6** `--all` | orchestrator | H10 (closed by the added capability line, D-249) |
+| REQ-DLV-030 | resumption from `progress.md`; stale review flagged | the A27 drill (K, ADR-0073), `validate --reconcile` | orchestrator | — |
+| REQ-DLV-040 | the pipeline does not pass a gate that is not APPROVED | `validate --pipeline` after DG7; the A24 pipeline test re-run | orchestrator | — |
+| REQ-S20-023 | separate review and audit evidence (A23) | the DG7 gate (D-243 Q19: `completes-after-gate:`) | auditor | — |
+| REQ-S21-002 | end-to-end per gate in en and ar with audit; reopens recorded | the DG7 gate; `stages.json`; D-250 O2 (the `/readyz` change record, DG1 not reopened) | orchestrator; auditor | — |
+
+**16 rows.** A hit of C1–C9 **in DG7** is a DG7 finding through the normal process. It is not a disclosure, and it blocks the gate if it is High or Critical.
+
+### J.2 Tests for slice J
+
+- `node --test tools/release/tests/protocol-audit.test.mjs` (DO-I; exists, 25 fixtures).
+- `node tools/release/protocol-audit.mjs --all --json <evidence>`: at the freeze, exit status recorded as it is. Exit 1 is expected while the DG0–DG6 hits are disclosed. Each hit must be in the D-249 list or be a new DG7 finding.
+- `node --test tools/gates/tests/*.test.mjs` (the validator tests, orchestrator).
+- `node tools/gates/validate.mjs --stage DG7`, `--pipeline`, `--reconcile`.
+
+### J.3 What the implementers must know
+
+- No implementer edits `tools/gates/**`, a gate record, a review or `stages.json`. The protocol tooling reads; it never fixes a record (D-243 Q13).
+- A disclosed historic hit is never described as fixed.

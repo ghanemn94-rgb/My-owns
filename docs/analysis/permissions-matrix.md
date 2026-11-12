@@ -1240,3 +1240,23 @@ Legend as in 8.3 (**C** create, **E** edit, **V** view), plus **R** = request a 
 |---|---|---|---|
 | `getReadiness` (`GET /readyz`) | public | anyone (load balancer, orchestrator) | installation |
 | `getDeploymentStatus` (`GET /api/v1/admin/deployment`) | `operations.read` | ADM_TECH, TO, KDS, TD, AUD | installation |
+
+## 33. P7 implementation, slices I and H (DG7): the in-app requirement register, Administration > About and the handover documentation set
+
+- **Task:** T-DG7-ARCH-05 (solution-architect), 2026-11-12. **Sources:** ADR-0071 §3–§4, ADR-0072; REQ-S02-003 ("view:ADM,AUD,TO; edit:none in-app (register is maintained in the repository)"), REQ-S02-005 ("set status:delivery-orchestrator; verify:independent reviewers"), REQ-S19-011 and REQ-S19-015 ("prepare:devops-engineer; accept:Mobily IT (external); view:IT").
+- **No new permission code and no seed migration** (the D-250 O1 precedent; `0153`–`0155` stay free). The three operations reuse `operations.read` (seeded by `0103`; §25.1: ADM_TECH, TO, KDS, TD, AUD), the code that already gates `getDeploymentStatus`, the other read-only view of what this installation is.
+- **Interpretation of "view:ADM,AUD,TO" (raised as open question O1 of the T-DG7-ARCH-05 handback).** ADM is read as the technical administrator (ADM_TECH), as for REQ-S17-002/003 (§26): the register and About are part of the IT handover, which ADM_TECH receives. Two consequences, both disclosed:
+  - KDS and TD also read the register and About, because they hold `operations.read`. Nothing in the register is restricted: it is the engineering coverage register shipped in the handover archive, and the ADR-0063 secret scan covers it.
+  - ADM_ACCESS and ADM_METHOD do not read it, because they do not hold `operations.read`.
+
+  The exact role set needs a dedicated code `requirement_register.read` and a seed migration. That is a later, additive change; it would push every implementer migration merged after it above its id (D-245 O9, D-248 O8).
+- **No edit right exists in the product.** The register is maintained in the repository (`docs/delivery/requirements.csv`, analyst-owned). The product shows a build-time snapshot of it and reads no delivery record at run time (ADR-0071 §2). Its statuses are set by the delivery orchestrator and verified by independent reviewers outside the product.
+- **AUD stays read-only.** All three operations are GETs.
+- **Nothing here is an approval.** A register status is an engineering delivery state. It is not a DG0–DG7 gate decision, and it is not a G1–G6 business approval. Mobily IT's acceptance of the handover (REQ-S19-011, REQ-S19-015 "accept:Mobily IT (external)") happens outside the platform.
+- **Slice H adds no operation.** The guides, the role matrix, the automation operations guide, the known limitations and the release notes are documents in the release (`docs/handover/**`), not product rights. The role matrix is generated from `packages/shared/src/permissions.ts` (ADR-0072 §4).
+
+| Operation | Permission | Default roles | Scope |
+|---|---|---|---|
+| `listRequirements` (`GET /api/v1/admin/requirements`) | `operations.read` | ADM_TECH, TO, KDS, TD, AUD | installation |
+| `getRequirement` (`GET /api/v1/admin/requirements/{reqId}`) | `operations.read` | ADM_TECH, TO, KDS, TD, AUD | installation |
+| `getReleaseAbout` (`GET /api/v1/admin/about`) | `operations.read` | ADM_TECH, TO, KDS, TD, AUD | installation |

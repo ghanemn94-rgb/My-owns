@@ -6,9 +6,11 @@
 import { P7_PENDING_ARCH_02 } from "./p7-pending-arch-02.ts";
 import { P7_PENDING_ARCH_03 } from "./p7-pending-arch-03.ts";
 import { P7_PENDING_ARCH_04 } from "./p7-pending-arch-04.ts";
+import { P7_PENDING_ARCH_05 } from "./p7-pending-arch-05.ts";
 
 export const P7_PENDING_OPERATIONS: readonly string[] = [
   ...P7_PENDING_ARCH_02,
   ...P7_PENDING_ARCH_03,
   ...P7_PENDING_ARCH_04,
+  ...P7_PENDING_ARCH_05,
 ];

@@ -2292,6 +2292,14 @@ Slices B (clean deployment, readiness, transfer, offline and image drills) and F
 - the transfer drill (ADR-0069 §4) moves every table through the ADR-0064 package (section 1ac) and scans the target's text and `jsonb` columns for the source origin;
 - the dictionary coverage tool (ADR-0070 §1) reads the catalogue of the `public` and `pgboss` schemas. Its ERD rule: a table named in an ERD section that does not exist **fails**; a table that appears in no ERD section is **reported** (this model is entities and relationships, not columns; ADR-0070 §1.1).
 
+## 1af. P7 slices I and H: no new entity (no migration; T-DG7-ARCH-05; ADR-0071, ADR-0072)
+
+Slices I (traceability, in-app register, honest completion) and H (handover documentation) add **no table, column, function or trigger**. T-DG7-ARCH-05 ships no migration from its range `0153`–`0155`.
+
+- The in-app register and Administration > About read a **build-time snapshot file** (`apps/api/dist/release/register-snapshot.json`, ADR-0071 §2), not the database.
+- The release-notes and handover generators (`tools/release/**`) read repository files at build or release time. They never connect to a database.
+- The role matrix of the handover (`docs/handover/role-matrix.md`) is generated from `packages/shared/src/permissions.ts`, whose parity with the `role_permission` seeds is already pinned by `packages/db/src/seed.test.ts`.
+
 ## 2. Conceptual model, all §16 entity groups
 
 ### 2.1 Identity and access (REQ-S16-011; final gate DG4)
