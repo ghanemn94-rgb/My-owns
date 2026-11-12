@@ -5,7 +5,7 @@
 - **Stage:** P7 "Independent transfer and release", gate DG7 (BUILDING), branch `claude/mobily-transformation-platform-dg6-regate`, at the current `HEAD`. Work in the repository root.
 - **Your task is §G.1 of `docs/architecture/p7-work-split.md`.** Read the whole of §1, §2 and §G first, then ADR-0062 and ADR-0063 (`docs/architecture/adr/`), the plan `docs/architecture/p7-plan.md` and decisions D-243 and D-244 in `docs/delivery/decisions.md`. The work split is binding: file ownership, exact texts, tests and the requirement → clause → test table.
 - **Time:** 60–75 minutes. Run `date -u` at start and end; past about 70 minutes, finish the current file and write the handback listing what remains.
-- **Concurrency:** T-DG7-ARCH-02 and T-DG7-DO-A may run at the same time. Touch only the files §G.1 assigns to you. `tools/release/lib/patterns.mjs` is frozen: import it, never edit it.
+- **Concurrency:** Touch only the files §G.1 assigns to you. `tools/release/lib/patterns.mjs` is frozen: import it, never edit it.
 
 ## Environment
 
