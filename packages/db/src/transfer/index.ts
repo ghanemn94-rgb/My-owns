@@ -1,5 +1,5 @@
 // The data migration package (P7 slice C; ADR-0064): the catalogue-driven plan, the encoder and export, and the
-// manifest format. BE-D adds import, reconcile and rebind here. Nothing here approves anything (no G1-G6, Finance or
+// manifest format; the import checks, the reconciliation and the identity rebind (T-DG7-BE-D). Nothing here approves anything (no G1-G6, Finance or
 // IT approval), and nothing reads or writes DG0-DG7.
 export {
   buildPlan,
@@ -78,3 +78,47 @@ export {
   type RecordedExportOutcome,
 } from "./run.ts";
 export { runExportMigrationCommand, type ExportCliIo, type ExportCliOptions } from "./cli.ts";
+export {
+  checkEmptyTarget,
+  checkPackage,
+  checkTarget,
+  EMPTY_TARGET_TABLES,
+  ImportRefused,
+  LOAD_BLOCKED_REASON,
+  runImportMigrationCommand,
+  type CheckedPackage,
+  type ImportCliIo,
+  type ImportCliOptions,
+} from "./import.ts";
+export {
+  buildReport,
+  EMPTY_DIGEST,
+  MIGRATION_IMPORT_LOCK_CLASS,
+  MIGRATION_IMPORT_LOCK_KEY,
+  pinEncoderSettings,
+  reconcileLine,
+  reconcileTables,
+  recordReconciliation,
+  runReconcileMigrationCommand,
+  withMigrationImportLock,
+  type AttachmentMismatch,
+  type ReconcileCliIo,
+  type ReconciliationReport,
+  type TableExpectation,
+  type TableResult,
+} from "./reconcile.ts";
+export {
+  applyRebind,
+  IDENTITY_REBIND_LOCK_CLASS,
+  IDENTITY_REBIND_LOCK_KEY,
+  MAPPING_HEADER,
+  parseMapping,
+  RebindConflict,
+  rebindLines,
+  splitCsvRecord,
+  validateMapping,
+  type MappingLine,
+  type MappingProblem,
+  type ParsedMapping,
+  type RebindOutcome,
+} from "./rebind.ts";

@@ -3,7 +3,7 @@
 // remains. Discovery is lazy (first login) and retried after a failure, so an IdP outage never blocks API startup.
 import { randomBytes } from "node:crypto";
 import type { AppConfig } from "@mth/config";
-import { sql, type Tx } from "@mth/db";
+import { sql, type DbOrTx, type Tx } from "@mth/db";
 import * as client from "openid-client";
 import { hasInvalidCharacter, hasText } from "@mth/shared/schemas";
 import { v7 as uuidv7 } from "uuid";
@@ -220,7 +220,27 @@ export function loginCookieName(appBaseUrl: URL): string {
 
 export type ResolvedLogin =
   | { ok: true; userId: string; organizationId: string; outcome: "existing" | "bound" | "created" }
-  | { ok: false; error: "account_disabled" | "not_provisioned"; userId: string | null; organizationId: string | null };
+  | {
+      ok: false;
+      error: "account_disabled" | "not_provisioned" | "identity_unbound";
+      userId: string | null;
+      organizationId: string | null;
+    };
+
+/**
+ * ADR-0064 §8 (T-DG7-BE-D): whether a user carried by a migration import still waits for IT's identity rebind (an
+ * `unbound` identity_binding_hold). Such a user never signs in (`identity_unbound`) until `mth-db rebind-identity`
+ * rebinds or retains the subject. An installation without hold rows behaves exactly as before (additive, seam 11).
+ */
+export async function identityUnbound(db: DbOrTx, userId: string): Promise<boolean> {
+  const hold = await db
+    .selectFrom("identity_binding_hold")
+    .select("id")
+    .where("user_id", "=", userId)
+    .where("state", "=", "unbound")
+    .executeTakeFirst();
+  return hold !== undefined;
+}
 
 interface Claims {
   iss: string;
@@ -298,6 +318,8 @@ export async function resolveOidcUser(tx: Tx, claims: Claims, requestId: string)
   if (existing) {
     if (existing.status !== "active")
       return { ok: false, error: "account_disabled", userId: existing.id, organizationId: existing.organization_id };
+    if (await identityUnbound(tx, existing.id))
+      return { ok: false, error: "identity_unbound", userId: existing.id, organizationId: existing.organization_id };
     await tx
       .updateTable("user_identity")
       .set({ last_login_at: sql<Date>`now()` })
@@ -334,6 +356,9 @@ export async function resolveOidcUser(tx: Tx, claims: Claims, requestId: string)
       .execute();
     if (candidates.length === 1) {
       const u = candidates[0]!;
+      // A carried user is never bound by e-mail while unbound: IT confirms every subject (ADR-0064 §8).
+      if (await identityUnbound(tx, u.id))
+        return { ok: false, error: "identity_unbound", userId: u.id, organizationId: u.organization_id };
       await tx
         .insertInto("user_identity")
         .values({

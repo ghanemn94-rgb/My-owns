@@ -10,6 +10,10 @@
 //   mth-db reset-demo   drop, re-create, migrate and re-seed the demo database (MTH_ENV=demo and
 //                       MTH_DEMO_ADMIN_DATABASE_URL; ADR-0050 §6)                                         exit 0 | 3
 //   mth-db export-migration --out DIR --operator NAME   the migration package (ADR-0064 §7; T-DG7-BE-C)  exit 0 | 1 | 2
+//   mth-db import-migration --from DIR --operator NAME [--manifest-sha256 HEX]   package and target checks (ADR-0064 §6;
+//                       T-DG7-BE-D; the load itself is not available, see transfer/import.ts)          exit 1 | 2 | 3
+//   mth-db reconcile-migration --operator NAME   re-check of the recorded import (ADR-0064 §6)            exit 0 | 2 | 4
+//   mth-db rebind-identity --mapping FILE --operator NAME   identity rebind, all or nothing (ADR-0064 §8)  exit 0 | 2
 // bootstrap writes the production marker and refuses (exit 3) on a demo database (ADR-0050 §3).
 // ADR-0058 §2 (T-DG6-DO-E): bootstrap and seed-demo also refuse (exit 3, nothing changed) on a database that holds the
 // synthetic load dataset (a load_dataset_marker row, written by deploy/load/generate.mjs).
@@ -26,7 +30,11 @@ import { DevSeedRefused, seedDev } from "./dev-seed.ts";
 import { assertUtf8Database, DatabaseEncodingError } from "./encoding.ts";
 import { migrate, MigrationError, migrationStatus } from "./migrate.ts";
 import { createDb, createPool } from "./pool.ts";
+import { readFile } from "node:fs/promises";
 import { runExportMigrationCommand } from "./transfer/cli.ts";
+import { runImportMigrationCommand } from "./transfer/import.ts";
+import { runReconcileMigrationCommand } from "./transfer/reconcile.ts";
+import { applyRebind, rebindLines } from "./transfer/rebind.ts";
 
 /** ADR-0058 §2: the refusal of bootstrap and seed-demo on a load database (exact text). */
 export const LOAD_DATASET_CLI_REFUSAL =
@@ -48,7 +56,10 @@ const USAGE = `usage:
   mth-db seed-dev
   mth-db seed-demo
   mth-db reset-demo
-  mth-db export-migration --out DIR --operator NAME`;
+  mth-db export-migration --out DIR --operator NAME
+  mth-db import-migration --from DIR --operator NAME [--manifest-sha256 HEX]
+  mth-db reconcile-migration --operator NAME
+  mth-db rebind-identity --mapping FILE --operator NAME`;
 
 async function main(argv: string[]): Promise<number> {
   const [command, ...rest] = argv;
@@ -59,7 +70,10 @@ async function main(argv: string[]): Promise<number> {
     command !== "seed-dev" &&
     command !== "seed-demo" &&
     command !== "reset-demo" &&
-    command !== "export-migration"
+    command !== "export-migration" &&
+    command !== "import-migration" &&
+    command !== "reconcile-migration" &&
+    command !== "rebind-identity"
   ) {
     console.error(USAGE);
     return 64;
@@ -144,6 +158,42 @@ async function main(argv: string[]): Promise<number> {
         { out: values.out, operator: values.operator, evidenceRoot: config.evidenceStorage.path },
         { out: (l) => console.log(l), err: (l) => console.error(l) },
       );
+    }
+    const io = { out: (l: string) => console.log(l), err: (l: string) => console.error(l) };
+    if (command === "import-migration") {
+      const { values } = parseArgs({
+        args: rest,
+        options: { from: { type: "string" }, operator: { type: "string" }, "manifest-sha256": { type: "string" } },
+        strict: true,
+      });
+      return await runImportMigrationCommand(
+        db,
+        { from: values.from, operator: values.operator, manifestSha256: values["manifest-sha256"] },
+        io,
+      );
+    }
+    if (command === "reconcile-migration") {
+      const { values } = parseArgs({ args: rest, options: { operator: { type: "string" } }, strict: true });
+      return await runReconcileMigrationCommand(db, { operator: values.operator }, io);
+    }
+    if (command === "rebind-identity") {
+      const { values } = parseArgs({
+        args: rest,
+        options: { mapping: { type: "string" }, operator: { type: "string" } },
+        strict: true,
+      });
+      if (
+        values.mapping === undefined ||
+        values.operator === undefined ||
+        !/^[\p{L}\p{N} ._@-]{1,100}$/u.test(values.operator)
+      ) {
+        console.error("BLOCKED: usage: mth-db rebind-identity --mapping <file> --operator <name>");
+        return 2;
+      }
+      const bytes = new Uint8Array(await readFile(values.mapping));
+      const outcome = await applyRebind(db, bytes, values.operator);
+      for (const line of rebindLines(outcome)) (outcome.ok ? console.log : console.error)(line);
+      return outcome.ok ? 0 : 2;
     }
     if (command === "bootstrap") {
       const { values } = parseArgs({

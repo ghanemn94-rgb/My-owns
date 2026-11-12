@@ -171,6 +171,7 @@ import { exerciseP6BeQOperations, P6_MIRRORS_BE_Q } from "./p6-exercises-be-q.ts
 import { exerciseP6BeTOperations, P6_MIRRORS_BE_T } from "./p6-exercises-be-t.ts";
 import { exerciseP6BeUOperations, P6_MIRRORS_BE_U } from "./p6-exercises-be-u.ts";
 import { exerciseP7BeCOperations, P7_MIRRORS_BE_C } from "./p7-exercises-be-c.ts"; // T-DG7-BE-C
+import { exerciseP7BeDOperations, P7_MIRRORS_BE_D } from "./p7-exercises-be-d.ts"; // T-DG7-BE-D
 import { exerciseP7BeFOperations, P7_MIRRORS_BE_F } from "./p7-exercises-be-f.ts"; // T-DG7-BE-F
 import { exerciseP7BeGOperations, P7_MIRRORS_BE_G } from "./p7-exercises-be-g.ts"; // T-DG7-BE-G
 import { exerciseP6BeWOperations, P6_MIRRORS_BE_W } from "./p6-exercises-be-w.ts";
@@ -421,6 +422,7 @@ const ZOD_MIRRORS: Record<string, z.ZodType> = {
   ...P6_MIRRORS_BE_W,
   ...P6_MIRRORS_BE_X1,
   ...P7_MIRRORS_BE_C, // T-DG7-BE-C
+  ...P7_MIRRORS_BE_D, // T-DG7-BE-D
   ...P7_MIRRORS_BE_F, // T-DG7-BE-F
   ...P7_MIRRORS_BE_G, // T-DG7-BE-G
 };
@@ -941,6 +943,10 @@ describe("every operation, validated against the contract and the zod mirrors", 
   }); // T-DG6-BE-X1 (F-DG6-QA-B-1)
   it("P7 BE-C operations (p7-exercises-be-c.ts): migration exports", async () => {
     await exerciseP7BeCOperations(p3());
+  });
+
+  it("P7 BE-D operations (p7-exercises-be-d.ts): migration imports, reconciliations, identity rebinds", async () => {
+    await exerciseP7BeDOperations(p3());
   });
 
   it("P7 BE-F operations (p7-exercises-be-f.ts): configuration bundles", async () => {
