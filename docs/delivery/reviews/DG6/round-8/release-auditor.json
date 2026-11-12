@@ -1,0 +1,137 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG6",
+  "round": 8,
+  "candidate_id": "sha256:10f71f2418567878bffddfb004efbf342347029fd799dd3076af40aca32e2fc5",
+  "source_commit": "d8868b2a5c074b13c04693a88644c25ef2792583",
+  "reviewer_role": "release-auditor",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG6-T-DG6-AUDIT-RG-R8-release-auditor-20261112T103628Z-dd36eb14",
+    "session_id": "dd36eb14-6a8b-4a99-a0f8-5477821d5414"
+  },
+  "implementation_author": [
+    "solution-architect",
+    "backend-workflow-engineer",
+    "kpi-benefits-engineer",
+    "frontend-ux-engineer",
+    "devops-engineer",
+    "transformation-analyst",
+    "qa-verifier",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "release-auditor authored no DG6 implementation, test, register row, ADR, repair, delivery decision (D-238 to D-240), re-gate commit, findings.json entry or stages.json entry. That includes the two out-of-order entries of F-DG6-952 in DG0 and DG5, which the orchestrator's commits 57d7a53f2, ffa3fae5a and 5df7ea660 wrote. The only other release-auditor run in runs/DG6 is the round-4 audit, T-DG6-AUDIT-RG-R4, which raised F-DG6-990, a different finding. F-DG6-952 was raised by qa-verifier. I did not author it or its proposed acceptance. qa-verifier is listed among the authors only for its pre-freeze acceptance tests."
+  },
+  "assignment": "docs/delivery/assignments/DG6/round-8/release-auditor.md",
+  "requirements_checked": [
+    "REQ-DLV-015"
+  ],
+  "checks_run": [
+    {
+      "id": "AUD-RG-R8-01-clone-identity",
+      "procedure": "Verify the assignment hash. Make a complete, non-shallow git clone under $TMPDIR (not a worktree) and check fsck connectivity. Recompute the candidate with --ref of the source commit and with --ref of the main repository's HEAD. Confirm that d8868b2a5..HEAD changes only meta-excluded records and that decisions.md is unchanged since the freeze. Read the manifest.",
+      "command": "sha256sum docs/delivery/assignments/DG6/round-8/release-auditor.md; git clone --shared --no-checkout /home/user/My-owns $TMPDIR/aud-r8s; git sparse-checkout set --no-cone /tools/ /docs/delivery/stages.json /docs/delivery/candidates/DG6/ /package.json; git checkout d8868b2a5c074b13c04693a88644c25ef2792583; git rev-parse --is-shallow-repository; git fsck --connectivity-only; node tools/gates/candidate.mjs --stage DG6 --ref d8868b2a5c074b13c04693a88644c25ef2792583; node tools/gates/candidate.mjs --stage DG6 --ref af8d10096a9682eb62db7a3a034d6c5729e5793b; git diff --name-status d8868b2a5 HEAD; git diff --stat d8868b2a5 HEAD -- docs/delivery/decisions.md",
+      "environment": "Repository /home/user/My-owns at HEAD af8d10096a9682eb62db7a3a034d6c5729e5793b (read-only); clone $TMPDIR/aud-r8s at d8868b2a5; Node v24.21.0; no network.",
+      "expected": "Assignment sha256 bfc2a26c...24e06. Candidate sha256:10f71f24...2fc5 over 2775 files from both refs. Post-freeze changes only meta-excluded records. decisions.md unchanged since the freeze.",
+      "actual": "Assignment sha256 bfc2a26ccbeb3ba3e176ee3c59e452bd5e48df40eca55c798ab37a5ff0b24e06, as given. Both computations give sha256:10f71f2418567878bffddfb004efbf342347029fd799dd3076af40aca32e2fc5 over 2775 files, exit 0. The manifest records source d8868b2a5c074b13c04693a88644c25ef2792583, frozen_at 2026-11-11T18:38:30Z and 2775 entries, matching stages.json DG6.candidate. Since d8868b2a5, the only modified files are findings.json, progress.md and stages.json. Everything else added is under assignments/DG6 (round-7, round-8), candidates/DG6, reviews/DG6/round-7, runs/DG6 (3 round-7 runs) and test-evidence/DG6/*/round-7. All of these are META_EXCLUDES, and no path outside docs/delivery changed. The decisions.md diff is empty. The clone is not shallow; fsck --connectivity-only exits 0, reporting only dangling commits. Deviation from the assignment: a first --no-local clone filled the run's TMPDIR volume (3.0 GB of objects plus a 2.8 GB tree, against 3.9 GB free) and was deleted. I used a --shared clone instead: it has the complete history through alternates, writes nothing to the source repository and is not a worktree. Its sparse checkout carries only the tooling, because candidate.mjs --ref hashes git blobs and not the checked-out tree.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/audit/round-8/03-candidate-identity.log"
+      ]
+    },
+    {
+      "id": "AUD-RG-R8-02-f952-facts",
+      "procedure": "Item 1. Scan every stage's stages.json history for an `at` earlier than the previous entry's. Find the commits that wrote the inverted entries and compare their commit times. Confirm that both inversions lie in APPROVED gates and that DG6's history is in order. Read the rules.mjs history checks.",
+      "command": "node -e '<scan of stages.json history: Date.parse(h[i].at) < Date.parse(h[i-1].at)>'; git show -s --format='%H %cI %s' 5df7ea660 57d7a53f2 ffa3fae5a; git show <c> -- docs/delivery/stages.json | grep '^+.*\"at\"'; sed -n 103,113p tools/gates/lib/rules.mjs",
+      "environment": "Repository /home/user/My-owns at HEAD af8d10096 (read-only); stages.json sha256 506fc45a16a2c8dcfe62190df8be20007f205bb8280ac9760520ed3ab99973d2; Node v24.21.0.",
+      "expected": "As F-DG6-952 states: DG5 VERIFYING 12:00:00Z before APPROVED 06:30:00Z, and DG0 REVIEWING 15:45:00Z before FIXING 15:16:00Z, both in APPROVED gates; no DG6 entry out of order; the validator does not check order.",
+      "actual": "Exactly two inversions. DG0 (APPROVED, 61 entries): [56] REVIEWING 2026-09-30T15:45:00Z > [57] FIXING 2026-09-30T15:16:00Z. DG5 (APPROVED, 7 entries): [5] VERIFYING 2026-10-26T12:00:00Z > [6] APPROVED 2026-10-26T06:30:00Z. DG1-DG4 and DG7 have 0 inversions. DG6 (VERIFYING, 15 entries, PLANNED through VERIFYING 2026-11-12T10:36:02Z) has 0. Writing commits: 57d7a53f2 committed 2026-09-30T14:51:02Z added '15:45:00Z'; ffa3fae5a committed 15:23:21Z added '15:16:00Z'; 5df7ea660 committed 2026-10-26T04:34:41Z added '12:00:00Z'. So two entries carry times later than the commits that wrote them: hand-typed record times. rules.mjs 106-113 checks only the PLANNED start, legal TRANSITIONS and state == last entry. It has no `at` ordering check, which confirms the finding's statement.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-015"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/audit/round-8/01-f952-history-order-facts.log"
+      ]
+    },
+    {
+      "id": "AUD-RG-R8-03-history-validators",
+      "procedure": "Item 1, continued. Run the validator's history checks: --historical for DG1-DG5 and --pipeline.",
+      "command": "for s in DG1 DG2 DG3 DG4 DG5; do node tools/gates/validate.mjs --stage $s --historical; done; node tools/gates/validate.mjs --pipeline",
+      "environment": "Repository /home/user/My-owns at HEAD af8d10096a9682eb62db7a3a034d6c5729e5793b (read-only; the validator writes nothing); Node v24.21.0.",
+      "expected": "Each exits 0 and prints PASS.",
+      "actual": "'PASS gate DG1 (historical)' through 'PASS gate DG5 (historical)', each exit 0. 'PASS pipeline (active stage: DG6 VERIFYING)', exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG6/audit/round-8/02-validate-historical-DG1.log",
+        "docs/delivery/test-evidence/DG6/audit/round-8/02-validate-historical-DG2.log",
+        "docs/delivery/test-evidence/DG6/audit/round-8/02-validate-historical-DG3.log",
+        "docs/delivery/test-evidence/DG6/audit/round-8/02-validate-historical-DG4.log",
+        "docs/delivery/test-evidence/DG6/audit/round-8/02-validate-historical-DG5.log",
+        "docs/delivery/test-evidence/DG6/audit/round-8/02-validate-pipeline.log"
+      ]
+    },
+    {
+      "id": "AUD-RG-R8-04-f952-classification",
+      "procedure": "Item 2. Confirm severity Low and mandatory_violation false in the raising sidecar and in findings.json. Confirm that rules.mjs permits ACCEPTED_OBSERVATION for such a finding and what it requires. Confirm the specialist's latest entry for the finding. Check for product effect: whether stages.json is meta-excluded and whether any product code reads it.",
+      "command": "cat docs/delivery/reviews/DG6/round-6/qa-verifier.findings.json docs/delivery/reviews/DG6/round-6/qa-verifier.verifications.json; node -e '<F-DG6-952 in findings.json>'; grep -l F-DG6-952 docs/delivery/reviews/DG6/*/*.json; sed -n 565,583p tools/gates/lib/rules.mjs; grep -n META_EXCLUDES -A12 tools/gates/lib/candidate.mjs; git grep -n stages.json d8868b2a5 -- ':!docs/**' ':!tools/**' ':!trading_agent/**' ':!.claude/**'",
+      "environment": "Repository /home/user/My-owns at HEAD af8d10096 (read-only); Node v24.21.0.",
+      "expected": "Low, not mandatory, with no product effect. The rules permit acceptance with a specialist sidecar plus a release-auditor sidecar.",
+      "actual": "The raising sidecar (qa-verifier round 6) and findings.json both give severity Low, mandatory_violation false and requirement REQ-DLV-015. rules.mjs 565-583: ACCEPTED_OBSERVATION is rejected unless severity is Low and the finding is non-mandatory. It also needs the latest per-role sidecar entry PASS/ACCEPTED_OBSERVATION from a release-auditor and from at least one specialist, and acceptance.accepted_by in findings.json mirroring those roles. qa-verifier's latest entry is round 6, PASS -> ACCEPTED_OBSERVATION. The round-7 sidecars of all three reviewers carry no entry for 952, and their records state agreement in prose. Product effect: stages.json is in META_EXCLUDES (candidate.mjs line 19), so it is outside candidate 10f71f24. No product code reads it. The only matches outside docs/ and tools/ are apps/api/test/integration/workflows/g5-g6.test.ts and tests/qa/integration/a08-gate-controls.test.ts, which list it as a delivery record the product must not touch, and neither reads `at`. Record note for part 2: findings.json already shows status ACCEPTED_OBSERVATION, imported from qa's sidecar alone, and has no `acceptance` object. The validator reports this until this sidecar is imported with accepted_by [qa-verifier, release-auditor]. It is expected at this point, so I raise no finding, but part 2 must confirm the import.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-015"
+      ],
+      "evidence": [
+        "docs/delivery/reviews/DG6/round-6/qa-verifier.findings.json",
+        "docs/delivery/reviews/DG6/round-6/qa-verifier.verifications.json",
+        "docs/delivery/test-evidence/DG6/audit/round-8/01-f952-history-order-facts.log",
+        "docs/delivery/test-evidence/DG6/audit/round-8/04-f952-no-product-effect.log",
+        "tools/gates/lib/rules.mjs",
+        "tools/gates/lib/candidate.mjs"
+      ]
+    },
+    {
+      "id": "AUD-RG-R8-05-f952-judgement",
+      "procedure": "Item 3. Judge independently whether accepting F-DG6-952 as an observation is sound, compared with rewriting the history of the approved gates. Read D-238 to D-240, progress.md from round 5 on (including the user's decision of 2026-11-12), and the round-7 records' remarks on 952. Record the concurrence in the verification sidecar.",
+      "environment": "Repository /home/user/My-owns at HEAD af8d10096 (read-only).",
+      "expected": "A reasoned concurrence or a reasoned refusal.",
+      "actual": "I concur: PASS -> ACCEPTED_OBSERVATION, owner delivery-orchestrator. Reasons: (a) both inversions are in the closed records of APPROVED gates DG0 and DG5, and every historical and pipeline validation passes; (b) no transition, gate decision, candidate or product behaviour depends on the two `at` values; (c) rewriting approved history to tidy them would alter approved records after the fact, which is the class of defect D-238 (B2/B3) cleared only with a clean re-gate, so the cure would carry more integrity risk than the drift; (d) DG6's own history, the gate under audit, is in order, including the annotated late FIXING entry of the F-DG6-911/951 fix. Residual risk: the validator would not catch a future inversion. Recommendation, not a condition: add a non-decreasing-`at` check for new entries (grandfathering DG0/DG5) in a later stage through the normal tools/gates change process. The user's decision in progress.md (2026-11-12) agrees, but my concurrence rests on the evidence above, not on that decision.",
+      "exit_status": null,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-015"
+      ],
+      "evidence": [
+        "docs/delivery/reviews/DG6/round-8/release-auditor.verifications.json",
+        "docs/delivery/decisions.md",
+        "docs/delivery/progress.md",
+        "docs/delivery/reviews/DG6/round-7/qa-verifier.json",
+        "docs/delivery/reviews/DG6/round-7/code-security-reviewer.json",
+        "docs/delivery/reviews/DG6/round-7/domain-reviewer.json"
+      ]
+    }
+  ],
+  "findings": [],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG6/audit/round-8/01-f952-history-order-facts.log",
+    "docs/delivery/test-evidence/DG6/audit/round-8/02-validate-historical-DG1.log",
+    "docs/delivery/test-evidence/DG6/audit/round-8/02-validate-historical-DG2.log",
+    "docs/delivery/test-evidence/DG6/audit/round-8/02-validate-historical-DG3.log",
+    "docs/delivery/test-evidence/DG6/audit/round-8/02-validate-historical-DG4.log",
+    "docs/delivery/test-evidence/DG6/audit/round-8/02-validate-historical-DG5.log",
+    "docs/delivery/test-evidence/DG6/audit/round-8/02-validate-pipeline.log",
+    "docs/delivery/test-evidence/DG6/audit/round-8/03-candidate-identity.log",
+    "docs/delivery/test-evidence/DG6/audit/round-8/04-f952-no-product-effect.log",
+    "docs/delivery/reviews/DG6/round-8/release-auditor.verifications.json"
+  ],
+  "reviewed_at": "2026-11-12T10:52:19Z",
+  "summary": "Release audit, PART 1 OF 2 (D-140 option 1), of DG6 on candidate sha256:10f71f2418567878bffddfb004efbf342347029fd799dd3076af40aca32e2fc5 (2775 files, source d8868b2a5c074b13c04693a88644c25ef2792583). This record carries NO gate decision, and I wrote no docs/delivery/gates/DG6.json. Part 2 (round 9) audits the gate in full and decides it. Scope: the identity of the candidate, and concurrence on F-DG6-952 only. Identity: the candidate recomputes to the recorded id from the source commit and from HEAD; post-freeze changes are meta-excluded records only; decisions.md is unchanged since the freeze. F-DG6-952 (Low, not mandatory): the two out-of-order history times exist exactly as stated, in the APPROVED gates DG0 and DG5 only. DG6's history is in order. The validator has no ordering check, and --historical DG1-DG5 and --pipeline all exit 0. rules.mjs permits ACCEPTED_OBSERVATION for it. I concur with accepting it as an observation rather than rewriting approved history (sidecar release-auditor.verifications.json: PASS -> ACCEPTED_OBSERVATION, owner delivery-orchestrator). No new findings. Verdict PASS for this part. Before part 2, the orchestrator must import this sidecar so that findings.json F-DG6-952 carries acceptance.accepted_by [qa-verifier, release-auditor]; it currently has no acceptance object. Deviation: a --shared complete clone with sparse checkout was used instead of --no-local, because the full clone exhausted the TMPDIR volume (check 01)."
+}
