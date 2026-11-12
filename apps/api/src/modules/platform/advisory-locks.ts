@@ -177,6 +177,8 @@ export const ADVISORY_LOCK_CLASSES = {
   // is one INSERT with a unique label).
   /** The retention configuration and runs (retention: a class update, a run or dry-run request and the start of the retention.archive job never interleave, so a run never sees a class change half-way and at most one run is queued or running; also held by the 0144 index retention_run_one_active). One class-wide key: "retention". */
   retentionRun: 730410,
+  // P7 block of T-DG7-ARCH-04 (730416-730417; p7-plan §4, ADR-0069 §8). Both are RESERVED for this block and not
+  // allocated: the readiness checks and getDeploymentStatus only read, and the drills run outside the API.
 } as const;
 
 export type AdvisoryLockClassName = keyof typeof ADVISORY_LOCK_CLASSES;

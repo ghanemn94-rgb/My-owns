@@ -1226,3 +1226,17 @@ Legend as in 8.3 (**C** create, **E** edit, **V** view), plus **R** = request a 
 1. Only an operational class not managed by an existing expiry job can leave `retain`, and an enabled action needs both a period and the IT reference text (ADR-0067 §2).
 
 - **Scope:** retention and backups are installation-wide (no organization scope).
+
+## 32. P7 implementation, slices B and F (DG7): readiness and the deployment status; schema, API and connector handover
+
+- **Task:** T-DG7-ARCH-04 (solution-architect), 2026-11-12. **Sources:** ADR-0069 §2–§3, ADR-0070; REQ-S19-010 ("view:IT"), REQ-S19-005, REQ-S19-007 and REQ-S17-004 ("view:IT", "view:ADM").
+- **No new permission code and no seed migration.** `getDeploymentStatus` reuses `operations.read` (seeded by `0103`; §25.1: ADM_TECH, TO, KDS, TD, AUD). Those roles already read the worker heartbeat and the operational exceptions, and the deployment status adds the configured base URL, the release and contract versions, the migration level and the readiness detail. It carries no secret value, credential reference, storage endpoint or connection string (ADR-0069 §3). A dedicated code is open question O1 of the T-DG7-ARCH-04 handback.
+- **`/readyz` stays public** (no session, as since DG1). Its two new keys are enums only: `storage` (`ok`, `fail`, `unknown`) and `worker` (`alive`, `stale`, `unknown`). No path, endpoint or error text is returned.
+- **AUD stays read-only.** The one new operation is a GET.
+- **Slice F adds no operation.** The handover files (`docs/handover/{data,api}/`) are documents in the release, not product rights.
+- **No API right starts a deployment, a transfer or a drill.** They run outside the API, with credentials that only IT holds.
+
+| Operation | Permission | Default roles | Scope |
+|---|---|---|---|
+| `getReadiness` (`GET /readyz`) | public | anyone (load balancer, orchestrator) | installation |
+| `getDeploymentStatus` (`GET /api/v1/admin/deployment`) | `operations.read` | ADM_TECH, TO, KDS, TD, AUD | installation |

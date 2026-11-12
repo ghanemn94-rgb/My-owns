@@ -36,4 +36,6 @@ export const P7_OPERATION_IDS: ReadonlySet<string> = new Set([
   "listRetentionRunActions",
   "listRetentionArchivedRecords",
   "listBackupSets",
+  // T-DG7-ARCH-04: slices B and F (1 operation; ADR-0069). The /readyz change adds no operation.
+  "getDeploymentStatus",
 ]);

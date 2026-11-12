@@ -5,5 +5,10 @@
 // T-DG7-ARCH-06 (p7-plan §5.3). All lists MUST be empty when the DG7 candidate freezes.
 import { P7_PENDING_ARCH_02 } from "./p7-pending-arch-02.ts";
 import { P7_PENDING_ARCH_03 } from "./p7-pending-arch-03.ts";
+import { P7_PENDING_ARCH_04 } from "./p7-pending-arch-04.ts";
 
-export const P7_PENDING_OPERATIONS: readonly string[] = [...P7_PENDING_ARCH_02, ...P7_PENDING_ARCH_03];
+export const P7_PENDING_OPERATIONS: readonly string[] = [
+  ...P7_PENDING_ARCH_02,
+  ...P7_PENDING_ARCH_03,
+  ...P7_PENDING_ARCH_04,
+];

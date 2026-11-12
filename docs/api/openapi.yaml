@@ -386,6 +386,8 @@ tags:
     description: Whole-installation migration exports, migration import status and reconciliation, the identity rebind list, and configuration transfer bundles (P7, ADR-0064, ADR-0065). The migration import and the identity rebind are CLI-only, IT-run.
   - name: retention
     description: Retention classes (every table in exactly one), retention runs and dry runs with their per-record action log, archived-record markers, and the read-only status of the backup sets the backup job reported (P7, ADR-0066, ADR-0067). Backups, restores and upgrades run outside the API, IT-run.
+  - name: deployment
+    description: The deployment status of this installation for its technical operators (configured base URL, release and contract versions, migration level, readiness detail of database, migrations, evidence storage and worker); read-only (P7, ADR-0069). Deployment, transfer and restore run outside the API, IT-run.
 security:
   - sessionCookie: []
 paths:
@@ -409,7 +411,15 @@ paths:
     get:
       tags: [health]
       operationId: getReadiness
-      summary: Readiness. The database is reachable and all migrations shipped with this build are applied.
+      summary: Readiness. The database is reachable, all migrations shipped with this build are applied, and the evidence storage is reachable; the worker status is reported and does not gate readiness.
+      description: |
+        P7 (ADR-0069 §2, REQ-S19-010; D-243 Q6): `checks` also reports `storage` (the effective evidence store of
+        ADR-0054 §2 answers a probe within its timeout: `ok`; it does not: `fail`; it cannot be determined because the
+        database check failed: `unknown`) and `worker` (the worker heartbeat of ADR-0053 §6: `alive`, `stale` or
+        `unknown`, never shown as alive without a beat). Ready (200) means database `ok`, migrations `ok` and storage
+        `ok`. The worker never gates readiness, so an API is not withdrawn from a load balancer because the worker is
+        down; operators watch `worker` here and in Administration > Operations. The two keys are optional in the
+        schema so that a DG1-DG6 response stays valid; every P7 build sends both.
       security: []
       responses:
         "200":
@@ -24951,6 +24961,21 @@ paths:
         "401": { $ref: "#/components/responses/Unauthenticated" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/deployment:
+    get:
+      tags: [deployment]
+      operationId: getDeploymentStatus
+      summary: "The deployment status of this installation: the configured base URL and its origin, the release and contract versions, the migration level, and the readiness detail of database, migrations, evidence storage and worker (operations.read; ADM_TECH, TO, KDS, TD, AUD). Read-only; no secret value, credential reference, storage endpoint or connection string. ADR-0069 §3; REQ-S19-010, REQ-S01-006."
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DeploymentStatus" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/RateLimited" }
 components:
   securitySchemes:
     sessionCookie:
@@ -29800,6 +29825,14 @@ components:
           properties:
             database: { type: string, enum: [ok, fail] }
             migrations: { type: string, enum: [ok, pending, fail] }
+            storage:
+              type: string
+              enum: [ok, fail, unknown]
+              description: "P7 (ADR-0069 §2): the effective evidence store answers a probe. Gates readiness: only `ok` is ready."
+            worker:
+              type: string
+              enum: [alive, stale, unknown]
+              description: "P7 (ADR-0069 §2): the worker heartbeat (ADR-0053 §6). Reported only; never gates readiness."
 
     DevLoginRequest:
       type: object
@@ -42665,3 +42698,48 @@ components:
       properties:
         items: { type: array, items: { $ref: "#/components/schemas/BackupSet" } }
         nextCursor: { type: [string, "null"] }
+    DeploymentStatus:
+      type: object
+      description: "ADR-0069 §3. Every value is read at request time on the API process and the database clock; nothing is cached across requests except the evidence-storage probe (at most 5 s, ADR-0069 §2)."
+      required: [baseUrl, origin, basePath, release, schema, readiness, storage, worker, environmentKind, checkedAt]
+      additionalProperties: false
+      properties:
+        baseUrl: { type: string, format: uri, maxLength: 2048, description: "APP_BASE_URL as configured (absolute links in sign-in, cookies, CSRF and notification deep links are built from it at use time; nothing stores it)." }
+        origin: { type: string, maxLength: 2048, description: "The origin (scheme, host, port) of baseUrl, the value the CSRF Origin check compares." }
+        basePath: { type: string, maxLength: 2048, description: "The path of baseUrl. Only `/` is supported (ADR-0069 §1: serving under a sub-path is a known limitation); any other value is reported here and logged as a warning at start." }
+        release:
+          type: object
+          required: [appVersion, contractVersion]
+          additionalProperties: false
+          properties:
+            appVersion: { type: string, maxLength: 50, description: "The API's package version, `unknown` when it cannot be read (the worker heartbeat's rule, ADR-0053 §6)." }
+            contractVersion: { type: string, maxLength: 50, description: "info.version of the OpenAPI document this build serves." }
+        schema:
+          type: object
+          required: [status, shippedCount, appliedCount, pendingCount, latestApplied]
+          additionalProperties: false
+          properties:
+            status: { type: string, enum: [ok, pending, fail], description: "The same rule as the readiness `migrations` check." }
+            shippedCount: { type: integer, minimum: 0 }
+            appliedCount: { type: integer, minimum: 0 }
+            pendingCount: { type: integer, minimum: 0 }
+            latestApplied: { type: [string, "null"], pattern: "^[0-9]{4}_[a-z0-9_]+$", description: "The file name stem of the highest applied migration; null when none is applied." }
+        readiness: { $ref: "#/components/schemas/Readiness" }
+        storage:
+          type: object
+          required: [status, driver, source]
+          additionalProperties: false
+          properties:
+            status: { type: string, enum: [ok, fail, unknown] }
+            driver: { type: [string, "null"], enum: [filesystem, s3, null], description: "The effective driver for new uploads (ADR-0054 §2); null when unknown." }
+            source: { type: [string, "null"], enum: [environment, setting, null] }
+        worker:
+          type: object
+          required: [status, newestBeatAt, staleAfterSeconds]
+          additionalProperties: false
+          properties:
+            status: { type: string, enum: [alive, stale, unknown] }
+            newestBeatAt: { $ref: "#/components/schemas/NullableTimestamp" }
+            staleAfterSeconds: { type: integer, minimum: 1 }
+        environmentKind: { type: [string, "null"], enum: [production, demo, null], description: "The deployment_environment marker (0090); null before initialization." }
+        checkedAt: { $ref: "#/components/schemas/Timestamp" }

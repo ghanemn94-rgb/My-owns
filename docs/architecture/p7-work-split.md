@@ -875,3 +875,270 @@ ARCH-02 merged → BE-A (W4: wiring point) → BE-F (W5) → FE-B (W9) → QA-B'
 - A NULL period is shown as "Not set (IT to agree)", never as 0 or as a default number.
 - Every new table needs its `retention_table_class` row in its own migration (E.7).
 - Backups and restores run outside the API. No route starts one.
+
+## §B. Slice B: clean deployment, offline runtime and the A18 transfer drill (T-DG7-ARCH-04; ADR-0069)
+
+### B.0 Already delivered by the architect (do not re-create)
+
+- `docs/architecture/adr/ADR-0069-p7-clean-deployment-base-url-readiness-transfer-offline-image-drills.md`.
+- **No migration.** `0150`–`0152` stay free. None is expected from slice B's implementers either, because slice B adds no table. A migration a slice B implementer still needs takes the next free id above the highest shipped one (D-245 O9, D-248 O8).
+- **No permission code.** `getDeploymentStatus` uses the P6 code `operations.read` (ADR-0069 §3; permissions matrix §32). `P7_PERMISSIONS` is unchanged.
+- **Contract** (`docs/api/openapi.yaml`, `1.6.0-p7`, 962 operations):
+  - the tag `deployment`;
+  - `getReadiness` gains its description and the optional `checks.storage` (`ok|fail|unknown`) and `checks.worker` (`alive|stale|unknown`);
+  - `GET /api/v1/admin/deployment` `getDeploymentStatus` with the schema `DeploymentStatus`.
+
+  `pnpm openapi:lint` passes. Related files: the `p7-operations.ts` block, `p7-pending-arch-04.ts`, `p7-pending-be-b.ts` (`["getDeploymentStatus"]`), the aggregate `p7-pending.ts` import line, and the `contract.test.ts` count pin 962 with its comment line.
+- **Advisory locks:** 730416–730417 reserved, none allocated (registry comment in `apps/api/src/modules/platform/advisory-locks.ts`, ADR-0016 §6 row).
+- **ERD** §1ae, **data dictionary** "P7 slices B and F", **permissions matrix** §32.
+- **Measured fact:** `bwrap --unshare-net` keeps loopback up; `unshare --net` does not, and `ip` is absent (`docs/delivery/handbacks/DG7/T-DG7-ARCH-04-evidence/netns-loopback.txt`). Every slice B drill uses `bwrap`.
+
+### B.1 BE-B: readiness and the deployment status (backend-workflow; W6; after ARCH-04 and BE-A)
+
+**Creates:**
+
+| File | Purpose |
+| --- | --- |
+| `apps/api/src/modules/evidence/readiness.ts` | `probeEvidenceStorage(db)`: resolve the effective store (ADR-0054 §2). **filesystem:** `stat` is a directory, `access(R_OK \| W_OK)`; **s3:** `head("mth-readiness-probe")` with a 2 000 ms timeout; a missing or incomplete setting gives `fail`. Returns `{ status: "ok" \| "fail", driver, source }` and never an endpoint or error text. The result is cached 5 s per process. No pool client is held during the S3 call. |
+| `apps/api/src/modules/platform/deployment.ts` | `registerDeploymentRoutes(app, pool, files, probes)`: `getDeploymentStatus` (access `operations.read`; ADR-0069 §3). It builds the body from `config.appBaseUrl`, the API's `package.json` version (the worker's `appVersion()` rule), `info.version` of the served contract, `migrationStatus`, the readiness evaluation shared with `/readyz`, `deployment_environment` and the heartbeat reader. |
+| `apps/api/test/integration/platform/readiness-storage-worker.test.ts` | T-B2 |
+| `apps/api/test/integration/platform/deployment-status.test.ts` | T-B4, T-B5, T-B6 |
+| `apps/api/test/integration/contract/p7-exercises-be-b.ts` | T-B7 |
+
+**Modifies:**
+
+| File | Exactly what |
+| --- | --- |
+| `apps/api/src/modules/platform/health.ts` | `registerHealthRoutes(app, pool, files, probes)` with `probes: { storage(db), worker(db) }`. It evaluates `storage` and `worker` only when `database` is `ok` (otherwise both are `unknown`). Ready means `database`, `migrations` and `storage` are all `ok`. Both keys are always sent. One `warn` log line per storage state change (B.3). |
+| `apps/api/src/modules/platform/health.test.ts` | T-B1 |
+| `apps/api/src/modules/platform/index.ts` | the `registerDeploymentRoutes` export line |
+| `apps/api/src/server.ts` | the `registerHealthRoutes` call (l.484) passes the two probes (`probeEvidenceStorage`, and the heartbeat status from `operations/heartbeat.ts` `readWorkerHeartbeat`); one `registerDeploymentRoutes` line; the sub-path warning (B.3) once at build when `config.appBaseUrl.pathname !== "/"` |
+| `apps/api/src/server.test.ts` | T-B8 (only the readiness lines) |
+| `apps/api/test/integration/contract/contract.test.ts` | the import and the `it(...)` hook for `p7-exercises-be-b.ts` (the P6 pattern) |
+| `apps/api/test/support/p7-pending-be-b.ts` | removes `getDeploymentStatus` in the change that routes and exercises it; empty at the end |
+| `docs/operations/health-readiness.md` | the `storage` and `worker` keys, which one gates, and the vocabulary (B.3 text) |
+
+**Reads only:** `apps/api/src/modules/evidence/store.ts` and `stores/**` (the port and the adapters), `apps/api/src/modules/operations/heartbeat.ts`, `packages/db/src/migrate.ts`.
+
+**Boundary:** `platform` imports no domain module (ADR-0002). The evidence and operations functions are passed in from `server.ts`. If `architecture.test.ts` refuses the `evidence/readiness.ts` → `evidence/store.ts` import, that is the module's own import and allowed; anything else goes to the orchestrator.
+
+### B.2 DO-D: the transfer drill (devops-engineer; W10; after BE-B, BE-D, BE-E, BE-F, DOC-B)
+
+**Creates:**
+
+| File | Purpose |
+| --- | --- |
+| `deploy/scripts/transfer-drill.sh` | ADR-0069 §4 D0–D11. Enters one `bwrap --dev-bind / / --unshare-net` namespace, runs the probe first, takes ports from the pool, and uses the exit codes of §2 rule 4. |
+| `deploy/scripts/drill/fake-idp-server.mjs` | starts the P6 fake OP (`apps/api/test/support/fake-idp.ts`) on `127.0.0.1` with a synthetic issuer, client and users. It prints its issuer and the users' subjects as JSON. Drill-only, never in the runtime tree. |
+| `deploy/scripts/drill/journey.mjs` | the D8 journey in mode `oidc-drill` (follows the redirect to the drill IdP, then runs the A02 steps that write, the approval decision, the evidence downloads with SHA-256 comparison, the source-origin 403, and the deep-link open) |
+| `deploy/scripts/drill/origin-scan.mjs` | D10: scans every `text`, `varchar` and `jsonb` column of every public table for the source origin; `audit_event` hits are listed, any other hit fails |
+| `deploy/scripts/drill/config-trace.mjs` | D3: fills `.env.example` keys only from `deploy/scripts/drill/guide-keys.json` (key → `docs/handover/deployment.md` section anchor). An anchor missing from the guide, or a key the target needs that is not in the map, fails as an undocumented step |
+| `deploy/scripts/drill/guide-keys.json` | the key → guide-section map (DOC-B's anchors) |
+| `deploy/scripts/tests/transfer-drill.test.mjs` | T-B3, T-B9, T-B10 |
+
+**Does not modify:** `deploy/scripts/smoke.mjs`, `clean-start-local.sh`, `compose.yaml`. The plan's `compose.transfer.yaml` overlay is **not** created: the container half of the transfer is not in D-243 Q1's orchestrator list, and the different origin is proven container-free. If the orchestrator wants a Compose overlay with another origin for its host run, DO-D writes it on request.
+
+**Report:** `--out` = DO-D's handback evidence directory (`T-DG7-DO-D-evidence/transfer/`). It holds `transfer-drill-report.json`, `config-trace.json`, `reconcile-*.json`, `origin-scan.json` and `drill.log`.
+
+### B.3 DO-E: the offline drill and the image bundle (devops-engineer; W11; after DO-D)
+
+**Creates:** `deploy/scripts/offline-drill.sh` (ADR-0069 §5), `deploy/scripts/image-bundle.sh` (§6: `save`, `load`, `verify`), `deploy/scripts/tests/image-bundle.test.mjs` (T-B12, with a stub `docker` on `PATH`), and `deploy/scripts/tests/offline-drill.test.mjs` (T-B13's connection-log check on fixtures).
+
+**Modifies:** `docs/operations/restricted-network.md` (the image half: `image-bundle.sh save` on a connected host, transfer, `load`, then `up --pull never`), and `docs/delivery/environment.md` (the P7 rows: the transfer, offline and image drills, and their split; p7-plan §5.3).
+
+**Hands to the orchestrator:** the exact command list of ADR-0069 §6–§7 for its host run, in its handback.
+
+### B.4 Tests (each line states what it proves)
+
+| Test | File | Proves |
+| --- | --- | --- |
+| T-B1 | `health.test.ts` | storage `fail` → 503 `not_ready` with `storage: fail`; storage `ok` + worker `stale` or `unknown` → 200 `ready` (the worker never gates); database `fail` → `storage: unknown`, `worker: unknown`, no probe called; both keys are always present |
+| T-B2 | `readiness-storage-worker.test.ts` (real PostgreSQL; the fake S3 of P6) | filesystem root missing or read-only → `fail`; S3 reachable → `ok`; fake S3 stopped → `fail` within 2 500 ms; an incomplete S3 setting → `fail`; two `/readyz` calls within 5 s → one probe; the body and the log line contain no endpoint, bucket, path or SecretRef name; heartbeat ≤ 90 s → `alive`, older → `stale`, none → `unknown` |
+| T-B3 | `transfer-drill.test.mjs` | `origin-scan.mjs` on a fixture database: the origin in a `text` column fails; in a `jsonb` value fails; in `audit_event` only → listed, pass |
+| T-B4 | `deployment-status.test.ts` | the body validates against `DeploymentStatus`; `origin` and `basePath` match `APP_BASE_URL`; `schema.latestApplied` equals the highest file; 200 for ADM_TECH, TO, KDS, TD and AUD; 403 for SP, TL, BO, WL, FIN, CM, SEC, ADM_METHOD and ADM_ACCESS; 401 without a session |
+| T-B5 | same | with an S3 setting holding canary endpoint, bucket and SecretRef names, none of them appears in the body |
+| T-B6 | same | `APP_BASE_URL=http://127.0.0.1:<p>/hub/` → the API starts, logs the B.5 warning exactly once, and reports `basePath: "/hub/"` |
+| T-B7 | `p7-exercises-be-b.ts` | `getDeploymentStatus` is exercised and validated; `getReadiness` 200 and 503 bodies with the new keys validate (`response-validation.test.ts`) |
+| T-B8 | `server.test.ts` | the server built by `buildServer` wires the real probes: a filesystem store in the test configuration → `storage: ok`; no beat → `worker: unknown`; 200 |
+| T-B9 | `transfer-drill.test.mjs` | `config-trace.mjs`: a key outside the map, or an anchor absent from a fixture guide, fails with the B.5 line; without `bwrap` (stub `PATH`) → exit 3; a probe that connects → exit 1 with the B.5 line; the report has `schemaVersion` `mth-transfer-drill/1` and `result` `PASS` only when every step passed |
+| T-B10 | same | the journey signs in through the drill IdP under `NODE_ENV=production`, `AUTH_MODE=oidc`; a write with the source origin in `Origin` is refused 403; an unbound user's sign-in is refused |
+| T-B11 | the drill run (DO-D; QA-C re-run) | D0–D11 pass on the merged tree, in the namespace with no network |
+| T-B12 | `image-bundle.test.mjs` | `save` lists every `images.lock.json` image plus the app image with tar SHA-256; `load` refuses a changed tar (exit 1, no `docker load` call); `verify` refuses an id mismatch; the stub records no `docker pull` in any path |
+| T-B13 | `offline-drill.test.mjs`, then the offline run (DO-E; QA-C re-run) | a fixture log line with a non-loopback address fails the check; the run: the lifecycle specs pass in the namespace and `connections.ndjson` holds loopback and socket entries only |
+| T-B14 | DOC-B (the guide check of ADR-0072) | `deployment.md` holds the HA statement, the sub-path limitation, the redirect URIs, the Compose service → role map, the external dependency "orchestration target", and every anchor that `guide-keys.json` names |
+
+### B.5 Exact texts
+
+Operator-facing log and script lines are English. The guides give the Arabic summary (D-243 Q7).
+
+| Where | Exit or level | Line |
+| --- | --- | --- |
+| API start (`server.ts`) | warn | `config: APP_BASE_URL has the path '<path>'; serving under a sub-path is not supported, so the hub is served from the origin root (see the deployment guide)` |
+| `/readyz` (`health.ts`) | warn, once per change | `readiness: evidence storage (<driver>) did not answer the probe: <error code>` |
+| `/readyz` (`health.ts`) | info, once per change | `readiness: evidence storage (<driver>) answers again` |
+| `transfer-drill.sh` | 3 | `transfer-drill: BLOCKED: no network namespace with loopback (bwrap unavailable)` / `transfer-drill: BLOCKED: PostgreSQL server binaries not found (set PGBIN)` |
+| `transfer-drill.sh` | 1 | `transfer-drill: network isolation is not effective` |
+| `transfer-drill.sh` | 1 | `transfer-drill: step <Dn> failed: <reason>` |
+| `transfer-drill.sh` | 1 | `transfer-drill: undocumented step: the target needs <KEY>, which no section of docs/handover/deployment.md names` |
+| `transfer-drill.sh` | 1 | `transfer-drill: the source origin <origin> was found in <table>.<column> (<n> rows)` |
+| `transfer-drill.sh` | 0 | `transfer-drill: PASS in <s> s: <t> tables and <n> evidence files equal, origin <origin>, restart verified; report <path>` |
+| `offline-drill.sh` | 3 | `offline-drill: BLOCKED: no installed Chromium for Playwright (it is never downloaded)` |
+| `offline-drill.sh` | 1 | `offline-drill: connection outside loopback: <address>:<port> by <process>` |
+| `image-bundle.sh` | 1 | `image-bundle: <image> does not match images.json (<field>)` |
+| `image-bundle.sh` | 3 | `image-bundle: BLOCKED: docker daemon not reachable` |
+| drill report | label | `synthetic drill IdP (not a corporate IdP)` |
+
+**Guide texts** (DOC-B, `docs/handover/deployment.md` and its Arabic summary page; the Arabic is **provisional** until a qualified reviewer checks it, D-243 Q7):
+
+| Key | English | Arabic (provisional) |
+| --- | --- | --- |
+| HA statement | Compose is a reproducible install and test configuration, not evidence of high-availability readiness. | إن Compose إعداد قابل للتكرار للتثبيت والاختبار، وليس دليلاً على الجاهزية للتوافر العالي. |
+| Sub-path | The hub is served from the root of its origin. Serving it under a sub-path (for example https://host/hub/) is not supported in this release. | تُقدَّم المنصة من جذر نطاقها. تقديمها تحت مسار فرعي (مثل https://host/hub/) غير مدعوم في هذا الإصدار. |
+| Origin change | After a move to another address, register the new sign-in redirect address with the identity provider: <origin>/api/v1/auth/callback. | بعد النقل إلى عنوان آخر، سجّل عنوان إعادة التوجيه الجديد لتسجيل الدخول لدى مزوّد الهوية: <origin>/api/v1/auth/callback. |
+| Readiness | Readiness needs the database, the migrations and the evidence storage. The worker status is shown but does not stop the service from being ready. | تتطلب الجاهزية قاعدة البيانات والترحيلات وتخزين الأدلة. تُعرض حالة العامل الخلفي لكنها لا تمنع الخدمة من أن تكون جاهزة. |
+| Orchestration target | Deployment configuration for Mobily's orchestration platform is to be written when IT names the target. This release ships no such configuration. | تُكتب إعدادات النشر لمنصة التشغيل في موبايلي عندما تحدد تقنية المعلومات المنصة المستهدفة. لا يتضمن هذا الإصدار مثل هذه الإعدادات. |
+
+### B.6 Seams with other slices
+
+| Seam | Rule |
+| --- | --- |
+| **Archive → A (DO-A)** | D0 uses `build-archive.mjs --verify` and `build-from-archive.sh` unchanged (ADR-0062 §4–§5). |
+| **Migration package → C (BE-C, BE-D, BE-E)** | D2, D5, D6 call `tools/migration/{export,import,reconcile}.mjs`, `transfer-attachments copy-out|copy-in|verify` and `mth-db rebind-identity` as ADR-0064 and D-248 O1 fix them. DO-D changes none of them; a gap goes in its handback. |
+| **Configuration → D (BE-F)** | Configuration moves inside the migration package in D5. The bundle path (REQ-S19-008) is QA-B's A06 replay, not this drill. |
+| **Backup and dry run → E (DO-F, DO-G)** | Not used by the transfer drill. A19 is DO-F's drill. The deployment guide links both. |
+| **Deployment guide → H (DOC-B)** | DOC-B owns the anchors that `guide-keys.json` cites. DO-D requests a missing anchor through its handback; it never edits the guide. |
+| **Readiness → every drill** | D7 and D9 (transfer), the Compose healthcheck (orchestrator) and A19's R checks (DO-F) all read `/readyz` with the B.1 semantics. |
+| **Heartbeat → P6 operations** | Read through `readWorkerHeartbeat` only; no change to `heartbeat.ts`. |
+| **A18 → QA-A, QA-C** | QA-A writes `tests/qa/integration/a18-*.test.ts` from the acceptance texts: it runs `transfer-drill.sh` and asserts the report fields of B.4. QA-C re-runs it and the offline drill into `test-evidence/DG7/qa/{transfer,offline}/`. |
+| **Container halves → orchestrator** | ADR-0069 §6–§7, on its host, logs under `test-evidence/DG7/orchestrator/`. |
+
+### B.7 Integration order
+
+1. ARCH-04 merged (this revision).
+2. BE-B (W6): readiness, deployment status (after BE-A's registry).
+3. QA-A (W7): the A18 harness, which fails until DO-D lands.
+4. DOC-B (W9): the deployment guide with the anchors.
+5. DO-D (W10): the transfer drill (after BE-D, BE-E, BE-F and DOC-B).
+6. DO-E (W11): the offline drill and the image bundle; the orchestrator's host run follows.
+7. QA-C (W12): the independent re-runs.
+
+### B.8 Requirement → clause → test → owner (drill split per D-243 Q1: A = agent, O = orchestrator host)
+
+| Requirement | Clause (acceptance text) | Test(s) | Where | Owner |
+| --- | --- | --- | --- | --- |
+| REQ-S01-001 | "the guided end-to-end scenario completes on a persisted database using only native workflows" | A02 re-run (QA-B); D1 and D8 journeys | A | QA-B; DO-D |
+| REQ-S01-001 | "the package installs and runs in a clean environment without builder-hosted services" | T-B11 (D0 build from the archive, D3–D9 in the namespace with no network); §7 Compose up | A; O | DO-D; QA-C; orchestrator |
+| REQ-S01-006 | "a clean environment with a different base URL starts from the package" | T-B11 D3, D7 (`getDeploymentStatus.origin`); T-B6 (`basePath`); T-B3 and D10 (no stored source origin) | A | DO-D; BE-B |
+| REQ-S01-006 | "runs key workflows with outbound public internet disabled" | T-B11 D8 (inside `bwrap --unshare-net`, probe asserted); T-B13; the no-egress Compose run | A; O | DO-D; DO-E; orchestrator |
+| REQ-S01-006 | "no builder or personal credentials configured" | T-B9 (`config-trace.json`: template keys only, synthetic generated secrets); ADR-0063 template check | A | DO-D; DO-B |
+| REQ-S16-008 | "docker compose up on a clean host reaches ready health checks" | §7 Compose up with `--pull never --wait`, `docker compose ps` all healthy, `/readyz` body | O | orchestrator |
+| REQ-S16-008 | "the docs state the HA limitation" | T-B14; `docs/operations/README.md` l.8 (exists) | A | DOC-B |
+| REQ-S16-008 | title: "deployment configuration for the actual IT orchestration target when known" | T-B14 (the guide records it as an external dependency; D-243 Q12, no manifests) | A | DOC-B |
+| REQ-S19-009 | "a clean deployment configured only from the template and guides starts successfully" | T-B9, T-B11 D3 and D7 | A | DO-D; DOC-B |
+| REQ-S19-009 | "the template contains no secret values" | ADR-0063 template check (exists, DO-B); `generate-env-example.mjs --check` | A | DO-B |
+| REQ-S19-010 | "on a clean VM the documented command reaches ready state" | T-B11 D7; §7 Compose healthcheck | A; O | DO-D; orchestrator |
+| REQ-S19-010 | "the readiness endpoint reports database, storage and worker status" | T-B1, T-B2, T-B7, T-B8 | A | BE-B |
+| REQ-S19-017 | "the drill report shows matching counts and checksums" | T-B11 D5 and D9 (reconciliation reports) | A | DO-D |
+| REQ-S19-017 | "working evidence downloads under the new base URL" | T-B11 D8 (a) and D9 (every file, SHA-256 equal) | A | DO-D |
+| REQ-S19-017 | "successful key workflows" | T-B10, T-B11 D8 (b)–(d) | A | DO-D |
+| REQ-S19-017 | "records, jobs and approvals intact after a full restart" | T-B11 D9 | A | DO-D |
+| REQ-S19-017 | title: "rebind identity" | T-B10 (unbound refused), T-B11 D6 | A | DO-D; BE-D |
+| REQ-S19-018 | "the lifecycle e2e suite passes with egress blocked" | T-B13; the no-egress Compose run with the smoke egress assertion | A; O | DO-E; orchestrator |
+| REQ-S19-018 | "the image set loads on a host without registry access" | T-B12 (script logic); §6 save, remove, load, `up --pull never` | A; O | DO-E; orchestrator |
+| REQ-S20-018 | "Clean environment starts successfully" | T-B11 D7; §7 | A; O | DO-D; orchestrator |
+| REQ-S20-018 | "restored records/files/configuration work" | T-B11 D5, D8, D9 (configuration moves in the package: published versions and pins are among the reconciled tables, and D8 runs workflows on them) | A | DO-D |
+| REQ-S20-018 | "workflows run without the original builder or mandatory public SaaS" | T-B11 inside the namespace; the drill IdP is synthetic and loopback | A | DO-D |
+| REQ-S20-018 | A18 executable test (test level "ops drill") | `tests/qa/integration/a18-*.test.ts` (QA-A), re-run by QA-C | A | QA-A; QA-C |
+
+### B.9 What the implementers must know
+
+- Use `bwrap --dev-bind / / --unshare-net`, never `unshare --net`, for anything that needs loopback.
+- The worker never gates readiness, and `unknown` is never reported as `alive` or `ok`.
+- `/readyz` is public. Never put a path, endpoint, bucket, error text or SecretRef name in it, and none in `getDeploymentStatus` either.
+- The drill IdP and every credential in the drill are synthetic, and the report says so. No agent configures or claims a corporate IdP.
+- A drill step that cannot run is BLOCKED (exit 3) with its reason, never skipped and never counted as passed.
+- No Kubernetes or other target manifest is written (D-243 Q12).
+
+## §F. Slice F: schema, API and connector handover (T-DG7-ARCH-04; ADR-0070)
+
+### F.0 Already delivered by the architect (do not re-create)
+
+- `docs/architecture/adr/ADR-0070-p7-schema-api-connector-handover-dictionary-coverage-openapi-completeness.md`.
+- The coverage rule written at the end of `docs/architecture/data-dictionary.md` ("P7 slices B and F") and in ERD §1ae.
+- No migration, no table and no operation.
+
+### F.1 DO-H: coverage tools and `docs/handover/{data,api}/` (devops-engineer; W9; after every ARCH task is merged)
+
+**Creates:**
+
+| File | Purpose |
+| --- | --- |
+| `tools/release/dictionary-coverage.mjs` | ADR-0070 §1 and §1.1. `--database-url <url> --out <file>`. Exit 0, 1, 2 or 3 (§2 rule 4). |
+| `tools/release/openapi-coverage.mjs` | ADR-0070 §2. `--vitest-json <file> --out <file>` |
+| `tools/release/connector-handover.mjs` | ADR-0070 §3. `--write` / `--check` |
+| `tools/release/tests/{dictionary-coverage,openapi-coverage,connector-handover}.test.mjs` | T-F1…T-F7. The database tests use `tests/qa/support/pg-port.sh` ports and a disposable cluster, or BLOCKED. |
+| `docs/handover/data/{README.md,pgboss.md,coverage.json}` | ADR-0070 §1.3 |
+| `docs/handover/api/{README.md,authentication.md,connectors.md,openapi-coverage.json}` | ADR-0070 §2–§3 |
+
+**Never edits:** `docs/architecture/{data-dictionary,erd}.md`, `docs/api/openapi.yaml` and the contract tests. A gap goes in the handback as a list, and the orchestrator or an ARCH repair closes it (p7-plan §5.3).
+
+**Requests:** the two index lines in `docs/handover/README.md` (DOC-B).
+
+### F.2 Tests (each line states what it proves)
+
+| Test | File | Proves |
+| --- | --- | --- |
+| T-F1 | `dictionary-coverage.test.mjs` (disposable PostgreSQL, fixture dictionaries) | a missing table, a missing column, a wrong type, a duplicated heading, and a documented table or column that does not exist each fail and are listed; a complete fixture passes; nullability is compared only where the section has a `Null` column |
+| T-F2 | same | a database that is not fully migrated → exit 2 with the F.3 line; an unreachable one → exit 2 |
+| T-F3 | same | an ERD table name that does not exist fails; a table in no ERD section is reported and does not fail |
+| T-F4 | `openapi-coverage.test.mjs` (fixture vitest JSON and fixture test sources) | a non-empty pending list, a `.skip`, `.todo` or `.only` in a contract test file, a count pin unequal to the document, and a failed required test each fail |
+| T-F5 | the real run on the merged tree | `openapi-coverage.json`: operations = routed = exercised = the pinned count, and the pending lists are empty (this run belongs to the freeze; before it, the report shows the open pending entries and fails) |
+| T-F6 | `connector-handover.test.mjs` | parity: every integration row of the `environment.md` residual table is in `connectors.md` and back, every adapter kind of `connectors.ts` appears, and `--check` equals a fresh generation |
+| T-F7 | same | every enterprise connector reads "not verified"; credentials appear by name only (the ADR-0063 secret scan finds nothing in `docs/handover/api/`) |
+| T-F8 | the real run of `dictionary-coverage.mjs` on a database migrated with every shipped migration (the merged tree) | exit 0 before the freeze, or a gap list the orchestrator closes first |
+
+### F.3 Exact texts
+
+| Tool | Exit | Line |
+| --- | --- | --- |
+| `dictionary-coverage.mjs` | 0 | `dictionary-coverage: PASS: <t> tables and <c> columns documented (<s> schemas); reported only: <i> indexes, <k> constraints, <g> triggers not named; ERD: <e> tables in no section` |
+| `dictionary-coverage.mjs` | 1 | `dictionary-coverage: FAIL: <n> gaps` followed by one line per gap: `missing table <schema>.<table>` / `missing column <table>.<column> (<type>)` / `type mismatch <table>.<column>: documented <a>, database <b>` / `stale <table>[.<column>]: documented but not in the database` / `duplicate heading <table>` / `ERD names a table that does not exist: <table>` |
+| `dictionary-coverage.mjs` | 2 | `dictionary-coverage: BLOCKED: the database is not fully migrated (<n> pending)` / `dictionary-coverage: BLOCKED: cannot connect to the database` |
+| `openapi-coverage.mjs` | 0 | `openapi-coverage: PASS: <n> operations described, routed and exercised; no pending entry; no skipped contract test` |
+| `openapi-coverage.mjs` | 1 | `openapi-coverage: FAIL: <reason>` (one line per reason: `pending operation <id> (<list file>)`, `skipped test in <file>:<line>`, `count pin <p> does not equal <n> operations`, `required test failed: <name>`) |
+| `connector-handover.mjs` | 1 | `connector-handover: connectors.md differs from environment.md: <row>` |
+| `connectors.md` live status | — | `Not verified: no authenticated test against a Mobily endpoint has been recorded.` (Arabic summary, provisional: `غير متحقق منه: لم يُسجَّل أي اختبار موثَّق مقابل نقطة اتصال لدى موبايلي.`) |
+
+The product's own label stays the approved `integrations.json` key `not_verified` ("Not verified"), unchanged.
+
+### F.4 Seams
+
+| Seam | Rule |
+| --- | --- |
+| **Every ARCH task** | DO-H runs after all ARCH tasks merge (W9), so the schema and contract it covers are final except for repairs. A later migration means a re-run of T-F8 before the freeze. |
+| **Contract suite** | DO-H reads its JSON output. The pending lists empty as each BE task lands. T-F5 can pass only at the freeze. |
+| **Handover index → H (DOC-B)** | DOC-B links `docs/handover/data/` and `docs/handover/api/`. |
+| **Known limitations → H (DOC-B)** | The same `environment.md` table feeds both. Neither copies the other. |
+| **A17, A18 → QA-C** | QA-C's A17 re-run proves "not verified" in the product; A18 includes ADR-0069 D4 (production initialization). |
+
+### F.5 Requirement → clause → test → owner
+
+| Requirement | Clause (acceptance text) | Test(s) | Owner |
+| --- | --- | --- | --- |
+| REQ-S19-005 | "the data dictionary covers every table and column in the final schema" | T-F1, T-F2, T-F8 | DO-H; orchestrator or ARCH repair for gaps |
+| REQ-S19-005 | "production initialization on a clean database succeeds" | ADR-0069 D4 inside T-B11; `clean-start-local.sh` phase A | DO-D; QA-C |
+| REQ-S19-005 | title: "ER diagram, validation rules, indexes" | T-F3 (ERD names); the reported-only counts in `coverage.json` | DO-H |
+| REQ-S19-007 | "every endpoint … in the release is described" | T-F4, T-F5; `pnpm openapi:lint` | DO-H |
+| REQ-S19-007 | "… and passes its contract test" | T-F5 (the contract suite with no pending entry and no skip) | DO-H; every BE task (its exercises) |
+| REQ-S19-007 | "every … connector … passes its contract test" | the adapter contract suites (P6) re-run; T-F6 lists each adapter's test file | DO-H; QA-C |
+| REQ-S19-007 | title: "authentication setup and connector contracts" | `authentication.md`, `connectors.md`; T-F6 | DO-H |
+| REQ-S17-004 | "contract tests pass against the local adapters" | A17 re-run (QA-C); the P6 adapter suites | QA-C |
+| REQ-S17-004 | "the integration status page shows 'not verified' for every enterprise connector without a recorded authenticated test" | A17 re-run (`a17-import-and-integration.test.ts` and its e2e); T-F7 for the handover text | QA-C; DO-H |
+| REQ-S17-004 | procedure: "the handover lists required endpoints and credentials" | T-F6, T-F7 | DO-H |
+
+### F.6 What the implementers must know
+
+- Never rewrite an approved dictionary or ERD section. Gaps are listed, and new sections are added by the orchestrator or an ARCH repair.
+- `NO_400_OPERATIONS` is not a skip list. Print it with its reason, and do not count it as an exclusion.
+- A credential is named, never shown. `connectors.md` must pass the ADR-0063 secret scan.
+- "Not verified" is the truth for every enterprise connector in this release. No text may say "live", "integrated with Mobily" or "tested against production".

@@ -2284,6 +2284,14 @@ erDiagram
 | Archived-record marker (S16-024) | `retention_archived_record` | `(table_name, record_key)` | — | job `retention.archive`; `retention_purge_record()` | `purged_at` (NULL: kept, read-only) | no | retention (runs) |
 | Backup set (S19-012) | `backup_set` | `id` (`label` unique) | — (`operator_name`) | `backup_set_record()` (owner role; `deploy/scripts/backup.sh`) | `status` (succeeded, failed) | no (append-only) | retention (backups) |
 
+## 1ae. P7 slices B and F: no new entity (no migration; T-DG7-ARCH-04; ADR-0069, ADR-0070)
+
+Slices B (clean deployment, readiness, transfer, offline and image drills) and F (schema, API and connector handover) add **no table, column, function or trigger**; T-DG7-ARCH-04 ships no migration from its range `0150`–`0152`. They read existing tables only:
+
+- readiness (`/readyz` `storage` and `worker`) and `getDeploymentStatus` read `storage_setting` (0102, the effective evidence store of ADR-0054 §2), `worker_heartbeat` (0101), `schema_migration` and `deployment_environment` (0090);
+- the transfer drill (ADR-0069 §4) moves every table through the ADR-0064 package (section 1ac) and scans the target's text and `jsonb` columns for the source origin;
+- the dictionary coverage tool (ADR-0070 §1) reads the catalogue of the `public` and `pgboss` schemas. Its ERD rule: a table named in an ERD section that does not exist **fails**; a table that appears in no ERD section is **reported** (this model is entities and relationships, not columns; ADR-0070 §1.1).
+
 ## 2. Conceptual model, all §16 entity groups
 
 ### 2.1 Identity and access (REQ-S16-011; final gate DG4)
