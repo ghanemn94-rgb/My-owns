@@ -1,0 +1,61 @@
+# 2026-11-12T11:12:20Z install + build in $TMPDIR/au at 953e39d26b82c02769c4b1fee52c618bd915e082 (Node v24.21.0)
+product diff d8868b2a5..HEAD outside docs/delivery: 0 files
+Scope: all 9 workspace projects
+ EROFS  EROFS: read-only file system, symlink '../../../../../../../var/tmp/mth-run.Y47LeG/claude-0/au' -> '/root/.local/share/pnpm/store/v10/projects/1b20ba5364580533a7a58e80fb636c1a'
+
+pnpm: EROFS: read-only file system, symlink '../../../../../../../var/tmp/mth-run.Y47LeG/claude-0/au' -> '/root/.local/share/pnpm/store/v10/projects/1b20ba5364580533a7a58e80fb636c1a'
+    at async Object.symlink (node:internal/fs/promises:1707:10)
+    at async forceSymlink (/root/.cache/node/corepack/v1/pnpm/10.33.0/dist/pnpm.cjs:91544:9)
+    at async registerProject (/root/.cache/node/corepack/v1/pnpm/10.33.0/dist/pnpm.cjs:105463:7)
+    at async getContext (/root/.cache/node/corepack/v1/pnpm/10.33.0/dist/pnpm.cjs:129463:7)
+    at async mutateModules (/root/.cache/node/corepack/v1/pnpm/10.33.0/dist/pnpm.cjs:162923:17)
+    at async recursive (/root/.cache/node/corepack/v1/pnpm/10.33.0/dist/pnpm.cjs:164367:100)
+    at async recursiveInstallThenUpdateWorkspaceState (/root/.cache/node/corepack/v1/pnpm/10.33.0/dist/pnpm.cjs:164878:31)
+    at async installDeps (/root/.cache/node/corepack/v1/pnpm/10.33.0/dist/pnpm.cjs:164685:11)
+    at async /root/.cache/node/corepack/v1/pnpm/10.33.0/dist/pnpm.cjs:201528:23
+    at async main (/root/.cache/node/corepack/v1/pnpm/10.33.0/dist/pnpm.cjs:201486:34)
+install exit=226
+--- retry with a private store copy (the shared store /root/.local/share/pnpm/store is read-only: EROFS on project registration)
+store copy exit=0
++ prettier 3.8.1
++ typescript 6.0.2
++ typescript-eslint 8.71.0
++ vitest 3.2.7
+
+ WARN  Failed to create bin at /var/tmp/mth-run.Y47LeG/claude-0/au/apps/api/node_modules/.bin/mth-db. ENOENT: no such file or directory, open '/var/tmp/mth-run.Y47LeG/claude-0/au/apps/api/node_modules/@mth/db/dist/cli.js'
+ WARN  Failed to create bin at /var/tmp/mth-run.Y47LeG/claude-0/au/apps/worker/node_modules/.bin/mth-db. ENOENT: no such file or directory, open '/var/tmp/mth-run.Y47LeG/claude-0/au/apps/worker/node_modules/@mth/db/dist/cli.js'
+Done in 1.7s using pnpm v10.33.0
+install exit=0
+packages/db build$ tsc -p tsconfig.build.json
+packages/db build: src/cli.ts(20,41): error TS2307: Cannot find module '@mth/config' or its corresponding type declarations.
+packages/db build: src/cli.ts(203,32): error TS18046: 'err' is of type 'unknown'.
+packages/db build: src/demo/data/finance.ts(13,37): error TS2307: Cannot find module '@mth/shared/schemas' or its corresponding type declarations.
+packages/db build: Failed
+/var/tmp/mth-run.Y47LeG/claude-0/au/packages/db:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @mth/db@0.1.0 build: `tsc -p tsconfig.build.json`
+Exit status 2
+build exit=2
+
+Done in 592ms using pnpm v10.33.0
+relink exit=0
+git status lines: 0
+/dev/vda        252G   38G  529M  99% /var/tmp/mth-run.Y47LeG/claude-0
+--- rebuild with dependency closure (the first filter omitted @mth/config and @mth/shared)
+packages/design-tokens build: Done
+packages/shared build: Done
+packages/config build$ tsc -p tsconfig.build.json
+packages/reporting build$ tsc -p tsconfig.build.json
+packages/config build: Done
+packages/reporting build: Done
+packages/db build$ tsc -p tsconfig.build.json
+packages/db build: Done
+apps/api build$ tsc -p tsconfig.build.json
+apps/worker build$ tsc -p tsconfig.build.json
+apps/worker build: Done
+apps/api build: Done
+build exit=0
+
+Done in 597ms using pnpm v10.33.0
+relink exit=0
+git status lines: 0
+/dev/vda        252G   38G  505M  99% /var/tmp/mth-run.Y47LeG/claude-0

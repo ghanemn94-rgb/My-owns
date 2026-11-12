@@ -1,0 +1,226 @@
+D-193..D-240: 48 expected, 48 present, missing: []
+rows lacking a separate rationale/evidence or reopen-if cell (table rows with [4] cells): ['D-201', 'D-202', 'D-203', 'D-204', 'D-205', 'D-206', 'D-207', 'D-208', 'D-209', 'D-210']
+For those rows the decision cell is quoted at greater length (1,600 characters) so that its inline reasons and evidence are visible.
+
+--- D-193 | 2026-10-26 | delivery-orchestrator
+    DECISION: "**DG5 is APPROVED.** The release-auditor `T-DG5-RG2-AUDIT-D2` (round 5) passed on candidate `55a411ae` (2207 files, source `660f40c`) on the corrected clean re-gate branch `claude/mobily-transformation-platform-dg5-regate2` (D-190). Specialist basis: code-security PASS and qa PASS (round 2), domain PASS (round 3, an acceptance round on the same candidate). Findings on this branch: F-DG5-100 (Mediu…"
+    RATIONALE/EVIDENCE: "`docs/delivery/gates/DG5.json`; `docs/delivery/reviews/DG5/round-5/release-auditor.json`."
+    REOPEN IF: "—"
+--- D-194 | 2026-10-26 | delivery-orchestrator (DG6 start authorized by the user)
+    DECISION: "**DG6 (P6 "Integration and system hardening") starts: BUILDING, with a planning task first.** DG5 is APPROVED (D-193); `validate --historical --stage DG5` exits 0. P6 carries 48 DG6-final requirements (register: all SPECIFIED). As in DG4 and DG5, **T-DG6-ARCH-00** (solution-architect, alone) writes `docs/architecture/p6-plan.md`: each requirement mapped to one slice with its P1–P5 status (met with…"
+    RATIONALE/EVIDENCE: "`docs/delivery/assignments/DG6/T-DG6-ARCH-00.md`."
+    REOPEN IF: "—"
+--- D-195 | 2026-10-26 | delivery-orchestrator (Q3, Q5 and the adoption of the remaining recommendations decided by the user)
+    DECISION: "**The P6 plan (`docs/architecture/p6-plan.md`, T-DG6-ARCH-00) is adopted.** 48 DG6 requirements in slices A–L (Met 0, Partly 35, New 13); 6 architecture tasks (ADR-0051…0062, migrations from 0098, advisory locks from 730300), 37 implementer runs, 5 QA runs and the analyst run, in 14 waves of at most 4 concurrent runs.<br>**Open questions, decided:**<br>- **Q3 (user): sensitive records.** Sensitivi…"
+    RATIONALE/EVIDENCE: "`docs/architecture/p6-plan.md`; `docs/delivery/handbacks/DG6/T-DG6-ARCH-00-solution-architect.md`."
+    REOPEN IF: "—"
+--- D-196 | 2026-10-26 | delivery-orchestrator
+    DECISION: "**T-DG6-ARCH-01 (slices E + F) is integrated: ADR-0051 (authorization boundary) and ADR-0052 (request and input hardening), migrations `0098`–`0100`, 13 operations (contract `1.5.0-p6`, 859 operations), `p6-work-split.md` §2 and §E/F. No DG1–DG5 behaviour changes (every new column nullable; probe G04). The architect's §5 questions are decided:**<br>1. **REQ-S13-013, 403 vs 404 (ADR-0051 §4): Optio…"
+    RATIONALE/EVIDENCE: "`docs/delivery/handbacks/DG6/T-DG6-ARCH-01-solution-architect.md`."
+    REOPEN IF: "—"
+--- D-197 | 2026-10-26 | delivery-orchestrator
+    DECISION: "**W2 is integrated: T-DG6-ARCH-02 (slices J + C: ADR-0053 operations and service identities, ADR-0054 identity, storage and notification channels; their migrations from `0101`, contract and work-split sections) and T-DG6-BE-A (P6 module registry, stubs and wiring points; merge `32dc271`). Decisions on the raised points:**<br>1. **Keycloak (D-195 Q5).** The Docker Hub publication could not be verif…"
+    RATIONALE/EVIDENCE: "ARCH-02 and BE-A handbacks."
+    REOPEN IF: "—"
+--- D-198 | 2026-10-26 | delivery-orchestrator
+    DECISION: "**W3 was stopped by a container restart and completed by continuation runs; it is integrated.** All four W3 runs (T-DG6-ARCH-03, BE-B, BE-E, FE-A) were stopped before their runs ended. Their run folders are kept as `*-orphaned` (`7dfbfba`); the partial work was WIP-committed (ARCH-03 `d206925`; BE-B, BE-E, FE-A on their branches). Continuations T-DG6-ARCH-03B, BE-BB, BE-EB and FE-AB reviewed the W…"
+    RATIONALE/EVIDENCE: "W3 handbacks."
+    REOPEN IF: "—"
+--- D-199 | 2026-10-27 | delivery-orchestrator
+    DECISION: "**W4 is integrated: T-DG6-ARCH-04 (slices H + G: ADR-0057 search and productivity, ADR-0058 performance and async exports), T-DG6-BE-B2 (sensitivity on record reads, rollups and export selection; the P6 Administration items in the server navigation catalogue), T-DG6-BE-F (response validation of every operation; the S16-023 integrity sweep) and T-DG6-DO-A (the dependency audit; the env template). D…"
+    RATIONALE/EVIDENCE: "W4 handbacks."
+    REOPEN IF: "—"
+--- D-200 | 2026-10-27 | delivery-orchestrator
+    DECISION: "**W5 is integrated.** T-DG6-ARCH-05 stopped at the account's weekly usage limit (exit 1, 'You've hit your weekly limit') after migrations `0111`–`0112`, schema and evidence; its partial work was committed and T-DG6-ARCH-05B continued it. A container restart then stopped ARCH-05B (run kept as `*-orphaned`) after it had completed every deliverable and check except the final full-integration result, …"
+    RATIONALE/EVIDENCE: "W5 handbacks."
+    REOPEN IF: "—"
+--- D-201 | 2026-10-29 | delivery-orchestrator
+    DECISION (no separate rationale or reopen-if cell; 4 cells): "**W5 and W6 are verified on the merged tree; W7 BE-K and BE-L are merged.**<br>• **W5 (a0c645e):** one seam, the ARCH-05 block missing from `P6_OPERATION_IDS` (10 AUD failures), fixed in 80464fa; the two `response-validation.test.ts` failures (a 30 s timeout and the P5 BE-J length) passed when the two files were re-run alone (237/237), so they are attributed to load. e2e unset 488/488.<br>• **W6 (54d804f, seams 3a4c3dd):** three restarts killed the W6 runs; the first two stalled before any work (folders kept as `-orphaned`), the third ran and every task wrote its handback before the next restart, so the trees were committed at handback. BE-J's migration was renumbered 0113 → 0114 (D-196 item 2). Seams: the JSON-body pin 394 → 397 (BE-H +2, BE-J +1) and `getBrandingVersionContrast` added to `P6_OPERATION_IDS`; the three files then passed alone (338/338). Results: hist, install, typecheck, build, lint, format, openapi, contrast, unit (both locales) 0; integration 4 failures, all the seams above; e2e unset 0, root 0, demo 0. e2e C.UTF-8 run 1: 5 failed / 464 passed during a disk-full window (the five cannot be re-run alone: they depend on earlier tests' data; logs kept in `run1-e2e-cutf8/`); run 2: those five passed, 1 failed / 484 passed (`p4-traceability.spec.ts:327`, a 30 s timeout while two W7 agents ran; it passed in run 1 and in the unset run). **Not closed:** it is carried to the freeze's full e2e run (D-193 rule); if it fails there it is a finding, not a flake.<br>• **W7:** BE-K and BE-L merged in 1769af2 (one conflict in `db-errors.ts`: both new mappers kept; API type…"
+--- D-202 | 2026-10-31 | delivery-orchestrator
+    DECISION (no separate rationale or reopen-if cell; 4 cells): "**DG6 is implemented. Pre-freeze repairs and decisions.**<br>• **Waves W7–W28:** every p6-work-split task has run and is merged, including FE-D2. The wave table had missed it; a cross-check of the work-split headings and bullets against the run folders found it. Restarts killed runs repeatedly. A run that had written its handback was committed at handback; any other run got a `…B` continuation, and every killed run folder is kept as `-orphaned` (the D-198/D-200 pattern).<br>• **Merge seams:** migration ids renumbered at merge (D-196 item 2): BE-J 0113→0114, BE-K2 0116→0117, BE-S 0119→0120 and BE-I2 0120→0121. The JSON-body contract pin and the `P6_OPERATION_IDS` additions were measured on each merged tree. Additive conflicts in db-errors, hooks, i18n, router and events were resolved by keeping both sides. On `connector.run_failed`, BE-L2's payload was kept, and BE-K2S made it fan out to both consumers.<br>• **QA findings repaired before the freeze:** F-DG6-QA-A-1 (High: SecretProvider registry never wired; BE-X2) and QA-A-2/3 (BE-X2). QA-B D1 (an undeclared 403; BE-X1) and D2 (assistant availability for users; BE-X5). QA-D-1/2 (connection log; BE-X3B, which also wired the assistant secret providers). AN-P6A §4.1, the linked KPI's last value (BE-X4). The REQ-S15-014 term scan (QA-F). Suite order dependence (QA-G). Twelve web e2e regressions (FE-X3, which also fixed a real `<mark>` contrast defect). A shared starter-rule threshold leaking between integration files (BE-X6; product unchanged by design). ADRs updated by ARCH-07 and ARCH-08.<br>• **A17 reader (option a):** a tech…"
+--- D-203 | 2026-11-01 | delivery-orchestrator
+    DECISION (no separate rationale or reopen-if cell; 4 cells): "**Two automation findings from QA-H are repaired before the freeze, not accepted** (D-192: a Medium finding cannot be accepted as an observation).<br>• **O-1, throughput (Medium; REQ-S12-020, REQ-S20-029):** each worker process takes one job per queue every polling interval (`batchSize: 1`, `pollingIntervalSeconds: 2`, plus pg-boss 11's loop delay). A burst of N events therefore needs at least 2·N s; 1,000 import-accepted actuals would take at least 33 min. Repair: process a bounded batch per fetch with bounded concurrency, keep exactly-once (ADR-0043 three layers) and the per-rule locks, and measure before and after.<br>• **O-2, a rule acts on events that occurred before it was enabled (behaviour defined here; ADR-0043 is silent):** an automation rule applies only to events that occurred at or after the moment its effective version became enabled. An event that is late because of a backlog, a worker outage or a retry is evaluated against the rules that were enabled when it occurred, so enabling a rule never acts on history. This matches the versioning principle that a record keeps the configuration version in force when it was made (REQ-PB-093). The architect records it in ADR-0043.<br>• Owner: T-DG6-BE-X9. Then a full verification on the merged tree, then the freeze."
+--- D-204 | 2026-11-01 | delivery-orchestrator
+    DECISION (no separate rationale or reopen-if cell; 4 cells): "**The version-switch case of D-203 is decided: an event is evaluated against the rule version in force when it occurred.** BE-X9 (handback §6 item 2) implemented the narrower reading: an event that occurred under version N and was evaluated after version N+1 was published was acted on by neither version, so a backlog or outage at a publish would silently drop automations. Decision: evaluate a late event against the version that was effective and enabled at its occurrence time, found from the `automation_rule_enablement` ledger (0122). An event that occurred while the rule was disabled is never acted on (D-203 unchanged). Owner: T-DG6-BE-X10. The architect records D-203 and D-204 in ADR-0043 (T-DG6-ARCH-09)."
+--- D-205 | 2026-11-01 | delivery-orchestrator
+    DECISION (no separate rationale or reopen-if cell; 4 cells): "**BE-X10's kill-switch choice is confirmed:** a rule must also be enabled when the event is evaluated. Disabling a rule stops its not-yet-evaluated events immediately, including ones that occurred while it was enabled, so an administrator can stop a misbehaving rule during a backlog. D-204 is read accordingly: version in force and enabled at occurrence, **and** still enabled at evaluation. **Residual race accepted as documented, not hidden** (BE-X10 §8): a publish or enable transaction that starts before an event's transaction but commits after the event is evaluated can see the event evaluated against the earlier state. The ledger and outbox times are both transaction-start times. This is bounded by the evaluation lag and recorded in ADR-0043 (T-DG6-ARCH-10). It is not a Medium finding: no action is taken against a rule the administrator had not enabled at occurrence."
+--- D-206 | 2026-11-01 | delivery-orchestrator
+    DECISION (no separate rationale or reopen-if cell; 4 cells): "**DG6 review round 1 on candidate 7d6b4a9f: all three reviews FAIL. Every finding is repaired before the next freeze; none is accepted as an observation (D-192).** The High mandatory findings are F-DG6-120 (SecretRef scope) and F-DG6-121, 122 and 123 (sensitive records reached through audit and form-record routes). The Medium findings are F-DG6-100/140 (KPI freshness never Stale; the same defect), 101/142 (load generator ids; the same defect), 141 (export and upload rate-limit classes) and 147 (export start over 2 s). The Low findings are F-DG6-102, 124, 143, 144, 145 and 146. Repair tasks: T-DG6-BE-Y1 (121-123), BE-Y2 (120), BE-Y3 (100/140, 146, 124, 145), BE-Y4 (141, 147), DO-Y1 (101/142) and FE-Y1 (102, 143, 144). A devops re-measurement of export start on the full dataset follows on the merged tree, then the full verification, a new freeze and review round 2."
+--- D-207 | 2026-11-01 | delivery-orchestrator
+    DECISION (no separate rationale or reopen-if cell; 4 cells): "**F-DG6-147: a live-selection export start no longer assembles the report in the request (ADR-0046 §2 is amended).** BE-Y4 measured the cause: about 55 % of the start is report assembly, which ADR-0046 §2 puts in the request. Trimming it (BE-Y4) did not bring 50 simultaneous starts under 2 s. **Decided:** (1) `createExport` for a live selection validates, authorizes and runs the restricted-source check **synchronously, so D-199's 403 is unchanged**. It then writes the job with its stored selection, its progress and its audit event, and answers 202 with no snapshot yet. (2) A durable API-process snapshot watch, following the connector-run-watch precedent (the assembler is API code, ADR-0002 rule 5), claims pending jobs `FOR UPDATE SKIP LOCKED`. It re-checks the requester's access, assembles and writes the snapshot, and only then writes the `export_job.requested` outbox event for the worker. Access lost in between gives a failed job with an `errorCode` and en/ar text, never a file. (3) Contract: `ExportJob.snapshotId` is nullable until it is assigned, and an idempotent replay compares the stored selection. (4) Migration 0124 (snapshot nullable while pending, the selection column, a CHECK); the seed free-id example moves to 0125. (5) Exports of an existing snapshot are unchanged. The snapshot's data-as-of is the assembly time, recorded on the snapshot as before. Owners: T-DG6-BE-Y5 implements; T-DG6-ARCH-11 amends ADR-0046 §2 and ADR-0058 §7 and the data dictionary. Devops then re-measures the full dataset on the merged tree (T-DG6-DO-Y2), with `EXPORT_RATE_LIMIT_PER_MINUTE` s…"
+--- D-208 | 2026-11-02 | delivery-orchestrator
+    DECISION (no separate rationale or reopen-if cell; 4 cells): "**DG6 round-1 repairs are complete; a new candidate is frozen for review round 2.**<br>• **Merged:** BE-Y1 to BE-Y5, DO-Y1, FE-Y1 and ARCH-11 (D-206, D-207), then four follow-up tasks:<br>&nbsp;&nbsp;– DO-Y2: the full-dataset re-measurement D-207 assigned; the load scripts now set the rate-limit classes high; configuration-doc drift fixed.<br>&nbsp;&nbsp;– ARCH-12: ADR-0052 confirmed after BE-Y2; ADR-0046/0058, data dictionary and ERD reconciled with BE-Y5.<br>&nbsp;&nbsp;– BE-Y6: ARCH-12's three proposed Low findings (sa12-1 to sa12-3). Migration 0125 checks an assigned snapshot's definition against its selection and persists the assembly attempt count; `fee.test.tsx` binds the two new problem texts to the ADR.<br>&nbsp;&nbsp;– ARCH-13: the documents updated after BE-Y6.<br>• **Proposed findings:** ARCH-12's sa12-1 to sa12-3 and ARCH-13's sa13-1 were raised by an implementing role and repaired before the freeze, so they are not entered in `findings.json`. sa13-1 was a comment in `assembly.ts` listing two steps in a different order from the code; the orchestrator corrected the comment only. The round-2 reviewers judge the repairs like any other code.<br>• **Final verification:** on c5bad1517, every step passed except one integration file. That file was a BE-X10 test that assumed 0123 was the last migration. The test was repaired in 1b70b9acf, and typecheck, lint, format and the full integration were re-run there, all with exit 0 (413 files, 4190 passed). Evidence: `docs/delivery/test-evidence/DG6/orchestrator-final-1b70b9a/`.<br>• **Not decided here:** whether any round-1 f…"
+--- D-209 | 2026-11-04 | delivery-orchestrator (design by solution-architect T-DG6-ARCH-14)
+    DECISION (no separate rationale or reopen-if cell; 4 cells): "**A SecretRef resolves only for the setting IT provisioned it for (F-DG6-181).**<br>• IT declares each secret in a read-only JSON manifest `SECRET_BINDINGS_FILE` (outside the database, no values): one consumer kind (`connector`, `webhook_signing`, `smtp`, `storage`, `assistant`), one scope (an immutable organization code; `null` = installation for `storage` and `assistant`) and the 1–16 hosts it may be sent to (not for `webhook_signing`). Each `(provider, name)` appears once.<br>• Fail closed: no manifest, nothing bound; an invalid manifest stops the API and the worker at start.<br>• Write time, after authorization, shape and namespace: `400 validation` with field error `validation.secret_ref_not_bound` (identical for every cause) or `validation.secret_ref_host_not_bound`; audit `secret_ref.refused` in a separate transaction.<br>• Resolve time: `SecretProviderRegistry.resolve(ref, use)` is the only resolve; unbound returns undefined without asking the provider.<br>• `resolvable` is computed through the binding, so it is no existence oracle. The binding's hosts are the credential egress rule; redirects stay refused. No global endpoint allow-list is decided here (credential-less SSRF stays with the network egress policy; noted for a later round).<br>• No migration, no contract shape change. ADR-0052 §5 amendment of 2026-11-04. Implementer: T-DG6-BE-Z2."
+--- D-210 | 2026-11-04 | delivery-orchestrator
+    DECISION (no separate rationale or reopen-if cell; 4 cells): "**DG6 round-2 repairs are complete; a new candidate is frozen for review round 3.**<br>• **Merged:** BE-Z1 (F-DG6-180: `benefit_calculation` lineage is a sensitive-reach source; F-DG6-200: deterministic tests), ARCH-14 (F-DG6-160: ADR-0053 corrected) and BE-Z2/Z2B (F-DG6-181: the SecretRef binding, D-209), AN-Z1 (F-DG6-161, F-DG6-201: register rows), BE-Z3 (sensitive values embedded in scenarios are omitted; proposed by the orchestrator), FE-Z1/Z1B (F-DG6-144: measured e2e budgets) and DO-Z1 (P6's optional outbound destinations in the operations documents). The orchestrator corrected one line of `configuration.md` (8b22cc095).<br>• **Final verification on 8b22cc095:** every step exits 0. Integration: 4212 passed. e2e: 546 passed in each locale. Root: 288 passed. Demo: 10 passed. Evidence: `docs/delivery/test-evidence/DG6/orchestrator-final-8b22cc0/`.<br>• **Carried to the round-3 reviewers, not decided here:** whether ADR-0051 §2 should also hide the corrective_case, transition_decision and performance_area_link registers; the two routes that disclose sensitive ids without values; credential-less SSRF, which is left to the network egress policy (D-209); ADR-0011 omits the object store from its outbound list (a possible Low).<br>• Only the round-3 reviewers verify closures."
+--- D-211 | 2026-11-05 | delivery-orchestrator
+    DECISION: "**DG6 round-3 repairs are complete; a new candidate is frozen for review round 4.**<br>• **Merged:** BE-Z4 (F-DG6-220: the corrective_case, transition_decision and performance_area_link of a sensitive benefit are omitted or 404 on their routes, the inbox and My Work); FE-Z2 (F-DG6-222: SecretRef field errors are mapped to the credential row and localized; F-DG6-221: localized last-error text; F-DG…"
+    RATIONALE/EVIDENCE: "Round-3 findings F-DG6-220, 221, 222, 260 and 261. **Evidence:** the merges of BE-Z4, FE-Z2 and AN-Z2, and the final verification above."
+    REOPEN IF: "—"
+--- D-212 | 2026-11-05 | delivery-orchestrator
+    DECISION: "**DG6 round 4 failed; every finding is routed to a repair, and the sensitive-benefit leak is repaired as a class.**<br>• **Round 4 on 4b84bf20:** domain FAIL (F-DG6-220, 221 and 222 CLOSED_VERIFIED; new F-DG6-280 High mandatory: the blocker escalation copies a sensitive benefit's title into an executive ask; F-DG6-281 Low: the connector target shows "Choose…"); code-security FAIL (new F-DG6-300 Hi…"
+    RATIONALE/EVIDENCE: "Round-4 records in `docs/delivery/reviews/DG6/round-4/`."
+    REOPEN IF: "If the sweep shows the defect is structural (for example, a read model with no access filter), the repair escalates to a solution-architect task before re-freeze."
+--- D-213 | 2026-11-05 | delivery-orchestrator
+    DECISION: "**The verification of 31d5ccea4 found one root e2e failure. Its cause is a product race, not a flake, so a pre-freeze repair runs before the round-5 freeze.**<br>• **The verification:** every step exits 0 except `root`: `a22-p6-operability` failed once in en (an acknowledgement left the exception open). The spec alone then passed 6 of 6.<br>• **The cause (orchestrator's reading, to be confirmed by…"
+    RATIONALE/EVIDENCE: "`docs/delivery/test-evidence/DG6/orchestrator-final-31d5cce/` (README, `root.log`, `a22-rerun.log`)."
+    REOPEN IF: "If the test shows a different cause, the repair fixes that cause and the handback says so."
+--- D-214 | 2026-11-05 | delivery-orchestrator
+    DECISION: "**DG6 round-4 repairs and the BE-Z6 pre-freeze repair are complete; a new candidate is frozen for review round 5.**<br>• **Merged:** BE-Z5 (F-DG6-300, 280: no report or escalation carries a sensitive benefit's code, title or values; a sweep test checks the GET operations for that class); FE-Z3 (F-DG6-320, 301, 281: the missing EN/AR texts and the connector-target label; `problems-all.test.ts` now …"
+    RATIONALE/EVIDENCE: "`orchestrator-final-8a24a1c/summary.txt`; handbacks T-DG6-BE-Z5, FE-Z3, AN-Z3, BE-Z6."
+    REOPEN IF: "Any round-5 review fails."
+--- D-215 | 2026-11-06 | delivery-orchestrator
+    DECISION: "**DG6 round 5 failed; every finding is routed to a serial repair.**<br>• **Round 5 on 832e5c82:** domain FAIL (280, 281 CLOSED_VERIFIED; new F-DG6-340 Medium: a report total includes a restricted value with no restricted marker; 341 Low: ADR-0053 does not record BE-Z6's rule); code-security FAIL (300, 301 CLOSED_VERIFIED; new F-DG6-360 and 361 High mandatory: the Executive Overview and the `value.…"
+    RATIONALE/EVIDENCE: "`reviews/DG6/round-5/`; `findings.json`."
+    REOPEN IF: "—"
+--- D-216 | 2026-11-06 | delivery-orchestrator
+    DECISION: "**DG6 round-5 repairs are complete; a new candidate is frozen for review round 6.**<br>• **Merged:** BE-Z7, then its continuation BE-Z7B after a container restart killed BE-Z7 (F-DG6-360, 361: the Executive Overview and drill-downs omit a restricted benefit and flag `includesRestrictedRecords`; F-DG6-340: totals are the same for every reader and carry the restricted label; F-DG6-362: the sweep fai…"
+    RATIONALE/EVIDENCE: "`orchestrator-final-9fbfea0/summary.txt`; handbacks T-DG6-BE-Z7B, BE-Z8, ARCH-15, AN-Z4."
+    REOPEN IF: "Any round-6 review fails."
+--- D-217 | 2026-11-07 | delivery-orchestrator
+    DECISION: "**DG6 round 6 failed; findings are routed to serial repairs.**<br>• Round 6 on 0fea8adf: domain, code-security and QA FAIL. 340, 341, 360, 361, 362, 380 CLOSED_VERIFIED. New Medium F-DG6-400 (domain), F-DG6-420 (code-security), F-DG6-440 (QA).<br>• Repairs, serial (D-004): T-DG6-BE-Z9 (400), T-DG6-BE-Z10 (420, per D-218), T-DG6-FE-Z3 (440). Then V9 and freeze round 7."
+    RATIONALE/EVIDENCE: "`docs/delivery/reviews/DG6/round-6/`; findings.json."
+    REOPEN IF: "—"
+--- D-218 | 2026-11-07 | delivery-orchestrator
+    DECISION: "**F-DG6-420: a response never names the id of a sensitive record the reader is not admitted to.** The reference is omitted; where the open record depends on it, a neutral restricted marker without an id is returned, `includesRestrictedRecords: true` is set, and the screen shows the restricted label instead of a link."
+    RATIONALE/EVIDENCE: "ADR-0051 §2 (existence not disclosed, ADR-0006); safer of the two options F-DG6-420 offers."
+    REOPEN IF: "A business owner requires the opaque id to be shown."
+--- D-219 | 2026-11-07 | delivery-orchestrator
+    DECISION: "**Scope of D-218 (BE-Z10/Z10B handback decisions).** D-218 governs business responses to readers not admitted to the record. It does **not** override: (1) ADR-0051 §2 audit events of a restricted record, which keep actor, action, time, record id and versions with `changes`/`reason` redacted, because the audit trail must stay complete and tamper-evident for its readers; (2) ADR-0051 §7 grant regist…"
+    RATIONALE/EVIDENCE: "ADR-0051 §2 and §7; BE-Z10 handback 'Decision needed'; BE-Z10B handback 'What remains'."
+    REOPEN IF: "A reviewer shows a reader learning a restricted id it could not otherwise obtain through one of these three paths."
+--- D-220 | 2026-11-08 | delivery-orchestrator
+    DECISION: "**DG6 round-6 repairs are complete; candidate be0200e2 is frozen for review round 7.**<br>• Merged: BE-Z9 (F-DG6-400), BE-Z10 and BE-Z10B (F-DG6-420, D-218, D-219), FE-Z3 (F-DG6-440).<br>• V9 on 87ca8cf red: one integration test (list registry vs contract after BE-Z10B, fixed by BE-Z11) and two e2e specs (FE-Z3's spec used demo users on the standard stack, fixed by FE-Z4; `p5-title-reflow` failed …"
+    RATIONALE/EVIDENCE: "V9 and V10 evidence; handbacks BE-Z9, BE-Z10, BE-Z10B, FE-Z3, BE-Z11, FE-Z4."
+    REOPEN IF: "—"
+--- D-221 | 2026-11-08 | delivery-orchestrator
+    DECISION: "**DG6 round 7 failed on one review; findings routed to serial repairs.**<br>• Round 7 on b64b95ff: domain PASS (400 CLOSED_VERIFIED; new F-DG6-460 Low), QA PASS (440 CLOSED_VERIFIED), code-security FAIL (420 CLOSED_VERIFIED; new F-DG6-480 Medium: D-218 not applied to parentBenefitId, meeting output recordId, launch-task outputRecordId, and a hidden-reference write answers 200).<br>• Repairs, seria…"
+    RATIONALE/EVIDENCE: "`docs/delivery/reviews/DG6/round-7/`."
+    REOPEN IF: "—"
+--- D-222 | 2026-11-08 | delivery-orchestrator
+    DECISION: "**BE-Z12 handback: the two open inventory rows.** (1) `work_item.subject_id` / My Work `recordId`/`href`: D-218 applies to the assignee too; a restricted item returns `subjectId: null`, `recordId: null`, a link to the transformation home and `includesRestrictedRecords: true` (BE-Z4's kept ids are superseded). (2) `automation_rule_version.conditions`: a literal that names a sensitive record the rea…"
+    RATIONALE/EVIDENCE: "D-218; BE-Z12 handback §6"
+    REOPEN IF: "A business owner rules that rule authors must always see full conditions."
+--- D-223 | 2026-11-08 | delivery-orchestrator
+    DECISION: "**BE-Z12B handback.** (1) Confirmed: `WorkItem.subjectId` and `MyWorkItem.recordId` widen to `NullableUuid` (still required), per D-222. (2) Accepted: a free-text automation condition literal is not existence-checked, so a writer who already holds a hidden record's id sees the marker on read; same trade-off as the procedure subject (BE-Z12). UUIDv7 ids are not guessable and no new 422 is added. (3…"
+    RATIONALE/EVIDENCE: "BE-Z12B handback §5"
+    REOPEN IF: "A reviewer shows the marker discloses a record the writer could not already know."
+--- D-224 | 2026-11-08 | delivery-orchestrator
+    DECISION: "**ARCH-16 handback.** (1) The handback path `T-DG6-ARCH-16-solution-architect.md` is confirmed (the brief's BE-Z8 path was a copy error). (2) Confirmed as D-223 (1): the merged widenings `RagOverride.evidenceId`, `RagOverrideInForce.evidenceId` (BE-Z10B) and `Approval.subjectId`, `ApprovalDecisionRecord.subjectId` (BE-Z12) to `NullableUuid`, per D-218. (3) Rendered export files carrying no restric…"
+    RATIONALE/EVIDENCE: "ARCH-16 handback §0, §5"
+    REOPEN IF: "A reviewer shows an export misleads a reader about omitted content."
+--- D-225 | 2026-11-08 | delivery-orchestrator
+    DECISION: "**DG6 round-7 repairs are complete; a new candidate is frozen for review round 8.**<br>• Merged: BE-Z12 and BE-Z12B (F-DG6-480, D-222, D-223), ARCH-16 (F-DG6-460, D-224).<br>• V11 on dbcb469: all 15 steps exit 0 (test-evidence/DG6/orchestrator-final-dbcb469).<br>• Each reviewer verifies its open findings, then runs a full review; then the release audit (D-140 option 1)."
+    RATIONALE/EVIDENCE: "V11 summary; handbacks"
+    REOPEN IF: "Any round-8 review FAILs."
+--- D-226 | 2026-11-08 | delivery-orchestrator
+    DECISION: "**DG6 round 8 failed; findings routed to one serial repair (T-DG6-BE-Z13).**<br>• Round 8 on 6cda8b33: domain, code-security and QA FAIL. 460 and 480 CLOSED_VERIFIED. New: 520, 541, 560 (Medium, one defect: the automation re-save pairs hidden literals by ordinal), 540 (Medium, the inbox still names hidden records), 561 (Low, the label's description speaks of a total on rows and conditions).<br>• *…"
+    RATIONALE/EVIDENCE: "Round-8 records"
+    REOPEN IF: "A reviewer shows the token discloses anything."
+--- D-227 | 2026-11-08 | delivery-orchestrator
+    DECISION: "**BE-Z13 handback observations (same class as F-DG6-540), repaired before round 9 in T-DG6-BE-Z13B.** (1) Served key columns that embed a record id (`OperationalFailure.idempotencyKey`, `AutomationExecution.triggerKey`, `actionResults[].idempotencyKey`) are not excluded by D-219: a hidden id inside a served key is replaced by the restricted marker and the item carries `includesRestrictedRecords: t…"
+    RATIONALE/EVIDENCE: "BE-Z13 handback §7"
+    REOPEN IF: "—"
+--- D-228 | 2026-11-08 | delivery-orchestrator
+    DECISION: "**BE-Z13/Z13B residuals, closed before round 9 (T-DG6-BE-Z13C, then T-DG6-ARCH-17).** (1) The D-226 token ordinal `k` becomes the condition literal's position among **all** literals of the stored version (not among the reader's hidden ones), so a grant or sensitivity change between read and save cannot shift tokens; it discloses nothing the reader does not already see (the count of conditions). (2…"
+    RATIONALE/EVIDENCE: "_)error_(message"
+    REOPEN IF: "detail)$`, e.g. `integration_run.error_message`) are classified in the inventory and masked like D-227 keys. (3) The failure queue and run detail show the restricted label (`scope="item"`) when `includesRestrictedRecords` is set. (4) Cross-organization ids stay out of scope: every D-218 helper check"
+--- D-229 | 2026-11-09 | delivery-orchestrator
+    DECISION: "**BE-Z13C observation accepted.** Connector configuration names (`credential_refs`, `field_mappings`) stay cannot-name: they are set only through IT's secret manifest or by connector administrators, who already see that configuration; no record id is disclosed to anyone who could not already read it."
+    RATIONALE/EVIDENCE: "BE-Z13C §7"
+    REOPEN IF: "A reviewer shows a reader learning a hidden id they could not already see."
+--- D-230 | 2026-11-09 | delivery-orchestrator
+    DECISION: "**Round-8 repairs complete; round 9 frozen.** BE-Z13, BE-Z13B, BE-Z13C and ARCH-17 are merged. Orchestrator verification V12 on f44df3d is green on all 15 steps. The round-9 candidate is frozen from this source and sent to the three independent reviewers, who verify 520, 540, 541, 560 and 561."
+    RATIONALE/EVIDENCE: "`test-evidence/DG6/orchestrator-final-f44df3d/`"
+    REOPEN IF: "Any round-9 review FAIL."
+--- D-231 | 2026-11-09 | delivery-orchestrator
+    DECISION: "**DG6 round 9 failed; repair T-DG6-BE-Z14.** Round 9 on fe824c05: the domain review completed FAIL (520 CLOSED_VERIFIED; new F-DG6-580 Medium: a restricted token is not bound to its version, so a second save of the same draft swaps the hidden literal). A container restart interrupted the code-security and QA reviews (exit 143, no result). Their partial records are set aside and are not a verdict. …"
+    RATIONALE/EVIDENCE: "Round-9 records; `test-evidence/DG6/code-security/round-9/repro/`"
+    REOPEN IF: "—"
+--- D-232 | 2026-11-09 | delivery-orchestrator
+    DECISION: "**Round-9 repair complete; round 10 frozen.** BE-Z14 is merged. V13 on 282dd0b is green on all 15 steps. Round 10 runs all three reviews in full. Domain verifies 580. Code-security verifies 540 and 541 (not verified in round 9, which was interrupted) and its observations 600 and 601. QA verifies 560 and 561."
+    RATIONALE/EVIDENCE: "`test-evidence/DG6/orchestrator-final-282dd0b/`"
+    REOPEN IF: "Any round-10 review FAIL."
+--- D-233 | 2026-11-09 | delivery-orchestrator
+    DECISION: "**DG6 round 10: code-security PASS, QA PASS, domain FAIL; repair T-DG6-BE-Z15.** On 56415aee all earlier findings are CLOSED_VERIFIED: 540, 541, 560, 561, and 580 by both domain and code-security. New is F-DG6-640 (Medium): the token names only the row-version number, so a token copied from another version row, or from another rule, with the same number resolves against the wrong positions. **Fix:…"
+    RATIONALE/EVIDENCE: "Round-10 records"
+    REOPEN IF: "A reviewer shows the tag discloses anything."
+--- D-234 | 2026-11-09 | delivery-orchestrator
+    DECISION: "**Round-10 repair complete; round 11 frozen.** BE-Z15 is merged (migration 0127). V14 on bf11756 is green on all 15 steps. Round 11 runs all three reviews in full. Domain verifies 640. Code-security and QA have no open findings and review the BE-Z15 diff with the rest."
+    RATIONALE/EVIDENCE: "`test-evidence/DG6/orchestrator-final-bf11756/`"
+    REOPEN IF: "Any round-11 review FAIL."
+--- D-235 | 2026-11-09 | delivery-orchestrator
+    DECISION: "**DG6 round 11: domain, code-security and QA all PASS on c45d73b8.** 640 is CLOSED_VERIFIED. Two Low findings name one defect: F-DG6-700 (domain) and F-DG6-740 (QA). On a 422 `restricted_token_stale` that is not a concurrent change, the editor tells the author in en and ar that the rule changed after they opened it. That is untrue. **Repair rather than accept:** a user-facing text that is untrue i…"
+    RATIONALE/EVIDENCE: "Round-11 records"
+    REOPEN IF: "—"
+--- D-236 | 2026-11-10 | delivery-orchestrator
+    DECISION: "**Round-11 repair complete; round 12 frozen.** FE-Z16 is merged: on a 422 `restricted_token_stale` the rule editor now shows `problems.automation_rule__restricted_token_stale` (en, provisional ar) instead of the concurrent-change message. ADR-0051 is updated to match. V15 on 4288d7c is green on all 15 steps. A container restart interrupted e2e-cutf8; it was re-run in full. Round 12 runs all three …"
+    RATIONALE/EVIDENCE: "`test-evidence/DG6/orchestrator-final-4288d7c/`"
+    REOPEN IF: "Any round-12 review FAIL."
+--- D-237 | 2026-11-10 | delivery-orchestrator
+    DECISION: "**DG6 round 12: domain, code-security and QA all PASS on c05864ba (source `2495e036c4d933788044756ab3c41415e3873cf3`), with no new finding.** F-DG6-700 and F-DG6-740 are CLOSED_VERIFIED, and all 52 DG6 findings are CLOSED_VERIFIED. The release audit was run as a single run, T-DG6-AUDIT-R13, because no auditor acceptance needed importing. This was first recorded in `progress.md`, because `decisions…"
+    RATIONALE/EVIDENCE: "Old branch, tag `dg6-dev-history-3dd8316ff`: `reviews/DG6/round-12/`."
+    REOPEN IF: "Superseded by D-238."
+--- D-238 | 2026-11-10 | delivery-orchestrator (clean re-gate chosen by the user)
+    DECISION: "**The release audit T-DG6-AUDIT-R13 BLOCKED DG6 on candidate c05864ba. DG6 is re-gated on a clean base (the D-184 / D-190 precedent). The final P6 product is carried unchanged. DG6's review history stays on the old branch.**<br>**The audit.** The auditor confirmed the substance: candidate identity, three PASS reviews, 48/48 requirements, a green final verification, and its own re-run of F-DG6-700/…"
+    RATIONALE/EVIDENCE: "Old branch at tag `dg6-dev-history-3dd8316ff`: `reviews/DG6/round-13/release-auditor.json`, `gates/DG6.json`, `test-evidence/DG6/audit/round-13/`."
+    REOPEN IF: "The clean round finds a defect the earlier rounds closed or missed."
+--- D-239 | 2026-11-11 | delivery-orchestrator
+    DECISION: "**The release audit T-DG6-AUDIT-RG-R4 BLOCKED DG6 on candidate 32e41b55 for one Low finding, F-DG6-990: seeded product text named engineering delivery gates DG2-DG4 (24 served strings). It is repaired, not accepted.** T-DG6-BE-RG3 adds migration `0130_p6_seeded_text_business_terms.sql`, which rewords the stored seeded texts in business terms (applied migrations untouched; version steps and audit e…"
+    RATIONALE/EVIDENCE: "F-DG6-990 (release-auditor, round 4); handback `docs/delivery/handbacks/DG6/T-DG6-BE-RG3-backend-workflow-engineer.md` and its evidence. Rewriting the append-only audit trail would break a stronger invariant than the one the finding protects."
+    REOPEN IF: "A reviewer judges an id in those five audit reasons to be product text that M0007 or REQ-S21-001 forbids, or a new seeded string names a delivery gate."
+--- D-240 | 2026-11-11 | delivery-orchestrator
+    DECISION: "**Rounds 5 and 6 of the DG6 re-gate on candidate 5e819f7a: every product finding closed; a re-freeze is needed only so that the record fix of F-DG6-911/951 lies inside a frozen candidate.**<br>- **Round 5:** code-security PASS; F-DG6-990 CLOSED_VERIFIED by domain and code-security. Domain FAIL on **F-DG6-911** (Medium); the qa run was killed by a container restart (exit 143, no record) and its com…"
+    RATIONALE/EVIDENCE: "Rounds 5 and 6 records under `docs/delivery/reviews/DG6/round-5/` and `round-6/`; `findings.json`."
+    REOPEN IF: "—"
+
+=== progress.md: the sections of the clean re-gate (verbatim)
+## D-238 (2026-11-10): DG6 clean re-gate
+
+The audit T-DG6-AUDIT-R13 BLOCKED (B1–B5). The user chose a clean re-gate. D-237 and D-238 are now recorded in `decisions.md` on branch `claude/mobily-transformation-platform-dg6-regate`, before its first freeze. **Next:** verify the carried tree (V16), then freeze round 1 and run three full reviews.
+
+## D-238 follow-up (2026-11-10): round 1 of the clean re-gate frozen
+
+- **Candidate:** `sha256:b506084b2c497c82d6e4de07789d35314bf1b3e3bb83f1dd6bf420a6c4510451` (2769 files, source `98feb869cd85671b3e95679e13bd255c421cb80d`).
+- **Write-once:** the check reports 0 errors for DG6 and DG5. `validate --historical --stage DG5` and `--register DG6` both PASS.
+- **No new verification run:** the product tree outside `docs/delivery` equals `4288d7c0b` byte for byte (`git diff` is empty). V15 (`test-evidence/DG6/orchestrator-final-4288d7c/`) verified that tree on all 15 steps, so it is not re-run.
+- **The provenance tag** `dg6-dev-history-3dd8316ff` could not be pushed (HTTP 403). The old branch `claude/mobily-transformation-platform-dg5-regate2` at `3dd8316ff` is the reference.
+- **Round 1:** full reviews by domain, code-security and qa (tasks `T-DG6-REV-*-RG-R1`). New finding ids are 900–959.
+
+## 2026-11-10: DG6 clean re-gate round 2
+
+- Round 1 on b506084b: domain PASS (F-DG6-900 Low), qa PASS, code-security FAIL (F-DG6-920 Medium). Imported.
+- Repairs: T-DG6-BE-RG1 (80314f134; migration 0128, re-check over citations ∪ context) and T-DG6-FE-RG1 (ccd078e91; basis label, assistant withheld notices). Not recorded in decisions.md, to keep the candidate stable; recorded here and in the handbacks.
+- V16 on ccd078e91: 15/15 exit 0 (integration 4360; e2e 556 + 556; root 288; demo 10). Evidence: test-evidence/DG6/orchestrator-final-ccd078e/.
+- Round 2 frozen: candidate sha256:d62b187b… (2771 files, source 71ff750ed). Reviewers T-DG6-REV-{DOM,CS,QA}-RG-R2. Next: import round 2; fix with `import-findings --fix` if needed; else the release audit.
+
+## 2026-11-11: DG6 clean re-gate round 3
+
+- Round 2 on d62b187b: domain FAIL (F-DG6-960), code-security FAIL (F-DG6-970 Medium, F-DG6-971 Low), qa interrupted by a container restart (exit 143, no verdict record; sidecar F-DG6-980 imported). 960/970/980: one history-channel defect. F-DG6-900 and F-DG6-920 CLOSED_VERIFIED.
+- Repair T-DG6-BE-RG2 (a0cf22bba; migration 0129). V17 on a0cf22bba: 15/15 exit 0 (integration 4366; e2e 556 + 556; root 288; demo 10).
+- Round 3 frozen: candidate sha256:32e41b55… (2773 files, source f56f1b3d2). Reviewers T-DG6-REV-{DOM,CS,QA}-RG-R3.
+
+## 2026-11-11: DG6 clean re-gate round 3 result, release audit round 4
+- Round 3 on 32e41b55: domain PASS, code-security PASS, qa PASS (second attempt; the first was killed by a container restart). No new finding. F-DG6-960/970/971/980 CLOSED_VERIFIED.
+- Orchestrator record fixes before the audit: `fix_revision` recorded for F-DG6-900 (ccd078e91…), 920 (80314f134…), 960/970/971/980 (a0cf22bba…); the verification block of 960/970/971/980 set to the code-security-reviewer round-3 sidecar (the one the validator selects among three same-round PASS verifications); `stages.json` round 2 no longer lists the qa record that the killed run never wrote (the B5 class of defect).
+- State VERIFYING. Next: release audit T-DG6-AUDIT-RG-R4 (round 4, assignment `assignments/DG6/round-4/release-auditor.md`).
+
+## 2026-11-11: F-DG6-990 repaired, V18 green, round 5 freeze
+- T-DG6-BE-RG3 integrated at 60787d89f (migration 0130, served-seed text scan; D-239). V18 on 60787d8: 15/15 exit 0 (integration 4370, e2e 556+556, root 288, demo 10). Evidence `test-evidence/DG6/orchestrator-final-60787d8/`.
+- Next: freeze round 5, full reviews by all three reviewers plus verification of F-DG6-990, then the release audit.
+
+## 2026-11-11: round 5, F-DG6-911 (domain, Medium) — stages.json transition
+- Domain round 5: FAIL on F-DG6-911: the DG6 history jumped VERIFYING -> REVIEWING at the round-5 freeze, with no FIXING entry for the round-4 audit BLOCK, so every `--historical` validator failed. F-DG6-990 verified CLOSED_VERIFIED by domain.
+- Fixed in `stages.json` (meta-excluded; the candidate is unchanged): a FIXING entry inserted at 06:42:33Z (the audit record commit), with a note that it was recorded late. `--historical` DG1-DG5 re-run after the fix (exit codes in the commit).
+
+## 2026-11-11: round 5 result, round 6 launched
+- Round 5 on 5e819f7a: code-security PASS; domain FAIL (F-DG6-911); qa killed by a container restart (exit 143, no record) with sidecar finding F-DG6-951 (same defect). F-DG6-990 CLOSED_VERIFIED by domain and code-security.
+- F-DG6-911/951 recorded FIXED_PENDING_VERIFICATION at e7cb240e7. Round 6 on the same candidate: domain and qa (T-DG6-REV-{DOM,QA}-RG-R6).
+
+## 2026-11-12: round 7 PASS; F-DG6-952 accepted by the user; audit part 1
+
+- Round 7 on the re-frozen candidate `10f71f24` (source `d8868b2a5`, D-240): domain, code-security and qa all PASS. F-DG6-911/951 CLOSED_VERIFIED by all three (fix `e7cb240e7` is now inside the candidate). findings.json verification blocks set to the code-security round-7 sidecar (the one the validator selects); F-DG6-990 `fix_revision` = `60787d89f`.
+- **User decision (2026-11-12):** asked whether to accept F-DG6-952 (Low: out-of-order history timestamps in the approved DG0 and DG5 entries of `stages.json`) as an observation or fix it by rewriting approved history plus a new round, the user chose **accept as an observation**. Recorded here, not in `decisions.md`, because `decisions.md` is in the candidate and editing it would force another re-freeze; part 2 of the audit cites this entry.
+- Next: release audit part 1 (round 8, T-DG6-AUDIT-RG-R8): concurrence on 952 only; import; then part 2 (round 9): full audit and gate decision.
+

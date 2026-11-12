@@ -1,0 +1,110 @@
+# 2026-11-12T11:17:09Z incidents and orchestrator decisions, from history (repository read-only, HEAD 953e39d26b82c02769c4b1fee52c618bd915e082)
+--- (a) killed runs: meta.json and committed files
+DG6-T-DG6-REV-QA-RG-R2-qa-verifier-20261110T181404Z-201c57a6: files=meta.json result.json sandbox.json settings.json stderr.log transcript.jsonl.gz 
+   exit 143 no-result-line started 2026-11-10T18:14:04Z finished 2026-11-10T21:20:04Z tool_authored ['docs/delivery/reviews/DG6/round-2/qa-verifier.findings.json', 'docs/delivery/reviews/DG6/round-2/qa-verifier.verifications.json', 'docs/delivery/test-evidence/DG6/qa/tests/round-2/qa-rg-r2-assistant-history.test.ts', 'docs/delivery/test-evidence/DG6/qa/tests/round-2/zz-qa-rg-r2-f900-basis.spec.ts']
+   first commit: 356553f2a run: DG6-T-DG6-REV-QA-RG-R2-qa-verifier-20261110T181404Z-201c57a6 (review evidence, auto-committed by run-agent.sh)
+DG6-T-DG6-REV-CS-RG-R3-code-security-reviewer-20261111T014305Z-0cbae4a1: files=.pre-config.txt .pre-snapshot.json settings.json stderr.log transcript.jsonl 
+   first commit: c31732980 DG6 re-gate round 3: keep the three reviewer runs interrupted by a container restart (no verdict records); partial evidence moved to round-3-interrupted-20261111
+DG6-T-DG6-REV-DOM-RG-R3-domain-reviewer-20261111T014302Z-262b73f7: files=.pre-config.txt .pre-snapshot.json settings.json stderr.log transcript.jsonl 
+   first commit: c31732980 DG6 re-gate round 3: keep the three reviewer runs interrupted by a container restart (no verdict records); partial evidence moved to round-3-interrupted-20261111
+DG6-T-DG6-REV-QA-RG-R3-qa-verifier-20261111T014308Z-b8fb82c1: files=.pre-config.txt .pre-snapshot.json settings.json stderr.log transcript.jsonl 
+   first commit: c31732980 DG6 re-gate round 3: keep the three reviewer runs interrupted by a container restart (no verdict records); partial evidence moved to round-3-interrupted-20261111
+DG6-T-DG6-REV-QA-RG-R5-qa-verifier-20261111T113410Z-846280c8: files=meta.json result.json sandbox.json settings.json stderr.log transcript.jsonl.gz 
+   exit 143 no-result-line started 2026-11-11T11:34:10Z finished 2026-11-11T14:41:58Z tool_authored ['docs/delivery/reviews/DG6/round-5/qa-verifier.findings.json', 'docs/delivery/reviews/DG6/round-5/qa-verifier.verifications.json']
+   first commit: 3b4a14778 run: DG6-T-DG6-REV-QA-RG-R5-qa-verifier-20261111T113410Z-846280c8 (review evidence, auto-committed by run-agent.sh)
+--- (b) stages.json review_rounds (records listed per round):
+  round 1 sha256:b506084b2c497c82 98feb869cd records: ['domain-reviewer', 'code-security-reviewer', 'qa-verifier']
+  round 2 sha256:d62b187baa8377da 71ff750ed1 records: ['domain-reviewer', 'code-security-reviewer']
+  round 3 sha256:32e41b5581a9beeb f56f1b3d24 records: ['domain-reviewer', 'code-security-reviewer', 'qa-verifier']
+  round 4 sha256:32e41b5581a9beeb f56f1b3d24 records: ['release-auditor']
+  round 5 sha256:5e819f7a579dbf98 3c8b9a3acf records: ['domain-reviewer', 'code-security-reviewer']
+  round 6 sha256:5e819f7a579dbf98 3c8b9a3acf records: ['domain-reviewer', 'qa-verifier']
+  round 7 sha256:10f71f2418567878 d8868b2a5c records: ['domain-reviewer', 'code-security-reviewer', 'qa-verifier']
+  round 8 sha256:10f71f2418567878 d8868b2a5c records: ['release-auditor']
+  round 9 sha256:10f71f2418567878 d8868b2a5c records: ['release-auditor']
+  history:
+    {'state': 'PLANNED', 'at': '2026-09-28T11:30:00Z'}
+    {'state': 'BUILDING', 'at': '2026-10-26T07:30:00Z', 'note': 'DG6 starts after DG5 APPROVED (D-193, D-194): planning task T-DG6-ARCH-00 first.'}
+    {'state': 'REVIEWING', 'at': '2026-11-10T08:33:58Z', 'note': 'Clean re-gate (D-238): round 1 frozen on candidate b506084b.'}
+    {'state': 'FIXING', 'at': '2026-11-10T12:33:11Z', 'note': 'Re-gate round 1: QA and domain PASS, code-security FAIL (F-DG6-920 Medium); F-DG6-900 Low also open. Repairs T-DG6-BE-RG1 and T-DG6-FE-RG1.'}
+    {'state': 'REVIEWING', 'at': '2026-11-10T18:13:01Z', 'note': 'Re-gate round 2 frozen on candidate d62b187b.'}
+    {'state': 'FIXING', 'at': '2026-11-10T21:21:06Z', 'note': 'Re-gate round 2: domain FAIL (F-DG6-960), code-security FAIL (F-DG6-970, F-DG6-971); qa interrupted by a container restart (exit 143, no verdict record; its sidecars F-DG6-980 kept, write-once). F-DG6-900 and F-DG6-920 CLOSED_VERIFIED. 960/970/980 are one defect (assistant history channel). Repair T-DG6-BE-RG2.'}
+    {'state': 'REVIEWING', 'at': '2026-11-11T01:42:18Z', 'note': 'Re-gate round 3 frozen on candidate 32e41b55.'}
+    {'state': 'VERIFYING', 'at': '2026-11-11T06:08:46Z', 'note': 'Re-gate round 3 on 32e41b55: domain, code-security and qa all PASS; F-DG6-960/970/971/980 CLOSED_VERIFIED; no new finding. Release audit T-DG6-AUDIT-RG-R4 (round 4, single run: no finding awaits acceptance).'}
+    {'state': 'FIXING', 'at': '2026-11-11T06:42:33Z', 'note': 'Release audit T-DG6-AUDIT-RG-R4 (round 4) BLOCKED on F-DG6-990 (Low, seeded product text naming DG gates). Repair T-DG6-BE-RG3 (migration 0130; D-239). Entry recorded late (2026-11-11, after F-DG6-911): the orchestrator moved VERIFYING -> REVIEWING at the round-5 freeze without it; the timestamp is the audit record commit.'}
+    {'state': 'REVIEWING', 'at': '2026-11-11T11:32:40Z', 'note': 'Re-gate round 5 frozen on candidate 5e819f7a.'}
+    {'state': 'FIXING', 'at': '2026-11-11T14:42:55Z', 'note': 'Round 5 on 5e819f7a: code-security PASS; domain FAIL F-DG6-911; qa killed (exit 143), sidecar F-DG6-951 (same defect). Fixed in stages.json (e7cb240e7).'}
+    {'state': 'REVIEWING', 'at': '2026-11-11T14:42:56Z', 'note': 'Round 6 on the same candidate 5e819f7a: domain and qa.'}
+    {'state': 'FIXING', 'at': '2026-11-11T18:35:32Z', 'note': 'Round 6 on 5e819f7a: domain and qa PASS. D-240: the record fix of F-DG6-911/951 (e7cb240e7) lies after the candidate source_commit; decisions.md gains D-240 and DG6 is re-frozen for round 7.'}
+    {'state': 'REVIEWING', 'at': '2026-11-11T18:38:30Z', 'note': 'Round 7 on the re-frozen candidate 10f71f24 (source d8868b2a5; D-240): domain, code-security and qa full reviews, each verifying F-DG6-911/951.'}
+    {'state': 'VERIFYING', 'at': '2026-11-12T10:36:02Z', 'note': 'Round 7 on 10f71f24: all three PASS; F-DG6-911/951 CLOSED_VERIFIED. F-DG6-952 accepted by the user as an observation. Release audit part 1 (round 8).'}
+--- (c) round-3 records point to the second attempts:
+  domain-reviewer DG6-T-DG6-REV-DOM-RG-R3-domain-reviewer-20261111T014653Z-2c1ec3f6
+  code-security-reviewer DG6-T-DG6-REV-CS-RG-R3-code-security-reviewer-20261111T014656Z-9abcdd72
+  qa-verifier DG6-T-DG6-REV-QA-RG-R3-qa-verifier-20261111T014659Z-9aa58015
+--- (d) sidecars of killed runs (round-2 qa, round-5 qa) are in the tree, committed by the runner:
+  docs/delivery/reviews/DG6/round-2/qa-verifier.findings.json first commit: 356553f2a run: DG6-T-DG6-REV-QA-RG-R2-qa-verifier-20261110T181404Z-201c57a6 (review evidence, auto-committed by run-agent.sh)
+  docs/delivery/reviews/DG6/round-2/qa-verifier.verifications.json first commit: 356553f2a run: DG6-T-DG6-REV-QA-RG-R2-qa-verifier-20261110T181404Z-201c57a6 (review evidence, auto-committed by run-agent.sh)
+  docs/delivery/reviews/DG6/round-5/qa-verifier.findings.json first commit: 3b4a14778 run: DG6-T-DG6-REV-QA-RG-R5-qa-verifier-20261111T113410Z-846280c8 (review evidence, auto-committed by run-agent.sh)
+  docs/delivery/reviews/DG6/round-5/qa-verifier.verifications.json first commit: 3b4a14778 run: DG6-T-DG6-REV-QA-RG-R5-qa-verifier-20261111T113410Z-846280c8 (review evidence, auto-committed by run-agent.sh)
+--- (e) c31732980 (round-3 interrupted runs kept): statuses
+      1 
+     21 A
+      1 c31732980 DG6 re-gate round 3: keep the three reviewer runs interrupted by a container restart (no verdict records); partial evidence moved to round-3-interrupted-20261111
+--- (f) commits that changed docs/delivery/findings.json since the base, with the per-finding field changes:
+== 62e0d48bf 2026-11-10T12:32:28+00:00 DG6 re-gate round 1: import findings F-DG6-900, F-DG6-920
+   F-DG6-900: added status=OPEN
+   F-DG6-920: added status=OPEN
+== 620301c30 2026-11-10T21:20:33+00:00 DG6 re-gate round 2: import findings (F-DG6-960/970/980 same history-channel defect, F-DG6-971); 900 and 920 CLOSED_VERIFIED
+   F-DG6-900: history; status: OPEN -> CLOSED_VERIFIED; verification.by_role: None -> code-security-reviewer
+   F-DG6-920: history; status: OPEN -> CLOSED_VERIFIED; verification.by_role: None -> code-security-reviewer
+   F-DG6-960: added status=OPEN
+   F-DG6-970: added status=OPEN
+   F-DG6-971: added status=OPEN
+   F-DG6-980: added status=OPEN
+== 8eebed1cd 2026-11-11T06:06:28+00:00 DG6 re-gate round 3: import verifications (960/970/971/980 CLOSED_VERIFIED), record fix_revision for 900/920/960/970/971/980
+   F-DG6-900: fix_revision: None -> ccd078e91ed43e1434a2a3a825978eafd9b8c46f
+   F-DG6-920: fix_revision: None -> 80314f134bb07743b9076cb5996e092c2dff1a30
+   F-DG6-960: fix_revision: None -> a0cf22bbad0468ee9fa06fdacfbcfab4a204fe9b; history; status: OPEN -> CLOSED_VERIFIED; verification.by_role: None -> code-security-reviewer
+   F-DG6-970: fix_revision: None -> a0cf22bbad0468ee9fa06fdacfbcfab4a204fe9b; history; status: OPEN -> CLOSED_VERIFIED; verification.by_role: None -> code-security-reviewer
+   F-DG6-971: fix_revision: None -> a0cf22bbad0468ee9fa06fdacfbcfab4a204fe9b; history; status: OPEN -> CLOSED_VERIFIED; verification.by_role: None -> code-security-reviewer
+   F-DG6-980: fix_revision: None -> a0cf22bbad0468ee9fa06fdacfbcfab4a204fe9b; history; status: OPEN -> CLOSED_VERIFIED; verification.by_role: None -> code-security-reviewer
+== f97e452c6 2026-11-11T06:44:39+00:00 DG6 re-gate round 4: audit BLOCKED on F-DG6-990 (Low): seeded product text names DG gates; import finding
+   F-DG6-990: added status=OPEN
+== 3c07fa84e 2026-11-11T14:43:50+00:00 DG6 re-gate: import round 5 (CS PASS, domain FAIL F-DG6-911, qa killed: F-DG6-951); round-6 assignments (domain, qa; same candidate)
+   F-DG6-911: added status=FIXED_PENDING_VERIFICATION
+   F-DG6-951: added status=FIXED_PENDING_VERIFICATION
+   F-DG6-990: history; status: OPEN -> CLOSED_VERIFIED; verification.by_role: None -> code-security-reviewer
+== 3655d5335 2026-11-11T18:34:47+00:00 DG6 round 6: import findings (911/951/990 verified, 952 observation)
+   F-DG6-911: history; status: FIXED_PENDING_VERIFICATION -> CLOSED_VERIFIED; verification.by_role: None -> qa-verifier
+   F-DG6-951: history; status: FIXED_PENDING_VERIFICATION -> CLOSED_VERIFIED; verification.by_role: None -> qa-verifier
+   F-DG6-952: added status=ACCEPTED_OBSERVATION
+   F-DG6-990: history; verification.by_role: code-security-reviewer -> qa-verifier
+== fb0f6d4aa 2026-11-11T23:48:37+00:00 DG6 round 7: import (911/951 CLOSED_VERIFIED on 10f71f24); verification blocks aligned to the code-security sidecar; F-DG6-990 fix_revision
+   F-DG6-911: history; verification.by_role: qa-verifier -> code-security-reviewer
+   F-DG6-951: history; verification.by_role: qa-verifier -> code-security-reviewer
+   F-DG6-990: fix_revision: None -> 60787d89ffa2562d491af424bc1024b4e3bc2d57; history; verification.by_role: qa-verifier -> qa-verifier
+== 953e39d26 2026-11-12T10:59:24+00:00 DG6: audit part 1 PASS (F-DG6-952 accepted); part 2 assignment (round 9)
+   F-DG6-952: acceptance; history; verification.by_role: qa-verifier -> release-auditor
+--- (g) e7cb240e7: files and stages.json diff
+e7cb240e742320935f4c7e01b26f143b8bd656c9 2026-11-11T13:38:24+00:00 DG6 re-gate: stages.json FIXING entry for the round-4 audit BLOCK (F-DG6-911)
+
+ docs/delivery/progress.md | 4 ++++
+ docs/delivery/stages.json | 5 +++++
+ 2 files changed, 9 insertions(+)
+--- a/docs/delivery/stages.json
++++ b/docs/delivery/stages.json
++        {
++          "state": "FIXING",
++          "at": "2026-11-11T06:42:33Z",
++          "note": "Release audit T-DG6-AUDIT-RG-R4 (round 4) BLOCKED on F-DG6-990 (Low, seeded product text naming DG gates). Repair T-DG6-BE-RG3 (migration 0130; D-239). Entry recorded late (2026-11-11, after F-DG6-911): the orchestrator moved VERIFYING -> REVIEWING at the round-5 freeze without it; the timestamp is the audit record commit."
++        },
+--- (h) F-DG6-911/951 fix_revision when imported at 3c07fa84e:
+   F-DG6-911 FIXED_PENDING_VERIFICATION e7cb240e742320935f4c7e01b26f143b8bd656c9
+   F-DG6-951 FIXED_PENDING_VERIFICATION e7cb240e742320935f4c7e01b26f143b8bd656c9
+is e7cb240e7 an ancestor of 3c07fa84e: yes; of 3c8b9a3 (round-5/6 source): no; of d8868b2a5: yes
+--- (i) D-240 re-freeze: product tree 3c8b9a3acf vs d8868b2a5 outside docs/delivery: 0 files; candidate-included changes 3c8b9a3acf..d8868b2a5 (not META_EXCLUDES):
+docs/delivery/decisions.md
+(end)
+--- (j) progress.md: user decision on F-DG6-952 (verbatim):
+141:- **User decision (2026-11-12):** asked whether to accept F-DG6-952 (Low: out-of-order history timestamps in the approved DG0 and DG5 entries of `stages.json`) as an observation or fix it by rewriting approved history plus a new round, the user chose **accept as an observation**. Recorded here, not in `decisions.md`, because `decisions.md` is in the candidate and editing it would force another re-freeze; part 2 of the audit cites this entry.

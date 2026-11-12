@@ -1,0 +1,73 @@
+# release-auditor T-DG6-AUDIT-RG-R9: scope of the three round-7 records (each check id, result, exit_status, first 170 chars of the procedure)
+===== domain-reviewer: verdict=PASS round=7 source_commit=d8868b2a5c074b13c04693a88644c25ef2792583 candidate=sha256:10f71f2418567878 checks=9 findings=[] requirements_checked=48 evidence_paths=10 reviewed_at=2026-11-11T20:10:00Z
+   implementation_author: ["devops-engineer", "backend-workflow-engineer", "frontend-ux-engineer", "kpi-benefits-engineer", "solution-architect", "transformation-analyst", "qa-verifier", "delivery-orchestrator"]
+   independence_declaration: {"reviewer_authored_reviewed_scope": false, "statement": "domain-reviewer authored none of the following in the reviewed candidate: any DG6 implementation, test, ADR, register row, repair or delivery decision (D-240 included), and any stages.json change (e7cb240e7 included). I formed this verdict from my own runs in this session. I did not open any other reviewer's round-7 record or evidence. I read my own role's round-5 and round-6 records, to re-use their structure and their judgements on unchanged areas. I also read F-DG6-911, F-DG6-951, F-DG6-952 and F-DG6-990 in findings.json, which carri
+   checks with result != PASS: []
+   - DOM-RG7-00-candidate [PASS/0] Verify the frozen candidate. Recompute the candidate ID on the complete repository. Confirm that HEAD differs from source_commit only in metadata. Confirm that both 3c8b9
+   - DOM-RG7-01-validators-and-stages [PASS/0] Run --historical for DG5 to DG1, --pipeline and --register DG6 at HEAD. Check every stage's stages.json history: whether the state equals the last entry, whether the tran
+   - DOM-RG7-02-verify-F-DG6-911-951 [PASS/0] Re-run the round-5 reproduction of F-DG6-911 and F-DG6-951 on this candidate. Serve each revision's stages.json in memory: 8754f809d, the round-5 freeze, which is the fix
+   - DOM-RG7-03-integration-p6-and-f990-regression [PASS/0] Re-run the 125 P6 integration files of my round-5/6 list on this candidate, together with three probes. The list covers: access and sensitivity (z12b, z13, z13b, z13c, z1
+   - DOM-RG7-04-root-e2e-p6-en-ar [PASS/0] Run the 14 root P6 acceptance e2e specs, plus my round-7 UI probe, in chromium-en and chromium-ar on the production-initialized stack. The specs are: A12 scope isolation;
+   - DOM-RG7-05-operating-logic-and-repair-diff [PASS/0] Judge the operating-logic clauses on this candidate, resting on DOM-RG7-03/04, which ran the suites myself. The product tree equals 60787d89f, which is also the product t
+   - DOM-RG7-06-d229-d228 [PASS/0] Judge D-229 (connector configuration names stay cannot-name) and the D-228 (4) out-of-scope ruling on cross-organization ids. Look for a served column, response, notifica
+   - DOM-RG7-07-decisions [PASS/0] Judge D-194 to D-196, D-199 item 2, D-202, D-203 to D-205, D-239 and D-240 against the master prompt's automation clauses (REQ-S12-019, REQ-S20-013) and the playbook.
+   - DOM-RG7-08-environmental-residuals [PASS/0] Record the environmental residuals on the offline and configuration surface, as the assignment instructs.
+===== code-security-reviewer: verdict=PASS round=7 source_commit=d8868b2a5c074b13c04693a88644c25ef2792583 candidate=sha256:10f71f2418567878 checks=26 findings=[] requirements_checked=36 evidence_paths=57 reviewed_at=2026-11-11T20:50:00Z
+   implementation_author: ["solution-architect", "backend-workflow-engineer", "kpi-benefits-engineer", "frontend-ux-engineer", "devops-engineer", "transformation-analyst", "qa-verifier", "delivery-orchestrator"]
+   independence_declaration: {"reviewer_authored_reviewed_scope": false, "statement": "I am code-security-reviewer, session 5fd9c5d0-4d54-4e67-9a31-3d5a49c84be4, task T-DG6-REV-CS-RG-R7. I verified the assignment's sha256 (e31a9f8f56480219025c674be6da98675dfd0cd267710c92d011b3e64ca96d58) and authored no implementation in the DG6 scope.\nAuthors: P6 and its repairs were built by solution-architect, backend-workflow-engineer (including T-DG6-BE-RG3, migration 0130), kpi-benefits-engineer, frontend-ux-engineer, devops-engineer and transformation-analyst. qa-verifier did the QA authoring, and delivery-orchestrator the integra
+   checks with result != PASS: []
+   - SEC-R7-00-candidate-identity [PASS/0] Confirm HEAD, the ancestry and the two product-tree equalities, and recompute the candidate on the complete (non-shallow) repository, both from the working tree and with 
+   - SEC-R7-01-environment-and-disclosures [PASS/0] Record the environment and every place where I departed from the assignment's text or where my own procedure caused a re-run.
+   - SEC-R7-02-install-build [PASS/0] Make a disposable sparse clone at the source commit (no runs/handbacks/test-evidence except the DO-G evidence a unit test reads), install offline from a copy of the local
+   - SEC-R7-04-typecheck [PASS/0] pnpm -r typecheck; re-run with --workspace-concurrency=1 after the first run was OOM-killed.
+   - SEC-R7-05-lint-format-openapi-nocdn [PASS/0] pnpm lint (re-run once), pnpm format:check, pnpm openapi:lint plus a plain operationId count and the version line, pnpm check:no-cdn.
+   - SEC-R7-09-unit-node22 [PASS/0] pnpm test on Node 22 (unit-node, unit-web, unit-formula-nocodegen). The five tests that failed under load were re-run alone; both runs are reported.
+   - SEC-R7-10-unit-node24 [PASS/0] pnpm test on Node 24; the project with the vitest RPC error was re-run alone.
+   - SEC-R7-11-integration-lang-unset [PASS/0] Full integration suite on a disposable PostgreSQL 16 with LANG and LC_ALL unset, in 2 shards (includes contract/contract.test.ts and migrations 0001-0130). The one failin
+   - SEC-R7-12-integration-lang-cutf8 [PASS/0] The full integration suite again with LANG=C.UTF-8, in 2 shards.
+   - SEC-R7-13-contract-pending-graph [PASS/0] The contract test's response-validation counts from both integration passes; every p6-pending list evaluated by importing it; the worker must not import API code; the cen
+   - SEC-R7-14-secrets [PASS/0] Secret-shape scan of the candidate's product files at d8868b2a5 (git grep at the commit) and a list of tracked env/key files.
+   - SEC-R7-15-log-scan-and-error-lines [PASS/0] Run the product's log scanner over copies of every test log of this round, grep directly for the synthetic secret literals and for key shapes, and classify every error-li
+   - SEC-R7-16-validators [PASS/0] Run validate.mjs --historical for DG5, DG4, DG3, DG2 and DG1, plus --pipeline and --register DG6, on the live repository.
+   - SEC-R7-17-f911-f951-verification [PASS/0] Verify F-DG6-911 and F-DG6-951 adversarially (sidecar code-security-reviewer.verifications.json):
+- re-run the raising reproduction (the validators);
+- run an independent
+   - SEC-R7-18-f952-judgement [PASS/0] Judge F-DG6-952 (out-of-order history times in the APPROVED gates DG5 and DG0) and the orchestrator's proposal to accept it as an observation.
+   - SEC-R7-19-d240-judgement [PASS/0] Read D-240 and judge the re-freeze.
+   - SEC-R7-20-f990-regression [PASS/0] Regression check of the CLOSED_VERIFIED F-DG6-990 on this candidate:
+- the round-4 audit probe, unedited (sha256 2f1d6169...), on a real API;
+- my extended served-text pr
+   - SEC-R7-21-repair-diff-0130 [PASS/0] Line-level adversarial re-read of the repair diff. The assignment's diff 60787d89f..d8868b2a5 outside docs/delivery is empty, so I re-read the real repair f56f1b3d..60787
+   - SEC-R7-22-p6-role-sweep [PASS/0] Re-run the round-1 P6 role sweep and the AUD valid-body sweep unchanged: AUD on every P6 write, and ADM-only on the P6 transformation-scoped reads and on search.
+   - SEC-R7-23-token-probes [PASS/0] Re-run the restricted-token probes unchanged: the old-branch cs-r11 issuer-bound key probe and the QA r12 condition-token re-save probe.
+   - SEC-R7-24-open-questions-d228-d229 [PASS/0] Judge D-229 (connector configuration names stay cannot-name) and the D-228 (4) ruling that cross-organization ids are out of scope. Look for a served column, response, no
+   - SEC-R7-25-e2e-targeted [PASS/0] Targeted e2e on the real stack, re-running the clauses the register defers to the freeze verification:
+- A12, P6 scope isolation including A12-5 assistant (REQ-S17-007, R
+   - SEC-R7-26-reused-earlier-rounds [PASS/0] State what I re-used from my own earlier rounds of this re-gate, and why that is sound.
+   - SEC-R7-27-environment-residuals [PASS/0] Record the environmental residuals the assignment names as NOT BLOCKED.
+   - SEC-R7-28-requirements [PASS/0] Judge the 36 assigned requirements against their acceptance texts and the register notes on this candidate.
+   - SEC-R7-29-head-moved-and-cleanup [PASS/0] Record the HEAD movement during the run without reading other reviewers' files, and remove the disposable clone and scratch.
+===== qa-verifier: verdict=PASS round=7 source_commit=d8868b2a5c074b13c04693a88644c25ef2792583 candidate=sha256:10f71f2418567878 checks=20 findings=[] requirements_checked=48 evidence_paths=16 reviewed_at=2026-11-11T23:50:00Z
+   implementation_author: ["solution-architect", "backend-workflow-engineer", "kpi-benefits-engineer", "frontend-ux-engineer", "transformation-analyst", "devops-engineer", "delivery-orchestrator"]
+   independence_declaration: {"reviewer_authored_reviewed_scope": false, "statement": "In this run qa-verifier authored no product implementation in the DG6 scope and changed no candidate file. The product (apps/**, packages/**, migrations, deploy/**, ADRs) was written by the implementer roles listed. That includes the repair T-DG6-BE-RG3 (migration 0130 and its scan). The delivery-orchestrator wrote the stages.json fix of F-DG6-911/951 (e7cb240e7) and the D-240 row of decisions.md. Earlier qa-verifier authoring tasks (T-DG6-QA-A to H) wrote the candidate's acceptance suites under tests/qa/** and e2e/** before the freeze.
+   checks with result != PASS: []
+   - QA-RG-R7-00-candidate [PASS/0] Recompute the candidate at start and end on the complete working tree of the main repository (not shallow), and over the full tree of the source commit (--ref). Confirm t
+   - QA-RG-R7-01-open-findings [PASS/0] Verify F-DG6-911 and F-DG6-951 on this candidate adversarially, each read in full in findings.json and in the sidecar that raised it (domain round 5; my round-5 qa sideca
+   - QA-RG-R7-02-repair-adversarial [PASS/0] Line-level reading of the repair diff 60787d89f..d8868b2a5 outside docs/delivery, which is empty: the candidate's product is byte-identical to 60787d89f. The effective re
+   - QA-RG-R7-03-static [PASS/0] pnpm -r typecheck, pnpm lint, pnpm openapi:lint, pnpm check:no-cdn, pnpm format:check, pnpm --filter @mth/design-tokens run check:contrast; pnpm -r build in both clones a
+   - QA-RG-R7-04-unit [PASS/0] pnpm test on Node 22 and Node 24, each with the locale unset and with LANG/LC_ALL=C.UTF-8.
+   - QA-RG-R7-05-integration-twice [PASS/0] pnpm test:integration twice, each on a fresh disposable PostgreSQL (locale unset, then C.UTF-8). It covers migrations 0001-0130 and contract/contract.test.ts. Record the 
+   - QA-RG-R7-06-tests-qa-alone [PASS/0] The qa acceptance suites on their own: tests/qa/integration on a fresh database, tests/qa/unit.
+   - QA-RG-R7-07-reliability [PASS/0] The A13 kill-and-restart drills (reindex, connector run, import commit, channel delivery) in both integration runs. My worker-burst probe for D-203 batch throughput and d
+   - QA-RG-R7-08-e2e-product [PASS/0] The product journeys apps/web/e2e on the production-initialized stack with --workers=1, in chromium-en and chromium-ar, with the locale unset and with C.UTF-8.
+   - QA-RG-R7-09-e2e-root-acceptance [PASS/0] The 22 root acceptance specs named in the assignment, by explicit path, on with-stack.sh with --workers=1 and both projects. Locale unset inside the A21 connection-log wr
+   - QA-RG-R7-10-e2e-demo [PASS/0] a02-demo-labels, a02-demo-users-walkthrough and a02-guided-walkthrough on e2e/support/with-demo-stack.sh (AUTH_MODE=dev; the demo role users sign in through the dev sign-
+   - QA-RG-R7-11-probe-p6-reflow-aud-xss-s17 [PASS/0] My round-1 e2e probes, unchanged. They cover the P6 screens at 360 px, 390 px and 200 % text (no horizontal scroll, axe at 390 px); an AUD read-only pass (no enabled muta
+   - QA-RG-R7-12-probe-restricted-tokens-and-d229 [PASS/0] Judge D-229 and D-228 (4). I re-ran my round-1 restricted-token sequence probe unchanged: a duplicated token; a token moved into an ordering condition, then a dry run; a 
+   - QA-RG-R7-13-probe-keyboard-walkthrough [PASS/0] REQ-S15-012 clause 2 on the demo stack: the shipped p6-walkthrough-keyboard spec, which is skipped on the production stack, and my round-1 probe that every walkthrough st
+   - QA-RG-R7-14-probe-ar-export-literals [PASS/0] REQ-S15-007 clause 3, tested literally: an Arabic export keeps 'KPI-001' and '12.5%' readable (PDF text extraction, DOCX, XLSX, CSV). My round-1 probe, unchanged.
+   - QA-RG-R7-15-load-async-export [PASS/0] REQ-S20-029 and REQ-S20-030 with the in-tree deploy/load tools, via my driver (the round-6 driver, names changed only). Generate the default profile and reindex, then run
+   - QA-RG-R7-16-clause-reading [PASS/0] Read each of the 48 DG6-final acceptance texts literally against the test that claims it and against the register notes. Re-run what the notes defer to 'the binding re-ru
+   - QA-RG-R7-17-validators-and-stage-history [PASS/0] node tools/gates/validate.mjs --register DG6, --pipeline, and --historical --stage DG5, DG4, DG3, DG2, DG1. Then check stages.json for anything else inconsistent: history
+   - QA-RG-R7-18-environmental-residuals [PASS/0] Record the environmental residuals as the assignment directs: PASS on the offline/config surface, with the residual noted.
+   - QA-RG-R7-19-run-interruptions-disclosed [PASS/0] Disclose every interrupted or failed harness step of this run and how each was replaced.

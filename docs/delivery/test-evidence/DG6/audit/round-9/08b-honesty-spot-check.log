@@ -1,0 +1,83 @@
+# 2026-11-12T11:18:38Z release-auditor spot-check of logged non-zero exits / failures in the round-7 records' cited logs and in V18, with each record's disclosure (repository read-only)
+== docs/delivery/test-evidence/DG6/code-security/round-7/04-typecheck.log
+17:apps/worker typecheck: Killed
+22:exit=137
+== docs/delivery/test-evidence/DG6/code-security/round-7/12-integration-lang-unset-shard1o2.log
+124:stdout | apps/api/test/integration/connection-hygiene.test.ts > shutdown is bounded > a body that stalls outside shutdown is cut by Node's requestTimeout (408, connection closed), nothing stored, no error log
+125:SWEEP {"path":"stalled body, requestTimeout 1.5 s","status":["HTTP/1.1 408"],"closedMs":1763}
+1264: ❯ |integration| tests/qa/integration/a13-p6-import-commit-kill-restart.test.ts (1 test | 1 failed) 10219ms
+1265:   × A13 (REQ-S20-013): the API process is killed during an import commit and restarted > the killed commit leaves the batch staged with nothing written; the retried commit commits once; a replay is refused 6141ms
+1392: FAIL  |integration| tests/qa/integration/a13-p6-import-commit-kill-restart.test.ts > A13 (REQ-S20-013): the API process is killed during an import commit and restarted > the killed commit leaves the batch staged wi
+1410: Test Files  1 failed | 220 passed (221)
+1411:      Tests  1 failed | 2082 passed | 1 skipped | 1 todo (2085)
+1415: ELIFECYCLE  Command failed with exit code 1.
+1416:exit=1
+== docs/delivery/test-evidence/DG6/code-security/round-7/10-unit-node22.log
+249: ❯ |unit-web| src/pages/raid/raid.test.tsx (18 tests | 1 failed) 39174ms
+250:   × RAID and actions screens (ar) > action register: source, follow-up date and overdue flag; edit sends If-Match 6401ms
+614: ❯ |unit-web| src/pages/meetings/governance.test.tsx (20 tests | 1 failed) 37803ms
+615:   × governance screens (en) > published minutes are read-only and the meeting shows the frozen note 6182ms
+804: ❯ |unit-web| src/pages/dashboards/kpiUnit.test.tsx (26 tests | 1 failed) 47399ms
+805:   × N5 surfaces (ar): every KPI value is formatted by its kind > T10: Outcomes (F1, F3), People & adoption (F2, Stale F2), the F4 gap, and the KPI drill-down 28374ms
+806:     → Test timed out in 20000ms.
+807:If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+808: ❯ |unit-web| src/components/form-framework/extension-hosts-twelve.test.tsx (24 tests | 1 failed) 86617ms
+809:   × extension fields on the twelve FE-C3 hosts (en) > control: the input renders in the create form and the record view; Form tools saves with If-Match 22503ms
+810:     → Test timed out in 20000ms.
+811:If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+== docs/delivery/test-evidence/DG6/qa/round-7/50-load-export.log
+59:mth-load export-proof qa-dg6-rg-r7-1: 66 exports, 1 failed
+84:export-proof 1 exit=1
+== docs/delivery/test-evidence/DG6/qa/round-7/interrupted-2h-limit/50-load-export.harness-path-error.log
+6:## end 2026-11-11T22:57:15Z rc=127
+== docs/delivery/test-evidence/DG6/domain/round-7/integration-p6.log
+255:   ✓ A22 post-suite log scan (REQ-S16-029 'a log scan after the test suite finds no secrets or storage URLs') > negative control: the same logs with one leaked canary fail (exit 1) and the scan never prints the val
+1614:   ✓ REQ-S18-003: the empty production initialization and the seed-demo refusals > a second seed-demo exits 3 (use reset-demo), and bootstrap refuses a demo database (exit 3)  13187ms
+1618:   ✓ REQ-S18-001: seed, then reset twice: identical record counts and checksums > reset-demo refusals exit 3 and drop nothing: MTH_ENV not demo, no admin URL, a production target  18226ms
+== V18 unit-unset.log stderr TypeError lines (inside passing extension-fields.test.tsx):
+377:Error handled by React Router default ErrorBoundary: TypeError: raci.deliverables is not iterable
+388:Error handled by React Router default ErrorBoundary: TypeError: raci.deliverables is not iterable
+399:TypeError: raci.deliverables is not iterable
+411:  [message]: 'raci.deliverables is not iterable'
+
+=== disclosures (verbatim excerpts of check.actual):
+-- code-security-reviewer SEC-R7-04-typecheck result=PASS exit_status=0
+   Run 1 (04-typecheck.log): every package passed except apps/worker, which 'Killed' with exit 137. The kernel OOM killer acted; the harness reported 'the kernel killed at least one process for lack of memory'. No type error was reported.
+Run 2, serial (04b): every package 'Done', exit 0. The OOM kill is a resource event, not a type error.
+
+-- code-security-reviewer SEC-R7-09-unit-node22 result=PASS exit_status=0
+   The full run exited 1 (10-unit-node22.log):
+- unit-node 191/191 files, 2906/2906;
+- unit-formula-nocodegen 3 files, 259 passed + 2 skipped;
+- unit-web 120/125 files, 2108/2113.
+The 5 unit-web failures are all load effects in files that took 37-87 s:
+- three 'Test timed out in 20000ms': kpiUnit (ar) T10, extension-hosts-twelve (en) control, prioritization (en) weight sets;
+- two findBy/waitFor misses: raid (ar) 'Unable to find role=link', and governance (en) 'expected null to be truthy'.
+The re-run of those 5 files alone (10b) passed 5 files, 108/108, exit 0.
+The 2 skips are the unit-formula-nocodegen skips, also present in the orchestrator's run.
+The stderr lines 'raci.deliverables is not iterable', 'reading length' and the duplicate-key warnings come from passing error-boundary and fixture tests. They appear identically in my round-5 logs.
+
+-- code-security-reviewer SEC-R7-11-integration-lang-unset result=PASS exit_status=0
+   Both shards report 'applied 122 migrations to a fresh database'.
+- Shard 2: 221/221 files, 2287 passed, exit 0.
+- Shard 1: 220/221 files, 2082 passed + 1 skipped + 1 todo, 1 failed, exit 1.
+The failure is tests/qa/integration/a13-p6-import-commit-kill-restart.test.ts:153, 'a13c-child-api.ts exited (0) before READY: READY RESPONSE 200 {... status committed, rowsCommitted 3 ...}'. It is a test-harness race, not a product defect:
+- The cluster log, read while the shard ran and quoted in 12b, shows the FIRST child's session blocked on the injected pg_advisory_xact_lock_shared(7313016) inside its import_row_commit insert and ended by the drill's own killHard at 20:24:20.5. The kill phase and its assertions (still staged, rowsCommitted null, 0 lineage, 0 actuals) passed.
+- The failing line is the RESTART step, spawnChild for 'qa-a13c-imp-api2'. That child printed READY, committed once (exactly the expected 200 committed/3) and exited 0 between two 150 ms polls. spawnChild's probe (tests/qa/support/a13c.ts:51) tests exitCode before READY, so it threw.
+The file run alone passed 3/3 (12b). It also passed in my C.UTF-8 pass, in both of my round-5 passes and in the orchestrator's V18.
+Union: 442 files, 4369 passed + 1 failed (the harness race) + 1 skipped + 1 todo; with the re-run, 4370 tests have a passing run. The skip is governance/presentation.test.ts it.runIf(!hasMeetingPackAssembler), and the todo is the stale audit-events placeholder (both explained in my round 2).
+Observation, not a finding: the race at a13c.ts:51 can fail a gate run under load. Checking `out.includes("READY")` before `exitCode` would remove it. It is test code with no product effect.
+The error lines are classified in SEC-R7-15.
+
+-- qa-verifier QA-RG-R7-04-unit result=PASS exit_status=0
+   All four runs exit 0 with identical counts. unit-node: 191 files, 2906 tests. unit-web: 125 files, 2113 tests. unit-formula-nocodegen: 3 files, 259 passed, 2 skipped. The 2 skips are fuzz.test.ts it.skipIf(NOCODEGEN): they run in unit-node and are skipped by design in the no-codegen process. Each log has the same 42 error-like lines inside passing tests, as in round 6. 'TypeError: raci.deliverables is not iterable' and "reading 'length'" come from extension-fields.test.tsx T12/T14, which mock only the header's endpoints, so the page body falls into its error boundary while the test asserts the provenance strip. ajv 'unknown format' comes from branding.test.ts. 'secret_ref.refused' is secrets.test.ts's expected warning. The React unique-key warnings come from fixtures that reuse ids. No test fails and nothing times out.
+
+-- qa-verifier QA-RG-R7-15-load-async-export result=PASS exit_status=0
+   PROVISIONAL engineering figures from one shared sandbox host, not Mobily capacity. Dataset: 50 transformations, 1,000 initiatives, 10,000 KPI actuals, 100,000 audit events, 120 users. The generator exits 0 in 20.9 s and the reindex completes. Workload: 14,935 steady requests, 0 errors, 0 conflicts, 0 rate-limit refusals, 0 error-level log lines. p95 figures, all within target: read 16.2 ms, update 24.7 ms, search 14.9 ms, key dashboard 33.3 ms, export start 30.7 ms. Export proof part A: 16 exports on LOAD-T01. Each start returns 202 (13-74 ms), finishes in 1.8-3.2 s, and its progress ends at 100. The other same-scope user and AUD get 404 on the export and its download. Part B: 50 at once, start p95 509 ms, completion p95 4.33 s. 429 export jobs succeeded, with at most 1 assembly attempt and 0 pending. export-proof.mjs exits 1 on 'LOAD-T20 FAIL: no sameScopeOther user for this transformation', the dataset gap the REQ-S20-030 notes disclose; it concerns neither latency nor access, as in round 6. The UUID check reports 120 non-RFC ids written by migrations (as the load README documents), not by the generator. The driver exits 0. Harness error disclosed: my first attempt exited 127 without measuring, because my copied seqC.sh named a driver path that does not exist (log kept in interrupted-2h-limit/). I corrected the path and re-ran the step (seqC2.sh).
+
+-- qa-verifier QA-RG-R7-19-run-interruptions-disclosed result=PASS exit_status=0
+   (1) At 20:52Z the 2-hour background-task limit stopped my two long sequential chains. Integration run 1 was at about 360/442 files and the locale-unset product e2e at test 525/558, with 0 failures in either partial log. Both were re-run whole in shorter chunks (scripts seqA2b.sh, seqB2.sh), and the partial logs are kept. Unit Node 22 (unset) had already completed. (2) The first load step exited 127 because of my own path error in seqC.sh, so no measurement ran. It was re-run (seqC2.sh) after the fix. (3) The shared disk briefly fell to 135 MB free at 19:49Z, caused by the concurrent reviews. No log of mine shows ENOSPC, and every suite that ran across that time passed. No test of the candidate failed in this run, apart from the intended mutant failures (checks 01, 02).
+
+-- domain-reviewer DOM-RG7-03-integration-p6-and-f990-regression result=PASS exit_status=0
+   Test Files 128 passed (128); Tests 1432 passed | 1 todo (1433); exit 0; 2183 s. No failure, timeout or retry. The OOM notice did not cost any file or test: all 128 files report ✓ and the totals equal the file list. '[AUD-R4 dg] served strings naming DG0-DG7: 0' (F-DG6-990 holds). The zz-domain-r5 probes pass: no served DG name, decision or ADR id in configuration endpoints, and audit history stays scoped. Disclosures: (a) two stderr lines 'secret_ref.refused … not_bound', in webhooks.test.ts and channel-fanout.test.ts, are refusals the tests provoke on purpose, and both tests pass. (b) The todo, shown as '15 tests | 1 skipped' for audit-events.test.ts, is the declared it.todo and does not run. (c) Three 'npm warn Unknown project config' lines come from the npm CLI and do not affect the result. I did not re-run the F-DG6-990 mutant with 0130 removed: the finding is CLOSED_VERIFIED and that migration has not changed, so my round-5 mutant evidence (mutant-m0130-api.log, mutant-m0130-ui.log) still applies.
+

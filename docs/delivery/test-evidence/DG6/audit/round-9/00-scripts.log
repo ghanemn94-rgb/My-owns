@@ -1,0 +1,146 @@
+# release-auditor T-DG6-AUDIT-RG-R9: the audit scripts are the round-4 auditor's scripts (docs/delivery/test-evidence/DG6/audit/round-4/scripts/) with the changes below (round 3 -> round 7 records, candidate f56f1b3d -> d8868b2a5, D-238 -> D-240, and in find.py the ACCEPTED_OBSERVATION branch). Run from the repository root (read-only); gates.sh inside the audit clone.
+=== prov.py sha256 4389318782558b809b979ab651398c7896651aa1fe0a12b788b02596cbd38989
+--- docs/delivery/test-evidence/DG6/audit/round-4/scripts/prov.py	2026-11-11 06:16:56.043318414 +0000
++++ /var/tmp/mth-run.Y47LeG/claude-0/scripts/prov.py	2026-11-12 11:11:48.706522970 +0000
+@@ -1,16 +1,16 @@
+ #!/usr/bin/env python3
+-"""release-auditor T-DG6-AUDIT-RG-R4: provenance and independence of the DG6 re-gate review runs.
++"""release-auditor T-DG6-AUDIT-RG-R9: provenance and independence of the DG6 re-gate review runs.
+ Run from the repository root (read-only). Prints one block per run and per gate record."""
+ import glob, gzip, hashlib, json, os, subprocess
+ 
+ RUNS = "docs/delivery/runs/DG6"
+ GATE = {
+-    "domain-reviewer": "docs/delivery/reviews/DG6/round-3/domain-reviewer.json",
+-    "code-security-reviewer": "docs/delivery/reviews/DG6/round-3/code-security-reviewer.json",
+-    "qa-verifier": "docs/delivery/reviews/DG6/round-3/qa-verifier.json",
++    "domain-reviewer": "docs/delivery/reviews/DG6/round-7/domain-reviewer.json",
++    "code-security-reviewer": "docs/delivery/reviews/DG6/round-7/code-security-reviewer.json",
++    "qa-verifier": "docs/delivery/reviews/DG6/round-7/qa-verifier.json",
+ }
+-CAND = "sha256:32e41b5581a9beeba357a6c0dd5b50c414226910232ebfbb711c2178024376b5"
+-SRC = "f56f1b3d24c00d1803f6627c99b3f422a47b3014"
++CAND = "sha256:10f71f2418567878bffddfb004efbf342347029fd799dd3076af40aca32e2fc5"
++SRC = "d8868b2a5c074b13c04693a88644c25ef2792583"
+ 
+ 
+ def sha(p):
+@@ -51,7 +51,7 @@
+     print(f"   exit={j['exit_code']} subtype={j['subtype']} is_error={j['is_error']} sandbox_ok={sha(d + '/sandbox.json') == j['process_sandbox_sha256']} ext={j['external_config_changed']}")
+     print(f"   assignment={j['assignment']} == record: {j['assignment'] == r['assignment']}; assignment sha ok: {sha(j['assignment']) == j['assignment_sha256']}")
+     print(f"   head_at_start={j['head_commit_at_start']} contains source_commit: {git('merge-base', '--is-ancestor', SRC, j['head_commit_at_start']).returncode == 0}")
+-    print(f"   started={j['started_at']} finished={j['finished_at']} (round frozen 2026-11-11T01:42:18Z)")
++    print(f"   started={j['started_at']} finished={j['finished_at']} (round frozen 2026-11-11T18:38:30Z)")
+     for k in j["tool_authored"]:
+         if "/reviews/" in k:
+             print(f"   tool_authored {k}: on-disk sha matches meta: {sha(k) == j['tool_authored'][k] if isinstance(j['tool_authored'], dict) else sha(k) == j['outputs'].get(k)}")
+=== find.py sha256 1a71a27b23282d4e1809dd32652b3aecdc86f1611eaac39cac5447aba3f583b8
+--- docs/delivery/test-evidence/DG6/audit/round-4/scripts/find.py	2026-11-11 06:17:58.951322154 +0000
++++ /var/tmp/mth-run.Y47LeG/claude-0/scripts/find.py	2026-11-12 11:11:59.819931912 +0000
+@@ -1,9 +1,9 @@
+ #!/usr/bin/env python3
+-"""release-auditor T-DG6-AUDIT-RG-R4: DG6 findings terminal state, fix_revision anchors and the sidecar mirror.
++"""release-auditor T-DG6-AUDIT-RG-R9: DG6 findings terminal state, fix_revision anchors and the sidecar mirror.
+ Run from the repository root (read-only)."""
+ import glob, json, os, re, subprocess
+ 
+-GATE_SRC = "f56f1b3d24c00d1803f6627c99b3f422a47b3014"
++GATE_SRC = "d8868b2a5c074b13c04693a88644c25ef2792583"
+ 
+ 
+ def git(*a):
+@@ -59,6 +59,11 @@
+     for t in counted:
+         if chosen is None or t[0] > chosen[0] or (t[0] == chosen[0] and t[4]["result"] == "FAIL"):
+             chosen = t
++    if x["status"] == "ACCEPTED_OBSERVATION":
++        print(f"   acceptance object: {json.dumps(x.get('acceptance'))}")
++        print(f"   findings.json verification: {json.dumps(x.get('verification'))}")
++        print(f"   fix_revision={x.get('fix_revision')}")
++        continue
+     if chosen:
+         rnd, role, p, _, v = chosen
+         rec = json.load(open(p.replace(".verifications.json", ".json")))
+=== req.py sha256 5f9e582eade1d61b6af0dd89f9433baa6659486ab00f76ebb5e217053385c25b
+--- docs/delivery/test-evidence/DG6/audit/round-4/scripts/req.py	2026-11-11 06:23:01.835340158 +0000
++++ /var/tmp/mth-run.Y47LeG/claude-0/scripts/req.py	2026-11-12 11:15:49.800834656 +0000
+@@ -1,5 +1,5 @@
+ #!/usr/bin/env python3
+-"""release-auditor T-DG6-AUDIT-RG-R4: the 48 DG6-final requirements against the register and the three gate records."""
++"""release-auditor T-DG6-AUDIT-RG-R9: the 48 DG6-final requirements against the register and the three gate records."""
+ import csv, json
+ 
+ ASSIGNED = """REQ-DLV-038 REQ-S01-005 REQ-S02-006 REQ-S10-002 REQ-S10-004 REQ-S12-019 REQ-S12-023 REQ-S12-024 REQ-S13-011
+@@ -22,8 +22,8 @@
+     print(f"register {status_col} of the 48: {dict(Counter(r[status_col] for r in fg))}")
+ recs = {}
+ for role in ("domain-reviewer", "code-security-reviewer", "qa-verifier"):
+-    recs[role] = set(json.load(open(f"docs/delivery/reviews/DG6/round-3/{role}.json"))["requirements_checked"])
+-    print(f"{role} round 3 requirements_checked: {len(recs[role])}; of the 48: {len(recs[role] & set(ASSIGNED))}; outside the 48: {sorted(recs[role] - set(ASSIGNED))}")
++    recs[role] = set(json.load(open(f"docs/delivery/reviews/DG6/round-7/{role}.json"))["requirements_checked"])
++    print(f"{role} round 7 requirements_checked: {len(recs[role])}; of the 48: {len(recs[role] & set(ASSIGNED))}; outside the 48: {sorted(recs[role] - set(ASSIGNED))}")
+ bad = [r for r in ASSIGNED if not (r in recs["qa-verifier"] and (r in recs["domain-reviewer"] or r in recs["code-security-reviewer"]))]
+ print(f"IDs failing 'qa AND (domain OR code-security)': {bad}")
+ print(f"in qa AND domain: {len([r for r in ASSIGNED if r in recs['qa-verifier'] and r in recs['domain-reviewer']])}; in all three: {len([r for r in ASSIGNED if all(r in s for s in recs.values())])}")
+=== hon.py sha256 1904962d61934aaac7fbd4fb4930b78be4dd704fcb39fb6cfee5ed08b6ae8955
+--- docs/delivery/test-evidence/DG6/audit/round-4/scripts/hon.py	2026-11-11 06:23:29.987341831 +0000
++++ /var/tmp/mth-run.Y47LeG/claude-0/scripts/hon.py	2026-11-12 11:15:49.802296630 +0000
+@@ -1,5 +1,5 @@
+ #!/usr/bin/env python3
+-"""release-auditor T-DG6-AUDIT-RG-R4: evidence honesty of the three round-3 gate records.
++"""release-auditor T-DG6-AUDIT-RG-R9: evidence honesty of the three round-7 gate records.
+ For each record: every cited path exists as a regular file; every cited log is grepped for non-zero exits, failures,
+ timeouts, kills, flakes and retries; for each log with hits, report whether the record's text names that log (the
+ disclosure). Logs with hits that the record does not name are listed for manual reading."""
+@@ -9,7 +9,7 @@
+ BENIGN = re.compile(r'"failed":0|role × month|× 2 |×2|\bx\b')
+ 
+ for role in ("domain-reviewer", "code-security-reviewer", "qa-verifier"):
+-    rp = f"docs/delivery/reviews/DG6/round-3/{role}.json"
++    rp = f"docs/delivery/reviews/DG6/round-7/{role}.json"
+     r = json.load(open(rp))
+     text = json.dumps(r)
+     md = rp.replace(".json", ".md")
+=== dec.py sha256 a3cc89610048f196a774cb41adff049ebfe5e5b9ba6983bfb539adaaf9092f7f
+--- docs/delivery/test-evidence/DG6/audit/round-4/scripts/dec.py	2026-11-11 06:24:28.324495952 +0000
++++ /var/tmp/mth-run.Y47LeG/claude-0/scripts/dec.py	2026-11-12 11:15:49.803954878 +0000
+@@ -1,5 +1,5 @@
+ #!/usr/bin/env python3
+-"""release-auditor T-DG6-AUDIT-RG-R4: D-193 to D-238 in decisions.md (each with decision, rationale/evidence and
++"""release-auditor T-DG6-AUDIT-RG-R9: D-193 to D-240 in decisions.md (each with decision, rationale/evidence and
+ reopen-if columns), quoted verbatim (first 400 characters of the decision, then the rationale column in full up to
+ 600 characters); and the progress.md sections of the clean re-gate, quoted verbatim."""
+ import re
+@@ -13,9 +13,9 @@
+     cells = [c.strip() for c in re.split(r"(?<!\\)\|", line.strip())[1:-1]]
+     rows[m.group(1)] = cells
+ 
+-want = [f"D-{n}" for n in range(193, 239)]
++want = [f"D-{n}" for n in range(193, 241)]
+ missing = [d for d in want if d not in rows]
+-print(f"D-193..D-238: {len(want)} expected, {len(want) - len(missing)} present, missing: {missing}")
++print(f"D-193..D-240: {len(want)} expected, {len(want) - len(missing)} present, missing: {missing}")
+ bad = [d for d in want if d in rows and (len(rows[d]) < 6 or not rows[d][3] or not rows[d][4] or not rows[d][5])]
+ print(f"rows lacking a separate rationale/evidence or reopen-if cell (table rows with {sorted(set(len(rows[d]) for d in bad))} cells): {bad}")
+ print("For those rows the decision cell is quoted at greater length (1,600 characters) so that its inline reasons and evidence are visible.")
+@@ -35,5 +35,5 @@
+ print()
+ print("=== progress.md: the sections of the clean re-gate (verbatim)")
+ text = open("docs/delivery/progress.md", encoding="utf-8").read()
+-start = text.find("## D-237 (2026-11-10")
++start = text.find("## D-238 (2026-11-10")
+ print(text[start:] if start >= 0 else "NOT FOUND")
+=== gates.sh sha256 6a74097c38496c9cbeb4a4a2bf770670d08c0b16c10acf2e871784c107814dcd
+--- docs/delivery/test-evidence/DG6/audit/round-4/scripts/gates.sh	2026-11-11 06:25:21.439348456 +0000
++++ /var/tmp/mth-run.Y47LeG/claude-0/scripts/gates.sh	2026-11-12 11:15:49.805759721 +0000
+@@ -1,8 +1,8 @@
+ #!/bin/bash
+-# release-auditor T-DG6-AUDIT-RG-R4: product gates G1-G6 vs engineering gates DG0-DG7, certification/official claims,
++# release-auditor T-DG6-AUDIT-RG-R9: product gates G1-G6 vs engineering gates DG0-DG7, certification/official claims,
+ # the provisional brand token and wordmark, and the synthetic demo labels. git grep at the source commit, run inside the
+ # audit clone ($1). Lines are cut at 240 bytes (a cut can split a multibyte Arabic character at the line end).
+-S=f56f1b3d24c00d1803f6627c99b3f422a47b3014
++S=d8868b2a5c074b13c04693a88644c25ef2792583
+ cd "$1" || exit 2
+ strip() { sed "s/^$S://" | cut -c1-240; }
+ echo "# $(date -u +%FT%TZ) git grep at $S in the audit clone (HEAD $(git rev-parse --short=9 HEAD))"
