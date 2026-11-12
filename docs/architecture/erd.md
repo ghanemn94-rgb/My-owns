@@ -2221,6 +2221,39 @@ erDiagram
 |---|---|---|---|---|---|---|---|
 | Snapshot aggregate records (S13-007; S10-002) | `report_snapshot_aggregate` | `id` (snapshot, section, record unique) | — | the snapshot's creating transaction | — | append-only | reporting |
 
+## 1ac. P7 slices C and D: the migration manifest rules, exports, imports, reconciliation reports, the identity rebind hold, and configuration bundles (migrations 0133–0135; T-DG7-ARCH-02; ADR-0064, ADR-0065)
+
+Three new mutable tables carry the P2 guards and are audited (`_row_guard`, deferred `_audit_required`): `migration_export`, `identity_binding_hold` and `config_bundle_import`, each with a state-machine trigger. `migration_import` and `migration_reconciliation` are append-only **and** audited (written once, by the CLI). `transfer_table_rule`, `transfer_column_rule` (migration-written catalogues), `migration_reconciliation_table`, `migration_reconciliation_attachment`, `identity_rebind_event`, `config_bundle_export` (audited), `config_bundle_import_item` and `config_bundle_import_commit` are append-only. `0135` adds four permission codes. The column lists are in `data-dictionary.md` ("P7 tables, slices C and D").
+
+```mermaid
+erDiagram
+    app_user |o--o{ migration_export : "requested by (NULL for the CLI)"
+    migration_import ||--o{ migration_reconciliation : "one import run, then re-checks"
+    migration_reconciliation ||--o{ migration_reconciliation_table : "one row per manifest table"
+    migration_reconciliation ||--o{ migration_reconciliation_attachment : "only mismatching objects"
+    migration_import ||--o{ identity_binding_hold : "one hold per imported user"
+    app_user ||--o| identity_binding_hold : "at most one hold"
+    identity_binding_hold ||--o| identity_rebind_event : "the applied mapping line"
+    organization ||--o{ config_bundle_export : "bundles exported from it"
+    organization ||--o{ config_bundle_import : "bundles imported into it"
+    config_bundle_import ||--o{ config_bundle_import_item : "one set per validation run"
+    config_bundle_import_item ||--o| config_bundle_import_commit : "the record a committed item created"
+```
+
+`transfer_table_rule` and `transfer_column_rule` name tables and columns by text (catalogue rules, no foreign key). `migration_import.source_export_reference` is the id of the **source** installation's export (no foreign key: the row is not on the target). `config_bundle_import_commit.target_record_id` is polymorphic over seven configuration tables named by `target_record_type` (CHECK), with no foreign key.
+
+### 1ac.1 P7 entity register (slices C and D) → tables
+
+| Entity | Table(s) | PK | Owner (column) | Writers | Status field | `version` | API module |
+|---|---|---|---|---|---|---|---|
+| Migration rules (S19-016) | `transfer_table_rule`, `transfer_column_rule` | `table_name`; `(table_name, column_name)` | — | migrations | — | no (append-only) | transfer |
+| Migration export (S19-016) | `migration_export` | `id` | `created_by` (NULL for the CLI) | `migration.export` (ADM_TECH); job `transfer.export`; CLI | `status` (queued, running, succeeded, failed) | yes | transfer (export) |
+| Migration import (S19-014, S19-016) | `migration_import` | `id` | — (`operator_name`) | CLI (owner role) | — | no (append-only) | transfer (import) |
+| Reconciliation report (S19-014) | `migration_reconciliation` (+ `_table`, `_attachment`) | `id`; `(migration_reconciliation_id, table_name)`; `id` | — (`operator_name`) | CLI (owner role) | `result` (matched, mismatched) | no (append-only) | transfer (import) |
+| Identity rebind (M0364) | `identity_binding_hold` (+ `identity_rebind_event`) | `id`; `user_id` unique | — (`operator_name`) | the import; CLI `rebind-identity` | `state` (unbound, rebound, retained) | yes (events append-only) | transfer (identity) |
+| Configuration bundle export (S19-008) | `config_bundle_export` | `id` | `created_by` | `config_bundle.export` (ADM_TECH, ADM_METHOD) | — | no (append-only) | transfer (config-bundle) |
+| Configuration bundle import (S19-008) | `config_bundle_import` (+ `_item`, `_commit`) | `id`; `(config_bundle_import_id, validation_no, ordinal)`; `config_bundle_import_item_id` | `created_by` | `config_bundle.import` (ADM_TECH, ADM_METHOD) | `status` (uploaded, validated, invalid, committed) | yes (items and commits append-only) | transfer (config-bundle) |
+
 ## 2. Conceptual model, all §16 entity groups
 
 ### 2.1 Identity and access (REQ-S16-011; final gate DG4)

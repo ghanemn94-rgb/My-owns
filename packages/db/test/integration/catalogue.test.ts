@@ -1131,6 +1131,117 @@ describe("schema.ts matches the migrated database", () => {
     expect(col).toEqual({ nullable: "NO", def: "(uuid_send(gen_random_uuid()) || uuid_send(gen_random_uuid()))" });
   });
 
+  it("0133-0134: the P7 slice C/D guards are attached (deferred audit, state machines, append-only catalogues, CLI-written reports and holds)", async () => {
+    const rows = await q<{ rel: string; tgname: string; deferrable: boolean; deferred: boolean }>(
+      `SELECT c.relname AS rel, t.tgname, t.tgdeferrable AS deferrable, t.tginitdeferred AS deferred
+       FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid
+       WHERE NOT t.tgisinternal AND c.relname IN ('config_bundle_export', 'config_bundle_import', 'config_bundle_import_commit', 'config_bundle_import_item', 'identity_binding_hold', 'identity_rebind_event', 'migration_export', 'migration_import', 'migration_reconciliation', 'migration_reconciliation_attachment', 'migration_reconciliation_table', 'transfer_column_rule', 'transfer_table_rule')
+       ORDER BY 1, 2`,
+    );
+    type Row = [string, string, boolean, boolean];
+    const expected: Row[] = [
+      ["config_bundle_export", "config_bundle_export_append_only", false, false],
+      ["config_bundle_export", "config_bundle_export_append_only_truncate", false, false],
+      ["config_bundle_export", "config_bundle_export_audit_required", true, true],
+      ["config_bundle_export", "config_bundle_export_row_guard", false, false],
+      ["config_bundle_import", "config_bundle_import_audit_required", true, true],
+      ["config_bundle_import", "config_bundle_import_guard", false, false],
+      ["config_bundle_import", "config_bundle_import_row_guard", false, false],
+      ["config_bundle_import_commit", "config_bundle_import_commit_append_only", false, false],
+      ["config_bundle_import_commit", "config_bundle_import_commit_append_only_truncate", false, false],
+      ["config_bundle_import_commit", "config_bundle_import_commit_guard", false, false],
+      ["config_bundle_import_item", "config_bundle_import_item_append_only", false, false],
+      ["config_bundle_import_item", "config_bundle_import_item_append_only_truncate", false, false],
+      ["identity_binding_hold", "identity_binding_hold_audit_required", true, true],
+      ["identity_binding_hold", "identity_binding_hold_guard", false, false],
+      ["identity_binding_hold", "identity_binding_hold_row_guard", false, false],
+      ["identity_rebind_event", "identity_rebind_event_append_only", false, false],
+      ["identity_rebind_event", "identity_rebind_event_append_only_truncate", false, false],
+      ["migration_export", "migration_export_audit_required", true, true],
+      ["migration_export", "migration_export_guard", false, false],
+      ["migration_export", "migration_export_row_guard", false, false],
+      ["migration_import", "migration_import_append_only", false, false],
+      ["migration_import", "migration_import_append_only_truncate", false, false],
+      ["migration_import", "migration_import_audit_required", true, true],
+      ["migration_import", "migration_import_row_guard", false, false],
+      ["migration_reconciliation", "migration_reconciliation_append_only", false, false],
+      ["migration_reconciliation", "migration_reconciliation_append_only_truncate", false, false],
+      ["migration_reconciliation", "migration_reconciliation_audit_required", true, true],
+      ["migration_reconciliation", "migration_reconciliation_row_guard", false, false],
+      ["migration_reconciliation_attachment", "migration_reconciliation_attachment_append_only", false, false],
+      ["migration_reconciliation_attachment", "migration_reconciliation_attachment_append_only_truncate", false, false],
+      ["migration_reconciliation_table", "migration_reconciliation_table_append_only", false, false],
+      ["migration_reconciliation_table", "migration_reconciliation_table_append_only_truncate", false, false],
+      ["transfer_column_rule", "transfer_column_rule_append_only", false, false],
+      ["transfer_column_rule", "transfer_column_rule_append_only_truncate", false, false],
+      ["transfer_table_rule", "transfer_table_rule_append_only", false, false],
+      ["transfer_table_rule", "transfer_table_rule_append_only_truncate", false, false],
+    ];
+    expect(rows.map((r) => [r.rel, r.tgname, r.deferrable, r.deferred])).toEqual(expected);
+  });
+
+  it("0133: every SecretRef column of the catalogue has a transfer_column_rule, and the excluded tables are exactly ADR-0064 §3's", async () => {
+    // A SecretRef column is a jsonb column checked by p6_secret_ref_valid or p6_credential_refs_valid, or a history
+    // column of the same name in the *_change table of such a table (ADR-0064 §4, D-243 Q16).
+    const checked = await q<{ t: string; c: string }>(
+      `SELECT cl.relname AS t, a.attname AS c
+         FROM pg_constraint k JOIN pg_class cl ON cl.oid = k.conrelid
+         JOIN pg_attribute a ON a.attrelid = k.conrelid AND a.attnum = ANY (k.conkey)
+        WHERE k.contype = 'c' AND pg_get_constraintdef(k.oid) ~ 'p6_(secret_ref|credential_refs)_valid'
+        ORDER BY 1, 2`,
+    );
+    const rules = await q<{ t: string; c: string; r: string }>(
+      `SELECT table_name AS t, column_name AS c, rule AS r FROM transfer_column_rule ORDER BY 1, 2`,
+    );
+    const ruled = new Set(rules.map((r) => `${r.t}.${r.c}`));
+    for (const { t, c } of checked) {
+      expect(ruled, `${t}.${c}`).toContain(`${t}.${c}`);
+      const history = await q<{ n: number }>(
+        `SELECT count(*)::int AS n FROM information_schema.columns
+          WHERE table_schema = 'public' AND table_name = $1 AND column_name = $2`,
+        [`${t}_change`, c],
+      );
+      if (history[0]!.n > 0) expect(ruled, `${t}_change.${c}`).toContain(`${t}_change.${c}`);
+    }
+    // Every ruled column exists and is jsonb.
+    for (const r of rules) {
+      const col = await q<{ d: string }>(
+        `SELECT data_type AS d FROM information_schema.columns WHERE table_schema = 'public' AND table_name = $1 AND column_name = $2`,
+        [r.t, r.c],
+      );
+      expect(
+        col.map((x) => x.d),
+        `${r.t}.${r.c}`,
+      ).toEqual(["jsonb"]);
+    }
+    expect(rules).toHaveLength(15);
+    const excluded = await q<{ t: string; r: string }>(
+      `SELECT table_name AS t, rule AS r FROM transfer_table_rule ORDER BY table_name COLLATE "C"`,
+    );
+    expect(excluded.map((x) => [x.t, x.r])).toEqual([
+      ["idempotency_record", "exclude_operational"],
+      ["identity_binding_hold", "exclude_transfer"],
+      ["identity_rebind_event", "exclude_transfer"],
+      ["migration_export", "exclude_transfer"],
+      ["migration_import", "exclude_transfer"],
+      ["migration_reconciliation", "exclude_transfer"],
+      ["migration_reconciliation_attachment", "exclude_transfer"],
+      ["migration_reconciliation_table", "exclude_transfer"],
+      ["oidc_login_state", "exclude_credential"],
+      ["schema_migration", "compare_only"],
+      ["search_document", "exclude_derived"],
+      ["search_index_state", "exclude_derived"],
+      ["session", "exclude_credential"],
+      ["worker_heartbeat", "exclude_operational"],
+    ]);
+    // Every excluded table exists.
+    const tables = await q<{ t: string }>(
+      `SELECT table_name AS t FROM information_schema.tables WHERE table_schema = 'public' AND table_type = 'BASE TABLE'`,
+    );
+    const names = new Set(tables.map((x) => x.t));
+    for (const { t } of excluded) expect(names, t).toContain(t);
+  });
+
   it("0128 (as amended by 0129): answers and suggestions store the record keys of every record given to the model; immutable (F-DG6-920)", async () => {
     const cols = await q<{ t: string; d: string; n: string }>(
       `SELECT table_name AS t, data_type AS d, is_nullable AS n FROM information_schema.columns
@@ -1598,6 +1709,11 @@ describe("type and structure rules (ADR-0003, data dictionary global rules)", ()
       "assistant_setting",
       "assistant_conversation",
       "assistant_suggestion",
+      // P7 slices C and D (0133-0134, T-DG7-ARCH-02; ADR-0064, ADR-0065). All three audited; every other P7 C/D table
+      // is append-only.
+      "migration_export",
+      "identity_binding_hold",
+      "config_bundle_import",
     ];
     const rows = await q<{ t: string; d: string }>(
       `SELECT table_name AS t, column_default AS d FROM information_schema.columns
@@ -2010,6 +2126,22 @@ describe("mth_app privileges are exactly the data dictionary's", () => {
       // P6 pre-freeze repair (0122; T-DG6-BE-X9, D-203 O-2): the enablement ledger is written only by its SECURITY
       // DEFINER trigger on automation_rule (SELECT only).
       automation_rule_enablement: "SELECT",
+      // P7 slices C and D (0133-0134; T-DG7-ARCH-02, ADR-0064, ADR-0065). No DELETE anywhere. The rule catalogues and
+      // everything the migration CLI writes (imports, reconciliation reports, identity holds and rebind events; the
+      // owner role) are SELECT only. migration_export and config_bundle_import update through column grants only.
+      transfer_table_rule: "SELECT",
+      transfer_column_rule: "SELECT",
+      migration_export: "INSERT,SELECT",
+      migration_import: "SELECT",
+      migration_reconciliation: "SELECT",
+      migration_reconciliation_table: "SELECT",
+      migration_reconciliation_attachment: "SELECT",
+      identity_binding_hold: "SELECT",
+      identity_rebind_event: "SELECT",
+      config_bundle_export: "INSERT,SELECT",
+      config_bundle_import: "INSERT,SELECT",
+      config_bundle_import_item: "INSERT,SELECT",
+      config_bundle_import_commit: "INSERT,SELECT",
     });
   });
 

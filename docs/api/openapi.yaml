@@ -1,7 +1,7 @@
 openapi: 3.1.1
 info:
   title: Mobily Transformation Hub API
-  version: 1.5.0-p6
+  version: 1.6.0-p7
   summary: P1 contract (identity, scoped access, organizations, transformations, audit) plus the P2 additions (Diagnose, Define, Design, product gates G1-G3) and the P3 additions (Mobilize, portfolio, T05-T09, business cases, product gate G4).
   description: |
     Versioned REST contract for the Mobily Transformation Hub (T-DG1-ARCH-01, ADR-0007).
@@ -382,6 +382,8 @@ tags:
     description: Staged CSV/XLSX imports, row-level validation, commit with lineage and templates (P6, ADR-0056).
   - name: assistant
     description: The optional in-app assistant, off by default; read-only retrieval with citations and labelled suggestions (P6, ADR-0059).
+  - name: transfer
+    description: Whole-installation migration exports, migration import status and reconciliation, the identity rebind list, and configuration transfer bundles (P7, ADR-0064, ADR-0065). The migration import and the identity rebind are CLI-only, IT-run.
 security:
   - sessionCookie: []
 paths:
@@ -24281,6 +24283,430 @@ paths:
         "422": { $ref: "#/components/responses/BusinessRule" }
         "428": { $ref: "#/components/responses/PreconditionRequired" }
         "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/migration-exports:
+    get:
+      tags: [transfer]
+      operationId: listMigrationExports
+      summary: "The installation's migration exports, newest first, with status, counts and checksums (migration.export; ADM_TECH). ADR-0064 §7; REQ-S19-016."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MigrationExportPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [transfer]
+      operationId: createMigrationExport
+      summary: "Request a whole-installation migration export with a reason (migration.export; ADM_TECH). The worker job transfer.export writes the package (one file per table, the manifest and the attachment manifest, plus the evidence bytes) into the evidence store under the export's own prefix, which IT copies to the target; the package never leaves through the API (ADR-0064 §7). Audit migration_export.requested. The same Idempotency-Key returns the existing request with 200. 422 migration.export_in_progress. ADR-0064 §2, §7; REQ-S19-014, REQ-S19-016."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MigrationExportCreate" }
+      responses:
+        "202":
+          description: "Accepted (queued)."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MigrationExport" }
+        "200":
+          description: "The existing request for this Idempotency-Key."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MigrationExport" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/migration-exports/{migrationExportId}:
+    parameters:
+      - $ref: "#/components/parameters/MigrationExportId"
+    get:
+      tags: [transfer]
+      operationId: getMigrationExport
+      summary: "One migration export: status, environment marker, migration level, counts, both checksums and, for a demo export, the ADR-0050 demo checksum (migration.export). ADR-0064 §2, §7."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MigrationExport" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/migration-exports/{migrationExportId}/manifest:
+    parameters:
+      - $ref: "#/components/parameters/MigrationExportId"
+    get:
+      tags: [transfer]
+      operationId: downloadMigrationExportManifest
+      summary: "Download the migration manifest of a succeeded export (attachment; ETag = its SHA-256): schema version, environment marker, demo checksum, migration level, the tables in load order with row counts, file checksums and content digests, the excluded tables and the rewritten columns. No row data (migration.export). 409 migration.export_not_ready; 422 migration.export_failed. ADR-0064 §2."
+      responses:
+        "200":
+          description: "The manifest (Content-Disposition attachment)."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MigrationManifest" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/migration-exports/{migrationExportId}/attachment-manifest:
+    parameters:
+      - $ref: "#/components/parameters/MigrationExportId"
+    get:
+      tags: [transfer]
+      operationId: downloadMigrationExportAttachmentManifest
+      summary: "Download the attachment manifest of a succeeded export (attachment; ETag = its SHA-256): one entry per evidence object with its storage name, size, SHA-256 and parent record. No bytes (migration.export). 409 migration.export_not_ready; 422 migration.export_failed. ADR-0064 §5; REQ-S19-014."
+      responses:
+        "200":
+          description: "The attachment manifest (Content-Disposition attachment)."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AttachmentManifest" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/migration-imports:
+    get:
+      tags: [transfer]
+      operationId: listMigrationImports
+      summary: "The migration imports of this installation (at most one: an import needs an empty database), with the result of their latest reconciliation (migration_import.read; ADM_TECH, ADM_ACCESS, AUD). Read-only: the import runs by CLI, IT-run (`mth-db import-migration`). ADR-0064 §6."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MigrationImportPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/migration-imports/{migrationImportId}:
+    parameters:
+      - $ref: "#/components/parameters/MigrationImportId"
+    get:
+      tags: [transfer]
+      operationId: getMigrationImport
+      summary: "One migration import: the manifest it loaded (checksums, environment marker, demo checksum, migration level, counts), who ran it and when, the latest reconciliation summary and the identity rebind counts (migration_import.read). ADR-0064 §6, §8."
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MigrationImport" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/migration-imports/{migrationImportId}/reconciliations:
+    parameters:
+      - $ref: "#/components/parameters/MigrationImportId"
+    get:
+      tags: [transfer]
+      operationId: listMigrationReconciliations
+      summary: "The reconciliation runs of an import, newest first: the run at import and every re-check (`mth-db reconcile-migration`), each with its totals and result (migration_import.read). ADR-0064 §6; REQ-S19-014."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MigrationReconciliationPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/migration-imports/{migrationImportId}/reconciliations/{migrationReconciliationId}:
+    parameters:
+      - $ref: "#/components/parameters/MigrationImportId"
+      - $ref: "#/components/parameters/MigrationReconciliationId"
+    get:
+      tags: [transfer]
+      operationId: getMigrationReconciliation
+      summary: "One reconciliation report: per table the expected and actual row counts and content digests, and every attachment that is missing or whose size or SHA-256 differs (migration_import.read). ADR-0064 §6; REQ-S19-014 \"equal record counts and matching attachment checksums\"."
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MigrationReconciliation" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/identity-rebinds:
+    get:
+      tags: [transfer]
+      operationId: listIdentityRebinds
+      summary: "The users carried by a migration import and their binding state: 'unbound' users cannot sign in until IT applies a mapping line with `mth-db rebind-identity`; 'rebound' and 'retained' show the applied line (migration_import.read). Read-only. ADR-0064 §8; master prompt l.562."
+      parameters:
+        - { name: state, in: query, required: false, schema: { type: string, enum: [unbound, rebound, retained] } }
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/IdentityRebindPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/config-bundles/exports:
+    get:
+      tags: [transfer]
+      operationId: listConfigBundleExports
+      summary: "The configuration bundles exported from an organization, newest first (config_bundle.export; ADM_TECH, ADM_METHOD). ADR-0065 §6."
+      parameters:
+        - $ref: "#/components/parameters/OrganizationIdQuery"
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ConfigBundleExportPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [transfer]
+      operationId: createConfigBundleExport
+      summary: "Export the organization's latest PUBLISHED configuration of the chosen kinds (all when omitted) as one bundle with bundleSchemaVersion mth-config-bundle/1, stored in the evidence store with its SHA-256 (config_bundle.export). Drafts, history, records and credentials are never included; references between items are stable keys, never ids. Audit config_bundle_export.created. 422 config_bundle.nothing_published, config_bundle.unportable_reference. ADR-0065 §1-§3, §6; REQ-S19-008."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/OrganizationIdQuery"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ConfigBundleExportCreate" }
+      responses:
+        "201":
+          description: "Created."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ConfigBundleExport" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/config-bundles/exports/{configBundleExportId}:
+    parameters:
+      - $ref: "#/components/parameters/ConfigBundleExportId"
+    get:
+      tags: [transfer]
+      operationId: getConfigBundleExport
+      summary: "One exported configuration bundle: organization, kinds, item count, size and SHA-256 (config_bundle.export). ADR-0065 §6."
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ConfigBundleExport" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/config-bundles/exports/{configBundleExportId}/download:
+    parameters:
+      - $ref: "#/components/parameters/ConfigBundleExportId"
+    get:
+      tags: [transfer]
+      operationId: downloadConfigBundleExport
+      summary: "Download the bundle (attachment; ETag = its SHA-256; config_bundle.export). The bytes are re-hashed on read; a mismatch is 422 config_bundle.checksum_mismatch, never a silent download. ADR-0065 §2, §6."
+      responses:
+        "200":
+          description: "The bundle (Content-Disposition attachment)."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ConfigBundle" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/config-bundles/imports:
+    get:
+      tags: [transfer]
+      operationId: listConfigBundleImports
+      summary: "The configuration bundles uploaded into an organization, newest first, with status and planned-action counts (config_bundle.import; ADM_TECH, ADM_METHOD). ADR-0065 §4."
+      parameters:
+        - $ref: "#/components/parameters/OrganizationIdQuery"
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ConfigBundleImportPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [transfer]
+      operationId: uploadConfigBundleImport
+      summary: "Upload a configuration bundle into an organization (config_bundle.import). Nothing is written to the configuration: the bundle is stored and checked for its envelope only; validate plans the items, commit writes drafts. A bundleSchemaVersion other than mth-config-bundle/1 is refused and nothing is stored. Audit config_bundle_import.uploaded. 413 config_bundle.too_large (over 5 MiB); 422 config_bundle.schema_version_unsupported, config_bundle.checksum_mismatch, config_bundle.item_invalid. ADR-0065 §2, §4; REQ-S19-008 \"a bundle with an unknown schema version is rejected\"."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/OrganizationIdQuery"
+        - { name: X-File-Name, in: header, required: true, schema: { type: string, minLength: 1, maxLength: 255 } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ConfigBundle" }
+      responses:
+        "201":
+          description: "Uploaded."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ConfigBundleImport" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "413":
+          description: "Larger than 5 MiB (code config_bundle.too_large)."
+          content:
+            application/problem+json:
+              schema: { $ref: "#/components/schemas/Problem" }
+  /api/v1/admin/config-bundles/imports/{configBundleImportId}:
+    parameters:
+      - $ref: "#/components/parameters/ConfigBundleImportId"
+    get:
+      tags: [transfer]
+      operationId: getConfigBundleImport
+      summary: "One uploaded bundle: status, counts and the items of its latest validation run with their planned action and problem code, and after the commit the draft each item created (config_bundle.import). ADR-0065 §4, §5."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ConfigBundleImport" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/config-bundles/imports/{configBundleImportId}/validate:
+    parameters:
+      - $ref: "#/components/parameters/ConfigBundleImportId"
+    post:
+      tags: [transfer]
+      operationId: validateConfigBundleImport
+      summary: "Plan every item against the organization's current configuration (config_bundle.import): create_draft, new_draft, identical, conflict (an open draft of the key exists) or refused (with its problem code). A plan with a conflict or a refused item makes the import invalid. Writes nothing to the configuration. Audit config_bundle_import.validated. 422 config_bundle.not_validatable. ADR-0065 §4."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "200":
+          description: "OK (validated or invalid)."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ConfigBundleImport" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/config-bundles/imports/{configBundleImportId}/commit:
+    parameters:
+      - $ref: "#/components/parameters/ConfigBundleImportId"
+    post:
+      tags: [transfer]
+      operationId: commitConfigBundleImport
+      summary: "Re-validate, then write every create_draft and new_draft item through its kind's existing write path (config_bundle.import plus each kind's own configure right): the seven kinds with drafts get a DRAFT that is never published here and goes through the existing review and publish pipeline; the five kinds without a draft stage (branding, notification policy, job schedule, review policy, upload policy) are applied as that kind's own audited change, and job schedules arrive disabled. One audit event per draft and config_bundle_import.committed. 422 config_bundle.not_committable, config_bundle.plan_changed, config_bundle.kind_not_permitted. ADR-0065 §5; p7-plan §3 seam 2."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "200":
+          description: "OK (committed)."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ConfigBundleImport" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
 components:
   securitySchemes:
     sessionCookie:
@@ -25959,6 +26385,31 @@ components:
       required: false
       description: "A sort key the list declares, optionally prefixed '-' for descending (ADR-0057 §5); an unknown key is 400 at /query/sort. Absent: today's order."
       schema: { type: string, pattern: "^-?[a-z][A-Za-z]{0,39}$" }
+    MigrationExportId:
+      name: migrationExportId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    MigrationImportId:
+      name: migrationImportId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    MigrationReconciliationId:
+      name: migrationReconciliationId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    ConfigBundleExportId:
+      name: configBundleExportId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    ConfigBundleImportId:
+      name: configBundleImportId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
   headers:
     X-Request-Id:
       description: Request correlation ID (echoed from a valid inbound header or generated), also in every log line and audit event.
@@ -29014,6 +29465,10 @@ components:
         - saved_view.share
         - assistant.use
         - assistant.configure
+        - migration.export
+        - migration_import.read
+        - config_bundle.export
+        - config_bundle.import
     RoleCode:
       type: string
       enum: [SP, TL, BO, WL, FIN, TO, KDS, TD, CM, SEC, AUD, ADM_TECH, ADM_ACCESS, ADM_METHOD]
@@ -41426,3 +41881,364 @@ components:
         suggestion: { $ref: "#/components/schemas/AssistantSuggestion" }
         transformationId: { $ref: "#/components/schemas/Uuid" }
         draft: { $ref: "#/components/schemas/FormDraftCreate" }
+    TransferSha256:
+      type: string
+      pattern: "^[0-9a-f]{64}$"
+      description: Lower-case hexadecimal SHA-256 (ADR-0064 §2).
+    TransferSourceEnvironment:
+      type: string
+      enum: [production, demo, unmarked]
+      description: "The source installation's deployment_environment marker (ADR-0050 §1): demo, production, or unmarked when it has none. D-244 O2: the manifest field is sourceEnvironment, and a demo export has 'demo'."
+    TransferInteger:
+      type: string
+      pattern: "^(0|[1-9][0-9]{0,18})$"
+      description: A non-negative 64-bit count or size as a decimal string (bigint columns are never JSON numbers).
+    MigrationExportCreate:
+      type: object
+      required: [reason]
+      additionalProperties: false
+      properties:
+        reason: { $ref: "#/components/schemas/Reason" }
+    MigrationExport:
+      type: object
+      required: [id, status, requestedVia, schemaVersion, sourceEnvironment, migrationLevel, tableCount, rowCount, attachmentCount, attachmentBytes, manifestSha256, attachmentManifestSha256, demoChecksum, failureReason, startedAt, finishedAt, createdAt, createdBy, version]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        status: { type: string, enum: [queued, running, succeeded, failed] }
+        requestedVia: { type: string, enum: [api, cli] }
+        schemaVersion: { type: string, enum: ["mth-migration/1"] }
+        sourceEnvironment: { oneOf: [{ $ref: "#/components/schemas/TransferSourceEnvironment" }, { type: "null" }] }
+        migrationLevel: { type: [string, "null"], pattern: "^[0-9]{4}_[a-z0-9_]+$" }
+        tableCount: { type: [integer, "null"], minimum: 0 }
+        rowCount: { oneOf: [{ $ref: "#/components/schemas/TransferInteger" }, { type: "null" }] }
+        attachmentCount: { type: [integer, "null"], minimum: 0 }
+        attachmentBytes: { oneOf: [{ $ref: "#/components/schemas/TransferInteger" }, { type: "null" }] }
+        manifestSha256: { oneOf: [{ $ref: "#/components/schemas/TransferSha256" }, { type: "null" }] }
+        attachmentManifestSha256: { oneOf: [{ $ref: "#/components/schemas/TransferSha256" }, { type: "null" }] }
+        demoChecksum: { oneOf: [{ $ref: "#/components/schemas/TransferSha256" }, { type: "null" }], description: "D-244 O2: the ADR-0050 demo checksum of the source; set exactly when sourceEnvironment is demo and the export succeeded." }
+        failureReason: { type: [string, "null"] }
+        startedAt: { oneOf: [{ $ref: "#/components/schemas/Timestamp" }, { type: "null" }] }
+        finishedAt: { oneOf: [{ $ref: "#/components/schemas/Timestamp" }, { type: "null" }] }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/NullableUuid" }
+        version: { type: integer, minimum: 1 }
+    MigrationExportPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/MigrationExport" } }
+        nextCursor: { type: [string, "null"] }
+    MigrationManifestTable:
+      type: object
+      required: [name, file, loadPhase, rowCount, fileSha256, contentDigest, columns, deferredColumns]
+      additionalProperties: false
+      properties:
+        name: { type: string, pattern: "^[a-z][a-z0-9_]{0,62}$" }
+        file: { type: string, pattern: "^tables/[a-z][a-z0-9_]{0,62}\\.ndjson$" }
+        loadPhase: { type: integer, minimum: 1, description: "Position in the foreign-key order (ADR-0064 §2)." }
+        rowCount: { $ref: "#/components/schemas/TransferInteger" }
+        fileSha256: { $ref: "#/components/schemas/TransferSha256" }
+        contentDigest: { $ref: "#/components/schemas/TransferSha256" }
+        columns: { type: array, minItems: 1, items: { type: string, pattern: "^[a-z][a-z0-9_]{0,62}$" } }
+        deferredColumns: { type: array, items: { type: string, pattern: "^[a-z][a-z0-9_]{0,62}$" }, description: "Nullable foreign-key columns loaded as null and set in the second pass, to break a foreign-key cycle (ADR-0064 §2)." }
+    MigrationManifest:
+      type: object
+      description: "The migration manifest (ADR-0064 §2). Synthetic demo exports carry sourceEnvironment demo and their demoChecksum."
+      required: [schemaVersion, exportId, sourceEnvironment, demoChecksum, migrationLevel, createdAt, appVersion, tables, excludedTables, rewrittenColumns, attachmentManifest, totals]
+      additionalProperties: false
+      properties:
+        schemaVersion: { type: string, enum: ["mth-migration/1"] }
+        exportId: { $ref: "#/components/schemas/Uuid" }
+        sourceEnvironment: { $ref: "#/components/schemas/TransferSourceEnvironment" }
+        demoChecksum: { oneOf: [{ $ref: "#/components/schemas/TransferSha256" }, { type: "null" }] }
+        migrationLevel: { type: string, pattern: "^[0-9]{4}_[a-z0-9_]+$" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        appVersion: { type: string, minLength: 1, maxLength: 64 }
+        tables: { type: array, items: { $ref: "#/components/schemas/MigrationManifestTable" } }
+        excludedTables:
+          type: array
+          items:
+            type: object
+            required: [name, rule, reason]
+            additionalProperties: false
+            properties:
+              name: { type: string }
+              rule: { type: string, enum: [exclude_credential, exclude_operational, exclude_derived, exclude_transfer, compare_only] }
+              reason: { type: string }
+        rewrittenColumns:
+          type: array
+          items:
+            type: object
+            required: [table, column, rule]
+            additionalProperties: false
+            properties:
+              table: { type: string }
+              column: { type: string }
+              rule: { type: string, enum: [secret_ref_unbind, secret_refs_unbind] }
+        attachmentManifest:
+          type: object
+          required: [file, sha256, count, bytes]
+          additionalProperties: false
+          properties:
+            file: { type: string, enum: [attachments.json] }
+            sha256: { $ref: "#/components/schemas/TransferSha256" }
+            count: { type: integer, minimum: 0 }
+            bytes: { $ref: "#/components/schemas/TransferInteger" }
+        totals:
+          type: object
+          required: [tables, rows]
+          additionalProperties: false
+          properties:
+            tables: { type: integer, minimum: 0 }
+            rows: { $ref: "#/components/schemas/TransferInteger" }
+    AttachmentManifest:
+      type: object
+      description: "The attachment manifest (ADR-0064 §5): every object of the evidence store a record points to."
+      required: [schemaVersion, exportId, items]
+      additionalProperties: false
+      properties:
+        schemaVersion: { type: string, enum: ["mth-attachment-manifest/1"] }
+        exportId: { $ref: "#/components/schemas/Uuid" }
+        items:
+          type: array
+          items:
+            type: object
+            required: [objectName, sizeBytes, sha256, parentTable, parentId, file]
+            additionalProperties: false
+            properties:
+              objectName: { type: string, minLength: 1, maxLength: 1024 }
+              sizeBytes: { $ref: "#/components/schemas/TransferInteger" }
+              sha256: { $ref: "#/components/schemas/TransferSha256" }
+              parentTable: { type: string, pattern: "^[a-z][a-z0-9_]{0,62}$" }
+              parentId: { $ref: "#/components/schemas/Uuid" }
+              file: { type: string, pattern: "^attachments/[0-9a-f]{64}$" }
+    MigrationReconciliationSummary:
+      type: object
+      required: [id, runKind, result, tablesChecked, tablesMismatched, rowsExpected, rowsActual, attachmentsChecked, attachmentsMismatched, operatorName, runAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        runKind: { type: string, enum: [import, recheck] }
+        result: { type: string, enum: [matched, mismatched] }
+        tablesChecked: { type: integer, minimum: 0 }
+        tablesMismatched: { type: integer, minimum: 0 }
+        rowsExpected: { $ref: "#/components/schemas/TransferInteger" }
+        rowsActual: { $ref: "#/components/schemas/TransferInteger" }
+        attachmentsChecked: { type: integer, minimum: 0 }
+        attachmentsMismatched: { type: integer, minimum: 0 }
+        operatorName: { type: string }
+        runAt: { $ref: "#/components/schemas/Timestamp" }
+    MigrationReconciliation:
+      type: object
+      required: [summary, tables, attachmentMismatches]
+      additionalProperties: false
+      properties:
+        summary: { $ref: "#/components/schemas/MigrationReconciliationSummary" }
+        tables:
+          type: array
+          items:
+            type: object
+            required: [tableName, expectedRows, actualRows, expectedDigest, actualDigest, matched]
+            additionalProperties: false
+            properties:
+              tableName: { type: string }
+              expectedRows: { $ref: "#/components/schemas/TransferInteger" }
+              actualRows: { $ref: "#/components/schemas/TransferInteger" }
+              expectedDigest: { $ref: "#/components/schemas/TransferSha256" }
+              actualDigest: { $ref: "#/components/schemas/TransferSha256" }
+              matched: { type: boolean }
+        attachmentMismatches:
+          type: array
+          items:
+            type: object
+            required: [parentTable, objectName, problem, expectedSize, actualSize, expectedSha256, actualSha256]
+            additionalProperties: false
+            properties:
+              parentTable: { type: string }
+              objectName: { type: string }
+              problem: { type: string, enum: [missing, size_mismatch, sha256_mismatch] }
+              expectedSize: { $ref: "#/components/schemas/TransferInteger" }
+              actualSize: { oneOf: [{ $ref: "#/components/schemas/TransferInteger" }, { type: "null" }] }
+              expectedSha256: { $ref: "#/components/schemas/TransferSha256" }
+              actualSha256: { oneOf: [{ $ref: "#/components/schemas/TransferSha256" }, { type: "null" }] }
+    MigrationReconciliationPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/MigrationReconciliationSummary" } }
+        nextCursor: { type: [string, "null"] }
+    MigrationImport:
+      type: object
+      required: [id, schemaVersion, sourceEnvironment, sourceExportReference, migrationLevel, manifestSha256, attachmentManifestSha256, demoChecksum, tableCount, rowCount, attachmentCount, attachmentBytes, operatorName, startedAt, importedAt, latestReconciliation, identities]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        schemaVersion: { type: string, enum: ["mth-migration/1"] }
+        sourceEnvironment: { $ref: "#/components/schemas/TransferSourceEnvironment" }
+        sourceExportReference: { $ref: "#/components/schemas/Uuid" }
+        migrationLevel: { type: string }
+        manifestSha256: { $ref: "#/components/schemas/TransferSha256" }
+        attachmentManifestSha256: { $ref: "#/components/schemas/TransferSha256" }
+        demoChecksum: { oneOf: [{ $ref: "#/components/schemas/TransferSha256" }, { type: "null" }] }
+        tableCount: { type: integer, minimum: 0 }
+        rowCount: { $ref: "#/components/schemas/TransferInteger" }
+        attachmentCount: { type: integer, minimum: 0 }
+        attachmentBytes: { $ref: "#/components/schemas/TransferInteger" }
+        operatorName: { type: string }
+        startedAt: { $ref: "#/components/schemas/Timestamp" }
+        importedAt: { $ref: "#/components/schemas/Timestamp" }
+        latestReconciliation: { $ref: "#/components/schemas/MigrationReconciliationSummary" }
+        identities:
+          type: object
+          required: [unbound, rebound, retained]
+          additionalProperties: false
+          properties:
+            unbound: { type: integer, minimum: 0 }
+            rebound: { type: integer, minimum: 0 }
+            retained: { type: integer, minimum: 0 }
+    MigrationImportPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/MigrationImport" } }
+        nextCursor: { type: [string, "null"] }
+    IdentityRebind:
+      type: object
+      required: [id, userId, displayName, migrationImportId, state, issuer, subject, newIssuer, newSubject, operatorName, resolvedAt, version]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        userId: { $ref: "#/components/schemas/Uuid" }
+        displayName: { type: string }
+        migrationImportId: { $ref: "#/components/schemas/Uuid" }
+        state: { type: string, enum: [unbound, rebound, retained] }
+        issuer: { type: string, description: "The issuer carried by the import (the source installation's)." }
+        subject: { type: string, description: "The subject carried by the import." }
+        newIssuer: { type: [string, "null"], description: "After a rebind: the issuer the user now signs in with." }
+        newSubject: { type: [string, "null"] }
+        operatorName: { type: [string, "null"] }
+        resolvedAt: { oneOf: [{ $ref: "#/components/schemas/Timestamp" }, { type: "null" }] }
+        version: { type: integer, minimum: 1 }
+    IdentityRebindPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/IdentityRebind" } }
+        nextCursor: { type: [string, "null"] }
+    ConfigBundleKind:
+      type: string
+      enum: [methodology, scoring_defaults, form_schema, procedure, automation_rule_set, health_check_scheme, automation_rule, branding, notification_policy, job_schedule, config_review_policy, upload_policy]
+      description: "A configuration kind a bundle carries (ADR-0065 §1)."
+    ConfigBundleExportCreate:
+      type: object
+      required: [reason]
+      additionalProperties: false
+      properties:
+        kinds: { type: array, minItems: 1, maxItems: 12, uniqueItems: true, items: { $ref: "#/components/schemas/ConfigBundleKind" } }
+        reason: { $ref: "#/components/schemas/Reason" }
+    ConfigBundleExport:
+      type: object
+      required: [id, organizationId, bundleSchemaVersion, sourceEnvironment, kinds, itemCount, byteSize, sha256, createdAt, createdBy]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        organizationId: { $ref: "#/components/schemas/Uuid" }
+        bundleSchemaVersion: { type: string, enum: ["mth-config-bundle/1"] }
+        sourceEnvironment: { $ref: "#/components/schemas/TransferSourceEnvironment" }
+        kinds: { type: array, items: { $ref: "#/components/schemas/ConfigBundleKind" } }
+        itemCount: { type: integer, minimum: 0 }
+        byteSize: { $ref: "#/components/schemas/TransferInteger" }
+        sha256: { $ref: "#/components/schemas/TransferSha256" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/Uuid" }
+    ConfigBundleExportPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/ConfigBundleExport" } }
+        nextCursor: { type: [string, "null"] }
+    ConfigBundleItem:
+      type: object
+      required: [kind, itemCode, sourceVersionNo, contentSha256, content]
+      additionalProperties: false
+      properties:
+        kind: { $ref: "#/components/schemas/ConfigBundleKind" }
+        itemCode: { type: string, minLength: 1, maxLength: 200, pattern: "^[a-z0-9][a-z0-9_.:-]*$", description: "The stable key of the item within its kind (ADR-0065 §3)." }
+        sourceVersionNo: { type: [integer, "null"], minimum: 1 }
+        contentSha256: { $ref: "#/components/schemas/TransferSha256" }
+        content: { type: object, description: "The published content in the kind's own schema, validated per kind by the server (ADR-0065 §2); never ids of the source installation's records." }
+    ConfigBundle:
+      type: object
+      description: "A configuration transfer bundle (ADR-0065 §2). bundleSchemaVersion is checked by the server, not by this schema, so that an unknown version is answered with 422 config_bundle.schema_version_unsupported rather than a generic 400."
+      required: [bundleSchemaVersion, exportId, sourceEnvironment, createdAt, appVersion, items]
+      additionalProperties: false
+      properties:
+        bundleSchemaVersion: { type: string, minLength: 1, maxLength: 64 }
+        exportId: { $ref: "#/components/schemas/Uuid" }
+        sourceEnvironment: { $ref: "#/components/schemas/TransferSourceEnvironment" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        appVersion: { type: string, minLength: 1, maxLength: 64 }
+        items: { type: array, maxItems: 2000, items: { $ref: "#/components/schemas/ConfigBundleItem" } }
+    ConfigBundleImportItem:
+      type: object
+      required: [id, ordinal, kind, itemCode, sourceVersionNo, contentSha256, action, problemCode, targetRecordType, targetRecordId]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        ordinal: { type: integer, minimum: 1 }
+        kind: { $ref: "#/components/schemas/ConfigBundleKind" }
+        itemCode: { type: string }
+        sourceVersionNo: { type: [integer, "null"], minimum: 1 }
+        contentSha256: { $ref: "#/components/schemas/TransferSha256" }
+        action: { type: string, enum: [create_draft, new_draft, identical, conflict, refused] }
+        problemCode: { type: [string, "null"], pattern: "^config_bundle\\.[a-z_]+$" }
+        targetRecordType: { type: [string, "null"], enum: [methodology_version, automation_rule_version, branding_version, notification_policy, job_schedule, config_review_policy, upload_policy, null] }
+        targetRecordId: { $ref: "#/components/schemas/NullableUuid" }
+    ConfigBundleImport:
+      type: object
+      required: [id, organizationId, bundleSchemaVersion, sourceEnvironment, fileName, byteSize, sha256, itemCount, status, validationNo, counts, items, validatedAt, validatedBy, committedAt, committedBy, createdAt, createdBy, version]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        organizationId: { $ref: "#/components/schemas/Uuid" }
+        bundleSchemaVersion: { type: string, enum: ["mth-config-bundle/1"] }
+        sourceEnvironment: { $ref: "#/components/schemas/TransferSourceEnvironment" }
+        fileName: { type: string }
+        byteSize: { $ref: "#/components/schemas/TransferInteger" }
+        sha256: { $ref: "#/components/schemas/TransferSha256" }
+        itemCount: { type: integer, minimum: 0 }
+        status: { type: string, enum: [uploaded, validated, invalid, committed] }
+        validationNo: { type: integer, minimum: 0 }
+        counts:
+          oneOf:
+            - type: "null"
+            - type: object
+              required: [createDraft, newDraft, identical, conflict, refused]
+              additionalProperties: false
+              properties:
+                createDraft: { type: integer, minimum: 0 }
+                newDraft: { type: integer, minimum: 0 }
+                identical: { type: integer, minimum: 0 }
+                conflict: { type: integer, minimum: 0 }
+                refused: { type: integer, minimum: 0 }
+        items: { type: array, description: "The items of the latest validation run (empty before the first).", items: { $ref: "#/components/schemas/ConfigBundleImportItem" } }
+        validatedAt: { oneOf: [{ $ref: "#/components/schemas/Timestamp" }, { type: "null" }] }
+        validatedBy: { $ref: "#/components/schemas/NullableUuid" }
+        committedAt: { oneOf: [{ $ref: "#/components/schemas/Timestamp" }, { type: "null" }] }
+        committedBy: { $ref: "#/components/schemas/NullableUuid" }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/Uuid" }
+        version: { type: integer, minimum: 1 }
+    ConfigBundleImportPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/ConfigBundleImport" } }
+        nextCursor: { type: [string, "null"] }

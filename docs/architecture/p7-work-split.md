@@ -364,3 +364,310 @@ User-facing product text: **none** (no screen, route, problem code or i18n key).
 - **A Section 1 row needs a test that exists and runs.** If a control has no test, report it in the handback as a gap. Do not move it to Section 2 to avoid the rule. Section 2 is only for functions the product does not perform.
 - **Database TLS has no product code** (ADR-0063 Context 6). T-G9 tests the integration point, or the matrix says `none (BLOCKED: <reason>)`. Never claim more.
 - **History hits** in approved DG0–DG6 records are never fixed by rewriting history or records (D-243 Q13). They are allow-listed by value hash with a reason, or reported to the orchestrator if a real secret is found.
+
+## §C. Slice C: data migration manifest and tools (T-DG7-ARCH-02; ADR-0064)
+
+### C.0 Already delivered by the architect (do not re-create)
+
+- `docs/architecture/adr/ADR-0064-p7-migration-manifest-export-import-reconciliation-identity-rebind.md`.
+- **Migration `0133_p7_transfer_migration_manifest.sql`:** `transfer_table_rule` (14 rows), `transfer_column_rule` (15 rows), `migration_export`, `migration_import`, `migration_reconciliation`, `migration_reconciliation_table`, `migration_reconciliation_attachment`, `identity_binding_hold`, `identity_rebind_event`, with their guards and grants.
+- **Migration `0135_p7_transfer_permissions.sql`:** `migration.export`, `migration_import.read`, `config_bundle.export`, `config_bundle.import` and their role defaults. `packages/shared/src/permissions.ts` `P7_TRANSFER_PERMISSIONS`, `P7_TRANSFER_ROLE_PERMISSIONS`, `P7_PERMISSIONS`.
+- **Kysely types** (`packages/db/src/schema.ts`) and the `SCHEMA_COLUMNS` entries of the 13 tables of 0133–0134. **Catalogue pins** (`packages/db/test/integration/catalogue.test.ts`): the 0133–0134 trigger test, the SecretRef/exclusion test, the mutable-table pin, the `mth_app` privilege pins. **Seed parity** (`packages/db/src/seed.test.ts`): the 0135 block and the P7 migration ceiling 0163.
+- **Guard probe:** `packages/db/test/integration/p7-transfer-guards.test.ts` (state machines, write rules, audit rule; real PostgreSQL).
+- **Advisory locks** 730402–730405 in `apps/api/src/modules/platform/advisory-locks.ts` (+ test) and ADR-0016 §6; 730406–730409 reserved.
+- **Contract:** 10 slice C operations (tag `transfer`, `info.version` 1.6.0-p7), `apps/api/test/support/p7-operations.ts`, `p7-pending.ts`, `p7-pending-arch-02.ts`, `p7-pending-be-c.ts`, `p7-pending-be-d.ts`; `p2-pending.ts` and both AUD sweeps include the P7 sets; the contract count pin is 951.
+- **Inventory:** `migration_import.source_export_reference` classified in `apps/api/test/support/sensitive-reference-inventory.ts`.
+- **ERD, data dictionary and permissions matrix** sections for 0133–0135.
+- **Free ids:** migrations `0136`–`0142` are for the slice C and D implementers, in the order of C.9. `0131`–`0132` stay unused (T-DG7-ARCH-01 needed none, and the runner refuses an id below the highest applied one).
+
+### C.1 BE-C: export (backend-workflow; W5; after BE-A)
+
+**Creates:**
+
+| File | Purpose |
+| --- | --- |
+| `packages/db/src/transfer/plan.ts` | ADR-0064 §2.2: the catalogue-driven plan (tables minus `transfer_table_rule`, FK graph, SCCs, `deferredColumns`, `loadPhase`, self-reference order). `buildPlan(db) → Promise<TransferPlan>`; throws `TransferPlanError` with the C.5 text on a cycle without a nullable edge |
+| `packages/db/src/transfer/export.ts` | ADR-0064 §2.3, §4: the encoder (pinned settings, text output, JSON for json/jsonb, SecretRef rewrite from `transfer_column_rule`), one `REPEATABLE READ READ ONLY` snapshot, `contentDigest`. `exportPackage(db, sink, opts) → Promise<ExportResult>`; `sink` writes files (a directory writer here, an EvidenceStore writer in the job) |
+| `packages/db/src/transfer/manifest.ts` | ADR-0064 §2.1: the canonical manifest writer and reader, `MANIFEST_SCHEMA_VERSION = "mth-migration/1"`, `sourceEnvironment` from `readDeploymentEnvironment`, `demoChecksum` from `packages/db/src/demo/checksum.ts` for a demo source only |
+| `packages/db/src/transfer/index.ts` | the package's exports |
+| `packages/db/src/transfer/{plan,export,manifest}.test.ts` | unit tests T-C1…T-C3 |
+| `packages/db/test/integration/transfer-export.test.ts` | T-C4, T-C5 |
+| `apps/api/src/modules/transfer/export/routes.ts` (+ `service.ts`) | the 5 export operations (C.5 texts), lock 730402, audit per transition |
+| `apps/worker/src/handlers/transfer/export.ts` | the job `transfer.export` (exactly once under 730402; writes through an EvidenceStore sink under `transfer/migration-exports/<exportId>/`; byte reads through the port, ADR-0064 §5) |
+| `packages/db/migrations/0136_p7_transfer_export_job.sql` | the `job:transfer.export` service identity (no permission code, ADR-0064 §7) and its `job_schedule` row only if the kit needs one (none expected: the job is enqueued, not scheduled) |
+| `tools/migration/export.mjs` | thin wrapper over `mth-db export-migration` (exit codes of §2 rule 4) |
+| `apps/api/test/integration/transfer/export.test.ts`, `apps/api/test/integration/contract/p7-exercises-be-c.ts` | T-C6, T-C7; contract exercises |
+
+**Modifies:**
+
+| File | Exactly what |
+| --- | --- |
+| `packages/db/src/cli.ts` | one command line: `export-migration --out <dir> --operator <name>` (BE-C first, then BE-D, then DO-G; p7-plan §5.3) |
+| `apps/api/test/support/p7-pending-be-c.ts` | removes each entry as it is routed and exercised; empty at the end |
+| `packages/db/src/schema.ts`, `catalogue.test.ts`, `seed.test.ts` | only the lines for `0136` (the numbering example moves to `0137`) |
+
+**Reads only:** `transfer_table_rule`, `transfer_column_rule`, `packages/db/src/demo/{guard,checksum}.ts`, `apps/api/src/modules/evidence/store.ts` (the port).
+
+### C.2 BE-D: import, reconcile, rebind and the read-only routes (backend-workflow; W6; after BE-C)
+
+**Creates:**
+
+| File | Purpose |
+| --- | --- |
+| `packages/db/src/transfer/import.ts` | ADR-0064 §6 steps 1, 2, 4–7, 9 (owner role; session lock 730403 as `MIGRATION_IMPORT_LOCK_CLASS`); `audit_event` never truncated and its triggers never disabled |
+| `packages/db/src/transfer/reconcile.ts` | ADR-0064 §6 step 8 and `reconcile-migration` |
+| `packages/db/src/transfer/rebind.ts` | ADR-0064 §8 (mapping file, all-or-nothing, lock 730404 as `IDENTITY_REBIND_LOCK_CLASS`) |
+| `packages/db/src/transfer/{import,reconcile,rebind}.test.ts` | unit tests |
+| `packages/db/test/integration/transfer-roundtrip.test.ts` | T-C8…T-C12 |
+| `packages/db/test/integration/transfer-locks.test.ts` | T-C13 (the two CLI lock constants equal `ADVISORY_LOCK_CLASSES.migrationImport`/`identityRebind`, read as text from `apps/api/src/modules/platform/advisory-locks.ts`) |
+| `apps/api/src/modules/transfer/import/routes.ts` (+ `service.ts`) | the 5 read-only operations (`migration_import.read`) |
+| `tools/migration/import.mjs`, `tools/migration/reconcile.mjs` | ADR-0064 §6 order: package checks → `transfer-attachments copy-in` (BE-E) → `mth-db import-migration` → print report |
+| `apps/api/test/integration/transfer/import-routes.test.ts`, `apps/api/test/integration/identity/unbound-signin.test.ts`, `apps/api/test/integration/contract/p7-exercises-be-d.ts` | T-C14, T-C15; contract exercises |
+
+**Modifies:**
+
+| File | Exactly what |
+| --- | --- |
+| `packages/db/src/cli.ts` | three command lines: `import-migration`, `reconcile-migration`, `rebind-identity` |
+| `apps/api/src/modules/identity/oidc.ts` | the `identity_unbound` result beside `account_disabled` (ADR-0064 §8): one query on `identity_binding_hold` |
+| `apps/api/src/modules/identity/routes.ts` | only if the callback's error mapping needs the new code listed (the redirect itself is the existing `fail(code)`) |
+| `apps/web/src/i18n/{en,ar}/auth.json` | the one key `errors.identity_unbound` (C.5), append-only (FE-A owns the file; this key is requested in the handback if FE-A has merged first) |
+| `apps/api/test/support/p7-pending-be-d.ts` | removes each entry as it is routed and exercised |
+
+### C.3 BE-E: evidence bytes (backend-workflow; W7; after BE-C)
+
+**Creates:** `apps/api/src/modules/transfer/attachments.ts` (`readForExport(store, entry)`, `copyIn(store, dir, manifest)`, `verify(store, manifest) → mismatch[]`), `apps/api/src/cli/transfer-attachments.ts` (`copy-in --from <dir>`, `verify --from <dir> --out <json>`; exit codes of §2 rule 4), `apps/api/test/integration/transfer/attachments.test.ts` (T-C16 against the filesystem adapter and `apps/api/test/support/fake-s3.ts`, through the P6 store contract kit `apps/api/src/modules/evidence/stores/contract.ts`).
+
+**Deviation from p7-plan §5.1, recorded:** the plan put this file at `packages/db/src/transfer/attachments.ts`. The `EvidenceStore` port and both adapters are in `apps/api`, and `packages/db` must not import `apps/api` (ADR-0002), so the byte copy is in `apps/api` (ADR-0064 §5).
+
+### C.4 KBE-A: financial parity of the round-trip (kpi-benefits; W8; after BE-D)
+
+**Creates:** `tests/integration/transfer/financial-parity.test.ts` (T-C17). It reuses BE-D's round-trip helper (exported from `packages/db/test/integration/transfer-roundtrip.test.ts`'s sibling `transfer-roundtrip.fixture.ts`, which BE-D creates).
+
+### C.5 Exact texts
+
+**Problem codes** (`apps/web/src/i18n/{en,ar}/problems.json`, keys with `.` written `__`; FE-A adds them; the Arabic is **provisional** until a qualified reviewer checks it, D-243 Q7):
+
+| Code | Status | English | Arabic (provisional) |
+| --- | --- | --- | --- |
+| `migration.export_in_progress` | 422 | A migration export is already queued or running. Wait for it to finish. | يوجد تصدير ترحيل قيد الانتظار أو التنفيذ. انتظر حتى يكتمل. |
+| `migration.export_not_ready` | 409 | This export has not finished yet. | لم يكتمل هذا التصدير بعد. |
+| `migration.export_failed` | 422 | This export failed. Its manifests are not available. | فشل هذا التصدير، وبياناته الوصفية غير متاحة. |
+
+**Sign-in refusal** (`apps/web/src/i18n/{en,ar}/auth.json` `errors.identity_unbound`):
+
+- EN: "Your account was moved from another installation and is not linked to your corporate sign-in yet. Contact your IT administrator."
+- AR (provisional): "نُقل حسابك من منصة أخرى ولم يُربط بعد بتسجيل الدخول المؤسسي. تواصل مع مسؤول تقنية المعلومات."
+
+**CLI lines** (operator-facing, English; the operator guide gives the Arabic summary, D-243 Q7). `<…>` is filled at run time:
+
+| Command | Exit | Line |
+| --- | --- | --- |
+| `import-migration` | 2 | `import-migration: refused: unsupported manifest schema version '<v>'` |
+| `import-migration` | 2 | `import-migration: refused: checksum mismatch for <file>` |
+| `import-migration` | 2 | `import-migration: refused: the target is at <level>, the package at <level>` |
+| `import-migration` | 2 | `import-migration: refused: the target runs <appVersion>, the package was written by <appVersion>` |
+| `import-migration` | 3 | `import-migration: refused: the target database is not empty` |
+| `import-migration` | 4 | `import-migration: reconciliation mismatch: <n> tables, <m> attachments differ; nothing was imported` |
+| `import-migration` | 0 | `import-migration: imported <rows> rows in <tables> tables and <count> attachments; reconciliation matched; <users> users wait for an identity rebind` |
+| `reconcile-migration` | 0 / 4 | `reconcile-migration: matched` / `reconcile-migration: mismatch: <n> tables, <m> attachments differ` |
+| `rebind-identity` | 2 | `rebind-identity: refused: <n> invalid lines; nothing was changed` (then one line per problem: `line <k>: <reason>`) |
+| `rebind-identity` | 0 | `rebind-identity: rebound <r>, retained <t>; <u> users remain unbound` |
+| `export-migration` | 1 | `export-migration: failed: <reason>` |
+| plan | 1 | `migration plan: foreign-key cycle without a nullable edge: <tables>` |
+
+The `line <k>` reasons: `unknown user <id>`, `user <id> has no unbound hold`, `user <id> appears twice`, `<issuer> <subject> is already bound to another user`, `retain needs the carried issuer and subject`, `action must be rebind or retain`.
+
+**Audit actions:** `migration_export.requested`, `.started`, `.succeeded`, `.failed`; `migration.imported`; `migration.reconciled`; `identity.binding_held`, `identity.rebound`, `identity.retained`; `session.login_failed` with `changes.error = "identity_unbound"`.
+
+### C.6 Tests (each line states what it proves)
+
+| Test | File | Proves |
+| --- | --- | --- |
+| T-C1 | `plan.test.ts` + `transfer-export.test.ts` | every public base table is exported or in `transfer_table_rule`; the real schema has no cycle without a nullable edge; every FK's referenced table loads first or the column is deferred; a synthetic depth-3 self-reference loads in order |
+| T-C2 | `export.test.ts` | the encoder round-trips `numeric` (money with 4 decimals, rates), `bigint`, `timestamptz` with microseconds, arrays, `bytea`, `jsonb`, `NULL` through `jsonb_populate_recordset` unchanged; no value is a JSON number |
+| T-C3 | `manifest.test.ts` | canonical bytes are stable; `schemaVersion` is `mth-migration/1`; `sourceEnvironment` is `demo`/`production`/`unmarked` from the marker; `demoChecksum` is set exactly for a demo source and equals `datasetChecksum()` (`packages/db/src/demo/checksum.ts`) |
+| T-C4 | `transfer-export.test.ts` | `fileSha256 = contentDigest` for every table; two exports of the demo give equal `demoChecksum` and equal `contentDigest` for every table whose rows have no `now()` column |
+| T-C5 | `transfer-export.test.ts` | every SecretRef in the package has provider `unbound`; no file is named after an excluded table |
+| T-C6 | `transfer/export.test.ts` | the 5 routes: 403 for every role except ADM_TECH (AUD included); 422 `migration.export_in_progress`; one audit event per transition; the job runs once under 730402; no response contains a row value |
+| T-C7 | `p7-exercises-be-c.ts` | each of the 5 operations is exercised and its responses validate against the contract |
+| T-C8 | `transfer-roundtrip.test.ts` | demo + P6 fixtures (sensitive benefit, grant, connector with SecretRefs, import batch, assistant setting) → export → import into an empty database: every table's ids and rows equal (reconciliation `matched`), `audit_event` rows equal including `seq`, the target's `demoChecksum` equals the manifest's, the P6 integrity sweep passes |
+| T-C9 | `transfer-roundtrip.test.ts` | the package scan of ADR-0064 §3 finds no session or state hash, no provider other than `unbound`, no canary secret value, and no column named like a password exists in the schema |
+| T-C10 | `transfer-roundtrip.test.ts` | each refusal (schema version, level, app version, non-empty target, file checksum) exits with its code and line and leaves the target unchanged |
+| T-C11 | `transfer-roundtrip.test.ts` | a tampered table file and a tampered attachment make the reconciliation mismatch; the transaction rolls back; exit 4; the database stays empty |
+| T-C12 | `transfer-roundtrip.test.ts` | `audit_event`'s two triggers are enabled at every step (checked between steps), the import issues no `TRUNCATE` (seeded rows are deleted in reverse load order), and the only new audit rows after the load are the import's own |
+| T-C13 | `transfer-locks.test.ts` | the CLI lock constants equal the registry's 730403 and 730404; a second import waits on the lock |
+| T-C14 | `transfer/import-routes.test.ts` | the 5 read-only routes for ADM_TECH, ADM_ACCESS and AUD; 403 for every other role; the reconciliation report shows per-table counts and digests and attachment mismatches |
+| T-C15 | `identity/unbound-signin.test.ts` | an unbound user (OIDC through the fake IdP, and the dev login) gets `/login?error=identity_unbound`, no session, and a `session.login_failed` event; after `rebind-identity` the user signs in with the new subject, and the old subject no longer resolves; an invalid mapping line changes nothing |
+| T-C16 | `transfer/attachments.test.ts` | copy-in and verify with both adapters; the target object under the same name has equal size and SHA-256; a missing object and a changed byte are reported, never skipped |
+| T-C17 | `tests/integration/transfer/financial-parity.test.ts` | benefit totals, allocations, formula versions, KPI calculation runs and Finance validations recompute identically after the round-trip (decimal strings exact); Unknown and Stale stay Unknown and Stale, never 0 |
+
+### C.7 Seams with other slices
+
+| Seam | Rule |
+| --- | --- |
+| **`demo-data/` → A (DO-A)** | Settled by ADR-0064 §2.1: the marker field is `sourceEnvironment` and must be `demo`; the checksum field is `demoChecksum`. These are the names DO-A's fixture already uses, so **no repair is needed** (A.2). |
+| **Transfer drill → B (DO-D)** | DO-D runs `mth-db export-migration` on the seeded demo, `tools/migration/import.mjs` into the clean environment with a different base URL, then `rebind-identity` with a mapping for the drill's Keycloak users, and records the reconciliation report (REQ-S19-014's evidence). |
+| **Backups → E (ARCH-03)** | ADR-0066 may reuse `attachments.json` (ADR-0064 §5) to check evidence bytes. It does not reuse the migration package as the backup format (ADR-0064 Alternatives 1). |
+| **Retention → E** | A purge of a business record is out of P7 scope (D-243 Q3); `transfer_table_rule` gets no row from retention. |
+| **Module registry → BE-A** | BE-A registers the module `transfer` with the stubs `transfer/export/routes.ts`, `transfer/import/routes.ts`, `transfer/config-bundle/routes.ts` and the worker stub `apps/worker/src/handlers/transfer/index.ts`. `transfer` imports no domain module except `evidence` (the port) (p7-plan §2). |
+| **Guides → H (DOC-B, DOC-A)** | DOC-B's deployment and operator guides describe export, copy, import, reconcile and rebind, including "map at least one administrator before first sign-in" and "stop the source's worker and wait for an empty queue before exporting". DOC-A's admin guide covers the Data export screen (FE-B). |
+| **Screens → FE-B** | Administration > Data export (exports list, request with reason, status, the two manifest downloads), Migration status (imports, reconciliation reports, identity rebind list, read-only). Texts in C.8. |
+
+### C.8 Screen texts (FE-B; EN and AR, the Arabic provisional)
+
+| Key (`apps/web/src/i18n/{en,ar}/transfer.json`) | English | Arabic (provisional) |
+| --- | --- | --- |
+| `export.title` | Data export | تصدير البيانات |
+| `export.intro` | A migration export copies this whole installation, with its ids, links, audit history and evidence, into a package in IT-controlled storage. It never contains sessions, tokens or secret values. | ينسخ تصدير الترحيل هذه المنصة بالكامل، بمعرّفاتها وروابطها وسجل التدقيق والأدلة، إلى حزمة في تخزين تتحكم فيه إدارة تقنية المعلومات. ولا يتضمن أبدًا جلسات أو رموزًا أو قيمًا سرية. |
+| `export.request` | Request export | طلب تصدير |
+| `export.reason` | Reason | السبب |
+| `export.status.queued` / `running` / `succeeded` / `failed` | Queued / Running / Succeeded / Failed | في الانتظار / قيد التنفيذ / نجح / فشل |
+| `export.environment.demo` | Synthetic demo data | بيانات عرض تجريبية اصطناعية |
+| `export.downloadManifest` / `downloadAttachments` | Download manifest / Download attachment manifest | تنزيل البيانات الوصفية / تنزيل بيان المرفقات |
+| `import.title` | Migration status | حالة الترحيل |
+| `import.cliOnly` | Imports and identity rebinds are run by IT with the migration tools. This page is read-only. | تنفّذ إدارة تقنية المعلومات عمليات الاستيراد وإعادة ربط الهويات باستخدام أدوات الترحيل. هذه الصفحة للقراءة فقط. |
+| `import.result.matched` / `mismatched` | Counts and checksums match / Differences found | الأعداد ومجاميع التحقق متطابقة / وُجدت اختلافات |
+| `rebind.title` | Identity rebind | إعادة ربط الهويات |
+| `rebind.state.unbound` / `rebound` / `retained` | Not linked: cannot sign in / Linked to a new identity / Same identity confirmed | غير مربوط: لا يمكنه تسجيل الدخول / مربوط بهوية جديدة / تأكيد الهوية نفسها |
+
+### C.9 Integration order
+
+1. ARCH-02 merged (this revision).
+2. BE-A (W4): the `transfer` module, route stubs and worker stub.
+3. BE-C (W5): `0136`, export, routes, job.
+4. BE-D (W6): import, reconcile, rebind, sign-in check, read-only routes (`cli.ts` after BE-C).
+5. BE-E (W7): attachments; then BE-D's round-trip test runs with real bytes (BE-D lands the test with the byte step stubbed by the filesystem adapter in W6, and BE-E switches it to the real step).
+6. KBE-A (W8), FE-B (W9), DO-D (W10).
+
+### C.10 Requirement → clause → test → owner
+
+| Requirement | Clause (acceptance text) | Test(s) | Owner |
+| --- | --- | --- | --- |
+| REQ-S19-014 | "migrating the demo dataset into a clean installation" | T-C8 (demo → empty database); DO-D's A18 drill (clean installation, different base URL) | BE-D; DO-D |
+| REQ-S19-014 | "reports equal record counts" | T-C8, T-C11 (a difference is reported, never hidden), T-C14 (the report is readable) | BE-D |
+| REQ-S19-014 | "and matching attachment checksums" | T-C16, T-C11 | BE-E; BE-D |
+| REQ-S19-014 | M0362 "mapping, validation, reconciliation, attachment manifests and checksum/record-count checks" | T-C10 (validation), T-C8/T-C11 (reconciliation), T-C15 (mapping file), T-C4 (checksums) | BE-C; BE-D |
+| REQ-S19-016 | "an export and import round-trip preserves IDs" | T-C8 | BE-D |
+| REQ-S19-016 | "links" | T-C8 (every FK value equal), T-C16 (attachment links under the same object name) | BE-D; BE-E |
+| REQ-S19-016 | "audit history" | T-C8 (rows and `seq` equal), T-C12 | BE-D |
+| REQ-S19-016 | "and evidence checksums" | T-C16, T-C8 | BE-E |
+| REQ-S19-016 | "the package contains no password hashes" (and D-243 Q16: no credential material) | T-C9, T-C5 | BE-D; BE-C |
+| REQ-S19-016 | M0364 "rebind corporate identity subjects under IT control" | T-C15 | BE-D |
+| REQ-S19-016 | M0364 decimal and status integrity across the move | T-C2, T-C17 | BE-C; KBE-A |
+
+### C.11 What the implementers must know
+
+- **Never disable `audit_event`'s triggers, never truncate it.** T-C12 checks it between steps. If a load needs it, stop and report: it would be a DG1 reopen (seam 8).
+- **The import is CLI-only.** No route, job or permission may start an import or a rebind.
+- **Same release, same level, empty target.** Do not add a "merge" or "force" option.
+- **Every value is text.** A JSON number in a table file is a defect (T-C2).
+- **The attachment manifest lists object names, not bytes.** Never return evidence bytes or row data from an API operation of this slice.
+- **`deployment_environment` travels.** A demo package imported anywhere stays labelled synthetic.
+
+## §D. Slice D: configuration transfer bundle (T-DG7-ARCH-02; ADR-0065)
+
+### D.0 Already delivered by the architect (do not re-create)
+
+- `docs/architecture/adr/ADR-0065-p7-configuration-transfer-bundle-schema-version-drafts-publish-pipeline.md`.
+- **Migration `0134_p7_config_bundles.sql`:** `config_bundle_export`, `config_bundle_import`, `config_bundle_import_item`, `config_bundle_import_commit`, with guards and grants; the permissions in `0135` (C.0).
+- Kysely types, catalogue pins, the guard probe (C.0), lock 730405.
+- **Contract:** 9 slice D operations (tag `transfer`), pending in `apps/api/test/support/p7-pending-be-f.ts`.
+- **Inventory:** `config_bundle_import_commit.target_record_id` classified.
+
+### D.1 BE-F: configuration bundles (backend-workflow; W5; after BE-A)
+
+**Creates:**
+
+| File | Purpose |
+| --- | --- |
+| `packages/shared/src/transfer/config-bundle.ts` | `BUNDLE_SCHEMA_VERSION = "mth-config-bundle/1"`, the 12 kinds in ADR-0065 §1 order, canonical JSON and `contentSha256`, the envelope zod schema and one content schema per kind (its export line in `packages/shared/package.json` is an orchestrator merge on request, p7-plan §5.3) |
+| `apps/api/src/modules/transfer/config-bundle/{routes,service,registry,plan}.ts` | the 9 operations, the `ConfigBundleKindAdapter` port and registry, the plan and commit (ADR-0065 §3–§6), lock 730405 |
+| `apps/api/src/modules/methodology/config-bundle-adapter.ts` | the six Studio kinds and `config_review_policy`; the new "draft from content" service in the same file (ADR-0065 §5) |
+| `apps/api/src/modules/automation/config-bundle-adapter.ts` | `automation_rule` (draft version) |
+| `apps/api/src/modules/admin/config-bundle-adapters.ts` | `branding`, `upload_policy` |
+| `apps/api/src/modules/tasks/config-bundle-adapter.ts` | `notification_policy` |
+| `apps/api/src/modules/jobs/config-bundle-adapter.ts` | `job_schedule` (always applied disabled) |
+| `apps/api/test/integration/transfer/config-bundle.test.ts`, `config-bundle-roundtrip.test.ts`, `apps/api/test/integration/contract/p7-exercises-be-f.ts` | T-D1…T-D9 |
+
+**Modifies:** `apps/api/test/support/p7-pending-be-f.ts` (shrinks to empty); the registry wiring point BE-A creates (one registration line per adapter). If the bundle tables need a column, `0137`+ in the free range (none expected).
+
+**Reads only:** each adapter's owning service (`methodology/review-policies.ts`, `automation/lifecycle.ts`, `admin/branding.ts`, `admin/upload-policy.ts`, `tasks/notification-policy.ts`, `jobs/schedules.ts`) and its permission constant. Editing an existing operation's request, response or behaviour is out of scope; if a kind needs it, stop and report (ADR-0065 residual 2).
+
+### D.2 Exact texts
+
+**Problem codes** (EN; AR provisional):
+
+| Code | Status | English | Arabic (provisional) |
+| --- | --- | --- | --- |
+| `config_bundle.schema_version_unsupported` | 422 | This bundle uses schema version "{version}", which this release cannot read. Export it again from a compatible release. | تستخدم هذه الحزمة إصدار المخطط "{version}" الذي لا يستطيع هذا الإصدار قراءته. صدّرها مجددًا من إصدار متوافق. |
+| `config_bundle.too_large` | 413 | The bundle is larger than 5 MiB. | حجم الحزمة أكبر من 5 ميغابايت. |
+| `config_bundle.checksum_mismatch` | 422 | The bundle's checksum does not match its content. | لا يطابق مجموع التحقق الخاص بالحزمة محتواها. |
+| `config_bundle.item_invalid` | 422 | An item of the bundle is not valid for its kind. | أحد عناصر الحزمة غير صالح لنوعه. |
+| `config_bundle.nothing_published` | 422 | Nothing of the chosen kinds is published in this organization. | لا يوجد إصدار منشور من الأنواع المختارة في هذه الجهة. |
+| `config_bundle.unportable_reference` | 422 | An item refers to a record that has no stable key, so it cannot be exported. | يشير أحد العناصر إلى سجل ليس له مفتاح ثابت، لذا لا يمكن تصديره. |
+| `config_bundle.not_validatable` | 422 | This import cannot be validated in its current state. | لا يمكن التحقق من هذا الاستيراد في حالته الحالية. |
+| `config_bundle.not_committable` | 422 | Only a validated import without conflicts or refused items can be committed. | لا يمكن اعتماد إلا استيراد تم التحقق منه بلا تعارضات أو عناصر مرفوضة. |
+| `config_bundle.plan_changed` | 422 | The configuration changed since the last validation. Validate again. | تغيّرت الإعدادات منذ آخر تحقق. أعد التحقق. |
+| `config_bundle.open_draft_exists` | (item) | An open draft of this item exists. It is never overwritten. | توجد مسودة مفتوحة لهذا العنصر، ولا يُكتب فوقها أبدًا. |
+| `config_bundle.reference_missing` | (item) | This item refers to another item that is neither in the bundle nor in this installation. | يشير هذا العنصر إلى عنصر آخر غير موجود في الحزمة ولا في هذه المنصة. |
+| `config_bundle.kind_not_permitted` | (item) | You do not have the right to change this kind of configuration. | ليست لديك صلاحية تعديل هذا النوع من الإعدادات. |
+| `config_bundle.kind_unavailable` | (item) | This kind of configuration is not available in this installation. | هذا النوع من الإعدادات غير متاح في هذه المنصة. |
+
+**Screen texts** (FE-B, `apps/web/src/i18n/{en,ar}/transfer.json`):
+
+| Key | English | Arabic (provisional) |
+| --- | --- | --- |
+| `bundle.title` | Configuration transfer | نقل الإعدادات |
+| `bundle.intro` | Export published configuration as a bundle, or import a bundle. An import creates drafts that go through the normal review and publishing; it never publishes anything. | صدّر الإعدادات المنشورة كحزمة، أو استورد حزمة. ينشئ الاستيراد مسودات تمر بالمراجعة والنشر المعتادين، ولا ينشر أي شيء. |
+| `bundle.nonDraftNote` | Branding, the notification policy, review policies and the upload policy have no draft stage: committing applies them as a change. Job schedules are imported disabled. | لا توجد مرحلة مسودة للهوية البصرية وسياسة الإشعارات وسياسات المراجعة وسياسة الرفع: يؤدي الاعتماد إلى تطبيقها كتغيير. تُستورد جداول المهام معطّلة. |
+| `bundle.export` / `upload` / `validate` / `commit` | Export bundle / Upload bundle / Validate / Commit as drafts | تصدير حزمة / رفع حزمة / تحقق / اعتماد كمسودات |
+| `bundle.action.create_draft` / `new_draft` / `identical` / `conflict` / `refused` | New draft / New draft of an existing item / Identical, nothing to do / Conflict / Refused | مسودة جديدة / مسودة جديدة لعنصر موجود / مطابق، لا إجراء / تعارض / مرفوض |
+| `bundle.status.uploaded` / `validated` / `invalid` / `committed` | Uploaded / Validated / Invalid / Committed | مرفوعة / تم التحقق / غير صالحة / معتمدة |
+
+**Audit actions:** `config_bundle_export.created`, `config_bundle_import.uploaded`, `.validated`, `.committed`, plus each kind's own existing audit action for every written record.
+
+### D.3 Tests (each line states what it proves)
+
+| Test | File | Proves |
+| --- | --- | --- |
+| T-D1 | `config-bundle.test.ts` | `mth-config-bundle/2`, `""` and a missing `bundleSchemaVersion` are rejected with 422 `config_bundle.schema_version_unsupported`; no row and no object are written |
+| T-D2 | `config-bundle.test.ts` | a changed `content` with the old `contentSha256` is 422 `config_bundle.checksum_mismatch`; an invalid item is 422 `config_bundle.item_invalid` with its pointer; 5 MiB + 1 byte is 413 |
+| T-D3 | `config-bundle.test.ts` | the plan: each of the five actions on synthetic targets; an open draft is `conflict` and is not touched; `invalid` is terminal |
+| T-D4 | `config-bundle.test.ts` | commit writes **drafts** for the seven drafting kinds (status draft, never published); job schedules arrive `enabled = false`; each write has its kind's audit event; `plan_changed` writes nothing |
+| T-D5 | `config-bundle.test.ts` | permissions: ADM_TECH and ADM_METHOD only; AUD 403 on all 9; an item of a kind the caller cannot write is `refused` with `config_bundle.kind_not_permitted` |
+| T-D6 | `config-bundle-roundtrip.test.ts` | demo → export all kinds → clean installation → upload, validate, commit, publish through the existing operations → every published content hash equals the source's `contentSha256`; a re-export has the same items and hashes |
+| T-D7 | `config-bundle-roundtrip.test.ts` | publishing an imported methodology draft in an installation with a running transformation triggers the ADR-0040 migration and reapproval exactly as a hand-made publish (same records created); the pin is unchanged until then |
+| T-D8 | `config-bundle.test.ts` | no source id appears in any bundle (every uuid in the file is `exportId`); an unportable reference is 422 at export |
+| T-D9 | `p7-exercises-be-f.ts` | each of the 9 operations is exercised and validates against the contract |
+| A06 replay | QA-B (`tests/qa/**`) | the A06 assertions pass on the target after T-D6's publish |
+
+### D.4 Seams
+
+| Seam | Rule |
+| --- | --- |
+| **Publish pipeline (seam 2)** | Read-only use of the existing publish, review and migration paths; one new "draft from content" function per drafting module (additive). Any change to an existing operation is a reopen question for the orchestrator. |
+| **Slice C** | Bundles move configuration **by stable key** into an installation with its own records; migrations move whole installations **by id** into an empty one. A migration package carries the bundle tables as records (they are not excluded). |
+| **Screens → FE-B** | Administration > Configuration transfer, texts in D.2. |
+| **Transfer drill → DO-D** | The A18 drill exports a bundle from the demo and imports it into the clean installation (REQ-S19-008 lists A18). |
+
+### D.5 Integration order
+
+ARCH-02 merged → BE-A (W4: wiring point) → BE-F (W5) → FE-B (W9) → QA-B's A06 replay (W11) → DO-D (W10, the drill's bundle step).
+
+### D.6 Requirement → clause → test → owner
+
+| Requirement | Clause (acceptance text) | Test(s) | Owner |
+| --- | --- | --- | --- |
+| REQ-S19-008 | "a bundle exported from the demo installation imports into a clean one" | T-D6; DO-D's A18 drill | BE-F; DO-D |
+| REQ-S19-008 | "and its published versions behave identically" | T-D6 (content hashes), A06 replay, T-D7 (publish semantics unchanged) | BE-F; QA-B |
+| REQ-S19-008 | "a bundle with an unknown schema version is rejected" | T-D1 | BE-F |
+| REQ-S19-008 | M0356 "Workflow, methodology, forms, branding and automation configuration export/import with schema versions" | T-D4 (all 12 kinds written through their paths), T-D6 | BE-F |
+
+### D.7 What the implementers must know
+
+- **Never publish in a commit.** A drafting kind's import ends as a draft. T-D4 fails otherwise.
+- **Never overwrite a draft.** An open draft is a `conflict`.
+- **Job schedules arrive disabled.** Always.
+- **No ids in a bundle.** Stable keys and codes only.
+- **The kind's own right decides.** `config_bundle.import` alone never lets a user write a kind they could not write by hand.

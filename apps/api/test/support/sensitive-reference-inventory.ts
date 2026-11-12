@@ -1264,6 +1264,17 @@ export const SENSITIVE_REFERENCE_INVENTORY: readonly InventoryRow[] = [
   keyNotServed("processed_message.idempotency_key", "the consumer ledger"),
   keyNotServed("revision_proposal.dedupe_key", "a revision proposal dedupe key"),
   keyNotServed("work_item.dedupe_key", "a work item dedupe key"),
+  // T-DG7-ARCH-02 (0133-0134; ADR-0064, ADR-0065): the two uuid columns of the P7 slice C/D tables with no foreign key.
+  cannot(
+    "migration_import.source_export_reference",
+    "uuid",
+    "the id of the SOURCE installation's migration_export row, copied from the manifest by the CLI (the target has no such row; ADR-0064 §6)",
+  ),
+  cannot(
+    "config_bundle_import_commit.target_record_id",
+    "uuid",
+    "the configuration draft a bundle item created; its target_record_type CHECK (0134) allows only configuration tables, none of them a sensitive record or a SENSITIVE_CHILD_SOURCES type (ADR-0065 §5)",
+  ),
 ];
 
 function ownInputRow(column: string, why: string): InventoryRow {

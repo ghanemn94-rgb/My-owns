@@ -93,6 +93,10 @@ describe("advisory-lock class registry", () => {
       searchReindex: 730318,
       savedViewShare: 730319,
       assistantSetting: 730323,
+      migrationExport: 730402,
+      migrationImport: 730403,
+      identityRebind: 730404,
+      configBundleImport: 730405,
     });
     const values = Object.values(ADVISORY_LOCK_CLASSES);
     expect(new Set(values).size).toBe(values.length);
@@ -117,8 +121,9 @@ describe("advisory-lock class registry", () => {
     const offenders = walk(MODULES)
       .filter((f) => /\.[cm]?[jt]sx?$/.test(f) && !f.endsWith("advisory-locks.ts") && !f.endsWith(".test.ts"))
       // 730219-730299: the P1-P3 classes, every P4 block (p4-plan §4) and the P5 blocks (p5-plan §4, from 730250);
-      // 730300-730339: the P6 blocks (p6-plan §4; T-DG6-ARCH-01).
-      .filter((f) => /\b7302(19|[2-9][0-9])\b|\b7303[0-3][0-9]\b/.test(readFileSync(f, "utf8")))
+      // 730300-730339: the P6 blocks (p6-plan §4; T-DG6-ARCH-01); 730400-730439: the P7 blocks (p7-plan §4;
+      // T-DG7-ARCH-02).
+      .filter((f) => /\b7302(19|[2-9][0-9])\b|\b7303[0-3][0-9]\b|\b7304[0-3][0-9]\b/.test(readFileSync(f, "utf8")))
       .map((f) => relative(MODULES, f));
     expect(offenders).toEqual([]);
   });

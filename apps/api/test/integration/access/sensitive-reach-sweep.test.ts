@@ -47,6 +47,7 @@ import { createScratchDatabase, dropScratchDatabase, roleUrl } from "../../../..
 import { DASHBOARD_METRICS, FINANCE_VALUE_CLASSES } from "../../../../../packages/shared/src/schemas/dashboards.ts";
 import { REPORT_DEFINITION_CODES, REPORT_REGISTERS } from "../../../../../packages/shared/src/schemas/report.ts";
 import { openapi, operations } from "../../support/contract.ts";
+import { P2_PENDING_OPERATIONS } from "../../support/p2-pending.ts";
 import { SENSITIVE_REFERENCE_INVENTORY } from "../../support/sensitive-reference-inventory.ts";
 import { call, createUser, grant, signIn, startApi, type Session, type TestApi } from "../../support/harness.ts";
 import { handleBlockerEscalation } from "../../../../worker/src/handlers/escalations.ts";
@@ -1237,6 +1238,9 @@ async function sweepPaths(): Promise<{ resolved: SweepRequest[]; skipped: string
   const skipped: string[] = [];
   for (const o of operations) {
     if (o.method !== "GET") continue;
+    // T-DG7-ARCH-02: a contract-first operation with no route yet (the p2- to p7-pending lists, empty at every freeze)
+    // is outside the live sweeps, the rule those lists state; it joins this sweep in the change that routes it.
+    if (P2_PENDING_OPERATIONS.has(o.operationId)) continue;
     const params = [...o.path.matchAll(/\{([^}]+)\}/g)].map((m) => m[1]!);
     let paths = [o.path];
     let ok = true;

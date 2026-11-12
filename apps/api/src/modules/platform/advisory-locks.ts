@@ -159,6 +159,19 @@ export const ADVISORY_LOCK_CLASSES = {
   assistantSetting: 730323,
   // P6 block of T-DG6-ARCH-06 (730326-730327; p6-plan §4, ADR-0061 §10). Both are RESERVED for this block and not
   // allocated: the branding contrast report is written by the publish transaction under brandingPublish (730270).
+  // P7 block of T-DG7-ARCH-02 (730402-730409; p7-plan §4, ADR-0064 §10, ADR-0065 §9). 730406-730409 are RESERVED for
+  // this block: never allocated to another block, and listed here only once a resource uses it. 730403 and 730404 are
+  // taken by the migration CLI (packages/db/src/transfer, which cannot import this registry; the demoReset precedent,
+  // 730271): BE-D spells them there as MIGRATION_IMPORT_LOCK_CLASS and IDENTITY_REBIND_LOCK_CLASS and pins them to these
+  // entries with a test.
+  /** The installation's migration export (transfer export: one export runs at a time; a second request while one is queued or running is refused with migration.export_in_progress). One class-wide key: "migration-export". */
+  migrationExport: 730402,
+  /** The migration import and its reconciliation (`mth-db import-migration` and `mth-db reconcile-migration`, session lock held for the whole load: a second import, a re-check and an export never interleave with it). One class-wide key: "migration-import". */
+  migrationImport: 730403,
+  /** One identity rebind run (`mth-db rebind-identity`: a mapping file is applied whole or not at all, never interleaved with another rebind or with an import). One class-wide key: "identity-rebind". */
+  identityRebind: 730404,
+  /** One organization's configuration bundle import validation and commit (config bundles: a validation run and a commit never interleave, and the commit re-validates at commit time; one validation step is also held by the 0134 trigger config_bundle_import_guard). Key: "<organizationId>". */
+  configBundleImport: 730405,
 } as const;
 
 export type AdvisoryLockClassName = keyof typeof ADVISORY_LOCK_CLASSES;

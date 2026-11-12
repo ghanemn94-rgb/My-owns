@@ -1163,3 +1163,35 @@ Legend as in 8.3 (**C** create, **E** edit, **V** view), plus **P** = created on
 1. Through `/api/v1/audit-events` only (the event's after-state), not through `getBrandingVersionContrast`.
 2. `branding.configure` (seeded by `0091`): `getBrandingVersionContrast`; the report is written by `putBrandingSettings` in the publish transaction, never by its own operation, and is immutable.
 3. Exactly where the caller can read the value itself (scope, record permission, sensitivity grant; ADR-0051): the weighted score (`getInitiativeScores`), the benefit realized value (`getBenefitValues`, `getBenefit`), the KPI status (`getKpiStatus`), the financial metrics (`getBusinessCaseCashFlows` and the metrics), the health check (`getHealthCheck`) and the dashboard drill-downs. A panel adds no data the caller cannot already read. Technical details (token names, hashes, infrastructure terms) appear only on Administration screens (REQ-S15-014 "view-technical:ADM").
+
+## 30. P7 implementation, slices C and D (DG7): migration exports, imports, reconciliation and identity rebind; configuration transfer bundles
+
+- **Task:** T-DG7-ARCH-02 (solution-architect), 2026-11-12. **Sources:** ADR-0064 §7–§9, ADR-0065 §4, §8; master prompt M0356, M0362, M0364 ("rebind corporate identity subjects under IT control"); D-243 Q4, Q5 (the import and the rebind are CLI-only, IT-run).
+- **Seed:** `0135_p7_transfer_permissions.sql`, equal to `P7_TRANSFER_PERMISSIONS` / `P7_TRANSFER_ROLE_PERMISSIONS` in `packages/shared/src/permissions.ts` (`packages/db/src/seed.test.ts`). A configurable starting point, not a Mobily-approved access policy.
+- **Code name.** The p7-plan named the read code `migration.import_status.read`. A permission code has exactly one dot (0001 `permission_code_check`), so it is `migration_import.read`.
+- **Separation:** no code here is a business approval or a Finance validation; the 0001 trigger still refuses any approval code for a technical-admin role. A migration package carries the source's G1–G6 decisions and Finance validations as records; exporting, importing or rebinding approves nothing. Committing a configuration bundle creates drafts that go through the existing review and publish pipeline; it publishes nothing.
+- **No API right starts an import or a rebind.** `mth-db import-migration`, `reconcile-migration` and `rebind-identity` run with the owner credentials, which only IT holds. The API only shows their results.
+- **AUD stays read-only:** AUD holds `migration_import.read` (imports, reconciliation reports, the rebind list) and nothing else here. Every export, upload, validate and commit answers 403 for AUD.
+
+### 30.1 Permission codes
+
+| Code | Category | Meaning | Default roles |
+|---|---|---|---|
+| `migration.export` | configure | Request a whole-installation migration export; read exports, the manifest and the attachment manifest (never row data or bytes); lock 730402 | ADM_TECH |
+| `migration_import.read` | read | Read migration imports, their reconciliation reports and the identity rebind list | ADM_TECH, ADM_ACCESS, AUD |
+| `config_bundle.export` | configure | Export an organization's published configuration as a bundle; read and download exports | ADM_TECH, ADM_METHOD |
+| `config_bundle.import` | configure | Upload, validate and commit a bundle (plus each written kind's own configure right); lock 730405 | ADM_TECH, ADM_METHOD |
+
+Legend as in 8.3 (**C** create, **E** edit, **V** view), plus **D** = download, **Val** = validate, **Com** = commit.
+
+| Entity (table) | SP | TL | BO | WL | FIN | TO | KDS | TD | CM | SEC | AUD | ADM_METHOD | ADM_TECH | ADM_ACCESS |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Migration export (`migration_export`) and its manifests | — | — | — | — | — | — | — | — | — | — | — | — | C V D | — |
+| Migration import, reconciliation reports (`migration_import`, `migration_reconciliation*`) | — | — | — | — | — | — | — | — | — | — | V | — | V | V |
+| Identity rebind list (`identity_binding_hold`, `identity_rebind_event`) | — | — | — | — | — | — | — | — | — | — | V | — | V | V |
+| Configuration bundle export (`config_bundle_export`) | — | — | — | — | — | — | — | — | — | — | — | C V D | C V D | — |
+| Configuration bundle import (`config_bundle_import*`) | — | — | — | — | — | — | — | — | — | — | — | C V Val Com¹ | C V Val Com¹ | — |
+
+1. The commit writes an item only when the caller also holds that kind's own right: `methodology.configure` (the six Studio kinds; ADM_METHOD), `automation.configure` (rules), `branding.configure`, `notification_policy.configure`, `job.configure`, `upload_policy.configure` (ADM_TECH by default) and `config_review_policy.configure` (TO by default). An item the caller could not write by hand is planned as `refused` (`config_bundle.kind_not_permitted`). The import never widens a right.
+
+- **Scope:** migration exports and imports are installation-wide. Bundles are per organization (`organizationId`), and the caller needs the code in that organization.

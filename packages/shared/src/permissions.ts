@@ -399,6 +399,29 @@ export const P6_PERMISSIONS = {
   ...P6_ASSISTANT_PERMISSIONS,
 } as const satisfies Record<string, PermissionCategory>;
 
+/**
+ * P7 slices C and D (seeded by 0135; ADR-0064 §9, ADR-0065 §8; T-DG7-ARCH-02). A configurable starting point, not a
+ * Mobily-approved access policy. migration.export requests a whole-installation migration export and reads its status,
+ * manifest and attachment manifest (never row data; REQ-S19-016); migration_import.read reads the imports, their
+ * reconciliation reports and the identity rebind list (the import and the rebind are CLI-only, IT-run; REQ-S19-014);
+ * config_bundle.export exports and downloads a configuration bundle; config_bundle.import uploads, validates and
+ * commits one as drafts, the commit also needing each item kind's own configure right (REQ-S19-008). The p7-plan
+ * named the read code `migration.import_status.read`; a permission code has exactly one dot (0001
+ * `permission_code_check`), so it is `migration_import.read`. No code is a business_approval or finance_validation
+ * code; AUD gets the read code only.
+ */
+export const P7_TRANSFER_PERMISSIONS = {
+  "migration.export": "configure",
+  "migration_import.read": "read",
+  "config_bundle.export": "configure",
+  "config_bundle.import": "configure",
+} as const satisfies Record<string, PermissionCategory>;
+
+/** Every P7 permission block (each P7 architecture task appends its block here and to PERMISSIONS). */
+export const P7_PERMISSIONS = {
+  ...P7_TRANSFER_PERMISSIONS,
+} as const satisfies Record<string, PermissionCategory>;
+
 export const PERMISSIONS = {
   ...P1_PERMISSIONS,
   ...P2_PERMISSIONS,
@@ -418,6 +441,7 @@ export const PERMISSIONS = {
   ...P5_KPI_LAUNCH_HEALTH_PERMISSIONS,
   ...P5_READER_DEMO_PERMISSIONS,
   ...P6_PERMISSIONS,
+  ...P7_PERMISSIONS,
 } as const satisfies Record<string, PermissionCategory>;
 export type Permission = keyof typeof PERMISSIONS;
 export const PERMISSION_CODES = Object.keys(PERMISSIONS) as Permission[];
@@ -972,6 +996,28 @@ export const P6_ASSISTANT_ROLE_PERMISSIONS = {
   ADM_METHOD: ["assistant.use"],
 } as const satisfies Record<string, readonly (keyof typeof P6_ASSISTANT_PERMISSIONS)[]>;
 
+/**
+ * P7 slices C and D role defaults (seeded by 0135; ADR-0064 §9, ADR-0065 §8): ADM_TECH exports the installation and
+ * transfers configuration; ADM_METHOD transfers configuration (the Studio owner); ADM_TECH, ADM_ACCESS and AUD read
+ * the imports, reconciliation reports and the identity rebind list.
+ */
+export const P7_TRANSFER_ROLE_PERMISSIONS = {
+  SP: [],
+  TL: [],
+  BO: [],
+  WL: [],
+  FIN: [],
+  TO: [],
+  KDS: [],
+  TD: [],
+  CM: [],
+  SEC: [],
+  AUD: ["migration_import.read"],
+  ADM_TECH: ["migration.export", "migration_import.read", "config_bundle.export", "config_bundle.import"],
+  ADM_ACCESS: ["migration_import.read"],
+  ADM_METHOD: ["config_bundle.export", "config_bundle.import"],
+} as const satisfies Record<string, readonly (keyof typeof P7_TRANSFER_PERMISSIONS)[]>;
+
 export const ROLES = {
   SP: {
     kind: "source",
@@ -1213,6 +1259,7 @@ export const ROLES = {
       ...P6_INTEGRATIONS_ROLE_PERMISSIONS.AUD,
       ...P6_SEARCH_ROLE_PERMISSIONS.AUD,
       ...P6_ASSISTANT_ROLE_PERMISSIONS.AUD,
+      ...P7_TRANSFER_ROLE_PERMISSIONS.AUD,
     ],
   },
   // Technical administrators: configuration only, no business-record access and never an approver
@@ -1235,6 +1282,7 @@ export const ROLES = {
       ...P6_INTEGRATIONS_ROLE_PERMISSIONS.ADM_TECH,
       ...P6_SEARCH_ROLE_PERMISSIONS.ADM_TECH,
       ...P6_ASSISTANT_ROLE_PERMISSIONS.ADM_TECH,
+      ...P7_TRANSFER_ROLE_PERMISSIONS.ADM_TECH,
     ],
   },
   ADM_ACCESS: {
@@ -1255,6 +1303,7 @@ export const ROLES = {
       ...P6_OPERATIONS_CHANNELS_ROLE_PERMISSIONS.ADM_ACCESS,
       ...P6_SEARCH_ROLE_PERMISSIONS.ADM_ACCESS,
       ...P6_ASSISTANT_ROLE_PERMISSIONS.ADM_ACCESS,
+      ...P7_TRANSFER_ROLE_PERMISSIONS.ADM_ACCESS,
     ],
   },
   ADM_METHOD: {
@@ -1271,6 +1320,7 @@ export const ROLES = {
       ...P5_KPI_LAUNCH_HEALTH_ROLE_PERMISSIONS.ADM_METHOD,
       ...P6_SEARCH_ROLE_PERMISSIONS.ADM_METHOD,
       ...P6_ASSISTANT_ROLE_PERMISSIONS.ADM_METHOD,
+      ...P7_TRANSFER_ROLE_PERMISSIONS.ADM_METHOD,
     ],
   },
 } as const satisfies Record<string, RoleDefinition>;
