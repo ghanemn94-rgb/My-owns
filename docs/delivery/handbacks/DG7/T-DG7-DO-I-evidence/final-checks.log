@@ -1,0 +1,49 @@
+# final checks, 2026-11-12T18:07:43Z, HEAD 119dcd0541b1e8351e23c233d62cc3d25f9ed794, node v24.21.0
+$ node --test tools/release/tests/protocol-audit.test.mjs
+ℹ tests 25
+ℹ suites 5
+ℹ pass 25
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 463.539029
+exit=0
+$ pnpm lint
+> mobily-transformation-hub@0.1.0 lint /home/user/My-owns
+> eslint . --max-warnings=0
+
+exit=0
+$ npx eslint --no-ignore --max-warnings=0 tools/release/protocol-audit.mjs tools/release/tests/protocol-audit.test.mjs
+exit=0
+$ git ls-files -co --exclude-standard -z | xargs -0 npx prettier --check --ignore-unknown
+All matched files use Prettier code style!
+Checking formatting...
+All matched files use Prettier code style!
+exit=0
+$ node tools/gates/validate.mjs --historical --stage DG6
+PASS gate DG6 (historical)
+exit=0
+$ sha256sum (evidence and tool)
+3f4b1de5c8bacd38bc56cbd2dabd7b26255b06f1746f37aa4aea7f6342661e4e  docs/delivery/handbacks/DG7/T-DG7-DO-I-evidence/protocol-audit-all.json
+65bc0ac406fd9e5a33413da491ed4460fc17f6fe418b07e90105e7bdb237a908  docs/delivery/handbacks/DG7/T-DG7-DO-I-evidence/protocol-audit-all.log
+e3e49dc2d2859510c2412b491e25d581bd07b27917302fea2119861518ec66b8  docs/delivery/handbacks/DG7/T-DG7-DO-I-evidence/protocol-audit-DG6.json
+cd80f147584d8f76e40115ebe0723a61815f091b7a928a6f11c35c9bc690d7c1  docs/delivery/handbacks/DG7/T-DG7-DO-I-evidence/protocol-audit-DG6.log
+5c56c21460f1947a2efd255558d5bf9b5a6eff5dcccf8cdc33cc6a6a885377b1  docs/delivery/handbacks/DG7/T-DG7-DO-I-evidence/validate-historical-DG6.log
+724b61a50eb4e9537f0d1cb72a7e51966c15c7f1aa1030c9c0a525e529c8bfbb  tools/release/protocol-audit.mjs
+d85ab7741c0783dec8bf5fff55a11d74ad623e437aae8d92c8162a8e6b1c333e  tools/release/tests/protocol-audit.test.mjs
+# end 2026-11-12T18:11:21Z
+# regenerated with the final tool bytes 2026-11-12T18:11:36Z
+FAIL (exit 1): 248 hit(s) in 28 check(s), 0 blocked, 37 pass
+exit=1
+finished 2026-11-12T18:11:34Z elapsed 2.973734063s
+FAIL (exit 1): 35 hit(s) in 6 check(s), 0 blocked, 3 pass
+exit=1
+$ sha256sum (final)
+2614fc6ce028523bacb197db700bfd2c42aa7d5ef3f2dabdee40271560c2f3fd  docs/delivery/handbacks/DG7/T-DG7-DO-I-evidence/protocol-audit-all.json
+27d455774c98213ebc8a15efc77999bb91c93d91f939c4928b46e50bea62c729  docs/delivery/handbacks/DG7/T-DG7-DO-I-evidence/protocol-audit-all.log
+e3e49dc2d2859510c2412b491e25d581bd07b27917302fea2119861518ec66b8  docs/delivery/handbacks/DG7/T-DG7-DO-I-evidence/protocol-audit-DG6.json
+cd80f147584d8f76e40115ebe0723a61815f091b7a928a6f11c35c9bc690d7c1  docs/delivery/handbacks/DG7/T-DG7-DO-I-evidence/protocol-audit-DG6.log
+5c56c21460f1947a2efd255558d5bf9b5a6eff5dcccf8cdc33cc6a6a885377b1  docs/delivery/handbacks/DG7/T-DG7-DO-I-evidence/validate-historical-DG6.log
+724b61a50eb4e9537f0d1cb72a7e51966c15c7f1aa1030c9c0a525e529c8bfbb  tools/release/protocol-audit.mjs
+d85ab7741c0783dec8bf5fff55a11d74ad623e437aae8d92c8162a8e6b1c333e  tools/release/tests/protocol-audit.test.mjs

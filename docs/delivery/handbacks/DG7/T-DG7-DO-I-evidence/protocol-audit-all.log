@@ -1,0 +1,72 @@
+$ node tools/release/protocol-audit.mjs --all --json docs/delivery/handbacks/DG7/T-DG7-DO-I-evidence/protocol-audit-all.json
+tool sha256 724b61a50eb4e9537f0d1cb72a7e51966c15c7f1aa1030c9c0a525e529c8bfbb
+started 2026-11-12T18:11:32Z
+protocol-audit 1.0.0 stages=DG0,DG1,DG2,DG3,DG4,DG5,DG6,DG7 head=119dcd0541b1e8351e23c233d62cc3d25f9ed794 git-history=true
+  C1 concurrency          DG0          PASS
+  C1 concurrency          DG1          PASS
+  C1 concurrency          DG2          PASS
+  C1 concurrency          DG3          PASS
+  C1 concurrency          DG4          PASS
+  C1 concurrency          DG5          HIT 2 hit(s): overlap-above-limit
+  C1 concurrency          DG6          HIT 1 hit(s): overlap-above-limit
+  C1 concurrency          DG7          PASS
+  C2 assignment-contract  DG0          HIT 49 hit(s): assignment-missing-elements
+  C2 assignment-contract  DG1          HIT 16 hit(s): assignment-missing-elements
+  C2 assignment-contract  DG2          HIT 39 hit(s): assignment-missing-elements
+  C2 assignment-contract  DG3          HIT 14 hit(s): assignment-missing-elements
+  C2 assignment-contract  DG4          HIT 11 hit(s): assignment-missing-elements
+  C2 assignment-contract  DG5          HIT 6 hit(s): assignment-missing-elements
+  C2 assignment-contract  DG6          HIT 14 hit(s): assignment-missing-elements, assignment-sha-mismatch
+  C2 assignment-contract  DG7          PASS
+  C3 handback-sections    DG0          PASS
+  C3 handback-sections    DG1          PASS
+  C3 handback-sections    DG2          HIT 8 hit(s): handback-missing-sections
+  C3 handback-sections    DG3          HIT 3 hit(s): handback-missing-sections
+  C3 handback-sections    DG4          HIT 4 hit(s): handback-missing-sections
+  C3 handback-sections    DG5          HIT 20 hit(s): handback-missing-sections
+  C3 handback-sections    DG6          HIT 13 hit(s): handback-missing-sections
+  C3 handback-sections    DG7          HIT 1 hit(s): handback-missing-sections
+  C4 file-ownership       DG0          PASS
+  C4 file-ownership       DG1          PASS
+  C4 file-ownership       DG2          PASS
+  C4 file-ownership       DG3          PASS
+  C4 file-ownership       DG4          HIT 24 hit(s): concurrent-assignments-declare-same-file
+  C4 file-ownership       DG5          HIT 8 hit(s): concurrent-assignments-declare-same-file
+  C4 file-ownership       DG6          HIT 5 hit(s): concurrent-assignments-declare-same-file
+  C4 file-ownership       DG7          PASS
+  C5 historical-first     DG0          PASS
+  C5 historical-first     DG1          HIT 1 hit(s): historical-evidence-not-before-first-implementation
+  C5 historical-first     DG2          HIT 1 hit(s): historical-evidence-not-before-first-implementation
+  C5 historical-first     DG3          HIT 1 hit(s): historical-evidence-not-before-first-implementation
+  C5 historical-first     DG4          HIT 1 hit(s): historical-evidence-not-before-first-implementation
+  C5 historical-first     DG5          HIT 1 hit(s): historical-evidence-not-before-first-implementation
+  C5 historical-first     DG6          HIT 1 hit(s): historical-evidence-not-before-first-implementation
+  C5 historical-first     DG7          HIT 1 hit(s): historical-evidence-missing-from-test-evidence
+  C6 progress-updates     DG0          HIT 1 hit(s): task-with-open-gaps-reported-complete
+  C6 progress-updates     DG1          PASS
+  C6 progress-updates     DG2          PASS
+  C6 progress-updates     DG3          PASS
+  C6 progress-updates     DG4          PASS
+  C6 progress-updates     DG5          PASS
+  C6 progress-updates     DG6          HIT 1 hit(s): gate-update-missing-elements
+  C6 progress-updates     DG7          PASS
+  C7 three-failed-fixes   DG0          PASS
+  C7 three-failed-fixes   DG1          PASS
+  C7 three-failed-fixes   DG2          PASS
+  C7 three-failed-fixes   DG3          HIT 1 hit(s): three-failed-fixes-without-blocker
+  C7 three-failed-fixes   DG4          PASS
+  C7 three-failed-fixes   DG5          PASS
+  C7 three-failed-fixes   DG6          PASS
+  C7 three-failed-fixes   DG7          PASS
+  C8 approval-claims      all-selected PASS
+  C9 stage-continuation   DG0          PASS
+  C9 stage-continuation   DG1          PASS
+  C9 stage-continuation   DG2          PASS
+  C9 stage-continuation   DG3          PASS
+  C9 stage-continuation   DG4          PASS
+  C9 stage-continuation   DG5          PASS
+  C9 stage-continuation   DG6          PASS
+  C9 stage-continuation   DG7          PASS
+FAIL (exit 1): 248 hit(s) in 28 check(s), 0 blocked, 37 pass
+exit=1
+finished 2026-11-12T18:11:34Z elapsed 2.973734063s

@@ -1,0 +1,1358 @@
+{
+ "tool": "tools/release/protocol-audit.mjs",
+ "version": "1.0.0",
+ "head": "119dcd0541b1e8351e23c233d62cc3d25f9ed794",
+ "git_history_used": true,
+ "stages": [
+  "DG6"
+ ],
+ "verdict": "FAIL",
+ "exit_code": 1,
+ "totals": {
+  "checks": 9,
+  "pass": 3,
+  "hit": 6,
+  "blocked": 0,
+  "hits": 35
+ },
+ "checks": [
+  {
+   "id": "C1",
+   "name": "concurrency",
+   "requirement": "REQ-DLV-009",
+   "clause": "for each gate, overlapping run intervals in docs/delivery/runs/<DGx>/*/meta.json never exceed four (D-004)",
+   "stage": "DG6",
+   "status": "HIT",
+   "stats": {
+    "runs_with_meta": 157,
+    "runs_without_meta": 31,
+    "max_concurrent": 5,
+    "peak_at": "2026-11-01T21:10:21.000Z",
+    "peak_runs": [
+     "DG6-T-DG6-BE-Y1-backend-workflow-engineer-20261101T210453Z-1e447a32",
+     "DG6-T-DG6-BE-Y2-backend-workflow-engineer-20261101T210513Z-2d01dcc1",
+     "DG6-T-DG6-BE-Y3-backend-workflow-engineer-20261101T210533Z-60b1bd85",
+     "DG6-T-DG6-DO-Y1-devops-engineer-20261101T210553Z-3c9cffc4",
+     "DG6-T-DG6-BE-Y4-backend-workflow-engineer-20261101T211021Z-0df556b9"
+    ],
+    "limit": 4
+   },
+   "hits": [
+    {
+     "stage": "DG6",
+     "kind": "overlap-above-limit",
+     "from": "2026-11-01T21:10:21.000Z",
+     "to": "2026-11-01T22:51:12.000Z",
+     "max_active": 5,
+     "runs": [
+      "DG6-T-DG6-BE-Y1-backend-workflow-engineer-20261101T210453Z-1e447a32",
+      "DG6-T-DG6-BE-Y2-backend-workflow-engineer-20261101T210513Z-2d01dcc1",
+      "DG6-T-DG6-BE-Y3-backend-workflow-engineer-20261101T210533Z-60b1bd85",
+      "DG6-T-DG6-DO-Y1-devops-engineer-20261101T210553Z-3c9cffc4",
+      "DG6-T-DG6-BE-Y4-backend-workflow-engineer-20261101T211021Z-0df556b9"
+     ],
+     "limit": 4
+    }
+   ],
+   "notes": [
+    {
+     "kind": "runs-without-meta",
+     "detail": "no finished_at, so not counted in the overlap; listed for disclosure",
+     "runs": [
+      {
+       "run_dir": "docs/delivery/runs/DG6/DG6-T-DG6-ARCH-03-solution-architect-20261026T195829Z-ae183e2e-orphaned",
+       "started_from_name": "2026-10-26T19:58:29Z",
+       "files": [
+        ".pre-config.txt",
+        ".pre-snapshot.json",
+        "settings.json",
+        "stderr.log",
+        "transcript.jsonl"
+       ]
+      },
+      {
+       "run_dir": "docs/delivery/runs/DG6/DG6-T-DG6-ARCH-05B-solution-architect-20261027T051339Z-a722402e-orphaned",
+       "started_from_name": "2026-10-27T05:13:39Z",
+       "files": [
+        ".pre-config.txt",
+        ".pre-snapshot.json",
+        "settings.json",
+        "stderr.log",
+        "transcript.jsonl"
+       ]
+      },
+      {
+       "run_dir": "docs/delivery/runs/DG6/DG6-T-DG6-ARCH-06-solution-architect-20261027T084951Z-564ecfc4-orphaned",
+       "started_from_name": "2026-10-27T08:49:51Z",
+       "files": [
+        ".pre-snapshot.json",
+        "settings.json"
+       ]
+      },
+      {
+       "run_dir": "docs/delivery/runs/DG6/DG6-T-DG6-ARCH-06-solution-architect-20261028T104438Z-43987325-orphaned",
+       "started_from_name": "2026-10-28T10:44:38Z",
+       "files": [
+        ".pre-snapshot.json",
+        "settings.json"
+       ]
+      },
+      {
+       "run_dir": "docs/delivery/runs/DG6/DG6-T-DG6-ARCH-06-solution-architect-20261028T181139Z-e9c6f48b-orphaned",
+       "started_from_name": "2026-10-28T18:11:39Z",
+       "files": [
+        ".pre-config.txt",
+        ".pre-snapshot.json",
+        "settings.json",
+        "stderr.log",
+        "transcript.jsonl"
+       ]
+      },
+      {
+       "run_dir": "docs/delivery/runs/DG6/DG6-T-DG6-ARCH-11-solution-architect-20261101T230117Z-114368f1",
+       "started_from_name": "2026-11-01T23:01:17Z",
+       "files": [
+        ".post-config.txt",
+        ".post-snapshot.json",
+        ".pre-config.txt",
+        ".pre-snapshot.json",
+        "sandbox.json",
+        "settings.json",
+        "stderr.log",
+        "transcript.jsonl"
+       ]
+      },
+      {
+       "run_dir": "docs/delivery/runs/DG6/DG6-T-DG6-BE-B-backend-workflow-engineer-20261026T195849Z-3f5fa767-orphaned",
+       "started_from_name": "2026-10-26T19:58:49Z",
+       "files": [
+        ".pre-config.txt",
+        ".pre-snapshot.json",
+        "settings.json",
+        "stderr.log",
+        "transcript.jsonl"
+       ]
+      },
+      {
+       "run_dir": "docs/delivery/runs/DG6/DG6-T-DG6-BE-E-backend-workflow-engineer-20261026T195909Z-e2d8bc34-orphaned",
+       "started_from_name": "2026-10-26T19:59:09Z",
+       "files": [
+        ".pre-config.txt",
+        ".pre-snapshot.json",
+        "settings.json",
+        "stderr.log",
+        "transcript.jsonl"
+       ]
+      },
+      {
+       "run_dir": "docs/delivery/runs/DG6/DG6-T-DG6-BE-E2-backend-workflow-engineer-20261030T073114Z-0265174d-orphaned",
+       "started_from_name": "2026-10-30T07:31:14Z",
+       "files": [
+        ".pre-config.txt",
+        ".pre-snapshot.json",
+        "settings.json",
+        "stderr.log",
+        "transcript.jsonl"
+       ]
+      },
+      {
+       "run_dir": "docs/delivery/runs/DG6/DG6-T-DG6-BE-H-backend-workflow-engineer-20261027T085031Z-8c1dfd62-orphaned",
+       "started_from_name": "2026-10-27T08:50:31Z",
+       "files": [
+        ".pre-snapshot.json",
+        "settings.json"
+       ]
+      },
+      {
+       "run_dir": "docs/delivery/runs/DG6/DG6-T-DG6-BE-H-backend-workflow-engineer-20261028T104438Z-e505fc5a-orphaned",
+       "started_from_name": "2026-10-28T10:44:38Z",
+       "files": [
+        ".pre-snapshot.json",
+        "settings.json"
+       ]
+      },
+      {
+       "run_dir": "docs/delivery/runs/DG6/DG6-T-DG6-BE-H-backend-workflow-engineer-20261028T181139Z-0984dcc8-orphaned",
+       "started_from_name": "2026-10-28T18:11:39Z",
+       "files": [
+        ".pre-config.txt",
+        ".pre-snapshot.json",
+        "settings.json",
+        "stderr.log",
+        "transcript.jsonl"
+       ]
+      },
+      {
+       "run_dir": "docs/delivery/runs/DG6/DG6-T-DG6-BE-I-backend-workflow-engineer-20261027T085051Z-cdc057f6-orphaned",
+       "started_from_name": "2026-10-27T08:50:51Z",
+       "files": [
+        ".pre-snapshot.json",
+        "settings.json"
+       ]
+      },
+      {
+       "run_dir": "docs/delivery/runs/DG6/DG6-T-DG6-BE-I-backend-workflow-engineer-20261028T104438Z-2e65235f-orphaned",
+       "started_from_name": "2026-10-28T10:44:38Z",
+       "files": [
+        ".pre-snapshot.json",
+        "settings.json"
+       ]
+      },
+      {
+       "run_dir": "docs/delivery/runs/DG6/DG6-T-DG6-BE-I-backend-workflow-engineer-20261028T181139Z-876ff96f-orphaned",
+       "started_from_name": "2026-10-28T18:11:39Z",
+       "files": [
+        ".pre-config.txt",
+        ".pre-snapshot.json",
+        "settings.json",
+        "stderr.log",
+        "transcript.jsonl"
+       ]
+      },
+      {
+       "run_dir": "docs/delivery/runs/DG6/DG6-T-DG6-BE-J-backend-workflow-engineer-20261027T085011Z-16bd5121-orphaned",
+       "started_from_name": "2026-10-27T08:50:11Z",
+       "files": [
+        ".pre-snapshot.json",
+        "settings.json"
+       ]
+      },
+      {
+       "run_dir": "docs/delivery/runs/DG6/DG6-T-DG6-BE-J-backend-workflow-engineer-20261028T104438Z-723045a8-orphaned",
+       "started_from_name": "2026-10-28T10:44:38Z",
+       "files": [
+        ".pre-snapshot.json",
+        "settings.json"
+       ]
+      },
+      {
+       "run_dir": "docs/delivery/runs/DG6/DG6-T-DG6-BE-O-backend-workflow-engineer-20261030T071809Z-8048e19c-orphaned",
+       "started_from_name": "2026-10-30T07:18:09Z",
+       "files": [
+        ".pre-config.txt",
+        ".pre-snapshot.json",
+        "settings.json",
+        "stderr.log",
+        "transcript.jsonl"
+       ]
+      },
+      {
+       "run_dir": "docs/delivery/runs/DG6/DG6-T-DG6-BE-U-backend-workflow-engineer-20261030T074614Z-332bd035-orphaned",
+       "started_from_name": "2026-10-30T07:46:14Z",
+       "files": [
+        ".pre-config.txt",
+        ".pre-snapshot.json",
+        "settings.json",
+        "stderr.log",
+        "transcript.jsonl"
+       ]
+      },
+      {
+       "run_dir": "docs/delivery/runs/DG6/DG6-T-DG6-BE-X4-backend-workflow-engineer-20261031T035549Z-243a2d22-orphaned",
+       "started_from_name": "2026-10-31T03:55:49Z",
+       "files": [
+        ".pre-config.txt",
+        ".pre-snapshot.json",
+        "settings.json",
+        "stderr.log",
+        "transcript.jsonl"
+       ]
+      },
+      {
+       "run_dir": "docs/delivery/runs/DG6/DG6-T-DG6-BE-X5-backend-workflow-engineer-20261031T035609Z-1428d898-orphaned",
+       "started_from_name": "2026-10-31T03:56:09Z",
+       "files": [
+        ".pre-config.txt",
+        ".pre-snapshot.json",
+        "settings.json",
+        "stderr.log",
+        "transcript.jsonl"
+       ]
+      },
+      {
+       "run_dir": "docs/delivery/runs/DG6/DG6-T-DG6-BE-Z2-backend-workflow-engineer-20261104T004405Z-de1d011b",
+       "started_from_name": "2026-11-04T00:44:05Z",
+       "files": [
+        ".pre-config.txt",
+        ".pre-snapshot.json",
+        "settings.json",
+        "stderr.log",
+        "transcript.jsonl"
+       ]
+      },
+      {
+       "run_dir": "docs/delivery/runs/DG6/DG6-T-DG6-BE-Z7-backend-workflow-engineer-20261106T003839Z-4b6cbf47",
+       "started_from_name": "2026-11-06T00:38:39Z",
+       "files": [
+        ".pre-config.txt",
+        ".pre-snapshot.json",
+        "settings.json",
+        "stderr.log",
+        "transcript.jsonl"
+       ]
+      },
+      {
+       "run_dir": "docs/delivery/runs/DG6/DG6-T-DG6-DO-F-devops-engineer-20261030T074016Z-2eec07bc-orphaned",
+       "started_from_name": "2026-10-30T07:40:16Z",
+       "files": [
+        ".pre-config.txt",
+        ".pre-snapshot.json",
+        "settings.json",
+        "stderr.log",
+        "transcript.jsonl"
+       ]
+      },
+      {
+       "run_dir": "docs/delivery/runs/DG6/DG6-T-DG6-FE-A-frontend-ux-engineer-20261026T195929Z-0d48f532-orphaned",
+       "started_from_name": "2026-10-26T19:59:29Z",
+       "files": [
+        ".pre-config.txt",
+        ".pre-snapshot.json",
+        "settings.json",
+        "stderr.log",
+        "transcript.jsonl"
+       ]
+      },
+      {
+       "run_dir": "docs/delivery/runs/DG6/DG6-T-DG6-FE-Z1-frontend-ux-engineer-20261104T032527Z-93a005c5",
+       "started_from_name": "2026-11-04T03:25:27Z",
+       "files": [
+        ".pre-config.txt",
+        ".pre-snapshot.json",
+        "settings.json",
+        "stderr.log",
+        "transcript.jsonl"
+       ]
+      },
+      {
+       "run_dir": "docs/delivery/runs/DG6/DG6-T-DG6-QA-E-qa-verifier-20261031T032802Z-a70cbe26-orphaned",
+       "started_from_name": "2026-10-31T03:28:02Z",
+       "files": [
+        ".pre-config.txt",
+        ".pre-snapshot.json",
+        "settings.json",
+        "stderr.log",
+        "transcript.jsonl"
+       ]
+      },
+      {
+       "run_dir": "docs/delivery/runs/DG6/DG6-T-DG6-QA-F-qa-verifier-20261031T035629Z-e44f05c3-orphaned",
+       "started_from_name": "2026-10-31T03:56:29Z",
+       "files": [
+        ".pre-config.txt",
+        ".pre-snapshot.json",
+        "settings.json",
+        "stderr.log",
+        "transcript.jsonl"
+       ]
+      },
+      {
+       "run_dir": "docs/delivery/runs/DG6/DG6-T-DG6-REV-CS-RG-R3-code-security-reviewer-20261111T014305Z-0cbae4a1",
+       "started_from_name": "2026-11-11T01:43:05Z",
+       "files": [
+        ".pre-config.txt",
+        ".pre-snapshot.json",
+        "settings.json",
+        "stderr.log",
+        "transcript.jsonl"
+       ]
+      },
+      {
+       "run_dir": "docs/delivery/runs/DG6/DG6-T-DG6-REV-DOM-RG-R3-domain-reviewer-20261111T014302Z-262b73f7",
+       "started_from_name": "2026-11-11T01:43:02Z",
+       "files": [
+        ".pre-config.txt",
+        ".pre-snapshot.json",
+        "settings.json",
+        "stderr.log",
+        "transcript.jsonl"
+       ]
+      },
+      {
+       "run_dir": "docs/delivery/runs/DG6/DG6-T-DG6-REV-QA-RG-R3-qa-verifier-20261111T014308Z-b8fb82c1",
+       "started_from_name": "2026-11-11T01:43:08Z",
+       "files": [
+        ".pre-config.txt",
+        ".pre-snapshot.json",
+        "settings.json",
+        "stderr.log",
+        "transcript.jsonl"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "C2",
+   "name": "assignment-contract",
+   "requirement": "REQ-DLV-011",
+   "clause": "every run's meta.json records an assignment SHA-256 that matches an assignment file containing all ten contract elements",
+   "stage": "DG6",
+   "status": "HIT",
+   "stats": {
+    "assignments_audited": 156,
+    "runs": 157,
+    "assignments_complete_in_own_text": 141,
+    "assignments_complete_by_reference": 2,
+    "elements": [
+     "Stage ID",
+     "Task and requirement IDs",
+     "Source/reference files",
+     "Candidate/base revision",
+     "Permitted files",
+     "Constraints",
+     "Input/output contracts",
+     "Acceptance checks",
+     "Dependency status",
+     "Handback path"
+    ]
+   },
+   "hits": [
+    {
+     "stage": "DG6",
+     "kind": "assignment-missing-elements",
+     "assignment": "docs/delivery/assignments/DG6/T-DG6-AN-P6C.md",
+     "role": "transformation-analyst",
+     "missing": [
+      "permitted_files",
+      "input_output_contracts"
+     ]
+    },
+    {
+     "stage": "DG6",
+     "kind": "assignment-missing-elements",
+     "assignment": "docs/delivery/assignments/DG6/T-DG6-AN-Z1.md",
+     "role": "transformation-analyst",
+     "missing": [
+      "input_output_contracts"
+     ]
+    },
+    {
+     "stage": "DG6",
+     "kind": "assignment-missing-elements",
+     "assignment": "docs/delivery/assignments/DG6/T-DG6-AN-Z2.md",
+     "role": "transformation-analyst",
+     "missing": [
+      "input_output_contracts"
+     ]
+    },
+    {
+     "stage": "DG6",
+     "kind": "assignment-missing-elements",
+     "assignment": "docs/delivery/assignments/DG6/T-DG6-AN-Z3.md",
+     "role": "transformation-analyst",
+     "missing": [
+      "input_output_contracts"
+     ]
+    },
+    {
+     "stage": "DG6",
+     "kind": "assignment-missing-elements",
+     "assignment": "docs/delivery/assignments/DG6/T-DG6-AN-Z4.md",
+     "role": "transformation-analyst",
+     "missing": [
+      "input_output_contracts"
+     ]
+    },
+    {
+     "stage": "DG6",
+     "kind": "assignment-missing-elements",
+     "assignment": "docs/delivery/assignments/DG6/T-DG6-ARCH-07.md",
+     "role": "solution-architect",
+     "missing": [
+      "task_and_requirement_ids"
+     ]
+    },
+    {
+     "stage": "DG6",
+     "kind": "assignment-missing-elements",
+     "assignment": "docs/delivery/assignments/DG6/T-DG6-ARCH-08.md",
+     "role": "solution-architect",
+     "missing": [
+      "task_and_requirement_ids"
+     ]
+    },
+    {
+     "stage": "DG6",
+     "kind": "assignment-missing-elements",
+     "assignment": "docs/delivery/assignments/DG6/T-DG6-ARCH-09.md",
+     "role": "solution-architect",
+     "missing": [
+      "task_and_requirement_ids"
+     ]
+    },
+    {
+     "stage": "DG6",
+     "kind": "assignment-missing-elements",
+     "assignment": "docs/delivery/assignments/DG6/T-DG6-ARCH-10.md",
+     "role": "solution-architect",
+     "missing": [
+      "task_and_requirement_ids"
+     ]
+    },
+    {
+     "stage": "DG6",
+     "kind": "assignment-missing-elements",
+     "assignment": "docs/delivery/assignments/DG6/round-4/release-auditor.md",
+     "role": "release-auditor",
+     "missing": [
+      "dependency_status"
+     ]
+    },
+    {
+     "stage": "DG6",
+     "kind": "assignment-missing-elements",
+     "assignment": "docs/delivery/assignments/DG6/round-8/release-auditor.md",
+     "role": "release-auditor",
+     "missing": [
+      "dependency_status"
+     ]
+    },
+    {
+     "stage": "DG6",
+     "kind": "assignment-missing-elements",
+     "assignment": "docs/delivery/assignments/DG6/round-9/release-auditor.md",
+     "role": "release-auditor",
+     "missing": [
+      "dependency_status"
+     ]
+    },
+    {
+     "stage": "DG6",
+     "kind": "assignment-missing-elements",
+     "assignment": "docs/delivery/assignments/DG6/T-DG6-DO-Z1.md",
+     "role": "devops-engineer",
+     "missing": [
+      "task_and_requirement_ids",
+      "input_output_contracts"
+     ]
+    },
+    {
+     "stage": "DG6",
+     "kind": "assignment-sha-mismatch",
+     "assignment": "docs/delivery/assignments/DG6/T-DG6-FE-Z3.md",
+     "run_id": "DG6-T-DG6-FE-Z3-frontend-ux-engineer-20261105T084325Z-861f32a9",
+     "recorded": "ae622048f0e8dac1c5fd4b4186d1d075cc77f4661ee613a3548ea4b374334292",
+     "current": "d300c7ed3d1efe9c3fdddb5adecae39de9b2428f1f4554f6002bc407b085d964"
+    }
+   ],
+   "notes": [
+    {
+     "kind": "elements-supplied-by-reference",
+     "detail": "present only in a file the assignment names as binding (one level)",
+     "count": 2,
+     "items": [
+      {
+       "assignment": "docs/delivery/assignments/DG6/T-DG6-BE-Z2B.md",
+       "elements": [
+        "stage_id",
+        "task_and_requirement_ids",
+        "base_revision",
+        "dependency_status"
+       ],
+       "via": [
+        "docs/delivery/assignments/DG6/T-DG6-BE-Z2.md"
+       ]
+      },
+      {
+       "assignment": "docs/delivery/assignments/DG6/T-DG6-FE-Z1B.md",
+       "elements": [
+        "stage_id",
+        "task_and_requirement_ids",
+        "base_revision",
+        "constraints",
+        "input_output_contracts",
+        "dependency_status"
+       ],
+       "via": [
+        "docs/delivery/assignments/DG6/T-DG6-FE-Z1.md"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "C3",
+   "name": "handback-sections",
+   "requirement": "REQ-DLV-012",
+   "clause": "every implementation task in a gate has a handback with the five sections",
+   "stage": "DG6",
+   "status": "HIT",
+   "stats": {
+    "implementation_handbacks": 133,
+    "sections": [
+     "Changed files",
+     "Behaviour delivered, per requirement",
+     "Checks actually run",
+     "Known gaps / not done",
+     "Merge instructions"
+    ]
+   },
+   "hits": [
+    {
+     "stage": "DG6",
+     "kind": "handback-missing-sections",
+     "handback": "docs/delivery/handbacks/DG6/T-DG6-ARCH-01-solution-architect.md",
+     "role": "solution-architect",
+     "missing": [
+      "known_gaps"
+     ]
+    },
+    {
+     "stage": "DG6",
+     "kind": "handback-missing-sections",
+     "handback": "docs/delivery/handbacks/DG6/T-DG6-ARCH-02-solution-architect.md",
+     "role": "solution-architect",
+     "missing": [
+      "known_gaps"
+     ]
+    },
+    {
+     "stage": "DG6",
+     "kind": "handback-missing-sections",
+     "handback": "docs/delivery/handbacks/DG6/T-DG6-ARCH-05-solution-architect.md",
+     "role": "solution-architect",
+     "missing": [
+      "known_gaps"
+     ]
+    },
+    {
+     "stage": "DG6",
+     "kind": "handback-missing-sections",
+     "handback": "docs/delivery/handbacks/DG6/T-DG6-ARCH-07-solution-architect.md",
+     "role": "solution-architect",
+     "missing": [
+      "behaviour"
+     ]
+    },
+    {
+     "stage": "DG6",
+     "kind": "handback-missing-sections",
+     "handback": "docs/delivery/handbacks/DG6/T-DG6-ARCH-08-solution-architect.md",
+     "role": "solution-architect",
+     "missing": [
+      "behaviour"
+     ]
+    },
+    {
+     "stage": "DG6",
+     "kind": "handback-missing-sections",
+     "handback": "docs/delivery/handbacks/DG6/T-DG6-ARCH-09-solution-architect.md",
+     "role": "solution-architect",
+     "missing": [
+      "behaviour"
+     ]
+    },
+    {
+     "stage": "DG6",
+     "kind": "handback-missing-sections",
+     "handback": "docs/delivery/handbacks/DG6/T-DG6-ARCH-10-solution-architect.md",
+     "role": "solution-architect",
+     "missing": [
+      "behaviour"
+     ]
+    },
+    {
+     "stage": "DG6",
+     "kind": "handback-missing-sections",
+     "handback": "docs/delivery/handbacks/DG6/T-DG6-BE-Z10-backend-workflow-engineer.md",
+     "role": "backend-workflow-engineer",
+     "missing": [
+      "behaviour"
+     ]
+    },
+    {
+     "stage": "DG6",
+     "kind": "handback-missing-sections",
+     "handback": "docs/delivery/handbacks/DG6/T-DG6-DO-A-devops-engineer.md",
+     "role": "devops-engineer",
+     "missing": [
+      "merge_instructions"
+     ]
+    },
+    {
+     "stage": "DG6",
+     "kind": "handback-missing-sections",
+     "handback": "docs/delivery/handbacks/DG6/T-DG6-DO-Z1-devops-engineer.md",
+     "role": "devops-engineer",
+     "missing": [
+      "behaviour"
+     ]
+    },
+    {
+     "stage": "DG6",
+     "kind": "handback-missing-sections",
+     "handback": "docs/delivery/handbacks/DG6/T-DG6-FE-G-frontend-ux-engineer.md",
+     "role": "frontend-ux-engineer",
+     "missing": [
+      "merge_instructions"
+     ]
+    },
+    {
+     "stage": "DG6",
+     "kind": "handback-missing-sections",
+     "handback": "docs/delivery/handbacks/DG6/T-DG6-FE-X1B-frontend-ux-engineer.md",
+     "role": "frontend-ux-engineer",
+     "missing": [
+      "changed_files"
+     ]
+    },
+    {
+     "stage": "DG6",
+     "kind": "handback-missing-sections",
+     "handback": "docs/delivery/handbacks/DG6/T-DG6-FE-Z3-R6-frontend-ux-engineer.md",
+     "role": "frontend-ux-engineer",
+     "missing": [
+      "merge_instructions"
+     ]
+    }
+   ],
+   "notes": [
+    {
+     "kind": "implementation-runs-without-conventional-handback",
+     "detail": "task id has no docs/delivery/handbacks/<stage>/<task>-<role>.md (plan or orphaned runs; a re-run's handback is under the same task)",
+     "runs": [
+      {
+       "run_id": "DG6-T-DG6-ARCH-03B-solution-architect-20261026T213321Z-ab5648ce",
+       "task": "T-DG6-ARCH-03B",
+       "other_handback_paths": [
+        "docs/delivery/handbacks/DG6/T-DG6-ARCH-03-solution-architect.md"
+       ]
+      },
+      {
+       "run_id": "DG6-T-DG6-BE-BB-backend-workflow-engineer-20261026T213341Z-880b860b",
+       "task": "T-DG6-BE-BB",
+       "other_handback_paths": []
+      },
+      {
+       "run_id": "DG6-T-DG6-BE-EB-backend-workflow-engineer-20261026T213401Z-bd01601b",
+       "task": "T-DG6-BE-EB",
+       "other_handback_paths": [
+        "docs/delivery/handbacks/DG6/T-DG6-BE-E-backend-workflow-engineer.md"
+       ]
+      },
+      {
+       "run_id": "DG6-T-DG6-BE-H2-backend-workflow-engineer-20261030T025609Z-11978afe",
+       "task": "T-DG6-BE-H2",
+       "other_handback_paths": []
+      },
+      {
+       "run_id": "DG6-T-DG6-BE-X3-backend-workflow-engineer-20261031T002449Z-c695c67a",
+       "task": "T-DG6-BE-X3",
+       "other_handback_paths": []
+      },
+      {
+       "run_id": "DG6-T-DG6-BE-Z2B-backend-workflow-engineer-20261104T015333Z-ef0a43a0",
+       "task": "T-DG6-BE-Z2B",
+       "other_handback_paths": [
+        "docs/delivery/handbacks/DG6/T-DG6-BE-Z2-backend-workflow-engineer.md"
+       ]
+      },
+      {
+       "run_id": "DG6-T-DG6-FE-AB-frontend-ux-engineer-20261026T213421Z-0bf23010",
+       "task": "T-DG6-FE-AB",
+       "other_handback_paths": [
+        "docs/delivery/handbacks/DG6/T-DG6-FE-A-frontend-ux-engineer.md"
+       ]
+      },
+      {
+       "run_id": "DG6-T-DG6-FE-X1-frontend-ux-engineer-20261031T002509Z-95b47d73",
+       "task": "T-DG6-FE-X1",
+       "other_handback_paths": []
+      },
+      {
+       "run_id": "DG6-T-DG6-FE-Z1B-frontend-ux-engineer-20261104T042216Z-c80144bd",
+       "task": "T-DG6-FE-Z1B",
+       "other_handback_paths": [
+        "docs/delivery/handbacks/DG6/T-DG6-FE-Z1-frontend-ux-engineer.md"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "C4",
+   "name": "file-ownership",
+   "requirement": "REQ-DLV-008",
+   "clause": "no two concurrently active assignments share a writable file",
+   "stage": "DG6",
+   "status": "HIT",
+   "stats": {
+    "concurrent_pairs": 164,
+    "pairs_with_both_declarations": 5,
+    "assignments": 156,
+    "assignments_without_declared_paths": 146
+   },
+   "hits": [
+    {
+     "stage": "DG6",
+     "kind": "concurrent-assignments-declare-same-file",
+     "runs": [
+      "DG6-T-DG6-QA-A-qa-verifier-20261030T195616Z-73e24ae4",
+      "DG6-T-DG6-QA-B-qa-verifier-20261030T200721Z-edb39ee5"
+     ],
+     "assignments": [
+      "docs/delivery/assignments/DG6/T-DG6-QA-A.md",
+      "docs/delivery/assignments/DG6/T-DG6-QA-B.md"
+     ],
+     "declared_from": [
+      "assignment",
+      "assignment"
+     ],
+     "overlap": [
+      "2026-10-30T20:07:21.000Z",
+      "2026-10-30T21:02:25.000Z"
+     ],
+     "shared_written": [],
+     "shared_declared": [
+      "tests/qa/support/api.ts",
+      "tests/qa/support/with-pg.sh"
+     ],
+     "scope_overlap": [
+      "tests/qa/**",
+      "tests/qa/** ~ tests/qa/integration/**",
+      "tests/qa/** ~ tests/qa/support/api.ts",
+      "tests/qa/** ~ tests/qa/support/with-pg.sh",
+      "tests/qa/** ~ tests/qa/unit/**",
+      "tests/qa/integration/** ~ tests/qa/**",
+      "tests/qa/integration/**",
+      "tests/qa/support/api.ts ~ tests/qa/**",
+      "tests/qa/support/with-pg.sh ~ tests/qa/**",
+      "tests/qa/unit/** ~ tests/qa/**"
+     ]
+    },
+    {
+     "stage": "DG6",
+     "kind": "concurrent-assignments-declare-same-file",
+     "runs": [
+      "DG6-T-DG6-QA-A-qa-verifier-20261030T195616Z-73e24ae4",
+      "DG6-T-DG6-QA-C-qa-verifier-20261030T201852Z-8d8ff489"
+     ],
+     "assignments": [
+      "docs/delivery/assignments/DG6/T-DG6-QA-A.md",
+      "docs/delivery/assignments/DG6/T-DG6-QA-C.md"
+     ],
+     "declared_from": [
+      "assignment",
+      "assignment"
+     ],
+     "overlap": [
+      "2026-10-30T20:18:52.000Z",
+      "2026-10-30T21:06:41.000Z"
+     ],
+     "shared_written": [],
+     "shared_declared": [
+      "tests/qa/support/api.ts",
+      "tests/qa/support/with-pg.sh"
+     ],
+     "scope_overlap": [
+      "tests/qa/**",
+      "tests/qa/** ~ tests/qa/integration/**",
+      "tests/qa/** ~ tests/qa/support/api.ts",
+      "tests/qa/** ~ tests/qa/support/with-pg.sh",
+      "tests/qa/** ~ tests/qa/unit/**",
+      "tests/qa/integration/** ~ tests/qa/**",
+      "tests/qa/integration/**",
+      "tests/qa/support/api.ts ~ tests/qa/**",
+      "tests/qa/support/with-pg.sh ~ tests/qa/**",
+      "tests/qa/unit/** ~ tests/qa/**"
+     ]
+    },
+    {
+     "stage": "DG6",
+     "kind": "concurrent-assignments-declare-same-file",
+     "runs": [
+      "DG6-T-DG6-QA-B-qa-verifier-20261030T200721Z-edb39ee5",
+      "DG6-T-DG6-QA-C-qa-verifier-20261030T201852Z-8d8ff489"
+     ],
+     "assignments": [
+      "docs/delivery/assignments/DG6/T-DG6-QA-B.md",
+      "docs/delivery/assignments/DG6/T-DG6-QA-C.md"
+     ],
+     "declared_from": [
+      "assignment",
+      "assignment"
+     ],
+     "overlap": [
+      "2026-10-30T20:18:52.000Z",
+      "2026-10-30T21:02:25.000Z"
+     ],
+     "shared_written": [],
+     "shared_declared": [
+      "tests/qa/support/api.ts",
+      "tests/qa/support/with-pg.sh"
+     ],
+     "scope_overlap": [
+      "tests/qa/**",
+      "tests/qa/** ~ tests/qa/integration/**",
+      "tests/qa/** ~ tests/qa/support/api.ts",
+      "tests/qa/** ~ tests/qa/support/with-pg.sh",
+      "tests/qa/** ~ tests/qa/unit/**",
+      "tests/qa/integration/** ~ tests/qa/**",
+      "tests/qa/integration/**",
+      "tests/qa/support/api.ts ~ tests/qa/**",
+      "tests/qa/support/with-pg.sh ~ tests/qa/**",
+      "tests/qa/unit/** ~ tests/qa/**"
+     ]
+    },
+    {
+     "stage": "DG6",
+     "kind": "concurrent-assignments-declare-same-file",
+     "runs": [
+      "DG6-T-DG6-QA-EB-qa-verifier-20261031T040946Z-b0553a8a",
+      "DG6-T-DG6-QA-F-qa-verifier-20261031T041046Z-7e25d4f0"
+     ],
+     "assignments": [
+      "docs/delivery/assignments/DG6/T-DG6-QA-EB.md",
+      "docs/delivery/assignments/DG6/T-DG6-QA-F.md"
+     ],
+     "declared_from": [
+      "assignment",
+      "assignment"
+     ],
+     "overlap": [
+      "2026-10-31T04:10:46.000Z",
+      "2026-10-31T05:15:32.000Z"
+     ],
+     "shared_written": [],
+     "shared_declared": [
+      "tests/qa/support/api.ts",
+      "tests/qa/support/with-pg.sh"
+     ],
+     "scope_overlap": [
+      "tests/qa/**",
+      "tests/qa/** ~ tests/qa/integration/**",
+      "tests/qa/** ~ tests/qa/support/api.ts",
+      "tests/qa/** ~ tests/qa/support/with-pg.sh",
+      "tests/qa/** ~ tests/qa/unit/**",
+      "tests/qa/integration/** ~ tests/qa/**",
+      "tests/qa/integration/**",
+      "tests/qa/support/api.ts ~ tests/qa/**",
+      "tests/qa/support/with-pg.sh ~ tests/qa/**",
+      "tests/qa/unit/** ~ tests/qa/**"
+     ]
+    },
+    {
+     "stage": "DG6",
+     "kind": "concurrent-assignments-declare-same-file",
+     "runs": [
+      "DG6-T-DG6-QA-F-qa-verifier-20261031T041046Z-7e25d4f0",
+      "DG6-T-DG6-QA-G-qa-verifier-20261031T052339Z-b5203705"
+     ],
+     "assignments": [
+      "docs/delivery/assignments/DG6/T-DG6-QA-F.md",
+      "docs/delivery/assignments/DG6/T-DG6-QA-G.md"
+     ],
+     "declared_from": [
+      "assignment",
+      "assignment"
+     ],
+     "overlap": [
+      "2026-10-31T05:23:39.000Z",
+      "2026-10-31T05:30:24.000Z"
+     ],
+     "shared_written": [],
+     "shared_declared": [
+      "tests/qa/support/api.ts",
+      "tests/qa/support/with-pg.sh"
+     ],
+     "scope_overlap": [
+      "tests/qa/**",
+      "tests/qa/** ~ tests/qa/integration/**",
+      "tests/qa/** ~ tests/qa/support/api.ts",
+      "tests/qa/** ~ tests/qa/support/with-pg.sh",
+      "tests/qa/** ~ tests/qa/unit/**",
+      "tests/qa/integration/** ~ tests/qa/**",
+      "tests/qa/integration/**",
+      "tests/qa/support/api.ts ~ tests/qa/**",
+      "tests/qa/support/with-pg.sh ~ tests/qa/**",
+      "tests/qa/unit/** ~ tests/qa/**"
+     ]
+    }
+   ],
+   "notes": [
+    {
+     "kind": "assignments-without-declared-paths",
+     "detail": "no permitted-files list or work-split section found; only actual writes (written_by_tools) are compared for these",
+     "count": 146,
+     "assignments": [
+      "docs/delivery/assignments/DG6/T-DG6-AN-P6A.md",
+      "docs/delivery/assignments/DG6/T-DG6-AN-P6B.md",
+      "docs/delivery/assignments/DG6/T-DG6-AN-P6C.md",
+      "docs/delivery/assignments/DG6/T-DG6-AN-Z1.md",
+      "docs/delivery/assignments/DG6/T-DG6-AN-Z2.md",
+      "docs/delivery/assignments/DG6/T-DG6-AN-Z3.md",
+      "docs/delivery/assignments/DG6/T-DG6-AN-Z4.md",
+      "docs/delivery/assignments/DG6/T-DG6-ARCH-00.md",
+      "docs/delivery/assignments/DG6/T-DG6-ARCH-01.md",
+      "docs/delivery/assignments/DG6/T-DG6-ARCH-02.md",
+      "docs/delivery/assignments/DG6/T-DG6-ARCH-03B.md",
+      "docs/delivery/assignments/DG6/T-DG6-ARCH-04.md",
+      "docs/delivery/assignments/DG6/T-DG6-ARCH-05.md",
+      "docs/delivery/assignments/DG6/T-DG6-ARCH-07.md",
+      "docs/delivery/assignments/DG6/T-DG6-ARCH-08.md",
+      "docs/delivery/assignments/DG6/T-DG6-ARCH-09.md",
+      "docs/delivery/assignments/DG6/T-DG6-ARCH-10.md",
+      "docs/delivery/assignments/DG6/T-DG6-ARCH-12.md",
+      "docs/delivery/assignments/DG6/T-DG6-ARCH-13.md",
+      "docs/delivery/assignments/DG6/T-DG6-ARCH-14.md",
+      "docs/delivery/assignments/DG6/T-DG6-ARCH-15.md",
+      "docs/delivery/assignments/DG6/T-DG6-ARCH-16.md",
+      "docs/delivery/assignments/DG6/T-DG6-ARCH-17.md",
+      "docs/delivery/assignments/DG6/round-4/release-auditor.md",
+      "docs/delivery/assignments/DG6/round-8/release-auditor.md",
+      "docs/delivery/assignments/DG6/round-9/release-auditor.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-A.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-B2.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-BB.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-C.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-C2.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-D.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-EB.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-F.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-G.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-H2.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-H2B.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-I2.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-J.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-K.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-K2.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-K2S.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-L.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-L2.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-M.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-M2.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-N.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-N2.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-P.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-P2.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-Q.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-Q2.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-R.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-RG1.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-RG2.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-RG3.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-S.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-T.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-V.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-W.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-X1.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-X10.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-X2.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-X3.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-X3B.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-X4.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-X5.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-X6.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-X7.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-X8.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-X9.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-Y1.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-Y2.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-Y3.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-Y4.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-Y5.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-Y6.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-Z1.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-Z10.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-Z10B.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-Z11.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-Z12.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-Z12B.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-Z13.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-Z13B.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-Z13C.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-Z14.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-Z15.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-Z2B.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-Z3.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-Z4.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-Z5.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-Z6.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-Z7B.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-Z8.md",
+      "docs/delivery/assignments/DG6/T-DG6-BE-Z9.md",
+      "docs/delivery/assignments/DG6/T-DG6-DO-A.md",
+      "docs/delivery/assignments/DG6/T-DG6-DO-A2.md",
+      "docs/delivery/assignments/DG6/T-DG6-DO-B.md",
+      "docs/delivery/assignments/DG6/T-DG6-DO-C.md",
+      "docs/delivery/assignments/DG6/T-DG6-DO-D.md",
+      "docs/delivery/assignments/DG6/T-DG6-DO-E.md",
+      "docs/delivery/assignments/DG6/T-DG6-DO-FB.md",
+      "docs/delivery/assignments/DG6/T-DG6-DO-G.md",
+      "docs/delivery/assignments/DG6/T-DG6-DO-H.md",
+      "docs/delivery/assignments/DG6/T-DG6-DO-Y1.md",
+      "docs/delivery/assignments/DG6/T-DG6-DO-Y2.md",
+      "docs/delivery/assignments/DG6/T-DG6-DO-Z1.md",
+      "docs/delivery/assignments/DG6/T-DG6-FE-AB.md",
+      "docs/delivery/assignments/DG6/T-DG6-FE-B.md",
+      "docs/delivery/assignments/DG6/T-DG6-FE-C.md",
+      "docs/delivery/assignments/DG6/T-DG6-FE-D.md",
+      "docs/delivery/assignments/DG6/T-DG6-FE-D2.md",
+      "docs/delivery/assignments/DG6/T-DG6-FE-E.md",
+      "docs/delivery/assignments/DG6/T-DG6-FE-F.md",
+      "docs/delivery/assignments/DG6/T-DG6-FE-F2.md",
+      "docs/delivery/assignments/DG6/T-DG6-FE-G.md",
+      "docs/delivery/assignments/DG6/T-DG6-FE-RG1.md",
+      "docs/delivery/assignments/DG6/T-DG6-FE-X1.md",
+      "docs/delivery/assignments/DG6/T-DG6-FE-X1B.md",
+      "docs/delivery/assignments/DG6/T-DG6-FE-X3.md",
+      "docs/delivery/assignments/DG6/T-DG6-FE-Y1.md",
+      "docs/delivery/assignments/DG6/T-DG6-FE-Z16.md",
+      "docs/delivery/assignments/DG6/T-DG6-FE-Z1B.md",
+      "docs/delivery/assignments/DG6/T-DG6-FE-Z2.md",
+      "docs/delivery/assignments/DG6/T-DG6-FE-Z3.md",
+      "docs/delivery/assignments/DG6/T-DG6-FE-Z4.md",
+      "docs/delivery/assignments/DG6/T-DG6-KBE-A.md",
+      "docs/delivery/assignments/DG6/T-DG6-KBE-B.md",
+      "docs/delivery/assignments/DG6/round-1/code-security-reviewer.md",
+      "docs/delivery/assignments/DG6/round-2/code-security-reviewer.md",
+      "docs/delivery/assignments/DG6/round-3/code-security-reviewer.md",
+      "docs/delivery/assignments/DG6/round-5/code-security-reviewer.md",
+      "docs/delivery/assignments/DG6/round-7/code-security-reviewer.md",
+      "docs/delivery/assignments/DG6/round-1/domain-reviewer.md",
+      "docs/delivery/assignments/DG6/round-2/domain-reviewer.md",
+      "docs/delivery/assignments/DG6/round-3/domain-reviewer.md",
+      "docs/delivery/assignments/DG6/round-5/domain-reviewer.md",
+      "docs/delivery/assignments/DG6/round-6/domain-reviewer.md",
+      "docs/delivery/assignments/DG6/round-7/domain-reviewer.md",
+      "docs/delivery/assignments/DG6/round-1/qa-verifier.md",
+      "docs/delivery/assignments/DG6/round-2/qa-verifier.md",
+      "docs/delivery/assignments/DG6/round-3/qa-verifier.md",
+      "docs/delivery/assignments/DG6/round-5/qa-verifier.md",
+      "docs/delivery/assignments/DG6/round-6/qa-verifier.md",
+      "docs/delivery/assignments/DG6/round-7/qa-verifier.md"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "C5",
+   "name": "historical-first",
+   "requirement": "REQ-DLV-024",
+   "clause": "for each of P1-P7, test-evidence contains a passing --historical run for the previous gate, dated before the stage's first implementation run",
+   "stage": "DG6",
+   "status": "HIT",
+   "stats": {
+    "previous_gate": "DG5",
+    "first_implementation_run": {
+     "run_id": "DG6-T-DG6-BE-A-backend-workflow-engineer-20261026T164021Z-5a73b485",
+     "started_at": "2026-10-26T16:40:21Z"
+    },
+    "first_implementer_role_run": {
+     "run_id": "DG6-T-DG6-ARCH-00-solution-architect-20261026T134043Z-7827e3ce",
+     "role": "solution-architect",
+     "started_at": "2026-10-26T13:40:43Z"
+    },
+    "test_evidence_files": 45,
+    "passing_before_first_implementation": [],
+    "records_stating_the_run": 130
+   },
+   "hits": [
+    {
+     "stage": "DG6",
+     "kind": "historical-evidence-not-before-first-implementation",
+     "previous_gate": "DG5",
+     "first_implementation_run": {
+      "run_id": "DG6-T-DG6-BE-A-backend-workflow-engineer-20261026T164021Z-5a73b485",
+      "started_at": "2026-10-26T16:40:21Z"
+     },
+     "test_evidence_found": [
+      {
+       "path": "docs/delivery/test-evidence/DG6/audit/round-4/09-decisions.log",
+       "passed": true,
+       "dated": "2026-11-11T06:42:29Z",
+       "date_source": "finished_at of DG6-T-DG6-AUDIT-RG-R4-release-auditor-20261111T060928Z-11aff7a3"
+      },
+      {
+       "path": "docs/delivery/test-evidence/DG6/audit/round-4/12-validators.log",
+       "passed": true,
+       "dated": "2026-11-11T06:42:29Z",
+       "date_source": "finished_at of DG6-T-DG6-AUDIT-RG-R4-release-auditor-20261111T060928Z-11aff7a3"
+      },
+      {
+       "path": "docs/delivery/test-evidence/DG6/audit/round-4/13-final-verification-v17.log",
+       "passed": true,
+       "dated": "2026-11-11T06:42:29Z",
+       "date_source": "finished_at of DG6-T-DG6-AUDIT-RG-R4-release-auditor-20261111T060928Z-11aff7a3"
+      },
+      {
+       "path": "docs/delivery/test-evidence/DG6/audit/round-8/02-validate-historical-DG5.log",
+       "passed": true,
+       "dated": "2026-11-12T10:55:35Z",
+       "date_source": "finished_at of DG6-T-DG6-AUDIT-RG-R8-release-auditor-20261112T103628Z-dd36eb14"
+      },
+      {
+       "path": "docs/delivery/test-evidence/DG6/audit/round-9/03b-full-review-scope.log",
+       "passed": true,
+       "dated": "2026-11-12T11:27:56Z",
+       "date_source": "finished_at of DG6-T-DG6-AUDIT-RG-R9-release-auditor-20261112T105929Z-1f0837be"
+      },
+      {
+       "path": "docs/delivery/test-evidence/DG6/audit/round-9/09-decisions.log",
+       "passed": true,
+       "dated": "2026-11-12T11:27:56Z",
+       "date_source": "finished_at of DG6-T-DG6-AUDIT-RG-R9-release-auditor-20261112T105929Z-1f0837be"
+      },
+      {
+       "path": "docs/delivery/test-evidence/DG6/audit/round-9/12-validators.log",
+       "passed": true,
+       "dated": "2026-11-12T11:27:56Z",
+       "date_source": "finished_at of DG6-T-DG6-AUDIT-RG-R9-release-auditor-20261112T105929Z-1f0837be"
+      },
+      {
+       "path": "docs/delivery/test-evidence/DG6/code-security/round-1/40-validators.log",
+       "passed": true,
+       "dated": "2026-11-10T12:25:58Z",
+       "date_source": "finished_at of DG6-T-DG6-REV-CS-RG-R1-code-security-reviewer-20261110T083448Z-957b9774"
+      },
+      {
+       "path": "docs/delivery/test-evidence/DG6/code-security/round-2/40-validators.log",
+       "passed": true,
+       "dated": "2026-11-10T19:28:07Z",
+       "date_source": "finished_at of DG6-T-DG6-REV-DOM-RG-R2-domain-reviewer-20261110T181358Z-a2e3763a"
+      },
+      {
+       "path": "docs/delivery/test-evidence/DG6/code-security/round-3/45-validators.log",
+       "passed": true,
+       "dated": "2026-11-11T02:53:51Z",
+       "date_source": "finished_at of DG6-T-DG6-REV-DOM-RG-R3-domain-reviewer-20261111T014653Z-2c1ec3f6"
+      }
+     ],
+     "stated_in_records": [
+      "docs/delivery/handbacks/DG6/T-DG6-AN-P6A-transformation-analyst.md",
+      "docs/delivery/handbacks/DG6/T-DG6-AN-P6B-transformation-analyst.md",
+      "docs/delivery/handbacks/DG6/T-DG6-AN-P6C-transformation-analyst.md",
+      "docs/delivery/handbacks/DG6/T-DG6-AN-Z3-transformation-analyst.md",
+      "docs/delivery/handbacks/DG6/T-DG6-ARCH-00-solution-architect.md",
+      "docs/delivery/handbacks/DG6/T-DG6-ARCH-01-solution-architect.md",
+      "docs/delivery/handbacks/DG6/T-DG6-ARCH-02-solution-architect.md",
+      "docs/delivery/handbacks/DG6/T-DG6-ARCH-03-solution-architect.md",
+      "docs/delivery/handbacks/DG6/T-DG6-ARCH-04-solution-architect.md",
+      "docs/delivery/handbacks/DG6/T-DG6-ARCH-05-solution-architect.md",
+      "docs/delivery/handbacks/DG6/T-DG6-ARCH-06-solution-architect.md",
+      "docs/delivery/handbacks/DG6/T-DG6-ARCH-07-solution-architect.md",
+      "docs/delivery/handbacks/DG6/T-DG6-ARCH-08-solution-architect.md",
+      "docs/delivery/handbacks/DG6/T-DG6-ARCH-09-solution-architect.md",
+      "docs/delivery/handbacks/DG6/T-DG6-ARCH-10-solution-architect.md"
+     ],
+     "stated_by_runs_started_before_first_implementation": [
+      {
+       "handback": "docs/delivery/handbacks/DG6/T-DG6-ARCH-00-solution-architect.md",
+       "run_id": "DG6-T-DG6-ARCH-00-solution-architect-20261026T134043Z-7827e3ce",
+       "run_started_at": "2026-10-26T13:40:43Z",
+       "run_finished_at": "2026-10-26T14:08:31Z"
+      },
+      {
+       "handback": "docs/delivery/handbacks/DG6/T-DG6-ARCH-01-solution-architect.md",
+       "run_id": "DG6-T-DG6-ARCH-01-solution-architect-20261026T141307Z-bd4d7c55",
+       "run_started_at": "2026-10-26T14:13:07Z",
+       "run_finished_at": "2026-10-26T16:27:25Z"
+      },
+      {
+       "handback": "docs/delivery/handbacks/DG6/T-DG6-ARCH-02-solution-architect.md",
+       "run_id": "DG6-T-DG6-ARCH-02-solution-architect-20261026T164001Z-7203495f",
+       "run_started_at": "2026-10-26T16:40:01Z",
+       "run_finished_at": "2026-10-26T18:02:34Z"
+      }
+     ]
+    }
+   ],
+   "notes": []
+  },
+  {
+   "id": "C6",
+   "name": "progress-updates",
+   "requirement": "REQ-DLV-028; REQ-DLV-012",
+   "clause": "for each approved gate, progress.md has an update with all six elements and the candidate ID matching gates/DGx.json; any task whose handback lists open gaps is not reported as complete in progress.md",
+   "stage": "DG6",
+   "status": "HIT",
+   "stats": {
+    "gate_decision": "APPROVED",
+    "progress_versions_read": 97,
+    "gate_update": {
+     "version": "working-tree",
+     "elements_present": 5,
+     "of": 6
+    },
+    "handbacks_with_open_gaps": 44
+   },
+   "hits": [
+    {
+     "stage": "DG6",
+     "kind": "gate-update-missing-elements",
+     "candidate_prefix": "10f71f24",
+     "best_update": {
+      "version": "working-tree",
+      "missing": [
+       "capabilities"
+      ],
+      "excerpt": "## 2026-11-12: DG6 APPROVED\n\n- Audit part 1 (round 8): PASS, F-DG6-952 ACCEPTED_OBSERVATION (qa-verifier, release-auditor), imported.\n- Audit part 2 (round 9, T-DG6-AUDIT-RG-R9): PASS, `gates/DG6.json` decision APPROVED on candidate `10f71f"
+     }
+    }
+   ],
+   "notes": []
+  },
+  {
+   "id": "C7",
+   "name": "three-failed-fixes",
+   "requirement": "REQ-DLV-018",
+   "clause": "any finding with three failed fix verifications has a blocker entry with a recovery plan in progress.md and stages.json",
+   "stage": "DG6",
+   "status": "PASS",
+   "stats": {
+    "findings": 10,
+    "findings_with_failed_fix_verifications": 0,
+    "max_failed": 0,
+    "counted": []
+   },
+   "hits": [],
+   "notes": [
+    {
+     "kind": "scope",
+     "detail": "counts history transitions FIXED_PENDING_VERIFICATION -> OPEN in docs/delivery/findings.json on this branch; findings of superseded branches (clean re-gates) are not in this file"
+    }
+   ]
+  },
+  {
+   "id": "C8",
+   "name": "approval-claims",
+   "requirement": "REQ-DLV-027",
+   "clause": "no record claims a business, Finance, IT or production approval; no text equates product G6 with DG7 (CLAUDE.md)",
+   "stage": "all-selected",
+   "status": "PASS",
+   "stats": {
+    "files_scanned": 641,
+    "sentences_scanned": 284116
+   },
+   "hits": [],
+   "notes": [
+    {
+     "kind": "method",
+     "detail": "sentence-level patterns; a negation token or a product/demo context word in the sentence suppresses a hit (residual: unusual phrasing)"
+    }
+   ]
+  },
+  {
+   "id": "C9",
+   "name": "stage-continuation",
+   "requirement": "REQ-DLV-027; REQ-DLV-040",
+   "clause": "each next stage enters BUILDING after the prior APPROVED gate; history in order (F-DG6-952 reported as its accepted observation)",
+   "stage": "DG6",
+   "status": "PASS",
+   "stats": {
+    "state": "APPROVED",
+    "transitions": 16,
+    "entered_building": {
+     "previous_gate_approved_at": "2026-10-26T06:30:00Z",
+     "building_at": "2026-10-26T07:30:00Z"
+    }
+   },
+   "hits": [],
+   "notes": []
+  }
+ ]
+}
