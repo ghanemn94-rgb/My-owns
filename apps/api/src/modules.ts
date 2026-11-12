@@ -212,6 +212,28 @@ export const API_MODULES = {
     // A failed run reaches operations through the outbox (an event, p6-plan §2), so integrations never imports it.
     dependsOn: ["platform", "audit", "access", "organization", "transformations", "jobs", "tasks"],
   },
+  // P7 modules (p7-plan §2 "No module cycle"; T-DG7-BE-A). None imports a domain module, and no P1-P6 module imports a
+  // P7 module. transfer and retention reach evidence only for the EvidenceStore port (export package and archive set
+  // bytes) and jobs only for the outbox (their worker jobs); release reads a build-time snapshot.
+  transfer: {
+    responsibility:
+      "Migration exports, the read-only import, reconciliation and identity-rebind views, and configuration bundles imported as drafts (P7 slices C-D)",
+    // The export reads every table through the catalogue-driven plan in @mth/db, never a domain module; each
+    // configuration kind registers its ConfigBundleKindAdapter at composition (server.ts; ADR-0065 §6), the
+    // AutomationActionRegistry pattern. jobs: the transfer.export job is enqueued through the outbox.
+    dependsOn: ["platform", "audit", "access", "evidence", "jobs"],
+  },
+  retention: {
+    responsibility:
+      "Retention classes, retention runs and dry runs, archived-record markers and the backup-set status (P7 slice E)",
+    // The tables of a class are data (0143 retention_table_class, generated from the catalogue), so retention imports no
+    // owning module (ADR-0067 §1). jobs: the retention.archive job is enqueued through the outbox.
+    dependsOn: ["platform", "audit", "access", "evidence", "jobs"],
+  },
+  release: {
+    responsibility: "The in-app requirement register and About, from a build-time register snapshot (P7 slice I)",
+    dependsOn: ["platform", "audit", "access"],
+  },
 } as const satisfies Record<string, { responsibility: string; dependsOn: readonly string[] }>;
 
 export type ApiModule = keyof typeof API_MODULES;
@@ -260,7 +282,13 @@ export const P5_MODULES: readonly ApiModule[] = ["forms", "procedures", "automat
  */
 export const P6_MODULES: readonly ApiModule[] = ["integrations", "search", "assistant", "operations"];
 
-/** Every module directory that exists under src/modules (P1 + P2 + P3 + P4 + P5 + P6). */
+/**
+ * Modules added in P7 (p7-plan §2, §5.1 BE-A): each with a public index.ts and its own test suite. BE-A creates them with
+ * stub route files; the owning tasks fill them (BE-C, BE-D, BE-F: transfer; BE-G: retention; BE-H: release).
+ */
+export const P7_MODULES: readonly ApiModule[] = ["transfer", "retention", "release"];
+
+/** Every module directory that exists under src/modules (P1 + P2 + P3 + P4 + P5 + P6 + P7). */
 export const IMPLEMENTED_MODULES: readonly ApiModule[] = [
   ...P1_MODULES,
   ...P2_MODULES,
@@ -268,6 +296,7 @@ export const IMPLEMENTED_MODULES: readonly ApiModule[] = [
   ...P4_MODULES,
   ...P5_MODULES,
   ...P6_MODULES,
+  ...P7_MODULES,
 ];
 
 /** The six §16 business modules (master prompt M0308; REQ-S16-003 / A12): each exists with its own test suite. */
@@ -283,7 +312,9 @@ export const SECTION16_MODULES = {
   reporting: ["reporting", "search", "assistant"],
   // P5: the form builder is administration (Playbook Studio's form_schema kind, ADR-0041). P6: integrations and
   // operational exceptions are administered (Administration > Integrations, Operations).
-  admin: ["admin", "forms", "integrations", "operations"],
+  // P7 (p7-plan §2): data transfer, retention and the release information are administered (Administration > Data
+  // export, Configuration transfer, Retention, Backups, Requirements, About).
+  admin: ["admin", "forms", "integrations", "operations", "transfer", "retention", "release"],
 } as const satisfies Record<string, readonly ApiModule[]>;
 
 /** P1 scaffolds: they exist, but deliver behaviour in a later stage and register no routes in P1 (D-048). */

@@ -121,6 +121,10 @@ import {
 } from "./modules/portfolio/deliverable-confirmation.ts"; // BE-O (ADR-0055 §6)
 import { registerOperationsModule } from "./modules/operations/index.ts";
 import { registerSearchModule } from "./modules/search/index.ts";
+// P7 modules (p7-plan §2, §5.1; T-DG7-BE-A): each registers its route files (stubs until their owners fill them).
+import { registerReleaseModule } from "./modules/release/index.ts";
+import { registerRetentionModule } from "./modules/retention/index.ts";
+import { registerTransferModule } from "./modules/transfer/index.ts";
 // P4 modules (p4-plan §2 seam 19; T-DG4-BE-A): each registers its route files (stubs until their owners fill them).
 import { registerAdoptionModule, updateStakeholderGroup } from "./modules/adoption/index.ts";
 import { registerBenefitsModule, updateBenefitRecord } from "./modules/benefits/index.ts";
@@ -704,6 +708,18 @@ export async function buildServer(options: ServerOptions): Promise<{
     onConfirmed: async (tx, ctx, confirmed) => void (await recordConnectorConfirmation(tx, ctx, confirmed)),
   });
   setExternalChangeEvidenceGate(requireEvidenceRead);
+  // P7 wiring points (p7-plan §2, §5.1, §5.3; p7-work-split §C.7, §D.1, §E.7; T-DG7-BE-A). No P7 behaviour yet.
+  //  - ConfigBundleKindAdapter registry (ADR-0065 §6; BE-F defines the port and registry in
+  //    transfer/config-bundle/registry.ts): BE-F puts the registry line directly below this block and each kind's owner
+  //    adds one registration line below it (methodology/config-bundle-adapter.ts first, then automation, admin, tasks
+  //    and jobs), so transfer imports no domain module (the AutomationActionRegistry pattern above).
+  //  - RetentionClassRegistry (p7-plan §2; ADR-0067 §1): which tables belong to which retention class is data, the 0143
+  //    `retention_table_class` rows generated from the catalogue and pinned by catalogue.test.ts, so retention imports
+  //    no owning module and no domain registers anything here today. If BE-G needs a per-module hook (for example an
+  //    owning module's reader of the archive set), its registry line goes directly below this block, with one
+  //    registration line per owning module (p7-plan §5.3: BE-G's named wiring lines), and nothing else in this file.
+  //  - EvidenceStore for transfer and retention (the port; p7-work-split §C.7, §E.7): the driver-selecting
+  //    `evidenceStore` above is the one store; BE-C/BE-G pass it to their module on its registration line below.
   const modules: ModuleRegistration[] = [
     registerWorkflowsModule(app, deps, { gateFacts, t08ScheduleFlags }),
     // T-DG4-KBE-C (D-095): kpi requests kpi_version_activation approvals through workflows' approval service, passed
@@ -737,6 +753,10 @@ export async function buildServer(options: ServerOptions): Promise<{
     registerSearchModule(app, deps),
     registerAssistantModule(app, deps),
     registerOperationsModule(app, deps),
+    // P7 modules (p7-plan §2): each reports "scaffold" until a route exists.
+    registerTransferModule(app, deps), // BE-C export, BE-D import, BE-F config-bundle
+    registerRetentionModule(app, deps), // BE-G classes, runs, backups
+    registerReleaseModule(app, deps), // BE-H requirements, about
   ];
 
   if (webRoot) {

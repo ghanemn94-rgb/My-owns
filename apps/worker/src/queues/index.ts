@@ -22,6 +22,9 @@ import { INTEGRATIONS_EVENT_QUEUES, INTEGRATIONS_QUEUES } from "./integrations.t
 import { SEARCH_EVENT_QUEUES, SEARCH_QUEUES } from "./search.ts";
 import { NOTIFICATIONS_EVENT_QUEUES, NOTIFICATIONS_QUEUES } from "./notifications.ts";
 import { OPERATIONS_EVENT_QUEUES, OPERATIONS_QUEUES } from "./operations.ts";
+// P7 domains (T-DG7-BE-A stubs; p7-plan §5.3): one import per new domain, each owned by its task.
+import { TRANSFER_EVENT_QUEUES, TRANSFER_QUEUES } from "./transfer.ts";
+import { RETENTION_EVENT_QUEUES, RETENTION_QUEUES } from "./retention.ts";
 import { PORTFOLIO_EVENT_QUEUES, PORTFOLIO_QUEUES } from "./portfolio.ts"; // T-DG5-BE-J (ADR-0044 §7, §8)
 import { DIGESTS_QUEUES } from "./digests.ts"; // T-DG5-BE-L (ADR-0044 §5, §8)
 import { JOBS_EVENT_QUEUES, JOBS_QUEUES } from "./jobs.ts"; // T-DG5-BE-I2 (ADR-0043 §6): run now
@@ -73,6 +76,8 @@ export const DOMAIN_QUEUES: readonly QueueSpec[] = [
   ...SEARCH_QUEUES, // P6 (T-DG6-BE-A stub)
   ...NOTIFICATIONS_QUEUES, // P6 (T-DG6-BE-A stub)
   ...OPERATIONS_QUEUES, // P6 (T-DG6-BE-A stub)
+  ...TRANSFER_QUEUES, // P7 (T-DG7-BE-A stub; BE-C)
+  ...RETENTION_QUEUES, // P7 (T-DG7-BE-A stub; BE-G)
 ];
 
 /**
@@ -108,6 +113,8 @@ const EVENT_QUEUE_MAPS: readonly Readonly<Record<string, string>>[] = [
   BRANDING_EVENT_QUEUES, // T-DG5-BE-R
   SEARCH_EVENT_QUEUES, // P6 (T-DG6-BE-A stub)
   NOTIFICATIONS_EVENT_QUEUES, // P6 (T-DG6-BE-A stub)
+  TRANSFER_EVENT_QUEUES, // P7 (T-DG7-BE-A stub)
+  RETENTION_EVENT_QUEUES, // P7 (T-DG7-BE-A stub)
 ];
 
 /** Merges the domain maps into event type -> the list of its queues, in registration order, each queue once. */
