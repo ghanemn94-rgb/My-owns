@@ -165,6 +165,14 @@ export const exportJobRequestedV1 = z.strictObject({ exportJobId: uuid });
 export type ExportJobRequestedV1 = z.infer<typeof exportJobRequestedV1>;
 
 /**
+ * P7 slice C (T-DG7-BE-C; ADR-0064 §7): a whole-installation migration export was requested. Written by the API with
+ * the `migration_export.requested` audit event in one transaction; the relay sends it to `transfer.export`. It carries
+ * only the export's id (never row data).
+ */
+export const migrationExportRequestedV1 = z.strictObject({ migrationExportId: uuid });
+export type MigrationExportRequestedV1 = z.infer<typeof migrationExportRequestedV1>;
+
+/**
  * P5 slice J (T-DG5-BE-S; ADR-0050 §6): an in-app demo reset was requested. Written by the API with its audit event in
  * one transaction; the relay sends it to `demo.reset` (singleton key = the idempotency key
  * `demo.reset_requested:<latest run id>`). The worker acknowledges it, then drops, re-creates and re-seeds the demo
@@ -291,6 +299,8 @@ export const OUTBOX_EVENT_SCHEMAS = {
   "data.stale": { 1: dataStaleV1 },
   // T-DG6-BE-I2 (ADR-0054 §3): consumer notifications.fanout (apps/worker queues/notifications.ts).
   "inbox_notification.created": { 1: inboxNotificationCreatedV1 },
+  // T-DG7-BE-C (ADR-0064 §7): consumer transfer.export (apps/worker queues/transfer.ts).
+  "migration_export.requested": { 1: migrationExportRequestedV1 },
 } as const;
 export type OutboxEventType = keyof typeof OUTBOX_EVENT_SCHEMAS;
 

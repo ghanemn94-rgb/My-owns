@@ -1236,7 +1236,7 @@ const declare = (
     labelAr,
   });
 
-/** One declaration per queue of apps/worker/src/queues/**, by queue name (40 at T-DG6-BE-J's revision; 42 with T-DG6-BE-P's; 47 with T-DG6-BE-K2's (two connector jobs of T-DG6-BE-L2 included); 49 with T-DG6-BE-I2's). */
+/** One declaration per queue of apps/worker/src/queues/**, by queue name (40 at T-DG6-BE-J's revision; 42 with T-DG6-BE-P's; 47 with T-DG6-BE-K2's (two connector jobs of T-DG6-BE-L2 included); 49 with T-DG6-BE-I2's; 50 with T-DG7-BE-C's). */
 export const JOB_SERVICE_IDENTITIES: readonly JobIdentityDeclaration[] = Object.freeze([
   declare(
     "adoption.indicator_evaluated",
@@ -1401,6 +1401,10 @@ export const JOB_SERVICE_IDENTITIES: readonly JobIdentityDeclaration[] = Object.
   declare("search.reindex", [TR], "Job: search reindex", "مهمة: إعادة بناء فهرس البحث"),
   declare("sustainment.control_check_scan", [TR], "Job: control check scan", "مهمة: فحص فحوص الضوابط"),
   declare("sustainment.review_scan", [TR], "Job: performance review scan", "مهمة: فحص مراجعات الأداء"),
+  // T-DG7-BE-C (ADR-0064 §7; 0147; D-245 O4): the migration export declares NO permission code. It reads every
+  // exported table as the database role, like a backup; ADR-0053 scoping does not limit it, and nothing pretends it
+  // does. migration.export (ADM_TECH) starts it, every transition is audited, and no API operation returns its output.
+  declare("transfer.export", [], "Job: migration export", "مهمة: تصدير الترحيل"),
   declare(
     "transformation.created",
     [TR, "access.read", "methodology.read"],

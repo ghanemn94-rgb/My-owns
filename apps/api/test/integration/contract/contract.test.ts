@@ -170,6 +170,7 @@ import { exerciseP6BePOperations, P6_MIRRORS_BE_P } from "./p6-exercises-be-p.ts
 import { exerciseP6BeQOperations, P6_MIRRORS_BE_Q } from "./p6-exercises-be-q.ts";
 import { exerciseP6BeTOperations, P6_MIRRORS_BE_T } from "./p6-exercises-be-t.ts";
 import { exerciseP6BeUOperations, P6_MIRRORS_BE_U } from "./p6-exercises-be-u.ts";
+import { exerciseP7BeCOperations, P7_MIRRORS_BE_C } from "./p7-exercises-be-c.ts"; // T-DG7-BE-C
 import { exerciseP6BeWOperations, P6_MIRRORS_BE_W } from "./p6-exercises-be-w.ts";
 import { exerciseP6BeX1Operations, P6_MIRRORS_BE_X1 } from "./p6-exercises-be-x1.ts"; // T-DG6-BE-X1
 import {
@@ -417,6 +418,7 @@ const ZOD_MIRRORS: Record<string, z.ZodType> = {
   ...P6_MIRRORS_BE_U,
   ...P6_MIRRORS_BE_W,
   ...P6_MIRRORS_BE_X1,
+  ...P7_MIRRORS_BE_C, // T-DG7-BE-C
 };
 
 let api: TestApi;
@@ -933,6 +935,9 @@ describe("every operation, validated against the contract and the zod mirrors", 
   it("P6 BE-X1 declared 403s of the evidence reads (p6-exercises-be-x1.ts)", async () => {
     await exerciseP6BeX1Operations(p3());
   }); // T-DG6-BE-X1 (F-DG6-QA-B-1)
+  it("P7 BE-C operations (p7-exercises-be-c.ts): migration exports", async () => {
+    await exerciseP7BeCOperations(p3());
+  });
 
   // T-DG2-ARCH-02 (ADR-0007 §5a): every operation that validates input declares 400.
   it("every GET operation with a path parameter: a malformed id is a declared 400 at /params/<name>; nothing written", async () => {
@@ -1114,7 +1119,9 @@ describe("every operation, validated against the contract and the zod mirrors", 
     // T-DG6-BE-O: + putDeliverableExternalChange, confirmDeliverableExternalChange (2 JSON bodies;
     // getDeliverableConfirmation is a GET). 425 + 2 = 427; JSON 423 + 2 = 425 (reconciled at merge).
     // Merge (orchestrator, measured): BE-O, BE-E2 and BE-U together: 427 + 2 = 429; JSON 425 + 2 = 427.
-    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([429, 427, 1]);
+    // T-DG7-BE-C: + createMigrationExport (1 JSON body; the four other export operations are GETs). 429 + 1 = 430;
+    // JSON 427 + 1 = 428 (measured; reconciled at merge with the other W5 tasks).
+    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([430, 428, 1]);
     expect([byType("text/csv"), byType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")]).toEqual([
       1, 1,
     ]);

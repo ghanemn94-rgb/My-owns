@@ -18,7 +18,8 @@ describe("transfer module (P7)", () => {
       expect(registration.status).toBe(registration.routes.length > 0 ? "active" : "scaffold");
       await app.ready();
       // A stub registers exactly the routes it reports, so a pending operation is never half-routed.
-      expect(app.printRoutes().includes("/api/v1/admin/")).toBe(registration.routes.length > 0);
+      // printRoutes() prints a radix tree, so the prefix appears without its leading slash (T-DG7-BE-C).
+      expect(app.printRoutes().includes("api/v1/admin/")).toBe(registration.routes.length > 0);
     } finally {
       await app.close();
     }

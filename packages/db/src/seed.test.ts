@@ -1156,7 +1156,8 @@ describe("migration files", () => {
     // T-DG7-ARCH-03 ships 0143-0146 from the low end of its range 0143-0149, so the implementers' next free id of that
     // range is 0147 (implementer migrations of 0136-0142 renumber at merge, the runner refusing an id below the
     // highest applied one).
-    expect(numberingViolations([...files, { id: 147, name: "0147_p7_example.sql" }])).toEqual([]);
+    // T-DG7-BE-C ships 0147 (the orchestrator renumbers at the W5 merge if another task shipped it first), so it is 0148.
+    expect(numberingViolations([...files, { id: 148, name: "0148_p7_example.sql" }])).toEqual([]);
     expect(numberingViolations([...files, { id: 164, name: "0164_p7_example.sql" }])).toEqual([
       "0164_p7_example.sql: above 0163",
     ]);

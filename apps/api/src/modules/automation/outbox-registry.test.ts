@@ -48,6 +48,7 @@ const ENQUEUED: Readonly<Record<string, string>> = {
   "data.stale": "worker handlers/operations.ts (kpi.freshness_scan; T-DG6-BE-K2, ADR-0053 §3)",
   // T-DG6-BE-I2 (ADR-0054 §3 step 1): one per notification createWorkItemOnce writes; consumer notifications.fanout.
   "inbox_notification.created": "api tasks/service.ts, worker kit.ts (createWorkItemOnce)",
+  "migration_export.requested": "api transfer/export/service.ts (T-DG7-BE-C; consumer transfer.export)",
 };
 
 /**

@@ -20,6 +20,8 @@ const NOT_TRIGGERS = new Set([
   "connector.run_recovered",
   // T-DG6-BE-I2 (ADR-0054 §3): the channel fan-out's own event (consumed by notifications.fanout only; no catalogue trigger).
   "inbox_notification.created",
+  // T-DG7-BE-C (ADR-0064 §7): the migration export request (consumed by transfer.export only; no catalogue trigger).
+  "migration_export.requested",
 ]);
 
 describe("automation samples (D-164 d)", () => {
