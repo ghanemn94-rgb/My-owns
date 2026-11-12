@@ -267,3 +267,45 @@ jobs:
           docker tag "$MTH_APP_IMAGE" "$REGISTRY/mth-app:$SHA"
           docker push "$REGISTRY/mth-app:$SHA"
           docker logout "$REGISTRY"
+
+  # devops-engineer (T-DG7-DO-A, ADR-0062 §9.1): the release tooling. Self-tests of the archive, tar, service list,
+  # asset scan and licence tools; the service list against Compose; a REHEARSAL archive (fixture demo-data) built from
+  # this commit and verified; and the build from that archive inside a network namespace with no interfaces (offline
+  # install from the store the sandboxed install filled, build, runtime assembly, check-no-cdn, scan-assets).
+  # The archive is an engineering artefact, not an IT approval. Live CI has not been run (D-058).
+  release:
+    needs: [delivery-gates]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24"
+      - name: pnpm at the packageManager version (real binary on PATH; no install scripts)
+        run: npm install --global --ignore-scripts "$(node -p 'require("./package.json").packageManager.split("+")[0]')"
+      - name: bubblewrap for the sandboxed installer and the network namespace (allow unprivileged user namespaces)
+        run: |
+          sudo apt-get update -q && sudo apt-get install -y -q --no-install-recommends bubblewrap
+          if [ -e /proc/sys/kernel/apparmor_restrict_unprivileged_userns ]; then
+            sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          fi
+      - name: Install (sandboxed, frozen lockfile; BLOCKED without bubblewrap - never an unsandboxed fallback)
+        run: deploy/scripts/ci-install-deps.sh
+      - name: Release tooling self-tests (T-A1..T-A11; Node 24 refuses a directory argument)
+        run: node --test tools/release/tests/*.test.mjs licenses/tests/*.test.mjs
+      - name: Service list matches the Compose files
+        run: node tools/release/service-list.mjs --check
+      - name: SBOM, licence inventory, procurement flag and direct-dependency pins
+        run: node licenses/generate-sbom.mjs --check
+      - name: Rehearsal archive from this commit, verified
+        run: |
+          mkdir -p dist/release
+          node tools/release/build-archive.mjs --commit "$(git rev-parse HEAD)" \
+            --demo-data tools/release/tests/fixtures/demo-data --rehearsal --out dist/release
+          archive="$(ls dist/release/*-REHEARSAL.tar.gz)"
+          node tools/release/build-archive.mjs --verify "$archive" --expect-sha256 "$(cut -c1-64 "$archive.sha256")"
+      - name: Build from the archive with no network (includes scan-assets on the built SPA, runtime tree and config)
+        run: |
+          archive="$(ls dist/release/*-REHEARSAL.tar.gz)"
+          tools/release/build-from-archive.sh "$archive" --sha256 "$(cut -c1-64 "$archive.sha256")" \
+            --store "$(pnpm store path)" --work "$RUNNER_TEMP/build-from-archive"

@@ -1,0 +1,60 @@
+Steps 4-5 of build-from-archive.sh run by hand on the kept work tree (the script stopped at the pre-existing assemble-runtime.sh layout check; the runtime tree had been fully written before that check).
+$ cd $SRC && node scripts/check-no-cdn.mjs apps packages
+PASS no-cdn: scanned apps, packages
+exit=0
+
+web build determinism: vendor-forms source map of this build vs the trial build of an earlier rehearsal archive (same apps/ sources):
+a200f5df8269ad7dee4dbc1ab5a99374efc2c0cc2cfdcedc54fc881a1482f228  apps/web/dist/assets/vendor-forms-DLh3TFGs.js.map
+allow-list entry: apps/web/dist/assets/vendor-forms-DLh3TFGs.js.map a200f5df8269ad7dee4dbc1ab5a99374efc2c0cc2cfdcedc54fc881a1482f228
+
+$ node tools/release/scan-assets.mjs --web $SRC/apps/web/dist --runtime $TMPDIR/bfa-final/runtime --config $SRC
+T3 R2 (unknown) runtime/node_modules/.modules.yaml:613:   "storeDir": "[R2:/var…].1ZZlVX/claude-0/pnpm-store-ro
+T3 R2 @fastify/send@4.1.1 runtime/node_modules/.pnpm/@fastify+send@4.1.1/node_modules/@fastify/send/node_modules/.bin/mime:13:   export NODE_PATH="[R2:/var…].1ZZlVX/claude-0/bfa-final/unp
+T3 R2 @fastify/send@4.1.1 runtime/node_modules/.pnpm/@fastify+send@4.1.1/node_modules/@fastify/send/node_modules/.bin/mime:15:   export NODE_PATH="[R2:/var…].1ZZlVX/claude-0/bfa-final/unp
+T3 R2 docx@9.8.1 runtime/node_modules/.pnpm/docx@9.8.1/node_modules/docx/node_modules/.bin/nanoid:13:   export NODE_PATH="[R2:/var…].1ZZlVX/claude-0/bfa-final/unp
+T3 R2 docx@9.8.1 runtime/node_modules/.pnpm/docx@9.8.1/node_modules/docx/node_modules/.bin/nanoid:15:   export NODE_PATH="[R2:/var…].1ZZlVX/claude-0/bfa-final/unp
+T3 R2 docx@9.8.1 runtime/node_modules/.pnpm/docx@9.8.1/node_modules/docx/node_modules/.bin/xml-js:13:   export NODE_PATH="[R2:/var…].1ZZlVX/claude-0/bfa-final/unp
+T3 R2 docx@9.8.1 runtime/node_modules/.pnpm/docx@9.8.1/node_modules/docx/node_modules/.bin/xml-js:15:   export NODE_PATH="[R2:/var…].1ZZlVX/claude-0/bfa-final/unp
+T3 R2 fastify@5.12.7 runtime/node_modules/.pnpm/fastify@5.12.7/node_modules/fastify/node_modules/.bin/pino:13:   export NODE_PATH="[R2:/var…].1ZZlVX/claude-0/bfa-final/unp
+T3 R2 fastify@5.12.7 runtime/node_modules/.pnpm/fastify@5.12.7/node_modules/fastify/node_modules/.bin/pino:15:   export NODE_PATH="[R2:/var…].1ZZlVX/claude-0/bfa-final/unp
+T3 R2 fastify@5.12.7 runtime/node_modules/.pnpm/fastify@5.12.7/node_modules/fastify/node_modules/.bin/semver:13:   export NODE_PATH="[R2:/var…].1ZZlVX/claude-0/bfa-final/unp
+T3 R2 fastify@5.12.7 runtime/node_modules/.pnpm/fastify@5.12.7/node_modules/fastify/node_modules/.bin/semver:15:   export NODE_PATH="[R2:/var…].1ZZlVX/claude-0/bfa-final/unp
+T3 R2 find-my-way@9.9.0 runtime/node_modules/.pnpm/find-my-way@9.9.0/node_modules/find-my-way/node_modules/.bin/safe-regex2:13:   export NODE_PATH="[R2:/var…].1ZZlVX/claude-0/bfa-final/unp
+T3 R2 find-my-way@9.9.0 runtime/node_modules/.pnpm/find-my-way@9.9.0/node_modules/find-my-way/node_modules/.bin/safe-regex2:15:   export NODE_PATH="[R2:/var…].1ZZlVX/claude-0/bfa-final/unp
+T3 R2 i18next@26.4.2 runtime/node_modules/.pnpm/i18next@26.4.2_typescript@6.0.2/node_modules/i18next/node_modules/.bin/tsc:13:   export NODE_PATH="[R2:/var…].1ZZlVX/claude-0/bfa-final/unp
+T3 R2 i18next@26.4.2 runtime/node_modules/.pnpm/i18next@26.4.2_typescript@6.0.2/node_modules/i18next/node_modules/.bin/tsc:15:   export NODE_PATH="[R2:/var…].1ZZlVX/claude-0/bfa-final/unp
+T3 R2 i18next@26.4.2 runtime/node_modules/.pnpm/i18next@26.4.2_typescript@6.0.2/node_modules/i18next/node_modules/.bin/tsserver:13:   export NODE_PATH="[R2:/var…].1ZZlVX/claude-0/bfa-final/unp
+T3 R2 i18next@26.4.2 runtime/node_modules/.pnpm/i18next@26.4.2_typescript@6.0.2/node_modules/i18next/node_modules/.bin/tsserver:15:   export NODE_PATH="[R2:/var…].1ZZlVX/claude-0/bfa-final/unp
+T3 R2 (unknown) runtime/node_modules/.pnpm/node_modules/.bin/image-size:13:   export NODE_PATH="[R2:/var…].1ZZlVX/claude-0/bfa-final/unp
+T3 R2 (unknown) runtime/node_modules/.pnpm/node_modules/.bin/image-size:15:   export NODE_PATH="[R2:/var…].1ZZlVX/claude-0/bfa-final/unp
+T3 R2 (unknown) runtime/node_modules/.pnpm/node_modules/.bin/mime:13:   export NODE_PATH="[R2:/var…].1ZZlVX/claude-0/bfa-final/unp
+T3 R2 (unknown) runtime/node_modules/.pnpm/node_modules/.bin/mime:15:   export NODE_PATH="[R2:/var…].1ZZlVX/claude-0/bfa-final/unp
+T3 R2 (unknown) runtime/node_modules/.pnpm/node_modules/.bin/nanoid:13:   export NODE_PATH="[R2:/var…].1ZZlVX/claude-0/bfa-final/unp
+T3 R2 (unknown) runtime/node_modules/.pnpm/node_modules/.bin/nanoid:15:   export NODE_PATH="[R2:/var…].1ZZlVX/claude-0/bfa-final/unp
+T3 R2 (unknown) runtime/node_modules/.pnpm/node_modules/.bin/pino:13:   export NODE_PATH="[R2:/var…].1ZZlVX/claude-0/bfa-final/unp
+T3 R2 (unknown) runtime/node_modules/.pnpm/node_modules/.bin/pino:15:   export NODE_PATH="[R2:/var…].1ZZlVX/claude-0/bfa-final/unp
+T3 R2 (unknown) runtime/node_modules/.pnpm/node_modules/.bin/safe-regex2:13:   export NODE_PATH="[R2:/var…].1ZZlVX/claude-0/bfa-final/unp
+T3 R2 (unknown) runtime/node_modules/.pnpm/node_modules/.bin/safe-regex2:15:   export NODE_PATH="[R2:/var…].1ZZlVX/claude-0/bfa-final/unp
+T3 R2 (unknown) runtime/node_modules/.pnpm/node_modules/.bin/semver:13:   export NODE_PATH="[R2:/var…].1ZZlVX/claude-0/bfa-final/unp
+T3 R2 (unknown) runtime/node_modules/.pnpm/node_modules/.bin/semver:15:   export NODE_PATH="[R2:/var…].1ZZlVX/claude-0/bfa-final/unp
+T3 R2 (unknown) runtime/node_modules/.pnpm/node_modules/.bin/uuid:13:   export NODE_PATH="[R2:/var…].1ZZlVX/claude-0/bfa-final/unp
+T3 R2 (unknown) runtime/node_modules/.pnpm/node_modules/.bin/uuid:15:   export NODE_PATH="[R2:/var…].1ZZlVX/claude-0/bfa-final/unp
+T3 R2 (unknown) runtime/node_modules/.pnpm/node_modules/.bin/xml-js:13:   export NODE_PATH="[R2:/var…].1ZZlVX/claude-0/bfa-final/unp
+T3 R2 (unknown) runtime/node_modules/.pnpm/node_modules/.bin/xml-js:15:   export NODE_PATH="[R2:/var…].1ZZlVX/claude-0/bfa-final/unp
+T3 R2 pptxgenjs@4.0.1 runtime/node_modules/.pnpm/pptxgenjs@4.0.1/node_modules/pptxgenjs/node_modules/.bin/image-size:13:   export NODE_PATH="[R2:/var…].1ZZlVX/claude-0/bfa-final/unp
+T3 R2 pptxgenjs@4.0.1 runtime/node_modules/.pnpm/pptxgenjs@4.0.1/node_modules/pptxgenjs/node_modules/.bin/image-size:15:   export NODE_PATH="[R2:/var…].1ZZlVX/claude-0/bfa-final/unp
+T3 R2 react-i18next@17.0.15 runtime/node_modules/.pnpm/react-i18next@17.0.15_i18next@26.4.2_typescript@6.0.2__react-dom@19.2.0_react@19.2.0__react@19.2.0_typescript@6.0.2/node_modules/react-i18next/node_modules/.bin/tsc:13:   export NODE_PATH="[R2:/var…].1ZZlVX/claude-0/bfa-final/unp
+T3 R2 react-i18next@17.0.15 runtime/node_modules/.pnpm/react-i18next@17.0.15_i18next@26.4.2_typescript@6.0.2__react-dom@19.2.0_react@19.2.0__react@19.2.0_typescript@6.0.2/node_modules/react-i18next/node_modules/.bin/tsc:15:   export NODE_PATH="[R2:/var…].1ZZlVX/claude-0/bfa-final/unp
+T3 R2 react-i18next@17.0.15 runtime/node_modules/.pnpm/react-i18next@17.0.15_i18next@26.4.2_typescript@6.0.2__react-dom@19.2.0_react@19.2.0__react@19.2.0_typescript@6.0.2/node_modules/react-i18next/node_modules/.bin/tsserver:13:   export NODE_PATH="[R2:/var…].1ZZlVX/claude-0/bfa-final/unp
+T3 R2 react-i18next@17.0.15 runtime/node_modules/.pnpm/react-i18next@17.0.15_i18next@26.4.2_typescript@6.0.2__react-dom@19.2.0_react@19.2.0__react@19.2.0_typescript@6.0.2/node_modules/react-i18next/node_modules/.bin/tsserver:15:   export NODE_PATH="[R2:/var…].1ZZlVX/claude-0/bfa-final/unp
+T3 R2 (unknown) runtime/node_modules/.pnpm-workspace-state-v1.json:4:     "[R2:/var…].1ZZlVX/claude-0/bfa-final/unp
+T3 R2 (unknown) runtime/node_modules/.pnpm-workspace-state-v1.json:8:     "[R2:/var…].1ZZlVX/claude-0/bfa-final/unp
+T3 R2 (unknown) runtime/node_modules/.pnpm-workspace-state-v1.json:12:     "[R2:/var…].1ZZlVX/claude-0/bfa-final/unp
+T3 R2 (unknown) runtime/node_modules/.pnpm-workspace-state-v1.json:16:     "[R2:/var…].1ZZlVX/claude-0/bfa-final/unp
+T3 R2 (unknown) runtime/node_modules/.pnpm-workspace-state-v1.json:20:     "[R2:/var…].1ZZlVX/claude-0/bfa-final/unp
+T3 R2 (unknown) runtime/node_modules/.pnpm-workspace-state-v1.json:24:     "[R2:/var…].1ZZlVX/claude-0/bfa-final/unp
+T3 R2 (unknown) runtime/node_modules/.pnpm-workspace-state-v1.json:28:     "[R2:/var…].1ZZlVX/claude-0/bfa-final/unp
+T3 R2 (unknown) runtime/node_modules/.pnpm-workspace-state-v1.json:32:     "[R2:/var…].1ZZlVX/claude-0/bfa-final/unp
+T3 R2 (unknown) runtime/node_modules/.pnpm-workspace-state-v1.json:36:     "[R2:/var…].1ZZlVX/claude-0/bfa-final/unp
+scan-assets: FAIL (48 hits)
+exit=1

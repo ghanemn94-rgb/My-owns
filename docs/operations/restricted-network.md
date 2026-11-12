@@ -114,6 +114,35 @@ deploy/scripts/build-image.sh \
 lockfile. Copy the store, then run `MTH_PNPM_STORE=<store> MTH_PNPM_OFFLINE=1 deploy/scripts/clean-start-local.sh`,
 which installs and builds with no network (measured in [clean-start.md](clean-start.md)).
 
+**From the release archive, with no network at all** (ADR-0062 §5). The release archive
+(`mth-transformation-hub-<version>.tar.gz`, built by `tools/release/build-archive.mjs`) holds the source, deployment
+files, documentation and synthetic demo data. The npm packages come from one of two sources inside company
+infrastructure. Their integrity is fixed by the lockfile's SHA-512 hashes either way:
+
+1. **IT's npm mirror:** `pnpm fetch --frozen-lockfile` against the mirror fills a store;
+2. **the store artefact:** on a connected preparation machine, run `pnpm fetch --frozen-lockfile --store-dir <dir>`,
+   then `node tools/release/build-archive.mjs --pack-store <dir> --out dist/release/`. That writes
+   `mth-transformation-hub-<version>-pnpm-store.tar.gz` and its `.sha256`. Copy both into the restricted network and
+   unpack the store there.
+
+The build host needs Node 24.x, pnpm 10.33.0, GNU tar and `unshare` (util-linux) or `bwrap` (bubblewrap), all
+installed by IT from its own mirror. Then:
+
+```bash
+tools/release/build-from-archive.sh mth-transformation-hub-<version>.tar.gz \
+  --sha256 "$(cut -c1-64 mth-transformation-hub-<version>.tar.gz.sha256)" --store <pnpm store dir>
+```
+
+The script checks the archive checksum before unpacking, unpacks into an empty work directory and asserts there is
+no `.git`. Inside a network namespace with no interfaces it first asserts that a TCP connection to `1.1.1.1:443`
+and a DNS lookup of `registry.npmjs.org` both fail. It then runs the offline frozen install, `pnpm -r build`,
+`deploy/scripts/assemble-runtime.sh`, `check-no-cdn` and `tools/release/scan-assets.mjs`, and prints each step with
+its duration and exit status. Exit 3 means BLOCKED: no network namespace is available, and the script never builds
+with the network on. The image build from the unpacked `source/` (`deploy/scripts/build-image.sh` against IT's
+mirror) needs a Docker daemon and is a separate step. A successful local build shows the build needs nothing beyond
+the archive and the store. It does not show that IT's mirror serves the store, and it is not a production-readiness
+test.
+
 ## Inventory for IT review
 
 - `licenses/sbom.cdx.json` (CycloneDX 1.6) and `licenses/inventory.csv`: every lockfile package with version,

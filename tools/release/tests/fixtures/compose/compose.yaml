@@ -1,0 +1,37 @@
+# SYNTHETIC Compose fixture for tools/release/tests/service-list.test.mjs (ADR-0062 §6). Not a deployment file.
+name: fixture
+
+x-app: &app
+  image: ${MTH_APP_IMAGE:-mth-app:local}
+  read_only: true
+
+services:
+  db:
+    image: postgres:18@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722
+    volumes: ["pgdata:/var/lib/postgresql"]
+  migrate:
+    <<: *app
+    depends_on:
+      db: { condition: service_healthy }
+  api:
+    <<: *app
+    ports: ["127.0.0.1:3000:3000"]
+    depends_on: [db, migrate]
+  worker:
+    <<: *app
+    depends_on: [db]
+  keycloak:
+    profiles: ["test-idp"]
+    image: quay.io/keycloak/keycloak:26.8.1@sha256:a78d6b79572168cb25886b80a8b5b8d4ed4390743e3eecb810538683e209dd6b
+  smoke:
+    <<: *app
+    profiles: ["smoke"]
+  load-generate:
+    <<: *app
+    profiles: ["load"]
+  load-sessions:
+    <<: *app
+    profiles: ["load"]
+
+volumes:
+  pgdata:
