@@ -146,3 +146,9 @@ The audit T-DG6-AUDIT-R13 BLOCKED (B1–B5). The user chose a clean re-gate. D-2
 - Audit part 1 (round 8): PASS, F-DG6-952 ACCEPTED_OBSERVATION (qa-verifier, release-auditor), imported.
 - Audit part 2 (round 9, T-DG6-AUDIT-RG-R9): PASS, `gates/DG6.json` decision APPROVED on candidate `10f71f24` (source `d8868b2a5`), blocking conditions none. `validate.mjs --stage DG6`: PASS.
 - Next: DG7 (run `--historical --stage DG6` first, then plan).
+
+## 2026-11-12: DG7 W3 — protocol audit; historic hits disclosed (D-249)
+
+- DG6 approval capabilities (closing H10 by an added record): 48/48 DG6 requirements IMPLEMENTED and reviewed, covering integration and imports, connectors, identity and storage adapters, the optional assistant (off by default), security hardening, performance and async export, UX and accessibility hardening, and operational monitoring.
+- User decision: the DO-I historic hits are disclosed, no gate is reopened (D-249).
+- Next: W4 (T-DG7-ARCH-04, then T-DG7-BE-A); the A26 drill follows when disk allows.
