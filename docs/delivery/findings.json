@@ -14557,22 +14557,45 @@
           "at": "2026-11-11T18:40:00Z",
           "status": "ACCEPTED_OBSERVATION",
           "note": "verified by qa-verifier round 6: PASS"
+        },
+        {
+          "at": "2026-11-12T10:52:19Z",
+          "status": "ACCEPTED_OBSERVATION",
+          "note": "verified by release-auditor round 8: PASS"
         }
       ],
       "verification": {
-        "by_role": "qa-verifier",
+        "by_role": "release-auditor",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG6-T-DG6-REV-QA-RG-R6-qa-verifier-20261111T144416Z-130c1666",
-          "session_id": "130c1666-d41b-4af5-a115-a668bf9d0887"
+          "run_id": "DG6-T-DG6-AUDIT-RG-R8-release-auditor-20261112T103628Z-dd36eb14",
+          "session_id": "dd36eb14-6a8b-4a99-a0f8-5477821d5414"
         },
-        "at": "2026-11-11T18:40:00Z",
+        "at": "2026-11-12T10:52:19Z",
         "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG6/qa/round-6/42-stages-history-order.log",
-          "docs/delivery/test-evidence/DG6/qa/round-6/40-validate-pipeline.log"
+          "docs/delivery/test-evidence/DG6/audit/round-8/01-f952-history-order-facts.log",
+          "docs/delivery/test-evidence/DG6/audit/round-8/02-validate-historical-DG1.log",
+          "docs/delivery/test-evidence/DG6/audit/round-8/02-validate-historical-DG2.log",
+          "docs/delivery/test-evidence/DG6/audit/round-8/02-validate-historical-DG3.log",
+          "docs/delivery/test-evidence/DG6/audit/round-8/02-validate-historical-DG4.log",
+          "docs/delivery/test-evidence/DG6/audit/round-8/02-validate-historical-DG5.log",
+          "docs/delivery/test-evidence/DG6/audit/round-8/02-validate-pipeline.log",
+          "docs/delivery/test-evidence/DG6/audit/round-8/04-f952-no-product-effect.log",
+          "docs/delivery/reviews/DG6/round-6/qa-verifier.findings.json",
+          "docs/delivery/reviews/DG6/round-6/qa-verifier.verifications.json",
+          "tools/gates/lib/rules.mjs",
+          "docs/delivery/progress.md"
         ],
-        "note": "My own Low, non-mandatory finding of this round, proposed for acceptance as an observation (it takes effect only if the release auditor adds the same acceptance). Rationale: the two out-of-order timestamps are in the histories of DG0 and DG5, which are APPROVED and closed. They change no gate decision, transition or validator result (--historical DG1-DG5 and --pipeline PASS), and they do not touch DG6 or the candidate. Correcting them is optional delivery-record hygiene. A validator rule that `at` never decreases would stop it recurring, and the orchestrator may still correct the two times with a note."
+        "note": "Release-auditor concurrence (T-DG6-AUDIT-RG-R8, part 1 of the D-140 option 1 audit). I judged this independently of the qa-verifier proposal and the user's decision of 2026-11-12 (progress.md). (1) Facts confirmed on the repository at HEAD af8d10096 (stages.json sha256 506fc45a\u202673d2): a scan of every stage's history finds exactly two inversions, DG0 [56] REVIEWING 2026-09-30T15:45:00Z before [57] FIXING 15:16:00Z, and DG5 [5] VERIFYING 2026-10-26T12:00:00Z before [6] APPROVED 06:30:00Z. DG1-DG4 and DG7 are in order, and DG6's 15 entries (through VERIFYING 2026-11-12T10:36:02Z) are in order. git shows the entries were written by 57d7a53f2 (committed 14:51:02Z, entry dated 15:45Z), ffa3fae5a (15:23:21Z, entry 15:16Z) and 5df7ea660 (04:34:41Z, entry 12:00Z), so they are hand-typed times in the records of two APPROVED gates (log 01). (2) rules.mjs lines 106-113 check the first state, the legal transitions and state == last entry, but not that `at` is non-decreasing. All of validate --historical DG1, DG2, DG3, DG4 and DG5 and --pipeline print PASS and exit 0 (logs 02). (3) The finding is Low with mandatory_violation false (qa's round-6 sidecar and findings.json agree). rules.mjs lines 565-583 permit ACCEPTED_OBSERVATION only for Low, non-mandatory findings, and only with a specialist sidecar plus a release-auditor sidecar. qa-verifier's latest entry (round 6) is PASS -> ACCEPTED_OBSERVATION, and no round-7 sidecar has a newer entry for 952. (4) No product effect: stages.json is in META_EXCLUDES, so it is not in candidate 10f71f24. No product code reads it; the only matches outside docs/ and tools/ are two tests that list it as a delivery record the product must not modify (log 04). No gate decision or transition depends on the `at` values. Judgement: accepting it is sound, and rewriting the history of approved gates would be worse. DG0 and DG5 are APPROVED and validate historically. Editing their recorded history to tidy two timestamps would alter approved records for no change in any decision, which is the class of after-the-fact rewriting that D-238 (B2/B3) treated as a defect. The F-DG6-911 precedent of an appended, annotated correction applies to a gate still in progress, not to closed ones. Residual risk: the validator does not detect future out-of-order entries. Recommendation, not a condition: in a later stage, add a non-decreasing-`at` check for new entries (grandfathering DG0/DG5) through the normal tools/gates change process. Owner: delivery-orchestrator. This acceptance takes effect only after the orchestrator imports this sidecar into findings.json, with acceptance.accepted_by mirroring qa-verifier and release-auditor."
+      },
+      "acceptance": {
+        "rationale": "Low, non-mandatory, no product effect: out-of-order history timestamps in the approved DG0 and DG5 entries of stages.json; the validator's history checks pass. Approved gates' history is not rewritten. Accepted by the user's decision (progress.md 2026-11-12), by the reporter (qa-verifier, round 6) and by the release-auditor (round 8).",
+        "owner": "delivery-orchestrator",
+        "accepted_by": [
+          "qa-verifier",
+          "release-auditor"
+        ]
       }
     }
   ]
