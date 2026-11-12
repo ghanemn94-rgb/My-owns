@@ -134,3 +134,9 @@ The audit T-DG6-AUDIT-R13 BLOCKED (B1–B5). The user chose a clean re-gate. D-2
 ## 2026-11-11: round 5 result, round 6 launched
 - Round 5 on 5e819f7a: code-security PASS; domain FAIL (F-DG6-911); qa killed by a container restart (exit 143, no record) with sidecar finding F-DG6-951 (same defect). F-DG6-990 CLOSED_VERIFIED by domain and code-security.
 - F-DG6-911/951 recorded FIXED_PENDING_VERIFICATION at e7cb240e7. Round 6 on the same candidate: domain and qa (T-DG6-REV-{DOM,QA}-RG-R6).
+
+## 2026-11-12: round 7 PASS; F-DG6-952 accepted by the user; audit part 1
+
+- Round 7 on the re-frozen candidate `10f71f24` (source `d8868b2a5`, D-240): domain, code-security and qa all PASS. F-DG6-911/951 CLOSED_VERIFIED by all three (fix `e7cb240e7` is now inside the candidate). findings.json verification blocks set to the code-security round-7 sidecar (the one the validator selects); F-DG6-990 `fix_revision` = `60787d89f`.
+- **User decision (2026-11-12):** asked whether to accept F-DG6-952 (Low: out-of-order history timestamps in the approved DG0 and DG5 entries of `stages.json`) as an observation or fix it by rewriting approved history plus a new round, the user chose **accept as an observation**. Recorded here, not in `decisions.md`, because `decisions.md` is in the candidate and editing it would force another re-freeze; part 2 of the audit cites this entry.
+- Next: release audit part 1 (round 8, T-DG6-AUDIT-RG-R8): concurrence on 952 only; import; then part 2 (round 9): full audit and gate decision.
