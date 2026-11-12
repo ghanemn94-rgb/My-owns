@@ -53,6 +53,11 @@ const MIGRATIONS = [
     url: new URL("../../../packages/db/migrations/0147_p7_transfer_export_job.sql", import.meta.url),
     table: "p7_transfer_job_identity",
   },
+  // T-DG7-BE-G (0148): the retention archival job (retention.read only; ADR-0067 §4).
+  {
+    url: new URL("../../../packages/db/migrations/0148_p7_retention_job.sql", import.meta.url),
+    table: "p7_retention_job_identity",
+  },
 ] as const;
 const CATEGORY: ReadonlyMap<string, string> = new Map(Object.entries(PERMISSIONS));
 
@@ -111,7 +116,7 @@ describe("job service identities (ADR-0053 §1)", () => {
     const declared = JOB_SERVICE_IDENTITIES.map((d) => d.queue);
     expect(new Set(declared).size).toBe(declared.length);
     expect([...declared].sort()).toEqual([...queues].sort());
-    expect(declared).toHaveLength(50); // 40 (T-DG6-BE-J) + two search jobs (T-DG6-BE-P) + two connector jobs (T-DG6-BE-L2) + three operations jobs (T-DG6-BE-K2) + two notification jobs (T-DG6-BE-I2) + the migration export (T-DG7-BE-C)
+    expect(declared).toHaveLength(51); // 40 (T-DG6-BE-J) + two search jobs (T-DG6-BE-P) + two connector jobs (T-DG6-BE-L2) + three operations jobs (T-DG6-BE-K2) + two notification jobs (T-DG6-BE-I2) + the migration export (T-DG7-BE-C) + the retention archival (T-DG7-BE-G)
   });
 
   it("migrations 0114 and 0115 seed exactly the declarations (code, queue, codes, sensitive access, labels)", () => {

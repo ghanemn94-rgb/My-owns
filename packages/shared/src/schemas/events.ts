@@ -173,6 +173,14 @@ export const migrationExportRequestedV1 = z.strictObject({ migrationExportId: uu
 export type MigrationExportRequestedV1 = z.infer<typeof migrationExportRequestedV1>;
 
 /**
+ * P7 slice E (T-DG7-BE-G; ADR-0067 §4): a retention run or dry run was requested. Written by the API with the
+ * `retention_run.requested` audit event in one transaction; the relay sends it to `retention.archive` (singleton key =
+ * the idempotency key = the run id). It carries only the run's id (never row data).
+ */
+export const retentionRunRequestedV1 = z.strictObject({ retentionRunId: uuid });
+export type RetentionRunRequestedV1 = z.infer<typeof retentionRunRequestedV1>;
+
+/**
  * P5 slice J (T-DG5-BE-S; ADR-0050 §6): an in-app demo reset was requested. Written by the API with its audit event in
  * one transaction; the relay sends it to `demo.reset` (singleton key = the idempotency key
  * `demo.reset_requested:<latest run id>`). The worker acknowledges it, then drops, re-creates and re-seeds the demo
@@ -301,6 +309,8 @@ export const OUTBOX_EVENT_SCHEMAS = {
   "inbox_notification.created": { 1: inboxNotificationCreatedV1 },
   // T-DG7-BE-C (ADR-0064 §7): consumer transfer.export (apps/worker queues/transfer.ts).
   "migration_export.requested": { 1: migrationExportRequestedV1 },
+  // T-DG7-BE-G (ADR-0067 §4): consumer retention.archive (apps/worker queues/retention.ts).
+  "retention_run.requested": { 1: retentionRunRequestedV1 },
 } as const;
 export type OutboxEventType = keyof typeof OUTBOX_EVENT_SCHEMAS;
 

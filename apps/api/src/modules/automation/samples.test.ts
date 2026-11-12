@@ -22,6 +22,8 @@ const NOT_TRIGGERS = new Set([
   "inbox_notification.created",
   // T-DG7-BE-C (ADR-0064 §7): the migration export request (consumed by transfer.export only; no catalogue trigger).
   "migration_export.requested",
+  // T-DG7-BE-G (ADR-0067 §4): the retention run request (consumed by retention.archive only; no catalogue trigger).
+  "retention_run.requested",
 ]);
 
 describe("automation samples (D-164 d)", () => {

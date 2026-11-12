@@ -172,6 +172,7 @@ import { exerciseP6BeTOperations, P6_MIRRORS_BE_T } from "./p6-exercises-be-t.ts
 import { exerciseP6BeUOperations, P6_MIRRORS_BE_U } from "./p6-exercises-be-u.ts";
 import { exerciseP7BeCOperations, P7_MIRRORS_BE_C } from "./p7-exercises-be-c.ts"; // T-DG7-BE-C
 import { exerciseP7BeFOperations, P7_MIRRORS_BE_F } from "./p7-exercises-be-f.ts"; // T-DG7-BE-F
+import { exerciseP7BeGOperations, P7_MIRRORS_BE_G } from "./p7-exercises-be-g.ts"; // T-DG7-BE-G
 import { exerciseP6BeWOperations, P6_MIRRORS_BE_W } from "./p6-exercises-be-w.ts";
 import { exerciseP6BeX1Operations, P6_MIRRORS_BE_X1 } from "./p6-exercises-be-x1.ts"; // T-DG6-BE-X1
 import {
@@ -421,6 +422,7 @@ const ZOD_MIRRORS: Record<string, z.ZodType> = {
   ...P6_MIRRORS_BE_X1,
   ...P7_MIRRORS_BE_C, // T-DG7-BE-C
   ...P7_MIRRORS_BE_F, // T-DG7-BE-F
+  ...P7_MIRRORS_BE_G, // T-DG7-BE-G
 };
 
 let api: TestApi;
@@ -945,6 +947,10 @@ describe("every operation, validated against the contract and the zod mirrors", 
     await exerciseP7BeFOperations(p3());
   });
 
+  it("P7 BE-G operations (p7-exercises-be-g.ts): retention classes, runs, actions, archived records, backup sets", async () => {
+    await exerciseP7BeGOperations(p3());
+  });
+
   // T-DG2-ARCH-02 (ADR-0007 §5a): every operation that validates input declares 400.
   it("every GET operation with a path parameter: a malformed id is a declared 400 at /params/<name>; nothing written", async () => {
     // A fresh session: `office` signed out in "transformations and audit".
@@ -1129,7 +1135,9 @@ describe("every operation, validated against the contract and the zod mirrors", 
     // JSON 427 + 1 = 428 (measured; reconciled at merge with the other W5 tasks).
     // T-DG7-BE-F: + createConfigBundleExport, uploadConfigBundleImport (2 JSON bodies; validate and commit take none,
     // the five others are GETs). 430 + 2 = 432; JSON 428 + 2 = 430 (measured; reconciled at merge with the W5 tasks).
-    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([432, 430, 1]);
+    // T-DG7-BE-G: + updateRetentionClass, createRetentionRun, createRetentionDryRun (3 JSON bodies; the seven other
+    // retention and backup operations are GETs). 432 + 3 = 435; JSON 430 + 3 = 433 (measured; reconciled at merge).
+    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([435, 433, 1]);
     expect([byType("text/csv"), byType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")]).toEqual([
       1, 1,
     ]);

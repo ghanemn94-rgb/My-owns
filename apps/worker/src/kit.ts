@@ -1236,7 +1236,7 @@ const declare = (
     labelAr,
   });
 
-/** One declaration per queue of apps/worker/src/queues/**, by queue name (40 at T-DG6-BE-J's revision; 42 with T-DG6-BE-P's; 47 with T-DG6-BE-K2's (two connector jobs of T-DG6-BE-L2 included); 49 with T-DG6-BE-I2's; 50 with T-DG7-BE-C's). */
+/** One declaration per queue of apps/worker/src/queues/**, by queue name (40 at T-DG6-BE-J's revision; 42 with T-DG6-BE-P's; 47 with T-DG6-BE-K2's (two connector jobs of T-DG6-BE-L2 included); 49 with T-DG6-BE-I2's; 50 with T-DG7-BE-C's; 51 with T-DG7-BE-G's). */
 export const JOB_SERVICE_IDENTITIES: readonly JobIdentityDeclaration[] = Object.freeze([
   declare(
     "adoption.indicator_evaluated",
@@ -1395,6 +1395,9 @@ export const JOB_SERVICE_IDENTITIES: readonly JobIdentityDeclaration[] = Object.
   ),
   declare("reports.export", [TR], "Job: report export", "مهمة: تصدير التقارير"),
   declare("reports.owner_update_tasks", [TR], "Job: owner update tasks", "مهمة: مهام تحديث المالكين"),
+  // T-DG7-BE-G (ADR-0067 §4; 0148): the retention archival job reads the retention classes only; it archives and
+  // purges through the run it was given, the marker trigger and retention_purge_record(), never through a permission.
+  declare("retention.archive", ["retention.read"], "Job: retention archival", "مهمة: أرشفة الاحتفاظ"),
   // T-DG6-BE-P (ADR-0057 §2; 0115): the search index jobs. `none` here; their one declared exception (they read the
   // ADR-0057 §1 indexed columns of sensitive records, never a value column) is enforced in search/documents.ts.
   declare("search.index_feed", [TR], "Job: search index feed", "مهمة: تحديث فهرس البحث"),

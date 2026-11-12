@@ -49,6 +49,7 @@ const ENQUEUED: Readonly<Record<string, string>> = {
   // T-DG6-BE-I2 (ADR-0054 §3 step 1): one per notification createWorkItemOnce writes; consumer notifications.fanout.
   "inbox_notification.created": "api tasks/service.ts, worker kit.ts (createWorkItemOnce)",
   "migration_export.requested": "api transfer/export/service.ts (T-DG7-BE-C; consumer transfer.export)",
+  "retention_run.requested": "api retention/runs/service.ts (T-DG7-BE-G; consumer retention.archive)",
 };
 
 /**
