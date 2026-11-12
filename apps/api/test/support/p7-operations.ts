@@ -25,4 +25,15 @@ export const P7_OPERATION_IDS: ReadonlySet<string> = new Set([
   "getConfigBundleImport",
   "validateConfigBundleImport",
   "commitConfigBundleImport",
+  // T-DG7-ARCH-03: slice E (10 operations; ADR-0066, ADR-0067).
+  "listRetentionClasses",
+  "getRetentionClass",
+  "updateRetentionClass",
+  "listRetentionRuns",
+  "createRetentionRun",
+  "createRetentionDryRun",
+  "getRetentionRun",
+  "listRetentionRunActions",
+  "listRetentionArchivedRecords",
+  "listBackupSets",
 ]);

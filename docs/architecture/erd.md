@@ -2254,6 +2254,36 @@ erDiagram
 | Configuration bundle export (S19-008) | `config_bundle_export` | `id` | `created_by` | `config_bundle.export` (ADM_TECH, ADM_METHOD) | — | no (append-only) | transfer (config-bundle) |
 | Configuration bundle import (S19-008) | `config_bundle_import` (+ `_item`, `_commit`) | `id`; `(config_bundle_import_id, validation_no, ordinal)`; `config_bundle_import_item_id` | `created_by` | `config_bundle.import` (ADM_TECH, ADM_METHOD) | `status` (uploaded, validated, invalid, committed) | yes (items and commits append-only) | transfer (config-bundle) |
 
+## 1ad. P7 slice E: retention classes and the table map, retention runs, their actions, archived-record markers, and backup sets (migrations 0143–0146; T-DG7-ARCH-03; ADR-0066, ADR-0067)
+
+Two new mutable tables carry the P2 guards and are audited (`_row_guard`, deferred `_audit_required`): `retention_class` (with `retention_class_guard`; never deleted) and `retention_run` (with the state machine `retention_run_guard`). `retention_table_class` (migration-written) and `retention_run_action` (with a deferred per-action audit rule) are append-only; `retention_archived_record` is insert-only except its purge marker; `backup_set` is append-only and audited, written only by `backup_set_record()`. `0146` adds four permission codes. The column lists are in `data-dictionary.md` ("P7 tables, slice E").
+
+```mermaid
+erDiagram
+    retention_class ||--o{ retention_table_class : "every public base table, exactly once"
+    app_user |o--o{ retention_run : "requested by (NULL for the schedule)"
+    retention_run ||--o{ retention_run_action : "one row per record and action"
+    retention_class ||--o{ retention_run_action : "class applied"
+    retention_table_class ||--o{ retention_run_action : "table"
+    retention_run ||--o{ retention_archived_record : "archived by"
+    retention_run |o--o{ retention_archived_record : "purged by"
+    retention_table_class ||--o{ retention_archived_record : "table"
+    retention_class ||--o{ retention_archived_record : "class"
+```
+
+`retention_table_class.table_name` names a table by text (a catalogue map, no foreign key to `pg_class`). `retention_archived_record.record_key` and `retention_run_action.record_key` hold the primary key values of the archived or selected row as a text-valued object: a polymorphic reference to a row of an operational table (`processed_message`, `worker_heartbeat`, `inbox_notification`, `job_run`, `webhook_receipt`), with no foreign key, because the row may be purged. `backup_set` stands alone (no foreign key).
+
+### 1ad.1 P7 entity register (slice E) → tables
+
+| Entity | Table(s) | PK | Owner (column) | Writers | Status field | `version` | API module |
+|---|---|---|---|---|---|---|---|
+| Retention class (S16-024) | `retention_class` | `id` (`code` unique) | `updated_by` | migrations; `retention.configure` (ADM_TECH) | `action` (retain, archive, archive_then_purge) | yes | retention (classes) |
+| Retention table map (S16-024) | `retention_table_class` | `table_name` | — | migrations | — | no (append-only) | retention (classes) |
+| Retention run (S16-024) | `retention_run` | `id` | `created_by` (NULL for the schedule) | `retention.run` (ADM_TECH); job `retention.archive` | `status` (queued, running, succeeded, failed) | yes | retention (runs) |
+| Retention action log (S16-024) | `retention_run_action` | `id` | — | job `retention.archive` | `action` | no (append-only) | retention (runs) |
+| Archived-record marker (S16-024) | `retention_archived_record` | `(table_name, record_key)` | — | job `retention.archive`; `retention_purge_record()` | `purged_at` (NULL: kept, read-only) | no | retention (runs) |
+| Backup set (S19-012) | `backup_set` | `id` (`label` unique) | — (`operator_name`) | `backup_set_record()` (owner role; `deploy/scripts/backup.sh`) | `status` (succeeded, failed) | no (append-only) | retention (backups) |
+
 ## 2. Conceptual model, all §16 entity groups
 
 ### 2.1 Identity and access (REQ-S16-011; final gate DG4)

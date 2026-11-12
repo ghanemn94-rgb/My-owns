@@ -1195,3 +1195,34 @@ Legend as in 8.3 (**C** create, **E** edit, **V** view), plus **D** = download, 
 1. The commit writes an item only when the caller also holds that kind's own right: `methodology.configure` (the six Studio kinds; ADM_METHOD), `automation.configure` (rules), `branding.configure`, `notification_policy.configure`, `job.configure`, `upload_policy.configure` (ADM_TECH by default) and `config_review_policy.configure` (TO by default). An item the caller could not write by hand is planned as `refused` (`config_bundle.kind_not_permitted`). The import never widens a right.
 
 - **Scope:** migration exports and imports are installation-wide. Bundles are per organization (`organizationId`), and the caller needs the code in that organization.
+
+## 31. P7 implementation, slice E (DG7): retention classes, retention runs and archived records; backup status
+
+- **Task:** T-DG7-ARCH-03 (solution-architect), 2026-11-12. **Sources:** ADR-0067 §7, ADR-0066 §6; REQ-S16-024 ("configure:ADM(IT-approved); view:AUD,ADM"); REQ-S19-012 ("view:IT"); D-243 Q3.
+- **Seed:** `0146_p7_retention_backup_permissions.sql`, equal to `P7_RETENTION_PERMISSIONS` / `P7_RETENTION_ROLE_PERMISSIONS` in `packages/shared/src/permissions.ts` (`packages/db/src/seed.test.ts`). A configurable starting point, not a Mobily-approved access policy.
+- **"IT-approved" is a reference, not a right.** `retention.configure` lets ADM_TECH record the reference of an approval Mobily IT gave outside the platform (for example a change ticket). Holding the code, or saving a reference, approves nothing; no agent writes a real reference.
+- **Separation:** no code here is a business approval or a Finance validation; the 0001 trigger still refuses any approval code for a technical-admin role. Business, audit and snapshot classes can never leave `retain`, whatever the caller holds (database CHECK, ADR-0067 §2).
+- **No API right starts a backup or a restore.** Both run outside the API with the owner credentials, which only IT holds; the API shows the reported sets only.
+- **AUD stays read-only:** AUD holds `retention.read` and `backup.read`. Every class update and run request answers 403 for AUD.
+
+### 31.1 Permission codes
+
+| Code | Category | Meaning | Default roles |
+|---|---|---|---|
+| `retention.read` | read | Read retention classes with their tables, runs, the per-record action log and archived-record markers (key values only, never row content) | ADM_TECH, ADM_ACCESS, AUD |
+| `retention.configure` | configure | Change a class's action, period and IT approval reference text (If-Match); lock 730410 | ADM_TECH |
+| `retention.run` | configure | Request a retention dry run or run; lock 730410 | ADM_TECH |
+| `backup.read` | read | Read the backup sets the backup job reported (status, timings, checksums, counts) | ADM_TECH, AUD |
+
+Legend as in 8.3 (**C** create, **E** edit, **V** view), plus **R** = request a run or dry run.
+
+| Entity (table) | SP | TL | BO | WL | FIN | TO | KDS | TD | CM | SEC | AUD | ADM_METHOD | ADM_TECH | ADM_ACCESS |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Retention class (`retention_class`, `retention_table_class`) | — | — | — | — | — | — | — | — | — | — | V | — | V E¹ | V |
+| Retention run and action log (`retention_run`, `retention_run_action`) | — | — | — | — | — | — | — | — | — | — | V | — | V R | V |
+| Archived records (`retention_archived_record`) | — | — | — | — | — | — | — | — | — | — | V | — | V | V |
+| Backup sets (`backup_set`) | — | — | — | — | — | — | — | — | — | — | V | — | V | — |
+
+1. Only an operational class not managed by an existing expiry job can leave `retain`, and an enabled action needs both a period and the IT reference text (ADR-0067 §2).
+
+- **Scope:** retention and backups are installation-wide (no organization scope).

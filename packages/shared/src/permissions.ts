@@ -417,9 +417,25 @@ export const P7_TRANSFER_PERMISSIONS = {
   "config_bundle.import": "configure",
 } as const satisfies Record<string, PermissionCategory>;
 
+/**
+ * P7 slice E (seeded by 0146; ADR-0067 §8, ADR-0066 §6; T-DG7-ARCH-03). A configurable starting point, not a
+ * Mobily-approved access policy. retention.read reads the retention classes, runs, run actions and archived-record
+ * markers; retention.configure changes a class's action, period and IT approval reference text (the reference records
+ * an approval given outside the platform, so holding the code approves nothing; D-243 Q3); retention.run requests a dry
+ * run or a run of the retention job; backup.read reads the backup sets the backup job reported (REQ-S19-012). No code is
+ * a business_approval or finance_validation code; AUD gets read codes only.
+ */
+export const P7_RETENTION_PERMISSIONS = {
+  "retention.read": "read",
+  "retention.configure": "configure",
+  "retention.run": "configure",
+  "backup.read": "read",
+} as const satisfies Record<string, PermissionCategory>;
+
 /** Every P7 permission block (each P7 architecture task appends its block here and to PERMISSIONS). */
 export const P7_PERMISSIONS = {
   ...P7_TRANSFER_PERMISSIONS,
+  ...P7_RETENTION_PERMISSIONS,
 } as const satisfies Record<string, PermissionCategory>;
 
 export const PERMISSIONS = {
@@ -1018,6 +1034,27 @@ export const P7_TRANSFER_ROLE_PERMISSIONS = {
   ADM_METHOD: ["config_bundle.export", "config_bundle.import"],
 } as const satisfies Record<string, readonly (keyof typeof P7_TRANSFER_PERMISSIONS)[]>;
 
+/**
+ * P7 slice E role defaults (seeded by 0146; ADR-0067 §8): ADM_TECH reads and configures retention, requests runs and
+ * reads backup status; ADM_ACCESS reads retention; AUD reads retention and backup status.
+ */
+export const P7_RETENTION_ROLE_PERMISSIONS = {
+  SP: [],
+  TL: [],
+  BO: [],
+  WL: [],
+  FIN: [],
+  TO: [],
+  KDS: [],
+  TD: [],
+  CM: [],
+  SEC: [],
+  AUD: ["retention.read", "backup.read"],
+  ADM_TECH: ["retention.read", "retention.configure", "retention.run", "backup.read"],
+  ADM_ACCESS: ["retention.read"],
+  ADM_METHOD: [],
+} as const satisfies Record<string, readonly (keyof typeof P7_RETENTION_PERMISSIONS)[]>;
+
 export const ROLES = {
   SP: {
     kind: "source",
@@ -1260,6 +1297,7 @@ export const ROLES = {
       ...P6_SEARCH_ROLE_PERMISSIONS.AUD,
       ...P6_ASSISTANT_ROLE_PERMISSIONS.AUD,
       ...P7_TRANSFER_ROLE_PERMISSIONS.AUD,
+      ...P7_RETENTION_ROLE_PERMISSIONS.AUD,
     ],
   },
   // Technical administrators: configuration only, no business-record access and never an approver
@@ -1283,6 +1321,7 @@ export const ROLES = {
       ...P6_SEARCH_ROLE_PERMISSIONS.ADM_TECH,
       ...P6_ASSISTANT_ROLE_PERMISSIONS.ADM_TECH,
       ...P7_TRANSFER_ROLE_PERMISSIONS.ADM_TECH,
+      ...P7_RETENTION_ROLE_PERMISSIONS.ADM_TECH,
     ],
   },
   ADM_ACCESS: {
@@ -1304,6 +1343,7 @@ export const ROLES = {
       ...P6_SEARCH_ROLE_PERMISSIONS.ADM_ACCESS,
       ...P6_ASSISTANT_ROLE_PERMISSIONS.ADM_ACCESS,
       ...P7_TRANSFER_ROLE_PERMISSIONS.ADM_ACCESS,
+      ...P7_RETENTION_ROLE_PERMISSIONS.ADM_ACCESS,
     ],
   },
   ADM_METHOD: {

@@ -671,3 +671,207 @@ ARCH-02 merged → BE-A (W4: wiring point) → BE-F (W5) → FE-B (W9) → QA-B'
 - **Job schedules arrive disabled.** Always.
 - **No ids in a bundle.** Stable keys and codes only.
 - **The kind's own right decides.** `config_bundle.import` alone never lets a user write a kind they could not write by hand.
+
+## §E. Slice E: backup, restore, upgrades and retention (T-DG7-ARCH-03; ADR-0066, ADR-0067, ADR-0068)
+
+### E.0 Already delivered by the architect (do not re-create)
+
+- `docs/architecture/adr/ADR-0066-p7-backup-restore-backup-set-manifest-restore-checks-drill.md`, `ADR-0067-p7-retention-classes-archival-job-dry-run-purge-guard.md`, `ADR-0068-p7-upgrades-migration-dry-run-irreversible-catalogue-maintenance-window-rollback-by-restore.md`.
+- **Migration `0143_p7_retention_classes.sql`:** `retention_class` (12 classes, all `retain`, period NULL), `retention_table_class` (one row per public base table, generated from the catalogue; explicit rows for audit, snapshot, system, derived and operational tables), the guard `retention_class_guard`.
+- **Migration `0144_p7_retention_runs.sql`:** `retention_run`, `retention_archived_record`, `retention_run_action`; `retention_record_key()`, `retention_row_age()`, the purge function `retention_purge_record()` (SECURITY DEFINER), the read-only trigger on `inbox_notification` and `worker_heartbeat`.
+- **Migration `0145_p7_backup_sets.sql`:** `backup_set` and `backup_set_record(jsonb)` (owner only).
+- **Migration `0146_p7_retention_backup_permissions.sql`:** `retention.read`, `retention.configure`, `retention.run`, `backup.read` and their role defaults. `packages/shared/src/permissions.ts` `P7_RETENTION_PERMISSIONS`, `P7_RETENTION_ROLE_PERMISSIONS` (in `P7_PERMISSIONS`).
+- **Kysely types** and `SCHEMA_COLUMNS` for the 6 tables. **Catalogue pins** (`catalogue.test.ts`): the 0143–0145 trigger test, "every public base table has exactly one retention class with its real primary key", the class-registry test, the mutable-table pin, the privilege pins, and one added line in the approved P6 `worker_heartbeat` trigger pin. **Seed parity:** the 0146 block; the numbering example moves to `0147`.
+- **Guard probe:** `packages/db/test/integration/p7-retention-guards.test.ts` (15 tests, real PostgreSQL).
+- **Advisory lock** 730410 `retentionRun` (registry, test, ADR-0016 §6); 730411–730415 reserved.
+- **Contract:** 10 operations (tag `retention`), `p7-operations.ts` block, `p7-pending-arch-03.ts`, `p7-pending-be-g.ts`; the contract count pin is 961.
+- **ERD, data dictionary and permissions matrix** sections for 0143–0146.
+- **Free ids:** `0147`–`0149` for the slice E implementers (BE-G takes `0147`). Implementer migrations of `0136`–`0142` (slices C and D) are renumbered at merge if they land after `0143`–`0146` (the runner refuses an id below the highest applied one; D-245 O9).
+
+### E.1 BE-G: retention module, job and backup status route (backend-workflow; W5; after BE-A)
+
+**Creates:**
+
+| File | Purpose |
+| --- | --- |
+| `apps/api/src/modules/retention/classes/routes.ts` (+ `service.ts`) | `listRetentionClasses`, `getRetentionClass`, `updateRetentionClass` (If-Match; 730410; the 422 codes of E.5; audit `retention_class.updated` with before/after of action, period and reference) |
+| `apps/api/src/modules/retention/runs/routes.ts` (+ `service.ts`) | `listRetentionRuns`, `createRetentionRun`, `createRetentionDryRun` (Idempotency-Key; 730410; 422 `retention.run_in_progress`; `as_of = now()`; enqueue `retention.archive` with singleton key = run id; audit `retention_run.requested`), `getRetentionRun`, `listRetentionRunActions`, `listRetentionArchivedRecords` |
+| `apps/api/src/modules/retention/backups/routes.ts` | `listBackupSets` (`backup.read`) |
+| `apps/worker/src/handlers/retention/archive.ts` | the job `retention.archive` (ADR-0067 §4–§6): `queued → running` once under 730410; per enabled class, candidates by age column (`record_age_at` read as text); the archive set under `retention/<runId>/` through the EvidenceStore with the ADR-0064 encoder (`packages/db/src/transfer/export.ts`, BE-C) **before** any marker; then batches of ≤ 500 rows per transaction: marker → `archived` action + audit → `retention_purge_record()` → `purged` or `skipped_referenced` action + audit; dry run: `would_*` actions only; `succeeded` with counts, or `failed` with the reason |
+| `packages/db/migrations/0147_p7_retention_job.sql` | the `job:retention.archive` service identity (platform scope; declared and granted `retention.read`) and its `job_schedule` row (weekly, Monday 02:00, `Asia/Riyadh`), **disabled**; the `retention_table_class` row of every table BE-G adds (none expected) |
+| `apps/api/test/integration/retention/{classes,runs,backups}.test.ts`, `apps/worker/test/integration/retention-archive.test.ts`, `apps/api/test/integration/contract/p7-exercises-be-g.ts` | T-E10…T-E22 |
+
+**Modifies:**
+
+| File | Exactly what |
+| --- | --- |
+| `apps/api/src/modules/retention/index.ts` (BE-A's stub) | the three route registrations |
+| `apps/worker/src/handlers/retention/index.ts` (BE-A's stub) | the handler registration |
+| `apps/api/test/support/p7-pending-be-g.ts` | removes each entry as it is routed and exercised; empty at the end |
+| `packages/db/src/schema.ts`, `catalogue.test.ts`, `seed.test.ts` | only the lines for `0147` (the numbering example moves to `0148`) |
+
+**Reads only:** `retention_*`, `backup_set`, `apps/api/src/modules/evidence/store.ts` (the port), `packages/db/src/transfer/export.ts` (the encoder; BE-C).
+
+### E.2 DO-F: backup, restore and the A19 drill (devops-engineer; W8; after ARCH-03 and BE-E)
+
+**Creates:**
+
+| File | Purpose |
+| --- | --- |
+| `deploy/scripts/backup.sh` | ADR-0066 §1–§4, §6: snapshot-consistent `pg_dump -Fc` and table counts, evidence copy-out through BE-E's CLI, retention sets, `config/` without secret values, manifest `mth-backup/1`, checks, `backup_set_record()` |
+| `deploy/scripts/restore.sh` | ADR-0066 §7–§8: package checks, same major, fresh target only, `pg_restore --single-transaction --no-owner --role=mth_owner`, evidence copy-in, R1–R8, `restore-report.json` |
+| `deploy/scripts/restore-drill.sh` | ADR-0066 §9: demo → backup → fresh project → restore → R1–R9 → `drill-report.json` with timings |
+| `deploy/scripts/tests/backup-restore.test.mjs` (`node --test`, against `with-pg.sh`) | T-E1…T-E9 |
+| `docs/handover/backup-restore.md` | scope, schedule example, set layout, restore steps, checks table R1–R9, measured drill timings, RPO/RTO "to agree with Mobily IT", secrets to provide by name, cross-major note |
+
+**Modifies:** `deploy/compose/compose.yaml`: the `backup` service under `profiles: ["backup"]` on the pinned `postgres:18` image (no new image; `images.lock.json` unchanged).
+
+**Needs from BE-E (handback O1):** `transfer-attachments copy-out --to <dir> --out <attachments.json>` beside `copy-in` and `verify`. If BE-E has merged without it, DO-F requests it; DO-F does not edit BE-E's files.
+
+### E.3 DO-G: dry run, migration catalogue, upgrade guide (devops-engineer; W7; after ARCH-03; `cli.ts` after BE-D)
+
+**Creates:** `packages/db/src/dry-run.ts` (ADR-0068 §1–§2), `packages/db/test/integration/dry-run.test.ts` (T-E30…T-E33), `tools/release/migration-catalogue.mjs` and `tools/release/migration-catalogue.overrides.json` (ADR-0068 §3), `tools/release/migration-catalogue.test.mjs` (T-E34…T-E36), the generated `docs/handover/migration-catalogue.json`, `docs/handover/upgrades.md` (ADR-0068 §4, with the generated catalogue table).
+
+**Modifies:** `packages/db/src/cli.ts`: the `--dry-run` option of `migrate` and its usage line only.
+
+### E.4 Tests (each line states what it proves)
+
+| Test | File | Proves |
+| --- | --- | --- |
+| T-E1 | `backup-restore.test.mjs` | a set has exactly the ADR-0066 §1 layout; `schemaVersion` `mth-backup/1`; every listed file's SHA-256 matches |
+| T-E2 | same | `table-counts.tsv` equals counts taken in the dump's snapshot (a row inserted during the dump is in neither) |
+| T-E3 | same | `config/` contains no secret value (canary values in the environment file are absent; keys are present) |
+| T-E4 | same | a changed byte in any file → restore exit 2 naming the file; the target stays empty |
+| T-E5 | same | a manifest with another `server.major` → exit 2 with the E.5 line |
+| T-E6 | same | a non-empty target database or evidence store → exit 2; nothing written |
+| T-E7 | same | a restore into a fresh local cluster passes R1–R8 (same major) and writes `restore-report.json` with every step's seconds |
+| T-E8 | same | a failing step records a `failed` set with its reason through `backup_set_record()` |
+| T-E9 | same | the `backup_set_record()` argument has exactly the 19 keys of ADR-0066 §6 |
+| T-E10 | `retention/classes.test.ts` | the list shows every class and every table exactly once; a class with no period shows `periodDays: null` |
+| T-E11 | same | `updateRetentionClass`: each 422 code of E.5; 409 on a stale If-Match; 428 without one; audit with before/after |
+| T-E12 | same | 403 for every role without `retention.configure` (AUD, ADM_ACCESS included); reads for ADM_TECH, ADM_ACCESS, AUD only |
+| T-E13 | `retention/runs.test.ts` | 422 `retention.run_in_progress` while a run is queued or running; Idempotency-Key replay returns 200 with the same run |
+| T-E14 | `retention-archive.test.ts` | **A19/A22:** with test periods on synthetic rows, a run archives **only** records past retention (rows 1 day younger than the period stay unmarked and live), and writes one action row and one audit event per action |
+| T-E15 | same | a dry run writes `would_*` rows only: no archive set object, no marker, no delete, row counts unchanged |
+| T-E16 | same | exactly once: the job delivered twice for one run archives each record once; a second run never re-archives a marked record |
+| T-E17 | same | the archive set: `manifest.json` (`mth-retention-archive/1`), NDJSON per table in the ADR-0064 encoding, SHA-256 equal to `archive_set_sha256`; written before any marker (a store failure leaves no marker and fails the run) |
+| T-E18 | same | `archive_then_purge` on `processed_message`: archived then deleted; an inbox item referenced by a delivery: `skipped_referenced`, kept, read-only |
+| T-E19 | same | a class with action `retain` is never touched; business, audit and snapshot tables never appear in any action |
+| T-E20 | `retention/backups.test.ts` | `listBackupSets`: newest first, no content field, 403 without `backup.read` |
+| T-E21 | `p7-exercises-be-g.ts` | each of the 10 operations is exercised and validates against the contract |
+| T-E22 | `retention-archive.test.ts` | the job's service identity is `job:retention.archive`; the shipped schedule is disabled |
+| T-E23 | `apps/web/src/pages/admin/retention/*.test.tsx` | "Not set (IT to agree)" for a NULL period, never 0; the reference field is labelled as a reference, never as an approval |
+| T-E24 | same | EN and AR texts of E.6; RTL layout in Arabic |
+| T-E25 | `apps/web/e2e/p7-retention.spec.ts` (FE-D) | axe, keyboard, 360 px |
+| T-E30 | `dry-run.test.ts` | on a restored DG6-level copy (0001–0130), the report lists exactly the later files with their catalogue class and seconds |
+| T-E31 | same | the diff shows the P7 tables (`retention_class`, `backup_set`, …) and their grants |
+| T-E32 | same | the copy's `schema_migration` is unchanged after the dry run, and the throw-away database is dropped (also after a failing migration) |
+| T-E33 | same | a production-marked copy without the confirmation flag → exit 2, nothing created |
+| T-E34 | `migration-catalogue.test.mjs` | every file `0001`–last has exactly one entry with its id and SHA-256; the committed output equals a fresh generation |
+| T-E35 | same | scanner fixtures: each destructive and data-rewrite pattern classifies; an `UPDATE` inside a `$$` body does not |
+| T-E36 | same | every override has a reason of at least 20 characters and never lowers a class |
+| (done) | `p7-retention-guards.test.ts` | the database half of T-E14/T-E18/T-E19 and of ADR-0066 §6 (15 tests) |
+
+### E.5 Exact texts
+
+**Problem codes** (`apps/web/src/i18n/{en,ar}/problems.json`, keys with `.` written `__`; FE-A adds them; the Arabic is **provisional** until a qualified reviewer checks it, D-243 Q7):
+
+| Code | Status | English | Arabic (provisional) |
+| --- | --- | --- | --- |
+| `retention.class_retain_only` | 422 | Records of this class are always kept. Only operational classes can be archived or purged. | تُحفظ سجلات هذه الفئة دائماً. لا يمكن أرشفة أو حذف إلا الفئات التشغيلية. |
+| `retention.class_not_archivable` | 422 | This class cannot use this action: a table in it has no age date, or cannot be purged. | لا يمكن استخدام هذا الإجراء مع هذه الفئة: أحد جداولها بلا تاريخ عمر أو لا يمكن حذفه. |
+| `retention.class_period_required` | 422 | Enter the retention period agreed with IT before enabling this action. | أدخل مدة الاحتفاظ المتفق عليها مع تقنية المعلومات قبل تفعيل هذا الإجراء. |
+| `retention.class_reference_required` | 422 | Enter the reference of the IT approval (for example a change ticket) before enabling this action. | أدخل مرجع موافقة تقنية المعلومات (مثل رقم طلب التغيير) قبل تفعيل هذا الإجراء. |
+| `retention.run_in_progress` | 422 | A retention run is already queued or running. Wait for it to finish. | توجد عملية احتفاظ قيد الانتظار أو التنفيذ. انتظر حتى تكتمل. |
+
+**Audit actions:** `retention_class.updated`; `retention_run.requested`, `.started`, `.succeeded`, `.failed`; `retention.archived`, `retention.purged`, `retention.skipped` (one per action row); `backup.recorded` (written by `backup_set_record()`).
+
+**Script lines** (operator-facing, English; the guide gives the Arabic summary, D-243 Q7):
+
+| Script | Exit | Line |
+| --- | --- | --- |
+| `backup.sh` | 0 | `backup: set <label> succeeded: <bytes> database bytes, <n> evidence objects; manifest sha256 <hex>` |
+| `backup.sh` | 1 | `backup: set <label> failed: <reason>` |
+| `restore.sh` | 2 | `restore: refused: unsupported backup schema version '<v>'` |
+| `restore.sh` | 2 | `restore: refused: checksum mismatch for <file>` |
+| `restore.sh` | 2 | `restore: refused: backup is from PostgreSQL <m>, target is <n>; a cross-major restore is an upgrade (dump with the newer client), see upgrades.md` |
+| `restore.sh` | 2 | `restore: refused: the target database is not empty` / `restore: refused: the target evidence store is not empty` |
+| `restore.sh` | 1 | `restore: check <R#> failed: expected <x>, got <y>` |
+| `restore.sh` | 0 | `restore: <label> restored and ready in <s> s; all checks passed` |
+| `mth-db migrate --dry-run` | 0 | `mth-db migrate --dry-run: <n> pending migration(s) applied to a throw-away copy in <s> s; the source is unchanged` |
+| `mth-db migrate --dry-run` | 1 | `mth-db migrate --dry-run: <name> failed: <error>; <k> not attempted; the source is unchanged` |
+| `mth-db migrate --dry-run` | 2 | `mth-db migrate --dry-run: refused: this database is marked production; run it on a restored copy and pass --i-confirm-this-is-a-restored-copy` |
+
+### E.6 Screen texts (FE-C; Administration > Retention; `apps/web/src/i18n/{en,ar}/retention.json`; the Arabic provisional)
+
+| Key | English | Arabic (provisional) |
+| --- | --- | --- |
+| `title` | Retention | الاحتفاظ بالبيانات |
+| `intro` | Each record class has a retention action. Every class starts as "Keep". Business records, audit and snapshots are always kept. Periods must be agreed with Mobily IT. | لكل فئة سجلات إجراء احتفاظ. تبدأ كل فئة بإجراء "الاحتفاظ". تُحفظ سجلات الأعمال وسجل التدقيق واللقطات دائماً. يجب الاتفاق على المدد مع تقنية المعلومات في موبايلي. |
+| `action.retain` / `archive` / `archive_then_purge` | Keep / Archive / Archive, then delete | الاحتفاظ / الأرشفة / الأرشفة ثم الحذف |
+| `period.notSet` | Not set (IT to agree) | غير محددة (يُتفق عليها مع تقنية المعلومات) |
+| `period.days` | {{count}} days | {{count}} يوماً |
+| `reference.label` | IT approval reference | مرجع موافقة تقنية المعلومات |
+| `reference.help` | Record the reference of the approval Mobily IT gave outside this platform, for example a change ticket. Saving it does not approve anything. | سجّل مرجع الموافقة التي منحتها تقنية المعلومات في موبايلي خارج هذه المنصة، مثل رقم طلب التغيير. حفظه لا يعني الموافقة على أي شيء. |
+| `managedByJob` | Removed automatically when expired | تُزال تلقائياً عند انتهاء صلاحيتها |
+| `effect.inbox` | Archived read notifications can no longer be marked unread. With "Archive, then delete" they disappear from the inbox. | لا يمكن إعادة الإشعارات المقروءة المؤرشفة إلى غير مقروءة. ومع "الأرشفة ثم الحذف" تختفي من صندوق الوارد. |
+| `run.dryRun` / `run.run` | Dry run / Run now | تشغيل تجريبي / تشغيل الآن |
+| `run.dryRunHelp` | Shows what a run would archive or delete. Nothing is changed. | يعرض ما ستؤرشفه العملية أو تحذفه دون تغيير أي شيء. |
+| `run.status.queued` / `running` / `succeeded` / `failed` | Queued / Running / Succeeded / Failed | في الانتظار / قيد التنفيذ / نجحت / فشلت |
+| `actions.title` | Actions in this run | إجراءات هذه العملية |
+| `archived.title` | Archived records | السجلات المؤرشفة |
+| `archived.kept` | Kept (read-only) | محفوظ (للقراءة فقط) |
+| `backups.title` | Backup sets | مجموعات النسخ الاحتياطي |
+| `backups.readOnly` | Backups and restores are run by IT with the backup scripts. This list is read-only. | تنفّذ تقنية المعلومات النسخ الاحتياطي والاستعادة باستخدام نصوص النسخ. هذه القائمة للقراءة فقط. |
+| `backups.none` | No backup set has been reported yet. | لم يُبلَّغ عن أي مجموعة نسخ احتياطي بعد. |
+
+### E.7 Seams with other slices
+
+| Seam | Rule |
+| --- | --- |
+| **Attachment manifest → C (BE-E)** | ADR-0066 reuses `attachments.json` (`mth-attachment-manifest/1`) and BE-E's CLI; it needs `copy-out` (O1). |
+| **Encoder → C (BE-C)** | The archive set uses `packages/db/src/transfer/export.ts`'s row encoding; BE-G imports it, never copies it. |
+| **Migration export ↔ retention** | `transfer_table_rule` gets no row from retention; the retention tables are exported like any business table (they are not in `transfer_table_rule`), so an import carries the run history. |
+| **Every later migration** | A migration that creates a table adds its `retention_table_class` row in the same file (class `business_record` unless an ADR says otherwise), or the catalogue test fails. This applies to BE-C, BE-D, BE-F and every later stage. |
+| **Module registry → BE-A** | BE-A registers the module `retention` with the stubs `retention/{classes,runs,backups}/routes.ts` and the worker stub `apps/worker/src/handlers/retention/index.ts`. `retention` imports no domain module except `evidence` (the port). |
+| **Guides → H (DOC-A, DOC-B, DOC-C)** | DOC-A's admin guide covers the Retention screen (E.6) including the inbox effect; DOC-C's automation guide the job, identity and disabled schedule; DOC-B's index links `backup-restore.md` and `upgrades.md` (D-247 O5). |
+| **A19 → QA-A, QA-C** | QA-A writes `tests/qa/integration/a19-*.test.ts` from the acceptance text (restore recovers database, evidence, audit, snapshots and job state; checks R1–R8; timings recorded); QA-C re-runs it and the orchestrator runs the container drill (D-243 Q1). |
+
+### E.8 Integration order
+
+1. ARCH-03 merged (this revision).
+2. BE-A (W4): module `retention`, stubs.
+3. BE-G (W5): `0147`, routes, job (after BE-C's encoder; if BE-C is not merged, BE-G lands the job with the archive writer behind an interface and switches to the encoder in the same wave, stated in its handback).
+4. DO-G (W7): dry run (`cli.ts` after BE-D), catalogue, upgrade guide; QA-A (W7): A19 harness.
+5. DO-F (W8): backup, restore, drill (after BE-E).
+6. FE-C (W9), DOC-A/DOC-C (W8–W10), QA-C (W12).
+
+### E.9 Requirement → clause → test → owner
+
+| Requirement | Clause (acceptance text) | Test(s) | Owner |
+| --- | --- | --- | --- |
+| REQ-S16-024 | "the retention configuration lists every record class" | catalogue "every public base table has exactly one retention class" (done); T-E10 | solution-architect; BE-G |
+| REQ-S16-024 | "an archival job run on test data archives only records past retention" | T-E14, T-E19; probe "a record that is not past retention can never be marked archived" (done) | BE-G |
+| REQ-S16-024 | "and logs each action" | T-E14 (one action row and one audit event per action), T-E15 (dry run logs `would_*`); probe "an unaudited action cannot commit" (done) | BE-G |
+| REQ-S16-024 | "Retention periods must be agreed with Mobily IT; defaults are placeholders" / "Approver" | class registry test (all `retain`, period NULL; done); T-E23; T-E11 (period and reference required) | solution-architect; BE-G; FE-C |
+| REQ-S16-024 | M0329 "soft deletion is not a substitute" / D-243 Q3 nothing purged in business, audit, snapshot | probe "business, audit and snapshot classes can never leave 'retain'", "purge refuses … any business table" (done); T-E19 | solution-architect; BE-G |
+| REQ-S19-012 | "the restore drill recovers the database" | T-E7 (R2, R3), the A19 drill | DO-F; QA-C |
+| REQ-S19-012 | "evidence" | T-E7 (R7), T-E4 | DO-F; BE-E |
+| REQ-S19-012 | "audit" | T-E7 (R4) | DO-F |
+| REQ-S19-012 | "snapshots" | T-E7 (R5) | DO-F |
+| REQ-S19-012 | "and job state" | T-E7 (R6) | DO-F |
+| REQ-S19-012 | "with documented checks and timings" | T-E7 (`restore-report.json`), `backup-restore.md` R1–R9 and drill timings | DO-F |
+| REQ-S19-012 | M0360 "configuration" / "recovery objectives to be agreed with IT" | T-E3; the guide's RPO/RTO placeholders | DO-F |
+| REQ-S19-013 | "a dry-run migration on a restored copy reports its changes" | T-E30, T-E31, T-E32 | DO-G |
+| REQ-S19-013 | "the guide identifies each irreversible migration and its backup-based recovery" | T-E34, T-E35, T-E36; `upgrades.md` | DO-G |
+| REQ-S19-013 | "tested by upgrading a restored copy from the previous release" | T-E30 then the real `migrate` on the copy (ADR-0068 §5) | DO-G |
+| REQ-S20-019 | "Restore drill recovers database, evidence, audit, snapshots and job state with documented checks and timings" | `tests/qa/integration/a19-*.test.ts` (QA-A), re-run by QA-C; the orchestrator's container drill | QA-A; QA-C; orchestrator |
+
+### E.10 What the implementers must know
+
+- **Never** grant DELETE on any table to `mth_app`, and never call `EvidenceStore.delete`. The only delete path is `retention_purge_record()`.
+- `record_age_at` must equal the row's age exactly: read it as text in SQL. A JavaScript `Date` drops microseconds and the marker is refused.
+- No agent or test writes a real IT reference. Tests use texts beginning `TEST-ONLY`. No class is shipped enabled.
+- A NULL period is shown as "Not set (IT to agree)", never as 0 or as a default number.
+- Every new table needs its `retention_table_class` row in its own migration (E.7).
+- Backups and restores run outside the API. No route starts one.

@@ -49,6 +49,8 @@ import {
   P6_ASSISTANT_ROLE_PERMISSIONS,
   P7_TRANSFER_PERMISSIONS,
   P7_TRANSFER_ROLE_PERMISSIONS,
+  P7_RETENTION_PERMISSIONS,
+  P7_RETENTION_ROLE_PERMISSIONS,
   PERMISSIONS,
   ROLES,
 } from "@mth/shared";
@@ -93,6 +95,7 @@ const sqlP6Integrations = readFileSync(`${defaultMigrationsDir()}/0107_p6_integr
 const sqlP6Search = readFileSync(`${defaultMigrationsDir()}/0109_p6_search_productivity_permissions.sql`, "utf8");
 const sqlP6Assistant = readFileSync(`${defaultMigrationsDir()}/0112_p6_assistant_permissions.sql`, "utf8");
 const sqlP7Transfer = readFileSync(`${defaultMigrationsDir()}/0135_p7_transfer_permissions.sql`, "utf8");
+const sqlP7Retention = readFileSync(`${defaultMigrationsDir()}/0146_p7_retention_backup_permissions.sql`, "utf8");
 const LATER_PERMISSION_SET: ReadonlySet<string> = new Set([
   ...Object.keys(P2_PERMISSIONS),
   ...Object.keys(P3_PERMISSIONS),
@@ -116,6 +119,7 @@ const LATER_PERMISSION_SET: ReadonlySet<string> = new Set([
   ...Object.keys(P6_SEARCH_PERMISSIONS),
   ...Object.keys(P6_ASSISTANT_PERMISSIONS),
   ...Object.keys(P7_TRANSFER_PERMISSIONS),
+  ...Object.keys(P7_RETENTION_PERMISSIONS),
 ]);
 
 function section(header: string, text: string = sql): string {
@@ -209,6 +213,7 @@ describe("0018 seed equals the P2 part of permissions.ts", () => {
       ...P6_SEARCH_PERMISSIONS,
       ...P6_ASSISTANT_PERMISSIONS,
       ...P7_TRANSFER_PERMISSIONS,
+      ...P7_RETENTION_PERMISSIONS,
     }).toEqual(PERMISSIONS);
   });
 
@@ -1042,6 +1047,45 @@ describe("0135 seed equals the P7 part of permissions.ts (slices C and D, migrat
   });
 });
 
+describe("0146 seed equals the P7 part of permissions.ts (slice E, retention and backup status)", () => {
+  it("permission rows", () => {
+    const rows = [
+      ...section("INSERT INTO permission", sqlP7Retention).matchAll(/^\s*\('([a-z_.]+)', '([a-z_]+)'/gm),
+    ].map((m) => [m[1], m[2]]);
+    expect(Object.fromEntries(rows)).toEqual(P7_RETENTION_PERMISSIONS);
+    expect(rows).toHaveLength(Object.keys(P7_RETENTION_PERMISSIONS).length);
+  });
+
+  it("role_permission links", () => {
+    const idToCode = new Map(
+      [...section("INSERT INTO role (").matchAll(/^\s*\('([0-9a-f-]{36})', '([A-Z_]+)'/gm)].map((m) => [m[1]!, m[2]!]),
+    );
+    const byRole: Record<string, string[]> = {};
+    for (const l of section("INSERT INTO role_permission", sqlP7Retention).matchAll(
+      /\('([0-9a-f-]{36})', '([a-z_.]+)'\)/g,
+    ))
+      (byRole[idToCode.get(l[1]!)!] ??= []).push(l[2]!);
+    const sorted = (o: Record<string, readonly string[]>) =>
+      Object.fromEntries(
+        Object.entries(o)
+          .filter(([, p]) => p.length > 0)
+          .map(([c, p]) => [c, [...p].sort()]),
+      );
+    expect(sorted(byRole)).toEqual(sorted(P7_RETENTION_ROLE_PERMISSIONS));
+    for (const [code, perms] of Object.entries(P7_RETENTION_ROLE_PERMISSIONS))
+      for (const p of perms) expect(ROLES[code as keyof typeof ROLES].permissions).toContain(p);
+  });
+
+  it("no business approval or Finance validation; configure and run codes only for ADM_TECH; AUD reads only", () => {
+    for (const c of Object.values(P7_RETENTION_PERMISSIONS as Record<string, string>))
+      expect(["read", "configure"]).toContain(c);
+    for (const [role, perms] of Object.entries(P7_RETENTION_ROLE_PERMISSIONS))
+      for (const p of perms as readonly (keyof typeof P7_RETENTION_PERMISSIONS)[])
+        if (P7_RETENTION_PERMISSIONS[p] === "configure") expect(role).toBe("ADM_TECH");
+    expect([...P7_RETENTION_ROLE_PERMISSIONS.AUD].sort()).toEqual(["backup.read", "retention.read"]);
+  });
+});
+
 /**
  * F-DG5-100: the P5 ids its stage left unused (planned gaps of the p5-plan §4 ranges, D-142). They are permanently
  * unused: a file in a gap would run at its lexical position on a fresh database but last on an upgraded one (the
@@ -1109,7 +1153,10 @@ describe("migration files", () => {
     // T-DG7-ARCH-02 (P7, D-243): the ceiling is now the P7 repair block's last id, 0163. 0131-0132 (T-DG7-ARCH-01,
     // none needed) stay unused once 0133 ships (the runner refuses an id below the highest applied one). 0133-0135
     // are shipped, so the next free id of the T-DG7-ARCH-02 range is 0136.
-    expect(numberingViolations([...files, { id: 136, name: "0136_p7_example.sql" }])).toEqual([]);
+    // T-DG7-ARCH-03 ships 0143-0146 from the low end of its range 0143-0149, so the implementers' next free id of that
+    // range is 0147 (implementer migrations of 0136-0142 renumber at merge, the runner refusing an id below the
+    // highest applied one).
+    expect(numberingViolations([...files, { id: 147, name: "0147_p7_example.sql" }])).toEqual([]);
     expect(numberingViolations([...files, { id: 164, name: "0164_p7_example.sql" }])).toEqual([
       "0164_p7_example.sql: above 0163",
     ]);

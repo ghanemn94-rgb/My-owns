@@ -4,5 +4,6 @@
 // exercised, so the lists can only shrink. Each architecture task adds one import line here; the file is frozen after
 // T-DG7-ARCH-06 (p7-plan §5.3). All lists MUST be empty when the DG7 candidate freezes.
 import { P7_PENDING_ARCH_02 } from "./p7-pending-arch-02.ts";
+import { P7_PENDING_ARCH_03 } from "./p7-pending-arch-03.ts";
 
-export const P7_PENDING_OPERATIONS: readonly string[] = [...P7_PENDING_ARCH_02];
+export const P7_PENDING_OPERATIONS: readonly string[] = [...P7_PENDING_ARCH_02, ...P7_PENDING_ARCH_03];

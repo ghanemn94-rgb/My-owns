@@ -172,6 +172,11 @@ export const ADVISORY_LOCK_CLASSES = {
   identityRebind: 730404,
   /** One organization's configuration bundle import validation and commit (config bundles: a validation run and a commit never interleave, and the commit re-validates at commit time; one validation step is also held by the 0134 trigger config_bundle_import_guard). Key: "<organizationId>". */
   configBundleImport: 730405,
+  // P7 block of T-DG7-ARCH-03 (730410-730415; p7-plan §4, ADR-0067 §4). 730411-730415 are RESERVED for this block: never
+  // allocated to another block, and listed here only once a resource uses it (a backup set needs none: backup_set_record
+  // is one INSERT with a unique label).
+  /** The retention configuration and runs (retention: a class update, a run or dry-run request and the start of the retention.archive job never interleave, so a run never sees a class change half-way and at most one run is queued or running; also held by the 0144 index retention_run_one_active). One class-wide key: "retention". */
+  retentionRun: 730410,
 } as const;
 
 export type AdvisoryLockClassName = keyof typeof ADVISORY_LOCK_CLASSES;

@@ -7480,6 +7480,135 @@ export type ConfigBundleImportRow = Selectable<ConfigBundleImportTable>;
 export type ConfigBundleImportItemRow = Selectable<ConfigBundleImportItemTable>;
 export type ConfigBundleImportCommitRow = Selectable<ConfigBundleImportCommitTable>;
 
+// ---------------------------------------------------------------------------------------------------------------
+// P7 slice E (0143-0145; T-DG7-ARCH-03, ADR-0066, ADR-0067): the retention class registry and table map, retention runs,
+// their actions, the archived-record markers and the backup sets reported by the backup job.
+
+export interface RetentionClassTable {
+  id: string;
+  code: string;
+  /** 'business' | 'audit' | 'snapshot' | 'system' | 'derived' | 'operational'; only 'operational' may leave 'retain' */
+  category: string;
+  label_en: string;
+  label_ar: string;
+  description_en: string;
+  description_ar: string;
+  managed_by_job: string | null;
+  /** 'retain' (default) | 'archive' | 'archive_then_purge' */
+  action: Generated<string>;
+  /** NULL: "not set (IT to agree)" */
+  period_days: number | null;
+  /** A reference to an approval given outside the platform (for example a change ticket); never an approval itself. */
+  it_approval_reference: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  updated_at: TimestampDefault;
+  updated_by: string | null;
+}
+
+export interface RetentionTableClassTable {
+  table_name: string;
+  retention_class_id: string;
+  key_columns: string[];
+  age_column: string | null;
+  purge_eligible: Generated<boolean>;
+  created_at: TimestampDefault;
+}
+
+export interface RetentionRunTable {
+  id: string;
+  /** 'dry_run' | 'run' */
+  mode: string;
+  status: Generated<string>;
+  /** 'api' | 'schedule' */
+  requested_via: string;
+  as_of: Timestamp;
+  candidate_count: number | null;
+  archived_count: number | null;
+  purged_count: number | null;
+  skipped_count: number | null;
+  archive_set_key: string | null;
+  archive_set_sha256: string | null;
+  /** bigint as a string */
+  archive_set_bytes: string | null;
+  failure_reason: string | null;
+  started_at: NullableTimestamp;
+  finished_at: NullableTimestamp;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string | null;
+  updated_at: TimestampDefault;
+  updated_by: string | null;
+}
+
+export interface RetentionArchivedRecordTable {
+  table_name: string;
+  /** The primary key columns as a text-valued object (ADR-0067 §5). */
+  record_key: Json;
+  retention_class_id: string;
+  retention_run_id: string;
+  archive_set_key: string;
+  record_age_at: Timestamp;
+  archived_at: TimestampDefault;
+  purged_at: NullableTimestamp;
+  purge_run_id: string | null;
+}
+
+export interface RetentionRunActionTable {
+  id: string;
+  retention_run_id: string;
+  retention_class_id: string;
+  table_name: string;
+  record_key: Json;
+  /** 'would_archive' | 'would_purge' | 'archived' | 'purged' | 'skipped_referenced' */
+  action: string;
+  period_days: number;
+  record_age_at: Timestamp;
+  occurred_at: TimestampDefault;
+}
+
+export interface BackupSetTable {
+  id: string;
+  label: string;
+  /** 'succeeded' | 'failed' */
+  status: string;
+  manifest_schema_version: string;
+  started_at: Timestamp;
+  finished_at: Timestamp;
+  migration_level: string | null;
+  server_major: number | null;
+  dump_format: string | null;
+  /** bigint as a string */
+  dump_bytes: string | null;
+  dump_sha256: string | null;
+  evidence_backend: string | null;
+  evidence_object_count: number | null;
+  /** bigint as a string */
+  evidence_bytes: string | null;
+  attachment_manifest_sha256: string | null;
+  config_bundle_sha256: string | null;
+  manifest_sha256: string | null;
+  failure_reason: string | null;
+  operator_name: string;
+  recorded_at: TimestampDefault;
+}
+
+export interface Database {
+  retention_class: RetentionClassTable;
+  retention_table_class: RetentionTableClassTable;
+  retention_run: RetentionRunTable;
+  retention_archived_record: RetentionArchivedRecordTable;
+  retention_run_action: RetentionRunActionTable;
+  backup_set: BackupSetTable;
+}
+
+export type RetentionClassRow = Selectable<RetentionClassTable>;
+export type RetentionTableClassRow = Selectable<RetentionTableClassTable>;
+export type RetentionRunRow = Selectable<RetentionRunTable>;
+export type RetentionArchivedRecordRow = Selectable<RetentionArchivedRecordTable>;
+export type RetentionRunActionRow = Selectable<RetentionRunActionTable>;
+export type BackupSetRow = Selectable<BackupSetTable>;
+
 /**
  * Runtime column catalogue of `Database`. The compiler forces it to list exactly the interface's columns (both
  * directions, see the assertions below), and the integration test compares it with information_schema, so the
@@ -13672,6 +13801,97 @@ export const SCHEMA_COLUMNS = {
     "created_at",
   ],
   config_bundle_import_commit: ["config_bundle_import_item_id", "target_record_type", "target_record_id", "created_at"],
+  retention_class: [
+    "id",
+    "code",
+    "category",
+    "label_en",
+    "label_ar",
+    "description_en",
+    "description_ar",
+    "managed_by_job",
+    "action",
+    "period_days",
+    "it_approval_reference",
+    "version",
+    "created_at",
+    "updated_at",
+    "updated_by",
+  ],
+  retention_table_class: [
+    "table_name",
+    "retention_class_id",
+    "key_columns",
+    "age_column",
+    "purge_eligible",
+    "created_at",
+  ],
+  retention_run: [
+    "id",
+    "mode",
+    "status",
+    "requested_via",
+    "as_of",
+    "candidate_count",
+    "archived_count",
+    "purged_count",
+    "skipped_count",
+    "archive_set_key",
+    "archive_set_sha256",
+    "archive_set_bytes",
+    "failure_reason",
+    "started_at",
+    "finished_at",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  retention_archived_record: [
+    "table_name",
+    "record_key",
+    "retention_class_id",
+    "retention_run_id",
+    "archive_set_key",
+    "record_age_at",
+    "archived_at",
+    "purged_at",
+    "purge_run_id",
+  ],
+  retention_run_action: [
+    "id",
+    "retention_run_id",
+    "retention_class_id",
+    "table_name",
+    "record_key",
+    "action",
+    "period_days",
+    "record_age_at",
+    "occurred_at",
+  ],
+  backup_set: [
+    "id",
+    "label",
+    "status",
+    "manifest_schema_version",
+    "started_at",
+    "finished_at",
+    "migration_level",
+    "server_major",
+    "dump_format",
+    "dump_bytes",
+    "dump_sha256",
+    "evidence_backend",
+    "evidence_object_count",
+    "evidence_bytes",
+    "attachment_manifest_sha256",
+    "config_bundle_sha256",
+    "manifest_sha256",
+    "failure_reason",
+    "operator_name",
+    "recorded_at",
+  ],
 } as const satisfies { readonly [T in keyof Database]: readonly (keyof Database[T] & string)[] };
 
 // Compile-time completeness: every interface column is listed (the `satisfies` above covers the other direction).

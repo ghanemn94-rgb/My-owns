@@ -97,6 +97,7 @@ describe("advisory-lock class registry", () => {
       migrationImport: 730403,
       identityRebind: 730404,
       configBundleImport: 730405,
+      retentionRun: 730410,
     });
     const values = Object.values(ADVISORY_LOCK_CLASSES);
     expect(new Set(values).size).toBe(values.length);

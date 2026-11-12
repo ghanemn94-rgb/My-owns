@@ -384,6 +384,8 @@ tags:
     description: The optional in-app assistant, off by default; read-only retrieval with citations and labelled suggestions (P6, ADR-0059).
   - name: transfer
     description: Whole-installation migration exports, migration import status and reconciliation, the identity rebind list, and configuration transfer bundles (P7, ADR-0064, ADR-0065). The migration import and the identity rebind are CLI-only, IT-run.
+  - name: retention
+    description: Retention classes (every table in exactly one), retention runs and dry runs with their per-record action log, archived-record markers, and the read-only status of the backup sets the backup job reported (P7, ADR-0066, ADR-0067). Backups, restores and upgrades run outside the API, IT-run.
 security:
   - sessionCookie: []
 paths:
@@ -24707,6 +24709,248 @@ paths:
         "422": { $ref: "#/components/responses/BusinessRule" }
         "428": { $ref: "#/components/responses/PreconditionRequired" }
         "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/retention/classes:
+    get:
+      tags: [retention]
+      operationId: listRetentionClasses
+      summary: "Every retention class with its category, action, period (null: not set, IT to agree), IT approval reference text and the tables it covers, ordered by code (retention.read; ADM_TECH, ADM_ACCESS, AUD). Every public table belongs to exactly one class. ADR-0067 §2, §3; REQ-S16-024."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RetentionClassPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/retention/classes/{retentionClassCode}:
+    parameters:
+      - $ref: "#/components/parameters/RetentionClassCode"
+    get:
+      tags: [retention]
+      operationId: getRetentionClass
+      summary: "One retention class with its tables (retention.read). ADR-0067 §2."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RetentionClass" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    put:
+      tags: [retention]
+      operationId: updateRetentionClass
+      summary: "Change a class's action, period and IT approval reference text with a reason (retention.configure; ADM_TECH; If-Match). The reference records an approval given outside the platform (for example a change ticket); saving it approves nothing. Only operational classes not managed by an existing expiry job can leave 'retain'; 'archive' needs an age column on every table of the class and 'archive_then_purge' needs every table purge-eligible. Audit retention_class.updated. 422 retention.class_retain_only, retention.class_not_archivable, retention.class_period_required, retention.class_reference_required, retention.run_in_progress. ADR-0067 §2; D-243 Q3; REQ-S16-024."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RetentionClassUpdate" }
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RetentionClass" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/VersionConflict" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/retention/runs:
+    get:
+      tags: [retention]
+      operationId: listRetentionRuns
+      summary: "Retention runs and dry runs, newest first, with status, as-of time, counts and the archive set checksum (retention.read). ADR-0067 §4."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RetentionRunPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+    post:
+      tags: [retention]
+      operationId: createRetentionRun
+      summary: "Request a retention run with a reason (retention.run; ADM_TECH). The worker job retention.archive, under its own service identity, selects the records of every enabled class whose age column is older than the as-of time minus the class period, writes them to an archive set in the migration-manifest format in the evidence store, marks each live row archived (read-only) and, for 'archive_then_purge' classes, deletes it through the database purge function; one audit event per action. With no enabled class the run succeeds with zero counts. Audit retention_run.requested. The same Idempotency-Key returns the existing request with 200. 422 retention.run_in_progress. ADR-0067 §4-§6; REQ-S16-024."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RetentionRunCreate" }
+      responses:
+        "202":
+          description: "Accepted (queued)."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RetentionRun" }
+        "200":
+          description: "The existing request for this Idempotency-Key."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RetentionRun" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/retention/dry-runs:
+    post:
+      tags: [retention]
+      operationId: createRetentionDryRun
+      summary: "Request a retention dry run with a reason (retention.run; ADM_TECH): the same selection as a run, recorded as would_archive and would_purge actions; nothing is archived, marked or deleted and no archive set is written. Audit retention_run.requested (one event for the dry run). The same Idempotency-Key returns the existing request with 200. 422 retention.run_in_progress. ADR-0067 §4."
+      security:
+        - sessionCookie: []
+          csrfToken: []
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RetentionRunCreate" }
+      responses:
+        "202":
+          description: "Accepted (queued)."
+          headers:
+            Location: { $ref: "#/components/headers/Location" }
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RetentionRun" }
+        "200":
+          description: "The existing request for this Idempotency-Key."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RetentionRun" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/BusinessRule" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/retention/runs/{retentionRunId}:
+    parameters:
+      - $ref: "#/components/parameters/RetentionRunId"
+    get:
+      tags: [retention]
+      operationId: getRetentionRun
+      summary: "One retention run or dry run (retention.read). ADR-0067 §4."
+      responses:
+        "200":
+          description: "OK."
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RetentionRun" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/retention/runs/{retentionRunId}/actions:
+    parameters:
+      - $ref: "#/components/parameters/RetentionRunId"
+    get:
+      tags: [retention]
+      operationId: listRetentionRunActions
+      summary: "The per-record action log of one run, in order: table, record key (primary key values only, never row content), class, period applied, the record's age and the action (retention.read). ADR-0067 §6; REQ-S16-024 'logs each action'."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RetentionRunActionPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/retention/archived:
+    get:
+      tags: [retention]
+      operationId: listRetentionArchivedRecords
+      summary: "Archived-record markers, newest first: table, record key, class, the run and archive set that hold the copy, and when the live row was purged (null: it stays, read-only) (retention.read). Optional filters table and retentionRunId. ADR-0067 §5."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+        - name: table
+          in: query
+          required: false
+          schema: { type: string, pattern: "^[a-z][a-z0-9_]{0,62}$" }
+        - name: retentionRunId
+          in: query
+          required: false
+          schema: { $ref: "#/components/schemas/Uuid" }
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RetentionArchivedRecordPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+  /api/v1/admin/backups:
+    get:
+      tags: [retention]
+      operationId: listBackupSets
+      summary: "The backup sets the backup job reported, newest first: status, timings, migration level, PostgreSQL major, dump, evidence and manifest checksums and counts (backup.read; ADM_TECH, AUD). Read-only: backups and restores run outside the API (deploy/scripts/backup.sh, restore.sh; IT-run). No file content and no location of a credential. ADR-0066 §6; REQ-S19-012."
+      parameters:
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/Limit"
+      responses:
+        "200":
+          description: "OK."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BackupSetPage" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "401": { $ref: "#/components/responses/Unauthenticated" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/RateLimited" }
 components:
   securitySchemes:
     sessionCookie:
@@ -26407,6 +26651,16 @@ components:
       schema: { $ref: "#/components/schemas/Uuid" }
     ConfigBundleImportId:
       name: configBundleImportId
+      in: path
+      required: true
+      schema: { $ref: "#/components/schemas/Uuid" }
+    RetentionClassCode:
+      name: retentionClassCode
+      in: path
+      required: true
+      schema: { type: string, pattern: "^[a-z][a-z0-9_]{2,62}$" }
+    RetentionRunId:
+      name: retentionRunId
       in: path
       required: true
       schema: { $ref: "#/components/schemas/Uuid" }
@@ -29469,6 +29723,10 @@ components:
         - migration_import.read
         - config_bundle.export
         - config_bundle.import
+        - retention.read
+        - retention.configure
+        - retention.run
+        - backup.read
     RoleCode:
       type: string
       enum: [SP, TL, BO, WL, FIN, TO, KDS, TD, CM, SEC, AUD, ADM_TECH, ADM_ACCESS, ADM_METHOD]
@@ -42241,4 +42499,169 @@ components:
       additionalProperties: false
       properties:
         items: { type: array, items: { $ref: "#/components/schemas/ConfigBundleImport" } }
+        nextCursor: { type: [string, "null"] }
+    RetentionCategory:
+      type: string
+      enum: [business, audit, snapshot, system, derived, operational]
+      description: "D-243 Q3: only 'operational' classes can leave 'retain'; business, audit and snapshot records are never archived or purged by the platform."
+    RetentionAction:
+      type: string
+      enum: [retain, archive, archive_then_purge]
+    RetentionClassTable:
+      type: object
+      required: [tableName, ageColumn, purgeEligible]
+      additionalProperties: false
+      properties:
+        tableName: { type: string, pattern: "^[a-z][a-z0-9_]{0,62}$" }
+        ageColumn: { type: [string, "null"], description: "The timestamp that decides a record's age; null: never selected by a run." }
+        purgeEligible: { type: boolean }
+    RetentionClass:
+      type: object
+      required: [id, code, category, labelEn, labelAr, descriptionEn, descriptionAr, managedByJob, action, periodDays, itApprovalReference, tables, updatedAt, updatedBy, version]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        code: { type: string, pattern: "^[a-z][a-z0-9_]{2,62}$" }
+        category: { $ref: "#/components/schemas/RetentionCategory" }
+        labelEn: { type: string }
+        labelAr: { type: string }
+        descriptionEn: { type: string }
+        descriptionAr: { type: string }
+        managedByJob: { type: [string, "null"], description: "An existing job that already removes these rows on expiry (for example platform.purge-expired); such a class stays 'retain'." }
+        action: { $ref: "#/components/schemas/RetentionAction" }
+        periodDays: { type: [integer, "null"], minimum: 1, maximum: 36500, description: "Null: not set (IT to agree). Never shown as zero." }
+        itApprovalReference: { type: [string, "null"], description: "A reference to an approval given outside the platform (for example a change ticket). Text only; the platform never approves." }
+        tables: { type: array, items: { $ref: "#/components/schemas/RetentionClassTable" } }
+        updatedAt: { $ref: "#/components/schemas/Timestamp" }
+        updatedBy: { $ref: "#/components/schemas/NullableUuid" }
+        version: { type: integer, minimum: 1 }
+    RetentionClassPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/RetentionClass" } }
+        nextCursor: { type: [string, "null"] }
+    RetentionClassUpdate:
+      type: object
+      required: [action, periodDays, itApprovalReference, reason]
+      additionalProperties: false
+      properties:
+        action: { $ref: "#/components/schemas/RetentionAction" }
+        periodDays: { type: [integer, "null"], minimum: 1, maximum: 36500 }
+        itApprovalReference: { type: [string, "null"], minLength: 3, maxLength: 500 }
+        reason: { $ref: "#/components/schemas/Reason" }
+    RetentionRunCreate:
+      type: object
+      required: [reason]
+      additionalProperties: false
+      properties:
+        reason: { $ref: "#/components/schemas/Reason" }
+    RetentionRun:
+      type: object
+      required: [id, mode, status, requestedVia, asOf, candidateCount, archivedCount, purgedCount, skippedCount, archiveSetKey, archiveSetSha256, archiveSetBytes, failureReason, startedAt, finishedAt, createdAt, createdBy, version]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        mode: { type: string, enum: [dry_run, run] }
+        status: { type: string, enum: [queued, running, succeeded, failed] }
+        requestedVia: { type: string, enum: [api, schedule] }
+        asOf: { $ref: "#/components/schemas/Timestamp" }
+        candidateCount: { type: [integer, "null"], minimum: 0 }
+        archivedCount: { type: [integer, "null"], minimum: 0 }
+        purgedCount: { type: [integer, "null"], minimum: 0 }
+        skippedCount: { type: [integer, "null"], minimum: 0 }
+        archiveSetKey: { type: [string, "null"], pattern: "^retention/[0-9a-f-]{36}/manifest\\.json$" }
+        archiveSetSha256: { oneOf: [{ $ref: "#/components/schemas/TransferSha256" }, { type: "null" }] }
+        archiveSetBytes: { oneOf: [{ $ref: "#/components/schemas/TransferInteger" }, { type: "null" }] }
+        failureReason: { type: [string, "null"] }
+        startedAt: { oneOf: [{ $ref: "#/components/schemas/Timestamp" }, { type: "null" }] }
+        finishedAt: { oneOf: [{ $ref: "#/components/schemas/Timestamp" }, { type: "null" }] }
+        createdAt: { $ref: "#/components/schemas/Timestamp" }
+        createdBy: { $ref: "#/components/schemas/NullableUuid" }
+        version: { type: integer, minimum: 1 }
+    RetentionRunPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/RetentionRun" } }
+        nextCursor: { type: [string, "null"] }
+    RetentionRecordKey:
+      type: object
+      description: "The record's primary key columns and their text values only (ADR-0067 §5). Never row content."
+      additionalProperties: { type: string }
+    RetentionRunAction:
+      type: object
+      required: [id, retentionRunId, retentionClassCode, tableName, recordKey, action, periodDays, recordAgeAt, occurredAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        retentionRunId: { $ref: "#/components/schemas/Uuid" }
+        retentionClassCode: { type: string }
+        tableName: { type: string }
+        recordKey: { $ref: "#/components/schemas/RetentionRecordKey" }
+        action: { type: string, enum: [would_archive, would_purge, archived, purged, skipped_referenced] }
+        periodDays: { type: integer, minimum: 1 }
+        recordAgeAt: { $ref: "#/components/schemas/Timestamp" }
+        occurredAt: { $ref: "#/components/schemas/Timestamp" }
+    RetentionRunActionPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/RetentionRunAction" } }
+        nextCursor: { type: [string, "null"] }
+    RetentionArchivedRecord:
+      type: object
+      required: [tableName, recordKey, retentionClassCode, retentionRunId, archiveSetKey, recordAgeAt, archivedAt, purgedAt, purgeRunId]
+      additionalProperties: false
+      properties:
+        tableName: { type: string }
+        recordKey: { $ref: "#/components/schemas/RetentionRecordKey" }
+        retentionClassCode: { type: string }
+        retentionRunId: { $ref: "#/components/schemas/Uuid" }
+        archiveSetKey: { type: string }
+        recordAgeAt: { $ref: "#/components/schemas/Timestamp" }
+        archivedAt: { $ref: "#/components/schemas/Timestamp" }
+        purgedAt: { oneOf: [{ $ref: "#/components/schemas/Timestamp" }, { type: "null" }] }
+        purgeRunId: { $ref: "#/components/schemas/NullableUuid" }
+    RetentionArchivedRecordPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/RetentionArchivedRecord" } }
+        nextCursor: { type: [string, "null"] }
+    BackupSet:
+      type: object
+      required: [id, label, status, manifestSchemaVersion, startedAt, finishedAt, migrationLevel, serverMajor, dumpFormat, dumpBytes, dumpSha256, evidenceBackend, evidenceObjectCount, evidenceBytes, attachmentManifestSha256, configBundleSha256, manifestSha256, failureReason, operatorName, recordedAt]
+      additionalProperties: false
+      properties:
+        id: { $ref: "#/components/schemas/Uuid" }
+        label: { type: string }
+        status: { type: string, enum: [succeeded, failed] }
+        manifestSchemaVersion: { type: string, enum: ["mth-backup/1"] }
+        startedAt: { $ref: "#/components/schemas/Timestamp" }
+        finishedAt: { $ref: "#/components/schemas/Timestamp" }
+        migrationLevel: { type: [string, "null"], pattern: "^[0-9]{4}_[a-z0-9_]+$" }
+        serverMajor: { type: [integer, "null"], minimum: 16 }
+        dumpFormat: { type: [string, "null"], enum: [custom, null] }
+        dumpBytes: { oneOf: [{ $ref: "#/components/schemas/TransferInteger" }, { type: "null" }] }
+        dumpSha256: { oneOf: [{ $ref: "#/components/schemas/TransferSha256" }, { type: "null" }] }
+        evidenceBackend: { type: [string, "null"], enum: [filesystem, s3, null] }
+        evidenceObjectCount: { type: [integer, "null"], minimum: 0 }
+        evidenceBytes: { oneOf: [{ $ref: "#/components/schemas/TransferInteger" }, { type: "null" }] }
+        attachmentManifestSha256: { oneOf: [{ $ref: "#/components/schemas/TransferSha256" }, { type: "null" }] }
+        configBundleSha256: { oneOf: [{ $ref: "#/components/schemas/TransferSha256" }, { type: "null" }] }
+        manifestSha256: { oneOf: [{ $ref: "#/components/schemas/TransferSha256" }, { type: "null" }] }
+        failureReason: { type: [string, "null"] }
+        operatorName: { type: string }
+        recordedAt: { $ref: "#/components/schemas/Timestamp" }
+    BackupSetPage:
+      type: object
+      required: [items, nextCursor]
+      additionalProperties: false
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/BackupSet" } }
         nextCursor: { type: [string, "null"] }

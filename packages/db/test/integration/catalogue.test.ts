@@ -936,6 +936,8 @@ describe("schema.ts matches the migrated database", () => {
       ["storage_setting", "storage_setting_row_guard", false, false],
       ["storage_setting_change", "storage_setting_change_append_only", false, false],
       ["storage_setting_change", "storage_setting_change_append_only_truncate", false, false],
+      // T-DG7-ARCH-03 (0144, ADR-0067 §5): an archived heartbeat is read-only; inert while the class is 'retain'.
+      ["worker_heartbeat", "worker_heartbeat_archived_read_only", false, false],
       ["worker_heartbeat", "worker_heartbeat_guard", false, false],
       ["worker_heartbeat", "worker_heartbeat_row_guard", false, false],
     ];
@@ -1240,6 +1242,121 @@ describe("schema.ts matches the migrated database", () => {
     );
     const names = new Set(tables.map((x) => x.t));
     for (const { t } of excluded) expect(names, t).toContain(t);
+  });
+
+  it("0143-0145: the P7 slice E guards are attached (deferred audit, state machines, append-only map, history and markers, archived rows read-only)", async () => {
+    const rows = await q<{ rel: string; tgname: string; deferrable: boolean; deferred: boolean }>(
+      `SELECT c.relname AS rel, t.tgname, t.tgdeferrable AS deferrable, t.tginitdeferred AS deferred
+       FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid
+       WHERE NOT t.tgisinternal AND (c.relname IN ('backup_set', 'retention_archived_record', 'retention_class', 'retention_run', 'retention_run_action', 'retention_table_class')
+         OR t.tgname LIKE '%_archived_read_only')
+       ORDER BY 1, 2`,
+    );
+    type Row = [string, string, boolean, boolean];
+    const expected: Row[] = [
+      ["backup_set", "backup_set_append_only", false, false],
+      ["backup_set", "backup_set_append_only_truncate", false, false],
+      ["backup_set", "backup_set_audit_required", true, true],
+      ["backup_set", "backup_set_row_guard", false, false],
+      ["inbox_notification", "inbox_notification_archived_read_only", false, false],
+      ["retention_archived_record", "retention_archived_record_guard", false, false],
+      ["retention_archived_record", "retention_archived_record_no_delete", false, false],
+      ["retention_class", "retention_class_audit_required", true, true],
+      ["retention_class", "retention_class_guard", false, false],
+      ["retention_class", "retention_class_no_delete", false, false],
+      ["retention_class", "retention_class_row_guard", false, false],
+      ["retention_run", "retention_run_audit_required", true, true],
+      ["retention_run", "retention_run_guard", false, false],
+      ["retention_run", "retention_run_row_guard", false, false],
+      ["retention_run_action", "retention_run_action_append_only", false, false],
+      ["retention_run_action", "retention_run_action_append_only_truncate", false, false],
+      ["retention_run_action", "retention_run_action_audit_required", true, true],
+      ["retention_run_action", "retention_run_action_guard", false, false],
+      ["retention_table_class", "retention_table_class_append_only", false, false],
+      ["retention_table_class", "retention_table_class_append_only_truncate", false, false],
+      ["worker_heartbeat", "worker_heartbeat_archived_read_only", false, false],
+    ];
+    expect(rows.map((r) => [r.rel, r.tgname, r.deferrable, r.deferred])).toEqual(expected);
+  });
+
+  it("0143: every public base table has exactly one retention class with its real primary key (REQ-S16-024, ADR-0067 §3)", async () => {
+    // A migration that creates a table must add its retention_table_class row in the same file; this test fails
+    // otherwise, naming the table.
+    const tables = await q<{ t: string; pk: string[] | null }>(
+      `SELECT c.relname AS t,
+              (SELECT array_agg(a.attname::text ORDER BY k.ord) FROM pg_index i
+                 CROSS JOIN LATERAL unnest(i.indkey) WITH ORDINALITY AS k(attnum, ord)
+                 JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = k.attnum
+                WHERE i.indrelid = c.oid AND i.indisprimary) AS pk
+         FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace AND n.nspname = 'public'
+        WHERE c.relkind IN ('r', 'p') ORDER BY c.relname COLLATE "C"`,
+    );
+    const mapped = await q<{ t: string; k: string[] }>(
+      `SELECT table_name AS t, key_columns AS k FROM retention_table_class ORDER BY table_name COLLATE "C"`,
+    );
+    expect(mapped.map((m) => m.t)).toEqual(tables.map((t) => t.t));
+    const pk = new Map(tables.map((t) => [t.t, t.pk]));
+    for (const m of mapped) expect(m.k, m.t).toEqual(pk.get(m.t));
+  });
+
+  it("0143: the class registry is D-243 Q3's (12 classes, all 'retain' with no period; only operational tables are archivable; purge-eligible tables are operational and never append-only)", async () => {
+    const classes = await q<{
+      code: string;
+      category: string;
+      action: string;
+      period: number | null;
+      ref: string | null;
+      job: string | null;
+    }>(
+      `SELECT code, category, action, period_days AS period, it_approval_reference AS ref, managed_by_job AS job
+         FROM retention_class ORDER BY code COLLATE "C"`,
+    );
+    expect(classes.map((c) => [c.code, c.category, c.job])).toEqual([
+      ["audit_trail", "audit", null],
+      ["business_record", "business", null],
+      ["derived_index", "derived", null],
+      ["expiring_credential", "operational", "platform.purge-expired"],
+      ["inbox_read_item", "operational", null],
+      ["job_history", "operational", null],
+      ["processed_message_log", "operational", null],
+      ["report_snapshot", "snapshot", null],
+      ["retention_backup_history", "audit", null],
+      ["system_catalogue", "system", null],
+      ["webhook_receipt_log", "operational", null],
+      ["worker_heartbeat_log", "operational", null],
+    ]);
+    for (const c of classes) expect([c.code, c.action, c.period, c.ref]).toEqual([c.code, "retain", null, null]);
+    const aged = await q<{ t: string; category: string; purge: boolean; append_only: boolean }>(
+      `SELECT t.table_name AS t, c.category, t.purge_eligible AS purge,
+              EXISTS (SELECT 1 FROM pg_trigger g WHERE g.tgrelid = format('public.%I', t.table_name)::regclass
+                        AND g.tgname = t.table_name || '_append_only') AS append_only
+         FROM retention_table_class t JOIN retention_class c ON c.id = t.retention_class_id
+        WHERE t.age_column IS NOT NULL ORDER BY t.table_name COLLATE "C"`,
+    );
+    expect(aged.map((a) => [a.t, a.purge])).toEqual([
+      ["inbox_notification", true],
+      ["job_run", false],
+      ["processed_message", true],
+      ["webhook_receipt", false],
+      ["worker_heartbeat", true],
+    ]);
+    for (const a of aged) {
+      expect(a.category, a.t).toBe("operational");
+      if (a.purge) expect(a.append_only, a.t).toBe(false);
+    }
+    // Every audit, snapshot and history table named by ADR-0067 §3 is in a never-purged class.
+    const kept = await q<{ t: string; category: string }>(
+      `SELECT t.table_name AS t, c.category FROM retention_table_class t JOIN retention_class c ON c.id = t.retention_class_id
+        WHERE t.table_name IN ('audit_event', 'report_snapshot', 'ranking_snapshot', 'retention_run_action', 'backup_set')
+        ORDER BY 1`,
+    );
+    expect(kept.map((k) => [k.t, k.category])).toEqual([
+      ["audit_event", "audit"],
+      ["backup_set", "audit"],
+      ["ranking_snapshot", "snapshot"],
+      ["report_snapshot", "snapshot"],
+      ["retention_run_action", "audit"],
+    ]);
   });
 
   it("0128 (as amended by 0129): answers and suggestions store the record keys of every record given to the model; immutable (F-DG6-920)", async () => {
@@ -1714,6 +1831,9 @@ describe("type and structure rules (ADR-0003, data dictionary global rules)", ()
       "migration_export",
       "identity_binding_hold",
       "config_bundle_import",
+      // P7 slice E (0143-0144, T-DG7-ARCH-03; ADR-0067). Both audited; every other P7 E table is append-only.
+      "retention_class",
+      "retention_run",
     ];
     const rows = await q<{ t: string; d: string }>(
       `SELECT table_name AS t, column_default AS d FROM information_schema.columns
@@ -2142,6 +2262,15 @@ describe("mth_app privileges are exactly the data dictionary's", () => {
       config_bundle_import: "INSERT,SELECT",
       config_bundle_import_item: "INSERT,SELECT",
       config_bundle_import_commit: "INSERT,SELECT",
+      // P7 slice E (0143-0145; T-DG7-ARCH-03, ADR-0066, ADR-0067). No DELETE anywhere: a retention purge goes through
+      // the SECURITY DEFINER retention_purge_record() only. The table map and the backup sets (written by the owner
+      // through backup_set_record()) are SELECT only; retention_class and retention_run update through column grants.
+      retention_class: "SELECT",
+      retention_table_class: "SELECT",
+      retention_run: "INSERT,SELECT",
+      retention_archived_record: "INSERT,SELECT",
+      retention_run_action: "INSERT,SELECT",
+      backup_set: "SELECT",
     });
   });
 

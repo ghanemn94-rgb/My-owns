@@ -1275,6 +1275,30 @@ export const SENSITIVE_REFERENCE_INVENTORY: readonly InventoryRow[] = [
     "uuid",
     "the configuration draft a bundle item created; its target_record_type CHECK (0134) allows only configuration tables, none of them a sensitive record or a SENSITIVE_CHILD_SOURCES type (ADR-0065 §5)",
   ),
+  // T-DG7-ARCH-03 (0144; ADR-0067 §5): the record keys and archive set keys of retention. A record key holds only the
+  // primary key values of a row of an OPERATIONAL class (the 0144 trigger retention_archived_record_guard refuses any
+  // other class, and retention_class_retain_only keeps business, audit and snapshot classes at 'retain'): a processed
+  // message key, a worker heartbeat id, a job run id, a webhook receipt id or a read inbox notification id. It never
+  // holds a column of the row, so no subject or record id of a sensitive record travels (handback O3 asks the
+  // orchestrator to confirm this for inbox notification ids).
+  cannot(
+    "retention_archived_record.record_key",
+    "json",
+    "the primary key values of an archived row of an operational class only (0144 trigger; ADR-0067 §5); never row content",
+  ),
+  cannot(
+    "retention_run_action.record_key",
+    "json",
+    "the primary key values of a row of an operational class only (the run's candidates; ADR-0067 §6); never row content",
+  ),
+  code(
+    "retention_run.archive_set_key",
+    "the run's own archive set key 'retention/<runId>/manifest.json' (CHECK, 0144)",
+  ),
+  code(
+    "retention_archived_record.archive_set_key",
+    "the archiving run's set key 'retention/<runId>/manifest.json' (CHECK, 0144)",
+  ),
 ];
 
 function ownInputRow(column: string, why: string): InventoryRow {
