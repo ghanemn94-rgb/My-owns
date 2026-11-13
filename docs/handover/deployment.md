@@ -240,6 +240,10 @@ After a move to another address, register the new sign-in redirect address with 
 that were already sent keep the old origin. The transfer itself (export, import, reconciliation, identity rebind) is
 described in ADR-0064 and in Administration > Data export and Data import.
 
+## Moving an installation {#migration-import}
+
+To move an installation, prepare the target from the migration package before anything else runs on it: run `mth-db migrate --reserve-audit-seq-for <package>` on a new, empty database (not `mth-db migrate` alone), then `tools/migration/import.mjs --from <package> --operator <name>`, then `mth-db rebind-identity`, and only then start the API and the worker. A target migrated without the reservation is refused; create a new empty database and prepare it again.
+
 ## First deployment, in order {#first-deployment}
 
 1. IT creates the database, the roles `mth_owner` and `mth_app`, and the secret files ([Service accounts](#service-accounts), [Secrets](#secrets)).

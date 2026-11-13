@@ -1,9 +1,9 @@
-// deploy/scripts/tests/transfer-drill.test.mjs: T-B3, T-B9, T-B10 of the transfer drill (p7-work-split §B.4;
-// ADR-0069 §4; T-DG7-DO-D).
+// deploy/scripts/tests/transfer-drill.test.mjs: T-B3, T-B9, T-B10, T-B15, T-B16 of the transfer drill
+// (p7-work-split §B.4 and §B.6 DO-D2; ADR-0069 §4; ADR-0064 A1.9; T-DG7-DO-D, T-DG7-DO-D2).
 //
 //   tests/qa/support/with-pg.sh node --test deploy/scripts/tests/transfer-drill.test.mjs
 //
-// T-B3 and T-B10 need a disposable PostgreSQL cluster: without TEST_DATABASE_ADMIN_URL they FAIL with "BLOCKED: …"
+// T-B3, T-B10 and T-B16 need a disposable PostgreSQL cluster: without TEST_DATABASE_ADMIN_URL they FAIL with "BLOCKED: …"
 // (never a silent skip, never a pass). T-B9's namespace cases need bwrap; without it they fail the same way.
 // Every user, secret and origin here is SYNTHETIC. Nothing here is a business, Finance or IT approval.
 import assert from "node:assert/strict";
@@ -17,6 +17,7 @@ import { fileURLToPath } from "node:url";
 import { trace, UNDOCUMENTED } from "../drill/config-trace.mjs";
 import { startDrillIdp, readUsers, DRILL_IDP_LABEL } from "../drill/fake-idp-server.mjs";
 import { runJourney } from "../drill/journey.mjs";
+import { buildAllowance, constants, A19_NEVER_OPERATIONAL } from "../drill/allowance.mjs";
 
 const REPO = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
 const DRILL = join(REPO, "deploy/scripts/transfer-drill.sh");
@@ -260,6 +261,19 @@ describe("T-B9 transfer-drill.sh: BLOCKED, isolation and the report", () => {
     assert.match(r.stdout, /^transfer-drill: BLOCKED: PostgreSQL server binaries not found \(set PGBIN\)$/m);
   });
 
+  it("not enough free disk: exit 3 with the B.6 DO-D2 line, and the work directory is removed", () => {
+    if (!hasBwrap()) throw new Error("BLOCKED: bwrap --unshare-net is not available here");
+    const w = join(work, "w-disk");
+    const r = spawnSync(
+      "bash",
+      [DRILL, "--archive", fakeArchive, "--sha256", sha, "--store", work, "--out", join(work, "o-disk"), "--work", w],
+      { encoding: "utf8", env: { ...process.env, MTH_TD_NEED_MB: "999999999" } },
+    );
+    assert.equal(r.status, 3, r.stdout + r.stderr);
+    assert.match(r.stdout, /^transfer-drill: BLOCKED: \d+ MB free under \S+; the run needs at least 999999999 MB$/m);
+    assert.equal(spawnSync("test", ["-e", w]).status, 1);
+  });
+
   it("a probe that connects exits 1 with the B.5 isolation line", () => {
     if (!hasBwrap()) throw new Error("BLOCKED: bwrap --unshare-net is not available here");
     // Inside a fresh namespace, a listener on loopback stands in for a reachable public address.
@@ -304,10 +318,10 @@ describe("T-B9 transfer-drill.sh: BLOCKED, isolation and the report", () => {
 });
 
 // --------------------------------------------------------------------------------------------- T-B10 journey
-// T-B10 asks for NODE_ENV=production. Measured: packages/config/src/load.ts l.310 refuses an http OIDC_ISSUER_URL in
-// production with no loopback exception (APP_BASE_URL has one), so the loopback drill IdP cannot be used there and the
-// production case FAILS until that is resolved (handback, known gap 1). The same journey also runs against an API in
-// NODE_ENV=development with AUTH_MODE=oidc (the real OIDC code path, NOT production semantics), labelled as such.
+// T-B10 runs under NODE_ENV=production, AUTH_MODE=oidc, with the drill IdP at http://127.0.0.1:<p>: the loopback
+// exception for OIDC_ISSUER_URL (T-DG7-BE-R1, T-R10) admits it. The development run is kept as a supporting case,
+// labelled NOT production semantics. The production suite also measures, for allowance.mjs (T-B16), whether a sign-in
+// changes the user's app_user row; MTH_DRILL_MEASURE_OUT=<file> writes the answer.
 function journeySuite(nodeEnv, title) {
   describe(title, () => {
     const db = `mth_td_journey_${nodeEnv}_${suffix}`;
@@ -452,12 +466,63 @@ function journeySuite(nodeEnv, title) {
       assert.equal(r.idp, DRILL_IDP_LABEL);
     });
 
-    it("a step that is not built never passes (the deep link is reported FAIL)", async () => {
+    it("status: getDeploymentStatus.origin is the target's origin; a wrong expectation FAILS, never passes", async () => {
       needPg();
-      const r = await runJourney({ app, user: "drill-bound", steps: ["deeplink"] });
-      assert.equal(r.result, "FAIL");
-      assert.match(r.steps[0].detail, /not built/);
+      const ok = await runJourney({
+        app,
+        user: "drill-bound",
+        steps: ["signin", "status"],
+        expectOrigin: app,
+        expectEnvironment: "production",
+      });
+      assert.equal(ok.steps[1].result, "PASS", JSON.stringify(ok.steps) + apiLog.slice(-2000));
+      const bad = await runJourney({
+        app,
+        user: "drill-bound",
+        steps: ["signin", "status"],
+        expectOrigin: "http://localhost:25301",
+        expectEnvironment: "production",
+      });
+      assert.equal(bad.result, "FAIL");
+      assert.match(bad.steps[1].detail, /origin is .* expected http:\/\/localhost:25301/);
     });
+
+    it("a step with no data to prove never passes (deeplink with an empty inbox, downloads without a list)", async () => {
+      needPg();
+      const r = await runJourney({ app, user: "drill-bound", steps: ["signin", "deeplink", "downloads"] });
+      assert.deepEqual(
+        r.steps.map((x) => x.result),
+        ["PASS", "FAIL", "FAIL"],
+      );
+      assert.equal(r.result, "FAIL");
+    });
+
+    if (nodeEnv === "production")
+      it("T-B16 (measurement): whether a sign-in changes app_user, recorded for allowance.mjs", async () => {
+        needPg();
+        const owner = dbUrl(db, "mth_owner");
+        const row = () =>
+          psql(
+            owner,
+            `SELECT u::text FROM app_user u JOIN user_identity i ON i.user_id = u.id WHERE i.subject = 'drill-bound';`,
+          );
+        const ident = () => psql(owner, `SELECT i::text FROM user_identity i WHERE i.subject = 'drill-bound';`);
+        const [u0, i0] = [row(), ident()];
+        assert.ok(u0, "the bound user exists");
+        const r = await runJourney({ app, user: "drill-bound", steps: ["signin"] });
+        assert.equal(r.result, "PASS", JSON.stringify(r.steps));
+        const [u1, i1] = [row(), ident()];
+        const measured = {
+          schemaVersion: "mth-drill-signin-measurement/1",
+          appUserChangedBySignIn: u0 !== u1,
+          userIdentityChangedBySignIn: i0 !== i1,
+          measuredOn: "T-B10 production suite (NODE_ENV=production, AUTH_MODE=oidc, drill IdP), SYNTHETIC user",
+        };
+        if (process.env.MTH_DRILL_MEASURE_OUT)
+          writeFileSync(process.env.MTH_DRILL_MEASURE_OUT, JSON.stringify(measured, null, 2) + "\n");
+        console.log(`# T-B16 measurement: ${JSON.stringify(measured)}`);
+        assert.equal(typeof measured.appUserChangedBySignIn, "boolean");
+      });
 
     it("a redirect URI the drill IdP has not registered is refused", async () => {
       needPg();
@@ -479,3 +544,185 @@ journeySuite(
   "development",
   "T-B10 (supporting, NOT production semantics) the same journey with NODE_ENV=development, AUTH_MODE=oidc",
 );
+
+// --------------------------------------------------------------------------------------------- T-B15 allowance
+describe("T-B15 allowance.mjs: mth-recheck-allowance/1 from a fixture journal", () => {
+  const journal = [
+    { table: "transformation", key: ["t-1"], op: "added", via: "createTransformation" },
+    { table: "raid_entry", key: ["r-1"], op: "added", via: "createRaidEntry" },
+    { table: "raid_entry", key: ["r-1"], op: "added", via: "createRaidEntry (repeated)" },
+    { table: "kpi_actual", key: ["k-1"], op: "changed", via: "submitKpiActual" },
+    { table: "kpi_actual", key: ["k-1"], op: "changed", via: "submitKpiActual (repeated)" },
+    { table: "gate_decision", key: ["gd-1"], op: "added", via: "decideGate" },
+    { table: "decision", key: ["d-1"], op: "added", via: "decideGate" },
+    { table: "export_job", key: ["e-1"], op: "added", via: "createExport" },
+    { table: "user_identity", key: ["http://127.0.0.1:25401/realms/mth-test", "drill-a"], op: "signin", via: "signin" },
+    { table: "user_identity", key: ["http://127.0.0.1:25401/realms/mth-test", "drill-a"], op: "signin", via: "again" },
+  ];
+  const identity = (iss, sub) => (sub === "drill-a" ? { id: "ui-1", userId: "u-1" } : null);
+
+  it("writes a valid allowance: exact keys merged, never-operational tables only in tables, reasons for each operational", async () => {
+    const k = await constants();
+    const { allowance, reasons, errors } = buildAllowance(journal, {
+      identity,
+      appUserChangedBySignIn: true,
+      constants: k,
+    });
+    assert.deepEqual(errors, []);
+    assert.equal(allowance.schemaVersion, "mth-recheck-allowance/1");
+    assert.deepEqual(Object.keys(allowance), ["schemaVersion", "tables", "operational"]);
+    const byName = Object.fromEntries(allowance.tables.map((t) => [t.name, t]));
+    assert.deepEqual(byName.raid_entry, { name: "raid_entry", added: [["r-1"]], changed: [] });
+    assert.deepEqual(byName.kpi_actual, { name: "kpi_actual", added: [], changed: [["k-1"]] });
+    assert.deepEqual(byName.user_identity, { name: "user_identity", added: [], changed: [["ui-1"]] });
+    assert.deepEqual(byName.app_user, { name: "app_user", added: [], changed: [["u-1"]] });
+    // A RECHECK_NEVER_OPERATIONAL table goes in tables, never in operational.
+    for (const t of [...k.never, "decision"]) assert.ok(!allowance.operational.includes(t), t);
+    assert.ok(byName.gate_decision && byName.decision);
+    // A table with exact keys is not also operational (A1.9 rule 7).
+    assert.ok(!allowance.operational.includes("export_job"));
+    assert.ok(allowance.operational.every((t) => k.operational.has(t)));
+    assert.deepEqual(
+      reasons.operational.map((r) => r.table),
+      allowance.operational,
+    );
+    assert.ok(reasons.operational.every((r) => r.reason.length > 10));
+    for (const t of A19_NEVER_OPERATIONAL) assert.ok(k.never.has(t), t);
+  });
+
+  it("app_user is listed only when the measurement says a sign-in changes it", async () => {
+    const k = await constants();
+    const { allowance } = buildAllowance(journal, { identity, appUserChangedBySignIn: false, constants: k });
+    assert.ok(!allowance.tables.some((t) => t.name === "app_user"));
+  });
+
+  it("an audit_event entry, an unknown identity or a bad key is refused (exit 1 via the CLI)", async () => {
+    const k = await constants();
+    const { errors } = buildAllowance(
+      [
+        { table: "audit_event", key: ["a"], op: "added" },
+        { table: "user_identity", key: ["iss", "nobody"], op: "signin" },
+        { table: "raid_entry", key: [""], op: "added" },
+      ],
+      { identity, constants: k },
+    );
+    assert.equal(errors.length, 3);
+    const dir = mkdtempSync(join(work, "allow-"));
+    writeFileSync(
+      join(dir, "j.json"),
+      JSON.stringify({ entries: [{ table: "audit_event", key: ["a"], op: "added" }] }),
+    );
+    const r = spawnSync(
+      "node",
+      [
+        join(REPO, "deploy/scripts/drill/allowance.mjs"),
+        "--journal",
+        join(dir, "j.json"),
+        "--out",
+        join(dir, "a.json"),
+        "--reasons-out",
+        join(dir, "r.json"),
+      ],
+      { encoding: "utf8" },
+    );
+    assert.equal(r.status, 1, r.stderr);
+  });
+
+  it("BE-R1's parseAllowance (packages/db) accepts the file", async () => {
+    const k = await constants();
+    if (!k.parseAllowance)
+      throw new Error(
+        "BLOCKED: parseAllowance is not exported by packages/db/src/transfer/recheck.ts (T-DG7-BE-R1 gap 2); the file cannot be validated by it",
+      );
+    const { allowance } = buildAllowance(journal.slice(0, 8), { identity, constants: k });
+    const parsed = k.parseAllowance(Buffer.from(JSON.stringify(allowance), "utf8"));
+    assert.ok(parsed);
+  });
+});
+
+// --------------------------------------------------------------------------------------------- T-B16 job checks
+describe("T-B16 job-check.mjs on a fixture database", () => {
+  const db = `mth_td_jobs_${suffix}`;
+  const JOB = join(REPO, "deploy/scripts/drill/job-check.mjs");
+  let url;
+  const run = (...args) => spawnSync("node", [JOB, ...args], { encoding: "utf8" });
+  const fresh = () => {
+    const dir = mkdtempSync(join(work, "jobs-"));
+    return { before: join(dir, "before.json"), out: join(dir, "out.json") };
+  };
+  before(() => {
+    if (!ADMIN) return;
+    psql(ADMIN, `CREATE DATABASE ${db} ENCODING 'UTF8' TEMPLATE template0;`);
+    url = dbUrl(db);
+    psql(
+      url,
+      `CREATE TABLE job_run (id uuid PRIMARY KEY, job_id text NOT NULL, status text NOT NULL);
+       CREATE TABLE job_schedule (id uuid PRIMARY KEY, job_id text NOT NULL, cron text NOT NULL, enabled boolean NOT NULL);
+       CREATE TABLE gate_decision (id uuid PRIMARY KEY, outcome text NOT NULL);
+       CREATE TABLE approval (id uuid PRIMARY KEY, status text NOT NULL);
+       CREATE TABLE approval_decision (id uuid PRIMARY KEY, outcome text NOT NULL);
+       CREATE SCHEMA pgboss; CREATE TABLE pgboss.job (id uuid PRIMARY KEY, name text NOT NULL, state text NOT NULL);
+       INSERT INTO job_run VALUES ('00000000-0000-7000-8000-000000000001', 'retention', 'succeeded');
+       INSERT INTO job_schedule VALUES ('00000000-0000-7000-8000-0000000000a1', 'retention', '0 2 * * *', true),
+                                       ('00000000-0000-7000-8000-0000000000a2', 'digest', '0 6 * * *', false);
+       INSERT INTO gate_decision VALUES ('00000000-0000-7000-8000-0000000000b1', 'deferred');
+       INSERT INTO pgboss.job VALUES ('00000000-0000-7000-8000-0000000000c1', 'export', 'created');`,
+    );
+  });
+  after(() => {
+    if (ADMIN) psql(ADMIN, `DROP DATABASE IF EXISTS ${db} WITH (FORCE);`);
+  });
+
+  it("a new job_run row passes (counted), and the pg-boss table is measured", () => {
+    needPg();
+    const f = fresh();
+    assert.equal(run("snapshot", "--database-url", url, "--out", f.before).status, 0);
+    psql(url, `INSERT INTO job_run VALUES ('00000000-0000-7000-8000-000000000002', 'export', 'succeeded');`);
+    const r = run("compare", "--database-url", url, "--before", f.before, "--out", f.out);
+    assert.equal(r.status, 0, r.stdout + r.stderr);
+    const rep = JSON.parse(readFileSync(f.out, "utf8"));
+    assert.equal(rep.result, "PASS");
+    assert.equal(rep.newJobRuns, 1);
+    assert.deepEqual([rep.before.pgBoss.schema, rep.before.pgBoss.table], ["pgboss", "job"]);
+  });
+
+  it("a changed enabled schedule fails", () => {
+    needPg();
+    const f = fresh();
+    assert.equal(run("snapshot", "--database-url", url, "--out", f.before).status, 0);
+    psql(url, `UPDATE job_schedule SET cron = '0 3 * * *' WHERE enabled;`);
+    const r = run("compare", "--database-url", url, "--before", f.before, "--out", f.out);
+    assert.equal(r.status, 1);
+    assert.match(r.stdout, /job_schedule: the enabled schedules changed/);
+  });
+
+  it("a removed job_run row fails", () => {
+    needPg();
+    const f = fresh();
+    assert.equal(run("snapshot", "--database-url", url, "--out", f.before).status, 0);
+    psql(url, `DELETE FROM job_run WHERE id = '00000000-0000-7000-8000-000000000001';`);
+    const r = run("compare", "--database-url", url, "--before", f.before, "--out", f.out);
+    assert.equal(r.status, 1);
+    assert.match(r.stdout, /job_run: the earlier rows changed/);
+  });
+
+  it("a changed approval row fails", () => {
+    needPg();
+    const f = fresh();
+    assert.equal(run("snapshot", "--database-url", url, "--out", f.before).status, 0);
+    psql(url, `UPDATE gate_decision SET outcome = 'approved';`);
+    const r = run("compare", "--database-url", url, "--before", f.before, "--out", f.out);
+    assert.equal(r.status, 1);
+    assert.match(r.stdout, /gate_decision: 1 -> 1 rows, digest differs/);
+  });
+
+  it("a missing pg-boss table reports BLOCKED (exit 2), never PASS", () => {
+    needPg();
+    psql(url, `DROP SCHEMA pgboss CASCADE;`);
+    const f = fresh();
+    const r = run("snapshot", "--database-url", url, "--out", f.before);
+    assert.equal(r.status, 2);
+    assert.match(r.stderr, /BLOCKED: no pg-boss job table/);
+    assert.doesNotMatch(r.stdout, /PASS/);
+  });
+});

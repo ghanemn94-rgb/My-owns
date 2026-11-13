@@ -12,24 +12,33 @@
 #
 #   D0  verify the archive (build-archive.mjs --verify), build from it (build-from-archive.sh) into <work>/build
 #   D1  source installation S at http://localhost:<pS>: fresh cluster, migrate, seed-demo + seed-dev (SYNTHETIC), API
-#       and worker, then the A02 smoke journey (dev users)
-#   D2  export from S (tools/migration/export.mjs; transfer-attachments copy-out runs inside the export), stop S
+#       and worker, then the A02 smoke journey (dev users) and two SYNTHETIC evidence uploads (journey.mjs uploads)
+#   D2  export from S (tools/migration/export.mjs only: the export writes attachments/ and attachments.json itself);
+#       attachments.json's count must equal S's rows with a storage_key; stop S
 #   D3  target configuration only from .env.example and docs/handover/deployment.md (drill/config-trace.mjs), with the
 #       ADR-0063 template check first; origin http://127.0.0.1:<pT>, NODE_ENV=production, AUTH_MODE=oidc; synthetic
 #       generated secrets in *_FILE files
 #   D4  production initialization re-proved on a separate clean database: migrate, bootstrap, a second bootstrap refuses
-#   D5  import into the empty target (tools/migration/import.mjs) and reconcile (tools/migration/reconcile.mjs)
-#   D6  identity rebind to the drill IdP (mth-db rebind-identity); one user left unmapped
-#   D7  start T; /readyz 200 with storage ok and worker alive within 120 s; getDeploymentStatus origin = T's origin
-#   D8  the oidc-drill journey (drill/journey.mjs) through the SYNTHETIC drill IdP (drill/fake-idp-server.mjs)
-#   D9  full restart of PostgreSQL, API and worker; reconcile again; downloads again; /readyz 200
+#   D5  docs/handover/deployment.md#migration-import: a new empty database and evidence directory;
+#       tools/migration/prepare-target.mjs --from <pkg> (NOT plain mth-db migrate); tools/migration/import.mjs --from
+#       <pkg> --keep-reports <out>; tools/migration/reconcile.mjs --from <pkg> in mode 1 -> reconcile-d5.json
+#   D6  identity rebind to the drill IdP (mth-db rebind-identity); one user left unmapped; mode 1 again ->
+#       reconcile-d6.json (with the `rebind` delta)
+#   D7  start T; /readyz 200 with storage ok and worker alive within 120 s; getDeploymentStatus.origin = T's origin
+#       and environmentKind = the package's sourceEnvironment (journey.mjs status)
+#   D8  the oidc-drill journey (drill/journey.mjs) through the SYNTHETIC drill IdP (drill/fake-idp-server.mjs):
+#       sign-in, unbound refused, CSRF, writes (transformation, RAID item, KPI value, gate submission), the decision by
+#       a REBOUND approver, downloads (count = the attachment manifest's), deep link; every key into journal.json
+#   D9  job checks (drill/job-check.mjs): stop the worker, queue one export, snapshot; stop API and PostgreSQL; start
+#       PostgreSQL, API and worker; compare; the export succeeds within 120 s; downloads again; then the mode 2 recheck
+#       with the allowance built from journal.json (drill/allowance.mjs) -> reconcile-d9.json
 #   D10 old-origin scan (drill/origin-scan.mjs)
 #   D11 transfer-drill-report.json (schemaVersion mth-transfer-drill/1)
 #
 # A step that fails stops the drill: the later steps are recorded NOT_RUN (never PASS) and the report's result is FAIL.
 # Output (--out): transfer-drill-report.json, config-trace.json, reconcile-*.json, origin-scan.json, drill.log and
 # the step logs. Exit codes (p7-work-split §2 rule 4): 0 PASS, 1 FAIL, 2 BLOCKED (usage), 3 BLOCKED (no bwrap, no
-# PostgreSQL server binaries). The drill IdP and every credential are SYNTHETIC; a local drill is not evidence of
+# PostgreSQL server binaries, not enough free disk: MTH_TD_NEED_MB, default 4 x the archive + 1024 MB, an estimate). The drill IdP and every credential are SYNTHETIC; a local drill is not evidence of
 # high-availability production readiness, and it approves nothing (no G1-G6 decision, no DG0-DG7 record).
 set -euo pipefail
 
@@ -78,6 +87,15 @@ if [ "${MTH_TD_INNER:-}" != "1" ]; then
   [ -z "$(ls -A "$WORK")" ] || { echo "transfer-drill: BLOCKED: work directory $WORK is not empty" >&2; exit 2; }
   WORK="$(cd "$WORK" && pwd)"
   chmod 0755 "$WORK"
+  # Free disk first (B.6 DO-D2 Q3): the archive unpacked, the runtime tree, two clusters and the package.
+  ARCH_MB=$(( ($(stat -c %s "$ARCHIVE") + 1048575) / 1048576 ))
+  NEED_MB="${MTH_TD_NEED_MB:-$(( ARCH_MB * 4 + 1024 ))}"
+  FREE_MB="$(df -Pm "$WORK" | awk 'NR == 2 { print $4 }')"
+  if [ "$FREE_MB" -lt "$NEED_MB" ]; then
+    echo "transfer-drill: BLOCKED: $FREE_MB MB free under $WORK; the run needs at least $NEED_MB MB" | tee "$OUT/drill.log"
+    [ "$KEEP" -eq 1 ] || rm -rf "$WORK"
+    exit 3
+  fi
   set +e
   MTH_TD_INNER=1 MTH_TD_ARCHIVE="$ARCHIVE" MTH_TD_SHA="$SHA" MTH_TD_STORE="$STORE" MTH_TD_OUT="$OUT" \
     MTH_TD_WORK="$WORK" PGBIN="$PGBIN" bwrap --dev-bind / / --unshare-net --die-with-parent \
@@ -114,7 +132,7 @@ trap cleanup EXIT
 P_PG_S=25432 P_PG_T=25433 P_API_S=25301 P_API_T=25302 P_IDP=25401
 ORIGIN_S="http://localhost:$P_API_S"
 ORIGIN_T="http://127.0.0.1:$P_API_T"
-OPERATOR="transfer-drill (synthetic)"
+OPERATOR="transfer-drill synthetic operator"  # the CLI admits letters, digits, space and ._@- only
 IDP_LABEL="synthetic drill IdP (not a corporate IdP)"
 log "work $WORK; out $OUT; source origin $ORIGIN_S; target origin $ORIGIN_T"
 log "environment: node $(node --version); $(bwrap --version); PostgreSQL $("$PGBIN/postgres" --version | awk '{print $NF}'); uid $(id -u)"
@@ -142,8 +160,8 @@ ALL_STEPS=(D0 D1 D2 D3 D4 D5 D6 D7 D8 D9 D10 D11)
 declare -A SECTION=(
   [D0]="docs/handover/deployment.md#first-deployment" [D1]="docs/handover/deployment.md#first-deployment"
   [D2]="docs/handover/deployment.md#origin-change" [D3]="docs/handover/deployment.md#configuration-keys"
-  [D4]="docs/handover/deployment.md#database" [D5]="docs/handover/deployment.md#origin-change"
-  [D6]="docs/handover/deployment.md#corporate-sso-mapping" [D7]="docs/handover/deployment.md#monitoring"
+  [D4]="docs/handover/deployment.md#database" [D5]="docs/handover/deployment.md#migration-import"
+  [D6]="docs/handover/deployment.md#migration-import" [D7]="docs/handover/deployment.md#monitoring"
   [D8]="docs/handover/deployment.md#origin-change" [D9]="docs/handover/deployment.md#monitoring"
   [D10]="docs/handover/deployment.md#origin-change" [D11]="docs/handover/deployment.md#first-deployment"
 )
@@ -271,22 +289,35 @@ d1() {
   wait_http "http://127.0.0.1:$P_API_S/readyz" 120 '^200$'
   MTH_SMOKE_API_URL="http://127.0.0.1:$P_API_S" APP_BASE_URL="$ORIGIN_S" MTH_SMOKE_AUTH=dev \
     node "$SRC/deploy/scripts/smoke.mjs"
+  node "$REPO/deploy/scripts/drill/journey.mjs" --mode dev --app "$ORIGIN_S" --api "http://127.0.0.1:$P_API_S" \
+    --user dev.office --steps signin,uploads --journal "$OUT/journal-S.json" --out "$OUT/journey-D1.json"
   "$PGBIN/psql" -X -qAt -d "$(su_url "$WORK/pgS" "$P_PG_S" mth)" -c \
     "select 'D1: evidence rows ' || (select count(*) from evidence) || ', audit_event ' || (select count(*) from audit_event)"
 }
-step D1 "fresh cluster; mth-db migrate; mth-db seed-demo; mth-db seed-dev; API and worker at $ORIGIN_S; deploy/scripts/smoke.mjs (MTH_SMOKE_AUTH=dev)" d1
+step D1 "fresh cluster; mth-db migrate; mth-db seed-demo; mth-db seed-dev; API and worker at $ORIGIN_S; deploy/scripts/smoke.mjs (MTH_SMOKE_AUTH=dev); journey.mjs --mode dev --steps signin,uploads" d1
 [ -f "$WORK/S.pids" ] && read -r API_PID WORKER_PID <"$WORK/S.pids" || true
 [ -f "$WORK/pgS.pid" ] && PG_S_PID="$(cat "$WORK/pgS.pid")" || true
 
 # ---- D2: export from S, then stop S ----------------------------------------------------------------------------------
 d2() {
   (cd "$SRC" && DATABASE_OWNER_URL="$(cat "$SECS/mth_owner_url")" DATABASE_URL="$(cat "$SECS/mth_app_url")" \
-    EVIDENCE_STORAGE_DRIVER=filesystem EVIDENCE_STORAGE_PATH="$WORK/evidence-S" \
+    NODE_ENV=development EVIDENCE_STORAGE_DRIVER=filesystem EVIDENCE_STORAGE_PATH="$WORK/evidence-S" \
     node tools/migration/export.mjs --out "$PKG" --operator "$OPERATOR")
   echo "manifest sha256 $(sha256sum "$PKG/manifest.json" | cut -d' ' -f1)"
-  [ ! -f "$PKG/attachments.json" ] || echo "attachments.json sha256 $(sha256sum "$PKG/attachments.json" | cut -d' ' -f1)"
+  [ -f "$PKG/attachments.json" ] || { echo "the export wrote no attachments.json"; return 1; }
+  echo "attachments.json sha256 $(sha256sum "$PKG/attachments.json" | cut -d' ' -f1)"
+  # attachments.json's count equals S's rows with a storage_key (every public table that has the column).
+  local rows items
+  rows="$("$PGBIN/psql" -X -qAt -d "$(su_url "$WORK/pgS" "$P_PG_S" mth)" -c "select coalesce(sum((xpath('/row/n/text()',
+      query_to_xml(format('select count(*) as n from %I.%I where storage_key is not null', table_schema, table_name),
+      false, true, '')))[1]::text::bigint), 0)
+    from information_schema.columns where table_schema = 'public' and column_name = 'storage_key'
+      and table_name in (select table_name from information_schema.tables where table_schema = 'public' and table_type = 'BASE TABLE')")"
+  items="$(node -e 'console.log(JSON.parse(require("fs").readFileSync(process.argv[1], "utf8")).items.length)' "$PKG/attachments.json")"
+  echo "D2: attachments.json lists $items files; S has $rows rows with a storage_key"
+  [ "$items" = "$rows" ] || { echo "D2: attachments.json count $items differs from S's $rows rows with a storage_key"; return 1; }
 }
-step D2 "DATABASE_OWNER_URL=<S> node tools/migration/export.mjs --out <work>/package --operator '$OPERATOR'" d2
+step D2 "DATABASE_OWNER_URL=<S> node tools/migration/export.mjs --out <work>/package --operator '$OPERATOR' (attachments.json count = S's rows with a storage_key)" d2
 stop_pid "$API_PID"; stop_pid "$WORKER_PID"; stop_pid "$PG_S_PID"; API_PID="" WORKER_PID="" PG_S_PID=""
 
 # ---- D3: the target's configuration, only from the template and the guide --------------------------------------------------
@@ -337,27 +368,38 @@ step D4 "mth-db migrate && mth-db bootstrap (twice; the second must refuse) on a
 t_owner() { cat "$SECS/mth_owner_url"; }
 # reconcile <label>: tools/migration/reconcile.mjs on the target; its output and exit go to reconcile-<label>.json
 # (`equal` is true only for exit 0, `reconcile-migration: matched`).
+# reconcile <label> [extra args]: mode 1 by default; mode 2 with `--after-use --allow <file>` (ADR-0064 A1.9).
 reconcile() {
-  local rc=0
+  local label="$1" rc=0 lower; shift
+  lower="$(echo "$label" | tr 'A-Z' 'a-z')"
   (cd "$SRC" && DATABASE_OWNER_URL="$(t_owner)" NODE_ENV=production \
-    node tools/migration/reconcile.mjs --operator "$OPERATOR") >"$WORK/reconcile-$1.txt" 2>&1 || rc=$?
-  cat "$WORK/reconcile-$1.txt"
-  node -e 'const [f, out, label, rc] = process.argv.slice(1); const text = require("node:fs").readFileSync(f, "utf8");
-    require("node:fs").writeFileSync(out, JSON.stringify({ step: label, command: "node tools/migration/reconcile.mjs --operator <name>",
-      exit: Number(rc), equal: Number(rc) === 0, output: text.trim().split("\n") }, null, 2) + "\n");' \
-    "$WORK/reconcile-$1.txt" "$OUT/reconcile-$1.json" "$1" "$rc"
+    node tools/migration/reconcile.mjs --operator "$OPERATOR" --from "$PKG" "$@") >"$WORK/reconcile-$lower.txt" 2>&1 || rc=$?
+  cat "$WORK/reconcile-$lower.txt"
+  node -e 'const [f, out, label, rc, mode] = process.argv.slice(1); const text = require("node:fs").readFileSync(f, "utf8");
+    const lines = text.trim().split("\n");
+    const want = mode === "2" ? /^reconcile-migration: matched after use:/ : /^reconcile-migration: matched/;
+    require("node:fs").writeFileSync(out, JSON.stringify({ step: label, mode: Number(mode),
+      command: "node tools/migration/reconcile.mjs --operator <name> --from <package>" + (mode === "2" ? " --after-use --allow <allowance.json>" : ""),
+      exit: Number(rc), equal: Number(rc) === 0 && lines.some((l) => want.test(l)),
+      result: Number(rc) === 0 ? (mode === "2" ? "matched after use" : "matched") : "not matched", output: lines }, null, 2) + "\n");' \
+    "$WORK/reconcile-$lower.txt" "$OUT/reconcile-$lower.json" "$label" "$rc" "$([[ " $* " == *" --after-use "* ]] && echo 2 || echo 1)"
   return "$rc"
 }
 d5() {
+  # docs/handover/deployment.md#migration-import: prepare the target from the package BEFORE anything else runs on it.
   make_db "$WORK/pgT" "$P_PG_T" mth "$SECS"
-  DATABASE_OWNER_URL="$(t_owner)" NODE_ENV=production MTHDB migrate
+  rm -rf "$WORK/evidence-T" && mkdir -p "$WORK/evidence-T"
+  [ -f "$SRC/tools/migration/prepare-target.mjs" ] || {
+    echo "D5: tools/migration/prepare-target.mjs is not in the archive (ADR-0064 A1.2; T-DG7-BE-R1 gap 3)"; return 1; }
+  (cd "$SRC" && DATABASE_OWNER_URL="$(t_owner)" NODE_ENV=production node tools/migration/prepare-target.mjs --from "$PKG")
+  mkdir -p "$OUT/import-reports"
   (cd "$SRC" && DATABASE_OWNER_URL="$(t_owner)" DATABASE_URL="$(cat "$SECS/mth_app_url")" NODE_ENV=production \
     EVIDENCE_STORAGE_DRIVER=filesystem EVIDENCE_STORAGE_PATH="$WORK/evidence-T" \
-    node tools/migration/import.mjs --from "$PKG" --operator "$OPERATOR" \
+    node tools/migration/import.mjs --from "$PKG" --operator "$OPERATOR" --keep-reports "$OUT/import-reports" \
     --manifest-sha256 "$(sha256sum "$PKG/manifest.json" | cut -d' ' -f1)")
   reconcile D5
 }
-step D5 "mth-db migrate && node tools/migration/import.mjs --from <package> --operator '$OPERATOR' --manifest-sha256 <hex> && node tools/migration/reconcile.mjs --operator '$OPERATOR'" d5
+step D5 "node tools/migration/prepare-target.mjs --from <package> && node tools/migration/import.mjs --from <package> --operator '$OPERATOR' --keep-reports <out>/import-reports --manifest-sha256 <hex> && node tools/migration/reconcile.mjs --operator '$OPERATOR' --from <package> (mode 1)" d5
 
 # ---- D6: identity rebind -------------------------------------------------------------------------------------------------
 UNBOUND_SUB=""
@@ -377,8 +419,10 @@ d6() {
     "$WORK/carried.csv" "http://127.0.0.1:$P_IDP/realms/mth-test" "$WORK/mapping.csv" "$WORK/idp-users.json" "$WORK/unbound.id"
   echo "mapping sha256 $(sha256sum "$WORK/mapping.csv" | cut -d' ' -f1)"
   DATABASE_OWNER_URL="$(t_owner)" NODE_ENV=production MTHDB rebind-identity --mapping "$WORK/mapping.csv" --operator "$OPERATOR"
+  reconcile D6
+  grep -q '"rebind"\|rebind' "$WORK/reconcile-d6.txt" || { echo "D6: the mode 1 recheck reports no rebind delta"; return 1; }
 }
-step D6 "mth-db rebind-identity --mapping <mapping.csv> --operator '$OPERATOR' (one carried user left unmapped)" d6
+step D6 "mth-db rebind-identity --mapping <mapping.csv> --operator '$OPERATOR' (one carried user left unmapped); node tools/migration/reconcile.mjs --from <package> (mode 1, rebind delta)" d6
 
 # ---- D7: start T ---------------------------------------------------------------------------------------------------
 start_target() {
@@ -388,8 +432,36 @@ start_target() {
   start_api "${T_ENV[@]}"; start_worker "${T_ENV[@]}"
   echo "$IDP_PID $API_PID $WORKER_PID" >"$WORK/T.pids"
 }
+# actors: the REBOUND users the journeys sign in as, chosen on T by permission (who signs in is not an allowance key):
+# an operations.read holder (D7 status), and on one transformation a gate.submit holder and a different gate.decide
+# holder; the unmapped user is never chosen. Written to <work>/actors.json.
+pick_actors() {
+  local su; su="$(su_url "$WORK/pgT" "$P_PG_T" mth)"
+  "$PGBIN/psql" -X -qAt -d "$su" -v unbound="$(cat "$WORK/unbound.id")" <<'SQL' >"$WORK/actors.json"
+WITH held AS (
+  SELECT sa.user_id, sa.scope_type, sa.scope_id, rp.permission_code
+    FROM scoped_assignment sa JOIN role_permission rp ON rp.role_id = sa.role_id
+   WHERE sa.revoked_at IS NULL AND (sa.effective_to IS NULL OR sa.effective_to > now())
+     AND sa.user_id <> :'unbound'::uuid
+     AND EXISTS (SELECT FROM identity_rebind_event e WHERE e.user_id = sa.user_id AND e.action = 'rebound')),
+pairs AS (
+  SELECT s.scope_id AS t, s.user_id AS submitter, d.user_id AS approver
+    FROM held s JOIN held d ON d.scope_type = 'transformation' AND d.scope_id = s.scope_id
+   WHERE s.scope_type = 'transformation' AND s.permission_code = 'gate.submit' AND d.permission_code = 'gate.decide'
+     AND s.user_id <> d.user_id
+   ORDER BY 1, 2, 3 LIMIT 1)
+SELECT json_build_object(
+  'admin', (SELECT user_id FROM held WHERE permission_code = 'operations.read' ORDER BY user_id LIMIT 1),
+  'transformation', (SELECT t FROM pairs), 'submitter', (SELECT submitter FROM pairs), 'approver', (SELECT approver FROM pairs));
+SQL
+  cat "$WORK/actors.json"
+}
+actor() { node -e 'const v = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"))[process.argv[2]];
+  if (!v) { console.error("no " + process.argv[2] + " among the rebound users"); process.exit(1); } console.log(v)' "$WORK/actors.json" "$1"; }
+ISSUER_T="http://127.0.0.1:$P_IDP/realms/mth-test"
 d7() {
   local t0; t0="$(clock)"
+  pick_actors
   start_target
   for _ in $(seq 1 480); do
     body="$(curl -s "http://127.0.0.1:$P_API_T/readyz" || true)"
@@ -399,8 +471,13 @@ d7() {
   echo "readyz $body" | tee "$OUT/readyz-D7.json"
   echo "$body" | grep -q '"status":"ready"' && echo "$body" | grep -q '"worker":"alive"' || return 1
   echo "D7: ready in $(secs "$t0" "$(clock)") s"
+  local env_kind
+  env_kind="$(node -e 'console.log(JSON.parse(require("fs").readFileSync(process.argv[1], "utf8")).sourceEnvironment)' "$PKG/manifest.json")"
+  node "$REPO/deploy/scripts/drill/journey.mjs" --mode oidc-drill --app "$ORIGIN_T" --issuer "$ISSUER_T" \
+    --user "drill-$(actor admin)" --steps signin,status --expect-origin "$ORIGIN_T" --expect-environment "$env_kind" \
+    --journal "$OUT/journal.json" --out "$OUT/journey-D7.json"
 }
-step D7 "start the drill IdP, the API and the worker from the runtime tree with target.env; GET /readyz until 200, storage ok, worker alive (120 s)" d7
+step D7 "start the drill IdP, the API and the worker from the runtime tree with target.env; GET /readyz until 200, storage ok, worker alive (120 s); journey.mjs --steps signin,status (getDeploymentStatus origin and environmentKind)" d7
 [ -f "$WORK/T.pids" ] && read -r IDP_PID API_PID WORKER_PID <"$WORK/T.pids" || true
 
 # ---- D8: the journey under the new origin ---------------------------------------------------------------------------
@@ -415,29 +492,66 @@ downloads() {
     fs.writeFileSync(out, JSON.stringify(items.map((i) => ({ path: `/api/v1/transformations/${tr.get(i.parentId)}/evidence/${i.parentId}/content`, sha256: i.sha256 }))));' \
     "$PKG/attachments.json" "$WORK/evidence.csv" "$WORK/downloads.json"
 }
+check_download_count() { # the download count equals the attachment manifest's count
+  local n m
+  n="$(node -e 'console.log(JSON.parse(require("fs").readFileSync(process.argv[1], "utf8")).length)' "$WORK/downloads.json")"
+  m="$(node -e 'console.log(JSON.parse(require("fs").readFileSync(process.argv[1], "utf8")).items.length)' "$PKG/attachments.json")"
+  echo "$1: $n downloads; the attachment manifest lists $m"
+  [ "$n" = "$m" ] && [ "$n" -gt 0 ] || { echo "$1: the download count $n differs from the manifest count $m (or is 0)"; return 1; }
+}
 d8() {
   downloads
-  node "$REPO/deploy/scripts/drill/journey.mjs" --mode oidc-drill --app "$ORIGIN_T" \
-    --user "$(node -e 'console.log(JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"))[0].sub)' "$WORK/idp-users.json")" \
+  check_download_count D8
+  node "$REPO/deploy/scripts/drill/journey.mjs" --mode oidc-drill --app "$ORIGIN_T" --issuer "$ISSUER_T" \
+    --user "drill-$(actor submitter)" --approver "drill-$(actor approver)" --transformation "$(actor transformation)" \
     --unbound-user "drill-$(cat "$WORK/unbound.id")" --source-origin "$ORIGIN_S" --downloads "$WORK/downloads.json" \
-    --out "$OUT/journey-D8.json"
+    --journal "$OUT/journal.json" --out "$OUT/journey-D8.json"
 }
-step D8 "node deploy/scripts/drill/journey.mjs --mode oidc-drill --app $ORIGIN_T --source-origin $ORIGIN_S (signin, unbound, csrf, writes, downloads, deeplink)" d8
+step D8 "node deploy/scripts/drill/journey.mjs --mode oidc-drill --app $ORIGIN_T --source-origin $ORIGIN_S (signin, unbound, csrf, status, writes, approve, downloads, deeplink; keys into journal.json)" d8
 
 # ---- D9: full restart --------------------------------------------------------------------------------------------------
 d9() {
-  stop_pid "$API_PID"; stop_pid "$WORKER_PID"; stop_pid "$PG_T_PID"
+  local su j=(node "$REPO/deploy/scripts/drill/journey.mjs" --mode oidc-drill --app "$ORIGIN_T" --issuer "$ISSUER_T"
+    --user "drill-$(actor submitter)" --transformation "$(actor transformation)" --journal "$OUT/journal.json")
+  su="$(su_url "$WORK/pgT" "$P_PG_T" mth)"
+  # 1-3: stop the worker, queue one export (it stays queued), snapshot jobs and approval rows.
+  stop_pid "$WORKER_PID"; WORKER_PID=""
+  "${j[@]}" --steps signin,exportq --out "$OUT/journey-D9-queue.json"
+  node "$REPO/deploy/scripts/drill/job-check.mjs" snapshot --database-url "$su" --out "$OUT/jobs-before.json"
+  # 4: stop the API and PostgreSQL, then start PostgreSQL, the API and the worker.
+  stop_pid "$API_PID"; stop_pid "$PG_T_PID"
   PG_T_PID="$(pg_start "$WORK/pgT" "$P_PG_T")"
   echo "$PG_T_PID" >"$WORK/pgT.pid"
   start_api "${T_ENV[@]}"; start_worker "${T_ENV[@]}"
   echo "$IDP_PID $API_PID $WORKER_PID" >"$WORK/T.pids"
   wait_http "http://127.0.0.1:$P_API_T/readyz" 120 '^200$'
-  reconcile D9
-  node "$REPO/deploy/scripts/drill/journey.mjs" --mode oidc-drill --app "$ORIGIN_T" --steps signin,downloads \
-    --user "$(node -e 'console.log(JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"))[0].sub)' "$WORK/idp-users.json")" \
-    --downloads "$WORK/downloads.json" --out "$OUT/journey-D9.json"
+  # 5-6: schedules, earlier job_run rows and approval rows; the queued export completes; downloads again.
+  node "$REPO/deploy/scripts/drill/job-check.mjs" compare --database-url "$su" --before "$OUT/jobs-before.json" \
+    --out "$OUT/job-check.json"
+  if ! "${j[@]}" --steps signin,exportwait,downloads --downloads "$WORK/downloads.json" --out "$OUT/journey-D9.json"; then
+    if grep -q 'did not complete within 120 s' "$OUT/journey-D9.json"; then
+      echo "transfer-drill: step D9 failed: the export queued before the restart did not complete within 120 s"
+    fi
+    return 1
+  fi
+  check_download_count D9
+  # The mode 2 recheck, with the allowance built only from journal.json (keys from API responses and sign-ins).
+  # T-B16 measured (T-DG7-DO-D2, NODE_ENV=production, drill IdP) that a sign-in changes the user's app_user row, so
+  # the signed-in users' app_user keys are listed as changed. MTH_TD_APP_USER_SIGNIN=<file> replaces the measurement.
+  [ -n "${MTH_TD_APP_USER_SIGNIN:-}" ] || {
+    printf '{"appUserChangedBySignIn":true,"source":"T-B16 measurement (T-DG7-DO-D2)"}\n' >"$OUT/app-user-signin.json"
+    MTH_TD_APP_USER_SIGNIN="$OUT/app-user-signin.json"; }
+  node "$REPO/deploy/scripts/drill/allowance.mjs" --journal "$OUT/journal.json" --database-url "$su" \
+    --app-user-signin "$MTH_TD_APP_USER_SIGNIN" \
+    --out "$OUT/allowance.json" --reasons-out "$OUT/allowance-reasons.json"
+  if ! reconcile D9 --after-use --allow "$OUT/allowance.json"; then
+    sed -n 's/^  \([a-z_][a-z0-9_]*\): .*/\1/p' "$WORK/reconcile-d9.txt" | while read -r t; do
+      echo "transfer-drill: step D9 failed: $t changed outside the allowance"
+    done
+    return 1
+  fi
 }
-step D9 "stop API, worker, PostgreSQL; start all three; node tools/migration/reconcile.mjs; downloads again; /readyz 200" d9
+step D9 "stop worker; journey exportq; job-check snapshot; stop API, PostgreSQL; start PostgreSQL, API, worker; job-check compare; journey exportwait, downloads; allowance.mjs; node tools/migration/reconcile.mjs --from <package> --after-use --allow <allowance.json> (mode 2)" d9
 [ -f "$WORK/pgT.pid" ] && PG_T_PID="$(cat "$WORK/pgT.pid")" || true
 [ -f "$WORK/T.pids" ] && read -r IDP_PID API_PID WORKER_PID <"$WORK/T.pids" || true
 
@@ -466,7 +580,10 @@ node -e '
     archive: { sha256: sha },
     sourceOrigin: src, targetOrigin: tgt,
     idp: { label },
-    checksums: { manifest: digest(manifest), attachmentManifest: digest(attachments), mapping: digest(mapping) },
+    checksums: { manifest: digest(manifest), attachmentManifest: digest(attachments), mapping: digest(mapping),
+      allowance: digest(out + "/allowance.json"), journal: digest(out + "/journal.json") },
+    reports: ["reconcile-d5.json", "reconcile-d6.json", "reconcile-d9.json", "allowance.json", "allowance-reasons.json",
+      "job-check.json", "config-trace.json", "origin-scan.json"].filter((f) => fs.existsSync(out + "/" + f)),
     totals: { tables, evidenceFiles: files, seconds: Number(total) },
     steps,
     note: "SYNTHETIC data and credentials. A local drill is not evidence of high-availability production readiness; it approves nothing.",

@@ -1,0 +1,32 @@
+transfer-drill: work /var/tmp/mth-run.rR9wx1/claude-0/mth-transfer-drill.duDsJJ; out /home/user/My-owns/docs/delivery/handbacks/DG7/T-DG7-DO-D2-evidence/transfer; source origin http://localhost:25301; target origin http://127.0.0.1:25302
+transfer-drill: environment: node v24.21.0; bubblewrap 0.9.0; PostgreSQL 16.15-0ubuntu0.24.04.1); uid 0
+probe tcp 1.1.1.1:443: ENETUNREACH
+probe dns registry.npmjs.org: EAI_AGAIN
+transfer-drill: probe: network isolation effective (no route, no resolver); loopback only
+transfer-drill: step D0 start: node tools/release/build-archive.mjs --verify <archive> --expect-sha256 cf185ccc2ab95ec487af1a95d3b552708803810bce3cc91f515aedd4647d9cfb && tools/release/build-from-archive.sh <archive> --sha256 cf185ccc2ab95ec487af1a95d3b552708803810bce3cc91f515aedd4647d9cfb --store <store> --work <work>/build
+  | 1 archive-checksum: ok
+  | 2 single-top-level-directory: ok
+  | 3 layout: ok
+  | 4 sha256sums: ok
+  | 5 candidate-id: ok
+  | 6 copies: ok
+  | 7 determinism-metadata: ok
+  | archive-verify: PASS
+  | store /var/tmp/mth-run.rR9wx1/claude-0/b11/store
+  | checksum ok cf185ccc2ab95ec487af1a95d3b552708803810bce3cc91f515aedd4647d9cfb
+  | step unpack         exit 0     0.6s  (no source/.git)
+  | namespace unshare --user --map-root-user --net (unshare from util-linux 2.39.3)
+  | probe tcp 1.1.1.1:443: failed (ENETUNREACH)
+  | probe dns registry.npmjs.org: failed (EAI_AGAIN)
+  | step install        exit 0     1.5s  (log /var/tmp/mth-run.rR9wx1/claude-0/mth-transfer-drill.duDsJJ/build/logs/install.log)
+  | step build          exit 0   142.2s  (log /var/tmp/mth-run.rR9wx1/claude-0/mth-transfer-drill.duDsJJ/build/logs/build.log)
+  | step assemble       exit 0     4.7s  (log /var/tmp/mth-run.rR9wx1/claude-0/mth-transfer-drill.duDsJJ/build/logs/assemble.log)
+  | step check-no-cdn   exit 0     0.5s  (log /var/tmp/mth-run.rR9wx1/claude-0/mth-transfer-drill.duDsJJ/build/logs/check-no-cdn.log)
+  | step scan-assets    exit 1    18.9s  (log /var/tmp/mth-run.rR9wx1/claude-0/mth-transfer-drill.duDsJJ/build/logs/scan-assets.log)
+  |     | T1 R2 apps/api/dist/release/register-snapshot.json:1: directory: the runner creates [R2:/var…].XXXXXX (mode 700), exports it
+  |     | T1 R2 apps/api/dist/release/register-snapshot.json:1: o the agent-writable $TMPDIR ([R2:/tmp…]-0) or runs git checkout outsi
+  |     | scan-assets: FAIL (2 hits)
+  | total 168.4s
+  | build-from-archive: FAIL (exit 1)
+transfer-drill: step D0 failed: exit 1: build-from-archive: FAIL (exit 1)
+transfer-drill: FAIL: D0 FAIL, D1 NOT_RUN, D2 NOT_RUN, D3 NOT_RUN, D4 NOT_RUN, D5 NOT_RUN, D6 NOT_RUN, D7 NOT_RUN, D8 NOT_RUN, D9 NOT_RUN, D10 NOT_RUN, D11 NOT_RUN; report /home/user/My-owns/docs/delivery/handbacks/DG7/T-DG7-DO-D2-evidence/transfer/transfer-drill-report.json
