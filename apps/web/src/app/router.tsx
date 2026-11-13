@@ -141,6 +141,13 @@ const ConfigBundleExportPage = lazyPage(() =>
 const ConfigBundleImportPage = lazyPage(() =>
   import("../pages/admin/config-transfer/ConfigTransferPages.tsx").then((m) => m.ConfigBundleImportPage),
 );
+// The slice I screens of T-DG7-FE-C (p7-work-split §I.2): the requirement register (with its detail panel) and About.
+const RequirementsPage = lazyPage(() =>
+  import("../pages/admin/requirements/RequirementsPage.tsx").then((m) => m.RequirementsPage),
+);
+const AboutReleasePage = lazyPage(() =>
+  import("../pages/admin/about/AboutReleasePage.tsx").then((m) => m.AboutReleasePage),
+);
 // P6 slices E, F, J and C screens (T-DG6-FE-B; p6-work-split §E/F.12, §J/C.13).
 const AuditEventsPage = lazyPage(() => import("../pages/admin/audit/AuditPages.tsx").then((m) => m.AuditEventsPage));
 const AuditEventPage = lazyPage(() => import("../pages/admin/audit/AuditPages.tsx").then((m) => m.AuditEventPage));
@@ -621,13 +628,34 @@ export const P7_SCREEN_ROUTES: readonly { path: string; feature: string; owner: 
   { path: "admin/about", feature: "releaseAbout", owner: "FE-C" },
 ];
 
+/** The paths of P7_SCREEN_ROUTES whose screens T-DG7-FE-C built for slice I (p7-work-split §I.2). */
+export const P7_FE_C_RELEASE_PATHS: readonly string[] = [
+  "admin/requirements",
+  "admin/requirements/:reqId",
+  "admin/about",
+];
+
 /**
  * The P7 screens that still show the placeholder. All of them at T-DG7-FE-A; FE-B and FE-C remove theirs as they replace
  * the element (P7_SCREEN_ROUTES stays as the stable list of P7 paths, e.g. for the P7 accessibility scope of FE-D).
  */
 export const P7_PLANNED_ROUTES: readonly { path: string; feature: string; owner: string }[] = P7_SCREEN_ROUTES.filter(
-  // T-DG7-FE-B built the slice C and D screens (P7_FE_B_ROUTES below).
-  (r) => r.owner !== "FE-B",
+  // T-DG7-FE-B built the slice C and D screens (P7_FE_B_ROUTES below); T-DG7-FE-C the slice I screens
+  // (P7_FE_C_RELEASE_ROUTES below). The slice E (Retention) screens are still placeholders.
+  (r) => r.owner !== "FE-B" && !P7_FE_C_RELEASE_PATHS.includes(r.path),
+);
+
+/** The slice I screens of T-DG7-FE-C (p7-work-split §I.2): the register list and its detail panel share one page. */
+const P7_FE_C_RELEASE_ELEMENTS: Readonly<Record<string, ReactElement>> = {
+  "admin/requirements": <RequirementsPage />,
+  "admin/requirements/:reqId": <RequirementsPage />,
+  "admin/about": <AboutReleasePage />,
+};
+export const P7_FE_C_RELEASE_ROUTES: RouteObject[] = Object.entries(P7_FE_C_RELEASE_ELEMENTS).map(
+  ([path, element]) => ({
+    path,
+    element,
+  }),
 );
 
 /** The slice C and D screens of T-DG7-FE-B, one element per P7_SCREEN_ROUTES path owned by FE-B. */
@@ -924,6 +952,7 @@ export const routes: RouteObject[] = [
       ...p4PlannedRoutes,
       ...p6PlannedRoutes,
       ...P7_FE_B_ROUTES,
+      ...P7_FE_C_RELEASE_ROUTES,
       ...p7PlannedRoutes,
       ...landingRoutes,
       ...subEntryRoutes,

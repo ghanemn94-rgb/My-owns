@@ -150,6 +150,9 @@ import enExplanations from "./en/explanations.json" with { type: "json" };
 // P7 (DG7) Administration screens of slices C and D (T-DG7-FE-B; p7-work-split §C.8, §D.2).
 import arTransfer from "./ar/transfer.json" with { type: "json" };
 import enTransfer from "./en/transfer.json" with { type: "json" };
+// P7 (DG7) Administration > Requirement register and About this release (T-DG7-FE-C; p7-work-split §I.2, §I.3).
+import arRelease from "./ar/release.json" with { type: "json" };
+import enRelease from "./en/release.json" with { type: "json" };
 
 /** Namespace files per locale; the key-parity test walks exactly these. */
 export const catalogues = {
@@ -211,6 +214,7 @@ export const catalogues = {
     externalChange: arExternalChange,
     explanations: arExplanations,
     transfer: arTransfer,
+    release: arRelease,
   },
   en: {
     common: enCommon,
@@ -270,6 +274,7 @@ export const catalogues = {
     externalChange: enExternalChange,
     explanations: enExplanations,
     transfer: enTransfer,
+    release: enRelease,
   },
 } as const;
 
