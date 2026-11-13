@@ -433,27 +433,15 @@ start_target() {
   echo "$IDP_PID $API_PID $WORKER_PID" >"$WORK/T.pids"
 }
 # actors: the REBOUND users the journeys sign in as, chosen on T by permission (who signs in is not an allowance key):
-# an operations.read holder (D7 status), and on one transformation a gate.submit holder and a different gate.decide
-# holder; the unmapped user is never chosen. Written to <work>/actors.json.
+# an operations.read holder (D7 status), and on one transformation a gate.submit holder, a different gate.decide
+# holder and a kpi_actual.submit holder who owns or stewards an active KPI definition there (pick-actors.sql); the
+# unmapped user is never chosen. Written to <work>/actors.json.
 pick_actors() {
   local su; su="$(su_url "$WORK/pgT" "$P_PG_T" mth)"
-  "$PGBIN/psql" -X -qAt -d "$su" -v unbound="$(cat "$WORK/unbound.id")" <<'SQL' >"$WORK/actors.json"
-WITH held AS (
-  SELECT sa.user_id, sa.scope_type, sa.scope_id, rp.permission_code
-    FROM scoped_assignment sa JOIN role_permission rp ON rp.role_id = sa.role_id
-   WHERE sa.revoked_at IS NULL AND (sa.effective_to IS NULL OR sa.effective_to > now())
-     AND sa.user_id <> :'unbound'::uuid
-     AND EXISTS (SELECT FROM identity_rebind_event e WHERE e.user_id = sa.user_id AND e.action = 'rebound')),
-pairs AS (
-  SELECT s.scope_id AS t, s.user_id AS submitter, d.user_id AS approver
-    FROM held s JOIN held d ON d.scope_type = 'transformation' AND d.scope_id = s.scope_id
-   WHERE s.scope_type = 'transformation' AND s.permission_code = 'gate.submit' AND d.permission_code = 'gate.decide'
-     AND s.user_id <> d.user_id
-   ORDER BY 1, 2, 3 LIMIT 1)
-SELECT json_build_object(
-  'admin', (SELECT user_id FROM held WHERE permission_code = 'operations.read' ORDER BY user_id LIMIT 1),
-  'transformation', (SELECT t FROM pairs), 'submitter', (SELECT submitter FROM pairs), 'approver', (SELECT approver FROM pairs));
-SQL
+  # T-DG7-DO-D3 (T-B11 run, T-B17): the gate.submit holder chosen before held no kpi_actual.submit, so D8 (b)'s KPI
+  # value was refused 403; the query now also chooses a KPI actor. Shared with T-B17 (deploy/scripts/drill/pick-actors.sql).
+  "$PGBIN/psql" -X -qAt -v ON_ERROR_STOP=1 -d "$su" -v unbound="$(cat "$WORK/unbound.id")" \
+    -f "$REPO/deploy/scripts/drill/pick-actors.sql" >"$WORK/actors.json"
   cat "$WORK/actors.json"
 }
 actor() { node -e 'const v = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"))[process.argv[2]];
@@ -504,6 +492,8 @@ d8() {
   check_download_count D8
   node "$REPO/deploy/scripts/drill/journey.mjs" --mode oidc-drill --app "$ORIGIN_T" --issuer "$ISSUER_T" \
     --user "drill-$(actor submitter)" --approver "drill-$(actor approver)" --transformation "$(actor transformation)" \
+    --kpi-user "drill-$(actor kpiUser)" --kpi-definition "$(actor kpiDefinition)" \
+    --kpi-value-nature "$(actor kpiValueNature)" --gate "$(actor gate)" \
     --unbound-user "drill-$(cat "$WORK/unbound.id")" --source-origin "$ORIGIN_S" --downloads "$WORK/downloads.json" \
     --journal "$OUT/journal.json" --out "$OUT/journey-D8.json"
 }
@@ -517,7 +507,9 @@ d9() {
   # 1-3: stop the worker, queue one export (it stays queued), snapshot jobs and approval rows.
   stop_pid "$WORKER_PID"; WORKER_PID=""
   "${j[@]}" --steps signin,exportq --out "$OUT/journey-D9-queue.json"
-  node "$REPO/deploy/scripts/drill/job-check.mjs" snapshot --database-url "$su" --out "$OUT/jobs-before.json"
+  # T-DG7-DO-D3: the digests come from the runtime tree's mth-db table-digest (the §2.3 encoder, C.13).
+  node "$REPO/deploy/scripts/drill/job-check.mjs" snapshot --database-url "$su" --mth-db "$RT/packages/db/dist/cli.js" \
+    --out "$OUT/jobs-before.json"
   # 4: stop the API and PostgreSQL, then start PostgreSQL, the API and the worker.
   stop_pid "$API_PID"; stop_pid "$PG_T_PID"
   PG_T_PID="$(pg_start "$WORK/pgT" "$P_PG_T")"
@@ -526,8 +518,8 @@ d9() {
   echo "$IDP_PID $API_PID $WORKER_PID" >"$WORK/T.pids"
   wait_http "http://127.0.0.1:$P_API_T/readyz" 120 '^200$'
   # 5-6: schedules, earlier job_run rows and approval rows; the queued export completes; downloads again.
-  node "$REPO/deploy/scripts/drill/job-check.mjs" compare --database-url "$su" --before "$OUT/jobs-before.json" \
-    --out "$OUT/job-check.json"
+  node "$REPO/deploy/scripts/drill/job-check.mjs" compare --database-url "$su" --mth-db "$RT/packages/db/dist/cli.js" \
+    --before "$OUT/jobs-before.json" --out "$OUT/job-check.json"
   if ! "${j[@]}" --steps signin,exportwait,downloads --downloads "$WORK/downloads.json" --out "$OUT/journey-D9.json"; then
     if grep -q 'did not complete within 120 s' "$OUT/journey-D9.json"; then
       echo "transfer-drill: step D9 failed: the export queued before the restart did not complete within 120 s"

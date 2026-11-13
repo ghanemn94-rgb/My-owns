@@ -17,7 +17,8 @@ import { fileURLToPath } from "node:url";
 import { trace, UNDOCUMENTED } from "../drill/config-trace.mjs";
 import { startDrillIdp, readUsers, DRILL_IDP_LABEL } from "../drill/fake-idp-server.mjs";
 import { runJourney } from "../drill/journey.mjs";
-import { buildAllowance, constants, A19_NEVER_OPERATIONAL } from "../drill/allowance.mjs";
+import { tableDigest } from "../drill/job-check.mjs";
+import { buildAllowance, constants, D8_TOUCHED_AUDITED, D8_TOUCHED_CHILDREN } from "../drill/allowance.mjs";
 
 const REPO = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
 const DRILL = join(REPO, "deploy/scripts/transfer-drill.sh");
@@ -546,54 +547,103 @@ journeySuite(
 );
 
 // --------------------------------------------------------------------------------------------- T-B15 allowance
-describe("T-B15 allowance.mjs: mth-recheck-allowance/1 from a fixture journal", () => {
+describe("T-B15 allowance.mjs: mth-recheck-allowance/2 from a fixture journal (p7-work-split §B.7 DO-D3)", () => {
+  const U1 = "01995000-0000-7000-8000-0000000000e1";
   const journal = [
     { table: "transformation", key: ["t-1"], op: "added", via: "createTransformation" },
     { table: "raid_entry", key: ["r-1"], op: "added", via: "createRaidEntry" },
     { table: "raid_entry", key: ["r-1"], op: "added", via: "createRaidEntry (repeated)" },
-    { table: "kpi_actual", key: ["k-1"], op: "changed", via: "submitKpiActual" },
-    { table: "kpi_actual", key: ["k-1"], op: "changed", via: "submitKpiActual (repeated)" },
+    { table: "kpi_actual", key: ["k-1"], op: "changed", via: "addKpiActualValue" },
+    { table: "kpi_actual", key: ["k-1"], op: "changed", via: "addKpiActualValue (repeated)" },
+    { table: "gate_instance", key: ["gi-1"], op: "changed", via: "submitGate" },
     { table: "gate_decision", key: ["gd-1"], op: "added", via: "decideGate" },
     { table: "decision", key: ["d-1"], op: "added", via: "decideGate" },
     { table: "export_job", key: ["e-1"], op: "added", via: "createExport" },
     { table: "user_identity", key: ["http://127.0.0.1:25401/realms/mth-test", "drill-a"], op: "signin", via: "signin" },
     { table: "user_identity", key: ["http://127.0.0.1:25401/realms/mth-test", "drill-a"], op: "signin", via: "again" },
   ];
-  const identity = (iss, sub) => (sub === "drill-a" ? { id: "ui-1", userId: "u-1" } : null);
+  const identity = (iss, sub) => (sub === "drill-a" ? { id: "ui-1", userId: U1 } : null);
 
-  it("writes a valid allowance: exact keys merged, never-operational tables only in tables, reasons for each operational", async () => {
+  it("writes a /2 file with all six keys that parseAllowance (packages/db recheck.ts) accepts", async () => {
     const k = await constants();
-    const { allowance, reasons, errors } = buildAllowance(journal, {
-      identity,
-      appUserChangedBySignIn: true,
-      constants: k,
-    });
+    assert.equal(k.source, "packages/db/src/transfer/recheck.ts");
+    assert.equal(k.schemaVersion, "mth-recheck-allowance/2");
+    const { allowance, errors } = buildAllowance(journal, { identity, appUserChangedBySignIn: true, constants: k });
     assert.deepEqual(errors, []);
-    assert.equal(allowance.schemaVersion, "mth-recheck-allowance/1");
-    assert.deepEqual(Object.keys(allowance), ["schemaVersion", "tables", "operational"]);
+    assert.equal(allowance.schemaVersion, "mth-recheck-allowance/2");
+    assert.deepEqual(Object.keys(allowance), [
+      "schemaVersion",
+      "actors",
+      "tables",
+      "audited",
+      "children",
+      "operational",
+    ]);
+    const parsed = k.parseAllowance(Buffer.from(JSON.stringify(allowance), "utf8"));
+    assert.deepEqual(parsed.actors, [U1]);
+    assert.equal(parsed.audited.length, Object.keys(D8_TOUCHED_AUDITED).length);
+  });
+
+  it("actors from sign-ins; journalled keys of audited tables go to mustInclude; duplicates merged", async () => {
+    const k = await constants();
+    const { allowance } = buildAllowance(journal, { identity, appUserChangedBySignIn: true, constants: k });
+    assert.deepEqual(allowance.actors, [U1]);
     const byName = Object.fromEntries(allowance.tables.map((t) => [t.name, t]));
     assert.deepEqual(byName.raid_entry, { name: "raid_entry", added: [["r-1"]], changed: [] });
     assert.deepEqual(byName.kpi_actual, { name: "kpi_actual", added: [], changed: [["k-1"]] });
     assert.deepEqual(byName.user_identity, { name: "user_identity", added: [], changed: [["ui-1"]] });
-    assert.deepEqual(byName.app_user, { name: "app_user", added: [], changed: [["u-1"]] });
-    // A RECHECK_NEVER_OPERATIONAL table goes in tables, never in operational.
-    for (const t of [...k.never, "decision"]) assert.ok(!allowance.operational.includes(t), t);
-    assert.ok(byName.gate_decision && byName.decision);
-    // A table with exact keys is not also operational (A1.9 rule 7).
-    assert.ok(!allowance.operational.includes("export_job"));
+    assert.deepEqual(byName.app_user, { name: "app_user", added: [], changed: [[U1]] });
+    // gate_instance is audited (D8_TOUCHED_AUDITED): its journalled key is in mustInclude, never in tables.
+    assert.ok(!byName.gate_instance);
+    const gi = allowance.audited.find((a) => a.name === "gate_instance");
+    assert.deepEqual(gi.mustInclude, { added: [], changed: [["gi-1"]] });
+    assert.deepEqual(
+      allowance.children.map((c) => c.name),
+      D8_TOUCHED_CHILDREN.map((c) => c.name),
+    );
+  });
+
+  it("never-operational tables appear only in tables, audited or children; reasons for every list entry", async () => {
+    const k = await constants();
+    const { allowance, reasons } = buildAllowance(journal, { identity, appUserChangedBySignIn: true, constants: k });
+    for (const t of allowance.operational) assert.ok(!k.isNever(t), t);
+    for (const t of ["gate_decision", "decision", "app_user", "user_identity", "kpi_actual", "scoped_assignment"])
+      assert.ok(!allowance.operational.includes(t), t);
+    assert.ok(
+      allowance.tables.some((t) => t.name === "gate_decision") && allowance.tables.some((t) => t.name === "decision"),
+    );
+    assert.ok(!allowance.operational.includes("export_job"), "a table with exact keys is not also operational");
     assert.ok(allowance.operational.every((t) => k.operational.has(t)));
     assert.deepEqual(
       reasons.operational.map((r) => r.table),
       allowance.operational,
     );
-    assert.ok(reasons.operational.every((r) => r.reason.length > 10));
-    for (const t of A19_NEVER_OPERATIONAL) assert.ok(k.never.has(t), t);
+    for (const list of [reasons.operational, reasons.audited, reasons.children])
+      for (const r of list) assert.ok(typeof r.reason === "string" && r.reason.length > 10, JSON.stringify(r));
+  });
+
+  it("the two D8 lists are pinned: audited tables have no child entry, children's parents are listed", async () => {
+    const auditedNames = new Set(Object.keys(D8_TOUCHED_AUDITED));
+    const k = await constants();
+    const { allowance } = buildAllowance(journal, { identity, appUserChangedBySignIn: true, constants: k });
+    const listed = new Set([
+      ...allowance.tables.map((t) => t.name),
+      ...auditedNames,
+      ...D8_TOUCHED_CHILDREN.map((c) => c.name),
+    ]);
+    for (const c of D8_TOUCHED_CHILDREN) {
+      assert.ok(!auditedNames.has(c.name), c.name);
+      assert.ok(listed.has(c.parent), `parent ${c.parent} of ${c.name} is listed`);
+      assert.match(c.fkey, /^[a-z][a-z0-9_]{0,62}$/);
+    }
+    for (const t of ["audit_event", "user_identity"]) assert.ok(!auditedNames.has(t), t);
   });
 
   it("app_user is listed only when the measurement says a sign-in changes it", async () => {
     const k = await constants();
     const { allowance } = buildAllowance(journal, { identity, appUserChangedBySignIn: false, constants: k });
     assert.ok(!allowance.tables.some((t) => t.name === "app_user"));
+    assert.deepEqual(allowance.actors, [U1], "the actor is still listed");
   });
 
   it("an audit_event entry, an unknown identity or a bad key is refused (exit 1 via the CLI)", async () => {
@@ -627,57 +677,80 @@ describe("T-B15 allowance.mjs: mth-recheck-allowance/1 from a fixture journal", 
     );
     assert.equal(r.status, 1, r.stderr);
   });
-
-  it("BE-R1's parseAllowance (packages/db) accepts the file", async () => {
-    const k = await constants();
-    if (!k.parseAllowance)
-      throw new Error(
-        "BLOCKED: parseAllowance is not exported by packages/db/src/transfer/recheck.ts (T-DG7-BE-R1 gap 2); the file cannot be validated by it",
-      );
-    const { allowance } = buildAllowance(journal.slice(0, 8), { identity, constants: k });
-    const parsed = k.parseAllowance(Buffer.from(JSON.stringify(allowance), "utf8"));
-    assert.ok(parsed);
-  });
 });
 
 // --------------------------------------------------------------------------------------------- T-B16 job checks
-describe("T-B16 job-check.mjs on a fixture database", () => {
+describe("T-B16 job-check.mjs on a fixture database, digests from mth-db table-digest (§2.3 encoder)", () => {
   const db = `mth_td_jobs_${suffix}`;
   const JOB = join(REPO, "deploy/scripts/drill/job-check.mjs");
   let url;
-  const run = (...args) => spawnSync("node", [JOB, ...args], { encoding: "utf8" });
+  const run = (...args) => spawnSync("node", [JOB, ...args], { encoding: "utf8", env: { ...process.env } });
   const fresh = () => {
     const dir = mkdtempSync(join(work, "jobs-"));
     return { before: join(dir, "before.json"), out: join(dir, "out.json") };
   };
+  // Fixture changes are written as the superuser with triggers off (session_replication_role = replica): they stand
+  // for what a broken restart could do (job_run is append-only, approval rows are audited), never for product code.
+  const raw = (sql) => psql(dbUrl(db), `SET session_replication_role = replica; ${sql}`);
   before(() => {
     if (!ADMIN) return;
-    psql(ADMIN, `CREATE DATABASE ${db} ENCODING 'UTF8' TEMPLATE template0;`);
-    url = dbUrl(db);
-    psql(
-      url,
-      `CREATE TABLE job_run (id uuid PRIMARY KEY, job_id text NOT NULL, status text NOT NULL);
-       CREATE TABLE job_schedule (id uuid PRIMARY KEY, job_id text NOT NULL, cron text NOT NULL, enabled boolean NOT NULL);
-       CREATE TABLE gate_decision (id uuid PRIMARY KEY, outcome text NOT NULL);
-       CREATE TABLE approval (id uuid PRIMARY KEY, status text NOT NULL);
-       CREATE TABLE approval_decision (id uuid PRIMARY KEY, outcome text NOT NULL);
-       CREATE SCHEMA pgboss; CREATE TABLE pgboss.job (id uuid PRIMARY KEY, name text NOT NULL, state text NOT NULL);
-       INSERT INTO job_run VALUES ('00000000-0000-7000-8000-000000000001', 'retention', 'succeeded');
-       INSERT INTO job_schedule VALUES ('00000000-0000-7000-8000-0000000000a1', 'retention', '0 2 * * *', true),
-                                       ('00000000-0000-7000-8000-0000000000a2', 'digest', '0 6 * * *', false);
-       INSERT INTO gate_decision VALUES ('00000000-0000-7000-8000-0000000000b1', 'deferred');
-       INSERT INTO pgboss.job VALUES ('00000000-0000-7000-8000-0000000000c1', 'export', 'created');`,
+    for (const r of ["mth_owner", "mth_app"])
+      psql(
+        ADMIN,
+        `DO $$ BEGIN IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = '${r}') THEN CREATE ROLE ${r} LOGIN; END IF; END $$;`,
+      );
+    psql(ADMIN, `CREATE DATABASE ${db} OWNER mth_owner ENCODING 'UTF8' TEMPLATE template0;`);
+    psql(ADMIN, `GRANT CONNECT ON DATABASE ${db} TO mth_app;`);
+    for (const c of ["migrate", "seed-demo"]) {
+      const r = spawnSync("node", ["--conditions=@mth/source", "src/cli.ts", c], {
+        cwd: join(REPO, "packages/db"),
+        encoding: "utf8",
+        env: {
+          PATH: process.env.PATH,
+          HOME: work,
+          DATABASE_OWNER_URL: dbUrl(db, "mth_owner"),
+          NODE_ENV: "development",
+        },
+      });
+      if (r.status !== 0) throw new Error(`mth-db ${c}: ${r.stdout}${r.stderr}`);
+    }
+    url = dbUrl(db, "mth_app");
+    raw(
+      `INSERT INTO job_run (id, job_schedule_code, job_id, attempt_no, outcome, started_at, finished_at)
+         SELECT '00000000-0000-7000-8000-000000000001', code, 'fixture-1', 1, 'succeeded', now(), now()
+           FROM job_schedule WHERE enabled ORDER BY code LIMIT 1;
+       GRANT USAGE ON SCHEMA pgboss TO mth_app; GRANT SELECT ON ALL TABLES IN SCHEMA pgboss TO mth_app;`,
     );
   });
   after(() => {
     if (ADMIN) psql(ADMIN, `DROP DATABASE IF EXISTS ${db} WITH (FORCE);`);
   });
 
+  it("the snapshot holds the encoder's digests: approval digests equal mth-db table-digest's", () => {
+    needPg();
+    const f = fresh();
+    const r = run("snapshot", "--database-url", url, "--out", f.before);
+    assert.equal(r.status, 0, r.stdout + r.stderr);
+    const snap = JSON.parse(readFileSync(f.before, "utf8"));
+    assert.equal(snap.schemaVersion, "mth-drill-job-snapshot/2");
+    const d = tableDigest(url, ["gate_decision", "approval", "approval_decision"]);
+    for (const t of ["gate_decision", "approval", "approval_decision"]) {
+      assert.equal(snap.approvals[t].digest, d.get(t).digest, t);
+      assert.match(snap.approvals[t].digest, /^[0-9a-f]{64}$/);
+    }
+    assert.ok(snap.enabledSchedules.count > 0 && Object.values(snap.enabledSchedules.lines).every(Boolean));
+    assert.equal(snap.jobRun.count, 1);
+  });
+
   it("a new job_run row passes (counted), and the pg-boss table is measured", () => {
     needPg();
     const f = fresh();
     assert.equal(run("snapshot", "--database-url", url, "--out", f.before).status, 0);
-    psql(url, `INSERT INTO job_run VALUES ('00000000-0000-7000-8000-000000000002', 'export', 'succeeded');`);
+    raw(
+      `INSERT INTO job_run (id, job_schedule_code, job_id, attempt_no, outcome, started_at, finished_at)
+         SELECT '00000000-0000-7000-8000-000000000002', job_schedule_code, 'fixture-2', 1, 'succeeded', now(), now()
+           FROM job_run LIMIT 1;`,
+    );
     const r = run("compare", "--database-url", url, "--before", f.before, "--out", f.out);
     assert.equal(r.status, 0, r.stdout + r.stderr);
     const rep = JSON.parse(readFileSync(f.out, "utf8"));
@@ -690,7 +763,7 @@ describe("T-B16 job-check.mjs on a fixture database", () => {
     needPg();
     const f = fresh();
     assert.equal(run("snapshot", "--database-url", url, "--out", f.before).status, 0);
-    psql(url, `UPDATE job_schedule SET cron = '0 3 * * *' WHERE enabled;`);
+    raw(`UPDATE job_schedule SET cron = '7 3 * * *' WHERE code = (SELECT min(code) FROM job_schedule WHERE enabled);`);
     const r = run("compare", "--database-url", url, "--before", f.before, "--out", f.out);
     assert.equal(r.status, 1);
     assert.match(r.stdout, /job_schedule: the enabled schedules changed/);
@@ -700,29 +773,359 @@ describe("T-B16 job-check.mjs on a fixture database", () => {
     needPg();
     const f = fresh();
     assert.equal(run("snapshot", "--database-url", url, "--out", f.before).status, 0);
-    psql(url, `DELETE FROM job_run WHERE id = '00000000-0000-7000-8000-000000000001';`);
+    raw(`DELETE FROM job_run WHERE id = '00000000-0000-7000-8000-000000000001';`);
     const r = run("compare", "--database-url", url, "--before", f.before, "--out", f.out);
     assert.equal(r.status, 1);
     assert.match(r.stdout, /job_run: the earlier rows changed/);
   });
 
-  it("a changed approval row fails", () => {
+  it("a changed approval row fails, and changes the encoder digest", () => {
     needPg();
     const f = fresh();
     assert.equal(run("snapshot", "--database-url", url, "--out", f.before).status, 0);
-    psql(url, `UPDATE gate_decision SET outcome = 'approved';`);
+    const d0 = tableDigest(url, ["gate_decision"]).get("gate_decision");
+    raw(`UPDATE gate_decision SET rationale = rationale || ' (changed by the T-B16 fixture)'
+           WHERE id = (SELECT id FROM gate_decision ORDER BY id LIMIT 1);`);
+    const d1 = tableDigest(url, ["gate_decision"]).get("gate_decision");
+    assert.equal(d1.rows, d0.rows);
+    assert.notEqual(d1.digest, d0.digest, "a changed approval row changes the encoder digest");
     const r = run("compare", "--database-url", url, "--before", f.before, "--out", f.out);
-    assert.equal(r.status, 1);
-    assert.match(r.stdout, /gate_decision: 1 -> 1 rows, digest differs/);
+    assert.equal(r.status, 1, r.stdout + r.stderr);
+    assert.match(r.stdout, new RegExp(`gate_decision: ${d0.rows} -> ${d0.rows} rows, digest differs`));
   });
 
   it("a missing pg-boss table reports BLOCKED (exit 2), never PASS", () => {
     needPg();
-    psql(url, `DROP SCHEMA pgboss CASCADE;`);
+    raw(`DROP SCHEMA pgboss CASCADE;`);
     const f = fresh();
     const r = run("snapshot", "--database-url", url, "--out", f.before);
     assert.equal(r.status, 2);
     assert.match(r.stderr, /BLOCKED: no pg-boss job table/);
     assert.doesNotMatch(r.stdout, /PASS/);
+  });
+});
+
+// --------------------------------------------------------------------------------------------- T-B17 the D8 lists
+// p7-work-split §B.7 DO-D3 T-B17 (PostgreSQL): the two D8 lists of allowance.mjs are MEASURED, not guessed. A fixture
+// installation is built the drill's way (S: migrate + seed-demo; export; T: prepare-target, import, rebind every
+// carried user to the SYNTHETIC drill IdP), the API runs on T under NODE_ENV=production and AUTH_MODE=oidc together with
+// the worker, and D8's write chain (journey.mjs --steps signin,writes,approve) runs against it. Every exported table
+// is compared, row by row through `mth-db table-digest --rows`, with a snapshot taken before; the changed tables minus
+// the journalled `tables`, the operational list and user_identity must equal D8_TOUCHED_AUDITED ∪ D8_TOUCHED_CHILDREN.
+// Then mode 2 runs on the fixture with the generated allowance (exit 0), and one extra owner-written row in an audited
+// table, with its audit event by a user who is not journalled, gives exit 4.
+describe("T-B17 the D8 lists of allowance.mjs are measured on a fixture installation (mode 2 exit 0, then 4)", () => {
+  const s = `mth_td_b17s_${suffix}`;
+  const t = `mth_td_b17t_${suffix}`;
+  const dir = join(work, "b17");
+  const pkg = join(dir, "package");
+  const port = 29000 + Math.floor(Math.random() * 2900);
+  const app = `http://127.0.0.1:${port}`;
+  const issuer = `http://127.0.0.1:${port + 1}/realms/mth-test`;
+  const journal = join(dir, "journal.json");
+  let idp, api, worker, actors, tables;
+  let apiLog = "";
+  const OPERATOR = "transfer-drill synthetic operator";
+  const env = (extra) => ({ PATH: process.env.PATH, HOME: work, TMPDIR: tmpdir(), LANG: "C.UTF-8", ...extra });
+  const tool = (args, extra) => spawnSync("node", args, { cwd: REPO, encoding: "utf8", env: env(extra) });
+  const db = (args, extra) =>
+    spawnSync("node", ["--conditions=@mth/source", "src/cli.ts", ...args], {
+      cwd: join(REPO, "packages/db"),
+      encoding: "utf8",
+      env: env(extra),
+    });
+  const ok = (r, what) => {
+    if (r.status !== 0) throw new Error(`${what}: exit ${r.status}: ${r.stdout}${r.stderr}`);
+    return r.stdout;
+  };
+  /** Every exported table, row by row (key -> line sha256), through mth-db table-digest --rows as mth_app. */
+  const rows = () => {
+    const d = tableDigest(dbUrl(t, "mth_app"), tables, { rows: true });
+    return new Map([...d.values()].map((x) => [x.name, new Map(x.lines.map((l) => [l.key, l.sha256]))]));
+  };
+  const diff = (a, b) => {
+    const changed = {};
+    for (const [name, before] of a) {
+      const after = b.get(name);
+      let added = 0,
+        changedRows = 0,
+        missing = 0;
+      for (const [k, h] of after)
+        if (!before.has(k)) added++;
+        else if (before.get(k) !== h) changedRows++;
+      for (const k of before.keys()) if (!after.has(k)) missing++;
+      if (added + changedRows + missing > 0) changed[name] = { added, changed: changedRows, missing };
+    }
+    return changed;
+  };
+  let before0, measured;
+
+  before(
+    async () => {
+      if (!ADMIN) return;
+      mkdirSync(pkg, { recursive: true });
+      mkdirSync(join(dir, "evidence"), { recursive: true });
+      for (const r of ["mth_owner", "mth_app"])
+        psql(
+          ADMIN,
+          `DO $$ BEGIN IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = '${r}') THEN CREATE ROLE ${r} LOGIN; END IF; END $$;`,
+        );
+      for (const d of [s, t]) {
+        psql(ADMIN, `CREATE DATABASE ${d} OWNER mth_owner ENCODING 'UTF8' TEMPLATE template0;`);
+        psql(ADMIN, `GRANT CONNECT ON DATABASE ${d} TO mth_app;`);
+      }
+      const S = { DATABASE_OWNER_URL: dbUrl(s, "mth_owner"), NODE_ENV: "development" };
+      const T = { DATABASE_OWNER_URL: dbUrl(t, "mth_owner"), NODE_ENV: "production" };
+      ok(db(["migrate"], S), "migrate S");
+      ok(db(["seed-demo"], S), "seed-demo S");
+      ok(tool(["tools/migration/export.mjs", "--out", pkg, "--operator", OPERATOR], S), "export");
+      ok(tool(["tools/migration/prepare-target.mjs", "--from", pkg], T), "prepare-target");
+      ok(
+        tool(["tools/migration/import.mjs", "--from", pkg, "--operator", OPERATOR], {
+          ...T,
+          DATABASE_URL: dbUrl(t, "mth_app"),
+          EVIDENCE_STORAGE_DRIVER: "filesystem",
+          EVIDENCE_STORAGE_PATH: join(dir, "evidence"),
+        }),
+        "import",
+      );
+      tables = JSON.parse(readFileSync(join(pkg, "manifest.json"), "utf8")).tables.map((x) => x.name);
+      // The rebind: every carried user to the drill IdP (synthetic subjects), as D6 does.
+      const held = psql(
+        dbUrl(t, "mth_owner"),
+        `SELECT user_id FROM identity_binding_hold WHERE state = 'unbound' ORDER BY user_id;`,
+      ).split("\n");
+      const mapping = join(dir, "mapping.csv");
+      writeFileSync(
+        mapping,
+        "user_id,action,new_issuer,new_subject\n" +
+          held.map((u) => `${u},rebind,${issuer},drill-${u}`).join("\n") +
+          "\n",
+      );
+      ok(db(["rebind-identity", "--mapping", mapping, "--operator", OPERATOR], T), "rebind-identity");
+      // The actors, chosen by permission among the rebound users (the drill's pick_actors).
+      actors = JSON.parse(
+        ok(
+          spawnSync(
+            "psql",
+            [
+              "-X",
+              "-qAt",
+              "-v",
+              "ON_ERROR_STOP=1",
+              "-v",
+              "unbound=00000000-0000-0000-0000-000000000000",
+              "-d",
+              dbUrl(t, "mth_owner"),
+            ],
+            { input: readFileSync(join(REPO, "deploy/scripts/drill/pick-actors.sql"), "utf8"), encoding: "utf8" },
+          ),
+          "pick-actors.sql",
+        ).trim(),
+      );
+      const secretDir = join(dir, "secrets");
+      mkdirSync(secretDir, { recursive: true });
+      const secret = randomBytes(24).toString("hex");
+      writeFileSync(join(secretDir, "oidc"), secret);
+      writeFileSync(join(secretDir, "db"), dbUrl(t, "mth_app"));
+      idp = await startDrillIdp({
+        port: port + 1,
+        users: readUsers(JSON.stringify(held.map((u) => ({ sub: `drill-${u}`, name: "Drill user (synthetic)" })))),
+        clientSecret: secret,
+        redirectUris: [`${app}/api/v1/auth/callback`],
+      });
+      const runtime = {
+        NODE_ENV: "production",
+        AUTH_MODE: "oidc",
+        APP_BASE_URL: app,
+        PORT: String(port),
+        DATABASE_URL_FILE: join(secretDir, "db"),
+        OIDC_ISSUER_URL: issuer,
+        OIDC_CLIENT_ID: "mth-test-client",
+        OIDC_CLIENT_SECRET_FILE: join(secretDir, "oidc"),
+        EVIDENCE_STORAGE_PATH: join(dir, "evidence"),
+        LOG_LEVEL: "warn",
+      };
+      const start = (app_) => {
+        const p = spawn("node", ["--conditions=@mth/source", "src/main.ts"], {
+          cwd: join(REPO, `apps/${app_}`),
+          env: env(runtime),
+          stdio: ["ignore", "pipe", "pipe"],
+        });
+        p.stdout.on("data", (d) => (apiLog += d));
+        p.stderr.on("data", (d) => (apiLog += d));
+        return p;
+      };
+      api = start("api");
+      worker = start("worker");
+      for (let i = 0; i < 480; i++) {
+        const body = await fetch(`${app}/readyz`).then(
+          (r) => r.text(),
+          () => "",
+        );
+        if (/"worker":"alive"/.test(body)) break;
+        await new Promise((r) => setTimeout(r, 250));
+      }
+      before0 = rows();
+    },
+    { timeout: 300_000 },
+  );
+  after(async () => {
+    api?.kill("SIGTERM");
+    worker?.kill("SIGTERM");
+    await idp?.stop();
+    if (ADMIN) for (const d of [s, t]) psql(ADMIN, `DROP DATABASE IF EXISTS ${d} WITH (FORCE);`);
+  });
+
+  it("D8's write chain changes exactly the journalled tables, the operational list, user_identity and the two D8 lists", async () => {
+    needPg();
+    assert.ok(actors.transformation && actors.submitter && actors.approver && actors.kpiUser, JSON.stringify(actors));
+    const r = await runJourney({
+      app,
+      issuer,
+      user: `drill-${actors.submitter}`,
+      approver: `drill-${actors.approver}`,
+      kpiUser: `drill-${actors.kpiUser}`,
+      kpiDefinition: actors.kpiDefinition,
+      kpiValueNature: actors.kpiValueNature,
+      gate: actors.gate,
+      transformation: actors.transformation,
+      steps: ["signin", "writes", "approve"],
+      journal,
+    });
+    // The measurement is recorded whatever the journey's result (a FAIL is asserted below, never hidden).
+    // The worker derives rows from the writes (outbox, KPI evaluation); give it time to settle, as D9's restart does.
+    await new Promise((res) => setTimeout(res, 15_000));
+    const changed = diff(before0, rows());
+    const k = await constants();
+    const entries = JSON.parse(readFileSync(journal, "utf8")).entries;
+    const owner = dbUrl(t, "mth_owner");
+    const signedIn = new Set(
+      entries
+        .filter((e) => e.op === "signin")
+        .map((e) =>
+          psql(owner, `SELECT user_id FROM user_identity WHERE issuer = '${e.key[0]}' AND subject = '${e.key[1]}';`),
+        ),
+    );
+    const journalled = new Set(entries.filter((e) => e.op !== "signin").map((e) => e.table));
+    journalled.add("app_user"); // the T-B16 measurement: a sign-in changes app_user (listed as changed)
+    const audited = new Set(Object.keys(D8_TOUCHED_AUDITED));
+    const residue = Object.keys(changed)
+      // audit_event: additions are always allowed and checked by the trail check (A1.9 rule 1, A2.3), never listed
+      .filter((n) => n !== "user_identity" && n !== "audit_event" && !k.operational.has(n))
+      .filter((n) => audited.has(n) || !journalled.has(n))
+      .sort();
+    // The measurement, written for the handback: each changed table, whether it is audited and its foreign keys.
+    measured = {
+      schemaVersion: "mth-drill-d8-measurement/1",
+      changed,
+      journalledTables: [...journalled].sort(),
+      residue: residue.map((n) => ({
+        table: n,
+        auditRequired:
+          psql(
+            owner,
+            `SELECT count(*) FROM pg_trigger WHERE tgrelid = '${n}'::regclass AND tgname = '${n}_audit_required' AND tgenabled <> 'D';`,
+          ) === "1",
+        fkeys: psql(
+          owner,
+          `SELECT coalesce(string_agg(conname || '->' || confrelid::regclass::text, ' ' ORDER BY conname), '')
+             FROM pg_constraint WHERE conrelid = '${n}'::regclass AND contype = 'f';`,
+        ),
+      })),
+      signedIn: [...signedIn].length,
+      journey: r.steps.map((x) => ({ step: x.step, result: x.result, detail: x.detail })),
+      complete: r.result === "PASS",
+      note: "SYNTHETIC fixture (seed-demo, drill IdP); measured by T-B17. complete=false: the write chain stopped at the failing step, so the lists below cover only the steps before it",
+    };
+    if (process.env.MTH_DRILL_D8_MEASURE_OUT)
+      writeFileSync(process.env.MTH_DRILL_D8_MEASURE_OUT, JSON.stringify(measured, null, 2) + "\n");
+    console.log(`# T-B17 measurement: ${JSON.stringify(measured)}`);
+    assert.equal(r.result, "PASS", JSON.stringify(r.steps) + apiLog.slice(-3000));
+    const expected = [...audited, ...D8_TOUCHED_CHILDREN.map((c) => c.name)].sort();
+    assert.deepEqual(residue, expected, "the D8 lists differ from the measured changed tables");
+  });
+
+  it("mode 2 with the generated allowance matches after use (exit 0)", () => {
+    needPg();
+    assert.ok(measured, "the measurement test must run first");
+    const signin = join(dir, "app-user-signin.json");
+    writeFileSync(signin, JSON.stringify({ appUserChangedBySignIn: true }) + "\n");
+    const allow = join(dir, "allowance.json");
+    const a = tool([
+      "deploy/scripts/drill/allowance.mjs",
+      "--journal",
+      journal,
+      "--database-url",
+      dbUrl(t, "mth_owner"),
+      "--app-user-signin",
+      signin,
+      "--out",
+      allow,
+      "--reasons-out",
+      join(dir, "allowance-reasons.json"),
+    ]);
+    assert.equal(a.status, 0, a.stdout + a.stderr);
+    const r = tool(
+      ["tools/migration/reconcile.mjs", "--operator", OPERATOR, "--from", pkg, "--after-use", "--allow", allow],
+      {
+        DATABASE_OWNER_URL: dbUrl(t, "mth_owner"),
+        NODE_ENV: "production",
+      },
+    );
+    if (process.env.MTH_DRILL_D8_MEASURE_OUT)
+      writeFileSync(process.env.MTH_DRILL_D8_MEASURE_OUT.replace(/\.json$/, "-mode2.txt"), r.stdout + r.stderr);
+    assert.equal(r.status, 0, r.stdout + r.stderr);
+    assert.match(r.stdout, /^reconcile-migration: matched after use:/m);
+  });
+
+  it("one extra owner-written row in an audited table, its event by a non-journalled user, gives exit 4", () => {
+    needPg();
+    // roadmap_wave: an audited D8 table with no row guard beyond its audit trigger (automation_action_result, the
+    // first by name, refuses rows outside a running attempt).
+    const name = "roadmap_wave";
+    assert.ok(name in D8_TOUCHED_AUDITED, "roadmap_wave is not in D8_TOUCHED_AUDITED");
+    const owner = dbUrl(t, "mth_owner");
+    const stranger = psql(
+      owner,
+      `SELECT u.id FROM app_user u WHERE u.id NOT IN ('${actors.submitter}', '${actors.approver}', '${actors.kpiUser}') ORDER BY u.id LIMIT 1;`,
+    );
+    assert.ok(stranger);
+    const id = psql(owner, "SELECT mth_uuid_v7();");
+    // The row: a copy of an existing row of that table with a new id, its version 1, and its audit event.
+    const hasVersion =
+      psql(
+        owner,
+        `SELECT count(*) FROM information_schema.columns WHERE table_name = '${name}' AND column_name = 'version';`,
+      ) === "1";
+    psql(
+      owner,
+      `BEGIN;
+       CREATE TEMP TABLE extra AS SELECT * FROM ${name} ORDER BY id LIMIT 1;
+       UPDATE extra SET id = '${id}'${hasVersion ? ", version = 1" : ""}, code = 'tb17_extra';
+       INSERT INTO ${name} SELECT * FROM extra;
+       INSERT INTO audit_event (id, actor_type, actor_user_id, action, record_type, record_id, prior_version, new_version, source, reason)
+         SELECT mth_uuid_v7(), 'user', '${stranger}', '${name}.create', '${name}', id, NULL, ${hasVersion ? "1" : "NULL"}, 'api',
+                'T-B17 synthetic extra row by a user who is not journalled' FROM extra;
+       COMMIT;`,
+    );
+    const r = tool(
+      [
+        "tools/migration/reconcile.mjs",
+        "--operator",
+        OPERATOR,
+        "--from",
+        pkg,
+        "--after-use",
+        "--allow",
+        join(dir, "allowance.json"),
+      ],
+      { DATABASE_OWNER_URL: owner, NODE_ENV: "production" },
+    );
+    assert.equal(r.status, 4, r.stdout + r.stderr);
+    assert.ok(
+      (r.stdout + r.stderr).includes(`unexplained added ${JSON.stringify([id])}`),
+      `the extra ${name} row ${id} is not reported unexplained:\n${r.stdout}${r.stderr}`,
+    );
   });
 });

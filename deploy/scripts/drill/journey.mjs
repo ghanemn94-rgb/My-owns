@@ -3,7 +3,7 @@
 // and §B.6 DO-D2; tests T-B10; T-DG7-DO-D, T-DG7-DO-D2). It does not change deploy/scripts/smoke.mjs.
 //
 //   node deploy/scripts/drill/journey.mjs --mode oidc-drill|dev --app <origin> [--api <url>] --user <sub|username>
-//        [--approver <sub>] [--unbound-user <sub>] [--source-origin <origin>] [--transformation <id>] [--gate <code>]
+//        [--approver <sub>] [--kpi-user <sub>] [--kpi-definition <id>] [--kpi-value-nature <n>] [--unbound-user <sub>] [--source-origin <origin>] [--transformation <id>] [--gate <code>]
 //        [--expect-origin <origin>] [--expect-environment <kind>] [--downloads <downloads.json>]
 //        [--journal <journal.json>] [--steps a,b,...] [--out <journey.json>]
 //
@@ -18,8 +18,9 @@
 //   uploads   D1 (on S): two SYNTHETIC file evidence items are created and their bytes uploaded through the API, so
 //             D8 (a) is never vacuous. Their keys go to the journal of S (not used by the allowance of T).
 //   writes    D8 (b): on --transformation: a new transformation is created (201 + ETag) and read back with its audit
-//             trail; a RAID item is created; a KPI value is recorded on the first active KPI definition that has an
-//             open reporting period; gate --gate (default G1) is submitted.
+//             trail; a RAID item is created; a KPI value is recorded by --kpi-user (a kpi_actual.submit holder who
+//             owns or stewards it) on --kpi-definition in an open reporting period (without them: the signed-in user
+//             on the first active definition); gate --gate (default G1) is submitted.
 //   approve   D8 (b): the REBOUND approver --approver signs in and decides the submission (outcome `deferred`, a
 //             SYNTHETIC drill decision; it approves nothing real). Then the KPI evaluation the worker derives is read
 //             back through the API.
@@ -303,30 +304,62 @@ export async function runJourney(o) {
         "create RAID item",
       );
       journal.add("raid_entry", raid.id, "added", "createRaidEntry");
-      // A KPI value: the first KPI definition of the transformation with an open reporting period.
-      const defs = await call("GET", `/api/v1/transformations/${t}/kpi-definitions?limit=100`);
-      const periods = await call("GET", `/api/v1/transformations/${t}/reporting-periods`);
-      const period = items(periods.json).find((p) => p.status === "open") ?? items(periods.json)[0];
-      const def = items(defs.json).find((k) => k.status === "active") ?? items(defs.json)[0];
+      // A KPI value. The routine update is refused unless the caller holds kpi_actual.submit AND owns or stewards the
+      // definition (apps/api/src/modules/kpi/actuals.ts), so --kpi-user (that rebound user, signed in separately and
+      // journalled) records it on --kpi-definition; without them, the signed-in user on the first active definition.
+      const kpiActor = { jar: new Jar(), csrf: ctx.csrf };
+      if (o.kpiUser && o.kpiUser !== o.user) {
+        const kr = await signIn(kpiActor.jar, o.kpiUser);
+        if (!kr.ok) fail(`sign-in of the KPI user ${o.kpiUser} refused: ${kr.location || `HTTP ${kr.status}`}`);
+        kpiActor.csrf = kr.me.csrfToken;
+        if (o.authMode !== "dev" && o.issuer)
+          journal.add("user_identity", [o.issuer, o.kpiUser], "signin", "oidc sign-in (KPI user)");
+      } else kpiActor.jar = ctx.jar;
+      const kcall = as(kpiActor);
+      const defs = await kcall("GET", `/api/v1/transformations/${t}/kpi-definitions?limit=100`);
+      const periods = await kcall("GET", `/api/v1/transformations/${t}/reporting-periods`);
+      const def = o.kpiDefinition
+        ? items(defs.json).find((k) => k.id === o.kpiDefinition)
+        : (items(defs.json).find((k) => k.status === "active") ?? items(defs.json)[0]);
+      // One slot per KPI, scope and period: a period without a slot takes the routine update (create); when every open
+      // period has one, the slot gets a new value version (POST .../kpi-actuals/{a}/values with If-Match).
+      const slots = def
+        ? await kcall("GET", `/api/v1/transformations/${t}/kpi-definitions/${def.id}/actuals?limit=100`)
+        : null;
+      const slotOf = (p) =>
+        items(slots?.json).find(
+          (x) => x.reportingPeriodId === p.id && (x.scopeId ?? t) === t && x.scopeKind !== "business_unit",
+        );
+      const open = items(periods.json).filter((p) => p.status === "open");
+      const period = open.find((p) => !slotOf(p)) ?? open[0] ?? items(periods.json)[0];
       need(
         def && period,
-        `no KPI definition (HTTP ${defs.status}) or reporting period (HTTP ${periods.status}) on ${t}`,
+        `no KPI definition${o.kpiDefinition ? ` ${o.kpiDefinition}` : ""} (HTTP ${defs.status}) or reporting period (HTTP ${periods.status}) on ${t}`,
       );
-      const kv = await call("POST", `/api/v1/transformations/${t}/kpi-definitions/${def.id}/actuals`, {
-        scopeKind: "transformation",
-        scopeId: t,
-        reportingPeriodId: period.id,
+      const entry = {
         action: "save_draft",
-        value: "1.5",
+        // decimal strings, never JSON numbers; a ratio KPI takes a numerator and a denominator instead of a value
+        ...(o.kpiValueNature === "ratio" ? { numerator: "3", denominator: "2" } : { value: "1.5" }),
         dataAsOf: today(),
         comment: `Transfer drill ${run} (synthetic)`,
-      });
+      };
+      const slot = slotOf(period);
+      const kv = slot
+        ? await kcall("POST", `/api/v1/transformations/${t}/kpi-actuals/${slot.id}/values`, entry, {
+            "if-match": `"${slot.version}"`,
+          })
+        : await kcall("POST", `/api/v1/transformations/${t}/kpi-definitions/${def.id}/actuals`, {
+            scopeKind: "transformation",
+            scopeId: t,
+            reportingPeriodId: period.id,
+            ...entry,
+          });
       if (kv.status !== 201 && kv.status !== 200)
         fail(`record KPI value: HTTP ${kv.status} ${(kv.text ?? "").slice(0, 200)}`);
       const actualId = kv.json?.actual?.id ?? kv.json?.id;
-      journal.add("kpi_actual", actualId, kv.status === 201 ? "added" : "changed", "submitKpiActual");
-      for (const v of kv.json?.actual?.values ?? [])
-        if (v?.id) journal.add("kpi_actual_value", v.id, "added", "submitKpiActual");
+      journal.add("kpi_actual", actualId, slot ? "changed" : "added", slot ? "addKpiActualValue" : "submitKpiActual");
+      // kpi_actual_value rows have an id the API does not return (the value is presented by valueNo): they are not
+      // journalled; T-B17 measured how mode 2 explains them (allowance.mjs D8_TOUCHED_AUDITED / D8_TOUCHED_CHILDREN).
       ctx.kpi = { def: def.id, actual: actualId };
       // The gate submission.
       const g = await call("GET", `/api/v1/transformations/${t}/gates/${ctx.gate}`);
@@ -482,6 +515,9 @@ async function main() {
           "api",
           "user",
           "approver",
+          "kpi-user",
+          "kpi-definition",
+          "kpi-value-nature",
           "issuer",
           "unbound-user",
           "source-origin",
@@ -510,6 +546,9 @@ async function main() {
     authMode: v.mode === "dev" ? "dev" : "oidc",
     user: v.user,
     approver: v.approver,
+    kpiUser: v["kpi-user"],
+    kpiDefinition: v["kpi-definition"],
+    kpiValueNature: v["kpi-value-nature"],
     issuer: v.issuer,
     unboundUser: v["unbound-user"],
     sourceOrigin: v["source-origin"],

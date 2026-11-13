@@ -1,0 +1,30 @@
+# deploy/scripts/ci/transfer-drill.job.yml: CI job FRAGMENT for the transfer drill's tests (p7-work-split §2 rule 9,
+# §B.7 DO-D3; T-DG7-DO-D3). The orchestrator merges it under `jobs:` of deploy/ci/ci.yml, copies that file verbatim to
+# .github/workflows/ci.yml and runs `node deploy/scripts/check-ci-needs.mjs`. DO-D3 does not edit the CI files.
+#
+# It runs T-B3, T-B9, T-B10, T-B15, T-B16 and T-B17 (deploy/scripts/tests/transfer-drill.test.mjs) against a
+# DISPOSABLE PostgreSQL cluster started by tests/qa/support/with-pg.sh from the runner's PostgreSQL server binaries
+# (PGBIN; the ubuntu-24.04 image ships /usr/lib/postgresql/16/bin). It is NOT the A18 drill itself (T-B11), which needs
+# a release archive and runs on the orchestrator's host. Every user, secret and origin in these tests is SYNTHETIC; a
+# green job approves nothing (no G1-G6, Finance or IT approval, and no DG gate). Expect it to fail until T-B17 passes
+# (T-DG7-DO-D3 handback §4).
+transfer-drill:
+  needs: verify
+  runs-on: ubuntu-24.04
+  steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+    - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      with:
+        node-version: "24"
+    - name: pnpm at the packageManager version (real binary on PATH; no install scripts)
+      run: npm install --global --ignore-scripts "$(node -p 'require("./package.json").packageManager.split("+")[0]')"
+    - name: bubblewrap (the sandboxed installer and the drill's no-network namespace tests)
+      run: |
+        sudo apt-get update -q && sudo apt-get install -y -q --no-install-recommends bubblewrap
+        if [ -e /proc/sys/kernel/apparmor_restrict_unprivileged_userns ]; then
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+        fi
+    - name: Install (sandboxed, frozen lockfile; BLOCKED without bubblewrap - never an unsandboxed fallback)
+      run: deploy/scripts/ci-install-deps.sh
+    - name: Transfer drill tests on a disposable PostgreSQL (exit 3 BLOCKED without server binaries, never a pass)
+      run: tests/qa/support/with-pg.sh node --test deploy/scripts/tests/transfer-drill.test.mjs

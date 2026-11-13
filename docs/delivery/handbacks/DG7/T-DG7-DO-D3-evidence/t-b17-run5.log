@@ -1,0 +1,71 @@
+port-policy: PostgreSQL listening on port 24351 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+▶ T-B17 the D8 lists of allowance.mjs are measured on a fixture installation (mode 2 exit 0, then 4)
+  ✖ D8's write chain changes exactly the journalled tables, the operational list, user_identity and the two D8 lists (2.641379ms)
+  ✖ mode 2 with the generated allowance matches after use (exit 0) (0.32943ms)
+  ✖ one extra owner-written row in an audited table, its event by a non-journalled user, gives exit 4 (0.25747ms)
+✖ T-B17 the D8 lists of allowance.mjs are measured on a fixture installation (mode 2 exit 0, then 4) (18866.9318ms)
+ℹ tests 3
+ℹ suites 1
+ℹ pass 0
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 19024.835541
+
+✖ failing tests:
+
+test at deploy/scripts/tests/transfer-drill.test.mjs:900:3
+✖ D8's write chain changes exactly the journalled tables, the operational list, user_identity and the two D8 lists (2.641379ms)
+  AssertionError [ERR_ASSERTION]: {"admin":"01995000-0000-7000-8000-000000000015","transformation":null,"submitter":null,"approver":null,"kpiUser":null,"kpiDefinition":null}
+      at TestContext.<anonymous> (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:902:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Promise.all (index 0)
+      at async Suite.run (node:internal/test_runner/test:1905:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: null,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at deploy/scripts/tests/transfer-drill.test.mjs:961:3
+✖ mode 2 with the generated allowance matches after use (exit 0) (0.32943ms)
+  AssertionError [ERR_ASSERTION]: the measurement test must run first
+      at TestContext.<anonymous> (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:963:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at deploy/scripts/tests/transfer-drill.test.mjs:991:3
+✖ one extra owner-written row in an audited table, its event by a non-journalled user, gives exit 4 (0.25747ms)
+  AssertionError [ERR_ASSERTION]: D8_TOUCHED_AUDITED is empty
+      at TestContext.<anonymous> (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:994:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+real	0m20.172s
+user	0m20.595s
+sys	0m4.589s

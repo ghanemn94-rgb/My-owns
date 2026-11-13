@@ -1,0 +1,72 @@
+▶ T-I1: the snapshot of the tree's register equals the file
+  ✔ exits 0 with the I.3 line (3.153554ms)
+  ✔ rowCount, ids in order, sourceSha256 and every field byte for byte (multi-line fields included) (10.995726ms)
+  ✔ the record count equals an independent count of the file's record starts (71.682504ms)
+  ✔ a register with multi-line, quoted and comma fields: the same parity, field by field (52.518399ms)
+  ✔ generatedAt follows SOURCE_DATE_EPOCH (156.729797ms)
+✔ T-I1: the snapshot of the tree's register equals the file (296.715452ms)
+▶ T-I2: --check
+  ✔ exits 0 on a fresh snapshot and 1 with the I.3 line after one byte of the register changes (131.470672ms)
+✔ T-I2: --check (131.743405ms)
+▶ T-I3: refusals
+  ✔ header (46.749572ms)
+  ✔ field count (48.909269ms)
+  ✔ id (42.481557ms)
+  ✔ id pattern (37.891426ms)
+  ✔ duplicate (38.96557ms)
+  ✔ class (39.449026ms)
+  ✔ status (43.244226ms)
+  ✔ final gate (34.600598ms)
+  ✔ unterminated quote (35.738313ms)
+  ✔ byte order mark (37.019643ms)
+  ✔ a record's line is the line it starts on, after a multi-line field (48.988956ms)
+  ✔ a missing --csv file -> exit 2 BLOCKED; a usage error -> exit 2 (119.607994ms)
+  ✔ --deps absent or naming no file -> externalDependencies null (never []) (81.415518ms)
+  ✔ a valid dependency list is carried; an invalid entry -> exit 1 (275.810547ms)
+✔ T-I3: refusals (932.585927ms)
+▶ parseRegister and buildSnapshot (exports)
+  ✔ keeps quoted commas, doubled quotes and CRLF inside a field as LF, untrimmed (0.625396ms)
+✔ parseRegister and buildSnapshot (exports) (0.790379ms)
+▶ T-R16: the register snapshot passes the T1 asset scan (A2.8)
+  ✖ the snapshot of the tree's register has no T1 finding (182.067953ms)
+  ✔ a SYNTHETIC register with a planted build-host path fails and names the row, the column and R2 (215.802881ms)
+✖ T-R16: the register snapshot passes the T1 asset scan (A2.8) (398.128621ms)
+ℹ tests 23
+ℹ suites 5
+ℹ pass 22
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2039.331383
+
+✖ failing tests:
+
+test at apps/api/scripts/register-snapshot.test.mjs:300:3
+✖ the snapshot of the tree's register has no T1 finding (182.067953ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+  + [
+  +   'REQ-DLV-006 procedure R2',
+  +   'REQ-DLV-023 notes R2'
+  + ]
+  - []
+  
+      at TestContext.<anonymous> (file:///home/user/My-owns/apps/api/scripts/register-snapshot.test.mjs:308:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at node:internal/test_runner/test:1903:71
+      at node:internal/per_context/primordials:504:82
+      at new Promise (<anonymous>)
+      at new SafePromise (node:internal/per_context/primordials:478:3)
+      at node:internal/per_context/primordials:504:9
+      at Array.map (<anonymous>) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'REQ-DLV-006 procedure R2', 'REQ-DLV-023 notes R2' ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
