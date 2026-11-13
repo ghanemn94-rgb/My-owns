@@ -1,0 +1,268 @@
+{
+  "schemaVersion": "mth-recheck-allowance-reasons/4",
+  "constantsSource": "packages/db/src/transfer/recheck.ts",
+  "appUserChangedBySignIn": true,
+  "actors": {
+    "count": 6,
+    "reason": "the app_user ids of the journalled sign-ins, resolved on the target by (issuer, subject)"
+  },
+  "operational": [
+    {
+      "table": "job_run",
+      "reason": "the worker records a run of every scheduled and queued job after the target starts (D7, D9)"
+    },
+    {
+      "table": "outbox_event",
+      "reason": "the gate submission and decision of D8 (b) publish domain events through the outbox"
+    },
+    {
+      "table": "processed_message",
+      "reason": "the worker marks each outbox message it consumes"
+    },
+    {
+      "table": "inbox_notification",
+      "reason": "the D8 (b) gate submission notifies its approver; the recipients are not chosen by the drill"
+    },
+    {
+      "table": "notification_delivery",
+      "reason": "the worker records the delivery attempts of those notifications"
+    },
+    {
+      "table": "export_job_progress",
+      "reason": "the worker records that export's progress"
+    }
+  ],
+  "tables": [
+    {
+      "table": "adoption_metric_link",
+      "added": 1,
+      "changed": 0,
+      "reason": "keys from the journey's API responses and sign-ins (journal.json); never read from the target"
+    },
+    {
+      "table": "app_user",
+      "added": 0,
+      "changed": 6,
+      "reason": "keys from the journey's API responses and sign-ins (journal.json); never read from the target"
+    },
+    {
+      "table": "decision",
+      "added": 1,
+      "changed": 1,
+      "reason": "keys from the journey's API responses and sign-ins (journal.json); never read from the target"
+    },
+    {
+      "table": "evidence",
+      "added": 1,
+      "changed": 0,
+      "reason": "keys from the journey's API responses and sign-ins (journal.json); never read from the target"
+    },
+    {
+      "table": "export_job",
+      "added": 1,
+      "changed": 0,
+      "reason": "keys from the journey's API responses and sign-ins (journal.json); never read from the target"
+    },
+    {
+      "table": "gate_decision",
+      "added": 1,
+      "changed": 0,
+      "reason": "keys from the journey's API responses and sign-ins (journal.json); never read from the target"
+    },
+    {
+      "table": "gate_submission",
+      "added": 1,
+      "changed": 0,
+      "reason": "keys from the journey's API responses and sign-ins (journal.json); never read from the target"
+    },
+    {
+      "table": "kpi_actual",
+      "added": 3,
+      "changed": 0,
+      "reason": "keys from the journey's API responses and sign-ins (journal.json); never read from the target"
+    },
+    {
+      "table": "phase_step_evidence",
+      "added": 1,
+      "changed": 0,
+      "reason": "keys from the journey's API responses and sign-ins (journal.json); never read from the target"
+    },
+    {
+      "table": "raid_entry",
+      "added": 1,
+      "changed": 0,
+      "reason": "keys from the journey's API responses and sign-ins (journal.json); never read from the target"
+    },
+    {
+      "table": "transformation",
+      "added": 1,
+      "changed": 0,
+      "reason": "keys from the journey's API responses and sign-ins (journal.json); never read from the target"
+    },
+    {
+      "table": "user_identity",
+      "added": 0,
+      "changed": 6,
+      "reason": "keys from the journey's API responses and sign-ins (journal.json); never read from the target"
+    }
+  ],
+  "audited": [
+    {
+      "table": "automation_action_result",
+      "mustIncludeAdded": 0,
+      "mustIncludeChanged": 0,
+      "reason": "the result rows of those automation executions, explained per execution by A4.4 (T-B17 measured 16 added, audit trigger on)"
+    },
+    {
+      "table": "automation_execution",
+      "mustIncludeAdded": 0,
+      "mustIncludeChanged": 0,
+      "reason": "the automation rules the chain's domain events trigger (createTransformation, the C1 acceptances, the gate events) and the depth-2 executions of the lineage outbox rows (T-B17 measured 16 added, audit trigger on)"
+    },
+    {
+      "table": "corrective_case",
+      "mustIncludeAdded": 0,
+      "mustIncludeChanged": 0,
+      "reason": "required by ADR-0064 A4.5 because corrective_signal is in lineage; T-DG7-DO-D7 measured no corrective_case change"
+    },
+    {
+      "table": "diagnostic_item",
+      "mustIncludeAdded": 0,
+      "mustIncludeChanged": 0,
+      "reason": "created by createTransformation for the new transformation (T-B17 measured, audit trigger on)"
+    },
+    {
+      "table": "forum",
+      "mustIncludeAdded": 0,
+      "mustIncludeChanged": 0,
+      "reason": "created by createTransformation for the new transformation (T-B17 measured, audit trigger on)"
+    },
+    {
+      "table": "gate_instance",
+      "mustIncludeAdded": 0,
+      "mustIncludeChanged": 0,
+      "reason": "created by createTransformation for the new transformation (T-B17 measured, audit trigger on); D8 (b)'s submission and decision change it"
+    },
+    {
+      "table": "governance_matrix",
+      "mustIncludeAdded": 0,
+      "mustIncludeChanged": 0,
+      "reason": "created by createTransformation for the new transformation (T-B17 measured, audit trigger on)"
+    },
+    {
+      "table": "phase_step",
+      "mustIncludeAdded": 0,
+      "mustIncludeChanged": 0,
+      "reason": "created by createTransformation for the new transformation (T-B17 measured, audit trigger on)"
+    },
+    {
+      "table": "roadmap_wave",
+      "mustIncludeAdded": 0,
+      "mustIncludeChanged": 0,
+      "reason": "created by createTransformation for the new transformation (T-B17 measured, audit trigger on)"
+    },
+    {
+      "table": "scoring_weight_set",
+      "mustIncludeAdded": 0,
+      "mustIncludeChanged": 0,
+      "reason": "created by createTransformation for the new transformation (T-B17 measured, audit trigger on)"
+    },
+    {
+      "table": "tom_canvas_cell",
+      "mustIncludeAdded": 0,
+      "mustIncludeChanged": 0,
+      "reason": "created by createTransformation for the new transformation (T-B17 measured, audit trigger on)"
+    },
+    {
+      "table": "transformation_config_pin",
+      "mustIncludeAdded": 0,
+      "mustIncludeChanged": 0,
+      "reason": "created by createTransformation for the new transformation (T-B17 measured, audit trigger on)"
+    },
+    {
+      "table": "transformation_decision_right",
+      "mustIncludeAdded": 0,
+      "mustIncludeChanged": 0,
+      "reason": "created by createTransformation for the new transformation (T-B17 measured, audit trigger on)"
+    },
+    {
+      "table": "transformation_raci_assignment",
+      "mustIncludeAdded": 0,
+      "mustIncludeChanged": 0,
+      "reason": "created by createTransformation for the new transformation (T-B17 measured, audit trigger on)"
+    },
+    {
+      "table": "transformation_raci_deliverable",
+      "mustIncludeAdded": 0,
+      "mustIncludeChanged": 0,
+      "reason": "created by createTransformation for the new transformation (T-B17 measured, audit trigger on)"
+    },
+    {
+      "table": "work_item",
+      "mustIncludeAdded": 0,
+      "mustIncludeChanged": 0,
+      "reason": "created by createTransformation for the new transformation (T-B17 measured, audit trigger on)"
+    }
+  ],
+  "children": [
+    {
+      "table": "scoped_assignment",
+      "parent": "app_user",
+      "fkey": "scoped_assignment_user_id_fkey",
+      "reason": "the creator's role on the new transformation; the creator is a journalled sign-in (app_user changed)"
+    },
+    {
+      "table": "scoring_weight",
+      "parent": "scoring_weight_set",
+      "fkey": "scoring_weight_weight_set_id_fkey",
+      "reason": "the weights of the scoring weight set createTransformation creates"
+    },
+    {
+      "table": "gate_submission_criterion",
+      "parent": "gate_submission",
+      "fkey": "gate_submission_criterion_gate_submission_id_fkey",
+      "reason": "the criterion snapshot rows of the journalled gate submission (submitGate, C3; T-DG7-DO-D7 measured 4 added)"
+    },
+    {
+      "table": "kpi_actual_value",
+      "parent": "kpi_actual",
+      "fkey": "kpi_actual_value_actual_fkey",
+      "reason": "the value entries of the journalled KPI actuals (submitKpiActual, C1; T-DG7-DO-D7 measured 3 added)"
+    },
+    {
+      "table": "kpi_actual_review",
+      "parent": "kpi_actual",
+      "fkey": "kpi_actual_review_actual_fkey",
+      "reason": "the review rows of the journalled KPI actuals, accepted on submit (C1; T-DG7-DO-D7 measured 3 added)"
+    }
+  ],
+  "counters": [
+    {
+      "table": "record_code_counter",
+      "reason": "the RAID code counter of the carried transformation, moved by D8's RAID item (T-B17 measured: one counter row; A3.3)"
+    }
+  ],
+  "lineage": [
+    {
+      "table": "calculation_run",
+      "mustIncludeAdded": 3,
+      "reason": "the worker's KPI recalculation runs triggered by the kpi.actual_accepted events of the C1 actuals (L1; T-DG7-DO-D7 measured 3 added)"
+    },
+    {
+      "table": "corrective_signal",
+      "mustIncludeAdded": 0,
+      "reason": "the KPI deviation signals the corrective starter derives from kpi.deviation_evaluated outbox rows (L5; T-DG7-DO-D7 measured 3 added)"
+    },
+    {
+      "table": "data_quality_finding",
+      "mustIncludeAdded": 0,
+      "reason": "the data-quality findings those runs record, counted by finding_count (L4; T-DG7-DO-D7 measured 3 added)"
+    },
+    {
+      "table": "kpi_evaluation",
+      "mustIncludeAdded": 3,
+      "reason": "the evaluations of those runs, counted by evaluation_count; the ones getKpiStatus returned are in mustInclude (L2; T-DG7-DO-D7 measured 6 added)"
+    }
+  ],
+  "note": "SYNTHETIC drill data. The allowance proves only that exactly these keys changed, or rows audited as changed by these actors, or their foreign-key children, or counter steps issued to explained coded rows, or worker lineage rows linked to an explained outbox row or run (ADR-0064 A1.11 residual 3, A2.6, A3.3, A4.2)."
+}

@@ -832,7 +832,9 @@ export async function runJourney(o) {
       if (!ctx.csrf) fail("not signed in (the signin step must pass first)");
       const t = await pickTransformation();
       const r = await call("POST", "/api/v1/exports", {
-        report: { definitionCode: "registers", subjectId: t },
+        // T-DG7-DO-D7 (T-B11 run 1, D9): the registers output needs its register (registersReportParameters); without
+        // it createExport answers 422 report.parameters_invalid. The RAID register, unfiltered.
+        report: { definitionCode: "registers", subjectId: t, parameters: { register: "raid", filters: {} } },
         format: "csv",
         language: "en",
       });

@@ -24,6 +24,8 @@ import {
   D8_TOUCHED_AUDITED,
   D8_TOUCHED_CHILDREN,
   D8_TOUCHED_COUNTERS,
+  D8_TOUCHED_LINEAGE,
+  A45_REQUIRED_AUDITED,
 } from "../drill/allowance.mjs";
 
 const REPO = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
@@ -553,7 +555,7 @@ journeySuite(
 );
 
 // --------------------------------------------------------------------------------------------- T-B15 allowance
-describe("T-B15 allowance.mjs: mth-recheck-allowance/3 from a fixture journal (p7-work-split §B.8 DO-D4)", () => {
+describe("T-B15 allowance.mjs: mth-recheck-allowance/4 from a fixture journal (p7-work-split §B.9 DO-D7)", () => {
   const U1 = "01995000-0000-7000-8000-0000000000e1";
   const journal = [
     { table: "transformation", key: ["t-1"], op: "added", via: "createTransformation" },
@@ -562,7 +564,11 @@ describe("T-B15 allowance.mjs: mth-recheck-allowance/3 from a fixture journal (p
     { table: "kpi_actual", key: ["k-1"], op: "changed", via: "addKpiActualValue" },
     { table: "kpi_actual", key: ["k-1"], op: "changed", via: "addKpiActualValue (repeated)" },
     { table: "gate_instance", key: ["gi-1"], op: "changed", via: "submitGate" },
+    { table: "gate_submission", key: ["gs-1"], op: "added", via: "submitGate" },
     { table: "gate_decision", key: ["gd-1"], op: "added", via: "decideGate" },
+    { table: "kpi_evaluation", key: ["ev-1"], op: "added", via: "getKpiStatus (worker-derived)" },
+    { table: "kpi_evaluation", key: ["ev-1"], op: "added", via: "getKpiStatus (repeated)" },
+    { table: "calculation_run", key: ["run-1"], op: "added", via: "getKpiStatus (worker-derived)" },
     { table: "decision", key: ["d-1"], op: "added", via: "decideGate" },
     { table: "export_job", key: ["e-1"], op: "added", via: "createExport" },
     { table: "user_identity", key: ["http://127.0.0.1:25401/realms/mth-test", "drill-a"], op: "signin", via: "signin" },
@@ -570,13 +576,13 @@ describe("T-B15 allowance.mjs: mth-recheck-allowance/3 from a fixture journal (p
   ];
   const identity = (iss, sub) => (sub === "drill-a" ? { id: "ui-1", userId: U1 } : null);
 
-  it("writes a /3 file with all seven keys that parseAllowance (packages/db recheck.ts) accepts", async () => {
+  it("writes a /4 file with all eight keys that parseAllowance (packages/db recheck.ts) accepts", async () => {
     const k = await constants();
     assert.equal(k.source, "packages/db/src/transfer/recheck.ts");
-    assert.equal(k.schemaVersion, "mth-recheck-allowance/3");
+    assert.equal(k.schemaVersion, "mth-recheck-allowance/4");
     const { allowance, errors } = buildAllowance(journal, { identity, appUserChangedBySignIn: true, constants: k });
     assert.deepEqual(errors, []);
-    assert.equal(allowance.schemaVersion, "mth-recheck-allowance/3");
+    assert.equal(allowance.schemaVersion, "mth-recheck-allowance/4");
     assert.deepEqual(Object.keys(allowance), [
       "schemaVersion",
       "actors",
@@ -584,14 +590,74 @@ describe("T-B15 allowance.mjs: mth-recheck-allowance/3 from a fixture journal (p
       "audited",
       "children",
       "counters",
+      "lineage",
       "operational",
     ]);
     const parsed = k.parseAllowance(Buffer.from(JSON.stringify(allowance), "utf8"));
     assert.deepEqual(parsed.actors, [U1]);
-    assert.equal(parsed.audited.length, Object.keys(D8_TOUCHED_AUDITED).length);
+    // D8_TOUCHED_AUDITED plus A4.5's corrective_case (corrective_signal is in lineage)
+    assert.equal(parsed.audited.length, Object.keys({ ...D8_TOUCHED_AUDITED, ...A45_REQUIRED_AUDITED }).length);
+    assert.ok(parsed.audited.some((a) => a.name === "corrective_case"));
+    assert.deepEqual(
+      parsed.lineage.map((l) => l.name),
+      Object.keys(D8_TOUCHED_LINEAGE).sort(),
+    );
     assert.deepEqual(parsed.counters, Object.keys(D8_TOUCHED_COUNTERS).sort());
     // the worker's automation rows are explained by E* (A3.2), so they are audited, never operational
     for (const t of ["automation_execution", "automation_action_result"]) assert.ok(t in D8_TOUCHED_AUDITED, t);
+  });
+
+  it("a lineage table appears only in lineage; a journalled kpi_evaluation key goes to lineage[].mustInclude.added", async () => {
+    const k = await constants();
+    const { allowance, reasons } = buildAllowance(journal, { identity, appUserChangedBySignIn: true, constants: k });
+    for (const l of allowance.lineage) {
+      assert.ok(k.lineage.has(l.name), `${l.name} is in RECHECK_LINEAGE_TABLES`);
+      for (const list of [allowance.tables, allowance.audited, allowance.children])
+        assert.ok(!list.some((t) => t.name === l.name), l.name);
+      assert.ok(!allowance.counters.includes(l.name) && !allowance.operational.includes(l.name), l.name);
+    }
+    const byName = Object.fromEntries(allowance.lineage.map((l) => [l.name, l]));
+    assert.deepEqual(byName.kpi_evaluation.mustInclude, { added: [["ev-1"]] });
+    assert.deepEqual(byName.calculation_run.mustInclude, { added: [["run-1"]] });
+    assert.deepEqual(byName.corrective_signal.mustInclude, { added: [] });
+    assert.ok(!allowance.tables.some((t) => k.lineage.has(t.name)), "a lineage journal key went to tables");
+    assert.equal(reasons.schemaVersion, "mth-recheck-allowance-reasons/4");
+    for (const r of reasons.lineage) assert.ok(typeof r.reason === "string" && r.reason.length > 10, JSON.stringify(r));
+    // refusals: a changed lineage key; a lineage table missing from the list; a lineage name outside the constant
+    const changed = buildAllowance([...journal, { table: "kpi_evaluation", key: ["ev-2"], op: "changed" }], {
+      identity,
+      constants: k,
+    });
+    assert.ok(
+      changed.errors.includes(
+        "kpi_evaluation is a lineage table (append-only, A4.2): the journal may not name a changed key",
+      ),
+      changed.errors.join("; "),
+    );
+    const missing = buildAllowance(journal, { identity, constants: k, lineage: { calculation_run: "test only" } });
+    assert.ok(
+      missing.errors.includes(
+        "kpi_evaluation is a lineage table (RECHECK_LINEAGE_TABLES) missing from D8_TOUCHED_LINEAGE",
+      ),
+      missing.errors.join("; "),
+    );
+    const unknown = buildAllowance(journal, { identity, constants: k, lineage: { raid_entry: "not lineage" } });
+    assert.ok(
+      unknown.errors.includes("lineage table raid_entry is not in RECHECK_LINEAGE_TABLES"),
+      unknown.errors.join("; "),
+    );
+    // parseAllowance itself refuses a lineage name outside RECHECK_LINEAGE_TABLES and a /3 file (BE-R4 A4.5)
+    assert.throws(
+      () =>
+        k.parseAllowance(
+          Buffer.from(JSON.stringify({ ...allowance, lineage: [{ name: "approval", mustInclude: { added: [] } }] })),
+        ),
+      /lineage table approval is not in RECHECK_LINEAGE_TABLES/,
+    );
+    assert.throws(
+      () => k.parseAllowance(Buffer.from(JSON.stringify({ ...allowance, schemaVersion: "mth-recheck-allowance/3" }))),
+      /unsupported schema version 'mth-recheck-allowance\/3'/,
+    );
   });
 
   it("a counter table appears only in counters: in children, audited or the journal it is refused", async () => {
@@ -667,7 +733,7 @@ describe("T-B15 allowance.mjs: mth-recheck-allowance/3 from a fixture journal (p
       reasons.operational.map((r) => r.table),
       allowance.operational,
     );
-    for (const list of [reasons.operational, reasons.audited, reasons.children, reasons.counters])
+    for (const list of [reasons.operational, reasons.audited, reasons.children, reasons.counters, reasons.lineage])
       for (const r of list) assert.ok(typeof r.reason === "string" && r.reason.length > 10, JSON.stringify(r));
   });
 
@@ -865,325 +931,427 @@ describe("T-B16 job-check.mjs on a fixture database, digests from mth-db table-d
 // the journalled `tables`, the operational list and user_identity must equal D8_TOUCHED_AUDITED ∪ D8_TOUCHED_CHILDREN.
 // Then mode 2 runs on the fixture with the generated allowance (exit 0), and one extra owner-written row in an audited
 // table, with its audit event by a user who is not journalled, gives exit 4.
-describe("T-B17 the D8 lists of allowance.mjs are measured on a fixture installation (mode 2 exit 0, then 4)", () => {
-  const s = `mth_td_b17s_${suffix}`;
-  const t = `mth_td_b17t_${suffix}`;
-  const dir = join(work, "b17");
-  const pkg = join(dir, "package");
-  const port = 29000 + Math.floor(Math.random() * 2900);
-  const app = `http://127.0.0.1:${port}`;
-  const issuer = `http://127.0.0.1:${port + 1}/realms/mth-test`;
-  const journal = join(dir, "journal.json");
-  let idp, api, worker, actors, tables;
-  let apiLog = "";
-  const OPERATOR = "transfer-drill synthetic operator";
-  const env = (extra) => ({ PATH: process.env.PATH, HOME: work, TMPDIR: tmpdir(), LANG: "C.UTF-8", ...extra });
-  const tool = (args, extra) => spawnSync("node", args, { cwd: REPO, encoding: "utf8", env: env(extra) });
-  const db = (args, extra) =>
-    spawnSync("node", ["--conditions=@mth/source", "src/cli.ts", ...args], {
-      cwd: join(REPO, "packages/db"),
-      encoding: "utf8",
-      env: env(extra),
-    });
-  const ok = (r, what) => {
-    if (r.status !== 0) throw new Error(`${what}: exit ${r.status}: ${r.stdout}${r.stderr}`);
-    return r.stdout;
-  };
-  /** Every exported table, row by row (key -> line sha256), through mth-db table-digest --rows as mth_app. */
-  const rows = () => {
-    const d = tableDigest(dbUrl(t, "mth_app"), tables, { rows: true });
-    return new Map([...d.values()].map((x) => [x.name, new Map(x.lines.map((l) => [l.key, l.sha256]))]));
-  };
-  const diff = (a, b) => {
-    const changed = {};
-    for (const [name, before] of a) {
-      const after = b.get(name);
-      let added = 0,
-        changedRows = 0,
-        missing = 0;
-      for (const [k, h] of after)
-        if (!before.has(k)) added++;
-        else if (before.get(k) !== h) changedRows++;
-      for (const k of before.keys()) if (!after.has(k)) missing++;
-      if (added + changedRows + missing > 0) changed[name] = { added, changed: changedRows, missing };
-    }
-    return changed;
-  };
-  let before0, measured;
-
-  before(
-    async () => {
-      if (!ADMIN) return;
-      mkdirSync(pkg, { recursive: true });
-      mkdirSync(join(dir, "evidence"), { recursive: true });
-      for (const r of ["mth_owner", "mth_app"])
-        psql(
-          ADMIN,
-          `DO $$ BEGIN IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = '${r}') THEN CREATE ROLE ${r} LOGIN; END IF; END $$;`,
-        );
-      for (const d of [s, t]) {
-        psql(ADMIN, `CREATE DATABASE ${d} OWNER mth_owner ENCODING 'UTF8' TEMPLATE template0;`);
-        psql(ADMIN, `GRANT CONNECT ON DATABASE ${d} TO mth_app;`);
-      }
-      const S = { DATABASE_OWNER_URL: dbUrl(s, "mth_owner"), NODE_ENV: "development" };
-      const T = { DATABASE_OWNER_URL: dbUrl(t, "mth_owner"), NODE_ENV: "production" };
-      ok(db(["migrate"], S), "migrate S");
-      ok(db(["seed-demo"], S), "seed-demo S");
-      ok(tool(["tools/migration/export.mjs", "--out", pkg, "--operator", OPERATOR], S), "export");
-      ok(tool(["tools/migration/prepare-target.mjs", "--from", pkg], T), "prepare-target");
-      ok(
-        tool(["tools/migration/import.mjs", "--from", pkg, "--operator", OPERATOR], {
-          ...T,
-          DATABASE_URL: dbUrl(t, "mth_app"),
-          EVIDENCE_STORAGE_DRIVER: "filesystem",
-          EVIDENCE_STORAGE_PATH: join(dir, "evidence"),
-        }),
-        "import",
-      );
-      tables = JSON.parse(readFileSync(join(pkg, "manifest.json"), "utf8")).tables.map((x) => x.name);
-      // The rebind: every carried user to the drill IdP (synthetic subjects), as D6 does.
-      const held = psql(
-        dbUrl(t, "mth_owner"),
-        `SELECT user_id FROM identity_binding_hold WHERE state = 'unbound' ORDER BY user_id;`,
-      ).split("\n");
-      const mapping = join(dir, "mapping.csv");
-      writeFileSync(
-        mapping,
-        "user_id,action,new_issuer,new_subject\n" +
-          held.map((u) => `${u},rebind,${issuer},drill-${u}`).join("\n") +
-          "\n",
-      );
-      ok(db(["rebind-identity", "--mapping", mapping, "--operator", OPERATOR], T), "rebind-identity");
-      // The actors, chosen by permission among the rebound users (the drill's pick_actors).
-      actors = JSON.parse(
-        ok(
-          spawnSync(
-            "psql",
-            [
-              "-X",
-              "-qAt",
-              "-v",
-              "ON_ERROR_STOP=1",
-              "-v",
-              "unbound=00000000-0000-0000-0000-000000000000",
-              "-d",
-              dbUrl(t, "mth_owner"),
-            ],
-            { input: readFileSync(join(REPO, "deploy/scripts/drill/pick-actors.sql"), "utf8"), encoding: "utf8" },
-          ),
-          "pick-actors.sql",
-        ).trim(),
-      );
-      const secretDir = join(dir, "secrets");
-      mkdirSync(secretDir, { recursive: true });
-      const secret = randomBytes(24).toString("hex");
-      writeFileSync(join(secretDir, "oidc"), secret);
-      writeFileSync(join(secretDir, "db"), dbUrl(t, "mth_app"));
-      idp = await startDrillIdp({
-        port: port + 1,
-        users: readUsers(JSON.stringify(held.map((u) => ({ sub: `drill-${u}`, name: "Drill user (synthetic)" })))),
-        clientSecret: secret,
-        redirectUris: [`${app}/api/v1/auth/callback`],
+// B.9 DO-D7: the installation is built by `fixtureSuite`, shared by T-B17 (a fresh seed-demo: shipped demo data, the
+// current period open, no fixture grant) and T-B19 (seed-demo --as-of the first day of last month: the current period
+// is absent, so D8 takes DO-D6's grant path).
+/** The first day of last month in Asia/Riyadh (the demo organization's timezone, A4.6), as YYYY-MM-DD. */
+/** The current business month in Asia/Riyadh (journey.mjs businessDate), as YYYY-MM. */
+const businessMonth = (now = new Date()) =>
+  new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Riyadh" }).format(now).slice(0, 7);
+const firstDayOfLastMonth = (now = new Date()) => {
+  const [y, m] = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Riyadh" }).format(now).split("-").map(Number);
+  const py = m === 1 ? y - 1 : y;
+  const pm = m === 1 ? 12 : m - 1;
+  return `${py}-${String(pm).padStart(2, "0")}-01`;
+};
+const fixtureSuite = (kind, title, asOf) =>
+  describe(title, () => {
+    const s = `mth_td_${kind}s_${suffix}`;
+    const t = `mth_td_${kind}t_${suffix}`;
+    const dir = join(work, kind);
+    const pkg = join(dir, "package");
+    const port = 29000 + Math.floor(Math.random() * 2900);
+    const app = `http://127.0.0.1:${port}`;
+    const issuer = `http://127.0.0.1:${port + 1}/realms/mth-test`;
+    const journal = join(dir, "journal.json");
+    let idp, api, worker, actors, tables;
+    let apiLog = "";
+    const OPERATOR = "transfer-drill synthetic operator";
+    const env = (extra) => ({ PATH: process.env.PATH, HOME: work, TMPDIR: tmpdir(), LANG: "C.UTF-8", ...extra });
+    const tool = (args, extra) => spawnSync("node", args, { cwd: REPO, encoding: "utf8", env: env(extra) });
+    const db = (args, extra) =>
+      spawnSync("node", ["--conditions=@mth/source", "src/cli.ts", ...args], {
+        cwd: join(REPO, "packages/db"),
+        encoding: "utf8",
+        env: env(extra),
       });
-      const runtime = {
-        NODE_ENV: "production",
-        AUTH_MODE: "oidc",
-        APP_BASE_URL: app,
-        PORT: String(port),
-        DATABASE_URL_FILE: join(secretDir, "db"),
-        OIDC_ISSUER_URL: issuer,
-        OIDC_CLIENT_ID: "mth-test-client",
-        OIDC_CLIENT_SECRET_FILE: join(secretDir, "oidc"),
-        EVIDENCE_STORAGE_PATH: join(dir, "evidence"),
-        LOG_LEVEL: "warn",
-      };
-      const start = (app_) => {
-        const p = spawn("node", ["--conditions=@mth/source", "src/main.ts"], {
-          cwd: join(REPO, `apps/${app_}`),
-          env: env(runtime),
-          stdio: ["ignore", "pipe", "pipe"],
-        });
-        p.stdout.on("data", (d) => (apiLog += d));
-        p.stderr.on("data", (d) => (apiLog += d));
-        return p;
-      };
-      api = start("api");
-      worker = start("worker");
-      for (let i = 0; i < 480; i++) {
-        const body = await fetch(`${app}/readyz`).then(
-          (r) => r.text(),
-          () => "",
-        );
-        if (/"worker":"alive"/.test(body)) break;
-        await new Promise((r) => setTimeout(r, 250));
+    const ok = (r, what) => {
+      if (r.status !== 0) throw new Error(`${what}: exit ${r.status}: ${r.stdout}${r.stderr}`);
+      return r.stdout;
+    };
+    /** Every exported table, row by row (key -> line sha256), through mth-db table-digest --rows as mth_app. */
+    const rows = () => {
+      const d = tableDigest(dbUrl(t, "mth_app"), tables, { rows: true });
+      return new Map([...d.values()].map((x) => [x.name, new Map(x.lines.map((l) => [l.key, l.sha256]))]));
+    };
+    const diff = (a, b) => {
+      const changed = {};
+      for (const [name, before] of a) {
+        const after = b.get(name);
+        let added = 0,
+          changedRows = 0,
+          missing = 0;
+        for (const [k, h] of after)
+          if (!before.has(k)) added++;
+          else if (before.get(k) !== h) changedRows++;
+        for (const k of before.keys()) if (!after.has(k)) missing++;
+        if (added + changedRows + missing > 0) changed[name] = { added, changed: changedRows, missing };
       }
-      before0 = rows();
-    },
-    { timeout: 300_000 },
-  );
-  after(async () => {
-    api?.kill("SIGTERM");
-    worker?.kill("SIGTERM");
-    await idp?.stop();
-    if (ADMIN) for (const d of [s, t]) psql(ADMIN, `DROP DATABASE IF EXISTS ${d} WITH (FORCE);`);
-  });
+      return changed;
+    };
+    let before0, measured;
+    let seedLine = "";
 
-  it("D8's write chain changes exactly the journalled tables, the operational list, user_identity and the two D8 lists", async () => {
-    needPg();
-    assert.ok(actors.transformation && actors.submitter && actors.approver, JSON.stringify(actors));
-    const r = await runJourney({
-      app,
-      issuer,
-      user: `drill-${actors.submitter}`,
-      approver: `drill-${actors.approver}`,
-      actors,
-      subPrefix: "drill-",
-      gate: actors.gate,
-      transformation: actors.transformation,
-      steps: ["signin", "writes", "approve"],
-      journal,
-    });
-    // B.8 DO-D4: at least 30 s after C6 before the snapshot. The approve step waits itself when it reaches C6; when the
-    // chain stopped earlier, the worker still gets the same 30 s here, so its rows are measured, never missed.
-    const waited = r.steps.find((x) => x.step === "approve")?.result === "PASS" ? 0 : 30_000;
-    await new Promise((res) => setTimeout(res, waited));
-    // The measurement is recorded whatever the journey's result (a FAIL is asserted below, never hidden). The approve
-    // step already waited at least 30 s after C6 for the worker (journey.mjs SETTLE_MS, B.8 DO-D4).
-    const changed = diff(before0, rows());
-    const k = await constants();
-    const entries = JSON.parse(readFileSync(journal, "utf8")).entries;
-    const owner = dbUrl(t, "mth_owner");
-    const signedIn = new Set(
-      entries
-        .filter((e) => e.op === "signin")
-        .map((e) =>
-          psql(owner, `SELECT user_id FROM user_identity WHERE issuer = '${e.key[0]}' AND subject = '${e.key[1]}';`),
-        ),
+    before(
+      async () => {
+        if (!ADMIN) return;
+        mkdirSync(pkg, { recursive: true });
+        mkdirSync(join(dir, "evidence"), { recursive: true });
+        for (const r of ["mth_owner", "mth_app"])
+          psql(
+            ADMIN,
+            `DO $$ BEGIN IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = '${r}') THEN CREATE ROLE ${r} LOGIN; END IF; END $$;`,
+          );
+        for (const d of [s, t]) {
+          psql(ADMIN, `CREATE DATABASE ${d} OWNER mth_owner ENCODING 'UTF8' TEMPLATE template0;`);
+          psql(ADMIN, `GRANT CONNECT ON DATABASE ${d} TO mth_app;`);
+        }
+        const S = { DATABASE_OWNER_URL: dbUrl(s, "mth_owner"), NODE_ENV: "development" };
+        const T = { DATABASE_OWNER_URL: dbUrl(t, "mth_owner"), NODE_ENV: "production" };
+        ok(db(["migrate"], S), "migrate S");
+        const seeded = ok(db(asOf ? ["seed-demo", "--as-of", asOf] : ["seed-demo"], S), "seed-demo S");
+        seedLine = seeded.split("\n").find((l) => l.includes("reporting periods relative to")) ?? "";
+        ok(tool(["tools/migration/export.mjs", "--out", pkg, "--operator", OPERATOR], S), "export");
+        ok(tool(["tools/migration/prepare-target.mjs", "--from", pkg], T), "prepare-target");
+        ok(
+          tool(["tools/migration/import.mjs", "--from", pkg, "--operator", OPERATOR], {
+            ...T,
+            DATABASE_URL: dbUrl(t, "mth_app"),
+            EVIDENCE_STORAGE_DRIVER: "filesystem",
+            EVIDENCE_STORAGE_PATH: join(dir, "evidence"),
+          }),
+          "import",
+        );
+        tables = JSON.parse(readFileSync(join(pkg, "manifest.json"), "utf8")).tables.map((x) => x.name);
+        // The rebind: every carried user to the drill IdP (synthetic subjects), as D6 does.
+        const held = psql(
+          dbUrl(t, "mth_owner"),
+          `SELECT user_id FROM identity_binding_hold WHERE state = 'unbound' ORDER BY user_id;`,
+        ).split("\n");
+        const mapping = join(dir, "mapping.csv");
+        writeFileSync(
+          mapping,
+          "user_id,action,new_issuer,new_subject\n" +
+            held.map((u) => `${u},rebind,${issuer},drill-${u}`).join("\n") +
+            "\n",
+        );
+        ok(db(["rebind-identity", "--mapping", mapping, "--operator", OPERATOR], T), "rebind-identity");
+        // The actors, chosen by permission among the rebound users (the drill's pick_actors).
+        actors = JSON.parse(
+          ok(
+            spawnSync(
+              "psql",
+              [
+                "-X",
+                "-qAt",
+                "-v",
+                "ON_ERROR_STOP=1",
+                "-v",
+                "unbound=00000000-0000-0000-0000-000000000000",
+                "-d",
+                dbUrl(t, "mth_owner"),
+              ],
+              { input: readFileSync(join(REPO, "deploy/scripts/drill/pick-actors.sql"), "utf8"), encoding: "utf8" },
+            ),
+            "pick-actors.sql",
+          ).trim(),
+        );
+        const secretDir = join(dir, "secrets");
+        mkdirSync(secretDir, { recursive: true });
+        const secret = randomBytes(24).toString("hex");
+        writeFileSync(join(secretDir, "oidc"), secret);
+        writeFileSync(join(secretDir, "db"), dbUrl(t, "mth_app"));
+        idp = await startDrillIdp({
+          port: port + 1,
+          users: readUsers(JSON.stringify(held.map((u) => ({ sub: `drill-${u}`, name: "Drill user (synthetic)" })))),
+          clientSecret: secret,
+          redirectUris: [`${app}/api/v1/auth/callback`],
+        });
+        const runtime = {
+          NODE_ENV: "production",
+          AUTH_MODE: "oidc",
+          APP_BASE_URL: app,
+          PORT: String(port),
+          DATABASE_URL_FILE: join(secretDir, "db"),
+          OIDC_ISSUER_URL: issuer,
+          OIDC_CLIENT_ID: "mth-test-client",
+          OIDC_CLIENT_SECRET_FILE: join(secretDir, "oidc"),
+          EVIDENCE_STORAGE_PATH: join(dir, "evidence"),
+          LOG_LEVEL: "warn",
+        };
+        const start = (app_) => {
+          const p = spawn("node", ["--conditions=@mth/source", "src/main.ts"], {
+            cwd: join(REPO, `apps/${app_}`),
+            env: env(runtime),
+            stdio: ["ignore", "pipe", "pipe"],
+          });
+          p.stdout.on("data", (d) => (apiLog += d));
+          p.stderr.on("data", (d) => (apiLog += d));
+          return p;
+        };
+        api = start("api");
+        worker = start("worker");
+        for (let i = 0; i < 480; i++) {
+          const body = await fetch(`${app}/readyz`).then(
+            (r) => r.text(),
+            () => "",
+          );
+          if (/"worker":"alive"/.test(body)) break;
+          await new Promise((r) => setTimeout(r, 250));
+        }
+        before0 = rows();
+      },
+      { timeout: 300_000 },
     );
-    const journalled = new Set(entries.filter((e) => e.op !== "signin").map((e) => e.table));
-    journalled.add("app_user"); // the T-B16 measurement: a sign-in changes app_user (listed as changed)
-    const audited = new Set(Object.keys(D8_TOUCHED_AUDITED));
-    for (const c of Object.keys(D8_TOUCHED_COUNTERS)) journalled.delete(c);
-    const residue = Object.keys(changed)
-      // audit_event: additions are always allowed and checked by the trail check (A1.9 rule 1, A2.3), never listed
-      .filter((n) => n !== "user_identity" && n !== "audit_event" && !k.operational.has(n))
-      .filter((n) => audited.has(n) || !journalled.has(n) || n in D8_TOUCHED_COUNTERS)
-      .sort();
-    // The measurement, written for the handback: each changed table, whether it is audited and its foreign keys.
-    measured = {
-      schemaVersion: "mth-drill-d8-measurement/1",
-      changed,
-      journalledTables: [...journalled].sort(),
-      residue: residue.map((n) => ({
-        table: n,
-        auditRequired:
+    after(async () => {
+      api?.kill("SIGTERM");
+      worker?.kill("SIGTERM");
+      await idp?.stop();
+      if (ADMIN) for (const d of [s, t]) psql(ADMIN, `DROP DATABASE IF EXISTS ${d} WITH (FORCE);`);
+    });
+
+    if (kind === "b19") {
+      // p7-work-split §B.9 DO-D7 T-B19 (PostgreSQL): DO-D6's grant path still works on shipped data. With seed-demo
+      // --as-of the first day of last month, the current period is absent; D8's organization-scope access administrator
+      // G grants TO to the period grantee through the API, the grantee opens the period, and the grant is journalled.
+      it("T-B19: with the current period absent, G grants TO at organization scope and the period is opened through the API", async () => {
+        needPg();
+        const owner = dbUrl(t, "mth_owner");
+        const month = businessMonth();
+        assert.match(seedLine, /reporting periods relative to /, "seed-demo did not print the A4.6 line");
+        assert.equal(
           psql(
             owner,
-            `SELECT count(*) FROM pg_trigger WHERE tgrelid = '${n}'::regclass AND tgname = '${n}_audit_required' AND tgenabled <> 'D';`,
-          ) === "1",
-        fkeys: psql(
-          owner,
-          `SELECT coalesce(string_agg(conname || '->' || confrelid::regclass::text, ' ' ORDER BY conname), '')
-             FROM pg_constraint WHERE conrelid = '${n}'::regclass AND contype = 'f';`,
-        ),
-      })),
-      signedIn: [...signedIn].length,
-      journey: r.steps.map((x) => ({ step: x.step, result: x.result, detail: x.detail })),
-      gateChain: r.gateChain,
-      actors,
-      complete: r.result === "PASS",
-      note: "SYNTHETIC fixture (seed-demo, drill IdP); measured by T-B17 on the ADR-0064 A3.6 chain C0-C6. complete=false: the chain stopped at the failing step, so the lists cover only the steps before it. Every write, including the gate submission and its deferred decision, is SYNTHETIC and approves nothing.",
-    };
-    if (process.env.MTH_DRILL_D8_MEASURE_OUT)
-      writeFileSync(process.env.MTH_DRILL_D8_MEASURE_OUT, JSON.stringify(measured, null, 2) + "\n");
-    console.log(`# T-B17 measurement: ${JSON.stringify(measured)}`);
-    assert.equal(r.result, "PASS", JSON.stringify(r.steps) + apiLog.slice(-3000));
-    assert.ok(
-      r.steps.find((x) => x.step === "approve")?.detail.includes("deferred"),
-      "the journey reached decideGate 201",
-    );
-    const expected = [
-      ...audited,
-      ...D8_TOUCHED_CHILDREN.map((c) => c.name),
-      ...Object.keys(D8_TOUCHED_COUNTERS),
-    ].sort();
-    assert.deepEqual(residue, expected, "the D8 lists differ from the measured changed tables");
-  });
+            `SELECT count(*) FROM reporting_period WHERE frequency = 'monthly' AND period_label = '${month}';`,
+          ),
+          "0",
+          `the current period ${month} exists after seed-demo --as-of ${asOf}`,
+        );
+        assert.ok(actors.accessAdmin, `no organization-scope access administrator: ${JSON.stringify(actors)}`);
+        assert.equal(actors.periodManager ?? null, null, "a rebound period manager already exists");
+        const j19 = join(dir, "journal-t-b19.json");
+        const r = await runJourney({
+          app,
+          issuer,
+          user: `drill-${actors.submitter}`,
+          actors,
+          subPrefix: "drill-",
+          gate: actors.gate,
+          transformation: actors.transformation,
+          steps: ["signin", "gatechain"],
+          journal: j19,
+        });
+        const jr = JSON.parse(readFileSync(j19, "utf8"));
+        if (process.env.MTH_DRILL_D8_MEASURE_OUT)
+          writeFileSync(
+            process.env.MTH_DRILL_D8_MEASURE_OUT.replace(/\.json$/, "-t-b19.json"),
+            JSON.stringify({ asOf, seedLine, steps: r.steps, grants: jr.grants ?? [], actors }, null, 2) + "\n",
+          );
+        assert.equal(jr.grants?.length, 1, JSON.stringify(r.steps) + apiLog.slice(-2000));
+        const g = jr.grants[0];
+        assert.equal(g.via, "createRoleAssignment");
+        assert.equal(g.grantor, actors.accessAdmin);
+        assert.equal(g.userId, actors.periodGrantee);
+        assert.equal(g.roleCode, "TO");
+        assert.equal(g.scope.type, "organization");
+        assert.deepEqual(r.grants, jr.grants, "the journey summary's grants differ from the journal's");
+        // the grant is audited by G (the product's scoped_assignment.create), and the period is open
+        assert.equal(
+          psql(
+            owner,
+            `SELECT count(*) FROM audit_event WHERE record_type = 'scoped_assignment' AND record_id = '${g.assignmentId}'
+              AND action = 'scoped_assignment.create' AND actor_user_id = '${actors.accessAdmin}';`,
+          ),
+          "1",
+        );
+        assert.equal(
+          psql(owner, `SELECT status FROM reporting_period WHERE frequency = 'monthly' AND period_label = '${month}';`),
+          "open",
+        );
+        assert.ok(
+          jr.entries.some(
+            (e) => e.table === "reporting_period" && e.op === "added" && e.via === "createReportingPeriod",
+          ),
+          "the created period is not journalled",
+        );
+      });
+      return;
+    }
 
-  it("mode 2 with the generated allowance matches after use (exit 0)", () => {
-    needPg();
-    assert.ok(measured, "the measurement test must run first");
-    const signin = join(dir, "app-user-signin.json");
-    writeFileSync(signin, JSON.stringify({ appUserChangedBySignIn: true }) + "\n");
-    const allow = join(dir, "allowance.json");
-    const a = tool([
-      "deploy/scripts/drill/allowance.mjs",
-      "--journal",
-      journal,
-      "--database-url",
-      dbUrl(t, "mth_owner"),
-      "--app-user-signin",
-      signin,
-      "--out",
-      allow,
-      "--reasons-out",
-      join(dir, "allowance-reasons.json"),
-    ]);
-    assert.equal(a.status, 0, a.stdout + a.stderr);
-    const r = tool(
-      [
-        "tools/migration/reconcile.mjs",
-        "--operator",
-        OPERATOR,
-        "--from",
-        pkg,
-        "--after-use",
-        "--allow",
-        allow,
-        "--report",
-        join(dir, "mode2.txt"),
-      ],
-      {
-        DATABASE_OWNER_URL: dbUrl(t, "mth_owner"),
-        NODE_ENV: "production",
-      },
-    );
-    if (process.env.MTH_DRILL_D8_MEASURE_OUT)
-      writeFileSync(process.env.MTH_DRILL_D8_MEASURE_OUT.replace(/\.json$/, "-mode2.txt"), r.stdout + r.stderr);
-    assert.equal(r.status, 0, r.stdout + r.stderr);
-    assert.match(r.stdout, /^reconcile-migration: matched after use:/m);
-    // BE-R3 Q1: mode 2 writes <report>.json next to the text report; its automationChain must be non-empty (A3.2)
-    const json = JSON.parse(readFileSync(join(dir, "mode2.txt.json"), "utf8"));
-    if (process.env.MTH_DRILL_D8_MEASURE_OUT)
-      writeFileSync(
-        process.env.MTH_DRILL_D8_MEASURE_OUT.replace(/\.json$/, "-mode2.json"),
-        JSON.stringify(json, null, 2),
+    it("D8's write chain changes exactly the journalled tables, the operational list, user_identity and the two D8 lists", async () => {
+      needPg();
+      assert.ok(actors.transformation && actors.submitter && actors.approver, JSON.stringify(actors));
+      const r = await runJourney({
+        app,
+        issuer,
+        user: `drill-${actors.submitter}`,
+        approver: `drill-${actors.approver}`,
+        actors,
+        subPrefix: "drill-",
+        gate: actors.gate,
+        transformation: actors.transformation,
+        // T-DG7-DO-D7 (T-B11 run 2, D9: "report_snapshot: 1 added, 0 changed, 0 missing (unexplained)"): D9's report
+        // export is part of the drill's writes too, so T-B17 measures it with the chain (exportq, then exportwait).
+        steps: ["signin", "writes", "approve", "exportq", "exportwait"],
+        journal,
+      });
+      // B.8 DO-D4: at least 30 s after C6 before the snapshot. The approve step waits itself when it reaches C6; when the
+      // chain stopped earlier, the worker still gets the same 30 s here, so its rows are measured, never missed.
+      const waited = r.steps.find((x) => x.step === "approve")?.result === "PASS" ? 0 : 30_000;
+      await new Promise((res) => setTimeout(res, waited));
+      // The measurement is recorded whatever the journey's result (a FAIL is asserted below, never hidden). The approve
+      // step already waited at least 30 s after C6 for the worker (journey.mjs SETTLE_MS, B.8 DO-D4).
+      const changed = diff(before0, rows());
+      const k = await constants();
+      const entries = JSON.parse(readFileSync(journal, "utf8")).entries;
+      const owner = dbUrl(t, "mth_owner");
+      const signedIn = new Set(
+        entries
+          .filter((e) => e.op === "signin")
+          .map((e) =>
+            psql(owner, `SELECT user_id FROM user_identity WHERE issuer = '${e.key[0]}' AND subject = '${e.key[1]}';`),
+          ),
       );
-    assert.ok(Array.isArray(json.automationChain) && json.automationChain.length > 0, "automationChain is empty");
-  });
+      const journalled = new Set(entries.filter((e) => e.op !== "signin").map((e) => e.table));
+      journalled.add("app_user"); // the T-B16 measurement: a sign-in changes app_user (listed as changed)
+      const audited = new Set(Object.keys(D8_TOUCHED_AUDITED));
+      for (const c of Object.keys(D8_TOUCHED_COUNTERS)) journalled.delete(c);
+      // B.9 DO-D7: the journal keys of a lineage table never go to `tables` (A4.5), so every changed lineage table is
+      // residue, whether or not the journal names its keys.
+      for (const l of k.lineage) journalled.delete(l);
+      const residue = Object.keys(changed)
+        // audit_event: additions are always allowed and checked by the trail check (A1.9 rule 1, A2.3), never listed
+        .filter((n) => n !== "user_identity" && n !== "audit_event" && !k.operational.has(n))
+        .filter((n) => audited.has(n) || !journalled.has(n) || n in D8_TOUCHED_COUNTERS || k.lineage.has(n))
+        .sort();
+      // The measurement, written for the handback: each changed table, whether it is audited and its foreign keys.
+      measured = {
+        schemaVersion: "mth-drill-d8-measurement/1",
+        changed,
+        journalledTables: [...journalled].sort(),
+        residue: residue.map((n) => ({
+          table: n,
+          auditRequired:
+            psql(
+              owner,
+              `SELECT count(*) FROM pg_trigger WHERE tgrelid = '${n}'::regclass AND tgname = '${n}_audit_required' AND tgenabled <> 'D';`,
+            ) === "1",
+          fkeys: psql(
+            owner,
+            `SELECT coalesce(string_agg(conname || '->' || confrelid::regclass::text, ' ' ORDER BY conname), '')
+             FROM pg_constraint WHERE conrelid = '${n}'::regclass AND contype = 'f';`,
+          ),
+        })),
+        signedIn: [...signedIn].length,
+        journey: r.steps.map((x) => ({ step: x.step, result: x.result, detail: x.detail })),
+        gateChain: r.gateChain,
+        actors,
+        complete: r.result === "PASS",
+        note: "SYNTHETIC fixture (seed-demo, drill IdP); measured by T-B17 on the ADR-0064 A3.6 chain C0-C6. complete=false: the chain stopped at the failing step, so the lists cover only the steps before it. Every write, including the gate submission and its deferred decision, is SYNTHETIC and approves nothing.",
+      };
+      if (process.env.MTH_DRILL_D8_MEASURE_OUT)
+        writeFileSync(process.env.MTH_DRILL_D8_MEASURE_OUT, JSON.stringify(measured, null, 2) + "\n");
+      console.log(`# T-B17 measurement: ${JSON.stringify(measured)}`);
+      assert.equal(r.result, "PASS", JSON.stringify(r.steps) + apiLog.slice(-3000));
+      assert.ok(
+        r.steps.find((x) => x.step === "approve")?.detail.includes("deferred"),
+        "the journey reached decideGate 201",
+      );
+      const expected = [
+        ...audited,
+        ...D8_TOUCHED_CHILDREN.map((c) => c.name),
+        ...Object.keys(D8_TOUCHED_COUNTERS),
+        ...Object.keys(D8_TOUCHED_LINEAGE),
+      ].sort();
+      assert.deepEqual(residue, expected, "the D8 lists differ from the measured changed tables");
+      // A4.5's structural addition (corrective_case, for lineage corrective_signal) is not a measurement: it must not change.
+      for (const n of Object.keys(A45_REQUIRED_AUDITED))
+        assert.ok(!(n in changed), `${n} changed: ${JSON.stringify(changed[n])}`);
+    });
 
-  it("one extra owner-written row in an audited table, its event by a non-journalled user, gives exit 4", () => {
-    needPg();
-    // roadmap_wave: an audited D8 table with no row guard beyond its audit trigger (automation_action_result, the
-    // first by name, refuses rows outside a running attempt).
-    const name = "roadmap_wave";
-    assert.ok(name in D8_TOUCHED_AUDITED, "roadmap_wave is not in D8_TOUCHED_AUDITED");
-    const owner = dbUrl(t, "mth_owner");
-    const stranger = psql(
-      owner,
-      `SELECT u.id FROM app_user u WHERE u.id NOT IN ('${actors.submitter}', '${actors.approver}', '${actors.kpiUser}') ORDER BY u.id LIMIT 1;`,
-    );
-    assert.ok(stranger);
-    const id = psql(owner, "SELECT mth_uuid_v7();");
-    // The row: a copy of an existing row of that table with a new id, its version 1, and its audit event.
-    const hasVersion =
+    it("mode 2 with the generated allowance matches after use (exit 0)", () => {
+      needPg();
+      assert.ok(measured, "the measurement test must run first");
+      const signin = join(dir, "app-user-signin.json");
+      writeFileSync(signin, JSON.stringify({ appUserChangedBySignIn: true }) + "\n");
+      const allow = join(dir, "allowance.json");
+      const a = tool([
+        "deploy/scripts/drill/allowance.mjs",
+        "--journal",
+        journal,
+        "--database-url",
+        dbUrl(t, "mth_owner"),
+        "--app-user-signin",
+        signin,
+        "--out",
+        allow,
+        "--reasons-out",
+        join(dir, "allowance-reasons.json"),
+      ]);
+      assert.equal(a.status, 0, a.stdout + a.stderr);
+      const r = tool(
+        [
+          "tools/migration/reconcile.mjs",
+          "--operator",
+          OPERATOR,
+          "--from",
+          pkg,
+          "--after-use",
+          "--allow",
+          allow,
+          "--report",
+          join(dir, "mode2.txt"),
+        ],
+        {
+          DATABASE_OWNER_URL: dbUrl(t, "mth_owner"),
+          NODE_ENV: "production",
+        },
+      );
+      if (process.env.MTH_DRILL_D8_MEASURE_OUT)
+        writeFileSync(process.env.MTH_DRILL_D8_MEASURE_OUT.replace(/\.json$/, "-mode2.txt"), r.stdout + r.stderr);
+      assert.equal(r.status, 0, r.stdout + r.stderr);
+      assert.match(r.stdout, /^reconcile-migration: matched after use:/m);
+      // BE-R3 Q1: mode 2 writes <report>.json next to the text report; its automationChain must be non-empty (A3.2)
+      const json = JSON.parse(readFileSync(join(dir, "mode2.txt.json"), "utf8"));
+      if (process.env.MTH_DRILL_D8_MEASURE_OUT)
+        writeFileSync(
+          process.env.MTH_DRILL_D8_MEASURE_OUT.replace(/\.json$/, "-mode2.json"),
+          JSON.stringify(json, null, 2),
+        );
+      assert.ok(Array.isArray(json.automationChain) && json.automationChain.length > 0, "automationChain is empty");
+      // B.9 DO-D7: the second hop (A4.4 depth 2) is explained, and the lineage chain is non-empty (A4.2)
+      assert.ok(
+        json.automationChain.some((x) => x.depth === 2),
+        `no depth-2 automationChain entry: ${JSON.stringify(json.automationChain.map((x) => x.depth))}`,
+      );
+      assert.ok(Array.isArray(json.lineageChain) && json.lineageChain.length > 0, "lineageChain is empty");
+    });
+
+    it("one extra owner-written row in an audited table, its event by a non-journalled user, gives exit 4", () => {
+      needPg();
+      // roadmap_wave: an audited D8 table with no row guard beyond its audit trigger (automation_action_result, the
+      // first by name, refuses rows outside a running attempt).
+      const name = "roadmap_wave";
+      assert.ok(name in D8_TOUCHED_AUDITED, "roadmap_wave is not in D8_TOUCHED_AUDITED");
+      const owner = dbUrl(t, "mth_owner");
+      // B.9 DO-D7: the full chain signs in more actors (V, W, O, …), so the stranger is outside the allowance's whole
+      // `actors` list, not only outside S, A and K (T-DG7-DO-D7 run 2: the first user by id was a journalled actor).
+      const listedActors = JSON.parse(readFileSync(join(dir, "allowance.json"), "utf8")).actors;
+      const stranger = psql(
+        owner,
+        `SELECT u.id FROM app_user u WHERE u.id <> ALL ('{${listedActors.join(",")}}'::uuid[]) ORDER BY u.id LIMIT 1;`,
+      );
+      assert.ok(stranger && !listedActors.includes(stranger), stranger);
+      const id = psql(owner, "SELECT mth_uuid_v7();");
+      // The row: a copy of an existing row of that table with a new id, its version 1, and its audit event.
+      const hasVersion =
+        psql(
+          owner,
+          `SELECT count(*) FROM information_schema.columns WHERE table_name = '${name}' AND column_name = 'version';`,
+        ) === "1";
       psql(
         owner,
-        `SELECT count(*) FROM information_schema.columns WHERE table_name = '${name}' AND column_name = 'version';`,
-      ) === "1";
-    psql(
-      owner,
-      `BEGIN;
+        `BEGIN;
        CREATE TEMP TABLE extra AS SELECT * FROM ${name} ORDER BY id LIMIT 1;
        UPDATE extra SET id = '${id}'${hasVersion ? ", version = 1" : ""}, code = 'tb17_extra';
        INSERT INTO ${name} SELECT * FROM extra;
@@ -1191,77 +1359,87 @@ describe("T-B17 the D8 lists of allowance.mjs are measured on a fixture installa
          SELECT mth_uuid_v7(), 'user', '${stranger}', '${name}.create', '${name}', id, NULL, ${hasVersion ? "1" : "NULL"}, 'api',
                 'T-B17 synthetic extra row by a user who is not journalled' FROM extra;
        COMMIT;`,
-    );
-    const r = tool(
-      [
-        "tools/migration/reconcile.mjs",
-        "--operator",
-        OPERATOR,
-        "--from",
-        pkg,
-        "--after-use",
-        "--allow",
-        join(dir, "allowance.json"),
-      ],
-      { DATABASE_OWNER_URL: owner, NODE_ENV: "production" },
-    );
-    assert.equal(r.status, 4, r.stdout + r.stderr);
-    assert.ok(
-      (r.stdout + r.stderr).includes(`unexplained added ${JSON.stringify([id])}`),
-      `the extra ${name} row ${id} is not reported unexplained:\n${r.stdout}${r.stderr}`,
-    );
-  });
+      );
+      const r = tool(
+        [
+          "tools/migration/reconcile.mjs",
+          "--operator",
+          OPERATOR,
+          "--from",
+          pkg,
+          "--after-use",
+          "--allow",
+          join(dir, "allowance.json"),
+        ],
+        { DATABASE_OWNER_URL: owner, NODE_ENV: "production" },
+      );
+      assert.equal(r.status, 4, r.stdout + r.stderr);
+      assert.ok(
+        (r.stdout + r.stderr).includes(`unexplained added ${JSON.stringify([id])}`),
+        `the extra ${name} row ${id} is not reported unexplained:\n${r.stdout}${r.stderr}`,
+      );
+    });
 
-  // p7-work-split §B.8 DO-D4 T-B18 (PostgreSQL): the remedy table is closed. On the same fixture, every active outcome
-  // KPI link of the chosen transformation is archived (a SYNTHETIC fixture change made as the cluster superuser with
-  // triggers off, labelled as such; it is not a product path), so the gate misses `g5.performance_no_kpi`, which has
-  // no remedy row. The journey must stop at C1 with the A3.6 line and write nothing after it.
-  it("T-B18: a missing code without a remedy row stops D8 at C1 with the A3.6 line, and nothing is written after it", async () => {
-    needPg();
-    assert.ok(actors?.transformation, "the fixture must exist");
-    psql(
-      dbUrl(t),
-      `SET session_replication_role = replica;
+    // p7-work-split §B.8 DO-D4 T-B18 (PostgreSQL): the remedy table is closed. On the same fixture, every active outcome
+    // KPI link of the chosen transformation is archived (a SYNTHETIC fixture change made as the cluster superuser with
+    // triggers off, labelled as such; it is not a product path), so the gate misses `g5.performance_no_kpi`, which has
+    // no remedy row. The journey must stop at C1 with the A3.6 line and write nothing after it.
+    it("T-B18: a missing code without a remedy row stops D8 at C1 with the A3.6 line, and nothing is written after it", async () => {
+      needPg();
+      assert.ok(actors?.transformation, "the fixture must exist");
+      psql(
+        dbUrl(t),
+        `SET session_replication_role = replica;
        UPDATE outcome_kpi SET status = 'archived', archived_at = now(), archived_by = '${actors.submitter}',
               archive_reason = 'T-B18 SYNTHETIC fixture: no outcome KPI'
         WHERE transformation_id = '${actors.transformation}' AND status = 'active';`,
-    );
-    const watched = ["kpi_actual", "evidence", "phase_step_evidence", "decision", "raid_entry", "gate_submission"];
-    const snap = () =>
-      Object.fromEntries(
-        watched.map((n) => [
-          n,
-          psql(dbUrl(t, "mth_owner"), `SELECT count(*) || ':' || coalesce(max(updated_at)::text, '') FROM ${n};`),
-        ]),
       );
-    const j18 = join(dir, "journal-t-b18.json");
-    // C1 is reached directly: only the gate chain runs (the writes step's create and RAID item are D8's, not C1's)
-    const before18 = snap();
-    const r = await runJourney({
-      app,
-      issuer,
-      user: `drill-${actors.submitter}`,
-      actors,
-      subPrefix: "drill-",
-      gate: actors.gate,
-      transformation: actors.transformation,
-      steps: ["signin", "gatechain"],
-      journal: j18,
+      const watched = ["kpi_actual", "evidence", "phase_step_evidence", "decision", "raid_entry", "gate_submission"];
+      const snap = () =>
+        Object.fromEntries(
+          watched.map((n) => [
+            n,
+            psql(dbUrl(t, "mth_owner"), `SELECT count(*) || ':' || coalesce(max(updated_at)::text, '') FROM ${n};`),
+          ]),
+        );
+      const j18 = join(dir, "journal-t-b18.json");
+      // C1 is reached directly: only the gate chain runs (the writes step's create and RAID item are D8's, not C1's)
+      const before18 = snap();
+      const r = await runJourney({
+        app,
+        issuer,
+        user: `drill-${actors.submitter}`,
+        actors,
+        subPrefix: "drill-",
+        gate: actors.gate,
+        transformation: actors.transformation,
+        steps: ["signin", "gatechain"],
+        journal: j18,
+      });
+      const after18 = snap();
+      if (process.env.MTH_DRILL_D8_MEASURE_OUT)
+        writeFileSync(
+          process.env.MTH_DRILL_D8_MEASURE_OUT.replace(/\.json$/, "-t-b18.json"),
+          JSON.stringify({ steps: r.steps, gateChain: r.gateChain, before: before18, after: after18 }, null, 2),
+        );
+      const step = r.steps.find((x) => x.step === "gatechain");
+      assert.equal(step?.result, "FAIL", JSON.stringify(r.steps));
+      assert.match(step.detail, /^D8 FAIL: no API remedy for g5\.performance_no_kpi at \(no pointer\)$/);
+      assert.ok(
+        r.gateChain.c0Missing.some((m) => m.code === "g5.performance_no_kpi"),
+        JSON.stringify(r.gateChain),
+      );
+      assert.deepEqual(r.gateChain.writes, [], "the chain wrote something after C0");
+      assert.deepEqual(after18, before18, "a remedy table changed");
     });
-    const after18 = snap();
-    if (process.env.MTH_DRILL_D8_MEASURE_OUT)
-      writeFileSync(
-        process.env.MTH_DRILL_D8_MEASURE_OUT.replace(/\.json$/, "-t-b18.json"),
-        JSON.stringify({ steps: r.steps, gateChain: r.gateChain, before: before18, after: after18 }, null, 2),
-      );
-    const step = r.steps.find((x) => x.step === "gatechain");
-    assert.equal(step?.result, "FAIL", JSON.stringify(r.steps));
-    assert.match(step.detail, /^D8 FAIL: no API remedy for g5\.performance_no_kpi at \(no pointer\)$/);
-    assert.ok(
-      r.gateChain.c0Missing.some((m) => m.code === "g5.performance_no_kpi"),
-      JSON.stringify(r.gateChain),
-    );
-    assert.deepEqual(r.gateChain.writes, [], "the chain wrote something after C0");
-    assert.deepEqual(after18, before18, "a remedy table changed");
   });
-});
+
+fixtureSuite(
+  "b17",
+  "T-B17 the D8 lists of allowance.mjs are measured on a fixture installation (mode 2 exit 0, then 4)",
+);
+fixtureSuite(
+  "b19",
+  "T-B19 DO-D6's grant path on shipped data: seed-demo --as-of the first day of last month (no current period)",
+  firstDayOfLastMonth(),
+);
