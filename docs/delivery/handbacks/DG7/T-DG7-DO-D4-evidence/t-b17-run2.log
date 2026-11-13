@@ -1,0 +1,96 @@
+port-policy: PostgreSQL listening on port 24351 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+▶ T-B15 allowance.mjs: mth-recheck-allowance/3 from a fixture journal (p7-work-split §B.8 DO-D4)
+  ✔ writes a /3 file with all seven keys that parseAllowance (packages/db recheck.ts) accepts (160.875356ms)
+  ✔ a counter table appears only in counters: in children, audited or the journal it is refused (1.664888ms)
+  ✔ actors from sign-ins; journalled keys of audited tables go to mustInclude; duplicates merged (0.886052ms)
+  ✔ never-operational tables appear only in tables, audited or children; reasons for every list entry (0.3481ms)
+  ✔ the three D8 lists are pinned: audited tables have no child entry, children's parents are listed (0.453064ms)
+  ✔ app_user is listed only when the measurement says a sign-in changes it (0.245875ms)
+  ✔ an audit_event entry, an unknown identity or a bad key is refused (exit 1 via the CLI) (205.593317ms)
+✔ T-B15 allowance.mjs: mth-recheck-allowance/3 from a fixture journal (p7-work-split §B.8 DO-D4) (371.888985ms)
+PASS  signin (114 ms): drill-01995000-0000-7000-8000-000000000012 -> user 01995000-0000-7000-8000-000000000012, roles [TL,TL]
+FAIL  writes (271 ms): D8 FAIL: no API remedy for g5.adoption_none at (no pointer)
+FAIL  approve (0 ms): no submission (the writes step must pass first)
+# T-B17 measurement: {"schemaVersion":"mth-drill-d8-measurement/1","changed":{"app_user":{"added":0,"changed":1,"missing":0},"audit_event":{"added":87,"changed":0,"missing":0},"outbox_event":{"added":1,"changed":0,"missing":0},"scoped_assignment":{"added":1,"changed":0,"missing":0},"transformation":{"added":1,"changed":0,"missing":0},"forum":{"added":5,"changed":0,"missing":0},"gate_instance":{"added":6,"changed":0,"missing":0},"governance_matrix":{"added":2,"changed":0,"missing":0},"diagnostic_item":{"added":6,"changed":0,"missing":0},"record_code_counter":{"added":1,"changed":0,"missing":0},"roadmap_wave":{"added":4,"changed":0,"missing":0},"raid_entry":{"added":1,"changed":0,"missing":0},"scoring_weight_set":{"added":1,"changed":0,"missing":0},"scoring_weight":{"added":5,"changed":0,"missing":0},"tom_canvas_cell":{"added":10,"changed":0,"missing":0},"transformation_decision_right":{"added":4,"changed":0,"missing":0},"transformation_config_pin":{"added":3,"changed":0,"missing":0},"transformation_raci_deliverable":{"added":6,"changed":0,"missing":0},"transformation_raci_assignment":{"added":36,"changed":0,"missing":0},"user_identity":{"added":0,"changed":1,"missing":0}},"journalledTables":["app_user","raid_entry","transformation"],"residue":[{"table":"diagnostic_item","auditRequired":true,"fkeys":"diagnostic_item_archived_by_fkey->app_user diagnostic_item_baseline_id_fkey->baseline diagnostic_item_created_by_fkey->app_user diagnostic_item_dimension_code_fkey->diagnostic_dimension diagnostic_item_impact_kpi_definition_id_fkey->kpi_definition diagnostic_item_organization_id_fkey->organization diagnostic_item_owner_user_id_fkey->app_user diagnostic_item_transformation_id_fkey->transformation diagnostic_item_updated_by_fkey->app_user"},{"table":"forum","auditRequired":true,"fkeys":"forum_chair_party_code_fkey->governance_party forum_created_by_fkey->app_user forum_organization_id_fkey->organization forum_secretary_user_id_fkey->app_user forum_template_key_fkey->forum_template forum_transformation_id_fkey->transformation forum_updated_by_fkey->app_user"},{"table":"gate_instance","auditRequired":true,"fkeys":"gate_instance_approver_role_code_fkey->role gate_instance_approver_user_id_fkey->app_user gate_instance_created_by_fkey->app_user gate_instance_current_submission_fkey->gate_submission gate_instance_gate_code_fkey->gate_definition gate_instance_organization_id_fkey->organization gate_instance_transformation_id_fkey->transformation gate_instance_updated_by_fkey->app_user"},{"table":"governance_matrix","auditRequired":true,"fkeys":"governance_matrix_approved_by_fkey->app_user governance_matrix_created_by_fkey->app_user governance_matrix_organization_id_fkey->organization governance_matrix_transformation_id_fkey->transformation governance_matrix_updated_by_fkey->app_user"},{"table":"record_code_counter","auditRequired":false,"fkeys":"record_code_counter_transformation_id_fkey->transformation"},{"table":"roadmap_wave","auditRequired":true,"fkeys":"roadmap_wave_created_by_fkey->app_user roadmap_wave_organization_id_fkey->organization roadmap_wave_owner_user_id_fkey->app_user roadmap_wave_transformation_id_fkey->transformation roadmap_wave_updated_by_fkey->app_user"},{"table":"scoped_assignment","auditRequired":false,"fkeys":"scoped_assignment_created_by_fkey->app_user scoped_assignment_derived_from_assignment_id_fkey->scoped_assignment scoped_assignment_granted_by_fkey->app_user scoped_assignment_organization_id_fkey->organization scoped_assignment_revoked_by_fkey->app_user scoped_assignment_role_id_fkey->role scoped_assignment_updated_by_fkey->app_user scoped_assignment_user_id_fkey->app_user"},{"table":"scoring_weight","auditRequired":false,"fkeys":"scoring_weight_created_by_fkey->app_user scoring_weight_organization_id_fkey->organization scoring_weight_transformation_id_fkey->transformation scoring_weight_weight_set_id_fkey->scoring_weight_set"},{"table":"scoring_weight_set","auditRequired":true,"fkeys":"scoring_weight_set_approved_by_fkey->app_user scoring_weight_set_created_by_fkey->app_user scoring_weight_set_organization_id_fkey->organization scoring_weight_set_transformation_id_fkey->transformation scoring_weight_set_updated_by_fkey->app_user"},{"table":"tom_canvas_cell","auditRequired":true,"fkeys":"tom_canvas_cell_created_by_fkey->app_user tom_canvas_cell_dimension_code_fkey->tom_dimension tom_canvas_cell_organization_id_fkey->organization tom_canvas_cell_owner_user_id_fkey->app_user tom_canvas_cell_transformation_id_fkey->transformation tom_canvas_cell_updated_by_fkey->app_user"},{"table":"transformation_config_pin","auditRequired":true,"fkeys":"transformation_config_pin_created_by_fkey->app_user transformation_config_pin_last_migration_fkey->methodology_migration transformation_config_pin_methodology_version_id_fkey->methodology_version transformation_config_pin_organization_id_fkey->organization transformation_config_pin_pinned_by_fkey->app_user transformation_config_pin_transformation_id_fkey->transformation transformation_config_pin_updated_by_fkey->app_user"},{"table":"transformation_decision_right","auditRequired":true,"fkeys":"transformation_decision_right_approve_party_code_fkey->governance_party transformation_decision_right_created_by_fkey->app_user transformation_decision_right_organization_id_fkey->organization transformation_decision_right_template_key_fkey->decision_right_template transformation_decision_right_transformation_id_fkey->transformation transformation_decision_right_updated_by_fkey->app_user"},{"table":"transformation_raci_assignment","auditRequired":true,"fkeys":"transformation_raci_assignment_created_by_fkey->app_user transformation_raci_assignment_deliverable_fkey->transformation_raci_deliverable transformation_raci_assignment_organization_id_fkey->organization transformation_raci_assignment_party_code_fkey->governance_party transformation_raci_assignment_transformation_id_fkey->transformation transformation_raci_assignment_updated_by_fkey->app_user"},{"table":"transformation_raci_deliverable","auditRequired":true,"fkeys":"transformation_raci_deliverable_created_by_fkey->app_user transformation_raci_deliverable_organization_id_fkey->organization transformation_raci_deliverable_template_key_fkey->raci_template_deliverable transformation_raci_deliverable_transformation_id_fkey->transformation transformation_raci_deliverable_updated_by_fkey->app_user"}],"signedIn":1,"journey":[{"step":"signin","result":"PASS","detail":"drill-01995000-0000-7000-8000-000000000012 -> user 01995000-0000-7000-8000-000000000012, roles [TL,TL]"},{"step":"writes","result":"FAIL","detail":"D8 FAIL: no API remedy for g5.adoption_none at (no pointer)"},{"step":"approve","result":"FAIL","detail":"no submission (the writes step must pass first)"}],"gateChain":{"gate":"G5","c0Missing":[{"code":"g5.performance_kpi_not_known","pointer":"/kpiDefinitions/01995000-4102-7000-8000-000000000001"},{"code":"g5.performance_kpi_not_known","pointer":"/kpiDefinitions/01995000-4102-7000-8000-000000000002"},{"code":"g5.performance_kpi_not_known","pointer":"/kpiDefinitions/01995000-4102-7000-8000-000000000003"},{"code":"g5.performance_pilot_evidence_missing","pointer":"/phase-steps/transform.deliver_pilots"},{"code":"g5.adoption_none","pointer":null},{"code":"g5.decision_overdue","pointer":"/decisions/01995000-1040-7000-8000-000000000002"}],"writes":[]},"actors":{"admin":"01995000-0000-7000-8000-000000000015","transformation":"01995000-0000-7000-8000-000000000001","submitter":"01995000-0000-7000-8000-000000000012","approver":"01995000-0000-7000-8000-000000000011","kpiUser":"01995000-0000-7000-8000-000000000015","kpiDefinition":"01995000-4102-7000-8000-000000000001","gate":"G5","kpiValueNature":"ratio","kpis":{"01995000-4102-7000-8000-000000000001":{"user":"01995000-0000-7000-8000-000000000015","reviewer":null,"reviewerParty":null,"valueNature":"ratio"},"01995000-4102-7000-8000-000000000002":{"user":"01995000-0000-7000-8000-000000000015","reviewer":null,"reviewerParty":null,"valueNature":"ratio"},"01995000-4102-7000-8000-000000000003":{"user":"01995000-0000-7000-8000-000000000015","reviewer":null,"reviewerParty":null,"valueNature":"ratio"}},"evidenceReviewer":"01995000-0000-7000-8000-000000000013","decisionOwner":"01995000-0000-7000-8000-000000000011","decisionOwners":{"01995000-1040-7000-8000-000000000007":"01995000-0000-7000-8000-000000000014","01995000-1040-7000-8000-000000000008":"01995000-0000-7000-8000-000000000014","01995000-1040-7000-8000-000000000009":"01995000-0000-7000-8000-000000000014","01995000-1040-7000-8000-000000000002":"01995000-0000-7000-8000-000000000011"},"trainer":"01995000-0000-7000-8000-000000000013","riskEditor":"01995000-0000-7000-8000-000000000012"},"complete":false,"note":"SYNTHETIC fixture (seed-demo, drill IdP); measured by T-B17 on the ADR-0064 A3.6 chain C0-C6. complete=false: the chain stopped at the failing step, so the lists cover only the steps before it. Every write, including the gate submission and its deferred decision, is SYNTHETIC and approves nothing."}
+▶ T-B17 the D8 lists of allowance.mjs are measured on a fixture installation (mode 2 exit 0, then 4)
+  ✖ D8's write chain changes exactly the journalled tables, the operational list, user_identity and the two D8 lists (2450.021953ms)
+  ✖ mode 2 with the generated allowance matches after use (exit 0) (1102.093795ms)
+  ✖ one extra owner-written row in an audited table, its event by a non-journalled user, gives exit 4 (1015.763518ms)
+PASS  signin (35 ms): drill-01995000-0000-7000-8000-000000000012 -> user 01995000-0000-7000-8000-000000000012, roles [TL,TL,TL]
+FAIL  gatechain (80 ms): D8 FAIL: no API remedy for g5.performance_no_kpi at (no pointer)
+  ✔ T-B18: a missing code without a remedy row stops D8 at C1 with the A3.6 line, and nothing is written after it (529.968672ms)
+✖ T-B17 the D8 lists of allowance.mjs are measured on a fixture installation (mode 2 exit 0, then 4) (21346.140569ms)
+ℹ tests 11
+ℹ suites 2
+ℹ pass 8
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 21874.280086
+
+✖ failing tests:
+
+test at deploy/scripts/tests/transfer-drill.test.mjs:1031:3
+✖ D8's write chain changes exactly the journalled tables, the operational list, user_identity and the two D8 lists (2450.021953ms)
+  AssertionError [ERR_ASSERTION]: [{"step":"signin","result":"PASS","ms":114,"detail":"drill-01995000-0000-7000-8000-000000000012 -> user 01995000-0000-7000-8000-000000000012, roles [TL,TL]"},{"step":"writes","result":"FAIL","ms":271,"detail":"D8 FAIL: no API remedy for g5.adoption_none at (no pointer)"},{"step":"approve","result":"FAIL","ms":0,"detail":"no submission (the writes step must pass first)"}]{"level":"info","msg":"job schedules registered","scheduled":["approval.escalation_scan","automation.tick_daily","automation.tick_hourly","delegation.expiry_sweep","gate.condition_escalation_scan","gate.exception_expiry_scan","governance.blocker_escalation_scan","governance.decision_sla_scan","governance.meeting_cutoff_scan","governance.meeting_series_generate","integrations.connector_run","kpi.freshness_scan","kpi.reporting_period_open","launch.day_ninety_tests","notification.digest","notifications.delivery_sweep","operations.exception_alerts","reports.owner_update_tasks","search.index_feed","search.reindex","sustainment.control_check_scan","sustainment.review_scan"],"unscheduled":[],"unhandled":[]}
+  {"level":"info","msg":"mth-worker started","timeZone":"Asia/Riyadh","superviseIntervalSeconds":60,"heartbeatSeconds":30,"jobBatchSize":8,"jobConcurrency":4,"instanceKey":"worker-7398cb7762d24fec9ca42838","secretProviders":["env","file"]}
+  
+  
+  'FAIL' !== 'PASS'
+  
+      at TestContext.<anonymous> (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:1097:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Promise.all (index 0)
+      at async Suite.run (node:internal/test_runner/test:1905:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'FAIL',
+    expected: 'PASS',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at deploy/scripts/tests/transfer-drill.test.mjs:1110:3
+✖ mode 2 with the generated allowance matches after use (exit 0) (1102.093795ms)
+  AssertionError [ERR_ASSERTION]: reconcile-migration: refused: invalid allowance file: parent kpi_actual of kpi_actual_value is not listed in tables, audited or children
+  
+  
+  2 !== 0
+  
+      at TestContext.<anonymous> (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:1150:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at deploy/scripts/tests/transfer-drill.test.mjs:1162:3
+✖ one extra owner-written row in an audited table, its event by a non-journalled user, gives exit 4 (1015.763518ms)
+  AssertionError [ERR_ASSERTION]: reconcile-migration: refused: invalid allowance file: parent kpi_actual of kpi_actual_value is not listed in tables, audited or children
+  
+  
+  2 !== 4
+  
+      at TestContext.<anonymous> (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:1205:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 4,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+exit 1

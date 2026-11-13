@@ -1,12 +1,12 @@
 #!/usr/bin/env node
-// deploy/scripts/drill/allowance.mjs: builds the `mth-recheck-allowance/2` file of the drill's D9 mode-2 recheck from
-// the journey's journal (ADR-0064 A1.9 with Amendment 2 §A2.6; p7-work-split §B.6 DO-D2, §B.7 DO-D3; tests T-B15,
-// T-B17; T-DG7-DO-D2, T-DG7-DO-D3).
+// deploy/scripts/drill/allowance.mjs: builds the `mth-recheck-allowance/3` file of the drill's D9 mode-2 recheck from
+// the journey's journal (ADR-0064 A1.9 with Amendment 2 §A2.6 and Amendment 3 §A3.4; p7-work-split §B.6 DO-D2, §B.7
+// DO-D3, §B.8 DO-D4; tests T-B15, T-B17; T-DG7-DO-D2, T-DG7-DO-D3, T-DG7-DO-D4).
 //
 //   node deploy/scripts/drill/allowance.mjs --journal <journal.json> --out <allowance.json>
 //        --reasons-out <allowance-reasons.json> [--database-url <target>] [--app-user-signin <measurement.json>]
 //
-// The six keys of `/2` (A2.6):
+// The seven keys of `/3` (A2.6, A3.4):
 // - `actors`: the target's app_user ids of the journalled sign-ins, resolved on the target by (issuer, subject)
 //   (--database-url, through psql). Never "whatever is new" on the target: that would make D9 prove nothing.
 // - `tables`: the journalled keys (from API responses and sign-ins) of every table that is not in `audited`. A sign-in
@@ -14,11 +14,12 @@
 //   (--app-user-signin, `{ "appUserChangedBySignIn": true }`) says a sign-in changes `app_user`.
 // - `audited`: the tables of D8_TOUCHED_AUDITED, each with `mustInclude` set to the journalled keys of that table.
 // - `children`: D8_TOUCHED_CHILDREN (child, parent, fkey).
+// - `counters`: D8_TOUCHED_COUNTERS, names from RECHECK_COUNTER_TABLES (A3.3); a counter table appears only there.
 // - `operational`: the minimum the run needs (OPERATIONAL_NEEDED, each with its reason), restricted to
 //   RECHECK_OPERATIONAL_TABLES; a never-operational table is never listed there, whatever the input.
-// D8_TOUCHED_AUDITED and D8_TOUCHED_CHILDREN are MEASURED by T-B17 (deploy/scripts/tests/transfer-drill.test.mjs): it
+// D8_TOUCHED_AUDITED, D8_TOUCHED_CHILDREN and D8_TOUCHED_COUNTERS are MEASURED by T-B17 (deploy/scripts/tests/transfer-drill.test.mjs): it
 // runs D8's write chain on a fixture installation and checks that the changed tables, minus `tables`, the operational
-// list and user_identity, are exactly their union. Each table has its reason in allowance-reasons.json.
+// list and user_identity, are exactly their union (on the full A3.6 chain C0-C6). Each table has its reason in allowance-reasons.json.
 // The constants of the recheck come ONLY from packages/db/src/transfer/recheck.ts; a failing import is an error
 // (exit 2), never a fallback. Duplicate keys are merged; a key both added and changed is listed as added only.
 // Exit codes (p7-work-split §2 rule 4): 0 written, 1 a journal entry is invalid, 2 BLOCKED (usage, unreadable input or
@@ -34,10 +35,11 @@ const REPO = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
 const RECHECK = join(REPO, "packages/db/src/transfer/recheck.ts");
 
 /**
- * MEASURED BY T-B17 ON A PARTIAL CHAIN (T-DG7-DO-D3 run 9, docs/delivery/handbacks/DG7/T-DG7-DO-D3-evidence/
- * t-b17-measurement.json): sign-in, createTransformation, the RAID item and the KPI value ran; the gate submission was
- * refused on the seed-demo data (G5's mandatory criteria incomplete), so the tables the submission and the decision
- * change are NOT yet measured, and T-B17 fails until the chain runs to the end.
+ * MEASURED BY T-B17 ON A PARTIAL CHAIN (T-DG7-DO-D4 run 3, docs/delivery/handbacks/DG7/T-DG7-DO-D4-evidence/
+ * t-b17-measurement.json): sign-in, createTransformation and the RAID item ran, and the worker had 30 s. The ADR-0064
+ * A3.6 gate chain stopped at C1 before writing anything: on the seed-demo data G5 misses `g5.adoption_none`, which has
+ * no remedy row ("needs configuration, which D8 does not create"). So the tables the remedies, the submission and the
+ * decision change are NOT measured, and T-B17 fails until the chain runs to the end (handback T-DG7-DO-D4 Q1).
  *
  * The audited tables D8's write chain (journey.mjs --steps writes,approve) changes, measured by T-B17; each with its
  * reason. Every one has an enabled `<t>_audit_required` trigger and the primary key (id) (A2.6 rule 3).
@@ -72,18 +74,6 @@ export const D8_TOUCHED_AUDITED = {
  */
 export const D8_TOUCHED_CHILDREN = [
   {
-    name: "kpi_actual_value",
-    parent: "kpi_actual",
-    fkey: "kpi_actual_value_actual_fkey",
-    reason: "the KPI value version D8 (b) adds to its journalled kpi_actual; the API presents it by valueNo, not by id",
-  },
-  {
-    name: "record_code_counter",
-    parent: "transformation",
-    fkey: "record_code_counter_transformation_id_fkey",
-    reason: "the record code counter createTransformation starts for the new transformation",
-  },
-  {
     name: "scoped_assignment",
     parent: "app_user",
     fkey: "scoped_assignment_user_id_fkey",
@@ -96,6 +86,15 @@ export const D8_TOUCHED_CHILDREN = [
     reason: "the weights of the scoring weight set createTransformation creates",
   },
 ];
+
+/**
+ * The counter tables D8's write chain moves, measured by T-B17 (A3.3: explained only by the explained added coded rows
+ * of the scope); each with its reason.
+ */
+export const D8_TOUCHED_COUNTERS = {
+  record_code_counter:
+    "the RAID code counter of the carried transformation, moved by D8's RAID item (T-B17 measured: one counter row; A3.3)",
+};
 
 /** The operational tables the drill needs, each with its reason (allowance-reasons.json). */
 export const OPERATIONAL_NEEDED = {
@@ -116,12 +115,20 @@ export async function constants() {
   } catch (e) {
     throw Object.assign(new Error(`cannot import packages/db/src/transfer/recheck.ts: ${e.message}`), { code: 2 });
   }
-  for (const k of ["RECHECK_OPERATIONAL_TABLES", "RECHECK_NEVER_OPERATIONAL", "isNeverOperational", "parseAllowance"])
+  for (const k of [
+    "ALLOWANCE_SCHEMA_VERSION",
+    "RECHECK_OPERATIONAL_TABLES",
+    "RECHECK_NEVER_OPERATIONAL",
+    "RECHECK_COUNTER_TABLES",
+    "isNeverOperational",
+    "parseAllowance",
+  ])
     if (!m[k]) throw Object.assign(new Error(`packages/db/src/transfer/recheck.ts does not export ${k}`), { code: 2 });
   return {
     source: "packages/db/src/transfer/recheck.ts",
     schemaVersion: m.ALLOWANCE_SCHEMA_VERSION,
     operational: new Set(m.RECHECK_OPERATIONAL_TABLES),
+    counters: new Set(Object.keys(m.RECHECK_COUNTER_TABLES)),
     isNever: m.isNeverOperational,
     parseAllowance: m.parseAllowance,
   };
@@ -135,7 +142,8 @@ const sortKeys = (m) => [...m.values()].sort((a, b) => keyText(a).localeCompare(
  * Builds the allowance from journal entries.
  * @param entries [{ table, key: string[], op: "added"|"changed"|"signin", via }]
  * @param opts { identity(issuer, subject) -> { id, userId } | null, appUserChangedBySignIn: boolean, constants,
- *               audited?: Record<string, string>, children?: { name, parent, fkey, reason }[] }
+ *               audited?: Record<string, string>, children?: { name, parent, fkey, reason }[],
+ *               counters?: Record<string, string> }
  */
 export function buildAllowance(
   entries,
@@ -145,6 +153,7 @@ export function buildAllowance(
     constants: k,
     audited = D8_TOUCHED_AUDITED,
     children = D8_TOUCHED_CHILDREN,
+    counters = D8_TOUCHED_COUNTERS,
   },
 ) {
   const keyed = new Map();
@@ -197,16 +206,25 @@ export function buildAllowance(
   const childNames = new Set(children.map((c) => c.name));
   for (const c of children)
     if (keyed.has(c.name)) errors.push(`${c.name} is a D8 child table but the journal names its keys`);
+  const counterNames = Object.keys(counters).sort();
+  for (const c of counterNames) {
+    if (!k.counters.has(c)) errors.push(`counter table ${c} is not in RECHECK_COUNTER_TABLES`);
+    if (keyed.has(c) || childNames.has(c) || auditedNames.includes(c))
+      errors.push(`${c} is a D8 counter table and may appear only in counters`);
+  }
+  for (const name of keyed.keys())
+    if (k.counters.has(name) && !counterNames.includes(name))
+      errors.push(`${name} is a counter table (RECHECK_COUNTER_TABLES): the journal may not name its keys`);
   const tables = [...keyed.values()]
     .filter((t) => !auditedNames.includes(t.name))
     .sort((a, b) => a.name.localeCompare(b.name))
     .map((t) => ({ name: t.name, added: sortKeys(t.added), changed: sortKeys(t.changed) }));
-  const listed = new Set([...tables.map((t) => t.name), ...auditedNames, ...childNames]);
+  const listed = new Set([...tables.map((t) => t.name), ...auditedNames, ...childNames, ...counterNames]);
   const operational = Object.keys(OPERATIONAL_NEEDED).filter(
     (t) => k.operational.has(t) && !k.isNever(t) && !listed.has(t),
   );
   const allowance = {
-    schemaVersion: "mth-recheck-allowance/2",
+    schemaVersion: k.schemaVersion,
     actors: [...actors].sort(),
     tables,
     audited: auditedNames.map((name) => {
@@ -217,10 +235,11 @@ export function buildAllowance(
       };
     }),
     children: children.map(({ name, parent, fkey }) => ({ name, parent, fkey })),
+    counters: counterNames,
     operational,
   };
   const reasons = {
-    schemaVersion: "mth-recheck-allowance-reasons/2",
+    schemaVersion: "mth-recheck-allowance-reasons/3",
     constantsSource: k.source,
     appUserChangedBySignIn,
     actors: {
@@ -241,7 +260,8 @@ export function buildAllowance(
       reason: audited[a.name],
     })),
     children: children.map((c) => ({ table: c.name, parent: c.parent, fkey: c.fkey, reason: c.reason })),
-    note: "SYNTHETIC drill data. The allowance proves only that exactly these keys changed, or rows audited as changed by these actors, or their foreign-key children (ADR-0064 A1.11 residual 3, A2.6).",
+    counters: counterNames.map((c) => ({ table: c, reason: counters[c] })),
+    note: "SYNTHETIC drill data. The allowance proves only that exactly these keys changed, or rows audited as changed by these actors, or their foreign-key children, or counter steps issued to explained coded rows (ADR-0064 A1.11 residual 3, A2.6, A3.3).",
   };
   return { allowance, reasons, errors };
 }

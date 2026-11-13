@@ -1,0 +1,141 @@
+{
+  "schemaVersion": "mth-transfer-drill/1",
+  "mode": "container-free, inside one bwrap --unshare-net namespace (agent sandbox; ADR-0069 §7 split)",
+  "archive": {
+    "sha256": "9d957c2689af053e56cca1672d174445f4c197fa0d21a63c5b6fcbbde065bd2f"
+  },
+  "sourceOrigin": "http://localhost:25301",
+  "targetOrigin": "http://127.0.0.1:25302",
+  "idp": {
+    "label": "synthetic drill IdP (not a corporate IdP)"
+  },
+  "checksums": {
+    "manifest": "329a91cd89e81e1bef2ed035e6ff59694bd6ab609da5e71c0aa865d7026028f2",
+    "attachmentManifest": "339596a8aa3e5138ef777de9e5078d17686a42b41b7b347cd7b5c5ca121d92d3",
+    "mapping": "2f21c6a810e302096bf37c901a27e5a252a24b6fffc1bd519518b6944c14b766",
+    "allowance": null,
+    "journal": "d7d68487a013daaa6cf759d31ea2a133cb950adefaf6b69614d31b0761c6eb90"
+  },
+  "reports": [
+    "reconcile-d5.json",
+    "reconcile-d6.json",
+    "config-trace.json"
+  ],
+  "totals": {
+    "tables": 335,
+    "evidenceFiles": 2,
+    "seconds": 192.487
+  },
+  "steps": [
+    {
+      "id": "D0",
+      "guideSection": "docs/handover/deployment.md#first-deployment",
+      "command": "node tools/release/build-archive.mjs --verify <archive> --expect-sha256 9d957c2689af053e56cca1672d174445f4c197fa0d21a63c5b6fcbbde065bd2f && tools/release/build-from-archive.sh <archive> --sha256 9d957c2689af053e56cca1672d174445f4c197fa0d21a63c5b6fcbbde065bd2f --store <store> --work <work>/build",
+      "exit": 0,
+      "seconds": 158.91,
+      "result": "PASS",
+      "detail": "D0: archive 9d957c2689af053e56cca1672d174445f4c197fa0d21a63c5b6fcbbde065bd2f verified and built; runtime /var/tmp/mth-run.Drtj9S/claude-0/mth-transfer-drill.iinqr3/build/runtime"
+    },
+    {
+      "id": "D1",
+      "guideSection": "docs/handover/deployment.md#first-deployment",
+      "command": "fresh cluster; mth-db migrate; mth-db seed-demo; mth-db seed-dev; API and worker at http://localhost:25301; deploy/scripts/smoke.mjs (MTH_SMOKE_AUTH=dev); journey.mjs --mode dev --steps signin,uploads",
+      "exit": 0,
+      "seconds": 9.86,
+      "result": "PASS",
+      "detail": "D1: evidence rows 3, audit_event 1023"
+    },
+    {
+      "id": "D2",
+      "guideSection": "docs/handover/deployment.md#origin-change",
+      "command": "DATABASE_OWNER_URL=<S> node tools/migration/export.mjs --out <work>/package --operator 'transfer-drill synthetic operator' (attachments.json count = S's rows with a storage_key)",
+      "exit": 0,
+      "seconds": 1.536,
+      "result": "PASS",
+      "detail": "D2: attachments.json lists 2 files; S has 2 rows with a storage_key"
+    },
+    {
+      "id": "D3",
+      "guideSection": "docs/handover/deployment.md#configuration-keys",
+      "command": "node deploy/scripts/generate-env-example.mjs --check && node deploy/scripts/drill/config-trace.mjs --template .env.example --guide docs/handover/deployment.md --map deploy/scripts/drill/guide-keys.json",
+      "exit": 0,
+      "seconds": 0.247,
+      "result": "PASS",
+      "detail": "config-trace: 14 keys filled from the template, 0 problems"
+    },
+    {
+      "id": "D4",
+      "guideSection": "docs/handover/deployment.md#database",
+      "command": "mth-db migrate && mth-db bootstrap (twice; the second must refuse) on a separate clean database",
+      "exit": 0,
+      "seconds": 6.245,
+      "result": "PASS",
+      "detail": "D4: migrate 0, bootstrap 0, second bootstrap refused; database dropped"
+    },
+    {
+      "id": "D5",
+      "guideSection": "docs/handover/deployment.md#migration-import",
+      "command": "node tools/migration/prepare-target.mjs --from <package> && node tools/migration/import.mjs --from <package> --operator 'transfer-drill synthetic operator' --keep-reports <out>/import-reports --manifest-sha256 <hex> && node tools/migration/reconcile.mjs --operator 'transfer-drill synthetic operator' --from <package> (mode 1)",
+      "exit": 0,
+      "seconds": 10.509,
+      "result": "PASS",
+      "detail": "reconcile-migration: matched"
+    },
+    {
+      "id": "D6",
+      "guideSection": "docs/handover/deployment.md#migration-import",
+      "command": "mth-db rebind-identity --mapping <mapping.csv> --operator 'transfer-drill synthetic operator' (one carried user left unmapped); node tools/migration/reconcile.mjs --from <package> (mode 1, rebind delta)",
+      "exit": 0,
+      "seconds": 2.513,
+      "result": "PASS",
+      "detail": "D6: recorded delta: rebind user_identity changed 13 allowed true"
+    },
+    {
+      "id": "D7",
+      "guideSection": "docs/handover/deployment.md#monitoring",
+      "command": "start the drill IdP, the API and the worker from the runtime tree with target.env; GET /readyz until 200, storage ok, worker alive (120 s); journey.mjs --steps signin,status (getDeploymentStatus origin and environmentKind)",
+      "exit": 0,
+      "seconds": 1.905,
+      "result": "PASS",
+      "detail": "{\"result\":\"PASS\",\"steps\":2}"
+    },
+    {
+      "id": "D8",
+      "guideSection": "docs/handover/deployment.md#origin-change",
+      "command": "node deploy/scripts/drill/journey.mjs --mode oidc-drill --app http://127.0.0.1:25302 --source-origin http://localhost:25301 (signin, unbound, csrf, status, writes, approve, downloads, deeplink; keys into journal.json)",
+      "exit": 1,
+      "seconds": 0.113,
+      "result": "FAIL",
+      "detail": "D8: the download count 0 differs from the manifest count 2 (or is 0)"
+    },
+    {
+      "id": "D9",
+      "guideSection": "docs/handover/deployment.md#monitoring",
+      "command": "stop worker; journey exportq; job-check snapshot; stop API, PostgreSQL; start PostgreSQL, API, worker; job-check compare; journey exportwait, downloads; allowance.mjs; node tools/migration/reconcile.mjs --from <package> --after-use --allow <allowance.json> (mode 2)",
+      "exit": -1,
+      "seconds": 0,
+      "result": "NOT_RUN",
+      "detail": "not run: step D8 failed"
+    },
+    {
+      "id": "D10",
+      "guideSection": "docs/handover/deployment.md#origin-change",
+      "command": "node deploy/scripts/drill/origin-scan.mjs --database-url <target superuser> --origin http://localhost:25301",
+      "exit": -1,
+      "seconds": 0,
+      "result": "NOT_RUN",
+      "detail": "not run: step D8 failed"
+    },
+    {
+      "id": "D11",
+      "guideSection": "docs/handover/deployment.md#first-deployment",
+      "command": "write transfer-drill-report.json",
+      "exit": 0,
+      "seconds": 0,
+      "result": "NOT_RUN",
+      "detail": "report written"
+    }
+  ],
+  "note": "SYNTHETIC data and credentials. A local drill is not evidence of high-availability production readiness; it approves nothing.",
+  "result": "FAIL"
+}

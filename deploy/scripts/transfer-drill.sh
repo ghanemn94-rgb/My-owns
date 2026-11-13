@@ -206,13 +206,20 @@ pg_init() { # pg_init <dir> <port> <pidvar>
 }
 pg_start() { # pg_start <dir> <port> -> echoes the pid
   local dir="$1" port="$2"
-  as_pg "$PGBIN/postgres" -D "$dir/data" -p "$port" -k "$dir" -c listen_addresses=127.0.0.1 >>"$dir/pg.log" 2>&1 &
+  # T-DG7-DO-D4 (T-B11 attempt 2, D1 after 31.7 s with an empty step log): `-k "$dir"` made the postmaster create a Unix
+  # socket, which the host sandbox refuses ("could not create Unix socket ... Operation not permitted", then FATAL "could
+  # not create any Unix-domain sockets"). Every connection of the drill is TCP on 127.0.0.1 (su_url), so no Unix socket
+  # is created, as tests/qa/support/pg-port.sh does.
+  as_pg "$PGBIN/postgres" -D "$dir/data" -p "$port" -c unix_socket_directories='' -c listen_addresses=127.0.0.1 \
+    >>"$dir/pg.log" 2>&1 &
   local pid=$!
   for _ in $(seq 1 120); do
     PGPASSWORD="$(cat "$dir.su")" "$PGBIN/psql" -h 127.0.0.1 -p "$port" -U postgres -d postgres -qAtc 'select 1' \
       >/dev/null 2>&1 && { echo "$pid"; return 0; }
     sleep 0.25
   done
+  echo "PostgreSQL on port $port did not accept connections within 30 s; $dir/pg.log ends:" >&2
+  tail -5 "$dir/pg.log" >&2
   return 1
 }
 su_url() { printf 'postgres://postgres:%s@127.0.0.1:%s/%s' "$(cat "$1.su")" "$2" "${3:-postgres}"; }
@@ -278,7 +285,10 @@ d1() {
   local own app
   own="$(cat "$SECS/mth_owner_url")" app="$(cat "$SECS/mth_app_url")"
   DATABASE_OWNER_URL="$own" NODE_ENV=development MTHDB migrate
-  (cd "$SRC/packages/db" && DATABASE_OWNER_URL="$own" NODE_ENV=development AUTH_MODE=dev MTH_ENV=demo \
+  # T-DG7-DO-D4 (T-B11 attempts 5-6, D6): with AUTH_MODE=dev, seed-demo also binds every demo user to the dev issuer
+  # (D-165), so each carried demo user had 2 identities and mth-db rebind-identity (exactly 1) could rebind none of the
+  # demo actors. D1 signs in on S only as seed-dev users, so the demo is seeded without AUTH_MODE (one identity each).
+  (cd "$SRC/packages/db" && DATABASE_OWNER_URL="$own" NODE_ENV=development MTH_ENV=demo \
     node --conditions=@mth/source src/cli.ts seed-demo)
   (cd "$SRC/packages/db" && DATABASE_OWNER_URL="$own" NODE_ENV=development AUTH_MODE=dev \
     node --conditions=@mth/source src/cli.ts seed-dev)
@@ -372,7 +382,10 @@ t_owner() { cat "$SECS/mth_owner_url"; }
 reconcile() {
   local label="$1" rc=0 lower; shift
   lower="$(echo "$label" | tr 'A-Z' 'a-z')"
+  # T-DG7-DO-D4 (T-B11 attempt 4, D5): reconcile.mjs runs transfer-attachments verify against T's evidence store first
+  # (A1.8), which refused "BLOCKED: transfer-attachments verify: EVIDENCE_STORAGE_PATH is not set"; T's store is passed.
   (cd "$SRC" && DATABASE_OWNER_URL="$(t_owner)" NODE_ENV=production \
+    EVIDENCE_STORAGE_DRIVER=filesystem EVIDENCE_STORAGE_PATH="$WORK/evidence-T" \
     node tools/migration/reconcile.mjs --operator "$OPERATOR" --from "$PKG" "$@") >"$WORK/reconcile-$lower.txt" 2>&1 || rc=$?
   cat "$WORK/reconcile-$lower.txt"
   node -e 'const [f, out, label, rc, mode] = process.argv.slice(1); const text = require("node:fs").readFileSync(f, "utf8");
@@ -406,12 +419,19 @@ UNBOUND_SUB=""
 d6() {
   local su; su="$(su_url "$WORK/pgT" "$P_PG_T" mth)"
   # Every carried user is mapped to the drill IdP with a synthetic subject, except the last one (left unbound).
-  "$PGBIN/psql" -X -qAt -F, -d "$su" -c "select u.id, coalesce(u.email, '') from app_user u
+  # T-DG7-DO-D4 (T-B11 attempt 5, D6 exit 2: "line 15: user 01995000-1001-7000-8000-000000000002 has 2 carried
+  # identities; exactly 1 is needed"): mth-db rebind-identity maps a user with exactly one carried identity (rebind.ts).
+  # A carried user with another count is not mapped: it stays unbound and is listed here by id, never forced.
+  "$PGBIN/psql" -X -qAt -F, -d "$su" -c "select u.id, coalesce(u.email, ''),
+       (select count(*) from user_identity i where i.user_id = u.id) from app_user u
      join identity_binding_hold h on h.user_id = u.id and h.state = 'unbound' order by u.id" >"$WORK/carried.csv"
   [ -s "$WORK/carried.csv" ] || { echo "no carried user waits for a rebind"; return 1; }
   node -e '
     const fs = require("node:fs"); const [csv, issuer, map, users, unbound] = process.argv.slice(1);
-    const rows = fs.readFileSync(csv, "utf8").trim().split("\n").map((l) => l.split(","));
+    const all = fs.readFileSync(csv, "utf8").trim().split("\n").map((l) => l.split(","));
+    const rows = all.filter((r) => r[2] === "1");
+    for (const r of all.filter((x) => x[2] !== "1"))
+      console.log(`D6: carried user ${r[0]} has ${r[2]} carried identities; not mapped (rebind-identity needs exactly 1), left unbound`);
     const keep = rows.slice(0, -1), left = rows.at(-1);
     fs.writeFileSync(map, "user_id,action,new_issuer,new_subject\n" + keep.map(([id]) => `${id},rebind,${issuer},drill-${id}`).join("\n") + "\n");
     fs.writeFileSync(users, JSON.stringify(rows.map(([id, email]) => ({ sub: "drill-" + id, ...(email ? { email } : {}), name: "Drill user (synthetic)" }))));
@@ -420,7 +440,15 @@ d6() {
   echo "mapping sha256 $(sha256sum "$WORK/mapping.csv" | cut -d' ' -f1)"
   DATABASE_OWNER_URL="$(t_owner)" NODE_ENV=production MTHDB rebind-identity --mapping "$WORK/mapping.csv" --operator "$OPERATOR"
   reconcile D6
-  grep -q '"rebind"\|rebind' "$WORK/reconcile-d6.txt" || { echo "D6: the mode 1 recheck reports no rebind delta"; return 1; }
+  # T-DG7-DO-D4 (T-B11 attempt 6): mode 1 records the rebind delta in migration_reconciliation_delta and prints only the
+  # identity.rebound audit lines, so a text grep for "rebind" never matched. The latest recheck's recorded delta is read.
+  local delta
+  delta="$("$PGBIN/psql" -X -qAt -d "$su" -c "select d.basis || ' ' || d.table_name || ' changed ' || d.rows_changed
+     || ' allowed ' || d.allowed from migration_reconciliation_delta d
+     where d.migration_reconciliation_id = (select id from migration_reconciliation where run_kind = 'recheck'
+       order by run_at desc, id desc limit 1) and d.basis = 'rebind'")"
+  echo "D6: recorded delta: ${delta:-none}" | tee "$OUT/reconcile-d6-delta.txt"
+  [[ "$delta" == "rebind user_identity changed "*" allowed true" ]] || { echo "D6: the mode 1 recheck reports no rebind delta"; return 1; }
 }
 step D6 "mth-db rebind-identity --mapping <mapping.csv> --operator '$OPERATOR' (one carried user left unmapped); node tools/migration/reconcile.mjs --from <package> (mode 1, rebind delta)" d6
 
@@ -440,6 +468,7 @@ pick_actors() {
   local su; su="$(su_url "$WORK/pgT" "$P_PG_T" mth)"
   # T-DG7-DO-D3 (T-B11 run, T-B17): the gate.submit holder chosen before held no kpi_actual.submit, so D8 (b)'s KPI
   # value was refused 403; the query now also chooses a KPI actor. Shared with T-B17 (deploy/scripts/drill/pick-actors.sql).
+  # T-DG7-DO-D4: it also chooses the ADR-0064 A3.6 actors (K/V per KPI, W, O, L, X); journey.mjs reads them (--actors).
   "$PGBIN/psql" -X -qAt -v ON_ERROR_STOP=1 -d "$su" -v unbound="$(cat "$WORK/unbound.id")" \
     -f "$REPO/deploy/scripts/drill/pick-actors.sql" >"$WORK/actors.json"
   cat "$WORK/actors.json"
@@ -472,12 +501,15 @@ step D7 "start the drill IdP, the API and the worker from the runtime tree with 
 downloads() {
   local su; su="$(su_url "$WORK/pgT" "$P_PG_T" mth)"
   [ -f "$PKG/attachments.json" ] || { echo "[]" >"$WORK/downloads.json"; return 0; }
-  "$PGBIN/psql" -X -qAt -F, -d "$su" -c "select id, transformation_id from evidence" >"$WORK/evidence.csv"
+  # T-DG7-DO-D4 (T-B11 attempt 8, D8 "the download count 0 differs from the manifest count 2"): an attachment's parent
+  # is the evidence_content revision (export.ts attachmentRows: parentTable = the table naming the object), not the
+  # evidence row; its evidence_id and transformation_id give the download path.
+  "$PGBIN/psql" -X -qAt -F, -d "$su" -c "select id, evidence_id, transformation_id from evidence_content" >"$WORK/evidence.csv"
   node -e '
     const fs = require("node:fs"); const [att, csv, out] = process.argv.slice(1);
-    const tr = new Map(fs.readFileSync(csv, "utf8").trim().split("\n").filter(Boolean).map((l) => l.split(",")));
-    const items = JSON.parse(fs.readFileSync(att, "utf8")).items.filter((i) => i.parentTable === "evidence");
-    fs.writeFileSync(out, JSON.stringify(items.map((i) => ({ path: `/api/v1/transformations/${tr.get(i.parentId)}/evidence/${i.parentId}/content`, sha256: i.sha256 }))));' \
+    const by = new Map(fs.readFileSync(csv, "utf8").trim().split("\n").filter(Boolean).map((l) => { const [c, e, t] = l.split(","); return [c, { e, t }]; }));
+    const items = JSON.parse(fs.readFileSync(att, "utf8")).items.filter((i) => i.parentTable === "evidence_content" && by.has(i.parentId));
+    fs.writeFileSync(out, JSON.stringify(items.map((i) => ({ path: `/api/v1/transformations/${by.get(i.parentId).t}/evidence/${by.get(i.parentId).e}/content`, sha256: i.sha256 }))));' \
     "$PKG/attachments.json" "$WORK/evidence.csv" "$WORK/downloads.json"
 }
 check_download_count() { # the download count equals the attachment manifest's count
@@ -492,8 +524,7 @@ d8() {
   check_download_count D8
   node "$REPO/deploy/scripts/drill/journey.mjs" --mode oidc-drill --app "$ORIGIN_T" --issuer "$ISSUER_T" \
     --user "drill-$(actor submitter)" --approver "drill-$(actor approver)" --transformation "$(actor transformation)" \
-    --kpi-user "drill-$(actor kpiUser)" --kpi-definition "$(actor kpiDefinition)" \
-    --kpi-value-nature "$(actor kpiValueNature)" --gate "$(actor gate)" \
+    --actors "$WORK/actors.json" --sub-prefix drill- --gate "$(actor gate)" \
     --unbound-user "drill-$(cat "$WORK/unbound.id")" --source-origin "$ORIGIN_S" --downloads "$WORK/downloads.json" \
     --journal "$OUT/journal.json" --out "$OUT/journey-D8.json"
 }
