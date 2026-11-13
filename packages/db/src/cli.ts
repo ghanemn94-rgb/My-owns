@@ -19,8 +19,11 @@
 //                       [--report FILE]   the import into a target prepared with the reservation (ADR-0064 §6 and
 //                       Amendment 1; T-DG7-BE-D, T-DG7-BE-R1)                                      exit 0 | 1 | 2 | 3 | 4
 //   mth-db reconcile-migration --operator NAME [--attachments-report FILE]
-//                       [--after-use --from DIR --allow FILE [--report FILE]]   re-check of the recorded import
-//                       (ADR-0064 A1.9: mode 1, or mode 2 after use)                                    exit 0 | 2 | 4
+//                       [--after-use --from DIR --allow FILE] [--report FILE]   re-check of the recorded import
+//                       (ADR-0064 A1.9 with A2.3, A2.6: mode 1, or mode 2 after use with the allowance
+//                       mth-recheck-allowance/2; T-DG7-BE-R2)                                          exit 0 | 2 | 4
+//   mth-db table-digest --table T [--table T …] [--rows]   read-only, as mth_app (DATABASE_URL): one canonical JSON
+//                       line mth-table-digest/1 for exported tables (ADR-0064 A2; T-DG7-BE-R2)          exit 0 | 2
 //   mth-db rebind-identity --mapping FILE --operator NAME   identity rebind, all or nothing (ADR-0064 §8)  exit 0 | 2
 // bootstrap writes the production marker and refuses (exit 3) on a demo database (ADR-0050 §3).
 // ADR-0058 §2 (T-DG6-DO-E): bootstrap and seed-demo also refuse (exit 3, nothing changed) on a database that holds the
@@ -43,6 +46,7 @@ import { readFile } from "node:fs/promises";
 import { runExportMigrationCommand } from "./transfer/cli.ts";
 import { ImportRefused, reservedAuditStart, runImportMigrationCommand } from "./transfer/import.ts";
 import { runReconcileMigrationCommand } from "./transfer/reconcile.ts";
+import { runTableDigestCommand } from "./transfer/table-digest.ts";
 import { applyRebind, rebindLines } from "./transfer/rebind.ts";
 
 /** ADR-0058 §2: the refusal of bootstrap and seed-demo on a load database (exact text). */
@@ -71,8 +75,9 @@ const USAGE = `usage:
   mth-db import-migration --from DIR --operator NAME [--manifest-sha256 HEX] [--attachments-report FILE]
                           [--report FILE]
   mth-db reconcile-migration --operator NAME [--attachments-report FILE]
-                             [--after-use --from DIR --allow FILE [--report FILE]]
-  mth-db rebind-identity --mapping FILE --operator NAME`;
+                             [--after-use --from DIR --allow FILE] [--report FILE]
+  mth-db rebind-identity --mapping FILE --operator NAME
+  mth-db table-digest --table T [--table T …] [--rows]`;
 
 async function main(argv: string[]): Promise<number> {
   const [command, ...rest] = argv;
@@ -86,10 +91,34 @@ async function main(argv: string[]): Promise<number> {
     command !== "export-migration" &&
     command !== "import-migration" &&
     command !== "reconcile-migration" &&
-    command !== "rebind-identity"
+    command !== "rebind-identity" &&
+    command !== "table-digest"
   ) {
     console.error(USAGE);
     return 64;
+  }
+  if (command === "table-digest") {
+    // ADR-0064 A2 (p7-work-split §C.13): read-only, as mth_app (DATABASE_URL), exported tables only.
+    const { values } = parseArgs({
+      args: rest,
+      options: { table: { type: "string", multiple: true }, rows: { type: "boolean" } },
+      strict: true,
+    });
+    const url = process.env["DATABASE_URL"];
+    if (url === undefined || url === "") {
+      console.error("BLOCKED: table-digest needs DATABASE_URL (the mth_app role)");
+      return 2;
+    }
+    const db = createDb(createPool(url, { max: 1 }));
+    try {
+      return await runTableDigestCommand(
+        db,
+        { tables: values.table ?? [], rows: values.rows === true },
+        { out: (l) => console.log(l), err: (l) => console.error(l) },
+      );
+    } finally {
+      await db.destroy();
+    }
   }
   const config = loadConfig("db-cli");
   const ownerUrl = config.databaseOwnerUrl!;
@@ -239,8 +268,30 @@ async function main(argv: string[]): Promise<number> {
       );
     }
     if (command === "reconcile-migration") {
-      const { values } = parseArgs({ args: rest, options: { operator: { type: "string" } }, strict: true });
-      return await runReconcileMigrationCommand(db, { operator: values.operator }, io);
+      const { values } = parseArgs({
+        args: rest,
+        options: {
+          operator: { type: "string" },
+          "attachments-report": { type: "string" },
+          "after-use": { type: "boolean" },
+          from: { type: "string" },
+          allow: { type: "string" },
+          report: { type: "string" },
+        },
+        strict: true,
+      });
+      return await runReconcileMigrationCommand(
+        db,
+        {
+          operator: values.operator,
+          attachmentsReport: values["attachments-report"],
+          afterUse: values["after-use"] === true,
+          from: values.from,
+          allow: values.allow,
+          report: values.report,
+        },
+        io,
+      );
     }
     if (command === "rebind-identity") {
       const { values } = parseArgs({

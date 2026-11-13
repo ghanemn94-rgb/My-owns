@@ -8,10 +8,9 @@
 //           exits with its code and C.5 line and leaves the target unchanged;
 //   - T-C12 (refusal paths) audit_event's two triggers stay enabled after every step, and no audit row is written;
 //   - the reconciliation (step 8) of the package against its live source matches, and a changed table is reported;
-//   - T-R3 (= T-C8) is BLOCKED (T-DG7-BE-R1 handback §4, R1): on a target prepared with the reservation of ADR-0064
-//           A1.2, carried audit ids collide with the target's migration baseline (0068, 0069 and 0095 write
-//           deterministic ids), so the load stops at L1 (transfer-load.test.ts pins it). This file pins that a plainly
-//           migrated target is refused by E3 with the remedy in the line.
+//   - T-R3 (= T-C8, with P per ADR-0064 A2.10 residual 1) runs in transfer-load.test.ts on the real load (T-DG7-BE-R2:
+//           T-R13 with T-R3 and T-R4 on one import). This file pins that a plainly migrated target is refused by E3
+//           with the remedy in the line.
 // Every value is synthetic. Nothing here approves anything (no G1-G6, Finance or IT approval) or touches DG0-DG7.
 import { spawnSync } from "node:child_process";
 import { randomBytes } from "node:crypto";

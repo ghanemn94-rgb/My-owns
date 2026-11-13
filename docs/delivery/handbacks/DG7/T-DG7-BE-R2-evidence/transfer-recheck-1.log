@@ -1,0 +1,50 @@
+port-policy: PostgreSQL listening on port 24351 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/My-owns
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwf3g5sn_eb030822 (server_encoding UTF8); applied 133 migrations to a fresh database
+ ❯ |integration| packages/db/test/integration/transfer-recheck.test.ts (9 tests | 9 skipped) 10933ms
+   ↓ T-R17: tableDigest equals the export's contentDigest > for exported tables; --rows hashes each line; a non-exported table is refused with its line
+   ↓ T-R6: mode 1 after the import and a rebind > matched with audit_baseline, audit_already_present, audit_additions and rebind deltas, all allowed
+   ↓ T-R6: mode 1 after the import and a rebind > a further edit of the rebound identity's pair is unexplained (exit 4)
+   ↓ T-R6: mode 1 after the import and a rebind > an owner UPDATE of one non-audit row: exit 4 naming the table
+   ↓ T-R7 + T-R15: mode 2 (--after-use) with mth-recheck-allowance/2 > audited: the change by a listed actor is explained (exit 0 and the line); by another actor it is not
+   ↓ T-R7 + T-R15: mode 2 (--after-use) with mth-recheck-allowance/2 > audited mustInclude: a key not changed gives 'expected but not'
+   ↓ T-R7 + T-R15: mode 2 (--after-use) with mth-recheck-allowance/2 > tables (exact_ids): exactly the keys pass; a missing listing is unexpected; an extra listing is expected but not
+   ↓ T-R7 + T-R15: mode 2 (--after-use) with mth-recheck-allowance/2 > a table not listed is unexplained (exit 4 with the per-table line)
+   ↓ T-R7 + T-R15: mode 2 (--after-use) with mth-recheck-allowance/2 > every allowance refusal exits 2 with its line (A1.9 rule 7, A2.6 rule 6)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| packages/db/test/integration/transfer-recheck.test.ts [ packages/db/test/integration/transfer-recheck.test.ts ]
+error: relation "undefined" does not exist
+ ❯ node_modules/.pnpm/pg@8.16.3/node_modules/pg/lib/client.js:545:17
+ ❯ PostgresConnection.executeQuery node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:95:49
+ ❯ node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:35:28
+ ❯ DefaultConnectionProvider.provideConnection node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/default-connection-provider.js:10:20
+ ❯ DefaultQueryExecutor.executeQuery node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16
+ ❯ packages/db/test/integration/transfer-recheck.test.ts:132:16
+    130|     }
+    131|   }
+    132|   auditedId = (await sql<{ id: string }>`${sql.raw(`SELECT min(id::tex…
+       |                ^
+    133|     .rows[0]!.id;
+    134|   const users = await target.db.selectFrom("app_user").select("id").or…
+ ❯ PostgresConnection.executeQuery node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:107:41
+ ❯ node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:35:28
+ ❯ DefaultConnectionProvider.provideConnection node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/default-connection-provider.js:10:20
+ ❯ DefaultQueryExecutor.executeQuery node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16
+ ❯ packages/db/test/integration/transfer-recheck.test.ts:132:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  9 skipped (9)
+   Start at  14:50:30
+   Duration  16.44s (transform 1.03s, setup 0ms, collect 1.91s, tests 10.93s, environment 0ms, prepare 83ms)
+

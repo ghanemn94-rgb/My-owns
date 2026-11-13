@@ -79,9 +79,12 @@ export {
 } from "./run.ts";
 export { runExportMigrationCommand, type ExportCliIo, type ExportCliOptions } from "./cli.ts";
 export {
+  alreadyPresentLine,
   assertAuditTriggersEnabled,
+  AUDIT_DATABASE_ASSIGNED,
   AUDIT_TRIGGERS,
   auditHistoryLine,
+  checkSharedAuditIds,
   BASELINE_PREDICATE,
   checkEmptyTarget,
   checkPackage,
@@ -112,6 +115,8 @@ export {
 export {
   buildReport,
   EMPTY_DIGEST,
+  encodeCarriedAudit,
+  type AuditAlreadyPresent,
   MIGRATION_IMPORT_LOCK_CLASS,
   MIGRATION_IMPORT_LOCK_KEY,
   pinEncoderSettings,
@@ -120,6 +125,7 @@ export {
   reconcileTables,
   recordReconciliation,
   runReconcileMigrationCommand,
+  type ReconcileCliOptions,
   type DeltaBasis,
   type ReconciliationDelta,
   type RunKind,
@@ -145,3 +151,33 @@ export {
   type ParsedMapping,
   type RebindOutcome,
 } from "./rebind.ts";
+export {
+  digestOfLines,
+  encodedRows,
+  runTableDigestCommand,
+  TABLE_DIGEST_SCHEMA_VERSION,
+  tableDigest,
+  TableDigestRefused,
+  type EncodedRow,
+  type EncodedRows,
+  type TableDigest,
+  type TableDigestCliIo,
+} from "./table-digest.ts";
+export {
+  ALLOWANCE_SCHEMA_VERSION,
+  AllowanceRefused,
+  checkAuditTrail,
+  childrenOrder,
+  compareRows,
+  explainAudited,
+  explainChildren,
+  isNeverOperational,
+  parseAllowance,
+  RECHECK_FINANCIAL_TABLES,
+  RECHECK_NEVER_OPERATIONAL,
+  RECHECK_OPERATIONAL_TABLES,
+  reverseRebinds,
+  validateAllowance,
+  type Allowance,
+  type KeyTuple,
+} from "./recheck.ts";

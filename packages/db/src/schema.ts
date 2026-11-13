@@ -7330,6 +7330,7 @@ export interface MigrationImportTable {
   audit_baseline_seq_max: string | null;
   audit_baseline_digest: string | null;
   seed_rows_replaced: string | null;
+  audit_already_present_rows: string | null;
 }
 
 export interface MigrationReconciliationTable {
@@ -13714,6 +13715,7 @@ export const SCHEMA_COLUMNS = {
     "audit_baseline_seq_max",
     "audit_baseline_digest",
     "seed_rows_replaced",
+    "audit_already_present_rows",
   ],
   migration_reconciliation: [
     "id",

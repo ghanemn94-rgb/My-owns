@@ -12,11 +12,15 @@
 //           <appVersion>, the package was written by <appVersion>`).
 //   L0-L12  ONE transaction under the session lock 730403 (A1.4): pinned encoder settings and
 //           `LOCK TABLE audit_event IN EXCLUSIVE MODE`; E1-E4 (A1.3: no use, baseline-only audit rows, the audit
-//           sequence reserved above the package's highest seq M, both audit triggers enabled); the baseline recorded;
+//           sequence reserved above the package's highest seq M, both audit triggers enabled); E5 (Amendment 2 §A2.2:
+//           a carried audit row whose id exists on the target must be the identical migration baseline event, else
+//           exit 1; such rows, P, are never inserted, and their source seq and time go into migration.imported's
+//           auditAlreadyPresent); the baseline recorded;
 //           user triggers off on every exported table EXCEPT audit_event; the migration seeds deleted (never from
 //           audit_event, never TRUNCATE); every table loaded with its own ids (audit_event too, with its own id and
-//           seq); the deferred columns set; sequences raised, never lowered; user triggers back on; the
-//           reconciliation (audit_event over seq <= M, the baseline re-checked, the attachment report); on a mismatch
+//           seq), except P, with the inserted count checked; the deferred columns set; sequences raised, never lowered; user triggers back on; the
+//           reconciliation (audit_event as the reconstructed carried trail of A2.3, the baseline re-checked, the
+//           attachment report); on a mismatch
 //           ROLLBACK and exit 4; else migration_import, the holds, the reconciliation rows and the appended audit
 //           events migration.imported, migration.reconciled and identity.binding_held, then COMMIT.
 // audit_event is never updated, deleted from or truncated, and its triggers are never disabled (D-258).
@@ -37,7 +41,7 @@ import {
   requireAttachmentReport,
   type ParsedAttachmentReport,
 } from "./attachment-report.ts";
-import { confinedPath, encodeTable, transferSha256 } from "./export.ts";
+import { confinedPath, encodeLine, encodeTable, transferSha256 } from "./export.ts";
 import {
   ATTACHMENT_MANIFEST_FILE,
   decodeStrictUtf8,
@@ -58,9 +62,11 @@ import {
   reconcileTables,
   recordReconciliation,
   withMigrationImportLock,
+  type AuditAlreadyPresent,
   type ReconciliationDelta,
   type ReconciliationReport,
 } from "./reconcile.ts";
+import { encodedRows } from "./table-digest.ts";
 
 /** A refusal with its exit code and C.5 line. */
 export class ImportRefused extends Error {
@@ -280,27 +286,103 @@ export async function checkEmptyTarget(tx: DbOrTx, carriedSeqMax: bigint, dir: s
   await assertAuditTriggersEnabled(tx);
 }
 
+// ------------------------------------------------------------------------------------------------ A2.2: E5
+
+/** The two audit_event columns the database assigns at insert time: recorded, never compared (ADR-0064 A2.1). */
+export const AUDIT_DATABASE_ASSIGNED = ["seq", "occurred_at"] as const;
+
+/** The E2 baseline predicate over one row's column texts (a package line or a live row encoded alike). */
+function isBaselineRow(get: (column: string) => unknown): boolean {
+  return (
+    get("source") === "migration" &&
+    get("actor_type") === "system" &&
+    get("actor_user_id") === null &&
+    get("on_behalf_of_user_id") === null &&
+    get("organization_id") === null &&
+    get("transformation_id") === null
+  );
+}
+
 /**
- * Measured by T-DG7-BE-R1 (handback §4, open question R1): migrations 0068, 0069 and 0095 write audit_event rows with
- * DETERMINISTIC ids, so a source's carried history and a target's migration baseline hold rows with the same id. A1.4
- * L5 assumes no carried id collides with a baseline row; the PRIMARY KEY would refuse the load. The import does not
- * skip, renumber or re-identify any audit row (C.12 hard rules), so it stops here, inside the transaction, before
- * anything is changed, and reports the count (exit 1) until the architect decides.
+ * E5 (ADR-0064 A2.2): inside the load transaction, after the audit_event lock. P is the set of carried rows whose id
+ * exists on the target. Each must be the same event: both copies migration baseline rows (the E2 predicate), and the
+ * 13 columns of A2.1 (every column but seq and occurred_at) identical by the exact JSON text of the §2.3 encoder.
+ * Decided on the whole encoded line (the live row with the package's seq and occurred_at overlaid must equal the
+ * package line byte for byte); the columns named in a refusal are found column by column. Any failure refuses the
+ * import with exit 1 (the A2.7 lines); nothing is written. Returns P sorted by id with each source seq and time.
  */
-export async function checkAuditIdCollisions(tx: DbOrTx, carried: PackageAuditRange): Promise<void> {
-  if (carried.ids.length === 0) return;
-  const r = (
-    await sql<{ n: string; first: string | null }>`
-      SELECT count(*)::text AS n, min(id::text) AS first FROM audit_event WHERE id = ANY(${carried.ids}::uuid[])`.execute(
-      tx,
-    )
-  ).rows[0]!;
-  if (r.n !== "0")
+export async function checkSharedAuditIds(
+  tx: DbOrTx,
+  pkg: CheckedPackage,
+  carried: PackageAuditRange,
+  plan: TransferPlan,
+): Promise<AuditAlreadyPresent[]> {
+  const audit = plan.tables.find((t) => t.name === "audit_event");
+  if (audit === undefined || carried.ids.length === 0) return [];
+  const shared = new Set<string>();
+  for (let i = 0; i < carried.ids.length; i += 5000) {
+    const r = await sql<{ id: string }>`
+      SELECT id::text AS id FROM audit_event WHERE id = ANY(${carried.ids.slice(i, i + 5000)}::uuid[])`.execute(tx);
+    for (const row of r.rows) shared.add(row.id);
+  }
+  if (shared.size === 0) return [];
+  const file = pkg.manifest.tables.find((t) => t.name === "audit_event")!.file;
+  const lines = new Map<string, { line: string; row: Record<string, unknown> }>();
+  for (const line of await tableLines(pkg, file)) {
+    const row = JSON.parse(line) as Record<string, unknown>;
+    const id = row["id"];
+    if (typeof id === "string" && shared.has(id)) lines.set(id, { line, row });
+  }
+  const live = await encodedRows(tx, audit, plan.rewrittenColumns, {
+    where: `id = ANY('{${[...shared].join(",")}}'::uuid[])`,
+  });
+  const { kinds } = live;
+  const assigned = AUDIT_DATABASE_ASSIGNED.map((c) => kinds.findIndex((k) => k.name === c));
+  const failures: string[] = [];
+  const present: AuditAlreadyPresent[] = [];
+  for (const r of live.rows) {
+    const id = r.values[0] ?? "";
+    const pkgCopy = lines.get(id);
+    if (pkgCopy === undefined) continue;
+    const valueOf = (c: string) => r.values[kinds.findIndex((k) => k.name === c)] ?? null;
+    if (!isBaselineRow((c) => pkgCopy.row[c] ?? null)) {
+      failures.push(`import-migration: ${id}: not a migration baseline event on the source`);
+      continue;
+    }
+    if (!isBaselineRow(valueOf)) {
+      failures.push(`import-migration: ${id}: not a migration baseline event on the target`);
+      continue;
+    }
+    const sourceSeq = pkgCopy.row["seq"];
+    const sourceOccurredAt = pkgCopy.row["occurred_at"];
+    const overlaid = [...r.values];
+    overlaid[assigned[0]!] = typeof sourceSeq === "string" ? sourceSeq : null;
+    overlaid[assigned[1]!] = typeof sourceOccurredAt === "string" ? sourceOccurredAt : null;
+    if (encodeLine(kinds, overlaid) === pkgCopy.line && typeof sourceSeq === "string") {
+      present.push({ id, sourceSeq, sourceOccurredAt: sourceOccurredAt as string });
+      continue;
+    }
+    const differ = kinds
+      .filter((k) => !(AUDIT_DATABASE_ASSIGNED as readonly string[]).includes(k.name))
+      .filter((k) => {
+        const mine = valueOf(k.name);
+        const theirs = pkgCopy.row[k.name] ?? null;
+        if (k.kind === "text" || k.kind === "bool") return mine !== theirs;
+        return JSON.stringify(mine === null ? null : JSON.parse(mine)) !== JSON.stringify(theirs);
+      })
+      .map((k) => k.name);
+    failures.push(
+      `import-migration: ${id}: differs in ${differ.length > 0 ? differ.join(", ") : kinds.map((k) => k.name).join(", ")}`,
+    );
+  }
+  if (failures.length > 0)
     throw new ImportRefused(
       1,
-      `import-migration: failed: ${r.n} carried audit events share their id with the target's migration baseline ` +
-        `(first ${r.first}); ADR-0064 Amendment 1 does not provide for this, and no audit row is skipped or renumbered`,
+      `import-migration: failed: ${failures.length} carried audit events share their id with a target audit event ` +
+        "but are not the same event; nothing was imported",
+      failures.slice(0, 20),
     );
+  return present.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
 }
 
 // ------------------------------------------------------------------------------------------------ A1.4: the load
@@ -368,15 +450,22 @@ async function generatedAndIdentity(tx: Tx, table: string): Promise<{ generated:
   };
 }
 
-/** L5: one table, in batches, deferred columns as null. */
-async function loadTable(ctx: LoadContext, table: TransferPlanTable, file: string): Promise<void> {
+/** L5: one table, in batches, deferred columns as null; `skip` holds ids never inserted (A2.2: P, audit_event only). */
+async function loadTable(
+  ctx: LoadContext,
+  table: TransferPlanTable,
+  file: string,
+  skip: ReadonlySet<string> = new Set(),
+): Promise<void> {
   const { generated, identity } = await generatedAndIdentity(ctx.tx, table.name);
   const direct = await directDeferred(ctx.tx, table);
   const cols = table.columns.map((c) => c.name).filter((c) => !generated.has(c));
   const select = cols
     .map((c) => (table.deferredColumns.includes(c) && !direct.has(c) ? "NULL" : `r.${quoteIdent(c)}`))
     .join(", ");
-  const lines = orderedLines(table, await tableLines(ctx.pkg, file));
+  const all = await tableLines(ctx.pkg, file);
+  const kept = skip.size === 0 ? all : all.filter((l) => !skip.has((JSON.parse(l) as { id?: string }).id ?? ""));
+  const lines = orderedLines(table, kept);
   const head =
     `INSERT INTO ${quoteIdent(table.name)} (${cols.map(quoteIdent).join(", ")})` +
     `${identity ? " OVERRIDING SYSTEM VALUE" : ""} SELECT ${select} ` +
@@ -385,6 +474,74 @@ async function loadTable(ctx: LoadContext, table: TransferPlanTable, file: strin
     const json = `[${lines.slice(i, i + BATCH).join(",")}]`;
     await sql`${sql.raw(head)}${json}::jsonb${sql.raw(") AS r")}`.execute(ctx.tx);
   }
+}
+
+/** The tables a table's deferred columns reference through a foreign key that is NOT DEFERRABLE (never itself). */
+async function nonDeferrableParents(tx: Tx, table: TransferPlanTable): Promise<string[]> {
+  if (table.deferredColumns.length === 0) return [];
+  const r = await sql<{ parent: string; cols: string[] }>`
+    SELECT con.confrelid::regclass::text AS parent,
+           array_agg(a.attname::text ORDER BY a.attname) AS cols
+      FROM pg_constraint con
+      CROSS JOIN LATERAL unnest(con.conkey) AS k(attnum)
+      JOIN pg_attribute a ON a.attrelid = con.conrelid AND a.attnum = k.attnum
+     WHERE con.contype = 'f' AND NOT con.condeferrable AND con.conrelid = ${quoteIdent(table.name)}::regclass
+       AND con.confrelid <> con.conrelid
+     GROUP BY con.oid, con.confrelid`.execute(tx);
+  return [
+    ...new Set(r.rows.filter((x) => x.cols.some((c) => table.deferredColumns.includes(c))).map((x) => x.parent)),
+  ].sort();
+}
+
+/** Per column of `table`: the tables its foreign keys reference (self included). */
+async function referencedTables(tx: Tx, table: string): Promise<Map<string, string[]>> {
+  const r = await sql<{ col: string; parent: string }>`
+    SELECT a.attname::text AS col, con.confrelid::regclass::text AS parent
+      FROM pg_constraint con
+      CROSS JOIN LATERAL unnest(con.conkey) AS k(attnum)
+      JOIN pg_attribute a ON a.attrelid = con.conrelid AND a.attnum = k.attnum
+     WHERE con.contype = 'f' AND con.conrelid = ${quoteIdent(table)}::regclass`.execute(tx);
+  const out = new Map<string, string[]>();
+  for (const x of r.rows) out.set(x.col, [...(out.get(x.col) ?? []), x.parent]);
+  return out;
+}
+
+/**
+ * L5 for a plan cycle whose deferred column a CHECK or NOT NULL rule refuses as null and whose foreign key is NOT
+ * DEFERRABLE (measured by T-DG7-BE-R2: gate_instance.current_submission_id, CHECK gate_instance_draft_unsubmitted,
+ * with gate_instance <-> gate_submission). The group (the plan tables from the refused one up to its last
+ * non-deferrable parent, in plan order) loads in ONE statement of data-modifying CTEs, so the RESTRICT foreign keys are
+ * checked at the statement's end, when every side exists (the counterpart of L4's single DELETE statement). A deferred
+ * column loads with its value when every table its keys reference is loaded or in the group; otherwise as null, set by
+ * L6. No row is changed or left out; no constraint or trigger beyond L3's is disabled.
+ */
+async function loadTogether(
+  ctx: LoadContext,
+  group: readonly { table: TransferPlanTable; file: string }[],
+  loaded: ReadonlySet<string>,
+): Promise<void> {
+  const inGroup = new Set(group.map((g) => g.table.name));
+  let query = sql``;
+  for (let i = 0; i < group.length; i += 1) {
+    const { table, file } = group[i]!;
+    const { generated, identity } = await generatedAndIdentity(ctx.tx, table.name);
+    const refs = await referencedTables(ctx.tx, table.name);
+    const cols = table.columns.map((c) => c.name).filter((c) => !generated.has(c));
+    const direct = (c: string) =>
+      !table.deferredColumns.includes(c) || (refs.get(c) ?? []).every((t) => loaded.has(t) || inGroup.has(t));
+    const json = `[${(await tableLines(ctx.pkg, file)).join(",")}]`;
+    const insert =
+      `INSERT INTO ${quoteIdent(table.name)} (${cols.map(quoteIdent).join(", ")})` +
+      `${identity ? " OVERRIDING SYSTEM VALUE" : ""} SELECT ${cols
+        .map((c) => (direct(c) ? `r.${quoteIdent(c)}` : "NULL"))
+        .join(", ")} FROM jsonb_populate_recordset(NULL::${quoteIdent(table.name)}, `;
+    const last = i === group.length - 1;
+    const open = i === 0 && !last ? "WITH " : "";
+    const prefix = last ? "" : `i${i} AS (`;
+    const suffix = last ? ") AS r" : `) AS r RETURNING 1)${i === group.length - 2 ? " " : ", "}`;
+    query = sql`${query}${sql.raw(`${open}${prefix}${insert}`)}${json}::jsonb${sql.raw(suffix)}`;
+  }
+  await query.execute(ctx.tx);
 }
 
 /** L6: the deferred columns, set from the package by primary key. */
@@ -490,6 +647,10 @@ export interface ImportSummary {
   readonly carried: PackageAuditRange;
   readonly baseline: Baseline;
   readonly seedRowsReplaced: ReadonlyMap<string, bigint>;
+  /** P (A2.2), sorted by id. */
+  readonly present: readonly AuditAlreadyPresent[];
+  /** The lowest seq of the inserted carried rows, null when none was inserted. */
+  readonly insertedSeqMin: bigint | null;
 }
 
 interface LoadInput {
@@ -516,7 +677,6 @@ async function loadInTransaction(tx: Tx, input: LoadInput): Promise<ImportSummar
   await step("L0");
   // L1
   await checkEmptyTarget(tx, carried.seqMax, pkg.dir);
-  await checkAuditIdCollisions(tx, carried);
   const plan = await buildPlan(tx);
   const ctx: LoadContext = { tx, pkg, plan };
   const fileOf = new Map(manifest.tables.map((t) => [t.name, t]));
@@ -534,6 +694,9 @@ async function loadInTransaction(tx: Tx, input: LoadInput): Promise<ImportSummar
       1,
       "import-migration: failed: the plan defers a column of audit_event, which can never be updated",
     );
+  // E5 (A2.2): P, after the lock, inside this transaction.
+  const present = await checkSharedAuditIds(tx, pkg, carried, plan);
+  const presentIds = new Set(present.map((e) => e.id));
   await step("L1");
   // L2
   const baseline = await measureBaseline(tx, carried.seqMax);
@@ -558,7 +721,48 @@ async function loadInTransaction(tx: Tx, input: LoadInput): Promise<ImportSummar
   });
   await step("L4");
   // L5
-  for (const t of plan.tables) await loadTable(ctx, t, fileOf.get(t.name)!.file);
+  const loadedTables = new Set<string>();
+  for (const t of plan.tables) {
+    if (loadedTables.has(t.name)) continue;
+    loadedTables.add(t.name);
+    const parents = (await nonDeferrableParents(tx, t)).filter((p) => !loadedTables.has(p));
+    if (parents.length === 0 || t.name === "audit_event") {
+      await loadTable(ctx, t, fileOf.get(t.name)!.file, t.name === "audit_event" ? presentIds : new Set());
+      continue;
+    }
+    // A deferred column with a NOT DEFERRABLE key: the null may be refused by a CHECK (measured: gate_instance).
+    await sql`SAVEPOINT mth_l5_table`.execute(tx);
+    try {
+      await loadTable(ctx, t, fileOf.get(t.name)!.file);
+      await sql`RELEASE SAVEPOINT mth_l5_table`.execute(tx);
+    } catch (err) {
+      const code = (err as { code?: string }).code;
+      if (code !== "23514" && code !== "23502") throw err;
+      await sql`ROLLBACK TO SAVEPOINT mth_l5_table`.execute(tx);
+      const from = plan.tables.indexOf(t);
+      const to = Math.max(...parents.map((p) => plan.tables.findIndex((x) => x.name === p)));
+      const group = plan.tables
+        .slice(from, to + 1)
+        .filter((x) => x.name === t.name || (!loadedTables.has(x.name) && x.name !== "audit_event"))
+        .map((x) => ({ table: x, file: fileOf.get(x.name)!.file }));
+      await loadTogether(ctx, group, loadedTables);
+      for (const g of group) {
+        loadedTables.add(g.table.name);
+      }
+    }
+  }
+  const loaded = (
+    await sql<{ n: string; lo: string | null }>`
+      SELECT count(*)::text AS n, min(seq)::text AS lo FROM audit_event WHERE seq <= ${carried.seqMax.toString()}::bigint`.execute(
+      tx,
+    )
+  ).rows[0]!;
+  const expectedLoaded = carried.rows - BigInt(present.length);
+  if (BigInt(loaded.n) !== expectedLoaded)
+    throw new ImportRefused(
+      1,
+      `import-migration: failed: audit_event loaded ${loaded.n} rows, expected ${expectedLoaded.toString()}`,
+    );
   await step("L5");
   // L6
   for (const t of plan.tables) await secondPass(ctx, t, fileOf.get(t.name)!.file);
@@ -566,12 +770,18 @@ async function loadInTransaction(tx: Tx, input: LoadInput): Promise<ImportSummar
   // L7
   await raiseSequences(ctx);
   await step("L7");
-  // L8
+  // L8. The DEFERRABLE foreign keys deferred at L0 are checked now, retroactively, over every loaded row (ALTER TABLE
+  // refuses a table with pending trigger events); the mode then goes back to deferred for L11 and L12.
+  await sql`SET CONSTRAINTS ALL IMMEDIATE`.execute(tx);
+  await sql`SET CONSTRAINTS ALL DEFERRED`.execute(tx);
   for (const t of others) await sql`${sql.raw(`ALTER TABLE ${quoteIdent(t.name)} ENABLE TRIGGER USER`)}`.execute(tx);
   await assertAuditTriggersEnabled(tx);
   await step("L8");
   // L9
-  const tables = await reconcileTables(tx, manifest.tables, { auditCarriedSeqMax: carried.seqMax });
+  const tables = await reconcileTables(tx, manifest.tables, {
+    auditCarriedSeqMax: carried.seqMax,
+    auditAlreadyPresent: present,
+  });
   const again = await measureBaseline(tx, carried.seqMax);
   const baselineKept = sameBaseline(baseline, again);
   const deltas: ReconciliationDelta[] = [
@@ -582,6 +792,14 @@ async function loadInTransaction(tx: Tx, input: LoadInput): Promise<ImportSummar
       rowsChanged: "0",
       rowsMissing: "0",
       allowed: baselineKept,
+    },
+    {
+      tableName: "audit_event",
+      basis: "audit_already_present",
+      rowsAdded: "0",
+      rowsChanged: String(present.length),
+      rowsMissing: "0",
+      allowed: true,
     },
   ];
   const lines: string[] = [];
@@ -630,6 +848,7 @@ async function loadInTransaction(tx: Tx, input: LoadInput): Promise<ImportSummar
       audit_baseline_seq_max: baseline.seqMax?.toString() ?? null,
       audit_baseline_digest: baseline.digest,
       seed_rows_replaced: seedTotal.toString(),
+      audit_already_present_rows: String(present.length),
     })
     .execute();
   const users = await tx.selectFrom("app_user").select(["id", "organization_id"]).orderBy("id").execute();
@@ -675,6 +894,7 @@ async function loadInTransaction(tx: Tx, input: LoadInput): Promise<ImportSummar
           },
         },
         seedRowsReplaced: { from: null, to: { total: seedTotal.toString(), tables: counts } },
+        auditAlreadyPresent: { from: null, to: { rows: String(present.length), entries: present } },
       },
     },
   );
@@ -703,6 +923,8 @@ async function loadInTransaction(tx: Tx, input: LoadInput): Promise<ImportSummar
     carried,
     baseline,
     seedRowsReplaced,
+    present,
+    insertedSeqMin: loaded.lo === null ? null : BigInt(loaded.lo),
   };
 }
 
@@ -727,17 +949,30 @@ export interface ImportCliOptions {
 
 const OPERATOR = /^[\p{L}\p{N} ._@-]{1,100}$/u;
 
-/** The audit history line printed after the C.5 success line (A1.4). */
-export function auditHistoryLine(carried: PackageAuditRange, baseline: Baseline): string {
+/**
+ * The audit history line printed after the C.5 success line (A1.4); `<c>` counts the carried rows inserted (A2.2),
+ * from the lowest inserted seq to M.
+ */
+export function auditHistoryLine(
+  carried: PackageAuditRange,
+  baseline: Baseline,
+  presentRows = 0,
+  insertedSeqMin: bigint | null = carried.seqMin,
+): string {
   const target =
     baseline.rows === 0n
       ? `${baseline.rows} target migration events`
       : `${baseline.rows} target migration events (seq ${baseline.seqMin}-${baseline.seqMax})`;
   return (
-    `import-migration: audit history: ${carried.rows} carried events (seq ${carried.seqMin ?? 0}-${carried.seqMax}) ` +
-    `and ${target} kept; nothing was renumbered`
+    `import-migration: audit history: ${carried.rows - BigInt(presentRows)} carried events ` +
+    `(seq ${insertedSeqMin ?? 0}-${carried.seqMax}) and ${target} kept; nothing was renumbered`
   );
 }
+
+/** The A2.2 line printed after the audit-history line when |P| > 0. */
+export const alreadyPresentLine = (p: number): string =>
+  `import-migration: audit history: ${p} carried events were already present as identical target migration events ` +
+  "(same id and content); their source seq and time are recorded in migration.imported, and none was inserted twice";
 
 /** `mth-db import-migration`; returns the exit code. */
 export async function runImportMigrationCommand(db: Db, opts: ImportCliOptions, io: ImportCliIo): Promise<number> {
@@ -798,7 +1033,8 @@ export async function runImportMigrationCommand(db: Db, opts: ImportCliOptions, 
       const lines = [
         `import-migration: imported ${summary.rows} rows in ${summary.tables} tables and ${summary.attachments} ` +
           `attachments; reconciliation matched; ${summary.holds} users wait for an identity rebind`,
-        auditHistoryLine(summary.carried, summary.baseline),
+        auditHistoryLine(summary.carried, summary.baseline, summary.present.length, summary.insertedSeqMin),
+        ...(summary.present.length > 0 ? [alreadyPresentLine(summary.present.length)] : []),
       ];
       for (const l of lines) io.out(l);
       await writeReport(lines);

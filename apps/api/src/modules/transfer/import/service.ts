@@ -26,7 +26,7 @@ const timestamp = z.iso.datetime({ offset: true });
 
 export const reconciliationSummaryView = z.strictObject({
   id: z.uuid(),
-  runKind: z.enum(["import", "recheck"]),
+  runKind: z.enum(["import", "recheck", "recheck_after_use"]),
   result: z.enum(["matched", "mismatched"]),
   tablesChecked: z.number().int().min(0),
   tablesMismatched: z.number().int().min(0),
@@ -39,8 +39,30 @@ export const reconciliationSummaryView = z.strictObject({
 });
 export type ReconciliationSummaryView = z.infer<typeof reconciliationSummaryView>;
 
+export const DELTA_BASES = [
+  "audit_baseline",
+  "audit_additions",
+  "audit_already_present",
+  "rebind",
+  "exact_ids",
+  "audit_explained",
+  "child_of",
+  "operational",
+  "unexplained",
+] as const;
+
 export const reconciliationView = z.strictObject({
   summary: reconciliationSummaryView,
+  deltas: z.array(
+    z.strictObject({
+      tableName: z.string(),
+      basis: z.enum(DELTA_BASES),
+      rowsAdded: count,
+      rowsChanged: count,
+      rowsMissing: count,
+      allowed: z.boolean(),
+    }),
+  ),
   tables: z.array(
     z.strictObject({
       tableName: z.string(),
@@ -86,6 +108,14 @@ export const migrationImportView = z.strictObject({
   operatorName: z.string(),
   startedAt: timestamp,
   importedAt: timestamp,
+  auditCarriedRows: count.nullable(),
+  auditCarriedSeqMax: count.nullable(),
+  auditBaselineRows: count.nullable(),
+  auditBaselineSeqMin: count.nullable(),
+  auditBaselineSeqMax: count.nullable(),
+  auditBaselineDigest: sha.nullable(),
+  seedRowsReplaced: count.nullable(),
+  auditAlreadyPresentRows: count.nullable(),
   latestReconciliation: reconciliationSummaryView,
   identities: z.strictObject({
     unbound: z.number().int().min(0),
@@ -205,7 +235,17 @@ interface ImportRow {
   operator_name: string;
   started_at: Date;
   imported_at: Date;
+  audit_carried_rows: string | null;
+  audit_carried_seq_max: string | null;
+  audit_baseline_rows: string | null;
+  audit_baseline_seq_min: string | null;
+  audit_baseline_seq_max: string | null;
+  audit_baseline_digest: string | null;
+  seed_rows_replaced: string | null;
+  audit_already_present_rows: string | null;
 }
+
+const textOrNull = (v: string | number | bigint | null): string | null => (v === null ? null : String(v));
 
 /** One import with its latest reconciliation (every import has its own run, written in the import's transaction). */
 export async function presentImport(db: DbOrTx, r: ImportRow): Promise<MigrationImportView> {
@@ -227,6 +267,14 @@ export async function presentImport(db: DbOrTx, r: ImportRow): Promise<Migration
     operatorName: r.operator_name,
     startedAt: iso(r.started_at),
     importedAt: iso(r.imported_at),
+    auditCarriedRows: textOrNull(r.audit_carried_rows),
+    auditCarriedSeqMax: textOrNull(r.audit_carried_seq_max),
+    auditBaselineRows: textOrNull(r.audit_baseline_rows),
+    auditBaselineSeqMin: textOrNull(r.audit_baseline_seq_min),
+    auditBaselineSeqMax: textOrNull(r.audit_baseline_seq_max),
+    auditBaselineDigest: r.audit_baseline_digest,
+    seedRowsReplaced: textOrNull(r.seed_rows_replaced),
+    auditAlreadyPresentRows: textOrNull(r.audit_already_present_rows),
     latestReconciliation: presentReconciliationSummary(latest),
     identities: await identityCounts(db, r.id),
   });
@@ -263,8 +311,23 @@ export async function findReconciliation(
     .orderBy("object_name")
     .orderBy("id")
     .execute();
+  const deltas = await db
+    .selectFrom("migration_reconciliation_delta")
+    .selectAll()
+    .where("migration_reconciliation_id", "=", run.id)
+    .orderBy("table_name")
+    .orderBy("basis")
+    .execute();
   return reconciliationView.parse({
     summary: presentReconciliationSummary(run),
+    deltas: deltas.map((d) => ({
+      tableName: d.table_name,
+      basis: d.basis,
+      rowsAdded: text(d.rows_added),
+      rowsChanged: text(d.rows_changed),
+      rowsMissing: text(d.rows_missing),
+      allowed: d.allowed,
+    })),
     tables: tables.map((t) => ({
       tableName: t.table_name,
       expectedRows: text(t.expected_rows),

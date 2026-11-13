@@ -270,3 +270,57 @@ describe("parseRegister and buildSnapshot (exports)", () => {
     assert.equal(snap.externalDependencies, null);
   });
 });
+
+// T-R16 (ADR-0064 Amendment 2 §A2.8 item 2; p7-work-split §C.13; T-DG7-BE-R2): the early guard. The snapshot built from
+// the tree's register goes into dist/release/ (the runtime tree, target T1 of ADR-0062 §8), so every field of every
+// row must pass the asset scan there: no R1, R2, R3, R5 or R6 hit, and every R4 hit allowed by a T1 host entry of the
+// allow-list. A register edit that reintroduces a build-host path then fails here, naming the row, column and rule.
+// register-snapshot.mjs itself is unchanged (A2.8). scanLine is imported read-only from tools/release/scan-assets.mjs.
+const { scanLine } = await import(new URL("../../../tools/release/scan-assets.mjs", import.meta.url).href);
+const ALLOWLIST = JSON.parse(
+  readFileSync(fileURLToPath(new URL("../../../tools/release/asset-scan-allowlist.json", import.meta.url)), "utf8"),
+);
+
+/** The T1 findings of a snapshot: `<row id> <column> <rule>` for every disallowed hit. */
+function t1Findings(snapshot) {
+  const hosts = ALLOWLIST.entries.filter((e) => e.rule === "R4" && e.target === "T1" && typeof e.host === "string");
+  const out = [];
+  for (const row of snapshot.rows)
+    row.forEach((value, i) => {
+      for (const line of String(value).split("\n"))
+        for (const hit of scanLine(line, { target: "T1" })) {
+          if (hit.rule === "R4" && hosts.some((e) => hit.host === e.host || hit.host?.endsWith(`.${e.host}`))) continue;
+          out.push(`${row[0]} ${snapshot.columns[i]} ${hit.rule}`);
+        }
+    });
+  return out;
+}
+
+describe("T-R16: the register snapshot passes the T1 asset scan (A2.8)", () => {
+  it("the snapshot of the tree's register has no T1 finding", () => {
+    const csvBytes = readFileSync(TREE_CSV);
+    const snap = buildSnapshot({
+      csvBytes,
+      parsed: parseRegister(csvBytes),
+      externalDependencies: [],
+      generatedAt: "2026-01-01T00:00:00.000Z",
+    });
+    assert.deepEqual(t1Findings(snap), []);
+  });
+
+  it("a SYNTHETIC register with a planted build-host path fails and names the row, the column and R2", () => {
+    const csvBytes = readFileSync(TREE_CSV);
+    const parsed = parseRegister(csvBytes);
+    const col = parsed.columns.indexOf("notes");
+    assert.ok(col > 0);
+    const planted = parsed.rows.map((r) => [...r]);
+    planted[0][col] = `${planted[0][col]} (synthetic: see ${["", "var", "tmp", "mth-run.ABC123", "x"].join("/")})`;
+    const snap = buildSnapshot({
+      csvBytes,
+      parsed: { columns: parsed.columns, rows: planted },
+      externalDependencies: [],
+      generatedAt: "2026-01-01T00:00:00.000Z",
+    });
+    assert.ok(t1Findings(snap).includes(`${planted[0][0]} notes R2`), JSON.stringify(t1Findings(snap)));
+  });
+});

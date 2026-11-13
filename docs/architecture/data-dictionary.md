@@ -14773,12 +14773,14 @@ Written by T-DG7-ARCH-02 (ADR-0064, ADR-0065). The table sections below are gene
 | audit_baseline_seq_max | bigint | NULL |  | (0149) |
 | audit_baseline_digest | text | NULL |  | `CHECK (((audit_baseline_digest IS NULL) OR (audit_baseline_digest ~ '^[0-9a-f]{64}$')))` (0149) |
 | seed_rows_replaced | bigint | NULL |  | `CHECK (((seed_rows_replaced IS NULL) OR (seed_rows_replaced >= 0)))` (0149: the migration seeds L4 replaced) |
+| audit_already_present_rows | bigint | NULL |  | (0150: the carried audit events found already present as identical target migration events and not inserted, ADR-0064 A2.2, A2.4) |
 
 **Table constraints:**
 
 - `migration_import_demo_checksum` (CHECK): `CHECK (((demo_checksum IS NOT NULL) = (source_environment = 'demo')))`
 - `migration_import_times` (CHECK): `CHECK ((imported_at >= started_at))`
 - `migration_import_audit_ranges` (CHECK, 0149; ADR-0064 A1.6): the seven audit columns are all NULL, or all set with `(audit_baseline_rows = 0) = (audit_baseline_seq_min IS NULL)` (the same for `_max`) and, for a non-empty baseline, `audit_baseline_seq_min > audit_carried_seq_max` and `audit_baseline_seq_max >= audit_baseline_seq_min`.
+- `migration_import_audit_present` (CHECK, 0150; ADR-0064 A2.4): `audit_already_present_rows` is NULL, or `>= 0` with `audit_carried_rows` set, `<= audit_carried_rows` and `<= audit_baseline_rows`.
 
 **Triggers:**
 
@@ -14854,15 +14856,15 @@ Written by T-DG7-ARCH-02 (ADR-0064, ADR-0065). The table sections below are gene
 
 ## migration_reconciliation_delta
 
-- **Purpose:** Why a table may differ from the package in one reconciliation run: the audit baseline, audit additions after the import, identity rebinds, exact allowed ids, operational tables, or an unexplained difference (ADR-0064 Amendment 1 §A1.6, §A1.9).
-- **Migration:** `0149_p7_transfer_import_load.sql`. **API module:** `transfer (import)`. **Who writes:** the migration CLI only (`mth-db import-migration` / `reconcile-migration`, as mth_owner; lock 730403). **Lifecycle:** append-only; a run is `matched` only if every delta row of the run is `allowed`. Never exported (`transfer_table_rule` `exclude_transfer`).
+- **Purpose:** Why a table may differ from the package in one reconciliation run: the audit baseline, audit additions after the import, carried audit events already present in the baseline, identity rebinds, exact allowed ids, rows explained by audited actors or as children of explained rows, operational tables, or an unexplained difference (ADR-0064 Amendment 1 §A1.6, §A1.9; Amendment 2 §A2.4, §A2.6).
+- **Migration:** `0149_p7_transfer_import_load.sql` (basis CHECK replaced by `0150_p7_transfer_import_shared_audit.sql`). **API module:** `transfer (import)`. **Who writes:** the migration CLI only (`mth-db import-migration` / `reconcile-migration`, as mth_owner; lock 730403). **Lifecycle:** append-only; a run is `matched` only if every delta row of the run is `allowed`. Never exported (`transfer_table_rule` `exclude_transfer`).
 - **`mth_app` privileges:** SELECT.
 
 | Column | Type | Null | Default | Column constraints |
 |---|---|---|---|---|
 | migration_reconciliation_id | uuid | NOT NULL |  | PK; FK → migration_reconciliation(id) |
 | table_name | text | NOT NULL |  | PK; `CHECK ((table_name ~ '^[a-z][a-z0-9_]{0,62}$'))` |
-| basis | text | NOT NULL |  | PK; `CHECK ((basis = ANY (ARRAY['audit_baseline', 'audit_additions', 'rebind', 'exact_ids', 'operational', 'unexplained'])))` |
+| basis | text | NOT NULL |  | PK; `CHECK ((basis = ANY (ARRAY['audit_baseline', 'audit_additions', 'audit_already_present', 'rebind', 'exact_ids', 'audit_explained', 'child_of', 'operational', 'unexplained'])))` (0150 re-added it with nine values) |
 | rows_added | bigint | NOT NULL |  | `CHECK ((rows_added >= 0))` |
 | rows_changed | bigint | NOT NULL |  | `CHECK ((rows_changed >= 0))` |
 | rows_missing | bigint | NOT NULL |  | `CHECK ((rows_missing >= 0))` |

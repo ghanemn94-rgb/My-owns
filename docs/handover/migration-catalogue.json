@@ -2,11 +2,11 @@
   "schemaVersion": "mth-migration-catalogue/1",
   "generatedBy": "tools/release/migration-catalogue.mjs",
   "migrationsDir": "packages/db/migrations",
-  "count": 132,
+  "count": 133,
   "counts": {
     "additive": 73,
     "data_rewrite": 38,
-    "destructive": 21
+    "destructive": 22
   },
   "entries": [
     {
@@ -1471,6 +1471,18 @@
       "id": "0149",
       "name": "0149_p7_transfer_import_load.sql",
       "sha256": "6fd1d4e76e4c182312f72dd8234b9d1b8d2f2e7783388d583bb4884c71743d8f",
+      "stage": "p7",
+      "class": "destructive",
+      "irreversible": true,
+      "reasons": [
+        "DROP CONSTRAINT"
+      ],
+      "recovery": "Irreversible: restore the pre-upgrade backup set (ADR-0066 §7) into a fresh database and storage, and run the previous release."
+    },
+    {
+      "id": "0150",
+      "name": "0150_p7_transfer_import_shared_audit.sql",
+      "sha256": "a6678151ab2b4890c961836acf2fca5d4f3061893488dec446fb90635513b809",
       "stage": "p7",
       "class": "destructive",
       "irreversible": true,

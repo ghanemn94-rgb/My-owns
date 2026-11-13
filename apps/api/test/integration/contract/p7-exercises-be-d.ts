@@ -77,10 +77,19 @@ export async function seedSyntheticImport(owner: pg.Pool, db: Db, organizationId
     await c.query(
       `INSERT INTO migration_import (id, schema_version, source_environment, source_export_reference, migration_level,
          manifest_sha256, attachment_manifest_sha256, demo_checksum, table_count, row_count, attachment_count,
-         attachment_bytes, operator_name, started_at, imported_at)
+         attachment_bytes, operator_name, started_at, imported_at, audit_carried_rows, audit_carried_seq_max,
+         audit_baseline_rows, audit_baseline_seq_min, audit_baseline_seq_max, audit_baseline_digest, seed_rows_replaced,
+         audit_already_present_rows)
        VALUES ($1, 'mth-migration/1', 'demo', $2, '0148_p7_retention_job', $3, $4, $5, 2, 7, 1, 11,
-         'Synthetic operator', now() - interval '1 minute', now())`,
-      [importId, uuidv7(), digest("synthetic manifest"), digest("synthetic attachments"), digest("synthetic demo")],
+         'Synthetic operator', now() - interval '1 minute', now(), 40, 52, 60, 53, 112, $6, 9, 3)`,
+      [
+        importId,
+        uuidv7(),
+        digest("synthetic manifest"),
+        digest("synthetic attachments"),
+        digest("synthetic demo"),
+        digest("synthetic baseline"),
+      ],
     );
     await audit(c, "migration_import", importId, "migration.imported");
     await c.query(
@@ -98,6 +107,12 @@ export async function seedSyntheticImport(owner: pg.Pool, db: Db, organizationId
        VALUES ($1, 'organization', 1, 1, $3, $3, true), ($1, 'app_user', 6, 6, $4, $4, true),
               ($2, 'organization', 1, 1, $3, $3, true), ($2, 'app_user', 6, 5, $4, $5, false)`,
       [importRunId, recheckRunId, digest("org rows"), digest("user rows"), digest("user rows changed")],
+    );
+    // T-R12: one delta row of the recheck (ADR-0064 A1.6, A2.4).
+    await c.query(
+      `INSERT INTO migration_reconciliation_delta (migration_reconciliation_id, table_name, basis, rows_added,
+         rows_changed, rows_missing, allowed) VALUES ($1, 'audit_event', 'audit_already_present', 0, 3, 0, true)`,
+      [recheckRunId],
     );
     await c.query(
       `INSERT INTO migration_reconciliation_attachment (id, migration_reconciliation_id, parent_table, object_name,
@@ -201,6 +216,27 @@ export async function exerciseP7BeDOperations(ctx: P6ExerciseContext): Promise<v
   expect(report.body.attachmentMismatches).toEqual([
     expect.objectContaining({ objectName: "synthetic/object-1", problem: "sha256_mismatch", expectedSize: "11" }),
   ]);
+  // T-R12 (ADR-0064 A1.6, A2.4): the delta rows, and the import's audit fields as decimal strings.
+  expect(report.body.deltas).toEqual([
+    {
+      tableName: "audit_event",
+      basis: "audit_already_present",
+      rowsAdded: "0",
+      rowsChanged: "3",
+      rowsMissing: "0",
+      allowed: true,
+    },
+  ]);
+  const imported = await status(m("GET", `${IMPORTS}/${seeded.importId}`, { session: tech }), 200);
+  expect(imported.body).toMatchObject({
+    auditCarriedRows: "40",
+    auditCarriedSeqMax: "52",
+    auditBaselineRows: "60",
+    auditBaselineSeqMin: "53",
+    auditBaselineSeqMax: "112",
+    seedRowsReplaced: "9",
+    auditAlreadyPresentRows: "3",
+  });
   await status(
     m("GET", `${IMPORTS}/${seeded.importId}/reconciliations/${seeded.recheckRunId}`, { session: office }),
     403,

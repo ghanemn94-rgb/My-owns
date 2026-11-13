@@ -11,12 +11,16 @@
 // attachments differ`; 2 a usage error or no recorded import.
 //
 // A reconciliation approves nothing (no G1-G6, Finance or IT approval) and never reads or writes DG0-DG7.
+import { readFile, writeFile } from "node:fs/promises";
 import { sql } from "kysely";
 import { v7 as uuidv7 } from "uuid";
 import { insertAuditEvent, type AuditActor } from "../audit.ts";
 import type { Db, DbOrTx, Tx } from "../pool.ts";
-import { encodeTable, ENCODER_SETTINGS, transferSha256 } from "./export.ts";
-import { buildPlan } from "./plan.ts";
+import { encodeLine, encodeTable, ENCODER_SETTINGS, transferSha256 } from "./export.ts";
+import { buildPlan, type TransferPlan } from "./plan.ts";
+import type { CheckedPackage } from "./import.ts";
+import type { Allowance } from "./recheck.ts";
+import { digestOfLines, encodedRows, type EncodedRow } from "./table-digest.ts";
 
 /** ADR-0016 §6 `migrationImport` (apps/api platform/advisory-locks.ts); pinned to the registry by transfer-locks.test. */
 export const MIGRATION_IMPORT_LOCK_CLASS = 730403;
@@ -51,7 +55,70 @@ export interface AttachmentMismatch {
 }
 
 /** Why a table may differ from the package (A1.6 `migration_reconciliation_delta`). */
-export type DeltaBasis = "audit_baseline" | "audit_additions" | "rebind" | "exact_ids" | "operational" | "unexplained";
+export type DeltaBasis =
+  | "audit_baseline"
+  | "audit_additions"
+  | "audit_already_present"
+  | "rebind"
+  | "exact_ids"
+  | "audit_explained"
+  | "child_of"
+  | "operational"
+  | "unexplained";
+
+/**
+ * One carried audit event the load found already present as an identical target migration event (ADR-0064 A2.2, A2.5):
+ * its id, and the source's `seq` (decimal string) and `occurred_at` (the package line's exact §2.3 text).
+ */
+export interface AuditAlreadyPresent {
+  readonly id: string;
+  readonly sourceSeq: string;
+  readonly sourceOccurredAt: string;
+}
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+
+/**
+ * The reconstructed carried trail (ADR-0064 A2.3): the live audit_event rows with `seq <= M`, plus, for each entry of
+ * `present`, the live row with that id whose `seq` and `occurred_at` are replaced by the entry's source values; encoded
+ * with encodeTable's encoder, column order and line format, sorted by id. With `present = []` it equals
+ * `encodeTable(…, { where: 'seq <= M' })` (a unit case pins it). A `present` id with no live row is simply absent, so
+ * the count and the digest then differ from the manifest's.
+ */
+export async function encodeCarriedAudit(
+  tx: DbOrTx,
+  carriedSeqMax: bigint,
+  present: readonly AuditAlreadyPresent[],
+  plan?: TransferPlan,
+): Promise<{ readonly rowCount: number; readonly contentDigest: string; readonly lines: readonly string[] }> {
+  const p = plan ?? (await buildPlan(tx));
+  const audit = p.tables.find((t) => t.name === "audit_event");
+  if (audit === undefined) throw new Error("audit_event is not an exported table");
+  const carried = await encodedRows(tx, audit, p.rewrittenColumns, { where: `seq <= ${carriedSeqMax.toString()}` });
+  const rows: { id: string; line: string }[] = carried.rows.map((r) => ({ id: r.values[0] ?? "", line: r.line }));
+  if (present.length > 0) {
+    for (const e of present) if (!UUID.test(e.id)) throw new Error(`invalid audit id ${JSON.stringify(e.id)}`);
+    const seqAt = carried.kinds.findIndex((k) => k.name === "seq");
+    const occurredAt = carried.kinds.findIndex((k) => k.name === "occurred_at");
+    const idAt = carried.kinds.findIndex((k) => k.name === "id");
+    if (seqAt < 0 || occurredAt < 0 || idAt !== 0) throw new Error("audit_event lacks id, seq or occurred_at");
+    const byId = new Map(present.map((e) => [e.id, e]));
+    const live = await encodedRows(tx, audit, p.rewrittenColumns, {
+      where: `id = ANY('{${present.map((e) => e.id).join(",")}}'::uuid[])`,
+    });
+    for (const r of live.rows) {
+      const e = byId.get(r.values[idAt] ?? "");
+      if (e === undefined) continue;
+      const values = [...r.values];
+      values[seqAt] = e.sourceSeq;
+      values[occurredAt] = e.sourceOccurredAt;
+      rows.push({ id: e.id, line: encodeLine(live.kinds, values) });
+    }
+    rows.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+  }
+  const lines = rows.map((r) => r.line);
+  return { rowCount: lines.length, contentDigest: digestOfLines(lines), lines };
+}
 
 export interface ReconciliationDelta {
   readonly tableName: string;
@@ -92,21 +159,20 @@ export async function pinEncoderSettings(tx: Tx): Promise<void> {
 export async function reconcileTables(
   tx: DbOrTx,
   expected: readonly TableExpectation[],
-  opts: { readonly auditCarriedSeqMax?: bigint } = {},
+  opts: { readonly auditCarriedSeqMax?: bigint; readonly auditAlreadyPresent?: readonly AuditAlreadyPresent[] } = {},
 ): Promise<TableResult[]> {
   const plan = await buildPlan(tx);
   const out: TableResult[] = [];
   for (const e of expected) {
     const table = plan.tables.find((t) => t.name === e.name);
-    // ADR-0064 A1.5: on an imported target, audit_event is compared over the carried range (seq <= M) only.
-    const where =
-      e.name === "audit_event" && opts.auditCarriedSeqMax !== undefined
-        ? { where: `seq <= ${opts.auditCarriedSeqMax.toString()}` }
-        : {};
+    // ADR-0064 A1.5 with A2.3: on an imported target, audit_event is compared as the reconstructed carried trail (the
+    // live rows with seq <= M plus the already-present events with their recorded source seq and time).
     const live =
       table === undefined
         ? { rowCount: 0, contentDigest: EMPTY_DIGEST }
-        : await encodeTable(tx, table, plan.rewrittenColumns, where);
+        : e.name === "audit_event" && opts.auditCarriedSeqMax !== undefined
+          ? await encodeCarriedAudit(tx, opts.auditCarriedSeqMax, opts.auditAlreadyPresent ?? [], plan)
+          : await encodeTable(tx, table, plan.rewrittenColumns);
     const actualRows = String(live.rowCount);
     out.push({
       tableName: e.name,
@@ -311,69 +377,404 @@ export interface ReconcileCliIo {
 
 const OPERATOR = /^[\p{L}\p{N} ._@-]{1,100}$/u;
 
-/** `mth-db reconcile-migration --operator <name>`; returns the exit code. */
+export interface ReconcileCliOptions {
+  readonly operator: string | undefined;
+  /** A1.8: the `transfer-attachments verify` output; required when the import recorded attachments. */
+  readonly attachmentsReport?: string | undefined;
+  /** Mode 2 (A1.9, A2.6). */
+  readonly afterUse?: boolean;
+  readonly from?: string | undefined;
+  readonly allow?: string | undefined;
+  /** Where the printed lines are also written. */
+  readonly report?: string | undefined;
+}
+
+const REFUSE_AFTER_USE = "reconcile-migration: refused: --after-use needs --from <dir> and --allow <file>";
+
+class RecheckRefused extends Error {}
+
+/**
+ * `mth-db reconcile-migration --operator <name> [--attachments-report <file>] [--after-use --from <dir> --allow
+ * <file>] [--report <file>]`; returns the exit code (0 matched, 4 mismatch, 2 refused or no import).
+ */
 export async function runReconcileMigrationCommand(
   db: Db,
-  opts: { readonly operator: string | undefined },
+  opts: ReconcileCliOptions,
   io: ReconcileCliIo,
 ): Promise<number> {
   if (opts.operator === undefined || !OPERATOR.test(opts.operator)) {
-    io.err("BLOCKED: usage: mth-db reconcile-migration --operator <name>");
+    io.err(
+      "BLOCKED: usage: mth-db reconcile-migration --operator <name> [--attachments-report <file>] " +
+        "[--after-use --from <dir> --allow <file>] [--report <file>]",
+    );
     return 2;
   }
   const operator = opts.operator;
-  return withMigrationImportLock(db, async (conn) => {
-    const outcome = await conn.transaction().execute(async (tx) => {
-      const imported = await tx
-        .selectFrom("migration_import")
-        .select(["id"])
-        .orderBy("imported_at", "desc")
-        .orderBy("id", "desc")
-        .executeTakeFirst();
-      if (imported === undefined) return null;
-      const run = await tx
-        .selectFrom("migration_reconciliation")
-        .select("id")
-        .where("migration_import_id", "=", imported.id)
-        .where("run_kind", "=", "import")
-        .executeTakeFirst();
-      if (run === undefined) return null;
-      const expected = await tx
-        .selectFrom("migration_reconciliation_table")
-        .select(["table_name", "expected_rows", "expected_digest"])
-        .where("migration_reconciliation_id", "=", run.id)
-        .orderBy("table_name")
-        .execute();
-      await pinEncoderSettings(tx);
-      const tables = await reconcileTables(
-        tx,
-        expected.map((e) => ({
-          name: e.table_name,
-          rowCount: String(e.expected_rows),
-          contentDigest: e.expected_digest,
-        })),
-      );
-      const report = buildReport(tables, 0, []);
-      const org = await tx.selectFrom("organization").select("id").orderBy("id").executeTakeFirst();
-      await recordReconciliation(tx, {
-        migrationImportId: imported.id,
-        organizationId: org?.id ?? null,
-        runKind: "recheck",
-        report,
-        operator,
-        actor: { actorType: "system", actorUserId: null, source: "cli" },
-      });
-      return report;
-    });
-    if (outcome === null) {
-      io.err("BLOCKED: reconcile-migration: no migration import is recorded in this database");
-      return 2;
+  const afterUse = opts.afterUse === true;
+  if (afterUse && (opts.from === undefined || opts.allow === undefined)) {
+    io.err(REFUSE_AFTER_USE);
+    return 2;
+  }
+  const printed: string[] = [];
+  const say = (l: string) => {
+    printed.push(l);
+    io.out(l);
+  };
+  const finish = async (code: number, last?: string) => {
+    if (last !== undefined) {
+      printed.push(last);
+      if (code === 0 || code === 4) io.out(last);
+      else io.err(last);
     }
-    for (const t of outcome.tables.filter((x) => !x.matched))
-      io.out(
-        `  ${t.tableName}: expected ${t.expectedRows} rows ${t.expectedDigest}, found ${t.actualRows} rows ${t.actualDigest}`,
+    if (opts.report !== undefined) await writeFile(opts.report, `${printed.join("\n")}\n`, "utf8");
+    return code;
+  };
+  const R = await import("./recheck.ts");
+  const I = await import("./import.ts");
+  const A = await import("./attachment-report.ts");
+  // The allowance is validated structurally before any database read (A1.9).
+  let allowance: Allowance | null = null;
+  let pkg: CheckedPackage | null = null;
+  try {
+    if (afterUse) {
+      allowance = R.parseAllowance(new Uint8Array(await readFile(opts.allow!)));
+      pkg = await I.checkPackage(opts.from!);
+    }
+  } catch (err) {
+    if (err instanceof R.AllowanceRefused) return finish(2, err.message);
+    if (err instanceof I.ImportRefused)
+      return finish(2, err.message.replace(/^import-migration:/, "reconcile-migration:"));
+    throw err;
+  }
+  try {
+    return await withMigrationImportLock(db, async (conn) => {
+      const outcome = await conn.transaction().execute(async (tx) => {
+        const imported = await tx
+          .selectFrom("migration_import")
+          .selectAll()
+          .orderBy("imported_at", "desc")
+          .orderBy("id", "desc")
+          .executeTakeFirst();
+        if (imported === undefined) return null;
+        const run = await tx
+          .selectFrom("migration_reconciliation")
+          .select("id")
+          .where("migration_import_id", "=", imported.id)
+          .where("run_kind", "=", "import")
+          .executeTakeFirst();
+        if (run === undefined) return null;
+        if (pkg !== null && pkg.manifestSha256 !== imported.manifest_sha256)
+          throw new RecheckRefused(
+            `reconcile-migration: refused: the package at ${opts.from} is not the one imported (${pkg.manifestSha256}, ` +
+              `the import recorded ${imported.manifest_sha256})`,
+          );
+        // A1.8: never 0 checked for a package that lists attachments.
+        A.requireAttachmentReport(
+          imported.attachment_count,
+          opts.attachmentsReport !== undefined,
+          "reconcile-migration",
+        );
+        const attachments =
+          opts.attachmentsReport === undefined
+            ? { checked: 0, mismatches: [] as AttachmentMismatch[] }
+            : A.parseAttachmentReport(
+                new Uint8Array(await readFile(opts.attachmentsReport)),
+                { attachmentManifestSha256: imported.attachment_manifest_sha256, count: imported.attachment_count },
+                "reconcile-migration",
+              );
+        await pinEncoderSettings(tx);
+        await I.assertAuditTriggersEnabled(tx).catch((e: unknown) => {
+          if (e instanceof I.ImportRefused)
+            throw new RecheckRefused(e.message.replace(/^import-migration:/, "reconcile-migration:"));
+          throw e;
+        });
+        const plan = await buildPlan(tx);
+        if (allowance !== null) await R.validateAllowance(tx, allowance, plan);
+        const expected = await tx
+          .selectFrom("migration_reconciliation_table")
+          .select(["table_name", "expected_rows", "expected_digest"])
+          .where("migration_reconciliation_id", "=", run.id)
+          .orderBy("table_name")
+          .execute();
+        const big = (v: string | number | null) => (v === null ? null : BigInt(v));
+        const imp = {
+          id: imported.id,
+          carriedRows: BigInt(imported.audit_carried_rows ?? "0"),
+          carriedSeqMax: BigInt(imported.audit_carried_seq_max ?? "0"),
+          baselineRows: BigInt(imported.audit_baseline_rows ?? "0"),
+          baselineSeqMin: big(imported.audit_baseline_seq_min),
+          baselineSeqMax: big(imported.audit_baseline_seq_max),
+          baselineDigest: imported.audit_baseline_digest ?? EMPTY_DIGEST,
+          alreadyPresentRows: BigInt(imported.audit_already_present_rows ?? "0"),
+        };
+        const lines: string[] = [];
+        const tables: TableResult[] = [];
+        const deltas: ReconciliationDelta[] = [];
+        let unchanged = 0;
+        let allowedDiff = 0;
+        // audit_event (A1.5 with A2.3), both modes.
+        const auditExp = expected.find((e) => e.table_name === "audit_event")!;
+        const trail = await R.checkAuditTrail(
+          tx,
+          imp,
+          { rowCount: String(auditExp.expected_rows), contentDigest: auditExp.expected_digest },
+          plan,
+          (t, m, max) => I.measureBaseline(t, m, max),
+        );
+        tables.push({
+          tableName: "audit_event",
+          expectedRows: String(auditExp.expected_rows),
+          actualRows: String(trail.reconstructedRows),
+          expectedDigest: auditExp.expected_digest,
+          actualDigest: trail.reconstructedDigest,
+          matched: trail.ok,
+        });
+        deltas.push(
+          {
+            tableName: "audit_event",
+            basis: "audit_baseline",
+            rowsAdded: String(imp.baselineRows),
+            rowsChanged: "0",
+            rowsMissing: "0",
+            allowed: trail.baselineKept,
+          },
+          {
+            tableName: "audit_event",
+            basis: "audit_already_present",
+            rowsAdded: "0",
+            rowsChanged: String(trail.present.length),
+            rowsMissing: "0",
+            allowed: trail.presentOk,
+          },
+          {
+            tableName: "audit_event",
+            basis: "audit_additions",
+            rowsAdded: trail.additionsTotal.toString(),
+            rowsChanged: "0",
+            rowsMissing: "0",
+            allowed: true,
+          },
+        );
+        lines.push(...trail.problems);
+        // user_identity: the rebinds reversed first (both modes).
+        const rev = await R.reverseRebinds(tx, plan);
+        const uiExp = expected.find((e) => e.table_name === "user_identity");
+        const others = expected.filter((e) => e.table_name !== "audit_event" && e.table_name !== "user_identity");
+        if (allowance === null) {
+          // Mode 1.
+          if (uiExp !== undefined) {
+            const digest = R.digestOfRows(rev.rows);
+            const matched =
+              String(rev.rows.length) === String(uiExp.expected_rows) &&
+              digest === uiExp.expected_digest &&
+              rev.unexplained.length === 0;
+            tables.push({
+              tableName: "user_identity",
+              expectedRows: String(uiExp.expected_rows),
+              actualRows: String(rev.rows.length),
+              expectedDigest: uiExp.expected_digest,
+              actualDigest: digest,
+              matched,
+            });
+            if (rev.rebound > 0 || rev.unexplained.length > 0)
+              deltas.push(
+                rev.unexplained.length === 0 && matched
+                  ? {
+                      tableName: "user_identity",
+                      basis: "rebind",
+                      rowsAdded: "0",
+                      rowsChanged: String(rev.rebound),
+                      rowsMissing: "0",
+                      allowed: true,
+                    }
+                  : {
+                      tableName: "user_identity",
+                      basis: "unexplained",
+                      rowsAdded: "0",
+                      rowsChanged: String(rev.rebound),
+                      rowsMissing: "0",
+                      allowed: false,
+                    },
+              );
+          }
+          const rest = await reconcileTables(
+            tx,
+            others.map((e) => ({
+              name: e.table_name,
+              rowCount: String(e.expected_rows),
+              contentDigest: e.expected_digest,
+            })),
+          );
+          tables.push(...rest);
+        } else {
+          // Mode 2: row by row against the package.
+          const a = allowance;
+          const listedTables = new Map(a.tables.map((t) => [t.name, t]));
+          const audited = new Map(a.audited.map((t) => [t.name, t]));
+          const operational = new Set(a.operational);
+          const childrenOf = new Map(a.children.map((c) => [c.name, c]));
+          const explainedRows = new Map<string, EncodedRow[]>();
+          const fileOf = new Map(pkg!.manifest.tables.map((t) => [t.name, t.file]));
+          const order = [
+            ...pkg!.manifest.tables.map((t) => t.name).filter((n) => n !== "audit_event" && !childrenOf.has(n)),
+            ...R.childrenOrder(a).map((c) => c.name),
+          ];
+          const keyText = (k: readonly string[]) => JSON.stringify(k);
+          for (const name of order) {
+            const table = plan.tables.find((t) => t.name === name)!;
+            const pkgRows = await R.packageLines(pkg!.dir, fileOf.get(name)!, table);
+            const liveRows = name === "user_identity" ? rev.rows : undefined;
+            const cmp = await R.compareRows(tx, table, pkgRows, plan, liveRows);
+            const counts = { a: cmp.added.length, c: cmp.changed.length, m: cmp.missing.length };
+            const push = (basis: DeltaBasis, allowed: boolean) =>
+              deltas.push({
+                tableName: name,
+                basis,
+                rowsAdded: String(counts.a),
+                rowsChanged: String(counts.c),
+                rowsMissing: String(counts.m),
+                allowed,
+              });
+            const perTable = (basis: DeltaBasis) =>
+              `  ${name}: ${counts.a} added, ${counts.c} changed, ${counts.m} missing (${basis})`;
+            const listKeys = (prefix: string, keys: readonly string[]) => {
+              for (const k of keys.slice(0, 20)) lines.push(`    ${prefix} ${k}`);
+            };
+            if (name === "user_identity" && rev.unexplained.length > 0) {
+              push("unexplained", false);
+              lines.push(perTable("unexplained"));
+              continue;
+            }
+            const diff = counts.a + counts.c + counts.m;
+            if (listedTables.has(name)) {
+              const t = listedTables.get(name)!;
+              const want = { added: new Set(t.added.map(keyText)), changed: new Set(t.changed.map(keyText)) };
+              const got = {
+                added: new Set(cmp.added.map((r) => r.key)),
+                changed: new Set(cmp.changed.map((r) => r.key)),
+              };
+              const extra = (k: "added" | "changed") => [...got[k]].filter((x) => !want[k].has(x));
+              const absent = (k: "added" | "changed") => [...want[k]].filter((x) => !got[k].has(x));
+              const ok =
+                counts.m === 0 &&
+                extra("added").length + extra("changed").length + absent("added").length + absent("changed").length ===
+                  0;
+              push("exact_ids", ok);
+              if (ok) {
+                allowedDiff += 1;
+                explainedRows.set(name, [...cmp.added, ...cmp.changed]);
+              } else {
+                lines.push(perTable("exact_ids"));
+                for (const k of ["added", "changed"] as const) listKeys(`unexpected ${k}`, extra(k));
+                for (const k of ["added", "changed"] as const) listKeys(`expected but not ${k}`, absent(k));
+              }
+            } else if (operational.has(name)) {
+              push("operational", true);
+              if (diff > 0) allowedDiff += 1;
+              else unchanged += 1;
+            } else if (audited.has(name)) {
+              const t = audited.get(name)!;
+              const ex = await R.explainAudited(tx, table, cmp, a.actors, imp.baselineSeqMax ?? imp.carriedSeqMax);
+              const unAdded = new Set(ex.unexplainedAdded.map((r) => r.key));
+              const unChanged = new Set(ex.unexplainedChanged.map((r) => r.key));
+              const okAdded = new Set(cmp.added.map((r) => r.key).filter((k) => !unAdded.has(k)));
+              const okChanged = new Set(cmp.changed.map((r) => r.key).filter((k) => !unChanged.has(k)));
+              const notIn = (k: "added" | "changed") =>
+                t.mustInclude[k].map(keyText).filter((x) => !(k === "added" ? okAdded : okChanged).has(x));
+              const ok =
+                counts.m === 0 && unAdded.size + unChanged.size + notIn("added").length + notIn("changed").length === 0;
+              push("audit_explained", ok);
+              explainedRows.set(
+                name,
+                [...cmp.added, ...cmp.changed].filter((r) => okAdded.has(r.key) || okChanged.has(r.key)),
+              );
+              lines.push(`  ${name}: ${ex.events} explaining events`);
+              if (ok) allowedDiff += diff > 0 ? 1 : 0;
+              else {
+                lines.push(perTable("audit_explained"));
+                listKeys("unexplained added", [...unAdded]);
+                listKeys("unexplained changed", [...unChanged]);
+                listKeys("expected but not added", notIn("added"));
+                listKeys("expected but not changed", notIn("changed"));
+              }
+              if (ok && diff === 0) unchanged += 1;
+            } else if (childrenOf.has(name)) {
+              const c = childrenOf.get(name)!;
+              const parent = plan.tables.find((t) => t.name === c.parent)!;
+              const ex = await R.explainChildren(tx, table, parent, c.fkey, cmp, explainedRows.get(c.parent) ?? []);
+              const ok = counts.m === 0 && ex.unexplainedAdded.length + ex.unexplainedChanged.length === 0;
+              push("child_of", ok);
+              const bad = new Set([...ex.unexplainedAdded, ...ex.unexplainedChanged].map((r) => r.key));
+              explainedRows.set(
+                name,
+                [...cmp.added, ...cmp.changed].filter((r) => !bad.has(r.key)),
+              );
+              if (ok) {
+                if (diff > 0) allowedDiff += 1;
+                else unchanged += 1;
+              } else {
+                lines.push(perTable("child_of"));
+                listKeys(
+                  "unexplained added",
+                  ex.unexplainedAdded.map((r) => r.key),
+                );
+                listKeys(
+                  "unexplained changed",
+                  ex.unexplainedChanged.map((r) => r.key),
+                );
+              }
+            } else if (name === "user_identity" && rev.rebound > 0 && diff === 0) {
+              push("rebind", true);
+              allowedDiff += 1;
+            } else if (diff === 0) {
+              unchanged += 1;
+            } else {
+              push("unexplained", false);
+              lines.push(perTable("unexplained"));
+            }
+          }
+          if (trail.ok) allowedDiff += 0;
+        }
+        const report = buildReport(
+          tables,
+          attachments.checked,
+          attachments.mismatches,
+          deltas,
+          allowance === null ? "recheck" : "recheck_after_use",
+        );
+        for (const t of report.tables.filter((x) => !x.matched && x.tableName !== "audit_event"))
+          lines.unshift(
+            `  ${t.tableName}: expected ${t.expectedRows} rows ${t.expectedDigest}, found ${t.actualRows} rows ${t.actualDigest}`,
+          );
+        for (const m of report.attachmentMismatches) lines.push(`  attachment ${m.objectName}: ${m.problem}`);
+        const org = await tx.selectFrom("organization").select("id").orderBy("id").executeTakeFirst();
+        await recordReconciliation(tx, {
+          migrationImportId: imported.id,
+          organizationId: org?.id ?? null,
+          runKind: allowance === null ? "recheck" : "recheck_after_use",
+          report,
+          operator,
+          actor: { actorType: "system", actorUserId: null, source: "cli" },
+        });
+        return { report, lines, unchanged, allowedDiff, additions: trail.additionsTotal, byAction: trail.additions };
+      });
+      if (outcome === null)
+        return finish(2, "BLOCKED: reconcile-migration: no migration import is recorded in this database");
+      for (const l of outcome.lines) say(l);
+      if (outcome.report.result !== "matched") return finish(4, reconcileLine(outcome.report));
+      if (!afterUse) {
+        for (const [action, n] of outcome.byAction) say(`  audit_event: ${n} ${action} added since the import`);
+        return finish(0, reconcileLine(outcome.report));
+      }
+      return finish(
+        0,
+        `reconcile-migration: matched after use: ${outcome.unchanged} tables unchanged, ${outcome.allowedDiff} tables ` +
+          `with allowed differences, ${outcome.additions} audit events added since the import`,
       );
-    io.out(reconcileLine(outcome));
-    return outcome.result === "matched" ? 0 : 4;
-  });
+    });
+  } catch (err) {
+    if (err instanceof RecheckRefused || err instanceof R.AllowanceRefused || err instanceof A.AttachmentReportRefused)
+      return finish(2, err.message);
+    throw err;
+  }
 }

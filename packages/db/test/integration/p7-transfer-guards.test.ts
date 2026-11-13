@@ -327,6 +327,80 @@ describe("T-R9: 0149 the import load's audit ranges and the recheck deltas (ADR-
   });
 });
 
+describe("T-R9: 0150 the shared migration audit events and the nine delta bases (ADR-0064 A2.4; T-DG7-BE-R2)", () => {
+  const withImport = (ranges: (string | null)[], present: string | null) =>
+    inTx(owner.pool, async (c) => {
+      const id = uuidv7();
+      await c.query(
+        `INSERT INTO migration_import (id, schema_version, source_environment, source_export_reference, migration_level,
+           manifest_sha256, attachment_manifest_sha256, demo_checksum, table_count, row_count, attachment_count,
+           attachment_bytes, operator_name, started_at, imported_at, audit_carried_rows, audit_carried_seq_max,
+           audit_baseline_rows, audit_baseline_seq_min, audit_baseline_seq_max, audit_baseline_digest, seed_rows_replaced,
+           audit_already_present_rows)
+         VALUES ($1, 'mth-migration/1', 'unmarked', $2, $3, $4, $5, NULL, 1, 2, 0, 0, 'probe operator', now(), now(),
+                 $6, $7, $8, $9, $10, $11, $12, $13)`,
+        [id, uuidv7(), LEVEL, HEX, HEX2, ...ranges, present],
+      );
+      await audit(c, "migration_import", id, null);
+      return id;
+    });
+  const RANGES = ["10", "10", "3", "11", "13", HEX, "5"];
+
+  it("migration_import_audit_present: NULL, or 0..min(carried, baseline) with the carried rows recorded", async () => {
+    await withImport(RANGES, null);
+    await withImport(RANGES, "0");
+    await withImport(RANGES, "3");
+    for (const bad of ["-1", "4"])
+      expect((await pgError(withImport(RANGES, bad))).constraint, bad).toBe("migration_import_audit_present");
+    expect((await pgError(withImport(["2", "10", "3", "11", "13", HEX, "5"], "3"))).constraint).toBe(
+      "migration_import_audit_present",
+    );
+    expect((await pgError(withImport([null, null, null, null, null, null, null], "0"))).constraint).toBe(
+      "migration_import_audit_present",
+    );
+  });
+
+  it("migration_reconciliation_delta.basis takes exactly the nine A2.4 values", async () => {
+    const importId = await withImport(RANGES, "0");
+    const runId = await inTx(owner.pool, async (c) => {
+      const id = uuidv7();
+      await c.query(
+        `INSERT INTO migration_reconciliation (id, migration_import_id, run_kind, result, tables_checked,
+           tables_mismatched, rows_expected, rows_actual, attachments_checked, attachments_mismatched, operator_name, run_at)
+         VALUES ($1, $2, 'recheck', 'matched', 1, 0, 1, 1, 0, 0, 'probe operator', now())`,
+        [id, importId],
+      );
+      await audit(c, "migration_reconciliation", id, null);
+      return id;
+    });
+    const delta = (table: string, basis: string, allowed: boolean) =>
+      owner.pool.query(
+        `INSERT INTO migration_reconciliation_delta (migration_reconciliation_id, table_name, basis, rows_added,
+           rows_changed, rows_missing, allowed) VALUES ($1, $2, $3, 0, 1, 0, $4)`,
+        [runId, table, basis, allowed],
+      );
+    const nine = [
+      "audit_baseline",
+      "audit_additions",
+      "audit_already_present",
+      "rebind",
+      "exact_ids",
+      "audit_explained",
+      "child_of",
+      "operational",
+      "unexplained",
+    ];
+    for (const b of nine) await delta("audit_event", b, b !== "unexplained");
+    expect((await pgError(delta("audit_event", "renumbered", true))).constraint).toBe(
+      "migration_reconciliation_delta_basis_check",
+    );
+    const r = await owner.pool.query(
+      `SELECT pg_get_constraintdef(oid) AS d FROM pg_constraint WHERE conname = 'migration_reconciliation_delta_basis_check'`,
+    );
+    for (const b of nine) expect(r.rows[0].d).toContain(`'${b}'`);
+  });
+});
+
 describe("0134 configuration bundle imports (ADR-0065 §4)", () => {
   async function uploaded(): Promise<string> {
     const id = uuidv7();

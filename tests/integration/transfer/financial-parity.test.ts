@@ -10,11 +10,9 @@
 //     the package by PostgreSQL's own typed decoder (`jsonb_populate_recordset(NULL::<table>, …)`, the decoder ADR-0064
 //     §6 names for the load), WITHOUT inserting anything. Each decoded row must equal the source row column for column
 //     as text, and the financial recomputation below must give identical results on both sides.
-//   - THE LOADED-TARGET HALF (BLOCKED). The import's load (ADR-0064 §6 steps 5-7, 9) is not built: BE-D's open question
-//     Q1 (a freshly migrated target already holds migration-written audit_event rows, so step 4 refuses it). That fact is
-//     pinned by packages/db/test/integration/transfer-roundtrip.test.ts ("Q1 (BLOCKED …)"). The `it.todo` at the end
-//     names the missing check. When the load exists, it is `financialRowsOf(target.db)` compared with
-//     `financialRowsOf(source.db)`, through the same `recompute` used here.
+//   - THE LOADED-TARGET HALF (runs; T-R11, switched on by T-DG7-BE-R2). A target prepared with the audit sequence
+//     reservation (ADR-0064 A1.2) is loaded by `import-migration` (A1.4 with Amendment 2), and `financialRowsOf` of
+//     the loaded target is compared with the source's, through the same `recompute`, plus the two benefit value views.
 //
 // Every value is synthetic. Nothing here approves anything: no G1-G6 business approval, no Finance or IT approval. It
 // touches no DG0-DG7 record. Arithmetic is decimal throughout (the shared engine's decimal.js; never a binary float).
@@ -37,6 +35,7 @@ import type { Db } from "../../../packages/db/src/pool.ts";
 import { pinEncoderSettings, type MigrationManifest } from "../../../packages/db/src/transfer/index.ts";
 import { testDatabase } from "../../../packages/db/test/helpers.ts";
 import {
+  importInto,
   RoundtripWorkspace,
   type RoundtripScratch,
 } from "../../../packages/db/test/integration/transfer-roundtrip.fixture.ts";
@@ -636,10 +635,23 @@ describe("T-C17 (negative control): the parity is not vacuous", () => {
   }, 120_000);
 });
 
-describe("T-C17 (loaded target): BLOCKED until the import's load exists (BE-D Q1)", () => {
-  it.todo(
-    "after import-migration exits 0: recompute(financialRowsOf(target.db)) equals recompute(financialRowsOf(source.db)), " +
-      "and the target's benefit_counting and benefit_value_line views equal the source's (blocked: ADR-0064 §6 steps " +
-      "5-7 and 9 not built; T-DG7-BE-D handback Q1)",
-  );
+describe("T-C17 (loaded target) = T-R11: the financial rows and results after import-migration (T-DG7-BE-R2)", () => {
+  it("after import-migration exits 0: recompute(financialRowsOf(target.db)) equals recompute(financialRowsOf(source.db)), and the target's benefit_counting and benefit_value_line views equal the source's", async () => {
+    const loaded = await ws.reserved("mth_fp_loaded", pkg);
+    const r = await importInto(loaded.db, pkg);
+    expect(r.err, r.out.join("\n")).toEqual([]);
+    expect(r.code).toBe(0);
+    const loadedRows = await financialRowsOf(loaded.db);
+    for (const t of FINANCIAL_TABLES) expect(loadedRows[t], `${t} rows`).toEqual(sourceRows[t]);
+    expect(recompute(loadedRows)).toEqual(recompute(sourceRows));
+    const view = async (db: Db, name: string) =>
+      (await sql<{ r: string }>`SELECT v::text AS r FROM ${sql.table(name)} v ORDER BY 1`.execute(db)).rows.map(
+        (x) => x.r,
+      );
+    for (const name of ["benefit_counting", "benefit_value_line"]) {
+      const fromSource = await view(source.db, name);
+      expect(fromSource.length, `${name} has rows`).toBeGreaterThan(0);
+      expect(await view(loaded.db, name), name).toEqual(fromSource);
+    }
+  }, 900_000);
 });

@@ -42401,7 +42401,7 @@ components:
       additionalProperties: false
       properties:
         id: { $ref: "#/components/schemas/Uuid" }
-        runKind: { type: string, enum: [import, recheck] }
+        runKind: { type: string, enum: [import, recheck, recheck_after_use] }
         result: { type: string, enum: [matched, mismatched] }
         tablesChecked: { type: integer, minimum: 0 }
         tablesMismatched: { type: integer, minimum: 0 }
@@ -42413,10 +42413,26 @@ components:
         runAt: { $ref: "#/components/schemas/Timestamp" }
     MigrationReconciliation:
       type: object
-      required: [summary, tables, attachmentMismatches]
+      required: [summary, tables, attachmentMismatches, deltas]
       additionalProperties: false
       properties:
         summary: { $ref: "#/components/schemas/MigrationReconciliationSummary" }
+        deltas:
+          type: array
+          description: "Why a table may differ from the package (ADR-0064 A1.6, A2.4); a run is matched only if every delta is allowed."
+          items:
+            type: object
+            required: [tableName, basis, rowsAdded, rowsChanged, rowsMissing, allowed]
+            additionalProperties: false
+            properties:
+              tableName: { type: string }
+              basis:
+                type: string
+                enum: [audit_baseline, audit_additions, audit_already_present, rebind, exact_ids, audit_explained, child_of, operational, unexplained]
+              rowsAdded: { $ref: "#/components/schemas/TransferInteger" }
+              rowsChanged: { $ref: "#/components/schemas/TransferInteger" }
+              rowsMissing: { $ref: "#/components/schemas/TransferInteger" }
+              allowed: { type: boolean }
         tables:
           type: array
           items:
@@ -42453,7 +42469,7 @@ components:
         nextCursor: { type: [string, "null"] }
     MigrationImport:
       type: object
-      required: [id, schemaVersion, sourceEnvironment, sourceExportReference, migrationLevel, manifestSha256, attachmentManifestSha256, demoChecksum, tableCount, rowCount, attachmentCount, attachmentBytes, operatorName, startedAt, importedAt, latestReconciliation, identities]
+      required: [id, schemaVersion, sourceEnvironment, sourceExportReference, migrationLevel, manifestSha256, attachmentManifestSha256, demoChecksum, tableCount, rowCount, attachmentCount, attachmentBytes, operatorName, startedAt, importedAt, auditCarriedRows, auditCarriedSeqMax, auditBaselineRows, auditBaselineSeqMin, auditBaselineSeqMax, auditBaselineDigest, seedRowsReplaced, auditAlreadyPresentRows, latestReconciliation, identities]
       additionalProperties: false
       properties:
         id: { $ref: "#/components/schemas/Uuid" }
@@ -42471,6 +42487,14 @@ components:
         operatorName: { type: string }
         startedAt: { $ref: "#/components/schemas/Timestamp" }
         importedAt: { $ref: "#/components/schemas/Timestamp" }
+        auditCarriedRows: { oneOf: [{ $ref: "#/components/schemas/TransferInteger" }, { type: "null" }] }
+        auditCarriedSeqMax: { oneOf: [{ $ref: "#/components/schemas/TransferInteger" }, { type: "null" }] }
+        auditBaselineRows: { oneOf: [{ $ref: "#/components/schemas/TransferInteger" }, { type: "null" }] }
+        auditBaselineSeqMin: { oneOf: [{ $ref: "#/components/schemas/TransferInteger" }, { type: "null" }] }
+        auditBaselineSeqMax: { oneOf: [{ $ref: "#/components/schemas/TransferInteger" }, { type: "null" }] }
+        auditBaselineDigest: { oneOf: [{ $ref: "#/components/schemas/TransferSha256" }, { type: "null" }] }
+        seedRowsReplaced: { oneOf: [{ $ref: "#/components/schemas/TransferInteger" }, { type: "null" }] }
+        auditAlreadyPresentRows: { oneOf: [{ $ref: "#/components/schemas/TransferInteger" }, { type: "null" }] }
         latestReconciliation: { $ref: "#/components/schemas/MigrationReconciliationSummary" }
         identities:
           type: object
