@@ -74,14 +74,14 @@ test("T-A6 fixture: an added service without a role fails generation and --check
   edit(root, (t) =>
     t.replace(
       "\nvolumes:",
-      '  backup:\n    image: postgres:18@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722\n    profiles: ["backup"]\n\nvolumes:',
+      '  synthetic-unlisted:\n    image: postgres:18@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722\n    profiles: ["synthetic"]\n\nvolumes:',
     ),
   );
   const r = runNode([TOOL, "--check", "--root", root]);
   assert.equal(r.code, 1);
-  assert.equal(r.stderr.trim(), "service-list: no role text for service 'backup'");
+  assert.equal(r.stderr.trim(), "service-list: no role text for service 'synthetic-unlisted'");
   // With its one SERVICE_ROLES line the list regenerates, and the stale committed file still fails --check.
-  const roles = { ...SERVICE_ROLES, backup: "Synthetic test role." };
+  const roles = { ...SERVICE_ROLES, "synthetic-unlisted": "Synthetic test role." };
   await assert.rejects(run({ root, check: true, roles }), /service-list: deploy\/service-list.json is out of date/);
   await run({ root, roles });
   assert.equal((await run({ root, check: true, roles })).startsWith("service-list: OK"), true);

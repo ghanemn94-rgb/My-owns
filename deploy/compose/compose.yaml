@@ -10,6 +10,7 @@
 #            smoke: in-network smoke test (login, create, read)        (profile: smoke)
 #            load-generate, load-sessions: the SYNTHETIC load dataset and the load sessions of a load run
 #                                                                       (profile: load; off by default; ADR-0058)
+#            backup: the database phase of a backup set on the pinned PostgreSQL 18 image (profile: backup; ADR-0066)
 # Variant:   compose.no-egress.yaml marks the network `internal: true` (no route to the internet).
 #
 # Prerequisites (from the repository root):
@@ -241,6 +242,36 @@ services:
     volumes:
       - "../load:/app/deploy/load:ro"
       - "${MTH_LOAD_OUT_DIR:-/tmp/mth-load}:/load-out"
+    depends_on:
+      db: { condition: service_healthy }
+
+  # ---------------------------------------------------------------------------------------------- profile: backup
+  # The database phase of a backup set (ADR-0066 §1-§5; docs/handover/backup-restore.md). Off by default. It runs on the
+  # SAME pinned PostgreSQL 18 image as `db` (no new image), with the owner URL as a secret, the evidence volume
+  # read-only (retention archive sets) and the backup root the operator chooses (MTH_BACKUP_ROOT, a host directory).
+  # The platform never schedules its own backup: run it from IT's scheduler. Sequence (from the repository root):
+  #   MTH_BACKUP_ROOT=/srv/mth-backups docker compose -f deploy/compose/compose.yaml --profile backup run --rm \
+  #     backup --label <label> --phase database
+  #   (the evidence copy-out in the app image, then)   ... run --rm backup --label <label> --phase finish
+  # Not a high-availability backup system: one set per run, no WAL archiving, no off-site copy (IT's).
+  backup:
+    image: postgres:18@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722
+    profiles: ["backup"]
+    restart: "no"
+    entrypoint: ["bash", "/mth/scripts/backup.sh", "--out", "/backups"]
+    command: ["--phase", "database"]
+    environment:
+      DATABASE_URL_FILE: /run/secrets/database_owner_url
+      EVIDENCE_STORAGE_DRIVER: filesystem
+      EVIDENCE_STORAGE_PATH: /var/lib/mth/evidence
+      MTH_TRANSFER_ATTACHMENTS: "none"
+    secrets: [database_owner_url]
+    volumes:
+      - "../scripts/backup.sh:/mth/scripts/backup.sh:ro"
+      - "./compose.yaml:/mth/deploy/compose/compose.yaml:ro"
+      - "../images.lock.json:/mth/deploy/images.lock.json:ro"
+      - "evidence:/var/lib/mth/evidence:ro"
+      - "${MTH_BACKUP_ROOT:-/tmp/mth-backups}:/backups"
     depends_on:
       db: { condition: service_healthy }
 

@@ -1,0 +1,16 @@
+316c316
+<     expect(m.migrationLevel).toBe(before.migrationLevel);
+---
+>     expect(Number(String(m.migrationLevel).slice(0, 4))).toBe(Number(before.migrationLevel)); // DO-F diagnostic patch 1
+456c456
+<     expect((await fingerprint(db)).tableCounts).toEqual({});
+---
+>     expect((await (async () => { const pl = createPool(roleUrl(inject("mthDb").adminUrl, db, null), { max: 1 }); try { return Number((await pl.query("SELECT count(*) AS n FROM pg_tables WHERE schemaname IN ('public', 'pgboss')")).rows[0].n); } finally { await pl.end(); } })())).toBe(0); // DO-F diagnostic patch 2
+473c473
+<     expect((await fingerprint(db)).tableCounts).toEqual({});
+---
+>     expect((await (async () => { const pl = createPool(roleUrl(inject("mthDb").adminUrl, db, null), { max: 1 }); try { return Number((await pl.query("SELECT count(*) AS n FROM pg_tables WHERE schemaname IN ('public', 'pgboss')")).rows[0].n); } finally { await pl.end(); } })())).toBe(0); // DO-F diagnostic patch 2
+492c492
+<     expect((await fingerprint(db)).tableCounts).toEqual({});
+---
+>     expect((await (async () => { const pl = createPool(roleUrl(inject("mthDb").adminUrl, db, null), { max: 1 }); try { return Number((await pl.query("SELECT count(*) AS n FROM pg_tables WHERE schemaname IN ('public', 'pgboss')")).rows[0].n); } finally { await pl.end(); } })())).toBe(0); // DO-F diagnostic patch 2

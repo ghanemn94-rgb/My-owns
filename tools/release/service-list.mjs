@@ -30,6 +30,7 @@ export const SERVICE_ROLES = Object.freeze({
   smoke: "One-shot smoke test of a running stack (test profile).",
   "load-generate": "One-shot generator of the synthetic load dataset (load profile, never production).",
   "load-sessions": "One-shot creation of synthetic load-test sessions (load profile, never production).",
+  backup: "One-shot database phase of a backup set, run by IT (backup profile, off by default; ADR-0066).",
 });
 
 /** p7-work-split A.3, verbatim. No enterprise-messaging row: restricted-network.md lists no such channel at DG6. */

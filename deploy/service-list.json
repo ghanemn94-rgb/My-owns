@@ -26,6 +26,26 @@
       "requiredInProduction": true
     },
     {
+      "name": "backup",
+      "files": ["deploy/compose/compose.yaml"],
+      "profiles": ["backup"],
+      "image": "postgres:18@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722",
+      "imageLockId": "postgres",
+      "imageScope": "production",
+      "dependsOn": ["db"],
+      "volumes": [
+        "../scripts/backup.sh:/mth/scripts/backup.sh:ro",
+        "./compose.yaml:/mth/deploy/compose/compose.yaml:ro",
+        "../images.lock.json:/mth/deploy/images.lock.json:ro",
+        "evidence:/var/lib/mth/evidence:ro",
+        "${MTH_BACKUP_ROOT:-/tmp/mth-backups}:/backups"
+      ],
+      "publishedPorts": [],
+      "networks": [],
+      "role": "One-shot database phase of a backup set, run by IT (backup profile, off by default; ADR-0066).",
+      "requiredInProduction": false
+    },
+    {
       "name": "db",
       "files": ["deploy/compose/compose.yaml"],
       "profiles": [],
