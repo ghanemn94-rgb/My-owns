@@ -607,7 +607,7 @@ erDiagram
     evidence ||--o{ evidence_content : "file revisions (append-only)"
     evidence_content |o--o| evidence : "current / reviewed content (composite FK)"
     evidence ||--o{ evidence_link : "T-FK"
-    evidence_link }o--|| P2_record : "record_type + record_id (guarded, same transformation)"
+    %% evidence_link.record_type + record_id point at any P2 record (polymorphic, guarded, same transformation). There is no table to draw; "P2_record" was a placeholder entity (removed by T-DG7-ARCH-R1, ADR-0070 §1.1).
 
     evidence {
         uuid id PK

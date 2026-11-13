@@ -372,6 +372,8 @@ tags:
     description: The upload allow-list and size limit, and the rate-limit matrix (P6, ADR-0052).
   - name: operations
     description: Operational exceptions, the worker heartbeat and the service identities of jobs and connectors (P6, ADR-0053).
+  - name: admin
+    description: "Read-only administration data served since DG1: the provisional brand design tokens (getBrandingTokens). Editing branding is under `branding` (P5)."
   - name: platform-admin
     description: Identity, evidence storage and notification channels in Administration (P6, ADR-0054).
   - name: search
@@ -629,6 +631,7 @@ paths:
     get:
       tags: [organizations]
       operationId: getOrganization
+      summary: "One organization with its defaults (organization.read). The response carries the version as its ETag."
       responses:
         "200":
           description: The organization.
@@ -724,6 +727,7 @@ paths:
     get:
       tags: [organizations]
       operationId: getBusinessUnit
+      summary: "One business unit (business_unit.read). The response carries the version as its ETag."
       responses:
         "200":
           description: The business unit.
@@ -739,6 +743,7 @@ paths:
     patch:
       tags: [organizations]
       operationId: updateBusinessUnit
+      summary: "Update names, status or the parent unit (business_unit.manage; a re-parent also needs it at the destination). Needs If-Match; a cycle or a hierarchy deeper than the limit is refused (422)."
       security:
         - sessionCookie: []
           csrfToken: []
@@ -819,6 +824,7 @@ paths:
     get:
       tags: [users]
       operationId: getUser
+      summary: "One user (user.read on the user's organization). The response carries the version as its ETag."
       responses:
         "200":
           description: The user.
@@ -979,6 +985,7 @@ paths:
     get:
       tags: [access]
       operationId: getRoleAssignment
+      summary: "One scoped role assignment (access.read at or above its scope). The response carries the version as its ETag."
       responses:
         "200":
           description: The assignment.
@@ -1104,6 +1111,7 @@ paths:
     get:
       tags: [transformations]
       operationId: getTransformation
+      summary: "One transformation (transformation.read). The response carries the version as its ETag."
       responses:
         "200":
           description: The transformation.
@@ -1267,6 +1275,7 @@ paths:
     get:
       tags: [direction]
       operationId: getStrategicGuardrail
+      summary: "One strategic guardrail (B0035). Needs transformation.read on the transformation; the response carries the version as its ETag."
       responses:
         "200":
           description: The record.
@@ -1403,6 +1412,7 @@ paths:
     get:
       tags: [direction]
       operationId: getOutcome
+      summary: "One outcome of the outcome tree (B0048). Needs transformation.read on the transformation; the response carries the version as its ETag."
       responses:
         "200":
           description: The record.
@@ -1537,6 +1547,7 @@ paths:
     get:
       tags: [kpi]
       operationId: getKpiDefinition
+      summary: "One KPI dictionary entry. Needs transformation.read on the transformation; the response carries the version as its ETag."
       responses:
         "200":
           description: The record.
@@ -1700,6 +1711,7 @@ paths:
     get:
       tags: [kpi]
       operationId: getBaseline
+      summary: "One baseline; a missing value is Unknown (null), never zero. Needs transformation.read on the transformation; the response carries the version as its ETag."
       responses:
         "200":
           description: The record.
@@ -1834,6 +1846,7 @@ paths:
     get:
       tags: [kpi]
       operationId: getOutcomeKpi
+      summary: "One T02 Outcome & KPI Tree row (B0050). Needs transformation.read on the transformation; the response carries the version as its ETag."
       responses:
         "200":
           description: The record.
@@ -1968,6 +1981,7 @@ paths:
     get:
       tags: [diagnose]
       operationId: getValuePool
+      summary: "One value pool; an unquantified pool has null amounts, never zero. Needs transformation.read on the transformation; the response carries the version as its ETag."
       responses:
         "200":
           description: The record.
@@ -2104,6 +2118,7 @@ paths:
     get:
       tags: [diagnose]
       operationId: getDiagnosticItem
+      summary: "One T01 Current-State Diagnostic row (B0031). Needs transformation.read on the transformation; the response carries the version as its ETag."
       responses:
         "200":
           description: The record.
@@ -2240,6 +2255,7 @@ paths:
     get:
       tags: [diagnose]
       operationId: getDiagnosticFinding
+      summary: "One diagnostic finding. Needs transformation.read on the transformation; the response carries the version as its ETag."
       responses:
         "200":
           description: The record.
@@ -2376,6 +2392,7 @@ paths:
     get:
       tags: [diagnose]
       operationId: getWorkstreamOutput
+      summary: "One output of a Diagnose workstream (REQ-PB-023). Needs transformation.read on the transformation; the response carries the version as its ETag."
       responses:
         "200":
           description: The record.
@@ -2512,6 +2529,7 @@ paths:
     get:
       tags: [design]
       operationId: getTomGap
+      summary: "One T03 TOM Gap Matrix row (B0058). Needs transformation.read on the transformation; the response carries the version as its ETag."
       responses:
         "200":
           description: The record.
@@ -2648,6 +2666,7 @@ paths:
     get:
       tags: [design]
       operationId: getCapabilityHeatmapEntry
+      summary: "One capability heatmap entry. Needs transformation.read on the transformation; the response carries the version as its ETag."
       responses:
         "200":
           description: The record.
@@ -2784,6 +2803,7 @@ paths:
     get:
       tags: [design]
       operationId: getJourney
+      summary: "One journey. Needs transformation.read on the transformation; the response carries the version as its ETag."
       responses:
         "200":
           description: The record.
@@ -2918,6 +2938,7 @@ paths:
     get:
       tags: [decisions]
       operationId: getDependency
+      summary: "One dependency (the canonical record shared by T08 and RAID). Needs transformation.read on the transformation; the response carries the version as its ETag."
       responses:
         "200":
           description: The record.
@@ -3052,6 +3073,7 @@ paths:
     get:
       tags: [decisions]
       operationId: getActionItem
+      summary: "One action item. Needs transformation.read on the transformation; the response carries the version as its ETag."
       responses:
         "200":
           description: The record.
@@ -3152,6 +3174,7 @@ paths:
     get:
       tags: [design]
       operationId: getTomWorkshop
+      summary: "One TOM canvas workshop (B0063). Needs transformation.read on the transformation; the response carries the version as its ETag."
       responses:
         "200":
           description: The record.

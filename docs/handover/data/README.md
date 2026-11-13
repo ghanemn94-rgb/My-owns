@@ -27,13 +27,13 @@ The figures below were copied from `coverage.json` as committed with this file. 
 
 | Measure | Value |
 | --- | --- |
-| Result | **FAIL: 176 gaps** (listed in `coverage.json` under `gaps`) |
+| Result | **PASS: 0 gaps** (`gaps` is empty) |
 | Tables and views checked (schemas `public` and `pgboss`) | 364 |
 | Columns checked | 5761 |
-| Indexes not named in their section (reported only) | 395 |
-| Constraints not named in their section (reported only) | 4099 |
-| Triggers not named in their section (reported only) | 47 |
-| Columns in sections without a `Null` column (nullability reported, not compared) | 121 |
+| Indexes not named in their section (reported only) | 341 |
+| Constraints not named in their section (reported only) | 3722 |
+| Triggers not named in their section (reported only) | 24 |
+| Columns in sections without a `Null` column (nullability reported, not compared) | 0 |
 | Public tables in no ERD section (reported only) | 9 |
 
-The gaps are closed by the orchestrator or an ARCH repair, by adding dictionary sections (p7-plan §5.3). Until `coverage.json` reads `"result": "PASS"`, this handover item is **not complete**: REQ-S19-005 requires "the data dictionary covers every table and column in the final schema".
+The 176 gaps of the first run (T-DG7-DO-H) were closed by the ARCH repair T-DG7-ARCH-R1 (p7-plan §5.3): the part "Coverage repair: complete column lists" at the end of the dictionary documents 36 tables and views in full, the earlier sections keep their approved content under an `Earlier section:` heading, and the ERD placeholder `P2_record` was removed. Any later migration means re-running the tool and copying the figures again. The coverage check is engineering evidence; it is not an IT acceptance of the handover.
