@@ -757,6 +757,86 @@ T-C9, T-C10, T-C13, T-C14 and T-C15 stay as they are and must still pass.
 - `RECHECK_OPERATIONAL_TABLES` may shrink by measurement. It never grows without the architect.
 - Run before the handback: `node tools/gates/validate.mjs --historical --stage DG6` **first**; then `pnpm -r typecheck`, `pnpm lint`, `pnpm openapi:lint` and `pnpm test`; the integration files of C.12 plus `transfer-recheck.test.ts`; `node --test apps/api/scripts/register-snapshot.test.mjs` and the wrapper tests; `node tools/release/migration-catalogue.mjs --check`; the dictionary coverage tool; and the repository-wide prettier check.
 
+### C.14 BE-R3: mode 2 rules and table-digest drain (backend-workflow; repair; after ARCH-R4)
+
+**What this is.** The third repair task for the import and recheck, under p7-plan §5.3 (D-260). It builds ADR-0064 **Amendment 3**:
+
+- the automation chain (A3.2);
+- the `counter` basis (A3.3);
+- allowance `mth-recheck-allowance/3` (A3.4);
+- migration 0151 and the additive contract value (A3.5).
+
+It also fixes DO-D3 Q1: `mth-db` cuts piped stdout at 64 KiB. C.12's and C.13's rows stand where Amendment 3 does not change them. Where they differ, Amendment 3 wins. The column counts of C.13 read as A3.7 corrects them (15 compared, 17 in total). BE-R2's code already does this and is not changed for it.
+
+**Hard rules.**
+- C.12's and C.13's hard rules stand.
+- No table is added to `RECHECK_OPERATIONAL_TABLES`.
+- No worker or API audit attribution changes (A3.2 option (b) is rejected).
+- `jobActor` stays as it is.
+- Nothing writes, updates or truncates `audit_event`.
+- If a measurement contradicts Amendment 3, stop and report. It is a design question. For example: an outbox row and its mutation's audit event whose timestamps differ, or a counter call site that does not insert its coded row in the same transaction.
+
+**Creates:**
+
+| File | Purpose |
+| --- | --- |
+| `packages/db/migrations/0151_p7_transfer_recheck_counter_basis.sql` (the next free id above the highest shipped file, D-245 O9) | A3.5: drop and re-add `migration_reconciliation_delta_basis_check` with ten values (A2.4's nine plus `counter`). The header states that nothing here touches `audit_event`. |
+| `packages/db/src/transfer/recheck-automation.ts` (or a section of `recheck.ts`; BE-R3 chooses and names it in the handback) | `explainingEvents(tx, B, actors) → E`; `automationChain(tx, B, actors, package) → { events: E*, chain: AutomationLink[] }`, the A3.2 fixed point |
+| `packages/db/test/integration/transfer-recheck-automation.test.ts` | T-R19, T-R20 |
+| `packages/db/test/integration/cli-stdout-drain.test.ts` (or a case in an existing CLI test) | T-R23 |
+
+**Modifies:**
+
+| File | Exactly what |
+| --- | --- |
+| `packages/db/src/transfer/recheck.ts` | `ALLOWANCE_SCHEMA_VERSION = "mth-recheck-allowance/3"`. `Allowance.counters`. `parseAllowance` requires the seven keys and refuses `/1` and `/2` (`unsupported schema version '<v>'`). `RECHECK_COUNTER_TABLES` (A3.3 item 1; `prefixes` and `unmapped`). `validateAllowance` adds the counter refusals of A3.4. `explainAudited` takes `E*` in place of `E`. New `explainCounters` (A3.3 items 3–7). `DeltaBasis` gains `counter`. |
+| `packages/db/src/transfer/reconcile.ts` | Mode 2 order: `tables` → `audited` with `E*` → `children` → `counters` → `operational`. The `counter` delta. The JSON report gains `explainingEventsByActor`, `explainingEventsByAutomation`, `automationChain` (A3.2 "Report") and, per counter row, `{key, old, new, codes}`. |
+| `packages/db/src/cli.ts` | **DO-D3 Q1.** `main(...).then((code) => { process.exitCode = code; })` in place of `process.exit(code)`, and the same in the two error branches (l.370–392 at the base). The `DemoRefused` branch then `return`s, so it keeps its own exit code and is not overwritten by the generic `1`. The process then ends when stdout has drained. No command may leave a handle open: a pool not closed is a bug, which T-R23 catches by timing out. Usage and header unchanged. |
+| `packages/db/src/transfer/index.ts` | export lines (`RECHECK_COUNTER_TABLES`, `explainCounters`, the automation functions) |
+| `packages/db/src/transfer/recheck.test.ts` | unit parts of T-R21 and T-R22's prefix pin |
+| `packages/db/test/integration/transfer-recheck.test.ts` | the existing `/2` fixtures move to `/3` (add `"counters": []`) |
+| `packages/db/src/schema.ts`, `packages/db/src/seed.test.ts`, `packages/db/test/integration/p7-transfer-guards.test.ts`, `packages/db/test/integration/catalogue.test.ts` | the 0151 lines (the next free id becomes 0152) and T-R9's cases for 0151 |
+| `docs/api/openapi.yaml`, `apps/api/src/modules/transfer/import/service.ts`, `apps/api/test/integration/contract/p7-exercises-be-d.ts` | additive only: `counter` in the `basis` enum and its zod mirror. The exercise seeds one `counter` delta (T-R12). `info.version` and the operation count are unchanged. |
+| `docs/architecture/data-dictionary.md`, `docs/architecture/erd.md`, `docs/handover/data/coverage.json`, `docs/handover/migration-catalogue.json`, the generated table of `docs/handover/upgrades.md` | the 0151 lines; regenerated with their tools, no override |
+
+**Not BE-R3's:**
+- the drill (`deploy/scripts/**`), which is DO-D4's (B.8);
+- BE-R2's Q2 (the grouped load and `SET CONSTRAINTS ALL IMMEDIATE`), which stays with the orchestrator as BE-R2 raised it.
+
+**Exact texts.** These add to C.5, C.12 and C.13. Every earlier line stays.
+
+| Command | Exit | Line |
+| --- | --- | --- |
+| `reconcile-migration` | 2 | `reconcile-migration: refused: invalid allowance file: unsupported schema version 'mth-recheck-allowance/2'` (and `/1`) |
+| `reconcile-migration` | 2 | `reconcile-migration: refused: invalid allowance file: missing key 'counters'` |
+| `reconcile-migration` | 2 | `reconcile-migration: refused: invalid allowance file: counter table <t> is not in RECHECK_COUNTER_TABLES` |
+| `reconcile-migration` | 4 | for a counter table, after the per-table line `  <table>: <a> added, <c> changed, <m> missing (counter)`: at most 20 lines `    counter <key>: moved <old> -> <new>, <n> new coded rows (<numbers, comma-separated, or none>)` |
+
+**Tests** (real PostgreSQL through `tests/qa/support/with-pg.sh`, except where marked unit):
+
+| Test | File | Proves |
+| --- | --- | --- |
+| T-R19 | `transfer-recheck-automation.test.ts` | Fixture: a target after import, with the API and the worker running in-process.<br>• A journalled actor creates a transformation through the route. Mode 2 with `automation_execution` and `automation_action_result` in `audited` explains both rows (`allowed`), and `automationChain` names the outbox row and the `transformation` event with equal timestamps.<br>• **Negative 1:** an owner-inserted `outbox_event` with the same aggregate but a `created_at` one microsecond off, triggering an execution, leaves that execution `unexplained`.<br>• **Negative 2:** a starter execution caused by a non-journalled user (the same route, signed in as a user not in `actors`) is `unexplained`, and so are the rows its job wrote.<br>• **Negative 3:** an execution with `initiating_user_id` or `trigger_payload.createdBy` not in `actors` is `unexplained`, even though its trigger link holds.<br>• **Negative 4:** a schedule-triggered execution is `unexplained`. |
+| T-R20 | `transfer-recheck-automation.test.ts` | Mode 2 with `counters: ["record_code_counter"]`:<br>• one RAID issue created by a journalled actor gives `I` moved 0→1 (or n→n+1) and is explained;<br>• the counter moved by 2 for one row is `unexplained`, with the A3.3 line;<br>• a counter moved with no coded row is `unexplained`;<br>• a coded row added by an unexplained event leaves its counter step `unexplained`;<br>• an explained coded row whose counter did not move is reported (A3.3 item 5);<br>• an unmapped prefix that changed is `unexplained`;<br>• `D-`, `DEC-` and `DEP-` codes in one transformation are counted only under their own prefix. |
+| T-R21 | `recheck.test.ts` (unit) and `transfer-recheck.test.ts` | `/3` is accepted with seven keys. `/1` and `/2` are refused with the line. `counters` missing is refused. An unknown counter table is refused. `record_code_counter` in both `counters` and `children` gives `listed more than once`. |
+| T-R22 | `recheck.test.ts` (unit) | `RECHECK_COUNTER_TABLES.record_code_counter`'s `prefixes ∪ unmapped` equals the 24 prefixes of the 0055 CHECK, read from the migration file, and the two are disjoint. Each mapped table has `transformation_id` and its code column, checked against `SCHEMA_COLUMNS`. |
+| T-R9 (0151) | `p7-transfer-guards.test.ts` | The basis CHECK accepts `counter` and still refuses an unknown basis. `audit_event` triggers and grants are unchanged. |
+| T-R12 | contract | the `counter` value round-trips |
+| T-R23 | `cli-stdout-drain.test.ts` | On a migrated seed-demo database, `node packages/db/dist/cli.js table-digest --table audit_event --rows` (built first) piped through a reader that counts bytes gives the same byte count and SHA-256 as the same command written to a file. The output must exceed 256 KiB; the test asserts that. The exit code is 0, and the process ends within 30 s. |
+
+**Requirement → clause → test** (adds to C.10, C.12, C.13):
+
+| Requirement | Clause | Test(s) |
+| --- | --- | --- |
+| REQ-S19-014 | M0362 "reconciliation" | T-R19, T-R20, T-R21, T-R22 |
+| REQ-S19-017 (B.8) | "records, jobs and approvals intact after a full restart" | T-R19, T-R20 (mode 2 on automation and counters), T-R23 (the digest D9 uses, piped) |
+
+**What BE-R3 must know.**
+- The timestamp link compares `timestamptz` values exactly in SQL (`e.occurred_at = o.created_at`), never through text or JavaScript `Date`, which would lose microseconds.
+- `E*` is computed once per recheck, inside its transaction, before any `audited` table is explained.
+- The counter rule reads only rows that this run explained. Run it last.
+- Run before the handback: `node tools/gates/validate.mjs --historical --stage DG6` **first**; then `pnpm -r typecheck`, `pnpm lint`, `pnpm openapi:lint` and `pnpm test`; the integration files of C.13 plus T-R19–T-R23; `node tools/release/migration-catalogue.mjs --check`; the dictionary coverage tool; and the repository-wide prettier check.
+
 ## §D. Slice D: configuration transfer bundle (T-DG7-ARCH-02; ADR-0065)
 
 ### D.0 Already delivered by the architect (do not re-create)
@@ -1384,6 +1464,47 @@ This section is referred to as "B.7 DO-D3". Its number clashes with "B.7 Integra
 - Disk is tight. Measure first, never make a second full checkout, and delete the work tree unless `--keep` is given.
 - `actors` come from sign-ins. Never derive actors or keys from "whatever is new" on T.
 - Every IdP user, secret and origin is synthetic. Nothing here approves anything: no G1–G6, Finance or IT approval, and no DG gate.
+- Run before the handback: `node tools/gates/validate.mjs --historical --stage DG6` **first**; then the drill tests under `with-pg.sh`, T-B11, `pnpm -r typecheck`, `pnpm lint`, `pnpm openapi:lint` and the repository-wide prettier check.
+
+### B.8 DO-D4: run T-B11 to the end (devops-engineer; repair; after BE-R3 and AN-R1)
+
+**What this is.** The third repair task for the A18 drill (D-260). This section is referred to as "B.8 DO-D4". Its number clashes with "B.8 Requirement → clause → test → owner" above, as B.6 DO-D2 and B.7 DO-D3 did (D-259, D-260). The rules of B.6 DO-D2 and B.7 DO-D3 stand unless changed here. It does the following:
+
+- moves D8 to the ADR-0064 A3.6 gate chain;
+- moves the allowance to `mth-recheck-allowance/3` with `counters`;
+- remeasures the D8 lists on the full chain;
+- runs T-B17 and T-B11 from D0 to D11.
+
+**Preconditions** (checked first, and reported as BLOCKED with the reason if they do not hold):
+- BE-R3 is merged (`ALLOWANCE_SCHEMA_VERSION` is `/3` and `RECHECK_COUNTER_TABLES` exists);
+- AN-R1 is merged: `node --test apps/api/scripts/register-snapshot.test.mjs` (T-R16) exits 0.
+
+**Modifies:**
+
+| File | Exactly what |
+| --- | --- |
+| `deploy/scripts/drill/pick-actors.sql` | Adds the A3.6 actors: `V`, `W`, `O`, and `L` and `X` when needed. They are rebound users only, and each must differ where A3.6 says. A role that cannot be filled ends D8 before C0 with `D8 FAIL: no rebound user holds <permission>`. |
+| `deploy/scripts/drill/journey.mjs` | The A3.6 steps C0–C6 and the remedy table, by operation id. Every call is made through the public API with the session cookie, the CSRF token and `If-Match` where required. Every key a response returns is journalled. The failure lines are exactly A3.6's. Every created text starts with `SYNTHETIC`. |
+| `deploy/scripts/drill/allowance.mjs` | Writes `/3`: the six `/2` keys plus `counters` = `D8_TOUCHED_COUNTERS`. `automation_execution` and `automation_action_result` are in `D8_TOUCHED_AUDITED`. `D8_TOUCHED_AUDITED`, `D8_TOUCHED_CHILDREN` and `D8_TOUCHED_COUNTERS` are replaced by the T-B17 measurement on the **full** chain. Each entry has its reason in `allowance-reasons.json` (`mth-recheck-allowance-reasons/3`). The constants still come from `recheck.ts` only. |
+| `deploy/scripts/transfer-drill.sh` | D8 passes the new actors. D9 passes the `/3` file. Bug fixes found by the run are each named in the handback with the failing log line. |
+| `deploy/scripts/tests/transfer-drill.test.mjs` | T-B15 on `/3`, T-B17 on the full chain, and T-B18 |
+
+**Tests:**
+
+| Test | Proves |
+| --- | --- |
+| T-B15 | `allowance.mjs` writes a `/3` file that `parseAllowance` accepts. A counter table appears only in `counters`. |
+| T-B17 (PostgreSQL) | As in B.7, on the **full** A3.6 chain (C0–C6): the journey reaches `decideGate` 201, and the changed tables minus `tables`, operational and `user_identity` equal `D8_TOUCHED_AUDITED ∪ D8_TOUCHED_CHILDREN ∪ D8_TOUCHED_COUNTERS`. Mode 2 with the generated `/3` file exits 0, and the report's `automationChain` is non-empty. The negative case of B.7 stays. |
+| T-B18 (PostgreSQL) | The remedy table is closed: on a fixture where the chosen gate misses a code with no remedy row, the journey stops at C1 with `D8 FAIL: no API remedy for <code> at <pointer>` and writes nothing after it |
+| T-B11 | As in B.6 DO-D2 and B.7: D0–D11 PASS in the no-network namespace, on an archive built from the merged candidate commit. `reconcile-d5.json` and `reconcile-d6.json` are `matched`, with an `audit_already_present` delta. `reconcile-d9.json` is `matched after use`. The report's `result` is `PASS`. |
+
+**What DO-D4 must know.**
+- A row that mode 2 calls unexplained is reported with its key, never allowed by editing the lists by hand. The lists come from T-B17's measurement only.
+- A scheduled automation row that lands in the window (A3.9 residual 1) is a FAIL with its key and trigger code. Never pause, disable or reschedule a job to avoid it. Report it, and the orchestrator decides.
+- `table-digest` output may be piped again once BE-R3's drain fix is merged. The file-based workaround of DO-D3 may stay.
+- Wait at least 30 s after C6 (and after the gate routing in C4) before D9's snapshot, and record the wait. A worker job that ends later than that is a T-B17 measurement gap, reported as such.
+- Every IdP user, secret, origin, KPI value, evidence note, deferral and gate decision is SYNTHETIC. Nothing here approves anything: no G1–G6, Finance or IT approval, and no DG gate.
+- Disk is tight. Measure first, never make a second full checkout, and delete the work tree unless `--keep` is given.
 - Run before the handback: `node tools/gates/validate.mjs --historical --stage DG6` **first**; then the drill tests under `with-pg.sh`, T-B11, `pnpm -r typecheck`, `pnpm lint`, `pnpm openapi:lint` and the repository-wide prettier check.
 
 ## §F. Slice F: schema, API and connector handover (T-DG7-ARCH-04; ADR-0070)

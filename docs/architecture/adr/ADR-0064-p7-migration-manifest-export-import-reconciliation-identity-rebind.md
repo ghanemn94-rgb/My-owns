@@ -737,3 +737,267 @@ D-259's escalation condition ("Amendment 2 cannot keep the DG1 audit guarantees"
 3. **`audit_explained` trusts the drill's actor list.** A journalled actor's unrelated edit in an audited table would be accepted. The JSON report lists every explaining event's action for review.
 4. **`child_of` accepts any number of children under an explained parent.** It cannot see whether they were written in the same transaction, because the database stores no transaction id per row.
 5. **The register rewording needs an analyst assignment** before BE-R2's T-R16 can pass. Until then T-R16 fails, by design, and names the two rows.
+
+## Amendment 3 (2026-11-13, T-DG7-ARCH-R4): mode 2 explanations for worker automation rows and for code counters, the D8 gate chain, and the A2.1 column counts
+
+- **Author:** solution-architect (T-DG7-ARCH-R4). Base `cbf26ddb40a402f2ea1873eb665b5d8d32f7ec42` on `claude/mobily-transformation-platform-dg6-regate`.
+- **Why.** D-260 records three open items after repair round 2. DO-D3 measured them in T-B17 (`docs/delivery/handbacks/DG7/T-DG7-DO-D3-evidence/t-b17-measurement-mode2.txt`). BE-R2 raised one arithmetic question. This amendment decides all four:
+  1. **DO-D3 Q2a, automation rows.** `createTransformation` makes the worker write one `automation_execution` row and one `automation_action_result` row. Their audit events have `actor_type = 'service'`, `actor_user_id` NULL and `on_behalf_of_user_id` NULL (`apps/worker/src/kit.ts` `jobActor`). So A2.6's explaining set `E` contains none of them, and mode 2 calls both rows `unexplained`.
+  2. **DO-D3 Q2b, counters.** `record_code_counter` `(transformation_id, prefix)` moved for the carried transformation when D8 created a RAID issue. The row has no `id` and no audit trigger. Its only foreign key points at the unchanged carried `transformation`. So no A2.6 basis can explain it.
+  3. **DO-D3 Q3, D8 gate chain.** On the demo transformation, G1–G4 are `approved`. G5 is `draft`, and `submitGate` refuses it: `422 gate_criteria_incomplete: "Mandatory required outputs are incomplete: Performance evidence, Adoption, Decision log."`.
+  4. **BE-R2 Q1.** `audit_event` has 17 columns. A2.1 lists the right 15 compared names but calls them "13", and it calls the total "15".
+- **What this amendment replaces.** It replaces:
+  - A2.6's definition of the explaining set `E`, which is extended (A3.2);
+  - A2.6's format `mth-recheck-allowance/2`, which becomes `/3` with one more key (A3.4);
+  - the counts in A2.1, A2.2 L1, A2.10 residual 2 and C.13, which are corrected (A3.7);
+  - B.7 DO-D3's D8 step (b), which becomes the A3.6 chain.
+
+  Everything else in this ADR and in Amendments 1 and 2 stands unchanged. Nothing is loosened: every rule of A1.9 and A2.6 still applies, and each new explanation is key by key and rooted in a journalled actor's audited mutation.
+- **Hard constraints (D-258, D-259, D-260).** They are unchanged:
+  - `audit_event` stays append-only, and both of its triggers stay enabled;
+  - nothing truncates, deletes from or updates it;
+  - no source audit event is lost, altered or re-attributed;
+  - mode 2 never explains a row by "whatever is new" and never by putting a table in `operational`.
+
+  D-260's escalation condition is "Amendment 3 needs to loosen the allowance beyond what the drill's journal explains". A3.8 shows that it is **not** met. A3.9 names the one case that would meet it (scheduled automation) and keeps that case unexplained.
+- **Two gate systems.** Nothing in this amendment grants or implies a G1–G6, Finance or IT approval, and nothing reads or writes DG0–DG7. Every D8 write, including the G5 submission and its decision, is SYNTHETIC drill data on a disposable target. It approves nothing real.
+
+### A3.1 Automation rows: the facts that decide it
+
+The facts below were read in the code at the base revision.
+
+- **The measured row comes from a seeded starter.** It is not an ADMIN rule. `starter.transformation_created` (0075) has `run_as = 'service'`. The starter wrapper (`apps/worker/src/automation/starters.ts`, l.212) writes `initiating_user_id: null`. CHECK `automation_execution_identity` makes `initiating_user_id` non-NULL only for `run_as = 'initiating_user'`. **So for the row DO-D3 measured, `initiating_user_id` is NULL.** A rule over `initiating_user_id` alone, as D-260 worded it, would not explain it. The G5 chain (A3.6) adds `gate.submitted` and `gate.decided` starters, whose catalogue `initiating_user_field` is NULL as well.
+- **The trigger link is recorded, immutably.**
+  - `automation_execution.trigger_key` is the envelope's `idempotencyKey`, and `trigger_code` is its `eventType` (`starters.ts` l.126–138, `engine.ts`).
+  - The relay copies `idempotencyKey` from `outbox_event.idempotency_key` (`apps/worker/src/relay.ts` l.78).
+  - `automation_execution_guard` (0074) refuses any later change of `trigger_code`, `trigger_key`, `trigger_payload`, `run_as` and `initiating_user_id`.
+- **The outbox row is written in the transaction of the mutation that raised it.** Examples:
+  - `createTransformation` writes aggregate `transformation` (`routes.ts` l.298);
+  - `submitGate` and `decideGate` write aggregate `gate_instance` (`gates.ts` `enqueueGateEvent`).
+
+  `outbox_event.created_at` and `audit_event.occurred_at` both default to `now()`, PostgreSQL's transaction timestamp. Neither insert path sets them (`packages/db/src/audit.ts`, `apps/api/src/modules/jobs/outbox.ts`, `gates.ts`). So the mutation's audit event and its outbox row carry the **same** timestamp.
+- **The worker's own writes carry the job.** Every worker audit event has `request_id = 'job:<pg-boss job id>'` (`jobActor`). A starter wrapper and the handler it wraps run in the same job, so they write under the same `request_id`. The engine (queue `automation.evaluate`) writes its executions and their actions' effects in its own job, again under one `request_id`. That includes the execution, the action result and the handler's outputs, such as a gate routing's approval rows.
+- **`outbox_event` is exported and listed as operational.** Mode 2 still reads its live rows. Being operational only means its own differences are counted rather than explained (A1.9 rule 4). Nothing stops a rule from reading it as evidence.
+
+### A3.2 Automation rows: options weighed and the rule
+
+| Option | Verdict |
+| --- | --- |
+| (a) D-260 literally: explain a service row when `automation_execution.initiating_user_id` is a journalled actor | **Improved, not adopted alone.** It is correct where it applies, and it is kept as a cross-check. But it is NULL for every seeded starter (A3.1), which covers every measured row. |
+| (b) Write `on_behalf_of_user_id` on the worker's events (DO-D3 Q2a option 1) | **Rejected.** It changes product attribution to fit a test. Starters run as the service identity by design (D-142 Q3; ADR-0044 §1). Saying "on behalf of" a user who did not ask for it would misstate the trail. It would also change 0074-era behaviour that DG5/DG6 approved. |
+| (c) Put `automation_execution` and `automation_action_result` in `operational` | **Rejected.** That is "ignore the table" (A2.6), and the handler's outputs (for example approval rows) would still be unexplained. |
+| (d) Accept any `source = 'worker'` event after the import | **Rejected.** That is "whatever is new": a scheduled job would explain itself. |
+| **(e) Chained explanation through recorded links** | **Chosen.** An automation execution is explained only when its trigger is an outbox event written **in the same transaction** as an already explained audit event. Its job's service events then join the explaining set. This repeats until nothing changes. Every link is a recorded column. |
+
+**The rule (extends A2.6 rule 3).**
+
+Let `B` be `audit_baseline_seq_max` of the latest `migration_import`, and `A` the allowance's `actors`.
+
+1. **Start.** `E*` is `E` of A2.6, unchanged: events with `seq > B`, `source IN ('api', 'worker')`, and `actor_user_id` or `on_behalf_of_user_id` in `A`.
+2. **Explained trigger.** An `outbox_event` row `o` is *explained by `E*`* when all of the following hold:
+   - `o` is added (its key is not in the package);
+   - `E*` has an event `e` with `e.record_type = o.aggregate_type`, `e.record_id = o.aggregate_id`, `e.organization_id = o.organization_id` and `e.occurred_at = o.created_at`.
+
+   The equal timestamp places `e` in the transaction that wrote `o`. The equal record places it on the aggregate the event is about. Both must hold.
+3. **Explained execution.** A row `x` of `automation_execution` (added, or changed by a retry) is *chain-explained* when all of the following hold:
+   - `automation_trigger.trigger_kind` of `x.trigger_code` is `event`;
+   - exactly one explained `o` has `o.idempotency_key = x.trigger_key` and `o.event_type = x.trigger_code`;
+   - the execution's recorded user, if it has one, is in `A`. The recorded user is `x.initiating_user_id` when it is non-NULL. Otherwise it is `x.trigger_payload ->> f`, where `f` is `automation_trigger.initiating_user_field` of `x.trigger_code`, when `f` is non-NULL. For `transformation.created`, `f` is `createdBy`. This is option (a) as a cross-check: a journalled link with a foreign recorded user is **not** explained.
+
+   A schedule or request trigger is never chain-explained by this rule (A3.9). Request starters are written in the API transaction by the user, so A2.6 already explains them.
+4. **The job's events join `E*`.** `R(x)` is the set of `request_id` values of the events with all of the following:
+   - `seq > B`;
+   - `source = 'worker'` and `actor_type = 'service'`;
+   - `record_type = 'automation_execution'` and `record_id = x.id`.
+
+   Every value must match `^job:.+$`, else `x` is not chain-explained. Then every event with `seq > B`, `source = 'worker'`, `actor_type = 'service'` and `request_id ∈ R(x)` joins `E*`, provided that its `on_behalf_of_user_id` is NULL or in `A`.
+5. **Fixed point.** Steps 2–4 repeat until `E*` stops growing. This covers chains where a worker job writes an outbox row (in its own transaction, with its own service event on the aggregate) that triggers the next execution. Every step adds at least one execution, so the number of rounds is at most the number of added executions.
+6. **Use.** A2.6 rule 3 is evaluated with `E*` in place of `E`, for every `audited` table, with no other change. Rows of `automation_execution` and `automation_action_result` are then explained like any other audited row: by an event in `E*` on their own `id`, and at their `version` where the table has one. No new basis value is written; such rows count under `audit_explained`.
+
+**What the allowance file says.** Nothing new. `automation_execution` and `automation_action_result` are listed in `audited`, as DO-D3 already does. No schema change and no new allowance key are needed for automation.
+
+**Report (adds to A2.6 "Output").** The JSON report gives, per `audited` table, `explainingEventsByActor` (from `E`) and `explainingEventsByAutomation` (from `E* \ E`). It also gives a list `automationChain` of `{executionId, triggerCode, triggerKey, outboxEventId, linkEventId, linkRecordType, linkRecordId, requestIds[]}`, sorted by `executionId`. Here `linkEventId` is the `e` of step 2. No console line changes, and an unexplained row keeps its `    unexplained added <key>` line.
+
+### A3.3 Counters: options weighed and the rule
+
+`record_code_counter (transformation_id, prefix, last_value)` is written only by `INSERT … ON CONFLICT DO UPDATE SET last_value = last_value + 1 RETURNING last_value`, inside the transaction that inserts the coded row. The format is `<prefix>-<n padded to 2>`. Examples are `apps/api/src/modules/workflows/codes.ts`, `raid/register.ts` `nextRaidCode` and `apps/worker/src/handlers/escalations.ts` `nextDecisionCode`. The coded tables hold `(transformation_id, code)` unique (for example `raid_entry_code_key`, `decision_code_key`).
+
+| Option | Verdict |
+| --- | --- |
+| (a) `operational` (DO-D3 Q2b option 1) | **Rejected.** That is "ignore the table". A counter moved with no new coded row would pass. |
+| (b) `children` of `transformation` | **Rejected.** A2.6 rule 4 needs an explained parent, and the carried transformation is unchanged. Loosening rule 4 would loosen it for every child. |
+| (c) An `exact_ids` entry for the counter key | **Rejected as the only rule.** It names the key but cannot check the value: a counter moved by 5 for one new row would pass. |
+| **(d) A "counter" basis: the counter may move only by exactly the new coded rows explained in its scope** | **Chosen** |
+
+**The rule (new A2.6 rule 4a, basis `counter`).**
+
+1. **The constant.** `RECHECK_COUNTER_TABLES` in `packages/db/src/transfer/recheck.ts` maps each counter table to its scope:
+
+   ```ts
+   { name: "record_code_counter", scope: "transformation_id", prefixColumn: "prefix", valueColumn: "last_value",
+     prefixes: { R: { table: "raid_entry", code: "code" }, A: …, I: …, D: { table: "decision", code: "code" }, GD: …, DEC: …, DEP: { table: "dependency", code: "code" }, … } }
+   ```
+
+   - BE-R3 fills `prefixes` by reading each call site of the counter (A3.10 lists them). An entry exists only for a prefix whose coded table and column BE-R3 verified at the call site.
+   - Under the 0055 CHECK, every prefix is either mapped or listed in `unmapped`. A test pins that the two sets together equal the CHECK's 24 prefixes, so a new prefix fails the test.
+   - Any change to a counter row of an unmapped prefix is unexplained.
+   - Adding a counter table or a prefix mapping needs the architect, as for `RECHECK_OPERATIONAL_TABLES`.
+2. **The allowance.** The allowance names counter tables in the new key `counters` (A3.4). A counter table may not appear in `tables`, `audited`, `children` or `operational`.
+3. **Order.** Counters are checked **after** `tables`, `audited` (with `E*`) and `children` are resolved, because they count rows those sets explained.
+4. **Each counter row.** For each counter row `c` that is added or changed, with prefix `p`:
+   - Let `old` be the package's `last_value` (0 when `c` is added), and `new` the live value.
+   - Let `N` be the set of rows of the mapped table that are **explained added** in this run (explained under `tables`, `audited` or `children`), with `scope = c.transformation_id` and the code column matching `^<p>-([0-9]{2,6})$`. The prefix is matched exactly, so `D-` never matches `DEC-` or `DEP-`.
+   - `c` is explained only if `new > old` **and** the multiset of numbers parsed from `N`'s codes equals exactly `{old + 1, …, new}`. Each number appears once, with none missing and none extra.
+   - Otherwise `c` is unexplained, and the report line gives `counter <key>: moved <old> -> <new>, <|N|> new coded rows (<numbers>)`.
+5. **The inverse check.** For each mapped prefix and scope where `N` is non-empty but the counter row is unchanged, the counter row is reported unexplained with the same line. New coded rows that did not move the counter are inconsistent.
+6. **No row may be missing** (ADR-0003). A counter row present in the package and absent live is unexplained.
+7. **Delta row.** Basis `counter`, with `rows_added` and `rows_changed` the counts of added and changed counter rows. `allowed` is false if any row is unexplained.
+
+**Why this is strict.** The value is checked, not only the key. Each step of the counter must match one explained coded row, in its own transformation, with its exact number. A stray increment, a skipped number, a counter moved by an unexplained row, or a coded row without its increment all fail.
+
+### A3.4 Format `mth-recheck-allowance/3`
+
+`/3` is `/2` with one more required key, `counters`. It is an array of names from `RECHECK_COUNTER_TABLES`, and it may be empty. `ALLOWANCE_SCHEMA_VERSION` becomes `"mth-recheck-allowance/3"`. `/2` and `/1` are refused with `unsupported schema version '<v>'`: `/2` does not carry `counters`, and only the drill writes allowance files.
+
+```json
+{
+  "schemaVersion": "mth-recheck-allowance/3",
+  "actors": ["<app_user id>"],
+  "tables": [],
+  "audited": [{ "name": "automation_execution", "mustInclude": { "added": [], "changed": [] } }],
+  "children": [],
+  "counters": ["record_code_counter"],
+  "operational": ["job_run", "outbox_event"]
+}
+```
+
+All seven keys are required. The additional refusals (exit 2, `reconcile-migration: refused: invalid allowance file: <reason>`) are:
+
+- `counter table <t> is not in RECHECK_COUNTER_TABLES`;
+- `<t> is listed more than once` (as before; it now also covers `counters`).
+
+### A3.5 Schema and contract
+
+The `counter` basis needs schema and contract changes. Automation needs none.
+
+- **Migration `0151`** (BE-R3; the next free id above `0150`, D-245 O9) drops `migration_reconciliation_delta_basis_check` and re-adds it with ten values: the nine of A2.4 plus `counter`. The CHECK `migration_reconciliation_delta_unexplained` is unchanged. Nothing in 0151 touches `audit_event`, its triggers or its grants, and its header says so. `tools/release/migration-catalogue.mjs` classifies it as it finds it, with no override.
+- **Contract (additive only).** `MigrationReconciliation.deltas[].basis` gains `counter`. No operation is added or removed, and `info.version` and the operation count are unchanged.
+
+### A3.6 The D8 gate chain (DO-D3 Q3; replaces B.7 DO-D3's D8 step (b))
+
+**Options weighed:**
+
+| Option | Verdict |
+| --- | --- |
+| Change `seed-demo` so that a gate is submittable | **Rejected** (D-260). Shipped demo data stays as it is (ADR-0050 checksum). |
+| Cover the missing criteria with a gate exception (`createGateException` + `decideGateException`) | **Rejected.** It waives outputs instead of completing them, and it adds a second business approval to the drill. |
+| Submit a gate of a new transformation created in D8 | **Rejected.** G1 needs the whole Case for Change set, which is far more writes and still data-shaped. |
+| **D8 completes the chosen gate's missing required outputs through the public API, then submits, and a different rebound approver decides** | **Chosen** |
+
+**The actors.** These are rebound users chosen by `pick-actors.sql` from roles and grants, never from "new rows". Each signs in through the drill IdP, is journalled, and is listed in `actors`.
+
+| Actor | Must hold | Must differ from |
+| --- | --- | --- |
+| `S` (submitter) | `gate.submit` on the transformation | `P` |
+| `K` (KPI user) | `kpi_actual.submit`, and owner or steward of the KPI | `V` |
+| `V` (KPI reviewer) | `kpi_actual.accept`, configured reviewer | `K` |
+| `W` (evidence reviewer) | `evidence.review` | the evidence's creator (`S`) |
+| `O` (decision owner) | `executive_decision.decide` on the T16 decision (its owner or an active delegate) | — |
+| `P` (gate approver) | the gate's configured approver (user, or holder of its approver role with `gate.decide`) | `S` |
+| `L` (only if a training remedy is needed) | `proficiency.record` | — |
+| `X` (only if a risk remedy is needed) | `raid.edit` on the transformation | — |
+
+One user may fill several rows when the "must differ" column allows it. A role that `pick-actors.sql` cannot fill from rebound users stops D8 before C0, with `D8 FAIL: no rebound user holds <permission>`. The table is only for the remedies the gate actually needs, so a role that no remedy needs is not required.
+
+The gate is the lowest gate in `draft`, `changes_requested` or `deferred`, as `pick-actors.sql` already chooses. On the demo this is G5.
+
+**The steps.** Every call goes through the public API with a session cookie and CSRF token, and sends `If-Match` where the operation requires it. Every request and response is journalled. Every key a response returns goes into the journal for `tables` and `mustInclude`.
+
+| Step | Operation id(s) | Rule |
+| --- | --- | --- |
+| C0 | `getGate` (as `S`) | Read `criteria[]` and the ETag. If `canSubmit` is true, go to C3. |
+| C1 | per missing item, the remedy below | For each mandatory criterion with `completeness = incomplete`, take each `missing[]` item by `code` and `pointer`, in order. A code without a row below stops D8: `D8 FAIL: no API remedy for <code> at <pointer>`. D8 never guesses and never writes outside this table. |
+| C2 | `getGate` (as `S`) | Poll every 2 s, for at most 120 s, until `canSubmit` is true. Otherwise: `D8 FAIL: <gate> still incomplete: <criterion key>: <codes>`. |
+| C3 | `submitGate` (as `S`, `If-Match` = the gate ETag) | Body `{"submissionNote": "SYNTHETIC transfer drill submission; approves nothing real"}`. Expect 201. Journal the submission id and `submissionNo`. |
+| C4 | `getGate` (as `P`) | Poll every 2 s, for at most 120 s, until `canDecide` is true. The `gate.submitted` routing runs in the worker. |
+| C5 | `decideGate` (as `P`) | Body `{"submissionNo": <n>, "outcome": "deferred", "rationale": "SYNTHETIC transfer drill decision; approves nothing real"}`. Expect 201. Journal the decision id. `deferred` is kept from DO-D3: it exercises `gate.decided` and its starter without enabling a next phase. |
+| C6 | `getGateSubmission` (as `P`) | Read back the decision. Then wait for the worker as B.7 does, and longer (A3.10 DO-D4). |
+
+**The remedies (C1).** Each is applied once per item. A refusal (any 4xx) stops D8 with `D8 FAIL: <operation id> HTTP <status> <code>`.
+
+| Missing code (pointer) | Operation ids, in order | Notes |
+| --- | --- | --- |
+| `g5.performance_no_accepted_actual` (`/kpiDefinitions/{k}`) | `listTransformationReportingPeriods` → `listKpiActuals` → `submitKpiActual` **or** `addKpiActualValue` (+ `submitKpiActualDraft` when the actual is a draft) as `K` → `acceptKpiActual` as `V` | The latest open period. A ratio KPI sends `numerator` and `denominator` as decimal strings (DO-D3 finding 4). The worker's evaluation is awaited by C2's `getGate` poll, which is the gate's own judgement. When that poll times out on this KPI, D8 reads `getKpiStatus` once and puts its body in the failure line. D8 never edits KPI configuration. |
+| `g5.performance_kpi_not_known` (`/kpiDefinitions/{k}`) | as the row above when the KPI has no accepted actual in the latest open period; otherwise nothing (C2 waits for the evaluation) | Stale or Unknown is never treated as met (ADR-0035 §10) |
+| `g5.performance_pilot_evidence_missing` | `createEvidence` (as `S`; `kind: "note"`, `title` and `noteBody` start with `SYNTHETIC`) → `reviewEvidence` (as `W`; verified, accessible) → `listPhaseSteps` → `linkPhaseStepEvidence` (step key `transform.deliver_pilots`) | A note is accessible content, so it can be verified. No file bytes and no external URL. |
+| `g5.adoption_indicator_unknown` (`/adoptionMetricLinks/{l}`) | `getAdoptionMetricLink`. If its `kpiDefinitionId` is set, the KPI remedy above for that KPI. If its source is `training_records`, `createTrainingRecord` (as `L`). | A source of `assessment_records` stops D8 with no remedy (see A3.9) |
+| `g5.decision_log_empty` | `createExecutiveDecision` (as `O`; decision date = the business date + 14 days) | |
+| `g5.decision_date_missing`, `g5.decision_overdue` (`/decisions/{d}`) | `getExecutiveDecision` → `recordExecutiveDecisionOutcome` (as `O`, `If-Match`; `{"outcome": "deferred", "deferUntil": <business date + 14 days>}`) | A deferral with a new date is the product's own remedy for an overdue ask. It decides nothing. |
+| `g5.risk_open` (`/raidEntries/{r}`) | `getRaidEntry` → `closeRaidEntry` (as `X`, `If-Match`; closure note starts with `SYNTHETIC`) | Not measured on the demo. Listed so that the table is complete for G5. |
+| `g5.performance_no_kpi`, `g5.adoption_none`, any `*_not_loaded` | — | Stops D8. These need configuration (outcomes, KPI definitions, metric links), which D8 does not create. |
+
+A gate other than G5 is not expected on the demo. If `pick-actors.sql` chooses one, its codes are not in this table, and D8 stops at C1 with the exact code. A new remedy row needs the architect.
+
+**What this changes in mode 2.** D8 now writes into more audited tables, for example `kpi_actual`, `evidence`, `phase_step_evidence`, `decision` and its executive rows, `gate_submission`, `gate_decision`, and the routing's approval rows (written by the worker). Each is explained by `E*`. `D8_TOUCHED_AUDITED`, `D8_TOUCHED_CHILDREN` and the new `D8_TOUCHED_COUNTERS` are **remeasured** by T-B17 on the full chain (C.14 / B.8). They are never copied from this list.
+
+### A3.7 BE-R2 Q1: the column counts (corrections by amendment)
+
+The catalogue gives 17 `audit_event` columns (0003 l.7–28, and BE-R2's catalogue pin). The rule of A2.1 is unchanged: compare every column except `seq` and `occurred_at`. Only the numbers were wrong. The text above stays as written, and these readings replace it:
+
+| Where | Reads | Read as |
+| --- | --- | --- |
+| A2.1, third fact | "The other 13 columns … That makes 15 columns in total." | "The other **15** columns … That makes **17** columns in total." The list of 15 names is unchanged and complete. |
+| A2.1, option (f) | "All 13 non-database-assigned columns" | "All **15**" |
+| A2.2 L1 | "over the 13 columns of A2.1" | "over the **15** columns of A2.1" |
+| A2.10 residual 2 | "content equality of 13 columns" | "content equality of **15** columns" |
+| C.13 `import.ts` row | "the 13 columns of A2.1" | "the **15** columns of A2.1" |
+| C.13 "What BE-R2 must know" | "The 13 compared columns … exactly 15 `audit_event` columns" | "The **15** compared columns … exactly **17** `audit_event` columns" |
+
+BE-R2's code and test already do this. E5 compares the catalogue minus `seq` and `occurred_at`, and the pin is 15 + 2 = 17. Nothing is rebuilt.
+
+**The measured shared-baseline count (A2.5, A2.10 residual 1).** BE-R2 measured `|P| = 45` on a real import of this release (`docs/delivery/handbacks/DG7/T-DG7-BE-R2-evidence/integration-be-r2.log`: `T-R13 measured |P| = 45`). A2.5's reading of the migrations gave 44. **45 is the recorded figure.** For 45 shared migration events, the target row carries the target's `seq` and `occurred_at`. The source values are in `migration.imported` and proven by the digest. This is the narrowing of C8's "including `seq`" that D-260 records. The difference of one between the reading and the measurement does not change any rule: E5 finds `P` by id and never uses a constant. It is not investigated further here.
+
+### A3.8 DG1 audit guarantees and D-260's escalation condition
+
+| Guarantee | How it holds |
+| --- | --- |
+| `audit_event_immutable` and `_truncate` stay enabled | Unchanged. A3.2 and A3.3 only SELECT. 0151 does not touch `audit_event`. |
+| no UPDATE, DELETE or TRUNCATE of the trail | Unchanged. No write path is added. |
+| no re-attribution | The worker's events keep `actor_type = 'service'`. Option (b), which would have re-attributed them, is rejected. |
+| `mth_app` INSERT and SELECT only | Unchanged. The recheck stays owner CLI only. |
+
+**Escalation test (D-260: "loosen the allowance beyond what the drill's journal explains").** Every row that A3.2 or A3.3 explains rests on a chain of recorded links that ends at an event in `E`, which is an audited mutation by a journalled actor:
+
+- an execution: `trigger_key` → the outbox row → the same-transaction event on the same aggregate;
+- a worker row: its event → its `request_id` → the job of an explained execution;
+- a counter: the explained coded rows whose numbers it issued.
+
+No table moves to `operational`, no key is taken from "what is new", and every A1.9 and A2.6 rule still holds. The condition is **not met**, and the orchestrator need not escalate.
+
+### A3.9 Residuals of this amendment
+
+1. **Scheduled automation stays unexplained.** An execution with a `schedule` trigger (for example `kpi.reporting_period_open`, the `*_scan` starters, the engine ticks) has no journalled cause. If one runs on T between the import and D9, its rows, and the rows its job writes, are `unexplained`, and mode 2 exits 4. Explaining them would mean explaining rows by the scheduler, not by the drill's journal, which is D-260's escalation case. So:
+   - DO-D4 reports any such row as a FAIL with its key and trigger code;
+   - DO-D4 never pauses, disables or reschedules a job to avoid it, because that would also change `job_schedule`, which B.6 job-check pins;
+   - the orchestrator decides.
+
+   T-B17 measured none in its window (DO-D3 handback finding 3).
+2. **The same-transaction link is a timestamp equality.** PostgreSQL stores no transaction id per row. Two transactions that start in the same microsecond, write an outbox row and an explained event on the **same aggregate**, would be indistinguishable. Both events would still be on that record, so the record touched is right either way.
+3. **`E*` trusts the actors' causes.** A journalled actor's mutation that triggers a starter makes the starter's outputs explained, whatever they are. That is the product's designed behaviour. The JSON report's `automationChain` lets a reviewer read every chain.
+4. **The counter rule depends on the call-site map.** An unmapped prefix is always unexplained, so the map can only be too strict, never too loose.
+5. **Assessment-fed adoption indicators have no D8 remedy.** If the demo's G5 needs one, D8 stops with the code. The demo measured only "Adoption"; DO-D4 records which item.
+6. **G5 completion depends on the worker's KPI evaluation.** A KPI that evaluates to anything other than `ok` with a fresh accepted actual (for example `not_computable` for a missing trajectory) stops D8. D8 does not change configuration to force it.
+
+### A3.10 Who builds it
+
+- **BE-R3 (C.14):**
+  - A3.2, A3.3, A3.4 and A3.5 in `recheck.ts` and `reconcile.ts`;
+  - migration 0151 and the contract;
+  - the `mth-db` stdout drain (DO-D3 Q1);
+  - the tests.
+  - The call sites to map are those of `record_code_counter` in `apps/api/src/modules/**` and `apps/worker/src/handlers/{adoption,escalations}.ts`, found by `grep -rn record_code_counter`.
+- **DO-D4 (B.8):**
+  - the A3.6 chain in `journey.mjs` and `pick-actors.sql`;
+  - allowance `/3` with `counters`;
+  - the remeasured `D8_TOUCHED_*` lists;
+  - T-B17 and T-B11 to the end.
