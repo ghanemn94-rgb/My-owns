@@ -182,6 +182,8 @@ export const ADVISORY_LOCK_CLASSES = {
   // P7 block of T-DG7-ARCH-05 (730418-730419; p7-plan §4, ADR-0071 §8). Both are RESERVED for this block and not
   // allocated: the register and About operations only read a build-time snapshot, and the release tools run outside
   // the API.
+  // P7 block of T-DG7-ARCH-06 (730420-730421; p7-plan §4, ADR-0073 §12). Both are RESERVED for this block and not
+  // allocated: the seal and verify tools run outside the API and hold no database lock; the A26/A27 drills write none.
 } as const;
 
 export type AdvisoryLockClassName = keyof typeof ADVISORY_LOCK_CLASSES;
