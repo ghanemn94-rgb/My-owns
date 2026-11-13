@@ -147,6 +147,9 @@ import enExternalChange from "./en/externalChange.json" with { type: "json" };
 // report. Its Arabic is provisional (./provisional-ar-p6.ts, source "fe-f").
 import arExplanations from "./ar/explanations.json" with { type: "json" };
 import enExplanations from "./en/explanations.json" with { type: "json" };
+// P7 (DG7) Administration screens of slices C and D (T-DG7-FE-B; p7-work-split §C.8, §D.2).
+import arTransfer from "./ar/transfer.json" with { type: "json" };
+import enTransfer from "./en/transfer.json" with { type: "json" };
 
 /** Namespace files per locale; the key-parity test walks exactly these. */
 export const catalogues = {
@@ -207,6 +210,7 @@ export const catalogues = {
     imports: arImports,
     externalChange: arExternalChange,
     explanations: arExplanations,
+    transfer: arTransfer,
   },
   en: {
     common: enCommon,
@@ -265,6 +269,7 @@ export const catalogues = {
     imports: enImports,
     externalChange: enExternalChange,
     explanations: enExplanations,
+    transfer: enTransfer,
   },
 } as const;
 

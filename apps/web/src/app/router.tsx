@@ -1,5 +1,5 @@
 // Routes (React Router 7, data-router library mode; ADR-0009). Everything below the shell needs a session.
-import { lazy, Suspense, useState, type ComponentType } from "react";
+import { lazy, Suspense, useState, type ComponentType, type ReactElement } from "react";
 import { Navigate, createBrowserRouter, matchRoutes, type RouteObject } from "react-router";
 import { RequireSession } from "../auth/session.tsx";
 import { RouteLoadFailed, RouteLoadingFallback } from "../components/RouteFallback.tsx";
@@ -112,6 +112,34 @@ const P6NotAvailablePage = lazyPage(() =>
 // T-DG7-FE-A: the "not available yet" placeholder of the P7 screens that FE-B and FE-C build (P7_PLANNED_ROUTES).
 const P7NotAvailablePage = lazyPage(() =>
   import("../components/P7NotAvailablePage.tsx").then((m) => m.P7NotAvailablePage),
+);
+// P7 slices C and D screens (T-DG7-FE-B; p7-work-split §C.8, §D.2).
+const DataExportPage = lazyPage(() =>
+  import("../pages/admin/migration/MigrationPages.tsx").then((m) => m.DataExportPage),
+);
+const MigrationExportPage = lazyPage(() =>
+  import("../pages/admin/migration/MigrationPages.tsx").then((m) => m.MigrationExportPage),
+);
+const MigrationStatusPage = lazyPage(() =>
+  import("../pages/admin/migration/MigrationPages.tsx").then((m) => m.MigrationStatusPage),
+);
+const MigrationImportPage = lazyPage(() =>
+  import("../pages/admin/migration/MigrationPages.tsx").then((m) => m.MigrationImportPage),
+);
+const MigrationReconciliationPage = lazyPage(() =>
+  import("../pages/admin/migration/MigrationPages.tsx").then((m) => m.MigrationReconciliationPage),
+);
+const IdentityRebindsPage = lazyPage(() =>
+  import("../pages/admin/migration/MigrationPages.tsx").then((m) => m.IdentityRebindsPage),
+);
+const ConfigTransferPage = lazyPage(() =>
+  import("../pages/admin/config-transfer/ConfigTransferPages.tsx").then((m) => m.ConfigTransferPage),
+);
+const ConfigBundleExportPage = lazyPage(() =>
+  import("../pages/admin/config-transfer/ConfigTransferPages.tsx").then((m) => m.ConfigBundleExportPage),
+);
+const ConfigBundleImportPage = lazyPage(() =>
+  import("../pages/admin/config-transfer/ConfigTransferPages.tsx").then((m) => m.ConfigBundleImportPage),
 );
 // P6 slices E, F, J and C screens (T-DG6-FE-B; p6-work-split §E/F.12, §J/C.13).
 const AuditEventsPage = lazyPage(() => import("../pages/admin/audit/AuditPages.tsx").then((m) => m.AuditEventsPage));
@@ -597,7 +625,29 @@ export const P7_SCREEN_ROUTES: readonly { path: string; feature: string; owner: 
  * The P7 screens that still show the placeholder. All of them at T-DG7-FE-A; FE-B and FE-C remove theirs as they replace
  * the element (P7_SCREEN_ROUTES stays as the stable list of P7 paths, e.g. for the P7 accessibility scope of FE-D).
  */
-export const P7_PLANNED_ROUTES: readonly { path: string; feature: string; owner: string }[] = P7_SCREEN_ROUTES;
+export const P7_PLANNED_ROUTES: readonly { path: string; feature: string; owner: string }[] = P7_SCREEN_ROUTES.filter(
+  // T-DG7-FE-B built the slice C and D screens (P7_FE_B_ROUTES below).
+  (r) => r.owner !== "FE-B",
+);
+
+/** The slice C and D screens of T-DG7-FE-B, one element per P7_SCREEN_ROUTES path owned by FE-B. */
+const P7_FE_B_ELEMENTS: Readonly<Record<string, ReactElement>> = {
+  "admin/migration/exports": <DataExportPage />,
+  "admin/migration/exports/:migrationExportId": <MigrationExportPage />,
+  "admin/migration/imports": <MigrationStatusPage />,
+  "admin/migration/imports/:migrationImportId": <MigrationImportPage />,
+  "admin/migration/imports/:migrationImportId/reconciliations/:migrationReconciliationId": (
+    <MigrationReconciliationPage />
+  ),
+  "admin/migration/identity-rebinds": <IdentityRebindsPage />,
+  "admin/config-transfer": <ConfigTransferPage />,
+  "admin/config-transfer/exports/:configBundleExportId": <ConfigBundleExportPage />,
+  "admin/config-transfer/imports/:configBundleImportId": <ConfigBundleImportPage />,
+};
+export const P7_FE_B_ROUTES: RouteObject[] = P7_SCREEN_ROUTES.filter((r) => r.owner === "FE-B").map((r) => ({
+  path: r.path,
+  element: P7_FE_B_ELEMENTS[r.path]!,
+}));
 
 const p4PlannedRoutes: RouteObject[] = P4_PLANNED_ROUTES.map((r) => ({
   path: r.path,
@@ -873,6 +923,7 @@ export const routes: RouteObject[] = [
       { path: "admin/notification-deliveries", element: <NotificationDeliveriesPage /> },
       ...p4PlannedRoutes,
       ...p6PlannedRoutes,
+      ...P7_FE_B_ROUTES,
       ...p7PlannedRoutes,
       ...landingRoutes,
       ...subEntryRoutes,

@@ -147,8 +147,8 @@ describe("P7 navigation entries and route placeholders (slices C, D, E, I)", () 
     expect(P7_SCREEN_ROUTES.map((r) => [r.path, r.feature, r.owner])).toEqual(
       P7_SCREEN_ROUTES_EXPECTED.map(([p, f, o]) => [p, f, o]),
     );
-    // At T-DG7-FE-A every P7 screen still shows the placeholder; FE-B and FE-C shrink P7_PLANNED_ROUTES as they build.
-    expect(P7_PLANNED_ROUTES).toEqual(P7_SCREEN_ROUTES);
+    // FE-B and FE-C shrink P7_PLANNED_ROUTES as they build: after T-DG7-FE-B only FE-C's screens are placeholders.
+    expect(P7_PLANNED_ROUTES).toEqual(P7_SCREEN_ROUTES.filter((r) => r.owner !== "FE-B"));
     const registered = shellChildren().map((r) => r.path);
     for (const [path, feature] of P7_SCREEN_ROUTES_EXPECTED) {
       expect(
@@ -206,7 +206,8 @@ describe("P7 navigation entries and route placeholders (slices C, D, E, I)", () 
         reqId: "REQ-S02-003",
       };
       const nav = catalogues[locale].nav as unknown as { p7: { notAvailableTitle: string; notAvailableBody: string } };
-      for (const [path, feature] of [0, 4, 9, 16].map((i) => P7_SCREEN_ROUTES_EXPECTED[i]!)) {
+      // The routes still planned (FE-C's); FE-B's are real screens since T-DG7-FE-B (pages/admin/{migration,config-transfer}).
+      for (const [path, feature] of [9, 10, 15, 16].map((i) => P7_SCREEN_ROUTES_EXPECTED[i]!)) {
         const url = `/${path.replace(/:(\w+)/g, (_, n: string) => sample[n]!)}`;
         renderApp(url, { i18n: createI18n(locale) });
         expect(
