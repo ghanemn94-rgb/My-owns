@@ -1,0 +1,60 @@
+// Evidence rehearsal for the T-DG7-DO-J handback (ADR-0073 §8). Sparse scratch clone under $TMPDIR, SYNTHETIC DG7 record.
+// Part A: the CLIs on the real records (no neutralisation, DO-B's real allow-list): the state A28 would meet today.
+// Part B: the module seal with the scratch allow-list (the requested DO-B entry) and DG3's L3 sentence neutralised in
+//         the clone only: the pass path, with checksums and timings.
+import { execFileSync, spawnSync } from "node:child_process";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+const R = "/home/user/My-owns/tools/release";
+const h = await import(`${R}/tests/fixtures/seal/rehearsal.mjs`);
+const { seal } = await import(`${R}/seal.mjs`);
+const { verifySeal } = await import(`${R}/verify-seal.mjs`);
+const log = (...a) => console.log(...a);
+const t = () => Date.now();
+const cli = (args, cwd) => {
+  const s = t();
+  const r = spawnSync(process.execPath, args, { cwd, encoding: "utf8", maxBuffer: 1 << 26 });
+  log(`$ node ${args.map((a) => (a.includes(" ") ? JSON.stringify(a) : a)).join(" ")}`);
+  log((r.stdout + r.stderr).trimEnd());
+  log(`exit ${r.status} (${((t() - s) / 1000).toFixed(1)} s)\n`);
+  return r;
+};
+log(`# DO-J rehearsal evidence, ${new Date().toISOString()}, node ${process.version}, repository HEAD ${execFileSync("git", ["-C", h.REPO, "rev-parse", "HEAD"]).toString().trim()}`);
+let s = t();
+const c = h.sparseClone("evidence");
+log(`sparse clone ${c.dir} at ${c.head} (${t() - s} ms); candidate.mjs --stage DG7 in the clone: ${JSON.parse(execFileSync(process.execPath, ["tools/gates/candidate.mjs", "--stage", "DG7"], { cwd: c.dir }).toString()).candidate_id}`);
+h.overlayWorkingFiles(c.dir);
+const syn = h.writeSynthetic(c.dir);
+const demo = h.demoInput(c.dir);
+log(`SYNTHETIC DG7 record: candidate ${syn.candidate}, source_commit ${syn.sourceCommit} (clone commit with the DO-J working-tree files), seal commit ${syn.sealCommit}`);
+log(`demo-data input (SYNTHETIC fixture) inputSha256 ${demo.sha256}\n`);
+log("## Part A: the CLIs on the real DG0–DG6 records and DO-B's allow-list\n");
+const ev = h.evidenceArgs();
+const outA = join(c.parent, "out-a");
+cli([`${R}/seal.mjs`, "--rehearsal", "--repo", c.dir, "--candidate", syn.candidate, "--demo-data", demo.path, "--demo-data-sha256", demo.sha256, ...ev, "--out", outA], c.dir);
+log("## Part B: the module seal with the scratch allow-list (+ the requested DO-B envelope entry)\n");
+const allow = h.scratchAllowlist(c.parent);
+s = t();
+const r = await seal({ ...h.sealOptions(c.dir, syn, demo), secretAllowlist: allow, print: log });
+log(`seal exit ${r.exit} (${((t() - s) / 1000).toFixed(1)} s)`);
+log(`payload hash ${r.report.payloadHash}\npayload archive ${r.report.payloadArchive.name} sha256 ${r.report.payloadArchive.archiveSha256}\nenvelope archive ${r.report.envelopeArchive.name} sha256 ${r.report.envelopeArchive.archiveSha256}\nenvelope manifest sha256 ${r.report.envelopeManifestSha256}`);
+log(`sha256sum check: ${execFileSync("sha256sum", [r.envelopePath]).toString().slice(0, 64)}`);
+log(`envelope files: ${JSON.parse(readFileSync(join(c.dir, "docs/delivery/test-evidence/DG7/seal/envelope-manifest-1.json"))).reviews.length} review records\n`);
+log("## Part A (verify): the CLI verify-seal on that envelope, repository mode, DO-B's real allow-list, real DG3 record\n");
+cli([`${R}/verify-seal.mjs`, "--rehearsal", "--envelope", r.envelopePath, "--expect-sha256", r.report.envelopeArchive.archiveSha256, "--repo", c.dir, "--out", join(c.parent, "out-v")], c.dir);
+log("## Part B (verify): the module verify with the scratch allow-list, DG3's L3 sentence neutralised in a second clone\n");
+const c2 = h.sparseClone("evidence-b");
+h.overlayWorkingFiles(c2.dir);
+h.neutralizeKnownLabelHits(c2.dir);
+const syn2 = h.writeSynthetic(c2.dir);
+const demo2 = h.demoInput(c2.dir);
+const r2 = await seal({ ...h.sealOptions(c2.dir, syn2, demo2), secretAllowlist: allow });
+log(`seal exit ${r2.exit}; envelope sha256 ${r2.report?.envelopeArchive.archiveSha256}`);
+s = t();
+const v = await verifySeal({ envelope: r2.envelopePath, expectSha256: r2.report.envelopeArchive.archiveSha256, repo: c2.dir, rehearsal: true, secretAllowlist: allow, historicalStages: ["DG0", "DG6", "DG7"] });
+for (const x of v.checks) log(`${x.id} ${x.status} ${x.detail.slice(0, 400)}`);
+for (const l of v.lines) log(l);
+log(`verify exit ${v.exit} (${((t() - s) / 1000).toFixed(1)} s; V16 limited to DG0, DG6, DG7 here; the full DG0–DG7 run is T-M2/R0)`);
+h.removeClone(c);
+h.removeClone(c2);
+log(`\nclones removed: ${c.parent}, ${c2.parent}`);

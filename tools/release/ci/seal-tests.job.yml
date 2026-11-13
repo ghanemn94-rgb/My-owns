@@ -1,0 +1,27 @@
+# CI job fragment of T-DG7-DO-J (ADR-0073 §8, §13; p7-work-split §M.1 "if DO-J wants a CI job for the seal tests, it
+# hands over tools/release/ci/seal-tests.job.yml for the orchestrator to merge", §2 rule 9). Merge instructions:
+#   1. insert the `seal-tests` job below (the entry under `jobs:`) after the `secret-scan` job in deploy/ci/ci.yml and,
+#      verbatim, in .github/workflows/ci.yml;
+#   2. it needs `delivery-gates` only; no other job needs it (the seal itself runs after DG7 approval, never in CI);
+#   3. run `node deploy/scripts/check-ci-needs.mjs`.
+# No dependency install: the seal, verify and release-notes tools and their tests use only Node built-ins and the
+# repository's own files. The rehearsal makes a sparse `git clone --shared` of the checkout under $RUNNER_TEMP with a
+# SYNTHETIC DG7 record that exists only there (ADR-0073 §8); it never writes the checkout. The seal and verify suites
+# take about 12 and 10 minutes on the development sandbox (V16 runs validate.mjs --historical for DG0–DG6 in the clone).
+# Live CI has not been run (D-058).
+jobs:
+  # devops-engineer (T-DG7-DO-J, ADR-0073): the release seal, A28 verification and release-notes tools on the rehearsal.
+  # REHEARSAL-PASS is not PASS: this job proves the tools, not a release (A28 runs once, after DG7 approval).
+  seal-tests:
+    needs: delivery-gates
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      TMPDIR: ${{ runner.temp }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24"
+      - name: Seal, verify-seal and release-notes self-tests (T-M1..T-M13, T-I11, T-I13 fixture half)
+        run: node --test tools/release/tests/seal.test.mjs tools/release/tests/verify-seal.test.mjs tools/release/tests/release-notes.test.mjs
