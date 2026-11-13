@@ -509,3 +509,231 @@ The allowance file is `mth-recheck-allowance/1`: strict UTF-8 JSON (not necessar
 3. **Mode 2 depends on the allowance the operator gives.** It proves "exactly these keys changed, and nothing else outside the operational list". It cannot judge whether those were the right changes. The drill's keys come from API responses, and a reviewer can read the file.
 4. **`RECHECK_OPERATIONAL_TABLES` is a judgment.** A difference in those tables is counted, not explained. The list excludes every identity, approval, decision and financial table by test.
 5. **E1/E2 rely on ADR-0004's coverage rule** (every mutation writes a non-baseline audit event), plus the heartbeat and session rows. A writer that broke that rule would also break DG1's own tests.
+
+## Amendment 2 (2026-11-13, T-DG7-ARCH-R3): carried audit events already present in the target's baseline, the mode 2 allowance, and the register snapshot under the asset scan
+
+- **Author:** solution-architect (T-DG7-ARCH-R3). Base `ecd65f96b732e272780a82272164af6a760f6586` on `claude/mobily-transformation-platform-dg6-regate`.
+- **Why.** D-259 records three open items after repair round 1. This amendment decides them. It does not reopen anything:
+  1. **R1.** Migrations `0068` (l.372), `0069` (l.212) and `0095` (l.40, l.85, l.92) insert `audit_event` rows with **deterministic ids** (literal uuids, or uuids derived from `md5('p5-procedures-v2:audit:' || id)`). A source and a target therefore both hold these rows under the same `id`. A1.4 L5 claimed that "E3 guarantees that no carried `seq` and no carried `id` collides with a baseline row". That holds for `seq` but **not for `id`**. BE-R1 measured the load failing on `audit_event_pkey` and stopped it at L1 (BE-R1 handback §0).
+  2. **DO-D2 Q2.** Under A1.9 rule 5, mode 2 would call correct writes `unexplained` when no API response returns their keys: gate instance updates, work items, decision child rows, and the role assignment and lifecycle rows a new transformation creates.
+  3. **DO-D2 gap 1.** `apps/api` `build` writes the register into `dist/release/register-snapshot.json` (ADR-0071 §2). Two register rows quote build-host paths, and ADR-0062 §8 rule R2 refuses the runtime tree. As a result, every archive built from `HEAD` fails `build-from-archive`.
+- **What this amendment replaces.** It replaces:
+  - A1.4 L1, L5, L9 and the "after L12" lines, where they differ from A2.2;
+  - A1.5's first, second and fourth rows, as given in A2.3;
+  - A1.6, by adding the 0150 schema (A2.4);
+  - A1.7, by adding one field;
+  - A1.9 mode 2: the allowance format and rules 3–7 are extended by A2.6, and nothing in them is loosened.
+
+  Everything else in this ADR and in Amendment 1 stands unchanged.
+- **Hard constraints (D-258, D-259).** They are unchanged:
+  - `audit_event` stays append-only, and both of its triggers stay enabled;
+  - nothing truncates, deletes from or updates it;
+  - no source audit event is lost, altered or re-attributed;
+  - the target's own migration events are kept;
+  - the result is verified by reconciliation;
+  - nothing is skipped silently, renumbered or archived.
+- **Two gate systems.** Nothing in this amendment grants or implies a G1–G6, Finance or IT approval, and nothing reads or writes DG0–DG7.
+
+### A2.1 R1: options weighed
+
+The facts that decide it:
+
+- The colliding rows are migration seeds, written with `source = 'migration'`, `actor_type = 'system'` and no actor, organization or transformation.
+- Two of their columns are assigned by the database at insert time, and these necessarily differ between the source's copy and the target's:
+  - `seq` (`GENERATED ALWAYS AS IDENTITY`). The A1.2 reservation puts the target's value above `M`, the source's below it.
+  - `occurred_at` (`DEFAULT now()`). It is the wall-clock time of each installation's own `mth-db migrate`.
+- The other 13 columns are written as literals or derived deterministically by the migration: `id`, `organization_id`, `transformation_id`, `actor_type`, `actor_user_id`, `on_behalf_of_user_id`, `action`, `record_type`, `record_id`, `prior_version`, `new_version`, `reason`, `request_id`, `source` and `changes`. That makes 15 columns in total.
+
+| Option | What it does | Verdict |
+| --- | --- | --- |
+| (a) D-259 as worded: accept a shared id only if **every** column is byte-identical | | **Improved, not adopted literally.** `seq` and `occurred_at` differ by construction (BE-R1 measured both). The literal rule would refuse every import, so it is the same as no decision. |
+| (b) Insert the carried copy under a new id, or with a suffix | | **Rejected.** That renumbers an event, which D-259 forbids. |
+| (c) Skip the carried copy and say nothing | | **Rejected.** That skips silently and loses the source's `seq` and `occurred_at`. |
+| (d) Load the carried trail before the deterministic-id migrations run (migrate to `0003`, load, then continue) | | **Rejected.** `0068` then fails on its own `INSERT` (`audit_event_pkey`). Migrations are never edited (A1.1 (d)). |
+| (e) Delete or replace the target's baseline copy | | **Rejected.** That is a DG1 reopen (ADR-0004 §2). |
+| **(f) Accept the shared id only when the event's content is identical** | All 13 non-database-assigned columns must be identical under the §2.3 encoder, and both copies must be migration baseline rows. The carried copy is then counted `already_present`. It is never inserted. Its source `seq` and `occurred_at` are recorded **in the trail itself**, in `migration.imported`. Reconciliation rebuilds the source's `audit_event` file exactly from the live rows plus that record, and requires the manifest's `contentDigest`. Any other difference refuses the import. | **Chosen** (A2.2). |
+
+**Why (f) keeps D-259's direction and improves it:**
+
+- The test is "the same event from the same migration". That means the same id, the same action, the same record, the same version step, the same reason, the same (absent) actor and scope, and the same `changes`. The two columns the database stamps at insert time describe *where and when* each installation ran the migration, not *what* happened. Requiring them to be equal is impossible. Ignoring them would lose source data. So they are **recorded, not compared**.
+- **Nothing is lost.** The record sits in an `audit_event` row, the `migration.imported` event. The DG1 triggers protect that row against UPDATE, DELETE and TRUNCATE exactly as they protect the rest of the trail. Being part of the trail, it also travels in a later export (a second hop), where a side table classified `exclude_transfer` would not.
+- **Nothing is silent.** The count is printed and stored (`migration_import.audit_already_present_rows`) and carried as a delta row (`audit_already_present`). The ids are listed in the event, and every recheck re-proves them.
+- **Proof, not trust.** The manifest's `contentDigest` covers every column of every carried row, including `seq` and `occurred_at`. Reconciliation must reproduce that digest bit for bit from the target, so a single wrong recorded value fails it.
+
+### A2.2 R1: the rule in the load
+
+These changes are made to A1.4. Every step not named here is unchanged.
+
+| Step | Change |
+| --- | --- |
+| L1 | After E1–E4, **E5 shared ids**. Stream `tables/audit_event.ndjson` and collect the carried ids. `P` is the set of carried rows whose `id` exists on the target (`SELECT id FROM audit_event WHERE id = ANY($1)`, in batches). For each row in `P`, compare the package line with the live row encoded by the §2.3 encoder under the L0 settings, **column by column** over the 13 columns of A2.1, by the exact JSON text of each value. Also check that both copies satisfy the E2 baseline predicate (`source = 'migration'`, `actor_type = 'system'`, and null `actor_user_id`, `on_behalf_of_user_id`, `organization_id`, `transformation_id`). Any row that fails refuses the import with exit 1 (the A2.7 lines), and the transaction rolls back before L2. The source `seq` must be `<= M`, which is true by definition of `M`. |
+| L2 | Unchanged. The baseline digest covers every baseline row, including those in `P`. |
+| L5 | `audit_event` is loaded as before, except that rows in `P` are **not** inserted. No other row is ever left out. The number inserted must equal `rowCount − \|P\|`, else exit 1 `import-migration: failed: audit_event loaded <n> rows, expected <rowCount − \|P\|>`. |
+| L9 | `audit_event` is reconciled by **reconstruction** (A2.3). The table row records `rows_expected = rowCount`, `rows_actual` = live `count(*) WHERE seq <= M` plus `\|P\|`, and the reconstructed digest. A delta row `audit_already_present` is written with `rows_added 0`, `rows_changed \|P\|` and `rows_missing 0`, `allowed = true`. "Changed" here means that these carried rows are present with the target's `seq` and `occurred_at`. |
+| L11 | `migration_import.audit_already_present_rows = \|P\|` (A2.4). |
+| L12 | `migration.imported` gains the field `auditAlreadyPresent` (A2.5). |
+
+**After L12**, when `|P| > 0`, the import prints one more line after the A1.4 audit-history line. That line keeps its form, and its `<c>` counts the rows inserted:
+
+`import-migration: audit history: <p> carried events were already present as identical target migration events (same id and content); their source seq and time are recorded in migration.imported, and none was inserted twice`
+
+### A2.3 R1: how the trail is verified (A1.5, rows 1, 2 and 4 replaced)
+
+Let `P` be the entries of `migration.imported`'s `auditAlreadyPresent`. The **reconstructed carried trail** is the union of two sets:
+
+- the live rows with `seq <= M`;
+- for each entry of `P`, the live row with that `id`, with `seq` and `occurred_at` replaced by the entry's `sourceSeq` and `sourceOccurredAt` (the exact §2.3 text from the package line).
+
+It is encoded with the §2.3 encoder, sorted by `id`, using the column order and line format of `encodeTable`.
+
+| Property | Check (at L9, and again by every recheck in either mode) |
+| --- | --- |
+| no source event lost or added | `count(*) WHERE seq <= M` + `\|P\|` = the manifest's `rowCount`, and `\|P\|` = `migration_import.audit_already_present_rows` |
+| no source event altered or re-attributed | the reconstructed trail's digest = the manifest's `contentDigest`. Because every column of every carried line is covered, this also proves each recorded `sourceSeq` and `sourceOccurredAt`. |
+| every `P` entry names a baseline row | each entry's `id` exists with `seq` between `audit_baseline_seq_min` and `audit_baseline_seq_max` and satisfies the E2 predicate. The entries are sorted by `id` and unique. |
+| baseline kept and unchanged | as in A1.5 (`P` rows are baseline rows, so the L2 digest covers them) |
+
+Rows 3, 5 and 6 of A1.5 (order, non-interleaving ranges, triggers on) stand. The source order of the `P` events is part of the reconstruction, because their `sourceSeq` is in the digest.
+
+**Implementation note.** `reconcile.ts` gets `encodeCarriedAudit(tx, M, present)`. It uses the same line encoder and column order as `encodeTable`, through a `UNION ALL` of the two sets that overlays `seq` and `occurred_at` from `jsonb_to_recordset($1)`. With `present = []` it must give exactly `encodeTable(…, { where: 'seq <= M' })`, and a unit case pins that.
+
+### A2.4 Schema: migration `0150` (BE-R2; the next free id above `0149`, D-245 O9)
+
+- `migration_import` gains `audit_already_present_rows bigint NULL`, with CHECK `migration_import_audit_present`: `audit_already_present_rows IS NULL OR (audit_already_present_rows >= 0 AND audit_carried_rows IS NOT NULL AND audit_already_present_rows <= audit_carried_rows AND audit_already_present_rows <= audit_baseline_rows)`. Every row written by the 0150 code fills it, with 0 when nothing is shared.
+- `migration_reconciliation_delta.basis`: the column CHECK of 0149 is dropped and re-added. The allowed values become `audit_baseline`, `audit_additions`, `audit_already_present`, `rebind`, `exact_ids`, `audit_explained`, `child_of`, `operational` and `unexplained`. The CHECK `migration_reconciliation_delta_unexplained` is unchanged.
+- Nothing in 0150 touches `audit_event`, its triggers or its grants, and its header says so. `tools/release/migration-catalogue.mjs` classifies 0150 as it finds it, with no override.
+- **Contract (additive only):** `MigrationImport.auditAlreadyPresentRows` (nullable decimal string), and the three new `basis` values. No operation is added or removed.
+
+### A2.5 The `migration.imported` field (adds to A1.7)
+
+`auditAlreadyPresent`: `{from: null, to: {rows: "<p>", entries: [{id, sourceSeq, sourceOccurredAt}]}}`. The entries are sorted by `id`. `sourceSeq` is a decimal string. `sourceOccurredAt` is the package line's exact §2.3 text. When `|P| = 0`, it is `{rows: "0", entries: []}`, never absent.
+
+The size is bounded by the release: only migrations write deterministic audit ids. Reading the three migrations BE-R1 measured gives 44 such rows today: one in `0068`, one in `0069`, and 42 in `0095` (one version event, 10 definition events and 31 step events). BE-R2 measures the exact number on a real import and records it. The event names no user and no secret.
+
+The trail now shows each such event **once**, at the target's position, and `migration.imported` records where it stood in the source's history. This narrows A1.11 residual 2 for these rows: they are no longer shown twice.
+
+### A2.6 The mode 2 allowance (DO-D2 Q2; extends A1.9)
+
+**Options weighed:**
+
+| Option | Verdict |
+| --- | --- |
+| Put the tables in `operational` | **Rejected.** That is "ignore the table", and A1.9 rule 6 forbids it for approval, decision, identity and financial tables. |
+| Per-table expected deltas (counts only) derived from the action list | **Rejected as the only rule.** A count cannot tell D8's row from a stray one of the same table. |
+| Read "whatever is new" from the target into the allowance | **Rejected** (B.6: it would make D9 prove nothing) |
+| **Keys explained by the database-enforced audit trail of the drill's own actors, plus FK children of explained rows** | **Chosen.** It is key by key and strict. It rests on a guarantee the database enforces (`p2_audit_required`), not on the drill's opinion. |
+
+**Why the audit trail can explain keys.** Every table with a deferred constraint trigger `<t>_audit_required` (`p2_audit_required`, 0010 and 0120) refuses at COMMIT any inserted or updated row that has no `audit_event` with `record_type = '<t>'`, `record_id = NEW.id` and (when the table has `version`) `new_version = NEW.version`. After the import, L8 re-enables these triggers. So on a target in use, every added or changed row of such a table has its audit event, and that event names the actor. Rows that **no** journalled actor caused remain unexplained.
+
+**Format `mth-recheck-allowance/2`.** `/1` is refused, because it was never built (BE-R1 gap 2).
+
+```json
+{
+  "schemaVersion": "mth-recheck-allowance/2",
+  "actors": ["<app_user id>"],
+  "tables": [{ "name": "transformation", "added": [["<pk text>"]], "changed": [] }],
+  "audited": [{ "name": "gate_instance", "mustInclude": { "added": [], "changed": [["<pk text>"]] } }],
+  "children": [{ "name": "<child table>", "parent": "<parent table>", "fkey": "<constraint name>" }],
+  "operational": ["job_run"]
+}
+```
+
+All six keys are required. Arrays may be empty. The rules are:
+
+1. **`tables`**, `operational`, `audit_event` and `user_identity`: as A1.9 rules 1–5, unchanged.
+2. **`actors`:** the `app_user` ids of the users who acted in the drill. The drill resolves them on T from its journalled sign-ins by (issuer, subject), never from "new rows". Each id must exist on T, else exit 2. `actors` must be non-empty when `audited` is non-empty.
+3. **`audited` entry `t`** (delta basis `audit_explained`):
+   - Validation (exit 2 on failure): `t` has an enabled trigger `<t>_audit_required`; its primary key is exactly `(id uuid)`; it is not `audit_event` or `user_identity`; and it does not appear in `tables`, `children` or `operational`.
+   - **Explaining events.** `E` is the set of `audit_event` rows with:
+     - `seq > audit_baseline_seq_max` of the latest `migration_import`;
+     - `source IN ('api', 'worker')`;
+     - `actor_user_id = ANY(actors) OR on_behalf_of_user_id = ANY(actors)`.
+   - **Each added or changed row** `r` of `t`, compared row by row against the package as in A1.9, must have an event in `E` with `record_type = 't'` and `record_id = r.id`. When `t` has a `version` column, the event's `new_version` must equal `r.version`. Otherwise `r` is **unexplained**.
+   - **No row may be missing** (ADR-0003).
+   - **`mustInclude`:** the journalled keys returned by the API for `t` must be a subset of the explained added or changed keys, respectively. Missing ones are listed as `expected but not`.
+   - `allowed` is true only if nothing is unexplained, missing or absent from `mustInclude`.
+4. **`children` entry `c`** (basis `child_of`):
+   - Validation (exit 2): `fkey` is a foreign key constraint from `c` to `parent`; `c` has **no** `_audit_required` trigger (an audited table belongs in `audited`); `parent` appears in `tables`, `audited` or `children` of the same file; the `children` graph has no cycle; and `c` is not in `operational` or `tables`.
+   - **Each added or changed row** of `c` must reference, through the columns of `fkey`, a key of `parent` that is in this run's **explained** added or changed set of `parent`. Parents are resolved first, in topological order. A NULL reference, or a reference to an unchanged or unexplained parent row, is unexplained.
+   - No row may be missing.
+5. **Never in `operational`** stays as A1.9 rule 6. Tables named there **may** appear in `tables`, `audited` or `children`, because all three are key-by-key.
+6. **Additional allowance refusals** (exit 2, `reconcile-migration: refused: invalid allowance file: <reason>`):
+   - `unsupported schema version '<v>'`;
+   - `missing key '<k>'`;
+   - `unknown actor <id>`;
+   - `audited table <t> has no enabled <t>_audit_required trigger`;
+   - `audited table <t> has a primary key other than (id)`;
+   - `child table <c> has an _audit_required trigger; list it under audited`;
+   - `<fkey> is not a foreign key from <c> to <parent>`;
+   - `parent <p> of <c> is not listed in tables, audited or children`;
+   - `children form a cycle at <c>`;
+   - `<t> is listed more than once`;
+   - `actors is empty but audited is not`.
+
+**Output** (adds to C.12). For a disallowed `audited` or `children` table, the per-table line `  <table>: <a> added, <c> changed, <m> missing (<basis>)` is followed by at most 20 lines `    unexplained <added|changed> <key>` and at most 20 lines `    expected but not <added|changed> <key>`. Each delta row stores its counts. The JSON report also gives, per `audited` table, the number of explaining events.
+
+**What this proves, and what it does not.** Mode 2 now proves the following for every changed table:
+
+- each changed row is either named by an API response, caused by an audited mutation of a journalled actor, or a foreign-key child of such a row;
+- nothing else changed outside the fixed operational list.
+
+It does not prove that the drill's actors made only the intended changes. A1.11 residual 3 stands. A reviewer reads the actors and the allowance.
+
+### A2.7 Exact texts (add to C.12; existing lines stay)
+
+| Command | Exit | Line |
+| --- | --- | --- |
+| `import-migration` | 1 | `import-migration: failed: <n> carried audit events share their id with a target audit event but are not the same event; nothing was imported` then, for at most 20 of them, `import-migration: <id>: differs in <col>[, <col>…]` or `import-migration: <id>: not a migration baseline event on the <source\|target>` |
+| `import-migration` | 1 | `import-migration: failed: audit_event loaded <n> rows, expected <e>` |
+| `import-migration` | 0 | the A2.2 `already present` line, after the audit-history line, when `\|P\| > 0` |
+| `reconcile-migration` | 4 | the C.5 mismatch line, then `  audit_event: the reconstructed carried trail does not match the manifest (<n> rows, digest <d>)` when A2.3 fails |
+
+These replace BE-R1's provisional exit-1 line (`… ADR-0064 Amendment 1 does not provide for this …`). `<col>` names are database column names in attribute order.
+
+### A2.8 DO-D2 gap 1: the register snapshot and rule R2
+
+**Measured** (`docs/delivery/handbacks/DG7/T-DG7-ARCH-R3-evidence/register-t1-scan.log`): `scanLine` with target T1 over every field of the 412 register rows finds exactly two hits, both R2:
+
+- REQ-DLV-006, column `procedure`: `the runner creates /var/tmp/mth-run.XXXXXX (mode 700)`;
+- REQ-DLV-023, column `notes`: `the agent-writable $TMPDIR (/tmp/claude-0)`.
+
+| Option | Verdict |
+| --- | --- |
+| (a) The snapshot builder neutralises absolute paths | **Rejected.** ADR-0071 §2.2 and T-I1 require every field verbatim, and `getRequirement` returns "every column verbatim". A silent rewrite would make the in-app register differ from the file. It would also hide from the scanner exactly what the scanner is for. |
+| (b) An R2 allow-list entry (T1, `file` + `sha256`) | **Rejected.** ADR-0062 §8 permits it, because R2 is not in the never-allow set. But the snapshot's SHA-256 changes with every register edit, so the entry goes stale (and fails the scan) at every edit until someone recomputes it, right up to the freeze. A host- or path-wide entry would weaken R2 for all first-party output. |
+| **(c) Reword the two fields at the source, and fail early on any recurrence** | **Chosen.** |
+
+**Decision:**
+
+1. **The register text.** The requirements-analyst (the register's owner; an orchestrator assignment) replaces exactly:
+   - in REQ-DLV-006, `the runner creates /var/tmp/mth-run.XXXXXX (mode 700)` with `the runner creates mth-run.XXXXXX under /var/tmp (mode 700)`;
+   - in REQ-DLV-023, `the agent-writable $TMPDIR (/tmp/claude-0)` with `the agent-writable $TMPDIR (claude-0 under /tmp)`.
+
+   The meaning is unchanged. Measured in memory: after these two replacements, T1 hits = 0 (`register-t1-scan-reworded.log`). No other byte of the register changes.
+2. **The early guard (BE-R2, T-R16).** `apps/api/scripts/register-snapshot.test.mjs` builds the snapshot from the tree's register and runs `scanLine` (imported read-only from `tools/release/scan-assets.mjs`) with target T1 over every field:
+   - zero R1, R2, R3, R5 and R6 hits are allowed;
+   - every R4 hit must match a T1 `host` entry of `tools/release/asset-scan-allowlist.json`.
+
+   A register edit that reintroduces a build-host path then fails `pnpm test` with the row id, the column and the rule, long before an archive build. `register-snapshot.mjs` itself stays verbatim and unchanged.
+3. ADR-0062 §8 and ADR-0071 §2 are unchanged.
+
+### A2.9 DG1 audit guarantees (A1.10 re-checked for this amendment)
+
+| Guarantee | How it holds |
+| --- | --- |
+| `audit_event_immutable` and `_truncate` stay enabled | E4 at L1, L3 and L8 and at every recheck, as before. E5 reads `audit_event` and never writes it. |
+| no UPDATE, DELETE or TRUNCATE of the trail | E5 and the reconstruction are SELECTs. The `P` rows are **not inserted**, so nothing is overwritten. L4 still excludes `audit_event` by name. |
+| append-only, events in the mutation's transaction | The only new rows are the import's own L12 events, in the import transaction. `auditAlreadyPresent` is inside one of them. |
+| one total order (`seq` unique) | Unchanged. No `seq` is reassigned. The source position of each `P` event is preserved as data and proven by the digest. |
+| `mth_app` INSERT and SELECT only | Unchanged. 0150 changes no `audit_event` grant. The recheck and the import stay owner CLI only. |
+| no ordinary user modification | Unchanged. The allowance only reads the trail. |
+
+D-259's escalation condition ("Amendment 2 cannot keep the DG1 audit guarantees") is **not** met.
+
+### A2.10 Residuals of this amendment
+
+1. **T-C8's "including `seq`" holds for the `rowCount − |P|` inserted rows.** For the `|P|` shared migration events, the target row carries the target's `seq` and `occurred_at`. The source values are recorded in `migration.imported` and proven by the digest. This is a real narrowing of D-243 Q4's "verbatim", disclosed here. The orchestrator records it.
+2. **E5's identity test is content equality of 13 columns.** A source whose shared-id migration event was written with different content (for example a different `reason`) is refused, not merged. That is intended: such a source did not run the same migration.
+3. **`audit_explained` trusts the drill's actor list.** A journalled actor's unrelated edit in an audited table would be accepted. The JSON report lists every explaining event's action for review.
+4. **`child_of` accepts any number of children under an explained parent.** It cannot see whether they were written in the same transaction, because the database stores no transaction id per row.
+5. **The register rewording needs an analyst assignment** before BE-R2's T-R16 can pass. Until then T-R16 fails, by design, and names the two rows.

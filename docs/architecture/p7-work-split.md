@@ -676,6 +676,87 @@ T-C9, T-C10, T-C13, T-C14 and T-C15 stay as they are and must still pass.
 - `RECHECK_OPERATIONAL_TABLES` may shrink by measurement. It never grows without the architect.
 - Run before the handback: `pnpm -r typecheck`, `pnpm lint`, `pnpm openapi:lint`, `pnpm test`, the integration files named above plus `transfer-export.test.ts`, `catalogue.test.ts`, `contract.test.ts`, `unbound-signin.test.ts`, `import-routes.test.ts`, `attachments.test.ts` and `oidc.test.ts`, `node tools/release/migration-catalogue.mjs --check`, the dictionary coverage tool, the repository-wide prettier check, and `node tools/gates/validate.mjs --historical --stage DG6` **before** implementing.
 
+### C.13 BE-R2: finish the load and recheck (backend-workflow; repair; after ARCH-R3)
+
+**What this is.** The second repair task for the import, under p7-plan §5.3 (D-259). It builds ADR-0064 **Amendment 2** (A2.1–A2.10) and closes every BE-R1 gap: `prepare-target.mjs`, `--keep-reports`, `reconcile-migration --from`, mode 1, mode 2 `--after-use --allow`, `recheck.ts`, `parseAllowance`, T-R3–T-R8, T-R11 and T-R12. It also adds the register guard of A2.8. C.12's rows stand where Amendment 2 does not change them. Where they differ, Amendment 2 wins.
+
+**Hard rules.**
+- C.12's hard rules stand.
+- A carried audit row whose `id` exists on the target is either proven to be the same event (E5) and recorded, or it refuses the import. It is never inserted, skipped without a record, renumbered or archived.
+- If a measurement contradicts Amendment 2, stop and report. It is a design question.
+
+**Creates:**
+
+| File | Purpose |
+| --- | --- |
+| `packages/db/migrations/0150_p7_transfer_import_shared_audit.sql` (the next free id above the highest shipped file, D-245 O9) | A2.4: `migration_import.audit_already_present_rows` with CHECK `migration_import_audit_present`, and the dropped and re-added `basis` CHECK of `migration_reconciliation_delta` (nine values). The header states that nothing here touches `audit_event`. |
+| `packages/db/src/transfer/recheck.ts` | A1.9 and A2.6: `RECHECK_OPERATIONAL_TABLES`, `RECHECK_NEVER_OPERATIONAL`, `ALLOWANCE_SCHEMA_VERSION = "mth-recheck-allowance/2"`, `parseAllowance(bytes) → Allowance` (structure only, no database, the A1.9 and A2.6 refusals that need no catalogue), `validateAllowance(tx, allowance)` (the catalogue refusals: triggers, primary keys, foreign keys, actors, cycles), `compareRows(tx, table, packageFile) → {added, changed, missing}` by primary-key tuple, `explainAudited`, `explainChildren`, the `user_identity` rebind reversal, and `checkAuditTrail` (A1.5 with A2.3) |
+| `packages/db/src/transfer/recheck.test.ts` | unit parts of T-R7 and T-R15 (parsing, the constants' disjointness, refusal lines) |
+| `packages/db/test/integration/transfer-recheck.test.ts` | T-R6, T-R7, T-R8 (database part), T-R15 |
+| `packages/db/src/transfer/table-digest.ts` | `tableDigest(tx, table, { rows?: boolean })`. It returns `{name, rows, digest, lines?: [{key, sha256}]}` using `encodeTable`'s encoder, settings, order and line format, so `digest` equals what the manifest's `contentDigest` would be. |
+| `tools/migration/prepare-target.mjs` | thin wrapper over `mth-db migrate --reserve-audit-seq-for <dir>`. `--from <dir>` is required; the exit codes are those of §2 rule 4; the child's lines are passed through unchanged. |
+| `tools/migration/tests/wrappers.test.mjs` (or new cases in the existing wrapper test, if there is one) | T-R18 |
+
+**Modifies:**
+
+| File | Exactly what |
+| --- | --- |
+| `packages/db/src/transfer/import.ts` | Removes BE-R1's provisional exit-1 collision line and `checkAuditIdCollisions`. Adds E5 at L1 (A2.2), with the per-row comparison of the 13 columns of A2.1 through the encoder. Then: L5 skips exactly the `P` rows and checks the inserted count; L9 reconciles by reconstruction; L11 fills `audit_already_present_rows`; L12 adds `auditAlreadyPresent`; and the A2.2 output line. |
+| `packages/db/src/transfer/reconcile.ts` | `encodeCarriedAudit(tx, M, present)` (A2.3; it equals `encodeTable(…, { where: 'seq <= M' })` for `present = []`), the `audit_already_present` delta, mode 1 and mode 2 through `recheck.ts`, and the A1.8 report in place of `attachments_checked = 0`. Every recheck reads `P` from the latest `migration.imported` event and cross-checks it with `migration_import.audit_already_present_rows`. |
+| `packages/db/src/cli.ts` | `reconcile-migration` accepts `--attachments-report FILE` and `--after-use --from DIR --allow FILE`, plus `--report FILE`. New read-only command `table-digest --table T [--table T …] [--rows]`: as `mth_app` (`DATABASE_URL`), only tables of the export plan; one canonical JSON line `mth-table-digest/1` on stdout; exit 0, or exit 2 with `table-digest: refused: <t> is not an exported table`. Usage and header updated. |
+| `packages/db/src/transfer/index.ts` | export lines (`parseAllowance`, `validateAllowance`, the constants, `tableDigest`) |
+| `tools/migration/import.mjs` | the order: package checks, then `copy-in`, then `verify --out <tmp>`, then `mth-db import-migration --attachments-report <tmp> [--report …]`. `--keep-reports <dir>` copies the verify output there; otherwise the temporary file is deleted, on success and on failure. |
+| `tools/migration/reconcile.mjs` | `--from <dir>` (re-checked as in §6 step 1). When the import recorded attachments, it runs `verify` first and passes `--attachments-report`. With `--after-use --allow <file>`, mode 2. The flags are passed through. `--keep-reports <dir>` works as in `import.mjs`. |
+| `packages/db/test/integration/transfer-load.test.ts` | The "R1 (BLOCKED …)" test is replaced by T-R13 and T-R14. T-R4 and T-R5 run on the real load. |
+| `packages/db/test/integration/transfer-roundtrip.fixture.ts`, `transfer-roundtrip.test.ts` | T-R3 with `P` (A2.10 residual 1). `seedSyntheticImport` fills the seven A1.6 columns and `audit_already_present_rows`. |
+| `tests/integration/transfer/financial-parity.test.ts` | only the C.12 change (T-R11): the loaded-target `it.todo` becomes its test body |
+| `packages/db/src/schema.ts`, `packages/db/test/integration/catalogue.test.ts`, `packages/db/src/seed.test.ts`, `packages/db/test/integration/p7-transfer-guards.test.ts` | only the 0150 lines (the next free id becomes 0151) and T-R9's extra cases for 0150 |
+| `docs/api/openapi.yaml`, `apps/api/src/modules/transfer/import/service.ts`, `apps/api/test/integration/contract/p7-exercises-be-d.ts` | additive only: the A1.6 fields (BE-R1 gap 4), `auditAlreadyPresentRows`, and the nine `basis` values. `info.version` and the operation count are unchanged (T-R12). |
+| `docs/architecture/data-dictionary.md`, `docs/architecture/erd.md`, `docs/handover/data/coverage.json`, `docs/handover/migration-catalogue.json`, the generated table of `docs/handover/upgrades.md` | the 0150 lines; regenerated with their tools, no override |
+| `apps/api/scripts/register-snapshot.test.mjs` | T-R16 only. `register-snapshot.mjs` is **not** changed (A2.8). |
+
+**Not BE-R2's:** the rewording of REQ-DLV-006 and REQ-DLV-023 in `docs/delivery/requirements.csv` (A2.8 item 1). It belongs to the requirements-analyst, through an orchestrator assignment. Until it lands, T-R16 fails and names the two rows. BE-R2 reports that and does not edit the register.
+
+**Exact texts.** These add to C.5 and C.12. Every earlier line stays, except BE-R1's provisional collision line, which A2.7 replaces.
+
+| Command | Exit | Line |
+| --- | --- | --- |
+| `import-migration` | 1 | `import-migration: failed: <n> carried audit events share their id with a target audit event but are not the same event; nothing was imported` |
+| `import-migration` | 1 | then, at most 20 times: `import-migration: <id>: differs in <col>[, <col>…]` or `import-migration: <id>: not a migration baseline event on the <source\|target>` |
+| `import-migration` | 1 | `import-migration: failed: audit_event loaded <n> rows, expected <e>` |
+| `import-migration` | 0 | when `\|P\| > 0`, after the audit-history line: `import-migration: audit history: <p> carried events were already present as identical target migration events (same id and content); their source seq and time are recorded in migration.imported, and none was inserted twice` |
+| `reconcile-migration` | 4 | after the C.5 mismatch line: `  audit_event: the reconstructed carried trail does not match the manifest (<n> rows, digest <d>)` |
+| `reconcile-migration` | 4 | for `audited` and `children` tables, after the per-table line: at most 20 `    unexplained <added\|changed> <key>` and at most 20 `    expected but not <added\|changed> <key>` |
+| `reconcile-migration` | 2 | `reconcile-migration: refused: invalid allowance file: <reason>`, with the A2.6 rule 6 reasons, plus A1.9 rule 7's |
+| `table-digest` | 2 | `table-digest: refused: <t> is not an exported table` |
+| `prepare-target.mjs` | 2 | `prepare-target: refused: --from <dir> is required` |
+
+**Tests** (real PostgreSQL through `tests/qa/support/with-pg.sh`). T-R3–T-R12 are as in C.12, adjusted only by A2.10 residual 1. These are added:
+
+| Test | File | Proves |
+| --- | --- | --- |
+| T-R13 | `transfer-load.test.ts` | On the demo plus P6 fixtures, export, reserved target, import exits 0. It checks that: `\|P\|` > 0 and equals the measured shared ids (the number is recorded in the handback); no `P` row was inserted (the target holds one row per shared id, the baseline one); the `already present` line is printed; `migration_import.audit_already_present_rows = \|P\|`; the delta row is `audit_already_present` with `rows_changed = \|P\|` and is allowed; `migration.imported` lists `P` sorted by id, with each `sourceSeq` and `sourceOccurredAt` equal to the package line; the reconstructed digest equals the manifest's; `pg_stat_xact_user_tables` for `audit_event` shows no update or delete; and both triggers are `O` at every step. |
+| T-R14 | `transfer-load.test.ts` | A package whose shared-id line differs in `reason` (with its `fileSha256` and manifest recomputed by the fixture, so the package checks pass) exits 1 with both A2.7 lines naming `reason`. A package whose shared-id line has `source` `api` exits 1 with `not a migration baseline event on the source`. In both cases every table's count, the trail's md5 and the trigger states are unchanged, and no `migration_import` row exists. |
+| T-R15 | `recheck.test.ts`, `transfer-recheck.test.ts` | Mode 2 with `audited` and `children`. A row changed through a journalled actor's audited mutation is explained. A row added by the owner, with an audit event written for a non-listed user, is `unexplained` and exits 4 with its key. A `mustInclude` key that was not changed gives `expected but not`. A child of an explained parent is explained, and a child of an unchanged parent is unexplained. Every A2.6 rule 6 refusal exits 2 with its line. An allowance with schema version `mth-recheck-allowance/1` is refused. |
+| T-R16 | `apps/api/scripts/register-snapshot.test.mjs` | A2.8 item 2: the snapshot built from the tree's register has no T1 hit of R1, R2, R3, R5 or R6, and every R4 hit matches a T1 host entry of the allow-list. On a fixture register with a planted `/var/tmp/mth-run` path, it fails and names the row, the column and R2. |
+| T-R17 | `transfer-recheck.test.ts` | `tableDigest` on an exported table equals the export's `contentDigest` for that table. Its `--rows` lines hash each encoded line, and the CLI refuses a non-exported table with its line. |
+| T-R18 | `tools/migration/tests/` | `prepare-target.mjs` passes the child's exit code and lines through. `import.mjs --keep-reports <dir>` keeps the verify report, and without the flag no report file is left (also after a failed import). `reconcile.mjs --from` runs `verify` exactly when the import recorded attachments. |
+
+**Requirement → clause → test** (this adds to C.10 and C.12):
+
+| Requirement | Clause | Test(s) |
+| --- | --- | --- |
+| REQ-S19-016 | "audit history" | T-R13, T-R14 (shared migration events), T-R3 |
+| REQ-S19-014 | M0362 "reconciliation" | T-R13 (reconstruction), T-R6, T-R7, T-R15 |
+| REQ-S19-017 (B.8) | "records, jobs and approvals intact after a full restart" | T-R15 (mode 2), T-R17 (the digest D9 uses) |
+| REQ-S19-019 | "no builder-hosted … in built assets" | T-R16 |
+
+**What BE-R2 must know.**
+- `P` is computed inside the load transaction after the `audit_event` lock, never before it.
+- The 13 compared columns are A2.1's list, read from the catalogue minus `seq` and `occurred_at`. A test pins that the catalogue gives exactly 15 `audit_event` columns, so a future column added to `audit_event` fails the test and comes back to the architect.
+- `RECHECK_OPERATIONAL_TABLES` may shrink by measurement. It never grows without the architect.
+- Run before the handback: `node tools/gates/validate.mjs --historical --stage DG6` **first**; then `pnpm -r typecheck`, `pnpm lint`, `pnpm openapi:lint` and `pnpm test`; the integration files of C.12 plus `transfer-recheck.test.ts`; `node --test apps/api/scripts/register-snapshot.test.mjs` and the wrapper tests; `node tools/release/migration-catalogue.mjs --check`; the dictionary coverage tool; and the repository-wide prettier check.
+
 ## §D. Slice D: configuration transfer bundle (T-DG7-ARCH-02; ADR-0065)
 
 ### D.0 Already delivered by the architect (do not re-create)
@@ -1258,6 +1339,52 @@ If a seam fails, the drill records the step as FAIL with the reason. DO-D2 does 
 - Every IdP user, secret and origin is synthetic, and the report says so. Nothing here approves anything: no G1–G6, Finance or IT approval, and no DG gate.
 - The CI wiring fragment (DO-D gap 7) remains the orchestrator's.
 - Run before the handback: `node tools/gates/validate.mjs --historical --stage DG6` **first**, then the drill tests under `with-pg.sh`, `pnpm -r typecheck`, `pnpm lint`, `pnpm openapi:lint`, and the repository-wide prettier check.
+
+### B.7 DO-D3: run the transfer drill to the end (devops-engineer; repair; after BE-R2)
+
+**What this is.** The second repair task for the A18 drill (D-259). It does the following:
+
+- moves the drill to Amendment 2: allowance `mth-recheck-allowance/2` (A2.6) and the job digest through the §2.3 encoder (`mth-db table-digest`, C.13);
+- fixes any drill bug the real run finds;
+- hands over the CI fragment;
+- runs T-B11 from D0 to D11.
+
+This section is referred to as "B.7 DO-D3". Its number clashes with "B.7 Integration order" above, as B.6 DO-D2 did (D-259). B.6 DO-D2's rules stand unless changed here.
+
+**Preconditions (checked first, and reported as BLOCKED with the reason if they do not hold):**
+- BE-R2 is merged;
+- the A2.8 register rewording is merged, so `register-t1-scan` gives 0 hits.
+
+**Modifies:**
+
+| File | Exactly what |
+| --- | --- |
+| `deploy/scripts/drill/allowance.mjs` | Writes `/2`, with all six keys:<br>• `actors`: the T `app_user` ids of the journalled sign-ins, resolved by (issuer, subject);<br>• `tables`: journalled API keys for tables not in `audited`;<br>• `audited`: the tables of `D8_TOUCHED_AUDITED`, each with `mustInclude` set to the journalled keys of that table;<br>• `children`: `D8_TOUCHED_CHILDREN` (child, parent, fkey);<br>• `operational`: unchanged from B.6 DO-D2.<br>The two lists are constants in the file, each table with a reason in `allowance-reasons.json`, and both are pinned by T-B17. The constants come from `recheck.ts` only. The literal fallback of DO-D2 is removed, and a failing import is an error, not a fallback. |
+| `deploy/scripts/drill/job-check.mjs` | The digests use `mth-db table-digest` (C.13), not `row::text`:<br>• the approval tables by `digest`;<br>• the enabled `job_schedule` rows and the earlier `job_run` rows by the `--rows` line hashes of their keys.<br>The pg-boss rows keep their measured form (they are outside the export plan). |
+| `deploy/scripts/transfer-drill.sh` | only bug fixes found by the run, each named in the handback with the failing log line; and D9 passes `--allow` with the `/2` file |
+| `deploy/scripts/tests/transfer-drill.test.mjs` | T-B15 against `parseAllowance` (`/2`, which must now pass), T-B16 on the encoder digest, and T-B17 |
+
+**Creates:**
+
+| File | Purpose |
+| --- | --- |
+| `deploy/scripts/ci/transfer-drill.job.yml` | The CI job fragment (§2 rule 9): `tests/qa/support/with-pg.sh node --test deploy/scripts/tests/transfer-drill.test.mjs`. The orchestrator merges it and runs `check-ci-needs.mjs`. DO-D3 does not edit the CI files. |
+
+**Tests:**
+
+| Test | Proves |
+| --- | --- |
+| T-B15 | `allowance.mjs` on a fixture journal writes a `/2` file that `parseAllowance` accepts; never-operational tables appear only in `tables`, `audited` or `children`; duplicates are merged. |
+| T-B16 | as in B.6 DO-D2, with the digests from `mth-db table-digest`. A changed approval row changes the encoder digest. |
+| T-B17 (PostgreSQL) | **The two D8 lists are measured, not guessed.** It runs D8's write chain (`journey.mjs --steps writes,approve`) against a fixture installation, compares every exported table against a snapshot taken before, and checks that the changed tables minus `tables`, the operational list and `user_identity` equal `D8_TOUCHED_AUDITED ∪ D8_TOUCHED_CHILDREN`. It then runs mode 2 on that fixture with the generated allowance and expects exit 0. One extra owner-written row in an audited table, with an event by a non-journalled user, gives exit 4. |
+| T-B11 | as in B.6 DO-D2: D0–D11 PASS in the no-network namespace, on an archive built from the merged candidate commit. `reconcile-d5.json` and `reconcile-d6.json` are `matched`, with an `audit_already_present` delta. `reconcile-d9.json` is `matched after use`. The report's `result` is `PASS`. |
+
+**What DO-D3 must know.**
+- A step that cannot run is BLOCKED or FAIL with its reason. A product defect found by the run is reported, never worked around in product code.
+- Disk is tight. Measure first, never make a second full checkout, and delete the work tree unless `--keep` is given.
+- `actors` come from sign-ins. Never derive actors or keys from "whatever is new" on T.
+- Every IdP user, secret and origin is synthetic. Nothing here approves anything: no G1–G6, Finance or IT approval, and no DG gate.
+- Run before the handback: `node tools/gates/validate.mjs --historical --stage DG6` **first**; then the drill tests under `with-pg.sh`, T-B11, `pnpm -r typecheck`, `pnpm lint`, `pnpm openapi:lint` and the repository-wide prettier check.
 
 ## §F. Slice F: schema, API and connector handover (T-DG7-ARCH-04; ADR-0070)
 
