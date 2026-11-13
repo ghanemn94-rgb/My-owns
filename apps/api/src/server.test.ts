@@ -200,3 +200,50 @@ describe("module composition (D-048, P2)", () => {
     }
   });
 });
+
+// T-B8 (T-DG7-BE-B; ADR-0069 §2; p7-work-split §B.4): the server built by buildServer wires the REAL probes into
+// /readyz (evidence/readiness.ts and operations/heartbeat.ts readWorkerHeartbeat). No database: a fake pool answers
+// the readiness queries (UTF8, no migration table with no shipped files, no storage_setting row, no worker beat), so
+// the filesystem store of the test configuration (a fresh directory) is `ok`, no beat is `unknown`, and the answer
+// is 200 ready (the worker never gates).
+describe("T-B8: /readyz wiring of the storage and worker probes", () => {
+  it("filesystem store -> storage: ok; no beat -> worker: unknown; 200", async () => {
+    const { mkdtempSync, rmSync } = await import("node:fs");
+    const { tmpdir } = await import("node:os");
+    const { join } = await import("node:path");
+    const dir = mkdtempSync(join(tmpdir(), "mth-readyz-"));
+    const seen: string[] = [];
+    const client = {
+      query: async (text: string | { text: string }) => {
+        const q = typeof text === "string" ? text : text.text;
+        seen.push(q);
+        if (q === "SHOW server_encoding") return { rows: [{ server_encoding: "UTF8" }] };
+        if (q.includes("to_regclass")) return { rows: [{ exists: false }] };
+        if (/now\(\) AS now/i.test(q)) return { rows: [{ now: new Date() }], command: "SELECT", rowCount: 1 };
+        if (q.includes('"storage_setting"') || q.includes('"worker_heartbeat"'))
+          return { rows: [], command: "SELECT", rowCount: 0 };
+        return { rows: [{ "?column?": 1 }], command: "SELECT", rowCount: 1 };
+      },
+      release: () => undefined,
+    };
+    const pool = { connect: async () => client, on: () => pool, end: async () => undefined } as unknown as Parameters<
+      typeof buildServer
+    >[0]["pool"];
+    const config = loadConfig("api", { ...base, AUTH_MODE: "dev", EVIDENCE_STORAGE_PATH: dir });
+    const { app } = await buildServer({ config, pool, logger: false, webRoot: null, migrationFiles: [] });
+    try {
+      const res = await app.inject({ method: "GET", url: "/readyz" });
+      expect(res.statusCode, res.body).toBe(200);
+      expect(res.json()).toEqual({
+        status: "ready",
+        checks: { database: "ok", migrations: "ok", storage: "ok", worker: "unknown" },
+      });
+      // The real probes ran: the storage setting and the heartbeat table were both read.
+      expect(seen.some((q) => q.includes('"storage_setting"'))).toBe(true);
+      expect(seen.some((q) => q.includes('"worker_heartbeat"'))).toBe(true);
+    } finally {
+      await app.close();
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});

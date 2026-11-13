@@ -30,6 +30,8 @@ import { createDb, listMigrationFiles, type Db, type MigrationFile } from "@mth/
 import Fastify, { LogController, type FastifyBaseLogger, type FastifyInstance, type FastifyRequest } from "fastify";
 import type pg from "pg";
 import {
+  authorize,
+  organizationsWith,
   principalOf,
   registerAccessP2Routes,
   registerAccessP4Routes,
@@ -79,6 +81,8 @@ import {
   SelectingEvidenceStore,
   storageTestTarget,
 } from "./modules/evidence/store.ts";
+// P7 (T-DG7-BE-B; ADR-0069 §2): the evidence-storage readiness probe, passed into the platform's /readyz.
+import { createEvidenceStorageProbe } from "./modules/evidence/readiness.ts";
 import { loadKpiP3GateFacts, registerKpiModule } from "./modules/kpi/index.ts";
 import { createConfigResolver, registerMethodologyModule } from "./modules/methodology/index.ts";
 import { registerOrganizationRoutes, registerCalendarRoutes } from "./modules/organization/index.ts";
@@ -121,6 +125,8 @@ import {
   setExternalChangeEvidenceGate,
 } from "./modules/portfolio/deliverable-confirmation.ts"; // BE-O (ADR-0055 §6)
 import { registerOperationsModule } from "./modules/operations/index.ts";
+// P7 (T-DG7-BE-B; ADR-0069 §2): the worker heartbeat reader, passed into the platform's /readyz (read only).
+import { HEARTBEAT_STALE_AFTER_SECONDS, readWorkerHeartbeat } from "./modules/operations/heartbeat.ts";
 import { registerSearchModule } from "./modules/search/index.ts";
 // P7 modules (p7-plan §2, §5.1; T-DG7-BE-A): each registers its route files (stubs until their owners fill them).
 import { registerReleaseModule } from "./modules/release/index.ts";
@@ -164,7 +170,9 @@ import {
   parseQueryString,
   problems,
   registerConnectionHygiene,
+  registerDeploymentRoutes,
   registerHealthRoutes,
+  subPathWarning,
   registerInFlightTracking,
   registerMediaTypeEnforcement,
   registerNotFoundHandler,
@@ -422,6 +430,10 @@ export async function buildServer(options: ServerOptions): Promise<{
     forceCloseConnections: "idle",
   });
   appLog = app.log;
+  // P7 (T-DG7-BE-B; ADR-0069 §1 item 4; p7-work-split §B.5): serving under a sub-path is not supported. A path in
+  // APP_BASE_URL is warned about once, at build; the API still starts and serves from the origin root.
+  const subPath = subPathWarning(config.appBaseUrl);
+  if (subPath !== null) app.log.warn(subPath);
   // T-DG6-BE-X3 (QA-D-1): the connection log, held by this app until it closes (holdApiConnectionLog above).
   const releaseConnectionLog = holdApiConnectionLog(config.nodeEnv);
   app.addHook("onClose", async () => releaseConnectionLog());
@@ -494,7 +506,33 @@ export async function buildServer(options: ServerOptions): Promise<{
 
   registerDeniedMutationAudit(app, db);
   registerSecretRefusalAudit(app, db); // F-DG6-181 (T-DG6-BE-Z2): audits a SecretRef binding refusal
-  registerHealthRoutes(app, pool, options.migrationFiles ?? listMigrationFiles());
+  // P7 (T-DG7-BE-B; ADR-0069 §2, §3): /readyz reports storage (gates) and worker (reported only); the probes come from
+  // the evidence and operations modules (the platform imports neither, ADR-0002). getDeploymentStatus shares the
+  // readiness evaluation and is guarded by operations.read, decided as getWorkerHeartbeat decides it.
+  const migrationFiles = options.migrationFiles ?? listMigrationFiles();
+  const probeEvidenceStorage = createEvidenceStorageProbe({
+    environment: config.evidenceStorage,
+    secrets: () => secrets,
+  });
+  const readiness = registerHealthRoutes(app, pool, migrationFiles, {
+    storage: probeEvidenceStorage,
+    worker: async (d) => {
+      const beat = await readWorkerHeartbeat(d);
+      return { status: beat.status, newestBeatAt: beat.newestBeatAt, staleAfterSeconds: beat.staleAfterSeconds };
+    },
+  });
+  registerDeploymentRoutes(app, pool, migrationFiles, {
+    readiness,
+    appBaseUrl: config.appBaseUrl,
+    workerStaleAfterSeconds: HEARTBEAT_STALE_AFTER_SECONDS,
+    requireAccess: async (request) => {
+      const principal = principalOf(request);
+      for (const organizationId of organizationsWith(principal, "operations.read"))
+        if ((await authorize(db, principal, "operations.read", { type: "organization", id: organizationId })).allowed)
+          return;
+      throw problems.forbidden();
+    },
+  });
   const deps = { db, config };
   registerIdentity(app, deps, {
     rateLimitSubjects,

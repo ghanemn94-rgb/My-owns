@@ -170,6 +170,7 @@ import { exerciseP6BePOperations, P6_MIRRORS_BE_P } from "./p6-exercises-be-p.ts
 import { exerciseP6BeQOperations, P6_MIRRORS_BE_Q } from "./p6-exercises-be-q.ts";
 import { exerciseP6BeTOperations, P6_MIRRORS_BE_T } from "./p6-exercises-be-t.ts";
 import { exerciseP6BeUOperations, P6_MIRRORS_BE_U } from "./p6-exercises-be-u.ts";
+import { exerciseP7BeBOperations, P7_MIRRORS_BE_B } from "./p7-exercises-be-b.ts"; // T-DG7-BE-B
 import { exerciseP7BeCOperations, P7_MIRRORS_BE_C } from "./p7-exercises-be-c.ts"; // T-DG7-BE-C
 import { exerciseP7BeDOperations, P7_MIRRORS_BE_D } from "./p7-exercises-be-d.ts"; // T-DG7-BE-D
 import { exerciseP7BeFOperations, P7_MIRRORS_BE_F } from "./p7-exercises-be-f.ts"; // T-DG7-BE-F
@@ -421,6 +422,7 @@ const ZOD_MIRRORS: Record<string, z.ZodType> = {
   ...P6_MIRRORS_BE_U,
   ...P6_MIRRORS_BE_W,
   ...P6_MIRRORS_BE_X1,
+  ...P7_MIRRORS_BE_B, // T-DG7-BE-B
   ...P7_MIRRORS_BE_C, // T-DG7-BE-C
   ...P7_MIRRORS_BE_D, // T-DG7-BE-D
   ...P7_MIRRORS_BE_F, // T-DG7-BE-F
@@ -941,6 +943,10 @@ describe("every operation, validated against the contract and the zod mirrors", 
   it("P6 BE-X1 declared 403s of the evidence reads (p6-exercises-be-x1.ts)", async () => {
     await exerciseP6BeX1Operations(p3());
   }); // T-DG6-BE-X1 (F-DG6-QA-B-1)
+  it("P7 BE-B operations (p7-exercises-be-b.ts): deployment status, readiness with storage and worker", async () => {
+    await exerciseP7BeBOperations(p3());
+  });
+
   it("P7 BE-C operations (p7-exercises-be-c.ts): migration exports", async () => {
     await exerciseP7BeCOperations(p3());
   });

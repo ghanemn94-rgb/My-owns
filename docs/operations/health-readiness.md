@@ -5,10 +5,56 @@
 | Endpoint | Meaning | Healthy response | Unhealthy |
 |---|---|---|---|
 | `GET /healthz` | **Liveness**: the process serves HTTP. It checks no dependencies, so a database outage does not make the orchestrator restart-loop the API | `200 {"status":"ok"}` | no response |
-| `GET /readyz` | **Readiness**: the database is reachable (as `mth_app`) **and** uses the `UTF8` encoding **and** every migration shipped with this build is applied with the same checksum | `200 {"status":"ready","checks":{"database":"ok","migrations":"ok"}}` | `503 {"status":"not_ready","checks":{…}}` with `database: fail` (unreachable, or not UTF8: the log line says `the database must use UTF8 encoding (found …)`), or `migrations: pending` / `fail` (checksum drift or unknown migration) |
+| `GET /readyz` | **Readiness**: the database is reachable (as `mth_app`) **and** uses the `UTF8` encoding **and** every migration shipped with this build is applied with the same checksum **and** (from P7) the evidence storage answers its probe | `200 {"status":"ready","checks":{"database":"ok","migrations":"ok","storage":"ok","worker":"alive"}}` (`worker` may also be `stale` or `unknown`) | `503 {"status":"not_ready","checks":{…}}` with `database: fail` (unreachable, or not UTF8: the log line says `the database must use UTF8 encoding (found …)`), `migrations: pending` / `fail` (checksum drift or unknown migration), or `storage: fail` |
 
 Both are public, never rate-limited, and return no configuration or secret data. Route traffic to an instance only
 while `/readyz` is 200.
+
+### Storage and worker in `/readyz` (P7; ADR-0069 §2, D-243 Q6)
+
+Every P7 build sends four keys in `checks`. Two of them gate readiness from P7 on, and one is reported only:
+
+| Key | Values | Meaning | Gates readiness |
+|---|---|---|---|
+| `database` | `ok`, `fail` | As above. | yes |
+| `migrations` | `ok`, `pending`, `fail` | As above. | yes |
+| `storage` | `ok`, `fail`, `unknown` | The **effective** evidence store (the saved storage setting, else `EVIDENCE_STORAGE_DRIVER`) answers a probe. **Filesystem:** the root exists, is a directory, and the API process can read and write it. **S3-compatible:** a `HEAD` of the key `mth-readiness-probe` answers within 2 s (an existing object or "no such key" both count as an answer); an error, a timeout or an incomplete setting is `fail`. `unknown` when the database check failed, because the effective store is read from the database. | **yes**: ready needs `ok` |
+| `worker` | `alive`, `stale`, `unknown` | The worker heartbeat ([monitoring.md](monitoring.md)): `alive` when the newest beat is at most 90 s old, `stale` when it is older, `unknown` when no worker ever beat or the database check failed. | **no**: reported only |
+
+Readiness needs the database, the migrations and the evidence storage. The worker status is shown but does not stop
+the service from being ready.
+
+- **Why the worker does not gate.** A load balancer that polls `/readyz` would otherwise withdraw every API instance
+  when the worker stops, so a background-job outage would become a full outage. Watch `worker` here and on
+  Administration > Operations (the heartbeat card and the `heartbeat_missed` exception). `unknown` is never shown as
+  `alive`, and `unknown` storage is never shown as `ok`.
+- **Probe cost.** The storage result is kept for 5 s per API process, so a poller causes at most one storage call per
+  5 s per instance. The worker check is one indexed query per request. Storage and worker are read only after the
+  database check has released its connection, so a slow object store never holds a database connection.
+- **Logs.** A storage failure is logged once per change of state, at warn:
+  `readiness: evidence storage (<driver>) did not answer the probe: <error code>` (for example `ENOENT`, `EACCES`,
+  `EROFS`, `ENOTDIR`, `Timeout`, `NotConfigured`). The recovery is logged once, at info:
+  `readiness: evidence storage (<driver>) answers again`. Neither line, nor the `/readyz` body, names an endpoint,
+  bucket, path or credential reference.
+- **This changes DG1 behaviour** (D-250 O2): an instance whose evidence store is unreachable is no longer ready. In
+  every shipped profile the store is a filesystem volume that exists, so no shipped configuration changes state.
+- **Compose** keeps `mth health /readyz` as the API's healthcheck, so a container whose evidence volume is missing or
+  read-only stays unhealthy.
+
+### Deployment status (P7; ADR-0069 §3)
+
+`GET /api/v1/admin/deployment` (`getDeploymentStatus`, permission `operations.read`: ADM_TECH, TO, KDS, TD, AUD) gives
+technical operators and the transfer drill the deployment status of this installation. It returns the configured base
+URL with its origin and path, the API and contract versions, and the migration level (shipped, applied and pending
+counts, and the highest applied migration). It also returns the full `/readyz` evaluation, the effective storage
+driver and its source, the worker's newest beat, and the `deployment_environment` marker (`production`, `demo`, or
+`null` before initialization). It is a read, so it writes no audit event, and it carries no secret value, credential
+reference, storage endpoint, bucket, path or connection string.
+
+**Base URL.** The API is served from the root of its origin. The configuration loader refuses an `APP_BASE_URL` with a
+path. If a configuration with a path reaches the API anyway, the API logs this warning once at start and reports the
+path as `basePath`:
+`config: APP_BASE_URL has the path '<path>'; serving under a sub-path is not supported, so the hub is served from the origin root (see the deployment guide)`.
 
 ## In containers
 
@@ -18,11 +64,11 @@ while `/readyz` is 200.
 - `db` is healthy when `pg_isready` succeeds over TCP. That happens only after first-start initialization has created
   the roles and the `mth` database.
 - `migrate` is a one-shot service: `api` and `worker` start only after it `completed_successfully`.
-- `worker` has **no HTTP endpoint in P1**. Its liveness is the process itself (`restart: unless-stopped`) plus its
-  structured logs (`mth-worker started`, pg-boss errors). A worker health probe (for example a heartbeat row that
-  readiness can check) is a recorded follow-up for the backend owner. Until then, "worker running" is not proof that
-  jobs are flowing. `verify-stack.sh` and `clean-start-local.sh` check it by observing the `processed_message` ledger
-  row for the smoke transformation.
+- `worker` has **no HTTP endpoint**. Its liveness is the process itself (`restart: unless-stopped`) plus its
+  structured logs (`mth-worker started`, pg-boss errors). From P6 it writes a heartbeat row, and from P7 the API's
+  `/readyz` reports it as `worker` (`alive`, `stale`, `unknown`) without gating on it (see above). "Worker running" is
+  still not proof that jobs are flowing. `verify-stack.sh` and `clean-start-local.sh` check that by observing the
+  `processed_message` ledger row for the smoke transformation.
 - `keycloak` (test profile only) is checked by opening its HTTPS port. The smoke test additionally waits for the
   realm's discovery document.
 
