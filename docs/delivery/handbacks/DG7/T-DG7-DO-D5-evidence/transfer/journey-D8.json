@@ -1,0 +1,88 @@
+{
+  "schemaVersion": "mth-transfer-journey/1",
+  "mode": "oidc-drill",
+  "idp": "synthetic drill IdP (not a corporate IdP)",
+  "app": "http://127.0.0.1:25302",
+  "steps": [
+    {
+      "step": "signin",
+      "result": "PASS",
+      "ms": 90,
+      "detail": "drill-01995000-0000-7000-8000-000000000012 -> user 01995000-0000-7000-8000-000000000012, roles [TL,TL]"
+    },
+    {
+      "step": "unbound",
+      "result": "PASS",
+      "ms": 23,
+      "detail": "drill-01920000-0000-7000-9000-000000000205 refused: identity_unbound; /me 401"
+    },
+    {
+      "step": "csrf",
+      "result": "PASS",
+      "ms": 10,
+      "detail": "Origin http://localhost:25301 -> 403 csrf"
+    },
+    {
+      "step": "status",
+      "result": "PASS",
+      "ms": 35,
+      "detail": "origin http://127.0.0.1:25302, environmentKind demo, schema ok"
+    },
+    {
+      "step": "writes",
+      "result": "FAIL",
+      "ms": 257,
+      "detail": "D8 FAIL: no rebound user holds reporting_period.manage (the current period 2026-11 is absent)"
+    },
+    {
+      "step": "approve",
+      "result": "FAIL",
+      "ms": 0,
+      "detail": "no submission (the writes step must pass first)"
+    },
+    {
+      "step": "downloads",
+      "result": "PASS",
+      "ms": 58,
+      "detail": "2 evidence files downloaded by drill-01920000-0000-7000-9000-000000000202, SHA-256 equal"
+    },
+    {
+      "step": "deeplink",
+      "result": "FAIL",
+      "ms": 7,
+      "detail": "no notification with a link was issued on the target"
+    }
+  ],
+  "journalEntries": 6,
+  "gateChain": {
+    "gate": "G5",
+    "c0Missing": [
+      {
+        "code": "g5.performance_kpi_not_known",
+        "pointer": "/kpiDefinitions/01995000-4102-7000-8000-000000000001"
+      },
+      {
+        "code": "g5.performance_kpi_not_known",
+        "pointer": "/kpiDefinitions/01995000-4102-7000-8000-000000000002"
+      },
+      {
+        "code": "g5.performance_kpi_not_known",
+        "pointer": "/kpiDefinitions/01995000-4102-7000-8000-000000000003"
+      },
+      {
+        "code": "g5.performance_pilot_evidence_missing",
+        "pointer": "/phase-steps/transform.deliver_pilots"
+      },
+      {
+        "code": "g5.adoption_none",
+        "pointer": null
+      },
+      {
+        "code": "g5.decision_overdue",
+        "pointer": "/decisions/01995000-1040-7000-8000-000000000002"
+      }
+    ],
+    "writes": []
+  },
+  "result": "FAIL"
+}

@@ -410,7 +410,26 @@ d5() {
     EVIDENCE_STORAGE_DRIVER=filesystem EVIDENCE_STORAGE_PATH="$WORK/evidence-T" \
     node tools/migration/import.mjs --from "$PKG" --operator "$OPERATOR" --keep-reports "$OUT/import-reports" \
     --manifest-sha256 "$(sha256sum "$PKG/manifest.json" | cut -d' ' -f1)")
-  reconcile D5
+  reconcile D5 || return 1
+  # T-DG7-DO-D5 (DO-D4 gap 6, D-261): mode 1 prints no delta lines, so the audit_already_present delta of this recheck is
+  # read from migration_reconciliation_delta (as D6 reads its rebind delta) and checked against the import's own count
+  # (migration_import.audit_already_present_rows): it must be recorded, allowed, and equal. It goes into reconcile-d5.json.
+  local su delta; su="$(su_url "$WORK/pgT" "$P_PG_T" mth)"
+  delta="$("$PGBIN/psql" -X -qAt -F' ' -d "$su" -c "select d.rows_changed, d.allowed,
+       (select coalesce(i.audit_already_present_rows::text, 'null') from migration_import i where i.id = r.migration_import_id)
+     from migration_reconciliation r join migration_reconciliation_delta d on d.migration_reconciliation_id = r.id
+     where r.id = (select id from migration_reconciliation where run_kind = 'recheck' order by run_at desc, id desc limit 1)
+       and d.table_name = 'audit_event' and d.basis = 'audit_already_present'")"
+  echo "D5: recorded audit_already_present delta (rows_changed allowed import_rows): ${delta:-none}" | tee "$OUT/reconcile-d5-delta.txt"
+  node -e '
+    const fs = require("node:fs"); const [file, d] = process.argv.slice(1);
+    const [changed, allowed, imported] = d ? d.split(" ") : [];
+    const j = JSON.parse(fs.readFileSync(file, "utf8"));
+    j.auditAlreadyPresent = d ? { rowsChanged: changed, allowed: allowed === "t", importRows: imported,
+      ok: allowed === "t" && changed === imported } : { recorded: false, ok: false };
+    fs.writeFileSync(file, JSON.stringify(j, null, 2) + "\n");
+    if (!j.auditAlreadyPresent.ok) { console.log("D5: the mode 1 recheck has no allowed audit_already_present delta equal to the import count"); process.exit(1); }' \
+    "$OUT/reconcile-d5.json" "$delta"
 }
 step D5 "node tools/migration/prepare-target.mjs --from <package> && node tools/migration/import.mjs --from <package> --operator '$OPERATOR' --keep-reports <out>/import-reports --manifest-sha256 <hex> && node tools/migration/reconcile.mjs --operator '$OPERATOR' --from <package> (mode 1)" d5
 
@@ -422,8 +441,16 @@ d6() {
   # T-DG7-DO-D4 (T-B11 attempt 5, D6 exit 2: "line 15: user 01995000-1001-7000-8000-000000000002 has 2 carried
   # identities; exactly 1 is needed"): mth-db rebind-identity maps a user with exactly one carried identity (rebind.ts).
   # A carried user with another count is not mapped: it stays unbound and is listed here by id, never forced.
+  # T-DG7-DO-D5 (DO-D4 T-B11 attempt 9, D8 unbound "refused with /login?error=not_provisioned, expected
+  # identity_unbound"): the callback answers identity_unbound for a carried user only through its e-mail
+  # (oidc.ts resolveOidcUser step 2: one ACTIVE user with that e-mail, verified). The user left unmapped is therefore
+  # the last carried user with exactly 1 identity, an e-mail, status active and an e-mail no other active user shares
+  # (column 4 = t); the drill IdP gets that user with its carried e-mail. Chosen the same way every run.
   "$PGBIN/psql" -X -qAt -F, -d "$su" -c "select u.id, coalesce(u.email, ''),
-       (select count(*) from user_identity i where i.user_id = u.id) from app_user u
+       (select count(*) from user_identity i where i.user_id = u.id),
+       (u.status = 'active' and u.email is not null and (select count(*) from app_user o
+          where o.status = 'active' and lower(o.email) = lower(u.email)) = 1)
+     from app_user u
      join identity_binding_hold h on h.user_id = u.id and h.state = 'unbound' order by u.id" >"$WORK/carried.csv"
   [ -s "$WORK/carried.csv" ] || { echo "no carried user waits for a rebind"; return 1; }
   node -e '
@@ -432,7 +459,10 @@ d6() {
     const rows = all.filter((r) => r[2] === "1");
     for (const r of all.filter((x) => x[2] !== "1"))
       console.log(`D6: carried user ${r[0]} has ${r[2]} carried identities; not mapped (rebind-identity needs exactly 1), left unbound`);
-    const keep = rows.slice(0, -1), left = rows.at(-1);
+    const left = rows.filter((r) => r[3] === "t").at(-1);
+    if (!left) { console.log("D6: no carried user with 1 identity and a unique e-mail can be left unbound for the identity_unbound check"); process.exit(1); }
+    const keep = rows.filter((r) => r !== left);
+    console.log(`D6: carried user ${left[0]} is left unmapped (identity_unbound check, by its e-mail)`);
     fs.writeFileSync(map, "user_id,action,new_issuer,new_subject\n" + keep.map(([id]) => `${id},rebind,${issuer},drill-${id}`).join("\n") + "\n");
     fs.writeFileSync(users, JSON.stringify(rows.map(([id, email]) => ({ sub: "drill-" + id, ...(email ? { email } : {}), name: "Drill user (synthetic)" }))));
     fs.writeFileSync(unbound, left[0]);' \
@@ -504,14 +534,28 @@ downloads() {
   # T-DG7-DO-D4 (T-B11 attempt 8, D8 "the download count 0 differs from the manifest count 2"): an attachment's parent
   # is the evidence_content revision (export.ts attachmentRows: parentTable = the table naming the object), not the
   # evidence row; its evidence_id and transformation_id give the download path.
-  "$PGBIN/psql" -X -qAt -F, -d "$su" -c "select id, evidence_id, transformation_id from evidence_content" >"$WORK/evidence.csv"
+  # T-DG7-DO-D5 (DO-D4 T-B11 attempt 9, D8 downloads "HTTP 404" for the submitter): the files belong to the D1
+  # transformation, which the gate submitter cannot read (the product's access rule). The downloads are made by the
+  # REBOUND uploader of those files (evidence.created_by, mapped in D6), who could read them on S. One uploader, rebound,
+  # or the step fails with the reason; written to <work>/download-user.id.
+  "$PGBIN/psql" -X -qAt -F, -d "$su" -c "select c.id, c.evidence_id, c.transformation_id, e.created_by
+     from evidence_content c join evidence e on e.id = c.evidence_id" >"$WORK/evidence.csv"
   node -e '
-    const fs = require("node:fs"); const [att, csv, out] = process.argv.slice(1);
-    const by = new Map(fs.readFileSync(csv, "utf8").trim().split("\n").filter(Boolean).map((l) => { const [c, e, t] = l.split(","); return [c, { e, t }]; }));
+    const fs = require("node:fs"); const [att, csv, out, mapping, who] = process.argv.slice(1);
+    const by = new Map(fs.readFileSync(csv, "utf8").trim().split("\n").filter(Boolean).map((l) => { const [c, e, t, u] = l.split(","); return [c, { e, t, u }]; }));
     const items = JSON.parse(fs.readFileSync(att, "utf8")).items.filter((i) => i.parentTable === "evidence_content" && by.has(i.parentId));
-    fs.writeFileSync(out, JSON.stringify(items.map((i) => ({ path: `/api/v1/transformations/${by.get(i.parentId).t}/evidence/${by.get(i.parentId).e}/content`, sha256: i.sha256 }))));' \
-    "$PKG/attachments.json" "$WORK/evidence.csv" "$WORK/downloads.json"
+    fs.writeFileSync(out, JSON.stringify(items.map((i) => ({ path: `/api/v1/transformations/${by.get(i.parentId).t}/evidence/${by.get(i.parentId).e}/content`, sha256: i.sha256 }))));
+    const uploaders = [...new Set(items.map((i) => by.get(i.parentId).u))];
+    const rebound = new Set(fs.readFileSync(mapping, "utf8").trim().split("\n").slice(1).map((l) => l.split(",")[0]));
+    if (uploaders.length !== 1 || !rebound.has(uploaders[0])) {
+      console.log(`downloads: the files have ${uploaders.length} uploader(s) [${uploaders.join(" ")}]; exactly one rebound uploader is needed`);
+      process.exit(1);
+    }
+    fs.writeFileSync(who, uploaders[0]);
+    console.log(`downloads: made by the rebound uploader ${uploaders[0]}`);' \
+    "$PKG/attachments.json" "$WORK/evidence.csv" "$WORK/downloads.json" "$WORK/mapping.csv" "$WORK/download-user.id"
 }
+env_kind() { node -e 'console.log(JSON.parse(require("fs").readFileSync(process.argv[1], "utf8")).sourceEnvironment)' "$PKG/manifest.json"; }
 check_download_count() { # the download count equals the attachment manifest's count
   local n m
   n="$(node -e 'console.log(JSON.parse(require("fs").readFileSync(process.argv[1], "utf8")).length)' "$WORK/downloads.json")"
@@ -520,11 +564,14 @@ check_download_count() { # the download count equals the attachment manifest's c
   [ "$n" = "$m" ] && [ "$n" -gt 0 ] || { echo "$1: the download count $n differs from the manifest count $m (or is 0)"; return 1; }
 }
 d8() {
-  downloads
+  downloads || return 1
   check_download_count D8
+  # T-DG7-DO-D5: `status` gets the D7 expectations (DO-D4 attempt 9: "no --expect-origin or --expect-environment
+  # given"), and the downloads are made by the rebound uploader (--download-user).
   node "$REPO/deploy/scripts/drill/journey.mjs" --mode oidc-drill --app "$ORIGIN_T" --issuer "$ISSUER_T" \
     --user "drill-$(actor submitter)" --approver "drill-$(actor approver)" --transformation "$(actor transformation)" \
     --actors "$WORK/actors.json" --sub-prefix drill- --gate "$(actor gate)" \
+    --expect-origin "$ORIGIN_T" --expect-environment "$(env_kind)" --status-user "drill-$(actor admin)" --download-user "drill-$(cat "$WORK/download-user.id")" \
     --unbound-user "drill-$(cat "$WORK/unbound.id")" --source-origin "$ORIGIN_S" --downloads "$WORK/downloads.json" \
     --journal "$OUT/journal.json" --out "$OUT/journey-D8.json"
 }
@@ -551,7 +598,8 @@ d9() {
   # 5-6: schedules, earlier job_run rows and approval rows; the queued export completes; downloads again.
   node "$REPO/deploy/scripts/drill/job-check.mjs" compare --database-url "$su" --mth-db "$RT/packages/db/dist/cli.js" \
     --before "$OUT/jobs-before.json" --out "$OUT/job-check.json"
-  if ! "${j[@]}" --steps signin,exportwait,downloads --downloads "$WORK/downloads.json" --out "$OUT/journey-D9.json"; then
+  if ! "${j[@]}" --steps signin,exportwait,downloads --downloads "$WORK/downloads.json" \
+    --download-user "drill-$(cat "$WORK/download-user.id")" --out "$OUT/journey-D9.json"; then
     if grep -q 'did not complete within 120 s' "$OUT/journey-D9.json"; then
       echo "transfer-drill: step D9 failed: the export queued before the restart did not complete within 120 s"
     fi

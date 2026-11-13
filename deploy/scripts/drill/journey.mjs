@@ -4,7 +4,8 @@
 //
 //   node deploy/scripts/drill/journey.mjs --mode oidc-drill|dev --app <origin> [--api <url>] --user <sub|username>
 //        [--approver <sub>] [--actors <pick-actors.json>] [--sub-prefix drill-] [--unbound-user <sub>] [--source-origin <origin>] [--transformation <id>] [--gate <code>]
-//        [--expect-origin <origin>] [--expect-environment <kind>] [--downloads <downloads.json>]
+//        [--expect-origin <origin>] [--expect-environment <kind>] [--status-user <sub>] [--downloads <downloads.json>]
+//        [--download-user <sub>]
 //        [--journal <journal.json>] [--steps a,b,...] [--out <journey.json>]
 //
 // Steps (default: signin, unbound, csrf, status, writes, approve, downloads, deeplink, in this order):
@@ -14,7 +15,8 @@
 //   unbound   the same for --unbound-user: the callback must refuse it (`/login?error=identity_unbound`), no session.
 //   csrf      a write with the SOURCE origin in `Origin` is refused 403 (ADR-0069 §1 item 1, D8 (c)).
 //   status    D7: getDeploymentStatus (GET /api/v1/admin/deployment): `origin` equals --expect-origin and
-//             `environmentKind` equals --expect-environment (the package's sourceEnvironment).
+//             `environmentKind` equals --expect-environment (the package's sourceEnvironment). With --status-user
+//             (an operations.read holder; T-DG7-DO-D5) that user signs in for this step, else the --user session is used.
 //   uploads   D1 (on S): two SYNTHETIC file evidence items are created and their bytes uploaded through the API, so
 //             D8 (a) is never vacuous. Their keys go to the journal of S (not used by the allowance of T).
 //   writes    D8 (b) (ADR-0064 A3.6; B.8 DO-D4): on --transformation as the submitter S: a new transformation is created
@@ -28,7 +30,8 @@
 //             the submission (outcome `deferred`, a SYNTHETIC drill decision; it approves nothing real), reads it back
 //             (getGateSubmission), waits at least 30 s for the worker, then reads the remedied KPIs' evaluations.
 //   downloads D8 (a): every entry of <downloads.json> ([{ path, sha256 }]) is fetched from the target and its SHA-256
-//             compared.
+//             compared. With --download-user (an actor who can read the files' transformation, e.g. the rebound
+//             uploader; T-DG7-DO-D5) that user signs in for this step, else the --user session is used.
 //   exportq   D9 (before the restart, worker stopped): one report export is requested (createExport), so it stays
 //             queued; its id is journalled (export_job is operational).
 //   exportwait D9 (after the restart): that export reaches `succeeded` within 120 s and its file downloads with the
@@ -173,8 +176,15 @@ export class Journal {
   }
 }
 
-/** The codes of the A3.6 remedy table (C1); any other code stops D8 (g5.performance_no_kpi, g5.adoption_none, *_not_loaded). */
+/**
+ * The codes of the A3.6 remedy table (C1); any other code stops D8 (g5.performance_no_kpi, *_not_loaded).
+ * T-DG7-DO-D5 (D-261): g5.adoption_none is remedied by creating the missing adoption configuration through the public
+ * API (createAdoptionMetricLink, adoption.edit) as a rebound holder: the KPI-fed measure pick-actors.sql chooses
+ * (`adoptionLink`), attached to the transformation and fed by an existing active KPI of matching unit and polarity; that
+ * KPI then gets the KPI remedy. No demo data and no gate rule is changed.
+ */
 export const REMEDY_CODES = new Set([
+  "g5.adoption_none",
   "g5.performance_no_accepted_actual",
   "g5.performance_kpi_not_known",
   "g5.performance_pilot_evidence_missing",
@@ -242,6 +252,18 @@ export async function runJourney(o) {
     sessions.set(userId, s);
     return s;
   };
+  /** A separate session for a step run as another user (by its full subject or dev username); journalled like actor(). */
+  const subSession = async (sub, role) => {
+    if (sessions.has(sub)) return sessions.get(sub);
+    const jar = new Jar();
+    const r = await signIn(jar, sub);
+    if (!r.ok) fail(`sign-in of the ${role} ${sub} refused: ${r.location || `HTTP ${r.status}`}`);
+    const s = { jar, csrf: r.me.csrfToken, id: r.me.user.id };
+    if (o.authMode !== "dev" && o.issuer)
+      journal.add("user_identity", [o.issuer, sub], "signin", `oidc sign-in (${role})`);
+    sessions.set(sub, s);
+    return s;
+  };
   /** One API call of the chain: a refusal (any 4xx, or an unexpected status) stops D8 with the A3.6 line. */
   const op = async (who, opId, method, path, body, headers = {}, ok = [200, 201]) => {
     const r = await as(who)(method, path, body, headers);
@@ -257,6 +279,51 @@ export async function runJourney(o) {
     d.setUTCDate(d.getUTCDate() + plusDays);
     return d.toISOString().slice(0, 10);
   };
+  /**
+   * T-DG7-DO-D5: the reporting period the KPI remedy reports in is the one holding today's business date. The demo's
+   * last period is 2026-09, so an actual in an older open period is already past the KPI's staleAfterDays and stays
+   * `stale` (T-B17 run 1: "actualStatus stale ... dataAsOf 2026-08-31, staleAfterDays 45"). The current period is
+   * therefore opened through the public API by a rebound reporting_period.manage holder R (openReportingPeriod when it
+   * is scheduled; createReportingPeriod for the calendar month, then openReportingPeriod, when it does not exist), as an
+   * operator would at the start of a month. Demo data and the freshness rule are unchanged. Done once per run.
+   */
+  const currentPeriod = async (t, K) => {
+    if (ctx.period) return ctx.period;
+    const base = `/api/v1/transformations/${t}`;
+    const today = businessDate(0);
+    const periods = await op(K, "listTransformationReportingPeriods", "GET", `${base}/reporting-periods?limit=100`);
+    const all = items(periods.json);
+    let p = all.find((x) => x.frequency === "monthly" && x.periodStart <= today && today <= x.periodEnd);
+    if (p?.status === "open") return (ctx.period = p);
+    if (p && p.status !== "scheduled") fail(`D8 FAIL: the current reporting period ${p.periodLabel} is ${p.status}`);
+    const org = all[0]?.organizationId;
+    if (!org) fail(`D8 FAIL: no reporting period readable on ${t}`);
+    const R = await actor(actors.periodManager, "reporting_period.manage", "period manager R");
+    const obase = `/api/v1/organizations/${org}/reporting-periods`;
+    if (!p) {
+      const end = new Date(`${today.slice(0, 7)}-01T00:00:00Z`);
+      end.setUTCMonth(end.getUTCMonth() + 1);
+      end.setUTCDate(0);
+      const due = new Date(end);
+      due.setUTCDate(due.getUTCDate() + 5);
+      const cr = await op(R, "createReportingPeriod", "POST", obase, {
+        frequency: "monthly",
+        periodLabel: today.slice(0, 7),
+        periodStart: `${today.slice(0, 7)}-01`,
+        periodEnd: end.toISOString().slice(0, 10),
+        basis: "calendar",
+        updateDueDate: due.toISOString().slice(0, 10),
+      });
+      p = cr.json;
+      journal.add("reporting_period", p.id, "added", "createReportingPeriod");
+    }
+    const cur = await op(R, "getReportingPeriod", "GET", `${obase}/${p.id}`);
+    const opened = await op(R, "openReportingPeriod", "POST", `${obase}/${p.id}/open`, undefined, {
+      "if-match": etagOf(cur, cur.json?.version),
+    });
+    journal.add("reporting_period", p.id, "changed", "openReportingPeriod");
+    return (ctx.period = opened.json ?? p);
+  };
   /** The KPI remedy (A3.6 rows g5.performance_no_accepted_actual and g5.performance_kpi_not_known). */
   const kpiRemedy = async (t, k, run) => {
     ctx.kpisDone ??= [];
@@ -264,12 +331,7 @@ export async function runJourney(o) {
     const a = actors.kpis?.[k] ?? {};
     const K = await actor(a.user, "kpi_actual.submit", "KPI user K");
     const base = `/api/v1/transformations/${t}`;
-    const periods = await op(K, "listTransformationReportingPeriods", "GET", `${base}/reporting-periods`);
-    const open = items(periods.json)
-      .filter((p) => p.status === "open")
-      .sort((x, y) => (x.periodStart < y.periodStart ? 1 : x.periodStart > y.periodStart ? -1 : 0));
-    const period = open[0];
-    if (!period) fail(`D8 FAIL: no open reporting period on ${t} for KPI ${k}`);
+    const period = await currentPeriod(t, K);
     const slots = await op(K, "listKpiActuals", "GET", `${base}/kpi-definitions/${k}/actuals?limit=100`);
     const slot = items(slots.json).find(
       (x) => x.reportingPeriodId === period.id && (x.scopeId ?? t) === t && x.scopeKind !== "business_unit",
@@ -361,6 +423,21 @@ export async function runJourney(o) {
         if (lid) journal.add("phase_step_evidence", lid, "added", "linkPhaseStepEvidence");
         return `pilot evidence ${ev.json.id} verified and linked`;
       }
+      case "g5.adoption_none": {
+        const A = await actor(actors.adoptionEditor, "adoption.edit", "adoption editor A");
+        const pick = actors.adoptionLink ?? {};
+        if (!pick.templateKey || !pick.kpiDefinition)
+          fail(
+            `D8 FAIL: no API remedy for ${it.code} at ${it.pointer ?? "(no pointer)"} (no KPI-fed template matches an active KPI)`,
+          );
+        const ln = await op(A, "createAdoptionMetricLink", "POST", `${base}/adoption-metric-links`, {
+          templateKey: pick.templateKey,
+          targetKind: "transformation",
+          kpiDefinitionId: pick.kpiDefinition,
+        });
+        journal.add("adoption_metric_link", ln.json.id, "added", "createAdoptionMetricLink");
+        return `adoption link ${ln.json.id} (${pick.templateKey} <- KPI ${pick.kpiDefinition}): ${await kpiRemedy(t, pick.kpiDefinition, run)}`;
+      }
       case "g5.adoption_indicator_unknown": {
         const l = await op(S, "getAdoptionMetricLink", "GET", `${base}/adoption-metric-links/${id}`);
         if (l.json?.kpiDefinitionId) return `adoption link ${id}: ${await kpiRemedy(t, l.json.kpiDefinitionId, run)}`;
@@ -423,6 +500,11 @@ export async function runJourney(o) {
         return [[actors.kpis?.[id]?.user, "kpi_actual.submit"]];
       case "g5.performance_pilot_evidence_missing":
         return [[actors.evidenceReviewer, "evidence.review"]];
+      case "g5.adoption_none":
+        return [
+          [actors.adoptionEditor, "adoption.edit"],
+          [actors.kpis?.[actors.adoptionLink?.kpiDefinition]?.user, "kpi_actual.submit"],
+        ];
       case "g5.decision_log_empty":
         return [[actors.decisionOwner, "executive_decision.decide"]];
       case "g5.decision_date_missing":
@@ -451,6 +533,24 @@ export async function runJourney(o) {
           fail(`D8 FAIL: no API remedy for ${it.code} at ${it.pointer ?? "(no pointer)"}`);
       for (const it of missing)
         for (const [u, p] of neededActors(it)) if (!u) fail(`D8 FAIL: no rebound user holds ${p}`);
+      // T-DG7-DO-D5: a KPI remedy reports in the current period; when it is not open yet, R must exist (read only here).
+      const KPI_CODES = ["g5.performance_no_accepted_actual", "g5.performance_kpi_not_known", "g5.adoption_none"];
+      if (missing.some((it) => KPI_CODES.includes(it.code)) && !actors.periodManager) {
+        const today = businessDate(0);
+        const l = await op(
+          S,
+          "listTransformationReportingPeriods",
+          "GET",
+          `/api/v1/transformations/${t}/reporting-periods?limit=100`,
+        );
+        const cur = items(l.json).find(
+          (x) => x.frequency === "monthly" && x.periodStart <= today && today <= x.periodEnd,
+        );
+        if (cur?.status !== "open")
+          fail(
+            `D8 FAIL: no rebound user holds reporting_period.manage (the current period ${cur?.periodLabel ?? today.slice(0, 7)} is ${cur?.status ?? "absent"})`,
+          );
+      }
       // C1, in order, each item once
       for (const it of missing) lines.push(await remedy(t, it, run));
       // C2
@@ -523,8 +623,9 @@ export async function runJourney(o) {
     },
     async status() {
       if (!o.expectOrigin || !o.expectEnvironment) fail("no --expect-origin or --expect-environment given");
-      if (!ctx.csrf) fail("not signed in (the signin step must pass first)");
-      const r = await call("GET", "/api/v1/admin/deployment");
+      const who = o.statusUser ? await subSession(o.statusUser, "status user") : ctx;
+      if (!who.csrf) fail("not signed in (the signin step must pass first)");
+      const r = await as(who)("GET", "/api/v1/admin/deployment");
       if (r.status !== 200) fail(`getDeploymentStatus: HTTP ${r.status} ${(r.text ?? "").slice(0, 200)}`);
       if (r.json.origin !== o.expectOrigin)
         fail(`getDeploymentStatus.origin is ${r.json.origin}, expected ${o.expectOrigin}`);
@@ -663,14 +764,15 @@ export async function runJourney(o) {
       if (!o.downloads) fail("no --downloads given");
       const list = JSON.parse(readFileSync(o.downloads, "utf8"));
       if (!Array.isArray(list) || list.length === 0) fail("the download list is empty (no evidence file to prove)");
+      const who = o.downloadUser ? await subSession(o.downloadUser, "download user") : ctx;
       const bad = [];
       for (const e of list) {
-        const r = await c.http(ctx.jar, "GET", e.path, { raw: true });
+        const r = await c.http(who.jar, "GET", e.path, { raw: true });
         const sha = createHash("sha256").update(r.bytes).digest("hex");
         if (r.status !== 200 || sha !== e.sha256) bad.push(`${e.path}: HTTP ${r.status}, sha256 ${sha.slice(0, 12)}`);
       }
       if (bad.length > 0) fail(`${bad.length} of ${list.length} downloads differ: ${bad.slice(0, 3).join("; ")}`);
-      return `${list.length} evidence files downloaded, SHA-256 equal`;
+      return `${list.length} evidence files downloaded by ${o.downloadUser ?? o.user}, SHA-256 equal`;
     },
     async exportq() {
       if (!ctx.csrf) fail("not signed in (the signin step must pass first)");
@@ -774,7 +876,9 @@ async function main() {
           "gate",
           "expect-origin",
           "expect-environment",
+          "status-user",
           "downloads",
+          "download-user",
           "journal",
           "steps",
           "out",
@@ -804,7 +908,9 @@ async function main() {
     gate: v.gate,
     expectOrigin: v["expect-origin"],
     expectEnvironment: v["expect-environment"],
+    statusUser: v["status-user"],
     downloads: v.downloads,
+    downloadUser: v["download-user"],
     journal: v.journal,
     steps: v.steps ? v.steps.split(",") : undefined,
   });

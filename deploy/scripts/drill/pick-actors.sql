@@ -20,7 +20,15 @@
 --   decisionOwners      per executive decision of the transformation: its owner when rebound and holding
 --                       executive_decision.decide, else null (remedies g5.decision_date_missing, g5.decision_overdue);
 --   trainer    L   a proficiency.record holder (remedy via a training_records adoption source);
---   riskEditor X   a raid.edit holder (remedy g5.risk_open).
+--   riskEditor X   a raid.edit holder (remedy g5.risk_open);
+--   periodManager R  a reporting_period.manage holder by an ORGANIZATION-scoped grant, with organization.read
+--                  (the period routes are organization routes; reporting-periods.ts requireManage) (opens the current reporting period for the KPI remedy;
+--                  T-DG7-DO-D5);
+--   adoptionEditor A  an adoption.edit holder (remedy g5.adoption_none; T-DG7-DO-D5, D-261);
+--   adoptionLink   { templateKey, kpiDefinition }: the first KPI-fed adoption template (by indicator and measure
+--                  ordinal) whose unit_kind and polarity equal an active KPI of the transformation that has a KPI user
+--                  K, with no active link of that template on the transformation yet (createAdoptionMetricLink's
+--                  kpi_mismatch and exists rules); null when none matches. Configuration through the API, never a seed edit.
 -- A role nobody fills is null; journey.mjs stops D8 with `D8 FAIL: no rebound user holds <permission>` when a needed
 -- remedy (or S/P) has no actor. Prints one JSON object. SYNTHETIC drill users; choosing an actor approves nothing.
 WITH rebound AS (
@@ -97,6 +105,16 @@ kpis AS (
        ORDER BY (SELECT count(*) FROM party p WHERE p.kpi_definition = k.id AND p.user_id <> h.user_id) = 0, h.user_id
        LIMIT 1) ku ON true
    WHERE k.transformation_id = (SELECT t FROM pairs) AND k.status = 'active'),
+adoption AS (
+  SELECT tp.key AS template_key, k.id AS kpi_definition
+    FROM adoption_indicator_template tp
+    JOIN kpi_definition k ON k.transformation_id = (SELECT t FROM pairs) AND k.status = 'active'
+     AND k.unit_kind = tp.unit_kind AND k.polarity = tp.polarity
+    JOIN kpis ON kpis.kpi_definition = k.id AND kpis.kpi_user IS NOT NULL
+   WHERE tp.value_source = 'kpi_actuals'
+     AND NOT EXISTS (SELECT FROM adoption_metric_link l WHERE l.transformation_id = k.transformation_id
+                       AND l.template_key = tp.key AND l.target_kind = 'transformation' AND l.status = 'active')
+   ORDER BY tp.indicator_ordinal, tp.measure_ordinal, k.id LIMIT 1),
 decisions AS (
   SELECT d.id, CASE WHEN EXISTS (SELECT FROM held h WHERE h.user_id = d.owner_user_id AND h.t = d.transformation_id
                                    AND h.permission_code = 'executive_decision.decide')
@@ -115,4 +133,12 @@ SELECT json_build_object(
   'decisionOwner', (SELECT user_id FROM holder WHERE permission_code = 'executive_decision.decide'),
   'decisionOwners', coalesce((SELECT json_object_agg(id, owner) FROM decisions), '{}'::json),
   'trainer', (SELECT user_id FROM holder WHERE permission_code = 'proficiency.record'),
-  'riskEditor', (SELECT user_id FROM holder WHERE permission_code = 'raid.edit'));
+  'riskEditor', (SELECT user_id FROM holder WHERE permission_code = 'raid.edit'),
+  'adoptionEditor', (SELECT user_id FROM holder WHERE permission_code = 'adoption.edit'),
+  'periodManager', (SELECT min(sa.user_id::text)::uuid FROM scoped_assignment sa JOIN role_permission rp ON rp.role_id = sa.role_id
+                      JOIN transformation t ON t.id = (SELECT t FROM pairs)
+                     WHERE sa.scope_type = 'organization' AND sa.scope_id = t.organization_id AND sa.revoked_at IS NULL
+                       AND (sa.effective_to IS NULL OR sa.effective_to > now()) AND rp.permission_code = 'reporting_period.manage'
+                       AND sa.user_id IN (SELECT user_id FROM rebound)
+                       AND EXISTS (SELECT FROM held h WHERE h.user_id = sa.user_id AND h.t = t.id AND h.permission_code = 'organization.read')),
+  'adoptionLink', (SELECT json_build_object('templateKey', template_key, 'kpiDefinition', kpi_definition) FROM adoption));
