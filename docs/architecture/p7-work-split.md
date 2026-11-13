@@ -837,6 +837,99 @@ It also fixes DO-D3 Q1: `mth-db` cuts piped stdout at 64 KiB. C.12's and C.13's 
 - The counter rule reads only rows that this run explained. Run it last.
 - Run before the handback: `node tools/gates/validate.mjs --historical --stage DG6` **first**; then `pnpm -r typecheck`, `pnpm lint`, `pnpm openapi:lint` and `pnpm test`; the integration files of C.13 plus T-R19–T-R23; `node tools/release/migration-catalogue.mjs --check`; the dictionary coverage tool; and the repository-wide prettier check.
 
+### C.15 BE-R4: chain rules, KPI evaluations, date-relative demo periods (backend-workflow; repair; after ARCH-R5)
+
+**What this is.** The fourth repair task for the recheck, under p7-plan §5.3 (D-263). It builds ADR-0064 **Amendment 4**:
+
+- the lineage links in the chain fixed point (A4.2);
+- the `kpi_evaluation` count (A4.3);
+- the depth and the per-link counts (A4.4);
+- allowance `mth-recheck-allowance/4`, migration 0152 and the contract value (A4.5);
+- the date-relative demo periods and the organization-wide demo access administrator (A4.6).
+
+C.12–C.14 stand where Amendment 4 does not change them. Where they differ, Amendment 4 wins.
+
+**Hard rules.**
+- C.12–C.14's hard rules stand.
+- No table is added to `RECHECK_OPERATIONAL_TABLES`.
+- No worker or API audit event is added or re-attributed: runs, evaluations, findings and signals keep writing none (A4.2 option (c) is rejected).
+- No product authorization rule changes.
+- Nothing writes, updates or truncates `audit_event`.
+- The four fixed demo periods do not change.
+- **If a measurement contradicts Amendment 4, stop and report.** It is a design question. For example:
+  - a run whose `completed_at` differs from its outbox rows' `created_at`;
+  - a `kpi.actual_accepted` run whose `idempotency_key` is not the outbox key;
+  - a starter execution with more than one action result in one attempt.
+
+**Creates:**
+
+| File | Purpose |
+| --- | --- |
+| `packages/db/migrations/0152_p7_transfer_recheck_lineage_basis.sql` (the next free id above the highest shipped file, D-245 O9) | A4.5: drop and re-add `migration_reconciliation_delta_basis_check` with eleven values (A3.5's ten plus `lineage`). The header states that nothing here touches `audit_event`. |
+| `packages/db/test/integration/transfer-recheck-lineage.test.ts` | T-R24, T-R25, T-R26 |
+| `packages/db/test/integration/demo-periods.test.ts` | T-R28, T-R29, T-R30 |
+
+**Modifies:**
+
+| File | Exactly what |
+| --- | --- |
+| `packages/db/src/transfer/recheck.ts` | `ALLOWANCE_SCHEMA_VERSION = "mth-recheck-allowance/4"`. `Allowance.lineage`. `parseAllowance` requires the eight keys and refuses `/1`–`/3`. `RECHECK_LINEAGE_TABLES`, `RECHECK_LINEAGE_OUTBOX` and `RECHECK_CHAIN_MAX_DEPTH` (A4.2). `validateAllowance` gets the A4.5 refusals. `DeltaBasis` gains `lineage`. |
+| `packages/db/src/transfer/recheck-automation.ts` | `automationChain` runs the A4.2 fixed point: S2, L1, L2, L3, S3 and S4 to a fixed point, with depth. It returns `X`, `O`, `Run` and `K` with depths, besides `E*` and `chain`. The catalogue check of the named links (exit 2). |
+| `packages/db/src/transfer/reconcile.ts` | Mode 2 order: `tables` → the fixed point → L4, L5 → `audited` with `E*` and the A4.4 action-result rules → `children` → `lineage` deltas and the A4.3 counts → `counters` → `operational`. The A4.7 lines. The JSON report adds `lineageChain`, the signals and `depth` (A4.5). |
+| `packages/db/src/transfer/index.ts` | export lines |
+| `packages/db/src/transfer/recheck.test.ts` | the unit parts of T-R27 |
+| `packages/db/test/integration/transfer-recheck.test.ts`, `transfer-recheck-automation.test.ts` | the `/3` fixtures move to `/4` (add `"lineage": []`). T-R19's expectations are unchanged. |
+| `packages/db/src/schema.ts`, `packages/db/src/seed.test.ts`, `packages/db/test/integration/p7-transfer-guards.test.ts`, `packages/db/test/integration/catalogue.test.ts` | the 0152 lines (the next free id becomes 0153) and T-R9's cases for 0152 |
+| `docs/api/openapi.yaml`, `apps/api/src/modules/transfer/import/service.ts`, `apps/api/test/integration/contract/p7-exercises-be-d.ts` | additive only: `lineage` in the `basis` enum and its zod mirror. The exercise seeds one `lineage` delta (T-R12). |
+| `packages/db/src/demo/data/kpis.ts` | `demoPeriodsFor(anchor)`: `DEMO_PERIODS` unchanged plus the A4.6 generated months. `seedPeriods` seeds them. |
+| `packages/db/src/demo/data/roaming.ts` | the A4.6 organization-scope `ADM_ACCESS` grant |
+| `packages/db/src/demo/seed.ts`, `packages/db/src/demo/reset.ts`, `packages/db/src/demo/cli.ts` | `asOf`, the anchor, `periodAnchor` in the summary, `--as-of`, the A4.6 lines and refusals; the usage text gains `--as-of` |
+| `packages/db/test/integration/demo.test.ts`, `demo-roaming.test.ts`, `demo-numbers.test.ts`, `demo-numbers-spec.test.ts` | every seed or reset pair that compares checksums passes the same `asOf`. Tests that assert the legacy numbers pass `asOf: "2026-09-01"`. No expected number changes, except the one grant row (T-R29). |
+| `docs/architecture/data-dictionary.md`, `docs/architecture/erd.md`, `docs/handover/data/coverage.json`, `docs/handover/migration-catalogue.json`, the generated table of `docs/handover/upgrades.md` | the 0152 lines, regenerated with their tools, no override |
+| `docs/handover/` operator text for `seed-demo` / `reset-demo`, if it lists their options | `--as-of`, one line |
+
+**Not BE-R4's:**
+- the drill (`deploy/scripts/**`), which is DO-D7's (B.9);
+- trajectories past 2026-12 (A4.9 residual 4), which are measured, not changed.
+
+**Exact texts:** A4.7.
+
+**Tests** (real PostgreSQL through `tests/qa/support/with-pg.sh`, except where marked unit):
+
+| Test | File | Proves |
+| --- | --- | --- |
+| T-R24 | `transfer-recheck-lineage.test.ts` | Fixture: a target after import, with the API and worker in-process. A journalled actor accepts one KPI actual through the route, and the worker runs. Mode 2 with `calculation_run`, `kpi_evaluation` and `data_quality_finding` in `lineage`, `automation_*` and `corrective_case` in `audited`, and `corrective_signal` in `lineage` gives `allowed`. The report shows: the run at depth 1, with `evaluation_count` evaluations (period and cumulative) and one lineage outbox row of each kind; the second-hop executions at depth 2, with exactly one action result each; and one signal per deviation outbox row. |
+| T-R25 | `transfer-recheck-lineage.test.ts` | **Negatives, each unexplained with its A4.7 line:**<br>• an owner-inserted extra `kpi_evaluation` on an explained run (count ≠ `evaluation_count`);<br>• an owner-inserted `kpi.deviation_evaluated` outbox row whose `created_at` is 1 µs off, and the execution it triggers;<br>• a run whose outbox row's acceptance event is by an actor not in `actors`;<br>• a run of a trigger kind outside the map;<br>• a `corrective_signal` whose `source_event_key` names no explained outbox row;<br>• an extra action result (ordinal 2) on a starter execution;<br>• an action result whose event's `request_id` is another job's;<br>• a chain of depth 6 (owner-built fixture);<br>• `kpi_evaluation` listed in `tables` and not in `lineage` gives `exact_ids` unexplained added keys. |
+| T-R26 | `transfer-recheck-lineage.test.ts` | Catalogue check: in a disposable database, renaming `kpi_evaluation_run_fkey` gives exit 2 with `lineage link kpi_evaluation_run_fkey does not match the schema` |
+| T-R27 | `recheck.test.ts` (unit) | `/4` is accepted with eight keys. `/1`–`/3` are refused, and `lineage` missing is refused. Each A4.5 refusal is covered. `RECHECK_LINEAGE_TABLES` names exactly the four tables, and none of them is in `RECHECK_OPERATIONAL_TABLES`. `RECHECK_CHAIN_MAX_DEPTH` is 5. |
+| T-R9 (0152) | `p7-transfer-guards.test.ts` | the basis CHECK accepts `lineage` and refuses an unknown basis. `audit_event` triggers and grants are unchanged. |
+| T-R12 | contract | the `lineage` value round-trips |
+| T-R28 | `demo-periods.test.ts` | `seed-demo --as-of 2026-11-13`:<br>• periods 2026-06 to 2026-09 are exactly as with `--as-of 2026-09-01`;<br>• 2026-10 and 2026-11 exist, `open`, with the A4.6 ids, labels, dates and `opened_at` (start of month in Asia/Riyadh);<br>• the CLI line reads `… 2 generated, current period 2026-11 open`;<br>• seed then reset twice with the same `--as-of` gives identical counts and checksum;<br>• `--as-of` after today, and `--as-of 2026-02-30`, give exit 2 with the line;<br>• an anchor of 2100-01 is refused (unit, through `demoPeriodsFor`). |
+| T-R29 | `demo-periods.test.ts` | The demo access administrator holds `ADM_ACCESS` at organization scope `SYN-ROAMING` and still at the business unit. As that user, `createRoleAssignment` of `TO` at organization scope for another demo user returns 201 with its audit event. As a business-unit-only holder, the same call is refused, so the rules are unchanged. `grantApplies` and `rules.ts` are not modified (`git diff --exit-code apps/api/src/modules/access/rules.ts`). |
+| T-R30 | `demo-periods.test.ts` | Measurement, not a gate: `--as-of 2027-03-15`, accept one actual per demo KPI in 2027-03 through the API, and record each `getKpiStatus` `valueStatus`. If it is not `ok`, the test records it and passes, and the handback reports it as A4.9 residual 4. |
+
+**Requirement → clause → test** (adds to C.10 and C.12–C.14):
+
+| Requirement | Clause | Test(s) |
+| --- | --- | --- |
+| REQ-S19-014 | M0362 "reconciliation" | T-R24, T-R25, T-R26, T-R27 |
+| REQ-S19-017 (B.9) | "records, jobs and approvals intact after a full restart" | T-R24, T-R25 |
+| REQ-S18-001 | demo seed and reset, counts and checksum | T-R28 |
+| REQ-S18-002 | seed coverage | T-R28 (coverage still PASS for both anchors) |
+
+**What BE-R4 must know.**
+- Compare `timestamptz` values in SQL, never in JavaScript.
+- `RECHECK_LINEAGE_*` are code constants. The allowance names tables, never links.
+- The fixed point is computed once per recheck, inside its transaction.
+- The demo seed reads the real clock **once**, for the anchor, in the organization's timezone. `asOf` overrides it. Nothing else changes in ADR-0050's determinism rules.
+- Run before the handback:
+  1. `node tools/gates/validate.mjs --historical --stage DG6`, **first**;
+  2. `pnpm -r typecheck`, `pnpm lint`, `pnpm openapi:lint` and `pnpm test`;
+  3. the integration files of C.13 and C.14, plus T-R24–T-R30;
+  4. `node tools/release/migration-catalogue.mjs --check`;
+  5. the dictionary coverage tool;
+  6. the repository-wide prettier check.
+
 ## §D. Slice D: configuration transfer bundle (T-DG7-ARCH-02; ADR-0065)
 
 ### D.0 Already delivered by the architect (do not re-create)
@@ -1506,6 +1599,52 @@ This section is referred to as "B.7 DO-D3". Its number clashes with "B.7 Integra
 - Every IdP user, secret, origin, KPI value, evidence note, deferral and gate decision is SYNTHETIC. Nothing here approves anything: no G1–G6, Finance or IT approval, and no DG gate.
 - Disk is tight. Measure first, never make a second full checkout, and delete the work tree unless `--keep` is given.
 - Run before the handback: `node tools/gates/validate.mjs --historical --stage DG6` **first**; then the drill tests under `with-pg.sh`, T-B11, `pnpm -r typecheck`, `pnpm lint`, `pnpm openapi:lint` and the repository-wide prettier check.
+
+### B.9 DO-D7: run T-B11 and the A18 harness to the end (devops-engineer; repair; after BE-R4)
+
+**What this is.** The repair task for the A18 drill after D-263. This section is referred to as "B.9 DO-D7". Its number clashes with "B.9 What the implementers must know" above, as B.6–B.8 did (D-259 to D-261). The rules of B.6 DO-D2, B.7 DO-D3 and B.8 DO-D4 stand unless changed here, and so does DO-D6's grant path. It does the following:
+
+- moves the allowance to `mth-recheck-allowance/4`;
+- remeasures the D8 lists on the full A3.6 chain, now on shipped demo data;
+- runs T-B17, T-B11 (D0–D11) and the A18 harness.
+
+**Preconditions** (checked first, and reported as BLOCKED with the reason if they do not hold):
+- BE-R4 is merged: `ALLOWANCE_SCHEMA_VERSION` is `/4`, `RECHECK_LINEAGE_TABLES` exists, and `seed-demo` prints the A4.6 line;
+- on a fresh `migrate` and `seed-demo`, the current monthly period is `open`, and the demo access administrator holds `ADM_ACCESS` at organization scope.
+
+**Modifies:**
+
+| File | Exactly what |
+| --- | --- |
+| `deploy/scripts/drill/allowance.mjs` | Writes `/4`: the seven `/3` keys plus `lineage` = `D8_TOUCHED_LINEAGE`. `mustInclude.added` holds the journalled keys of each lineage table (for example the evaluations the API returned). The journal keys of a lineage table never go to `tables`. `D8_TOUCHED_AUDITED`, `D8_TOUCHED_CHILDREN`, `D8_TOUCHED_COUNTERS` and the new `D8_TOUCHED_LINEAGE` are replaced by T-B17's measurement on the full chain on **shipped** demo data. Each entry has its reason in `allowance-reasons.json` (`mth-recheck-allowance-reasons/4`). The constants still come from `recheck.ts` only. |
+| `deploy/scripts/drill/journey.mjs`, `pick-actors.sql` | Only if the run shows a bug, each one named in the handback with its failing log line. `currentPeriod` already uses an open current period without a grant, and falls back to DO-D6's `grantPeriodManager`. |
+| `deploy/scripts/transfer-drill.sh` | D9 passes the `/4` file. Bug fixes as above. |
+| `deploy/scripts/tests/transfer-drill.test.mjs` | T-B15 on `/4`; T-B17 on shipped demo data, with no fixture grant; T-B19 |
+| `deploy/ci/**` (the existing drill fragment only) | nothing new, unless a path changes |
+
+**Tests:**
+
+| Test | Proves |
+| --- | --- |
+| T-B15 | `allowance.mjs` writes a `/4` file that `parseAllowance` accepts. A lineage table appears only in `lineage`. A journalled `kpi_evaluation` key goes to `lineage[].mustInclude.added`. |
+| T-B17 (PostgreSQL) | On a fresh `seed-demo` (no fixture change), the journey runs C0–C6 to `decideGate` 201. The changed tables, minus `tables`, operational and `user_identity`, equal `D8_TOUCHED_AUDITED ∪ D8_TOUCHED_CHILDREN ∪ D8_TOUCHED_COUNTERS ∪ D8_TOUCHED_LINEAGE`. Mode 2 with the generated `/4` file exits 0, `automationChain` includes depth-2 entries, and `lineageChain` is non-empty. B.7's negative case stays. |
+| T-B19 (PostgreSQL) | DO-D6's grant path still works on shipped data. With `seed-demo --as-of <the first day of last month>`, the current period is absent. D8 then has the organization-scope access administrator grant `TO` and opens the period through the API, and the grant appears in the journal's `grants`. |
+| T-B11 | As in B.8 DO-D4: D0–D11 PASS in the no-network namespace, on an archive built from the merged candidate commit. `reconcile-d5.json` and `reconcile-d6.json` are `matched`. `reconcile-d9.json` is `matched after use`. The report's `result` is `PASS`. |
+| A18 harness | `tests/qa/integration/a18-transfer-drill.test.ts`, with `QA_A18_ARCHIVE`, `QA_A18_ARCHIVE_SHA256` and `QA_A18_STORE` set to T-B11's archive, its SHA-256 and the offline store. It is run, not edited, and its exit code is recorded. A failure is reported with its assertion. |
+
+**What DO-D7 must know.**
+- **Never allow an unexplained row by editing a list by hand.** The lists come from T-B17's measurement only. An unexplained row is reported with its key and table, plus its trigger code for an execution.
+- Report A4.9 residuals 1 and 4 when they occur, and do not work around them. Never pause, disable or reschedule a job, and never change demo data, gate rules or KPI configuration.
+- **The demo package now depends on the month** (A4.6). Never pin the demo export manifest digest across months. Record the anchor that T-B11 seeded.
+- Wait at least 30 s after C6 before D9's snapshot, and record the wait. The second hop (A4.4 depth 2) runs after the first, so if T-B17 shows rows arriving later, lengthen the wait and record why.
+- **Everything is SYNTHETIC.** Every IdP user, grant, secret, origin, KPI value, evidence note, deferral and gate decision is synthetic. Nothing here approves anything: no G1–G6, Finance or IT approval, and no DG gate.
+- Disk is tight. Measure first, never make a second full checkout, and delete the work tree unless `--keep` is given.
+- Run before the handback:
+  1. `node tools/gates/validate.mjs --historical --stage DG6`, **first**;
+  2. the drill tests under `with-pg.sh`;
+  3. T-B11 and the A18 harness;
+  4. `pnpm -r typecheck`, `pnpm lint` and `pnpm openapi:lint`;
+  5. the repository-wide prettier check.
 
 ## §F. Slice F: schema, API and connector handover (T-DG7-ARCH-04; ADR-0070)
 

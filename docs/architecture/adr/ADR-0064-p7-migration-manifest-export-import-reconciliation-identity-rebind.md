@@ -1001,3 +1001,314 @@ No table moves to `operational`, no key is taken from "what is new", and every A
   - allowance `/3` with `counters`;
   - the remeasured `D8_TOUCHED_*` lists;
   - T-B17 and T-B11 to the end.
+
+## Amendment 4 (2026-11-13, T-DG7-ARCH-R5): lineage rows in the automation chain, KPI evaluations, chain depth and exact counts, and date-relative demo periods
+
+- **Author:** solution-architect (T-DG7-ARCH-R5). Base `d398b007a2c61ee0f2f35758ae7240b8ed7da2b9` on `claude/mobily-transformation-platform-dg6-regate`.
+- **Why.** D-263 records two blockers after DO-D6:
+  1. **DO-D6 Q2, mode 2 on the full chain.** A diagnostic run of the whole A3.6 chain (`docs/delivery/handbacks/DG7/T-DG7-DO-D6-evidence/diag-org-admin-measurement-mode2.txt`) left these rows unexplained:
+     - 9 of 16 `automation_execution` rows;
+     - 9 of 16 `automation_action_result` rows;
+     - 3 of 6 `kpi_evaluation` rows;
+     - every added row of `data_quality_finding` (3), `corrective_signal` (3), `kpi_actual_value` (3), `kpi_actual_review` (3) and `gate_submission_criterion` (4).
+  2. **DO-D6 Q1, demo data.** No rebound user can open the current reporting period. The demo's last period is 2026-09, so on any later date the current period is absent.
+- **What this amendment decides:**
+  - a **lineage** link for the worker's unaudited system-lineage rows, which joins the A3.2 fixed point (A4.2, A4.3);
+  - the **chain depth** and the **exact counts** of every link (A4.4);
+  - the expected count of `kpi_evaluation` (A4.3);
+  - format `mth-recheck-allowance/4`, migration `0152` and one contract value (A4.5);
+  - date-relative demo reporting periods and the organization-wide demo access administrator (A4.6).
+- **What it replaces.** Only the following; everything else in this ADR and in Amendments 1–3 stands unchanged:
+  - A3.2 step 5, whose fixed point now also covers the lineage steps (A4.2);
+  - A3.4's format, which becomes `/4` with one more key (A4.5);
+  - for the demo dataset, ADR-0050 §4's "identical counts and checksum" now reads "identical for the same period anchor" (A4.6). The orchestrator decided this demo data change in D-263, for this defect only.
+- **Hard constraints.** D-258 to D-263 are unchanged:
+  - `audit_event` stays append-only, with both triggers enabled;
+  - nothing truncates, deletes or updates it;
+  - no source audit event is lost, altered or re-attributed;
+  - mode 2 never explains a row by "whatever is new", by a table-wide allowance or by `operational`;
+  - no product authorization rule changes.
+- **Two gate systems.** Nothing here grants or implies a G1–G6, Finance or IT approval, and nothing reads or writes DG0–DG7. Every demo and drill row is SYNTHETIC.
+
+### A4.1 The facts that decide it
+
+The facts below were read in the code at the base revision.
+
+- **The 9 unexplained executions are the second hop of the KPI chain.** Each of the 3 accepted actuals gives one execution of `starter.kpi_actual_accepted` on `kpi.actual_accepted`, which A3.2 explains. Its worker job writes one `calculation_run`, its `kpi_evaluation` rows and two kinds of outbox row (`apps/worker/src/handlers/kpi.ts` `persistRun`, l.1044–1203):
+  - one `kpi.values_recalculated` per run (aggregate `calculation_run`, key `kpi.values_recalculated:<run id>`);
+  - one `kpi.deviation_evaluated` per evaluation of basis `period` (aggregate `kpi_evaluation`, key `kpi.deviation_evaluated:<evaluation id>`).
+
+  These outbox rows trigger 3 × 3 = 9 executions (0075 l.46, 47 and 56):
+  - `starter.kpi_actual_accepted` on `kpi.values_recalculated` (queue `benefits.recalculate_pending`);
+  - `starter.kpi_deviation` on `kpi.deviation_evaluated` (queue `raid.corrective_kpi`);
+  - `starter.adoption_control_failed` on `kpi.deviation_evaluated` (queue `adoption.indicator_evaluated`).
+- **Why A3.2 stops there.** A3.2 step 2 explains an outbox row only through an `E*` audit event on its aggregate. But runs and evaluations **write no audit event, by design** (0035 header; ADR-0027 §7, "system lineage, the benefit_calculation precedent"). So no event sits on those aggregates, and the chain breaks. The 9 action results fall with their executions.
+- **The lineage rows carry exact recorded links:**
+
+  | Table | Link column(s) | What it points at | Enforced by |
+  | --- | --- | --- | --- |
+  | `calculation_run` | `idempotency_key` | the `idempotency_key` of the outbox row it consumed (`runOnce(…, envelope.idempotencyKey)`, `persistRun`) | `calculation_run_idempotency_key` UNIQUE; `outbox_event_idempotency_key_key` UNIQUE |
+  | `calculation_run` | `trigger_kind`, `trigger_record_type`, `trigger_record_id`, `trigger_slot` | that outbox row's event type, aggregate and value number | `calculation_run_trigger_pair`, `calculation_run_trigger_key` |
+  | `calculation_run` | `evaluation_count`, `finding_count` | the number of rows the run wrote | written in the same INSERT as the rows' transaction |
+  | `kpi_evaluation` | `(transformation_id, calculation_run_id)` | its run | FK `kpi_evaluation_run_fkey` |
+  | `data_quality_finding` | `(transformation_id, detected_by_run_id)` | its run | FK `data_quality_finding_run_fkey` |
+  | `corrective_signal` | `source_event_key` | the `idempotency_key` of the outbox row its job consumed (`apps/worker/src/handlers/raid.ts` l.501, 545, 579) | `corrective_signal_event_key` UNIQUE |
+  | `corrective_signal` | `(transformation_id, corrective_case_id)` | the case it created or updated, which is audited | FK `corrective_signal_case_fkey` |
+
+- **The same-transaction timestamp.** In `persistRun`, `calculation_run.completed_at` and both kinds of outbox row take their `DEFAULT now()`. That is PostgreSQL's transaction timestamp, as in A3.1. So the run and its outbox rows carry the same instant.
+- **Inserts are not audited, but updates of findings are.** `data_quality_finding` has `data_quality_finding_audit_required` on **UPDATE** only (0035 l.183). `calculation_run`, `kpi_evaluation` and `corrective_signal` are append-only (`p2_attach_append_only`) and have no audit trigger. So A2.6 rule 3 cannot explain an added finding, and A2.6 rule 4 refuses a finding as a child, because the table has an `_audit_required` trigger.
+- **The other unexplained tables are plain FK children.** `kpi_actual_value` and `kpi_actual_review` reference `kpi_actual`, and `gate_submission_criterion` references `gate_submission`. Their parents are audited and explained by `E`. They need no new rule: DO-D7 remeasures `D8_TOUCHED_CHILDREN`, as A3.6 required.
+- **The 3 "unexpected" `kpi_evaluation` keys** arise because the drill put the table in `tables` (`exact_ids`) with the 3 keys the API returned (basis `period`). The run also wrote 3 rows of basis `cumulative`, which no API response names. That is a wrong basis for this table, not a missing allowance.
+
+### A4.2 The rule: lineage links join the A3.2 fixed point
+
+| Option | Verdict |
+| --- | --- |
+| (a) Put the lineage tables, or the 9 executions' rows, in `operational` | **Rejected.** It is "ignore the table", which D-263 forbids. |
+| (b) Explain an outbox row by any `source = 'worker'` row of the same job | **Rejected.** Lineage rows have no event, so there is no job to read. A job id is not recorded on these rows. |
+| (c) Make the worker write audit events for runs and evaluations | **Rejected.** It changes DG4-approved behaviour (ADR-0027 §7, REQ-S07-013 "one audit event per user action") to fit a check. |
+| (d) Let the allowance name lineage tables as `children` of `transformation` | **Rejected.** The carried transformation is unchanged, and loosening A2.6 rule 4 would loosen it everywhere. |
+| **(e) A fixed, code-defined lineage map: each lineage row is explained only through its recorded link to an already explained outbox row or run, with exact counts. Lineage outbox rows then extend the chain.** | **Chosen** |
+
+**The constant.** `RECHECK_LINEAGE_TABLES` lives in `packages/db/src/transfer/recheck.ts`. The allowance names tables; it never names columns or links.
+
+```ts
+export const RECHECK_LINEAGE_TABLES = {
+  calculation_run: {
+    link: "outbox",                 // A4.2 step L1
+    triggers: {                     // trigger_kind -> outbox event_type and aggregate_type
+      actual_accepted:     { eventType: "kpi.actual_accepted",     aggregateType: "kpi_actual" },
+      threshold_changed:   { eventType: "kpi.threshold_changed",   aggregateType: "kpi_rag_threshold" },
+      trajectory_approved: { eventType: "kpi.trajectory_approved", aggregateType: "target_trajectory" },
+      version_activated:   { eventType: "kpi.version_activated",   aggregateType: "kpi_version" },
+    },
+  },
+  kpi_evaluation:       { link: "run", fkey: "kpi_evaluation_run_fkey",       countColumn: "evaluation_count" },
+  data_quality_finding: { link: "run", fkey: "data_quality_finding_run_fkey", countColumn: "finding_count" },
+  corrective_signal: {
+    link: "source_event",           // A4.2 step L4
+    sourceKinds: { kpi_deviation: "kpi.deviation_evaluated", benefit_variance: "benefit.variance_evaluated",
+                   adoption_check: "adoption.check_failed",  control_check: "control_check.failed" },
+    caseFkey: "corrective_signal_case_fkey",
+  },
+} as const;
+export const RECHECK_LINEAGE_OUTBOX = [        // A4.2 step L3
+  { eventType: "kpi.values_recalculated", aggregateType: "calculation_run", keyPrefix: "kpi.values_recalculated:", from: "run" },
+  { eventType: "kpi.deviation_evaluated", aggregateType: "kpi_evaluation",  keyPrefix: "kpi.deviation_evaluated:", from: "evaluation", basis: "period" },
+] as const;
+export const RECHECK_CHAIN_MAX_DEPTH = 5;
+```
+
+- Adding a table, an event or a link needs the architect, as for `RECHECK_OPERATIONAL_TABLES` and `RECHECK_COUNTER_TABLES`.
+- **At run time,** before any row is read, the recheck checks the catalogue. Each named FK must exist from the named table to `calculation_run` or `corrective_case`, with the columns named in A4.1. Each named column must exist. If any is absent, it exits 2 with `reconcile-migration: refused: lineage link <name> does not match the schema`. So schema drift is refused, never assumed.
+
+**The extended fixed point.** This replaces A3.2 step 5. Steps 1–4 and 6 of A3.2 are unchanged. `X` is the set of chain-explained executions, `O` the set of explained added outbox rows, `Run` the set of explained runs, and `K` the set of explained evaluations. `d(·)` is the depth (A4.4).
+
+Repeat until none of `E*`, `O`, `X`, `Run` and `K` grows:
+
+- **S2 (A3.2 step 2, unchanged).** Explain added outbox rows through events of `E*`. `d(o) = d(e)`, where `d(e) = 0` for `e ∈ E`, and `d(e) = d(x)` for an event that joined `E*` through execution `x`.
+- **L1, runs.** An added `calculation_run` row `r` is explained when all of the following hold:
+  - exactly one `o ∈ O` has `o.idempotency_key = r.idempotency_key`;
+  - `o.event_type` and `o.aggregate_type` are those of `triggers[r.trigger_kind]`;
+  - `o.aggregate_id = r.trigger_record_id` and `o.organization_id = r.organization_id`;
+  - for `actual_accepted`, `(o.payload ->> 'valueNo')::int = r.trigger_slot`.
+
+  Then `d(r) = d(o) + 1`. A trigger kind outside the map, for example a restatement run (ADR-0047 §3), is never explained (A4.8).
+- **L2, evaluations.** An added `kpi_evaluation` row `k` is explained when `(k.transformation_id, k.calculation_run_id)` references `r ∈ Run` through `kpi_evaluation_run_fkey`. Then `d(k) = d(r)`.
+- **L3, lineage outbox.** An added outbox row `o′` is explained when it matches one row of `RECHECK_LINEAGE_OUTBOX` exactly:
+  - **`from: run`:** `o′.aggregate_type = 'calculation_run'`, `o′.aggregate_id = r.id` for an `r ∈ Run` with `r.status = 'completed'`, and `o′.idempotency_key = 'kpi.values_recalculated:' || r.id`;
+  - **`from: evaluation`:** `o′.aggregate_type = 'kpi_evaluation'`, `o′.aggregate_id = k.id` for a `k ∈ K` with `k.value_basis = 'period'`, and `o′.idempotency_key = 'kpi.deviation_evaluated:' || k.id`;
+  - in both cases, `o′.event_type` is the row's `eventType`, `o′.organization_id` is the run's, and `o′.created_at = r.completed_at` of the run (of `k`'s run for an evaluation), compared as `timestamptz` in SQL.
+
+  Then `o′ ∈ O` and `d(o′) = d(r)`. The equal timestamp places `o′` in the run's transaction, as A3.2 step 2 does for events.
+- **S3 and S4 (A3.2 steps 3 and 4, unchanged).** Executions are chain-explained through `O`, which now includes lineage outbox rows. Their jobs' service events join `E*`. Then `d(x) = d(o) + 1`, and **`x` is explained only if `d(x) ≤ RECHECK_CHAIN_MAX_DEPTH`**.
+
+The loop ends because each round adds at least one row, and the candidate rows are finite. After the loop, and before `audited` is evaluated with `E*` (A3.2 step 6):
+
+- **L4, findings.** An added `data_quality_finding` row `f` is explained when `(f.transformation_id, f.detected_by_run_id)` references `r ∈ Run` through `data_quality_finding_run_fkey`. A **changed** finding (for example resolved by a user) is explained only as A2.6 rule 3 explains an audited row: by an event of `E*` on `f.id`, at `f.version` when the table has `version`. The lineage link never explains a change.
+- **L5, corrective signals.** An added `corrective_signal` row `s` is explained when all of the following hold:
+  - exactly one `o ∈ O` has `o.idempotency_key = s.source_event_key`, `o.event_type = sourceKinds[s.source_kind]` and `o.organization_id = s.organization_id`;
+  - at least one `x ∈ X` has `x.trigger_key = o.idempotency_key` and `x.trigger_code = o.event_type`;
+  - `s.corrective_case_id` is NULL, or its key is in the explained added or changed set of `corrective_case` (audited; A2.6 rule 3 with `E*`).
+
+  `d(s) = d(x)`, the smallest such depth.
+- **Changed or missing lineage rows.** `calculation_run`, `kpi_evaluation` and `corrective_signal` are append-only. A changed or missing row of these tables is unexplained, and so is a missing finding (ADR-0003).
+
+### A4.3 `kpi_evaluation`: the basis and the exact expected count
+
+- **Basis.** An evaluation is explained only through its run (L2). The run is explained only through the outbox row of the journalled acceptance (L1). That outbox row is explained only through the audit event of `acceptKpiActual` (or of a direct-accept `submitKpiActual`) by a listed actor, in the same transaction (A3.2 step 2). The accepted `kpi_actual` slot is audited and explained by `E`. Its `kpi_actual_value` row with `value_no = r.trigger_slot` is a `children` row of it.
+- **Count.** For each `r ∈ Run`:
+  - the live `kpi_evaluation` rows with `calculation_run_id = r.id` number exactly `r.evaluation_count`, and every one of them is **added**;
+  - the live findings with `detected_by_run_id = r.id` number exactly `r.finding_count`;
+  - for a completed run, `O` holds exactly 1 `kpi.values_recalculated` row of `r`, and exactly as many `kpi.deviation_evaluated` rows of `r` as `r` has evaluations of basis `period`;
+  - a `failed` run has no evaluation, no finding and no lineage outbox row.
+
+  Any difference makes `r` **and** every row linked to it unexplained, reported on the A4.7 line. On the diagnostic: 3 runs × 2 evaluations (period and cumulative) = 6 rows, which is the 6 measured, and 3 + 3 lineage outbox rows.
+- **The journal's keys.** The keys the API returns for evaluations (the period basis, through `getKpiStatus` or the gate) go into `lineage[].mustInclude.added` (A4.5). They must be a subset of the explained added keys. `kpi_evaluation` may no longer appear in `tables`.
+
+### A4.4 Chain depth and exact counts
+
+- **Depth.** `d = 0` for the listed actors' events and the rows they explain. Each hop through an execution (S3) or a run (L1) adds 1. Every other link keeps the depth of what it links to.
+
+  On the measured chain:
+
+  | Depth | Rows |
+  | --- | --- |
+  | 0 | the acceptance, its event and its outbox row |
+  | 1 | the `kpi.actual_accepted` execution, its run, the run's evaluations, findings and lineage outbox rows |
+  | 2 | the 9 executions and their action results |
+  | 3 | anything their jobs raise through audited outbox rows (none measured) |
+
+  `RECHECK_CHAIN_MAX_DEPTH = 5` is two hops above the deepest measured chain. A deeper execution is unexplained, with its own line (A4.7). Raising the constant needs the architect.
+- **Exact counts per link.** These are added to the counts of A4.3:
+  - **Outbox → execution (S3).** Each explained execution links to exactly one outbox row (A3.2 step 3, unchanged). For each `o ∈ O`, the report gives the number of executions and their rule codes.
+  - **Execution → action results.** These rules add to A3.2 step 6. An added `automation_action_result` row `ar` is explained only when **both** of the following hold:
+    - it has an event of `E*` on `ar.id`;
+    - `ar.automation_execution_id` (FK `automation_action_result_automation_execution_id_fkey`) is an explained added or changed execution `x`, and that event's `request_id` is in `R(x)` when `x ∈ X`. For an execution explained by `E` (a request starter in the API transaction), the event must be in `E`.
+
+    For each explained `x`:
+    - no result row has `attempt_no > x.attempt_no`;
+    - for each attempt, the ordinals of the added rows are exactly `{1, …, m}`, with no gap and no duplicate (`automation_action_result_attempt_key`);
+    - for a starter (`automation_rule` code starting `starter.`) whose status is not `running`, the current attempt has exactly one row, with ordinal 1 and action `starter_handler` (`apps/worker/src/automation/starters.ts` step 4).
+
+    A violation makes every result row of `x` unexplained.
+  - **Signals.** `corrective_signal_event_key` makes the count one per outbox row at most. L5 makes it one per explained outbox row with a consuming execution, and none otherwise.
+- **No table-wide allowance.** Every number above is computed per linked row from recorded columns. No count is configured, and no table is accepted as a whole.
+
+### A4.5 Format `mth-recheck-allowance/4`, schema and contract
+
+- **`/4`** is `/3` with one more required key, `lineage`:
+
+  ```json
+  { "schemaVersion": "mth-recheck-allowance/4", "actors": [], "tables": [], "audited": [], "children": [], "counters": [],
+    "lineage": [{ "name": "kpi_evaluation", "mustInclude": { "added": [["<pk text>"]] } }], "operational": [] }
+  ```
+
+  - `lineage[].name` is a key of `RECHECK_LINEAGE_TABLES`, and `mustInclude.added` holds journalled keys.
+  - Lineage tables are listed only here: never in `tables`, `audited`, `children`, `counters` or `operational`.
+  - `/3`, `/2` and `/1` are refused with `unsupported schema version '<v>'`.
+  - A lineage table that changed but is not listed is `unexplained`, as any other table (A1.9 rule 5).
+  - When `calculation_run` is not listed, L1 explains no run. Then no `kpi_evaluation` and no lineage outbox row is explained either.
+- **New refusals** (exit 2, `reconcile-migration: refused: invalid allowance file: <reason>`):
+  - `missing key 'lineage'`;
+  - `lineage table <t> is not in RECHECK_LINEAGE_TABLES`;
+  - `<t> is listed more than once` (as before; it now covers `lineage`);
+  - `lineage table <t> needs calculation_run in lineage` (for `kpi_evaluation` and `data_quality_finding`);
+  - `lineage table corrective_signal needs corrective_case in audited`.
+- **Migration `0152`** (BE-R4; the next free id above `0151`, D-245 O9) drops `migration_reconciliation_delta_basis_check` and re-adds it with eleven values: the ten of A3.5 plus `lineage`.
+  - Nothing in 0152 touches `audit_event`, its triggers or its grants, and its header says so.
+  - `tools/release/migration-catalogue.mjs` classifies it as it finds it, with no override.
+- **Contract (additive only).** `MigrationReconciliation.deltas[].basis` gains `lineage`. `info.version` and the operation count are unchanged.
+- **Delta rows.** Each lineage table gets one delta with basis `lineage`, with `rows_added`, `rows_changed` and `allowed`. The JSON report gains:
+  - `lineageChain`: per explained run, `{runId, outboxEventId, depth, evaluations, findings, lineageOutboxIds[]}`, sorted by `runId`;
+  - per explained signal, `{signalId, outboxEventId, executionIds[]}`;
+  - `depth` on every `automationChain` entry.
+
+### A4.6 Demo data (D-263): date-relative reporting periods and the organization-wide access administrator
+
+**The defect.** `DEMO_PERIODS` (`packages/db/src/demo/data/kpis.ts` l.204) ends at 2026-09. After September 2026, the current monthly period of the demo organization does not exist. So a KPI actual can only be entered in a past period, where it is already stale (DO-D5, T-B17 run 1). Shipped demo data goes stale with the calendar.
+
+**The rule.**
+- **The anchor.** `seed-demo` and `reset-demo` compute one **period anchor**: the calendar month (`YYYY-MM`) of the run's date in the demo organization's `default_timezone` (`Asia/Riyadh` in the dataset, read from the dataset constant, never from the host). This is the seed's only read of the real clock. Every other seeded time still derives from the synthetic clock (ADR-0050 §4).
+- **The four fixed periods stay exactly as they are now** ("prior periods as now"): 2026-06 and 2026-07 closed, 2026-08 open, 2026-09 scheduled, with the same ids, times and actuals.
+- **When the anchor is 2026-09 or earlier,** nothing is generated. The dataset is then byte-for-byte today's, except for the A4.6 grant below.
+- **When the anchor is later than 2026-09,** one monthly period is generated for each month `M` from 2026-10 to the anchor, inclusive:
+
+  | Field | Value |
+  | --- | --- |
+  | `id` | `kbeId(ID_BLOCK.reportingPeriod, 4 + n)`, where `n` is the number of months from 2026-09 to `M` (2026-10 → 5) |
+  | fixture key | `kbe.period.<YYYY-MM>` |
+  | `frequency`, `basis` | `monthly`, `calendar` |
+  | `period_label` | `YYYY-MM` |
+  | `period_start`, `period_end` | the first and last day of `M` |
+  | `update_due_date` | `period_end` + 5 days (the fixed periods' pattern) |
+  | final status | **`open`** |
+  | `opened_at` | the start of month `M + 1` in the organization's timezone, for a month before the anchor (the instant `kpi.reporting_period_open` would have opened it, ADR-0025 §4); the start of the anchor month itself, for the anchor month (the current period) |
+  | created | at the same instant as `opened_at`, by the same seeding user as the fixed periods, through `ctx.insert` and then `seedUpdate(…, "open", …)`, as `seedPeriods` does |
+
+  - **Every generated period is open.** The current one must be open (D-263). An earlier one is open because the product's daily job opens every scheduled period whose end has passed (`openDuePeriods`). Seeding it `scheduled` would only make the first job run change it, which is a scheduled write that mode 2 cannot explain (A3.9 residual 1).
+  - No actual, slot, trajectory point or evaluation is generated. The current period simply exists and is open.
+- **The limit.** `n` must fit `kbeId`. The seed refuses an anchor beyond 2099-12 with exit 1 and `seed-demo: refused: period anchor <YYYY-MM> is outside the supported range 2026-09..2099-12`, and nothing is written.
+- **Determinism, restated (ADR-0050 §4 for the demo dataset).** For the **same anchor**, the record counts and the checksum are identical. Seed, reset and reset in one month give identical results.
+  - `DemoSeedOptions` gains `asOf?: string` (`YYYY-MM-DD`). The anchor is the month of `asOf` when given, else the month of the real date in the organization's timezone.
+  - `seed-demo` and `reset-demo` gain `--as-of <YYYY-MM-DD>`. A value later than the real date, or one that is not a valid date, gives exit 2 with `seed-demo: refused: --as-of must be a valid date not after today` (or `reset-demo: …`).
+  - The summary (`DemoRunSummary`) gains `periodAnchor`.
+  - After the existing lines, the CLI prints one more: `seed-demo: reporting periods relative to <YYYY-MM-DD> (<timezone>): <g> generated, current period <YYYY-MM> open` (with `reset-demo:` for a reset). When `g` is 0, it prints `current period <YYYY-MM> not generated (anchor not after 2026-09)`.
+  - The anchor is not stored in a new column. It is recoverable as the label of the latest generated period, and as 2026-09 or earlier when none is generated.
+- **The organization-wide access administrator.** The permission model already allows one, with no rule change:
+  - `apps/api/src/modules/access/rules.ts` `grantApplies` accepts an `organization` grant on an organization target;
+  - `seed-dev` already holds `ADM_ACCESS` at organization scope for `SYN-DEV`.
+
+  So the dataset adds **one** grant: `ADM_ACCESS` at **organization** scope `SYN-ROAMING` for the existing demo access administrator `roaming.user.adm_access` (`DEMO_ACCESS_ADMIN`).
+  - Fixture key `roaming.assignment_org.adm_access` (the pattern of `roaming.assignment_bu.<key>`), the same reason text `REASON` as the business-unit grants, `scope_type` `organization`, `scope_id` the demo organization, and a fixed id `rtId(RT_BLOCK.scopedAssignment, n)` with the first `n` no other seeded row uses (BE-R4 names it). It is inserted right after the business-unit grants, in `roaming.ts` l.271–l.290 at the base.
+  - The business-unit grant stays.
+  - ADM_ACCESS holds no business-record or approval permission (ADR-0050 D1). This makes no user an approver. It lets the access administrator assign roles across the demo organization through `createRoleAssignment`, which is audited.
+  - This **amends ADR-0050 D2** ("TL, TO and ADM_ACCESS only, at the business unit") for this one grant, as D-263 decided.
+  - The grant is in the dataset for every anchor, so the legacy checksum changes once, by this row and its audit event.
+- **What the drill gets.** On a target imported in the anchor month, `currentPeriod` (`journey.mjs`) finds the current period open, so D8 needs no grant. On a target used in a later month, the current period is absent, and `grantPeriodManager` uses the organization-scope access administrator, whom `pick-actors.sql` `accessAdmin` already finds. Both paths are ordinary audited product workflows.
+- **Files** (BE-R4, C.15):
+  - `packages/db/src/demo/data/kpis.ts` (`demoPeriodsFor(anchor)`, `seedPeriods`);
+  - `packages/db/src/demo/data/roaming.ts` (the grant);
+  - `packages/db/src/demo/seed.ts` (`asOf`, the anchor, the summary);
+  - `packages/db/src/demo/cli.ts` (`--as-of`, the line);
+  - `packages/db/src/demo/reset.ts` (passes `asOf`);
+  - `packages/db/src/demo/coverage.ts`, only if a coverage condition names a period count;
+  - the tests of C.15.
+
+### A4.7 Exact texts (add to C.12–C.14; existing lines stay)
+
+| Command | Exit | Line |
+| --- | --- | --- |
+| `reconcile-migration` | 2 | `reconcile-migration: refused: invalid allowance file: unsupported schema version 'mth-recheck-allowance/3'` (and `/2`, `/1`) |
+| `reconcile-migration` | 2 | `reconcile-migration: refused: invalid allowance file: missing key 'lineage'` |
+| `reconcile-migration` | 2 | `reconcile-migration: refused: invalid allowance file: lineage table <t> is not in RECHECK_LINEAGE_TABLES` |
+| `reconcile-migration` | 2 | `reconcile-migration: refused: invalid allowance file: lineage table <t> needs calculation_run in lineage` |
+| `reconcile-migration` | 2 | `reconcile-migration: refused: invalid allowance file: lineage table corrective_signal needs corrective_case in audited` |
+| `reconcile-migration` | 2 | `reconcile-migration: refused: lineage link <name> does not match the schema` |
+| `reconcile-migration` | 4 | after `  <table>: <a> added, <c> changed, <m> missing (lineage)`, at most 20 lines `    unexplained <added\|changed\|missing> <key>`, then at most 20 lines `    lineage run <id>: <e> evaluations (expected <ee>), <f> findings (expected <ef>), <v> values_recalculated (expected 1), <d> deviation_evaluated (expected <ed>)` for each run whose counts differ |
+| `reconcile-migration` | 4 | under `automation_execution`: `    chain depth <d> exceeds 5 at <key>` |
+| `reconcile-migration` | 4 | under `automation_action_result`: `    execution <id>: attempt <a> ordinals <list> (expected 1..<m>)` |
+| `seed-demo`, `reset-demo` | 0 | the A4.6 line |
+| `seed-demo`, `reset-demo` | 2 | the A4.6 `--as-of` refusal |
+| `seed-demo`, `reset-demo` | 1 | the A4.6 range refusal |
+
+### A4.8 DG1 audit guarantees, the "never ignore a table" rule and D-263's escalation condition
+
+| Guarantee | How it holds |
+| --- | --- |
+| `audit_event_immutable` and `_truncate` stay enabled | Unchanged. A4.2–A4.4 only SELECT. 0152 does not touch `audit_event`. |
+| no UPDATE, DELETE or TRUNCATE of the trail | Unchanged. No write path is added to the recheck. The demo seed writes its new rows through its existing single insert path, with one audit event per row (ADR-0050 §4). |
+| no re-attribution | Unchanged. Option (c), which would have added worker events, is rejected. The worker's events keep `actor_type = 'service'`. |
+| `mth_app` INSERT and SELECT only | Unchanged. The recheck stays owner CLI only. |
+| one total order (`seq`) | Unchanged. Depth is computed, never stored. |
+
+**Never ignore a table.**
+- No table is added to `RECHECK_OPERATIONAL_TABLES`.
+- Each lineage row is explained key by key, through a recorded column or a named foreign key, to an outbox row that is itself explained.
+- Each link's count is checked exactly.
+- A lineage table that is not listed, or a row whose link fails, is unexplained.
+
+**Escalation test (D-263: "The chain rule needs a table-wide allowance").** Every row this amendment explains ends, through recorded links, at an event in `E`: an audited mutation by a journalled actor.
+- **A run:** its idempotency key → the outbox row → the same-transaction event of the acceptance.
+- **An evaluation or finding:** its FK → the run.
+- **A lineage outbox row:** the run's id in its key, its aggregate, and the run's transaction timestamp.
+- **A signal:** its source event key → an explained outbox row with a consuming explained execution.
+
+No allowance is table-wide. The condition is **not met**, and the orchestrator need not escalate.
+
+### A4.9 Residuals of this amendment
+
+1. **Restatement and benefit lineage stay unexplained.** A restatement run (ADR-0047 §3) and `benefit_calculation` (the other "system lineage" precedent) are not in the map. If D8 ever writes them, they are unexplained, and DO-D7 reports them. The diagnostic wrote neither.
+2. **The lineage outbox link is a timestamp equality,** as A3.9 residual 2. It is on the same run, so the record touched is right either way.
+3. **`finding_count` counts findings the run intended to insert** (`ON CONFLICT DO NOTHING`, after an in-transaction check). A concurrent writer of the same open finding could make the count differ. A4.3 then reports the run as unexplained, which is strict, not loose.
+4. **Demo trajectories end 2026-12-31** (`kpis.ts`). D-263 changes periods only. From 2027-01, a fresh actual in a generated period may evaluate as `not_computable`, and then G5's `known()` stops D8 (A3.9 residual 6). BE-R4 measures this with `--as-of 2027-03-15` (T-R30) and reports it. Extending trajectories is a further demo data change, which only the orchestrator can decide.
+5. **The demo checksum now depends on the month,** by design. A pinned checksum must name its anchor. No shipped test pins a literal checksum (BE-R4 confirms this with `grep`).
+6. **The 2026-09 period stays `scheduled`** ("as now"). Once the worker's daily `kpi.reporting_period_open` job runs on a demo database after 2026-09, it opens that period, as it would in production. If that run lands inside a drill window, it is A3.9 residual 1, reported and never avoided.
+
+### A4.10 Who builds it
+
+- **BE-R4 (C.15):** A4.2–A4.5 in `recheck.ts`, `recheck-automation.ts` and `reconcile.ts`; migration 0152 and the contract value; A4.6 in the demo seed; the tests.
+- **DO-D7 (B.9):**
+  - allowance `/4` with `lineage`;
+  - the remeasured `D8_TOUCHED_*` lists, including `D8_TOUCHED_LINEAGE`;
+  - T-B17, T-B11 and the A18 harness to the end.
