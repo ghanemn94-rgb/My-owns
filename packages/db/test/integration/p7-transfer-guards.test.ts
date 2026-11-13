@@ -216,6 +216,117 @@ describe("0133 imports, reconciliation and identity holds are written by the CLI
   });
 });
 
+describe("T-R9: 0149 the import load's audit ranges and the recheck deltas (ADR-0064 A1.6; T-DG7-BE-R1)", () => {
+  const insertImport = (c: PoolClient, id: string, ranges: (string | null)[]) =>
+    c.query(
+      `INSERT INTO migration_import (id, schema_version, source_environment, source_export_reference, migration_level,
+         manifest_sha256, attachment_manifest_sha256, demo_checksum, table_count, row_count, attachment_count,
+         attachment_bytes, operator_name, started_at, imported_at, audit_carried_rows, audit_carried_seq_max,
+         audit_baseline_rows, audit_baseline_seq_min, audit_baseline_seq_max, audit_baseline_digest, seed_rows_replaced)
+       VALUES ($1, 'mth-migration/1', 'unmarked', $2, $3, $4, $5, NULL, 1, 2, 0, 0, 'probe operator', now(), now(),
+               $6, $7, $8, $9, $10, $11, $12)`,
+      [id, uuidv7(), LEVEL, HEX, HEX2, ...ranges],
+    );
+  const withImport = (ranges: (string | null)[]) =>
+    inTx(owner.pool, async (c) => {
+      const id = uuidv7();
+      await insertImport(c, id, ranges);
+      await audit(c, "migration_import", id, null);
+      return id;
+    });
+
+  it("migration_import_audit_ranges: all seven or none; the baseline strictly above the carried maximum", async () => {
+    await withImport([null, null, null, null, null, null, null]);
+    await withImport(["10", "10", "3", "11", "13", HEX, "5"]);
+    await withImport(["0", "0", "0", null, null, HEX, "0"]);
+    for (const partial of [
+      ["10", "10", "3", "11", "13", null, "5"],
+      ["10", null, null, null, null, null, null],
+      ["10", "10", "0", "11", null, HEX, "5"],
+      ["10", "10", "3", null, null, HEX, "5"],
+    ])
+      expect((await pgError(withImport(partial))).constraint, JSON.stringify(partial)).toBe(
+        "migration_import_audit_ranges",
+      );
+    expect((await pgError(withImport(["10", "10", "3", "10", "13", HEX, "5"]))).constraint).toBe(
+      "migration_import_audit_ranges",
+    );
+    expect((await pgError(withImport(["10", "10", "3", "12", "11", HEX, "5"]))).constraint).toBe(
+      "migration_import_audit_ranges",
+    );
+  });
+
+  it("recheck_after_use may count unequal rows when no table is disallowed; never with a disallowed table", async () => {
+    const importId = await withImport([null, null, null, null, null, null, null]);
+    const run = (kind: string, result: string, mismatched: number, expected: number, actual: number) =>
+      inTx(owner.pool, async (c) => {
+        const id = uuidv7();
+        await c.query(
+          `INSERT INTO migration_reconciliation (id, migration_import_id, run_kind, result, tables_checked,
+             tables_mismatched, rows_expected, rows_actual, attachments_checked, attachments_mismatched, operator_name, run_at)
+           VALUES ($1, $2, $3, $4, 2, $5, $6, $7, 0, 0, 'probe operator', now())`,
+          [id, importId, kind, result, mismatched, expected, actual],
+        );
+        await audit(c, "migration_reconciliation", id, null);
+        return id;
+      });
+    await run("recheck_after_use", "matched", 0, 2, 5);
+    expect((await pgError(run("recheck_after_use", "matched", 1, 2, 5))).constraint).toBe(
+      "migration_reconciliation_result",
+    );
+    expect((await pgError(run("recheck", "matched", 0, 2, 5))).constraint).toBe("migration_reconciliation_result");
+    expect((await pgError(run("other", "matched", 0, 2, 2))).constraint).toBe(
+      "migration_reconciliation_run_kind_check",
+    );
+  });
+
+  it("migration_reconciliation_delta is append-only; mth_app reads it and cannot insert; unexplained is never allowed", async () => {
+    const importId = await withImport([null, null, null, null, null, null, null]);
+    const runId = await inTx(owner.pool, async (c) => {
+      const id = uuidv7();
+      await c.query(
+        `INSERT INTO migration_reconciliation (id, migration_import_id, run_kind, result, tables_checked,
+           tables_mismatched, rows_expected, rows_actual, attachments_checked, attachments_mismatched, operator_name, run_at)
+         VALUES ($1, $2, 'recheck', 'matched', 1, 0, 1, 1, 0, 0, 'probe operator', now())`,
+        [id, importId],
+      );
+      await audit(c, "migration_reconciliation", id, null);
+      return id;
+    });
+    const delta = (basis: string, allowed: boolean, pool = owner.pool) =>
+      pool.query(
+        `INSERT INTO migration_reconciliation_delta (migration_reconciliation_id, table_name, basis, rows_added,
+           rows_changed, rows_missing, allowed) VALUES ($1, 'audit_event', $2, 3, 0, 0, $3)`,
+        [runId, basis, allowed],
+      );
+    await delta("audit_additions", true);
+    expect((await pgError(delta("unexplained", true))).constraint).toBe("migration_reconciliation_delta_unexplained");
+    expect((await pgError(delta("rebind", true, app.pool))).code).toBe("42501");
+    expect(
+      (
+        await app.pool.query(
+          `SELECT basis FROM migration_reconciliation_delta WHERE migration_reconciliation_id = $1`,
+          [runId],
+        )
+      ).rows,
+    ).toEqual([{ basis: "audit_additions" }]);
+    for (const sql of [
+      `UPDATE migration_reconciliation_delta SET allowed = false WHERE migration_reconciliation_id = '${runId}'`,
+      `DELETE FROM migration_reconciliation_delta WHERE migration_reconciliation_id = '${runId}'`,
+    ])
+      expect((await pgError(owner.pool.query(sql))).message, sql).toMatch(/append-only/);
+  });
+
+  it("transfer_table_rule has the new row: the delta table never travels", async () => {
+    const r = await owner.pool.query(
+      `SELECT rule, reason FROM transfer_table_rule WHERE table_name = 'migration_reconciliation_delta'`,
+    );
+    expect(r.rows).toEqual([
+      { rule: "exclude_transfer", reason: "Written by the import and the rechecks on the target" },
+    ]);
+  });
+});
+
 describe("0134 configuration bundle imports (ADR-0065 §4)", () => {
   async function uploaded(): Promise<string> {
     const id = uuidv7();

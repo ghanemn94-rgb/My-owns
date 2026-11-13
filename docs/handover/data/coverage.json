@@ -2,19 +2,19 @@
   "schemaVersion": "mth-dictionary-coverage/1",
   "result": "PASS",
   "migration": {
-    "applied": 131,
-    "highest": "0148_p7_retention_job.sql"
+    "applied": 132,
+    "highest": "0149_p7_transfer_import_load.sql"
   },
   "schemas": [
     "pgboss",
     "public"
   ],
-  "tables": 364,
-  "columns": 5761,
+  "tables": 365,
+  "columns": 5775,
   "gaps": [],
   "reportedOnly": {
-    "indexesNotNamed": 341,
-    "constraintsNotNamed": 3722,
+    "indexesNotNamed": 342,
+    "constraintsNotNamed": 3734,
     "triggersNotNamed": 24,
     "columnsWithoutNullColumn": 0,
     "erdTablesInNoSection": 9,
@@ -4492,6 +4492,10 @@
           "migration_import_attachment_bytes_check",
           "migration_import_attachment_count_check",
           "migration_import_attachment_manifest_sha256_check",
+          "migration_import_audit_baseline_digest_check",
+          "migration_import_audit_baseline_rows_check",
+          "migration_import_audit_carried_rows_check",
+          "migration_import_audit_carried_seq_max_check",
           "migration_import_demo_checksum_check",
           "migration_import_manifest_sha256_check",
           "migration_import_migration_level_check",
@@ -4499,6 +4503,7 @@
           "migration_import_pkey",
           "migration_import_row_count_check",
           "migration_import_schema_version_check",
+          "migration_import_seed_rows_replaced_check",
           "migration_import_source_environment_check",
           "migration_import_table_count_check"
         ],
@@ -4537,6 +4542,22 @@
           "migration_reconciliation_attachment_parent_table_check",
           "migration_reconciliation_attachment_pkey",
           "migration_reconciliation_attachment_problem_check"
+        ],
+        "triggers": []
+      },
+      {
+        "table": "migration_reconciliation_delta",
+        "indexes": [
+          "migration_reconciliation_delta_pkey"
+        ],
+        "constraints": [
+          "migration_reconciliation_delta_basis_check",
+          "migration_reconciliation_delta_migration_reconciliation_id_fkey",
+          "migration_reconciliation_delta_pkey",
+          "migration_reconciliation_delta_rows_added_check",
+          "migration_reconciliation_delta_rows_changed_check",
+          "migration_reconciliation_delta_rows_missing_check",
+          "migration_reconciliation_delta_table_name_check"
         ],
         "triggers": []
       },
@@ -6933,7 +6954,7 @@
     "dictionaries": [
       {
         "path": "docs/architecture/data-dictionary.md",
-        "sha256": "317a67a561e6aedf1917b6073a9ff376c7d9b91a66a289653220793ad259cf41"
+        "sha256": "6e04f5a1ed095fde260cd6da832e0ad1d536e22a22c6352480648530c20c0ceb"
       },
       {
         "path": "docs/handover/data/pgboss.md",
@@ -6942,7 +6963,7 @@
     ],
     "erd": {
       "path": "docs/architecture/erd.md",
-      "sha256": "20a6fe4606bba53349a59da8884e4a7efbae53dd0b5cc3209922bdbf8907a9c3"
+      "sha256": "b239c37f422b11fd91a98c98420116381b032b3a503b592956d8101f40a43750"
     }
   }
 }

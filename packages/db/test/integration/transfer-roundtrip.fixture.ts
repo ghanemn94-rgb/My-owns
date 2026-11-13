@@ -4,22 +4,24 @@
 // synthetic (sourceEnvironment demo). Nothing here approves anything (no G1-G6, Finance or IT approval) or touches
 // DG0-DG7.
 //
-// The import itself (ADR-0064 §6 steps 5-7, 9) is NOT available: see packages/db/src/transfer/import.ts and the
-// T-DG7-BE-D handback, open question Q1. `importInto` therefore reports the command's exit code and lines, and the
-// round-trip assertions that need a loaded target wait for the architect's decision.
+// The import's target is prepared with the audit sequence reservation of ADR-0064 Amendment 1 §A1.2 (`reserved`,
+// T-DG7-BE-R1); a plainly migrated target (`migrated`) is refused by check E3. `importInto` runs the command's body and
+// reports its exit code and lines.
 import { cpSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { v7 as uuidv7 } from "uuid";
 import { seedDemo } from "../../src/demo/seed.ts";
-import { migrate } from "../../src/migrate.ts";
+import { migrate, type MigrateOptions } from "../../src/migrate.ts";
 import { createDb, createPool, type Db } from "../../src/pool.ts";
 import {
   directorySink,
   exportPackage,
   filesystemObjectSource,
+  reservedAuditStart,
   runImportMigrationCommand,
   type ExportResult,
+  type ImportCliOptions,
 } from "../../src/transfer/index.ts";
 import { createScratchDatabase, dropScratchDatabase, roleUrl } from "../helpers.ts";
 
@@ -42,15 +44,21 @@ export class RoundtripWorkspace {
     this.#adminUrl = adminUrl;
   }
 
-  /** A freshly migrated scratch database (the import's target shape). */
-  async migrated(prefix: string): Promise<RoundtripScratch> {
+  /** A freshly migrated scratch database (without the reservation: E3 refuses it as an import target). */
+  async migrated(prefix: string, options: MigrateOptions = {}): Promise<RoundtripScratch> {
     const name = await createScratchDatabase(this.#adminUrl, prefix);
     this.#databases.push(name);
     const ownerUrl = roleUrl(this.#adminUrl, name, "mth_owner");
-    await migrate(ownerUrl);
+    await migrate(ownerUrl, options);
     const db = createDb(createPool(ownerUrl, { max: 3 }));
     this.#handles.push(db);
     return { ownerUrl, db };
+  }
+
+  /** The import's target: migrated with `--reserve-audit-seq-for <dir>` (ADR-0064 A1.2). */
+  async reserved(prefix: string, packageDir: string, options: MigrateOptions = {}): Promise<RoundtripScratch> {
+    const { start } = await reservedAuditStart(packageDir);
+    return this.migrated(prefix, { ...options, reserveAuditSeqFrom: start });
   }
 
   /** A migrated scratch database seeded with the SYNTHETIC demo dataset (ADR-0050). */
@@ -101,7 +109,12 @@ export class RoundtripWorkspace {
 export async function importInto(
   target: Db,
   dir: string,
-  opts: { readonly appVersion?: string; readonly manifestSha256?: string } = {},
+  opts: {
+    readonly appVersion?: string;
+    readonly manifestSha256?: string;
+    readonly attachmentsReport?: string;
+    readonly onStep?: ImportCliOptions["onStep"];
+  } = {},
 ): Promise<{ code: number; out: string[]; err: string[] }> {
   const out: string[] = [];
   const err: string[] = [];
@@ -111,7 +124,9 @@ export async function importInto(
       from: dir,
       operator: "Synthetic IT operator",
       manifestSha256: opts.manifestSha256,
+      attachmentsReport: opts.attachmentsReport,
       appVersion: opts.appVersion ?? ROUNDTRIP_APP_VERSION,
+      ...(opts.onStep !== undefined ? { onStep: opts.onStep } : {}),
     },
     { out: (l) => out.push(l), err: (l) => err.push(l) },
   );

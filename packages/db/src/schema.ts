@@ -7323,6 +7323,13 @@ export interface MigrationImportTable {
   operator_name: string;
   started_at: Timestamp;
   imported_at: Timestamp;
+  audit_carried_rows: string | null;
+  audit_carried_seq_max: string | null;
+  audit_baseline_rows: string | null;
+  audit_baseline_seq_min: string | null;
+  audit_baseline_seq_max: string | null;
+  audit_baseline_digest: string | null;
+  seed_rows_replaced: string | null;
 }
 
 export interface MigrationReconciliationTable {
@@ -7348,6 +7355,16 @@ export interface MigrationReconciliationTableTable {
   expected_digest: string;
   actual_digest: string;
   matched: boolean;
+}
+
+export interface MigrationReconciliationDeltaTable {
+  migration_reconciliation_id: string;
+  table_name: string;
+  basis: string;
+  rows_added: string;
+  rows_changed: string;
+  rows_missing: string;
+  allowed: boolean;
 }
 
 export interface MigrationReconciliationAttachmentTable {
@@ -7458,6 +7475,7 @@ export interface Database {
   migration_reconciliation: MigrationReconciliationTable;
   migration_reconciliation_table: MigrationReconciliationTableTable;
   migration_reconciliation_attachment: MigrationReconciliationAttachmentTable;
+  migration_reconciliation_delta: MigrationReconciliationDeltaTable;
   identity_binding_hold: IdentityBindingHoldTable;
   identity_rebind_event: IdentityRebindEventTable;
   config_bundle_export: ConfigBundleExportTable;
@@ -13689,6 +13707,13 @@ export const SCHEMA_COLUMNS = {
     "operator_name",
     "started_at",
     "imported_at",
+    "audit_carried_rows",
+    "audit_carried_seq_max",
+    "audit_baseline_rows",
+    "audit_baseline_seq_min",
+    "audit_baseline_seq_max",
+    "audit_baseline_digest",
+    "seed_rows_replaced",
   ],
   migration_reconciliation: [
     "id",
@@ -13723,6 +13748,15 @@ export const SCHEMA_COLUMNS = {
     "actual_size",
     "expected_sha256",
     "actual_sha256",
+  ],
+  migration_reconciliation_delta: [
+    "migration_reconciliation_id",
+    "table_name",
+    "basis",
+    "rows_added",
+    "rows_changed",
+    "rows_missing",
+    "allowed",
   ],
   identity_binding_hold: [
     "id",

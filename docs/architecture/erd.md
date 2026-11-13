@@ -2223,7 +2223,7 @@ erDiagram
 
 ## 1ac. P7 slices C and D: the migration manifest rules, exports, imports, reconciliation reports, the identity rebind hold, and configuration bundles (migrations 0133–0135; T-DG7-ARCH-02; ADR-0064, ADR-0065)
 
-Three new mutable tables carry the P2 guards and are audited (`_row_guard`, deferred `_audit_required`): `migration_export`, `identity_binding_hold` and `config_bundle_import`, each with a state-machine trigger. `migration_import` and `migration_reconciliation` are append-only **and** audited (written once, by the CLI). `transfer_table_rule`, `transfer_column_rule` (migration-written catalogues), `migration_reconciliation_table`, `migration_reconciliation_attachment`, `identity_rebind_event`, `config_bundle_export` (audited), `config_bundle_import_item` and `config_bundle_import_commit` are append-only. `0135` adds four permission codes. The column lists are in `data-dictionary.md` ("P7 tables, slices C and D").
+Three new mutable tables carry the P2 guards and are audited (`_row_guard`, deferred `_audit_required`): `migration_export`, `identity_binding_hold` and `config_bundle_import`, each with a state-machine trigger. `migration_import` and `migration_reconciliation` are append-only **and** audited (written once, by the CLI). `transfer_table_rule`, `transfer_column_rule` (migration-written catalogues), `migration_reconciliation_table`, `migration_reconciliation_attachment`, `identity_rebind_event`, `config_bundle_export` (audited), `config_bundle_import_item` and `config_bundle_import_commit` are append-only. `0149` adds `migration_reconciliation_delta` (append-only, CLI-written) and the seven audit-range columns of `migration_import` (ADR-0064 Amendment 1). `0135` adds four permission codes. The column lists are in `data-dictionary.md` ("P7 tables, slices C and D").
 
 ```mermaid
 erDiagram
@@ -2231,6 +2231,7 @@ erDiagram
     migration_import ||--o{ migration_reconciliation : "one import run, then re-checks"
     migration_reconciliation ||--o{ migration_reconciliation_table : "one row per manifest table"
     migration_reconciliation ||--o{ migration_reconciliation_attachment : "only mismatching objects"
+    migration_reconciliation ||--o{ migration_reconciliation_delta : "allowed and unexplained differences (0149)"
     migration_import ||--o{ identity_binding_hold : "one hold per imported user"
     app_user ||--o| identity_binding_hold : "at most one hold"
     identity_binding_hold ||--o| identity_rebind_event : "the applied mapping line"

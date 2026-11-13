@@ -1157,8 +1157,9 @@ describe("migration files", () => {
     // range is 0147 (implementer migrations of 0136-0142 renumber at merge, the runner refusing an id below the
     // highest applied one).
     // T-DG7-BE-C ships 0147 (the orchestrator renumbers at the W5 merge if another task shipped it first), so it is 0148.
-    // T-DG7-BE-G ships 0148 (the retention job identity and its disabled schedule), so it is 0149.
-    expect(numberingViolations([...files, { id: 149, name: "0149_p7_example.sql" }])).toEqual([]);
+    // T-DG7-BE-G ships 0148 (the retention job identity and its disabled schedule), so it was 0149.
+    // T-DG7-BE-R1 ships 0149 (the import load's audit ranges and recheck deltas), so it is 0150.
+    expect(numberingViolations([...files, { id: 150, name: "0150_p7_example.sql" }])).toEqual([]);
     expect(numberingViolations([...files, { id: 164, name: "0164_p7_example.sql" }])).toEqual([
       "0164_p7_example.sql: above 0163",
     ]);

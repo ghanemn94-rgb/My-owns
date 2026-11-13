@@ -8,9 +8,10 @@
 //           exits with its code and C.5 line and leaves the target unchanged;
 //   - T-C12 (refusal paths) audit_event's two triggers stay enabled after every step, and no audit row is written;
 //   - the reconciliation (step 8) of the package against its live source matches, and a changed table is reported;
-//   - Q1 (BLOCKED, handback §4): a freshly migrated target already holds migration-written audit_event rows, so the
-//           import refuses it and never loads. T-C8, T-C11 and the load half of T-C12 cannot pass until the architect
-//           decides; this file pins the measured fact instead of hiding it.
+//   - T-R3 (= T-C8) is BLOCKED (T-DG7-BE-R1 handback §4, R1): on a target prepared with the reservation of ADR-0064
+//           A1.2, carried audit ids collide with the target's migration baseline (0068, 0069 and 0095 write
+//           deterministic ids), so the load stops at L1 (transfer-load.test.ts pins it). This file pins that a plainly
+//           migrated target is refused by E3 with the remedy in the line.
 // Every value is synthetic. Nothing here approves anything (no G1-G6, Finance or IT approval) or touches DG0-DG7.
 import { spawnSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
@@ -177,7 +178,9 @@ describe("T-C10 and T-C12 (refusals): each refusal exits with its code and line 
       expect(before.triggers).toEqual(AUDIT_TRIGGERS_ENABLED);
       const r = await run();
       expect(r.code).toBe(code);
-      expect(r.err).toHaveLength(1);
+      // E1/E2 (ADR-0064 A1.3) add one detail line per used table after the C.5 line.
+      if (code !== 3) expect(r.err).toHaveLength(1);
+      else expect(r.err.slice(1).every((l) => /^import-migration: [a-z_]+ holds [0-9]+ rows/.test(l))).toBe(true);
       if (typeof line === "string") expect(r.err[0]).toBe(line);
       else expect(r.err[0]).toMatch(line);
       const after = await state(db);
@@ -229,24 +232,23 @@ describe("the reconciliation (step 8) of the package against its live source", (
   }, 120_000);
 });
 
-describe("Q1 (BLOCKED; handback §4): ADR-0064 §6 step 4 versus a freshly migrated target", () => {
-  it("a freshly migrated target already holds migration-written audit_event rows, so the import refuses it", async () => {
-    const audit = await sql<{ n: string; first: string; sources: string[] }>`
-      SELECT count(*)::text AS n, min(seq)::text AS first, array_agg(DISTINCT source) AS sources
-      FROM audit_event`.execute(target.db);
-    const row = audit.rows[0]!;
-    // The measured fact behind Q1: rows exist before any import, and their seq starts at 1, as the source's do.
-    expect(Number(row.n)).toBeGreaterThan(0);
-    expect(row.first).toBe("1");
-    const sourceAudit = manifest.tables.find((t) => t.name === "audit_event")!;
-    expect(BigInt(sourceAudit.rowCount)).toBeGreaterThan(BigInt(row.n));
+describe("E3 (ADR-0064 A1.3): a target migrated without the reservation is refused", () => {
+  it("its audit events start at seq 1, at or below the package's M: exit 2 with the remedy; nothing changes", async () => {
+    const audit = await sql<{ n: string; first: string }>`
+      SELECT count(*)::text AS n, min(seq)::text AS first FROM audit_event`.execute(target.db);
+    expect(Number(audit.rows[0]!.n)).toBeGreaterThan(0);
+    expect(audit.rows[0]!.first).toBe("1");
     const before = await state(target.db);
     const r = await importInto(target.db, pkg);
-    expect(r).toEqual({ code: 3, out: [], err: ["import-migration: refused: the target database is not empty"] });
+    expect(r.code).toBe(2);
+    expect(r.out).toEqual([]);
+    expect(r.err).toHaveLength(1);
+    expect(r.err[0]).toMatch(
+      /^import-migration: refused: the target's audit events start at seq 1, at or below the package's highest audit seq [0-9]+; recreate the target with mth-db migrate --reserve-audit-seq-for .+$/,
+    );
     const after = await state(target.db);
     expect(after.counts).toEqual(before.counts);
     expect(after.triggers).toEqual(AUDIT_TRIGGERS_ENABLED);
-    // The package itself passes every package check (only the target refuses).
     expect(parseManifest(readFileSync(join(pkg, "manifest.json"), "utf8")).schemaVersion).toBe("mth-migration/1");
   }, 120_000);
 });

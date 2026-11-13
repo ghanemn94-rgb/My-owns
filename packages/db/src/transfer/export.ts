@@ -192,12 +192,13 @@ export async function encodeTable(
   db: DbOrTx,
   table: TransferPlanTable,
   rewritten: TransferPlan["rewrittenColumns"],
+  opts: { readonly where?: string } = {},
 ): Promise<EncodedTable> {
   const kinds = columnKinds(table, rewritten);
   const select = kinds.map((k, i) => `${columnExpression(k.name, k.kind)} AS c${i}`).join(", ");
   const order = table.primaryKey.map((c) => `${ident(c)}::text COLLATE "C"`).join(", ");
   const r = await sql<Record<string, string | null>>`${sql.raw(
-    `SELECT ${select} FROM ${ident(table.name)} ORDER BY ${order}`,
+    `SELECT ${select} FROM ${ident(table.name)}${opts.where !== undefined ? ` WHERE ${opts.where}` : ""} ORDER BY ${order}`,
   )}`.execute(db);
   const hash = createHash("sha256");
   const lines: string[] = [];

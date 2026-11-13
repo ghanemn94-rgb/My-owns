@@ -14766,11 +14766,19 @@ Written by T-DG7-ARCH-02 (ADR-0064, ADR-0065). The table sections below are gene
 | operator_name | text | NOT NULL |  | `CHECK (((char_length(operator_name) >= 1) AND (char_length(operator_name) <= 200)))` |
 | started_at | timestamp with time zone | NOT NULL |  |  |
 | imported_at | timestamp with time zone | NOT NULL |  |  |
+| audit_carried_rows | bigint | NULL |  | `CHECK (((audit_carried_rows IS NULL) OR (audit_carried_rows >= 0)))` (0149: the manifest's audit_event rowCount) |
+| audit_carried_seq_max | bigint | NULL |  | `CHECK (((audit_carried_seq_max IS NULL) OR (audit_carried_seq_max >= 0)))` (0149: M, the package's highest audit seq) |
+| audit_baseline_rows | bigint | NULL |  | `CHECK (((audit_baseline_rows IS NULL) OR (audit_baseline_rows >= 0)))` (0149: the target's migration baseline, L2) |
+| audit_baseline_seq_min | bigint | NULL |  | (0149) |
+| audit_baseline_seq_max | bigint | NULL |  | (0149) |
+| audit_baseline_digest | text | NULL |  | `CHECK (((audit_baseline_digest IS NULL) OR (audit_baseline_digest ~ '^[0-9a-f]{64}$')))` (0149) |
+| seed_rows_replaced | bigint | NULL |  | `CHECK (((seed_rows_replaced IS NULL) OR (seed_rows_replaced >= 0)))` (0149: the migration seeds L4 replaced) |
 
 **Table constraints:**
 
 - `migration_import_demo_checksum` (CHECK): `CHECK (((demo_checksum IS NOT NULL) = (source_environment = 'demo')))`
 - `migration_import_times` (CHECK): `CHECK ((imported_at >= started_at))`
+- `migration_import_audit_ranges` (CHECK, 0149; ADR-0064 A1.6): the seven audit columns are all NULL, or all set with `(audit_baseline_rows = 0) = (audit_baseline_seq_min IS NULL)` (the same for `_max`) and, for a non-empty baseline, `audit_baseline_seq_min > audit_carried_seq_max` and `audit_baseline_seq_max >= audit_baseline_seq_min`.
 
 **Triggers:**
 
@@ -14789,7 +14797,7 @@ Written by T-DG7-ARCH-02 (ADR-0064, ADR-0065). The table sections below are gene
 |---|---|---|---|---|
 | id | uuid | NOT NULL |  | PK |
 | migration_import_id | uuid | NOT NULL |  | FK → migration_import(id) |
-| run_kind | text | NOT NULL |  | `CHECK ((run_kind = ANY (ARRAY['import', 'recheck'])))` |
+| run_kind | text | NOT NULL |  | `CHECK ((run_kind = ANY (ARRAY['import', 'recheck', 'recheck_after_use'])))` (`recheck_after_use` added by 0149) |
 | result | text | NOT NULL |  | `CHECK ((result = ANY (ARRAY['matched', 'mismatched'])))` |
 | tables_checked | integer | NOT NULL |  | `CHECK ((tables_checked >= 0))` |
 | tables_mismatched | integer | NOT NULL |  |  |
@@ -14804,7 +14812,7 @@ Written by T-DG7-ARCH-02 (ADR-0064, ADR-0065). The table sections below are gene
 
 - `migration_reconciliation_check` (CHECK): `CHECK (((tables_mismatched >= 0) AND (tables_mismatched <= tables_checked)))`
 - `migration_reconciliation_check1` (CHECK): `CHECK (((attachments_mismatched >= 0) AND (attachments_mismatched <= attachments_checked)))`
-- `migration_reconciliation_result` (CHECK): `CHECK (((result = 'matched') = ((tables_mismatched = 0) AND (attachments_mismatched = 0) AND (rows_expected = rows_actual))))`
+- `migration_reconciliation_result` (CHECK; replaced by 0149, ADR-0064 A1.6): `CHECK (((result = 'matched') = ((tables_mismatched = 0) AND (attachments_mismatched = 0) AND ((run_kind = 'recheck_after_use') OR (rows_expected = rows_actual)))))`
 
 **Indexes:**
 
@@ -14843,6 +14851,31 @@ Written by T-DG7-ARCH-02 (ADR-0064, ADR-0065). The table sections below are gene
 
 - `migration_reconciliation_table_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
 - `migration_reconciliation_table_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
+
+## migration_reconciliation_delta
+
+- **Purpose:** Why a table may differ from the package in one reconciliation run: the audit baseline, audit additions after the import, identity rebinds, exact allowed ids, operational tables, or an unexplained difference (ADR-0064 Amendment 1 §A1.6, §A1.9).
+- **Migration:** `0149_p7_transfer_import_load.sql`. **API module:** `transfer (import)`. **Who writes:** the migration CLI only (`mth-db import-migration` / `reconcile-migration`, as mth_owner; lock 730403). **Lifecycle:** append-only; a run is `matched` only if every delta row of the run is `allowed`. Never exported (`transfer_table_rule` `exclude_transfer`).
+- **`mth_app` privileges:** SELECT.
+
+| Column | Type | Null | Default | Column constraints |
+|---|---|---|---|---|
+| migration_reconciliation_id | uuid | NOT NULL |  | PK; FK → migration_reconciliation(id) |
+| table_name | text | NOT NULL |  | PK; `CHECK ((table_name ~ '^[a-z][a-z0-9_]{0,62}$'))` |
+| basis | text | NOT NULL |  | PK; `CHECK ((basis = ANY (ARRAY['audit_baseline', 'audit_additions', 'rebind', 'exact_ids', 'operational', 'unexplained'])))` |
+| rows_added | bigint | NOT NULL |  | `CHECK ((rows_added >= 0))` |
+| rows_changed | bigint | NOT NULL |  | `CHECK ((rows_changed >= 0))` |
+| rows_missing | bigint | NOT NULL |  | `CHECK ((rows_missing >= 0))` |
+| allowed | boolean | NOT NULL |  |  |
+
+**Table constraints:**
+
+- `migration_reconciliation_delta_unexplained` (CHECK): `CHECK (((basis <> 'unexplained') OR (NOT allowed)))`
+
+**Triggers:**
+
+- `migration_reconciliation_delta_append_only`: BEFORE DELETE OR UPDATE FOR EACH ROW → `p2_append_only()`
+- `migration_reconciliation_delta_append_only_truncate`: BEFORE TRUNCATE FOR EACH STATEMENT → `p2_append_only()`
 
 ## migration_reconciliation_attachment
 

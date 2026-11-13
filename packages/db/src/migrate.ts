@@ -129,7 +129,30 @@ export async function migrationStatus(
 export interface MigrateOptions {
   readonly dir?: string;
   readonly log?: (line: string) => void;
+  /**
+   * ADR-0064 A1.2: the first `seq` of this installation's audit trail (R = M + 1 for a migration package whose highest
+   * audit seq is M). Allowed only on a database with no applied migration. Inside the transaction of the first file
+   * after which `audit_event_seq_seq` exists, after its SQL and before its schema_migration row, the runner asserts
+   * that audit_event is empty and runs `setval('audit_event_seq_seq', R, false)`. A run in which that never happens is
+   * refused (MigrationReserveError). No audit row is written, updated or deleted by the reservation.
+   */
+  readonly reserveAuditSeqFrom?: bigint;
+  /** Called once, with the file in whose transaction the reservation ran (tests: T-R2 "after 0003"). */
+  readonly onReserved?: (fileName: string) => void;
 }
+
+/** A refusal of the A1.2 reservation; `message` is the C.12 line (exit 2 of `mth-db migrate`). */
+export class MigrationReserveError extends MigrationError {
+  constructor(message: string) {
+    super(message);
+    this.name = "MigrationReserveError";
+  }
+}
+
+export const RESERVE_NEEDS_EMPTY_DATABASE =
+  "migrate: refused: --reserve-audit-seq-for needs a database with no applied migration";
+export const RESERVE_NEVER_FIRED =
+  "migrate: refused: the migrations never created audit_event_seq_seq; nothing was reserved";
 
 /** Apply all pending migrations with the OWNER connection string. Returns the names applied in this run. */
 export async function migrate(ownerUrl: string, options: MigrateOptions = {}): Promise<string[]> {
@@ -173,11 +196,33 @@ export async function migrate(ownerUrl: string, options: MigrateOptions = {}): P
             `database, so give each new migration an id above ${String(highest.id).padStart(4, "0")}`,
         );
       }
+      const reserve = options.reserveAuditSeqFrom;
+      if (reserve !== undefined) {
+        if (reserve < 1n)
+          throw new MigrationReserveError("migrate: refused: the reserved audit seq must be at least 1");
+        if (status.applied.length > 0) throw new MigrationReserveError(RESERVE_NEEDS_EMPTY_DATABASE);
+      }
+      let reserved = false;
       for (const file of files.filter((f) => status.pending.includes(f.name))) {
         log(`applying ${file.name}`);
         await client.query("BEGIN");
         try {
           await client.query(file.sql);
+          if (reserve !== undefined && !reserved) {
+            const seq = await client.query<{ present: boolean }>(
+              "SELECT to_regclass('public.audit_event_seq_seq') IS NOT NULL AS present",
+            );
+            if (seq.rows[0]?.present === true) {
+              const n = await client.query<{ n: string }>("SELECT count(*)::text AS n FROM audit_event");
+              if (n.rows[0]?.n !== "0")
+                throw new MigrationReserveError(
+                  `migrate: refused: audit_event already holds ${n.rows[0]?.n ?? "?"} rows; nothing was reserved`,
+                );
+              await client.query("SELECT setval('audit_event_seq_seq', $1::bigint, false)", [reserve.toString()]);
+              reserved = true;
+              options.onReserved?.(file.name);
+            }
+          }
           await client.query(`INSERT INTO ${MIGRATION_TABLE} (id, name, sha256) VALUES ($1, $2, $3)`, [
             file.id,
             file.name,
@@ -186,10 +231,12 @@ export async function migrate(ownerUrl: string, options: MigrateOptions = {}): P
           await client.query("COMMIT");
         } catch (err) {
           await client.query("ROLLBACK");
+          if (err instanceof MigrationReserveError) throw err;
           throw new MigrationError(`migration ${file.name} failed: ${(err as Error).message}`);
         }
         appliedNow.push(file.name);
       }
+      if (reserve !== undefined && !reserved) throw new MigrationReserveError(RESERVE_NEVER_FIRED);
     } finally {
       await client.query("SELECT pg_advisory_unlock($1)", [MIGRATION_LOCK_KEY]);
     }

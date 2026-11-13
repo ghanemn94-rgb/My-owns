@@ -1137,7 +1137,7 @@ describe("schema.ts matches the migrated database", () => {
     const rows = await q<{ rel: string; tgname: string; deferrable: boolean; deferred: boolean }>(
       `SELECT c.relname AS rel, t.tgname, t.tgdeferrable AS deferrable, t.tginitdeferred AS deferred
        FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid
-       WHERE NOT t.tgisinternal AND c.relname IN ('config_bundle_export', 'config_bundle_import', 'config_bundle_import_commit', 'config_bundle_import_item', 'identity_binding_hold', 'identity_rebind_event', 'migration_export', 'migration_import', 'migration_reconciliation', 'migration_reconciliation_attachment', 'migration_reconciliation_table', 'transfer_column_rule', 'transfer_table_rule')
+       WHERE NOT t.tgisinternal AND c.relname IN ('config_bundle_export', 'config_bundle_import', 'config_bundle_import_commit', 'config_bundle_import_item', 'identity_binding_hold', 'identity_rebind_event', 'migration_export', 'migration_import', 'migration_reconciliation', 'migration_reconciliation_attachment', 'migration_reconciliation_delta', 'migration_reconciliation_table', 'transfer_column_rule', 'transfer_table_rule')
        ORDER BY 1, 2`,
     );
     type Row = [string, string, boolean, boolean];
@@ -1172,6 +1172,8 @@ describe("schema.ts matches the migrated database", () => {
       ["migration_reconciliation", "migration_reconciliation_row_guard", false, false],
       ["migration_reconciliation_attachment", "migration_reconciliation_attachment_append_only", false, false],
       ["migration_reconciliation_attachment", "migration_reconciliation_attachment_append_only_truncate", false, false],
+      ["migration_reconciliation_delta", "migration_reconciliation_delta_append_only", false, false],
+      ["migration_reconciliation_delta", "migration_reconciliation_delta_append_only_truncate", false, false],
       ["migration_reconciliation_table", "migration_reconciliation_table_append_only", false, false],
       ["migration_reconciliation_table", "migration_reconciliation_table_append_only_truncate", false, false],
       ["transfer_column_rule", "transfer_column_rule_append_only", false, false],
@@ -1228,6 +1230,7 @@ describe("schema.ts matches the migrated database", () => {
       ["migration_import", "exclude_transfer"],
       ["migration_reconciliation", "exclude_transfer"],
       ["migration_reconciliation_attachment", "exclude_transfer"],
+      ["migration_reconciliation_delta", "exclude_transfer"],
       ["migration_reconciliation_table", "exclude_transfer"],
       ["oidc_login_state", "exclude_credential"],
       ["schema_migration", "compare_only"],
@@ -2256,6 +2259,7 @@ describe("mth_app privileges are exactly the data dictionary's", () => {
       migration_reconciliation: "SELECT",
       migration_reconciliation_table: "SELECT",
       migration_reconciliation_attachment: "SELECT",
+      migration_reconciliation_delta: "SELECT",
       identity_binding_hold: "SELECT",
       identity_rebind_event: "SELECT",
       config_bundle_export: "INSERT,SELECT",

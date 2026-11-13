@@ -2,6 +2,8 @@
 // mth-db: the database CLI (ADR-0003). Uses DATABASE_OWNER_URL (owner role; migrations and bootstrap only).
 //
 //   mth-db migrate      apply pending migrations (advisory lock; refuses on checksum drift)     exit 0 | 1
+//   mth-db migrate --reserve-audit-seq-for DIR   the same on a database with no applied migration, with the audit
+//                       sequence started above the package's highest audit seq (ADR-0064 A1.2; T-DG7-BE-R1) exit 0 | 2
 //   mth-db migrate --dry-run [--report FILE] [--catalogue FILE] [--i-confirm-this-is-a-restored-copy]
 //                       apply the pending migrations to a throw-away copy of a RESTORED copy and report the changes
 //                       (ADR-0068 §1; DRY_RUN_ADMIN_DATABASE_URL; T-DG7-DO-G)                     exit 0 | 1 | 2
@@ -13,9 +15,12 @@
 //   mth-db reset-demo   drop, re-create, migrate and re-seed the demo database (MTH_ENV=demo and
 //                       MTH_DEMO_ADMIN_DATABASE_URL; ADR-0050 §6)                                         exit 0 | 3
 //   mth-db export-migration --out DIR --operator NAME   the migration package (ADR-0064 §7; T-DG7-BE-C)  exit 0 | 1 | 2
-//   mth-db import-migration --from DIR --operator NAME [--manifest-sha256 HEX]   package and target checks (ADR-0064 §6;
-//                       T-DG7-BE-D; the load itself is not available, see transfer/import.ts)          exit 1 | 2 | 3
-//   mth-db reconcile-migration --operator NAME   re-check of the recorded import (ADR-0064 §6)            exit 0 | 2 | 4
+//   mth-db import-migration --from DIR --operator NAME [--manifest-sha256 HEX] [--attachments-report FILE]
+//                       [--report FILE]   the import into a target prepared with the reservation (ADR-0064 §6 and
+//                       Amendment 1; T-DG7-BE-D, T-DG7-BE-R1)                                      exit 0 | 1 | 2 | 3 | 4
+//   mth-db reconcile-migration --operator NAME [--attachments-report FILE]
+//                       [--after-use --from DIR --allow FILE [--report FILE]]   re-check of the recorded import
+//                       (ADR-0064 A1.9: mode 1, or mode 2 after use)                                    exit 0 | 2 | 4
 //   mth-db rebind-identity --mapping FILE --operator NAME   identity rebind, all or nothing (ADR-0064 §8)  exit 0 | 2
 // bootstrap writes the production marker and refuses (exit 3) on a demo database (ADR-0050 §3).
 // ADR-0058 §2 (T-DG6-DO-E): bootstrap and seed-demo also refuse (exit 3, nothing changed) on a database that holds the
@@ -31,12 +36,12 @@ import { runDemoCommand } from "./demo/cli.ts";
 import { DemoRefused, demoDevIssuerBindingAllowed } from "./demo/guard.ts";
 import { DevSeedRefused, seedDev } from "./dev-seed.ts";
 import { assertUtf8Database, DatabaseEncodingError } from "./encoding.ts";
-import { migrate, MigrationError, migrationStatus } from "./migrate.ts";
+import { migrate, MigrationError, MigrationReserveError, migrationStatus } from "./migrate.ts";
 import { createDb, createPool } from "./pool.ts";
 import { runDryRunCommand } from "./dry-run.ts";
 import { readFile } from "node:fs/promises";
 import { runExportMigrationCommand } from "./transfer/cli.ts";
-import { runImportMigrationCommand } from "./transfer/import.ts";
+import { ImportRefused, reservedAuditStart, runImportMigrationCommand } from "./transfer/import.ts";
 import { runReconcileMigrationCommand } from "./transfer/reconcile.ts";
 import { applyRebind, rebindLines } from "./transfer/rebind.ts";
 
@@ -54,6 +59,7 @@ async function holdsLoadDataset(pool: ReturnType<typeof createPool>): Promise<bo
 
 const USAGE = `usage:
   mth-db migrate
+  mth-db migrate --reserve-audit-seq-for DIR
   mth-db migrate --dry-run [--report FILE] [--catalogue FILE] [--i-confirm-this-is-a-restored-copy]
   mth-db status
   mth-db bootstrap --org-code CODE --org-name-en NAME --org-name-ar NAME
@@ -62,8 +68,10 @@ const USAGE = `usage:
   mth-db seed-demo
   mth-db reset-demo
   mth-db export-migration --out DIR --operator NAME
-  mth-db import-migration --from DIR --operator NAME [--manifest-sha256 HEX]
-  mth-db reconcile-migration --operator NAME
+  mth-db import-migration --from DIR --operator NAME [--manifest-sha256 HEX] [--attachments-report FILE]
+                          [--report FILE]
+  mth-db reconcile-migration --operator NAME [--attachments-report FILE]
+                             [--after-use --from DIR --allow FILE [--report FILE]]
   mth-db rebind-identity --mapping FILE --operator NAME`;
 
 async function main(argv: string[]): Promise<number> {
@@ -103,6 +111,45 @@ async function main(argv: string[]): Promise<number> {
 
   if (command === "migrate" && rest.includes("--dry-run"))
     return runDryRunCommand(rest, ownerUrl, { out: (l) => console.log(l), err: (l) => console.error(l) });
+  if (command === "migrate" && rest.length > 0) {
+    // ADR-0064 A1.2: the package is checked and M read before any connection is made.
+    const { values } = parseArgs({
+      args: rest,
+      options: { "reserve-audit-seq-for": { type: "string" } },
+      strict: true,
+    });
+    const dir = values["reserve-audit-seq-for"];
+    if (dir === undefined || dir === "") {
+      console.error("BLOCKED: usage: mth-db migrate --reserve-audit-seq-for <dir>");
+      return 2;
+    }
+    let reserved: { start: bigint; seqMax: bigint };
+    try {
+      reserved = await reservedAuditStart(dir);
+    } catch (err) {
+      if (err instanceof ImportRefused) {
+        console.error(err.message);
+        return 2;
+      }
+      throw err;
+    }
+    try {
+      await migrate(ownerUrl, {
+        log: (l) => console.log(`mth-db migrate: ${l}`),
+        reserveAuditSeqFrom: reserved.start,
+      });
+    } catch (err) {
+      if (err instanceof MigrationReserveError) {
+        console.error(err.message);
+        return 2;
+      }
+      throw err;
+    }
+    console.log(
+      `migrate: the audit sequence of this target starts at ${reserved.start} (the package's highest audit seq is ${reserved.seqMax})`,
+    );
+    return 0;
+  }
   if (command === "migrate") {
     const applied = await migrate(ownerUrl, { log: (l) => console.log(`mth-db migrate: ${l}`) });
     console.log(
@@ -170,12 +217,24 @@ async function main(argv: string[]): Promise<number> {
     if (command === "import-migration") {
       const { values } = parseArgs({
         args: rest,
-        options: { from: { type: "string" }, operator: { type: "string" }, "manifest-sha256": { type: "string" } },
+        options: {
+          from: { type: "string" },
+          operator: { type: "string" },
+          "manifest-sha256": { type: "string" },
+          "attachments-report": { type: "string" },
+          report: { type: "string" },
+        },
         strict: true,
       });
       return await runImportMigrationCommand(
         db,
-        { from: values.from, operator: values.operator, manifestSha256: values["manifest-sha256"] },
+        {
+          from: values.from,
+          operator: values.operator,
+          manifestSha256: values["manifest-sha256"],
+          attachmentsReport: values["attachments-report"],
+          report: values.report,
+        },
         io,
       );
     }

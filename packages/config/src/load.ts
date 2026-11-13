@@ -307,8 +307,12 @@ export function loadConfig(service: Service, env: Env = process.env): AppConfig 
       } catch {
         problems.push("OIDC_ISSUER_URL is invalid (must be an absolute http(s) URL)");
       }
-      if (issuerUrl && issuerUrl.protocol === "http:" && nodeEnv === "production") {
-        problems.push("OIDC_ISSUER_URL must use https when NODE_ENV=production");
+      if (issuerUrl && nodeEnv === "production" && !secureIssuerAllowed(issuerUrl, nodeEnv)) {
+        // D-258 item 2: the loopback exception of APP_BASE_URL (a local drill IdP on the same host), nothing wider.
+        problems.push(
+          "OIDC_ISSUER_URL must use https when NODE_ENV=production (plain http is accepted only for a loopback host: " +
+            "localhost, 127.0.0.1 or [::1])",
+        );
       }
       if (issuerUrl) oidc = { issuerUrl, clientId, clientSecret, scopes: raw.OIDC_SCOPES ?? "openid profile email" };
     }
@@ -406,6 +410,16 @@ export function isLoopbackHost(url: URL): boolean {
 export function secureOriginAllowed(appBaseUrl: URL, nodeEnv: string): boolean {
   if (nodeEnv !== "production") return true;
   return appBaseUrl.protocol === "https:" || isLoopbackHost(appBaseUrl);
+}
+
+/**
+ * The OIDC issuer's transport rule (D-258 item 2; p7-work-split §C.12): outside production any http(s) issuer is fine;
+ * in production it must be https, or plain http on a loopback host (the same hosts as APP_BASE_URL). Used by the
+ * loader and by the API's OIDC client (`allowHttp`).
+ */
+export function secureIssuerAllowed(issuerUrl: URL, nodeEnv: string): boolean {
+  if (nodeEnv !== "production") return true;
+  return issuerUrl.protocol === "https:" || isLoopbackHost(issuerUrl);
 }
 
 // ------------------------------------------------------------------------------------------------ log redaction

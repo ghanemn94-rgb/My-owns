@@ -13,9 +13,15 @@ import {
   loadDatasetStartupRefusal,
   isLoopbackHost,
   loadConfig,
+  secureIssuerAllowed,
   secureOriginAllowed,
   SUPERVISE_INTERVAL_SECONDS,
 } from "./index.ts";
+
+/** The C.12 refusal line (D-258 item 2). */
+const ISSUER_REFUSAL =
+  "OIDC_ISSUER_URL must use https when NODE_ENV=production (plain http is accepted only for a loopback host: " +
+  "localhost, 127.0.0.1 or [::1])";
 
 const base = {
   NODE_ENV: "test",
@@ -203,7 +209,43 @@ describe("loadConfig", () => {
         OIDC_CLIENT_SECRET: "s",
       }),
     );
-    expect(problems).toContain("OIDC_ISSUER_URL must use https when NODE_ENV=production");
+    expect(problems).toContain(ISSUER_REFUSAL);
+  });
+
+  describe("T-R10: OIDC_ISSUER_URL in production, the loopback exception (D-258 item 2; p7-work-split §C.12)", () => {
+    const prod = {
+      ...base,
+      NODE_ENV: "production",
+      AUTH_MODE: "oidc",
+      APP_BASE_URL: "https://hub.example.internal",
+      OIDC_CLIENT_ID: "mth",
+      OIDC_CLIENT_SECRET: "s",
+    };
+
+    it.each([
+      "http://127.0.0.1:28080/realms/drill",
+      "http://localhost:28080/realms/drill",
+      "http://[::1]:28080/realms/drill",
+    ])("loads the loopback issuer %s", (url) => {
+      expect(loadConfig("api", { ...prod, OIDC_ISSUER_URL: url }).oidc?.issuerUrl.href).toBe(new URL(url).href);
+    });
+
+    it.each(["http://idp.example.test", "http://10.0.0.5:8080/realms/mth", "http://localhost.evil.example/realms/mth"])(
+      "refuses the plain-http issuer %s with the exact line",
+      (url) => {
+        expect(problemsOf(() => loadConfig("api", { ...prod, OIDC_ISSUER_URL: url }))).toContain(ISSUER_REFUSAL);
+      },
+    );
+
+    it("leaves https unchanged, and outside production any http issuer", () => {
+      expect(
+        loadConfig("api", { ...prod, OIDC_ISSUER_URL: "https://idp.example.test/r" }).oidc?.issuerUrl.protocol,
+      ).toBe("https:");
+      expect(secureIssuerAllowed(new URL("http://idp.example.test"), "development")).toBe(true);
+      expect(secureIssuerAllowed(new URL("http://idp.example.test"), "production")).toBe(false);
+      expect(secureIssuerAllowed(new URL("http://127.0.0.1:1"), "production")).toBe(true);
+      expect(secureIssuerAllowed(new URL("https://idp.example.test"), "production")).toBe(true);
+    });
   });
 
   it("reports missing required variables per service without echoing values", () => {

@@ -2,7 +2,7 @@
 // Tokens never reach the browser and are not stored: after the ID token is validated, only a server-side session
 // remains. Discovery is lazy (first login) and retried after a failure, so an IdP outage never blocks API startup.
 import { randomBytes } from "node:crypto";
-import type { AppConfig } from "@mth/config";
+import { secureIssuerAllowed, type AppConfig } from "@mth/config";
 import { sql, type DbOrTx, type Tx } from "@mth/db";
 import * as client from "openid-client";
 import { hasInvalidCharacter, hasText } from "@mth/shared/schemas";
@@ -69,8 +69,10 @@ export class OidcService {
     this.oidc = config.oidc;
     this.appOrigin = config.appBaseUrl.origin;
     this.redirectUri = `${this.appOrigin}/api/v1/auth/callback`;
-    // Plain-http issuers exist only for local/test IdPs; the config loader refuses them in production.
-    this.allowHttp = config.nodeEnv !== "production" && this.oidc.issuerUrl.protocol === "http:";
+    // Plain-http issuers exist only for local/test IdPs and, in production, a loopback drill IdP (D-258 item 2); the
+    // config loader refuses any other plain-http issuer in production.
+    this.allowHttp =
+      this.oidc.issuerUrl.protocol === "http:" && secureIssuerAllowed(this.oidc.issuerUrl, config.nodeEnv);
   }
 
   get issuer(): string {

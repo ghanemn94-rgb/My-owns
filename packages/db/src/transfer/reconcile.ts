@@ -50,8 +50,24 @@ export interface AttachmentMismatch {
   readonly actualSha256: string | null;
 }
 
+/** Why a table may differ from the package (A1.6 `migration_reconciliation_delta`). */
+export type DeltaBasis = "audit_baseline" | "audit_additions" | "rebind" | "exact_ids" | "operational" | "unexplained";
+
+export interface ReconciliationDelta {
+  readonly tableName: string;
+  readonly basis: DeltaBasis;
+  /** Decimal strings. */
+  readonly rowsAdded: string;
+  readonly rowsChanged: string;
+  readonly rowsMissing: string;
+  readonly allowed: boolean;
+}
+
+export type RunKind = "import" | "recheck" | "recheck_after_use";
+
 export interface ReconciliationReport {
   readonly result: "matched" | "mismatched";
+  readonly deltas: readonly ReconciliationDelta[];
   readonly tables: readonly TableResult[];
   readonly tablesMismatched: number;
   /** Decimal strings. */
@@ -73,15 +89,24 @@ export async function pinEncoderSettings(tx: Tx): Promise<void> {
  * Compares every expected table with the live rows (in the caller's transaction, whose encoder settings are pinned).
  * A table the target does not have counts as zero rows with the empty digest, so it mismatches unless it was empty.
  */
-export async function reconcileTables(tx: DbOrTx, expected: readonly TableExpectation[]): Promise<TableResult[]> {
+export async function reconcileTables(
+  tx: DbOrTx,
+  expected: readonly TableExpectation[],
+  opts: { readonly auditCarriedSeqMax?: bigint } = {},
+): Promise<TableResult[]> {
   const plan = await buildPlan(tx);
   const out: TableResult[] = [];
   for (const e of expected) {
     const table = plan.tables.find((t) => t.name === e.name);
+    // ADR-0064 A1.5: on an imported target, audit_event is compared over the carried range (seq <= M) only.
+    const where =
+      e.name === "audit_event" && opts.auditCarriedSeqMax !== undefined
+        ? { where: `seq <= ${opts.auditCarriedSeqMax.toString()}` }
+        : {};
     const live =
       table === undefined
         ? { rowCount: 0, contentDigest: EMPTY_DIGEST }
-        : await encodeTable(tx, table, plan.rewrittenColumns);
+        : await encodeTable(tx, table, plan.rewrittenColumns, where);
     const actualRows = String(live.rowCount);
     out.push({
       tableName: e.name,
@@ -100,14 +125,25 @@ export function buildReport(
   tables: readonly TableResult[],
   attachmentsChecked: number,
   attachmentMismatches: readonly AttachmentMismatch[],
+  deltas: readonly ReconciliationDelta[] = [],
+  runKind: RunKind = "import",
 ): ReconciliationReport {
   const sum = (f: (t: TableResult) => string) => tables.reduce((n, t) => n + BigInt(f(t)), 0n);
   const rowsExpected = sum((t) => t.expectedRows);
   const rowsActual = sum((t) => t.actualRows);
-  const tablesMismatched = tables.filter((t) => !t.matched).length;
-  const matched = tablesMismatched === 0 && attachmentMismatches.length === 0 && rowsExpected === rowsActual;
+  // A1.6: a table counts as mismatched when its table row did not match and no allowed delta explains it, or when it
+  // has a disallowed delta.
+  const allowedFor = new Set(deltas.filter((d) => d.allowed).map((d) => d.tableName));
+  const bad = new Set(tables.filter((t) => !t.matched && !allowedFor.has(t.tableName)).map((t) => t.tableName));
+  for (const d of deltas) if (!d.allowed) bad.add(d.tableName);
+  const tablesMismatched = bad.size;
+  const matched =
+    tablesMismatched === 0 &&
+    attachmentMismatches.length === 0 &&
+    (runKind === "recheck_after_use" || rowsExpected === rowsActual);
   return {
     result: matched ? "matched" : "mismatched",
+    deltas,
     tables,
     tablesMismatched,
     rowsExpected: String(rowsExpected),
@@ -123,10 +159,12 @@ export async function recordReconciliation(
   input: {
     readonly migrationImportId: string;
     readonly organizationId: string | null;
-    readonly runKind: "import" | "recheck";
+    readonly runKind: RunKind;
     readonly report: ReconciliationReport;
     readonly operator: string;
     readonly actor: AuditActor;
+    /** The import writes its migration.imported event first (A1.4 L12) and the reconciled event after it. */
+    readonly skipAudit?: boolean;
   },
 ): Promise<string> {
   const { report } = input;
@@ -138,7 +176,7 @@ export async function recordReconciliation(
       migration_import_id: input.migrationImportId,
       run_kind: input.runKind,
       result: report.result,
-      tables_checked: report.tables.length,
+      tables_checked: Math.max(report.tables.length, report.tablesMismatched),
       tables_mismatched: report.tablesMismatched,
       rows_expected: report.rowsExpected,
       rows_actual: report.rowsActual,
@@ -180,6 +218,39 @@ export async function recordReconciliation(
         })),
       )
       .execute();
+  if (report.deltas.length > 0)
+    await tx
+      .insertInto("migration_reconciliation_delta")
+      .values(
+        report.deltas.map((d) => ({
+          migration_reconciliation_id: id,
+          table_name: d.tableName,
+          basis: d.basis,
+          rows_added: d.rowsAdded,
+          rows_changed: d.rowsChanged,
+          rows_missing: d.rowsMissing,
+          allowed: d.allowed,
+        })),
+      )
+      .execute();
+  if (input.skipAudit !== true) await auditReconciliation(tx, id, input);
+  return id;
+}
+
+/** The migration.reconciled event of run `id`. */
+export async function auditReconciliation(
+  tx: Tx,
+  id: string,
+  input: {
+    readonly migrationImportId: string;
+    readonly organizationId: string | null;
+    readonly runKind: RunKind;
+    readonly report: ReconciliationReport;
+    readonly operator: string;
+    readonly actor: AuditActor;
+  },
+): Promise<void> {
+  const { report } = input;
   await insertAuditEvent(tx, input.actor, {
     action: "migration.reconciled",
     recordType: "migration_reconciliation",
@@ -191,12 +262,23 @@ export async function recordReconciliation(
       run_kind: { from: null, to: input.runKind },
       result: { from: null, to: report.result },
       tables_mismatched: { from: null, to: report.tablesMismatched },
+      attachments_checked: { from: null, to: report.attachmentsChecked },
       attachments_mismatched: { from: null, to: report.attachmentMismatches.length },
       rows_expected: { from: null, to: report.rowsExpected },
       rows_actual: { from: null, to: report.rowsActual },
+      deltas: {
+        from: null,
+        to: report.deltas.map((d) => ({
+          table: d.tableName,
+          basis: d.basis,
+          added: d.rowsAdded,
+          changed: d.rowsChanged,
+          missing: d.rowsMissing,
+          allowed: d.allowed,
+        })),
+      },
     },
   });
-  return id;
 }
 
 /** The C.5 line of a report for `command`. */
