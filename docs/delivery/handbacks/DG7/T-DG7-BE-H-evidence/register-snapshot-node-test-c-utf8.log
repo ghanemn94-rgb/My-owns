@@ -1,0 +1,165 @@
+TAP version 13
+# Subtest: T-I1: the snapshot of the tree's register equals the file
+    # Subtest: exits 0 with the I.3 line
+    ok 1 - exits 0 with the I.3 line
+      ---
+      duration_ms: 1.787365
+      type: 'test'
+      ...
+    # Subtest: rowCount, ids in order, sourceSha256 and every field byte for byte (multi-line fields included)
+    ok 2 - rowCount, ids in order, sourceSha256 and every field byte for byte (multi-line fields included)
+      ---
+      duration_ms: 8.468094
+      type: 'test'
+      ...
+    # Subtest: the record count equals an independent count of the file's record starts
+    ok 3 - the record count equals an independent count of the file's record starts
+      ---
+      duration_ms: 105.639783
+      type: 'test'
+      ...
+    # Subtest: a register with multi-line, quoted and comma fields: the same parity, field by field
+    ok 4 - a register with multi-line, quoted and comma fields: the same parity, field by field
+      ---
+      duration_ms: 107.388802
+      type: 'test'
+      ...
+    # Subtest: generatedAt follows SOURCE_DATE_EPOCH
+    ok 5 - generatedAt follows SOURCE_DATE_EPOCH
+      ---
+      duration_ms: 195.238665
+      type: 'test'
+      ...
+    1..5
+ok 1 - T-I1: the snapshot of the tree's register equals the file
+  ---
+  duration_ms: 419.407728
+  type: 'suite'
+  ...
+# Subtest: T-I2: --check
+    # Subtest: exits 0 on a fresh snapshot and 1 with the I.3 line after one byte of the register changes
+    ok 1 - exits 0 on a fresh snapshot and 1 with the I.3 line after one byte of the register changes
+      ---
+      duration_ms: 178.646061
+      type: 'test'
+      ...
+    1..1
+ok 2 - T-I2: --check
+  ---
+  duration_ms: 178.778007
+  type: 'suite'
+  ...
+# Subtest: T-I3: refusals
+    # Subtest: header
+    ok 1 - header
+      ---
+      duration_ms: 56.343479
+      type: 'test'
+      ...
+    # Subtest: field count
+    ok 2 - field count
+      ---
+      duration_ms: 75.898132
+      type: 'test'
+      ...
+    # Subtest: id
+    ok 3 - id
+      ---
+      duration_ms: 67.306236
+      type: 'test'
+      ...
+    # Subtest: id pattern
+    ok 4 - id pattern
+      ---
+      duration_ms: 77.613408
+      type: 'test'
+      ...
+    # Subtest: duplicate
+    ok 5 - duplicate
+      ---
+      duration_ms: 95.615371
+      type: 'test'
+      ...
+    # Subtest: class
+    ok 6 - class
+      ---
+      duration_ms: 65.761056
+      type: 'test'
+      ...
+    # Subtest: status
+    ok 7 - status
+      ---
+      duration_ms: 41.913161
+      type: 'test'
+      ...
+    # Subtest: final gate
+    ok 8 - final gate
+      ---
+      duration_ms: 90.413985
+      type: 'test'
+      ...
+    # Subtest: unterminated quote
+    ok 9 - unterminated quote
+      ---
+      duration_ms: 68.593633
+      type: 'test'
+      ...
+    # Subtest: byte order mark
+    ok 10 - byte order mark
+      ---
+      duration_ms: 56.641313
+      type: 'test'
+      ...
+    # Subtest: a record's line is the line it starts on, after a multi-line field
+    ok 11 - a record's line is the line it starts on, after a multi-line field
+      ---
+      duration_ms: 41.031653
+      type: 'test'
+      ...
+    # Subtest: a missing --csv file -> exit 2 BLOCKED; a usage error -> exit 2
+    ok 12 - a missing --csv file -> exit 2 BLOCKED; a usage error -> exit 2
+      ---
+      duration_ms: 268.798146
+      type: 'test'
+      ...
+    # Subtest: --deps absent or naming no file -> externalDependencies null (never [])
+    ok 13 - --deps absent or naming no file -> externalDependencies null (never [])
+      ---
+      duration_ms: 229.738801
+      type: 'test'
+      ...
+    # Subtest: a valid dependency list is carried; an invalid entry -> exit 1
+    ok 14 - a valid dependency list is carried; an invalid entry -> exit 1
+      ---
+      duration_ms: 407.022704
+      type: 'test'
+      ...
+    1..14
+ok 3 - T-I3: refusals
+  ---
+  duration_ms: 1643.595925
+  type: 'suite'
+  ...
+# Subtest: parseRegister and buildSnapshot (exports)
+    # Subtest: keeps quoted commas, doubled quotes and CRLF inside a field as LF, untrimmed
+    ok 1 - keeps quoted commas, doubled quotes and CRLF inside a field as LF, untrimmed
+      ---
+      duration_ms: 0.474212
+      type: 'test'
+      ...
+    1..1
+ok 4 - parseRegister and buildSnapshot (exports)
+  ---
+  duration_ms: 0.630446
+  type: 'suite'
+  ...
+1..4
+# tests 21
+# suites 4
+# pass 21
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2534.715875
+exit=0

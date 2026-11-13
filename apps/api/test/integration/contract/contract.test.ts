@@ -175,6 +175,7 @@ import { exerciseP7BeCOperations, P7_MIRRORS_BE_C } from "./p7-exercises-be-c.ts
 import { exerciseP7BeDOperations, P7_MIRRORS_BE_D } from "./p7-exercises-be-d.ts"; // T-DG7-BE-D
 import { exerciseP7BeFOperations, P7_MIRRORS_BE_F } from "./p7-exercises-be-f.ts"; // T-DG7-BE-F
 import { exerciseP7BeGOperations, P7_MIRRORS_BE_G } from "./p7-exercises-be-g.ts"; // T-DG7-BE-G
+import { exerciseP7BeHOperations, P7_MIRRORS_BE_H } from "./p7-exercises-be-h.ts"; // T-DG7-BE-H
 import { exerciseP6BeWOperations, P6_MIRRORS_BE_W } from "./p6-exercises-be-w.ts";
 import { exerciseP6BeX1Operations, P6_MIRRORS_BE_X1 } from "./p6-exercises-be-x1.ts"; // T-DG6-BE-X1
 import {
@@ -427,6 +428,7 @@ const ZOD_MIRRORS: Record<string, z.ZodType> = {
   ...P7_MIRRORS_BE_D, // T-DG7-BE-D
   ...P7_MIRRORS_BE_F, // T-DG7-BE-F
   ...P7_MIRRORS_BE_G, // T-DG7-BE-G
+  ...P7_MIRRORS_BE_H, // T-DG7-BE-H
 };
 
 let api: TestApi;
@@ -961,6 +963,10 @@ describe("every operation, validated against the contract and the zod mirrors", 
 
   it("P7 BE-G operations (p7-exercises-be-g.ts): retention classes, runs, actions, archived records, backup sets", async () => {
     await exerciseP7BeGOperations(p3());
+  });
+
+  it("P7 BE-H operations (p7-exercises-be-h.ts): requirement register and About", async () => {
+    await exerciseP7BeHOperations(p3());
   });
 
   // T-DG2-ARCH-02 (ADR-0007 §5a): every operation that validates input declares 400.

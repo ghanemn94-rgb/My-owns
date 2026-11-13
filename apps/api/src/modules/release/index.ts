@@ -5,13 +5,20 @@
 import type { FastifyInstance } from "fastify";
 import type { ModuleDeps, ModuleRegistration } from "../platform/index.ts";
 import { registerReleaseRoutes } from "./routes.ts";
+import { defaultRegisterSnapshotSource, type RegisterSnapshotSource } from "./snapshot.ts";
+
+export type { RegisterSnapshotSource } from "./snapshot.ts";
 
 /**
  * Wiring hook called by the composition root (server.ts). Every route file of the module registers here (T-DG7-BE-A
  * created it as a stub; p7-plan §5.1). The module reports "scaffold" until a route exists, then "active".
  */
-export function registerReleaseModule(app: FastifyInstance, deps: ModuleDeps): ModuleRegistration {
-  const routes = [...registerReleaseRoutes(app, deps)]; // T-DG7-BE-H
+export function registerReleaseModule(
+  app: FastifyInstance,
+  deps: ModuleDeps,
+  source: RegisterSnapshotSource = defaultRegisterSnapshotSource(),
+): ModuleRegistration {
+  const routes = [...registerReleaseRoutes(app, deps, source)]; // T-DG7-BE-H: the register snapshot source passes through
   return Object.freeze({
     module: "release",
     status: routes.length > 0 ? "active" : "scaffold",
