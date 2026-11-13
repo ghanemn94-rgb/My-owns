@@ -75,18 +75,76 @@ IT's registry must hold these images (`deploy/images.lock.json` is the source of
 |---|---|---|
 | `node` | `24-bookworm-slim` | base of `mth-app` (build and runtime stages) |
 | `postgres` | `18` | database (Compose, CI) |
-| `quay.io/keycloak/keycloak` | `26.4` | **test** IdP only |
+| `quay.io/keycloak/keycloak` | `26.8.1` | **test** IdP only |
 | `mcr.microsoft.com/playwright` | `v1.56.1-noble` | CI e2e only (browsers baked in; `playwright install` is never run) |
 | `mth-app` | built | the application |
 
-Tags and support windows are **[UNVERIFIED]** until `node deploy/scripts/pin-images.mjs --resolve` records digests,
-which needs registry access. `--apply` rewrites the Dockerfile, Compose and CI references. `--check` (offline, in CI)
-fails while anything is unpinned. **As of this increment no digest is recorded**; see the T-DG1-DEVOPS handback.
+`node deploy/scripts/pin-images.mjs --resolve` records each digest and its `verifiedAt` time, and needs registry
+access. `--apply` rewrites the Dockerfile, Compose and CI references. `--check` (offline, in CI) fails while anything
+is unpinned. All four images above carry a recorded digest in `deploy/images.lock.json`; an image without one is
+**[UNVERIFIED]** and is never bundled (below).
 
 To use mirrored images:
 
 - base image: `deploy/scripts/build-image.sh --node-image <mirror>/node:24-bookworm-slim@sha256:…`;
 - Compose: edit the `image:` lines to point at the mirror (keep the digests), or re-tag the mirrored images locally.
+
+## Moving the images to a host without registry access (image bundle)
+
+When the target host cannot reach any registry, not even IT's mirror, the images travel as files
+(`deploy/scripts/image-bundle.sh`, ADR-0069 §6). The script never runs `docker pull`, `docker login` or `docker push`.
+
+1. **On a connected host** that already holds every image: the four images of `deploy/images.lock.json` at their pinned
+   `<ref>:<tag>@<digest>` (for example after `docker compose -f deploy/compose/compose.yaml pull`), and the application
+   image built with `deploy/scripts/build-image.sh`:
+
+   ```bash
+   deploy/scripts/image-bundle.sh save --out <bundle dir> [--app-image mth-app:local]
+   ```
+
+   It writes `images.tar` (one `docker save` archive) and `images.json` (`mth-image-bundle/1`). For each image,
+   `images.json` records its name, its lock digest, its image id, its size and the tar's SHA-256. An image that is not
+   present locally, or a lock entry without a digest, stops the save (exit 2). Pull or build it first.
+2. **Transfer** the bundle directory by IT's approved means. Compare the SHA-256 of `images.tar` with `images.json`
+   (`tar.sha256`) on arrival.
+3. **On the target host:**
+
+   ```bash
+   deploy/scripts/image-bundle.sh load --from <bundle dir>
+   ```
+
+   It checks the size and SHA-256 of `images.tar` against `images.json` **before** calling Docker. A changed tar exits 1
+   (`image-bundle: images.tar does not match images.json (sha256)`), and `docker load` is not run. It then loads the tar
+   and compares each image id with `images.json`. `image-bundle.sh verify --from <bundle dir>` repeats both checks
+   without loading.
+4. **Start without pulling:**
+
+   ```bash
+   docker compose -f deploy/compose/compose.yaml up -d --pull never --wait
+   ```
+
+   `--pull never` makes Compose fail if any image is missing locally, so a start that reaches `healthy` used only the
+   loaded images.
+
+Exit codes: 0 PASS, 1 a mismatch, 2 a usage error or missing input, 3 `image-bundle: BLOCKED: docker daemon not
+reachable`.
+
+**What has been shown, and what has not.**
+
+- The script's manifest, checksum and refusal logic is tested with a stub `docker` (T-B12,
+  `deploy/scripts/tests/image-bundle.test.mjs`).
+- A real save, removal, load and `up --pull never` needs a Docker daemon. It is the orchestrator's host run (ADR-0069
+  §6–§7); that run is recorded under the DG7 orchestrator evidence when it has happened.
+- A load on a host that otherwise has registry access is **not** a physically air-gapped host (ADR-0069 residual 5).
+- A Compose start is a reproducible install and test configuration, not evidence of high-availability readiness.
+
+**Lifecycle e2e with no outbound network.** `deploy/scripts/offline-drill.sh --out <dir>` runs the A02 and A21 e2e
+specs inside a network namespace with no route off the host (`bwrap --unshare-net`, loopback only). It first proves
+that a TCP connection to `1.1.1.1:443` and a DNS lookup of `registry.npmjs.org` both fail. Every Node process of the
+run writes the product's connection log, and the drill fails on any connection outside loopback (ADR-0069 §5). It uses
+the Chromium already installed for Playwright and never downloads one (exit 3 without it). It needs no Docker daemon.
+It covers the Node processes, not the browser, the database server or the operating system: those are covered by the
+namespace itself. It is a connection log, not a packet capture.
 
 ## Building in a restricted network
 

@@ -18,6 +18,7 @@ import { trace, UNDOCUMENTED } from "../drill/config-trace.mjs";
 import { startDrillIdp, readUsers, DRILL_IDP_LABEL } from "../drill/fake-idp-server.mjs";
 import { runJourney } from "../drill/journey.mjs";
 import { tableDigest } from "../drill/job-check.mjs";
+import { unexplainedTables } from "../drill/unexplained-tables.mjs";
 import {
   buildAllowance,
   constants,
@@ -1443,3 +1444,74 @@ fixtureSuite(
   "T-B19 DO-D6's grant path on shipped data: seed-demo --as-of the first day of last month (no current period)",
   firstDayOfLastMonth(),
 );
+
+// ---------------------------------------------------------------------- D-264: the D9 failure names only unexplained tables
+describe("D-264 unexplained-tables.mjs: D9 names only the tables the mode 2 recheck could not explain", () => {
+  // The failing mode 2 output of T-DG7-DO-D7's T-B11 run 2 (reconcile-d9.json, abridged): informational
+  // `explaining events` lines for explained audited tables, and three unexplained tables.
+  const REPORT = [
+    "transfer-attachments verify: matched: 2 objects",
+    "  automation_execution: 32 explaining events",
+    "  forum: 5 explaining events",
+    "  report_snapshot: 1 added, 0 changed, 0 missing (unexplained)",
+    '    unexplained added ["0b1d"]',
+    "  report_snapshot_source: 3 added, 0 changed, 0 missing (unexplained)",
+    "  report_snapshot_version: 1 added, 0 changed, 0 missing (unexplained)",
+    "  corrective_case: 0 explaining events",
+    "  work_item: 2 explaining events",
+    "  work_item: 0 added, 1 changed, 0 missing (audit_explained)",
+    "  kpi_evaluation: 2 added, 0 changed, 0 missing (lineage)",
+    "reconcile-migration: mismatch: 5 tables, 0 attachments differ",
+  ].join("\n");
+
+  it("lists the `added, changed, missing (<basis>)` tables only, in report order, each once", () => {
+    assert.deepEqual(
+      unexplainedTables(REPORT).map((t) => `${t.table}:${t.added}/${t.changed}/${t.missing}:${t.basis}`),
+      [
+        "report_snapshot:1/0/0:unexplained",
+        "report_snapshot_source:3/0/0:unexplained",
+        "report_snapshot_version:1/0/0:unexplained",
+        "work_item:0/1/0:audit_explained",
+        "kpi_evaluation:2/0/0:lineage",
+      ],
+    );
+  });
+
+  it("an explaining-events line, a key line or the summary line is never listed", () => {
+    const names = unexplainedTables(REPORT).map((t) => t.table);
+    for (const informational of ["automation_execution", "forum", "corrective_case"])
+      assert.ok(!names.includes(informational), informational);
+    assert.deepEqual(
+      unexplainedTables("  forum: 5 explaining events\nreconcile-migration: matched after use: 1 table"),
+      [],
+    );
+  });
+
+  it("the CLI prints one line per unexplained table; a missing file is BLOCKED (exit 2)", () => {
+    const f = join(work, "reconcile-d9.txt");
+    writeFileSync(f, REPORT);
+    const r = spawnSync(process.execPath, [join(REPO, "deploy/scripts/drill/unexplained-tables.mjs"), f], {
+      encoding: "utf8",
+    });
+    assert.equal(r.status, 0, r.stderr);
+    assert.equal(r.stdout.trim().split("\n").length, 5);
+    assert.match(r.stdout, /^report_snapshot 1 added, 0 changed, 0 missing \(unexplained\)$/m);
+    const missing = spawnSync(
+      process.execPath,
+      [join(REPO, "deploy/scripts/drill/unexplained-tables.mjs"), f + ".none"],
+      {
+        encoding: "utf8",
+      },
+    );
+    assert.equal(missing.status, 2);
+    assert.match(missing.stderr, /^unexplained-tables: BLOCKED: /);
+  });
+
+  it("transfer-drill.sh D9 takes its failure listing from the helper, not from every indented table line", () => {
+    const src = readFileSync(DRILL, "utf8");
+    const d9 = src.slice(src.indexOf("d9() {"), src.indexOf('step D9 "'));
+    assert.match(d9, /drill\/unexplained-tables\.mjs" "\$WORK\/reconcile-d9\.txt"/);
+    assert.doesNotMatch(d9, /sed -n 's\/\^  /);
+    assert.match(d9, /transfer-drill: step D9 failed: \$t changed outside the allowance/);
+  });
+});

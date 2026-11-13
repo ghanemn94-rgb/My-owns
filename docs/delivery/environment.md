@@ -107,3 +107,35 @@ Environment facts behind this table, from `docs/delivery/handbacks/DG6/T-DG6-DO-
 
 A row's proof cell names the task that delivers it. "Planned" or "not on `135ff1d`" means that the proof had not been
 merged when this table was written. The orchestrator updates the row when that task's handback is merged.
+
+## P7 drills: where each one runs (the D-243 Q1 split)
+
+Written by T-DG7-DO-E (devops-engineer) on 2026-11-13, against `HEAD` `60e7e8e4c`, under p7-work-split §B.3 and ADR-0069
+§7. "Agent" means an agent run inside its sandbox, with no Docker daemon. "Orchestrator host" means the orchestrator,
+outside the agent sandbox; its logs belong under `docs/delivery/test-evidence/DG7/orchestrator/`. A row's result is
+whatever its evidence says. This table records only where each drill runs and what it needs. A Compose start or a drill
+in a namespace is not evidence of high-availability production readiness, and no drill approves anything.
+
+Environment facts measured by T-DG7-DO-E (`docs/delivery/handbacks/DG7/T-DG7-DO-E-evidence/environment-facts.txt`):
+
+- Node 24.21.0 at `/opt/nvm/versions/node/v24.21.0/bin`. The default `PATH` of the agent shell resolves `node` to
+  22.22.0, so drills and checks must put the Node 24 directory first.
+- bubblewrap 0.9.0. `bwrap --dev-bind / / --unshare-net` gives a namespace with loopback up and no route off the host.
+- PostgreSQL 16.15 server binaries (`/usr/lib/postgresql/16/bin`).
+- Playwright's Chromium is installed at `/opt/pw-browsers/chromium-1194` (`PLAYWRIGHT_BROWSERS_PATH`). The drills never
+  download a browser.
+- Docker client 29.9.2 and Compose v5.6.1 are present (the P1 rows above recorded 29.3.1 and v5.1.1). In the agent
+  sandbox, `docker info` exits 1 with "permission denied while trying to connect to the docker API at
+  unix:///var/run/docker.sock". No agent can run a container.
+
+| Drill | Script | Where | What it needs | Evidence |
+|---|---|---|---|---|
+| A18 transfer drill D0–D11 (T-B11) | `deploy/scripts/transfer-drill.sh` | Agent: one `bwrap --unshare-net` namespace | the release archive and its SHA-256, an offline pnpm store, PostgreSQL server binaries, bwrap | DO-D…DO-D7 and DO-E handbacks; QA-C re-run under `test-evidence/DG7/qa/transfer/` |
+| Offline lifecycle e2e (T-B13) | `deploy/scripts/offline-drill.sh` | Agent: one `bwrap --unshare-net` namespace | a built tree (`pnpm -r build`), PostgreSQL server binaries, installed Chromium, bwrap | DO-E handback; QA-C re-run under `test-evidence/DG7/qa/offline/` |
+| Image bundle logic (T-B12) | `deploy/scripts/image-bundle.sh` with a stub `docker` | Agent | Node 24 only | `deploy/scripts/tests/image-bundle.test.mjs` |
+| Image bundle save, remove, load, `up --pull never` | `deploy/scripts/image-bundle.sh` | Orchestrator host | a Docker daemon; the pinned images and `mth-app` present before `save` | orchestrator evidence |
+| Compose up on a clean host; `compose.no-egress.yaml` with the `test-idp` profile | `docker compose … up -d --pull never --wait` | Orchestrator host | a Docker daemon and the loaded images | orchestrator evidence |
+| Keycloak e2e (REQ-S16-007 residual) | `e2e/identity/keycloak-login.spec.ts` | Orchestrator host | a Docker daemon (`test-idp` profile) | orchestrator evidence |
+
+If the orchestrator's host cannot run its rows, they are recorded BLOCKED with the reason. That is a release blocker
+under REQ-S21-003, never a pass (ADR-0069 residual 1).

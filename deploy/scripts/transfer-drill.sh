@@ -616,9 +616,15 @@ d9() {
     --app-user-signin "$MTH_TD_APP_USER_SIGNIN" \
     --out "$OUT/allowance.json" --reasons-out "$OUT/allowance-reasons.json"
   if ! reconcile D9 --after-use --allow "$OUT/allowance.json"; then
-    sed -n 's/^  \([a-z_][a-z0-9_]*\): .*/\1/p' "$WORK/reconcile-d9.txt" | while read -r t; do
-      echo "transfer-drill: step D9 failed: $t changed outside the allowance"
-    done
+    # T-DG7-DO-E (D-264): name only the tables the mode 2 report could not explain (its
+    # `<table>: <a> added, <c> changed, <m> missing (<basis>)` lines), never its informational `explaining events` lines.
+    local listed=0 t rest
+    while read -r t rest; do
+      [ -n "$t" ] || continue
+      listed=1
+      echo "transfer-drill: step D9 failed: $t changed outside the allowance ($rest)"
+    done < <(node "$REPO/deploy/scripts/drill/unexplained-tables.mjs" "$WORK/reconcile-d9.txt")
+    [ "$listed" -eq 1 ] || echo "transfer-drill: step D9 failed: the mode 2 recheck did not match (no table line; see reconcile-d9.json)"
     return 1
   fi
 }
