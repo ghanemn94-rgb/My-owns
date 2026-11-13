@@ -1,0 +1,62 @@
+▶ T-E34: every migration file has exactly one entry; the committed output equals a fresh generation
+  ✔ one entry per file 0001–last, in order, with its id and SHA-256 (computed independently here) (9.855642ms)
+  ✔ --check exits 0 on the repository (the JSON and the guide's table are a fresh generation) (173.713175ms)
+  ✔ --check exits 1 when a file has no entry, an entry names no file, or a SHA-256 differs; 0 after regeneration (434.577058ms)
+  ✔ BLOCKED (exit 2) on a file name that is not NNNN_snake_case.sql, on missing guide markers, and on a usage error (132.728507ms)
+✔ T-E34: every migration file has exactly one entry; the committed output equals a fresh generation (752.552292ms)
+▶ T-E35: the scanner classifies each pattern, and ignores the bodies of functions
+  ✔ destructive: DROP TABLE (2.424273ms)
+  ✔ destructive: DROP COLUMN (0.811923ms)
+  ✔ destructive: DROP FUNCTION (0.152596ms)
+  ✔ destructive: DROP TRIGGER (0.306289ms)
+  ✔ destructive: DROP CONSTRAINT (0.164579ms)
+  ✔ destructive: DROP NOT NULL (0.23582ms)
+  ✔ destructive: TRUNCATE (0.103253ms)
+  ✔ destructive: ALTER … TYPE (0.100937ms)
+  ✔ destructive: ALTER … SET DATA TYPE (0.089876ms)
+  ✔ destructive: RENAME (0.072491ms)
+  ✔ destructive: REVOKE (existing object) (0.327638ms)
+  ✔ destructive: DROP in a DO block (0.814523ms)
+  ✔ data_rewrite: UPDATE (0.186535ms)
+  ✔ data_rewrite: UPDATE ONLY (0.855016ms)
+  ✔ data_rewrite: DELETE FROM (0.09303ms)
+  ✔ data_rewrite: INSERT … SELECT (0.118811ms)
+  ✔ data_rewrite: INSERT (cols) … SELECT (0.170723ms)
+  ✔ data_rewrite: WITH … UPDATE (0.164723ms)
+  ✔ data_rewrite: backfill: SELECT f(…) FROM t (0.072395ms)
+  ✔ data_rewrite: UPDATE in a DO block (runs at migration time) (0.351506ms)
+  ✔ data_rewrite: dynamic SQL in a DO block (0.092521ms)
+  ✔ data_rewrite: CREATE OR REPLACE FUNCTION of a function an earlier file created; additive when it is new (0.2895ms)
+  ✔ additive: CREATE TABLE with ON DELETE/ON UPDATE (0.123012ms)
+  ✔ additive: CREATE INDEX (0.049521ms)
+  ✔ additive: GRANT SELECT, UPDATE (0.040671ms)
+  ✔ additive: seed INSERT … VALUES (0.040823ms)
+  ✔ additive: ALTER TABLE ADD COLUMN (0.096407ms)
+  ✔ additive: UPDATE inside a $$ function body (0.057198ms)
+  ✔ additive: UPDATE inside a tagged $body$ body (0.046107ms)
+  ✔ additive: UPDATE in a line comment (0.084425ms)
+  ✔ additive: DROP in a block comment (0.082545ms)
+  ✔ additive: keywords in a string literal (0.095241ms)
+  ✔ additive: a read-only DO guard (0.077052ms)
+  ✔ additive: REVOKE on a function the same file creates (0.22127ms)
+  ✔ additive: SELECT helper call without FROM (0.061865ms)
+  ✔ additive: CREATE TRIGGER (new) (0.056443ms)
+  ✔ the strongest class wins and every reason is listed once (0.193048ms)
+✔ T-E35: the scanner classifies each pattern, and ignores the bodies of functions (10.48127ms)
+▶ T-E36: overrides have a reason of at least 20 characters and never lower a class
+  ✔ the committed overrides file is valid: schema version, known ids, classes, reasons ≥ 20 characters (73.878655ms)
+  ✔ refuses a reason shorter than 20 characters, or none (0.731067ms)
+  ✔ refuses an unknown class, a stale id, a duplicate and an unknown key (0.188967ms)
+  ✔ an override never lowers a class (BLOCKED, exit 2), and may raise one with a recovery note (91.304426ms)
+✔ T-E36: overrides have a reason of at least 20 characters and never lower a class (166.362362ms)
+▶ the catalogue of the shipped migrations (spot checks a reviewer can repeat)
+  ✔ names the known data rewrites and destructive files with their reasons (69.792145ms)
+✔ the catalogue of the shipped migrations (spot checks a reviewer can repeat) (70.075475ms)
+ℹ tests 46
+ℹ suites 4
+ℹ pass 46
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1110.450809

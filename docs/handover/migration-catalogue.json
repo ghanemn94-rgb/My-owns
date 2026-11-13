@@ -1,0 +1,1471 @@
+{
+  "schemaVersion": "mth-migration-catalogue/1",
+  "generatedBy": "tools/release/migration-catalogue.mjs",
+  "migrationsDir": "packages/db/migrations",
+  "count": 131,
+  "counts": {
+    "additive": 73,
+    "data_rewrite": 38,
+    "destructive": 20
+  },
+  "entries": [
+    {
+      "id": "0001",
+      "name": "0001_identity_access.sql",
+      "sha256": "bf5707da18bc9d2825d33fa3797fb4ddff7a4ff2125406336c554858fccbbd55",
+      "stage": "p1",
+      "class": "destructive",
+      "irreversible": true,
+      "reasons": [
+        "REVOKE on schema public"
+      ],
+      "recovery": "Irreversible: restore the pre-upgrade backup set (ADR-0066 §7) into a fresh database and storage, and run the previous release."
+    },
+    {
+      "id": "0002",
+      "name": "0002_transformation.sql",
+      "sha256": "acd0ff65c057aefb9acb6d5c4bfd3e22c58b4941e0c68eb3c19e245a520418e1",
+      "stage": "p1",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0003",
+      "name": "0003_audit_event.sql",
+      "sha256": "f565243d24bf9cacad0bfe7505244398fa5bf2a0a460945d9a7ba7614012195b",
+      "stage": "p1",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0004",
+      "name": "0004_outbox_jobs.sql",
+      "sha256": "747085fb32d0ac9443afd2083ce7c934e71a9dcc3824e6145a287f9bddd211da",
+      "stage": "p1",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0005",
+      "name": "0005_seed_roles_permissions.sql",
+      "sha256": "1624ae8ebf86c49e317ed0682e769de87390d2eff8541c2975441ddfba62f416",
+      "stage": "p1",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0006",
+      "name": "0006_pgboss_schema_v25.sql",
+      "sha256": "6b83d3f0adf984799230de580076887ca8354abe24b29b808e536b2b38efdb1e",
+      "stage": "p1",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0007",
+      "name": "0007_oidc_login_browser_binding.sql",
+      "sha256": "e634bb32a22c3085f22ec35d8503e81102cb87001e84345b1ead9ddb82b4c572",
+      "stage": "p1",
+      "class": "data_rewrite",
+      "irreversible": true,
+      "reasons": [
+        "DELETE FROM oidc_login_state"
+      ],
+      "recovery": "Irreversible: restore the pre-upgrade backup set (ADR-0066 §7) into a fresh database and storage, and run the previous release."
+    },
+    {
+      "id": "0008",
+      "name": "0008_scoped_assignment_derived_from.sql",
+      "sha256": "d0a9bfcdbbbd2bef159a37d8bb631fafa588534688269f6a58c614ac3cba5ecf",
+      "stage": "p1",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0009",
+      "name": "0009_business_unit_hierarchy_guard.sql",
+      "sha256": "3204dee7ecb0ae63c4baba223c432dd35696051e5efa69ee1fbd3f8da4859fed",
+      "stage": "p1",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0010",
+      "name": "0010_p2_record_guards.sql",
+      "sha256": "14dc5fe51e5d288c65fd5422a2c86d1c75c03b83606ee91350dc68a61a2a3eee",
+      "stage": "p2",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0011",
+      "name": "0011_p2_methodology_catalogue.sql",
+      "sha256": "e1ef12ee6c958f14e49a04173a14d93de681917a3ac63442363b58526f0ae2a0",
+      "stage": "p2",
+      "class": "data_rewrite",
+      "irreversible": true,
+      "reasons": [
+        "INSERT … SELECT into methodology_version"
+      ],
+      "recovery": "Irreversible: restore the pre-upgrade backup set (ADR-0066 §7) into a fresh database and storage, and run the previous release."
+    },
+    {
+      "id": "0012",
+      "name": "0012_p2_evidence.sql",
+      "sha256": "0bc87d51f625ed7696fc2fe0345f3c2a004106569b110b17b49ab2361a6b96b0",
+      "stage": "p2",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0013",
+      "name": "0013_p2_direction_charter.sql",
+      "sha256": "bbd5d3191f235c5940a563bb093890b8bea03e15cac0e1f2ba352d8b5e9bd09c",
+      "stage": "p2",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0014",
+      "name": "0014_p2_kpi_baseline_value_pool.sql",
+      "sha256": "a6970f3e35744a0eb1e121f416192170d8d56ea39e01f99ee375e2b0601a85b8",
+      "stage": "p2",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0015",
+      "name": "0015_p2_diagnose.sql",
+      "sha256": "dc243b3160004df6a28c295693e4899dfbbc4a26c3e4cbff84205689085884a7",
+      "stage": "p2",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0016",
+      "name": "0016_p2_design_tom.sql",
+      "sha256": "3ca3b93799297f0ed87718733412b35ff522dd0204192551d489d13da78fde8f",
+      "stage": "p2",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0017",
+      "name": "0017_p2_decisions_gates.sql",
+      "sha256": "e3e3a7c0d764d6e7c9dfff9a4ac63fb77946c84db7f5edd3c8e5d8c2e7dc1e69",
+      "stage": "p2",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0018",
+      "name": "0018_p2_access_instantiation.sql",
+      "sha256": "5f678e36e270366829f10eccdc6f67518c86af52037aad160166c1b39c8f072a",
+      "stage": "p2",
+      "class": "data_rewrite",
+      "irreversible": true,
+      "reasons": [
+        "backfill: p2_instantiate_transformation(…) for each row of transformation"
+      ],
+      "recovery": "Irreversible: restore the pre-upgrade backup set (ADR-0066 §7) into a fresh database and storage, and run the previous release."
+    },
+    {
+      "id": "0019",
+      "name": "0019_evidence_review_separation.sql",
+      "sha256": "a36f19c0b06a0290cd508406b1828427a27864b240d024f7bf9419af92e7b0fc",
+      "stage": "p1",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0020",
+      "name": "0020_p3_portfolio_roadmap.sql",
+      "sha256": "2a19861b3b39bfadafbf6fffdb3649d2da1b2d8abfdb362a4bd25717d2e6f34e",
+      "stage": "p3",
+      "class": "destructive",
+      "irreversible": true,
+      "reasons": [
+        "DROP CONSTRAINT"
+      ],
+      "recovery": "Irreversible: restore the pre-upgrade backup set (ADR-0066 §7) into a fresh database and storage, and run the previous release."
+    },
+    {
+      "id": "0021",
+      "name": "0021_p3_prioritization.sql",
+      "sha256": "fed5e19b66afa45659541fad48e2238d69b4ad6ef8db357714b934645c1d554e",
+      "stage": "p3",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0022",
+      "name": "0022_p3_dependency_capacity_funding.sql",
+      "sha256": "686fb990783cbeb95dddc6a3ad04f57da8156a085dcba3c8bd65725917f87a2e",
+      "stage": "p3",
+      "class": "destructive",
+      "irreversible": true,
+      "reasons": [
+        "DROP CONSTRAINT"
+      ],
+      "recovery": "Irreversible: restore the pre-upgrade backup set (ADR-0066 §7) into a fresh database and storage, and run the previous release."
+    },
+    {
+      "id": "0023",
+      "name": "0023_p3_business_case_formula.sql",
+      "sha256": "8ee08aa921c4e4eff6fd18f6a4beb549d0e4f80804fbedbec143e7df143b4074",
+      "stage": "p3",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0024",
+      "name": "0024_p3_gates_access_instantiation.sql",
+      "sha256": "ad1e1fb5c8e14de54d91638acd649346b1881b7e66677abc2e7236d15513cf9f",
+      "stage": "p3",
+      "class": "data_rewrite",
+      "irreversible": true,
+      "reasons": [
+        "backfill: p3_instantiate_transformation(…) for each row of transformation"
+      ],
+      "recovery": "Irreversible: restore the pre-upgrade backup set (ADR-0066 §7) into a fresh database and storage, and run the previous release."
+    },
+    {
+      "id": "0025",
+      "name": "0025_p3_g1_agreement_guard.sql",
+      "sha256": "1ec76ac17dbd03eef08ed39f6651dc1660cbcf2693333d46eb44e5599eac0f14",
+      "stage": "p3",
+      "class": "data_rewrite",
+      "irreversible": true,
+      "reasons": [
+        "replaces function p3_instantiate_transformation"
+      ],
+      "recovery": "Irreversible: restore the pre-upgrade backup set (ADR-0066 §7) into a fresh database and storage, and run the previous release."
+    },
+    {
+      "id": "0026",
+      "name": "0026_p3_enable_g4.sql",
+      "sha256": "823c9392e258e27c8129f7750ce1ba6029801d426bd6acab70c5228b342c2ec9",
+      "stage": "p3",
+      "class": "data_rewrite",
+      "irreversible": true,
+      "reasons": [
+        "UPDATE gate_definition"
+      ],
+      "recovery": "Irreversible: restore the pre-upgrade backup set (ADR-0066 §7) into a fresh database and storage, and run the previous release."
+    },
+    {
+      "id": "0027",
+      "name": "0027_p3_calculation_rounding.sql",
+      "sha256": "1d2abcf971dd6a3cb269f23370510e007b6210a455a6ddfb030c757430682a1a",
+      "stage": "p3",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0028",
+      "name": "0028_p4_calendar_jobs_work_items.sql",
+      "sha256": "ec085284ca832d277334683dddf297c36e831e1315fad34273111af7663aeb4f",
+      "stage": "p4",
+      "class": "data_rewrite",
+      "irreversible": true,
+      "reasons": [
+        "backfill: p4_ensure_default_calendar(…) for each row of organization",
+        "INSERT … SELECT into audit_event"
+      ],
+      "recovery": "Irreversible: restore the pre-upgrade backup set (ADR-0066 §7) into a fresh database and storage, and run the previous release."
+    },
+    {
+      "id": "0029",
+      "name": "0029_p4_groups_role_mapping_delegation.sql",
+      "sha256": "64fbc0ff3b6b72c94b077f4fe1f597bc851ba938fd3f0b0db4a28cb35b296c50",
+      "stage": "p4",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0030",
+      "name": "0030_p4_decision_rights_raci.sql",
+      "sha256": "60d5c4dd046b07c8ab6ff7b11cbaf20be534640835d50da64a5f58b042cc8fef",
+      "stage": "p4",
+      "class": "data_rewrite",
+      "irreversible": true,
+      "reasons": [
+        "INSERT … SELECT into raci_template_cell",
+        "backfill: p4_instantiate_transformation(…) for each row of transformation"
+      ],
+      "recovery": "Irreversible: restore the pre-upgrade backup set (ADR-0066 §7) into a fresh database and storage, and run the previous release."
+    },
+    {
+      "id": "0031",
+      "name": "0031_p4_approvals_permissions.sql",
+      "sha256": "e1c43ba8864d2d187375ea9239b96c7f5eda8480f1b7cef80d5fdabfefed0893",
+      "stage": "p4",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0032",
+      "name": "0032_p4_slice_i_c_reserved.sql",
+      "sha256": "6141df5f25cadd1426d48432b55a2e6c98779de703c5c0efdfe8215a3cebe25a",
+      "stage": "p4",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0033",
+      "name": "0033_p4_kpi_dictionary_versions.sql",
+      "sha256": "504f89fc1c92277bd092e80e6465b6c95c1c12bdd67172eb92d5f83e224543e2",
+      "stage": "p4",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0034",
+      "name": "0034_p4_kpi_trajectories_actuals.sql",
+      "sha256": "e6ea3b5cb682eb5a2201e0f91536984d191737fdece72c0d59e8ca0f95c152f0",
+      "stage": "p4",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0035",
+      "name": "0035_p4_kpi_calculation_runs_quality.sql",
+      "sha256": "a87e0c5c5bf70ab368089f990f2c429605aa8fb9e234b4aeb4e26f3e3d220183",
+      "stage": "p4",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0036",
+      "name": "0036_p4_kpi_permissions_backfill.sql",
+      "sha256": "73c87d99474352c53b5b1739eb5c706d738f9b6d1f002e794f8a28b9b1fca8f9",
+      "stage": "p4",
+      "class": "data_rewrite",
+      "irreversible": true,
+      "reasons": [
+        "DO block: UPDATE target_trajectory",
+        "DO block: INSERT … SELECT into target_trajectory"
+      ],
+      "recovery": "Irreversible: restore the pre-upgrade backup set (ADR-0066 §7) into a fresh database and storage, and run the previous release."
+    },
+    {
+      "id": "0037",
+      "name": "0037_p4_benefit_register.sql",
+      "sha256": "1447044cd98d3fedb48cd6ab73e0f1e9b38b989c2c549984b64ac25ae42d26bc",
+      "stage": "p4",
+      "class": "destructive",
+      "irreversible": true,
+      "reasons": [
+        "DROP CONSTRAINT"
+      ],
+      "recovery": "Irreversible: restore the pre-upgrade backup set (ADR-0066 §7) into a fresh database and storage, and run the previous release."
+    },
+    {
+      "id": "0038",
+      "name": "0038_p4_benefit_measurement_validation.sql",
+      "sha256": "d5b7e19548672a780570f9b62cbd0be9e480b8c9f1d0d581184d33e70be48c28",
+      "stage": "p4",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0039",
+      "name": "0039_p4_benefit_value_views.sql",
+      "sha256": "d40a05b3f1b77a955f9f32329302224dbef1c44cfbafc4917b7c81dd990d3831",
+      "stage": "p4",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0040",
+      "name": "0040_p4_benefit_permissions.sql",
+      "sha256": "4f39af818a8f1ffacc9981cad887462c83f61912ad6ddaf8a3dbcace27afdd69",
+      "stage": "p4",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0041",
+      "name": "0041_p4_raid_actions_corrective.sql",
+      "sha256": "80fee997e45015cf7aaed952328be6415439f92acbe5dc0ecf3f86b248c92c02",
+      "stage": "p4",
+      "class": "destructive",
+      "irreversible": true,
+      "reasons": [
+        "DROP CONSTRAINT"
+      ],
+      "recovery": "Irreversible: restore the pre-upgrade backup set (ADR-0066 §7) into a fresh database and storage, and run the previous release."
+    },
+    {
+      "id": "0042",
+      "name": "0042_p4_budget_schedule.sql",
+      "sha256": "8f925ee9b6bfa6dac7a2ef5e9cbed0deaf8cdfc19eee8de30a1cd8c05c412cf3",
+      "stage": "p4",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0043",
+      "name": "0043_p4_raid_permissions.sql",
+      "sha256": "5821b2b02c24cd737684ee8d5af70f4084d9084d0826eb3e60b3e69839de80ce",
+      "stage": "p4",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0044",
+      "name": "0044_p4_forums_meetings.sql",
+      "sha256": "c42682942b5b728eb2c93422b7d3b30b127f0fdb1047be58c8b9e9b682c075b2",
+      "stage": "p4",
+      "class": "data_rewrite",
+      "irreversible": true,
+      "reasons": [
+        "replaces function p4_instantiate_transformation",
+        "backfill: p4_instantiate_forums(…) for each row of transformation"
+      ],
+      "recovery": "Irreversible: restore the pre-upgrade backup set (ADR-0066 §7) into a fresh database and storage, and run the previous release."
+    },
+    {
+      "id": "0045",
+      "name": "0045_p4_t16_escalation.sql",
+      "sha256": "c38fab36d4daf87f906b079140dc6d091a830fa0f70bc0e3d4a530f0e325e0dd",
+      "stage": "p4",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0046",
+      "name": "0046_p4_governance_permissions.sql",
+      "sha256": "fee0dcc59432ea1e7615e4ce0ccabe988de7f236e43a3a5d0d64ced3bdbefafd",
+      "stage": "p4",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0047",
+      "name": "0047_p4_adoption.sql",
+      "sha256": "e4e3e2e1fe89f6a02ea535c17f8e83eaf7f835fc2d5e3127af51bc93d0352c11",
+      "stage": "p4",
+      "class": "destructive",
+      "irreversible": true,
+      "reasons": [
+        "DROP CONSTRAINT"
+      ],
+      "recovery": "Irreversible: restore the pre-upgrade backup set (ADR-0066 §7) into a fresh database and storage, and run the previous release."
+    },
+    {
+      "id": "0048",
+      "name": "0048_p4_sustainment.sql",
+      "sha256": "0cf1ccef578850bf87174941301626d32ba84aa228209b9898741917e14557f2",
+      "stage": "p4",
+      "class": "destructive",
+      "irreversible": true,
+      "reasons": [
+        "DROP CONSTRAINT"
+      ],
+      "recovery": "Irreversible: restore the pre-upgrade backup set (ADR-0066 §7) into a fresh database and storage, and run the previous release."
+    },
+    {
+      "id": "0049",
+      "name": "0049_p4_adoption_sustainment_permissions.sql",
+      "sha256": "0538d2ae4fb394810ff4d0f05634b559e195f3001a63daa444877890ebc08929",
+      "stage": "p4",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0050",
+      "name": "0050_p4_sustainment_schedules.sql",
+      "sha256": "e18c5590f72f10fa1297a6e4e4f130489cdcf67c1ca5c5eaf3735dee1a48dce1",
+      "stage": "p4",
+      "class": "data_rewrite",
+      "irreversible": true,
+      "reasons": [
+        "INSERT … SELECT into audit_event"
+      ],
+      "recovery": "Irreversible: restore the pre-upgrade backup set (ADR-0066 §7) into a fresh database and storage, and run the previous release."
+    },
+    {
+      "id": "0051",
+      "name": "0051_p4_phases_gates_g5_g6_exceptions.sql",
+      "sha256": "7c717413ab1ef053ebef43322f34b5fe291f0d3a12c7bac9cb71ea18beaaa649",
+      "stage": "p4",
+      "class": "destructive",
+      "irreversible": true,
+      "reasons": [
+        "DROP CONSTRAINT"
+      ],
+      "recovery": "Irreversible: restore the pre-upgrade backup set (ADR-0066 §7) into a fresh database and storage, and run the previous release."
+    },
+    {
+      "id": "0052",
+      "name": "0052_p4_change_control.sql",
+      "sha256": "5679417375819e4407866f724f110f4729f1169feca3ce2d9167bb2f0ec5c107",
+      "stage": "p4",
+      "class": "destructive",
+      "irreversible": true,
+      "reasons": [
+        "DROP CONSTRAINT"
+      ],
+      "recovery": "Irreversible: restore the pre-upgrade backup set (ADR-0066 §7) into a fresh database and storage, and run the previous release."
+    },
+    {
+      "id": "0053",
+      "name": "0053_p4_gates_change_permissions.sql",
+      "sha256": "b40d49aedd2ddbb770448591adada082a52c7a058c08c8e6a8b81b9188bd016e",
+      "stage": "p4",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0054",
+      "name": "0054_p4_gate_exception_expiry_schedule.sql",
+      "sha256": "78a47471fd651dcf45c6383e24115e0fc8c13d4c173515f924a3d19858a15d78",
+      "stage": "p4",
+      "class": "data_rewrite",
+      "irreversible": true,
+      "reasons": [
+        "INSERT … SELECT into audit_event"
+      ],
+      "recovery": "Irreversible: restore the pre-upgrade backup set (ADR-0066 §7) into a fresh database and storage, and run the previous release."
+    },
+    {
+      "id": "0055",
+      "name": "0055_p4_traceability_modular_structure.sql",
+      "sha256": "4a270521437e3e9bb20e0db5327dae27a5f2963f6ac8c15eea34e7bc51a15463",
+      "stage": "p4",
+      "class": "destructive",
+      "irreversible": true,
+      "reasons": [
+        "DROP CONSTRAINT"
+      ],
+      "recovery": "Irreversible: restore the pre-upgrade backup set (ADR-0066 §7) into a fresh database and storage, and run the previous release."
+    },
+    {
+      "id": "0056",
+      "name": "0056_p4_dashboards_t10.sql",
+      "sha256": "1119a5065a49dd0f23965f5a80433dd474dc41e46fdc3eb2c1b94a9df3ad20f4",
+      "stage": "p4",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0057",
+      "name": "0057_p4_dashboards_traceability_permissions.sql",
+      "sha256": "51fea740d1d733538948f382183b40d57995d5bddddccac7af4b7061e8a8f3f3",
+      "stage": "p4",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0058",
+      "name": "0058_p4_approval_reminder_kinds.sql",
+      "sha256": "ee158bd50a2916a298370009599f0142a93718fd14142579fa727dda6b49f471",
+      "stage": "p4",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0059",
+      "name": "0059_p4_enable_g5_g6.sql",
+      "sha256": "5721a120bf318bf429ebb34d0a488d77a75bdffc2bab55b88f1300fe98233872",
+      "stage": "p4",
+      "class": "data_rewrite",
+      "irreversible": true,
+      "reasons": [
+        "UPDATE gate_definition"
+      ],
+      "recovery": "Irreversible: restore the pre-upgrade backup set (ADR-0066 §7) into a fresh database and storage, and run the previous release."
+    },
+    {
+      "id": "0060",
+      "name": "0060_p4_governance_schedules_weekly_cadence.sql",
+      "sha256": "b96cc23cfb38ccdd700845f93985556fe5bbe095bb30e63300c83d4a7f4158a7",
+      "stage": "p4",
+      "class": "destructive",
+      "irreversible": true,
+      "reasons": [
+        "INSERT … SELECT into audit_event",
+        "DROP CONSTRAINT"
+      ],
+      "recovery": "Irreversible: restore the pre-upgrade backup set (ADR-0066 §7) into a fresh database and storage, and run the previous release."
+    },
+    {
+      "id": "0061",
+      "name": "0061_p4_finance_validation_correction_step.sql",
+      "sha256": "20b53eff0a10c5b96f8f0ecec9f41be23ca6160a01cf733e95757f7acf8c57dd",
+      "stage": "p4",
+      "class": "data_rewrite",
+      "irreversible": true,
+      "reasons": [
+        "replaces function finance_validation_guard"
+      ],
+      "recovery": "Irreversible: restore the pre-upgrade backup set (ADR-0066 §7) into a fresh database and storage, and run the previous release."
+    },
+    {
+      "id": "0062",
+      "name": "0062_p5_config_versions.sql",
+      "sha256": "d00b9feb667d83a131936919eb92581439e4c5304d2f9be6d5b2ca003da446d4",
+      "stage": "p5",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0063",
+      "name": "0063_p5_pins_methodology_migrations.sql",
+      "sha256": "66df797f547bb16822747bff7719b27dd913cee9cdfab7937f724158cdc0e044",
+      "stage": "p5",
+      "class": "destructive",
+      "irreversible": true,
+      "reasons": [
+        "DROP CONSTRAINT"
+      ],
+      "recovery": "Irreversible: restore the pre-upgrade backup set (ADR-0066 §7) into a fresh database and storage, and run the previous release."
+    },
+    {
+      "id": "0064",
+      "name": "0064_p5_studio_permissions_source_inventory.sql",
+      "sha256": "5f95a23f0037a1243c8c3a512b8ff759790d6007a0682379720502dcf7e5c013",
+      "stage": "p5",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0065",
+      "name": "0065_p5_scoring_defaults_instantiation.sql",
+      "sha256": "d4b80979f6ecc8d5ce49a25d56486059b80ce45c69eca12f1980a876f901d6be",
+      "stage": "p5",
+      "class": "destructive",
+      "irreversible": true,
+      "reasons": [
+        "DROP CONSTRAINT",
+        "replaces function p3_instantiate_transformation"
+      ],
+      "recovery": "Irreversible: restore the pre-upgrade backup set (ADR-0066 §7) into a fresh database and storage, and run the previous release."
+    },
+    {
+      "id": "0068",
+      "name": "0068_p5_form_schemas_framework.sql",
+      "sha256": "d7846eacdbf299fdb44ca9229db13ec64935da5e432da8563260935301fb405c",
+      "stage": "p5",
+      "class": "destructive",
+      "irreversible": true,
+      "reasons": [
+        "DROP CONSTRAINT",
+        "replaces function methodology_element_guard"
+      ],
+      "recovery": "Irreversible: restore the pre-upgrade backup set (ADR-0066 §7) into a fresh database and storage, and run the previous release."
+    },
+    {
+      "id": "0069",
+      "name": "0069_p5_procedures.sql",
+      "sha256": "4bb7caa3e793d90f0a0b1af94054ede9b3f78df2ea6df9ffb96d78ae63649d77",
+      "stage": "p5",
+      "class": "data_rewrite",
+      "irreversible": true,
+      "reasons": [
+        "INSERT … SELECT into procedure_step_definition"
+      ],
+      "recovery": "Irreversible: restore the pre-upgrade backup set (ADR-0066 §7) into a fresh database and storage, and run the previous release."
+    },
+    {
+      "id": "0070",
+      "name": "0070_p5_forms_procedures_permissions_coverage.sql",
+      "sha256": "119e353ee0061f49c25af7f11d04050a0c25a268cf79e32117cb58b75074721e",
+      "stage": "p5",
+      "class": "data_rewrite",
+      "irreversible": true,
+      "reasons": [
+        "INSERT … SELECT into methodology_coverage_link"
+      ],
+      "recovery": "Irreversible: restore the pre-upgrade backup set (ADR-0066 §7) into a fresh database and storage, and run the previous release."
+    },
+    {
+      "id": "0071",
+      "name": "0071_p5_choice_multiple_values.sql",
+      "sha256": "86cbd83d788c052c0dad393926728f680ac48e592d0f8eeb884c80696a9e085c",
+      "stage": "p5",
+      "class": "data_rewrite",
+      "irreversible": true,
+      "reasons": [
+        "replaces function form_custom_value_guard"
+      ],
+      "recovery": "Irreversible: restore the pre-upgrade backup set (ADR-0066 §7) into a fresh database and storage, and run the previous release."
+    },
+    {
+      "id": "0072",
+      "name": "0072_p5_procedure_step_approval_type.sql",
+      "sha256": "8207a212a5470279671e523762f2aade560f9fa604fbaceb0123566e5bd7f470",
+      "stage": "p5",
+      "class": "data_rewrite",
+      "irreversible": true,
+      "reasons": [
+        "replaces function procedure_instance_guard"
+      ],
+      "recovery": "Irreversible: restore the pre-upgrade backup set (ADR-0066 §7) into a fresh database and storage, and run the previous release."
+    },
+    {
+      "id": "0074",
+      "name": "0074_p5_automation_engine.sql",
+      "sha256": "3116e7ed0bc84fce114619710836c99c8f01521a48189c97006d0d503da55d83",
+      "stage": "p5",
+      "class": "data_rewrite",
+      "irreversible": true,
+      "reasons": [
+        "INSERT … SELECT into audit_event"
+      ],
+      "recovery": "Irreversible: restore the pre-upgrade backup set (ADR-0066 §7) into a fresh database and storage, and run the previous release."
+    },
+    {
+      "id": "0075",
+      "name": "0075_p5_starters_routes_policies.sql",
+      "sha256": "b44f38044591676d2149700c5bd6ec858d823d4ae1a51db338fbcc869b09ab8b",
+      "stage": "p5",
+      "class": "data_rewrite",
+      "irreversible": true,
+      "reasons": [
+        "INSERT … SELECT into audit_event",
+        "INSERT … SELECT into automation_rule",
+        "INSERT … SELECT into automation_rule_version",
+        "UPDATE work_item_kind"
+      ],
+      "recovery": "Irreversible: restore the pre-upgrade backup set (ADR-0066 §7) into a fresh database and storage, and run the previous release."
+    },
+    {
+      "id": "0076",
+      "name": "0076_p5_automation_permissions.sql",
+      "sha256": "d92c766cde4f9bdbd38e6ed9f37a7727ed407bb232aa6e325ba9b4083625aa51",
+      "stage": "p5",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0080",
+      "name": "0080_p5_reports_snapshots_updates.sql",
+      "sha256": "246dac0695a8c95bc0f9b0fcd3e26d2d7e0868cfac54907a0386bcf4798ca564",
+      "stage": "p5",
+      "class": "data_rewrite",
+      "irreversible": true,
+      "reasons": [
+        "INSERT … SELECT into audit_event"
+      ],
+      "recovery": "Irreversible: restore the pre-upgrade backup set (ADR-0066 §7) into a fresh database and storage, and run the previous release."
+    },
+    {
+      "id": "0081",
+      "name": "0081_p5_export_jobs.sql",
+      "sha256": "fdf3fdc0cc85cd02be952477b1f020364397d113604014ad8916b93ef0653749",
+      "stage": "p5",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0082",
+      "name": "0082_p5_reporting_permissions.sql",
+      "sha256": "072da5b7f908d2209ae2a2414ca268114b0b03662a32870fd332a3cb0b9f2537",
+      "stage": "p5",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0085",
+      "name": "0085_p5_kpi_restatements_financial_metrics.sql",
+      "sha256": "1b92e2f4c67a41e4381dc47ef510e98c8c37beb85f6d9125891304ec22c4955e",
+      "stage": "p5",
+      "class": "destructive",
+      "irreversible": true,
+      "reasons": [
+        "DROP CONSTRAINT"
+      ],
+      "recovery": "Irreversible: restore the pre-upgrade backup set (ADR-0066 §7) into a fresh database and storage, and run the previous release."
+    },
+    {
+      "id": "0086",
+      "name": "0086_p5_launch_plans_health_checks.sql",
+      "sha256": "db4d4f2c6ad6f06ce1f22b5aeaad5e473a3ccf42ddd932bb55b6dc64ad6d1e60",
+      "stage": "p5",
+      "class": "destructive",
+      "irreversible": true,
+      "reasons": [
+        "DROP CONSTRAINT",
+        "replaces function methodology_element_guard",
+        "INSERT … SELECT into audit_event"
+      ],
+      "recovery": "Irreversible: restore the pre-upgrade backup set (ADR-0066 §7) into a fresh database and storage, and run the previous release."
+    },
+    {
+      "id": "0087",
+      "name": "0087_p5_kpi_launch_health_permissions.sql",
+      "sha256": "faa704e03038cb6a32e6e93e7a59ce512d4dca30bf6d65bdaafce9e5d5a3a214",
+      "stage": "p5",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0088",
+      "name": "0088_p5_launch_health_source_working.sql",
+      "sha256": "328b7f32e39e540748e0610f4e29a2909220013a8897e11df1aaa70276ca0413",
+      "stage": "p5",
+      "class": "data_rewrite",
+      "irreversible": true,
+      "reasons": [
+        "DO block: UPDATE source_element"
+      ],
+      "recovery": "Irreversible: restore the pre-upgrade backup set (ADR-0066 §7) into a fresh database and storage, and run the previous release."
+    },
+    {
+      "id": "0089",
+      "name": "0089_p5_reader_provenance_branding.sql",
+      "sha256": "c2e134531132b1fa17a913ca3bbfa78b5c713ef1c37175fadd823c99175b5fe0",
+      "stage": "p5",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0090",
+      "name": "0090_p5_demo_environment_walkthrough.sql",
+      "sha256": "e32e1978d5d7ebd0bde48174d98e509d83b7a56b3f4e5a09aa18c95f7d95ef5a",
+      "stage": "p5",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0091",
+      "name": "0091_p5_reader_branding_demo_permissions.sql",
+      "sha256": "02aecf6f9de8ddd5555d008d3929783f255d5c7cbdf80c28a31b0736df088eee",
+      "stage": "p5",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0092",
+      "name": "0092_p5_playbook_blocks.sql",
+      "sha256": "16ca6bec022e77fce0034aa9a6c33a833879c5810c805f8dc5c7d4a47ef23497",
+      "stage": "p5",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0093",
+      "name": "0093_p5_roaming_example_source_working.sql",
+      "sha256": "2935938a9c0683c1b372a465bc09b56cf5508571b25c06b6613276f5e7ec59d9",
+      "stage": "p5",
+      "class": "data_rewrite",
+      "irreversible": true,
+      "reasons": [
+        "DO block: UPDATE source_element"
+      ],
+      "recovery": "Irreversible: restore the pre-upgrade backup set (ADR-0066 §7) into a fresh database and storage, and run the previous release."
+    },
+    {
+      "id": "0094",
+      "name": "0094_p5_gate_approver_configured.sql",
+      "sha256": "22f106fbb1f41c89d865cec71bfb3092da71e30b4385ece756f88531e4eafc79",
+      "stage": "p5",
+      "class": "data_rewrite",
+      "irreversible": true,
+      "reasons": [
+        "UPDATE gate_instance"
+      ],
+      "recovery": "Irreversible: restore the pre-upgrade backup set (ADR-0066 §7) into a fresh database and storage, and run the previous release."
+    },
+    {
+      "id": "0095",
+      "name": "0095_p5_procedures_v2_baseline_assignee.sql",
+      "sha256": "a639c66739bf249df8c84560c222a7b5ef233c456800c7ed58e1f35d09464f2b",
+      "stage": "p5",
+      "class": "data_rewrite",
+      "irreversible": true,
+      "reasons": [
+        "INSERT … SELECT into procedure_definition",
+        "INSERT … SELECT into procedure_step_definition",
+        "INSERT … SELECT into audit_event"
+      ],
+      "recovery": "Irreversible: restore the pre-upgrade backup set (ADR-0066 §7) into a fresh database and storage, and run the previous release."
+    },
+    {
+      "id": "0096",
+      "name": "0096_p5_intake_adopts_transformation.sql",
+      "sha256": "f6eeb652d36046efc5c270d7c2082bac043371754e6a6a2501e169f2f42d353a",
+      "stage": "p5",
+      "class": "destructive",
+      "irreversible": true,
+      "reasons": [
+        "DROP TRIGGER"
+      ],
+      "recovery": "Irreversible: restore the pre-upgrade backup set (ADR-0066 §7) into a fresh database and storage, and run the previous release."
+    },
+    {
+      "id": "0097",
+      "name": "0097_p5_config_review_contributors.sql",
+      "sha256": "c5ee2f423a0b823c6be3be1bef28adcb069ce6a918e825e4e59172968c8bc6c4",
+      "stage": "p5",
+      "class": "data_rewrite",
+      "irreversible": true,
+      "reasons": [
+        "INSERT … SELECT into methodology_version_contributor",
+        "INSERT … SELECT into automation_rule_version_contributor",
+        "INSERT … SELECT into audit_event"
+      ],
+      "recovery": "Irreversible: restore the pre-upgrade backup set (ADR-0066 §7) into a fresh database and storage, and run the previous release."
+    },
+    {
+      "id": "0098",
+      "name": "0098_p6_sensitive_records_deep_links.sql",
+      "sha256": "c6d7ab01fb5c9a48836bc607105b28b1a8c3a04617454cc8411ac6460241a8af",
+      "stage": "p6",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0099",
+      "name": "0099_p6_upload_policy_content_types.sql",
+      "sha256": "ba9ba1fa17723bb33f328f70a5330b2e98bf5ac8f48224fb0b146495715d066d",
+      "stage": "p6",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0100",
+      "name": "0100_p6_access_hardening_permissions.sql",
+      "sha256": "c338b129e803c118df3325ed6232d5b44d893b7927e3a74f017dd9ecc3045f08",
+      "stage": "p6",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0101",
+      "name": "0101_p6_operations_service_identities.sql",
+      "sha256": "de555ac91b8e666b09c0c010d0ea66b355c2e4aead896f04408b4c1312bca98b",
+      "stage": "p6",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0102",
+      "name": "0102_p6_storage_notification_channels.sql",
+      "sha256": "4c5b780e5622b32a75278b935b46d82d957b7ca3db77951016388be17a865f06",
+      "stage": "p6",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0103",
+      "name": "0103_p6_operations_channels_permissions.sql",
+      "sha256": "4a7c00bdec9fa13eb04eccf783e2a987076a0d6407c0112d8c180f57e89873e9",
+      "stage": "p6",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0104",
+      "name": "0104_p6_connectors_runs_outbound_writes.sql",
+      "sha256": "9e77861a0dc01ddeec93519bd5e04975d9abab153e15a4390d778cdadcb06507",
+      "stage": "p6",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0105",
+      "name": "0105_p6_imports_lineage_webhooks.sql",
+      "sha256": "8df12f447c7134e6c926707f6194733a0acaf09172e2609ee10aef46feb4fec6",
+      "stage": "p6",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0106",
+      "name": "0106_p6_deliverable_external_change.sql",
+      "sha256": "6a2747f188b4e8be14cb009331c22484675de2a9a63498c4bc396d659d554b63",
+      "stage": "p6",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0107",
+      "name": "0107_p6_integrations_permissions.sql",
+      "sha256": "56e870c0bed41af53139d674f5c85b8d13922118abf01f9da9c15e5038a44451",
+      "stage": "p6",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0108",
+      "name": "0108_p6_search_saved_views_help.sql",
+      "sha256": "15c42be3c6b5c5297f19da8273b59091a705d77fe3cef203cf558c5b73cc74f9",
+      "stage": "p6",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0109",
+      "name": "0109_p6_search_productivity_permissions.sql",
+      "sha256": "add0815f9178c35de25e5bc46b72003706c4c0c25fa173c7fdc8dc650549af66",
+      "stage": "p6",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0110",
+      "name": "0110_p6_register_filter_indexes.sql",
+      "sha256": "72fbf963961d4e03c9fa2036f1502718b7693df7021eef602a9b4a29199115f0",
+      "stage": "p6",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0111",
+      "name": "0111_p6_assistant.sql",
+      "sha256": "87fbab38d10dccfb63a0f9b2ebf65bb4482a0b9fee0adf37317dbbf0ea4ef721",
+      "stage": "p6",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0112",
+      "name": "0112_p6_assistant_permissions.sql",
+      "sha256": "64b33a14e92ae82f1c0ec491827cc1b3d01dcadd52632a50f5eb77c5b844789d",
+      "stage": "p6",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0113",
+      "name": "0113_p6_branding_contrast_reports.sql",
+      "sha256": "d0fad871235b5482c6ef19e72053d1ab6da9c03aebc16c6c1c5961337dd7a9dc",
+      "stage": "p6",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0114",
+      "name": "0114_p6_job_service_identities.sql",
+      "sha256": "d533463dae3012163b9a4c7d5906637b8b4901ebfbc04d0967c9175ffc84b7ca",
+      "stage": "p6",
+      "class": "data_rewrite",
+      "irreversible": true,
+      "reasons": [
+        "INSERT … SELECT into service_identity",
+        "INSERT … SELECT into audit_event"
+      ],
+      "recovery": "Irreversible: restore the pre-upgrade backup set (ADR-0066 §7) into a fresh database and storage, and run the previous release."
+    },
+    {
+      "id": "0115",
+      "name": "0115_p6_search_index_jobs.sql",
+      "sha256": "7041c5af0d614c6e52fd8fc6c654601bb2ced16ffadaae35ef8c889910252390",
+      "stage": "p6",
+      "class": "data_rewrite",
+      "irreversible": true,
+      "reasons": [
+        "INSERT … SELECT into audit_event",
+        "INSERT … SELECT into service_identity"
+      ],
+      "recovery": "Irreversible: restore the pre-upgrade backup set (ADR-0066 §7) into a fresh database and storage, and run the previous release."
+    },
+    {
+      "id": "0116",
+      "name": "0116_p6_connector_run_jobs.sql",
+      "sha256": "b48cca4c876f29a0b7cf699c7759cbe7be46567bd95f5ff2f07eda0fba2d1cf7",
+      "stage": "p6",
+      "class": "data_rewrite",
+      "irreversible": true,
+      "reasons": [
+        "INSERT … SELECT into audit_event",
+        "INSERT … SELECT into service_identity"
+      ],
+      "recovery": "Irreversible: restore the pre-upgrade backup set (ADR-0066 §7) into a fresh database and storage, and run the previous release."
+    },
+    {
+      "id": "0117",
+      "name": "0117_p6_operations_triggers_freshness.sql",
+      "sha256": "4037c2aeb3e62e8433f8af3026a075582e8d934e8fd5c25a3568cfb70392337d",
+      "stage": "p6",
+      "class": "data_rewrite",
+      "irreversible": true,
+      "reasons": [
+        "replaces function automation_rule_version_guard",
+        "UPDATE automation_rule",
+        "INSERT … SELECT into audit_event",
+        "UPDATE automation_rule_version",
+        "INSERT … SELECT into service_identity"
+      ],
+      "recovery": "Irreversible: restore the pre-upgrade backup set (ADR-0066 §7) into a fresh database and storage, and run the previous release."
+    },
+    {
+      "id": "0118",
+      "name": "0118_p6_evidence_content_detected_type_required.sql",
+      "sha256": "9d20d9102e44f843d70a84e49891f107c7f28ee2597ca51d25862b33c692fde1",
+      "stage": "p6",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0119",
+      "name": "0119_p6_branding_version_contrast_required.sql",
+      "sha256": "0d2d350f6827fff254d726448bc17fd07af5dc0313ebe8749792328f4cb5f8f1",
+      "stage": "p6",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0120",
+      "name": "0120_p6_audit_required_index_use.sql",
+      "sha256": "e1b4b512fca31b00fbfa1a33eb9640fcc666e1e9907ca9e1e71125ce0bafcd69",
+      "stage": "p6",
+      "class": "data_rewrite",
+      "irreversible": true,
+      "reasons": [
+        "replaces function p2_audit_required"
+      ],
+      "recovery": "Irreversible: restore the pre-upgrade backup set (ADR-0066 §7) into a fresh database and storage, and run the previous release."
+    },
+    {
+      "id": "0121",
+      "name": "0121_p6_notification_fanout_jobs.sql",
+      "sha256": "5a9f8a5c8e85983dbc303d798fbd8ac4fe649cdcadf830424f651594d629a5af",
+      "stage": "p6",
+      "class": "data_rewrite",
+      "irreversible": true,
+      "reasons": [
+        "INSERT … SELECT into audit_event",
+        "INSERT … SELECT into service_identity"
+      ],
+      "recovery": "Irreversible: restore the pre-upgrade backup set (ADR-0066 §7) into a fresh database and storage, and run the previous release."
+    },
+    {
+      "id": "0122",
+      "name": "0122_p6_automation_rule_enablement.sql",
+      "sha256": "468198d62f4ac65139dbf2db95690b401d6bca37899895b4bc326cf4262dd6f7",
+      "stage": "p6",
+      "class": "data_rewrite",
+      "irreversible": true,
+      "reasons": [
+        "INSERT … SELECT into automation_rule_enablement"
+      ],
+      "recovery": "Irreversible: restore the pre-upgrade backup set (ADR-0066 §7) into a fresh database and storage, and run the previous release."
+    },
+    {
+      "id": "0123",
+      "name": "0123_p6_automation_rule_enablement_disable.sql",
+      "sha256": "7523c8ccd162f482353c72962de51117a8df904da45c2a2ae989261fc5ebaf22",
+      "stage": "p6",
+      "class": "destructive",
+      "irreversible": true,
+      "reasons": [
+        "DROP CONSTRAINT",
+        "INSERT … SELECT into automation_rule_enablement",
+        "replaces function automation_rule_enablement_record"
+      ],
+      "recovery": "Irreversible: restore the pre-upgrade backup set (ADR-0066 §7) into a fresh database and storage, and run the previous release."
+    },
+    {
+      "id": "0124",
+      "name": "0124_p6_export_live_selection_pending.sql",
+      "sha256": "939a759268fb96b06108a510bcecc107207df419b15cb3e6d4e5baf6d346b433",
+      "stage": "p6",
+      "class": "destructive",
+      "irreversible": true,
+      "reasons": [
+        "DROP NOT NULL",
+        "DROP CONSTRAINT",
+        "replaces function export_job_guard"
+      ],
+      "recovery": "Irreversible: restore the pre-upgrade backup set (ADR-0066 §7) into a fresh database and storage, and run the previous release."
+    },
+    {
+      "id": "0125",
+      "name": "0125_p6_export_assembly_attempts.sql",
+      "sha256": "b703f4c43a3077b46ee032ebdb6b493600e2d0e1d0d372c13fdca06b9f78f7d8",
+      "stage": "p6",
+      "class": "data_rewrite",
+      "irreversible": true,
+      "reasons": [
+        "replaces function export_job_guard"
+      ],
+      "recovery": "Irreversible: restore the pre-upgrade backup set (ADR-0066 §7) into a fresh database and storage, and run the previous release."
+    },
+    {
+      "id": "0126",
+      "name": "0126_p6_report_snapshot_aggregate.sql",
+      "sha256": "0a7f11f46e1c3a70cfa341c3207d3f7c3b2d75ca32902d5190d7e973e141cd1d",
+      "stage": "p6",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0127",
+      "name": "0127_p6_automation_restricted_token_key.sql",
+      "sha256": "397a760de231aadbda71b77ab2f1e3c5012de4f4e0d5c1f26235194e8c7019b6",
+      "stage": "p6",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0128",
+      "name": "0128_p6_assistant_context_records.sql",
+      "sha256": "ae2c04c706a48daeffd4e9b655f5a0777850feb649f330abe0d39327fe6df6f8",
+      "stage": "p6",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0129",
+      "name": "0129_p6_assistant_context_insert_rule.sql",
+      "sha256": "2daccb347a0a12ae41a8c24fefa13888ae690d91f65793c964221394b9f65cba",
+      "stage": "p6",
+      "class": "destructive",
+      "irreversible": true,
+      "reasons": [
+        "replaces function p6_assistant_context_records_valid",
+        "DROP CONSTRAINT"
+      ],
+      "recovery": "Irreversible: restore the pre-upgrade backup set (ADR-0066 §7) into a fresh database and storage, and run the previous release."
+    },
+    {
+      "id": "0130",
+      "name": "0130_p6_seeded_text_business_terms.sql",
+      "sha256": "6f070379089486370c05090cf4c5a22ad5c3bf56a39390af8c25a9c0b453400b",
+      "stage": "p6",
+      "class": "data_rewrite",
+      "irreversible": true,
+      "reasons": [
+        "WITH … data-changing statement",
+        "INSERT … SELECT into audit_event"
+      ],
+      "recovery": "Irreversible: restore the pre-upgrade backup set (ADR-0066 §7) into a fresh database and storage, and run the previous release."
+    },
+    {
+      "id": "0133",
+      "name": "0133_p7_transfer_migration_manifest.sql",
+      "sha256": "a4c5806d5e5dc0e05fb2baef018bd1992169165905540b83e82db6109b984386",
+      "stage": "p7",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0134",
+      "name": "0134_p7_config_bundles.sql",
+      "sha256": "5a65cc0e1389af9ad32c4364b2281dc49640990f3c51d94d09a61e04d1e9b68e",
+      "stage": "p7",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0135",
+      "name": "0135_p7_transfer_permissions.sql",
+      "sha256": "ec1c478f7a4540b77643f30e7e4bbafed2cd129e6711fade4f1d1beaa96c84d8",
+      "stage": "p7",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0143",
+      "name": "0143_p7_retention_classes.sql",
+      "sha256": "34ab8b2fced46ef716a38813b9912e645b205fe2b3c0139d007b0a2cc066c19b",
+      "stage": "p7",
+      "class": "data_rewrite",
+      "irreversible": true,
+      "reasons": [
+        "INSERT … SELECT into retention_table_class"
+      ],
+      "recovery": "Irreversible: restore the pre-upgrade backup set (ADR-0066 §7) into a fresh database and storage, and run the previous release."
+    },
+    {
+      "id": "0144",
+      "name": "0144_p7_retention_runs.sql",
+      "sha256": "b2ff788315c2825f67a41e3602776a75ac007dc7dc4fb8c1e24a62325eb2eb97",
+      "stage": "p7",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0145",
+      "name": "0145_p7_backup_sets.sql",
+      "sha256": "d550f68cc980eb23e9e6afe03db700b1cae6486dc3f374ac8c40643b3238cff4",
+      "stage": "p7",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0146",
+      "name": "0146_p7_retention_backup_permissions.sql",
+      "sha256": "d623d492a3704928f0105138ca685f3bf2bfd52a1603dd47cb55853f37e277f1",
+      "stage": "p7",
+      "class": "additive",
+      "irreversible": false,
+      "reasons": [],
+      "recovery": "Forward-only like every migration: the supported rollback is the restore of the pre-upgrade backup set (ADR-0066 §7) and the previous release."
+    },
+    {
+      "id": "0147",
+      "name": "0147_p7_transfer_export_job.sql",
+      "sha256": "2cc88057490eddef5436b30850a44ee0bdae02a2d497854a7181a819b23afaa8",
+      "stage": "p7",
+      "class": "data_rewrite",
+      "irreversible": true,
+      "reasons": [
+        "INSERT … SELECT into service_identity",
+        "INSERT … SELECT into audit_event"
+      ],
+      "recovery": "Irreversible: restore the pre-upgrade backup set (ADR-0066 §7) into a fresh database and storage, and run the previous release."
+    },
+    {
+      "id": "0148",
+      "name": "0148_p7_retention_job.sql",
+      "sha256": "939139d2b2129636e587758c2bd44763f8ea9271bb38e4e4c82c003b71bcd963",
+      "stage": "p7",
+      "class": "data_rewrite",
+      "irreversible": true,
+      "reasons": [
+        "INSERT … SELECT into service_identity",
+        "INSERT … SELECT into audit_event"
+      ],
+      "recovery": "Irreversible: restore the pre-upgrade backup set (ADR-0066 §7) into a fresh database and storage, and run the previous release."
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+# plain pg_dump -Fc | pg_restore (no list reordering) of a DG6-level and a full-level database; 2026-11-13T02:59:48Z; HEAD 47b32d48dad4f589e3b9edf7c326250167926238
+port-policy: PostgreSQL listening on port 24351 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+== restore src (DG6 level vs fulldb level), all errors:
+pg_restore: error: COPY failed for table "forum_template": ERROR:  new row for relation "forum_template" violates check constraint "forum_template_participant_parties_check"
+pg_restore: warning: errors ignored on restore: 1
+== restore fulldb (DG6 level vs fulldb level), all errors:
+pg_restore: error: COPY failed for table "forum_template": ERROR:  new row for relation "forum_template" violates check constraint "forum_template_participant_parties_check"
+pg_restore: warning: errors ignored on restore: 1
+probe exit 0

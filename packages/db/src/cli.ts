@@ -2,6 +2,9 @@
 // mth-db: the database CLI (ADR-0003). Uses DATABASE_OWNER_URL (owner role; migrations and bootstrap only).
 //
 //   mth-db migrate      apply pending migrations (advisory lock; refuses on checksum drift)     exit 0 | 1
+//   mth-db migrate --dry-run [--report FILE] [--catalogue FILE] [--i-confirm-this-is-a-restored-copy]
+//                       apply the pending migrations to a throw-away copy of a RESTORED copy and report the changes
+//                       (ADR-0068 §1; DRY_RUN_ADMIN_DATABASE_URL; T-DG7-DO-G)                     exit 0 | 1 | 2
 //   mth-db status       report applied/pending; exit 0 only when up to date                     exit 0 | 3 | 4
 //   mth-db bootstrap    first organization + first technical/access administrator (see bootstrap.ts)
 //   mth-db seed-dev     SYNTHETIC dev-login users (refused with NODE_ENV=production or AUTH_MODE != dev)
@@ -30,6 +33,7 @@ import { DevSeedRefused, seedDev } from "./dev-seed.ts";
 import { assertUtf8Database, DatabaseEncodingError } from "./encoding.ts";
 import { migrate, MigrationError, migrationStatus } from "./migrate.ts";
 import { createDb, createPool } from "./pool.ts";
+import { runDryRunCommand } from "./dry-run.ts";
 import { readFile } from "node:fs/promises";
 import { runExportMigrationCommand } from "./transfer/cli.ts";
 import { runImportMigrationCommand } from "./transfer/import.ts";
@@ -50,6 +54,7 @@ async function holdsLoadDataset(pool: ReturnType<typeof createPool>): Promise<bo
 
 const USAGE = `usage:
   mth-db migrate
+  mth-db migrate --dry-run [--report FILE] [--catalogue FILE] [--i-confirm-this-is-a-restored-copy]
   mth-db status
   mth-db bootstrap --org-code CODE --org-name-en NAME --org-name-ar NAME
                    --admin-name NAME [--admin-email EMAIL] --admin-issuer ISSUER --admin-subject SUB
@@ -96,6 +101,8 @@ async function main(argv: string[]): Promise<number> {
       devIssuerBinding,
     });
 
+  if (command === "migrate" && rest.includes("--dry-run"))
+    return runDryRunCommand(rest, ownerUrl, { out: (l) => console.log(l), err: (l) => console.error(l) });
   if (command === "migrate") {
     const applied = await migrate(ownerUrl, { log: (l) => console.log(`mth-db migrate: ${l}`) });
     console.log(
