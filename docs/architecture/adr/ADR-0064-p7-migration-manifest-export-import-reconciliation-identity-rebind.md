@@ -209,3 +209,303 @@ The plan named the read code `migration.import_status.read`. A permission code h
 ## Version evidence (M0314)
 
 No new dependency. JSON, SHA-256 (`node:crypto`), file I/O and CSV parsing of the four-column mapping file use Node built-ins and the existing `pg`/Kysely stack (ADR-0001). `jsonb_populate_recordset`, `ALTER TABLE … DISABLE TRIGGER USER` and `OVERRIDING SYSTEM VALUE` are PostgreSQL features present in the SQL floor, PostgreSQL 16 (the guard probe ran on 16.15, handback §3).
+
+## Amendment 1 (2026-11-13, T-DG7-ARCH-R2): the import load on a freshly migrated target (§6), the post-import recheck, and the attachment verify report
+
+- **Author:** solution-architect (T-DG7-ARCH-R2). Base `9430663aa2681a2e776eb396ff8c46148edbf405` on `claude/mobily-transformation-platform-dg6-regate`.
+- **Why.** This amendment repairs a design error recorded in D-258, item 1. It does not reopen anything. §6 above stated that "a freshly migrated database passes" step 4, and that `audit_event` "loads by plain INSERT with its original `id`, `seq`" while its triggers stay on. Both statements are false:
+  - Migrations write `audit_event` rows themselves, for example `job_schedule.create` in 0028 and `service_identity.create` in 0147. These rows have uuid v7 ids and `seq` from 1. BE-D measured this on PostgreSQL 16.15 (handback T-DG7-BE-D, Q1, and the test "Q1 (BLOCKED …)" in `transfer-roundtrip.test.ts`).
+  - So the literal step 4 refuses every target. Without step 4, the source rows collide on `audit_event_seq_key`. The target's own rows cannot be removed, because that needs the triggers off, which is a DG1 reopen.
+- **What this amendment replaces.** It replaces §6 steps 4–9, the `reconcile-migration` paragraph after them, and the BE-E row of §12 wherever they differ from it. Everything else in this ADR stands unchanged: §1–§5, §6 steps 1–3, §7–§11, the Residuals and the Alternatives.
+- **Hard constraints (D-258).**
+  - `audit_event` stays append-only, and both of its triggers stay enabled. Nothing truncates, deletes from or updates it.
+  - No source audit event is lost, altered or re-attributed.
+  - The target's own migration-written events are kept.
+  - The result can be verified by reconciliation.
+- **Two gate systems.** Nothing in this amendment grants or implies a G1–G6, Finance or IT approval, and nothing reads or writes DG0–DG7.
+
+### A1.1 Options weighed
+
+| Option | What it does | Verdict |
+| --- | --- | --- |
+| (a) Empty `audit_event` on the target before the load | needs `audit_event`'s triggers bypassed (or dropped) by the owner | **Rejected.** DG1 reopen (ADR-0004 §2, seam 8). Forbidden by D-258. |
+| (b) Keep the target's rows, load the source's after them with `seq` shifted by a recorded offset | every source column is verbatim except `seq`, which becomes `seq + Δ` | **Rejected.** Every carried event's stored `seq` changes, so "rows equal including `seq`" (T-C8) and D-243 Q4's "verbatim audit import" no longer hold. A mapping can be verified, but it is weaker than equality. |
+| (c) Carry only the source events with `source <> 'migration'` and renumber | as (b), and the source's own migration events are dropped | **Rejected.** It loses source events. |
+| (d) A target path whose migrations write no audit row | needs edits to applied, forward-only migrations | **Rejected.** Migrations are never edited once merged, and 28 files write audit rows. |
+| (e) Carry the source trail into a separate archive table | | **Rejected** already (D-243 Q4, Alternative 3). The in-app audit view would lose the history. |
+| **(f) Reserve the target's audit sequence above the package before any audit row exists** | `mth-db migrate --reserve-audit-seq-for <package>` sets `audit_event_seq_seq` right after the migration that creates it, before any later migration writes an event. The target's migration events then get `seq` values above the package's highest `seq`, and the source rows load with their own `id` and `seq`, unchanged. | **Chosen** (A1.2). |
+
+**Why (f).**
+
+- **Every source audit row is loaded byte for byte**, including `id`, `seq`, `occurred_at`, the actors, `changes`, `request_id` and `source`. So the T-C8 clause "`audit_event` rows equal including `seq`" and D-243 Q4's "verbatim" hold as written.
+- **The target's own migration events are kept as they are.** No trigger is touched and no audit row is updated or deleted.
+- **One total order holds:** the carried history first, then the target's migration events, then the import's own events, then later use. That order matches what happened on the wall clock: the target was migrated after the source history and before the import.
+- **The cost is one preparation step on the target.** A target migrated without the reservation is refused with a precise line telling IT how to recreate it (A1.3, check E3). Setting the identity sequence of an empty table is not an audit modification: no audit row exists yet when it runs.
+
+### A1.2 Preparing the target: `mth-db migrate --reserve-audit-seq-for <dir>`
+
+1. **Who and when.** It runs as `mth_owner` (`DATABASE_ADMIN_URL`), on a database with **no applied migration**. Otherwise it exits 2 with `migrate: refused: --reserve-audit-seq-for needs a database with no applied migration`.
+2. **The package is checked first** (§6 step 1). The checks are the manifest's `schemaVersion`, that the manifest is canonical, and the `fileSha256` of `tables/audit_event.ndjson`. A failure exits 2 with `migrate: refused: the package at <dir> failed its checks: <the import-migration reason>`, and the command never connects to the database.
+3. **The reserved start.** `R = M + 1`, where `M` is the highest `seq` in `tables/audit_event.ndjson`, read as an exact bigint by streaming the file. If the file has no row, `M = 0`. Nothing else in the package is read.
+4. **The hook.** The migration runner (`packages/db/src/migrate.ts`, a new `MigrateOptions.reserveAuditSeqFrom?: bigint`) applies the migrations as usual. Inside the transaction of the **first file after which `to_regclass('public.audit_event_seq_seq')` is not null** (today `0003_audit_event.sql`), after that file's SQL and before its `schema_migration` row, it:
+   - asserts `SELECT count(*) FROM audit_event` is 0;
+   - runs `SELECT setval('audit_event_seq_seq', R, false)`.
+
+   If the run ends without the hook having fired, the runner exits 2 with `migrate: refused: the migrations never created audit_event_seq_seq; nothing was reserved`. The transaction then rolls back that file, so in practice this line is reached only by a test with a fixture directory.
+5. **Output.** On success it prints the usual `applying …` lines, then `migrate: the audit sequence of this target starts at <R> (the package's highest audit seq is <M>)`, and exits 0.
+6. **No audit row is written by the reservation itself.** It happens before the first audit row of the installation exists. It is recorded later, on `migration_import` (A1.6) and in `migration.imported` (A1.7).
+7. **Wrapper.** `tools/migration/prepare-target.mjs --from <dir>` is a thin wrapper over this command, with the exit codes of p7-work-split §2 rule 4.
+8. **Without the option**, `mth-db migrate` behaves exactly as before. Every other installation is unaffected.
+
+### A1.3 The empty-target rule (replaces §6 step 4)
+
+The check runs **inside the load transaction** (A1.4 L1), after `LOCK TABLE audit_event IN EXCLUSIVE MODE`. That lock blocks every other writer until commit or rollback, so no application mutation can slip in between the check and the load. The lock does not disable or bypass any trigger.
+
+| Check | Rule | Refusal |
+| --- | --- | --- |
+| **E1** no use | no row in `organization`, `app_user`, `user_identity`, `transformation`, `deployment_environment`, `evidence_content`, `export_job`, `migration_import`, `identity_binding_hold`, `session` or `worker_heartbeat` | exit 3: `import-migration: refused: the target database is not empty` (C.5, unchanged), then one line per table: `import-migration: <table> holds <n> rows` |
+| **E2** baseline only | every `audit_event` row is a **baseline row**: `source = 'migration' AND actor_type = 'system' AND actor_user_id IS NULL AND on_behalf_of_user_id IS NULL AND organization_id IS NULL AND transformation_id IS NULL` | exit 3: the C.5 line, then `import-migration: audit_event holds <n> rows not written by migrations` |
+| **E3** reserved | if any baseline row exists, `min(seq)` of the baseline is greater than `M`, the package's highest audit `seq` | exit 2: `import-migration: refused: the target's audit events start at seq <s>, at or below the package's highest audit seq <M>; recreate the target with mth-db migrate --reserve-audit-seq-for <dir>` |
+| **E4** triggers on | `audit_event_immutable` and `audit_event_immutable_truncate` both have `tgenabled = 'O'` | exit 2: `import-migration: refused: audit_event trigger <name> is not enabled` |
+
+**Why E1 and E2 together mean "only migration seeds".**
+
+- ADR-0004 §3 makes every application, worker and CLI mutation write an audit event, and those events are never baseline rows: they carry an actor, an organization, or a source other than `migration`.
+- `worker_heartbeat` and `session` catch a worker that has started and a sign-in. Neither writes a business audit event.
+- So when E1 and E2 hold, every row in every other exported table was written by a migration of the same release at the same level (§6 step 2). Those rows are exactly what the source also holds, and step L4 replaces them with the source's own copy.
+
+**BE-R1's T-R1 measures that a freshly migrated target satisfies E1, E2 and E4.** If a future migration writes a baseline row that E2 does not describe, that test fails. A new migration must not weaken E2. If one ever needs to, it stops and reports to the architect.
+
+### A1.4 The load (replaces §6 steps 5–7 and 9)
+
+Steps 1–3 of §6 are unchanged: package checks, target checks, then the attachment copy-in. After step 3, `tools/migration/import.mjs` also runs `transfer-attachments verify --from <dir> --out <report>` (A1.8). It then passes `--attachments-report <report>` to `mth-db import-migration`.
+
+From L0 to L12 below is **one transaction**, under the session lock 730403. A refusal or failure at any point rolls the whole transaction back.
+
+| Step | What | Rule |
+| --- | --- | --- |
+| L0 | open | `BEGIN`; the pinned encoder settings of §2.3 (`SET LOCAL`); `LOCK TABLE audit_event IN EXCLUSIVE MODE` |
+| L1 | empty target | E1–E4 (A1.3) |
+| L2 | record the baseline | Over the baseline rows: `rows`, `min(seq)`, `max(seq)`, and the **baseline digest**, which is the §2.3 encoder applied to `audit_event` with `WHERE seq > M` (sorted by primary key, as always). If there are no rows, the digest is that of the empty string. |
+| L3 | user triggers off, except `audit_event` | `ALTER TABLE … DISABLE TRIGGER USER` on every exported table **except `audit_event`**. Foreign keys and CHECK constraints stay enforced. Re-assert E4 afterwards. |
+| L4 | replace the migration seeds | `DELETE FROM t` on every exported table except `audit_event`, in **reverse** `loadPhase` order, counting the rows per table (`seedRowsReplaced`). `TRUNCATE` is never used (§6). `audit_event` is never a target of DELETE: its baseline rows stay. |
+| L5 | load | Every exported table, in `loadPhase` order: `INSERT INTO t [OVERRIDING SYSTEM VALUE] SELECT * FROM jsonb_populate_recordset(NULL::t, $1)`, in batches, with `deferredColumns` loaded as `null`. **`audit_event` is loaded at its `loadPhase` the same way, with its own `id` and `seq`.** E3 guarantees that no carried `seq` and no carried `id` collides with a baseline row. A uuid v7 collision would be refused by the primary key and roll everything back. |
+| L6 | second pass | Set every `deferredColumns` value (§2.2). If the plan gives `audit_event` a deferred column, the import refuses before L3 (exit 1, `import-migration: failed: the plan defers a column of audit_event, which can never be updated`). T-R2 pins that it has none today. |
+| L7 | sequences | For every identity or serial column of an exported table: `setval(seq, greatest(max(col), <current last_value>), true)`. A sequence is **never lowered**. For `audit_event_seq_seq` this keeps the value above the baseline. |
+| L8 | user triggers on | `ALTER TABLE … ENABLE TRIGGER USER` for exactly the tables of L3, then re-assert E4. Triggers that were disabled during an INSERT queue no deferred event, so `p2_audit_required` does not fire after the fact for loaded rows. They were audited on the source, and their audit rows are among the carried events. |
+| L9 | reconcile (§6 step 8; A1.5) | Per exported table, live count and digest against the manifest. For `audit_event`, the **carried range** (`seq <= M`) is compared, and the baseline is recorded as an allowed delta. Attachments come from the A1.8 report. |
+| L10 | mismatch → rollback | On any mismatch: `ROLLBACK`. The report goes to stdout and to `--report <file>`, and the command exits 4 with the C.5 line. The database is as it was before L0: still migrated, still with only its baseline. |
+| L11 | records | `migration_import` with the A1.6 fields; one `identity_binding_hold` (`unbound`) per `app_user` row; then `migration_reconciliation` (`run_kind` `import`), its `migration_reconciliation_table` rows, its `migration_reconciliation_attachment` rows and its `migration_reconciliation_delta` rows (A1.6). |
+| L12 | audit and commit | **Append** `migration.imported`, `migration.reconciled`, and one `identity.binding_held` per hold. Each is written as `actor_type` `system`, `source` `cli`, through the ordinary sequence, so after the baseline. Then `COMMIT`. |
+
+**After L12, the import prints:**
+- the C.5 success line, unchanged;
+- then one more line: `import-migration: audit history: <c> carried events (seq <a>-<M>) and <b> target migration events (seq <x>-<y>) kept; nothing was renumbered`. `<b>` may be 0, and `(seq <x>-<y>)` is then omitted.
+
+**The import still never edits or removes an audit row, and both triggers stay enabled throughout** (T-R4 checks this between every step). The import's own events are the only new audit rows beyond the carried ones. The trail's total order is:
+
+| Range | Which events |
+| --- | --- |
+| `seq <= M` | carried history, verbatim |
+| `M < seq <= y` | the target's migration baseline |
+| `seq > y` | the import's own events, then later use |
+
+### A1.5 How the audit chain and its order are verified
+
+DG1 gives `audit_event` no hash chain (ADR-0004 §2 leaves that as a later option). "The chain" here therefore means four things: the set of events, their content, their order, and the boundaries between the three ranges. Each is proven by one check.
+
+| Property | Check (at L9, and again by every recheck) |
+| --- | --- |
+| no source event lost or added | `count(*) WHERE seq <= M` equals the manifest's `rowCount` for `audit_event` |
+| no source event altered or re-attributed | the §2.3 encoder over `audit_event WHERE seq <= M`, sorted by `id`, gives the manifest's `contentDigest`. Every column is covered, including `id`, `seq`, `occurred_at`, `actor_type`, `actor_user_id`, `on_behalf_of_user_id`, `organization_id`, `transformation_id`, `source`, `request_id` and `changes`. |
+| source order unchanged | follows from the digest: `seq` is part of every encoded line |
+| baseline kept and unchanged | rows, `min(seq)`, `max(seq)` and the digest of `M < seq <= audit_baseline_seq_max` equal the L2 values recorded on `migration_import` |
+| ranges do not interleave | `max(seq) WHERE seq <= M` ≤ `M` < `audit_baseline_seq_min` ≤ `audit_baseline_seq_max` < `min(seq)` of the import's own events. Every event after the import has `seq > audit_baseline_seq_max`. |
+| triggers on | E4 at L1, L3 and L8 (import), and at the start of every recheck |
+
+### A1.6 Schema (migration `0149`, BE-R1; the next free id above `0148`, D-245 O9)
+
+**`migration_import` gains seven columns.** All are NULL-able so the migration applies on any database at 0148. Every row written by the 0149 code fills all of them, and a CHECK enforces "all or none".
+
+| Column | Type | Meaning |
+| --- | --- | --- |
+| `audit_carried_rows` | bigint ≥ 0 | the manifest's `audit_event` `rowCount` |
+| `audit_carried_seq_max` | bigint ≥ 0 | `M` |
+| `audit_baseline_rows` | bigint ≥ 0 | L2 rows |
+| `audit_baseline_seq_min`, `audit_baseline_seq_max` | bigint, both NULL exactly when `audit_baseline_rows = 0` | L2 range |
+| `audit_baseline_digest` | text `^[0-9a-f]{64}$` | L2 digest |
+| `seed_rows_replaced` | bigint ≥ 0 | sum of L4's deletes |
+
+**CHECK `migration_import_audit_ranges`:** all seven columns are NULL, or:
+- `audit_carried_rows`, `audit_carried_seq_max`, `audit_baseline_rows`, `audit_baseline_digest` and `seed_rows_replaced` are all NOT NULL;
+- `(audit_baseline_rows = 0) = (audit_baseline_seq_min IS NULL)`, and the same for `audit_baseline_seq_max`;
+- `audit_baseline_seq_min > audit_carried_seq_max` and `audit_baseline_seq_max >= audit_baseline_seq_min`, when the baseline is not empty.
+
+**`migration_reconciliation`:**
+- `run_kind` gains the value `recheck_after_use`.
+- The CHECK `migration_reconciliation_result` is replaced by: `(result = 'matched') = (tables_mismatched = 0 AND attachments_mismatched = 0 AND (run_kind = 'recheck_after_use' OR rows_expected = rows_actual))`.
+- Both changes are drop-and-add of a CHECK. Existing rows still satisfy the looser rule. `tools/release/migration-catalogue.mjs` classifies 0149 as it finds it; BE-R1 regenerates the catalogue and adds no override that lowers the class.
+
+**New table `migration_reconciliation_delta`.** It is append-only (`p2_attach_append_only`), `mth_app` has SELECT only, and it is written by the CLI (owner):
+
+| Column | Type | Meaning |
+| --- | --- | --- |
+| `migration_reconciliation_id` | uuid, FK `migration_reconciliation` | the run |
+| `table_name` | text, the identifier pattern of 0133 | the table |
+| `basis` | text, one of `audit_baseline`, `audit_additions`, `rebind`, `exact_ids`, `operational`, `unexplained` | why the table may differ |
+| `rows_added`, `rows_changed`, `rows_missing` | bigint ≥ 0 | against the package (or the carried range) |
+| `allowed` | boolean | `false` only with basis `unexplained`, or when an `exact_ids` set does not match |
+| primary key | `(migration_reconciliation_id, table_name, basis)` | |
+
+**Rule (code and test, not a CHECK):** a run is `matched` only if every delta row of the run is `allowed`. `tables_mismatched` counts the tables that have a `matched = false` table row with no allowed delta, plus the tables with a disallowed delta.
+
+**Also in BE-R1's scope:** `transfer_table_rule` gains exactly one row, `('migration_reconciliation_delta', 'exclude_transfer', 'Written by the import and the rechecks on the target')`, so the new table never travels (the T-C1 catalogue test requires it). The data dictionary, ERD, Kysely types, `SCHEMA_COLUMNS` and catalogue pins follow.
+
+**Contract (additive only):**
+- `MigrationImport` gains the seven fields, nullable, as decimal strings for bigint.
+- `MigrationReconciliation` gains `runKind` value `recheck_after_use` and an array `deltas[]` of `{tableName, basis, rowsAdded, rowsChanged, rowsMissing, allowed}`.
+- No operation is added or removed.
+
+### A1.7 The `migration.imported` event (replaces the event part of §6 step 9)
+
+The event is: `record_type` `migration_import`, `record_id` the import id, `new_version` 1, `actor_type` `system`, `source` `cli`, `reason` `null`, and `request_id` set to the operator name prefixed `cli:`.
+
+`changes` follows the `{field: {from: null, to: …}}` shape (ADR-0004 §1). The fields are:
+- `manifestSha256`, `attachmentManifestSha256`, `sourceEnvironment`, `demoChecksum`;
+- `tableCount`, `rowCount`, `attachmentCount`;
+- `auditCarried` `{rows, seqMax}`;
+- `auditBaseline` `{rows, seqMin, seqMax, digest}`;
+- `seedRowsReplaced` `{total, tables: {<table>: <n>}}`, listing only the tables with n > 0.
+
+All counts are decimal strings. The event names no source user and no secret.
+
+**What the replaced seeds mean for the baseline.** A baseline event (for example `job_schedule.create` for `01920004-0001-7000-8000-000000000001`) describes a migration seed that L4 replaced with the source's row of the same id. The `seedRowsReplaced` field is the record of that replacement. The baseline event is kept as written (D-258), so the trail shows the event twice: once in the carried history (the source's migration) and once in the baseline (the target's). The audit view shows both because both happened.
+
+### A1.8 The attachment verify report that `reconcile` consumes (BE-D gap 2, BE-E §2)
+
+`apps/api/src/cli/transfer-attachments.ts verify --from <dir> --out <file>` (BE-E) writes **`mth-attachment-verify/1`**. It is adopted here as the contract, exactly as BE-E built it. The file is canonical JSON, with keys in this order, no insignificant whitespace, and one final newline:
+
+```json
+{
+  "schemaVersion": "mth-attachment-verify/1",
+  "attachmentManifestSha256": "<64 hex: SHA-256 of the package's attachments.json>",
+  "checked": 0,
+  "result": "matched",
+  "mismatches": [
+    {
+      "parentTable": "<table>",
+      "objectName": "<storage key>",
+      "problem": "missing",
+      "expectedSize": "<decimal string>",
+      "actualSize": null,
+      "expectedSha256": "<64 hex>",
+      "actualSha256": null
+    }
+  ]
+}
+```
+
+(The example is pretty-printed for reading. The file itself is one line.)
+
+| Field | Rule |
+| --- | --- |
+| `checked` | a JSON integer, equal to `attachments.json`'s entry count |
+| `result` | `matched` exactly when `mismatches` is empty |
+| `problem` | `missing`, `size_mismatch` or `sha256_mismatch` |
+| `actualSize`, `actualSha256` | both `null` exactly for `missing` |
+| sizes | decimal strings |
+| `mismatches[]` order | the order of `attachments.json` |
+
+**`mth-db import-migration` and `reconcile-migration` read it with `--attachments-report <file>`** and refuse (exit 2) when:
+
+| Condition | Line |
+| --- | --- |
+| the package lists attachments (`attachmentManifest.count > 0`, or `migration_import.attachment_count > 0` for a recheck) and no report is given | `<cmd>: refused: the package lists <n> attachments; give --attachments-report <file> written by transfer-attachments verify` |
+| the file is not strict UTF-8 canonical JSON, `schemaVersion` differs, a field is missing or extra, or a rule above is broken | `<cmd>: refused: invalid attachment report: <reason>` |
+| `attachmentManifestSha256` differs from the package's (import) or from `migration_import.attachment_manifest_sha256` (recheck) | `<cmd>: refused: the attachment report belongs to another package (<a>, the import recorded <b>)` |
+| `checked` differs from the count | `<cmd>: refused: the attachment report checked <c> of <n> attachments` |
+
+`<cmd>` is `import-migration` or `reconcile-migration`. A package with no attachments needs no report, and `attachments_checked` is then 0, which is the truth. **A recheck never reports `attachments_checked = 0` for a package that has attachments.** The mismatches go one-to-one into `migration_reconciliation_attachment` (§6 step 8). `tools/migration/import.mjs` and `tools/migration/reconcile.mjs` run `verify` immediately before the database command, in the same wrapper run, and delete the report file afterwards unless `--keep-reports <dir>` is given.
+
+### A1.9 The recheck (replaces the `reconcile-migration` paragraph of §6; BE-D Q2, DO-D Q2)
+
+`mth-db reconcile-migration --operator <name> [--attachments-report <file>] [--after-use --from <dir> --allow <file>]` runs as `mth_owner` under lock 730403. It reads the latest `migration_import`; with none recorded it exits 2, as built. It changes no business row. It appends one `migration_reconciliation` with its child rows and one `migration.reconciled` audit event. Those writes are the expected `audit_event` additions of the next recheck.
+
+#### Mode 1, before use (default; `run_kind` `recheck`)
+
+This is the state right after the import and the identity rebind, before anyone has used the target. Exit 0 means `matched`; exit 4 means `mismatch`, with the C.5 lines.
+
+| Table | Must hold |
+| --- | --- |
+| every exported table except `audit_event` and `user_identity` | live count and digest equal the import run's `migration_reconciliation_table` expectations, which are the manifest values |
+| `audit_event` | the carried range and the baseline equal (A1.5). Rows with `seq > audit_baseline_seq_max` are **additions** and are always allowed (delta `audit_additions`). The report lists them by `action` with counts. |
+| `user_identity` | the live rows, with each `identity_rebind_event` of action `rebound` **reversed** (issuer and subject set back to `old_issuer`, `old_subject` for that identity), equal the expectation. Delta `rebind`, `rows_changed` = the number of rebound identities. A rebound identity whose live pair differs from the event's `new_issuer`, `new_subject` is `unexplained`. |
+| attachments | the A1.8 report: every mismatch counts |
+
+Any other difference is a mismatch. Mode 1 is the D5 check and the T-R6 check.
+
+#### Mode 2, after use (`--after-use`; `run_kind` `recheck_after_use`)
+
+This is for a target that has been used, for example by the drill's D8. It needs the package directory (`--from`, re-checked as in §6 step 1) and an **allowance file**. It compares **row by row** by primary key: each live row against the package row, both encoded by §2.3. Each row is unchanged, added, changed, or missing.
+
+The allowance file is `mth-recheck-allowance/1`: strict UTF-8 JSON (not necessarily canonical), validated before any database read.
+
+```json
+{
+  "schemaVersion": "mth-recheck-allowance/1",
+  "tables": [{ "name": "transformation", "added": [["<pk text>"]], "changed": [] }],
+  "operational": ["job_run"]
+}
+```
+
+- **`tables[]`:** `name` is an exported table. `added` and `changed` are arrays of primary-key tuples. A tuple holds the key columns' text output, in key order, as JSON strings.
+- **`operational[]`:** table names from the code constant `RECHECK_OPERATIONAL_TABLES` (`packages/db/src/transfer/recheck.ts`).
+
+**The rules:**
+
+1. **`audit_event`:** as in mode 1. It may not appear in the file.
+2. **`user_identity`:** the mode 1 reversal is applied first. Further changes (for example `last_login_at` after a sign-in) must be listed in `tables` with exact ids.
+3. **A table in `tables`:** its set of added keys must **equal** `added` exactly, its set of changed keys must **equal** `changed`, and no row may be missing (ADR-0003: no hard delete). Delta basis `exact_ids`; `allowed` is false if any set differs, and the report prints the extra and the absent keys, at most 20 of each.
+4. **A table in `operational`:** additions, changes and missing rows are allowed and counted (delta `operational`).
+5. **Every other exported table:** must be row-for-row unchanged. Any difference gives delta `unexplained` and `allowed = false`.
+6. **Never in `operational`** (the constant's test pins this):
+   - `audit_event`, `app_user`, `user_identity`, `scoped_assignment`, `delegation`;
+   - every approval and decision table (`gate_decision`, `approval`, `approval_decision`, and every table whose name starts with `decision`);
+   - the 17 financial tables of T-C17.
+
+   Rows these tables gain through use must be named, key by key, in `tables`.
+7. **The allowance file itself is refused** (exit 2, `reconcile-migration: refused: invalid allowance file: <reason>`) for:
+   - an unknown, excluded or duplicated table;
+   - a table both in `tables` and in `operational`;
+   - an `operational` name outside the constant;
+   - a malformed key tuple.
+
+**Output:**
+- Exit 0 prints `reconcile-migration: matched after use: <t> tables unchanged, <d> tables with allowed differences, <e> audit events added since the import`.
+- Exit 4 prints the C.5 mismatch line, then one line per disallowed table: `  <table>: <a> added, <c> changed, <m> missing (<basis>)`.
+
+**What the drill's D9 asserts with mode 2.** The drill passes the keys its journey received from API responses: the records D8 created or changed, the rows the worker derived from them that the journey reads back through the API, and the identities that signed in. Those are exactly D8's additions. Everything else is operational, or must be unchanged.
+
+**The initial `RECHECK_OPERATIONAL_TABLES`:** `job_schedule`, `job_run`, `outbox_event`, `processed_message`, `operational_failure`, `operational_exception`, `operational_exception_event`, `inbox_notification`, `notification_delivery`, `notification_digest`, `export_job`, `export_job_progress`.
+- BE-R1 may remove a name that it measures is never written.
+- Adding a name needs the architect: it is a new place where a recheck stops seeing changes.
+
+### A1.10 DG1 audit guarantees: how each is preserved
+
+| Guarantee (ADR-0004, 0003) | How |
+| --- | --- |
+| `audit_event_immutable` refuses UPDATE and DELETE, even for the owner | Never disabled. E4 is checked at L1, L3 and L8 and at every recheck. T-R4 checks `tgenabled = 'O'` between steps. The import issues no UPDATE or DELETE on `audit_event`; L4 excludes it by name. |
+| `audit_event_immutable_truncate` refuses TRUNCATE | Never disabled. The import issues no TRUNCATE at all (§6). |
+| `mth_app` has INSERT and SELECT only | Unchanged. The import, the reservation and the rechecks run as `mth_owner` through the CLI only (C.11), and no grant changes. |
+| one total order (`seq` unique, `GENERATED ALWAYS`) | Kept. The carried rows keep their `seq`. The reservation places every target event above them, and the sequence is never lowered (L7). `audit_event_seq_key` is never violated. A collision is impossible after E3, and would roll back the transaction if it happened. |
+| events are written in the transaction of the mutation | The import's own events are written in the import's transaction (L12). The loaded rows were written in the source's transactions and are carried as history. |
+| no ordinary user modification | No route, job or permission reaches any of this (C.11). The only new rows are appended. |
+| owner credentials are IT-held (residual of ADR-0004) | Unchanged. The amendment adds no way for the owner to alter the trail. Setting the sequence of an empty `audit_event` (A1.2) runs before the installation's first event. |
+
+### A1.11 Residuals of this amendment
+
+1. **The target must be prepared with the reservation.** A plainly migrated target is refused (E3), with the remedy in the message. For an operator this is one more documented step. DOC-B adds it to the deployment and operator guides (C.12, B.6 DO-D2).
+2. **The trail shows each seed's creation twice** (A1.7): once for the source and once for the target's baseline. Both are true events. The baseline events have no organization, so transformation-scoped audit views never show them.
+3. **Mode 2 depends on the allowance the operator gives.** It proves "exactly these keys changed, and nothing else outside the operational list". It cannot judge whether those were the right changes. The drill's keys come from API responses, and a reviewer can read the file.
+4. **`RECHECK_OPERATIONAL_TABLES` is a judgment.** A difference in those tables is counted, not explained. The list excludes every identity, approval, decision and financial table by test.
+5. **E1/E2 rely on ADR-0004's coverage rule** (every mutation writes a non-baseline audit event), plus the heartbeat and session rows. A writer that broke that rule would also break DG1's own tests.
