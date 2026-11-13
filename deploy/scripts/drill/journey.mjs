@@ -160,7 +160,15 @@ export function client({ app, api }) {
 export class Journal {
   constructor(file) {
     this.file = file;
-    this.entries = file && existsSync(file) ? JSON.parse(readFileSync(file, "utf8")).entries : [];
+    const j = file && existsSync(file) ? JSON.parse(readFileSync(file, "utf8")) : {};
+    this.entries = j.entries ?? [];
+    /** D-262 (a): the access grants D8 made through the API (createRoleAssignment), recorded for the report. Not
+     * allowance keys: scoped_assignment is a D8 child table (allowance.mjs D8_TOUCHED_CHILDREN), explained through its
+     * parent app_user (the grantee signs in and is journalled), and its audit_event is checked by the trail check. */
+    this.grants = j.grants ?? [];
+  }
+  grant(g) {
+    this.grants.push(g);
   }
   add(table, key, op, via) {
     const k = Array.isArray(key) ? key.map(String) : [String(key)];
@@ -171,7 +179,15 @@ export class Journal {
     if (this.file)
       writeFileSync(
         this.file,
-        JSON.stringify({ schemaVersion: "mth-drill-journal/1", entries: this.entries }, null, 2) + "\n",
+        JSON.stringify(
+          {
+            schemaVersion: "mth-drill-journal/1",
+            entries: this.entries,
+            ...(this.grants.length > 0 ? { grants: this.grants } : {}),
+          },
+          null,
+          2,
+        ) + "\n",
       );
   }
 }
@@ -287,6 +303,41 @@ export async function runJourney(o) {
    * is scheduled; createReportingPeriod for the calendar month, then openReportingPeriod, when it does not exist), as an
    * operator would at the start of a month. Demo data and the freshness rule are unchanged. Done once per run.
    */
+  /**
+   * D-262 (a), T-DG7-DO-D6: when no rebound user holds reporting_period.manage at organization scope, the rebound access
+   * administrator G (access.assign at organization scope) grants the organization-wide TO role (reporting_period.manage,
+   * organization.read) to the rebound drill actor `periodGrantee` through the public API (createRoleAssignment, with a
+   * mandatory reason; the product audits it as scoped_assignment.create). The grant is recorded in the journal's
+   * `grants`, and the grantee then signs in as R. SYNTHETIC: it grants no business, Finance or IT approval.
+   */
+  const grantPeriodManager = async (org) => {
+    const G = await actor(actors.accessAdmin, "access.assign at organization scope", "access administrator G");
+    if (!actors.periodGrantee || actors.periodGrantee === G.id)
+      fail("D8 FAIL: no rebound drill actor to receive reporting_period.manage");
+    const r = await op(
+      G,
+      "createRoleAssignment",
+      "POST",
+      "/api/v1/role-assignments",
+      {
+        userId: actors.periodGrantee,
+        roleCode: "TO",
+        scope: { type: "organization", id: org },
+        reason: "SYNTHETIC transfer drill D8: open the current reporting period (D-262); approves nothing",
+      },
+      {},
+      [201],
+    );
+    journal.grant({
+      via: "createRoleAssignment",
+      assignmentId: r.json.id,
+      grantor: G.id,
+      userId: actors.periodGrantee,
+      roleCode: "TO",
+      scope: { type: "organization", id: org },
+    });
+    return actor(actors.periodGrantee, "reporting_period.manage", "period manager R (granted)");
+  };
   const currentPeriod = async (t, K) => {
     if (ctx.period) return ctx.period;
     const base = `/api/v1/transformations/${t}`;
@@ -298,7 +349,9 @@ export async function runJourney(o) {
     if (p && p.status !== "scheduled") fail(`D8 FAIL: the current reporting period ${p.periodLabel} is ${p.status}`);
     const org = all[0]?.organizationId;
     if (!org) fail(`D8 FAIL: no reporting period readable on ${t}`);
-    const R = await actor(actors.periodManager, "reporting_period.manage", "period manager R");
+    const R = actors.periodManager
+      ? await actor(actors.periodManager, "reporting_period.manage", "period manager R")
+      : await grantPeriodManager(org);
     const obase = `/api/v1/organizations/${org}/reporting-periods`;
     if (!p) {
       const end = new Date(`${today.slice(0, 7)}-01T00:00:00Z`);
@@ -535,7 +588,8 @@ export async function runJourney(o) {
         for (const [u, p] of neededActors(it)) if (!u) fail(`D8 FAIL: no rebound user holds ${p}`);
       // T-DG7-DO-D5: a KPI remedy reports in the current period; when it is not open yet, R must exist (read only here).
       const KPI_CODES = ["g5.performance_no_accepted_actual", "g5.performance_kpi_not_known", "g5.adoption_none"];
-      if (missing.some((it) => KPI_CODES.includes(it.code)) && !actors.periodManager) {
+      const canGrant = actors.accessAdmin && actors.periodGrantee && actors.accessAdmin !== actors.periodGrantee;
+      if (missing.some((it) => KPI_CODES.includes(it.code)) && !actors.periodManager && !canGrant) {
         const today = businessDate(0);
         const l = await op(
           S,
@@ -548,7 +602,7 @@ export async function runJourney(o) {
         );
         if (cur?.status !== "open")
           fail(
-            `D8 FAIL: no rebound user holds reporting_period.manage (the current period ${cur?.periodLabel ?? today.slice(0, 7)} is ${cur?.status ?? "absent"})`,
+            `D8 FAIL: no rebound user holds reporting_period.manage (the current period ${cur?.periodLabel ?? today.slice(0, 7)} is ${cur?.status ?? "absent"}), and no rebound user holds access.assign at organization scope to grant it (D-262)`,
           );
       }
       // C1, in order, each item once
@@ -851,6 +905,8 @@ export async function runJourney(o) {
     journalEntries: journal.entries.length,
     // A3.6: the missing items read at C0 and every mutating operation of the chain, in order (T-B18)
     gateChain: { gate: ctx.gate, c0Missing: ctx.c0 ?? null, writes },
+    // D-262 (a): access grants D8 made through the API (empty when a period manager already existed)
+    grants: journal.grants,
     result: steps.length > 0 && steps.every((s) => s.result === "PASS") ? "PASS" : "FAIL",
   };
 }

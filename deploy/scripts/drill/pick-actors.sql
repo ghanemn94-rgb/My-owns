@@ -24,6 +24,12 @@
 --   periodManager R  a reporting_period.manage holder by an ORGANIZATION-scoped grant, with organization.read
 --                  (the period routes are organization routes; reporting-periods.ts requireManage) (opens the current reporting period for the KPI remedy;
 --                  T-DG7-DO-D5);
+--   accessAdmin    G  a rebound access.assign holder by an ORGANIZATION-scoped grant on the transformation's organization
+--                  (createRoleAssignment at organization scope needs it: rules.ts grantApplies never lets a business-unit
+--                  grant act on an organization target); used only when no periodManager exists (D-262 (a); T-DG7-DO-D6);
+--   periodGrantee  the rebound user G grants the organization-wide TO role (reporting_period.manage, organization.read):
+--                  the first rebound reporting_period.manage holder on the transformation, else the first KPI user K;
+--                  never G itself (access.self_grant). SYNTHETIC; the grant is journalled and audited, and approves nothing;
 --   adoptionEditor A  an adoption.edit holder (remedy g5.adoption_none; T-DG7-DO-D5, D-261);
 --   adoptionLink   { templateKey, kpiDefinition }: the first KPI-fed adoption template (by indicator and measure
 --                  ordinal) whose unit_kind and polarity equal an active KPI of the transformation that has a KPI user
@@ -141,4 +147,18 @@ SELECT json_build_object(
                        AND (sa.effective_to IS NULL OR sa.effective_to > now()) AND rp.permission_code = 'reporting_period.manage'
                        AND sa.user_id IN (SELECT user_id FROM rebound)
                        AND EXISTS (SELECT FROM held h WHERE h.user_id = sa.user_id AND h.t = t.id AND h.permission_code = 'organization.read')),
+  'accessAdmin', (SELECT min(sa.user_id::text)::uuid FROM scoped_assignment sa JOIN role_permission rp ON rp.role_id = sa.role_id
+                    JOIN transformation t ON t.id = (SELECT t FROM pairs)
+                   WHERE sa.scope_type = 'organization' AND sa.scope_id = t.organization_id AND sa.revoked_at IS NULL
+                     AND (sa.effective_to IS NULL OR sa.effective_to > now()) AND rp.permission_code = 'access.assign'
+                     AND sa.user_id IN (SELECT user_id FROM rebound)),
+  'periodGrantee', coalesce(
+     (SELECT min(h.user_id::text)::uuid FROM held h WHERE h.t = (SELECT t FROM pairs)
+         AND h.permission_code = 'reporting_period.manage'
+         AND h.user_id IS DISTINCT FROM (SELECT min(sa.user_id::text)::uuid FROM scoped_assignment sa
+               JOIN role_permission rp ON rp.role_id = sa.role_id JOIN transformation t ON t.id = (SELECT t FROM pairs)
+              WHERE sa.scope_type = 'organization' AND sa.scope_id = t.organization_id AND sa.revoked_at IS NULL
+                AND (sa.effective_to IS NULL OR sa.effective_to > now()) AND rp.permission_code = 'access.assign'
+                AND sa.user_id IN (SELECT user_id FROM rebound))),
+     (SELECT kpi_user FROM pairs)),
   'adoptionLink', (SELECT json_build_object('templateKey', template_key, 'kpiDefinition', kpi_definition) FROM adoption));
