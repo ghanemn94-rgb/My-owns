@@ -21,7 +21,7 @@
 //   mth-db reconcile-migration --operator NAME [--attachments-report FILE]
 //                       [--after-use --from DIR --allow FILE] [--report FILE]   re-check of the recorded import
 //                       (ADR-0064 A1.9 with A2.3, A2.6: mode 1, or mode 2 after use with the allowance
-//                       mth-recheck-allowance/2; T-DG7-BE-R2)                                          exit 0 | 2 | 4
+//                       mth-recheck-allowance/3; T-DG7-BE-R2, T-DG7-BE-R3)                             exit 0 | 2 | 4
 //   mth-db table-digest --table T [--table T …] [--rows]   read-only, as mth_app (DATABASE_URL): one canonical JSON
 //                       line mth-table-digest/1 for exported tables (ADR-0064 A2; T-DG7-BE-R2)          exit 0 | 2
 //   mth-db rebind-identity --mapping FILE --operator NAME   identity rebind, all or nothing (ADR-0064 §8)  exit 0 | 2
@@ -368,13 +368,19 @@ async function main(argv: string[]): Promise<number> {
   }
 }
 
+// DO-D3 Q1 (ADR-0064 A3.10; p7-work-split §C.14): the exit code is set, never forced with process.exit, so the process
+// ends only when stdout and stderr have drained (a piped `table-digest --rows` larger than the pipe buffer is written
+// whole). Every command closes its pool, so no handle keeps the process alive.
 main(process.argv.slice(2)).then(
-  (code) => process.exit(code),
+  (code) => {
+    process.exitCode = code;
+  },
   (err: unknown) => {
     if (err instanceof DemoRefused) {
       // ADR-0050 §9: "mth-db <command>: refused: <reason>", exit 3, nothing changed.
       console.error(err.message);
-      process.exit(err.exitCode);
+      process.exitCode = err.exitCode;
+      return;
     }
     if (
       err instanceof ConfigError ||
@@ -387,6 +393,6 @@ main(process.argv.slice(2)).then(
     } else {
       console.error("mth-db: unexpected error:", err instanceof Error ? err.message : err);
     }
-    process.exit(1);
+    process.exitCode = 1;
   },
 );

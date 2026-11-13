@@ -108,10 +108,12 @@ export async function seedSyntheticImport(owner: pg.Pool, db: Db, organizationId
               ($2, 'organization', 1, 1, $3, $3, true), ($2, 'app_user', 6, 5, $4, $5, false)`,
       [importRunId, recheckRunId, digest("org rows"), digest("user rows"), digest("user rows changed")],
     );
-    // T-R12: one delta row of the recheck (ADR-0064 A1.6, A2.4).
+    // T-R12: two delta rows of the recheck (ADR-0064 A1.6, A2.4; the counter basis of A3.5).
     await c.query(
       `INSERT INTO migration_reconciliation_delta (migration_reconciliation_id, table_name, basis, rows_added,
-         rows_changed, rows_missing, allowed) VALUES ($1, 'audit_event', 'audit_already_present', 0, 3, 0, true)`,
+         rows_changed, rows_missing, allowed)
+       VALUES ($1, 'audit_event', 'audit_already_present', 0, 3, 0, true),
+              ($1, 'record_code_counter', 'counter', 0, 1, 0, true)`,
       [recheckRunId],
     );
     await c.query(
@@ -216,13 +218,22 @@ export async function exerciseP7BeDOperations(ctx: P6ExerciseContext): Promise<v
   expect(report.body.attachmentMismatches).toEqual([
     expect.objectContaining({ objectName: "synthetic/object-1", problem: "sha256_mismatch", expectedSize: "11" }),
   ]);
-  // T-R12 (ADR-0064 A1.6, A2.4): the delta rows, and the import's audit fields as decimal strings.
+  // T-R12 (ADR-0064 A1.6, A2.4, A3.5): the delta rows (the counter basis round-trips), and the import's audit fields
+  // as decimal strings.
   expect(report.body.deltas).toEqual([
     {
       tableName: "audit_event",
       basis: "audit_already_present",
       rowsAdded: "0",
       rowsChanged: "3",
+      rowsMissing: "0",
+      allowed: true,
+    },
+    {
+      tableName: "record_code_counter",
+      basis: "counter",
+      rowsAdded: "0",
+      rowsChanged: "1",
       rowsMissing: "0",
       allowed: true,
     },

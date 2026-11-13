@@ -19,7 +19,8 @@ import type { Db, DbOrTx, Tx } from "../pool.ts";
 import { encodeLine, encodeTable, ENCODER_SETTINGS, transferSha256 } from "./export.ts";
 import { buildPlan, type TransferPlan } from "./plan.ts";
 import type { CheckedPackage } from "./import.ts";
-import type { Allowance } from "./recheck.ts";
+import type { Allowance, CounterVerdict } from "./recheck.ts";
+import type { AutomationLink } from "./recheck-automation.ts";
 import { digestOfLines, encodedRows, type EncodedRow } from "./table-digest.ts";
 
 /** ADR-0016 §6 `migrationImport` (apps/api platform/advisory-locks.ts); pinned to the registry by transfer-locks.test. */
@@ -63,6 +64,7 @@ export type DeltaBasis =
   | "exact_ids"
   | "audit_explained"
   | "child_of"
+  | "counter"
   | "operational"
   | "unexplained";
 
@@ -385,8 +387,34 @@ export interface ReconcileCliOptions {
   readonly afterUse?: boolean;
   readonly from?: string | undefined;
   readonly allow?: string | undefined;
-  /** Where the printed lines are also written. */
+  /**
+   * Where the printed lines are also written. In mode 2 the JSON report (A2.6 "Output" with A3.2 "Report" and the
+   * counter rows of A3.3) is written next to it, to `<report>.json`.
+   */
   readonly report?: string | undefined;
+}
+
+/** The JSON report of a mode 2 recheck (`<report>.json`). */
+export interface RecheckJsonReport {
+  readonly schemaVersion: "mth-recheck-report/1";
+  readonly result: "matched" | "mismatched";
+  readonly deltas: readonly ReconciliationDelta[];
+  /** Per audited table: the explaining events on it, from E and from E* \ E. */
+  readonly audited: readonly {
+    readonly table: string;
+    readonly explainingEvents: number;
+    readonly explainingEventsByActor: number;
+    readonly explainingEventsByAutomation: number;
+  }[];
+  readonly automationChain: readonly AutomationLink[];
+  readonly counters: readonly {
+    readonly table: string;
+    readonly key: string;
+    readonly old: number;
+    readonly new: number;
+    readonly codes: readonly number[];
+    readonly explained: boolean;
+  }[];
 }
 
 const REFUSE_AFTER_USE = "reconcile-migration: refused: --after-use needs --from <dir> and --allow <file>";
@@ -430,6 +458,7 @@ export async function runReconcileMigrationCommand(
     return code;
   };
   const R = await import("./recheck.ts");
+  const RA = await import("./recheck-automation.ts");
   const I = await import("./import.ts");
   const A = await import("./attachment-report.ts");
   // The allowance is validated structurally before any database read (A1.9).
@@ -508,6 +537,9 @@ export async function runReconcileMigrationCommand(
           alreadyPresentRows: BigInt(imported.audit_already_present_rows ?? "0"),
         };
         const lines: string[] = [];
+        let automationChainOut: AutomationLink[] = [];
+        const auditedOut: RecheckJsonReport["audited"][number][] = [];
+        const countersOut: (CounterVerdict & { table: string })[] = [];
         const tables: TableResult[] = [];
         const deltas: ReconciliationDelta[] = [];
         let unchanged = 0;
@@ -607,18 +639,43 @@ export async function runReconcileMigrationCommand(
           );
           tables.push(...rest);
         } else {
-          // Mode 2: row by row against the package.
+          // Mode 2: row by row against the package, in the order tables -> audited (with E*) -> children -> counters
+          // (A3.3 item 3: the counters read only rows this run explained); operational tables are only counted.
           const a = allowance;
           const listedTables = new Map(a.tables.map((t) => [t.name, t]));
           const audited = new Map(a.audited.map((t) => [t.name, t]));
           const operational = new Set(a.operational);
           const childrenOf = new Map(a.children.map((c) => [c.name, c]));
+          const counterSet = new Set(a.counters);
           const explainedRows = new Map<string, EncodedRow[]>();
+          const explainedAdded = new Map<string, EncodedRow[]>();
           const fileOf = new Map(pkg!.manifest.tables.map((t) => [t.name, t.file]));
           const order = [
-            ...pkg!.manifest.tables.map((t) => t.name).filter((n) => n !== "audit_event" && !childrenOf.has(n)),
+            ...pkg!.manifest.tables
+              .map((t) => t.name)
+              .filter((n) => n !== "audit_event" && !childrenOf.has(n) && !counterSet.has(n)),
             ...R.childrenOrder(a).map((c) => c.name),
+            ...pkg!.manifest.tables.map((t) => t.name).filter((n) => counterSet.has(n)),
           ];
+          // E* once, before any audited table is explained (A3.2; C.14 "What BE-R3 must know").
+          const B = imp.baselineSeqMax ?? imp.carriedSeqMax;
+          const pkgIds = async (name: string): Promise<{ ids: string[]; changedOrAdded: string[] }> => {
+            const table = plan.tables.find((t) => t.name === name);
+            const file = fileOf.get(name);
+            if (table === undefined || file === undefined) return { ids: [], changedOrAdded: [] };
+            const lines = await R.packageLines(pkg!.dir, file, table);
+            const ids = [...lines.keys()].map((k) => (JSON.parse(k) as string[])[0]!);
+            const cmp = await R.compareRows(tx, table, lines, plan);
+            const idAt = table.columns.findIndex((c) => c.name === "id");
+            return { ids, changedOrAdded: [...cmp.added, ...cmp.changed].map((r) => r.values[idAt]!) };
+          };
+          const outboxPkg = await pkgIds("outbox_event");
+          const execPkg = await pkgIds("automation_execution");
+          const star = await RA.automationChain(tx, B, a.actors, {
+            outboxIds: outboxPkg.ids,
+            executionIds: execPkg.changedOrAdded,
+          });
+          automationChainOut = star.chain;
           const keyText = (k: readonly string[]) => JSON.stringify(k);
           for (const name of order) {
             const table = plan.tables.find((t) => t.name === name)!;
@@ -663,6 +720,7 @@ export async function runReconcileMigrationCommand(
               if (ok) {
                 allowedDiff += 1;
                 explainedRows.set(name, [...cmp.added, ...cmp.changed]);
+                explainedAdded.set(name, [...cmp.added]);
               } else {
                 lines.push(perTable("exact_ids"));
                 for (const k of ["added", "changed"] as const) listKeys(`unexpected ${k}`, extra(k));
@@ -674,7 +732,13 @@ export async function runReconcileMigrationCommand(
               else unchanged += 1;
             } else if (audited.has(name)) {
               const t = audited.get(name)!;
-              const ex = await R.explainAudited(tx, table, cmp, a.actors, imp.baselineSeqMax ?? imp.carriedSeqMax);
+              const ex = await R.explainAudited(tx, table, cmp, star.events);
+              auditedOut.push({
+                table: name,
+                explainingEvents: ex.events,
+                explainingEventsByActor: ex.eventsByActor,
+                explainingEventsByAutomation: ex.eventsByAutomation,
+              });
               const unAdded = new Set(ex.unexplainedAdded.map((r) => r.key));
               const unChanged = new Set(ex.unexplainedChanged.map((r) => r.key));
               const okAdded = new Set(cmp.added.map((r) => r.key).filter((k) => !unAdded.has(k)));
@@ -687,6 +751,10 @@ export async function runReconcileMigrationCommand(
               explainedRows.set(
                 name,
                 [...cmp.added, ...cmp.changed].filter((r) => okAdded.has(r.key) || okChanged.has(r.key)),
+              );
+              explainedAdded.set(
+                name,
+                cmp.added.filter((r) => okAdded.has(r.key)),
               );
               lines.push(`  ${name}: ${ex.events} explaining events`);
               if (ok) allowedDiff += diff > 0 ? 1 : 0;
@@ -709,6 +777,10 @@ export async function runReconcileMigrationCommand(
                 name,
                 [...cmp.added, ...cmp.changed].filter((r) => !bad.has(r.key)),
               );
+              explainedAdded.set(
+                name,
+                cmp.added.filter((r) => !bad.has(r.key)),
+              );
               if (ok) {
                 if (diff > 0) allowedDiff += 1;
                 else unchanged += 1;
@@ -722,6 +794,20 @@ export async function runReconcileMigrationCommand(
                   "unexplained changed",
                   ex.unexplainedChanged.map((r) => r.key),
                 );
+              }
+            } else if (counterSet.has(name)) {
+              const ct = R.RECHECK_COUNTER_TABLES[name]!;
+              const ec = R.explainCounters(ct, table, pkgRows, cmp, explainedAdded, plan);
+              for (const v of ec.verdicts) countersOut.push({ table: name, ...v });
+              const ok = ec.explained;
+              push("counter", ok);
+              if (ok) {
+                if (diff > 0) allowedDiff += 1;
+                else unchanged += 1;
+              } else {
+                lines.push(perTable("counter"));
+                for (const v of ec.verdicts.filter((x) => !x.explained).slice(0, 20)) lines.push(R.counterLine(v));
+                listKeys("missing", ec.missing);
               }
             } else if (name === "user_identity" && rev.rebound > 0 && diff === 0) {
               push("rebind", true);
@@ -756,11 +842,36 @@ export async function runReconcileMigrationCommand(
           operator,
           actor: { actorType: "system", actorUserId: null, source: "cli" },
         });
-        return { report, lines, unchanged, allowedDiff, additions: trail.additionsTotal, byAction: trail.additions };
+        const json: RecheckJsonReport = {
+          schemaVersion: "mth-recheck-report/1",
+          result: report.result,
+          deltas: report.deltas,
+          audited: auditedOut,
+          automationChain: automationChainOut,
+          counters: countersOut.map((c) => ({
+            table: c.table,
+            key: c.key,
+            old: c.old,
+            new: c.new,
+            codes: c.codes,
+            explained: c.explained,
+          })),
+        };
+        return {
+          report,
+          json,
+          lines,
+          unchanged,
+          allowedDiff,
+          additions: trail.additionsTotal,
+          byAction: trail.additions,
+        };
       });
       if (outcome === null)
         return finish(2, "BLOCKED: reconcile-migration: no migration import is recorded in this database");
       for (const l of outcome.lines) say(l);
+      if (afterUse && opts.report !== undefined)
+        await writeFile(`${opts.report}.json`, `${JSON.stringify(outcome.json, null, 2)}\n`, "utf8");
       if (outcome.report.result !== "matched") return finish(4, reconcileLine(outcome.report));
       if (!afterUse) {
         for (const [action, n] of outcome.byAction) say(`  audit_event: ${n} ${action} added since the import`);

@@ -63,6 +63,7 @@ const allowance = (over: Record<string, unknown> = {}) => ({
   tables: [],
   audited: [],
   children: [],
+  counters: [],
   operational: [],
   ...over,
 });
@@ -217,7 +218,7 @@ describe("T-R6: mode 1 after the import and a rebind", () => {
   }, 300_000);
 });
 
-describe("T-R7 + T-R15: mode 2 (--after-use) with mth-recheck-allowance/2", () => {
+describe("T-R7 + T-R15: mode 2 (--after-use) with mth-recheck-allowance/3", () => {
   // State here: the rebind of `actor`, and one audited change of `audited` row `auditedId` by `actor`.
   const changedKey = () => [[auditedId]];
 
@@ -295,12 +296,22 @@ describe("T-R7 + T-R15: mode 2 (--after-use) with mth-recheck-allowance/2", () =
       expect(r.code, reason).toBe(2);
       expect(r.err, reason).toEqual([`reconcile-migration: refused: invalid allowance file: ${reason}`]);
     };
-    await refused(
-      { ...allowance(), schemaVersion: "mth-recheck-allowance/1" },
-      "unsupported schema version 'mth-recheck-allowance/1'",
-    );
+    // T-R21 (A3.4): /1 and /2 are refused for their version; counters is required; a counter table must be a known
+    // one and is listed once.
+    for (const v of ["mth-recheck-allowance/1", "mth-recheck-allowance/2"])
+      await refused({ ...allowance(), schemaVersion: v }, `unsupported schema version '${v}'`);
     const { operational: _o, ...noOperational } = allowance();
     await refused(noOperational, "missing key 'operational'");
+    const { counters: _c, ...noCounters } = allowance();
+    await refused(noCounters, "missing key 'counters'");
+    await refused(allowance({ counters: ["benefit"] }), "counter table benefit is not in RECHECK_COUNTER_TABLES");
+    await refused(
+      allowance({
+        counters: ["record_code_counter"],
+        children: [{ name: "record_code_counter", parent: "transformation", fkey: "record_code_counter_fkey" }],
+      }),
+      "record_code_counter is listed more than once",
+    );
     const ghost = uuidv7();
     await refused(allowance({ actors: [ghost] }), `unknown actor ${ghost}`);
     await refused(

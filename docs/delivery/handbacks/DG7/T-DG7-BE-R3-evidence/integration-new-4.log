@@ -1,0 +1,81 @@
+port-policy: PostgreSQL listening on port 24351 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/My-owns
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwf7hm6w_bced6c02 (server_encoding UTF8); applied 134 migrations to a fresh database
+ ❯ |integration| packages/db/test/integration/transfer-recheck-automation.test.ts (4 tests | 1 failed) 13572ms
+   ✓ T-R19: the automation chain (A3.2) > a journalled actor's mutation chains its starter execution and the job's rows (audit_explained)  810ms
+   ✓ T-R19: the automation chain (A3.2) > negatives 1-4: an off-by-a-microsecond outbox row, a non-journalled user, a foreign recorded user and a schedule trigger leave their executions unexplained  759ms
+   ✓ T-R20: the counter basis (A3.3) > one RAID issue by a journalled actor moves I by one and is explained  628ms
+   × T-R20: the counter basis (A3.3) > a counter moved by 2 for one row, moved with no row, moved by an unexplained row, a row without its step and an unmapped prefix are unexplained 616ms
+     →   automation_execution: 1 explaining events
+  automation_execution: 6 added, 0 changed, 0 missing (audit_explained)
+    unexplained added ["01a1d5cb-50c9-75dc-850f-bcecc0716941"]
+    unexplained added ["01a1d5cb-50cf-725a-b4bc-58232afd3ade"]
+    unexplained added ["01a1d5cb-50d7-7352-866b-5ac3e3b5dc8f"]
+    unexplained added ["01a1d5cb-50de-74ef-81e6-cd2cf1d8c7e7"]
+    unexplained added ["01a1d5cb-50e4-7089-b203-e75fc45aa1b5"]
+  automation_action_result: 1 explaining events
+  automation_action_result: 6 added, 0 changed, 0 missing (audit_explained)
+    unexplained added ["01a1d5cb-50c9-75dc-850f-c13505500e7f"]
+    unexplained added ["01a1d5cb-50cf-725a-b4bc-5f2aca61d9ba"]
+    unexplained added ["01a1d5cb-50d7-7352-866b-5c76c3cdc687"]
+    unexplained added ["01a1d5cb-50de-74ef-81e6-d260030ff893"]
+    unexplained added ["01a1d5cb-50e4-7089-b203-e8f2fd06e2b6"]
+  raid_entry: 3 explaining events
+  raid_entry: 4 added, 0 changed, 0 missing (audit_explained)
+    unexplained added ["01a1d5cb-5639-72aa-9bf1-5a22d53bee43"]
+  record_code_counter: 3 added, 2 changed, 0 missing (counter)
+    counter ["01995000-0000-7000-8000-000000000001","A"]: moved 0 -> 2, 1 new coded rows (1)
+    counter ["01995000-0000-7000-8000-000000000001","B"]: moved 3 -> 4, 0 new coded rows (none)
+    counter ["01995000-0000-7000-8000-000000000001","CR"]: moved 0 -> 1, 0 new coded rows (none)
+    counter ["01995000-0000-7000-8000-000000000001","I"]: moved 0 -> 2, 1 new coded rows (1)
+reconcile-migration: mismatch: 4 tables, 0 attachments differ: expected [ …(23) ] to include '    counter ["01995000-0000-7000-8000…'
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| packages/db/test/integration/transfer-recheck-automation.test.ts > T-R20: the counter basis (A3.3) > a counter moved by 2 for one row, moved with no row, moved by an unexplained row, a row without its step and an unmapped prefix are unexplained
+AssertionError:   automation_execution: 1 explaining events
+  automation_execution: 6 added, 0 changed, 0 missing (audit_explained)
+    unexplained added ["01a1d5cb-50c9-75dc-850f-bcecc0716941"]
+    unexplained added ["01a1d5cb-50cf-725a-b4bc-58232afd3ade"]
+    unexplained added ["01a1d5cb-50d7-7352-866b-5ac3e3b5dc8f"]
+    unexplained added ["01a1d5cb-50de-74ef-81e6-cd2cf1d8c7e7"]
+    unexplained added ["01a1d5cb-50e4-7089-b203-e75fc45aa1b5"]
+  automation_action_result: 1 explaining events
+  automation_action_result: 6 added, 0 changed, 0 missing (audit_explained)
+    unexplained added ["01a1d5cb-50c9-75dc-850f-c13505500e7f"]
+    unexplained added ["01a1d5cb-50cf-725a-b4bc-5f2aca61d9ba"]
+    unexplained added ["01a1d5cb-50d7-7352-866b-5c76c3cdc687"]
+    unexplained added ["01a1d5cb-50de-74ef-81e6-d260030ff893"]
+    unexplained added ["01a1d5cb-50e4-7089-b203-e8f2fd06e2b6"]
+  raid_entry: 3 explaining events
+  raid_entry: 4 added, 0 changed, 0 missing (audit_explained)
+    unexplained added ["01a1d5cb-5639-72aa-9bf1-5a22d53bee43"]
+  record_code_counter: 3 added, 2 changed, 0 missing (counter)
+    counter ["01995000-0000-7000-8000-000000000001","A"]: moved 0 -> 2, 1 new coded rows (1)
+    counter ["01995000-0000-7000-8000-000000000001","B"]: moved 3 -> 4, 0 new coded rows (none)
+    counter ["01995000-0000-7000-8000-000000000001","CR"]: moved 0 -> 1, 0 new coded rows (none)
+    counter ["01995000-0000-7000-8000-000000000001","I"]: moved 0 -> 2, 1 new coded rows (1)
+reconcile-migration: mismatch: 4 tables, 0 attachments differ: expected [ …(23) ] to include '    counter ["01995000-0000-7000-8000…'
+ ❯ packages/db/test/integration/transfer-recheck-automation.test.ts:415:37
+    413|     expect(r.out, r.out.join("\n")).toContain(line("CR", c0, c0 + 1, […
+    414|     expect(r.out, r.out.join("\n")).toContain(line("I", iPackage, iPac…
+    415|     expect(r.out, r.out.join("\n")).toContain(line("R", r0, r0, [r0 + …
+       |                                     ^
+    416|     expect(r.out, r.out.join("\n")).toContain(line("B", b0, b0 + 1, []…
+    417|     for (const p of ["A", "CR", "I", "R", "B"])
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+   Start at  16:43:36
+   Duration  19.43s (transform 927ms, setup 0ms, collect 1.68s, tests 13.57s, environment 0ms, prepare 45ms)
+
+EXIT=1

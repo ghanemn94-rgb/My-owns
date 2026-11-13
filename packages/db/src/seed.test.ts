@@ -1159,8 +1159,9 @@ describe("migration files", () => {
     // T-DG7-BE-C ships 0147 (the orchestrator renumbers at the W5 merge if another task shipped it first), so it is 0148.
     // T-DG7-BE-G ships 0148 (the retention job identity and its disabled schedule), so it was 0149.
     // T-DG7-BE-R1 ships 0149 (the import load's audit ranges and recheck deltas), so it was 0150.
-    // T-DG7-BE-R2 ships 0150 (the shared migration audit events and the nine delta bases), so it is 0151.
-    expect(numberingViolations([...files, { id: 151, name: "0151_p7_example.sql" }])).toEqual([]);
+    // T-DG7-BE-R2 ships 0150 (the shared migration audit events and the nine delta bases), so it was 0151.
+    // T-DG7-BE-R3 ships 0151 (the counter basis of the mode 2 recheck, ADR-0064 A3.5), so it is 0152.
+    expect(numberingViolations([...files, { id: 152, name: "0152_p7_example.sql" }])).toEqual([]);
     expect(numberingViolations([...files, { id: 164, name: "0164_p7_example.sql" }])).toEqual([
       "0164_p7_example.sql: above 0163",
     ]);

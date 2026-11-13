@@ -14856,15 +14856,15 @@ Written by T-DG7-ARCH-02 (ADR-0064, ADR-0065). The table sections below are gene
 
 ## migration_reconciliation_delta
 
-- **Purpose:** Why a table may differ from the package in one reconciliation run: the audit baseline, audit additions after the import, carried audit events already present in the baseline, identity rebinds, exact allowed ids, rows explained by audited actors or as children of explained rows, operational tables, or an unexplained difference (ADR-0064 Amendment 1 §A1.6, §A1.9; Amendment 2 §A2.4, §A2.6).
-- **Migration:** `0149_p7_transfer_import_load.sql` (basis CHECK replaced by `0150_p7_transfer_import_shared_audit.sql`). **API module:** `transfer (import)`. **Who writes:** the migration CLI only (`mth-db import-migration` / `reconcile-migration`, as mth_owner; lock 730403). **Lifecycle:** append-only; a run is `matched` only if every delta row of the run is `allowed`. Never exported (`transfer_table_rule` `exclude_transfer`).
+- **Purpose:** Why a table may differ from the package in one reconciliation run: the audit baseline, audit additions after the import, carried audit events already present in the baseline, identity rebinds, exact allowed ids, rows explained by audited actors or as children of explained rows, code counters moved by exactly their explained new coded rows, operational tables, or an unexplained difference (ADR-0064 Amendment 1 §A1.6, §A1.9; Amendment 2 §A2.4, §A2.6; Amendment 3 §A3.3).
+- **Migration:** `0149_p7_transfer_import_load.sql` (basis CHECK replaced by `0150_p7_transfer_import_shared_audit.sql`, then by `0151_p7_transfer_recheck_counter_basis.sql`). **API module:** `transfer (import)`. **Who writes:** the migration CLI only (`mth-db import-migration` / `reconcile-migration`, as mth_owner; lock 730403). **Lifecycle:** append-only; a run is `matched` only if every delta row of the run is `allowed`. Never exported (`transfer_table_rule` `exclude_transfer`).
 - **`mth_app` privileges:** SELECT.
 
 | Column | Type | Null | Default | Column constraints |
 |---|---|---|---|---|
 | migration_reconciliation_id | uuid | NOT NULL |  | PK; FK → migration_reconciliation(id) |
 | table_name | text | NOT NULL |  | PK; `CHECK ((table_name ~ '^[a-z][a-z0-9_]{0,62}$'))` |
-| basis | text | NOT NULL |  | PK; `CHECK ((basis = ANY (ARRAY['audit_baseline', 'audit_additions', 'audit_already_present', 'rebind', 'exact_ids', 'audit_explained', 'child_of', 'operational', 'unexplained'])))` (0150 re-added it with nine values) |
+| basis | text | NOT NULL |  | PK; `CHECK ((basis = ANY (ARRAY['audit_baseline', 'audit_additions', 'audit_already_present', 'rebind', 'exact_ids', 'audit_explained', 'child_of', 'counter', 'operational', 'unexplained'])))` (0150 re-added it with nine values; 0151 with ten, adding `counter`, ADR-0064 A3.3) |
 | rows_added | bigint | NOT NULL |  | `CHECK ((rows_added >= 0))` |
 | rows_changed | bigint | NOT NULL |  | `CHECK ((rows_changed >= 0))` |
 | rows_missing | bigint | NOT NULL |  | `CHECK ((rows_missing >= 0))` |

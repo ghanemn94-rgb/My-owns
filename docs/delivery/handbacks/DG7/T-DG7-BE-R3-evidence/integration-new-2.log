@@ -1,0 +1,101 @@
+port-policy: PostgreSQL listening on port 24351 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/My-owns
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwf7fo1k_e927cc06 (server_encoding UTF8); applied 134 migrations to a fresh database
+ ❯ |integration| packages/db/test/integration/transfer-recheck-automation.test.ts (4 tests | 4 failed) 12073ms
+   × T-R19: the automation chain (A3.2) > a journalled actor's mutation chains its starter execution and the job's rows (audit_explained) 225ms
+     → expected [ Array(1) ] to deeply equal []
+   × T-R19: the automation chain (A3.2) > negatives 1-4: an off-by-a-microsecond outbox row, a non-journalled user, a foreign recorded user and a schedule trigger leave their executions unexplained 211ms
+     → expected 2 to be 4 // Object.is equality
+   × T-R20: the counter basis (A3.3) > one RAID issue by a journalled actor moves I by one and is explained 182ms
+     → Cannot read properties of null (reading 'counters')
+   × T-R20: the counter basis (A3.3) > a counter moved by 2 for one row, moved with no row, moved by an unexplained row, a row without its step and an unmapped prefix are unexplained 192ms
+     → expected 2 to be 4 // Object.is equality
+ ✓ |integration| packages/db/test/integration/cli-stdout-drain.test.ts (1 test) 11986ms
+   ✓ T-R23: mth-db drains a piped stdout before it exits (DO-D3 Q1) > table-digest --rows piped through a slow reader equals the file output, byte for byte, above 256 KiB  1745ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| packages/db/test/integration/transfer-recheck-automation.test.ts > T-R19: the automation chain (A3.2) > a journalled actor's mutation chains its starter execution and the job's rows (audit_explained)
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   "reconcile-migration: refused: invalid allowance file: audited table transformation has no enabled transformation_audit_required trigger",[39m
+[31m+ ][39m
+
+ ❯ packages/db/test/integration/transfer-recheck-automation.test.ts:226:37
+    224|     positive = await workerJob(tf1, "transformation.created", positive…
+    225|     const r = await recheck(allowance({ audited: audited(...AUTOMATION…
+    226|     expect(r.err, r.out.join("\n")).toEqual([]);
+       |                                     ^
+    227|     expect(r.code, r.out.join("\n")).toBe(0);
+    228|     for (const t of ["automation_execution", "automation_action_result…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  |integration| packages/db/test/integration/transfer-recheck-automation.test.ts > T-R19: the automation chain (A3.2) > negatives 1-4: an off-by-a-microsecond outbox row, a non-journalled user, a foreign recorded user and a schedule trigger leave their executions unexplained
+AssertionError: expected 2 to be 4 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 4[39m
+[31m+ 2[39m
+
+ ❯ packages/db/test/integration/transfer-recheck-automation.test.ts:284:38
+    282|     const n4 = await workerJob(tf1, schedule, k4, {});
+    283|     const r = await recheck(allowance({ audited: audited(...AUTOMATION…
+    284|     expect(r.code, r.out.join("\n")).toBe(4);
+       |                                      ^
+    285|     expect(r.json.automationChain.map((l) => l.executionId)).toEqual([…
+    286|     for (const n of [n1, n2, n3, n3b, n4]) {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  |integration| packages/db/test/integration/transfer-recheck-automation.test.ts > T-R20: the counter basis (A3.3) > one RAID issue by a journalled actor moves I by one and is explained
+TypeError: Cannot read properties of null (reading 'counters')
+ ❯ packages/db/test/integration/transfer-recheck-automation.test.ts:355:22
+    353|     await raid(tf1, actor, "issue");
+    354|     const r = await recheck(allow());
+    355|     const c = r.json.counters.find((x) => x.key === key(tf1.id, "I"))!;
+       |                      ^
+    356|     expect(c).toEqual({
+    357|       table: "record_code_counter",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  |integration| packages/db/test/integration/transfer-recheck-automation.test.ts > T-R20: the counter basis (A3.3) > a counter moved by 2 for one row, moved with no row, moved by an unexplained row, a row without its step and an unmapped prefix are unexplained
+AssertionError: expected 2 to be 4 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 4[39m
+[31m+ 2[39m
+
+ ❯ packages/db/test/integration/transfer-recheck-automation.test.ts:392:20
+    390|     });
+    391|     const r = await recheck(allow());
+    392|     expect(r.code).toBe(4);
+       |                    ^
+    393|     const delta = r.json.deltas.find((d) => d.tableName === "record_co…
+    394|     expect(delta).toMatchObject({ basis: "counter", allowed: false });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  4 failed | 1 passed (5)
+   Start at  16:42:05
+   Duration  29.83s (transform 1.12s, setup 0ms, collect 2.22s, tests 24.06s, environment 0ms, prepare 60ms)
+
+EXIT=1

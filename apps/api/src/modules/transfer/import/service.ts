@@ -47,6 +47,7 @@ export const DELTA_BASES = [
   "exact_ids",
   "audit_explained",
   "child_of",
+  "counter",
   "operational",
   "unexplained",
 ] as const;

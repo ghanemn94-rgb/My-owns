@@ -9,10 +9,13 @@
 //          action); user_identity equals the expectation once every `rebound` identity_rebind_event is reversed; the
 //          attachments come from the A1.8 report (never 0 checked for a package that lists attachments).
 //   mode 2 (`--after-use`; run_kind `recheck_after_use`): the package is re-checked and compared ROW BY ROW by primary
-//          key; the allowance file `mth-recheck-allowance/2` (A2.6) says which differences are allowed: `tables` (exact
-//          keys), `audited` (each added or changed row explained by an audit event of a listed actor after the
-//          baseline, at the row's version), `children` (each added or changed row a foreign-key child of an explained
-//          parent row) and `operational` (counted). Every other table must be unchanged. No row may be missing.
+//          key; the allowance file `mth-recheck-allowance/3` (A2.6 with Amendment 3 §A3.4) says which differences are
+//          allowed: `tables` (exact keys), `audited` (each added or changed row explained by an event of the
+//          explaining set E* after the baseline, at the row's version: a listed actor's event, or a worker event of
+//          the job of an automation execution chained to such an event, A3.2), `children` (each added or changed row
+//          a foreign-key child of an explained parent row), `counters` (each code counter row moved by exactly the
+//          explained new coded rows of its scope, A3.3) and `operational` (counted). Every other table must be
+//          unchanged. No row may be missing.
 //
 // It changes no business row; it appends one migration_reconciliation run with its child rows and its
 // migration.reconciled event. audit_event is only read. Nothing here approves anything (no G1-G6, Finance or IT
@@ -85,7 +88,79 @@ export const RECHECK_NEVER_OPERATIONAL: readonly string[] = [
 export const isNeverOperational = (t: string): boolean =>
   RECHECK_NEVER_OPERATIONAL.includes(t) || t.startsWith("decision");
 
-export const ALLOWANCE_SCHEMA_VERSION = "mth-recheck-allowance/2";
+export const ALLOWANCE_SCHEMA_VERSION = "mth-recheck-allowance/3";
+
+/** One coded table of a counter prefix: rows whose `code` column reads `<prefix>-<n>`, scoped by the counter's scope. */
+export interface CounterCodedTable {
+  readonly table: string;
+  readonly code: string;
+}
+
+export interface CounterTable {
+  readonly name: string;
+  /** The scope column, on the counter table and on every coded table. */
+  readonly scope: string;
+  readonly prefixColumn: string;
+  readonly valueColumn: string;
+  /** Prefixes whose coded table and column were verified at every call site of the counter (A3.3 item 1). */
+  readonly prefixes: Readonly<Record<string, CounterCodedTable>>;
+  /**
+   * Prefixes the counter's CHECK allows that have no mapping: any change to their counter row is unexplained. `B`
+   * (benefit) is here because its codes read `B01` with no hyphen (apps/api benefits/register.ts nextBenefitCode;
+   * 0037 CHECK `^B[0-9]{2,6}$`), which the A3.3 pattern `^<p>-([0-9]{2,6})$` cannot match.
+   */
+  readonly unmapped: readonly string[];
+}
+
+/**
+ * A3.3: the code counters mode 2 may explain, with their prefix map. Each mapped prefix was read at its call sites
+ * (`INSERT INTO record_code_counter … ON CONFLICT DO UPDATE … RETURNING last_value` in the transaction that inserts
+ * the coded row): D/GD/DEC (workflows/codes.ts nextCode in decisions.ts, gates.ts; governance/executive-decisions.ts;
+ * portfolio/funding.ts; worker escalations.ts) into `decision`; DEP (codes.ts in t08-dependencies.ts,
+ * design-registers.ts) into `dependency`; INI (portfolio/repository.ts) into `initiative`; BC (kpi/business-cases.ts)
+ * into `business_case`; BF (kpi/benefit-formulas.ts) into `benefit_formula`; BG (benefits/groups.ts) into
+ * `benefit_group`; VM (benefits/valuation-methods.ts) into `benefit_valuation_method`; R/A/I (raid/register.ts) into
+ * `raid_entry`; CA (raid/corrective-cases.ts; worker raid.ts) into `corrective_case`; SG/AI (adoption/register.ts;
+ * worker adoption.ts) into `stakeholder_group` / `adoption_intervention`; PA/HO (sustainment/performance-areas.ts) into
+ * `performance_area` / `bau_handover`; CTL/CI/LL (sustainment/controls.ts) into `control` / `improvement_item` /
+ * `lesson`; TD (sustainment/transition-decisions.ts) into `transition_decision`; CR (workflows/change-requests.ts) into
+ * `change_request`; WS (portfolio/structure.ts) into `workstream`. A new counter table or prefix mapping needs the
+ * architect.
+ */
+export const RECHECK_COUNTER_TABLES: Readonly<Record<string, CounterTable>> = {
+  record_code_counter: {
+    name: "record_code_counter",
+    scope: "transformation_id",
+    prefixColumn: "prefix",
+    valueColumn: "last_value",
+    prefixes: {
+      D: { table: "decision", code: "code" },
+      GD: { table: "decision", code: "code" },
+      DEC: { table: "decision", code: "code" },
+      DEP: { table: "dependency", code: "code" },
+      INI: { table: "initiative", code: "code" },
+      BC: { table: "business_case", code: "code" },
+      BF: { table: "benefit_formula", code: "code" },
+      BG: { table: "benefit_group", code: "code" },
+      VM: { table: "benefit_valuation_method", code: "code" },
+      R: { table: "raid_entry", code: "code" },
+      A: { table: "raid_entry", code: "code" },
+      I: { table: "raid_entry", code: "code" },
+      CA: { table: "corrective_case", code: "code" },
+      SG: { table: "stakeholder_group", code: "code" },
+      AI: { table: "adoption_intervention", code: "code" },
+      PA: { table: "performance_area", code: "code" },
+      HO: { table: "bau_handover", code: "code" },
+      CTL: { table: "control", code: "code" },
+      CI: { table: "improvement_item", code: "code" },
+      LL: { table: "lesson", code: "code" },
+      TD: { table: "transition_decision", code: "code" },
+      CR: { table: "change_request", code: "code" },
+      WS: { table: "workstream", code: "code" },
+    },
+    unmapped: ["B"],
+  },
+};
 
 // ------------------------------------------------------------------------------------------------ the allowance
 
@@ -104,6 +179,8 @@ export interface Allowance {
     readonly mustInclude: { readonly added: readonly KeyTuple[]; readonly changed: readonly KeyTuple[] };
   }[];
   readonly children: readonly { readonly name: string; readonly parent: string; readonly fkey: string }[];
+  /** A3.4: names from RECHECK_COUNTER_TABLES. */
+  readonly counters: readonly string[];
   readonly operational: readonly string[];
 }
 
@@ -115,7 +192,7 @@ export class AllowanceRefused extends Error {
   }
 }
 
-const KEYS = ["schemaVersion", "actors", "tables", "audited", "children", "operational"] as const;
+const KEYS = ["schemaVersion", "actors", "tables", "audited", "children", "counters", "operational"] as const;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 const NAME = /^[a-z][a-z0-9_]{0,62}$/;
 
@@ -137,9 +214,10 @@ function tableName(v: unknown, where: string): string {
 }
 
 /**
- * Structure only, no database (A1.9 rule 7 and A2.6 rule 6, the refusals that need no catalogue): strict UTF-8 JSON;
- * schema version `/2`; all six keys; the shapes; a table named twice (in any of the four lists); an operational name
- * outside the constant; audit_event or user_identity listed; actors empty while audited is not.
+ * Structure only, no database (A1.9 rule 7, A2.6 rule 6 and A3.4, the refusals that need no catalogue): strict UTF-8
+ * JSON; schema version `/3` (`/1` and `/2` refused); all seven keys; the shapes; a table named twice (in any of the five
+ * lists); an operational name outside the constant; a counter name outside RECHECK_COUNTER_TABLES; audit_event or
+ * user_identity listed; actors empty while audited is not.
  */
 export function parseAllowance(bytes: Uint8Array): Allowance {
   let raw: unknown;
@@ -154,11 +232,17 @@ export function parseAllowance(bytes: Uint8Array): Allowance {
   for (const k of KEYS) if (!(k in raw)) throw new AllowanceRefused(`missing key '${k}'`);
   for (const k of Object.keys(raw))
     if (!(KEYS as readonly string[]).includes(k)) throw new AllowanceRefused(`unknown key '${k}'`);
-  const { actors, tables, audited, children, operational } = raw as Record<(typeof KEYS)[number], unknown>;
+  const { actors, tables, audited, children, counters, operational } = raw as Record<(typeof KEYS)[number], unknown>;
   if (!Array.isArray(actors) || !actors.every((a) => typeof a === "string" && UUID.test(a)))
     throw new AllowanceRefused("actors must be an array of app_user ids");
-  if (!Array.isArray(tables) || !Array.isArray(audited) || !Array.isArray(children) || !Array.isArray(operational))
-    throw new AllowanceRefused("tables, audited, children and operational must be arrays");
+  if (
+    !Array.isArray(tables) ||
+    !Array.isArray(audited) ||
+    !Array.isArray(children) ||
+    !Array.isArray(counters) ||
+    !Array.isArray(operational)
+  )
+    throw new AllowanceRefused("tables, audited, children, counters and operational must be arrays");
   const seen = new Set<string>();
   const once = (t: string) => {
     if (seen.has(t)) throw new AllowanceRefused(`${t} is listed more than once`);
@@ -187,6 +271,13 @@ export function parseAllowance(bytes: Uint8Array): Allowance {
     once(name);
     return { name, parent, fkey: e["fkey"] };
   });
+  const outCounters = counters.map((n) => {
+    const name = tableName(n, "counters");
+    once(name);
+    if (!Object.hasOwn(RECHECK_COUNTER_TABLES, name))
+      throw new AllowanceRefused(`counter table ${name} is not in RECHECK_COUNTER_TABLES`);
+    return name;
+  });
   const tableSet = new Set(outTables.map((t) => t.name));
   const outOperational = operational.map((n) => {
     const name = tableName(n, "operational");
@@ -206,6 +297,7 @@ export function parseAllowance(bytes: Uint8Array): Allowance {
     tables: outTables,
     audited: outAudited,
     children: outChildren,
+    counters: outCounters,
     operational: outOperational,
   };
 }
@@ -245,6 +337,11 @@ export async function validateAllowance(tx: DbOrTx, allowance: Allowance, plan?:
       if (k.length !== table.primaryKey.length) throw new AllowanceRefused(`malformed key tuple in ${t.name}`);
   }
   for (const t of allowance.operational) known(t);
+  for (const t of allowance.counters) {
+    const c = RECHECK_COUNTER_TABLES[t];
+    if (c === undefined) throw new AllowanceRefused(`counter table ${t} is not in RECHECK_COUNTER_TABLES`);
+    known(t);
+  }
   if (allowance.actors.length > 0) {
     const found = new Set(
       (
@@ -504,32 +601,46 @@ export async function checkAuditTrail(
 // ------------------------------------------------------------------------------------------------ explanations
 
 /**
- * A2.6 rule 3: each added or changed row of an audited table must have an explaining event (after the baseline, source
- * api or worker, by or on behalf of a listed actor, record_type = t, record_id = row id, new_version = row version when
- * the table has one). Returns the unexplained rows and the number of explaining events.
+ * The explaining set of a recheck (A2.6 rule 3 with A3.2): `all` is E* (the `seq` of every explaining event, decimal
+ * strings), `byActor` is E (the listed actors' own events, A3.2 step 1), and E* \ E came from automation chains.
+ */
+export interface ExplainingSet {
+  readonly all: readonly string[];
+  readonly byActor: ReadonlySet<string>;
+}
+
+/**
+ * A2.6 rule 3 evaluated with E* (A3.2 step 6): each added or changed row of an audited table must have an event of E*
+ * with record_type = t, record_id = row id and new_version = row version when the table has one. Returns the
+ * unexplained rows and the number of explaining events on the table (from E, and from E* \ E).
  */
 export async function explainAudited(
   tx: DbOrTx,
   table: TransferPlanTable,
   rows: { readonly added: readonly EncodedRow[]; readonly changed: readonly EncodedRow[] },
-  actors: readonly string[],
-  baselineSeqMax: bigint,
-): Promise<{ unexplainedAdded: EncodedRow[]; unexplainedChanged: EncodedRow[]; events: number }> {
+  events: ExplainingSet,
+): Promise<{
+  unexplainedAdded: EncodedRow[];
+  unexplainedChanged: EncodedRow[];
+  events: number;
+  eventsByActor: number;
+  eventsByAutomation: number;
+}> {
   const versionAt = table.columns.findIndex((c) => c.name === "version");
   const idAt = table.columns.findIndex((c) => c.name === "id");
-  const ev = await sql<{ record_id: string; new_version: number | null }>`
-    SELECT record_id::text AS record_id, new_version FROM audit_event
-     WHERE seq > ${baselineSeqMax.toString()}::bigint AND source IN ('api', 'worker') AND record_type = ${table.name}
-       AND (actor_user_id = ANY(${[...actors]}::uuid[]) OR on_behalf_of_user_id = ANY(${[...actors]}::uuid[]))`.execute(
-    tx,
-  );
+  const ev = await sql<{ seq: string; record_id: string; new_version: number | null }>`
+    SELECT seq::text AS seq, record_id::text AS record_id, new_version FROM audit_event
+     WHERE seq = ANY(${[...events.all]}::bigint[]) AND record_type = ${table.name}`.execute(tx);
   const explaining = new Set(ev.rows.map((e) => `${e.record_id}|${versionAt < 0 ? "" : String(e.new_version)}`));
   const explained = (r: EncodedRow) =>
     explaining.has(`${r.values[idAt] ?? ""}|${versionAt < 0 ? "" : String(r.values[versionAt] ?? "null")}`);
+  const byActor = ev.rows.filter((e) => events.byActor.has(e.seq)).length;
   return {
     unexplainedAdded: rows.added.filter((r) => !explained(r)),
     unexplainedChanged: rows.changed.filter((r) => !explained(r)),
     events: ev.rows.length,
+    eventsByActor: byActor,
+    eventsByAutomation: ev.rows.length - byActor,
   };
 }
 
@@ -565,6 +676,101 @@ export async function explainChildren(
   return {
     unexplainedAdded: rows.added.filter((r) => !ok(r)),
     unexplainedChanged: rows.changed.filter((r) => !ok(r)),
+  };
+}
+
+// ------------------------------------------------------------------------------------------------ counters
+
+/** One counter row's verdict (A3.3 item 4; the report's `{key, old, new, codes}`). */
+export interface CounterVerdict {
+  /** The counter row's key (the JSON text of its primary-key tuple). */
+  readonly key: string;
+  readonly old: number;
+  readonly new: number;
+  /** The numbers of the explained new coded rows of its scope and prefix, ascending. */
+  readonly codes: readonly number[];
+  readonly explained: boolean;
+}
+
+/** A3.3 item 4: `{old+1 … new}` exactly, each number once. Pure. */
+export function counterStepExplained(oldValue: number, newValue: number, codes: readonly number[]): boolean {
+  if (!(newValue > oldValue) || codes.length !== newValue - oldValue) return false;
+  const sorted = [...codes].sort((a, b) => a - b);
+  return sorted.every((n, i) => n === oldValue + 1 + i);
+}
+
+/** The C.14 line of a counter verdict. */
+export const counterLine = (v: CounterVerdict): string =>
+  `    counter ${v.key}: moved ${v.old} -> ${v.new}, ${v.codes.length} new coded rows (${
+    v.codes.length === 0 ? "none" : v.codes.join(", ")
+  })`;
+
+const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+/**
+ * A3.3 items 3–7: the counter rows of `counter` against the explained added rows of the mapped coded tables.
+ * `explainedAdded` holds, per table, the rows this run explained as added (under tables, audited or children); it is
+ * read only, so the caller runs this last. A counter row present in the package and absent live is unexplained (item
+ * 6); an unmapped prefix that changed is unexplained (item 1); a scope and prefix with explained new coded rows whose
+ * counter row did not change is reported unexplained (item 5).
+ */
+export function explainCounters(
+  counter: CounterTable,
+  counterTable: TransferPlanTable,
+  pkg: ReadonlyMap<string, string>,
+  cmp: RowComparison,
+  explainedAdded: ReadonlyMap<string, readonly EncodedRow[]>,
+  plan: TransferPlan,
+): { verdicts: CounterVerdict[]; missing: readonly string[]; explained: boolean } {
+  const at = (t: TransferPlanTable, c: string) => t.columns.findIndex((x) => x.name === c);
+  const [iScope, iPrefix, iValue] = [
+    at(counterTable, counter.scope),
+    at(counterTable, counter.prefixColumn),
+    at(counterTable, counter.valueColumn),
+  ];
+  // N per (scope, prefix): the numbers parsed from the explained added coded rows (A3.3 item 4).
+  const numbers = new Map<string, number[]>();
+  const nKey = (scope: string, prefix: string) => JSON.stringify([scope, prefix]);
+  for (const [prefix, coded] of Object.entries(counter.prefixes)) {
+    const t = plan.tables.find((x) => x.name === coded.table);
+    if (t === undefined) continue;
+    const [iS, iC] = [at(t, counter.scope), at(t, coded.code)];
+    const re = new RegExp(`^${escapeRe(prefix)}-([0-9]{2,6})$`);
+    for (const r of explainedAdded.get(coded.table) ?? []) {
+      const m = re.exec(r.values[iC] ?? "");
+      const scope = r.values[iS];
+      if (m === null || scope === null || scope === undefined) continue;
+      const k = nKey(scope, prefix);
+      numbers.set(k, [...(numbers.get(k) ?? []), Number(m[1])]);
+    }
+  }
+  const verdicts: CounterVerdict[] = [];
+  const seen = new Set<string>();
+  const live = [...cmp.added.map((r) => ({ r, added: true })), ...cmp.changed.map((r) => ({ r, added: false }))];
+  for (const { r, added } of live) {
+    const scope = r.values[iScope] ?? "";
+    const prefix = r.values[iPrefix] ?? "";
+    const k = nKey(scope, prefix);
+    seen.add(k);
+    const oldValue = added ? 0 : Number((JSON.parse(pkg.get(r.key)!) as Record<string, unknown>)[counter.valueColumn]);
+    const newValue = Number(r.values[iValue]);
+    const codes = Object.hasOwn(counter.prefixes, prefix) ? [...(numbers.get(k) ?? [])].sort((a, b) => a - b) : [];
+    const ok = Object.hasOwn(counter.prefixes, prefix) && counterStepExplained(oldValue, newValue, codes);
+    verdicts.push({ key: r.key, old: oldValue, new: newValue, codes, explained: ok });
+  }
+  // A3.3 item 5: explained new coded rows whose counter row did not move.
+  for (const [k, codes] of numbers) {
+    if (seen.has(k)) continue;
+    const pkgLine = pkg.get(k);
+    const value =
+      pkgLine === undefined ? 0 : Number((JSON.parse(pkgLine) as Record<string, unknown>)[counter.valueColumn]);
+    verdicts.push({ key: k, old: value, new: value, codes: [...codes].sort((a, b) => a - b), explained: false });
+  }
+  verdicts.sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
+  return {
+    verdicts,
+    missing: cmp.missing,
+    explained: cmp.missing.length === 0 && verdicts.every((v) => v.explained),
   };
 }
 
