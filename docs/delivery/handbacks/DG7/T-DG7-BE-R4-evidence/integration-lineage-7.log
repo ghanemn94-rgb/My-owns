@@ -1,0 +1,123 @@
+port-policy: PostgreSQL listening on port 25411 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/My-owns
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwfe97e7_afec76d0 (server_encoding UTF8); applied 135 migrations to a fresh database
+ ❯ |integration| packages/db/test/integration/transfer-recheck-lineage.test.ts (11 tests | 5 failed) 18780ms
+   × T-R24: the KPI chain explained through its lineage links (A4.2-A4.5) > a journalled actor accepts one KPI actual through the route; the worker runs; mode 2 gives allowed 1478ms
+     →   app_user: 0 added, 2 changed, 0 missing (unexplained)
+  automation_execution: 8 explaining events
+  automation_action_result: 4 explaining events
+  kpi_actual: 1 explaining events
+  corrective_case: 0 explaining events
+reconcile-migration: mismatch: 1 tables, 0 attachments differ
+: expected 4 to be +0 // Object.is equality
+   × T-R25: each negative is unexplained with its A4.7 line (A4.2-A4.5) > a chain of depth 6 (owner-built): the sixth execution is unexplained, with its depth line 2ms
+     → no event trigger with a published non-starter rule
+   × T-R25: each negative is unexplained with its A4.7 line (A4.2-A4.5) > an action result whose event's request_id is another job's is unexplained 1ms
+     → Cannot read properties of undefined (reading 'result')
+   ✓ T-R25: each negative is unexplained with its A4.7 line (A4.2-A4.5) > an extra action result (ordinal 2) on a starter execution makes its results unexplained, with the line  1182ms
+   × T-R25: each negative is unexplained with its A4.7 line (A4.2-A4.5) > an owner-inserted kpi.deviation_evaluated row 1 µs off, and the execution it triggers, are unexplained 4ms
+     → no published non-starter version for kpi.deviation_evaluated
+   × T-R25: each negative is unexplained with its A4.7 line (A4.2-A4.5) > a run whose acceptance event is by an actor not in actors is unexplained 563ms
+     → expected [ Array(1) ] to not include '01a1d678-ddda-72c3-a7e7-65b1d57f0437'
+   ✓ T-R25: each negative is unexplained with its A4.7 line (A4.2-A4.5) > a run whose trigger kind's map entry does not match its outbox row is never explained  576ms
+   ✓ T-R25: each negative is unexplained with its A4.7 line (A4.2-A4.5) > a corrective_signal whose source_event_key names no explained outbox row is unexplained  1090ms
+   ✓ T-R25: each negative is unexplained with its A4.7 line (A4.2-A4.5) > kpi_evaluation listed in tables (not in lineage) gives exact_ids unexplained added keys  618ms
+   ✓ T-R25: each negative is unexplained with its A4.7 line (A4.2-A4.5) > an owner-inserted extra kpi_evaluation on an explained run: the run's count differs (A4.3 line)  671ms
+   ✓ T-R26: the catalogue check of the named lineage links (A4.2 'At run time') > renaming kpi_evaluation_run_fkey gives exit 2 with the A4.7 line 211ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| packages/db/test/integration/transfer-recheck-lineage.test.ts > T-R24: the KPI chain explained through its lineage links (A4.2-A4.5) > a journalled actor accepts one KPI actual through the route; the worker runs; mode 2 gives allowed
+AssertionError:   app_user: 0 added, 2 changed, 0 missing (unexplained)
+  automation_execution: 8 explaining events
+  automation_action_result: 4 explaining events
+  kpi_actual: 1 explaining events
+  corrective_case: 0 explaining events
+reconcile-migration: mismatch: 1 tables, 0 attachments differ
+: expected 4 to be +0 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 0[39m
+[31m+ 4[39m
+
+ ❯ packages/db/test/integration/transfer-recheck-lineage.test.ts:258:71
+    256|     const r = await recheck(allowance());
+    257|     expect(r.err, r.out.join("\n")).toEqual([]);
+    258|     expect(r.code, `${r.out.join("\n")}\n${workerErrors.join("\n")}`).…
+       |                                                                       ^
+    259|     for (const t of ALL_LINEAGE) {
+    260|       const d = deltaOf(r, t);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  |integration| packages/db/test/integration/transfer-recheck-lineage.test.ts > T-R25: each negative is unexplained with its A4.7 line (A4.2-A4.5) > a chain of depth 6 (owner-built): the sixth execution is unexplained, with its depth line
+Error: no event trigger with a published non-starter rule
+ ❯ eventTrigger packages/db/test/integration/transfer-recheck-lineage.test.ts:356:40
+    354|                       WHERE v.status = 'published' AND t.code = ANY(v.…
+    355|        ORDER BY t.code LIMIT 1`.execute(target.db);
+    356|     if (r.rows[0] === undefined) throw new Error("no event trigger wit…
+       |                                        ^
+    357|     return r.rows[0].code;
+    358|   }
+ ❯ packages/db/test/integration/transfer-recheck-lineage.test.ts:364:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  |integration| packages/db/test/integration/transfer-recheck-lineage.test.ts > T-R25: each negative is unexplained with its A4.7 line (A4.2-A4.5) > an action result whose event's request_id is another job's is unexplained
+TypeError: Cannot read properties of undefined (reading 'result')
+ ❯ packages/db/test/integration/transfer-recheck-lineage.test.ts:399:104
+    397|     await target.db.transaction().execute(async (tx) => {
+    398|       const action = (
+    399|         await sql<{ a: string }>`SELECT action_type AS a FROM automati…
+       |                                                                                                        ^
+    400|           tx,
+    401|         )
+ ❯ node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/kysely.js:582:38
+ ❯ DefaultConnectionProvider.provideConnection node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/default-connection-provider.js:10:20
+ ❯ packages/db/test/integration/transfer-recheck-lineage.test.ts:397:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  |integration| packages/db/test/integration/transfer-recheck-lineage.test.ts > T-R25: each negative is unexplained with its A4.7 line (A4.2-A4.5) > an owner-inserted kpi.deviation_evaluated row 1 µs off, and the execution it triggers, are unexplained
+Error: no published non-starter version for kpi.deviation_evaluated
+ ❯ packages/db/test/integration/transfer-recheck-lineage.test.ts:321:34
+    319|            ORDER BY v.id, c.code LIMIT 1`.execute(tx)
+    320|       ).rows[0];
+    321|       if (v === undefined) throw new Error(`no published non-starter v…
+       |                                  ^
+    322|       await sql`INSERT INTO automation_execution (id, automation_rule_…
+    323|                   trigger_key, trigger_payload, organization_id, trans…
+ ❯ node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/kysely.js:582:32
+ ❯ DefaultConnectionProvider.provideConnection node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/default-connection-provider.js:10:20
+ ❯ chainedJob packages/db/test/integration/transfer-recheck-lineage.test.ts:311:5
+ ❯ packages/db/test/integration/transfer-recheck-lineage.test.ts:477:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  |integration| packages/db/test/integration/transfer-recheck-lineage.test.ts > T-R25: each negative is unexplained with its A4.7 line (A4.2-A4.5) > a run whose acceptance event is by an actor not in actors is unexplained
+AssertionError: expected [ Array(1) ] to not include '01a1d678-ddda-72c3-a7e7-65b1d57f0437'
+ ❯ packages/db/test/integration/transfer-recheck-lineage.test.ts:487:57
+    485|     const r = await recheck(allowance({ actors: [user("KDS").id] }));
+    486|     expect(r.code).toBe(4);
+    487|     expect(r.json.lineageChain.map((x) => x.runId)).not.toContain(runI…
+       |                                                         ^
+    488|     expect(r.out).toContain(`    unexplained added ${keyOf(runId)}`);
+    489|   }, 300_000);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 6 passed (11)
+   Start at  19:53:01
+   Duration  32.74s (transform 5.29s, setup 0ms, collect 9.69s, tests 18.78s, environment 0ms, prepare 63ms)
+
+exit=1

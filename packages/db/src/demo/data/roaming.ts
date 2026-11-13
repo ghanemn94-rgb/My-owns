@@ -16,6 +16,7 @@
 // ids, then calls the function and requires that it creates nothing (so the structure is exactly the product's).
 import { sql } from "kysely";
 import { DEV_ISSUER } from "../../constants.ts";
+import { DEMO_ORGANIZATION_TIMEZONE } from "../guard.ts";
 import type { DemoDatasetModule, DemoSeedContext } from "../seed.ts";
 import { DEMO_ANCHORS } from "./kpis.ts";
 import { RT_BLOCK, rtId } from "./roaming-ids.ts";
@@ -135,6 +136,13 @@ export const DEMO_BUSINESS_UNIT_GRANTS: readonly { key: string; userId: string; 
   { key: "adm_access", userId: DEMO_ACCESS_ADMIN.id, role: "ADM_ACCESS" },
 ];
 
+/** ADR-0064 A4.6: the one organization-scope grant (ADM_ACCESS at SYN-ROAMING for the demo access administrator). */
+export const DEMO_ORG_ACCESS_GRANT: { fixtureKey: string; userId: string; role: string } = {
+  fixtureKey: "roaming.assignment_org.adm_access",
+  userId: DEMO_ACCESS_ADMIN.id,
+  role: "ADM_ACCESS",
+};
+
 const REASON = "Synthetic demonstration role (illustrative example; approves nothing real)";
 
 type Row = Record<string, unknown>;
@@ -159,7 +167,7 @@ async function seedFoundation(ctx: DemoSeedContext): Promise<void> {
     code: "SYN-ROAMING",
     name_en: "Synthetic Demo Operator",
     name_ar: "مشغل عرض توضيحي اصطناعي",
-    default_timezone: "Asia/Riyadh",
+    default_timezone: DEMO_ORGANIZATION_TIMEZONE,
     default_currency: "SAR",
     default_locale: "en",
     created_at: at,
@@ -294,6 +302,33 @@ async function seedFoundation(ctx: DemoSeedContext): Promise<void> {
       { organizationId: ORG, transformationId: null },
     );
   }
+  // ADR-0064 A4.6 (D-263; amends ADR-0050 D2 for this one grant): the demo access administrator also holds ADM_ACCESS
+  // at organization scope, so role assignments across the demo organization go through createRoleAssignment (audited).
+  // ADM_ACCESS holds no business-record or approval permission; this makes no user an approver. Id number 12 (after
+  // the eight transformation grants and the three business-unit grants); the business-unit grant stays.
+  n += 1;
+  const admAccess = roleIds.get(DEMO_ORG_ACCESS_GRANT.role);
+  if (admAccess === undefined) throw new Error(`demo seed: role ${DEMO_ORG_ACCESS_GRANT.role} missing`);
+  await ctx.insert(
+    "scoped_assignment",
+    DEMO_ORG_ACCESS_GRANT.fixtureKey,
+    {
+      id: rtId(RT_BLOCK.scopedAssignment, n),
+      organization_id: ORG,
+      user_id: DEMO_ORG_ACCESS_GRANT.userId,
+      role_id: admAccess,
+      scope_type: "organization",
+      scope_id: ORG,
+      effective_from: at,
+      reason: REASON,
+      granted_by: U.tl,
+      created_at: at,
+      updated_at: at,
+      created_by: U.tl,
+      updated_by: U.tl,
+    },
+    { organizationId: ORG, transformationId: null },
+  );
 }
 
 // ------------------------------------------------------------------------------------------------ starter structure

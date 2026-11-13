@@ -54,6 +54,7 @@ const allowance = (over: Record<string, unknown> = {}) => ({
   audited: [],
   children: [],
   counters: [],
+  lineage: [],
   operational: ["outbox_event"],
   ...over,
 });

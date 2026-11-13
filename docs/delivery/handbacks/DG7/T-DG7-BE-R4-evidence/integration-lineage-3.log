@@ -1,0 +1,52 @@
+port-policy: PostgreSQL listening on port 25411 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/My-owns
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwfe5bc5_f62c1138 (server_encoding UTF8); applied 135 migrations to a fresh database
+ ❯ |integration| packages/db/test/integration/transfer-recheck-lineage.test.ts (11 tests | 11 skipped) 10857ms
+   ↓ T-R24: the KPI chain explained through its lineage links (A4.2-A4.5) > a journalled actor accepts one KPI actual through the route; the worker runs; mode 2 gives allowed
+   ↓ T-R25: each negative is unexplained with its A4.7 line (A4.2-A4.5) > a chain of depth 6 (owner-built): the sixth execution is unexplained, with its depth line
+   ↓ T-R25: each negative is unexplained with its A4.7 line (A4.2-A4.5) > an action result whose event's request_id is another job's is unexplained
+   ↓ T-R25: each negative is unexplained with its A4.7 line (A4.2-A4.5) > an extra action result (ordinal 2) on a starter execution makes its results unexplained, with the line
+   ↓ T-R25: each negative is unexplained with its A4.7 line (A4.2-A4.5) > an owner-inserted kpi.deviation_evaluated row 1 µs off, and the execution it triggers, are unexplained
+   ↓ T-R25: each negative is unexplained with its A4.7 line (A4.2-A4.5) > a run whose acceptance event is by an actor not in actors is unexplained
+   ↓ T-R25: each negative is unexplained with its A4.7 line (A4.2-A4.5) > a run whose trigger kind's map entry does not match its outbox row is never explained
+   ↓ T-R25: each negative is unexplained with its A4.7 line (A4.2-A4.5) > a corrective_signal whose source_event_key names no explained outbox row is unexplained
+   ↓ T-R25: each negative is unexplained with its A4.7 line (A4.2-A4.5) > kpi_evaluation listed in tables (not in lineage) gives exact_ids unexplained added keys
+   ↓ T-R25: each negative is unexplained with its A4.7 line (A4.2-A4.5) > an owner-inserted extra kpi_evaluation on an explained run: the run's count differs (A4.3 line)
+   ↓ T-R26: the catalogue check of the named lineage links (A4.2 'At run time') > renaming kpi_evaluation_run_fkey gives exit 2 with the A4.7 line
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| packages/db/test/integration/transfer-recheck-lineage.test.ts [ packages/db/test/integration/transfer-recheck-lineage.test.ts ]
+AssertionError: expected 'rebind-identity: refused: 2 invalid l…' to match /^rebind-identity: rebound 0, retained…/
+
+[32m- Expected:[39m 
+/^rebind-identity: rebound 0, retained 2;/
+
+[31m+ Received:[39m 
+"rebind-identity: refused: 2 invalid lines; nothing was changed
+line 2: user 01995000-0000-7000-8000-000000000011 has 2 carried identities; exactly 1 is needed
+line 3: user 01995000-0000-7000-8000-000000000015 has 2 carried identities; exactly 1 is needed"
+
+ ❯ packages/db/test/integration/transfer-recheck-lineage.test.ts:187:43
+    185|   const mapping = [MAPPING_HEADER, ...ids.rows.map((i) => `${i.user_id…
+    186|   const rebound = await applyRebind(target.db, new TextEncoder().encod…
+    187|   expect(rebindLines(rebound).join("\n")).toMatch(/^rebind-identity: r…
+       |                                           ^
+    188|   worker = createDb(createPool(roleUrl(adminUrl, targetName, "mth_app"…
+    189|   api = await startApi({ database: targetName });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  11 skipped (11)
+   Start at  19:50:00
+   Duration  24.88s (transform 5.57s, setup 0ms, collect 10.28s, tests 10.86s, environment 0ms, prepare 61ms)
+
+exit=1

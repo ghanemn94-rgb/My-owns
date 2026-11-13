@@ -9,12 +9,15 @@
 //          action); user_identity equals the expectation once every `rebound` identity_rebind_event is reversed; the
 //          attachments come from the A1.8 report (never 0 checked for a package that lists attachments).
 //   mode 2 (`--after-use`; run_kind `recheck_after_use`): the package is re-checked and compared ROW BY ROW by primary
-//          key; the allowance file `mth-recheck-allowance/3` (A2.6 with Amendment 3 §A3.4) says which differences are
+//          key; the allowance file `mth-recheck-allowance/4` (A2.6 with Amendment 3 §A3.4 and Amendment 4 §A4.5) says
+//          which differences are
 //          allowed: `tables` (exact keys), `audited` (each added or changed row explained by an event of the
 //          explaining set E* after the baseline, at the row's version: a listed actor's event, or a worker event of
 //          the job of an automation execution chained to such an event, A3.2), `children` (each added or changed row
 //          a foreign-key child of an explained parent row), `counters` (each code counter row moved by exactly the
-//          explained new coded rows of its scope, A3.3) and `operational` (counted). Every other table must be
+//          explained new coded rows of its scope, A3.3), `lineage` (each worker lineage row explained only through its
+//          recorded link to an explained outbox row or run, with exact counts and chain depth, A4.2-A4.4) and
+//          `operational` (counted). Every other table must be
 //          unchanged. No row may be missing.
 //
 // It changes no business row; it appends one migration_reconciliation run with its child rows and its
@@ -88,7 +91,155 @@ export const RECHECK_NEVER_OPERATIONAL: readonly string[] = [
 export const isNeverOperational = (t: string): boolean =>
   RECHECK_NEVER_OPERATIONAL.includes(t) || t.startsWith("decision");
 
-export const ALLOWANCE_SCHEMA_VERSION = "mth-recheck-allowance/3";
+export const ALLOWANCE_SCHEMA_VERSION = "mth-recheck-allowance/4";
+
+/**
+ * A4.2: the worker's unaudited system-lineage tables, each explained only through its recorded link to an already
+ * explained outbox row or run, with exact counts (A4.3, A4.4). Adding a table, an event or a link needs the
+ * architect. The allowance names these tables (under `lineage`), never their links.
+ */
+export const RECHECK_LINEAGE_TABLES = {
+  calculation_run: {
+    link: "outbox", // A4.2 step L1
+    triggers: {
+      actual_accepted: { eventType: "kpi.actual_accepted", aggregateType: "kpi_actual" },
+      threshold_changed: { eventType: "kpi.threshold_changed", aggregateType: "kpi_rag_threshold" },
+      trajectory_approved: { eventType: "kpi.trajectory_approved", aggregateType: "target_trajectory" },
+      version_activated: { eventType: "kpi.version_activated", aggregateType: "kpi_version" },
+    },
+  },
+  kpi_evaluation: { link: "run", fkey: "kpi_evaluation_run_fkey", countColumn: "evaluation_count" },
+  data_quality_finding: { link: "run", fkey: "data_quality_finding_run_fkey", countColumn: "finding_count" },
+  corrective_signal: {
+    link: "source_event", // A4.2 step L4
+    sourceKinds: {
+      kpi_deviation: "kpi.deviation_evaluated",
+      benefit_variance: "benefit.variance_evaluated",
+      adoption_check: "adoption.check_failed",
+      control_check: "control_check.failed",
+    },
+    caseFkey: "corrective_signal_case_fkey",
+  },
+} as const;
+
+export type LineageTable = keyof typeof RECHECK_LINEAGE_TABLES;
+
+/** A4.2 step L3: the outbox rows a run writes in its own transaction, which extend the chain. */
+export const RECHECK_LINEAGE_OUTBOX = [
+  {
+    eventType: "kpi.values_recalculated",
+    aggregateType: "calculation_run",
+    keyPrefix: "kpi.values_recalculated:",
+    from: "run",
+  },
+  {
+    eventType: "kpi.deviation_evaluated",
+    aggregateType: "kpi_evaluation",
+    keyPrefix: "kpi.deviation_evaluated:",
+    from: "evaluation",
+    basis: "period",
+  },
+] as const;
+
+/** A4.4: the deepest chain-explained execution (two hops above the deepest measured chain). */
+export const RECHECK_CHAIN_MAX_DEPTH = 5;
+
+/**
+ * A4.2 "At run time": the named links and columns the lineage steps read; each FK must run from `table` to `parent`
+ * on exactly `columns`. Checked against the catalogue before any row is read (exit 2 on drift).
+ */
+export const RECHECK_LINEAGE_LINKS: readonly {
+  readonly name: string;
+  readonly table: string;
+  readonly parent: string;
+  readonly columns: readonly string[];
+}[] = [
+  {
+    name: "kpi_evaluation_run_fkey",
+    table: "kpi_evaluation",
+    parent: "calculation_run",
+    columns: ["transformation_id", "calculation_run_id"],
+  },
+  {
+    name: "data_quality_finding_run_fkey",
+    table: "data_quality_finding",
+    parent: "calculation_run",
+    columns: ["transformation_id", "detected_by_run_id"],
+  },
+  {
+    name: "corrective_signal_case_fkey",
+    table: "corrective_signal",
+    parent: "corrective_case",
+    columns: ["transformation_id", "corrective_case_id"],
+  },
+];
+
+/** A4.1: the recorded link columns the lineage steps read, by table. */
+export const RECHECK_LINEAGE_COLUMNS: Readonly<Record<string, readonly string[]>> = {
+  calculation_run: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "idempotency_key",
+    "trigger_kind",
+    "trigger_record_type",
+    "trigger_record_id",
+    "trigger_slot",
+    "status",
+    "evaluation_count",
+    "finding_count",
+    "completed_at",
+  ],
+  kpi_evaluation: ["id", "transformation_id", "calculation_run_id", "value_basis"],
+  data_quality_finding: ["id", "transformation_id", "detected_by_run_id"],
+  corrective_signal: [
+    "id",
+    "organization_id",
+    "transformation_id",
+    "source_kind",
+    "source_event_key",
+    "corrective_case_id",
+  ],
+  outbox_event: [
+    "id",
+    "organization_id",
+    "aggregate_type",
+    "aggregate_id",
+    "event_type",
+    "payload",
+    "idempotency_key",
+    "created_at",
+  ],
+};
+
+/** The refusal of A4.2 "At run time" (exit 2); `message` is the whole A4.7 line. */
+export class LineageLinkRefused extends Error {
+  constructor(name: string) {
+    super(`reconcile-migration: refused: lineage link ${name} does not match the schema`);
+    this.name = "LineageLinkRefused";
+  }
+}
+
+/** A4.2: the catalogue check of the named links and columns, before any row is read. Read-only. */
+export async function checkLineageCatalogue(tx: DbOrTx): Promise<void> {
+  for (const l of RECHECK_LINEAGE_LINKS) {
+    const r = await sql<{ cols: string[] }>`
+      SELECT array(SELECT a.attname::text FROM unnest(con.conkey) WITH ORDINALITY k(n, o)
+                     JOIN pg_attribute a ON a.attrelid = con.conrelid AND a.attnum = k.n ORDER BY k.o) AS cols
+        FROM pg_constraint con
+       WHERE con.contype = 'f' AND con.conname = ${l.name}
+         AND con.conrelid = to_regclass(${`public.${l.table}`})
+         AND con.confrelid = to_regclass(${`public.${l.parent}`})`.execute(tx);
+    if (r.rows.length !== 1 || r.rows[0]!.cols.join(",") !== l.columns.join(",")) throw new LineageLinkRefused(l.name);
+  }
+  for (const [table, cols] of Object.entries(RECHECK_LINEAGE_COLUMNS)) {
+    const r = await sql<{ c: string }>`
+      SELECT attname::text AS c FROM pg_attribute
+       WHERE attrelid = to_regclass(${`public.${table}`}) AND attnum > 0 AND NOT attisdropped`.execute(tx);
+    const have = new Set(r.rows.map((x) => x.c));
+    for (const c of cols) if (!have.has(c)) throw new LineageLinkRefused(`${table}.${c}`);
+  }
+}
 
 /** One coded table of a counter prefix: rows whose `code` column reads `<prefix>-<n>`, scoped by the counter's scope. */
 export interface CounterCodedTable {
@@ -182,6 +333,11 @@ export interface Allowance {
   /** A3.4: names from RECHECK_COUNTER_TABLES. */
   readonly counters: readonly string[];
   readonly operational: readonly string[];
+  /** A4.5: names from RECHECK_LINEAGE_TABLES, with the journalled keys that must be among the explained added rows. */
+  readonly lineage: readonly {
+    readonly name: LineageTable;
+    readonly mustInclude: { readonly added: readonly KeyTuple[] };
+  }[];
 }
 
 /** A refused allowance file; `message` is the whole C.12 line. */
@@ -192,7 +348,16 @@ export class AllowanceRefused extends Error {
   }
 }
 
-const KEYS = ["schemaVersion", "actors", "tables", "audited", "children", "counters", "operational"] as const;
+const KEYS = [
+  "schemaVersion",
+  "actors",
+  "tables",
+  "audited",
+  "children",
+  "counters",
+  "lineage",
+  "operational",
+] as const;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 const NAME = /^[a-z][a-z0-9_]{0,62}$/;
 
@@ -215,9 +380,10 @@ function tableName(v: unknown, where: string): string {
 
 /**
  * Structure only, no database (A1.9 rule 7, A2.6 rule 6 and A3.4, the refusals that need no catalogue): strict UTF-8
- * JSON; schema version `/3` (`/1` and `/2` refused); all seven keys; the shapes; a table named twice (in any of the five
- * lists); an operational name outside the constant; a counter name outside RECHECK_COUNTER_TABLES; audit_event or
- * user_identity listed; actors empty while audited is not.
+ * JSON; schema version `/4` (`/1`-`/3` refused); all eight keys; the shapes; a table named twice (in any of the six
+ * lists); an operational name outside the constant; a counter name outside RECHECK_COUNTER_TABLES; a lineage name
+ * outside RECHECK_LINEAGE_TABLES, or without the tables it needs (A4.5); audit_event or user_identity listed; actors
+ * empty while audited is not.
  */
 export function parseAllowance(bytes: Uint8Array): Allowance {
   let raw: unknown;
@@ -232,7 +398,10 @@ export function parseAllowance(bytes: Uint8Array): Allowance {
   for (const k of KEYS) if (!(k in raw)) throw new AllowanceRefused(`missing key '${k}'`);
   for (const k of Object.keys(raw))
     if (!(KEYS as readonly string[]).includes(k)) throw new AllowanceRefused(`unknown key '${k}'`);
-  const { actors, tables, audited, children, counters, operational } = raw as Record<(typeof KEYS)[number], unknown>;
+  const { actors, tables, audited, children, counters, lineage, operational } = raw as Record<
+    (typeof KEYS)[number],
+    unknown
+  >;
   if (!Array.isArray(actors) || !actors.every((a) => typeof a === "string" && UUID.test(a)))
     throw new AllowanceRefused("actors must be an array of app_user ids");
   if (
@@ -240,9 +409,10 @@ export function parseAllowance(bytes: Uint8Array): Allowance {
     !Array.isArray(audited) ||
     !Array.isArray(children) ||
     !Array.isArray(counters) ||
+    !Array.isArray(lineage) ||
     !Array.isArray(operational)
   )
-    throw new AllowanceRefused("tables, audited, children, counters and operational must be arrays");
+    throw new AllowanceRefused("tables, audited, children, counters, lineage and operational must be arrays");
   const seen = new Set<string>();
   const once = (t: string) => {
     if (seen.has(t)) throw new AllowanceRefused(`${t} is listed more than once`);
@@ -278,6 +448,20 @@ export function parseAllowance(bytes: Uint8Array): Allowance {
       throw new AllowanceRefused(`counter table ${name} is not in RECHECK_COUNTER_TABLES`);
     return name;
   });
+  const outLineage = lineage.map((e, i) => {
+    if (!isObject(e) || !isObject(e["mustInclude"])) throw new AllowanceRefused(`lineage[${i}] is not an object`);
+    const name = tableName(e["name"], "lineage");
+    once(name);
+    if (!Object.hasOwn(RECHECK_LINEAGE_TABLES, name))
+      throw new AllowanceRefused(`lineage table ${name} is not in RECHECK_LINEAGE_TABLES`);
+    return { name: name as LineageTable, mustInclude: { added: tuples(e["mustInclude"]["added"], name) } };
+  });
+  const lineageSet = new Set<string>(outLineage.map((l) => l.name));
+  for (const t of ["kpi_evaluation", "data_quality_finding"])
+    if (lineageSet.has(t) && !lineageSet.has("calculation_run"))
+      throw new AllowanceRefused(`lineage table ${t} needs calculation_run in lineage`);
+  if (lineageSet.has("corrective_signal") && !outAudited.some((a) => a.name === "corrective_case"))
+    throw new AllowanceRefused("lineage table corrective_signal needs corrective_case in audited");
   const tableSet = new Set(outTables.map((t) => t.name));
   const outOperational = operational.map((n) => {
     const name = tableName(n, "operational");
@@ -298,6 +482,7 @@ export function parseAllowance(bytes: Uint8Array): Allowance {
     audited: outAudited,
     children: outChildren,
     counters: outCounters,
+    lineage: outLineage,
     operational: outOperational,
   };
 }
@@ -337,6 +522,11 @@ export async function validateAllowance(tx: DbOrTx, allowance: Allowance, plan?:
       if (k.length !== table.primaryKey.length) throw new AllowanceRefused(`malformed key tuple in ${t.name}`);
   }
   for (const t of allowance.operational) known(t);
+  for (const l of allowance.lineage) {
+    const table = known(l.name);
+    for (const k of l.mustInclude.added)
+      if (k.length !== table.primaryKey.length) throw new AllowanceRefused(`malformed key tuple in ${l.name}`);
+  }
   for (const t of allowance.counters) {
     const c = RECHECK_COUNTER_TABLES[t];
     if (c === undefined) throw new AllowanceRefused(`counter table ${t} is not in RECHECK_COUNTER_TABLES`);

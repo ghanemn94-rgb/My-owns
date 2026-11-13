@@ -14,7 +14,14 @@ import pg from "pg";
 import { DB_ROLES } from "../constants.ts";
 import { migrate } from "../migrate.ts";
 import { DemoRefused, RESET_DEMO_REFUSALS, resetDemoConfigRefusal } from "./guard.ts";
-import { maintenanceUrl, seedDemo, withDemoLock, type DemoRunSummary, type DemoSeedOptions } from "./seed.ts";
+import {
+  maintenanceUrl,
+  resolvePeriodAnchor,
+  seedDemo,
+  withDemoLock,
+  type DemoRunSummary,
+  type DemoSeedOptions,
+} from "./seed.ts";
 
 const DATABASE_NAME = /^[A-Za-z_][A-Za-z0-9_]{0,62}$/;
 
@@ -32,6 +39,8 @@ export interface DemoResetOptions {
   readonly conditions?: DemoSeedOptions["conditions"];
   /** D-165: also bind the demo users to the dev issuer (dev-mode stack only; `demoDevIssuerBindingAllowed`). */
   readonly devIssuerBinding?: boolean;
+  /** ADR-0064 A4.6: the date whose month is the period anchor (default: the real date, read once). */
+  readonly asOf?: string;
   readonly log?: (line: string) => void;
 }
 
@@ -81,6 +90,9 @@ export async function resetDemo(options: DemoResetOptions): Promise<DemoRunSumma
   const database = databaseNameOf(options.ownerUrl);
   if (database === "postgres" || database.startsWith("template"))
     throw new DemoRefused("reset-demo", RESET_DEMO_REFUSALS.notDemoDatabase);
+  // ADR-0064 A4.6: the anchor is resolved (and its range refused) before the database is dropped, and the real clock
+  // is read once: the seed gets the resolved date.
+  const period = resolvePeriodAnchor(options.asOf);
 
   return withDemoLock(adminUrl, async () => {
     if (!(await targetIsDemo(adminUrl, database)))
@@ -117,6 +129,7 @@ export async function resetDemo(options: DemoResetOptions): Promise<DemoRunSumma
       ...(options.modules ? { modules: options.modules } : {}),
       ...(options.conditions ? { conditions: options.conditions } : {}),
       devIssuerBinding: options.devIssuerBinding === true,
+      asOf: period.asOf,
     });
   });
 }

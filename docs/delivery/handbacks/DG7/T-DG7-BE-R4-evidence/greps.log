@@ -1,0 +1,8 @@
+$ git diff --exit-code apps/api/src/modules/access/rules.ts
+exit=0
+$ git grep -nE '(toBe|toEqual)\("[0-9a-f]{64}"\)' -- '*.test.ts' '*.test.mjs' | grep -i checksum
+exit=1 (1 = no literal checksum pinned)
+$ git grep -nE '"[0-9a-f]{64}"' -- 'packages/db/test/integration/demo*.test.ts' 'apps/api/test/integration/environment/*.ts'
+exit=1 (1 = none)
+$ grep -nE '(UPDATE|DELETE FROM|TRUNCATE|INSERT INTO) +audit_event' packages/db/src/transfer/recheck*.ts packages/db/src/transfer/reconcile.ts packages/db/migrations/0152_*.sql
+exit=1 (1 = none)

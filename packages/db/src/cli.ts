@@ -14,6 +14,7 @@
 //                       (AUTH_MODE=dev, never NODE_ENV=production: also binds the demo users to the dev issuer; D-165)
 //   mth-db reset-demo   drop, re-create, migrate and re-seed the demo database (MTH_ENV=demo and
 //                       MTH_DEMO_ADMIN_DATABASE_URL; ADR-0050 §6)                                         exit 0 | 3
+//                       both take [--as-of YYYY-MM-DD], the period anchor of ADR-0064 A4.6         also exit 1 | 2
 //   mth-db export-migration --out DIR --operator NAME   the migration package (ADR-0064 §7; T-DG7-BE-C)  exit 0 | 1 | 2
 //   mth-db import-migration --from DIR --operator NAME [--manifest-sha256 HEX] [--attachments-report FILE]
 //                       [--report FILE]   the import into a target prepared with the reservation (ADR-0064 §6 and
@@ -21,7 +22,7 @@
 //   mth-db reconcile-migration --operator NAME [--attachments-report FILE]
 //                       [--after-use --from DIR --allow FILE] [--report FILE]   re-check of the recorded import
 //                       (ADR-0064 A1.9 with A2.3, A2.6: mode 1, or mode 2 after use with the allowance
-//                       mth-recheck-allowance/3; T-DG7-BE-R2, T-DG7-BE-R3)                             exit 0 | 2 | 4
+//                       mth-recheck-allowance/4; T-DG7-BE-R2, T-DG7-BE-R3, T-DG7-BE-R4)                exit 0 | 2 | 4
 //   mth-db table-digest --table T [--table T …] [--rows]   read-only, as mth_app (DATABASE_URL): one canonical JSON
 //                       line mth-table-digest/1 for exported tables (ADR-0064 A2; T-DG7-BE-R2)          exit 0 | 2
 //   mth-db rebind-identity --mapping FILE --operator NAME   identity rebind, all or nothing (ADR-0064 §8)  exit 0 | 2
@@ -69,8 +70,8 @@ const USAGE = `usage:
   mth-db bootstrap --org-code CODE --org-name-en NAME --org-name-ar NAME
                    --admin-name NAME [--admin-email EMAIL] --admin-issuer ISSUER --admin-subject SUB
   mth-db seed-dev
-  mth-db seed-demo
-  mth-db reset-demo
+  mth-db seed-demo [--as-of YYYY-MM-DD]
+  mth-db reset-demo [--as-of YYYY-MM-DD]
   mth-db export-migration --out DIR --operator NAME
   mth-db import-migration --from DIR --operator NAME [--manifest-sha256 HEX] [--attachments-report FILE]
                           [--report FILE]
@@ -129,6 +130,12 @@ async function main(argv: string[]): Promise<number> {
     AUTH_MODE: process.env["AUTH_MODE"],
   });
 
+  // ADR-0064 A4.6: `--as-of YYYY-MM-DD` sets the period anchor of seed-demo and reset-demo (validated by runDemoCommand).
+  const demoAsOf =
+    command === "seed-demo" || command === "reset-demo"
+      ? parseArgs({ args: rest, options: { "as-of": { type: "string" } }, strict: true }).values["as-of"]
+      : undefined;
+
   // ADR-0050 §6: the reset re-creates the database, so it checks nothing on it first (it creates it UTF8 itself).
   if (command === "reset-demo")
     return runDemoCommand(command, {
@@ -136,6 +143,7 @@ async function main(argv: string[]): Promise<number> {
       ownerUrl,
       demoAdminUrl: config.demoAdminDatabaseUrl,
       devIssuerBinding,
+      asOf: demoAsOf,
     });
 
   if (command === "migrate" && rest.includes("--dry-run"))
@@ -227,6 +235,7 @@ async function main(argv: string[]): Promise<number> {
         ownerUrl,
         demoAdminUrl: config.demoAdminDatabaseUrl,
         devIssuerBinding,
+        asOf: demoAsOf,
       });
 
     const db = createDb(pool);

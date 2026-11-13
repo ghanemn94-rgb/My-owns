@@ -33,8 +33,10 @@ import {
   DEMO_DATASET_VERSION,
   DEMO_RESET_LOCK_CLASS,
   DEMO_RESET_LOCK_KEY,
+  DEMO_ORGANIZATION_TIMEZONE,
   DEMO_SYNTHETIC_CLOCK,
 } from "./guard.ts";
+import { DEMO_PERIODS, dateInZone, demoPeriodsFor, isCalendarDate } from "./data/kpis.ts";
 
 /** Every seeded id is a fixed literal UUID in this namespace (ADR-0050 §4). */
 export const DEMO_ID_PATTERN = /^01995000-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
@@ -52,6 +54,10 @@ export interface DemoSeedContext {
   date(offsetDays: number): string;
   /** D-165: also bind the demo users to the dev issuer (a dev-mode stack only; guard.ts demoDevIssuerBindingAllowed). */
   readonly devIssuerBinding: boolean;
+  /** ADR-0064 A4.6: the run's period anchor (YYYY-MM), the only input taken from the real clock (or from `asOf`). */
+  readonly periodAnchor: string;
+  /** The demo organization's timezone (DEMO_ORGANIZATION_TIMEZONE). */
+  readonly timeZone: string;
   /**
    * Inserts one row with a fixed `id`, writes its audit event (`<table>.create`, new version 1) and registers it in
    * demo_seed_record under `fixtureKey`. jsonb values must be passed as JSON text.
@@ -80,6 +86,13 @@ export interface DemoRunSummary {
   readonly coverageNotImplemented: readonly string[];
   readonly coverageComplete: boolean;
   readonly seededRecords: number;
+  /** ADR-0064 A4.6: the period anchor (YYYY-MM) of this run. */
+  readonly periodAnchor: string;
+  /** The date the anchor was taken from (YYYY-MM-DD, `asOf` or the real date in the organization's timezone). */
+  readonly periodAsOf: string;
+  readonly periodTimezone: string;
+  /** The number of generated reporting periods (0 when the anchor is not after 2026-09). */
+  readonly periodsGenerated: number;
 }
 
 export interface DemoSeedOptions {
@@ -99,6 +112,29 @@ export interface DemoSeedOptions {
   readonly requestId?: string | null;
   /** D-165: also bind the demo users to the dev issuer. Default false; the CLI sets it in a dev-mode stack only. */
   readonly devIssuerBinding?: boolean;
+  /**
+   * ADR-0064 A4.6: the date (YYYY-MM-DD) whose month is the period anchor. Default: the real date in the demo
+   * organization's timezone, read once. Seed and reset with the same anchor give identical counts and checksum.
+   */
+  readonly asOf?: string;
+}
+
+/**
+ * ADR-0064 A4.6: the period anchor of a run: the month of `asOf`, else of the real date in the demo organization's
+ * timezone (the seed's only read of the real clock). Validates the anchor's range before anything is written.
+ */
+export function resolvePeriodAnchor(asOf: string | undefined): {
+  asOf: string;
+  anchor: string;
+  timeZone: string;
+  generated: number;
+} {
+  const timeZone = DEMO_ORGANIZATION_TIMEZONE;
+  const date = asOf ?? dateInZone(new Date(), timeZone);
+  if (!isCalendarDate(date)) throw new Error(`demo seed: asOf ${date} is not a valid YYYY-MM-DD date`);
+  const anchor = date.slice(0, 7);
+  const periods = demoPeriodsFor(anchor, timeZone);
+  return { asOf: date, anchor, timeZone, generated: periods.length - DEMO_PERIODS.length };
 }
 
 /** The maintenance database's URL on the same server and credentials ("postgres"). */
@@ -128,7 +164,13 @@ export async function withDemoLock<T>(url: string, fn: () => Promise<T>): Promis
   }
 }
 
-function seedContext(tx: Tx, actor: AuditActor, registered: { n: number }, devIssuerBinding: boolean): DemoSeedContext {
+function seedContext(
+  tx: Tx,
+  actor: AuditActor,
+  registered: { n: number },
+  devIssuerBinding: boolean,
+  period: { readonly anchor: string; readonly timeZone: string },
+): DemoSeedContext {
   const clock = new Date(DEMO_SYNTHETIC_CLOCK);
   const at = (o: { days?: number; hours?: number; minutes?: number }): Date =>
     new Date(clock.getTime() + (((o.days ?? 0) * 24 + (o.hours ?? 0)) * 60 + (o.minutes ?? 0)) * 60_000);
@@ -138,6 +180,8 @@ function seedContext(tx: Tx, actor: AuditActor, registered: { n: number }, devIs
     at,
     date: (offsetDays) => at({ days: offsetDays }).toISOString().slice(0, 10),
     devIssuerBinding,
+    periodAnchor: period.anchor,
+    timeZone: period.timeZone,
     async insert(table, fixtureKey, row, audit) {
       if (!TABLE.test(table)) throw new Error(`demo seed: invalid table name ${table}`);
       if (!FIXTURE_KEY.test(fixtureKey)) throw new Error(`demo seed: invalid fixture key ${fixtureKey}`);
@@ -179,6 +223,8 @@ function seedContext(tx: Tx, actor: AuditActor, registered: { n: number }, devIs
 
 /** The seed transaction on `ownerUrl` (ADR-0050 §6). Throws DemoRefused (exit 3) when refused; nothing changes then. */
 export async function seedDemo(ownerUrl: string, options: DemoSeedOptions): Promise<DemoRunSummary> {
+  // A4.6: the anchor and its range refusal come first, so a refused anchor writes nothing.
+  const period = resolvePeriodAnchor(options.asOf);
   const run = async (): Promise<DemoRunSummary> => {
     const pool = createPool(ownerUrl, { max: 1, applicationName: `mth-db demo ${options.runKind}` });
     const db = createDb(pool);
@@ -202,7 +248,7 @@ export async function seedDemo(ownerUrl: string, options: DemoSeedOptions): Prom
             ? { actorType: "system", actorUserId: null, source: "cli", requestId: options.requestId ?? null }
             : { actorType: "service", actorUserId: null, source: "worker", requestId: options.requestId ?? null };
         const registered = { n: 0 };
-        const ctx = seedContext(tx, actor, registered, options.devIssuerBinding === true);
+        const ctx = seedContext(tx, actor, registered, options.devIssuerBinding === true, period);
         const modules = [...(options.modules ?? DEMO_DATASET_MODULES)].sort(
           (a, b) => a.order - b.order || (a.key < b.key ? -1 : a.key > b.key ? 1 : 0),
         );
@@ -255,6 +301,10 @@ export async function seedDemo(ownerUrl: string, options: DemoSeedOptions): Prom
           coverageNotImplemented: coverage.notImplemented,
           coverageComplete: coverage.complete,
           seededRecords: registered.n,
+          periodAnchor: period.anchor,
+          periodAsOf: period.asOf,
+          periodTimezone: period.timeZone,
+          periodsGenerated: period.generated,
         };
       });
     } finally {

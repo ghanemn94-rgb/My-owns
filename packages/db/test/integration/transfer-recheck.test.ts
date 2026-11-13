@@ -64,6 +64,7 @@ const allowance = (over: Record<string, unknown> = {}) => ({
   audited: [],
   children: [],
   counters: [],
+  lineage: [],
   operational: [],
   ...over,
 });
@@ -218,7 +219,7 @@ describe("T-R6: mode 1 after the import and a rebind", () => {
   }, 300_000);
 });
 
-describe("T-R7 + T-R15: mode 2 (--after-use) with mth-recheck-allowance/3", () => {
+describe("T-R7 + T-R15: mode 2 (--after-use) with mth-recheck-allowance/4", () => {
   // State here: the rebind of `actor`, and one audited change of `audited` row `auditedId` by `actor`.
   const changedKey = () => [[auditedId]];
 

@@ -42419,7 +42419,7 @@ components:
         summary: { $ref: "#/components/schemas/MigrationReconciliationSummary" }
         deltas:
           type: array
-          description: "Why a table may differ from the package (ADR-0064 A1.6, A2.4, A3.5); a run is matched only if every delta is allowed."
+          description: "Why a table may differ from the package (ADR-0064 A1.6, A2.4, A3.5, A4.5); a run is matched only if every delta is allowed."
           items:
             type: object
             required: [tableName, basis, rowsAdded, rowsChanged, rowsMissing, allowed]
@@ -42428,7 +42428,7 @@ components:
               tableName: { type: string }
               basis:
                 type: string
-                enum: [audit_baseline, audit_additions, audit_already_present, rebind, exact_ids, audit_explained, child_of, counter, operational, unexplained]
+                enum: [audit_baseline, audit_additions, audit_already_present, rebind, exact_ids, audit_explained, child_of, counter, operational, lineage, unexplained]
               rowsAdded: { $ref: "#/components/schemas/TransferInteger" }
               rowsChanged: { $ref: "#/components/schemas/TransferInteger" }
               rowsMissing: { $ref: "#/components/schemas/TransferInteger" }

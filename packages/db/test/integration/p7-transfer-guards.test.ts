@@ -451,10 +451,87 @@ describe("T-R9: 0151 the counter basis (ADR-0064 A3.3, A3.5; T-DG7-BE-R3)", () =
       "unexplained",
     ];
     for (const b of ten) expect(r.rows[0].d).toContain(`'${b}'`);
-    expect((r.rows[0].d as string).match(/'[a-z_]+'/g)).toHaveLength(10);
+    // 0152 re-added the CHECK with eleven values (ADR-0064 A4.5); the ten of 0151 are all still there.
+    expect((r.rows[0].d as string).match(/'[a-z_]+'/g)).toHaveLength(11);
   });
 
   it("0151 leaves the audit_event triggers and grants as they were (A3.8)", async () => {
+    const t = await owner.pool.query(
+      `SELECT tgname, tgenabled FROM pg_trigger WHERE tgrelid = 'audit_event'::regclass AND NOT tgisinternal
+        ORDER BY tgname`,
+    );
+    expect(t.rows).toEqual([
+      { tgname: "audit_event_immutable", tgenabled: "O" },
+      { tgname: "audit_event_immutable_truncate", tgenabled: "O" },
+    ]);
+    const g = await owner.pool.query(
+      `SELECT privilege_type FROM information_schema.role_table_grants
+        WHERE table_name = 'audit_event' AND grantee = 'mth_app' ORDER BY privilege_type`,
+    );
+    expect(g.rows.map((x) => x.privilege_type)).toEqual(["INSERT", "SELECT"]);
+  });
+});
+
+describe("T-R9: 0152 the lineage basis (ADR-0064 A4.5; T-DG7-BE-R4)", () => {
+  it("migration_reconciliation_delta.basis accepts lineage and still refuses an unknown basis", async () => {
+    const importId = await inTx(owner.pool, async (c) => {
+      const id = uuidv7();
+      await c.query(
+        `INSERT INTO migration_import (id, schema_version, source_environment, source_export_reference, migration_level,
+           manifest_sha256, attachment_manifest_sha256, demo_checksum, table_count, row_count, attachment_count,
+           attachment_bytes, operator_name, started_at, imported_at)
+         VALUES ($1, 'mth-migration/1', 'unmarked', $2, $3, $4, $5, NULL, 1, 2, 0, 0, 'probe operator', now(), now())`,
+        [id, uuidv7(), LEVEL, HEX, HEX2],
+      );
+      await audit(c, "migration_import", id, null);
+      return id;
+    });
+    const runId = await inTx(owner.pool, async (c) => {
+      const id = uuidv7();
+      await c.query(
+        `INSERT INTO migration_reconciliation (id, migration_import_id, run_kind, result, tables_checked,
+           tables_mismatched, rows_expected, rows_actual, attachments_checked, attachments_mismatched, operator_name, run_at)
+         VALUES ($1, $2, 'recheck_after_use', 'matched', 1, 0, 1, 1, 0, 0, 'probe operator', now())`,
+        [id, importId],
+      );
+      await audit(c, "migration_reconciliation", id, null);
+      return id;
+    });
+    const delta = (table: string, basis: string, allowed: boolean) =>
+      owner.pool.query(
+        `INSERT INTO migration_reconciliation_delta (migration_reconciliation_id, table_name, basis, rows_added,
+           rows_changed, rows_missing, allowed) VALUES ($1, $2, $3, 2, 0, 0, $4)`,
+        [runId, table, basis, allowed],
+      );
+    await delta("kpi_evaluation", "lineage", true);
+    await delta("calculation_run", "lineage", false);
+    expect((await pgError(delta("corrective_signal", "lineages", true))).constraint).toBe(
+      "migration_reconciliation_delta_basis_check",
+    );
+    expect((await pgError(delta("corrective_signal", "unexplained", true))).constraint).toBe(
+      "migration_reconciliation_delta_unexplained",
+    );
+    const r = await owner.pool.query(
+      `SELECT pg_get_constraintdef(oid) AS d FROM pg_constraint WHERE conname = 'migration_reconciliation_delta_basis_check'`,
+    );
+    const eleven = [
+      "audit_baseline",
+      "audit_additions",
+      "audit_already_present",
+      "rebind",
+      "exact_ids",
+      "audit_explained",
+      "child_of",
+      "counter",
+      "operational",
+      "lineage",
+      "unexplained",
+    ];
+    for (const b of eleven) expect(r.rows[0].d).toContain(`'${b}'`);
+    expect((r.rows[0].d as string).match(/'[a-z_]+'/g)).toHaveLength(11);
+  });
+
+  it("0152 leaves the audit_event triggers and grants as they were (A4.8)", async () => {
     const t = await owner.pool.query(
       `SELECT tgname, tgenabled FROM pg_trigger WHERE tgrelid = 'audit_event'::regclass AND NOT tgisinternal
         ORDER BY tgname`,

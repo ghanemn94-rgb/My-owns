@@ -15,6 +15,12 @@ import type { DbOrTx } from "../pool.ts";
 export const DEMO_DATASET_CODE = "international_roaming";
 /** Its version; stored in the marker and every run. */
 export const DEMO_DATASET_VERSION = "1.0.0";
+/**
+ * The demo organization's `default_timezone` (roaming.ts). ADR-0064 A4.6: the period anchor is the run's month in this
+ * zone, read from this constant, never from the host.
+ */
+export const DEMO_ORGANIZATION_TIMEZONE = "Asia/Riyadh";
+
 /** The synthetic clock (ADR-0050 §4): 2026-09-01 09:00 Asia/Riyadh. Every seeded time derives from it. */
 export const DEMO_SYNTHETIC_CLOCK = "2026-09-01T06:00:00.000Z";
 /** ADR-0050 §10: the demo reset's session advisory lock class (registry 730271) and its one class-wide key. */

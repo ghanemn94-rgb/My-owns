@@ -49,6 +49,7 @@ export const DELTA_BASES = [
   "child_of",
   "counter",
   "operational",
+  "lineage",
   "unexplained",
 ] as const;
 

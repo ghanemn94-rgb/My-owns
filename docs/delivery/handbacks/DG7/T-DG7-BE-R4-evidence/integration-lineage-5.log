@@ -1,0 +1,237 @@
+port-policy: PostgreSQL listening on port 25411 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/My-owns
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwfe78lx_378aa8d9 (server_encoding UTF8); applied 135 migrations to a fresh database
+ ❯ |integration| packages/db/test/integration/transfer-recheck-lineage.test.ts (11 tests | 11 failed) 11198ms
+   × T-R24: the KPI chain explained through its lineage links (A4.2-A4.5) > a journalled actor accepts one KPI actual through the route; the worker runs; mode 2 gives allowed 82ms
+     → {"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"The request is not valid.","code":"validation","requestId":"01a1d677-6f9e-7778-941d-1ebd51b02e0f","errors":[{"pointer":"/params/kpiActualId","code":"validation.invalid_format","message":"Invalid UUID"}]}: expected 400 to be 200 // Object.is equality
+   × T-R25: each negative is unexplained with its A4.7 line (A4.2-A4.5) > a chain of depth 6 (owner-built): the sixth execution is unexplained, with its depth line 1ms
+     → T-R24 must run first: expected '' not to be '' // Object.is equality
+   × T-R25: each negative is unexplained with its A4.7 line (A4.2-A4.5) > an action result whose event's request_id is another job's is unexplained 1ms
+     → Cannot read properties of undefined (reading 'result')
+   × T-R25: each negative is unexplained with its A4.7 line (A4.2-A4.5) > an extra action result (ordinal 2) on a starter execution makes its results unexplained, with the line 5ms
+     → Cannot read properties of null (reading 'automationChain')
+   × T-R25: each negative is unexplained with its A4.7 line (A4.2-A4.5) > an owner-inserted kpi.deviation_evaluated row 1 µs off, and the execution it triggers, are unexplained 1ms
+     → invalid input syntax for type uuid: ""
+   × T-R25: each negative is unexplained with its A4.7 line (A4.2-A4.5) > a run whose acceptance event is by an actor not in actors is unexplained 3ms
+     → expected 2 to be 4 // Object.is equality
+   × T-R25: each negative is unexplained with its A4.7 line (A4.2-A4.5) > a run whose trigger kind's map entry does not match its outbox row is never explained 1ms
+     → invalid input syntax for type uuid: ""
+   × T-R25: each negative is unexplained with its A4.7 line (A4.2-A4.5) > a corrective_signal whose source_event_key names no explained outbox row is unexplained 2ms
+     → Cannot read properties of null (reading 'signals')
+   × T-R25: each negative is unexplained with its A4.7 line (A4.2-A4.5) > kpi_evaluation listed in tables (not in lineage) gives exact_ids unexplained added keys 5ms
+     → expected 2 to be 4 // Object.is equality
+   × T-R25: each negative is unexplained with its A4.7 line (A4.2-A4.5) > an owner-inserted extra kpi_evaluation on an explained run: the run's count differs (A4.3 line) 1ms
+     → invalid input syntax for type uuid: ""
+   × T-R26: the catalogue check of the named lineage links (A4.2 'At run time') > renaming kpi_evaluation_run_fkey gives exit 2 with the A4.7 line 5ms
+     → expected [ Array(1) ] to deeply equal [ Array(1) ]
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 11 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| packages/db/test/integration/transfer-recheck-lineage.test.ts > T-R24: the KPI chain explained through its lineage links (A4.2-A4.5) > a journalled actor accepts one KPI actual through the route; the worker runs; mode 2 gives allowed
+AssertionError: {"type":"urn:mth:problem:validation","title":"Validation failed","status":400,"detail":"The request is not valid.","code":"validation","requestId":"01a1d677-6f9e-7778-941d-1ebd51b02e0f","errors":[{"pointer":"/params/kpiActualId","code":"validation.invalid_format","message":"Invalid UUID"}]}: expected 400 to be 200 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 200[39m
+[31m+ 400[39m
+
+ ❯ packages/db/test/integration/transfer-recheck-lineage.test.ts:232:60
+    230|       body: {},
+    231|     });
+    232|     expect(accepted.status, JSON.stringify(accepted.body)).toBe(200);
+       |                                                            ^
+    233|     await drainWorker(before ?? "0");
+    234|     const run = (
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/11]⎯
+
+ FAIL  |integration| packages/db/test/integration/transfer-recheck-lineage.test.ts > T-R25: each negative is unexplained with its A4.7 line (A4.2-A4.5) > a chain of depth 6 (owner-built): the sixth execution is unexplained, with its depth line
+AssertionError: T-R24 must run first: expected '' not to be '' // Object.is equality
+ ❯ packages/db/test/integration/transfer-recheck-lineage.test.ts:358:47
+    356| 
+    357|   it("a chain of depth 6 (owner-built): the sixth execution is unexpla…
+    358|     expect(runId, "T-R24 must run first").not.toBe("");
+       |                                               ^
+    359|     const code = await eventTrigger();
+    360|     // Depth 0: an API-shaped mutation by a listed actor writes the fi…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/11]⎯
+
+ FAIL  |integration| packages/db/test/integration/transfer-recheck-lineage.test.ts > T-R25: each negative is unexplained with its A4.7 line (A4.2-A4.5) > an action result whose event's request_id is another job's is unexplained
+TypeError: Cannot read properties of undefined (reading 'result')
+ ❯ packages/db/test/integration/transfer-recheck-lineage.test.ts:394:104
+    392|     await target.db.transaction().execute(async (tx) => {
+    393|       const action = (
+    394|         await sql<{ a: string }>`SELECT action_type AS a FROM automati…
+       |                                                                                                        ^
+    395|           tx,
+    396|         )
+ ❯ node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/kysely.js:582:38
+ ❯ DefaultConnectionProvider.provideConnection node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/default-connection-provider.js:10:20
+ ❯ packages/db/test/integration/transfer-recheck-lineage.test.ts:392:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/11]⎯
+
+ FAIL  |integration| packages/db/test/integration/transfer-recheck-lineage.test.ts > T-R25: each negative is unexplained with its A4.7 line (A4.2-A4.5) > an extra action result (ordinal 2) on a starter execution makes its results unexplained, with the line
+TypeError: Cannot read properties of null (reading 'automationChain')
+ ❯ packages/db/test/integration/transfer-recheck-lineage.test.ts:424:37
+    422|           JOIN automation_action_result ar ON ar.automation_execution_…
+    423|           JOIN audit_event a ON a.record_type = 'automation_action_res…
+    424|          WHERE x.id = ANY(${r0.json.automationChain.filter((c) => c.de…
+       |                                     ^
+    425|            AND x.status <> 'running'
+    426|          ORDER BY x.id LIMIT 1`.execute(target.db)
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/11]⎯
+
+ FAIL  |integration| packages/db/test/integration/transfer-recheck-lineage.test.ts > T-R25: each negative is unexplained with its A4.7 line (A4.2-A4.5) > an owner-inserted kpi.deviation_evaluated row 1 µs off, and the execution it triggers, are unexplained
+error: invalid input syntax for type uuid: ""
+ ❯ node_modules/.pnpm/pg@8.16.3/node_modules/pg/lib/client.js:545:17
+ ❯ PostgresConnection.executeQuery node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:95:49
+ ❯ node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:35:28
+ ❯ DefaultConnectionProvider.provideConnection node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/default-connection-provider.js:10:20
+ ❯ DefaultQueryExecutor.executeQuery node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16
+ ❯ packages/db/test/integration/transfer-recheck-lineage.test.ts:460:7
+    458|   it("an owner-inserted kpi.deviation_evaluated row 1 µs off, and the …
+    459|     const lineageRow = (
+    460|       await sql<{ id: string; created_at: string }>`
+       |       ^
+    461|         SELECT o.id::text AS id, o.created_at::text AS created_at FROM…
+    462|          WHERE o.aggregate_type = 'calculation_run' AND o.aggregate_id…
+ ❯ PostgresConnection.executeQuery node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:107:41
+ ❯ node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:35:28
+ ❯ DefaultConnectionProvider.provideConnection node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/default-connection-provider.js:10:20
+ ❯ DefaultQueryExecutor.executeQuery node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16
+ ❯ packages/db/test/integration/transfer-recheck-lineage.test.ts:460:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/11]⎯
+
+ FAIL  |integration| packages/db/test/integration/transfer-recheck-lineage.test.ts > T-R25: each negative is unexplained with its A4.7 line (A4.2-A4.5) > a run whose acceptance event is by an actor not in actors is unexplained
+AssertionError: expected 2 to be 4 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 4[39m
+[31m+ 2[39m
+
+ ❯ packages/db/test/integration/transfer-recheck-lineage.test.ts:481:20
+    479|   it("a run whose acceptance event is by an actor not in actors is une…
+    480|     const r = await recheck(allowance({ actors: [user("KDS").id] }));
+    481|     expect(r.code).toBe(4);
+       |                    ^
+    482|     expect(r.json.lineageChain.map((x) => x.runId)).not.toContain(runI…
+    483|     expect(r.out).toContain(`    unexplained added ${keyOf(runId)}`);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/11]⎯
+
+ FAIL  |integration| packages/db/test/integration/transfer-recheck-lineage.test.ts > T-R25: each negative is unexplained with its A4.7 line (A4.2-A4.5) > a run whose trigger kind's map entry does not match its outbox row is never explained
+error: invalid input syntax for type uuid: ""
+ ❯ node_modules/.pnpm/pg@8.16.3/node_modules/pg/lib/client.js:545:17
+ ❯ PostgresConnection.executeQuery node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:95:49
+ ❯ node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:35:28
+ ❯ DefaultConnectionProvider.provideConnection node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/default-connection-provider.js:10:20
+ ❯ DefaultQueryExecutor.executeQuery node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16
+ ❯ packages/db/test/integration/transfer-recheck-lineage.test.ts:490:7
+    488|     // nearest constructible case is a mapped kind whose outbox row (e…
+    489|     const values = (
+    490|       await sql<{ id: string; key: string }>`SELECT aggregate_id::text…
+       |       ^
+    491|         WHERE aggregate_type = 'calculation_run' AND aggregate_id = ${…
+    492|     ).rows[0]!;
+ ❯ PostgresConnection.executeQuery node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:107:41
+ ❯ node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:35:28
+ ❯ DefaultConnectionProvider.provideConnection node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/default-connection-provider.js:10:20
+ ❯ DefaultQueryExecutor.executeQuery node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16
+ ❯ packages/db/test/integration/transfer-recheck-lineage.test.ts:490:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/11]⎯
+
+ FAIL  |integration| packages/db/test/integration/transfer-recheck-lineage.test.ts > T-R25: each negative is unexplained with its A4.7 line (A4.2-A4.5) > a corrective_signal whose source_event_key names no explained outbox row is unexplained
+TypeError: Cannot read properties of null (reading 'signals')
+ ❯ packages/db/test/integration/transfer-recheck-lineage.test.ts:512:26
+    510|   it("a corrective_signal whose source_event_key names no explained ou…
+    511|     const r0 = await recheck(allowance());
+    512|     const some = r0.json.signals[0];
+       |                          ^
+    513|     expect(some, "T-R24 produced at least one explained signal").toBeD…
+    514|     const fake = await cloneRow("corrective_signal", some!.signalId, {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/11]⎯
+
+ FAIL  |integration| packages/db/test/integration/transfer-recheck-lineage.test.ts > T-R25: each negative is unexplained with its A4.7 line (A4.2-A4.5) > kpi_evaluation listed in tables (not in lineage) gives exact_ids unexplained added keys
+AssertionError: expected 2 to be 4 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 4[39m
+[31m+ 2[39m
+
+ ❯ packages/db/test/integration/transfer-recheck-lineage.test.ts:532:20
+    530|       }),
+    531|     );
+    532|     expect(r.code).toBe(4);
+       |                    ^
+    533|     expect(deltaOf(r, "kpi_evaluation")).toMatchObject({ basis: "exact…
+    534|     const cumulative = (
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/11]⎯
+
+ FAIL  |integration| packages/db/test/integration/transfer-recheck-lineage.test.ts > T-R25: each negative is unexplained with its A4.7 line (A4.2-A4.5) > an owner-inserted extra kpi_evaluation on an explained run: the run's count differs (A4.3 line)
+error: invalid input syntax for type uuid: ""
+ ❯ node_modules/.pnpm/pg@8.16.3/node_modules/pg/lib/client.js:545:17
+ ❯ PostgresConnection.executeQuery node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:95:49
+ ❯ node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:35:28
+ ❯ DefaultConnectionProvider.provideConnection node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/default-connection-provider.js:10:20
+ ❯ DefaultQueryExecutor.executeQuery node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16
+ ❯ packages/db/test/integration/transfer-recheck-lineage.test.ts:543:7
+    541|   it("an owner-inserted extra kpi_evaluation on an explained run: the …
+    542|     const one = (
+    543|       await sql<{ id: string; period: string }>`SELECT id::text AS id,…
+       |       ^
+    544|         FROM kpi_evaluation WHERE calculation_run_id = ${runId}::uuid …
+    545|         target.db,
+ ❯ PostgresConnection.executeQuery node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:107:41
+ ❯ node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:35:28
+ ❯ DefaultConnectionProvider.provideConnection node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/default-connection-provider.js:10:20
+ ❯ DefaultQueryExecutor.executeQuery node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16
+ ❯ packages/db/test/integration/transfer-recheck-lineage.test.ts:543:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/11]⎯
+
+ FAIL  |integration| packages/db/test/integration/transfer-recheck-lineage.test.ts > T-R26: the catalogue check of the named lineage links (A4.2 'At run time') > renaming kpi_evaluation_run_fkey gives exit 2 with the A4.7 line
+AssertionError: expected [ Array(1) ] to deeply equal [ Array(1) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   "reconcile-migration: refused: lineage link kpi_evaluation_run_fkey does not match the schema",[39m
+[31m+   "reconcile-migration: refused: invalid allowance file: lineage table corrective_signal needs corrective_case in audited",[39m
+[2m  ][22m
+
+ ❯ packages/db/test/integration/transfer-recheck-lineage.test.ts:578:21
+    576|       const r = await recheck(allowance());
+    577|       expect(r.code).toBe(2);
+    578|       expect(r.err).toEqual(["reconcile-migration: refused: lineage li…
+       |                     ^
+    579|     } finally {
+    580|       await sql`ALTER TABLE kpi_evaluation RENAME CONSTRAINT kpi_evalu…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/11]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  11 failed (11)
+   Start at  19:51:29
+   Duration  24.44s (transform 4.87s, setup 0ms, collect 9.10s, tests 11.20s, environment 0ms, prepare 52ms)
+
+exit=1

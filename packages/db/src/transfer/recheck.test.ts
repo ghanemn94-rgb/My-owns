@@ -1,7 +1,8 @@
 // Unit parts of T-R7 and T-R15 (ADR-0064 A1.9, A2.6; p7-work-split §C.13; T-DG7-BE-R2), and of T-R21 and T-R22
 // (Amendment 3 §A3.3, §A3.4; §C.14; T-DG7-BE-R3): the constants' disjointness and coverage, the counter prefix map
-// pinned to the 0055 CHECK and the schema, the counter step rule, and the structural allowance refusals (no database). Nothing here approves anything (no G1-G6, Finance
-// or IT approval) or touches DG0-DG7.
+// pinned to the 0055 CHECK and the schema, the counter step rule, and the structural allowance refusals (no database);
+// and the unit parts of T-R27 (Amendment 4 §A4.2, §A4.5; §C.15; T-DG7-BE-R4): `/4` with `lineage`, its refusals and the
+// lineage constants. Nothing here approves anything (no G1-G6, Finance or IT approval) or touches DG0-DG7.
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { SCHEMA_COLUMNS } from "../schema.ts";
@@ -17,6 +18,11 @@ import {
   RECHECK_COUNTER_TABLES,
   RECHECK_FINANCIAL_TABLES,
   RECHECK_NEVER_OPERATIONAL,
+  RECHECK_CHAIN_MAX_DEPTH,
+  RECHECK_LINEAGE_COLUMNS,
+  RECHECK_LINEAGE_LINKS,
+  RECHECK_LINEAGE_OUTBOX,
+  RECHECK_LINEAGE_TABLES,
   RECHECK_OPERATIONAL_TABLES,
 } from "./recheck.ts";
 import type { TransferPlan, TransferPlanTable } from "./plan.ts";
@@ -30,6 +36,7 @@ const base = (over: Record<string, unknown> = {}) => ({
   audited: [],
   children: [],
   counters: [],
+  lineage: [],
   operational: [],
   ...over,
 });
@@ -75,7 +82,7 @@ describe("the recheck constants (A1.9 rule 6)", () => {
   });
 });
 
-describe("parseAllowance (mth-recheck-allowance/3; T-R21 unit)", () => {
+describe("parseAllowance (mth-recheck-allowance/4; T-R21 and T-R27 unit)", () => {
   it("accepts a well-formed file", () => {
     const a = parseAllowance(
       bytes(
@@ -89,14 +96,15 @@ describe("parseAllowance (mth-recheck-allowance/3; T-R21 unit)", () => {
         }),
       ),
     );
-    expect(ALLOWANCE_SCHEMA_VERSION).toBe("mth-recheck-allowance/3");
+    expect(ALLOWANCE_SCHEMA_VERSION).toBe("mth-recheck-allowance/4");
+    expect(a.lineage).toEqual([]);
     expect(a.counters).toEqual(["record_code_counter"]);
     expect(a.tables[0]!.added).toEqual([["a"]]);
     expect(childrenOrder(a).map((c) => c.name)).toEqual(["gate_instance_note"]);
   });
 
   it("refuses each structural fault with its reason", () => {
-    for (const v of ["mth-recheck-allowance/1", "mth-recheck-allowance/2"])
+    for (const v of ["mth-recheck-allowance/1", "mth-recheck-allowance/2", "mth-recheck-allowance/3"])
       expect(refusal({ ...base(), schemaVersion: v })).toBe(`unsupported schema version '${v}'`);
     // A /2 file as the drill wrote it before A3.4 (no counters) is refused for its version, not its keys.
     const v2: Record<string, unknown> = { ...base(), schemaVersion: "mth-recheck-allowance/2" };
@@ -117,7 +125,7 @@ describe("parseAllowance (mth-recheck-allowance/3; T-R21 unit)", () => {
     expect(refusal(base({ counters: ["record_code_counter", "record_code_counter"] }))).toBe(
       "record_code_counter is listed more than once",
     );
-    for (const k of ["actors", "tables", "audited", "children", "counters", "operational"]) {
+    for (const k of ["actors", "tables", "audited", "children", "counters", "lineage", "operational"]) {
       const v: Record<string, unknown> = base();
       delete v[k];
       expect(refusal(v)).toBe(`missing key '${k}'`);
@@ -275,5 +283,107 @@ describe("T-R20 unit: explainCounters keeps D-, DEC- and DEP- apart in one trans
       explained: false,
     });
     expect(r.missing).toEqual([JSON.stringify(["t1", "DEC"])]);
+  });
+});
+
+describe("T-R27: allowance /4 and the lineage constants (ADR-0064 A4.2, A4.5)", () => {
+  const lineageAllowance = (lineage: unknown[], audited: unknown[] = []) =>
+    base({ actors: audited.length > 0 ? [ACTOR] : [], audited, lineage });
+  const CASE = { name: "corrective_case", mustInclude: { added: [], changed: [] } };
+  const all4 = [
+    { name: "calculation_run", mustInclude: { added: [] } },
+    { name: "kpi_evaluation", mustInclude: { added: [["k1"]] } },
+    { name: "data_quality_finding", mustInclude: { added: [] } },
+    { name: "corrective_signal", mustInclude: { added: [] } },
+  ];
+
+  it("accepts /4 with its eight keys and the four lineage tables", () => {
+    const v = lineageAllowance(all4, [CASE]);
+    expect(Object.keys(v)).toHaveLength(8);
+    const a = parseAllowance(bytes(v));
+    expect(a.lineage.map((l) => l.name)).toEqual([
+      "calculation_run",
+      "kpi_evaluation",
+      "data_quality_finding",
+      "corrective_signal",
+    ]);
+    expect(a.lineage[1]!.mustInclude.added).toEqual([["k1"]]);
+  });
+
+  it("refuses /1-/3, a missing lineage key and an unknown key", () => {
+    for (const v of ["mth-recheck-allowance/1", "mth-recheck-allowance/2", "mth-recheck-allowance/3"]) {
+      const x: Record<string, unknown> = { ...base(), schemaVersion: v };
+      delete x["lineage"];
+      expect(refusal(x)).toBe(`unsupported schema version '${v}'`);
+    }
+    const noLineage: Record<string, unknown> = base();
+    delete noLineage["lineage"];
+    expect(refusal(noLineage)).toBe("missing key 'lineage'");
+    expect(refusal({ ...base(), extra: [] })).toBe("unknown key 'extra'");
+  });
+
+  it("refuses each A4.5 lineage fault with its A4.7 reason", () => {
+    expect(refusal(lineageAllowance([{ name: "benefit_calculation", mustInclude: { added: [] } }]))).toBe(
+      "lineage table benefit_calculation is not in RECHECK_LINEAGE_TABLES",
+    );
+    expect(
+      refusal(
+        lineageAllowance([
+          { name: "calculation_run", mustInclude: { added: [] } },
+          { name: "calculation_run", mustInclude: { added: [] } },
+        ]),
+      ),
+    ).toBe("calculation_run is listed more than once");
+    expect(
+      refusal(
+        base({
+          tables: [{ name: "kpi_evaluation", added: [], changed: [] }],
+          lineage: [
+            { name: "calculation_run", mustInclude: { added: [] } },
+            { name: "kpi_evaluation", mustInclude: { added: [] } },
+          ],
+        }),
+      ),
+    ).toBe("kpi_evaluation is listed more than once");
+    for (const t of ["kpi_evaluation", "data_quality_finding"])
+      expect(refusal(lineageAllowance([{ name: t, mustInclude: { added: [] } }]))).toBe(
+        `lineage table ${t} needs calculation_run in lineage`,
+      );
+    expect(refusal(lineageAllowance([{ name: "corrective_signal", mustInclude: { added: [] } }]))).toBe(
+      "lineage table corrective_signal needs corrective_case in audited",
+    );
+    expect(refusal(lineageAllowance([{ name: "calculation_run" }]))).toBe("lineage[0] is not an object");
+    expect(refusal(lineageAllowance([{ name: "calculation_run", mustInclude: { added: [[2]] } }]))).toBe(
+      "malformed key tuple in calculation_run",
+    );
+  });
+
+  it("RECHECK_LINEAGE_TABLES names exactly the four tables, none of them operational; the depth is 5", () => {
+    expect(Object.keys(RECHECK_LINEAGE_TABLES).sort()).toEqual([
+      "calculation_run",
+      "corrective_signal",
+      "data_quality_finding",
+      "kpi_evaluation",
+    ]);
+    for (const t of Object.keys(RECHECK_LINEAGE_TABLES)) expect(RECHECK_OPERATIONAL_TABLES).not.toContain(t);
+    expect(RECHECK_CHAIN_MAX_DEPTH).toBe(5);
+    expect(RECHECK_LINEAGE_OUTBOX.map((o) => [o.eventType, o.aggregateType, o.keyPrefix, o.from])).toEqual([
+      ["kpi.values_recalculated", "calculation_run", "kpi.values_recalculated:", "run"],
+      ["kpi.deviation_evaluated", "kpi_evaluation", "kpi.deviation_evaluated:", "evaluation"],
+    ]);
+    expect(Object.keys(RECHECK_LINEAGE_TABLES.calculation_run.triggers).sort()).toEqual([
+      "actual_accepted",
+      "threshold_changed",
+      "trajectory_approved",
+      "version_activated",
+    ]);
+  });
+
+  it("every named lineage link and column exists in the generated schema", () => {
+    const schema = SCHEMA_COLUMNS as unknown as Record<string, readonly string[]>;
+    for (const l of RECHECK_LINEAGE_LINKS)
+      for (const c of l.columns) expect(schema[l.table], `${l.name} ${c}`).toContain(c);
+    for (const [t, cols] of Object.entries(RECHECK_LINEAGE_COLUMNS))
+      for (const c of cols) expect(schema[t], `${t}.${c}`).toContain(c);
   });
 });

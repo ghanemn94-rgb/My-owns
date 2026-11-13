@@ -67,6 +67,7 @@ beforeAll(async () => {
     requestedBy: null,
     modules: MODULES,
     conditions: CONDITIONS,
+    asOf: "2026-09-01",
   });
   client = new pg.Client({ connectionString: ownerUrl });
   await client.connect();
@@ -516,6 +517,7 @@ describe("§J.3: recomputed values equal the seeded values (from the stored rows
       requestedBy: null,
       modules: MODULES,
       conditions: CONDITIONS,
+      asOf: "2026-09-01",
     });
     expect(again.recordCounts).toEqual(summary.recordCounts);
     expect(again.checksumSha256).toBe(summary.checksumSha256);

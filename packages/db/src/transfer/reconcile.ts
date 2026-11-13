@@ -17,10 +17,10 @@ import { v7 as uuidv7 } from "uuid";
 import { insertAuditEvent, type AuditActor } from "../audit.ts";
 import type { Db, DbOrTx, Tx } from "../pool.ts";
 import { encodeLine, encodeTable, ENCODER_SETTINGS, transferSha256 } from "./export.ts";
-import { buildPlan, type TransferPlan } from "./plan.ts";
+import { buildPlan, type TransferPlan, type TransferPlanTable } from "./plan.ts";
 import type { CheckedPackage } from "./import.ts";
 import type { Allowance, CounterVerdict } from "./recheck.ts";
-import type { AutomationLink } from "./recheck-automation.ts";
+import type { AutomationLink, LineageRunLink, LineageSignalLink } from "./recheck-automation.ts";
 import { digestOfLines, encodedRows, type EncodedRow } from "./table-digest.ts";
 
 /** ADR-0016 §6 `migrationImport` (apps/api platform/advisory-locks.ts); pinned to the registry by transfer-locks.test. */
@@ -66,6 +66,7 @@ export type DeltaBasis =
   | "child_of"
   | "counter"
   | "operational"
+  | "lineage"
   | "unexplained";
 
 /**
@@ -407,6 +408,10 @@ export interface RecheckJsonReport {
     readonly explainingEventsByAutomation: number;
   }[];
   readonly automationChain: readonly AutomationLink[];
+  /** A4.5: per explained run, sorted by runId. */
+  readonly lineageChain: readonly LineageRunLink[];
+  /** A4.5: per explained corrective signal. */
+  readonly signals: readonly Omit<LineageSignalLink, "depth">[];
   readonly counters: readonly {
     readonly table: string;
     readonly key: string;
@@ -518,7 +523,11 @@ export async function runReconcileMigrationCommand(
           throw e;
         });
         const plan = await buildPlan(tx);
-        if (allowance !== null) await R.validateAllowance(tx, allowance, plan);
+        if (allowance !== null) {
+          await R.validateAllowance(tx, allowance, plan);
+          // A4.2 "At run time": the named lineage links and columns, before any row is read.
+          await R.checkLineageCatalogue(tx);
+        }
         const expected = await tx
           .selectFrom("migration_reconciliation_table")
           .select(["table_name", "expected_rows", "expected_digest"])
@@ -538,6 +547,8 @@ export async function runReconcileMigrationCommand(
         };
         const lines: string[] = [];
         let automationChainOut: AutomationLink[] = [];
+        let lineageChainOut: LineageRunLink[] = [];
+        let signalsOut: LineageSignalLink[] = [];
         const auditedOut: RecheckJsonReport["audited"][number][] = [];
         const countersOut: (CounterVerdict & { table: string })[] = [];
         const tables: TableResult[] = [];
@@ -639,22 +650,25 @@ export async function runReconcileMigrationCommand(
           );
           tables.push(...rest);
         } else {
-          // Mode 2: row by row against the package, in the order tables -> audited (with E*) -> children -> counters
-          // (A3.3 item 3: the counters read only rows this run explained); operational tables are only counted.
+          // Mode 2: row by row against the package, in the order tables -> the fixed point (A4.2) -> audited (with E*
+          // and the A4.4 action-result rules) -> children -> lineage (L1-L5 and the A4.3 counts) -> counters (A3.3
+          // item 3: the counters read only rows this run explained); operational tables are only counted.
           const a = allowance;
           const listedTables = new Map(a.tables.map((t) => [t.name, t]));
           const audited = new Map(a.audited.map((t) => [t.name, t]));
           const operational = new Set(a.operational);
           const childrenOf = new Map(a.children.map((c) => [c.name, c]));
           const counterSet = new Set(a.counters);
+          const lineageOf = new Map(a.lineage.map((l) => [l.name as string, l]));
           const explainedRows = new Map<string, EncodedRow[]>();
           const explainedAdded = new Map<string, EncodedRow[]>();
           const fileOf = new Map(pkg!.manifest.tables.map((t) => [t.name, t.file]));
           const order = [
             ...pkg!.manifest.tables
               .map((t) => t.name)
-              .filter((n) => n !== "audit_event" && !childrenOf.has(n) && !counterSet.has(n)),
+              .filter((n) => n !== "audit_event" && !childrenOf.has(n) && !counterSet.has(n) && !lineageOf.has(n)),
             ...R.childrenOrder(a).map((c) => c.name),
+            ...pkg!.manifest.tables.map((t) => t.name).filter((n) => lineageOf.has(n)),
             ...pkg!.manifest.tables.map((t) => t.name).filter((n) => counterSet.has(n)),
           ];
           // E* once, before any audited table is explained (A3.2; C.14 "What BE-R3 must know").
@@ -671,11 +685,39 @@ export async function runReconcileMigrationCommand(
           };
           const outboxPkg = await pkgIds("outbox_event");
           const execPkg = await pkgIds("automation_execution");
-          const star = await RA.automationChain(tx, B, a.actors, {
-            outboxIds: outboxPkg.ids,
-            executionIds: execPkg.changedOrAdded,
-          });
+          const runPkg = lineageOf.has("calculation_run") ? await pkgIds("calculation_run") : { ids: [] };
+          const evalPkg = lineageOf.has("kpi_evaluation") ? await pkgIds("kpi_evaluation") : { ids: [] };
+          const star = await RA.automationChain(
+            tx,
+            B,
+            a.actors,
+            {
+              outboxIds: outboxPkg.ids,
+              executionIds: execPkg.changedOrAdded,
+              runIds: runPkg.ids,
+              evaluationIds: evalPkg.ids,
+            },
+            { runs: lineageOf.has("calculation_run"), evaluations: lineageOf.has("kpi_evaluation") },
+          );
           automationChainOut = star.chain;
+          lineageChainOut = [...star.runs];
+          const idOf = (t: TransferPlanTable, r: EncodedRow) => r.values[t.columns.findIndex((c) => c.name === "id")]!;
+          // A4.4: the explained added or changed executions (X within the depth, or explained by E* at their version).
+          const explainedExecutions = async (): Promise<Set<string>> => {
+            const t = plan.tables.find((x) => x.name === "automation_execution")!;
+            const f = fileOf.get("automation_execution");
+            if (f === undefined) return new Set();
+            const c = await R.compareRows(tx, t, await R.packageLines(pkg!.dir, f, t), plan);
+            const ex = await R.explainAudited(tx, t, c, star.events);
+            const bad = new Set([...ex.unexplainedAdded, ...ex.unexplainedChanged].map((r) => r.key));
+            const deep = new Set(star.tooDeep.map((d) => d.executionId));
+            return new Set(
+              [...c.added, ...c.changed]
+                .filter((r) => !bad.has(r.key))
+                .map((r) => idOf(t, r))
+                .filter((id) => !deep.has(id)),
+            );
+          };
           const keyText = (k: readonly string[]) => JSON.stringify(k);
           for (const name of order) {
             const table = plan.tables.find((t) => t.name === name)!;
@@ -733,6 +775,34 @@ export async function runReconcileMigrationCommand(
             } else if (audited.has(name)) {
               const t = audited.get(name)!;
               const ex = await R.explainAudited(tx, table, cmp, star.events);
+              const extraLines: string[] = [];
+              if (name === "automation_action_result") {
+                const ar = await RA.explainActionResults(
+                  tx,
+                  star.events,
+                  star.chain,
+                  await explainedExecutions(),
+                  cmp.added.map((r) => idOf(table, r)),
+                  RA.STARTER_HANDLER_ACTION,
+                );
+                const already = new Set(ex.unexplainedAdded.map((r) => r.key));
+                for (const r of cmp.added)
+                  if (ar.unexplained.has(idOf(table, r)) && !already.has(r.key)) ex.unexplainedAdded.push(r);
+                extraLines.push(...ar.lines);
+              }
+              if (name === "automation_execution") {
+                const deep = new Map(star.tooDeep.map((d) => [d.executionId, d.depth]));
+                const already = new Set(ex.unexplainedAdded.map((r) => r.key));
+                const alreadyC = new Set(ex.unexplainedChanged.map((r) => r.key));
+                for (const r of cmp.added)
+                  if (deep.has(idOf(table, r)) && !already.has(r.key)) ex.unexplainedAdded.push(r);
+                for (const r of cmp.changed)
+                  if (deep.has(idOf(table, r)) && !alreadyC.has(r.key)) ex.unexplainedChanged.push(r);
+                for (const d of star.tooDeep.slice(0, 20))
+                  extraLines.push(
+                    `    chain depth ${d.depth} exceeds ${R.RECHECK_CHAIN_MAX_DEPTH} at ${JSON.stringify([d.executionId])}`,
+                  );
+              }
               auditedOut.push({
                 table: name,
                 explainingEvents: ex.events,
@@ -764,6 +834,7 @@ export async function runReconcileMigrationCommand(
                 listKeys("unexplained changed", [...unChanged]);
                 listKeys("expected but not added", notIn("added"));
                 listKeys("expected but not changed", notIn("changed"));
+                lines.push(...extraLines);
               }
               if (ok && diff === 0) unchanged += 1;
             } else if (childrenOf.has(name)) {
@@ -794,6 +865,63 @@ export async function runReconcileMigrationCommand(
                   "unexplained changed",
                   ex.unexplainedChanged.map((r) => r.key),
                 );
+              }
+            } else if (lineageOf.has(name)) {
+              // A4.2 L1-L5 with the A4.3 counts: each added row explained only through its recorded link.
+              const l = lineageOf.get(name)!;
+              const ids = (rs: readonly EncodedRow[]) => rs.map((r) => idOf(table, r));
+              let unAdded = new Set<string>();
+              const unChanged = new Set<string>(cmp.changed.map((r) => r.key));
+              const runLines: string[] = [];
+              if (name === "calculation_run") {
+                const ok = new Set(star.runs.map((r) => r.runId));
+                unAdded = new Set(cmp.added.filter((r) => !ok.has(idOf(table, r))).map((r) => r.key));
+                for (const c of star.runCounts.slice(0, 20)) runLines.push(RA.lineageRunLine(c));
+              } else if (name === "kpi_evaluation") {
+                unAdded = new Set(cmp.added.filter((r) => !star.evaluations.has(idOf(table, r))).map((r) => r.key));
+              } else if (name === "data_quality_finding") {
+                const bad = await RA.unexplainedFindings(
+                  tx,
+                  ids(cmp.added),
+                  star.runs.map((r) => r.runId),
+                );
+                unAdded = new Set(cmp.added.filter((r) => bad.has(idOf(table, r))).map((r) => r.key));
+                // A changed finding is explained only as an audited row, by an event of E* at its version (L4).
+                const ex = await R.explainAudited(tx, table, { added: [], changed: cmp.changed }, star.events);
+                unChanged.clear();
+                for (const r of ex.unexplainedChanged) unChanged.add(r.key);
+              } else if (name === "corrective_signal") {
+                const cases = new Set(
+                  (explainedRows.get("corrective_case") ?? []).map((r) =>
+                    idOf(plan.tables.find((x) => x.name === "corrective_case")!, r),
+                  ),
+                );
+                signalsOut = await RA.explainSignals(tx, ids(cmp.added), star.outbox, star.chain, cases);
+                const ok = new Set(signalsOut.map((x) => x.signalId));
+                unAdded = new Set(cmp.added.filter((r) => !ok.has(idOf(table, r))).map((r) => r.key));
+              }
+              const okAdded = new Set(cmp.added.map((r) => r.key).filter((k) => !unAdded.has(k)));
+              const notIn = l.mustInclude.added.map(keyText).filter((x) => !okAdded.has(x));
+              const ok = counts.m === 0 && unAdded.size + unChanged.size + notIn.length + runLines.length === 0;
+              push("lineage", ok);
+              explainedRows.set(
+                name,
+                [...cmp.added, ...cmp.changed].filter((r) => !unAdded.has(r.key) && !unChanged.has(r.key)),
+              );
+              explainedAdded.set(
+                name,
+                cmp.added.filter((r) => !unAdded.has(r.key)),
+              );
+              if (ok) {
+                if (diff > 0) allowedDiff += 1;
+                else unchanged += 1;
+              } else {
+                lines.push(perTable("lineage"));
+                listKeys("unexplained added", [...unAdded]);
+                listKeys("unexplained changed", [...unChanged]);
+                listKeys("unexplained missing", [...cmp.missing]);
+                listKeys("expected but not added", notIn);
+                lines.push(...runLines);
               }
             } else if (counterSet.has(name)) {
               const ct = R.RECHECK_COUNTER_TABLES[name]!;
@@ -848,6 +976,12 @@ export async function runReconcileMigrationCommand(
           deltas: report.deltas,
           audited: auditedOut,
           automationChain: automationChainOut,
+          lineageChain: lineageChainOut,
+          signals: signalsOut.map((x) => ({
+            signalId: x.signalId,
+            outboxEventId: x.outboxEventId,
+            executionIds: x.executionIds,
+          })),
           counters: countersOut.map((c) => ({
             table: c.table,
             key: c.key,
@@ -884,7 +1018,12 @@ export async function runReconcileMigrationCommand(
       );
     });
   } catch (err) {
-    if (err instanceof RecheckRefused || err instanceof R.AllowanceRefused || err instanceof A.AttachmentReportRefused)
+    if (
+      err instanceof RecheckRefused ||
+      err instanceof R.AllowanceRefused ||
+      err instanceof R.LineageLinkRefused ||
+      err instanceof A.AttachmentReportRefused
+    )
       return finish(2, err.message);
     throw err;
   }
