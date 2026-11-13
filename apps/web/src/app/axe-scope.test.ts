@@ -11,7 +11,7 @@ import { describe, expect, it } from "vitest";
 import type { RouteObject } from "react-router";
 import { KEY_FLOW_AXE_SCREENS, P6_AXE_ROUTES } from "../../../../e2e/support/p6-axe-screens.ts";
 import { AREA_CONTENTS, NAV_AREAS, NAV_SUBPAGES } from "./nav.ts";
-import { P4_PLANNED_ROUTES, P5_PLANNED_ROUTES, P6_PLANNED_ROUTES, routes } from "./router.tsx";
+import { P4_PLANNED_ROUTES, P5_PLANNED_ROUTES, P6_PLANNED_ROUTES, P7_SCREEN_ROUTES, routes } from "./router.tsx";
 
 /** The literal `path:` entries of router.tsx at the DG5-approved source commit 660f40c (D-193), without "/". */
 const DG5_LITERAL_PATHS: readonly string[] = [
@@ -214,8 +214,11 @@ const dg5 = new Set<string>([
   ...P4_PLANNED_ROUTES.map((r) => normal(r.path)),
   ...P5_PLANNED_ROUTES.map((r) => normal(r.path)),
 ]);
+// T-DG7-FE-A: the P7 screens (P7_SCREEN_ROUTES) are added after P6. Their accessibility scope is P7's (p7-plan §5.1
+// row FE-D, apps/web/e2e/p7-*.spec.ts), so they are not P6 routes here; the last test below keeps them registered.
+const p7 = new Set(P7_SCREEN_ROUTES.map((r) => normal(r.path)));
 const p6Routes = [...registered].filter(
-  (p) => (p !== "*" && !dg5.has(p)) || P6_PLANNED_ROUTES.some((r) => normal(r.path) === p),
+  (p) => ((p !== "*" && !dg5.has(p)) || P6_PLANNED_ROUTES.some((r) => normal(r.path) === p)) && !p7.has(p),
 );
 
 describe("axe scope (ADR-0061 §7.2)", () => {
@@ -246,6 +249,14 @@ describe("axe scope (ADR-0061 §7.2)", () => {
     }
     expect(new Set(all.map((s) => s.name)).size, "unique evidence names").toBe(all.length);
     expect(new Set(P6_AXE_ROUTES.map((s) => s.route)).size, "each P6 route once").toBe(P6_AXE_ROUTES.length);
+  });
+
+  it("excludes only registered P7 routes from the P6 scope (T-DG7-FE-A)", () => {
+    expect(p7.size).toBeGreaterThan(0);
+    for (const p of p7) {
+      expect(registered.has(p), p).toBe(true);
+      expect(dg5.has(p), p).toBe(false);
+    }
   });
 
   it("keeps P6_AXE_ROUTES to P6 routes (a DG1-DG5 screen belongs to the key flows or the P5 reflow spec)", () => {

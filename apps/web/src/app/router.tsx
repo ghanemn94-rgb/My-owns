@@ -109,6 +109,10 @@ const P4BeingBuiltPage = lazyPage(() => import("../pages/AreaPages.tsx").then((m
 const P6NotAvailablePage = lazyPage(() =>
   import("../components/P6NotAvailablePage.tsx").then((m) => m.P6NotAvailablePage),
 );
+// T-DG7-FE-A: the "not available yet" placeholder of the P7 screens that FE-B and FE-C build (P7_PLANNED_ROUTES).
+const P7NotAvailablePage = lazyPage(() =>
+  import("../components/P7NotAvailablePage.tsx").then((m) => m.P7NotAvailablePage),
+);
 // P6 slices E, F, J and C screens (T-DG6-FE-B; p6-work-split §E/F.12, §J/C.13).
 const AuditEventsPage = lazyPage(() => import("../pages/admin/audit/AuditPages.tsx").then((m) => m.AuditEventsPage));
 const AuditEventPage = lazyPage(() => import("../pages/admin/audit/AuditPages.tsx").then((m) => m.AuditEventPage));
@@ -550,6 +554,51 @@ export const P5_PLANNED_ROUTES: readonly { path: string; feature: string; owner:
  */
 export const P6_PLANNED_ROUTES: readonly { path: string; feature: string; owner: string }[] = [];
 
+/**
+ * The P7 screens of slices C, D, E and I (p7-plan §5.1 rows FE-B and FE-C; p7-work-split §C.7/C.8, §D.4, §E.6, §I.2),
+ * registered up front by T-DG7-FE-A. Each shows the "not available yet" placeholder (components/P7NotAvailablePage.tsx,
+ * `nav.p7.<feature>.*`) until its owner replaces the element through an orchestrator merge and removes the entry here
+ * (F-DG4-160). The detail paths are registered too, so a link to a record (an export, an import's reconciliation report,
+ * a bundle import, a retention class or run, a requirement) never leads to "page not found". Migration imports and
+ * identity rebinds are read-only screens: no route starts an import or a rebind (p7-work-split §C.11). The deployment
+ * status (`getDeploymentStatus`, slice B) has a client (api/p7.ts) but no screen is assigned in P7.
+ * The accessibility scope of these routes is P7's (p7-plan §5.1 row FE-D, `apps/web/e2e/p7-*.spec.ts`), not the P6 axe
+ * list (app/axe-scope.test.ts excludes them).
+ */
+export const P7_SCREEN_ROUTES: readonly { path: string; feature: string; owner: string }[] = [
+  // slice C (FE-B): Data export, Migration status, Identity rebind
+  { path: "admin/migration/exports", feature: "dataExport", owner: "FE-B" },
+  { path: "admin/migration/exports/:migrationExportId", feature: "migrationExport", owner: "FE-B" },
+  { path: "admin/migration/imports", feature: "migrationStatus", owner: "FE-B" },
+  { path: "admin/migration/imports/:migrationImportId", feature: "migrationImport", owner: "FE-B" },
+  {
+    path: "admin/migration/imports/:migrationImportId/reconciliations/:migrationReconciliationId",
+    feature: "migrationReconciliation",
+    owner: "FE-B",
+  },
+  { path: "admin/migration/identity-rebinds", feature: "identityRebinds", owner: "FE-B" },
+  // slice D (FE-B): Configuration transfer
+  { path: "admin/config-transfer", feature: "configTransfer", owner: "FE-B" },
+  { path: "admin/config-transfer/exports/:configBundleExportId", feature: "configBundleExport", owner: "FE-B" },
+  { path: "admin/config-transfer/imports/:configBundleImportId", feature: "configBundleImport", owner: "FE-B" },
+  // slice E (FE-C): Retention, its classes, runs and archived records, and the backup sets
+  { path: "admin/retention", feature: "retention", owner: "FE-C" },
+  { path: "admin/retention/classes/:retentionClassCode", feature: "retentionClass", owner: "FE-C" },
+  { path: "admin/retention/runs/:retentionRunId", feature: "retentionRun", owner: "FE-C" },
+  { path: "admin/retention/archived", feature: "retentionArchived", owner: "FE-C" },
+  { path: "admin/retention/backups", feature: "backupSets", owner: "FE-C" },
+  // slice I (FE-C): the requirement register and About this release
+  { path: "admin/requirements", feature: "requirements", owner: "FE-C" },
+  { path: "admin/requirements/:reqId", feature: "requirement", owner: "FE-C" },
+  { path: "admin/about", feature: "releaseAbout", owner: "FE-C" },
+];
+
+/**
+ * The P7 screens that still show the placeholder. All of them at T-DG7-FE-A; FE-B and FE-C remove theirs as they replace
+ * the element (P7_SCREEN_ROUTES stays as the stable list of P7 paths, e.g. for the P7 accessibility scope of FE-D).
+ */
+export const P7_PLANNED_ROUTES: readonly { path: string; feature: string; owner: string }[] = P7_SCREEN_ROUTES;
+
 const p4PlannedRoutes: RouteObject[] = P4_PLANNED_ROUTES.map((r) => ({
   path: r.path,
   element: <P4BeingBuiltPage feature={r.feature} />,
@@ -558,6 +607,11 @@ const p4PlannedRoutes: RouteObject[] = P4_PLANNED_ROUTES.map((r) => ({
 const p6PlannedRoutes: RouteObject[] = P6_PLANNED_ROUTES.map((r) => ({
   path: r.path,
   element: <P6NotAvailablePage feature={r.feature} />,
+}));
+
+const p7PlannedRoutes: RouteObject[] = P7_PLANNED_ROUTES.map((r) => ({
+  path: r.path,
+  element: <P7NotAvailablePage feature={r.feature} />,
 }));
 
 export const routes: RouteObject[] = [
@@ -819,6 +873,7 @@ export const routes: RouteObject[] = [
       { path: "admin/notification-deliveries", element: <NotificationDeliveriesPage /> },
       ...p4PlannedRoutes,
       ...p6PlannedRoutes,
+      ...p7PlannedRoutes,
       ...landingRoutes,
       ...subEntryRoutes,
       { path: "*", element: <NotFoundPage /> },
