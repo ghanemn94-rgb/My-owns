@@ -1,0 +1,90 @@
+port-policy: PostgreSQL listening on port 24351 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+▶ T-B3 origin-scan.mjs: the source origin is accepted only in audit_event
+  ✔ a hit in audit_event only is listed and passes (exit 0) (105.679271ms)
+  ✔ the origin in a text column fails with the B.5 line (exit 1) (181.36497ms)
+  ✔ the origin in a jsonb value fails (exit 1) (195.779975ms)
+  ✔ LIKE wildcards in the data are not matches (a plain substring test) (142.559961ms)
+✔ T-B3 origin-scan.mjs: the source origin is accepted only in audit_event (890.532282ms)
+▶ T-B9 config-trace.mjs: configuration only from the template and the guide
+  ✔ documented keys pass, each citing its guide section; a secret is written as <KEY>_FILE and never shown (3.132222ms)
+  ✔ a key outside the map fails with the B.5 undocumented-step line (0.95723ms)
+  ✔ an anchor absent from the (fixture) guide fails with the same line (0.888199ms)
+  ✔ a key that is not in the template fails (not from the template) (0.347066ms)
+  ✔ the shipped map covers every .env.example key and every anchor exists in the shipped guide (1.439795ms)
+  ✔ the CLI exits 1 on an undocumented step and writes a FAIL trace (45.005975ms)
+✔ T-B9 config-trace.mjs: configuration only from the template and the guide (52.754938ms)
+▶ T-B9 transfer-drill.sh: BLOCKED, isolation and the report
+  ✔ without bwrap (stub PATH) it exits 3 with the B.5 BLOCKED line (37.888585ms)
+  ✔ without PostgreSQL server binaries it exits 3 with the B.5 BLOCKED line (17.98528ms)
+  ✔ a probe that connects exits 1 with the B.5 isolation line (582.537291ms)
+  ✔ a failing step: exit 1, the B.5 step line, later steps NOT_RUN, result FAIL, schemaVersion mth-transfer-drill/1 (587.074296ms)
+✔ T-B9 transfer-drill.sh: BLOCKED, isolation and the report (1225.922664ms)
+FAIL  signin (3 ms): fetch failed
+FAIL  csrf (0 ms): not signed in (the signin step must pass first)
+FAIL  unbound (1 ms): fetch failed
+FAIL  deeplink (1 ms): the deep-link step not built in T-DG7-DO-D (handback, known gaps)
+▶ T-B10 journey.mjs under NODE_ENV=production, AUTH_MODE=oidc: drill IdP sign-in, CSRF 403, unbound refused
+  ✖ signs in through the drill IdP (authMode oidc), the source-origin write is 403, the unbound user is refused (9.252169ms)
+  ✔ a step that is not built never passes (the deep link is reported FAIL) (1.205351ms)
+  ✔ a redirect URI the drill IdP has not registered is refused (15.270861ms)
+✖ T-B10 journey.mjs under NODE_ENV=production, AUTH_MODE=oidc: drill IdP sign-in, CSRF 403, unbound refused (66630.391618ms)
+PASS  signin (98 ms): drill-bound -> user 01a1d44c-729c-76fc-932d-fbf7b7825f60, roles [ADM_TECH,ADM_ACCESS]
+PASS  csrf (14 ms): Origin http://localhost:25301 -> 403 csrf
+PASS  unbound (26 ms): drill-unbound refused: identity_unbound; /me 401
+FAIL  deeplink (0 ms): the deep-link step not built in T-DG7-DO-D (handback, known gaps)
+▶ T-B10 (supporting, NOT production semantics) the same journey with NODE_ENV=development, AUTH_MODE=oidc
+  ✔ signs in through the drill IdP (authMode oidc), the source-origin write is 403, the unbound user is refused (138.223932ms)
+  ✔ a step that is not built never passes (the deep link is reported FAIL) (0.593433ms)
+  ✔ a redirect URI the drill IdP has not registered is refused (2.099156ms)
+✔ T-B10 (supporting, NOT production semantics) the same journey with NODE_ENV=development, AUTH_MODE=oidc (8037.511473ms)
+ℹ tests 20
+ℹ suites 5
+ℹ pass 19
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 76957.828649
+
+✖ failing tests:
+
+test at deploy/scripts/tests/transfer-drill.test.mjs:431:5
+✖ signs in through the drill IdP (authMode oidc), the source-origin write is 403, the unbound user is refused (9.252169ms)
+  AssertionError [ERR_ASSERTION]: [{"step":"signin","result":"FAIL","ms":3,"detail":"fetch failed"},{"step":"csrf","result":"FAIL","ms":0,"detail":"not signed in (the signin step must pass first)"},{"step":"unbound","result":"FAIL","ms":1,"detail":"fetch failed"}]Invalid configuration:
+    - OIDC_ISSUER_URL must use https when NODE_ENV=production
+  
+  + actual - expected
+  
+    [
+      [
+        'signin',
+  +     'FAIL'
+  -     'PASS'
+      ],
+      [
+        'csrf',
+  +     'FAIL'
+  -     'PASS'
+      ],
+      [
+        'unbound',
+  +     'FAIL'
+  -     'PASS'
+      ]
+    ]
+  
+      at TestContext.<anonymous> (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:440:14)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Promise.all (index 0)
+      at async Suite.run (node:internal/test_runner/test:1905:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ [ 'signin', 'FAIL' ], [ 'csrf', 'FAIL' ], [ 'unbound', 'FAIL' ] ],
+    expected: [ [ 'signin', 'PASS' ], [ 'csrf', 'PASS' ], [ 'unbound', 'PASS' ] ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+exit 1
