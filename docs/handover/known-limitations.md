@@ -95,7 +95,7 @@ Accepted observations reported by the audit:
 | `apps/web/src/pages/my-work/provisional-ar.ts` | 1 |
 | Total | 299 |
 
-Handover files with Arabic text not listed in `docs/handover/arabic-review.json` (12):
+Handover files with Arabic text not listed in `docs/handover/arabic-review.json` (13):
 
 - `docs/handover/README.md`
 - `docs/handover/api/connectors.md`
@@ -106,6 +106,7 @@ Handover files with Arabic text not listed in `docs/handover/arabic-review.json`
 - `docs/handover/guides/user/ar/user-guide.md`
 - `docs/handover/known-limitations.ar-summary.md`
 - `docs/handover/operator-guide.ar-summary.md`
+- `docs/handover/release-notes.md`
 - `docs/handover/role-matrix.md`
 - `docs/handover/security-controls.md`
 - `docs/handover/upgrades.md`
@@ -158,6 +159,7 @@ Each P7 ADR states its residuals in a "Residuals (honest)" section. In short:
 | ADR-0063 | The secret and claims scans are pattern-based; database TLS has no product-side code (it depends on the driver honouring the URL); encryption at rest is a hosting function; history scope is `HEAD`'s ancestry only; live CI not run; cross-site-scripting evidence is integration-level; the Arabic summaries are provisional. |
 | ADR-0064 | Migration scale is unproven; cross-release imports are out of scope; queued jobs do not travel (stop the source's worker and wait for an empty queue first); the attachment manifest lists evidence object names to ADM_TECH; secrets must be re-bound by IT on the target; every imported user is held until IT confirms the identity. |
 | ADR-0065 | Some configuration kinds may be refused as unportable; a draft of a new key needs a draft-from-content service; "behaves identically" is shown by assertions and content hashes, not an exhaustive comparison; review-policy items are refused for the default bundle roles. |
+| ADR-0065 | Automation rules (`automation_rule`) are not carried by configuration bundles: every admin rule names its owner by user id, which has no stable key. An export that names the kind is refused with `config_bundle.unportable_reference`; an imported item of the kind is refused. Automation rule sets (Studio) are carried. A target installation recreates its automation rules by hand, with its own owners (Amendment 1, A1.2; the export screen does not offer the kind). |
 | ADR-0066 | Recovery objectives (RPO, RTO) are not set; only measured drill timings exist; after a restore the backup list shows only the sets known when the restored set was taken; scale unproven; secrets are not backed up; no point-in-time recovery; the S3 path is proven only against a local fake. |
 | ADR-0067 | Retention periods are placeholders ("not set (IT to agree)"); archived rows are not restored into live tables; business records cannot be archived; pg-boss keeps its own job retention; run scale unproven. |
 | ADR-0068 | The irreversible-migration scanner is heuristic; run times on production volumes are unknown; there is no online (zero-downtime) upgrade. |
