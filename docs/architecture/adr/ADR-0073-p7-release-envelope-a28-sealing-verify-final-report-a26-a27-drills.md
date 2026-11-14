@@ -317,7 +317,7 @@ Only the exact line `verify-seal: PASS` from a release-mode run with `--repo` **
 
 - L1, L2 and L5 are field checks. L3 and L4 are text checks over **texts the delivery controls** (gate records, the README, the final report). Review records are free-form inspection narratives and are **not** text-scanned, because a sentence such as "DG6 exercised the G6 workflow" is correct there. L3/L4 on them would block delivery on wording, not on confusion. They are covered by V7's field check (`candidate_id`) only.
 - The rule lists live in `tools/release/lib/gate-labels.mjs` (DO-J), exported for the tests.
-- On the base, DO-J runs L1–L4 over the real `gates/DG0.json`–`DG6.json` (T-M9). A hit there is reported to the orchestrator (D-243 Q13: approved records are not rewritten) before the freeze, never fixed by editing a gate record.
+- On the base, DO-J runs L1–L4 over the real `gates/DG0.json`–`DG6.json` (T-M9). A hit there is reported to the orchestrator (D-243 Q13: approved records are not rewritten) before the freeze, never fixed by editing a gate record. _Amended by Amendment 1 (A1.1): a reported L3/L4 hit in an approved record DG0–DG6 can be acknowledged, sentence by sentence, in the reviewed list `tools/release/gate-labels-acknowledged.json`. The rules themselves are unchanged._
 
 ### 7. The final delivery report (REQ-DLV-031)
 
@@ -521,3 +521,36 @@ No new dependency, runtime or development.
 ## Version evidence (M0314)
 
 No new dependency. The seal and verify tools use Node.js 24.21.0 built-ins (`node:crypto`, `node:zlib`, `node:fs`, `node:child_process`), already pinned (ADR-0001, ADR-0062), and git, already required by the gate tools. `git sparse-checkout --no-cone` and `git clone --shared` are used by the rehearsal and the drills and are present in the host's git (checked by DO-J with `git --version` in its handback).
+
+## Amendment 1 (2026-11-14, T-DG7-ARCH-R7): the V12 acknowledgement list for approved gate records
+
+- **Author:** solution-architect (T-DG7-ARCH-R7). Base `f0b09b34760e4bf8389b6eeb1f9f39a18b21c08c` on `claude/mobily-transformation-platform-dg6-regate`.
+- **Why.** DO-J2 Q1 (`docs/delivery/handbacks/DG7/T-DG7-DO-J2-devops-engineer.md` §5) asks whether §6 should describe the acknowledgement list it shipped for DO-J O1. **Yes.** Without it, a reviewer reading §6 literally would expect V12 to fail on the DG3 sentence that the list acknowledges. DO-J2 also asks about the two history-only entries of `secret-allowlist.json`. Those belong to ADR-0063 §1.3, not to V12, and are recorded there (ADR-0063 Amendment 1). This amendment does not describe them.
+- **What it replaces.** Only the last bullet of §6 ("a hit there is … never fixed by editing a gate record"), which carries a pointer here. The rules L1–L5, their patterns and phrase lists, and their scopes are unchanged.
+- **Contracts.** No API, schema, migration or lock change. One new reviewed input of V12, read from the payload.
+
+### A1.1 Acknowledged sentences (V12, rules L3 and L4)
+
+1. **The list.** `tools/release/gate-labels-acknowledged.json` is `{ "$comment", "entries": [ { "rule", "path", "jsonPath", "sentenceSha256", "reason" } ] }`. It is loaded by `parseAcknowledgements` in `tools/release/lib/gate-labels.mjs`. The loader **refuses** the whole list when any of these holds:
+   - the rule is not `L3` or `L4`;
+   - the path is not one of the approved records `docs/delivery/gates/DG0.json`–`DG6.json`. That excludes DG7's own record, globs and review paths;
+   - `jsonPath` is not a JSON path (`$.` or `$[`);
+   - `sentenceSha256` is not 64 hex digits;
+   - the reason is under 40 characters after trimming;
+   - a field is missing, or an entry duplicates an earlier one.
+2. **What an entry matches.** One sentence: `rule` + `path` + `jsonPath` + the SHA-256 of the exact sentence, split as §6 L3 and L4 split it. A one-character change to the sentence makes it a hit again.
+   - The envelope `README.txt` and the final report are **never** acknowledgeable, even with a matching hash.
+   - L1, L2 and L5 are field checks and cannot be acknowledged.
+3. **Stale entries fail.** An entry that matches nothing in a checked record is a V12 hit, in the manner of ADR-0063 §1.3.
+4. **The list that counts is the reviewed one.**
+   - `verify-seal` reads the list from the **payload archive** (`source/tools/release/gate-labels-acknowledged.json`), not from the working tree.
+   - A list the loader refuses fails V12 (`acknowledgement list … refused: …`).
+   - A payload with no list acknowledges nothing, so the hit comes back as a V12 FAIL (T-M10 of DO-J2).
+   - The V12 pass line names each acknowledged sentence (rule, path, JSON path, entry index).
+5. **Who adds an entry.** An entry is added only for a hit reported under §6 (D-243 Q13: approved records are never rewritten). Its `reason` must let a reviewer judge it: what each gate label in the sentence refers to, and why the sentence equates neither system with the other. The code-security reviewer reviews the list with the candidate (DO-J2 Q2).
+6. **The current list.** One entry: L3, `docs/delivery/gates/DG3.json` `$.notes`, sentence SHA-256 `9c3e2203…def053`. That is the DG3 audit observation (2), where "DG6" is the engineering stage that the D-079 item was carried to, and "G4" is the product gate whose capacity-conflict item shows the label defect.
+7. **Two gate systems.** An acknowledgement accepts a sentence's wording in an approved engineering record. It approves nothing. It grants no business, Finance or IT approval. Product gate G6 does not imply engineering gate DG7, and DG7 does not imply any product gate.
+
+### A1.2 Residual added
+
+8. **Acknowledgements are judged by people.** V12 checks that an acknowledged sentence is unchanged, not that the acknowledgement was right. The `reason` field and the code-security review are the control.

@@ -117,14 +117,14 @@ It carries no secret value, credential reference, storage endpoint, bucket or co
 `deploy/scripts/image-bundle.sh save --out <dir>` / `load --from <dir>` / `verify --from <dir>`:
 
 - **save:** for every image of `deploy/images.lock.json` (by digest) **that a Compose file runs** (its `usedIn` names a file under `deploy/compose/`), and the locally built application image (`build-image.sh`), run `docker save`. Write `images.tar` and `images.json` (name, lock digest, image id, size, tar SHA-256). _Amended by Amendment 1 (A1.3): the original text said "every image"; the CI-only Playwright image is not part of the deployable image set._
-- **Image store (Amendment 1, A1.2):** the load host uses Docker's **containerd image store**, so the digest-pinned `image:` lines of Compose resolve after `load`. A host on the classic store records the image clause BLOCKED with that reason. The bundle never re-tags images and never rewrites `image:` lines.
+- **Image store (Amendment 1, A1.2):** the load host uses Docker's **containerd image store**, so the digest-pinned `image:` lines of Compose resolve after `load`. A host on the classic store records the image clause BLOCKED with that reason. The bundle never rewrites `image:` lines. _Amended by Amendment 2 (A2.1): the original text also said "the bundle never re-tags images". `save` now tags each pinned image `<ref>:<tag>` on the **connected** host, after an id check, and saves by that name. `load` and `verify` never tag._
 - **load:** check `images.tar` against `images.json`, run `docker load -i images.tar`, then check each `docker image inspect` id against `images.json`. A mismatch exits 1.
 - **The registry-free proof:** before `load`, the orchestrator removes the images (`docker image rm`). After `load`, it runs `docker compose … up --pull never --wait`, which fails if any image is missing locally. So a successful start shows that nothing was pulled. The log records `docker info` (registry mirrors), the commands and the exits.
 - **The agent half (container-free):** the script's logic is tested with a **stub `docker`** on `PATH` that records calls and serves fixture outputs (T-B12). This proves the manifest, checksum and refusal logic, not a real load.
 
 ### 7. Compose up on a clean host and the drill split (REQ-S16-008; D-243 Q1, Q12)
 
-- **Compose up (orchestrator):** on its host, with a fresh project name and no prior volumes, using the images loaded in §6: `docker compose -f deploy/compose/compose.yaml up -d --pull never --wait`. The run records `docker compose ps` with every service `healthy` (the API's healthcheck is `mth health /readyz`, so it includes `storage`), and the `/readyz` body with all four keys. Then the same with `compose.no-egress.yaml` and the `test-idp` profile, where the smoke service asserts that egress is blocked. Then the Keycloak e2e (`e2e/identity/keycloak-login.spec.ts`; REQ-S16-007, the D-049 residual).
+- **Compose up (orchestrator):** on its host, with a fresh project name and no prior volumes, using the images loaded in §6: `docker compose -f deploy/compose/compose.yaml up -d --pull never --wait`. The run records `docker compose ps` with every service `healthy` (the API's healthcheck is `mth health /readyz`, so it includes `storage`), and the `/readyz` body with all four keys. Then the same with `compose.no-egress.yaml` and the `test-idp` profile, where the smoke service asserts that egress is blocked. Then the Keycloak e2e (`e2e/identity/keycloak-login.spec.ts`; REQ-S16-007, the D-049 residual). _Amended by Amendment 2 (A2.2): the Keycloak e2e runs on the default stack with the `test-idp` profile, not on the no-egress stack, and its test process runs without the host's proxy variables._
 - **The HA statement already exists** (`docs/operations/README.md` l.8, `clean-start.md` l.7). The deployment guide (DOC-B) repeats it: "Compose is a reproducible install and test configuration, not evidence of high-availability readiness."
 - **No orchestration-target manifests** (D-243 Q12). No Kubernetes, Helm or other target files are written, because no target is known and they would be untested claims. The deployment guide maps the Compose services to generic roles (database, API, worker, migration job, backup job, optional IdP for tests), lists what IT must supply, and records "deployment configuration for the IT orchestration target" as an external configuration dependency (M0414).
 
@@ -235,7 +235,7 @@ Changing the drill to use it would mean a second PostgreSQL bootstrap inside the
 2. **A classic-store host is BLOCKED, never worked around.**
    - On such a host the image clause of REQ-S19-018 is recorded BLOCKED: "the load host uses the classic image store; digest-pinned references do not resolve after load (ADR-0069 A1.2)". That is a release blocker under REQ-S21-003, never a pass.
    - The orchestrator may switch that host to the containerd store (`"features": {"containerd-snapshotter": true}` in `daemon.json`, then restart the daemon) and rerun from step 1. Switching stores hides the images already present, so step 1 pulls them again.
-3. **No re-tag and no rewritten `image:` lines.** Rejected alternatives:
+3. **No re-tag and no rewritten `image:` lines.** _Amended by Amendment 2 (A2.1): host run 2 showed that a bundle saved under digest names loses its names on load, even on the containerd store. `save` now tags `<ref>:<tag>` on the connected host. The rejection of (a) and (b) below stands, because neither of them is that change._ Rejected alternatives:
    - (a) re-tagging the loaded images to tag-only names plus a Compose override without digests. It removes the digest pin at start time, which is exactly what `images.lock.json` exists to guarantee (ADR-0011). It also needs an override file that nothing else tests.
    - (b) a Compose override naming images by image id. It is unreadable for IT and differs per build of the app image.
    - The bundle's own check stays as it is: `load` and `verify` inspect the digest name. On a classic store they fail with `image-bundle: <name> does not match images.json (present)` (exit 1). A1.2 rule 1 turns that into a precondition, so the failure explains itself before the run.
@@ -259,3 +259,85 @@ Changing the drill to use it would mean a second PostgreSQL bootstrap inside the
 
 8. **Image store.** The digest-reference behaviour of A1.2 is unverified until the orchestrator's host run (A1.2, "Not verified here").
 9. **Header grouping.** The offline drill picks a spec's stack by a header grep (A1.1, Disclosure).
+
+## Amendment 2 (2026-11-14, T-DG7-ARCH-R7): the bundle tags on the connected host; where and how the Keycloak e2e runs
+
+- **Author:** solution-architect (T-DG7-ARCH-R7). Base `f0b09b34760e4bf8389b6eeb1f9f39a18b21c08c` on `claude/mobily-transformation-platform-dg6-regate`.
+- **Why.** D-267 sends two questions to the architect before the freeze:
+  - DO-E4 Q1 (`docs/delivery/handbacks/DG7/T-DG7-DO-E4-devops-engineer.md` §5): A1.2 rule 3 and §6 say "the bundle never re-tags images", and DO-E4's `save` tags each pinned image on the connected host;
+  - the Keycloak e2e of §7 passed only when its test process ran without the host's proxy variables (host run 3c).
+- **Evidence.** These are the orchestrator's host runs, all under `docs/delivery/test-evidence/DG7/orchestrator/host/`. All ran on Docker Engine 29.9.2 (client and server), Compose v5.6.1 and the containerd image store (`docker info`: `Storage Driver: overlayfs`, `driver-type: io.containerd.snapshotter.v1`; `host-run.log` l.21–23).
+  - **Host run 2** (`host-run-2-bundle-names-lost.log`). This is the old `save`, which passed `<ref>:<tag>@<digest>` to `docker save`:
+    - `load` printed `Loaded image ID: sha256:5a5a…` and `Loaded image ID: sha256:a78d…`, with no name (l.656–657);
+    - `verify` reported `… does not match images.json (present)` (l.659–660, step 06 exit 1);
+    - `up --pull never` failed with `No such image: postgres:18@sha256:5a5a…` (l.677–680, step 07 exit 1).
+  - **Host run 3** (`host-run.log`). This is DO-E4's `save`:
+    - it logged `tagged postgres:18 …; saved as postgres:18` and the same for Keycloak (l.555–556, step 04 exit 0);
+    - after `docker image rm` (step 05), `load` printed `Loaded image: postgres:18`, `Loaded image: quay.io/keycloak/keycloak:26.8.1` and `Loaded image: mth-app:local` (l.624–626);
+    - every `<ref>:<tag>@<digest>`, `<ref>:<tag>` and app name resolved to its recorded id in `load` and `verify` (step 06 exit 0);
+    - `up -d --pull never --wait` succeeded, with `/readyz` `{"status":"ready","checks":{"database":"ok","migrations":"ok","storage":"ok","worker":"alive"}}` (step 07 exit 0);
+    - the no-egress stack with `test-idp` became healthy (step 09 exit 0);
+    - the Keycloak e2e on the no-egress stack failed with `net::ERR_CONNECTION_REFUSED at http://localhost:3000/login` in all 4 tests (step 11 exit 1).
+  - **Host run 3b** (`host-run-3b.log`):
+    - the no-egress smoke passed: `{"smoke":"PASS","mode":"oidc",…,"steps":15,"passed":15,…}` (b03 exit 0);
+    - the Keycloak e2e on the default `test-idp` stack timed out at `page.waitForURL` for the IdP origin in all 4 tests (b07 exit 1, 247 s).
+  - **Host run 3c** (`host-run-3c.log`): the same stack and the same command as 3b b07, with the proxy variables removed (`env -u HTTPS_PROXY -u HTTP_PROXY -u https_proxy -u http_proxy -u ALL_PROXY -u all_proxy …`). Result: `4 passed (10.3s)` (b07 exit 0).
+- **What it replaces:**
+  - in A1.2, the "no re-tag" half of rule 3, and the store-model statement in the problem description, as far as host run 2 contradicts it (A2.1 item 4);
+  - in §6, the sentence "The bundle never re-tags images";
+  - in §7, where the Keycloak e2e runs (A2.2).
+
+  Each replaced place carries a pointer here. Everything else stands: A1.2 rules 1, 2 and 4, A1.3, the registry-free proof of §6, and the split table of §7.
+- **Contracts.** No API, schema, migration, permission or advisory-lock change. `mth-image-bundle/1` gains one more **optional** key, `savedAs` (already shipped by DO-E4). A manifest written before it still parses, but such a bundle fails to load on a real engine (A2.1 item 6).
+
+### A2.1 `save` tags the pinned image on the connected host; `load` and `verify` never tag (DO-E4 Q1)
+
+1. **Decided: DO-E4's approach, as shipped in `deploy/scripts/image-bundle.sh`.** For each lock image that a Compose file runs (A1.3), `save` does the following:
+   1. It requires the containerd store (exit 3 otherwise, the A1.2 rule 4 line).
+   2. **Pass 1, which changes nothing on the host:**
+      - it reads the local id of `<ref>:<tag>@<digest>`, and refuses with exit 1 if that id is not the lock digest;
+      - it refuses with exit 1 if `<ref>:<tag>` already names a **different** image;
+      - an image that is not present is BLOCKED (exit 2).
+
+      Nothing is tagged until every image has passed.
+   3. **Pass 2:**
+      - it runs `docker tag <ref>:<tag>@<digest> <ref>:<tag>`;
+      - it re-inspects `<ref>:<tag>`, and exits 1 if the id is not the lock digest;
+      - it saves all images in one `docker save`, by `<ref>:<tag>` for each lock image and by its own name for the app image (which is never tagged).
+   4. `images.json` records `name`, the reference Compose uses, and `savedAs`, the name inside the archive.
+2. **`load` and `verify` never tag, and nothing rewrites an `image:` line.** They check that every `name` **and** every `savedAs` resolves to the recorded `imageId`. On the target host the `<ref>:<tag>` name arrives inside the archive. No command of the bundle creates or moves a tag there.
+3. **Why this is not the alternative rejected in A1.2 rule 3 (a).** Alternative (a) re-tagged the loaded images to tag-only names on the **target**, and started Compose from an override **without digests**. That removed the digest pin at start time. This change keeps it:
+   - Compose's `image:` lines still read `<ref>:<tag>@<digest>`, unchanged;
+   - `up --pull never` starts only an image whose digest is the pinned one (host run 3 step 07);
+   - the tag is only the name the archive carries, and `save` checks the id behind it twice: before tagging, and after.
+4. **What host run 2 corrects in A1.2.** A1.2 said that with the containerd store, `docker save` writes the manifests and index and `load` restores them, "so the digest reference resolves". On this engine, an image passed to `docker save` under a digest reference came back from `load` with **no name** (host run 2). Under a `<ref>:<tag>` name, it came back with that name, and its digest reference resolved (host run 3). So the precondition of A1.2 rule 1 stays, and it is not sufficient on its own: the archive must carry `<ref>:<tag>` names.
+   - I read the cause as `docker save` recording only tag references as names in the archive. That is an inference from the two runs. It was **not** checked against current official Docker documentation (the agent sandbox has no network).
+5. **Side effect on the connected host, and DO-E4 Q2.**
+   - After `save`, the connected host has the local tags `postgres:18` and `quay.io/keycloak/keycloak:26.8.1`, pointing at the pinned digests.
+   - If such a tag already names another image (for example `postgres:18` pulled by tag at a later digest), `save` refuses and changes nothing. The operator removes or renames that tag, then saves again. `docs/operations/restricted-network.md` says so.
+   - **Architectural recommendation on DO-E4 Q2** (the orchestrator decides): keep the refusal. Never remove or move an operator's tag automatically. A script that silently repoints `postgres:18` on a shared host would change what other workloads on that host start.
+6. **Older bundles.** A bundle written without `savedAs` gets only the `name` check. On a real engine it fails as host run 2 did. Such a bundle must be saved again; it is never "repaired" by tagging at load.
+7. **Tests.** T-B12 (p7-work-split §B.4) covers this with the stateful stub `docker` of DO-E4: tagging before the single `docker save`, the round trip, an old-format archive failing, the two refusals and exit 3 on the classic store. Host run 3 steps 04–09 are the real-engine proof on one host.
+
+### A2.2 The Keycloak e2e: on the default `test-idp` stack, with the host's proxy variables removed (§7)
+
+1. **Stack.** The Keycloak e2e runs on the **default** stack with the `test-idp` profile: `docker compose -f deploy/compose/compose.yaml --profile test-idp up -d --pull never --wait`, then the `db bootstrap` of `e2e/support/keycloak-login.ts`, then the spec.
+   - It does **not** run on the no-egress stack. `compose.no-egress.yaml` makes the network `internal: true` and resets every published port (its l.6–19), so no browser on the host can reach the API (host run 3 step 11: `ERR_CONNECTION_REFUSED`, exit 1, kept as evidence).
+   - What each run proves:
+     - the egress clause of §7 is proven by the no-egress stack becoming healthy plus its smoke service (host run 3 step 09, host run 3b b03, 15/15, egress probe refused);
+     - the Keycloak e2e proves REQ-S16-007: sign-in through realm `mth-test`, and the refusal of realm `mth-other`. That needs no egress block.
+   - §7's order ("then the Keycloak e2e") is read as: after the no-egress run, on a fresh default `test-idp` project.
+2. **The test process runs without the host's proxy variables.** The Playwright process is started with `HTTPS_PROXY`, `HTTP_PROXY`, `ALL_PROXY` and their lower-case forms **unset**, as in host run 3c. Adding the IdP host name to `NO_PROXY` is the equivalent alternative.
+   - Why: the IdP origin is `https://keycloak:8443` (Compose's `KC_HOSTNAME`), and the spec maps the name `keycloak` to 127.0.0.1 inside Chromium. The host's `NO_PROXY` (`00-env.log` l.53) lists `localhost` and `127.0.0.0/8`, but not `keycloak`. With the proxy variables set, the navigation to the IdP did not complete (host run 3b, 60 s timeout ×4). Without them, all 4 tests passed (host run 3c). The two runs differ only in those variables.
+   - **Mechanism, inferred and not verified:** Chromium hands a host that is not in its bypass list to the proxy, which resolves `keycloak` itself and cannot reach the local container.
+   - **What this changes, and what it does not.** This is a property of the **test host**: an agent build proxy that has no route to the host's containers. It changes no product code, no Compose file and no TLS rule. The API validates the IdP inside the Compose network and never uses the host's proxy. A target installation configures its own IdP origin (ADR-0054 §1). Its proxy rules are IT's (`docs/operations/restricted-network.md`).
+3. **Follow-up (not done here; it is not the architect's file).** The run instructions in the header of `e2e/support/keycloak-login.ts` (l.11–19) should say: "run the spec with the HTTP(S)/ALL proxy variables unset, or with the IdP host in `NO_PROXY`". The orchestrator routes this to the e2e helper's owner. Until it lands, this amendment and host run 3c carry the instruction.
+4. **Status.** REQ-S16-007's Keycloak e2e: 4/4, `chromium-en` and `chromium-ar` (host run 3c b07 exit 0). Host run 3 step 11 and host run 3b b07 are failed runs, kept and disclosed (D-267).
+
+### A2.3 Residuals changed
+
+- **Residual 1 (container halves depend on the orchestrator's host):** the host halves ran in the orchestrator's container, with a Docker daemon it started (D-266 (a), D-267). One host only. An independent rerun is the reopen condition of D-267.
+- **Residual 5 (not air-gapped):** it stands. The host had registry access through a proxy. "Without registry access" is shown by `docker image rm` followed by `--pull never` (host run 3 steps 05–07).
+- **Residual 8 (image store):** narrowed. On the containerd store, the A2.1 bundle loads and its digest references resolve. Host run 3 observed this on one engine, 29.9.2. No classic-store host was run, so the classic-store BLOCKED rule (A1.2 rule 2; `save`, `load` and `verify` exit 3) is tested with the stub `docker` only. M0314's documentary evidence for the store behaviour is still **pending**: no current official Docker documentation was consulted.
+- **New residual 10 (test-host proxy):** the Keycloak e2e depends on the test process bypassing the host's proxy for the IdP host (A2.2 item 2). A host whose proxy settings cannot be changed records that e2e BLOCKED with this reason. It is never recorded as a pass.
+- **Version evidence.** The host runs used Docker Engine 29.9.2 and Compose v5.6.1, not the 29.3.1 and v5.1.1 that this ADR's version-evidence section cites from P1's `environment.md`. No new feature is used: `docker tag` is as old as `docker save`.

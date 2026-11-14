@@ -78,7 +78,7 @@ A file is scanned as UTF-8 text. A file with a NUL byte in its first 8 KiB is sc
 | Rule | Detects (exact) | Placeholders and non-secrets that do **not** match |
 | --- | --- | --- |
 | **S1 key-shape** | `KEY_SHAPES` of `tools/release/lib/patterns.mjs` (delivered by ARCH-01, shared with ADR-0062 R3; frozen), in simplified form: `sk-ant-…`, `sk-…`, `AKIA…`/`ASIA…`, `ghp_…`, `github_pat_…`, `xox?-…`, `AIza…`, `-----BEGIN … PRIVATE KEY-----`, JWT `eyJ….eyJ` | — |
-| **S2 credential-url** | `<scheme>://<user>:<password>@` where the password is a literal | password `%s`, `${…}`, `$NAME`, `<…>`, `***`, `[REDACTED]`, `…` |
+| **S2 credential-url** | `<scheme>://<user>:<password>@` where the password is a literal | password `%s`, `${…}`, `$NAME`, `<…>`, `***`, `[REDACTED]`, `…`; the scanner's own mask `[S<n>:…` (Amendment 1, A1.2) |
 | **S3 secret-assignment** | a key name matching `(secret|password|passwd|pwd|token|api[_-]?key|access[_-]?key|private[_-]?key|client[_-]?secret|signing[_-]?key)` (any case, also inside a longer name such as `smtpPassword`), then `=`, `:` or `": "`, then a value of at least 16 characters whose Shannon entropy is at least 3.5 bits per character | the placeholders of S2; `process.env.…`; `/run/secrets/…` and other `*_FILE` paths; checksum shapes (64 hex, `sha256:<hex>`, `sha512-<base64>`); a value that is a key **name** (`[A-Z][A-Z0-9_]+`); an i18n key (`[a-z0-9_.]+`) |
 | **S4 canary-misplaced** | a value starting with `mth-canary-` (the ADR-0053 §5 prefix) **outside** test and CI paths. The test and CI paths are `**/*.test.*`, `**/*.vitest.mjs`, `**/test/**`, `**/tests/**`, `tests/**`, `e2e/**`, `deploy/ci/**`, `.github/workflows/**`, `deploy/scripts/log-scan.mjs` and `docs/architecture/**` | canaries inside those paths are reported in the summary count as `canary (documented)`, never as a pass in disguise |
 | **S5 env-template** | in `.env.example`: any non-blank, non-comment line not matching `^[A-Z][A-Z0-9_]*=$`. That is REQ-S16-031 "the environment template contains placeholders only": a variable **name** with an empty value. Comment lines are still subject to S1–S3 | — |
@@ -86,7 +86,7 @@ A file is scanned as UTF-8 text. A file with a NUL byte in its first 8 KiB is sc
 
 #### 1.3 The allow-list: `tools/release/secret-allowlist.json`
 
-Each entry is `{ "rule", "path" (glob), "valueSha256", "reason" }`. Rules for entries:
+Each entry is `{ "rule", "path" (glob), "valueSha256", "reason" }`. _Amended by Amendment 1 (A1.1): an entry may also carry `scopes`._ Rules for entries:
 
 - **No value is stored.** The SHA-256 of the matched value identifies it.
 - **History scope** matches on `rule` + `valueSha256` only, because paths vary across history.
@@ -274,3 +274,50 @@ The **A28 half** of REQ-S16-033 is the seal-time re-run of T-G6 and T-G7 over th
 - **Scanning for the bare word "compliance".** Rejected because it flags category labels such as "Risk / compliance" and the disclaimers this ADR requires. Claims are recognised by a governed object or a named framework, with negation.
 - **Keeping the claim term list in this ADR.** Rejected because the ADR would then contain claim sentences and fail its own scan, or need an allow-list. The rules live in code (`claims-rules.mjs`), and the ADR describes them.
 - **Listing hosting responsibilities as controls with "no test".** Rejected because it would break "the matrix links each control to a test" or water it down. They are a separate section with integration points.
+
+## Amendment 1 (2026-11-14, T-DG7-ARCH-R7): allow-list scopes, the history-only entries, and the scanner's own mask
+
+- **Author:** solution-architect (T-DG7-ARCH-R7). Base `f0b09b34760e4bf8389b6eeb1f9f39a18b21c08c` on `claude/mobily-transformation-platform-dg6-regate`.
+- **Why.** DO-J2 Q1 (`docs/delivery/handbacks/DG7/T-DG7-DO-J2-devops-engineer.md` §5) asks whether the ADRs should describe the history allow-list entries it added. This ADR is their home, because §1.3 owns the allow-list. ADR-0073 §6 (V12) does not read the secret allow-list, and V13 uses the envelope scope, where history-only entries do not apply. Recording them here also covers two shipped behaviours that §1.2 and §1.3 did not yet describe:
+  - the `scopes` key of an entry;
+  - the S2 exclusion of the scanner's own mask (DO-J2).
+- **What it replaces.** Each replaced place carries a pointer here. No other rule, scope, protected path or exit code changes.
+  - The entry shape in §1.3.
+  - The "do not match" cell of S2 in §1.2.
+- **Contracts.** No API, schema, migration or lock change.
+
+### A1.1 Entry scopes (§1.3)
+
+1. **The `scopes` key.** An entry may carry `"scopes": [...]`, with values from `payload`, `history`, `path` and `envelope` (`SCOPES` in `tools/release/secret-scan.mjs`).
+   - When the key is omitted, it defaults to `["payload", "history"]`.
+   - An entry applies only in a scan of a scope it names, and it is checked for staleness only there.
+   - An invalid value makes the loader refuse the list (exit 2).
+   - The other §1.3 rules hold in every scope: no stored value, history matching on `rule` + `valueSha256` only, stale entries fail, and protected paths are refused.
+2. **The patterns in use:**
+   - `["history", "envelope"]`: quotes inside approved delivery records, which are never rewritten (D-243 Q13);
+   - `["envelope"]`: one quote in an approved DG6 review record (DO-J O2);
+   - `["history"]`: the raw values left in **earlier blobs** of a file whose current content was reworded (A1.3).
+
+### A1.2 S2 does not match the scanner's own mask (§1.2)
+
+- A credential URL whose password part begins with the scanner's own mask prefix (`/^\[S\d(?:-documented)?:/`, the output of `mask` in `tools/release/lib/patterns.mjs`, for example `[S2:x…]`) is not a hit.
+- Why: a committed scan log or run transcript that quotes a masked FAIL line otherwise becomes a permanent history hit, and history can never be reworded. DO-J2 observed this on AN-P7's committed evidence.
+- The exclusion applies to the password part of S2 only. S1, S3 and S4 are unchanged.
+
+### A1.3 The two history-only entries of DO-J2 (no new rule)
+
+They are entries of the kind §1.3 already permits ("History scope matches on `rule` + `valueSha256` only"):
+
+| Rule | `path` (reason context only in history) | Value | Why it is not a credential | Current file |
+| --- | --- | --- | --- | --- |
+| S3 | `deploy/scripts/drill/guide-keys.json` | value sha256 `1f753298…` | the guide anchor `docs/handover/deployment.md#secrets` under `OIDC_CLIENT_SECRET` and `SECRETS_DIR` in earlier blobs of the drill's key-to-guide map | reworded to `#secrets`; no payload entry |
+| S2 | `packages/db/test/integration/transfer-load.test.ts` | value sha256 `2d711642…` | the one-character dummy password `x` of a deliberately unreachable `postgres://…@127.0.0.1:1/none` URL in earlier blobs | no password now; no payload entry |
+
+- **Accepted breadth.** In history, each entry accepts its value **anywhere** in the history scope: any S3 blob whose value is exactly that anchor, and any S2 blob whose password is exactly `x`. This is the narrowest means available, because a past blob cannot be reworded. The payload and envelope scans are unaffected: the entries do not name those scopes, and the current files are clean.
+- **Rule of use.** A current file is **reworded by its owner, not allow-listed** (D-266 (b)). A history-only entry is added only for a value that remains in past blobs after that rewording.
+- **Review.** The code-security reviewer judges these entries and A1.2 with the candidate (DO-J2 Q2).
+
+### A1.4 Residuals added
+
+7. **History entries are value-wide** (A1.3). A future real credential that happened to equal one of the two values (the anchor text, or the password `x`) would be accepted in history only. It would still be a hit in the payload and envelope scans.
+8. **The own-mask exclusion** (A1.2) would miss a real password that literally begins with `[S<digit>:`. That is accepted as negligible next to a permanent false history hit.
