@@ -68,9 +68,12 @@ export const ENV_ROWS = Object.freeze([
   {
     name: "Keycloak test realm e2e",
     key: "keycloak-e2e",
-    title: "Keycloak test-realm end-to-end sign-in (needs a container runtime)",
-    owner: "Mobily IT, or the delivery orchestrator's container host run (D-243 Q1)",
-    status: "blocked",
+    // D-267: the orchestrator's container host run (run 3c) passed the Keycloak e2e 4/4 on one delivery host, so this
+    // is no longer `blocked`. It stays `not_verified`: a synthetic test realm, not Mobily's IdP, one host, not HA.
+    title:
+      "Keycloak test-realm end-to-end sign-in (passed 4/4 on one delivery host with a container runtime, D-267; synthetic realm, not Mobily's IdP, not HA)",
+    owner: "Mobily IT",
+    status: "not_verified",
   },
   {
     name: "Brokered SAML",

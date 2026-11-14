@@ -6,7 +6,7 @@
 // MTH_STRICT_HANDOVER=1 (the freeze), the full check on the real tree must exit 0: no BLOCKED is accepted.
 import assert from "node:assert/strict";
 import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname, join, relative, sep } from "node:path";
 import { after, describe, it } from "node:test";
 import { APPROVED_SPEC, manifestFromWorkingTree } from "../../gates/lib/candidate.mjs";
 import {
@@ -34,11 +34,21 @@ const REPORT = join(REPO, "docs/delivery/handbacks/DG7/T-DG7-DO-I-evidence/proto
 const roots = [];
 after(() => roots.forEach((r) => rmSync(r, { recursive: true, force: true })));
 
-/** A fixture root: copies of docs/handover, .env.example, compose.yaml, the router files and a register stub. */
-function fixtureRoot() {
+/** The handover paths written later in the release (PENDING): release-notes.md and guides/. */
+const LATER = new Set(["release-notes.md", "guides"]);
+
+/**
+ * A fixture root: copies of docs/handover, .env.example, compose.yaml, the router files and a register stub.
+ * Self-contained: by default the later-written files (release-notes.md, guides/) are left out, whether or not the
+ * real tree has them, so each case decides itself whether they exist (addPending or put). `{ full: true }` copies
+ * docs/handover whole (for the known-limitations regeneration, which lists the Arabic guides).
+ */
+function fixtureRoot({ full = false } = {}) {
   const dir = tmp("handover");
   roots.push(dir);
-  cpSync(join(REPO, "docs/handover"), join(dir, "docs/handover"), { recursive: true });
+  const src = join(REPO, "docs/handover");
+  const skip = (p) => !full && p !== src && LATER.has(relative(src, p).split(sep)[0]);
+  cpSync(src, join(dir, "docs/handover"), { recursive: true, filter: (p) => !skip(p) });
   for (const p of [".env.example", "deploy/compose/compose.yaml", "apps/web/src/app/router.tsx", "apps/web/src/app/nav.ts"]) {
     mkdirSync(dirname(join(dir, p)), { recursive: true });
     cpSync(join(REPO, p), join(dir, p));
@@ -122,6 +132,7 @@ describe("T-H1: the handover index", () => {
 
   it("reports a missing release-notes.md as BLOCKED, never as a pass", () => {
     const root = fixtureRoot();
+    assert.ok(!existsSync(join(root, "docs/handover/release-notes.md")), "the fixture must not copy release-notes.md");
     put(root, "docs/handover/guides/user/en/x.md", "# x\n");
     put(root, "docs/handover/guides/admin/en/x.md", "# x\n");
     const r = checkIndex(root);
@@ -252,7 +263,7 @@ describe("T-H4: known limitations", () => {
   });
 
   it("--write on a fixture copy regenerates a hand-damaged block, and --check then passes", () => {
-    const root = fixtureRoot();
+    const root = fixtureRoot({ full: true });
     mkdirSync(join(root, "docs/delivery"), { recursive: true });
     cpSync(join(REPO, "docs/delivery/environment.md"), join(root, "docs/delivery/environment.md"));
     for (const f of KL_PROVISIONAL_SOURCES) put(root, f, get(REPO, f));
@@ -301,6 +312,19 @@ describe("T-H4: known limitations", () => {
     for (const k of keys) assert.ok(md.includes(`| \`${k}\` |`), k);
     assert.ok(md.includes(KL.TEXTS.notVerifiedEn));
     assert.ok(md.includes(KL.TEXTS.idpEn));
+  });
+
+  it("keycloak-e2e records the D-267 host run: not_verified (not blocked, not Mobily's IdP), and §4 no longer says it never ran", () => {
+    const deps = JSON.parse(get(REPO, "docs/handover/external-dependencies.json"));
+    const kc = deps.find((d) => d.key === "keycloak-e2e");
+    assert.equal(kc.status, "not_verified");
+    assert.match(kc.title, /D-267/);
+    assert.match(kc.title, /not Mobily's IdP, not HA/);
+    assert.equal(deps.find((d) => d.key === "corporate-idp").status, "not_verified");
+    const md = get(REPO, "docs/handover/known-limitations.md");
+    const row = md.split("\n").find((l) => l.startsWith("| REQ-S16-007 |"));
+    assert.ok(row && !/has never run/.test(row) && !/stays BLOCKED/.test(row), row);
+    for (const t of ["4/4", "D-267", "run 3c", "not HA", "not Mobily's identity provider"]) assert.ok(row.includes(t), t);
   });
 
   it("arabic-review.json ships empty, and the provisional block lists every Arabic handover file", () => {
@@ -420,6 +444,7 @@ describe("T-H5 checker logic (DOC-A runs it on the real guides)", () => {
   it("no guides yet → BLOCKED (exit 2), never a pass", () => {
     if (!existsSync(join(REPO, "docs/handover/guides"))) assert.equal(checkGuides(REPO).status, "BLOCKED");
     const root = fixtureRoot();
+    assert.ok(!existsSync(join(root, "docs/handover/guides")), "the fixture must not copy docs/handover/guides");
     const r = checkGuides(root);
     assert.equal(r.status, "BLOCKED");
     assert.match(r.blocks[0], /no guides yet/);
