@@ -103,8 +103,18 @@ When the target host cannot reach any registry, not even IT's mirror, the images
    deploy/scripts/image-bundle.sh save --out <bundle dir> [--app-image mth-app:local]
    ```
 
+   Docker on this host must use the **containerd image store** (see step 3); on the classic store the save stops
+   (exit 3). For each pinned image the save first checks that the local image id **is** the lock digest (on the
+   containerd store the image id is the digest Compose pins; a different id stops the save, exit 1). It then tags the
+   image as `<ref>:<tag>` (for example `postgres:18`) on this connected host and saves it under that name: an archive
+   saved under a `<ref>:<tag>@<digest>` name loads by image id only (`Loaded image ID: sha256:…`), and then neither
+   name resolves on the target. If `<ref>:<tag>` already names a different image on this host, the save stops (exit 1)
+   rather than move that tag; remove or rename the tag and save again. The `image:` lines of Compose keep their
+   digests.
+
    It writes `images.tar` (one `docker save` archive) and `images.json` (`mth-image-bundle/1`). For each image,
-   `images.json` records its name, its lock digest, its image id, its size and the tar's SHA-256. The lock images that no
+   `images.json` records its name (the reference Compose uses), `savedAs` (the name in the archive), its lock digest,
+   its image id, its size and the tar's SHA-256. The lock images that no
    Compose file runs are not saved. They are listed under `excluded` with the reason: the CI-only `playwright` image,
    and `node-runtime`, whose layers already travel inside the application image. An image that is not present locally,
    or a bundled lock entry without a digest, stops the save (exit 2). Pull or build it first.
@@ -120,9 +130,11 @@ When the target host cannot reach any registry, not even IT's mirror, the images
    (`image-bundle: images.tar does not match images.json (sha256)`), and `docker load` is not run. It then checks that
    Docker uses the **containerd image store** (`docker info` shows the driver-type `io.containerd.snapshotter.v1`). The
    classic store does not restore the registry digest on load, so the digest-pinned names cannot resolve. On that store
-   the script stops before loading (exit 3). Enable the containerd image store and restart Docker. The script never
-   re-tags an image and never rewrites an `image:` line (ADR-0069 A1.2). It then loads the tar and compares each image
-   id with `images.json`. `image-bundle.sh verify --from <bundle dir>` repeats both checks
+   the script stops before loading (exit 3). Enable the containerd image store and restart Docker. `load` and `verify`
+   never re-tag an image, and no command rewrites an `image:` line (ADR-0069 A1.2). It then loads the tar (Docker
+   prints `Loaded image: postgres:18`, and so on) and checks that every `<ref>:<tag>@<digest>` that Compose uses, and
+   every `savedAs` name, resolves to the image id in `images.json`. A name that does not resolve exits 1
+   (`image-bundle: <name> does not match images.json (present)`). `image-bundle.sh verify --from <bundle dir>` repeats both checks
    without loading.
 4. **Start without pulling:**
 
@@ -134,13 +146,15 @@ When the target host cannot reach any registry, not even IT's mirror, the images
    loaded images.
 
 Exit codes: 0 PASS, 1 a mismatch, 2 a usage error or missing input, 3 `image-bundle: BLOCKED: docker daemon not
-reachable` or, for `load` and `verify`, `image-bundle: BLOCKED: the classic image store cannot resolve digest references
+reachable` or, for `save`, `load` and `verify`, `image-bundle: BLOCKED: the classic image store cannot resolve digest references
 after load (ADR-0069 A1.2); enable the containerd image store`.
 
 **What has been shown, and what has not.**
 
-- The script's manifest, checksum, image selection, image-store and refusal logic is tested with a stub `docker`
-  (T-B12, `deploy/scripts/tests/image-bundle.test.mjs`).
+- The script's manifest, checksum, image selection, image-store, save-name and refusal logic is tested with a stub
+  `docker` that models the containerd store's naming on load (T-B12, `deploy/scripts/tests/image-bundle.test.mjs`).
+  A stub is not a Docker engine: the save → remove → load → `up --pull never` sequence with the tag-named archive is
+  proven only by the orchestrator's host run.
 - That the containerd store keeps the digest after `load` and the classic store does not is the engine's documented
   model. It has not been confirmed by a run here (ADR-0069 residual 8).
 - A real save, removal, load and `up --pull never` needs a Docker daemon. It is the orchestrator's host run (ADR-0069

@@ -1,0 +1,230 @@
+▶ T-B12 image-bundle.sh with a stub docker
+  ✖ save lists every lock image that a Compose file runs plus the app image, with the tar SHA-256, and pulls nothing (325.693279ms)
+  ✖ save tags each pinned image as <ref>:<tag> before the one docker save, and the tag is the lock digest (DO-E4) (328.356937ms)
+  ✖ save -> remove every image -> load -> every <ref>:<tag>@<digest> resolves to its pinned id (host run 2 regression) (626.394602ms)
+  ✔ load: an archive saved under digest names (the old save) fails: each pinned name does not match (present), exit 1 (335.261662ms)
+  ✖ save refuses (exit 1) a pinned image whose local id is not the lock digest: nothing tagged or saved (315.990935ms)
+  ✖ save refuses (exit 1) when <ref>:<tag> already names a different image, and never moves that tag (292.18896ms)
+  ✖ save exits 3 on the classic image store (A1.2): no tag, no save (331.662765ms)
+  ✔ save records the lock images no Compose file runs in `excluded` (A1.3), and never saves or inspects them (0.544501ms)
+  ✔ save: an unpinned digest on a bundled image is BLOCKED (exit 2); one on an excluded image is not (395.751096ms)
+  ✔ load and verify exit 3 on the classic image store with the B.5 line (A1.2): no docker load, no id check (652.553668ms)
+  ✔ load and verify report the containerd store before any id check (307.570094ms)
+  ✔ verify passes on the saved bundle when every id matches (318.036658ms)
+  ✖ load: a good bundle is loaded once and each id is checked (317.869034ms)
+  ✔ load refuses a changed tar: exit 1 with the B.5 line, and docker load is never called (89.148294ms)
+  ✔ verify refuses an id mismatch: exit 1 with the B.5 line naming the image (295.265484ms)
+  ✔ verify after an image was removed: the missing image fails the id check (exit 1), never pulled (297.012912ms)
+  ✔ save: an image not present locally is BLOCKED (exit 2), and nothing is pulled or saved (142.369569ms)
+  ✔ no Docker daemon: exit 3 with the B.5 BLOCKED line (save, and load after the tar check) (234.886572ms)
+  ✔ usage errors are BLOCKED (exit 2); no path of the script calls docker pull (39.05132ms)
+✖ T-B12 image-bundle.sh with a stub docker (5648.917585ms)
+ℹ tests 19
+ℹ suites 1
+ℹ pass 12
+ℹ fail 7
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5747.838311
+
+✖ failing tests:
+
+test at deploy/scripts/tests/image-bundle.test.mjs:151:3
+✖ save lists every lock image that a Compose file runs plus the app image, with the tar SHA-256, and pulls nothing (325.693279ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+  +   'postgres:18@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722',
+  +   'quay.io/keycloak/keycloak:26.8.1@sha256:a78d6b79572168cb25886b80a8b5b8d4ed4390743e3eecb810538683e209dd6b',
+  -   'postgres:18',
+  -   'quay.io/keycloak/keycloak:26.8.1',
+      'mth-app:local'
+    ]
+  
+      at TestContext.<anonymous> (file:///var/tmp/mth-run.8MoA3V/claude-0/old/deploy/scripts/tests/image-bundle.test.mjs:176:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at node:internal/test_runner/test:1903:71
+      at node:internal/per_context/primordials:504:82
+      at new Promise (<anonymous>)
+      at new SafePromise (node:internal/per_context/primordials:478:3)
+      at node:internal/per_context/primordials:504:9
+      at Array.map (<anonymous>) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'postgres:18@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722', 'quay.io/keycloak/keycloak:26.8.1@sha256:a78d6b79572168cb25886b80a8b5b8d4ed4390743e3eecb810538683e209dd6b', 'mth-app:local' ],
+    expected: [ 'postgres:18', 'quay.io/keycloak/keycloak:26.8.1', 'mth-app:local' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at deploy/scripts/tests/image-bundle.test.mjs:184:3
+✖ save tags each pinned image as <ref>:<tag> before the one docker save, and the tag is the lock digest (DO-E4) (328.356937ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+  + []
+  - [
+  -   [
+  -     'tag',
+  -     'postgres:18@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722',
+  -     'postgres:18'
+  -   ],
+  -   [
+  -     'tag',
+  -     'quay.io/keycloak/keycloak:26.8.1@sha256:a78d6b79572168cb25886b80a8b5b8d4ed4390743e3eecb810538683e209dd6b',
+  -     'quay.io/keycloak/keycloak:26.8.1'
+  -   ]
+  - ]
+  
+      at TestContext.<anonymous> (file:///var/tmp/mth-run.8MoA3V/claude-0/old/deploy/scripts/tests/image-bundle.test.mjs:191:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Suite.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Promise.all (index 0)
+      at async Suite.run (node:internal/test_runner/test:1905:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [],
+    expected: [ [ 'tag', 'postgres:18@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722', 'postgres:18' ], [ 'tag', 'quay.io/keycloak/keycloak:26.8.1@sha256:a78d6b79572168cb25886b80a8b5b8d4ed4390743e3eecb810538683e209dd6b', 'quay.io/keycloak/keycloak:26.8.1' ] ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at deploy/scripts/tests/image-bundle.test.mjs:203:3
+✖ save -> remove every image -> load -> every <ref>:<tag>@<digest> resolves to its pinned id (host run 2 regression) (626.394602ms)
+  AssertionError [ERR_ASSERTION]: image-bundle: images.tar matches images.json: 494 bytes, sha256 27931fafd331d892de3f49b7cd3b242e1f5da421e852fcfd524eabf5e00379f3
+  image-bundle: image store: containerd (storage driver 'overlayfs', driver-type io.containerd.snapshotter.v1)
+  Loaded image ID: sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722
+  Loaded image ID: sha256:a78d6b79572168cb25886b80a8b5b8d4ed4390743e3eecb810538683e209dd6b
+  Loaded image: mth-app:local
+  image-bundle: postgres:18@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722 does not match images.json (present)
+  image-bundle: quay.io/keycloak/keycloak:26.8.1@sha256:a78d6b79572168cb25886b80a8b5b8d4ed4390743e3eecb810538683e209dd6b does not match images.json (present)
+  image-bundle: mth-app:local: image id sha256:b9ed69093653dc3eceea93a2730e1908958a5631f9c0fffd0efe873cfba4a9f4 as recorded
+  
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (file:///var/tmp/mth-run.8MoA3V/claude-0/old/deploy/scripts/tests/image-bundle.test.mjs:209:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Suite.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at deploy/scripts/tests/image-bundle.test.mjs:250:3
+✖ save refuses (exit 1) a pinned image whose local id is not the lock digest: nothing tagged or saved (315.990935ms)
+  AssertionError [ERR_ASSERTION]: image-bundle: excluded node-runtime: not run by any Compose file (usedIn: deploy/docker/Dockerfile)
+  image-bundle: excluded playwright: not run by any Compose file (usedIn: .github/workflows/ci.yml)
+  image-bundle: postgres:18@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722: image id sha256:d07850d4eb002a005bf87b8683133fa970fbdd77061298c1aadfcf0f64798964
+  image-bundle: quay.io/keycloak/keycloak:26.8.1@sha256:a78d6b79572168cb25886b80a8b5b8d4ed4390743e3eecb810538683e209dd6b: image id sha256:a78d6b79572168cb25886b80a8b5b8d4ed4390743e3eecb810538683e209dd6b
+  image-bundle: mth-app:local: image id sha256:b9ed69093653dc3eceea93a2730e1908958a5631f9c0fffd0efe873cfba4a9f4
+  image-bundle: saved 3 images: /var/tmp/mth-run.8MoA3V/claude-0/mth-image-bundle-test-dXAUdt/bundle-id-differs/images.tar (494 bytes, sha256 831a22d52c84be90a8b83fca4da394a5a6bccc3f6bc11f7f3d7700e515408bb0); manifest /var/tmp/mth-run.8MoA3V/claude-0/mth-image-bundle-test-dXAUdt/bundle-id-differs/images.json
+  
+  
+  0 !== 1
+  
+      at TestContext.<anonymous> (file:///var/tmp/mth-run.8MoA3V/claude-0/old/deploy/scripts/tests/image-bundle.test.mjs:257:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Suite.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at deploy/scripts/tests/image-bundle.test.mjs:267:3
+✖ save refuses (exit 1) when <ref>:<tag> already names a different image, and never moves that tag (292.18896ms)
+  AssertionError [ERR_ASSERTION]: image-bundle: excluded node-runtime: not run by any Compose file (usedIn: deploy/docker/Dockerfile)
+  image-bundle: excluded playwright: not run by any Compose file (usedIn: .github/workflows/ci.yml)
+  image-bundle: postgres:18@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722: image id sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722
+  image-bundle: quay.io/keycloak/keycloak:26.8.1@sha256:a78d6b79572168cb25886b80a8b5b8d4ed4390743e3eecb810538683e209dd6b: image id sha256:a78d6b79572168cb25886b80a8b5b8d4ed4390743e3eecb810538683e209dd6b
+  image-bundle: mth-app:local: image id sha256:b9ed69093653dc3eceea93a2730e1908958a5631f9c0fffd0efe873cfba4a9f4
+  image-bundle: saved 3 images: /var/tmp/mth-run.8MoA3V/claude-0/mth-image-bundle-test-dXAUdt/bundle-tag-taken/images.tar (494 bytes, sha256 27931fafd331d892de3f49b7cd3b242e1f5da421e852fcfd524eabf5e00379f3); manifest /var/tmp/mth-run.8MoA3V/claude-0/mth-image-bundle-test-dXAUdt/bundle-tag-taken/images.json
+  
+  
+  0 !== 1
+  
+      at TestContext.<anonymous> (file:///var/tmp/mth-run.8MoA3V/claude-0/old/deploy/scripts/tests/image-bundle.test.mjs:274:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Suite.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at deploy/scripts/tests/image-bundle.test.mjs:283:3
+✖ save exits 3 on the classic image store (A1.2): no tag, no save (331.662765ms)
+  AssertionError [ERR_ASSERTION]: image-bundle: excluded node-runtime: not run by any Compose file (usedIn: deploy/docker/Dockerfile)
+  image-bundle: excluded playwright: not run by any Compose file (usedIn: .github/workflows/ci.yml)
+  image-bundle: postgres:18@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722: image id sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722
+  image-bundle: quay.io/keycloak/keycloak:26.8.1@sha256:a78d6b79572168cb25886b80a8b5b8d4ed4390743e3eecb810538683e209dd6b: image id sha256:a78d6b79572168cb25886b80a8b5b8d4ed4390743e3eecb810538683e209dd6b
+  image-bundle: mth-app:local: image id sha256:b9ed69093653dc3eceea93a2730e1908958a5631f9c0fffd0efe873cfba4a9f4
+  image-bundle: saved 3 images: /var/tmp/mth-run.8MoA3V/claude-0/mth-image-bundle-test-dXAUdt/bundle-classic/images.tar (494 bytes, sha256 27931fafd331d892de3f49b7cd3b242e1f5da421e852fcfd524eabf5e00379f3); manifest /var/tmp/mth-run.8MoA3V/claude-0/mth-image-bundle-test-dXAUdt/bundle-classic/images.json
+  
+  
+  0 !== 3
+  
+      at TestContext.<anonymous> (file:///var/tmp/mth-run.8MoA3V/claude-0/old/deploy/scripts/tests/image-bundle.test.mjs:290:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Suite.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 3,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at deploy/scripts/tests/image-bundle.test.mjs:397:3
+✖ load: a good bundle is loaded once and each id is checked (317.869034ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  3 !== 5
+  
+      at TestContext.<anonymous> (file:///var/tmp/mth-run.8MoA3V/claude-0/old/deploy/scripts/tests/image-bundle.test.mjs:402:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Suite.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 3,
+    expected: 5,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+exit=1

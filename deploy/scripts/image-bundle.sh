@@ -9,22 +9,33 @@
 # save   For every image of deploy/images.lock.json THAT A COMPOSE FILE RUNS (an entry of its `usedIn` is a file under
 #        deploy/compose/; ADR-0069 §6 as amended by A1.3), by its pinned reference <ref>:<tag>@<digest> (the reference
 #        Compose uses), and for the locally built application image (deploy/scripts/build-image.sh; default
-#        ${MTH_APP_IMAGE:-mth-app:local}, the Compose default): read its image id and size with `docker image inspect`,
-#        then write ONE `docker save` archive images.tar and images.json (strict UTF-8 JSON, schemaVersion
-#        mth-image-bundle/1): per image the name, the lock id and digest (null for the app image), the image id, the size,
-#        and the tar SHA-256. The lock images that no Compose file runs (on the current lock the CI-only `playwright`, and
-#        `node-runtime`, whose layers travel inside mth-app) are listed in the optional key `excluded`
-#        ([{ lockId, reason }]) and are never saved. A bundled lock image with no digest, or an image that is not present
-#        locally, is BLOCKED (exit 2): this script never pulls. Pull on the connected host first (`docker compose pull`).
+#        ${MTH_APP_IMAGE:-mth-app:local}, the Compose default): read its image id and size with `docker image inspect`.
+#        Save names (T-DG7-DO-E4; host run 2): on the containerd store an archive saved under a <ref>:<tag>@<digest>
+#        name loads by image id only ("Loaded image ID: sha256:..."), so neither name resolves after `load`. So for each
+#        pinned image save (a) checks that the local id of <ref>:<tag>@<digest> IS the lock digest (on the containerd
+#        store the image id is the digest Compose pins; a different id exits 1 and nothing is tagged or saved), (b)
+#        refuses (exit 1) if <ref>:<tag> already names a DIFFERENT image (it never moves an existing tag), (c) tags the
+#        pinned image as <ref>:<tag> on this (connected) host and checks the tag's id again, and (d) passes <ref>:<tag> to
+#        `docker save`. The archive then carries the name, `load` restores it, and <ref>:<tag>@<digest> resolves to the
+#        pinned id. The digest pin of Compose and every `image:` line are unchanged; the target host is never re-tagged.
+#        Then write ONE `docker save` archive images.tar and images.json (strict UTF-8 JSON, schemaVersion
+#        mth-image-bundle/1): per image the name (the reference Compose uses), savedAs (the name in the archive), the
+#        lock id and digest (null for the app image), the image id, the size, and the tar SHA-256. The lock images that
+#        no Compose file runs (on the current lock the CI-only `playwright`, and `node-runtime`, whose layers travel
+#        inside mth-app) are listed in the optional key `excluded` ([{ lockId, reason }]) and are never saved. A bundled
+#        lock image with no digest, or an image that is not present locally, is BLOCKED (exit 2): this script never
+#        pulls. Pull on the connected host first (`docker compose pull`).
 # load   Check images.tar's size and SHA-256 against images.json BEFORE any docker call (a changed tar exits 1 and
-#        `docker load` is never called), then `docker load -i images.tar`, then compare each `docker image inspect` id
-#        with images.json (a mismatch exits 1).
-#        Image store (ADR-0069 A1.2): before any id check, load and verify read `docker info` and exit 3 unless the
-#        engine uses the containerd image store (driver-type io.containerd.snapshotter.v1). The classic store does not
-#        restore the registry digest on load, so the digest-pinned names of images.json and Compose cannot resolve.
-#        The script never re-tags an image and never rewrites an `image:` line.
-# verify The same two checks without loading: the tar against images.json, and every listed image present locally with
-#        its recorded id.
+#        `docker load` is never called), then `docker load -i images.tar`, then check that every name of images.json
+#        (each <ref>:<tag>@<digest> Compose uses) and its savedAs name resolve with `docker image inspect` to the
+#        recorded id (a missing name or a different id exits 1).
+#        Image store (ADR-0069 A1.2): before any id check, save, load and verify read `docker info` and exit 3 unless
+#        the engine uses the containerd image store (driver-type io.containerd.snapshotter.v1). The classic store does
+#        not restore the registry digest on load, so the digest-pinned names of images.json and Compose cannot resolve,
+#        and its image ids are not the registry digests save checks.
+#        load and verify never re-tag an image, and no path rewrites an `image:` line.
+# verify The same two checks without loading: the tar against images.json, and every listed name (and savedAs name)
+#        present locally with its recorded id.
 #
 # No path ever runs `docker pull`, `docker login` or `docker push`. The registry-free proof is the orchestrator's (ADR-0069
 # §6): remove the images, `load`, then `docker compose ... up --pull never --wait`, which fails if any image is missing
@@ -32,7 +43,7 @@
 # and a Compose start is not evidence of high-availability production readiness.
 #
 # Exit codes (p7-work-split §2 rule 4): 0 PASS; 1 FAIL (a mismatch); 2 BLOCKED (usage, missing or invalid input, an
-# image not present locally); 3 BLOCKED (no Docker daemon reachable, or the classic image store on load/verify).
+# image not present locally); 3 BLOCKED (no Docker daemon reachable, or the classic image store).
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -109,11 +120,13 @@ check_tar() {
   log "images.tar matches images.json: $bytes bytes, sha256 $sha"
 }
 
-# check_ids <dir>: every image of images.json is present locally with its recorded id.
+# check_ids <dir>: every image of images.json is present locally with its recorded id, under its name (the reference
+# Compose uses, <ref>:<tag>@<digest> for a lock image) AND under its savedAs name (the name in the archive, <ref>:<tag>).
+# A bundle written before savedAs existed has only the name checked.
 check_ids() {
   local dir="$1" name want got bad=0
   while IFS=$'\t' read -r name want; do
-    got="$(docker image inspect --format '{{.Id}}' "$name" 2>/dev/null || true)"
+    got="$(docker image inspect --format '{{.Id}}' "$name" </dev/null 2>/dev/null || true)"
     if [ -z "$got" ]; then
       echo "image-bundle: $name does not match images.json (present)"
       bad=1
@@ -123,8 +136,10 @@ check_ids() {
     else
       log "$name: image id $got as recorded"
     fi
-  done < <(node -e 'for (const i of JSON.parse(require("node:fs").readFileSync(process.argv[1], "utf8")).images)
-    console.log(i.name + "\t" + i.imageId)' "$dir/images.json")
+  done < <(node -e 'for (const i of JSON.parse(require("node:fs").readFileSync(process.argv[1], "utf8")).images) {
+      console.log(i.name + "\t" + i.imageId);
+      if (typeof i.savedAs === "string" && i.savedAs !== i.name) console.log(i.savedAs + "\t" + i.imageId);
+    }' "$dir/images.json")
   [ "$bad" -eq 0 ] || exit 1
 }
 
@@ -160,12 +175,16 @@ case "$CMD" in
     node -e 'for (const e of JSON.parse(process.argv[1])) console.log("image-bundle: excluded " + e.lockId + ": " + e.reason)' \
       "$EXCLUDED_JSON"
     need_daemon
+    need_containerd_store
     mkdir -p "$OUT"
     OUT="$(cd "$OUT" && pwd)"
     ROWS="$OUT/.images.tsv"
     : >"$ROWS"
-    NAMES=()
-    for row in "${LOCKED[@]}" "$(printf 'app	-	%s' "$APP_IMAGE")"; do
+    SAVE_NAMES=()
+    fail_save() { echo "image-bundle: $1"; rm -f "$ROWS"; exit 1; }
+    # Pass 1: every image present, and every pinned image's local id IS its lock digest. Nothing is tagged until all
+    # images pass, so a refused save leaves the host's tags as they were.
+    for row in "${LOCKED[@]}" "$(printf 'app\t-\t%s' "$APP_IMAGE")"; do
       IFS=$'\t' read -r id digest name <<<"$row"
       meta="$(docker image inspect --format '{{.Id}} {{.Size}}' "$name" 2>/dev/null || true)"
       if [ -z "$meta" ]; then
@@ -173,20 +192,39 @@ case "$CMD" in
         rm -f "$ROWS"
         exit 2
       fi
-      printf '%s\t%s\t%s\t%s\t%s\n' "$id" "$digest" "$name" "${meta% *}" "${meta#* }" >>"$ROWS"
-      NAMES+=("$name")
-      log "$name: image id ${meta% *}"
+      imageid="${meta% *}"
+      saveas="$name"
+      if [ "$id" != "app" ]; then
+        [ "$imageid" = "$digest" ] ||
+          fail_save "$name does not match images.lock.json (local image id $imageid is not the lock digest $digest)"
+        saveas="${name%@*}"
+        tagged="$(docker image inspect --format '{{.Id}}' "$saveas" </dev/null 2>/dev/null || true)"
+        [ -z "$tagged" ] || [ "$tagged" = "$digest" ] ||
+          fail_save "$saveas already names image $tagged, not the pinned $digest; this script never moves an existing tag (remove or rename that tag, then save again)"
+      fi
+      printf '%s\t%s\t%s\t%s\t%s\t%s\n' "$id" "$digest" "$name" "$saveas" "$imageid" "${meta#* }" >>"$ROWS"
+      SAVE_NAMES+=("$saveas")
+      log "$name: image id $imageid"
     done
+    # Pass 2: tag each pinned image as <ref>:<tag> (connected host only) and confirm the tag resolves to the lock digest.
+    while IFS=$'\t' read -r id digest name saveas imageid _; do
+      [ "$id" != "app" ] || continue
+      docker tag "$name" "$saveas" </dev/null || fail_save "docker tag $name $saveas failed"
+      tagged="$(docker image inspect --format '{{.Id}}' "$saveas" </dev/null 2>/dev/null || true)"
+      [ "$tagged" = "$digest" ] ||
+        fail_save "$saveas does not match images.lock.json after tagging (image id ${tagged:-none}, lock digest $digest)"
+      log "$name: tagged $saveas (image id $tagged); saved as $saveas"
+    done <"$ROWS"
     rm -f "$OUT/images.tar" "$OUT/images.json"
-    docker save -o "$OUT/images.tar" "${NAMES[@]}"
+    docker save -o "$OUT/images.tar" "${SAVE_NAMES[@]}"
     [ -s "$OUT/images.tar" ] || { echo "image-bundle: docker save wrote no images.tar"; rm -f "$ROWS"; exit 1; }
     node -e '
       const fs = require("node:fs");
       const [rows, tar, sha, lock, out, excludedJson] = process.argv.slice(1);
       const images = fs.readFileSync(rows, "utf8").trim().split("\n").map((l) => {
-        const [id, digest, name, imageId, size] = l.split("\t");
+        const [id, digest, name, savedAs, imageId, size] = l.split("\t");
         if (!/^sha256:[0-9a-f]{64}$/.test(imageId)) { console.error("image-bundle: " + name + " has no image id (" + imageId + ")"); process.exit(1); }
-        return { name, lockId: id === "app" ? null : id, lockDigest: digest === "-" ? null : digest, imageId,
+        return { name, savedAs, lockId: id === "app" ? null : id, lockDigest: digest === "-" ? null : digest, imageId,
           size: /^[0-9]+$/.test(size) ? Number(size) : null, tarSha256: sha };
       });
       const m = { schemaVersion: "mth-image-bundle/1", createdAt: new Date().toISOString(),
@@ -196,7 +234,7 @@ case "$CMD" in
       fs.writeFileSync(out, JSON.stringify(m, null, 2) + "\n");' \
       "$ROWS" "$OUT/images.tar" "$(sha_of "$OUT/images.tar")" "$LOCK" "$OUT/images.json" "$EXCLUDED_JSON"
     rm -f "$ROWS"
-    log "saved ${#NAMES[@]} images: $OUT/images.tar ($(stat -c %s "$OUT/images.tar") bytes, sha256 $(sha_of "$OUT/images.tar")); manifest $OUT/images.json"
+    log "saved ${#SAVE_NAMES[@]} images: $OUT/images.tar ($(stat -c %s "$OUT/images.tar") bytes, sha256 $(sha_of "$OUT/images.tar")); manifest $OUT/images.json"
     ;;
   load)
     FROM="$(cd "$FROM" 2>/dev/null && pwd)" || { echo "image-bundle: BLOCKED: bundle directory not found" >&2; exit 2; }

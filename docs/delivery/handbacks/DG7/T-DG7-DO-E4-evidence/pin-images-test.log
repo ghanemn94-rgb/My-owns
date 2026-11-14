@@ -1,0 +1,22 @@
+✔ C1 an unpinned lock: --check exits 1 and reports every null digest as NOT PINNED (honest, never a pass) (54.66619ms)
+✔ C2 all digests recorded: --apply then --check exits 0; only image reference lines change (98.501757ms)
+✔ C3 keycloak BLOCKED (blockedReason, null digest), others pinned: --apply skips it, --check still exits 1 (117.699485ms)
+✔ C4 structure: blockedReason together with a digest is contradictory (60.965896ms)
+✔ C5 structure: missing blockedReason field, bad scope, digest without verifiedAt, malformed digest (63.762316ms)
+✔ C6 completeness: an image referenced in Compose but absent from the lock fails (96.088075ms)
+✔ C7 completeness: a file using an image but missing from its usedIn fails (115.251944ms)
+✔ C8 a file digest that differs from the lock fails (124.429118ms)
+✔ C9 --resolve with a denied registry (stub docker): reachable images recorded, quay.io BLOCKED, exit 1 (224.413278ms)
+✔ C10 runner WITH quay.io: --resolve --missing pins ONLY keycloak, --apply, --check exits 0 (302.44268ms)
+✔ C11 runner WITHOUT quay.io: --resolve --missing exits 1, keycloak stays null/BLOCKED, --check still exits 1 (225.981766ms)
+✔ C12 nothing missing: --resolve --missing calls no registry, leaves the lock byte-identical, exits 0 (49.255968ms)
+✔ C13 CI images job: resolve --missing, then --apply, then --check, in that order (0.568945ms)
+ℹ tests 13
+ℹ suites 0
+ℹ pass 13
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1661.034225
+pin-images exit=0

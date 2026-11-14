@@ -1,0 +1,30 @@
+▶ T-B12 image-bundle.sh with a stub docker
+  ✔ save lists every lock image that a Compose file runs plus the app image, with the tar SHA-256, and pulls nothing (635.352946ms)
+  ✔ save tags each pinned image as <ref>:<tag> before the one docker save, and the tag is the lock digest (DO-E4) (699.405348ms)
+  ✔ save -> remove every image -> load -> every <ref>:<tag>@<digest> resolves to its pinned id (host run 2 regression) (1377.822253ms)
+  ✔ load: an archive saved under digest names (the old save) fails: each pinned name does not match (present), exit 1 (342.826616ms)
+  ✔ save refuses (exit 1) a pinned image whose local id is not the lock digest: nothing tagged or saved (225.816503ms)
+  ✔ save refuses (exit 1) when <ref>:<tag> already names a different image, and never moves that tag (385.512492ms)
+  ✔ save exits 3 on the classic image store (A1.2): no tag, no save (213.371408ms)
+  ✔ save records the lock images no Compose file runs in `excluded` (A1.3), and never saves or inspects them (0.863679ms)
+  ✔ save: an unpinned digest on a bundled image is BLOCKED (exit 2); one on an excluded image is not (644.259811ms)
+  ✔ load and verify exit 3 on the classic image store with the B.5 line (A1.2): no docker load, no id check (675.584191ms)
+  ✔ load and verify report the containerd store before any id check (371.029559ms)
+  ✔ verify passes on the saved bundle when every id matches (369.730812ms)
+  ✔ load: a good bundle is loaded once and each id is checked (392.84405ms)
+  ✔ load refuses a changed tar: exit 1 with the B.5 line, and docker load is never called (95.405539ms)
+  ✔ verify refuses an id mismatch: exit 1 with the B.5 line naming the image (400.440023ms)
+  ✔ verify after an image was removed: the missing image fails the id check (exit 1), never pulled (357.979813ms)
+  ✔ save: an image not present locally is BLOCKED (exit 2), and nothing is pulled or saved (262.378818ms)
+  ✔ no Docker daemon: exit 3 with the B.5 BLOCKED line (save, and load after the tar check) (208.551251ms)
+  ✔ usage errors are BLOCKED (exit 2); no path of the script calls docker pull (33.659451ms)
+✔ T-B12 image-bundle.sh with a stub docker (7696.031973ms)
+ℹ tests 19
+ℹ suites 1
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7780.750124
+image-bundle exit=0

@@ -25,12 +25,20 @@ const excludedLock = LOCK.images.filter((i) => !runByCompose(i));
 const CONTAINERD = JSON.stringify([["driver-type", "io.containerd.snapshotter.v1"]]);
 const APP = "mth-app:local";
 
-// The stub: a Node script named `docker`. It appends its argv as one JSON line to $STUB_CALLS, and answers:
+// The stub: a Node script named `docker` that models the CONTAINERD image store (ADR-0069 A1.2; T-DG7-DO-E4, host
+// run 2). Its image store is a JSON file $STUB_STATE ({ name: imageId }), seeded from $STUB_IMAGES by run(), so a tag or
+// a load changes what later calls in the same run see. On the containerd store the image id IS the manifest digest that
+// Compose pins, and a name "<ref>[:<tag>]@<digest>" resolves when the store holds that name, or any name of the same
+// repository whose image id is <digest>. It appends its argv as one JSON line to $STUB_CALLS, and answers:
 //   info                                 exit $STUB_INFO_EXIT (default 0); with --format, {{.Driver}} prints
 //                                        $STUB_DRIVER and {{json .DriverStatus}} prints $STUB_DRIVER_STATUS
-//   image inspect --format F <name>      "<id> <size>" or "<id>" from $STUB_IMAGES (JSON {name: id}); unknown -> exit 1
-//   save -o <file> <names...>            writes deterministic bytes naming the images
-//   load -i <file>                       prints "Loaded image: ..."
+//   image inspect --format F <name>      "<id> <size>" or "<id>" for a name that resolves; otherwise exit 1
+//   tag <src> <dst>                      dst -> id of src (exit 1 if src does not resolve)
+//   save -o <file> <names...>            writes the archive: a header line, then JSON [{ name, id }] (exit 1 on an
+//                                        unknown name)
+//   load -i <file>                       host run 2's behaviour: an archive entry saved under a digest name
+//                                        ("...@sha256:...") restores NO name ("Loaded image ID: <id>"); an entry saved
+//                                        under "<ref>:<tag>" restores that name ("Loaded image: <ref>:<tag>")
 //   anything else                        exit 99 (so an unexpected call fails loudly)
 function makeStub(dir) {
   mkdirSync(dir, { recursive: true });
@@ -41,7 +49,17 @@ function makeStub(dir) {
 const fs = require("node:fs");
 const a = process.argv.slice(2);
 fs.appendFileSync(process.env.STUB_CALLS, JSON.stringify(a) + "\\n");
-const images = JSON.parse(process.env.STUB_IMAGES || "{}");
+const state = process.env.STUB_STATE;
+const images = JSON.parse(fs.readFileSync(state, "utf8"));
+const store = () => fs.writeFileSync(state, JSON.stringify(images));
+const repoOf = (n) => { const s = n.split("@")[0]; const c = s.lastIndexOf(":"); return c > s.lastIndexOf("/") ? s.slice(0, c) : s; };
+const resolve = (n) => {
+  if (n in images) return images[n];
+  const at = n.indexOf("@");
+  if (at < 0) return null;
+  const d = n.slice(at + 1);
+  return Object.keys(images).some((k) => repoOf(k) === repoOf(n) && images[k] === d) ? d : null;
+};
 if (a[0] === "info") {
   const code = Number(process.env.STUB_INFO_EXIT || "0");
   if (code === 0 && a[1] === "--format") console.log(a[2].includes("DriverStatus") ? process.env.STUB_DRIVER_STATUS : process.env.STUB_DRIVER);
@@ -49,11 +67,28 @@ if (a[0] === "info") {
 }
 if (a[0] === "image" && a[1] === "inspect") {
   const name = a[a.length - 1]; const fmt = a[a.indexOf("--format") + 1];
-  if (!(name in images)) { console.error("Error: No such image: " + name); process.exit(1); }
-  console.log(fmt.includes("Size") ? images[name] + " 12345" : images[name]); process.exit(0);
+  const id = resolve(name);
+  if (!id) { console.error("Error: No such image: " + name); process.exit(1); }
+  console.log(fmt.includes("Size") ? id + " 12345" : id); process.exit(0);
 }
-if (a[0] === "save" && a[1] === "-o") { fs.writeFileSync(a[2], "stub image archive\\n" + a.slice(3).join("\\n") + "\\n"); process.exit(0); }
-if (a[0] === "load" && a[1] === "-i") { console.log("Loaded image: (stub)"); process.exit(0); }
+if (a[0] === "tag" && a.length === 3) {
+  const id = resolve(a[1]);
+  if (!id) { console.error("Error: No such image: " + a[1]); process.exit(1); }
+  images[a[2]] = id; store(); process.exit(0);
+}
+if (a[0] === "save" && a[1] === "-o") {
+  const saved = a.slice(3).map((name) => ({ name, id: resolve(name) }));
+  const bad = saved.find((e) => !e.id);
+  if (bad) { console.error("Error: No such image: " + bad.name); process.exit(1); }
+  fs.writeFileSync(a[2], "stub image archive\\n" + JSON.stringify(saved) + "\\n"); process.exit(0);
+}
+if (a[0] === "load" && a[1] === "-i") {
+  for (const e of JSON.parse(fs.readFileSync(a[2], "utf8").split("\\n")[1])) {
+    if (e.name.includes("@")) { images["<none>@" + e.id] = e.id; console.log("Loaded image ID: " + e.id); }
+    else { images[e.name] = e.id; console.log("Loaded image: " + e.name); }
+  }
+  store(); process.exit(0);
+}
 process.exit(99);
 `,
   );
@@ -61,15 +96,18 @@ process.exit(99);
   return dir;
 }
 
+let runs = 0;
 function run(args, { images, infoExit = "0", calls, driver = "overlayfs", driverStatus = CONTAINERD, lock }) {
   const stubDir = makeStub(join(work, "stub-bin"));
+  const state = join(work, `state-${++runs}.json`);
+  writeFileSync(state, JSON.stringify(images));
   writeFileSync(calls, "");
   const r = spawnSync("bash", [SCRIPT, ...args], {
     encoding: "utf8",
     env: {
       PATH: `${stubDir}:${dirname(process.execPath)}:/usr/bin:/bin`,
       STUB_CALLS: calls,
-      STUB_IMAGES: JSON.stringify(images),
+      STUB_STATE: state,
       STUB_INFO_EXIT: infoExit,
       STUB_DRIVER: driver,
       STUB_DRIVER_STATUS: driverStatus,
@@ -81,9 +119,25 @@ function run(args, { images, infoExit = "0", calls, driver = "overlayfs", driver
     .split("\n")
     .filter(Boolean)
     .map((l) => JSON.parse(l));
-  return { ...r, recorded };
+  return { ...r, recorded, state: JSON.parse(readFileSync(state, "utf8")) };
 }
-const allImages = () => Object.fromEntries([...lockNames, APP].map((n) => [n, fakeId(n)]));
+const composeLock = LOCK.images.filter(runByCompose);
+const tagNames = composeLock.map((i) => `${i.ref}:${i.tag}`);
+const APP_ID = fakeId(APP);
+// The connected host after `docker compose pull` on the containerd store: each pinned image is held under
+// "<ref>@<digest>" only (host run 2, step 05 "Untagged: postgres@sha256:..."), with its digest as image id.
+const pulledImages = () => ({
+  ...Object.fromEntries(composeLock.map((i) => [`${i.ref}@${i.digest}`, i.digest])),
+  [APP]: APP_ID,
+});
+// A host where every Compose reference resolves under its own name (verify fixtures).
+const allImages = () => ({ ...Object.fromEntries(composeLock.map((i, k) => [lockNames[k], i.digest])), [APP]: APP_ID });
+// What a successful load leaves: the archive names <ref>:<tag> and the app image.
+const loadedImages = () => ({
+  ...Object.fromEntries(composeLock.map((i, k) => [tagNames[k], i.digest])),
+  [APP]: APP_ID,
+});
+const expectedId = (name) => (name === APP ? APP_ID : composeLock[lockNames.indexOf(name)].digest);
 const noPull = (recorded) =>
   assert.ok(
     recorded.every((c) => !["pull", "login", "push"].includes(c[0]) && !(c[0] === "image" && c[1] === "pull")),
@@ -96,7 +150,7 @@ describe("T-B12 image-bundle.sh with a stub docker", () => {
 
   it("save lists every lock image that a Compose file runs plus the app image, with the tar SHA-256, and pulls nothing", () => {
     const calls = join(work, "calls-save.ndjson");
-    const r = run(["save", "--out", bundle], { images: allImages(), calls });
+    const r = run(["save", "--out", bundle], { images: pulledImages(), calls });
     assert.equal(r.status, 0, r.stdout + r.stderr);
     saveCalls = r.recorded;
     const m = JSON.parse(readFileSync(join(bundle, "images.json"), "utf8"));
@@ -110,7 +164,7 @@ describe("T-B12 image-bundle.sh with a stub docker", () => {
     );
     for (const i of m.images) {
       assert.equal(i.tarSha256, sha(tar), i.name);
-      assert.equal(i.imageId, fakeId(i.name), i.name);
+      assert.equal(i.imageId, expectedId(i.name), i.name);
     }
     assert.deepEqual(
       m.images.map((i) => i.lockDigest),
@@ -118,8 +172,127 @@ describe("T-B12 image-bundle.sh with a stub docker", () => {
     );
     const save = r.recorded.filter((c) => c[0] === "save");
     assert.equal(save.length, 1);
-    assert.deepEqual(save[0].slice(3), [...lockNames, APP]);
+    // T-DG7-DO-E4: saved by <ref>:<tag> (a digest name loads by image id only), recorded as savedAs.
+    assert.deepEqual(save[0].slice(3), [...tagNames, APP]);
+    assert.deepEqual(
+      m.images.map((i) => i.savedAs),
+      [...tagNames, APP],
+    );
     noPull(r.recorded);
+  });
+
+  it("save tags each pinned image as <ref>:<tag> before the one docker save, and the tag is the lock digest (DO-E4)", () => {
+    const r = run(["save", "--out", join(work, "bundle-tags")], {
+      images: pulledImages(),
+      calls: join(work, "calls-save-tags.ndjson"),
+    });
+    assert.equal(r.status, 0, r.stdout + r.stderr);
+    const tags = r.recorded.filter((c) => c[0] === "tag");
+    assert.deepEqual(
+      tags,
+      lockNames.map((n, k) => ["tag", n, tagNames[k]]),
+    );
+    const iSave = r.recorded.findIndex((c) => c[0] === "save");
+    assert.ok(r.recorded.findLastIndex((c) => c[0] === "tag") < iSave, JSON.stringify(r.recorded));
+    composeLock.forEach((i, k) => assert.equal(r.state[tagNames[k]], i.digest, tagNames[k]));
+    assert.ok(!r.recorded.some((c) => c[0] === "tag" && c[1] === APP), "the app image is never re-tagged");
+    for (const n of tagNames)
+      assert.match(r.stdout, new RegExp(`tagged ${n.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&")} \\(image id sha256:`));
+  });
+
+  it("save -> remove every image -> load -> every <ref>:<tag>@<digest> resolves to its pinned id (host run 2 regression)", () => {
+    const dir = join(work, "bundle-roundtrip");
+    const s1 = run(["save", "--out", dir], { images: pulledImages(), calls: join(work, "calls-rt-save.ndjson") });
+    assert.equal(s1.status, 0, s1.stdout + s1.stderr);
+    // The target host: nothing present (host run 2, step 05 removed every bundled image).
+    const l = run(["load", "--from", dir], { images: {}, calls: join(work, "calls-rt-load.ndjson") });
+    assert.equal(l.status, 0, l.stdout + l.stderr);
+    for (const n of tagNames) assert.ok(l.stdout.includes(`Loaded image: ${n}\n`), l.stdout);
+    assert.doesNotMatch(l.stdout, /Loaded image ID:/);
+    assert.doesNotMatch(l.stdout, /does not match/);
+    for (const n of lockNames)
+      assert.ok(l.stdout.includes(`image-bundle: ${n}: image id ${expectedId(n)} as recorded`), n);
+    assert.ok(!l.recorded.some((c) => c[0] === "tag"), "load never re-tags");
+    // What Compose `up --pull never` asks for: each pinned reference resolves on the loaded store.
+    const v = run(["verify", "--from", dir], { images: l.state, calls: join(work, "calls-rt-verify.ndjson") });
+    assert.equal(v.status, 0, v.stdout + v.stderr);
+    const inspected = v.recorded.filter((c) => c[0] === "image" && c[1] === "inspect").map((c) => c[c.length - 1]);
+    for (const n of [...lockNames, ...tagNames, APP]) assert.ok(inspected.includes(n), n);
+    noPull([...s1.recorded, ...l.recorded, ...v.recorded]);
+  });
+
+  it("load: an archive saved under digest names (the old save) fails: each pinned name does not match (present), exit 1", () => {
+    const dir = join(work, "bundle-digest-names");
+    mkdirSync(dir);
+    const tar = Buffer.from(
+      `stub image archive\n${JSON.stringify([...composeLock.map((i, k) => ({ name: lockNames[k], id: i.digest })), { name: APP, id: APP_ID }])}\n`,
+    );
+    writeFileSync(join(dir, "images.tar"), tar);
+    const images = [
+      ...composeLock.map((i, k) => ({ name: lockNames[k], savedAs: lockNames[k], imageId: i.digest })),
+      { name: APP, savedAs: APP, imageId: APP_ID },
+    ];
+    writeFileSync(
+      join(dir, "images.json"),
+      JSON.stringify({
+        schemaVersion: "mth-image-bundle/1",
+        tar: { file: "images.tar", bytes: tar.length, sha256: sha(tar) },
+        images: images.map((i) => ({ ...i, tarSha256: sha(tar) })),
+      }),
+    );
+    const r = run(["load", "--from", dir], { images: {}, calls: join(work, "calls-digest-names.ndjson") });
+    assert.equal(r.status, 1, r.stdout + r.stderr);
+    assert.match(r.stdout, /Loaded image ID: sha256:/);
+    for (const n of lockNames)
+      assert.ok(r.stdout.includes(`image-bundle: ${n} does not match images.json (present)`), r.stdout);
+  });
+
+  it("save refuses (exit 1) a pinned image whose local id is not the lock digest: nothing tagged or saved", () => {
+    const images = pulledImages();
+    images[lockNames[0]] = fakeId("a different build"); // the name resolves, but to another id
+    const r = run(["save", "--out", join(work, "bundle-id-differs")], {
+      images,
+      calls: join(work, "calls-id-differs.ndjson"),
+    });
+    assert.equal(r.status, 1, r.stdout + r.stderr);
+    assert.ok(
+      r.stdout.includes(
+        `image-bundle: ${lockNames[0]} does not match images.lock.json (local image id ${fakeId("a different build")} is not the lock digest ${composeLock[0].digest})`,
+      ),
+      r.stdout,
+    );
+    assert.equal(r.recorded.filter((c) => c[0] === "tag" || c[0] === "save").length, 0, JSON.stringify(r.recorded));
+  });
+
+  it("save refuses (exit 1) when <ref>:<tag> already names a different image, and never moves that tag", () => {
+    const images = pulledImages();
+    images[tagNames[1]] = fakeId("another tag target");
+    const r = run(["save", "--out", join(work, "bundle-tag-taken")], {
+      images,
+      calls: join(work, "calls-tag-taken.ndjson"),
+    });
+    assert.equal(r.status, 1, r.stdout + r.stderr);
+    assert.match(
+      r.stdout,
+      /already names image sha256:[0-9a-f]{64}, not the pinned sha256:[0-9a-f]{64}; this script never moves an existing tag/,
+    );
+    assert.equal(r.recorded.filter((c) => c[0] === "tag" || c[0] === "save").length, 0, JSON.stringify(r.recorded));
+    assert.equal(r.state[tagNames[1]], fakeId("another tag target"));
+  });
+
+  it("save exits 3 on the classic image store (A1.2): no tag, no save", () => {
+    const r = run(["save", "--out", join(work, "bundle-classic")], {
+      images: pulledImages(),
+      calls: join(work, "calls-save-classic.ndjson"),
+      driver: "overlay2",
+      driverStatus: "null",
+    });
+    assert.equal(r.status, 3, r.stdout + r.stderr);
+    assert.match(
+      r.stdout,
+      /^image-bundle: BLOCKED: the classic image store cannot resolve digest references after load/m,
+    );
+    assert.equal(r.recorded.filter((c) => c[0] !== "info").length, 0, JSON.stringify(r.recorded));
   });
 
   it("save records the lock images no Compose file runs in `excluded` (A1.3), and never saves or inspects them", () => {
@@ -154,7 +327,7 @@ describe("T-B12 image-bundle.sh with a stub docker", () => {
     };
     const bundledUnpinned = fixture((imgs) => (imgs.find((i) => i.id === "postgres").digest = null));
     const r = run(["save", "--out", join(work, "bundle-unpinned")], {
-      images: allImages(),
+      images: pulledImages(),
       calls: join(work, "calls-unpinned.ndjson"),
       lock: bundledUnpinned,
     });
@@ -163,7 +336,7 @@ describe("T-B12 image-bundle.sh with a stub docker", () => {
     assert.equal(r.recorded.length, 0, JSON.stringify(r.recorded));
     const excludedUnpinned = fixture((imgs) => (imgs.find((i) => i.id === "playwright").digest = null));
     const r2 = run(["save", "--out", join(work, "bundle-excl-unpinned")], {
-      images: allImages(),
+      images: pulledImages(),
       calls: join(work, "calls-excl-unpinned.ndjson"),
       lock: excludedUnpinned,
     });
@@ -200,7 +373,7 @@ describe("T-B12 image-bundle.sh with a stub docker", () => {
   });
 
   it("load and verify report the containerd store before any id check", () => {
-    const r = run(["verify", "--from", bundle], { images: allImages(), calls: join(work, "calls-store-ok.ndjson") });
+    const r = run(["verify", "--from", bundle], { images: loadedImages(), calls: join(work, "calls-store-ok.ndjson") });
     assert.equal(r.status, 0, r.stdout + r.stderr);
     assert.match(
       r.stdout,
@@ -212,17 +385,21 @@ describe("T-B12 image-bundle.sh with a stub docker", () => {
   });
 
   it("verify passes on the saved bundle when every id matches", () => {
-    const r = run(["verify", "--from", bundle], { images: allImages(), calls: join(work, "calls-verify-ok.ndjson") });
+    const r = run(["verify", "--from", bundle], {
+      images: loadedImages(),
+      calls: join(work, "calls-verify-ok.ndjson"),
+    });
     assert.equal(r.status, 0, r.stdout + r.stderr);
     assert.match(r.stdout, /PASS: verify/);
     noPull(r.recorded);
   });
 
   it("load: a good bundle is loaded once and each id is checked", () => {
-    const r = run(["load", "--from", bundle], { images: allImages(), calls: join(work, "calls-load-ok.ndjson") });
+    const r = run(["load", "--from", bundle], { images: loadedImages(), calls: join(work, "calls-load-ok.ndjson") });
     assert.equal(r.status, 0, r.stdout + r.stderr);
     assert.equal(r.recorded.filter((c) => c[0] === "load").length, 1);
-    assert.equal(r.recorded.filter((c) => c[0] === "image" && c[1] === "inspect").length, lockNames.length + 1);
+    // Each pinned image under its Compose name and its savedAs name, plus the app image once (DO-E4).
+    assert.equal(r.recorded.filter((c) => c[0] === "image" && c[1] === "inspect").length, 2 * lockNames.length + 1);
     noPull(r.recorded);
   });
 
@@ -245,7 +422,7 @@ describe("T-B12 image-bundle.sh with a stub docker", () => {
   });
 
   it("verify refuses an id mismatch: exit 1 with the B.5 line naming the image", () => {
-    const images = allImages();
+    const images = loadedImages();
     images[lockNames[1]] = fakeId("something else");
     const r = run(["verify", "--from", bundle], { images, calls: join(work, "calls-verify-bad.ndjson") });
     assert.equal(r.status, 1, r.stdout + r.stderr);
@@ -253,18 +430,20 @@ describe("T-B12 image-bundle.sh with a stub docker", () => {
     noPull(r.recorded);
   });
 
-  it("load after the images were removed: a missing image fails the id check (exit 1), never pulled", () => {
-    const images = allImages();
+  // With the stateful stub a `load` restores what the archive holds, so the missing-image case is a verify on a host
+  // where an image was removed after the load.
+  it("verify after an image was removed: the missing image fails the id check (exit 1), never pulled", () => {
+    const images = loadedImages();
     delete images[APP];
-    const r = run(["load", "--from", bundle], { images, calls: join(work, "calls-load-missing.ndjson") });
+    const r = run(["verify", "--from", bundle], { images, calls: join(work, "calls-load-missing.ndjson") });
     assert.equal(r.status, 1);
     assert.ok(r.stdout.includes(`image-bundle: ${APP} does not match images.json (present)`), r.stdout);
     noPull(r.recorded);
   });
 
   it("save: an image not present locally is BLOCKED (exit 2), and nothing is pulled or saved", () => {
-    const images = allImages();
-    delete images[lockNames[0]];
+    const images = pulledImages();
+    delete images[`${composeLock[0].ref}@${composeLock[0].digest}`];
     const r = run(["save", "--out", join(work, "bundle-missing")], {
       images,
       calls: join(work, "calls-save-miss.ndjson"),
@@ -280,7 +459,7 @@ describe("T-B12 image-bundle.sh with a stub docker", () => {
       ["save", "--out", join(work, "bundle-nodaemon")],
       ["load", "--from", bundle],
     ]) {
-      const r = run(args, { images: allImages(), infoExit: "1", calls: join(work, "calls-nodaemon.ndjson") });
+      const r = run(args, { images: pulledImages(), infoExit: "1", calls: join(work, "calls-nodaemon.ndjson") });
       assert.equal(r.status, 3, `${args[0]}: ${r.stdout}${r.stderr}`);
       assert.match(r.stdout, /^image-bundle: BLOCKED: docker daemon not reachable$/m);
       assert.equal(r.recorded.filter((c) => c[0] !== "info").length, 0);
