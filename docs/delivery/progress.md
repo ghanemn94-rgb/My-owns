@@ -157,3 +157,9 @@ The audit T-DG6-AUDIT-R13 BLOCKED (B1–B5). The user chose a clean re-gate. D-2
 ## 2026-11-14: DG7 progress checkpoint refreshed (orchestrator note)
 
 - This file lagged the real state from W4 to D-267 (the same defect the A27 drill found at the DG6 checkpoint, K11). The current checkpoint above is now current; it is updated at every step change from here.
+
+## 2026-11-14: A26 drill K1-K3 (orchestrator)
+
+- Branch `drill/dg7-a26` in a worktree outside the repository directory, base `3e0cec96275bfbb9f8daea15618d47547984d779`; one neutral-message commit `c3bbc780c` plants the defect; drill candidate `sha256:0df0d31b…c896` (not frozen).
+- **Defect card SHA-256: `33eea29a15ab4c9fade0d99c7815e769b5cb1a22dccccc0a27b1825535df23b2`** (card kept outside the repository until K5).
+- Next: K4, code-security-reviewer and qa-verifier with `--cwd` on the worktree.
