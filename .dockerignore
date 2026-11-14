@@ -39,6 +39,14 @@ deploy/compose/.env
 **/*.pem
 **/*.key
 **/*secret*
+# ...but never drop tracked TypeScript SOURCES whose names merely contain "secret" (secrets.ts, secret-refs.ts,
+# secret-namespace.ts: code that resolves SecretRefs at runtime, not secret values). Without these the build stage
+# fails to compile. deploy/scripts/tests/dockerfile-context.test.mjs fails if any git-tracked file under apps/*/src or
+# packages/*/src is excluded from the build context.
+!apps/*/src/**/*secret*.ts
+!apps/*/src/**/*secret*.tsx
+!packages/*/src/**/*secret*.ts
+!packages/*/src/**/*secret*.tsx
 !packages/config/src/**
 
 # Local evidence storage (filesystem adapter in development)
