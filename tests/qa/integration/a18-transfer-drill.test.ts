@@ -21,7 +21,7 @@
 // Mutations: the drill performs none through this harness; the workflows D8 runs (approval decision, CSRF refusal
 // with the source origin) are asserted through the drill's step results. All data is SYNTHETIC; the drill IdP is not a
 // corporate IdP; nothing here is a business, Finance or IT approval or touches DG0–DG7.
-import { spawnSync } from "node:child_process";
+import { spawn } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -112,38 +112,62 @@ describe("A18 transfer drill: restored records, files and configuration work on 
   let run: { status: number | null; text: string; seconds: number } | undefined;
   const read = (f: string): Json => JSON.parse(readFileSync(join(out, f), "utf8"));
 
-  /** Runs the drill once (the first test that needs it); later tests read its report. */
-  function drill(): NonNullable<typeof run> {
-    requireBuilt();
-    const missing = [
-      ["QA_A18_ARCHIVE", archive && existsSync(archive)],
-      ["QA_A18_ARCHIVE_SHA256", /^[0-9a-f]{64}$/.test(archiveSha)],
-      ["QA_A18_STORE", store && existsSync(store)],
-    ].filter(([, ok]) => !ok);
-    if (missing.length > 0)
-      throw new Error(`A18 input missing: ${missing.map(([k]) => k).join(", ")} (the DO-A archive and offline store)`);
-    if (run) return run;
-    // QA_A18_OUT keeps the report for evidence (QA-C: test-evidence/DG7/qa/transfer/); otherwise a scratch directory.
+  const missingInputs = (): string[] =>
+    (
+      [
+        ["QA_A18_ARCHIVE", archive && existsSync(archive)],
+        ["QA_A18_ARCHIVE_SHA256", /^[0-9a-f]{64}$/.test(archiveSha)],
+        ["QA_A18_STORE", store && existsSync(store)],
+      ] as const
+    )
+      .filter(([, ok]) => !ok)
+      .map(([k]) => k);
+
+  // QA-C (T-DG7-QA-C): the drill runs ASYNCHRONOUSLY in beforeAll. The earlier spawnSync blocked the Vitest worker's
+  // event loop for the whole drill (338 s in QA-C run 2), so Vitest reported `[vitest-worker]: Timeout calling
+  // "onTaskUpdate"` and exited 1 although all 8 tests passed. The assertions are unchanged; a missing input or file
+  // still fails every drill test through drill() below, never skips.
+  beforeAll(async () => {
+    if (DRILL_FILES.some((f) => !existsSync(join(REPO, f))) || missingInputs().length > 0) return;
+    // QA_A18_OUT keeps the report for evidence (QA-C: test-evidence/DG7/qa/); otherwise a scratch directory.
     out = process.env["QA_A18_OUT"] ?? mkdtempSync(join(tmpdir(), "qa-a18-drill-"));
     mkdirSync(out, { recursive: true });
     const t0 = performance.now();
-    const r = spawnSync(
-      "bash",
-      [join(REPO, DRILL), "--archive", archive, "--sha256", archiveSha, "--store", store, "--out", out],
-      {
-        cwd: REPO,
-        env: {
-          PATH: process.env["PATH"] ?? "",
-          HOME: process.env["HOME"] ?? tmpdir(),
-          TMPDIR: tmpdir(),
-          LANG: "C.UTF-8",
+    const r = await new Promise<{ status: number | null; text: string }>((done) => {
+      const child = spawn(
+        "bash",
+        [join(REPO, DRILL), "--archive", archive, "--sha256", archiveSha, "--store", store, "--out", out],
+        {
+          cwd: REPO,
+          env: {
+            PATH: process.env["PATH"] ?? "",
+            HOME: process.env["HOME"] ?? tmpdir(),
+            TMPDIR: tmpdir(),
+            LANG: "C.UTF-8",
+          },
+          stdio: ["ignore", "pipe", "pipe"],
         },
-        encoding: "utf8",
-        timeout: 2_400_000,
-      },
-    );
-    run = { status: r.status, text: `${r.stdout ?? ""}${r.stderr ?? ""}`, seconds: (performance.now() - t0) / 1000 };
+      );
+      const chunks: string[] = [];
+      child.stdout.setEncoding("utf8").on("data", (c: string) => chunks.push(c));
+      child.stderr.setEncoding("utf8").on("data", (c: string) => chunks.push(c));
+      const timer = setTimeout(() => child.kill("SIGKILL"), 2_400_000);
+      child.on("close", (status) => {
+        clearTimeout(timer);
+        done({ status, text: chunks.join("") });
+      });
+    });
+    run = { status: r.status, text: r.text, seconds: (performance.now() - t0) / 1000 };
     console.log(`A18-TIMINGS ${JSON.stringify({ drillSeconds: run.seconds, exit: run.status })}`);
+  }, 2_500_000);
+
+  /** The drill's result from beforeAll; a missing file or input fails the calling test, never skips it. */
+  function drill(): NonNullable<typeof run> {
+    requireBuilt();
+    const missing = missingInputs();
+    if (missing.length > 0)
+      throw new Error(`A18 input missing: ${missing.join(", ")} (the DO-A archive and offline store)`);
+    if (!run) throw new Error("A18: the drill did not run in beforeAll");
     return run;
   }
 
