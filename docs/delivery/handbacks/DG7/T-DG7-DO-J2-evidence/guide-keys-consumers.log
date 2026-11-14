@@ -1,0 +1,394 @@
+▶ T-B3 origin-scan.mjs: the source origin is accepted only in audit_event
+  ✖ a hit in audit_event only is listed and passes (exit 0) (0.782533ms)
+  ✖ the origin in a text column fails with the B.5 line (exit 1) (0.18238ms)
+  ✖ the origin in a jsonb value fails (exit 1) (0.125752ms)
+  ✖ LIKE wildcards in the data are not matches (a plain substring test) (0.107732ms)
+✖ T-B3 origin-scan.mjs: the source origin is accepted only in audit_event (3.80174ms)
+▶ T-B9 config-trace.mjs: configuration only from the template and the guide
+  ✔ documented keys pass, each citing its guide section; a secret is written as <KEY>_FILE and never shown (2.939037ms)
+  ✔ a key outside the map fails with the B.5 undocumented-step line (0.472568ms)
+  ✔ an anchor absent from the (fixture) guide fails with the same line (0.50062ms)
+  ✔ a key that is not in the template fails (not from the template) (0.456269ms)
+  ✔ the shipped map covers every .env.example key and every anchor exists in the shipped guide (2.455357ms)
+  ✔ the CLI exits 1 on an undocumented step and writes a FAIL trace (49.128711ms)
+✔ T-B9 config-trace.mjs: configuration only from the template and the guide (56.692745ms)
+▶ T-B9 transfer-drill.sh: BLOCKED, isolation and the report
+  ✔ without bwrap (stub PATH) it exits 3 with the B.5 BLOCKED line (80.806312ms)
+  ✔ without PostgreSQL server binaries it exits 3 with the B.5 BLOCKED line (63.160587ms)
+  ✔ not enough free disk: exit 3 with the B.6 DO-D2 line, and the work directory is removed (112.880721ms)
+  ✔ a probe that connects exits 1 with the B.5 isolation line (721.681232ms)
+  ✔ a failing step: exit 1, the B.5 step line, later steps NOT_RUN, result FAIL, schemaVersion mth-transfer-drill/1 (1892.469885ms)
+✔ T-B9 transfer-drill.sh: BLOCKED, isolation and the report (2871.555389ms)
+▶ T-B10 journey.mjs under NODE_ENV=production, AUTH_MODE=oidc: drill IdP sign-in, CSRF 403, unbound refused
+  ✖ signs in through the drill IdP (authMode oidc), the source-origin write is 403, the unbound user is refused (0.328275ms)
+  ✖ status: getDeploymentStatus.origin is the target's origin; a wrong expectation FAILS, never passes (0.149752ms)
+  ✖ a step with no data to prove never passes (deeplink with an empty inbox, downloads without a list) (0.117677ms)
+  ✖ T-B16 (measurement): whether a sign-in changes app_user, recorded for allowance.mjs (0.190055ms)
+  ✖ a redirect URI the drill IdP has not registered is refused (0.391763ms)
+✖ T-B10 journey.mjs under NODE_ENV=production, AUTH_MODE=oidc: drill IdP sign-in, CSRF 403, unbound refused (2.020693ms)
+▶ T-B10 (supporting, NOT production semantics) the same journey with NODE_ENV=development, AUTH_MODE=oidc
+  ✖ signs in through the drill IdP (authMode oidc), the source-origin write is 403, the unbound user is refused (0.166749ms)
+  ✖ status: getDeploymentStatus.origin is the target's origin; a wrong expectation FAILS, never passes (0.178457ms)
+  ✖ a step with no data to prove never passes (deeplink with an empty inbox, downloads without a list) (0.109814ms)
+  ✖ a redirect URI the drill IdP has not registered is refused (0.281161ms)
+✖ T-B10 (supporting, NOT production semantics) the same journey with NODE_ENV=development, AUTH_MODE=oidc (1.060394ms)
+▶ T-B15 allowance.mjs: mth-recheck-allowance/4 from a fixture journal (p7-work-split §B.9 DO-D7)
+  ✔ writes a /4 file with all eight keys that parseAllowance (packages/db recheck.ts) accepts (296.723405ms)
+  ✔ a lineage table appears only in lineage; a journalled kpi_evaluation key goes to lineage[].mustInclude.added (15.168351ms)
+  ✔ a counter table appears only in counters: in children, audited or the journal it is refused (0.925657ms)
+  ✔ actors from sign-ins; journalled keys of audited tables go to mustInclude; duplicates merged (0.590549ms)
+  ✔ never-operational tables appear only in tables, audited or children; reasons for every list entry (0.454192ms)
+  ✔ the three D8 lists are pinned: audited tables have no child entry, children's parents are listed (0.427307ms)
+  ✔ app_user is listed only when the measurement says a sign-in changes it (0.270357ms)
+  ✔ an audit_event entry, an unknown identity or a bad key is refused (exit 1 via the CLI) (433.34767ms)
+✔ T-B15 allowance.mjs: mth-recheck-allowance/4 from a fixture journal (p7-work-split §B.9 DO-D7) (748.374846ms)
+▶ T-B16 job-check.mjs on a fixture database, digests from mth-db table-digest (§2.3 encoder)
+  ✖ the snapshot holds the encoder's digests: approval digests equal mth-db table-digest's (0.384244ms)
+  ✖ a new job_run row passes (counted), and the pg-boss table is measured (0.254426ms)
+  ✖ a changed enabled schedule fails (0.14849ms)
+  ✖ a removed job_run row fails (0.113853ms)
+  ✖ a changed approval row fails, and changes the encoder digest (0.148647ms)
+  ✖ a missing pg-boss table reports BLOCKED (exit 2), never PASS (0.135447ms)
+✖ T-B16 job-check.mjs on a fixture database, digests from mth-db table-digest (§2.3 encoder) (2.013106ms)
+▶ T-B17 the D8 lists of allowance.mjs are measured on a fixture installation (mode 2 exit 0, then 4)
+  ✖ D8's write chain changes exactly the journalled tables, the operational list, user_identity and the two D8 lists (0.659762ms)
+  ✖ mode 2 with the generated allowance matches after use (exit 0) (0.39821ms)
+  ✖ one extra owner-written row in an audited table, its event by a non-journalled user, gives exit 4 (0.251137ms)
+  ✖ T-B18: a missing code without a remedy row stops D8 at C1 with the A3.6 line, and nothing is written after it (0.33569ms)
+✖ T-B17 the D8 lists of allowance.mjs are measured on a fixture installation (mode 2 exit 0, then 4) (2.814661ms)
+▶ T-B19 DO-D6's grant path on shipped data: seed-demo --as-of the first day of last month (no current period)
+  ✖ T-B19: with the current period absent, G grants TO at organization scope and the period is opened through the API (0.333855ms)
+✖ T-B19 DO-D6's grant path on shipped data: seed-demo --as-of the first day of last month (no current period) (2.593468ms)
+▶ D-264 unexplained-tables.mjs: D9 names only the tables the mode 2 recheck could not explain
+  ✔ lists the `added, changed, missing (<basis>)` tables only, in report order, each once (0.527245ms)
+  ✔ an explaining-events line, a key line or the summary line is never listed (0.182747ms)
+  ✔ the CLI prints one line per unexplained table; a missing file is BLOCKED (exit 2) (138.241741ms)
+  ✔ transfer-drill.sh D9 takes its failure listing from the helper, not from every indented table line (0.510684ms)
+✔ D-264 unexplained-tables.mjs: D9 names only the tables the mode 2 recheck could not explain (139.697867ms)
+▶ T-H1: the handover index
+  ✔ on the real tree: no FAIL; anything BLOCKED is a file written later in this release (5.179242ms)
+  ✔ maps each of the seven REQ-S19-015 items, and has the security-controls.md line (D-247 O3) (0.282705ms)
+  ✔ passes on a fixture once the pending files exist (5.673512ms)
+  ✔ fails for a file the index does not list (8.002847ms)
+  ✔ fails for an index line whose file does not exist (5.893823ms)
+  ✔ fails without the security-controls.md line, and for an unmapped item (4.632732ms)
+  ✔ reports a missing release-notes.md as BLOCKED, never as a pass (3.281955ms)
+  ✔ refuses an unknown archive path (4.466078ms)
+✔ T-H1: the handover index (39.27957ms)
+▶ T-H2 and T-B14: the deployment guide
+  ✔ on the real tree: no FAIL; only guide-keys.json may be BLOCKED (DO-D has not written it yet) (7.03517ms)
+  ✔ holds the seven anchors, the B.5 texts, the redirect URI, the service map and the orchestration target (0.760028ms)
+  ✔ fails when the section #domains-and-tls is missing (10.566567ms)
+  ✔ fails when the section #corporate-sso-mapping is missing (4.262161ms)
+  ✔ fails when the section #service-accounts is missing (4.987392ms)
+  ✔ fails when the section #secrets is missing (5.253245ms)
+  ✔ fails when the section #network-boundaries is missing (4.92767ms)
+  ✔ fails when the section #logging is missing (4.958222ms)
+  ✔ fails when the section #monitoring is missing (15.616102ms)
+  ✔ fails for an empty section and for a section that names no source (11.33585ms)
+  ✔ fails without the HA statement or the sub-path text (7.76948ms)
+  ✔ fails for a template key the guide does not index, and for a Compose service the map does not name (9.037629ms)
+  ✔ checks every anchor guide-keys.json cites: present → PASS, absent → FAIL (11.010462ms)
+  ✔ indexes every .env.example key with an existing anchor (0.598494ms)
+✔ T-H2 and T-B14: the deployment guide (99.019722ms)
+▶ T-H4: known limitations
+  ✔ known-limitations.mjs --check exits 0 on the tree with the DO-I report (73.904516ms)
+  ✔ names every carried row id of p7-plan §1.4 and every P7 ADR (ADR-0062 to ADR-0073) (0.815559ms)
+  ✔ the protocol-audit block equals the one generated from the report, with the D-249 statement (9.263882ms)
+  ✔ a changed report fails --check (exit 1) (125.136574ms)
+  ✔ --write on a fixture copy regenerates a hand-damaged block, and --check then passes (219.914007ms)
+  ✔ refuses an environment table row it does not know, or a known row that is missing (exit 2) (60.216993ms)
+  ✔ refuses a report that is not a protocol-audit report, and runs without one only as BLOCKED (2145.037474ms)
+  ✔ external-dependencies.json is the contract's ExternalDependency array, and the guide block lists the same keys (1.131172ms)
+  ✔ arabic-review.json ships empty, and the provisional block lists every Arabic handover file (8.964506ms)
+✔ T-H4: known limitations (2645.018728ms)
+▶ T-H7: Arabic summaries of the IT and operator documents
+  ✔ on the real tree: PASS (14.315065ms)
+  ✔ fails without the provisional line under the first heading (4.896699ms)
+  ✔ does not require the line for a file arabic-review.json lists (12.377045ms)
+  ✔ fails for a missing summary page, a missing section, or an operator summary without the upgrade guide (12.03473ms)
+  ✔ fails when an Arabic B.5 text of the deployment summary is not verbatim (8.844829ms)
+✔ T-H7: Arabic summaries of the IT and operator documents (52.799488ms)
+▶ T-H8: security-controls guide links (D-247 O5)
+  ✔ HR-01, HR-02, HR-04 and HR-06 link existing deployment.md anchors, and HR-04 the backup guide (0.844365ms)
+  ✔ fails for a link to a missing anchor, and for HR-04 without the backup guide (3.167706ms)
+  ✔ DO-B's matrix test (T-G7) still passes (56.909468ms)
+✔ T-H8: security-controls guide links (D-247 O5) (61.241736ms)
+▶ T-H9 and T-I14: scans over the handover, and the candidate manifest
+  ✔ the secret scan over docs/handover reports nothing (323.913342ms)
+  ✔ the claims scan (docs/handover/** in its scope) reports nothing (5729.4103ms)
+  ✔ every file under docs/handover/ is in the candidate manifest, so the payload scan covers it (T-I14) (646.077478ms)
+✔ T-H9 and T-I14: scans over the handover, and the candidate manifest (6699.664292ms)
+▶ T-H5 checker logic (DOC-A runs it on the real guides)
+  ✖ no guides yet → BLOCKED (exit 2), never a pass (10.440705ms)
+  ✔ matching en/ar pairs with known screen paths pass (6.776903ms)
+  ✔ fails for a missing ar file, a heading or anchor mismatch, a missing marker and an unknown screen path (5.606975ms)
+  ✔ route matching: parameters match one segment; API paths are not screens (0.797479ms)
+✖ T-H5 checker logic (DOC-A runs it on the real guides) (23.958356ms)
+▶ check-handover exit codes
+  ✔ FAIL wins over BLOCKED, BLOCKED over PASS (0.180525ms)
+  ✔ a usage error is BLOCKED (exit 2) (155.408944ms)
+  ✔ the full check on the real tree never FAILs; with MTH_STRICT_HANDOVER=1 (the freeze) it must PASS (1918.305222ms)
+✔ check-handover exit codes (2074.174692ms)
+ℹ tests 96
+ℹ suites 18
+ℹ pass 71
+ℹ fail 25
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 12073.341991
+
+✖ failing tests:
+
+test at deploy/scripts/tests/transfer-drill.test.mjs:85:3
+✖ a hit in audit_event only is listed and passes (exit 0) (0.782533ms)
+  Error: BLOCKED: TEST_DATABASE_ADMIN_URL is not set (run under tests/qa/support/with-pg.sh)
+      at needPg (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:37:21)
+      at TestContext.<anonymous> (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:86:5)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at async Promise.all (index 0)
+      at async Suite.run (node:internal/test_runner/test:1905:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+
+test at deploy/scripts/tests/transfer-drill.test.mjs:94:3
+✖ the origin in a text column fails with the B.5 line (exit 1) (0.18238ms)
+  Error: BLOCKED: TEST_DATABASE_ADMIN_URL is not set (run under tests/qa/support/with-pg.sh)
+      at needPg (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:37:21)
+      at TestContext.<anonymous> (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:95:5)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at deploy/scripts/tests/transfer-drill.test.mjs:110:3
+✖ the origin in a jsonb value fails (exit 1) (0.125752ms)
+  Error: BLOCKED: TEST_DATABASE_ADMIN_URL is not set (run under tests/qa/support/with-pg.sh)
+      at needPg (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:37:21)
+      at TestContext.<anonymous> (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:111:5)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at deploy/scripts/tests/transfer-drill.test.mjs:122:3
+✖ LIKE wildcards in the data are not matches (a plain substring test) (0.107732ms)
+  Error: BLOCKED: TEST_DATABASE_ADMIN_URL is not set (run under tests/qa/support/with-pg.sh)
+      at needPg (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:37:21)
+      at TestContext.<anonymous> (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:123:5)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at deploy/scripts/tests/transfer-drill.test.mjs:457:5
+✖ signs in through the drill IdP (authMode oidc), the source-origin write is 403, the unbound user is refused (0.328275ms)
+  Error: BLOCKED: TEST_DATABASE_ADMIN_URL is not set (run under tests/qa/support/with-pg.sh)
+      at needPg (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:37:21)
+      at TestContext.<anonymous> (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:458:7)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at async Promise.all (index 0)
+      at async Suite.run (node:internal/test_runner/test:1905:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at deploy/scripts/tests/transfer-drill.test.mjs:479:5
+✖ status: getDeploymentStatus.origin is the target's origin; a wrong expectation FAILS, never passes (0.149752ms)
+  Error: BLOCKED: TEST_DATABASE_ADMIN_URL is not set (run under tests/qa/support/with-pg.sh)
+      at needPg (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:37:21)
+      at TestContext.<anonymous> (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:480:7)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at deploy/scripts/tests/transfer-drill.test.mjs:500:5
+✖ a step with no data to prove never passes (deeplink with an empty inbox, downloads without a list) (0.117677ms)
+  Error: BLOCKED: TEST_DATABASE_ADMIN_URL is not set (run under tests/qa/support/with-pg.sh)
+      at needPg (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:37:21)
+      at TestContext.<anonymous> (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:501:7)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at deploy/scripts/tests/transfer-drill.test.mjs:511:7
+✖ T-B16 (measurement): whether a sign-in changes app_user, recorded for allowance.mjs (0.190055ms)
+  Error: BLOCKED: TEST_DATABASE_ADMIN_URL is not set (run under tests/qa/support/with-pg.sh)
+      at needPg (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:37:21)
+      at TestContext.<anonymous> (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:512:9)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at deploy/scripts/tests/transfer-drill.test.mjs:537:5
+✖ a redirect URI the drill IdP has not registered is refused (0.391763ms)
+  Error: BLOCKED: TEST_DATABASE_ADMIN_URL is not set (run under tests/qa/support/with-pg.sh)
+      at needPg (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:37:21)
+      at TestContext.<anonymous> (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:538:7)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at deploy/scripts/tests/transfer-drill.test.mjs:457:5
+✖ signs in through the drill IdP (authMode oidc), the source-origin write is 403, the unbound user is refused (0.166749ms)
+  Error: BLOCKED: TEST_DATABASE_ADMIN_URL is not set (run under tests/qa/support/with-pg.sh)
+      at needPg (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:37:21)
+      at TestContext.<anonymous> (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:458:7)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at async Promise.all (index 0)
+      at async Suite.run (node:internal/test_runner/test:1905:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at deploy/scripts/tests/transfer-drill.test.mjs:479:5
+✖ status: getDeploymentStatus.origin is the target's origin; a wrong expectation FAILS, never passes (0.178457ms)
+  Error: BLOCKED: TEST_DATABASE_ADMIN_URL is not set (run under tests/qa/support/with-pg.sh)
+      at needPg (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:37:21)
+      at TestContext.<anonymous> (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:480:7)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at deploy/scripts/tests/transfer-drill.test.mjs:500:5
+✖ a step with no data to prove never passes (deeplink with an empty inbox, downloads without a list) (0.109814ms)
+  Error: BLOCKED: TEST_DATABASE_ADMIN_URL is not set (run under tests/qa/support/with-pg.sh)
+      at needPg (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:37:21)
+      at TestContext.<anonymous> (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:501:7)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at deploy/scripts/tests/transfer-drill.test.mjs:537:5
+✖ a redirect URI the drill IdP has not registered is refused (0.281161ms)
+  Error: BLOCKED: TEST_DATABASE_ADMIN_URL is not set (run under tests/qa/support/with-pg.sh)
+      at needPg (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:37:21)
+      at TestContext.<anonymous> (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:538:7)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at deploy/scripts/tests/transfer-drill.test.mjs:847:3
+✖ the snapshot holds the encoder's digests: approval digests equal mth-db table-digest's (0.384244ms)
+  Error: BLOCKED: TEST_DATABASE_ADMIN_URL is not set (run under tests/qa/support/with-pg.sh)
+      at needPg (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:37:21)
+      at TestContext.<anonymous> (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:848:5)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at async Promise.all (index 0)
+      at async Suite.run (node:internal/test_runner/test:1905:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at deploy/scripts/tests/transfer-drill.test.mjs:863:3
+✖ a new job_run row passes (counted), and the pg-boss table is measured (0.254426ms)
+  Error: BLOCKED: TEST_DATABASE_ADMIN_URL is not set (run under tests/qa/support/with-pg.sh)
+      at needPg (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:37:21)
+      at TestContext.<anonymous> (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:864:5)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at deploy/scripts/tests/transfer-drill.test.mjs:880:3
+✖ a changed enabled schedule fails (0.14849ms)
+  Error: BLOCKED: TEST_DATABASE_ADMIN_URL is not set (run under tests/qa/support/with-pg.sh)
+      at needPg (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:37:21)
+      at TestContext.<anonymous> (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:881:5)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at deploy/scripts/tests/transfer-drill.test.mjs:890:3
+✖ a removed job_run row fails (0.113853ms)
+  Error: BLOCKED: TEST_DATABASE_ADMIN_URL is not set (run under tests/qa/support/with-pg.sh)
+      at needPg (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:37:21)
+      at TestContext.<anonymous> (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:891:5)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at deploy/scripts/tests/transfer-drill.test.mjs:900:3
+✖ a changed approval row fails, and changes the encoder digest (0.148647ms)
+  Error: BLOCKED: TEST_DATABASE_ADMIN_URL is not set (run under tests/qa/support/with-pg.sh)
+      at needPg (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:37:21)
+      at TestContext.<anonymous> (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:901:5)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at deploy/scripts/tests/transfer-drill.test.mjs:915:3
+✖ a missing pg-boss table reports BLOCKED (exit 2), never PASS (0.135447ms)
+  Error: BLOCKED: TEST_DATABASE_ADMIN_URL is not set (run under tests/qa/support/with-pg.sh)
+      at needPg (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:37:21)
+      at TestContext.<anonymous> (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:916:5)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at deploy/scripts/tests/transfer-drill.test.mjs:1182:5
+✖ D8's write chain changes exactly the journalled tables, the operational list, user_identity and the two D8 lists (0.659762ms)
+  Error: BLOCKED: TEST_DATABASE_ADMIN_URL is not set (run under tests/qa/support/with-pg.sh)
+      at needPg (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:37:21)
+      at TestContext.<anonymous> (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:1183:7)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at async Promise.all (index 0)
+      at async Suite.run (node:internal/test_runner/test:1905:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at deploy/scripts/tests/transfer-drill.test.mjs:1273:5
+✖ mode 2 with the generated allowance matches after use (exit 0) (0.39821ms)
+  Error: BLOCKED: TEST_DATABASE_ADMIN_URL is not set (run under tests/qa/support/with-pg.sh)
+      at needPg (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:37:21)
+      at TestContext.<anonymous> (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:1274:7)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at deploy/scripts/tests/transfer-drill.test.mjs:1331:5
+✖ one extra owner-written row in an audited table, its event by a non-journalled user, gives exit 4 (0.251137ms)
+  Error: BLOCKED: TEST_DATABASE_ADMIN_URL is not set (run under tests/qa/support/with-pg.sh)
+      at needPg (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:37:21)
+      at TestContext.<anonymous> (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:1332:7)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at deploy/scripts/tests/transfer-drill.test.mjs:1388:5
+✖ T-B18: a missing code without a remedy row stops D8 at C1 with the A3.6 line, and nothing is written after it (0.33569ms)
+  Error: BLOCKED: TEST_DATABASE_ADMIN_URL is not set (run under tests/qa/support/with-pg.sh)
+      at needPg (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:37:21)
+      at TestContext.<anonymous> (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:1389:7)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at deploy/scripts/tests/transfer-drill.test.mjs:1118:7
+✖ T-B19: with the current period absent, G grants TO at organization scope and the period is opened through the API (0.333855ms)
+  Error: BLOCKED: TEST_DATABASE_ADMIN_URL is not set (run under tests/qa/support/with-pg.sh)
+      at needPg (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:37:21)
+      at TestContext.<anonymous> (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:1119:9)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at async Promise.all (index 0)
+      at async Suite.run (node:internal/test_runner/test:1905:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+
+test at tools/release/tests/check-handover.test.mjs:420:3
+✖ no guides yet → BLOCKED (exit 2), never a pass (10.440705ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  'PASS' !== 'BLOCKED'
+  
+      at TestContext.<anonymous> (file:///home/user/My-owns/tools/release/tests/check-handover.test.mjs:424:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at node:internal/test_runner/test:1903:71
+      at node:internal/per_context/primordials:504:82
+      at new Promise (<anonymous>)
+      at new SafePromise (node:internal/per_context/primordials:478:3)
+      at node:internal/per_context/primordials:504:9
+      at Array.map (<anonymous>) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'PASS',
+    expected: 'BLOCKED',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

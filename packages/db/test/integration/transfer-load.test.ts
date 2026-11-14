@@ -101,7 +101,7 @@ describe("T-R2: mth-db migrate --reserve-audit-seq-for", () => {
     };
     const bad = ws.copyPackage(pkg);
     writeFileSync(join(bad, "tables", "audit_event.ndjson"), "{}\n");
-    const unreachable = "postgres://mth_owner:x@127.0.0.1:1/none";
+    const unreachable = "postgres://mth_owner@127.0.0.1:1/none";
     const r = spawnSync(
       process.execPath,
       ["--conditions=@mth/source", cli, "migrate", "--reserve-audit-seq-for", bad],

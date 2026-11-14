@@ -94,17 +94,20 @@ To use mirrored images:
 When the target host cannot reach any registry, not even IT's mirror, the images travel as files
 (`deploy/scripts/image-bundle.sh`, ADR-0069 §6). The script never runs `docker pull`, `docker login` or `docker push`.
 
-1. **On a connected host** that already holds every image: the four images of `deploy/images.lock.json` at their pinned
-   `<ref>:<tag>@<digest>` (for example after `docker compose -f deploy/compose/compose.yaml pull`), and the application
-   image built with `deploy/scripts/build-image.sh`:
+1. **On a connected host** that already holds every image: the images of `deploy/images.lock.json` that a Compose file
+   runs, at their pinned `<ref>:<tag>@<digest>` (in this release `postgres` and `keycloak`, for example after
+   `docker compose -f deploy/compose/compose.yaml --profile test-idp pull`), and the application image built with
+   `deploy/scripts/build-image.sh`. The bundle holds these three images (ADR-0069 A1.3):
 
    ```bash
    deploy/scripts/image-bundle.sh save --out <bundle dir> [--app-image mth-app:local]
    ```
 
    It writes `images.tar` (one `docker save` archive) and `images.json` (`mth-image-bundle/1`). For each image,
-   `images.json` records its name, its lock digest, its image id, its size and the tar's SHA-256. An image that is not
-   present locally, or a lock entry without a digest, stops the save (exit 2). Pull or build it first.
+   `images.json` records its name, its lock digest, its image id, its size and the tar's SHA-256. The lock images that no
+   Compose file runs are not saved. They are listed under `excluded` with the reason: the CI-only `playwright` image,
+   and `node-runtime`, whose layers already travel inside the application image. An image that is not present locally,
+   or a bundled lock entry without a digest, stops the save (exit 2). Pull or build it first.
 2. **Transfer** the bundle directory by IT's approved means. Compare the SHA-256 of `images.tar` with `images.json`
    (`tar.sha256`) on arrival.
 3. **On the target host:**
@@ -114,8 +117,12 @@ When the target host cannot reach any registry, not even IT's mirror, the images
    ```
 
    It checks the size and SHA-256 of `images.tar` against `images.json` **before** calling Docker. A changed tar exits 1
-   (`image-bundle: images.tar does not match images.json (sha256)`), and `docker load` is not run. It then loads the tar
-   and compares each image id with `images.json`. `image-bundle.sh verify --from <bundle dir>` repeats both checks
+   (`image-bundle: images.tar does not match images.json (sha256)`), and `docker load` is not run. It then checks that
+   Docker uses the **containerd image store** (`docker info` shows the driver-type `io.containerd.snapshotter.v1`). The
+   classic store does not restore the registry digest on load, so the digest-pinned names cannot resolve. On that store
+   the script stops before loading (exit 3). Enable the containerd image store and restart Docker. The script never
+   re-tags an image and never rewrites an `image:` line (ADR-0069 A1.2). It then loads the tar and compares each image
+   id with `images.json`. `image-bundle.sh verify --from <bundle dir>` repeats both checks
    without loading.
 4. **Start without pulling:**
 
@@ -127,12 +134,15 @@ When the target host cannot reach any registry, not even IT's mirror, the images
    loaded images.
 
 Exit codes: 0 PASS, 1 a mismatch, 2 a usage error or missing input, 3 `image-bundle: BLOCKED: docker daemon not
-reachable`.
+reachable` or, for `load` and `verify`, `image-bundle: BLOCKED: the classic image store cannot resolve digest references
+after load (ADR-0069 A1.2); enable the containerd image store`.
 
 **What has been shown, and what has not.**
 
-- The script's manifest, checksum and refusal logic is tested with a stub `docker` (T-B12,
-  `deploy/scripts/tests/image-bundle.test.mjs`).
+- The script's manifest, checksum, image selection, image-store and refusal logic is tested with a stub `docker`
+  (T-B12, `deploy/scripts/tests/image-bundle.test.mjs`).
+- That the containerd store keeps the digest after `load` and the classic store does not is the engine's documented
+  model. It has not been confirmed by a run here (ADR-0069 residual 8).
 - A real save, removal, load and `up --pull never` needs a Docker daemon. It is the orchestrator's host run (ADR-0069
   §6–§7); that run is recorded under the DG7 orchestrator evidence when it has happened.
 - A load on a host that otherwise has registry access is **not** a physically air-gapped host (ADR-0069 residual 5).

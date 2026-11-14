@@ -35,11 +35,13 @@ import {
   sha256,
 } from "./lib/envelope.mjs";
 import { checkFinalReport } from "./lib/final-report.mjs";
-import { checkGateLabels, parseNdjson } from "./lib/gate-labels.mjs";
+import { checkGateLabels, parseAcknowledgements, parseNdjson } from "./lib/gate-labels.mjs";
 import { gunzipArchive, readTar } from "./lib/tar.mjs";
 
 export const TEMPLATE_PATH = "docs/handover/final-report.template.md";
 export const SEAL_DIR = "docs/delivery/test-evidence/DG7/seal/";
+/** The V12 acknowledgement list of L3/L4 sentences in approved gate records (T-DG7-DO-J2), read from the payload. */
+export const ACK_LIST = "tools/release/gate-labels-acknowledged.json";
 const CHECK_IDS = Array.from({ length: 18 }, (_, k) => `V${k + 1}`);
 
 class VerifyBlocked extends Error {}
@@ -121,8 +123,10 @@ export function historicalValidation({ repo, rehearsal, stages = STAGES, timeout
 
 /**
  * Module API: verifySeal({ envelope, expectSha256, repo, finalReport, rehearsal, out, writeReport, historicalStages,
- *                         secretAllowlist })
+ *                         secretAllowlist, labelAcknowledgements })
  * `historicalStages` (default DG0–DG7) and `secretAllowlist` (default DO-B's file) are module-only test seams.
+ * `labelAcknowledgements` (module-only test seam, a parsed list) replaces the V12 acknowledgement list, which is
+ * otherwise read from the payload archive's source/tools/release/gate-labels-acknowledged.json (the reviewed copy).
  *   → Promise<{ verdict: "PASS"|"REHEARSAL-PASS"|"FAIL"|"BLOCKED", checks: { id, ok, status, detail }[], exit, lines,
  *               report, reportPath }>
  */
@@ -387,13 +391,33 @@ export async function verifySeal(options = {}) {
           demoTables.push({ table: mm[1], rows: [{ gate_code: { unreadable: path } }] });
         }
       }
+      // The acknowledgement list of APPROVED records' L3/L4 sentences (T-DG7-DO-J2), from the sealed payload: the copy
+      // the reviewers approved. No file there means no acknowledgement; an unreadable or refused list fails V12.
+      const p = [];
+      let acknowledged = [];
+      try {
+        if (options.labelAcknowledgements !== undefined) acknowledged = parseAcknowledgements(options.labelAcknowledgements);
+        else {
+          const ackBytes = src(ACK_LIST);
+          if (ackBytes) acknowledged = parseAcknowledgements(JSON.parse(ackBytes.toString("utf8")));
+        }
+      } catch (e) {
+        p.push(`acknowledgement list ${ACK_LIST} refused: ${e.message}`);
+      }
       const r = checkGateLabels({
         gates: gates.filter((g) => g.record).map((g) => ({ path: g.path, record: g.record })),
         manifest: m ?? null,
         texts: [{ label: "README.txt", text: file("README.txt")?.toString("utf8") ?? "", rules: ["L3"] }],
         demoTables,
+        acknowledged,
       });
-      judge("V12", r.hits.map((h) => `${h.rule} ${h.where}: ${h.detail.slice(0, 160)}`), `L1–L5 pass (${demoTables.length} demo-data tables)`);
+      p.push(...r.hits.map((h) => `${h.rule} ${h.where}: ${h.detail.slice(0, 160)}`));
+      const ackNote = r.acknowledged.map((a) => `${a.rule} ${a.where} (entry ${a.n})`).join(", ");
+      judge(
+        "V12",
+        p,
+        `L1–L5 pass (${demoTables.length} demo-data tables; ${r.acknowledged.length} acknowledged sentence(s) in approved records${ackNote ? `: ${ackNote}` : ""})`,
+      );
     }
 
     // V13

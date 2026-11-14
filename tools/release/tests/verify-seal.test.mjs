@@ -18,28 +18,28 @@ import { seal } from "../seal.mjs";
 import { historicalValidation, verifySeal } from "../verify-seal.mjs";
 import { manifestPaths, sha256, sha256sums } from "../lib/envelope.mjs";
 import { CAP_IDS, checkFinalReport, guidePaths } from "../lib/final-report.mjs";
-import { checkGateLabels, SYNTHETIC_NOTES_PREFIX } from "../lib/gate-labels.mjs";
+import { checkGateLabels, parseAcknowledgements, sentenceSha256, SYNTHETIC_NOTES_PREFIX } from "../lib/gate-labels.mjs";
 import { gunzipArchive, gzipDeterministic, readTar, writeTar } from "../lib/tar.mjs";
 import {
   demoInput,
   EVIDENCE,
-  neutralizeKnownLabelHits,
   overlayWorkingFiles,
   removeClone,
   REPO,
   scratch,
-  scratchAllowlist,
   sealOptions,
   sparseClone,
   writeSynthetic,
 } from "./fixtures/seal/rehearsal.mjs";
 
-/** The L1–L4 hits on the real DG0–DG6 records at DO-J's base (T-M9). Reported in the handback; never fixed here. */
+/**
+ * The raw L1–L4 hits on the real DG0–DG6 records at DO-J's base (T-M9). Approved records are never rewritten; since
+ * T-DG7-DO-J2 each is acknowledged by an exact entry of tools/release/gate-labels-acknowledged.json (DO-J O1).
+ */
 const KNOWN_REAL_HITS = Object.freeze([{ rule: "L3", where: "docs/delivery/gates/DG3.json $.notes", contains: "where a G4 capacity-conflict item" }]);
 
 let clone;
 let syn;
-let allow;
 let sealed;
 let envBytes;
 let work;
@@ -48,11 +48,9 @@ const SEAL_DIR = "docs/delivery/test-evidence/DG7/seal";
 before(async () => {
   clone = sparseClone("verify-test");
   overlayWorkingFiles(clone.dir);
-  neutralizeKnownLabelHits(clone.dir);
   syn = writeSynthetic(clone.dir);
   const demo = demoInput(clone.dir);
-  allow = scratchAllowlist(clone.parent);
-  sealed = await seal({ ...sealOptions(clone.dir, syn, demo), secretAllowlist: allow });
+  sealed = await seal({ ...sealOptions(clone.dir, syn, demo) });
   assert.equal(sealed.exit, 0, sealed.lines.join("\n"));
   envBytes = readFileSync(sealed.envelopePath);
   work = scratch("verify-work");
@@ -97,7 +95,6 @@ async function verifyTampered(mutate, { recompute = false, rehearsal = true } = 
     envelope: p,
     expectSha256: recompute ? sha256(bytes) : sealed.report.envelopeArchive.archiveSha256,
     rehearsal,
-    secretAllowlist: allow,
     writeReport: false,
   });
   rmSync(p);
@@ -142,6 +139,66 @@ test("T-M9 L1–L4 on the real DG0–DG6 gate records: the hit set is exactly th
   for (const rule of ["L1", "L2", "L4"]) assert.equal(r.hits.filter((h) => h.rule === rule).length, 0, `${rule} passes on DG0–DG6`);
 });
 
+/** The real DG0–DG6 records and the shipped acknowledgement list (T-DG7-DO-J2). */
+const realGates = () =>
+  [0, 1, 2, 3, 4, 5, 6].map((k) => {
+    const path = `docs/delivery/gates/DG${k}.json`;
+    return { path, record: JSON.parse(readFileSync(join(REPO, path), "utf8")) };
+  });
+const shippedAcks = () => parseAcknowledgements(JSON.parse(readFileSync(join(REPO, "tools/release/gate-labels-acknowledged.json"), "utf8")));
+
+test("T-M9 (DO-J2) the shipped acknowledgement list clears exactly the reported hits, and no gate record is edited", () => {
+  const r = checkGateLabels({ gates: realGates(), acknowledged: shippedAcks() });
+  assert.deepEqual(r.hits, [], JSON.stringify(r.hits, null, 1));
+  assert.deepEqual(
+    r.acknowledged.map((a) => ({ rule: a.rule, where: a.where })),
+    KNOWN_REAL_HITS.map(({ rule, where }) => ({ rule, where })),
+  );
+  KNOWN_REAL_HITS.forEach((k, i) => assert.ok(r.acknowledged[i].detail.includes(k.contains)));
+  assert.equal(shippedAcks().length, KNOWN_REAL_HITS.length, "one entry per reported hit, none spare");
+});
+
+test("T-M9 (DO-J2) an acknowledgement matches only the exact sentence: an edited sentence is a hit again and the entry is stale", () => {
+  const gates = realGates();
+  const dg3 = gates[3];
+  dg3.record = { ...dg3.record, notes: dg3.record.notes.replace("where a G4 capacity-conflict item", "where a G4 capacity conflict item") };
+  const r = checkGateLabels({ gates, acknowledged: shippedAcks() });
+  assert.deepEqual(
+    r.hits.map((h) => h.rule),
+    ["L3", "L3"],
+  );
+  assert.match(r.hits[0].detail, /G4 capacity conflict item/);
+  assert.match(r.hits[1].detail, /^stale acknowledgement 0: no L3 sentence with sha256 9c3e2203457a/);
+  // a record the check does not see makes no entry stale (archive tests check subsets)
+  assert.deepEqual(checkGateLabels({ gates: [gates[0]], acknowledged: shippedAcks() }).hits, []);
+});
+
+test("T-M9 (DO-J2) acknowledgements cover gate-record L3/L4 only: never DG7, a field rule, the README or the final report", () => {
+  const ok = { rule: "L3", path: "docs/delivery/gates/DG3.json", jsonPath: "$.notes", sentenceSha256: "a".repeat(64), reason: "SYNTHETIC: a reason that is long enough to be accepted here." };
+  assert.equal(parseAcknowledgements({ entries: [ok] }).length, 1);
+  const refused = (e, re) => assert.throws(() => parseAcknowledgements({ entries: [{ ...ok, ...e }] }), re);
+  refused({ path: "docs/delivery/gates/DG7.json" }, /not an approved gate record/);
+  refused({ path: "docs/delivery/gates/DG*.json" }, /not an approved gate record/);
+  refused({ path: "docs/delivery/reviews/DG6/round-7/code-security-reviewer.json" }, /not an approved gate record/);
+  for (const rule of ["L1", "L2", "L5"]) refused({ rule }, /cannot be acknowledged/);
+  refused({ sentenceSha256: "abc" }, /not 64 hex/);
+  refused({ reason: "fine" }, /shorter than 40/);
+  refused({ jsonPath: "notes" }, /not a JSON path/);
+  refused({ reason: undefined }, /lacks "reason"/);
+  assert.throws(() => parseAcknowledgements({ entries: [ok, ok] }), /duplicates/);
+  assert.throws(() => parseAcknowledgements({}), /no entries array/);
+  // a matching hash in a text (README, final report) or a DG7 record is still a hit (the hash below is exact)
+  const sentence = "SYNTHETIC: DG7 follows from G6";
+  assert.deepEqual(
+    checkGateLabels({ texts: [{ label: "x", text: sentence }] }).hits.map((h) => sentenceSha256(h.detail)),
+    [sentenceSha256(sentence)],
+  );
+  const ack = parseAcknowledgements([{ ...ok, sentenceSha256: sentenceSha256(sentence) }]);
+  assert.deepEqual(checkGateLabels({ texts: [{ label: "README.txt", text: sentence, rules: ["L3"] }], acknowledged: ack }).hits.map((h) => h.rule), ["L3"]);
+  const dg7 = { stage_id: "DG7", previous_gate: "DG6", decision: "APPROVED", decided_by: "release-auditor", notes: sentence };
+  assert.deepEqual(checkGateLabels({ gates: [{ path: "docs/delivery/gates/DG7.json", record: dg7 }], acknowledged: ack }).hits.map((h) => h.rule), ["L3"]);
+});
+
 test("T-M9 each rule fails on its SYNTHETIC case and passes the separation wording", () => {
   const base = { stage_id: "DG7", previous_gate: "DG6", decision: "APPROVED", decided_by: "release-auditor", notes: `${SYNTHETIC_NOTES_PREFIX}` };
   const ok = checkGateLabels({ gates: [{ path: "docs/delivery/gates/DG7.json", record: base }] });
@@ -164,11 +221,11 @@ test("T-M9 each rule fails on its SYNTHETIC case and passes the separation wordi
 });
 
 test("T-M10 the untampered envelope passes archive mode; R10 a release-mode verify of it fails V14 only", async () => {
-  const ok = await verifySeal({ envelope: sealed.envelopePath, expectSha256: sealed.report.envelopeArchive.archiveSha256, rehearsal: true, secretAllowlist: allow, writeReport: false });
+  const ok = await verifySeal({ envelope: sealed.envelopePath, expectSha256: sealed.report.envelopeArchive.archiveSha256, rehearsal: true, writeReport: false });
   assert.deepEqual(failedIds(ok), [], JSON.stringify(ok.checks.filter((c) => !c.ok), null, 1));
   assert.equal(ok.verdict, "REHEARSAL-PASS");
   assert.deepEqual(ok.checks.map((c) => c.id), Array.from({ length: 14 }, (_, k) => `V${k + 1}`), "archive mode runs V1–V14 only");
-  const r10 = await verifySeal({ envelope: sealed.envelopePath, expectSha256: sealed.report.envelopeArchive.archiveSha256, rehearsal: false, secretAllowlist: allow, writeReport: false });
+  const r10 = await verifySeal({ envelope: sealed.envelopePath, expectSha256: sealed.report.envelopeArchive.archiveSha256, rehearsal: false, writeReport: false });
   assert.deepEqual(failedIds(r10), ["V14"]);
   assert.equal(r10.exit, 1);
   assert.deepEqual(r10.lines.slice(-1), ["verify-seal: FAIL (1 checks)"]);
@@ -229,6 +286,22 @@ test("T-M10 R5 and R6: DG7 stage_id G6, and a product_gate key, fail V12 (with V
   const b = await verifyTampered(r6, { recompute: true });
   assert.deepEqual(failedIds(b), ["V3", "V12"]);
   assert.match(b.checks.find((c) => c.id === "V12").detail, /L2 docs\/delivery\/gates\/DG7\.json: key \$\.product_gate names a product or business gate/);
+});
+
+test("T-M10 (DO-J2) V12 takes the acknowledgement list from the sealed payload: untampered it acknowledges DG3's sentence; emptied, the L3 hit fails V12", async () => {
+  const ok = await verifySeal({ envelope: sealed.envelopePath, expectSha256: sealed.report.envelopeArchive.archiveSha256, rehearsal: true, writeReport: false });
+  const v12 = ok.checks.find((c) => c.id === "V12");
+  assert.equal(v12.status, "PASS", v12.detail);
+  assert.match(v12.detail, /1 acknowledged sentence\(s\) in approved records: L3 docs\/delivery\/gates\/DG3\.json \$\.notes \(entry 0\)/);
+  const emptied = (env) =>
+    editPayload(env, "source/tools/release/gate-labels-acknowledged.json", () => Buffer.from('{ "entries": [] }\n', "utf8"), { cover: true });
+  const r = await verifyTampered(emptied, { recompute: true });
+  assert.deepEqual(failedIds(r), ["V4", "V12"], "V4: the candidate id of source/ changed; V12: the L3 hit is back");
+  assert.match(r.checks.find((c) => c.id === "V12").detail, /L3 docs\/delivery\/gates\/DG3\.json \$\.notes: \(2\) For backend-workflow-engineer/);
+  const refused = (env) =>
+    editPayload(env, "source/tools/release/gate-labels-acknowledged.json", () => Buffer.from('{ "entries": [{ "rule": "L1" }] }\n', "utf8"), { cover: true });
+  const r2 = await verifyTampered(refused, { recompute: true });
+  assert.match(r2.checks.find((c) => c.id === "V12").detail, /acknowledgement list tools\/release\/gate-labels-acknowledged\.json refused/);
 });
 
 test("T-M10 R7: a demo-data row with gate_code DG7 fails V12 L5 (the tamperer covers every checksum)", async () => {
@@ -380,7 +453,6 @@ test("T-M12 R12 through verify-seal: V18 fails for a missing evidence path and f
       repo: clone.dir,
       finalReport: p,
       rehearsal: true,
-      secretAllowlist: allow,
       historicalStages: ["DG7"], // V16 is T-M11's and R0's; here only DG7 (SKIPPED) keeps the case short
       writeReport: false,
     });

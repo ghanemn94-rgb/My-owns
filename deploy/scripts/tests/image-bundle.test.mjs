@@ -1,4 +1,4 @@
-// T-B12 (p7-work-split §B.4; ADR-0069 §6; T-DG7-DO-E): deploy/scripts/image-bundle.sh's logic with a STUB `docker`
+// T-B12 (p7-work-split §B.4; ADR-0069 §6 and Amendment 1 A1.2/A1.3; T-DG7-DO-E, T-DG7-DO-E2): deploy/scripts/image-bundle.sh's logic with a STUB `docker`
 // on PATH that records every call and serves fixture outputs. It proves the manifest, checksum and refusal logic, not a
 // real `docker load` (that is the orchestrator's host run, ADR-0069 §6-§7).
 //   node --test deploy/scripts/tests/image-bundle.test.mjs
@@ -18,11 +18,16 @@ const work = mkdtempSync(join(tmpdir(), "mth-image-bundle-test-"));
 after(() => rmSync(work, { recursive: true, force: true }));
 const sha = (b) => createHash("sha256").update(b).digest("hex");
 const fakeId = (name) => `sha256:${sha(`image ${name}`)}`;
-const lockNames = LOCK.images.map((i) => `${i.ref}:${i.tag}@${i.digest}`);
+// ADR-0069 A1.3: only the lock images that a Compose file runs are bundled; the others are listed in `excluded`.
+const runByCompose = (i) => (i.usedIn ?? []).some((f) => f.startsWith("deploy/compose/"));
+const lockNames = LOCK.images.filter(runByCompose).map((i) => `${i.ref}:${i.tag}@${i.digest}`);
+const excludedLock = LOCK.images.filter((i) => !runByCompose(i));
+const CONTAINERD = JSON.stringify([["driver-type", "io.containerd.snapshotter.v1"]]);
 const APP = "mth-app:local";
 
 // The stub: a Node script named `docker`. It appends its argv as one JSON line to $STUB_CALLS, and answers:
-//   info                                 exit $STUB_INFO_EXIT (default 0)
+//   info                                 exit $STUB_INFO_EXIT (default 0); with --format, {{.Driver}} prints
+//                                        $STUB_DRIVER and {{json .DriverStatus}} prints $STUB_DRIVER_STATUS
 //   image inspect --format F <name>      "<id> <size>" or "<id>" from $STUB_IMAGES (JSON {name: id}); unknown -> exit 1
 //   save -o <file> <names...>            writes deterministic bytes naming the images
 //   load -i <file>                       prints "Loaded image: ..."
@@ -37,7 +42,11 @@ const fs = require("node:fs");
 const a = process.argv.slice(2);
 fs.appendFileSync(process.env.STUB_CALLS, JSON.stringify(a) + "\\n");
 const images = JSON.parse(process.env.STUB_IMAGES || "{}");
-if (a[0] === "info") process.exit(Number(process.env.STUB_INFO_EXIT || "0"));
+if (a[0] === "info") {
+  const code = Number(process.env.STUB_INFO_EXIT || "0");
+  if (code === 0 && a[1] === "--format") console.log(a[2].includes("DriverStatus") ? process.env.STUB_DRIVER_STATUS : process.env.STUB_DRIVER);
+  process.exit(code);
+}
 if (a[0] === "image" && a[1] === "inspect") {
   const name = a[a.length - 1]; const fmt = a[a.indexOf("--format") + 1];
   if (!(name in images)) { console.error("Error: No such image: " + name); process.exit(1); }
@@ -52,7 +61,7 @@ process.exit(99);
   return dir;
 }
 
-function run(args, { images, infoExit = "0", calls }) {
+function run(args, { images, infoExit = "0", calls, driver = "overlayfs", driverStatus = CONTAINERD, lock }) {
   const stubDir = makeStub(join(work, "stub-bin"));
   writeFileSync(calls, "");
   const r = spawnSync("bash", [SCRIPT, ...args], {
@@ -62,6 +71,9 @@ function run(args, { images, infoExit = "0", calls }) {
       STUB_CALLS: calls,
       STUB_IMAGES: JSON.stringify(images),
       STUB_INFO_EXIT: infoExit,
+      STUB_DRIVER: driver,
+      STUB_DRIVER_STATUS: driverStatus,
+      ...(lock ? { MTH_IMAGES_LOCK: lock } : {}),
       LANG: "C.UTF-8",
     },
   });
@@ -82,7 +94,7 @@ describe("T-B12 image-bundle.sh with a stub docker", () => {
   const bundle = join(work, "bundle");
   let saveCalls = [];
 
-  it("save lists every images.lock.json image plus the app image, with the tar SHA-256, and pulls nothing", () => {
+  it("save lists every lock image that a Compose file runs plus the app image, with the tar SHA-256, and pulls nothing", () => {
     const calls = join(work, "calls-save.ndjson");
     const r = run(["save", "--out", bundle], { images: allImages(), calls });
     assert.equal(r.status, 0, r.stdout + r.stderr);
@@ -102,12 +114,101 @@ describe("T-B12 image-bundle.sh with a stub docker", () => {
     }
     assert.deepEqual(
       m.images.map((i) => i.lockDigest),
-      [...LOCK.images.map((i) => i.digest), null],
+      [...LOCK.images.filter(runByCompose).map((i) => i.digest), null],
     );
     const save = r.recorded.filter((c) => c[0] === "save");
     assert.equal(save.length, 1);
     assert.deepEqual(save[0].slice(3), [...lockNames, APP]);
     noPull(r.recorded);
+  });
+
+  it("save records the lock images no Compose file runs in `excluded` (A1.3), and never saves or inspects them", () => {
+    const m = JSON.parse(readFileSync(join(bundle, "images.json"), "utf8"));
+    assert.deepEqual(
+      m.excluded,
+      excludedLock.map((i) => ({
+        lockId: i.id,
+        reason: `not run by any Compose file (usedIn: ${i.usedIn.join(", ")})`,
+      })),
+    );
+    // On the current lock: the CI-only Playwright image and node-runtime (its layers travel inside mth-app).
+    assert.ok(m.excluded.some((e) => e.lockId === "playwright"));
+    assert.ok(m.excluded.some((e) => e.lockId === "node-runtime"));
+    assert.deepEqual(
+      m.images.map((i) => i.lockId),
+      ["postgres", "keycloak", null],
+    );
+    const excludedRefs = excludedLock.map((i) => i.ref);
+    for (const c of saveCalls) {
+      assert.ok(!c.some((arg) => excludedRefs.some((ref) => arg.startsWith(`${ref}:`))), JSON.stringify(c));
+    }
+  });
+
+  it("save: an unpinned digest on a bundled image is BLOCKED (exit 2); one on an excluded image is not", () => {
+    const fixture = (mutate) => {
+      const l = JSON.parse(JSON.stringify(LOCK));
+      mutate(l.images);
+      const f = join(work, `lock-${Math.random().toString(16).slice(2)}.json`);
+      writeFileSync(f, JSON.stringify(l));
+      return f;
+    };
+    const bundledUnpinned = fixture((imgs) => (imgs.find((i) => i.id === "postgres").digest = null));
+    const r = run(["save", "--out", join(work, "bundle-unpinned")], {
+      images: allImages(),
+      calls: join(work, "calls-unpinned.ndjson"),
+      lock: bundledUnpinned,
+    });
+    assert.equal(r.status, 2, r.stdout + r.stderr);
+    assert.match(r.stderr, /^image-bundle: BLOCKED: postgres has no pinned digest in images\.lock\.json$/m);
+    assert.equal(r.recorded.length, 0, JSON.stringify(r.recorded));
+    const excludedUnpinned = fixture((imgs) => (imgs.find((i) => i.id === "playwright").digest = null));
+    const r2 = run(["save", "--out", join(work, "bundle-excl-unpinned")], {
+      images: allImages(),
+      calls: join(work, "calls-excl-unpinned.ndjson"),
+      lock: excludedUnpinned,
+    });
+    assert.equal(r2.status, 0, r2.stdout + r2.stderr);
+  });
+
+  it("load and verify exit 3 on the classic image store with the B.5 line (A1.2): no docker load, no id check", () => {
+    for (const cmd of ["load", "verify"]) {
+      for (const [driver, driverStatus] of [
+        [
+          "overlay2",
+          JSON.stringify([
+            ["Backing Filesystem", "extfs"],
+            ["Supports d_type", "true"],
+          ]),
+        ],
+        ["overlayfs", "null"],
+      ]) {
+        const r = run([cmd, "--from", bundle], {
+          images: allImages(),
+          calls: join(work, `calls-classic-${cmd}.ndjson`),
+          driver,
+          driverStatus,
+        });
+        assert.equal(r.status, 3, `${cmd} ${driver}: ${r.stdout}${r.stderr}`);
+        assert.match(
+          r.stdout,
+          /^image-bundle: BLOCKED: the classic image store cannot resolve digest references after load \(ADR-0069 A1\.2\); enable the containerd image store$/m,
+        );
+        assert.equal(r.recorded.filter((c) => c[0] !== "info").length, 0, JSON.stringify(r.recorded));
+        noPull(r.recorded);
+      }
+    }
+  });
+
+  it("load and verify report the containerd store before any id check", () => {
+    const r = run(["verify", "--from", bundle], { images: allImages(), calls: join(work, "calls-store-ok.ndjson") });
+    assert.equal(r.status, 0, r.stdout + r.stderr);
+    assert.match(
+      r.stdout,
+      /^image-bundle: image store: containerd \(storage driver 'overlayfs', driver-type io\.containerd\.snapshotter\.v1\)$/m,
+    );
+    const firstInspect = r.recorded.findIndex((c) => c[0] === "image");
+    const storeCheck = r.recorded.findIndex((c) => c[0] === "info" && c[1] === "--format");
+    assert.ok(storeCheck >= 0 && storeCheck < firstInspect, JSON.stringify(r.recorded));
   });
 
   it("verify passes on the saved bundle when every id matches", () => {

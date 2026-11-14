@@ -3,7 +3,7 @@
 // under $TMPDIR. It never writes the repository, its docs/delivery/ records or its git metadata. Nothing here is a gate
 // decision: the synthetic record approves nothing.
 import { execFileSync } from "node:child_process";
-import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -147,30 +147,6 @@ export function sealOptions(dir, syn, demo, extra = {}) {
 }
 
 /**
- * Envelope-only secret-scan hits found by the rehearsal in APPROVED delivery records, which are never rewritten
- * (D-243 Q13). Each is a reviewer narrative quoting a synthetic test fixture, not a credential. The entries belong in
- * DO-B's tools/release/secret-allowlist.json (scope "envelope"); DO-J requests them in its handback (p7-work-split §M.4
- * seam G) and, until they are merged, the rehearsal passes them through a scratch copy of DO-B's list.
- */
-export const ENVELOPE_ALLOW_REQUESTS = Object.freeze([
-  {
-    rule: "S1",
-    path: "docs/delivery/reviews/DG6/round-7/code-security-reviewer.json",
-    valueSha256: "457643f44d19aed85fd756aa50cc0cd6b57376d4e8f5a72f9f85972a522002a3",
-    reason: "approved DG6 review narrative (l.220) quoting the synthetic AWS-shaped redaction fixture of operations/exceptions.test.ts; not a credential",
-    scopes: ["envelope"],
-  },
-]);
-
-/** A scratch copy of DO-B's allow-list plus ENVELOPE_ALLOW_REQUESTS, written under `dir` (a $TMPDIR path). */
-export function scratchAllowlist(dir) {
-  const base = JSON.parse(readFileSync(join(REPO, "tools", "release", "secret-allowlist.json"), "utf8"));
-  const file = join(dir, "secret-allowlist.rehearsal.json");
-  writeFileSync(file, `${JSON.stringify({ ...base, entries: [...base.entries, ...ENVELOPE_ALLOW_REQUESTS] }, null, 2)}\n`);
-  return file;
-}
-
-/**
  * The DO-J files of the working tree, copied into the clone and committed there (SYNTHETIC rehearsal commit), so the
  * rehearsal's payload carries the tools and template it rehearses, as the frozen candidate will. Their repository
  * copies are only read.
@@ -188,15 +164,7 @@ export function overlayWorkingFiles(dir, paths = DO_J_PATHS) {
   return commitAll(dir, "SYNTHETIC rehearsal: the DO-J working-tree files");
 }
 
-/**
- * The known L3 hit on the approved DG3 gate record (T-M9; reported to the orchestrator, never fixed in the repository,
- * D-243 Q13). For the rehearsal's pass path the scratch clone's copy gets a labelled separation phrase; the repository's
- * record is untouched.
- */
-export const DG3_L3_SENTENCE = "where a G4 capacity-conflict item";
-export function neutralizeKnownLabelHits(dir) {
-  const p = join(dir, "docs", "delivery", "gates", "DG3.json");
-  const text = readFileSync(p, "utf8");
-  if (!text.includes(DG3_L3_SENTENCE)) throw new Error("the known DG3 L3 sentence is not in the clone's DG3.json");
-  writeFileSync(p, text.replace(DG3_L3_SENTENCE, "where a product gate G4 (distinct from engineering gate DG6; SYNTHETIC rehearsal edit) capacity-conflict item"));
-}
+// T-DG7-DO-J2 (DO-J O1/O2, D-266 (b)): the rehearsal no longer adjusts anything in the scratch clone beyond the
+// SYNTHETIC DG7 record, reviews, evidence placeholders and the DO-J overlay of ADR-0073 §8. The envelope secret-scan
+// hit of DO-J O2 is covered by an entry of the real tools/release/secret-allowlist.json (scope "envelope"), and the DG3
+// L3 sentence of O1 by the reviewed tools/release/gate-labels-acknowledged.json; neither approved record is edited.

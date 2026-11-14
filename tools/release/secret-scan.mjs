@@ -49,6 +49,8 @@ const ASSIGNMENT = new RegExp(
     String.raw`|([^\s'"` + "`" + String.raw`,;)}\]]+))`,
   "gi",
 );
+/** The prefix of this scanner's own mask, `[<rule>:` (lib/patterns.mjs `mask`), e.g. `[S2:x…]` or `[S4-documented:…`. */
+const OWN_MASK = /^\[S\d(?:-documented)?:/;
 const CANARY = /mth-canary-[A-Za-z0-9_-]+/g;
 const ENV_LINE = /^[A-Z][A-Z0-9_]*=$/;
 
@@ -136,6 +138,9 @@ export function scanContent(path, buf) {
       for (const m of line.matchAll(CRED_URL)) {
         const pw = m[3];
         if (pw === "" || PLACEHOLDER.test(pw) || /^\$|^%|^\*+$|^<|^\{\{|^mth-canary-/.test(pw)) continue;
+        // The scanner's own masked output (`[S2:x…]`, lib/patterns.mjs mask) quoted in a committed scan log or run
+        // transcript is not a credential: without this, every logged FAIL becomes a permanent history hit (T-DG7-DO-J2).
+        if (OWN_MASK.test(pw)) continue;
         lineHits.push({ rule: "S2", value: pw, index: m.index + m[0].length - 1 - pw.length });
       }
       for (const m of line.matchAll(ASSIGNMENT)) {

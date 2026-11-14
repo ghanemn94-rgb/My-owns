@@ -1,0 +1,50 @@
+// A28 rehearsal for T-DG7-DO-J2 (ADR-0073 §8; DO-J O1/O2; D-266 (b)). NO scratch-only adjustment: the CLIs run on the
+// real DG0–DG6 records (DG3 unedited), the real tools/release/secret-allowlist.json and the reviewed
+// tools/release/gate-labels-acknowledged.json. The only clone-side writes are those ADR-0073 §8 specifies: the DO-J
+// working-tree overlay of tools/release (a SYNTHETIC clone commit, so the payload carries the tools under rehearsal),
+// the SYNTHETIC DG7 record, three synthetic reviews, one synthetic audit and the evidence placeholders.
+// Run: node --input-type=module < this file   (Node 24; offline). The clone lives under $TMPDIR and is removed.
+import { execFileSync, spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+const R = "/home/user/My-owns/tools/release";
+const h = await import(`${R}/tests/fixtures/seal/rehearsal.mjs`);
+const log = (...a) => console.log(...a);
+const t = () => Date.now();
+const cli = (args, cwd) => {
+  const s = t();
+  const r = spawnSync(process.execPath, args, { cwd, encoding: "utf8", maxBuffer: 1 << 26 });
+  log(`$ node ${args.map((a) => (a.includes(" ") ? JSON.stringify(a) : a)).join(" ")}`);
+  log((r.stdout + r.stderr).trimEnd());
+  log(`exit ${r.status} (${((t() - s) / 1000).toFixed(1)} s)\n`);
+  return r;
+};
+const sha = (p) => createHash("sha256").update(readFileSync(p)).digest("hex");
+log(`# DO-J2 A28 rehearsal, ${new Date().toISOString()}, node ${process.version}, repository HEAD ${execFileSync("git", ["-C", h.REPO, "rev-parse", "HEAD"]).toString().trim()}`);
+log(`real DG3.json sha256 ${sha(join(h.REPO, "docs/delivery/gates/DG3.json"))}; secret-allowlist.json sha256 ${sha(join(R, "secret-allowlist.json"))}; gate-labels-acknowledged.json sha256 ${sha(join(R, "gate-labels-acknowledged.json"))}`);
+let s = t();
+const c = h.sparseClone("a28-dooj2");
+log(`sparse clone ${c.dir} at ${c.head} (${t() - s} ms); candidate.mjs --stage DG7 in the clone: ${JSON.parse(execFileSync(process.execPath, ["tools/gates/candidate.mjs", "--stage", "DG7"], { cwd: c.dir }).toString()).candidate_id}`);
+h.overlayWorkingFiles(c.dir);
+const syn = h.writeSynthetic(c.dir);
+const demo = h.demoInput(c.dir);
+log(`clone DG3.json sha256 ${sha(join(c.dir, "docs/delivery/gates/DG3.json"))} (must equal the real one: not neutralised)`);
+log(`SYNTHETIC DG7 record: candidate ${syn.candidate}, source_commit ${syn.sourceCommit}, seal commit ${syn.sealCommit}`);
+log(`demo-data input (SYNTHETIC fixture) inputSha256 ${demo.sha256}\n`);
+log("## seal CLI (real allow-list, no seam)\n");
+const out = join(c.dir, "docs/delivery/test-evidence/DG7/seal");
+const sr = cli([`${R}/seal.mjs`, "--rehearsal", "--repo", c.dir, "--candidate", syn.candidate, "--demo-data", demo.path, "--demo-data-sha256", demo.sha256, ...h.evidenceArgs()], c.dir);
+let vr = { status: null };
+if (sr.status === 0) {
+  const rep = JSON.parse(readFileSync(join(out, "seal-report-1.json"), "utf8"));
+  const env = join(c.dir, "dist", "release", rep.envelopeArchive.name);
+  log(`payload hash ${rep.payloadHash}\npayload archive ${rep.payloadArchive.name} sha256 ${rep.payloadArchive.archiveSha256}\nenvelope archive ${rep.envelopeArchive.name} sha256 ${rep.envelopeArchive.archiveSha256}\nenvelope manifest sha256 ${rep.envelopeManifestSha256}`);
+  log(`sha256sum check of the envelope: ${execFileSync("sha256sum", [env]).toString().slice(0, 64)}\n`);
+  log("## verify-seal CLI, repository mode, V1–V17, V16 over DG0–DG7 (real allow-list, payload's acknowledgement list)\n");
+  vr = cli([`${R}/verify-seal.mjs`, "--rehearsal", "--envelope", env, "--expect-sha256", rep.envelopeArchive.archiveSha256, "--repo", c.dir], c.dir);
+}
+h.removeClone(c);
+log(`clone removed: ${c.parent}`);
+log(`RESULT seal exit ${sr.status}, verify exit ${vr.status}`);
+process.exitCode = sr.status === 0 && vr.status === 0 ? 0 : 1;

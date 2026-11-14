@@ -1,0 +1,40 @@
+▶ T-B12 image-bundle.sh with a stub docker
+  ✔ save lists every lock image that a Compose file runs plus the app image, with the tar SHA-256, and pulls nothing (660.38993ms)
+  ✔ save records the lock images no Compose file runs in `excluded` (A1.3), and never saves or inspects them (11.900334ms)
+  ✔ save: an unpinned digest on a bundled image is BLOCKED (exit 2); one on an excluded image is not (583.139846ms)
+  ✔ load and verify exit 3 on the classic image store with the B.5 line (A1.2): no docker load, no id check (1181.404948ms)
+  ✔ load and verify report the containerd store before any id check (511.043395ms)
+  ✔ verify passes on the saved bundle when every id matches (519.434306ms)
+  ✔ load: a good bundle is loaded once and each id is checked (550.643663ms)
+  ✔ load refuses a changed tar: exit 1 with the B.5 line, and docker load is never called (149.737926ms)
+  ✔ verify refuses an id mismatch: exit 1 with the B.5 line naming the image (483.726211ms)
+  ✔ load after the images were removed: a missing image fails the id check (exit 1), never pulled (531.1646ms)
+  ✔ save: an image not present locally is BLOCKED (exit 2), and nothing is pulled or saved (328.536837ms)
+  ✔ no Docker daemon: exit 3 with the B.5 BLOCKED line (save, and load after the tar check) (405.086201ms)
+  ✔ usage errors are BLOCKED (exit 2); no path of the script calls docker pull (64.94556ms)
+✔ T-B12 image-bundle.sh with a stub docker (5984.733362ms)
+▶ T-B13 connection-check.mjs on fixture logs
+  ✔ loopback addresses and hosts are loopback; anything else is not (3.528547ms)
+  ✔ a log of loopback and socket entries passes, with the counts by category (2.14768ms)
+  ✔ a fixture line with a non-loopback address fails with the B.5 line naming address, port and process (0.310562ms)
+  ✔ a host name that is not loopback fails even when it was never dialled (failed lookup: null address and port) (0.749802ms)
+  ✔ a loopback host name that resolved to an outside address fails (every known value must be loopback) (1.247005ms)
+  ✔ a port with no host or address is not provably local; a socket-directory path is a socket (0.242713ms)
+  ✔ a log with no line of the API process fails (an empty or switched-off log is never a pass) (0.331304ms)
+  ✔ the CLI: exit 0 / 1 with the summary file; a missing log or a non-JSON line is BLOCKED (exit 2) (306.772839ms)
+✔ T-B13 connection-check.mjs on fixture logs (320.869078ms)
+▶ T-B13 offline-drill.sh: BLOCKED and isolation paths
+  ✔ usage without --out is BLOCKED (exit 2) (18.152167ms)
+  ✔ a non-empty output directory is BLOCKED (exit 2): two runs never mix their logs (749.637739ms)
+  ✔ no installed Chromium: exit 3 with the B.5 line, and nothing is downloaded (650.489169ms)
+  ✔ without bwrap (stub PATH) it exits 3 with the BLOCKED line (604.090679ms)
+  ✔ a probe that connects exits 1 with the isolation line, before any spec runs (832.951593ms)
+✔ T-B13 offline-drill.sh: BLOCKED and isolation paths (2855.986619ms)
+ℹ tests 26
+ℹ suites 3
+ℹ pass 26
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6149.978689

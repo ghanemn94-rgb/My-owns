@@ -79,6 +79,20 @@ describe("T-G1 secret-scan self-test (S1-S6, non-matches, allow-list, masking)",
     assert.deepEqual(scanContent("src/x.ts", code), []);
   });
 
+  it("its own masked output in a committed log is not a hit again, but a real credential URL beside it still is (T-DG7-DO-J2)", () => {
+    const log = [
+      "S2 packages/x.test.ts:104: const u = \"postgres://mth_owner:[S2:x…]@127.0.0.1:1/none\"; (value sha256 2d711642b726)",
+      "S2 docs/x.log:5: S2 y.ts:1: postgres://mth_owner:[S2:[S2:…]@127.0.0.1:1/none (value sha256 f81eacd8098d)",
+      "S2 config/db.yaml:1: url: postgres://mth_app:[S2:Hunt…]@db.internal (value sha256 0123456789ab)",
+    ].join("\n");
+    assert.deepEqual(scanContent("docs/delivery/x/secret-scan.log", Buffer.from(log)), []);
+    const real = Buffer.from(`${log}\nurl: postgres://mth_app:${PLANT.S2}@db.internal:5432/mth\n`);
+    assert.deepEqual(
+      scanContent("docs/delivery/x/secret-scan.log", real).map((h) => [h.rule, h.line]),
+      [["S2", 4]],
+    );
+  });
+
   it("prints the exact messages and never a planted value whole (masking)", () => {
     // the default (real) allow-list: its payload/history entries never apply to a --path scan
     const r = runNode([SCAN, "--path", dir], { cwd: dir });

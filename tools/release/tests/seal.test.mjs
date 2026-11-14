@@ -28,12 +28,10 @@ import {
   demoInput,
   EVIDENCE,
   git,
-  neutralizeKnownLabelHits,
   overlayWorkingFiles,
   removeClone,
   REPO,
   scratch,
-  scratchAllowlist,
   sealOptions,
   SEAL_DEMO,
   sparseClone,
@@ -56,7 +54,6 @@ let head;
 let idBefore;
 let syn;
 let demo;
-let allow;
 let r0;
 let v0;
 let r0EnvelopeBytes;
@@ -69,11 +66,9 @@ before(async () => {
   head = clone.head;
   idBefore = candidateCli(clone.dir); // T-M1, before any rehearsal commit
   overlayWorkingFiles(clone.dir);
-  neutralizeKnownLabelHits(clone.dir);
   syn = writeSynthetic(clone.dir);
   demo = demoInput(clone.dir);
-  allow = scratchAllowlist(clone.parent);
-  r0 = await seal({ ...sealOptions(clone.dir, syn, demo), secretAllowlist: allow });
+  r0 = await seal({ ...sealOptions(clone.dir, syn, demo) });
   if (r0.ok) {
     r0EnvelopeBytes = readFileSync(r0.envelopePath);
     // the filled SYNTHETIC final report (ADR-0073 §7) in the clone's seal directory (META-excluded)
@@ -107,7 +102,6 @@ before(async () => {
       repo: clone.dir,
       finalReport: join(clone.dir, sealDir, "final-report.md"),
       rehearsal: true,
-      secretAllowlist: allow,
     });
   }
 });
@@ -123,7 +117,7 @@ const freshOut = () => {
   return join(d, "out");
 };
 const restore = (...paths) => git(clone.dir, ["checkout", "-q", "HEAD", "--", ...paths]);
-const quick = (extra = {}) => seal({ ...sealOptions(clone.dir, syn, demo), secretAllowlist: allow, out: freshOut(), ...extra });
+const quick = (extra = {}) => seal({ ...sealOptions(clone.dir, syn, demo), out: freshOut(), ...extra });
 
 test("T-M1 the sparse scratch clone has the repository's DG7 candidate id at that commit", () => {
   assert.match(head, /^[0-9a-f]{40}$/);
@@ -158,7 +152,7 @@ test("T-M2 R0: rehearsal seal exit 0; verify REHEARSAL-PASS with V16 DG7 SKIPPED
 });
 
 test("T-M3 the envelope .tar bytes are identical across two seals of the same inputs; manifest key order and sorting", async () => {
-  const again = await seal({ ...sealOptions(clone.dir, syn, demo), secretAllowlist: allow, resealReason: "T-M3 determinism (SYNTHETIC)" });
+  const again = await seal({ ...sealOptions(clone.dir, syn, demo), resealReason: "T-M3 determinism (SYNTHETIC)" });
   assert.equal(again.exit, 0, again.lines.join("\n"));
   assert.equal(again.report.envelopeArchive.tarSha256, r0.report.envelopeArchive.tarSha256);
   assert.equal(again.report.envelopeArchive.archiveSha256, r0.report.envelopeArchive.archiveSha256);
@@ -231,19 +225,19 @@ test("T-M4 refusals: R9, R8, S1 missing, S1 not APPROVED, missing --evidence, ev
 
 test("T-M5 R11 and the re-seal rule", async () => {
   // R11: --out set to a payload path
-  let r = await seal({ ...sealOptions(clone.dir, syn, demo), secretAllowlist: allow, out: "docs/handover/x" });
+  let r = await seal({ ...sealOptions(clone.dir, syn, demo), out: "docs/handover/x" });
   assert.equal(r.exit, 2);
   assert.equal(r.lines.at(-1), `seal: refused output path ${join(clone.dir, "docs/handover/x")}: it would change the payload hash`);
   assert.ok(!existsSync(join(clone.dir, "docs/handover/x")));
   // an existing report without --reseal-reason (T-M3 wrote sequence 2)
   const out = join(clone.dir, "docs/delivery/test-evidence/DG7/seal");
-  r = await seal({ ...sealOptions(clone.dir, syn, demo), secretAllowlist: allow });
+  r = await seal({ ...sealOptions(clone.dir, syn, demo) });
   assert.equal(r.exit, 2);
   assert.equal(r.lines.at(-1), `seal: BLOCKED: ${join(out, "seal-report-2.json")} exists; a re-seal needs --reseal-reason`);
   // with it: sequence n+1, earlier reports unchanged
   const before1 = readFileSync(join(out, "seal-report-1.json"));
   const before2 = readFileSync(join(out, "seal-report-2.json"));
-  r = await seal({ ...sealOptions(clone.dir, syn, demo), secretAllowlist: allow, resealReason: "T-M5 envelope-only re-seal (SYNTHETIC)" });
+  r = await seal({ ...sealOptions(clone.dir, syn, demo), resealReason: "T-M5 envelope-only re-seal (SYNTHETIC)" });
   assert.equal(r.exit, 0, r.lines.join("\n"));
   assert.equal(r.report.sequence, 3);
   assert.equal(r.report.resealReason, "T-M5 envelope-only re-seal (SYNTHETIC)");
@@ -318,7 +312,7 @@ test("T-M8 S10: a planted secret in an envelope-listed file, and a planted claim
   writeFileSync(join(clone.dir, doc), `# SYNTHETIC\n\n${claim}\n`);
   commitAll(clone.dir, "SYNTHETIC planted claim");
   const planted2 = writeSynthetic(clone.dir);
-  r = await seal({ ...sealOptions(clone.dir, planted2, demo), secretAllowlist: allow, out: freshOut() });
+  r = await seal({ ...sealOptions(clone.dir, planted2, demo), out: freshOut() });
   rmSync(join(clone.dir, doc));
   commitAll(clone.dir, "SYNTHETIC planted claim removed");
   assert.equal(r.exit, 1, r.lines.join("\n"));

@@ -1,0 +1,378 @@
+diff --git a/deploy/scripts/image-bundle.sh b/deploy/scripts/image-bundle.sh
+index 29e37b1b2..7600c26b7 100755
+--- a/deploy/scripts/image-bundle.sh
++++ b/deploy/scripts/image-bundle.sh
+@@ -6,16 +6,23 @@
+ #   deploy/scripts/image-bundle.sh load   --from <dir>                      (on the target host)
+ #   deploy/scripts/image-bundle.sh verify --from <dir>                      (on either host, after load)
+ #
+-# save   For every image of deploy/images.lock.json, by its pinned reference <ref>:<tag>@<digest> (the reference Compose
+-#        and CI use), and for the locally built application image (deploy/scripts/build-image.sh; default
++# save   For every image of deploy/images.lock.json THAT A COMPOSE FILE RUNS (an entry of its `usedIn` is a file under
++#        deploy/compose/; ADR-0069 §6 as amended by A1.3), by its pinned reference <ref>:<tag>@<digest> (the reference
++#        Compose uses), and for the locally built application image (deploy/scripts/build-image.sh; default
+ #        ${MTH_APP_IMAGE:-mth-app:local}, the Compose default): read its image id and size with `docker image inspect`,
+ #        then write ONE `docker save` archive images.tar and images.json (strict UTF-8 JSON, schemaVersion
+ #        mth-image-bundle/1): per image the name, the lock id and digest (null for the app image), the image id, the size,
+-#        and the tar SHA-256. A lock image with no digest, or an image that is not present locally, is BLOCKED (exit 2):
+-#        this script never pulls. Pull on the connected host first (`docker compose pull`, or `docker pull <ref>`).
++#        and the tar SHA-256. The lock images that no Compose file runs (on the current lock the CI-only `playwright`, and
++#        `node-runtime`, whose layers travel inside mth-app) are listed in the optional key `excluded`
++#        ([{ lockId, reason }]) and are never saved. A bundled lock image with no digest, or an image that is not present
++#        locally, is BLOCKED (exit 2): this script never pulls. Pull on the connected host first (`docker compose pull`).
+ # load   Check images.tar's size and SHA-256 against images.json BEFORE any docker call (a changed tar exits 1 and
+ #        `docker load` is never called), then `docker load -i images.tar`, then compare each `docker image inspect` id
+ #        with images.json (a mismatch exits 1).
++#        Image store (ADR-0069 A1.2): before any id check, load and verify read `docker info` and exit 3 unless the
++#        engine uses the containerd image store (driver-type io.containerd.snapshotter.v1). The classic store does not
++#        restore the registry digest on load, so the digest-pinned names of images.json and Compose cannot resolve.
++#        The script never re-tags an image and never rewrites an `image:` line.
+ # verify The same two checks without loading: the tar against images.json, and every listed image present locally with
+ #        its recorded id.
+ #
+@@ -25,7 +32,7 @@
+ # and a Compose start is not evidence of high-availability production readiness.
+ #
+ # Exit codes (p7-work-split §2 rule 4): 0 PASS; 1 FAIL (a mismatch); 2 BLOCKED (usage, missing or invalid input, an
+-# image not present locally); 3 BLOCKED (no Docker daemon reachable).
++# image not present locally); 3 BLOCKED (no Docker daemon reachable, or the classic image store on load/verify).
+ set -euo pipefail
+ 
+ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+@@ -59,6 +66,19 @@ need_daemon() {
+     exit 3
+   fi
+ }
++# need_containerd_store: ADR-0069 A1.2. The containerd image store reports driver-type io.containerd.snapshotter.v1 in
++# `docker info`'s DriverStatus; any other store (overlay2 and the other graph drivers) is the classic one.
++need_containerd_store() {
++  local driver status
++  driver="$(docker info --format '{{.Driver}}' 2>/dev/null || true)"
++  status="$(docker info --format '{{json .DriverStatus}}' 2>/dev/null || true)"
++  if [[ "$status" != *'"driver-type","io.containerd.snapshotter.v1"'* ]]; then
++    log "image store: classic (storage driver '${driver:-unknown}', DriverStatus ${status:-unknown})"
++    echo "image-bundle: BLOCKED: the classic image store cannot resolve digest references after load (ADR-0069 A1.2); enable the containerd image store"
++    exit 3
++  fi
++  log "image store: containerd (storage driver '$driver', driver-type io.containerd.snapshotter.v1)"
++}
+ sha_of() { sha256sum "$1" | cut -d' ' -f1; }
+ 
+ # check_tar <dir>: images.json is well formed and images.tar matches its recorded size and SHA-256. No docker call.
+@@ -111,16 +131,34 @@ check_ids() {
+ case "$CMD" in
+   save)
+     [ -f "$LOCK" ] || { echo "image-bundle: BLOCKED: $LOCK not found" >&2; exit 2; }
+-    # The lock's references, refusing an unpinned one (a null digest means NOT PINNED; it is never bundled).
+-    mapfile -t LOCKED < <(node -e '
+-      const l = JSON.parse(require("node:fs").readFileSync(process.argv[1], "utf8"));
++    # ADR-0069 A1.3: the lock images that a Compose file runs are bundled; the others go to `excluded` (node prints
++    # them as one last line `excluded<TAB><json>`). A bundled reference must be pinned (a null digest means NOT PINNED;
++    # it is never bundled). No temporary file, so the script needs no writable TMPDIR.
++    # Capture node's output first: `mapfile < <(node ...) || exit` would test mapfile's status, not node's.
++    LOCKED_TSV="$(node -e '
++      const fs = require("node:fs");
++      const l = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+       let bad = 0;
++      const excluded = [];
+       for (const i of l.images) {
++        const usedIn = Array.isArray(i.usedIn) ? i.usedIn : [];
++        if (!usedIn.some((f) => typeof f === "string" && f.startsWith("deploy/compose/"))) {
++          excluded.push({ lockId: i.id, reason: "not run by any Compose file (usedIn: " + (usedIn.join(", ") || "none") + ")" });
++          continue;
++        }
+         if (!/^sha256:[0-9a-f]{64}$/.test(i.digest ?? "")) { console.error("image-bundle: BLOCKED: " + i.id + " has no pinned digest in images.lock.json"); bad = 1; continue; }
+         console.log([i.id, i.digest, i.ref + ":" + i.tag + "@" + i.digest].join("\t"));
+       }
+-      process.exit(bad ? 2 : 0);' "$LOCK") || exit 2
+-    [ "${#LOCKED[@]}" -gt 0 ] || { echo "image-bundle: BLOCKED: images.lock.json lists no image" >&2; exit 2; }
++      console.log("excluded\t" + JSON.stringify(excluded));
++      process.exit(bad ? 2 : 0);' "$LOCK")" || exit 2
++    EXCLUDED_JSON="$(printf '%s\n' "$LOCKED_TSV" | sed -n 's/^excluded\t//p')"
++    LOCKED=()
++    while IFS= read -r row; do
++      case "$row" in excluded$'\t'*) ;; ?*) LOCKED+=("$row") ;; esac
++    done <<<"$LOCKED_TSV"
++    [ "${#LOCKED[@]}" -gt 0 ] || { echo "image-bundle: BLOCKED: images.lock.json lists no image that a Compose file runs" >&2; exit 2; }
++    node -e 'for (const e of JSON.parse(process.argv[1])) console.log("image-bundle: excluded " + e.lockId + ": " + e.reason)' \
++      "$EXCLUDED_JSON"
+     need_daemon
+     mkdir -p "$OUT"
+     OUT="$(cd "$OUT" && pwd)"
+@@ -144,7 +182,7 @@ case "$CMD" in
+     [ -s "$OUT/images.tar" ] || { echo "image-bundle: docker save wrote no images.tar"; rm -f "$ROWS"; exit 1; }
+     node -e '
+       const fs = require("node:fs");
+-      const [rows, tar, sha, lock, out] = process.argv.slice(1);
++      const [rows, tar, sha, lock, out, excludedJson] = process.argv.slice(1);
+       const images = fs.readFileSync(rows, "utf8").trim().split("\n").map((l) => {
+         const [id, digest, name, imageId, size] = l.split("\t");
+         if (!/^sha256:[0-9a-f]{64}$/.test(imageId)) { console.error("image-bundle: " + name + " has no image id (" + imageId + ")"); process.exit(1); }
+@@ -153,9 +191,10 @@ case "$CMD" in
+       });
+       const m = { schemaVersion: "mth-image-bundle/1", createdAt: new Date().toISOString(),
+         lockSha256: require("node:crypto").createHash("sha256").update(fs.readFileSync(lock)).digest("hex"),
+-        tar: { file: "images.tar", bytes: fs.statSync(tar).size, sha256: sha }, images };
++        tar: { file: "images.tar", bytes: fs.statSync(tar).size, sha256: sha }, images,
++        excluded: JSON.parse(excludedJson) };
+       fs.writeFileSync(out, JSON.stringify(m, null, 2) + "\n");' \
+-      "$ROWS" "$OUT/images.tar" "$(sha_of "$OUT/images.tar")" "$LOCK" "$OUT/images.json"
++      "$ROWS" "$OUT/images.tar" "$(sha_of "$OUT/images.tar")" "$LOCK" "$OUT/images.json" "$EXCLUDED_JSON"
+     rm -f "$ROWS"
+     log "saved ${#NAMES[@]} images: $OUT/images.tar ($(stat -c %s "$OUT/images.tar") bytes, sha256 $(sha_of "$OUT/images.tar")); manifest $OUT/images.json"
+     ;;
+@@ -163,6 +202,7 @@ case "$CMD" in
+     FROM="$(cd "$FROM" 2>/dev/null && pwd)" || { echo "image-bundle: BLOCKED: bundle directory not found" >&2; exit 2; }
+     check_tar "$FROM"
+     need_daemon
++    need_containerd_store
+     docker load -i "$FROM/images.tar"
+     check_ids "$FROM"
+     log "PASS: load: every image of images.json is present with its recorded id"
+@@ -171,6 +211,7 @@ case "$CMD" in
+     FROM="$(cd "$FROM" 2>/dev/null && pwd)" || { echo "image-bundle: BLOCKED: bundle directory not found" >&2; exit 2; }
+     check_tar "$FROM"
+     need_daemon
++    need_containerd_store
+     check_ids "$FROM"
+     log "PASS: verify: images.tar matches images.json and every image is present with its recorded id"
+     ;;
+diff --git a/deploy/scripts/tests/image-bundle.test.mjs b/deploy/scripts/tests/image-bundle.test.mjs
+index 89a6be303..d66fb129d 100644
+--- a/deploy/scripts/tests/image-bundle.test.mjs
++++ b/deploy/scripts/tests/image-bundle.test.mjs
+@@ -1,4 +1,4 @@
+-// T-B12 (p7-work-split §B.4; ADR-0069 §6; T-DG7-DO-E): deploy/scripts/image-bundle.sh's logic with a STUB `docker`
++// T-B12 (p7-work-split §B.4; ADR-0069 §6 and Amendment 1 A1.2/A1.3; T-DG7-DO-E, T-DG7-DO-E2): deploy/scripts/image-bundle.sh's logic with a STUB `docker`
+ // on PATH that records every call and serves fixture outputs. It proves the manifest, checksum and refusal logic, not a
+ // real `docker load` (that is the orchestrator's host run, ADR-0069 §6-§7).
+ //   node --test deploy/scripts/tests/image-bundle.test.mjs
+@@ -18,11 +18,16 @@ const work = mkdtempSync(join(tmpdir(), "mth-image-bundle-test-"));
+ after(() => rmSync(work, { recursive: true, force: true }));
+ const sha = (b) => createHash("sha256").update(b).digest("hex");
+ const fakeId = (name) => `sha256:${sha(`image ${name}`)}`;
+-const lockNames = LOCK.images.map((i) => `${i.ref}:${i.tag}@${i.digest}`);
++// ADR-0069 A1.3: only the lock images that a Compose file runs are bundled; the others are listed in `excluded`.
++const runByCompose = (i) => (i.usedIn ?? []).some((f) => f.startsWith("deploy/compose/"));
++const lockNames = LOCK.images.filter(runByCompose).map((i) => `${i.ref}:${i.tag}@${i.digest}`);
++const excludedLock = LOCK.images.filter((i) => !runByCompose(i));
++const CONTAINERD = JSON.stringify([["driver-type", "io.containerd.snapshotter.v1"]]);
+ const APP = "mth-app:local";
+ 
+ // The stub: a Node script named `docker`. It appends its argv as one JSON line to $STUB_CALLS, and answers:
+-//   info                                 exit $STUB_INFO_EXIT (default 0)
++//   info                                 exit $STUB_INFO_EXIT (default 0); with --format, {{.Driver}} prints
++//                                        $STUB_DRIVER and {{json .DriverStatus}} prints $STUB_DRIVER_STATUS
+ //   image inspect --format F <name>      "<id> <size>" or "<id>" from $STUB_IMAGES (JSON {name: id}); unknown -> exit 1
+ //   save -o <file> <names...>            writes deterministic bytes naming the images
+ //   load -i <file>                       prints "Loaded image: ..."
+@@ -37,7 +42,11 @@ const fs = require("node:fs");
+ const a = process.argv.slice(2);
+ fs.appendFileSync(process.env.STUB_CALLS, JSON.stringify(a) + "\\n");
+ const images = JSON.parse(process.env.STUB_IMAGES || "{}");
+-if (a[0] === "info") process.exit(Number(process.env.STUB_INFO_EXIT || "0"));
++if (a[0] === "info") {
++  const code = Number(process.env.STUB_INFO_EXIT || "0");
++  if (code === 0 && a[1] === "--format") console.log(a[2].includes("DriverStatus") ? process.env.STUB_DRIVER_STATUS : process.env.STUB_DRIVER);
++  process.exit(code);
++}
+ if (a[0] === "image" && a[1] === "inspect") {
+   const name = a[a.length - 1]; const fmt = a[a.indexOf("--format") + 1];
+   if (!(name in images)) { console.error("Error: No such image: " + name); process.exit(1); }
+@@ -52,7 +61,7 @@ process.exit(99);
+   return dir;
+ }
+ 
+-function run(args, { images, infoExit = "0", calls }) {
++function run(args, { images, infoExit = "0", calls, driver = "overlayfs", driverStatus = CONTAINERD, lock }) {
+   const stubDir = makeStub(join(work, "stub-bin"));
+   writeFileSync(calls, "");
+   const r = spawnSync("bash", [SCRIPT, ...args], {
+@@ -62,6 +71,9 @@ function run(args, { images, infoExit = "0", calls }) {
+       STUB_CALLS: calls,
+       STUB_IMAGES: JSON.stringify(images),
+       STUB_INFO_EXIT: infoExit,
++      STUB_DRIVER: driver,
++      STUB_DRIVER_STATUS: driverStatus,
++      ...(lock ? { MTH_IMAGES_LOCK: lock } : {}),
+       LANG: "C.UTF-8",
+     },
+   });
+@@ -82,7 +94,7 @@ describe("T-B12 image-bundle.sh with a stub docker", () => {
+   const bundle = join(work, "bundle");
+   let saveCalls = [];
+ 
+-  it("save lists every images.lock.json image plus the app image, with the tar SHA-256, and pulls nothing", () => {
++  it("save lists every lock image that a Compose file runs plus the app image, with the tar SHA-256, and pulls nothing", () => {
+     const calls = join(work, "calls-save.ndjson");
+     const r = run(["save", "--out", bundle], { images: allImages(), calls });
+     assert.equal(r.status, 0, r.stdout + r.stderr);
+@@ -102,7 +114,7 @@ describe("T-B12 image-bundle.sh with a stub docker", () => {
+     }
+     assert.deepEqual(
+       m.images.map((i) => i.lockDigest),
+-      [...LOCK.images.map((i) => i.digest), null],
++      [...LOCK.images.filter(runByCompose).map((i) => i.digest), null],
+     );
+     const save = r.recorded.filter((c) => c[0] === "save");
+     assert.equal(save.length, 1);
+@@ -110,6 +122,95 @@ describe("T-B12 image-bundle.sh with a stub docker", () => {
+     noPull(r.recorded);
+   });
+ 
++  it("save records the lock images no Compose file runs in `excluded` (A1.3), and never saves or inspects them", () => {
++    const m = JSON.parse(readFileSync(join(bundle, "images.json"), "utf8"));
++    assert.deepEqual(
++      m.excluded,
++      excludedLock.map((i) => ({
++        lockId: i.id,
++        reason: `not run by any Compose file (usedIn: ${i.usedIn.join(", ")})`,
++      })),
++    );
++    // On the current lock: the CI-only Playwright image and node-runtime (its layers travel inside mth-app).
++    assert.ok(m.excluded.some((e) => e.lockId === "playwright"));
++    assert.ok(m.excluded.some((e) => e.lockId === "node-runtime"));
++    assert.deepEqual(
++      m.images.map((i) => i.lockId),
++      ["postgres", "keycloak", null],
++    );
++    const excludedRefs = excludedLock.map((i) => i.ref);
++    for (const c of saveCalls) {
++      assert.ok(!c.some((arg) => excludedRefs.some((ref) => arg.startsWith(`${ref}:`))), JSON.stringify(c));
++    }
++  });
++
++  it("save: an unpinned digest on a bundled image is BLOCKED (exit 2); one on an excluded image is not", () => {
++    const fixture = (mutate) => {
++      const l = JSON.parse(JSON.stringify(LOCK));
++      mutate(l.images);
++      const f = join(work, `lock-${Math.random().toString(16).slice(2)}.json`);
++      writeFileSync(f, JSON.stringify(l));
++      return f;
++    };
++    const bundledUnpinned = fixture((imgs) => (imgs.find((i) => i.id === "postgres").digest = null));
++    const r = run(["save", "--out", join(work, "bundle-unpinned")], {
++      images: allImages(),
++      calls: join(work, "calls-unpinned.ndjson"),
++      lock: bundledUnpinned,
++    });
++    assert.equal(r.status, 2, r.stdout + r.stderr);
++    assert.match(r.stderr, /^image-bundle: BLOCKED: postgres has no pinned digest in images\.lock\.json$/m);
++    assert.equal(r.recorded.length, 0, JSON.stringify(r.recorded));
++    const excludedUnpinned = fixture((imgs) => (imgs.find((i) => i.id === "playwright").digest = null));
++    const r2 = run(["save", "--out", join(work, "bundle-excl-unpinned")], {
++      images: allImages(),
++      calls: join(work, "calls-excl-unpinned.ndjson"),
++      lock: excludedUnpinned,
++    });
++    assert.equal(r2.status, 0, r2.stdout + r2.stderr);
++  });
++
++  it("load and verify exit 3 on the classic image store with the B.5 line (A1.2): no docker load, no id check", () => {
++    for (const cmd of ["load", "verify"]) {
++      for (const [driver, driverStatus] of [
++        [
++          "overlay2",
++          JSON.stringify([
++            ["Backing Filesystem", "extfs"],
++            ["Supports d_type", "true"],
++          ]),
++        ],
++        ["overlayfs", "null"],
++      ]) {
++        const r = run([cmd, "--from", bundle], {
++          images: allImages(),
++          calls: join(work, `calls-classic-${cmd}.ndjson`),
++          driver,
++          driverStatus,
++        });
++        assert.equal(r.status, 3, `${cmd} ${driver}: ${r.stdout}${r.stderr}`);
++        assert.match(
++          r.stdout,
++          /^image-bundle: BLOCKED: the classic image store cannot resolve digest references after load \(ADR-0069 A1\.2\); enable the containerd image store$/m,
++        );
++        assert.equal(r.recorded.filter((c) => c[0] !== "info").length, 0, JSON.stringify(r.recorded));
++        noPull(r.recorded);
++      }
++    }
++  });
++
++  it("load and verify report the containerd store before any id check", () => {
++    const r = run(["verify", "--from", bundle], { images: allImages(), calls: join(work, "calls-store-ok.ndjson") });
++    assert.equal(r.status, 0, r.stdout + r.stderr);
++    assert.match(
++      r.stdout,
++      /^image-bundle: image store: containerd \(storage driver 'overlayfs', driver-type io\.containerd\.snapshotter\.v1\)$/m,
++    );
++    const firstInspect = r.recorded.findIndex((c) => c[0] === "image");
++    const storeCheck = r.recorded.findIndex((c) => c[0] === "info" && c[1] === "--format");
++    assert.ok(storeCheck >= 0 && storeCheck < firstInspect, JSON.stringify(r.recorded));
++  });
++
+   it("verify passes on the saved bundle when every id matches", () => {
+     const r = run(["verify", "--from", bundle], { images: allImages(), calls: join(work, "calls-verify-ok.ndjson") });
+     assert.equal(r.status, 0, r.stdout + r.stderr);
+diff --git a/docs/operations/restricted-network.md b/docs/operations/restricted-network.md
+index 0ef57f96c..5a5b92e77 100644
+--- a/docs/operations/restricted-network.md
++++ b/docs/operations/restricted-network.md
+@@ -94,17 +94,20 @@ To use mirrored images:
+ When the target host cannot reach any registry, not even IT's mirror, the images travel as files
+ (`deploy/scripts/image-bundle.sh`, ADR-0069 §6). The script never runs `docker pull`, `docker login` or `docker push`.
+ 
+-1. **On a connected host** that already holds every image: the four images of `deploy/images.lock.json` at their pinned
+-   `<ref>:<tag>@<digest>` (for example after `docker compose -f deploy/compose/compose.yaml pull`), and the application
+-   image built with `deploy/scripts/build-image.sh`:
++1. **On a connected host** that already holds every image: the images of `deploy/images.lock.json` that a Compose file
++   runs, at their pinned `<ref>:<tag>@<digest>` (in this release `postgres` and `keycloak`, for example after
++   `docker compose -f deploy/compose/compose.yaml --profile test-idp pull`), and the application image built with
++   `deploy/scripts/build-image.sh`. The bundle holds these three images (ADR-0069 A1.3):
+ 
+    ```bash
+    deploy/scripts/image-bundle.sh save --out <bundle dir> [--app-image mth-app:local]
+    ```
+ 
+    It writes `images.tar` (one `docker save` archive) and `images.json` (`mth-image-bundle/1`). For each image,
+-   `images.json` records its name, its lock digest, its image id, its size and the tar's SHA-256. An image that is not
+-   present locally, or a lock entry without a digest, stops the save (exit 2). Pull or build it first.
++   `images.json` records its name, its lock digest, its image id, its size and the tar's SHA-256. The lock images that no
++   Compose file runs are not saved. They are listed under `excluded` with the reason: the CI-only `playwright` image,
++   and `node-runtime`, whose layers already travel inside the application image. An image that is not present locally,
++   or a bundled lock entry without a digest, stops the save (exit 2). Pull or build it first.
+ 2. **Transfer** the bundle directory by IT's approved means. Compare the SHA-256 of `images.tar` with `images.json`
+    (`tar.sha256`) on arrival.
+ 3. **On the target host:**
+@@ -114,8 +117,12 @@ When the target host cannot reach any registry, not even IT's mirror, the images
+    ```
+ 
+    It checks the size and SHA-256 of `images.tar` against `images.json` **before** calling Docker. A changed tar exits 1
+-   (`image-bundle: images.tar does not match images.json (sha256)`), and `docker load` is not run. It then loads the tar
+-   and compares each image id with `images.json`. `image-bundle.sh verify --from <bundle dir>` repeats both checks
++   (`image-bundle: images.tar does not match images.json (sha256)`), and `docker load` is not run. It then checks that
++   Docker uses the **containerd image store** (`docker info` shows the driver-type `io.containerd.snapshotter.v1`). The
++   classic store does not restore the registry digest on load, so the digest-pinned names cannot resolve. On that store
++   the script stops before loading (exit 3). Enable the containerd image store and restart Docker. The script never
++   re-tags an image and never rewrites an `image:` line (ADR-0069 A1.2). It then loads the tar and compares each image
++   id with `images.json`. `image-bundle.sh verify --from <bundle dir>` repeats both checks
+    without loading.
+ 4. **Start without pulling:**
+ 
+@@ -127,12 +134,15 @@ When the target host cannot reach any registry, not even IT's mirror, the images
+    loaded images.
+ 
+ Exit codes: 0 PASS, 1 a mismatch, 2 a usage error or missing input, 3 `image-bundle: BLOCKED: docker daemon not
+-reachable`.
++reachable` or, for `load` and `verify`, `image-bundle: BLOCKED: the classic image store cannot resolve digest references
++after load (ADR-0069 A1.2); enable the containerd image store`.
+ 
+ **What has been shown, and what has not.**
+ 
+-- The script's manifest, checksum and refusal logic is tested with a stub `docker` (T-B12,
+-  `deploy/scripts/tests/image-bundle.test.mjs`).
++- The script's manifest, checksum, image selection, image-store and refusal logic is tested with a stub `docker`
++  (T-B12, `deploy/scripts/tests/image-bundle.test.mjs`).
++- That the containerd store keeps the digest after `load` and the classic store does not is the engine's documented
++  model. It has not been confirmed by a run here (ADR-0069 residual 8).
+ - A real save, removal, load and `up --pull never` needs a Docker daemon. It is the orchestrator's host run (ADR-0069
+   §6–§7); that run is recorded under the DG7 orchestrator evidence when it has happened.
+ - A load on a host that otherwise has registry access is **not** a physically air-gapped host (ADR-0069 residual 5).

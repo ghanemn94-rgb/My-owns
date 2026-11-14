@@ -1,0 +1,43 @@
+# DO-E2 host command list (handbacks/DG7/T-DG7-DO-E-devops-engineer.md §5), run inside the agent sandbox
+# MTH_SECRETS_DIR=$TMPDIR/do-e2-secrets (outside the repository)
+
+$ deploy/scripts/ensure-docker.sh
+BLOCKED: /run is read-only here (sandboxed shell); dockerd cannot create its socket
+[exit 3, 0.2 s, 2026-11-14T14:53:11Z]
+
+$ docker info --format {{.Driver}} {{json .DriverStatus}}
+ null
+permission denied while trying to connect to the docker API at unix:///var/run/docker.sock
+[exit 1, 0.1 s, 2026-11-14T14:53:11Z]
+
+$ deploy/scripts/init-secrets.sh
+created pg_superuser_password
+created mth_owner_db_password
+created mth_app_db_password
+created oidc_client_secret
+created test_idp_user_password
+created test_idp_admin_password
+derived database_url, database_owner_url
+created test-idp-ca.pem, test-idp.crt, test-idp.key (TEST IdP only; CA key discarded)
+wrote deploy/compose/.env (MTH_SECRETS_DIR only)
+secrets directory: $TMPDIR/do-e2-secrets
+[exit 0, 3.4 s, 2026-11-14T14:53:15Z]
+
+$ docker compose -f deploy/compose/compose.yaml --profile test-idp pull
+permission denied while trying to connect to the docker API at unix:///var/run/docker.sock
+[exit 1, 0.2 s, 2026-11-14T14:53:15Z]
+
+$ deploy/scripts/build-image.sh --tag mth-app:local
+BLOCKED: no Docker daemon reachable (docker info failed)
+[exit 3, 0.1 s, 2026-11-14T14:53:15Z]
+
+$ deploy/scripts/image-bundle.sh save --out $TMPDIR/do-e2-bundle --app-image mth-app:local
+image-bundle: excluded node-runtime: not run by any Compose file (usedIn: deploy/docker/Dockerfile)
+image-bundle: excluded playwright: not run by any Compose file (usedIn: .github/workflows/ci.yml)
+image-bundle: BLOCKED: docker daemon not reachable
+[exit 3, 0.3 s, 2026-11-14T14:53:15Z]
+
+$ rm -f deploy/compose/.env; rm -rf "$TMPDIR/do-e2-secrets" "$TMPDIR/do-e2-bundle"   (cleanup; docker compose down -v not run: no stack was started)
+[exit 0, 2026-11-14T14:53:27Z]
+ls: cannot access 'deploy/compose/.env': No such file or directory
+ls: cannot access '$TMPDIR/do-e2-secrets': No such file or directory
