@@ -58,6 +58,22 @@ jobs:
       - name: Secret-scan, claims-scan and controls-matrix self-tests (T-G1..T-G8)
         run: node --test tools/release/tests/secret-scan.test.mjs tools/release/tests/claims-scan.test.mjs tools/release/tests/security-controls.test.mjs
 
+  # devops-engineer (T-DG7-DO-J, ADR-0073): the release seal, A28 verification and release-notes tools on the rehearsal.
+  # REHEARSAL-PASS is not PASS: this job proves the tools, not a release (A28 runs once, after DG7 approval).
+  seal-tests:
+    needs: delivery-gates
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      TMPDIR: ${{ runner.temp }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24"
+      - name: Seal, verify-seal and release-notes self-tests (T-M1..T-M13, T-I11, T-I13 fixture half)
+        run: node --test tools/release/tests/seal.test.mjs tools/release/tests/verify-seal.test.mjs tools/release/tests/release-notes.test.mjs
+
   verify:
     needs: [delivery-gates, secret-scan]
     runs-on: ubuntu-24.04
@@ -243,7 +259,7 @@ jobs:
       - name: Install (sandboxed, frozen lockfile; BLOCKED without bubblewrap - never an unsandboxed fallback)
         run: deploy/scripts/ci-install-deps.sh
       - name: Deploy tooling self-tests (check-ci-needs negatives incl. status-function and gate-context bypasses; pin-images BLOCKED and --missing paths)
-        run: node --test deploy/scripts/tests/check-ci-needs.test.mjs deploy/scripts/tests/pin-images.test.mjs deploy/scripts/tests/log-scan.test.mjs deploy/scripts/tests/check-virtual-store.test.mjs
+        run: node --test deploy/scripts/tests/check-ci-needs.test.mjs deploy/scripts/tests/pin-images.test.mjs deploy/scripts/tests/log-scan.test.mjs deploy/scripts/tests/check-virtual-store.test.mjs deploy/scripts/tests/image-bundle.test.mjs deploy/scripts/tests/offline-drill.test.mjs deploy/scripts/tests/dockerfile-context.test.mjs
       - name: CI structure (gated on delivery-gates success; sandboxed installs only; actions pinned by SHA)
         run: node deploy/scripts/check-ci-needs.mjs
       - name: .env.example equals the ENV_VARS catalogue (names only, no values)
