@@ -17,7 +17,7 @@ Server:
   Running: 0
   Paused: 0
   Stopped: 0
- Images: 0
+ Images: 3
  Server Version: 29.9.2
  Storage Driver: overlayfs
   driver-type: io.containerd.snapshotter.v1
@@ -32,7 +32,7 @@ Server:
   /etc/cdi
   /var/run/cdi
  Swarm: inactive
- Runtimes: io.containerd.runc.v2 runc
+ Runtimes: runc io.containerd.runc.v2
  Default Runtime: runc
  Init Binary: docker-init
  containerd version: b7a25261e029d68978bbf290df0a62fc819b3c51
@@ -91,7 +91,7 @@ Server: Docker Engine - Community
   Version:          0.19.0
   GitCommit:        de40ad0
 Docker Compose version v5.6.1
-### 00 exit=0 seconds=3
+### 00 exit=0 seconds=0
 ### 01 $ deploy/scripts/init-secrets.sh --dir /tmp/claude-0/-home-user-My-owns/f7dd9c0b-2b3c-52aa-bca7-45299008f27d/scratchpad/dg7/secrets
 created pg_superuser_password
 created mth_owner_db_password
@@ -103,424 +103,629 @@ derived database_url, database_owner_url
 created test-idp-ca.pem, test-idp.crt, test-idp.key (TEST IdP only; CA key discarded)
 wrote deploy/compose/.env (MTH_SECRETS_DIR only)
 secrets directory: /tmp/claude-0/-home-user-My-owns/f7dd9c0b-2b3c-52aa-bca7-45299008f27d/scratchpad/dg7/secrets
-### 01 exit=0 seconds=2
+### 01 exit=0 seconds=1
 ### 02 $ docker compose -f deploy/compose/compose.yaml --profile test-idp pull
  Image mth-app:local Skipped 
  Image mth-app:local Skipped 
  Image mth-app:local Skipped 
  Image quay.io/keycloak/keycloak:26.8.1@sha256:a78d6b79572168cb25886b80a8b5b8d4ed4390743e3eecb810538683e209dd6b Pulling 
  Image postgres:18@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722 Pulling 
- 573f8c6c6f89 Pulling fs layer 0B
- de1e8a46402a Pulling fs layer 0B
- 25582d7c77aa Pulling fs layer 0B
- b069ba8c51be Pulling fs layer 0B
- 3b0757c8de7f Pulling fs layer 0B
- 7ee6b8b2d259 Pulling fs layer 0B
- 6b37362b3da7 Pulling fs layer 0B
- 580a6c126420 Pulling fs layer 0B
- 646f8088ba62 Pulling fs layer 0B
- 41837be3e54d Pulling fs layer 0B
- 0e422c951642 Pulling fs layer 0B
- bba753ffc208 Pulling fs layer 0B
- dc5a76842a4c Pulling fs layer 0B
- 5696a7190adf Pulling fs layer 0B
- 61c7e2f79e69 Pulling fs layer 0B
- 4640014a8e88 Pulling fs layer 0B
- 21e9cf2c46c2 Pulling fs layer 0B
- 44136fa355b3 Download complete 0B
- 203f69f0ce26 Download complete 0B
- 05d71ffe696f Download complete 0B
- 21e9cf2c46c2 Download complete 0B
- 861221eab2eb Download complete 0B
- 580a6c126420 Download complete 0B
- 7ee6b8b2d259 Download complete 0B
- 3b0757c8de7f Download complete 0B
- 6b37362b3da7 Downloading 1.049MB
- 6b37362b3da7 Downloading 15.73MB
- b069ba8c51be Downloading 4.194MB
- b069ba8c51be Downloading 12.58MB
- 6b37362b3da7 Downloading 29.83MB
- 573f8c6c6f89 Download complete 0B
- b069ba8c51be Downloading 26.21MB
- 6b37362b3da7 Download complete 0B
- bba753ffc208 Downloading 1.049MB
- 6b37362b3da7 Extracting 1B
- bba753ffc208 Downloading 18.87MB
- b069ba8c51be Downloading 33.55MB
- 646f8088ba62 Download complete 0B
- 6b37362b3da7 Extracting 1B
- bba753ffc208 Downloading 32.51MB
- b069ba8c51be Downloading 45.09MB
- 6b37362b3da7 Extracting 1B
- bba753ffc208 Downloading 45.09MB
- b069ba8c51be Downloading 56.62MB
- 6b37362b3da7 Extracting 1B
- b069ba8c51be Downloading 65.01MB
- de1e8a46402a Downloading 2.097MB
- bba753ffc208 Downloading 60.82MB
- 6b37362b3da7 Extracting 1B
- bba753ffc208 Downloading 72.35MB
- de1e8a46402a Downloading 5.243MB
- b069ba8c51be Downloading 75.5MB
- 6b37362b3da7 Extracting 1B
- de1e8a46402a Downloading 7.34MB
- b069ba8c51be Downloading 88.08MB
- bba753ffc208 Downloading 85.98MB
- 6b37362b3da7 Extracting 1B
- de1e8a46402a Downloading 17.83MB
- b069ba8c51be Downloading 99.61MB
- bba753ffc208 Downloading 94.37MB
- 6b37362b3da7 Extracting 1B
- bba753ffc208 Downloading 101.7MB
- de1e8a46402a Downloading 26.21MB
- b069ba8c51be Downloading 108MB
- 6b37362b3da7 Extracting 1B
- de1e8a46402a Downloading 34.6MB
- b069ba8c51be Downloading 115.3MB
- bba753ffc208 Downloading 111.1MB
- 6b37362b3da7 Extracting 1B
- de1e8a46402a Downloading 47.19MB
- b069ba8c51be Downloading 129MB
- bba753ffc208 Downloading 115.4MB
- 6b37362b3da7 Extracting 1B
- de1e8a46402a Downloading 59.77MB
- b069ba8c51be Downloading 137.4MB
- bba753ffc208 Download complete 0B
- 0e422c951642 Downloading 19.42kB
- 6b37362b3da7 Pull complete 0B
- b069ba8c51be Downloading 151MB
- de1e8a46402a Downloading 73.4MB
- 0e422c951642 Download complete 0B
- 41837be3e54d Download complete 0B
- 646f8088ba62 Pull complete 0B
- de1e8a46402a Downloading 84.29MB
- b069ba8c51be Downloading 165.7MB
- de1e8a46402a Download complete 0B
- 25582d7c77aa Downloading 6.291MB
- b069ba8c51be Downloading 173.8MB
- 25582d7c77aa Downloading 7.257MB
- b069ba8c51be Downloading 173.8MB
- 4640014a8e88 Downloading 1.049MB
- 25582d7c77aa Download complete 0B
- dc5a76842a4c Download complete 0B
- b069ba8c51be Download complete 0B
- 5696a7190adf Download complete 0B
- 25582d7c77aa Extracting 1B
- 61c7e2f79e69 Download complete 0B
- 4640014a8e88 Download complete 0B
- 25582d7c77aa Extracting 1B
- 61c7e2f79e69 Extracting 1B
- de1e8a46402a Extracting 1B
- 25582d7c77aa Pull complete 0B
- 61c7e2f79e69 Extracting 1B
- 21e9cf2c46c2 Extracting 1B
- de1e8a46402a Extracting 1B
- 61c7e2f79e69 Pull complete 0B
- 4640014a8e88 Pull complete 0B
- 21e9cf2c46c2 Extracting 1B
- de1e8a46402a Extracting 1B
- 21e9cf2c46c2 Pull complete 0B
- de1e8a46402a Extracting 1B
- de1e8a46402a Extracting 1B
- 580a6c126420 Pull complete 0B
- 7ee6b8b2d259 Pull complete 0B
- bba753ffc208 Extracting 1B
- 41837be3e54d Pull complete 0B
- de1e8a46402a Extracting 1B
- bba753ffc208 Extracting 1B
- bba753ffc208 Extracting 1B
- de1e8a46402a Extracting 1B
- bba753ffc208 Extracting 1B
- de1e8a46402a Extracting 1B
- de1e8a46402a Extracting 1B
- bba753ffc208 Extracting 1B
- bba753ffc208 Extracting 1B
- de1e8a46402a Extracting 1B
- de1e8a46402a Extracting 2B
- bba753ffc208 Extracting 1B
- de1e8a46402a Extracting 2B
- bba753ffc208 Extracting 1B
- de1e8a46402a Extracting 2B
- bba753ffc208 Extracting 1B
- bba753ffc208 Extracting 1B
- de1e8a46402a Extracting 2B
- de1e8a46402a Extracting 2B
- bba753ffc208 Extracting 1B
- de1e8a46402a Extracting 2B
- bba753ffc208 Extracting 2B
- bba753ffc208 Extracting 2B
- de1e8a46402a Extracting 2B
- bba753ffc208 Extracting 2B
- de1e8a46402a Extracting 2B
- de1e8a46402a Extracting 2B
- bba753ffc208 Extracting 2B
- bba753ffc208 Extracting 2B
- de1e8a46402a Extracting 2B
- bba753ffc208 Extracting 2B
- de1e8a46402a Pull complete 0B
- b069ba8c51be Extracting 1B
- bba753ffc208 Extracting 2B
- b069ba8c51be Extracting 1B
- bba753ffc208 Extracting 2B
- b069ba8c51be Extracting 1B
- b069ba8c51be Extracting 1B
- bba753ffc208 Extracting 2B
- bba753ffc208 Extracting 2B
- b069ba8c51be Extracting 1B
- bba753ffc208 Extracting 3B
- b069ba8c51be Extracting 1B
- bba753ffc208 Extracting 3B
- b069ba8c51be Extracting 1B
- b069ba8c51be Extracting 1B
- bba753ffc208 Extracting 3B
- bba753ffc208 Pull complete 0B
- b069ba8c51be Extracting 1B
- 0e422c951642 Pull complete 0B
- dc5a76842a4c Pull complete 0B
- 3b0757c8de7f Pull complete 0B
- 5696a7190adf Pull complete 0B
- Image postgres:18@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722 Pulled 
- b069ba8c51be Extracting 1B
- b069ba8c51be Extracting 1B
- b069ba8c51be Extracting 2B
- 573f8c6c6f89 Pull complete 0B
- b069ba8c51be Pull complete 0B
  Image quay.io/keycloak/keycloak:26.8.1@sha256:a78d6b79572168cb25886b80a8b5b8d4ed4390743e3eecb810538683e209dd6b Pulled 
-### 02 exit=0 seconds=8
-### 03 $ deploy/scripts/build-image.sh --tag mth-app:local
+ Image postgres:18@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722 Error unknown: failed to resolve reference "docker.io/library/postgres@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722": unexpected status from HEAD request to https://registry-1.docker.io/v2/library/postgres/manifests/sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722: 429 Too Many Requests
+Error response from daemon: unknown: failed to resolve reference "docker.io/library/postgres@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722": unexpected status from HEAD request to https://registry-1.docker.io/v2/library/postgres/manifests/sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722: 429 Too Many Requests
+Error response from daemon: unknown: failed to resolve reference "docker.io/library/postgres@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722": unexpected status from HEAD request to https://registry-1.docker.io/v2/library/postgres/manifests/sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722: 429 Too Many Requests
+### 02 exit=1 seconds=2
+### 03 $ deploy/scripts/build-image.sh --tag mth-app:local --network host --proxy-from-env --build-ca /root/.ccr/ca-bundle.crt
+proxy build args passed from the environment: HTTPS_PROXY NO_PROXY https_proxy no_proxy
 #0 building with "default" instance using docker driver
 
 #1 [internal] load build definition from Dockerfile
-#1 transferring dockerfile: 5.20kB done
+#1 transferring dockerfile: 5.62kB done
 #1 DONE 0.0s
 
 #2 [internal] load metadata for docker.io/library/node:24-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
-#2 DONE 0.6s
+#2 DONE 0.5s
 
 #3 [internal] load .dockerignore
-#3 transferring context: 1.15kB done
+#3 transferring context: 1.67kB done
 #3 DONE 0.0s
 
-#4 [build  1/14] FROM docker.io/library/node:24-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
+#4 [build  1/15] FROM docker.io/library/node:24-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
 #4 resolve docker.io/library/node:24-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6 0.0s done
-#4 DONE 0.1s
+#4 DONE 0.0s
 
 #5 [internal] load build context
-#5 transferring context: 46.06MB 0.8s done
-#5 DONE 0.8s
+#5 transferring context: 271.67kB 6.6s
+#5 transferring context: 310.25kB 6.7s done
+#5 DONE 6.7s
 
-#4 [build  1/14] FROM docker.io/library/node:24-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
-#4 sha256:a0498254f698ab1b2c7d0d1ce51ebdea22c1f01e620433118a5c764fab93a3dc 445B / 445B 0.1s done
-#4 sha256:2a11efab31915186066efa212f7ba10e7ff63c5d49d21d07c4a8377a2993e70b 1.71MB / 1.71MB 0.2s done
-#4 sha256:1c473ca5523b8180b93f87dd2961339837b4d84db4d4998197a64984462b5164 35.65MB / 50.86MB 0.6s
-#4 sha256:eab09f3e3981ba4ceab089988dd081db334f2221594d7873f6b9e123f32d2105 3.31kB / 3.31kB 0.3s done
-#4 sha256:774043ccc8ccd0d0833a9ee0792142ab7ad93df971e59dd248fbf82db16d0150 28.24MB / 28.24MB 0.7s done
-#4 sha256:1c473ca5523b8180b93f87dd2961339837b4d84db4d4998197a64984462b5164 50.86MB / 50.86MB 0.8s done
-#4 extracting sha256:774043ccc8ccd0d0833a9ee0792142ab7ad93df971e59dd248fbf82db16d0150
-#4 extracting sha256:774043ccc8ccd0d0833a9ee0792142ab7ad93df971e59dd248fbf82db16d0150 0.8s done
-#4 DONE 1.6s
+#6 [build  3/15] COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
+#6 CACHED
 
-#4 [build  1/14] FROM docker.io/library/node:24-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
-#4 extracting sha256:eab09f3e3981ba4ceab089988dd081db334f2221594d7873f6b9e123f32d2105 0.0s done
-#4 extracting sha256:1c473ca5523b8180b93f87dd2961339837b4d84db4d4998197a64984462b5164
-#4 extracting sha256:1c473ca5523b8180b93f87dd2961339837b4d84db4d4998197a64984462b5164 1.3s done
-#4 DONE 2.9s
+#7 [build  6/15] COPY apps/web/package.json apps/web/package.json
+#7 CACHED
 
-#4 [build  1/14] FROM docker.io/library/node:24-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
-#4 extracting sha256:2a11efab31915186066efa212f7ba10e7ff63c5d49d21d07c4a8377a2993e70b 0.0s done
-#4 extracting sha256:a0498254f698ab1b2c7d0d1ce51ebdea22c1f01e620433118a5c764fab93a3dc done
-#4 DONE 2.9s
+#8 [build  7/15] COPY packages/config/package.json packages/config/package.json
+#8 CACHED
 
-#6 [runtime 2/7] RUN set -eu;     rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack /opt/yarn-*;     rm -f /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack /usr/local/bin/yarn /usr/local/bin/yarnpkg;     groupadd --system --gid 10001 mth;     useradd --system --uid 10001 --gid mth --home-dir /nonexistent --no-create-home --shell /usr/sbin/nologin mth;     mkdir -p /var/lib/mth/evidence;     chown mth:mth /var/lib/mth/evidence;     chmod 0700 /var/lib/mth/evidence
-#6 ...
+#9 [build  9/15] COPY packages/design-tokens/package.json packages/design-tokens/package.json
+#9 CACHED
 
-#7 [build  2/14] WORKDIR /src
-#7 DONE 2.0s
+#10 [build  4/15] COPY apps/api/package.json apps/api/package.json
+#10 CACHED
 
-#8 [build  3/14] COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
-#8 DONE 0.1s
+#11 [build 10/15] COPY packages/reporting/package.json packages/reporting/package.json
+#11 CACHED
 
-#9 [build  4/14] COPY apps/api/package.json apps/api/package.json
-#9 DONE 0.0s
+#12 [build  2/15] WORKDIR /src
+#12 CACHED
 
-#6 [runtime 2/7] RUN set -eu;     rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack /opt/yarn-*;     rm -f /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack /usr/local/bin/yarn /usr/local/bin/yarnpkg;     groupadd --system --gid 10001 mth;     useradd --system --uid 10001 --gid mth --home-dir /nonexistent --no-create-home --shell /usr/sbin/nologin mth;     mkdir -p /var/lib/mth/evidence;     chown mth:mth /var/lib/mth/evidence;     chmod 0700 /var/lib/mth/evidence
-#6 ...
+#13 [build  5/15] COPY apps/worker/package.json apps/worker/package.json
+#13 CACHED
 
-#10 [build  5/14] COPY apps/worker/package.json apps/worker/package.json
-#10 DONE 0.0s
+#14 [build  8/15] COPY packages/db/package.json packages/db/package.json
+#14 CACHED
 
-#11 [build  6/14] COPY apps/web/package.json apps/web/package.json
-#11 DONE 0.0s
+#15 [build 11/15] COPY packages/shared/package.json packages/shared/package.json
+#15 CACHED
 
-#12 [build  7/14] COPY packages/config/package.json packages/config/package.json
-#12 DONE 0.0s
+#16 [build 12/15] RUN --mount=type=secret,id=build_ca,required=false     set -eu;     if [ -s /run/secrets/build_ca ]; then export NODE_EXTRA_CA_CERTS=/run/secrets/build_ca; fi;     if [ -n "" ]; then export npm_config_registry="" COREPACK_NPM_REGISTRY=""; fi;     mkdir -p "/pnpm";     corepack enable --install-directory "/pnpm";     pnpm --version;     pnpm install --frozen-lockfile
+#16 1.575 10.33.0
+#16 1.949 Scope: all 9 workspace projects
+#16 2.026 Lockfile is up to date, resolution step is skipped
+#16 2.074 Progress: resolved 1, reused 0, downloaded 0, added 0
+#16 2.134 Packages: +432
+#16 2.134 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#16 3.084 Progress: resolved 432, reused 0, downloaded 115, added 104
+#16 4.082 Progress: resolved 432, reused 0, downloaded 121, added 108
+#16 8.696 Progress: resolved 432, reused 0, downloaded 122, added 108
+#16 9.697 Progress: resolved 432, reused 0, downloaded 122, added 109
+#16 13.23 Progress: resolved 432, reused 0, downloaded 123, added 109
+#16 14.52 Progress: resolved 432, reused 0, downloaded 124, added 109
+#16 15.53 Progress: resolved 432, reused 0, downloaded 125, added 109
+#16 18.48 Progress: resolved 432, reused 0, downloaded 126, added 109
+#16 19.48 Progress: resolved 432, reused 0, downloaded 126, added 110
+#16 20.48 Progress: resolved 432, reused 0, downloaded 128, added 110
+#16 21.49 Progress: resolved 432, reused 0, downloaded 384, added 381
+#16 21.70 Progress: resolved 432, reused 0, downloaded 432, added 432, done
+#16 21.96  WARN  Failed to create bin at /src/apps/api/node_modules/.bin/mth-db. ENOENT: no such file or directory, open '/src/packages/db/dist/cli.js'
+#16 21.96  WARN  Failed to create bin at /src/apps/worker/node_modules/.bin/mth-db. ENOENT: no such file or directory, open '/src/packages/db/dist/cli.js'
+#16 22.02 
+#16 22.02 devDependencies:
+#16 22.02 + @apidevtools/swagger-parser 10.1.1
+#16 22.02 + @axe-core/playwright 4.10.2
+#16 22.02 + @playwright/test 1.56.1
+#16 22.02 + @types/node 22.18.0
+#16 22.02 + eslint 10.1.0
+#16 22.02 + eslint-plugin-react-hooks 7.1.1
+#16 22.02 + openapi-types 12.1.3
+#16 22.02 + prettier 3.8.1
+#16 22.02 + typescript 6.0.2
+#16 22.02 + typescript-eslint 8.71.0
+#16 22.02 + vitest 3.2.7
+#16 22.02 
+#16 22.05  WARN  Failed to create bin at /src/apps/worker/node_modules/.bin/mth-db. ENOENT: no such file or directory, open '/src/apps/worker/node_modules/@mth/db/dist/cli.js'
+#16 22.05  WARN  Failed to create bin at /src/apps/api/node_modules/.bin/mth-db. ENOENT: no such file or directory, open '/src/apps/api/node_modules/@mth/db/dist/cli.js'
+#16 22.07 Done in 20.4s using pnpm v10.33.0
+#16 DONE 28.9s
 
-#13 [build  8/14] COPY packages/db/package.json packages/db/package.json
-#13 DONE 0.0s
+#17 [build 13/15] COPY . .
+#17 DONE 1.6s
 
-#14 [build  9/14] COPY packages/design-tokens/package.json packages/design-tokens/package.json
-#14 DONE 0.0s
+#18 [build 14/15] RUN pnpm -r build
+#18 0.434 Scope: 8 of 9 workspace projects
+#18 0.437 packages/design-tokens build$ tsc -p tsconfig.build.json && node src/cli.ts generate
+#18 0.438 packages/shared build$ tsc -p tsconfig.build.json
+#18 1.838 packages/design-tokens build: generated /src/packages/design-tokens/dist/tokens.css
+#18 1.846 packages/design-tokens build: Done
+#18 6.071 packages/shared build: Done
+#18 6.072 apps/web build$ tsc -p tsconfig.json && vite build
+#18 6.072 packages/reporting build$ tsc -p tsconfig.build.json
+#18 6.073 packages/config build$ tsc -p tsconfig.build.json
+#18 8.949 packages/config build: Done
+#18 9.293 packages/reporting build: Done
+#18 55.05 apps/web build: [36mvite v7.3.7 [32mbuilding client environment for production...[36m[39m
+#18 55.12 apps/web build: transforming...
+#18 57.72 apps/web build: [33m../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
+#18 57.73 apps/web build: "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
+#18 57.73 apps/web build:  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
+#18 57.73 apps/web build:  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
+#18 57.73 apps/web build: in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.[39m
+#18 57.73 apps/web build: [33m../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
+#18 57.73 apps/web build: "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
+#18 57.73 apps/web build: in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.[39m
+#18 61.38 apps/web build: [32m✓[39m 816 modules transformed.
+#18 62.21 apps/web build: rendering chunks...
+#18 64.10 apps/web build: computing gzip size...
+#18 64.45 apps/web build: [2mdist/[22m[32mindex.html                                                    [39m[1m[2m    1.11 kB[22m[1m[22m[2m │ gzip:   0.48 kB[22m
+#18 64.45 apps/web build: [2mdist/[22m[2massets/[22m[32mibm-plex-sans-latin-400-normal-CYLoc0-x.woff           [39m[1m[2m   22.10 kB[22m[1m[22m
+#18 64.45 apps/web build: [2mdist/[22m[2massets/[22m[32mibm-plex-sans-latin-400-normal-CDDApCn2.woff2          [39m[1m[2m   22.59 kB[22m[1m[22m
+#18 64.45 apps/web build: [2mdist/[22m[2massets/[22m[32mibm-plex-sans-latin-600-normal-Cu4Hd6ag.woff           [39m[1m[2m   23.88 kB[22m[1m[22m
+#18 64.45 apps/web build: [2mdist/[22m[2massets/[22m[32mibm-plex-sans-latin-500-normal-BgVn5rGT.woff           [39m[1m[2m   23.92 kB[22m[1m[22m
+#18 64.45 apps/web build: [2mdist/[22m[2massets/[22m[32mibm-plex-sans-latin-500-normal-6ng42L7E.woff2          [39m[1m[2m   24.18 kB[22m[1m[22m
+#18 64.45 apps/web build: [2mdist/[22m[2massets/[22m[32mibm-plex-sans-latin-600-normal-CuJfVYMP.woff2          [39m[1m[2m   24.25 kB[22m[1m[22m
+#18 64.45 apps/web build: [2mdist/[22m[2massets/[22m[32mibm-plex-sans-arabic-arabic-400-normal-BM00HIL5.woff2  [39m[1m[2m   42.88 kB[22m[1m[22m
+#18 64.45 apps/web build: [2mdist/[22m[2massets/[22m[32mibm-plex-sans-arabic-arabic-400-normal-D-ylXcdQ.woff   [39m[1m[2m   44.18 kB[22m[1m[22m
+#18 64.45 apps/web build: [2mdist/[22m[2massets/[22m[32mibm-plex-sans-arabic-arabic-500-normal-CVSLUoBh.woff2  [39m[1m[2m   45.49 kB[22m[1m[22m
+#18 64.45 apps/web build: [2mdist/[22m[2massets/[22m[32mibm-plex-sans-arabic-arabic-600-normal-a0NpOJIw.woff2  [39m[1m[2m   45.73 kB[22m[1m[22m
+#18 64.45 apps/web build: [2mdist/[22m[2massets/[22m[32mibm-plex-sans-arabic-arabic-600-normal-BQ7tCLaK.woff   [39m[1m[2m   46.83 kB[22m[1m[22m
+#18 64.45 apps/web build: [2mdist/[22m[2massets/[22m[32mibm-plex-sans-arabic-arabic-500-normal-DCkCZrW1.woff   [39m[1m[2m   46.96 kB[22m[1m[22m
+#18 64.45 apps/web build: [2mdist/[22m[2massets/[22m[35mpanels-BOxaP_-H.css                                    [39m[1m[2m    0.89 kB[22m[1m[22m[2m │ gzip:   0.37 kB[22m
+#18 64.45 apps/web build: [2mdist/[22m[2massets/[22m[35mintegrations-CKRMmDWb.css                              [39m[1m[2m    1.27 kB[22m[1m[22m[2m │ gzip:   0.51 kB[22m
+#18 64.45 apps/web build: [2mdist/[22m[2massets/[22m[35mRecordForm-D4B1akcy.css                                [39m[1m[2m    1.51 kB[22m[1m[22m[2m │ gzip:   0.48 kB[22m
+#18 64.45 apps/web build: [2mdist/[22m[2massets/[22m[35mvendor-DXNDhYAL.css                                    [39m[1m[2m    1.52 kB[22m[1m[22m[2m │ gzip:   0.33 kB[22m
+#18 64.45 apps/web build: [2mdist/[22m[2massets/[22m[35mindex-CowLZ_Uu.css                                     [39m[1m[2m   39.06 kB[22m[1m[22m[2m │ gzip:   6.91 kB[22m
+#18 64.45 apps/web build: [2mdist/[22m[2massets/[22m[36mTableScrollRegion-DUOvDBJ3.js                          [39m[1m[2m    0.39 kB[22m[1m[22m[2m │ gzip:   0.29 kB[22m[2m │ map:     1.87 kB[22m
+#18 64.45 apps/web build: [2mdist/[22m[2massets/[22m[36mapi-PqEb4THq.js                                        [39m[1m[2m    0.50 kB[22m[1m[22m[2m │ gzip:   0.32 kB[22m[2m │ map:     4.39 kB[22m
+#18 64.45 apps/web build: [2mdist/[22m[2massets/[22m[36mapi-1KmIyBOM.js                                        [39m[1m[2m    0.55 kB[22m[1m[22m[2m │ gzip:   0.33 kB[22m[2m │ map:     6.96 kB[22m
+#18 64.45 apps/web build: [2mdist/[22m[2massets/[22m[36mP6NotAvailablePage-DJbtVX2o.js                         [39m[1m[2m    0.61 kB[22m[1m[22m[2m │ gzip:   0.38 kB[22m[2m │ map:     1.64 kB[22m
+#18 64.45 apps/web build: [2mdist/[22m[2massets/[22m[36mP7NotAvailablePage-DaeDYU--.js                         [39m[1m[2m    0.61 kB[22m[1m[22m[2m │ gzip:   0.38 kB[22m[2m │ map:     1.67 kB[22m
+#18 64.45 apps/web build: [2mdist/[22m[2massets/[22m[36mRestrictedRecordsLabel-DYhIP40b.js                     [39m[1m[2m    0.65 kB[22m[1m[22m[2m │ gzip:   0.40 kB[22m[2m │ map:     2.18 kB[22m
+#18 64.45 apps/web build: [2mdist/[22m[2massets/[22m[36mactions-BwIykmt5.js                                    [39m[1m[2m    0.67 kB[22m[1m[22m[2m │ gzip:   0.46 kB[22m[2m │ map:     2.58 kB[22m
+#18 64.45 apps/web build: [2mdist/[22m[2massets/[22m[36mUnplacedFieldErrors-DPX9VmIh.js                        [39m[1m[2m    0.72 kB[22m[1m[22m[2m │ gzip:   0.42 kB[22m[2m │ map:     2.83 kB[22m
+#18 64.45 apps/web build: [2mdist/[22m[2massets/[22m[36mExtensionBadge-CDx95gAN.js                             [39m[1m[2m    0.77 kB[22m[1m[22m[2m │ gzip:   0.41 kB[22m[2m │ map:     2.97 kB[22m
+#18 64.45 apps/web build: [2mdist/[22m[2massets/[22m[36mmethodology-C1sYRf_3.js                                [39m[1m[2m    0.81 kB[22m[1m[22m[2m │ gzip:   0.35 kB[22m[2m │ map:     3.93 kB[22m
+#18 64.45 apps/web build: [2mdist/[22m[2massets/[22m[36mapi-Dp-A-gj1.js                                        [39m[1m[2m    0.92 kB[22m[1m[22m[2m │ gzip:   0.45 kB[22m[2m │ map:     3.99 kB[22m
+#18 64.45 apps/web build: [2mdist/[22m[2massets/[22m[36mvendor-CCMBgAGF.js                                     [39m[1m[2m    0.96 kB[22m[1m[22m[2m │ gzip:   0.52 kB[22m[2m │ map:     4.19 kB[22m
+#18 64.45 apps/web build: [2mdist/[22m[2massets/[22m[36mBadges-DO_uAVqL.js                                     [39m[1m[2m    0.99 kB[22m[1m[22m[2m │ gzip:   0.49 kB[22m[2m │ map:     3.78 kB[22m
+#18 64.45 apps/web build: [2mdist/[22m[2massets/[22m[36mapi-C04WiPNz.js                                        [39m[1m[2m    0.99 kB[22m[1m[22m[2m │ gzip:   0.50 kB[22m[2m │ map:     4.11 kB[22m
+#18 64.46 apps/web build: [2mdist/[22m[2massets/[22m[36mapi-BroXPK2d.js                                        [39m[1m[2m    1.02 kB[22m[1m[22m[2m │ gzip:   0.56 kB[22m[2m │ map:     5.04 kB[22m
+#18 64.46 apps/web build: [2mdist/[22m[2massets/[22m[36mmessages-BHrEGz5F.js                                   [39m[1m[2m    1.05 kB[22m[1m[22m[2m │ gzip:   0.62 kB[22m[2m │ map:     4.82 kB[22m
+#18 64.46 apps/web build: [2mdist/[22m[2massets/[22m[36mSection-D-SLzEmE.js                                    [39m[1m[2m    1.08 kB[22m[1m[22m[2m │ gzip:   0.50 kB[22m[2m │ map:     3.12 kB[22m
+#18 64.46 apps/web build: [2mdist/[22m[2massets/[22m[36mui-Bv9xR71a.js                                         [39m[1m[2m    1.24 kB[22m[1m[22m[2m │ gzip:   0.74 kB[22m[2m │ map:     5.63 kB[22m
+#18 64.46 apps/web build: [2mdist/[22m[2massets/[22m[36mapi-BEk0DYCy.js                                        [39m[1m[2m    1.31 kB[22m[1m[22m[2m │ gzip:   0.57 kB[22m[2m │ map:     5.60 kB[22m
+#18 64.46 apps/web build: [2mdist/[22m[2massets/[22m[36mdialogs-Dda6HVN2.js                                    [39m[1m[2m    1.35 kB[22m[1m[22m[2m │ gzip:   0.77 kB[22m[2m │ map:     5.11 kB[22m
+#18 64.46 apps/web build: [2mdist/[22m[2massets/[22m[36mapi-qFzH3l9t.js                                        [39m[1m[2m    1.38 kB[22m[1m[22m[2m │ gzip:   0.59 kB[22m[2m │ map:     5.41 kB[22m
+#18 64.46 apps/web build: [2mdist/[22m[2massets/[22m[36mapi-CtzCyUPo.js                                        [39m[1m[2m    1.40 kB[22m[1m[22m[2m │ gzip:   0.60 kB[22m[2m │ map:     5.81 kB[22m
+#18 64.46 apps/web build: [2mdist/[22m[2massets/[22m[36museVersionedSave-Cns4QG8c.js                           [39m[1m[2m    1.44 kB[22m[1m[22m[2m │ gzip:   0.73 kB[22m[2m │ map:     7.63 kB[22m
+#18 64.46 apps/web build: [2mdist/[22m[2massets/[22m[36mReasonDialog-0yTBuDxW.js                               [39m[1m[2m    1.47 kB[22m[1m[22m[2m │ gzip:   0.83 kB[22m[2m │ map:     6.32 kB[22m
+#18 64.46 apps/web build: [2mdist/[22m[2massets/[22m[36mPeople-Ci66v0gj.js                                     [39m[1m[2m    1.50 kB[22m[1m[22m[2m │ gzip:   0.83 kB[22m[2m │ map:     5.50 kB[22m
+#18 64.46 apps/web build: [2mdist/[22m[2massets/[22m[36mMigrationsEntryPage-BL1toKfW.js                        [39m[1m[2m    1.66 kB[22m[1m[22m[2m │ gzip:   0.76 kB[22m[2m │ map:     4.17 kB[22m
+#18 64.46 apps/web build: [2mdist/[22m[2massets/[22m[36mProvenanceBadge-Bv06Hvx0.js                            [39m[1m[2m    1.68 kB[22m[1m[22m[2m │ gzip:   0.76 kB[22m[2m │ map:     5.62 kB[22m
+#18 64.46 apps/web build: [2mdist/[22m[2massets/[22m[36mui-CmcmtP6Z.js                                         [39m[1m[2m    1.82 kB[22m[1m[22m[2m │ gzip:   0.93 kB[22m[2m │ map:     7.08 kB[22m
+#18 64.46 apps/web build: [2mdist/[22m[2massets/[22m[36mDeepLinkPage-CYezIM-r.js                               [39m[1m[2m    1.84 kB[22m[1m[22m[2m │ gzip:   0.85 kB[22m[2m │ map:     5.67 kB[22m
+#18 64.46 apps/web build: [2mdist/[22m[2massets/[22m[36mAdminHomePage-tVkVL0pY.js                              [39m[1m[2m    1.85 kB[22m[1m[22m[2m │ gzip:   0.80 kB[22m[2m │ map:     5.22 kB[22m
+#18 64.46 apps/web build: [2mdist/[22m[2massets/[22m[36mcommon-Df00hoBZ.js                                     [39m[1m[2m    1.91 kB[22m[1m[22m[2m │ gzip:   0.87 kB[22m[2m │ map:     6.14 kB[22m
+#18 64.46 apps/web build: [2mdist/[22m[2massets/[22m[36mAmount-BF3VavXK.js                                     [39m[1m[2m    1.92 kB[22m[1m[22m[2m │ gzip:   0.75 kB[22m[2m │ map:     5.75 kB[22m
+#18 64.46 apps/web build: [2mdist/[22m[2massets/[22m[36mportfolio-DKSUNVAx.js                                  [39m[1m[2m    1.99 kB[22m[1m[22m[2m │ gzip:   0.80 kB[22m[2m │ map:     8.70 kB[22m
+#18 64.46 apps/web build: [2mdist/[22m[2massets/[22m[36mTransformReadinessPage-B2KOMCg9.js                     [39m[1m[2m    2.13 kB[22m[1m[22m[2m │ gzip:   0.94 kB[22m[2m │ map:     5.59 kB[22m
+#18 64.46 apps/web build: [2mdist/[22m[2massets/[22m[36mui-Cr_FIdE6.js                                         [39m[1m[2m    2.27 kB[22m[1m[22m[2m │ gzip:   0.99 kB[22m[2m │ map:     8.09 kB[22m
+#18 64.46 apps/web build: [2mdist/[22m[2massets/[22m[36mSecurityPage-DqDCiISu.js                               [39m[1m[2m    2.41 kB[22m[1m[22m[2m │ gzip:   0.98 kB[22m[2m │ map:     5.97 kB[22m
+#18 64.46 apps/web build: [2mdist/[22m[2massets/[22m[36mDecisionLogPage-C8e34QQd.js                            [39m[1m[2m    2.45 kB[22m[1m[22m[2m │ gzip:   1.08 kB[22m[2m │ map:     6.60 kB[22m
+#18 64.46 apps/web build: [2mdist/[22m[2massets/[22m[36mp4api-Cu_4Xi9B.js                                      [39m[1m[2m    2.57 kB[22m[1m[22m[2m │ gzip:   0.99 kB[22m[2m │ map:    12.20 kB[22m
+#18 64.47 apps/web build: [2mdist/[22m[2massets/[22m[36mapi-DkihuWgZ.js                                        [39m[1m[2m    2.61 kB[22m[1m[22m[2m │ gzip:   1.27 kB[22m[2m │ map:    14.84 kB[22m
+#18 64.47 apps/web build: [2mdist/[22m[2massets/[22m[36mapi-DFGJRfnC.js                                        [39m[1m[2m    2.66 kB[22m[1m[22m[2m │ gzip:   1.01 kB[22m[2m │ map:    15.51 kB[22m
+#18 64.47 apps/web build: [2mdist/[22m[2massets/[22m[36mApprovalRecordsPage-CG6UpOYK.js                        [39m[1m[2m    2.76 kB[22m[1m[22m[2m │ gzip:   1.17 kB[22m[2m │ map:     7.27 kB[22m
+#18 64.47 apps/web build: [2mdist/[22m[2massets/[22m[36mp3ui-CiJPQatG.js                                       [39m[1m[2m    2.80 kB[22m[1m[22m[2m │ gzip:   1.27 kB[22m[2m │ map:    10.50 kB[22m
+#18 64.47 apps/web build: [2mdist/[22m[2massets/[22m[36mFormBuilderPage-BGiTU8Su.js                            [39m[1m[2m    2.90 kB[22m[1m[22m[2m │ gzip:   1.16 kB[22m[2m │ map:     7.37 kB[22m
+#18 64.47 apps/web build: [2mdist/[22m[2massets/[22m[36mui-BEez7cve.js                                         [39m[1m[2m    2.90 kB[22m[1m[22m[2m │ gzip:   1.19 kB[22m[2m │ map:     8.70 kB[22m
+#18 64.47 apps/web build: [2mdist/[22m[2massets/[22m[36mIdentityPage-CAvAmien.js                               [39m[1m[2m    2.95 kB[22m[1m[22m[2m │ gzip:   1.03 kB[22m[2m │ map:     7.76 kB[22m
+#18 64.47 apps/web build: [2mdist/[22m[2massets/[22m[36mapi-BmDSc2xj.js                                        [39m[1m[2m    3.05 kB[22m[1m[22m[2m │ gzip:   1.00 kB[22m[2m │ map:    24.30 kB[22m
+#18 64.47 apps/web build: [2mdist/[22m[2massets/[22m[36mapi-v1PonL9X.js                                        [39m[1m[2m    3.07 kB[22m[1m[22m[2m │ gzip:   0.87 kB[22m[2m │ map:    12.48 kB[22m
+#18 64.47 apps/web build: [2mdist/[22m[2massets/[22m[36mui-oSdiGlNf.js                                         [39m[1m[2m    3.09 kB[22m[1m[22m[2m │ gzip:   1.43 kB[22m[2m │ map:    12.63 kB[22m
+#18 64.47 apps/web build: [2mdist/[22m[2massets/[22m[36mui-DPtIuzAa.js                                         [39m[1m[2m    3.12 kB[22m[1m[22m[2m │ gzip:   1.29 kB[22m[2m │ map:    10.02 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mP2Badges-2brtpKIv.js                                   [39m[1m[2m    3.17 kB[22m[1m[22m[2m │ gzip:   1.11 kB[22m[2m │ map:     9.55 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mReviewPoliciesPage-BODiLgcu.js                         [39m[1m[2m    3.26 kB[22m[1m[22m[2m │ gzip:   1.26 kB[22m[2m │ map:     9.07 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mWalkthroughPage-CGVyWkpB.js                            [39m[1m[2m    3.27 kB[22m[1m[22m[2m │ gzip:   1.30 kB[22m[2m │ map:    10.04 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mui-Bq1iS-76.js                                         [39m[1m[2m    3.32 kB[22m[1m[22m[2m │ gzip:   1.43 kB[22m[2m │ map:    11.59 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mTransformationDashboardPage-Cyxvng1n.js                [39m[1m[2m    3.33 kB[22m[1m[22m[2m │ gzip:   1.31 kB[22m[2m │ map:     9.74 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mExportDialog-2ztHqsAQ.js                               [39m[1m[2m    3.39 kB[22m[1m[22m[2m │ gzip:   1.42 kB[22m[2m │ map:    10.55 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mui-B3Zd03Fa.js                                         [39m[1m[2m    3.40 kB[22m[1m[22m[2m │ gzip:   1.52 kB[22m[2m │ map:    17.70 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mConfigPinsPage-Cq9QYqJu.js                             [39m[1m[2m    3.49 kB[22m[1m[22m[2m │ gzip:   1.12 kB[22m[2m │ map:     9.67 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mRevisionProposalsPage-C3dWE8xV.js                      [39m[1m[2m    3.50 kB[22m[1m[22m[2m │ gzip:   1.33 kB[22m[2m │ map:    10.12 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mMyDraftsPage-vvEoV8xr.js                               [39m[1m[2m    3.62 kB[22m[1m[22m[2m │ gzip:   1.41 kB[22m[2m │ map:     9.84 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mapi-B13gEFaI.js                                        [39m[1m[2m    3.69 kB[22m[1m[22m[2m │ gzip:   1.11 kB[22m[2m │ map:    16.27 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mRowActions-DxlTdMNk.js                                 [39m[1m[2m    3.70 kB[22m[1m[22m[2m │ gzip:   1.49 kB[22m[2m │ map:    14.01 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mHomeRegions-C_a2x3j5.js                                [39m[1m[2m    3.88 kB[22m[1m[22m[2m │ gzip:   1.48 kB[22m[2m │ map:    14.06 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mCoveragePage-BsOhXV3v.js                               [39m[1m[2m    3.94 kB[22m[1m[22m[2m │ gzip:   1.46 kB[22m[2m │ map:     9.61 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mRegisterTable-BSvle78X.js                              [39m[1m[2m    3.97 kB[22m[1m[22m[2m │ gzip:   1.72 kB[22m[2m │ map:    15.40 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mJobsPage-INn0mlgE.js                                   [39m[1m[2m    4.00 kB[22m[1m[22m[2m │ gzip:   1.63 kB[22m[2m │ map:    11.53 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mui-CSMYSWS9.js                                         [39m[1m[2m    4.02 kB[22m[1m[22m[2m │ gzip:   1.49 kB[22m[2m │ map:    14.45 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mapi-Di8kjDNZ.js                                        [39m[1m[2m    4.02 kB[22m[1m[22m[2m │ gzip:   1.05 kB[22m[2m │ map:    16.30 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mapi-CuMtpvFX.js                                        [39m[1m[2m    4.05 kB[22m[1m[22m[2m │ gzip:   1.40 kB[22m[2m │ map:    17.42 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mshared-DTxsCmsU.js                                     [39m[1m[2m    4.22 kB[22m[1m[22m[2m │ gzip:   1.55 kB[22m[2m │ map:    15.87 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mReviewPage-5AetYfZP.js                                 [39m[1m[2m    4.22 kB[22m[1m[22m[2m │ gzip:   1.58 kB[22m[2m │ map:    12.19 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mDataQualityPage-DBGTMh_8.js                            [39m[1m[2m    4.27 kB[22m[1m[22m[2m │ gzip:   1.74 kB[22m[2m │ map:    11.59 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mfinance-D1QjZWGD.js                                    [39m[1m[2m    4.29 kB[22m[1m[22m[2m │ gzip:   1.95 kB[22m[2m │ map:    17.86 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mDataTable-2ge-itkA.js                                  [39m[1m[2m    4.45 kB[22m[1m[22m[2m │ gzip:   1.81 kB[22m[2m │ map:    17.14 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mSourceCoveragePage-DFLzuZZh.js                         [39m[1m[2m    4.49 kB[22m[1m[22m[2m │ gzip:   1.62 kB[22m[2m │ map:    13.32 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mCutoffPackPage-D09KCzly.js                             [39m[1m[2m    4.60 kB[22m[1m[22m[2m │ gzip:   1.64 kB[22m[2m │ map:    12.10 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mui-E6annhjk.js                                         [39m[1m[2m    4.63 kB[22m[1m[22m[2m │ gzip:   1.56 kB[22m[2m │ map:    17.94 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mGatesPage-Ct7z53Bw.js                                  [39m[1m[2m    4.64 kB[22m[1m[22m[2m │ gzip:   1.76 kB[22m[2m │ map:    15.54 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mslips-BJhWMVx5.js                                      [39m[1m[2m    4.71 kB[22m[1m[22m[2m │ gzip:   1.62 kB[22m[2m │ map:    15.19 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mapi-AZtPf-Uu.js                                        [39m[1m[2m    4.73 kB[22m[1m[22m[2m │ gzip:   1.31 kB[22m[2m │ map:    19.33 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mProceduresAdminPage-Btc3A8Fw.js                        [39m[1m[2m    4.75 kB[22m[1m[22m[2m │ gzip:   1.89 kB[22m[2m │ map:    13.37 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mui-BS52arTW.js                                         [39m[1m[2m    4.86 kB[22m[1m[22m[2m │ gzip:   1.99 kB[22m[2m │ map:    18.55 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mcommon-C2gxEDCr.js                                     [39m[1m[2m    4.91 kB[22m[1m[22m[2m │ gzip:   1.99 kB[22m[2m │ map:    18.65 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mExecutiveOverviewPage-Cyyo5CMT.js                      [39m[1m[2m    4.96 kB[22m[1m[22m[2m │ gzip:   2.11 kB[22m[2m │ map:    16.32 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mPresentationPage-Ytvful4D.js                           [39m[1m[2m    4.97 kB[22m[1m[22m[2m │ gzip:   1.76 kB[22m[2m │ map:    13.85 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mapi-Do9IVZM5.js                                        [39m[1m[2m    4.99 kB[22m[1m[22m[2m │ gzip:   1.18 kB[22m[2m │ map:    21.17 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mGateConditionsPage-CoziEzAG.js                         [39m[1m[2m    5.14 kB[22m[1m[22m[2m │ gzip:   1.98 kB[22m[2m │ map:    14.69 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mWorkspace-CS9-08UE.js                                  [39m[1m[2m    5.16 kB[22m[1m[22m[2m │ gzip:   1.83 kB[22m[2m │ map:    17.27 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mapi-DLEfmWgq.js                                        [39m[1m[2m    5.19 kB[22m[1m[22m[2m │ gzip:   1.46 kB[22m[2m │ map:    22.83 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mMyWorkSections-DR44nYnW.js                             [39m[1m[2m    5.21 kB[22m[1m[22m[2m │ gzip:   1.98 kB[22m[2m │ map:    16.64 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mMeetingsPage-DlGzky1z.js                               [39m[1m[2m    5.38 kB[22m[1m[22m[2m │ gzip:   2.08 kB[22m[2m │ map:    15.41 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mHealthSchemesPage-CNyAiSDW.js                          [39m[1m[2m    5.45 kB[22m[1m[22m[2m │ gzip:   1.62 kB[22m[2m │ map:    14.18 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mEnvironmentPage-BicU9HT4.js                            [39m[1m[2m    5.45 kB[22m[1m[22m[2m │ gzip:   1.82 kB[22m[2m │ map:    15.02 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mMigrationsPage-CPf9XsA9.js                             [39m[1m[2m    5.56 kB[22m[1m[22m[2m │ gzip:   1.85 kB[22m[2m │ map:    16.40 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mMappingsPage-CGiiCOBi.js                               [39m[1m[2m    5.59 kB[22m[1m[22m[2m │ gzip:   2.11 kB[22m[2m │ map:    17.32 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mRagPolicyPage-ClxQZAVb.js                              [39m[1m[2m    5.61 kB[22m[1m[22m[2m │ gzip:   2.30 kB[22m[2m │ map:    18.80 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mUploadPolicyPage-C8yf9TtT.js                           [39m[1m[2m    5.73 kB[22m[1m[22m[2m │ gzip:   2.18 kB[22m[2m │ map:    16.69 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mStudioFormDialog-C2k0NP5_.js                           [39m[1m[2m    5.73 kB[22m[1m[22m[2m │ gzip:   2.31 kB[22m[2m │ map:    21.76 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mAboutReleasePage-D8VvzhBb.js                           [39m[1m[2m    5.88 kB[22m[1m[22m[2m │ gzip:   1.77 kB[22m[2m │ map:    17.04 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mRoleMappingsPage-ykkOSJ8z.js                           [39m[1m[2m    5.88 kB[22m[1m[22m[2m │ gzip:   2.10 kB[22m[2m │ map:    16.99 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mStudioPage-C7qL6nRs.js                                 [39m[1m[2m    5.98 kB[22m[1m[22m[2m │ gzip:   2.27 kB[22m[2m │ map:    18.93 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mRecordPage-C-v4Kk2a.js                                 [39m[1m[2m    5.98 kB[22m[1m[22m[2m │ gzip:   2.14 kB[22m[2m │ map:    16.49 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mp4ui-jS4o2g92.js                                       [39m[1m[2m    6.00 kB[22m[1m[22m[2m │ gzip:   2.55 kB[22m[2m │ map:    25.17 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mp6-DhFK5_w4.js                                         [39m[1m[2m    6.06 kB[22m[1m[22m[2m │ gzip:   1.68 kB[22m[2m │ map:    32.65 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mSensitivityPanel-_nls04Cs.js                           [39m[1m[2m    6.17 kB[22m[1m[22m[2m │ gzip:   2.13 kB[22m[2m │ map:    18.46 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mDayNinetyTestPage-CSby_tVp.js                          [39m[1m[2m    6.23 kB[22m[1m[22m[2m │ gzip:   2.23 kB[22m[2m │ map:    17.72 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mExportsPage-CkYd0RV1.js                                [39m[1m[2m    6.23 kB[22m[1m[22m[2m │ gzip:   2.30 kB[22m[2m │ map:    18.77 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mBlockPage-B4P3BO1Q.js                                  [39m[1m[2m    6.40 kB[22m[1m[22m[2m │ gzip:   2.28 kB[22m[2m │ map:    18.94 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mMyProceduresPage-BK90wZV1.js                           [39m[1m[2m    6.59 kB[22m[1m[22m[2m │ gzip:   2.24 kB[22m[2m │ map:    19.97 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mReadinessPage-CFrzIj5W.js                              [39m[1m[2m    6.62 kB[22m[1m[22m[2m │ gzip:   1.95 kB[22m[2m │ map:    17.41 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mui-DwTs8913.js                                         [39m[1m[2m    6.68 kB[22m[1m[22m[2m │ gzip:   2.47 kB[22m[2m │ map:    22.44 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mSearchPage-BRCChnVr.js                                 [39m[1m[2m    6.76 kB[22m[1m[22m[2m │ gzip:   2.57 kB[22m[2m │ map:    21.83 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mjobsOperations-D0kdx1PQ.js                             [39m[1m[2m    6.77 kB[22m[1m[22m[2m │ gzip:   2.07 kB[22m[2m │ map:    17.98 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mp4-zOyUOr9T.js                                         [39m[1m[2m    6.84 kB[22m[1m[22m[2m │ gzip:   2.10 kB[22m[2m │ map:    28.39 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mFormulaPreviewPage-BDlDtVMb.js                         [39m[1m[2m    6.91 kB[22m[1m[22m[2m │ gzip:   2.16 kB[22m[2m │ map:    18.87 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mServiceIdentitiesPages-KO_0Xevf.js                     [39m[1m[2m    6.95 kB[22m[1m[22m[2m │ gzip:   2.25 kB[22m[2m │ map:    19.30 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mMyWorkPage-DCdGAZqg.js                                 [39m[1m[2m    6.95 kB[22m[1m[22m[2m │ gzip:   2.38 kB[22m[2m │ map:    21.17 kB[22m
+#18 64.48 apps/web build: [2mdist/[22m[2massets/[22m[36mImprovementPage-DeXAwHKR.js                            [39m[1m[2m    7.03 kB[22m[1m[22m[2m │ gzip:   2.47 kB[22m[2m │ map:    19.72 kB[22m
+#18 64.49 apps/web build: [2mdist/[22m[2massets/[22m[36mTransformationEditPage-BQHPBJRQ.js                     [39m[1m[2m    7.09 kB[22m[1m[22m[2m │ gzip:   2.78 kB[22m[2m │ map:    24.58 kB[22m
+#18 64.49 apps/web build: [2mdist/[22m[2massets/[22m[36mAreaPages-wAR_WYgP.js                                  [39m[1m[2m    7.12 kB[22m[1m[22m[2m │ gzip:   2.11 kB[22m[2m │ map:    21.95 kB[22m
+#18 64.49 apps/web build: [2mdist/[22m[2massets/[22m[36mMigrationPage-CNIislHP.js                              [39m[1m[2m    7.13 kB[22m[1m[22m[2m │ gzip:   2.36 kB[22m[2m │ map:    20.72 kB[22m
+#18 64.49 apps/web build: [2mdist/[22m[2massets/[22m[36mRaciPage-Btcb1SQc.js                                   [39m[1m[2m    7.14 kB[22m[1m[22m[2m │ gzip:   2.87 kB[22m[2m │ map:    22.33 kB[22m
+#18 64.49 apps/web build: [2mdist/[22m[2massets/[22m[36mApprovalRoutesPage-D9VeVTYr.js                         [39m[1m[2m    7.33 kB[22m[1m[22m[2m │ gzip:   2.50 kB[22m[2m │ map:    19.23 kB[22m
+#18 64.49 apps/web build: [2mdist/[22m[2massets/[22m[36mTeamPage-CgBzv3xe.js                                   [39m[1m[2m    7.41 kB[22m[1m[22m[2m │ gzip:   2.70 kB[22m[2m │ map:    24.93 kB[22m
+#18 64.49 apps/web build: [2mdist/[22m[2massets/[22m[36mEvidenceRegisterPage-TjeDpm6F.js                       [39m[1m[2m    7.61 kB[22m[1m[22m[2m │ gzip:   2.13 kB[22m[2m │ map:    20.92 kB[22m
+#18 64.49 apps/web build: [2mdist/[22m[2massets/[22m[36mScoringDefaultsPage-y99nY8YG.js                        [39m[1m[2m    7.61 kB[22m[1m[22m[2m │ gzip:   2.84 kB[22m[2m │ map:    24.45 kB[22m
+#18 64.49 apps/web build: [2mdist/[22m[2massets/[22m[36mMeasurementPage-cDwbse2M.js                            [39m[1m[2m    7.78 kB[22m[1m[22m[2m │ gzip:   2.28 kB[22m[2m │ map:    17.84 kB[22m
+#18 64.49 apps/web build: [2mdist/[22m[2massets/[22m[36mDelegationsPage-C0wJqnUI.js                            [39m[1m[2m    8.17 kB[22m[1m[22m[2m │ gzip:   2.68 kB[22m[2m │ map:    24.15 kB[22m
+#18 64.50 apps/web build: [2mdist/[22m[2massets/[22m[36mSensitiveGrantsPages-BfhpBeAb.js                       [39m[1m[2m    8.18 kB[22m[1m[22m[2m │ gzip:   2.57 kB[22m[2m │ map:    22.84 kB[22m
+#18 64.50 apps/web build: [2mdist/[22m[2massets/[22m[36mActionsPage-CzbOisbi.js                                [39m[1m[2m    8.35 kB[22m[1m[22m[2m │ gzip:   2.69 kB[22m[2m │ map:    24.63 kB[22m
+#18 64.50 apps/web build: [2mdist/[22m[2massets/[22m[36mui-dzcyClW_.js                                         [39m[1m[2m    8.36 kB[22m[1m[22m[2m │ gzip:   2.64 kB[22m[2m │ map:    45.23 kB[22m
+#18 64.50 apps/web build: [2mdist/[22m[2massets/[22m[36mOwnerUpdatesPage-DtfW7DmJ.js                           [39m[1m[2m    8.38 kB[22m[1m[22m[2m │ gzip:   3.05 kB[22m[2m │ map:    26.58 kB[22m
+#18 64.50 apps/web build: [2mdist/[22m[2massets/[22m[36mTrainingPage-BK6nfPHV.js                               [39m[1m[2m    8.45 kB[22m[1m[22m[2m │ gzip:   2.78 kB[22m[2m │ map:    23.91 kB[22m
+#18 64.50 apps/web build: [2mdist/[22m[2massets/[22m[36mStoragePage-C6ehHdzk.js                                [39m[1m[2m    8.52 kB[22m[1m[22m[2m │ gzip:   2.99 kB[22m[2m │ map:    26.96 kB[22m
+#18 64.50 apps/web build: [2mdist/[22m[2massets/[22m[36mCapacityPage-DgdaCzUR.js                               [39m[1m[2m    8.56 kB[22m[1m[22m[2m │ gzip:   2.82 kB[22m[2m │ map:    29.12 kB[22m
+#18 64.50 apps/web build: [2mdist/[22m[2massets/[22m[36mRequirementsPage-CNoRcXzE.js                           [39m[1m[2m    8.56 kB[22m[1m[22m[2m │ gzip:   3.11 kB[22m[2m │ map:    32.28 kB[22m
+#18 64.50 apps/web build: [2mdist/[22m[2massets/[22m[36mapi-B4LnsjzI.js                                        [39m[1m[2m    8.65 kB[22m[1m[22m[2m │ gzip:   3.21 kB[22m[2m │ map:    49.07 kB[22m
+#18 64.50 apps/web build: [2mdist/[22m[2massets/[22m[36mNotificationPreferencesPage-CkHacqxX.js                [39m[1m[2m    8.73 kB[22m[1m[22m[2m │ gzip:   2.60 kB[22m[2m │ map:    25.38 kB[22m
+#18 64.50 apps/web build: [2mdist/[22m[2massets/[22m[36mOutboundWritesPage-BUdmjsj6.js                         [39m[1m[2m    8.75 kB[22m[1m[22m[2m │ gzip:   2.47 kB[22m[2m │ map:    23.02 kB[22m
+#18 64.50 apps/web build: [2mdist/[22m[2massets/[22m[36mTransformationListPage-64soVFHU.js                     [39m[1m[2m    8.75 kB[22m[1m[22m[2m │ gzip:   2.84 kB[22m[2m │ map:    26.75 kB[22m
+#18 64.50 apps/web build: [2mdist/[22m[2massets/[22m[36mBusinessCasesPage-C5XwxRjj.js                          [39m[1m[2m    8.77 kB[22m[1m[22m[2m │ gzip:   3.25 kB[22m[2m │ map:    26.50 kB[22m
+#18 64.50 apps/web build: [2mdist/[22m[2massets/[22m[36mTransformationCreatePage-BWu4RzuC.js                   [39m[1m[2m    8.92 kB[22m[1m[22m[2m │ gzip:   2.88 kB[22m[2m │ map:    27.98 kB[22m
+#18 64.50 apps/web build: [2mdist/[22m[2massets/[22m[36mui-B8QQRXGY.js                                         [39m[1m[2m    9.04 kB[22m[1m[22m[2m │ gzip:   2.69 kB[22m[2m │ map:    32.95 kB[22m
+#18 64.50 apps/web build: [2mdist/[22m[2massets/[22m[36mAuditPages-ClASfnns.js                                 [39m[1m[2m    9.15 kB[22m[1m[22m[2m │ gzip:   2.78 kB[22m[2m │ map:    25.96 kB[22m
+#18 64.50 apps/web build: [2mdist/[22m[2massets/[22m[36mInterventionsPage-Bya8_Nof.js                          [39m[1m[2m    9.24 kB[22m[1m[22m[2m │ gzip:   2.82 kB[22m[2m │ map:    26.33 kB[22m
+#18 64.50 apps/web build: [2mdist/[22m[2massets/[22m[36mDraftRecovery-W2iJ3WZM.js                              [39m[1m[2m    9.29 kB[22m[1m[22m[2m │ gzip:   3.36 kB[22m[2m │ map:    40.61 kB[22m
+#18 64.50 apps/web build: [2mdist/[22m[2massets/[22m[36mKpisPage-DsOGWrpx.js                                   [39m[1m[2m    9.37 kB[22m[1m[22m[2m │ gzip:   2.84 kB[22m[2m │ map:    26.05 kB[22m
+#18 64.50 apps/web build: [2mdist/[22m[2massets/[22m[36mChangeRequestsPage-Cg8UoV01.js                         [39m[1m[2m    9.41 kB[22m[1m[22m[2m │ gzip:   3.08 kB[22m[2m │ map:    27.41 kB[22m
+#18 64.50 apps/web build: [2mdist/[22m[2massets/[22m[36mIndicatorsPage-Cp9EQjGs.js                             [39m[1m[2m    9.47 kB[22m[1m[22m[2m │ gzip:   2.96 kB[22m[2m │ map:    27.43 kB[22m
+#18 64.50 apps/web build: [2mdist/[22m[2massets/[22m[36mImportsPage-B1J9H3mI.js                                [39m[1m[2m    9.60 kB[22m[1m[22m[2m │ gzip:   3.10 kB[22m[2m │ map:    27.61 kB[22m
+#18 64.50 apps/web build: [2mdist/[22m[2massets/[22m[36mGroupsPage-DZowI_bs.js                                 [39m[1m[2m    9.70 kB[22m[1m[22m[2m │ gzip:   3.04 kB[22m[2m │ map:    29.15 kB[22m
+#18 64.50 apps/web build: [2mdist/[22m[2massets/[22m[36mp5-DNss_RP-.js                                         [39m[1m[2m    9.87 kB[22m[1m[22m[2m │ gzip:   2.35 kB[22m[2m │ map:    41.04 kB[22m
+#18 64.50 apps/web build: [2mdist/[22m[2massets/[22m[36mKpiActualPage-BD_KBpvd.js                              [39m[1m[2m   10.24 kB[22m[1m[22m[2m │ gzip:   3.06 kB[22m[2m │ map:    29.17 kB[22m
+#18 64.50 apps/web build: [2mdist/[22m[2massets/[22m[36mLessonsPage-xgppkK1q.js                                [39m[1m[2m   10.24 kB[22m[1m[22m[2m │ gzip:   3.31 kB[22m[2m │ map:    29.14 kB[22m
+#18 64.50 apps/web build: [2mdist/[22m[2massets/[22m[36mFailuresPage-DvQJoZZp.js                               [39m[1m[2m   10.38 kB[22m[1m[22m[2m │ gzip:   2.84 kB[22m[2m │ map:    27.10 kB[22m
+#18 64.50 apps/web build: [2mdist/[22m[2massets/[22m[36mFormSchemaPage-DQtW8cf2.js                             [39m[1m[2m   10.40 kB[22m[1m[22m[2m │ gzip:   3.59 kB[22m[2m │ map:    32.27 kB[22m
+#18 64.50 apps/web build: [2mdist/[22m[2massets/[22m[36mediting-BRbGbCQF.js                                    [39m[1m[2m   10.44 kB[22m[1m[22m[2m │ gzip:   3.14 kB[22m[2m │ map:    34.79 kB[22m
+#18 64.50 apps/web build: [2mdist/[22m[2massets/[22m[36mui-BAN1vyRz.js                                         [39m[1m[2m   10.45 kB[22m[1m[22m[2m │ gzip:   3.44 kB[22m[2m │ map:    36.10 kB[22m
+#18 64.50 apps/web build: [2mdist/[22m[2massets/[22m[36mImportPage-BqPc9VnC.js                                 [39m[1m[2m   10.57 kB[22m[1m[22m[2m │ gzip:   3.28 kB[22m[2m │ map:    29.97 kB[22m
+#18 64.50 apps/web build: [2mdist/[22m[2massets/[22m[36mReaderPage-C-vx-iZ4.js                                 [39m[1m[2m   10.80 kB[22m[1m[22m[2m │ gzip:   3.05 kB[22m[2m │ map:    31.26 kB[22m
+#18 64.50 apps/web build: [2mdist/[22m[2massets/[22m[36mCalendarPage--8PfavJ2.js                               [39m[1m[2m   10.98 kB[22m[1m[22m[2m │ gzip:   3.51 kB[22m[2m │ map:    34.33 kB[22m
+#18 64.50 apps/web build: [2mdist/[22m[2massets/[22m[36mReportsPage-4Zf3HFFr.js                                [39m[1m[2m   11.43 kB[22m[1m[22m[2m │ gzip:   3.37 kB[22m[2m │ map:    33.53 kB[22m
+#18 64.50 apps/web build: [2mdist/[22m[2massets/[22m[36mAssistantSettingsPage-3e2sHikj.js                      [39m[1m[2m   11.53 kB[22m[1m[22m[2m │ gzip:   3.28 kB[22m[2m │ map:    33.89 kB[22m
+#18 64.50 apps/web build: [2mdist/[22m[2massets/[22m[36mRaidPage-cwYjhNpo.js                                   [39m[1m[2m   11.89 kB[22m[1m[22m[2m │ gzip:   3.55 kB[22m[2m │ map:    34.25 kB[22m
+#18 64.50 apps/web build: [2mdist/[22m[2massets/[22m[36mFinancialMetricsPage-CXb56OLH.js                       [39m[1m[2m   12.30 kB[22m[1m[22m[2m │ gzip:   3.42 kB[22m[2m │ map:    34.45 kB[22m
+#18 64.50 apps/web build: [2mdist/[22m[2massets/[22m[36mSnapshotPage-BaJSpwoB.js                               [39m[1m[2m   12.58 kB[22m[1m[22m[2m │ gzip:   3.33 kB[22m[2m │ map:    36.52 kB[22m
+#18 64.50 apps/web build: [2mdist/[22m[2massets/[22m[36mModularPage-CwezEOxq.js                                [39m[1m[2m   12.73 kB[22m[1m[22m[2m │ gzip:   3.66 kB[22m[2m │ map:    35.51 kB[22m
+#18 64.50 apps/web build: [2mdist/[22m[2massets/[22m[36mNotificationChannelsPages-CBZbkMQF.js                  [39m[1m[2m   12.76 kB[22m[1m[22m[2m │ gzip:   4.01 kB[22m[2m │ map:    39.50 kB[22m
+#18 64.50 apps/web build: [2mdist/[22m[2massets/[22m[36mHealthCheckPage-DkfOSKmY.js                            [39m[1m[2m   12.78 kB[22m[1m[22m[2m │ gzip:   3.89 kB[22m[2m │ map:    39.25 kB[22m
+#18 64.50 apps/web build: [2mdist/[22m[2massets/[22m[36mChangeRequestPage-Cymd0GER.js                          [39m[1m[2m   13.10 kB[22m[1m[22m[2m │ gzip:   3.97 kB[22m[2m │ map:    36.43 kB[22m
+#18 64.50 apps/web build: [2mdist/[22m[2massets/[22m[36mDashboardsPage-DbWntraw.js                             [39m[1m[2m   13.17 kB[22m[1m[22m[2m │ gzip:   3.86 kB[22m[2m │ map:    38.53 kB[22m
+#18 64.50 apps/web build: [2mdist/[22m[2massets/[22m[36mOperationsPages-CMhwYseI.js                            [39m[1m[2m   13.31 kB[22m[1m[22m[2m │ gzip:   3.49 kB[22m[2m │ map:    39.40 kB[22m
+#18 64.50 apps/web build: [2mdist/[22m[2massets/[22m[36mBauPage-DXiRHPmr.js                                    [39m[1m[2m   13.34 kB[22m[1m[22m[2m │ gzip:   3.92 kB[22m[2m │ map:    37.68 kB[22m
+#18 64.50 apps/web build: [2mdist/[22m[2massets/[22m[36museListView-DSNfAQQv.js                                [39m[1m[2m   13.67 kB[22m[1m[22m[2m │ gzip:   4.23 kB[22m[2m │ map:    53.03 kB[22m
+#18 64.50 apps/web build: [2mdist/[22m[2massets/[22m[36mDispensationsPage-BAVQKEkA.js                          [39m[1m[2m   13.77 kB[22m[1m[22m[2m │ gzip:   4.18 kB[22m[2m │ map:    40.91 kB[22m
+#18 64.50 apps/web build: [2mdist/[22m[2massets/[22m[36mBenefitFormulasPage-Bi9Z9cEU.js                        [39m[1m[2m   13.98 kB[22m[1m[22m[2m │ gzip:   4.63 kB[22m[2m │ map:    44.72 kB[22m
+#18 64.50 apps/web build: [2mdist/[22m[2massets/[22m[36mWebhooksPage-Dj0nIJ5d.js                               [39m[1m[2m   14.05 kB[22m[1m[22m[2m │ gzip:   4.15 kB[22m[2m │ map:    40.66 kB[22m
+#18 64.50 apps/web build: [2mdist/[22m[2massets/[22m[36mRecordForm-HNxuxNlE.js                                 [39m[1m[2m   14.17 kB[22m[1m[22m[2m │ gzip:   4.98 kB[22m[2m │ map:    63.65 kB[22m
+#18 64.50 apps/web build: [2mdist/[22m[2massets/[22m[36mControlsPage-BXnU2MmA.js                               [39m[1m[2m   14.31 kB[22m[1m[22m[2m │ gzip:   3.91 kB[22m[2m │ map:    41.24 kB[22m
+#18 64.50 apps/web build: [2mdist/[22m[2massets/[22m[36mDecisionsPage-DsMzLfQP.js                              [39m[1m[2m   14.32 kB[22m[1m[22m[2m │ gzip:   4.32 kB[22m[2m │ map:    42.35 kB[22m
+#18 64.50 apps/web build: [2mdist/[22m[2massets/[22m[36mKpiRestatementPages-BNn2XUVQ.js                        [39m[1m[2m   14.53 kB[22m[1m[22m[2m │ gzip:   4.05 kB[22m[2m │ map:    43.61 kB[22m
+#18 64.50 apps/web build: [2mdist/[22m[2massets/[22m[36mConnectorFormPage-Dr45ouhH.js                          [39m[1m[2m   15.10 kB[22m[1m[22m[2m │ gzip:   4.40 kB[22m[2m │ map:    44.58 kB[22m
+#18 64.51 apps/web build: [2mdist/[22m[2massets/[22m[36mHandoverPage-VXxu5lmA.js                               [39m[1m[2m   15.17 kB[22m[1m[22m[2m │ gzip:   4.51 kB[22m[2m │ map:    43.31 kB[22m
+#18 64.51 apps/web build: [2mdist/[22m[2massets/[22m[36mConfigTransferPages-BEDMenWt.js                        [39m[1m[2m   15.28 kB[22m[1m[22m[2m │ gzip:   4.11 kB[22m[2m │ map:    48.70 kB[22m
+#18 64.51 apps/web build: [2mdist/[22m[2massets/[22m[36mAdoptionPage-VShiMl8L.js                               [39m[1m[2m   15.41 kB[22m[1m[22m[2m │ gzip:   4.36 kB[22m[2m │ map:    43.79 kB[22m
+#18 64.51 apps/web build: [2mdist/[22m[2massets/[22m[36mApprovalsPage-DD_P16Dc.js                              [39m[1m[2m   15.55 kB[22m[1m[22m[2m │ gzip:   4.42 kB[22m[2m │ map:    44.16 kB[22m
+#18 64.51 apps/web build: [2mdist/[22m[2massets/[22m[36mLaunchPlanPage-D7-hpo9o.js                             [39m[1m[2m   15.74 kB[22m[1m[22m[2m │ gzip:   4.38 kB[22m[2m │ map:    46.41 kB[22m
+#18 64.51 apps/web build: [2mdist/[22m[2massets/[22m[36mPhasesPage-4C4Z5Q4D.js                                 [39m[1m[2m   16.11 kB[22m[1m[22m[2m │ gzip:   4.74 kB[22m[2m │ map:    49.64 kB[22m
+#18 64.51 apps/web build: [2mdist/[22m[2massets/[22m[36mDecisionRightsPage-C5M9-Z0d.js                         [39m[1m[2m   16.31 kB[22m[1m[22m[2m │ gzip:   4.84 kB[22m[2m │ map:    46.97 kB[22m
+#18 64.51 apps/web build: [2mdist/[22m[2massets/[22m[36mRulesPage-D9CLopKa.js                                  [39m[1m[2m   16.39 kB[22m[1m[22m[2m │ gzip:   4.41 kB[22m[2m │ map:    50.31 kB[22m
+#18 64.51 apps/web build: [2mdist/[22m[2massets/[22m[36mPortfolioPage-C350Ry1f.js                              [39m[1m[2m   16.66 kB[22m[1m[22m[2m │ gzip:   5.60 kB[22m[2m │ map:    57.70 kB[22m
+#18 64.51 apps/web build: [2mdist/[22m[2massets/[22m[36mOrganizationsPage-BXQJyDkr.js                          [39m[1m[2m   17.06 kB[22m[1m[22m[2m │ gzip:   4.32 kB[22m[2m │ map:    52.81 kB[22m
+#18 64.51 apps/web build: [2mdist/[22m[2massets/[22m[36mExecutiveDecisionsPage-CZ199frc.js                     [39m[1m[2m   17.08 kB[22m[1m[22m[2m │ gzip:   4.80 kB[22m[2m │ map:    49.99 kB[22m
+#18 64.51 apps/web build: [2mdist/[22m[2massets/[22m[36mDependenciesPage-CGYhF5PT.js                           [39m[1m[2m   17.13 kB[22m[1m[22m[2m │ gzip:   5.10 kB[22m[2m │ map:    55.65 kB[22m
+#18 64.51 apps/web build: [2mdist/[22m[2massets/[22m[36mStructurePages-D1drJL3-.js                             [39m[1m[2m   17.16 kB[22m[1m[22m[2m │ gzip:   3.95 kB[22m[2m │ map:    52.60 kB[22m
+#18 64.51 apps/web build: [2mdist/[22m[2massets/[22m[36mFinanceValidationPages-Buz3LS8W.js                     [39m[1m[2m   17.26 kB[22m[1m[22m[2m │ gzip:   4.95 kB[22m[2m │ map:    50.22 kB[22m
+#18 64.51 apps/web build: [2mdist/[22m[2massets/[22m[36mCorrectivePages-CUtnfheF.js                            [39m[1m[2m   17.28 kB[22m[1m[22m[2m │ gzip:   4.67 kB[22m[2m │ map:    51.21 kB[22m
+#18 64.51 apps/web build: [2mdist/[22m[2massets/[22m[36mForumsPage-CG97yD3s.js                                 [39m[1m[2m   17.30 kB[22m[1m[22m[2m │ gzip:   4.89 kB[22m[2m │ map:    49.40 kB[22m
+#18 64.51 apps/web build: [2mdist/[22m[2massets/[22m[36mKpiUpdatePage-szUoQlg5.js                              [39m[1m[2m   17.50 kB[22m[1m[22m[2m │ gzip:   5.31 kB[22m[2m │ map:    53.11 kB[22m
+#18 64.51 apps/web build: [2mdist/[22m[2massets/[22m[36mEvidencePage-D3_PfKFX.js                               [39m[1m[2m   17.60 kB[22m[1m[22m[2m │ gzip:   5.41 kB[22m[2m │ map:    53.27 kB[22m
+#18 64.51 apps/web build: [2mdist/[22m[2massets/[22m[36mpanels-B57lQfIJ.js                                     [39m[1m[2m   18.21 kB[22m[1m[22m[2m │ gzip:   5.19 kB[22m[2m │ map:    68.91 kB[22m
+#18 64.51 apps/web build: [2mdist/[22m[2massets/[22m[36mRulePage-CErLaex3.js                                   [39m[1m[2m   18.36 kB[22m[1m[22m[2m │ gzip:   5.35 kB[22m[2m │ map:    55.43 kB[22m
+#18 64.51 apps/web build: [2mdist/[22m[2massets/[22m[36mCreateChangeRequest-ui_bISqC.js                        [39m[1m[2m   18.79 kB[22m[1m[22m[2m │ gzip:   6.05 kB[22m[2m │ map:    65.24 kB[22m
+#18 64.51 apps/web build: [2mdist/[22m[2massets/[22m[36mInstancePage-D8xQe_Xn.js                               [39m[1m[2m   18.80 kB[22m[1m[22m[2m │ gzip:   5.56 kB[22m[2m │ map:    61.34 kB[22m
+#18 64.51 apps/web build: [2mdist/[22m[2massets/[22m[36mCharterPage-DvPxDKXz.js                                [39m[1m[2m   19.64 kB[22m[1m[22m[2m │ gzip:   5.23 kB[22m[2m │ map:    55.14 kB[22m
+#18 64.51 apps/web build: [2mdist/[22m[2massets/[22m[36mMigrationPages-bbHmrGOm.js                             [39m[1m[2m   19.75 kB[22m[1m[22m[2m │ gzip:   4.40 kB[22m[2m │ map:    58.28 kB[22m
+#18 64.51 apps/web build: [2mdist/[22m[2massets/[22m[36mClosurePage-D1zgF2HY.js                                [39m[1m[2m   21.61 kB[22m[1m[22m[2m │ gzip:   5.35 kB[22m[2m │ map:    64.50 kB[22m
+#18 64.51 apps/web build: [2mdist/[22m[2massets/[22m[36mBrandingPage-DQ5SF0eZ.js                               [39m[1m[2m   21.73 kB[22m[1m[22m[2m │ gzip:   5.75 kB[22m[2m │ map:    66.48 kB[22m
+#18 64.51 apps/web build: [2mdist/[22m[2massets/[22m[36mRoadmapPage-CWpNJGdN.js                                [39m[1m[2m   23.59 kB[22m[1m[22m[2m │ gzip:   6.32 kB[22m[2m │ map:    72.47 kB[22m
+#18 64.51 apps/web build: [2mdist/[22m[2massets/[22m[36mConnectorsPage-C_MiT5J8.js                             [39m[1m[2m   23.67 kB[22m[1m[22m[2m │ gzip:   5.25 kB[22m[2m │ map:    62.06 kB[22m
+#18 64.51 apps/web build: [2mdist/[22m[2massets/[22m[36mFormsPage-RwZA8SXo.js                                  [39m[1m[2m   24.36 kB[22m[1m[22m[2m │ gzip:   6.71 kB[22m[2m │ map:    79.52 kB[22m
+#18 64.51 apps/web build: [2mdist/[22m[2massets/[22m[36mAssignmentsPage-B0X0KU0z.js                            [39m[1m[2m   24.51 kB[22m[1m[22m[2m │ gzip:   6.82 kB[22m[2m │ map:    75.55 kB[22m
+#18 64.51 apps/web build: [2mdist/[22m[2massets/[22m[36mDefinitionPage-DOrqlUG9.js                             [39m[1m[2m   24.68 kB[22m[1m[22m[2m │ gzip:   6.12 kB[22m[2m │ map:    71.32 kB[22m
+#18 64.51 apps/web build: [2mdist/[22m[2massets/[22m[36mRegisterPages-Blno9n0q.js                              [39m[1m[2m   24.70 kB[22m[1m[22m[2m │ gzip:   5.97 kB[22m[2m │ map:    72.32 kB[22m
+#18 64.51 apps/web build: [2mdist/[22m[2massets/[22m[36mDiagnosePage-CWfi2LLX.js                               [39m[1m[2m   25.07 kB[22m[1m[22m[2m │ gzip:   5.79 kB[22m[2m │ map:    73.04 kB[22m
+#18 64.51 apps/web build: [2mdist/[22m[2massets/[22m[36mGateP4-HUUFes6H.js                                     [39m[1m[2m   25.62 kB[22m[1m[22m[2m │ gzip:   6.50 kB[22m[2m │ map:    79.74 kB[22m
+#18 64.51 apps/web build: [2mdist/[22m[2massets/[22m[36mBenefitsPage-Ry0ggZWe.js                               [39m[1m[2m   25.75 kB[22m[1m[22m[2m │ gzip:   7.21 kB[22m[2m │ map:    80.33 kB[22m
+#18 64.51 apps/web build: [2mdist/[22m[2massets/[22m[36mExtensionEntry-BYIAE9W4.js                             [39m[1m[2m   26.37 kB[22m[1m[22m[2m │ gzip:   7.75 kB[22m[2m │ map:   100.49 kB[22m
+#18 64.51 apps/web build: [2mdist/[22m[2massets/[22m[36mDefinePage-I9Po2Dam.js                                 [39m[1m[2m   27.15 kB[22m[1m[22m[2m │ gzip:   7.03 kB[22m[2m │ map:    78.83 kB[22m
+#18 64.51 apps/web build: [2mdist/[22m[2massets/[22m[36mBenefitFormulaPage-rrOK6cfK.js                         [39m[1m[2m   27.32 kB[22m[1m[22m[2m │ gzip:   7.74 kB[22m[2m │ map:    88.15 kB[22m
+#18 64.51 apps/web build: [2mdist/[22m[2massets/[22m[36mbenefit-realized-CALEwZED.js                           [39m[1m[2m   27.56 kB[22m[1m[22m[2m │ gzip:   8.73 kB[22m[2m │ map:   146.07 kB[22m
+#18 64.51 apps/web build: [2mdist/[22m[2massets/[22m[36mMeetingPage-fSiPAlry.js                                [39m[1m[2m   27.56 kB[22m[1m[22m[2m │ gzip:   6.81 kB[22m[2m │ map:    82.00 kB[22m
+#18 64.51 apps/web build: [2mdist/[22m[2massets/[22m[36mVersionPage-Bqt0IosO.js                                [39m[1m[2m   28.00 kB[22m[1m[22m[2m │ gzip:   7.34 kB[22m[2m │ map:    88.98 kB[22m
+#18 64.51 apps/web build: [2mdist/[22m[2massets/[22m[36mTransformationDetailPage-CgdPVpoP.js                   [39m[1m[2m   28.07 kB[22m[1m[22m[2m │ gzip:   8.00 kB[22m[2m │ map:    90.05 kB[22m
+#18 64.51 apps/web build: [2mdist/[22m[2massets/[22m[36mTraceabilityPage-BHyWzfNx.js                           [39m[1m[2m   28.79 kB[22m[1m[22m[2m │ gzip:   7.31 kB[22m[2m │ map:    89.87 kB[22m
+#18 64.51 apps/web build: [2mdist/[22m[2massets/[22m[36mBusinessCasePage-E43NLMns.js                           [39m[1m[2m   30.04 kB[22m[1m[22m[2m │ gzip:   8.67 kB[22m[2m │ map:    96.28 kB[22m
+#18 64.51 apps/web build: [2mdist/[22m[2massets/[22m[36mKpiPage-V-mfr1qh.js                                    [39m[1m[2m   31.68 kB[22m[1m[22m[2m │ gzip:   7.83 kB[22m[2m │ map:    90.32 kB[22m
+#18 64.51 apps/web build: [2mdist/[22m[2massets/[22m[36mGateDetailPage-BR2vuT47.js                             [39m[1m[2m   32.55 kB[22m[1m[22m[2m │ gzip:   9.16 kB[22m[2m │ map:   108.20 kB[22m
+#18 64.51 apps/web build: [2mdist/[22m[2massets/[22m[36mui-Ckw2_zvN.js                                         [39m[1m[2m   34.21 kB[22m[1m[22m[2m │ gzip:   9.24 kB[22m[2m │ map:   119.42 kB[22m
+#18 64.51 apps/web build: [2mdist/[22m[2massets/[22m[36mBenefitPage-Qyxgxz49.js                                [39m[1m[2m   36.41 kB[22m[1m[22m[2m │ gzip:   8.91 kB[22m[2m │ map:   106.43 kB[22m
+#18 64.51 apps/web build: [2mdist/[22m[2massets/[22m[36mPrioritizationPage-B3WwNEFy.js                         [39m[1m[2m   40.28 kB[22m[1m[22m[2m │ gzip:  10.15 kB[22m[2m │ map:   132.11 kB[22m
+#18 64.51 apps/web build: [2mdist/[22m[2massets/[22m[36mDesignPage-Wn0gyJGe.js                                 [39m[1m[2m   41.54 kB[22m[1m[22m[2m │ gzip:   9.17 kB[22m[2m │ map:   125.80 kB[22m
+#18 64.51 apps/web build: [2mdist/[22m[2massets/[22m[36mvendor-i18n-DIgLw1Ps.js                                [39m[1m[2m   49.18 kB[22m[1m[22m[2m │ gzip:  16.30 kB[22m[2m │ map:   166.95 kB[22m
+#18 64.51 apps/web build: [2mdist/[22m[2massets/[22m[36mInitiativePage-NptZAR7G.js                             [39m[1m[2m   71.12 kB[22m[1m[22m[2m │ gzip:  16.98 kB[22m[2m │ map:   229.37 kB[22m
+#18 64.51 apps/web build: [2mdist/[22m[2massets/[22m[36mvendor-tanstack-BC_PukRK.js                            [39m[1m[2m   85.98 kB[22m[1m[22m[2m │ gzip:  23.77 kB[22m[2m │ map:   376.13 kB[22m
+#18 64.51 apps/web build: [2mdist/[22m[2massets/[22m[36mvendor-forms-DLh3TFGs.js                               [39m[1m[2m  152.26 kB[22m[1m[22m[2m │ gzip:  48.69 kB[22m[2m │ map:   891.20 kB[22m
+#18 64.51 apps/web build: [2mdist/[22m[2massets/[22m[36mvendor-react-BooCP96l.js                               [39m[1m[2m  286.32 kB[22m[1m[22m[2m │ gzip:  91.97 kB[22m[2m │ map: 1,446.43 kB[22m
+#18 64.51 apps/web build: [2mdist/[22m[2massets/[22m[36mindex-Dom2nIsC.js                                      [39m[1m[33m1,864.34 kB[39m[22m[2m │ gzip: 506.50 kB[22m[2m │ map: 1,764.28 kB[22m
+#18 64.51 apps/web build: [32m✓ built in 9.37s[39m
+#18 64.51 apps/web build: [33m
+#18 64.51 apps/web build: (!) Some chunks are larger than 500 kB after minification. Consider:
+#18 64.51 apps/web build: - Using dynamic import() to code-split the application
+#18 64.51 apps/web build: - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+#18 64.51 apps/web build: - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.[39m
+#18 64.62 apps/web build: Done
+#18 64.63 packages/db build$ tsc -p tsconfig.build.json
+#18 68.84 packages/db build: Done
+#18 68.84 apps/api build$ tsc -p tsconfig.build.json && node scripts/register-snapshot.mjs --csv ../../docs/delivery/requirements.csv --deps ../../docs/handover/external-dependencies.json --out dist/release/register-snapshot.json
+#18 68.84 apps/worker build$ tsc -p tsconfig.build.json
+#18 86.50 apps/worker build: Done
+#18 161.4 apps/api build: register-snapshot: wrote dist/release/register-snapshot.json (412 rows, sha256 54367819ef8c)
+#18 161.4 apps/api build: Done
+#18 DONE 161.5s
 
-#15 [build 10/14] COPY packages/shared/package.json packages/shared/package.json
-#15 DONE 0.0s
+#19 [build 15/15] RUN bash deploy/scripts/assemble-runtime.sh /src /out/app
+#19 0.325 collect-notices: 186 shipped packages, 174 files, 12 without a licence file -> /out/app/licenses
+#19 0.698 Scope: all 9 workspace projects
+#19 0.838 Lockfile is up to date, resolution step is skipped
+#19 1.517 Packages: -246
+#19 1.517 --------------------------------------------------------------------------------
+#19 1.685 
+#19 1.685 devDependencies:
+#19 1.685 - @apidevtools/swagger-parser 10.1.1
+#19 1.685 - @axe-core/playwright 4.10.2
+#19 1.685 - @playwright/test 1.56.1
+#19 1.685 - @types/node 22.18.0
+#19 1.685 - eslint 10.1.0
+#19 1.685 - eslint-plugin-react-hooks 7.1.1
+#19 1.685 - openapi-types 12.1.3
+#19 1.685 - prettier 3.8.1
+#19 1.685 - typescript 6.0.2
+#19 1.685 - typescript-eslint 8.71.0
+#19 1.685 - vitest 3.2.7
+#19 1.685 
+#19 1.725 Done in 1.3s using pnpm v10.33.0
+#19 2.560 runtime workspace packages: apps/api apps/worker packages/config packages/db packages/design-tokens packages/reporting packages/shared
+#19 2.747 virtual store: 186 package directories, all in the shipped set (186 runtime+bundled)
+#19 3.954 resolve: @mth/api: 18 dependencies resolve; ./dist/index.js imports
+#19 4.830 resolve: @mth/worker: 9 dependencies resolve; ./dist/index.js imports
+#19 5.008 resolve: @mth/config: 2 dependencies resolve; ./dist/index.js imports
+#19 5.468 resolve: @mth/db: 5 dependencies resolve; ./dist/index.js imports
+#19 5.516 resolve: @mth/design-tokens: 0 dependencies resolve; ./dist/index.js imports
+#19 5.952 resolve: @mth/reporting: 9 dependencies resolve; ./dist/index.js imports
+#19 6.014 resolve: @mth/shared: 2 dependencies resolve; ./dist/index.js imports
+#19 6.113 assemble-runtime: OK 186 packages, 205M -> /out/app
+#19 DONE 6.6s
 
-#6 [runtime 2/7] RUN set -eu;     rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack /opt/yarn-*;     rm -f /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack /usr/local/bin/yarn /usr/local/bin/yarnpkg;     groupadd --system --gid 10001 mth;     useradd --system --uid 10001 --gid mth --home-dir /nonexistent --no-create-home --shell /usr/sbin/nologin mth;     mkdir -p /var/lib/mth/evidence;     chown mth:mth /var/lib/mth/evidence;     chmod 0700 /var/lib/mth/evidence
-#6 2.397 useradd warning: mth's uid 10001 is greater than SYS_UID_MAX 999
-#6 DONE 2.4s
+#20 [runtime 2/7] RUN set -eu;     rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack /opt/yarn-*;     rm -f /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack /usr/local/bin/yarn /usr/local/bin/yarnpkg;     groupadd --system --gid 10001 mth;     useradd --system --uid 10001 --gid mth --home-dir /nonexistent --no-create-home --shell /usr/sbin/nologin mth;     mkdir -p /var/lib/mth/evidence;     chown mth:mth /var/lib/mth/evidence;     chmod 0700 /var/lib/mth/evidence
+#20 CACHED
 
-#16 [build 11/14] RUN --mount=type=secret,id=build_ca,required=false     set -eu;     if [ -s /run/secrets/build_ca ]; then export NODE_EXTRA_CA_CERTS=/run/secrets/build_ca; fi;     if [ -n "" ]; then export npm_config_registry="" COREPACK_NPM_REGISTRY=""; fi;     corepack enable --install-directory /pnpm;     pnpm --version;     pnpm install --frozen-lockfile
-#16 0.262 Internal Error: ENOENT: no such file or directory, lstat '/pnpm'
-#16 0.262     at Object.realpathSync (node:fs:2862:29)
-#16 0.262     at EnableCommand.execute (/usr/local/lib/node_modules/corepack/dist/lib/corepack.cjs:14289:43)
-#16 0.262     at EnableCommand.validateAndExecute (/usr/local/lib/node_modules/corepack/dist/lib/corepack.cjs:1352:37)
-#16 0.262     at /usr/local/lib/node_modules/corepack/dist/lib/corepack.cjs:2462:51
-#16 0.262     at noopCaptureActivator (/usr/local/lib/node_modules/corepack/dist/lib/corepack.cjs:2687:14)
-#16 0.262     at _Cli.run (/usr/local/lib/node_modules/corepack/dist/lib/corepack.cjs:2462:28)
-#16 0.262     at Object.runMain (/usr/local/lib/node_modules/corepack/dist/lib/corepack.cjs:14832:29)
-#16 0.262     at Object.<anonymous> (/usr/local/lib/node_modules/corepack/dist/corepack.js:4:31)
-#16 0.262     at Module._compile (node:internal/modules/cjs/loader:1929:14)
-#16 0.262     at Object..js (node:internal/modules/cjs/loader:2060:10)
-#16 ERROR: process "/bin/sh -c set -eu;     if [ -s /run/secrets/build_ca ]; then export NODE_EXTRA_CA_CERTS=/run/secrets/build_ca; fi;     if [ -n \"$NPM_REGISTRY\" ]; then export npm_config_registry=\"$NPM_REGISTRY\" COREPACK_NPM_REGISTRY=\"$NPM_REGISTRY\"; fi;     corepack enable --install-directory /pnpm;     pnpm --version;     pnpm install --frozen-lockfile" did not complete successfully: exit code: 1
-------
- > [build 11/14] RUN --mount=type=secret,id=build_ca,required=false     set -eu;     if [ -s /run/secrets/build_ca ]; then export NODE_EXTRA_CA_CERTS=/run/secrets/build_ca; fi;     if [ -n "" ]; then export npm_config_registry="" COREPACK_NPM_REGISTRY=""; fi;     corepack enable --install-directory /pnpm;     pnpm --version;     pnpm install --frozen-lockfile:
-0.262     at Object.realpathSync (node:fs:2862:29)
-0.262     at EnableCommand.execute (/usr/local/lib/node_modules/corepack/dist/lib/corepack.cjs:14289:43)
-0.262     at EnableCommand.validateAndExecute (/usr/local/lib/node_modules/corepack/dist/lib/corepack.cjs:1352:37)
-0.262     at /usr/local/lib/node_modules/corepack/dist/lib/corepack.cjs:2462:51
-0.262     at noopCaptureActivator (/usr/local/lib/node_modules/corepack/dist/lib/corepack.cjs:2687:14)
-0.262     at _Cli.run (/usr/local/lib/node_modules/corepack/dist/lib/corepack.cjs:2462:28)
-0.262     at Object.runMain (/usr/local/lib/node_modules/corepack/dist/lib/corepack.cjs:14832:29)
-0.262     at Object.<anonymous> (/usr/local/lib/node_modules/corepack/dist/corepack.js:4:31)
-0.262     at Module._compile (node:internal/modules/cjs/loader:1929:14)
-0.262     at Object..js (node:internal/modules/cjs/loader:2060:10)
-------
+#21 [runtime 3/7] COPY --from=build /out/app /app
+#21 DONE 1.3s
+
+#22 [runtime 4/7] COPY deploy/docker/entrypoint.sh /usr/local/bin/mth
+#22 DONE 0.1s
+
+#23 [runtime 5/7] COPY deploy/docker/healthcheck.mjs /app/healthcheck.mjs
+#23 DONE 0.0s
+
+#24 [runtime 6/7] RUN chmod 0555 /usr/local/bin/mth && chmod 0444 /app/healthcheck.mjs
+#24 DONE 0.1s
+
+#25 [runtime 7/7] WORKDIR /app
+#25 DONE 0.0s
+
+#26 exporting to image
+#26 exporting layers
+#26 exporting layers 7.5s done
+#26 exporting manifest sha256:2fa7a4eba9fefbd992270ddd0446933ab20134778b4adeb11d3d52d37c571853 done
+#26 exporting config sha256:aef854a78c2da7c3f9bfc3facd01b055c5e63e49fe852a9a1b367370092d192a done
+#26 exporting attestation manifest sha256:f2c3b939df6f0b35d28cb087733c57c1990dd84aee15a8558166f72fe792107e done
+#26 exporting manifest list sha256:3ac2e9cdb28c39229e2ea4cdd0b2da0d4674e615b1892db307ba9178799456e8 done
+#26 naming to docker.io/library/mth-app:local done
+#26 unpacking to docker.io/library/mth-app:local
+#26 unpacking to docker.io/library/mth-app:local 2.4s done
+#26 DONE 9.9s
 
  [33m1 warning found (use docker --debug to expand):
-[0m - SecretsUsedInArgOrEnv: Do not use ARG or ENV instructions for sensitive data (ENV "AUTH_MODE") (line 78)
-Dockerfile:44
---------------------
-  43 |     COPY packages/shared/package.json packages/shared/package.json
-  44 | >>> RUN --mount=type=secret,id=build_ca,required=false \
-  45 | >>>     set -eu; \
-  46 | >>>     if [ -s /run/secrets/build_ca ]; then export NODE_EXTRA_CA_CERTS=/run/secrets/build_ca; fi; \
-  47 | >>>     if [ -n "$NPM_REGISTRY" ]; then export npm_config_registry="$NPM_REGISTRY" COREPACK_NPM_REGISTRY="$NPM_REGISTRY"; fi; \
-  48 | >>>     corepack enable --install-directory /pnpm; \
-  49 | >>>     pnpm --version; \
-  50 | >>>     pnpm install --frozen-lockfile
-  51 |     
---------------------
-ERROR: failed to build: failed to solve: process "/bin/sh -c set -eu;     if [ -s /run/secrets/build_ca ]; then export NODE_EXTRA_CA_CERTS=/run/secrets/build_ca; fi;     if [ -n \"$NPM_REGISTRY\" ]; then export npm_config_registry=\"$NPM_REGISTRY\" COREPACK_NPM_REGISTRY=\"$NPM_REGISTRY\"; fi;     corepack enable --install-directory /pnpm;     pnpm --version;     pnpm install --frozen-lockfile" did not complete successfully: exit code: 1
-### 03 exit=1 seconds=6
+[0m - SecretsUsedInArgOrEnv: Do not use ARG or ENV instructions for sensitive data (ENV "AUTH_MODE") (line 83)
+build: 219 s
+== verifying mth-app:local
+  non-root: Config.User=10001:10001, id -u=10001
+  env: NODE_ENV=production AUTH_MODE=oidc
+  env: no *_PROXY variable in the image
+  no npm/npx/corepack/pnpm/yarn at runtime
+{"node":"v24.21.0","api":"0.1.0","worker":"0.1.0"}
+  commands: api | worker | migrate | db | health | version; seed-dev refused
+  /app/licenses: THIRD-PARTY-NOTICES.md, sbom.cdx.json
+image sha256:3ac2e9cdb28c39229e2ea4cdd0b2da0d4674e615b1892db307ba9178799456e8 size 582002321 bytes
+BUILD+VERIFY: PASS (mth-app:local)
+### 03 exit=0 seconds=223
 ### 04 $ deploy/scripts/image-bundle.sh save --out /tmp/claude-0/-home-user-My-owns/f7dd9c0b-2b3c-52aa-bca7-45299008f27d/scratchpad/dg7/bundle --app-image mth-app:local && sha256sum /tmp/claude-0/-home-user-My-owns/f7dd9c0b-2b3c-52aa-bca7-45299008f27d/scratchpad/dg7/bundle/images.tar && cat /tmp/claude-0/-home-user-My-owns/f7dd9c0b-2b3c-52aa-bca7-45299008f27d/scratchpad/dg7/bundle/images.json
 image-bundle: excluded node-runtime: not run by any Compose file (usedIn: deploy/docker/Dockerfile)
 image-bundle: excluded playwright: not run by any Compose file (usedIn: .github/workflows/ci.yml)
 image-bundle: postgres:18@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722: image id sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722
 image-bundle: quay.io/keycloak/keycloak:26.8.1@sha256:a78d6b79572168cb25886b80a8b5b8d4ed4390743e3eecb810538683e209dd6b: image id sha256:a78d6b79572168cb25886b80a8b5b8d4ed4390743e3eecb810538683e209dd6b
-image-bundle: BLOCKED: mth-app:local is not present locally; this script never pulls (pull or build it on the connected host first)
-### 04 exit=2 seconds=1
-### 05 $ node -e 'for (const i of require(process.argv[1]).images) console.log(i.name)' /tmp/claude-0/-home-user-My-owns/f7dd9c0b-2b3c-52aa-bca7-45299008f27d/scratchpad/dg7/bundle/images.json | xargs -r docker image rm -f; docker image ls
-node:internal/modules/cjs/loader:1568
-  throw err;
-  ^
-
-Error: Cannot find module '/tmp/claude-0/-home-user-My-owns/f7dd9c0b-2b3c-52aa-bca7-45299008f27d/scratchpad/dg7/bundle/images.json'
-Require stack:
-- /home/user/My-owns/[eval]
-    at Module._resolveFilename (node:internal/modules/cjs/loader:1564:15)
-    at wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)
-    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1142:10)
-    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)
-    at Module._load (node:internal/modules/cjs/loader:1341:5)
-    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
-    at Module.require (node:internal/modules/cjs/loader:1674:12)
-    at require (node:internal/modules/helpers:157:16)
-    at [eval]:1:17
-    at runScriptInThisContext (node:internal/vm:219:10) {
-  code: 'MODULE_NOT_FOUND',
-  requireStack: [ '/home/user/My-owns/[eval]' ]
+image-bundle: mth-app:local: image id sha256:3ac2e9cdb28c39229e2ea4cdd0b2da0d4674e615b1892db307ba9178799456e8
+image-bundle: saved 3 images: /tmp/claude-0/-home-user-My-owns/f7dd9c0b-2b3c-52aa-bca7-45299008f27d/scratchpad/dg7/bundle/images.tar (552813568 bytes, sha256 44f3b655dbf9fbc3e7c9a798ce27382a858fa6ea151ca345276e2d1802fbb749); manifest /tmp/claude-0/-home-user-My-owns/f7dd9c0b-2b3c-52aa-bca7-45299008f27d/scratchpad/dg7/bundle/images.json
+44f3b655dbf9fbc3e7c9a798ce27382a858fa6ea151ca345276e2d1802fbb749  /tmp/claude-0/-home-user-My-owns/f7dd9c0b-2b3c-52aa-bca7-45299008f27d/scratchpad/dg7/bundle/images.tar
+{
+  "schemaVersion": "mth-image-bundle/1",
+  "createdAt": "2026-11-14T17:44:40.252Z",
+  "lockSha256": "f72a87fecbcf0a3a0492fce26b0e60617401d405cc6b28ae3f7874bb6edd6982",
+  "tar": {
+    "file": "images.tar",
+    "bytes": 552813568,
+    "sha256": "44f3b655dbf9fbc3e7c9a798ce27382a858fa6ea151ca345276e2d1802fbb749"
+  },
+  "images": [
+    {
+      "name": "postgres:18@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722",
+      "lockId": "postgres",
+      "lockDigest": "sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722",
+      "imageId": "sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722",
+      "size": 644123392,
+      "tarSha256": "44f3b655dbf9fbc3e7c9a798ce27382a858fa6ea151ca345276e2d1802fbb749"
+    },
+    {
+      "name": "quay.io/keycloak/keycloak:26.8.1@sha256:a78d6b79572168cb25886b80a8b5b8d4ed4390743e3eecb810538683e209dd6b",
+      "lockId": "keycloak",
+      "lockDigest": "sha256:a78d6b79572168cb25886b80a8b5b8d4ed4390743e3eecb810538683e209dd6b",
+      "imageId": "sha256:a78d6b79572168cb25886b80a8b5b8d4ed4390743e3eecb810538683e209dd6b",
+      "size": 750565914,
+      "tarSha256": "44f3b655dbf9fbc3e7c9a798ce27382a858fa6ea151ca345276e2d1802fbb749"
+    },
+    {
+      "name": "mth-app:local",
+      "lockId": null,
+      "lockDigest": null,
+      "imageId": "sha256:3ac2e9cdb28c39229e2ea4cdd0b2da0d4674e615b1892db307ba9178799456e8",
+      "size": 582002321,
+      "tarSha256": "44f3b655dbf9fbc3e7c9a798ce27382a858fa6ea151ca345276e2d1802fbb749"
+    }
+  ],
+  "excluded": [
+    {
+      "lockId": "node-runtime",
+      "reason": "not run by any Compose file (usedIn: deploy/docker/Dockerfile)"
+    },
+    {
+      "lockId": "playwright",
+      "reason": "not run by any Compose file (usedIn: .github/workflows/ci.yml)"
+    }
+  ]
 }
-
-Node.js v24.21.0
-IMAGE                                                                                               ID             DISK USAGE   CONTENT SIZE   EXTRA
-postgres@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722                    5a5a84b19854        650MB          169MB        
-quay.io/keycloak/keycloak@sha256:a78d6b79572168cb25886b80a8b5b8d4ed4390743e3eecb810538683e209dd6b   a78d6b795721        751MB          265MB        
-### 05 exit=0 seconds=0
+### 04 exit=0 seconds=15
+### 05 $ node -e 'for (const i of require(process.argv[1]).images) console.log(i.name)' /tmp/claude-0/-home-user-My-owns/f7dd9c0b-2b3c-52aa-bca7-45299008f27d/scratchpad/dg7/bundle/images.json | xargs -r docker image rm -f; docker image ls
+Untagged: postgres@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722
+Deleted: sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722
+Untagged: quay.io/keycloak/keycloak@sha256:a78d6b79572168cb25886b80a8b5b8d4ed4390743e3eecb810538683e209dd6b
+Deleted: sha256:a78d6b79572168cb25886b80a8b5b8d4ed4390743e3eecb810538683e209dd6b
+Untagged: mth-app:local
+Deleted: sha256:3ac2e9cdb28c39229e2ea4cdd0b2da0d4674e615b1892db307ba9178799456e8
+IMAGE           ID             DISK USAGE   CONTENT SIZE   EXTRA
+mth-app:probe   4fb7c579eecc        582MB          119MB        
+### 05 exit=0 seconds=3
 ### 06 $ deploy/scripts/image-bundle.sh load --from /tmp/claude-0/-home-user-My-owns/f7dd9c0b-2b3c-52aa-bca7-45299008f27d/scratchpad/dg7/bundle && deploy/scripts/image-bundle.sh verify --from /tmp/claude-0/-home-user-My-owns/f7dd9c0b-2b3c-52aa-bca7-45299008f27d/scratchpad/dg7/bundle
-image-bundle: BLOCKED: /tmp/claude-0/-home-user-My-owns/f7dd9c0b-2b3c-52aa-bca7-45299008f27d/scratchpad/dg7/bundle/images.json not found
-### 06 exit=2 seconds=0
-### 07 $ docker compose -p mth-dg7-1794675852 -f deploy/compose/compose.yaml up -d --pull never --wait && docker compose -p mth-dg7-1794675852 -f deploy/compose/compose.yaml ps && curl -sS -i http://127.0.0.1:3000/readyz
- Network mth-dg7-1794675852_default Creating 
- Network mth-dg7-1794675852_default Creating 
- Volume mth-dg7-1794675852_pgdata Creating 
- Volume mth-dg7-1794675852_pgdata Creating 
- Volume mth-dg7-1794675852_evidence Creating 
- Volume mth-dg7-1794675852_evidence Creating 
- Volume mth-dg7-1794675852_pgdata Created 
- Volume mth-dg7-1794675852_pgdata Created 
- Volume mth-dg7-1794675852_evidence Created 
- Volume mth-dg7-1794675852_evidence Created 
- Network mth-dg7-1794675852_default Created 
- Network mth-dg7-1794675852_default Created 
- Container mth-dg7-1794675852-db-1 Creating 
- Container mth-dg7-1794675852-db-1 Created 
- Container mth-dg7-1794675852-migrate-1 Creating 
- service:migrate:1 Error response from daemon: No such image: mth-app:local 
- Container mth-dg7-1794675852-worker-1 Creating 
- Container mth-dg7-1794675852-api-1 Creating 
-Error response from daemon: No such image: mth-app:local
-### 07 exit=1 seconds=0
-### 08 $ docker compose -p mth-dg7-1794675852 -f deploy/compose/compose.yaml down -v
- Container mth-dg7-1794675852-db-1 Stopping 
- Container mth-dg7-1794675852-db-1 Stopped 
- Container mth-dg7-1794675852-db-1 Removing 
- Container mth-dg7-1794675852-db-1 Removed 
- Volume mth-dg7-1794675852_pgdata Removing 
- Network mth-dg7-1794675852_default Removing 
- Volume mth-dg7-1794675852_evidence Removing 
- Volume mth-dg7-1794675852_pgdata Removed 
- Volume mth-dg7-1794675852_evidence Removed 
- Network mth-dg7-1794675852_default Removed 
+image-bundle: images.tar matches images.json: 552813568 bytes, sha256 44f3b655dbf9fbc3e7c9a798ce27382a858fa6ea151ca345276e2d1802fbb749
+image-bundle: image store: containerd (storage driver 'overlayfs', driver-type io.containerd.snapshotter.v1)
+Loaded image ID: sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722
+Loaded image ID: sha256:a78d6b79572168cb25886b80a8b5b8d4ed4390743e3eecb810538683e209dd6b
+Loaded image: mth-app:local
+image-bundle: postgres:18@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722 does not match images.json (present)
+image-bundle: quay.io/keycloak/keycloak:26.8.1@sha256:a78d6b79572168cb25886b80a8b5b8d4ed4390743e3eecb810538683e209dd6b does not match images.json (present)
+image-bundle: mth-app:local: image id sha256:3ac2e9cdb28c39229e2ea4cdd0b2da0d4674e615b1892db307ba9178799456e8 as recorded
+### 06 exit=1 seconds=13
+### 07 $ docker compose -p mth-dg7-1794678297 -f deploy/compose/compose.yaml up -d --pull never --wait && docker compose -p mth-dg7-1794678297 -f deploy/compose/compose.yaml ps && curl -sS -i http://127.0.0.1:3000/readyz
+ Network mth-dg7-1794678297_default Creating 
+ Volume mth-dg7-1794678297_evidence Creating 
+ Volume mth-dg7-1794678297_pgdata Creating 
+ Volume mth-dg7-1794678297_evidence Creating 
+ Volume mth-dg7-1794678297_pgdata Creating 
+ Network mth-dg7-1794678297_default Creating 
+ Volume mth-dg7-1794678297_evidence Created 
+ Volume mth-dg7-1794678297_evidence Created 
+ Volume mth-dg7-1794678297_pgdata Created 
+ Volume mth-dg7-1794678297_pgdata Created 
+ Network mth-dg7-1794678297_default Created 
+ Network mth-dg7-1794678297_default Created 
+ Container mth-dg7-1794678297-db-1 Creating 
+ service:db:1 Error response from daemon: No such image: postgres:18@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722 
+ Container mth-dg7-1794678297-migrate-1 Creating 
+Error response from daemon: No such image: postgres:18@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722
+### 07 exit=1 seconds=1
+### 08 $ docker compose -p mth-dg7-1794678297 -f deploy/compose/compose.yaml down -v
+ Volume mth-dg7-1794678297_pgdata Removing 
+ Volume mth-dg7-1794678297_evidence Removing 
+ Network mth-dg7-1794678297_default Removing 
+ Volume mth-dg7-1794678297_pgdata Removed 
+ Volume mth-dg7-1794678297_evidence Removed 
+ Network mth-dg7-1794678297_default Removed 
 ### 08 exit=0 seconds=0
-### 09 $ docker compose -p mth-dg7-1794675852-ne -f deploy/compose/compose.yaml -f deploy/compose/compose.no-egress.yaml --profile test-idp up -d --pull never --wait && docker compose -p mth-dg7-1794675852-ne -f deploy/compose/compose.yaml -f deploy/compose/compose.no-egress.yaml --profile test-idp ps
- Network mth-dg7-1794675852-ne_default Creating 
- Network mth-dg7-1794675852-ne_default Creating 
- Volume mth-dg7-1794675852-ne_evidence Creating 
- Volume mth-dg7-1794675852-ne_evidence Creating 
- Volume mth-dg7-1794675852-ne_pgdata Creating 
- Volume mth-dg7-1794675852-ne_pgdata Creating 
- Volume mth-dg7-1794675852-ne_pgdata Created 
- Volume mth-dg7-1794675852-ne_pgdata Created 
- Volume mth-dg7-1794675852-ne_evidence Created 
- Volume mth-dg7-1794675852-ne_evidence Created 
- Network mth-dg7-1794675852-ne_default Created 
- Network mth-dg7-1794675852-ne_default Created 
- Container mth-dg7-1794675852-ne-keycloak-1 Creating 
- Container mth-dg7-1794675852-ne-db-1 Creating 
- Container mth-dg7-1794675852-ne-keycloak-1 Created 
- Container mth-dg7-1794675852-ne-db-1 Created 
- Container mth-dg7-1794675852-ne-migrate-1 Creating 
- service:migrate:1 Error response from daemon: No such image: mth-app:local 
- Container mth-dg7-1794675852-ne-worker-1 Creating 
- Container mth-dg7-1794675852-ne-api-1 Creating 
-Error response from daemon: No such image: mth-app:local
-### 09 exit=1 seconds=1
-### 10 $ docker compose -p mth-dg7-1794675852-ne -f deploy/compose/compose.yaml -f deploy/compose/compose.no-egress.yaml run --rm -T migrate db bootstrap --org-code MTH-E2E --org-name-en 'E2E org (synthetic)' --org-name-ar 'مؤسسة الاختبار (اصطناعية)' --admin-name 'Synthetic Access Admin' --admin-email smoke.admin@example.invalid --admin-issuer https://keycloak:8443/realms/mth-test --admin-subject 5f0c7a52-1d1e-4c9a-9a51-6a0d0e5a0001
- Container mth-dg7-1794675852-ne-db-1 Starting 
- Container mth-dg7-1794675852-ne-db-1 Started 
- Container mth-dg7-1794675852-ne-db-1 Waiting 
- Container mth-dg7-1794675852-ne-db-1 Healthy 
- Container mth-dg7-1794675852-ne-migrate-run-579b4b921173 Creating 
- Container mth-dg7-1794675852-ne-migrate-run-579b4b921173 Error response from daemon: No such image: mth-app:local 
-Error response from daemon: No such image: mth-app:local
-### 10 exit=1 seconds=5
+### 09 $ docker compose -p mth-dg7-1794678297-ne -f deploy/compose/compose.yaml -f deploy/compose/compose.no-egress.yaml --profile test-idp up -d --pull never --wait && docker compose -p mth-dg7-1794678297-ne -f deploy/compose/compose.yaml -f deploy/compose/compose.no-egress.yaml --profile test-idp ps
+ Volume mth-dg7-1794678297-ne_pgdata Creating 
+ Volume mth-dg7-1794678297-ne_pgdata Creating 
+ Network mth-dg7-1794678297-ne_default Creating 
+ Network mth-dg7-1794678297-ne_default Creating 
+ Volume mth-dg7-1794678297-ne_evidence Creating 
+ Volume mth-dg7-1794678297-ne_evidence Creating 
+ Volume mth-dg7-1794678297-ne_pgdata Created 
+ Volume mth-dg7-1794678297-ne_pgdata Created 
+ Volume mth-dg7-1794678297-ne_evidence Created 
+ Volume mth-dg7-1794678297-ne_evidence Created 
+ Network mth-dg7-1794678297-ne_default Created 
+ Network mth-dg7-1794678297-ne_default Created 
+ Container mth-dg7-1794678297-ne-db-1 Creating 
+ Container mth-dg7-1794678297-ne-keycloak-1 Creating 
+ service:keycloak:1 Error response from daemon: No such image: quay.io/keycloak/keycloak:26.8.1@sha256:a78d6b79572168cb25886b80a8b5b8d4ed4390743e3eecb810538683e209dd6b 
+Error response from daemon: No such image: quay.io/keycloak/keycloak:26.8.1@sha256:a78d6b79572168cb25886b80a8b5b8d4ed4390743e3eecb810538683e209dd6b
+### 09 exit=1 seconds=0
+### 10 $ docker compose -p mth-dg7-1794678297-ne -f deploy/compose/compose.yaml -f deploy/compose/compose.no-egress.yaml run --rm -T migrate db bootstrap --org-code MTH-E2E --org-name-en 'E2E org (synthetic)' --org-name-ar 'مؤسسة الاختبار (اصطناعية)' --admin-name 'Synthetic Access Admin' --admin-email smoke.admin@example.invalid --admin-issuer https://keycloak:8443/realms/mth-test --admin-subject 5f0c7a52-1d1e-4c9a-9a51-6a0d0e5a0001
+ Image postgres:18@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722 Pulling 
+ Image postgres:18@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722 Pulled 
+ Container mth-dg7-1794678297-ne-db-1 Creating 
+ Container mth-dg7-1794678297-ne-db-1 Created 
+ Container mth-dg7-1794678297-ne-db-1 Starting 
+ Container mth-dg7-1794678297-ne-db-1 Started 
+ Container mth-dg7-1794678297-ne-db-1 Waiting 
+ Container mth-dg7-1794678297-ne-db-1 Healthy 
+ Container mth-dg7-1794678297-ne-migrate-run-4e753119b0d0 Creating 
+ Container mth-dg7-1794678297-ne-migrate-run-4e753119b0d0 Created 
+mth-db: unexpected error: relation "deployment_environment" does not exist
+
+### 10 exit=1 seconds=10
 ### 11 $ MTH_E2E_KEYCLOAK=1 MTH_E2E_KEYCLOAK_PASSWORD_FILE=/tmp/claude-0/-home-user-My-owns/f7dd9c0b-2b3c-52aa-bca7-45299008f27d/scratchpad/dg7/secrets/test_idp_user_password E2E_BASE_URL=http://localhost:3000 pnpm exec playwright test e2e/identity/keycloak-login.spec.ts --workers=1 --trace off
 
 Running 4 tests using 1 worker
 
-  ✘  1 [chromium-en] › e2e/identity/keycloak-login.spec.ts:41:3 › REQ-S16-007: Keycloak test realm sign-in; another realm is refused › signs in through realm mth-test and gets a session (1.6s)
-  ✘  2 [chromium-en] › e2e/identity/keycloak-login.spec.ts:61:3 › REQ-S16-007: Keycloak test realm sign-in; another realm is refused › refuses the authorization response and token of realm mth-other: token_invalid, no session (209ms)
-  ✘  3 [chromium-ar] › e2e/identity/keycloak-login.spec.ts:41:3 › REQ-S16-007: Keycloak test realm sign-in; another realm is refused › signs in through realm mth-test and gets a session (197ms)
-  ✘  4 [chromium-ar] › e2e/identity/keycloak-login.spec.ts:61:3 › REQ-S16-007: Keycloak test realm sign-in; another realm is refused › refuses the authorization response and token of realm mth-other: token_invalid, no session (202ms)
+  ✘  1 [chromium-en] › e2e/identity/keycloak-login.spec.ts:41:3 › REQ-S16-007: Keycloak test realm sign-in; another realm is refused › signs in through realm mth-test and gets a session (171ms)
+  ✘  2 [chromium-en] › e2e/identity/keycloak-login.spec.ts:61:3 › REQ-S16-007: Keycloak test realm sign-in; another realm is refused › refuses the authorization response and token of realm mth-other: token_invalid, no session (171ms)
+  ✘  3 [chromium-ar] › e2e/identity/keycloak-login.spec.ts:41:3 › REQ-S16-007: Keycloak test realm sign-in; another realm is refused › signs in through realm mth-test and gets a session (155ms)
+  ✘  4 [chromium-ar] › e2e/identity/keycloak-login.spec.ts:61:3 › REQ-S16-007: Keycloak test realm sign-in; another realm is refused › refuses the authorization response and token of realm mth-other: token_invalid, no session (170ms)
 
 
   1) [chromium-en] › e2e/identity/keycloak-login.spec.ts:41:3 › REQ-S16-007: Keycloak test realm sign-in; another realm is refused › signs in through realm mth-test and gets a session 
@@ -613,21 +818,17 @@ To open last HTML report run:
 [36m[39m
 [36m  pnpm exec playwright show-report[39m
 [36m[39m
-### 11 exit=1 seconds=22
-### 12 $ docker compose -p mth-dg7-1794675852-ne -f deploy/compose/compose.yaml -f deploy/compose/compose.no-egress.yaml --profile test-idp logs --no-color > docs/delivery/test-evidence/DG7/orchestrator/host/no-egress-stack.log 2>&1; docker compose -p mth-dg7-1794675852-ne -f deploy/compose/compose.yaml -f deploy/compose/compose.no-egress.yaml --profile test-idp down -v
- Container mth-dg7-1794675852-ne-keycloak-1 Stopping 
- Container mth-dg7-1794675852-ne-db-1 Stopping 
- Container mth-dg7-1794675852-ne-keycloak-1 Stopped 
- Container mth-dg7-1794675852-ne-keycloak-1 Removing 
- Container mth-dg7-1794675852-ne-keycloak-1 Removed 
- Container mth-dg7-1794675852-ne-db-1 Stopped 
- Container mth-dg7-1794675852-ne-db-1 Removing 
- Container mth-dg7-1794675852-ne-db-1 Removed 
- Volume mth-dg7-1794675852-ne_pgdata Removing 
- Network mth-dg7-1794675852-ne_default Removing 
- Volume mth-dg7-1794675852-ne_evidence Removing 
- Network mth-dg7-1794675852-ne_default Removed 
- Volume mth-dg7-1794675852-ne_evidence Removed 
- Volume mth-dg7-1794675852-ne_pgdata Removed 
-### 12 exit=0 seconds=0
+### 11 exit=1 seconds=7
+### 12 $ docker compose -p mth-dg7-1794678297-ne -f deploy/compose/compose.yaml -f deploy/compose/compose.no-egress.yaml --profile test-idp logs --no-color > docs/delivery/test-evidence/DG7/orchestrator/host/no-egress-stack.log 2>&1; docker compose -p mth-dg7-1794678297-ne -f deploy/compose/compose.yaml -f deploy/compose/compose.no-egress.yaml --profile test-idp down -v
+ Container mth-dg7-1794678297-ne-db-1 Stopping 
+ Container mth-dg7-1794678297-ne-db-1 Stopped 
+ Container mth-dg7-1794678297-ne-db-1 Removing 
+ Container mth-dg7-1794678297-ne-db-1 Removed 
+ Volume mth-dg7-1794678297-ne_pgdata Removing 
+ Volume mth-dg7-1794678297-ne_evidence Removing 
+ Network mth-dg7-1794678297-ne_default Removing 
+ Network mth-dg7-1794678297-ne_default Removed 
+ Volume mth-dg7-1794678297-ne_pgdata Removed 
+ Volume mth-dg7-1794678297-ne_evidence Removed 
+### 12 exit=0 seconds=1
 ### DONE
