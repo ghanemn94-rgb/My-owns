@@ -347,7 +347,7 @@ export function registerOrganizationRoutes(app: FastifyInstance, { db, config }:
 
   app.patch(
     "/api/v1/business-units/:businessUnitId",
-    { config: { access: { permission: "business_unit.manage" } } },
+    { config: { access: { permission: "business_unit.read" } } },
     async (request, reply) => {
       const { businessUnitId } = parse(buParams, request.params, "params");
       const body = parseBody(businessUnitUpdate, request.body);
@@ -358,7 +358,7 @@ export function registerOrganizationRoutes(app: FastifyInstance, { db, config }:
           type: "business_unit",
           id: businessUnitId,
         });
-        await requireAction(tx, principal, "business_unit.manage", target);
+        await requireAction(tx, principal, "business_unit.read", target);
         const expected = requireIfMatch(request);
         // F-DG1-140: a re-parent serializes on the organization's hierarchy lock BEFORE reading anything it checks, so
         // two concurrent moves can never both pass the cycle/depth checks against the same committed hierarchy. The
