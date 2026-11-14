@@ -1,1 +1,351 @@
 ### b00 $ deploy/scripts/init-secrets.sh --dir /tmp/claude-0/-home-user-My-owns/f7dd9c0b-2b3c-52aa-bca7-45299008f27d/scratchpad/dg7/secrets; docker image ls
+created pg_superuser_password
+created mth_owner_db_password
+created mth_app_db_password
+created oidc_client_secret
+created test_idp_user_password
+created test_idp_admin_password
+derived database_url, database_owner_url
+created test-idp-ca.pem, test-idp.crt, test-idp.key (TEST IdP only; CA key discarded)
+wrote deploy/compose/.env (MTH_SECRETS_DIR only)
+secrets directory: /tmp/claude-0/-home-user-My-owns/f7dd9c0b-2b3c-52aa-bca7-45299008f27d/scratchpad/dg7/secrets
+IMAGE                              ID             DISK USAGE   CONTENT SIZE   EXTRA
+mth-app:local                      54ee8e763210        582MB          119MB        
+mth-app:probe                      4fb7c579eecc        582MB          119MB        
+postgres:18                        5a5a84b19854        650MB          169MB        
+quay.io/keycloak/keycloak:26.8.1   a78d6b795721        751MB          265MB        
+### b00 exit=0 seconds=2
+### b01 $ docker compose -p mth-dg7b-1794680250-ne -f deploy/compose/compose.yaml -f deploy/compose/compose.no-egress.yaml --profile test-idp up -d --pull never --wait
+ Volume mth-dg7b-1794680250-ne_evidence Creating 
+ Volume mth-dg7b-1794680250-ne_evidence Creating 
+ Network mth-dg7b-1794680250-ne_default Creating 
+ Network mth-dg7b-1794680250-ne_default Creating 
+ Volume mth-dg7b-1794680250-ne_pgdata Creating 
+ Volume mth-dg7b-1794680250-ne_pgdata Creating 
+ Volume mth-dg7b-1794680250-ne_evidence Created 
+ Volume mth-dg7b-1794680250-ne_evidence Created 
+ Volume mth-dg7b-1794680250-ne_pgdata Created 
+ Volume mth-dg7b-1794680250-ne_pgdata Created 
+ Network mth-dg7b-1794680250-ne_default Created 
+ Network mth-dg7b-1794680250-ne_default Created 
+ Container mth-dg7b-1794680250-ne-db-1 Creating 
+ Container mth-dg7b-1794680250-ne-keycloak-1 Creating 
+ Container mth-dg7b-1794680250-ne-keycloak-1 Created 
+ Container mth-dg7b-1794680250-ne-db-1 Created 
+ Container mth-dg7b-1794680250-ne-migrate-1 Creating 
+ Container mth-dg7b-1794680250-ne-migrate-1 Created 
+ Container mth-dg7b-1794680250-ne-worker-1 Creating 
+ Container mth-dg7b-1794680250-ne-api-1 Creating 
+ Container mth-dg7b-1794680250-ne-worker-1 Created 
+ Container mth-dg7b-1794680250-ne-api-1 Created 
+ Container mth-dg7b-1794680250-ne-keycloak-1 Starting 
+ Container mth-dg7b-1794680250-ne-db-1 Starting 
+ Container mth-dg7b-1794680250-ne-keycloak-1 Started 
+ Container mth-dg7b-1794680250-ne-db-1 Started 
+ Container mth-dg7b-1794680250-ne-db-1 Waiting 
+ Container mth-dg7b-1794680250-ne-db-1 Healthy 
+ Container mth-dg7b-1794680250-ne-migrate-1 Starting 
+ Container mth-dg7b-1794680250-ne-migrate-1 Started 
+ Container mth-dg7b-1794680250-ne-migrate-1 Waiting 
+ Container mth-dg7b-1794680250-ne-db-1 Waiting 
+ Container mth-dg7b-1794680250-ne-db-1 Waiting 
+ Container mth-dg7b-1794680250-ne-migrate-1 Waiting 
+ Container mth-dg7b-1794680250-ne-db-1 Healthy 
+ Container mth-dg7b-1794680250-ne-db-1 Healthy 
+ Container mth-dg7b-1794680250-ne-migrate-1 Exited 
+ Container mth-dg7b-1794680250-ne-worker-1 Starting 
+ Container mth-dg7b-1794680250-ne-migrate-1 Exited 
+ Container mth-dg7b-1794680250-ne-api-1 Starting 
+ Container mth-dg7b-1794680250-ne-worker-1 Started 
+ Container mth-dg7b-1794680250-ne-api-1 Started 
+ Container mth-dg7b-1794680250-ne-migrate-1 Waiting 
+ Container mth-dg7b-1794680250-ne-keycloak-1 Waiting 
+ Container mth-dg7b-1794680250-ne-worker-1 Waiting 
+ Container mth-dg7b-1794680250-ne-api-1 Waiting 
+ Container mth-dg7b-1794680250-ne-db-1 Waiting 
+ Container mth-dg7b-1794680250-ne-worker-1 Healthy 
+ Container mth-dg7b-1794680250-ne-db-1 Healthy 
+ Container mth-dg7b-1794680250-ne-migrate-1 Exited 
+ Container mth-dg7b-1794680250-ne-api-1 Healthy 
+ Container mth-dg7b-1794680250-ne-keycloak-1 Healthy 
+### b01 exit=0 seconds=31
+### b02 $ docker compose -p mth-dg7b-1794680250-ne -f deploy/compose/compose.yaml -f deploy/compose/compose.no-egress.yaml run --rm -T migrate db bootstrap --org-code MTH-E2E --org-name-en 'E2E org (synthetic)' --org-name-ar 'مؤسسة الاختبار (اصطناعية)' --admin-name 'Synthetic Access Admin' --admin-email smoke.admin@example.invalid --admin-issuer https://keycloak:8443/realms/mth-test --admin-subject 5f0c7a52-1d1e-4c9a-9a51-6a0d0e5a0001
+ Container mth-dg7b-1794680250-ne-db-1 Running 
+ Container mth-dg7b-1794680250-ne-db-1 Waiting 
+ Container mth-dg7b-1794680250-ne-db-1 Healthy 
+ Container mth-dg7b-1794680250-ne-migrate-run-537f81c17a8b Creating 
+ Container mth-dg7b-1794680250-ne-migrate-run-537f81c17a8b Created 
+{
+  "bootstrapped": true,
+  "organizationId": "01a1db47-e213-7039-9982-a129960bbe5a",
+  "adminUserId": "01a1db47-e214-71ac-a00c-88820c3c1ae0",
+  "systemUserId": "01a1db47-e214-71ac-a00c-853a85e81cca",
+  "assignmentIds": [
+    "01a1db47-e221-710c-8985-e1400bcdd0dd",
+    "01a1db47-e225-7099-9981-3dfe47915029"
+  ]
+}
+### b02 exit=0 seconds=2
+### b03 $ MTH_SMOKE_EXPECT_NO_EGRESS=1 docker compose -p mth-dg7b-1794680250-ne -f deploy/compose/compose.yaml -f deploy/compose/compose.no-egress.yaml --profile test-idp --profile smoke run --rm --no-deps smoke
+ Container mth-dg7b-1794680250-ne-smoke-run-0356e655f913 Creating 
+ Container mth-dg7b-1794680250-ne-smoke-run-0356e655f913 Created 
+mth smoke: mode=oidc api=http://api:3000 app=http://localhost:3000 run=BFD5043D (all users and data SYNTHETIC)
+PASS  GET /healthz returns 200 {status: ok} (59 ms): HTTP 200 {"status":"ok"}
+PASS  GET /readyz returns 200 ready (database + migrations) (10 ms): HTTP 200 {"status":"ready","checks":{"database":"ok","migrations":"ok","storage":"ok","worker":"alive"}}
+PASS  IdP discovery document reachable on the internal network (406 ms): issuer https://keycloak:8443/realms/mth-test
+PASS  no outbound internet: public TCP connect and public DNS lookup both fail (5 ms): tcp 1.1.1.1:443: error ENETUNREACH; dns registry.npmjs.org: error EAI_AGAIN
+PASS  technical admin signs in (oidc) (1236 ms): smoke.admin -> user 01a1db47-e214-71ac-a00c-88820c3c1ae0, roles [ADM_TECH,ADM_ACCESS]
+PASS  technical admin holds no business role (0 ms)
+PASS  admin creates a business unit (201 + ETag) (27 ms): business unit 01a1db47-ebba-7549-abb4-224ae60aff01
+PASS  transformation-office user signs in (oidc) (202 ms): smoke.office -> user 01a1db47-ec75-75b3-87b4-20b5370b34ea, roles []
+PASS  new OIDC user starts with no roles; creating a transformation is refused (403/404) (17 ms): HTTP 404 (ADR-0006: no read on the target gives 404, read without the action gives 403)
+PASS  admin grants TO at organization scope (201, audited) (15 ms): assignment 01a1db47-eca8-732f-b6d5-3f263db2a3ef
+PASS  office user signs in again and now holds TO (158 ms)
+PASS  office creates a transformation (201 + ETag, Idempotency-Key) (115 ms): transformation 01a1db47-ed54-7199-867c-80798f3d3cc0 code TR-0001
+PASS  office reads it back: detail, list and audit trail (34 ms): audit actions [transformation_config_pin.create,forum.create,forum.create,forum.create,forum.create,forum.create,transformation_raci_assignment.create,transformation_raci_assignment.create,transformation_raci_assignment.create,transformation_raci_assignment.create,transformation_raci_assignment.create,transformation_raci_assignment.create,transformation_raci_deliverable.create,transformation_raci_assignment.create,transformation_raci_assignment.create,transformation_raci_assignment.create,transformation_raci_assignment.create,transformation_raci_assignment.create,transformation_raci_assignment.create,transformation_raci_deliverable.create,transformation_raci_assignment.create,transformation_raci_assignment.create,transformation_raci_assignment.create,transformation_raci_assignment.create,transformation_raci_assignment.create]
+PASS  technical admin cannot see the business record: list excludes it, detail is 404 (12 ms): list 200 with 0 visible, detail 404
+PASS  both users sign out (21 ms)
+{"smoke":"PASS","mode":"oidc","run":"BFD5043D","steps":15,"passed":15,"totalMs":2324,"transformationId":"01a1db47-ed54-7199-867c-80798f3d3cc0"}
+### b03 exit=0 seconds=3
+### b04 $ docker compose -p mth-dg7b-1794680250-ne -f deploy/compose/compose.yaml -f deploy/compose/compose.no-egress.yaml --profile test-idp down -v
+ Container mth-dg7b-1794680250-ne-api-1 Stopping 
+ Container mth-dg7b-1794680250-ne-keycloak-1 Stopping 
+ Container mth-dg7b-1794680250-ne-worker-1 Stopping 
+ Container mth-dg7b-1794680250-ne-api-1 Stopped 
+ Container mth-dg7b-1794680250-ne-api-1 Removing 
+ Container mth-dg7b-1794680250-ne-worker-1 Stopped 
+ Container mth-dg7b-1794680250-ne-worker-1 Removing 
+ Container mth-dg7b-1794680250-ne-api-1 Removed 
+ Container mth-dg7b-1794680250-ne-worker-1 Removed 
+ Container mth-dg7b-1794680250-ne-migrate-1 Stopping 
+ Container mth-dg7b-1794680250-ne-migrate-1 Stopped 
+ Container mth-dg7b-1794680250-ne-migrate-1 Removing 
+ Container mth-dg7b-1794680250-ne-migrate-1 Removed 
+ Container mth-dg7b-1794680250-ne-db-1 Stopping 
+ Container mth-dg7b-1794680250-ne-db-1 Stopped 
+ Container mth-dg7b-1794680250-ne-db-1 Removing 
+ Container mth-dg7b-1794680250-ne-db-1 Removed 
+ Container mth-dg7b-1794680250-ne-keycloak-1 Stopped 
+ Container mth-dg7b-1794680250-ne-keycloak-1 Removing 
+ Container mth-dg7b-1794680250-ne-keycloak-1 Removed 
+ Network mth-dg7b-1794680250-ne_default Removing 
+ Volume mth-dg7b-1794680250-ne_evidence Removing 
+ Volume mth-dg7b-1794680250-ne_pgdata Removing 
+ Volume mth-dg7b-1794680250-ne_evidence Removed 
+ Network mth-dg7b-1794680250-ne_default Removed 
+ Volume mth-dg7b-1794680250-ne_pgdata Removed 
+### b04 exit=0 seconds=3
+### b05 $ docker compose -p mth-dg7b-1794680250 -f deploy/compose/compose.yaml --profile test-idp up -d --pull never --wait && docker compose -p mth-dg7b-1794680250 -f deploy/compose/compose.yaml --profile test-idp ps
+ Network mth-dg7b-1794680250_default Creating 
+ Network mth-dg7b-1794680250_default Creating 
+ Volume mth-dg7b-1794680250_evidence Creating 
+ Volume mth-dg7b-1794680250_evidence Creating 
+ Volume mth-dg7b-1794680250_pgdata Creating 
+ Volume mth-dg7b-1794680250_pgdata Creating 
+ Volume mth-dg7b-1794680250_pgdata Created 
+ Volume mth-dg7b-1794680250_pgdata Created 
+ Volume mth-dg7b-1794680250_evidence Created 
+ Volume mth-dg7b-1794680250_evidence Created 
+ Network mth-dg7b-1794680250_default Created 
+ Network mth-dg7b-1794680250_default Created 
+ Container mth-dg7b-1794680250-db-1 Creating 
+ Container mth-dg7b-1794680250-keycloak-1 Creating 
+ Container mth-dg7b-1794680250-keycloak-1 Created 
+ Container mth-dg7b-1794680250-db-1 Created 
+ Container mth-dg7b-1794680250-migrate-1 Creating 
+ Container mth-dg7b-1794680250-migrate-1 Created 
+ Container mth-dg7b-1794680250-worker-1 Creating 
+ Container mth-dg7b-1794680250-api-1 Creating 
+ Container mth-dg7b-1794680250-api-1 Created 
+ Container mth-dg7b-1794680250-worker-1 Created 
+ Container mth-dg7b-1794680250-db-1 Starting 
+ Container mth-dg7b-1794680250-keycloak-1 Starting 
+ Container mth-dg7b-1794680250-db-1 Started 
+ Container mth-dg7b-1794680250-db-1 Waiting 
+ Container mth-dg7b-1794680250-keycloak-1 Started 
+ Container mth-dg7b-1794680250-db-1 Healthy 
+ Container mth-dg7b-1794680250-migrate-1 Starting 
+ Container mth-dg7b-1794680250-migrate-1 Started 
+ Container mth-dg7b-1794680250-migrate-1 Waiting 
+ Container mth-dg7b-1794680250-db-1 Waiting 
+ Container mth-dg7b-1794680250-db-1 Waiting 
+ Container mth-dg7b-1794680250-migrate-1 Waiting 
+ Container mth-dg7b-1794680250-db-1 Healthy 
+ Container mth-dg7b-1794680250-db-1 Healthy 
+ Container mth-dg7b-1794680250-migrate-1 Exited 
+ Container mth-dg7b-1794680250-worker-1 Starting 
+ Container mth-dg7b-1794680250-migrate-1 Exited 
+ Container mth-dg7b-1794680250-api-1 Starting 
+ Container mth-dg7b-1794680250-worker-1 Started 
+ Container mth-dg7b-1794680250-api-1 Started 
+ Container mth-dg7b-1794680250-migrate-1 Waiting 
+ Container mth-dg7b-1794680250-api-1 Waiting 
+ Container mth-dg7b-1794680250-keycloak-1 Waiting 
+ Container mth-dg7b-1794680250-worker-1 Waiting 
+ Container mth-dg7b-1794680250-db-1 Waiting 
+ Container mth-dg7b-1794680250-worker-1 Healthy 
+ Container mth-dg7b-1794680250-db-1 Healthy 
+ Container mth-dg7b-1794680250-migrate-1 Exited 
+ Container mth-dg7b-1794680250-api-1 Healthy 
+ Container mth-dg7b-1794680250-keycloak-1 Healthy 
+NAME                             IMAGE                                                                                                      COMMAND                  SERVICE    CREATED          STATUS                    PORTS
+mth-dg7b-1794680250-api-1        mth-app:local                                                                                              "/usr/local/bin/mth …"   api        36 seconds ago   Up 25 seconds (healthy)   127.0.0.1:3000->3000/tcp
+mth-dg7b-1794680250-db-1         postgres:18@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722                        "docker-entrypoint.s…"   db         36 seconds ago   Up 36 seconds (healthy)   5432/tcp
+mth-dg7b-1794680250-keycloak-1   quay.io/keycloak/keycloak:26.8.1@sha256:a78d6b79572168cb25886b80a8b5b8d4ed4390743e3eecb810538683e209dd6b   "/bin/bash -c 'set -…"   keycloak   36 seconds ago   Up 35 seconds (healthy)   8080/tcp, 9000/tcp, 127.0.0.1:8443->8443/tcp
+mth-dg7b-1794680250-worker-1     mth-app:local                                                                                              "/usr/local/bin/mth …"   worker     36 seconds ago   Up 25 seconds             3000/tcp
+### b05 exit=0 seconds=36
+### b06 $ docker compose -p mth-dg7b-1794680250 -f deploy/compose/compose.yaml run --rm -T migrate db bootstrap --org-code MTH-E2E --org-name-en 'E2E org (synthetic)' --org-name-ar 'مؤسسة الاختبار (اصطناعية)' --admin-name 'Synthetic Access Admin' --admin-email smoke.admin@example.invalid --admin-issuer https://keycloak:8443/realms/mth-test --admin-subject 5f0c7a52-1d1e-4c9a-9a51-6a0d0e5a0001
+ Container mth-dg7b-1794680250-db-1 Running 
+ Container mth-dg7b-1794680250-db-1 Waiting 
+ Container mth-dg7b-1794680250-db-1 Healthy 
+ Container mth-dg7b-1794680250-migrate-run-77afa0b83495 Creating 
+ Container mth-dg7b-1794680250-migrate-run-77afa0b83495 Created 
+{
+  "bootstrapped": true,
+  "organizationId": "01a1db48-8bc9-7159-9f0c-c01139f20a18",
+  "adminUserId": "01a1db48-8bc9-7159-9f0c-cb47e34647b6",
+  "systemUserId": "01a1db48-8bc9-7159-9f0c-c785a6098484",
+  "assignmentIds": [
+    "01a1db48-8bd7-712c-af00-828dc38df650",
+    "01a1db48-8bda-724a-9439-abdea4c21045"
+  ]
+}
+### b06 exit=0 seconds=2
+### b07 $ MTH_E2E_KEYCLOAK=1 MTH_E2E_KEYCLOAK_PASSWORD_FILE=/tmp/claude-0/-home-user-My-owns/f7dd9c0b-2b3c-52aa-bca7-45299008f27d/scratchpad/dg7/secrets/test_idp_user_password E2E_BASE_URL=http://localhost:3000 pnpm exec playwright test e2e/identity/keycloak-login.spec.ts --workers=1 --trace off
+
+Running 4 tests using 1 worker
+
+  ✘  1 [chromium-en] › e2e/identity/keycloak-login.spec.ts:41:3 › REQ-S16-007: Keycloak test realm sign-in; another realm is refused › signs in through realm mth-test and gets a session (1.0m)
+  ✘  2 [chromium-en] › e2e/identity/keycloak-login.spec.ts:61:3 › REQ-S16-007: Keycloak test realm sign-in; another realm is refused › refuses the authorization response and token of realm mth-other: token_invalid, no session (1.0m)
+  ✘  3 [chromium-ar] › e2e/identity/keycloak-login.spec.ts:41:3 › REQ-S16-007: Keycloak test realm sign-in; another realm is refused › signs in through realm mth-test and gets a session (1.0m)
+  ✘  4 [chromium-ar] › e2e/identity/keycloak-login.spec.ts:61:3 › REQ-S16-007: Keycloak test realm sign-in; another realm is refused › refuses the authorization response and token of realm mth-other: token_invalid, no session (1.0m)
+
+
+  1) [chromium-en] › e2e/identity/keycloak-login.spec.ts:41:3 › REQ-S16-007: Keycloak test realm sign-in; another realm is refused › signs in through realm mth-test and gets a session 
+
+    [31mTest timeout of 60000ms exceeded.[39m
+
+    Error: page.waitForURL: Test timeout of 60000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation until "load"
+    ============================================================
+
+      51 |     await ensureLanguage(page, lang);
+      52 |     await page.getByRole("link", { name: tr(lang, "auth.oidcButton"), exact: true }).click();
+    > 53 |     await page.waitForURL((u) => u.origin === cfg.idpOrigin.origin && u.pathname.startsWith(realmPath(HUB_REALM)));
+         |                ^
+      54 |     await submitKeycloakLogin(page, HUB_REALM, cfg);
+      55 |     await page.waitForURL((u) => u.origin !== cfg.idpOrigin.origin && !u.pathname.startsWith("/login"));
+      56 |     const me = await page.request.get("/api/v1/me");
+        at /home/user/My-owns/e2e/identity/keycloak-login.spec.ts:53:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-identity-keycloak-logi-50293-mth-test-and-gets-a-session-chromium-en/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium-en] › e2e/identity/keycloak-login.spec.ts:61:3 › REQ-S16-007: Keycloak test realm sign-in; another realm is refused › refuses the authorization response and token of realm mth-other: token_invalid, no session 
+
+    [31mTest timeout of 60000ms exceeded.[39m
+
+    Error: page.waitForURL: Test timeout of 60000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation until "load"
+    ============================================================
+
+      75 |     await page.getByRole("link", { name: tr(lang, "auth.oidcButton"), exact: true }).click();
+      76 |     // The hub's own authorization request, as it reached realm mth-test (the browser now holds the hub's login cookie).
+    > 77 |     await page.waitForURL((u) => u.origin === cfg.idpOrigin.origin && u.pathname.startsWith(realmPath(HUB_REALM)));
+         |                ^
+      78 |     // Re-address that request to the other realm; nothing else in it changes. (A route on the authorization URL would
+      79 |     // not fire: Playwright does not intercept requests reached through a redirect.)
+      80 |     await page.goto(inRealm(page.url(), HUB_REALM, FOREIGN_REALM));
+        at /home/user/My-owns/e2e/identity/keycloak-login.spec.ts:77:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-identity-keycloak-logi-d22df-er-token-invalid-no-session-chromium-en/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) [chromium-ar] › e2e/identity/keycloak-login.spec.ts:41:3 › REQ-S16-007: Keycloak test realm sign-in; another realm is refused › signs in through realm mth-test and gets a session 
+
+    [31mTest timeout of 60000ms exceeded.[39m
+
+    Error: page.waitForURL: Test timeout of 60000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation until "load"
+    ============================================================
+
+      51 |     await ensureLanguage(page, lang);
+      52 |     await page.getByRole("link", { name: tr(lang, "auth.oidcButton"), exact: true }).click();
+    > 53 |     await page.waitForURL((u) => u.origin === cfg.idpOrigin.origin && u.pathname.startsWith(realmPath(HUB_REALM)));
+         |                ^
+      54 |     await submitKeycloakLogin(page, HUB_REALM, cfg);
+      55 |     await page.waitForURL((u) => u.origin !== cfg.idpOrigin.origin && !u.pathname.startsWith("/login"));
+      56 |     const me = await page.request.get("/api/v1/me");
+        at /home/user/My-owns/e2e/identity/keycloak-login.spec.ts:53:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-identity-keycloak-logi-50293-mth-test-and-gets-a-session-chromium-ar/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4) [chromium-ar] › e2e/identity/keycloak-login.spec.ts:61:3 › REQ-S16-007: Keycloak test realm sign-in; another realm is refused › refuses the authorization response and token of realm mth-other: token_invalid, no session 
+
+    [31mTest timeout of 60000ms exceeded.[39m
+
+    Error: page.waitForURL: Test timeout of 60000ms exceeded.
+    =========================== logs ===========================
+    waiting for navigation until "load"
+    ============================================================
+
+      75 |     await page.getByRole("link", { name: tr(lang, "auth.oidcButton"), exact: true }).click();
+      76 |     // The hub's own authorization request, as it reached realm mth-test (the browser now holds the hub's login cookie).
+    > 77 |     await page.waitForURL((u) => u.origin === cfg.idpOrigin.origin && u.pathname.startsWith(realmPath(HUB_REALM)));
+         |                ^
+      78 |     // Re-address that request to the other realm; nothing else in it changes. (A route on the authorization URL would
+      79 |     // not fire: Playwright does not intercept requests reached through a redirect.)
+      80 |     await page.goto(inRealm(page.url(), HUB_REALM, FOREIGN_REALM));
+        at /home/user/My-owns/e2e/identity/keycloak-login.spec.ts:77:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-identity-keycloak-logi-d22df-er-token-invalid-no-session-chromium-ar/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4 failed
+    [chromium-en] › e2e/identity/keycloak-login.spec.ts:41:3 › REQ-S16-007: Keycloak test realm sign-in; another realm is refused › signs in through realm mth-test and gets a session 
+    [chromium-en] › e2e/identity/keycloak-login.spec.ts:61:3 › REQ-S16-007: Keycloak test realm sign-in; another realm is refused › refuses the authorization response and token of realm mth-other: token_invalid, no session 
+    [chromium-ar] › e2e/identity/keycloak-login.spec.ts:41:3 › REQ-S16-007: Keycloak test realm sign-in; another realm is refused › signs in through realm mth-test and gets a session 
+    [chromium-ar] › e2e/identity/keycloak-login.spec.ts:61:3 › REQ-S16-007: Keycloak test realm sign-in; another realm is refused › refuses the authorization response and token of realm mth-other: token_invalid, no session 
+
+To open last HTML report run:
+[36m[39m
+[36m  pnpm exec playwright show-report[39m
+[36m[39m
+### b07 exit=1 seconds=247
+### b08 $ docker compose -p mth-dg7b-1794680250 -f deploy/compose/compose.yaml --profile test-idp logs --no-color > docs/delivery/test-evidence/DG7/orchestrator/host/keycloak-e2e-stack.log 2>&1; docker compose -p mth-dg7b-1794680250 -f deploy/compose/compose.yaml --profile test-idp down -v
+ Container mth-dg7b-1794680250-worker-1 Stopping 
+ Container mth-dg7b-1794680250-api-1 Stopping 
+ Container mth-dg7b-1794680250-keycloak-1 Stopping 
+ Container mth-dg7b-1794680250-worker-1 Stopped 
+ Container mth-dg7b-1794680250-worker-1 Removing 
+ Container mth-dg7b-1794680250-worker-1 Removed 
+ Container mth-dg7b-1794680250-api-1 Stopped 
+ Container mth-dg7b-1794680250-api-1 Removing 
+ Container mth-dg7b-1794680250-api-1 Removed 
+ Container mth-dg7b-1794680250-migrate-1 Stopping 
+ Container mth-dg7b-1794680250-migrate-1 Stopped 
+ Container mth-dg7b-1794680250-migrate-1 Removing 
+ Container mth-dg7b-1794680250-migrate-1 Removed 
+ Container mth-dg7b-1794680250-db-1 Stopping 
+ Container mth-dg7b-1794680250-db-1 Stopped 
+ Container mth-dg7b-1794680250-db-1 Removing 
+ Container mth-dg7b-1794680250-db-1 Removed 
+ Container mth-dg7b-1794680250-keycloak-1 Stopped 
+ Container mth-dg7b-1794680250-keycloak-1 Removing 
+ Container mth-dg7b-1794680250-keycloak-1 Removed 
+ Volume mth-dg7b-1794680250_evidence Removing 
+ Volume mth-dg7b-1794680250_pgdata Removing 
+ Network mth-dg7b-1794680250_default Removing 
+ Volume mth-dg7b-1794680250_evidence Removed 
+ Network mth-dg7b-1794680250_default Removed 
+ Volume mth-dg7b-1794680250_pgdata Removed 
+### b08 exit=0 seconds=2
+### DONE
