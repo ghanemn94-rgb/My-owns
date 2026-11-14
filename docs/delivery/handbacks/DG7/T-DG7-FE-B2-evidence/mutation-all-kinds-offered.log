@@ -1,0 +1,76 @@
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/My-owns
+
+ ❯ |unit-web| src/pages/admin/migration/transfer-screens.test.tsx (28 tests | 2 failed | 26 skipped) 3460ms
+   ↓ Administration > Data export (REQ-S19-014, REQ-S19-016) > en: lists exports with Unknown counts, never 0, and requests one with a reason
+   ↓ Administration > Data export (REQ-S19-014, REQ-S19-016) > ar: lists exports with Unknown counts, never 0, and requests one with a reason
+   ↓ Administration > Data export (REQ-S19-014, REQ-S19-016) > shows the translated 422 migration.export_in_progress and keeps the reason
+   ↓ Administration > Data export (REQ-S19-014, REQ-S19-016) > en: an export's manifests are offered only after success; a demo source is synthetic
+   ↓ Administration > Data export (REQ-S19-014, REQ-S19-016) > ar: an export's manifests are offered only after success; a demo source is synthetic
+   ↓ Administration > Migration status (read-only; REQ-S19-014, REQ-S19-016) > en: imports, rebinds and the read-only note; no control writes anything
+   ↓ Administration > Migration status (read-only; REQ-S19-014, REQ-S19-016) > ar: imports, rebinds and the read-only note; no control writes anything
+   ↓ Administration > Migration status (read-only; REQ-S19-014, REQ-S19-016) > en: a reconciliation lists each differing table and a missing attachment as Not found
+   ↓ Administration > Migration status (read-only; REQ-S19-014, REQ-S19-016) > ar: a reconciliation lists each differing table and a missing attachment as Not found
+   ↓ Administration > Configuration transfer (REQ-S19-008) > en: the auditor (no transfer right) gets the no-permission state and no request
+   ↓ Administration > Configuration transfer (REQ-S19-008) > ar: the auditor (no transfer right) gets the no-permission state and no request
+   ↓ Administration > Configuration transfer (REQ-S19-008) > en: exports kinds in contract order with the organization, and uploads the file's bytes
+   ↓ Administration > Configuration transfer (REQ-S19-008) > ar: exports kinds in contract order with the organization, and uploads the file's bytes
+   × Administration > Configuration transfer (REQ-S19-008) > en: the export form offers every kind except automation_rule, says why, and never sends it 575ms
+     → expected [ 'methodology', …(11) ] to deeply equal [ 'methodology', …(10) ]
+   × Administration > Configuration transfer (REQ-S19-008) > ar: the export form offers every kind except automation_rule, says why, and never sends it 131ms
+     → expected [ 'methodology', …(11) ] to deeply equal [ 'methodology', …(10) ]
+   ↓ Administration > Configuration transfer (REQ-S19-008) > en: an imported automation_rule item is still labelled, and shown refused with its reason
+   ↓ Administration > Configuration transfer (REQ-S19-008) > ar: an imported automation_rule item is still labelled, and shown refused with its reason
+   ↓ Administration > Configuration transfer (REQ-S19-008) > en: a conflict makes the import invalid: no Validate and no Commit; its reason is shown
+   ↓ Administration > Configuration transfer (REQ-S19-008) > ar: a conflict makes the import invalid: no Validate and no Commit; its reason is shown
+   ↓ Administration > Configuration transfer (REQ-S19-008) > en: Validate sends If-Match; a clean plan commits as drafts with If-Match
+   ↓ Administration > Configuration transfer (REQ-S19-008) > ar: Validate sends If-Match; a clean plan commits as drafts with If-Match
+   ↓ Administration > Configuration transfer (REQ-S19-008) > a 422 plan_changed on commit shows its text and reloads the import
+   ↓ transfer helpers > formats 64-bit counts exactly and never turns a missing value into 0
+   ↓ transfer helpers > commit is offered only for a validated plan without conflict or refused items
+   ↓ transfer helpers > header-safe file names and translated item problems
+   ↓ the transfer namespace (p7-work-split §C.8, §D.2; D-243 Q7) > has identical key sets, and every Arabic leaf is Arabic and labelled provisional
+   ↓ the transfer namespace (p7-work-split §C.8, §D.2; D-243 Q7) > uses the work split's EN and AR texts exactly for the keys it gives
+   ↓ the transfer namespace (p7-work-split §C.8, §D.2; D-243 Q7) > names no delivery gate and claims no approval or conformity
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-web| src/pages/admin/migration/transfer-screens.test.tsx > Administration > Configuration transfer (REQ-S19-008) > en: the export form offers every kind except automation_rule, says why, and never sends it
+ FAIL  |unit-web| src/pages/admin/migration/transfer-screens.test.tsx > Administration > Configuration transfer (REQ-S19-008) > ar: the export form offers every kind except automation_rule, says why, and never sends it
+AssertionError: expected [ 'methodology', …(11) ] to deeply equal [ 'methodology', …(10) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[33m@@ -3,10 +3,11 @@[39m
+[2m    "scoring_defaults",[22m
+[2m    "form_schema",[22m
+[2m    "procedure",[22m
+[2m    "automation_rule_set",[22m
+[2m    "health_check_scheme",[22m
+[31m+   "automation_rule",[39m
+[2m    "branding",[22m
+[2m    "notification_policy",[22m
+[2m    "job_schedule",[22m
+[2m    "config_review_policy",[22m
+[2m    "upload_policy",[22m
+
+ ❯ src/pages/admin/migration/transfer-screens.test.tsx:487:41
+    485|       // The offered kinds: the contract's order, all 12 less UNPORTAB…
+    486|       const boxes = within(fieldset).getAllByRole("checkbox") as HTMLI…
+    487|       expect(boxes.map((b) => b.value)).toEqual(CONFIG_BUNDLE_KINDS.fi…
+       |                                         ^
+    488|       expect(boxes.map((b) => b.value)).toEqual([...EXPORTABLE_CONFIG_…
+    489|       expect([...UNPORTABLE_BUNDLE_KINDS.keys()]).toEqual(["automation…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 26 skipped (28)
+   Start at  21:13:53
+   Duration  6.87s (transform 282.03s, setup 149ms, collect 2.54s, tests 3.46s, environment 420ms, prepare 109ms)
+

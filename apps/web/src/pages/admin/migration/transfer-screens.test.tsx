@@ -7,13 +7,16 @@
 //  - REQ-S19-008: a bundle is exported with the organization and the kinds in contract order; an upload sends the
 //    file's own bytes with X-File-Name, and a file over 5 MiB is refused without a request; Validate and Commit send
 //    If-Match; Commit is offered only for a validated import with no conflict or refused item, and the non-draft note
-//    is always shown; the auditor (no transfer right) sees the no-permission state.
+//    is always shown; the auditor (no transfer right) sees the no-permission state. The export form does not offer
+//    automation_rule (ADR-0065 Amendment 1, A1.2) and its "not carried" note says why (T-DG7-FE-B2).
 //  - The transfer namespace: identical key sets, every Arabic leaf labelled provisional, the work split's texts exact.
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Permission } from "@mth/shared";
+import { UNPORTABLE_BUNDLE_KINDS } from "@mth/shared/transfer";
+import { CONFIG_BUNDLE_KINDS, EXPORTABLE_CONFIG_BUNDLE_KINDS } from "../../../api/p7.ts";
 import { catalogues, createI18n } from "../../../i18n/index.ts";
 import { P7_TRANSFER_PROVISIONAL_ARABIC, TRANSFER_WORK_SPLIT_KEYS } from "../../../i18n/provisional-ar-p7-transfer.ts";
 import { ORG_ID, makeMe, mockApi, problem, renderApp, route, type RecordedRequest } from "../../../test/fixtures.tsx";
@@ -447,6 +450,101 @@ describe("Administration > Configuration transfer (REQ-S19-008)", () => {
       expect(up.url).toContain(`organizationId=${ORG_ID}`);
       expect(up.headers["x-file-name"]).toBe("b_ndle.json");
       expect(up.headers["content-type"]).toBe("application/json");
+    },
+  );
+
+  // T-DG7-FE-B2 (ADR-0065 Amendment 1, A1.2; BE-F2 Q3): automation_rule is not carried in this release, so the export
+  // form does not offer it (ticking it was a 422 unportable_reference), and the note where the kinds are listed says so.
+  it.each(LOCALES)(
+    "%s: the export form offers every kind except automation_rule, says why, and never sends it",
+    async (locale) => {
+      const created = {
+        id: BUNDLE_EXPORT_ID,
+        organizationId: ORG_ID,
+        bundleSchemaVersion: "mth-config-bundle/1",
+        sourceEnvironment: "demo",
+        kinds: EXPORTABLE_CONFIG_BUNDLE_KINDS,
+        itemCount: 11,
+        byteSize: "100",
+        sha256: SHA,
+        createdAt: "2026-11-13T08:00:00Z",
+        createdBy: ORG_ID,
+      };
+      const { requests } = mockApi(
+        meRoute(["config_bundle.export", "config_bundle.import"], locale),
+        route("GET", /\/config-bundles\/(exports|imports)\?/, () => ({
+          status: 200,
+          body: { items: [], nextCursor: null },
+        })),
+        route("POST", /\/config-bundles\/exports\?/, () => ({ status: 201, body: created })),
+      );
+      renderApp("/admin/config-transfer", { i18n: createI18n(locale) });
+      expect(await screen.findByText(tx(locale, "transfer.bundle.exportsEmpty"))).toBeTruthy();
+      const form = document.querySelector<HTMLFormElement>("form[data-form='export-config-bundle']")!;
+      const fieldset = within(form).getByRole("group", { name: tx(locale, "transfer.bundle.kinds") });
+      // The offered kinds: the contract's order, all 12 less UNPORTABLE_BUNDLE_KINDS (the shared list), labelled.
+      const boxes = within(fieldset).getAllByRole("checkbox") as HTMLInputElement[];
+      expect(boxes.map((b) => b.value)).toEqual(CONFIG_BUNDLE_KINDS.filter((k) => k !== "automation_rule"));
+      expect(boxes.map((b) => b.value)).toEqual([...EXPORTABLE_CONFIG_BUNDLE_KINDS]);
+      expect([...UNPORTABLE_BUNDLE_KINDS.keys()]).toEqual(["automation_rule"]);
+      expect(within(fieldset).queryByLabelText(tx(locale, "transfer.bundle.kind.automation_rule"))).toBeNull();
+      expect(within(fieldset).getByLabelText(tx(locale, "transfer.bundle.kind.automation_rule_set"))).toBeTruthy();
+      // The note: visible where the kinds are listed, read with the group, and naming the kind it leaves out.
+      const note = fieldset.querySelector<HTMLElement>("[data-state='not-carried-note']")!;
+      expect(note.textContent?.trim()).toBe(tx(locale, "transfer.bundle.notCarriedNote"));
+      expect(note.getAttribute("data-kinds")).toBe("automation_rule");
+      expect(fieldset.getAttribute("aria-describedby")?.split(" ")).toContain(note.id);
+      expect(document.getElementById(note.id)).toBe(note);
+      // Every offered kind ticked (keyboard: Space toggles a focused checkbox; fireEvent.click is its DOM effect).
+      for (const b of boxes) fireEvent.click(b);
+      fireEvent.change(screen.getByLabelText(new RegExp(tx(locale, "transfer.bundle.reason"))), {
+        target: { value: "Synthetic bundle for the clean installation" },
+      });
+      fireEvent.click(screen.getByRole("button", { name: tx(locale, "transfer.bundle.export") }));
+      expect(await screen.findByText(tx(locale, "transfer.bundle.exported"))).toBeTruthy();
+      const exp = nonGet(requests).find((r) => r.url.includes("/exports"))!;
+      expect(exp.body).toEqual({
+        reason: "Synthetic bundle for the clean installation",
+        kinds: [...EXPORTABLE_CONFIG_BUNDLE_KINDS],
+      });
+      expect((exp.body as { kinds: string[] }).kinds).not.toContain("automation_rule");
+      expect(within(form).queryByText(tx(locale, "problems.config_bundle__unportable_reference"))).toBeNull();
+    },
+  );
+
+  it.each(LOCALES)(
+    "%s: an imported automation_rule item is still labelled, and shown refused with its reason",
+    async (locale) => {
+      mockApi(
+        meRoute(["config_bundle.import"], locale),
+        route("GET", new RegExp(`/config-bundles/imports/${BUNDLE_IMPORT_ID}$`), () => ({
+          status: 200,
+          body: bundleImport({
+            status: "invalid",
+            counts: { createDraft: 0, newDraft: 0, identical: 0, conflict: 0, refused: 1 },
+            items: [
+              {
+                id: REC_ID,
+                ordinal: 1,
+                kind: "automation_rule",
+                itemCode: "overdue-reminder",
+                sourceVersionNo: 1,
+                contentSha256: SHA,
+                action: "refused",
+                problemCode: "config_bundle.kind_unavailable",
+                targetRecordType: null,
+                targetRecordId: null,
+              },
+            ],
+          }),
+        })),
+      );
+      renderApp(`/admin/config-transfer/imports/${BUNDLE_IMPORT_ID}`, { i18n: createI18n(locale) });
+      const items = await screen.findByRole("table", { name: tx(locale, "transfer.bundle.itemsTitle") });
+      expect(within(items).getByText(tx(locale, "transfer.bundle.kind.automation_rule"))).toBeTruthy();
+      expect(within(items).getByText(tx(locale, "transfer.bundle.action.refused"))).toBeTruthy();
+      expect(within(items).getByText(tx(locale, "problems.config_bundle__kind_unavailable"))).toBeTruthy();
+      expect(screen.queryByRole("button", { name: tx(locale, "transfer.bundle.commit") })).toBeNull();
     },
   );
 

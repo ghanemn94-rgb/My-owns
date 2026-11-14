@@ -1,6 +1,8 @@
 // Administration > Configuration transfer (T-DG7-FE-B; p7-work-split §D.2/D.4; ADR-0065; REQ-S19-008). Every screen
 // reads and writes the real API through the P7 client (api/p7.ts); the organization is the caller's home organization.
-//  - Export (config_bundle.export): pick kinds (none = every kind with a published version) and a reason; the bundle
+//  - Export (config_bundle.export): pick kinds (none = every listed kind with a published version) and a reason; the
+//    kinds offered are EXPORTABLE_CONFIG_BUNDLE_KINDS. `automation_rule` is not offered (ADR-0065 Amendment 1, A1.2:
+//    not carried in this release; naming it is 422 unportable_reference), and the "not carried" note says so. The bundle
 //    is listed with its kinds, item count, size, SHA-256 and a download (the server's exact bytes, a plain same-origin
 //    link). An export carries published configuration only.
 //  - Import (config_bundle.import): upload a bundle file (checked locally for size and JSON first; the server checks
@@ -16,12 +18,14 @@ import { Link, useParams } from "react-router";
 import { api, buildUrl } from "../../../api/client.ts";
 import {
   CONFIG_BUNDLE_KINDS,
+  EXPORTABLE_CONFIG_BUNDLE_KINDS,
   p7Paths,
   useConfigBundleExport,
   useConfigBundleExports,
   useConfigBundleImport,
   useConfigBundleImports,
   useP7AdminRefresh,
+  UNPORTABLE_CONFIG_BUNDLE_KINDS,
   type ConfigBundleKind,
 } from "../../../api/p7.ts";
 import { useLocale } from "../../../app/locale.ts";
@@ -141,6 +145,24 @@ function NonDraftNote() {
   );
 }
 
+/**
+ * What a bundle does not carry, with the reason (ADR-0065 Amendment 1, A1.2): the kinds are not offered for export,
+ * and this note says so where the kinds are listed, so the omission is never silent.
+ */
+function NotCarriedNote() {
+  const { t } = useTranslation();
+  return (
+    <p
+      className="field__hint"
+      id="bundle-kinds-not-carried"
+      data-state="not-carried-note"
+      data-kinds={UNPORTABLE_CONFIG_BUNDLE_KINDS.join(" ")}
+    >
+      <Icon name="info" /> {t("transfer.bundle.notCarriedNote")}
+    </p>
+  );
+}
+
 function KindList({ kinds }: { kinds: readonly string[] }) {
   const { t } = useTranslation();
   return <>{kinds.map((k) => t(`transfer.bundle.kind.${k}`)).join(", ")}</>;
@@ -170,7 +192,7 @@ function ExportBundleForm({ organizationId, onDone }: { organizationId: string; 
         }
         setInvalid(false);
         // In the contract's kind order; no kind = every kind with a published version (the field is optional).
-        const ordered = CONFIG_BUNDLE_KINDS.filter((k) => kinds.includes(k));
+        const ordered = EXPORTABLE_CONFIG_BUNDLE_KINDS.filter((k) => kinds.includes(k));
         void runner
           .run<ConfigBundleExport>(buildUrl(p7Paths.configBundleExports, { organizationId }), {
             method: "POST",
@@ -193,11 +215,14 @@ function ExportBundleForm({ organizationId, onDone }: { organizationId: string; 
           </Link>
         </p>
       ) : null}
-      <fieldset className="field">
+      <fieldset className="field" aria-describedby="bundle-kinds-hint bundle-kinds-not-carried">
         <legend className="field__label">{t("transfer.bundle.kinds")}</legend>
-        <p className="field__hint">{t("transfer.bundle.kindsHint")}</p>
+        <p className="field__hint" id="bundle-kinds-hint">
+          {t("transfer.bundle.kindsHint")}
+        </p>
+        <NotCarriedNote />
         <div className="grid grid--3">
-          {CONFIG_BUNDLE_KINDS.map((k) => (
+          {EXPORTABLE_CONFIG_BUNDLE_KINDS.map((k) => (
             <label key={k} className="checkbox">
               <input
                 type="checkbox"

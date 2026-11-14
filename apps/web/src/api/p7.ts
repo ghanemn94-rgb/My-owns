@@ -23,6 +23,7 @@
 //
 // Unknown is data, never a default (p7-work-split §I.7: "`null` means unknown"): a `null` count, period, checksum or
 // register is shown as Unknown, Unavailable or "Not set", never turned into 0, an empty list or a success colour here.
+import { UNPORTABLE_BUNDLE_KINDS } from "@mth/shared/transfer";
 import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, getSessionGeneration } from "./client.ts";
 import { fetchAllPages, shouldRetry } from "./queries.ts";
@@ -65,6 +66,18 @@ export const CONFIG_BUNDLE_KINDS = [
   "upload_policy",
 ] as const;
 export type ConfigBundleKind = (typeof CONFIG_BUNDLE_KINDS)[number];
+/**
+ * The kinds the export screen offers: every `ConfigBundleKind` less `UNPORTABLE_BUNDLE_KINDS` (ADR-0065 Amendment 1,
+ * A1.2: `automation_rule` is not carried in this release, and an export naming it is 422
+ * `config_bundle.unportable_reference`). The enum keeps all 12 values, so an import item of the kind is still labelled.
+ */
+export const EXPORTABLE_CONFIG_BUNDLE_KINDS: readonly ConfigBundleKind[] = CONFIG_BUNDLE_KINDS.filter(
+  (k) => !UNPORTABLE_BUNDLE_KINDS.has(k),
+);
+/** The kinds a bundle never carries (shown on the export screen with the reason, never dropped silently). */
+export const UNPORTABLE_CONFIG_BUNDLE_KINDS: readonly ConfigBundleKind[] = CONFIG_BUNDLE_KINDS.filter((k) =>
+  UNPORTABLE_BUNDLE_KINDS.has(k),
+);
 /** `ConfigBundleImport.status` (ADR-0065 §4). `invalid` is terminal. */
 export const CONFIG_BUNDLE_IMPORT_STATUSES = ["uploaded", "validated", "invalid", "committed"] as const;
 export type ConfigBundleImportStatus = (typeof CONFIG_BUNDLE_IMPORT_STATUSES)[number];
