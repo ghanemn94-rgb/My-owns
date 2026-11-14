@@ -137,5 +137,7 @@ Environment facts measured by T-DG7-DO-E (`docs/delivery/handbacks/DG7/T-DG7-DO-
 | Compose up on a clean host; `compose.no-egress.yaml` with the `test-idp` profile | `docker compose … up -d --pull never --wait` | Orchestrator host | a Docker daemon and the loaded images | orchestrator evidence |
 | Keycloak e2e (REQ-S16-007 residual) | `e2e/identity/keycloak-login.spec.ts` | Orchestrator host | a Docker daemon (`test-idp` profile) | orchestrator evidence |
 
+**Orchestrator host results (D-267, 2026-11-14).** The orchestrator started a Docker daemon in this container (containerd snapshotter, Server 29.9.2) and ran the host rows outside the agent sandbox: image build, bundle save/remove/load/verify, `up --pull never --wait` with `/readyz` ready, the no-egress stack with the smoke profile 15/15 (egress probe ENETUNREACH / EAI_AGAIN), and the Keycloak e2e 4/4 (run 3c, test process without the build-proxy variables). Logs: `docs/delivery/test-evidence/DG7/orchestrator/host/`. One host with registry access through the egress proxy: not air-gapped, not HA. The Keycloak row of the P6 table above is therefore no longer BLOCKED on this host.
+
 If the orchestrator's host cannot run its rows, they are recorded BLOCKED with the reason. That is a release blocker
 under REQ-S21-003, never a pass (ADR-0069 residual 1).
