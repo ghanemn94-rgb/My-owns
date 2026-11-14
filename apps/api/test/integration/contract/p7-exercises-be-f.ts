@@ -67,6 +67,15 @@ export async function exerciseP7BeFOperations(ctx: P6ExerciseContext): Promise<v
   });
   expect(policy.status).toBe(200);
   await status(m("POST", `${BASE}/exports${q}`, { session: tech, body: { reason: "x" } }), 400);
+  // T-DG7-BE-F2: automation_rule never travels (ADR-0065 §2, Residual 1): 422 unportable_reference, nothing written.
+  await status(
+    m("POST", `${BASE}/exports${q}`, {
+      session: tech,
+      body: { kinds: ["automation_rule"], reason: "Synthetic export of an unportable kind" },
+    }),
+    422,
+    "config_bundle.unportable_reference",
+  );
   await status(
     m("POST", `${BASE}/exports${q}`, { session: auditor, body: { reason: "Synthetic export" } }),
     403,

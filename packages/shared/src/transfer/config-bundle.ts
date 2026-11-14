@@ -4,9 +4,11 @@
 //     "createdAt": "<RFC 3339 UTC>", "appVersion": "<release>",
 //     "items": [ { "kind", "itemCode", "sourceVersionNo", "contentSha256", "content" } ] }
 //
-// - BUNDLE_SCHEMA_VERSION is the only version this release reads. Any other value (an empty string, a missing field,
+// - BUNDLE_SCHEMA_VERSION is the only version this release reads. Any other value (an empty string,
 //   "mth-config-bundle/2") is refused by the server with 422 config_bundle.schema_version_unsupported before anything
-//   else is read (ADR-0065 §2); the envelope schema below therefore accepts any string there.
+//   else is read (ADR-0065 §2); so is a missing field on an otherwise valid envelope, while a body without the field
+//   that is not otherwise a valid envelope is the uniform 400 (T-DG7-BE-F2; route-inventory case 4). The envelope
+//   schema below therefore accepts any string there, and the contract neither requires nor constrains it.
 // - contentSha256 = SHA-256 (hex) of the UTF-8 bytes of canonicalBundleJson(content): object keys sorted by code point,
 //   no insignificant whitespace, integers only (decimals are strings). The digest itself is computed by the caller's
 //   hasher (this package is dependency-free and has no Node types; the API passes node:crypto through @mth/db's
@@ -38,6 +40,24 @@ export const CONFIG_BUNDLE_KINDS = [
 ] as const;
 export type ConfigBundleKind = (typeof CONFIG_BUNDLE_KINDS)[number];
 export const configBundleKind = z.enum(CONFIG_BUNDLE_KINDS);
+
+/**
+ * Kinds this release never puts in a bundle, with the field that has no stable key (ADR-0065 §2: "A reference that has
+ * no stable key (for example a user id inside a configuration) fails the export with 422
+ * config_bundle.unportable_reference, naming the kind, key and field"; Residual 1: such a kind "is refused at export
+ * with config_bundle.unportable_reference and listed in BE-F's handback and in known limitations"; T-DG7-BE-F2).
+ *
+ * `automation_rule`: every admin rule names its owner by user id (`automation_rule.owner_user_id`, required for an
+ * admin rule by `createAutomationRule`), and a transformation-scoped rule also names its transformation by id. Neither
+ * is configuration with a stable key, and choosing another owner in the target would be a product decision the ADR
+ * does not make. So an export that names the kind is refused (422 config_bundle.unportable_reference, pointer
+ * `/kinds/<i>`), the default export leaves it out and lists only the kinds it covered in `kinds`, and an imported
+ * item of the kind is planned `refused` with config_bundle.kind_unavailable (no adapter is registered for it).
+ * `automation_rule_set` (the Studio kind) still travels.
+ */
+export const UNPORTABLE_BUNDLE_KINDS: ReadonlyMap<ConfigBundleKind, string> = new Map<ConfigBundleKind, string>([
+  ["automation_rule", "/ownerUserId"],
+]);
 
 /** The six Studio kinds: `methodology_version` rows keyed by (config_kind, key). */
 export const STUDIO_BUNDLE_KINDS = [

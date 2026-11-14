@@ -48,6 +48,7 @@ import {
   contentSha256,
   firstUuidPointer,
   SOURCE_ENVIRONMENTS,
+  UNPORTABLE_BUNDLE_KINDS,
   type ConfigBundleEnvelope,
   type ConfigBundleKind,
 } from "@mth/shared/transfer";
@@ -134,6 +135,15 @@ export const configBundleRefusals = {
         pointer: `/${kind}/${itemCode}${field}`,
         code: "config_bundle.unportable_reference",
         message: `${T["config_bundle.unportable_reference"]} (${kind} ${itemCode} ${field || "/"})`,
+      },
+    ]),
+  /** A kind this release never exports (UNPORTABLE_BUNDLE_KINDS; ADR-0065 §2, Residual 1): `index` into `kinds`. */
+  unportableKind: (kind: ConfigBundleKind, index: number) =>
+    rule("config_bundle.unportable_reference", [
+      {
+        pointer: `/kinds/${index}`,
+        code: "config_bundle.unportable_reference",
+        message: `${T["config_bundle.unportable_reference"]} (${kind} ${UNPORTABLE_BUNDLE_KINDS.get(kind) ?? "/"})`,
       },
     ]),
   kindUnavailable: (kind: string) =>
@@ -471,10 +481,14 @@ export async function createExport(
   organizationId: string,
   body: z.infer<typeof configBundleExportCreate>,
 ): Promise<ExportRow> {
-  // Default: every kind available in this installation. A kind asked for by name that has no adapter here is refused
-  // (422 config_bundle.kind_unavailable), never silently left out of the bundle.
-  const available = new Set(registry.kinds());
-  const missing = (body.kinds ?? []).find((k) => !available.has(k));
+  // Default: every kind available in this installation. A kind asked for by name is never silently left out of the
+  // bundle: a kind this release never exports (UNPORTABLE_BUNDLE_KINDS, ADR-0065 §2 and Residual 1) is 422
+  // config_bundle.unportable_reference, and one that has no adapter here is 422 config_bundle.kind_unavailable.
+  const named = body.kinds ?? [];
+  for (const [index, kind] of named.entries())
+    if (UNPORTABLE_BUNDLE_KINDS.has(kind)) throw configBundleRefusals.unportableKind(kind, index);
+  const available = new Set(registry.kinds().filter((k) => !UNPORTABLE_BUNDLE_KINDS.has(k)));
+  const missing = named.find((k) => !available.has(k));
   if (missing !== undefined) throw configBundleRefusals.kindUnavailable(missing);
   const kinds = CONFIG_BUNDLE_KINDS.filter(
     (k) => available.has(k) && (body.kinds === undefined || body.kinds.includes(k)),
@@ -539,18 +553,30 @@ export async function readExportBytes(store: BundleStore, row: ExportRow): Promi
  * The declared size was refused before the body was read (413, routes.ts). The stored object is the canonical JSON of
  * the checked bundle (keys by code point, no whitespace): byte for byte the file an export writes, so an unchanged
  * exported bundle keeps its SHA-256; the size limit applies to it too.
+ *
+ * T-DG7-BE-F2 (route-inventory case 4; ADR-0051 §5 and REQ-S16-027 "invalid input returns the uniform 400 body"):
+ * - a PRESENT bundleSchemaVersion other than mth-config-bundle/1 (any value, "" included) is 422 before anything else,
+ *   whatever the rest of the body looks like, because another release's bundle may have another shape;
+ * - an ABSENT bundleSchemaVersion names no version, so it cannot be another release's format: a body that is
+ *   otherwise a valid mth-config-bundle/1 envelope is 422 schema_version_unsupported (T-D1 "missing"), and a body that
+ *   is not one (not an object, or a required field missing or malformed) is plain invalid input, the uniform 400.
  */
 export function checkBundle(
   registry: ConfigBundleAdapterRegistry,
   body: unknown,
   parseEnvelope: (body: unknown) => ConfigBundleEnvelope,
 ): { bundle: ConfigBundleEnvelope; bytes: Uint8Array } {
-  const version =
-    body !== null && typeof body === "object" && !Array.isArray(body)
-      ? (body as Record<string, unknown>)["bundleSchemaVersion"]
-      : undefined;
-  if (version !== BUNDLE_SCHEMA_VERSION)
-    throw configBundleRefusals.schemaVersionUnsupported(typeof version === "string" ? version.slice(0, 64) : "");
+  const record =
+    body !== null && typeof body === "object" && !Array.isArray(body) ? (body as Record<string, unknown>) : null;
+  if (record !== null && Object.hasOwn(record, "bundleSchemaVersion")) {
+    const version = record["bundleSchemaVersion"];
+    if (version !== BUNDLE_SCHEMA_VERSION)
+      throw configBundleRefusals.schemaVersionUnsupported(typeof version === "string" ? version.slice(0, 64) : "");
+  } else {
+    // No version: the uniform 400 when the body is not otherwise a v1 envelope; else 422 (the version is missing).
+    parseEnvelope(record === null ? body : { ...record, bundleSchemaVersion: BUNDLE_SCHEMA_VERSION });
+    throw configBundleRefusals.schemaVersionUnsupported("");
+  }
   const bundle = parseEnvelope(body);
   const seen = new Set<string>();
   for (const [i, item] of bundle.items.entries()) {

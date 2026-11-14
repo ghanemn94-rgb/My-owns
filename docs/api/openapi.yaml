@@ -42581,10 +42581,10 @@ components:
     ConfigBundle:
       type: object
       description: "A configuration transfer bundle (ADR-0065 §2). bundleSchemaVersion is checked by the server, not by this schema, so that an unknown version is answered with 422 config_bundle.schema_version_unsupported rather than a generic 400."
-      required: [bundleSchemaVersion, exportId, sourceEnvironment, createdAt, appVersion, items]
+      required: [exportId, sourceEnvironment, createdAt, appVersion, items]
       additionalProperties: false
       properties:
-        bundleSchemaVersion: { type: string, minLength: 1, maxLength: 64 }
+        bundleSchemaVersion: { description: "Read by the server before anything else of the bundle. Only mth-config-bundle/1 is accepted. Any other value (an empty string and a value that is not a string included) is answered with 422 config_bundle.schema_version_unsupported, whatever the rest of the body, and nothing is stored (ADR-0065 §2; REQ-S19-008). A missing field is the same 422 when the rest of the body is a valid bundle, and the uniform 400 when it is not. Deliberately neither required nor constrained here, so that this refusal is that specific code and never the generic 400 (T-DG7-BE-F2)." }
         exportId: { $ref: "#/components/schemas/Uuid" }
         sourceEnvironment: { $ref: "#/components/schemas/TransferSourceEnvironment" }
         createdAt: { $ref: "#/components/schemas/Timestamp" }

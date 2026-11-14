@@ -235,21 +235,47 @@ describe("export (ADR-0065 §3) and T-D8", () => {
     expect(res.body.code).toBe("config_bundle.checksum_mismatch");
   });
 
-  it("a kind named in the request that this installation cannot export is 422 kind_unavailable, never left out", async () => {
-    const res = await send("POST", withOrg(`${BASE}/exports`), {
-      session: both,
-      body: { kinds: ["job_schedule", "automation_rule"], reason: "Synthetic export of an unavailable kind" },
-    });
-    expect(res.status).toBe(422);
-    expect(res.body.code).toBe("config_bundle.kind_unavailable");
-    expect(res.body.errors[0].message).toContain("automation_rule");
-    // The default (all kinds) records exactly the kinds it covered.
+  it("automation_rule named in the request is 422 unportable_reference (ADR-0065 §2, Residual 1), never left out", async () => {
+    // T-DG7-BE-F2: every admin rule names its owner by user id, which has no stable key, so the kind never travels.
+    const before = await owner
+      .selectFrom("config_bundle_export")
+      .select((eb) => eb.fn.countAll<string>().as("n"))
+      .executeTakeFirstOrThrow();
+    const dir = join(api.config.evidenceStorage.path, "transfer", "config-bundles");
+    const objects = existsSync(dir) ? readdirSync(dir).sort() : [];
+    for (const [kinds, index] of [
+      [["job_schedule", "automation_rule"], 1],
+      [["automation_rule"], 0],
+    ] as const) {
+      const res = await send("POST", withOrg(`${BASE}/exports`), {
+        session: both,
+        body: { kinds, reason: "Synthetic export of an unportable kind" },
+      });
+      expect(res.status, JSON.stringify(res.body)).toBe(422);
+      expect(res.body.code).toBe("config_bundle.unportable_reference");
+      expect(res.body.detail).toBe("An item refers to a record that has no stable key, so it cannot be exported.");
+      expect(res.body.errors).toHaveLength(1);
+      expect(res.body.errors[0]).toMatchObject({
+        pointer: `/kinds/${index}`,
+        code: "config_bundle.unportable_reference",
+      });
+      expect(res.body.errors[0].message).toContain("automation_rule /ownerUserId");
+    }
+    // Nothing was written: no export row and no stored object.
+    const after = await owner
+      .selectFrom("config_bundle_export")
+      .select((eb) => eb.fn.countAll<string>().as("n"))
+      .executeTakeFirstOrThrow();
+    expect(after.n).toBe(before.n);
+    expect(existsSync(dir) ? readdirSync(dir).sort() : []).toEqual(objects);
+    // The default (all kinds) records exactly the kinds it covered, and automation_rule is not among them.
     const row = await owner
       .selectFrom("config_bundle_export")
       .select("kinds")
       .where("id", "=", exported.id)
       .executeTakeFirstOrThrow();
     expect(row.kinds as unknown).not.toContain("automation_rule");
+    expect(exported.bundle.items.some((i: Item) => i.kind === "automation_rule")).toBe(false);
   });
 
   it("422 nothing_published when the chosen kinds have nothing published", async () => {
@@ -272,6 +298,39 @@ describe("T-D1 unknown schema versions are refused and nothing is stored", () =>
     const res = await upload(both, bundle);
     expect(res.status, JSON.stringify(res.body)).toBe(422);
     expect(res.body.code).toBe("config_bundle.schema_version_unsupported");
+    expect(await importRows()).toBe(rows);
+    expect(storedImportObjects()).toHaveLength(objects);
+  });
+
+  // T-DG7-BE-F2 (route-inventory case 4): a present unknown version is 422 whatever the body's shape; a body WITHOUT a
+  // version that is not otherwise a valid envelope is plain invalid input, the uniform 400 (ADR-0051 §5).
+  it.each([
+    ["another release's shape", { bundleSchemaVersion: "mth-config-bundle/2", payload: { future: true } }],
+    ["a version that is not a string", { bundleSchemaVersion: 2, items: [] }],
+  ])("422 for %s, before the envelope is read", async (_name, body) => {
+    const rows = await importRows();
+    const objects = storedImportObjects().length;
+    const res = await upload(both, body);
+    expect(res.status, JSON.stringify(res.body)).toBe(422);
+    expect(res.body.code).toBe("config_bundle.schema_version_unsupported");
+    expect(await importRows()).toBe(rows);
+    expect(storedImportObjects()).toHaveLength(objects);
+  });
+
+  it.each([
+    ["no version and no exportId", "missing", "/exportId"],
+    ["a body that is not an object", "array", null],
+  ])("400 uniform validation for %s; nothing is stored", async (_name, shape, pointer) => {
+    const rows = await importRows();
+    const objects = storedImportObjects().length;
+    const bundle = { ...exported.bundle };
+    delete bundle.bundleSchemaVersion;
+    delete bundle.exportId;
+    const res = await upload(both, shape === "array" ? [1] : bundle);
+    expect(res.status, JSON.stringify(res.body)).toBe(400);
+    expect(res.body.type).toBe("urn:mth:problem:validation");
+    expect(res.body.errors.length).toBeGreaterThan(0);
+    if (pointer !== null) expect(res.body.errors.map((e: Body) => e.pointer)).toContain(pointer);
     expect(await importRows()).toBe(rows);
     expect(storedImportObjects()).toHaveLength(objects);
   });
@@ -358,7 +417,7 @@ describe("T-D3 the plan", () => {
       ...c,
       reviewerRoleCode: "NO_SUCH_ROLE",
     }));
-    // automation_rule has no adapter in this installation (T-DG7-BE-F handback, known gaps).
+    // automation_rule is never imported (ADR-0065 Residual 1; T-DG7-BE-F2): no adapter is registered for it.
     const rule = { kind: "automation_rule", itemCode: "synthetic_rule", sourceVersionNo: 1, content: { name: "x" } };
     const ruleItem = { ...rule, contentSha256: sha(rule.content) };
     const items = [studio, newDraft, conflictItem, notificationCreate, unknownReviewer, ruleItem];
@@ -401,6 +460,70 @@ describe("T-D3 the plan", () => {
       headers: { "if-match": `"${draftAfter.version}"` },
     });
     expect(discard.status).toBe(200);
+  });
+});
+
+describe("automation_rule is excluded (ADR-0065 §2, Residual 1; T-DG7-BE-F2): an imported item is refused", () => {
+  it("plans an automation_rule item refused with kind_unavailable; the import cannot be committed; nothing is written", async () => {
+    // A SYNTHETIC admin rule in the shape a rule and its published version would have, without any id.
+    const content = {
+      code: "synthetic.bundle_rule",
+      nameEn: "Synthetic imported rule",
+      nameAr: "قاعدة مستوردة تجريبية",
+      scopeLevel: "organization",
+      triggerCodes: ["work_item.overdue"],
+      conditions: [],
+      actions: [{ type: "notify_role", parameters: { roleCode: "TO" } }],
+      runAs: "service",
+      servicePermissionCodes: [],
+      parameters: {},
+    };
+    const rule: Item = {
+      kind: "automation_rule",
+      itemCode: "synthetic.bundle_rule",
+      sourceVersionNo: 1,
+      contentSha256: sha(content),
+      content,
+    };
+    const count = async (table: "automation_rule" | "automation_rule_version") =>
+      Number(
+        (
+          await owner
+            .selectFrom(table)
+            .select((eb) => eb.fn.countAll<string>().as("n"))
+            .executeTakeFirstOrThrow()
+        ).n,
+      );
+    const rulesBefore = await count("automation_rule");
+    const versionsBefore = await count("automation_rule_version");
+    const up = await upload(both, bundleOf([rule]));
+    expect(up.status, JSON.stringify(up.body)).toBe(201);
+    const v = await validate(both, up.body.id, 1);
+    expect(v.status, JSON.stringify(v.body)).toBe(200);
+    expect((v.body.items as Body[]).map((i) => [i.kind, i.itemCode, i.action, i.problemCode])).toEqual([
+      ["automation_rule", "synthetic.bundle_rule", "refused", "config_bundle.kind_unavailable"],
+    ]);
+    expect(v.body).toMatchObject({
+      status: "invalid",
+      counts: { createDraft: 0, newDraft: 0, identical: 0, conflict: 0, refused: 1 },
+    });
+    const c = await commit(both, up.body.id, v.body.version);
+    expect([c.status, c.body.code]).toEqual([422, "config_bundle.not_committable"]);
+    // Nothing of the kind was written: no rule, no rule version, no commit row; the import is audited, never committed.
+    expect(await count("automation_rule")).toBe(rulesBefore);
+    expect(await count("automation_rule_version")).toBe(versionsBefore);
+    expect(
+      await owner.selectFrom("automation_rule").select("id").where("code", "=", "synthetic.bundle_rule").execute(),
+    ).toEqual([]);
+    expect(
+      await owner
+        .selectFrom("config_bundle_import_commit as c")
+        .innerJoin("config_bundle_import_item as i", "i.id", "c.config_bundle_import_item_id")
+        .select("c.target_record_id")
+        .where("i.config_bundle_import_id", "=", up.body.id)
+        .execute(),
+    ).toEqual([]);
+    expect(await auditActions(up.body.id)).toEqual(["config_bundle_import.uploaded", "config_bundle_import.validated"]);
   });
 });
 
