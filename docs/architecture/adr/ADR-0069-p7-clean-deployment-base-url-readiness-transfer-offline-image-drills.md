@@ -106,7 +106,7 @@ It carries no secret value, credential reference, storage endpoint, bucket or co
 
 ### 5. The offline drill (REQ-S19-018 first half, REQ-S01-006; DO-E; agent-run)
 
-`deploy/scripts/offline-drill.sh --out <dir>` runs the **lifecycle e2e suite** (the A02 walkthrough specs and A21's, `e2e/a02-*.spec.ts` and `e2e/a21-*.spec.ts` where present, through `deploy/scripts/ci-e2e-stack.mjs`) inside one `bwrap --unshare-net` namespace, after the same network probe.
+`deploy/scripts/offline-drill.sh --out <dir>` runs the **lifecycle e2e suite** (the A02 walkthrough specs and A21's, `e2e/a02-*.spec.ts` and `e2e/a21-*.spec.ts` where present, in both Playwright projects, **on the stack that each spec's header names**: `e2e/support/with-demo-stack.sh` or `apps/web/e2e/support/with-stack.sh`) inside one `bwrap --unshare-net` namespace, after the same network probe. _Amended by Amendment 1 (A1.1): the original text said "through `deploy/scripts/ci-e2e-stack.mjs`"; that is the CI launcher and cannot run in the namespace._
 
 - **Connection log (A21, closes the REQ-S17-009 residual "the A18 capture is DG7's"):** the stack runs with `MTH_CONNECTION_LOG=<out>/connections.ndjson` (non-production mode, because the log writes nothing under `NODE_ENV=production`). The drill fails if any logged connection has an address outside `127.0.0.0/8`, `::1` or the PostgreSQL socket directory. The DNS-port residual of REQ-S17-009 (a failed DNS lookup logs no port) is carried, not fixed.
 - **Browsers:** Playwright uses the Chromium already installed for the e2e suite. If none is installed, the drill exits 3 (BLOCKED), and never downloads one.
@@ -116,7 +116,8 @@ It carries no secret value, credential reference, storage endpoint, bucket or co
 
 `deploy/scripts/image-bundle.sh save --out <dir>` / `load --from <dir>` / `verify --from <dir>`:
 
-- **save:** for every image of `deploy/images.lock.json` (by digest) and the locally built application image (`build-image.sh`), run `docker save`. Write `images.tar` and `images.json` (name, lock digest, image id, size, tar SHA-256).
+- **save:** for every image of `deploy/images.lock.json` (by digest) **that a Compose file runs** (its `usedIn` names a file under `deploy/compose/`), and the locally built application image (`build-image.sh`), run `docker save`. Write `images.tar` and `images.json` (name, lock digest, image id, size, tar SHA-256). _Amended by Amendment 1 (A1.3): the original text said "every image"; the CI-only Playwright image is not part of the deployable image set._
+- **Image store (Amendment 1, A1.2):** the load host uses Docker's **containerd image store**, so the digest-pinned `image:` lines of Compose resolve after `load`. A host on the classic store records the image clause BLOCKED with that reason. The bundle never re-tags images and never rewrites `image:` lines.
 - **load:** check `images.tar` against `images.json`, run `docker load -i images.tar`, then check each `docker image inspect` id against `images.json`. A mismatch exits 1.
 - **The registry-free proof:** before `load`, the orchestrator removes the images (`docker image rm`). After `load`, it runs `docker compose … up --pull never --wait`, which fails if any image is missing locally. So a successful start shows that nothing was pulled. The log records `docker info` (registry mirrors), the commands and the exits.
 - **The agent half (container-free):** the script's logic is tested with a **stub `docker`** on `PATH` that records calls and serves fixture outputs (T-B12). This proves the manifest, checksum and refusal logic, not a real load.
@@ -187,3 +188,74 @@ None. The block 730416–730417 stays **reserved** (ADR-0016 §6): the readiness
 ## Version evidence (M0314)
 
 No new dependency and no new image. The drills use Node 24.21.0 built-ins, GNU tar, `bwrap` (bubblewrap 0.9.0, verified by ADR-0062 §5.1 and by this task's loopback measurement), the PostgreSQL 16 server binaries already used by `clean-start-local.sh`, the pinned images of `deploy/images.lock.json`, and the Chromium already used by the e2e suite. `docker save`, `docker load`, `docker compose up --pull never` and `--wait` are features of the Docker client 29.3.1 and Compose v5.1.1 recorded in `environment.md`. They run only on the orchestrator's host.
+
+## Amendment 1 (2026-11-14, T-DG7-ARCH-R6): the offline drill's stacks, the image store for digest references, and the bundle's image set
+
+- **Author:** solution-architect (T-DG7-ARCH-R6). Base `85f6ebe9fb6b7136bd3cbb1670400be449b8dfc8` on `claude/mobily-transformation-platform-dg6-regate`.
+- **Why.** D-265 sends DO-E's open questions to the architect before the freeze (`docs/delivery/handbacks/DG7/T-DG7-DO-E-devops-engineer.md` §5):
+  - **Q1:** §5 names `ci-e2e-stack.mjs`, and the shipped drill uses the stacks the spec headers name;
+  - **Q2:** after `docker load` on a host with the classic image store, Compose's digest-pinned `image:` lines may not resolve under `--pull never`;
+  - **Q3:** whether `save` bundles the CI-only Playwright image.
+- **What it replaces.** The first sentence of §5 and the `save` bullet of §6, both edited in place with a pointer here. Everything else in this ADR stands, including the connection-log rule, the browser rule, the report format `mth-offline-drill/1`, the registry-free proof of §6 and the split of §7.
+- **Contracts.** No API, schema, migration, permission or advisory-lock change. `mth-offline-drill/1` is unchanged. `mth-image-bundle/1` gains one **optional** key (A1.3), so a manifest written before it stays valid.
+
+### A1.1 The offline drill runs on the specs' own stacks (Q1: the ADR changes, the drill does not)
+
+The drill is right and the ADR text was wrong. The rule is now:
+
+1. **Specs.** Every `e2e/a02-*.spec.ts` and `e2e/a21-*.spec.ts` present, or the `--spec` list, in both projects (`chromium-en`, `chromium-ar`).
+2. **Stack per spec.** A spec whose first 25 lines name `e2e/support/with-demo-stack.sh` runs on that stack (`mth-db seed-demo`). Every other spec runs on `apps/web/e2e/support/with-stack.sh`. These are the stacks the specs were written and reviewed against (DG5 A02, DG6 A21).
+3. **Same properties as the original rule.** Both stacks start a disposable PostgreSQL cluster inside the namespace and the **built** API serving the **built** SPA. They run with `NODE_ENV` development or test, which the connection log needs (§5, first bullet). Ports come from the pool 25000–31999 (`MTH_PORT_POOL`).
+
+**Why not `ci-e2e-stack.mjs`.** Measured in DO-E's handback, gap 2, and confirmed by reading the launcher (`deploy/scripts/ci-e2e-stack.mjs` l.1–20 at the base):
+
+- it needs `TEST_DATABASE_ADMIN_URL`, a PostgreSQL service that is already running. In CI that is the job's service container, and the namespace has none (exit 3 without it);
+- it seeds only `seed-dev`, and the A02 specs need `seed-demo` (their headers say so);
+- it starts one API on `:3000`. The A21 degradation spec also starts its own fresh-install API from the port pool.
+
+Changing the drill to use it would mean a second PostgreSQL bootstrap inside the namespace and a demo seed path in a CI launcher, for no gain in what the drill proves.
+
+**What stays.** `ci-e2e-stack.mjs` remains the CI launcher of the `e2e` job (ADR-0012). The drill does not depend on it.
+
+**Disclosure.** The drill groups the specs by a header grep. A future A02 or A21 spec whose header does not name its stack runs on the plain stack. If it needs demo data it fails, so it is never a false pass.
+
+### A1.2 Digest references after `load`: the containerd image store is a precondition (Q2)
+
+**The problem.**
+
+- Compose pins its images by digest: `postgres:18@sha256:5a5a…9722` and `quay.io/keycloak/keycloak:26.8.1@sha256:a78d…dd6b` in `deploy/compose/compose.yaml`. `image-bundle.sh` saves and checks the same `<ref>:<tag>@<digest>` names.
+- A digest reference resolves locally only if the engine knows the image's registry manifest digest.
+- With the **classic** image store (graph drivers such as `overlay2`), that digest is recorded as `RepoDigests` on pull and is **not restored by `docker load`**. So after a remove-and-load, `docker image inspect <ref>:<tag>@<digest>` and `up --pull never` can both fail with "no such image".
+- With the **containerd** image store, `docker save` writes the image's manifests and index and `load` restores them, so the digest reference resolves.
+
+**Decided:**
+
+1. **The load host uses the containerd image store.** The orchestrator records `docker info` before step 2 of DO-E's command list. The store is the containerd one when `docker info` shows the storage driver `overlayfs` with `driver-type: io.containerd.snapshotter.v1`; `overlay2` is the classic store.
+   - P1's host already recorded `overlayfs` (`docs/delivery/environment.md`, Docker Engine row). That is a strong hint, not a proof: the DG7 run records its own `docker info`.
+2. **A classic-store host is BLOCKED, never worked around.**
+   - On such a host the image clause of REQ-S19-018 is recorded BLOCKED: "the load host uses the classic image store; digest-pinned references do not resolve after load (ADR-0069 A1.2)". That is a release blocker under REQ-S21-003, never a pass.
+   - The orchestrator may switch that host to the containerd store (`"features": {"containerd-snapshotter": true}` in `daemon.json`, then restart the daemon) and rerun from step 1. Switching stores hides the images already present, so step 1 pulls them again.
+3. **No re-tag and no rewritten `image:` lines.** Rejected alternatives:
+   - (a) re-tagging the loaded images to tag-only names plus a Compose override without digests. It removes the digest pin at start time, which is exactly what `images.lock.json` exists to guarantee (ADR-0011). It also needs an override file that nothing else tests.
+   - (b) a Compose override naming images by image id. It is unreadable for IT and differs per build of the app image.
+   - The bundle's own check stays as it is: `load` and `verify` inspect the digest name. On a classic store they fail with `image-bundle: <name> does not match images.json (present)` (exit 1). A1.2 rule 1 turns that into a precondition, so the failure explains itself before the run.
+4. **Follow-up for DO-E (code, not done here).** `image-bundle.sh load|verify` should report the store before loading and exit 3 on the classic store with this line: `image-bundle: BLOCKED: the classic image store cannot resolve digest references after load (ADR-0069 A1.2); enable the containerd image store`. It should be tested with the stub `docker` (a T-B12 case). Until then, the orchestrator's `docker info` record carries the check.
+
+**Not verified here.** The agent sandbox has no network and no Docker daemon (D-243 Q1). So the behaviour above comes from the engine's documented store model as I know it, and it was **not** checked against current official Docker documentation or by a run.
+
+- The orchestrator's host run is the proof. If a classic store resolves the digest names after `load`, or a containerd store does not, the run's result decides, and this section is reopened.
+- M0314's evidence for the store behaviour is therefore **pending**. It is not claimed.
+
+### A1.3 The bundle holds the image set that Compose runs (Q3)
+
+1. **Decided.** `save` bundles every lock image whose `usedIn` names a file under `deploy/compose/`, plus the application image. On the current lock that is `postgres` and `keycloak` (the `test-idp` profile, which step 6 of the orchestrator's list runs), plus `mth-app`.
+   - `playwright` (`scope: test-ci`, `usedIn` only `.github/workflows/ci.yml`) is **not** bundled. No Compose service runs it, and the Keycloak e2e (step 7) runs Playwright on the host with its installed Chromium. Bundling it adds an estimated 1–2 GB (DO-E's estimate, not measured) to every transfer for no clause of REQ-S19-018 ("the image set loads on a host without registry access").
+2. **`node-runtime`** is **not** bundled separately either. Its `usedIn` is `deploy/docker/Dockerfile`, not a Compose file. Its layers already travel inside the app image, which is bundled whole, and the target never builds the app image. A target that needs to rebuild uses the release archive's offline build (ADR-0062), not the image bundle.
+3. **The manifest says what was left out.** `images.json` gains an optional `excluded` array, `[{ "lockId", "reason" }]`, with the reason `not run by any Compose file (usedIn: <files>)`. `check_tar` ignores it. A reader sees that the Playwright image was left out on purpose, not lost.
+4. **T-B12 changes** (p7-work-split §B.4): `save` lists every lock image that a Compose file runs, plus the app image; the Playwright fixture appears in `excluded` and in no `docker save` argument.
+5. **Follow-up for DO-E (code, not done here).** The selection in `save`, the `excluded` key and the T-B12 case. **Until it lands**, the shipped script still saves every lock image. The orchestrator then pulls the Playwright image in step 1, as DO-E's list already does ("if Q3 keeps it"). The bundle is larger but correct, so the host run need not wait for the follow-up.
+
+### A1.4 Residuals added
+
+8. **Image store.** The digest-reference behaviour of A1.2 is unverified until the orchestrator's host run (A1.2, "Not verified here").
+9. **Header grouping.** The offline drill picks a spec's stack by a header grep (A1.1, Disclosure).

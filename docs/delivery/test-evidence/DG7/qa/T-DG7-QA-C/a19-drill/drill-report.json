@@ -1,0 +1,162 @@
+{
+  "schemaVersion": "mth-restore-drill/1",
+  "label": "drill-20261114t133333z",
+  "mode": "container-free (local PostgreSQL, filesystem evidence)",
+  "dataset": "synthetic demo (mth-db seed-demo)",
+  "restoreExit": 0,
+  "checks": [
+    {
+      "id": "R1",
+      "name": "manifest and file SHA-256",
+      "actual": {
+        "files": 5,
+        "mismatches": 0
+      },
+      "result": "PASS",
+      "expected": {
+        "files": 5,
+        "mismatches": 0
+      }
+    },
+    {
+      "id": "R2",
+      "name": "migration level",
+      "actual": {
+        "status": "mth-db status: up to date",
+        "migrationLevel": "0152_p7_transfer_recheck_lineage_basis"
+      },
+      "result": "PASS",
+      "expected": {
+        "status": "mth-db status: up to date",
+        "migrationLevel": "0152_p7_transfer_recheck_lineage_basis"
+      }
+    },
+    {
+      "id": "R3",
+      "name": "per-table row counts",
+      "actual": {
+        "tables": 356,
+        "differences": 0
+      },
+      "result": "PASS",
+      "expected": {
+        "tables": 356,
+        "differences": 0
+      }
+    },
+    {
+      "id": "R4",
+      "name": "audit",
+      "actual": {
+        "count": 928,
+        "maxSeq": "928"
+      },
+      "result": "PASS",
+      "expected": {
+        "count": 928,
+        "maxSeq": "928"
+      }
+    },
+    {
+      "id": "R5",
+      "name": "snapshots",
+      "actual": {
+        "snapshotDigest": "d2f42cae49396a54cd7adf7a55bb94ffed0f06d7aea44a38ff80c5493bb9ac0c"
+      },
+      "result": "PASS",
+      "expected": {
+        "snapshotDigest": "d2f42cae49396a54cd7adf7a55bb94ffed0f06d7aea44a38ff80c5493bb9ac0c"
+      }
+    },
+    {
+      "id": "R6",
+      "name": "job state",
+      "actual": {
+        "jobRunCount": 0,
+        "jobScheduleDigest": "8fc2d397869397288ee899c445d2dc0a7886e86937d59a43c479dc8589523cb1",
+        "pgbossJobsByState": {}
+      },
+      "result": "PASS",
+      "expected": {
+        "jobRunCount": 0,
+        "jobScheduleDigest": "8fc2d397869397288ee899c445d2dc0a7886e86937d59a43c479dc8589523cb1",
+        "pgbossJobsByState": {}
+      }
+    },
+    {
+      "id": "R7",
+      "name": "evidence",
+      "actual": {
+        "verified": 0,
+        "mismatches": 0,
+        "retentionFiles": 0
+      },
+      "result": "PASS",
+      "expected": {
+        "verified": 0,
+        "mismatches": 0,
+        "retentionFiles": 0
+      }
+    },
+    {
+      "id": "R8",
+      "name": "readiness (offline-equivalent)",
+      "actual": {
+        "status": "ready"
+      },
+      "result": "PASS",
+      "expected": {
+        "status": "ready"
+      }
+    },
+    {
+      "id": "R9",
+      "name": "demo checksum",
+      "expected": "56cfebe5578ababa7e80de83819df57347f9620bbd4a9c06e44e58c483e4e421",
+      "actual": "56cfebe5578ababa7e80de83819df57347f9620bbd4a9c06e44e58c483e4e421",
+      "result": "PASS"
+    }
+  ],
+  "timings": {
+    "seedSource": 7.387,
+    "backup": 4.606,
+    "backupSteps": {
+      "dump": 0.602,
+      "config": 0.221,
+      "verify": 1.554,
+      "evidence": 1.555,
+      "snapshot": 0.194
+    },
+    "restore": 8.029,
+    "restoreSteps": [
+      {
+        "name": "packageChecks",
+        "seconds": 0.277
+      },
+      {
+        "name": "targetChecks",
+        "seconds": 0.178
+      },
+      {
+        "name": "database",
+        "seconds": 3.591
+      },
+      {
+        "name": "evidence",
+        "seconds": 0.976
+      },
+      {
+        "name": "checks",
+        "seconds": 2.57
+      },
+      {
+        "name": "total",
+        "seconds": 7.595
+      }
+    ],
+    "r9": 1.094,
+    "total": 22.22
+  },
+  "note": "Measured drill timings on the synthetic demo, not recovery objectives (RPO/RTO are to agree with Mobily IT). Not proof of high-availability production readiness.",
+  "result": "PASS"
+}

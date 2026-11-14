@@ -1,0 +1,202 @@
+start 13:20:48
+port-policy: PostgreSQL listening on port 24351 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/My-owns
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwgfoq4w_97a18dfc (server_encoding UTF8); applied 135 migrations to a fresh database
+ ❯ |integration| tests/qa/integration/a22-operational-readiness.test.ts (8 tests | 1 failed) 40036ms
+   × REQ-S12-022: the jobs view shows last success and next run for each scheduled job; a non-admin gets 403 > lists every job_schedule row: never-run shows lastSuccessAt null; nextRunAt is the cron's next instant in its time zone 47ms
+     → expected [ 'retention.archive', 'object', …(1) ] to deeply equal [ 'retention.archive', 'string', null ]
+   ✓ REQ-S12-022: the jobs view shows last success and next run for each scheduled job; a non-admin gets 403 > after a run, the job shows its last success, last outcome and the run in its history  760ms
+   ✓ REQ-S12-022: the jobs view shows last success and next run for each scheduled job; a non-admin gets 403 > a disabled schedule shows next run null 'disabled' and refuses run-now with 422 job.schedule_disabled 91ms
+   ✓ REQ-S12-022: the jobs view shows last success and next run for each scheduled job; a non-admin gets 403 > every non-admin role gets 403 on the view, a job's detail and run-now 82ms
+   ✓ REQ-S18-003 / REQ-S18-001: production and demo databases are separate, and a production database stays clean > production initialization (mth-db bootstrap): zero demo records, zero demo users; GET /environment is production  1816ms
+   ✓ REQ-S18-003 / REQ-S18-001: production and demo databases are separate, and a production database stays clean > the demo seed command exits with an error in production mode, on a production database and on a non-empty one; nothing changes  6567ms
+   ✓ REQ-S18-003 / REQ-S18-001: production and demo databases are separate, and a production database stays clean > a separately initialized demo database: seeded, reported synthetic; reset twice gives identical counts and checksums; the production database is untouched  19597ms
+   ✓ REQ-S18-003 / REQ-S18-001: production and demo databases are separate, and a production database stays clean > the in-app demo reset is refused in a production database (409 environment.not_demo)  322ms
+stdout | tests/qa/integration/a19-backup-restore-drill.test.ts
+A19-TIMINGS {"backup.total":3.639918496000013,"backup.dump":0.483,"backup.config":0.142,"backup.verify":1.226,"backup.evidence":1.308,"backup.snapshot":0.192,"restore.total":7.015,"restore.packageChecks":0.235,"restore.targetChecks":0.122,"restore.database":2.669,"restore.evidence":1.156,"restore.checks":2.831,"check.timeToReady":0.26242644300000395}
+
+ ❯ |integration| tests/qa/integration/a19-backup-restore-drill.test.ts (13 tests | 4 failed) 19354ms
+   ✓ A19 pre-drill: the source installation is not vacuous > the source holds demo records, audit, snapshots, job state and evidence objects to recover 136ms
+   × A19 drill: backup, then restore into a fresh database and an empty evidence store (REQ-S20-019) > backup.sh writes a set with the mth-backup/1 manifest, five timings, and records it audited 3764ms
+     → expected '0152_p7_transfer_recheck_lineage_basis' to be 152 // Object.is equality
+   ✓ A19 drill: backup, then restore into a fresh database and an empty evidence store (REQ-S20-019) > the set's config/ holds no secret value (configuration without credentials) 1ms
+   ✓ A19 drill: backup, then restore into a fresh database and an empty evidence store (REQ-S20-019) > restore.sh restores into a fresh database and an empty evidence store, passing R1–R8 with timings  7509ms
+   ✓ A19 drill: backup, then restore into a fresh database and an empty evidence store (REQ-S20-019) > database (R2, R3), audit (R4), snapshots (R5) and job state (R6) are equal, by QA's own recount  406ms
+   ✓ A19 drill: backup, then restore into a fresh database and an empty evidence store (REQ-S20-019) > evidence (R7) and readiness (R8): every file downloads from the restored installation with its SHA-256  357ms
+   ✓ A19 drill: backup, then restore into a fresh database and an empty evidence store (REQ-S20-019) > the set appears in listBackupSets of the source for ADM_TECH; 403 without backup.read 196ms
+   ✓ A19 drill: backup, then restore into a fresh database and an empty evidence store (REQ-S20-019) > a non-empty target database is refused (exit 2) and left unchanged  654ms
+   × A19 drill: backup, then restore into a fresh database and an empty evidence store (REQ-S20-019) > a non-empty target evidence store is refused (exit 2); nothing is written to the database 449ms
+     → relation "public.report_snapshot" does not exist
+   × A19 drill: backup, then restore into a fresh database and an empty evidence store (REQ-S20-019) > a changed byte in a set file is refused (exit 2) naming the file; the target stays empty 208ms
+     → relation "public.report_snapshot" does not exist
+   × A19 drill: backup, then restore into a fresh database and an empty evidence store (REQ-S20-019) > an unsupported schema version is refused (exit 2) with the exact line 165ms
+     → relation "public.report_snapshot" does not exist
+   ✓ A19 drill: backup, then restore into a fresh database and an empty evidence store (REQ-S20-019) > backup_set_record(): the runtime role is refused and an unknown key is refused (authorization, validation) 16ms
+   ✓ A19 documented checks: docs/handover/backup-restore.md (DO-F) > documents R1–R9, measured drill timings, RPO/RTO 'to agree with Mobily IT' and an Arabic summary 1ms
+ ❯ |integration| tests/qa/integration/a22-p6-operability.test.ts (17 tests | 1 failed) 136627ms
+   ✓ A22 logs (REQ-S20-022, REQ-S16-029): every API line is structured JSON; credentials, tokens and deep-link tokens are redacted > each request is logged as one JSON object with time, level, msg and the requestId the problem response carries 13ms
+   ✓ A22 logs (REQ-S20-022, REQ-S16-029): every API line is structured JSON; credentials, tokens and deep-link tokens are redacted > an Authorization bearer token, the session cookie, the CSRF header and a deep-link token never appear in a log line 12ms
+   ✓ A22 logs (REQ-S20-022, REQ-S16-029): every API line is structured JSON; credentials, tokens and deep-link tokens are redacted > an OIDC code/state in a query string is masked in the logged URL 1ms
+   ✓ A22 worker heartbeat (ADR-0053 §6): unknown before any beat, alive while beating, stale after it stops (never alive); the API raises one heartbeat_missed exception and one alert line, and resolves it when beats resume > no worker ever beat: unknown with no instances (never alive); a non-admin gets 403, an anonymous caller 401 23ms
+   ✓ A22 worker heartbeat (ADR-0053 §6): unknown before any beat, alive while beating, stale after it stops (never alive); the API raises one heartbeat_missed exception and one alert line, and resolves it when beats resume > the built worker beats: alive, one instance with its app version, queue count and a growing beat count; its log lines are JSON  3486ms
+   ✓ A22 worker heartbeat (ADR-0053 §6): unknown before any beat, alive while beating, stale after it stops (never alive); the API raises one heartbeat_missed exception and one alert line, and resolves it when beats resume > after the worker stops and >90 s pass (rows aged), status is stale, never alive; the watch opens exactly one heartbeat_missed exception and writes one alert line  56386ms
+   ✓ A22 worker heartbeat (ADR-0053 §6): unknown before any beat, alive while beating, stale after it stops (never alive); the API raises one heartbeat_missed exception and one alert line, and resolves it when beats resume > when beats resume: alive again with the old instance stale beside the new one; the alert sweep notifies the acknowledgers in-app once; the watch resolves the exception as recovered  60011ms
+   ✓ A22 operational exceptions and error alerts (REQ-S12-019, REQ-S20-022): a failing connector opens one visible exception and one alert; acknowledge and resolve are authorized, version-checked and audited > one failing run -> exactly one open connector exception, visible to the technical admin and the auditor, not to a team lead  1479ms
+   ✓ A22 operational exceptions and error alerts (REQ-S12-019, REQ-S20-022): a failing connector opens one visible exception and one alert; acknowledge and resolve are authorized, version-checked and audited > the alert sweep writes exactly one structured alert line (worker) and one in-app alert per acknowledger; a recurrence alerts nothing  11030ms
+   ✓ A22 operational exceptions and error alerts (REQ-S12-019, REQ-S20-022): a failing connector opens one visible exception and one alert; acknowledge and resolve are authorized, version-checked and audited > acknowledge: 428 without If-Match, 409 version-conflict on a stale version, 403 for the auditor (read only), 422 operations.note_required on a short note; 200 with an audit event; a second acknowledge is 409 operations.exception_not_open 94ms
+   ✓ A22 operational exceptions and error alerts (REQ-S12-019, REQ-S20-022): a failing connector opens one visible exception and one alert; acknowledge and resolve are authorized, version-checked and audited > resolve: needs a note; 200 resolved (manual) with an audit event; a second resolve is refused 409 operations.exception_resolved 65ms
+   × A22 health checks and admin job visibility (REQ-S20-022 'Health checks … admin job visibility'): liveness, readiness (ready and not ready), and the P6 operations jobs in the jobs view > GET /healthz is 200 {status: ok} without a session and carries X-Request-Id; GET /readyz is 200 ready with database ok and migrations ok 19ms
+     → expected { status: 'ready', checks: { …(4) } } to deeply equal { status: 'ready', checks: { …(2) } }
+   ✓ A22 health checks and admin job visibility (REQ-S20-022 'Health checks … admin job visibility'): liveness, readiness (ready and not ready), and the P6 operations jobs in the jobs view > negative: an API on an UNMIGRATED database answers /readyz 503 not_ready with migrations not ok, while /healthz stays 200  448ms
+   ✓ A22 health checks and admin job visibility (REQ-S20-022 'Health checks … admin job visibility'): liveness, readiness (ready and not ready), and the P6 operations jobs in the jobs view > the jobs view lists the operations alert sweep with its last success (it ran above), an outcome and a next run or an explicit reason; a team lead gets 403 77ms
+   ✓ A22 post-suite log scan (REQ-S16-029 'a log scan after the test suite finds no secrets or storage URLs') > the scan over this suite's API and worker logs, with the canaries set, passes (exit 0) 57ms
+   ✓ A22 post-suite log scan (REQ-S16-029 'a log scan after the test suite finds no secrets or storage URLs') > negative control: the same logs with one leaked canary fail (exit 1) and the scan never prints the value 55ms
+   ✓ A22 post-suite log scan (REQ-S16-029 'a log scan after the test suite finds no secrets or storage URLs') > BLOCKED, never a pass: no canary with --require-canaries, or a docs/delivery path (exit 2) 87ms
+ ✓ |integration| tests/qa/integration/a17-import-and-integration.test.ts (10 tests) 32165ms
+   ✓ REQ-S17-002/003: a file with 8 valid rows, 1 invalid row and 1 duplicate commits 8 rows with provenance and shows the 2 others with row-level reasons > CSV (UTF-8, RFC 4180)  721ms
+   ✓ REQ-S17-002/003: a file with 8 valid rows, 1 invalid row and 1 duplicate commits 8 rows with provenance and shows the 2 others with row-level reasons > XLSX (values as numeric cells, the invalid value as text)  596ms
+   ✓ REQ-S17-002/003: a file with 8 valid rows, 1 invalid row and 1 duplicate commits 8 rows with provenance and shows the 2 others with row-level reasons > duplicates against committed data are detected: re-importing a committed file commits nothing  820ms
+   ✓ REQ-S17-002/003: a file with 8 valid rows, 1 invalid row and 1 duplicate commits 8 rows with provenance and shows the 2 others with row-level reasons > nothing partial: a commit whose valid row became invalid writes nothing at all (409 import.revalidation_failed)  423ms
+   ✓ REQ-S17-001: a test connector run records last success, row counts, errors and retries > a healthy run succeeds with row counts and sets last success; its staged batch keeps the 2 others with reasons  389ms
+   ✓ REQ-S17-001: a test connector run records last success, row counts, errors and retries > a failing run records its error and its retry (attempt 2, retry of attempt 1); counts stay Unknown, never 0  10254ms
+   ✓ failing connector (REQ-S12-019, A17): one exception, the KPI shows Stale with its last value and date, no silent data change > the failure chain opens exactly one operational exception linked to the stale KPI; nothing in the KPI data changes  12766ms
+   ✓ stopped connector (REQ-S17-005, A17): actionable error, one exception, no silent data change; the form and the import keep working > the connector page shows which run failed, why and the fallbacks; a KPI actual is still submitted by form and a file still imports  1924ms
+ ✓ |integration| tests/qa/integration/a21-p6-adapters-disabled.test.ts (10 tests) 4582ms
+   ✓ REQ-S12-023 / REQ-S17-010 / REQ-S20-021: with the adapters disabled, workflows complete and notify in the inbox > a KPI actual on a review route: submitted by form, its reviewer is notified in the inbox only, accepted; value kept exactly  338ms
+   ✓ REQ-S12-023 / REQ-S17-010 / REQ-S20-021: with the adapters disabled, workflows complete and notify in the inbox > a product gate G1 is submitted and approved by the Sponsor; a charter report is generated from the records  951ms
+ ✓ |integration| tests/qa/integration/a20-s15-014-no-infra-terms.test.ts (6 tests) 3464ms
+ ✓ |integration| tests/qa/integration/a20-p6-register-1000.test.ts (4 tests) 2686ms
+   ✓ REQ-S15-013 (A20): the initiative register API over 1,000 initiatives > is paginated: limit 50 gives 20 pages of at most 50, exactly 1,000 distinct initiatives, and the last page ends the chain  335ms
+   ✓ REQ-S15-013 (A20): the initiative register API over 1,000 initiatives > sorts across pages: sort=code is ascending and sort=-code its exact reverse; sort=name agrees with the code order's set  656ms
+   ✓ REQ-S15-013 (A20): the initiative register API over 1,000 initiatives > filters on the server: q is a case-insensitive substring over the text columns and matches exactly the expected subset  385ms
+ ✓ |integration| tests/qa/integration/a17-s01-005-external-change.test.ts (4 tests) 946ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/a19-backup-restore-drill.test.ts > A19 drill: backup, then restore into a fresh database and an empty evidence store (REQ-S20-019) > backup.sh writes a set with the mth-backup/1 manifest, five timings, and records it audited
+AssertionError: expected '0152_p7_transfer_recheck_lineage_basis' to be 152 // Object.is equality
+
+[32m- Expected:[39m 
+152
+
+[31m+ Received:[39m 
+"0152_p7_transfer_recheck_lineage_basis"
+
+ ❯ tests/qa/integration/a19-backup-restore-drill.test.ts:316:30
+    314|     for (const [k, v] of Object.entries(m.timings ?? {})) timings[`bac…
+    315|     expect(m.label).toBe(label);
+    316|     expect(m.migrationLevel).toBe(before.migrationLevel);
+       |                              ^
+    317|     expect(Number(m.database.auditEvents.count)).toBeGreaterThanOrEqua…
+    318|     expect(m.database.pgbossJobsByState.created).toBeGreaterThanOrEqua…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+ FAIL  |integration| tests/qa/integration/a19-backup-restore-drill.test.ts > A19 drill: backup, then restore into a fresh database and an empty evidence store (REQ-S20-019) > a non-empty target evidence store is refused (exit 2); nothing is written to the database
+error: relation "public.report_snapshot" does not exist
+ ❯ node_modules/.pnpm/pg-pool@3.14.0_pg@8.16.3/node_modules/pg-pool/index.js:45:11
+ ❯ q tests/qa/integration/a19-backup-restore-drill.test.ts:160:86
+    158| async function fingerprint(db: string): Promise<Fingerprint> {
+    159|   const pool = createPool(roleUrl(inject("mthDb").adminUrl, db, null),…
+    160|   const q = async <T extends Record<string, unknown>>(sql: string): Pr…
+       |                                                                                      ^
+    161|   try {
+    162|     const tables = await q<{ s: string; t: string }>(
+ ❯ fingerprint tests/qa/integration/a19-backup-restore-drill.test.ts:173:20
+ ❯ tests/qa/integration/a19-backup-restore-drill.test.ts:456:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  |integration| tests/qa/integration/a19-backup-restore-drill.test.ts > A19 drill: backup, then restore into a fresh database and an empty evidence store (REQ-S20-019) > a changed byte in a set file is refused (exit 2) naming the file; the target stays empty
+error: relation "public.report_snapshot" does not exist
+ ❯ node_modules/.pnpm/pg-pool@3.14.0_pg@8.16.3/node_modules/pg-pool/index.js:45:11
+ ❯ q tests/qa/integration/a19-backup-restore-drill.test.ts:160:86
+    158| async function fingerprint(db: string): Promise<Fingerprint> {
+    159|   const pool = createPool(roleUrl(inject("mthDb").adminUrl, db, null),…
+    160|   const q = async <T extends Record<string, unknown>>(sql: string): Pr…
+       |                                                                                      ^
+    161|   try {
+    162|     const tables = await q<{ s: string; t: string }>(
+ ❯ fingerprint tests/qa/integration/a19-backup-restore-drill.test.ts:173:20
+ ❯ tests/qa/integration/a19-backup-restore-drill.test.ts:473:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  |integration| tests/qa/integration/a19-backup-restore-drill.test.ts > A19 drill: backup, then restore into a fresh database and an empty evidence store (REQ-S20-019) > an unsupported schema version is refused (exit 2) with the exact line
+error: relation "public.report_snapshot" does not exist
+ ❯ node_modules/.pnpm/pg-pool@3.14.0_pg@8.16.3/node_modules/pg-pool/index.js:45:11
+ ❯ q tests/qa/integration/a19-backup-restore-drill.test.ts:160:86
+    158| async function fingerprint(db: string): Promise<Fingerprint> {
+    159|   const pool = createPool(roleUrl(inject("mthDb").adminUrl, db, null),…
+    160|   const q = async <T extends Record<string, unknown>>(sql: string): Pr…
+       |                                                                                      ^
+    161|   try {
+    162|     const tables = await q<{ s: string; t: string }>(
+ ❯ fingerprint tests/qa/integration/a19-backup-restore-drill.test.ts:173:20
+ ❯ tests/qa/integration/a19-backup-restore-drill.test.ts:492:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  |integration| tests/qa/integration/a22-operational-readiness.test.ts > REQ-S12-022: the jobs view shows last success and next run for each scheduled job; a non-admin gets 403 > lists every job_schedule row: never-run shows lastSuccessAt null; nextRunAt is the cron's next instant in its time zone
+AssertionError: expected [ 'retention.archive', 'object', …(1) ] to deeply equal [ 'retention.archive', 'string', null ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    "retention.archive",[22m
+[32m-   "string",[39m
+[32m-   null,[39m
+[31m+   "object",[39m
+[31m+   "disabled",[39m
+[2m  ][22m
+
+ ❯ tests/qa/integration/a22-operational-readiness.test.ts:106:72
+    104|         null,
+    105|       ]);
+    106|       expect([s.code, typeof job.nextRunAt, job.nextRunUnknownReason])…
+       |                                                                        ^
+    107|       expect(Date.parse(job.nextRunAt), `${s.code}: next run is in the…
+    108|       if (s.timezone === RIYADH) {
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  |integration| tests/qa/integration/a22-p6-operability.test.ts > A22 health checks and admin job visibility (REQ-S20-022 'Health checks … admin job visibility'): liveness, readiness (ready and not ready), and the P6 operations jobs in the jobs view > GET /healthz is 200 {status: ok} without a session and carries X-Request-Id; GET /readyz is 200 ready with database ok and migrations ok
+AssertionError: expected { status: 'ready', checks: { …(4) } } to deeply equal { status: 'ready', checks: { …(2) } }
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[2m    "checks": {[22m
+[2m      "database": "ok",[22m
+[2m      "migrations": "ok",[22m
+[31m+     "storage": "ok",[39m
+[31m+     "worker": "alive",[39m
+[2m    },[22m
+[2m    "status": "ready",[22m
+[2m  }[22m
+
+ ❯ tests/qa/integration/a22-p6-operability.test.ts:540:24
+    538|     const ready = await call<Loose>(env.api.app, "GET", "/readyz");
+    539|     expect(ready.status, JSON.stringify(ready.body)).toBe(200);
+    540|     expect(ready.body).toEqual({ status: "ready", checks: { database: …
+       |                        ^
+    541|   });
+    542| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  3 failed | 5 passed (8)
+      Tests  6 failed | 66 passed (72)
+   Start at  13:20:51
+   Duration  281.16s (transform 7.48s, setup 0ms, collect 36.48s, tests 239.86s, environment 0ms, prepare 527ms)
+
+EXIT 1 end 13:25:33

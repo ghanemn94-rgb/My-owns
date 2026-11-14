@@ -1307,7 +1307,7 @@ ARCH-02 merged → BE-A (W4: wiring point) → BE-F (W5) → FE-B (W9) → QA-B'
 
 ### B.3 DO-E: the offline drill and the image bundle (devops-engineer; W11; after DO-D)
 
-**Creates:** `deploy/scripts/offline-drill.sh` (ADR-0069 §5), `deploy/scripts/image-bundle.sh` (§6: `save`, `load`, `verify`), `deploy/scripts/tests/image-bundle.test.mjs` (T-B12, with a stub `docker` on `PATH`), and `deploy/scripts/tests/offline-drill.test.mjs` (T-B13's connection-log check on fixtures).
+**Creates:** `deploy/scripts/offline-drill.sh` (ADR-0069 §5 as amended by A1.1: the specs run on the stacks their headers name, not through `ci-e2e-stack.mjs`), `deploy/scripts/image-bundle.sh` (§6: `save`, `load`, `verify`), `deploy/scripts/tests/image-bundle.test.mjs` (T-B12, with a stub `docker` on `PATH`), and `deploy/scripts/tests/offline-drill.test.mjs` (T-B13's connection-log check on fixtures).
 
 **Modifies:** `docs/operations/restricted-network.md` (the image half: `image-bundle.sh save` on a connected host, transfer, `load`, then `up --pull never`), and `docs/delivery/environment.md` (the P7 rows: the transfer, offline and image drills, and their split; p7-plan §5.3).
 
@@ -1328,7 +1328,7 @@ ARCH-02 merged → BE-A (W4: wiring point) → BE-F (W5) → FE-B (W9) → QA-B'
 | T-B9 | `transfer-drill.test.mjs` | `config-trace.mjs`: a key outside the map, or an anchor absent from a fixture guide, fails with the B.5 line; without `bwrap` (stub `PATH`) → exit 3; a probe that connects → exit 1 with the B.5 line; the report has `schemaVersion` `mth-transfer-drill/1` and `result` `PASS` only when every step passed |
 | T-B10 | same | the journey signs in through the drill IdP under `NODE_ENV=production`, `AUTH_MODE=oidc`; a write with the source origin in `Origin` is refused 403; an unbound user's sign-in is refused |
 | T-B11 | the drill run (DO-D; QA-C re-run) | D0–D11 pass on the merged tree, in the namespace with no network |
-| T-B12 | `image-bundle.test.mjs` | `save` lists every `images.lock.json` image plus the app image with tar SHA-256; `load` refuses a changed tar (exit 1, no `docker load` call); `verify` refuses an id mismatch; the stub records no `docker pull` in any path |
+| T-B12 | `image-bundle.test.mjs` | `save` lists every `images.lock.json` image that a Compose file runs (`usedIn` under `deploy/compose/`), plus the app image, with tar SHA-256, and records the others in `excluded` (ADR-0069 A1.3; before ARCH-R6 this read "every image"); `load` and `verify` exit 3 on the classic image store (A1.2); `load` refuses a changed tar (exit 1, no `docker load` call); `verify` refuses an id mismatch; the stub records no `docker pull` in any path |
 | T-B13 | `offline-drill.test.mjs`, then the offline run (DO-E; QA-C re-run) | a fixture log line with a non-loopback address fails the check; the run: the lifecycle specs pass in the namespace and `connections.ndjson` holds loopback and socket entries only |
 | T-B14 | DOC-B (the guide check of ADR-0072) | `deployment.md` holds the HA statement, the sub-path limitation, the redirect URIs, the Compose service → role map, the external dependency "orchestration target", and every anchor that `guide-keys.json` names |
 
@@ -1351,6 +1351,7 @@ Operator-facing log and script lines are English. The guides give the Arabic sum
 | `offline-drill.sh` | 1 | `offline-drill: connection outside loopback: <address>:<port> by <process>` |
 | `image-bundle.sh` | 1 | `image-bundle: <image> does not match images.json (<field>)` |
 | `image-bundle.sh` | 3 | `image-bundle: BLOCKED: docker daemon not reachable` |
+| `image-bundle.sh` | 3 | `image-bundle: BLOCKED: the classic image store cannot resolve digest references after load (ADR-0069 A1.2); enable the containerd image store` |
 | drill report | label | `synthetic drill IdP (not a corporate IdP)` |
 
 **Guide texts** (DOC-B, `docs/handover/deployment.md` and its Arabic summary page; the Arabic is **provisional** until a qualified reviewer checks it, D-243 Q7):

@@ -164,6 +164,20 @@ async function fingerprint(db: string): Promise<Fingerprint> {
         WHERE table_schema IN ('public', 'pgboss') AND table_type = 'BASE TABLE' ORDER BY 1, 2`,
     );
     const tableCounts: Record<string, number> = {};
+    // QA-C (T-DG7-QA-C; DO-F Q1(b)): an EMPTY target (the refusal tests) has no tables at all, so it has no snapshot,
+    // audit or job state to read; its fingerprint is the empty one, never a "relation does not exist" error.
+    if (tables.length === 0)
+      return {
+        migrationLevel: "",
+        tableCounts,
+        audit: { count: 0, maxSeq: "" },
+        snapshotDigest: "",
+        snapshotRows: 0,
+        pgbossByQueueState: {},
+        jobSchedule: "",
+        jobRunCount: 0,
+        evidence: {},
+      };
     for (const { s, t } of tables)
       tableCounts[`${s}.${t}`] = Number((await q<{ n: string }>(`SELECT count(*) AS n FROM "${s}"."${t}"`))[0]!.n);
     const digest = createHash("sha256");
@@ -191,7 +205,18 @@ async function fingerprint(db: string): Promise<Fingerprint> {
       await q<{ n: string; m: string | null }>(`SELECT count(*) AS n, max(seq)::text AS m FROM audit_event`)
     )[0]!;
     return {
-      migrationLevel: (await q<{ v: string }>(`SELECT max(id) AS v FROM schema_migration`))[0]!.v,
+      // ADR-0066 §2: `migrationLevel` is the last applied migration as `<id>_<name>` (QA-C, DO-F Q1(a): the
+      // harness compared it with the integer max(id)). Recomputed here from schema_migration, independently.
+      migrationLevel: await (async () => {
+        const last = (
+          await q<{ id: string; name: string }>(
+            `SELECT m.id::text AS id, m.name FROM schema_migration m ORDER BY m.id DESC LIMIT 1`,
+          )
+        )[0];
+        if (!last) return "";
+        const base = last.name.replace(/\.sql$/, "");
+        return /^\d{4}_/.test(base) ? base : `${last.id.padStart(4, "0")}_${base}`;
+      })(),
       tableCounts,
       audit: { count: Number(audit.n), maxSeq: audit.m ?? "" },
       snapshotDigest: digest.digest("hex"),
