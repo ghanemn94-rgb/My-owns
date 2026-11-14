@@ -33,8 +33,13 @@ A=$(ls "$B"/arch/*.tar.gz | head -1); S=$(sha256sum "$A" | cut -c1-64); echo "ar
 t0=$(date +%s); mkdir -p "$B/store" && cp -a /root/.local/share/pnpm/store/v10 "$B/store/v10"; echo "store copy $(( $(date +%s) - t0 )) s"
 psql -X -q -d "$TEST_DATABASE_ADMIN_URL" -c "DROP DATABASE mth_b11_src WITH (FORCE);"
 t0=$(date +%s)
-bash deploy/scripts/transfer-drill.sh --archive "$A" --sha256 "$S" --store "$B/store" --out "$E/transfer-$R"
-rc=$?
+if [ "${QAC_SKIP_TB11:-0}" = 1 ]; then
+  # A18-only run (QA-C run 3, after the harness's async-spawn fix): the harness runs the drill itself on this archive.
+  echo "T-B11 skipped (QAC_SKIP_TB11=1): the A18 harness below runs the drill"; rc=0
+else
+  bash deploy/scripts/transfer-drill.sh --archive "$A" --sha256 "$S" --store "$B/store" --out "$E/transfer-$R"
+  rc=$?
+fi
 echo "T-B11 transfer-drill exit $rc in $(( $(date +%s) - t0 )) s; end $(ts)"
 mkdir -p "$E/a18-out-$R"; t0=$(date +%s)
 QA_A18_ARCHIVE="$A" QA_A18_ARCHIVE_SHA256="$S" QA_A18_STORE="$B/store" QA_A18_OUT="$E/a18-out-$R" \
