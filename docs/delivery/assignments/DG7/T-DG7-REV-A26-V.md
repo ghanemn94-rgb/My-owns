@@ -1,0 +1,5 @@
+# Assignment T-DG7-REV-A26-V: verify the drill fix (code-security-reviewer)
+
+A26 drill, K7 (ADR-0073 §10). Your working directory is the worktree of branch `drill/dg7-a26`. Its last commit is the implementer's fix for the defect you reported in `docs/delivery/test-evidence/DG7/code-security/a26/drill-findings.json`, with regression tests in `apps/api/test/integration/organizations.test.ts` (handback `docs/delivery/handbacks/DG7/T-DG7-BE-A26-backend-workflow-engineer.md`).
+
+Independently: (1) re-run the regression tests on the fixed tree (`packages/db/test/with-pg.sh` as the repo documents) and record the exit; (2) re-run them with the fix reverted in a scratch copy (or `git stash`-free: check out the defect commit's routes.ts into a temporary copy) and record that they fail; (3) check the fix covers both places and the split-grant re-parent case. Write `docs/delivery/test-evidence/DG7/code-security/a26/drill-verification.md` with commands, exits and a verdict per finding (CLOSED_VERIFIED or still open). Read-only to product code. Nothing here implies DG7.
