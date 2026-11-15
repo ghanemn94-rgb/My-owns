@@ -1,0 +1,231 @@
+
+ RUN  v3.2.7 /home/user/My-owns
+
+ ❯ |unit-node| tests/qa/unit/a18-harness-blocked.test.ts (13 tests | 2 failed) 29731ms
+   ✓ classifyA18Inputs: absent = BLOCKED, incomplete or wrong = invalid, complete = ready > none set: absent, with a BLOCKED reason naming all three inputs and saying it is not a pass 2ms
+   ✓ classifyA18Inputs: absent = BLOCKED, incomplete or wrong = invalid, complete = ready > QA_A18_REQUIRE=1 without inputs: invalid (a gate run that demands the drill fails, never skips) 0ms
+   ✓ classifyA18Inputs: absent = BLOCKED, incomplete or wrong = invalid, complete = ready > partly set: invalid, naming each unset input 0ms
+   ✓ classifyA18Inputs: absent = BLOCKED, incomplete or wrong = invalid, complete = ready > all set but the archive does not exist: invalid 0ms
+   ✓ classifyA18Inputs: absent = BLOCKED, incomplete or wrong = invalid, complete = ready > all set but the archive is a directory: invalid 0ms
+   ✓ classifyA18Inputs: absent = BLOCKED, incomplete or wrong = invalid, complete = ready > all set but the checksum is short: invalid 0ms
+   ✓ classifyA18Inputs: absent = BLOCKED, incomplete or wrong = invalid, complete = ready > all set but the checksum is upper case: invalid 0ms
+   ✓ classifyA18Inputs: absent = BLOCKED, incomplete or wrong = invalid, complete = ready > all set but the store does not exist: invalid 0ms
+   ✓ classifyA18Inputs: absent = BLOCKED, incomplete or wrong = invalid, complete = ready > all set but the store is a file: invalid 0ms
+   ✓ classifyA18Inputs: absent = BLOCKED, incomplete or wrong = invalid, complete = ready > all set and well formed: ready with the trimmed values (QA-C's invocation) 1ms
+   × the A18 harness file: absent inputs skip with BLOCKED, wrong inputs fail (child Vitest run) > absent: exit 0, the six drill tests skipped, a skipped BLOCKED test names the inputs, nothing failed 9618ms
+     → .join(", ")} (the D…
+    [90m   | [39m            [31m^[39m
+    [90m170| [39m    if (!run) throw new Error("A18: the drill did not run in beforeAll…
+    [90m171| [39m    [35mreturn[39m run[33m;[39m
+[90m [2m❯[22m tests/qa/integration/a18-transfer-drill.test.ts:[2m200:5[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[46m qa-a18-harness [49m[39m tests/qa/integration/a18-transfer-drill.test.ts[2m > [22mA18 transfer drill: restored records, files and configuration work on another origin, offline (DO-D)[2m > [22mD10: the source origin is stored nowhere except audit_event
+[31m[1mError[22m: A18 input missing: QA_A18_ARCHIVE, QA_A18_ARCHIVE_SHA256, QA_A18_STORE (the DO-A archive and offline store)[39m
+[36m [2m❯[22m drill tests/qa/integration/a18-transfer-drill.test.ts:[2m169:13[22m[39m
+    [90m167| [39m    [35mconst[39m missing [33m=[39m [34mmissingInputs[39m()[33m;[39m
+    [90m168| [39m    [35mif[39m (missing[33m.[39mlength [33m>[39m [34m0[39m)
+    [90m169| [39m      throw new Error(`A18 input missing: ${missing.join(", ")} (the D…
+    [90m   | [39m            [31m^[39m
+    [90m170| [39m    if (!run) throw new Error("A18: the drill did not run in beforeAll…
+    [90m171| [39m    [35mreturn[39m run[33m;[39m
+[90m [2m❯[22m tests/qa/integration/a18-transfer-drill.test.ts:[2m207:5[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[46m qa-a18-harness [49m[39m tests/qa/integration/a18-transfer-drill.test.ts[2m > [22mA18 transfer drill: restored records, files and configuration work on another origin, offline (DO-D)[2m > [22mthe drill log names no builder-hosted or public service it reached
+[31m[1mError[22m: A18 input missing: QA_A18_ARCHIVE, QA_A18_ARCHIVE_SHA256, QA_A18_STORE (the DO-A archive and offline store)[39m
+[36m [2m❯[22m drill tests/qa/integration/a18-transfer-drill.test.ts:[2m169:13[22m[39m
+    [90m167| [39m    [35mconst[39m missing [33m=[39m [34mmissingInputs[39m()[33m;[39m
+    [90m168| [39m    [35mif[39m (missing[33m.[39mlength [33m>[39m [34m0[39m)
+    [90m169| [39m      throw new Error(`A18 input missing: ${missing.join(", ")} (the D…
+    [90m   | [39m            [31m^[39m
+    [90m170| [39m    if (!run) throw new Error("A18: the drill did not run in beforeAll…
+    [90m171| [39m    [35mreturn[39m run[33m;[39m
+[90m [2m❯[22m tests/qa/integration/a18-transfer-drill.test.ts:[2m212:5[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m6 failed[39m[22m[2m | [22m[33m2 skipped[39m[90m (8)[39m
+[2m   Start at [22m 02:09:19
+[2m   Duration [22m 9.16s[2m (transform 4.72s, setup 0ms, collect 8.89s, tests 10ms, environment 0ms, prepare 61ms)[22m
+
+JSON report written to /var/tmp/mth-run.k4aDUj/claude-0/qa-a18-harness-9ZUojh/absent.json
+: expected 1 to be +0 // Object.is equality
+   × the A18 harness file: absent inputs skip with BLOCKED, wrong inputs fail (child Vitest run) > incomplete (only the archive set): exit 1, the input check and all six drill tests fail naming the inputs 9904ms
+     → or(`A18 input missing: ${missing.join(", ")} (the D…
+    [90m   | [39m            [31m^[39m
+    [90m170| [39m    if (!run) throw new Error("A18: the drill did not run in beforeAll…
+    [90m171| [39m    [35mreturn[39m run[33m;[39m
+[90m [2m❯[22m tests/qa/integration/a18-transfer-drill.test.ts:[2m200:5[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[46m qa-a18-harness [49m[39m tests/qa/integration/a18-transfer-drill.test.ts[2m > [22mA18 transfer drill: restored records, files and configuration work on another origin, offline (DO-D)[2m > [22mD10: the source origin is stored nowhere except audit_event
+[31m[1mError[22m: A18 input missing: QA_A18_ARCHIVE_SHA256, QA_A18_STORE (the DO-A archive and offline store)[39m
+[36m [2m❯[22m drill tests/qa/integration/a18-transfer-drill.test.ts:[2m169:13[22m[39m
+    [90m167| [39m    [35mconst[39m missing [33m=[39m [34mmissingInputs[39m()[33m;[39m
+    [90m168| [39m    [35mif[39m (missing[33m.[39mlength [33m>[39m [34m0[39m)
+    [90m169| [39m      throw new Error(`A18 input missing: ${missing.join(", ")} (the D…
+    [90m   | [39m            [31m^[39m
+    [90m170| [39m    if (!run) throw new Error("A18: the drill did not run in beforeAll…
+    [90m171| [39m    [35mreturn[39m run[33m;[39m
+[90m [2m❯[22m tests/qa/integration/a18-transfer-drill.test.ts:[2m207:5[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[46m qa-a18-harness [49m[39m tests/qa/integration/a18-transfer-drill.test.ts[2m > [22mA18 transfer drill: restored records, files and configuration work on another origin, offline (DO-D)[2m > [22mthe drill log names no builder-hosted or public service it reached
+[31m[1mError[22m: A18 input missing: QA_A18_ARCHIVE_SHA256, QA_A18_STORE (the DO-A archive and offline store)[39m
+[36m [2m❯[22m drill tests/qa/integration/a18-transfer-drill.test.ts:[2m169:13[22m[39m
+    [90m167| [39m    [35mconst[39m missing [33m=[39m [34mmissingInputs[39m()[33m;[39m
+    [90m168| [39m    [35mif[39m (missing[33m.[39mlength [33m>[39m [34m0[39m)
+    [90m169| [39m      throw new Error(`A18 input missing: ${missing.join(", ")} (the D…
+    [90m   | [39m            [31m^[39m
+    [90m170| [39m    if (!run) throw new Error("A18: the drill did not run in beforeAll…
+    [90m171| [39m    [35mreturn[39m run[33m;[39m
+[90m [2m❯[22m tests/qa/integration/a18-transfer-drill.test.ts:[2m212:5[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m6 failed[39m[22m[2m | [22m[33m2 skipped[39m[90m (8)[39m
+[2m   Start at [22m 02:09:29
+[2m   Duration [22m 9.44s[2m (transform 4.99s, setup 0ms, collect 9.20s, tests 9ms, environment 0ms, prepare 61ms)[22m
+
+JSON report written to /var/tmp/mth-run.k4aDUj/claude-0/qa-a18-harness-9ZUojh/partial.json
+: expected 6 to be 7 // Object.is equality
+   ✓ the A18 harness file: absent inputs skip with BLOCKED, wrong inputs fail (child Vitest run) > present but wrong (not an archive): the drill runs, rejects it and the drill tests fail; exit 1  10201ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-node| tests/qa/unit/a18-harness-blocked.test.ts > the A18 harness file: absent inputs skip with BLOCKED, wrong inputs fail (child Vitest run) > absent: exit 0, the six drill tests skipped, a skipped BLOCKED test names the inputs, nothing failed
+AssertionError: .join(", ")} (the D…
+    [90m   | [39m            [31m^[39m
+    [90m170| [39m    if (!run) throw new Error("A18: the drill did not run in beforeAll…
+    [90m171| [39m    [35mreturn[39m run[33m;[39m
+[90m [2m❯[22m tests/qa/integration/a18-transfer-drill.test.ts:[2m200:5[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[46m qa-a18-harness [49m[39m tests/qa/integration/a18-transfer-drill.test.ts[2m > [22mA18 transfer drill: restored records, files and configuration work on another origin, offline (DO-D)[2m > [22mD10: the source origin is stored nowhere except audit_event
+[31m[1mError[22m: A18 input missing: QA_A18_ARCHIVE, QA_A18_ARCHIVE_SHA256, QA_A18_STORE (the DO-A archive and offline store)[39m
+[36m [2m❯[22m drill tests/qa/integration/a18-transfer-drill.test.ts:[2m169:13[22m[39m
+    [90m167| [39m    [35mconst[39m missing [33m=[39m [34mmissingInputs[39m()[33m;[39m
+    [90m168| [39m    [35mif[39m (missing[33m.[39mlength [33m>[39m [34m0[39m)
+    [90m169| [39m      throw new Error(`A18 input missing: ${missing.join(", ")} (the D…
+    [90m   | [39m            [31m^[39m
+    [90m170| [39m    if (!run) throw new Error("A18: the drill did not run in beforeAll…
+    [90m171| [39m    [35mreturn[39m run[33m;[39m
+[90m [2m❯[22m tests/qa/integration/a18-transfer-drill.test.ts:[2m207:5[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[46m qa-a18-harness [49m[39m tests/qa/integration/a18-transfer-drill.test.ts[2m > [22mA18 transfer drill: restored records, files and configuration work on another origin, offline (DO-D)[2m > [22mthe drill log names no builder-hosted or public service it reached
+[31m[1mError[22m: A18 input missing: QA_A18_ARCHIVE, QA_A18_ARCHIVE_SHA256, QA_A18_STORE (the DO-A archive and offline store)[39m
+[36m [2m❯[22m drill tests/qa/integration/a18-transfer-drill.test.ts:[2m169:13[22m[39m
+    [90m167| [39m    [35mconst[39m missing [33m=[39m [34mmissingInputs[39m()[33m;[39m
+    [90m168| [39m    [35mif[39m (missing[33m.[39mlength [33m>[39m [34m0[39m)
+    [90m169| [39m      throw new Error(`A18 input missing: ${missing.join(", ")} (the D…
+    [90m   | [39m            [31m^[39m
+    [90m170| [39m    if (!run) throw new Error("A18: the drill did not run in beforeAll…
+    [90m171| [39m    [35mreturn[39m run[33m;[39m
+[90m [2m❯[22m tests/qa/integration/a18-transfer-drill.test.ts:[2m212:5[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m6 failed[39m[22m[2m | [22m[33m2 skipped[39m[90m (8)[39m
+[2m   Start at [22m 02:09:19
+[2m   Duration [22m 9.16s[2m (transform 4.72s, setup 0ms, collect 8.89s, tests 10ms, environment 0ms, prepare 61ms)[22m
+
+JSON report written to /var/tmp/mth-run.k4aDUj/claude-0/qa-a18-harness-9ZUojh/absent.json
+: expected 1 to be +0 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 0[39m
+[31m+ 1[39m
+
+ ❯ tests/qa/unit/a18-harness-blocked.test.ts:142:25
+    140|     const r = await runHarness(work, "absent", {});
+    141|     const why = r.output.slice(-3000);
+    142|     expect(r.exit, why).toBe(0);
+       |                         ^
+    143|     const drill = r.tests.filter(isDrillTest);
+    144|     expect(drill.length, why).toBe(DRILL_TESTS);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  |unit-node| tests/qa/unit/a18-harness-blocked.test.ts > the A18 harness file: absent inputs skip with BLOCKED, wrong inputs fail (child Vitest run) > incomplete (only the archive set): exit 1, the input check and all six drill tests fail naming the inputs
+AssertionError: or(`A18 input missing: ${missing.join(", ")} (the D…
+    [90m   | [39m            [31m^[39m
+    [90m170| [39m    if (!run) throw new Error("A18: the drill did not run in beforeAll…
+    [90m171| [39m    [35mreturn[39m run[33m;[39m
+[90m [2m❯[22m tests/qa/integration/a18-transfer-drill.test.ts:[2m200:5[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[46m qa-a18-harness [49m[39m tests/qa/integration/a18-transfer-drill.test.ts[2m > [22mA18 transfer drill: restored records, files and configuration work on another origin, offline (DO-D)[2m > [22mD10: the source origin is stored nowhere except audit_event
+[31m[1mError[22m: A18 input missing: QA_A18_ARCHIVE_SHA256, QA_A18_STORE (the DO-A archive and offline store)[39m
+[36m [2m❯[22m drill tests/qa/integration/a18-transfer-drill.test.ts:[2m169:13[22m[39m
+    [90m167| [39m    [35mconst[39m missing [33m=[39m [34mmissingInputs[39m()[33m;[39m
+    [90m168| [39m    [35mif[39m (missing[33m.[39mlength [33m>[39m [34m0[39m)
+    [90m169| [39m      throw new Error(`A18 input missing: ${missing.join(", ")} (the D…
+    [90m   | [39m            [31m^[39m
+    [90m170| [39m    if (!run) throw new Error("A18: the drill did not run in beforeAll…
+    [90m171| [39m    [35mreturn[39m run[33m;[39m
+[90m [2m❯[22m tests/qa/integration/a18-transfer-drill.test.ts:[2m207:5[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m [30m[46m qa-a18-harness [49m[39m tests/qa/integration/a18-transfer-drill.test.ts[2m > [22mA18 transfer drill: restored records, files and configuration work on another origin, offline (DO-D)[2m > [22mthe drill log names no builder-hosted or public service it reached
+[31m[1mError[22m: A18 input missing: QA_A18_ARCHIVE_SHA256, QA_A18_STORE (the DO-A archive and offline store)[39m
+[36m [2m❯[22m drill tests/qa/integration/a18-transfer-drill.test.ts:[2m169:13[22m[39m
+    [90m167| [39m    [35mconst[39m missing [33m=[39m [34mmissingInputs[39m()[33m;[39m
+    [90m168| [39m    [35mif[39m (missing[33m.[39mlength [33m>[39m [34m0[39m)
+    [90m169| [39m      throw new Error(`A18 input missing: ${missing.join(", ")} (the D…
+    [90m   | [39m            [31m^[39m
+    [90m170| [39m    if (!run) throw new Error("A18: the drill did not run in beforeAll…
+    [90m171| [39m    [35mreturn[39m run[33m;[39m
+[90m [2m❯[22m tests/qa/integration/a18-transfer-drill.test.ts:[2m212:5[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m1 failed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[31m6 failed[39m[22m[2m | [22m[33m2 skipped[39m[90m (8)[39m
+[2m   Start at [22m 02:09:29
+[2m   Duration [22m 9.44s[2m (transform 4.99s, setup 0ms, collect 9.20s, tests 9ms, environment 0ms, prepare 61ms)[22m
+
+JSON report written to /var/tmp/mth-run.k4aDUj/claude-0/qa-a18-harness-9ZUojh/partial.json
+: expected 6 to be 7 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 7[39m
+[31m+ 6[39m
+
+ ❯ tests/qa/unit/a18-harness-blocked.test.ts:165:32
+    163|     expect(r.exit, why).toBe(1);
+    164|     const failed = r.tests.filter((t) => t.status === "failed");
+    165|     expect(failed.length, why).toBe(DRILL_TESTS + 1);
+       |                                ^
+    166|     for (const t of failed) expect(t.failure, t.title).toContain("QA_A…
+    167|     expect(r.tests.some((t) => t.title.startsWith("BLOCKED:"))).toBe(f…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 11 passed (13)
+   Start at  02:09:19
+   Duration  30.03s (transform 39ms, setup 0ms, collect 48ms, tests 29.73s, environment 0ms, prepare 68ms)
+
+EXIT 1

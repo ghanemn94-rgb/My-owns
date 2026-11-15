@@ -16,7 +16,14 @@
 //
 // Inputs of part 2 (the archive is DO-A's `build-archive.mjs` output; building it needs the candidate commit and the
 // demo export, which DO-D's drill wiring or QA-C's re-run provides): QA_A18_ARCHIVE, QA_A18_ARCHIVE_SHA256,
-// QA_A18_STORE (the offline pnpm store). Without them part 2 fails naming the missing input; it never skips.
+// QA_A18_STORE (the offline pnpm store). T-DG7-QA-E (project rule: missing inputs make a check BLOCKED, never passed;
+// tests/qa/support/a18-inputs.ts):
+//  - none of the three set: the drill tests are SKIPPED and a skipped test titled "BLOCKED: A18 transfer drill not run:
+//    input missing: …" names them; the same line goes to stderr. Skipped is not passed: A18 stays unproved by that run.
+//  - some set but incomplete or wrong (missing path, wrong kind, malformed checksum), or QA_A18_REQUIRE=1 without
+//    them: every drill test FAILS naming the problem.
+//  - all set and well formed: the drill runs exactly as in QA-C's run; a drill that rejects them fails.
+// DO-D's drill files are checked in every run (a missing file fails, whatever the inputs).
 //
 // Mutations: the drill performs none through this harness; the workflows D8 runs (approval decision, CSRF refusal
 // with the source origin) are asserted through the drill's step results. All data is SYNTHETIC; the drill IdP is not a
@@ -39,6 +46,7 @@ import {
   transferReportProblems,
   type Json,
 } from "../support/a18-a19-reports.ts";
+import { classifyA18Inputs } from "../support/a18-inputs.ts";
 
 const REPO = resolve(import.meta.dirname, "..", "..", "..");
 const DRILL = "deploy/scripts/transfer-drill.sh";
@@ -104,118 +112,125 @@ describe("A18 clean environment starts: an empty, freshly migrated installation 
 
 // --------------------------------------------------------------------------- part 2: the transfer drill (DO-D)
 
-describe("A18 transfer drill: restored records, files and configuration work on another origin, offline (DO-D)", () => {
-  const archive = process.env["QA_A18_ARCHIVE"] ?? "";
-  const archiveSha = process.env["QA_A18_ARCHIVE_SHA256"] ?? "";
-  const store = process.env["QA_A18_STORE"] ?? "";
-  let out = "";
-  let run: { status: number | null; text: string; seconds: number } | undefined;
-  const read = (f: string): Json => JSON.parse(readFileSync(join(out, f), "utf8"));
+const inputState = classifyA18Inputs(process.env);
+if (inputState.kind === "absent") console.warn(inputState.reason);
 
-  const missingInputs = (): string[] =>
-    (
-      [
-        ["QA_A18_ARCHIVE", archive && existsSync(archive)],
-        ["QA_A18_ARCHIVE_SHA256", /^[0-9a-f]{64}$/.test(archiveSha)],
-        ["QA_A18_STORE", store && existsSync(store)],
-      ] as const
-    )
-      .filter(([, ok]) => !ok)
-      .map(([k]) => k);
-
-  // QA-C (T-DG7-QA-C): the drill runs ASYNCHRONOUSLY in beforeAll. The earlier spawnSync blocked the Vitest worker's
-  // event loop for the whole drill (338 s in QA-C run 2), so Vitest reported `[vitest-worker]: Timeout calling
-  // "onTaskUpdate"` and exited 1 although all 8 tests passed. The assertions are unchanged; a missing input or file
-  // still fails every drill test through drill() below, never skips.
-  beforeAll(async () => {
-    if (DRILL_FILES.some((f) => !existsSync(join(REPO, f))) || missingInputs().length > 0) return;
-    // QA_A18_OUT keeps the report for evidence (QA-C: test-evidence/DG7/qa/); otherwise a scratch directory.
-    out = process.env["QA_A18_OUT"] ?? mkdtempSync(join(tmpdir(), "qa-a18-drill-"));
-    mkdirSync(out, { recursive: true });
-    const t0 = performance.now();
-    const r = await new Promise<{ status: number | null; text: string }>((done) => {
-      const child = spawn(
-        "bash",
-        [join(REPO, DRILL), "--archive", archive, "--sha256", archiveSha, "--store", store, "--out", out],
-        {
-          cwd: REPO,
-          env: {
-            PATH: process.env["PATH"] ?? "",
-            HOME: process.env["HOME"] ?? tmpdir(),
-            TMPDIR: tmpdir(),
-            LANG: "C.UTF-8",
-          },
-          stdio: ["ignore", "pipe", "pipe"],
-        },
-      );
-      const chunks: string[] = [];
-      child.stdout.setEncoding("utf8").on("data", (c: string) => chunks.push(c));
-      child.stderr.setEncoding("utf8").on("data", (c: string) => chunks.push(c));
-      const timer = setTimeout(() => child.kill("SIGKILL"), 2_400_000);
-      child.on("close", (status) => {
-        clearTimeout(timer);
-        done({ status, text: chunks.join("") });
-      });
-    });
-    run = { status: r.status, text: r.text, seconds: (performance.now() - t0) / 1000 };
-    console.log(`A18-TIMINGS ${JSON.stringify({ drillSeconds: run.seconds, exit: run.status })}`);
-  }, 2_500_000);
-
-  /** The drill's result from beforeAll; a missing file or input fails the calling test, never skips it. */
-  function drill(): NonNullable<typeof run> {
+describe("A18 transfer drill harness: drill files present; inputs absent = BLOCKED (skipped), wrong = FAIL", () => {
+  it("DO-D's drill files and DOC-B's deployment guide are present (checked whatever the inputs)", () => {
     requireBuilt();
-    const missing = missingInputs();
-    if (missing.length > 0)
-      throw new Error(`A18 input missing: ${missing.join(", ")} (the DO-A archive and offline store)`);
-    if (!run) throw new Error("A18: the drill did not run in beforeAll");
-    return run;
+  });
+  if (inputState.kind === "absent") {
+    // A skipped test whose title is the BLOCKED reason, so every reporter shows why the drill did not run.
+    it.skip(inputState.reason, () => undefined);
+  } else {
+    it("the QA_A18_* inputs given are complete and well formed", () => {
+      if (inputState.kind === "invalid") throw new Error(inputState.message);
+    });
   }
-
-  it("the drill exits 0 with the PASS line (exit 3 is BLOCKED and fails here, never passes)", () => {
-    const r = drill();
-    if (r.status === 3)
-      throw new Error(`A18 BLOCKED (exit 3): ${r.text.split("\n").find((l) => l.includes("BLOCKED"))}`);
-    expect(r.status, r.text.slice(-4000)).toBe(0);
-    const m = TRANSFER_PASS_LINE.exec(r.text);
-    expect(m, "transfer-drill: PASS line (p7-work-split §B.5)").not.toBeNull();
-    expect(Number(m![2]), "tables reconciled").toBeGreaterThan(0);
-    expect(Number(m![3]), "evidence files reconciled").toBeGreaterThan(0);
-    // The target is another origin on loopback (D3: http://127.0.0.1:<pT>).
-    expect(m![4]).toMatch(/^http:\/\/127\.0\.0\.1:\d+$/);
-  }, 2_500_000);
-
-  it("the report: D0–D11 each PASS with command, exit and seconds; the given archive; the synthetic drill IdP", () => {
-    drill();
-    expect(transferReportProblems(read("transfer-drill-report.json"), { archiveSha256: archiveSha })).toEqual([]);
-  });
-
-  it("D3: configuration only from .env.example keys, each citing a section of the deployment guide", () => {
-    drill();
-    const anchors = headingAnchors(readFileSync(join(REPO, "docs/handover/deployment.md"), "utf8"));
-    const keys = templateKeys(readFileSync(join(REPO, ".env.example"), "utf8"));
-    expect(configTraceProblems(read("config-trace.json"), anchors, keys)).toEqual([]);
-  });
-
-  it("D5/D9: every reconciliation (counts, content digests, attachment checksums, after restart) is equal", () => {
-    drill();
-    const files = readdirSync(out).filter((f) => /^reconcile-.*\.json$/.test(f));
-    expect(files.length, "reconcile-*.json written").toBeGreaterThanOrEqual(2); // D5 and D9
-    for (const f of files) expect(inequalities(read(f)), f).toEqual([]);
-  });
-
-  it("D10: the source origin is stored nowhere except audit_event", () => {
-    drill();
-    expect(originScanProblems(read("origin-scan.json"))).toEqual([]);
-  });
-
-  it("the drill log names no builder-hosted or public service it reached", () => {
-    drill();
-    const log = readFileSync(join(out, "drill.log"), "utf8");
-    expect(log).not.toMatch(/registry\.npmjs\.org.*(200|connected)/i);
-    expect(log).toMatch(/network isolation|probe/i);
-  });
-
-  afterAll(() => {
-    if (out && !process.env["QA_A18_OUT"]) rmSync(out, { recursive: true, force: true });
-  });
 });
+
+describe.skipIf(inputState.kind === "absent")(
+  "A18 transfer drill: restored records, files and configuration work on another origin, offline (DO-D)",
+  () => {
+    const archive = inputState.kind === "ready" ? inputState.inputs.archive : "";
+    const archiveSha = inputState.kind === "ready" ? inputState.inputs.archiveSha256 : "";
+    const store = inputState.kind === "ready" ? inputState.inputs.store : "";
+    let out = "";
+    let run: { status: number | null; text: string; seconds: number } | undefined;
+    const read = (f: string): Json => JSON.parse(readFileSync(join(out, f), "utf8"));
+
+    // QA-C (T-DG7-QA-C): the drill runs ASYNCHRONOUSLY in beforeAll. The earlier spawnSync blocked the Vitest worker's
+    // event loop for the whole drill (338 s in QA-C run 2), so Vitest reported `[vitest-worker]: Timeout calling
+    // "onTaskUpdate"` and exited 1 although all 8 tests passed. The assertions are unchanged; a missing file or an
+    // incomplete or wrong input fails every drill test through drill() below (absent inputs skip this block: QA-E).
+    beforeAll(async () => {
+      if (DRILL_FILES.some((f) => !existsSync(join(REPO, f))) || inputState.kind !== "ready") return;
+      // QA_A18_OUT keeps the report for evidence (QA-C: test-evidence/DG7/qa/); otherwise a scratch directory.
+      out = process.env["QA_A18_OUT"] ?? mkdtempSync(join(tmpdir(), "qa-a18-drill-"));
+      mkdirSync(out, { recursive: true });
+      const t0 = performance.now();
+      const r = await new Promise<{ status: number | null; text: string }>((done) => {
+        const child = spawn(
+          "bash",
+          [join(REPO, DRILL), "--archive", archive, "--sha256", archiveSha, "--store", store, "--out", out],
+          {
+            cwd: REPO,
+            env: {
+              PATH: process.env["PATH"] ?? "",
+              HOME: process.env["HOME"] ?? tmpdir(),
+              TMPDIR: tmpdir(),
+              LANG: "C.UTF-8",
+            },
+            stdio: ["ignore", "pipe", "pipe"],
+          },
+        );
+        const chunks: string[] = [];
+        child.stdout.setEncoding("utf8").on("data", (c: string) => chunks.push(c));
+        child.stderr.setEncoding("utf8").on("data", (c: string) => chunks.push(c));
+        const timer = setTimeout(() => child.kill("SIGKILL"), 2_400_000);
+        child.on("close", (status) => {
+          clearTimeout(timer);
+          done({ status, text: chunks.join("") });
+        });
+      });
+      run = { status: r.status, text: r.text, seconds: (performance.now() - t0) / 1000 };
+      console.log(`A18-TIMINGS ${JSON.stringify({ drillSeconds: run.seconds, exit: run.status })}`);
+    }, 2_500_000);
+
+    /** The drill's result from beforeAll; a missing file or a wrong input fails the calling test, never skips it. */
+    function drill(): NonNullable<typeof run> {
+      requireBuilt();
+      if (inputState.kind === "invalid") throw new Error(inputState.message);
+      if (!run) throw new Error("A18: the drill did not run in beforeAll");
+      return run;
+    }
+
+    it("the drill exits 0 with the PASS line (exit 3 is BLOCKED and fails here, never passes)", () => {
+      const r = drill();
+      if (r.status === 3)
+        throw new Error(`A18 BLOCKED (exit 3): ${r.text.split("\n").find((l) => l.includes("BLOCKED"))}`);
+      expect(r.status, r.text.slice(-4000)).toBe(0);
+      const m = TRANSFER_PASS_LINE.exec(r.text);
+      expect(m, "transfer-drill: PASS line (p7-work-split §B.5)").not.toBeNull();
+      expect(Number(m![2]), "tables reconciled").toBeGreaterThan(0);
+      expect(Number(m![3]), "evidence files reconciled").toBeGreaterThan(0);
+      // The target is another origin on loopback (D3: http://127.0.0.1:<pT>).
+      expect(m![4]).toMatch(/^http:\/\/127\.0\.0\.1:\d+$/);
+    }, 2_500_000);
+
+    it("the report: D0–D11 each PASS with command, exit and seconds; the given archive; the synthetic drill IdP", () => {
+      drill();
+      expect(transferReportProblems(read("transfer-drill-report.json"), { archiveSha256: archiveSha })).toEqual([]);
+    });
+
+    it("D3: configuration only from .env.example keys, each citing a section of the deployment guide", () => {
+      drill();
+      const anchors = headingAnchors(readFileSync(join(REPO, "docs/handover/deployment.md"), "utf8"));
+      const keys = templateKeys(readFileSync(join(REPO, ".env.example"), "utf8"));
+      expect(configTraceProblems(read("config-trace.json"), anchors, keys)).toEqual([]);
+    });
+
+    it("D5/D9: every reconciliation (counts, content digests, attachment checksums, after restart) is equal", () => {
+      drill();
+      const files = readdirSync(out).filter((f) => /^reconcile-.*\.json$/.test(f));
+      expect(files.length, "reconcile-*.json written").toBeGreaterThanOrEqual(2); // D5 and D9
+      for (const f of files) expect(inequalities(read(f)), f).toEqual([]);
+    });
+
+    it("D10: the source origin is stored nowhere except audit_event", () => {
+      drill();
+      expect(originScanProblems(read("origin-scan.json"))).toEqual([]);
+    });
+
+    it("the drill log names no builder-hosted or public service it reached", () => {
+      drill();
+      const log = readFileSync(join(out, "drill.log"), "utf8");
+      expect(log).not.toMatch(/registry\.npmjs\.org.*(200|connected)/i);
+      expect(log).toMatch(/network isolation|probe/i);
+    });
+
+    afterAll(() => {
+      if (out && !process.env["QA_A18_OUT"]) rmSync(out, { recursive: true, force: true });
+    });
+  },
+);
