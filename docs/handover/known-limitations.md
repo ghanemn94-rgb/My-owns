@@ -38,7 +38,7 @@ Sign-in has been tested only with a synthetic identity provider. Connecting the 
 ## 2. Protocol-audit disclosure {#protocol-audit}
 
 <!-- generated:protocol-audit begin -->
-Report: `tools/release/protocol-audit.mjs` 1.0.0, repository head `119dcd0541b1e8351e23c233d62cc3d25f9ed794`, SHA-256 `2614fc6ce028523bacb197db700bfd2c42aa7d5ef3f2dabdee40271560c2f3fd`, stages DG0, DG1, DG2, DG3, DG4, DG5, DG6, DG7.
+Report: `tools/release/protocol-audit.mjs` 1.0.0, repository head `b2ba3e3f9be95171d761393b6805fcb1ff45257d`, SHA-256 `2b322f4d5006f7fef53d5f6207c65d6aca0608b3b7b3fb8a9f0ef290a7ed8549`, stages DG0, DG1, DG2, DG3, DG4, DG5, DG6, DG7.
 
 The delivery records of gates DG0–DG6 contain the historic protocol observations listed below, found by the protocol audit. None changed product behaviour. They are disclosed here, and no gate was reopened (decision D-249).
 
@@ -53,12 +53,13 @@ The delivery records of gates DG0–DG6 contain the historic protocol observatio
 | C2 assignment-contract | REQ-DLV-011 | DG4 | HIT | 11 | D-249 H3 |
 | C2 assignment-contract | REQ-DLV-011 | DG5 | HIT | 6 | D-249 H3 |
 | C2 assignment-contract | REQ-DLV-011 | DG6 | HIT | 14 | D-249 H3, H4 |
+| C2 assignment-contract | REQ-DLV-011 | DG7 | HIT | 27 | not in D-249 (DG7: disclosed by this release's records) |
 | C3 handback-sections | REQ-DLV-012 | DG2 | HIT | 8 | D-249 H5 |
 | C3 handback-sections | REQ-DLV-012 | DG3 | HIT | 3 | D-249 H5 |
 | C3 handback-sections | REQ-DLV-012 | DG4 | HIT | 4 | D-249 H5 |
 | C3 handback-sections | REQ-DLV-012 | DG5 | HIT | 20 | D-249 H5 |
 | C3 handback-sections | REQ-DLV-012 | DG6 | HIT | 13 | D-249 H5 |
-| C3 handback-sections | REQ-DLV-012 | DG7 | HIT | 1 | not in D-249 (DG7: disclosed by this release's records) |
+| C3 handback-sections | REQ-DLV-012 | DG7 | HIT | 5 | not in D-249 (DG7: disclosed by this release's records) |
 | C4 file-ownership | REQ-DLV-008 | DG4 | HIT | 24 | D-249 H6 |
 | C4 file-ownership | REQ-DLV-008 | DG5 | HIT | 8 | D-249 H7 |
 | C4 file-ownership | REQ-DLV-008 | DG6 | HIT | 5 | D-249 H7 |
