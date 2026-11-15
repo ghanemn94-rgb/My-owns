@@ -2,16 +2,63 @@
 // of the P7 slice C/D tables, exercised on a real PostgreSQL as the runtime role (mth_app) and the owner role
 // (mth_owner, which the migration CLI uses). Everything here is SYNTHETIC test data. Nothing here is a business
 // approval (G1-G6) or touches DG0-DG7.
+//
+// Isolation (F-DG7-962): this file commits rows that can never be removed (migration_import, its reconciliations and
+// deltas, and audit_event are append-only even for the owner) and queued exports it never finishes. In the one shared
+// run database they made other files order-dependent: a queued export refuses createMigrationExport (422
+// migration.export_in_progress) and an import without a reconciliation run fails listMigrationImports. So the file
+// runs in its OWN scratch database, created and migrated here and dropped at the end, and the shared run database
+// never sees its rows.
 import type { Pool, PoolClient } from "pg";
 import { v7 as uuidv7 } from "uuid";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { appRole, ownerRole, pgError } from "../helpers.ts";
+import { migrate } from "../../src/migrate.ts";
+import { createDb, createPool } from "../../src/pool.ts";
+import {
+  createScratchDatabase,
+  dropScratchDatabase,
+  pgError,
+  roleUrl,
+  testDatabase,
+  type RoleHandles,
+} from "../helpers.ts";
 
-const app = appRole();
-const owner = ownerRole();
+const { adminUrl, database: sharedDatabase } = testDatabase();
+let scratchName: string | undefined;
+let app: RoleHandles;
+let owner: RoleHandles;
+
+function handles(url: string, name: string): RoleHandles {
+  const pool = createPool(url, { max: 5, applicationName: name });
+  const db = createDb(pool);
+  return { pool, db, close: () => db.destroy() };
+}
+
+beforeAll(async () => {
+  scratchName = await createScratchDatabase(adminUrl, "mth_p7guard");
+  await migrate(roleUrl(adminUrl, scratchName, "mth_owner"));
+  app = handles(roleUrl(adminUrl, scratchName, "mth_app"), "test-app-p7guard");
+  owner = handles(roleUrl(adminUrl, scratchName, "mth_owner"), "test-owner-p7guard");
+}, 180_000);
+
 afterAll(async () => {
-  await app.close();
-  await owner.close();
+  await app?.close();
+  await owner?.close();
+  if (scratchName) await dropScratchDatabase(adminUrl, scratchName);
+}, 60_000);
+
+describe("F-DG7-962: this file is isolated from the shared run database", () => {
+  it("runs as mth_app and mth_owner in its own scratch database, never the run database", async () => {
+    const a = (
+      await app.pool.query<{ db: string; role: string }>("SELECT current_database() AS db, current_user AS role")
+    ).rows[0];
+    const o = (
+      await owner.pool.query<{ db: string; role: string }>("SELECT current_database() AS db, current_user AS role")
+    ).rows[0];
+    expect(a).toEqual({ db: scratchName, role: "mth_app" });
+    expect(o).toEqual({ db: scratchName, role: "mth_owner" });
+    expect(scratchName).not.toBe(sharedDatabase);
+  });
 });
 
 const HEX = "a".repeat(64);

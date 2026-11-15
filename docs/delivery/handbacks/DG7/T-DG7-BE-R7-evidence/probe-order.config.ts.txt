@@ -1,0 +1,15 @@
+// backend-workflow-engineer probe only (scratchpad, not in the repo): root config + a sequencer running files in BE_ORDER.
+import { mergeConfig } from "vitest/config";
+import { BaseSequencer } from "vitest/node";
+import base from "/home/user/My-owns/vitest.config.ts";
+class GivenOrder extends BaseSequencer {
+  async sort(files: any[]) {
+    const order = (process.env.BE_ORDER || "").split(",");
+    const id = (f: any) => String(f.moduleId ?? f[1] ?? f);
+    const rank = (f: any) => { const i = order.findIndex((o) => id(f).endsWith(o)); return i < 0 ? 99 : i; };
+    const sorted = [...files].sort((a, b) => rank(a) - rank(b));
+    console.log("[order-probe] " + sorted.map(id).join(" -> "));
+    return sorted;
+  }
+}
+export default mergeConfig(base, { root: "/home/user/My-owns", test: { sequence: { sequencer: GivenOrder }, fileParallelism: false } });
