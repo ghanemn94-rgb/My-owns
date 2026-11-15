@@ -1,0 +1,67 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG7-915",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:60dd90b6…80e9 (source 8323dacae, fix ced8d9924), in a disposable clone, Node 24.21.0 (20-f915-f961-f960.log).\n(A) sha256sum docs/delivery/requirements.csv = cfa6d37876c62d4a6799e6550d7d7c80775380ffbcc59a94de3be0af701d6fb9. release-notes.md l.9 states the same full hash, and the Arabic block (l.101) states cfa6d37876c6. The API build's register snapshot reports the same sha256 cfa6d37876c6 (03-build.log).\n(B) release-notes.mjs --check (the finding's exact command) prints '0 unfinished item(s), 23 later clause(s); … is up to date', exit 0.\n(C) The REQ-S19-015 entry (l.47) quotes the row's current completes-after-gate text.\n(D) Revert-to-fail: the round-2 release notes (git show f22c97b59:…) against this register give 'out of date', exit 1.\n(E) A one-character change to one register note, with the release notes unchanged, gives 'out of date', exit 1. The clone was restored, and git status is clean.\nResidual, not a defect of this fix: nothing mechanical runs release-notes --check on the real tree. check-handover treats release-notes.md as PENDING, and seal and verify-seal do not re-check it. The protection is the orchestrator's pre-freeze step (prefreeze-r3/release-notes.log). I did not author this fix.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/code-security/round-3/20-f915-f961-f960.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-3/03-build.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG7-961",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Same evidence as F-DG7-915, which this duplicates (QA's report of the same stale release notes). On this candidate:\n- the stated register SHA-256 (en l.9, ar l.101) equals sha256(requirements.csv) = cfa6d378…6fb9;\n- release-notes --check exits 0;\n- the round-2 notes and a one-character register change each make it exit 1 (20-f915-f961-f960.log).\nREQ-S02-005/A28 ('release notes list every non-IMPLEMENTED row') is met trivially: 412/412 rows are IMPLEMENTED. The 23 completes-after-gate clauses are listed instead (the 18 D-274 rows plus the five original Q19 rows DLV-010, DLV-021, DLV-041, S20-023 and S20-028; 21-f935-register.log).\nThe finding's 'ideally as a test' is not done. The check is an orchestrator pre-freeze step (prefreeze-r3/checks.log, 'release-notes … --write && … --check', exit 0), not an executable test. I note it as a residual, not a blocker.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/code-security/round-3/20-f915-f961-f960.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-3/21-f935-register.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG7-935",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "I raised this finding in round 2 (code-security-reviewer). Verified on candidate 60dd90b6 (fix ced8d9924, AN-P7F at 0326ee9ea).\n(1) validate.mjs --register DG7: 'PASS register rules at DG7', exit 0 (40-validators.log). The full gate validation fails only on the missing DG7.json, as it should before the audit.\n(2) The register has 412/412 rows IMPLEMENTED, and all 54 DG7-final rows are IMPLEMENTED. Each of the 18 rows has a non-empty evidence cell, cites D-274, and ends with a 'completes-after-gate:' marker naming the remaining clause. The marker texts are in 21-f935-register.log.\n(3) Judgement of the Q19 extension (the user's decision D-274; the assignment asks reviewers to judge it). I accept it as an honest disclosure mechanism, and I do not treat any disclosed gap as met. Two groups:\n- Remaining clause structurally after the gate: DLV-005, 014, 018, 028, 031, 039 (seal V6/V7), 040, S20-031, S21-002 and S21-004. The clause is the DG7 round, audit, gate record, seal or pipeline run itself. It cannot exist on a frozen candidate, as with the DG6 A23 precedent and D-243 Q19.\n- Real, disclosed deviations: DLV-011 (C2 27 hits), DLV-012 (C3), DLV-024 (C5 1 hit), DLV-030 (A27 K11 partial) and DLV-008 (assignment hits; C4 PASS on the candidate). These are NOT literally met. They are disclosed in the register, release notes and known-limitations under the user's decisions D-249/D-270, and the release-auditor decides them at the gate.\nThe rows' notes say so ('Disclosed deviation, not met'; 'They are not presented as met').\nOne marker is inaccurate. REQ-DLV-012 says 'six' C3 hits, but the frozen candidate has seven. That stays open under F-DG7-960, see there. It is not a reason to reject the mechanism. This finding (the frozen register cannot pass validateGate) is fixed. I did not author the fix (AN-P7F).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/code-security/round-3/40-validators.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-3/21-f935-register.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG7-960",
+      "result": "FAIL",
+      "status_after": "OPEN",
+      "note": "Not closed on candidate 60dd90b6. The defect class is still there: the release's disclosure of DG7's C3 handback hits does not cover every handback in the frozen candidate.\nWhat I ran (20-f915-f961-f960.log): node tools/release/protocol-audit.mjs --stage DG7 --root <repo> at HEAD 9c69cd11 (= source 8323dacae plus META-only freeze files). It reports C3 HIT with 7 hits (C2 27, C5 1, exit 1), and so does the orchestrator's own protocol-audit-r3.json (head 0326ee9ea). The seventh hit is docs/delivery/handbacks/DG7/T-DG7-DO-D8-devops-engineer.md, missing merge_instructions. Its headings are 1. Files changed … 5. Open questions; a grep for merge|rebase|integrat finds no merge-instructions text. It was committed at 6c606e5b3 (19:15Z, run exit 1, completed by DO-D8B). That is after D-270 ('every new assignment from here carries the full contract elements') and before AN-P7F wrote the register (0326ee9ea, 20:58Z).\nHow each disclosure stands:\n- docs/handover/known-limitations.md l.62 is now right: 'C3 … DG7 | HIT | 7'.\n- The shipped register row REQ-DLV-012 still says 'DG7 C3 6 hits … Disclosed deviation, not met: six DG7 implementation handbacks each lack one of the five sections. Five are the D-270 hits … The sixth, T-DG7-FE-C3…'. Its completes-after-gate marker says 'the D-270 C3 hits (six, F-DG7-960 included)'.\n- release-notes.md l.35, generated from that row, repeats 'six'.\nSo the register and release notes understate the hits and do not name the DO-D8 handback.\nChecks that stay green: check-handover (default and MTH_STRICT_HANDOVER=1) and known-limitations --check, both PASS with protocol-audit-r3.json. Neither compares the register's stated count with the report.\nThe FE-C3 hit that this finding first reported is now disclosed in all three places. What remains is the same mismatch for one more handback.\nSeverity stays Low (documentation drift in a disclosure; no product behaviour). To close it, either correct the REQ-DLV-012 notes and marker to seven and name T-DG7-DO-D8, then regenerate the release notes; or have the release-auditor and a specialist accept it as an observation. I authored no part of this.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/code-security/round-3/20-f915-f961-f960.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-3/21-f935-register.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG7-962",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified adversarially in a disposable clone of 8323dacae (fix in ced8d9924 lineage, BE-R7). Each order ran as one vitest run on a fresh disposable PostgreSQL 16 (with-pg.sh, port 32411), with a given-order sequencer and file parallelism off (scripts/probe-order.config.ts.txt, the QA round-2 probe) (30-f962-order-probes.log).\n- P1, guard file FIRST, then contract.test.ts, then response-validation.test.ts: 3 files, 252/252, exit 0.\n- P2, the guard file LAST: 252/252, exit 0.\n- M1 revert-to-fail, the pre-fix guard file (git show f22c97b59:packages/db/test/integration/p7-transfer-guards.test.ts) FIRST: exit 1 with 9 failed tests. contract.test.ts fails 4 and response-validation.test.ts fails 5: 'P7 BE-C operations' 422 migration.export_in_progress (expected 202), 'P7 BE-D operations', the undeclared-media-type sweep, and 'covers every operation' (createMigrationExport … and listMigrationImports …). That is exactly the round-2 failure. My grep filter's head -40 cut the M1 'Test Files' line; the 9 failures and exit 1 are in the log.\n- The file is restored (sha256 7036b7c8… before and after), and git status is clean.\nThe fix runs the guard file in its own scratch database, migrated in beforeAll and dropped in afterAll, and a test asserts current_database() ≠ the shared run database. The orchestrator's full integration run on this candidate is 474/474 files and 4692 tests passed, 8 skipped, 1 todo, exit 0 (prefreeze-r3/integration.log). The skips are 7 A18 cases without drill inputs (BLOCKED, run by the QA driver), 1 in governance/presentation.test.ts and 1 in audit/audit-events.test.ts. I did not author this fix.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/code-security/round-3/30-f962-order-probes.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-3/scripts/f962.sh",
+        "docs/delivery/test-evidence/DG7/code-security/round-3/scripts/probe-order.config.ts.txt",
+        "docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r3/integration.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG7-963",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified in a disposable clone of 8323dacae (DO-D8 and DO-D8B). The code (deploy/scripts/drill/cleanup.sh; transfer-drill.sh l.47-49, 99, 105-112, 134-144, 346-348, 609-612):\n- The outer mode now ends with td_remove_work, which always returns 0. After five 1 s attempts it prints one WARNING line (stderr and drill.log) saying the result is unchanged, then exit $rc, so a PASS stays 0 and a FAIL stays 1.\n- The EXIT trap and the D2/D9 stops use td_stop_pg on the real postmaster: SIGINT, a bounded wait for it and its /proc-listed children, then QUIT, then KILL. There is also td_stop_pg_dir via postmaster.pid, which checks comm=postgres and cwd=datadir before it signals anything.\n- The rm guard refuses an empty path or '/'.\nRuns (Node 24.21.0):\n(1) Full harness file under with-pg.sh: 55/55, exit 0, 206 s. The real-PostgreSQL case stopped 6 processes in 0.4 s, and no postgres was left (31b-f963-harness-with-pg.log). My first run of that file (31-f963-drill-cleanup.log section A) was started without with-pg.sh by my own error: 24 DB-dependent cases failed in under 4 ms each (T-B3, T-B10, T-B16, T-B17, T-B19), 31 passed, exit 1. It is superseded by (1).\n(2) The 8 T-DG7-DO-D8 cases alone: 8/8, exit 0.\n(3) Revert-to-fail, mutant M1 (td_remove_work returns the rm status, the pre-fix behaviour): 3 cases fail, exit 1. The rc-0 case gets actual 1 vs expected 0, which is the reported bug.\n(4) Mutant M2 (td_stop_pg sends only TERM to the launcher, the pre-fix stop_pid race): 3 cases fail, exit 1. The postmaster is still alive and postmaster.pid is still present.\n(5) Sources were restored (sha256 1b2b6dfd… before and after). During M2, one mutant-started postgres was briefly counted (the line '1'); it had exited by my next check, and the later run left 0.\nNot re-run by me: the full A18 drill (310 s). It needs an archive and ARCH_MB*4+1024 MB of scratch, and only 2.5 GB was free on the shared host at the time. I rely on DO-D8B's t-b11-run.log and the QA A18 driver for that. The harness tests and mutants above prove the fix's mechanism. I did not author this fix.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/code-security/round-3/31b-f963-harness-with-pg.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-3/31-f963-drill-cleanup.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-3/scripts/f963.sh"
+      ]
+    }
+  ]
+}

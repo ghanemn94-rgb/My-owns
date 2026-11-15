@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG7-940",
+      "stage_id": "DG7",
+      "requirement": "REQ-S19-016",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "No shipped test covers the organization-scope rule of the installation-wide migration export: with the scoped authorize() removed from requireExportRight, every shipped test still passes, so a business-unit ADM_TECH could export the whole installation and no test would catch it",
+      "reproduction": "Candidate sha256:60dd90b6c5a7af3b502f02be68e6b601fd11e90fcbc0a48166cbc389453a80e9 (source 8323dacae51a98c8f555fb95d8e1dd0a1e747ea8). I used a disposable --shared clone under $TMPDIR, Node 24.21.0, and a disposable PostgreSQL 16 from tests/qa/support/with-pg.sh (port 32462). Script: docs/delivery/test-evidence/DG7/code-security/round-3/scripts/mutants.sh. Log: 32-authz-mutants.log.\n\nThe code. apps/api/src/modules/transfer/export/service.ts l.138-147 (requireExportRight) says 'A grant at a narrower scope never admits an installation-wide export'. It loops over organizationsWith(principal, MIGRATION_EXPORT), which returns every organization where the principal holds migration.export at any scope (access/policy.ts l.227-230). For each one it admits only if authorize(..., { type: 'organization', id }) is allowed. All five export routes (export/routes.ts l.92-155: list, create, get, manifest, attachment manifest) gate on this function.\n\nNothing in the data model stops a narrower grant. scoped_assignment allows scope_type business_unit for any role (0001_identity_access.sql l.238), and there is no role/scope constraint for ADM_TECH.\n\n(R0) Unmodified tree, 3 files, 17/17 pass, exit 0:\n- my reproduction repro/zz-cs-r3-transfer-scope.test.ts, copied into the clone and removed afterwards. It gives ADM_TECH at business_unit scope 403 on GET/POST /admin/migration-exports and GET /admin/migration-imports and /admin/identity-rebinds, writes no migration_export row, and has an organization-scope control that gets 200;\n- the shipped export.test.ts;\n- the shipped import-routes.test.ts.\nSo the product is correct today.\n\n(M4) Replace l.144-145 'if ((await authorize(db, principal, MIGRATION_EXPORT, { type: \"organization\", id: organizationId })).allowed) return organizationId;' with 'return organizationId;'. The shipped apps/api/test/integration/transfer/export.test.ts still passes all 10 of its tests. Only my reproduction fails: 'GET /api/v1/admin/migration-exports {\"items\":[],\"nextCursor\":null}: expected 200 to be 403' (2 files, 1 failed / 11 passed, exit 1). With M4, a business-unit ADM_TECH lists exports with 200 and can request (POST) and download the installation-wide manifest.\n\nThe shipped tests do not catch it:\n- export.test.ts l.177-194 tests only roles that lack migration.export entirely (every role but ADM_TECH, plus a user without grants, all granted at organization scope, l.103-110);\n- the contract exercise p7-exercises-be-c.ts tests only AUD (l.114, 131, 155, 160);\n- no other test calls the migration-export routes (grep over apps/api/test, tests/).\n\n(M5) The same mutation in the sibling import/service.ts requireImportReadRight IS killed by the shipped import-routes.test.ts: 'AUD @ business unit GET /api/v1/admin/migration-imports: expected 200 to be 403'. So the import side has the narrower-grant test and the export side does not.\n\nSources were restored byte-equal (sha256 compared in the log).",
+      "expected": "CLAUDE.md and the assignment: 'Every mutation needs a server-side authorization check, validation, optimistic concurrency and an audit event, each covered by tests.' createMigrationExport is a mutation, and its authorization rule is the organization-scope requirement that requireExportRight documents (ADR-0064 §7; T-C6). It reads the whole installation, which is the most sensitive data operation of P7. A shipped test should fail when that scope rule is lost, as import-routes.test.ts does for migration_import.read. Concretely: ADM_TECH granted at business_unit (or transformation) scope gets 403 on all five migration-export operations, and no migration_export row or audit event is written.",
+      "actual": "The scope dimension of the export authorization has no shipped test. Deleting the scoped authorize() call (mutant M4) leaves every shipped test green, so a regression would silently let a business-unit-scoped ADM_TECH request and download an installation-wide migration export. The current code is correct: my reproduction R0 passes on the unmodified tree. This is a coverage defect of a security control, not an exploitable hole on this candidate, so it is not a mandatory violation. It is Medium because the control guards a whole-installation data export, the convention requires the test, and the sibling import control has one. The fix is bounded: add a narrower-scope ADM_TECH case to export.test.ts's 403 loop.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/code-security/round-3/32-authz-mutants.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-3/scripts/mutants.sh",
+        "docs/delivery/test-evidence/DG7/code-security/round-3/repro/zz-cs-r3-transfer-scope.test.ts",
+        "apps/api/src/modules/transfer/export/service.ts",
+        "apps/api/test/integration/transfer/export.test.ts",
+        "apps/api/test/integration/transfer/import-routes.test.ts"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG7/round-3/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-15T23:20:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG7 round 3 (candidate 60dd90b6). Mutant M4 on requireExportRight survives the shipped tests. My reproduction kills it. The sibling M5 on requireImportReadRight is killed by import-routes.test.ts."
+        }
+      ]
+    }
+  ]
+}
