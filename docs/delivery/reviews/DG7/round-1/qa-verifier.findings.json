@@ -1,0 +1,117 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG7-953",
+      "stage_id": "DG7",
+      "requirement": "REQ-DLV-014",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "The DG7 freeze commit edited docs/delivery/decisions.md, a candidate file, after the candidate was computed: at every commit since the freeze the tree no longer hashes to the round-1 candidate, so every round-1 record reads STALE and current-mode validate --stage DG7 cannot match the gate candidate",
+      "reproduction": "git clone --shared --no-checkout <repo> $TMPDIR/a27 (sparse, without test-evidence); git checkout 8f79401940601089668bbc45fc7c76073dfb7d76 (the freeze commit 'DG7: freeze round 1 (candidate df8225e5, D-271)'); node tools/gates/candidate.mjs --stage DG7 prints sha256:a3feb4ef...e36, and --diff against docs/delivery/candidates/DG7/df8225e537de3575.manifest.json lists changed: [docs/delivery/decisions.md] (the D-271 row added by the freeze commit; git diff a60a962 8f79401 -- docs/delivery/decisions.md). node tools/gates/validate.mjs --reconcile: 'working tree ... (differs: 1 changed)'. Then, in the same disposable clone, register a synthetic record on the correct round-1 candidate df8225e5 in stages.json review_rounds[0].records: reconcile prints 'round 1 qa-verifier: PASS (STALE for current content)'. Restore decisions.md to its a60a962 bytes: 'working tree ... (matches)' and '(current)'. tools/gates/lib/rules.mjs checkCandidate (current mode) recomputes the candidate from the working tree and errors 'candidate: working-tree content hashes to ..., approval covers ...' when they differ.",
+      "expected": "After a freeze no file in the candidate manifest changes until the gate is decided. Delivery decisions taken while the candidate is frozen are recorded outside the candidate, as D-190/D-191/D-192/D-237 did (progress.md entries 'recorded here because decisions.md is frozen in the candidate until the gate is decided'). The round-1 reviews are then current, and the release audit's current-mode validate --stage DG7 can match gates/DG7.json to the frozen candidate.",
+      "actual": "decisions.md is a manifest entry (sha256 f9b7e1dd... at a60a962) and is not meta-excluded. The freeze commit 8f79401 added the D-271 row to it, so HEAD (and every later commit) hashes to sha256:a3feb4ef..., not df8225e5. Every round-1 review record on df8225e5 is reported 'STALE for current content' by --reconcile, and validate --stage DG7 in current mode would fail on the candidate check as long as decisions.md carries D-271. No product file is affected (the frozen payload at a60a962 is intact and was the one reviewed). Repair options for the orchestrator: move D-271 out of decisions.md (restore its a60a962 bytes and record the freeze in progress.md, as in D-190), or re-freeze and re-run the round.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-1/06-a27-redrill-k9-k10.log",
+        "docs/delivery/test-evidence/DG7/qa/round-1/06b-a27-k10-stale-probe.log",
+        "docs/delivery/candidates/DG7/df8225e537de3575.manifest.json",
+        "tools/gates/lib/rules.mjs"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG7/round-1/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-15T08:55:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG7 round 1 (T-DG7-REV-QA-R1). Owner is the delivery-orchestrator, which wrote the freeze commit; no implementer role edits decisions.md at a freeze (precedent F-DG6-911, owner delivery-orchestrator)."
+        }
+      ]
+    },
+    {
+      "id": "F-DG7-954",
+      "stage_id": "DG7",
+      "requirement": "REQ-S20-031",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "No test in the candidate fails when PATCH /api/v1/business-units/:id is downgraded from business_unit.manage to business_unit.read: the A26 drill's regression tests stayed on the unmerged drill branch, so the authorization of this mutation is untested in the release",
+      "reproduction": "Disposable copy of the candidate a60a962. Apply the A26 drill defect (git diff c4943c8d1 c3bbc780c -- apps/api/src/modules/organization/routes.ts, saved as a26-mutant/a26-defect.patch: both the route gate and requireAction use business_unit.read). Run every candidate test file that calls the business-unit routes (grep 'business-units' over apps/api/test, tests, e2e, apps/web/e2e; only these PATCH it): tests/qa/support/with-pg.sh npx vitest run --project integration apps/api/test/integration/organizations.test.ts bu-hierarchy-guard.test.ts workflows/scale-scope-business-units.test.ts groups/groups.test.ts contract/contract.test.ts platform.test.ts. Control: the same copy with the patch reverted (routes.ts byte-equal to the candidate), contract test only.",
+      "expected": "CLAUDE.md: every mutation needs a server-side authorization check, each covered by tests. A26 (REQ-S20-026) asks for regression tests that prove closure; after the drill, the release should carry a test that fails when a reader (business_unit.read without business_unit.manage) can rename, deactivate or re-parent a business unit, like the K6 tests in c4943c8d1 (office/auditor/leadA1 get 403, unit unchanged, only authorization.denied audited; the split-grant re-parent is 403).",
+      "actual": "With the defect applied: organizations 10/10, bu-hierarchy-guard 7/7, scale-scope-business-units 4/4, groups 9/9 and platform 13/13 all pass. contract.test.ts has the same 2 failures with and without the defect (P5 BE-M export exercise: RenderError class identity, because the copy resolves @mth/reporting through symlinked node_modules; cancelExport therefore unexercised), so they are an artefact of the copy, not a detection; in the real clone contract.test.ts passes 111/111. The candidate's only business-unit PATCH tests use the technical admin, or test the destination check on re-parent (bu-hierarchy-guard), which the defect does not touch. The A26 drill QA review recorded the same on the defect commit ('Existing 30/30 pass'), and both drill reviewers raised the missing negative test (Medium). The K6 regression tests (apps/api/test/integration/organizations.test.ts +87 lines in c4943c8d1) exist only on branch drill/dg7-a26, 'never merged' (drill report K8); git diff a60a962 c4943c8d1 -- apps/api/test/integration/organizations.test.ts shows them absent from the candidate. The product route itself is correct in the candidate (routes.ts equals the fixed version): this is a test-coverage defect, not an access-control hole. Repair: merge the K6 tests (or equivalent) into the main line.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-1/a26-mutant/a26-defect.patch",
+        "docs/delivery/test-evidence/DG7/qa/round-1/a26-mutant/mutant-run.log",
+        "docs/delivery/test-evidence/DG7/qa/round-1/a26-mutant/control-run.log",
+        "docs/delivery/test-evidence/DG7/orchestrator/a26/drill-report.md",
+        "docs/delivery/test-evidence/DG7/orchestrator/a26/reviewers/qa/drill-review.md",
+        "apps/api/test/integration/organizations.test.ts"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG7/round-1/qa-verifier.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-15T08:55:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG7 round 1 (T-DG7-REV-QA-R1) from a mutation run on a disposable copy of the frozen candidate."
+        }
+      ]
+    },
+    {
+      "id": "F-DG7-955",
+      "stage_id": "DG7",
+      "requirement": "REQ-DLV-028",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "progress.md at the DG7 freeze still says under 'Unresolved blockers': 'None. DG0, DG1, DG2 and DG3 are APPROVED on this branch', contradicting its own checkpoint (18 DG7 release-blocker rows, D-270 disclosures)",
+      "reproduction": "git show 8f79401:docs/delivery/progress.md | sed -n 44,46p (also at a60a962 and HEAD).",
+      "expected": "The resumption file's 'Unresolved blockers' section names the remaining blockers at the checkpoint (the 18 DG7 rows below IMPLEMENTED with release-blocker notes, and the D-249/D-270 protocol-audit disclosures for the release-auditor), or points to where they are listed.",
+      "actual": "The section is unchanged since the DG3 era: 'None. DG0, DG1, DG2 and DG3 are APPROVED on this branch, and --pipeline exits 0.' The 'Current checkpoint' section above it is current and correct (my A27 K11 re-drill reconstructed the next action from it), so the effect is limited to a misleading stale statement for a reader who uses the blockers section.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-1/06d-a27-k11.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG7/round-1/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-15T08:55:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG7 round 1 (T-DG7-REV-QA-R1) during the A27 K11 re-drill."
+        }
+      ]
+    },
+    {
+      "id": "F-DG7-956",
+      "stage_id": "DG7",
+      "requirement": "REQ-S19-015",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "The release-tool suite fails on the frozen candidate: 4 tests in tools/release/tests/check-handover.test.mjs (T-H4 known limitations, check-handover strict exit codes) pin the superseded DO-I protocol-audit report, while docs/handover/known-limitations.md was regenerated from the pre-freeze report after the suite's last green run",
+      "reproduction": "Disposable clone at a60a962 (with docs/delivery/handbacks/DG7 present, so the pinned report exists): MTH_PNPM_STORE=<writable store copy> node --test tools/release/tests/*.test.mjs -> tests 450, pass 444, fail 4, skipped 2. Failing: 'known-limitations.mjs --check exits 0 on the tree with the DO-I report', 'the protocol-audit block equals the one generated from the report, with the D-249 statement', '--write on a fixture copy regenerates a hand-damaged block, and --check then passes', and 'the full check on the real tree never FAILs; with MTH_STRICT_HANDOVER=1 (the freeze) it must PASS'. Directly: node tools/release/known-limitations.mjs --protocol-audit docs/delivery/handbacks/DG7/T-DG7-DO-I-evidence/protocol-audit-all.json --check -> exit 1 (differs); with docs/delivery/test-evidence/DG7/orchestrator/protocol-audit/protocol-audit-prefreeze.json -> exit 0. Cause probe on a scratch copy: regenerating known-limitations.md from the DO-I report makes check-handover.test.mjs 50/50 (as frozen: 46/50).",
+      "expected": "The release-tool suite (which CI runs in full in its 'Release tooling self-tests' step, .github/workflows/ci.yml l.331-332: node --test tools/release/tests/*.test.mjs licenses/tests/*.test.mjs) passes on the frozen candidate. A generated handover file and the tests that check it use the same input, and the suite is re-run after the file is regenerated.",
+      "actual": "check-handover.test.mjs const REPORT = docs/delivery/handbacks/DG7/T-DG7-DO-I-evidence/protocol-audit-all.json (head 119dcd05). Commit c4958b565 (D-269) regenerated known-limitations.md from protocol-audit-prefreeze.json (head b2ba3e3, which adds the DG7 C2 27 and C3 5 rows) after the orchestrator's release-tool run prefreeze/3-release-tool-tests.log (465 tests, 0 failures); only check-handover itself (with the pre-freeze report) was run afterwards (check-handover-2.log), not the suite. The shipped known-limitations.md is the correct, more complete one; the tests are stale. The orchestrator's pre-freeze green run therefore does not describe the frozen tree.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-1/03e-nodetest-tools_release-rerun2.log",
+        "docs/delivery/test-evidence/DG7/qa/round-1/03g-check-handover-cause-probe.log",
+        "tools/release/tests/check-handover.test.mjs",
+        "docs/delivery/test-evidence/DG7/orchestrator/prefreeze/3-release-tool-tests.log",
+        "docs/delivery/test-evidence/DG7/orchestrator/protocol-audit/check-handover-2.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG7/round-1/qa-verifier.json",
+      "owner": "devops-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-15T09:25:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG7 round 1 (T-DG7-REV-QA-R1) from the release-tool suite run on the frozen candidate."
+        }
+      ]
+    }
+  ]
+}
