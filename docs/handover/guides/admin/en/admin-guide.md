@@ -76,7 +76,7 @@ A transfer moves data or configuration. It never grants a business, Finance or I
 
 ## Retention {#retention}
 
-**Status in this release.** The Retention screens are not built in this release. **Retention** (`/admin/retention`) and its sub-pages show the "not available yet" page. The retention rules work through the platform's API, with the rights `retention.read`, `retention.configure` and `retention.run` (archived records, runs and classes), and `backup.read` (backup sets). The behaviour below is what the API applies.
+**Status in this release.** **Retention** (`/admin/retention`) lists every record class with its action, period and IT approval reference, and the runs and dry runs. A class page (`/admin/retention/classes/<code>`) shows its tables and, for `retention.configure` (ADM_TECH), the change form for an operational class. A run page shows its counts and its per-record action log. **Archived records** (`/admin/retention/archived`) and **Backup sets** (`/admin/retention/backups`, read-only) are linked from it. The rights are `retention.read` (classes, runs, archived records), `retention.configure` (change a class), `retention.run` (dry run, run now) and `backup.read` (backup sets); the server checks each one.
 
 - Each record class has a retention action: **Keep**, **Archive** or **Archive, then delete**. Every class starts as "Keep". Business records, audit and snapshots are always kept. Periods must be agreed with Mobily IT.
 - A period that is not set reads **Not set (IT to agree)**.

@@ -148,6 +148,23 @@ const RequirementsPage = lazyPage(() =>
 const AboutReleasePage = lazyPage(() =>
   import("../pages/admin/about/AboutReleasePage.tsx").then((m) => m.AboutReleasePage),
 );
+// T-DG7-FE-C2 (p7-work-split §E.6; ADR-0066 §6, ADR-0067): Administration > Retention, its classes, runs, archived records
+// and the backup sets.
+const RetentionPage = lazyPage(() =>
+  import("../pages/admin/retention/RetentionPages.tsx").then((m) => m.RetentionPage),
+);
+const RetentionClassPage = lazyPage(() =>
+  import("../pages/admin/retention/RetentionPages.tsx").then((m) => m.RetentionClassPage),
+);
+const RetentionRunPage = lazyPage(() =>
+  import("../pages/admin/retention/RetentionPages.tsx").then((m) => m.RetentionRunPage),
+);
+const RetentionArchivedPage = lazyPage(() =>
+  import("../pages/admin/retention/RetentionPages.tsx").then((m) => m.RetentionArchivedPage),
+);
+const BackupSetsPage = lazyPage(() =>
+  import("../pages/admin/retention/RetentionPages.tsx").then((m) => m.BackupSetsPage),
+);
 // P6 slices E, F, J and C screens (T-DG6-FE-B; p6-work-split §E/F.12, §J/C.13).
 const AuditEventsPage = lazyPage(() => import("../pages/admin/audit/AuditPages.tsx").then((m) => m.AuditEventsPage));
 const AuditEventPage = lazyPage(() => import("../pages/admin/audit/AuditPages.tsx").then((m) => m.AuditEventPage));
@@ -628,6 +645,15 @@ export const P7_SCREEN_ROUTES: readonly { path: string; feature: string; owner: 
   { path: "admin/about", feature: "releaseAbout", owner: "FE-C" },
 ];
 
+/** The paths of P7_SCREEN_ROUTES whose screens T-DG7-FE-C2 built for slice E (p7-work-split §E.6). */
+export const P7_FE_C_RETENTION_PATHS: readonly string[] = [
+  "admin/retention",
+  "admin/retention/classes/:retentionClassCode",
+  "admin/retention/runs/:retentionRunId",
+  "admin/retention/archived",
+  "admin/retention/backups",
+];
+
 /** The paths of P7_SCREEN_ROUTES whose screens T-DG7-FE-C built for slice I (p7-work-split §I.2). */
 export const P7_FE_C_RELEASE_PATHS: readonly string[] = [
   "admin/requirements",
@@ -641,8 +667,9 @@ export const P7_FE_C_RELEASE_PATHS: readonly string[] = [
  */
 export const P7_PLANNED_ROUTES: readonly { path: string; feature: string; owner: string }[] = P7_SCREEN_ROUTES.filter(
   // T-DG7-FE-B built the slice C and D screens (P7_FE_B_ROUTES below); T-DG7-FE-C the slice I screens
-  // (P7_FE_C_RELEASE_ROUTES below). The slice E (Retention) screens are still placeholders.
-  (r) => r.owner !== "FE-B" && !P7_FE_C_RELEASE_PATHS.includes(r.path),
+  // (P7_FE_C_RELEASE_ROUTES below); T-DG7-FE-C2 the slice E (Retention) screens (P7_FE_C_RETENTION_ROUTES below). The
+  // seam is empty and stays as a tested seam (like P6_PLANNED_ROUTES).
+  (r) => r.owner !== "FE-B" && !P7_FE_C_RELEASE_PATHS.includes(r.path) && !P7_FE_C_RETENTION_PATHS.includes(r.path),
 );
 
 /** The slice I screens of T-DG7-FE-C (p7-work-split §I.2): the register list and its detail panel share one page. */
@@ -657,6 +684,19 @@ export const P7_FE_C_RELEASE_ROUTES: RouteObject[] = Object.entries(P7_FE_C_RELE
     element,
   }),
 );
+
+/** The slice E screens of T-DG7-FE-C2 (p7-work-split §E.6), one element per P7_FE_C_RETENTION_PATHS path. */
+const P7_FE_C_RETENTION_ELEMENTS: Readonly<Record<string, ReactElement>> = {
+  "admin/retention": <RetentionPage />,
+  "admin/retention/classes/:retentionClassCode": <RetentionClassPage />,
+  "admin/retention/runs/:retentionRunId": <RetentionRunPage />,
+  "admin/retention/archived": <RetentionArchivedPage />,
+  "admin/retention/backups": <BackupSetsPage />,
+};
+export const P7_FE_C_RETENTION_ROUTES: RouteObject[] = P7_FE_C_RETENTION_PATHS.map((path) => ({
+  path,
+  element: P7_FE_C_RETENTION_ELEMENTS[path]!,
+}));
 
 /** The slice C and D screens of T-DG7-FE-B, one element per P7_SCREEN_ROUTES path owned by FE-B. */
 const P7_FE_B_ELEMENTS: Readonly<Record<string, ReactElement>> = {
@@ -953,6 +993,7 @@ export const routes: RouteObject[] = [
       ...p6PlannedRoutes,
       ...P7_FE_B_ROUTES,
       ...P7_FE_C_RELEASE_ROUTES,
+      ...P7_FE_C_RETENTION_ROUTES,
       ...p7PlannedRoutes,
       ...landingRoutes,
       ...subEntryRoutes,

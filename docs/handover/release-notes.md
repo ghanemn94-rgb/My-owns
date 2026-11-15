@@ -185,6 +185,7 @@ Every Arabic user-interface text listed in these files is provisional until a qu
 | --- | --- |
 | `apps/web/src/i18n/provisional-ar-p6.ts` | 79 |
 | `apps/web/src/i18n/provisional-ar-p7-release.ts` | 67 |
+| `apps/web/src/i18n/provisional-ar-p7-retention.ts` | 146 |
 | `apps/web/src/i18n/provisional-ar-p7-transfer.ts` | 35 |
 | `apps/web/src/i18n/provisional-ar-p7.ts` | 71 |
 | `apps/web/src/components/assistant/provisional-ar.ts` | 19 |
@@ -192,7 +193,7 @@ Every Arabic user-interface text listed in these files is provisional until a qu
 | `apps/web/src/components/saved-views/provisional-ar.ts` | 10 |
 | `apps/web/src/pages/integrations/provisional-ar.ts` | 14 |
 | `apps/web/src/pages/my-work/provisional-ar.ts` | 1 |
-| Total | 299 |
+| Total | 445 |
 
 <div dir="rtl" lang="ar">
 
@@ -231,6 +232,6 @@ Arabic text: provisional. It has not been checked by a qualified Arabic reviewer
 
 ### النصوص العربية المؤقتة
 
-عدد الإدخالات المؤقتة: 299.
+عدد الإدخالات المؤقتة: 445.
 
 </div>

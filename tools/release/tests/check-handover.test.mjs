@@ -362,6 +362,7 @@ describe("T-H4: known limitations", () => {
 const KL_PROVISIONAL_SOURCES = [
   "apps/web/src/i18n/provisional-ar-p6.ts",
   "apps/web/src/i18n/provisional-ar-p7-release.ts",
+  "apps/web/src/i18n/provisional-ar-p7-retention.ts",
   "apps/web/src/i18n/provisional-ar-p7-transfer.ts",
   "apps/web/src/i18n/provisional-ar-p7.ts",
   "apps/web/src/components/assistant/provisional-ar.ts",

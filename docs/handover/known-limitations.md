@@ -87,6 +87,7 @@ Accepted observations reported by the audit:
 | --- | --- |
 | `apps/web/src/i18n/provisional-ar-p6.ts` | 79 |
 | `apps/web/src/i18n/provisional-ar-p7-release.ts` | 67 |
+| `apps/web/src/i18n/provisional-ar-p7-retention.ts` | 146 |
 | `apps/web/src/i18n/provisional-ar-p7-transfer.ts` | 35 |
 | `apps/web/src/i18n/provisional-ar-p7.ts` | 71 |
 | `apps/web/src/components/assistant/provisional-ar.ts` | 19 |
@@ -94,7 +95,7 @@ Accepted observations reported by the audit:
 | `apps/web/src/components/saved-views/provisional-ar.ts` | 10 |
 | `apps/web/src/pages/integrations/provisional-ar.ts` | 14 |
 | `apps/web/src/pages/my-work/provisional-ar.ts` | 1 |
-| Total | 299 |
+| Total | 445 |
 
 Handover files with Arabic text not listed in `docs/handover/arabic-review.json` (13):
 

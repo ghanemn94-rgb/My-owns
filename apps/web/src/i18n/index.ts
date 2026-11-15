@@ -153,6 +153,9 @@ import enTransfer from "./en/transfer.json" with { type: "json" };
 // P7 (DG7) Administration > Requirement register and About this release (T-DG7-FE-C; p7-work-split §I.2, §I.3).
 import arRelease from "./ar/release.json" with { type: "json" };
 import enRelease from "./en/release.json" with { type: "json" };
+// P7 (DG7) Administration > Retention (T-DG7-FE-C2; p7-work-split §E.6).
+import arRetention from "./ar/retention.json" with { type: "json" };
+import enRetention from "./en/retention.json" with { type: "json" };
 
 /** Namespace files per locale; the key-parity test walks exactly these. */
 export const catalogues = {
@@ -215,6 +218,7 @@ export const catalogues = {
     explanations: arExplanations,
     transfer: arTransfer,
     release: arRelease,
+    retention: arRetention,
   },
   en: {
     common: enCommon,
@@ -275,6 +279,7 @@ export const catalogues = {
     explanations: enExplanations,
     transfer: enTransfer,
     release: enRelease,
+    retention: enRetention,
   },
 } as const;
 

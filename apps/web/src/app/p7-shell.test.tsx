@@ -1,9 +1,9 @@
 // T-DG7-FE-A (p7-plan §5.1 row FE-A, §5.3; p7-work-split §C.7/C.8, §D.4, §E.6, §I.1/I.2): the P7 shell seams in English
 // LTR and Arabic RTL, against a scripted API (SYNTHETIC data).
 //  - The Administration entries Data export, Migration status, Configuration transfer, Retention, Requirement register
-//    and About this release are nav sub-entries; every FE-B and FE-C screen (and its detail paths) has a route that shows
-//    the honest "not available yet" placeholder until its owner replaces it (P7_PLANNED_ROUTES; F-DG4-160). The
-//    placeholder sends no request for P7 data and presents nothing as delivered.
+//    and About this release are nav sub-entries; every FE-B and FE-C screen (and its detail paths) had a route that showed
+//    the honest "not available yet" placeholder until its owner replaced it (P7_PLANNED_ROUTES; F-DG4-160). Since
+//    T-DG7-FE-C2 every one is built, so the seam is empty and stays tested.
 //  - The 33 request paths equal the contract's (docs/api/openapi.yaml 1.6.0-p7), method included, and the P7 operation
 //    set of the API tests (apps/api/test/support/p7-operations.ts); the closed value sets equal the contract's enums;
 //    the P7 query keys are scoped so a refresh touches only its area.
@@ -147,11 +147,9 @@ describe("P7 navigation entries and route placeholders (slices C, D, E, I)", () 
     expect(P7_SCREEN_ROUTES.map((r) => [r.path, r.feature, r.owner])).toEqual(
       P7_SCREEN_ROUTES_EXPECTED.map(([p, f, o]) => [p, f, o]),
     );
-    // FE-B and FE-C shrink P7_PLANNED_ROUTES as they build: after T-DG7-FE-B and FE-C's slice I screens (T-DG7-FE-C),
-    // only the slice E (Retention) screens are placeholders.
-    expect(P7_PLANNED_ROUTES).toEqual(
-      P7_SCREEN_ROUTES.filter((r) => r.feature.startsWith("retention") || r.feature === "backupSets"),
-    );
+    // FE-B and FE-C shrink P7_PLANNED_ROUTES as they build: after T-DG7-FE-B, FE-C's slice I screens (T-DG7-FE-C) and
+    // the slice E (Retention) screens (T-DG7-FE-C2), no P7 screen is a placeholder.
+    expect(P7_PLANNED_ROUTES).toEqual([]);
     const registered = shellChildren().map((r) => r.path);
     for (const [path, feature] of P7_SCREEN_ROUTES_EXPECTED) {
       expect(
@@ -189,7 +187,7 @@ describe("P7 navigation entries and route placeholders (slices C, D, E, I)", () 
   });
 
   it.each(LOCALES)(
-    "%s: each P7 screen path shows its placeholder, in the locale's direction, and loads no P7 data",
+    "%s: each slice E (Retention) path renders its screen, not the placeholder, in the locale's direction",
     async (locale) => {
       const { requests } = mockApi(
         meRoute(
@@ -199,41 +197,24 @@ describe("P7 navigation entries and route placeholders (slices C, D, E, I)", () 
         ),
       );
       const sample: Record<string, string> = {
-        migrationExportId: "01920000-0000-7000-9000-00000000e001",
-        migrationImportId: "01920000-0000-7000-9000-00000000e002",
-        migrationReconciliationId: "01920000-0000-7000-9000-00000000e003",
-        configBundleExportId: "01920000-0000-7000-9000-00000000e004",
-        configBundleImportId: "01920000-0000-7000-9000-00000000e005",
-        retentionClassCode: "inbox_read",
+        retentionClassCode: "inbox_read_item",
         retentionRunId: "01920000-0000-7000-9000-00000000e006",
-        reqId: "REQ-S02-003",
       };
-      const nav = catalogues[locale].nav as unknown as { p7: { notAvailableTitle: string; notAvailableBody: string } };
-      // The routes still planned (slice E, FE-C's); FE-B's are real screens since T-DG7-FE-B
-      // (pages/admin/{migration,config-transfer}) and slice I's since T-DG7-FE-C (pages/admin/{requirements,about}).
-      for (const [path, feature] of [9, 10, 11, 13].map((i) => P7_SCREEN_ROUTES_EXPECTED[i]!)) {
+      // T-DG7-FE-C2 built the slice E screens (pages/admin/retention); every P7 path is a real screen now, so the
+      // placeholder is shown by no P7 route (P7_PLANNED_ROUTES is empty). The scripted API answers 404 to the
+      // retention reads here: the screens show the not-found state, never the placeholder and never invented data.
+      for (const [path] of [9, 10, 11, 12, 13].map((i) => P7_SCREEN_ROUTES_EXPECTED[i]!)) {
         const url = `/${path.replace(/:(\w+)/g, (_, n: string) => sample[n]!)}`;
         renderApp(url, { i18n: createI18n(locale) });
-        expect(
-          await screen.findByRole("heading", { level: 1, name: p7Text(locale, feature, "title")! }),
-          url,
-        ).toBeTruthy();
+        await waitFor(() => expect(document.querySelector("[data-p7-screen]"), url).not.toBeNull());
         expect(document.documentElement.dir).toBe(locale === "ar" ? "rtl" : "ltr");
         expect(document.documentElement.lang).toBe(locale);
-        expect(document.querySelector(`[data-p7-feature='${feature}']`), url).not.toBeNull();
-        expect(screen.getByText(nav.p7.notAvailableTitle)).toBeTruthy();
-        expect(screen.getByText(nav.p7.notAvailableBody)).toBeTruthy();
-        // Nothing to use: no form control inside the placeholder.
-        const page = document.querySelector(`[data-p7-feature='${feature}']`)!;
-        expect(page.querySelectorAll("form, input, select, textarea, button").length, url).toBe(0);
+        expect(document.querySelector("[data-p7-feature]"), url).toBeNull();
         cleanup();
       }
-      const p7Requests = requests.filter((r) =>
-        /\/api\/v1\/admin\/(migration-|identity-rebinds|config-bundles|retention|backups|deployment|requirements|about)/.test(
-          r.url,
-        ),
-      );
-      expect(p7Requests.map((r) => r.url)).toEqual([]);
+      const retentionReads = requests.filter((r) => /\/api\/v1\/admin\/(retention|backups)/.test(r.url));
+      expect(retentionReads.length).toBeGreaterThan(0);
+      expect(retentionReads.every((r) => r.method === "GET")).toBe(true);
     },
   );
 
