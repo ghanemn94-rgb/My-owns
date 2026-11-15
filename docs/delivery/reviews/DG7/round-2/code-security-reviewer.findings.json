@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG7-935",
+      "stage_id": "DG7",
+      "requirement": "REQ-DLV-039",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "The frozen DG7 candidate cannot pass its own gate. 18 DG7-final rows are SPECIFIED in docs/delivery/requirements.csv, which is a candidate file, and validateGate's register rule requires IMPLEMENTED. D-266 (d) leaves these rows to the release-auditor, who cannot change the register without changing the candidate.",
+      "reproduction": "Candidate sha256:ca38b65ecaa23f49b4e5755f503c88e74c3a5bd502862fd28cc5ddbbd1fe13c5 (source f22c97b5931a40969574f4e646ea480be4454861; the freeze commit abc7254f6 does not touch requirements.csv: git diff f22c97b59 HEAD -- docs/delivery/requirements.csv is empty).\n\n(1) On the live repository, Node 24.21.0, run: node tools/gates/validate.mjs --register DG7. Result: 'FAIL register rules at DG7 (18 problems)', exit 1. There is one problem per row: 'final gate DG7 requires IMPLEMENTED at DG7 (is SPECIFIED)' for REQ-DLV-005, 008, 011, 012, 014, 018, 024, 028, 030, 031, 039, 040, REQ-S02-005, REQ-S19-015, REQ-S20-031, REQ-S21-002, REQ-S21-003 and REQ-S21-004 (log 41-register-DG7.log).\n\n(2) tools/gates/lib/rules.mjs l.1106: validateGate calls checkRegister(repo, stageId, errors, gate, records) for every gate. At l.219-221 that function raises this exact error for any row whose final gate is at or before the gate and whose status is not IMPLEMENTED.\n\n(3) tools/gates/lib/candidate.mjs l.9-20 (META_EXCLUDES) does not exclude docs/delivery/requirements.csv, so the file is hashed into the candidate. Setting any of the 18 rows to IMPLEMENTED changes the candidate ID, which then needs a re-freeze and new reviews.\n\n(4) Each row's notes say: 'still a RELEASE BLOCKER, not IMPLEMENTED ... the release-auditor decides it at the gate' (D-266 (d)). The missing dependencies the notes name are the DG7 round and audit, the freeze-time protocol audit, the seal (V6, V7, V18), 'validate --pipeline after DG7' and the K11 re-drill.",
+      "expected": "Before a DG7 round can approve a candidate, the frozen register must let the gate validation of that candidate pass. There are two ways to do that:\n- every DG7-final row is IMPLEMENTED with evidence on the candidate; or\n- the delivery decides, before the freeze, how 'completes-after-gate' clauses are carried. Two examples: split each such clause into a row whose final gate can be met at the gate, or have the user decide on the rule. The decision is recorded in decisions.md, and the register follows it.\n\nThen 'validate.mjs --stage DG7' can PASS on the very candidate the three reviewers and the auditor reviewed. The release-auditor never has to approve a candidate whose own register fails the gate rule, and nobody has to edit a candidate file after the reviews.",
+      "actual": "As frozen, the candidate's register fails the DG7 register rule with 18 problems, and nothing in the delivery records lets the gate pass on this candidate ID:\n- the auditor can only read requirements.csv;\n- the analyst's next pass would change a candidate file;\n- D-266 (d) gives the release-auditor a decision that the validator does not allow.\n\nSo DG7 cannot be APPROVED on ca38b65e. Every round on a candidate frozen with these 18 rows SPECIFIED meets the same block: three PASS reviews and an auditor PASS still could not validate.\n\nNo product behaviour is affected. The 18 rows are honestly SPECIFIED with release-blocker notes, which REQ-S02-005 and REQ-S21-003 require; that honesty is correct, and the defect is not in it. The defect is that the gate cannot complete. Two of the six findings verified in this round came from the same class of problem: freeze-time process steps that change or contradict candidate files (F-DG7-953, F-DG7-956).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/code-security/round-2/41-register-DG7.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-2/01-candidate-identity.log",
+        "tools/gates/lib/rules.mjs",
+        "tools/gates/lib/candidate.mjs",
+        "docs/delivery/requirements.csv"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG7/round-2/code-security-reviewer.json",
+      "owner": "transformation-analyst",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-15T15:45:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG7 round 2 by code-security-reviewer (session 079e6503) on candidate ca38b65e. The register is the analyst's file. The resolution path (a register pass and a re-freeze, or a decision on completes-after-gate clauses) needs a delivery-orchestrator or user decision first."
+        }
+      ]
+    }
+  ]
+}

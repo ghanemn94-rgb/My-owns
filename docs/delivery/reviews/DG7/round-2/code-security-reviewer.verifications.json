@@ -1,0 +1,57 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG7-913",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:ca38b65e…13c5 (source f22c97b59), in a disposable clone, Node 24.21.0.\n(1) The five admin/retention routes now render real pages. In router.tsx l.154-166 and l.690-694 each route maps to RetentionPages.tsx (RetentionPage, RetentionClassPage, RetentionRunPage, RetentionArchivedPage, BackupSetsPage). p7-retention.spec.ts asserts that the placeholder marker [data-p7-feature] is absent (l.173). No 'being-built' or 'not available yet' wording is left (24-f913-inspection.log).\n(2) I ran the T-E25 e2e spec in both languages: apps/web/e2e/support/with-stack.sh npx playwright test apps/web/e2e/p7-retention.spec.ts, ports 32461/32462, pre-installed Chromium. Result: 4/4 passed, exit 0. The four tests are chromium-ar and chromium-en × ADM_TECH (classes, change form, run form, archived, backups, run 404) and AUD (read-only class, no run form) (31-e2e-retention.log).\n(3) The unit-web project re-run, which includes retention-screens.test.tsx, passed 131/131 files and 2199/2199 tests (08b-unit-rerun.log). The first unit run had 3 web timeouts at load 18. They are explained in the record's unit check; none was in a retention file I could identify, and the re-run is clean.\n(4) The register row REQ-S16-024 is honest. AN-P7E's pass 5 corrects pass 1's claim and removes the FE-C evidence citation. It now cites the FE-C2 screens, unit test, e2e and axe evidence. The API-level A19/A22 is met: retention/classes.test.ts, runs.test.ts, backups.test.ts and retention-archive.test.ts all pass in my 47-file integration subset (10-integration-p7.log).\nThe UI mutations use If-Match (class form) and an Idempotency-Key (run form), as the API requires. I did not author this fix (FE-C2, FE-C3, AN-P7E).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/code-security/round-2/24-f913-inspection.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-2/31-e2e-retention.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-2/08b-unit-rerun.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-2/10-integration-p7.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG7-914",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified at HEAD abc7254f6, whose files equal the source f22c97b59 for these paths.\n- docs/handover/api/connectors.md l.38 names docs/operations/identity-saml-broker.md as the existing DO-B guide, and the file exists (18305 bytes).\n- A grep for 'not yet written|to be confirmed|owner: slice|planned|BE-T's handback' over connectors.md and docs/delivery/environment.md matches nothing in connectors.md. In environment.md it matches only l.108, a historical note that records the removal of the stale markers.\n- The http_pull and fake-model rows name the existing adapter, tests and doubles.\n- node tools/release/connector-handover.mjs --check prints 'PASS: docs/handover/api/connectors.md equals a fresh generation', exit 0 (20-f914-f955-inspection.log).",
+      "evidence": ["docs/delivery/test-evidence/DG7/code-security/round-2/20-f914-f955-inspection.log"]
+    },
+    {
+      "finding_id": "F-DG7-953",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on this round's freeze.\n- HEAD abc7254f6 (the round-2 freeze commit) is the direct child of the source f22c97b59.\n- git diff --stat f22c97b59 HEAD lists only the three round-2 assignments, candidates/DG7/ca38b65ecaa23f49.manifest.json and stages.json, all META-excluded. decisions.md is untouched; D-273 was committed before the freeze.\n- candidate.mjs --stage DG7 gives the same ID sha256:ca38b65e…13c5 over 3153 files three ways: on the working tree, with --ref HEAD and with --ref f22c97b59, each exit 0. --diff against the manifest reports matches: true, with nothing added, removed or changed (01-candidate-identity.log).\n- Later during my run, HEAD moved to 98c4e94bb: the domain reviewer's auto-committed records and run files. The candidate at that HEAD is still ca38b65e (42-head-moved.log).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/code-security/round-2/01-candidate-identity.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-2/42-head-moved.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG7-954",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified adversarially in a disposable clone of f22c97b59 with a disposable PostgreSQL 16 (tests/qa/support/with-pg.sh, port 32451).\n- M0, the control: organizations, config-bundle and unbound-signin tests on the unmodified tree, 43/43, exit 0.\n- M1: the exact A26 drill defect (repro/m1-a26-defect.patch = git diff c4943c8d1 c3bbc780c -- organization/routes.ts) makes organizations.test.ts fail 4 of 15, exit 1. The failing tests are office, auditor, leadA1 ('expected 200 to be 403') and the split-grant re-parent.\n- M1b: only the PATCH handler's requireAction (l.361) downgraded to business_unit.read gives the same 4 failures, exit 1.\n- Sources were restored byte-equal (sha256 compared) (30-mutants.log).\nThe five ported tests check 403, an unchanged unit, no business_unit.update audit and an audited authorization.denied, with a positive control (200, version +1, one audit). BE-R6's surviving route-label-only mutant is equivalent: the declared config.access.permission is not evaluated against grants, and authorization is the scoped requireAction. I agree with that analysis.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/code-security/round-2/30-mutants.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-2/repro/m1-a26-defect.patch"
+      ]
+    },
+    {
+      "finding_id": "F-DG7-955",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "progress.md's 'Unresolved blockers' section now opens with '(Historical, superseded 2026-11-15, F-DG7-955: this section dates from DG3. Current state: DG0–DG6 APPROVED; DG7 open findings and blockers are listed in the checkpoint at the top and in findings.json.)'. The old sentence is now past tense ('were APPROVED ... at the time'). The stale claim no longer misleads a reader of that section (20-f914-f955-inspection.log).",
+      "evidence": ["docs/delivery/test-evidence/DG7/code-security/round-2/20-f914-f955-inspection.log"]
+    },
+    {
+      "finding_id": "F-DG7-956",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified with a revert-to-fail in a disposable clone of f22c97b59, Node 24.21.0, MTH_PNPM_STORE set to a scratch store copy.\n(A) node --test tools/release/tests/check-handover.test.mjs passes 51/51, exit 0.\n(B) The same with MTH_STRICT_HANDOVER=1 passes 51/51, exit 0.\n(C) The pre-fix test file (git show 16b2bdd35^:…, which pins docs/delivery/handbacks/DG7/T-DG7-DO-I-evidence/protocol-audit-all.json) fails 4 of 50, exit 1. It is run as a sibling file in the clone and then removed. The 4 failures are exactly the ones F-DG7-956 lists (T-H4 x3 and the strict check-handover exit-code test).\n(D) Run directly, known-limitations.mjs --check prints FAIL with the DO-I report and PASS with protocol-audit-prefreeze.json. My log's 'exit=0' after the FAIL line is the exit of the tail in my pipeline, not of the tool; the printed FAIL is the tool's result.\n(E) check-handover.mjs --protocol-audit <pre-freeze report> prints PASS, exit 0.\nThe fixed test resolves the report from the SHA-256 that known-limitations.md states and fails, never skips, when the report is missing (21-f956-check-handover.log).",
+      "evidence": ["docs/delivery/test-evidence/DG7/code-security/round-2/21-f956-check-handover.log"]
+    }
+  ]
+}
