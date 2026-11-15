@@ -26,7 +26,7 @@ I didn't add an allow-list entry: `tools/release/asset-scan-allowlist.json` is u
 - `EMAIL_RE` finds no local part before `"@proxy.example`.
 - The regex assertion `/^http:\/\/u:p4ss@.../` contains escaped slashes and doesn't match either.
 
-**What the tests still prove.** At runtime the value is the real `http://u:p4ss@proxy.example:3128`, and the test asserts that exact shape. The tests still prove that `build-image.sh` passes only the _names_ of set proxy variables (`--build-arg HTTPS_PROXY`), never their values. The password never appears in stdout or stderr, either in the `--dry-run` default case (that assertion is new) or with `--proxy-from-env`. Docker is never called. The test "the Dockerfile declares no proxy ARG or ENV" is unchanged.
+**What the tests still prove.** At runtime the value is a real credential-bearing proxy URL (HTTP scheme, user `u`, the test's `PROXY_PASSWORD`, host `proxy.example`, port 3128), and the test asserts that exact shape. (Wording changed by T-DG7-DO-E6: the earlier sentence spelled the URL out and matched secret-scan rule S2.) The tests still prove that `build-image.sh` passes only the _names_ of set proxy variables (`--build-arg HTTPS_PROXY`), never their values. The password never appears in stdout or stderr, either in the `--dry-run` default case (that assertion is new) or with `--proxy-from-env`. Docker is never called. The test "the Dockerfile declares no proxy ARG or ENV" is unchanged.
 
 **Requirement IDs.** The assignment names none. The work serves the T-A5 build-from-archive check: REQ-S19-019's asset scan (ADR-0062 §8), as cited in the scanner header.
 

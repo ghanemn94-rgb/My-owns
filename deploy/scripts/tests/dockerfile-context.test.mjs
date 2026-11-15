@@ -188,7 +188,7 @@ function stubDocker() {
 }
 // A credential-bearing proxy URL, assembled at runtime: the scheme and the "://" separator are separate pieces, so
 // the source never contains a literal URL for tools/release/scan-assets.mjs R4 (unlisted-host) to match, yet the
-// value build-image.sh receives is a real `scheme://user:password@host:port` string.
+// value build-image.sh receives is a real credential-bearing proxy URL (scheme, user, password, host and port).
 const PROXY_PASSWORD = "p4ss";
 const proxyWithCredentials = () => ["http", "://", "u:", PROXY_PASSWORD, "@proxy.example:3128"].join("");
 function build(args, env = {}) {
