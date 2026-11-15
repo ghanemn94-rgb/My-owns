@@ -1,0 +1,13 @@
+diff --git a/apps/api/src/modules/organization/routes.ts b/apps/api/src/modules/organization/routes.ts
+index 038666590..170ad2f34 100644
+--- a/apps/api/src/modules/organization/routes.ts
++++ b/apps/api/src/modules/organization/routes.ts
+@@ -347,7 +347,7 @@ export function registerOrganizationRoutes(app: FastifyInstance, { db, config }:
+ 
+   app.patch(
+     "/api/v1/business-units/:businessUnitId",
+-    { config: { access: { permission: "business_unit.manage" } } },
++    { config: { access: { permission: "business_unit.read" } } },
+     async (request, reply) => {
+       const { businessUnitId } = parse(buParams, request.params, "params");
+       const body = parseBody(businessUnitUpdate, request.body);

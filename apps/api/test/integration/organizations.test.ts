@@ -4,7 +4,10 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   auditOf,
+  auditOfRequest,
   call,
+  createUser,
+  grant,
   seedWorld,
   signIn,
   startApi,
@@ -258,5 +261,89 @@ describe("business units", () => {
     expect((await call(api.app, "GET", `/api/v1/business-units/${w.a1}`, { session: office })).status).toBe(200);
     expect((await call(api.app, "GET", `/api/v1/business-units/${w.a1}`, { session: officeB })).status).toBe(404);
     expect((await call(api.app, "GET", `/api/v1/business-units/${w.b1}`, { session: nobody })).status).toBe(404);
+  });
+});
+
+// Drill A26 regression (F-DG7-CS-A26-1/-2, QA-A26-01/-02/-03): PATCH /api/v1/business-units/:id requires
+// business_unit.manage on the moved/renamed unit. business_unit.read (held by almost every role) is not enough
+// (ADR-0006: a caller who may read but not change a record gets 403). Synthetic data only.
+describe("business unit update authorization (business_unit.manage, not business_unit.read)", () => {
+  const unit = (id: string) =>
+    api.db.selectFrom("business_unit").selectAll().where("id", "=", id).executeTakeFirstOrThrow();
+
+  for (const who of ["office", "auditor", "leadA1"] as const) {
+    it(`${who} (business_unit.read without business_unit.manage) gets 403; unit unchanged; no update audited`, async () => {
+      const s = await signIn(api.app, w[who].subject);
+      const before = await unit(w.a1);
+      const requestId = uniq("a26-");
+      const res = await call(api.app, "PATCH", `/api/v1/business-units/${w.a1}`, {
+        session: s,
+        headers: { "if-match": `"${before.version}"`, "x-request-id": requestId },
+        body: { nameEn: `renamed-by-${who}`, nameAr: "تغيير", status: "inactive" },
+      });
+      expect(res.status).toBe(403);
+      const after = await unit(w.a1);
+      expect([after.version, after.name_en, after.name_ar, after.status]).toEqual([
+        before.version,
+        before.name_en,
+        before.name_ar,
+        before.status,
+      ]);
+      const updates = (await auditOf(api.db, w.a1)).filter(
+        (a) => a.action === "business_unit.update" && a.actor_user_id === w[who].id,
+      );
+      expect(updates).toHaveLength(0);
+      // Everything this request audited is the denial; no change event.
+      expect((await auditOfRequest(api.db, requestId)).map((a) => a.action)).toEqual(["authorization.denied"]);
+      // The refusal itself is audited as an authorization denial (denials.ts), never as a change.
+      expect(
+        (await auditOf(api.db, w.a1)).some((a) => a.action === "authorization.denied" && a.actor_user_id === w[who].id),
+      ).toBe(true);
+    });
+  }
+
+  it("split grant: manage on the destination (a2) but only read on the moved unit (a1x) cannot re-parent it (403)", async () => {
+    const u = await createUser(api.db, w.orgA.id);
+    await grant(api.db, w.grantor.id, u.id, "ADM_TECH", { type: "business_unit", id: w.a2 }, w.orgA.id);
+    await grant(api.db, w.grantor.id, u.id, "AUD", { type: "business_unit", id: w.a1 }, w.orgA.id);
+    const s = await signIn(api.app, u.subject);
+    const before = await unit(w.a1x);
+    expect(before.parent_business_unit_id).toBe(w.a1);
+    const res = await call(api.app, "PATCH", `/api/v1/business-units/${w.a1x}`, {
+      session: s,
+      headers: { "if-match": `"${before.version}"` },
+      body: { parentBusinessUnitId: w.a2 },
+    });
+    expect(res.status).toBe(403);
+    const after = await unit(w.a1x);
+    expect([after.version, after.parent_business_unit_id]).toEqual([before.version, w.a1]);
+    expect(
+      (await auditOf(api.db, w.a1x)).filter((a) => a.action === "business_unit.update" && a.actor_user_id === u.id),
+    ).toHaveLength(0);
+  });
+
+  it("other-organization and no-grant callers get 404 (ADR-0006); a manager still gets 200 (positive control)", async () => {
+    for (const s of [officeB, nobody]) {
+      const before = await unit(w.a1x);
+      const res = await call(api.app, "PATCH", `/api/v1/business-units/${w.a1x}`, {
+        session: s,
+        headers: { "if-match": `"${before.version}"` },
+        body: { nameEn: "x" },
+      });
+      expect(res.status).toBe(404);
+      expect((await unit(w.a1x)).version).toBe(before.version);
+    }
+    const before = await unit(w.a1x);
+    const ok = await call(api.app, "PATCH", `/api/v1/business-units/${w.a1x}`, {
+      session: admin,
+      headers: { "if-match": `"${before.version}"` },
+      body: { nameEn: "Synthetic Unit A1X renamed" },
+    });
+    expect([ok.status, ok.body.version]).toEqual([200, before.version + 1]);
+    expect(
+      (await auditOf(api.db, w.a1x)).filter(
+        (a) => a.action === "business_unit.update" && a.actor_user_id === w.admin.id,
+      ),
+    ).toHaveLength(1);
   });
 });
