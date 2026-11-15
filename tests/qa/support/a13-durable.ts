@@ -19,6 +19,7 @@ import { spawn, type ChildProcess } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 import { expect } from "vitest";
+import { watchChildOutput } from "./child-ready.ts";
 import { migrate } from "../../../packages/db/src/migrate.ts";
 import {
   createScratchDatabase,
@@ -372,16 +373,8 @@ export async function childWorker(appUrl: string): Promise<{ child: ChildProcess
       stdio: ["ignore", "pipe", "pipe"],
     },
   );
-  let out = "";
-  child.stdout!.on("data", (b: Buffer) => (out += b.toString()));
-  child.stderr!.on("data", (b: Buffer) => (out += b.toString()));
-  await waitFor(
-    async () => {
-      if (child.exitCode !== null) throw new Error(`child worker exited (${child.exitCode}) before READY: ${out}`);
-      return out.includes("READY");
-    },
-    "child worker READY",
-    60_000,
-  );
-  return { child, output: () => out };
+  // Event-driven (T-DG7-QA-F, see child-ready.ts): READY is honoured even when the exit is observed first.
+  const watched = watchChildOutput(child, "child worker", "READY", 60_000);
+  await watched.ready;
+  return { child, output: watched.output };
 }
