@@ -14622,7 +14622,7 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG7/round-1/domain-reviewer.json",
       "owner": "transformation-analyst",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-15T08:05:00Z",
@@ -14633,10 +14633,46 @@
           "at": "2026-11-15T14:19:49Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at b514c7a3531c91afb0d9f0ddb211b62865668856"
+        },
+        {
+          "at": "2026-11-15T15:05:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 2: PASS"
+        },
+        {
+          "at": "2026-11-15T16:10:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 2: PASS"
+        },
+        {
+          "at": "2026-11-15T17:15:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 2: PASS"
         }
       ],
       "fix_revision": "b514c7a3531c91afb0d9f0ddb211b62865668856",
-      "fix_summary": "FE-C2 built the five Retention screens (en/ar), T-E25 spec; FE-C3 language isolation; AN-P7E register"
+      "fix_summary": "FE-C2 built the five Retention screens (en/ar), T-E25 spec; FE-C3 language isolation; AN-P7E register",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG7-T-DG7-REV-QA-R2-qa-verifier-20261115T142050Z-1622f36c",
+          "session_id": "1622f36c-6004-4b93-a861-6c854e98f108"
+        },
+        "at": "2026-11-15T17:15:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG7/qa/round-2/30-unit-pnpm-test.log",
+          "docs/delivery/test-evidence/DG7/qa/round-2/20-e2e-web.log",
+          "docs/delivery/test-evidence/DG7/qa/round-2/23-qa-r2-retention-spec.log",
+          "docs/delivery/test-evidence/DG7/qa/round-2/23-qa-r2-retention-spec-attempt1.log",
+          "docs/delivery/test-evidence/DG7/qa/tests/qa-r2-retention.spec.ts",
+          "docs/delivery/test-evidence/DG7/qa/round-2/screens/qa-r2-retention-conflict-en.png",
+          "docs/delivery/test-evidence/DG7/qa/round-2/screens/qa-r2-retention-conflict-ar.png",
+          "docs/delivery/test-evidence/DG7/qa/round-2/53-f913-docs.log"
+        ],
+        "note": "Verified on candidate sha256:ca38b65ecaa23f49b4e5755f503c88e74c3a5bd502862fd28cc5ddbbd1fe13c5 (source f22c97b5, which contains the FE-C2 commit 4e8676de2, the FE-C3 commit 53cc5985b and the AN-P7E commit f63d117d1). The five p7-work-split §E.6 screens are built: router.tsx maps admin/retention, classes/:code, runs/:id, archived and backups to RetentionPages.tsx; P7_PLANNED_ROUTES is empty, asserted by p7-shell.test.tsx. retention-screens.test.tsx passes 20/20 and p7-shell.test.tsx 11/11 inside pnpm test (unit-web 2199/2199). The product T-E25 spec on the real stack passes in both projects: chromium-en tests 281-282 and chromium-ar tests 568-569 of my full apps/web/e2e run. My own independent spec (docs/delivery/test-evidence/DG7/qa/tests/qa-r2-retention.spec.ts, real stack, en and ar, 2/2 exit 0) drives what the product spec does not. (1) A 409 through the screen: the form is opened, the class is changed behind it through the API, and Save shows the conflict panel with mine-vs-current values; the server kept 222 / TEST-ONLY QA-BEHIND, and nothing was overwritten. Re-apply sends exactly one more PUT with the current If-Match and saves 333 (version +1). (2) Server-side rules: AUD PUT 403, no If-Match 428, stale If-Match 409, periodDays 0 400, and no refused request changed the version. (3) Period 0 in the form is refused inline, with focus on the field and nothing posted. (4) No form on business_record or expiring_credential, and through the API a business class cannot leave retain (422 retention.class_retain_only for archive and for archive_then_purge; unchanged). Attempt 1 of my spec wrongly expected a refusal of a retain PUT on a business class; ADR-0067 §2 allows it, so the product was right and my assertion was corrected (attempt-1 log kept). Screenshots in both languages show RTL/LTR and the provisional wordmark. Register row REQ-S16-024 now states the correction of pass 1 and cites the FE-C2 evidence; admin guide en/ar #retention describes the built screens; no handover text calls them placeholders."
+      }
     },
     {
       "id": "F-DG7-914",
@@ -14657,7 +14693,7 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG7/round-1/domain-reviewer.json",
       "owner": "devops-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-15T08:05:00Z",
@@ -14668,10 +14704,40 @@
           "at": "2026-11-15T14:19:49Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at b514c7a3531c91afb0d9f0ddb211b62865668856"
+        },
+        {
+          "at": "2026-11-15T15:05:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 2: PASS"
+        },
+        {
+          "at": "2026-11-15T16:10:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 2: PASS"
+        },
+        {
+          "at": "2026-11-15T17:15:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 2: PASS"
         }
       ],
       "fix_revision": "b514c7a3531c91afb0d9f0ddb211b62865668856",
-      "fix_summary": "environment.md connector rows refreshed by the orchestrator; DO-K2 regenerated connectors.md"
+      "fix_summary": "environment.md connector rows refreshed by the orchestrator; DO-K2 regenerated connectors.md",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG7-T-DG7-REV-QA-R2-qa-verifier-20261115T142050Z-1622f36c",
+          "session_id": "1622f36c-6004-4b93-a861-6c854e98f108"
+        },
+        "at": "2026-11-15T17:15:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG7/qa/round-2/50-f914-connectors.log",
+          "docs/delivery/test-evidence/DG7/qa/round-2/07-release-tools.log"
+        ],
+        "note": "Verified on candidate ca38b65e (clone at f22c97b5). docs/handover/api/connectors.md no longer contains 'not yet written', 'to be confirmed', 'owner: slice' or 'planned' (grep exit 1). It lists docs/operations/identity-saml-broker.md (the file exists, 18305 bytes) as the brokered SAML guide. In docs/delivery/environment.md the only remaining 'planned' is the explanatory note that the stale markers were removed (l.108, F-DG7-914). connector-handover.mjs --check: 'equals a fresh generation', exit 0. The residual task tags '(DO-B)' named by AN-P7E are cosmetic and not part of the finding's expected text."
+      }
     },
     {
       "id": "F-DG7-953",
@@ -14692,7 +14758,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG7/round-1/qa-verifier.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-15T08:55:00Z",
@@ -14703,10 +14769,40 @@
           "at": "2026-11-15T14:19:49Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at b514c7a3531c91afb0d9f0ddb211b62865668856"
+        },
+        {
+          "at": "2026-11-15T15:05:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 2: PASS"
+        },
+        {
+          "at": "2026-11-15T16:10:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 2: PASS"
+        },
+        {
+          "at": "2026-11-15T17:15:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 2: PASS"
         }
       ],
       "fix_revision": "b514c7a3531c91afb0d9f0ddb211b62865668856",
-      "fix_summary": "freeze process fixed (D-272): decisions and all candidate files committed before --freeze; round 2 freeze commit holds only stages.json, manifest, assignments"
+      "fix_summary": "freeze process fixed (D-272): decisions and all candidate files committed before --freeze; round 2 freeze commit holds only stages.json, manifest, assignments",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG7-T-DG7-REV-QA-R2-qa-verifier-20261115T142050Z-1622f36c",
+          "session_id": "1622f36c-6004-4b93-a861-6c854e98f108"
+        },
+        "at": "2026-11-15T17:15:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG7/qa/round-2/00-env.log",
+          "docs/delivery/test-evidence/DG7/qa/round-2/52-f953-reconcile.log"
+        ],
+        "note": "Verified at the round-2 freeze. HEAD is abc7254f (the freeze commit). The working tree recomputes to sha256:ca38b65e...c5 (3153 files) and --diff against the committed manifest reports matches true, with nothing added, removed or changed. --ref f22c97b5 and my disposable clone at f22c97b5 give the same id. The freeze commit's changed files are the three round-2 assignments, the manifest and stages.json, and none of the five is a manifest entry (checked against the 3153 entries). D-273 is in decisions.md at f22c97b5, before the freeze. validate.mjs --reconcile: 'working tree ... (matches)', exit 0; the round-1 records read STALE, as expected for the superseded candidate. The repaired process (commit every candidate file before --freeze) held for this freeze."
+      }
     },
     {
       "id": "F-DG7-954",
@@ -14729,7 +14825,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG7/round-1/qa-verifier.json",
       "owner": "backend-workflow-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-15T08:55:00Z",
@@ -14740,10 +14836,43 @@
           "at": "2026-11-15T14:19:49Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at b514c7a3531c91afb0d9f0ddb211b62865668856"
+        },
+        {
+          "at": "2026-11-15T15:05:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 2: PASS"
+        },
+        {
+          "at": "2026-11-15T16:10:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 2: PASS"
+        },
+        {
+          "at": "2026-11-15T17:15:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 2: PASS"
         }
       ],
       "fix_revision": "b514c7a3531c91afb0d9f0ddb211b62865668856",
-      "fix_summary": "BE-R6 ported the BU PATCH authorization regression tests into the main tree (fail on downgrade, pass on tree)"
+      "fix_summary": "BE-R6 ported the BU PATCH authorization regression tests into the main tree (fail on downgrade, pass on tree)",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG7-T-DG7-REV-QA-R2-qa-verifier-20261115T142050Z-1622f36c",
+          "session_id": "1622f36c-6004-4b93-a861-6c854e98f108"
+        },
+        "at": "2026-11-15T17:15:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG7/qa/round-2/f954/mutant-runs.log",
+          "docs/delivery/test-evidence/DG7/qa/round-2/f954/mutant-M1-verbose.log",
+          "docs/delivery/test-evidence/DG7/qa/round-2/f954/mutants.sh",
+          "docs/delivery/test-evidence/DG7/qa/round-2/f954/a26-defect.patch",
+          "docs/delivery/test-evidence/DG7/qa/round-2/f954/mutant-runs-attempt1-enospc.log"
+        ],
+        "note": "Revert-to-fail on a disposable copy of the candidate (routes.ts byte-equal to the candidate for the control; restored and compared after each mutant). organizations.test.ts on a fresh disposable PostgreSQL: M0 control 15/15, exit 0. M1, the exact A26 drill defect (round-1 a26-defect.patch, both the route label and requireAction set to business_unit.read): 4 failed / 11 passed, exit 1. The failing tests are office, auditor and leadA1 (read without manage get 403, unit unchanged, only authorization.denied audited) and the split-grant re-parent; the verbose re-run names them. M3, only requireAction downgraded: the same 4 fail, exit 1. M2, only the route's config.access.permission label downgraded: 15/15. I judge M2 equivalent: apps/api/src/modules/platform/hooks.ts and identity/routes.ts use the label only for public vs authenticated and the fail-closed 'policy consulted' check, never against grants, so authorization is the scoped requireAction, as BE-R6 disclosed. The tests are in the main tree at apps/api/test/integration/organizations.test.ts and pass in my full integration run."
+      }
     },
     {
       "id": "F-DG7-955",
@@ -14761,7 +14890,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG7/round-1/qa-verifier.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-15T08:55:00Z",
@@ -14772,10 +14901,40 @@
           "at": "2026-11-15T14:19:49Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at b514c7a3531c91afb0d9f0ddb211b62865668856"
+        },
+        {
+          "at": "2026-11-15T15:05:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 2: PASS"
+        },
+        {
+          "at": "2026-11-15T16:10:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 2: PASS"
+        },
+        {
+          "at": "2026-11-15T17:15:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 2: PASS"
         }
       ],
       "fix_revision": "b514c7a3531c91afb0d9f0ddb211b62865668856",
-      "fix_summary": "progress.md stale DG3 blocker section annotated as historical"
+      "fix_summary": "progress.md stale DG3 blocker section annotated as historical",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG7-T-DG7-REV-QA-R2-qa-verifier-20261115T142050Z-1622f36c",
+          "session_id": "1622f36c-6004-4b93-a861-6c854e98f108"
+        },
+        "at": "2026-11-15T17:15:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG7/qa/round-2/51-f955-progress.log",
+          "docs/delivery/test-evidence/DG7/qa/round-2/06-a27-resume.log"
+        ],
+        "note": "progress.md at HEAD abc7254f: the 'Unresolved blockers' section is annotated '(Historical, superseded 2026-11-15, F-DG7-955 ...) Current state: DG0-DG6 APPROVED; DG7 open findings and blockers are listed in the checkpoint at the top and in findings.json', and the old sentence is in the past tense. The checkpoint at the top names DG7 round 2, the six findings and the next action. progress.md is not a manifest entry, so the fix needed no re-freeze. Small residual, not a defect: the checkpoint's 'Next action: freeze round 2' was written before the freeze. The freeze commit changes only stages.json, the manifest and the assignments, so stages.json (REVIEWING, round 2 on ca38b65e) is the current state, and a resumption reconstructs it."
+      }
     },
     {
       "id": "F-DG7-956",
@@ -14797,7 +14956,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG7/round-1/qa-verifier.json",
       "owner": "devops-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-15T09:25:00Z",
@@ -14808,10 +14967,209 @@
           "at": "2026-11-15T14:19:49Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at b514c7a3531c91afb0d9f0ddb211b62865668856"
+        },
+        {
+          "at": "2026-11-15T15:05:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 2: PASS"
+        },
+        {
+          "at": "2026-11-15T16:10:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 2: PASS"
+        },
+        {
+          "at": "2026-11-15T17:15:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 2: PASS"
         }
       ],
       "fix_revision": "b514c7a3531c91afb0d9f0ddb211b62865668856",
-      "fix_summary": "DO-K2 check-handover tests use the report the shipped file is generated from; release-tool suite exit 0 (prefreeze-r2)"
+      "fix_summary": "DO-K2 check-handover tests use the report the shipped file is generated from; release-tool suite exit 0 (prefreeze-r2)",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG7-T-DG7-REV-QA-R2-qa-verifier-20261115T142050Z-1622f36c",
+          "session_id": "1622f36c-6004-4b93-a861-6c854e98f108"
+        },
+        "at": "2026-11-15T17:15:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG7/qa/round-2/f956-probes.log",
+          "docs/delivery/test-evidence/DG7/qa/round-2/f956-probes.sh",
+          "docs/delivery/test-evidence/DG7/qa/round-2/03-nodetest-tools_release_tests.log",
+          "docs/delivery/test-evidence/DG7/qa/round-2/03c-nodetest-build-from-archive-writable-store.log"
+        ],
+        "note": "On a sparse git clone at f22c97b5 that recomputes to ca38b65e, node --test tools/release/tests/check-handover.test.mjs gives P0 51/51, exit 0. Revert-to-fail: P1, the test file restored to its round-1 candidate version (a60a962), fails exactly the 4 tests of the finding (46/50, exit 1). P2, known-limitations.md's DG7 C3 count hand-damaged: the T-H4 block tests fail (47/51, exit 1). P3, the shipped report hidden: 'the report the shipped file names (by SHA-256) is in the delivery records' fails and names the hash, with no silent skip (45/51, exit 1). The test and known-limitations.md are byte-equal to the candidate afterwards. The full release-tool suite on the candidate clone gives 466 tests, 463 pass, 1 fail, 2 skipped. The failure is T-A5 build-from-archive with EROFS on the sandbox's read-only HOME pnpm store; with MTH_PNPM_STORE set to a writable copy, T-A5 passes and so does the whole build-from-archive file (2/2). The skips are T-A11 (BLOCKED: no assembled runtime tree) and T-A3 (bsdtar not installed), both environmental, as in DO-K2's evidence. Note: the test resolves the report from docs/delivery/test-evidence, which is committed but not a manifest entry; a tree without test-evidence fails T-H4 loudly, which is the intended direction. A different stale generated file, release-notes.md, is raised separately as F-DG7-961."
+      }
+    },
+    {
+      "id": "F-DG7-915",
+      "stage_id": "DG7",
+      "requirement": "REQ-S19-015",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "The frozen handover release notes are out of date against the frozen register: they state the round-1 register SHA-256 (e4805087...), not the shipped register (fc8ece8b...), and quote a superseded REQ-S19-015 note; release-notes.mjs --check exits 1 on the candidate",
+      "reproduction": "Disposable clone of the candidate at f22c97b5931a40969574f4e646ea480be4454861 (candidate sha256:ca38b65e..., verified): node tools/release/release-notes.mjs --csv docs/delivery/requirements.csv --deps docs/handover/external-dependencies.json --provisional apps/web/src/i18n --out docs/handover/release-notes.md --check -> 'release-notes: docs/handover/release-notes.md is out of date (run with --write)', exit 1. sha256sum docs/delivery/requirements.csv = fc8ece8bc56b80308b1953c9e88c5e839506f7cd95b6a5982e18286ad465ba23; release-notes.md line 9 states SHA-256 e4805087a95793c24dc51bf4e43a59d893c9e35a0eefc35cef61f360f7715b09 and the Arabic block (line 210) e4805087a957. Regenerating into $TMPDIR and diffing changes exactly lines 9, 123 (the REQ-S19-015 unfinished-item note lacks the 'DG7 analyst pass 5' text) and 210. Cause: release-notes.md was last written by FE-C2 (commit 4e8676de2, 11:50Z); AN-P7E then changed five register rows (commit f63d117d1, 12:14Z) and its handback gap 1 asked for regeneration before the round-2 freeze, which did not happen. p7-work-split §M.5 step 3 and the file table (l.2061) put 'release-notes.mjs --check in the freeze verification'; the orchestrator's prefreeze-r2 checks.log has no such step, and check-handover (strict) and the release-tool suite do not compare the shipped release notes with the register, so all of them stay green. The in-app About screen, built from the same register, shows 'Register snapshot: 412 rows, SHA-256 fc8ece8bc56b...' (screens/en-about-top.png), so the two handover surfaces disagree.",
+      "expected": "At the freeze, docs/handover/release-notes.md is byte-equal to the generator's output for the frozen register (ADR-0071 §5: deterministic, '--check compares bytes'; p7-work-split §M.5 step 3), so the release identity it states (the register's SHA-256) is the register that ships, and every unfinished item quotes its current notes as the missing dependency.",
+      "actual": "The shipped release notes name a register hash that matches no file in the release, contradict About, and quote REQ-S19-015's pass-4 note instead of its current one. Status counts (394 IMPLEMENTED / 18 SPECIFIED) and the set of 18 unfinished items are still correct, so no completion state is misreported; the effect is limited to the release identity and one note. A handover recipient who checks the register against the release notes gets a mismatch.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/domain/round-2/f915-release-notes-check.log",
+        "docs/delivery/test-evidence/DG7/domain/round-2/release-notes.diff",
+        "docs/delivery/test-evidence/DG7/domain/round-2/release-tool-checks.log",
+        "docs/delivery/test-evidence/DG7/domain/round-2/screens/en-about-top.png",
+        "docs/delivery/handbacks/DG7/T-DG7-AN-P7E-transformation-analyst.md",
+        "docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r2/checks.log"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG7/round-2/domain-reviewer.json",
+      "owner": "transformation-analyst",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-15T14:59:00Z",
+          "status": "OPEN",
+          "note": "Raised by domain-reviewer in DG7 round 2 on candidate sha256:ca38b65ecaa23f49b4e5755f503c88e74c3a5bd502862fd28cc5ddbbd1fe13c5. Repair: regenerate release-notes.md with --write from the frozen register and add release-notes.mjs --check to the freeze verification (p7-work-split §M.5 step 3)."
+        }
+      ]
+    },
+    {
+      "id": "F-DG7-935",
+      "stage_id": "DG7",
+      "requirement": "REQ-DLV-039",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "The frozen DG7 candidate cannot pass its own gate. 18 DG7-final rows are SPECIFIED in docs/delivery/requirements.csv, which is a candidate file, and validateGate's register rule requires IMPLEMENTED. D-266 (d) leaves these rows to the release-auditor, who cannot change the register without changing the candidate.",
+      "reproduction": "Candidate sha256:ca38b65ecaa23f49b4e5755f503c88e74c3a5bd502862fd28cc5ddbbd1fe13c5 (source f22c97b5931a40969574f4e646ea480be4454861; the freeze commit abc7254f6 does not touch requirements.csv: git diff f22c97b59 HEAD -- docs/delivery/requirements.csv is empty).\n\n(1) On the live repository, Node 24.21.0, run: node tools/gates/validate.mjs --register DG7. Result: 'FAIL register rules at DG7 (18 problems)', exit 1. There is one problem per row: 'final gate DG7 requires IMPLEMENTED at DG7 (is SPECIFIED)' for REQ-DLV-005, 008, 011, 012, 014, 018, 024, 028, 030, 031, 039, 040, REQ-S02-005, REQ-S19-015, REQ-S20-031, REQ-S21-002, REQ-S21-003 and REQ-S21-004 (log 41-register-DG7.log).\n\n(2) tools/gates/lib/rules.mjs l.1106: validateGate calls checkRegister(repo, stageId, errors, gate, records) for every gate. At l.219-221 that function raises this exact error for any row whose final gate is at or before the gate and whose status is not IMPLEMENTED.\n\n(3) tools/gates/lib/candidate.mjs l.9-20 (META_EXCLUDES) does not exclude docs/delivery/requirements.csv, so the file is hashed into the candidate. Setting any of the 18 rows to IMPLEMENTED changes the candidate ID, which then needs a re-freeze and new reviews.\n\n(4) Each row's notes say: 'still a RELEASE BLOCKER, not IMPLEMENTED ... the release-auditor decides it at the gate' (D-266 (d)). The missing dependencies the notes name are the DG7 round and audit, the freeze-time protocol audit, the seal (V6, V7, V18), 'validate --pipeline after DG7' and the K11 re-drill.",
+      "expected": "Before a DG7 round can approve a candidate, the frozen register must let the gate validation of that candidate pass. There are two ways to do that:\n- every DG7-final row is IMPLEMENTED with evidence on the candidate; or\n- the delivery decides, before the freeze, how 'completes-after-gate' clauses are carried. Two examples: split each such clause into a row whose final gate can be met at the gate, or have the user decide on the rule. The decision is recorded in decisions.md, and the register follows it.\n\nThen 'validate.mjs --stage DG7' can PASS on the very candidate the three reviewers and the auditor reviewed. The release-auditor never has to approve a candidate whose own register fails the gate rule, and nobody has to edit a candidate file after the reviews.",
+      "actual": "As frozen, the candidate's register fails the DG7 register rule with 18 problems, and nothing in the delivery records lets the gate pass on this candidate ID:\n- the auditor can only read requirements.csv;\n- the analyst's next pass would change a candidate file;\n- D-266 (d) gives the release-auditor a decision that the validator does not allow.\n\nSo DG7 cannot be APPROVED on ca38b65e. Every round on a candidate frozen with these 18 rows SPECIFIED meets the same block: three PASS reviews and an auditor PASS still could not validate.\n\nNo product behaviour is affected. The 18 rows are honestly SPECIFIED with release-blocker notes, which REQ-S02-005 and REQ-S21-003 require; that honesty is correct, and the defect is not in it. The defect is that the gate cannot complete. Two of the six findings verified in this round came from the same class of problem: freeze-time process steps that change or contradict candidate files (F-DG7-953, F-DG7-956).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/code-security/round-2/41-register-DG7.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-2/01-candidate-identity.log",
+        "tools/gates/lib/rules.mjs",
+        "tools/gates/lib/candidate.mjs",
+        "docs/delivery/requirements.csv"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG7/round-2/code-security-reviewer.json",
+      "owner": "transformation-analyst",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-15T15:45:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG7 round 2 by code-security-reviewer (session 079e6503) on candidate ca38b65e. The register is the analyst's file. The resolution path (a register pass and a re-freeze, or a decision on completes-after-gate clauses) needs a delivery-orchestrator or user decision first."
+        }
+      ]
+    },
+    {
+      "id": "F-DG7-960",
+      "stage_id": "DG7",
+      "requirement": "REQ-DLV-012",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "A round-1 repair handback (T-DG7-FE-C3) has no merge-instructions section. The protocol audit on this candidate reports 6 DG7 C3 handback hits, but known-limitations.md, the release notes and D-270 disclose 5",
+      "reproduction": "Repository at the freeze commit abc7254f (candidate ca38b65e verified, 3153 files): node tools/release/protocol-audit.mjs --stage DG7 --root /home/user/My-owns --json <file>. Result: C2 27 hits, C3 6 hits, C5 1 hit, exit 1. The pre-freeze report protocol-audit-prefreeze.json (head b2ba3e3) has C2 27, C3 5 and C5 1. The new C3 hit is docs/delivery/handbacks/DG7/T-DG7-FE-C3-frontend-ux-engineer.md, missing merge_instructions. Its headings are '1. Files changed', '2. Behaviour per requirement', '3. Checks run', '4. Known gaps' and '5. Open questions'; grep -i merge finds nothing. It was committed at 53cc5985b (2026-11-15T14:17Z), after the pre-freeze r2 checks (13:51Z). The shipped docs/handover/known-limitations.md l.62 reads '| C3 handback-sections | REQ-DLV-012 | DG7 | HIT | 5 |'. It was generated from the pre-freeze report, and check-handover and known-limitations --check pass because they are given that same report.",
+      "expected": "The agent-protocol handback contract has five sections, including merge instructions. D-270 states 'Every new assignment from here carries the full contract elements'. The release's disclosure of DG7's own protocol hits (known limitations, release notes, register notes of REQ-DLV-012) covers every handback in the frozen candidate, or the extra hit is disclosed and left for the release-auditor, as for the other five.",
+      "actual": "A sixth DG7 C3 hit exists in the frozen candidate and is not disclosed. The handover still says 5. The handback is write-once, so the repair is disclosure: regenerate known-limitations.md (and the release notes) from a protocol-audit report run on the next candidate, and name the FE-C3 handback. C2 (27) and C5 (1) are unchanged, so the round-1 repair assignments themselves carry the full contract. No behavioural effect.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-2/13-protocol-audit-DG7.log",
+        "docs/delivery/test-evidence/DG7/qa/round-2/13-protocol-audit-DG7.json",
+        "docs/delivery/test-evidence/DG7/qa/round-2/14-protocol-c3-fe-c3.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG7/round-2/qa-verifier.json",
+      "owner": "devops-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-15T16:45:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG7 round 2 (T-DG7-REV-QA-R2) from a protocol-audit re-run on the round-2 freeze commit. Owner is devops-engineer for the regenerated disclosure (known-limitations.md and release notes); the handback itself is write-once."
+        }
+      ]
+    },
+    {
+      "id": "F-DG7-961",
+      "stage_id": "DG7",
+      "requirement": "REQ-S19-015",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "docs/handover/release-notes.md is stale on the frozen candidate. It cites register SHA-256 e4805087... (en and ar), but the shipped requirements.csv is fc8ece8b..., and its REQ-S19-015 entry lacks the register's current notes. release-notes --check exits 1, and no test or pre-freeze step runs that check",
+      "reproduction": "Disposable clone at source commit f22c97b5 (recomputed candidate sha256:ca38b65e...c5, 3153 files). sha256sum docs/delivery/requirements.csv gives fc8ece8bc56b80308b1953c9e88c5e839506f7cd95b6a5982e18286ad465ba23. docs/handover/release-notes.md l.9 states 'SHA-256 `e4805087a95793c24dc51bf4e43a59d893c9e35a0eefc35cef61f360f7715b09`, 412 rows', and the Arabic block (l.210) states 'SHA-256 `e4805087a957`'. node tools/release/release-notes.mjs --csv docs/delivery/requirements.csv --deps docs/handover/external-dependencies.json --provisional apps/web/src/i18n --out docs/handover/release-notes.md --check prints 'docs/handover/release-notes.md is out of date (run with --write)', exit 1. --write on a scratch copy (restored afterwards) changes 3 lines: 9 and 210 (the hash) and 123 (the REQ-S19-015 notes, which in the register now carry the 'DG7 analyst pass 5 (T-DG7-AN-P7E ...)' paragraph; the shipped file has none). git log: requirements.csv was last changed by f63d117d1 (AN-P7E, 12:14Z), after release-notes.md was last written by 4e8676de2 (FE-C2, 11:50Z). Nothing catches it. prefreeze-r2/checks.log has no release-notes step. tools/release/tests/release-notes.test.mjs runs --check only on fixtures (T-I11). check-handover and the full release-tool suite pass.",
+      "expected": "The release notes in the handover package are generated from the register the package ships, and say so truthfully (the generator writes the register's SHA-256 so that a reader can verify it). REQ-S02-005/A28: release notes list every non-IMPLEMENTED row with its notes as in the register. Same lesson as F-DG7-956: a generated handover file is regenerated after its input changes, and its --check is run on the frozen tree (ideally as a test, as known-limitations and connector-handover already are).",
+      "actual": "The frozen release notes name a register hash that no shipped file has, in both languages, and omit the latest REQ-S19-015 status text. Mobily IT checking the register against the release notes would get a mismatch. The release-blocker list itself (18 rows) is still correct; only the hash and one row's notes are stale. Fix: release-notes.mjs --write, then add a real-tree --check (release-tool test or pre-freeze step) so it cannot drift again.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-2/15-release-notes-stale.log",
+        "docs/delivery/test-evidence/DG7/qa/round-2/07-release-tools.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG7/round-2/qa-verifier.json",
+      "owner": "devops-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-15T16:45:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG7 round 2 (T-DG7-REV-QA-R2): release-notes --check on the frozen candidate, exit 1. Medium under D-192: a generated deliverable inconsistent with the shipped register."
+        }
+      ]
+    },
+    {
+      "id": "F-DG7-962",
+      "stage_id": "DG7",
+      "requirement": "REQ-S20-031",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "The integration suite is order-dependent. p7-transfer-guards.test.ts commits queued migration_export rows and migration_import rows without a reconciliation run into the one shared test database, so contract.test.ts and response-validation.test.ts fail (422 migration.export_in_progress; 500 from listMigrationImports) whenever Vitest runs the guard file first",
+      "reproduction": "1) Full run on the candidate clone (QA_PG_PORT=32510 tests/qa/support/with-pg.sh npx vitest run --project integration): 474 files, 4 failed, 10 tests failed, exit 1. packages/db/test/integration/p7-transfer-guards.test.ts finished at log line 708 and contract.test.ts at 2163. Contract and response-validation each fail 'P7 BE-C operations' (createMigrationExport 422 migration.export_in_progress where 202 was expected), 'P7 BE-D operations' and 'every operation: an undeclared request media type...' (listMigrationImports returns an undeclared 500), and 'covers every operation...' (the cascade). 2) Deterministic probe (11c-integration-order-probe.log), one vitest run per order on a fresh disposable PostgreSQL. It uses a given-order sequencer config (probe-vitest.qa-order.config.ts, file parallelism off). Guard file then contract.test.ts: contract 4 failed, the same four, exit 1. Contract then guard: 132/132, exit 0. 3) Cause. packages/db/test/global-setup.ts creates ONE database per run (mth_test_<runId>, provided to every file). p7-transfer-guards.test.ts commits queued exports through queued() (l.60-70, used by the 'starts queued...' and 'mth_app cannot change...' tests, never finished) and a migration_import with no migration_reconciliation (l.143-157). apps/api/src/modules/transfer/export/service.ts refuses a new export while any export is queued or running (l.166-171). apps/api/src/modules/transfer/import/service.ts presentImport throws 'migration_import ... has no reconciliation run' (l.255), so the whole list returns 500. The orchestrator's green prefreeze-r2 integration.log ran response-validation (l.45) and contract (l.119) before the guard file (l.2948).",
+      "expected": "REQ-S20-031 / A23: the release's executable tests give the same result in any file order Vitest picks. The order depends on the duration cache, so a clean CI host or a different machine can order them differently. A test that leaves owner-written fixture rows in the shared database either removes them, uses its own database, or the tests that assume an empty export queue tolerate them.",
+      "actual": "pnpm test:integration on the frozen candidate fails, with 10 tests across contract.test.ts and response-validation.test.ts, when the guard file runs first; it passes otherwise. The two other failures of that run (a08 submit timeout 30 s; a17 hook timeout 60 s) were load and passed on re-run. The product behaves as designed: the CLI writes an import and its reconciliation in one transaction, and one export at a time is intended. The defect is test isolation. An observation, not part of this finding: one owner-written import row without a reconciliation makes the whole listMigrationImports answer 500 rather than skipping or flagging that row.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-2/10-integration.log",
+        "docs/delivery/test-evidence/DG7/qa/round-2/11a-integration-rerun-contract.log",
+        "docs/delivery/test-evidence/DG7/qa/round-2/11b-integration-rerun-failed-files.log",
+        "docs/delivery/test-evidence/DG7/qa/round-2/11c-integration-order-probe.log",
+        "docs/delivery/test-evidence/DG7/qa/round-2/probe-vitest.qa-order.config.ts"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG7/round-2/qa-verifier.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-15T16:45:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG7 round 2 (T-DG7-REV-QA-R2) from the full integration run on the frozen candidate, confirmed with a deterministic two-order probe. Medium under D-192: the release's own integration suite fails depending on file order."
+        }
+      ]
+    },
+    {
+      "id": "F-DG7-963",
+      "stage_id": "DG7",
+      "requirement": "REQ-S20-018",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "deploy/scripts/transfer-drill.sh can exit 1 after its PASS line: the outer cleanup 'rm -rf $WORK' runs under set -e while the target PostgreSQL, killed after a 5 s TERM wait, is still writing its data directory",
+      "reproduction": "A18 driver run 1 on the candidate (a18-run1.log, 16:21-16:27Z, host shared with two other reviews). Archive built from f22c97b5 with --candidate ca38b65e, archive --verify PASS. The drill log ends 'transfer-drill: PASS in 310.603 s: 335 tables and 2 evidence files equal ... restart verified'. Next comes 'rm: cannot remove .../mth-transfer-drill.ocfb5W/pgT/data/base/34663: Directory not empty'. The harness test 'the drill exits 0 with the PASS line' fails with 'expected 1 to be +0'; the 9 other tests pass, and the driver exits 1. Run 2 (a18-run2.log, 16:31-16:37Z, lower load) gives 10/10, exit 0. Cause, in transfer-drill.sh: the inner cleanup trap stop_pid sends TERM to the postmaster and waits 5 s, then sends KILL (l.120-129). The outer mode then runs set -e; [ \"$KEEP\" -eq 1 ] || rm -rf \"$WORK\" before exit \"$rc\" (l.104-106). If PostgreSQL is still checkpointing or its children are still alive, rm fails, and set -e turns a passed drill into exit 1.",
+      "expected": "The drill's exit status reflects the drill's result. Cleanup waits for PostgreSQL to stop (a fast shutdown and waiting for the PID and its children), or a cleanup failure is reported without overriding a PASS (BLOCKED or a warning, never a silent pass either way).",
+      "actual": "The drill reported PASS and then exited 1 because of the cleanup race. The failure is conservative (it can never make a failing drill pass) and depends on host load. A18 itself is met (run 2: 10/10, D0-D11 PASS). An operator following docs/handover would see a failed drill after a PASS line.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-2/a18/a18-run1.log",
+        "docs/delivery/test-evidence/DG7/qa/round-2/a18/a18-run2.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG7/round-2/qa-verifier.json",
+      "owner": "devops-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-15T16:45:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG7 round 2 (T-DG7-REV-QA-R2) from the A18 driver run 1; run 2 passed. Low: tool exit status only, conservative, load-dependent."
+        }
+      ]
     }
   ]
 }
