@@ -35,12 +35,12 @@ Copied verbatim from the source table's "What Mobily IT supplies" and "Guide" co
 |---|---|---|
 | Corporate identity provider (OIDC) | Issuer URL (https), client ID, client secret (as `OIDC_CLIENT_SECRET_FILE`), redirect URI registration, the `email` and `name` claims, and group → role mapping input | `docs/operations/configuration.md` |
 | Keycloak test realm e2e | A host with a container runtime, to run the `test-idp` profile | `docs/operations/configuration.md`; DO-B's e2e |
-| Brokered SAML | The corporate SAML IdP metadata, its signing certificate and rotation, and the attribute mappings for `email` and `name` | `docs/operations/identity-saml-broker.md` (DO-B; **not yet written** at `135ff1d`) |
+| Brokered SAML | The corporate SAML IdP metadata, its signing certificate and rotation, and the attribute mappings for `email` and `name` | `docs/operations/identity-saml-broker.md` (DO-B) |
 | IT object store (S3-compatible) | Endpoint (https), region, a private bucket, an optional key prefix, a least-privilege access key pair as secret references, and the CA if it is corporate | `docs/operations/storage.md` |
 | SMTP relay | Relay host and port, security mode, optional credentials as secret references, sender address, and the CA if it is corporate | `docs/operations/notifications.md` |
 | Enterprise messaging | — (a later release would add an adapter) | `docs/operations/notifications.md` |
-| Corporate data source (`http_pull` connector) | The source endpoint (https), its credential as a secret reference, the field mapping, and the network route | ADR-0055; handover guide for connectors (owner: slice B) |
-| AI model endpoint (optional assistant) | The endpoint, model name and credential reference of an IT-approved provider, if Mobily chooses to enable the assistant | ADR-0059; row to be confirmed by BE-T's handback |
+| Corporate data source (`http_pull` connector) | The source endpoint (https), its credential as a secret reference, the field mapping, and the network route | ADR-0055; `docs/handover/api/connectors.md` |
+| AI model endpoint (optional assistant) | The endpoint, model name and credential reference of an IT-approved provider, if Mobily chooses to enable the assistant | ADR-0059 |
 
 ## Connector adapter kinds
 

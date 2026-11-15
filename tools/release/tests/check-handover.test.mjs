@@ -5,6 +5,7 @@
 // Fixture roots are created under $TMPDIR and removed; nothing is written to the repository. With
 // MTH_STRICT_HANDOVER=1 (the freeze), the full check on the real tree must exit 0: no BLOCKED is accepted.
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join, relative, sep } from "node:path";
 import { after, describe, it } from "node:test";
@@ -30,7 +31,25 @@ import { REPO, runNode, tmp } from "./helpers.mjs";
 
 const TOOL = join(REPO, "tools", "release", "check-handover.mjs");
 const KL_TOOL = join(REPO, "tools", "release", "known-limitations.mjs");
-const REPORT = join(REPO, "docs/delivery/handbacks/DG7/T-DG7-DO-I-evidence/protocol-audit-all.json");
+/**
+ * The protocol-audit report the shipped docs/handover/known-limitations.md was generated from (F-DG7-956). The file's
+ * generated block states the report's SHA-256; the report is the delivery-record JSON under docs/delivery/ with that
+ * hash (searched in test-evidence/ and handbacks/). Pinning a path instead let the tests drift when the orchestrator regenerated the file from a newer report. A
+ * missing report fails the tests that need it (never a silent skip).
+ */
+function shippedReport() {
+  const md = readFileSync(join(REPO, "docs/handover/known-limitations.md"), "utf8");
+  const m = /^Report: `tools\/release\/protocol-audit\.mjs` .*, SHA-256 `([0-9a-f]{64})`/m.exec(md);
+  if (!m) return { path: undefined, why: "docs/handover/known-limitations.md states no protocol-audit report SHA-256" };
+  const want = m[1];
+  const found = ["docs/delivery/test-evidence", "docs/delivery/handbacks"]
+    .flatMap((d) => filesUnder(join(REPO, d)).map((f) => join(REPO, d, f)))
+    .filter((f) => /protocol-audit[^/]*\.json$/.test(f))
+    .find((f) => createHash("sha256").update(readFileSync(f)).digest("hex") === want);
+  return found ? { path: found, why: "" } : { path: undefined, why: `no protocol-audit*.json under docs/delivery has SHA-256 ${want}` };
+}
+const SHIPPED = shippedReport();
+const REPORT = SHIPPED.path ?? join(REPO, "docs/delivery/<missing protocol-audit report>.json");
 const roots = [];
 after(() => roots.forEach((r) => rmSync(r, { recursive: true, force: true })));
 
@@ -227,7 +246,11 @@ describe("T-H2 and T-B14: the deployment guide", () => {
 // --------------------------------------------------------------------------------------------------------- T-H4 --
 
 describe("T-H4: known limitations", () => {
-  it("known-limitations.mjs --check exits 0 on the tree with the DO-I report", () => {
+  it("the report the shipped file names (by SHA-256) is in the delivery records", () => {
+    assert.ok(SHIPPED.path, SHIPPED.why);
+  });
+
+  it("known-limitations.mjs --check exits 0 on the tree with the report the shipped file was generated from", () => {
     const r = runNode([KL_TOOL, "--protocol-audit", REPORT, "--check"], { cwd: REPO });
     assert.equal(r.code, 0, r.stderr);
   });
