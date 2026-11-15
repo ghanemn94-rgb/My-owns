@@ -1,0 +1,202 @@
+port-policy: PostgreSQL listening on port 24351 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/My-owns
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwh459lg_244bfc34 (server_encoding UTF8); applied 135 migrations to a fresh database
+ ✓ |integration| packages/db/test/integration/migrate.test.ts (9 tests) 5638ms
+   ✓ mth-db migrate on a fresh database > applies every shipped migration, then reports up to date  2657ms
+ ❯ |integration| apps/api/test/integration/platform/readiness-storage-worker.test.ts (9 tests | 1 failed) 5111ms
+   × T-B2: the evidence-storage probe > filesystem: a readable and writable directory -> ok; missing, not a directory, read-only -> fail 11ms
+     → uid 0 and no read-only mount found: the read-only case cannot be constructed: expected '' not to be '' // Object.is equality
+   ✓ T-B2: the evidence-storage probe > an incomplete S3 setting (s3 named by the environment, no saved setting) -> fail NotConfigured 2ms
+   ✓ T-B2: the evidence-storage probe > S3 reachable -> ok (an absent probe key is a valid answer); one HeadObject of mth-readiness-probe 47ms
+   ✓ T-B2: the evidence-storage probe > credential references that resolve to nothing -> fail 10ms
+   ✓ T-B2: the evidence-storage probe > the fake S3 stopped -> fail within 2 500 ms 9ms
+   ✓ T-B2: the evidence-storage probe > a store that accepts the connection and never answers -> fail Timeout within 2 500 ms  2013ms
+   ✓ T-B2: /readyz with the real probes > two /readyz calls within 5 s cause one storage call 90ms
+   ✓ T-B2: /readyz with the real probes > a storage failure is 503 with storage: fail, and neither body nor log names the endpoint, bucket, path or SecretRef 84ms
+   ✓ T-B2: /readyz with the real probes > worker: no beat -> unknown; a beat <= 90 s old -> alive; older -> stale; the worker never gates 36ms
+ ✓ |integration| apps/worker/test/integration/retention-archive.test.ts (8 tests) 3422ms
+ ❯ |integration| apps/api/test/integration/platform.test.ts (13 tests | 4 failed) 1882ms
+   × health and readiness > reports ready when the database answers and every shipped migration is applied 23ms
+     → expected [ 200, { status: 'ready', …(1) } ] to deeply equal [ 200, { status: 'ready', …(1) } ]
+   × health and readiness > reports 503 not_ready/pending when the build ships a migration the database lacks, and fail on checksum drift 243ms
+     → expected [ 503, { status: 'not_ready', …(1) } ] to deeply equal [ 503, { status: 'not_ready', …(1) } ]
+   × health and readiness > reports 503 fail, not pending, when a pending migration's id is below the highest applied id (F-DG5-100) 123ms
+     → expected [ 503, { status: 'not_ready', …(1) } ] to deeply equal [ 503, { status: 'not_ready', …(1) } ]
+   × readiness requires a UTF8 database (ADR-0003 'Database encoding', T-DG2-BE9) > reports 503 database: fail on a SQL_ASCII database, and database: ok on a UTF8 one created the same way 550ms
+     → expected [ 503, { status: 'not_ready', …(1) } ] to deeply equal [ 503, { status: 'not_ready', …(1) } ]
+   ✓ rate limiting (ADR-0007 T-3) > limits auth endpoints per IP with a 429 problem and Retry-After 134ms
+   ✓ rate limiting (ADR-0007 T-3) > limits general API traffic per session, never the health endpoints 198ms
+   ✓ rate limiting (ADR-0007 T-3) > does not reset the bucket when an unauthenticated client rotates fabricated session cookies 116ms
+   ✓ rate limiting (ADR-0007 T-3) > keys a validated session by its user, so it is not starved by an IP flood, and a revoked one falls back to the IP 159ms
+   ✓ request hygiene > rejects malformed JSON, non-JSON bodies and bodies over 1 MiB with 400 problems 26ms
+   ✓ request hygiene > answers unknown API paths with a 404 problem 1ms
+   ✓ request hygiene > sends a strict same-origin Content-Security-Policy and other security headers 1ms
+   ✓ fail-closed guards (ADR-0006) > refuses to start with an /api route that declares no access 1ms
+   ✓ fail-closed guards (ADR-0006) > turns a success from a route that never consulted the policy function into a 500 2ms
+ ❯ |integration| apps/api/test/integration/automation/automation-version-at-occurrence.test.ts (5 tests | 5 skipped) 3364ms
+   ↓ 0123: the enablement ledger records disables, and backfills past ones from their audit events (D-204) > each disable recorded under 0122 is backfilled at its audit event's time, with the version that stopped
+   ↓ 0123: the enablement ledger records disables, and backfills past ones from their audit events (D-204) > after 0123 the trigger writes a disable row (the version that stopped) and nothing for a no-op
+   ↓ a late event is evaluated by the rule version in force at its occurrence (D-204) > an event under v1, v2 published before evaluation: acted on exactly once, by v1, also when replayed
+   ↓ a late event is evaluated by the rule version in force at its occurrence (D-204) > disable/re-enable window across a version switch: v1 event by v1, window event by nobody, later event by v2
+   ↓ a late event is evaluated by the rule version in force at its occurrence (D-204) > kill switch: an event that occurred while enabled is not acted on when the rule is disabled at evaluation
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/automation/automation-version-at-occurrence.test.ts [ apps/api/test/integration/automation/automation-version-at-occurrence.test.ts ]
+Error: contract: devLogin does not declare status 500 (declared: 204, 400, 401, 403, 404, 429); body: {"type":"urn:mth:problem:internal","title":"Internal error","status":500,"code":"internal","requestId":"01a1dcab-38c8-773e-b4ef-d8923e418bed"}
+ ❯ assertContract apps/api/test/support/contract.ts:121:11
+    119|   const declared = op.responses[String(res.statusCode)] ?? op.response…
+    120|   if (!declared) {
+    121|     throw new Error(
+       |           ^
+    122|       `contract: ${op.operationId} does not declare status ${res.statu…
+    123|     );
+ ❯ call apps/api/test/support/harness.ts:188:5
+ ❯ signIn apps/api/test/support/harness.ts:202:17
+ ❯ apps/api/test/integration/automation/automation-version-at-occurrence.test.ts:276:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/platform.test.ts > health and readiness > reports ready when the database answers and every shipped migration is applied
+AssertionError: expected [ 200, { status: 'ready', …(1) } ] to deeply equal [ 200, { status: 'ready', …(1) } ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[33m@@ -2,9 +2,11 @@[39m
+[2m    200,[22m
+[2m    {[22m
+[2m      "checks": {[22m
+[2m        "database": "ok",[22m
+[2m        "migrations": "ok",[22m
+[31m+       "storage": "ok",[39m
+[31m+       "worker": "unknown",[39m
+[2m      },[22m
+[2m      "status": "ready",[22m
+[2m    },[22m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/platform.test.ts:23:36
+     21|   it("reports ready when the database answers and every shipped migrat…
+     22|     const res = await call(api.app, "GET", "/readyz");
+     23|     expect([res.status, res.body]).toEqual([200, { status: "ready", ch…
+       |                                    ^
+     24|     expect((await call(api.app, "GET", "/healthz")).body).toEqual({ st…
+     25|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/6]⎯
+
+ FAIL  |integration| apps/api/test/integration/platform.test.ts > health and readiness > reports 503 not_ready/pending when the build ships a migration the database lacks, and fail on checksum drift
+AssertionError: expected [ 503, { status: 'not_ready', …(1) } ] to deeply equal [ 503, { status: 'not_ready', …(1) } ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[33m@@ -2,9 +2,11 @@[39m
+[2m    503,[22m
+[2m    {[22m
+[2m      "checks": {[22m
+[2m        "database": "ok",[22m
+[2m        "migrations": "pending",[22m
+[31m+       "storage": "ok",[39m
+[31m+       "worker": "unknown",[39m
+[2m      },[22m
+[2m      "status": "not_ready",[22m
+[2m    },[22m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/platform.test.ts:37:34
+     35|     try {
+     36|       const p = await call(pending.app, "GET", "/readyz");
+     37|       expect([p.status, p.body]).toEqual([
+       |                                  ^
+     38|         503,
+     39|         { status: "not_ready", checks: { database: "ok", migrations: "…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/6]⎯
+
+ FAIL  |integration| apps/api/test/integration/platform.test.ts > health and readiness > reports 503 fail, not pending, when a pending migration's id is below the highest applied id (F-DG5-100)
+AssertionError: expected [ 503, { status: 'not_ready', …(1) } ] to deeply equal [ 503, { status: 'not_ready', …(1) } ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[33m@@ -2,9 +2,11 @@[39m
+[2m    503,[22m
+[2m    {[22m
+[2m      "checks": {[22m
+[2m        "database": "ok",[22m
+[2m        "migrations": "fail",[22m
+[31m+       "storage": "ok",[39m
+[31m+       "worker": "unknown",[39m
+[2m      },[22m
+[2m      "status": "not_ready",[22m
+[2m    },[22m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/platform.test.ts:56:34
+     54|     try {
+     55|       const r = await call(late.app, "GET", "/readyz");
+     56|       expect([r.status, r.body]).toEqual([
+       |                                  ^
+     57|         503,
+     58|         { status: "not_ready", checks: { database: "ok", migrations: "…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/6]⎯
+
+ FAIL  |integration| apps/api/test/integration/platform.test.ts > readiness requires a UTF8 database (ADR-0003 'Database encoding', T-DG2-BE9) > reports 503 database: fail on a SQL_ASCII database, and database: ok on a UTF8 one created the same way
+AssertionError: expected [ 503, { status: 'not_ready', …(1) } ] to deeply equal [ 503, { status: 'not_ready', …(1) } ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[33m@@ -2,9 +2,11 @@[39m
+[2m    503,[22m
+[2m    {[22m
+[2m      "checks": {[22m
+[2m        "database": "fail",[22m
+[2m        "migrations": "fail",[22m
+[31m+       "storage": "unknown",[39m
+[31m+       "worker": "unknown",[39m
+[2m      },[22m
+[2m      "status": "not_ready",[22m
+[2m    },[22m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/platform.test.ts:77:36
+     75|         // Not cached when negative: still refused on the second probe.
+     76|         const r = await call(onAscii.app, "GET", "/readyz");
+     77|         expect([r.status, r.body]).toEqual([
+       |                                    ^
+     78|           503,
+     79|           { status: "not_ready", checks: { database: "fail", migration…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/6]⎯
+
+ FAIL  |integration| apps/api/test/integration/platform/readiness-storage-worker.test.ts > T-B2: the evidence-storage probe > filesystem: a readable and writable directory -> ok; missing, not a directory, read-only -> fail
+AssertionError: uid 0 and no read-only mount found: the read-only case cannot be constructed: expected '' not to be '' // Object.is equality
+ ❯ apps/api/test/integration/platform/readiness-storage-worker.test.ts:215:106
+    213|           }
+    214|         }
+    215|       expect(target, "uid 0 and no read-only mount found: the read-onl…
+       |                                                                                                          ^
+    216|     }
+    217|     const ro = await uncached(fsEnv(target))(db);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/6]⎯
+
+
+ Test Files  3 failed | 2 passed (5)
+      Tests  5 failed | 34 passed | 5 skipped (44)
+   Start at  00:45:33
+   Duration  37.35s (transform 5.64s, setup 0ms, collect 14.17s, tests 19.42s, environment 0ms, prepare 60ms)
+
