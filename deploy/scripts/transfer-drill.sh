@@ -137,6 +137,8 @@ stop_pid() {
 cleanup() {
   for p in "$API_PID" "$WORKER_PID" "$IDP_PID"; do stop_pid "$p"; done
   for p in "$PG_S_PID" "$PG_T_PID"; do td_stop_pg "$p" || true; done
+  # T-DG7-DO-D8B: a postmaster whose launcher pid has already gone is found through its postmaster.pid.
+  for d in "$WORK/pgS/data" "$WORK/pgT/data"; do td_stop_pg_dir "$d" || true; done
   true
 }
 trap cleanup EXIT
@@ -342,7 +344,8 @@ d2() {
 }
 step D2 "DATABASE_OWNER_URL=<S> node tools/migration/export.mjs --out <work>/package --operator '$OPERATOR' (attachments.json count = S's rows with a storage_key)" d2
 # T-DG7-DO-D8: td_stop_pg (stop_pid's SIGTERM reached only pg_start's subshell and left the source postmaster running).
-stop_pid "$API_PID"; stop_pid "$WORKER_PID"; td_stop_pg "$PG_S_PID" || true; API_PID="" WORKER_PID="" PG_S_PID=""
+stop_pid "$API_PID"; stop_pid "$WORKER_PID"; td_stop_pg "$PG_S_PID" || true; td_stop_pg_dir "$WORK/pgS/data" || true
+API_PID="" WORKER_PID="" PG_S_PID=""
 
 # ---- D3: the target's configuration, only from the template and the guide --------------------------------------------------
 d3() {
@@ -605,7 +608,8 @@ d9() {
   # 4: stop the API and PostgreSQL, then start PostgreSQL, the API and the worker.
   # T-DG7-DO-D8: td_stop_pg waits until the postmaster and its children have exited, so the start below is a real
   # restart (stop_pid's SIGTERM reached only pg_start's subshell: the old postmaster kept serving the port).
-  stop_pid "$API_PID"; td_stop_pg "$PG_T_PID" || { echo "D9: the target PostgreSQL did not stop before its restart"; return 1; }
+  stop_pid "$API_PID"; td_stop_pg "$PG_T_PID" && td_stop_pg_dir "$WORK/pgT/data" ||
+    { echo "D9: the target PostgreSQL did not stop before its restart"; return 1; }
   PG_T_PID="$(pg_start "$WORK/pgT" "$P_PG_T")"
   echo "$PG_T_PID" >"$WORK/pgT.pid"
   start_api "${T_ENV[@]}"; start_worker "${T_ENV[@]}"

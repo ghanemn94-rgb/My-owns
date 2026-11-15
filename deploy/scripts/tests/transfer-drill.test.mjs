@@ -1658,17 +1658,75 @@ describe("T-DG7-DO-D8 drill/cleanup.sh: bounded PostgreSQL shutdown; cleanup nev
     for (const k of kids) assert.equal(alive(k), false, `server process ${k} is gone`);
   });
 
+  it("T-DG7-DO-D8B td_stop_pg_dir: the launcher pid has gone, the real postmaster is still found and stopped through postmaster.pid", () => {
+    const pgbin =
+      process.env.PGBIN ||
+      spawnSync("bash", ["-c", "ls -d /usr/lib/postgresql/*/bin 2>/dev/null | sort -V | tail -1"], {
+        encoding: "utf8",
+      }).stdout.trim();
+    if (!pgbin || spawnSync("test", ["-x", join(pgbin, "postgres")]).status !== 0)
+      throw new Error("BLOCKED: PostgreSQL server binaries not found (set PGBIN)");
+    const d = mkdtempSync(join(work, "pg-dir-"));
+    chmodSync(d, 0o777);
+    const other = mkdtempSync(join(work, "pg-other-"));
+    // The launcher subshell is killed with SIGKILL first: td_stop_pg on it then has nothing to stop (rc 0) while the
+    // postmaster still runs, which is the case td_stop_pg_dir covers. A stale pid file naming a postgres that does not
+    // run in the given directory is ignored (no signal to another cluster).
+    const r = lib(
+      `as_pg() { if [ "$(id -u)" = "0" ]; then unshare --user --map-user=1000 --map-group=1000 "$@"; else "$@"; fi; }
+       as_pg "$PGBIN/initdb" -D "$D/data" -U postgres --auth=trust --encoding=UTF8 --locale=C >/dev/null
+       pid="$( ( as_pg "$PGBIN/postgres" -D "$D/data" -p 25468 -c unix_socket_directories='' -c listen_addresses=127.0.0.1 >>"$D/pg.log" 2>&1 & echo $! ) )"
+       for _ in $(seq 1 120); do "$PGBIN/psql" -h 127.0.0.1 -p 25468 -U postgres -d postgres -qAtc 'create table t as select g from generate_series(1, 10000) g' >/dev/null 2>&1 && break; sleep 0.25; done
+       pm="$(td_postmaster "$pid")"; echo "pm $pm"
+       kill -KILL "$pid"; sleep 0.3
+       td_stop_pg "$pid"; echo "launcher rc $?"
+       td_alive "$pm" && echo "pm alive after launcher stop" || echo "pm gone after launcher stop"
+       mkdir -p "$O/data"; head -1 "$D/data/postmaster.pid" >"$O/data/postmaster.pid"
+       td_stop_pg_dir "$O/data" 1; echo "other rc $?"
+       td_alive "$pm" && echo "pm alive after other" || echo "pm gone after other"
+       td_stop_pg_dir "$D/data"; echo "dir rc $?"
+       td_alive "$pm" && echo "pm alive after dir" || echo "pm gone after dir"
+       grep -c "received fast shutdown request" "$D/pg.log" | sed 's/^/fast /'
+       [ -e "$D/data/postmaster.pid" ] && echo "pidfile present" || echo "pidfile removed"
+       td_stop_pg_dir "$D/data"; echo "again rc $?"
+       td_stop_pg_dir "$D/missing"; echo "missing rc $?"`,
+      { D: d, O: other, PGBIN: pgbin },
+    );
+    assert.equal(r.status, 0, r.stdout + r.stderr);
+    const pm = Number(/^pm (\d+)$/m.exec(r.stdout)[1]);
+    assert.ok(pm > 0, r.stdout);
+    assert.match(r.stdout, /^launcher rc 0$/m);
+    assert.match(r.stdout, /^pm alive after launcher stop$/m, "the postmaster outlived its launcher (the gap covered)");
+    assert.match(r.stdout, /^other rc 0$/m);
+    assert.match(r.stdout, /^pm alive after other$/m, "a pid file in another directory never signals this postmaster");
+    assert.match(r.stdout, /^dir rc 0$/m);
+    assert.match(r.stdout, /^pm gone after dir$/m);
+    assert.match(r.stdout, /^fast 1$/m, "a fast shutdown, sent to the postmaster named in postmaster.pid");
+    assert.match(r.stdout, /^pidfile removed$/m);
+    assert.match(r.stdout, /^again rc 0$/m);
+    assert.match(r.stdout, /^missing rc 0$/m);
+    assert.equal(alive(pm), false);
+    rmSync(d, { recursive: true, force: true });
+    rmSync(other, { recursive: true, force: true });
+  });
+
   it("transfer-drill.sh: the EXIT trap stops PostgreSQL with td_stop_pg and the outer mode ends td_remove_work; exit $rc", () => {
     const src = readFileSync(DRILL, "utf8");
     assert.match(src, /^\. "\$HERE\/drill\/cleanup\.sh"$/m);
-    assert.match(src, /for p in "\$PG_S_PID" "\$PG_T_PID"; do td_stop_pg "\$p" \|\| true; done\n {2}true\n\}/);
+    assert.match(
+      src,
+      /for p in "\$PG_S_PID" "\$PG_T_PID"; do td_stop_pg "\$p" \|\| true; done\n.*\n {2}for d in "\$WORK\/pgS\/data" "\$WORK\/pgT\/data"; do td_stop_pg_dir "\$d" \|\| true; done\n {2}true\n\}/,
+    );
     assert.match(src, /\[ "\$KEEP" -eq 1 \] \|\| td_remove_work "\$WORK" "\$rc" "\$OUT\/drill\.log"\n {2}exit "\$rc"/);
     assert.doesNotMatch(src, /rm -rf "\$WORK"$/m, "no bare rm -rf of the work tree is left under set -e");
     // D1/D2 boundary and D9: the source and the target clusters are stopped with td_stop_pg too, never with stop_pid.
-    assert.match(src, /td_stop_pg "\$PG_S_PID" \|\| true; API_PID="" WORKER_PID="" PG_S_PID=""/);
     assert.match(
       src,
-      /td_stop_pg "\$PG_T_PID" \|\| \{ echo "D9: the target PostgreSQL did not stop before its restart"; return 1; \}/,
+      /td_stop_pg "\$PG_S_PID" \|\| true; td_stop_pg_dir "\$WORK\/pgS\/data" \|\| true\nAPI_PID="" WORKER_PID="" PG_S_PID=""/,
+    );
+    assert.match(
+      src,
+      /td_stop_pg "\$PG_T_PID" && td_stop_pg_dir "\$WORK\/pgT\/data" \|\|\n {4}\{ echo "D9: the target PostgreSQL did not stop before its restart"; return 1; \}/,
     );
     assert.doesNotMatch(src, /stop_pid "\$PG_[ST]_PID"/);
   });

@@ -11,6 +11,12 @@
 #                               MTH_TD_PG_STOP_SECS or 30) s, then SIGQUIT (immediate shutdown) and 5 s, then SIGKILL to
 #                               every remaining process and 5 s. Returns 0 when everything exited, 1 when a process is
 #                               still alive after the bound (the caller reports it; it never hangs).
+#   td_stop_pg_dir <datadir> [secs]
+#                               the same bounded stop for the postmaster named in <datadir>/postmaster.pid (T-DG7-DO-D8B):
+#                               the fallback when the recorded launcher pid has already gone while the postmaster still
+#                               runs. Only a live process whose command is postgres AND whose working directory is
+#                               <datadir> is signalled (a stale pid file whose pid was reused is ignored). 0 when no
+#                               such process is left, 1 as td_stop_pg.
 #   td_remove_work <dir> <rc> [log]
 #                               remove the drill's work tree after the result is known. Five attempts, 1 s apart (a process that has just
 #                               exited may still be releasing files). A failure prints one WARNING line on stderr (and
@@ -102,6 +108,18 @@ td_stop_pg() {
   _td_wait_gone 50 "${procs[@]}" && return 0
   echo "transfer-drill: WARNING: PostgreSQL pid $pid or one of its processes was still running after the bounded shutdown" >&2
   return 1
+}
+
+td_stop_pg_dir() {
+  local dir="${1:-}" secs="${2:-}" pid cwd
+  [ -n "$dir" ] && [ -f "$dir/postmaster.pid" ] || return 0
+  dir="$(cd "$dir" 2>/dev/null && pwd -P)" || return 0
+  pid="$(head -1 "$dir/postmaster.pid" 2>/dev/null | tr -d '[:space:]')" || return 0
+  td_alive "$pid" || return 0
+  [ "$(cat "/proc/$pid/comm" 2>/dev/null)" = "postgres" ] || return 0
+  cwd="$(readlink "/proc/$pid/cwd" 2>/dev/null)" || return 0
+  [ "$cwd" = "$dir" ] || return 0
+  td_stop_pg "$pid" ${secs:+"$secs"}
 }
 
 td_remove_work() {
