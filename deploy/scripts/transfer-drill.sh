@@ -44,6 +44,9 @@ set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO="$(cd "$HERE/../.." && pwd)"
+# td_stop_pg and td_remove_work (T-DG7-DO-D8, F-DG7-963): shutdown waits for PostgreSQL, cleanup never changes a result.
+# shellcheck source=drill/cleanup.sh
+. "$HERE/drill/cleanup.sh"
 ARCHIVE="" SHA="" STORE="" OUT="" WORK="" KEEP=0
 usage() {
   echo "transfer-drill: BLOCKED: usage: transfer-drill.sh --archive <tar.gz> --sha256 <hex> --store <dir> --out <dir> [--work <dir>] [--keep]" >&2
@@ -93,7 +96,7 @@ if [ "${MTH_TD_INNER:-}" != "1" ]; then
   FREE_MB="$(df -Pm "$WORK" | awk 'NR == 2 { print $4 }')"
   if [ "$FREE_MB" -lt "$NEED_MB" ]; then
     echo "transfer-drill: BLOCKED: $FREE_MB MB free under $WORK; the run needs at least $NEED_MB MB" | tee "$OUT/drill.log"
-    [ "$KEEP" -eq 1 ] || rm -rf "$WORK"
+    [ "$KEEP" -eq 1 ] || td_remove_work "$WORK" 3 "$OUT/drill.log"
     exit 3
   fi
   set +e
@@ -102,7 +105,10 @@ if [ "${MTH_TD_INNER:-}" != "1" ]; then
     bash "$HERE/transfer-drill.sh" 2>&1 | tee "$OUT/drill.log"
   rc="${PIPESTATUS[0]}"
   set -e
-  [ "$KEEP" -eq 1 ] || rm -rf "$WORK"
+  # The result is fixed by now: td_remove_work always returns 0 and reports a failure as a WARNING line (stderr and
+  # drill.log), so a PASS stays exit 0 and a FAIL stays exit 1 (F-DG7-963: before, `rm -rf` under `set -e` could turn
+  # a PASS into exit 1 while a killed PostgreSQL was still writing its data directory).
+  [ "$KEEP" -eq 1 ] || td_remove_work "$WORK" "$rc" "$OUT/drill.log"
   exit "$rc"
 fi
 
@@ -125,7 +131,14 @@ stop_pid() {
   for _ in $(seq 1 50); do kill -0 "$1" 2>/dev/null || return 0; sleep 0.1; done
   kill -KILL "$1" 2>/dev/null || true
 }
-cleanup() { for p in "$API_PID" "$WORKER_PID" "$IDP_PID" "$PG_S_PID" "$PG_T_PID"; do stop_pid "$p"; done; }
+# PostgreSQL is stopped with td_stop_pg (fast shutdown of the real postmaster, then a bounded wait for it and its
+# children), so no server process still writes a data directory when the outer mode removes the work tree (F-DG7-963).
+# The trap never changes the exit status: it ends with `true`.
+cleanup() {
+  for p in "$API_PID" "$WORKER_PID" "$IDP_PID"; do stop_pid "$p"; done
+  for p in "$PG_S_PID" "$PG_T_PID"; do td_stop_pg "$p" || true; done
+  true
+}
 trap cleanup EXIT
 
 # Ports (the namespace is fresh, so they are free; all in the pool 25000-31999).
@@ -328,7 +341,8 @@ d2() {
   [ "$items" = "$rows" ] || { echo "D2: attachments.json count $items differs from S's $rows rows with a storage_key"; return 1; }
 }
 step D2 "DATABASE_OWNER_URL=<S> node tools/migration/export.mjs --out <work>/package --operator '$OPERATOR' (attachments.json count = S's rows with a storage_key)" d2
-stop_pid "$API_PID"; stop_pid "$WORKER_PID"; stop_pid "$PG_S_PID"; API_PID="" WORKER_PID="" PG_S_PID=""
+# T-DG7-DO-D8: td_stop_pg (stop_pid's SIGTERM reached only pg_start's subshell and left the source postmaster running).
+stop_pid "$API_PID"; stop_pid "$WORKER_PID"; td_stop_pg "$PG_S_PID" || true; API_PID="" WORKER_PID="" PG_S_PID=""
 
 # ---- D3: the target's configuration, only from the template and the guide --------------------------------------------------
 d3() {
@@ -589,7 +603,9 @@ d9() {
   node "$REPO/deploy/scripts/drill/job-check.mjs" snapshot --database-url "$su" --mth-db "$RT/packages/db/dist/cli.js" \
     --out "$OUT/jobs-before.json"
   # 4: stop the API and PostgreSQL, then start PostgreSQL, the API and the worker.
-  stop_pid "$API_PID"; stop_pid "$PG_T_PID"
+  # T-DG7-DO-D8: td_stop_pg waits until the postmaster and its children have exited, so the start below is a real
+  # restart (stop_pid's SIGTERM reached only pg_start's subshell: the old postmaster kept serving the port).
+  stop_pid "$API_PID"; td_stop_pg "$PG_T_PID" || { echo "D9: the target PostgreSQL did not stop before its restart"; return 1; }
   PG_T_PID="$(pg_start "$WORK/pgT" "$P_PG_T")"
   echo "$PG_T_PID" >"$WORK/pgT.pid"
   start_api "${T_ENV[@]}"; start_worker "${T_ENV[@]}"

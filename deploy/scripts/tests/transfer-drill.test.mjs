@@ -1515,3 +1515,187 @@ describe("D-264 unexplained-tables.mjs: D9 names only the tables the mode 2 rech
     assert.match(d9, /transfer-drill: step D9 failed: \$t changed outside the allowance/);
   });
 });
+
+// --------------------------------------------------------------------------------------------- T-DG7-DO-D8 cleanup
+// F-DG7-963: the drill printed PASS and then exited 1, because the outer `rm -rf $WORK` (under set -e) raced a target
+// PostgreSQL that the EXIT trap had killed but whose processes still wrote the data directory. These cases prove: the
+// trap's shutdown waits, bounded, for the postmaster and its children; cleanup can never change the drill's result and
+// a cleanup failure is never silent (one WARNING line, stderr and drill.log).
+describe("T-DG7-DO-D8 drill/cleanup.sh: bounded PostgreSQL shutdown; cleanup never changes the result", () => {
+  const LIB = join(REPO, "deploy/scripts/drill/cleanup.sh");
+  const realRm = spawnSync("bash", ["-c", "command -v rm"], { encoding: "utf8" }).stdout.trim();
+  // A PATH whose `rm` fails for every path under MTH_TEST_RM_FAIL (and is the real rm elsewhere).
+  const failingRmBin = () => {
+    const bin = mkdtempSync(join(work, "rm-bin-"));
+    writeFileSync(
+      join(bin, "rm"),
+      `#!/bin/bash\nfor a in "$@"; do case "$a" in "$MTH_TEST_RM_FAIL"*) echo "rm: cannot remove '$a': Directory not empty" >&2; exit 1 ;; esac; done\nexec ${realRm} "$@"\n`,
+    );
+    chmodSync(join(bin, "rm"), 0o755);
+    return bin;
+  };
+  const lib = (script, env = {}) =>
+    spawnSync("bash", ["-c", `set -euo pipefail; . "$LIB"; ${script}`], {
+      encoding: "utf8",
+      env: { ...process.env, LIB, ...env },
+      timeout: 90_000,
+    });
+  const alive = (pid) => {
+    try {
+      const stat = readFileSync(`/proc/${pid}/stat`, "utf8");
+      return stat.slice(stat.lastIndexOf(")") + 2, stat.lastIndexOf(")") + 3) !== "Z";
+    } catch {
+      return false;
+    }
+  };
+
+  it("td_remove_work removes the work tree and returns 0", () => {
+    const d = mkdtempSync(join(work, "rw-ok-"));
+    mkdirSync(join(d, "a/b"), { recursive: true });
+    writeFileSync(join(d, "a/b/f"), "x");
+    const r = lib(`td_remove_work "$D" 0 "$D.log"; echo after`, { D: d });
+    assert.equal(r.status, 0, r.stderr);
+    assert.equal(r.stdout.trim(), "after");
+    assert.equal(r.stderr, "");
+    assert.equal(spawnSync("test", ["-e", d]).status, 1);
+  });
+
+  for (const rc of [0, 1]) {
+    it(`a removal that keeps failing under set -e: returns 0, result ${rc} unchanged, one WARNING line on stderr and in the log`, () => {
+      const d = mkdtempSync(join(work, `rw-fail-${rc}-`));
+      const log = join(work, `rw-fail-${rc}.log`);
+      const t0 = Date.now();
+      const r = lib(`td_remove_work "$D" ${rc} "$LOG"; echo after; exit ${rc}`, {
+        D: d,
+        LOG: log,
+        MTH_TEST_RM_FAIL: d,
+        PATH: `${failingRmBin()}:${process.env.PATH}`,
+      });
+      assert.equal(r.status, rc, r.stderr);
+      assert.equal(r.stdout.trim(), "after");
+      const line = `transfer-drill: WARNING: could not remove the work directory ${d} (rm: cannot remove '${d}': Directory not empty); the drill result (exit ${rc}) is unchanged; remove the directory by hand`;
+      assert.equal(r.stderr.trim(), line);
+      assert.equal(readFileSync(log, "utf8").trim(), line);
+      assert.ok(Date.now() - t0 < 15_000, "bounded: five attempts about 1 s apart");
+    });
+  }
+
+  it("td_stop_pg escalates INT -> QUIT -> KILL and returns only when the 'postmaster' and its child are gone (bounded)", () => {
+    // A stand-in that ignores INT, QUIT and TERM, with a child that ignores them too: the worst case of the race. It
+    // runs as a copy of bash named `postgres`, so td_postmaster finds it under the launching subshell as it finds the
+    // real postmaster.
+    const fakeBin = mkdtempSync(join(work, "fake-pg-"));
+    const realBash = spawnSync("bash", ["-c", "command -v bash"], { encoding: "utf8" }).stdout.trim();
+    writeFileSync(join(fakeBin, "postgres"), readFileSync(realBash));
+    chmodSync(join(fakeBin, "postgres"), 0o755);
+    const stub = join(work, "stubborn-postmaster.sh");
+    writeFileSync(
+      stub,
+      "#!/bin/bash\ntrap '' INT QUIT TERM\n( trap '' INT QUIT TERM; exec -a stubborn-child bash -c 'trap \"\" INT QUIT TERM; while :; do sleep 0.2; done' ) &\nwhile :; do sleep 0.2; done\n",
+    );
+    chmodSync(stub, 0o755);
+    const t0 = Date.now();
+    // As in pg_start: a shell function backgrounded inside a command substitution, so `$!` is a subshell and the
+    // 'postmaster' is its child, not the caller's.
+    const r = lib(
+      `run() { "$FAKEPG" "$STUB"; }; pid="$( ( run >/dev/null 2>&1 & echo $! ) )"; sleep 0.5; kids="$(td_descendants "$pid" | tr '\\n' ' ')"; echo "pid $pid"; echo "kids $kids"; echo "pm $(td_postmaster "$pid")"; td_stop_pg "$pid" 1; echo "rc $?"`,
+      { STUB: stub, FAKEPG: join(fakeBin, "postgres") },
+    );
+    const secs = (Date.now() - t0) / 1000;
+    assert.equal(r.status, 0, r.stderr);
+    const pid = Number(/^pid (\d+)$/m.exec(r.stdout)[1]);
+    const kids = /^kids (.*)$/m.exec(r.stdout)[1].trim().split(/\s+/).filter(Boolean).map(Number);
+    assert.ok(kids.length >= 2, `the 'postmaster' and its child were listed: ${r.stdout}`);
+    assert.ok(
+      kids.includes(Number(/^pm (\d+)$/m.exec(r.stdout)[1])),
+      "td_postmaster found the postgres under the subshell",
+    );
+    assert.match(r.stdout, /^rc 0$/m);
+    assert.equal(alive(pid), false, "the stand-in postmaster is gone");
+    for (const k of kids) assert.equal(alive(k), false, `descendant ${k} is gone`);
+    assert.ok(secs < 20, `bounded: 1 s INT + 5 s QUIT + KILL, took ${secs} s`);
+  });
+
+  it("td_stop_pg on a real PostgreSQL: fast shutdown, no server process left, postmaster.pid removed, the tree removable", () => {
+    const pgbin =
+      process.env.PGBIN ||
+      spawnSync("bash", ["-c", "ls -d /usr/lib/postgresql/*/bin 2>/dev/null | sort -V | tail -1"], {
+        encoding: "utf8",
+      }).stdout.trim();
+    if (!pgbin || spawnSync("test", ["-x", join(pgbin, "postgres")]).status !== 0)
+      throw new Error("BLOCKED: PostgreSQL server binaries not found (set PGBIN)");
+    const d = mkdtempSync(join(work, "pg-stop-"));
+    chmodSync(d, 0o777);
+    const t0 = Date.now();
+    // Started exactly as transfer-drill.sh's pg_start does (`as_pg postgres … &` inside a command substitution).
+    const r = lib(
+      `as_pg() { if [ "$(id -u)" = "0" ]; then unshare --user --map-user=1000 --map-group=1000 "$@"; else "$@"; fi; }
+       as_pg "$PGBIN/initdb" -D "$D/data" -U postgres --auth=trust --encoding=UTF8 --locale=C >/dev/null
+       pid="$( ( as_pg "$PGBIN/postgres" -D "$D/data" -p 25467 -c unix_socket_directories='' -c listen_addresses=127.0.0.1 >>"$D/pg.log" 2>&1 & echo $! ) )"
+       for _ in $(seq 1 120); do "$PGBIN/psql" -h 127.0.0.1 -p 25467 -U postgres -d postgres -qAtc 'create table t as select g from generate_series(1, 10000) g' >/dev/null 2>&1 && break; sleep 0.25; done
+       kids="$(td_descendants "$pid" | tr '\\n' ' ')"; echo "pid $pid"; echo "kids $kids"; echo "comm $(cat /proc/$pid/comm)"
+       t1=$(date +%s.%N); td_stop_pg "$pid"; echo "rc $?"; echo "stop $(awk -v a="$t1" -v b="$(date +%s.%N)" 'BEGIN { printf "%.2f", b - a }')"
+       grep -c "received fast shutdown request" "$D/pg.log" | sed 's/^/fast /' 
+       [ -e "$D/data/postmaster.pid" ] && echo "pidfile present" || echo "pidfile removed"
+       td_remove_work "$D" 0; [ -e "$D" ] && echo "tree present" || echo "tree removed"`,
+      { D: d, PGBIN: pgbin },
+    );
+    assert.equal(r.status, 0, r.stdout + r.stderr);
+    const pid = Number(/^pid (\d+)$/m.exec(r.stdout)[1]);
+    const kids = /^kids (.*)$/m.exec(r.stdout)[1].trim().split(/\s+/).filter(Boolean).map(Number);
+    assert.ok(kids.length >= 3, `the server's children were listed (checkpointer, walwriter, …): ${r.stdout}`);
+    assert.match(r.stdout, /^rc 0$/m);
+    assert.match(r.stdout, /^fast 1$/m, "the fast-shutdown signal reached the postmaster (not only the subshell)");
+    assert.match(r.stdout, /^pidfile removed$/m, "a clean shutdown, not a kill");
+    assert.match(r.stdout, /^tree removed$/m);
+    const stop = Number(/^stop ([\d.]+)$/m.exec(r.stdout)[1]);
+    assert.ok(stop < 30, `the fast shutdown finished within the 30 s bound: ${stop} s`);
+    console.log(
+      `T-DG7-DO-D8 real PostgreSQL: ${/^comm .*$/m.exec(r.stdout)[0]} (the launching pid), ${kids.length} processes under it, td_stop_pg ${stop} s, total ${(Date.now() - t0) / 1000} s`,
+    );
+    assert.equal(r.stderr, "");
+    assert.equal(alive(pid), false);
+    for (const k of kids) assert.equal(alive(k), false, `server process ${k} is gone`);
+  });
+
+  it("transfer-drill.sh: the EXIT trap stops PostgreSQL with td_stop_pg and the outer mode ends td_remove_work; exit $rc", () => {
+    const src = readFileSync(DRILL, "utf8");
+    assert.match(src, /^\. "\$HERE\/drill\/cleanup\.sh"$/m);
+    assert.match(src, /for p in "\$PG_S_PID" "\$PG_T_PID"; do td_stop_pg "\$p" \|\| true; done\n {2}true\n\}/);
+    assert.match(src, /\[ "\$KEEP" -eq 1 \] \|\| td_remove_work "\$WORK" "\$rc" "\$OUT\/drill\.log"\n {2}exit "\$rc"/);
+    assert.doesNotMatch(src, /rm -rf "\$WORK"$/m, "no bare rm -rf of the work tree is left under set -e");
+    // D1/D2 boundary and D9: the source and the target clusters are stopped with td_stop_pg too, never with stop_pid.
+    assert.match(src, /td_stop_pg "\$PG_S_PID" \|\| true; API_PID="" WORKER_PID="" PG_S_PID=""/);
+    assert.match(
+      src,
+      /td_stop_pg "\$PG_T_PID" \|\| \{ echo "D9: the target PostgreSQL did not stop before its restart"; return 1; \}/,
+    );
+    assert.doesNotMatch(src, /stop_pid "\$PG_[ST]_PID"/);
+  });
+
+  it("end to end: a failing drill whose work tree cannot be removed still exits 1 (not changed), with the WARNING line", () => {
+    if (!hasBwrap()) throw new Error("BLOCKED: bwrap --unshare-net is not available here");
+    const fakeArchive = join(work, "not-an-archive-d8.tar.gz");
+    writeFileSync(fakeArchive, "synthetic, not a release archive\n");
+    const out = join(work, "o-d8");
+    const w = join(work, "w-d8");
+    const r = spawnSync(
+      "bash",
+      [DRILL, "--archive", fakeArchive, "--sha256", "0".repeat(64), "--store", work, "--out", out, "--work", w],
+      {
+        encoding: "utf8",
+        timeout: 120_000,
+        env: { ...process.env, MTH_TEST_RM_FAIL: w, PATH: `${failingRmBin()}:${process.env.PATH}` },
+      },
+    );
+    assert.equal(r.status, 1, r.stdout + r.stderr);
+    assert.match(r.stdout, /^transfer-drill: FAIL: D0 FAIL/m);
+    const warn = new RegExp(
+      `^transfer-drill: WARNING: could not remove the work directory ${w} \\(.*\\); the drill result \\(exit 1\\) is unchanged; remove the directory by hand$`,
+      "m",
+    );
+    assert.match(r.stderr, warn);
+    assert.match(readFileSync(join(out, "drill.log"), "utf8"), warn);
+    rmSync(w, { recursive: true, force: true });
+  });
+});
