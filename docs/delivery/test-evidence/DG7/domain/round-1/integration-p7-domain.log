@@ -1,0 +1,45 @@
+port-policy: PostgreSQL listening on port 32300 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.iY39Wv/claude-0/review-dg7dom
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwhjn0eo_4461bbcb (server_encoding UTF8); applied 135 migrations to a fresh database
+ ✓ |integration| packages/db/test/integration/transfer-export.test.ts (11 tests) 44445ms
+   ✓ T-C1: the catalogue-driven plan of the real schema (ADR-0064 §2.2) > has no cycle without a nullable edge, and every foreign key's referenced table loads first or is deferred  323ms
+   ✓ T-C3: the marker and the demo checksum (ADR-0064 §2.1; D-244 O2) > an unmarked source exports unmarked and a production source production, both with demoChecksum null  4972ms
+   ✓ mth-db export-migration and tools/migration/export.mjs (ADR-0064 §7; p7-work-split §2 rule 4, §C.5) > writes the package with a recorded cli export (requested, started, succeeded); refuses a non-empty --out (2)  23614ms
+ ✓ |integration| apps/api/test/integration/transfer/config-bundle-roundtrip.test.ts (2 tests) 22466ms
+   ✓ T-D6 demo -> clean installation round trip > imports as drafts, publishes through the existing pipeline, and the published hashes equal the source's  1121ms
+   ✓ T-D7 an imported draft is published, and migrated to, exactly as a hand-made one > the pin is unchanged by the commit and the publish; the publish and migration records equal a hand-made publish's  1389ms
+ ✓ |integration| packages/db/test/integration/transfer-roundtrip.test.ts (12 tests) 25003ms
+   ✓ T-C10 and T-C12 (refusals): each refusal exits with its code and line and changes nothing > schema version: exit 2  335ms
+   ✓ T-C10 and T-C12 (refusals): each refusal exits with its code and line and changes nothing > app version: exit 2  313ms
+   ✓ T-C10 and T-C12 (refusals): each refusal exits with its code and line and changes nothing > non-empty target (the seeded demo source itself): exit 3  344ms
+   ✓ the reconciliation (step 8) of the package against its live source > matches table for table; a change after the export is reported, never hidden  1204ms
+   ✓ the CLI lines and the wrappers (p7-work-split §C.5, §2 rule 4), as subprocesses > import.mjs passes mth-db's refusal through; reconcile.mjs exits 2; usage errors are 2  3282ms
+   ✓ the CLI lines and the wrappers (p7-work-split §C.5, §2 rule 4), as subprocesses > mth-db rebind-identity refuses an invalid file with exit 2 and one line per problem; nothing changes  1286ms
+ ✓ |integration| apps/api/test/integration/transfer/export.test.ts (10 tests) 7427ms
+   ✓ T-C6: the migration-export routes and the transfer.export job > the job waits on lock 730402, then runs once: running -> succeeded, one audit event per transition  1427ms
+   ✓ T-C6: the migration-export routes and the transfer.export job > the same Idempotency-Key returns the existing request with 200; a failed export is 422 on both manifests  727ms
+ ✓ |integration| apps/api/test/integration/transfer/config-bundle.test.ts (23 tests) 6538ms
+ ✓ |integration| apps/api/test/integration/transfer/attachments.test.ts (15 tests) 4663ms
+   ✓ T-C16: copy-out reads the rows that name objects from PostgreSQL (scratch database) > the plan's storage_key columns are evidence_content and export_job; their rows are listed and copy-out exits 0 with their manifest  3935ms
+ ✓ |integration| apps/api/test/integration/retention/classes.test.ts (8 tests) 4289ms
+ ✓ |integration| apps/api/test/integration/retention/runs.test.ts (7 tests) 6382ms
+   ✓ the run request (createRetentionRun, createRetentionDryRun) > 403 on both requests for every role but ADM_TECH (AUD and ADM_ACCESS included); reads for ADM_TECH, ADM_ACCESS, AUD  366ms
+ ✓ |integration| apps/api/test/integration/transfer/import-routes.test.ts (5 tests) 5120ms
+ ✓ |integration| apps/api/test/integration/retention/backups.test.ts (2 tests) 4756ms
+ ✓ |integration| apps/api/test/integration/release/register.test.ts (9 tests) 1761ms
+ ✓ |integration| apps/api/test/integration/release/about.test.ts (4 tests) 770ms
+ ✓ |integration| packages/db/test/integration/p7-transfer-guards.test.ts (21 tests) 375ms
+ ✓ |integration| packages/db/test/integration/p7-retention-guards.test.ts (15 tests) 268ms
+
+ Test Files  14 passed (14)
+      Tests  144 passed (144)
+   Start at  07:59:16
+   Duration  179.52s (transform 8.68s, setup 0ms, collect 39.87s, tests 134.26s, environment 0ms, prepare 81ms)
+
+EXIT=0

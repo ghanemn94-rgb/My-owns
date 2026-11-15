@@ -1,0 +1,18 @@
+## Orchestrator host run (D-267) applicability to the frozen candidate
+host run 3 timestamps: api start epoch 1794680172 = 2026-11-14T18:16:12Z; HEAD then: bf907c2d5 (2026-11-14 18:11:48Z)
+## git diff --stat bf907c2d5 a60a962 -- apps/api/src apps/worker/src packages deploy/docker deploy/compose deploy/scripts/*.sh
+ deploy/scripts/tests/dockerfile-context.test.mjs | 19 ++++++++++++++++---
+ packages/db/src/migrate.test.ts                  | 23 +++++++++++++++++++++++
+ packages/db/test/integration/migrate.test.ts     |  5 ++++-
+ 3 files changed, 43 insertions(+), 4 deletions(-)
+## web runtime diff
+ apps/web/src/api/p7.ts                             |  13 +++
+ apps/web/src/i18n/ar/transfer.json                 |   3 +-
+ apps/web/src/i18n/en/transfer.json                 |   3 +-
+ .../admin/config-transfer/ConfigTransferPages.tsx  |  35 ++++++--
+ .../admin/migration/transfer-screens.test.tsx      | 100 ++++++++++++++++++++-
+ e2e/support/keycloak-login.ts                      |  12 ++-
+ 6 files changed, 157 insertions(+), 9 deletions(-)
+## docker in this sandbox
+Server:
+permission denied while trying to connect to the docker API at unix:///var/run/docker.sock
