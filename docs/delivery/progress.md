@@ -44,7 +44,7 @@ _Updated by the delivery-orchestrator at every step change. On resumption, run `
 
 ## Unresolved blockers
 
-None. DG0, DG1, DG2 and DG3 are APPROVED on this branch, and `--pipeline` exits 0. (The kwcc4i branch's `validate.mjs --stage DG1` reports the three documented historical write-once-record artifacts from D-056; this clean branch does not carry them.)
+_(Historical, superseded 2026-11-15, F-DG7-955: this section dates from DG3. Current state: DG0–DG6 APPROVED; DG7 open findings and blockers are listed in the checkpoint at the top and in `findings.json`.)_ DG0, DG1, DG2 and DG3 were APPROVED on this branch at the time, and `--pipeline` exited 0. (The kwcc4i branch's `validate.mjs --stage DG1` reports the three documented historical write-once-record artifacts from D-056; this clean branch does not carry them.)
 
 ## D-191 (2026-10-25, delivery-orchestrator; recorded here because decisions.md is a frozen candidate file until the DG5 gate is decided, D-190)
 
