@@ -1,0 +1,61 @@
+$ git diff --stat a60a962 f22c97b5 -- apps/api/src apps/worker/src packages deploy/docker deploy/compose deploy/scripts
+(end)
+$ git diff --stat bf907c2d5 f22c97b5 -- apps/api/src apps/worker/src packages deploy/docker deploy/compose deploy/scripts
+ packages/db/src/migrate.test.ts                  | 23 +++++++++++++++++++++++
+ packages/db/test/integration/migrate.test.ts     |  5 ++++-
+ 3 files changed, 43 insertions(+), 4 deletions(-)
+(end)
+$ git diff --stat a60a962 f22c97b5 -- apps/web/src e2e/support e2e/identity
+ apps/web/src/app/p7-shell.test.tsx                 |   53 +-
+ apps/web/src/app/router.tsx                        |   45 +-
+ apps/web/src/i18n/ar/retention.json                |  184 +++
+ apps/web/src/i18n/en/retention.json                |  184 +++
+ apps/web/src/i18n/index.ts                         |    5 +
+ apps/web/src/i18n/provisional-ar-p7-retention.ts   |  161 +++
+ .../src/pages/admin/retention/RetentionPages.tsx   | 1262 ++++++++++++++++++++
+ .../admin/retention/retention-screens.test.tsx     |  537 +++++++++
+ 8 files changed, 2393 insertions(+), 38 deletions(-)
+$ ls host
+total 500
+drwxr-xr-x 2 root root   4096 Nov 14 18:23 .
+drwxr-xr-x 9 root root   4096 Nov 15 12:14 ..
+-rw-r--r-- 1 root root   2899 Nov 14 14:46 00-env.log
+-rw-r--r-- 1 root root   1686 Nov 14 14:46 01-pull.log
+-rw-r--r-- 1 root root  35451 Nov 14 17:04 host-run-1-image-build-failed.log
+-rw-r--r-- 1 root root  89606 Nov 14 17:45 host-run-2-bundle-names-lost.log
+-rw-r--r-- 1 root root  25574 Nov 14 18:22 host-run-3b.log
+-rw-r--r-- 1 root root   9024 Nov 14 18:24 host-run-3c.log
+-rw-r--r-- 1 root root  95722 Nov 14 18:16 host-run.log
+-rw-r--r-- 1 root root   1370 Nov 14 17:16 image-build-probe.diff
+-rw-r--r-- 1 root root  62798 Nov 14 17:16 image-build-probe.log
+-rw-r--r-- 1 root root 124812 Nov 14 18:24 keycloak-e2e-stack.log
+-rw-r--r-- 1 root root  21735 Nov 14 18:16 no-egress-stack.log
+$ docker info
+Client: Docker Engine - Community
+ Version:    29.9.2
+ Context:    default
+$ docker info (server part)
+Server:
+permission denied while trying to connect to the docker API at unix:///var/run/docker.sock
+$ git log -1 bf907c2d5 (host run 3 tree)
+bf907c2d5c0546113070b49af01e3a54e3b9bf42 2026-11-14T18:11:48+00:00 DG7: keep host run 2 log under its own name
+$ git diff --stat bf907c2d5 f22c97b5 -- apps/web/src | tail -1
+ 13 files changed, 2539 insertions(+), 46 deletions(-)
+$ grep results host-run.log / 3c
+96:created pg_superuser_password
+97:created mth_owner_db_password
+98:created mth_app_db_password
+100:created test_idp_user_password
+101:created test_idp_admin_password
+117:proxy build args passed from the environment: HTTPS_PROXY NO_PROXY https_proxy no_proxy
+371:#18 71.05 apps/web build: [2mdist/[22m[2massets/[22m[36mFailuresPage-DvQJoZZp.js                               [39m[1m[2m   10.38 kB[22m[1m[22m[2m │ gzip:   2.84 kB[22m[2m │ map:    27.10 kB[22m
+546:BUILD+VERIFY: PASS (mth-app:local)
+632:image-bundle: PASS: load: every image of images.json is present with its recorded id
+640:image-bundle: PASS: verify: images.tar matches images.json and every image is present with its recorded id
+814:### 11 $ MTH_E2E_KEYCLOAK=1 MTH_E2E_KEYCLOAK_PASSWORD_FILE=/tmp/claude-0/-home-user-My-owns/f7dd9c0b-2b3c-52aa-bca7-45299008f27d/scratchpad/dg7/secrets/test_idp_user_password E2E_BASE_URL=http://localhost:3000 pnpm exec playwright test e2e/identity/keycloak-login.spec.ts --workers=1 --trace off
+841:    test-results/e2e-identity-keycloak-logi-50293-mth-test-and-gets-a-session-chromium-en/test-failed-1.png
+861:    test-results/e2e-identity-keycloak-logi-d22df-er-token-invalid-no-session-chromium-en/test-failed-1.png
+881:    test-results/e2e-identity-keycloak-logi-50293-mth-test-and-gets-a-session-chromium-ar/test-failed-1.png
+901:    test-results/e2e-identity-keycloak-logi-d22df-er-token-invalid-no-session-chromium-ar/test-failed-1.png
+904:  4 failed
+103:  4 passed (10.3s)

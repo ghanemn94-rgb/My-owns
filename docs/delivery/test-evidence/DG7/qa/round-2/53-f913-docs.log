@@ -1,0 +1,24 @@
+$ grep -n -i -A3 "retention" docs/handover/guides/admin/en/admin-guide.md (section)
+## Retention {#retention}
+
+**Status in this release.** **Retention** (`/admin/retention`) lists every record class with its action, period and IT approval reference, and the runs and dry runs. A class page (`/admin/retention/classes/<code>`) shows its tables and, for `retention.configure` (ADM_TECH), the change form for an operational class. A run page shows its counts and its per-record action log. **Archived records** (`/admin/retention/archived`) and **Backup sets** (`/admin/retention/backups`, read-only) are linked from it. The rights are `retention.read` (classes, runs, archived records), `retention.configure` (change a class), `retention.run` (dry run, run now) and `backup.read` (backup sets); the server checks each one.
+
+- Each record class has a retention action: **Keep**, **Archive** or **Archive, then delete**. Every class starts as "Keep". Business records, audit and snapshots are always kept. Periods must be agreed with Mobily IT.
+- A period that is not set reads **Not set (IT to agree)**.
+- **IT approval reference.** Record the reference of the approval Mobily IT gave outside this platform, for example a change ticket. Saving it does not approve anything.
+- **Effect on the inbox.** Archived read notifications can no longer be marked unread. With "Archive, then delete" they disappear from the inbox.
+- **Dry run first.** A dry run shows what a run would archive or delete. Nothing is changed. A run's status is Queued, Running, Succeeded or Failed.
+- **Backup sets.** Backups and restores are run by IT with the backup scripts (`../../../backup-restore.md`). The list is read-only. If none was reported, it says "No backup set has been reported yet."
+- The retention job ships disabled (see "Job schedules").
+
+--- ar
+85:**الحالة في هذا الإصدار.** تعرض صفحة **الاحتفاظ بالبيانات** (`/admin/retention`) كل فئة سجلات مع إجرائها ومدتها ومرجع موافقة تقنية المعلومات، والعمليات والتشغيلات التجريبية. تعرض صفحة الفئة (`/admin/retention/classes/<code>`) جداولها، ونموذج التغيير لفئة تشغيلية لمن يملك `retention.configure` (ADM_TECH). تعرض صفحة العملية أعدادها وسجل إجراءاتها لكل سجل. ترتبط بها صفحتا **السجلات المؤرشفة** (`/admin/retention/archived`) و**مجموعات النسخ الاحتياطي** (`/admin/retention/backups`، للقراءة فقط). الصلاحيات هي `retention.read` (الفئات والعمليات والسجلات المؤرشفة) و`retention.configure` (تغيير فئة) و`retention.run` (التشغيل التجريبي والتشغيل الآن) و`backup.read` (مجموعات النسخ الاحتياطي)، ويتحقق الخادم من كل منها.
+--- placeholder language left anywhere in handover/register for retention?
+docs/handover/known-limitations.md:166:| ADR-0067 | Retention periods are placeholders ("not set (IT to agree)"); archived rows are not restored into live tables; business records cannot be archived; pg-boss keeps its own job retention; run scale unp
+docs/delivery/requirements.csv:336:REQ-S16-024,ENGINEERING,"Define retention and archival policies for records, evidence, audit and snapshots, and do not substitute soft deletion for an approved retention policy",M0329,§16 Portable architecture and 
+--- P7_PLANNED_ROUTES empty and placeholder component unused for retention
+5://    the honest "not available yet" placeholder until its owner replaced it (P7_PLANNED_ROUTES; F-DG4-160). Since
+43:import { P7_PLANNED_ROUTES, P7_SCREEN_ROUTES, routes } from "./router.tsx";
+150:    // FE-B and FE-C shrink P7_PLANNED_ROUTES as they build: after T-DG7-FE-B, FE-C's slice I screens (T-DG7-FE-C) and
+152:    expect(P7_PLANNED_ROUTES).toEqual([]);
+204:      // placeholder is shown by no P7 route (P7_PLANNED_ROUTES is empty). The scripted API answers 404 to the

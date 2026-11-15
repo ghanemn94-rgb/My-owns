@@ -1,0 +1,27 @@
+Sun Nov 15 16:16:33 UTC 2026
+===== order: packages/db/test/integration/p7-transfer-guards.test.ts,apps/api/test/integration/contract/contract.test.ts
+EXIT 1
+ ✓ |integration| packages/db/test/integration/p7-transfer-guards.test.ts (21 tests) 394ms
+ ❯ |integration| apps/api/test/integration/contract/contract.test.ts (111 tests | 4 failed) 95688ms
+   × every operation, validated against the contract and the zod mirrors > P7 BE-C operations (p7-exercises-be-c.ts): migration exports 50ms
+     → {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"A migration export is already queued or running. Wait for it to finish.","code":"migration.export_in_progress","requestId":"01a1e000-64e5-73fc-b24e-65529a8353
+   × every operation, validated against the contract and the zod mirrors > P7 BE-D operations (p7-exercises-be-d.ts): migration imports, reconciliations, identity rebinds 67ms
+     → contract: listMigrationImports does not declare status 500 (declared: 200, 400, 401, 403, 429); body: {"type":"urn:mth:problem:internal","title":"Internal error","status":500,"code":"internal","requestId":"01a1e000-652c-773a-9be1-0108d16cb503"}
+   × every operation, validated against the contract and the zod mirrors > every operation: an undeclared request media type is a declared 400 validation.content_type; nothing written 13094ms
+     → contract: listMigrationImports does not declare status 500 (declared: 200, 400, 401, 403, 429); body: {"type":"urn:mth:problem:internal","title":"Internal error","status":500,"code":"internal","requestId":"01a1e000-c029-75db-ab34-748eaf8ed510"}
+   × every operation, validated against the contract and the zod mirrors > covers every operation with at least one success and every successful body with its zod mirror 5ms
+     → expected [ 'createMigrationExport', …(8) ] to deeply equal []
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"A migration export is already queued or running. Wait for it to finish.","code":"migration.export_in_progress","requestId":"01a1e000-64e5-73fc-b24e-655
+Error: contract: listMigrationImports does not declare status 500 (declared: 200, 400, 401, 403, 429); body: {"type":"urn:mth:problem:internal","title":"Internal error","status":500,"code":"internal","requestId":"01a1e000-652c-773a-9be1-0108d16cb503"}
+Error: contract: listMigrationImports does not declare status 500 (declared: 200, 400, 401, 403, 429); body: {"type":"urn:mth:problem:internal","title":"Internal error","status":500,"code":"internal","requestId":"01a1e000-c029-75db-ab34-748eaf8ed510"}
+AssertionError: expected [ 'createMigrationExport', …(8) ] to deeply equal []
+ Test Files  1 failed | 1 passed (2)
+      Tests  4 failed | 128 passed (132)
+===== order: apps/api/test/integration/contract/contract.test.ts,packages/db/test/integration/p7-transfer-guards.test.ts
+EXIT 0
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts (111 tests) 98514ms
+ ✓ |integration| packages/db/test/integration/p7-transfer-guards.test.ts (21 tests) 313ms
+ Test Files  2 passed (2)
+      Tests  132 passed (132)
+Sun Nov 15 16:20:36 UTC 2026

@@ -1,0 +1,45 @@
+Sun Nov 15 14:50:51 UTC 2026
+HEAD abc7254f69cf4041987f35f6ce6466591f23f59c
+$ stages.json DG7 state, current round and last history entries
+{
+ "state": "REVIEWING",
+ "candidate": {
+  "candidate_id": "sha256:ca38b65ecaa23f49b4e5755f503c88e74c3a5bd502862fd28cc5ddbbd1fe13c5",
+  "source_commit": "f22c97b5931a40969574f4e646ea480be4454861",
+  "frozen_at": "2026-11-15T14:20:16Z",
+  "manifest_path": "docs/delivery/candidates/DG7/ca38b65ecaa23f49.manifest.json"
+ },
+ "rounds": [
+  {
+   "round": 1,
+   "candidate": "sha256:df8225e537de3575c059fa05ef16d1d87530e3c36854c8dfc8c4ec9e2439f944"
+  },
+  {
+   "round": 2,
+   "candidate": "sha256:ca38b65ecaa23f49b4e5755f503c88e74c3a5bd502862fd28cc5ddbbd1fe13c5"
+  }
+ ],
+ "history": [
+  {
+   "state": "REVIEWING",
+   "at": "2026-11-15T07:29:30Z",
+   "note": "Round 1 frozen on candidate df8225e5 (D-271)."
+  },
+  {
+   "state": "FIXING",
+   "at": "2026-11-15T09:54:25Z",
+   "note": "Round 1: domain FAIL (F-DG7-913 Medium mandatory, 914 Low), code-security BLOCKED (freeze commit changed decisions.md, a candidate file: orchestrator error), qa FAIL (953, 954, 956 Medium; 955 Low). Repairs FE-C2, BE-R6, DO-K2; orchestrator fixed 914 (environment.md) and 955 (progress.md). D-272."
+  },
+  {
+   "state": "REVIEWING",
+   "at": "2026-11-15T14:20:34Z",
+   "note": "Round 2 frozen on candidate ca38b65e (D-273)."
+  }
+ ]
+}
+$ progress.md current checkpoint DG7 line
+7:- **DG7 (P7 "Independent transfer and release") is entering round 2** (2026-11-15, D-273). Round 1 (df8225e5): domain FAIL, code-security BLOCKED (freeze-process error, F-DG7-953), qa FAIL; six findings (913, 954, 956 Medium; 953 Medium; 914, 955 Low) repaired and FIXED_PENDING_VERIFICATION. **Next action:** freeze round 2, then domain, code-security and qa on the same candidate verifying the six findings, then the release audit, then the A28 seal. Product gate G6 never implies DG7.
+$ ls docs/delivery/assignments/DG7/round-2/
+code-security-reviewer.md
+domain-reviewer.md
+qa-verifier.md

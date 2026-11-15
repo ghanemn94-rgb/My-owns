@@ -1,0 +1,56 @@
+# 2026-11-15T14:28:51Z F-DG7-956 (Node v24.21.0, cwd $TMPDIR/rv at f22c97b59)
+== A. candidate test file: node --test tools/release/tests/check-handover.test.mjs
+ℹ tests 51
+ℹ suites 8
+ℹ pass 51
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 46752.804286
+exit=0
+== B. candidate test file with MTH_STRICT_HANDOVER=1
+ℹ tests 51
+ℹ suites 8
+ℹ pass 51
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 22616.203203
+exit=0
+== C. revert-to-fail: pre-fix test (git show 16b2bdd35^:tools/release/tests/check-handover.test.mjs) as tools/release/tests/zz-prefix-check-handover.test.mjs
+33:const REPORT = join(REPO, "docs/delivery/handbacks/DG7/T-DG7-DO-I-evidence/protocol-audit-all.json");
+-rw-r--r-- 1 root root 267159 Nov 15 14:22 docs/delivery/handbacks/DG7/T-DG7-DO-I-evidence/protocol-audit-all.json
+  ✖ known-limitations.mjs --check exits 0 on the tree with the DO-I report (120.032311ms)
+  ✖ the protocol-audit block equals the one generated from the report, with the D-249 statement (21.292032ms)
+  ✖ --write on a fixture copy regenerates a hand-damaged block, and --check then passes (427.321428ms)
+✖ T-H4: known limitations (3413.76687ms)
+  ✖ the full check on the real tree never FAILs; with MTH_STRICT_HANDOVER=1 (the freeze) it must PASS (3255.894185ms)
+✖ check-handover exit codes (3500.471854ms)
+ℹ tests 50
+ℹ suites 8
+ℹ pass 46
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 53409.134629
+✖ failing tests:
+✖ known-limitations.mjs --check exits 0 on the tree with the DO-I report (120.032311ms)
+✖ the protocol-audit block equals the one generated from the report, with the D-249 statement (21.292032ms)
+✖ --write on a fixture copy regenerates a hand-damaged block, and --check then passes (427.321428ms)
+✖ the full check on the real tree never FAILs; with MTH_STRICT_HANDOVER=1 (the freeze) it must PASS (3255.894185ms)
+exit=1 (expected non-zero: 4 tests pinned to the superseded DO-I report)
+== D. direct: known-limitations --check with each report
+known-limitations: FAIL: docs/handover/known-limitations.md differ from the generated content; run node tools/release/known-limitations.mjs --protocol-audit <report> --write
+exit=0 (DO-I report; expected 1)
+known-limitations: PASS (docs/handover/known-limitations.md and docs/handover/external-dependencies.json are current)
+exit=0 (pre-freeze report; expected 0)
+== E. check-handover with the pre-freeze report
+  note: role-matrix.mjs: role-matrix: PASS (/var/tmp/mth-run.nt87BK/claude-0/rv/docs/handover/role-matrix.md is current)
+  note: automation-jobs.mjs: automation-jobs: PASS (the job table of /var/tmp/mth-run.nt87BK/claude-0/rv/docs/handover/automation-operations.md is current)
+  note: known-limitations: PASS (docs/handover/known-limitations.md and docs/handover/external-dependencies.json are current)
+check-handover: PASS (index PASS, deployment PASS, summaries PASS, security-links PASS, guides PASS, generated PASS; root .)
+exit=0
+# end 2026-11-15T14:30:59Z

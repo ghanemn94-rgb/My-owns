@@ -1,0 +1,21 @@
+===== M1 rerun, verbose reporter (Sun Nov 15 14:41:57 UTC 2026)
+9a367b504862efb75fb22e769c6ef0f9ff758d1bcd0ca200879ff08c039bda42  apps/api/src/modules/organization/routes.ts
+ ✓ |integration| apps/api/test/integration/organizations.test.ts > organizations > lists only organizations in which the caller holds organization.read 25ms
+ ✓ |integration| apps/api/test/integration/organizations.test.ts > organizations > reads one organization with ETag; others are 404 177ms
+ ✓ |integration| apps/api/test/integration/organizations.test.ts > organizations > updates with If-Match (technical admin), 403 for a business role, 404 across organizations; audited 145ms
+ ✓ |integration| apps/api/test/integration/organizations.test.ts > organizations > creates an organization (organization.manage) and carries over only the creator's technical-admin roles 424ms
+ ✓ |integration| apps/api/test/integration/organizations.test.ts > business units > creates under an organization (business_unit.manage on the organization), with duplicate and cross-org checks 219ms
+ ✓ |integration| apps/api/test/integration/organizations.test.ts > business units > lists the organization's units for readers and 404s other organizations 96ms
+ ✓ |integration| apps/api/test/integration/organizations.test.ts > business units > rejects moving a unit under itself or its descendant (422 cycle) and keeps the hierarchy 238ms
+ ✓ |integration| apps/api/test/integration/organizations.test.ts > business units > re-parents and renames with If-Match; audited with a diff 164ms
+ ✓ |integration| apps/api/test/integration/organizations.test.ts > business units > limits nesting depth (400 on create, per the contract) 288ms
+ ✓ |integration| apps/api/test/integration/organizations.test.ts > business units > reads one unit (business_unit.read) and 404s outside scope 54ms
+ × |integration| apps/api/test/integration/organizations.test.ts > business unit update authorization (business_unit.manage, not business_unit.read) > office (business_unit.read without business_unit.manage) gets 403; unit unchanged; no update audited 193ms
+ × |integration| apps/api/test/integration/organizations.test.ts > business unit update authorization (business_unit.manage, not business_unit.read) > auditor (business_unit.read without business_unit.manage) gets 403; unit unchanged; no update audited 57ms
+ × |integration| apps/api/test/integration/organizations.test.ts > business unit update authorization (business_unit.manage, not business_unit.read) > leadA1 (business_unit.read without business_unit.manage) gets 403; unit unchanged; no update audited 99ms
+ × |integration| apps/api/test/integration/organizations.test.ts > business unit update authorization (business_unit.manage, not business_unit.read) > split grant: manage on the destination (a2) but only read on the moved unit (a1x) cannot re-parent it (403) 371ms
+ ✓ |integration| apps/api/test/integration/organizations.test.ts > business unit update authorization (business_unit.manage, not business_unit.read) > other-organization and no-grant callers get 404 (ADR-0006); a manager still gets 200 (positive control) 916ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+      Tests  4 failed | 11 passed (15)
+EXIT 1
+restored

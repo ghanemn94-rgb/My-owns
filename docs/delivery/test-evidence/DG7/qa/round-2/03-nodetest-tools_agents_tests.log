@@ -1,0 +1,59 @@
+Sun Nov 15 16:00:00 UTC 2026
+$ node --test tools/agents/tests/*.test.mjs
+✔ reviewers may write only review records and evidence (66.932329ms)
+✔ qa-verifier may add tests under tests/qa and e2e but not product code (14.315188ms)
+✔ implementers cannot edit gate rules, agent definitions, sources or gate records (349.407802ms)
+✔ release-auditor writes gate decisions but not implementation (16.040303ms)
+✔ transformation-analyst is limited to analysis outputs and the register (23.419614ms)
+✔ unknown roles are denied and scratch space outside a repo is allowed (11.134675ms)
+✔ the hook entry point blocks with exit code 2 and allows with 0 (205.58891ms)
+✔ implementers cannot write reviewer test evidence (8.507849ms)
+✔ F-DG0-105: Claude configuration surfaces and the unrelated project are protected from implementers (242.200826ms)
+✔ F-DG0-105: writes through a symlink into a protected path are blocked (66.312836ms)
+✔ F-DG0-105: protected-path matching is case-insensitive (14.481548ms)
+✔ F-DG0-111: a planted nested .git cannot move the guarded root; .git paths are never writable (130.254946ms)
+✔ the production guard root is this repository (19.411347ms)
+✔ F-DG0-134: the repository's worktrees are guarded too, from any working directory (587.486907ms)
+✔ F-DG0-134: every role's hook command takes the guard from MTH_GUARD_ROOT and fails closed without it (98.702946ms)
+✔ F-DG0-135: the guard fails closed when the guarded roots cannot be determined (210.975985ms)
+✔ F-DG0-136: only the temporary directory is scratch; home and system configuration are never writable (534.441964ms)
+✔ F-DG0-136: the home directory is never scratch, even when HOME lies inside the temp directory (366.452806ms)
+✔ F-DG0-144: a reviewer may not write another reviewer's record, sidecars or evidence (589.46454ms)
+✔ F-DG0-144: only the run's own private temporary directory is scratch, never the shared /tmp (9.0321ms)
+✔ F-DG0-143: writes that resolve through /proc, /sys or /dev, or whose real path cannot be determined, are blocked (77.551171ms)
+✔ F-DG0-145: a confined reviewer's whole process writes only its own evidence and its own new review files (586.273241ms)
+✔ F-DG0-145: a symlink swapped between the guard's check and the write never lets a write land outside the role's scope (72596.52286ms)
+ℹ without the process sandbox: 31 of 72 allowed writes landed in /var/tmp/mth-run.3OfkU0/claude-0/psbx-0vxRiB/repo/tools/gates/tests
+ℹ code-security-reviewer -> /var/tmp/mth-run.3OfkU0/claude-0/psbx-0vxRiB/var-tmp/mth-run.EmhGyZ/clone/tests: 72 allowed by the hook, 32 of them refused by the kernel, 0 landed
+ℹ code-security-reviewer -> /var/tmp/mth-run.3OfkU0/claude-0/psbx-0vxRiB/repo/docs/delivery/test-evidence/DG0/qa: 84 allowed by the hook, 51 of them refused by the kernel, 0 landed
+ℹ qa-verifier -> /var/tmp/mth-run.3OfkU0/claude-0/psbx-0vxRiB/repo/tools/gates/tests: 84 allowed by the hook, 25 of them refused by the kernel, 0 landed
+ℹ backend-workflow-engineer -> /var/tmp/mth-run.3OfkU0/claude-0/psbx-0vxRiB/repo/tools/gates/tests: 79 allowed by the hook, 31 of them refused by the kernel, 0 landed
+ℹ backend-workflow-engineer -> /var/tmp/mth-run.3OfkU0/claude-0/psbx-0vxRiB/repo/.git/hooks: 76 allowed by the hook, 38 of them refused by the kernel, 0 landed
+✔ D-030: only CAP_SETFCAP remains, and neither the process nor a nested user namespace can unlock the read-only binds (229.723594ms)
+✔ D-030: implementers write product paths; existing protected paths stay read-only (305.884927ms)
+✔ D-030: the analyst's register is replaced atomically in staging and copied back, unless it changed concurrently (893.828435ms)
+✔ D-030: the auditor's gate record for its own stage is copied back; another stage's is not (230.462534ms)
+✔ D-030: the process sandbox binds the host procfs and creates no PID namespace (so nested bwrap works) (320.104317ms)
+✔ F-DG0-145 (round 16): a file another run commits to the real dir between prepare and finish is not a false discard (258.894729ms)
+✔ F-DG0-150/238: an own-role file already present in the real tree is a write-once discard, not an unhandled crash (206.098595ms)
+✔ F-DG0-152: a per-run Landlock domain stops a run reaching or signalling another run via /proc/<peer>/root|cwd (D-033) (522.196615ms)
+ℹ without Landlock: {"viaProcRoot":"WROTE","viaProcCwd":"WROTE","viaProcRootTmp":"WROTE","ownEvidence":"WROTE","ownTmp":"WROTE","signal":"allowed","nested":"works"}
+ℹ with Landlock: {"viaProcRoot":"refused","viaProcCwd":"refused","viaProcRootTmp":"refused","ownEvidence":"WROTE","ownTmp":"WROTE","signal":"refused","nested":"works"}
+✔ F-DG0-140: modules planted in the repository root are never imported by the runner's helpers (2314.332206ms)
+✔ D-026: zero-length untracked sandbox stubs are not reported as configuration changes (2450.304563ms)
+✔ D-026: configuration with content, a symlink, or a truncated tracked file is still reported (exit 71, no auto-commit) (2049.925481ms)
+✔ F-DG0-012/F-DG0-234: an untracked or ignored configuration file that is deleted or truncated to zero length is reported as removed (1966.925516ms)
+✔ F-DG0-144: every run gets its own private TMPDIR, exported to the agent and removed when the run ends (3775.23686ms)
+✔ F-DG0-236: the runner pre-creates the stage's evidence directories and the gate-record directory (1885.230686ms)
+✔ F-DG0-145: the runner runs the whole agent inside the process sandbox and records it (1852.182278ms)
+✔ D-030: a review run whose staging copy holds another role's file exits 73 and commits nothing (1317.055348ms)
+ℹ tests 39
+ℹ suites 0
+ℹ pass 39
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 76269.312227
+EXIT 0
+Sun Nov 15 16:01:17 UTC 2026

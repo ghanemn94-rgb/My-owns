@@ -1,0 +1,80 @@
+# 2026-11-15T15:32:51Z mutants (Node v24.21.0, cwd $TMPDIR/rv at f22c97b59, load 11.57 12.93 12.87)
+093ebfcb18e110a670e654e07f1bbe2dcac530fe3dbba267aa6a7e9d837063ce  apps/api/src/modules/organization/routes.ts
+77dbc0904cbc37b3dcb1ffff0cbe6e9a9fdb9a40c230a9a36e678da97397dd73  apps/api/src/modules/transfer/config-bundle/plan.ts
+d1c972d9b558ceac4f5adca247c7d3e99c57202539fed7941096474bf863d57d  apps/api/src/modules/identity/oidc.ts
+== M0 controls (unmodified tree)
+ Test Files  3 passed (3)
+      Tests  43 passed (43)
+exit=0
+== M1 A26 defect patch
+ apps/api/src/modules/organization/routes.ts | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+   × business unit update authorization (business_unit.manage, not business_unit.read) > office (business_unit.read without business_unit.manage) gets 403; unit unchanged; no update audited 26ms
+     → expected 200 to be 403 // Object.is equality
+   × business unit update authorization (business_unit.manage, not business_unit.read) > auditor (business_unit.read without business_unit.manage) gets 403; unit unchanged; no update audited 22ms
+     → expected 200 to be 403 // Object.is equality
+   × business unit update authorization (business_unit.manage, not business_unit.read) > leadA1 (business_unit.read without business_unit.manage) gets 403; unit unchanged; no update audited 37ms
+     → expected 200 to be 403 // Object.is equality
+   × business unit update authorization (business_unit.manage, not business_unit.read) > split grant: manage on the destination (a2) but only read on the moved unit (a1x) cannot re-parent it (403) 44ms
+     → expected 200 to be 403 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  |integration| apps/api/test/integration/organizations.test.ts > business unit update authorization (business_unit.manage, not business_unit.read) > office (business_unit.read without business_unit.manage) gets 403; unit unchanged; no update audited
+ FAIL  |integration| apps/api/test/integration/organizations.test.ts > business unit update authorization (business_unit.manage, not business_unit.read) > auditor (business_unit.read without business_unit.manage) gets 403; unit unchanged; no update audited
+ FAIL  |integration| apps/api/test/integration/organizations.test.ts > business unit update authorization (business_unit.manage, not business_unit.read) > leadA1 (business_unit.read without business_unit.manage) gets 403; unit unchanged; no update audited
+AssertionError: expected 200 to be 403 // Object.is equality
+ FAIL  |integration| apps/api/test/integration/organizations.test.ts > business unit update authorization (business_unit.manage, not business_unit.read) > split grant: manage on the destination (a2) but only read on the moved unit (a1x) cannot re-parent it (403)
+AssertionError: expected 200 to be 403 // Object.is equality
+ Test Files  1 failed (1)
+      Tests  4 failed | 11 passed (15)
+exit=1
+== M1b PATCH requireAction only (line 361)
+        await requireAction(tx, principal, "business_unit.manage", target);
+-        await requireAction(tx, principal, "business_unit.manage", target);
++        await requireAction(tx, principal, "business_unit.read", target);
+   × business unit update authorization (business_unit.manage, not business_unit.read) > office (business_unit.read without business_unit.manage) gets 403; unit unchanged; no update audited 114ms
+     → expected 200 to be 403 // Object.is equality
+   × business unit update authorization (business_unit.manage, not business_unit.read) > auditor (business_unit.read without business_unit.manage) gets 403; unit unchanged; no update audited 40ms
+     → expected 200 to be 403 // Object.is equality
+   × business unit update authorization (business_unit.manage, not business_unit.read) > leadA1 (business_unit.read without business_unit.manage) gets 403; unit unchanged; no update audited 35ms
+     → expected 200 to be 403 // Object.is equality
+   × business unit update authorization (business_unit.manage, not business_unit.read) > split grant: manage on the destination (a2) but only read on the moved unit (a1x) cannot re-parent it (403) 41ms
+     → expected 200 to be 403 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  |integration| apps/api/test/integration/organizations.test.ts > business unit update authorization (business_unit.manage, not business_unit.read) > office (business_unit.read without business_unit.manage) gets 403; unit unchanged; no update audited
+ FAIL  |integration| apps/api/test/integration/organizations.test.ts > business unit update authorization (business_unit.manage, not business_unit.read) > auditor (business_unit.read without business_unit.manage) gets 403; unit unchanged; no update audited
+ FAIL  |integration| apps/api/test/integration/organizations.test.ts > business unit update authorization (business_unit.manage, not business_unit.read) > leadA1 (business_unit.read without business_unit.manage) gets 403; unit unchanged; no update audited
+AssertionError: expected 200 to be 403 // Object.is equality
+ FAIL  |integration| apps/api/test/integration/organizations.test.ts > business unit update authorization (business_unit.manage, not business_unit.read) > split grant: manage on the destination (a2) but only read on the moved unit (a1x) cannot re-parent it (403)
+AssertionError: expected 200 to be 403 // Object.is equality
+ Test Files  1 failed (1)
+      Tests  4 failed | 11 passed (15)
+exit=1
+== M2 plan: every kind permitted
+-        may = await adapter.permitted(db, principal, organizationId);
++        may = true; void adapter.permitted;
+   × T-D5 permissions and concurrency > ADM_METHOD and ADM_TECH each hold both rights; the kind's own right decides per item 126ms
+     → expected undefined to match object { kind: 'job_schedule', …(1) }
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  |integration| apps/api/test/integration/transfer/config-bundle.test.ts > T-D5 permissions and concurrency > ADM_METHOD and ADM_TECH each hold both rights; the kind's own right decides per item
+AssertionError: expected undefined to match object { kind: 'job_schedule', …(1) }
+ Test Files  1 failed (1)
+      Tests  1 failed | 22 passed (23)
+exit=1
+== M3 oidc: existing identity unbound check removed
+-    if (await identityUnbound(tx, existing.id))
++    if (false && (await identityUnbound(tx, existing.id)))
+   × T-C15: an unbound user cannot sign in; rebind-identity binds under IT control > OIDC: the carried subject ends at /login?error=identity_unbound, no session, session.login_failed 146ms
+     → expected '/' to be '/login?error=identity_unbound' // Object.is equality
+   × T-C15: an unbound user cannot sign in; rebind-identity binds under IT control > after the rebind the user signs in with the new subject; the old one no longer resolves to them 47ms
+     → expected 2 to be 1 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  |integration| apps/api/test/integration/identity/unbound-signin.test.ts > T-C15: an unbound user cannot sign in; rebind-identity binds under IT control > OIDC: the carried subject ends at /login?error=identity_unbound, no session, session.login_failed
+AssertionError: expected '/' to be '/login?error=identity_unbound' // Object.is equality
+ FAIL  |integration| apps/api/test/integration/identity/unbound-signin.test.ts > T-C15: an unbound user cannot sign in; rebind-identity binds under IT control > after the rebind the user signs in with the new subject; the old one no longer resolves to them
+AssertionError: expected 2 to be 1 // Object.is equality
+ Test Files  1 failed (1)
+      Tests  2 failed | 3 passed (5)
+exit=1
+== restore check
+sources restored byte-equal
+# end 2026-11-15T15:35:45Z

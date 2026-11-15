@@ -1,0 +1,54 @@
+candidate of this copy: {"stage":"DG7","source":"working-tree","candidate_id":"sha256:ca38b65ecaa23f49b4e5755f503c88e74c3a5bd502862fd28cc5ddbbd1fe13c5","files":3153}
+===== P0-candidate
+ℹ fail 0
+ℹ pass 51
+ℹ skipped 0
+ℹ tests 51
+EXIT 0 P0-candidate
+===== P1-test-reverted-to-round1-candidate
+ℹ fail 4
+ℹ pass 46
+ℹ skipped 0
+ℹ tests 50
+✖ --write on a fixture copy regenerates a hand-damaged block, and --check then passes (550.300261ms)
+✖ T-H4: known limitations (6353.513279ms)
+✖ check-handover exit codes (6317.457341ms)
+✖ failing tests:
+✖ known-limitations.mjs --check exits 0 on the tree with the DO-I report (172.367604ms)
+✖ the full check on the real tree never FAILs; with MTH_STRICT_HANDOVER=1 (the freeze) it must PASS (5837.017427ms)
+✖ the protocol-audit block equals the one generated from the report, with the D-249 statement (25.464185ms)
+EXIT 1 P1-test-reverted-to-round1-candidate
+1
+===== P2-known-limitations-block-hand-damaged
+ℹ fail 4
+ℹ pass 47
+ℹ skipped 0
+ℹ tests 51
+✖ --write on a fixture copy regenerates a hand-damaged block, and --check then passes (609.88646ms)
+✖ T-H4: known limitations (6555.708476ms)
+✖ check-handover exit codes (6109.632176ms)
+✖ failing tests:
+✖ known-limitations.mjs --check exits 0 on the tree with the report the shipped file was generated from (155.986865ms)
+✖ the full check on the real tree never FAILs; with MTH_STRICT_HANDOVER=1 (the freeze) it must PASS (5869.181305ms)
+✖ the protocol-audit block equals the one generated from the report, with the D-249 statement (9.887403ms)
+EXIT 1 P2-known-limitations-block-hand-damaged
+===== P3-shipped-report-missing
+ℹ fail 6
+ℹ pass 45
+ℹ skipped 0
+ℹ tests 51
+✖ --write on a fixture copy regenerates a hand-damaged block, and --check then passes (454.146297ms)
+✖ T-H4: known limitations (7655.247909ms)
+✖ a changed report fails --check (exit 1) (0.27806ms)
+✖ failing tests:
+✖ known-limitations.mjs --check exits 0 on the tree with the report the shipped file was generated from (133.100372ms)
+✖ refuses an environment table row it does not know, or a known row that is missing (exit 2) (269.972672ms)
+✖ the protocol-audit block equals the one generated from the report, with the D-249 statement (0.192339ms)
+✖ the report the shipped file names (by SHA-256) is in the delivery records (1.045847ms)
+EXIT 1 P3-shipped-report-missing
+restored: test and known-limitations byte-equal to candidate
+===== P4 known-limitations.mjs --check with the shipped report / with the current-HEAD qa report
+known-limitations: PASS (docs/handover/known-limitations.md and docs/handover/external-dependencies.json are current)
+EXIT 0 (shipped report)
+known-limitations: FAIL: docs/handover/known-limitations.md differ from the generated content; run node tools/release/known-limitations.mjs --protocol-audit <report> --write
+EXIT 1 (DG7-only report at abc7254; differs expected: other stages absent and C3 6)

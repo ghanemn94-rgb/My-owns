@@ -1,0 +1,28 @@
+# 2026-11-15T14:27:59Z F-DG7-914 / F-DG7-955 inspection at HEAD abc7254f6 (source f22c97b59; these files are unchanged by the freeze commit)
+== grep placeholders in docs/handover/api/connectors.md and docs/delivery/environment.md
+docs/delivery/environment.md:108:A row's proof cell names the task that delivers it (stale "planned" markers removed 2026-11-15, F-DG7-914). "Planned" or "not on `135ff1d`" meant that the proof had not been
+grep exit=0 (1 = no match)
+== SAML broker guide line
+38:| Brokered SAML | The corporate SAML IdP metadata, its signing certificate and rotation, and the attribute mappings for `email` and `name` | `docs/operations/identity-saml-broker.md` (DO-B) |
+-rw-r--r-- 1 root root 18305 Nov 10 08:28 docs/operations/identity-saml-broker.md
+== http_pull / fake model rows
+27:| Corporate data source (`http_pull` connector) | `apps/api/src/modules/integrations/adapters/http-pull.ts` | `apps/api/test/integration/integrations/adapter-contract.test.ts`<br>`apps/api/test/integration/integrations/connectors.test.ts`<br>double: `apps/api/test/support/fake-http-source.ts` | T
+28:| AI model endpoint (optional assistant) | `apps/api/src/modules/assistant/provider.ts` | `apps/api/test/integration/assistant/provider.test.ts`<br>double: `apps/api/test/support/fake-model.ts` | The chat-completions endpoint (https) and model name, entered in the assistant setting (disabled by d
+42:| Corporate data source (`http_pull` connector) | The source endpoint (https), its credential as a secret reference, the field mapping, and the network route | ADR-0055; `docs/handover/api/connectors.md` |
+53:| `http_pull` | `apps/api/src/modules/integrations/adapters/http-pull.ts` | `apps/api/test/integration/integrations/adapter-contract.test.ts`<br>`apps/api/test/integration/integrations/connectors.test.ts` | Pulls rows from an IT-supplied HTTPS source (row "Corporate data source" below). |
+== connector-handover --check
+connector-handover: PASS: docs/handover/api/connectors.md equals a fresh generation
+exit=0
+== F-DG7-955: progress.md Unresolved blockers section
+## Unresolved blockers
+
+_(Historical, superseded 2026-11-15, F-DG7-955: this section dates from DG3. Current state: DG0–DG6 APPROVED; DG7 open findings and blockers are listed in the checkpoint at the top and in `findings.json`.)_ DG0, DG1, DG2 and DG3 were APPROVED on this branch at the time, and `--pipeline` exited 0. (The kwcc4i branch's `validate.mjs --stage DG1` reports the three documented historical write-once-record artifacts from D-056; this clean branch does not carry them.)
+
+## D-191 (2026-10-25, delivery-orchestrator; recorded here because decisions.md is a frozen candidate file until the DG5 gate is decided, D-190)
+
+**Corrected re-gate round 1 on candidate `ff3bc2c4`: domain, code-security and qa all PASS.** code-security raised **F-DG5-100** (Medium, not mandatory: DOCX and PPTX exports are not well-formed XML 1.0 when accepted user text holds a C0 control character, and the job still reports succeeded); qa raised **F-DG5-140** (Low: at branding version 0 the Arabic export header prints the English product name). domain raised none.
+**Decision:** a Medium finding cannot be accepted, so both are repaired in **T-DG5-BE-RG3** (backend), recorded with `import-findings --fix` and the full merge commit, followed by a full merged-tree verification including e2e in both locale settings, a re-freeze, round 2 with all three reviewers, and the release audit per D-140 option 1. D-191 is copied into `decisions.md` only after the gate is decided.
+
+## D-191 follow-up (2026-10-26): merged-tree verification of 7bb7d93
+
+`docs/delivery/test-evidence/DG5/orchestrator-D-191/verify-rg3-7bb7d93/`: `--historical --stage DG4`, install, typecheck, build, lint, format, openapi lint, contrast, unit (locale unset and C.UTF-8) and integration exit 0; web e2e 470/470 with the locale unset and 470/470 with C.UTF-8; root 32/32; demo 10/10. DG5 is re-frozen for corrected re-gate round 2; from this freeze no candidate file changes until the gate is decided.

@@ -1,0 +1,37 @@
+Sun Nov 15 14:50:23 UTC 2026
+clone /var/tmp/mth-run.3OfkU0/claude-0/rv at f22c97b5931a40969574f4e646ea480be4454861 (candidate "candidate_id":"sha256:ca38b65ecaa23f49b4e5755f503c88e74c3a5bd502862fd28cc5ddbbd1fe13c5","f)
+$ sha256sum docs/delivery/requirements.csv
+fc8ece8bc56b80308b1953c9e88c5e839506f7cd95b6a5982e18286ad465ba23  docs/delivery/requirements.csv
+$ grep -n "SHA-256" docs/handover/release-notes.md | head -3
+9:- Requirement register: `docs/delivery/requirements.csv`, SHA-256 `e4805087a95793c24dc51bf4e43a59d893c9e35a0eefc35cef61f360f7715b09`, 412 rows
+210:- سجل المتطلبات: 412 صفًا، SHA-256 `e4805087a957`
+$ node tools/release/release-notes.mjs --csv docs/delivery/requirements.csv --deps docs/handover/external-dependencies.json --provisional apps/web/src/i18n --out docs/handover/release-notes.md --check
+release-notes: docs/handover/release-notes.md is out of date (run with --write)
+EXIT 1
+$ git log (release-notes.md, requirements.csv)
+f63d117d1 2026-11-15T12:14:12+00:00 DG7: T-DG7-AN-P7E output (exit 0; orchestrator integration review pending)
+4e8676de2 2026-11-15T11:50:13+00:00 DG7: T-DG7-FE-C2 output (exit 0; orchestrator integration review pending)
+a60a962dd 2026-11-15T07:28:42+00:00 DG7: AN-P7D integrated (394/412); release notes regenerated; check-handover PASS
+--- diff shipped vs regenerated (--write on the scratch clone $TMPDIR/m2, restored afterwards), lines cut at 400 chars
+9c9
+< - Requirement register: `docs/delivery/requirements.csv`, SHA-256 `e4805087a95793c24dc51bf4e43a59d893c9e35a0eefc35cef61f360f7715b09`, 412 rows
+---
+> - Requirement register: `docs/delivery/requirements.csv`, SHA-256 `fc8ece8bc56b80308b1953c9e88c5e839506f7cd95b6a5982e18286ad465ba23`, 412 rows
+123c123
+< > DG7 analyst pass (T-DG7-AN-P7, base 3386b90, 2026-11-14): RELEASE BLOCKER at this pass, not IMPLEMENTED. Missing dependency: docs/handover/release-notes.md does not exist yet, so check-handover reports 'index BLOCKED' (exit 2) and T-H1 cannot pass. After this register pass the orchestrator runs release-notes.mjs --write (p7-work-split §M.5 step 3; the analyst's write scope excludes docs/hando
+---
+> > DG7 analyst pass (T-DG7-AN-P7, base 3386b90, 2026-11-14): RELEASE BLOCKER at this pass, not IMPLEMENTED. Missing dependency: docs/handover/release-notes.md does not exist yet, so check-handover reports 'index BLOCKED' (exit 2) and T-H1 cannot pass. After this register pass the orchestrator runs release-notes.mjs --write (p7-work-split §M.5 step 3; the analyst's write scope excludes docs/hando
+210c210
+< - سجل المتطلبات: 412 صفًا، SHA-256 `e4805087a957`
+---
+> - سجل المتطلبات: 412 صفًا، SHA-256 `fc8ece8bc56b`
+--- REQ-S19-015 notes: regenerated text has the AN-P7E pass-5 paragraph, shipped does not
+0
+--- tests that run release-notes --check on the real tree
+4://          exits 1; an IMPLEMENTED row without evidence exits 1; --check drift exits 1; no clock is read (two runs give
+91:test("T-I11 --check: up to date exits 0; one changed byte of the output exits 1 with the §I.3 line", () => {
+95:  const ok = run(fixtureArgs(dir, ["--check"]));
+99:  const drift = run(fixtureArgs(dir, ["--check"]));
+98:export const PENDING = Object.freeze(["release-notes.md", "guides/user/", "guides/admin/"]);
+--- prefreeze-r2 checks.log: no release-notes --check step
+0

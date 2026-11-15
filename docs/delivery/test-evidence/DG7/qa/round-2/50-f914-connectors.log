@@ -1,0 +1,11 @@
+$ grep -n -i 'not yet written|to be confirmed|owner: slice|planned|TBC|TODO' docs/handover/api/connectors.md docs/delivery/environment.md (connector rows)
+exit(grep connectors.md)=1
+--- environment.md hits
+108:A row's proof cell names the task that delivers it (stale "planned" markers removed 2026-11-15, F-DG7-914). "Planned" or "not on `135ff1d`" meant that the proof had not been
+--- saml guide exists?
+-rw-r--r-- 1 root root 18305 Nov 15 14:24 docs/operations/identity-saml-broker.md
+23:| Brokered SAML | None in this release | None (configuration only) | The corporate SAML IdP metadata URL, configured in the Keycloak broker (the hub itself speaks OIDC only) | The IdP signing certificate (public, not a secret); the broker's OIDC client secret as `OIDC_CLIENT_SECRET_FILE` | Not verified |
+38:| Brokered SAML | The corporate SAML IdP metadata, its signing certificate and rotation, and the attribute mappings for `email` and `name` | `docs/operations/identity-saml-broker.md` (DO-B) |
+--- connector-handover --check
+connector-handover: PASS: docs/handover/api/connectors.md equals a fresh generation
+EXIT 0

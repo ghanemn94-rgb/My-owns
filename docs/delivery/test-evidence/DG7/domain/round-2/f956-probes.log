@@ -1,0 +1,515 @@
+### strict MTH_STRICT_HANDOVER=1
+▶ T-H1: the handover index
+  ✔ on the real tree: no FAIL; anything BLOCKED is a file written later in this release (6.678873ms)
+  ✔ maps each of the seven REQ-S19-015 items, and has the security-controls.md line (D-247 O3) (0.436739ms)
+  ✔ passes on a fixture once the pending files exist (19.083648ms)
+  ✔ fails for a file the index does not list (7.526181ms)
+  ✔ fails for an index line whose file does not exist (8.755687ms)
+  ✔ fails without the security-controls.md line, and for an unmapped item (25.763553ms)
+  ✔ reports a missing release-notes.md as BLOCKED, never as a pass (23.29012ms)
+  ✔ refuses an unknown archive path (37.450304ms)
+✔ T-H1: the handover index (134.424238ms)
+▶ T-H2 and T-B14: the deployment guide
+  ✔ on the real tree: no FAIL; only guide-keys.json may be BLOCKED (DO-D has not written it yet) (9.316507ms)
+  ✔ holds the seven anchors, the B.5 texts, the redirect URI, the service map and the orchestration target (1.076245ms)
+  ✔ fails when the section #domains-and-tls is missing (14.749561ms)
+  ✔ fails when the section #corporate-sso-mapping is missing (14.523361ms)
+  ✔ fails when the section #service-accounts is missing (10.384626ms)
+  ✔ fails when the section #secrets is missing (11.926517ms)
+  ✔ fails when the section #network-boundaries is missing (15.427201ms)
+  ✔ fails when the section #logging is missing (11.520437ms)
+  ✔ fails when the section #monitoring is missing (31.625776ms)
+  ✔ fails for an empty section and for a section that names no source (19.695108ms)
+  ✔ fails without the HA statement or the sub-path text (10.417934ms)
+  ✔ fails for a template key the guide does not index, and for a Compose service the map does not name (14.358524ms)
+  ✔ checks every anchor guide-keys.json cites: present → PASS, absent → FAIL (11.736529ms)
+  ✔ indexes every .env.example key with an existing anchor (0.435304ms)
+✔ T-H2 and T-B14: the deployment guide (180.469072ms)
+▶ T-H4: known limitations
+  ✔ the report the shipped file names (by SHA-256) is in the delivery records (0.57287ms)
+  ✔ known-limitations.mjs --check exits 0 on the tree with the report the shipped file was generated from (174.671973ms)
+  ✔ names every carried row id of p7-plan §1.4 and every P7 ADR (ADR-0062 to ADR-0073) (0.934968ms)
+  ✔ the protocol-audit block equals the one generated from the report, with the D-249 statement (5.316492ms)
+  ✔ a changed report fails --check (exit 1) (505.187386ms)
+  ✔ --write on a fixture copy regenerates a hand-damaged block, and --check then passes (653.986368ms)
+  ✔ refuses an environment table row it does not know, or a known row that is missing (exit 2) (208.014314ms)
+  ✔ refuses a report that is not a protocol-audit report, and runs without one only as BLOCKED (3610.573615ms)
+  ✔ external-dependencies.json is the contract's ExternalDependency array, and the guide block lists the same keys (1.301567ms)
+  ✔ keycloak-e2e records the D-267 host run: not_verified (not blocked, not Mobily's IdP), and §4 no longer says it never ran (0.401572ms)
+  ✔ arabic-review.json ships empty, and the provisional block lists every Arabic handover file (26.044082ms)
+✔ T-H4: known limitations (5187.878756ms)
+▶ T-H7: Arabic summaries of the IT and operator documents
+  ✔ on the real tree: PASS (9.873701ms)
+  ✔ fails without the provisional line under the first heading (12.167663ms)
+  ✔ does not require the line for a file arabic-review.json lists (36.373479ms)
+  ✔ fails for a missing summary page, a missing section, or an operator summary without the upgrade guide (119.89725ms)
+  ✔ fails when an Arabic B.5 text of the deployment summary is not verbatim (36.606319ms)
+✔ T-H7: Arabic summaries of the IT and operator documents (215.405363ms)
+▶ T-H8: security-controls guide links (D-247 O5)
+  ✔ HR-01, HR-02, HR-04 and HR-06 link existing deployment.md anchors, and HR-04 the backup guide (2.429834ms)
+  ✔ fails for a link to a missing anchor, and for HR-04 without the backup guide (19.061384ms)
+  ✔ DO-B's matrix test (T-G7) still passes (177.107707ms)
+✔ T-H8: security-controls guide links (D-247 O5) (199.462767ms)
+▶ T-H9 and T-I14: scans over the handover, and the candidate manifest
+  ✔ the secret scan over docs/handover reports nothing (295.029717ms)
+  ✔ the claims scan (docs/handover/** in its scope) reports nothing (18317.202525ms)
+  ✔ every file under docs/handover/ is in the candidate manifest, so the payload scan covers it (T-I14) (2656.678751ms)
+✔ T-H9 and T-I14: scans over the handover, and the candidate manifest (21269.300042ms)
+▶ T-H5 checker logic (DOC-A runs it on the real guides)
+  ✔ no guides yet → BLOCKED (exit 2), never a pass (233.932921ms)
+  ✔ matching en/ar pairs with known screen paths pass (19.072852ms)
+  ✔ fails for a missing ar file, a heading or anchor mismatch, a missing marker and an unknown screen path (4.665233ms)
+  ✔ route matching: parameters match one segment; API paths are not screens (1.820561ms)
+✔ T-H5 checker logic (DOC-A runs it on the real guides) (260.342826ms)
+▶ check-handover exit codes
+  ✔ FAIL wins over BLOCKED, BLOCKED over PASS (0.295449ms)
+  ✔ a usage error is BLOCKED (exit 2) (612.112944ms)
+  ✔ the full check on the real tree never FAILs; with MTH_STRICT_HANDOVER=1 (the freeze) it must PASS (9257.057908ms)
+✔ check-handover exit codes (9869.847312ms)
+ℹ tests 51
+ℹ suites 8
+ℹ pass 51
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 47005.976269
+strict exit=0
+### probe A: round-1 (a60a962) test file on this tree
+▶ T-H1: the handover index
+  ✔ on the real tree: no FAIL; anything BLOCKED is a file written later in this release (37.306188ms)
+  ✔ maps each of the seven REQ-S19-015 items, and has the security-controls.md line (D-247 O3) (0.434166ms)
+  ✔ passes on a fixture once the pending files exist (67.464649ms)
+  ✔ fails for a file the index does not list (10.66873ms)
+  ✔ fails for an index line whose file does not exist (9.108399ms)
+  ✔ fails without the security-controls.md line, and for an unmapped item (7.647628ms)
+  ✔ reports a missing release-notes.md as BLOCKED, never as a pass (12.132282ms)
+  ✔ refuses an unknown archive path (7.777981ms)
+✔ T-H1: the handover index (154.925711ms)
+▶ T-H2 and T-B14: the deployment guide
+  ✔ on the real tree: no FAIL; only guide-keys.json may be BLOCKED (DO-D has not written it yet) (10.999977ms)
+  ✔ holds the seven anchors, the B.5 texts, the redirect URI, the service map and the orchestration target (1.639544ms)
+  ✔ fails when the section #domains-and-tls is missing (11.476264ms)
+  ✔ fails when the section #corporate-sso-mapping is missing (10.160853ms)
+  ✔ fails when the section #service-accounts is missing (13.204873ms)
+  ✔ fails when the section #secrets is missing (63.329365ms)
+  ✔ fails when the section #network-boundaries is missing (59.984635ms)
+  ✔ fails when the section #logging is missing (162.564728ms)
+  ✔ fails when the section #monitoring is missing (29.953899ms)
+  ✔ fails for an empty section and for a section that names no source (36.669974ms)
+  ✔ fails without the HA statement or the sub-path text (27.581437ms)
+  ✔ fails for a template key the guide does not index, and for a Compose service the map does not name (15.698175ms)
+  ✔ checks every anchor guide-keys.json cites: present → PASS, absent → FAIL (29.735485ms)
+  ✔ indexes every .env.example key with an existing anchor (0.740737ms)
+✔ T-H2 and T-B14: the deployment guide (475.220792ms)
+▶ T-H4: known limitations
+  ✖ known-limitations.mjs --check exits 0 on the tree with the DO-I report (314.624142ms)
+  ✔ names every carried row id of p7-plan §1.4 and every P7 ADR (ADR-0062 to ADR-0073) (1.069205ms)
+  ✖ the protocol-audit block equals the one generated from the report, with the D-249 statement (17.097586ms)
+  ✔ a changed report fails --check (exit 1) (121.783808ms)
+  ✖ --write on a fixture copy regenerates a hand-damaged block, and --check then passes (608.730657ms)
+  ✔ refuses an environment table row it does not know, or a known row that is missing (exit 2) (146.957805ms)
+  ✔ refuses a report that is not a protocol-audit report, and runs without one only as BLOCKED (58873.152669ms)
+  ✔ external-dependencies.json is the contract's ExternalDependency array, and the guide block lists the same keys (195.557102ms)
+  ✔ keycloak-e2e records the D-267 host run: not_verified (not blocked, not Mobily's IdP), and §4 no longer says it never ran (0.53411ms)
+  ✔ arabic-review.json ships empty, and the provisional block lists every Arabic handover file (52.211248ms)
+✖ T-H4: known limitations (60332.622562ms)
+▶ T-H7: Arabic summaries of the IT and operator documents
+  ✔ on the real tree: PASS (14.243298ms)
+  ✔ fails without the provisional line under the first heading (276.422664ms)
+  ✔ does not require the line for a file arabic-review.json lists (62.477231ms)
+  ✔ fails for a missing summary page, a missing section, or an operator summary without the upgrade guide (61.721815ms)
+  ✔ fails when an Arabic B.5 text of the deployment summary is not verbatim (33.969103ms)
+✔ T-H7: Arabic summaries of the IT and operator documents (449.247338ms)
+▶ T-H8: security-controls guide links (D-247 O5)
+  ✔ HR-01, HR-02, HR-04 and HR-06 link existing deployment.md anchors, and HR-04 the backup guide (1.008416ms)
+  ✔ fails for a link to a missing anchor, and for HR-04 without the backup guide (13.102341ms)
+  ✔ DO-B's matrix test (T-G7) still passes (311.406272ms)
+✔ T-H8: security-controls guide links (D-247 O5) (326.616481ms)
+▶ T-H9 and T-I14: scans over the handover, and the candidate manifest
+  ✔ the secret scan over docs/handover reports nothing (354.841517ms)
+  ✔ the claims scan (docs/handover/** in its scope) reports nothing (23872.727469ms)
+  ✔ every file under docs/handover/ is in the candidate manifest, so the payload scan covers it (T-I14) (2157.740303ms)
+✔ T-H9 and T-I14: scans over the handover, and the candidate manifest (26385.580564ms)
+▶ T-H5 checker logic (DOC-A runs it on the real guides)
+  ✔ no guides yet → BLOCKED (exit 2), never a pass (133.917233ms)
+  ✔ matching en/ar pairs with known screen paths pass (86.389036ms)
+  ✔ fails for a missing ar file, a heading or anchor mismatch, a missing marker and an unknown screen path (28.782023ms)
+  ✔ route matching: parameters match one segment; API paths are not screens (1.076769ms)
+✔ T-H5 checker logic (DOC-A runs it on the real guides) (250.510852ms)
+▶ check-handover exit codes
+  ✔ FAIL wins over BLOCKED, BLOCKED over PASS (0.358527ms)
+  ✔ a usage error is BLOCKED (exit 2) (461.138952ms)
+  ✖ the full check on the real tree never FAILs; with MTH_STRICT_HANDOVER=1 (the freeze) it must PASS (4636.761512ms)
+✖ check-handover exit codes (5098.687018ms)
+ℹ tests 50
+ℹ suites 8
+ℹ pass 46
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 97177.14181
+
+✖ failing tests:
+
+test at tools/release/tests/check-handover.test.mjs:230:3
+✖ known-limitations.mjs --check exits 0 on the tree with the DO-I report (314.624142ms)
+  AssertionError [ERR_ASSERTION]: known-limitations: FAIL: docs/handover/known-limitations.md differ from the generated content; run node tools/release/known-limitations.mjs --protocol-audit <report> --write
+  
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (file:///var/tmp/mth-run.tNL2Tr/claude-0/rv/tools/release/tests/check-handover.test.mjs:232:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at node:internal/test_runner/test:1903:71
+      at node:internal/per_context/primordials:504:82
+      at new Promise (<anonymous>)
+      at new SafePromise (node:internal/per_context/primordials:478:3)
+      at node:internal/per_context/primordials:504:9
+      at Array.map (<anonymous>) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tools/release/tests/check-handover.test.mjs:244:3
+✖ the protocol-audit block equals the one generated from the report, with the D-249 statement (17.097586ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+  
+    assert.ok(md.includes(`${KL.beginOf("protocol-audit")}\n${block}\n${KL.endOf("protocol-audit")}`))
+  
+      at TestContext.<anonymous> (file:///var/tmp/mth-run.tNL2Tr/claude-0/rv/tools/release/tests/check-handover.test.mjs:248:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Suite.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tools/release/tests/check-handover.test.mjs:265:3
+✖ --write on a fixture copy regenerates a hand-damaged block, and --check then passes (608.730657ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  ... Skipped lines
+  
+    '# Known limitations\n' +
+      '\n' +
+      'This document lists what this release does not do, what it has not proven, and what Mobily IT must still supply. It is\n' +
+      "for Mobily IT and the platform's owners. The Arabic summary is\n" +
+      '[known-limitations.ar-summary.md](known-limitations.ar-summary.md). This English text is complete.\n' +
+  ...
+      '<!-- generated:protocol-audit begin -->\n' +
+  +   'Report: `tools/release/protocol-audit.mjs` 1.0.0, repository head `119dcd0541b1e8351e23c233d62cc3d25f9ed794`, SHA-256 `2614fc6ce028523bacb197db700bfd2c42aa7d5ef3f2dabdee40271560c2f3fd`, stages DG0, DG1, DG2, DG3, DG4, DG5, DG6, DG7.\n' +
+  -   'Report: `tools/release/protocol-audit.mjs` 1.0.0, repository head `b2ba3e3f9be95171d761393b6805fcb1ff45257d`, SHA-256 `2b322f4d5006f7fef53d5f6207c65d6aca0608b3b7b3fb8a9f0ef290a7ed8549`, stages DG0, DG1, DG2, DG3, DG4, DG5, DG6, DG7.\n' +
+      '\n' +
+      'The delivery records of gates DG0–DG6 contain the historic protocol observations listed below, found by the protocol audit. None changed product behaviour. They are disclosed here, and no gate was reopened (decision D-249).\n' +
+      '\n' +
+      '| Check | Requirement | Stage | Result | Hits | Disclosure |\n' +
+      '| --- | --- | --- | --- | --- | --- |\n' +
+  ...
+      '| C2 assignment-contract | REQ-DLV-011 | DG6 | HIT | 14 | D-249 H3, H4 |\n' +
+  -   "| C2 assignment-contract | REQ-DLV-011 | DG7 | HIT | 27 | not in D-249 (DG7: disclosed by this release's records) |\n" +
+      '| C3 handback-sections | REQ-DLV-012 | DG2 | HIT | 8 | D-249 H5 |\n' +
+      '| C3 handback-sections | REQ-DLV-012 | DG3 | HIT | 3 | D-249 H5 |\n' +
+      '| C3 handback-sections | REQ-DLV-012 | DG4 | HIT | 4 | D-249 H5 |\n' +
+      '| C3 handback-sections | REQ-DLV-012 | DG5 | HIT | 20 | D-249 H5 |\n' +
+      '| C3 handback-sections | REQ-DLV-012 | DG6 | HIT | 13 | D-249 H5 |\n' +
+  +   "| C3 handback-sections | REQ-DLV-012 | DG7 | HIT | 1 | not in D-249 (DG7: disclosed by this release's records) |\n" +
+  -   "| C3 handback-sections | REQ-DLV-012 | DG7 | HIT | 5 | not in D-249 (DG7: disclosed by this release's records) |\n" +
+      '| C4 file-ownership | REQ-DLV-008 | DG4 | HIT | 24 | D-249 H6 |\n' +
+      '| C4 file-ownership | REQ-DLV-008 | DG5 | HIT | 8 | D-249 H7 |\n' +
+      '| C4 file-ownership | REQ-DLV-008 | DG6 | HIT | 5 | D-249 H7 |\n' +
+      '| C5 historical-first | REQ-DLV-024 | DG1 | HIT | 1 | D-249 H8 |\n' +
+      '| C5 historical-first | REQ-DLV-024 | DG2 | HIT | 1 | D-249 H8 |\n' +
+  ...
+      '| `apps/web/src/i18n/provisional-ar-p7-release.ts` | 67 |\n' +
+  -   '| `apps/web/src/i18n/provisional-ar-p7-retention.ts` | 146 |\n' +
+      '| `apps/web/src/i18n/provisional-ar-p7-transfer.ts` | 35 |\n' +
+      '| `apps/web/src/i18n/provisional-ar-p7.ts` | 71 |\n' +
+      '| `apps/web/src/components/assistant/provisional-ar.ts` | 19 |\n' +
+      '| `apps/web/src/components/compare/provisional-ar.ts` | 3 |\n' +
+      '| `apps/web/src/components/saved-views/provisional-ar.ts` | 10 |\n' +
+      '| `apps/web/src/pages/integrations/provisional-ar.ts` | 14 |\n' +
+      '| `apps/web/src/pages/my-work/provisional-ar.ts` | 1 |\n' +
+  +   '| Total | 299 |\n' +
+  -   '| Total | 445 |\n' +
+      '\n' +
+      'Handover files with Arabic text not listed in `docs/handover/arabic-review.json` (13):\n' +
+      '\n' +
+      '- `docs/handover/README.md`\n' +
+      '- `docs/handover/api/connectors.md`\n' +
+  ...
+      '| --- | --- |\n' +
+  +   "| REQ-S16-007 | The live Keycloak end-to-end sign-in (`mth-test` realm signs in, an `mth-other` token is refused) needs a container runtime, which the agent sandbox does not have (D-049, D-195 Q5, D-197). The delivery orchestrator's container host run (D-243 Q1) ran it on one host in the delivery container: `e2e/identity/keycloak-login` passed 4/4 (D-267, run 3c; the test process ran without the host's proxy variables, ADR-0069 A2.2; logs in `docs/delivery/test-evidence/DG7/orchestrator/host/`, recorded in `docs/delivery/environment.md`). That is one host with registry access through an egress proxy, not air-gapped and not HA, against the synthetic test realm, not Mobily's identity provider"... 8507 more characters
+  -   "| REQ-S16-007 | The live Keycloak end-to-end sign-in (`mth-test` realm signs in, an `mth-other` token is refused) needs a container runtime, which the agent sandbox does not have (D-049, D-195 Q5, D-197). The delivery orchestrator's container host run (D-243 Q1) ran it on one host in the delivery container: `e2e/identity/keycloak-login` passed 4/4 (D-267, run 3c; the test process ran without the host's proxy variables, ADR-0069 A2.2; logs in `docs/delivery/test-evidence/DG7/orchestrator/host/`, recorded in `docs/deli"... 8684 more characters
+  
+      at TestContext.<anonymous> (file:///var/tmp/mth-run.tNL2Tr/claude-0/rv/tools/release/tests/check-handover.test.mjs:275:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Suite.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: "# Known limitations\n\nThis document lists what this release does not do, what it has not proven, and what Mobily IT must still supply. It is\nfor Mobily IT and the platform's owners. The Arabic summary is\n[known-limitations.ar-summary.md](known-limitations.ar-summary.md). This English text is complete.\n\nAccepting this handover is a decision of Mobily IT, made outside the platform. This package is engineering evidence,\nnot that acceptance.\n\nCompose is a reproducible install and test configuration, not evidence of high-availability readiness.\n\nSections 1–3 are generated by `tools/release/known-limitations.mjs` and must not be edited by hand. Regenerate them\nwith `node tools/release/known-limitations.mjs --protocol-audit <report.json> --write`; `--check` fails when they are\nstale. Sections 4–6 are written by hand.\n\n## 1. Remaining external configuration dependencies {#external-dependencies}\n\n<!-- generated:external-dependencies begin -->\n| Key | Dependency | Status | Owner | What Mobily IT supplies | Source |\n| --- | --- | --- | --- | --- | --- |\n| `corporate-idp` | Corporate identity provider (OIDC sign-in through Mobily's IdP) | `not_verified` | Mobily IT | Issuer URL (https), client ID, client secret (as `OIDC_CLIENT_SECRET_FILE`), redirect URI registration, the `email` and `name` claims, and group → role mapping input | `docs/delivery/environment.md` (Corporate identity provider (OIDC)) |\n| `keycloak-e2e` | Keycloak test-realm end-to-end sign-in (passed 4/4 on one delivery host with a container runtime, D-267; synthetic realm, not Mobily's IdP, not HA) | `not_verified` | Mobily IT | A host with a container runtime, to run the `test-idp` profile | `docs/delivery/environment.md` (Keycloak test realm e2e) |\n| `saml-broker` | SAML identity provider through an OIDC broker | `not_configured` | Mobily IT | The corporate SAML IdP metadata, its signing certificate and rotation, and the attribute mappings for `email` and `name` | `docs/delivery/environment.md` (Brokered SAML) |\n| `object-store` | S3-compatible object store for evidence | `not_verified` | Mobily IT | Endpoint (https), region, a private bucket, an optional key prefix, a least-privilege access key pair as secret references, and the CA if it is corporate | `docs/delivery/environment.md` (IT object store (S3-compatible)) |\n| `smtp-relay` | SMTP relay for the email channel | `not_verified` | Mobily IT | Relay host and port, security mode, optional credentials as secret references, sender address, and the CA if it is corporate | `docs/delivery/environment.md` (SMTP relay) |\n| `enterprise-messaging` | Enterprise messaging channel (no adapter ships in this release) | `not_configured` | Mobily IT | Nothing in this release (no adapter ships) | `docs/delivery/environment.md` (Enterprise messaging) |\n| `corporate-data-source` | Corporate data source for the http_pull connector | `not_verified` | Mobily IT | The source endpoint (https), its credential as a secret reference, the field mapping, and the network route | `docs/delivery/environment.md` (Corporate data source (`http_pull` connector)) |\n| `ai-endpoint` | IT-hosted AI model endpoint for the optional assistant (off by default) | `not_configured` | Mobily IT | The endpoint, model name and credential reference of an IT-approved provider, if Mobily chooses to enable the assistant | `docs/delivery/environment.md` (AI model endpoint (optional assistant)) |\n| `package-registry` | Live package and image registry or IT mirror for builds and image pulls | `not_verified` | Mobily IT | An internal npm registry or mirror for the offline build, and an image registry or mirror for the images of `deploy/images.lock.json` | D-057 |\n| `live-ci` | Live CI execution of deploy/ci/ci.yml | `not_verified` | Mobily IT | A CI runner for `deploy/ci/ci.yml` (copied to `.github/workflows/ci.yml`) | D-058 |\n| `orchestration-target` | Deployment configuration for Mobily's orchestration platform | `not_configured` | Mobily IT | The name of the target orchestration platform. Deployment configuration for Mobily's orchestration platform is to be written when IT names the target. This release ships no such configuration. | D-243 Q12 |\n\nEvery dependency above: Not verified in this release. Mobily IT must supply and test it. The same list is `external-dependencies.json`, which the About screen and the release notes read.\n\nSign-in has been tested only with a synthetic identity provider. Connecting the corporate identity provider is an external dependency.\n<!-- generated:external-dependencies end -->\n\n## 2. Protocol-audit disclosure {#protocol-audit}\n\n<!-- generated:protocol-audit begin -->\nReport: `tools/release/protocol-audit.mjs` 1.0.0, repository head `119dcd0541b1e8351e23c233d62cc3d25f9ed794`, SHA-256 `2614fc6ce028523bacb197db700bfd2c42aa7d5ef3f2dabdee40271560c2f3fd`, stages DG0, DG1, DG2, DG3, DG4, DG5, DG6, DG7.\n\nThe delivery records of gates DG0–DG6 contain the historic protocol observations listed below, found by the protocol audit. None changed product behaviour. They are disclosed here, and no gate was reopened (decision D-249).\n\n| Check | Requirement | Stage | Result | Hits | Disclosure |\n| --- | --- | --- | --- | --- | --- |\n| C1 concurrency | REQ-DLV-009 | DG5 | HIT | 2 | D-249 H1 |\n| C1 concurrency | REQ-DLV-009 | DG6 | HIT | 1 | D-249 H2 |\n| C2 assignment-contract | REQ-DLV-011 | DG0 | HIT | 49 | D-249 H3 |\n| C2 assignment-contract | REQ-DLV-011 | DG1 | HIT | 16 | D-249 H3 |\n| C2 assignment-contract | REQ-DLV-011 | DG2 | HIT | 39 | D-249 H3 |\n| C2 assignment-contract | REQ-DLV-011 | DG3 | HIT | 14 | D-249 H3 |\n| C2 assignment-contract | REQ-DLV-011 | DG4 | HIT | 11 | D-249 H3 |\n| C2 assignment-contract | REQ-DLV-011 | DG5 | HIT | 6 | D-249 H3 |\n| C2 assignment-contract | REQ-DLV-011 | DG6 | HIT | 14 | D-249 H3, H4 |\n| C3 handback-sections | REQ-DLV-012 | DG2 | HIT | 8 | D-249 H5 |\n| C3 handback-sections | REQ-DLV-012 | DG3 | HIT | 3 | D-249 H5 |\n| C3 handback-sections | REQ-DLV-012 | DG4 | HIT | 4 | D-249 H5 |\n| C3 handback-sections | REQ-DLV-012 | DG5 | HIT | 20 | D-249 H5 |\n| C3 handback-sections | REQ-DLV-012 | DG6 | HIT | 13 | D-249 H5 |\n| C3 handback-sections | REQ-DLV-012 | DG7 | HIT | 1 | not in D-249 (DG7: disclosed by this release's records) |\n| C4 file-ownership | REQ-DLV-008 | DG4 | HIT | 24 | D-249 H6 |\n| C4 file-ownership | REQ-DLV-008 | DG5 | HIT | 8 | D-249 H7 |\n| C4 file-ownership | REQ-DLV-008 | DG6 | HIT | 5 | D-249 H7 |\n| C5 historical-first | REQ-DLV-024 | DG1 | HIT | 1 | D-249 H8 |\n| C5 historical-first | REQ-DLV-024 | DG2 | HIT | 1 | D-249 H8 |\n| C5 historical-first | REQ-DLV-024 | DG3 | HIT | 1 | D-249 H8 |\n| C5 historical-first | REQ-DLV-024 | DG4 | HIT | 1 | D-249 H8 |\n| C5 historical-first | REQ-DLV-024 | DG5 | HIT | 1 | D-249 H8 |\n| C5 historical-first | REQ-DLV-024 | DG6 | HIT | 1 | D-249 H8 |\n| C5 historical-first | REQ-DLV-024 | DG7 | HIT | 1 | not in D-249 (DG7: disclosed by this release's records) |\n| C6 progress-updates | REQ-DLV-028; REQ-DLV-012 | DG0 | HIT | 1 | D-249 H9 |\n| C6 progress-updates | REQ-DLV-028; REQ-DLV-012 | DG6 | HIT | 1 | D-249 H10 |\n| C7 three-failed-fixes | REQ-DLV-018 | DG3 | HIT | 1 | D-249 H11 |\n\nAccepted observations reported by the audit:\n\n- C9 stage-continuation, DG0: history-out-of-order, reported as the accepted observation F-DG6-952 (not a new hit; the approved history is not rewritten).\n- C9 stage-continuation, DG5: history-out-of-order, reported as the accepted observation F-DG6-952 (not a new hit; the approved history is not rewritten).\n<!-- generated:protocol-audit end -->\n\n## 3. Provisional Arabic {#provisional-arabic}\n\n<!-- generated:provisional-arabic begin -->\n| Provisional Arabic UI label file | Entries |\n| --- | --- |\n| `apps/web/src/i18n/provisional-ar-p6.ts` | 79 |\n| `apps/web/src/i18n/provisional-ar-p7-release.ts` | 67 |\n| `apps/web/src/i18n/provisional-ar-p7-transfer.ts` | 35 |\n| `apps/web/src/i18n/provisional-ar-p7.ts` | 71 |\n| `apps/web/src/components/assistant/provisional-ar.ts` | 19 |\n| `apps/web/src/components/compare/provisional-ar.ts` | 3 |\n| `apps/web/src/components/saved-views/provisional-ar.ts` | 10 |\n| `apps/web/src/pages/integrations/provisional-ar.ts` | 14 |\n| `apps/web/src/pages/my-work/provisional-ar.ts` | 1 |\n| Total | 299 |\n\nHandover files with Arabic text not listed in `docs/handover/arabic-review.json` (13):\n\n- `docs/handover/README.md`\n- `docs/handover/api/connectors.md`\n- `docs/handover/automation-operations.ar-summary.md`\n- `docs/handover/backup-restore.md`\n- `docs/handover/deployment.ar-summary.md`\n- `docs/handover/guides/admin/ar/admin-guide.md`\n- `docs/handover/guides/user/ar/user-guide.md`\n- `docs/handover/known-limitations.ar-summary.md`\n- `docs/handover/operator-guide.ar-summary.md`\n- `docs/handover/release-notes.md`\n- `docs/handover/role-matrix.md`\n- `docs/handover/security-controls.md`\n- `docs/handover/upgrades.md`\n\n`docs/handover/arabic-review.json` lists 0 file(s) checked by a qualified Arabic reviewer. Every Arabic text not listed there is provisional.\n<!-- generated:provisional-arabic end -->\n\n## 4. Carried from DG6 {#dg6-carry-forward}\n\nThese residuals of DG6 requirement rows are carried here (p7-plan §1.4). Each is a DG6-approved behaviour or an\nunproven clause; none is fixed in this release.\n\n| Source row | Limitation |\n| --- | --- |\n| REQ-S16-007 | The live Keycloak end-to-end sign-in (`mth-test` realm signs in, an `mth-other` token is refused) needs a container runtime, which the agent sandbox does not have (D-049, D-195 Q5, D-197). The delivery orchestrator's container host run (D-243 Q1) ran it on one host in the delivery container: `e2e/identity/keycloak-login` passed 4/4 (D-267, run 3c; the test process ran without the host's proxy variables, ADR-0069 A2.2; logs in `docs/delivery/test-evidence/DG7/orchestrator/host/`, recorded in `docs/delivery/environment.md`). That is one host with registry access through an egress proxy, not air-gapped and not HA, against the synthetic test realm, not Mobily's identity provider"... 8507 more characters,
+    expected: "# Known limitations\n\nThis document lists what this release does not do, what it has not proven, and what Mobily IT must still supply. It is\nfor Mobily IT and the platform's owners. The Arabic summary is\n[known-limitations.ar-summary.md](known-limitations.ar-summary.md). This English text is complete.\n\nAccepting this handover is a decision of Mobily IT, made outside the platform. This package is engineering evidence,\nnot that acceptance.\n\nCompose is a reproducible install and test configuration, not evidence of high-availability readiness.\n\nSections 1–3 are generated by `tools/release/known-limitations.mjs` and must not be edited by hand. Regenerate them\nwith `node tools/release/known-limitations.mjs --protocol-audit <report.json> --write`; `--check` fails when they are\nstale. Sections 4–6 are written by hand.\n\n## 1. Remaining external configuration dependencies {#external-dependencies}\n\n<!-- generated:external-dependencies begin -->\n| Key | Dependency | Status | Owner | What Mobily IT supplies | Source |\n| --- | --- | --- | --- | --- | --- |\n| `corporate-idp` | Corporate identity provider (OIDC sign-in through Mobily's IdP) | `not_verified` | Mobily IT | Issuer URL (https), client ID, client secret (as `OIDC_CLIENT_SECRET_FILE`), redirect URI registration, the `email` and `name` claims, and group → role mapping input | `docs/delivery/environment.md` (Corporate identity provider (OIDC)) |\n| `keycloak-e2e` | Keycloak test-realm end-to-end sign-in (passed 4/4 on one delivery host with a container runtime, D-267; synthetic realm, not Mobily's IdP, not HA) | `not_verified` | Mobily IT | A host with a container runtime, to run the `test-idp` profile | `docs/delivery/environment.md` (Keycloak test realm e2e) |\n| `saml-broker` | SAML identity provider through an OIDC broker | `not_configured` | Mobily IT | The corporate SAML IdP metadata, its signing certificate and rotation, and the attribute mappings for `email` and `name` | `docs/delivery/environment.md` (Brokered SAML) |\n| `object-store` | S3-compatible object store for evidence | `not_verified` | Mobily IT | Endpoint (https), region, a private bucket, an optional key prefix, a least-privilege access key pair as secret references, and the CA if it is corporate | `docs/delivery/environment.md` (IT object store (S3-compatible)) |\n| `smtp-relay` | SMTP relay for the email channel | `not_verified` | Mobily IT | Relay host and port, security mode, optional credentials as secret references, sender address, and the CA if it is corporate | `docs/delivery/environment.md` (SMTP relay) |\n| `enterprise-messaging` | Enterprise messaging channel (no adapter ships in this release) | `not_configured` | Mobily IT | Nothing in this release (no adapter ships) | `docs/delivery/environment.md` (Enterprise messaging) |\n| `corporate-data-source` | Corporate data source for the http_pull connector | `not_verified` | Mobily IT | The source endpoint (https), its credential as a secret reference, the field mapping, and the network route | `docs/delivery/environment.md` (Corporate data source (`http_pull` connector)) |\n| `ai-endpoint` | IT-hosted AI model endpoint for the optional assistant (off by default) | `not_configured` | Mobily IT | The endpoint, model name and credential reference of an IT-approved provider, if Mobily chooses to enable the assistant | `docs/delivery/environment.md` (AI model endpoint (optional assistant)) |\n| `package-registry` | Live package and image registry or IT mirror for builds and image pulls | `not_verified` | Mobily IT | An internal npm registry or mirror for the offline build, and an image registry or mirror for the images of `deploy/images.lock.json` | D-057 |\n| `live-ci` | Live CI execution of deploy/ci/ci.yml | `not_verified` | Mobily IT | A CI runner for `deploy/ci/ci.yml` (copied to `.github/workflows/ci.yml`) | D-058 |\n| `orchestration-target` | Deployment configuration for Mobily's orchestration platform | `not_configured` | Mobily IT | The name of the target orchestration platform. Deployment configuration for Mobily's orchestration platform is to be written when IT names the target. This release ships no such configuration. | D-243 Q12 |\n\nEvery dependency above: Not verified in this release. Mobily IT must supply and test it. The same list is `external-dependencies.json`, which the About screen and the release notes read.\n\nSign-in has been tested only with a synthetic identity provider. Connecting the corporate identity provider is an external dependency.\n<!-- generated:external-dependencies end -->\n\n## 2. Protocol-audit disclosure {#protocol-audit}\n\n<!-- generated:protocol-audit begin -->\nReport: `tools/release/protocol-audit.mjs` 1.0.0, repository head `b2ba3e3f9be95171d761393b6805fcb1ff45257d`, SHA-256 `2b322f4d5006f7fef53d5f6207c65d6aca0608b3b7b3fb8a9f0ef290a7ed8549`, stages DG0, DG1, DG2, DG3, DG4, DG5, DG6, DG7.\n\nThe delivery records of gates DG0–DG6 contain the historic protocol observations listed below, found by the protocol audit. None changed product behaviour. They are disclosed here, and no gate was reopened (decision D-249).\n\n| Check | Requirement | Stage | Result | Hits | Disclosure |\n| --- | --- | --- | --- | --- | --- |\n| C1 concurrency | REQ-DLV-009 | DG5 | HIT | 2 | D-249 H1 |\n| C1 concurrency | REQ-DLV-009 | DG6 | HIT | 1 | D-249 H2 |\n| C2 assignment-contract | REQ-DLV-011 | DG0 | HIT | 49 | D-249 H3 |\n| C2 assignment-contract | REQ-DLV-011 | DG1 | HIT | 16 | D-249 H3 |\n| C2 assignment-contract | REQ-DLV-011 | DG2 | HIT | 39 | D-249 H3 |\n| C2 assignment-contract | REQ-DLV-011 | DG3 | HIT | 14 | D-249 H3 |\n| C2 assignment-contract | REQ-DLV-011 | DG4 | HIT | 11 | D-249 H3 |\n| C2 assignment-contract | REQ-DLV-011 | DG5 | HIT | 6 | D-249 H3 |\n| C2 assignment-contract | REQ-DLV-011 | DG6 | HIT | 14 | D-249 H3, H4 |\n| C2 assignment-contract | REQ-DLV-011 | DG7 | HIT | 27 | not in D-249 (DG7: disclosed by this release's records) |\n| C3 handback-sections | REQ-DLV-012 | DG2 | HIT | 8 | D-249 H5 |\n| C3 handback-sections | REQ-DLV-012 | DG3 | HIT | 3 | D-249 H5 |\n| C3 handback-sections | REQ-DLV-012 | DG4 | HIT | 4 | D-249 H5 |\n| C3 handback-sections | REQ-DLV-012 | DG5 | HIT | 20 | D-249 H5 |\n| C3 handback-sections | REQ-DLV-012 | DG6 | HIT | 13 | D-249 H5 |\n| C3 handback-sections | REQ-DLV-012 | DG7 | HIT | 5 | not in D-249 (DG7: disclosed by this release's records) |\n| C4 file-ownership | REQ-DLV-008 | DG4 | HIT | 24 | D-249 H6 |\n| C4 file-ownership | REQ-DLV-008 | DG5 | HIT | 8 | D-249 H7 |\n| C4 file-ownership | REQ-DLV-008 | DG6 | HIT | 5 | D-249 H7 |\n| C5 historical-first | REQ-DLV-024 | DG1 | HIT | 1 | D-249 H8 |\n| C5 historical-first | REQ-DLV-024 | DG2 | HIT | 1 | D-249 H8 |\n| C5 historical-first | REQ-DLV-024 | DG3 | HIT | 1 | D-249 H8 |\n| C5 historical-first | REQ-DLV-024 | DG4 | HIT | 1 | D-249 H8 |\n| C5 historical-first | REQ-DLV-024 | DG5 | HIT | 1 | D-249 H8 |\n| C5 historical-first | REQ-DLV-024 | DG6 | HIT | 1 | D-249 H8 |\n| C5 historical-first | REQ-DLV-024 | DG7 | HIT | 1 | not in D-249 (DG7: disclosed by this release's records) |\n| C6 progress-updates | REQ-DLV-028; REQ-DLV-012 | DG0 | HIT | 1 | D-249 H9 |\n| C6 progress-updates | REQ-DLV-028; REQ-DLV-012 | DG6 | HIT | 1 | D-249 H10 |\n| C7 three-failed-fixes | REQ-DLV-018 | DG3 | HIT | 1 | D-249 H11 |\n\nAccepted observations reported by the audit:\n\n- C9 stage-continuation, DG0: history-out-of-order, reported as the accepted observation F-DG6-952 (not a new hit; the approved history is not rewritten).\n- C9 stage-continuation, DG5: history-out-of-order, reported as the accepted observation F-DG6-952 (not a new hit; the approved history is not rewritten).\n<!-- generated:protocol-audit end -->\n\n## 3. Provisional Arabic {#provisional-arabic}\n\n<!-- generated:provisional-arabic begin -->\n| Provisional Arabic UI label file | Entries |\n| --- | --- |\n| `apps/web/src/i18n/provisional-ar-p6.ts` | 79 |\n| `apps/web/src/i18n/provisional-ar-p7-release.ts` | 67 |\n| `apps/web/src/i18n/provisional-ar-p7-retention.ts` | 146 |\n| `apps/web/src/i18n/provisional-ar-p7-transfer.ts` | 35 |\n| `apps/web/src/i18n/provisional-ar-p7.ts` | 71 |\n| `apps/web/src/components/assistant/provisional-ar.ts` | 19 |\n| `apps/web/src/components/compare/provisional-ar.ts` | 3 |\n| `apps/web/src/components/saved-views/provisional-ar.ts` | 10 |\n| `apps/web/src/pages/integrations/provisional-ar.ts` | 14 |\n| `apps/web/src/pages/my-work/provisional-ar.ts` | 1 |\n| Total | 445 |\n\nHandover files with Arabic text not listed in `docs/handover/arabic-review.json` (13):\n\n- `docs/handover/README.md`\n- `docs/handover/api/connectors.md`\n- `docs/handover/automation-operations.ar-summary.md`\n- `docs/handover/backup-restore.md`\n- `docs/handover/deployment.ar-summary.md`\n- `docs/handover/guides/admin/ar/admin-guide.md`\n- `docs/handover/guides/user/ar/user-guide.md`\n- `docs/handover/known-limitations.ar-summary.md`\n- `docs/handover/operator-guide.ar-summary.md`\n- `docs/handover/release-notes.md`\n- `docs/handover/role-matrix.md`\n- `docs/handover/security-controls.md`\n- `docs/handover/upgrades.md`\n\n`docs/handover/arabic-review.json` lists 0 file(s) checked by a qualified Arabic reviewer. Every Arabic text not listed there is provisional.\n<!-- generated:provisional-arabic end -->\n\n## 4. Carried from DG6 {#dg6-carry-forward}\n\nThese residuals of DG6 requirement rows are carried here (p7-plan §1.4). Each is a DG6-approved behaviour or an\nunproven clause; none is fixed in this release.\n\n| Source row | Limitation |\n| --- | --- |\n| REQ-S16-007 | The live Keycloak end-to-end sign-in (`mth-test` realm signs in, an `mth-other` token is refused) needs a container runtime, which the agent sandbox does not have (D-049, D-195 Q5, D-197). The delivery orchestrator's container host run (D-243 Q1) ran it on one host in the delivery container: `e2e/identity/keycloak-login` passed 4/4 (D-267, run 3c; the test process ran without the host's proxy variables, ADR-0069 A2.2; logs in `docs/delivery/test-evidence/DG7/orchestrator/host/`, recorded in `docs/deli"... 8684 more characters,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tools/release/tests/check-handover.test.mjs:497:3
+✖ the full check on the real tree never FAILs; with MTH_STRICT_HANDOVER=1 (the freeze) it must PASS (4636.761512ms)
+  AssertionError [ERR_ASSERTION]: check-handover: index: PASS
+  check-handover: deployment: PASS
+    note: guide-keys.json: 10 anchors checked
+  check-handover: summaries: PASS
+    warning: docs/handover/backup-restore.md l.206: the Arabic section 'ملخص باللغة العربية (Arabic summary)' lacks the H.3 provisional line under its heading (§2.3)
+    warning: docs/handover/release-notes.md l.206: the Arabic section 'هوية الإصدار' lacks the H.3 provisional line under its heading (§2.3)
+    warning: docs/handover/release-notes.md l.212: the Arabic section 'المتطلبات حسب الحالة' lacks the H.3 provisional line under its heading (§2.3)
+    warning: docs/handover/release-notes.md l.221: the Arabic section 'البنود غير المكتملة وعوائق الإصدار' lacks the H.3 provisional line under its heading (§2.3)
+    warning: docs/handover/release-notes.md l.225: the Arabic section 'بنود تكتمل بعد البوابة الهندسية' lacks the H.3 provisional line under its heading (§2.3)
+    warning: docs/handover/release-notes.md l.229: the Arabic section 'تبعيات الإعداد الخارجية المتبقية' lacks the H.3 provisional line under its heading (§2.3)
+    warning: docs/handover/release-notes.md l.233: the Arabic section 'النصوص العربية المؤقتة' lacks the H.3 provisional line under its heading (§2.3)
+    warning: docs/handover/upgrades.md l.227: the Arabic section '6. Arabic summary (provisional, D-243 Q7)' lacks the H.3 provisional line under its heading (§2.3)
+  check-handover: security-links: PASS
+  check-handover: guides: PASS
+  check-handover: generated: FAIL
+    FAIL: known-limitations: FAIL: docs/handover/known-limitations.md differ from the generated content; run node tools/release/known-limitations.mjs --protocol-audit <report> --write
+    note: role-matrix.mjs: role-matrix: PASS (/var/tmp/mth-run.tNL2Tr/claude-0/rv/docs/handover/role-matrix.md is current)
+    note: automation-jobs.mjs: automation-jobs: PASS (the job table of /var/tmp/mth-run.tNL2Tr/claude-0/rv/docs/handover/automation-operations.md is current)
+  check-handover: FAIL (index PASS, deployment PASS, summaries PASS, security-links PASS, guides PASS, generated FAIL; root .)
+  
+      at TestContext.<anonymous> (file:///var/tmp/mth-run.tNL2Tr/claude-0/rv/tools/release/tests/check-handover.test.mjs:500:17)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Suite.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 1,
+    operator: 'notStrictEqual',
+    diff: 'simple'
+  }
+probeA exit=1
+### probe B: shipped known-limitations.md with a tampered protocol-audit SHA (no such report)
+ docs/handover/known-limitations.md | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+▶ T-H1: the handover index
+  ✔ on the real tree: no FAIL; anything BLOCKED is a file written later in this release (14.568177ms)
+  ✔ maps each of the seven REQ-S19-015 items, and has the security-controls.md line (D-247 O3) (0.51829ms)
+  ✔ passes on a fixture once the pending files exist (58.281698ms)
+  ✔ fails for a file the index does not list (52.99388ms)
+  ✔ fails for an index line whose file does not exist (33.582872ms)
+  ✔ fails without the security-controls.md line, and for an unmapped item (20.550438ms)
+  ✔ reports a missing release-notes.md as BLOCKED, never as a pass (9.330061ms)
+  ✔ refuses an unknown archive path (8.97288ms)
+✔ T-H1: the handover index (201.815435ms)
+▶ T-H2 and T-B14: the deployment guide
+  ✔ on the real tree: no FAIL; only guide-keys.json may be BLOCKED (DO-D has not written it yet) (7.449233ms)
+  ✔ holds the seven anchors, the B.5 texts, the redirect URI, the service map and the orchestration target (0.88005ms)
+  ✔ fails when the section #domains-and-tls is missing (12.906808ms)
+  ✔ fails when the section #corporate-sso-mapping is missing (16.314983ms)
+  ✔ fails when the section #service-accounts is missing (30.439538ms)
+  ✔ fails when the section #secrets is missing (31.67743ms)
+  ✔ fails when the section #network-boundaries is missing (31.541466ms)
+  ✔ fails when the section #logging is missing (22.462903ms)
+  ✔ fails when the section #monitoring is missing (26.087789ms)
+  ✔ fails for an empty section and for a section that names no source (13.240411ms)
+  ✔ fails without the HA statement or the sub-path text (16.042099ms)
+  ✔ fails for a template key the guide does not index, and for a Compose service the map does not name (19.790676ms)
+  ✔ checks every anchor guide-keys.json cites: present → PASS, absent → FAIL (12.652675ms)
+  ✔ indexes every .env.example key with an existing anchor (4.729696ms)
+✔ T-H2 and T-B14: the deployment guide (247.365177ms)
+▶ T-H4: known limitations
+  ✖ the report the shipped file names (by SHA-256) is in the delivery records (1.519787ms)
+  ✖ known-limitations.mjs --check exits 0 on the tree with the report the shipped file was generated from (178.674886ms)
+  ✔ names every carried row id of p7-plan §1.4 and every P7 ADR (ADR-0062 to ADR-0073) (0.776943ms)
+  ✖ the protocol-audit block equals the one generated from the report, with the D-249 statement (0.21257ms)
+  ✖ a changed report fails --check (exit 1) (0.407096ms)
+  ✖ --write on a fixture copy regenerates a hand-damaged block, and --check then passes (141.321762ms)
+  ✖ refuses an environment table row it does not know, or a known row that is missing (exit 2) (226.054492ms)
+  ✔ refuses a report that is not a protocol-audit report, and runs without one only as BLOCKED (5056.877627ms)
+  ✔ external-dependencies.json is the contract's ExternalDependency array, and the guide block lists the same keys (1.689423ms)
+  ✔ keycloak-e2e records the D-267 host run: not_verified (not blocked, not Mobily's IdP), and §4 no longer says it never ran (0.58711ms)
+  ✔ arabic-review.json ships empty, and the provisional block lists every Arabic handover file (5.980865ms)
+✖ T-H4: known limitations (5615.167657ms)
+▶ T-H7: Arabic summaries of the IT and operator documents
+  ✔ on the real tree: PASS (10.102479ms)
+  ✔ fails without the provisional line under the first heading (110.11364ms)
+  ✔ does not require the line for a file arabic-review.json lists (23.976054ms)
+  ✔ fails for a missing summary page, a missing section, or an operator summary without the upgrade guide (81.138607ms)
+  ✔ fails when an Arabic B.5 text of the deployment summary is not verbatim (13.050751ms)
+✔ T-H7: Arabic summaries of the IT and operator documents (238.814836ms)
+▶ T-H8: security-controls guide links (D-247 O5)
+  ✔ HR-01, HR-02, HR-04 and HR-06 link existing deployment.md anchors, and HR-04 the backup guide (0.862401ms)
+  ✔ fails for a link to a missing anchor, and for HR-04 without the backup guide (9.425155ms)
+  ✔ DO-B's matrix test (T-G7) still passes (73.091089ms)
+✔ T-H8: security-controls guide links (D-247 O5) (83.641771ms)
+▶ T-H9 and T-I14: scans over the handover, and the candidate manifest
+  ✔ the secret scan over docs/handover reports nothing (479.477927ms)
+  ✔ the claims scan (docs/handover/** in its scope) reports nothing (14728.655023ms)
+  ✔ every file under docs/handover/ is in the candidate manifest, so the payload scan covers it (T-I14) (1883.778407ms)
+✔ T-H9 and T-I14: scans over the handover, and the candidate manifest (17092.22953ms)
+▶ T-H5 checker logic (DOC-A runs it on the real guides)
+  ✔ no guides yet → BLOCKED (exit 2), never a pass (206.353931ms)
+  ✔ matching en/ar pairs with known screen paths pass (5.344297ms)
+  ✔ fails for a missing ar file, a heading or anchor mismatch, a missing marker and an unknown screen path (4.344085ms)
+  ✔ route matching: parameters match one segment; API paths are not screens (0.977825ms)
+✔ T-H5 checker logic (DOC-A runs it on the real guides) (217.288229ms)
+▶ check-handover exit codes
+  ✔ FAIL wins over BLOCKED, BLOCKED over PASS (16.002578ms)
+  ✔ a usage error is BLOCKED (exit 2) (402.434552ms)
+  ✔ the full check on the real tree never FAILs; with MTH_STRICT_HANDOVER=1 (the freeze) it must PASS (5790.754473ms)
+✔ check-handover exit codes (6209.632797ms)
+ℹ tests 51
+ℹ suites 8
+ℹ pass 45
+ℹ fail 6
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 34483.597301
+
+✖ failing tests:
+
+test at tools/release/tests/check-handover.test.mjs:249:3
+✖ the report the shipped file names (by SHA-256) is in the delivery records (1.519787ms)
+  AssertionError [ERR_ASSERTION]: no protocol-audit*.json under docs/delivery has SHA-256 deadbeef5006f7fef53d5f6207c65d6aca0608b3b7b3fb8a9f0ef290a7ed8549
+      at TestContext.<anonymous> (file:///var/tmp/mth-run.tNL2Tr/claude-0/rv/tools/release/tests/check-handover.test.mjs:250:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at node:internal/test_runner/test:1903:71
+      at node:internal/per_context/primordials:504:82
+      at new Promise (<anonymous>)
+      at new SafePromise (node:internal/per_context/primordials:478:3)
+      at node:internal/per_context/primordials:504:9
+      at Array.map (<anonymous>) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tools/release/tests/check-handover.test.mjs:253:3
+✖ known-limitations.mjs --check exits 0 on the tree with the report the shipped file was generated from (178.674886ms)
+  AssertionError [ERR_ASSERTION]: known-limitations: BLOCKED: protocol-audit report not found: /var/tmp/mth-run.tNL2Tr/claude-0/rv/docs/delivery/<missing protocol-audit report>.json
+  usage: node tools/release/known-limitations.mjs --protocol-audit <report.json> [--root <dir>] [--environment <file>] [--guide <file>] [--deps <file>] [--review <file>] (--check | --write)
+  
+  
+  2 !== 0
+  
+      at TestContext.<anonymous> (file:///var/tmp/mth-run.tNL2Tr/claude-0/rv/tools/release/tests/check-handover.test.mjs:255:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Suite.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Promise.all (index 0)
+      at async Suite.run (node:internal/test_runner/test:1905:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tools/release/tests/check-handover.test.mjs:267:3
+✖ the protocol-audit block equals the one generated from the report, with the D-249 statement (0.21257ms)
+  Error: ENOENT: no such file or directory, open '/var/tmp/mth-run.tNL2Tr/claude-0/rv/docs/delivery/<missing protocol-audit report>.json'
+      at Object.openSync (node:fs:621:18)
+      at readFileSync (node:fs:487:35)
+      at TestContext.<anonymous> (file:///var/tmp/mth-run.tNL2Tr/claude-0/rv/tools/release/tests/check-handover.test.mjs:268:19)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Suite.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'open',
+    path: '/var/tmp/mth-run.tNL2Tr/claude-0/rv/docs/delivery/<missing protocol-audit report>.json'
+  }
+
+test at tools/release/tests/check-handover.test.mjs:277:3
+✖ a changed report fails --check (exit 1) (0.407096ms)
+  Error: ENOENT: no such file or directory, open '/var/tmp/mth-run.tNL2Tr/claude-0/rv/docs/delivery/<missing protocol-audit report>.json'
+      at readFileSync (node:fs:483:20)
+      at TestContext.<anonymous> (file:///var/tmp/mth-run.tNL2Tr/claude-0/rv/tools/release/tests/check-handover.test.mjs:280:26)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Suite.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'open',
+    path: '/var/tmp/mth-run.tNL2Tr/claude-0/rv/docs/delivery/<missing protocol-audit report>.json'
+  }
+
+test at tools/release/tests/check-handover.test.mjs:288:3
+✖ --write on a fixture copy regenerates a hand-damaged block, and --check then passes (141.321762ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  2 !== 1
+  
+      at TestContext.<anonymous> (file:///var/tmp/mth-run.tNL2Tr/claude-0/rv/tools/release/tests/check-handover.test.mjs:295:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Suite.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tools/release/tests/check-handover.test.mjs:301:3
+✖ refuses an environment table row it does not know, or a known row that is missing (exit 2) (226.054492ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /BLOCKED: .*Mail relay/. Input:
+  
+  'known-limitations: BLOCKED: protocol-audit report not found: /var/tmp/mth-run.tNL2Tr/claude-0/rv/docs/delivery/<missing protocol-audit report>.json\n' +
+    'usage: node tools/release/known-limitations.mjs --protocol-audit <report.json> [--root <dir>] [--environment <file>] [--guide <file>] [--deps <file>] [--review <file>] (--check | --write)\n'
+  
+      at TestContext.<anonymous> (file:///var/tmp/mth-run.tNL2Tr/claude-0/rv/tools/release/tests/check-handover.test.mjs:311:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Suite.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'known-limitations: BLOCKED: protocol-audit report not found: /var/tmp/mth-run.tNL2Tr/claude-0/rv/docs/delivery/<missing protocol-audit report>.json\nusage: node tools/release/known-limitations.mjs --protocol-audit <report.json> [--root <dir>] [--environment <file>] [--guide <file>] [--deps <file>] [--review <file>] (--check | --write)\n',
+    expected: /BLOCKED: .*Mail relay/,
+    operator: 'match',
+    diff: 'simple'
+  }
+probeB exit=1

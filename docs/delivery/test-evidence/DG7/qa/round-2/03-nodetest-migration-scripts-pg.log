@@ -1,0 +1,59 @@
+Sun Nov 15 16:01:17 UTC 2026
+$ QA_PG_PORT=32550 MTH_PORT_POOL=32551-32559 tests/qa/support/with-pg.sh node --test tools/migration/tests/*.test.mjs apps/api/scripts/*.test.mjs
+port-policy: PostgreSQL listening on port 32550 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+▶ T-I1: the snapshot of the tree's register equals the file
+  ✔ exits 0 with the I.3 line (4.692094ms)
+  ✔ rowCount, ids in order, sourceSha256 and every field byte for byte (multi-line fields included) (20.162393ms)
+  ✔ the record count equals an independent count of the file's record starts (209.698406ms)
+  ✔ a register with multi-line, quoted and comma fields: the same parity, field by field (119.570849ms)
+  ✔ generatedAt follows SOURCE_DATE_EPOCH (480.502004ms)
+✔ T-I1: the snapshot of the tree's register equals the file (836.237606ms)
+▶ T-I2: --check
+  ✔ exits 0 on a fresh snapshot and 1 with the I.3 line after one byte of the register changes (359.784569ms)
+✔ T-I2: --check (360.060619ms)
+▶ T-I3: refusals
+  ✔ header (136.74812ms)
+  ✔ field count (201.652586ms)
+  ✔ id (143.091487ms)
+  ✔ id pattern (140.318309ms)
+  ✔ duplicate (83.471524ms)
+  ✔ class (104.576313ms)
+  ✔ status (99.408744ms)
+  ✔ final gate (54.648755ms)
+  ✔ unterminated quote (197.861613ms)
+  ✔ byte order mark (116.177153ms)
+  ✔ a record's line is the line it starts on, after a multi-line field (114.213129ms)
+  ✔ a missing --csv file -> exit 2 BLOCKED; a usage error -> exit 2 (289.966204ms)
+  ✔ --deps absent or naming no file -> externalDependencies null (never []) (370.227973ms)
+  ✔ a valid dependency list is carried; an invalid entry -> exit 1 (371.341688ms)
+✔ T-I3: refusals (2425.245979ms)
+▶ parseRegister and buildSnapshot (exports)
+  ✔ keeps quoted commas, doubled quotes and CRLF inside a field as LF, untrimmed (0.505075ms)
+✔ parseRegister and buildSnapshot (exports) (0.62512ms)
+▶ T-R16: the register snapshot passes the T1 asset scan (A2.8)
+  ✔ the snapshot of the tree's register has no T1 finding (530.009039ms)
+  ✔ a SYNTHETIC register with a planted build-host path fails and names the row, the column and R2 (337.243121ms)
+✔ T-R16: the register snapshot passes the T1 asset scan (A2.8) (867.476455ms)
+▶ T-R18: prepare-target.mjs
+  ✔ requires --from (exit 2 with the C.13 line) (55.204005ms)
+  ✔ runs mth-db migrate --reserve-audit-seq-for <dir> and passes the child's exit code and lines through (986.527515ms)
+✔ T-R18: prepare-target.mjs (1046.872903ms)
+▶ T-R18: import.mjs
+  ✔ copy-in, then verify --out, then import-migration --attachments-report; no report left behind (576.793368ms)
+  ✔ --keep-reports <dir> keeps the verify report; without it none is left, also after a failed import (1418.805721ms)
+  ✔ a package without attachments runs no copy-in or verify and passes no report (251.84092ms)
+✔ T-R18: import.mjs (2247.93844ms)
+▶ T-R18: reconcile.mjs --from
+  ✔ runs verify exactly when the package lists attachments, and passes mode 2 flags through (576.802637ms)
+✔ T-R18: reconcile.mjs --from (577.318843ms)
+ℹ tests 29
+ℹ suites 8
+ℹ pass 29
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5017.685002
+EXIT 0
+Sun Nov 15 16:01:23 UTC 2026

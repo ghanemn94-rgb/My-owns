@@ -1,0 +1,18 @@
+$ grep -n -A8 'Unresolved blockers' docs/delivery/progress.md (HEAD abc7254f6)
+45:## Unresolved blockers
+46-
+47-_(Historical, superseded 2026-11-15, F-DG7-955: this section dates from DG3. Current state: DG0–DG6 APPROVED; DG7 open findings and blockers are listed in the checkpoint at the top and in `findings.json`.)_ DG0, DG1, DG2 and DG3 were APPROVED on this branch at the time, and `--pipeline` exited 0. (The kwcc4i branch's `validate.mjs --stage DG1` reports the three documented historical write-once-record artifacts from D-056; this clean branch does not carry them.)
+48-
+49-## D-191 (2026-10-25, delivery-orchestrator; recorded here because decisions.md is a frozen candidate file until the DG5 gate is decided, D-190)
+50-
+51-**Corrected re-gate round 1 on candidate `ff3bc2c4`: domain, code-security and qa all PASS.** code-security raised **F-DG5-100** (Medium, not mandatory: DOCX and PPTX exports are not well-formed XML 1.0 when accepted user text holds a C0 control character, and the job still reports succeeded); qa raised **F-DG5-140** (Low: at branding version 0 the Arabic export header prints the English product name). domain raised none.
+52-**Decision:** a Medium finding cannot be accepted, so both are repaired in **T-DG5-BE-RG3** (backend), recorded with `import-findings --fix` and the full merge commit, followed by a full merged-tree verification including e2e in both locale settings, a re-freeze, round 2 with all three reviewers, and the release audit per D-140 option 1. D-191 is copied into `decisions.md` only after the gate is decided.
+53-
+54-## D-191 follow-up (2026-10-26): merged-tree verification of 7bb7d93
+55-
+--- is progress.md a manifest entry?
+0
+--- git log progress.md
+f22c97b59 DG7: D-273 round-1 repairs integrated; findings FIXED_PENDING_VERIFICATION
+709d7a1a3 DG7 round 1 findings: environment.md stale connector rows (F-DG7-914), progress.md stale blocker section (F-DG7-955); repair assignments FE-C2, BE-R6, DO-K2
+8f7940194 DG7: freeze round 1 (candidate df8225e5, D-271) + round-1 review assignments

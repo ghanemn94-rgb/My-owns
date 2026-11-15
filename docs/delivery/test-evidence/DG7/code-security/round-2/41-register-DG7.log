@@ -1,0 +1,40 @@
+# 2026-11-15T14:35:21Z validate.mjs --register DG7 on the live repository (HEAD abc7254f6; requirements.csv is a candidate file, unchanged by the freeze commit)
+FAIL register rules at DG7 (18 problems)
+  - requirements.csv REQ-DLV-005: final gate DG7 requires IMPLEMENTED at DG7 (is SPECIFIED)
+  - requirements.csv REQ-DLV-008: final gate DG7 requires IMPLEMENTED at DG7 (is SPECIFIED)
+  - requirements.csv REQ-DLV-011: final gate DG7 requires IMPLEMENTED at DG7 (is SPECIFIED)
+  - requirements.csv REQ-DLV-012: final gate DG7 requires IMPLEMENTED at DG7 (is SPECIFIED)
+  - requirements.csv REQ-DLV-014: final gate DG7 requires IMPLEMENTED at DG7 (is SPECIFIED)
+  - requirements.csv REQ-DLV-018: final gate DG7 requires IMPLEMENTED at DG7 (is SPECIFIED)
+  - requirements.csv REQ-DLV-024: final gate DG7 requires IMPLEMENTED at DG7 (is SPECIFIED)
+  - requirements.csv REQ-DLV-028: final gate DG7 requires IMPLEMENTED at DG7 (is SPECIFIED)
+  - requirements.csv REQ-DLV-030: final gate DG7 requires IMPLEMENTED at DG7 (is SPECIFIED)
+  - requirements.csv REQ-DLV-031: final gate DG7 requires IMPLEMENTED at DG7 (is SPECIFIED)
+  - requirements.csv REQ-DLV-039: final gate DG7 requires IMPLEMENTED at DG7 (is SPECIFIED)
+  - requirements.csv REQ-DLV-040: final gate DG7 requires IMPLEMENTED at DG7 (is SPECIFIED)
+  - requirements.csv REQ-S02-005: final gate DG7 requires IMPLEMENTED at DG7 (is SPECIFIED)
+  - requirements.csv REQ-S19-015: final gate DG7 requires IMPLEMENTED at DG7 (is SPECIFIED)
+  - requirements.csv REQ-S20-031: final gate DG7 requires IMPLEMENTED at DG7 (is SPECIFIED)
+  - requirements.csv REQ-S21-002: final gate DG7 requires IMPLEMENTED at DG7 (is SPECIFIED)
+  - requirements.csv REQ-S21-003: final gate DG7 requires IMPLEMENTED at DG7 (is SPECIFIED)
+  - requirements.csv REQ-S21-004: final gate DG7 requires IMPLEMENTED at DG7 (is SPECIFIED)
+exit=1
+== git diff f22c97b59 HEAD -- docs/delivery/requirements.csv | wc -l: 0
+== META_EXCLUDES (tools/gates/lib/candidate.mjs l.9-20)
+export const META_EXCLUDES = [
+  "docs/delivery/reviews/**",
+  "docs/delivery/gates/**",
+  "docs/delivery/test-evidence/**",
+  "docs/delivery/runs/**",
+  "docs/delivery/candidates/**",
+  "docs/delivery/handbacks/**",
+  "docs/delivery/assignments/**",
+  "docs/delivery/findings.json",
+  "docs/delivery/progress.md",
+  "docs/delivery/stages.json",
+];
+
+== the rule (tools/gates/lib/rules.mjs l.219-221)
+    if (fg >= 0 && fg <= gateIdx && row.status !== "IMPLEMENTED") {
+      errors.push(`${where}: final gate ${row.final_gate} requires IMPLEMENTED at ${stageId} (is ${row.status})`);
+    }

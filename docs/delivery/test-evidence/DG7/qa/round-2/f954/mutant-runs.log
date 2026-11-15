@@ -1,0 +1,131 @@
+===== M0-control (Sun Nov 15 14:36:18 UTC 2026)
+093ebfcb18e110a670e654e07f1bbe2dcac530fe3dbba267aa6a7e9d837063ce  apps/api/src/modules/organization/routes.ts
+port-policy: PostgreSQL listening on port 32580 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.3OfkU0/claude-0/mut
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwhxtq35_2795aa16 (server_encoding UTF8); applied 135 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/organizations.test.ts (15 tests) 6901ms
+   ✓ organizations > updates with If-Match (technical admin), 403 for a business role, 404 across organizations; audited  406ms
+   ✓ organizations > creates an organization (organization.manage) and carries over only the creator's technical-admin roles  598ms
+   ✓ business units > lists the organization's units for readers and 404s other organizations  349ms
+   ✓ business units > limits nesting depth (400 on create, per the contract)  376ms
+
+ Test Files  1 passed (1)
+      Tests  15 passed (15)
+   Start at  14:36:23
+   Duration  115.34s (transform 61.82s, setup 0ms, collect 94.16s, tests 6.90s, environment 0ms, prepare 202ms)
+
+EXIT 0 M0-control
+===== M1-both-read (Sun Nov 15 14:38:28 UTC 2026)
+9a367b504862efb75fb22e769c6ef0f9ff758d1bcd0ca200879ff08c039bda42  apps/api/src/modules/organization/routes.ts
+ .../claude-0/{rv => mut}/apps/api/src/modules/organization/routes.ts  | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+[31m+ Received[39m
+
+[32m- 403[39m
+[31m+ 200[39m
+
+ ❯ apps/api/test/integration/organizations.test.ts:284:26
+    282|         body: { nameEn: `renamed-by-${who}`, nameAr: "تغيير", status: …
+    283|       });
+    284|       expect(res.status).toBe(403);
+       |                          ^
+    285|       const after = await unit(w.a1);
+    286|       expect([after.version, after.name_en, after.name_ar, after.statu…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  |integration| apps/api/test/integration/organizations.test.ts > business unit update authorization (business_unit.manage, not business_unit.read) > split grant: manage on the destination (a2) but only read on the moved unit (a1x) cannot re-parent it (403)
+AssertionError: expected 200 to be 403 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 403[39m
+[31m+ 200[39m
+
+ ❯ apps/api/test/integration/organizations.test.ts:317:24
+    315|       body: { parentBusinessUnitId: w.a2 },
+    316|     });
+    317|     expect(res.status).toBe(403);
+       |                        ^
+    318|     const after = await unit(w.a1x);
+    319|     expect([after.version, after.parent_business_unit_id]).toEqual([be…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 11 passed (15)
+   Start at  14:38:35
+   Duration  42.02s (transform 12.39s, setup 0ms, collect 29.32s, tests 3.28s, environment 0ms, prepare 179ms)
+
+EXIT 1 M1-both-read
+===== M2-route-only (Sun Nov 15 14:39:23 UTC 2026)
+cb0350941788bdc93fe8184b44f8140e9e0779788a363394d54fc093556e3744  apps/api/src/modules/organization/routes.ts
+ .../claude-0/{rv => mut}/apps/api/src/modules/organization/routes.ts    | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+port-policy: PostgreSQL listening on port 32582 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.3OfkU0/claude-0/mut
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwhxxq65_20c4eed3 (server_encoding UTF8); applied 135 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/organizations.test.ts (15 tests) 4922ms
+   ✓ business units > limits nesting depth (400 on create, per the contract)  364ms
+
+ Test Files  1 passed (1)
+      Tests  15 passed (15)
+   Start at  14:39:30
+   Duration  42.88s (transform 11.06s, setup 0ms, collect 27.90s, tests 4.92s, environment 0ms, prepare 171ms)
+
+EXIT 0 M2-route-only
+===== M3-requireAction-only (Sun Nov 15 14:40:19 UTC 2026)
+e0a38d7aca0441c29bcd09635ce1d4a5336f0763a3b2061adcbbbe6f3d086ca3  apps/api/src/modules/organization/routes.ts
+ .../claude-0/{rv => mut}/apps/api/src/modules/organization/routes.ts    | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+[31m+ Received[39m
+
+[32m- 403[39m
+[31m+ 200[39m
+
+ ❯ apps/api/test/integration/organizations.test.ts:284:26
+    282|         body: { nameEn: `renamed-by-${who}`, nameAr: "تغيير", status: …
+    283|       });
+    284|       expect(res.status).toBe(403);
+       |                          ^
+    285|       const after = await unit(w.a1);
+    286|       expect([after.version, after.name_en, after.name_ar, after.statu…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  |integration| apps/api/test/integration/organizations.test.ts > business unit update authorization (business_unit.manage, not business_unit.read) > split grant: manage on the destination (a2) but only read on the moved unit (a1x) cannot re-parent it (403)
+AssertionError: expected 200 to be 403 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 403[39m
+[31m+ 200[39m
+
+ ❯ apps/api/test/integration/organizations.test.ts:317:24
+    315|       body: { parentBusinessUnitId: w.a2 },
+    316|     });
+    317|     expect(res.status).toBe(403);
+       |                        ^
+    318|     const after = await unit(w.a1x);
+    319|     expect([after.version, after.parent_business_unit_id]).toEqual([be…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 11 passed (15)
+   Start at  14:40:26
+   Duration  51.67s (transform 12.42s, setup 0ms, collect 31.40s, tests 4.87s, environment 0ms, prepare 90ms)
+
+EXIT 1 M3-requireAction-only
+===== restored
+routes.ts byte-equal to candidate

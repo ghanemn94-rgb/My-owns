@@ -1,0 +1,37 @@
+# 2026-11-15T15:27:56Z F-DG7-913 inspection at HEAD 98c4e94bb
+== router: retention routes and their elements
+154:  import("../pages/admin/retention/RetentionPages.tsx").then((m) => m.RetentionPage),
+157:  import("../pages/admin/retention/RetentionPages.tsx").then((m) => m.RetentionClassPage),
+160:  import("../pages/admin/retention/RetentionPages.tsx").then((m) => m.RetentionRunPage),
+163:  import("../pages/admin/retention/RetentionPages.tsx").then((m) => m.RetentionArchivedPage),
+166:  import("../pages/admin/retention/RetentionPages.tsx").then((m) => m.BackupSetsPage),
+637:  { path: "admin/retention", feature: "retention", owner: "FE-C" },
+638:  { path: "admin/retention/classes/:retentionClassCode", feature: "retentionClass", owner: "FE-C" },
+639:  { path: "admin/retention/runs/:retentionRunId", feature: "retentionRun", owner: "FE-C" },
+640:  { path: "admin/retention/archived", feature: "retentionArchived", owner: "FE-C" },
+641:  { path: "admin/retention/backups", feature: "backupSets", owner: "FE-C" },
+650:  "admin/retention",
+651:  "admin/retention/classes/:retentionClassCode",
+652:  "admin/retention/runs/:retentionRunId",
+653:  "admin/retention/archived",
+654:  "admin/retention/backups",
+690:  "admin/retention": <RetentionPage />,
+691:  "admin/retention/classes/:retentionClassCode": <RetentionClassPage />,
+692:  "admin/retention/runs/:retentionRunId": <RetentionRunPage />,
+693:  "admin/retention/archived": <RetentionArchivedPage />,
+694:  "admin/retention/backups": <BackupSetsPage />,
+== placeholder wording in the spec and pages (expect none)
+apps/web/e2e/p7-retention.spec.ts:9://  - it renders from the API: its `data-p7-screen` root, never the placeholder (`data-p7-feature`), no loading spinner;
+apps/web/e2e/p7-retention.spec.ts:173:  await expect(page.locator("[data-p7-feature]"), `${name}: not the placeholder`).toHaveCount(0);
+grep exit=0
+== spec titles
+203:test("T-E25 Retention (ADM_TECH): classes, change form, run form, archived, backups, run 404", async ({
+308:test("T-E25 Retention (AUD): read-only class, no run form, backups readable", async ({ page, playwright }, info) => {
+== REQ-S16-024 notes tail
+ily IT. Disclosed: a run stuck in 'running' has no API to end it (D-256), archive sets go to the filesystem root even with an S3 driver. DG7 analyst pass 5 (T-DG7-AN-P7E, base 7e5ff626b, 2026-11-15), F-DG7-913: correction of pass 1. Its 'Administration > Retention by FE-C' was not true. At that base the five admin/retention routes were placeholders (router.tsx P7 planned routes; p7-retention.spec.ts asserted the 'being-built' state), and the cited FE-C pnpm-test.log tested no Retention screen, so that citation is removed from evidence. FE-C2 (handback T-DG7-FE-C2, base 16b2bdd35, committed at 4e8676de2) built the five p7-work-split §E.6 screens on the existing API: Retention (classes; runs and dry runs, each with a reason and an Idempotency-Key); Retention class (a change form for retention.configure holders on an operational class no job manages, sent as PUT with If-Match, with a 409 conflict panel and the 422 problem text; a NULL period shows 'Not set (IT to agree)', never 0; the IT approval reference is labelled as a reference, and saving it approves nothing); Retention run (the per-record action log); Archived records; and Backup sets (read-only). P7_PLANNED_ROUTES is now empty. Run: retention-screens.test.tsx 20/20 (T-E23, T-E24) within pnpm test, exit 0; p7-retention.spec.ts (T-E25) on the real stack in chromium-en and chromium-ar, 4 passed, exit 0 (axe reports 0 violations on these screens at 1280 and 360 px; a measurement only); contract plus retention integration on a disposable PostgreSQL, 128/128, exit 0. Server enforcement and the archival job are unchanged (BE-G). Gaps FE-C2 states, kept open here: (1) the e2e stack starts no worker, so no dry run or run is queued on the real stack; the run POSTs, the Idempotency-Key and the 422 are covered by component tests (and BE-G's runs.test.ts), and a run's detail screen is checked on the real stack only in its 404 state; (2) the 409 conflict path is component-tested only, not on the real stack; (3) 146 Arabic leaves are provisional, and the 122 FE-C2 wrote are not checked by a qualified Arabic reviewer (D-243 Q7); (4) A22 as a whole is qa-verifier's acceptance test and FE-C2 did not run it (see REQ-S20-022); (5) the inbox-effect text is component-tested only. The repaired tree has no full integration or e2e run yet; the binding re-run is the freeze verification for round 2. F-DG7-913 stays OPEN until a non-author reviewer verifies it.
+== known-limitations / release-notes mentions of Retention
+docs/handover/known-limitations.md:90:| `apps/web/src/i18n/provisional-ar-p7-retention.ts` | 146 |
+docs/handover/known-limitations.md:142:| D-253 | Evidence held in the S3-compatible store is not exported in a migration package, and the retention job reads the filesystem store only. |
+docs/handover/known-limitations.md:144:| D-253 | A retention run stuck in `running` has no operation that ends it (needs an ADR-0067 decision). |
+docs/handover/known-limitations.md:166:| ADR-0067 | Retention periods are placeholders ("not set (IT to agree)"); archived rows are not restored into live tables; business records cannot be archived; pg-boss keeps its own job retention; run scale unproven. |
+docs/handover/release-notes.md:188:| `apps/web/src/i18n/provisional-ar-p7-retention.ts` | 146 |
