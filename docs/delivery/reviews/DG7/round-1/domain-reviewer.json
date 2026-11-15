@@ -1,0 +1,466 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG7",
+  "round": 1,
+  "candidate_id": "sha256:df8225e537de3575c059fa05ef16d1d87530e3c36854c8dfc8c4ec9e2439f944",
+  "source_commit": "a60a962dd9205c21df19de63b73a8bcf51866702",
+  "reviewer_role": "domain-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG7-T-DG7-REV-DOM-R1-domain-reviewer-20261115T073754Z-2c291847",
+    "session_id": "2c291847-9995-443a-aae3-f573a13b9857"
+  },
+  "implementation_author": [
+    "backend-workflow-engineer",
+    "kpi-benefits-engineer",
+    "frontend-ux-engineer",
+    "solution-architect",
+    "transformation-analyst",
+    "devops-engineer",
+    "qa-verifier",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "domain-reviewer authored no DG7 implementation, test, register row, ADR, handover text, repair or delivery decision in the reviewed candidate. I reviewed the frozen candidate df8225e5 at source commit a60a962. Assignment sha256 76d3bbb0...12cf was verified at the start. I formed my verdict from my own runs and from reading the source and evidence. I read no other reviewer's record for DG7 round 1: the code-security reviewer's record was committed to the repository during my run (commit 6c66c0157), and I did not open it. All product data in my runs is SYNTHETIC. No G1-G6 decision, Finance validation or other in-product approval in my runs approves anything real. Product G6 never implies DG7, and this record grants no business, Finance, IT or production approval. The assignment asks for 'round: 7'. The record path (round-1), stages.json (review_rounds[0].round = 1) and the validator (rules.mjs: rec.round must equal the round directory) all require 1, so 1 is recorded. This is an assignment-template inconsistency, disclosed here."
+  },
+  "assignment": "docs/delivery/assignments/DG7/round-1/domain-reviewer.md",
+  "requirements_checked": [
+    "REQ-DLV-005",
+    "REQ-DLV-008",
+    "REQ-DLV-009",
+    "REQ-DLV-010",
+    "REQ-DLV-011",
+    "REQ-DLV-012",
+    "REQ-DLV-014",
+    "REQ-DLV-018",
+    "REQ-DLV-021",
+    "REQ-DLV-024",
+    "REQ-DLV-027",
+    "REQ-DLV-028",
+    "REQ-DLV-030",
+    "REQ-DLV-031",
+    "REQ-DLV-039",
+    "REQ-DLV-040",
+    "REQ-DLV-041",
+    "REQ-S01-001",
+    "REQ-S01-006",
+    "REQ-S02-003",
+    "REQ-S02-005",
+    "REQ-S16-008",
+    "REQ-S16-009",
+    "REQ-S16-024",
+    "REQ-S16-031",
+    "REQ-S16-033",
+    "REQ-S17-004",
+    "REQ-S19-001",
+    "REQ-S19-002",
+    "REQ-S19-003",
+    "REQ-S19-005",
+    "REQ-S19-007",
+    "REQ-S19-008",
+    "REQ-S19-009",
+    "REQ-S19-010",
+    "REQ-S19-011",
+    "REQ-S19-012",
+    "REQ-S19-013",
+    "REQ-S19-014",
+    "REQ-S19-015",
+    "REQ-S19-016",
+    "REQ-S19-017",
+    "REQ-S19-018",
+    "REQ-S19-019",
+    "REQ-S20-018",
+    "REQ-S20-019",
+    "REQ-S20-023",
+    "REQ-S20-026",
+    "REQ-S20-027",
+    "REQ-S20-028",
+    "REQ-S20-031",
+    "REQ-S21-002",
+    "REQ-S21-003",
+    "REQ-S21-004"
+  ],
+  "checks_run": [
+    {
+      "id": "DOM-DG7-R1-00-candidate",
+      "procedure": "At the start and at the end, recompute the candidate at the source commit from the repository's object store and in a disposable clone. Diff the working tree against the frozen manifest, and list the commits made after the source commit.",
+      "command": "git rev-parse HEAD; node tools/gates/candidate.mjs --stage DG7 --ref a60a962...; node tools/gates/candidate.mjs --stage DG7 --diff; git diff --stat a60a962 HEAD; (clone) git clone --shared --no-checkout + sparse checkout at a60a962; node tools/gates/candidate.mjs --stage DG7 --ref HEAD",
+      "environment": "Repository /home/user/My-owns (not shallow, 1675 commits to a60a962); Node 24.21.0. Clone $TMPDIR/review-dg7dom: git clone --shared, sparse checkout excluding docs/delivery/{test-evidence,runs,handbacks,reviews} and trading_agent (no product test reads them), node_modules copied with cp -a. A first full clone filled the scratch volume; I deleted it, and its partial log was overwritten by the clean log cited here. The clone was removed at the end.",
+      "expected": "candidate_id sha256:df8225e5...f944, 3148 files, at the source commit, at start and end; commits after the source touch only delivery records.",
+      "actual": "Start (07:44:18Z) and end (08:03:19Z): --ref a60a962 and the clone's --ref HEAD both give sha256:df8225e537de3575c059fa05ef16d1d87530e3c36854c8dfc8c4ec9e2439f944, 3148 files, exit 0. Repository HEAD is 8f7940194 at the start (the freeze commit: assignments, manifest, D-271 line in decisions.md, progress.md, stages.json) and 6c66c0157 at the end (the code-security reviewer's run auto-commit). 'candidate.mjs --diff' exits 1 by design, because the working tree differs from the manifest only in docs/delivery/decisions.md: the freeze commit added the D-271 line. That file is in the manifest, so the working-tree id is sha256:a3feb4ef...; no product, tool or handover file differs. The binding identity is the recomputed id at the source commit, as the assignment specifies. The first, discarded clone attempt logged 'unable to write file' errors (disk full); those errors are environmental and not in the cited logs.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/domain/round-1/candidate-verify-start.log",
+        "docs/delivery/test-evidence/DG7/domain/round-1/candidate-verify-end.log",
+        "docs/delivery/candidates/DG7/df8225e537de3575.manifest.json"
+      ]
+    },
+    {
+      "id": "DOM-DG7-R1-01-validators",
+      "procedure": "Run the historical validator for DG6 to DG1, the current DG7 stage validator and the pipeline validator.",
+      "command": "for s in DG6..DG1: node tools/gates/validate.mjs --historical --stage $s; node tools/gates/validate.mjs --stage DG7; node tools/gates/validate.mjs --pipeline",
+      "environment": "Repository at HEAD 6c66c0157 (tools/gates identical to the candidate); Node 24.21.0.",
+      "expected": "DG6 to DG1 historical PASS; DG7 not yet passable (no gate record before the audit); pipeline PASS with DG7 active.",
+      "actual": "PASS gate DG6, DG5, DG4, DG3, DG2 and DG1 (historical), each exit 0. 'validate --stage DG7' exits 1 with one problem: 'gate DG7: file not found (docs/delivery/gates/DG7.json)'. That is expected before the release audit and is not a defect; it also confirms that REQ-DLV-005/-014/-021/-040's gate-time clauses can only complete at the gate. '--pipeline': 'PASS pipeline (active stage: DG7 REVIEWING)', exit 0. The overall check exits 0 because the only non-zero exit is the expected one.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-005",
+        "REQ-DLV-014",
+        "REQ-DLV-021",
+        "REQ-DLV-040",
+        "REQ-S20-023"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/domain/round-1/validators.log"
+      ]
+    },
+    {
+      "id": "DOM-DG7-R1-02-build",
+      "procedure": "Clean workspace build of the candidate in the disposable clone. It also generates the build-time register snapshot used by About and the in-app register.",
+      "command": "pnpm -r build",
+      "environment": "Clone at a60a962; Node 24.21.0; offline.",
+      "expected": "exit 0; register snapshot of 412 rows with the register's SHA-256.",
+      "actual": "exit 0 in 3m16s. 'register-snapshot: wrote dist/release/register-snapshot.json (412 rows, sha256 e4805087a957)', equal to sha256sum of docs/delivery/requirements.csv at a60a962 (e4805087...5b09). The only non-informational lines are Vite chunk-size warnings, not errors.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S19-002",
+        "REQ-S02-003"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/domain/round-1/clone-build.log"
+      ]
+    },
+    {
+      "id": "DOM-DG7-R1-03-integration-p7",
+      "procedure": "Run the P7 transfer, configuration-bundle, retention and release (register and About) integration suites, plus the database guards and the data-migration round trip, on a disposable PostgreSQL.",
+      "command": "QA_PG_PORT=32300 MTH_PORT_POOL=32301-32319 tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration apps/api/test/integration/release apps/api/test/integration/retention apps/api/test/integration/transfer/*.test.ts packages/db/test/integration/{transfer-roundtrip,p7-transfer-guards,p7-retention-guards,transfer-export}.test.ts",
+      "environment": "Clone at a60a962; disposable PostgreSQL 16.15 (UTF8/C), 135 migrations applied to a fresh database; Node 24.21.0; --configLoader runner because node_modules is read-only.",
+      "expected": "All files and tests pass. This covers: export/import round trip (ids, links, audit, evidence checksums, no password hash); config-bundle round trip and unknown-version refusal; automation_rule refused explicitly; authorization (403), If-Match/409/428 and audit on every mutation; the register lists 412 rows with the same ids; About counts and null-means-unknown.",
+      "actual": "Test Files 14 passed (14); Tests 144 passed (144); EXIT=0. Files: transfer-export (11), config-bundle-roundtrip (2), transfer-roundtrip (12), export (10), config-bundle (23), attachments (15), retention/classes (8), retention/runs (7), import-routes (5), retention/backups (2), release/register (9), release/about (4), p7-transfer-guards (21), p7-retention-guards (15). The test names include: 'AUD and a user without grants get 403 on all nine operations'; 'validate and commit need If-Match (428) and refuse a stale one (409)'; 'writes each item through its kind's path with its own audit event'; 'automation_rule named in the request is 422 unportable_reference ..., never left out'; '200 with the new version and ETag; audit with before/after and the reason; then 409 on the stale If-Match'. The log has no failed, skipped or flaky test. The only warning lines are three 'npm warn Unknown project config' lines from the .npmrc (environmental, no effect).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S19-008",
+        "REQ-S19-014",
+        "REQ-S19-016",
+        "REQ-S16-024",
+        "REQ-S02-003",
+        "REQ-S02-005"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/domain/round-1/integration-p7-domain.log"
+      ]
+    },
+    {
+      "id": "DOM-DG7-R1-04-screens-en-ar",
+      "procedure": "Render the P7 screens in English (LTR) and Arabic (RTL) against the real API and a real PostgreSQL: data export, migration status, configuration transfer, requirement register, About, no-permission states and the Retention routes. Check axe at 1280 and 360 px. Inspect the screenshots myself.",
+      "command": "E2E_PG_PORT=32340 E2E_API_PORT=32350 MTH_PORT_POOL=32351-32399 E2E_SCREENSHOT_DIR=$TMPDIR/shots apps/web/e2e/support/with-stack.sh npx playwright test apps/web/e2e/p7-admin-screens.spec.ts apps/web/e2e/p7-retention.spec.ts --workers=1 --reporter=list",
+      "environment": "Clone at a60a962 after pnpm -r build; pre-installed Chromium (PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers); disposable PostgreSQL; API in AUTH_MODE=dev with SYNTHETIC users; projects chromium-en and chromium-ar, timezone Asia/Riyadh.",
+      "expected": "All tests pass in both languages. About shows versions, status counts (18 SPECIFIED / 394 IMPLEMENTED / 412), unfinished items with notes verbatim and 'engineering delivery states, not business approvals'. The config-transfer screen does not offer automation_rule and says so. Arabic is RTL.",
+      "actual": "14 passed (3.0m), EXIT=0, with no retry, skip or flaky test (7 tests x 2 languages). Screens I inspected: About EN and AR show Application 0.1.0, contract 1.6.0-p7, register snapshot 412 rows SHA-256 e4805087a957, Planned 0 / Specified 18 / Implemented 394 / Blocked 0 / Total 412 with text labels, the banner 'These are engineering delivery states, not business approvals' (AR: 'هذه حالات تسليم هندسية، وليست موافقات أعمال') and the unfinished items with notes verbatim. AR is right-to-left, and the register text stays English, which is disclosed on the AR screen. The 'Provisional' wordmark badge is shown in both languages. Configuration transfer EN/AR lists 11 kinds, with the note 'Not carried by a bundle: automation rules ... Automation rule sets are carried', and says a transfer never grants a business, Finance or IT approval. The Retention routes show the 'not available yet' placeholder in both languages; that observation feeds F-DG7-913. The only warning lines in the log are the three npm config warnings.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S02-003",
+        "REQ-S02-005",
+        "REQ-S19-008",
+        "REQ-S21-002"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/domain/round-1/e2e-p7-screens.log",
+        "docs/delivery/test-evidence/DG7/domain/round-1/screens/en-about-top.png",
+        "docs/delivery/test-evidence/DG7/domain/round-1/screens/ar-about-top.png",
+        "docs/delivery/test-evidence/DG7/domain/round-1/screens/en-config-transfer.png",
+        "docs/delivery/test-evidence/DG7/domain/round-1/screens/ar-config-transfer.png",
+        "docs/delivery/test-evidence/DG7/domain/round-1/screens/en-requirements.png",
+        "docs/delivery/test-evidence/DG7/domain/round-1/screens/ar-requirements.png",
+        "docs/delivery/test-evidence/DG7/domain/round-1/screens/en-retention-placeholder-360.png",
+        "docs/delivery/test-evidence/DG7/domain/round-1/screens/ar-retention-placeholder-360.png"
+      ]
+    },
+    {
+      "id": "DOM-DG7-R1-05-handover-tools",
+      "procedure": "Run the handover-set generators and checks offline on the candidate: release notes, claims scan, connector handover, role matrix, service list, known limitations, check-handover with the orchestrator's protocol-audit report, and the payload secret scan.",
+      "command": "node tools/release/{release-notes.mjs --csv docs/delivery/requirements.csv --deps docs/handover/external-dependencies.json --out docs/handover/release-notes.md --check, claims-scan.mjs, connector-handover.mjs --check, role-matrix.mjs --check, service-list.mjs --check, known-limitations.mjs --protocol-audit <prefreeze.json> --check, check-handover.mjs --protocol-audit <prefreeze.json>, secret-scan.mjs --scope payload}",
+      "environment": "Clone at a60a962; Node 24.21.0; protocol-audit report docs/delivery/test-evidence/DG7/orchestrator/protocol-audit/protocol-audit-prefreeze.json.",
+      "expected": "Every check exits 0.",
+      "actual": "My first release-notes call omitted the required arguments: 'release-notes: BLOCKED: --csv and --out are required', exit 2. That was my usage error, and the log keeps it. Re-run with arguments: '18 unfinished item(s), 6 later clause(s); docs/handover/release-notes.md is up to date', exit 0. The release notes list all 18 non-IMPLEMENTED rows with their notes verbatim, which include the D-270 C2/C3/C5 hits. claims-scan PASS (888 files), exit 0. connector-handover PASS, exit 0: the copy is faithful, but the content is stale (F-DG7-914). role-matrix PASS; service-list OK; known-limitations PASS; all exit 0. check-handover: PASS for index, deployment, summaries, security-links, guides and generated, exit 0. It prints 8 warnings, not failures: the H.3 provisional line is missing under some Arabic subheadings of release-notes.md, backup-restore.md and upgrades.md. Each of those files carries the provisional line at the top of its Arabic section, so all Arabic stays labelled provisional. secret-scan payload PASS (3148 files), exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S02-005",
+        "REQ-S16-031",
+        "REQ-S16-033",
+        "REQ-S19-003",
+        "REQ-S19-015",
+        "REQ-S21-003"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/domain/round-1/release-tool-checks.log",
+        "docs/handover/release-notes.md"
+      ]
+    },
+    {
+      "id": "DOM-DG7-R1-06-source-fidelity-guides",
+      "procedure": "Read the handover index, user guide (EN/AR), admin guide (EN/AR), known limitations and deployment guide. Check them against playbook B0021 (six phases) and B0023 (G1-G6 gates), against the honesty rules (PMI, Mobily branding, #0078FF, approvals), and against the KPI Unknown/Stale and Finance-validation semantics. Compare the EN/AR section anchors.",
+      "command": "sed/grep over docs/handover/**; grep -o '{#...}' anchors in guides/{user,admin}/{en,ar}; sed -n 83,106p docs/source/playbook.md",
+      "environment": "Candidate tree (identical paths at a60a962).",
+      "expected": "Phases and gates match the playbook. There is no official PMI, certification or Mobily-brand claim. Product G6 is kept separate from DG7. Unknown/Stale is never zero or green. AR guides have the same sections.",
+      "actual": "The user guide lists Diagnose, Define, Design, Mobilize, Transform and Realize, and G1 Case for Change, G2 Direction, G3 Target State, G4 Mobilization, G5 Scale and G6 Sustain, as in B0021/B0023. It says the playbook is 'inspired by PMI, Brightline and BRM ... not an official PMI standard, and this product is not a certified product'. It says the wordmark and colour are provisional (deployment.md: '#0078FF is a provisional brand colour token'). It says G6 says nothing about the platform's delivery or release, and that KPI Unknown and Stale are never zero or on track, with text labels. It states that Finance validation is the in-product Finance role decision and that stale validations are flagged. Index and known-limitations say handover acceptance is Mobily IT's decision outside the platform, and that Compose is not HA evidence. The EN and AR anchors are identical: user guide 8/8, admin guide 11/11. The admin guide is honest that the Retention screens are not built, which the register is not (F-DG7-913).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S19-015",
+        "REQ-S16-033",
+        "REQ-S21-004"
+      ],
+      "evidence": [
+        "docs/handover/guides/user/en/user-guide.md",
+        "docs/handover/guides/user/ar/user-guide.md",
+        "docs/handover/guides/admin/en/admin-guide.md",
+        "docs/handover/README.md",
+        "docs/handover/known-limitations.md",
+        "docs/source/playbook.md"
+      ]
+    },
+    {
+      "id": "DOM-DG7-R1-07-honest-completion-register",
+      "procedure": "Judge REQ-S02-005 and REQ-S21-003 literally. Compare every IMPLEMENTED claim I could test against the running product, focusing on screens the register names, and check that every non-IMPLEMENTED row has a named missing dependency in the register, release notes and About.",
+      "command": "python csv read of docs/delivery/requirements.csv (status counts, DG7 rows, notes); grep router.tsx/p7-retention.spec.ts; grep known-limitations.md/release-notes.md; the e2e screens of DOM-DG7-R1-04",
+      "environment": "Candidate tree; rendered screens from DOM-DG7-R1-04.",
+      "expected": "No planned feature is labelled delivered; every unmet item is listed with its missing dependency.",
+      "actual": "Every one of the 18 SPECIFIED rows (all final gate DG7) carries a release-blocker note naming its missing dependency. The release notes and About list them verbatim, the counts are 394/18/412, and no row was removed. One defect: REQ-S16-024 (IMPLEMENTED) gives screen_api 'Administration > Retention' and notes 'Administration > Retention by FE-C', and cites FE-C test evidence. The five Retention routes are placeholders: router.tsx l.620-624, and p7-retention.spec.ts 'placeholders only; T-E25 not satisfiable'. The rendered EN and AR screens say 'not available yet'. FE-C's handback lists the screens as not built, and no decision drops them. known-limitations.md and release-notes.md do not disclose it. This labels a planned feature as delivered: F-DG7-913, Medium, mandatory. The row's own acceptance (A19/A22, API level) is met by the retention integration tests, so REQ-S16-024's behaviour passes; the defect is in the honest-completion record.",
+      "exit_status": 1,
+      "result": "FAIL",
+      "requirements": [
+        "REQ-S02-005",
+        "REQ-S21-003",
+        "REQ-S16-024"
+      ],
+      "evidence": [
+        "docs/delivery/requirements.csv",
+        "apps/web/src/app/router.tsx",
+        "apps/web/e2e/p7-retention.spec.ts",
+        "docs/delivery/handbacks/DG7/T-DG7-FE-C-frontend-ux-engineer.md",
+        "docs/handover/known-limitations.md",
+        "docs/delivery/test-evidence/DG7/domain/round-1/screens/en-retention-placeholder-360.png"
+      ]
+    },
+    {
+      "id": "DOM-DG7-R1-08-connector-handover-content",
+      "procedure": "Read the connector handover (REQ-S17-004 'list the enterprise endpoints and credentials IT must supply; never claim a live integration') against the candidate tree.",
+      "command": "sed -n 30,45p docs/handover/api/connectors.md; ls docs/operations/identity-saml-broker.md apps/api/test/support/fake-model.ts; grep http_pull apps/api/src",
+      "environment": "Candidate tree.",
+      "expected": "Every enterprise endpoint and credential is listed, no live integration is claimed, and the guides referenced are stated accurately.",
+      "actual": "Every integration lists what IT supplies, and no live integration is claimed: all are not_verified or not_configured, consistent with external-dependencies.json and About. The contract and adapter tests passed in DOM-DG7-R1-03 (transfer) and in QA-C's A17 run. However, the 'Guide' column says the SAML broker guide is 'not yet written at 135ff1d', though docs/operations/identity-saml-broker.md exists. It also keeps internal placeholders ('owner: slice B', 'row to be confirmed by BE-T's handback'), copied from environment.md, which still calls delivered adapters 'planned'. This is documentation drift with no behavioural effect: F-DG7-914, Low.",
+      "exit_status": 1,
+      "result": "FAIL",
+      "requirements": [
+        "REQ-S17-004",
+        "REQ-S19-007"
+      ],
+      "evidence": [
+        "docs/handover/api/connectors.md",
+        "docs/delivery/environment.md",
+        "docs/operations/identity-saml-broker.md"
+      ]
+    },
+    {
+      "id": "DOM-DG7-R1-09-config-bundle-automation-rule",
+      "procedure": "Judge REQ-S19-008 (M0356 'Workflow, methodology, forms, branding and automation configuration export/import with schema versions') literally against ADR-0065 Amendment 1 A1.2, the export screen and the tests.",
+      "command": "read ADR-0065 §1, §2, A1.2; grep automation_rule packages/shared/src/transfer/config-bundle.ts packages/db/src/transfer; integration and e2e results above",
+      "environment": "Candidate tree; DOM-DG7-R1-03 and -04 runs.",
+      "expected": "Each part of M0356 has a working carrier, and any part not carried is refused explicitly and disclosed.",
+      "actual": "Workflow and methodology (methodology, procedure, health_check_scheme), forms (form_schema), branding, and automation configuration in the form of automation_rule_set (Studio rule sets), plus notification, job-schedule, review and upload policies, travel as a versioned bundle (mth-config-bundle/1). An unknown version is 422, and the round-trip test passes. Individual automation_rule records name an owner by user id, an accountability choice that is a product decision. They are refused explicitly: 422 unportable_reference at export, refused in the import plan, tested. They are hidden on the export screen with an EN/AR note, and disclosed in known-limitations. They do travel with the full data migration (ADR-0064; packages/db/src/transfer/import.ts and recheck-automation.ts handle automation_rule). I judge M0356's 'automation configuration' met by rule sets, with the per-owner rules disclosed as a limitation. Not a finding. ADR-0065's 'T-D7' residual (an imported methodology draft publishing over a running transformation) is covered by design: it is the ordinary publish path.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S19-008"
+      ],
+      "evidence": [
+        "docs/architecture/adr/ADR-0065-p7-configuration-transfer-bundle-schema-version-drafts-publish-pipeline.md",
+        "packages/shared/src/transfer/config-bundle.ts",
+        "docs/delivery/test-evidence/DG7/domain/round-1/integration-p7-domain.log",
+        "docs/delivery/test-evidence/DG7/domain/round-1/screens/en-config-transfer.png"
+      ]
+    },
+    {
+      "id": "DOM-DG7-R1-10-container-host-evidence",
+      "procedure": "Judge the orchestrator's D-267 container host half (not re-run; agent sandboxes have no Docker daemon). Read each step's exit status and the /readyz body, and diff the runtime code between host run 3 and the candidate.",
+      "command": "grep '^### .. exit=' host-run.log host-run-3b.log host-run-3c.log; git diff --stat f0b09b347 a60a962 -- apps/*/src packages/*/src deploy/scripts/*.sh deploy/compose Dockerfile* .dockerignore",
+      "environment": "Repository evidence docs/delivery/test-evidence/DG7/orchestrator/host/ (2026-11-14, one container host, Docker 29.9.2, containerd store, registry via proxy, not air-gapped, not HA).",
+      "expected": "Build, image save/rm/load/verify, 'compose up --pull never --wait' with /readyz ready, the no-egress stack and smoke, and the Keycloak e2e all exit 0, on code equivalent to the candidate; every non-zero exit explained.",
+      "actual": "host-run.log steps 00-10 exit 0, including 03 build (192 s), 04-06 save/rm/load/verify, and 07 up --pull never --wait with HTTP 200 {\"status\":\"ready\",\"checks\":{\"database\":\"ok\",\"migrations\":\"ok\",\"storage\":\"ok\",\"worker\":\"alive\"}}. Step 11 (Keycloak e2e) exit 1, and run 3b step b07 exit 1 (247 s): both ran the test process with the sandbox proxy variables set, and the proxy cannot reach the local container (D-267, kept). Run 3c b07, with the proxy variables unset, exit 0 (4/4). 3b b01-b03 (no-egress stack, smoke with egress probe) exit 0. Runtime code after host run 3 (f0b09b347, 18:30Z) to the candidate differs only in FE-B2's config-transfer screen (apps/web/src/pages/admin/config-transfer, i18n transfer.json, api/p7.ts) and tests; no API, worker, db, Compose or image-script change. I rendered and tested that screen myself in DOM-DG7-R1-04. Judged as evidence, not as my own run. Residuals: one host, not air-gapped, not HA; Keycloak is a synthetic realm, not Mobily's IdP.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S01-001",
+        "REQ-S01-006",
+        "REQ-S16-008",
+        "REQ-S19-010",
+        "REQ-S19-018",
+        "REQ-S19-019",
+        "REQ-S20-018"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/orchestrator/host/host-run.log",
+        "docs/delivery/test-evidence/DG7/orchestrator/host/host-run-3b.log",
+        "docs/delivery/test-evidence/DG7/orchestrator/host/host-run-3c.log"
+      ]
+    },
+    {
+      "id": "DOM-DG7-R1-11-transfer-handover-rows",
+      "procedure": "For the transfer and handover rows, read each acceptance text and compare it with the evidence named in the register (T-B11 drill, A18/A19 harness runs, restore drill, dictionary coverage, openapi coverage, SBOM, env template, migration catalogue, archive layout), together with my own runs above.",
+      "command": "read requirements.csv acceptance/notes; read tools/release/build-archive.mjs (ROLE_DIRS, layout check); orchestrator prefreeze logs (4-openapi-coverage.log, 3-secret-*.log, checks.log); QA evidence index",
+      "environment": "Candidate tree and committed evidence.",
+      "expected": "Each acceptance clause has executed evidence on the candidate or a code-equivalent tree; residuals disclosed.",
+      "actual": "S19-001: the archive has four separate top-level directories, source/ (role app), infra/, docs/ and demo-data/ (SYNTHETIC, marker-checked). The verifier rejects any other layout. The 'app' directory is named source/ and holds the whole candidate (D-243 Q2, D-244 O1). I accept this mapping literally: there is a separate app-role directory. S19-002/-003/-005/-007/-009/-012/-013/-014/-016/-017: build-from-archive, SBOM (483 packages, 0 without licence id), dictionary coverage (365 tables, 5776 columns), openapi coverage (965 operations), env template placeholders only, restore drill R1-R9, dry-run migration, record-count and checksum reconciliation, round trip with no password hash (re-run by me: transfer-roundtrip and transfer-export pass), and the T-B11 drill under a new origin. All are evidenced, and their residuals (S3-held evidence not exported, scale unproven, timings synthetic, RPO/RTO to agree with IT) are disclosed in known-limitations. S16-009: 59 licences flagged 'review' for Mobily procurement; no procurement decision is claimed. S19-011: the deployment guide covers the seven topics, and check-handover's deployment check passed in my run.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-009",
+        "REQ-S16-031",
+        "REQ-S19-001",
+        "REQ-S19-002",
+        "REQ-S19-003",
+        "REQ-S19-005",
+        "REQ-S19-007",
+        "REQ-S19-009",
+        "REQ-S19-011",
+        "REQ-S19-012",
+        "REQ-S19-013",
+        "REQ-S19-014",
+        "REQ-S19-016",
+        "REQ-S19-017",
+        "REQ-S20-019"
+      ],
+      "evidence": [
+        "docs/delivery/requirements.csv",
+        "tools/release/build-archive.mjs",
+        "docs/delivery/test-evidence/DG7/orchestrator/prefreeze/4-openapi-coverage.log",
+        "docs/delivery/test-evidence/DG7/orchestrator/prefreeze/3-secret-payload.log",
+        "docs/delivery/test-evidence/DG7/qa/test-level-index.md"
+      ]
+    },
+    {
+      "id": "DOM-DG7-R1-12-protocol-rows-d270",
+      "procedure": "Judge the delivery-protocol rows that DG7's own protocol-audit hits touch, literally, as the assignment requires (a disclosed gap is not a met criterion). Spot-check that the hits are real and that the disclosure is accurate.",
+      "command": "python read of protocol-audit-prefreeze.json (DG7 checks C1-C9); head docs/delivery/assignments/DG7/T-DG7-FE-B2.md; grep headings docs/delivery/handbacks/DG7/T-DG7-BE-R5-backend-workflow-engineer.md; read a27/drill-report.md, D-249, D-269, D-270",
+      "environment": "Committed records at HEAD; report head b2ba3e3 (pre-freeze).",
+      "expected": "REQ-DLV-008/-011/-012/-024/-030 acceptance texts literally met, or each gap disclosed accurately and listed as a release blocker.",
+      "actual": "Literally NOT met. Each gap is accurately disclosed: the register rows are SPECIFIED with release-blocker notes, they appear in the release notes and About, and known-limitations §2 has the protocol-audit table. Details: C2 (REQ-DLV-011): 27 DG7 assignments lack contract elements. I confirmed T-DG7-FE-B2.md names no requirement id and gives the base as 'current HEAD'; the three A26 drill reviewer assignments also lack base revision and permitted files (REQ-DLV-008's first clause). C3 (REQ-DLV-012): 5 handbacks lack a section. I confirmed BE-R5 has 'Open questions' in place of merge instructions. C5 (REQ-DLV-024): the DG6 --historical log postdates the first DG7 implementation run (15:02:13Z vs 18:27:48Z). A27 K11 (REQ-DLV-030): progress.md was stale at the checkpoint, and the reconstruction succeeded from stages.json and decisions.md; PARTIAL, not re-drilled. C1, C4, C6, C7, C8 and C9 PASS for DG7. These are write-once process records and cannot be repaired. By user decision D-270 (following D-249), the release-auditor decides whether they block DG7. I raise no duplicate finding: they are already release blockers. I do not treat them as met, and this check is FAIL on the literal text.",
+      "exit_status": 1,
+      "result": "FAIL",
+      "requirements": [
+        "REQ-DLV-008",
+        "REQ-DLV-011",
+        "REQ-DLV-012",
+        "REQ-DLV-024",
+        "REQ-DLV-030"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/orchestrator/protocol-audit/protocol-audit-prefreeze.json",
+        "docs/delivery/test-evidence/DG7/orchestrator/a27/drill-report.md",
+        "docs/delivery/assignments/DG7/T-DG7-FE-B2.md",
+        "docs/delivery/handbacks/DG7/T-DG7-BE-R5-backend-workflow-engineer.md",
+        "docs/handover/known-limitations.md"
+      ]
+    },
+    {
+      "id": "DOM-DG7-R1-13-protocol-rows-met-and-drills",
+      "procedure": "Check the protocol rows the audit and drills support: concurrency, continuation without confirmation or approval claims, repair loop, A26 defect injection and A27 resumption.",
+      "command": "read protocol-audit-prefreeze.json C1/C7/C8/C9; a26/drill-report.md, k5-hash-check.txt; a27/drill-report.md, k9-k12.log",
+      "environment": "Committed records.",
+      "expected": "C1 ≤ 4 concurrent runs; no approval claim; BUILDING after APPROVED; A26 introduce, identify, fix, close; A27 resume, reject stale, no invented approval.",
+      "actual": "C1 DG7 PASS: peak 2 concurrent runs; one run directory without meta.json is disclosed and cannot raise the peak above 4. C8 PASS over all stages, with no business, Finance, IT or production approval claim and no G6=DG7 equation. C9 DG7 PASS: BUILDING at 12:02:49Z after DG6 APPROVED at 11:30:26Z, with no confirmation step. C7 DG7 PASS, but with 0 DG7 findings to exercise it; this round's findings will be the first. A26: the card hash was recorded before the reviewers ran, both reviewers named the injected authorization defect as Critical on the first attempt, the regression tests fail on the defect and pass on the fix, and a non-author verified the fix. Disclosed: the K7 candidate differs from K3 because of untracked assignment copies. A27: K9, K10, K12, K13 and K14 PASS; K11 PARTIAL (see DOM-DG7-R1-12). None of these drills imply DG7 or any G1-G6 decision.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-009",
+        "REQ-DLV-018",
+        "REQ-DLV-027",
+        "REQ-S20-026",
+        "REQ-S20-027"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/orchestrator/protocol-audit/protocol-audit-prefreeze.json",
+        "docs/delivery/test-evidence/DG7/orchestrator/a26/drill-report.md",
+        "docs/delivery/test-evidence/DG7/orchestrator/a27/drill-report.md"
+      ]
+    },
+    {
+      "id": "DOM-DG7-R1-14-gate-time-clauses",
+      "procedure": "For the rows whose last clause is the DG7 gate, audit or seal itself, verify the part that precedes the gate and record that the remainder cannot exist before the gate.",
+      "command": "read register notes ('completes-after-gate:' marker and release-blocker notes); release-notes.md 'Clauses that complete after the engineering gate'; validators.log; tools/release/seal.mjs and verify-seal.mjs presence",
+      "environment": "Candidate tree; DOM-DG7-R1-01 results.",
+      "expected": "Pre-gate parts evidenced; the gate-time clause is named honestly and never presented as met.",
+      "actual": "REQ-DLV-005/-010/-014/-021/-040 and REQ-S20-023: DG0-DG6 hold (historical validators PASS), and the A23 independence rules are enforced by tools/gates (A27 K14 re-ran the validator tests, 60/60). The DG7 part is this round, the audit and gates/DG7.json, which is absent as expected. REQ-DLV-028/-031/-041 and REQ-S20-028: the gate update, the final report and the seal exist only after approval. The seal tools and the final-report template ship, and the A28 rehearsal is labelled REHEARSAL-PASS, not a release verification. REQ-DLV-039, REQ-S20-031, REQ-S21-002, REQ-S21-004 and REQ-S19-015: the A02/A06/A18 halves are evidenced, and A23 on DG7 plus the frozen-candidate e2e/visual runs are this round's (my EN/AR screen run is part of it). REQ-S02-005 and REQ-S21-003: the release-blocker listing is complete and current (18 rows), except for F-DG7-913. Every one of these rows names its gate-time clause honestly, and none is presented as met. I verified the pre-gate parts and found no defect beyond F-DG7-913. Their completion is the gate itself, and this record is not that completion.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-005",
+        "REQ-DLV-010",
+        "REQ-DLV-014",
+        "REQ-DLV-021",
+        "REQ-DLV-028",
+        "REQ-DLV-031",
+        "REQ-DLV-039",
+        "REQ-DLV-040",
+        "REQ-DLV-041",
+        "REQ-S19-015",
+        "REQ-S20-023",
+        "REQ-S20-028",
+        "REQ-S20-031",
+        "REQ-S21-002",
+        "REQ-S21-004"
+      ],
+      "evidence": [
+        "docs/handover/release-notes.md",
+        "docs/handover/final-report.template.md",
+        "docs/delivery/test-evidence/DG7/domain/round-1/validators.log"
+      ]
+    },
+    {
+      "id": "DOM-DG7-R1-15-environmental-residuals",
+      "procedure": "Record the environmental residuals the assignment names, as passes on the offline and configuration surface.",
+      "command": "read docs/handover/known-limitations.md §1, docs/handover/external-dependencies.json, About (DOM-DG7-R1-04)",
+      "environment": "Candidate tree; no network; no Mobily system reachable.",
+      "expected": "Each residual is disclosed as an external dependency (not_verified/not_configured) and is never claimed live.",
+      "actual": "Live registry (REQ-DLV-042 AC-1, D-057) and live CI (D-058): not_verified, listed. Corporate IdP: not_verified. Keycloak: passed on one delivery host with a synthetic realm (D-267). SAML broker: documented, not_configured. Object store, SMTP, corporate data source and AI endpoint: not_verified or not_configured. Assistant, notifications and connectors run through test adapters and the shipped disabled configuration. The capacity targets are provisional engineering targets measured on one sandbox host. All 11 dependencies appear in known-limitations, the release notes and About, and none is claimed live. PASS on the offline/config surface; residuals stand.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S17-004",
+        "REQ-S19-018"
+      ],
+      "evidence": [
+        "docs/handover/known-limitations.md",
+        "docs/handover/external-dependencies.json"
+      ]
+    }
+  ],
+  "findings": [
+    "F-DG7-913",
+    "F-DG7-914"
+  ],
+  "verdict": "FAIL",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG7/domain/round-1/candidate-verify-start.log",
+    "docs/delivery/test-evidence/DG7/domain/round-1/candidate-verify-end.log",
+    "docs/delivery/test-evidence/DG7/domain/round-1/validators.log",
+    "docs/delivery/test-evidence/DG7/domain/round-1/clone-build.log",
+    "docs/delivery/test-evidence/DG7/domain/round-1/integration-p7-domain.log",
+    "docs/delivery/test-evidence/DG7/domain/round-1/e2e-p7-screens.log",
+    "docs/delivery/test-evidence/DG7/domain/round-1/release-tool-checks.log",
+    "docs/delivery/test-evidence/DG7/domain/round-1/screens/en-about-top.png",
+    "docs/delivery/test-evidence/DG7/domain/round-1/screens/ar-about-top.png",
+    "docs/delivery/test-evidence/DG7/domain/round-1/screens/en-retention-placeholder-360.png",
+    "docs/delivery/test-evidence/DG7/domain/round-1/screens/ar-retention-placeholder-360.png"
+  ],
+  "reviewed_at": "2026-11-15T08:06:00Z",
+  "summary": "FAIL on candidate df8225e5 (source a60a962). The P7 product behaviour I exercised is sound: P7 integration suites 144/144, EN/AR P7 screens 14/14 with axe, a clean build, all six historical validators and the pipeline PASS, and all handover checks PASS. Configuration transfer and data migration preserve integrity, with authorization, If-Match and audit on every mutation. About and the in-app register show the build's 412-row register honestly, with Unknown never shown as zero, and EN/AR source fidelity to the playbook holds. Two new findings. F-DG7-913 (Medium, mandatory, REQ-S02-005): the register row REQ-S16-024 labels the unbuilt 'Administration > Retention' screens as delivered, and neither the known limitations nor the release notes disclose it. F-DG7-914 (Low, REQ-S17-004): the connector handover carries stale 'not yet written' and 'to be confirmed' text. In addition, REQ-DLV-008/-011/-012/-024/-030 are literally unmet by DG7's own protocol hits (C2, C3, C5, A27 K11). They are accurately disclosed as release blockers under D-270, the release-auditor decides whether they block, and I do not count them as met. Gate-time clauses are named honestly and remain for the gate and the seal."
+}

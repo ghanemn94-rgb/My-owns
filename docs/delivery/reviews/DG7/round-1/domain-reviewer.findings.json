@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG7-913",
+      "stage_id": "DG7",
+      "requirement": "REQ-S02-005",
+      "severity": "Medium",
+      "mandatory_violation": true,
+      "title": "The register labels the unbuilt Administration > Retention screens as delivered (REQ-S16-024), and no release document discloses that they are placeholders",
+      "reproduction": "1) docs/delivery/requirements.csv row REQ-S16-024 (status IMPLEMENTED, final gate DG7): screen_api 'Administration > Retention'; notes '... Administration > Retention by FE-C ...'; evidence cites docs/delivery/handbacks/DG7/T-DG7-FE-C-evidence/pnpm-test.log. 2) apps/web/src/app/router.tsx l.620-624 lists the five admin/retention routes as P7 placeholders (owner FE-C); apps/web/e2e/p7-retention.spec.ts is titled 'P7 Retention routes (placeholders only; T-E25 not satisfiable)' and asserts the 'being-built' state with no form. I ran it in both languages on the candidate (e2e-p7-screens.log tests 7 and 14 pass); the Arabic and English screens say the screen is planned for this release and not available yet (screens/ar-retention-placeholder-360.png, screens/en-retention-placeholder-360.png). 3) The FE-C handback (docs/delivery/handbacks/DG7/T-DG7-FE-C-frontend-ux-engineer.md, Known gaps item 1) states 'The slice E Retention screens (§E.6) are not built'. p7-work-split §E.6, T-E24 and T-E25 planned them. No entry in decisions.md drops them. 4) grep docs/handover/known-limitations.md and docs/handover/release-notes.md: neither says that the Retention screens are not built (known-limitations only has the ADR-0067 row about placeholder periods). Only the admin guide (docs/handover/guides/admin/en/admin-guide.md #retention) says so. The in-app register and About show the row's notes verbatim, so they repeat the claim.",
+      "expected": "REQ-S02-005: no planned feature is labelled delivered. The planned Retention screens are either built, or the register row's screen_api/notes say plainly that Administration > Retention is a placeholder in this release (API only), with the missing dependency named. known-limitations.md (and so the release notes and About, which are generated from the register) disclose it as an unfinished item. Acceptance A19/A22 of REQ-S16-024 is API-level and is met (retention/classes.test.ts and runs.test.ts pass), so the row's status can stay IMPLEMENTED once its text is honest.",
+      "actual": "The IMPLEMENTED row claims 'Administration > Retention by FE-C' and cites FE-C test evidence, but the screens are 'not available yet' placeholders. The handover's known limitations and release notes are silent on it, and About and the in-app register repeat the claim.",
+      "evidence": [
+        "docs/delivery/requirements.csv",
+        "apps/web/src/app/router.tsx",
+        "apps/web/e2e/p7-retention.spec.ts",
+        "docs/delivery/handbacks/DG7/T-DG7-FE-C-frontend-ux-engineer.md",
+        "docs/handover/known-limitations.md",
+        "docs/handover/guides/admin/en/admin-guide.md",
+        "docs/delivery/test-evidence/DG7/domain/round-1/e2e-p7-screens.log",
+        "docs/delivery/test-evidence/DG7/domain/round-1/screens/ar-retention-placeholder-360.png",
+        "docs/delivery/test-evidence/DG7/domain/round-1/screens/en-retention-placeholder-360.png"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG7/round-1/domain-reviewer.json",
+      "owner": "transformation-analyst",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-15T08:05:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG7 round 1 on candidate df8225e5. The register text needs correcting (analyst), and the known-limitations hand-written section needs the disclosure (devops-engineer, DOC-B), followed by release-notes --write/--check and a rebuilt register snapshot. Alternatively, build the E.6 screens."
+        }
+      ]
+    },
+    {
+      "id": "F-DG7-914",
+      "stage_id": "DG7",
+      "requirement": "REQ-S17-004",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The handover connector list carries stale internal status: it says the SAML broker guide is 'not yet written', and it keeps 'planned' or 'to be confirmed' placeholders for delivered adapters",
+      "reproduction": "docs/handover/api/connectors.md l.38: Brokered SAML guide 'docs/operations/identity-saml-broker.md (DO-B; **not yet written** at `135ff1d`)', but the file exists at the candidate and other handover pages link it (deployment.md l.73, authentication.md l.31, security-controls.md HR-03). l.42: '... handover guide for connectors (owner: slice B)'. l.43: 'ADR-0059; row to be confirmed by BE-T's handback'. connectors.md is a generated copy of docs/delivery/environment.md l.101/105/106, which also still calls the http_pull fake source (BE-L2) and the fake model (BE-T, apps/api/test/support/fake-model.ts) 'planned', though both exist. 'connector-handover.mjs --check' passes because it checks only that the copy is faithful (release-tool-checks.log).",
+      "expected": "The handover document Mobily IT reads names existing guides as existing, and holds no internal task placeholders ('not yet written', 'to be confirmed by BE-T's handback', 'owner: slice B', 'planned' for delivered adapters).",
+      "actual": "The handover tells IT that the SAML broker guide does not exist, and it carries internal planning placeholders. No behaviour is affected.",
+      "evidence": [
+        "docs/handover/api/connectors.md",
+        "docs/delivery/environment.md",
+        "docs/operations/identity-saml-broker.md",
+        "docs/delivery/test-evidence/DG7/domain/round-1/release-tool-checks.log"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG7/round-1/domain-reviewer.json",
+      "owner": "devops-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-15T08:05:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG7 round 1 on candidate df8225e5. Documentation drift only. Update the environment.md source rows, then run connector-handover.mjs --write."
+        }
+      ]
+    }
+  ]
+}
