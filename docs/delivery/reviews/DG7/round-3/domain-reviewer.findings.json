@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG7-920",
+      "stage_id": "DG7",
+      "requirement": "REQ-DLV-012",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The frozen register and release notes disclose 'six' DG7 C3 handback hits, but the frozen candidate has seven: T-DG7-DO-D8-devops-engineer.md (a round-2 repair handback, committed after D-270) has no merge-instructions section and is named nowhere. known-limitations.md says 7, so two handover documents disagree",
+      "reproduction": "Disposable clone at source commit 8323dacae51a98c8f555fb95d8e1dd0a1e747ea8 (candidate sha256:60dd90b6..., verified, 3154 files). (1) node tools/release/protocol-audit.mjs --stage DG7 --root <clone> --json <file>: C3 handback-sections HIT 7 (exit 1 by design, the tool reports hits): AN-P7B, ARCH-R2, ARCH-R5, BE-R5, DO-A2 (the five D-270 hits), FE-C3 (F-DG7-960) and T-DG7-DO-D8-devops-engineer.md (missing merge_instructions). The orchestrator's own protocol-audit-r3.json (head 0326ee9) lists the same seven. (2) The DO-D8 handback headings are '1. Files changed', '2. Behaviour per requirement', '3. Checks run', '4. Known gaps', '5. Open questions': there is no merge-instructions section. (3) docs/handover/known-limitations.md l.62: '| C3 handback-sections | REQ-DLV-012 | DG7 | HIT | 7 |'. (4) docs/delivery/requirements.csv REQ-DLV-012: the pass-6 notes say 'DG7 C3 6 hits ... six DG7 implementation handbacks each lack one of the five sections' and name only the five D-270 handbacks plus FE-C3. Its completes-after-gate marker is 'the release-auditor's decision on the D-270 C3 hits (six, F-DG7-960 included)'. docs/handover/release-notes.md l.35 quotes that marker. Cause: AN-P7F (base 7c819f0, after DO-D8's commit 6c606e5b3) counted from the round-2 QA audit report (on ca38b65e), not from a run on its own base.",
+      "expected": "D-270 and D-274: the release discloses every DG7 protocol hit in the register, the release notes and known limitations, and the release-auditor decides each one. Every disclosure surface states the same count and names every affected handback on the frozen candidate (the F-DG7-960 lesson: one hit was missed then too).",
+      "actual": "The register and release notes say 'six' and do not name the DO-D8 handback. known-limitations says 7 but names no handbacks. The DO-D8 hit is therefore not disclosed by name anywhere in the handover, and the auditor's D-270 decision, as worded in the marker, covers six. No product behaviour is affected; the C3 hit itself is a write-once process fact. Repair is disclosure only: add the DO-D8 handback to REQ-DLV-012's notes and marker (seven), then regenerate the release notes.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/domain/round-3/scope-and-c3.log",
+        "docs/delivery/test-evidence/DG7/domain/round-3/protocol-audit-DG7-candidate.json",
+        "docs/delivery/test-evidence/DG7/domain/round-3/release-tool-checks.log"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG7/round-3/domain-reviewer.json",
+      "owner": "transformation-analyst",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-15T23:10:00Z",
+          "status": "OPEN",
+          "note": "Raised by domain-reviewer in DG7 round 3 on candidate sha256:60dd90b6c5a7af3b502f02be68e6b601fd11e90fcbc0a48166cbc389453a80e9. A recurrence of the F-DG7-960 class with a new handback. Low: disclosure wording only, no behavioural effect."
+        }
+      ]
+    },
+    {
+      "id": "F-DG7-921",
+      "stage_id": "DG7",
+      "requirement": "REQ-S19-017",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "The register states that A18's 'records, jobs and approvals intact after a full restart' was shown by the DO-D7 and DO-E drills. The delivery's own DO-D8 and DO-D8B handbacks conclude that those drills probably never restarted PostgreSQL. The register cites only those pre-fix runs and not the post-fix run that shows a real restart",
+      "reproduction": "Candidate sha256:60dd90b6... (source 8323dac). (1) docs/delivery/requirements.csv REQ-S19-017 (acceptance: 'records, jobs and approvals intact after a full restart'). Its notes read '... (DO-D7, D-264; rerun by DO-E, D-265 ...) ... D9 records, jobs and approvals intact after a full restart'. Its evidence column cites T-DG7-DO-E-evidence/t-b11-run.log, T-DG7-DO-D7-evidence/t-b11-run.log and T-DG7-DO-D7-evidence/a18-run.log. REQ-S20-018 cites DO-D7 a18-run.log, DO-E t-b11-run.log and QA-C a18-run3. None of the three rows (S19-017, S20-018, S01-006) mentions DO-D8 or DO-D8B. (2) docs/delivery/handbacks/DG7/T-DG7-DO-D8-devops-engineer.md l.27 and l.101 say, from a measured mechanism: stop_pid's SIGTERM reached only pg_start's launcher subshell, so 'the D9 \"restart verified\" claim in earlier runs (DO-D7, QA round 2 A18) probably did not restart PostgreSQL itself ... Only the API and worker restarts were real'. Open question 1 asks the orchestrator to record this against the earlier A18/T-B11 evidence. T-DG7-DO-D8B §4 agrees. (3) The drill code is unchanged between DO-D8B (7c819f08c) and the candidate (git diff empty). DO-D8B's T-B11 run (T-DG7-DO-D8B-evidence/t-b11-run.log, transfer/drill.log l.735) is the first run with a real PostgreSQL stop before the D9 restart, and it PASSes. (4) AN-P7F (base 7c819f0, after both handbacks) and D-275 left the three rows unchanged.",
+      "expected": "REQ-S02-005 / never report a check as passed that did not run: the register's evidence for the A18 'after a full restart' clause is a run that actually restarted PostgreSQL (DO-D8 or DO-D8B T-B11, or a QA round-3 A18 on this candidate). The notes disclose that the earlier D9 runs restarted only the API and worker, as the delivery's own handbacks found.",
+      "actual": "The register presents a full-restart persistence check as demonstrated by runs that the delivery itself now believes did not restart the database, and omits the run that did. The acceptance criterion itself is met on the candidate: DO-D8B's drill with the candidate's drill code passed D9 after a real restart. So no completion state is wrong. The defect is the register's evidence statement for a mandatory A18 clause, which a handover recipient would follow. Repair: the analyst updates the evidence and notes of REQ-S19-017, REQ-S20-018 (and REQ-S01-006 if it relies on D9) to cite the post-DO-D8 run and disclose the earlier runs' restart scope, then regenerates the release notes.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/domain/round-3/f921-restart-evidence.log",
+        "docs/delivery/handbacks/DG7/T-DG7-DO-D8-devops-engineer.md",
+        "docs/delivery/handbacks/DG7/T-DG7-DO-D8B-devops-engineer.md",
+        "docs/delivery/handbacks/DG7/T-DG7-DO-D8B-evidence/t-b11-run.log"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG7/round-3/domain-reviewer.json",
+      "owner": "transformation-analyst",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-15T23:10:00Z",
+          "status": "OPEN",
+          "note": "Raised by domain-reviewer in DG7 round 3 on candidate sha256:60dd90b6c5a7af3b502f02be68e6b601fd11e90fcbc0a48166cbc389453a80e9. Medium under D-192: a register evidence claim for a mandatory A18 clause rests on runs that the delivery's own handbacks say did not restart PostgreSQL; the post-fix run exists and is not cited."
+        }
+      ]
+    }
+  ]
+}

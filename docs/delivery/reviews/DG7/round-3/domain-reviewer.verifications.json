@@ -1,0 +1,71 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG7-915",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified by its originating reviewer (domain-reviewer, session 96c7e804) on candidate sha256:60dd90b6c5a7af3b502f02be68e6b601fd11e90fcbc0a48166cbc389453a80e9 (source 8323dac; fix ced8d992 an ancestor), in a disposable clone. release-notes.mjs --check exits 0 ('0 unfinished item(s), 23 later clause(s) ... up to date'). The register's SHA-256 is cfa6d37876c6...6fb9. Release notes l.9 (en) and l.101 (ar) state that hash, and the rendered About screen states 'Register snapshot: 412 rows, SHA-256 cfa6d37876c6...' in both languages (en-p7-about-top.png, ar-p7-about-top.png), so the two handover surfaces agree. Revert-to-fail: changing one byte of a register note in the clone makes --check exit 1 ('out of date'). Restoring it makes --check exit 0 again. The freeze verification now runs --write then --check after the last register change (prefreeze-r3 checks.log, 'release-notes exit=0').",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/domain/round-3/f915-961-release-notes.log",
+        "docs/delivery/test-evidence/DG7/domain/round-3/release-tool-checks.log",
+        "docs/delivery/test-evidence/DG7/domain/round-3/screens/en-p7-about-top.png",
+        "docs/delivery/test-evidence/DG7/domain/round-3/screens/ar-p7-about-top.png",
+        "docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r3/checks.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG7-961",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified independently (domain-reviewer, not the reporter or owner) on candidate sha256:60dd90b6... (source 8323dac). This is the same defect as F-DG7-915, and the same evidence applies. --check exits 0 on the frozen tree. The en and ar hash equals sha256sum of the shipped register. A one-byte register change makes --check exit 1. The requested real-tree --check is a pre-freeze step (prefreeze-r3 checks.log, release-notes exit 0). It is not a release-tool test, which the finding named as one acceptable option. The release notes now list 0 unfinished items and 23 later clauses, consistent with the register (412 IMPLEMENTED).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/domain/round-3/f915-961-release-notes.log",
+        "docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r3/checks.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG7-935",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified independently on candidate sha256:60dd90b6.... validate.mjs --register DG7 gives 'PASS register rules at DG7', exit 0. validate.mjs --stage DG7 reports only the missing gates/DG7.json, which is expected before the audit, and no register problem. The 54 DG7 rows are all IMPLEMENTED. I read all 23 rows that carry a 'completes-after-gate:' marker (D-243 Q19 rows plus the 18 rows extended by D-274) against their acceptance text. Each marker names a clause that only the gate, the audit or the seal can show, or a D-270/K11 disclosure. Rows whose acceptance is NOT literally met are DLV-011 (C2 27), DLV-012 (C3), DLV-024 (C5 1) and DLV-030 (K11 partial). Their notes say 'Disclosed deviation, not met' (or equivalent), and they are not presented as met. Per the user decisions D-270 and D-274, the release-auditor decides whether they block. I accept the Q19 extension as an honest classification under those user decisions. I do not treat those four gaps as met. One wording defect in DLV-012's marker ('six' C3 hits where the candidate has seven) is raised separately as F-DG7-920 (Low). It does not reopen this finding, which concerned the gate being impossible to pass.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/domain/round-3/validate-DG7.log",
+        "docs/delivery/test-evidence/DG7/domain/round-3/release-tool-checks.log",
+        "docs/delivery/test-evidence/DG7/domain/round-3/scope-and-c3.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG7-960",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified independently (domain-reviewer, not the reporter or owner) on candidate sha256:60dd90b6.... The FE-C3 handback, the hit this finding was about, is now disclosed. REQ-DLV-012's notes name T-DG7-FE-C3-frontend-ux-engineer.md, and its marker and the release notes say 'F-DG7-960 included'. known-limitations.md was regenerated from protocol-audit-r3.json (DG7 C3 = 7). known-limitations --check and check-handover --protocol-audit protocol-audit-r3.json both exit 0. A protocol-audit re-run on the candidate gives the same 7 DG7 C3 hits as r3. The seventh hit is the DO-D8 round-2 repair handback, which also lacks merge instructions. It is counted in known-limitations, but the register and release notes still say 'six' and do not name it. That is a new instance, raised as F-DG7-920 (Low), not a failure of this repair.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/domain/round-3/scope-and-c3.log",
+        "docs/delivery/test-evidence/DG7/domain/round-3/protocol-audit-DG7-candidate.json",
+        "docs/delivery/test-evidence/DG7/domain/round-3/release-tool-checks.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG7-962",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified independently on candidate sha256:60dd90b6... in a disposable clone with a disposable PostgreSQL (with-pg.sh, ports 32310/32311). I used a given-order sequencer over the repository's vitest.config.ts with file parallelism off (a scratch config in the clone only). The order was p7-transfer-guards.test.ts, then contract.test.ts, then response-validation.test.ts: 3 files, 252/252 passed, exit 0. Revert-to-fail: with only p7-transfer-guards.test.ts restored to its round-2 version (f22c97b5) and the same order, the run gives 2 files failed, 9 tests failed, exit 1. createMigrationExport fails with '422 migration.export_in_progress' where 202 was expected, the P7 BE-D operations and the undeclared-media-type sweep fail, the coverage cascade fails with 'expected [createMigrationExport, ...] to deeply equal []', and pagination fails on listMigrationImports. That is the original failure pattern; QA counted 10 because its run also included the 'covers every operation' cascade twice. The fix gives the guard file its own scratch database, created, migrated and dropped, and adds a test asserting it never uses the run database. My first probe attempt failed with ERR_MODULE_NOT_FOUND because the scratch config sat outside the clone root and could not resolve vitest. I moved it into the clone and re-ran; the log keeps only the re-run. The orchestrator's full pre-freeze integration run on this source is 474/474 files passed, 4692 tests passed, 8 skipped, 1 todo, exit 0. The 8 skips are 7 A18 harness tests reported BLOCKED for missing archive inputs and 1 runIf branch of presentation.test.ts. The todo is a DG6 fail-closed redaction item in audit-events.test.ts. In that run the guard file runs late, so it alone would not show order independence; my probe does.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/domain/round-3/f962-order-candidate.log",
+        "docs/delivery/test-evidence/DG7/domain/round-3/f962-order-revert.log",
+        "docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r3/integration.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG7-963",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified independently on candidate sha256:60dd90b6.... I read deploy/scripts/drill/cleanup.sh and the transfer-drill.sh diff. The outer mode now ends with td_remove_work \"$WORK\" \"$rc\": five attempts, then one WARNING line that says the result is unchanged, and it always returns 0, so the drill's exit status is its result. PostgreSQL is stopped by td_stop_pg (SIGINT to the real postmaster, a bounded wait for it and its children, then QUIT, then KILL) and by td_stop_pg_dir through postmaster.pid. On the candidate (with-pg.sh, port 32320), deploy/scripts/tests/transfer-drill.test.mjs gives 55/55 pass, 0 fail, 0 skipped, exit 0. Revert-to-fail: with only transfer-drill.sh restored to round-2 f22c97b5, the DO-D8 suite gives 6 pass and 2 fail, exit 1. The static wiring test fails, and the end-to-end test, a failing drill whose work tree cannot be removed, gets the raw 'rm: cannot remove ... Directory not empty' and no WARNING line. DO-D8B's full T-B11 run with this drill code (no diff to the candidate) printed 'PASS ... restart verified', exited 0, logged 0 WARNING lines and left no drill PostgreSQL process and no work tree. I did not re-run the full A18 drill myself: the sandbox had 2.6 GB free, below the drill's own disk estimate. The fix also changes D9 into a real PostgreSQL restart, which exposes an evidence gap in the register; I raised that separately as F-DG7-921.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/domain/round-3/f963-drill-tests-candidate.log",
+        "docs/delivery/test-evidence/DG7/domain/round-3/f963-drill-tests-revert.log",
+        "docs/delivery/handbacks/DG7/T-DG7-DO-D8B-evidence/t-b11-run.log"
+      ]
+    }
+  ]
+}
