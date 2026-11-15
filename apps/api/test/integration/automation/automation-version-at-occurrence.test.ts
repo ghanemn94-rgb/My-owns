@@ -18,6 +18,7 @@
 import { cpSync, mkdtempSync, readdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { defaultMigrationsDir, migrate, sql } from "@mth/db";
+import pg from "pg";
 import { afterAll, beforeAll, describe, expect, inject, it } from "vitest";
 import { createScratchDatabase, dropScratchDatabase, roleUrl } from "../../../../../packages/db/test/helpers.ts";
 import { AUTOMATION_HANDLERS } from "../../../../worker/src/handlers/automation.ts";
@@ -251,15 +252,32 @@ async function evaluate(events: readonly Ev[], expectedJobs = events.length): Pr
   }
 }
 
+/** A one-connection pool acting as mth_owner (the role passed as a startup option, as the harness does). */
+const ownerPoolOf = (ownerUrl: string) =>
+  new pg.Pool({ connectionString: ownerUrl.replace(/\?.*$/, ""), options: "-c role=mth_owner", max: 1 });
+
 beforeAll(async () => {
   const { adminUrl } = inject("mthDb");
   scratch = await createScratchDatabase(adminUrl, "mth_be_x10_occurrence");
   // Up to 0122 only: the history 0123 must backfill is written under 0122's trigger.
   migDir = mkdtempSync(join(process.env["TMPDIR"] ?? "/tmp", "mig-x10-"));
+  // Only migration files (NNNN_name.sql): any other entry of the folder (a stray directory, a note) is not copied.
   for (const f of readdirSync(defaultMigrationsDir()))
-    if (f.slice(0, 4) <= LAST_BEFORE) cpSync(join(defaultMigrationsDir(), f), join(migDir, f));
+    if (/^\d{4}_[^/]+\.sql$/.test(f) && f.slice(0, 4) <= LAST_BEFORE)
+      cpSync(join(defaultMigrationsDir(), f), join(migDir, f));
   const ownerUrl = roleUrl(adminUrl, scratch, "mth_owner");
   await migrate(ownerUrl, { dir: migDir });
+  // The CURRENT API runs on this 0122 schema to write the history. Its dev login reads identity_binding_hold
+  // (ADR-0064 §8), created by the later 0133, so the sign-in failed with 500 on the 0122 schema. A temporary, EMPTY
+  // stand-in holding only the columns that read uses (no row: no user is held, as on any installation without an
+  // import) lets the sessions be opened; it is dropped before 0123+ are applied, so 0133 creates the real table.
+  const ownerPool = ownerPoolOf(ownerUrl);
+  try {
+    await ownerPool.query(`CREATE TABLE identity_binding_hold (id uuid PRIMARY KEY, user_id uuid NOT NULL, state text NOT NULL);
+       GRANT SELECT ON identity_binding_hold TO mth_app`);
+  } finally {
+    await ownerPool.end();
+  }
   api = await startApi({ database: scratch });
   boss = createBoss(roleUrl(adminUrl, scratch, "mth_app"), {
     schedule: false,
@@ -302,7 +320,13 @@ beforeAll(async () => {
       (await ledgerOf(id)).map((l) => l.source),
     );
 
-  // Now 0123 (and every later migration, which this test does not depend on).
+  // Now 0123 (and every later migration, which this test does not depend on), after the stand-in is gone.
+  const dropPool = ownerPoolOf(ownerUrl);
+  try {
+    await dropPool.query(`DROP TABLE identity_binding_hold`);
+  } finally {
+    await dropPool.end();
+  }
   const applied = await migrate(ownerUrl);
   expect(applied[0]).toMatch(/^0123_/);
   expect(applied.slice(1).every((f) => f.slice(0, 4) > "0123")).toBe(true);

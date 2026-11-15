@@ -309,9 +309,23 @@ describe("retention.archive (ADR-0067 §4-§6)", () => {
     expect(lines.map((l) => l["idempotency_key"])).toEqual(["fresh-old", "old-31", "old-40"]); // primary key order
     for (const l of lines) {
       expect(Object.keys(l)).toEqual(["consumer", "idempotency_key", "processed_at", "outcome"]);
-      // ADR-0064 §2.3: PostgreSQL's text output under TimeZone UTC, microseconds kept
-      expect(l["processed_at"]).toMatch(/^\d{4}-\d\d-\d\d \d\d:\d\d:\d\d\.\d{6}\+00$/);
+      // ADR-0064 §2.3: PostgreSQL's text output under TimeZone UTC, microseconds kept. That output drops trailing
+      // zeros of the fraction (…:51.914290 is rendered ':51.91429') and the whole fraction at .000000, so the
+      // fraction has 1-6 digits, never ends in 0, or is absent.
+      expect(l["processed_at"]).toMatch(/^\d{4}-\d\d-\d\d \d\d:\d\d:\d\d(\.\d{0,5}[1-9])?\+00$/);
     }
+    // Microseconds kept: each archived value is exactly the database's own UTC text of the row's timestamp.
+    const rendered = await env.owner.query<{ consumer: string; idempotency_key: string; text: string }>(
+      `SELECT p.consumer, p.idempotency_key, (p.processed_at AT TIME ZONE 'UTC')::text || '+00' AS text
+         FROM processed_message p
+         JOIN unnest($1::text[], $2::text[]) AS k(consumer, idempotency_key) USING (consumer, idempotency_key)`,
+      [lines.map((l) => l["consumer"]), lines.map((l) => l["idempotency_key"])],
+    );
+    const key = (consumer: string | undefined, k: string | undefined) => `${consumer}\u0000${k}`;
+    expect(rendered.rows).toHaveLength(lines.length);
+    expect(Object.fromEntries(lines.map((l) => [key(l["consumer"], l["idempotency_key"]), l["processed_at"]]))).toEqual(
+      Object.fromEntries(rendered.rows.map((x) => [key(x.consumer, x.idempotency_key), x.text])),
+    );
     // The marker's age equals the row's age exactly (microseconds included).
     const exact = await env.owner.query<{ same: boolean }>(
       `SELECT bool_and(m.record_age_at = p.processed_at) AS same FROM retention_archived_record m

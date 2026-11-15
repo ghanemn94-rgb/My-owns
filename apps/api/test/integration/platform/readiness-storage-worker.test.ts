@@ -11,7 +11,7 @@
 //   - heartbeat <= 90 s -> alive, older -> stale, none -> unknown (and the worker never gates readiness).
 // The storage setting is written as the API writes it: the row and its audit event in one transaction (ADR-0004).
 // Nothing here approves anything or touches DG0-DG7.
-import { access, chmod, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { access, chmod, mkdir, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { constants } from "node:fs";
 import { createServer, type Server, type Socket } from "node:net";
 import { tmpdir } from "node:os";
@@ -148,6 +148,34 @@ async function setStorage(values: {
 }
 
 const fsEnv = (path: string): EnvironmentStorage => ({ driver: "filesystem", path });
+
+/**
+ * A directory on a read-only mount of this process's mount table (`/proc/self/mountinfo`: mount options in field 6),
+ * confirmed by `access(W_OK)` failing with EROFS; null when there is none (or no mount table).
+ */
+async function findReadOnlyMountDirectory(): Promise<string | null> {
+  let table: string;
+  try {
+    table = await readFile("/proc/self/mountinfo", "utf8");
+  } catch {
+    return null;
+  }
+  // Octal escapes (\040 for a space) in the mount point field.
+  const unescape = (p: string) => p.replace(/\\([0-7]{3})/g, (_m, o: string) => String.fromCharCode(parseInt(o, 8)));
+  const candidates = table
+    .split("\n")
+    .map((line) => line.split(" "))
+    .filter((f) => f.length > 6 && f[5]!.split(",").includes("ro"))
+    .map((f) => unescape(f[4]!));
+  for (const candidate of candidates)
+    try {
+      if (!(await stat(candidate)).isDirectory()) continue;
+      await access(candidate, constants.W_OK);
+    } catch (err) {
+      if ((err as { code?: string }).code === "EROFS") return candidate;
+    }
+  return null;
+}
 /** A probe without the 5 s cache, so each call probes (the cache has its own test below). */
 const uncached = (environment: EnvironmentStorage): EvidenceStorageProbe =>
   createEvidenceStorageProbe({ environment, secrets: () => secrets, cacheMs: 0 });
@@ -182,7 +210,7 @@ function expectNoLeak(texts: string[], extra: string[]): void {
 }
 
 describe("T-B2: the evidence-storage probe", () => {
-  it("filesystem: a readable and writable directory -> ok; missing, not a directory, read-only -> fail", async () => {
+  it("filesystem: a readable and writable directory -> ok; missing, not a directory -> fail", async () => {
     expect(await uncached(fsEnv(root))(db)).toEqual({
       status: "ok",
       driver: "filesystem",
@@ -194,30 +222,33 @@ describe("T-B2: the evidence-storage probe", () => {
     const file = join(root, "a-file");
     await writeFile(file, "x");
     expect(await uncached(fsEnv(file))(db)).toMatchObject({ status: "fail", errorCode: "ENOTDIR" });
+  });
 
-    // Read-only: mode 0555 for a non-root process. uid 0 bypasses mode bits, so as root the read-only case is a
-    // read-only MOUNT (EROFS); if no such mount exists the test fails rather than skip the case.
+  it("filesystem: a read-only directory -> fail (EACCES for a non-root process, EROFS on a read-only mount)", async (ctx) => {
+    // Non-root: mode 0555 denies the write. uid 0 bypasses mode bits (CAP_DAC_OVERRIDE), so as root the read-only
+    // case is a directory on a read-only MOUNT (EROFS), taken from this process's own mount table. When the process
+    // is root and no read-only mount exists, the case cannot be constructed: the test is SKIPPED with a BLOCKED note
+    // (shown by the reporter as skipped, never as passed).
     const readOnly = join(root, "read-only");
-    await (await import("node:fs/promises")).mkdir(readOnly);
+    await mkdir(readOnly);
     await chmod(readOnly, 0o555);
-    let target = readOnly;
-    if (process.getuid?.() === 0) {
-      target = "";
-      for (const candidate of ["/usr", "/sys", "/proc/sys"])
-        try {
-          await access(candidate, constants.W_OK);
-        } catch (err) {
-          if ((err as { code?: string }).code === "EROFS") {
-            target = candidate;
-            break;
-          }
+    try {
+      let target = readOnly;
+      if (process.getuid?.() === 0) {
+        target = (await findReadOnlyMountDirectory()) ?? "";
+        if (target === "") {
+          const note =
+            "BLOCKED: running as uid 0 with no read-only mount in /proc/self/mountinfo: the read-only case cannot be constructed (run as a non-root user, or with a read-only mount)";
+          console.warn(`T-B2 ${note}`);
+          ctx.skip(note);
         }
-      expect(target, "uid 0 and no read-only mount found: the read-only case cannot be constructed").not.toBe("");
+      }
+      const ro = await uncached(fsEnv(target))(db);
+      expect(ro.status).toBe("fail");
+      expect(["EACCES", "EROFS"]).toContain(ro.errorCode);
+    } finally {
+      await chmod(readOnly, 0o755);
     }
-    const ro = await uncached(fsEnv(target))(db);
-    expect(ro.status).toBe("fail");
-    expect(["EACCES", "EROFS"]).toContain(ro.errorCode);
-    await chmod(readOnly, 0o755);
   });
 
   it("an incomplete S3 setting (s3 named by the environment, no saved setting) -> fail NotConfigured", async () => {

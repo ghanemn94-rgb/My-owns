@@ -1,0 +1,40 @@
+port-policy: PostgreSQL listening on port 24351 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/My-owns
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwh4xyks_2efabe1f (server_encoding UTF8); applied 135 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/automation/automation-version-at-occurrence.test.ts (5 tests | 5 skipped) 2610ms
+   ↓ 0123: the enablement ledger records disables, and backfills past ones from their audit events (D-204) > each disable recorded under 0122 is backfilled at its audit event's time, with the version that stopped
+   ↓ 0123: the enablement ledger records disables, and backfills past ones from their audit events (D-204) > after 0123 the trigger writes a disable row (the version that stopped) and nothing for a no-op
+   ↓ a late event is evaluated by the rule version in force at its occurrence (D-204) > an event under v1, v2 published before evaluation: acted on exactly once, by v1, also when replayed
+   ↓ a late event is evaluated by the rule version in force at its occurrence (D-204) > disable/re-enable window across a version switch: v1 event by v1, window event by nobody, later event by v2
+   ↓ a late event is evaluated by the rule version in force at its occurrence (D-204) > kill switch: an event that occurred while enabled is not acted on when the rule is disabled at evaluation
+ ✓ |integration| apps/worker/test/integration/retention-archive.test.ts (8 tests) 2767ms
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/automation/automation-version-at-occurrence.test.ts [ apps/api/test/integration/automation/automation-version-at-occurrence.test.ts ]
+Error: contract: devLogin does not declare status 500 (declared: 204, 400, 401, 403, 404, 429); body: {"type":"urn:mth:problem:internal","title":"Internal error","status":500,"code":"internal","requestId":"01a1dcbf-5230-778a-b22b-4281887c573f"}
+ ❯ assertContract apps/api/test/support/contract.ts:121:11
+    119|   const declared = op.responses[String(res.statusCode)] ?? op.response…
+    120|   if (!declared) {
+    121|     throw new Error(
+       |           ^
+    122|       `contract: ${op.operationId} does not declare status ${res.statu…
+    123|     );
+ ❯ call apps/api/test/support/harness.ts:188:5
+ ❯ signIn apps/api/test/support/harness.ts:202:17
+ ❯ apps/api/test/integration/automation/automation-version-at-occurrence.test.ts:276:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  8 passed | 5 skipped (13)
+   Start at  01:07:52
+   Duration  18.87s (transform 5.20s, setup 0ms, collect 9.67s, tests 5.38s, environment 0ms, prepare 60ms)
+
