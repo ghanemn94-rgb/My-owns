@@ -1,0 +1,24 @@
+# node --test deploy/scripts/tests/dockerfile-context.test.mjs (after prettier --write); 2026-11-15T01:01:31Z
+✔ the committed Dockerfile and .dockerignore pass all three checks (CLI exit 0) (153.743892ms)
+✔ the required install inputs are every tracked workspace package.json plus the root install files (2.833163ms)
+✔ defect (b): a workspace package.json missing from the dependency layer is reported (3.305212ms)
+✔ a manifest COPYed only AFTER `pnpm install` is reported (1.38415ms)
+✔ a manifest excluded from the build context by .dockerignore is reported (0.75214ms)
+✔ defect (c): `**/*secret*` without the source exceptions drops tracked sources, and is reported (62.393274ms)
+✔ the committed .dockerignore still keeps local secrets, keys and .env files out of the context (1.212441ms)
+✔ .dockerignore matcher follows Docker's semantics (`*` stays in a segment, `**` spans, parent match, last wins) (0.62639ms)
+✔ defect (a): corepack enable --install-directory before the directory exists is reported (1.053857ms)
+✔ CLI: missing input is BLOCKED (exit 2), a usage error is exit 2 (93.52683ms)
+✔ build-image.sh --dry-run: no proxy and no network flag unless asked; Docker never called (10.904557ms)
+✔ build-image.sh --proxy-from-env passes only the SET proxy names, never their values (19.155549ms)
+✔ build-image.sh refuses a bad --network, a missing value and a missing CA file (exit 64) (23.60088ms)
+✔ the Dockerfile declares no proxy ARG or ENV (proxy values are never baked into the image) (0.372311ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 509.887678
+exit 0

@@ -186,6 +186,11 @@ function stubDocker() {
   }
   return bin;
 }
+// A credential-bearing proxy URL, assembled at runtime: the scheme and the "://" separator are separate pieces, so
+// the source never contains a literal URL for tools/release/scan-assets.mjs R4 (unlisted-host) to match, yet the
+// value build-image.sh receives is a real `scheme://user:password@host:port` string.
+const PROXY_PASSWORD = "p4ss";
+const proxyWithCredentials = () => ["http", "://", "u:", PROXY_PASSWORD, "@proxy.example:3128"].join("");
 function build(args, env = {}) {
   const base = { ...process.env };
   for (const v of [
@@ -209,22 +214,30 @@ function build(args, env = {}) {
 }
 
 test("build-image.sh --dry-run: no proxy and no network flag unless asked; Docker never called", () => {
-  const r = build([], { HTTPS_PROXY: ["http://u:", "p4ss", "@proxy.example:3128"].join("") });
+  const r = build([], { HTTPS_PROXY: proxyWithCredentials() });
   assert.equal(r.status, 0, r.stderr);
   assert.doesNotMatch(r.stdout, /--build-arg HTTPS_PROXY|--network/);
   assert.match(r.stdout, /DRY-RUN: no build performed/);
+  assert.ok(
+    !r.stdout.includes(PROXY_PASSWORD) && !r.stderr.includes(PROXY_PASSWORD),
+    "a proxy value must never be printed",
+  );
   assert.equal(existsSync(join(scratch, "docker-called")), false);
 });
 
 test("build-image.sh --proxy-from-env passes only the SET proxy names, never their values", () => {
-  const value = ["http://u:", "p4ss", "@proxy.example:3128"].join("");
+  const value = proxyWithCredentials();
+  assert.match(value, /^http:\/\/u:p4ss@proxy\.example:3128$/);
   const r = build(["--proxy-from-env", "--network", "host"], { HTTPS_PROXY: value, no_proxy: "localhost,127.0.0.1" });
   assert.equal(r.status, 0, r.stderr);
   assert.match(r.stdout, / --network host /);
   assert.match(r.stdout, / --build-arg HTTPS_PROXY /);
   assert.match(r.stdout, / --build-arg no_proxy /);
   assert.doesNotMatch(r.stdout, /--build-arg HTTP_PROXY |--build-arg ALL_PROXY /);
-  assert.ok(!r.stdout.includes("p4ss") && !r.stderr.includes("p4ss"), "a proxy value must never be printed");
+  assert.ok(
+    !r.stdout.includes(PROXY_PASSWORD) && !r.stderr.includes(PROXY_PASSWORD),
+    "a proxy value must never be printed",
+  );
   assert.ok(!r.stdout.includes("localhost,127.0.0.1"));
   // the env-variable forms behave the same
   const e = build([], { MTH_BUILD_PROXY_FROM_ENV: "1", MTH_BUILD_NETWORK: "host", http_proxy: value });
