@@ -1,0 +1,72 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG7-913",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified by its originating reviewer (domain-reviewer, session 99310a17) on candidate sha256:ca38b65ecaa23f49b4e5755f503c88e74c3a5bd502862fd28cc5ddbbd1fe13c5 (source f22c97b5, fix b514c7a3 an ancestor), in a disposable clone. (1) The screens exist: router.tsx routes the five /admin/retention paths to RetentionPages.tsx; P7_PLANNED_ROUTES is empty. (2) I ran them on the real stack (with-stack.sh, real API, disposable PostgreSQL, SYNTHETIC users) in chromium-en and chromium-ar: p7-retention.spec.ts 4/4, exit 0 (e2e-p7-retention-attempt2.log). In attempt 1, which also ran p7-admin-screens.spec.ts, 15 of 16 passed. The failure was [chromium-ar] Retention ADM_TECH: Playwright's 90 s test timeout fired inside AxeBuilder.analyze on the Archived screen, at the same time as a kernel out-of-memory kill caused by my concurrent probe run. Run alone, the same test took 38.9 s, and FE-C3's and the orchestrator's after-FE-C3 runs also passed, so I count it as resource contention, not a defect. (3) I inspected the screenshots myself. EN home lists 12 classes, a NULL period shows 'Not set (IT to agree)' (never 0), the IT approval reference shows 'None recorded', and the run form needs a reason. The AR class page is RTL, with the saved period 400 days, reference TEST-ONLY E2E-ar and version 2 after a PUT with If-Match, and it says the change grants no business, Finance or IT approval. The AUD class page is read-only ('You can see this class but not change it'). AR backups at 360 px are read-only with 'none reported yet'. Axe summaries list 0 violations on 12 screen states per language (a measurement, not a conformity claim). Component tests: retention-screens.test.tsx and p7-shell.test.tsx 31/31. Server: retention classes, runs and backups plus the contract test 141/141 on PostgreSQL (authorization, If-Match, audit unchanged since round 1). (4) Honest classification: register row REQ-S16-024 now cites the FE-C2 screens and records the pass-1 correction; the admin guide (en, ar) describes the built screens. The original defect (screens claimed but not built) is repaired.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/domain/round-2/e2e-p7-retention-attempt2.log",
+        "docs/delivery/test-evidence/DG7/domain/round-2/e2e-p7-screens-attempt1.log",
+        "docs/delivery/test-evidence/DG7/domain/round-2/web-retention-components.log",
+        "docs/delivery/test-evidence/DG7/domain/round-2/integration-p7-domain.log",
+        "docs/delivery/test-evidence/DG7/domain/round-2/screens/en-p7-retention-home.png",
+        "docs/delivery/test-evidence/DG7/domain/round-2/screens/ar-p7-retention-class-saved.png",
+        "docs/delivery/test-evidence/DG7/domain/round-2/screens/en-p7-retention-class-auditor.png",
+        "docs/delivery/test-evidence/DG7/domain/round-2/screens/ar-p7-retention-backups-360.png",
+        "docs/delivery/test-evidence/DG7/domain/round-2/screens/en-p7-retention-axe-summary.json",
+        "docs/delivery/test-evidence/DG7/domain/round-2/screens/ar-p7-retention-axe-summary.json"
+      ]
+    },
+    {
+      "finding_id": "F-DG7-914",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified by its originating reviewer (domain-reviewer, session 99310a17) on candidate sha256:ca38b65e... (source f22c97b5). docs/handover/api/connectors.md now names docs/operations/identity-saml-broker.md without 'not yet written', and contains no 'to be confirmed', 'owner: slice B' or 'planned' marker. The http_pull source (fake-http-source.ts, BE-L2) and the fake model (fake-model.ts, BE-T) are listed as existing doubles. grep over docs/handover and docs/operations for 'not on `', 'not yet written', 'to be confirmed', TODO and TBD finds only a quoted historical register note in release-notes.md. connector-handover.mjs --check exits 0 and check-handover (strict) exits 0 (release-tool-checks.log). Observation, not a defect of this finding: docs/delivery/environment.md (a delivery record, not copied into the handover; connectors.md copies only its 'IT supplies' and 'Guide' columns) still says 'Driver selection and Administration > Storage are BE-H2 (not on `135ff1d`)' and 'Fan-out exactly once is BE-I2 (not on `135ff1d`)'. Both were delivered in earlier gates. Its own footnote explains that 'not on 135ff1d' was a merge-time marker. No IT-facing document or behaviour is affected.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/domain/round-2/release-tool-checks.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG7-953",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified independently (domain-reviewer, not the reporter or owner) on this round's freeze. HEAD abc7254f is the freeze commit, and git show --stat lists only the three round-2 assignments, the manifest ca38b65ecaa23f49.manifest.json and stages.json. decisions.md (D-273) is committed in the source commit f22c97b5, before the freeze. candidate.mjs --stage DG7 gives sha256:ca38b65e... (3153 files) on the working tree at HEAD, and --ref f22c97b5 gives the same. --diff against the manifest matches with no added, removed or changed file, at the start and at the end of my run. validate.mjs --stage DG7 (current mode) reports a single problem: the gate record does not exist yet (expected before the audit). There is no 'working-tree content has changed' error, so round-2 records will not read STALE.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/domain/round-2/candidate-verify.log",
+        "docs/delivery/test-evidence/DG7/domain/round-2/validate-DG7.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG7-954",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified adversarially (domain-reviewer, not the reporter or owner) in a disposable clone of f22c97b5 on a disposable PostgreSQL (ports 32300-32319). On the unmodified candidate, organizations.test.ts passes 15/15, exit 0. I then applied the exact A26 drill defect, derived by me with git diff c4943c8d1 c3bbc780c -- routes.ts (a26-defect.patch: both the route gate and requireAction downgraded to business_unit.read). The same file then exits 1 with 4 failed and 11 passed. The failing tests: office, auditor and leadA1 (read without manage) get 403 with the unit unchanged and no update audited, and the split-grant re-parent is refused. routes.ts was restored with git checkout. The release now carries a test that fails when the PATCH authorization is downgraded. A kernel out-of-memory kill was reported during this command (memory shared with other sessions); both vitest runs completed with full summaries, so their results are complete. BE-R6's disclosed surviving route-label-only mutant is an equivalent mutant (the label is not evaluated against grants), which I accept as described.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/domain/round-2/f954-tree.log",
+        "docs/delivery/test-evidence/DG7/domain/round-2/f954-mutant.log",
+        "docs/delivery/test-evidence/DG7/domain/round-2/a26-defect.patch"
+      ]
+    },
+    {
+      "finding_id": "F-DG7-955",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified (domain-reviewer, not the reporter or owner). git diff a60a962 f22c97b5 -- docs/delivery/progress.md: the 'Unresolved blockers' section now begins '(Historical, superseded 2026-11-15, F-DG7-955: this section dates from DG3. Current state: DG0-DG6 APPROVED; DG7 open findings and blockers are listed in the checkpoint at the top and in findings.json.)'. The checkpoint at the top names round 2, the six findings and the next action. That next action, 'freeze round 2', is now one step behind, because the freeze commit may not touch candidate files (F-DG7-953). That is the correct trade-off, not a new defect. The misleading 'None' statement no longer stands as current.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/domain/round-2/candidate-verify.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG7-956",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified adversarially (domain-reviewer, not the reporter or owner) in a disposable clone of f22c97b5. node --test tools/release/tests/check-handover.test.mjs: 51/51, exit 0. With MTH_STRICT_HANDOVER=1: 51/51, exit 0. Revert-to-fail A: the round-1 (a60a962) test file on this tree gives 46 pass and 4 fail, exit 1, the same four tests named in the finding. Probe B: changing the SHA-256 that the shipped known-limitations.md states for its protocol-audit report gives 45 pass and 6 fail, exit 1, starting with 'the report the shipped file names (by SHA-256) is in the delivery records'. So the test no longer pins a superseded report, and it fails, never skips, when the shipped file and its report diverge. Both probes were restored with git checkout. known-limitations.mjs --check with the pre-freeze report (sha 2b322f4d..., the hash the file states) exits 0. I did not re-run the full release-tool suite myself. The orchestrator's prefreeze-r2 run of it has 466 tests, 464 pass, 0 fail and 2 skipped: T-A11 is BLOCKED with no assembled runtime tree, and T-A3 is skipped because bsdtar is not installed. Both are environmental and unrelated. A kernel out-of-memory kill was reported during my probe command, and all three runs completed with full summaries. Note: release-notes.md is a separate drift, raised as F-DG7-915, not part of this finding.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/domain/round-2/f956-check-handover.log",
+        "docs/delivery/test-evidence/DG7/domain/round-2/f956-probes.log",
+        "docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r2/release-tool-tests.log"
+      ]
+    }
+  ]
+}

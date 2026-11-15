@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG7-915",
+      "stage_id": "DG7",
+      "requirement": "REQ-S19-015",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "The frozen handover release notes are out of date against the frozen register: they state the round-1 register SHA-256 (e4805087...), not the shipped register (fc8ece8b...), and quote a superseded REQ-S19-015 note; release-notes.mjs --check exits 1 on the candidate",
+      "reproduction": "Disposable clone of the candidate at f22c97b5931a40969574f4e646ea480be4454861 (candidate sha256:ca38b65e..., verified): node tools/release/release-notes.mjs --csv docs/delivery/requirements.csv --deps docs/handover/external-dependencies.json --provisional apps/web/src/i18n --out docs/handover/release-notes.md --check -> 'release-notes: docs/handover/release-notes.md is out of date (run with --write)', exit 1. sha256sum docs/delivery/requirements.csv = fc8ece8bc56b80308b1953c9e88c5e839506f7cd95b6a5982e18286ad465ba23; release-notes.md line 9 states SHA-256 e4805087a95793c24dc51bf4e43a59d893c9e35a0eefc35cef61f360f7715b09 and the Arabic block (line 210) e4805087a957. Regenerating into $TMPDIR and diffing changes exactly lines 9, 123 (the REQ-S19-015 unfinished-item note lacks the 'DG7 analyst pass 5' text) and 210. Cause: release-notes.md was last written by FE-C2 (commit 4e8676de2, 11:50Z); AN-P7E then changed five register rows (commit f63d117d1, 12:14Z) and its handback gap 1 asked for regeneration before the round-2 freeze, which did not happen. p7-work-split §M.5 step 3 and the file table (l.2061) put 'release-notes.mjs --check in the freeze verification'; the orchestrator's prefreeze-r2 checks.log has no such step, and check-handover (strict) and the release-tool suite do not compare the shipped release notes with the register, so all of them stay green. The in-app About screen, built from the same register, shows 'Register snapshot: 412 rows, SHA-256 fc8ece8bc56b...' (screens/en-about-top.png), so the two handover surfaces disagree.",
+      "expected": "At the freeze, docs/handover/release-notes.md is byte-equal to the generator's output for the frozen register (ADR-0071 §5: deterministic, '--check compares bytes'; p7-work-split §M.5 step 3), so the release identity it states (the register's SHA-256) is the register that ships, and every unfinished item quotes its current notes as the missing dependency.",
+      "actual": "The shipped release notes name a register hash that matches no file in the release, contradict About, and quote REQ-S19-015's pass-4 note instead of its current one. Status counts (394 IMPLEMENTED / 18 SPECIFIED) and the set of 18 unfinished items are still correct, so no completion state is misreported; the effect is limited to the release identity and one note. A handover recipient who checks the register against the release notes gets a mismatch.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/domain/round-2/f915-release-notes-check.log",
+        "docs/delivery/test-evidence/DG7/domain/round-2/release-notes.diff",
+        "docs/delivery/test-evidence/DG7/domain/round-2/release-tool-checks.log",
+        "docs/delivery/test-evidence/DG7/domain/round-2/screens/en-about-top.png",
+        "docs/delivery/handbacks/DG7/T-DG7-AN-P7E-transformation-analyst.md",
+        "docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r2/checks.log"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG7/round-2/domain-reviewer.json",
+      "owner": "transformation-analyst",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-15T14:59:00Z",
+          "status": "OPEN",
+          "note": "Raised by domain-reviewer in DG7 round 2 on candidate sha256:ca38b65ecaa23f49b4e5755f503c88e74c3a5bd502862fd28cc5ddbbd1fe13c5. Repair: regenerate release-notes.md with --write from the frozen register and add release-notes.mjs --check to the freeze verification (p7-work-split §M.5 step 3)."
+        }
+      ]
+    }
+  ]
+}
