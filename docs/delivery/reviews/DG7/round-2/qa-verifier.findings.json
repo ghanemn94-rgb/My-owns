@@ -1,0 +1,113 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG7-960",
+      "stage_id": "DG7",
+      "requirement": "REQ-DLV-012",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "A round-1 repair handback (T-DG7-FE-C3) has no merge-instructions section. The protocol audit on this candidate reports 6 DG7 C3 handback hits, but known-limitations.md, the release notes and D-270 disclose 5",
+      "reproduction": "Repository at the freeze commit abc7254f (candidate ca38b65e verified, 3153 files): node tools/release/protocol-audit.mjs --stage DG7 --root /home/user/My-owns --json <file>. Result: C2 27 hits, C3 6 hits, C5 1 hit, exit 1. The pre-freeze report protocol-audit-prefreeze.json (head b2ba3e3) has C2 27, C3 5 and C5 1. The new C3 hit is docs/delivery/handbacks/DG7/T-DG7-FE-C3-frontend-ux-engineer.md, missing merge_instructions. Its headings are '1. Files changed', '2. Behaviour per requirement', '3. Checks run', '4. Known gaps' and '5. Open questions'; grep -i merge finds nothing. It was committed at 53cc5985b (2026-11-15T14:17Z), after the pre-freeze r2 checks (13:51Z). The shipped docs/handover/known-limitations.md l.62 reads '| C3 handback-sections | REQ-DLV-012 | DG7 | HIT | 5 |'. It was generated from the pre-freeze report, and check-handover and known-limitations --check pass because they are given that same report.",
+      "expected": "The agent-protocol handback contract has five sections, including merge instructions. D-270 states 'Every new assignment from here carries the full contract elements'. The release's disclosure of DG7's own protocol hits (known limitations, release notes, register notes of REQ-DLV-012) covers every handback in the frozen candidate, or the extra hit is disclosed and left for the release-auditor, as for the other five.",
+      "actual": "A sixth DG7 C3 hit exists in the frozen candidate and is not disclosed. The handover still says 5. The handback is write-once, so the repair is disclosure: regenerate known-limitations.md (and the release notes) from a protocol-audit report run on the next candidate, and name the FE-C3 handback. C2 (27) and C5 (1) are unchanged, so the round-1 repair assignments themselves carry the full contract. No behavioural effect.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-2/13-protocol-audit-DG7.log",
+        "docs/delivery/test-evidence/DG7/qa/round-2/13-protocol-audit-DG7.json",
+        "docs/delivery/test-evidence/DG7/qa/round-2/14-protocol-c3-fe-c3.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG7/round-2/qa-verifier.json",
+      "owner": "devops-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-15T16:45:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG7 round 2 (T-DG7-REV-QA-R2) from a protocol-audit re-run on the round-2 freeze commit. Owner is devops-engineer for the regenerated disclosure (known-limitations.md and release notes); the handback itself is write-once."
+        }
+      ]
+    },
+    {
+      "id": "F-DG7-961",
+      "stage_id": "DG7",
+      "requirement": "REQ-S19-015",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "docs/handover/release-notes.md is stale on the frozen candidate. It cites register SHA-256 e4805087... (en and ar), but the shipped requirements.csv is fc8ece8b..., and its REQ-S19-015 entry lacks the register's current notes. release-notes --check exits 1, and no test or pre-freeze step runs that check",
+      "reproduction": "Disposable clone at source commit f22c97b5 (recomputed candidate sha256:ca38b65e...c5, 3153 files). sha256sum docs/delivery/requirements.csv gives fc8ece8bc56b80308b1953c9e88c5e839506f7cd95b6a5982e18286ad465ba23. docs/handover/release-notes.md l.9 states 'SHA-256 `e4805087a95793c24dc51bf4e43a59d893c9e35a0eefc35cef61f360f7715b09`, 412 rows', and the Arabic block (l.210) states 'SHA-256 `e4805087a957`'. node tools/release/release-notes.mjs --csv docs/delivery/requirements.csv --deps docs/handover/external-dependencies.json --provisional apps/web/src/i18n --out docs/handover/release-notes.md --check prints 'docs/handover/release-notes.md is out of date (run with --write)', exit 1. --write on a scratch copy (restored afterwards) changes 3 lines: 9 and 210 (the hash) and 123 (the REQ-S19-015 notes, which in the register now carry the 'DG7 analyst pass 5 (T-DG7-AN-P7E ...)' paragraph; the shipped file has none). git log: requirements.csv was last changed by f63d117d1 (AN-P7E, 12:14Z), after release-notes.md was last written by 4e8676de2 (FE-C2, 11:50Z). Nothing catches it. prefreeze-r2/checks.log has no release-notes step. tools/release/tests/release-notes.test.mjs runs --check only on fixtures (T-I11). check-handover and the full release-tool suite pass.",
+      "expected": "The release notes in the handover package are generated from the register the package ships, and say so truthfully (the generator writes the register's SHA-256 so that a reader can verify it). REQ-S02-005/A28: release notes list every non-IMPLEMENTED row with its notes as in the register. Same lesson as F-DG7-956: a generated handover file is regenerated after its input changes, and its --check is run on the frozen tree (ideally as a test, as known-limitations and connector-handover already are).",
+      "actual": "The frozen release notes name a register hash that no shipped file has, in both languages, and omit the latest REQ-S19-015 status text. Mobily IT checking the register against the release notes would get a mismatch. The release-blocker list itself (18 rows) is still correct; only the hash and one row's notes are stale. Fix: release-notes.mjs --write, then add a real-tree --check (release-tool test or pre-freeze step) so it cannot drift again.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-2/15-release-notes-stale.log",
+        "docs/delivery/test-evidence/DG7/qa/round-2/07-release-tools.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG7/round-2/qa-verifier.json",
+      "owner": "devops-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-15T16:45:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG7 round 2 (T-DG7-REV-QA-R2): release-notes --check on the frozen candidate, exit 1. Medium under D-192: a generated deliverable inconsistent with the shipped register."
+        }
+      ]
+    },
+    {
+      "id": "F-DG7-962",
+      "stage_id": "DG7",
+      "requirement": "REQ-S20-031",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "The integration suite is order-dependent. p7-transfer-guards.test.ts commits queued migration_export rows and migration_import rows without a reconciliation run into the one shared test database, so contract.test.ts and response-validation.test.ts fail (422 migration.export_in_progress; 500 from listMigrationImports) whenever Vitest runs the guard file first",
+      "reproduction": "1) Full run on the candidate clone (QA_PG_PORT=32510 tests/qa/support/with-pg.sh npx vitest run --project integration): 474 files, 4 failed, 10 tests failed, exit 1. packages/db/test/integration/p7-transfer-guards.test.ts finished at log line 708 and contract.test.ts at 2163. Contract and response-validation each fail 'P7 BE-C operations' (createMigrationExport 422 migration.export_in_progress where 202 was expected), 'P7 BE-D operations' and 'every operation: an undeclared request media type...' (listMigrationImports returns an undeclared 500), and 'covers every operation...' (the cascade). 2) Deterministic probe (11c-integration-order-probe.log), one vitest run per order on a fresh disposable PostgreSQL. It uses a given-order sequencer config (probe-vitest.qa-order.config.ts, file parallelism off). Guard file then contract.test.ts: contract 4 failed, the same four, exit 1. Contract then guard: 132/132, exit 0. 3) Cause. packages/db/test/global-setup.ts creates ONE database per run (mth_test_<runId>, provided to every file). p7-transfer-guards.test.ts commits queued exports through queued() (l.60-70, used by the 'starts queued...' and 'mth_app cannot change...' tests, never finished) and a migration_import with no migration_reconciliation (l.143-157). apps/api/src/modules/transfer/export/service.ts refuses a new export while any export is queued or running (l.166-171). apps/api/src/modules/transfer/import/service.ts presentImport throws 'migration_import ... has no reconciliation run' (l.255), so the whole list returns 500. The orchestrator's green prefreeze-r2 integration.log ran response-validation (l.45) and contract (l.119) before the guard file (l.2948).",
+      "expected": "REQ-S20-031 / A23: the release's executable tests give the same result in any file order Vitest picks. The order depends on the duration cache, so a clean CI host or a different machine can order them differently. A test that leaves owner-written fixture rows in the shared database either removes them, uses its own database, or the tests that assume an empty export queue tolerate them.",
+      "actual": "pnpm test:integration on the frozen candidate fails, with 10 tests across contract.test.ts and response-validation.test.ts, when the guard file runs first; it passes otherwise. The two other failures of that run (a08 submit timeout 30 s; a17 hook timeout 60 s) were load and passed on re-run. The product behaves as designed: the CLI writes an import and its reconciliation in one transaction, and one export at a time is intended. The defect is test isolation. An observation, not part of this finding: one owner-written import row without a reconciliation makes the whole listMigrationImports answer 500 rather than skipping or flagging that row.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-2/10-integration.log",
+        "docs/delivery/test-evidence/DG7/qa/round-2/11a-integration-rerun-contract.log",
+        "docs/delivery/test-evidence/DG7/qa/round-2/11b-integration-rerun-failed-files.log",
+        "docs/delivery/test-evidence/DG7/qa/round-2/11c-integration-order-probe.log",
+        "docs/delivery/test-evidence/DG7/qa/round-2/probe-vitest.qa-order.config.ts"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG7/round-2/qa-verifier.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-15T16:45:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG7 round 2 (T-DG7-REV-QA-R2) from the full integration run on the frozen candidate, confirmed with a deterministic two-order probe. Medium under D-192: the release's own integration suite fails depending on file order."
+        }
+      ]
+    },
+    {
+      "id": "F-DG7-963",
+      "stage_id": "DG7",
+      "requirement": "REQ-S20-018",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "deploy/scripts/transfer-drill.sh can exit 1 after its PASS line: the outer cleanup 'rm -rf $WORK' runs under set -e while the target PostgreSQL, killed after a 5 s TERM wait, is still writing its data directory",
+      "reproduction": "A18 driver run 1 on the candidate (a18-run1.log, 16:21-16:27Z, host shared with two other reviews). Archive built from f22c97b5 with --candidate ca38b65e, archive --verify PASS. The drill log ends 'transfer-drill: PASS in 310.603 s: 335 tables and 2 evidence files equal ... restart verified'. Next comes 'rm: cannot remove .../mth-transfer-drill.ocfb5W/pgT/data/base/34663: Directory not empty'. The harness test 'the drill exits 0 with the PASS line' fails with 'expected 1 to be +0'; the 9 other tests pass, and the driver exits 1. Run 2 (a18-run2.log, 16:31-16:37Z, lower load) gives 10/10, exit 0. Cause, in transfer-drill.sh: the inner cleanup trap stop_pid sends TERM to the postmaster and waits 5 s, then sends KILL (l.120-129). The outer mode then runs set -e; [ \"$KEEP\" -eq 1 ] || rm -rf \"$WORK\" before exit \"$rc\" (l.104-106). If PostgreSQL is still checkpointing or its children are still alive, rm fails, and set -e turns a passed drill into exit 1.",
+      "expected": "The drill's exit status reflects the drill's result. Cleanup waits for PostgreSQL to stop (a fast shutdown and waiting for the PID and its children), or a cleanup failure is reported without overriding a PASS (BLOCKED or a warning, never a silent pass either way).",
+      "actual": "The drill reported PASS and then exited 1 because of the cleanup race. The failure is conservative (it can never make a failing drill pass) and depends on host load. A18 itself is met (run 2: 10/10, D0-D11 PASS). An operator following docs/handover would see a failed drill after a PASS line.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-2/a18/a18-run1.log",
+        "docs/delivery/test-evidence/DG7/qa/round-2/a18/a18-run2.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG7/round-2/qa-verifier.json",
+      "owner": "devops-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-15T16:45:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG7 round 2 (T-DG7-REV-QA-R2) from the A18 driver run 1; run 2 passed. Low: tool exit status only, conservative, load-dependent."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,75 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG7-913",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:ca38b65ecaa23f49b4e5755f503c88e74c3a5bd502862fd28cc5ddbbd1fe13c5 (source f22c97b5, which contains the FE-C2 commit 4e8676de2, the FE-C3 commit 53cc5985b and the AN-P7E commit f63d117d1). The five p7-work-split §E.6 screens are built: router.tsx maps admin/retention, classes/:code, runs/:id, archived and backups to RetentionPages.tsx; P7_PLANNED_ROUTES is empty, asserted by p7-shell.test.tsx. retention-screens.test.tsx passes 20/20 and p7-shell.test.tsx 11/11 inside pnpm test (unit-web 2199/2199). The product T-E25 spec on the real stack passes in both projects: chromium-en tests 281-282 and chromium-ar tests 568-569 of my full apps/web/e2e run. My own independent spec (docs/delivery/test-evidence/DG7/qa/tests/qa-r2-retention.spec.ts, real stack, en and ar, 2/2 exit 0) drives what the product spec does not. (1) A 409 through the screen: the form is opened, the class is changed behind it through the API, and Save shows the conflict panel with mine-vs-current values; the server kept 222 / TEST-ONLY QA-BEHIND, and nothing was overwritten. Re-apply sends exactly one more PUT with the current If-Match and saves 333 (version +1). (2) Server-side rules: AUD PUT 403, no If-Match 428, stale If-Match 409, periodDays 0 400, and no refused request changed the version. (3) Period 0 in the form is refused inline, with focus on the field and nothing posted. (4) No form on business_record or expiring_credential, and through the API a business class cannot leave retain (422 retention.class_retain_only for archive and for archive_then_purge; unchanged). Attempt 1 of my spec wrongly expected a refusal of a retain PUT on a business class; ADR-0067 §2 allows it, so the product was right and my assertion was corrected (attempt-1 log kept). Screenshots in both languages show RTL/LTR and the provisional wordmark. Register row REQ-S16-024 now states the correction of pass 1 and cites the FE-C2 evidence; admin guide en/ar #retention describes the built screens; no handover text calls them placeholders.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-2/30-unit-pnpm-test.log",
+        "docs/delivery/test-evidence/DG7/qa/round-2/20-e2e-web.log",
+        "docs/delivery/test-evidence/DG7/qa/round-2/23-qa-r2-retention-spec.log",
+        "docs/delivery/test-evidence/DG7/qa/round-2/23-qa-r2-retention-spec-attempt1.log",
+        "docs/delivery/test-evidence/DG7/qa/tests/qa-r2-retention.spec.ts",
+        "docs/delivery/test-evidence/DG7/qa/round-2/screens/qa-r2-retention-conflict-en.png",
+        "docs/delivery/test-evidence/DG7/qa/round-2/screens/qa-r2-retention-conflict-ar.png",
+        "docs/delivery/test-evidence/DG7/qa/round-2/53-f913-docs.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG7-914",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate ca38b65e (clone at f22c97b5). docs/handover/api/connectors.md no longer contains 'not yet written', 'to be confirmed', 'owner: slice' or 'planned' (grep exit 1). It lists docs/operations/identity-saml-broker.md (the file exists, 18305 bytes) as the brokered SAML guide. In docs/delivery/environment.md the only remaining 'planned' is the explanatory note that the stale markers were removed (l.108, F-DG7-914). connector-handover.mjs --check: 'equals a fresh generation', exit 0. The residual task tags '(DO-B)' named by AN-P7E are cosmetic and not part of the finding's expected text.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-2/50-f914-connectors.log",
+        "docs/delivery/test-evidence/DG7/qa/round-2/07-release-tools.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG7-953",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified at the round-2 freeze. HEAD is abc7254f (the freeze commit). The working tree recomputes to sha256:ca38b65e...c5 (3153 files) and --diff against the committed manifest reports matches true, with nothing added, removed or changed. --ref f22c97b5 and my disposable clone at f22c97b5 give the same id. The freeze commit's changed files are the three round-2 assignments, the manifest and stages.json, and none of the five is a manifest entry (checked against the 3153 entries). D-273 is in decisions.md at f22c97b5, before the freeze. validate.mjs --reconcile: 'working tree ... (matches)', exit 0; the round-1 records read STALE, as expected for the superseded candidate. The repaired process (commit every candidate file before --freeze) held for this freeze.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-2/00-env.log",
+        "docs/delivery/test-evidence/DG7/qa/round-2/52-f953-reconcile.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG7-954",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Revert-to-fail on a disposable copy of the candidate (routes.ts byte-equal to the candidate for the control; restored and compared after each mutant). organizations.test.ts on a fresh disposable PostgreSQL: M0 control 15/15, exit 0. M1, the exact A26 drill defect (round-1 a26-defect.patch, both the route label and requireAction set to business_unit.read): 4 failed / 11 passed, exit 1. The failing tests are office, auditor and leadA1 (read without manage get 403, unit unchanged, only authorization.denied audited) and the split-grant re-parent; the verbose re-run names them. M3, only requireAction downgraded: the same 4 fail, exit 1. M2, only the route's config.access.permission label downgraded: 15/15. I judge M2 equivalent: apps/api/src/modules/platform/hooks.ts and identity/routes.ts use the label only for public vs authenticated and the fail-closed 'policy consulted' check, never against grants, so authorization is the scoped requireAction, as BE-R6 disclosed. The tests are in the main tree at apps/api/test/integration/organizations.test.ts and pass in my full integration run.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-2/f954/mutant-runs.log",
+        "docs/delivery/test-evidence/DG7/qa/round-2/f954/mutant-M1-verbose.log",
+        "docs/delivery/test-evidence/DG7/qa/round-2/f954/mutants.sh",
+        "docs/delivery/test-evidence/DG7/qa/round-2/f954/a26-defect.patch",
+        "docs/delivery/test-evidence/DG7/qa/round-2/f954/mutant-runs-attempt1-enospc.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG7-955",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "progress.md at HEAD abc7254f: the 'Unresolved blockers' section is annotated '(Historical, superseded 2026-11-15, F-DG7-955 ...) Current state: DG0-DG6 APPROVED; DG7 open findings and blockers are listed in the checkpoint at the top and in findings.json', and the old sentence is in the past tense. The checkpoint at the top names DG7 round 2, the six findings and the next action. progress.md is not a manifest entry, so the fix needed no re-freeze. Small residual, not a defect: the checkpoint's 'Next action: freeze round 2' was written before the freeze. The freeze commit changes only stages.json, the manifest and the assignments, so stages.json (REVIEWING, round 2 on ca38b65e) is the current state, and a resumption reconstructs it.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-2/51-f955-progress.log",
+        "docs/delivery/test-evidence/DG7/qa/round-2/06-a27-resume.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG7-956",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "On a sparse git clone at f22c97b5 that recomputes to ca38b65e, node --test tools/release/tests/check-handover.test.mjs gives P0 51/51, exit 0. Revert-to-fail: P1, the test file restored to its round-1 candidate version (a60a962), fails exactly the 4 tests of the finding (46/50, exit 1). P2, known-limitations.md's DG7 C3 count hand-damaged: the T-H4 block tests fail (47/51, exit 1). P3, the shipped report hidden: 'the report the shipped file names (by SHA-256) is in the delivery records' fails and names the hash, with no silent skip (45/51, exit 1). The test and known-limitations.md are byte-equal to the candidate afterwards. The full release-tool suite on the candidate clone gives 466 tests, 463 pass, 1 fail, 2 skipped. The failure is T-A5 build-from-archive with EROFS on the sandbox's read-only HOME pnpm store; with MTH_PNPM_STORE set to a writable copy, T-A5 passes and so does the whole build-from-archive file (2/2). The skips are T-A11 (BLOCKED: no assembled runtime tree) and T-A3 (bsdtar not installed), both environmental, as in DO-K2's evidence. Note: the test resolves the report from docs/delivery/test-evidence, which is committed but not a manifest entry; a tree without test-evidence fails T-H4 loudly, which is the intended direction. A different stale generated file, release-notes.md, is raised separately as F-DG7-961.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-2/f956-probes.log",
+        "docs/delivery/test-evidence/DG7/qa/round-2/f956-probes.sh",
+        "docs/delivery/test-evidence/DG7/qa/round-2/03-nodetest-tools_release_tests.log",
+        "docs/delivery/test-evidence/DG7/qa/round-2/03c-nodetest-build-from-archive-writable-store.log"
+      ]
+    }
+  ]
+}
