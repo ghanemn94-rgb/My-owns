@@ -90,6 +90,7 @@ export default defineConfig({
             "apps/*/test/integration/**/*.test.ts",
             "packages/*/test/integration/**/*.test.ts",
             "tests/qa/integration/**/*.test.ts",
+            "tests/integration/**/*.test.ts",
           ],
           // One disposable database per run; created/dropped by the global setup owned by backend-workflow-engineer.
           globalSetup: ["packages/db/test/global-setup.ts"],

@@ -1,0 +1,33 @@
+port-policy: PostgreSQL listening on port 24611 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/My-owns
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwgiw1v3_970751b3 (server_encoding UTF8); applied 135 migrations to a fresh database
+stdout | packages/db/test/integration/transfer-load.test.ts > T-R13 + T-R4 + T-R3: the real load with carried events already present in the baseline (A2.2, A2.3) > imports (exit 0), never inserts P twice, records P, reconstructs the trail, keeps the triggers on
+T-R13 measured |P| = 45
+
+ ✓ |integration| packages/db/test/integration/transfer-load.test.ts (10 tests) 46668ms
+   ✓ T-R2: mth-db migrate --reserve-audit-seq-for > starts the target's audit trail at M + 1, fires once after 0003, and the plan defers no audit column  2823ms
+   ✓ T-R2: mth-db migrate --reserve-audit-seq-for > refuses on a database with an applied migration (exit-2 line), changing nothing  2503ms
+   ✓ T-R2: mth-db migrate --reserve-audit-seq-for > the CLI prints the line; a bad package is refused before any connection (unreachable URL)  4692ms
+   ✓ T-R1: the empty-target rule E1-E4 > a fresh target (with and without the reservation) satisfies E1, E2 and E4, measured  6348ms
+   ✓ T-R1: the empty-target rule E1-E4 > a plainly migrated target is refused by E3 (exit 2, exact line), unchanged  2889ms
+   ✓ T-R1: the empty-target rule E1-E4 > one organization: exit 3 with the detail line; one api audit row as mth_app: exit 3 with the E2 line  6626ms
+   ✓ T-R13 + T-R4 + T-R3: the real load with carried events already present in the baseline (A2.2, A2.3) > imports (exit 0), never inserts P twice, records P, reconstructs the trail, keeps the triggers on  5923ms
+   ✓ T-R14: a shared-id carried event that is not the same event refuses the import (A2.2, A2.7) > a differing reason, and a source copy that is not a baseline event: exit 1, both lines, nothing changed  3673ms
+   ✓ T-R5 (b): a changed loaded row at L8 makes the reconciliation mismatch and rolls everything back > exit 4 with the C.5 line; counts, trail and triggers unchanged; no migration_import  5042ms
+
+ Test Files  1 passed (1)
+      Tests  10 passed (10)
+   Start at  14:50:32
+   Duration  52.97s (transform 1.47s, setup 0ms, collect 2.39s, tests 46.67s, environment 0ms, prepare 134ms)
+
+
+real	0m57.039s
+user	0m47.040s
+sys	0m6.094s
+exit=0

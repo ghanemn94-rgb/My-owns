@@ -1,0 +1,56 @@
+port-policy: PostgreSQL listening on port 27651 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/My-owns
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwglvbb8_d1ccacfc (server_encoding UTF8); applied 135 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/transfer/zz-td7-mutant2.test.ts (2 tests | 1 failed | 1 skipped) 18726ms
+   ↓ T-D6 demo -> clean installation round trip > imports as drafts, publishes through the existing pipeline, and the published hashes equal the source's
+   × T-D7 an imported draft is published, and migrated to, exactly as a hand-made one > the pin is unchanged by the commit and the publish; the publish and migration records equal a hand-made publish's 923ms
+     → expected { status: 'executed', …(4) } to deeply equal { status: 'executed', …(4) }
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/transfer/zz-td7-mutant2.test.ts > T-D7 an imported draft is published, and migrated to, exactly as a hand-made one > the pin is unchanged by the commit and the publish; the publish and migration records equal a hand-made publish's
+AssertionError: expected { status: 'executed', …(4) } to deeply equal { status: 'executed', …(4) }
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[33m@@ -10,10 +10,15 @@[39m
+[2m        "automatic",[22m
+[2m        [[22m
+[2m          {[22m
+[2m            "change": "added",[22m
+[2m            "elementType": "checklist_item",[22m
+[31m+           "stableKey": "synthetic.mutant-g1",[39m
+[31m+         },[39m
+[31m+         {[39m
+[31m+           "change": "added",[39m
+[31m+           "elementType": "checklist_item",[39m
+[2m            "stableKey": "synthetic.t-d7-g1-check",[22m
+[2m          },[22m
+[2m        ],[22m
+[2m      ],[22m
+[2m      [[22m
+
+ ❯ apps/api/test/integration/transfer/zz-td7-mutant2.test.ts:583:26
+    581|     const handMigration = await runMigration(hand, handPublished.id);
+    582|     const impMigration = await runMigration(imp, impPublished.id);
+    583|     expect(impMigration).toEqual(handMigration);
+       |                          ^
+    584|     expect(handMigration.status).toBe("executed");
+    585|     expect(handMigration.planReady).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 skipped (2)
+   Start at  16:13:56
+   Duration  31.65s (transform 4.95s, setup 0ms, collect 8.85s, tests 18.73s, environment 0ms, prepare 61ms)
+
+exit 1

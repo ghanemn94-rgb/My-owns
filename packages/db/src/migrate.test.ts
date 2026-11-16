@@ -2,6 +2,9 @@
 // migration-gap-order.mjs): forward-only migrations apply in one order on every database (ADR-0003). A pending file whose
 // id is not above the highest applied id would run at its lexical position on a fresh database but last on an upgraded
 // one, so compareStatus() reports it and migrate() refuses it (the refusal itself: test/integration/migrate.test.ts).
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { compareStatus, listMigrationFiles, type AppliedMigration, type MigrationFile } from "./migrate.ts";
 
@@ -50,5 +53,25 @@ describe("compareStatus: a pending migration below the highest applied id (F-DG5
     expect(fresh.pending).toEqual(shipped.map((f) => f.name));
     expect(fresh.outOfOrderPending).toEqual([]);
     expect(compareStatus(shipped, upgraded)).toMatchObject({ upToDate: true, outOfOrderPending: [] });
+  });
+});
+
+describe("listMigrationFiles: only `.sql` entries are migrations (T-DG7-BE-R5)", () => {
+  it("ignores a stray directory and a non-.sql file in the folder, and still refuses a misnamed .sql file", () => {
+    const dir = mkdtempSync(join(process.env["TMPDIR"] ?? tmpdir(), "mig-entries-"));
+    try {
+      writeFileSync(join(dir, "0001_first.sql"), "SELECT 1;");
+      writeFileSync(join(dir, "0002_second.sql"), "SELECT 2;");
+      mkdirSync(join(dir, ".claude", ".cc-writes"), { recursive: true }); // the stray sandbox folder of DG7 pre-freeze
+      writeFileSync(join(dir, "README.md"), "not a migration");
+      expect(listMigrationFiles(dir).map((f) => [f.id, f.name])).toEqual([
+        [1, "0001_first.sql"],
+        [2, "0002_second.sql"],
+      ]);
+      writeFileSync(join(dir, "third.sql"), "SELECT 3;");
+      expect(() => listMigrationFiles(dir)).toThrow(/does not match NNNN_snake_case\.sql/);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });

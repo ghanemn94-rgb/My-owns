@@ -1,0 +1,61 @@
+port-policy: PostgreSQL listening on port 24351 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/My-owns
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwf37dnc_dc611d26 (server_encoding UTF8); applied 133 migrations to a fresh database
+ ❯ |integration| packages/db/test/integration/transfer-load.test.ts (10 tests | 2 failed | 7 skipped) 15040ms
+   ↓ T-R2: mth-db migrate --reserve-audit-seq-for > starts the target's audit trail at M + 1, fires once after 0003, and the plan defers no audit column
+   ↓ T-R2: mth-db migrate --reserve-audit-seq-for > refuses on a database with an applied migration (exit-2 line), changing nothing
+   ↓ T-R2: mth-db migrate --reserve-audit-seq-for > the CLI prints the line; a bad package is refused before any connection (unreachable URL)
+   ↓ T-R1: the empty-target rule E1-E4 > a fresh target (with and without the reservation) satisfies E1, E2 and E4, measured
+   ↓ T-R1: the empty-target rule E1-E4 > a plainly migrated target is refused by E3 (exit 2, exact line), unchanged
+   ↓ T-R1: the empty-target rule E1-E4 > one organization: exit 3 with the detail line; one api audit row as mth_app: exit 3 with the E2 line
+   × T-R13 + T-R4 + T-R3: the real load with carried events already present in the baseline (A2.2, A2.3) > imports (exit 0), never inserts P twice, records P, reconstructs the trail, keeps the triggers on 4612ms
+     → cannot ALTER TABLE "connector" because it has pending trigger events
+   ✓ T-R13 + T-R4 + T-R3: the real load with carried events already present in the baseline (A2.2, A2.3) > pins A2.1: audit_event has the enumerated columns (17 measured), so E5 compares all but seq and occurred_at 119ms
+   ↓ T-R14: a shared-id carried event that is not the same event refuses the import (A2.2, A2.7) > a differing reason, and a source copy that is not a baseline event: exit 1, both lines, nothing changed
+   × T-R5 (b): a changed loaded row at L8 makes the reconciliation mismatch and rolls everything back > exit 4 with the C.5 line; counts, trail and triggers unchanged; no migration_import 4396ms
+     → cannot ALTER TABLE "connector" because it has pending trigger events
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| packages/db/test/integration/transfer-load.test.ts > T-R13 + T-R4 + T-R3: the real load with carried events already present in the baseline (A2.2, A2.3) > imports (exit 0), never inserts P twice, records P, reconstructs the trail, keeps the triggers on
+ FAIL  |integration| packages/db/test/integration/transfer-load.test.ts > T-R5 (b): a changed loaded row at L8 makes the reconciliation mismatch and rolls everything back > exit 4 with the C.5 line; counts, trail and triggers unchanged; no migration_import
+error: cannot ALTER TABLE "connector" because it has pending trigger events
+ ❯ node_modules/.pnpm/pg@8.16.3/node_modules/pg/lib/client.js:545:17
+ ❯ PostgresConnection.executeQuery node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:95:49
+ ❯ node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:35:28
+ ❯ node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/kysely.js:947:20
+ ❯ SingleConnectionProvider.#run node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/single-connection-provider.js:24:16
+ ❯ DefaultQueryExecutor.executeQuery node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16
+ ❯ loadInTransaction packages/db/src/transfer/import.ts:774:27
+    772|   await step("L7");
+    773|   // L8
+    774|   for (const t of others) await sql`${sql.raw(`ALTER TABLE ${quoteIden…
+       |                           ^
+    775|   await assertAuditTriggersEnabled(tx);
+    776|   await step("L8");
+ ❯ node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/kysely.js:582:32
+ ❯ SingleConnectionProvider.#run node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/single-connection-provider.js:24:16
+ ❯ PostgresConnection.executeQuery node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/dialect/postgres/postgres-driver.js:107:41
+ ❯ node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:35:28
+ ❯ node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/kysely.js:947:20
+ ❯ SingleConnectionProvider.#run node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/single-connection-provider.js:24:16
+ ❯ DefaultQueryExecutor.executeQuery node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/query-executor/query-executor-base.js:34:16
+ ❯ loadInTransaction packages/db/src/transfer/import.ts:774:27
+ ❯ node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/kysely.js:582:32
+ ❯ SingleConnectionProvider.#run node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/dist/esm/driver/single-connection-provider.js:24:16
+ ❯ packages/db/src/transfer/import.ts:1011:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed | 7 skipped (10)
+   Start at  14:43:40
+   Duration  21.14s (transform 885ms, setup 0ms, collect 1.59s, tests 15.04s, environment 0ms, prepare 48ms)
+

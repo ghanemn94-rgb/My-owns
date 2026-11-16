@@ -1,0 +1,790 @@
+port-policy: PostgreSQL listening on port 24351 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.7J5f2o/claude-0/review-a26-qa
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwgv7lwl_0991fe57 (server_encoding UTF8); applied 135 migrations to a fresh database
+stdout | apps/api/test/integration/contract/response-validation.test.ts > REQ-S16-027: every operation's responses validated against the contract (ADR-0052 §7) > every operation outside the pending aggregate returned at least one validated response in the contract suite
+[response-validation] 11484 validated responses; 965 of 965 live operations (0 pending excluded); 4464 distinct (operationId, status) pairs; operations without a validated response: 0
+
+stdout | apps/api/test/integration/contract/response-validation.test.ts > REQ-S16-027: every operation's responses validated against the contract (ADR-0052 §7) > every validated error response is application/problem+json and a Problem; every 400 is the uniform validation body
+[response-validation] 8502 validated error responses; 5681 validated 400 responses, all uniform validation bodies
+
+stdout | apps/api/test/integration/contract/response-validation.test.ts > REQ-S16-027: every operation's responses validated against the contract (ADR-0052 §7) > invalid input returns the uniform 400 body in every module (a validated 400 per OpenAPI tag)
+[response-validation] modules (OpenAPI tags) with a validated uniform 400: 123/123
+
+stdout | apps/api/test/integration/contract/response-validation.test.ts > REQ-S16-027: every operation's responses validated against the contract (ADR-0052 §7) > an explicit invalid body per module: 400 urn:mth:problem:validation with JSON-pointer errors
+[response-validation] explicit invalid-body: modules without a 400: none
+[response-validation] explicit invalid-body samples: 75 modules with a uniform 400 (access:createRoleAssignment, adoption-indicators:createAdoptionMetricLink, adoption-interventions:createAdoptionIntervention, approvals:requestApproval, assessment-forms:createAssessmentForm, assessment-records:createAssessmentRecord, assistant:putAssistantSetting, automation:createAutomationRule, bau-handovers:createBauHandover, benefit-formulas:checkBenefitFormula, benefit-groups:createBenefitGroup, benefit-overlaps:createBenefitOverlap, benefit-scenarios:createBenefitScenario, benefit-valuation-methods:createBenefitValuationMethod, benefits:createBenefit, branding:putBrandingSettings, business-cases:createBusinessCase, capacity:createResourceRole, change-requests:putChangeControlPolicy, charter:createCharter, closure:closeTransformation, controls:createControl, corrective-actions:createCorrectiveCase, decision-rights:createDecisionRight, decisions:createDependency, delegations:createDelegation, dependencies:createT08Dependency, design:createTomGap, diagnose:createValuePool, direction:createStrategicGuardrail, escalations:createEscalationRule, evidence:createEvidence, executive-decisions:createExecutiveDecision, exports:createExport, financial-metrics:putFinancialMetricEnablement, forms:createFormDraft, formula-previews:previewFormula, forums:createForum, gate-exceptions:createGateException, health-checks:createHealthCheck, improvement-items:createImprovementItem, integrations:createConnector, kpi:createKpiDefinition, launch-plans:generateLaunchPlan, lessons:createLesson, me:updateMyPreferences, meeting-series:createMeetingSeries, meetings:createMeeting, methodology-migrations:createMethodologyMigration, modular-entry:createInheritedRecord, notifications:putMyNotificationPreferences, organizations:createOrganization, owner-updates:createOwnerUpdate, performance-areas:createPerformanceArea, platform-admin:putStorageSetting, portfolio:createInitiative, prioritization:createWeightSet, procedures:validateProcedureDefinition, raci:createRaciDeliverable, raid:createRaidEntry, retention:createRetentionRun, risk-dispositions:createRiskDisposition, roadmap:createRoadmapWave, role-mappings:createRoleMapping, scale:createScaleTransition, search:createSavedView, security:putUploadPolicy, stakeholder-groups:createStakeholderGroup, studio:createConfigDraft, traceability:createTraceLink, transfer:createMigrationExport, transformations:createTransformation, transition-decisions:createTransitionDecision, users:createUser, workstreams:createWorkstream); refused before validation (authorization first): none
+
+stdout | apps/api/test/integration/contract/response-validation.test.ts > REQ-S16-027: every operation's responses validated against the contract (ADR-0052 §7) > an unauthorized call returns 403 (or the ADR-0006 404 for an unreadable record): every transformation read by a user without an assignment
+[response-validation] unauthorized transformation reads: 124 operations; statuses {"403":1,"404":123}
+
+stdout | apps/api/test/integration/contract/response-validation.test.ts > REQ-S16-027: every operation's responses validated against the contract (ADR-0052 §7) > an unauthorized call returns 403: the auditor (AUD, read-only) is refused every write that needs a business permission
+[response-validation] auditor write sweep: 486 permissioned writes; statuses {"400":35,"403":317,"404":134}; modules with a 403 forbidden: 96
+
+stdout | apps/api/test/integration/contract/response-validation.test.ts > REQ-S16-027: every operation's responses validated against the contract (ADR-0052 §7) > an unauthorized call is refused in every module with a business-permission route (the two sweeps and the suite)
+[response-validation] modules with a business-permission route: 115; refused an unauthorized call: 115; not reached: none
+
+stdout | apps/api/test/integration/contract/response-validation.test.ts > REQ-S16-027: every operation's responses validated against the contract (ADR-0052 §7) > pagination: every list operation declares nextCursor, and every validated list success carries it
+[response-validation] list operations: 231; cursor-paginated 210 (292 validated 200s, all with nextCursor); unpaginated, pinned and reported: 21
+
+ ✓ |integration| apps/api/test/integration/contract/response-validation.test.ts (119 tests) 89234ms
+   ✓ every operation, validated against the contract and the zod mirrors > kpi module operations (P2; kpi-exercises.ts, owned by kpi-benefits-engineer)  804ms
+   ✓ every operation, validated against the contract and the zod mirrors > P2 backend operations (p2-exercises.ts): every routed operation exercised with a success  2829ms
+   ✓ every operation, validated against the contract and the zod mirrors > P3 BE-B operations (p3-exercises-be-b.ts)  884ms
+   ✓ every operation, validated against the contract and the zod mirrors > P3 BE-C operations (p3-exercises-be-c.ts)  785ms
+   ✓ every operation, validated against the contract and the zod mirrors > P3 BE-D operations (p3-exercises-be-d.ts)  906ms
+   ✓ every operation, validated against the contract and the zod mirrors > P3 BE-E operations (p3-exercises-be-e.ts)  620ms
+   ✓ every operation, validated against the contract and the zod mirrors > P3 KBE-B operations (p3-exercises-kbe-b.ts)  433ms
+   ✓ every operation, validated against the contract and the zod mirrors > P3 KBE-C operations (p3-exercises-kbe-c.ts)  462ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-A operations (p4-exercises-be-a.ts)  394ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-B operations (p4-exercises-be-b.ts)  848ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-C operations (p4-exercises-be-c.ts)  564ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-D operations (p4-exercises-be-d.ts)  965ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-E operations (p4-exercises-be-e.ts)  472ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-F operations (p4-exercises-be-f.ts)  1587ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-G operations (p4-exercises-be-g.ts)  585ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-H operations (p4-exercises-be-h.ts)  1055ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-I operations (p4-exercises-be-i.ts)  1123ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-J operations (p4-exercises-be-j.ts)  577ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-K operations (p4-exercises-be-k.ts)  1143ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-L operations (p4-exercises-be-l.ts)  1114ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 BE-M operations (p4-exercises-be-m.ts)  1313ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 KBE-B operations (p4-exercises-kbe-b.ts)  634ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 KBE-C operations (p4-exercises-kbe-c.ts)  1096ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 KBE-D operations (p4-exercises-kbe-d.ts)  642ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 KBE-D2 operations (p4-exercises-kbe-d2.ts)  723ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 KBE-E operations (p4-exercises-kbe-e.ts)  1082ms
+   ✓ every operation, validated against the contract and the zod mirrors > P4 KBE-G operations (p4-exercises-kbe-g.ts)  1082ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-A operations (p5-exercises-be-a.ts)  442ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-B operations (p5-exercises-be-b.ts)  486ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-B3 operations (p5-exercises-be-b3.ts)  753ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-C operations (p5-exercises-be-c.ts)  1061ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-D operations (p5-exercises-be-d.ts)  490ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-E operations (p5-exercises-be-e.ts)  495ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-E2 operations (p5-exercises-be-e2.ts)  676ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-F operations (p5-exercises-be-f.ts)  665ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-F2 operations (p5-exercises-be-f2.ts)  1547ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-H operations (p5-exercises-be-h.ts)  664ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-H2 operations (p5-exercises-be-h2.ts)  561ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-I operations (p5-exercises-be-i.ts)  766ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-K operations (p5-exercises-be-k.ts)  597ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-L2 operations (p5-exercises-be-l2.ts)  361ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 KBE-C operations (p5-exercises-kbe-c.ts)  659ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 KBE-D operations (p5-exercises-kbe-d.ts)  632ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-M operations (p5-exercises-be-m.ts)  725ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-O operations (p5-exercises-be-o.ts)  464ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 KBE-E operations (p5-exercises-kbe-e.ts)  873ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 KBE-E2 operations (p5-exercises-kbe-e2.ts)  1112ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 KBE-F operations (p5-exercises-kbe-f.ts)  489ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-P operations (p5-exercises-be-p.ts)  636ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-P2 operations (p5-exercises-be-p2.ts)  452ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 KBE-G2 operations (p5-exercises-kbe-g2.ts)  1006ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-R operations (p5-exercises-be-r.ts)  320ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-S operations (p5-exercises-be-s.ts)  3242ms
+   ✓ every operation, validated against the contract and the zod mirrors > P5 BE-T2 operations (p5-exercises-be-t2.ts)  3107ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-B operations (p6-exercises-be-b.ts)  403ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-D operations (p6-exercises-be-d.ts)  355ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-H2 operations (p6-exercises-be-h2.ts)  349ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-I operations (p6-exercises-be-i.ts)  350ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-K operations (p6-exercises-be-k.ts)  344ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-L operations (p6-exercises-be-l.ts)  1026ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-M operations (p6-exercises-be-m.ts)  705ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-N operations (p6-exercises-be-n.ts)  879ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-O operations (p6-exercises-be-o.ts)  318ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-Q operations (p6-exercises-be-q.ts)  668ms
+   ✓ every operation, validated against the contract and the zod mirrors > P6 BE-T operations (p6-exercises-be-t.ts)  476ms
+   ✓ every operation, validated against the contract and the zod mirrors > P7 BE-F operations (p7-exercises-be-f.ts): configuration bundles  440ms
+   ✓ every operation, validated against the contract and the zod mirrors > P7 BE-G operations (p7-exercises-be-g.ts): retention classes, runs, actions, archived records, backup sets  429ms
+   ✓ every operation, validated against the contract and the zod mirrors > every GET operation with a path parameter: a malformed id is a declared 400 at /params/<name>; nothing written  2404ms
+   ✓ every operation, validated against the contract and the zod mirrors > every operation but the OIDC callback: U+0000 in the query is a declared 400 invalid_character  5378ms
+   ✓ every operation, validated against the contract and the zod mirrors > every operation: an undeclared request media type is a declared 400 validation.content_type; nothing written  11491ms
+   ✓ every operation, validated against the contract and the zod mirrors > the contract: every operation declares each platform status derived from its route (ADR-0007 §5b)  326ms
+   ✓ every operation, validated against the contract and the zod mirrors > every operation: the rate limiter's 429 is a declared RateLimited problem (live, limits of 1 per minute)  4319ms
+   ✓ REQ-S16-027: every operation's responses validated against the contract (ADR-0052 §7) > an explicit invalid body per module: 400 urn:mth:problem:validation with JSON-pointer errors  514ms
+   ✓ REQ-S16-027: every operation's responses validated against the contract (ADR-0052 §7) > an unauthorized call returns 403 (or the ADR-0006 404 for an unreadable record): every transformation read by a user without an assignment  436ms
+   ✓ REQ-S16-027: every operation's responses validated against the contract (ADR-0052 §7) > an unauthorized call returns 403: the auditor (AUD, read-only) is refused every write that needs a business permission  3495ms
+ ❯ |integration| tests/qa/integration/a22-p6-operability.test.ts (17 tests | 9 failed) 63906ms
+   ✓ A22 logs (REQ-S20-022, REQ-S16-029): every API line is structured JSON; credentials, tokens and deep-link tokens are redacted > each request is logged as one JSON object with time, level, msg and the requestId the problem response carries 12ms
+   ✓ A22 logs (REQ-S20-022, REQ-S16-029): every API line is structured JSON; credentials, tokens and deep-link tokens are redacted > an Authorization bearer token, the session cookie, the CSRF header and a deep-link token never appear in a log line 12ms
+   ✓ A22 logs (REQ-S20-022, REQ-S16-029): every API line is structured JSON; credentials, tokens and deep-link tokens are redacted > an OIDC code/state in a query string is masked in the logged URL 2ms
+   ✓ A22 worker heartbeat (ADR-0053 §6): unknown before any beat, alive while beating, stale after it stops (never alive); the API raises one heartbeat_missed exception and one alert line, and resolves it when beats resume > no worker ever beat: unknown with no instances (never alive); a non-admin gets 403, an anonymous caller 401 24ms
+   × A22 worker heartbeat (ADR-0053 §6): unknown before any beat, alive while beating, stale after it stops (never alive); the API raises one heartbeat_missed exception and one alert line, and resolves it when beats resume > the built worker beats: alive, one instance with its app version, queue count and a growing beat count; its log lines are JSON 218ms
+     → the worker exited (1) before it started: node:internal/modules/cjs/loader:1386
+  throw err;
+  ^
+
+Error: Cannot find module '/var/tmp/mth-run.7J5f2o/claude-0/review-a26-qa/apps/worker/dist/main.js'
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1383:15)
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1025:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1030:22)
+    at Function._load (node:internal/modules/cjs/loader:1192:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:237:24)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:171:5)
+    at node:internal/main/run_main_module:36:49 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v22.22.0
+
+   × A22 worker heartbeat (ADR-0053 §6): unknown before any beat, alive while beating, stale after it stops (never alive); the API raises one heartbeat_missed exception and one alert line, and resolves it when beats resume > after the worker stops and >90 s pass (rows aged), status is stale, never alive; the watch opens exactly one heartbeat_missed exception and writes one alert line 3ms
+     → the worker shuts down cleanly on SIGTERM: expected null to be +0 // Object.is equality
+   × A22 worker heartbeat (ADR-0053 §6): unknown before any beat, alive while beating, stale after it stops (never alive); the API raises one heartbeat_missed exception and one alert line, and resolves it when beats resume > when beats resume: alive again with the old instance stale beside the new one; the alert sweep notifies the acknowledgers in-app once; the watch resolves the exception as recovered 1ms
+     → the previous step opened the heartbeat exception: expected '' not to be '' // Object.is equality
+   × A22 operational exceptions and error alerts (REQ-S12-019, REQ-S20-022): a failing connector opens one visible exception and one alert; acknowledge and resolve are authorized, version-checked and audited > one failing run -> exactly one open connector exception, visible to the technical admin and the auditor, not to a team lead 212ms
+     → the worker exited (1) before it started: node:internal/modules/cjs/loader:1386
+  throw err;
+  ^
+
+Error: Cannot find module '/var/tmp/mth-run.7J5f2o/claude-0/review-a26-qa/apps/worker/dist/main.js'
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1383:15)
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1025:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1030:22)
+    at Function._load (node:internal/modules/cjs/loader:1192:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:237:24)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:171:5)
+    at node:internal/main/run_main_module:36:49 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v22.22.0
+
+   × A22 operational exceptions and error alerts (REQ-S12-019, REQ-S20-022): a failing connector opens one visible exception and one alert; acknowledge and resolve are authorized, version-checked and audited > the alert sweep writes exactly one structured alert line (worker) and one in-app alert per acknowledger; a recurrence alerts nothing 60171ms
+     → timed out after 60000 ms waiting for the worker's alert line
+   × A22 operational exceptions and error alerts (REQ-S12-019, REQ-S20-022): a failing connector opens one visible exception and one alert; acknowledge and resolve are authorized, version-checked and audited > acknowledge: 428 without If-Match, 409 version-conflict on a stale version, 403 for the auditor (read only), 422 operations.note_required on a short note; 200 with an audit event; a second acknowledge is 409 operations.exception_not_open 17ms
+     → contract: no OpenAPI operation for GET /api/v1/admin/operations/exceptions/
+   × A22 operational exceptions and error alerts (REQ-S12-019, REQ-S20-022): a failing connector opens one visible exception and one alert; acknowledge and resolve are authorized, version-checked and audited > resolve: needs a note; 200 resolved (manual) with an audit event; a second resolve is refused 409 operations.exception_resolved 8ms
+     → contract: no OpenAPI operation for GET /api/v1/admin/operations/exceptions/
+   ✓ A22 health checks and admin job visibility (REQ-S20-022 'Health checks … admin job visibility'): liveness, readiness (ready and not ready), and the P6 operations jobs in the jobs view > GET /healthz is 200 {status: ok} without a session and carries X-Request-Id; GET /readyz is 200 ready with database ok and migrations ok 22ms
+   ✓ A22 health checks and admin job visibility (REQ-S20-022 'Health checks … admin job visibility'): liveness, readiness (ready and not ready), and the P6 operations jobs in the jobs view > negative: an API on an UNMIGRATED database answers /readyz 503 not_ready with migrations not ok, while /healthz stays 200 258ms
+   × A22 health checks and admin job visibility (REQ-S20-022 'Health checks … admin job visibility'): liveness, readiness (ready and not ready), and the P6 operations jobs in the jobs view > the jobs view lists the operations alert sweep with its last success (it ran above), an outcome and a next run or an explicit reason; a team lead gets 403 25ms
+     → {"code":"operations.exception_alerts","queueName":"operations.exception_alerts","cron":"* * * * *","timezone":"Asia/Riyadh","enabled":true,"ownerModule":"operations","descriptionEn":"Alert once for each newly opened operational exception: one error log line and one in-app notification to each holder of operations.acknowledge. Never approves anything.","descriptionAr":"التنبيه مرة واحدة لكل استثناء تشغيلي يُفتح: سطر سجل خطأ واحد وإشعار داخل التطبيق لكل من يملك صلاحية الإقرار. لا يعتمد أي شيء.","lastSuccessAt":null,"lastRunAt":null,"lastOutcome":null,"nextRunAt":"2026-11-14T20:39:00.000Z","nextRunUnknownReason":null,"openFailures":0,"allowedActions":["run_now"]}: expected null not to be null
+   × A22 post-suite log scan (REQ-S16-029 'a log scan after the test suite finds no secrets or storage URLs') > the scan over this suite's API and worker logs, with the canaries set, passes (exit 0) 2ms
+     → expected '' to contain 'mth-worker started'
+   ✓ A22 post-suite log scan (REQ-S16-029 'a log scan after the test suite finds no secrets or storage URLs') > negative control: the same logs with one leaked canary fail (exit 1) and the scan never prints the value 40ms
+   ✓ A22 post-suite log scan (REQ-S16-029 'a log scan after the test suite finds no secrets or storage URLs') > BLOCKED, never a pass: no canary with --require-canaries, or a docs/delivery path (exit 2) 84ms
+stdout | apps/api/test/integration/access/sensitive-reach-sweep.test.ts
+[BE-Z10 sweep] evidence referenced in: evidence_link=01995000-1050-7000-8000-000000000001
+
+stdout | apps/api/test/integration/access/sensitive-reach-sweep.test.ts
+[BE-Z10 sweep] business_case referenced in: business_case_line=01995000-4305-7000-8000-000000000001 funding_decision=01995000-4305-7000-8000-000000000002
+
+stdout | apps/api/test/integration/access/sensitive-reach-sweep.test.ts
+[BE-Z5 sweep] blocker escalation 1: {"outcome":"not_red_for_cycles","decisionId":null}
+
+stdout | apps/api/test/integration/access/sensitive-reach-sweep.test.ts
+[BE-Z5 sweep] blocker escalation 8: {"outcome":"ask_created","decisionId":"01a1dbc8-66a7-7516-8adc-e88973753595"}
+
+stdout | apps/api/test/integration/access/sensitive-reach-sweep.test.ts
+[BE-Z10B sweep] reference kinds: diagnostic_workstream_output.evidence_id; phase_step_evidence.evidence_id; inherited_record(kind evidence): NOT SEEDED (Modular only; covered via the prior_approval entry); rag_override.evidence_id (and the KPI status override); deliverable_external_change.evidence_id; gate_dispensation.evidence_id (and listInheritedRecords' prior_approval entry); agenda_item.materials_evidence_ids; evidence_link(tom_canvas_cell); day_ninety_response.evidence_id; health_assessment_answer: NOT SEEDED (no parent in the demo); gate_condition_closure: NOT SEEDED (no parent in the demo)
+
+stdout | apps/api/test/integration/access/sensitive-reach-sweep.test.ts
+[BE-Z12 sweep] reference kinds: diagnostic_workstream_output.evidence_id; phase_step_evidence.evidence_id; inherited_record(kind evidence): NOT SEEDED (Modular only; covered via the prior_approval entry); rag_override.evidence_id (and the KPI status override); deliverable_external_change.evidence_id; gate_dispensation.evidence_id (and listInheritedRecords' prior_approval entry); agenda_item.materials_evidence_ids; evidence_link(tom_canvas_cell); day_ninety_response.evidence_id; health_assessment_answer: NOT SEEDED (no parent in the demo); gate_condition_closure: NOT SEEDED (no parent in the demo); benefit.parent_benefit_id; launch_task.output_record_id; meeting_output.record_id; action_item.corrective_case_id; kpi_actual_evidence.evidence_id; bau_handover_evidence.evidence_id
+
+stdout | apps/api/test/integration/access/sensitive-reach-sweep.test.ts > ADR-0051 §2: a sensitive benefit's title, code-with-title and values over every GET (F-DG6-300 class) > TL and AUD (not admitted; AUD at the transformation and at the organization) never receive the title, the code-with-title or the planned value; the admitted TL does
+[BE-Z7 sweep] 579 requests per reader over 388 operations (544 ids); 84 operations not fillable
+[BE-Z7 sweep] not fillable: completeOidcLogin getTomWorkshop getTomCanvasCell listTomWorkshopParticipants listTomWorkshopItems getRoadmapWave getGroup listGroupMembers getDelegation getDecisionRight previewDecisionRightDueDate getBenefitOverlap getBenefitScenario getBudgetLine getInitiativeSchedule getMeetingSeries getMeetingMinutes getAdoptionMetricLink getAssessmentForm getAssessmentFormVersion listAssessmentInvitations getAssessmentRecord getTransitionDecision getPhaseStep listPhaseStepEvidence listGateCriterionReviews getGateException getRiskDisposition getChangeRequest getChangeRequestImpactPreview listImpactAssessments getImpactAssessment getWorkstreamDashboard getInheritedRecord getPortfolio listPortfolioTransformations getWorkstream listWorkstreamInitiatives getMethodologyMigration getFormDraft getProcedureDefinition getProcedureInstance getAutomationExecution getAutomationFailure getJobOperation getMeetingCutoffPack getMyNotificationDigest getExport downloadExport getOwnerUpdate listOwnerUpdateRevisions getKpiRestatement getKpiRestatementReconciliation listKpiRestatementReissueOffers getHealthCheck getHealthCheckScheme getMethodologyBlock listMethodologyBlockLinks listTemplateSourceLinks resolveDeepLink getOperationalException getNotificationChannel getIntegrationRun getImport listImportRows downloadImportTemplate getWebhookEndpoint getOutboundWrite getSavedView getHelpTopic getAssistantConversation getMigrationExport downloadMigrationExportManifest downloadMigrationExportAttachmentManifest getMigrationImport listMigrationReconciliations getMigrationReconciliation getConfigBundleExport downloadConfigBundleExport getConfigBundleImport getRetentionClass getRetentionRun listRetentionRunActions getRequirement
+
+stdout | apps/api/test/integration/access/sensitive-reach-sweep.test.ts > ADR-0051 §2: a sensitive benefit's title, code-with-title and values over every GET (F-DG6-300 class) > TL and AUD (not admitted; AUD at the transformation and at the organization) never receive the title, the code-with-title or the planned value; the admitted TL does
+[BE-Z7 sweep] 2561 pages read
+[BE-Z10 sweep] id allowances used: getSensitiveGrant listAuditEvents listSensitiveGrants listTransformationAudit
+[BE-Z7 sweep] allowed errors: startOidcLogin:404 downloadEvidenceContent:403/404 getWorkItem:404 getBrandingLogo:404 getBrandingVersion:403/404 getBrandingVersionContrast:403/404 previewEvidenceContent:403/422/404
+
+stdout | apps/api/test/integration/access/sensitive-reach-sweep.test.ts > ADR-0051 §2: a sensitive benefit's title, code-with-title and values over every GET (F-DG6-300 class) > TL and AUD (not admitted; AUD at the transformation and at the organization) never receive the title, the code-with-title or the planned value; the admitted TL does
+[BE-Z7 sweep] 381 operations read (2xx) by an admitted reader
+
+stdout | apps/api/test/integration/access/sensitive-reach-sweep.test.ts > ADR-0051 §2: a sensitive benefit's title, code-with-title and values over every GET (F-DG6-300 class) > TL and AUD (not admitted; AUD at the transformation and at the organization) never receive the title, the code-with-title or the planned value; the admitted TL does
+[BE-Z12 sweep] inventory rows exercised here but not seeded: none
+
+ ✓ |integration| apps/api/test/integration/access/sensitive-reach-sweep.test.ts (2 tests) 27800ms
+   ✓ ADR-0051 §2: a sensitive benefit's title, code-with-title and values over every GET (F-DG6-300 class) > TL and AUD (not admitted; AUD at the transformation and at the organization) never receive the title, the code-with-title or the planned value; the admitted TL does  22443ms
+ ❯ |integration| tests/qa/integration/a22-operational-readiness.test.ts (8 tests | 3 failed) 11253ms
+   ✓ REQ-S12-022: the jobs view shows last success and next run for each scheduled job; a non-admin gets 403 > lists every job_schedule row: never-run shows lastSuccessAt null; nextRunAt is the cron's next instant in its time zone 24ms
+   ✓ REQ-S12-022: the jobs view shows last success and next run for each scheduled job; a non-admin gets 403 > after a run, the job shows its last success, last outcome and the run in its history  970ms
+   ✓ REQ-S12-022: the jobs view shows last success and next run for each scheduled job; a non-admin gets 403 > a disabled schedule shows next run null 'disabled' and refuses run-now with 422 job.schedule_disabled 57ms
+   ✓ REQ-S12-022: the jobs view shows last success and next run for each scheduled job; a non-admin gets 403 > every non-admin role gets 403 on the view, a job's detail and run-now 56ms
+   × REQ-S18-003 / REQ-S18-001: production and demo databases are separate, and a production database stays clean > production initialization (mth-db bootstrap): zero demo records, zero demo users; GET /environment is production 146ms
+     → expected [ 1, …(1) ] to deeply equal [ +0, '' ]
+   × REQ-S18-003 / REQ-S18-001: production and demo databases are separate, and a production database stays clean > the demo seed command exits with an error in production mode, on a production database and on a non-empty one; nothing changes 371ms
+     → expected [ 1, …(1) ] to deeply equal [ 3, …(1) ]
+   × REQ-S18-003 / REQ-S18-001: production and demo databases are separate, and a production database stays clean > a separately initialized demo database: seeded, reported synthetic; reset twice gives identical counts and checksums; the production database is untouched 268ms
+     → node:internal/modules/esm/resolve:274
+    throw new ERR_MODULE_NOT_FOUND(
+          ^
+
+Error [ERR_MODULE_NOT_FOUND]: Cannot find module '/var/tmp/mth-run.7J5f2o/claude-0/review-a26-qa/packages/db/node_modules/@mth/config/dist/index.js' imported from /var/tmp/mth-run.7J5f2o/claude-0/review-a26-qa/packages/db/dist/cli.js
+    at finalizeResolution (node:internal/modules/esm/resolve:274:11)
+    at moduleResolve (node:internal/modules/esm/resolve:859:10)
+    at defaultResolve (node:internal/modules/esm/resolve:983:11)
+    at #cachedDefaultResolve (node:internal/modules/esm/loader:731:20)
+    at ModuleLoader.resolve (node:internal/modules/esm/loader:708:38)
+    at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:310:38)
+    at ModuleJob._link (node:internal/modules/esm/module_job:182:49) {
+  code: 'ERR_MODULE_NOT_FOUND',
+  url: 'file:///var/tmp/mth-run.7J5f2o/claude-0/review-a26-qa/packages/db/node_modules/@mth/config/dist/index.js'
+}
+
+Node.js v22.22.0
+: expected 1 to be +0 // Object.is equality
+   ✓ REQ-S18-003 / REQ-S18-001: production and demo databases are separate, and a production database stays clean > the in-app demo reset is refused in a production database (409 environment.not_demo) 246ms
+ ✓ |integration| tests/qa/integration/a13-p6-import-commit-kill-restart.test.ts (1 test) 8706ms
+   ✓ A13 (REQ-S20-013): the API process is killed during an import commit and restarted > the killed commit leaves the batch staged with nothing written; the retried commit commits once; a replay is refused  4819ms
+src/cli.ts(37,41): error TS2307: Cannot find module '@mth/config' or its corresponding type declarations.
+src/cli.ts(401,32): error TS18046: 'err' is of type 'unknown'.
+src/demo/data/finance.ts(13,37): error TS2307: Cannot find module '@mth/shared/schemas' or its corresponding type declarations.
+ ❯ |integration| packages/db/test/integration/cli-stdout-drain.test.ts (1 test | 1 skipped) 4015ms
+   ↓ T-R23: mth-db drains a piped stdout before it exits (DO-D3 Q1) > table-digest --rows piped through a slow reader equals the file output, byte for byte, above 256 KiB
+ ❯ |integration| tests/qa/integration/a18-transfer-drill.test.ts (8 tests | 6 failed) 3829ms
+   ✓ A18 clean environment starts: an empty, freshly migrated installation is ready (REQ-S20-018) > ready with database, migrations and storage ok; the worker without a heartbeat is unknown, never alive 179ms
+   ✓ A18 clean environment starts: an empty, freshly migrated installation is ready (REQ-S20-018) > a missing evidence directory is not ready (503, storage fail), never reported ok 132ms
+   × A18 transfer drill: restored records, files and configuration work on another origin, offline (DO-D) > the drill exits 0 with the PASS line (exit 3 is BLOCKED and fails here, never passes) 1ms
+     → A18 input missing: QA_A18_ARCHIVE, QA_A18_ARCHIVE_SHA256, QA_A18_STORE (the DO-A archive and offline store)
+   × A18 transfer drill: restored records, files and configuration work on another origin, offline (DO-D) > the report: D0–D11 each PASS with command, exit and seconds; the given archive; the synthetic drill IdP 0ms
+     → A18 input missing: QA_A18_ARCHIVE, QA_A18_ARCHIVE_SHA256, QA_A18_STORE (the DO-A archive and offline store)
+   × A18 transfer drill: restored records, files and configuration work on another origin, offline (DO-D) > D3: configuration only from .env.example keys, each citing a section of the deployment guide 0ms
+     → A18 input missing: QA_A18_ARCHIVE, QA_A18_ARCHIVE_SHA256, QA_A18_STORE (the DO-A archive and offline store)
+   × A18 transfer drill: restored records, files and configuration work on another origin, offline (DO-D) > D5/D9: every reconciliation (counts, content digests, attachment checksums, after restart) is equal 0ms
+     → A18 input missing: QA_A18_ARCHIVE, QA_A18_ARCHIVE_SHA256, QA_A18_STORE (the DO-A archive and offline store)
+   × A18 transfer drill: restored records, files and configuration work on another origin, offline (DO-D) > D10: the source origin is stored nowhere except audit_event 0ms
+     → A18 input missing: QA_A18_ARCHIVE, QA_A18_ARCHIVE_SHA256, QA_A18_STORE (the DO-A archive and offline store)
+   × A18 transfer drill: restored records, files and configuration work on another origin, offline (DO-D) > the drill log names no builder-hosted or public service it reached 0ms
+     → A18 input missing: QA_A18_ARCHIVE, QA_A18_ARCHIVE_SHA256, QA_A18_STORE (the DO-A archive and offline store)
+ ❯ |integration| apps/api/test/integration/automation/automation-version-at-occurrence.test.ts (5 tests | 5 skipped) 3992ms
+   ↓ 0123: the enablement ledger records disables, and backfills past ones from their audit events (D-204) > each disable recorded under 0122 is backfilled at its audit event's time, with the version that stopped
+   ↓ 0123: the enablement ledger records disables, and backfills past ones from their audit events (D-204) > after 0123 the trigger writes a disable row (the version that stopped) and nothing for a no-op
+   ↓ a late event is evaluated by the rule version in force at its occurrence (D-204) > an event under v1, v2 published before evaluation: acted on exactly once, by v1, also when replayed
+   ↓ a late event is evaluated by the rule version in force at its occurrence (D-204) > disable/re-enable window across a version switch: v1 event by v1, window event by nobody, later event by v2
+   ↓ a late event is evaluated by the rule version in force at its occurrence (D-204) > kill switch: an event that occurred while enabled is not acted on when the rule is disabled at evaluation
+ ❯ |integration| apps/api/test/integration/platform.test.ts (13 tests | 4 failed) 2130ms
+   × health and readiness > reports ready when the database answers and every shipped migration is applied 23ms
+     → expected [ 200, { status: 'ready', …(1) } ] to deeply equal [ 200, { status: 'ready', …(1) } ]
+   × health and readiness > reports 503 not_ready/pending when the build ships a migration the database lacks, and fail on checksum drift 299ms
+     → expected [ 503, { status: 'not_ready', …(1) } ] to deeply equal [ 503, { status: 'not_ready', …(1) } ]
+   × health and readiness > reports 503 fail, not pending, when a pending migration's id is below the highest applied id (F-DG5-100) 152ms
+     → expected [ 503, { status: 'not_ready', …(1) } ] to deeply equal [ 503, { status: 'not_ready', …(1) } ]
+   × readiness requires a UTF8 database (ADR-0003 'Database encoding', T-DG2-BE9) > reports 503 database: fail on a SQL_ASCII database, and database: ok on a UTF8 one created the same way 610ms
+     → expected [ 503, { status: 'not_ready', …(1) } ] to deeply equal [ 503, { status: 'not_ready', …(1) } ]
+   ✓ rate limiting (ADR-0007 T-3) > limits auth endpoints per IP with a 429 problem and Retry-After 174ms
+   ✓ rate limiting (ADR-0007 T-3) > limits general API traffic per session, never the health endpoints 233ms
+   ✓ rate limiting (ADR-0007 T-3) > does not reset the bucket when an unauthenticated client rotates fabricated session cookies 175ms
+   ✓ rate limiting (ADR-0007 T-3) > keys a validated session by its user, so it is not starved by an IP flood, and a revoked one falls back to the IP 207ms
+   ✓ request hygiene > rejects malformed JSON, non-JSON bodies and bodies over 1 MiB with 400 problems 30ms
+   ✓ request hygiene > answers unknown API paths with a 404 problem 1ms
+   ✓ request hygiene > sends a strict same-origin Content-Security-Policy and other security headers 1ms
+   ✓ fail-closed guards (ADR-0006) > refuses to start with an /api route that declares no access 2ms
+   ✓ fail-closed guards (ADR-0006) > turns a success from a route that never consulted the policy function into a 500 3ms
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| packages/db/test/integration/cli-stdout-drain.test.ts [ packages/db/test/integration/cli-stdout-drain.test.ts ]
+Error: Command failed: /opt/node22/bin/node /var/tmp/mth-run.7J5f2o/claude-0/review-a26-qa/node_modules/typescript/bin/tsc -p tsconfig.build.json
+ ❯ packages/db/test/integration/cli-stdout-drain.test.ts:30:3
+     28| beforeAll(async () => {
+     29|   // Built first: the test runs the shipped entry point, not the TypeS…
+     30|   execFileSync(process.execPath, [join(ROOT, "node_modules/typescript/…
+       |   ^
+     31|     cwd: join(ROOT, "packages/db"),
+     32|     stdio: "inherit",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/24]⎯
+
+ FAIL  |integration| apps/api/test/integration/automation/automation-version-at-occurrence.test.ts [ apps/api/test/integration/automation/automation-version-at-occurrence.test.ts ]
+Error: contract: devLogin does not declare status 500 (declared: 204, 400, 401, 403, 404, 429); body: {"type":"urn:mth:problem:internal","title":"Internal error","status":500,"code":"internal","requestId":"01a1dbc9-6180-778e-8b58-d57a85d7c09d"}
+ ❯ assertContract apps/api/test/support/contract.ts:121:11
+    119|   const declared = op.responses[String(res.statusCode)] ?? op.response…
+    120|   if (!declared) {
+    121|     throw new Error(
+       |           ^
+    122|       `contract: ${op.operationId} does not declare status ${res.statu…
+    123|     );
+ ❯ call apps/api/test/support/harness.ts:188:5
+ ❯ signIn apps/api/test/support/harness.ts:202:17
+ ❯ apps/api/test/integration/automation/automation-version-at-occurrence.test.ts:276:11
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/24]⎯
+
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 22 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/a18-transfer-drill.test.ts > A18 transfer drill: restored records, files and configuration work on another origin, offline (DO-D) > the drill exits 0 with the PASS line (exit 3 is BLOCKED and fails here, never passes)
+Error: A18 input missing: QA_A18_ARCHIVE, QA_A18_ARCHIVE_SHA256, QA_A18_STORE (the DO-A archive and offline store)
+ ❯ drill tests/qa/integration/a18-transfer-drill.test.ts:169:13
+    167|     const missing = missingInputs();
+    168|     if (missing.length > 0)
+    169|       throw new Error(`A18 input missing: ${missing.join(", ")} (the D…
+       |             ^
+    170|     if (!run) throw new Error("A18: the drill did not run in beforeAll…
+    171|     return run;
+ ❯ tests/qa/integration/a18-transfer-drill.test.ts:175:15
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/24]⎯
+
+ FAIL  |integration| tests/qa/integration/a18-transfer-drill.test.ts > A18 transfer drill: restored records, files and configuration work on another origin, offline (DO-D) > the report: D0–D11 each PASS with command, exit and seconds; the given archive; the synthetic drill IdP
+Error: A18 input missing: QA_A18_ARCHIVE, QA_A18_ARCHIVE_SHA256, QA_A18_STORE (the DO-A archive and offline store)
+ ❯ drill tests/qa/integration/a18-transfer-drill.test.ts:169:13
+    167|     const missing = missingInputs();
+    168|     if (missing.length > 0)
+    169|       throw new Error(`A18 input missing: ${missing.join(", ")} (the D…
+       |             ^
+    170|     if (!run) throw new Error("A18: the drill did not run in beforeAll…
+    171|     return run;
+ ❯ tests/qa/integration/a18-transfer-drill.test.ts:188:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/24]⎯
+
+ FAIL  |integration| tests/qa/integration/a18-transfer-drill.test.ts > A18 transfer drill: restored records, files and configuration work on another origin, offline (DO-D) > D3: configuration only from .env.example keys, each citing a section of the deployment guide
+Error: A18 input missing: QA_A18_ARCHIVE, QA_A18_ARCHIVE_SHA256, QA_A18_STORE (the DO-A archive and offline store)
+ ❯ drill tests/qa/integration/a18-transfer-drill.test.ts:169:13
+    167|     const missing = missingInputs();
+    168|     if (missing.length > 0)
+    169|       throw new Error(`A18 input missing: ${missing.join(", ")} (the D…
+       |             ^
+    170|     if (!run) throw new Error("A18: the drill did not run in beforeAll…
+    171|     return run;
+ ❯ tests/qa/integration/a18-transfer-drill.test.ts:193:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/24]⎯
+
+ FAIL  |integration| tests/qa/integration/a18-transfer-drill.test.ts > A18 transfer drill: restored records, files and configuration work on another origin, offline (DO-D) > D5/D9: every reconciliation (counts, content digests, attachment checksums, after restart) is equal
+Error: A18 input missing: QA_A18_ARCHIVE, QA_A18_ARCHIVE_SHA256, QA_A18_STORE (the DO-A archive and offline store)
+ ❯ drill tests/qa/integration/a18-transfer-drill.test.ts:169:13
+    167|     const missing = missingInputs();
+    168|     if (missing.length > 0)
+    169|       throw new Error(`A18 input missing: ${missing.join(", ")} (the D…
+       |             ^
+    170|     if (!run) throw new Error("A18: the drill did not run in beforeAll…
+    171|     return run;
+ ❯ tests/qa/integration/a18-transfer-drill.test.ts:200:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/24]⎯
+
+ FAIL  |integration| tests/qa/integration/a18-transfer-drill.test.ts > A18 transfer drill: restored records, files and configuration work on another origin, offline (DO-D) > D10: the source origin is stored nowhere except audit_event
+Error: A18 input missing: QA_A18_ARCHIVE, QA_A18_ARCHIVE_SHA256, QA_A18_STORE (the DO-A archive and offline store)
+ ❯ drill tests/qa/integration/a18-transfer-drill.test.ts:169:13
+    167|     const missing = missingInputs();
+    168|     if (missing.length > 0)
+    169|       throw new Error(`A18 input missing: ${missing.join(", ")} (the D…
+       |             ^
+    170|     if (!run) throw new Error("A18: the drill did not run in beforeAll…
+    171|     return run;
+ ❯ tests/qa/integration/a18-transfer-drill.test.ts:207:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/24]⎯
+
+ FAIL  |integration| tests/qa/integration/a18-transfer-drill.test.ts > A18 transfer drill: restored records, files and configuration work on another origin, offline (DO-D) > the drill log names no builder-hosted or public service it reached
+Error: A18 input missing: QA_A18_ARCHIVE, QA_A18_ARCHIVE_SHA256, QA_A18_STORE (the DO-A archive and offline store)
+ ❯ drill tests/qa/integration/a18-transfer-drill.test.ts:169:13
+    167|     const missing = missingInputs();
+    168|     if (missing.length > 0)
+    169|       throw new Error(`A18 input missing: ${missing.join(", ")} (the D…
+       |             ^
+    170|     if (!run) throw new Error("A18: the drill did not run in beforeAll…
+    171|     return run;
+ ❯ tests/qa/integration/a18-transfer-drill.test.ts:212:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/24]⎯
+
+ FAIL  |integration| tests/qa/integration/a22-operational-readiness.test.ts > REQ-S18-003 / REQ-S18-001: production and demo databases are separate, and a production database stays clean > production initialization (mth-db bootstrap): zero demo records, zero demo users; GET /environment is production
+AssertionError: expected [ 1, …(1) ] to deeply equal [ +0, '' ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   0,[39m
+[32m-   "",[39m
+[31m+   1,[39m
+[31m+   "node:internal/modules/esm/resolve:274[39m
+[31m+     throw new ERR_MODULE_NOT_FOUND([39m
+[31m+           ^[39m
+[31m+[39m
+[31m+ Error [ERR_MODULE_NOT_FOUND]: Cannot find module '/var/tmp/mth-run.7J5f2o/claude-0/review-a26-qa/packages/db/node_modules/@mth/config/dist/index.js' imported from /var/tmp/mth-run.7J5f2o/claude-0/review-a26-qa/packages/db/dist/cli.js[39m
+[31m+     at finalizeResolution (node:internal/modules/esm/resolve:274:11)[39m
+[31m+     at moduleResolve (node:internal/modules/esm/resolve:859:10)[39m
+[31m+     at defaultResolve (node:internal/modules/esm/resolve:983:11)[39m
+[31m+     at #cachedDefaultResolve (node:internal/modules/esm/loader:731:20)[39m
+[31m+     at ModuleLoader.resolve (node:internal/modules/esm/loader:708:38)[39m
+[31m+     at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:310:38)[39m
+[31m+     at ModuleJob._link (node:internal/modules/esm/module_job:182:49) {[39m
+[31m+   code: 'ERR_MODULE_NOT_FOUND',[39m
+[31m+   url: 'file:///var/tmp/mth-run.7J5f2o/claude-0/review-a26-qa/packages/db/node_modules/@mth/config/dist/index.js'[39m
+[31m+ }[39m
+[31m+[39m
+[31m+ Node.js v22.22.0[39m
+[31m+ ",[39m
+[2m  ][22m
+
+ ❯ tests/qa/integration/a22-operational-readiness.test.ts:293:46
+    291|         { NODE_ENV: "production", MTH_ENV: "production", DATABASE_OWNE…
+    292|       );
+    293|       expect([r.status, r.stderr], r.stdout).toEqual([0, ""]);
+       |                                              ^
+    294|       // The REQ-S18-003 query.
+    295|       expect(await scalar(su(prodDb), "SELECT count(*)::int AS v FROM …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/24]⎯
+
+ FAIL  |integration| tests/qa/integration/a22-operational-readiness.test.ts > REQ-S18-003 / REQ-S18-001: production and demo databases are separate, and a production database stays clean > the demo seed command exits with an error in production mode, on a production database and on a non-empty one; nothing changes
+AssertionError: expected [ 1, …(1) ] to deeply equal [ 3, …(1) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   3,[39m
+[32m-   "mth-db seed-demo: refused: MTH_ENV is production",[39m
+[31m+   1,[39m
+[31m+   "node:internal/modules/esm/resolve:274[39m
+[31m+     throw new ERR_MODULE_NOT_FOUND([39m
+[31m+           ^[39m
+[31m+[39m
+[31m+ Error [ERR_MODULE_NOT_FOUND]: Cannot find module '/var/tmp/mth-run.7J5f2o/claude-0/review-a26-qa/packages/db/node_modules/@mth/config/dist/index.js' imported from /var/tmp/mth-run.7J5f2o/claude-0/review-a26-qa/packages/db/dist/cli.js[39m
+[31m+     at finalizeResolution (node:internal/modules/esm/resolve:274:11)[39m
+[31m+     at moduleResolve (node:internal/modules/esm/resolve:859:10)[39m
+[31m+     at defaultResolve (node:internal/modules/esm/resolve:983:11)[39m
+[31m+     at #cachedDefaultResolve (node:internal/modules/esm/loader:731:20)[39m
+[31m+     at ModuleLoader.resolve (node:internal/modules/esm/loader:708:38)[39m
+[31m+     at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:310:38)[39m
+[31m+     at ModuleJob._link (node:internal/modules/esm/module_job:182:49) {[39m
+[31m+   code: 'ERR_MODULE_NOT_FOUND',[39m
+[31m+   url: 'file:///var/tmp/mth-run.7J5f2o/claude-0/review-a26-qa/packages/db/node_modules/@mth/config/dist/index.js'[39m
+[31m+ }[39m
+[31m+[39m
+[31m+ Node.js v22.22.0",[39m
+[2m  ][22m
+
+ ❯ tests/qa/integration/a22-operational-readiness.test.ts:343:61
+    341|       const before = await tableCounts(su(prodDb));
+    342|       const inProdMode = mthDb(["seed-demo"], { NODE_ENV: "production"…
+    343|       expect([inProdMode.status, inProdMode.stderr.trim()]).toEqual([
+       |                                                             ^
+    344|         3,
+    345|         "mth-db seed-demo: refused: MTH_ENV is production",
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/24]⎯
+
+ FAIL  |integration| tests/qa/integration/a22-operational-readiness.test.ts > REQ-S18-003 / REQ-S18-001: production and demo databases are separate, and a production database stays clean > a separately initialized demo database: seeded, reported synthetic; reset twice gives identical counts and checksums; the production database is untouched
+AssertionError: node:internal/modules/esm/resolve:274
+    throw new ERR_MODULE_NOT_FOUND(
+          ^
+
+Error [ERR_MODULE_NOT_FOUND]: Cannot find module '/var/tmp/mth-run.7J5f2o/claude-0/review-a26-qa/packages/db/node_modules/@mth/config/dist/index.js' imported from /var/tmp/mth-run.7J5f2o/claude-0/review-a26-qa/packages/db/dist/cli.js
+    at finalizeResolution (node:internal/modules/esm/resolve:274:11)
+    at moduleResolve (node:internal/modules/esm/resolve:859:10)
+    at defaultResolve (node:internal/modules/esm/resolve:983:11)
+    at #cachedDefaultResolve (node:internal/modules/esm/loader:731:20)
+    at ModuleLoader.resolve (node:internal/modules/esm/loader:708:38)
+    at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:310:38)
+    at ModuleJob._link (node:internal/modules/esm/module_job:182:49) {
+  code: 'ERR_MODULE_NOT_FOUND',
+  url: 'file:///var/tmp/mth-run.7J5f2o/claude-0/review-a26-qa/packages/db/node_modules/@mth/config/dist/index.js'
+}
+
+Node.js v22.22.0
+: expected 1 to be +0 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 0[39m
+[31m+ 1[39m
+
+ ❯ tests/qa/integration/a22-operational-readiness.test.ts:388:44
+    386| 
+    387|       const seeded = mthDb(["seed-demo"], { MTH_ENV: "demo", DATABASE_…
+    388|       expect(seeded.status, seeded.stderr).toBe(0);
+       |                                            ^
+    389|       expect(seeded.stdout).toContain("SYNTHETIC demonstration dataset…
+    390|       expect(await scalar(su(demoDb), "SELECT environment_kind AS v FR…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/24]⎯
+
+ FAIL  |integration| tests/qa/integration/a22-p6-operability.test.ts > A22 worker heartbeat (ADR-0053 §6): unknown before any beat, alive while beating, stale after it stops (never alive); the API raises one heartbeat_missed exception and one alert line, and resolves it when beats resume > the built worker beats: alive, one instance with its app version, queue count and a growing beat count; its log lines are JSON
+Error: the worker exited (1) before it started: node:internal/modules/cjs/loader:1386
+  throw err;
+  ^
+
+Error: Cannot find module '/var/tmp/mth-run.7J5f2o/claude-0/review-a26-qa/apps/worker/dist/main.js'
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1383:15)
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1025:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1030:22)
+    at Function._load (node:internal/modules/cjs/loader:1192:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:237:24)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:171:5)
+    at node:internal/main/run_main_module:36:49 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v22.22.0
+
+ ❯ startBuiltWorker tests/qa/support/a22-ops.ts:117:40
+    115|   const until = Date.now() + 60_000;
+    116|   while (!out.includes("mth-worker started")) {
+    117|     if (child.exitCode !== null) throw new Error(`the worker exited ($…
+       |                                        ^
+    118|     if (Date.now() > until) throw new Error(`the worker did not start …
+    119|     await new Promise((r) => setTimeout(r, 200));
+ ❯ startWorker tests/qa/integration/a22-p6-operability.test.ts:88:12
+ ❯ tests/qa/integration/a22-p6-operability.test.ts:197:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/24]⎯
+
+ FAIL  |integration| tests/qa/integration/a22-p6-operability.test.ts > A22 worker heartbeat (ADR-0053 §6): unknown before any beat, alive while beating, stale after it stops (never alive); the API raises one heartbeat_missed exception and one alert line, and resolves it when beats resume > after the worker stops and >90 s pass (rows aged), status is stale, never alive; the watch opens exactly one heartbeat_missed exception and writes one alert line
+AssertionError: the worker shuts down cleanly on SIGTERM: expected null to be +0 // Object.is equality
+
+[32m- Expected:[39m 
+0
+
+[31m+ Received:[39m 
+null
+
+ ❯ tests/qa/integration/a22-p6-operability.test.ts:221:76
+    219| 
+    220|   it("after the worker stops and >90 s pass (rows aged), status is sta…
+    221|     expect(await stopWorker(), "the worker shuts down cleanly on SIGTE…
+       |                                                                            ^
+    222|     await ageHeartbeats();
+    223|     const stale = await heartbeat();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/24]⎯
+
+ FAIL  |integration| tests/qa/integration/a22-p6-operability.test.ts > A22 worker heartbeat (ADR-0053 §6): unknown before any beat, alive while beating, stale after it stops (never alive); the API raises one heartbeat_missed exception and one alert line, and resolves it when beats resume > when beats resume: alive again with the old instance stale beside the new one; the alert sweep notifies the acknowledgers in-app once; the watch resolves the exception as recovered
+AssertionError: the previous step opened the heartbeat exception: expected '' not to be '' // Object.is equality
+ ❯ tests/qa/integration/a22-p6-operability.test.ts:267:81
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/24]⎯
+
+ FAIL  |integration| tests/qa/integration/a22-p6-operability.test.ts > A22 operational exceptions and error alerts (REQ-S12-019, REQ-S20-022): a failing connector opens one visible exception and one alert; acknowledge and resolve are authorized, version-checked and audited > one failing run -> exactly one open connector exception, visible to the technical admin and the auditor, not to a team lead
+Error: the worker exited (1) before it started: node:internal/modules/cjs/loader:1386
+  throw err;
+  ^
+
+Error: Cannot find module '/var/tmp/mth-run.7J5f2o/claude-0/review-a26-qa/apps/worker/dist/main.js'
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1383:15)
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1025:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1030:22)
+    at Function._load (node:internal/modules/cjs/loader:1192:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:328:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:237:24)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:171:5)
+    at node:internal/main/run_main_module:36:49 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v22.22.0
+
+ ❯ startBuiltWorker tests/qa/support/a22-ops.ts:117:40
+    115|   const until = Date.now() + 60_000;
+    116|   while (!out.includes("mth-worker started")) {
+    117|     if (child.exitCode !== null) throw new Error(`the worker exited ($…
+       |                                        ^
+    118|     if (Date.now() > until) throw new Error(`the worker did not start …
+    119|     await new Promise((r) => setTimeout(r, 200));
+ ❯ startWorker tests/qa/integration/a22-p6-operability.test.ts:88:12
+ ❯ tests/qa/integration/a22-p6-operability.test.ts:349:18
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/24]⎯
+
+ FAIL  |integration| tests/qa/integration/a22-p6-operability.test.ts > A22 operational exceptions and error alerts (REQ-S12-019, REQ-S20-022): a failing connector opens one visible exception and one alert; acknowledge and resolve are authorized, version-checked and audited > the alert sweep writes exactly one structured alert line (worker) and one in-app alert per acknowledger; a recurrence alerts nothing
+Error: timed out after 60000 ms waiting for the worker's alert line
+ ❯ waitFor tests/qa/support/a13-durable.ts:66:35
+     64|     const v = await probe();
+     65|     if (v) return v;
+     66|     if (Date.now() > until) throw new Error(`timed out after ${ms} ms …
+       |                                   ^
+     67|     await new Promise((r) => setTimeout(r, 150));
+     68|   }
+ ❯ tests/qa/integration/a22-p6-operability.test.ts:388:19
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/24]⎯
+
+ FAIL  |integration| tests/qa/integration/a22-p6-operability.test.ts > A22 operational exceptions and error alerts (REQ-S12-019, REQ-S20-022): a failing connector opens one visible exception and one alert; acknowledge and resolve are authorized, version-checked and audited > acknowledge: 428 without If-Match, 409 version-conflict on a stale version, 403 for the auditor (read only), 422 operations.note_required on a short note; 200 with an audit event; a second acknowledge is 409 operations.exception_not_open
+Error: contract: no OpenAPI operation for GET /api/v1/admin/operations/exceptions/
+ ❯ assertContract apps/api/test/support/contract.ts:118:18
+    116| export function assertContract(method: string, url: string, res: Contr…
+    117|   const op = findOperation(method, url);
+    118|   if (!op) throw new Error(`contract: no OpenAPI operation for ${metho…
+       |                  ^
+    119|   const declared = op.responses[String(res.statusCode)] ?? op.response…
+    120|   if (!declared) {
+ ❯ call apps/api/test/support/harness.ts:188:5
+ ❯ tests/qa/integration/a22-p6-operability.test.ts:435:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[17/24]⎯
+
+ FAIL  |integration| tests/qa/integration/a22-p6-operability.test.ts > A22 operational exceptions and error alerts (REQ-S12-019, REQ-S20-022): a failing connector opens one visible exception and one alert; acknowledge and resolve are authorized, version-checked and audited > resolve: needs a note; 200 resolved (manual) with an audit event; a second resolve is refused 409 operations.exception_resolved
+Error: contract: no OpenAPI operation for GET /api/v1/admin/operations/exceptions/
+ ❯ assertContract apps/api/test/support/contract.ts:118:18
+    116| export function assertContract(method: string, url: string, res: Contr…
+    117|   const op = findOperation(method, url);
+    118|   if (!op) throw new Error(`contract: no OpenAPI operation for ${metho…
+       |                  ^
+    119|   const declared = op.responses[String(res.statusCode)] ?? op.response…
+    120|   if (!declared) {
+ ❯ call apps/api/test/support/harness.ts:188:5
+ ❯ tests/qa/integration/a22-p6-operability.test.ts:498:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[18/24]⎯
+
+ FAIL  |integration| tests/qa/integration/a22-p6-operability.test.ts > A22 health checks and admin job visibility (REQ-S20-022 'Health checks … admin job visibility'): liveness, readiness (ready and not ready), and the P6 operations jobs in the jobs view > the jobs view lists the operations alert sweep with its last success (it ran above), an outcome and a next run or an explicit reason; a team lead gets 403
+AssertionError: {"code":"operations.exception_alerts","queueName":"operations.exception_alerts","cron":"* * * * *","timezone":"Asia/Riyadh","enabled":true,"ownerModule":"operations","descriptionEn":"Alert once for each newly opened operational exception: one error log line and one in-app notification to each holder of operations.acknowledge. Never approves anything.","descriptionAr":"التنبيه مرة واحدة لكل استثناء تشغيلي يُفتح: سطر سجل خطأ واحد وإشعار داخل التطبيق لكل من يملك صلاحية الإقرار. لا يعتمد أي شيء.","lastSuccessAt":null,"lastRunAt":null,"lastOutcome":null,"nextRunAt":"2026-11-14T20:39:00.000Z","nextRunUnknownReason":null,"openFailures":0,"allowedActions":["run_now"]}: expected null not to be null
+ ❯ tests/qa/integration/a22-p6-operability.test.ts:571:60
+    569|     const sweep = (r.body.items as Loose[]).find((j) => j.code === "op…
+    570|     expect(sweep, JSON.stringify((r.body.items as Loose[]).map((j) => …
+    571|     expect(sweep.lastSuccessAt, JSON.stringify(sweep)).not.toBeNull();
+       |                                                            ^
+    572|     expect(sweep.lastOutcome).toBe("succeeded");
+    573|     // Never a guessed time: either a next run, or null with a reason.
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[19/24]⎯
+
+ FAIL  |integration| tests/qa/integration/a22-p6-operability.test.ts > A22 post-suite log scan (REQ-S16-029 'a log scan after the test suite finds no secrets or storage URLs') > the scan over this suite's API and worker logs, with the canaries set, passes (exit 0)
+AssertionError: expected '' to contain 'mth-worker started'
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- mth-worker started[39m
+
+ ❯ tests/qa/integration/a22-p6-operability.test.ts:594:31
+    592|   it("the scan over this suite's API and worker logs, with the canarie…
+    593|     expect(env.lines.length, "the suite wrote API lines").toBeGreaterT…
+    594|     expect(allWorkerOutput()).toContain("mth-worker started");
+       |                               ^
+    595|     const r = logScan(["--require-canaries", "--storage-path", env.api…
+    596|       ...CANARY_ENV,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[20/24]⎯
+
+ FAIL  |integration| apps/api/test/integration/platform.test.ts > health and readiness > reports ready when the database answers and every shipped migration is applied
+AssertionError: expected [ 200, { status: 'ready', …(1) } ] to deeply equal [ 200, { status: 'ready', …(1) } ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[33m@@ -2,9 +2,11 @@[39m
+[2m    200,[22m
+[2m    {[22m
+[2m      "checks": {[22m
+[2m        "database": "ok",[22m
+[2m        "migrations": "ok",[22m
+[31m+       "storage": "ok",[39m
+[31m+       "worker": "unknown",[39m
+[2m      },[22m
+[2m      "status": "ready",[22m
+[2m    },[22m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/platform.test.ts:23:36
+     21|   it("reports ready when the database answers and every shipped migrat…
+     22|     const res = await call(api.app, "GET", "/readyz");
+     23|     expect([res.status, res.body]).toEqual([200, { status: "ready", ch…
+       |                                    ^
+     24|     expect((await call(api.app, "GET", "/healthz")).body).toEqual({ st…
+     25|   });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[21/24]⎯
+
+ FAIL  |integration| apps/api/test/integration/platform.test.ts > health and readiness > reports 503 not_ready/pending when the build ships a migration the database lacks, and fail on checksum drift
+AssertionError: expected [ 503, { status: 'not_ready', …(1) } ] to deeply equal [ 503, { status: 'not_ready', …(1) } ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[33m@@ -2,9 +2,11 @@[39m
+[2m    503,[22m
+[2m    {[22m
+[2m      "checks": {[22m
+[2m        "database": "ok",[22m
+[2m        "migrations": "pending",[22m
+[31m+       "storage": "ok",[39m
+[31m+       "worker": "unknown",[39m
+[2m      },[22m
+[2m      "status": "not_ready",[22m
+[2m    },[22m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/platform.test.ts:37:34
+     35|     try {
+     36|       const p = await call(pending.app, "GET", "/readyz");
+     37|       expect([p.status, p.body]).toEqual([
+       |                                  ^
+     38|         503,
+     39|         { status: "not_ready", checks: { database: "ok", migrations: "…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[22/24]⎯
+
+ FAIL  |integration| apps/api/test/integration/platform.test.ts > health and readiness > reports 503 fail, not pending, when a pending migration's id is below the highest applied id (F-DG5-100)
+AssertionError: expected [ 503, { status: 'not_ready', …(1) } ] to deeply equal [ 503, { status: 'not_ready', …(1) } ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[33m@@ -2,9 +2,11 @@[39m
+[2m    503,[22m
+[2m    {[22m
+[2m      "checks": {[22m
+[2m        "database": "ok",[22m
+[2m        "migrations": "fail",[22m
+[31m+       "storage": "ok",[39m
+[31m+       "worker": "unknown",[39m
+[2m      },[22m
+[2m      "status": "not_ready",[22m
+[2m    },[22m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/platform.test.ts:56:34
+     54|     try {
+     55|       const r = await call(late.app, "GET", "/readyz");
+     56|       expect([r.status, r.body]).toEqual([
+       |                                  ^
+     57|         503,
+     58|         { status: "not_ready", checks: { database: "ok", migrations: "…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[23/24]⎯
+
+ FAIL  |integration| apps/api/test/integration/platform.test.ts > readiness requires a UTF8 database (ADR-0003 'Database encoding', T-DG2-BE9) > reports 503 database: fail on a SQL_ASCII database, and database: ok on a UTF8 one created the same way
+AssertionError: expected [ 503, { status: 'not_ready', …(1) } ] to deeply equal [ 503, { status: 'not_ready', …(1) } ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[33m@@ -2,9 +2,11 @@[39m
+[2m    503,[22m
+[2m    {[22m
+[2m      "checks": {[22m
+[2m        "database": "fail",[22m
+[2m        "migrations": "fail",[22m
+[31m+       "storage": "unknown",[39m
+[31m+       "worker": "unknown",[39m
+[2m      },[22m
+[2m      "status": "not_ready",[22m
+[2m    },[22m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/platform.test.ts:77:36
+     75|         // Not cached when negative: still refused on the second probe.
+     76|         const r = await call(onAscii.app, "GET", "/readyz");
+     77|         expect([r.status, r.body]).toEqual([
+       |                                    ^
+     78|           503,
+     79|           { status: "not_ready", checks: { database: "fail", migration…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[24/24]⎯
+
+
+ Test Files  6 failed | 3 passed (9)
+      Tests  22 failed | 146 passed | 6 skipped (174)
+   Start at  20:35:26
+   Duration  248.95s (transform 7.36s, setup 0ms, collect 30.24s, tests 214.86s, environment 0ms, prepare 65ms)
+
+exit=1

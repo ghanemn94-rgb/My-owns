@@ -296,6 +296,7 @@ export {
   ConfigError,
   isLoopbackHost,
   loadConfig,
+  secureIssuerAllowed,
   secureOriginAllowed,
   secretVariableNames,
   LOG_LEVELS,

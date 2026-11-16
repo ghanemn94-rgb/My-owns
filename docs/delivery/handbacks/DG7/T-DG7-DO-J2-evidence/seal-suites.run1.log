@@ -1,0 +1,109 @@
+Sat Nov 14 14:53:34 UTC 2026
+✔ T-M1 the sparse scratch clone has the repository's DG7 candidate id at that commit (746553.41707ms)
+✔ T-M2 R0: rehearsal seal exit 0; verify REHEARSAL-PASS with V16 DG7 SKIPPED (DG0–DG6 PASS or BLOCKED, never FAIL) (1.741096ms)
+✔ T-M3 the envelope .tar bytes are identical across two seals of the same inputs; manifest key order and sorting (144795.042128ms)
+✔ T-M4 refusals: R9, R8, S1 missing, S1 not APPROVED, missing --evidence, evidence outside DG7/, uncommitted file (135354.898403ms)
+✔ T-M5 R11 and the re-seal rule (80374.449282ms)
+✔ T-M6 S5/V14: a release seal refuses a synthetic record; a rehearsal refuses a missing DG7 marker and a marker on DG0–DG6 (110201.096003ms)
+✔ T-M7 S7: a demo-data input with one changed byte is refused (42713.502671ms)
+✔ T-M13 R13: after a rehearsal seal the clone's DG7 candidate id is unchanged (815.875409ms)
+✔ T-M8 S10: a planted secret in an envelope-listed file, and a planted claim in the payload docs/, fail the seal (141810.754344ms)
+✖ T-M2 (end) the repository's git status is unchanged by the whole rehearsal (111.968189ms)
+✔ T-M9 L1–L4 on the real DG0–DG6 gate records: the hit set is exactly the reported one (3290.094552ms)
+✔ T-M9 (DO-J2) the shipped acknowledgement list clears exactly the reported hits, and no gate record is edited (4.357435ms)
+✔ T-M9 (DO-J2) an acknowledgement matches only the exact sentence: an edited sentence is a hit again and the entry is stale (4.192797ms)
+✔ T-M9 (DO-J2) acknowledgements cover gate-record L3/L4 only: never DG7, a field rule, the README or the final report (1.363614ms)
+✔ T-M9 each rule fails on its SYNTHETIC case and passes the separation wording (0.772992ms)
+✔ T-M10 the untampered envelope passes archive mode; R10 a release-mode verify of it fails V14 only (7660.43647ms)
+✔ T-M10 R1: a source/ entry rewritten inside the payload archive fails V4 and V1; recomputed: V4 alone (14522.604175ms)
+✔ T-M10 R2: gates/DG3.json removed from the envelope fails V3 and V6 (and V1) (8667.519482ms)
+✔ T-M10 R3: an agent definition altered in evidence/ fails V3 and V8 (and V1) (8520.34487ms)
+✔ T-M10 R4: the register in evidence/ differing by one byte fails V3 and V9 (and V1) (8667.886505ms)
+✔ T-M10 R5 and R6: DG7 stage_id G6, and a product_gate key, fail V12 (with V3 for the changed bytes) (8634.938174ms)
+✔ T-M10 (DO-J2) V12 takes the acknowledgement list from the sealed payload: untampered it acknowledges DG3's sentence; emptied, the L3 hit fails V12 (19405.588949ms)
+✔ T-M10 R7: a demo-data row with gate_code DG7 fails V12 L5 (the tamperer covers every checksum) (7896.580997ms)
+✔ T-M10 BLOCKED: a missing envelope, a non-gzip file, a missing --expect-sha256 (19.070296ms)
+✔ T-M11 V16 runs validate.mjs --historical per gate, records exit codes, FAILs on non-zero, BLOCKED when it cannot run (1208.137724ms)
+✔ T-M12 the filled SYNTHETIC report passes V18; the template's section 2 is M0074 verbatim (35231.3092ms)
+✔ T-M12 every §7.3 rule has a failing fixture (15.555803ms)
+✔ T-M12 R12 through verify-seal: V18 fails for a missing evidence path and for an altered section 2 (14977.261677ms)
+✔ T-M12 the template's section 8 guides exist in the tree (DOC-B's guides: strict with MTH_STRICT_GUIDES=1) (1.067389ms) # missing guide(s), reported to the orchestrator: docs/handover/release-notes.md
+ℹ tests 29
+ℹ suites 0
+ℹ pass 27
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 1
+ℹ duration_ms 1676648.434687
+
+✖ failing tests:
+
+test at tools/release/tests/seal.test.mjs:323:1
+✖ T-M2 (end) the repository's git status is unchanged by the whole rehearsal (111.968189ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+    ' M deploy/scripts/drill/guide-keys.json\n' +
+      ' M deploy/scripts/image-bundle.sh\n' +
+      ' M deploy/scripts/tests/image-bundle.test.mjs\n' +
+      ' M docs/operations/restricted-network.md\n' +
+      ' M packages/db/test/integration/transfer-load.test.ts\n' +
+      ' M tools/release/lib/gate-labels.mjs\n' +
+      ' M tools/release/secret-allowlist.json\n' +
+  +   ' M tools/release/secret-scan.mjs\n' +
+      ' M tools/release/tests/fixtures/seal/rehearsal.mjs\n' +
+      ' M tools/release/tests/seal.test.mjs\n' +
+  +   ' M tools/release/tests/secret-scan.test.mjs\n' +
+      ' M tools/release/tests/verify-seal.test.mjs\n' +
+      ' M tools/release/verify-seal.mjs\n' +
+  +   '?? docs/delivery/handbacks/DG7/T-DG7-DO-E2-devops-engineer.md\n' +
+      '?? docs/delivery/handbacks/DG7/T-DG7-DO-E2-evidence/checks-summary.log\n' +
+      '?? docs/delivery/handbacks/DG7/T-DG7-DO-E2-evidence/do-e2-environment-facts.txt\n' +
+      '?? docs/delivery/handbacks/DG7/T-DG7-DO-E2-evidence/do-e2-host-run.log\n' +
+      '?? docs/delivery/handbacks/DG7/T-DG7-DO-E2-evidence/do-e2-my-diff.patch\n' +
+      '?? docs/delivery/handbacks/DG7/T-DG7-DO-E2-evidence/drill-tests.log\n' +
+      '?? docs/delivery/handbacks/DG7/T-DG7-DO-E2-evidence/lint.log\n' +
+      '?? docs/delivery/handbacks/DG7/T-DG7-DO-E2-evidence/openapi-lint.log\n' +
+  +   '?? docs/delivery/handbacks/DG7/T-DG7-DO-E2-evidence/pnpm-test.log\n' +
+  +   '?? docs/delivery/handbacks/DG7/T-DG7-DO-E2-evidence/typecheck.log\n' +
+      '?? docs/delivery/handbacks/DG7/T-DG7-DO-E2-evidence/validate-historical-DG6-first.log\n' +
+  +   '?? docs/delivery/handbacks/DG7/T-DG7-DO-J2-evidence/a28-rehearsal.script.mjs.txt\n' +
+      '?? docs/delivery/handbacks/DG7/T-DG7-DO-J2-evidence/check-handover.log\n' +
+  +   '?? docs/delivery/handbacks/DG7/T-DG7-DO-J2-evidence/contract.integration.log\n' +
+      '?? docs/delivery/handbacks/DG7/T-DG7-DO-J2-evidence/guide-keys-consumers.log\n' +
+  +   '?? docs/delivery/handbacks/DG7/T-DG7-DO-J2-evidence/lint.log\n' +
+  +   '?? docs/delivery/handbacks/DG7/T-DG7-DO-J2-evidence/openapi-lint.log\n' +
+  +   '?? docs/delivery/handbacks/DG7/T-DG7-DO-J2-evidence/p7-wiring.rerun.log\n' +
+  +   '?? docs/delivery/handbacks/DG7/T-DG7-DO-J2-evidence/pnpm-test.log\n' +
+      '?? docs/delivery/handbacks/DG7/T-DG7-DO-J2-evidence/seal-suites.log\n' +
+  +   '?? docs/delivery/handbacks/DG7/T-DG7-DO-J2-evidence/secret-scan-T-G1.log\n' +
+  +   '?? docs/delivery/handbacks/DG7/T-DG7-DO-J2-evidence/secret-scan-history.log\n' +
+      '?? docs/delivery/handbacks/DG7/T-DG7-DO-J2-evidence/secret-scan-payload.after.log\n' +
+      '?? docs/delivery/handbacks/DG7/T-DG7-DO-J2-evidence/secret-scan-payload.before.log\n' +
+  +   '?? docs/delivery/handbacks/DG7/T-DG7-DO-J2-evidence/secret-scan-selftests.log\n' +
+      '?? docs/delivery/handbacks/DG7/T-DG7-DO-J2-evidence/transfer-drill.with-pg.log\n' +
+      '?? docs/delivery/handbacks/DG7/T-DG7-DO-J2-evidence/transfer-load.integration.log\n' +
+  +   '?? docs/delivery/handbacks/DG7/T-DG7-DO-J2-evidence/typecheck.log\n' +
+  +   '?? docs/delivery/handbacks/DG7/T-DG7-DO-J2-evidence/typecheck.oom-killed.log\n' +
+  +   '?? docs/delivery/handbacks/DG7/T-DG7-DO-J2-evidence/validate-historical-DG6.log\n' +
+  -   '?? docs/delivery/test-evidence/DG7/orchestrator/a27/k9-k12.log\n' +
+      '?? tools/release/gate-labels-acknowledged.json\n'
+  
+      at TestContext.<anonymous> (file:///home/user/My-owns/tools/release/tests/seal.test.mjs:324:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: ' M deploy/scripts/drill/guide-keys.json\n M deploy/scripts/image-bundle.sh\n M deploy/scripts/tests/image-bundle.test.mjs\n M docs/operations/restricted-network.md\n M packages/db/test/integration/transfer-load.test.ts\n M tools/release/lib/gate-labels.mjs\n M tools/release/secret-allowlist.json\n M tools/release/secret-scan.mjs\n M tools/release/tests/fixtures/seal/rehearsal.mjs\n M tools/release/tests/seal.test.mjs\n M tools/release/tests/secret-scan.test.mjs\n M tools/release/tests/verify-seal.test.mjs\n M tools/release/verify-seal.mjs\n?? docs/delivery/handbacks/DG7/T-DG7-DO-E2-devops-engineer.md\n?? docs/delivery/handbacks/DG7/T-DG7-DO-E2-evidence/checks-summary.log\n?? docs/delivery/handbacks/DG7/T-DG7-DO-E2-evidence/do-e2-environment-facts.txt\n?? docs/delivery/handbacks/DG7/T-DG7-DO-E2-evidence/do-e2-host-run.log\n?? docs/delivery/handbacks/DG7/T-DG7-DO-E2-evidence/do-e2-my-diff.patch\n?? docs/delivery/handbacks/DG7/T-DG7-DO-E2-evidence/drill-tests.log\n?? docs/delivery/handbacks/DG7/T-DG7-DO-E2-evidence/lint.log\n?? docs/delivery/handbacks/DG7/T-DG7-DO-E2-evidence/openapi-lint.log\n?? docs/delivery/handbacks/DG7/T-DG7-DO-E2-evidence/pnpm-test.log\n?? docs/delivery/handbacks/DG7/T-DG7-DO-E2-evidence/typecheck.log\n?? docs/delivery/handbacks/DG7/T-DG7-DO-E2-evidence/validate-historical-DG6-first.log\n?? docs/delivery/handbacks/DG7/T-DG7-DO-J2-evidence/a28-rehearsal.script.mjs.txt\n?? docs/delivery/handbacks/DG7/T-DG7-DO-J2-evidence/check-handover.log\n?? docs/delivery/handbacks/DG7/T-DG7-DO-J2-evidence/contract.integration.log\n?? docs/delivery/handbacks/DG7/T-DG7-DO-J2-evidence/guide-keys-consumers.log\n?? docs/delivery/handbacks/DG7/T-DG7-DO-J2-evidence/lint.log\n?? docs/delivery/handbacks/DG7/T-DG7-DO-J2-evidence/openapi-lint.log\n?? docs/delivery/handbacks/DG7/T-DG7-DO-J2-evidence/p7-wiring.rerun.log\n?? docs/delivery/handbacks/DG7/T-DG7-DO-J2-evidence/pnpm-test.log\n?? docs/delivery/handbacks/DG7/T-DG7-DO-J2-evidence/seal-suites.log\n?? docs/delivery/handbacks/DG7/T-DG7-DO-J2-evidence/secret-scan-T-G1.log\n?? docs/delivery/handbacks/DG7/T-DG7-DO-J2-evidence/secret-scan-history.log\n?? docs/delivery/handbacks/DG7/T-DG7-DO-J2-evidence/secret-scan-payload.after.log\n?? docs/delivery/handbacks/DG7/T-DG7-DO-J2-evidence/secret-scan-payload.before.log\n?? docs/delivery/handbacks/DG7/T-DG7-DO-J2-evidence/secret-scan-selftests.log\n?? docs/delivery/handbacks/DG7/T-DG7-DO-J2-evidence/transfer-drill.with-pg.log\n?? docs/delivery/handbacks/DG7/T-DG7-DO-J2-evidence/transfer-load.integration.log\n?? docs/delivery/handbacks/DG7/T-DG7-DO-J2-evidence/typecheck.log\n?? docs/delivery/handbacks/DG7/T-DG7-DO-J2-evidence/typecheck.oom-killed.log\n?? docs/delivery/handbacks/DG7/T-DG7-DO-J2-evidence/validate-historical-DG6.log\n?? tools/release/gate-labels-acknowledged.json\n',
+    expected: ' M deploy/scripts/drill/guide-keys.json\n M deploy/scripts/image-bundle.sh\n M deploy/scripts/tests/image-bundle.test.mjs\n M docs/operations/restricted-network.md\n M packages/db/test/integration/transfer-load.test.ts\n M tools/release/lib/gate-labels.mjs\n M tools/release/secret-allowlist.json\n M tools/release/tests/fixtures/seal/rehearsal.mjs\n M tools/release/tests/seal.test.mjs\n M tools/release/tests/verify-seal.test.mjs\n M tools/release/verify-seal.mjs\n?? docs/delivery/handbacks/DG7/T-DG7-DO-E2-evidence/checks-summary.log\n?? docs/delivery/handbacks/DG7/T-DG7-DO-E2-evidence/do-e2-environment-facts.txt\n?? docs/delivery/handbacks/DG7/T-DG7-DO-E2-evidence/do-e2-host-run.log\n?? docs/delivery/handbacks/DG7/T-DG7-DO-E2-evidence/do-e2-my-diff.patch\n?? docs/delivery/handbacks/DG7/T-DG7-DO-E2-evidence/drill-tests.log\n?? docs/delivery/handbacks/DG7/T-DG7-DO-E2-evidence/lint.log\n?? docs/delivery/handbacks/DG7/T-DG7-DO-E2-evidence/openapi-lint.log\n?? docs/delivery/handbacks/DG7/T-DG7-DO-E2-evidence/validate-historical-DG6-first.log\n?? docs/delivery/handbacks/DG7/T-DG7-DO-J2-evidence/check-handover.log\n?? docs/delivery/handbacks/DG7/T-DG7-DO-J2-evidence/guide-keys-consumers.log\n?? docs/delivery/handbacks/DG7/T-DG7-DO-J2-evidence/seal-suites.log\n?? docs/delivery/handbacks/DG7/T-DG7-DO-J2-evidence/secret-scan-payload.after.log\n?? docs/delivery/handbacks/DG7/T-DG7-DO-J2-evidence/secret-scan-payload.before.log\n?? docs/delivery/handbacks/DG7/T-DG7-DO-J2-evidence/transfer-drill.with-pg.log\n?? docs/delivery/handbacks/DG7/T-DG7-DO-J2-evidence/transfer-load.integration.log\n?? docs/delivery/test-evidence/DG7/orchestrator/a27/k9-k12.log\n?? tools/release/gate-labels-acknowledged.json\n',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+real	27m56.803s
+user	8m47.407s
+sys	7m57.078s
+exit=1
+Sat Nov 14 15:21:31 UTC 2026

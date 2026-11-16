@@ -30,7 +30,10 @@ async function freshDb(): Promise<string> {
 function copyMigrations(): string {
   const dir = mkdtempSync(join(process.env["TMPDIR"] ?? "/tmp", "mig-"));
   dirs.push(dir);
-  for (const f of readdirSync(defaultMigrationsDir())) cpSync(join(defaultMigrationsDir(), f), join(dir, f));
+  // Only what the reader loads (listMigrationFiles: the `.sql` entries); a stray non-.sql entry such as a directory is
+  // ignored by migrate() and is not copied (a directory made cpSync throw "cannot copy a directory").
+  for (const f of readdirSync(defaultMigrationsDir()).filter((n) => n.endsWith(".sql")))
+    cpSync(join(defaultMigrationsDir(), f), join(dir, f));
   return dir;
 }
 

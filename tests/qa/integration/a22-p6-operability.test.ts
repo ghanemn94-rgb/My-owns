@@ -537,7 +537,13 @@ describe("A22 health checks and admin job visibility (REQ-S20-022 'Health checks
     expect(String(live.headers["x-request-id"] ?? "")).not.toBe("");
     const ready = await call<Loose>(env.api.app, "GET", "/readyz");
     expect(ready.status, JSON.stringify(ready.body)).toBe(200);
-    expect(ready.body).toEqual({ status: "ready", checks: { database: "ok", migrations: "ok" } });
+    // QA-C (T-DG7-QA-C): since BE-B, ADR-0069 §2 adds `storage` (gating) and `worker` (reported only, never gating;
+    // the P6 `alive|stale|unknown` vocabulary) to the readiness body. The P6 expectation is updated to that contract.
+    expect(ready.body).toEqual({
+      status: "ready",
+      checks: { database: "ok", migrations: "ok", storage: "ok", worker: expect.any(String) },
+    });
+    expect(["alive", "stale", "unknown"]).toContain((ready.body.checks as Loose).worker);
   });
 
   it("negative: an API on an UNMIGRATED database answers /readyz 503 not_ready with migrations not ok, while /healthz stays 200", async () => {

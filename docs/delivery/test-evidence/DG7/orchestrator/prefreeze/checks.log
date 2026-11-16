@@ -1,0 +1,62 @@
+### validate-historical-DG6 $ node tools/gates/validate.mjs --historical --stage DG6
+PASS gate DG6 (historical)
+### validate-historical-DG6 exit=0 seconds=136
+### typecheck $ pnpm -r typecheck
+apps/api typecheck$ tsc -p tsconfig.json
+apps/worker typecheck$ tsc -p tsconfig.json
+apps/worker typecheck: Done
+apps/api typecheck: Done
+### typecheck exit=0 seconds=292
+### lint $ pnpm lint
+
+> mobily-transformation-hub@0.1.0 lint /home/user/My-owns
+> eslint . --max-warnings=0
+
+### lint exit=0 seconds=40
+### openapi-lint $ pnpm openapi:lint
+> mobily-transformation-hub@0.1.0 openapi:lint /home/user/My-owns
+> node scripts/openapi-lint.mjs docs/api/openapi.yaml
+
+PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 965 operations
+### openapi-lint exit=0 seconds=0
+### prettier $ npx prettier --check .
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+Checking formatting...
+All matched files use Prettier code style!
+### prettier exit=0 seconds=54
+### unit $ pnpm test
+      Tests  259 passed | 2 skipped (261)
+   Start at  23:37:18
+   Duration  5.63s (transform 276ms, setup 0ms, collect 665ms, tests 5.15s, environment 1ms, prepare 214ms)
+
+### unit exit=0 seconds=361
+### release-tool-tests $ node --test tools/release/tests/*.test.mjs licenses/tests/*.test.mjs
+    expected: /^step scan-assets +exit 0 /m,
+    operator: 'match',
+    diff: 'simple'
+  }
+### release-tool-tests exit=1 seconds=858
+### deploy-tool-tests $ node --test deploy/scripts/tests/check-ci-needs.test.mjs deploy/scripts/tests/pin-images.test.mjs deploy/scripts/tests/log-scan.test.mjs deploy/scripts/tests/check-virtual-store.test.mjs deploy/scripts/tests/image-bundle.test.mjs deploy/scripts/tests/offline-drill.test.mjs deploy/scripts/tests/dockerfile-context.test.mjs
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7801.267648
+### deploy-tool-tests exit=0 seconds=8
+### gate-tool-tests $ node --test tools/gates/tests/*.test.mjs
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 54796.775369
+### gate-tool-tests exit=0 seconds=55
+### secret-scan-payload $ node tools/release/secret-scan.mjs --scope payload
+secret-scan: PASS (payload; 3143 files; allowed 33; canary (documented) 22)
+### secret-scan-payload exit=0 seconds=7
+### claims-scan $ node tools/release/claims-scan.mjs
+claims-scan: PASS (888 files; D 141, U 747; negated 28; allowed 19)
+### claims-scan exit=0 seconds=5
+### integration $ packages/db/test/with-pg.sh pnpm test:integration
+bash: line 1: packages/db/test/with-pg.sh: No such file or directory
+### integration exit=127 seconds=0
+### DONE
+### integration(rerun, tests/qa/support/with-pg.sh) exit=1 seconds=3094

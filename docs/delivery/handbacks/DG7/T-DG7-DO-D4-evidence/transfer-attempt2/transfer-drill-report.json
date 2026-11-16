@@ -1,0 +1,137 @@
+{
+  "schemaVersion": "mth-transfer-drill/1",
+  "mode": "container-free, inside one bwrap --unshare-net namespace (agent sandbox; ADR-0069 §7 split)",
+  "archive": {
+    "sha256": "cf222330786f4df99b17a887e828dd986657cee1d13a531f1825498f5c25e016"
+  },
+  "sourceOrigin": "http://localhost:25301",
+  "targetOrigin": "http://127.0.0.1:25302",
+  "idp": {
+    "label": "synthetic drill IdP (not a corporate IdP)"
+  },
+  "checksums": {
+    "manifest": null,
+    "attachmentManifest": null,
+    "mapping": null,
+    "allowance": null,
+    "journal": null
+  },
+  "reports": [],
+  "totals": {
+    "tables": null,
+    "evidenceFiles": null,
+    "seconds": 187.55
+  },
+  "steps": [
+    {
+      "id": "D0",
+      "guideSection": "docs/handover/deployment.md#first-deployment",
+      "command": "node tools/release/build-archive.mjs --verify <archive> --expect-sha256 cf222330786f4df99b17a887e828dd986657cee1d13a531f1825498f5c25e016 && tools/release/build-from-archive.sh <archive> --sha256 cf222330786f4df99b17a887e828dd986657cee1d13a531f1825498f5c25e016 --store <store> --work <work>/build",
+      "exit": 0,
+      "seconds": 155.489,
+      "result": "PASS",
+      "detail": "D0: archive cf222330786f4df99b17a887e828dd986657cee1d13a531f1825498f5c25e016 verified and built; runtime /var/tmp/mth-run.Drtj9S/claude-0/mth-transfer-drill.o8vn1O/build/runtime"
+    },
+    {
+      "id": "D1",
+      "guideSection": "docs/handover/deployment.md#first-deployment",
+      "command": "fresh cluster; mth-db migrate; mth-db seed-demo; mth-db seed-dev; API and worker at http://localhost:25301; deploy/scripts/smoke.mjs (MTH_SMOKE_AUTH=dev); journey.mjs --mode dev --steps signin,uploads",
+      "exit": 1,
+      "seconds": 31.674,
+      "result": "FAIL",
+      "detail": ""
+    },
+    {
+      "id": "D2",
+      "guideSection": "docs/handover/deployment.md#origin-change",
+      "command": "DATABASE_OWNER_URL=<S> node tools/migration/export.mjs --out <work>/package --operator 'transfer-drill synthetic operator' (attachments.json count = S's rows with a storage_key)",
+      "exit": -1,
+      "seconds": 0,
+      "result": "NOT_RUN",
+      "detail": "not run: step D1 failed"
+    },
+    {
+      "id": "D3",
+      "guideSection": "docs/handover/deployment.md#configuration-keys",
+      "command": "node deploy/scripts/generate-env-example.mjs --check && node deploy/scripts/drill/config-trace.mjs --template .env.example --guide docs/handover/deployment.md --map deploy/scripts/drill/guide-keys.json",
+      "exit": -1,
+      "seconds": 0,
+      "result": "NOT_RUN",
+      "detail": "not run: step D1 failed"
+    },
+    {
+      "id": "D4",
+      "guideSection": "docs/handover/deployment.md#database",
+      "command": "mth-db migrate && mth-db bootstrap (twice; the second must refuse) on a separate clean database",
+      "exit": -1,
+      "seconds": 0,
+      "result": "NOT_RUN",
+      "detail": "not run: step D1 failed"
+    },
+    {
+      "id": "D5",
+      "guideSection": "docs/handover/deployment.md#migration-import",
+      "command": "node tools/migration/prepare-target.mjs --from <package> && node tools/migration/import.mjs --from <package> --operator 'transfer-drill synthetic operator' --keep-reports <out>/import-reports --manifest-sha256 <hex> && node tools/migration/reconcile.mjs --operator 'transfer-drill synthetic operator' --from <package> (mode 1)",
+      "exit": -1,
+      "seconds": 0,
+      "result": "NOT_RUN",
+      "detail": "not run: step D1 failed"
+    },
+    {
+      "id": "D6",
+      "guideSection": "docs/handover/deployment.md#migration-import",
+      "command": "mth-db rebind-identity --mapping <mapping.csv> --operator 'transfer-drill synthetic operator' (one carried user left unmapped); node tools/migration/reconcile.mjs --from <package> (mode 1, rebind delta)",
+      "exit": -1,
+      "seconds": 0,
+      "result": "NOT_RUN",
+      "detail": "not run: step D1 failed"
+    },
+    {
+      "id": "D7",
+      "guideSection": "docs/handover/deployment.md#monitoring",
+      "command": "start the drill IdP, the API and the worker from the runtime tree with target.env; GET /readyz until 200, storage ok, worker alive (120 s); journey.mjs --steps signin,status (getDeploymentStatus origin and environmentKind)",
+      "exit": -1,
+      "seconds": 0,
+      "result": "NOT_RUN",
+      "detail": "not run: step D1 failed"
+    },
+    {
+      "id": "D8",
+      "guideSection": "docs/handover/deployment.md#origin-change",
+      "command": "node deploy/scripts/drill/journey.mjs --mode oidc-drill --app http://127.0.0.1:25302 --source-origin http://localhost:25301 (signin, unbound, csrf, status, writes, approve, downloads, deeplink; keys into journal.json)",
+      "exit": -1,
+      "seconds": 0,
+      "result": "NOT_RUN",
+      "detail": "not run: step D1 failed"
+    },
+    {
+      "id": "D9",
+      "guideSection": "docs/handover/deployment.md#monitoring",
+      "command": "stop worker; journey exportq; job-check snapshot; stop API, PostgreSQL; start PostgreSQL, API, worker; job-check compare; journey exportwait, downloads; allowance.mjs; node tools/migration/reconcile.mjs --from <package> --after-use --allow <allowance.json> (mode 2)",
+      "exit": -1,
+      "seconds": 0,
+      "result": "NOT_RUN",
+      "detail": "not run: step D1 failed"
+    },
+    {
+      "id": "D10",
+      "guideSection": "docs/handover/deployment.md#origin-change",
+      "command": "node deploy/scripts/drill/origin-scan.mjs --database-url <target superuser> --origin http://localhost:25301",
+      "exit": -1,
+      "seconds": 0,
+      "result": "NOT_RUN",
+      "detail": "not run: step D1 failed"
+    },
+    {
+      "id": "D11",
+      "guideSection": "docs/handover/deployment.md#first-deployment",
+      "command": "write transfer-drill-report.json",
+      "exit": 0,
+      "seconds": 0,
+      "result": "NOT_RUN",
+      "detail": "report written"
+    }
+  ],
+  "note": "SYNTHETIC data and credentials. A local drill is not evidence of high-availability production readiness; it approves nothing.",
+  "result": "FAIL"
+}

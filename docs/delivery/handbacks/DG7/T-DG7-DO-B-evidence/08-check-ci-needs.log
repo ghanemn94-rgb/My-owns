@@ -1,0 +1,9 @@
+OK: docs/delivery/handbacks/DG7/T-DG7-DO-B-evidence/08-ci-merged-scratch.yml: 8 jobs; first job delivery-gates runs validate.mjs --pipeline; every other job depends on it with no status-function if:; installs only via ci-install-deps.sh
+  secret-scan <- delivery-gates
+  verify <- delivery-gates, secret-scan
+  dependency-audit <- delivery-gates, secret-scan
+  integration <- verify
+  e2e <- verify
+  images <- integration, e2e, dependency-audit
+  release <- delivery-gates, secret-scan
+exit=0

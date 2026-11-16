@@ -1,0 +1,37 @@
+port-policy: PostgreSQL listening on port 24351 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/My-owns
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwf7gwfq_544a9cbd (server_encoding UTF8); applied 134 migrations to a fresh database
+ ❯ |integration| packages/db/test/integration/transfer-recheck-automation.test.ts (4 tests | 1 failed) 13036ms
+   ✓ T-R19: the automation chain (A3.2) > a journalled actor's mutation chains its starter execution and the job's rows (audit_explained)  606ms
+   ✓ T-R19: the automation chain (A3.2) > negatives 1-4: an off-by-a-microsecond outbox row, a non-journalled user, a foreign recorded user and a schedule trigger leave their executions unexplained  596ms
+   ✓ T-R20: the counter basis (A3.3) > one RAID issue by a journalled actor moves I by one and is explained  647ms
+   × T-R20: the counter basis (A3.3) > a counter moved by 2 for one row, moved with no row, moved by an unexplained row, a row without its step and an unmapped prefix are unexplained 559ms
+     → expected [ …(23) ] to include '    counter ["01995000-0000-7000-8000…'
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| packages/db/test/integration/transfer-recheck-automation.test.ts > T-R20: the counter basis (A3.3) > a counter moved by 2 for one row, moved with no row, moved by an unexplained row, a row without its step and an unmapped prefix are unexplained
+AssertionError: expected [ …(23) ] to include '    counter ["01995000-0000-7000-8000…'
+ ❯ packages/db/test/integration/transfer-recheck-automation.test.ts:415:19
+    413|     expect(r.out).toContain(line("CR", c0, c0 + 1, []));
+    414|     expect(r.out).toContain(line("I", iPackage, iPackage + 2, [iPackag…
+    415|     expect(r.out).toContain(line("R", r0, r0, [r0 + 1]));
+       |                   ^
+    416|     expect(r.out).toContain(line("B", b0, b0 + 1, []));
+    417|     for (const p of ["A", "CR", "I", "R", "B"])
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+   Start at  16:43:03
+   Duration  18.25s (transform 938ms, setup 0ms, collect 1.64s, tests 13.04s, environment 0ms, prepare 56ms)
+
+EXIT=1

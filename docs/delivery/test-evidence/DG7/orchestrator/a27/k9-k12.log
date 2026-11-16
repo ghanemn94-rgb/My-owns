@@ -1,0 +1,56 @@
+## K9
+$ git clone --no-checkout . /tmp/claude-0/-home-user-My-owns/f7dd9c0b-2b3c-52aa-bca7-45299008f27d/scratchpad/a27 && git -C /tmp/claude-0/-home-user-My-owns/f7dd9c0b-2b3c-52aa-bca7-45299008f27d/scratchpad/a27 checkout d8868b2a5c074b13c04693a88644c25ef2792583
+exit 0
+{"stage":"DG6","source":"working-tree","candidate_id":"sha256:10f71f2418567878bffddfb004efbf342347029fd799dd3076af40aca32e2fc5","files":2775}
+exit 0
+## K10
+active stage: DG6 (FIXING)
+frozen candidate: sha256:5e819f7a579dbf98eb78f7f8e326a7ad57d939ed6a0762e3bea912f6dc735ed6
+working tree:     sha256:10f71f2418567878bffddfb004efbf342347029fd799dd3076af40aca32e2fc5 (differs: 1 changed, 0 added, 0 removed)
+round 1 domain-reviewer: PASS (STALE for current content)
+round 1 code-security-reviewer: FAIL (STALE for current content)
+round 1 qa-verifier: PASS (STALE for current content)
+round 2 domain-reviewer: FAIL (STALE for current content)
+round 2 code-security-reviewer: FAIL (STALE for current content)
+round 3 domain-reviewer: PASS (STALE for current content)
+round 3 code-security-reviewer: PASS (STALE for current content)
+round 3 qa-verifier: PASS (STALE for current content)
+round 4 release-auditor: FAIL (STALE for current content)
+round 5 domain-reviewer: FAIL (STALE for current content)
+round 5 code-security-reviewer: PASS (STALE for current content)
+round 6 domain-reviewer: PASS (STALE for current content)
+round 6 qa-verifier: PASS (STALE for current content)
+PASS reconcile (structure)
+exit 0
+## K12a
+FAIL gate DG6 (current) (26 problems)
+  - gate DG6: decision is BLOCKED
+  - gate DG6: blocking conditions recorded: B1 (F-DG6-990, Low, not mandatory, OPEN, owner backend-workflow-engineer): the product serves seeded English text that names engineering delivery gates. Migration 0117 (P6) describes job 'kpi.freshness_scan' as '... (DG4 freshness rule, unchanged) ...', shown as the job's name on the English Jobs and Job operations pages. P5 seeds carried in this candidate add 16 automation starter changeSummary 'Seeded starter: the DG4 behaviour (D-142 Q3).' and 6 procedure validationRulesEn 'The DG4/DG3 ... rules apply unchanged.' (24 served strings in all; 11-served-dg-labels.log). This breaks M0007 (keep the two gate systems' meanings separate) and REQ-S21-001's acceptance ('no DG0-DG7 references'), which the product enforces elsewhere (0089, problems-p6.test.ts). The finding is unresolved: it is neither repaired nor accepted as an observation by a specialist and the auditor, and the auditor cannot accept it alone. To clear it, either repair it (reword the seeded texts in a new, audited migration, extend the REQ-S21-001 scan to served seeded text, re-freeze and re-review), or route it to a specialist to judge acceptance and then run a two-part audit (D-140 option 1).
+  - stages.json: DG6 state FIXING not in VERIFYING/APPROVED
+  - stages.json: DG6 candidate sha256:5e819f7a579dbf98eb78f7f8e326a7ad57d939ed6a0762e3bea912f6dc735ed6 != gate sha256:32e41b5581a9beeba357a6c0dd5b50c414226910232ebfbb711c2178024376b5
+  - candidate: current content hashes to sha256:10f71f2418567878bffddfb004efbf342347029fd799dd3076af40aca32e2fc5, approval covers sha256:32e41b5581a9beeba357a6c0dd5b50c414226910232ebfbb711c2178024376b5; changed: ~docs/architecture/data-dictionary.md ~docs/delivery/decisions.md +apps/api/test/integration/text-scan/seeded-texts.test.ts +packages/db/migrations/0130_p6_seeded_text_business_terms.sql
+  - review domain-reviewer (docs/delivery/reviews/DG6/round-3/domain-reviewer.json): invocation DG6-T-DG6-REV-DOM-RG-R3-domain-reviewer-20261111T014653Z-2c1ec3f6: started 2026-11-11T01:46:53Z, before the candidate froze at 2026-11-11T11:32:40Z
+  - review code-security-reviewer (docs/delivery/reviews/DG6/round-3/code-security-reviewer.json): invocation DG6-T-DG6-REV-CS-RG-R3-code-security-reviewer-20261111T014656Z-9abcdd72: started 2026-11-11T01:46:56Z, before the candidate froze at 2026-11-11T11:32:40Z
+  - review qa-verifier (docs/delivery/reviews/DG6/round-3/qa-verifier.json): invocation DG6-T-DG6-REV-QA-RG-R3-qa-verifier-20261111T014659Z-9aa58015: started 2026-11-11T01:46:59Z, before the candidate froze at 2026-11-11T11:32:40Z
+  - review release-auditor (docs/delivery/reviews/DG6/round-4/release-auditor.json): verdict is FAIL
+  - review release-auditor (docs/delivery/reviews/DG6/round-4/release-auditor.json): check AUD-RG-R4-11-product-vs-engineering-gates is FAIL
+  - review release-auditor (docs/delivery/reviews/DG6/round-4/release-auditor.json): invocation DG6-T-DG6-AUDIT-RG-R4-release-auditor-20261111T060928Z-11aff7a3: started 2026-11-11T06:09:28Z, before the candidate froze at 2026-11-11T11:32:40Z
+  - gate DG6: test 'Product gates vs engineering gates: no product text names DG0-DG7 (M0007, REQ-S21-001). FAILS: 24 served seeded strings name DG2-DG4 (F-DG6-990)' is FAIL
+  - finding F-DG6-990 (Low): CLOSED_VERIFIED needs a full fix_revision commit id
+  - finding F-DG6-911 (Medium): findings.json verification by qa-verifier, sidecar by domain-reviewer
+  - finding F-DG6-911 (Medium): verification invocation is not the verifying reviewer's own run for round-6
+  - finding F-DG6-911 (Medium): findings.json verification evidence differs from the sidecar
+  - finding F-DG6-911 (Medium): fix e7cb240e74 is not in the verified round-6 candidate (3c8b9a3acf)
+  - finding F-DG6-911 (Medium): fix e7cb240e74 is not in the gate candidate
+  - finding F-DG6-951 (Medium): findings.json verification by qa-verifier, sidecar by domain-reviewer
+  - finding F-DG6-951 (Medium): verification invocation is not the verifying reviewer's own run for round-6
+  - finding F-DG6-951 (Medium): findings.json verification evidence differs from the sidecar
+  - finding F-DG6-951 (Medium): fix e7cb240e74 is not in the verified round-6 candidate (3c8b9a3acf)
+  - finding F-DG6-951 (Medium): fix e7cb240e74 is not in the gate candidate
+  - finding F-DG6-952 (Low): no release-auditor sidecar accepts it
+  - finding F-DG6-952 (Low): findings.json accepted_by does not mirror the accepting sidecars (qa-verifier)
+  - finding F-DG6-952 (Low): not listed in the gate's accepted_observations
+exit 1
+## K12b
+PASS pipeline (active stage: DG6 FIXING)
+exit 0

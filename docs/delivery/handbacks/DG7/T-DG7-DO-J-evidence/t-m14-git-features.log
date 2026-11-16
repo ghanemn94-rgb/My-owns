@@ -1,0 +1,29 @@
+# T-M14: git features used by the rehearsal and the drills (ADR-0073 §8.1), 2026-11-13T05:59:52Z
+$ git --version
+git version 2.43.0
+exit 0
+$ git clone -q --no-checkout --shared <repo> "$TMPDIR/tm14"
+exit 0
+$ git -C "$TMPDIR/tm14" sparse-checkout set --no-cone '/*' '!/docs/delivery/test-evidence/' '!/docs/delivery/handbacks/' '!/docs/delivery/runs/'
+exit 0
+$ git -C "$TMPDIR/tm14" checkout -q 89e299095e9435fd31d8ed8ea5c52505923b4b16
+exit 0
+$ git -C "$TMPDIR/tm14" config --bool core.sparseCheckout
+true
+exit 0
+$ ls docs/delivery/ (in the clone)
+agent-protocol.md
+agents.md
+assignments
+candidates
+decisions.md
+environment.md
+findings.json
+gates
+progress.md
+requirements-spec.md
+requirements.csv
+reviews
+stages.json
+threat-model.md
+clone removed

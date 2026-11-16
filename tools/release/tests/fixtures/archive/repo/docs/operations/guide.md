@@ -1,0 +1,1 @@
+# Fixture operations guide

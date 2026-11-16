@@ -1,0 +1,633 @@
+### 00 $ deploy/scripts/ensure-docker.sh; docker info; docker version; docker compose version
+docker: daemon ready (29.9.2)
+Client: Docker Engine - Community
+ Version:    29.9.2
+ Context:    default
+ Debug Mode: false
+ Plugins:
+  buildx: Docker Buildx (Docker Inc.)
+    Version:  v0.38.1
+    Path:     /usr/libexec/docker/cli-plugins/docker-buildx
+  compose: Docker Compose (Docker Inc.)
+    Version:  v5.6.1
+    Path:     /usr/libexec/docker/cli-plugins/docker-compose
+
+Server:
+ Containers: 0
+  Running: 0
+  Paused: 0
+  Stopped: 0
+ Images: 0
+ Server Version: 29.9.2
+ Storage Driver: overlayfs
+  driver-type: io.containerd.snapshotter.v1
+ Logging Driver: json-file
+ Cgroup Driver: cgroupfs
+ Cgroup Version: 1
+ Plugins:
+  Volume: local
+  Network: bridge host ipvlan macvlan null overlay
+  Log: awslogs fluentd gcplogs gelf journald json-file local splunk syslog
+ CDI spec directories:
+  /etc/cdi
+  /var/run/cdi
+ Swarm: inactive
+ Runtimes: io.containerd.runc.v2 runc
+ Default Runtime: runc
+ Init Binary: docker-init
+ containerd version: b7a25261e029d68978bbf290df0a62fc819b3c51
+ runc version: v1.5.2-0-g29dd3dc2
+ init version: de40ad0
+ Security Options:
+  seccomp
+   Profile: builtin
+ Kernel Version: 6.18.44-fc-v470
+ Operating System: Ubuntu 24.04.5 LTS
+ OSType: linux
+ Architecture: x86_64
+ CPUs: 4
+ Total Memory: 15.71GiB
+ Name: vm
+ ID: c60f2c7c-261a-47b2-a825-e216b9327eb7
+ Docker Root Dir: /var/lib/docker
+ Debug Mode: false
+ HTTPS Proxy: http://127.0.0.1:37111
+ No Proxy: localhost,127.0.0.1,::1,127.0.0.0/8,0.0.0.0/8,::,169.254.0.0/16,api.anthropic.com,api-staging.anthropic.com,api-pr-preview.anthropic.com,mcp-proxy.anthropic.com,mcp-proxy-staging.anthropic.com,registry.npmjs.org,jsr.io,npm.jsr.io,pypi.org,files.pythonhosted.org,index.crates.io,proxy.golang.org,host.docker.internal,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,100.64.0.0/10,.svc.cluster.local,*.svc.cluster.local
+ Experimental: false
+ Insecure Registries:
+  127.0.0.0/8
+  ::1/128
+ Live Restore Enabled: false
+ Firewall Backend: iptables
+  EnableUserlandProxy: true
+  UserlandProxyPath: /usr/bin/docker-proxy
+
+WARNING: Support for cgroup v1 is deprecated and planned to be removed by no later than May 2029 (https://github.com/moby/moby/issues/51111)
+Client: Docker Engine - Community
+ Version:           29.9.2
+ API version:       1.56
+ Go version:        go1.26.10
+ Git commit:        a82e528
+ Built:             Tue Oct 20 18:44:40 2026
+ OS/Arch:           linux/amd64
+ Context:           default
+
+Server: Docker Engine - Community
+ Engine:
+  Version:          29.9.2
+  API version:      1.56 (minimum version 1.40)
+  Go version:       go1.26.10
+  Git commit:       0367cbe
+  Built:            Tue Oct 20 18:44:40 2026
+  OS/Arch:          linux/amd64
+  Experimental:     false
+ containerd:
+  Version:          v2.4.2
+  GitCommit:        b7a25261e029d68978bbf290df0a62fc819b3c51
+ runc:
+  Version:          1.5.2
+  GitCommit:        v1.5.2-0-g29dd3dc2
+ docker-init:
+  Version:          0.19.0
+  GitCommit:        de40ad0
+Docker Compose version v5.6.1
+### 00 exit=0 seconds=3
+### 01 $ deploy/scripts/init-secrets.sh --dir /tmp/claude-0/-home-user-My-owns/f7dd9c0b-2b3c-52aa-bca7-45299008f27d/scratchpad/dg7/secrets
+created pg_superuser_password
+created mth_owner_db_password
+created mth_app_db_password
+created oidc_client_secret
+created test_idp_user_password
+created test_idp_admin_password
+derived database_url, database_owner_url
+created test-idp-ca.pem, test-idp.crt, test-idp.key (TEST IdP only; CA key discarded)
+wrote deploy/compose/.env (MTH_SECRETS_DIR only)
+secrets directory: /tmp/claude-0/-home-user-My-owns/f7dd9c0b-2b3c-52aa-bca7-45299008f27d/scratchpad/dg7/secrets
+### 01 exit=0 seconds=2
+### 02 $ docker compose -f deploy/compose/compose.yaml --profile test-idp pull
+ Image mth-app:local Skipped 
+ Image mth-app:local Skipped 
+ Image mth-app:local Skipped 
+ Image quay.io/keycloak/keycloak:26.8.1@sha256:a78d6b79572168cb25886b80a8b5b8d4ed4390743e3eecb810538683e209dd6b Pulling 
+ Image postgres:18@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722 Pulling 
+ 573f8c6c6f89 Pulling fs layer 0B
+ de1e8a46402a Pulling fs layer 0B
+ 25582d7c77aa Pulling fs layer 0B
+ b069ba8c51be Pulling fs layer 0B
+ 3b0757c8de7f Pulling fs layer 0B
+ 7ee6b8b2d259 Pulling fs layer 0B
+ 6b37362b3da7 Pulling fs layer 0B
+ 580a6c126420 Pulling fs layer 0B
+ 646f8088ba62 Pulling fs layer 0B
+ 41837be3e54d Pulling fs layer 0B
+ 0e422c951642 Pulling fs layer 0B
+ bba753ffc208 Pulling fs layer 0B
+ dc5a76842a4c Pulling fs layer 0B
+ 5696a7190adf Pulling fs layer 0B
+ 61c7e2f79e69 Pulling fs layer 0B
+ 4640014a8e88 Pulling fs layer 0B
+ 21e9cf2c46c2 Pulling fs layer 0B
+ 44136fa355b3 Download complete 0B
+ 203f69f0ce26 Download complete 0B
+ 05d71ffe696f Download complete 0B
+ 21e9cf2c46c2 Download complete 0B
+ 861221eab2eb Download complete 0B
+ 580a6c126420 Download complete 0B
+ 7ee6b8b2d259 Download complete 0B
+ 3b0757c8de7f Download complete 0B
+ 6b37362b3da7 Downloading 1.049MB
+ 6b37362b3da7 Downloading 15.73MB
+ b069ba8c51be Downloading 4.194MB
+ b069ba8c51be Downloading 12.58MB
+ 6b37362b3da7 Downloading 29.83MB
+ 573f8c6c6f89 Download complete 0B
+ b069ba8c51be Downloading 26.21MB
+ 6b37362b3da7 Download complete 0B
+ bba753ffc208 Downloading 1.049MB
+ 6b37362b3da7 Extracting 1B
+ bba753ffc208 Downloading 18.87MB
+ b069ba8c51be Downloading 33.55MB
+ 646f8088ba62 Download complete 0B
+ 6b37362b3da7 Extracting 1B
+ bba753ffc208 Downloading 32.51MB
+ b069ba8c51be Downloading 45.09MB
+ 6b37362b3da7 Extracting 1B
+ bba753ffc208 Downloading 45.09MB
+ b069ba8c51be Downloading 56.62MB
+ 6b37362b3da7 Extracting 1B
+ b069ba8c51be Downloading 65.01MB
+ de1e8a46402a Downloading 2.097MB
+ bba753ffc208 Downloading 60.82MB
+ 6b37362b3da7 Extracting 1B
+ bba753ffc208 Downloading 72.35MB
+ de1e8a46402a Downloading 5.243MB
+ b069ba8c51be Downloading 75.5MB
+ 6b37362b3da7 Extracting 1B
+ de1e8a46402a Downloading 7.34MB
+ b069ba8c51be Downloading 88.08MB
+ bba753ffc208 Downloading 85.98MB
+ 6b37362b3da7 Extracting 1B
+ de1e8a46402a Downloading 17.83MB
+ b069ba8c51be Downloading 99.61MB
+ bba753ffc208 Downloading 94.37MB
+ 6b37362b3da7 Extracting 1B
+ bba753ffc208 Downloading 101.7MB
+ de1e8a46402a Downloading 26.21MB
+ b069ba8c51be Downloading 108MB
+ 6b37362b3da7 Extracting 1B
+ de1e8a46402a Downloading 34.6MB
+ b069ba8c51be Downloading 115.3MB
+ bba753ffc208 Downloading 111.1MB
+ 6b37362b3da7 Extracting 1B
+ de1e8a46402a Downloading 47.19MB
+ b069ba8c51be Downloading 129MB
+ bba753ffc208 Downloading 115.4MB
+ 6b37362b3da7 Extracting 1B
+ de1e8a46402a Downloading 59.77MB
+ b069ba8c51be Downloading 137.4MB
+ bba753ffc208 Download complete 0B
+ 0e422c951642 Downloading 19.42kB
+ 6b37362b3da7 Pull complete 0B
+ b069ba8c51be Downloading 151MB
+ de1e8a46402a Downloading 73.4MB
+ 0e422c951642 Download complete 0B
+ 41837be3e54d Download complete 0B
+ 646f8088ba62 Pull complete 0B
+ de1e8a46402a Downloading 84.29MB
+ b069ba8c51be Downloading 165.7MB
+ de1e8a46402a Download complete 0B
+ 25582d7c77aa Downloading 6.291MB
+ b069ba8c51be Downloading 173.8MB
+ 25582d7c77aa Downloading 7.257MB
+ b069ba8c51be Downloading 173.8MB
+ 4640014a8e88 Downloading 1.049MB
+ 25582d7c77aa Download complete 0B
+ dc5a76842a4c Download complete 0B
+ b069ba8c51be Download complete 0B
+ 5696a7190adf Download complete 0B
+ 25582d7c77aa Extracting 1B
+ 61c7e2f79e69 Download complete 0B
+ 4640014a8e88 Download complete 0B
+ 25582d7c77aa Extracting 1B
+ 61c7e2f79e69 Extracting 1B
+ de1e8a46402a Extracting 1B
+ 25582d7c77aa Pull complete 0B
+ 61c7e2f79e69 Extracting 1B
+ 21e9cf2c46c2 Extracting 1B
+ de1e8a46402a Extracting 1B
+ 61c7e2f79e69 Pull complete 0B
+ 4640014a8e88 Pull complete 0B
+ 21e9cf2c46c2 Extracting 1B
+ de1e8a46402a Extracting 1B
+ 21e9cf2c46c2 Pull complete 0B
+ de1e8a46402a Extracting 1B
+ de1e8a46402a Extracting 1B
+ 580a6c126420 Pull complete 0B
+ 7ee6b8b2d259 Pull complete 0B
+ bba753ffc208 Extracting 1B
+ 41837be3e54d Pull complete 0B
+ de1e8a46402a Extracting 1B
+ bba753ffc208 Extracting 1B
+ bba753ffc208 Extracting 1B
+ de1e8a46402a Extracting 1B
+ bba753ffc208 Extracting 1B
+ de1e8a46402a Extracting 1B
+ de1e8a46402a Extracting 1B
+ bba753ffc208 Extracting 1B
+ bba753ffc208 Extracting 1B
+ de1e8a46402a Extracting 1B
+ de1e8a46402a Extracting 2B
+ bba753ffc208 Extracting 1B
+ de1e8a46402a Extracting 2B
+ bba753ffc208 Extracting 1B
+ de1e8a46402a Extracting 2B
+ bba753ffc208 Extracting 1B
+ bba753ffc208 Extracting 1B
+ de1e8a46402a Extracting 2B
+ de1e8a46402a Extracting 2B
+ bba753ffc208 Extracting 1B
+ de1e8a46402a Extracting 2B
+ bba753ffc208 Extracting 2B
+ bba753ffc208 Extracting 2B
+ de1e8a46402a Extracting 2B
+ bba753ffc208 Extracting 2B
+ de1e8a46402a Extracting 2B
+ de1e8a46402a Extracting 2B
+ bba753ffc208 Extracting 2B
+ bba753ffc208 Extracting 2B
+ de1e8a46402a Extracting 2B
+ bba753ffc208 Extracting 2B
+ de1e8a46402a Pull complete 0B
+ b069ba8c51be Extracting 1B
+ bba753ffc208 Extracting 2B
+ b069ba8c51be Extracting 1B
+ bba753ffc208 Extracting 2B
+ b069ba8c51be Extracting 1B
+ b069ba8c51be Extracting 1B
+ bba753ffc208 Extracting 2B
+ bba753ffc208 Extracting 2B
+ b069ba8c51be Extracting 1B
+ bba753ffc208 Extracting 3B
+ b069ba8c51be Extracting 1B
+ bba753ffc208 Extracting 3B
+ b069ba8c51be Extracting 1B
+ b069ba8c51be Extracting 1B
+ bba753ffc208 Extracting 3B
+ bba753ffc208 Pull complete 0B
+ b069ba8c51be Extracting 1B
+ 0e422c951642 Pull complete 0B
+ dc5a76842a4c Pull complete 0B
+ 3b0757c8de7f Pull complete 0B
+ 5696a7190adf Pull complete 0B
+ Image postgres:18@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722 Pulled 
+ b069ba8c51be Extracting 1B
+ b069ba8c51be Extracting 1B
+ b069ba8c51be Extracting 2B
+ 573f8c6c6f89 Pull complete 0B
+ b069ba8c51be Pull complete 0B
+ Image quay.io/keycloak/keycloak:26.8.1@sha256:a78d6b79572168cb25886b80a8b5b8d4ed4390743e3eecb810538683e209dd6b Pulled 
+### 02 exit=0 seconds=8
+### 03 $ deploy/scripts/build-image.sh --tag mth-app:local
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 5.20kB done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/node:24-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
+#2 DONE 0.6s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 1.15kB done
+#3 DONE 0.0s
+
+#4 [build  1/14] FROM docker.io/library/node:24-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
+#4 resolve docker.io/library/node:24-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6 0.0s done
+#4 DONE 0.1s
+
+#5 [internal] load build context
+#5 transferring context: 46.06MB 0.8s done
+#5 DONE 0.8s
+
+#4 [build  1/14] FROM docker.io/library/node:24-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
+#4 sha256:a0498254f698ab1b2c7d0d1ce51ebdea22c1f01e620433118a5c764fab93a3dc 445B / 445B 0.1s done
+#4 sha256:2a11efab31915186066efa212f7ba10e7ff63c5d49d21d07c4a8377a2993e70b 1.71MB / 1.71MB 0.2s done
+#4 sha256:1c473ca5523b8180b93f87dd2961339837b4d84db4d4998197a64984462b5164 35.65MB / 50.86MB 0.6s
+#4 sha256:eab09f3e3981ba4ceab089988dd081db334f2221594d7873f6b9e123f32d2105 3.31kB / 3.31kB 0.3s done
+#4 sha256:774043ccc8ccd0d0833a9ee0792142ab7ad93df971e59dd248fbf82db16d0150 28.24MB / 28.24MB 0.7s done
+#4 sha256:1c473ca5523b8180b93f87dd2961339837b4d84db4d4998197a64984462b5164 50.86MB / 50.86MB 0.8s done
+#4 extracting sha256:774043ccc8ccd0d0833a9ee0792142ab7ad93df971e59dd248fbf82db16d0150
+#4 extracting sha256:774043ccc8ccd0d0833a9ee0792142ab7ad93df971e59dd248fbf82db16d0150 0.8s done
+#4 DONE 1.6s
+
+#4 [build  1/14] FROM docker.io/library/node:24-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
+#4 extracting sha256:eab09f3e3981ba4ceab089988dd081db334f2221594d7873f6b9e123f32d2105 0.0s done
+#4 extracting sha256:1c473ca5523b8180b93f87dd2961339837b4d84db4d4998197a64984462b5164
+#4 extracting sha256:1c473ca5523b8180b93f87dd2961339837b4d84db4d4998197a64984462b5164 1.3s done
+#4 DONE 2.9s
+
+#4 [build  1/14] FROM docker.io/library/node:24-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
+#4 extracting sha256:2a11efab31915186066efa212f7ba10e7ff63c5d49d21d07c4a8377a2993e70b 0.0s done
+#4 extracting sha256:a0498254f698ab1b2c7d0d1ce51ebdea22c1f01e620433118a5c764fab93a3dc done
+#4 DONE 2.9s
+
+#6 [runtime 2/7] RUN set -eu;     rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack /opt/yarn-*;     rm -f /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack /usr/local/bin/yarn /usr/local/bin/yarnpkg;     groupadd --system --gid 10001 mth;     useradd --system --uid 10001 --gid mth --home-dir /nonexistent --no-create-home --shell /usr/sbin/nologin mth;     mkdir -p /var/lib/mth/evidence;     chown mth:mth /var/lib/mth/evidence;     chmod 0700 /var/lib/mth/evidence
+#6 ...
+
+#7 [build  2/14] WORKDIR /src
+#7 DONE 2.0s
+
+#8 [build  3/14] COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
+#8 DONE 0.1s
+
+#9 [build  4/14] COPY apps/api/package.json apps/api/package.json
+#9 DONE 0.0s
+
+#6 [runtime 2/7] RUN set -eu;     rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack /opt/yarn-*;     rm -f /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack /usr/local/bin/yarn /usr/local/bin/yarnpkg;     groupadd --system --gid 10001 mth;     useradd --system --uid 10001 --gid mth --home-dir /nonexistent --no-create-home --shell /usr/sbin/nologin mth;     mkdir -p /var/lib/mth/evidence;     chown mth:mth /var/lib/mth/evidence;     chmod 0700 /var/lib/mth/evidence
+#6 ...
+
+#10 [build  5/14] COPY apps/worker/package.json apps/worker/package.json
+#10 DONE 0.0s
+
+#11 [build  6/14] COPY apps/web/package.json apps/web/package.json
+#11 DONE 0.0s
+
+#12 [build  7/14] COPY packages/config/package.json packages/config/package.json
+#12 DONE 0.0s
+
+#13 [build  8/14] COPY packages/db/package.json packages/db/package.json
+#13 DONE 0.0s
+
+#14 [build  9/14] COPY packages/design-tokens/package.json packages/design-tokens/package.json
+#14 DONE 0.0s
+
+#15 [build 10/14] COPY packages/shared/package.json packages/shared/package.json
+#15 DONE 0.0s
+
+#6 [runtime 2/7] RUN set -eu;     rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack /opt/yarn-*;     rm -f /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack /usr/local/bin/yarn /usr/local/bin/yarnpkg;     groupadd --system --gid 10001 mth;     useradd --system --uid 10001 --gid mth --home-dir /nonexistent --no-create-home --shell /usr/sbin/nologin mth;     mkdir -p /var/lib/mth/evidence;     chown mth:mth /var/lib/mth/evidence;     chmod 0700 /var/lib/mth/evidence
+#6 2.397 useradd warning: mth's uid 10001 is greater than SYS_UID_MAX 999
+#6 DONE 2.4s
+
+#16 [build 11/14] RUN --mount=type=secret,id=build_ca,required=false     set -eu;     if [ -s /run/secrets/build_ca ]; then export NODE_EXTRA_CA_CERTS=/run/secrets/build_ca; fi;     if [ -n "" ]; then export npm_config_registry="" COREPACK_NPM_REGISTRY=""; fi;     corepack enable --install-directory /pnpm;     pnpm --version;     pnpm install --frozen-lockfile
+#16 0.262 Internal Error: ENOENT: no such file or directory, lstat '/pnpm'
+#16 0.262     at Object.realpathSync (node:fs:2862:29)
+#16 0.262     at EnableCommand.execute (/usr/local/lib/node_modules/corepack/dist/lib/corepack.cjs:14289:43)
+#16 0.262     at EnableCommand.validateAndExecute (/usr/local/lib/node_modules/corepack/dist/lib/corepack.cjs:1352:37)
+#16 0.262     at /usr/local/lib/node_modules/corepack/dist/lib/corepack.cjs:2462:51
+#16 0.262     at noopCaptureActivator (/usr/local/lib/node_modules/corepack/dist/lib/corepack.cjs:2687:14)
+#16 0.262     at _Cli.run (/usr/local/lib/node_modules/corepack/dist/lib/corepack.cjs:2462:28)
+#16 0.262     at Object.runMain (/usr/local/lib/node_modules/corepack/dist/lib/corepack.cjs:14832:29)
+#16 0.262     at Object.<anonymous> (/usr/local/lib/node_modules/corepack/dist/corepack.js:4:31)
+#16 0.262     at Module._compile (node:internal/modules/cjs/loader:1929:14)
+#16 0.262     at Object..js (node:internal/modules/cjs/loader:2060:10)
+#16 ERROR: process "/bin/sh -c set -eu;     if [ -s /run/secrets/build_ca ]; then export NODE_EXTRA_CA_CERTS=/run/secrets/build_ca; fi;     if [ -n \"$NPM_REGISTRY\" ]; then export npm_config_registry=\"$NPM_REGISTRY\" COREPACK_NPM_REGISTRY=\"$NPM_REGISTRY\"; fi;     corepack enable --install-directory /pnpm;     pnpm --version;     pnpm install --frozen-lockfile" did not complete successfully: exit code: 1
+------
+ > [build 11/14] RUN --mount=type=secret,id=build_ca,required=false     set -eu;     if [ -s /run/secrets/build_ca ]; then export NODE_EXTRA_CA_CERTS=/run/secrets/build_ca; fi;     if [ -n "" ]; then export npm_config_registry="" COREPACK_NPM_REGISTRY=""; fi;     corepack enable --install-directory /pnpm;     pnpm --version;     pnpm install --frozen-lockfile:
+0.262     at Object.realpathSync (node:fs:2862:29)
+0.262     at EnableCommand.execute (/usr/local/lib/node_modules/corepack/dist/lib/corepack.cjs:14289:43)
+0.262     at EnableCommand.validateAndExecute (/usr/local/lib/node_modules/corepack/dist/lib/corepack.cjs:1352:37)
+0.262     at /usr/local/lib/node_modules/corepack/dist/lib/corepack.cjs:2462:51
+0.262     at noopCaptureActivator (/usr/local/lib/node_modules/corepack/dist/lib/corepack.cjs:2687:14)
+0.262     at _Cli.run (/usr/local/lib/node_modules/corepack/dist/lib/corepack.cjs:2462:28)
+0.262     at Object.runMain (/usr/local/lib/node_modules/corepack/dist/lib/corepack.cjs:14832:29)
+0.262     at Object.<anonymous> (/usr/local/lib/node_modules/corepack/dist/corepack.js:4:31)
+0.262     at Module._compile (node:internal/modules/cjs/loader:1929:14)
+0.262     at Object..js (node:internal/modules/cjs/loader:2060:10)
+------
+
+ [33m1 warning found (use docker --debug to expand):
+[0m - SecretsUsedInArgOrEnv: Do not use ARG or ENV instructions for sensitive data (ENV "AUTH_MODE") (line 78)
+Dockerfile:44
+--------------------
+  43 |     COPY packages/shared/package.json packages/shared/package.json
+  44 | >>> RUN --mount=type=secret,id=build_ca,required=false \
+  45 | >>>     set -eu; \
+  46 | >>>     if [ -s /run/secrets/build_ca ]; then export NODE_EXTRA_CA_CERTS=/run/secrets/build_ca; fi; \
+  47 | >>>     if [ -n "$NPM_REGISTRY" ]; then export npm_config_registry="$NPM_REGISTRY" COREPACK_NPM_REGISTRY="$NPM_REGISTRY"; fi; \
+  48 | >>>     corepack enable --install-directory /pnpm; \
+  49 | >>>     pnpm --version; \
+  50 | >>>     pnpm install --frozen-lockfile
+  51 |     
+--------------------
+ERROR: failed to build: failed to solve: process "/bin/sh -c set -eu;     if [ -s /run/secrets/build_ca ]; then export NODE_EXTRA_CA_CERTS=/run/secrets/build_ca; fi;     if [ -n \"$NPM_REGISTRY\" ]; then export npm_config_registry=\"$NPM_REGISTRY\" COREPACK_NPM_REGISTRY=\"$NPM_REGISTRY\"; fi;     corepack enable --install-directory /pnpm;     pnpm --version;     pnpm install --frozen-lockfile" did not complete successfully: exit code: 1
+### 03 exit=1 seconds=6
+### 04 $ deploy/scripts/image-bundle.sh save --out /tmp/claude-0/-home-user-My-owns/f7dd9c0b-2b3c-52aa-bca7-45299008f27d/scratchpad/dg7/bundle --app-image mth-app:local && sha256sum /tmp/claude-0/-home-user-My-owns/f7dd9c0b-2b3c-52aa-bca7-45299008f27d/scratchpad/dg7/bundle/images.tar && cat /tmp/claude-0/-home-user-My-owns/f7dd9c0b-2b3c-52aa-bca7-45299008f27d/scratchpad/dg7/bundle/images.json
+image-bundle: excluded node-runtime: not run by any Compose file (usedIn: deploy/docker/Dockerfile)
+image-bundle: excluded playwright: not run by any Compose file (usedIn: .github/workflows/ci.yml)
+image-bundle: postgres:18@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722: image id sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722
+image-bundle: quay.io/keycloak/keycloak:26.8.1@sha256:a78d6b79572168cb25886b80a8b5b8d4ed4390743e3eecb810538683e209dd6b: image id sha256:a78d6b79572168cb25886b80a8b5b8d4ed4390743e3eecb810538683e209dd6b
+image-bundle: BLOCKED: mth-app:local is not present locally; this script never pulls (pull or build it on the connected host first)
+### 04 exit=2 seconds=1
+### 05 $ node -e 'for (const i of require(process.argv[1]).images) console.log(i.name)' /tmp/claude-0/-home-user-My-owns/f7dd9c0b-2b3c-52aa-bca7-45299008f27d/scratchpad/dg7/bundle/images.json | xargs -r docker image rm -f; docker image ls
+node:internal/modules/cjs/loader:1568
+  throw err;
+  ^
+
+Error: Cannot find module '/tmp/claude-0/-home-user-My-owns/f7dd9c0b-2b3c-52aa-bca7-45299008f27d/scratchpad/dg7/bundle/images.json'
+Require stack:
+- /home/user/My-owns/[eval]
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1564:15)
+    at wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)
+    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1142:10)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)
+    at Module._load (node:internal/modules/cjs/loader:1341:5)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.require (node:internal/modules/cjs/loader:1674:12)
+    at require (node:internal/modules/helpers:157:16)
+    at [eval]:1:17
+    at runScriptInThisContext (node:internal/vm:219:10) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [ '/home/user/My-owns/[eval]' ]
+}
+
+Node.js v24.21.0
+IMAGE                                                                                               ID             DISK USAGE   CONTENT SIZE   EXTRA
+postgres@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722                    5a5a84b19854        650MB          169MB        
+quay.io/keycloak/keycloak@sha256:a78d6b79572168cb25886b80a8b5b8d4ed4390743e3eecb810538683e209dd6b   a78d6b795721        751MB          265MB        
+### 05 exit=0 seconds=0
+### 06 $ deploy/scripts/image-bundle.sh load --from /tmp/claude-0/-home-user-My-owns/f7dd9c0b-2b3c-52aa-bca7-45299008f27d/scratchpad/dg7/bundle && deploy/scripts/image-bundle.sh verify --from /tmp/claude-0/-home-user-My-owns/f7dd9c0b-2b3c-52aa-bca7-45299008f27d/scratchpad/dg7/bundle
+image-bundle: BLOCKED: /tmp/claude-0/-home-user-My-owns/f7dd9c0b-2b3c-52aa-bca7-45299008f27d/scratchpad/dg7/bundle/images.json not found
+### 06 exit=2 seconds=0
+### 07 $ docker compose -p mth-dg7-1794675852 -f deploy/compose/compose.yaml up -d --pull never --wait && docker compose -p mth-dg7-1794675852 -f deploy/compose/compose.yaml ps && curl -sS -i http://127.0.0.1:3000/readyz
+ Network mth-dg7-1794675852_default Creating 
+ Network mth-dg7-1794675852_default Creating 
+ Volume mth-dg7-1794675852_pgdata Creating 
+ Volume mth-dg7-1794675852_pgdata Creating 
+ Volume mth-dg7-1794675852_evidence Creating 
+ Volume mth-dg7-1794675852_evidence Creating 
+ Volume mth-dg7-1794675852_pgdata Created 
+ Volume mth-dg7-1794675852_pgdata Created 
+ Volume mth-dg7-1794675852_evidence Created 
+ Volume mth-dg7-1794675852_evidence Created 
+ Network mth-dg7-1794675852_default Created 
+ Network mth-dg7-1794675852_default Created 
+ Container mth-dg7-1794675852-db-1 Creating 
+ Container mth-dg7-1794675852-db-1 Created 
+ Container mth-dg7-1794675852-migrate-1 Creating 
+ service:migrate:1 Error response from daemon: No such image: mth-app:local 
+ Container mth-dg7-1794675852-worker-1 Creating 
+ Container mth-dg7-1794675852-api-1 Creating 
+Error response from daemon: No such image: mth-app:local
+### 07 exit=1 seconds=0
+### 08 $ docker compose -p mth-dg7-1794675852 -f deploy/compose/compose.yaml down -v
+ Container mth-dg7-1794675852-db-1 Stopping 
+ Container mth-dg7-1794675852-db-1 Stopped 
+ Container mth-dg7-1794675852-db-1 Removing 
+ Container mth-dg7-1794675852-db-1 Removed 
+ Volume mth-dg7-1794675852_pgdata Removing 
+ Network mth-dg7-1794675852_default Removing 
+ Volume mth-dg7-1794675852_evidence Removing 
+ Volume mth-dg7-1794675852_pgdata Removed 
+ Volume mth-dg7-1794675852_evidence Removed 
+ Network mth-dg7-1794675852_default Removed 
+### 08 exit=0 seconds=0
+### 09 $ docker compose -p mth-dg7-1794675852-ne -f deploy/compose/compose.yaml -f deploy/compose/compose.no-egress.yaml --profile test-idp up -d --pull never --wait && docker compose -p mth-dg7-1794675852-ne -f deploy/compose/compose.yaml -f deploy/compose/compose.no-egress.yaml --profile test-idp ps
+ Network mth-dg7-1794675852-ne_default Creating 
+ Network mth-dg7-1794675852-ne_default Creating 
+ Volume mth-dg7-1794675852-ne_evidence Creating 
+ Volume mth-dg7-1794675852-ne_evidence Creating 
+ Volume mth-dg7-1794675852-ne_pgdata Creating 
+ Volume mth-dg7-1794675852-ne_pgdata Creating 
+ Volume mth-dg7-1794675852-ne_pgdata Created 
+ Volume mth-dg7-1794675852-ne_pgdata Created 
+ Volume mth-dg7-1794675852-ne_evidence Created 
+ Volume mth-dg7-1794675852-ne_evidence Created 
+ Network mth-dg7-1794675852-ne_default Created 
+ Network mth-dg7-1794675852-ne_default Created 
+ Container mth-dg7-1794675852-ne-keycloak-1 Creating 
+ Container mth-dg7-1794675852-ne-db-1 Creating 
+ Container mth-dg7-1794675852-ne-keycloak-1 Created 
+ Container mth-dg7-1794675852-ne-db-1 Created 
+ Container mth-dg7-1794675852-ne-migrate-1 Creating 
+ service:migrate:1 Error response from daemon: No such image: mth-app:local 
+ Container mth-dg7-1794675852-ne-worker-1 Creating 
+ Container mth-dg7-1794675852-ne-api-1 Creating 
+Error response from daemon: No such image: mth-app:local
+### 09 exit=1 seconds=1
+### 10 $ docker compose -p mth-dg7-1794675852-ne -f deploy/compose/compose.yaml -f deploy/compose/compose.no-egress.yaml run --rm -T migrate db bootstrap --org-code MTH-E2E --org-name-en 'E2E org (synthetic)' --org-name-ar 'مؤسسة الاختبار (اصطناعية)' --admin-name 'Synthetic Access Admin' --admin-email smoke.admin@example.invalid --admin-issuer https://keycloak:8443/realms/mth-test --admin-subject 5f0c7a52-1d1e-4c9a-9a51-6a0d0e5a0001
+ Container mth-dg7-1794675852-ne-db-1 Starting 
+ Container mth-dg7-1794675852-ne-db-1 Started 
+ Container mth-dg7-1794675852-ne-db-1 Waiting 
+ Container mth-dg7-1794675852-ne-db-1 Healthy 
+ Container mth-dg7-1794675852-ne-migrate-run-579b4b921173 Creating 
+ Container mth-dg7-1794675852-ne-migrate-run-579b4b921173 Error response from daemon: No such image: mth-app:local 
+Error response from daemon: No such image: mth-app:local
+### 10 exit=1 seconds=5
+### 11 $ MTH_E2E_KEYCLOAK=1 MTH_E2E_KEYCLOAK_PASSWORD_FILE=/tmp/claude-0/-home-user-My-owns/f7dd9c0b-2b3c-52aa-bca7-45299008f27d/scratchpad/dg7/secrets/test_idp_user_password E2E_BASE_URL=http://localhost:3000 pnpm exec playwright test e2e/identity/keycloak-login.spec.ts --workers=1 --trace off
+
+Running 4 tests using 1 worker
+
+  ✘  1 [chromium-en] › e2e/identity/keycloak-login.spec.ts:41:3 › REQ-S16-007: Keycloak test realm sign-in; another realm is refused › signs in through realm mth-test and gets a session (1.6s)
+  ✘  2 [chromium-en] › e2e/identity/keycloak-login.spec.ts:61:3 › REQ-S16-007: Keycloak test realm sign-in; another realm is refused › refuses the authorization response and token of realm mth-other: token_invalid, no session (209ms)
+  ✘  3 [chromium-ar] › e2e/identity/keycloak-login.spec.ts:41:3 › REQ-S16-007: Keycloak test realm sign-in; another realm is refused › signs in through realm mth-test and gets a session (197ms)
+  ✘  4 [chromium-ar] › e2e/identity/keycloak-login.spec.ts:61:3 › REQ-S16-007: Keycloak test realm sign-in; another realm is refused › refuses the authorization response and token of realm mth-other: token_invalid, no session (202ms)
+
+
+  1) [chromium-en] › e2e/identity/keycloak-login.spec.ts:41:3 › REQ-S16-007: Keycloak test realm sign-in; another realm is refused › signs in through realm mth-test and gets a session 
+
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/login
+    Call log:
+    [2m  - navigating to "http://localhost:3000/login", waiting until "load"[22m
+
+
+      48 |     if (!cfg.enabled) return;
+      49 |     const lang = langOf(info);
+    > 50 |     await page.goto("/login");
+         |                ^
+      51 |     await ensureLanguage(page, lang);
+      52 |     await page.getByRole("link", { name: tr(lang, "auth.oidcButton"), exact: true }).click();
+      53 |     await page.waitForURL((u) => u.origin === cfg.idpOrigin.origin && u.pathname.startsWith(realmPath(HUB_REALM)));
+        at /home/user/My-owns/e2e/identity/keycloak-login.spec.ts:50:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-identity-keycloak-logi-50293-mth-test-and-gets-a-session-chromium-en/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium-en] › e2e/identity/keycloak-login.spec.ts:61:3 › REQ-S16-007: Keycloak test realm sign-in; another realm is refused › refuses the authorization response and token of realm mth-other: token_invalid, no session 
+
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/login
+    Call log:
+    [2m  - navigating to "http://localhost:3000/login", waiting until "load"[22m
+
+
+      71 |     });
+      72 |
+    > 73 |     await page.goto("/login");
+         |                ^
+      74 |     await ensureLanguage(page, lang);
+      75 |     await page.getByRole("link", { name: tr(lang, "auth.oidcButton"), exact: true }).click();
+      76 |     // The hub's own authorization request, as it reached realm mth-test (the browser now holds the hub's login cookie).
+        at /home/user/My-owns/e2e/identity/keycloak-login.spec.ts:73:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-identity-keycloak-logi-d22df-er-token-invalid-no-session-chromium-en/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) [chromium-ar] › e2e/identity/keycloak-login.spec.ts:41:3 › REQ-S16-007: Keycloak test realm sign-in; another realm is refused › signs in through realm mth-test and gets a session 
+
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/login
+    Call log:
+    [2m  - navigating to "http://localhost:3000/login", waiting until "load"[22m
+
+
+      48 |     if (!cfg.enabled) return;
+      49 |     const lang = langOf(info);
+    > 50 |     await page.goto("/login");
+         |                ^
+      51 |     await ensureLanguage(page, lang);
+      52 |     await page.getByRole("link", { name: tr(lang, "auth.oidcButton"), exact: true }).click();
+      53 |     await page.waitForURL((u) => u.origin === cfg.idpOrigin.origin && u.pathname.startsWith(realmPath(HUB_REALM)));
+        at /home/user/My-owns/e2e/identity/keycloak-login.spec.ts:50:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-identity-keycloak-logi-50293-mth-test-and-gets-a-session-chromium-ar/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4) [chromium-ar] › e2e/identity/keycloak-login.spec.ts:61:3 › REQ-S16-007: Keycloak test realm sign-in; another realm is refused › refuses the authorization response and token of realm mth-other: token_invalid, no session 
+
+    Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:3000/login
+    Call log:
+    [2m  - navigating to "http://localhost:3000/login", waiting until "load"[22m
+
+
+      71 |     });
+      72 |
+    > 73 |     await page.goto("/login");
+         |                ^
+      74 |     await ensureLanguage(page, lang);
+      75 |     await page.getByRole("link", { name: tr(lang, "auth.oidcButton"), exact: true }).click();
+      76 |     // The hub's own authorization request, as it reached realm mth-test (the browser now holds the hub's login cookie).
+        at /home/user/My-owns/e2e/identity/keycloak-login.spec.ts:73:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/e2e-identity-keycloak-logi-d22df-er-token-invalid-no-session-chromium-ar/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4 failed
+    [chromium-en] › e2e/identity/keycloak-login.spec.ts:41:3 › REQ-S16-007: Keycloak test realm sign-in; another realm is refused › signs in through realm mth-test and gets a session 
+    [chromium-en] › e2e/identity/keycloak-login.spec.ts:61:3 › REQ-S16-007: Keycloak test realm sign-in; another realm is refused › refuses the authorization response and token of realm mth-other: token_invalid, no session 
+    [chromium-ar] › e2e/identity/keycloak-login.spec.ts:41:3 › REQ-S16-007: Keycloak test realm sign-in; another realm is refused › signs in through realm mth-test and gets a session 
+    [chromium-ar] › e2e/identity/keycloak-login.spec.ts:61:3 › REQ-S16-007: Keycloak test realm sign-in; another realm is refused › refuses the authorization response and token of realm mth-other: token_invalid, no session 
+
+To open last HTML report run:
+[36m[39m
+[36m  pnpm exec playwright show-report[39m
+[36m[39m
+### 11 exit=1 seconds=22
+### 12 $ docker compose -p mth-dg7-1794675852-ne -f deploy/compose/compose.yaml -f deploy/compose/compose.no-egress.yaml --profile test-idp logs --no-color > docs/delivery/test-evidence/DG7/orchestrator/host/no-egress-stack.log 2>&1; docker compose -p mth-dg7-1794675852-ne -f deploy/compose/compose.yaml -f deploy/compose/compose.no-egress.yaml --profile test-idp down -v
+ Container mth-dg7-1794675852-ne-keycloak-1 Stopping 
+ Container mth-dg7-1794675852-ne-db-1 Stopping 
+ Container mth-dg7-1794675852-ne-keycloak-1 Stopped 
+ Container mth-dg7-1794675852-ne-keycloak-1 Removing 
+ Container mth-dg7-1794675852-ne-keycloak-1 Removed 
+ Container mth-dg7-1794675852-ne-db-1 Stopped 
+ Container mth-dg7-1794675852-ne-db-1 Removing 
+ Container mth-dg7-1794675852-ne-db-1 Removed 
+ Volume mth-dg7-1794675852-ne_pgdata Removing 
+ Network mth-dg7-1794675852-ne_default Removing 
+ Volume mth-dg7-1794675852-ne_evidence Removing 
+ Network mth-dg7-1794675852-ne_default Removed 
+ Volume mth-dg7-1794675852-ne_evidence Removed 
+ Volume mth-dg7-1794675852-ne_pgdata Removed 
+### 12 exit=0 seconds=0
+### DONE

@@ -145,6 +145,8 @@ const SHARED_ALLOWED = new Set([
   "@mth/db",
   // P5 (ADR-0046 §1; T-DG5-BE-M): the dependency-free export-file store only; the renderers stay in the worker.
   "@mth/reporting/storage",
+  // P7 (ADR-0065 §2, §6; p7-work-split §D.1; T-DG7-BE-F): the configuration bundle format and the adapter port.
+  "@mth/shared/transfer",
 ]);
 /**
  * D-055 DEFAULT-DENY allow-list of `node:` built-ins (without the prefix) that module source may import. Seeded from

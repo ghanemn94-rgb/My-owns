@@ -7264,6 +7264,370 @@ export interface Database {
 
 export type AutomationRuleEnablementRow = Selectable<AutomationRuleEnablementTable>;
 
+// ------------------------------------------------------------------------------------------------ P7 slices C and D (0133-0134)
+// The data migration manifest rules, exports, imports, reconciliation reports and the identity rebind hold (ADR-0064),
+// and the configuration transfer bundles (ADR-0065) (T-DG7-ARCH-02). bigint columns are read as decimal strings.
+
+export interface TransferTableRuleTable {
+  table_name: string;
+  rule: string;
+  reason: string;
+  created_at: TimestampDefault;
+}
+
+export interface TransferColumnRuleTable {
+  table_name: string;
+  column_name: string;
+  rule: string;
+  reason: string;
+  created_at: TimestampDefault;
+}
+
+export interface MigrationExportTable {
+  id: string;
+  status: Generated<string>;
+  requested_via: string;
+  schema_version: Generated<string>;
+  source_environment: string | null;
+  migration_level: string | null;
+  table_count: number | null;
+  row_count: string | null;
+  attachment_count: number | null;
+  attachment_bytes: string | null;
+  manifest_sha256: string | null;
+  attachment_manifest_sha256: string | null;
+  demo_checksum: string | null;
+  failure_reason: string | null;
+  started_at: NullableTimestamp;
+  finished_at: NullableTimestamp;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string | null;
+  updated_at: TimestampDefault;
+  updated_by: string | null;
+}
+
+export interface MigrationImportTable {
+  id: string;
+  schema_version: string;
+  source_environment: string;
+  source_export_reference: string;
+  migration_level: string;
+  manifest_sha256: string;
+  attachment_manifest_sha256: string;
+  demo_checksum: string | null;
+  table_count: number;
+  row_count: string;
+  attachment_count: number;
+  attachment_bytes: string;
+  operator_name: string;
+  started_at: Timestamp;
+  imported_at: Timestamp;
+  audit_carried_rows: string | null;
+  audit_carried_seq_max: string | null;
+  audit_baseline_rows: string | null;
+  audit_baseline_seq_min: string | null;
+  audit_baseline_seq_max: string | null;
+  audit_baseline_digest: string | null;
+  seed_rows_replaced: string | null;
+  audit_already_present_rows: string | null;
+}
+
+export interface MigrationReconciliationTable {
+  id: string;
+  migration_import_id: string;
+  run_kind: string;
+  result: string;
+  tables_checked: number;
+  tables_mismatched: number;
+  rows_expected: string;
+  rows_actual: string;
+  attachments_checked: number;
+  attachments_mismatched: number;
+  operator_name: string;
+  run_at: Timestamp;
+}
+
+export interface MigrationReconciliationTableTable {
+  migration_reconciliation_id: string;
+  table_name: string;
+  expected_rows: string;
+  actual_rows: string;
+  expected_digest: string;
+  actual_digest: string;
+  matched: boolean;
+}
+
+export interface MigrationReconciliationDeltaTable {
+  migration_reconciliation_id: string;
+  table_name: string;
+  basis: string;
+  rows_added: string;
+  rows_changed: string;
+  rows_missing: string;
+  allowed: boolean;
+}
+
+export interface MigrationReconciliationAttachmentTable {
+  id: string;
+  migration_reconciliation_id: string;
+  parent_table: string;
+  object_name: string;
+  problem: string;
+  expected_size: string;
+  actual_size: string | null;
+  expected_sha256: string;
+  actual_sha256: string | null;
+}
+
+export interface IdentityBindingHoldTable {
+  id: string;
+  user_id: string;
+  migration_import_id: string;
+  state: Generated<string>;
+  mapping_sha256: string | null;
+  operator_name: string | null;
+  resolved_at: NullableTimestamp;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  updated_at: TimestampDefault;
+}
+
+export interface IdentityRebindEventTable {
+  id: string;
+  identity_binding_hold_id: string;
+  user_id: string;
+  action: string;
+  old_issuer: string;
+  old_subject: string;
+  new_issuer: string;
+  new_subject: string;
+  mapping_sha256: string;
+  operator_name: string;
+  applied_at: Timestamp;
+}
+
+export interface ConfigBundleExportTable {
+  id: string;
+  organization_id: string;
+  bundle_schema_version: string;
+  source_environment: string;
+  kinds: string;
+  item_count: number;
+  byte_size: string;
+  sha256: string;
+  created_at: TimestampDefault;
+  created_by: string;
+}
+
+export interface ConfigBundleImportTable {
+  id: string;
+  organization_id: string;
+  bundle_schema_version: string;
+  source_environment: string;
+  file_name: string;
+  byte_size: string;
+  sha256: string;
+  item_count: number;
+  status: Generated<string>;
+  validation_no: Generated<number>;
+  items_create: number | null;
+  items_new_draft: number | null;
+  items_identical: number | null;
+  items_conflict: number | null;
+  items_refused: number | null;
+  validated_at: NullableTimestamp;
+  validated_by: string | null;
+  committed_at: NullableTimestamp;
+  committed_by: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string;
+  updated_at: TimestampDefault;
+  updated_by: string | null;
+}
+
+export interface ConfigBundleImportItemTable {
+  id: string;
+  config_bundle_import_id: string;
+  validation_no: number;
+  ordinal: number;
+  kind: string;
+  item_code: string;
+  source_version_no: number | null;
+  content_sha256: string;
+  action: string;
+  problem_code: string | null;
+  created_at: TimestampDefault;
+}
+
+export interface ConfigBundleImportCommitTable {
+  config_bundle_import_item_id: string;
+  target_record_type: string;
+  target_record_id: string;
+  created_at: TimestampDefault;
+}
+
+export interface Database {
+  transfer_table_rule: TransferTableRuleTable;
+  transfer_column_rule: TransferColumnRuleTable;
+  migration_export: MigrationExportTable;
+  migration_import: MigrationImportTable;
+  migration_reconciliation: MigrationReconciliationTable;
+  migration_reconciliation_table: MigrationReconciliationTableTable;
+  migration_reconciliation_attachment: MigrationReconciliationAttachmentTable;
+  migration_reconciliation_delta: MigrationReconciliationDeltaTable;
+  identity_binding_hold: IdentityBindingHoldTable;
+  identity_rebind_event: IdentityRebindEventTable;
+  config_bundle_export: ConfigBundleExportTable;
+  config_bundle_import: ConfigBundleImportTable;
+  config_bundle_import_item: ConfigBundleImportItemTable;
+  config_bundle_import_commit: ConfigBundleImportCommitTable;
+}
+
+export type TransferTableRuleRow = Selectable<TransferTableRuleTable>;
+export type TransferColumnRuleRow = Selectable<TransferColumnRuleTable>;
+export type MigrationExportRow = Selectable<MigrationExportTable>;
+export type MigrationImportRow = Selectable<MigrationImportTable>;
+export type MigrationReconciliationRow = Selectable<MigrationReconciliationTable>;
+export type MigrationReconciliationTableRow = Selectable<MigrationReconciliationTableTable>;
+export type MigrationReconciliationAttachmentRow = Selectable<MigrationReconciliationAttachmentTable>;
+export type IdentityBindingHoldRow = Selectable<IdentityBindingHoldTable>;
+export type IdentityRebindEventRow = Selectable<IdentityRebindEventTable>;
+export type ConfigBundleExportRow = Selectable<ConfigBundleExportTable>;
+export type ConfigBundleImportRow = Selectable<ConfigBundleImportTable>;
+export type ConfigBundleImportItemRow = Selectable<ConfigBundleImportItemTable>;
+export type ConfigBundleImportCommitRow = Selectable<ConfigBundleImportCommitTable>;
+
+// ---------------------------------------------------------------------------------------------------------------
+// P7 slice E (0143-0145; T-DG7-ARCH-03, ADR-0066, ADR-0067): the retention class registry and table map, retention runs,
+// their actions, the archived-record markers and the backup sets reported by the backup job.
+
+export interface RetentionClassTable {
+  id: string;
+  code: string;
+  /** 'business' | 'audit' | 'snapshot' | 'system' | 'derived' | 'operational'; only 'operational' may leave 'retain' */
+  category: string;
+  label_en: string;
+  label_ar: string;
+  description_en: string;
+  description_ar: string;
+  managed_by_job: string | null;
+  /** 'retain' (default) | 'archive' | 'archive_then_purge' */
+  action: Generated<string>;
+  /** NULL: "not set (IT to agree)" */
+  period_days: number | null;
+  /** A reference to an approval given outside the platform (for example a change ticket); never an approval itself. */
+  it_approval_reference: string | null;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  updated_at: TimestampDefault;
+  updated_by: string | null;
+}
+
+export interface RetentionTableClassTable {
+  table_name: string;
+  retention_class_id: string;
+  key_columns: string[];
+  age_column: string | null;
+  purge_eligible: Generated<boolean>;
+  created_at: TimestampDefault;
+}
+
+export interface RetentionRunTable {
+  id: string;
+  /** 'dry_run' | 'run' */
+  mode: string;
+  status: Generated<string>;
+  /** 'api' | 'schedule' */
+  requested_via: string;
+  as_of: Timestamp;
+  candidate_count: number | null;
+  archived_count: number | null;
+  purged_count: number | null;
+  skipped_count: number | null;
+  archive_set_key: string | null;
+  archive_set_sha256: string | null;
+  /** bigint as a string */
+  archive_set_bytes: string | null;
+  failure_reason: string | null;
+  started_at: NullableTimestamp;
+  finished_at: NullableTimestamp;
+  version: Generated<number>;
+  created_at: TimestampDefault;
+  created_by: string | null;
+  updated_at: TimestampDefault;
+  updated_by: string | null;
+}
+
+export interface RetentionArchivedRecordTable {
+  table_name: string;
+  /** The primary key columns as a text-valued object (ADR-0067 §5). */
+  record_key: Json;
+  retention_class_id: string;
+  retention_run_id: string;
+  archive_set_key: string;
+  record_age_at: Timestamp;
+  archived_at: TimestampDefault;
+  purged_at: NullableTimestamp;
+  purge_run_id: string | null;
+}
+
+export interface RetentionRunActionTable {
+  id: string;
+  retention_run_id: string;
+  retention_class_id: string;
+  table_name: string;
+  record_key: Json;
+  /** 'would_archive' | 'would_purge' | 'archived' | 'purged' | 'skipped_referenced' */
+  action: string;
+  period_days: number;
+  record_age_at: Timestamp;
+  occurred_at: TimestampDefault;
+}
+
+export interface BackupSetTable {
+  id: string;
+  label: string;
+  /** 'succeeded' | 'failed' */
+  status: string;
+  manifest_schema_version: string;
+  started_at: Timestamp;
+  finished_at: Timestamp;
+  migration_level: string | null;
+  server_major: number | null;
+  dump_format: string | null;
+  /** bigint as a string */
+  dump_bytes: string | null;
+  dump_sha256: string | null;
+  evidence_backend: string | null;
+  evidence_object_count: number | null;
+  /** bigint as a string */
+  evidence_bytes: string | null;
+  attachment_manifest_sha256: string | null;
+  config_bundle_sha256: string | null;
+  manifest_sha256: string | null;
+  failure_reason: string | null;
+  operator_name: string;
+  recorded_at: TimestampDefault;
+}
+
+export interface Database {
+  retention_class: RetentionClassTable;
+  retention_table_class: RetentionTableClassTable;
+  retention_run: RetentionRunTable;
+  retention_archived_record: RetentionArchivedRecordTable;
+  retention_run_action: RetentionRunActionTable;
+  backup_set: BackupSetTable;
+}
+
+export type RetentionClassRow = Selectable<RetentionClassTable>;
+export type RetentionTableClassRow = Selectable<RetentionTableClassTable>;
+export type RetentionRunRow = Selectable<RetentionRunTable>;
+export type RetentionArchivedRecordRow = Selectable<RetentionArchivedRecordTable>;
+export type RetentionRunActionRow = Selectable<RetentionRunActionTable>;
+export type BackupSetRow = Selectable<BackupSetTable>;
+
 /**
  * Runtime column catalogue of `Database`. The compiler forces it to list exactly the interface's columns (both
  * directions, see the assertions below), and the integration test compares it with information_schema, so the
@@ -13303,6 +13667,267 @@ export const SCHEMA_COLUMNS = {
     "created_at",
   ],
   automation_rule_enablement: ["id", "automation_rule_id", "automation_rule_version_id", "enabled_from", "source"],
+  transfer_table_rule: ["table_name", "rule", "reason", "created_at"],
+  transfer_column_rule: ["table_name", "column_name", "rule", "reason", "created_at"],
+  migration_export: [
+    "id",
+    "status",
+    "requested_via",
+    "schema_version",
+    "source_environment",
+    "migration_level",
+    "table_count",
+    "row_count",
+    "attachment_count",
+    "attachment_bytes",
+    "manifest_sha256",
+    "attachment_manifest_sha256",
+    "demo_checksum",
+    "failure_reason",
+    "started_at",
+    "finished_at",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  migration_import: [
+    "id",
+    "schema_version",
+    "source_environment",
+    "source_export_reference",
+    "migration_level",
+    "manifest_sha256",
+    "attachment_manifest_sha256",
+    "demo_checksum",
+    "table_count",
+    "row_count",
+    "attachment_count",
+    "attachment_bytes",
+    "operator_name",
+    "started_at",
+    "imported_at",
+    "audit_carried_rows",
+    "audit_carried_seq_max",
+    "audit_baseline_rows",
+    "audit_baseline_seq_min",
+    "audit_baseline_seq_max",
+    "audit_baseline_digest",
+    "seed_rows_replaced",
+    "audit_already_present_rows",
+  ],
+  migration_reconciliation: [
+    "id",
+    "migration_import_id",
+    "run_kind",
+    "result",
+    "tables_checked",
+    "tables_mismatched",
+    "rows_expected",
+    "rows_actual",
+    "attachments_checked",
+    "attachments_mismatched",
+    "operator_name",
+    "run_at",
+  ],
+  migration_reconciliation_table: [
+    "migration_reconciliation_id",
+    "table_name",
+    "expected_rows",
+    "actual_rows",
+    "expected_digest",
+    "actual_digest",
+    "matched",
+  ],
+  migration_reconciliation_attachment: [
+    "id",
+    "migration_reconciliation_id",
+    "parent_table",
+    "object_name",
+    "problem",
+    "expected_size",
+    "actual_size",
+    "expected_sha256",
+    "actual_sha256",
+  ],
+  migration_reconciliation_delta: [
+    "migration_reconciliation_id",
+    "table_name",
+    "basis",
+    "rows_added",
+    "rows_changed",
+    "rows_missing",
+    "allowed",
+  ],
+  identity_binding_hold: [
+    "id",
+    "user_id",
+    "migration_import_id",
+    "state",
+    "mapping_sha256",
+    "operator_name",
+    "resolved_at",
+    "version",
+    "created_at",
+    "updated_at",
+  ],
+  identity_rebind_event: [
+    "id",
+    "identity_binding_hold_id",
+    "user_id",
+    "action",
+    "old_issuer",
+    "old_subject",
+    "new_issuer",
+    "new_subject",
+    "mapping_sha256",
+    "operator_name",
+    "applied_at",
+  ],
+  config_bundle_export: [
+    "id",
+    "organization_id",
+    "bundle_schema_version",
+    "source_environment",
+    "kinds",
+    "item_count",
+    "byte_size",
+    "sha256",
+    "created_at",
+    "created_by",
+  ],
+  config_bundle_import: [
+    "id",
+    "organization_id",
+    "bundle_schema_version",
+    "source_environment",
+    "file_name",
+    "byte_size",
+    "sha256",
+    "item_count",
+    "status",
+    "validation_no",
+    "items_create",
+    "items_new_draft",
+    "items_identical",
+    "items_conflict",
+    "items_refused",
+    "validated_at",
+    "validated_by",
+    "committed_at",
+    "committed_by",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  config_bundle_import_item: [
+    "id",
+    "config_bundle_import_id",
+    "validation_no",
+    "ordinal",
+    "kind",
+    "item_code",
+    "source_version_no",
+    "content_sha256",
+    "action",
+    "problem_code",
+    "created_at",
+  ],
+  config_bundle_import_commit: ["config_bundle_import_item_id", "target_record_type", "target_record_id", "created_at"],
+  retention_class: [
+    "id",
+    "code",
+    "category",
+    "label_en",
+    "label_ar",
+    "description_en",
+    "description_ar",
+    "managed_by_job",
+    "action",
+    "period_days",
+    "it_approval_reference",
+    "version",
+    "created_at",
+    "updated_at",
+    "updated_by",
+  ],
+  retention_table_class: [
+    "table_name",
+    "retention_class_id",
+    "key_columns",
+    "age_column",
+    "purge_eligible",
+    "created_at",
+  ],
+  retention_run: [
+    "id",
+    "mode",
+    "status",
+    "requested_via",
+    "as_of",
+    "candidate_count",
+    "archived_count",
+    "purged_count",
+    "skipped_count",
+    "archive_set_key",
+    "archive_set_sha256",
+    "archive_set_bytes",
+    "failure_reason",
+    "started_at",
+    "finished_at",
+    "version",
+    "created_at",
+    "created_by",
+    "updated_at",
+    "updated_by",
+  ],
+  retention_archived_record: [
+    "table_name",
+    "record_key",
+    "retention_class_id",
+    "retention_run_id",
+    "archive_set_key",
+    "record_age_at",
+    "archived_at",
+    "purged_at",
+    "purge_run_id",
+  ],
+  retention_run_action: [
+    "id",
+    "retention_run_id",
+    "retention_class_id",
+    "table_name",
+    "record_key",
+    "action",
+    "period_days",
+    "record_age_at",
+    "occurred_at",
+  ],
+  backup_set: [
+    "id",
+    "label",
+    "status",
+    "manifest_schema_version",
+    "started_at",
+    "finished_at",
+    "migration_level",
+    "server_major",
+    "dump_format",
+    "dump_bytes",
+    "dump_sha256",
+    "evidence_backend",
+    "evidence_object_count",
+    "evidence_bytes",
+    "attachment_manifest_sha256",
+    "config_bundle_sha256",
+    "manifest_sha256",
+    "failure_reason",
+    "operator_name",
+    "recorded_at",
+  ],
 } as const satisfies { readonly [T in keyof Database]: readonly (keyof Database[T] & string)[] };
 
 // Compile-time completeness: every interface column is listed (the `satisfies` above covers the other direction).

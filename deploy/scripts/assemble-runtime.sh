@@ -18,6 +18,7 @@
 # Why not `pnpm deploy`: in pnpm 10 its lockfile-faithful mode needs inject-workspace-packages=true, and `--legacy`
 # re-resolves versions without the lockfile (needs the network; not reproducible).
 set -euo pipefail
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 STORE=()
 if [ "${1:-}" = "--store-dir" ]; then STORE=(--store-dir "$2"); shift 2; fi
@@ -107,6 +108,15 @@ cp -a "$WS/apps/web/dist" "$OUT/apps/web/"
 find "$OUT/apps" "$OUT/packages" -path '*/node_modules' -prune -o \
   \( -name '*.test.js' -o -name '*.test.d.ts' -o -name '*.test.js.map' -o -name '*.test.d.ts.map' \) -type f -exec rm -f {} +
 
+# 3b) pnpm install-state metadata (P-2, T-DG7-DO-A2): node_modules/.modules.yaml (records storeDir and the virtual
+#     store path), node_modules/.pnpm-workspace-state-v1.json (records the workspace directory) and the `.bin` shims
+#     (their NODE_PATH lines name the absolute directory the tree was assembled in) carry build-host paths into the
+#     image. Nothing at run time reads them: the image and the clean start run `node <file>` (entrypoint.sh, the
+#     Dockerfile CMD, clean-start-local.sh), the shipped code starts no child process, and Node's resolver follows the
+#     package symlinks, not this metadata. The tree is never `pnpm install`ed again (it is a copy, not a workspace).
+rm -f "$OUT/node_modules/.modules.yaml" "$OUT/node_modules/.pnpm-workspace-state-v1.json"
+find "$OUT" -type d -name .bin -path '*/node_modules/.bin' -prune -exec rm -rf {} +
+
 # 4) layout verification
 for f in apps/api/dist/main.js apps/worker/dist/main.js packages/db/dist/cli.js apps/web/dist/index.html \
          licenses/THIRD-PARTY-NOTICES.md licenses/sbom.cdx.json; do
@@ -114,25 +124,15 @@ for f in apps/api/dist/main.js apps/worker/dist/main.js packages/db/dist/cli.js 
 done
 ls "$OUT"/packages/db/migrations/*.sql >/dev/null
 [ ! -e "$OUT/packages/db/seeds" ] || { echo "layout check failed: dev seeds present" >&2; exit 1; }
+for f in node_modules/.modules.yaml node_modules/.pnpm-workspace-state-v1.json; do
+  [ ! -e "$OUT/$f" ] || { echo "layout check failed: pnpm metadata $f present" >&2; exit 1; }
+done
+[ -z "$(find "$OUT" -type d -name .bin -path '*/node_modules/.bin' -print -quit)" ] \
+  || { echo "layout check failed: node_modules/.bin shims present" >&2; exit 1; }
 # Every package directory in the virtual store must be in the shipped set (scope runtime|bundled) of the inventory.
-node - "$OUT/node_modules/.pnpm" "$WS/licenses/inventory.csv" <<'JS' || { echo "layout check failed: non-shipped packages present" >&2; exit 1; }
-const fs = require("node:fs");
-const [store, csv] = process.argv.slice(2);
-const shipped = new Set(fs.readFileSync(csv, "utf8").trim().split("\n").slice(1)
-  .map((l) => l.split(",")).filter((c) => c[3] === "runtime" || c[3] === "bundled").map((c) => `${c[0]}@${c[1]}`));
-const extra = [];
-let n = 0;
-for (const d of fs.readdirSync(store)) {
-  if (d === "node_modules" || d === "lock.yaml" || !fs.statSync(`${store}/${d}`).isDirectory()) continue;
-  n++;
-  const base = d.replace(/_.*$/, "");
-  const at = base.lastIndexOf("@");
-  const name = base.slice(0, at).replace(/^@([^+]+)\+/, "@$1/");
-  if (!shipped.has(`${name}@${base.slice(at + 1)}`)) extra.push(d);
-}
-if (extra.length) { console.error(`not in the shipped set: ${extra.join(", ")}`); process.exit(1); }
-console.log(`virtual store: ${n} package directories, all in the shipped set (${shipped.size} runtime+bundled)`);
-JS
+# The directory-name parser lives in check-virtual-store.mjs and is tested there (P-1, T-DG7-DO-A2).
+node "$HERE/check-virtual-store.mjs" "$OUT/node_modules/.pnpm" "$WS/licenses/inventory.csv" \
+  || { echo "layout check failed: non-shipped packages present" >&2; exit 1; }
 # Module resolution (F-DG1-202): from each shipped workspace package, every production dependency resolves to an
 # existing file (import.meta.resolve runs the full ESM resolver, so a dangling workspace symlink fails), and the
 # package's own entry module imports (loads its whole static import graph; entry modules only export, start nothing).

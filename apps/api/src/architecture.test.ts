@@ -57,6 +57,7 @@ import {
   P4_MODULES,
   P5_MODULES,
   P6_MODULES,
+  P7_MODULES,
   SECTION16_MODULES,
   type ApiModule,
 } from "./modules.ts";
@@ -189,6 +190,36 @@ describe("API module boundaries (ADR-0002)", () => {
     for (const m of P6_MODULES) expect(API_MODULES[m].dependsOn as readonly string[], m).not.toContain("workflows");
   });
 
+  it('the P7 modules exist, each with its own test suite, and import no domain module (p7-plan §2 "No module cycle")', () => {
+    expect([...P7_MODULES]).toEqual(["transfer", "retention", "release"]);
+    for (const m of P7_MODULES)
+      expect(
+        readdirSync(join(MODULES_DIR, m)).some((f) => f.endsWith(".test.ts")),
+        `${m} has its own test suite`,
+      ).toBe(true);
+    // transfer and retention: no domain module except evidence (the EvidenceStore port) and the outbox leaf jobs
+    // (p7-work-split §C.7, §E.7). Configuration kinds reach transfer through the ConfigBundleKindAdapter registry, and the
+    // tables of a retention class are data (retention_table_class), both wired in server.ts.
+    expect([...API_MODULES.transfer.dependsOn].sort()).toEqual(["access", "audit", "evidence", "jobs", "platform"]);
+    expect([...API_MODULES.retention.dependsOn].sort()).toEqual(["access", "audit", "evidence", "jobs", "platform"]);
+    // release reads a build-time register snapshot and imports nothing beyond the plumbing and the policy function.
+    expect([...API_MODULES.release.dependsOn].sort()).toEqual(["access", "audit", "platform"]);
+    // The P7 modules do not import each other.
+    for (const m of P7_MODULES)
+      for (const other of P7_MODULES)
+        expect(API_MODULES[m].dependsOn as readonly string[], `${m} -> ${other}`).not.toContain(other);
+    // No P1-P6 module imports a P7 module (P7 extends DG1-DG6 additively, p7-plan §3).
+    for (const m of Object.keys(API_MODULES) as ApiModule[])
+      if (!P7_MODULES.includes(m))
+        for (const p7 of P7_MODULES)
+          expect(API_MODULES[m].dependsOn as readonly string[], `${m} -> ${p7}`).not.toContain(p7);
+    // No P7 module imports workflows, kpi or benefits: no P7 path decides a business approval (G1-G6) or a Finance
+    // validation, and none computes a KPI or benefit value.
+    for (const m of P7_MODULES)
+      for (const domain of ["workflows", "kpi", "benefits", "governance"])
+        expect(API_MODULES[m].dependsOn as readonly string[], `${m} -> ${domain}`).not.toContain(domain);
+  });
+
   it("workflows reaches kpi and evidence (G1-G3 evaluators), and none of them reaches back (no cycle)", () => {
     // P4 (T-DG4-BE-A): + organization (working-day due dates) and tasks (approval work items), both leaves.
     expect([...API_MODULES.workflows.dependsOn].sort()).toEqual([
@@ -220,7 +251,16 @@ describe("API module boundaries (ADR-0002)", () => {
     expect([...SECTION16_MODULES.transformations]).toEqual(["transformations", "launch"]);
     expect([...SECTION16_MODULES.workflows]).toEqual(["workflows", "procedures", "automation"]);
     // P6 (p6-plan §3 seam 21, T-DG6-BE-A): integrations and operations join admin, search and assistant reporting.
-    expect([...SECTION16_MODULES.admin]).toEqual(["admin", "forms", "integrations", "operations"]);
+    // P7 (p7-plan §2, T-DG7-BE-A): transfer, retention and release join admin.
+    expect([...SECTION16_MODULES.admin]).toEqual([
+      "admin",
+      "forms",
+      "integrations",
+      "operations",
+      "transfer",
+      "retention",
+      "release",
+    ]);
     expect([...SECTION16_MODULES.reporting]).toEqual(["reporting", "search", "assistant"]);
     expect(
       Object.values(SECTION16_MODULES)
@@ -234,11 +274,17 @@ describe("API module boundaries (ADR-0002)", () => {
         .filter((m) => P6_MODULES.includes(m))
         .sort(),
     ).toEqual([...P6_MODULES].sort());
+    expect(
+      Object.values(SECTION16_MODULES)
+        .flat()
+        .filter((m) => P7_MODULES.includes(m))
+        .sort(),
+    ).toEqual([...P7_MODULES].sort());
     for (const [area, mods] of Object.entries(SECTION16_MODULES)) {
       for (const m of mods) {
         expect(
-          [...P1_MODULES, ...P4_MODULES, ...P5_MODULES, ...P6_MODULES],
-          `${area}: ${m} is a P1, P4, P5 or P6 module`,
+          [...P1_MODULES, ...P4_MODULES, ...P5_MODULES, ...P6_MODULES, ...P7_MODULES],
+          `${area}: ${m} is a P1, P4, P5, P6 or P7 module`,
         ).toContain(m);
         expect(suitesOf(m).length, `${area}: ${m} has its own test suite`).toBeGreaterThan(0);
       }

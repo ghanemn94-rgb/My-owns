@@ -120,7 +120,28 @@ export {
   RST_AVOIDANCE_DELAY_MS,
   type ConnectionHygieneOptions,
 } from "./connection-hygiene.ts";
-export { registerHealthRoutes } from "./health.ts";
+export {
+  createReadiness,
+  registerHealthRoutes,
+  storageFailedLine,
+  storageRecoveredLine,
+  type Readiness,
+  type ReadinessBody,
+  type ReadinessEvaluation,
+  type ReadinessProbes,
+  type StorageProbeOutcome,
+  type WorkerProbeOutcome,
+} from "./health.ts";
+// P7 (T-DG7-BE-B; ADR-0069 §3): getDeploymentStatus and the start-time sub-path warning.
+export {
+  CONTRACT_VERSION,
+  DEPLOYMENT_PATH,
+  deploymentStatusView,
+  readinessView,
+  registerDeploymentRoutes,
+  subPathWarning,
+  type DeploymentStatus,
+} from "./deployment.ts";
 export { createInFlight, registerInFlightTracking, type InFlight } from "./in-flight.ts";
 export type { ModuleDeps, ModuleRegistration } from "./deps.ts";
 export { ADVISORY_LOCK_CLASSES, type AdvisoryLockClassName } from "./advisory-locks.ts";

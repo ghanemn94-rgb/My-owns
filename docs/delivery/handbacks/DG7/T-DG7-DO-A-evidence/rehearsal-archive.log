@@ -1,0 +1,72 @@
+$ date -u; node --version; git -C <repo> rev-parse HEAD
+Thu Nov 12 15:26:34 UTC 2026
+v24.21.0
+cb02a91bc83f4eeb4650efd783158604ed0b51bb
+disposable clone commit (HEAD + this run's working tree, committed only in $TMPDIR/clone1): a51f3a8fbfcef44bde77438e71cef1905c1fba20
+
+$ time node tools/release/build-archive.mjs --repo $TMPDIR/clone1 --commit a51f3a8fbfcef44bde77438e71cef1905c1fba20 --demo-data tools/release/tests/fixtures/demo-data --rehearsal --out $TMPDIR/rel-final
+build-archive: wrote $TMPDIR/rel-final/mth-transformation-hub-0.1.0-a9679ce70fd7-REHEARSAL.tar.gz
+build-archive: candidate sha256:a9679ce70fd70161aa07a773a8ddb946a416469380e0495f8b427d090debde3f commit a51f3a8fbfcef44bde77438e71cef1905c1fba20
+build-archive: tar sha256 7efe1c3651a0727d5b88b5dcfe74c884ed5ca0227133651185a8c3a9cbb1f1d8
+build-archive: archive sha256 0dcc0c18280769a1f17c8706188db3204ef1bd160d8b6e2de4e911275ac1e2c5
+
+real	0m12.353s
+user	0m8.015s
+sys	0m4.848s
+exit=0
+
+0dcc0c18280769a1f17c8706188db3204ef1bd160d8b6e2de4e911275ac1e2c5  mth-transformation-hub-0.1.0-a9679ce70fd7-REHEARSAL.tar.gz
+total 12384
+-rw-r--r-- 1 root root      956 Nov 12 15:26 mth-transformation-hub-0.1.0-a9679ce70fd7-REHEARSAL.build-report.json
+-rw-r--r-- 1 root root 12669468 Nov 12 15:26 mth-transformation-hub-0.1.0-a9679ce70fd7-REHEARSAL.tar.gz
+-rw-r--r-- 1 root root      125 Nov 12 15:26 mth-transformation-hub-0.1.0-a9679ce70fd7-REHEARSAL.tar.gz.sha256
+
+$ node tools/release/build-archive.mjs --verify $TMPDIR/rel-final/mth-transformation-hub-0.1.0-a9679ce70fd7-REHEARSAL.tar.gz --expect-sha256 0dcc0c18280769a1f17c8706188db3204ef1bd160d8b6e2de4e911275ac1e2c5
+1 archive-checksum: ok
+2 single-top-level-directory: ok
+3 layout: ok
+4 sha256sums: ok
+5 candidate-id: ok
+6 copies: ok
+7 determinism-metadata: ok
+archive-verify: PASS
+exit=0
+
+--- build-report.json
+{
+  "name": "mth-transformation-hub-0.1.0-a9679ce70fd7-REHEARSAL",
+  "archive": "mth-transformation-hub-0.1.0-a9679ce70fd7-REHEARSAL.tar.gz",
+  "archiveSha256": "0dcc0c18280769a1f17c8706188db3204ef1bd160d8b6e2de4e911275ac1e2c5",
+  "tarSha256": "7efe1c3651a0727d5b88b5dcfe74c884ed5ca0227133651185a8c3a9cbb1f1d8",
+  "archiveBytes": 12669468,
+  "tarBytes": 56074240,
+  "candidateId": "sha256:a9679ce70fd70161aa07a773a8ddb946a416469380e0495f8b427d090debde3f",
+  "sourceCommit": "a51f3a8fbfcef44bde77438e71cef1905c1fba20",
+  "rehearsal": true,
+  "files": 3004,
+  "layout": [
+    {
+      "dir": "source",
+      "files": 2840
+    },
+    {
+      "dir": "infra",
+      "files": 65
+    },
+    {
+      "dir": "docs",
+      "files": 93
+    },
+    {
+      "dir": "demo-data",
+      "files": 3
+    }
+  ],
+  "node": "24.21.0",
+  "zlib": "1.3.2.1-motley-8002e91",
+  "timingsMs": {
+    "readCommit": 10351,
+    "total": 12295
+  },
+  "builtAt": "2026-11-12T15:26:47.157Z"
+}

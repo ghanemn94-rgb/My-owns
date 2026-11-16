@@ -1,0 +1,138 @@
+### b00 $ deploy/scripts/init-secrets.sh --dir /tmp/claude-0/-home-user-My-owns/f7dd9c0b-2b3c-52aa-bca7-45299008f27d/scratchpad/dg7/secrets; docker image ls
+created pg_superuser_password
+created mth_owner_db_password
+created mth_app_db_password
+created oidc_client_secret
+created test_idp_user_password
+created test_idp_admin_password
+derived database_url, database_owner_url
+created test-idp-ca.pem, test-idp.crt, test-idp.key (TEST IdP only; CA key discarded)
+wrote deploy/compose/.env (MTH_SECRETS_DIR only)
+secrets directory: /tmp/claude-0/-home-user-My-owns/f7dd9c0b-2b3c-52aa-bca7-45299008f27d/scratchpad/dg7/secrets
+IMAGE                              ID             DISK USAGE   CONTENT SIZE   EXTRA
+mth-app:local                      54ee8e763210        582MB          119MB        
+mth-app:probe                      4fb7c579eecc        582MB          119MB        
+postgres:18                        5a5a84b19854        650MB          169MB        
+quay.io/keycloak/keycloak:26.8.1   a78d6b795721        751MB          265MB        
+### b00 exit=0 seconds=3
+### b05 $ docker compose -p mth-dg7b-1794680607 -f deploy/compose/compose.yaml --profile test-idp up -d --pull never --wait && docker compose -p mth-dg7b-1794680607 -f deploy/compose/compose.yaml --profile test-idp ps
+ Volume mth-dg7b-1794680607_evidence Creating 
+ Volume mth-dg7b-1794680607_evidence Creating 
+ Volume mth-dg7b-1794680607_pgdata Creating 
+ Volume mth-dg7b-1794680607_pgdata Creating 
+ Network mth-dg7b-1794680607_default Creating 
+ Network mth-dg7b-1794680607_default Creating 
+ Volume mth-dg7b-1794680607_pgdata Created 
+ Volume mth-dg7b-1794680607_pgdata Created 
+ Volume mth-dg7b-1794680607_evidence Created 
+ Volume mth-dg7b-1794680607_evidence Created 
+ Network mth-dg7b-1794680607_default Created 
+ Network mth-dg7b-1794680607_default Created 
+ Container mth-dg7b-1794680607-keycloak-1 Creating 
+ Container mth-dg7b-1794680607-db-1 Creating 
+ Container mth-dg7b-1794680607-keycloak-1 Created 
+ Container mth-dg7b-1794680607-db-1 Created 
+ Container mth-dg7b-1794680607-migrate-1 Creating 
+ Container mth-dg7b-1794680607-migrate-1 Created 
+ Container mth-dg7b-1794680607-worker-1 Creating 
+ Container mth-dg7b-1794680607-api-1 Creating 
+ Container mth-dg7b-1794680607-worker-1 Created 
+ Container mth-dg7b-1794680607-api-1 Created 
+ Container mth-dg7b-1794680607-db-1 Starting 
+ Container mth-dg7b-1794680607-keycloak-1 Starting 
+ Container mth-dg7b-1794680607-db-1 Started 
+ Container mth-dg7b-1794680607-db-1 Waiting 
+ Container mth-dg7b-1794680607-keycloak-1 Started 
+ Container mth-dg7b-1794680607-db-1 Healthy 
+ Container mth-dg7b-1794680607-migrate-1 Starting 
+ Container mth-dg7b-1794680607-migrate-1 Started 
+ Container mth-dg7b-1794680607-migrate-1 Waiting 
+ Container mth-dg7b-1794680607-db-1 Waiting 
+ Container mth-dg7b-1794680607-migrate-1 Waiting 
+ Container mth-dg7b-1794680607-db-1 Waiting 
+ Container mth-dg7b-1794680607-db-1 Healthy 
+ Container mth-dg7b-1794680607-db-1 Healthy 
+ Container mth-dg7b-1794680607-migrate-1 Exited 
+ Container mth-dg7b-1794680607-api-1 Starting 
+ Container mth-dg7b-1794680607-migrate-1 Exited 
+ Container mth-dg7b-1794680607-worker-1 Starting 
+ Container mth-dg7b-1794680607-api-1 Started 
+ Container mth-dg7b-1794680607-worker-1 Started 
+ Container mth-dg7b-1794680607-keycloak-1 Waiting 
+ Container mth-dg7b-1794680607-db-1 Waiting 
+ Container mth-dg7b-1794680607-api-1 Waiting 
+ Container mth-dg7b-1794680607-worker-1 Waiting 
+ Container mth-dg7b-1794680607-migrate-1 Waiting 
+ Container mth-dg7b-1794680607-migrate-1 Exited 
+ Container mth-dg7b-1794680607-db-1 Healthy 
+ Container mth-dg7b-1794680607-worker-1 Healthy 
+ Container mth-dg7b-1794680607-api-1 Healthy 
+ Container mth-dg7b-1794680607-keycloak-1 Healthy 
+NAME                             IMAGE                                                                                                      COMMAND                  SERVICE    CREATED          STATUS                    PORTS
+mth-dg7b-1794680607-api-1        mth-app:local                                                                                              "/usr/local/bin/mth …"   api        30 seconds ago   Up 20 seconds (healthy)   127.0.0.1:3000->3000/tcp
+mth-dg7b-1794680607-db-1         postgres:18@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722                        "docker-entrypoint.s…"   db         30 seconds ago   Up 30 seconds (healthy)   5432/tcp
+mth-dg7b-1794680607-keycloak-1   quay.io/keycloak/keycloak:26.8.1@sha256:a78d6b79572168cb25886b80a8b5b8d4ed4390743e3eecb810538683e209dd6b   "/bin/bash -c 'set -…"   keycloak   30 seconds ago   Up 30 seconds (healthy)   8080/tcp, 9000/tcp, 127.0.0.1:8443->8443/tcp
+mth-dg7b-1794680607-worker-1     mth-app:local                                                                                              "/usr/local/bin/mth …"   worker     30 seconds ago   Up 20 seconds             3000/tcp
+### b05 exit=0 seconds=31
+### b06 $ docker compose -p mth-dg7b-1794680607 -f deploy/compose/compose.yaml run --rm -T migrate db bootstrap --org-code MTH-E2E --org-name-en 'E2E org (synthetic)' --org-name-ar 'مؤسسة الاختبار (اصطناعية)' --admin-name 'Synthetic Access Admin' --admin-email smoke.admin@example.invalid --admin-issuer https://keycloak:8443/realms/mth-test --admin-subject 5f0c7a52-1d1e-4c9a-9a51-6a0d0e5a0001
+ Container mth-dg7b-1794680607-db-1 Running 
+ Container mth-dg7b-1794680607-db-1 Waiting 
+ Container mth-dg7b-1794680607-db-1 Healthy 
+ Container mth-dg7b-1794680607-migrate-run-66f4d7ad302d Creating 
+ Container mth-dg7b-1794680607-migrate-run-66f4d7ad302d Created 
+{
+  "bootstrapped": true,
+  "organizationId": "01a1db4d-53e1-726e-9eb5-98458c1b9fb6",
+  "adminUserId": "01a1db4d-53e2-7219-8910-fac8809c9bee",
+  "systemUserId": "01a1db4d-53e2-7219-8910-f54060cd330c",
+  "assignmentIds": [
+    "01a1db4d-53ec-7469-9dd5-2c0f66b2775a",
+    "01a1db4d-53ef-752a-a6e3-e8b3b3b7e111"
+  ]
+}
+### b06 exit=0 seconds=2
+### b07 $ env -u HTTPS_PROXY -u HTTP_PROXY -u https_proxy -u http_proxy -u ALL_PROXY -u all_proxy MTH_E2E_KEYCLOAK=1 MTH_E2E_KEYCLOAK_PASSWORD_FILE=/tmp/claude-0/-home-user-My-owns/f7dd9c0b-2b3c-52aa-bca7-45299008f27d/scratchpad/dg7/secrets/test_idp_user_password E2E_BASE_URL=http://localhost:3000 pnpm exec playwright test e2e/identity/keycloak-login.spec.ts --workers=1 --trace off
+
+Running 4 tests using 1 worker
+
+  ✓  1 [chromium-en] › e2e/identity/keycloak-login.spec.ts:41:3 › REQ-S16-007: Keycloak test realm sign-in; another realm is refused › signs in through realm mth-test and gets a session (3.1s)
+  ✓  2 [chromium-en] › e2e/identity/keycloak-login.spec.ts:61:3 › REQ-S16-007: Keycloak test realm sign-in; another realm is refused › refuses the authorization response and token of realm mth-other: token_invalid, no session (1.7s)
+  ✓  3 [chromium-ar] › e2e/identity/keycloak-login.spec.ts:41:3 › REQ-S16-007: Keycloak test realm sign-in; another realm is refused › signs in through realm mth-test and gets a session (1.5s)
+  ✓  4 [chromium-ar] › e2e/identity/keycloak-login.spec.ts:61:3 › REQ-S16-007: Keycloak test realm sign-in; another realm is refused › refuses the authorization response and token of realm mth-other: token_invalid, no session (1.4s)
+
+  4 passed (10.3s)
+
+To open last HTML report run:
+[36m[39m
+[36m  pnpm exec playwright show-report[39m
+[36m[39m
+### b07 exit=0 seconds=12
+### b08 $ docker compose -p mth-dg7b-1794680607 -f deploy/compose/compose.yaml --profile test-idp logs --no-color > docs/delivery/test-evidence/DG7/orchestrator/host/keycloak-e2e-stack.log 2>&1; docker compose -p mth-dg7b-1794680607 -f deploy/compose/compose.yaml --profile test-idp down -v
+ Container mth-dg7b-1794680607-api-1 Stopping 
+ Container mth-dg7b-1794680607-keycloak-1 Stopping 
+ Container mth-dg7b-1794680607-worker-1 Stopping 
+ Container mth-dg7b-1794680607-api-1 Stopped 
+ Container mth-dg7b-1794680607-api-1 Removing 
+ Container mth-dg7b-1794680607-api-1 Removed 
+ Container mth-dg7b-1794680607-worker-1 Stopped 
+ Container mth-dg7b-1794680607-worker-1 Removing 
+ Container mth-dg7b-1794680607-worker-1 Removed 
+ Container mth-dg7b-1794680607-migrate-1 Stopping 
+ Container mth-dg7b-1794680607-migrate-1 Stopped 
+ Container mth-dg7b-1794680607-migrate-1 Removing 
+ Container mth-dg7b-1794680607-migrate-1 Removed 
+ Container mth-dg7b-1794680607-db-1 Stopping 
+ Container mth-dg7b-1794680607-db-1 Stopped 
+ Container mth-dg7b-1794680607-db-1 Removing 
+ Container mth-dg7b-1794680607-db-1 Removed 
+ Container mth-dg7b-1794680607-keycloak-1 Stopped 
+ Container mth-dg7b-1794680607-keycloak-1 Removing 
+ Container mth-dg7b-1794680607-keycloak-1 Removed 
+ Volume mth-dg7b-1794680607_evidence Removing 
+ Volume mth-dg7b-1794680607_pgdata Removing 
+ Network mth-dg7b-1794680607_default Removing 
+ Network mth-dg7b-1794680607_default Removed 
+ Volume mth-dg7b-1794680607_pgdata Removed 
+ Volume mth-dg7b-1794680607_evidence Removed 
+### b08 exit=0 seconds=2
+### DONE

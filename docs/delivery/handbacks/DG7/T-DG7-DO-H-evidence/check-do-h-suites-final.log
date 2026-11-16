@@ -1,0 +1,273 @@
+TAP version 13
+# Subtest: connector-handover parity (T-F6)
+    # Subtest: --check: the committed connectors.md equals a fresh generation
+    ok 1 - --check: the committed connectors.md equals a fresh generation
+      ---
+      duration_ms: 56.936778
+      type: 'test'
+      ...
+    # Subtest: every integration row of the environment.md table is in connectors.md, and every connectors.md row has a source row
+    ok 2 - every integration row of the environment.md table is in connectors.md, and every connectors.md row has a source row
+      ---
+      duration_ms: 5.389258
+      type: 'test'
+      ...
+    # Subtest: every adapter kind of connectors.ts appears, with its adapter and contract test file
+    ok 3 - every adapter kind of connectors.ts appears, with its adapter and contract test file
+      ---
+      duration_ms: 1.007863
+      type: 'test'
+      ...
+    # Subtest: each mapped integration names its local adapter's contract test file
+    ok 4 - each mapped integration names its local adapter's contract test file
+      ---
+      duration_ms: 0.504086
+      type: 'test'
+      ...
+    # Subtest: a new environment.md row without a mapping fails with the F.3 line
+    ok 5 - a new environment.md row without a mapping fails with the F.3 line
+      ---
+      duration_ms: 55.236298
+      type: 'test'
+      ...
+    # Subtest: a removed environment.md row fails (a mapping without a source row)
+    ok 6 - a removed environment.md row fails (a mapping without a source row)
+      ---
+      duration_ms: 52.000807
+      type: 'test'
+      ...
+    # Subtest: --check fails when connectors.md is edited by hand, and passes after --write
+    ok 7 - --check fails when connectors.md is edited by hand, and passes after --write
+      ---
+      duration_ms: 214.379507
+      type: 'test'
+      ...
+    # Subtest: an adapter kind added to port.ts without a handover entry fails
+    ok 8 - an adapter kind added to port.ts without a handover entry fails
+      ---
+      duration_ms: 52.313653
+      type: 'test'
+      ...
+    # Subtest: usage without --write or --check is BLOCKED (exit 2)
+    ok 9 - usage without --write or --check is BLOCKED (exit 2)
+      ---
+      duration_ms: 48.173705
+      type: 'test'
+      ...
+    1..9
+ok 1 - connector-handover parity (T-F6)
+  ---
+  duration_ms: 487.687684
+  type: 'suite'
+  ...
+# Subtest: connector-handover honesty (T-F7)
+    # Subtest: every enterprise connector reads "Not verified", with the exact F.3 sentence in English and Arabic
+    ok 1 - every enterprise connector reads "Not verified", with the exact F.3 sentence in English and Arabic
+      ---
+      duration_ms: 0.85001
+      type: 'test'
+      ...
+    # Subtest: no text claims a live, Mobily-integrated or production-tested connector
+    ok 2 - no text claims a live, Mobily-integrated or production-tested connector
+      ---
+      duration_ms: 0.420478
+      type: 'test'
+      ...
+    # Subtest: credentials appear by name only: the ADR-0063 secret scan finds nothing in docs/handover/api/
+    ok 3 - credentials appear by name only: the ADR-0063 secret scan finds nothing in docs/handover/api/
+      ---
+      duration_ms: 70.241662
+      type: 'test'
+      ...
+    1..3
+ok 2 - connector-handover honesty (T-F7)
+  ---
+  duration_ms: 71.833189
+  type: 'suite'
+  ...
+# Subtest: dictionary-coverage against a disposable PostgreSQL (T-F1, T-F2, T-F3)
+    # Subtest: T-F1: a complete fixture passes; nullability is not compared where a section has no Null column
+    ok 1 - T-F1: a complete fixture passes; nullability is not compared where a section has no Null column
+      ---
+      duration_ms: 104.151254
+      type: 'test'
+      ...
+    # Subtest: T-F1: a missing table fails and is listed
+    ok 2 - T-F1: a missing table fails and is listed
+      ---
+      duration_ms: 100.383026
+      type: 'test'
+      ...
+    # Subtest: T-F1: a missing pgboss table fails and is listed
+    ok 3 - T-F1: a missing pgboss table fails and is listed
+      ---
+      duration_ms: 97.294262
+      type: 'test'
+      ...
+    # Subtest: T-F1: a missing column fails with its type
+    ok 4 - T-F1: a missing column fails with its type
+      ---
+      duration_ms: 94.659041
+      type: 'test'
+      ...
+    # Subtest: T-F1: a wrong type fails
+    ok 5 - T-F1: a wrong type fails
+      ---
+      duration_ms: 105.97632
+      type: 'test'
+      ...
+    # Subtest: T-F1: a wrong nullability fails where the section has a Null column
+    ok 6 - T-F1: a wrong nullability fails where the section has a Null column
+      ---
+      duration_ms: 120.176862
+      type: 'test'
+      ...
+    # Subtest: T-F1: a duplicated heading fails
+    ok 7 - T-F1: a duplicated heading fails
+      ---
+      duration_ms: 103.795223
+      type: 'test'
+      ...
+    # Subtest: T-F1: a documented table or column that does not exist fails as stale
+    ok 8 - T-F1: a documented table or column that does not exist fails as stale
+      ---
+      duration_ms: 99.555137
+      type: 'test'
+      ...
+    # Subtest: T-F2: a database that is not fully migrated is BLOCKED (exit 2) with the F.3 line
+    ok 9 - T-F2: a database that is not fully migrated is BLOCKED (exit 2) with the F.3 line
+      ---
+      duration_ms: 85.205555
+      type: 'test'
+      ...
+    # Subtest: T-F2: an unreachable database is BLOCKED (exit 2)
+    ok 10 - T-F2: an unreachable database is BLOCKED (exit 2)
+      ---
+      duration_ms: 79.067408
+      type: 'test'
+      ...
+    # Subtest: T-F3: an ERD table name that does not exist fails; a table in no ERD section is reported, not failed
+    ok 11 - T-F3: an ERD table name that does not exist fails; a table in no ERD section is reported, not failed
+      ---
+      duration_ms: 100.744792
+      type: 'test'
+      ...
+    # Subtest: --write-pgboss renders the queue schema from the catalogue, and the rendering passes coverage
+    ok 12 - --write-pgboss renders the queue schema from the catalogue, and the rendering passes coverage
+      ---
+      duration_ms: 169.799678
+      type: 'test'
+      ...
+    1..12
+ok 3 - dictionary-coverage against a disposable PostgreSQL (T-F1, T-F2, T-F3)
+  ---
+  duration_ms: 2407.425406
+  type: 'suite'
+  ...
+# Subtest: dictionary-coverage usage
+    # Subtest: no --database-url is BLOCKED (exit 2)
+    ok 1 - no --database-url is BLOCKED (exit 2)
+      ---
+      duration_ms: 50.442726
+      type: 'test'
+      ...
+    1..1
+ok 4 - dictionary-coverage usage
+  ---
+  duration_ms: 50.590842
+  type: 'suite'
+  ...
+# Subtest: openapi-coverage (T-F4)
+    # Subtest: a complete fixture passes; NO_400_OPERATIONS is printed with its reason and is not a skip
+    ok 1 - a complete fixture passes; NO_400_OPERATIONS is printed with its reason and is not a skip
+      ---
+      duration_ms: 98.636729
+      type: 'test'
+      ...
+    # Subtest: a non-empty pending list fails, and routed/exercised are Unknown (null), never zero
+    ok 2 - a non-empty pending list fails, and routed/exercised are Unknown (null), never zero
+      ---
+      duration_ms: 119.556941
+      type: 'test'
+      ...
+    # Subtest: a .skip in a contract test file fails with its file and line
+    ok 3 - a .skip in a contract test file fails with its file and line
+      ---
+      duration_ms: 103.275828
+      type: 'test'
+      ...
+    # Subtest: a .todo in a contract test file fails with its file and line
+    ok 4 - a .todo in a contract test file fails with its file and line
+      ---
+      duration_ms: 91.805983
+      type: 'test'
+      ...
+    # Subtest: a .only in a contract test file fails with its file and line
+    ok 5 - a .only in a contract test file fails with its file and line
+      ---
+      duration_ms: 102.488905
+      type: 'test'
+      ...
+    # Subtest: a .skipIf in a contract test file fails with its file and line
+    ok 6 - a .skipIf in a contract test file fails with its file and line
+      ---
+      duration_ms: 86.491284
+      type: 'test'
+      ...
+    # Subtest: a count pin unequal to the document fails
+    ok 7 - a count pin unequal to the document fails
+      ---
+      duration_ms: 89.189424
+      type: 'test'
+      ...
+    # Subtest: a failed required test fails
+    ok 8 - a failed required test fails
+      ---
+      duration_ms: 88.850755
+      type: 'test'
+      ...
+    # Subtest: a required test missing from the run fails
+    ok 9 - a required test missing from the run fails
+      ---
+      duration_ms: 78.535405
+      type: 'test'
+      ...
+    # Subtest: a run without response-validation.test.ts fails
+    ok 10 - a run without response-validation.test.ts fails
+      ---
+      duration_ms: 91.280197
+      type: 'test'
+      ...
+    # Subtest: a skipped test in the run fails
+    ok 11 - a skipped test in the run fails
+      ---
+      duration_ms: 94.905105
+      type: 'test'
+      ...
+    # Subtest: an operation without a summary, or with an undeclared tag, is not described
+    ok 12 - an operation without a summary, or with an undeclared tag, is not described
+      ---
+      duration_ms: 79.68537
+      type: 'test'
+      ...
+    # Subtest: a missing vitest report is BLOCKED (exit 2)
+    ok 13 - a missing vitest report is BLOCKED (exit 2)
+      ---
+      duration_ms: 48.415297
+      type: 'test'
+      ...
+    1..13
+ok 5 - openapi-coverage (T-F4)
+  ---
+  duration_ms: 1174.736863
+  type: 'suite'
+  ...
+1..5
+# tests 38
+# suites 5
+# pass 38
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2539.920843

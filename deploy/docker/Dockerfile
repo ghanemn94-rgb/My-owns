@@ -33,6 +33,9 @@ ENV CI=true \
 WORKDIR /src
 
 # 1) Dependencies only (cached until a manifest or the lockfile changes).
+#    EVERY workspace package.json (pnpm-workspace.yaml: apps/*, packages/*) must be copied here, or
+#    `pnpm install --frozen-lockfile` sees a workspace that does not match the lockfile and the build fails.
+#    deploy/scripts/tests/dockerfile-context.test.mjs fails when a workspace manifest is missing from this list.
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 COPY apps/api/package.json apps/api/package.json
 COPY apps/worker/package.json apps/worker/package.json
@@ -40,12 +43,14 @@ COPY apps/web/package.json apps/web/package.json
 COPY packages/config/package.json packages/config/package.json
 COPY packages/db/package.json packages/db/package.json
 COPY packages/design-tokens/package.json packages/design-tokens/package.json
+COPY packages/reporting/package.json packages/reporting/package.json
 COPY packages/shared/package.json packages/shared/package.json
 RUN --mount=type=secret,id=build_ca,required=false \
     set -eu; \
     if [ -s /run/secrets/build_ca ]; then export NODE_EXTRA_CA_CERTS=/run/secrets/build_ca; fi; \
     if [ -n "$NPM_REGISTRY" ]; then export npm_config_registry="$NPM_REGISTRY" COREPACK_NPM_REGISTRY="$NPM_REGISTRY"; fi; \
-    corepack enable --install-directory /pnpm; \
+    mkdir -p "$PNPM_HOME"; \
+    corepack enable --install-directory "$PNPM_HOME"; \
     pnpm --version; \
     pnpm install --frozen-lockfile
 

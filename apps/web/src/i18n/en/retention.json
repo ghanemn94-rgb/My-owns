@@ -1,0 +1,184 @@
+{
+  "title": "Retention",
+  "intro": "Each record class has a retention action. Every class starts as \"Keep\". Business records, audit and snapshots are always kept. Periods must be agreed with Mobily IT.",
+  "action": {
+    "retain": "Keep",
+    "archive": "Archive",
+    "archive_then_purge": "Archive, then delete",
+    "label": "Action"
+  },
+  "period": {
+    "notSet": "Not set (IT to agree)",
+    "days": "{{count}} days",
+    "label": "Retention period"
+  },
+  "reference": {
+    "label": "IT approval reference",
+    "help": "Record the reference of the approval Mobily IT gave outside this platform, for example a change ticket. Saving it does not approve anything.",
+    "none": "None recorded"
+  },
+  "managedByJob": "Removed automatically when expired",
+  "effect": {
+    "inbox": "Archived read notifications can no longer be marked unread. With \"Archive, then delete\" they disappear from the inbox."
+  },
+  "run": {
+    "dryRun": "Dry run",
+    "run": "Run now",
+    "dryRunHelp": "Shows what a run would archive or delete. Nothing is changed.",
+    "runHelp": "Archives the records of every enabled class that are past their period and, for \"Archive, then delete\", deletes the live rows. Each action is logged.",
+    "status": {
+      "queued": "Queued",
+      "running": "Running",
+      "succeeded": "Succeeded",
+      "failed": "Failed",
+      "label": "Status"
+    },
+    "mode": {
+      "label": "Kind",
+      "dry_run": "Dry run",
+      "run": "Run"
+    },
+    "requestedVia": {
+      "label": "Requested by",
+      "api": "A person, on this screen or the API",
+      "schedule": "The schedule"
+    },
+    "listTitle": "Runs and dry runs",
+    "requestTitle": "Start a run",
+    "reason": "Reason for the run",
+    "requested": "The request was recorded. Its status is shown in the list below.",
+    "empty": "No run or dry run has been requested yet.",
+    "asOf": "As of",
+    "candidates": "Candidate records",
+    "archived": "Archived",
+    "purged": "Deleted",
+    "skipped": "Skipped (still referenced)",
+    "archiveSetKey": "Archive set",
+    "archiveSetSha256": "Archive set SHA-256",
+    "archiveSetBytes": "Archive set bytes",
+    "failureReason": "Reason for the failure",
+    "startedAt": "Started",
+    "finishedAt": "Finished",
+    "createdAt": "Requested",
+    "unknownUntilDone": "Counts and checksums are unknown until the run has finished.",
+    "noArchiveSet": "No archive set (a dry run writes none)",
+    "open": "Open the run"
+  },
+  "actions": {
+    "title": "Actions in this run",
+    "empty": "This run has logged no action.",
+    "table": "Table",
+    "record": "Record key",
+    "class": "Class",
+    "period": "Period applied",
+    "recordAge": "Record date",
+    "occurredAt": "Logged at",
+    "kind": {
+      "label": "Action",
+      "would_archive": "Would archive",
+      "would_purge": "Would delete",
+      "archived": "Archived",
+      "purged": "Deleted",
+      "skipped_referenced": "Skipped (still referenced)"
+    }
+  },
+  "archived": {
+    "title": "Archived records",
+    "kept": "Kept (read-only)",
+    "intro": "Each record a run archived, with the run and archive set that hold its copy. A record that was not deleted stays read-only.",
+    "empty": "No record has been archived.",
+    "table": "Table",
+    "record": "Record key",
+    "class": "Class",
+    "run": "Run",
+    "archiveSet": "Archive set",
+    "recordAge": "Record date",
+    "archivedAt": "Archived at",
+    "liveRow": "Live row",
+    "purgedOn": "Deleted on {{date}}",
+    "filterTable": "Table name",
+    "filterTableHint": "Lower-case letters, digits and underscores, for example inbox_notification.",
+    "filterTableInvalid": "Enter a table name in lower-case letters, digits and underscores.",
+    "filterRun": "Run",
+    "apply": "Apply filters",
+    "clear": "Clear filters",
+    "filters": "Filters",
+    "forRun": "Archived records of this run"
+  },
+  "backups": {
+    "title": "Backup sets",
+    "readOnly": "Backups and restores are run by IT with the backup scripts. This list is read-only.",
+    "none": "No backup set has been reported yet.",
+    "label": "Label",
+    "status": {
+      "label": "Status",
+      "succeeded": "Succeeded",
+      "failed": "Failed"
+    },
+    "startedAt": "Started",
+    "finishedAt": "Finished",
+    "migrationLevel": "Migration level",
+    "serverMajor": "PostgreSQL major version",
+    "dumpBytes": "Database dump bytes",
+    "dumpSha256": "Database dump SHA-256",
+    "evidenceBackend": "Evidence storage",
+    "evidenceObjects": "Evidence objects",
+    "evidenceBytes": "Evidence bytes",
+    "manifestSha256": "Manifest SHA-256",
+    "operator": "Reported by",
+    "recordedAt": "Recorded",
+    "failureReason": "Reason for the failure",
+    "details": "Checksums and sizes"
+  },
+  "classes": {
+    "title": "Record classes",
+    "empty": "No retention class was returned.",
+    "class": "Class",
+    "code": "Code",
+    "category": {
+      "label": "Category",
+      "business": "Business records",
+      "audit": "Audit",
+      "snapshot": "Snapshots",
+      "system": "System",
+      "derived": "Derived data",
+      "operational": "Operational"
+    },
+    "tableCount": "Tables",
+    "alwaysKept": "Always kept"
+  },
+  "class": {
+    "description": "Description",
+    "tablesTitle": "Tables in this class",
+    "table": "Table",
+    "ageColumn": "Age date column",
+    "ageColumnNone": "None (never selected by a run)",
+    "purgeEligible": "Can be deleted",
+    "yes": "Yes",
+    "no": "No",
+    "updatedAt": "Last changed",
+    "version": "Version",
+    "editTitle": "Change the retention action",
+    "readOnly": "You can see this class but not change it.",
+    "fixed": "This class is always kept. Its action cannot be changed.",
+    "periodInput": "Retention period in days",
+    "periodHint": "A whole number from 1 to 36500. Leave it empty while IT has not agreed a period.",
+    "periodInvalid": "Enter a whole number of days from 1 to 36500, or leave it empty.",
+    "referenceInvalid": "Enter at least 3 and at most 500 characters, or leave it empty.",
+    "reason": "Reason for the change",
+    "save": "Save",
+    "saved": "Saved. The class now shows the values the server stored.",
+    "notApproval": "Changing a class records a technical setting. It does not grant a business, Finance or IT approval."
+  },
+  "nav": {
+    "archived": "Archived records",
+    "backups": "Backup sets",
+    "back": "Back to Retention",
+    "sectionsLabel": "Retention pages"
+  },
+  "common": {
+    "unknown": "Unknown",
+    "notYet": "Not yet",
+    "noPermission": "You do not have the right to see this part."
+  }
+}

@@ -1,0 +1,166 @@
+{
+  "schemaVersion": "mth-offline-drill/1",
+  "generatedAt": "2026-11-14T14:04:36.560Z",
+  "mode": "container-free, inside one bwrap --unshare-net namespace (agent sandbox; ADR-0069 §5, §7 split)",
+  "note": "Synthetic data. Not evidence of high-availability production readiness. Approves nothing (no G1-G6 decision, no DG0-DG7 record). A connection log of the Node processes, not a packet capture.",
+  "probe": {
+    "tcp": "1.1.1.1:443 ENETUNREACH",
+    "dns": "registry.npmjs.org EAI_AGAIN",
+    "isolated": true
+  },
+  "groups": [
+    {
+      "group": "demo",
+      "stack": "e2e/support/with-demo-stack.sh",
+      "specs": [
+        "e2e/a02-demo-labels.spec.ts",
+        "e2e/a02-demo-users-walkthrough.spec.ts",
+        "e2e/a02-guided-walkthrough.spec.ts",
+        "e2e/a21-no-ai-operation.spec.ts"
+      ],
+      "exit": 1,
+      "seconds": 104.397
+    },
+    {
+      "group": "plain",
+      "stack": "apps/web/e2e/support/with-stack.sh",
+      "specs": [
+        "e2e/a21-p6-degradation.spec.ts"
+      ],
+      "exit": 1,
+      "seconds": 33.672
+    }
+  ],
+  "specs": [
+    {
+      "file": "e2e/a02-demo-labels.spec.ts",
+      "project": "chromium-en",
+      "passed": 1,
+      "failed": 2,
+      "skipped": 0,
+      "flaky": 0,
+      "stack": "e2e/support/with-demo-stack.sh",
+      "outcome": "FAIL"
+    },
+    {
+      "file": "e2e/a02-demo-labels.spec.ts",
+      "project": "chromium-ar",
+      "passed": 1,
+      "failed": 2,
+      "skipped": 0,
+      "flaky": 0,
+      "stack": "e2e/support/with-demo-stack.sh",
+      "outcome": "FAIL"
+    },
+    {
+      "file": "e2e/a02-demo-users-walkthrough.spec.ts",
+      "project": "chromium-en",
+      "passed": 0,
+      "failed": 1,
+      "skipped": 0,
+      "flaky": 0,
+      "stack": "e2e/support/with-demo-stack.sh",
+      "outcome": "FAIL"
+    },
+    {
+      "file": "e2e/a02-demo-users-walkthrough.spec.ts",
+      "project": "chromium-ar",
+      "passed": 0,
+      "failed": 1,
+      "skipped": 0,
+      "flaky": 0,
+      "stack": "e2e/support/with-demo-stack.sh",
+      "outcome": "FAIL"
+    },
+    {
+      "file": "e2e/a02-guided-walkthrough.spec.ts",
+      "project": "chromium-en",
+      "passed": 0,
+      "failed": 1,
+      "skipped": 0,
+      "flaky": 0,
+      "stack": "e2e/support/with-demo-stack.sh",
+      "outcome": "FAIL"
+    },
+    {
+      "file": "e2e/a02-guided-walkthrough.spec.ts",
+      "project": "chromium-ar",
+      "passed": 0,
+      "failed": 1,
+      "skipped": 0,
+      "flaky": 0,
+      "stack": "e2e/support/with-demo-stack.sh",
+      "outcome": "FAIL"
+    },
+    {
+      "file": "e2e/a21-no-ai-operation.spec.ts",
+      "project": "chromium-en",
+      "passed": 0,
+      "failed": 1,
+      "skipped": 0,
+      "flaky": 0,
+      "stack": "e2e/support/with-demo-stack.sh",
+      "outcome": "FAIL"
+    },
+    {
+      "file": "e2e/a21-no-ai-operation.spec.ts",
+      "project": "chromium-ar",
+      "passed": 0,
+      "failed": 1,
+      "skipped": 0,
+      "flaky": 0,
+      "stack": "e2e/support/with-demo-stack.sh",
+      "outcome": "FAIL"
+    },
+    {
+      "file": "e2e/a21-p6-degradation.spec.ts",
+      "project": "chromium-en",
+      "passed": 0,
+      "failed": 1,
+      "skipped": 1,
+      "flaky": 0,
+      "stack": "apps/web/e2e/support/with-stack.sh",
+      "outcome": "FAIL"
+    },
+    {
+      "file": "e2e/a21-p6-degradation.spec.ts",
+      "project": "chromium-ar",
+      "passed": 0,
+      "failed": 1,
+      "skipped": 1,
+      "flaky": 0,
+      "stack": "apps/web/e2e/support/with-stack.sh",
+      "outcome": "FAIL"
+    }
+  ],
+  "connections": {
+    "lines": 191,
+    "apiLines": 86,
+    "byCategory": {
+      "loopback": 191,
+      "socket": 0,
+      "outside": 0
+    },
+    "byProcess": {
+      "qa-preload:db/dist/cli.js": 11,
+      "qa-preload:api/dist/main.js": 43,
+      "api": 43,
+      "qa-preload:lib/common/process.js": 50,
+      "qa-preload:worker/dist/main.js": 22,
+      "worker": 22
+    },
+    "destinations": {
+      "127.0.0.1|127.0.0.1:25440": 99,
+      "127.0.0.1|127.0.0.1:25310": 8,
+      "127.0.0.1|127.0.0.1:25450": 42,
+      "127.0.0.1|127.0.0.1:25320": 2,
+      "localhost|-:31999": 20,
+      "localhost|127.0.0.1:31999": 20
+    },
+    "outside": [],
+    "result": "PASS",
+    "exit": 0
+  },
+  "seconds": 138.267,
+  "result": "FAIL"
+}

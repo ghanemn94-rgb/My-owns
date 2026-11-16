@@ -1,0 +1,24 @@
+[
+  {
+    "id": "F-DG7-CS-A26-1",
+    "severity": "Critical",
+    "mandatory_violation": true,
+    "file": "apps/api/src/modules/organization/routes.ts",
+    "line": 350,
+    "summary": "Privilege escalation: PATCH /api/v1/business-units/:businessUnitId now requires only business_unit.read, both at the route gate (line 350) and in the server-side scoped check (line 361: requireAction(tx, principal, \"business_unit.read\", target)), where it previously required business_unit.manage. business_unit.read is in BASE_READ (packages/shared/src/permissions.ts:475), which almost every role holds, including the read-only auditor (AUD). So any reader in scope can rename a business unit (nameEn/nameAr) or deactivate it (status). Commit c3bbc780c calls this 'tidy business-unit update route', which hides a security-relevant change. The re-parent path still checks business_unit.manage on the destination (lines 377/394), but the moved unit itself only needs read. A reader who holds manage somewhere else in the organization can therefore move a unit they can only read.",
+    "reproduction": "Disposable clone of c3bbc780c, disposable PostgreSQL 16 cluster: tests/qa/support/with-pg.sh npx vitest run --project integration apps/api/test/integration/zz-a26-repro.test.ts (the file is docs/delivery/test-evidence/DG7/code-security/a26/bu-update-authz.repro.test.ts). Synthetic seedWorld users: AUD@orgA sends PATCH a1 {nameEn,status:'inactive'} with a valid If-Match and gets 200 (expected 403). TO@orgA sends PATCH a2 {nameEn} and gets 200 (expected 403). TL@BU a1 sends PATCH a1 {nameAr} and gets 200 (expected 403). Control: ADM_TECH gets 200. Same test with only routes.ts reverted to parent 3e0cec962: 4/4 pass.",
+    "evidence": "Candidate: repro exit 1, 3 failed | 1 passed (each 'expected 200 to be 403'). Parent routes.ts: repro exit 0, 4 passed. Existing suites (organizations, bu-hierarchy-guard, scale-scope-business-units) at the candidate: exit 0, 21 passed, so the regression is undetected. See drill-review.md.",
+    "expected": "403 problem response plus an audited authorization.denied for any principal without business_unit.manage on the target unit; no row change.",
+    "actual": "200, and the unit is renamed or deactivated. The business_unit.update audit event is attributed to the read-only actor."
+  },
+  {
+    "id": "F-DG7-CS-A26-2",
+    "severity": "Medium",
+    "mandatory_violation": true,
+    "file": "apps/api/test/integration/organizations.test.ts",
+    "line": 257,
+    "summary": "Test gap: the project rules require positive and negative authorization tests for every mutation, but no test covers a non-manager (read-only) principal sending PATCH /api/v1/business-units/:id. organizations.test.ts only tests GET for BU read scope (lines 257-261). bu-hierarchy-guard.test.ts covers the re-parent destination check (F-DG1-141), not the base permission. That is why F-DG7-CS-A26-1 passes the full existing BU suite.",
+    "reproduction": "At c3bbc780c (disposable clone + with-pg.sh): npx vitest run --project integration apps/api/test/integration/organizations.test.ts apps/api/test/integration/bu-hierarchy-guard.test.ts apps/api/test/integration/workflows/scale-scope-business-units.test.ts exits 0 (21/21) even though the route accepts readers. grep -rn 'PATCH.*business-units' apps/api/test tests finds no reader-denial case.",
+    "evidence": "Existing-suite run exit 0 at the candidate. The repro test in this directory is a ready-made regression test to adopt (AUD/TO/TL get 403, ADM_TECH gets 200)."
+  }
+]

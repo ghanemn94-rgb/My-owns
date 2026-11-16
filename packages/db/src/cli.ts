@@ -2,6 +2,11 @@
 // mth-db: the database CLI (ADR-0003). Uses DATABASE_OWNER_URL (owner role; migrations and bootstrap only).
 //
 //   mth-db migrate      apply pending migrations (advisory lock; refuses on checksum drift)     exit 0 | 1
+//   mth-db migrate --reserve-audit-seq-for DIR   the same on a database with no applied migration, with the audit
+//                       sequence started above the package's highest audit seq (ADR-0064 A1.2; T-DG7-BE-R1) exit 0 | 2
+//   mth-db migrate --dry-run [--report FILE] [--catalogue FILE] [--i-confirm-this-is-a-restored-copy]
+//                       apply the pending migrations to a throw-away copy of a RESTORED copy and report the changes
+//                       (ADR-0068 §1; DRY_RUN_ADMIN_DATABASE_URL; T-DG7-DO-G)                     exit 0 | 1 | 2
 //   mth-db status       report applied/pending; exit 0 only when up to date                     exit 0 | 3 | 4
 //   mth-db bootstrap    first organization + first technical/access administrator (see bootstrap.ts)
 //   mth-db seed-dev     SYNTHETIC dev-login users (refused with NODE_ENV=production or AUTH_MODE != dev)
@@ -9,6 +14,18 @@
 //                       (AUTH_MODE=dev, never NODE_ENV=production: also binds the demo users to the dev issuer; D-165)
 //   mth-db reset-demo   drop, re-create, migrate and re-seed the demo database (MTH_ENV=demo and
 //                       MTH_DEMO_ADMIN_DATABASE_URL; ADR-0050 §6)                                         exit 0 | 3
+//                       both take [--as-of YYYY-MM-DD], the period anchor of ADR-0064 A4.6         also exit 1 | 2
+//   mth-db export-migration --out DIR --operator NAME   the migration package (ADR-0064 §7; T-DG7-BE-C)  exit 0 | 1 | 2
+//   mth-db import-migration --from DIR --operator NAME [--manifest-sha256 HEX] [--attachments-report FILE]
+//                       [--report FILE]   the import into a target prepared with the reservation (ADR-0064 §6 and
+//                       Amendment 1; T-DG7-BE-D, T-DG7-BE-R1)                                      exit 0 | 1 | 2 | 3 | 4
+//   mth-db reconcile-migration --operator NAME [--attachments-report FILE]
+//                       [--after-use --from DIR --allow FILE] [--report FILE]   re-check of the recorded import
+//                       (ADR-0064 A1.9 with A2.3, A2.6: mode 1, or mode 2 after use with the allowance
+//                       mth-recheck-allowance/4; T-DG7-BE-R2, T-DG7-BE-R3, T-DG7-BE-R4)                exit 0 | 2 | 4
+//   mth-db table-digest --table T [--table T …] [--rows]   read-only, as mth_app (DATABASE_URL): one canonical JSON
+//                       line mth-table-digest/1 for exported tables (ADR-0064 A2; T-DG7-BE-R2)          exit 0 | 2
+//   mth-db rebind-identity --mapping FILE --operator NAME   identity rebind, all or nothing (ADR-0064 §8)  exit 0 | 2
 // bootstrap writes the production marker and refuses (exit 3) on a demo database (ADR-0050 §3).
 // ADR-0058 §2 (T-DG6-DO-E): bootstrap and seed-demo also refuse (exit 3, nothing changed) on a database that holds the
 // synthetic load dataset (a load_dataset_marker row, written by deploy/load/generate.mjs).
@@ -23,8 +40,15 @@ import { runDemoCommand } from "./demo/cli.ts";
 import { DemoRefused, demoDevIssuerBindingAllowed } from "./demo/guard.ts";
 import { DevSeedRefused, seedDev } from "./dev-seed.ts";
 import { assertUtf8Database, DatabaseEncodingError } from "./encoding.ts";
-import { migrate, MigrationError, migrationStatus } from "./migrate.ts";
+import { migrate, MigrationError, MigrationReserveError, migrationStatus } from "./migrate.ts";
 import { createDb, createPool } from "./pool.ts";
+import { runDryRunCommand } from "./dry-run.ts";
+import { readFile } from "node:fs/promises";
+import { runExportMigrationCommand } from "./transfer/cli.ts";
+import { ImportRefused, reservedAuditStart, runImportMigrationCommand } from "./transfer/import.ts";
+import { runReconcileMigrationCommand } from "./transfer/reconcile.ts";
+import { runTableDigestCommand } from "./transfer/table-digest.ts";
+import { applyRebind, rebindLines } from "./transfer/rebind.ts";
 
 /** ADR-0058 §2: the refusal of bootstrap and seed-demo on a load database (exact text). */
 export const LOAD_DATASET_CLI_REFUSAL =
@@ -40,12 +64,21 @@ async function holdsLoadDataset(pool: ReturnType<typeof createPool>): Promise<bo
 
 const USAGE = `usage:
   mth-db migrate
+  mth-db migrate --reserve-audit-seq-for DIR
+  mth-db migrate --dry-run [--report FILE] [--catalogue FILE] [--i-confirm-this-is-a-restored-copy]
   mth-db status
   mth-db bootstrap --org-code CODE --org-name-en NAME --org-name-ar NAME
                    --admin-name NAME [--admin-email EMAIL] --admin-issuer ISSUER --admin-subject SUB
   mth-db seed-dev
-  mth-db seed-demo
-  mth-db reset-demo`;
+  mth-db seed-demo [--as-of YYYY-MM-DD]
+  mth-db reset-demo [--as-of YYYY-MM-DD]
+  mth-db export-migration --out DIR --operator NAME
+  mth-db import-migration --from DIR --operator NAME [--manifest-sha256 HEX] [--attachments-report FILE]
+                          [--report FILE]
+  mth-db reconcile-migration --operator NAME [--attachments-report FILE]
+                             [--after-use --from DIR --allow FILE] [--report FILE]
+  mth-db rebind-identity --mapping FILE --operator NAME
+  mth-db table-digest --table T [--table T …] [--rows]`;
 
 async function main(argv: string[]): Promise<number> {
   const [command, ...rest] = argv;
@@ -55,10 +88,38 @@ async function main(argv: string[]): Promise<number> {
     command !== "bootstrap" &&
     command !== "seed-dev" &&
     command !== "seed-demo" &&
-    command !== "reset-demo"
+    command !== "reset-demo" &&
+    command !== "export-migration" &&
+    command !== "import-migration" &&
+    command !== "reconcile-migration" &&
+    command !== "rebind-identity" &&
+    command !== "table-digest"
   ) {
     console.error(USAGE);
     return 64;
+  }
+  if (command === "table-digest") {
+    // ADR-0064 A2 (p7-work-split §C.13): read-only, as mth_app (DATABASE_URL), exported tables only.
+    const { values } = parseArgs({
+      args: rest,
+      options: { table: { type: "string", multiple: true }, rows: { type: "boolean" } },
+      strict: true,
+    });
+    const url = process.env["DATABASE_URL"];
+    if (url === undefined || url === "") {
+      console.error("BLOCKED: table-digest needs DATABASE_URL (the mth_app role)");
+      return 2;
+    }
+    const db = createDb(createPool(url, { max: 1 }));
+    try {
+      return await runTableDigestCommand(
+        db,
+        { tables: values.table ?? [], rows: values.rows === true },
+        { out: (l) => console.log(l), err: (l) => console.error(l) },
+      );
+    } finally {
+      await db.destroy();
+    }
   }
   const config = loadConfig("db-cli");
   const ownerUrl = config.databaseOwnerUrl!;
@@ -69,6 +130,12 @@ async function main(argv: string[]): Promise<number> {
     AUTH_MODE: process.env["AUTH_MODE"],
   });
 
+  // ADR-0064 A4.6: `--as-of YYYY-MM-DD` sets the period anchor of seed-demo and reset-demo (validated by runDemoCommand).
+  const demoAsOf =
+    command === "seed-demo" || command === "reset-demo"
+      ? parseArgs({ args: rest, options: { "as-of": { type: "string" } }, strict: true }).values["as-of"]
+      : undefined;
+
   // ADR-0050 §6: the reset re-creates the database, so it checks nothing on it first (it creates it UTF8 itself).
   if (command === "reset-demo")
     return runDemoCommand(command, {
@@ -76,8 +143,50 @@ async function main(argv: string[]): Promise<number> {
       ownerUrl,
       demoAdminUrl: config.demoAdminDatabaseUrl,
       devIssuerBinding,
+      asOf: demoAsOf,
     });
 
+  if (command === "migrate" && rest.includes("--dry-run"))
+    return runDryRunCommand(rest, ownerUrl, { out: (l) => console.log(l), err: (l) => console.error(l) });
+  if (command === "migrate" && rest.length > 0) {
+    // ADR-0064 A1.2: the package is checked and M read before any connection is made.
+    const { values } = parseArgs({
+      args: rest,
+      options: { "reserve-audit-seq-for": { type: "string" } },
+      strict: true,
+    });
+    const dir = values["reserve-audit-seq-for"];
+    if (dir === undefined || dir === "") {
+      console.error("BLOCKED: usage: mth-db migrate --reserve-audit-seq-for <dir>");
+      return 2;
+    }
+    let reserved: { start: bigint; seqMax: bigint };
+    try {
+      reserved = await reservedAuditStart(dir);
+    } catch (err) {
+      if (err instanceof ImportRefused) {
+        console.error(err.message);
+        return 2;
+      }
+      throw err;
+    }
+    try {
+      await migrate(ownerUrl, {
+        log: (l) => console.log(`mth-db migrate: ${l}`),
+        reserveAuditSeqFrom: reserved.start,
+      });
+    } catch (err) {
+      if (err instanceof MigrationReserveError) {
+        console.error(err.message);
+        return 2;
+      }
+      throw err;
+    }
+    console.log(
+      `migrate: the audit sequence of this target starts at ${reserved.start} (the package's highest audit seq is ${reserved.seqMax})`,
+    );
+    return 0;
+  }
   if (command === "migrate") {
     const applied = await migrate(ownerUrl, { log: (l) => console.log(`mth-db migrate: ${l}`) });
     console.log(
@@ -126,9 +235,92 @@ async function main(argv: string[]): Promise<number> {
         ownerUrl,
         demoAdminUrl: config.demoAdminDatabaseUrl,
         devIssuerBinding,
+        asOf: demoAsOf,
       });
 
     const db = createDb(pool);
+    if (command === "export-migration") {
+      const { values } = parseArgs({
+        args: rest,
+        options: { out: { type: "string" }, operator: { type: "string" } },
+        strict: true,
+      });
+      return await runExportMigrationCommand(
+        db,
+        { out: values.out, operator: values.operator, evidenceRoot: config.evidenceStorage.path },
+        { out: (l) => console.log(l), err: (l) => console.error(l) },
+      );
+    }
+    const io = { out: (l: string) => console.log(l), err: (l: string) => console.error(l) };
+    if (command === "import-migration") {
+      const { values } = parseArgs({
+        args: rest,
+        options: {
+          from: { type: "string" },
+          operator: { type: "string" },
+          "manifest-sha256": { type: "string" },
+          "attachments-report": { type: "string" },
+          report: { type: "string" },
+        },
+        strict: true,
+      });
+      return await runImportMigrationCommand(
+        db,
+        {
+          from: values.from,
+          operator: values.operator,
+          manifestSha256: values["manifest-sha256"],
+          attachmentsReport: values["attachments-report"],
+          report: values.report,
+        },
+        io,
+      );
+    }
+    if (command === "reconcile-migration") {
+      const { values } = parseArgs({
+        args: rest,
+        options: {
+          operator: { type: "string" },
+          "attachments-report": { type: "string" },
+          "after-use": { type: "boolean" },
+          from: { type: "string" },
+          allow: { type: "string" },
+          report: { type: "string" },
+        },
+        strict: true,
+      });
+      return await runReconcileMigrationCommand(
+        db,
+        {
+          operator: values.operator,
+          attachmentsReport: values["attachments-report"],
+          afterUse: values["after-use"] === true,
+          from: values.from,
+          allow: values.allow,
+          report: values.report,
+        },
+        io,
+      );
+    }
+    if (command === "rebind-identity") {
+      const { values } = parseArgs({
+        args: rest,
+        options: { mapping: { type: "string" }, operator: { type: "string" } },
+        strict: true,
+      });
+      if (
+        values.mapping === undefined ||
+        values.operator === undefined ||
+        !/^[\p{L}\p{N} ._@-]{1,100}$/u.test(values.operator)
+      ) {
+        console.error("BLOCKED: usage: mth-db rebind-identity --mapping <file> --operator <name>");
+        return 2;
+      }
+      const bytes = new Uint8Array(await readFile(values.mapping));
+      const outcome = await applyRebind(db, bytes, values.operator);
+      for (const line of rebindLines(outcome)) (outcome.ok ? console.log : console.error)(line);
+      return outcome.ok ? 0 : 2;
+    }
     if (command === "bootstrap") {
       const { values } = parseArgs({
         args: rest,
@@ -185,13 +377,19 @@ async function main(argv: string[]): Promise<number> {
   }
 }
 
+// DO-D3 Q1 (ADR-0064 A3.10; p7-work-split §C.14): the exit code is set, never forced with process.exit, so the process
+// ends only when stdout and stderr have drained (a piped `table-digest --rows` larger than the pipe buffer is written
+// whole). Every command closes its pool, so no handle keeps the process alive.
 main(process.argv.slice(2)).then(
-  (code) => process.exit(code),
+  (code) => {
+    process.exitCode = code;
+  },
   (err: unknown) => {
     if (err instanceof DemoRefused) {
       // ADR-0050 §9: "mth-db <command>: refused: <reason>", exit 3, nothing changed.
       console.error(err.message);
-      process.exit(err.exitCode);
+      process.exitCode = err.exitCode;
+      return;
     }
     if (
       err instanceof ConfigError ||
@@ -204,6 +402,6 @@ main(process.argv.slice(2)).then(
     } else {
       console.error("mth-db: unexpected error:", err instanceof Error ? err.message : err);
     }
-    process.exit(1);
+    process.exitCode = 1;
   },
 );

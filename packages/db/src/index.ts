@@ -87,4 +87,6 @@ export {
 } from "./demo/seed.ts";
 export { databaseNameOf, resetDemo, urlForDatabase, type DemoResetOptions } from "./demo/reset.ts";
 export { runDemoCommand, type DemoCliConfig, type DemoCliIo } from "./demo/cli.ts";
+// P7 slice C (T-DG7-BE-C; ADR-0064): the migration plan, export and manifest.
+export * from "./transfer/index.ts";
 export { sql, type Expression, type SqlBool } from "kysely";

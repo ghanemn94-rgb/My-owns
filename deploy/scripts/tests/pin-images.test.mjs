@@ -99,20 +99,36 @@ test("C2 all digests recorded: --apply then --check exits 0; only image referenc
   const c = pin(t, ["--check"]);
   assert.equal(c.status, 0, c.out);
   assert.match(c.out, /^OK: 4 images pinned by digest/m);
-  let changed = 0;
+  const changed = {};
   for (const [f, lines] of Object.entries(before)) {
     const now = readFileSync(join(t, f), "utf8").split("\n");
     assert.equal(now.length, lines.length, f);
+    changed[f] = [];
     lines.forEach((line, i) => {
       if (line === now[i]) return;
-      changed++;
+      changed[f].push(i);
       assert.equal(now[i].replace(/@sha256:[0-9a-f]{64}/, ""), line, `${f}:${i + 1} changed beyond the digest`);
     });
   }
-  // Dockerfile 1 + compose 2 + ci.yml 3 (+3 for the staged copy when present)
-  assert.equal(
-    changed,
-    existsSync(join(t, "deploy/ci/ci.yml")) && existsSync(join(t, ".github/workflows/ci.yml")) ? 9 : 6,
+  // Per file: Dockerfile 1; compose 3 (db, keycloak, and the `backup` profile service, which runs on the SAME pinned
+  // postgres:18 image as db: ADR-0066 §5 "on the already pinned postgres:18 image (same digest; no new image)",
+  // T-DG7-DO-F); ci.yml 3, and the staged copy deploy/ci/ci.yml 3 when present.
+  const expected = { "deploy/docker/Dockerfile": 1, "deploy/compose/compose.yaml": 3, ".github/workflows/ci.yml": 3 };
+  if (existsSync(join(t, "deploy/ci/ci.yml"))) expected["deploy/ci/ci.yml"] = 3;
+  assert.deepEqual(Object.fromEntries(Object.entries(changed).map(([f, l]) => [f, l.length])), expected);
+  // The compose lines are exactly the three services' image lines, in file order.
+  const compose = before["deploy/compose/compose.yaml"];
+  const serviceOf = (i) => {
+    for (let k = i; k >= 0; k--) {
+      const m = /^ {2}([a-z0-9-]+):\s*$/.exec(compose[k]);
+      if (m) return m[1];
+    }
+    return null;
+  };
+  assert.deepEqual(changed["deploy/compose/compose.yaml"].map(serviceOf), ["db", "keycloak", "backup"]);
+  assert.deepEqual(
+    changed["deploy/compose/compose.yaml"].map((i) => compose[i].trim()),
+    ["image: postgres:18", `image: ${KC_IMAGE}`, "image: postgres:18"],
   );
 });
 

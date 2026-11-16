@@ -1,0 +1,75 @@
+▶ T-H1: the handover index
+  ✔ on the real tree: no FAIL; anything BLOCKED is a file written later in this release (3.864775ms)
+  ✔ maps each of the seven REQ-S19-015 items, and has the security-controls.md line (D-247 O3) (0.292173ms)
+  ✔ passes on a fixture once the pending files exist (8.401677ms)
+  ✔ fails for a file the index does not list (9.301665ms)
+  ✔ fails for an index line whose file does not exist (7.853518ms)
+  ✔ fails without the security-controls.md line, and for an unmapped item (9.620371ms)
+  ✔ reports a missing release-notes.md as BLOCKED, never as a pass (8.108004ms)
+  ✔ refuses an unknown archive path (8.639894ms)
+✔ T-H1: the handover index (57.925333ms)
+▶ T-H2 and T-B14: the deployment guide
+  ✔ on the real tree: no FAIL; only guide-keys.json may be BLOCKED (DO-D has not written it yet) (4.09913ms)
+  ✔ holds the seven anchors, the B.5 texts, the redirect URI, the service map and the orchestration target (0.615173ms)
+  ✔ fails when the section #domains-and-tls is missing (8.620264ms)
+  ✔ fails when the section #corporate-sso-mapping is missing (8.908718ms)
+  ✔ fails when the section #service-accounts is missing (8.093105ms)
+  ✔ fails when the section #secrets is missing (8.861101ms)
+  ✔ fails when the section #network-boundaries is missing (9.632798ms)
+  ✔ fails when the section #logging is missing (9.333733ms)
+  ✔ fails when the section #monitoring is missing (8.812225ms)
+  ✔ fails for an empty section and for a section that names no source (11.748039ms)
+  ✔ fails without the HA statement or the sub-path text (9.601637ms)
+  ✔ fails for a template key the guide does not index, and for a Compose service the map does not name (9.813158ms)
+  ✔ checks every anchor guide-keys.json cites: present → PASS, absent → FAIL (13.528719ms)
+  ✔ indexes every .env.example key with an existing anchor (0.443738ms)
+✔ T-H2 and T-B14: the deployment guide (113.207853ms)
+▶ T-H4: known limitations
+  ✔ the report the shipped file names (by SHA-256) is in the delivery records (0.326335ms)
+  ✔ known-limitations.mjs --check exits 0 on the tree with the report the shipped file was generated from (76.196785ms)
+  ✔ names every carried row id of p7-plan §1.4 and every P7 ADR (ADR-0062 to ADR-0073) (0.785471ms)
+  ✔ the protocol-audit block equals the one generated from the report, with the D-249 statement (3.511305ms)
+  ✔ a changed report fails --check (exit 1) (57.474661ms)
+  ✔ --write on a fixture copy regenerates a hand-damaged block, and --check then passes (182.323671ms)
+  ✔ refuses an environment table row it does not know, or a known row that is missing (exit 2) (67.969721ms)
+  ✔ refuses a report that is not a protocol-audit report, and runs without one only as BLOCKED (1300.887884ms)
+  ✔ external-dependencies.json is the contract's ExternalDependency array, and the guide block lists the same keys (1.427304ms)
+  ✔ keycloak-e2e records the D-267 host run: not_verified (not blocked, not Mobily's IdP), and §4 no longer says it never ran (0.567866ms)
+  ✔ arabic-review.json ships empty, and the provisional block lists every Arabic handover file (6.418913ms)
+✔ T-H4: known limitations (1698.890312ms)
+▶ T-H7: Arabic summaries of the IT and operator documents
+  ✔ on the real tree: PASS (5.675292ms)
+  ✔ fails without the provisional line under the first heading (13.224952ms)
+  ✔ does not require the line for a file arabic-review.json lists (11.296486ms)
+  ✔ fails for a missing summary page, a missing section, or an operator summary without the upgrade guide (11.973734ms)
+  ✔ fails when an Arabic B.5 text of the deployment summary is not verbatim (8.547392ms)
+✔ T-H7: Arabic summaries of the IT and operator documents (51.070727ms)
+▶ T-H8: security-controls guide links (D-247 O5)
+  ✔ HR-01, HR-02, HR-04 and HR-06 link existing deployment.md anchors, and HR-04 the backup guide (0.696885ms)
+  ✔ fails for a link to a missing anchor, and for HR-04 without the backup guide (6.81831ms)
+  ✔ DO-B's matrix test (T-G7) still passes (49.628493ms)
+✔ T-H8: security-controls guide links (D-247 O5) (57.408131ms)
+▶ T-H9 and T-I14: scans over the handover, and the candidate manifest
+  ✔ the secret scan over docs/handover reports nothing (154.483587ms)
+  ✔ the claims scan (docs/handover/** in its scope) reports nothing (4856.282857ms)
+  ✔ every file under docs/handover/ is in the candidate manifest, so the payload scan covers it (T-I14) (524.571332ms)
+✔ T-H9 and T-I14: scans over the handover, and the candidate manifest (5535.675143ms)
+▶ T-H5 checker logic (DOC-A runs it on the real guides)
+  ✔ no guides yet → BLOCKED (exit 2), never a pass (59.046132ms)
+  ✔ matching en/ar pairs with known screen paths pass (13.518405ms)
+  ✔ fails for a missing ar file, a heading or anchor mismatch, a missing marker and an unknown screen path (11.818159ms)
+  ✔ route matching: parameters match one segment; API paths are not screens (1.251419ms)
+✔ T-H5 checker logic (DOC-A runs it on the real guides) (86.14874ms)
+▶ check-handover exit codes
+  ✔ FAIL wins over BLOCKED, BLOCKED over PASS (0.297631ms)
+  ✔ a usage error is BLOCKED (exit 2) (101.983398ms)
+  ✔ the full check on the real tree never FAILs; with MTH_STRICT_HANDOVER=1 (the freeze) it must PASS (1445.721196ms)
+✔ check-handover exit codes (1548.447704ms)
+ℹ tests 51
+ℹ suites 8
+ℹ pass 51
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 9696.091368

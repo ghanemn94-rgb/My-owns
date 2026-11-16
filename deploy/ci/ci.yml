@@ -37,8 +37,45 @@ jobs:
       - name: Delivery gate pipeline state (no stage advanced past an unapproved gate)
         run: node tools/gates/validate.mjs --pipeline
 
-  verify:
+  # devops-engineer (T-DG7-DO-B, ADR-0063 §1.5): the repository secret scan blocks committed secrets before any product
+  # job runs. Payload (the candidate manifest of this commit, what the archive's source/ holds), then history (every
+  # blob reachable from HEAD, except trading_agent/), then the self-tests (T-G1..T-G8, which also run the claims scan
+  # over the docs and UI strings). Exit 1 (a hit or a stale allow-list entry) or 2 (BLOCKED) fails the job.
+  secret-scan:
     needs: delivery-gates
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0 # the history scope scans every blob reachable from HEAD
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24"
+      - name: Secret scan, payload (the candidate manifest of this commit)
+        run: node tools/release/secret-scan.mjs --scope payload
+      - name: Secret scan, history (every blob reachable from HEAD)
+        run: node tools/release/secret-scan.mjs --scope history
+      - name: Secret-scan, claims-scan and controls-matrix self-tests (T-G1..T-G8)
+        run: node --test tools/release/tests/secret-scan.test.mjs tools/release/tests/claims-scan.test.mjs tools/release/tests/security-controls.test.mjs
+
+  # devops-engineer (T-DG7-DO-J, ADR-0073): the release seal, A28 verification and release-notes tools on the rehearsal.
+  # REHEARSAL-PASS is not PASS: this job proves the tools, not a release (A28 runs once, after DG7 approval).
+  seal-tests:
+    needs: delivery-gates
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      TMPDIR: ${{ runner.temp }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24"
+      - name: Seal, verify-seal and release-notes self-tests (T-M1..T-M13, T-I11, T-I13 fixture half)
+        run: node --test tools/release/tests/seal.test.mjs tools/release/tests/verify-seal.test.mjs tools/release/tests/release-notes.test.mjs
+
+  verify:
+    needs: [delivery-gates, secret-scan]
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
@@ -74,7 +111,7 @@ jobs:
   # without the registry's advisory service the live step fails (BLOCKED), it is not skipped. Refresh the snapshot
   # where the service is reachable: node deploy/scripts/dep-audit.mjs --refresh (docs/operations/dependency-audit.md).
   dependency-audit:
-    needs: delivery-gates
+    needs: [delivery-gates, secret-scan]
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -222,7 +259,7 @@ jobs:
       - name: Install (sandboxed, frozen lockfile; BLOCKED without bubblewrap - never an unsandboxed fallback)
         run: deploy/scripts/ci-install-deps.sh
       - name: Deploy tooling self-tests (check-ci-needs negatives incl. status-function and gate-context bypasses; pin-images BLOCKED and --missing paths)
-        run: node --test deploy/scripts/tests/check-ci-needs.test.mjs deploy/scripts/tests/pin-images.test.mjs deploy/scripts/tests/log-scan.test.mjs
+        run: node --test deploy/scripts/tests/check-ci-needs.test.mjs deploy/scripts/tests/pin-images.test.mjs deploy/scripts/tests/log-scan.test.mjs deploy/scripts/tests/check-virtual-store.test.mjs deploy/scripts/tests/image-bundle.test.mjs deploy/scripts/tests/offline-drill.test.mjs deploy/scripts/tests/dockerfile-context.test.mjs
       - name: CI structure (gated on delivery-gates success; sandboxed installs only; actions pinned by SHA)
         run: node deploy/scripts/check-ci-needs.mjs
       - name: .env.example equals the ENV_VARS catalogue (names only, no values)
@@ -267,3 +304,45 @@ jobs:
           docker tag "$MTH_APP_IMAGE" "$REGISTRY/mth-app:$SHA"
           docker push "$REGISTRY/mth-app:$SHA"
           docker logout "$REGISTRY"
+
+  # devops-engineer (T-DG7-DO-A, ADR-0062 §9.1): the release tooling. Self-tests of the archive, tar, service list,
+  # asset scan and licence tools; the service list against Compose; a REHEARSAL archive (fixture demo-data) built from
+  # this commit and verified; and the build from that archive inside a network namespace with no interfaces (offline
+  # install from the store the sandboxed install filled, build, runtime assembly, check-no-cdn, scan-assets).
+  # The archive is an engineering artefact, not an IT approval. Live CI has not been run (D-058).
+  release:
+    needs: [delivery-gates, secret-scan]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24"
+      - name: pnpm at the packageManager version (real binary on PATH; no install scripts)
+        run: npm install --global --ignore-scripts "$(node -p 'require("./package.json").packageManager.split("+")[0]')"
+      - name: bubblewrap for the sandboxed installer and the network namespace (allow unprivileged user namespaces)
+        run: |
+          sudo apt-get update -q && sudo apt-get install -y -q --no-install-recommends bubblewrap
+          if [ -e /proc/sys/kernel/apparmor_restrict_unprivileged_userns ]; then
+            sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          fi
+      - name: Install (sandboxed, frozen lockfile; BLOCKED without bubblewrap - never an unsandboxed fallback)
+        run: deploy/scripts/ci-install-deps.sh
+      - name: Release tooling self-tests (T-A1..T-A11; Node 24 refuses a directory argument)
+        run: node --test tools/release/tests/*.test.mjs licenses/tests/*.test.mjs
+      - name: Service list matches the Compose files
+        run: node tools/release/service-list.mjs --check
+      - name: SBOM, licence inventory, procurement flag and direct-dependency pins
+        run: node licenses/generate-sbom.mjs --check
+      - name: Rehearsal archive from this commit, verified
+        run: |
+          mkdir -p dist/release
+          node tools/release/build-archive.mjs --commit "$(git rev-parse HEAD)" \
+            --demo-data tools/release/tests/fixtures/demo-data --rehearsal --out dist/release
+          archive="$(ls dist/release/*-REHEARSAL.tar.gz)"
+          node tools/release/build-archive.mjs --verify "$archive" --expect-sha256 "$(cut -c1-64 "$archive.sha256")"
+      - name: Build from the archive with no network (includes scan-assets on the built SPA, runtime tree and config)
+        run: |
+          archive="$(ls dist/release/*-REHEARSAL.tar.gz)"
+          tools/release/build-from-archive.sh "$archive" --sha256 "$(cut -c1-64 "$archive.sha256")" \
+            --store "$(pnpm store path)" --work "$RUNNER_TEMP/build-from-archive"

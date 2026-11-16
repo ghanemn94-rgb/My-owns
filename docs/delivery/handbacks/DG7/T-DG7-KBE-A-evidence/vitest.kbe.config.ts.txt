@@ -1,0 +1,18 @@
+// Scratch config (T-DG7-KBE-A): the root integration project, with tests/integration/** included. Not in the repo.
+import { defineConfig } from "vitest/config";
+export default defineConfig({
+  root: "/home/user/My-owns",
+  resolve: { conditions: ["@mth/source"] },
+  ssr: { resolve: { conditions: ["@mth/source"], externalConditions: ["@mth/source"] } },
+  test: {
+    name: "integration-kbe",
+    environment: "node",
+    include: ["tests/integration/**/*.test.ts"],
+    globalSetup: ["packages/db/test/global-setup.ts"],
+    pool: "forks",
+    poolOptions: { forks: { singleFork: true } },
+    fileParallelism: false,
+    testTimeout: 30_000,
+    hookTimeout: 30_000,
+  },
+});

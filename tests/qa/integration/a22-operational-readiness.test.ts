@@ -103,6 +103,13 @@ describe("REQ-S12-022: the jobs view shows last success and next run for each sc
         null,
         null,
       ]);
+      // QA-C (T-DG7-QA-C): ADR-0067 §4 ships `retention.archive` DISABLED. A disabled schedule has no next run: it
+      // is shown as null with the reason "disabled", never as a time (Unknown is never shown as a value).
+      if (!s.enabled) {
+        expect([s.code, job.nextRunAt, job.nextRunUnknownReason]).toEqual([s.code, null, "disabled"]);
+        expect(job.openFailures).toBe(0);
+        continue;
+      }
       expect([s.code, typeof job.nextRunAt, job.nextRunUnknownReason]).toEqual([s.code, "string", null]);
       expect(Date.parse(job.nextRunAt), `${s.code}: next run is in the future`).toBeGreaterThan(before - 1000);
       if (s.timezone === RIYADH) {

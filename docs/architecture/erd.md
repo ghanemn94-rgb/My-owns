@@ -607,7 +607,7 @@ erDiagram
     evidence ||--o{ evidence_content : "file revisions (append-only)"
     evidence_content |o--o| evidence : "current / reviewed content (composite FK)"
     evidence ||--o{ evidence_link : "T-FK"
-    evidence_link }o--|| P2_record : "record_type + record_id (guarded, same transformation)"
+    %% evidence_link.record_type + record_id point at any P2 record (polymorphic, guarded, same transformation). There is no table to draw; "P2_record" was a placeholder entity (removed by T-DG7-ARCH-R1, ADR-0070 §1.1).
 
     evidence {
         uuid id PK
@@ -2220,6 +2220,86 @@ erDiagram
 | Entity | Table(s) | PK | Owner (column) | Writers | Status field | `version` | API module |
 |---|---|---|---|---|---|---|---|
 | Snapshot aggregate records (S13-007; S10-002) | `report_snapshot_aggregate` | `id` (snapshot, section, record unique) | — | the snapshot's creating transaction | — | append-only | reporting |
+
+## 1ac. P7 slices C and D: the migration manifest rules, exports, imports, reconciliation reports, the identity rebind hold, and configuration bundles (migrations 0133–0135; T-DG7-ARCH-02; ADR-0064, ADR-0065)
+
+Three new mutable tables carry the P2 guards and are audited (`_row_guard`, deferred `_audit_required`): `migration_export`, `identity_binding_hold` and `config_bundle_import`, each with a state-machine trigger. `migration_import` and `migration_reconciliation` are append-only **and** audited (written once, by the CLI). `transfer_table_rule`, `transfer_column_rule` (migration-written catalogues), `migration_reconciliation_table`, `migration_reconciliation_attachment`, `identity_rebind_event`, `config_bundle_export` (audited), `config_bundle_import_item` and `config_bundle_import_commit` are append-only. `0149` adds `migration_reconciliation_delta` (append-only, CLI-written) and the seven audit-range columns of `migration_import` (ADR-0064 Amendment 1). `0150` adds `migration_import.audit_already_present_rows` and widens the delta `basis` to nine values (ADR-0064 Amendment 2). `0151` widens the delta `basis` to ten values with `counter` (ADR-0064 Amendment 3). `0152` widens it to eleven values with `lineage` (ADR-0064 Amendment 4). `0135` adds four permission codes. The column lists are in `data-dictionary.md` ("P7 tables, slices C and D").
+
+```mermaid
+erDiagram
+    app_user |o--o{ migration_export : "requested by (NULL for the CLI)"
+    migration_import ||--o{ migration_reconciliation : "one import run, then re-checks"
+    migration_reconciliation ||--o{ migration_reconciliation_table : "one row per manifest table"
+    migration_reconciliation ||--o{ migration_reconciliation_attachment : "only mismatching objects"
+    migration_reconciliation ||--o{ migration_reconciliation_delta : "allowed and unexplained differences (0149)"
+    migration_import ||--o{ identity_binding_hold : "one hold per imported user"
+    app_user ||--o| identity_binding_hold : "at most one hold"
+    identity_binding_hold ||--o| identity_rebind_event : "the applied mapping line"
+    organization ||--o{ config_bundle_export : "bundles exported from it"
+    organization ||--o{ config_bundle_import : "bundles imported into it"
+    config_bundle_import ||--o{ config_bundle_import_item : "one set per validation run"
+    config_bundle_import_item ||--o| config_bundle_import_commit : "the record a committed item created"
+```
+
+`transfer_table_rule` and `transfer_column_rule` name tables and columns by text (catalogue rules, no foreign key). `migration_import.source_export_reference` is the id of the **source** installation's export (no foreign key: the row is not on the target). `config_bundle_import_commit.target_record_id` is polymorphic over seven configuration tables named by `target_record_type` (CHECK), with no foreign key.
+
+### 1ac.1 P7 entity register (slices C and D) → tables
+
+| Entity | Table(s) | PK | Owner (column) | Writers | Status field | `version` | API module |
+|---|---|---|---|---|---|---|---|
+| Migration rules (S19-016) | `transfer_table_rule`, `transfer_column_rule` | `table_name`; `(table_name, column_name)` | — | migrations | — | no (append-only) | transfer |
+| Migration export (S19-016) | `migration_export` | `id` | `created_by` (NULL for the CLI) | `migration.export` (ADM_TECH); job `transfer.export`; CLI | `status` (queued, running, succeeded, failed) | yes | transfer (export) |
+| Migration import (S19-014, S19-016) | `migration_import` | `id` | — (`operator_name`) | CLI (owner role) | — | no (append-only) | transfer (import) |
+| Reconciliation report (S19-014) | `migration_reconciliation` (+ `_table`, `_attachment`) | `id`; `(migration_reconciliation_id, table_name)`; `id` | — (`operator_name`) | CLI (owner role) | `result` (matched, mismatched) | no (append-only) | transfer (import) |
+| Identity rebind (M0364) | `identity_binding_hold` (+ `identity_rebind_event`) | `id`; `user_id` unique | — (`operator_name`) | the import; CLI `rebind-identity` | `state` (unbound, rebound, retained) | yes (events append-only) | transfer (identity) |
+| Configuration bundle export (S19-008) | `config_bundle_export` | `id` | `created_by` | `config_bundle.export` (ADM_TECH, ADM_METHOD) | — | no (append-only) | transfer (config-bundle) |
+| Configuration bundle import (S19-008) | `config_bundle_import` (+ `_item`, `_commit`) | `id`; `(config_bundle_import_id, validation_no, ordinal)`; `config_bundle_import_item_id` | `created_by` | `config_bundle.import` (ADM_TECH, ADM_METHOD) | `status` (uploaded, validated, invalid, committed) | yes (items and commits append-only) | transfer (config-bundle) |
+
+## 1ad. P7 slice E: retention classes and the table map, retention runs, their actions, archived-record markers, and backup sets (migrations 0143–0146; T-DG7-ARCH-03; ADR-0066, ADR-0067)
+
+Two new mutable tables carry the P2 guards and are audited (`_row_guard`, deferred `_audit_required`): `retention_class` (with `retention_class_guard`; never deleted) and `retention_run` (with the state machine `retention_run_guard`). `retention_table_class` (migration-written) and `retention_run_action` (with a deferred per-action audit rule) are append-only; `retention_archived_record` is insert-only except its purge marker; `backup_set` is append-only and audited, written only by `backup_set_record()`. `0146` adds four permission codes. The column lists are in `data-dictionary.md` ("P7 tables, slice E").
+
+```mermaid
+erDiagram
+    retention_class ||--o{ retention_table_class : "every public base table, exactly once"
+    app_user |o--o{ retention_run : "requested by (NULL for the schedule)"
+    retention_run ||--o{ retention_run_action : "one row per record and action"
+    retention_class ||--o{ retention_run_action : "class applied"
+    retention_table_class ||--o{ retention_run_action : "table"
+    retention_run ||--o{ retention_archived_record : "archived by"
+    retention_run |o--o{ retention_archived_record : "purged by"
+    retention_table_class ||--o{ retention_archived_record : "table"
+    retention_class ||--o{ retention_archived_record : "class"
+```
+
+`retention_table_class.table_name` names a table by text (a catalogue map, no foreign key to `pg_class`). `retention_archived_record.record_key` and `retention_run_action.record_key` hold the primary key values of the archived or selected row as a text-valued object: a polymorphic reference to a row of an operational table (`processed_message`, `worker_heartbeat`, `inbox_notification`, `job_run`, `webhook_receipt`), with no foreign key, because the row may be purged. `backup_set` stands alone (no foreign key).
+
+### 1ad.1 P7 entity register (slice E) → tables
+
+| Entity | Table(s) | PK | Owner (column) | Writers | Status field | `version` | API module |
+|---|---|---|---|---|---|---|---|
+| Retention class (S16-024) | `retention_class` | `id` (`code` unique) | `updated_by` | migrations; `retention.configure` (ADM_TECH) | `action` (retain, archive, archive_then_purge) | yes | retention (classes) |
+| Retention table map (S16-024) | `retention_table_class` | `table_name` | — | migrations | — | no (append-only) | retention (classes) |
+| Retention run (S16-024) | `retention_run` | `id` | `created_by` (NULL for the schedule) | `retention.run` (ADM_TECH); job `retention.archive` | `status` (queued, running, succeeded, failed) | yes | retention (runs) |
+| Retention action log (S16-024) | `retention_run_action` | `id` | — | job `retention.archive` | `action` | no (append-only) | retention (runs) |
+| Archived-record marker (S16-024) | `retention_archived_record` | `(table_name, record_key)` | — | job `retention.archive`; `retention_purge_record()` | `purged_at` (NULL: kept, read-only) | no | retention (runs) |
+| Backup set (S19-012) | `backup_set` | `id` (`label` unique) | — (`operator_name`) | `backup_set_record()` (owner role; `deploy/scripts/backup.sh`) | `status` (succeeded, failed) | no (append-only) | retention (backups) |
+
+## 1ae. P7 slices B and F: no new entity (no migration; T-DG7-ARCH-04; ADR-0069, ADR-0070)
+
+Slices B (clean deployment, readiness, transfer, offline and image drills) and F (schema, API and connector handover) add **no table, column, function or trigger**; T-DG7-ARCH-04 ships no migration from its range `0150`–`0152`. They read existing tables only:
+
+- readiness (`/readyz` `storage` and `worker`) and `getDeploymentStatus` read `storage_setting` (0102, the effective evidence store of ADR-0054 §2), `worker_heartbeat` (0101), `schema_migration` and `deployment_environment` (0090);
+- the transfer drill (ADR-0069 §4) moves every table through the ADR-0064 package (section 1ac) and scans the target's text and `jsonb` columns for the source origin;
+- the dictionary coverage tool (ADR-0070 §1) reads the catalogue of the `public` and `pgboss` schemas. Its ERD rule: a table named in an ERD section that does not exist **fails**; a table that appears in no ERD section is **reported** (this model is entities and relationships, not columns; ADR-0070 §1.1).
+
+## 1af. P7 slices I and H: no new entity (no migration; T-DG7-ARCH-05; ADR-0071, ADR-0072)
+
+Slices I (traceability, in-app register, honest completion) and H (handover documentation) add **no table, column, function or trigger**. T-DG7-ARCH-05 ships no migration from its range `0153`–`0155`.
+
+- The in-app register and Administration > About read a **build-time snapshot file** (`apps/api/dist/release/register-snapshot.json`, ADR-0071 §2), not the database.
+- The release-notes and handover generators (`tools/release/**`) read repository files at build or release time. They never connect to a database.
+- The role matrix of the handover (`docs/handover/role-matrix.md`) is generated from `packages/shared/src/permissions.ts`, whose parity with the `role_permission` seeds is already pinned by `packages/db/src/seed.test.ts`.
 
 ## 2. Conceptual model, all §16 entity groups
 

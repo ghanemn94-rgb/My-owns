@@ -198,6 +198,8 @@ export interface DemoPeriod {
   readonly finalStatus: "scheduled" | "open" | "closed";
   readonly openedAt: string | null;
   readonly closedAt: string | null;
+  /** A generated period (ADR-0064 A4.6) is created at its opening instant; the fixed ones at KPIS_CREATED_AT. */
+  readonly createdAt?: string;
 }
 
 /** Monthly periods (the three KPIs are monthly). September is still scheduled at the synthetic clock (2026-09-01). */
@@ -247,6 +249,114 @@ export const DEMO_PERIODS: readonly DemoPeriod[] = [
     closedAt: null,
   },
 ];
+
+// ------------------------------------------------------------------------------------------------ A4.6: date-relative
+
+/** The last fixed period; a later anchor generates one open monthly period per month up to it (ADR-0064 A4.6). */
+export const DEMO_LAST_FIXED_PERIOD = "2026-09";
+/** The latest supported anchor (kbeId's number range is far wider; the bound is the ADR's). */
+export const DEMO_MAX_PERIOD_ANCHOR = "2099-12";
+
+/** A4.6 "The limit": an anchor beyond 2099-12. The CLI prints the A4.7 line and exits 1; nothing is written. */
+export class DemoPeriodAnchorRefused extends Error {
+  readonly exitCode = 1;
+  readonly anchor: string;
+  constructor(anchor: string) {
+    super(
+      `period anchor ${anchor} is outside the supported range ${DEMO_LAST_FIXED_PERIOD}..${DEMO_MAX_PERIOD_ANCHOR}`,
+    );
+    this.name = "DemoPeriodAnchorRefused";
+    this.anchor = anchor;
+  }
+}
+
+const MONTH = /^(\d{4})-(\d{2})$/;
+const DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
+const pad2 = (n: number) => String(n).padStart(2, "0");
+
+/** True when `v` is a real calendar date written YYYY-MM-DD (2026-02-30 is not). Pure. */
+export function isCalendarDate(v: string): boolean {
+  const m = DATE.exec(v);
+  if (m === null) return false;
+  const [y, mo, d] = [Number(m[1]), Number(m[2]), Number(m[3])];
+  const t = new Date(Date.UTC(y, mo - 1, d));
+  return t.getUTCFullYear() === y && t.getUTCMonth() === mo - 1 && t.getUTCDate() === d;
+}
+
+/** The calendar date (YYYY-MM-DD) of `instant` in `timeZone`. Pure. */
+export function dateInZone(instant: Date, timeZone: string): string {
+  const f = new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" });
+  const parts = Object.fromEntries(f.formatToParts(instant).map((x) => [x.type, x.value]));
+  return `${parts["year"]}-${parts["month"]}-${parts["day"]}`;
+}
+
+/** The UTC instant (YYYY-MM-DDTHH:MM:SSZ) of local midnight on the first of month `y`-`m` in `timeZone`. Pure. */
+export function startOfMonthIn(y: number, m: number, timeZone: string): string {
+  const f = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    hourCycle: "h23",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+  const offsetAt = (t: number) => {
+    const p = Object.fromEntries(f.formatToParts(new Date(t)).map((x) => [x.type, x.value]));
+    const local = Date.UTC(
+      Number(p["year"]),
+      Number(p["month"]) - 1,
+      Number(p["day"]),
+      Number(p["hour"]),
+      Number(p["minute"]),
+      Number(p["second"]),
+    );
+    return local - t;
+  };
+  const wall = Date.UTC(y, m - 1, 1);
+  let t = wall - offsetAt(wall);
+  t = wall - offsetAt(t);
+  return new Date(t).toISOString().replace(/\.000Z$/, "Z");
+}
+
+/**
+ * ADR-0064 A4.6: the dataset's reporting periods for a period anchor (YYYY-MM): DEMO_PERIODS unchanged, plus, for an
+ * anchor after 2026-09, one open monthly period per month from 2026-10 to the anchor inclusive. Refuses an anchor
+ * beyond 2099-12 (DemoPeriodAnchorRefused). Pure: the anchor is the only input besides the dataset's timezone.
+ */
+export function demoPeriodsFor(anchor: string, timeZone: string): DemoPeriod[] {
+  const a = MONTH.exec(anchor);
+  if (a === null || Number(a[2]) < 1 || Number(a[2]) > 12)
+    throw new Error(`demo seed: invalid period anchor ${anchor}`);
+  if (anchor > DEMO_MAX_PERIOD_ANCHOR) throw new DemoPeriodAnchorRefused(anchor);
+  const out: DemoPeriod[] = [...DEMO_PERIODS];
+  const [ay, am] = [Number(a[1]), Number(a[2])];
+  const total = (ay - 2026) * 12 + (am - 9);
+  for (let n = 1; n <= total; n += 1) {
+    const idx = 8 + n; // months since 2026-01, zero-based: 2026-10 is 9
+    const [y, m] = [2026 + Math.floor(idx / 12), (idx % 12) + 1];
+    const label = `${y}-${pad2(m)}`;
+    const last = new Date(Date.UTC(y, m, 0)).getUTCDate();
+    const end = `${label}-${pad2(last)}`;
+    const due = new Date(Date.UTC(y, m - 1, last + 5));
+    const [ny, nm] = m === 12 ? [y + 1, 1] : [y, m + 1];
+    const openedAt = n === total ? startOfMonthIn(y, m, timeZone) : startOfMonthIn(ny, nm, timeZone);
+    out.push({
+      key: label,
+      id: kbeId(ID_BLOCK.reportingPeriod, 4 + n),
+      label,
+      start: `${label}-01`,
+      end,
+      dueDate: due.toISOString().slice(0, 10),
+      finalStatus: "open",
+      openedAt,
+      closedAt: null,
+      createdAt: openedAt,
+    });
+  }
+  return out;
+}
 
 export function demoPeriod(key: string): DemoPeriod {
   const p = DEMO_PERIODS.find((x) => x.key === key);
@@ -444,8 +554,9 @@ const TRAJECTORIES_APPROVED_AT = "2026-05-28T08:00:00Z";
 
 async function seedPeriods(ctx: DemoSeedContext): Promise<void> {
   const by = DEMO_ANCHORS.users.kds;
-  for (const p of DEMO_PERIODS) {
-    const at = when(ctx, KPIS_CREATED_AT);
+  // ADR-0064 A4.6: the fixed periods as before, then the generated ones up to the run's period anchor.
+  for (const p of demoPeriodsFor(ctx.periodAnchor, ctx.timeZone)) {
+    const at = when(ctx, p.createdAt ?? KPIS_CREATED_AT);
     // A period is created scheduled; an actual is entered only while it is open (kpi_actual_period_open), so the
     // three past periods open here and June and July close after their actuals (actuals.ts).
     await ctx.insert(

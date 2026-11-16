@@ -1,0 +1,26 @@
+port-policy: PostgreSQL listening on port 24351 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.7J5f2o/claude-0/review-a26-qa
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwgswb9f_4b14f9a3 (server_encoding UTF8); applied 135 migrations to a fresh database
+stdout | tests/qa/integration/qa-a26-bu-update-authz.test.ts > drill a26: business-unit PATCH requires business_unit.manage > office (business_unit.read only) cannot rename/deactivate a1: 403, audited denial, no change
+[qa-a26] office: status=403 version 1->1 name_en=Unit BUC24B28 status=active updates=0
+
+stdout | tests/qa/integration/qa-a26-bu-update-authz.test.ts > drill a26: business-unit PATCH requires business_unit.manage > auditor (business_unit.read only) cannot rename/deactivate a1: 403, audited denial, no change
+[qa-a26] auditor: status=403 version 1->1 name_en=Unit BUC24B28 status=active updates=0
+
+stdout | tests/qa/integration/qa-a26-bu-update-authz.test.ts > drill a26: business-unit PATCH requires business_unit.manage > leadA1 (business_unit.read only) cannot rename/deactivate a1: 403, audited denial, no change
+[qa-a26] leadA1: status=403 version 1->1 name_en=Unit BUC24B28 status=active updates=0
+
+stdout | tests/qa/integration/qa-a26-bu-update-authz.test.ts > drill a26: business-unit PATCH requires business_unit.manage > auditor (read-only) cannot re-parent a1x to the top level when only read applies to the moved unit
+[qa-a26] auditor re-parent: status=403
+
+ ✓ |integration| tests/qa/integration/qa-a26-bu-update-authz.test.ts (6 tests) 748ms
+
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+   Start at  19:30:40
+   Duration  13.70s (transform 4.99s, setup 0ms, collect 9.15s, tests 748ms, environment 0ms, prepare 77ms)
+
+exit=0

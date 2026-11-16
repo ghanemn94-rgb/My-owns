@@ -1163,3 +1163,100 @@ Legend as in 8.3 (**C** create, **E** edit, **V** view), plus **P** = created on
 1. Through `/api/v1/audit-events` only (the event's after-state), not through `getBrandingVersionContrast`.
 2. `branding.configure` (seeded by `0091`): `getBrandingVersionContrast`; the report is written by `putBrandingSettings` in the publish transaction, never by its own operation, and is immutable.
 3. Exactly where the caller can read the value itself (scope, record permission, sensitivity grant; ADR-0051): the weighted score (`getInitiativeScores`), the benefit realized value (`getBenefitValues`, `getBenefit`), the KPI status (`getKpiStatus`), the financial metrics (`getBusinessCaseCashFlows` and the metrics), the health check (`getHealthCheck`) and the dashboard drill-downs. A panel adds no data the caller cannot already read. Technical details (token names, hashes, infrastructure terms) appear only on Administration screens (REQ-S15-014 "view-technical:ADM").
+
+## 30. P7 implementation, slices C and D (DG7): migration exports, imports, reconciliation and identity rebind; configuration transfer bundles
+
+- **Task:** T-DG7-ARCH-02 (solution-architect), 2026-11-12. **Sources:** ADR-0064 §7–§9, ADR-0065 §4, §8; master prompt M0356, M0362, M0364 ("rebind corporate identity subjects under IT control"); D-243 Q4, Q5 (the import and the rebind are CLI-only, IT-run).
+- **Seed:** `0135_p7_transfer_permissions.sql`, equal to `P7_TRANSFER_PERMISSIONS` / `P7_TRANSFER_ROLE_PERMISSIONS` in `packages/shared/src/permissions.ts` (`packages/db/src/seed.test.ts`). A configurable starting point, not a Mobily-approved access policy.
+- **Code name.** The p7-plan named the read code `migration.import_status.read`. A permission code has exactly one dot (0001 `permission_code_check`), so it is `migration_import.read`.
+- **Separation:** no code here is a business approval or a Finance validation; the 0001 trigger still refuses any approval code for a technical-admin role. A migration package carries the source's G1–G6 decisions and Finance validations as records; exporting, importing or rebinding approves nothing. Committing a configuration bundle creates drafts that go through the existing review and publish pipeline; it publishes nothing.
+- **No API right starts an import or a rebind.** `mth-db import-migration`, `reconcile-migration` and `rebind-identity` run with the owner credentials, which only IT holds. The API only shows their results.
+- **AUD stays read-only:** AUD holds `migration_import.read` (imports, reconciliation reports, the rebind list) and nothing else here. Every export, upload, validate and commit answers 403 for AUD.
+
+### 30.1 Permission codes
+
+| Code | Category | Meaning | Default roles |
+|---|---|---|---|
+| `migration.export` | configure | Request a whole-installation migration export; read exports, the manifest and the attachment manifest (never row data or bytes); lock 730402 | ADM_TECH |
+| `migration_import.read` | read | Read migration imports, their reconciliation reports and the identity rebind list | ADM_TECH, ADM_ACCESS, AUD |
+| `config_bundle.export` | configure | Export an organization's published configuration as a bundle; read and download exports | ADM_TECH, ADM_METHOD |
+| `config_bundle.import` | configure | Upload, validate and commit a bundle (plus each written kind's own configure right); lock 730405 | ADM_TECH, ADM_METHOD |
+
+Legend as in 8.3 (**C** create, **E** edit, **V** view), plus **D** = download, **Val** = validate, **Com** = commit.
+
+| Entity (table) | SP | TL | BO | WL | FIN | TO | KDS | TD | CM | SEC | AUD | ADM_METHOD | ADM_TECH | ADM_ACCESS |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Migration export (`migration_export`) and its manifests | — | — | — | — | — | — | — | — | — | — | — | — | C V D | — |
+| Migration import, reconciliation reports (`migration_import`, `migration_reconciliation*`) | — | — | — | — | — | — | — | — | — | — | V | — | V | V |
+| Identity rebind list (`identity_binding_hold`, `identity_rebind_event`) | — | — | — | — | — | — | — | — | — | — | V | — | V | V |
+| Configuration bundle export (`config_bundle_export`) | — | — | — | — | — | — | — | — | — | — | — | C V D | C V D | — |
+| Configuration bundle import (`config_bundle_import*`) | — | — | — | — | — | — | — | — | — | — | — | C V Val Com¹ | C V Val Com¹ | — |
+
+1. The commit writes an item only when the caller also holds that kind's own right: `methodology.configure` (the six Studio kinds; ADM_METHOD), `automation.configure` (rules), `branding.configure`, `notification_policy.configure`, `job.configure`, `upload_policy.configure` (ADM_TECH by default) and `config_review_policy.configure` (TO by default). An item the caller could not write by hand is planned as `refused` (`config_bundle.kind_not_permitted`). The import never widens a right.
+
+- **Scope:** migration exports and imports are installation-wide. Bundles are per organization (`organizationId`), and the caller needs the code in that organization.
+
+## 31. P7 implementation, slice E (DG7): retention classes, retention runs and archived records; backup status
+
+- **Task:** T-DG7-ARCH-03 (solution-architect), 2026-11-12. **Sources:** ADR-0067 §7, ADR-0066 §6; REQ-S16-024 ("configure:ADM(IT-approved); view:AUD,ADM"); REQ-S19-012 ("view:IT"); D-243 Q3.
+- **Seed:** `0146_p7_retention_backup_permissions.sql`, equal to `P7_RETENTION_PERMISSIONS` / `P7_RETENTION_ROLE_PERMISSIONS` in `packages/shared/src/permissions.ts` (`packages/db/src/seed.test.ts`). A configurable starting point, not a Mobily-approved access policy.
+- **"IT-approved" is a reference, not a right.** `retention.configure` lets ADM_TECH record the reference of an approval Mobily IT gave outside the platform (for example a change ticket). Holding the code, or saving a reference, approves nothing; no agent writes a real reference.
+- **Separation:** no code here is a business approval or a Finance validation; the 0001 trigger still refuses any approval code for a technical-admin role. Business, audit and snapshot classes can never leave `retain`, whatever the caller holds (database CHECK, ADR-0067 §2).
+- **No API right starts a backup or a restore.** Both run outside the API with the owner credentials, which only IT holds; the API shows the reported sets only.
+- **AUD stays read-only:** AUD holds `retention.read` and `backup.read`. Every class update and run request answers 403 for AUD.
+
+### 31.1 Permission codes
+
+| Code | Category | Meaning | Default roles |
+|---|---|---|---|
+| `retention.read` | read | Read retention classes with their tables, runs, the per-record action log and archived-record markers (key values only, never row content) | ADM_TECH, ADM_ACCESS, AUD |
+| `retention.configure` | configure | Change a class's action, period and IT approval reference text (If-Match); lock 730410 | ADM_TECH |
+| `retention.run` | configure | Request a retention dry run or run; lock 730410 | ADM_TECH |
+| `backup.read` | read | Read the backup sets the backup job reported (status, timings, checksums, counts) | ADM_TECH, AUD |
+
+Legend as in 8.3 (**C** create, **E** edit, **V** view), plus **R** = request a run or dry run.
+
+| Entity (table) | SP | TL | BO | WL | FIN | TO | KDS | TD | CM | SEC | AUD | ADM_METHOD | ADM_TECH | ADM_ACCESS |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Retention class (`retention_class`, `retention_table_class`) | — | — | — | — | — | — | — | — | — | — | V | — | V E¹ | V |
+| Retention run and action log (`retention_run`, `retention_run_action`) | — | — | — | — | — | — | — | — | — | — | V | — | V R | V |
+| Archived records (`retention_archived_record`) | — | — | — | — | — | — | — | — | — | — | V | — | V | V |
+| Backup sets (`backup_set`) | — | — | — | — | — | — | — | — | — | — | V | — | V | — |
+
+1. Only an operational class not managed by an existing expiry job can leave `retain`, and an enabled action needs both a period and the IT reference text (ADR-0067 §2).
+
+- **Scope:** retention and backups are installation-wide (no organization scope).
+
+## 32. P7 implementation, slices B and F (DG7): readiness and the deployment status; schema, API and connector handover
+
+- **Task:** T-DG7-ARCH-04 (solution-architect), 2026-11-12. **Sources:** ADR-0069 §2–§3, ADR-0070; REQ-S19-010 ("view:IT"), REQ-S19-005, REQ-S19-007 and REQ-S17-004 ("view:IT", "view:ADM").
+- **No new permission code and no seed migration.** `getDeploymentStatus` reuses `operations.read` (seeded by `0103`; §25.1: ADM_TECH, TO, KDS, TD, AUD). Those roles already read the worker heartbeat and the operational exceptions, and the deployment status adds the configured base URL, the release and contract versions, the migration level and the readiness detail. It carries no secret value, credential reference, storage endpoint or connection string (ADR-0069 §3). A dedicated code is open question O1 of the T-DG7-ARCH-04 handback.
+- **`/readyz` stays public** (no session, as since DG1). Its two new keys are enums only: `storage` (`ok`, `fail`, `unknown`) and `worker` (`alive`, `stale`, `unknown`). No path, endpoint or error text is returned.
+- **AUD stays read-only.** The one new operation is a GET.
+- **Slice F adds no operation.** The handover files (`docs/handover/{data,api}/`) are documents in the release, not product rights.
+- **No API right starts a deployment, a transfer or a drill.** They run outside the API, with credentials that only IT holds.
+
+| Operation | Permission | Default roles | Scope |
+|---|---|---|---|
+| `getReadiness` (`GET /readyz`) | public | anyone (load balancer, orchestrator) | installation |
+| `getDeploymentStatus` (`GET /api/v1/admin/deployment`) | `operations.read` | ADM_TECH, TO, KDS, TD, AUD | installation |
+
+## 33. P7 implementation, slices I and H (DG7): the in-app requirement register, Administration > About and the handover documentation set
+
+- **Task:** T-DG7-ARCH-05 (solution-architect), 2026-11-12. **Sources:** ADR-0071 §3–§4, ADR-0072; REQ-S02-003 ("view:ADM,AUD,TO; edit:none in-app (register is maintained in the repository)"), REQ-S02-005 ("set status:delivery-orchestrator; verify:independent reviewers"), REQ-S19-011 and REQ-S19-015 ("prepare:devops-engineer; accept:Mobily IT (external); view:IT").
+- **No new permission code and no seed migration** (the D-250 O1 precedent; `0153`–`0155` stay free). The three operations reuse `operations.read` (seeded by `0103`; §25.1: ADM_TECH, TO, KDS, TD, AUD), the code that already gates `getDeploymentStatus`, the other read-only view of what this installation is.
+- **Interpretation of "view:ADM,AUD,TO" (raised as open question O1 of the T-DG7-ARCH-05 handback).** ADM is read as the technical administrator (ADM_TECH), as for REQ-S17-002/003 (§26): the register and About are part of the IT handover, which ADM_TECH receives. Two consequences, both disclosed:
+  - KDS and TD also read the register and About, because they hold `operations.read`. Nothing in the register is restricted: it is the engineering coverage register shipped in the handover archive, and the ADR-0063 secret scan covers it.
+  - ADM_ACCESS and ADM_METHOD do not read it, because they do not hold `operations.read`.
+
+  The exact role set needs a dedicated code `requirement_register.read` and a seed migration. That is a later, additive change; it would push every implementer migration merged after it above its id (D-245 O9, D-248 O8).
+- **No edit right exists in the product.** The register is maintained in the repository (`docs/delivery/requirements.csv`, analyst-owned). The product shows a build-time snapshot of it and reads no delivery record at run time (ADR-0071 §2). Its statuses are set by the delivery orchestrator and verified by independent reviewers outside the product.
+- **AUD stays read-only.** All three operations are GETs.
+- **Nothing here is an approval.** A register status is an engineering delivery state. It is not a DG0–DG7 gate decision, and it is not a G1–G6 business approval. Mobily IT's acceptance of the handover (REQ-S19-011, REQ-S19-015 "accept:Mobily IT (external)") happens outside the platform.
+- **Slice H adds no operation.** The guides, the role matrix, the automation operations guide, the known limitations and the release notes are documents in the release (`docs/handover/**`), not product rights. The role matrix is generated from `packages/shared/src/permissions.ts` (ADR-0072 §4).
+
+| Operation | Permission | Default roles | Scope |
+|---|---|---|---|
+| `listRequirements` (`GET /api/v1/admin/requirements`) | `operations.read` | ADM_TECH, TO, KDS, TD, AUD | installation |
+| `getRequirement` (`GET /api/v1/admin/requirements/{reqId}`) | `operations.read` | ADM_TECH, TO, KDS, TD, AUD | installation |
+| `getReleaseAbout` (`GET /api/v1/admin/about`) | `operations.read` | ADM_TECH, TO, KDS, TD, AUD | installation |

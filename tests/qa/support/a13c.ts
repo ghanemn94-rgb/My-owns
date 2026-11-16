@@ -18,6 +18,7 @@ import { fileURLToPath } from "node:url";
 import { expect } from "vitest";
 import type { createPool } from "./api.ts";
 import { waitFor } from "./a13-durable.ts";
+import { watchChildOutput } from "./child-ready.ts";
 
 export { waitFor };
 
@@ -43,18 +44,22 @@ export async function spawnChild(script: "a13c-child-api.ts" | "a13c-child-worke
       stdio: ["ignore", "pipe", "pipe"],
     },
   );
-  let out = "";
-  child.stdout!.on("data", (b: Buffer) => (out += b.toString()));
-  child.stderr!.on("data", (b: Buffer) => (out += b.toString()));
-  await waitFor(
-    async () => {
-      if (child.exitCode !== null) throw new Error(`${script} exited (${child.exitCode}) before READY: ${out}`);
-      return out.includes("READY");
-    },
-    `${script} READY`,
-    90_000,
-  );
-  return { child, appName, output: () => out } satisfies Child;
+  // Event-driven (T-DG7-QA-F, see child-ready.ts): a request-mode child may print READY, answer and exit 0 before a
+  // poll would see READY; only a child that closes without ever printing READY is an error.
+  const watched = watchChildOutput(child, script, "READY", 90_000);
+  if (process.env["QA_A13C_TRACE"] === "1") {
+    // Evidence aid: one line per child for READY and for its exit (code or signal).
+    const t0 = Date.now();
+    void watched.ready.then(
+      () => process.stderr.write(`[a13c-trace] ${appName} READY +${Date.now() - t0}ms\n`),
+      () => undefined,
+    );
+    child.once("exit", (code, signal) =>
+      process.stderr.write(`[a13c-trace] ${appName} exit code=${code} signal=${signal} +${Date.now() - t0}ms\n`),
+    );
+  }
+  await watched.ready;
+  return { child, appName, output: watched.output } satisfies Child;
 }
 
 /** Installs the switchable blocking trigger on `table` (BEFORE INSERT, FOR EACH ROW, only when `whenSql` holds). */
@@ -115,7 +120,11 @@ export async function waitBlocked(su: Pool, c: Child, what: string, ms = 90_000)
 
 /** SIGKILL, then end the dead client's sessions so its open transactions roll back; waits until they are gone. */
 export async function killHard(su: Pool, c: Child): Promise<void> {
-  const exited = new Promise<NodeJS.Signals | null>((r) => c.child.once("exit", (_code, signal) => r(signal)));
+  // A process that already exited cannot be killed; its real exit signal (null) then fails the assertion below.
+  const exited =
+    c.child.exitCode !== null || c.child.signalCode !== null
+      ? Promise.resolve(c.child.signalCode)
+      : new Promise<NodeJS.Signals | null>((r) => c.child.once("exit", (_code, signal) => r(signal)));
   c.child.kill("SIGKILL");
   expect(await exited, "the child was killed by SIGKILL").toBe("SIGKILL");
   await su.query("SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE application_name = $1", [c.appName]);

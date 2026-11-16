@@ -18,6 +18,7 @@ import {
   B0144_TEXT,
   B0145,
   B0147_CHAINS,
+  DEMO_ACCESS_ADMIN,
   DEMO_BUSINESS_UNIT_GRANTS,
   DEMO_IDP_ISSUER,
   DEMO_SIGN_IN_USERS,
@@ -42,7 +43,14 @@ async function seedScratch(prefix: string): Promise<{ ownerUrl: string; summary:
   dropAtEnd.push(name);
   const ownerUrl = roleUrl(adminUrl, name, "mth_owner");
   await migrate(ownerUrl);
-  const s = await seedDemo(ownerUrl, { mthEnv: "demo", runKind: "seed", requestedVia: "cli", requestedBy: null });
+  // ADR-0064 A4.6: the legacy anchor (no generated period); both seeds of the determinism check use it.
+  const s = await seedDemo(ownerUrl, {
+    mthEnv: "demo",
+    runKind: "seed",
+    requestedVia: "cli",
+    requestedBy: null,
+    asOf: "2026-09-01",
+  });
   return { ownerUrl, summary: s };
 }
 
@@ -140,13 +148,21 @@ describe("REQ-PB-088: the roaming transformation and the seven B0145 elements", 
       })).sort((a, b) => (a.subject < b.subject ? -1 : 1)),
     );
     expect(bu.map((g) => g.role).sort()).toEqual(["ADM_ACCESS", "TL", "TO"]);
-    // Every role user still holds their role on the seeded roaming transformation; nobody holds an organization grant.
+    // Every role user still holds their role on the seeded roaming transformation. The only organization grant is the
+    // ADR-0064 A4.6 one (D-263, amending ADR-0050 D2 for this grant): ADM_ACCESS for the demo access administrator.
     const onT = grants.filter((g) => g.scope_type === "transformation");
     expect(onT.map((g) => [g.subject, g.role])).toEqual(
       DEMO_USERS.map((u) => [u.name, u.role]).sort((a, b) => (a[0]! < b[0]! ? -1 : 1)),
     );
     for (const g of onT) expect(g.scope_id).toBe(T);
-    expect(grants.filter((g) => g.scope_type === "organization")).toEqual([]);
+    expect(grants.filter((g) => g.scope_type === "organization")).toEqual([
+      {
+        subject: DEMO_ACCESS_ADMIN.name,
+        role: "ADM_ACCESS",
+        scope_type: "organization",
+        scope_id: DEMO_ANCHORS.organizationId,
+      },
+    ]);
     // The demo access administrator holds no business-record or approval permission (a technical_admin role).
     const perms = await rows<{ code: string; category: string }>(
       `SELECT p.code, p.category FROM role_permission rp JOIN role r ON r.id = rp.role_id

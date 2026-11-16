@@ -1,5 +1,5 @@
 // Routes (React Router 7, data-router library mode; ADR-0009). Everything below the shell needs a session.
-import { lazy, Suspense, useState, type ComponentType } from "react";
+import { lazy, Suspense, useState, type ComponentType, type ReactElement } from "react";
 import { Navigate, createBrowserRouter, matchRoutes, type RouteObject } from "react-router";
 import { RequireSession } from "../auth/session.tsx";
 import { RouteLoadFailed, RouteLoadingFallback } from "../components/RouteFallback.tsx";
@@ -108,6 +108,62 @@ const NotFoundPage = lazyPage(() => import("../pages/AreaPages.tsx").then((m) =>
 const P4BeingBuiltPage = lazyPage(() => import("../pages/AreaPages.tsx").then((m) => m.P4BeingBuiltPage));
 const P6NotAvailablePage = lazyPage(() =>
   import("../components/P6NotAvailablePage.tsx").then((m) => m.P6NotAvailablePage),
+);
+// T-DG7-FE-A: the "not available yet" placeholder of the P7 screens that FE-B and FE-C build (P7_PLANNED_ROUTES).
+const P7NotAvailablePage = lazyPage(() =>
+  import("../components/P7NotAvailablePage.tsx").then((m) => m.P7NotAvailablePage),
+);
+// P7 slices C and D screens (T-DG7-FE-B; p7-work-split §C.8, §D.2).
+const DataExportPage = lazyPage(() =>
+  import("../pages/admin/migration/MigrationPages.tsx").then((m) => m.DataExportPage),
+);
+const MigrationExportPage = lazyPage(() =>
+  import("../pages/admin/migration/MigrationPages.tsx").then((m) => m.MigrationExportPage),
+);
+const MigrationStatusPage = lazyPage(() =>
+  import("../pages/admin/migration/MigrationPages.tsx").then((m) => m.MigrationStatusPage),
+);
+const MigrationImportPage = lazyPage(() =>
+  import("../pages/admin/migration/MigrationPages.tsx").then((m) => m.MigrationImportPage),
+);
+const MigrationReconciliationPage = lazyPage(() =>
+  import("../pages/admin/migration/MigrationPages.tsx").then((m) => m.MigrationReconciliationPage),
+);
+const IdentityRebindsPage = lazyPage(() =>
+  import("../pages/admin/migration/MigrationPages.tsx").then((m) => m.IdentityRebindsPage),
+);
+const ConfigTransferPage = lazyPage(() =>
+  import("../pages/admin/config-transfer/ConfigTransferPages.tsx").then((m) => m.ConfigTransferPage),
+);
+const ConfigBundleExportPage = lazyPage(() =>
+  import("../pages/admin/config-transfer/ConfigTransferPages.tsx").then((m) => m.ConfigBundleExportPage),
+);
+const ConfigBundleImportPage = lazyPage(() =>
+  import("../pages/admin/config-transfer/ConfigTransferPages.tsx").then((m) => m.ConfigBundleImportPage),
+);
+// The slice I screens of T-DG7-FE-C (p7-work-split §I.2): the requirement register (with its detail panel) and About.
+const RequirementsPage = lazyPage(() =>
+  import("../pages/admin/requirements/RequirementsPage.tsx").then((m) => m.RequirementsPage),
+);
+const AboutReleasePage = lazyPage(() =>
+  import("../pages/admin/about/AboutReleasePage.tsx").then((m) => m.AboutReleasePage),
+);
+// T-DG7-FE-C2 (p7-work-split §E.6; ADR-0066 §6, ADR-0067): Administration > Retention, its classes, runs, archived records
+// and the backup sets.
+const RetentionPage = lazyPage(() =>
+  import("../pages/admin/retention/RetentionPages.tsx").then((m) => m.RetentionPage),
+);
+const RetentionClassPage = lazyPage(() =>
+  import("../pages/admin/retention/RetentionPages.tsx").then((m) => m.RetentionClassPage),
+);
+const RetentionRunPage = lazyPage(() =>
+  import("../pages/admin/retention/RetentionPages.tsx").then((m) => m.RetentionRunPage),
+);
+const RetentionArchivedPage = lazyPage(() =>
+  import("../pages/admin/retention/RetentionPages.tsx").then((m) => m.RetentionArchivedPage),
+);
+const BackupSetsPage = lazyPage(() =>
+  import("../pages/admin/retention/RetentionPages.tsx").then((m) => m.BackupSetsPage),
 );
 // P6 slices E, F, J and C screens (T-DG6-FE-B; p6-work-split §E/F.12, §J/C.13).
 const AuditEventsPage = lazyPage(() => import("../pages/admin/audit/AuditPages.tsx").then((m) => m.AuditEventsPage));
@@ -550,6 +606,117 @@ export const P5_PLANNED_ROUTES: readonly { path: string; feature: string; owner:
  */
 export const P6_PLANNED_ROUTES: readonly { path: string; feature: string; owner: string }[] = [];
 
+/**
+ * The P7 screens of slices C, D, E and I (p7-plan §5.1 rows FE-B and FE-C; p7-work-split §C.7/C.8, §D.4, §E.6, §I.2),
+ * registered up front by T-DG7-FE-A. Each shows the "not available yet" placeholder (components/P7NotAvailablePage.tsx,
+ * `nav.p7.<feature>.*`) until its owner replaces the element through an orchestrator merge and removes the entry here
+ * (F-DG4-160). The detail paths are registered too, so a link to a record (an export, an import's reconciliation report,
+ * a bundle import, a retention class or run, a requirement) never leads to "page not found". Migration imports and
+ * identity rebinds are read-only screens: no route starts an import or a rebind (p7-work-split §C.11). The deployment
+ * status (`getDeploymentStatus`, slice B) has a client (api/p7.ts) but no screen is assigned in P7.
+ * The accessibility scope of these routes is P7's (p7-plan §5.1 row FE-D, `apps/web/e2e/p7-*.spec.ts`), not the P6 axe
+ * list (app/axe-scope.test.ts excludes them).
+ */
+export const P7_SCREEN_ROUTES: readonly { path: string; feature: string; owner: string }[] = [
+  // slice C (FE-B): Data export, Migration status, Identity rebind
+  { path: "admin/migration/exports", feature: "dataExport", owner: "FE-B" },
+  { path: "admin/migration/exports/:migrationExportId", feature: "migrationExport", owner: "FE-B" },
+  { path: "admin/migration/imports", feature: "migrationStatus", owner: "FE-B" },
+  { path: "admin/migration/imports/:migrationImportId", feature: "migrationImport", owner: "FE-B" },
+  {
+    path: "admin/migration/imports/:migrationImportId/reconciliations/:migrationReconciliationId",
+    feature: "migrationReconciliation",
+    owner: "FE-B",
+  },
+  { path: "admin/migration/identity-rebinds", feature: "identityRebinds", owner: "FE-B" },
+  // slice D (FE-B): Configuration transfer
+  { path: "admin/config-transfer", feature: "configTransfer", owner: "FE-B" },
+  { path: "admin/config-transfer/exports/:configBundleExportId", feature: "configBundleExport", owner: "FE-B" },
+  { path: "admin/config-transfer/imports/:configBundleImportId", feature: "configBundleImport", owner: "FE-B" },
+  // slice E (FE-C): Retention, its classes, runs and archived records, and the backup sets
+  { path: "admin/retention", feature: "retention", owner: "FE-C" },
+  { path: "admin/retention/classes/:retentionClassCode", feature: "retentionClass", owner: "FE-C" },
+  { path: "admin/retention/runs/:retentionRunId", feature: "retentionRun", owner: "FE-C" },
+  { path: "admin/retention/archived", feature: "retentionArchived", owner: "FE-C" },
+  { path: "admin/retention/backups", feature: "backupSets", owner: "FE-C" },
+  // slice I (FE-C): the requirement register and About this release
+  { path: "admin/requirements", feature: "requirements", owner: "FE-C" },
+  { path: "admin/requirements/:reqId", feature: "requirement", owner: "FE-C" },
+  { path: "admin/about", feature: "releaseAbout", owner: "FE-C" },
+];
+
+/** The paths of P7_SCREEN_ROUTES whose screens T-DG7-FE-C2 built for slice E (p7-work-split §E.6). */
+export const P7_FE_C_RETENTION_PATHS: readonly string[] = [
+  "admin/retention",
+  "admin/retention/classes/:retentionClassCode",
+  "admin/retention/runs/:retentionRunId",
+  "admin/retention/archived",
+  "admin/retention/backups",
+];
+
+/** The paths of P7_SCREEN_ROUTES whose screens T-DG7-FE-C built for slice I (p7-work-split §I.2). */
+export const P7_FE_C_RELEASE_PATHS: readonly string[] = [
+  "admin/requirements",
+  "admin/requirements/:reqId",
+  "admin/about",
+];
+
+/**
+ * The P7 screens that still show the placeholder. All of them at T-DG7-FE-A; FE-B and FE-C remove theirs as they replace
+ * the element (P7_SCREEN_ROUTES stays as the stable list of P7 paths, e.g. for the P7 accessibility scope of FE-D).
+ */
+export const P7_PLANNED_ROUTES: readonly { path: string; feature: string; owner: string }[] = P7_SCREEN_ROUTES.filter(
+  // T-DG7-FE-B built the slice C and D screens (P7_FE_B_ROUTES below); T-DG7-FE-C the slice I screens
+  // (P7_FE_C_RELEASE_ROUTES below); T-DG7-FE-C2 the slice E (Retention) screens (P7_FE_C_RETENTION_ROUTES below). The
+  // seam is empty and stays as a tested seam (like P6_PLANNED_ROUTES).
+  (r) => r.owner !== "FE-B" && !P7_FE_C_RELEASE_PATHS.includes(r.path) && !P7_FE_C_RETENTION_PATHS.includes(r.path),
+);
+
+/** The slice I screens of T-DG7-FE-C (p7-work-split §I.2): the register list and its detail panel share one page. */
+const P7_FE_C_RELEASE_ELEMENTS: Readonly<Record<string, ReactElement>> = {
+  "admin/requirements": <RequirementsPage />,
+  "admin/requirements/:reqId": <RequirementsPage />,
+  "admin/about": <AboutReleasePage />,
+};
+export const P7_FE_C_RELEASE_ROUTES: RouteObject[] = Object.entries(P7_FE_C_RELEASE_ELEMENTS).map(
+  ([path, element]) => ({
+    path,
+    element,
+  }),
+);
+
+/** The slice E screens of T-DG7-FE-C2 (p7-work-split §E.6), one element per P7_FE_C_RETENTION_PATHS path. */
+const P7_FE_C_RETENTION_ELEMENTS: Readonly<Record<string, ReactElement>> = {
+  "admin/retention": <RetentionPage />,
+  "admin/retention/classes/:retentionClassCode": <RetentionClassPage />,
+  "admin/retention/runs/:retentionRunId": <RetentionRunPage />,
+  "admin/retention/archived": <RetentionArchivedPage />,
+  "admin/retention/backups": <BackupSetsPage />,
+};
+export const P7_FE_C_RETENTION_ROUTES: RouteObject[] = P7_FE_C_RETENTION_PATHS.map((path) => ({
+  path,
+  element: P7_FE_C_RETENTION_ELEMENTS[path]!,
+}));
+
+/** The slice C and D screens of T-DG7-FE-B, one element per P7_SCREEN_ROUTES path owned by FE-B. */
+const P7_FE_B_ELEMENTS: Readonly<Record<string, ReactElement>> = {
+  "admin/migration/exports": <DataExportPage />,
+  "admin/migration/exports/:migrationExportId": <MigrationExportPage />,
+  "admin/migration/imports": <MigrationStatusPage />,
+  "admin/migration/imports/:migrationImportId": <MigrationImportPage />,
+  "admin/migration/imports/:migrationImportId/reconciliations/:migrationReconciliationId": (
+    <MigrationReconciliationPage />
+  ),
+  "admin/migration/identity-rebinds": <IdentityRebindsPage />,
+  "admin/config-transfer": <ConfigTransferPage />,
+  "admin/config-transfer/exports/:configBundleExportId": <ConfigBundleExportPage />,
+  "admin/config-transfer/imports/:configBundleImportId": <ConfigBundleImportPage />,
+};
+export const P7_FE_B_ROUTES: RouteObject[] = P7_SCREEN_ROUTES.filter((r) => r.owner === "FE-B").map((r) => ({
+  path: r.path,
+  element: P7_FE_B_ELEMENTS[r.path]!,
+}));
+
 const p4PlannedRoutes: RouteObject[] = P4_PLANNED_ROUTES.map((r) => ({
   path: r.path,
   element: <P4BeingBuiltPage feature={r.feature} />,
@@ -558,6 +725,11 @@ const p4PlannedRoutes: RouteObject[] = P4_PLANNED_ROUTES.map((r) => ({
 const p6PlannedRoutes: RouteObject[] = P6_PLANNED_ROUTES.map((r) => ({
   path: r.path,
   element: <P6NotAvailablePage feature={r.feature} />,
+}));
+
+const p7PlannedRoutes: RouteObject[] = P7_PLANNED_ROUTES.map((r) => ({
+  path: r.path,
+  element: <P7NotAvailablePage feature={r.feature} />,
 }));
 
 export const routes: RouteObject[] = [
@@ -819,6 +991,10 @@ export const routes: RouteObject[] = [
       { path: "admin/notification-deliveries", element: <NotificationDeliveriesPage /> },
       ...p4PlannedRoutes,
       ...p6PlannedRoutes,
+      ...P7_FE_B_ROUTES,
+      ...P7_FE_C_RELEASE_ROUTES,
+      ...P7_FE_C_RETENTION_ROUTES,
+      ...p7PlannedRoutes,
       ...landingRoutes,
       ...subEntryRoutes,
       { path: "*", element: <NotFoundPage /> },

@@ -22,6 +22,9 @@ import { INTEGRATIONS_HANDLERS } from "./integrations.ts";
 import { SEARCH_HANDLERS } from "./search.ts";
 import { NOTIFICATIONS_HANDLERS } from "./notifications.ts";
 import { OPERATIONS_HANDLERS } from "./operations.ts";
+// P7 domains (T-DG7-BE-A stubs; p7-plan §5.3): one import per new handler directory, each owned by its task.
+import { TRANSFER_HANDLERS } from "./transfer/index.ts";
+import { RETENTION_HANDLERS } from "./retention/index.ts";
 import type { JobHandler } from "./spec.ts";
 import type { Db } from "@mth/db";
 // T-DG5-BE-J (ADR-0044 §1, §7; p5-work-split §E.1): the starters' wrapper and the dependency-slip consumer.
@@ -71,4 +74,6 @@ export const DOMAIN_HANDLERS: readonly JobHandler[] = withStarterRules([
   ...SEARCH_HANDLERS, // P6 (T-DG6-BE-A stub)
   ...NOTIFICATIONS_HANDLERS, // P6 (T-DG6-BE-A stub)
   ...OPERATIONS_HANDLERS, // P6 (T-DG6-BE-A stub)
+  ...TRANSFER_HANDLERS, // P7 (T-DG7-BE-A stub; BE-C)
+  ...RETENTION_HANDLERS, // P7 (T-DG7-BE-A stub; BE-G)
 ]);

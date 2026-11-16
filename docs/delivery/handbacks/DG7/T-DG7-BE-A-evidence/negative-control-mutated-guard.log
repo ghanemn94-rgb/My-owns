@@ -1,0 +1,94 @@
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/My-owns
+
+ ❯ |unit-node| apps/api/src/modules/retention/retention.test.ts (3 tests | 1 failed) 70ms
+   ✓ retention module (P7) > registers through its hook and reports its registration (a scaffold while no route exists) 60ms
+   ✓ retention module (P7) > has its three route files in place (created by T-DG7-BE-A, p7-work-split §E.7) 2ms
+   × retention module (P7) > guards its 10 operations with the slice E codes only, and uses every one of them (ADR-0067 §8, ADR-0066 §6) 7ms
+     → expected [ 'retention.configure', …(2) ] to deeply equal [ 'backup.read', …(3) ]
+ ❯ |unit-node| apps/api/src/p7-wiring.test.ts (3 tests | 2 failed) 1081ms
+   × P7 permission wiring (T-DG7-BE-A) > every P7 permission code guards at least one P7 route, and the P7 guards use no other code 8ms
+     → expected [ 'config_bundle.export', …(6) ] to deeply equal [ 'backup.read', …(7) ]
+   × P7 permission wiring (T-DG7-BE-A) > every guard row is a contract operation with the same method, path and stated permission 839ms
+     → listBackupSets: expected 'The backup sets the backup job report…' to match /\((?:[^()]*; )?retention\.read(?:[;)]…/
+   ✓ P7 permission wiring (T-DG7-BE-A) > a guarded operation is not routed yet, or routed with exactly its guard's permission 233ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-node| apps/api/src/p7-wiring.test.ts > P7 permission wiring (T-DG7-BE-A) > every P7 permission code guards at least one P7 route, and the P7 guards use no other code
+AssertionError: expected [ 'config_bundle.export', …(6) ] to deeply equal [ 'backup.read', …(7) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[33m@@ -1,7 +1,6 @@[39m
+[2m  [[22m
+[32m-   "backup.read",[39m
+[2m    "config_bundle.export",[22m
+[2m    "config_bundle.import",[22m
+[2m    "migration.export",[22m
+[2m    "migration_import.read",[22m
+[2m    "retention.configure",[22m
+
+ ❯ apps/api/src/p7-wiring.test.ts:51:81
+     49| describe("P7 permission wiring (T-DG7-BE-A)", () => {
+     50|   it("every P7 permission code guards at least one P7 route, and the P…
+     51|     expect([...new Set(Object.values(GUARDS).map((g) => g.permission))…
+       |                                                                                 ^
+     52|       Object.keys(P7_PERMISSIONS).sort(),
+     53|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |unit-node| apps/api/src/p7-wiring.test.ts > P7 permission wiring (T-DG7-BE-A) > every guard row is a contract operation with the same method, path and stated permission
+AssertionError: listBackupSets: expected 'The backup sets the backup job report…' to match /\((?:[^()]*; )?retention\.read(?:[;)]…/
+
+[32m- Expected:[39m 
+/\((?:[^()]*; )?retention\.read(?:[;)]| plus )/
+
+[31m+ Received:[39m 
+"The backup sets the backup job reported, newest first: status, timings, migration level, PostgreSQL major, dump, evidence and manifest checksums and counts (backup.read; ADM_TECH, AUD). Read-only: backups and restores run outside the API (deploy/scripts/backup.sh, restore.sh; IT-run). No file content and no location of a credential. ADR-0066 §6; REQ-S19-012."
+
+ ❯ apps/api/src/p7-wiring.test.ts:66:40
+     64|       // or "(attachment; ETag = its SHA-256; config_bundle.export)".
+     65|       const code = guard.permission.replace(/\./g, "\\.");
+     66|       expect(op!.summary, operationId).toMatch(new RegExp(`\\((?:[^()]…
+       |                                        ^
+     67|     }
+     68|     // And the other way round: every transfer or retention operation …
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |unit-node| apps/api/src/modules/retention/retention.test.ts > retention module (P7) > guards its 10 operations with the slice E codes only, and uses every one of them (ADR-0067 §8, ADR-0066 §6)
+AssertionError: expected [ 'retention.configure', …(2) ] to deeply equal [ 'backup.read', …(3) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   "backup.read",[39m
+[2m    "retention.configure",[22m
+[2m    "retention.read",[22m
+[2m    "retention.run",[22m
+[2m  ][22m
+
+ ❯ apps/api/src/modules/retention/retention.test.ts:34:66
+     32|     const guards = Object.values(RETENTION_ROUTE_GUARDS);
+     33|     expect(Object.keys(RETENTION_ROUTE_GUARDS)).toHaveLength(10);
+     34|     expect([...new Set(guards.map((g) => g.permission))].sort()).toEqu…
+       |                                                                  ^
+     35|     expect(new Set(guards.map((g) => `${g.method} ${g.path}`)).size).t…
+     36|     // The only writes (configure a class, request a run) need a confi…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  3 failed | 3 passed (6)
+   Start at  19:17:37
+   Duration  6.90s (transform 3.66s, setup 0ms, collect 5.88s, tests 1.15s, environment 0ms, prepare 133ms)
+
+exit=1

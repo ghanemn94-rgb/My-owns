@@ -1,0 +1,183 @@
+✖ the committed Dockerfile and .dockerignore pass all three checks (CLI exit 0) (158.138102ms)
+✔ the required install inputs are every tracked workspace package.json plus the root install files (3.306458ms)
+✖ defect (b): a workspace package.json missing from the dependency layer is reported (0.329042ms)
+✖ a manifest COPYed only AFTER `pnpm install` is reported (4.05131ms)
+✖ a manifest excluded from the build context by .dockerignore is reported (2.078642ms)
+✖ defect (c): `**/*secret*` without the source exceptions drops tracked sources, and is reported (0.451028ms)
+✖ the committed .dockerignore still keeps local secrets, keys and .env files out of the context (1.808608ms)
+✔ .dockerignore matcher follows Docker's semantics (`*` stays in a segment, `**` spans, parent match, last wins) (0.557362ms)
+✖ defect (a): corepack enable --install-directory before the directory exists is reported (0.371335ms)
+✔ CLI: missing input is BLOCKED (exit 2), a usage error is exit 2 (93.134693ms)
+✔ build-image.sh --dry-run: no proxy and no network flag unless asked; Docker never called (11.213857ms)
+✔ build-image.sh --proxy-from-env passes only the SET proxy names, never their values (19.972752ms)
+✔ build-image.sh refuses a bad --network, a missing value and a missing CA file (exit 64) (25.980554ms)
+✔ the Dockerfile declares no proxy ARG or ENV (proxy values are never baked into the image) (0.774401ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 7
+ℹ fail 7
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 454.926665
+
+✖ failing tests:
+
+test at deploy/scripts/tests/dockerfile-context.test.mjs:39:1
+✖ the committed Dockerfile and .dockerignore pass all three checks (CLI exit 0) (158.138102ms)
+  AssertionError [ERR_ASSERTION]: check-dockerfile-context: 12 install inputs (package.json, pnpm-lock.yaml, pnpm-workspace.yaml, .npmrc, apps/api/package.json, apps/web/package.json, apps/worker/package.json, packages/config/package.json, packages/db/package.json, packages/design-tokens/package.json, packages/reporting/package.json, packages/shared/package.json); 1579 tracked source files; 10 problem(s)
+  RESULT: FAIL
+  FAIL: packages/reporting/package.json: not COPYed before `pnpm install` in stage build
+  FAIL: apps/api/src/modules/access/secret-refusals.ts: tracked source excluded from the build context by .dockerignore rule `**/*secret*`
+  FAIL: apps/api/src/modules/integrations/secret-refs.ts: tracked source excluded from the build context by .dockerignore rule `**/*secret*`
+  FAIL: apps/api/src/modules/platform/secret-namespace.ts: tracked source excluded from the build context by .dockerignore rule `**/*secret*`
+  FAIL: apps/api/src/modules/platform/secrets-registry.test.ts: tracked source excluded from the build context by .dockerignore rule `**/*secret*`
+  FAIL: apps/api/src/modules/platform/secrets.test.ts: tracked source excluded from the build context by .dockerignore rule `**/*secret*`
+  FAIL: apps/api/src/modules/platform/secrets.ts: tracked source excluded from the build context by .dockerignore rule `**/*secret*`
+  FAIL: apps/worker/src/secrets.test.ts: tracked source excluded from the build context by .dockerignore rule `**/*secret*`
+  FAIL: apps/worker/src/secrets.ts: tracked source excluded from the build context by .dockerignore rule `**/*secret*`
+  FAIL: Dockerfile line 44 (stage build): corepack enable --install-directory /pnpm runs before /pnpm is created (add `mkdir -p /pnpm` first; corepack fails with ENOENT)
+  
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (file:///home/user/My-owns/deploy/scripts/tests/dockerfile-context.test.mjs:41:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at deploy/scripts/tests/dockerfile-context.test.mjs:55:1
+✖ defect (b): a workspace package.json missing from the dependency layer is reported (0.329042ms)
+  AssertionError [ERR_ASSERTION]: fixture must remove the COPY line
+      at TestContext.<anonymous> (file:///home/user/My-owns/deploy/scripts/tests/dockerfile-context.test.mjs:57:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: '# Mobily Transformation Hub: the single application image `mth-app` (ADR-0011, T-DG1-DEVOPS).\n#\n# One image, three commands (see deploy/docker/entrypoint.sh):\n#   api      HTTP API; also serves the built SPA from /app/apps/web/dist (same origin: cookies, CSP, CSRF)\n#   worker   background worker (outbox relay, pg-boss handlers)\n#   migrate  one-shot `mth-db migrate` as the owner role (DATABASE_OWNER_URL); `db <cmd>` exposes status/bootstrap\n#\n# Build from the repository root:\n#   deploy/scripts/build-image.sh                  (wraps the command below)\n#   docker build -f deploy/docker/Dockerfile -t mth-app:local .\n#\n# Restricted networks (§19 item 7, docs/operations/restricted-network.md):\n#   --build-arg NODE_IMAGE=<IT mirror>/node:24-bookworm-slim@sha256:...   base image from IT\'s registry mirror\n#   --build-arg NPM_REGISTRY=https://<IT npm mirror>/                      packages (and pnpm itself) from IT\'s mirror\n#   --secret id=build_ca,src=/path/to/ca.pem                               OPTIONAL: extra CA for a TLS-intercepting\n#                                                                          proxy/mirror. BUILD-TIME ONLY; never copied\n#                                                                          into any layer, and the runtime never needs it.\n# The lockfile\'s integrity hashes guarantee identical packages whichever registry serves them.\n#\n# There is deliberately NO `# syntax=` directive: that would pull the docker/dockerfile frontend image from Docker Hub\n# at build time. `RUN --mount=type=secret` is supported by the Dockerfile frontend built into BuildKit (Docker 23+).\n#\n# Base image: pinned by digest through deploy/images.lock.json (`node deploy/scripts/pin-images.mjs --check`).\nARG NODE_IMAGE=node:24-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6\n\n# --------------------------------------------------------------------------------------------------------------------\nFROM ${NODE_IMAGE} AS build\nARG NPM_REGISTRY=""\nENV CI=true \\\n    COREPACK_ENABLE_DOWNLOAD_PROMPT=0 \\\n    PNPM_HOME=/pnpm \\\n    PATH=/pnpm:$PATH\nWORKDIR /src\n\n# 1) Dependencies only (cached until a manifest or the lockfile changes).\nCOPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./\nCOPY apps/api/package.json apps/api/package.json\nCOPY apps/worker/package.json apps/worker/package.json\nCOPY apps/web/package.json apps/web/package.json\nCOPY packages/config/package.json packages/config/package.json\nCOPY packages/db/package.json packages/db/package.json\nCOPY packages/design-tokens/package.json packages/design-tokens/package.json\nCOPY packages/shared/package.json packages/shared/package.json\nRUN --mount=type=secret,id=build_ca,required=false \\\n    set -eu; \\\n    if [ -s /run/secrets/build_ca ]; then export NODE_EXTRA_CA_CERTS=/run/secrets/build_ca; fi; \\\n    if [ -n "$NPM_REGISTRY" ]; then export npm_config_registry="$NPM_REGISTRY" COREPACK_NPM_REGISTRY="$NPM_REGISTRY"; fi; \\\n    corepack enable --install-directory /pnpm; \\\n    pnpm --version; \\\n    pnpm install --frozen-lockfile\n\n# 2) Sources (filtered by /.dockerignore: no node_modules, dist, .git, delivery records or local secrets).\nCOPY . .\nRUN pnpm -r build\n\n# 3) Runtime tree: licence notices + SBOM, OFFLINE production prune from the same frozen lockfile, copy only what\n#    api/worker/migrate need, verify the layout. The local clean start runs the very same script\n#    (docs/operations/clean-start.md), so the image layout is testable without Docker.\nRUN bash deploy/scripts/assemble-runtime.sh /src /out/app\n\n# --------------------------------------------------------------------------------------------------------------------\nFROM ${NODE_IMAGE} AS runtime\nLABEL org.opencontainers.image.title="mth-app" \\\n      org.opencontainers.image.description="Mobily Transformation Hub (api | worker | migrate). Not an official PMI product." \\\n      org.opencontainers.image.licenses="UNLICENSED"\n\n# No package managers or build tools at runtime (ADR-0011): drop npm, npx, corepack and yarn from the base image.\n# A dedicated non-root user (uid/gid 10001) runs every command; the application files stay root-owned (read-only).\nRUN set -eu; \\\n    rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack /opt/yarn-*; \\\n    rm -f /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack /usr/local/bin/yarn /usr/local/bin/yarnpkg; \\\n    groupadd --system --gid 10001 mth; \\\n    useradd --system --uid 10001 --gid mth --home-dir /nonexistent --no-create-home --shell /usr/sbin/nologin mth; \\\n    mkdir -p /var/lib/mth/evidence; \\\n    chown mth:mth /var/lib/mth/evidence; \\\n    chmod 0700 /var/lib/mth/evidence\n\nENV NODE_ENV=production \\\n    AUTH_MODE=oidc \\\n    PORT=3000 \\\n    EVIDENCE_STORAGE_DRIVER=filesystem \\\n    EVIDENCE_STORAGE_PATH=/var/lib/mth/evidence\n\nCOPY --from=build /out/app /app\nCOPY deploy/docker/entrypoint.sh /usr/local/bin/mth\nCOPY deploy/docker/healthcheck.mjs /app/healthcheck.mjs\nRUN chmod 0555 /usr/local/bin/mth && chmod 0444 /app/healthcheck.mjs\n\nWORKDIR /app\nUSER 10001:10001\nEXPOSE 3000\nVOLUME ["/var/lib/mth/evidence"]\nENTRYPOINT ["/usr/local/bin/mth"]\nCMD ["api"]\n',
+    expected: '# Mobily Transformation Hub: the single application image `mth-app` (ADR-0011, T-DG1-DEVOPS).\n#\n# One image, three commands (see deploy/docker/entrypoint.sh):\n#   api      HTTP API; also serves the built SPA from /app/apps/web/dist (same origin: cookies, CSP, CSRF)\n#   worker   background worker (outbox relay, pg-boss handlers)\n#   migrate  one-shot `mth-db migrate` as the owner role (DATABASE_OWNER_URL); `db <cmd>` exposes status/bootstrap\n#\n# Build from the repository root:\n#   deploy/scripts/build-image.sh                  (wraps the command below)\n#   docker build -f deploy/docker/Dockerfile -t mth-app:local .\n#\n# Restricted networks (§19 item 7, docs/operations/restricted-network.md):\n#   --build-arg NODE_IMAGE=<IT mirror>/node:24-bookworm-slim@sha256:...   base image from IT\'s registry mirror\n#   --build-arg NPM_REGISTRY=https://<IT npm mirror>/                      packages (and pnpm itself) from IT\'s mirror\n#   --secret id=build_ca,src=/path/to/ca.pem                               OPTIONAL: extra CA for a TLS-intercepting\n#                                                                          proxy/mirror. BUILD-TIME ONLY; never copied\n#                                                                          into any layer, and the runtime never needs it.\n# The lockfile\'s integrity hashes guarantee identical packages whichever registry serves them.\n#\n# There is deliberately NO `# syntax=` directive: that would pull the docker/dockerfile frontend image from Docker Hub\n# at build time. `RUN --mount=type=secret` is supported by the Dockerfile frontend built into BuildKit (Docker 23+).\n#\n# Base image: pinned by digest through deploy/images.lock.json (`node deploy/scripts/pin-images.mjs --check`).\nARG NODE_IMAGE=node:24-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6\n\n# --------------------------------------------------------------------------------------------------------------------\nFROM ${NODE_IMAGE} AS build\nARG NPM_REGISTRY=""\nENV CI=true \\\n    COREPACK_ENABLE_DOWNLOAD_PROMPT=0 \\\n    PNPM_HOME=/pnpm \\\n    PATH=/pnpm:$PATH\nWORKDIR /src\n\n# 1) Dependencies only (cached until a manifest or the lockfile changes).\nCOPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./\nCOPY apps/api/package.json apps/api/package.json\nCOPY apps/worker/package.json apps/worker/package.json\nCOPY apps/web/package.json apps/web/package.json\nCOPY packages/config/package.json packages/config/package.json\nCOPY packages/db/package.json packages/db/package.json\nCOPY packages/design-tokens/package.json packages/design-tokens/package.json\nCOPY packages/shared/package.json packages/shared/package.json\nRUN --mount=type=secret,id=build_ca,required=false \\\n    set -eu; \\\n    if [ -s /run/secrets/build_ca ]; then export NODE_EXTRA_CA_CERTS=/run/secrets/build_ca; fi; \\\n    if [ -n "$NPM_REGISTRY" ]; then export npm_config_registry="$NPM_REGISTRY" COREPACK_NPM_REGISTRY="$NPM_REGISTRY"; fi; \\\n    corepack enable --install-directory /pnpm; \\\n    pnpm --version; \\\n    pnpm install --frozen-lockfile\n\n# 2) Sources (filtered by /.dockerignore: no node_modules, dist, .git, delivery records or local secrets).\nCOPY . .\nRUN pnpm -r build\n\n# 3) Runtime tree: licence notices + SBOM, OFFLINE production prune from the same frozen lockfile, copy only what\n#    api/worker/migrate need, verify the layout. The local clean start runs the very same script\n#    (docs/operations/clean-start.md), so the image layout is testable without Docker.\nRUN bash deploy/scripts/assemble-runtime.sh /src /out/app\n\n# --------------------------------------------------------------------------------------------------------------------\nFROM ${NODE_IMAGE} AS runtime\nLABEL org.opencontainers.image.title="mth-app" \\\n      org.opencontainers.image.description="Mobily Transformation Hub (api | worker | migrate). Not an official PMI product." \\\n      org.opencontainers.image.licenses="UNLICENSED"\n\n# No package managers or build tools at runtime (ADR-0011): drop npm, npx, corepack and yarn from the base image.\n# A dedicated non-root user (uid/gid 10001) runs every command; the application files stay root-owned (read-only).\nRUN set -eu; \\\n    rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack /opt/yarn-*; \\\n    rm -f /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack /usr/local/bin/yarn /usr/local/bin/yarnpkg; \\\n    groupadd --system --gid 10001 mth; \\\n    useradd --system --uid 10001 --gid mth --home-dir /nonexistent --no-create-home --shell /usr/sbin/nologin mth; \\\n    mkdir -p /var/lib/mth/evidence; \\\n    chown mth:mth /var/lib/mth/evidence; \\\n    chmod 0700 /var/lib/mth/evidence\n\nENV NODE_ENV=production \\\n    AUTH_MODE=oidc \\\n    PORT=3000 \\\n    EVIDENCE_STORAGE_DRIVER=filesystem \\\n    EVIDENCE_STORAGE_PATH=/var/lib/mth/evidence\n\nCOPY --from=build /out/app /app\nCOPY deploy/docker/entrypoint.sh /usr/local/bin/mth\nCOPY deploy/docker/healthcheck.mjs /app/healthcheck.mjs\nRUN chmod 0555 /usr/local/bin/mth && chmod 0444 /app/healthcheck.mjs\n\nWORKDIR /app\nUSER 10001:10001\nEXPOSE 3000\nVOLUME ["/var/lib/mth/evidence"]\nENTRYPOINT ["/usr/local/bin/mth"]\nCMD ["api"]\n',
+    operator: 'notStrictEqual',
+    diff: 'simple'
+  }
+
+test at deploy/scripts/tests/dockerfile-context.test.mjs:62:1
+✖ a manifest COPYed only AFTER `pnpm install` is reported (4.05131ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+  +   'packages/reporting/package.json: not COPYed before `pnpm install` in stage build',
+      'packages/shared/package.json: not COPYed before `pnpm install` in stage build'
+    ]
+  
+      at TestContext.<anonymous> (file:///home/user/My-owns/deploy/scripts/tests/dockerfile-context.test.mjs:68:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'packages/reporting/package.json: not COPYed before `pnpm install` in stage build', 'packages/shared/package.json: not COPYed before `pnpm install` in stage build' ],
+    expected: [ 'packages/shared/package.json: not COPYed before `pnpm install` in stage build' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at deploy/scripts/tests/dockerfile-context.test.mjs:71:1
+✖ a manifest excluded from the build context by .dockerignore is reported (2.078642ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+      '.npmrc: excluded from the build context by .dockerignore rule `.npmrc`',
+  +   'packages/reporting/package.json: not COPYed before `pnpm install` in stage build'
+    ]
+  
+      at TestContext.<anonymous> (file:///home/user/My-owns/deploy/scripts/tests/dockerfile-context.test.mjs:77:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ '.npmrc: excluded from the build context by .dockerignore rule `.npmrc`', 'packages/reporting/package.json: not COPYed before `pnpm install` in stage build' ],
+    expected: [ '.npmrc: excluded from the build context by .dockerignore rule `.npmrc`' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at deploy/scripts/tests/dockerfile-context.test.mjs:80:1
+✖ defect (c): `**/*secret*` without the source exceptions drops tracked sources, and is reported (0.451028ms)
+  AssertionError [ERR_ASSERTION]: fixture must remove the exceptions
+      at TestContext.<anonymous> (file:///home/user/My-owns/deploy/scripts/tests/dockerfile-context.test.mjs:84:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: '# Build context filter for deploy/docker/Dockerfile (context = repository root). ADR-0011, T-DG1-DEVOPS.\n# Keeps the context small and reproducible, and keeps anything secret, local or unrelated out of every image layer.\n\n# Version control and editor/agent state\n.git\n.github\n.idea\n.vscode\n.claude\n**/.claude\n.mcp.json\nCLAUDE.md\nCLAUDE.local.md\n.gitmodules\n.bash_profile\n.bashrc\n.profile\n.zprofile\n.zshrc\n.gitconfig\n.ripgreprc\n\n# Installed and built artefacts: the image installs from the lockfile and builds from source itself\n**/node_modules\n**/dist\n**/coverage\n**/*.tsbuildinfo\ntest-results\nplaywright-report\nblob-report\napps/web/e2e/screenshots\n\n# Local configuration and secrets (never baked into an image; runtime configuration only)\n.env\n.env.*\n!.env.example\n**/.env\ndeploy/compose/.env\n**/*.pem\n**/*.key\n**/*secret*\n!packages/config/src/**\n\n# Local evidence storage (filesystem adapter in development)\nvar\n\n# Not part of the product: delivery process, gate tooling, sources, unrelated user project\ndocs/delivery\n!docs/delivery/requirements.csv\ndocs/source\ntools\ntrading_agent\n**/__pycache__\n**/*.py[cod]\n',
+    expected: '# Build context filter for deploy/docker/Dockerfile (context = repository root). ADR-0011, T-DG1-DEVOPS.\n# Keeps the context small and reproducible, and keeps anything secret, local or unrelated out of every image layer.\n\n# Version control and editor/agent state\n.git\n.github\n.idea\n.vscode\n.claude\n**/.claude\n.mcp.json\nCLAUDE.md\nCLAUDE.local.md\n.gitmodules\n.bash_profile\n.bashrc\n.profile\n.zprofile\n.zshrc\n.gitconfig\n.ripgreprc\n\n# Installed and built artefacts: the image installs from the lockfile and builds from source itself\n**/node_modules\n**/dist\n**/coverage\n**/*.tsbuildinfo\ntest-results\nplaywright-report\nblob-report\napps/web/e2e/screenshots\n\n# Local configuration and secrets (never baked into an image; runtime configuration only)\n.env\n.env.*\n!.env.example\n**/.env\ndeploy/compose/.env\n**/*.pem\n**/*.key\n**/*secret*\n!packages/config/src/**\n\n# Local evidence storage (filesystem adapter in development)\nvar\n\n# Not part of the product: delivery process, gate tooling, sources, unrelated user project\ndocs/delivery\n!docs/delivery/requirements.csv\ndocs/source\ntools\ntrading_agent\n**/__pycache__\n**/*.py[cod]\n',
+    operator: 'notStrictEqual',
+    diff: 'simple'
+  }
+
+test at deploy/scripts/tests/dockerfile-context.test.mjs:100:1
+✖ the committed .dockerignore still keeps local secrets, keys and .env files out of the context (1.808608ms)
+  AssertionError [ERR_ASSERTION]: apps/worker/src/secrets.ts must be in the context
+  + actual - expected
+  
+  + '**/*secret*'
+  - null
+  
+      at TestContext.<anonymous> (file:///home/user/My-owns/deploy/scripts/tests/dockerfile-context.test.mjs:127:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: '**/*secret*',
+    expected: null,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at deploy/scripts/tests/dockerfile-context.test.mjs:148:1
+✖ defect (a): corepack enable --install-directory before the directory exists is reported (0.371335ms)
+  AssertionError [ERR_ASSERTION]: fixture must remove the mkdir
+      at TestContext.<anonymous> (file:///home/user/My-owns/deploy/scripts/tests/dockerfile-context.test.mjs:150:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: '# Mobily Transformation Hub: the single application image `mth-app` (ADR-0011, T-DG1-DEVOPS).\n#\n# One image, three commands (see deploy/docker/entrypoint.sh):\n#   api      HTTP API; also serves the built SPA from /app/apps/web/dist (same origin: cookies, CSP, CSRF)\n#   worker   background worker (outbox relay, pg-boss handlers)\n#   migrate  one-shot `mth-db migrate` as the owner role (DATABASE_OWNER_URL); `db <cmd>` exposes status/bootstrap\n#\n# Build from the repository root:\n#   deploy/scripts/build-image.sh                  (wraps the command below)\n#   docker build -f deploy/docker/Dockerfile -t mth-app:local .\n#\n# Restricted networks (§19 item 7, docs/operations/restricted-network.md):\n#   --build-arg NODE_IMAGE=<IT mirror>/node:24-bookworm-slim@sha256:...   base image from IT\'s registry mirror\n#   --build-arg NPM_REGISTRY=https://<IT npm mirror>/                      packages (and pnpm itself) from IT\'s mirror\n#   --secret id=build_ca,src=/path/to/ca.pem                               OPTIONAL: extra CA for a TLS-intercepting\n#                                                                          proxy/mirror. BUILD-TIME ONLY; never copied\n#                                                                          into any layer, and the runtime never needs it.\n# The lockfile\'s integrity hashes guarantee identical packages whichever registry serves them.\n#\n# There is deliberately NO `# syntax=` directive: that would pull the docker/dockerfile frontend image from Docker Hub\n# at build time. `RUN --mount=type=secret` is supported by the Dockerfile frontend built into BuildKit (Docker 23+).\n#\n# Base image: pinned by digest through deploy/images.lock.json (`node deploy/scripts/pin-images.mjs --check`).\nARG NODE_IMAGE=node:24-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6\n\n# --------------------------------------------------------------------------------------------------------------------\nFROM ${NODE_IMAGE} AS build\nARG NPM_REGISTRY=""\nENV CI=true \\\n    COREPACK_ENABLE_DOWNLOAD_PROMPT=0 \\\n    PNPM_HOME=/pnpm \\\n    PATH=/pnpm:$PATH\nWORKDIR /src\n\n# 1) Dependencies only (cached until a manifest or the lockfile changes).\nCOPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./\nCOPY apps/api/package.json apps/api/package.json\nCOPY apps/worker/package.json apps/worker/package.json\nCOPY apps/web/package.json apps/web/package.json\nCOPY packages/config/package.json packages/config/package.json\nCOPY packages/db/package.json packages/db/package.json\nCOPY packages/design-tokens/package.json packages/design-tokens/package.json\nCOPY packages/shared/package.json packages/shared/package.json\nRUN --mount=type=secret,id=build_ca,required=false \\\n    set -eu; \\\n    if [ -s /run/secrets/build_ca ]; then export NODE_EXTRA_CA_CERTS=/run/secrets/build_ca; fi; \\\n    if [ -n "$NPM_REGISTRY" ]; then export npm_config_registry="$NPM_REGISTRY" COREPACK_NPM_REGISTRY="$NPM_REGISTRY"; fi; \\\n    corepack enable --install-directory /pnpm; \\\n    pnpm --version; \\\n    pnpm install --frozen-lockfile\n\n# 2) Sources (filtered by /.dockerignore: no node_modules, dist, .git, delivery records or local secrets).\nCOPY . .\nRUN pnpm -r build\n\n# 3) Runtime tree: licence notices + SBOM, OFFLINE production prune from the same frozen lockfile, copy only what\n#    api/worker/migrate need, verify the layout. The local clean start runs the very same script\n#    (docs/operations/clean-start.md), so the image layout is testable without Docker.\nRUN bash deploy/scripts/assemble-runtime.sh /src /out/app\n\n# --------------------------------------------------------------------------------------------------------------------\nFROM ${NODE_IMAGE} AS runtime\nLABEL org.opencontainers.image.title="mth-app" \\\n      org.opencontainers.image.description="Mobily Transformation Hub (api | worker | migrate). Not an official PMI product." \\\n      org.opencontainers.image.licenses="UNLICENSED"\n\n# No package managers or build tools at runtime (ADR-0011): drop npm, npx, corepack and yarn from the base image.\n# A dedicated non-root user (uid/gid 10001) runs every command; the application files stay root-owned (read-only).\nRUN set -eu; \\\n    rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack /opt/yarn-*; \\\n    rm -f /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack /usr/local/bin/yarn /usr/local/bin/yarnpkg; \\\n    groupadd --system --gid 10001 mth; \\\n    useradd --system --uid 10001 --gid mth --home-dir /nonexistent --no-create-home --shell /usr/sbin/nologin mth; \\\n    mkdir -p /var/lib/mth/evidence; \\\n    chown mth:mth /var/lib/mth/evidence; \\\n    chmod 0700 /var/lib/mth/evidence\n\nENV NODE_ENV=production \\\n    AUTH_MODE=oidc \\\n    PORT=3000 \\\n    EVIDENCE_STORAGE_DRIVER=filesystem \\\n    EVIDENCE_STORAGE_PATH=/var/lib/mth/evidence\n\nCOPY --from=build /out/app /app\nCOPY deploy/docker/entrypoint.sh /usr/local/bin/mth\nCOPY deploy/docker/healthcheck.mjs /app/healthcheck.mjs\nRUN chmod 0555 /usr/local/bin/mth && chmod 0444 /app/healthcheck.mjs\n\nWORKDIR /app\nUSER 10001:10001\nEXPOSE 3000\nVOLUME ["/var/lib/mth/evidence"]\nENTRYPOINT ["/usr/local/bin/mth"]\nCMD ["api"]\n',
+    expected: '# Mobily Transformation Hub: the single application image `mth-app` (ADR-0011, T-DG1-DEVOPS).\n#\n# One image, three commands (see deploy/docker/entrypoint.sh):\n#   api      HTTP API; also serves the built SPA from /app/apps/web/dist (same origin: cookies, CSP, CSRF)\n#   worker   background worker (outbox relay, pg-boss handlers)\n#   migrate  one-shot `mth-db migrate` as the owner role (DATABASE_OWNER_URL); `db <cmd>` exposes status/bootstrap\n#\n# Build from the repository root:\n#   deploy/scripts/build-image.sh                  (wraps the command below)\n#   docker build -f deploy/docker/Dockerfile -t mth-app:local .\n#\n# Restricted networks (§19 item 7, docs/operations/restricted-network.md):\n#   --build-arg NODE_IMAGE=<IT mirror>/node:24-bookworm-slim@sha256:...   base image from IT\'s registry mirror\n#   --build-arg NPM_REGISTRY=https://<IT npm mirror>/                      packages (and pnpm itself) from IT\'s mirror\n#   --secret id=build_ca,src=/path/to/ca.pem                               OPTIONAL: extra CA for a TLS-intercepting\n#                                                                          proxy/mirror. BUILD-TIME ONLY; never copied\n#                                                                          into any layer, and the runtime never needs it.\n# The lockfile\'s integrity hashes guarantee identical packages whichever registry serves them.\n#\n# There is deliberately NO `# syntax=` directive: that would pull the docker/dockerfile frontend image from Docker Hub\n# at build time. `RUN --mount=type=secret` is supported by the Dockerfile frontend built into BuildKit (Docker 23+).\n#\n# Base image: pinned by digest through deploy/images.lock.json (`node deploy/scripts/pin-images.mjs --check`).\nARG NODE_IMAGE=node:24-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6\n\n# --------------------------------------------------------------------------------------------------------------------\nFROM ${NODE_IMAGE} AS build\nARG NPM_REGISTRY=""\nENV CI=true \\\n    COREPACK_ENABLE_DOWNLOAD_PROMPT=0 \\\n    PNPM_HOME=/pnpm \\\n    PATH=/pnpm:$PATH\nWORKDIR /src\n\n# 1) Dependencies only (cached until a manifest or the lockfile changes).\nCOPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./\nCOPY apps/api/package.json apps/api/package.json\nCOPY apps/worker/package.json apps/worker/package.json\nCOPY apps/web/package.json apps/web/package.json\nCOPY packages/config/package.json packages/config/package.json\nCOPY packages/db/package.json packages/db/package.json\nCOPY packages/design-tokens/package.json packages/design-tokens/package.json\nCOPY packages/shared/package.json packages/shared/package.json\nRUN --mount=type=secret,id=build_ca,required=false \\\n    set -eu; \\\n    if [ -s /run/secrets/build_ca ]; then export NODE_EXTRA_CA_CERTS=/run/secrets/build_ca; fi; \\\n    if [ -n "$NPM_REGISTRY" ]; then export npm_config_registry="$NPM_REGISTRY" COREPACK_NPM_REGISTRY="$NPM_REGISTRY"; fi; \\\n    corepack enable --install-directory /pnpm; \\\n    pnpm --version; \\\n    pnpm install --frozen-lockfile\n\n# 2) Sources (filtered by /.dockerignore: no node_modules, dist, .git, delivery records or local secrets).\nCOPY . .\nRUN pnpm -r build\n\n# 3) Runtime tree: licence notices + SBOM, OFFLINE production prune from the same frozen lockfile, copy only what\n#    api/worker/migrate need, verify the layout. The local clean start runs the very same script\n#    (docs/operations/clean-start.md), so the image layout is testable without Docker.\nRUN bash deploy/scripts/assemble-runtime.sh /src /out/app\n\n# --------------------------------------------------------------------------------------------------------------------\nFROM ${NODE_IMAGE} AS runtime\nLABEL org.opencontainers.image.title="mth-app" \\\n      org.opencontainers.image.description="Mobily Transformation Hub (api | worker | migrate). Not an official PMI product." \\\n      org.opencontainers.image.licenses="UNLICENSED"\n\n# No package managers or build tools at runtime (ADR-0011): drop npm, npx, corepack and yarn from the base image.\n# A dedicated non-root user (uid/gid 10001) runs every command; the application files stay root-owned (read-only).\nRUN set -eu; \\\n    rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack /opt/yarn-*; \\\n    rm -f /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack /usr/local/bin/yarn /usr/local/bin/yarnpkg; \\\n    groupadd --system --gid 10001 mth; \\\n    useradd --system --uid 10001 --gid mth --home-dir /nonexistent --no-create-home --shell /usr/sbin/nologin mth; \\\n    mkdir -p /var/lib/mth/evidence; \\\n    chown mth:mth /var/lib/mth/evidence; \\\n    chmod 0700 /var/lib/mth/evidence\n\nENV NODE_ENV=production \\\n    AUTH_MODE=oidc \\\n    PORT=3000 \\\n    EVIDENCE_STORAGE_DRIVER=filesystem \\\n    EVIDENCE_STORAGE_PATH=/var/lib/mth/evidence\n\nCOPY --from=build /out/app /app\nCOPY deploy/docker/entrypoint.sh /usr/local/bin/mth\nCOPY deploy/docker/healthcheck.mjs /app/healthcheck.mjs\nRUN chmod 0555 /usr/local/bin/mth && chmod 0444 /app/healthcheck.mjs\n\nWORKDIR /app\nUSER 10001:10001\nEXPOSE 3000\nVOLUME ["/var/lib/mth/evidence"]\nENTRYPOINT ["/usr/local/bin/mth"]\nCMD ["api"]\n',
+    operator: 'notStrictEqual',
+    diff: 'simple'
+  }
+exit=1

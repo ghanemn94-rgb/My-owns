@@ -1,0 +1,24 @@
+port-policy: PostgreSQL listening on port 27411 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /home/user/My-owns
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwegdjsg_22a2af40 (server_encoding UTF8); applied 131 migrations to a fresh database
+ ✓ |integration-kbe| tests/integration/transfer/financial-parity.test.ts > T-C17 (package parity): every financial row survives the package exactly > every financial table travels in the package (none excluded) and the demo exercises each case 2ms
+ ✓ |integration-kbe| tests/integration/transfer/financial-parity.test.ts > T-C17 (package parity): every financial row survives the package exactly > no numeric value is a JSON number in any financial table file (decimal strings only) 25ms
+ ✓ |integration-kbe| tests/integration/transfer/financial-parity.test.ts > T-C17 (package parity): every financial row survives the package exactly > each row decoded on the target equals its source row, column for column as text 4ms
+ ✓ |integration-kbe| tests/integration/transfer/financial-parity.test.ts > T-C17 (recomputation): the financial results recompute identically from the decoded rows > benefit totals: plan, measured and validated realized value are equal as exact decimal strings 0ms
+ ✓ |integration-kbe| tests/integration/transfer/financial-parity.test.ts > T-C17 (recomputation): the financial results recompute identically from the decoded rows > allocations: each set's allocated share is equal, at most 100%, with the unallocated share shown 0ms
+ ✓ |integration-kbe| tests/integration/transfer/financial-parity.test.ts > T-C17 (recomputation): the financial results recompute identically from the decoded rows > formula versions: expression hashes match the stored hash and every calculation re-evaluates to its stored result 0ms
+ ✓ |integration-kbe| tests/integration/transfer/financial-parity.test.ts > T-C17 (recomputation): the financial results recompute identically from the decoded rows > Finance validations: statuses, counts and approved amounts are equal; approvals equal the validated amount 0ms
+ ✓ |integration-kbe| tests/integration/transfer/financial-parity.test.ts > T-C17 (recomputation): the financial results recompute identically from the decoded rows > KPI calculation runs: evaluations, variances and recomputed RAG are equal and match the stored ones 1ms
+ ✓ |integration-kbe| tests/integration/transfer/financial-parity.test.ts > T-C17 (recomputation): the financial results recompute identically from the decoded rows > Unknown and Stale stay Unknown and Stale after the move, never 0 and never green 4ms
+ ✓ |integration-kbe| tests/integration/transfer/financial-parity.test.ts > T-C17 (negative control): the parity is not vacuous > one plan amount changed by 0.0001 in a package copy is caught by the rows and by the recomputed totals 40ms
+ ↓ |integration-kbe| tests/integration/transfer/financial-parity.test.ts > T-C17 (loaded target): BLOCKED until the import's load exists (BE-D Q1) > after import-migration exits 0: recompute(financialRowsOf(target.db)) equals recompute(financialRowsOf(source.db)), and the target's benefit_counting and benefit_value_line views equal the source's (blocked: ADR-0064 §6 steps 5-7 and 9 not built; T-DG7-BE-D handback Q1)
+
+ Test Files  1 passed (1)
+      Tests  10 passed | 1 todo (11)
+   Start at  04:04:37
+   Duration  11.80s (transform 1.15s, setup 0ms, collect 1.89s, tests 7.09s, environment 0ms, prepare 42ms)
+
+exit 0

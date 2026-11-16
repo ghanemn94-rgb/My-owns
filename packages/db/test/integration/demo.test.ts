@@ -22,6 +22,9 @@ import { createDb, createPool, type Db } from "../../src/pool.ts";
 import { FIXTURE_DEMO_ISSUER, FIXTURE_USER_ID, TEST_DEMO_MODULES } from "../demo-fixture.ts";
 import { createScratchDatabase, dropScratchDatabase, pgError, roleUrl, testDatabase } from "../helpers.ts";
 
+/** ADR-0064 A4.6: the legacy anchor (2026-09: no generated period), so the pinned expectations keep their numbers. */
+const LEGACY_AS_OF = "2026-09-01";
+
 const { adminUrl } = testDatabase();
 const cli = fileURLToPath(new URL("../../src/cli.ts", import.meta.url));
 const dropAtEnd: string[] = [];
@@ -198,6 +201,7 @@ describe("REQ-S18-003: the empty production initialization and the seed-demo ref
       requestedVia: "cli",
       requestedBy: null,
       modules: TEST_DEMO_MODULES,
+      asOf: LEGACY_AS_OF,
     }).catch((e: unknown) => e);
     expect(err).toBeInstanceOf(DemoRefused);
     expect([(err as DemoRefused).exitCode, (err as DemoRefused).reason]).toEqual([3, SEED_DEMO_REFUSALS.production]);
@@ -215,6 +219,7 @@ describe("REQ-S18-001: seed, then reset twice: identical record counts and check
       requestedVia: "cli",
       requestedBy: null,
       modules: TEST_DEMO_MODULES,
+      asOf: LEGACY_AS_OF,
     });
     expect([seeded.runNo, seeded.runKind, seeded.seededRecords]).toEqual([1, "seed", 3]);
     expect(seeded.recordCounts["demo_seed_record"]).toBe(3);
@@ -244,6 +249,7 @@ describe("REQ-S18-001: seed, then reset twice: identical record counts and check
           requestedVia: "cli",
           requestedBy: null,
           modules: TEST_DEMO_MODULES,
+          asOf: LEGACY_AS_OF,
         }),
       );
     for (const r of resets) {
@@ -290,11 +296,12 @@ describe("REQ-S18-001: seed, then reset twice: identical record counts and check
   it("through the CLI (the shipped dataset): seed-demo, then reset-demo twice gives identical counts and checksums", async () => {
     const { ownerUrl } = await scratch("mth_demo_cli");
     const outputs: string[] = [];
-    const seed = runCli(["seed-demo"], { DATABASE_OWNER_URL: ownerUrl, MTH_ENV: "demo" });
+    // ADR-0064 A4.6: seed and resets compare counts and checksum for the same period anchor.
+    const seed = runCli(["seed-demo", "--as-of", LEGACY_AS_OF], { DATABASE_OWNER_URL: ownerUrl, MTH_ENV: "demo" });
     expect(seed.status, seed.stderr).toBe(0);
     outputs.push(seed.stdout);
     for (let i = 0; i < 2; i++) {
-      const r = runCli(["reset-demo"], {
+      const r = runCli(["reset-demo", "--as-of", LEGACY_AS_OF], {
         DATABASE_OWNER_URL: ownerUrl,
         MTH_ENV: "demo",
         MTH_DEMO_ADMIN_DATABASE_URL: adminUrl,
@@ -349,6 +356,7 @@ describe("REQ-S18-001: seed, then reset twice: identical record counts and check
       requestedVia: "cli",
       requestedBy: null,
       modules: TEST_DEMO_MODULES,
+      asOf: LEGACY_AS_OF,
     });
     await query(ownerUrl, "UPDATE organization SET name_en = 'Changed' WHERE code = 'SYN-DEMO'");
     const after = await withDb(ownerUrl, (db) => db.transaction().execute((tx) => datasetChecksum(tx)));

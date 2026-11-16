@@ -1,0 +1,104 @@
+port-policy: PostgreSQL listening on port 24351 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/My-owns
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwehn12d_7aca5001 (server_encoding UTF8); applied 131 migrations to a fresh database
+stdout | tests/qa/integration/a19-backup-restore-drill.test.ts
+A19-TIMINGS {"backup.total":2.541409345,"backup.dump":0.463,"backup.config":0.099,"backup.verify":0.78,"backup.evidence":0.821,"backup.snapshot":0.153,"restore.total":5.133,"restore.packageChecks":0.17,"restore.targetChecks":0.085,"restore.database":2.695,"restore.evidence":0.691,"restore.checks":1.489,"check.timeToReady":0.14962818399999742}
+
+ ❯ |integration| tests/qa/integration/a19-backup-restore-drill.test.ts (13 tests | 4 failed) 15020ms
+   ✓ A19 pre-drill: the source installation is not vacuous > the source holds demo records, audit, snapshots, job state and evidence objects to recover 102ms
+   × A19 drill: backup, then restore into a fresh database and an empty evidence store (REQ-S20-019) > backup.sh writes a set with the mth-backup/1 manifest, five timings, and records it audited 2661ms
+     → expected '0148_p7_retention_job' to be 148 // Object.is equality
+   ✓ A19 drill: backup, then restore into a fresh database and an empty evidence store (REQ-S20-019) > the set's config/ holds no secret value (configuration without credentials) 1ms
+   ✓ A19 drill: backup, then restore into a fresh database and an empty evidence store (REQ-S20-019) > restore.sh restores into a fresh database and an empty evidence store, passing R1–R8 with timings  5436ms
+   ✓ A19 drill: backup, then restore into a fresh database and an empty evidence store (REQ-S20-019) > database (R2, R3), audit (R4), snapshots (R5) and job state (R6) are equal, by QA's own recount 106ms
+   ✓ A19 drill: backup, then restore into a fresh database and an empty evidence store (REQ-S20-019) > evidence (R7) and readiness (R8): every file downloads from the restored installation with its SHA-256 233ms
+   ✓ A19 drill: backup, then restore into a fresh database and an empty evidence store (REQ-S20-019) > the set appears in listBackupSets of the source for ADM_TECH; 403 without backup.read 47ms
+   ✓ A19 drill: backup, then restore into a fresh database and an empty evidence store (REQ-S20-019) > a non-empty target database is refused (exit 2) and left unchanged  519ms
+   × A19 drill: backup, then restore into a fresh database and an empty evidence store (REQ-S20-019) > a non-empty target evidence store is refused (exit 2); nothing is written to the database 309ms
+     → relation "public.report_snapshot" does not exist
+   × A19 drill: backup, then restore into a fresh database and an empty evidence store (REQ-S20-019) > a changed byte in a set file is refused (exit 2) naming the file; the target stays empty 170ms
+     → relation "public.report_snapshot" does not exist
+   × A19 drill: backup, then restore into a fresh database and an empty evidence store (REQ-S20-019) > an unsupported schema version is refused (exit 2) with the exact line 128ms
+     → relation "public.report_snapshot" does not exist
+   ✓ A19 drill: backup, then restore into a fresh database and an empty evidence store (REQ-S20-019) > backup_set_record(): the runtime role is refused and an unknown key is refused (authorization, validation) 10ms
+   ✓ A19 documented checks: docs/handover/backup-restore.md (DO-F) > documents R1–R9, measured drill timings, RPO/RTO 'to agree with Mobily IT' and an Arabic summary 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/a19-backup-restore-drill.test.ts > A19 drill: backup, then restore into a fresh database and an empty evidence store (REQ-S20-019) > backup.sh writes a set with the mth-backup/1 manifest, five timings, and records it audited
+AssertionError: expected '0148_p7_retention_job' to be 148 // Object.is equality
+
+[32m- Expected:[39m 
+148
+
+[31m+ Received:[39m 
+"0148_p7_retention_job"
+
+ ❯ tests/qa/integration/a19-backup-restore-drill.test.ts:316:30
+    314|     for (const [k, v] of Object.entries(m.timings ?? {})) timings[`bac…
+    315|     expect(m.label).toBe(label);
+    316|     expect(m.migrationLevel).toBe(before.migrationLevel);
+       |                              ^
+    317|     expect(Number(m.database.auditEvents.count)).toBeGreaterThanOrEqua…
+    318|     expect(m.database.pgbossJobsByState.created).toBeGreaterThanOrEqua…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  |integration| tests/qa/integration/a19-backup-restore-drill.test.ts > A19 drill: backup, then restore into a fresh database and an empty evidence store (REQ-S20-019) > a non-empty target evidence store is refused (exit 2); nothing is written to the database
+error: relation "public.report_snapshot" does not exist
+ ❯ node_modules/.pnpm/pg-pool@3.14.0_pg@8.16.3/node_modules/pg-pool/index.js:45:11
+ ❯ q tests/qa/integration/a19-backup-restore-drill.test.ts:160:86
+    158| async function fingerprint(db: string): Promise<Fingerprint> {
+    159|   const pool = createPool(roleUrl(inject("mthDb").adminUrl, db, null),…
+    160|   const q = async <T extends Record<string, unknown>>(sql: string): Pr…
+       |                                                                                      ^
+    161|   try {
+    162|     const tables = await q<{ s: string; t: string }>(
+ ❯ fingerprint tests/qa/integration/a19-backup-restore-drill.test.ts:173:20
+ ❯ tests/qa/integration/a19-backup-restore-drill.test.ts:456:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  |integration| tests/qa/integration/a19-backup-restore-drill.test.ts > A19 drill: backup, then restore into a fresh database and an empty evidence store (REQ-S20-019) > a changed byte in a set file is refused (exit 2) naming the file; the target stays empty
+error: relation "public.report_snapshot" does not exist
+ ❯ node_modules/.pnpm/pg-pool@3.14.0_pg@8.16.3/node_modules/pg-pool/index.js:45:11
+ ❯ q tests/qa/integration/a19-backup-restore-drill.test.ts:160:86
+    158| async function fingerprint(db: string): Promise<Fingerprint> {
+    159|   const pool = createPool(roleUrl(inject("mthDb").adminUrl, db, null),…
+    160|   const q = async <T extends Record<string, unknown>>(sql: string): Pr…
+       |                                                                                      ^
+    161|   try {
+    162|     const tables = await q<{ s: string; t: string }>(
+ ❯ fingerprint tests/qa/integration/a19-backup-restore-drill.test.ts:173:20
+ ❯ tests/qa/integration/a19-backup-restore-drill.test.ts:473:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  |integration| tests/qa/integration/a19-backup-restore-drill.test.ts > A19 drill: backup, then restore into a fresh database and an empty evidence store (REQ-S20-019) > an unsupported schema version is refused (exit 2) with the exact line
+error: relation "public.report_snapshot" does not exist
+ ❯ node_modules/.pnpm/pg-pool@3.14.0_pg@8.16.3/node_modules/pg-pool/index.js:45:11
+ ❯ q tests/qa/integration/a19-backup-restore-drill.test.ts:160:86
+    158| async function fingerprint(db: string): Promise<Fingerprint> {
+    159|   const pool = createPool(roleUrl(inject("mthDb").adminUrl, db, null),…
+    160|   const q = async <T extends Record<string, unknown>>(sql: string): Pr…
+       |                                                                                      ^
+    161|   try {
+    162|     const tables = await q<{ s: string; t: string }>(
+ ❯ fingerprint tests/qa/integration/a19-backup-restore-drill.test.ts:173:20
+ ❯ tests/qa/integration/a19-backup-restore-drill.test.ts:492:13
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 9 passed (13)
+   Start at  04:39:59
+   Duration  27.49s (transform 4.80s, setup 0ms, collect 8.79s, tests 15.02s, environment 0ms, prepare 55ms)
+
+exit=1

@@ -1,0 +1,73 @@
+port-policy: PostgreSQL listening on port 24351 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.7J5f2o/claude-0/review-a26-qa
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwgsx1vo_3db76278 (server_encoding UTF8); applied 135 migrations to a fresh database
+stdout | tests/qa/integration/qa-a26-bu-update-authz.test.ts > drill a26: business-unit PATCH requires business_unit.manage > office (business_unit.read only) cannot rename/deactivate a1: 403, audited denial, no change
+[qa-a26] office: status=200 version 1->2 name_en=pwned-by-office status=inactive updates=1
+
+stdout | tests/qa/integration/qa-a26-bu-update-authz.test.ts > drill a26: business-unit PATCH requires business_unit.manage > auditor (business_unit.read only) cannot rename/deactivate a1: 403, audited denial, no change
+[qa-a26] auditor: status=200 version 2->3 name_en=pwned-by-auditor status=inactive updates=2
+
+stdout | tests/qa/integration/qa-a26-bu-update-authz.test.ts > drill a26: business-unit PATCH requires business_unit.manage > leadA1 (business_unit.read only) cannot rename/deactivate a1: 403, audited denial, no change
+[qa-a26] leadA1: status=200 version 3->4 name_en=pwned-by-leadA1 status=inactive updates=3
+
+stdout | tests/qa/integration/qa-a26-bu-update-authz.test.ts > drill a26: business-unit PATCH requires business_unit.manage > auditor (read-only) cannot re-parent a1x to the top level when only read applies to the moved unit
+[qa-a26] auditor re-parent: status=403
+
+stdout | tests/qa/integration/qa-a26-bu-update-authz.test.ts > drill a26: business-unit PATCH requires business_unit.manage > re-parent: manage on the destination (a2) but only read on the moved unit (a1x) must be refused
+[qa-a26] split-grant re-parent: status=200 parent a1->a2
+
+ ❯ |integration| tests/qa/integration/qa-a26-bu-update-authz.test.ts (7 tests | 4 failed) 828ms
+   × drill a26: business-unit PATCH requires business_unit.manage > office (business_unit.read only) cannot rename/deactivate a1: 403, audited denial, no change 42ms
+     → expected 200 to be 403 // Object.is equality
+   × drill a26: business-unit PATCH requires business_unit.manage > auditor (business_unit.read only) cannot rename/deactivate a1: 403, audited denial, no change 13ms
+     → expected 200 to be 403 // Object.is equality
+   × drill a26: business-unit PATCH requires business_unit.manage > leadA1 (business_unit.read only) cannot rename/deactivate a1: 403, audited denial, no change 13ms
+     → expected 200 to be 403 // Object.is equality
+   ✓ drill a26: business-unit PATCH requires business_unit.manage > auditor (read-only) cannot re-parent a1x to the top level when only read applies to the moved unit 23ms
+   × drill a26: business-unit PATCH requires business_unit.manage > re-parent: manage on the destination (a2) but only read on the moved unit (a1x) must be refused 32ms
+     → expected 200 to be 403 // Object.is equality
+   ✓ drill a26: business-unit PATCH requires business_unit.manage > negative scope control: other-organization and no-grant users still get 404 17ms
+   ✓ drill a26: business-unit PATCH requires business_unit.manage > positive control: ADM_TECH (business_unit.manage) renames a2 with If-Match; one audit event; stale If-Match 409 22ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/qa-a26-bu-update-authz.test.ts > drill a26: business-unit PATCH requires business_unit.manage > office (business_unit.read only) cannot rename/deactivate a1: 403, audited denial, no change
+ FAIL  |integration| tests/qa/integration/qa-a26-bu-update-authz.test.ts > drill a26: business-unit PATCH requires business_unit.manage > auditor (business_unit.read only) cannot rename/deactivate a1: 403, audited denial, no change
+ FAIL  |integration| tests/qa/integration/qa-a26-bu-update-authz.test.ts > drill a26: business-unit PATCH requires business_unit.manage > leadA1 (business_unit.read only) cannot rename/deactivate a1: 403, audited denial, no change
+AssertionError: expected 200 to be 403 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 403[39m
+[31m+ 200[39m
+
+ ❯ tests/qa/integration/qa-a26-bu-update-authz.test.ts:36:26
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  |integration| tests/qa/integration/qa-a26-bu-update-authz.test.ts > drill a26: business-unit PATCH requires business_unit.manage > re-parent: manage on the destination (a2) but only read on the moved unit (a1x) must be refused
+AssertionError: expected 200 to be 403 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 403[39m
+[31m+ 200[39m
+
+ ❯ tests/qa/integration/qa-a26-bu-update-authz.test.ts:67:24
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 3 passed (7)
+   Start at  19:31:14
+   Duration  14.79s (transform 5.14s, setup 0ms, collect 9.70s, tests 828ms, environment 0ms, prepare 58ms)
+
+exit=1

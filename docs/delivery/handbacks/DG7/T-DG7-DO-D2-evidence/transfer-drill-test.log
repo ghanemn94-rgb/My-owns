@@ -1,0 +1,90 @@
+port-policy: PostgreSQL listening on port 24351 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+▶ T-B3 origin-scan.mjs: the source origin is accepted only in audit_event
+  ✔ a hit in audit_event only is listed and passes (exit 0) (121.373076ms)
+  ✔ the origin in a text column fails with the B.5 line (exit 1) (152.220018ms)
+  ✔ the origin in a jsonb value fails (exit 1) (155.826956ms)
+  ✔ LIKE wildcards in the data are not matches (a plain substring test) (125.132726ms)
+✔ T-B3 origin-scan.mjs: the source origin is accepted only in audit_event (710.212033ms)
+▶ T-B9 config-trace.mjs: configuration only from the template and the guide
+  ✔ documented keys pass, each citing its guide section; a secret is written as <KEY>_FILE and never shown (1.656761ms)
+  ✔ a key outside the map fails with the B.5 undocumented-step line (0.332536ms)
+  ✔ an anchor absent from the (fixture) guide fails with the same line (0.316426ms)
+  ✔ a key that is not in the template fails (not from the template) (0.245016ms)
+  ✔ the shipped map covers every .env.example key and every anchor exists in the shipped guide (1.087569ms)
+  ✔ the CLI exits 1 on an undocumented step and writes a FAIL trace (37.878646ms)
+✔ T-B9 config-trace.mjs: configuration only from the template and the guide (42.715277ms)
+▶ T-B9 transfer-drill.sh: BLOCKED, isolation and the report
+  ✔ without bwrap (stub PATH) it exits 3 with the B.5 BLOCKED line (30.853178ms)
+  ✔ without PostgreSQL server binaries it exits 3 with the B.5 BLOCKED line (15.043368ms)
+  ✔ not enough free disk: exit 3 with the B.6 DO-D2 line, and the work directory is removed (41.618987ms)
+  ✔ a probe that connects exits 1 with the B.5 isolation line (584.414366ms)
+  ✔ a failing step: exit 1, the B.5 step line, later steps NOT_RUN, result FAIL, schemaVersion mth-transfer-drill/1 (616.842014ms)
+✔ T-B9 transfer-drill.sh: BLOCKED, isolation and the report (1289.184741ms)
+PASS  signin (95 ms): drill-bound -> user 01a1d539-cd1f-7132-85b3-6add416d7d79, roles [ADM_TECH,ADM_ACCESS]
+PASS  csrf (11 ms): Origin http://localhost:25301 -> 403 csrf
+PASS  unbound (24 ms): drill-unbound refused: identity_unbound; /me 401
+▶ T-B10 journey.mjs under NODE_ENV=production, AUTH_MODE=oidc: drill IdP sign-in, CSRF 403, unbound refused
+  ✔ signs in through the drill IdP (authMode oidc), the source-origin write is 403, the unbound user is refused (129.851194ms)
+PASS  signin (39 ms): drill-bound -> user 01a1d539-cd1f-7132-85b3-6add416d7d79, roles [ADM_TECH,ADM_ACCESS]
+PASS  status (21 ms): origin http://127.0.0.1:25217, environmentKind production, schema ok
+PASS  signin (28 ms): drill-bound -> user 01a1d539-cd1f-7132-85b3-6add416d7d79, roles [ADM_TECH,ADM_ACCESS]
+FAIL  status (10 ms): getDeploymentStatus.origin is http://127.0.0.1:25217, expected http://localhost:25301
+  ✔ status: getDeploymentStatus.origin is the target's origin; a wrong expectation FAILS, never passes (98.658153ms)
+PASS  signin (32 ms): drill-bound -> user 01a1d539-cd1f-7132-85b3-6add416d7d79, roles [ADM_TECH,ADM_ACCESS]
+FAIL  deeplink (8 ms): no notification with a link was issued on the target
+FAIL  downloads (0 ms): no --downloads given
+  ✔ a step with no data to prove never passes (deeplink with an empty inbox, downloads without a list) (41.073305ms)
+PASS  signin (26 ms): drill-bound -> user 01a1d539-cd1f-7132-85b3-6add416d7d79, roles [ADM_TECH,ADM_ACCESS]
+# T-B16 measurement: {"schemaVersion":"mth-drill-signin-measurement/1","appUserChangedBySignIn":true,"userIdentityChangedBySignIn":true,"measuredOn":"T-B10 production suite (NODE_ENV=production, AUTH_MODE=oidc, drill IdP), SYNTHETIC user"}
+  ✔ T-B16 (measurement): whether a sign-in changes app_user, recorded for allowance.mjs (157.612523ms)
+  ✔ a redirect URI the drill IdP has not registered is refused (1.676923ms)
+✔ T-B10 journey.mjs under NODE_ENV=production, AUTH_MODE=oidc: drill IdP sign-in, CSRF 403, unbound refused (7486.938586ms)
+PASS  signin (93 ms): drill-bound -> user 01a1d539-eb90-70cc-82ab-b4b51bea9f88, roles [ADM_TECH,ADM_ACCESS]
+PASS  csrf (10 ms): Origin http://localhost:25301 -> 403 csrf
+PASS  unbound (22 ms): drill-unbound refused: identity_unbound; /me 401
+▶ T-B10 (supporting, NOT production semantics) the same journey with NODE_ENV=development, AUTH_MODE=oidc
+  ✔ signs in through the drill IdP (authMode oidc), the source-origin write is 403, the unbound user is refused (126.317236ms)
+PASS  signin (34 ms): drill-bound -> user 01a1d539-eb90-70cc-82ab-b4b51bea9f88, roles [ADM_TECH,ADM_ACCESS]
+PASS  status (18 ms): origin http://127.0.0.1:29746, environmentKind production, schema ok
+PASS  signin (23 ms): drill-bound -> user 01a1d539-eb90-70cc-82ab-b4b51bea9f88, roles [ADM_TECH,ADM_ACCESS]
+FAIL  status (11 ms): getDeploymentStatus.origin is http://127.0.0.1:29746, expected http://localhost:25301
+  ✔ status: getDeploymentStatus.origin is the target's origin; a wrong expectation FAILS, never passes (86.736494ms)
+PASS  signin (21 ms): drill-bound -> user 01a1d539-eb90-70cc-82ab-b4b51bea9f88, roles [ADM_TECH,ADM_ACCESS]
+FAIL  deeplink (8 ms): no notification with a link was issued on the target
+FAIL  downloads (0 ms): no --downloads given
+  ✔ a step with no data to prove never passes (deeplink with an empty inbox, downloads without a list) (29.534566ms)
+  ✔ a redirect URI the drill IdP has not registered is refused (1.708835ms)
+✔ T-B10 (supporting, NOT production semantics) the same journey with NODE_ENV=development, AUTH_MODE=oidc (7478.773103ms)
+▶ T-B15 allowance.mjs: mth-recheck-allowance/1 from a fixture journal
+  ✔ writes a valid allowance: exact keys merged, never-operational tables only in tables, reasons for each operational (7.992822ms)
+  ✔ app_user is listed only when the measurement says a sign-in changes it (0.379111ms)
+  ✔ an audit_event entry, an unknown identity or a bad key is refused (exit 1 via the CLI) (40.622716ms)
+  ✖ BE-R1's parseAllowance (packages/db) accepts the file (0.534792ms)
+✖ T-B15 allowance.mjs: mth-recheck-allowance/1 from a fixture journal (49.890949ms)
+▶ T-B16 job-check.mjs on a fixture database
+  ✔ a new job_run row passes (counted), and the pg-boss table is measured (683.736497ms)
+  ✔ a changed enabled schedule fails (675.491022ms)
+  ✔ a removed job_run row fails (740.896963ms)
+  ✔ a changed approval row fails (679.998076ms)
+  ✔ a missing pg-boss table reports BLOCKED (exit 2), never PASS (105.898185ms)
+✔ T-B16 job-check.mjs on a fixture database (3039.667503ms)
+ℹ tests 33
+ℹ suites 7
+ℹ pass 32
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 20206.753509
+
+✖ failing tests:
+
+test at deploy/scripts/tests/transfer-drill.test.mjs:631:3
+✖ BE-R1's parseAllowance (packages/db) accepts the file (0.534792ms)
+  Error: BLOCKED: parseAllowance is not exported by packages/db/src/transfer/recheck.ts (T-DG7-BE-R1 gap 2); the file cannot be validated by it
+      at TestContext.<anonymous> (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:634:13)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7)
+exit=1

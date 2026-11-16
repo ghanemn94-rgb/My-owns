@@ -1,0 +1,1079 @@
+{
+ "tool": "tools/release/protocol-audit.mjs",
+ "version": "1.0.0",
+ "head": "5458273cd4803b2c5b5573b4f2ff317c0d01d2ff",
+ "git_history_used": true,
+ "stages": [
+  "DG7"
+ ],
+ "verdict": "FAIL",
+ "exit_code": 1,
+ "totals": {
+  "checks": 9,
+  "pass": 6,
+  "hit": 3,
+  "blocked": 0,
+  "hits": 35
+ },
+ "checks": [
+  {
+   "id": "C1",
+   "name": "concurrency",
+   "requirement": "REQ-DLV-009",
+   "clause": "for each gate, overlapping run intervals in docs/delivery/runs/<DGx>/*/meta.json never exceed four (D-004)",
+   "stage": "DG7",
+   "status": "PASS",
+   "stats": {
+    "runs_with_meta": 94,
+    "runs_without_meta": 3,
+    "max_concurrent": 3,
+    "peak_at": "2026-11-15T07:38:00.000Z",
+    "peak_runs": [
+     "DG7-T-DG7-REV-DOM-R1-domain-reviewer-20261115T073754Z-2c291847",
+     "DG7-T-DG7-REV-CS-R1-code-security-reviewer-20261115T073757Z-4b0b34ec",
+     "DG7-T-DG7-REV-QA-R1-qa-verifier-20261115T073800Z-09c7ac0c"
+    ],
+    "limit": 4
+   },
+   "hits": [],
+   "notes": [
+    {
+     "kind": "runs-without-meta",
+     "detail": "no finished_at, so not counted in the overlap; listed for disclosure",
+     "runs": [
+      {
+       "run_dir": "docs/delivery/runs/DG7/DG7-T-DG7-AN-P7D-transformation-analyst-20261115T051849Z-b6bb9b4e",
+       "started_from_name": "2026-11-15T05:18:49Z",
+       "files": [
+        ".pre-config.txt",
+        ".pre-snapshot.json",
+        "settings.json",
+        "stderr.log",
+        "transcript.jsonl"
+       ]
+      },
+      {
+       "run_dir": "docs/delivery/runs/DG7/DG7-T-DG7-AN-P7G-transformation-analyst-20261116T013856Z-99fb4120",
+       "started_from_name": "2026-11-16T01:38:56Z",
+       "files": [
+        ".pre-config.txt",
+        ".pre-snapshot.json",
+        "settings.json",
+        "stderr.log",
+        "transcript.jsonl"
+       ]
+      },
+      {
+       "run_dir": "docs/delivery/runs/DG7/DG7-T-DG7-ARCH-02-solution-architect-20261112T132438Z-96a9626b",
+       "started_from_name": "2026-11-12T13:24:38Z",
+       "files": [
+        ".pre-config.txt",
+        ".pre-snapshot.json",
+        "settings.json",
+        "stderr.log",
+        "transcript.jsonl"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "C2",
+   "name": "assignment-contract",
+   "requirement": "REQ-DLV-011",
+   "clause": "every run's meta.json records an assignment SHA-256 that matches an assignment file containing all ten contract elements",
+   "stage": "DG7",
+   "status": "HIT",
+   "stats": {
+    "assignments_audited": 94,
+    "runs": 94,
+    "assignments_complete_in_own_text": 34,
+    "assignments_complete_by_reference": 33,
+    "elements": [
+     "Stage ID",
+     "Task and requirement IDs",
+     "Source/reference files",
+     "Candidate/base revision",
+     "Permitted files",
+     "Constraints",
+     "Input/output contracts",
+     "Acceptance checks",
+     "Dependency status",
+     "Handback path"
+    ]
+   },
+   "hits": [
+    {
+     "stage": "DG7",
+     "kind": "assignment-missing-elements",
+     "assignment": "docs/delivery/assignments/DG7/T-DG7-AN-P7B.md",
+     "role": "transformation-analyst",
+     "missing": [
+      "task_and_requirement_ids"
+     ]
+    },
+    {
+     "stage": "DG7",
+     "kind": "assignment-missing-elements",
+     "assignment": "docs/delivery/assignments/DG7/T-DG7-ARCH-R1.md",
+     "role": "solution-architect",
+     "missing": [
+      "task_and_requirement_ids"
+     ]
+    },
+    {
+     "stage": "DG7",
+     "kind": "assignment-missing-elements",
+     "assignment": "docs/delivery/assignments/DG7/T-DG7-ARCH-R7.md",
+     "role": "solution-architect",
+     "missing": [
+      "task_and_requirement_ids"
+     ]
+    },
+    {
+     "stage": "DG7",
+     "kind": "assignment-missing-elements",
+     "assignment": "docs/delivery/assignments/DG7/T-DG7-BE-A.md",
+     "role": "backend-workflow-engineer",
+     "missing": [
+      "task_and_requirement_ids"
+     ]
+    },
+    {
+     "stage": "DG7",
+     "kind": "assignment-missing-elements",
+     "assignment": "docs/delivery/assignments/DG7/T-DG7-BE-A26.md",
+     "role": "backend-workflow-engineer",
+     "missing": [
+      "stage_id",
+      "task_and_requirement_ids",
+      "permitted_files",
+      "dependency_status"
+     ]
+    },
+    {
+     "stage": "DG7",
+     "kind": "assignment-missing-elements",
+     "assignment": "docs/delivery/assignments/DG7/T-DG7-BE-R5.md",
+     "role": "backend-workflow-engineer",
+     "missing": [
+      "task_and_requirement_ids"
+     ]
+    },
+    {
+     "stage": "DG7",
+     "kind": "assignment-missing-elements",
+     "assignment": "docs/delivery/assignments/DG7/T-DG7-DO-E2.md",
+     "role": "devops-engineer",
+     "missing": [
+      "task_and_requirement_ids"
+     ]
+    },
+    {
+     "stage": "DG7",
+     "kind": "assignment-missing-elements",
+     "assignment": "docs/delivery/assignments/DG7/T-DG7-DO-E3.md",
+     "role": "devops-engineer",
+     "missing": [
+      "task_and_requirement_ids"
+     ]
+    },
+    {
+     "stage": "DG7",
+     "kind": "assignment-missing-elements",
+     "assignment": "docs/delivery/assignments/DG7/T-DG7-DO-E4.md",
+     "role": "devops-engineer",
+     "missing": [
+      "task_and_requirement_ids"
+     ]
+    },
+    {
+     "stage": "DG7",
+     "kind": "assignment-missing-elements",
+     "assignment": "docs/delivery/assignments/DG7/T-DG7-DO-E5.md",
+     "role": "devops-engineer",
+     "missing": [
+      "task_and_requirement_ids"
+     ]
+    },
+    {
+     "stage": "DG7",
+     "kind": "assignment-missing-elements",
+     "assignment": "docs/delivery/assignments/DG7/T-DG7-DO-E6.md",
+     "role": "devops-engineer",
+     "missing": [
+      "task_and_requirement_ids"
+     ]
+    },
+    {
+     "stage": "DG7",
+     "kind": "assignment-missing-elements",
+     "assignment": "docs/delivery/assignments/DG7/T-DG7-DO-J2.md",
+     "role": "devops-engineer",
+     "missing": [
+      "task_and_requirement_ids"
+     ]
+    },
+    {
+     "stage": "DG7",
+     "kind": "assignment-missing-elements",
+     "assignment": "docs/delivery/assignments/DG7/T-DG7-DO-K1.md",
+     "role": "devops-engineer",
+     "missing": [
+      "task_and_requirement_ids"
+     ]
+    },
+    {
+     "stage": "DG7",
+     "kind": "assignment-missing-elements",
+     "assignment": "docs/delivery/assignments/DG7/T-DG7-DOC-A.md",
+     "role": "frontend-ux-engineer",
+     "missing": [
+      "task_and_requirement_ids"
+     ]
+    },
+    {
+     "stage": "DG7",
+     "kind": "assignment-missing-elements",
+     "assignment": "docs/delivery/assignments/DG7/T-DG7-DOC-B.md",
+     "role": "devops-engineer",
+     "missing": [
+      "task_and_requirement_ids"
+     ]
+    },
+    {
+     "stage": "DG7",
+     "kind": "assignment-missing-elements",
+     "assignment": "docs/delivery/assignments/DG7/T-DG7-DOC-B2.md",
+     "role": "devops-engineer",
+     "missing": [
+      "task_and_requirement_ids"
+     ]
+    },
+    {
+     "stage": "DG7",
+     "kind": "assignment-missing-elements",
+     "assignment": "docs/delivery/assignments/DG7/T-DG7-FE-A.md",
+     "role": "frontend-ux-engineer",
+     "missing": [
+      "task_and_requirement_ids"
+     ]
+    },
+    {
+     "stage": "DG7",
+     "kind": "assignment-missing-elements",
+     "assignment": "docs/delivery/assignments/DG7/T-DG7-FE-B.md",
+     "role": "frontend-ux-engineer",
+     "missing": [
+      "task_and_requirement_ids"
+     ]
+    },
+    {
+     "stage": "DG7",
+     "kind": "assignment-missing-elements",
+     "assignment": "docs/delivery/assignments/DG7/T-DG7-FE-B2.md",
+     "role": "frontend-ux-engineer",
+     "missing": [
+      "task_and_requirement_ids"
+     ]
+    },
+    {
+     "stage": "DG7",
+     "kind": "assignment-missing-elements",
+     "assignment": "docs/delivery/assignments/DG7/T-DG7-FE-D.md",
+     "role": "frontend-ux-engineer",
+     "missing": [
+      "task_and_requirement_ids"
+     ]
+    },
+    {
+     "stage": "DG7",
+     "kind": "assignment-missing-elements",
+     "assignment": "docs/delivery/assignments/DG7/T-DG7-QA-B.md",
+     "role": "qa-verifier",
+     "missing": [
+      "task_and_requirement_ids"
+     ]
+    },
+    {
+     "stage": "DG7",
+     "kind": "assignment-missing-elements",
+     "assignment": "docs/delivery/assignments/DG7/T-DG7-QA-C.md",
+     "role": "qa-verifier",
+     "missing": [
+      "task_and_requirement_ids"
+     ]
+    },
+    {
+     "stage": "DG7",
+     "kind": "assignment-missing-elements",
+     "assignment": "docs/delivery/assignments/DG7/T-DG7-QA-E.md",
+     "role": "qa-verifier",
+     "missing": [
+      "task_and_requirement_ids"
+     ]
+    },
+    {
+     "stage": "DG7",
+     "kind": "assignment-missing-elements",
+     "assignment": "docs/delivery/assignments/DG7/T-DG7-QA-F.md",
+     "role": "qa-verifier",
+     "missing": [
+      "task_and_requirement_ids"
+     ]
+    },
+    {
+     "stage": "DG7",
+     "kind": "assignment-missing-elements",
+     "assignment": "docs/delivery/assignments/DG7/T-DG7-REV-A26-CS.md",
+     "role": "code-security-reviewer",
+     "missing": [
+      "stage_id",
+      "task_and_requirement_ids",
+      "base_revision",
+      "permitted_files",
+      "input_output_contracts",
+      "acceptance_checks",
+      "handback_path"
+     ]
+    },
+    {
+     "stage": "DG7",
+     "kind": "assignment-missing-elements",
+     "assignment": "docs/delivery/assignments/DG7/T-DG7-REV-A26-QA.md",
+     "role": "qa-verifier",
+     "missing": [
+      "stage_id",
+      "task_and_requirement_ids",
+      "base_revision",
+      "permitted_files",
+      "input_output_contracts",
+      "acceptance_checks",
+      "handback_path"
+     ]
+    },
+    {
+     "stage": "DG7",
+     "kind": "assignment-missing-elements",
+     "assignment": "docs/delivery/assignments/DG7/T-DG7-REV-A26-V.md",
+     "role": "code-security-reviewer",
+     "missing": [
+      "stage_id",
+      "task_and_requirement_ids",
+      "base_revision",
+      "permitted_files",
+      "constraints",
+      "input_output_contracts",
+      "dependency_status"
+     ]
+    }
+   ],
+   "notes": [
+    {
+     "kind": "elements-supplied-by-reference",
+     "detail": "present only in a file the assignment names as binding (one level)",
+     "count": 33,
+     "items": [
+      {
+       "assignment": "docs/delivery/assignments/DG7/T-DG7-ARCH-R2.md",
+       "elements": [
+        "task_and_requirement_ids"
+       ],
+       "via": [
+        "docs/architecture/p7-work-split.md §C"
+       ]
+      },
+      {
+       "assignment": "docs/delivery/assignments/DG7/T-DG7-ARCH-R4.md",
+       "elements": [
+        "task_and_requirement_ids"
+       ],
+       "via": [
+        "docs/architecture/p7-work-split.md §C"
+       ]
+      },
+      {
+       "assignment": "docs/delivery/assignments/DG7/T-DG7-ARCH-R5.md",
+       "elements": [
+        "task_and_requirement_ids"
+       ],
+       "via": [
+        "docs/architecture/p7-work-split.md §C"
+       ]
+      },
+      {
+       "assignment": "docs/delivery/assignments/DG7/T-DG7-ARCH-R6.md",
+       "elements": [
+        "task_and_requirement_ids"
+       ],
+       "via": [
+        "docs/architecture/p7-work-split.md §B"
+       ]
+      },
+      {
+       "assignment": "docs/delivery/assignments/DG7/T-DG7-BE-B.md",
+       "elements": [
+        "task_and_requirement_ids"
+       ],
+       "via": [
+        "docs/architecture/p7-work-split.md §B.1"
+       ]
+      },
+      {
+       "assignment": "docs/delivery/assignments/DG7/T-DG7-BE-C.md",
+       "elements": [
+        "task_and_requirement_ids"
+       ],
+       "via": [
+        "docs/architecture/p7-work-split.md §C.1"
+       ]
+      },
+      {
+       "assignment": "docs/delivery/assignments/DG7/T-DG7-BE-D.md",
+       "elements": [
+        "task_and_requirement_ids"
+       ],
+       "via": [
+        "docs/architecture/p7-work-split.md §C.2"
+       ]
+      },
+      {
+       "assignment": "docs/delivery/assignments/DG7/T-DG7-BE-E.md",
+       "elements": [
+        "task_and_requirement_ids"
+       ],
+       "via": [
+        "docs/architecture/p7-work-split.md §C.3"
+       ]
+      },
+      {
+       "assignment": "docs/delivery/assignments/DG7/T-DG7-BE-F.md",
+       "elements": [
+        "task_and_requirement_ids"
+       ],
+       "via": [
+        "docs/architecture/p7-work-split.md §D.1"
+       ]
+      },
+      {
+       "assignment": "docs/delivery/assignments/DG7/T-DG7-BE-G.md",
+       "elements": [
+        "task_and_requirement_ids"
+       ],
+       "via": [
+        "docs/architecture/p7-work-split.md §E.1"
+       ]
+      },
+      {
+       "assignment": "docs/delivery/assignments/DG7/T-DG7-BE-H.md",
+       "elements": [
+        "task_and_requirement_ids"
+       ],
+       "via": [
+        "docs/architecture/p7-work-split.md §I.1"
+       ]
+      },
+      {
+       "assignment": "docs/delivery/assignments/DG7/T-DG7-BE-R1.md",
+       "elements": [
+        "task_and_requirement_ids"
+       ],
+       "via": [
+        "docs/architecture/p7-work-split.md §C.12"
+       ]
+      },
+      {
+       "assignment": "docs/delivery/assignments/DG7/T-DG7-BE-R2.md",
+       "elements": [
+        "task_and_requirement_ids"
+       ],
+       "via": [
+        "docs/architecture/p7-work-split.md §C.13"
+       ]
+      },
+      {
+       "assignment": "docs/delivery/assignments/DG7/T-DG7-BE-R3.md",
+       "elements": [
+        "task_and_requirement_ids"
+       ],
+       "via": [
+        "docs/architecture/p7-work-split.md §C.14"
+       ]
+      },
+      {
+       "assignment": "docs/delivery/assignments/DG7/T-DG7-BE-R4.md",
+       "elements": [
+        "task_and_requirement_ids"
+       ],
+       "via": [
+        "docs/architecture/p7-work-split.md §C.15"
+       ]
+      },
+      {
+       "assignment": "docs/delivery/assignments/DG7/T-DG7-DO-A.md",
+       "elements": [
+        "task_and_requirement_ids"
+       ],
+       "via": [
+        "docs/architecture/p7-work-split.md §A.1"
+       ]
+      },
+      {
+       "assignment": "docs/delivery/assignments/DG7/T-DG7-DO-A2.md",
+       "elements": [
+        "task_and_requirement_ids",
+        "input_output_contracts"
+       ],
+       "via": [
+        "docs/architecture/p7-work-split.md §A"
+       ]
+      },
+      {
+       "assignment": "docs/delivery/assignments/DG7/T-DG7-DO-B.md",
+       "elements": [
+        "task_and_requirement_ids"
+       ],
+       "via": [
+        "docs/architecture/p7-work-split.md §G.1"
+       ]
+      },
+      {
+       "assignment": "docs/delivery/assignments/DG7/T-DG7-DO-D.md",
+       "elements": [
+        "task_and_requirement_ids"
+       ],
+       "via": [
+        "docs/architecture/p7-work-split.md §B.2"
+       ]
+      },
+      {
+       "assignment": "docs/delivery/assignments/DG7/T-DG7-DO-D2.md",
+       "elements": [
+        "task_and_requirement_ids"
+       ],
+       "via": [
+        "docs/architecture/p7-work-split.md §B.6"
+       ]
+      },
+      {
+       "assignment": "docs/delivery/assignments/DG7/T-DG7-DO-D3.md",
+       "elements": [
+        "task_and_requirement_ids"
+       ],
+       "via": [
+        "docs/architecture/p7-work-split.md §B.7"
+       ]
+      },
+      {
+       "assignment": "docs/delivery/assignments/DG7/T-DG7-DO-D4.md",
+       "elements": [
+        "task_and_requirement_ids"
+       ],
+       "via": [
+        "docs/architecture/p7-work-split.md §B.8"
+       ]
+      },
+      {
+       "assignment": "docs/delivery/assignments/DG7/T-DG7-DO-D5.md",
+       "elements": [
+        "task_and_requirement_ids"
+       ],
+       "via": [
+        "docs/architecture/p7-work-split.md §B.8"
+       ]
+      },
+      {
+       "assignment": "docs/delivery/assignments/DG7/T-DG7-DO-D6.md",
+       "elements": [
+        "task_and_requirement_ids"
+       ],
+       "via": [
+        "docs/architecture/p7-work-split.md §B.8"
+       ]
+      },
+      {
+       "assignment": "docs/delivery/assignments/DG7/T-DG7-DO-D7.md",
+       "elements": [
+        "task_and_requirement_ids"
+       ],
+       "via": [
+        "docs/architecture/p7-work-split.md §B.9"
+       ]
+      },
+      {
+       "assignment": "docs/delivery/assignments/DG7/T-DG7-DO-E.md",
+       "elements": [
+        "task_and_requirement_ids"
+       ],
+       "via": [
+        "docs/architecture/p7-work-split.md §B.3"
+       ]
+      },
+      {
+       "assignment": "docs/delivery/assignments/DG7/T-DG7-DO-F.md",
+       "elements": [
+        "task_and_requirement_ids"
+       ],
+       "via": [
+        "docs/architecture/p7-work-split.md §E.2"
+       ]
+      },
+      {
+       "assignment": "docs/delivery/assignments/DG7/T-DG7-DO-G.md",
+       "elements": [
+        "task_and_requirement_ids"
+       ],
+       "via": [
+        "docs/architecture/p7-work-split.md §E.3"
+       ]
+      },
+      {
+       "assignment": "docs/delivery/assignments/DG7/T-DG7-DO-H.md",
+       "elements": [
+        "task_and_requirement_ids"
+       ],
+       "via": [
+        "docs/architecture/p7-work-split.md §F.1"
+       ]
+      },
+      {
+       "assignment": "docs/delivery/assignments/DG7/T-DG7-DO-J.md",
+       "elements": [
+        "task_and_requirement_ids"
+       ],
+       "via": [
+        "docs/architecture/p7-work-split.md §M.1"
+       ]
+      },
+      {
+       "assignment": "docs/delivery/assignments/DG7/T-DG7-DOC-C.md",
+       "elements": [
+        "task_and_requirement_ids"
+       ],
+       "via": [
+        "docs/architecture/p7-work-split.md §H"
+       ]
+      },
+      {
+       "assignment": "docs/delivery/assignments/DG7/T-DG7-FE-C.md",
+       "elements": [
+        "task_and_requirement_ids"
+       ],
+       "via": [
+        "docs/architecture/p7-work-split.md §I.2"
+       ]
+      },
+      {
+       "assignment": "docs/delivery/assignments/DG7/T-DG7-KBE-A.md",
+       "elements": [
+        "task_and_requirement_ids"
+       ],
+       "via": [
+        "docs/architecture/p7-work-split.md §C.4"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "C3",
+   "name": "handback-sections",
+   "requirement": "REQ-DLV-012",
+   "clause": "every implementation task in a gate has a handback with the five sections",
+   "stage": "DG7",
+   "status": "HIT",
+   "stats": {
+    "implementation_handbacks": 75,
+    "sections": [
+     "Changed files",
+     "Behaviour delivered, per requirement",
+     "Checks actually run",
+     "Known gaps / not done",
+     "Merge instructions"
+    ]
+   },
+   "hits": [
+    {
+     "stage": "DG7",
+     "kind": "handback-missing-sections",
+     "handback": "docs/delivery/handbacks/DG7/T-DG7-AN-P7B-transformation-analyst.md",
+     "role": "transformation-analyst",
+     "missing": [
+      "merge_instructions"
+     ]
+    },
+    {
+     "stage": "DG7",
+     "kind": "handback-missing-sections",
+     "handback": "docs/delivery/handbacks/DG7/T-DG7-ARCH-R2-solution-architect.md",
+     "role": "solution-architect",
+     "missing": [
+      "behaviour"
+     ]
+    },
+    {
+     "stage": "DG7",
+     "kind": "handback-missing-sections",
+     "handback": "docs/delivery/handbacks/DG7/T-DG7-ARCH-R5-solution-architect.md",
+     "role": "solution-architect",
+     "missing": [
+      "behaviour"
+     ]
+    },
+    {
+     "stage": "DG7",
+     "kind": "handback-missing-sections",
+     "handback": "docs/delivery/handbacks/DG7/T-DG7-BE-R5-backend-workflow-engineer.md",
+     "role": "backend-workflow-engineer",
+     "missing": [
+      "merge_instructions"
+     ]
+    },
+    {
+     "stage": "DG7",
+     "kind": "handback-missing-sections",
+     "handback": "docs/delivery/handbacks/DG7/T-DG7-DO-A2-devops-engineer.md",
+     "role": "devops-engineer",
+     "missing": [
+      "behaviour"
+     ]
+    },
+    {
+     "stage": "DG7",
+     "kind": "handback-missing-sections",
+     "handback": "docs/delivery/handbacks/DG7/T-DG7-DO-D8-devops-engineer.md",
+     "role": "devops-engineer",
+     "missing": [
+      "merge_instructions"
+     ]
+    },
+    {
+     "stage": "DG7",
+     "kind": "handback-missing-sections",
+     "handback": "docs/delivery/handbacks/DG7/T-DG7-FE-C3-frontend-ux-engineer.md",
+     "role": "frontend-ux-engineer",
+     "missing": [
+      "merge_instructions"
+     ]
+    }
+   ],
+   "notes": [
+    {
+     "kind": "implementation-runs-without-conventional-handback",
+     "detail": "task id has no docs/delivery/handbacks/<stage>/<task>-<role>.md (plan or orphaned runs; a re-run's handback is under the same task)",
+     "runs": [
+      {
+       "run_id": "DG7-T-DG7-BE-A26-backend-workflow-engineer-20261114T204434Z-79cf8324",
+       "task": "T-DG7-BE-A26",
+       "other_handback_paths": [
+        "docs/delivery/handbacks/DG7/T-DG7-BE-A26-backend-workflow-engineer.md"
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "C4",
+   "name": "file-ownership",
+   "requirement": "REQ-DLV-008",
+   "clause": "no two concurrently active assignments share a writable file",
+   "stage": "DG7",
+   "status": "PASS",
+   "stats": {
+    "concurrent_pairs": 13,
+    "pairs_with_both_declarations": 0,
+    "assignments": 94,
+    "assignments_without_declared_paths": 68
+   },
+   "hits": [],
+   "notes": [
+    {
+     "kind": "assignments-without-declared-paths",
+     "detail": "no permitted-files list or work-split section found; only actual writes (written_by_tools) are compared for these",
+     "count": 68,
+     "assignments": [
+      "docs/delivery/assignments/DG7/T-DG7-AN-P7.md",
+      "docs/delivery/assignments/DG7/T-DG7-AN-P7B.md",
+      "docs/delivery/assignments/DG7/T-DG7-AN-P7C.md",
+      "docs/delivery/assignments/DG7/T-DG7-AN-P7D.md",
+      "docs/delivery/assignments/DG7/T-DG7-AN-P7E.md",
+      "docs/delivery/assignments/DG7/T-DG7-AN-P7F.md",
+      "docs/delivery/assignments/DG7/T-DG7-ARCH-00.md",
+      "docs/delivery/assignments/DG7/T-DG7-ARCH-01.md",
+      "docs/delivery/assignments/DG7/T-DG7-ARCH-02.md",
+      "docs/delivery/assignments/DG7/T-DG7-ARCH-03.md",
+      "docs/delivery/assignments/DG7/T-DG7-ARCH-04.md",
+      "docs/delivery/assignments/DG7/T-DG7-ARCH-05.md",
+      "docs/delivery/assignments/DG7/T-DG7-ARCH-06.md",
+      "docs/delivery/assignments/DG7/T-DG7-ARCH-R1.md",
+      "docs/delivery/assignments/DG7/T-DG7-ARCH-R7.md",
+      "docs/delivery/assignments/DG7/T-DG7-BE-A.md",
+      "docs/delivery/assignments/DG7/T-DG7-BE-A26.md",
+      "docs/delivery/assignments/DG7/T-DG7-BE-F2.md",
+      "docs/delivery/assignments/DG7/T-DG7-BE-R5.md",
+      "docs/delivery/assignments/DG7/T-DG7-BE-R6.md",
+      "docs/delivery/assignments/DG7/T-DG7-BE-R7.md",
+      "docs/delivery/assignments/DG7/T-DG7-DO-D2.md",
+      "docs/delivery/assignments/DG7/T-DG7-DO-D3.md",
+      "docs/delivery/assignments/DG7/T-DG7-DO-D4.md",
+      "docs/delivery/assignments/DG7/T-DG7-DO-D5.md",
+      "docs/delivery/assignments/DG7/T-DG7-DO-D6.md",
+      "docs/delivery/assignments/DG7/T-DG7-DO-D7.md",
+      "docs/delivery/assignments/DG7/T-DG7-DO-D8.md",
+      "docs/delivery/assignments/DG7/T-DG7-DO-D8B.md",
+      "docs/delivery/assignments/DG7/T-DG7-DO-E.md",
+      "docs/delivery/assignments/DG7/T-DG7-DO-E2.md",
+      "docs/delivery/assignments/DG7/T-DG7-DO-E3.md",
+      "docs/delivery/assignments/DG7/T-DG7-DO-E4.md",
+      "docs/delivery/assignments/DG7/T-DG7-DO-E5.md",
+      "docs/delivery/assignments/DG7/T-DG7-DO-E6.md",
+      "docs/delivery/assignments/DG7/T-DG7-DO-I.md",
+      "docs/delivery/assignments/DG7/T-DG7-DO-J2.md",
+      "docs/delivery/assignments/DG7/T-DG7-DO-K1.md",
+      "docs/delivery/assignments/DG7/T-DG7-DO-K2.md",
+      "docs/delivery/assignments/DG7/T-DG7-DOC-A.md",
+      "docs/delivery/assignments/DG7/T-DG7-DOC-B.md",
+      "docs/delivery/assignments/DG7/T-DG7-DOC-B2.md",
+      "docs/delivery/assignments/DG7/T-DG7-DOC-C.md",
+      "docs/delivery/assignments/DG7/T-DG7-FE-A.md",
+      "docs/delivery/assignments/DG7/T-DG7-FE-B.md",
+      "docs/delivery/assignments/DG7/T-DG7-FE-B2.md",
+      "docs/delivery/assignments/DG7/T-DG7-FE-C.md",
+      "docs/delivery/assignments/DG7/T-DG7-FE-C2.md",
+      "docs/delivery/assignments/DG7/T-DG7-FE-C3.md",
+      "docs/delivery/assignments/DG7/T-DG7-FE-D.md",
+      "docs/delivery/assignments/DG7/T-DG7-QA-A.md",
+      "docs/delivery/assignments/DG7/T-DG7-QA-B.md",
+      "docs/delivery/assignments/DG7/T-DG7-QA-C.md",
+      "docs/delivery/assignments/DG7/T-DG7-QA-D.md",
+      "docs/delivery/assignments/DG7/T-DG7-QA-E.md",
+      "docs/delivery/assignments/DG7/T-DG7-QA-F.md",
+      "docs/delivery/assignments/DG7/T-DG7-REV-A26-CS.md",
+      "docs/delivery/assignments/DG7/T-DG7-REV-A26-QA.md",
+      "docs/delivery/assignments/DG7/T-DG7-REV-A26-V.md",
+      "docs/delivery/assignments/DG7/round-1/code-security-reviewer.md",
+      "docs/delivery/assignments/DG7/round-2/code-security-reviewer.md",
+      "docs/delivery/assignments/DG7/round-3/code-security-reviewer.md",
+      "docs/delivery/assignments/DG7/round-1/domain-reviewer.md",
+      "docs/delivery/assignments/DG7/round-2/domain-reviewer.md",
+      "docs/delivery/assignments/DG7/round-3/domain-reviewer.md",
+      "docs/delivery/assignments/DG7/round-1/qa-verifier.md",
+      "docs/delivery/assignments/DG7/round-2/qa-verifier.md",
+      "docs/delivery/assignments/DG7/round-3/qa-verifier.md"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "C5",
+   "name": "historical-first",
+   "requirement": "REQ-DLV-024",
+   "clause": "for each of P1-P7, test-evidence contains a passing --historical run for the previous gate, dated before the stage's first implementation run",
+   "stage": "DG7",
+   "status": "HIT",
+   "stats": {
+    "previous_gate": "DG6",
+    "first_implementation_run": {
+     "run_id": "DG7-T-DG7-DO-A-devops-engineer-20261112T150213Z-a1b38000",
+     "started_at": "2026-11-12T15:02:13Z"
+    },
+    "first_implementer_role_run": {
+     "run_id": "DG7-T-DG7-ARCH-00-solution-architect-20261112T120300Z-fc7f0be7",
+     "role": "solution-architect",
+     "started_at": "2026-11-12T12:03:00Z"
+    },
+    "test_evidence_files": 18,
+    "passing_before_first_implementation": [],
+    "records_stating_the_run": 79
+   },
+   "hits": [
+    {
+     "stage": "DG7",
+     "kind": "historical-evidence-not-before-first-implementation",
+     "previous_gate": "DG6",
+     "first_implementation_run": {
+      "run_id": "DG7-T-DG7-DO-A-devops-engineer-20261112T150213Z-a1b38000",
+      "started_at": "2026-11-12T15:02:13Z"
+     },
+     "test_evidence_found": [
+      {
+       "path": "docs/delivery/test-evidence/DG7/code-security/round-2/40-validators.log",
+       "passed": true,
+       "dated": "2026-11-15T15:05:07Z",
+       "date_source": "finished_at of DG7-T-DG7-REV-DOM-R2-domain-reviewer-20261115T142044Z-99310a17"
+      },
+      {
+       "path": "docs/delivery/test-evidence/DG7/code-security/round-3/40-validators.log",
+       "passed": true,
+       "dated": "2026-11-15T23:11:00Z",
+       "date_source": "finished_at of DG7-T-DG7-REV-DOM-R3-domain-reviewer-20261115T223443Z-96c7e804"
+      },
+      {
+       "path": "docs/delivery/test-evidence/DG7/domain/round-1/validators.log",
+       "passed": true,
+       "dated": "2026-11-15T08:28:51Z",
+       "date_source": "finished_at of DG7-T-DG7-REV-DOM-R1-domain-reviewer-20261115T073754Z-2c291847"
+      },
+      {
+       "path": "docs/delivery/test-evidence/DG7/domain/round-2/validators-historical.log",
+       "passed": true,
+       "dated": "2026-11-15T15:05:07Z",
+       "date_source": "finished_at of DG7-T-DG7-REV-DOM-R2-domain-reviewer-20261115T142044Z-99310a17"
+      },
+      {
+       "path": "docs/delivery/test-evidence/DG7/domain/round-3/validators-historical.log",
+       "passed": true,
+       "dated": "2026-11-15T23:11:00Z",
+       "date_source": "finished_at of DG7-T-DG7-REV-DOM-R3-domain-reviewer-20261115T223443Z-96c7e804"
+      },
+      {
+       "path": "docs/delivery/test-evidence/DG7/orchestrator/prefreeze/checks.log",
+       "passed": true,
+       "dated": "2026-11-15T00:46:39+00:00",
+       "date_source": "git add date"
+      },
+      {
+       "path": "docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r2/checks.log",
+       "passed": true,
+       "dated": "2026-11-15T13:51:02+00:00",
+       "date_source": "git add date"
+      },
+      {
+       "path": "docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r3/checks.log",
+       "passed": true,
+       "dated": "2026-11-15T22:33:08+00:00",
+       "date_source": "git add date"
+      },
+      {
+       "path": "docs/delivery/test-evidence/DG7/qa/T-DG7-QA-B/T-DG7-QA-B-qa-verifier.md",
+       "passed": true,
+       "dated": "2026-11-13T22:13:05Z",
+       "date_source": "finished_at of DG7-T-DG7-QA-B-qa-verifier-20261113T214440Z-20ba2c1e"
+      },
+      {
+       "path": "docs/delivery/test-evidence/DG7/qa/T-DG7-QA-C/T-DG7-QA-C-qa-verifier.md",
+       "passed": true,
+       "dated": "2026-11-14T14:11:44Z",
+       "date_source": "finished_at of DG7-T-DG7-QA-C-qa-verifier-20261114T131344Z-23c9a774"
+      }
+     ],
+     "stated_in_records": [
+      "docs/delivery/handbacks/DG7/T-DG7-AN-P7-transformation-analyst.md",
+      "docs/delivery/handbacks/DG7/T-DG7-AN-P7B-transformation-analyst.md",
+      "docs/delivery/handbacks/DG7/T-DG7-AN-P7C-transformation-analyst.md",
+      "docs/delivery/handbacks/DG7/T-DG7-AN-P7D-transformation-analyst.md",
+      "docs/delivery/handbacks/DG7/T-DG7-AN-P7E-transformation-analyst.md",
+      "docs/delivery/handbacks/DG7/T-DG7-AN-P7F-transformation-analyst.md",
+      "docs/delivery/handbacks/DG7/T-DG7-AN-R1-transformation-analyst.md",
+      "docs/delivery/handbacks/DG7/T-DG7-ARCH-00-solution-architect.md",
+      "docs/delivery/handbacks/DG7/T-DG7-ARCH-01-solution-architect.md",
+      "docs/delivery/handbacks/DG7/T-DG7-ARCH-02-solution-architect.md",
+      "docs/delivery/handbacks/DG7/T-DG7-ARCH-03-solution-architect.md",
+      "docs/delivery/handbacks/DG7/T-DG7-ARCH-04-solution-architect.md",
+      "docs/delivery/handbacks/DG7/T-DG7-ARCH-05-solution-architect.md",
+      "docs/delivery/handbacks/DG7/T-DG7-ARCH-06-solution-architect.md",
+      "docs/delivery/handbacks/DG7/T-DG7-ARCH-R1-solution-architect.md"
+     ],
+     "stated_by_runs_started_before_first_implementation": [
+      {
+       "handback": "docs/delivery/handbacks/DG7/T-DG7-ARCH-00-solution-architect.md",
+       "run_id": "DG7-T-DG7-ARCH-00-solution-architect-20261112T120300Z-fc7f0be7",
+       "run_started_at": "2026-11-12T12:03:00Z",
+       "run_finished_at": "2026-11-12T12:20:18Z"
+      },
+      {
+       "handback": "docs/delivery/handbacks/DG7/T-DG7-ARCH-01-solution-architect.md",
+       "run_id": "DG7-T-DG7-ARCH-01-solution-architect-20261112T125502Z-17c855f0",
+       "run_started_at": "2026-11-12T12:55:02Z",
+       "run_finished_at": "2026-11-12T13:21:55Z"
+      },
+      {
+       "handback": "docs/delivery/handbacks/DG7/T-DG7-ARCH-02-solution-architect.md",
+       "run_id": "DG7-T-DG7-ARCH-02-solution-architect-20261112T132647Z-51682921",
+       "run_started_at": "2026-11-12T13:26:47Z",
+       "run_finished_at": "2026-11-12T14:58:02Z"
+      }
+     ]
+    }
+   ],
+   "notes": []
+  },
+  {
+   "id": "C6",
+   "name": "progress-updates",
+   "requirement": "REQ-DLV-028; REQ-DLV-012",
+   "clause": "for each approved gate, progress.md has an update with all six elements and the candidate ID matching gates/DGx.json; any task whose handback lists open gaps is not reported as complete in progress.md",
+   "stage": "DG7",
+   "status": "PASS",
+   "stats": {
+    "gate_decision": null,
+    "progress_versions_read": 105,
+    "gate_update": "not applicable (gate not APPROVED)",
+    "handbacks_with_open_gaps": 19
+   },
+   "hits": [],
+   "notes": []
+  },
+  {
+   "id": "C7",
+   "name": "three-failed-fixes",
+   "requirement": "REQ-DLV-018",
+   "clause": "any finding with three failed fix verifications has a blocker entry with a recovery plan in progress.md and stages.json",
+   "stage": "DG7",
+   "status": "PASS",
+   "stats": {
+    "findings": 15,
+    "findings_with_failed_fix_verifications": 0,
+    "max_failed": 0,
+    "counted": []
+   },
+   "hits": [],
+   "notes": [
+    {
+     "kind": "scope",
+     "detail": "counts history transitions FIXED_PENDING_VERIFICATION -> OPEN in docs/delivery/findings.json on this branch; findings of superseded branches (clean re-gates) are not in this file"
+    }
+   ]
+  },
+  {
+   "id": "C8",
+   "name": "approval-claims",
+   "requirement": "REQ-DLV-027",
+   "clause": "no record claims a business, Finance, IT or production approval; no text equates product G6 with DG7 (CLAUDE.md)",
+   "stage": "all-selected",
+   "status": "PASS",
+   "stats": {
+    "files_scanned": 874,
+    "sentences_scanned": 227744
+   },
+   "hits": [],
+   "notes": [
+    {
+     "kind": "method",
+     "detail": "sentence-level patterns; a negation token or a product/demo context word in the sentence suppresses a hit (residual: unusual phrasing)"
+    }
+   ]
+  },
+  {
+   "id": "C9",
+   "name": "stage-continuation",
+   "requirement": "REQ-DLV-027; REQ-DLV-040",
+   "clause": "each next stage enters BUILDING after the prior APPROVED gate; history in order (F-DG6-952 reported as its accepted observation)",
+   "stage": "DG7",
+   "status": "PASS",
+   "stats": {
+    "state": "REVIEWING",
+    "transitions": 7,
+    "entered_building": {
+     "previous_gate_approved_at": "2026-11-12T11:30:26Z",
+     "building_at": "2026-11-12T12:02:49Z"
+    }
+   },
+   "hits": [],
+   "notes": []
+  }
+ ]
+}

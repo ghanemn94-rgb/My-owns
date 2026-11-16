@@ -1,0 +1,73 @@
+$ date -u; node --version; git rev-parse HEAD
+Thu Nov 12 15:59:06 UTC 2026
+v24.21.0
+092a7dec6adb449977b733c3d405c9059facb0ab
+disposable clone commit (HEAD + this run's working tree after formatting, committed only in $TMPDIR/clone1): 015f6483276e95060d574568dbcb65c772032922
+
+$ time node tools/release/build-archive.mjs --repo $TMPDIR/clone1 --commit 015f6483276e95060d574568dbcb65c772032922 --demo-data tools/release/tests/fixtures/demo-data --rehearsal --out $TMPDIR/rel
+build-archive: wrote $TMPDIR/rel/mth-transformation-hub-0.1.0-3017b2de2279-REHEARSAL.tar.gz
+build-archive: candidate sha256:3017b2de2279c962973171586226a4962efa4b1ebee08cc2099eb155ab9c8635 commit 015f6483276e95060d574568dbcb65c772032922
+build-archive: tar sha256 52a0412596231a79e97b665924f4045d3f529704772d2d394a818e7fedafe8ed
+build-archive: archive sha256 60a81b83425c7416b401c7aa86052c8114c5f29f5161ad898c6c9e2d3ccf77e3
+
+real	0m10.931s
+user	0m7.655s
+sys	0m3.763s
+exit=0
+
+$ node tools/release/build-archive.mjs --verify <archive> --expect-sha256 60a81b83425c7416b401c7aa86052c8114c5f29f5161ad898c6c9e2d3ccf77e3
+1 archive-checksum: ok
+2 single-top-level-directory: ok
+3 layout: ok
+4 sha256sums: ok
+5 candidate-id: ok
+6 copies: ok
+7 determinism-metadata: ok
+archive-verify: PASS
+exit=0
+
+--- ARCHIVE-MANIFEST.json .tool (Q1)
+{"buildArchiveSha256":"c8e5a7682b54b5bc5c6ff3e8b5e997494806a4d920d0f354b60650e59c379340"}
+--- grep -c '"node"' ARCHIVE-MANIFEST.json
+0
+--- build-report.json
+{
+  "name": "mth-transformation-hub-0.1.0-3017b2de2279-REHEARSAL",
+  "archive": "mth-transformation-hub-0.1.0-3017b2de2279-REHEARSAL.tar.gz",
+  "archiveSha256": "60a81b83425c7416b401c7aa86052c8114c5f29f5161ad898c6c9e2d3ccf77e3",
+  "tarSha256": "52a0412596231a79e97b665924f4045d3f529704772d2d394a818e7fedafe8ed",
+  "archiveBytes": 12674807,
+  "tarBytes": 56094720,
+  "candidateId": "sha256:3017b2de2279c962973171586226a4962efa4b1ebee08cc2099eb155ab9c8635",
+  "sourceCommit": "015f6483276e95060d574568dbcb65c772032922",
+  "rehearsal": true,
+  "files": 3008,
+  "layout": [
+    {
+      "dir": "source",
+      "files": 2842
+    },
+    {
+      "dir": "infra",
+      "files": 67
+    },
+    {
+      "dir": "docs",
+      "files": 93
+    },
+    {
+      "dir": "demo-data",
+      "files": 3
+    }
+  ],
+  "tool": {
+    "node": "24.21.0",
+    "zlib": "1.3.2.1-motley-8002e91",
+    "buildArchiveSha256": "c8e5a7682b54b5bc5c6ff3e8b5e997494806a4d920d0f354b60650e59c379340"
+  },
+  "timingsMs": {
+    "readCommit": 9006,
+    "total": 10882
+  },
+  "builtAt": "2026-11-12T15:59:16.952Z"
+}

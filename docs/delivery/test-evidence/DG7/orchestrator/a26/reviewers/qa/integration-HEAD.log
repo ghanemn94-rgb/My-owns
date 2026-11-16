@@ -1,0 +1,62 @@
+port-policy: PostgreSQL listening on port 24351 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /var/tmp/mth-run.7J5f2o/claude-0/review-a26-qa
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwgsvh7h_8a3ef411 (server_encoding UTF8); applied 135 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/groups/groups.test.ts (9 tests) 1896ms
+   ✓ REQ-S16-011: the identity and access entity group through the API, with authorization enforced > creates and reads Organization, BusinessUnit, User, Group, ScopedAssignment and Delegation; reads Role and Permission  301ms
+ ✓ |integration| apps/api/test/integration/bu-hierarchy-guard.test.ts (7 tests) 3206ms
+ ✓ |integration| apps/api/test/integration/organizations.test.ts (10 tests) 699ms
+ ✓ |integration| apps/api/test/integration/workflows/scale-scope-business-units.test.ts (4 tests) 1630ms
+   ✓ listScaleScopeBusinessUnits (ADR-0035 amendment R1) > a Sponsor with only a transformation grant reads every active unit of the organization, never another's  341ms
+   ✓ listScaleScopeBusinessUnits (ADR-0035 amendment R1) > a unit set inactive after an approved scope named it is listed with selectable false; an unnamed inactive unit is not  502ms
+   ✓ listScaleScopeBusinessUnits (ADR-0035 amendment R1) > cursor paging by code then id walks the same set; another transformation's cursor is 400  444ms
+stdout | tests/qa/integration/qa-a26-bu-update-authz.test.ts > drill a26: business-unit PATCH requires business_unit.manage > office (business_unit.read only) cannot rename/deactivate a1: 403, audited denial, no change
+[qa-a26] office: status=200 version 1->2 name_en=pwned-by-office status=inactive updates=1
+
+stdout | tests/qa/integration/qa-a26-bu-update-authz.test.ts > drill a26: business-unit PATCH requires business_unit.manage > auditor (business_unit.read only) cannot rename/deactivate a1: 403, audited denial, no change
+[qa-a26] auditor: status=200 version 2->3 name_en=pwned-by-auditor status=inactive updates=2
+
+stdout | tests/qa/integration/qa-a26-bu-update-authz.test.ts > drill a26: business-unit PATCH requires business_unit.manage > leadA1 (business_unit.read only) cannot rename/deactivate a1: 403, audited denial, no change
+[qa-a26] leadA1: status=200 version 3->4 name_en=pwned-by-leadA1 status=inactive updates=3
+
+stdout | tests/qa/integration/qa-a26-bu-update-authz.test.ts > drill a26: business-unit PATCH requires business_unit.manage > auditor (read-only) cannot re-parent a1x to the top level when only read applies to the moved unit
+[qa-a26] auditor re-parent: status=403
+
+ ❯ |integration| tests/qa/integration/qa-a26-bu-update-authz.test.ts (6 tests | 3 failed) 346ms
+   × drill a26: business-unit PATCH requires business_unit.manage > office (business_unit.read only) cannot rename/deactivate a1: 403, audited denial, no change 21ms
+     → expected 200 to be 403 // Object.is equality
+   × drill a26: business-unit PATCH requires business_unit.manage > auditor (business_unit.read only) cannot rename/deactivate a1: 403, audited denial, no change 9ms
+     → expected 200 to be 403 // Object.is equality
+   × drill a26: business-unit PATCH requires business_unit.manage > leadA1 (business_unit.read only) cannot rename/deactivate a1: 403, audited denial, no change 8ms
+     → expected 200 to be 403 // Object.is equality
+   ✓ drill a26: business-unit PATCH requires business_unit.manage > auditor (read-only) cannot re-parent a1x to the top level when only read applies to the moved unit 13ms
+   ✓ drill a26: business-unit PATCH requires business_unit.manage > negative scope control: other-organization and no-grant users still get 404 15ms
+   ✓ drill a26: business-unit PATCH requires business_unit.manage > positive control: ADM_TECH (business_unit.manage) renames a2 with If-Match; one audit event; stale If-Match 409 14ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/qa-a26-bu-update-authz.test.ts > drill a26: business-unit PATCH requires business_unit.manage > office (business_unit.read only) cannot rename/deactivate a1: 403, audited denial, no change
+ FAIL  |integration| tests/qa/integration/qa-a26-bu-update-authz.test.ts > drill a26: business-unit PATCH requires business_unit.manage > auditor (business_unit.read only) cannot rename/deactivate a1: 403, audited denial, no change
+ FAIL  |integration| tests/qa/integration/qa-a26-bu-update-authz.test.ts > drill a26: business-unit PATCH requires business_unit.manage > leadA1 (business_unit.read only) cannot rename/deactivate a1: 403, audited denial, no change
+AssertionError: expected 200 to be 403 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 403[39m
+[31m+ 200[39m
+
+ ❯ tests/qa/integration/qa-a26-bu-update-authz.test.ts:36:26
+
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+
+ Test Files  1 failed | 4 passed (5)
+      Tests  3 failed | 33 passed (36)
+   Start at  19:30:01
+   Duration  28.85s (transform 5.10s, setup 0ms, collect 17.37s, tests 7.78s, environment 0ms, prepare 68ms)
+
+exit=1

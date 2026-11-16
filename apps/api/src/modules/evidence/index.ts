@@ -4,3 +4,4 @@
 // Depends on platform, audit and access only.
 export { EVIDENCE_MODULE, registerEvidenceModule } from "./routes.ts";
 export { loadVerifiedEvidenceFacts, toEvidence, type EvidenceFact } from "./repository.ts";
+export type { EvidenceStore } from "./store.ts";

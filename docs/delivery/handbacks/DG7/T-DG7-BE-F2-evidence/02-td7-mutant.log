@@ -1,0 +1,39 @@
+port-policy: PostgreSQL listening on port 27641 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/My-owns
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwgludt5_7867cd1a (server_encoding UTF8); applied 135 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/transfer/zz-td7-mutant.test.ts (2 tests | 1 failed | 1 skipped) 17364ms
+   ↓ T-D6 demo -> clean installation round trip > imports as drafts, publishes through the existing pipeline, and the published hashes equal the source's
+   × T-D7 an imported draft is published, and migrated to, exactly as a hand-made one > the pin is unchanged by the commit and the publish; the publish and migration records equal a hand-made publish's 558ms
+     → expected 'e0c6fe3ec96c8137576f7376ee292058b113d…' to be 'ba5178425b939919e6c5b719ca065082db5cc…' // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/transfer/zz-td7-mutant.test.ts > T-D7 an imported draft is published, and migrated to, exactly as a hand-made one > the pin is unchanged by the commit and the publish; the publish and migration records equal a hand-made publish's
+AssertionError: expected 'e0c6fe3ec96c8137576f7376ee292058b113d…' to be 'ba5178425b939919e6c5b719ca065082db5cc…' // Object.is equality
+
+Expected: [32m"ba5178425b939919e6c5b719ca065082db5cc7a780787115b6cc50e3632dcee9"[39m
+Received: [31m"e0c6fe3ec96c8137576f7376ee292058b113d0d65c0a893dfb81a7272e8ccfd0"[39m
+
+ ❯ apps/api/test/integration/transfer/zz-td7-mutant.test.ts:568:40
+    566|     const impPublished = await publishDraft(imp, committed.targetRecor…
+    567|     const impPublish = await createdSince(imp, impSeq, impOutbox);
+    568|     expect(impPublished.contentSha256).toBe(handPublished.contentSha25…
+       |                                        ^
+    569|     // The publish moves no pin and starts no migration: "the pin is u…
+    570|     expect(await pinOf(imp)).toBe(imp.from);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 skipped (2)
+   Start at  16:13:13
+   Duration  30.28s (transform 5.22s, setup 0ms, collect 9.33s, tests 17.36s, environment 0ms, prepare 75ms)
+
+exit 1

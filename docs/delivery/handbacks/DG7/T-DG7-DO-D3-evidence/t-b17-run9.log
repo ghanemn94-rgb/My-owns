@@ -1,0 +1,108 @@
+port-policy: PostgreSQL listening on port 24351 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+PASS  signin (91 ms): drill-01995000-0000-7000-8000-000000000012 -> user 01995000-0000-7000-8000-000000000012, roles [TL,TL]
+FAIL  writes (443 ms): submit gate G5: HTTP 422 {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"Mandatory required outputs are incomplete: Performance evidence, Adoption, Decision log.","code":"gate_crit
+FAIL  approve (0 ms): no submission (the writes step must pass first)
+# T-B17 measurement: {"schemaVersion":"mth-drill-d8-measurement/1","changed":{"app_user":{"added":0,"changed":2,"missing":0},"audit_event":{"added":108,"changed":0,"missing":0},"outbox_event":{"added":6,"changed":0,"missing":0},"processed_message":{"added":1,"changed":0,"missing":0},"scoped_assignment":{"added":1,"changed":0,"missing":0},"transformation":{"added":1,"changed":0,"missing":0},"automation_execution":{"added":1,"changed":0,"missing":0},"automation_action_result":{"added":1,"changed":0,"missing":0},"forum":{"added":5,"changed":0,"missing":0},"gate_instance":{"added":6,"changed":0,"missing":0},"governance_matrix":{"added":2,"changed":0,"missing":0},"diagnostic_item":{"added":6,"changed":0,"missing":0},"kpi_actual":{"added":0,"changed":1,"missing":0},"record_code_counter":{"added":1,"changed":0,"missing":0},"roadmap_wave":{"added":4,"changed":0,"missing":0},"raid_entry":{"added":1,"changed":0,"missing":0},"scoring_weight_set":{"added":1,"changed":0,"missing":0},"scoring_weight":{"added":5,"changed":0,"missing":0},"tom_canvas_cell":{"added":10,"changed":0,"missing":0},"transformation_decision_right":{"added":4,"changed":0,"missing":0},"kpi_actual_value":{"added":1,"changed":0,"missing":0},"phase_step":{"added":5,"changed":0,"missing":0},"transformation_config_pin":{"added":3,"changed":0,"missing":0},"transformation_raci_deliverable":{"added":6,"changed":0,"missing":0},"transformation_raci_assignment":{"added":36,"changed":0,"missing":0},"user_identity":{"added":0,"changed":2,"missing":0},"work_item":{"added":5,"changed":0,"missing":0},"inbox_notification":{"added":5,"changed":0,"missing":0}},"journalledTables":["app_user","kpi_actual","raid_entry","transformation"],"residue":[{"table":"audit_event","auditRequired":false,"fkeys":"audit_event_organization_id_fkey->organization"},{"table":"automation_action_result","auditRequired":true,"fkeys":"automation_action_result_action_type_fkey->automation_action_type automation_action_result_automation_execution_id_fkey->automation_execution"},{"table":"automation_execution","auditRequired":true,"fkeys":"automation_execution_created_by_fkey->app_user automation_execution_initiating_user_id_fkey->app_user automation_execution_organization_id_fkey->organization automation_execution_rule_version_fkey->automation_rule_version automation_execution_transformation_id_fkey->transformation automation_execution_trigger_code_fkey->automation_trigger automation_execution_updated_by_fkey->app_user"},{"table":"diagnostic_item","auditRequired":true,"fkeys":"diagnostic_item_archived_by_fkey->app_user diagnostic_item_baseline_id_fkey->baseline diagnostic_item_created_by_fkey->app_user diagnostic_item_dimension_code_fkey->diagnostic_dimension diagnostic_item_impact_kpi_definition_id_fkey->kpi_definition diagnostic_item_organization_id_fkey->organization diagnostic_item_owner_user_id_fkey->app_user diagnostic_item_transformation_id_fkey->transformation diagnostic_item_updated_by_fkey->app_user"},{"table":"forum","auditRequired":true,"fkeys":"forum_chair_party_code_fkey->governance_party forum_created_by_fkey->app_user forum_organization_id_fkey->organization forum_secretary_user_id_fkey->app_user forum_template_key_fkey->forum_template forum_transformation_id_fkey->transformation forum_updated_by_fkey->app_user"},{"table":"gate_instance","auditRequired":true,"fkeys":"gate_instance_approver_role_code_fkey->role gate_instance_approver_user_id_fkey->app_user gate_instance_created_by_fkey->app_user gate_instance_current_submission_fkey->gate_submission gate_instance_gate_code_fkey->gate_definition gate_instance_organization_id_fkey->organization gate_instance_transformation_id_fkey->transformation gate_instance_updated_by_fkey->app_user"},{"table":"governance_matrix","auditRequired":true,"fkeys":"governance_matrix_approved_by_fkey->app_user governance_matrix_created_by_fkey->app_user governance_matrix_organization_id_fkey->organization governance_matrix_transformation_id_fkey->transformation governance_matrix_updated_by_fkey->app_user"},{"table":"kpi_actual_value","auditRequired":false,"fkeys":"kpi_actual_value_actual_fkey->kpi_actual kpi_actual_value_entered_by_fkey->app_user kpi_actual_value_organization_id_fkey->organization kpi_actual_value_transformation_id_fkey->transformation kpi_actual_value_version_fkey->kpi_version"},{"table":"phase_step","auditRequired":true,"fkeys":"phase_step_created_by_fkey->app_user phase_step_definition_fkey->phase_step_definition phase_step_enabled_by_gate_decision_id_fkey->gate_decision phase_step_organization_id_fkey->organization phase_step_owner_user_id_fkey->app_user phase_step_review_requested_by_fkey->app_user phase_step_reviewed_by_fkey->app_user phase_step_transformation_id_fkey->transformation phase_step_updated_by_fkey->app_user"},{"table":"record_code_counter","auditRequired":false,"fkeys":"record_code_counter_transformation_id_fkey->transformation"},{"table":"roadmap_wave","auditRequired":true,"fkeys":"roadmap_wave_created_by_fkey->app_user roadmap_wave_organization_id_fkey->organization roadmap_wave_owner_user_id_fkey->app_user roadmap_wave_transformation_id_fkey->transformation roadmap_wave_updated_by_fkey->app_user"},{"table":"scoped_assignment","auditRequired":false,"fkeys":"scoped_assignment_created_by_fkey->app_user scoped_assignment_derived_from_assignment_id_fkey->scoped_assignment scoped_assignment_granted_by_fkey->app_user scoped_assignment_organization_id_fkey->organization scoped_assignment_revoked_by_fkey->app_user scoped_assignment_role_id_fkey->role scoped_assignment_updated_by_fkey->app_user scoped_assignment_user_id_fkey->app_user"},{"table":"scoring_weight","auditRequired":false,"fkeys":"scoring_weight_created_by_fkey->app_user scoring_weight_organization_id_fkey->organization scoring_weight_transformation_id_fkey->transformation scoring_weight_weight_set_id_fkey->scoring_weight_set"},{"table":"scoring_weight_set","auditRequired":true,"fkeys":"scoring_weight_set_approved_by_fkey->app_user scoring_weight_set_created_by_fkey->app_user scoring_weight_set_organization_id_fkey->organization scoring_weight_set_transformation_id_fkey->transformation scoring_weight_set_updated_by_fkey->app_user"},{"table":"tom_canvas_cell","auditRequired":true,"fkeys":"tom_canvas_cell_created_by_fkey->app_user tom_canvas_cell_dimension_code_fkey->tom_dimension tom_canvas_cell_organization_id_fkey->organization tom_canvas_cell_owner_user_id_fkey->app_user tom_canvas_cell_transformation_id_fkey->transformation tom_canvas_cell_updated_by_fkey->app_user"},{"table":"transformation_config_pin","auditRequired":true,"fkeys":"transformation_config_pin_created_by_fkey->app_user transformation_config_pin_last_migration_fkey->methodology_migration transformation_config_pin_methodology_version_id_fkey->methodology_version transformation_config_pin_organization_id_fkey->organization transformation_config_pin_pinned_by_fkey->app_user transformation_config_pin_transformation_id_fkey->transformation transformation_config_pin_updated_by_fkey->app_user"},{"table":"transformation_decision_right","auditRequired":true,"fkeys":"transformation_decision_right_approve_party_code_fkey->governance_party transformation_decision_right_created_by_fkey->app_user transformation_decision_right_organization_id_fkey->organization transformation_decision_right_template_key_fkey->decision_right_template transformation_decision_right_transformation_id_fkey->transformation transformation_decision_right_updated_by_fkey->app_user"},{"table":"transformation_raci_assignment","auditRequired":true,"fkeys":"transformation_raci_assignment_created_by_fkey->app_user transformation_raci_assignment_deliverable_fkey->transformation_raci_deliverable transformation_raci_assignment_organization_id_fkey->organization transformation_raci_assignment_party_code_fkey->governance_party transformation_raci_assignment_transformation_id_fkey->transformation transformation_raci_assignment_updated_by_fkey->app_user"},{"table":"transformation_raci_deliverable","auditRequired":true,"fkeys":"transformation_raci_deliverable_created_by_fkey->app_user transformation_raci_deliverable_organization_id_fkey->organization transformation_raci_deliverable_template_key_fkey->raci_template_deliverable transformation_raci_deliverable_transformation_id_fkey->transformation transformation_raci_deliverable_updated_by_fkey->app_user"},{"table":"work_item","auditRequired":true,"fkeys":"work_item_assignee_user_id_fkey->app_user work_item_completed_by_fkey->app_user work_item_created_by_fkey->app_user work_item_kind_fkey->work_item_kind work_item_organization_id_fkey->organization work_item_transformation_id_fkey->transformation work_item_updated_by_fkey->app_user"}],"signedIn":2,"journey":[{"step":"signin","result":"PASS","detail":"drill-01995000-0000-7000-8000-000000000012 -> user 01995000-0000-7000-8000-000000000012, roles [TL,TL]"},{"step":"writes","result":"FAIL","detail":"submit gate G5: HTTP 422 {\"type\":\"urn:mth:problem:validation\",\"title\":\"Business rule violated\",\"status\":422,\"detail\":\"Mandatory required outputs are incomplete: Performance evidence, Adoption, Decision log.\",\"code\":\"gate_crit"},{"step":"approve","result":"FAIL","detail":"no submission (the writes step must pass first)"}],"complete":false,"note":"SYNTHETIC fixture (seed-demo, drill IdP); measured by T-B17. complete=false: the write chain stopped at the failing step, so the lists below cover only the steps before it"}
+▶ T-B17 the D8 lists of allowance.mjs are measured on a fixture installation (mode 2 exit 0, then 4)
+  ✖ D8's write chain changes exactly the journalled tables, the operational list, user_identity and the two D8 lists (17867.310653ms)
+  ✖ mode 2 with the generated allowance matches after use (exit 0) (1685.875923ms)
+  ✖ one extra owner-written row in an audited table, its event by a non-journalled user, gives exit 4 (1.682146ms)
+✖ T-B17 the D8 lists of allowance.mjs are measured on a fixture installation (mode 2 exit 0, then 4) (37615.560298ms)
+ℹ tests 3
+ℹ suites 1
+ℹ pass 0
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 37766.10043
+
+✖ failing tests:
+
+test at deploy/scripts/tests/transfer-drill.test.mjs:900:3
+✖ D8's write chain changes exactly the journalled tables, the operational list, user_identity and the two D8 lists (17867.310653ms)
+  AssertionError [ERR_ASSERTION]: [{"step":"signin","result":"PASS","ms":91,"detail":"drill-01995000-0000-7000-8000-000000000012 -> user 01995000-0000-7000-8000-000000000012, roles [TL,TL]"},{"step":"writes","result":"FAIL","ms":443,"detail":"submit gate G5: HTTP 422 {\"type\":\"urn:mth:problem:validation\",\"title\":\"Business rule violated\",\"status\":422,\"detail\":\"Mandatory required outputs are incomplete: Performance evidence, Adoption, Decision log.\",\"code\":\"gate_crit"},{"step":"approve","result":"FAIL","ms":0,"detail":"no submission (the writes step must pass first)"}]{"level":"info","msg":"job schedules registered","scheduled":["approval.escalation_scan","automation.tick_daily","automation.tick_hourly","delegation.expiry_sweep","gate.condition_escalation_scan","gate.exception_expiry_scan","governance.blocker_escalation_scan","governance.decision_sla_scan","governance.meeting_cutoff_scan","governance.meeting_series_generate","integrations.connector_run","kpi.freshness_scan","kpi.reporting_period_open","launch.day_ninety_tests","notification.digest","notifications.delivery_sweep","operations.exception_alerts","reports.owner_update_tasks","search.index_feed","search.reindex","sustainment.control_check_scan","sustainment.review_scan"],"unscheduled":[],"unhandled":[]}
+  {"level":"info","msg":"mth-worker started","timeZone":"Asia/Riyadh","superviseIntervalSeconds":60,"heartbeatSeconds":30,"jobBatchSize":8,"jobConcurrency":4,"instanceKey":"worker-26d5d82dc0b5a30dd140d1af","secretProviders":["env","file"]}
+  {"level":"info","msg":"outbox relay","published":1,"failed":0}
+  {"level":"info","msg":"job handled","queue":"automation.evaluate","jobId":"c9206479-a385-816d-a3dc-31c85fa959a3","attempt":{"retryCount":0,"retryLimit":5},"outcome":[]}
+  {"level":"info","msg":"job handled","queue":"transformation.created","jobId":"d08e13d0-08c3-8ed0-8a07-00ee77f5a74c","outcome":"done"}
+  {"level":"info","msg":"outbox relay","published":5,"failed":0}
+  {"level":"info","msg":"job handled","queue":"notifications.fanout","jobId":"01a1d58b-03ea-7fae-aa73-27ace72e245d","attempt":{"retryCount":0,"retryLimit":5},"outcome":{"outcome":"no_channel","created":[],"sends":[]}}
+  {"level":"info","msg":"job handled","queue":"notifications.fanout","jobId":"01a1d58b-03f0-796d-aada-a98cfca81b46","attempt":{"retryCount":0,"retryLimit":5},"outcome":{"outcome":"no_channel","created":[],"sends":[]}}
+  {"level":"info","msg":"job handled","queue":"notifications.fanout","jobId":"01a1d58b-03fe-7369-b8b7-2a3ce0297d76","attempt":{"retryCount":0,"retryLimit":5},"outcome":{"outcome":"no_channel","created":[],"sends":[]}}
+  {"level":"info","msg":"job handled","queue":"notifications.fanout","jobId":"01a1d58b-03f7-74d3-ad75-602d58796eec","attempt":{"retryCount":0,"retryLimit":5},"outcome":{"outcome":"no_channel","created":[],"sends":[]}}
+  {"level":"info","msg":"job handled","queue":"notifications.fanout","jobId":"01a1d58b-0405-78c9-ae26-eeef97e7f7e2","attempt":{"retryCount":0,"retryLimit":5},"outcome":{"outcome":"no_channel","created":[],"sends":[]}}
+  
+  
+  'FAIL' !== 'PASS'
+  
+      at TestContext.<anonymous> (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:961:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Promise.all (index 0)
+      at async Suite.run (node:internal/test_runner/test:1905:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'FAIL',
+    expected: 'PASS',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at deploy/scripts/tests/transfer-drill.test.mjs:966:3
+✖ mode 2 with the generated allowance matches after use (exit 0) (1685.875923ms)
+  AssertionError [ERR_ASSERTION]:   scoped_assignment: 1 added, 0 changed, 0 missing (unexplained)
+    automation_execution: 1 added, 0 changed, 0 missing (unexplained)
+    automation_action_result: 1 added, 0 changed, 0 missing (unexplained)
+    forum: 5 added, 0 changed, 0 missing (unexplained)
+    gate_instance: 6 added, 0 changed, 0 missing (unexplained)
+    governance_matrix: 2 added, 0 changed, 0 missing (unexplained)
+    diagnostic_item: 6 added, 0 changed, 0 missing (unexplained)
+    record_code_counter: 1 added, 0 changed, 0 missing (unexplained)
+    roadmap_wave: 4 added, 0 changed, 0 missing (unexplained)
+    scoring_weight_set: 1 added, 0 changed, 0 missing (unexplained)
+    scoring_weight: 5 added, 0 changed, 0 missing (unexplained)
+    tom_canvas_cell: 10 added, 0 changed, 0 missing (unexplained)
+    transformation_decision_right: 4 added, 0 changed, 0 missing (unexplained)
+    kpi_actual_value: 1 added, 0 changed, 0 missing (unexplained)
+    phase_step: 5 added, 0 changed, 0 missing (unexplained)
+    transformation_config_pin: 3 added, 0 changed, 0 missing (unexplained)
+    transformation_raci_deliverable: 6 added, 0 changed, 0 missing (unexplained)
+    transformation_raci_assignment: 36 added, 0 changed, 0 missing (unexplained)
+    work_item: 5 added, 0 changed, 0 missing (unexplained)
+  reconcile-migration: mismatch: 19 tables, 0 attachments differ
+  
+  
+  4 !== 0
+  
+      at TestContext.<anonymous> (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:992:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 4,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at deploy/scripts/tests/transfer-drill.test.mjs:996:3
+✖ one extra owner-written row in an audited table, its event by a non-journalled user, gives exit 4 (1.682146ms)
+  AssertionError [ERR_ASSERTION]: D8_TOUCHED_AUDITED is empty
+      at TestContext.<anonymous> (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:999:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+real	0m39.347s
+user	0m24.880s
+sys	0m5.864s

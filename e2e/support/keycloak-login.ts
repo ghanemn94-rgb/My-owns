@@ -15,8 +15,18 @@
 //     --org-name-en "E2E org (synthetic)" --org-name-ar "مؤسسة الاختبار (اصطناعية)" \
 //     --admin-name "Synthetic Access Admin" --admin-email smoke.admin@example.invalid \
 //     --admin-issuer https://keycloak:8443/realms/mth-test --admin-subject 5f0c7a52-1d1e-4c9a-9a51-6a0d0e5a0001
-//   MTH_E2E_KEYCLOAK=1 MTH_E2E_KEYCLOAK_PASSWORD_FILE="$MTH_SECRETS_DIR/test_idp_user_password" \
+//   env -u HTTPS_PROXY -u HTTP_PROXY -u ALL_PROXY -u https_proxy -u http_proxy -u all_proxy \
+//     MTH_E2E_KEYCLOAK=1 MTH_E2E_KEYCLOAK_PASSWORD_FILE="$MTH_SECRETS_DIR/test_idp_user_password" \
 //     E2E_BASE_URL=http://localhost:3000 pnpm exec playwright test e2e/identity/keycloak-login.spec.ts
+//
+// Proxy (ADR-0069 Amendment 2, A2.2 item 2; residual 10): run the spec with the HTTP(S)/ALL proxy variables unset
+// (HTTPS_PROXY, HTTP_PROXY, ALL_PROXY and their lower-case forms), as the `env -u` above does, or with the IdP host
+// name (the host of MTH_E2E_KEYCLOAK_URL, by default `keycloak`) in NO_PROXY. On a host whose build proxy cannot reach
+// the local containers, Chromium otherwise hands the IdP navigation to that proxy and it never completes (orchestrator
+// host run 3b: 4 failed on the 60 s timeout; run 3c, the same stack and command with the variables unset: 4 passed).
+// That mechanism is inferred, not verified. It is a property of the test host only: the API reaches the IdP inside the
+// Compose network and never uses the host's proxy, and no product code, Compose file or TLS rule changes. A host whose
+// proxy settings cannot be changed records this e2e BLOCKED with that reason, never as a pass.
 //
 // Environment (all optional except the two that enable it):
 //   MTH_E2E_KEYCLOAK=1                     enables the spec (otherwise it is skipped as BLOCKED)

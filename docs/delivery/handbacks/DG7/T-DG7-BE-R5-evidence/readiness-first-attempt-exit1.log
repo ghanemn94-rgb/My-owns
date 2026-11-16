@@ -1,0 +1,64 @@
+port-policy: PostgreSQL listening on port 24351 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/My-owns
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwh4wfnf_6fddb367 (server_encoding UTF8); applied 135 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/platform/readiness-storage-worker.test.ts (10 tests) 4829ms
+   ✓ T-B2: the evidence-storage probe > a store that accepts the connection and never answers -> fail Timeout within 2 500 ms  2011ms
+ ❯ |integration| apps/api/test/integration/platform.test.ts (13 tests | 1 failed) 1810ms
+   ✓ health and readiness > reports ready when the database answers and every shipped migration is applied 27ms
+   ✓ health and readiness > reports 503 not_ready/pending when the build ships a migration the database lacks, and fail on checksum drift 250ms
+   ✓ health and readiness > reports 503 fail, not pending, when a pending migration's id is below the highest applied id (F-DG5-100) 124ms
+   × readiness requires a UTF8 database (ADR-0003 'Database encoding', T-DG2-BE9) > reports 503 database: fail on a SQL_ASCII database, and database: ok on a UTF8 one created the same way 407ms
+     → expected [ 503, { status: 'not_ready', …(1) } ] to deeply equal [ 503, { status: 'not_ready', …(1) } ]
+   ✓ rate limiting (ADR-0007 T-3) > limits auth endpoints per IP with a 429 problem and Retry-After 159ms
+   ✓ rate limiting (ADR-0007 T-3) > limits general API traffic per session, never the health endpoints 195ms
+   ✓ rate limiting (ADR-0007 T-3) > does not reset the bucket when an unauthenticated client rotates fabricated session cookies 117ms
+   ✓ rate limiting (ADR-0007 T-3) > keys a validated session by its user, so it is not starved by an IP flood, and a revoked one falls back to the IP 174ms
+   ✓ request hygiene > rejects malformed JSON, non-JSON bodies and bodies over 1 MiB with 400 problems 27ms
+   ✓ request hygiene > answers unknown API paths with a 404 problem 1ms
+   ✓ request hygiene > sends a strict same-origin Content-Security-Policy and other security headers 1ms
+   ✓ fail-closed guards (ADR-0006) > refuses to start with an /api route that declares no access 1ms
+   ✓ fail-closed guards (ADR-0006) > turns a success from a route that never consulted the policy function into a 500 2ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/platform.test.ts > readiness requires a UTF8 database (ADR-0003 'Database encoding', T-DG2-BE9) > reports 503 database: fail on a SQL_ASCII database, and database: ok on a UTF8 one created the same way
+AssertionError: expected [ 503, { status: 'not_ready', …(1) } ] to deeply equal [ 503, { status: 'not_ready', …(1) } ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[33m@@ -2,9 +2,11 @@[39m
+[2m    503,[22m
+[2m    {[22m
+[2m      "checks": {[22m
+[2m        "database": "ok",[22m
+[2m        "migrations": "pending",[22m
+[31m+       "storage": "fail",[39m
+[31m+       "worker": "unknown",[39m
+[2m      },[22m
+[2m      "status": "not_ready",[22m
+[2m    },[22m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/platform.test.ts:96:34
+     94|       // Control: both scratch databases are empty (no migrations), so…
+     95|       const u = await call(onUtf8.app, "GET", "/readyz");
+     96|       expect([u.status, u.body]).toEqual([
+       |                                  ^
+     97|         503,
+     98|         { status: "not_ready", checks: { database: "ok", migrations: "…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 22 passed (23)
+   Start at  01:06:41
+   Duration  21.22s (transform 4.95s, setup 0ms, collect 10.91s, tests 6.64s, environment 0ms, prepare 61ms)
+

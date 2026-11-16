@@ -1,0 +1,59 @@
+port-policy: PostgreSQL listening on port 24351 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/My-owns
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwe68suc_c0e3c9c2 (server_encoding UTF8); applied 131 migrations to a fresh database
+ ❯ |integration| packages/db/test/integration/transfer-roundtrip.test.ts (10 tests | 1 failed) 6876ms
+   × T-C9: the package scan (ADR-0064 §3) > has no file of an excluded table, no session hash, no provider but unbound, no password column 32ms
+     → expected [ …(2) ] to deeply equal []
+   ✓ T-C10 and T-C12 (refusals): each refusal exits with its code and line and changes nothing > schema version: exit 2  341ms
+   ✓ T-C10 and T-C12 (refusals): each refusal exits with its code and line and changes nothing > file checksum: exit 2 77ms
+   ✓ T-C10 and T-C12 (refusals): each refusal exits with its code and line and changes nothing > manifest SHA-256 given by IT: exit 2 85ms
+   ✓ T-C10 and T-C12 (refusals): each refusal exits with its code and line and changes nothing > migration level: exit 2 153ms
+   ✓ T-C10 and T-C12 (refusals): each refusal exits with its code and line and changes nothing > app version: exit 2 135ms
+   ✓ T-C10 and T-C12 (refusals): each refusal exits with its code and line and changes nothing > non-empty target (the seeded demo source itself): exit 3 171ms
+   ✓ the reconciliation (step 8) of the package against its live source > matches table for table; a change after the export is reported, never hidden  377ms
+   ✓ the reconciliation (step 8) of the package against its live source > reconcile-migration refuses (exit 2) where no import is recorded, and writes nothing 65ms
+   ✓ Q1 (BLOCKED; handback §4): ADR-0064 §6 step 4 versus a freshly migrated target > a freshly migrated target already holds migration-written audit_event rows, so the import refuses it 119ms
+ ✓ |integration| apps/api/test/integration/identity/unbound-signin.test.ts (5 tests) 2458ms
+ ✓ |integration| apps/api/test/integration/transfer/import-routes.test.ts (5 tests) 2720ms
+ ✓ |integration| packages/db/test/integration/transfer-locks.test.ts (3 tests) 2381ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| packages/db/test/integration/transfer-roundtrip.test.ts > T-C9: the package scan (ADR-0064 §3) > has no file of an excluded table, no session hash, no provider but unbound, no password column
+AssertionError: expected [ …(2) ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   {[39m
+[31m+     "c": "notification_channel.smtp_password_ref",[39m
+[31m+   },[39m
+[31m+   {[39m
+[31m+     "c": "notification_channel_change.smtp_password_ref",[39m
+[31m+   },[39m
+[31m+ ][39m
+
+ ❯ packages/db/test/integration/transfer-roundtrip.test.ts:112:27
+    110|       SELECT table_name || '.' || column_name AS c FROM information_sc…
+    111|       WHERE table_schema = 'public' AND column_name ~* '(password|pass…
+    112|     expect(password.rows).toEqual([]);
+       |                           ^
+    113|   });
+    114| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 3 passed (4)
+      Tests  1 failed | 22 passed (23)
+   Start at  23:20:59
+   Duration  24.63s (transform 3.25s, setup 0ms, collect 7.37s, tests 14.43s, environment 0ms, prepare 61ms)
+

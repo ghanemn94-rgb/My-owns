@@ -1,0 +1,100 @@
+{
+  "schemaVersion": "mth-transfer-journey/1",
+  "mode": "oidc-drill",
+  "idp": "synthetic drill IdP (not a corporate IdP)",
+  "app": "http://127.0.0.1:25302",
+  "steps": [
+    {
+      "step": "signin",
+      "result": "PASS",
+      "ms": 101,
+      "detail": "drill-01995000-0000-7000-8000-000000000012 -> user 01995000-0000-7000-8000-000000000012, roles [TL,TL]"
+    },
+    {
+      "step": "unbound",
+      "result": "PASS",
+      "ms": 24,
+      "detail": "drill-01920000-0000-7000-9000-000000000205 refused: identity_unbound; /me 401"
+    },
+    {
+      "step": "csrf",
+      "result": "PASS",
+      "ms": 10,
+      "detail": "Origin http://localhost:25301 -> 403 csrf"
+    },
+    {
+      "step": "status",
+      "result": "PASS",
+      "ms": 35,
+      "detail": "origin http://127.0.0.1:25302, environmentKind demo, schema ok"
+    },
+    {
+      "step": "writes",
+      "result": "PASS",
+      "ms": 2949,
+      "detail": "transformation 01a1da3c-7a79-77b3-a7f7-10bd8dc37bd1; RAID 01a1da3c-7af8-76ee-bc83-a3dbf1da591e; C0 G5 missing [g5.performance_kpi_not_known, g5.performance_kpi_not_known, g5.performance_kpi_not_known, g5.performance_pilot_evidence_missing, g5.adoption_none, g5.decision_overdue]; C1 KPI 01995000-4102-7000-8000-000000000001 submitted (accepted) in period 2026-11; KPI 01995000-4102-7000-8000-000000000002 submitted (accepted) in period 2026-11; KPI 01995000-4102-7000-8000-000000000003 submitted (accepted) in period 2026-11; pilot evidence 01a1da3c-7c57-7702-b0f7-06f0ac835c13 verified and linked; adoption link 01a1da3c-7ca5-70cd-a0b8-0f066ccbb6e8 (usage_activation_rate <- KPI 01995000-4102-7000-8000-000000000001): KPI 01995000-4102-7000-8000-000000000001 already remedied; executive decision DEC-01 deferred to 2026-11-28; C2 canSubmit after 2 s; C3 submission 1"
+    },
+    {
+      "step": "approve",
+      "result": "PASS",
+      "ms": 30198,
+      "detail": "C4 canDecide after 0 s; C5 drill-01995000-0000-7000-8000-000000000011 (rebound) decided G5 submission 1: deferred (decision 01a1da3c-866a-71ed-96a0-bcff32918ceb); C6 submission decided; waited 30 s for the worker; KPI evaluations read: 3"
+    },
+    {
+      "step": "downloads",
+      "result": "PASS",
+      "ms": 76,
+      "detail": "2 evidence files downloaded by drill-01920000-0000-7000-9000-000000000202, SHA-256 equal"
+    },
+    {
+      "step": "deeplink",
+      "result": "PASS",
+      "ms": 29,
+      "detail": "notification 01a1da3c-8ad1-709e-a362-a0655c8ec660: http://127.0.0.1:25302/transformations/01995000-0000-7000-8000-000000000001/gates/G5/submissions/1 -> 200"
+    }
+  ],
+  "journalEntries": 28,
+  "gateChain": {
+    "gate": "G5",
+    "c0Missing": [
+      {
+        "code": "g5.performance_kpi_not_known",
+        "pointer": "/kpiDefinitions/01995000-4102-7000-8000-000000000001"
+      },
+      {
+        "code": "g5.performance_kpi_not_known",
+        "pointer": "/kpiDefinitions/01995000-4102-7000-8000-000000000002"
+      },
+      {
+        "code": "g5.performance_kpi_not_known",
+        "pointer": "/kpiDefinitions/01995000-4102-7000-8000-000000000003"
+      },
+      {
+        "code": "g5.performance_pilot_evidence_missing",
+        "pointer": "/phase-steps/transform.deliver_pilots"
+      },
+      {
+        "code": "g5.adoption_none",
+        "pointer": null
+      },
+      {
+        "code": "g5.decision_overdue",
+        "pointer": "/decisions/01995000-1040-7000-8000-000000000002"
+      }
+    ],
+    "writes": [
+      "submitKpiActual",
+      "submitKpiActual",
+      "submitKpiActual",
+      "createEvidence",
+      "reviewEvidence",
+      "linkPhaseStepEvidence",
+      "createAdoptionMetricLink",
+      "recordExecutiveDecisionOutcome",
+      "submitGate",
+      "decideGate"
+    ]
+  },
+  "grants": [],
+  "result": "PASS"
+}

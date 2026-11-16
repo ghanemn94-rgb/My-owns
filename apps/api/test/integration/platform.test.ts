@@ -17,10 +17,21 @@ beforeAll(async () => {
 });
 afterAll(() => api.close());
 
+// ADR-0069 §2 (T-DG7-BE-B): /readyz always sends `storage` and `worker`. `storage` gates readiness and is evaluated only
+// when `database` is ok (else `unknown`); `worker` is the P6 heartbeat status (`alive` <= 90 s, `stale` older, `unknown`
+// with no beat ever), reported only, never gating, and `unknown` when `database` is not ok. On the run's SHARED
+// database other suites may write worker_heartbeat rows concurrently (operations/exceptions.test.ts), so here `worker`
+// is asserted to be one of the vocabulary's values while the status is decided by the gating checks alone; its exact
+// alive/stale/unknown rule is proven on a scratch database by T-B2 (platform/readiness-storage-worker.test.ts).
+const ANY_WORKER = expect.stringMatching(/^(alive|stale|unknown)$/);
+
 describe("health and readiness", () => {
   it("reports ready when the database answers and every shipped migration is applied", async () => {
     const res = await call(api.app, "GET", "/readyz");
-    expect([res.status, res.body]).toEqual([200, { status: "ready", checks: { database: "ok", migrations: "ok" } }]);
+    expect([res.status, res.body]).toEqual([
+      200,
+      { status: "ready", checks: { database: "ok", migrations: "ok", storage: "ok", worker: ANY_WORKER } },
+    ]);
     expect((await call(api.app, "GET", "/healthz")).body).toEqual({ status: "ok" });
   });
 
@@ -36,7 +47,7 @@ describe("health and readiness", () => {
       const p = await call(pending.app, "GET", "/readyz");
       expect([p.status, p.body]).toEqual([
         503,
-        { status: "not_ready", checks: { database: "ok", migrations: "pending" } },
+        { status: "not_ready", checks: { database: "ok", migrations: "pending", storage: "ok", worker: ANY_WORKER } },
       ]);
       const d = await call(drift.app, "GET", "/readyz");
       expect([d.status, d.body.checks.migrations]).toEqual([503, "fail"]);
@@ -55,7 +66,7 @@ describe("health and readiness", () => {
       const r = await call(late.app, "GET", "/readyz");
       expect([r.status, r.body]).toEqual([
         503,
-        { status: "not_ready", checks: { database: "ok", migrations: "fail" } },
+        { status: "not_ready", checks: { database: "ok", migrations: "fail", storage: "ok", worker: ANY_WORKER } },
       ]);
     } finally {
       await late.close();
@@ -76,14 +87,20 @@ describe("readiness requires a UTF8 database (ADR-0003 'Database encoding', T-DG
         const r = await call(onAscii.app, "GET", "/readyz");
         expect([r.status, r.body]).toEqual([
           503,
-          { status: "not_ready", checks: { database: "fail", migrations: "fail" } },
+          // database fail: storage and worker are not evaluated, so both are `unknown` (never ok or alive).
+          {
+            status: "not_ready",
+            checks: { database: "fail", migrations: "fail", storage: "unknown", worker: "unknown" },
+          },
         ]);
       }
       // Control: both scratch databases are empty (no migrations), so the ONLY difference is the encoding.
       const u = await call(onUtf8.app, "GET", "/readyz");
       expect([u.status, u.body]).toEqual([
         503,
-        { status: "not_ready", checks: { database: "ok", migrations: "pending" } },
+        // The empty database has no storage_setting table, so the storage probe fails closed (`fail`, never ok), and
+        // the heartbeat read fails, which is `unknown` (never alive): health.ts, ADR-0069 §2.
+        { status: "not_ready", checks: { database: "ok", migrations: "pending", storage: "fail", worker: "unknown" } },
       ]);
     } finally {
       await onAscii.close();

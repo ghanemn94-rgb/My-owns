@@ -1,0 +1,24 @@
+port-policy: PostgreSQL listening on port 24351 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/My-owns
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mweho0xk_60f3b4ce (server_encoding UTF8); applied 131 migrations to a fresh database
+stdout | tests/qa/integration/a19-zz-dof-diagnostic-tmp.test.ts
+A19-TIMINGS {"backup.total":2.4744920789999996,"backup.dump":0.477,"backup.config":0.116,"backup.verify":0.705,"backup.evidence":0.782,"backup.snapshot":0.148,"restore.total":5.841,"restore.packageChecks":0.161,"restore.targetChecks":0.089,"restore.database":3.271,"restore.evidence":0.826,"restore.checks":1.491,"check.timeToReady":0.19742579599999954}
+
+ ✓ |integration| tests/qa/integration/a19-zz-dof-diagnostic-tmp.test.ts (13 tests) 16382ms
+   ✓ A19 drill: backup, then restore into a fresh database and an empty evidence store (REQ-S20-019) > backup.sh writes a set with the mth-backup/1 manifest, five timings, and records it audited  2632ms
+   ✓ A19 drill: backup, then restore into a fresh database and an empty evidence store (REQ-S20-019) > restore.sh restores into a fresh database and an empty evidence store, passing R1–R8 with timings  6199ms
+   ✓ A19 drill: backup, then restore into a fresh database and an empty evidence store (REQ-S20-019) > a non-empty target database is refused (exit 2) and left unchanged  521ms
+   ✓ A19 drill: backup, then restore into a fresh database and an empty evidence store (REQ-S20-019) > a non-empty target evidence store is refused (exit 2); nothing is written to the database  326ms
+
+ Test Files  1 passed (1)
+      Tests  13 passed (13)
+   Start at  04:40:45
+   Duration  28.46s (transform 4.73s, setup 0ms, collect 8.75s, tests 16.38s, environment 0ms, prepare 72ms)
+
+exit=0

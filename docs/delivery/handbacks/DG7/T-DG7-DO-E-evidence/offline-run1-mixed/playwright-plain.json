@@ -1,0 +1,278 @@
+{
+  "config": {
+    "configFile": "/home/user/My-owns/playwright.config.ts",
+    "rootDir": "/home/user/My-owns",
+    "forbidOnly": true,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "list"
+      ],
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "/var/tmp/mth-run.KrmVbL/claude-0/mth-offline-drill.qkRFNA/results-plain",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chromium-en",
+        "name": "chromium-en",
+        "testDir": "/home/user/My-owns",
+        "testIgnore": [
+          "**/node_modules/**"
+        ],
+        "testMatch": [
+          "e2e/**/*.spec.ts",
+          "apps/web/e2e/**/*.spec.ts"
+        ],
+        "timeout": 30000
+      },
+      {
+        "outputDir": "/var/tmp/mth-run.KrmVbL/claude-0/mth-offline-drill.qkRFNA/results-plain",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chromium-ar",
+        "name": "chromium-ar",
+        "testDir": "/home/user/My-owns",
+        "testIgnore": [
+          "**/node_modules/**"
+        ],
+        "testMatch": [
+          "e2e/**/*.spec.ts",
+          "apps/web/e2e/**/*.spec.ts"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "shard": null,
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.56.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "e2e/a21-p6-degradation.spec.ts",
+      "file": "e2e/a21-p6-degradation.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "A21 / REQ-S17-009: Administration shows the assistant off (not configured), telemetry off, and every channel not enabled",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 300000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium-en",
+              "projectName": "chromium-en",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 3935,
+                  "error": {
+                    "message": "Error: BLOCKED: MTH_PORT_POOL (\"a-b\") is not set; no harness port for the fresh-install API",
+                    "stack": "Error: BLOCKED: MTH_PORT_POOL (\"a-b\") is not set; no harness port for the fresh-install API\n    at candidatePorts (/home/user/My-owns/e2e/support/fresh-install.ts:67:17)\n    at startFreshInstall (/home/user/My-owns/e2e/support/fresh-install.ts:105:22)\n    at /home/user/My-owns/e2e/a21-p6-degradation.spec.ts:190:19",
+                    "location": {
+                      "file": "/home/user/My-owns/e2e/support/fresh-install.ts",
+                      "column": 17,
+                      "line": 67
+                    },
+                    "snippet": "\u001b[90m   at \u001b[39me2e/support/fresh-install.ts:67\n\n  65 |   const pool = process.env[\"MTH_PORT_POOL\"];\n  66 |   const m = pool ? /^(\\d+)-(\\d+)$/.exec(pool) : null;\n> 67 |   if (!m) throw new Error(`BLOCKED: MTH_PORT_POOL (\"a-b\") is not set; no harness port for the fresh-install API`);\n     |                 ^\n  68 |   const out: number[] = [];\n  69 |   for (let p = Number(m[2]); p >= Number(m[1]); p--) out.push(p);\n  70 |   return out;"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/home/user/My-owns/e2e/support/fresh-install.ts",
+                        "column": 17,
+                        "line": 67
+                      },
+                      "message": "Error: BLOCKED: MTH_PORT_POOL (\"a-b\") is not set; no harness port for the fresh-install API\n\n   at e2e/support/fresh-install.ts:67\n\n  65 |   const pool = process.env[\"MTH_PORT_POOL\"];\n  66 |   const m = pool ? /^(\\d+)-(\\d+)$/.exec(pool) : null;\n> 67 |   if (!m) throw new Error(`BLOCKED: MTH_PORT_POOL (\"a-b\") is not set; no harness port for the fresh-install API`);\n     |                 ^\n  68 |   const out: number[] = [];\n  69 |   for (let p = Number(m[2]); p >= Number(m[1]); p--) out.push(p);\n  70 |   return out;\n    at candidatePorts (/home/user/My-owns/e2e/support/fresh-install.ts:67:17)\n    at startFreshInstall (/home/user/My-owns/e2e/support/fresh-install.ts:105:22)\n    at /home/user/My-owns/e2e/a21-p6-degradation.spec.ts:190:19"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "NOTICE:  database \"mth_fresh_qa_a21_en\" does not exist, skipping\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-13T21:18:13.869Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "/var/tmp/mth-run.KrmVbL/claude-0/mth-offline-drill.qkRFNA/results-plain/e2e-a21-p6-degradation-A21-271a1-d-every-channel-not-enabled-chromium-en/trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/home/user/My-owns/e2e/support/fresh-install.ts",
+                    "column": 17,
+                    "line": 67
+                  }
+                }
+              ],
+              "status": "unexpected"
+            },
+            {
+              "timeout": 300000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium-ar",
+              "projectName": "chromium-ar",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 3290,
+                  "error": {
+                    "message": "Error: BLOCKED: MTH_PORT_POOL (\"a-b\") is not set; no harness port for the fresh-install API",
+                    "stack": "Error: BLOCKED: MTH_PORT_POOL (\"a-b\") is not set; no harness port for the fresh-install API\n    at candidatePorts (/home/user/My-owns/e2e/support/fresh-install.ts:67:17)\n    at startFreshInstall (/home/user/My-owns/e2e/support/fresh-install.ts:105:22)\n    at /home/user/My-owns/e2e/a21-p6-degradation.spec.ts:190:19",
+                    "location": {
+                      "file": "/home/user/My-owns/e2e/support/fresh-install.ts",
+                      "column": 17,
+                      "line": 67
+                    },
+                    "snippet": "\u001b[90m   at \u001b[39me2e/support/fresh-install.ts:67\n\n  65 |   const pool = process.env[\"MTH_PORT_POOL\"];\n  66 |   const m = pool ? /^(\\d+)-(\\d+)$/.exec(pool) : null;\n> 67 |   if (!m) throw new Error(`BLOCKED: MTH_PORT_POOL (\"a-b\") is not set; no harness port for the fresh-install API`);\n     |                 ^\n  68 |   const out: number[] = [];\n  69 |   for (let p = Number(m[2]); p >= Number(m[1]); p--) out.push(p);\n  70 |   return out;"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/home/user/My-owns/e2e/support/fresh-install.ts",
+                        "column": 17,
+                        "line": 67
+                      },
+                      "message": "Error: BLOCKED: MTH_PORT_POOL (\"a-b\") is not set; no harness port for the fresh-install API\n\n   at e2e/support/fresh-install.ts:67\n\n  65 |   const pool = process.env[\"MTH_PORT_POOL\"];\n  66 |   const m = pool ? /^(\\d+)-(\\d+)$/.exec(pool) : null;\n> 67 |   if (!m) throw new Error(`BLOCKED: MTH_PORT_POOL (\"a-b\") is not set; no harness port for the fresh-install API`);\n     |                 ^\n  68 |   const out: number[] = [];\n  69 |   for (let p = Number(m[2]); p >= Number(m[1]); p--) out.push(p);\n  70 |   return out;\n    at candidatePorts (/home/user/My-owns/e2e/support/fresh-install.ts:67:17)\n    at startFreshInstall (/home/user/My-owns/e2e/support/fresh-install.ts:105:22)\n    at /home/user/My-owns/e2e/a21-p6-degradation.spec.ts:190:19"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [
+                    {
+                      "text": "NOTICE:  database \"mth_fresh_qa_a21_ar\" does not exist, skipping\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-11-13T21:18:19.349Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "/var/tmp/mth-run.KrmVbL/claude-0/mth-offline-drill.qkRFNA/results-plain/e2e-a21-p6-degradation-A21-271a1-d-every-channel-not-enabled-chromium-ar/trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/home/user/My-owns/e2e/support/fresh-install.ts",
+                    "column": 17,
+                    "line": 67
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "b22518e7f8531d9f6907-2f4655df2948ff144179",
+          "file": "e2e/a21-p6-degradation.spec.ts",
+          "line": 163,
+          "column": 1
+        },
+        {
+          "title": "A21 / REQ-S12-023: with no channel configured the reviewer finds the reminder in the inbox, follows it and accepts the actual",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 75000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium-en",
+              "projectName": "chromium-en",
+              "results": [
+                {
+                  "workerIndex": -1,
+                  "parallelIndex": -1,
+                  "status": "skipped",
+                  "duration": 0,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-13T21:18:18.645Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "skipped"
+            },
+            {
+              "timeout": 75000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium-ar",
+              "projectName": "chromium-ar",
+              "results": [
+                {
+                  "workerIndex": -1,
+                  "parallelIndex": -1,
+                  "status": "skipped",
+                  "duration": 0,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-11-13T21:18:23.411Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "skipped"
+            }
+          ],
+          "id": "b22518e7f8531d9f6907-b19b2aed7dc6e5f516e5",
+          "file": "e2e/a21-p6-degradation.spec.ts",
+          "line": 234,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-11-13T21:18:12.520Z",
+    "duration": 10909.186,
+    "expected": 0,
+    "skipped": 2,
+    "unexpected": 2,
+    "flaky": 0
+  }
+}

@@ -1,0 +1,20 @@
+$ node --version
+v24.21.0
+$ node /var/tmp/mth-run.RP3AYZ/claude-0/roles2.mts   (imports packages/shared/src/permissions.ts by built-in type stripping)
+import { ROLES } from "/home/user/My-owns/packages/shared/src/permissions.ts";
+const r: any = ROLES; const sets: Record<string, Set<string>> = {};
+for (const k of Object.keys(r)) sets[k] = new Set(r[k].permissions);
+const common = [...sets.AUD].filter(p => ["ADM_TECH","TO"].every(w => sets[w].has(p)));
+for (const p of common) { const h = Object.keys(r).filter(k => sets[k].has(p)); if (h.length < 14) console.log(p.padEnd(40), h.join(",")); }
+--- output:
+business_unit.read                       SP,TL,BO,WL,FIN,TO,KDS,TD,CM,SEC,AUD,ADM_TECH,ADM_ACCESS
+automation.read                          TO,AUD,ADM_TECH,ADM_METHOD
+operations.read                          TO,KDS,TD,AUD,ADM_TECH
+connector.read                           TO,KDS,TD,AUD,ADM_TECH
+EXIT=0
+--- holders common to ADM_TECH, ADM_ACCESS, ADM_METHOD, AUD, TO:
+SP,TL,BO,WL,FIN,TO,KDS,TD,CM,SEC,AUD,ADM_TECH,ADM_ACCESS,ADM_METHOD
+common: organization.read role.read procedure.read
+organization.read SP,TL,BO,WL,FIN,TO,KDS,TD,CM,SEC,AUD,ADM_TECH,ADM_ACCESS,ADM_METHOD
+role.read SP,TL,BO,WL,FIN,TO,KDS,TD,CM,SEC,AUD,ADM_TECH,ADM_ACCESS,ADM_METHOD
+procedure.read SP,TL,BO,WL,FIN,TO,KDS,TD,CM,SEC,AUD,ADM_TECH,ADM_ACCESS,ADM_METHOD

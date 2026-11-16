@@ -1,0 +1,22 @@
+# repro: mth-db table-digest --rows (audit_event app_user job_schedule transformation) on a seed-demo db
+# script: same as below, run under tests/qa/support/with-pg.sh
+set -e
+A="$TEST_DATABASE_ADMIN_URL"
+url() { node -e 'const u=new URL(process.argv[1]); u.username=process.argv[2]; u.pathname="/"+process.argv[3]; console.log(u.href)' "$A" "$1" "$2"; }
+psql -X -q -d "$A" -c "CREATE ROLE mth_owner LOGIN" -c "CREATE ROLE mth_app LOGIN" -c "CREATE DATABASE x OWNER mth_owner TEMPLATE template0 ENCODING 'UTF8'" -c "GRANT CONNECT ON DATABASE x TO mth_app"
+cd packages/db
+DATABASE_OWNER_URL=$(url mth_owner x) NODE_ENV=development node --conditions=@mth/source src/cli.ts migrate >/dev/null
+DATABASE_OWNER_URL=$(url mth_owner x) NODE_ENV=development node --conditions=@mth/source src/cli.ts seed-demo >/dev/null
+T=$(psql -X -qAt -d "$A" -c "select 1" >/dev/null; echo "--table audit_event --table app_user --table job_schedule --table transformation")
+DATABASE_URL=$(url mth_app x) NODE_ENV=production node --conditions=@mth/source src/cli.ts table-digest --rows $T > $TMPDIR/exp/td-file.json; echo "file exit $? bytes $(wc -c < $TMPDIR/exp/td-file.json)"
+DATABASE_URL=$(url mth_app x) NODE_ENV=production node --conditions=@mth/source src/cli.ts table-digest --rows $T | cat > $TMPDIR/exp/td-pipe.json; echo "pipe bytes $(wc -c < $TMPDIR/exp/td-pipe.json)"
+node -e 'JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));console.log("pipe json ok")' $TMPDIR/exp/td-pipe.json
+# output (first 3 lines):
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+file exit 0 bytes 122697
+pipe bytes 65536
+
+# cli.ts exit path:
+372:  (code) => process.exit(code),
+377:      process.exit(err.exitCode);
+390:    process.exit(1);

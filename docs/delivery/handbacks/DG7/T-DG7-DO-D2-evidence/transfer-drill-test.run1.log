@@ -1,0 +1,214 @@
+port-policy: PostgreSQL listening on port 24351 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+▶ T-B3 origin-scan.mjs: the source origin is accepted only in audit_event
+  ✔ a hit in audit_event only is listed and passes (exit 0) (141.940555ms)
+  ✔ the origin in a text column fails with the B.5 line (exit 1) (210.91975ms)
+  ✔ the origin in a jsonb value fails (exit 1) (184.375886ms)
+  ✔ LIKE wildcards in the data are not matches (a plain substring test) (125.671736ms)
+✔ T-B3 origin-scan.mjs: the source origin is accepted only in audit_event (799.580904ms)
+▶ T-B9 config-trace.mjs: configuration only from the template and the guide
+  ✔ documented keys pass, each citing its guide section; a secret is written as <KEY>_FILE and never shown (2.098435ms)
+  ✔ a key outside the map fails with the B.5 undocumented-step line (0.422325ms)
+  ✔ an anchor absent from the (fixture) guide fails with the same line (0.530492ms)
+  ✔ a key that is not in the template fails (not from the template) (0.231557ms)
+  ✔ the shipped map covers every .env.example key and every anchor exists in the shipped guide (1.333208ms)
+  ✔ the CLI exits 1 on an undocumented step and writes a FAIL trace (29.256291ms)
+✔ T-B9 config-trace.mjs: configuration only from the template and the guide (34.418747ms)
+▶ T-B9 transfer-drill.sh: BLOCKED, isolation and the report
+  ✔ without bwrap (stub PATH) it exits 3 with the B.5 BLOCKED line (32.582537ms)
+  ✔ without PostgreSQL server binaries it exits 3 with the B.5 BLOCKED line (19.147181ms)
+  ✔ not enough free disk: exit 3 with the B.6 DO-D2 line, and the work directory is removed (42.852487ms)
+  ✔ a probe that connects exits 1 with the B.5 isolation line (593.666521ms)
+  ✔ a failing step: exit 1, the B.5 step line, later steps NOT_RUN, result FAIL, schemaVersion mth-transfer-drill/1 (573.230021ms)
+✔ T-B9 transfer-drill.sh: BLOCKED, isolation and the report (1261.863112ms)
+FAIL  signin (97 ms): journal: no key for user_identity from oidc sign-in
+PASS  csrf (14 ms): Origin http://localhost:25301 -> 403 csrf
+PASS  unbound (22 ms): drill-unbound refused: identity_unbound; /me 401
+▶ T-B10 journey.mjs under NODE_ENV=production, AUTH_MODE=oidc: drill IdP sign-in, CSRF 403, unbound refused
+  ✖ signs in through the drill IdP (authMode oidc), the source-origin write is 403, the unbound user is refused (134.957721ms)
+FAIL  signin (31 ms): journal: no key for user_identity from oidc sign-in
+PASS  status (22 ms): origin http://127.0.0.1:26798, environmentKind production, schema ok
+FAIL  signin (28 ms): journal: no key for user_identity from oidc sign-in
+FAIL  status (15 ms): getDeploymentStatus.origin is http://127.0.0.1:26798, expected http://localhost:25301
+  ✔ status: getDeploymentStatus.origin is the target's origin; a wrong expectation FAILS, never passes (96.354784ms)
+FAIL  signin (34 ms): journal: no key for user_identity from oidc sign-in
+FAIL  deeplink (8 ms): no notification with a link was issued on the target
+FAIL  downloads (0 ms): no --downloads given
+  ✖ a step with no data to prove never passes (deeplink with an empty inbox, downloads without a list) (43.423445ms)
+FAIL  signin (26 ms): journal: no key for user_identity from oidc sign-in
+  ✖ T-B16 (measurement): whether a sign-in changes app_user, recorded for allowance.mjs (101.155286ms)
+  ✔ a redirect URI the drill IdP has not registered is refused (1.901836ms)
+✖ T-B10 journey.mjs under NODE_ENV=production, AUTH_MODE=oidc: drill IdP sign-in, CSRF 403, unbound refused (6554.506921ms)
+FAIL  signin (77 ms): journal: no key for user_identity from oidc sign-in
+PASS  csrf (9 ms): Origin http://localhost:25301 -> 403 csrf
+PASS  unbound (19 ms): drill-unbound refused: identity_unbound; /me 401
+▶ T-B10 (supporting, NOT production semantics) the same journey with NODE_ENV=development, AUTH_MODE=oidc
+  ✖ signs in through the drill IdP (authMode oidc), the source-origin write is 403, the unbound user is refused (106.263016ms)
+FAIL  signin (29 ms): journal: no key for user_identity from oidc sign-in
+PASS  status (16 ms): origin http://127.0.0.1:30762, environmentKind production, schema ok
+FAIL  signin (22 ms): journal: no key for user_identity from oidc sign-in
+FAIL  status (14 ms): getDeploymentStatus.origin is http://127.0.0.1:30762, expected http://localhost:25301
+  ✔ status: getDeploymentStatus.origin is the target's origin; a wrong expectation FAILS, never passes (82.158923ms)
+FAIL  signin (27 ms): journal: no key for user_identity from oidc sign-in
+FAIL  deeplink (7 ms): no notification with a link was issued on the target
+FAIL  downloads (0 ms): no --downloads given
+  ✖ a step with no data to prove never passes (deeplink with an empty inbox, downloads without a list) (35.13254ms)
+  ✔ a redirect URI the drill IdP has not registered is refused (2.502309ms)
+✖ T-B10 (supporting, NOT production semantics) the same journey with NODE_ENV=development, AUTH_MODE=oidc (6305.751846ms)
+▶ T-B15 allowance.mjs: mth-recheck-allowance/1 from a fixture journal
+  ✔ writes a valid allowance: exact keys merged, never-operational tables only in tables, reasons for each operational (7.892484ms)
+  ✔ app_user is listed only when the measurement says a sign-in changes it (0.345502ms)
+  ✔ an audit_event entry, an unknown identity or a bad key is refused (exit 1 via the CLI) (48.273499ms)
+  ✖ BE-R1's parseAllowance (packages/db) accepts the file (0.297458ms)
+✖ T-B15 allowance.mjs: mth-recheck-allowance/1 from a fixture journal (57.087957ms)
+▶ T-B16 job-check.mjs on a fixture database
+  ✔ a new job_run row passes (counted), and the pg-boss table is measured (754.436803ms)
+  ✔ a changed enabled schedule fails (745.422532ms)
+  ✔ a removed job_run row fails (619.09488ms)
+  ✔ a changed approval row fails (672.817257ms)
+  ✔ a missing pg-boss table reports BLOCKED (exit 2), never PASS (133.512103ms)
+✔ T-B16 job-check.mjs on a fixture database (3066.4901ms)
+ℹ tests 33
+ℹ suites 7
+ℹ pass 27
+ℹ fail 6
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 18204.454338
+
+✖ failing tests:
+
+test at deploy/scripts/tests/transfer-drill.test.mjs:447:5
+✖ signs in through the drill IdP (authMode oidc), the source-origin write is 403, the unbound user is refused (134.957721ms)
+  AssertionError [ERR_ASSERTION]: [{"step":"signin","result":"FAIL","ms":97,"detail":"journal: no key for user_identity from oidc sign-in"},{"step":"csrf","result":"PASS","ms":14,"detail":"Origin http://localhost:25301 -> 403 csrf"},{"step":"unbound","result":"PASS","ms":22,"detail":"drill-unbound refused: identity_unbound; /me 401"}]
+  + actual - expected
+  
+    [
+      [
+        'signin',
+  +     'FAIL'
+  -     'PASS'
+      ],
+      [
+        'csrf',
+        'PASS'
+      ],
+  
+      at TestContext.<anonymous> (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:456:14)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Promise.all (index 0)
+      at async Suite.run (node:internal/test_runner/test:1905:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ [ 'signin', 'FAIL' ], [ 'csrf', 'PASS' ], [ 'unbound', 'PASS' ] ],
+    expected: [ [ 'signin', 'PASS' ], [ 'csrf', 'PASS' ], [ 'unbound', 'PASS' ] ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at deploy/scripts/tests/transfer-drill.test.mjs:490:5
+✖ a step with no data to prove never passes (deeplink with an empty inbox, downloads without a list) (43.423445ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+  -   'PASS',
+      'FAIL',
+      'FAIL',
+  +   'FAIL'
+    ]
+  
+      at TestContext.<anonymous> (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:493:14)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'FAIL', 'FAIL', 'FAIL' ],
+    expected: [ 'PASS', 'FAIL', 'FAIL' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at deploy/scripts/tests/transfer-drill.test.mjs:501:7
+✖ T-B16 (measurement): whether a sign-in changes app_user, recorded for allowance.mjs (101.155286ms)
+  AssertionError [ERR_ASSERTION]: [{"step":"signin","result":"FAIL","ms":26,"detail":"journal: no key for user_identity from oidc sign-in"}]
+  
+  'FAIL' !== 'PASS'
+  
+      at TestContext.<anonymous> (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:513:16)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'FAIL',
+    expected: 'PASS',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at deploy/scripts/tests/transfer-drill.test.mjs:447:5
+✖ signs in through the drill IdP (authMode oidc), the source-origin write is 403, the unbound user is refused (106.263016ms)
+  AssertionError [ERR_ASSERTION]: [{"step":"signin","result":"FAIL","ms":77,"detail":"journal: no key for user_identity from oidc sign-in"},{"step":"csrf","result":"PASS","ms":9,"detail":"Origin http://localhost:25301 -> 403 csrf"},{"step":"unbound","result":"PASS","ms":19,"detail":"drill-unbound refused: identity_unbound; /me 401"}]
+  + actual - expected
+  
+    [
+      [
+        'signin',
+  +     'FAIL'
+  -     'PASS'
+      ],
+      [
+        'csrf',
+        'PASS'
+      ],
+  
+      at TestContext.<anonymous> (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:456:14)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Promise.all (index 0)
+      at async Suite.run (node:internal/test_runner/test:1905:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ [ 'signin', 'FAIL' ], [ 'csrf', 'PASS' ], [ 'unbound', 'PASS' ] ],
+    expected: [ [ 'signin', 'PASS' ], [ 'csrf', 'PASS' ], [ 'unbound', 'PASS' ] ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at deploy/scripts/tests/transfer-drill.test.mjs:490:5
+✖ a step with no data to prove never passes (deeplink with an empty inbox, downloads without a list) (35.13254ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+  -   'PASS',
+      'FAIL',
+      'FAIL',
+  +   'FAIL'
+    ]
+  
+      at TestContext.<anonymous> (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:493:14)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'FAIL', 'FAIL', 'FAIL' ],
+    expected: [ 'PASS', 'FAIL', 'FAIL' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at deploy/scripts/tests/transfer-drill.test.mjs:616:3
+✖ BE-R1's parseAllowance (packages/db) accepts the file (0.297458ms)
+  Error: BLOCKED: parseAllowance is not exported by packages/db/src/transfer/recheck.ts (T-DG7-BE-R1 gap 2); the file cannot be validated by it
+      at TestContext.<anonymous> (file:///home/user/My-owns/deploy/scripts/tests/transfer-drill.test.mjs:619:13)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7)

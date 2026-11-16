@@ -1,0 +1,41 @@
+port-policy: PostgreSQL listening on port 24351 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/My-owns
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwf7ixyf_3c729a2e (server_encoding UTF8); applied 134 migrations to a fresh database
+ ❯ |integration| packages/db/test/integration/cli-stdout-drain.test.ts (1 test | 1 failed) 10037ms
+   × T-R23: mth-db drains a piped stdout before it exits (DO-D3 Q1) > table-digest --rows piped through a slow reader equals the file output, byte for byte, above 256 KiB 1153ms
+     → expected 146176 to be 376079 // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| packages/db/test/integration/cli-stdout-drain.test.ts > T-R23: mth-db drains a piped stdout before it exits (DO-D3 Q1) > table-digest --rows piped through a slow reader equals the file output, byte for byte, above 256 KiB
+AssertionError: expected 146176 to be 376079 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 376079[39m
+[31m+ 146176[39m
+
+ ❯ packages/db/test/integration/cli-stdout-drain.test.ts:109:30
+    107|     expect(piped.code).toBe(0);
+    108|     expect(piped.ms).toBeLessThan(30_000);
+    109|     expect(pipeBytes.length).toBe(fileBytes.length);
+       |                              ^
+    110|     expect(sha(pipeBytes)).toBe(sha(fileBytes));
+    111|     expect(pipeBytes.toString("utf8").endsWith("\n")).toBe(true);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  16:44:38
+   Duration  16.03s (transform 811ms, setup 0ms, collect 1.51s, tests 10.04s, environment 0ms, prepare 52ms)
+
+EXIT=1

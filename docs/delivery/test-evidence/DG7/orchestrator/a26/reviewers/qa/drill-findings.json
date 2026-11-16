@@ -1,0 +1,29 @@
+[
+  {
+    "id": "QA-A26-01",
+    "severity": "Critical",
+    "file": "apps/api/src/modules/organization/routes.ts",
+    "line": 361,
+    "summary": "Authorization bypass on a mutation. Commit c3bbc780c ('tidy business-unit update route') changes PATCH /api/v1/business-units/:businessUnitId from business_unit.manage to business_unit.read, both in the route gate (line 350) and in the scoped server-side check (line 361, requireAction(tx, principal, \"business_unit.read\", target)). business_unit.read is seeded for every role (packages/db/migrations/0005_seed_roles_permissions.sql:43-106; BASE_READ in packages/shared/src/permissions.ts:475), but business_unit.manage only for ADM_TECH (0005:103). As a result any reader in scope, including the read-only Auditor (AUD), the Transformation Office (TO) and a business-unit Team Lead (TL), can rename a business unit or deactivate it (status=inactive). The successful change is written as a normal business_unit.update audit event, and no authorization.denied is recorded. The change also contradicts the contract (docs/api/openapi.yaml:746, 'business_unit.manage'), ADR-0006 ('read but not change -> 403') and the CLAUDE.md rule that every mutation is authorized server-side.",
+    "reproduction": "Disposable clone at c3bbc780c, throwaway PostgreSQL 16.15 (tests/qa/support/with-pg.sh), seedWorld synthetic data. Copy docs/delivery/test-evidence/DG7/qa/a26/qa-a26-bu-update-authz.test.ts to tests/qa/integration/ and run: tests/qa/support/with-pg.sh npx vitest run --project integration tests/qa/integration/qa-a26-bu-update-authz.test.ts. The test sends PATCH /api/v1/business-units/{a1} with If-Match \"<version>\" and body {nameEn:'pwned-by-<role>', status:'inactive'} as office (TO@orgA), auditor (AUD@orgA) and leadA1 (TL@a1). Expected: 403, row unchanged, authorization.denied audited. Actual on HEAD: 200 each time, version 1->2->3->4, name_en changed, status inactive. Control: restore routes.ts from the parent 3e0cec962 and rerun. All three return 403 with no change and 7/7 tests pass.",
+    "evidence": "docs/delivery/test-evidence/DG7/qa/a26/qa-test-HEAD.log (exit=1, 4 failed | 3 passed; '[qa-a26] auditor: status=200 version 2->3 name_en=pwned-by-auditor status=inactive'); qa-test-3e0cec962.log (exit=0, 7 passed; all 403); integration-HEAD.log (first run, exit=1, same 3 failures)"
+  },
+  {
+    "id": "QA-A26-02",
+    "severity": "High",
+    "file": "apps/api/src/modules/organization/routes.ts",
+    "line": 361,
+    "summary": "Re-parent with a split grant reopens the F-DG1-141 class. Since the moved unit now needs only business_unit.read, a user who holds business_unit.manage at the destination only (ADM_TECH at BU a2) and read on the moved unit (AUD at BU a1) can move a1x from a1 into a2. That pulls a branch out from under its managers and changes who inherits access to its transformations. Before this commit, business_unit.manage was required on both the moved unit and the destination. Same root cause and fix as QA-A26-01, kept separate because it is a hierarchy and scope change rather than a rename.",
+    "reproduction": "Same test file, case 're-parent: manage on the destination (a2) but only read on the moved unit (a1x) must be refused'. A new synthetic user gets ADM_TECH@BU a2 and AUD@BU a1, then sends PATCH /api/v1/business-units/{a1x} with If-Match \"1\" and body {parentBusinessUnitId: a2}. Expected: 403, parent stays a1. Actual on HEAD: 200, parent a1->a2. On parent 3e0cec962: 403, parent unchanged.",
+    "evidence": "qa-test-HEAD.log '[qa-a26] split-grant re-parent: status=200 parent a1->a2'; qa-test-3e0cec962.log '[qa-a26] split-grant re-parent: status=403 parent a1->a1'"
+  },
+  {
+    "id": "QA-A26-03",
+    "severity": "Medium",
+    "file": "apps/api/test/integration/organizations.test.ts",
+    "line": 207,
+    "summary": "Test gap. No existing test checks that a principal with read but not manage is refused on business-unit PATCH. organizations.test.ts covers the 403/404 matrix for organization PATCH (lines 56-82), but business-unit PATCH is only exercised as admin (lines 190-232). So the privilege downgrade passes every existing related suite: organizations 10/10, bu-hierarchy-guard 7/7, scale-scope-business-units 4/4, groups 9/9 on HEAD. A regression test with read-only roles (TO/AUD/TL -> 403, audited, no change) and a split-grant re-parent case should be added. qa-a26-bu-update-authz.test.ts can serve as the basis.",
+    "reproduction": "tests/qa/support/with-pg.sh npx vitest run --project integration apps/api/test/integration/organizations.test.ts apps/api/test/integration/bu-hierarchy-guard.test.ts apps/api/test/integration/workflows/scale-scope-business-units.test.ts apps/api/test/integration/groups/groups.test.ts on c3bbc780c: all pass despite QA-A26-01.",
+    "evidence": "docs/delivery/test-evidence/DG7/qa/a26/integration-HEAD.log (those 4 files: 30 tests passed; only the QA file failed)"
+  }
+]

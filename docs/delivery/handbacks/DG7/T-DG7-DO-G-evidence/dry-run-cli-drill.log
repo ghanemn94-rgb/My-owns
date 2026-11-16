@@ -1,0 +1,46 @@
+port-policy: PostgreSQL listening on port 24351 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+applied 122 migrations (DG6 level, last 0130_p6_seeded_text_business_terms.sql) in 2.9 s
+pg_dump -Fc: 3285935 bytes, sha256 0614c3f6c66738afd3cb4f6c2b8eb86dfaf857e4655738589b16012f94b9ac87, .426264651 s
+pg_restore (governance_party data first) exit 0 in 3.628008172 s
+restored copy: 122 applied, last 0130_p6_seeded_text_business_terms.sql
+--- 1. without the confirmation flag
+source dg6copy: unmarked (treated as production), level 0130_p6_seeded_text_business_terms.sql (122 applied)
+mth-db migrate --dry-run: refused: this database is marked production; run it on a restored copy and pass --i-confirm-this-is-a-restored-copy
+exit 2
+--- 2. with the flag and a report
+mth-db migrate --dry-run: created throw-away database dg6copy_dryrun_20261113t023531 from dg6copy
+mth-db migrate --dry-run: applying 0133_p7_transfer_migration_manifest.sql
+mth-db migrate --dry-run: applying 0134_p7_config_bundles.sql
+mth-db migrate --dry-run: applying 0135_p7_transfer_permissions.sql
+mth-db migrate --dry-run: applying 0143_p7_retention_classes.sql
+mth-db migrate --dry-run: applying 0144_p7_retention_runs.sql
+mth-db migrate --dry-run: applying 0145_p7_backup_sets.sql
+mth-db migrate --dry-run: applying 0146_p7_retention_backup_permissions.sql
+mth-db migrate --dry-run: applying 0147_p7_transfer_export_job.sql
+mth-db migrate --dry-run: applying 0148_p7_retention_job.sql
+mth-db migrate --dry-run: dropped throw-away database dg6copy_dryrun_20261113t023531
+source dg6copy: unmarked (treated as production), level 0130_p6_seeded_text_business_terms.sql (122 applied)
+  applied       0133_p7_transfer_migration_manifest.sql  class additive  0.043 s
+  applied       0134_p7_config_bundles.sql  class additive  0.023 s
+  applied       0135_p7_transfer_permissions.sql  class additive  0.003 s
+  applied       0143_p7_retention_classes.sql  class data_rewrite  0.066 s
+  applied       0144_p7_retention_runs.sql  class additive  0.021 s
+  applied       0145_p7_backup_sets.sql  class additive  0.007 s
+  applied       0146_p7_retention_backup_permissions.sql  class additive  0.002 s
+  applied       0147_p7_transfer_export_job.sql  class data_rewrite  0.008 s
+  applied       0148_p7_retention_job.sql  class data_rewrite  0.017 s
+catalogue diff: tables +19 -0 ~0, columns +222 -0 ~0, constraints +233 -0 ~0, indexes +41 -0 ~0, triggers +57 -0 ~0, functions +14 -0 ~0, grants +80 -0 ~0, migrations +9 -0 ~0
+row counts changed in 26 table(s)
+throw-away database dg6copy_dryrun_20261113t023531: dropped
+mth-db migrate --dry-run: report written to /home/user/My-owns/docs/delivery/handbacks/DG7/T-DG7-DO-G-evidence/dry-run-report.json (sha256 cfa3636e71d0aff89c66e7b4d104299c6810aa6b8017f9e6e2ad5666670c56f0)
+mth-db migrate --dry-run: 9 pending migration(s) applied to a throw-away copy in 1.7 s; the source is unchanged
+exit 0 (wall 2.179622102 s)
+databases named *_dryrun_*: 0
+copy after dry run: 122 applied, last 0130_p6_seeded_text_business_terms.sql
+--- 3. the real migrate on the restored copy
+mth-db migrate: applying 0148_p7_retention_job.sql
+mth-db migrate: applied 9 migration(s)
+exit 0 (wall .747692576 s)
+mth-db status: up to date (131 applied)
+status exit 0

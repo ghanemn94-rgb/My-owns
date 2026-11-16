@@ -30,6 +30,8 @@ import { createDb, listMigrationFiles, type Db, type MigrationFile } from "@mth/
 import Fastify, { LogController, type FastifyBaseLogger, type FastifyInstance, type FastifyRequest } from "fastify";
 import type pg from "pg";
 import {
+  authorize,
+  organizationsWith,
   principalOf,
   registerAccessP2Routes,
   registerAccessP4Routes,
@@ -53,6 +55,7 @@ import {
 import {
   registerAdminRoutes,
   registerBrandingRoutes,
+  type BrandingTokenSource,
   registerEnvironmentRoutes,
   registerIdentityAdminRoutes,
   registerNotificationChannelRoutes,
@@ -78,6 +81,8 @@ import {
   SelectingEvidenceStore,
   storageTestTarget,
 } from "./modules/evidence/store.ts";
+// P7 (T-DG7-BE-B; ADR-0069 §2): the evidence-storage readiness probe, passed into the platform's /readyz.
+import { createEvidenceStorageProbe } from "./modules/evidence/readiness.ts";
 import { loadKpiP3GateFacts, registerKpiModule } from "./modules/kpi/index.ts";
 import { createConfigResolver, registerMethodologyModule } from "./modules/methodology/index.ts";
 import { registerOrganizationRoutes, registerCalendarRoutes } from "./modules/organization/index.ts";
@@ -120,7 +125,21 @@ import {
   setExternalChangeEvidenceGate,
 } from "./modules/portfolio/deliverable-confirmation.ts"; // BE-O (ADR-0055 §6)
 import { registerOperationsModule } from "./modules/operations/index.ts";
+// P7 (T-DG7-BE-B; ADR-0069 §2): the worker heartbeat reader, passed into the platform's /readyz (read only).
+import { HEARTBEAT_STALE_AFTER_SECONDS, readWorkerHeartbeat } from "./modules/operations/heartbeat.ts";
 import { registerSearchModule } from "./modules/search/index.ts";
+// P7 modules (p7-plan §2, §5.1; T-DG7-BE-A): each registers its route files (stubs until their owners fill them).
+import { registerReleaseModule } from "./modules/release/index.ts";
+import { registerRetentionModule } from "./modules/retention/index.ts";
+import {
+  createConfigBundleAdapterRegistry,
+  registerTransferModule,
+  setConfigBundleAdapters,
+} from "./modules/transfer/index.ts";
+import { METHODOLOGY_BUNDLE_ADAPTERS } from "./modules/methodology/config-bundle-adapter.ts";
+import { brandingBundleAdapter, uploadPolicyBundleAdapter } from "./modules/admin/config-bundle-adapters.ts";
+import { notificationPolicyBundleAdapter } from "./modules/tasks/config-bundle-adapter.ts";
+import { jobScheduleBundleAdapter } from "./modules/jobs/config-bundle-adapter.ts";
 // P4 modules (p4-plan §2 seam 19; T-DG4-BE-A): each registers its route files (stubs until their owners fill them).
 import { registerAdoptionModule, updateStakeholderGroup } from "./modules/adoption/index.ts";
 import { registerBenefitsModule, updateBenefitRecord } from "./modules/benefits/index.ts";
@@ -151,7 +170,9 @@ import {
   parseQueryString,
   problems,
   registerConnectionHygiene,
+  registerDeploymentRoutes,
   registerHealthRoutes,
+  subPathWarning,
   registerInFlightTracking,
   registerMediaTypeEnforcement,
   registerNotFoundHandler,
@@ -409,6 +430,10 @@ export async function buildServer(options: ServerOptions): Promise<{
     forceCloseConnections: "idle",
   });
   appLog = app.log;
+  // P7 (T-DG7-BE-B; ADR-0069 §1 item 4; p7-work-split §B.5): serving under a sub-path is not supported. A path in
+  // APP_BASE_URL is warned about once, at build; the API still starts and serves from the origin root.
+  const subPath = subPathWarning(config.appBaseUrl);
+  if (subPath !== null) app.log.warn(subPath);
   // T-DG6-BE-X3 (QA-D-1): the connection log, held by this app until it closes (holdApiConnectionLog above).
   const releaseConnectionLog = holdApiConnectionLog(config.nodeEnv);
   app.addHook("onClose", async () => releaseConnectionLog());
@@ -481,7 +506,33 @@ export async function buildServer(options: ServerOptions): Promise<{
 
   registerDeniedMutationAudit(app, db);
   registerSecretRefusalAudit(app, db); // F-DG6-181 (T-DG6-BE-Z2): audits a SecretRef binding refusal
-  registerHealthRoutes(app, pool, options.migrationFiles ?? listMigrationFiles());
+  // P7 (T-DG7-BE-B; ADR-0069 §2, §3): /readyz reports storage (gates) and worker (reported only); the probes come from
+  // the evidence and operations modules (the platform imports neither, ADR-0002). getDeploymentStatus shares the
+  // readiness evaluation and is guarded by operations.read, decided as getWorkerHeartbeat decides it.
+  const migrationFiles = options.migrationFiles ?? listMigrationFiles();
+  const probeEvidenceStorage = createEvidenceStorageProbe({
+    environment: config.evidenceStorage,
+    secrets: () => secrets,
+  });
+  const readiness = registerHealthRoutes(app, pool, migrationFiles, {
+    storage: probeEvidenceStorage,
+    worker: async (d) => {
+      const beat = await readWorkerHeartbeat(d);
+      return { status: beat.status, newestBeatAt: beat.newestBeatAt, staleAfterSeconds: beat.staleAfterSeconds };
+    },
+  });
+  registerDeploymentRoutes(app, pool, migrationFiles, {
+    readiness,
+    appBaseUrl: config.appBaseUrl,
+    workerStaleAfterSeconds: HEARTBEAT_STALE_AFTER_SECONDS,
+    requireAccess: async (request) => {
+      const principal = principalOf(request);
+      for (const organizationId of organizationsWith(principal, "operations.read"))
+        if ((await authorize(db, principal, "operations.read", { type: "organization", id: organizationId })).allowed)
+          return;
+      throw problems.forbidden();
+    },
+  });
   const deps = { db, config };
   registerIdentity(app, deps, {
     rateLimitSubjects,
@@ -496,22 +547,20 @@ export async function buildServer(options: ServerOptions): Promise<{
   registerAccessP2Routes(app, deps);
   // T-DG5-BE-R (ADR-0049 §8): the versioned branding routes; the token route merges the current version's colours and
   // re-derives the ADR-0009 §3 shades from the same single token source at read time.
-  registerBrandingRoutes(
-    app,
-    {
-      colorTokens,
-      tokensAreProvisional,
-      derived: tokenSource.derived,
-      deriveDarkerShade,
-      // T-DG6-BE-W (ADR-0061 §1): the runtime contrast rule and the SHA-256 of the tokens.json bytes read at start-up.
-      checkBrandingContrast: (primary, secondary) =>
-        checkBrandingContrast(primary, secondary).map((p) => ({ ...p, pointer: contrastPointer(p) })),
-      tokenSourceSha256: createHash("sha256")
-        .update(readFileSync(createRequire(import.meta.url).resolve("@mth/design-tokens/tokens.json")))
-        .digest("hex"),
-    },
-    deps,
-  );
+  // T-DG7-BE-F: the same token source also binds the configuration-bundle branding adapter (registered below).
+  const brandingTokenSource: BrandingTokenSource = {
+    colorTokens,
+    tokensAreProvisional,
+    derived: tokenSource.derived,
+    deriveDarkerShade,
+    // T-DG6-BE-W (ADR-0061 §1): the runtime contrast rule and the SHA-256 of the tokens.json bytes read at start-up.
+    checkBrandingContrast: (primary, secondary) =>
+      checkBrandingContrast(primary, secondary).map((p) => ({ ...p, pointer: contrastPointer(p) })),
+    tokenSourceSha256: createHash("sha256")
+      .update(readFileSync(createRequire(import.meta.url).resolve("@mth/design-tokens/tokens.json")))
+      .digest("hex"),
+  };
+  registerBrandingRoutes(app, brandingTokenSource, deps);
   // P4 (T-DG4-BE-A; ADR-0025, ADR-0026): business calendars (organization), job schedules (jobs) and the BE-B access
   // route files (groups, role mappings, delegations). The workspace header is served by reporting (ADR-0037 §11).
   registerCalendarRoutes(app, deps);
@@ -704,6 +753,25 @@ export async function buildServer(options: ServerOptions): Promise<{
     onConfirmed: async (tx, ctx, confirmed) => void (await recordConnectorConfirmation(tx, ctx, confirmed)),
   });
   setExternalChangeEvidenceGate(requireEvidenceRead);
+  // P7 wiring points (p7-plan §2, §5.1, §5.3; p7-work-split §C.7, §D.1, §E.7; T-DG7-BE-A). No P7 behaviour yet.
+  //  - ConfigBundleKindAdapter registry (ADR-0065 §6; BE-F defines the port and registry in
+  //    transfer/config-bundle/registry.ts): BE-F puts the registry line directly below this block and each kind's owner
+  //    adds one registration line below it (methodology/config-bundle-adapter.ts first, then automation, admin, tasks
+  //    and jobs), so transfer imports no domain module (the AutomationActionRegistry pattern above).
+  //  - RetentionClassRegistry (p7-plan §2; ADR-0067 §1): which tables belong to which retention class is data, the 0143
+  //    `retention_table_class` rows generated from the catalogue and pinned by catalogue.test.ts, so retention imports
+  //    no owning module and no domain registers anything here today. If BE-G needs a per-module hook (for example an
+  //    owning module's reader of the archive set), its registry line goes directly below this block, with one
+  //    registration line per owning module (p7-plan §5.3: BE-G's named wiring lines), and nothing else in this file.
+  //  - EvidenceStore for transfer and retention (the port; p7-work-split §C.7, §E.7): the driver-selecting
+  //    `evidenceStore` above is the one store; BE-C/BE-G pass it to their module on its registration line below.
+  const configBundleAdapters = createConfigBundleAdapterRegistry(); // T-DG7-BE-F (ADR-0065 §6)
+  setConfigBundleAdapters(configBundleAdapters);
+  for (const adapter of METHODOLOGY_BUNDLE_ADAPTERS) configBundleAdapters.register(adapter); // six Studio kinds, review policies
+  configBundleAdapters.register(notificationPolicyBundleAdapter); // tasks
+  configBundleAdapters.register(jobScheduleBundleAdapter); // jobs (always applied disabled)
+  configBundleAdapters.register(brandingBundleAdapter(brandingTokenSource)); // admin (no draft stage)
+  configBundleAdapters.register(uploadPolicyBundleAdapter); // admin
   const modules: ModuleRegistration[] = [
     registerWorkflowsModule(app, deps, { gateFacts, t08ScheduleFlags }),
     // T-DG4-KBE-C (D-095): kpi requests kpi_version_activation approvals through workflows' approval service, passed
@@ -737,6 +805,10 @@ export async function buildServer(options: ServerOptions): Promise<{
     registerSearchModule(app, deps),
     registerAssistantModule(app, deps),
     registerOperationsModule(app, deps),
+    // P7 modules (p7-plan §2): each reports "scaffold" until a route exists.
+    registerTransferModule(app, deps), // BE-C export, BE-D import, BE-F config-bundle
+    registerRetentionModule(app, deps), // BE-G classes, runs, backups
+    registerReleaseModule(app, deps), // BE-H requirements, about
   ];
 
   if (webRoot) {

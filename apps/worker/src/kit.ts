@@ -1236,7 +1236,7 @@ const declare = (
     labelAr,
   });
 
-/** One declaration per queue of apps/worker/src/queues/**, by queue name (40 at T-DG6-BE-J's revision; 42 with T-DG6-BE-P's; 47 with T-DG6-BE-K2's (two connector jobs of T-DG6-BE-L2 included); 49 with T-DG6-BE-I2's). */
+/** One declaration per queue of apps/worker/src/queues/**, by queue name (40 at T-DG6-BE-J's revision; 42 with T-DG6-BE-P's; 47 with T-DG6-BE-K2's (two connector jobs of T-DG6-BE-L2 included); 49 with T-DG6-BE-I2's; 50 with T-DG7-BE-C's; 51 with T-DG7-BE-G's). */
 export const JOB_SERVICE_IDENTITIES: readonly JobIdentityDeclaration[] = Object.freeze([
   declare(
     "adoption.indicator_evaluated",
@@ -1395,12 +1395,19 @@ export const JOB_SERVICE_IDENTITIES: readonly JobIdentityDeclaration[] = Object.
   ),
   declare("reports.export", [TR], "Job: report export", "مهمة: تصدير التقارير"),
   declare("reports.owner_update_tasks", [TR], "Job: owner update tasks", "مهمة: مهام تحديث المالكين"),
+  // T-DG7-BE-G (ADR-0067 §4; 0148): the retention archival job reads the retention classes only; it archives and
+  // purges through the run it was given, the marker trigger and retention_purge_record(), never through a permission.
+  declare("retention.archive", ["retention.read"], "Job: retention archival", "مهمة: أرشفة الاحتفاظ"),
   // T-DG6-BE-P (ADR-0057 §2; 0115): the search index jobs. `none` here; their one declared exception (they read the
   // ADR-0057 §1 indexed columns of sensitive records, never a value column) is enforced in search/documents.ts.
   declare("search.index_feed", [TR], "Job: search index feed", "مهمة: تحديث فهرس البحث"),
   declare("search.reindex", [TR], "Job: search reindex", "مهمة: إعادة بناء فهرس البحث"),
   declare("sustainment.control_check_scan", [TR], "Job: control check scan", "مهمة: فحص فحوص الضوابط"),
   declare("sustainment.review_scan", [TR], "Job: performance review scan", "مهمة: فحص مراجعات الأداء"),
+  // T-DG7-BE-C (ADR-0064 §7; 0147; D-245 O4): the migration export declares NO permission code. It reads every
+  // exported table as the database role, like a backup; ADR-0053 scoping does not limit it, and nothing pretends it
+  // does. migration.export (ADM_TECH) starts it, every transition is audited, and no API operation returns its output.
+  declare("transfer.export", [], "Job: migration export", "مهمة: تصدير الترحيل"),
   declare(
     "transformation.created",
     [TR, "access.read", "methodology.read"],

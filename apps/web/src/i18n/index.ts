@@ -147,6 +147,15 @@ import enExternalChange from "./en/externalChange.json" with { type: "json" };
 // report. Its Arabic is provisional (./provisional-ar-p6.ts, source "fe-f").
 import arExplanations from "./ar/explanations.json" with { type: "json" };
 import enExplanations from "./en/explanations.json" with { type: "json" };
+// P7 (DG7) Administration screens of slices C and D (T-DG7-FE-B; p7-work-split §C.8, §D.2).
+import arTransfer from "./ar/transfer.json" with { type: "json" };
+import enTransfer from "./en/transfer.json" with { type: "json" };
+// P7 (DG7) Administration > Requirement register and About this release (T-DG7-FE-C; p7-work-split §I.2, §I.3).
+import arRelease from "./ar/release.json" with { type: "json" };
+import enRelease from "./en/release.json" with { type: "json" };
+// P7 (DG7) Administration > Retention (T-DG7-FE-C2; p7-work-split §E.6).
+import arRetention from "./ar/retention.json" with { type: "json" };
+import enRetention from "./en/retention.json" with { type: "json" };
 
 /** Namespace files per locale; the key-parity test walks exactly these. */
 export const catalogues = {
@@ -207,6 +216,9 @@ export const catalogues = {
     imports: arImports,
     externalChange: arExternalChange,
     explanations: arExplanations,
+    transfer: arTransfer,
+    release: arRelease,
+    retention: arRetention,
   },
   en: {
     common: enCommon,
@@ -265,6 +277,9 @@ export const catalogues = {
     imports: enImports,
     externalChange: enExternalChange,
     explanations: enExplanations,
+    transfer: enTransfer,
+    release: enRelease,
+    retention: enRetention,
   },
 } as const;
 

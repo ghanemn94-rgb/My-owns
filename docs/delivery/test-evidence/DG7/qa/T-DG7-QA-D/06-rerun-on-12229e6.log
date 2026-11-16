@@ -1,0 +1,80 @@
+$ date -u; git rev-parse HEAD; git status --short -- . ":!docs/delivery/runs" ":!docs/delivery/test-evidence/DG7/qa"; node tools/gates/candidate.mjs --stage DG7
+Sat Nov 14 14:41:07 UTC 2026
+12229e6b69c11105bde0d1693093c608254e1fef
+?? tests/qa/integration/a24-register-rules.test.ts
+{"stage":"DG7","source":"working-tree","candidate_id":"sha256:c3fd5d9c4bdd5c7fb482902fdf81e9445d41169e667f2dcdbae3344e3f7ce9ef","files":3139}
+exit=0
+$ node --test tools/gates/tests/validator.test.mjs
+✔ a fully evidenced DG0 gate passes in current and historical mode (1048.118119ms)
+✔ A24: a missing specialist reviewer fails the gate (125.362983ms)
+✔ A23: a reviewer who authored the scope, or who is an owner, is rejected (946.451128ms)
+✔ A23: reviewers sharing one invocation are not independent (324.064446ms)
+✔ A24 / F-DG0-102: fabricated or incomplete provenance is rejected (1102.493881ms)
+✔ F-DG0-201: a review bound to an unrelated run of the same role is rejected (586.564758ms)
+✔ A24: failed or BLOCKED checks and non-PASS verdicts fail the gate (902.406908ms)
+✔ A24: unresolved blocking findings fail the gate; owners cannot verify their own fix (531.223718ms)
+✔ F-DG0-101: findings cannot escape by relabelling, dropping or downgrading (1499.797966ms)
+✔ A24 / F-DG0-106 / F-DG0-202: incomplete requirements, placeholder evidence and coverage gaps fail (3141.049103ms)
+✔ A25: a source change invalidates the approval; review metadata does not (960.929578ms)
+✔ A25 / F-DG0-103: symlinks are part of the candidate identity; submodules are refused (92.787512ms)
+✔ F-DG0-104: the manifest spec must equal the stage spec and the approved policy (583.646993ms)
+✔ A25: a tampered manifest or a stale review candidate is detected (608.409312ms)
+✔ F-DG0-102: approval records are immutable after approval (historical mode) (1846.791776ms)
+✔ the gate record must be written by the audited release-auditor invocation (309.071838ms)
+✔ A24: the pipeline cannot advance past a gate that is not APPROVED (975.166241ms)
+✔ illegal stage transitions are rejected (93.18605ms)
+✔ an APPROVED gate with a BLOCKED decision or blocking conditions fails (287.949671ms)
+✔ F-DG0-107: the CSV parser rejects text after a closing quote and ragged rows (0.68983ms)
+✔ F-DG0-110 / F-DG0-204: closure comes from the reviewer's own verification sidecar and bound run (1696.526217ms)
+✔ F-DG0-101 residual: deleting an earlier review round is detected (912.609308ms)
+✔ F-DG0-205: evidence that is a symlink to a file outside the repository is rejected (299.48231ms)
+✔ F-DG0-112 / F-DG0-206: file mode and entry type are part of the candidate identity (63.563074ms)
+✔ F-DG0-115: reviewer artefacts cannot be edited after the run, committed or not (1280.261181ms)
+✔ F-DG0-208: round metadata must match the committed manifest of its candidate (328.47868ms)
+✔ F-DG0-102 residual: a verifying record must be the round's listed, schema-valid record (563.441426ms)
+✔ F-DG0-117: observations are accepted only through specialist and auditor sidecars (529.204789ms)
+✔ F-DG0-116: with core.fileMode=false tracked modes come from the index (52.087961ms)
+✔ F-DG0-115 residual: an evil merge cannot rewrite committed evidence (369.045783ms)
+✔ F-DG0-118: skip-worktree / assume-unchanged cannot hide edited evidence (337.327293ms)
+✔ F-DG0-119: only content replayed from the run's own successful Write/Edit calls is bound (320.881493ms)
+✔ F-DG0-121 / F-DG0-211: the gate file must be what the auditor run wrote (296.801674ms)
+✔ F-DG0-212: a round manifest must describe its source commit; runs start from a commit containing it (637.300563ms)
+✔ F-DG0-115 residual: a back-dated side branch merged in cannot replace committed evidence (359.228951ms)
+✔ F-DG0-115 defence in depth: meta.tool_authored cannot vouch for content the transcript never wrote (333.310278ms)
+✔ D-022: only a CLI-replayed prompt binds a transcript to its run; the same text in a tool result does not (294.938369ms)
+✔ F-DG0-132: an empty or newline-only transcript fails every transcript check (647.270239ms)
+✔ F-DG0-133: the assignment named in the replayed prompt must be the one recorded in meta (311.98943ms)
+✔ F-DG0-223: a genuine prompt binds when the checkout path contains spaces (291.508403ms)
+✔ F-DG0-224: the validator loads its schemas from a path with spaces and non-ASCII characters (61.399267ms)
+✔ D-024: a run that changed configuration outside the candidate is rejected (315.364907ms)
+✔ D-025: gate records must come from Bash-sandboxed runs (590.530488ms)
+✔ F-DG0-145/D-030: gate records must come from runs whose whole agent process was confined to the role's own areas (4087.351276ms)
+✔ F-DG0-230: the sandbox deny list must protect the run's own repository, not some other directory (367.22851ms)
+✔ F-DG0-233: meta.cwd is bound to the transcript (the CLI init line and the replayed prompt) (963.879369ms)
+✔ F-DG0-146/F-DG0-236: concurrent sandbox mount stubs do not perturb the working-tree candidate; anything else still does (174.606853ms)
+✔ D-035: findManifest tolerates a pruned (missing) source_commit but still enforces entries self-consistency (164.322207ms)
+✔ D-036: a gate whose source_commit does not exist is rejected in current mode too (F-DG0-240/155) (246.282303ms)
+✔ D-037 / F-DG0-241: a gate source_commit that exists but is OFF this branch is rejected (D-036 only checked resolvability) (626.965748ms)
+✔ D-039/D-040 / F-DG0-164/166/246/249: checkClosure binds the fix to the verifying run's head, not forgeable round metadata (771.566268ms)
+✔ D-044 / F-DG0-250: a fix_revision that is an annotated tag object (not a commit) is rejected (550.813948ms)
+✔ D-044 / F-DG0-251: a head_commit_at_start that is an annotated tag object (not a commit) is rejected (580.50789ms)
+✔ D-045 / F-DG0-171 / F-DG0-251: a review round's source_commit that is an annotated tag object (not a commit) is rejected (748.933643ms)
+✔ D-042 / F-DG0-169: a closure verified in a round whose source_commit is absent is rejected (anchor 1 is unconditional) (564.776469ms)
+✔ D-039 / F-DG0-164: checkInvocation requires a present head_commit_at_start that contains the manifest -- no absent-round escape (921.619809ms)
+✔ D-039 / F-DG0-165: a later-round findings sidecar cannot reclassify a finding's immutable fields (331.692555ms)
+✔ D-039 / F-DG0-248: validateGate refuses a shallow clone (727.699964ms)
+✔ D-038 / F-DG0-158: every finding a sidecar raises must be in findings.json; the record-less drop exemption is withdrawn (692.319513ms)
+✔ D-038 / F-DG0-163: the schema subset validator rejects extra keys named after Object.prototype members (0.593328ms)
+ℹ tests 60
+ℹ suites 0
+ℹ pass 60
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 40730.266162
+exit=0
+$ node tools/gates/validate.mjs --historical --stage DG6
+PASS gate DG6 (historical)
+exit=0
+Sat Nov 14 14:44:12 UTC 2026

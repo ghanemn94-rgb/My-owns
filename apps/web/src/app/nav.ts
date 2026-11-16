@@ -20,6 +20,10 @@
 // registered up front (P6_SUBPAGES here, P6_PLANNED_ROUTES in app/router.tsx), each with an honest "not available yet"
 // placeholder until FE-B replaces the route element. Which areas a caller sees is still decided by the server
 // (GET /me/navigation, ADR-0049 §9); `requiresAny` is a UI hint for the sub-entries only.
+// Since P7 (T-DG7-FE-A; p7-plan §5.1 row FE-A, §5.3; p7-work-split §C.7, §D.4, §E.6, §I.1): the Administration
+// screens of slices C, D, E and I (Data export, Migration status, Configuration transfer, Retention, Requirement
+// register, About this release) are sub-entries registered up front (P7_SUBPAGES here, P7_PLANNED_ROUTES in
+// app/router.tsx), each with an honest "not available yet" placeholder until FE-B or FE-C replaces the route element.
 import type { Permission } from "@mth/shared";
 import { ADMIN_PERMISSIONS } from "../auth/permissions.ts";
 
@@ -115,6 +119,22 @@ export const P6_ADMIN_READ_PERMISSIONS: readonly Permission[] = [
   "notification_channel.configure",
 ];
 
+/**
+ * The read permissions of the P7 Administration screens (0135, 0146; ADR-0064 §7, ADR-0065 §7, ADR-0067 §7; the
+ * register and About use the P6 `operations.read`, D-252 O1). A UI hint only (the server decides). At the seeded
+ * defaults ADM_TECH holds all of them; AUD reads Migration status, Retention and backup sets; ADM_ACCESS reads Migration
+ * status and Retention; ADM_METHOD transfers configuration; TO, KDS and TD read the register and About.
+ */
+export const P7_ADMIN_READ_PERMISSIONS: readonly Permission[] = [
+  "migration.export",
+  "migration_import.read",
+  "config_bundle.export",
+  "config_bundle.import",
+  "retention.read",
+  "backup.read",
+  "operations.read",
+];
+
 export const NAV_AREAS: readonly NavArea[] = [
   { id: "myWork", path: "/my-work", availability: "available" },
   // T-DG4-FE-G: the Executive Overview (the executive dashboard, ADR-0037 §8) is a working screen.
@@ -175,7 +195,14 @@ export const NAV_AREAS: readonly NavArea[] = [
     id: "admin",
     path: "/admin",
     availability: "available",
-    requiresAny: [...ADMIN_PERMISSIONS, "methodology.configure", "methodology.publish", ...P6_ADMIN_READ_PERMISSIONS],
+    requiresAny: [
+      ...ADMIN_PERMISSIONS,
+      "methodology.configure",
+      "methodology.publish",
+      ...P6_ADMIN_READ_PERMISSIONS,
+      // T-DG7-FE-A: the P7 read permissions not already listed (operations.read is a P6 one).
+      ...P7_ADMIN_READ_PERMISSIONS.filter((p) => !P6_ADMIN_READ_PERMISSIONS.includes(p)),
+    ],
   },
 ];
 
@@ -229,7 +256,9 @@ export interface NavSubPage {
     | "assistant"
     // T-DG6-FE-C: Administration > Integrations (ADR-0055) and Strategy and KPIs > Imports (ADR-0056; D-195 Q1).
     | "integrations"
-    | "imports";
+    | "imports"
+    // T-DG7-FE-A: the P7 Administration screens of FE-B and FE-C (P7_SUBPAGES), "not available yet" until built.
+    | P7SubPageId;
   /** T-DG4-FE-D: the workspace tab an area-entry sub-page opens (the route renders AreaEntryPage for it). */
   readonly workspaceTab?: AreaWorkspaceTab;
   readonly area: AreaId;
@@ -239,6 +268,8 @@ export interface NavSubPage {
   readonly p5Feature?: P5SubPageId;
   /** T-DG6-FE-A: a P6 screen registered up front; its route shows the "not available yet" placeholder of this feature. */
   readonly p6Feature?: P6SubPageId;
+  /** T-DG7-FE-A: a P7 screen registered up front; its route shows the "not available yet" placeholder of this feature. */
+  readonly p7Feature?: P7SubPageId;
 }
 
 /** The P5 navigation sub-entries (p5-plan §1.1, §5.1; D-144 item 1). Each id is also its placeholder's feature id. */
@@ -406,6 +437,78 @@ export const P6_SUBPAGES: readonly (NavSubPage & { readonly p6Feature: P6SubPage
   },
 ];
 
+/** The P7 navigation sub-entries (p7-work-split §C.7, §D.4, §E.6, §I.1). Each id is also its placeholder's feature id. */
+export type P7SubPageId =
+  | "dataExport"
+  | "migrationStatus"
+  | "configTransfer"
+  | "retention"
+  | "requirements"
+  | "releaseAbout";
+
+/**
+ * T-DG7-FE-A: the P7 Administration sub-entries, with the FE task that replaces each placeholder (p7-plan §5.1 rows
+ * FE-B and FE-C). `requiresAny` is a UI hint (the server decides and answers 403). Migration status covers the imports,
+ * their reconciliation reports and the identity rebind list, read-only: imports and rebinds are run by IT with the CLI
+ * tools (p7-work-split §C.11). Retention covers the classes, runs, archived records and the backup sets (§E.6). The
+ * register and About show engineering delivery states, never business approvals (§I.3).
+ */
+export const P7_SUBPAGES: readonly (NavSubPage & { readonly p7Feature: P7SubPageId; readonly owner: string })[] = [
+  // slice C (ADR-0064): Administration > Data export (migration.export)
+  {
+    id: "dataExport",
+    p7Feature: "dataExport",
+    owner: "FE-B",
+    area: "admin",
+    path: "/admin/migration/exports",
+    requiresAny: ["migration.export"],
+  },
+  // slice C (ADR-0064 §6-§8): Administration > Migration status (migration_import.read)
+  {
+    id: "migrationStatus",
+    p7Feature: "migrationStatus",
+    owner: "FE-B",
+    area: "admin",
+    path: "/admin/migration/imports",
+    requiresAny: ["migration_import.read"],
+  },
+  // slice D (ADR-0065): Administration > Configuration transfer
+  {
+    id: "configTransfer",
+    p7Feature: "configTransfer",
+    owner: "FE-B",
+    area: "admin",
+    path: "/admin/config-transfer",
+    requiresAny: ["config_bundle.export", "config_bundle.import"],
+  },
+  // slice E (ADR-0066, ADR-0067): Administration > Retention (with the backup sets)
+  {
+    id: "retention",
+    p7Feature: "retention",
+    owner: "FE-C",
+    area: "admin",
+    path: "/admin/retention",
+    requiresAny: ["retention.read", "backup.read"],
+  },
+  // slice I (ADR-0071; p7-work-split §I.1 "Requests to FE-A"): the register and About, visible with operations.read
+  {
+    id: "requirements",
+    p7Feature: "requirements",
+    owner: "FE-C",
+    area: "admin",
+    path: "/admin/requirements",
+    requiresAny: ["operations.read"],
+  },
+  {
+    id: "releaseAbout",
+    p7Feature: "releaseAbout",
+    owner: "FE-C",
+    area: "admin",
+    path: "/admin/about",
+    requiresAny: ["operations.read"],
+  },
+];
+
 export const NAV_SUBPAGES: readonly NavSubPage[] = [
   { id: "myWorkItems", area: "myWork", path: "/my-work" },
   { id: "approvals", area: "myWork", path: "/my-work/approvals" },
@@ -470,6 +573,8 @@ export const NAV_SUBPAGES: readonly NavSubPage[] = [
   // TO, AUD) and Strategy and KPIs > Imports (import.read: KDS, BO, TO, AUD). UI hints only: the server decides.
   { id: "integrations", area: "admin", path: "/admin/integrations", requiresAny: ["connector.read"] },
   { id: "imports", area: "strategy", path: "/strategy-kpis/imports", requiresAny: ["import.read"] },
+  // T-DG7-FE-A: the P7 Administration screens, appended after the P6 entries.
+  ...P7_SUBPAGES,
 ];
 
 /**

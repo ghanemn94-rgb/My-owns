@@ -75,18 +75,100 @@ IT's registry must hold these images (`deploy/images.lock.json` is the source of
 |---|---|---|
 | `node` | `24-bookworm-slim` | base of `mth-app` (build and runtime stages) |
 | `postgres` | `18` | database (Compose, CI) |
-| `quay.io/keycloak/keycloak` | `26.4` | **test** IdP only |
+| `quay.io/keycloak/keycloak` | `26.8.1` | **test** IdP only |
 | `mcr.microsoft.com/playwright` | `v1.56.1-noble` | CI e2e only (browsers baked in; `playwright install` is never run) |
 | `mth-app` | built | the application |
 
-Tags and support windows are **[UNVERIFIED]** until `node deploy/scripts/pin-images.mjs --resolve` records digests,
-which needs registry access. `--apply` rewrites the Dockerfile, Compose and CI references. `--check` (offline, in CI)
-fails while anything is unpinned. **As of this increment no digest is recorded**; see the T-DG1-DEVOPS handback.
+`node deploy/scripts/pin-images.mjs --resolve` records each digest and its `verifiedAt` time, and needs registry
+access. `--apply` rewrites the Dockerfile, Compose and CI references. `--check` (offline, in CI) fails while anything
+is unpinned. All four images above carry a recorded digest in `deploy/images.lock.json`; an image without one is
+**[UNVERIFIED]** and is never bundled (below).
 
 To use mirrored images:
 
 - base image: `deploy/scripts/build-image.sh --node-image <mirror>/node:24-bookworm-slim@sha256:…`;
 - Compose: edit the `image:` lines to point at the mirror (keep the digests), or re-tag the mirrored images locally.
+
+## Moving the images to a host without registry access (image bundle)
+
+When the target host cannot reach any registry, not even IT's mirror, the images travel as files
+(`deploy/scripts/image-bundle.sh`, ADR-0069 §6). The script never runs `docker pull`, `docker login` or `docker push`.
+
+1. **On a connected host** that already holds every image: the images of `deploy/images.lock.json` that a Compose file
+   runs, at their pinned `<ref>:<tag>@<digest>` (in this release `postgres` and `keycloak`, for example after
+   `docker compose -f deploy/compose/compose.yaml --profile test-idp pull`), and the application image built with
+   `deploy/scripts/build-image.sh`. The bundle holds these three images (ADR-0069 A1.3):
+
+   ```bash
+   deploy/scripts/image-bundle.sh save --out <bundle dir> [--app-image mth-app:local]
+   ```
+
+   Docker on this host must use the **containerd image store** (see step 3); on the classic store the save stops
+   (exit 3). For each pinned image the save first checks that the local image id **is** the lock digest (on the
+   containerd store the image id is the digest Compose pins; a different id stops the save, exit 1). It then tags the
+   image as `<ref>:<tag>` (for example `postgres:18`) on this connected host and saves it under that name: an archive
+   saved under a `<ref>:<tag>@<digest>` name loads by image id only (`Loaded image ID: sha256:…`), and then neither
+   name resolves on the target. If `<ref>:<tag>` already names a different image on this host, the save stops (exit 1)
+   rather than move that tag; remove or rename the tag and save again. The `image:` lines of Compose keep their
+   digests.
+
+   It writes `images.tar` (one `docker save` archive) and `images.json` (`mth-image-bundle/1`). For each image,
+   `images.json` records its name (the reference Compose uses), `savedAs` (the name in the archive), its lock digest,
+   its image id, its size and the tar's SHA-256. The lock images that no
+   Compose file runs are not saved. They are listed under `excluded` with the reason: the CI-only `playwright` image,
+   and `node-runtime`, whose layers already travel inside the application image. An image that is not present locally,
+   or a bundled lock entry without a digest, stops the save (exit 2). Pull or build it first.
+2. **Transfer** the bundle directory by IT's approved means. Compare the SHA-256 of `images.tar` with `images.json`
+   (`tar.sha256`) on arrival.
+3. **On the target host:**
+
+   ```bash
+   deploy/scripts/image-bundle.sh load --from <bundle dir>
+   ```
+
+   It checks the size and SHA-256 of `images.tar` against `images.json` **before** calling Docker. A changed tar exits 1
+   (`image-bundle: images.tar does not match images.json (sha256)`), and `docker load` is not run. It then checks that
+   Docker uses the **containerd image store** (`docker info` shows the driver-type `io.containerd.snapshotter.v1`). The
+   classic store does not restore the registry digest on load, so the digest-pinned names cannot resolve. On that store
+   the script stops before loading (exit 3). Enable the containerd image store and restart Docker. `load` and `verify`
+   never re-tag an image, and no command rewrites an `image:` line (ADR-0069 A1.2). It then loads the tar (Docker
+   prints `Loaded image: postgres:18`, and so on) and checks that every `<ref>:<tag>@<digest>` that Compose uses, and
+   every `savedAs` name, resolves to the image id in `images.json`. A name that does not resolve exits 1
+   (`image-bundle: <name> does not match images.json (present)`). `image-bundle.sh verify --from <bundle dir>` repeats both checks
+   without loading.
+4. **Start without pulling:**
+
+   ```bash
+   docker compose -f deploy/compose/compose.yaml up -d --pull never --wait
+   ```
+
+   `--pull never` makes Compose fail if any image is missing locally, so a start that reaches `healthy` used only the
+   loaded images.
+
+Exit codes: 0 PASS, 1 a mismatch, 2 a usage error or missing input, 3 `image-bundle: BLOCKED: docker daemon not
+reachable` or, for `save`, `load` and `verify`, `image-bundle: BLOCKED: the classic image store cannot resolve digest references
+after load (ADR-0069 A1.2); enable the containerd image store`.
+
+**What has been shown, and what has not.**
+
+- The script's manifest, checksum, image selection, image-store, save-name and refusal logic is tested with a stub
+  `docker` that models the containerd store's naming on load (T-B12, `deploy/scripts/tests/image-bundle.test.mjs`).
+  A stub is not a Docker engine: the save → remove → load → `up --pull never` sequence with the tag-named archive is
+  proven only by the orchestrator's host run.
+- That the containerd store keeps the digest after `load` and the classic store does not is the engine's documented
+  model. It has not been confirmed by a run here (ADR-0069 residual 8).
+- A real save, removal, load and `up --pull never` needs a Docker daemon. It is the orchestrator's host run (ADR-0069
+  §6–§7); that run is recorded under the DG7 orchestrator evidence when it has happened.
+- A load on a host that otherwise has registry access is **not** a physically air-gapped host (ADR-0069 residual 5).
+- A Compose start is a reproducible install and test configuration, not evidence of high-availability readiness.
+
+**Lifecycle e2e with no outbound network.** `deploy/scripts/offline-drill.sh --out <dir>` runs the A02 and A21 e2e
+specs inside a network namespace with no route off the host (`bwrap --unshare-net`, loopback only). It first proves
+that a TCP connection to `1.1.1.1:443` and a DNS lookup of `registry.npmjs.org` both fail. Every Node process of the
+run writes the product's connection log, and the drill fails on any connection outside loopback (ADR-0069 §5). It uses
+the Chromium already installed for Playwright and never downloads one (exit 3 without it). It needs no Docker daemon.
+It covers the Node processes, not the browser, the database server or the operating system: those are covered by the
+namespace itself. It is a connection log, not a packet capture.
 
 ## Building in a restricted network
 
@@ -113,6 +195,35 @@ deploy/scripts/build-image.sh \
 **Without Docker** (for example to prepare artefacts on a connected machine): `pnpm fetch` fills a pnpm store from the
 lockfile. Copy the store, then run `MTH_PNPM_STORE=<store> MTH_PNPM_OFFLINE=1 deploy/scripts/clean-start-local.sh`,
 which installs and builds with no network (measured in [clean-start.md](clean-start.md)).
+
+**From the release archive, with no network at all** (ADR-0062 §5). The release archive
+(`mth-transformation-hub-<version>.tar.gz`, built by `tools/release/build-archive.mjs`) holds the source, deployment
+files, documentation and synthetic demo data. The npm packages come from one of two sources inside company
+infrastructure. Their integrity is fixed by the lockfile's SHA-512 hashes either way:
+
+1. **IT's npm mirror:** `pnpm fetch --frozen-lockfile` against the mirror fills a store;
+2. **the store artefact:** on a connected preparation machine, run `pnpm fetch --frozen-lockfile --store-dir <dir>`,
+   then `node tools/release/build-archive.mjs --pack-store <dir> --out dist/release/`. That writes
+   `mth-transformation-hub-<version>-pnpm-store.tar.gz` and its `.sha256`. Copy both into the restricted network and
+   unpack the store there.
+
+The build host needs Node 24.x, pnpm 10.33.0, GNU tar and `unshare` (util-linux) or `bwrap` (bubblewrap), all
+installed by IT from its own mirror. Then:
+
+```bash
+tools/release/build-from-archive.sh mth-transformation-hub-<version>.tar.gz \
+  --sha256 "$(cut -c1-64 mth-transformation-hub-<version>.tar.gz.sha256)" --store <pnpm store dir>
+```
+
+The script checks the archive checksum before unpacking, unpacks into an empty work directory and asserts there is
+no `.git`. Inside a network namespace with no interfaces it first asserts that a TCP connection to `1.1.1.1:443`
+and a DNS lookup of `registry.npmjs.org` both fail. It then runs the offline frozen install, `pnpm -r build`,
+`deploy/scripts/assemble-runtime.sh`, `check-no-cdn` and `tools/release/scan-assets.mjs`, and prints each step with
+its duration and exit status. Exit 3 means BLOCKED: no network namespace is available, and the script never builds
+with the network on. The image build from the unpacked `source/` (`deploy/scripts/build-image.sh` against IT's
+mirror) needs a Docker daemon and is a separate step. A successful local build shows the build needs nothing beyond
+the archive and the store. It does not show that IT's mirror serves the store, and it is not a production-readiness
+test.
 
 ## Inventory for IT review
 

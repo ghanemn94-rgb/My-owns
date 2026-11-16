@@ -1,0 +1,32 @@
+diff --git a/.dockerignore b/.dockerignore
+index 1258ec7e4..ff8a79759 100644
+--- a/.dockerignore
++++ b/.dockerignore
+@@ -39,6 +39,8 @@ deploy/compose/.env
+ **/*.pem
+ **/*.key
+ **/*secret*
++!apps/*/src/**/*secret*.ts
++!packages/*/src/**/*secret*.ts
+ !packages/config/src/**
+ 
+ # Local evidence storage (filesystem adapter in development)
+diff --git a/deploy/docker/Dockerfile b/deploy/docker/Dockerfile
+index 00b2682fd..b76b2a43b 100644
+--- a/deploy/docker/Dockerfile
++++ b/deploy/docker/Dockerfile
+@@ -40,12 +40,13 @@ COPY apps/web/package.json apps/web/package.json
+ COPY packages/config/package.json packages/config/package.json
+ COPY packages/db/package.json packages/db/package.json
+ COPY packages/design-tokens/package.json packages/design-tokens/package.json
++COPY packages/reporting/package.json packages/reporting/package.json
+ COPY packages/shared/package.json packages/shared/package.json
+ RUN --mount=type=secret,id=build_ca,required=false \
+     set -eu; \
+     if [ -s /run/secrets/build_ca ]; then export NODE_EXTRA_CA_CERTS=/run/secrets/build_ca; fi; \
+     if [ -n "$NPM_REGISTRY" ]; then export npm_config_registry="$NPM_REGISTRY" COREPACK_NPM_REGISTRY="$NPM_REGISTRY"; fi; \
+-    corepack enable --install-directory /pnpm; \
++    mkdir -p /pnpm; corepack enable --install-directory /pnpm; \
+     pnpm --version; \
+     pnpm install --frozen-lockfile
+ 

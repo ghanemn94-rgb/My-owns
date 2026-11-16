@@ -1,0 +1,532 @@
+{
+  "$comment": "ADR-0062 §8 allow-list of tools/release/scan-assets.mjs. Every entry has a reason a reviewer can judge. An entry that matches nothing fails the scan (stale). R1, R3 and R5 hits in T1/T2 can never be listed (the loader refuses them). T3 entries need package, file and sha256.",
+  "entries": [
+    {
+      "rule": "R4",
+      "target": "T1",
+      "host": "react.dev",
+      "reason": "A documentation or reference link inside a bundled third-party library (React error messages); it is text in a message, comment or source map, never fetched by the hub."
+    },
+    {
+      "rule": "R4",
+      "target": "T1",
+      "host": "reactjs.org",
+      "reason": "A documentation or reference link inside a bundled third-party library (React and react-hook-form comments); it is text in a message, comment or source map, never fetched by the hub."
+    },
+    {
+      "rule": "R4",
+      "target": "T1",
+      "host": "reactrouter.com",
+      "reason": "A documentation or reference link inside a bundled third-party library (React Router messages); it is text in a message, comment or source map, never fetched by the hub."
+    },
+    {
+      "rule": "R4",
+      "target": "T1",
+      "host": "react.i18next.com",
+      "reason": "A documentation or reference link inside a bundled third-party library (react-i18next warnings); it is text in a message, comment or source map, never fetched by the hub."
+    },
+    {
+      "rule": "R4",
+      "target": "T1",
+      "host": "tanstack.com",
+      "reason": "A documentation or reference link inside a bundled third-party library (TanStack source-map comments); it is text in a message, comment or source map, never fetched by the hub."
+    },
+    {
+      "rule": "R4",
+      "target": "T1",
+      "host": "react-hook-form.com",
+      "reason": "A documentation or reference link inside a bundled third-party library (react-hook-form comments); it is text in a message, comment or source map, never fetched by the hub."
+    },
+    {
+      "rule": "R4",
+      "target": "T1",
+      "host": "developer.mozilla.org",
+      "reason": "A documentation or reference link inside a bundled third-party library (library comments in the forms vendor source map); it is text in a message, comment or source map, never fetched by the hub."
+    },
+    {
+      "rule": "R4",
+      "target": "T1",
+      "host": "github.com",
+      "reason": "A documentation or reference link inside a bundled third-party library (issue and repository links in library comments); it is text in a message, comment or source map, never fetched by the hub."
+    },
+    {
+      "rule": "R4",
+      "target": "T1",
+      "host": "stackoverflow.com",
+      "reason": "A documentation or reference link inside a bundled third-party library (a library comment in the forms vendor source map); it is text in a message, comment or source map, never fetched by the hub."
+    },
+    {
+      "rule": "R4",
+      "target": "T1",
+      "host": "codesandbox.io",
+      "reason": "A documentation or reference link inside a bundled third-party library (a library comment in the forms vendor source map); it is text in a message, comment or source map, never fetched by the hub."
+    },
+    {
+      "rule": "R4",
+      "target": "T1",
+      "host": "blog.stevenlevithan.com",
+      "reason": "A documentation or reference link inside a bundled third-party library (a regular-expression credit in a library comment); it is text in a message, comment or source map, never fetched by the hub."
+    },
+    {
+      "rule": "R4",
+      "target": "T1",
+      "host": "thekevinscott.com",
+      "reason": "A documentation or reference link inside a bundled third-party library (a library comment in the forms vendor source map); it is text in a message, comment or source map, never fetched by the hub."
+    },
+    {
+      "rule": "R4",
+      "target": "T1",
+      "host": "www.youtube.com",
+      "reason": "A documentation or reference link inside a bundled third-party library (a library comment in the forms vendor source map); it is text in a message, comment or source map, never fetched by the hub."
+    },
+    {
+      "rule": "R4",
+      "target": "T1",
+      "host": "youtu.be",
+      "reason": "A documentation or reference link inside a bundled third-party library (a library comment in the forms vendor source map); it is text in a message, comment or source map, never fetched by the hub."
+    },
+    {
+      "rule": "R4",
+      "target": "T1",
+      "host": "www.w3.org",
+      "reason": "An XML namespace or schema identifier written into documents or compared as a string; never fetched."
+    },
+    {
+      "rule": "R4",
+      "target": "T1",
+      "host": "json-schema.org",
+      "reason": "An XML namespace or schema identifier written into documents or compared as a string; never fetched."
+    },
+    {
+      "rule": "R4",
+      "target": "T1",
+      "host": "schemas.openxmlformats.org",
+      "reason": "An XML namespace or schema identifier written into documents or compared as a string; never fetched."
+    },
+    {
+      "rule": "R4",
+      "target": "T1",
+      "host": "html.spec.whatwg.org",
+      "reason": "An XML namespace or schema identifier written into documents or compared as a string; never fetched. (a specification link in a React source-map comment)"
+    },
+    {
+      "rule": "R4",
+      "target": "T1",
+      "host": "localhost",
+      "reason": "Loopback host in bundled React development-check text; never a remote destination."
+    },
+    {
+      "rule": "R4",
+      "target": "T1",
+      "host": "127.0.0.1",
+      "reason": "Loopback address in the S3 adapter's type documentation (a local test endpoint example); the adapter requires an explicit endpoint configured by IT (ADR-0054)."
+    },
+    {
+      "rule": "R4",
+      "target": "T1",
+      "host": "*.example.internal",
+      "reason": "Placeholder origin (hub.example.internal) of the configuration schema's documentation; a reserved-style name that IT replaces."
+    },
+    {
+      "rule": "R4",
+      "target": "T1",
+      "host": "*.invalid",
+      "reason": "RFC 2606 reserved .invalid name used by the synthetic demo data (demo-idp.mth.invalid); it cannot resolve."
+    },
+    {
+      "rule": "R4",
+      "target": "T2",
+      "host": "localhost",
+      "reason": "Loopback host of the local Compose stack, the health check and the test scripts."
+    },
+    {
+      "rule": "R4",
+      "target": "T2",
+      "host": "127.0.0.1",
+      "reason": "Loopback address of the entrypoint, the health check and the local load and verification scripts."
+    },
+    {
+      "rule": "R4",
+      "target": "T2",
+      "host": "api",
+      "reason": "Compose service name of the API inside the project network (smoke test and keycloak redirect); not an internet host."
+    },
+    {
+      "rule": "R4",
+      "target": "T2",
+      "host": "keycloak",
+      "reason": "Compose service name of the TEST identity provider (profile test-idp) inside the project network; not an internet host."
+    },
+    {
+      "rule": "R4",
+      "target": "T2",
+      "host": "*.example.internal",
+      "reason": "Placeholder origin in .env.example (hub.example.internal) that IT replaces; .env.example carries names only."
+    },
+    {
+      "rule": "R4",
+      "target": "T2",
+      "host": "*.invalid",
+      "reason": "RFC 2606 reserved .invalid names of the test identity providers in the clean-start and load test scripts; they cannot resolve."
+    },
+    {
+      "rule": "R4",
+      "target": "T2",
+      "host": "*.example",
+      "reason": "RFC 2606 reserved .example names of the fake object-store endpoints in the log-scan self-test; they cannot resolve."
+    },
+    {
+      "rule": "R4",
+      "target": "T2",
+      "host": "quay.io",
+      "reason": "Container registry of the pinned test IdP image (deploy/images.lock.json), named in the pin-images self-test; a build-time pull source that IT mirrors (restricted-network.md Images to mirror), never contacted at runtime."
+    },
+    {
+      "rule": "R4",
+      "target": "T2",
+      "host": "github.com",
+      "reason": "Advisory reference links in the committed offline advisory snapshot (deploy/advisories); data for the dependency audit report, never fetched at runtime."
+    },
+    {
+      "rule": "R4",
+      "target": "T2",
+      "host": "registry.npmjs.org",
+      "reason": "The npm registry named by the development-time dependency audit (deploy/scripts/dep-audit.mjs, ADR-0052 §6) as the source of its advisory data; a CI and build-host tool, not part of the runtime."
+    },
+    {
+      "rule": "R6",
+      "target": "T1",
+      "file": "apps/web/dist/assets/vendor-forms-DLh3TFGs.js.map",
+      "sha256": "a200f5df8269ad7dee4dbc1ab5a99374efc2c0cc2cfdcedc54fc881a1482f228",
+      "reason": "The author's address in the MIT copyright header of decimal.js, kept in the forms vendor source map; third-party licence text, not a personal address of the builder."
+    },
+    {
+      "rule": "R3",
+      "target": "T3",
+      "package": "@aws-sdk/nested-clients@3.997.51",
+      "file": "runtime/node_modules/.pnpm/@aws-sdk+nested-clients@3.997.51/node_modules/@aws-sdk/nested-clients/dist-types/submodules/sts/commands/AssumeRoleCommand.d.ts",
+      "sha256": "d6b5f96e31cdfcf6955ca63778db40cbf392b87934b6c0db399b5b71206ff609",
+      "reason": "AWS SDK documentation example in a type declaration: the documented sample access key id that ends in EXAMPLE. Not a credential; a comment, never executed."
+    },
+    {
+      "rule": "R3",
+      "target": "T3",
+      "package": "@aws-sdk/nested-clients@3.997.51",
+      "file": "runtime/node_modules/.pnpm/@aws-sdk+nested-clients@3.997.51/node_modules/@aws-sdk/nested-clients/dist-types/submodules/sts/commands/AssumeRoleWithWebIdentityCommand.d.ts",
+      "sha256": "93271217ff1125ad4250d78a14941f3cc59aa477eb10207bc72c709e82790bbe",
+      "reason": "AWS SDK documentation example in a type declaration: the documented sample access key id that ends in EXAMPLE. Not a credential; a comment, never executed."
+    },
+    {
+      "rule": "R2",
+      "target": "T3",
+      "package": "@fastify/static@10.1.7",
+      "file": "runtime/node_modules/.pnpm/@fastify+static@10.1.7/node_modules/@fastify/static/test/static.test.js",
+      "sha256": "c2ac8acbb60923826027eee0e1716d307c6504b6f12f5051055a670ddbee466d",
+      "reason": "The package's own test file: a route path that begins with /root is a test fixture. Never loaded by the hub."
+    },
+    {
+      "rule": "R1",
+      "target": "T3",
+      "package": "@lukeed/ms@2.0.2",
+      "file": "runtime/node_modules/.pnpm/@lukeed+ms@2.0.2/node_modules/@lukeed/ms/readme.md",
+      "sha256": "e44fbaa0b8d299233431a38da706c977d5eda01d6328371ed38ef2dd9a5b9555",
+      "reason": "Documentation file readme.md shipped inside the package; the public CDN host (unpkg.com) is in prose (a link or an example). Text only: never executed, served or fetched by the hub."
+    },
+    {
+      "rule": "R2",
+      "target": "T3",
+      "package": "@types/node@22.18.0",
+      "file": "runtime/node_modules/.pnpm/@types+node@22.18.0/node_modules/@types/node/path.d.ts",
+      "sha256": "45875bcae57270aeb3ebc73a5e3fb4c7b9d91d6b045f107c1d8513c28ece71c0",
+      "reason": "An example path in a type-declaration comment (/home/user/); never used as a path."
+    },
+    {
+      "rule": "R1",
+      "target": "T3",
+      "package": "ajv@8.17.1",
+      "file": "runtime/node_modules/.pnpm/ajv@8.17.1/node_modules/ajv/README.md",
+      "sha256": "57d9f5c9d12d019ee1c42fcd7be6a1c5b2944608b011714146ecdd20972374ed",
+      "reason": "Documentation file README.md shipped inside the package; the public CDN host (cdn.rawgit.com) is in prose (a link or an example). Text only: never executed, served or fetched by the hub."
+    },
+    {
+      "rule": "R2",
+      "target": "T3",
+      "package": "ajv@8.17.1",
+      "file": "runtime/node_modules/.pnpm/ajv@8.17.1/node_modules/ajv/dist/core.js",
+      "sha256": "7fdd03e949ecb3d020e560f669da71ce69a70f4bca28e5aff2ebc34d15bc2134",
+      "reason": "JSON-schema $id/$ref identifier (raw.githubusercontent.com) used as a schema name; compared as a string, never fetched by ajv or the hub."
+    },
+    {
+      "rule": "R2",
+      "target": "T3",
+      "package": "ajv@8.17.1",
+      "file": "runtime/node_modules/.pnpm/ajv@8.17.1/node_modules/ajv/dist/refs/data.json",
+      "sha256": "d24ab8a97c18b3f5afdde7d7024a0e0ac1df0614a16a41cb88f81379edcc2db3",
+      "reason": "JSON-schema $id/$ref identifier (raw.githubusercontent.com) used as a schema name; compared as a string, never fetched by ajv or the hub."
+    },
+    {
+      "rule": "R2",
+      "target": "T3",
+      "package": "ajv@8.17.1",
+      "file": "runtime/node_modules/.pnpm/ajv@8.17.1/node_modules/ajv/dist/refs/json-schema-secure.json",
+      "sha256": "b7840b4f1526eee47ac19780906a436d0c39df2aa3d505388caf18864085a421",
+      "reason": "JSON-schema $id/$ref identifier (raw.githubusercontent.com) used as a schema name; compared as a string, never fetched by ajv or the hub."
+    },
+    {
+      "rule": "R2",
+      "target": "T3",
+      "package": "ajv@8.17.1",
+      "file": "runtime/node_modules/.pnpm/ajv@8.17.1/node_modules/ajv/lib/core.ts",
+      "sha256": "44069e60c6493073c2f8cf3fda0e5e7e7a20ef110be7cdd5ef21652968ee221f",
+      "reason": "JSON-schema $id/$ref identifier (raw.githubusercontent.com) used as a schema name; compared as a string, never fetched by ajv or the hub."
+    },
+    {
+      "rule": "R2",
+      "target": "T3",
+      "package": "ajv@8.17.1",
+      "file": "runtime/node_modules/.pnpm/ajv@8.17.1/node_modules/ajv/lib/refs/data.json",
+      "sha256": "d24ab8a97c18b3f5afdde7d7024a0e0ac1df0614a16a41cb88f81379edcc2db3",
+      "reason": "JSON-schema $id/$ref identifier (raw.githubusercontent.com) used as a schema name; compared as a string, never fetched by ajv or the hub."
+    },
+    {
+      "rule": "R2",
+      "target": "T3",
+      "package": "ajv@8.17.1",
+      "file": "runtime/node_modules/.pnpm/ajv@8.17.1/node_modules/ajv/lib/refs/json-schema-secure.json",
+      "sha256": "b7840b4f1526eee47ac19780906a436d0c39df2aa3d505388caf18864085a421",
+      "reason": "JSON-schema $id/$ref identifier (raw.githubusercontent.com) used as a schema name; compared as a string, never fetched by ajv or the hub."
+    },
+    {
+      "rule": "R1",
+      "target": "T3",
+      "package": "bowser@2.15.0",
+      "file": "runtime/node_modules/.pnpm/bowser@2.15.0/node_modules/bowser/README.md",
+      "sha256": "45aece700fba599935549faf05701b43c6ec30626a3fa220dc4f4f25357c3b00",
+      "reason": "Documentation file README.md shipped inside the package; the public CDN host (unpkg.com) is in prose (a link or an example). Text only: never executed, served or fetched by the hub."
+    },
+    {
+      "rule": "R2",
+      "target": "T3",
+      "package": "decimal.js@10.6.0",
+      "file": "runtime/node_modules/.pnpm/decimal.js@10.6.0/node_modules/decimal.js/README.md",
+      "sha256": "c562022b4b739ca41647724f81ff909ce3c7fac54ea4aa369730de3d309c2397",
+      "reason": "Documentation file README.md shipped inside the package; the builder or code-hosting host or path (raw.githubusercontent.com) is in prose (a link or an example). Text only: never executed, served or fetched by the hub."
+    },
+    {
+      "rule": "R1",
+      "target": "T3",
+      "package": "dequal@2.0.3",
+      "file": "runtime/node_modules/.pnpm/dequal@2.0.3/node_modules/dequal/readme.md",
+      "sha256": "13d0baa49b78a3567af96171135e0784f2be2e5a19dc775d0b4f92647267b887",
+      "reason": "Documentation file readme.md shipped inside the package; the public CDN host (unpkg.com) is in prose (a link or an example). Text only: never executed, served or fetched by the hub."
+    },
+    {
+      "rule": "R2",
+      "target": "T3",
+      "package": "dfa@1.2.0",
+      "file": "runtime/node_modules/.pnpm/dfa@1.2.0/node_modules/dfa/README.md",
+      "sha256": "30bd445925aa53205ff7f9afa6a43e21358fab656e471df6e028431aefc426c7",
+      "reason": "Documentation file README.md shipped inside the package; the builder or code-hosting host or path (cloud.githubusercontent.com) is in prose (a link or an example). Text only: never executed, served or fetched by the hub."
+    },
+    {
+      "rule": "R2",
+      "target": "T3",
+      "package": "docx@9.8.1",
+      "file": "runtime/node_modules/.pnpm/docx@9.8.1/node_modules/docx/README.md",
+      "sha256": "b48ada1268195f3ff6f4efd51c76b9c16fcbf66182d0b0d4eefc49045ddc5f06",
+      "reason": "Documentation file README.md shipped inside the package; the builder or code-hosting host or path (user-images.githubusercontent.com, docxjs-editor.vercel.app) is in prose (a link or an example). Text only: never executed, served or fetched by the hub."
+    },
+    {
+      "rule": "R2",
+      "target": "T3",
+      "package": "fastify@5.12.7",
+      "file": "runtime/node_modules/.pnpm/fastify@5.12.7/node_modules/fastify/README.md",
+      "sha256": "417c8e9d14534c9163cc2f912f4fa4ed0f2b91ede6fc083b8cab36de018981ef",
+      "reason": "Documentation file README.md shipped inside the package; the builder or code-hosting host or path (raw.githubusercontent.com) is in prose (a link or an example). Text only: never executed, served or fetched by the hub."
+    },
+    {
+      "rule": "R2",
+      "target": "T3",
+      "package": "fastify@5.12.7",
+      "file": "runtime/node_modules/.pnpm/fastify@5.12.7/node_modules/fastify/lib/logger-pino.js",
+      "sha256": "51ecedc135fa6a9cd44e66c1edb032f41b633e83f146f502e483d31b77e3e881",
+      "reason": "Licence attribution URL in a source comment (raw.githubusercontent.com); never fetched."
+    },
+    {
+      "rule": "R2",
+      "target": "T3",
+      "package": "i18next@26.4.2",
+      "file": "runtime/node_modules/.pnpm/i18next@26.4.2_typescript@6.0.2/node_modules/i18next/README.md",
+      "sha256": "0b65109ccd81e85491064840e2e10b9d75d9878573d19719287d1f8a209e4320",
+      "reason": "Documentation file README.md shipped inside the package; the builder or code-hosting host or path (raw.githubusercontent.com) is in prose (a link or an example). Text only: never executed, served or fetched by the hub."
+    },
+    {
+      "rule": "R2",
+      "target": "T3",
+      "package": "jose@6.2.12",
+      "file": "runtime/node_modules/.pnpm/jose@6.2.12/node_modules/jose/README.md",
+      "sha256": "0d5441e41b48444b163c2a593e90b16213e668d861ca79dfcb718bea1e2f8c1d",
+      "reason": "Documentation file README.md shipped inside the package; the builder or code-hosting host or path (raw.githubusercontent.com) is in prose (a link or an example). Text only: never executed, served or fetched by the hub."
+    },
+    {
+      "rule": "R3",
+      "target": "T3",
+      "package": "jose@6.2.12",
+      "file": "runtime/node_modules/.pnpm/jose@6.2.12/node_modules/jose/dist/webapi/key/import.js",
+      "sha256": "ab2f57a9db99e8d48451a8d0a8adf75379381f65b0e3e28ba6c02aa5bb3ee5fa",
+      "reason": "The PEM header literal that jose uses to recognise a PKCS#8 input; a string constant, not a key."
+    },
+    {
+      "rule": "R2",
+      "target": "T3",
+      "package": "kysely@0.28.18",
+      "file": "runtime/node_modules/.pnpm/kysely@0.28.18/node_modules/kysely/README.md",
+      "sha256": "870aeb2a6ee76a67f403d81fbb440b46734237558e8c736ddfb6138f598a5eea",
+      "reason": "Documentation file README.md shipped inside the package; the builder or code-hosting host or path (raw.githubusercontent.com, avatars.githubusercontent.com) is in prose (a link or an example). Text only: never executed, served or fetched by the hub."
+    },
+    {
+      "rule": "R1",
+      "target": "T3",
+      "package": "lru-cache@11.5.3",
+      "file": "runtime/node_modules/.pnpm/lru-cache@11.5.3/node_modules/lru-cache/README.md",
+      "sha256": "9ce0167d06ee43ab4fcab0d76b71f515da53bcf70c40b0b80129c987372fc13e",
+      "reason": "Documentation file README.md shipped inside the package; the public CDN host (unpkg.com) is in prose (a link or an example). Text only: never executed, served or fetched by the hub."
+    },
+    {
+      "rule": "R1",
+      "target": "T3",
+      "package": "mime@3.0.0",
+      "file": "runtime/node_modules/.pnpm/mime@3.0.0/node_modules/mime/README.md",
+      "sha256": "df1af0e6e562e58b7266fea23dbb4836a7889f02124f89978359663fb4c0ca12",
+      "reason": "Documentation file README.md shipped inside the package; the public CDN host (cdn.skypack.dev) is in prose (a link or an example). Text only: never executed, served or fetched by the hub."
+    },
+    {
+      "rule": "R1",
+      "target": "T3",
+      "package": "nanoid@6.0.2",
+      "file": "runtime/node_modules/.pnpm/nanoid@6.0.2/node_modules/nanoid/README.md",
+      "sha256": "2fc6c9241f8986b9816647be6c6e230b0750d5b1cf07f3e5917b1c51d3a06717",
+      "reason": "Documentation file README.md shipped inside the package; the public CDN host (cdn.evilmartians.com) is in prose (a link or an example). Text only: never executed, served or fetched by the hub."
+    },
+    {
+      "rule": "R2",
+      "target": "T3",
+      "package": "nodemailer@10.2.1",
+      "file": "runtime/node_modules/.pnpm/nodemailer@10.2.1/node_modules/nodemailer/README.md",
+      "sha256": "196a69b2b6c19cfdb200c47216471709d7f953a0ca3f7bdf476515b0f76a5a85",
+      "reason": "Documentation file README.md shipped inside the package; the builder or code-hosting host or path (raw.githubusercontent.com) is in prose (a link or an example). Text only: never executed, served or fetched by the hub."
+    },
+    {
+      "rule": "R2",
+      "target": "T3",
+      "package": "oauth4webapi@3.8.8",
+      "file": "runtime/node_modules/.pnpm/oauth4webapi@3.8.8/node_modules/oauth4webapi/README.md",
+      "sha256": "fe23a9cf4da06216b3bc82e04abadab4c4f57cc8d18ec17de2cfd8fd899408f0",
+      "reason": "Documentation file README.md shipped inside the package; the builder or code-hosting host or path (raw.githubusercontent.com, user-images.githubusercontent.com) is in prose (a link or an example). Text only: never executed, served or fetched by the hub."
+    },
+    {
+      "rule": "R2",
+      "target": "T3",
+      "package": "openid-client@6.8.1",
+      "file": "runtime/node_modules/.pnpm/openid-client@6.8.1/node_modules/openid-client/README.md",
+      "sha256": "65bc105151af06b45b2e63b2002e719db2d68ed2e619296fe70bd2e0cf48cc84",
+      "reason": "Documentation file README.md shipped inside the package; the builder or code-hosting host or path (raw.githubusercontent.com, user-images.githubusercontent.com) is in prose (a link or an example). Text only: never executed, served or fetched by the hub."
+    },
+    {
+      "rule": "R2",
+      "target": "T3",
+      "package": "pg@8.16.3",
+      "file": "runtime/node_modules/.pnpm/pg@8.16.3/node_modules/pg/README.md",
+      "sha256": "25e19d878c5a492023778a2596e8e26d76fc3e2b97a9582d4bdde675b8932408",
+      "reason": "Documentation file README.md shipped inside the package; the builder or code-hosting host or path (raw.githubusercontent.com) is in prose (a link or an example). Text only: never executed, served or fetched by the hub."
+    },
+    {
+      "rule": "R1",
+      "target": "T3",
+      "package": "pino@9.14.0",
+      "file": "runtime/node_modules/.pnpm/pino@9.14.0/node_modules/pino/docs/transports.md",
+      "sha256": "b6405f8523409915bf81d64c150dbd3872d438462dedb12f2b8036651b6b3ce7",
+      "reason": "Documentation file transports.md shipped inside the package; the public CDN host (www.datadoghq.com, sentry.io) is in prose (a link or an example). Text only: never executed, served or fetched by the hub."
+    },
+    {
+      "rule": "R1",
+      "target": "T3",
+      "package": "pino@9.14.0",
+      "file": "runtime/node_modules/.pnpm/pino@9.14.0/node_modules/pino/index.html",
+      "sha256": "e248daa163da332d06de953410f4f7af7d6fc47a1b4bf916665cc23e698757a7",
+      "reason": "pino's own documentation web page (docsify), shipped in the package; the public CDN host (unpkg.com, cdn.jsdelivr.net) is its script and style sources. The hub never serves or loads this page (it serves only apps/web/dist)."
+    },
+    {
+      "rule": "R1",
+      "target": "T3",
+      "package": "pptxgenjs@4.0.1",
+      "file": "runtime/node_modules/.pnpm/pptxgenjs@4.0.1/node_modules/pptxgenjs/README.md",
+      "sha256": "e36118997c58ec08a1fff55e1d9744a47420945167af1efc360af3d1ccaf0d3b",
+      "reason": "Documentation file README.md shipped inside the package; the public CDN host (cdn.jsdelivr.net) is in prose (a link or an example). Text only: never executed, served or fetched by the hub."
+    },
+    {
+      "rule": "R2",
+      "target": "T3",
+      "package": "pptxgenjs@4.0.1",
+      "file": "runtime/node_modules/.pnpm/pptxgenjs@4.0.1/node_modules/pptxgenjs/README.md",
+      "sha256": "e36118997c58ec08a1fff55e1d9744a47420945167af1efc360af3d1ccaf0d3b",
+      "reason": "Documentation file README.md shipped inside the package; the builder or code-hosting host or path (raw.githubusercontent.com) is in prose (a link or an example). Text only: never executed, served or fetched by the hub."
+    },
+    {
+      "rule": "R2",
+      "target": "T3",
+      "package": "react-hook-form@7.62.0",
+      "file": "runtime/node_modules/.pnpm/react-hook-form@7.62.0_react@19.2.0/node_modules/react-hook-form/README.md",
+      "sha256": "afdaa40ce601f46a3ccf6d08f4bd0b6bc8cef462c99239390d880d14e03a5ef4",
+      "reason": "Documentation file README.md shipped inside the package; the builder or code-hosting host or path (raw.githubusercontent.com, avatars.githubusercontent.com) is in prose (a link or an example). Text only: never executed, served or fetched by the hub."
+    },
+    {
+      "rule": "R2",
+      "target": "T3",
+      "package": "react-i18next@17.0.15",
+      "file": "runtime/node_modules/.pnpm/react-i18next@17.0.15_i18next@26.4.2_typescript@6.0.2__react-dom@19.2.0_react@19.2.0__react@19.2.0_typescript@6.0.2/node_modules/react-i18next/README.md",
+      "sha256": "bcd692905cb53f1b7ca8e4c8c4b89b7fb0510669e41e9c3749e7830d3ada1c9b",
+      "reason": "Documentation file README.md shipped inside the package; the builder or code-hosting host or path (raw.githubusercontent.com, avatars3.githubusercontent.com, avatars0.githubusercontent.com, avatars1.githubusercontent.com) is in prose (a link or an example). Text only: never executed, served or fetched by the hub."
+    },
+    {
+      "rule": "R2",
+      "target": "T3",
+      "package": "react-router@7.18.4",
+      "file": "runtime/node_modules/.pnpm/react-router@7.18.4_react-dom@19.2.0_react@19.2.0__react@19.2.0/node_modules/react-router/docs/how-to/react-server-components.md",
+      "sha256": "c6e0d989e724e7f82417c43c9c7fb30fe9e17ed2f7c3a43b03ceb58dbc361011",
+      "reason": "Documentation file react-server-components.md shipped inside the package; the builder or code-hosting host or path (/root/) is in prose (a link or an example). Text only: never executed, served or fetched by the hub."
+    },
+    {
+      "rule": "R2",
+      "target": "T3",
+      "package": "thread-stream@3.2.0",
+      "file": "runtime/node_modules/.pnpm/thread-stream@3.2.0/node_modules/thread-stream/CLAUDE.md",
+      "sha256": "90dea946c3476f8cff784e41676c6930017b41713c927d1d7bb9c2002a1abc78",
+      "reason": "Documentation file CLAUDE.md shipped inside the package; the builder or code-hosting host or path (claude.ai) is in prose (a link or an example). Text only: never executed, served or fetched by the hub."
+    },
+    {
+      "rule": "R2",
+      "target": "T3",
+      "package": "typescript@6.0.2",
+      "file": "runtime/node_modules/.pnpm/typescript@6.0.2/node_modules/typescript/lib/typescript.d.ts",
+      "sha256": "c967e03c8dbb4770f7e2f0b71b5d13593de679a41cc2b60266c4b69f1342a263",
+      "reason": "An example path in a type-declaration comment (/root/); never used as a path."
+    },
+    {
+      "rule": "R2",
+      "target": "T3",
+      "package": "uuid@13.0.0",
+      "file": "runtime/node_modules/.pnpm/uuid@13.0.0/node_modules/uuid/README.md",
+      "sha256": "8957b176223dd506084ed983602661bb64ddd4498f182e047f1746a6e5c1274d",
+      "reason": "Documentation file README.md shipped inside the package; the builder or code-hosting host or path (camo.githubusercontent.com) is in prose (a link or an example). Text only: never executed, served or fetched by the hub."
+    },
+    {
+      "rule": "R3",
+      "target": "T3",
+      "package": "zod@4.6.7",
+      "file": "runtime/node_modules/.pnpm/zod@4.6.7/node_modules/zod/src/v4/mini/tests/string.test.ts",
+      "sha256": "f4ebdab74387516508d0ce96a56979fe06af7e2425dccc13d34c0a229ba3a050",
+      "reason": "The public jwt.io sample token in zod's own test file; not a credential, never loaded by the hub."
+    }
+  ]
+}

@@ -1,0 +1,186 @@
+  P0 deploy/ci/ci.yml as committed: exit 0
+  P1 images: if: success() && github.event_name == 'push' (implicit-success semantics kept): exit 0
+  P2 integration: if: github.event_name != 'schedule' (no status function): exit 0
+  P3 step-level if: always() inside a gated product job (upload-artifact): exit 0
+  N1 verify: needs removed: exit 1: FAIL: job "verify" does not depend on delivery-gates
+  N2 rogue job without needs: exit 1: FAIL: job "rogue" does not depend on delivery-gates
+  N3 unknown need: exit 1: FAIL: images needs unknown job "nope"
+  N4 verify: if: always(): exit 1: FAIL: job "verify": job-level if: "always()" uses a status function, so it can run after delivery-gates failed
+  N5 images: if: ${{ !cancelled() }}: exit 1: FAIL: job "images": job-level if: "${{ !cancelled() }}" uses a status function, so it can run after delivery-gates failed
+  N6 integration: if: failure(): exit 1: FAIL: job "integration": job-level if: "failure()" uses a status function, so it can run after delivery-gates failed
+  N7 e2e: if: ${{ always() && github.ref == 'refs/heads/main' }}: exit 1: FAIL: job "e2e": job-level if: "${{ always() && github.ref == 'refs/heads/main' }}" uses a status function, so it can run after delivery-gates failed
+  N8 verify: if: Always ( ) (case/whitespace): exit 1: FAIL: job "verify": job-level if: "Always ( )" uses a status function, so it can run after delivery-gates failed
+  N9 integration: if: success() || failure(): exit 1: FAIL: job "integration": job-level if: "success() || failure()" uses a status function, so it can run after delivery-gates failed
+  N10 delivery-gates: continue-on-error: true: exit 1: FAIL: delivery-gates: job must not set continue-on-error (a failed gate would count as success)
+  N11 validate step: continue-on-error: true: exit 1: FAIL: delivery-gates: validate step must not set continue-on-error
+  N12 validate step: `|| true`: exit 1: FAIL: delivery-gates does not run exactly "node tools/gates/validate.mjs --pipeline"
+  N13 validate step: if: false: exit 1: FAIL: delivery-gates: validate step must not have an if: ("false")
+  N14 verify: plain pnpm install --frozen-lockfile instead of ci-install-deps.sh: exit 1: FAIL: verify: dependency install outside deploy/scripts/ci-install-deps.sh (REQ-DLV-042): pnpm install --frozen-lockfile
+  N15 integration: ci-install-deps.sh step removed (pnpm used without any install): exit 1: FAIL: integration: runs pnpm before the sandboxed install (deploy/scripts/ci-install-deps.sh): pnpm -r build
+  N16 images: extra `npm ci` step: exit 1: FAIL: images: dependency install outside deploy/scripts/ci-install-deps.sh (REQ-DLV-042): npm ci
+  N17 e2e: corepack enable && pnpm install: exit 1: FAIL: e2e: dependency install outside deploy/scripts/ci-install-deps.sh (REQ-DLV-042): pnpm install
+  N18 verify: fallback `ci-install-deps.sh || pnpm install`: exit 1: FAIL: verify: the sandboxed install must be the whole command, exactly deploy/scripts/ci-install-deps.sh: deploy/scripts/ci-install-deps.sh || pnpm install
+  N19 validate step: env NODE_OPTIONS=--import=data:...process.exit(0): exit 1: FAIL: delivery-gates step 3: a validate.mjs step must not set env: {"NODE_OPTIONS":"--import=data:text/javascript,process.exit(0)"} (only name/id/run)
+  N20 validate step: working-directory: decoy: exit 1: FAIL: delivery-gates step 3: a validate.mjs step must not set working-directory: "decoy" (only name/id/run)
+  N21 validate step: shell: 'true {0}': exit 1: FAIL: delivery-gates step 3: a validate.mjs step must not set shell: "true {0}" (only name/id/run)
+  N22 workflow-level defaults.run.working-directory: decoy: exit 1: FAIL: workflow-level defaults: is not allowed (it reaches the delivery-gates validate step): {"run":{"working-directory":"decoy"}}
+  N23 workflow-level defaults.run.shell: exit 1: FAIL: workflow-level defaults: is not allowed (it reaches the delivery-gates validate step): {"run":{"shell":"true {0}"}}
+  N24 workflow-level env NODE_OPTIONS: exit 1: FAIL: workflow-level env: is not allowed (it reaches the delivery-gates validate step): {"NODE_OPTIONS":"--import=data:text/javascript,process.exit(0)"}
+  N25 delivery-gates job-level env NODE_OPTIONS: exit 1: FAIL: delivery-gates: job key "env" is not allowed (it could change how the validate step runs)
+  N26 delivery-gates job-level defaults.run.working-directory: exit 1: FAIL: delivery-gates: job key "defaults" is not allowed (it could change how the validate step runs)
+  N27 delivery-gates pre-step writes NODE_OPTIONS to $GITHUB_ENV: exit 1: FAIL: delivery-gates step 3: only the validate step may run commands in delivery-gates: "echo \"NODE_OPTIONS=--import=data:text/javascript,process.exit(0)\" >> \"$GITHUB_ENV\""
+  N28 delivery-gates setup-node step with env: exit 1: FAIL: delivery-gates step 2: key "env" is not allowed
+  N29 validate.mjs run in another job with NODE_OPTIONS: exit 1: FAIL: verify step 13: a validate.mjs step must not set env: {"NODE_OPTIONS":"--x"} (only name/id/run)
+  P4 validate step with a name and an id (only name/id/run): exit 0
+  P5 product job (verify) with its own job-level env and defaults (does not reach the gate): exit 0
+  N30 delivery-gates checkout with.ref override: exit 1: FAIL: delivery-gates step 1: with.ref is not allowed on checkout in delivery-gates (allowed: fetch-depth, persist-credentials); it could make validate.mjs check a different tree or toolchain
+  N31 delivery-gates checkout with.repository override: exit 1: FAIL: delivery-gates step 1: with.repository is not allowed on checkout in delivery-gates (allowed: fetch-depth, persist-credentials); it could make validate.mjs check a different tree or toolchain
+  N32 delivery-gates checkout with.path override: exit 1: FAIL: delivery-gates step 1: with.path is not allowed on checkout in delivery-gates (allowed: fetch-depth, persist-credentials); it could make validate.mjs check a different tree or toolchain
+  N33 delivery-gates checkout with.token override: exit 1: FAIL: delivery-gates step 1: with.token is not allowed on checkout in delivery-gates (allowed: fetch-depth, persist-credentials); it could make validate.mjs check a different tree or toolchain
+  N34 delivery-gates checkout with.sparse-checkout override: exit 1: FAIL: delivery-gates step 1: with.sparse-checkout is not allowed on checkout in delivery-gates (allowed: fetch-depth, persist-credentials); it could make validate.mjs check a different tree or toolchain
+  N35 delivery-gates checkout with.submodules override: exit 1: FAIL: delivery-gates step 1: with.submodules is not allowed on checkout in delivery-gates (allowed: fetch-depth, persist-credentials); it could make validate.mjs check a different tree or toolchain
+  N36 delivery-gates checkout with.fetch-depth as an expression: exit 1: FAIL: delivery-gates step 1: with.fetch-depth has a disallowed value "${{ github.event.inputs.depth }}"
+  N37 delivery-gates setup-node with.node-version-file: exit 1: FAIL: delivery-gates step 2: with.node-version-file is not allowed on setup-node in delivery-gates (allowed: node-version); it could make validate.mjs check a different tree or toolchain
+  N38 delivery-gates checkout with: is a string, not a mapping: exit 1: FAIL: delivery-gates step 1: with: must be a mapping, got "ref=main"
+  P6 delivery-gates checkout with persist-credentials: false (allow-listed): exit 0
+  P7 delivery-gates checkout without with: (defaults to the triggering commit): exit 0
+✔ POSITIVE P0 deploy/ci/ci.yml as committed (244.41077ms)
+✔ POSITIVE P1 images: if: success() && github.event_name == 'push' (implicit-success semantics kept) (196.754431ms)
+✔ POSITIVE P2 integration: if: github.event_name != 'schedule' (no status function) (184.288437ms)
+✔ POSITIVE P3 step-level if: always() inside a gated product job (upload-artifact) (129.082004ms)
+✔ NEGATIVE N1 verify: needs removed (118.607256ms)
+✔ NEGATIVE N2 rogue job without needs (132.639918ms)
+✔ NEGATIVE N3 unknown need (140.515537ms)
+✔ NEGATIVE N4 verify: if: always() (156.895283ms)
+✔ NEGATIVE N5 images: if: ${{ !cancelled() }} (131.793255ms)
+✔ NEGATIVE N6 integration: if: failure() (127.064807ms)
+✔ NEGATIVE N7 e2e: if: ${{ always() && github.ref == 'refs/heads/main' }} (117.598684ms)
+✔ NEGATIVE N8 verify: if: Always ( ) (case/whitespace) (132.029134ms)
+✔ NEGATIVE N9 integration: if: success() || failure() (127.837887ms)
+✔ NEGATIVE N10 delivery-gates: continue-on-error: true (152.916554ms)
+✔ NEGATIVE N11 validate step: continue-on-error: true (121.477941ms)
+✔ NEGATIVE N12 validate step: `|| true` (140.454258ms)
+✔ NEGATIVE N13 validate step: if: false (129.837289ms)
+✔ NEGATIVE N14 verify: plain pnpm install --frozen-lockfile instead of ci-install-deps.sh (124.1187ms)
+✔ NEGATIVE N15 integration: ci-install-deps.sh step removed (pnpm used without any install) (151.43129ms)
+✔ NEGATIVE N16 images: extra `npm ci` step (123.204917ms)
+✔ NEGATIVE N17 e2e: corepack enable && pnpm install (151.422458ms)
+✔ NEGATIVE N18 verify: fallback `ci-install-deps.sh || pnpm install` (131.857566ms)
+✔ NEGATIVE N19 validate step: env NODE_OPTIONS=--import=data:...process.exit(0) (127.583494ms)
+✔ NEGATIVE N20 validate step: working-directory: decoy (130.460315ms)
+✔ NEGATIVE N21 validate step: shell: 'true {0}' (167.54457ms)
+✔ NEGATIVE N22 workflow-level defaults.run.working-directory: decoy (145.687815ms)
+✔ NEGATIVE N23 workflow-level defaults.run.shell (139.586923ms)
+✔ NEGATIVE N24 workflow-level env NODE_OPTIONS (126.043501ms)
+✔ NEGATIVE N25 delivery-gates job-level env NODE_OPTIONS (140.33556ms)
+✔ NEGATIVE N26 delivery-gates job-level defaults.run.working-directory (126.251562ms)
+✔ NEGATIVE N27 delivery-gates pre-step writes NODE_OPTIONS to $GITHUB_ENV (171.419677ms)
+✔ NEGATIVE N28 delivery-gates setup-node step with env (135.209572ms)
+✔ NEGATIVE N29 validate.mjs run in another job with NODE_OPTIONS (125.257912ms)
+✔ POSITIVE P4 validate step with a name and an id (only name/id/run) (148.463761ms)
+✔ POSITIVE P5 product job (verify) with its own job-level env and defaults (does not reach the gate) (135.667202ms)
+✔ NEGATIVE N30 delivery-gates checkout with.ref override (125.037556ms)
+✔ NEGATIVE N31 delivery-gates checkout with.repository override (127.002709ms)
+✔ NEGATIVE N32 delivery-gates checkout with.path override (121.563356ms)
+✔ NEGATIVE N33 delivery-gates checkout with.token override (137.257504ms)
+✔ NEGATIVE N34 delivery-gates checkout with.sparse-checkout override (121.096583ms)
+✔ NEGATIVE N35 delivery-gates checkout with.submodules override (121.88593ms)
+✔ NEGATIVE N36 delivery-gates checkout with.fetch-depth as an expression (112.172653ms)
+✔ NEGATIVE N37 delivery-gates setup-node with.node-version-file (128.995144ms)
+✔ NEGATIVE N38 delivery-gates checkout with: is a string, not a mapping (143.918841ms)
+✔ POSITIVE P6 delivery-gates checkout with persist-credentials: false (allow-listed) (100.571968ms)
+✔ POSITIVE P7 delivery-gates checkout without with: (defaults to the triggering commit) (108.6923ms)
+✔ P-1: names containing `_` are kept; only the peer suffix after the version is stripped (4.191775ms)
+✔ a runtime store with string_decoder and a peer-suffixed react-dom passes (module and CLI) (55.192188ms)
+✔ development, unknown-version and unparseable directories fail with exit 1 and are named (58.865175ms)
+✔ usage error and unreadable input exit 2 (BLOCKED), never 0 (130.756104ms)
+✔ assemble-runtime.sh uses this check and strips the pnpm metadata (P-1, P-2) (0.631408ms)
+✔ the committed Dockerfile and .dockerignore pass all three checks (CLI exit 0) (282.866706ms)
+✔ the required install inputs are every tracked workspace package.json plus the root install files (4.412886ms)
+✔ defect (b): a workspace package.json missing from the dependency layer is reported (5.007761ms)
+✔ a manifest COPYed only AFTER `pnpm install` is reported (2.238988ms)
+✔ a manifest excluded from the build context by .dockerignore is reported (1.858438ms)
+✔ defect (c): `**/*secret*` without the source exceptions drops tracked sources, and is reported (106.432516ms)
+✔ the committed .dockerignore still keeps local secrets, keys and .env files out of the context (6.998151ms)
+✔ .dockerignore matcher follows Docker's semantics (`*` stays in a segment, `**` spans, parent match, last wins) (0.647735ms)
+✔ defect (a): corepack enable --install-directory before the directory exists is reported (2.686538ms)
+✔ CLI: missing input is BLOCKED (exit 2), a usage error is exit 2 (111.523834ms)
+✔ build-image.sh --dry-run: no proxy and no network flag unless asked; Docker never called (12.204311ms)
+✔ build-image.sh --proxy-from-env passes only the SET proxy names, never their values (24.792091ms)
+✔ build-image.sh refuses a bad --network, a missing value and a missing CA file (exit 64) (28.168282ms)
+✔ the Dockerfile declares no proxy ARG or ENV (proxy values are never baked into the image) (0.422913ms)
+▶ T-B12 image-bundle.sh with a stub docker
+  ✔ save lists every lock image that a Compose file runs plus the app image, with the tar SHA-256, and pulls nothing (667.183612ms)
+  ✔ save tags each pinned image as <ref>:<tag> before the one docker save, and the tag is the lock digest (DO-E4) (582.182822ms)
+  ✔ save -> remove every image -> load -> every <ref>:<tag>@<digest> resolves to its pinned id (host run 2 regression) (1486.556377ms)
+  ✔ load: an archive saved under digest names (the old save) fails: each pinned name does not match (present), exit 1 (347.606309ms)
+  ✔ save refuses (exit 1) a pinned image whose local id is not the lock digest: nothing tagged or saved (269.313564ms)
+  ✔ save refuses (exit 1) when <ref>:<tag> already names a different image, and never moves that tag (377.128189ms)
+  ✔ save exits 3 on the classic image store (A1.2): no tag, no save (234.976186ms)
+  ✔ save records the lock images no Compose file runs in `excluded` (A1.3), and never saves or inspects them (1.79907ms)
+  ✔ save: an unpinned digest on a bundled image is BLOCKED (exit 2); one on an excluded image is not (726.834556ms)
+  ✔ load and verify exit 3 on the classic image store with the B.5 line (A1.2): no docker load, no id check (769.170388ms)
+  ✔ load and verify report the containerd store before any id check (433.294822ms)
+  ✔ verify passes on the saved bundle when every id matches (349.717267ms)
+  ✔ load: a good bundle is loaded once and each id is checked (400.653518ms)
+  ✔ load refuses a changed tar: exit 1 with the B.5 line, and docker load is never called (94.060203ms)
+  ✔ verify refuses an id mismatch: exit 1 with the B.5 line naming the image (381.272967ms)
+  ✔ verify after an image was removed: the missing image fails the id check (exit 1), never pulled (419.631059ms)
+  ✔ save: an image not present locally is BLOCKED (exit 2), and nothing is pulled or saved (257.919916ms)
+  ✔ no Docker daemon: exit 3 with the B.5 BLOCKED line (save, and load after the tar check) (192.720436ms)
+  ✔ usage errors are BLOCKED (exit 2); no path of the script calls docker pull (35.161513ms)
+✔ T-B12 image-bundle.sh with a stub docker (8030.405909ms)
+✔ the fixture covers every fixed pattern class plus the canary, store-host and storage-path classes (1.614703ms)
+✔ FAIL on a line with the private-key class (exit 1, file and line reported, the match masked) (40.331068ms)
+✔ FAIL on a line with the aws-access-key-id class (exit 1, file and line reported, the match masked) (44.266457ms)
+✔ FAIL on a line with the x-amz-signature class (exit 1, file and line reported, the match masked) (37.489029ms)
+✔ FAIL on a line with the x-amz-credential class (exit 1, file and line reported, the match masked) (41.256761ms)
+✔ FAIL on a line with the bearer-token class (exit 1, file and line reported, the match masked) (45.246495ms)
+✔ FAIL on a line with the jwt class (exit 1, file and line reported, the match masked) (43.867107ms)
+✔ FAIL on a line with the deep-link-token class (exit 1, file and line reported, the match masked) (51.118692ms)
+✔ FAIL on a line with the canary-secret class (exit 1, file and line reported, the match masked) (39.240028ms)
+✔ FAIL on a line with the object-store-host class (exit 1, file and line reported, the match masked) (41.690024ms)
+✔ FAIL on a line with the evidence-storage-path class (exit 1, file and line reported, the match masked) (51.712779ms)
+✔ FAIL on the whole fixture: every line is reported (51.465046ms)
+✔ PASS on a clean run (redacted lines only), scanning a directory recursively (43.04461ms)
+✔ canaries come from every mth-canary-* environment value; store hosts from MTH_LOG_SCAN_STORE_HOSTS (36.267896ms)
+✔ BLOCKED (exit 2, never a pass): no input, an empty directory, a docs/delivery path, no canary when required (229.358391ms)
+▶ T-B13 connection-check.mjs on fixture logs
+  ✔ loopback addresses and hosts are loopback; anything else is not (1.793898ms)
+  ✔ a log of loopback and socket entries passes, with the counts by category (1.559761ms)
+  ✔ a fixture line with a non-loopback address fails with the B.5 line naming address, port and process (0.363751ms)
+  ✔ a host name that is not loopback fails even when it was never dialled (failed lookup: null address and port) (0.219967ms)
+  ✔ a loopback host name that resolved to an outside address fails (every known value must be loopback) (0.12975ms)
+  ✔ a port with no host or address is not provably local; a socket-directory path is a socket (0.244824ms)
+  ✔ a log with no line of the API process fails (an empty or switched-off log is never a pass) (0.42951ms)
+  ✔ the CLI: exit 0 / 1 with the summary file; a missing log or a non-JSON line is BLOCKED (exit 2) (207.450678ms)
+✔ T-B13 connection-check.mjs on fixture logs (214.25323ms)
+▶ T-B13 offline-drill.sh: BLOCKED and isolation paths
+  ✔ usage without --out is BLOCKED (exit 2) (13.660601ms)
+  ✔ a non-empty output directory is BLOCKED (exit 2): two runs never mix their logs (593.548156ms)
+  ✔ no installed Chromium: exit 3 with the B.5 line, and nothing is downloaded (532.177505ms)
+  ✔ without bwrap (stub PATH) it exits 3 with the BLOCKED line (583.047795ms)
+  ✔ a probe that connects exits 1 with the isolation line, before any spec runs (589.582724ms)
+✔ T-B13 offline-drill.sh: BLOCKED and isolation paths (2312.71066ms)
+✔ C1 an unpinned lock: --check exits 1 and reports every null digest as NOT PINNED (honest, never a pass) (76.291936ms)
+✔ C2 all digests recorded: --apply then --check exits 0; only image reference lines change (126.604482ms)
+✔ C3 keycloak BLOCKED (blockedReason, null digest), others pinned: --apply skips it, --check still exits 1 (103.984738ms)
+✔ C4 structure: blockedReason together with a digest is contradictory (57.724616ms)
+✔ C5 structure: missing blockedReason field, bad scope, digest without verifiedAt, malformed digest (71.523075ms)
+✔ C6 completeness: an image referenced in Compose but absent from the lock fails (106.847996ms)
+✔ C7 completeness: a file using an image but missing from its usedIn fails (149.363203ms)
+✔ C8 a file digest that differs from the lock fails (168.813547ms)
+✔ C9 --resolve with a denied registry (stub docker): reachable images recorded, quay.io BLOCKED, exit 1 (256.675914ms)
+✔ C10 runner WITH quay.io: --resolve --missing pins ONLY keycloak, --apply, --check exits 0 (299.572091ms)
+✔ C11 runner WITHOUT quay.io: --resolve --missing exits 1, keycloak stays null/BLOCKED, --check still exits 1 (270.637972ms)
+✔ C12 nothing missing: --resolve --missing calls no registry, leaves the lock byte-identical, exits 0 (49.345551ms)
+✔ C13 CI images job: resolve --missing, then --apply, then --check, in that order (0.387147ms)
+ℹ tests 125
+ℹ suites 3
+ℹ pass 125
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8495.335183
+exit=0

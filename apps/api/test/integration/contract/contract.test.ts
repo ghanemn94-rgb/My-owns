@@ -170,6 +170,12 @@ import { exerciseP6BePOperations, P6_MIRRORS_BE_P } from "./p6-exercises-be-p.ts
 import { exerciseP6BeQOperations, P6_MIRRORS_BE_Q } from "./p6-exercises-be-q.ts";
 import { exerciseP6BeTOperations, P6_MIRRORS_BE_T } from "./p6-exercises-be-t.ts";
 import { exerciseP6BeUOperations, P6_MIRRORS_BE_U } from "./p6-exercises-be-u.ts";
+import { exerciseP7BeBOperations, P7_MIRRORS_BE_B } from "./p7-exercises-be-b.ts"; // T-DG7-BE-B
+import { exerciseP7BeCOperations, P7_MIRRORS_BE_C } from "./p7-exercises-be-c.ts"; // T-DG7-BE-C
+import { exerciseP7BeDOperations, P7_MIRRORS_BE_D } from "./p7-exercises-be-d.ts"; // T-DG7-BE-D
+import { exerciseP7BeFOperations, P7_MIRRORS_BE_F } from "./p7-exercises-be-f.ts"; // T-DG7-BE-F
+import { exerciseP7BeGOperations, P7_MIRRORS_BE_G } from "./p7-exercises-be-g.ts"; // T-DG7-BE-G
+import { exerciseP7BeHOperations, P7_MIRRORS_BE_H } from "./p7-exercises-be-h.ts"; // T-DG7-BE-H
 import { exerciseP6BeWOperations, P6_MIRRORS_BE_W } from "./p6-exercises-be-w.ts";
 import { exerciseP6BeX1Operations, P6_MIRRORS_BE_X1 } from "./p6-exercises-be-x1.ts"; // T-DG6-BE-X1
 import {
@@ -417,6 +423,12 @@ const ZOD_MIRRORS: Record<string, z.ZodType> = {
   ...P6_MIRRORS_BE_U,
   ...P6_MIRRORS_BE_W,
   ...P6_MIRRORS_BE_X1,
+  ...P7_MIRRORS_BE_B, // T-DG7-BE-B
+  ...P7_MIRRORS_BE_C, // T-DG7-BE-C
+  ...P7_MIRRORS_BE_D, // T-DG7-BE-D
+  ...P7_MIRRORS_BE_F, // T-DG7-BE-F
+  ...P7_MIRRORS_BE_G, // T-DG7-BE-G
+  ...P7_MIRRORS_BE_H, // T-DG7-BE-H
 };
 
 let api: TestApi;
@@ -933,6 +945,29 @@ describe("every operation, validated against the contract and the zod mirrors", 
   it("P6 BE-X1 declared 403s of the evidence reads (p6-exercises-be-x1.ts)", async () => {
     await exerciseP6BeX1Operations(p3());
   }); // T-DG6-BE-X1 (F-DG6-QA-B-1)
+  it("P7 BE-B operations (p7-exercises-be-b.ts): deployment status, readiness with storage and worker", async () => {
+    await exerciseP7BeBOperations(p3());
+  });
+
+  it("P7 BE-C operations (p7-exercises-be-c.ts): migration exports", async () => {
+    await exerciseP7BeCOperations(p3());
+  });
+
+  it("P7 BE-D operations (p7-exercises-be-d.ts): migration imports, reconciliations, identity rebinds", async () => {
+    await exerciseP7BeDOperations(p3());
+  });
+
+  it("P7 BE-F operations (p7-exercises-be-f.ts): configuration bundles", async () => {
+    await exerciseP7BeFOperations(p3());
+  });
+
+  it("P7 BE-G operations (p7-exercises-be-g.ts): retention classes, runs, actions, archived records, backup sets", async () => {
+    await exerciseP7BeGOperations(p3());
+  });
+
+  it("P7 BE-H operations (p7-exercises-be-h.ts): requirement register and About", async () => {
+    await exerciseP7BeHOperations(p3());
+  });
 
   // T-DG2-ARCH-02 (ADR-0007 §5a): every operation that validates input declares 400.
   it("every GET operation with a path parameter: a malformed id is a declared 400 at /params/<name>; nothing written", async () => {
@@ -1114,7 +1149,13 @@ describe("every operation, validated against the contract and the zod mirrors", 
     // T-DG6-BE-O: + putDeliverableExternalChange, confirmDeliverableExternalChange (2 JSON bodies;
     // getDeliverableConfirmation is a GET). 425 + 2 = 427; JSON 423 + 2 = 425 (reconciled at merge).
     // Merge (orchestrator, measured): BE-O, BE-E2 and BE-U together: 427 + 2 = 429; JSON 425 + 2 = 427.
-    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([429, 427, 1]);
+    // T-DG7-BE-C: + createMigrationExport (1 JSON body; the four other export operations are GETs). 429 + 1 = 430;
+    // JSON 427 + 1 = 428 (measured; reconciled at merge with the other W5 tasks).
+    // T-DG7-BE-F: + createConfigBundleExport, uploadConfigBundleImport (2 JSON bodies; validate and commit take none,
+    // the five others are GETs). 430 + 2 = 432; JSON 428 + 2 = 430 (measured; reconciled at merge with the W5 tasks).
+    // T-DG7-BE-G: + updateRetentionClass, createRetentionRun, createRetentionDryRun (3 JSON bodies; the seven other
+    // retention and backup operations are GETs). 432 + 3 = 435; JSON 430 + 3 = 433 (measured; reconciled at merge).
+    expect([withBody.length, byType("application/json"), byType("application/octet-stream")]).toEqual([435, 433, 1]);
     expect([byType("text/csv"), byType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")]).toEqual([
       1, 1,
     ]);
@@ -1214,7 +1255,11 @@ describe("every operation, validated against the contract and the zod mirrors", 
     // + 12 P6 operations of slices H and G (T-DG6-ARCH-04; pending in p6-pending-be-p/q/q2.ts).
     // + 9 P6 operations of slice D (T-DG6-ARCH-05; pending in p6-pending-be-t/u.ts).
     // + 1 P6 operation of slice I (T-DG6-ARCH-06; pending in p6-pending-be-w.ts).
+    // + 19 P7 operations of slices C and D (T-DG7-ARCH-02; pending in p7-pending-be-c/d/f.ts).
+    // + 10 P7 operations of slice E (T-DG7-ARCH-03; pending in p7-pending-be-g.ts).
+    // + 1 P7 operation of slices B and F (T-DG7-ARCH-04; pending in p7-pending-be-b.ts).
+    // + 3 P7 operations of slices I and H (T-DG7-ARCH-05; pending in p7-pending-be-h.ts).
     // A new operation needs a contract change first.
-    expect(operations).toHaveLength(932);
+    expect(operations).toHaveLength(965);
   });
 });

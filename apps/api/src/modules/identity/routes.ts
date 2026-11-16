@@ -16,6 +16,7 @@ import { findOrganization, toOrganization } from "../organization/index.ts";
 import { parseBody, parseQuery, problems, requireIfMatch, sendVersioned, type ModuleDeps } from "../platform/index.ts";
 import {
   identityClaimsStorable,
+  identityUnbound,
   LOGIN_STATE_TTL_MINUTES,
   loginCookieName,
   OidcService,
@@ -224,7 +225,7 @@ export function registerIdentity(
 
   async function auditLoginFailure(
     request: FastifyRequest,
-    detail: { userId: string | null; organizationId: string | null; reason: string },
+    detail: { userId: string | null; organizationId: string | null; reason: string; error?: "identity_unbound" },
   ) {
     await db.transaction().execute((tx) =>
       record(
@@ -238,6 +239,8 @@ export function registerIdentity(
           recordId: uuidv7(),
           organizationId: detail.organizationId,
           reason: detail.reason,
+          // ADR-0064 §8 (T-DG7-BE-D): the refusal of a carried user before IT's identity rebind.
+          ...(detail.error === undefined ? {} : { changes: { error: { from: null, to: detail.error } } }),
         },
       ),
     );
@@ -265,6 +268,16 @@ export function registerIdentity(
             userId: found?.id ?? null,
             organizationId: found?.organization_id ?? null,
             reason: found ? "dev login refused: user disabled" : `dev login refused: no synthetic user "${username}"`,
+          });
+          throw problems.loginFailed();
+        }
+        // ADR-0064 §8: the dev login applies the same identity-rebind hold as the OIDC callback.
+        if (await identityUnbound(db, found.id)) {
+          await auditLoginFailure(request, {
+            userId: found.id,
+            organizationId: found.organization_id,
+            reason: "dev login refused: identity_unbound",
+            error: "identity_unbound",
           });
           throw problems.loginFailed();
         }
@@ -393,6 +406,7 @@ export function registerIdentity(
             userId: resolved.userId,
             organizationId: resolved.organizationId,
             reason: `OIDC sign-in refused: ${resolved.error}`,
+            ...(resolved.error === "identity_unbound" ? { error: resolved.error } : {}),
           });
           return fail(resolved.error);
         }

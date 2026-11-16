@@ -159,6 +159,31 @@ export const ADVISORY_LOCK_CLASSES = {
   assistantSetting: 730323,
   // P6 block of T-DG6-ARCH-06 (730326-730327; p6-plan §4, ADR-0061 §10). Both are RESERVED for this block and not
   // allocated: the branding contrast report is written by the publish transaction under brandingPublish (730270).
+  // P7 block of T-DG7-ARCH-02 (730402-730409; p7-plan §4, ADR-0064 §10, ADR-0065 §9). 730406-730409 are RESERVED for
+  // this block: never allocated to another block, and listed here only once a resource uses it. 730403 and 730404 are
+  // taken by the migration CLI (packages/db/src/transfer, which cannot import this registry; the demoReset precedent,
+  // 730271): BE-D spells them there as MIGRATION_IMPORT_LOCK_CLASS and IDENTITY_REBIND_LOCK_CLASS and pins them to these
+  // entries with a test.
+  /** The installation's migration export (transfer export: one export runs at a time; a second request while one is queued or running is refused with migration.export_in_progress). One class-wide key: "migration-export". */
+  migrationExport: 730402,
+  /** The migration import and its reconciliation (`mth-db import-migration` and `mth-db reconcile-migration`, session lock held for the whole load: a second import, a re-check and an export never interleave with it). One class-wide key: "migration-import". */
+  migrationImport: 730403,
+  /** One identity rebind run (`mth-db rebind-identity`: a mapping file is applied whole or not at all, never interleaved with another rebind or with an import). One class-wide key: "identity-rebind". */
+  identityRebind: 730404,
+  /** One organization's configuration bundle import validation and commit (config bundles: a validation run and a commit never interleave, and the commit re-validates at commit time; one validation step is also held by the 0134 trigger config_bundle_import_guard). Key: "<organizationId>". */
+  configBundleImport: 730405,
+  // P7 block of T-DG7-ARCH-03 (730410-730415; p7-plan §4, ADR-0067 §4). 730411-730415 are RESERVED for this block: never
+  // allocated to another block, and listed here only once a resource uses it (a backup set needs none: backup_set_record
+  // is one INSERT with a unique label).
+  /** The retention configuration and runs (retention: a class update, a run or dry-run request and the start of the retention.archive job never interleave, so a run never sees a class change half-way and at most one run is queued or running; also held by the 0144 index retention_run_one_active). One class-wide key: "retention". */
+  retentionRun: 730410,
+  // P7 block of T-DG7-ARCH-04 (730416-730417; p7-plan §4, ADR-0069 §8). Both are RESERVED for this block and not
+  // allocated: the readiness checks and getDeploymentStatus only read, and the drills run outside the API.
+  // P7 block of T-DG7-ARCH-05 (730418-730419; p7-plan §4, ADR-0071 §8). Both are RESERVED for this block and not
+  // allocated: the register and About operations only read a build-time snapshot, and the release tools run outside
+  // the API.
+  // P7 block of T-DG7-ARCH-06 (730420-730421; p7-plan §4, ADR-0073 §12). Both are RESERVED for this block and not
+  // allocated: the seal and verify tools run outside the API and hold no database lock; the A26/A27 drills write none.
 } as const;
 
 export type AdvisoryLockClassName = keyof typeof ADVISORY_LOCK_CLASSES;
