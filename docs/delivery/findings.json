@@ -15158,7 +15158,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG7/round-2/qa-verifier.json",
       "owner": "devops-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-15T16:45:00Z",
@@ -15189,6 +15189,21 @@
           "at": "2026-11-16T03:55:00Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 1fa349f0154c9f710d93195e8d2bdf2e20ed7291"
+        },
+        {
+          "at": "2026-11-16T04:16:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 4: PASS"
+        },
+        {
+          "at": "2026-11-16T04:45:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 4: PASS"
+        },
+        {
+          "at": "2026-11-16T06:12:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 4: PASS"
         }
       ],
       "fix_revision": "1fa349f0154c9f710d93195e8d2bdf2e20ed7291",
@@ -15197,19 +15212,21 @@
         "by_role": "qa-verifier",
         "invocation_reference": {
           "kind": "claude-code-cli-session",
-          "run_id": "DG7-T-DG7-REV-QA-R3-qa-verifier-20261115T223443Z-4c79dba1",
-          "session_id": "4c79dba1-b7f7-4e94-9c7c-823c8271051c"
+          "run_id": "DG7-T-DG7-REV-QA-R4-qa-verifier-20261116T035546Z-294c05d1",
+          "session_id": "294c05d1-af75-4757-8b9d-b12f959d14bb"
         },
-        "at": "2026-11-16T01:40:00Z",
-        "result": "FAIL",
+        "at": "2026-11-16T06:12:00Z",
+        "result": "PASS",
         "evidence": [
-          "docs/delivery/test-evidence/DG7/qa/round-3/13-protocol-audit.log",
-          "docs/delivery/test-evidence/DG7/qa/round-3/13-protocol-audit-all.json",
-          "docs/delivery/test-evidence/DG7/qa/round-3/14-f960-probes.log",
-          "docs/delivery/test-evidence/DG7/qa/round-3/15-f961-release-notes.log",
-          "docs/delivery/test-evidence/DG7/qa/round-3/19-dg7-rows.txt"
+          "docs/delivery/test-evidence/DG7/qa/round-4/f960/protocol-audit-DG7.out",
+          "docs/delivery/test-evidence/DG7/qa/round-4/f960/protocol-audit-DG7.json",
+          "docs/delivery/test-evidence/DG7/qa/round-4/f960/disclosure-surfaces.log",
+          "docs/delivery/test-evidence/DG7/qa/round-4/f960/release-tools-all.log",
+          "docs/delivery/test-evidence/DG7/qa/round-4/f960/known-limitations-regenerated.diff",
+          "docs/delivery/test-evidence/DG7/qa/round-4/f960/known-limitations-control.log",
+          "docs/delivery/test-evidence/DG7/qa/round-4/f960/release-notes-revert-probe.log"
         ],
-        "note": "NOT closed on candidate 60dd90b6. The finding's own expected result is that the release's disclosure of DG7's protocol hits (known limitations, release notes and the REQ-DLV-012 register notes) covers every handback in the frozen candidate. Part of this is repaired. The FE-C3 handback is now disclosed in the register and the release notes. known-limitations.md is regenerated from protocol-audit-r3.json and shows 'C3 handback-sections | REQ-DLV-012 | DG7 | HIT | 7'. known-limitations --check and check-handover pass, and fail when the round-2 file or a hand-edited count is put back. But my own protocol-audit.mjs --all run on this candidate (281 hits, the same as the shipped r3 report) finds SEVEN DG7 C3 hits. The seventh is docs/delivery/handbacks/DG7/T-DG7-DO-D8-devops-engineer.md, a round-2 repair task (exit 1, continued by DO-D8B), which has no merge-instructions section. Its sections are 1. Files changed, 2. Behaviour, 3. Checks run, 4. Known gaps and 5. Open questions. The REQ-DLV-012 register notes (AN-P7F) and the generated release notes still read 'the D-270 C3 hits (six, F-DG7-960 included)'. They name only the five D-270 handbacks plus FE-C3. The DO-D8 hit is named nowhere, and D-270 and D-274 do not cover it. So the handover contradicts itself: known-limitations says 7, the release notes and the register say six. The release-auditor would decide on an undercounted set (REQ-S21-003's later clause: every disclosed deviation listed in the release notes). This is the same defect class as round 2, now with a new handback. Repair: disclose the DO-D8 hit in the REQ-DLV-012 notes and regenerate the release notes, or have the user's D-270/D-274 disclosure decision cover it explicitly. No behavioural effect."
+        "note": "Verified on candidate sha256:d91f7152950ed7119b412db0135836c53a3f01e95300af32c86db367f0712e59 (source 471072d6, 3155 files recomputed in a clone and in the tree; --diff matches). A fresh 'protocol-audit.mjs --stage DG7' on this tree reports C3 = 7 hits of 77 DG7 implementation handbacks: AN-P7B, BE-R5, FE-C3, DO-D8 (merge instructions) and ARCH-R2, ARCH-R5, DO-A2 (behaviour). The two new handbacks (AN-P7G, BE-R8) are complete, which explains 77 against AN-P7G's 75. A fresh --all run gives per-stage hit counts identical to the orchestrator's protocol-audit-r4.json, with no difference. Disclosure surfaces: REQ-DLV-012's notes (pass 7) say SEVEN and name all seven handbacks, including T-DG7-FE-C3 and T-DG7-DO-D8 (not D8B). The release notes say 'seven: the five D-270 hits plus F-DG7-960's FE-C3 and F-DG7-920's DO-D8 handback'. known-limitations lists DG7 C3 = 7. No stale 'six' or '6 hits' remains in either handover file. known-limitations --check passes with the orchestrator's r4 report. With my own fresh report it differs only in the provenance line (report head and SHA-256), and the table is identical (diff kept). release-notes --check exits 0. Revert-to-fail: with the round-3 register and the current notes, --check exits 1."
       }
     },
     {
@@ -15431,7 +15448,7 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG7/round-3/domain-reviewer.json",
       "owner": "transformation-analyst",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-15T23:10:00Z",
@@ -15442,10 +15459,41 @@
           "at": "2026-11-16T03:55:00Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 1fa349f0154c9f710d93195e8d2bdf2e20ed7291"
+        },
+        {
+          "at": "2026-11-16T04:16:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 4: PASS"
+        },
+        {
+          "at": "2026-11-16T04:45:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 4: PASS"
+        },
+        {
+          "at": "2026-11-16T06:12:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 4: PASS"
         }
       ],
       "fix_revision": "1fa349f0154c9f710d93195e8d2bdf2e20ed7291",
-      "fix_summary": "AN-P7G: REQ-DLV-012 names all seven DG7 C3 handbacks (incl. DO-D8), derived from a fresh protocol audit; release notes and known limitations regenerated and agree (7)."
+      "fix_summary": "AN-P7G: REQ-DLV-012 names all seven DG7 C3 handbacks (incl. DO-D8), derived from a fresh protocol audit; release notes and known limitations regenerated and agree (7).",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG7-T-DG7-REV-QA-R4-qa-verifier-20261116T035546Z-294c05d1",
+          "session_id": "294c05d1-af75-4757-8b9d-b12f959d14bb"
+        },
+        "at": "2026-11-16T06:12:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG7/qa/round-4/f960/protocol-audit-DG7.json",
+          "docs/delivery/test-evidence/DG7/qa/round-4/f960/disclosure-surfaces.log",
+          "docs/delivery/test-evidence/DG7/qa/round-4/f960/release-tools-all.log"
+        ],
+        "note": "Same evidence as F-DG7-960, on candidate d91f7152. The DO-D8 handback (T-DG7-DO-D8-devops-engineer.md, no merge instructions) is one of the seven C3 hits in my fresh audit. It is now named in REQ-DLV-012's notes and in its completes-after-gate marker ('seven: the five D-270 hits plus F-DG7-960's FE-C3 and F-DG7-920's DO-D8 handback'). The regenerated release notes carry the same marker text, and known-limitations states 7. The three surfaces agree with each other and with the audit. The handback itself stays write-once (a disclosed process fact), and the decision on the hits stays with the release-auditor, as the marker says."
+      }
     },
     {
       "id": "F-DG7-921",
@@ -15466,7 +15514,7 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG7/round-3/domain-reviewer.json",
       "owner": "transformation-analyst",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-15T23:10:00Z",
@@ -15477,10 +15525,44 @@
           "at": "2026-11-16T03:55:00Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 1fa349f0154c9f710d93195e8d2bdf2e20ed7291"
+        },
+        {
+          "at": "2026-11-16T04:16:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 4: PASS"
+        },
+        {
+          "at": "2026-11-16T04:45:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 4: PASS"
+        },
+        {
+          "at": "2026-11-16T06:12:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 4: PASS"
         }
       ],
       "fix_revision": "1fa349f0154c9f710d93195e8d2bdf2e20ed7291",
-      "fix_summary": "AN-P7G: REQ-S19-017 (and related rows) cite the DO-D8B T-B11 run that restarted PostgreSQL and disclose that the earlier DO-D7/DO-E D9 runs restarted only API and worker."
+      "fix_summary": "AN-P7G: REQ-S19-017 (and related rows) cite the DO-D8B T-B11 run that restarted PostgreSQL and disclose that the earlier DO-D7/DO-E D9 runs restarted only API and worker.",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG7-T-DG7-REV-QA-R4-qa-verifier-20261116T035546Z-294c05d1",
+          "session_id": "294c05d1-af75-4757-8b9d-b12f959d14bb"
+        },
+        "at": "2026-11-16T06:12:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG7/qa/round-4/f921-register-extract.log",
+          "docs/delivery/test-evidence/DG7/qa/round-4/a18/a18-run.log",
+          "docs/delivery/test-evidence/DG7/qa/round-4/a18/out/direct/pgT-pg.log",
+          "docs/delivery/test-evidence/DG7/qa/round-4/a18/out/direct/step-D9.log",
+          "docs/delivery/test-evidence/DG7/qa/round-4/a18/out/direct/job-check.json",
+          "docs/delivery/test-evidence/DG7/qa/round-4/a18/qa-r4-a18-driver.sh"
+        ],
+        "note": "Verified on candidate d91f7152. REQ-S19-017's notes (pass 7) and evidence now cite DO-D8B's T-B11 run (t-b11-run.log, D9 PASS, job-check PASS, driver exit 0). They disclose that the DO-D7, DO-E and QA round-2 D9 runs most probably restarted only the API and worker, and keep those runs as history. REQ-S20-018 and REQ-S01-006 carry matching notes. I checked the citation: the cited log has the D9 line 'stop API, PostgreSQL; start PostgreSQL, API, worker', job-check PASS, 'D9 PASS in 9.573 s' and driver exit 0, and has no 'did not stop before its restart' line. transfer-drill.sh is unchanged from 7c819f08c to 471072d6 (empty diff). Independent run on this candidate: I built an archive from the frozen clone and ran transfer-drill.sh with --keep. D0-D10 PASS ('restart verified'). The target cluster's pg.log shows postmaster 4261 'received fast shutdown request' at 04:28:59.983 and 'database system is shut down' at 04:29:00.547, then a new postmaster 5001 'ready to accept connections' at 04:29:00.762, inside D9. job-check: 'PASS: enabled schedules equal, earlier job_run rows unchanged (0 new), approval rows equal'. The shipped A18 harness on the same archive passed 10/10."
+      }
     },
     {
       "id": "F-DG7-940",
@@ -15503,7 +15585,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG7/round-3/code-security-reviewer.json",
       "owner": "backend-workflow-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-15T23:20:00Z",
@@ -15514,10 +15596,128 @@
           "at": "2026-11-16T03:55:00Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 1fa349f0154c9f710d93195e8d2bdf2e20ed7291"
+        },
+        {
+          "at": "2026-11-16T04:16:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 4: PASS"
+        },
+        {
+          "at": "2026-11-16T04:45:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 4: PASS"
+        },
+        {
+          "at": "2026-11-16T06:12:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 4: PASS"
         }
       ],
       "fix_revision": "1fa349f0154c9f710d93195e8d2bdf2e20ed7291",
-      "fix_summary": "BE-R8: export-scope.test.ts proves 403 and no row/audit for business_unit and transformation scoped ADM_TECH on all five export operations; mutant M4 killed (evidence 02-mutant-M4.log)."
+      "fix_summary": "BE-R8: export-scope.test.ts proves 403 and no row/audit for business_unit and transformation scoped ADM_TECH on all five export operations; mutant M4 killed (evidence 02-mutant-M4.log).",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG7-T-DG7-REV-QA-R4-qa-verifier-20261116T035546Z-294c05d1",
+          "session_id": "294c05d1-af75-4757-8b9d-b12f959d14bb"
+        },
+        "at": "2026-11-16T06:12:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG7/qa/round-4/f940/mutants.sh",
+          "docs/delivery/test-evidence/DG7/qa/round-4/f940/mutants.log",
+          "docs/delivery/test-evidence/DG7/qa/round-4/04-integration.log"
+        ],
+        "note": "Verified on candidate d91f7152 in a disposable clone with a disposable PostgreSQL. The shipped test apps/api/test/integration/transfer/export-scope.test.ts grants ADM_TECH at business_unit and at transformation scope. It asserts 403 on list, create (with and without Idempotency-Key), get, manifest and attachment-manifest; no new migration_export row, outbox event or audit event; and an organization-scope control at 200. M0 (unmodified): export-scope plus export.test.ts, 14/14 pass, exit 0. M4 (the round-3 mutant: the scoped authorize() removed from requireExportRight, so it returns the first organization holding migration.export at any scope): 3 of 4 export-scope tests fail (both narrow-scope 403 tests and the audit-trail test), exit 1. export.test.ts still passes, so the new file is what kills it. Extra mutant M6 (requireExportRight removed from the get-by-id route only): 7 tests fail across both files, exit 1. The clone was restored after each mutant (git diff empty). The full integration suite on the unmodified clone includes the file and passes."
+      }
+    },
+    {
+      "id": "F-DG7-922",
+      "stage_id": "DG7",
+      "requirement": "REQ-DLV-015",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "stages.json at the round-4 freeze commit records DG7 REVIEWING -> REVIEWING (the round-3 FAIL outcome and the AN-P7G/BE-R8 repair period are not recorded as FIXING), so validate.mjs --historical --stage DG6..DG1 and --stage DG7 all fail on the state-machine rule",
+      "reproduction": "Repository at HEAD a76c2aed45cc7e68c07bf150d0494963f9756342 (the round-4 freeze commit over source 471072d6481a346c356e985d07b49721ebdda571; candidate sha256:d91f7152... verified, --diff matches), Node 24.21.0: `node tools/gates/validate.mjs --historical --stage DG6` prints 'FAIL gate DG6 (historical) (1 problem) - stages.json: DG7 illegal transition REVIEWING -> REVIEWING' and exits 1; the same for --historical --stage DG1 (exit 1), DG5, DG4, DG3 and DG2 (validate.log), and `--stage DG7` reports the same problem besides the expected missing gates/DG7.json (exit 1). `git diff 471072d6 HEAD -- docs/delivery/stages.json` shows the freeze appended {state: REVIEWING, at: 2026-11-16T03:55:37Z, note: 'Round 4 frozen on sha256:d91f7152 (D-276)'} directly after {state: REVIEWING, at: 2026-11-15T22:34:02Z, note: 'Round 3 frozen ...'}. tools/gates/lib/rules.mjs TRANSITIONS allows REVIEWING -> FIXING | VERIFYING | BLOCKED only. Rounds 1 and 2 recorded REVIEWING -> FIXING -> REVIEWING correctly; round 3's outcome (three FAIL records, D-276) was not. Control: the same six historical validators run with stages.json served in memory with one FIXING entry inserted before the last REVIEWING entry (stages-fixing-patch.mjs via `node --import`; the repository is not changed) all print 'PASS gate DGn (historical)', exit 0 (validate-historical-exit.log), so this transition is the only cause. The orchestrator's pre-freeze historical run (prefreeze-r4/historical.log, PASS) predates the freeze commit and so did not see it.",
+      "expected": "REQ-DLV-015: the gate state machine is enforced and a stage history passes the validator. After round 3 ended with three FAIL records on 60dd90b6 and the repairs AN-P7G and BE-R8 were integrated (D-276), the DG7 history records that period (REVIEWING -> FIXING) before the round-4 freeze moves it to REVIEWING. The assignment states that `node tools/gates/validate.mjs --historical --stage DG6` (and DG5..DG1) must pass.",
+      "actual": "The DG7 history goes REVIEWING (round 3 frozen, 2026-11-15T22:34:02Z) -> REVIEWING (round 4 frozen, 2026-11-16T03:55:37Z). All six historical validators exit 1, and `validate.mjs --stage DG7` at gate time would fail on the same rule, so DG7 cannot be APPROVED as recorded. The register check (`--register DG7`) passes. stages.json is outside the candidate (candidate.mjs metadata exclusion), so the repair needs no new candidate and affects no product file, test or review. The same defect was raised at DG4 (F-DG4-104/124) and DG6 (F-DG6-911/951). Owner: the stage record is the orchestrator's (implementers cannot write stages.json), so the owner is delivery-orchestrator as in those precedents, not one of the implementer roles the assignment lists.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/domain/round-4/validate.log",
+        "docs/delivery/test-evidence/DG7/domain/round-4/validate-historical-exit.log",
+        "docs/delivery/test-evidence/DG7/domain/round-4/stages-fixing-patch.mjs",
+        "docs/delivery/stages.json",
+        "tools/gates/lib/rules.mjs"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG7/round-4/domain-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-16T04:15:00Z",
+          "status": "OPEN",
+          "note": "Raised by domain-reviewer in DG7 round 4 on candidate sha256:d91f7152950ed7119b412db0135836c53a3f01e95300af32c86db367f0712e59 (freeze commit a76c2aed4). Medium per D-192: repair before the gate; no new candidate needed."
+        }
+      ]
+    },
+    {
+      "id": "F-DG7-941",
+      "stage_id": "DG7",
+      "requirement": "REQ-DLV-014",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "The round-4 freeze commit records DG7 REVIEWING -> REVIEWING in stages.json (the round-3 FAIL is not recorded as FIXING), so validate.mjs --pipeline, --stage DG7 and every required --historical validation (DG6, DG5, DG4, DG3, DG2, DG1) exit 1",
+      "reproduction": "Main repository at HEAD a76c2aed45cc7e68c07bf150d0494963f9756342 ('DG7: freeze round 4', the direct child of the source commit 471072d6481a346c356e985d07b49721ebdda571 of candidate sha256:d91f7152950ed7119b412db0135836c53a3f01e95300af32c86db367f0712e59), Node 24.21.0, read-only. (1) `node tools/gates/validate.mjs --historical --stage DG6` prints 'FAIL gate DG6 (historical) (1 problem) - stages.json: DG7 illegal transition REVIEWING -> REVIEWING' and exits 1. DG5, DG4, DG3, DG2 and DG1 give the same single problem and exit 1. `--pipeline` and `--stage DG7` report the same problem and exit 1 (40-validators.log, 41-validators-pipeline.log). `--register DG7` passes because it does not read the history. (2) `git diff 471072d6 HEAD -- docs/delivery/stages.json` shows that the freeze commit appended {state: REVIEWING, at: 2026-11-16T03:55:37Z, note: 'Round 4 frozen on sha256:d91f7152 (D-276).'} directly after {state: REVIEWING, at: 2026-11-15T22:34:02Z, note: 'Round 3 frozen on sha256:60dd90b6 (D-275).'}. No FIXING entry was recorded for the round-3 outcome (domain, code-security and qa all FAIL; repairs AN-P7G and BE-R8; D-276). tools/gates/lib/rules.mjs TRANSITIONS allows only REVIEWING -> FIXING | VERIFYING | BLOCKED. (3) The orchestrator's pre-freeze check prefreeze-r4/historical.log ('PASS gate DG6 (historical)') ran on the source commit before the freeze commit, where the history still ended FIXING -> REVIEWING (round 3). Rounds 1 and 2 of DG7 did record REVIEWING -> FIXING -> REVIEWING.",
+      "expected": "The assignment says '`node tools/gates/validate.mjs --historical --stage DG6` must pass (and DG5…DG1)'. CLAUDE.md requires running the validator against the previous approved gate (--historical). REQ-DLV-014 (final gate DG7): each stage's history in stages.json passes through BUILDING, REVIEWING and VERIFYING to APPROVED under the gate state machine (REQ-DLV-015). A round that fails and is repaired records REVIEWING -> FIXING -> REVIEWING, as DG7 did after rounds 1 and 2, and as the same-class precedents F-DG4-104, F-DG4-124, F-DG6-911 and F-DG6-951 (Medium, owner delivery-orchestrator) required.",
+      "actual": "DG7's history goes REVIEWING (round 3) -> REVIEWING (round 4). Every required historical validation and the pipeline validation exit 1, and the DG7 gate validation cannot pass until this is fixed. The candidate is not affected: stages.json is META-excluded and the candidate ID is still sha256:d91f7152…e59 (01-candidate-identity.log). The fix is a metadata-only correction that inserts the missing FIXING entry dated between 2026-11-15T22:34:02Z and 2026-11-16T03:55:37Z (for example at the D-276 marking). It does not change the candidate. The owner is delivery-orchestrator because implementers cannot write stages.json (CLAUDE.md, agent-protocol.md). The findings schema allows this owner, and the four precedents above use it. The assignment's owner list names implementer roles only, and none of them owns this file.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/code-security/round-4/40-validators.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-4/41-validators-pipeline.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-4/01-candidate-identity.log",
+        "docs/delivery/stages.json",
+        "tools/gates/lib/rules.mjs",
+        "docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r4/historical.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG7/round-4/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-16T04:20:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG7 round 4 by code-security-reviewer (session e38c10a2). This is the same defect class as F-DG4-104/124 and F-DG6-911/951. It is metadata only and does not change the candidate."
+        }
+      ]
+    },
+    {
+      "id": "F-DG7-970",
+      "stage_id": "DG7",
+      "requirement": "REQ-DLV-014",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "The round-4 freeze commit appended a second REVIEWING entry to DG7's stage history without the FIXING state of the round-3 repairs, so the gate validator fails on stages.json: --historical for DG6..DG1, --reconcile and --stage DG7 all exit 1 with 'DG7 illegal transition REVIEWING -> REVIEWING'",
+      "reproduction": "On HEAD a76c2aed4 (the round-4 freeze) or later: node tools/gates/validate.mjs --historical --stage DG6 (and DG5, DG4, DG3, DG2, DG1), node tools/gates/validate.mjs --reconcile, node tools/gates/validate.mjs --stage DG7. Each reports 'stages.json: DG7 illegal transition REVIEWING -> REVIEWING' and exits 1. Control: in a clone at the source commit 471072d6 (pre-freeze stages.json, whose last DG7 entry is the round-3 REVIEWING), --historical --stage DG6 and --stage DG1 print PASS and exit 0. git show a76c2aed4 -- docs/delivery/stages.json shows the appended entry {state: REVIEWING, at: 2026-11-16T03:55:37Z, note: 'Round 4 frozen on sha256:d91f7152 (D-276)'} directly after {state: REVIEWING, at: 2026-11-15T22:34:02Z, note: 'Round 3 frozen on sha256:60dd90b6 (D-275)'}. tools/gates/lib/rules.mjs TRANSITIONS allows REVIEWING -> FIXING | VERIFYING | BLOCKED only.",
+      "expected": "REQ-DLV-014 (A23/A26): each stage's history in stages.json passes through the gate loop, and its completes-after-gate clause is 'validate.mjs --stage DG7' at the gate. The assignment requires 'node tools/gates/validate.mjs --historical --stage DG6 must pass (and DG5...DG1)'. Round 3 failed (D-276) and its findings were repaired (AN-P7G, BE-R8), so the history should record REVIEWING (round 3) -> FIXING -> REVIEWING (round 4), as it did after rounds 1 and 2.",
+      "actual": "The FIXING entry for the round-3 repairs is missing, so the stage history misstates the loop, and every validator mode that reads stages.json fails. The DG7 gate cannot pass validate.mjs until the history is corrected. Scope: stages.json is a delivery record excluded from the candidate (META_EXCLUDES), so the repair does not change candidate sha256:d91f7152...0e59 and no product behaviour is affected. It is not a mandatory violation of the product. Medium under D-192: a real defect with a bounded effect that must be repaired before the gate. Owner: the delivery orchestrator, the only writer of stages.json (implementers may not edit it). The assignment's owner list names only implementer roles, but tools/gates/schemas/findings.schema.json allows delivery-orchestrator, and that is the role that can repair it.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-4/01-candidate-and-historical.log",
+        "docs/delivery/test-evidence/DG7/qa/round-4/01b-historical-at-source-commit.log",
+        "docs/delivery/test-evidence/DG7/qa/round-4/01c-stages-transition.log",
+        "docs/delivery/test-evidence/DG7/qa/round-4/09-release-tools.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG7/round-4/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-16T06:10:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG7 round 4 on candidate sha256:d91f7152950ed7119b412db0135836c53a3f01e95300af32c86db367f0712e59. Delivery-record defect introduced by the freeze commit a76c2aed4; it is outside the candidate and has no product effect, but it makes the gate validator fail."
+        }
+      ]
     }
   ]
 }
