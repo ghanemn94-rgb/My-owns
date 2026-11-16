@@ -15922,7 +15922,7 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG7/round-6/domain-reviewer.json",
       "owner": "transformation-analyst",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-16T13:15:00Z",
@@ -15933,10 +15933,40 @@
           "at": "2026-11-16T18:38:53Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at c4bb0cf8b9f6ca8bf72656807c18ead8af14be95"
+        },
+        {
+          "at": "2026-11-16T19:30:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 7: PASS"
+        },
+        {
+          "at": "2026-11-16T19:26:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 7: PASS"
+        },
+        {
+          "at": "2026-11-16T20:50:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 7: PASS"
         }
       ],
       "fix_revision": "c4bb0cf8b9f6ca8bf72656807c18ead8af14be95",
-      "fix_summary": "D-278 disclosure added to known-limitations.md, deployment.md, both Arabic summaries, the handover README and a release-notes section (T-DG7-AN-P7I, T-DG7-DO-D10; D-280)"
+      "fix_summary": "D-278 disclosure added to known-limitations.md, deployment.md, both Arabic summaries, the handover README and a release-notes section (T-DG7-AN-P7I, T-DG7-DO-D10; D-280)",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG7-T-DG7-REV-QA-R7-qa-verifier-20261116T184007Z-67eca439",
+          "session_id": "67eca439-bf25-440d-8359-2150c9185d69"
+        },
+        "at": "2026-11-16T20:50:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG7/qa/round-7/22-disclosure-surfaces.log",
+          "docs/delivery/test-evidence/DG7/qa/round-7/06-release-tools.log"
+        ],
+        "note": "I am a non-author of the fix (AN-P7I and DO-D10). Verified on candidate sha256:0d71d4456adaac949e2c9af4c975f4b9976a166872195f496d5aa75fe8ed2272, as for F-DG7-972. The finding's expected result is fully met. known-limitations.md and the release notes, as well as deployment.md, carry the three A5.6 statements. known-limitations.md carries the open A5.7 residuals (engine ticks not covered; S6/S7 timing on pg-boss 11.0.0 defaults). The Arabic summaries follow the English text and are marked provisional (deployment.ar-summary.md omits only the pg-boss sentence, which known-limitations.ar-summary.md carries)."
+      }
     },
     {
       "id": "F-DG7-942",
@@ -15959,7 +15989,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG7/round-6/code-security-reviewer.json",
       "owner": "transformation-analyst",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-16T13:05:00Z",
@@ -15970,10 +16000,41 @@
           "at": "2026-11-16T18:38:53Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at c4bb0cf8b9f6ca8bf72656807c18ead8af14be95"
+        },
+        {
+          "at": "2026-11-16T19:30:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 7: PASS"
+        },
+        {
+          "at": "2026-11-16T19:26:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 7: PASS"
+        },
+        {
+          "at": "2026-11-16T20:50:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 7: PASS"
         }
       ],
       "fix_revision": "c4bb0cf8b9f6ca8bf72656807c18ead8af14be95",
-      "fix_summary": "D-278 disclosure added to known-limitations.md, deployment.md, both Arabic summaries, the handover README and a release-notes section (T-DG7-AN-P7I, T-DG7-DO-D10; D-280)"
+      "fix_summary": "D-278 disclosure added to known-limitations.md, deployment.md, both Arabic summaries, the handover README and a release-notes section (T-DG7-AN-P7I, T-DG7-DO-D10; D-280)",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG7-T-DG7-REV-QA-R7-qa-verifier-20261116T184007Z-67eca439",
+          "session_id": "67eca439-bf25-440d-8359-2150c9185d69"
+        },
+        "at": "2026-11-16T20:50:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG7/qa/round-7/22-disclosure-surfaces.log",
+          "docs/delivery/test-evidence/DG7/qa/round-7/21-release-notes-mutations.log",
+          "docs/delivery/test-evidence/DG7/qa/round-7/06-release-tools.log"
+        ],
+        "note": "I am a non-author of the fix (AN-P7I and DO-D10). Verified on candidate sha256:0d71d4456adaac949e2c9af4c975f4b9976a166872195f496d5aa75fe8ed2272, as for F-DG7-972. known-limitations.md, the release notes and deployment.md's drill section say (1) a scheduled job is explained only as A5.2 says and is listed in the report, (2) a handler's business writes in the window still fail D9 and that is not a data defect, and (3) the recovery is to re-run the drill and never pause a schedule. known-limitations.md also carries the remaining A5.7 residuals: handler writes fail D9, including kpi.reporting_period_open; engine ticks automation.tick_hourly and tick_daily are not covered; S6/S7 depend on pg-boss 11.0.0 timing defaults. The generated texts reproduce with --check (exit 0)."
+      }
     },
     {
       "id": "F-DG7-972",
@@ -15996,7 +16057,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG7/round-6/qa-verifier.json",
       "owner": "transformation-analyst",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-16T15:25:00Z",
@@ -16007,10 +16068,74 @@
           "at": "2026-11-16T18:38:53Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at c4bb0cf8b9f6ca8bf72656807c18ead8af14be95"
+        },
+        {
+          "at": "2026-11-16T19:30:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 7: PASS"
+        },
+        {
+          "at": "2026-11-16T19:26:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 7: PASS"
+        },
+        {
+          "at": "2026-11-16T20:50:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 7: PASS"
         }
       ],
       "fix_revision": "c4bb0cf8b9f6ca8bf72656807c18ead8af14be95",
-      "fix_summary": "D-278 disclosure added to known-limitations.md, deployment.md, both Arabic summaries, the handover README and a release-notes section (T-DG7-AN-P7I, T-DG7-DO-D10; D-280)"
+      "fix_summary": "D-278 disclosure added to known-limitations.md, deployment.md, both Arabic summaries, the handover README and a release-notes section (T-DG7-AN-P7I, T-DG7-DO-D10; D-280)",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG7-T-DG7-REV-QA-R7-qa-verifier-20261116T184007Z-67eca439",
+          "session_id": "67eca439-bf25-440d-8359-2150c9185d69"
+        },
+        "at": "2026-11-16T20:50:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG7/qa/round-7/22-disclosure-surfaces.log",
+          "docs/delivery/test-evidence/DG7/qa/round-7/21-release-notes-mutations.log",
+          "docs/delivery/test-evidence/DG7/qa/round-7/06-release-tools.log",
+          "docs/delivery/test-evidence/DG7/qa/round-7/a18/a18-run.log",
+          "docs/delivery/test-evidence/DG7/qa/round-7/01-candidate.log"
+        ],
+        "note": "Verified on candidate sha256:0d71d4456adaac949e2c9af4c975f4b9976a166872195f496d5aa75fe8ed2272 (source 7579382c, 3158 files; recomputed in the repository tree at the start and end, and in my clone). The fix commit c4bb0cf8b is an ancestor of 7579382c. Since round 6 the only changes outside delivery records are docs/handover (README, deployment.md, deployment.ar-summary.md, known-limitations.md, known-limitations.ar-summary.md, release-notes.md) and tools/release (release-notes.mjs, release-notes-disclosures.json, secret-allowlist.json, release-notes.test.mjs). No product, drill or migration code changed. Each surface that ADR-0064 A5.6 names now carries all three required statements, in English and in provisional Arabic: (1) a scheduled job that runs during the drill is explained only as A5.2 says and is listed in the report (schedule-explained-d9.json and the D9 report fields); (2) a handler that writes business rows in the window still makes D9 fail, and that is not a data defect; (3) the recovery is to re-run the drill and never pause or reschedule a job. The surfaces are known-limitations.md (new 'ADR-0064 Amendment 5 (D-278)' row in section 6), the release notes (new section, EN and AR), deployment.md's drill section, known-limitations.ar-summary.md item 7 and deployment.ar-summary.md. The texts agree with A5.2 (no initiating user, schedule trigger, enabled job_schedule row, slot of that row's cron and timezone inside (W0-60 s, W1] on the target clock, created in the window, own worker audit event, one per slot) and with A5.7: residual 1 (kpi.reporting_period_open still fails, named in known-limitations), residual 3 (engine ticks not covered) and residual 4 (pg-boss 11.0.0 timing). They also agree with the drill code: schedule-explained.mjs runs one READ ONLY transaction and transfer-drill.sh never writes job_schedule. One small difference: the deployment Arabic summary omits the pg-boss 11.0.0 sentence. It is a summary, the Arabic known-limitations summary carries that sentence, and it is not one of the three required statements. Reproducibility: release-notes --check exit 0, known-limitations --check (protocol-audit-r7.json) exit 0, check-handover exit 0. Mutations in a disposable clone are caught: a removed EN or AR statement and an empty list give exit 1, and an unknown key or a missing file gives exit 2. Two real transfer drills on this candidate's archive passed D0-D11 (matched), and the A18 harness passed 10/10. The ADR-0071 text drift that the new generator input causes is raised separately as F-DG7-973 (Low). It does not reopen this finding."
+      }
+    },
+    {
+      "id": "F-DG7-973",
+      "stage_id": "DG7",
+      "requirement": "REQ-S02-005",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "ADR-0071 §5 still says the release-notes generator 'reads nothing else' and lists seven sections, but since DO-D10 it also reads tools/release/release-notes-disclosures.json and prints an eighth section; D-280 accepts the deviation without a dated ADR amendment",
+      "reproduction": "On candidate sha256:0d71d445... (source 7579382c): read docs/architecture/adr/ADR-0071-p7-traceability-register-snapshot-about-release-notes-release-blockers-protocol-audit.md §5 item 1 (l.181: 'It reads the register ..., the dependency list and the provisional Arabic files ... It reads nothing else.') and item 2 (the seven sections of release-notes.md). Then read tools/release/release-notes.mjs l.10-11 and l.28 (DEFAULT_DISCLOSURES = tools/release/release-notes-disclosures.json), and docs/handover/release-notes.md ('## Known limitations disclosed in this release'). grep -rl 'release-notes-disclosures\\|D-280' docs/architecture/ returns nothing. D-280 says: 'I accept this as within ADR-0071's intent ... and record it here instead of amending the ADR'. DO-D10's handback (known gap 1) asked for the ADR text to be settled.",
+      "expected": "Accepted architecture records state the generator's real inputs and output sections. The project records design changes to an ADR as dated amendments that win over the ADR body. ADR-0071 §5.1/§5.2 should get a dated amendment naming the extra checked-in input (read from the tool's own directory, deterministic, refused when missing or invalid) and the 'Known limitations disclosed in this release' section, in English and in the provisional Arabic summary. Alternatively the release-auditor can accept this as an observation, with the ADR owner's agreement as D-280's reversal trigger requires.",
+      "actual": "The behaviour is sound. I verified that the output is deterministic and reproducible (--check exit 0). Mutations of the input are caught: a removed English or Arabic statement and an empty list give exit 1 (drift), and an unknown key or a missing file gives exit 2 (BLOCKED). The tests (DO-D10 disclosures) pass in the 469/471 release-tool run. Only the ADR text is stale: a maintainer who reads ADR-0071 §5 is told the generator has no input beyond the register, the dependencies and the provisional files. The deviation is recorded only in decisions.md (D-280) and in the handover README row. This is documentation drift with no behavioural effect. It is not mandatory and does not block the gate.",
+      "evidence": [
+        "docs/architecture/adr/ADR-0071-p7-traceability-register-snapshot-about-release-notes-release-blockers-protocol-audit.md",
+        "tools/release/release-notes.mjs",
+        "tools/release/release-notes-disclosures.json",
+        "docs/delivery/decisions.md",
+        "docs/delivery/handbacks/DG7/T-DG7-DO-D10-devops-engineer.md",
+        "docs/delivery/test-evidence/DG7/qa/round-7/21-release-notes-mutations.log",
+        "docs/delivery/test-evidence/DG7/qa/round-7/06-release-tools.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG7/round-7/qa-verifier.json",
+      "owner": "solution-architect",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-16T20:50:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG7 round 7 (T-DG7-REV-QA-R7) on candidate sha256:0d71d4456adaac949e2c9af4c975f4b9976a166872195f496d5aa75fe8ed2272. Low, not mandatory, not blocking."
+        }
+      ]
     }
   ]
 }
