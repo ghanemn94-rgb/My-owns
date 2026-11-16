@@ -1,0 +1,115 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG7-996",
+      "stage_id": "DG7",
+      "requirement": "REQ-DLV-014",
+      "severity": "Medium",
+      "mandatory_violation": true,
+      "title": "validate --stage DG7 fails the write-once rule: committed files under docs/delivery/runs/DG7 were later deleted or modified in six commits (57 validator errors)",
+      "reproduction": "With docs/delivery/gates/DG7.json present (any decision), run 'node tools/gates/validate.mjs --stage DG7' at f141d8be4. It reports 57 'write-once:' errors ('has a D event', 'was removed after it was committed', 'is missing from the working tree', 'was committed with 2 different contents'; 'review evidence is append-only'), from rules.mjs checkReviewRounds ('nothing under the stage's reviews/ or runs/ may ever have been deleted from git history'). 'git log --diff-filter=DMR --name-status -- docs/delivery/runs/DG7' lists the commits: f6686f0d7 (REV-QA-R5 run: .post-snapshot.json, .pre-config.txt, .pre-snapshot.json, transcript.jsonl deleted), b4f501c3f (DO-J2), 3b72c507f (DO-E2 deletions plus DO-J2 transcript.jsonl modified), 8d0abc3f9 (QA-D), 12229e6b6 (AN-P7 deletions and renames), cabf14268 (QA-C). In each case a concurrent commit swept the runner's in-flight files (.pre-*, .post-snapshot.json, uncompressed transcript.jsonl) into history before the runner finished and replaced them with meta.json and transcript.jsonl.gz. The validator stops at 'gate DG7: file not found' while no gate record exists, which is why no round-1..8 reviewer and no pre-freeze freeze check saw these errors.",
+      "expected": "'node tools/gates/validate.mjs --stage DG7' passes its write-once check: no file under docs/delivery/runs/DG7 or docs/delivery/reviews/DG7 is deleted or rewritten after it is committed.",
+      "actual": "57 write-once errors over 6 run directories. The final run records (meta.json, result.json, sandbox.json, settings.json, stderr.log, transcript.jsonl.gz) of each run are present and unchanged, so no reviewer verdict or invocation evidence is lost. The rule is nevertheless broken in history, and the gate validator exits 1. Fixing it needs a decision by the orchestrator and the user. The release-auditor cannot waive it, and implementers may not edit tools/gates. The precedents are a clean re-gate on a new base (D-184/D-190/D-238) or a reviewed change to the gate rules that classifies runner transient files.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/audit/round-9/13b-validate-stage-DG7-with-approved-draft.log",
+        "docs/delivery/test-evidence/DG7/audit/round-9/16-validator-gate-errors-analysis.log",
+        "docs/delivery/test-evidence/DG7/audit/round-9/05-write-once.log"
+      ],
+      "reported_by": "release-auditor",
+      "reported_in": "docs/delivery/reviews/DG7/round-9/release-auditor.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-16T21:36:36Z",
+          "status": "OPEN",
+          "note": "Raised by release-auditor in T-DG7-AUDIT-R9 (round 9) on candidate 0d71d445. It was found when the gate record made validate --stage DG7 run its full checks. Medium and mandatory because the gate validator (M0067, REQ-DLV-014's 'validate.mjs --stage DG7 at the gate') fails. No product effect. The final run records are intact. DG7 is BLOCKED on it."
+        }
+      ]
+    },
+    {
+      "id": "F-DG7-997",
+      "stage_id": "DG7",
+      "requirement": "REQ-DLV-014",
+      "severity": "Medium",
+      "mandatory_violation": true,
+      "title": "stages.json DG7 review_rounds 7, 8 and 9 record frozen_at 2026-11-16T18:39:59Z, but the committed manifest (and stages.json candidate.frozen_at) say 18:39:12Z; the validator rejects all three rounds",
+      "reproduction": "Read docs/delivery/stages.json DG7: review_rounds[round 7|8|9].frozen_at = '2026-11-16T18:39:59Z' (equal to the REVIEWING history entry's 'at'), while docs/delivery/candidates/DG7/0d71d4456adaac94.manifest.json frozen_at and stages.json DG7 candidate.frozen_at = '2026-11-16T18:39:12Z'. 'node tools/gates/validate.mjs --stage DG7' with a gate record present reports 'review rounds: DG7 round 7|8|9 frozen_at/source_commit differ from its committed manifest' (rules.mjs l.774-775).",
+      "expected": "Each review round's frozen_at and source_commit equal those of its candidate's committed manifest.",
+      "actual": "Three validator errors. source_commit matches, but frozen_at does not. The data error is the orchestrator's. stages.json is meta-excluded, so a correction does not change the candidate id.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/audit/round-9/13b-validate-stage-DG7-with-approved-draft.log",
+        "docs/delivery/test-evidence/DG7/audit/round-9/16-validator-gate-errors-analysis.log",
+        "docs/delivery/stages.json",
+        "docs/delivery/candidates/DG7/0d71d4456adaac94.manifest.json"
+      ],
+      "reported_by": "release-auditor",
+      "reported_in": "docs/delivery/reviews/DG7/round-9/release-auditor.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-16T21:36:36Z",
+          "status": "OPEN",
+          "note": "Raised by release-auditor in T-DG7-AUDIT-R9 (round 9). Medium and mandatory because the gate validator fails. It is a record-only defect with no product effect. DG7 is BLOCKED on it."
+        }
+      ]
+    },
+    {
+      "id": "F-DG7-998",
+      "stage_id": "DG7",
+      "requirement": "REQ-DLV-014",
+      "severity": "Medium",
+      "mandatory_violation": true,
+      "title": "findings.json verification blocks of 19 CLOSED_VERIFIED DG7 findings mirror qa-verifier's sidecar entry, but the validator selects code-security-reviewer's (domain-reviewer's for F-DG7-971); 57 validator errors",
+      "reproduction": "With a gate record present, 'node tools/gates/validate.mjs --stage DG7' reports, for each of F-DG7-913, 914, 953, 954, 955, 956, 915, 935, 960, 961, 962, 963, 920, 921, 940, 971, 923, 942 and 972, three errors: 'findings.json verification by qa-verifier, sidecar by code-security-reviewer' (domain-reviewer for 971), 'verification invocation is not the verifying reviewer's own run for round-N' and 'findings.json verification evidence differs from the sidecar'. rules.mjs collectVerifications (l.650-690) takes the highest round and, within it, the first sidecar by file name unless a later one is FAIL. That is code-security-reviewer.verifications.json, or domain-reviewer's in round 6, while findings.json carries qa-verifier's entry. F-DG7-922/941/970, imported from code-security round 5, match.",
+      "expected": "findings.json verification blocks equal the sidecar entry the validator selects (D-018), as produced by tools/gates/import-findings.mjs.",
+      "actual": "19 mismatches. The substance of every closure holds. In each deciding round, every reviewer's sidecar entry for these findings is PASS -> CLOSED_VERIFIED, and every verifier is a non-owner (16-validator-gate-errors-analysis.log). The defect is in the mirror record only. findings.json is meta-excluded, so re-importing does not change the candidate id.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/audit/round-9/13b-validate-stage-DG7-with-approved-draft.log",
+        "docs/delivery/test-evidence/DG7/audit/round-9/16-validator-gate-errors-analysis.log",
+        "docs/delivery/findings.json"
+      ],
+      "reported_by": "release-auditor",
+      "reported_in": "docs/delivery/reviews/DG7/round-9/release-auditor.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-16T21:36:36Z",
+          "status": "OPEN",
+          "note": "Raised by release-auditor in T-DG7-AUDIT-R9 (round 9). Medium and mandatory because the gate validator fails. It is a record-only defect, and the closures are substantively valid. DG7 is BLOCKED on it."
+        }
+      ]
+    },
+    {
+      "id": "F-DG7-999",
+      "stage_id": "DG7",
+      "requirement": "REQ-DLV-014",
+      "severity": "Medium",
+      "mandatory_violation": true,
+      "title": "stages.json DG7 review round 5 lists records.qa-verifier = docs/delivery/reviews/DG7/round-5/qa-verifier.json, which was never written (run killed, D-278); the validator reports the record and its verifications sidecar as not found",
+      "reproduction": "stages.json DG7 review_rounds[round 5].records['qa-verifier'] = 'docs/delivery/reviews/DG7/round-5/qa-verifier.json'. The directory holds only qa-verifier.findings.json, .md and .verifications.json, written by run DG7-T-DG7-REV-QA-R5-qa-verifier-20261116T061415Z-f4c61bca (exit 143). With a gate record present, 'node tools/gates/validate.mjs --stage DG7' reports 'review rounds: DG7 round 5 qa-verifier: file not found (...round-5/qa-verifier.json)' and 'verifications sidecar .../round-5/qa-verifier.verifications.json record: file not found (...round-5/qa-verifier.json)'. rules.mjs l.662-670 tolerates an interrupted run's sidecar only when its record is neither listed in review_rounds nor on disk (D-034).",
+      "expected": "Every record listed in stages.json review_rounds exists. An interrupted run's sidecars are kept as honest evidence but are not listed as a round record (D-034).",
+      "actual": "2 validator errors. D-278 correctly decided not to import the killed run's verifications, but the round-5 entry still names the missing record. F-DG7-971's 'reported_in' also names that missing file, while its raising sidecar is round-5/qa-verifier.findings.json. This is a record-only defect, and stages.json is meta-excluded.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/audit/round-9/13b-validate-stage-DG7-with-approved-draft.log",
+        "docs/delivery/test-evidence/DG7/audit/round-9/16-validator-gate-errors-analysis.log",
+        "docs/delivery/test-evidence/DG7/audit/round-9/06-incidents.log",
+        "docs/delivery/stages.json"
+      ],
+      "reported_by": "release-auditor",
+      "reported_in": "docs/delivery/reviews/DG7/round-9/release-auditor.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-16T21:36:36Z",
+          "status": "OPEN",
+          "note": "Raised by release-auditor in T-DG7-AUDIT-R9 (round 9). Medium and mandatory because the gate validator fails. It is a record-only defect with no product effect. DG7 is BLOCKED on it."
+        }
+      ]
+    }
+  ]
+}

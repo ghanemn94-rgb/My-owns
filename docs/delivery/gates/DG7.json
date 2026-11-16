@@ -1,0 +1,223 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG7",
+  "decision": "BLOCKED",
+  "candidate_id": "sha256:0d71d4456adaac949e2c9af4c975f4b9976a166872195f496d5aa75fe8ed2272",
+  "source_commit": "7579382c59e1791321d4856ac1cb2eb2cfb4edc7",
+  "manifest_path": "docs/delivery/candidates/DG7/0d71d4456adaac94.manifest.json",
+  "previous_gate": "DG6",
+  "reviews": {
+    "domain-reviewer": "docs/delivery/reviews/DG7/round-7/domain-reviewer.json",
+    "code-security-reviewer": "docs/delivery/reviews/DG7/round-7/code-security-reviewer.json",
+    "qa-verifier": "docs/delivery/reviews/DG7/round-7/qa-verifier.json"
+  },
+  "release_audit": "docs/delivery/reviews/DG7/round-9/release-auditor.json",
+  "requirements": {
+    "final_gate_ids": [
+      "REQ-DLV-005",
+      "REQ-DLV-008",
+      "REQ-DLV-009",
+      "REQ-DLV-010",
+      "REQ-DLV-011",
+      "REQ-DLV-012",
+      "REQ-DLV-014",
+      "REQ-DLV-018",
+      "REQ-DLV-021",
+      "REQ-DLV-024",
+      "REQ-DLV-027",
+      "REQ-DLV-028",
+      "REQ-DLV-030",
+      "REQ-DLV-031",
+      "REQ-DLV-039",
+      "REQ-DLV-040",
+      "REQ-DLV-041",
+      "REQ-S01-001",
+      "REQ-S01-006",
+      "REQ-S02-003",
+      "REQ-S02-005",
+      "REQ-S16-008",
+      "REQ-S16-009",
+      "REQ-S16-024",
+      "REQ-S16-031",
+      "REQ-S16-033",
+      "REQ-S17-004",
+      "REQ-S19-001",
+      "REQ-S19-002",
+      "REQ-S19-003",
+      "REQ-S19-005",
+      "REQ-S19-007",
+      "REQ-S19-008",
+      "REQ-S19-009",
+      "REQ-S19-010",
+      "REQ-S19-011",
+      "REQ-S19-012",
+      "REQ-S19-013",
+      "REQ-S19-014",
+      "REQ-S19-015",
+      "REQ-S19-016",
+      "REQ-S19-017",
+      "REQ-S19-018",
+      "REQ-S19-019",
+      "REQ-S20-018",
+      "REQ-S20-019",
+      "REQ-S20-023",
+      "REQ-S20-026",
+      "REQ-S20-027",
+      "REQ-S20-028",
+      "REQ-S20-031",
+      "REQ-S21-002",
+      "REQ-S21-003",
+      "REQ-S21-004"
+    ],
+    "notes": "All 54 register rows with final_gate DG7 are IMPLEMENTED and equal the assignment list exactly. All three round-7 specialists checked all 54, and validate --register DG7 passes. 23 rows carry a completes-after-gate clause, and the D-274 extension is accepted in principle. The release-auditor decides that the D-270 C2/C3/C5 hits and the A27 K11 partial do not on their own block DG7 (DLV-008, 011, 012, 024, 030). NOT MET at this gate: REQ-DLV-014's clause ('validate.mjs --stage DG7 at the gate' with every finding verified by a non-owner) and REQ-DLV-005's clause ('validate.mjs --stage DG7 on the DG7 candidate with the DG7 round's review records and audit'). The validator fails on F-DG7-996 to F-DG7-999. The seal clauses (DLV-028, 031, 039, 040, 041, S02-005, S19-015, S20-028) can only follow an APPROVED gate."
+  },
+  "tests": [
+    {
+      "name": "Complete-clone check and candidate recomputation (--ref 7579382c5, --ref HEAD, working tree: 0d71d445, 3158 files); post-freeze diff meta-only; decisions.md unchanged since the freeze; DG6 historical",
+      "command": "git clone --no-local; git rev-parse --is-shallow-repository; git fsck --connectivity-only; node tools/gates/candidate.mjs --stage DG7 [--ref 7579382c59e1791321d4856ac1cb2eb2cfb4edc7 | --ref HEAD]; git diff --name-status 7579382c5 HEAD; git diff --quiet 7579382c5 HEAD -- docs/delivery/decisions.md; node tools/gates/validate.mjs --historical --stage DG6",
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/audit/round-9/01-clone-identity.log",
+        "docs/delivery/test-evidence/DG7/audit/round-9/01b-validate-DG6-historical.log"
+      ]
+    },
+    {
+      "name": "Provenance and independence of the three round-7 records (distinct successful sandboxed runs, sandbox.json hash, empty external_config_changed, tool-authored record hashes; no reviewer implemented DG7)",
+      "command": "python3 over docs/delivery/runs/DG7/*/meta.json, sandbox.json, transcript.jsonl.gz and reviews/DG7/round-7/*.json",
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/audit/round-9/02-provenance.log",
+        "docs/delivery/test-evidence/DG7/audit/round-9/02b-dg7-runs-table.log"
+      ]
+    },
+    {
+      "name": "Verdicts and full-review scope of the round-7 records; round-6 vs round-7 manifest diff",
+      "command": "python3 over reviews/DG7/round-7/*.json and candidates/DG7/{0b48162701518d1f,0d71d4456adaac94}.manifest.json",
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/audit/round-9/03-manifest-r6-r7.log",
+        "docs/delivery/test-evidence/DG7/audit/round-9/08c-requirements-coverage.log"
+      ]
+    },
+    {
+      "name": "DG7 findings: substance of 22 closures holds (non-owner PASS verifications, valid anchors), F-DG7-973 properly accepted; but findings.json verification mirrors of 19 findings differ from the validator-selected sidecar (F-DG7-998)",
+      "command": "python3 + git cat-file -t + git merge-base --is-ancestor over docs/delivery/findings.json, stages.json, runs/DG7/*/meta.json and reviews/DG7/round-*/*.verifications.json; node tools/gates/validate.mjs --stage DG7",
+      "result": "FAIL",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/audit/round-9/04-findings.log",
+        "docs/delivery/test-evidence/DG7/audit/round-9/16-validator-gate-errors-analysis.log"
+      ]
+    },
+    {
+      "name": "Write-once: DG0-DG6 unchanged; reviews/candidates/assignments of DG7 untouched; but 57 validator write-once errors on runner transient files in six runs/DG7 directories (F-DG7-996)",
+      "command": "git log --diff-filter=DMR --name-status -- docs/delivery/{reviews,runs,candidates}/DG7 'docs/delivery/assignments/DG7/round-*'; git log c6e354ae7..HEAD -- <DG0-DG6 records>; node tools/gates/validate.mjs --stage DG7",
+      "result": "FAIL",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/audit/round-9/05-write-once.log",
+        "docs/delivery/test-evidence/DG7/audit/round-9/16-validator-gate-errors-analysis.log"
+      ]
+    },
+    {
+      "name": "Incidents and orchestrator decisions judged from history; stages.json round-5 lists a never-written qa-verifier.json (F-DG7-999) and rounds 7-9 carry a frozen_at that differs from the manifest (F-DG7-997)",
+      "command": "git log/show; stages.json DG7 history and review_rounds; reviews/DG7/round-5; tools/release/secret-allowlist.json; decisions.md D-241..D-280; known-limitations.md",
+      "result": "FAIL",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/audit/round-9/06-incidents.log",
+        "docs/delivery/test-evidence/DG7/audit/round-9/06a-disclosure-decisions.log",
+        "docs/delivery/test-evidence/DG7/audit/round-9/16-validator-gate-errors-analysis.log"
+      ]
+    },
+    {
+      "name": "Protocol audit on DG7 (exit 1 by design: C2 29 lexical hits, C3 7, C5 1; C1, C4, C6-C9 PASS) and the release-auditor's decision that the D-270 hits and the A27 K11 partial do not on their own block",
+      "command": "node tools/release/protocol-audit.mjs --stage DG7 --json; ASSIGNMENT_ELEMENTS over the round-7/8/9 assignments; progress.md next-action reading",
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/audit/round-9/07a-protocol-audit-DG7.log",
+        "docs/delivery/test-evidence/DG7/audit/round-9/07-protocol-audit-DG7.json",
+        "docs/delivery/test-evidence/DG7/audit/round-9/07b-c2-hits.log",
+        "docs/delivery/test-evidence/DG7/audit/round-9/07c-k11-progress-reading.log"
+      ]
+    },
+    {
+      "name": "Register DG7 (54/54 IMPLEMENTED, equal to the assignment list; register rules PASS); REQ-DLV-014 and REQ-DLV-005 gate clauses not met while validate --stage DG7 fails",
+      "command": "node tools/gates/validate.mjs --register DG7; python3 over requirements.csv and reviews/DG7/round-7/*.json",
+      "result": "FAIL",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/audit/round-9/08-validate-register-DG7.log",
+        "docs/delivery/test-evidence/DG7/audit/round-9/08b-register-rows.log",
+        "docs/delivery/test-evidence/DG7/audit/round-9/08c-requirements-coverage.log"
+      ]
+    },
+    {
+      "name": "Final verification: product tree 19a82f6c2 -> 7579382c5 differs only in known-limitations.md and secret-allowlist.json; prefreeze-r7 19 steps (17 exit 0; 2 failed on the stale entries) and prefreeze-r7b re-runs all exit 0; live CI not run (disclosed residual, D-058)",
+      "command": "git diff --stat 19a82f6c2bbb0434fd15e87ef0cfe192d5de6a47 7579382c59e1791321d4856ac1cb2eb2cfb4edc7 -- . ':!docs/delivery'; grep exit= prefreeze-r7*/checks.log; grep failure markers in prefreeze-r7*/*.log",
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/audit/round-9/09-final-verification.log",
+        "docs/delivery/test-evidence/DG7/audit/round-9/09a-prefreeze-tree-diff.log"
+      ]
+    },
+    {
+      "name": "Evidence honesty: every failure marker in the logs the round-7 records cite is disclosed and explained; spot checks of the About screens and both A18 drill reports",
+      "command": "grep -cE over test-evidence/DG7/{domain,code-security,qa}/round-7; Read of screenshots; python3 over a18 transfer-drill-report.json",
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/audit/round-9/10b-evidence-honesty.log"
+      ]
+    },
+    {
+      "name": "Release tools at the source commit (claims-scan, release-notes --check, known-limitations --check, check-handover, payload secret scan, release-notes tests), product-vs-engineering-gate greps, evidence secret scan",
+      "command": "node tools/release/{claims-scan,release-notes,known-limitations,check-handover,secret-scan}.mjs ...; node --test tools/release/tests/release-notes.test.mjs; grep; node tools/release/secret-scan.mjs --path docs/delivery/test-evidence/DG7/audit/round-9",
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/audit/round-9/11-release-tools.log",
+        "docs/delivery/test-evidence/DG7/audit/round-9/11b-check-handover.log",
+        "docs/delivery/test-evidence/DG7/audit/round-9/10-product-vs-engineering.log",
+        "docs/delivery/test-evidence/DG7/audit/round-9/15-evidence-secret-scan.log"
+      ]
+    },
+    {
+      "name": "Gates DG5..DG0 historical and pipeline",
+      "command": "node tools/gates/validate.mjs --historical --stage DG5 / DG4 / DG3 / DG2 / DG1 / DG0; node tools/gates/validate.mjs --pipeline",
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/audit/round-9/12-validators.log"
+      ]
+    },
+    {
+      "name": "validate --stage DG7 with a gate record present: 120 problems, of which 1 concerns this in-flight run and 119 do not (F-DG7-996 to F-DG7-999)",
+      "command": "node tools/gates/validate.mjs --stage DG7",
+      "result": "FAIL",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/audit/round-9/13b-validate-stage-DG7-with-approved-draft.log",
+        "docs/delivery/test-evidence/DG7/audit/round-9/16-validator-gate-errors-analysis.log"
+      ]
+    },
+    {
+      "name": "Decisions D-241..D-280 present with rationale and reopen-if, quoted verbatim; progress.md checkpoint with the user's F-DG7-973 decision quoted",
+      "command": "python3 over docs/delivery/decisions.md; sed -n 7p docs/delivery/progress.md",
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/audit/round-9/14-decisions.log"
+      ]
+    }
+  ],
+  "blocking_conditions": [
+    "B1 (F-DG7-996, Medium, mandatory, OPEN, owner delivery-orchestrator): 'node tools/gates/validate.mjs --stage DG7' reports 57 write-once errors. Files committed under docs/delivery/runs/DG7 were later deleted or modified: the runner's transient .pre-config.txt, .pre-snapshot.json, .post-snapshot.json and uncompressed transcript.jsonl, swept into history by concurrent commits. The commits are f6686f0d7 (REV-QA-R5), b4f501c3f (DO-J2), 3b72c507f (DO-E2, DO-J2), 8d0abc3f9 (QA-D), 12229e6b6 (AN-P7) and cabf14268 (QA-C). The final run records are intact, but rules.mjs checkReviewRounds forbids any deletion under runs/ in history. The release-auditor cannot waive this. Clearing it needs a decision by the orchestrator and the user, for example a clean re-gate on a new base (D-184/D-190/D-238) or a reviewed gate-rule change, and then a new audit.",
+    "B2 (F-DG7-997, Medium, mandatory, OPEN, owner delivery-orchestrator): stages.json DG7 review_rounds 7, 8 and 9 record frozen_at 2026-11-16T18:39:59Z, but the committed manifest 0d71d4456adaac94 and candidate.frozen_at record 2026-11-16T18:39:12Z. The validator reports 'frozen_at/source_commit differ from its committed manifest' for all three rounds. stages.json is meta-excluded, so a correction needs no re-freeze.",
+    "B3 (F-DG7-998, Medium, mandatory, OPEN, owner delivery-orchestrator): findings.json verification blocks of 19 CLOSED_VERIFIED findings carry qa-verifier's sidecar entry: F-DG7-913, 914, 953, 954, 955, 956, 915, 935, 960, 961, 962, 963, 920, 921, 940, 971, 923, 942 and 972. The validator selects code-security-reviewer's entry (domain-reviewer's for 971), giving 57 errors (role, invocation and evidence differ). Every sidecar in each deciding round is PASS by a non-owner, so the closures are substantively valid. findings.json is meta-excluded. A re-import with tools/gates/import-findings.mjs that matches the validator's selection is needed.",
+    "B4 (F-DG7-999, Medium, mandatory, OPEN, owner delivery-orchestrator): stages.json DG7 review round 5 lists records.qa-verifier = docs/delivery/reviews/DG7/round-5/qa-verifier.json, which the killed run f4c61bca never wrote (D-278). The validator reports the record and its verifications sidecar's record as not found (2 errors). It tolerates an interrupted run's sidecars only when the record is neither listed nor on disk (D-034). Also: F-DG7-971.reported_in names that missing file.",
+    "B5: consequently REQ-DLV-014's gate clause ('shown by validate.mjs --stage DG7 at the gate') and REQ-DLV-005's gate clause are not met. After B1-B4 are repaired and imported, a new release audit must re-run validate --stage DG7 with a gate record present. Every other condition checked in this audit holds: identity, provenance, verdicts, the substance of every finding, pre-freeze evidence, evidence honesty, the protocol-hit and K11 decisions, decisions and the product/engineering gate separation."
+  ],
+  "accepted_observations": [
+    "F-DG7-973"
+  ],
+  "decided_at": "2026-11-16T21:36:36Z",
+  "decided_by": "release-auditor",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG7-T-DG7-AUDIT-R9-release-auditor-20261116T211135Z-d27cb0e9",
+    "session_id": "d27cb0e9-02e4-4b3a-a007-e743fa1ee16d"
+  },
+  "notes": "DG7 is an engineering delivery gate only. This record grants no real business, Finance or IT approval and implies nothing about product gates G1-G6. Product G6 never implies DG7. The demo data and approvals in the evidence are synthetic and labelled as such, #0078FF is a provisional brand token, and nothing claims official PMI status or certification.\n\nWhy BLOCKED: the assignment requires that every error 'validate --stage DG7' reports concern only this in-flight run. With a gate record present, the validator reports 119 other errors, from four record-integrity defects in delivery records (B1-B4). None changes the product or the candidate. The product, the three round-7 reviews and every prior finding's substance pass this audit. The earlier reviewers could not see these errors because 'validate --stage DG7' stops at 'gate DG7: file not found' when no gate record exists. The freeze-time check that D-277 introduced has the same limit. Recommendation for the gate rules' owner: run the record checks even when the gate record is absent, through the reviewed tools/gates change process.\n\nF-DG7-973 (Low, not mandatory) stays accepted as an observation. It is accepted by the user's decision (progress.md, 2026-11-16), by its reporter qa-verifier (round 8) and by the release-auditor (round 8, confirmed here). The acceptance record's owner is delivery-orchestrator, and the follow-up, a dated ADR-0071 amendment, is owned by solution-architect.\n\nDecisions carried to the next audit, unless something changes: the D-270 protocol hits (C2, C3, C5) and the A27 K11 partial do not on their own block DG7, and the D-274 Q19 extension is accepted.\n\nObservations (not findings):\n- O-1: the protocol audit now reports 29 lexical C2 hits for DG7, 30 once this run's meta.json exists, against the 27 disclosed. The extra hits are the round-8 qa and release-auditor assignments and this round-9 assignment. The auditor judges the flagged elements present in substance. The sealing report should state this.\n- O-2: F-DG7-971.reported_in, see B4.\n- O-3: the About 'Clause that completes later' column shows full notes verbatim, by ADR-0071 design.\n\nResiduals, disclosed and not claimed as passed: live CI (D-058); the live registry (D-057); Keycloak and an enterprise IdP beyond the single-host run (D-049, D-267); real external systems; and the provisional capacity targets and Arabic text."
+}

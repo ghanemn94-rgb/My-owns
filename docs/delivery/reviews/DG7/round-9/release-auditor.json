@@ -1,0 +1,354 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG7",
+  "round": 9,
+  "candidate_id": "sha256:0d71d4456adaac949e2c9af4c975f4b9976a166872195f496d5aa75fe8ed2272",
+  "source_commit": "7579382c59e1791321d4856ac1cb2eb2cfb4edc7",
+  "reviewer_role": "release-auditor",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG7-T-DG7-AUDIT-R9-release-auditor-20261116T211135Z-d27cb0e9",
+    "session_id": "d27cb0e9-02e4-4b3a-a007-e743fa1ee16d"
+  },
+  "implementation_author": [
+    "solution-architect",
+    "backend-workflow-engineer",
+    "kpi-benefits-engineer",
+    "frontend-ux-engineer",
+    "devops-engineer",
+    "transformation-analyst",
+    "qa-verifier",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "release-auditor (session d27cb0e9-02e4-4b3a-a007-e743fa1ee16d, task T-DG7-AUDIT-R9) authored no DG7 implementation, test, ADR, register row, handover text, release tool, repair, delivery decision (D-241 to D-280), freeze commit, stages.json entry or findings.json entry. My role's only earlier DG7 run is the round-8 part-1 concurrence on F-DG7-973 (T-DG7-AUDIT-R8); I re-judged that acceptance here rather than relying on it. qa-verifier is listed among the authors only for its pre-freeze test-first acceptance suites (T-DG7-QA-A to QA-F: tests/qa/**), which agent-protocol.md permits; its round-7 record declares it wrote no product code and no candidate file in that run. I verified the assignment hash (93a6ca78...4acb). I re-ran every audit item myself, in a complete git clone --no-local (not a worktree, D-082) under my private $TMPDIR, and read the specialist records as objects of the audit, not as a substitute for my own checks. I wrote only this record, its findings sidecar, docs/delivery/gates/DG7.json and evidence under docs/delivery/test-evidence/DG7/audit/round-9/. I grant no business, Finance, IT or production approval and no product gate G1-G6; product G6 never implies DG7."
+  },
+  "assignment": "docs/delivery/assignments/DG7/round-9/release-auditor.md",
+  "requirements_checked": [
+    "REQ-DLV-005",
+    "REQ-DLV-008",
+    "REQ-DLV-009",
+    "REQ-DLV-010",
+    "REQ-DLV-011",
+    "REQ-DLV-012",
+    "REQ-DLV-014",
+    "REQ-DLV-018",
+    "REQ-DLV-021",
+    "REQ-DLV-024",
+    "REQ-DLV-027",
+    "REQ-DLV-028",
+    "REQ-DLV-030",
+    "REQ-DLV-031",
+    "REQ-DLV-039",
+    "REQ-DLV-040",
+    "REQ-DLV-041",
+    "REQ-S01-001",
+    "REQ-S01-006",
+    "REQ-S02-003",
+    "REQ-S02-005",
+    "REQ-S16-008",
+    "REQ-S16-009",
+    "REQ-S16-024",
+    "REQ-S16-031",
+    "REQ-S16-033",
+    "REQ-S17-004",
+    "REQ-S19-001",
+    "REQ-S19-002",
+    "REQ-S19-003",
+    "REQ-S19-005",
+    "REQ-S19-007",
+    "REQ-S19-008",
+    "REQ-S19-009",
+    "REQ-S19-010",
+    "REQ-S19-011",
+    "REQ-S19-012",
+    "REQ-S19-013",
+    "REQ-S19-014",
+    "REQ-S19-015",
+    "REQ-S19-016",
+    "REQ-S19-017",
+    "REQ-S19-018",
+    "REQ-S19-019",
+    "REQ-S20-018",
+    "REQ-S20-019",
+    "REQ-S20-023",
+    "REQ-S20-026",
+    "REQ-S20-027",
+    "REQ-S20-028",
+    "REQ-S20-031",
+    "REQ-S21-002",
+    "REQ-S21-003",
+    "REQ-S21-004"
+  ],
+  "checks_run": [
+    {
+      "id": "AUD-DG7-R9-01-clone-identity",
+      "procedure": "Verify the assignment hash. Make a complete git clone --no-local (not a worktree) under $TMPDIR at HEAD f141d8be4; check it is not shallow and passes a connectivity fsck. Recompute the candidate with --ref 7579382c5, --ref HEAD and on the clone working tree. Read the manifest and stages.json DG7. Confirm 7579382c5..HEAD changes only meta-excluded records (tools/gates/lib/candidate.mjs META_EXCLUDES) and that decisions.md is unchanged since the freeze. Run validate --historical --stage DG6.",
+      "command": "sha256sum docs/delivery/assignments/DG7/round-9/release-auditor.md; git clone -q --no-local /home/user/My-owns $TMPDIR/c; git checkout f141d8be4; git rev-parse --is-shallow-repository; git fsck --connectivity-only; node tools/gates/candidate.mjs --stage DG7 [--ref 7579382c59e1791321d4856ac1cb2eb2cfb4edc7 | --ref HEAD | working tree]; git diff --name-status 7579382c5 HEAD; git diff --quiet 7579382c5 HEAD -- docs/delivery/decisions.md; node tools/gates/validate.mjs --historical --stage DG6",
+      "environment": "Node 24.21.0 (/opt/nvm/versions/node/v24.21.0/bin), agent sandbox, offline; complete --no-local clone under $TMPDIR",
+      "expected": "Candidate sha256:0d71d445...2272 with 3158 files in every computation; post-freeze changes meta-only; decisions.md unchanged; DG6 historical PASS.",
+      "actual": "Assignment sha256 93a6ca781188ecd586c945712f1c2956fdac17ab365a7e6ec64599c5afd34acb, as given. Clone HEAD f141d8be4, shallow=false, fsck --connectivity-only exit 0. candidate.mjs gives sha256:0d71d4456adaac949e2c9af4c975f4b9976a166872195f496d5aa75fe8ed2272, 3158 files, exit 0, at --ref 7579382c5, --ref HEAD and on the working tree. The manifest records the same id, source_commit 7579382c59e1791321d4856ac1cb2eb2cfb4edc7, frozen_at 2026-11-16T18:39:12Z, spec include ** / exclude trading_agent/**, 3158 entries; stages.json DG7 is VERIFYING with the same candidate, source and manifest_path. 7579382c5..HEAD: only A under assignments/DG7/round-7..9, candidates/DG7 (the manifest), reviews/DG7/round-7..8, runs/DG7 (5 runs), test-evidence/DG7, and M of findings.json, progress.md and stages.json: all META_EXCLUDES. decisions.md: git diff --quiet exit 0. validate --historical --stage DG6: 'PASS gate DG6 (historical)', exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/audit/round-9/01-clone-identity.log",
+        "docs/delivery/test-evidence/DG7/audit/round-9/01b-validate-DG6-historical.log",
+        "docs/delivery/candidates/DG7/0d71d4456adaac94.manifest.json"
+      ]
+    },
+    {
+      "id": "AUD-DG7-R9-02-provenance-independence",
+      "procedure": "For each round-7 specialist record: resolve invocation_reference to runs/DG7/<run_id>/meta.json; check role, task, exit code, subtype, assignment hash, sandbox.json sha256 against meta.process_sandbox_sha256, external_config_changed, transcript session ids, written_by_tools and the record's sha256 against tool_authored. Tabulate every DG7 run by role. Check that no reviewer role implemented a DG7 requirement and that no DG7 review run has a non-empty external_config_changed.",
+      "command": "python3 over docs/delivery/runs/DG7/*/meta.json, sandbox.json, transcript.jsonl.gz and docs/delivery/reviews/DG7/round-7/*.json (see 02-provenance.log)",
+      "environment": "Clone at f141d8be4, python3, offline",
+      "expected": "Three real, distinct, successful, sandboxed round-7 runs bound to their records; no reviewer authored DG7 implementation; no review run with external config change.",
+      "actual": "domain-reviewer 79fe1980 (T-DG7-REV-DOM-R7), code-security-reviewer 43e1182d (T-DG7-REV-CS-R7), qa-verifier 67eca439 (T-DG7-REV-QA-R7): each exit 0, subtype success, is_error false, result_session_id equal to the record's session, one session id in the transcript, assignment sha256 equal to the file, process_sandbox and bash_sandbox true, sandbox.json sha256 equal to meta.process_sandbox_sha256, external_config_changed [], deleted [], record sha256 equal to tool_authored. Sessions distinct. Each run's 'outputs' also lists the other reviewers' files: outputs is a before/after snapshot of the shared tree while the three ran concurrently; written_by_tools and tool_authored are per run and contain only each run's own files. Reviewer-role DG7 runs: domain R1-R7, code-security R1-R7 plus A26-CS/A26-V (drill reviews), qa R1-R8 plus A26-QA and QA-A..QA-F (test-first acceptance suites under tests/qa/**, permitted by agent-protocol.md), release-auditor R8. No reviewer role ran an implementer task. Every DG7 review run's sandbox.json matches and its external_config_changed is []. The only non-empty external_config_changed in DG7 is the implementer run T-DG7-BE-A26 (scratch node_modules .gitattributes and a package CLAUDE.md inside its own drill worktree): not a review run. Two DG7 run directories have no meta.json (AN-P7D: worker restart, D-270; ARCH-02: disk full, relaunched, 9f161c651), both implementer runs, disclosed. The round-5 qa run ended with exit 143 (container restart, D-278); see checks 06 and 14.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/audit/round-9/02-provenance.log",
+        "docs/delivery/test-evidence/DG7/audit/round-9/02b-dg7-runs-table.log"
+      ]
+    },
+    {
+      "id": "AUD-DG7-R9-03-verdicts-full-review",
+      "procedure": "Read the three round-7 records: verdict, candidate, full 40-hex source_commit, round, every check's result and exit_status, requirements_checked. Judge from the checks and their evidence whether each is a full review of the candidate, not only of the D-280 delta. Independently compare the round-6 and round-7 manifests entry by entry.",
+      "command": "python3 over reviews/DG7/round-7/*.json; manifest diff 0b48162701518d1f vs 0d71d4456adaac94",
+      "environment": "Clone at f141d8be4",
+      "expected": "Three PASS records on this candidate, each a full review.",
+      "actual": "domain-reviewer: PASS, 13 checks all PASS/0, 54 requirements, findings []. code-security-reviewer: PASS, 13 checks all PASS/0, 54 requirements, findings []. qa-verifier: PASS, 26 checks all PASS/0, 54 requirements, findings [F-DG7-973]. Each candidate_id is 0d71d445...2272, each source_commit is the full 7579382c59e1791321d4856ac1cb2eb2cfb4edc7, round 7. My manifest diff: 3157 -> 3158 entries; added tools/release/release-notes-disclosures.json; changed decisions.md, six docs/handover files, release-notes.mjs, secret-allowlist.json, release-notes.test.mjs; nothing under apps/, packages/, deploy/, tests/, e2e/ or the register. Judgement per record. qa re-ran the whole candidate: static checks, unit 3042+2199+259, integration 475 files (5 environment failures explained and re-run 246/246), gates/agents/migration/deploy suites, release tools 469/0/2, e2e en/ar 286+286, root acceptance 288, offline 10/10, two real A18 drills D0-D11 PASS on this candidate's archive plus the harness 10/10, A19, the register, the protocol audit, deps and licences, both secret scans, and read all 54 acceptance texts. domain re-ran the release-tool suite (T-A5 rerun green), the transfer-drill tests 70/70, the P7 About/register e2e in en and ar with screenshots, the generated-text checks and the history secret scan, and judged all 54 requirements and the disclosures. code-security rebuilt the clone, ran payload/history/claims and the asset scan on an assembled runtime, the full release-tool suite (T-A5 and T-A11 re-run green), the deploy suite 204/204, a 22-case hostile-input probe of the new generator code, and the validators; for unchanged product code it states that its earlier line-level review stands (SEC-DG7-R7-30). Both carry-forwards are sound because the product tree is byte-identical to round 6 (my manifest diff) and to the rounds in which they reviewed it, as the DG6 audit accepted for the same pattern. None of the three is limited to the D-280 delta. Note: each reviewer ran validate --stage DG7 only without a gate record, so the validator stopped at 'file not found (gates/DG7.json)' and none of them could see the record errors in check 14.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/audit/round-9/03-manifest-r6-r7.log",
+        "docs/delivery/test-evidence/DG7/audit/round-9/08c-requirements-coverage.log",
+        "docs/delivery/reviews/DG7/round-7/domain-reviewer.json",
+        "docs/delivery/reviews/DG7/round-7/code-security-reviewer.json",
+        "docs/delivery/reviews/DG7/round-7/qa-verifier.json"
+      ]
+    },
+    {
+      "id": "AUD-DG7-R9-04-findings",
+      "procedure": "For every DG7 finding in findings.json: severity, mandatory flag, status, owner, reporter, verifier; for CLOSED_VERIFIED: fix_revision full 40-hex, a commit object, an ancestor of the verifying round's source_commit (stages.json review_rounds), of the verifying run's head_commit_at_start and of 7579382c5, verifier not the owner. List every sidecar verification per finding and compare findings.json with the entry the validator selects (rules.mjs collectVerifications). For F-DG7-973: the acceptance object and the round-8 sidecars; re-judge the acceptance.",
+      "command": "python3 + git cat-file -t / git merge-base --is-ancestor over docs/delivery/findings.json, stages.json, runs/DG7/*/meta.json; reviews/DG7/round-*/*.verifications.json; node tools/gates/validate.mjs --stage DG7 (with a gate record); grep ADR-0071",
+      "environment": "Clone at f141d8be4 and the repository (read-only validator)",
+      "expected": "Every DG7 finding CLOSED_VERIFIED by a non-owner with a valid anchor, mirrored in findings.json exactly as the validator selects it, or ACCEPTED_OBSERVATION as permitted; zero unresolved Critical/High; zero unresolved mandatory.",
+      "actual": "23 prior DG7 findings. Substance holds for the 22 CLOSED_VERIFIED ones. Fix anchors: 913 (Medium, mandatory), 914, 953, 954, 955 and 956 at b514c7a3531c91afb0d9f0ddb211b62865668856 (round 2); 915, 935, 961, 962 and 963 at ced8d9924918435c44045899d78196c2e17d7807 (round 3); 960, 920, 921 and 940 at 1fa349f0154c9f710d93195e8d2bdf2e20ed7291 (round 4); 922, 941 and 970 at 9d56911437e10bff97c09f6b05e4bd26eadc37ea (round 5); 971 at ac650b8b09b8c96b562abffd0e42fa46be78285f (round 6); 923, 942 and 972 at c4bb0cf8b9f6ca8bf72656807c18ead8af14be95 (round 7). Each anchor is 40-hex, a commit object, and an ancestor of the verifying round's source, the verifying run's head and 7579382c5. In each deciding round every reviewer's sidecar entry is PASS -> CLOSED_VERIFIED, and none of them is the owner. FAIL on the mirror: findings.json's verification block for 19 of them (913, 914, 953, 954, 955, 956, 915, 935, 960, 961, 962, 963, 920, 921, 940, 971, 923, 942, 972) is qa-verifier's entry. The validator selects code-security-reviewer's entry, or domain-reviewer's for 971, by file-name order, and reports 57 errors (F-DG7-998). F-DG7-973: Low, mandatory_violation false, ACCEPTED_OBSERVATION. qa-verifier (reporter, round 8) and release-auditor (round 8) are both PASS -> ACCEPTED_OBSERVATION. The acceptance owner is delivery-orchestrator, accepted_by [qa-verifier, release-auditor], with the user's decision in progress.md (614c3b975). The validator raises no error on it. I concur: ADR-0071 l.181 still says 'It reads nothing else', the generator stays deterministic (check 11), and the stale ADR text has no behavioural effect. Follow-up owner: solution-architect (a dated ADR-0071 amendment). Unresolved Critical/High: none. Unresolved mandatory among the prior findings: none. New: F-DG7-996 to F-DG7-999 (Medium, mandatory, OPEN).",
+      "exit_status": 1,
+      "result": "FAIL",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/audit/round-9/04-findings.log",
+        "docs/delivery/test-evidence/DG7/audit/round-9/16-validator-gate-errors-analysis.log",
+        "docs/delivery/test-evidence/DG7/audit/round-9/13b-validate-stage-DG7-with-approved-draft.log",
+        "docs/delivery/findings.json",
+        "docs/delivery/reviews/DG7/round-8/qa-verifier.verifications.json",
+        "docs/delivery/reviews/DG7/round-8/release-auditor.verifications.json"
+      ]
+    },
+    {
+      "id": "AUD-DG7-R9-05-write-once",
+      "procedure": "List every D/M/R in the full history under reviews/DG7, runs/DG7, candidates/DG7 and assignments/DG7/round-*. List every commit touching gates/DG0-DG6.json, reviews/DG0-DG6, candidates/DG0-DG6, runs/DG0-DG6 or assignments/DG0-DG6 after DG6's last gate commit. Read the validator's write-once check with a gate record present.",
+      "command": "git log --diff-filter=DMR --name-status -- <paths>; git log c6e354ae7..HEAD -- <DG0-DG6 paths>; node tools/gates/validate.mjs --stage DG7",
+      "environment": "Clone at f141d8be4 and the repository (read-only validator)",
+      "expected": "No write-once DG7 record deleted or rewritten; DG0-DG6 approved records unchanged; the validator's write-once check reports nothing.",
+      "actual": "DG0-DG6: no commit touches their gate records, reviews, candidates, runs or assignments after c6e354ae7, and all seven gates are APPROVED. reviews/DG7, candidates/DG7 and assignments/DG7/round-*: no D, M or R in history. runs/DG7: six commits delete or modify committed files, namely the runner's transient .pre-config.txt, .pre-snapshot.json, .post-snapshot.json and uncompressed transcript.jsonl. The commits are f6686f0d7 (REV-QA-R5), b4f501c3f (DO-J2), 3b72c507f (DO-E2, plus DO-J2 transcript.jsonl M), 8d0abc3f9 (QA-D), 12229e6b6 (AN-P7) and cabf14268 (QA-C). With a gate record present the validator reports 57 'write-once:' errors on these files ('review evidence is append-only'). Each run's final records (meta.json, result.json, sandbox.json, transcript.jsonl.gz) are intact, so no verdict or invocation evidence is lost. The write-once rule is still broken by the validator's own standard: F-DG7-996 (Medium, mandatory). My first reading took the 13a log, which only reported the missing gate record, as a clean write-once check. That was wrong: the validator stops before the write-once check when no gate record exists.",
+      "exit_status": 1,
+      "result": "FAIL",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/audit/round-9/05-write-once.log",
+        "docs/delivery/test-evidence/DG7/audit/round-9/13b-validate-stage-DG7-with-approved-draft.log",
+        "docs/delivery/test-evidence/DG7/audit/round-9/16-validator-gate-errors-analysis.log"
+      ]
+    },
+    {
+      "id": "AUD-DG7-R9-06-incidents-orchestrator-decisions",
+      "procedure": "Judge from history: (a) the container-restart kill of the round-5 qa run; (b) the stages.json transition error F-DG7-922/941/970 and the late FIXING entry (D-277); (c) D-278, its disclosure repair (D-280: AN-P7I, DO-D10), the history-only allow-list entries and the r7 -> r7b re-run; (d) the user's acceptance of F-DG7-973 in progress.md; (e) the disclosures D-249/D-270, D-274, D-267, D-269, A27 K11 partial, ADR-0065 Amendment 1.",
+      "command": "git log/show on the named commits; stages.json DG7 history and review_rounds; runs/DG7/*REV-QA-R5*/meta.json; reviews/DG7/round-5/; secret-allowlist.json; decisions.md D-241..D-280; known-limitations.md, release-notes.md; node tools/release/protocol-audit.mjs --stage DG7 --json",
+      "environment": "Clone at f141d8be4, Node 24.21.0",
+      "expected": "Each incident handled without fabricating or substituting a review and recorded consistently; each disclosure accurate and on the handover surfaces.",
+      "actual": "(a) Run f4c61bca ended with exit 143 and no-result-line. It wrote qa-verifier.findings.json, .md and .verifications.json, but no qa-verifier.json. D-278 does not import its verifications: 922/941/970 are closed by code-security round 5, and 971 (raised from the committed qa sidecar) was verified by domain and qa in round 6, a full three-reviewer round. No missing review was substituted, and the decision itself is sound. But stages.json review_rounds round 5 still lists records.qa-verifier = round-5/qa-verifier.json. The validator reports the record and its verifications sidecar as not found (2 errors; F-DG7-999). F-DG7-971.reported_in also names that missing file. (b) The stages.json DG7 history now reads BUILDING, then alternating REVIEWING/FIXING, then REVIEWING r7 and VERIFYING. The round-3 FIXING note says it was recorded late, and the repair 9d5691143 was verified in round 5. This is accepted, and there is no later transition error (--pipeline PASS). Separately, review_rounds 7, 8 and 9 carry frozen_at 18:39:59Z (the REVIEWING history time) instead of the manifest's 18:39:12Z, and the validator rejects all three (F-DG7-997). (c) The D-278 rule is narrow (schedule-triggered, no initiating user, an enabled job_schedule row, a slot inside D7-D9). It was verified by all three reviewers in round 6, and its disclosure in round 7. The two allow-list entries are history-only hashes of regex fragments, recovered independently by three reviewers. r7's two failures were exactly those entries, and r7b re-ran them green. Accepted. (d) The user's decision is in progress.md l.7 (614c3b975, before the round-8 runs), not in decisions.md, because decisions.md is a candidate file (DG6 F-DG6-952 precedent). It is backed by the reporter's and the release-auditor's round-8 sidecars. Accepted. (e) D-249/D-270: decided in check 07. D-274: accepted, see check 08. D-267 (one host, registry via proxy, not air-gapped, not HA; Keycloak e2e 4/4 once): disclosed as keycloak-e2e 'not_verified', not claimed as passed by any reviewer, with the image inputs unchanged since host run 3 (QA-R7-19). Accepted as a disclosed residual. D-269: disclosed and accepted. ADR-0065 Amendment 1 (automation_rule not carried) is disclosed in known-limitations l.165 and the Arabic summary. Accepted.",
+      "exit_status": 1,
+      "result": "FAIL",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/audit/round-9/06-incidents.log",
+        "docs/delivery/test-evidence/DG7/audit/round-9/06a-disclosure-decisions.log",
+        "docs/delivery/test-evidence/DG7/audit/round-9/16-validator-gate-errors-analysis.log",
+        "docs/delivery/test-evidence/DG7/audit/round-9/14-decisions.log",
+        "docs/delivery/progress.md",
+        "docs/handover/known-limitations.md"
+      ]
+    },
+    {
+      "id": "AUD-DG7-R9-07-protocol-hits-decision",
+      "procedure": "Re-run the protocol audit on DG7 and compare with the frozen r7 report. Classify every C2/C3/C5 hit. Read the four A26 drill assignments, the two round-8 assignments and my own round-9 assignment against the tool's element patterns. Check the C5 timing against DG6's approval, D-242 and the ARCH-00 handback. Read the A27 K11 partial and do a K11-style reading of progress.md at this audit. Decide whether the D-270 disclosures (REQ-DLV-008/011/012/024) and the K11 partial (REQ-DLV-030) block DG7.",
+      "command": "node tools/release/protocol-audit.mjs --stage DG7 --json 07-protocol-audit-DG7.json; node (ASSIGNMENT_ELEMENTS from tools/release/protocol-audit.mjs) over the round-7/8/9 assignments; grep historical docs/delivery/handbacks/DG7/T-DG7-ARCH-00-solution-architect.md",
+      "environment": "Clone at f141d8be4, Node 24.21.0",
+      "expected": "The disclosed hits are what they claim to be, no product or verification-integrity effect, and any new hit is explained.",
+      "actual": "protocol-audit --stage DG7: exit 1 by design, 37 hits in 3 checks. C1, C4, C6, C7, C8 and C9 PASS (C1 peak 3 concurrent, limit 4; C4 no shared write; C8 no approval claim). C3: 7 hits (AN-P7B, BE-R5, DO-D8 and FE-C3 lack merge instructions; ARCH-R2, ARCH-R5 and DO-A2 lack behaviour), all listed in the register and known-limitations. C5: 1 hit. The first build run, DO-A, started at 15:02:13Z on 2026-11-12, and the test-evidence log of the DG6 historical run is dated 18:27:48Z. In substance the precondition was met earlier. DG6 was APPROVED at 11:30:26Z (C9), D-242 records 'validate --historical --stage DG6 exits 0' when DG7 started at 12:02Z, and the ARCH-00 handback (the first DG7 run) records 'PASS gate DG6 (historical), exit 0' at its start. C2: 29 hits now against 27 in protocol-audit-r7.json. 23 assignments lack only the task and requirement ids (the orchestrator's custom template). 4 are the A26 drill assignments, which are deliberately non-leading drill briefs (M0032). The 2 new hits are docs/delivery/assignments/DG7/round-8/qa-verifier.md (dependency_status) and round-8/release-auditor.md (input_output_contracts, dependency_status). Read in full, both carry these elements in substance: 'Stage state is VERIFYING before your run', 'Round 7 (this candidate): domain, code-security and qa all PASS', the part-1/part-2 order, and exact output shapes such as the verifications sidecar `{ \"verifications\": [ {finding_id, result, status_after, note, evidence[]} ] }`. Only the tool's lexical patterns miss them. My own round-9 assignment will add one more lexical C2 hit (dependency_status) once my run's meta.json exists, although it states the dependencies. DECISION: the D-270 C2/C3/C5 hits and the A27 K11 partial do not on their own block DG7. Reasons: (1) The user chose disclosure without rewriting for exactly these hits (D-249, D-270) and placed the blocking decision with the release-auditor (D-270, D-274). (2) Each is a defect of form in a write-once delivery record. None changed product behaviour, file ownership (C4 PASS), concurrency (C1 PASS), reviewer independence or verification. (3) Where the substance can be checked, it holds: C5 (above) and the task ids (each run's meta.json 'task'). (4) Correcting them would mean rewriting write-once records. (5) Each is disclosed on the handover surfaces. K11: K10, K12 and K13 PASS. progress.md's next action equals the action taken at 7579382c5 (QA-R7-10) and at HEAD (07c). The partial was a stale checkpoint on 2026-11-14 and does not recur. This decision stands for the next audit if nothing changes. The extra lexical C2 hits (29 now, 30 after this run) exceed the 27 in known-limitations, which is generated from the r7 report at head 19a82f6c2 and is accurate for that head. Observation O-1 asks the sealing report to state the gate-time count with this reading.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/audit/round-9/07a-protocol-audit-DG7.log",
+        "docs/delivery/test-evidence/DG7/audit/round-9/07-protocol-audit-DG7.json",
+        "docs/delivery/test-evidence/DG7/audit/round-9/07b-c2-hits.log",
+        "docs/delivery/test-evidence/DG7/audit/round-9/07c-k11-progress-reading.log",
+        "docs/delivery/test-evidence/DG7/orchestrator/protocol-audit/protocol-audit-r7.json",
+        "docs/delivery/test-evidence/DG7/orchestrator/a27/drill-report.md",
+        "docs/delivery/handbacks/DG7/T-DG7-ARCH-00-solution-architect.md",
+        "docs/delivery/assignments/DG7/round-8/qa-verifier.md",
+        "docs/delivery/assignments/DG7/round-8/release-auditor.md"
+      ]
+    },
+    {
+      "id": "AUD-DG7-R9-08-requirements",
+      "procedure": "Check that the register's DG7-final rows equal the 54 assigned ids and are all IMPLEMENTED with evidence. Check that every id is in qa's requirements_checked and in domain's or code-security's. Run validate --register DG7. Read each of the 23 completes-after-gate clauses and decide those that name the release-auditor or the gate.",
+      "command": "python3 over docs/delivery/requirements.csv and reviews/DG7/round-7/*.json; node tools/gates/validate.mjs --register DG7",
+      "environment": "Clone at f141d8be4, Node 24.21.0",
+      "expected": "54/54 IMPLEMENTED; every id checked by qa and by domain or code-security; register PASS; every gate-time later clause met.",
+      "actual": "412 rows, all IMPLEMENTED. The DG7-final rows equal the 54 assigned ids. Each of the three round-7 records lists exactly these 54, and every evidence path they cite exists (0 missing of 62/71/98). 'PASS register rules at DG7', exit 0. 23 rows carry completes-after-gate (18 via D-274). The extension is accepted in principle. Most gate-time clauses are met: DLV-005/010/021, S20-023 and S21-004 (three specialist PASS records and this audit on the frozen candidate), DLV-018 (no finding with three failed fix verifications; findings read in check 04), S20-031, S21-002 (reviewed en/ar e2e, QA-R7-16/17; reopen records D-277/D-278/D-280) and S21-003 (the regenerated release notes list every disclosed deviation and later clause; --check exit 0). My check-07 decisions complete the clauses of DLV-008, 011, 012, 024 and 030. NOT MET at this gate: REQ-DLV-014's clause, 'DG7's history reaching VERIFYING and APPROVED, with each DG7 finding ... fixed and verified by a non-owner, shown by validate.mjs --stage DG7 at the gate'. validate --stage DG7 fails on record errors F-DG7-996 to 999, and the gate cannot reach APPROVED. DLV-005's clause ('validate.mjs --stage DG7 on the DG7 candidate with the DG7 round's review records and audit') is unmet for the same reason. The seal clauses (DLV-028, 031, 039, 040, 041, S02-005, S19-015, S20-028) can only follow an APPROVED gate and stay open.",
+      "exit_status": 1,
+      "result": "FAIL",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/audit/round-9/08-validate-register-DG7.log",
+        "docs/delivery/test-evidence/DG7/audit/round-9/08b-register-rows.log",
+        "docs/delivery/test-evidence/DG7/audit/round-9/08c-requirements-coverage.log",
+        "docs/delivery/requirements.csv"
+      ]
+    },
+    {
+      "id": "AUD-DG7-R9-09-final-verification",
+      "procedure": "Confirm the product tree of 7579382c5 differs from 19a82f6c2 only in known-limitations.md and secret-allowlist.json. Read every step's exit code in prefreeze-r7/checks.log and prefreeze-r7b/checks.log. Grep each log for failure markers and read the test summaries. Judge whether, with the specialists' own runs on the candidate, the evidence suffices.",
+      "command": "git diff --stat 19a82f6c2bbb0434fd15e87ef0cfe192d5de6a47 7579382c59e1791321d4856ac1cb2eb2cfb4edc7 -- . ':!docs/delivery'; grep '^### .* exit=' prefreeze-r7*/checks.log; grep -cE '✖|not ok|[1-9][0-9]* failed' prefreeze-r7*/*.log",
+      "environment": "Clone at f141d8be4",
+      "expected": "Only the two files differ; every step exit 0 in r7, or re-run green in r7b; no unexplained failure.",
+      "actual": "git diff: docs/handover/known-limitations.md (the regenerated protocol-audit pointer: head 33c237b2 -> 19a82f6c2, report SHA a495abb3 -> 67b36d7f) and tools/release/secret-allowlist.json (the two entries gain scopes ['history']): 2 files, 9+/3-. r7 has 19 steps. 17 exited 0: protocol-audit, known-limitations, release-notes, check-handover, register, typecheck, lint, openapi-lint, prettier, unit (3042, 2199, 259 + 2 skipped), integration (475 files, 4696 passed, 8 skipped, 1 todo), transfer-drill 70/70, deploy-tool 125/125, e2e-retention, secret-history, claims and historical DG6. The other 2 exited 1, both from the two stale payload-scope allow-list entries 46/47: secret-payload and release-tool-tests (468/1/2; T-G2 '--scope payload exits 0'). r7b re-ran secret-payload PASS (3158 files), secret-history PASS, release-tool-tests 469/0/2 and prettier, all exit 0. The 2 skips are T-A11 (no runtime tree), which code-security ran green, and T-A3 (bsdtar absent). The protocol-audit step runs with '; true' because its real result is FAIL on the disclosed hits. The two GNU find warnings at the top of checks.log come from a cleanup step. Every ✖ and 'failed' line belongs to those explained failures or to titles of passing negative tests. Sufficient for the product: r7 ran on a tree whose product files equal the candidate's apart from those two files, r7b re-ran the affected checks, and the reviewers re-ran everything on the candidate. Live CI was not run. It is recorded as a disclosed residual (REQ-DLV-025 A24, D-058), not as passed.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/audit/round-9/09-final-verification.log",
+        "docs/delivery/test-evidence/DG7/audit/round-9/09a-prefreeze-tree-diff.log",
+        "docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r7/checks.log",
+        "docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r7b/checks.log",
+        "docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r7/release-tool-tests.log",
+        "docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r7b/release-tool-tests.log"
+      ]
+    },
+    {
+      "id": "AUD-DG7-R9-10-evidence-honesty",
+      "procedure": "Grep every log the three round-7 records cite for failure markers (✖, not ok, N failed, non-zero exit, timeout, ELIFECYCLE). For each hit, find the record's explanation. Spot-check evidence content: the About screenshots (en, ar) and both A18 drill reports.",
+      "command": "grep -cE '✖|\\bnot ok\\b|[0-9]+ failed|exit[ =:]*[1-9][0-9]*\\b|Timed? ?out|timeout of|ELIFECYCLE|Command failed' over test-evidence/DG7/{domain,code-security,qa}/round-7; Read of screens/en-p7-about-top.png and ar-p7-about-top.png; python3 over qa/round-7/a18/*/transfer-drill-report.json",
+      "environment": "Clone at f141d8be4",
+      "expected": "Every failure in a cited log is disclosed and explained in the citing record; evidence supports the claims.",
+      "actual": "24 logs contain markers, and each is explained in its record. Domain: T-A5 EROFS on a read-only HOME store (DOM-R7-08, rerun 1/1); expected negative-test output in transfer-drill (70/70); cleanup pgrep lines. Code-security: the sparse-clone register exit 1 (SEC-R7-21 (2)); the missing-gate exit 1 (SEC-R7-20); T-A5 and T-A11 environment failures, both re-run green (SEC-R7-22); deploy N1-N20 negative cases (204/204). QA: --diff in a clone before the freeze commit; vite EROFS then build exit 0; deps:verify with no network (no result, not counted); integration 5 failures from @mth shim module identity, re-run 246/246 (QA-R7-04); protocol audit exit 1 by design. The other markers are titles of passing tests. Spot checks: the About screens show 'These are engineering delivery states, not business approvals', 412 Implemented and 0 Planned/Specified/Blocked, register SHA 0be471c06da2, the provisional wordmark, synthetic user labels and RTL Arabic. Both A18 drill reports (p1-drill, p2-harness) are PASS, with D0-D11 all PASS. Observation O-3: the About 'Clause that completes later' column shows each row's notes verbatim, including earlier analyst-pass history. ADR-0071 requires notes verbatim and never truncated, so this is by design and not a defect.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/audit/round-9/10b-evidence-honesty.log",
+        "docs/delivery/test-evidence/DG7/domain/round-7/screens/en-p7-about-top.png",
+        "docs/delivery/test-evidence/DG7/domain/round-7/screens/ar-p7-about-top.png",
+        "docs/delivery/test-evidence/DG7/qa/round-7/a18/p1-drill/transfer-drill-report.json",
+        "docs/delivery/test-evidence/DG7/qa/round-7/a18/p2-harness/transfer-drill-report.json"
+      ]
+    },
+    {
+      "id": "AUD-DG7-R9-11-release-tools-and-product-vs-engineering",
+      "procedure": "At 7579382c5 in the clone, run claims-scan, release-notes --check, known-limitations --check, check-handover and the payload secret scan, plus the release-notes tests. Grep handover and web i18n for unnegated certification or official-brand claims, for #0078FF outside provisional context and tests, and for any G6->DG7 or DG7->business coupling. Secret-scan my own evidence.",
+      "command": "node tools/release/claims-scan.mjs; node tools/release/release-notes.mjs ... --check; node tools/release/known-limitations.mjs --protocol-audit .../protocol-audit-r7.json --check; node tools/release/check-handover.mjs --protocol-audit .../protocol-audit-r7.json; node tools/release/secret-scan.mjs --scope payload; node --test tools/release/tests/release-notes.test.mjs; grep ...; node tools/release/secret-scan.mjs --path docs/delivery/test-evidence/DG7/audit/round-9",
+      "environment": "Clone at 7579382c5 (release tools), Node 24.21.0; node_modules linked read-only from the repository for check-handover's automation-jobs generator",
+      "expected": "All exit 0; no official or certified claim; G1-G6 not tied to DG0-DG7.",
+      "actual": "claims-scan PASS (891 files), exit 0. release-notes --check: '0 unfinished item(s), 23 later clause(s); ... up to date', exit 0. known-limitations --check PASS, exit 0. Payload secret scan PASS (3158 files; allowed 33), exit 0. Release-notes tests 14/14, exit 0. check-handover first exited 2 (BLOCKED) only because the clone had no node_modules ('Cannot find package @mth/db' for automation-jobs.mjs --check). With the repository's node_modules linked in read-only it gives PASS for index, deployment, summaries, security-links, guides and generated, exit 0, plus the 8 known H.3 sub-heading warnings, which are not failures. Greps: no unnegated certification or official PMI/Mobily claim in docs/handover or the web i18n. #0078FF appears outside 'provisional' only in two web test files. No text ties product G6 to DG7 or DG7 to any business approval. About states 'engineering delivery states, not business approvals', and the demo identities are labelled synthetic. Evidence secret scan: PASS (path; 25 files), exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/audit/round-9/11-release-tools.log",
+        "docs/delivery/test-evidence/DG7/audit/round-9/11b-check-handover.log",
+        "docs/delivery/test-evidence/DG7/audit/round-9/10-product-vs-engineering.log",
+        "docs/delivery/test-evidence/DG7/audit/round-9/15-evidence-secret-scan.log"
+      ]
+    },
+    {
+      "id": "AUD-DG7-R9-12-validators",
+      "procedure": "Run the historical validators for DG5..DG0, the pipeline validator, and validate --stage DG7 before writing records.",
+      "command": "node tools/gates/validate.mjs --historical --stage DG5|DG4|DG3|DG2|DG1|DG0; node tools/gates/validate.mjs --pipeline; node tools/gates/validate.mjs --stage DG7",
+      "environment": "Clone at f141d8be4, Node 24.21.0",
+      "expected": "All historical and pipeline PASS.",
+      "actual": "PASS gate DG5, DG4, DG3, DG2, DG1, DG0 (historical), each exit 0. 'PASS pipeline (active stage: DG7 VERIFYING)', exit 0. --stage DG7 before my records: 'FAIL gate DG7 (current) (1 problem): gate DG7: file not found (docs/delivery/gates/DG7.json)', exit 1. The validator stops there and runs none of the gate's record checks, which is why that output is not evidence of a clean gate. See check 14.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/audit/round-9/12-validators.log",
+        "docs/delivery/test-evidence/DG7/audit/round-9/13a-validate-stage-DG7-before-records.log"
+      ]
+    },
+    {
+      "id": "AUD-DG7-R9-13-decisions",
+      "procedure": "Parse D-241 to D-280 in decisions.md and quote each verbatim (decision, rationale/evidence, reopen-if); quote the progress.md checkpoint carrying the user's F-DG7-973 decision.",
+      "command": "python3 over docs/delivery/decisions.md; sed -n 7p docs/delivery/progress.md",
+      "environment": "Clone at f141d8be4",
+      "expected": "40 decisions present with rationale; quotes recorded.",
+      "actual": "D-241..D-280: 40 expected, 40 present, none missing, each with a rationale/evidence cell and a reopen-if cell, all quoted in full in 14-decisions.log. Verbatim key quotes follow. D-270: '**The user chose disclosure for DG7's own protocol hits, as in D-249** (C2: 27 assignments lacking task/requirement ids; C3: 5 handbacks lacking one section; C5: late DG6 historical run). They are recorded in the register and release notes; the release-auditor decides whether they block DG7.' Reopen if: 'reopen if the release-auditor rejects the disclosure'. D-274: '**User decision on 935:** extend D-243 Q19 to the 18 rows: each becomes IMPLEMENTED with a `completes-after-gate:` marker naming the remaining gate/seal clause and its disclosure (D-270 protocol hits, A27 K11 partial); this supersedes D-266 (d); reviewers and the release-auditor judge it, and a rejection BLOCKS the gate.' D-277: 'at the round-4 freeze I appended REVIEWING without first recording the round-3 FIXING state, so stages.json held REVIEWING -> REVIEWING and the validator failed (F-DG7-922, 941, 970, Medium).' and 'the freeze step now checks that `validate --stage DG7` reports no transition error.' D-278: 'The qa-verifier run reached a FAIL verdict (its `qa-verifier.md`, findings and verifications are committed) but was killed by a container restart before it wrote `qa-verifier.json`, so its verifications are not imported.' D-280: '**ADR-0071 §5.1 note:** the release-notes generator now reads that one extra checked-in file of its own, in the way `claims-scan.mjs` reads its allow-list; I accept this as within ADR-0071's intent (deterministic output from checked-in inputs) and record it here instead of amending the ADR.' D-267: '**Container host half run in this container (Docker daemon started by the orchestrator, containerd store; one host with registry access via the proxy, not air-gapped, not HA).**' progress.md l.7: '**User decision (2026-11-16):** asked whether to accept F-DG7-973 as an observation or amend ADR-0071 and run another full round, the user chose **accept as an observation**. Recorded here, not in decisions.md, so the candidate is not re-frozen (as in DG6, F-DG6-952).'",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/audit/round-9/14-decisions.log",
+        "docs/delivery/decisions.md",
+        "docs/delivery/progress.md"
+      ]
+    },
+    {
+      "id": "AUD-DG7-R9-14-validate-stage-with-gate-record",
+      "procedure": "Write the gate record and run node tools/gates/validate.mjs --stage DG7 in the repository. Classify every reported problem: my own in-flight run_id versus anything else. Per the assignment, any error other than my in-flight run means BLOCKED.",
+      "command": "node tools/gates/validate.mjs --stage DG7",
+      "environment": "Repository /home/user/My-owns at f141d8be4 plus this run's staged records, Node 24.21.0, read-only validator",
+      "expected": "Only errors that concern DG7-T-DG7-AUDIT-R9-release-auditor-20261116T211135Z-d27cb0e9 (its meta.json is written by the runner after the run).",
+      "actual": "With the gate record drafted APPROVED: 'FAIL gate DG7 (current) (120 problems)', exit 1. 1 problem concerns my in-flight run: 'review release-auditor (...round-9/release-auditor.json) invocation: file not found (docs/delivery/runs/DG7/DG7-T-DG7-AUDIT-R9-release-auditor-20261116T211135Z-d27cb0e9/meta.json)'. The other 119 do not. 57 are write-once errors on runner transient files in six runs/DG7 directories (F-DG7-996). 3 are 'review rounds: DG7 round 7|8|9 frozen_at/source_commit differ from its committed manifest' (F-DG7-997). 57 are findings.json verification mirrors that differ from the validator-selected sidecar for 19 findings (F-DG7-998). 2 are round-5 qa-verifier.json not found, as round record and as the verifications sidecar's record (F-DG7-999). All four are record-integrity defects in meta-excluded delivery records, with no product effect. Each breaks the gate validator, so DG7 is BLOCKED. The gate record was rewritten as BLOCKED. The final validator run on the BLOCKED record is reported in the handback.",
+      "exit_status": 1,
+      "result": "FAIL",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/audit/round-9/13b-validate-stage-DG7-with-approved-draft.log",
+        "docs/delivery/test-evidence/DG7/audit/round-9/16-validator-gate-errors-analysis.log",
+        "tools/gates/lib/rules.mjs"
+      ]
+    }
+  ],
+  "findings": [
+    "F-DG7-996",
+    "F-DG7-997",
+    "F-DG7-998",
+    "F-DG7-999"
+  ],
+  "verdict": "FAIL",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG7/audit/round-9/01-clone-identity.log",
+    "docs/delivery/test-evidence/DG7/audit/round-9/01b-validate-DG6-historical.log",
+    "docs/delivery/test-evidence/DG7/audit/round-9/02-provenance.log",
+    "docs/delivery/test-evidence/DG7/audit/round-9/02b-dg7-runs-table.log",
+    "docs/delivery/test-evidence/DG7/audit/round-9/03-manifest-r6-r7.log",
+    "docs/delivery/test-evidence/DG7/audit/round-9/04-findings.log",
+    "docs/delivery/test-evidence/DG7/audit/round-9/05-write-once.log",
+    "docs/delivery/test-evidence/DG7/audit/round-9/06-incidents.log",
+    "docs/delivery/test-evidence/DG7/audit/round-9/06a-disclosure-decisions.log",
+    "docs/delivery/test-evidence/DG7/audit/round-9/07-protocol-audit-DG7.json",
+    "docs/delivery/test-evidence/DG7/audit/round-9/07a-protocol-audit-DG7.log",
+    "docs/delivery/test-evidence/DG7/audit/round-9/07b-c2-hits.log",
+    "docs/delivery/test-evidence/DG7/audit/round-9/07c-k11-progress-reading.log",
+    "docs/delivery/test-evidence/DG7/audit/round-9/08-validate-register-DG7.log",
+    "docs/delivery/test-evidence/DG7/audit/round-9/08b-register-rows.log",
+    "docs/delivery/test-evidence/DG7/audit/round-9/08c-requirements-coverage.log",
+    "docs/delivery/test-evidence/DG7/audit/round-9/09-final-verification.log",
+    "docs/delivery/test-evidence/DG7/audit/round-9/09a-prefreeze-tree-diff.log",
+    "docs/delivery/test-evidence/DG7/audit/round-9/10-product-vs-engineering.log",
+    "docs/delivery/test-evidence/DG7/audit/round-9/10b-evidence-honesty.log",
+    "docs/delivery/test-evidence/DG7/audit/round-9/11-release-tools.log",
+    "docs/delivery/test-evidence/DG7/audit/round-9/11b-check-handover.log",
+    "docs/delivery/test-evidence/DG7/audit/round-9/12-validators.log",
+    "docs/delivery/test-evidence/DG7/audit/round-9/13a-validate-stage-DG7-before-records.log",
+    "docs/delivery/test-evidence/DG7/audit/round-9/13b-validate-stage-DG7-with-approved-draft.log",
+    "docs/delivery/test-evidence/DG7/audit/round-9/14-decisions.log",
+    "docs/delivery/test-evidence/DG7/audit/round-9/15-evidence-secret-scan.log",
+    "docs/delivery/test-evidence/DG7/audit/round-9/16-validator-gate-errors-analysis.log"
+  ],
+  "reviewed_at": "2026-11-16T21:36:36Z",
+  "summary": "Audit part 2 of 2 (D-140 option 1): FAIL on candidate sha256:0d71d4456adaac949e2c9af4c975f4b9976a166872195f496d5aa75fe8ed2272 (3158 files, source 7579382c59e1791321d4856ac1cb2eb2cfb4edc7). Gate DG7 BLOCKED.\n\nThe product and the review substance hold:\n- The identity is verified.\n- Three full-review PASS records sit on three distinct, sandboxed runs, and no reviewer implemented DG7.\n- Every prior finding is substantively closed by non-owners, and F-DG7-973 is properly accepted.\n- DG0-DG6 are unchanged.\n- The pre-freeze r7/r7b evidence is sufficient.\n- The D-270 protocol hits and the K11 partial are accepted as non-blocking, and the D-274 extension is accepted.\n- The product and engineering gate systems are kept separate.\n\nBut 'node tools/gates/validate.mjs --stage DG7', run with a gate record present, reports 119 errors besides my own in-flight run. The gate fails on four new record-integrity findings (Medium, mandatory, owner delivery-orchestrator):\n- F-DG7-996: 57 write-once errors. Runner transient files under runs/DG7 were committed and later deleted or modified in 6 commits.\n- F-DG7-997: stages.json review_rounds 7, 8 and 9 have frozen_at 18:39:59Z, but the manifest says 18:39:12Z.\n- F-DG7-998: findings.json verification mirrors for 19 findings carry qa-verifier's entry, but the validator selects code-security-reviewer's (domain-reviewer's for 971).\n- F-DG7-999: stages.json round 5 lists a qa-verifier.json that was never written.\n\nNone has a product effect. F-997, F-998 and F-999 are in meta-excluded records and need no re-freeze. F-996 is in git history and needs a decision by the orchestrator and the user (a clean re-gate per D-238, or a reviewed gate-rule change). Earlier records did not catch these because the validator stops at the missing gate record.\n\nObservations O-1 to O-3 are listed in the gate record. No business, Finance or IT approval is granted. Product G6 never implies DG7."
+}
