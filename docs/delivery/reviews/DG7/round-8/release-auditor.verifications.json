@@ -1,0 +1,25 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG7-973",
+      "result": "PASS",
+      "status_after": "ACCEPTED_OBSERVATION",
+      "note": "Release-auditor concurrence (T-DG7-AUDIT-R8, part 1 of the D-140 option 1 audit) on candidate sha256:0d71d4456adaac949e2c9af4c975f4b9976a166872195f496d5aa75fe8ed2272 (source 7579382c5). I judged this independently of qa-verifier's round-8 judgement, which I have not seen, and of the user's decision of 2026-11-16 (progress.md). (1) Facts confirmed in a clone at 7579382c5. ADR-0071 (blob 1a26ccbb, unchanged since the freeze) §5 item 1 says the generator 'reads nothing else', and item 2 lists seven sections. grep finds no 'release-notes-disclosures' or 'D-280' anywhere under docs/architecture/. tools/release/release-notes.mjs l.10-12 and l.28 read the checked-in tools/release/release-notes-disclosures.json from the tool's own directory, and a missing or invalid file is BLOCKED (exit 2). docs/handover/release-notes.md carries the eighth section, '## Known limitations disclosed in this release' (l.71), and its Arabic counterpart (l.137). D-280 (decisions.md l.7, unchanged since the freeze) records the deviation as 'within ADR-0071's intent (deterministic output from checked-in inputs)' and does not amend the ADR. Its reversal trigger is 'ADR-0071's owner rejects the extra input file', and no such rejection is recorded. Determinism: release-notes.mjs --check exits 0 on two consecutive runs ('docs/handover/release-notes.md is up to date'), and node --test tools/release/tests/release-notes.test.mjs passes 14/14, including the five DO-D10 disclosure tests (log 05). (2) Classification: the round-7 qa sidecar and findings.json both record Low, mandatory_violation false, REQ-S02-005, owner solution-architect. rules.mjs l.565-583 permits ACCEPTED_OBSERVATION only for a Low, non-mandatory finding, with a release-auditor sidecar plus a specialist sidecar and accepted_by mirrored in findings.json. No product effect: nothing outside docs/ and tools/ references the generator, its input or the release notes, except two comments in provisional-Arabic i18n files that describe how the generator counts keys (log 04). The generator is release tooling that produces a handover document, and the runtime does not read it. (3) Judgement: accepting it is sound. The defect is the stale text of one ADR paragraph, not behaviour. The behaviour matches the ADR's stated intent (named checked-in inputs, no clock, byte-compare --check). The added input makes the release notes more honest, since it carries the ADR-0064 A5.6 disclosure that REQ-S02-005 favours. The real inputs are documented in the generator's own header, in D-280 (in the candidate) and in docs/handover/README.md l.52, which names the disclosures file. A maintainer is not left without a correct source. Amending ADR-0071 now would change the candidate (docs/architecture is in the manifest) and force a re-freeze and a full three-reviewer round for a documentation-only correction. That cost outweighs the risk. Side note in the same class: §5.1's 'nothing else' was already inexact before DO-D10, because the generator also reads apps/api/package.json and docs/api/openapi.yaml for the §5.2 item-1 identity (l.103, l.108). The amendment below should name them too. I raise no separate finding. Residual risk: ADR-0071 §5.1/§5.2 stays stale until amended. Condition of my concurrence, to be carried in the gate's accepted-observation rationale: owner solution-architect records a dated ADR-0071 amendment naming every real generator input and the eighth section, in English and in the Arabic summary, at the next change to docs/architecture after DG7. If the ADR owner instead rejects the extra input (D-280's reversal trigger), this acceptance no longer holds and the finding reopens. This acceptance takes effect only after the orchestrator imports this sidecar into findings.json, with acceptance.accepted_by mirroring the accepting specialist and release-auditor.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/audit/round-8/01-f973-facts.log",
+        "docs/delivery/test-evidence/DG7/audit/round-8/03-candidate-identity.log",
+        "docs/delivery/test-evidence/DG7/audit/round-8/04-f973-classification-no-product-effect.log",
+        "docs/delivery/test-evidence/DG7/audit/round-8/05-release-notes-check-and-tests.log",
+        "docs/delivery/reviews/DG7/round-7/qa-verifier.findings.json",
+        "docs/architecture/adr/ADR-0071-p7-traceability-register-snapshot-about-release-notes-release-blockers-protocol-audit.md",
+        "tools/release/release-notes.mjs",
+        "tools/release/release-notes-disclosures.json",
+        "docs/handover/release-notes.md",
+        "docs/handover/README.md",
+        "docs/delivery/decisions.md",
+        "tools/gates/lib/rules.mjs",
+        "docs/delivery/progress.md"
+      ]
+    }
+  ]
+}
