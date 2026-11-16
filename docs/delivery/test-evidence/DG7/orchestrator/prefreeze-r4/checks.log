@@ -1,0 +1,41 @@
+find: The -delete action automatically turns on -depth, but -prune does nothing when -depth is in effect.  If you want to carry on anyway, just explicitly use the -depth option.
+find: The -delete action automatically turns on -depth, but -prune does nothing when -depth is in effect.  If you want to carry on anyway, just explicitly use the -depth option.
+### protocol-audit $ node tools/release/protocol-audit.mjs --all --json docs/delivery/test-evidence/DG7/orchestrator/protocol-audit/protocol-audit-r4.json; true
+### protocol-audit exit=0 seconds=4
+### known-limitations $ node tools/release/known-limitations.mjs --protocol-audit docs/delivery/test-evidence/DG7/orchestrator/protocol-audit/protocol-audit-r4.json --write
+### known-limitations exit=0 seconds=1
+### release-notes $ node tools/release/release-notes.mjs --csv docs/delivery/requirements.csv --deps docs/handover/external-dependencies.json --provisional apps/web/src/i18n --out docs/handover/release-notes.md --write && node tools/release/release-notes.mjs --csv docs/delivery/requirements.csv --deps docs/handover/external-dependencies.json --provisional apps/web/src/i18n --out docs/handover/release-notes.md --check
+### release-notes exit=0 seconds=0
+### check-handover $ node tools/release/check-handover.mjs --protocol-audit docs/delivery/test-evidence/DG7/orchestrator/protocol-audit/protocol-audit-r4.json
+### check-handover exit=0 seconds=1
+### register $ node tools/gates/validate.mjs --register DG7
+### register exit=0 seconds=0
+### typecheck $ pnpm -r typecheck
+### typecheck exit=0 seconds=277
+### lint $ pnpm lint
+### lint exit=0 seconds=39
+### openapi-lint $ pnpm openapi:lint
+### openapi-lint exit=0 seconds=1
+### prettier $ npx prettier --check .
+### prettier exit=0 seconds=53
+### unit $ pnpm test
+### unit exit=0 seconds=342
+### integration $ tests/qa/support/with-pg.sh pnpm test:integration
+### integration exit=0 seconds=3098
+### transfer-drill-tests $ tests/qa/support/with-pg.sh node --test deploy/scripts/tests/transfer-drill.test.mjs
+### transfer-drill-tests exit=0 seconds=147
+### release-tool-tests $ node --test tools/release/tests/*.test.mjs licenses/tests/*.test.mjs
+### release-tool-tests exit=0 seconds=878
+### deploy-tool-tests $ node --test deploy/scripts/tests/check-ci-needs.test.mjs deploy/scripts/tests/pin-images.test.mjs deploy/scripts/tests/log-scan.test.mjs deploy/scripts/tests/check-virtual-store.test.mjs deploy/scripts/tests/image-bundle.test.mjs deploy/scripts/tests/offline-drill.test.mjs deploy/scripts/tests/dockerfile-context.test.mjs
+### deploy-tool-tests exit=0 seconds=7
+### e2e-retention $ pnpm -r build > /dev/null && apps/web/e2e/support/with-stack.sh npx playwright test apps/web/e2e/p7-retention.spec.ts --trace off
+### e2e-retention exit=0 seconds=172
+### secret-payload $ node tools/release/secret-scan.mjs --scope payload
+### secret-payload exit=0 seconds=7
+### secret-history $ node tools/release/secret-scan.mjs --scope history
+### secret-history exit=0 seconds=165
+### claims $ node tools/release/claims-scan.mjs
+### claims exit=0 seconds=5
+### historical $ node tools/gates/validate.mjs --historical --stage DG6
+### historical exit=0 seconds=126
+### DONE
