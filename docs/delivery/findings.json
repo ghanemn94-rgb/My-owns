@@ -15652,7 +15652,7 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG7/round-4/domain-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-16T04:15:00Z",
@@ -15663,10 +15663,36 @@
           "at": "2026-11-16T06:13:24Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 9d56911437e10bff97c09f6b05e4bd26eadc37ea"
+        },
+        {
+          "at": "2026-11-16T06:33:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 5: PASS"
+        },
+        {
+          "at": "2026-11-16T06:50:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 5: PASS"
         }
       ],
       "fix_revision": "9d56911437e10bff97c09f6b05e4bd26eadc37ea",
-      "fix_summary": "Orchestrator inserted the omitted round-3 FIXING entry (marked as recorded late) before the round-4 REVIEWING entry and recorded the round-4 outcome as FIXING; validate --historical --stage DG6 PASS and no illegal transition for DG7."
+      "fix_summary": "Orchestrator inserted the omitted round-3 FIXING entry (marked as recorded late) before the round-4 REVIEWING entry and recorded the round-4 outcome as FIXING; validate --historical --stage DG6 PASS and no illegal transition for DG7.",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG7-T-DG7-REV-CS-R5-code-security-reviewer-20261116T061415Z-a087192e",
+          "session_id": "a087192e-361b-47c8-a8c7-4be60e753820"
+        },
+        "at": "2026-11-16T06:50:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG7/code-security/round-5/40-validators.log",
+          "docs/delivery/test-evidence/DG7/code-security/round-5/10-history-probe.log",
+          "docs/delivery/stages.json"
+        ],
+        "note": "Same defect as F-DG7-941 (domain-reviewer's record, REQ-DLV-015: the gate state machine is enforced and the history passes the validator), verified with the same evidence on candidate 07af9fba (fix 9d5691143). --historical DG6…DG1 exit 0. The DG7 history records REVIEWING (round 3) -> FIXING (2026-11-16T01:38:50Z, the round-3 findings import, disclosed as recorded late) -> REVIEWING (round 4). The AN-P7G/BE-R8 repair period lies inside that FIXING window. Removing the entry reproduces the original failure (P3). I did not author this fix."
+      }
     },
     {
       "id": "F-DG7-941",
@@ -15689,7 +15715,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG7/round-4/code-security-reviewer.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-16T04:20:00Z",
@@ -15700,10 +15726,38 @@
           "at": "2026-11-16T06:13:24Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 9d56911437e10bff97c09f6b05e4bd26eadc37ea"
+        },
+        {
+          "at": "2026-11-16T06:33:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 5: PASS"
+        },
+        {
+          "at": "2026-11-16T06:50:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 5: PASS"
         }
       ],
       "fix_revision": "9d56911437e10bff97c09f6b05e4bd26eadc37ea",
-      "fix_summary": "Orchestrator inserted the omitted round-3 FIXING entry (marked as recorded late) before the round-4 REVIEWING entry and recorded the round-4 outcome as FIXING; validate --historical --stage DG6 PASS and no illegal transition for DG7."
+      "fix_summary": "Orchestrator inserted the omitted round-3 FIXING entry (marked as recorded late) before the round-4 REVIEWING entry and recorded the round-4 outcome as FIXING; validate --historical --stage DG6 PASS and no illegal transition for DG7.",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG7-T-DG7-REV-CS-R5-code-security-reviewer-20261116T061415Z-a087192e",
+          "session_id": "a087192e-361b-47c8-a8c7-4be60e753820"
+        },
+        "at": "2026-11-16T06:50:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG7/code-security/round-5/40-validators.log",
+          "docs/delivery/test-evidence/DG7/code-security/round-5/41-validators-pipeline.log",
+          "docs/delivery/test-evidence/DG7/code-security/round-5/10-history-probe.log",
+          "docs/delivery/test-evidence/DG7/code-security/round-5/scripts/history-probe.sh",
+          "docs/delivery/stages.json"
+        ],
+        "note": "Verified on candidate sha256:07af9fba…a61d (source 02aeed6e4, freeze f3f61cd60; fix 9d5691143). F-DG7-941 is my own round-4 finding, and I did not author the fix.\n(1) Validators on this tree: --historical --stage DG6, DG5, DG4, DG3, DG2 and DG1 each PASS, exit 0. --reconcile PASS, exit 0. --pipeline PASS, exit 0. --stage DG7 fails only on the missing gate record, which is expected during REVIEWING. 'illegal transition REVIEWING -> REVIEWING' appears nowhere (40/41 logs).\n(2) DG7's history is REVIEWING -> FIXING -> REVIEWING for each of rounds 1–4, time-monotone, and each FIXING lies strictly between its rounds (10-history-probe.log P1).\n(3) The inserted round-3 FIXING entry is dated 2026-11-16T01:38:50Z, the commit time of 5458273cd (import of round-3 findings), as its note says. The AN-P7G and BE-R8 repair commits fall inside the window it opens. The repair changed or removed no pre-existing entry (P2).\n(4) Mutation: removing the entry in a disposable clone brings back exactly 'stages.json: DG7 illegal transition REVIEWING -> REVIEWING', exit 1; the control exits 0 (P3).\nA disclosed late entry with a truthful timestamp is an acceptable repair, the same as the accepted DG4 (F-DG4-104/124) and DG6 (F-DG6-911/951) precedents. The candidate content is unaffected (stages.json is excluded from the manifest)."
+      }
     },
     {
       "id": "F-DG7-970",
@@ -15724,7 +15778,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG7/round-4/qa-verifier.json",
       "owner": "delivery-orchestrator",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-16T06:10:00Z",
@@ -15735,10 +15789,70 @@
           "at": "2026-11-16T06:13:24Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 9d56911437e10bff97c09f6b05e4bd26eadc37ea"
+        },
+        {
+          "at": "2026-11-16T06:33:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 5: PASS"
+        },
+        {
+          "at": "2026-11-16T06:50:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 5: PASS"
         }
       ],
       "fix_revision": "9d56911437e10bff97c09f6b05e4bd26eadc37ea",
-      "fix_summary": "Orchestrator inserted the omitted round-3 FIXING entry (marked as recorded late) before the round-4 REVIEWING entry and recorded the round-4 outcome as FIXING; validate --historical --stage DG6 PASS and no illegal transition for DG7."
+      "fix_summary": "Orchestrator inserted the omitted round-3 FIXING entry (marked as recorded late) before the round-4 REVIEWING entry and recorded the round-4 outcome as FIXING; validate --historical --stage DG6 PASS and no illegal transition for DG7.",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG7-T-DG7-REV-CS-R5-code-security-reviewer-20261116T061415Z-a087192e",
+          "session_id": "a087192e-361b-47c8-a8c7-4be60e753820"
+        },
+        "at": "2026-11-16T06:50:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG7/code-security/round-5/40-validators.log",
+          "docs/delivery/test-evidence/DG7/code-security/round-5/10-history-probe.log",
+          "docs/delivery/stages.json"
+        ],
+        "note": "Same defect as F-DG7-941 (qa-verifier's record, REQ-DLV-014), verified with the same evidence on candidate 07af9fba (fix 9d5691143). The modes 970 names now pass: --historical DG6…DG1 exit 0, and --reconcile 'PASS reconcile (structure)', exit 0. --stage DG7 no longer reports the transition error; its only remaining problem is the gate record that the release-auditor has not yet written. The history records round 3's FIXING before round 4, as after rounds 1 and 2. I did not author this fix."
+      }
+    },
+    {
+      "id": "F-DG7-971",
+      "stage_id": "DG7",
+      "requirement": "REQ-S19-017",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "The A18 transfer drill and its harness FAIL at D9 whenever the */15 approval.escalation_scan starter runs on the target between D7 and D9, so the A18 result depends on the wall clock; ADR-0064 A3.9 residual 1 was never decided and is not disclosed in any handover text or A18 register row",
+      "reproduction": "Disposable shared clone at 02aeed6e (candidate sha256:07af9fba26f9ae435f6f3de7ca5204ed1e182a125f1fd0f912b70da06035a61d), Node 24.21.0, tests/qa/support/with-pg.sh. (1) Natural occurrence: docs/delivery/test-evidence/DG7/qa/round-5/a18/qa-r5-a18-driver.sh (the round-4 driver with the new candidate id) built a fresh archive; part 1 (transfer-drill.sh --keep) PASSED with D9 at 07:10:32Z; part 2, the shipped harness tests/qa/integration/a18-transfer-drill.test.ts with QA_A18_REQUIRE=1 on the same archive, FAILED 4 of 10 tests: the drill's D9 restart happened just after 07:15:00Z and mode 2 reported 'automation_execution: 17 added ... unexplained added [01a1e336-6adf-7a11-af63-c8f6347fcaf8]' and the same for automation_action_result, then 'D9 FAIL, D10 NOT_RUN, D11 NOT_RUN'. Only that run's worker handled approval.escalation_scan after the restart. (2) Control: the harness alone re-run at 07:20 (D7-D9 at about 07:24-07:25Z) passed 10/10 with 16 executions, all explained. (3) Deliberate reproduction on the unmodified candidate: qa-r5-d9-boundary-repro.sh with QA_START=07:56:05 runs deploy/scripts/transfer-drill.sh --keep so that D7-D9 contains 08:00:00Z. The drill exits 1 with D9 FAIL. The kept target database holds exactly one schedule-triggered execution, 01a1e35f-8e4f-7de0-80d2-0aab0e420e27, trigger_code approval.escalation_scan, trigger_key approval.escalation_scan:2026-11-16T08:00, created 08:00:52.8Z, initiating_user_id NULL, and its starter_handler result 01a1e35f-8e85-72b8-bcd3-074233427210. job_schedule: approval.escalation_scan '*/15 * * * *' Asia/Riyadh; apps/worker/src/automation/starters.ts maps the queue to starter.decision_sla. An attempt aimed at 07:45 missed the slot by 3 s and passed.",
+      "expected": "REQ-S19-017 (A18): 'the drill report shows matching counts and checksums, working evidence downloads under the new base URL, successful key workflows, and records, jobs and approvals intact after a full restart'. The shipped drill is the operator's and the reviewer's proof of that clause (docs/handover/deployment.md, the A18 harness). Run against a correct installation, it should give the same result whatever the time of day. If a known residual can make it fail, ADR-0064 A3.9 residual 1 says 'the orchestrator decides': I expect either that decision (and a drill or explaining-rule change), or at least a disclosure that tells the operator a scheduled starter in the D7-D9 window gives a D9 FAIL that is not a data defect.",
+      "actual": "The result depends on the wall clock. 2 of my 5 D9 runs on this candidate failed: the run-1 harness at 07:15 and the reproduction at 08:00. 3 passed: the run-1 direct drill, the run-2 harness and reproduction attempt 1; none of their windows contained a quarter hour. The product itself is correct: a scheduled job runs after the restart and writes its execution and audit event. The mode 2 recheck classifies schedule-triggered executions as unexplained by design (A3.9). With the worker up for about 46-60 s from D7 to D9 and approval.escalation_scan every 15 minutes, about 5-7 % of runs fail on time alone. The daily starters between 00:05 and 00:45 Asia/Riyadh add more. DO-D4 measured none (T-B17), so the residual was never hit before, and no decision was recorded. It is absent from known-limitations.md, the release notes, deployment.md and the notes of REQ-S19-017, REQ-S20-018 and REQ-S01-006 (grep and python3 in d9-schedule-window-analysis.log §7). An operator or a later reviewer who runs the shipped drill near a quarter hour gets an A18 FAIL with no documented explanation. Medium (D-192): this is a real defect in the acceptance drill with a bounded effect. No data is wrong and no authorization is affected, so it is not mandatory. It must be repaired before the gate: the orchestrator decides A3.9, then the explaining rule or the drill changes, or the residual is disclosed with the operator's recovery (re-run outside the slot). The ADR forbids pausing or rescheduling the job to avoid it.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-5/a18/d9-schedule-window-analysis.log",
+        "docs/delivery/test-evidence/DG7/qa/round-5/a18/a18-run1.log",
+        "docs/delivery/test-evidence/DG7/qa/round-5/a18/out-run1/harness/step-D9.log",
+        "docs/delivery/test-evidence/DG7/qa/round-5/a18/out-run1/harness/worker.log",
+        "docs/delivery/test-evidence/DG7/qa/round-5/a18/out-run1/direct/step-D9.log",
+        "docs/delivery/test-evidence/DG7/qa/round-5/a18/a18-run2.log",
+        "docs/delivery/test-evidence/DG7/qa/round-5/a18/qa-r5-d9-boundary-repro.sh",
+        "docs/delivery/test-evidence/DG7/qa/round-5/a18/d9-boundary-repro.log",
+        "docs/delivery/test-evidence/DG7/qa/round-5/a18/d9-boundary-repro-attempt1.log",
+        "docs/delivery/test-evidence/DG7/qa/round-5/a18/out-repro/step-D9.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG7/round-5/qa-verifier.json",
+      "owner": "solution-architect",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-16T08:01:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG7 round 5 on candidate sha256:07af9fba26f9ae435f6f3de7ca5204ed1e182a125f1fd0f912b70da06035a61d. First seen in the A18 harness run at 07:15Z, then reproduced on demand at 08:00Z on the unmodified candidate. The owner is solution-architect because the decision belongs to ADR-0064 A3.9 (the orchestrator decides); any drill or documentation change falls to devops-engineer. Medium per D-192: repair before the gate."
+        }
+      ]
     }
   ]
 }
