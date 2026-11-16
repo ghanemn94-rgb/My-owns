@@ -68,6 +68,19 @@ Rows whose notes carry `completes-after-gate:` (D-243 Q19). The named clause com
 | `live-ci` | Live CI execution of deploy/ci/ci.yml | Mobily IT | not_verified |
 | `orchestration-target` | Deployment configuration for Mobily's orchestration platform | Mobily IT | not_configured |
 
+## Known limitations disclosed in this release
+
+Behaviour that is implemented as designed but limits how a procedure or check can be used. Each entry is a summary; the linked section gives the full text.
+
+### Transfer drill and scheduled jobs (ADR-0064 Amendment 5, D-278)
+
+- Scheduled jobs keep running during the transfer drill (A18, `deploy/scripts/transfer-drill.sh`). The drill never pauses, disables or reschedules one.
+- At step D9 the drill explains only the scheduled executions that ADR-0064 A5.2 allows: an added `automation_execution` with no initiating user and a `schedule` trigger, whose `trigger_key` names an enabled `job_schedule` row and a slot of that row's cron and timezone inside the D7–D9 window, with that execution's action results and audit events. The drill report lists each one (`schedule-explained-d9.json`). Every other added or changed row stays unexplained.
+- A scheduled job whose handler writes business rows inside the window (for example, `approval.escalation_scan` escalates an overdue approval) still makes D9 fail. That is not a data defect.
+- The recovery is to re-run the drill, never to pause or reschedule a job.
+- Not covered: the engine ticks `automation.tick_hourly` and `automation.tick_daily` (A5.7 residual 3). An execution of either inside the window makes D9 fail. The window bounds rest on pg-boss 11.0.0's timing defaults (A5.7 residual 4).
+- Details: [Known limitations, section 6](known-limitations.md#adr-residuals) (source: ADR-0064 Amendment 5 A5.6, D-278).
+
 ## Provisional Arabic texts
 
 Every Arabic user-interface text listed in these files is provisional until a qualified Arabic reviewer checks it; that review is an external dependency. An entry ending in `.` stands for every key under that prefix.
@@ -120,6 +133,23 @@ Arabic text: provisional. It has not been checked by a qualified Arabic reviewer
 ### تبعيات الإعداد الخارجية المتبقية
 
 عدد التبعيات: 11. التفاصيل في القسم الإنجليزي أعلاه.
+
+### قيود معروفة يفصح عنها هذا الإصدار
+
+Arabic text: provisional. It has not been checked by a qualified Arabic reviewer.
+
+النص العربي مؤقت. لم يراجعه مراجع عربي مؤهل.
+
+سلوك منفذ كما صُمّم، لكنه يحدّ من طريقة استخدام إجراء أو فحص. كل بند ملخص، والنص الكامل في القسم المرتبط.
+
+**تجربة النقل والمهام المجدولة (ADR-0064، التعديل 5، القرار D-278)**
+
+- تبقى المهام المجدولة تعمل أثناء تجربة النقل (A18، `deploy/scripts/transfer-drill.sh`)، ولا توقف التجربة أي مهمة ولا تعيد جدولتها.
+- في الخطوة D9 لا تشرح التجربة إلا التنفيذ المجدول الذي تسمح به القاعدة ADR-0064 A5.2: تنفيذ (`automation_execution`) بلا مستخدم مُبادِر، يسمّي `trigger_key` الخاص به صفاً مُفعّلاً في `job_schedule` وموعداً داخل نافذة الخطوات D7–D9 وفق جدول ذلك الصف (cron) ومنطقته الزمنية، مع نتائج إجراءاته وأحداث التدقيق الخاصة به. يُدرج كل تنفيذ يُشرح بهذه الطريقة في تقرير التجربة (`schedule-explained-d9.json`). يبقى كل صف آخر مُضاف أو مُعدَّل غير مشروح.
+- إذا كتب معالج مهمة مجدولة سجلات أعمال داخل النافذة (مثل تصعيد موافقة متأخرة)، تفشل الخطوة D9، وهذا ليس عيباً في البيانات.
+- الحل هو إعادة تشغيل التجربة، ولا تُوقف أي مهمة مجدولة ولا يُعاد جدولتها أبداً.
+- لا تشمل القاعدة نبضات المحرك `automation.tick_hourly` و`automation.tick_daily` (البند 3 من بقايا A5.7)، وأي تنفيذ لأي منهما داخل النافذة يُفشل الخطوة D9. وتعتمد حدود النافذة على إعدادات التوقيت الافتراضية في pg-boss 11.0.0 (البند 4 من بقايا A5.7).
+- التفاصيل: [القيود المعروفة، القسم 6](known-limitations.md#adr-residuals) (ADR-0064 Amendment 5 A5.6, D-278).
 
 ### النصوص العربية المؤقتة
 

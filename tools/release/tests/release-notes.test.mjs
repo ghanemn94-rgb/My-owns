@@ -4,13 +4,27 @@
 //          exits 1; an IMPLEMENTED row without evidence exits 1; --check drift exits 1; no clock is read (two runs give
 //          identical bytes); the dependency list absent gives the Unknown line, never "none".
 //   T-I13  (fixture half) the six D-243 Q19 rows carry `completes-after-gate:` and appear in the later-clauses section.
+//   DO-D10 the checked-in disclosure input (ADR-0064 A5.6, D-278) is printed in English and in the Arabic summary, with
+//          its link; the D-278 points are present; a missing or invalid input exits 2 (BLOCKED) and writes nothing.
 // Everything is written under $TMPDIR; nothing is written to the repository.
 import assert from "node:assert/strict";
 import { copyFileSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { after, test } from "node:test";
 import { parseRegister } from "../../../apps/api/scripts/register-snapshot.mjs";
-import { buildReleaseNotes, countProvisional, laterClauseOf, main, MARKER, Q19_ROWS, TEXT } from "../release-notes.mjs";
+import {
+  buildReleaseNotes,
+  countProvisional,
+  DEFAULT_DISCLOSURES,
+  DisclosureError,
+  DISCLOSURES_FORMAT,
+  laterClauseOf,
+  main,
+  MARKER,
+  parseDisclosures,
+  Q19_ROWS,
+  TEXT,
+} from "../release-notes.mjs";
 import { HERE, REPO, runNode, tmp } from "./helpers.mjs";
 
 const TOOL = join(HERE, "..", "release-notes.mjs");
@@ -158,4 +172,110 @@ test("provisional counts: record keys and array items are counted, comments are 
   const text = readFileSync(join(dir, "n.md"), "utf8");
   for (const f of ["apps/web/src/i18n/provisional-ar-p6.ts", "apps/web/src/i18n/provisional-ar-p7.ts", "apps/web/src/pages/my-work/provisional-ar.ts"])
     assert.match(text, new RegExp(`^\\| \`${f.replace(/[.]/g, "\\.")}\` \\| [1-9]\\d* \\|$`, "m"), f);
+});
+
+/** The text of one "## " section (up to the next "## " heading or the Arabic block). */
+function section(text, heading) {
+  const start = text.indexOf(`## ${heading}\n`);
+  assert.ok(start >= 0, heading);
+  const ends = [text.indexOf("\n## ", start + 3), text.indexOf('\n<div dir="rtl"', start)].filter((k) => k > 0);
+  return text.slice(start, Math.min(...ends));
+}
+
+test("DO-D10 disclosures: the checked-in input carries the D-278 transfer-drill rule in English and Arabic", () => {
+  const list = parseDisclosures(readFileSync(DEFAULT_DISCLOSURES, "utf8"), "release-notes-disclosures.json");
+  const d = list.find((x) => x.id === "d278-transfer-drill");
+  assert.ok(d, "the D-278 entry is present");
+  const en = d.en.join("\n");
+  // The five points of the assignment (A5.6 AN and A5.7 residual 3), in brief.
+  assert.match(en, /Scheduled jobs keep running during the transfer drill/);
+  assert.match(en, /never pauses, disables or reschedules/);
+  assert.match(en, /explains only the scheduled executions that ADR-0064 A5\.2 allows/);
+  assert.match(en, /The drill report lists each one \(`schedule-explained-d9\.json`\)/);
+  assert.match(en, /writes business rows inside the window .* still makes D9 fail\. That is not a data defect\./);
+  assert.match(en, /re-run the drill, never to pause or reschedule a job/);
+  assert.match(en, /Not covered: the engine ticks `automation\.tick_hourly` and `automation\.tick_daily`/);
+  const ar = d.ar.join("\n");
+  for (const t of ["تبقى المهام المجدولة تعمل", "schedule-explained-d9.json", "ليس عيباً في البيانات", "إعادة تشغيل التجربة", "automation.tick_hourly"])
+    assert.ok(ar.includes(t), t);
+  assert.equal(d.link.href, "known-limitations.md#adr-residuals");
+  // The link target exists: the anchor of known-limitations.md section 6, which carries the full D-278 row.
+  const kl = readFileSync(join(REPO, "docs", "handover", "known-limitations.md"), "utf8");
+  assert.match(kl, /^## .*\{#adr-residuals\}$/m);
+  assert.match(kl, /^\| ADR-0064 Amendment 5 \(D-278\) \| /m);
+});
+
+test("DO-D10 disclosures: printed in English before the provisional section, and in the Arabic summary", () => {
+  const dir = tmp("rn-j");
+  cleanup.push(dir);
+  const r = run(fixtureArgs(dir));
+  assert.equal(r.code, 0, r.lines.join("\n"));
+  const text = readFileSync(join(dir, "release-notes.md"), "utf8");
+  const [d] = parseDisclosures(readFileSync(DEFAULT_DISCLOSURES, "utf8"), "x");
+  const en = section(text, TEXT.disclosures[0]);
+  assert.ok(text.indexOf(`## ${TEXT.deps[0]}\n`) < text.indexOf(`## ${TEXT.disclosures[0]}\n`));
+  assert.ok(text.indexOf(`## ${TEXT.disclosures[0]}\n`) < text.indexOf(`## ${TEXT.provisional[0]}\n`));
+  assert.ok(en.includes(`### ${d.heading[0]}\n`));
+  for (const t of d.en) assert.ok(en.includes(`\n- ${t}\n`), t);
+  assert.ok(en.includes(`- ${TEXT.details[0]}: [${d.link.text[0]}](${d.link.href}) (source: ${d.source}).\n`));
+  const rtl = text.slice(text.indexOf('<div dir="rtl" lang="ar">'));
+  // The Arabic heading is followed by the H.3 provisional lines (check-handover §2.3), and each title is a bold line.
+  assert.ok(rtl.includes(`### ${TEXT.disclosures[1]}\n\n${TEXT.provisionalMarker[0]}\n\n${TEXT.provisionalMarker[1]}\n`));
+  assert.ok(rtl.includes(`\n**${d.heading[1]}**\n`));
+  for (const t of d.ar) assert.ok(rtl.includes(`\n- ${t}\n`), t);
+  assert.ok(rtl.includes(`- ${TEXT.details[1]}: [${d.link.text[1]}](${d.link.href})`));
+  assert.ok(!en.includes(d.ar[0]) && !rtl.includes(d.en[0]), "each language in its own section");
+});
+
+test("DO-D10 disclosures: the committed release notes carry the section (regenerated with --write)", () => {
+  const notes = readFileSync(join(REPO, "docs", "handover", "release-notes.md"), "utf8");
+  for (const d of parseDisclosures(readFileSync(DEFAULT_DISCLOSURES, "utf8"), "x")) {
+    for (const t of [...d.en, ...d.ar]) assert.ok(notes.includes(`- ${t}\n`), t);
+  }
+});
+
+test("DO-D10 disclosures: an empty list prints the None line in both languages, never an empty heading", () => {
+  const dir = tmp("rn-k");
+  cleanup.push(dir);
+  const f = join(dir, "d.json");
+  writeFileSync(f, JSON.stringify({ format: DISCLOSURES_FORMAT, disclosures: [] }));
+  const r = run(fixtureArgs(dir, ["--disclosures", f]));
+  assert.equal(r.code, 0, r.lines.join("\n"));
+  const text = readFileSync(join(dir, "release-notes.md"), "utf8");
+  assert.ok(text.includes(`## ${TEXT.disclosures[0]}\n\n${TEXT.disclosuresNone[0]}\n`));
+  assert.ok(text.includes(`### ${TEXT.disclosures[1]}\n\n${TEXT.provisionalMarker[0]}\n\n${TEXT.provisionalMarker[1]}\n\n${TEXT.disclosuresNone[1]}\n`));
+});
+
+test("DO-D10 disclosures: a missing or invalid input is BLOCKED (exit 2) and nothing is written", () => {
+  const dir = tmp("rn-l");
+  cleanup.push(dir);
+  const good = JSON.parse(readFileSync(DEFAULT_DISCLOSURES, "utf8"));
+  const entry = good.disclosures[0];
+  const variants = {
+    "not valid JSON": "{",
+    "format is not": { ...good, format: "other/1" },
+    "unknown key extra": { ...good, extra: 1 },
+    "id must be lower-case kebab": { ...good, disclosures: [{ ...entry, id: "D278" }] },
+    "duplicate id": { ...good, disclosures: [entry, entry] },
+    "heading must be [English, Arabic]": { ...good, disclosures: [{ ...entry, heading: [entry.heading[0]] }] },
+    "en must be a non-empty list": { ...good, disclosures: [{ ...entry, en: [] }] },
+    "ar must be a non-empty list": { ...good, disclosures: [{ ...entry, ar: ["line one\nline two"] }] },
+    "link.href must be a relative .md path": { ...good, disclosures: [{ ...entry, link: { ...entry.link, href: "https://example.invalid/x.md" } }] },
+    "link.href must be a relative .md path ": { ...good, disclosures: [{ ...entry, link: { ...entry.link, href: "../delivery/decisions.md" } }] },
+    "unknown key note": { ...good, disclosures: [{ ...entry, note: "x" }] },
+  };
+  for (const [why, body] of Object.entries(variants)) {
+    const f = join(dir, "bad.json");
+    writeFileSync(f, typeof body === "string" ? body : JSON.stringify(body));
+    const out = join(dir, "n.md");
+    const r = run(["--repo", dir, "--csv", CSV, "--deps", DEPS, "--provisional", I18N, "--out", out, "--disclosures", f]);
+    assert.equal(r.code, 2, why);
+    assert.equal(r.lines.length, 1, why);
+    assert.ok(r.lines[0].startsWith("release-notes: BLOCKED: ") && r.lines[0].includes(why.trim()), `${why}: ${r.lines[0]}`);
+    assert.throws(() => readFileSync(out), /ENOENT/, `${why}: nothing is written`);
+  }
+  const missing = run(["--repo", dir, "--csv", CSV, "--out", join(dir, "m.md"), "--disclosures", join(dir, "none.json")]);
+  assert.equal(missing.code, 2);
+  assert.deepEqual(missing.lines, [`release-notes: BLOCKED: ${join(dir, "none.json")} not found`]);
+  assert.throws(() => parseDisclosures("[]", "x"), DisclosureError);
 });

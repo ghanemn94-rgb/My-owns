@@ -2,11 +2,14 @@
 // Release notes generator (ADR-0071 §5; REQ-S02-005, REQ-S21-003). Node 24, no dependency, no network, no clock.
 //
 //   node tools/release/release-notes.mjs --csv docs/delivery/requirements.csv --deps docs/handover/external-dependencies.json \
-//     --provisional apps/web/src/i18n --out docs/handover/release-notes.md [--write | --check] [--repo <dir>]
+//     --provisional apps/web/src/i18n --out docs/handover/release-notes.md [--write | --check] [--repo <dir>] [--disclosures <file>]
 //
 // Reads only named files (D-138): the register, the dependency list (absent → the Unknown line, never "none"), the
 // provisional-Arabic label files (`provisional-ar*.ts` in each --provisional directory, plus the five component files of
 // p7-plan §1.4), and, for the release identity of §5.2 item 1, `apps/api/package.json` and `docs/api/openapi.yaml`.
+// It also reads its own checked-in input `tools/release/release-notes-disclosures.json` (T-DG7-DO-D10; override with
+// --disclosures): disclosures that IMPLEMENTED rows must carry (ADR-0064 A5.6, D-278), printed in English and in the
+// Arabic summary with a link to the full text. A missing or invalid disclosure file is BLOCKED (exit 2), never dropped.
 // The output is deterministic, so --check compares bytes. Exit 0 PASS, 1 FAIL (a refusal or drift), 2 BLOCKED.
 // The register's statuses are engineering delivery states, not business approvals; nothing here grants an approval.
 import { existsSync, lstatSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -21,6 +24,9 @@ export const MARKER = "completes-after-gate:";
 /** The six D-243 Q19 rows that must carry the marker at the freeze (ADR-0071 §5.3; T-I13). */
 export const Q19_ROWS = Object.freeze(["REQ-DLV-010", "REQ-DLV-021", "REQ-DLV-039", "REQ-DLV-041", "REQ-S20-023", "REQ-S20-028"]);
 /** The provisional-Arabic files outside apps/web/src/i18n (p7-plan §1.4: "five provisional-ar.ts files"). */
+/** The checked-in disclosure input, read from the tool's own directory (the claims-scan allow-list precedent). */
+export const DEFAULT_DISCLOSURES = join(HERE, "release-notes-disclosures.json");
+export const DISCLOSURES_FORMAT = "mth-release-notes-disclosures/1";
 export const PROVISIONAL_COMPONENT_FILES = Object.freeze([
   "apps/web/src/components/assistant/provisional-ar.ts",
   "apps/web/src/components/compare/provisional-ar.ts",
@@ -37,6 +43,13 @@ export const TEXT = Object.freeze({
   later: ["Clauses that complete after the engineering gate", "بنود تكتمل بعد البوابة الهندسية"],
   deps: ["Remaining external configuration dependencies", "تبعيات الإعداد الخارجية المتبقية"],
   provisional: ["Provisional Arabic texts", "النصوص العربية المؤقتة"],
+  disclosures: ["Known limitations disclosed in this release", "قيود معروفة يفصح عنها هذا الإصدار"],
+  disclosuresIntro: [
+    "Behaviour that is implemented as designed but limits how a procedure or check can be used. Each entry is a summary; the linked section gives the full text.",
+    "سلوك منفذ كما صُمّم، لكنه يحدّ من طريقة استخدام إجراء أو فحص. كل بند ملخص، والنص الكامل في القسم المرتبط.",
+  ],
+  disclosuresNone: ["None: this release lists no such disclosure.", "لا يوجد: لا يذكر هذا الإصدار أي إفصاح من هذا النوع."],
+  details: ["Details", "التفاصيل"],
   none: ["None: every requirement of this release is implemented.", "لا يوجد: جميع متطلبات هذا الإصدار منفذة."],
   unknown: ["Unknown: this build did not include the list.", "غير معروف: لم يتضمن هذا البناء القائمة."],
   notApproval: ["These are engineering delivery states, not business approvals.", "هذه حالات تسليم هندسية، وليست موافقات أعمال."],
@@ -107,6 +120,54 @@ export const laterClauseOf = (notes) => {
   return notes.slice(k + MARKER.length).split("\n")[0].trim();
 };
 
+/** A refused disclosure input (exit 2, BLOCKED: invalid input, p7-work-split §2 rule 4). */
+export class DisclosureError extends Error {}
+
+const oneLine = (v) => typeof v === "string" && v.trim() !== "" && !/[\r\n]/.test(v) && v === v.trim();
+const pair = (v) => Array.isArray(v) && v.length === 2 && v.every(oneLine);
+const lines = (v) => Array.isArray(v) && v.length > 0 && v.every(oneLine);
+const ENTRY_KEYS = ["id", "source", "heading", "en", "ar", "link"];
+
+/**
+ * Parses and validates the disclosure input. Returns the entries in file order.
+ * Every string is one trimmed line; a link is a relative Markdown path (never a URL, never outside docs/handover).
+ * @param {string} text @param {string} name shown in the error
+ */
+export function parseDisclosures(text, name) {
+  const fail = (why) => {
+    throw new DisclosureError(`${name}: ${why}`);
+  };
+  let doc;
+  try {
+    doc = JSON.parse(text);
+  } catch {
+    fail("not valid JSON");
+  }
+  if (!doc || typeof doc !== "object" || Array.isArray(doc)) fail("not a JSON object");
+  if (doc.format !== DISCLOSURES_FORMAT) fail(`format is not ${DISCLOSURES_FORMAT}`);
+  for (const k of Object.keys(doc)) if (!["$comment", "format", "disclosures"].includes(k)) fail(`unknown key ${k}`);
+  if (!Array.isArray(doc.disclosures)) fail("disclosures is not an array");
+  const seen = new Set();
+  return doc.disclosures.map((d, i) => {
+    const at = `disclosures[${i}]`;
+    if (!d || typeof d !== "object" || Array.isArray(d)) fail(`${at} is not an object`);
+    for (const k of Object.keys(d)) if (!ENTRY_KEYS.includes(k)) fail(`${at}: unknown key ${k}`);
+    if (typeof d.id !== "string" || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(d.id)) fail(`${at}: id must be lower-case kebab`);
+    if (seen.has(d.id)) fail(`${at}: duplicate id ${d.id}`);
+    seen.add(d.id);
+    if (!oneLine(d.source)) fail(`${d.id}: source must be one non-empty line`);
+    if (!pair(d.heading)) fail(`${d.id}: heading must be [English, Arabic], one line each`);
+    if (!lines(d.en)) fail(`${d.id}: en must be a non-empty list of one-line texts`);
+    if (!lines(d.ar)) fail(`${d.id}: ar must be a non-empty list of one-line texts`);
+    const l = d.link;
+    if (!l || typeof l !== "object" || Array.isArray(l) || Object.keys(l).some((k) => !["href", "text"].includes(k))) fail(`${d.id}: link must be { href, text }`);
+    if (typeof l.href !== "string" || !/^(?!\.\.?\/)[A-Za-z0-9_-]+(?:\/[A-Za-z0-9_-]+)*\.md(?:#[a-z0-9-]+)?$/.test(l.href))
+      fail(`${d.id}: link.href must be a relative .md path under docs/handover, optionally with a #fragment`);
+    if (!pair(l.text)) fail(`${d.id}: link.text must be [English, Arabic], one line each`);
+    return Object.freeze({ id: d.id, source: d.source, heading: d.heading, en: d.en, ar: d.ar, link: { href: l.href, text: l.text } });
+  });
+}
+
 const quote = (text) =>
   String(text)
     .split("\n")
@@ -116,9 +177,10 @@ const quote = (text) =>
 /**
  * Builds the release notes. Returns { text, problems, unfinished, later } without writing anything.
  * @param {{ csvBytes: Buffer, csvPath: string, deps: object[] | null, provisional: { path: string, entries: number }[],
- *           identity: { api: string | null, contract: string | null } }} input
+ *           identity: { api: string | null, contract: string | null },
+ *           disclosures?: ReturnType<typeof parseDisclosures> }} input
  */
-export function buildReleaseNotes({ csvBytes, csvPath, deps, provisional, identity: id }) {
+export function buildReleaseNotes({ csvBytes, csvPath, deps, provisional, identity: id, disclosures = [] }) {
   const { rows } = parseRegister(csvBytes);
   const problems = [];
   for (const r of rows) {
@@ -172,6 +234,16 @@ export function buildReleaseNotes({ csvBytes, csvPath, deps, provisional, identi
     for (const d of deps) L.push(`| \`${d.key}\` | ${d.title.replace(/\|/g, "\\|")} | ${d.owner.replace(/\|/g, "\\|")} | ${d.status} |`);
     L.push("");
   }
+  L.push(`## ${TEXT.disclosures[0]}`, "");
+  if (disclosures.length === 0) L.push(TEXT.disclosuresNone[0], "");
+  else {
+    L.push(TEXT.disclosuresIntro[0], "");
+    for (const d of disclosures) {
+      L.push(`### ${d.heading[0]}`, "");
+      for (const t of d.en) L.push(`- ${t}`);
+      L.push(`- ${TEXT.details[0]}: [${d.link.text[0]}](${d.link.href}) (source: ${d.source}).`, "");
+    }
+  }
   L.push(`## ${TEXT.provisional[0]}`, "");
   L.push(
     "Every Arabic user-interface text listed in these files is provisional until a qualified Arabic reviewer checks it; that review is an external dependency. An entry ending in `.` stands for every key under that prefix.",
@@ -194,6 +266,17 @@ export function buildReleaseNotes({ csvBytes, csvPath, deps, provisional, identi
   L.push(unfinished.length === 0 ? TEXT.none[1] : `عدد البنود غير المكتملة: ${unfinished.length}. القائمة الكاملة مع التبعية الناقصة لكل بند في القسم الإنجليزي أعلاه.`, "");
   L.push(`### ${TEXT.later[1]}`, "", `عدد البنود: ${later.length}.`, "");
   L.push(`### ${TEXT.deps[1]}`, "", deps === null ? TEXT.unknown[1] : `عدد التبعيات: ${deps.length}. التفاصيل في القسم الإنجليزي أعلاه.`, "");
+  // One Arabic heading, followed by the H.3 provisional lines (check-handover §2.3); each entry's title is a bold line.
+  L.push(`### ${TEXT.disclosures[1]}`, "", TEXT.provisionalMarker[0], "", TEXT.provisionalMarker[1], "");
+  if (disclosures.length === 0) L.push(TEXT.disclosuresNone[1], "");
+  else {
+    L.push(TEXT.disclosuresIntro[1], "");
+    for (const d of disclosures) {
+      L.push(`**${d.heading[1]}**`, "");
+      for (const t of d.ar) L.push(`- ${t}`);
+      L.push(`- ${TEXT.details[1]}: [${d.link.text[1]}](${d.link.href}) (${d.source}).`, "");
+    }
+  }
   L.push(`### ${TEXT.provisional[1]}`, "", `عدد الإدخالات المؤقتة: ${totalProvisional}.`, "");
   L.push("</div>", "");
   return { text: L.join("\n"), problems, unfinished: unfinished.map((r) => r[C.id]), later: later.map((r) => r[C.id]) };
@@ -209,7 +292,7 @@ export function main(argv, { print = console.log } = {}) {
     const a = argv[k];
     if (a === "--check") o.mode = "check";
     else if (a === "--write") o.mode = "write";
-    else if (["--csv", "--deps", "--out", "--repo", "--provisional"].includes(a)) {
+    else if (["--csv", "--deps", "--out", "--repo", "--provisional", "--disclosures"].includes(a)) {
       const v = argv[k + 1];
       if (v === undefined || v.startsWith("--")) {
         print(`release-notes: BLOCKED: ${a} needs a value`);
@@ -242,13 +325,28 @@ export function main(argv, { print = console.log } = {}) {
       return 1;
     }
   }
+  const disclosuresAbs = o.disclosures ? resolve(repo, o.disclosures) : DEFAULT_DISCLOSURES;
+  if (!existsSync(disclosuresAbs)) {
+    print(`release-notes: BLOCKED: ${o.disclosures ?? shown(REPO, DEFAULT_DISCLOSURES)} not found`);
+    return 2;
+  }
+  let disclosures;
+  try {
+    disclosures = parseDisclosures(readFileSync(disclosuresAbs, "utf8"), shown(repo, disclosuresAbs));
+  } catch (e) {
+    if (e instanceof DisclosureError) {
+      print(`release-notes: BLOCKED: ${e.message}`);
+      return 2;
+    }
+    throw e;
+  }
   const provisional = provisionalFiles(repo, o.provisional.length ? o.provisional : ["apps/web/src/i18n"]).map((abs) => ({
     path: shown(repo, abs),
     entries: countProvisional(readFileSync(abs, "utf8")),
   }));
   let built;
   try {
-    built = buildReleaseNotes({ csvBytes: readFileSync(csvAbs), csvPath: shown(repo, csvAbs), deps, provisional, identity: identity(repo) });
+    built = buildReleaseNotes({ csvBytes: readFileSync(csvAbs), csvPath: shown(repo, csvAbs), deps, provisional, identity: identity(repo), disclosures });
   } catch (e) {
     if (e instanceof RegisterError) {
       print(`release-notes: ${e.line}: ${e.reason}`);
