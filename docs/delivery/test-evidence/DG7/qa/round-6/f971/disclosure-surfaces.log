@@ -1,0 +1,31 @@
+## Disclosure surfaces of the D-278 rule (ADR-0064 Amendment 5 A5.6 'AN (D-278)'), on candidate 0b481627 (source 830d7edf)
+$ sed -n '/### A5.6/,/### A5.7/p' ADR-0064 | grep -n -A6 'AN (D-278)'
+**AN (D-278):** the register notes of REQ-S19-017, REQ-S20-018 and REQ-S01-006, and the handover disclosure in `known-limitations.md`, the release notes and `deployment.md`'s drill section. The disclosure must say:
+- a scheduled job that runs during the drill is explained only as A5.2 says, and is listed in the report;
+- a scheduled job whose handler writes business rows during the window still makes D9 FAIL, which is not a data defect;
+- the recovery is to re-run the drill, never to pause a schedule.
+
+### A5.7 Residuals of this amendment
+$ git show 830d7edf:docs/handover/deployment.md | grep -c -i -E 'D-278|schedule-explained|schedule_explained|Amendment 5|escalation_scan|tick_hourly|re-run the drill'
+1
+$ git show 830d7edf:docs/handover/known-limitations.md | grep -c -i -E 'D-278|schedule-explained|schedule_explained|Amendment 5|escalation_scan|tick_hourly|re-run the drill'
+0
+$ git show 830d7edf:docs/handover/release-notes.md | grep -c -i -E 'D-278|schedule-explained|schedule_explained|Amendment 5|escalation_scan|tick_hourly|re-run the drill'
+0
+$ git show 830d7edf:docs/handover/deployment.ar-summary.md | grep -c -i -E 'D-278|schedule-explained|schedule_explained|Amendment 5|escalation_scan|tick_hourly|re-run the drill'
+0
+$ git show 830d7edf:docs/handover/known-limitations.ar-summary.md | grep -c -i -E 'D-278|schedule-explained|schedule_explained|Amendment 5|escalation_scan|tick_hourly|re-run the drill'
+0
+$ known-limitations.md ADR-0064 row (the only ADR-0064 row)
+| ADR-0064 | Migration scale is unproven; cross-release imports are out of scope; queued jobs do not travel (stop the source's worker and wait for an empty queue first); the attachment manifest lists evidence object names to ADM_TECH; secrets must be re-bound by IT on the target; every imported user is held until IT confirms the identity. |
+$ deployment.md drill paragraph: residuals named?
+      1 Re-run the drill
+      1 handler writes business rows
+      1 never pause a schedule
+$ T-DG7-AN-P7H handback, open question to the orchestrator
+1. **Handover disclosure is not written by me.** The assignment forbids `docs/handover/**`, but ADR-0064 A5.6 assigns "the handover disclosure in `known-limitations.md`, the release notes and `deployment.md`'s drill section" to AN.
+   - At this base, `deployment.md` line 247 already carries DO-D9's paragraph with all three A5.6 points.
+   - `known-limitations.md`, `release-notes.md`, `deployment.ar-summary.md` and `known-limitations.ar-summary.md` have **no** mention (grep).
+1. **The A5.6 handover disclosure.** ADR-0064 A5.6 gives it to AN, while this assignment gives it to the orchestrator's regeneration. Please confirm that `known-limitations.md`, the release notes and the Arabic summaries will carry it, since F-DG7-971's expected result names them.
+$ grep D-279 for a decision on it
+(no match = not addressed)

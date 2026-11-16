@@ -1,0 +1,62 @@
+$ pnpm -r build  (12:28:35)
+apps/web build: dist/assets/vendor-i18n-DIgLw1Ps.js                                   49.18 kB │ gzip:  16.30 kB │ map:   167.25 kB
+apps/web build: dist/assets/InitiativePage-DxJGkMwh.js                                71.12 kB │ gzip:  16.98 kB │ map:   229.37 kB
+apps/web build: dist/assets/vendor-tanstack-BC_PukRK.js                               85.98 kB │ gzip:  23.77 kB │ map:   377.08 kB
+apps/web build: dist/assets/vendor-forms-DLh3TFGs.js                                 152.26 kB │ gzip:  48.69 kB │ map:   891.92 kB
+apps/web build: dist/assets/vendor-react-BooCP96l.js                                 286.32 kB │ gzip:  91.97 kB │ map: 1,446.79 kB
+apps/web build: dist/assets/index-DLzrZjXy.js                                      1,879.26 kB │ gzip: 510.52 kB │ map: 1,767.58 kB
+apps/web build: ✓ built in 12.84s
+apps/web build: Done
+packages/db build$ tsc -p tsconfig.build.json
+packages/db build: Done
+apps/api build$ tsc -p tsconfig.build.json && node scripts/register-snapshot.mjs --csv ../../docs/delivery/requirements.csv --deps ../../docs/handover/external-dependencies.json --out dist/release/register-snapshot.json
+apps/worker build$ tsc -p tsconfig.build.json
+apps/worker build: Done
+apps/api build: register-snapshot: wrote dist/release/register-snapshot.json (412 rows, sha256 0be471c06da2)
+apps/api build: Done
+exit=0
+$ pnpm -r typecheck  (12:32:03)
+packages/shared typecheck$ tsc -p tsconfig.json
+packages/design-tokens typecheck: Done
+packages/shared typecheck: Done
+apps/web typecheck$ tsc -p tsconfig.json && tsc -p tsconfig.e2e.json
+packages/config typecheck$ tsc -p tsconfig.json
+packages/reporting typecheck$ tsc -p tsconfig.json
+packages/config typecheck: Done
+packages/reporting typecheck: Done
+apps/web typecheck: Done
+packages/db typecheck$ tsc -p tsconfig.json
+packages/db typecheck: Done
+apps/api typecheck$ tsc -p tsconfig.json
+apps/worker typecheck$ tsc -p tsconfig.json
+apps/worker typecheck: Done
+apps/api typecheck: Done
+exit=0
+$ pnpm lint  (12:38:47)
+
+> mobily-transformation-hub@0.1.0 lint /var/tmp/mth-run.OMqNCZ/claude-0/review-qa
+> eslint . --max-warnings=0
+
+exit=0
+$ pnpm openapi:lint  (12:39:34)
+
+> mobily-transformation-hub@0.1.0 openapi:lint /var/tmp/mth-run.OMqNCZ/claude-0/review-qa
+> node scripts/openapi-lint.mjs docs/api/openapi.yaml
+
+PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 965 operations
+exit=0
+$ pnpm check:no-cdn  (12:39:36)
+
+> mobily-transformation-hub@0.1.0 check:no-cdn /var/tmp/mth-run.OMqNCZ/claude-0/review-qa
+> node scripts/check-no-cdn.mjs
+
+PASS no-cdn: scanned apps, packages
+exit=0
+$ pnpm format:check  (12:39:37)
+
+> mobily-transformation-hub@0.1.0 format:check /var/tmp/mth-run.OMqNCZ/claude-0/review-qa
+> prettier --check .
+
+Checking formatting...
+All matched files use Prettier code style!
+exit=0

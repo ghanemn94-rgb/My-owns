@@ -1,0 +1,78 @@
+port-policy: PostgreSQL listening on port 32570 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+start 13:44:57; HEAD 830d7edfdc3c36f55679db29253ebc35c4c838c0; node v24.21.0; free 9222 MB
+mth-db seed-demo: reporting periods relative to 2026-11-16 (Asia/Riyadh): 2 generated, current period 2026-11 open
+export-migration: wrote export 01a1e49a-b078-7486-9bae-2ab2bc1f79b5 (demo, 0152_p7_transfer_recheck_lineage_basis): 335 tables, 4782 rows, 0 attachments to /var/tmp/mth-run.OMqNCZ/claude-0/qa-r6-a18-run4/export; manifest sha256 13463aa545367796d0e7a81a1c8adeef45671617d0d18b4db75ccaab5f3aefc8
+build-archive: archive sha256 7e65c859988ade5d6739f7f07f1fd2610c5394be8bda79d979aea81fd90bae80
+archive mth-transformation-hub-0.1.0-0b4816270151.tar.gz sha256 7e65c859988ade5d6739f7f07f1fd2610c5394be8bda79d979aea81fd90bae80
+=== drill a
+waiting 603 s until 13:55:35
+[a] transfer-drill.sh --keep start 13:55:35
+[a] drill exit 0 14:01:28
+transfer-drill: step D0 PASS in 263.927 s
+transfer-drill: step D1 PASS in 12.619 s
+transfer-drill: step D2 PASS in 2.032 s
+transfer-drill: step D3 PASS in 0.366 s
+transfer-drill: step D4 PASS in 6.681 s
+transfer-drill: step D5 PASS in 14.572 s
+transfer-drill: step D6 PASS in 3.447 s
+transfer-drill: step D7 PASS in 2.384 s
+transfer-drill: step D8 PASS in 34.111 s
+transfer-drill: step D9 PASS in 10.120 s
+transfer-drill: step D10 PASS in 0.870 s
+transfer-drill: PASS in 351.983 s: 335 tables and 2 evidence files equal, origin http://127.0.0.1:25302, restart verified; report /home/user/My-owns/docs/delivery/test-evidence/DG7/qa/round-6/a18/run4
+transfer-drill: D7: schedule window start 2026-11-16T14:00:40.581Z (target clock_timestamp())
+transfer-drill: D9: schedule window end 2026-11-16T14:01:27.021Z (target clock_timestamp())
+report result PASS | D9 PASS recheck matched window {"clock":"target clock_timestamp()","end":"2026-11-16T14:01:27.021Z","lowerBoundExclusive":"2026-11-16T13:59:40.581Z","start":"2026-11-16T14:00:40.581Z"} | listed []
+stderr lines: 0
+--- [a] kept-target probes start 14:01:54
+window 2026-11-16T14:00:40.581Z .. 2026-11-16T14:01:27.021Z; explained execution in part 1: none
+digest before: ed69e8335055343a2f51899df36edccc 63292ad847399098ef40b674a63a4315 
+[B0] exit 0
+digest after B0 (the stage alone): ed69e8335055343a2f51899df36edccc 63292ad847399098ef40b674a63a4315 
+no schedule-explained execution in part 1 (window held no slot): the DB probes P1-P8, P11 cannot run on this target
+[P9-extra-table] exit 1
+    transfer-drill: D9: schedule rule not applicable: table approval_request is not automation_execution or automation_action_result
+[P10-changed-execution] exit 1
+    transfer-drill: D9: schedule rule not applicable: line not allowed: reconcile-migration: matched after use: 290 tables unchanged, 44 tables with allowed differences, 217 audit events added since the import
+[B1-restored] exit 0
+digest after: ed69e8335055343a2f51899df36edccc 63292ad847399098ef40b674a63a4315 
+kept target stopped
+[a] kept-target probes exit 0 14:01:54
+=== drill b
+waiting 638 s until 13:56:10
+[b] transfer-drill.sh --keep start 13:56:10
+[b] drill exit 0 14:01:53
+transfer-drill: step D0 PASS in 250.420 s
+transfer-drill: step D1 PASS in 13.945 s
+transfer-drill: step D2 PASS in 2.345 s
+transfer-drill: step D3 PASS in 0.490 s
+transfer-drill: step D4 PASS in 8.522 s
+transfer-drill: step D5 PASS in 12.803 s
+transfer-drill: step D6 PASS in 3.291 s
+transfer-drill: step D7 PASS in 2.322 s
+transfer-drill: step D8 PASS in 34.254 s
+transfer-drill: step D9 PASS in 11.911 s
+transfer-drill: step D10 PASS in 0.908 s
+transfer-drill: PASS in 342.183 s: 335 tables and 2 evidence files equal, origin http://127.0.0.1:25302, restart verified; report /home/user/My-owns/docs/delivery/test-evidence/DG7/qa/round-6/a18/run4
+transfer-drill: D7: schedule window start 2026-11-16T14:01:03.887Z (target clock_timestamp())
+transfer-drill: D9: schedule window end 2026-11-16T14:01:52.207Z (target clock_timestamp())
+report result PASS | D9 PASS recheck matched window {"clock":"target clock_timestamp()","end":"2026-11-16T14:01:52.207Z","lowerBoundExclusive":"2026-11-16T14:00:03.887Z","start":"2026-11-16T14:01:03.887Z"} | listed []
+stderr lines: 0
+--- [b] kept-target probes start 14:01:54
+window 2026-11-16T14:01:03.887Z .. 2026-11-16T14:01:52.207Z; explained execution in part 1: none
+digest before: 996f4a579654a977bd6158bb685d88ce 97a2009099102966ecc1af42ab3625af 
+[B0] exit 0
+digest after B0 (the stage alone): 996f4a579654a977bd6158bb685d88ce 97a2009099102966ecc1af42ab3625af 
+no schedule-explained execution in part 1 (window held no slot): the DB probes P1-P8, P11 cannot run on this target
+[P9-extra-table] exit 1
+    transfer-drill: D9: schedule rule not applicable: table approval_request is not automation_execution or automation_action_result
+[P10-changed-execution] exit 1
+    transfer-drill: D9: schedule rule not applicable: line not allowed: reconcile-migration: matched after use: 289 tables unchanged, 45 tables with allowed differences, 217 audit events added since the import
+[B1-restored] exit 0
+digest after: 996f4a579654a977bd6158bb685d88ce 97a2009099102966ecc1af42ab3625af 
+kept target stopped
+[b] kept-target probes exit 0 14:01:55
+drill PostgreSQL left running: none
+removed /var/tmp/mth-run.OMqNCZ/claude-0/qa-r6-a18-run4 14:02:10
+driver-4 exit 0

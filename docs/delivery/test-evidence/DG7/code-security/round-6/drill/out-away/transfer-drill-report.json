@@ -1,0 +1,155 @@
+{
+  "schemaVersion": "mth-transfer-drill/1",
+  "mode": "container-free, inside one bwrap --unshare-net namespace (agent sandbox; ADR-0069 §7 split)",
+  "archive": {
+    "sha256": "ce5bd7aa205fac5fecd13951e1505881b62fbfc0d724124ed9e060b3a311c327"
+  },
+  "sourceOrigin": "http://localhost:25301",
+  "targetOrigin": "http://127.0.0.1:25302",
+  "idp": {
+    "label": "synthetic drill IdP (not a corporate IdP)"
+  },
+  "checksums": {
+    "manifest": "b63b051e2c6ec1f3b8cc3a85549ca20803360db7fc0882fcabc7a552e09a2fe7",
+    "attachmentManifest": "bdc1c08bbf1c3996ff2b4409af71d0e1cb7494c7bb4612e821b6b43bdd2c399d",
+    "mapping": "51ad8b68b9a337531585287259edd312a6163c720a13f7a756720ff2159bafa9",
+    "allowance": "7039e49ac89d171166782c84ebff20351cb39eaf449a365216ef252e1f0c5550",
+    "journal": "25054be3942b95f1a038300d2f689fa85153c9b531e938c8d3b36bcb537a312f"
+  },
+  "reports": [
+    "reconcile-d5.json",
+    "reconcile-d6.json",
+    "reconcile-d9.json",
+    "allowance.json",
+    "allowance-reasons.json",
+    "schedule-explained-d9.json",
+    "job-check.json",
+    "config-trace.json",
+    "origin-scan.json"
+  ],
+  "totals": {
+    "tables": 335,
+    "evidenceFiles": 2,
+    "seconds": 316.195
+  },
+  "steps": [
+    {
+      "id": "D0",
+      "guideSection": "docs/handover/deployment.md#first-deployment",
+      "command": "node tools/release/build-archive.mjs --verify <archive> --expect-sha256 ce5bd7aa205fac5fecd13951e1505881b62fbfc0d724124ed9e060b3a311c327 && tools/release/build-from-archive.sh <archive> --sha256 ce5bd7aa205fac5fecd13951e1505881b62fbfc0d724124ed9e060b3a311c327 --store <store> --work <work>/build",
+      "exit": 0,
+      "seconds": 227.209,
+      "result": "PASS",
+      "detail": "D0: archive ce5bd7aa205fac5fecd13951e1505881b62fbfc0d724124ed9e060b3a311c327 verified and built; runtime /var/tmp/mth-run.awb0Qu/claude-0/cs-d9/work-away/build/runtime"
+    },
+    {
+      "id": "D1",
+      "guideSection": "docs/handover/deployment.md#first-deployment",
+      "command": "fresh cluster; mth-db migrate; mth-db seed-demo; mth-db seed-dev; API and worker at http://localhost:25301; deploy/scripts/smoke.mjs (MTH_SMOKE_AUTH=dev); journey.mjs --mode dev --steps signin,uploads",
+      "exit": 0,
+      "seconds": 13.812,
+      "result": "PASS",
+      "detail": "D1: evidence rows 3, audit_event 1028"
+    },
+    {
+      "id": "D2",
+      "guideSection": "docs/handover/deployment.md#origin-change",
+      "command": "DATABASE_OWNER_URL=<S> node tools/migration/export.mjs --out <work>/package --operator 'transfer-drill synthetic operator' (attachments.json count = S's rows with a storage_key)",
+      "exit": 0,
+      "seconds": 2.185,
+      "result": "PASS",
+      "detail": "D2: attachments.json lists 2 files; S has 2 rows with a storage_key"
+    },
+    {
+      "id": "D3",
+      "guideSection": "docs/handover/deployment.md#configuration-keys",
+      "command": "node deploy/scripts/generate-env-example.mjs --check && node deploy/scripts/drill/config-trace.mjs --template .env.example --guide docs/handover/deployment.md --map deploy/scripts/drill/guide-keys.json",
+      "exit": 0,
+      "seconds": 0.395,
+      "result": "PASS",
+      "detail": "config-trace: 14 keys filled from the template, 0 problems"
+    },
+    {
+      "id": "D4",
+      "guideSection": "docs/handover/deployment.md#database",
+      "command": "mth-db migrate && mth-db bootstrap (twice; the second must refuse) on a separate clean database",
+      "exit": 0,
+      "seconds": 8.693,
+      "result": "PASS",
+      "detail": "D4: migrate 0, bootstrap 0, second bootstrap refused; database dropped"
+    },
+    {
+      "id": "D5",
+      "guideSection": "docs/handover/deployment.md#migration-import",
+      "command": "node tools/migration/prepare-target.mjs --from <package> && node tools/migration/import.mjs --from <package> --operator 'transfer-drill synthetic operator' --keep-reports <out>/import-reports --manifest-sha256 <hex> && node tools/migration/reconcile.mjs --operator 'transfer-drill synthetic operator' --from <package> (mode 1)",
+      "exit": 0,
+      "seconds": 12.961,
+      "result": "PASS",
+      "detail": "D5: recorded audit_already_present delta (rows_changed allowed import_rows): 45 t 45"
+    },
+    {
+      "id": "D6",
+      "guideSection": "docs/handover/deployment.md#migration-import",
+      "command": "mth-db rebind-identity --mapping <mapping.csv> --operator 'transfer-drill synthetic operator' (one carried user left unmapped); node tools/migration/reconcile.mjs --from <package> (mode 1, rebind delta)",
+      "exit": 0,
+      "seconds": 3.185,
+      "result": "PASS",
+      "detail": "D6: recorded delta: rebind user_identity changed 13 allowed true"
+    },
+    {
+      "id": "D7",
+      "guideSection": "docs/handover/deployment.md#monitoring",
+      "command": "start the drill IdP, the API and the worker from the runtime tree with target.env; GET /readyz until 200, storage ok, worker alive (120 s); journey.mjs --steps signin,status (getDeploymentStatus origin and environmentKind)",
+      "exit": 0,
+      "seconds": 2.321,
+      "result": "PASS",
+      "detail": "{\"result\":\"PASS\",\"steps\":2}"
+    },
+    {
+      "id": "D8",
+      "guideSection": "docs/handover/deployment.md#origin-change",
+      "command": "node deploy/scripts/drill/journey.mjs --mode oidc-drill --app http://127.0.0.1:25302 --source-origin http://localhost:25301 (signin, unbound, csrf, status, writes, approve, downloads, deeplink; keys into journal.json)",
+      "exit": 0,
+      "seconds": 33.727,
+      "result": "PASS",
+      "detail": "{\"result\":\"PASS\",\"steps\":8}"
+    },
+    {
+      "id": "D9",
+      "guideSection": "docs/handover/deployment.md#monitoring",
+      "command": "stop worker; journey exportq; job-check snapshot; stop API, PostgreSQL; start PostgreSQL, API, worker; job-check compare; journey exportwait, downloads; allowance.mjs; node tools/migration/reconcile.mjs --from <package> --after-use --allow <allowance.json> (mode 2); node deploy/scripts/drill/schedule-explained.mjs (ADR-0064 A5, read only)",
+      "exit": 0,
+      "seconds": 9.62,
+      "result": "PASS",
+      "detail": "transfer-drill: D9: schedule window end 2026-11-16T12:51:55.355Z (target clock_timestamp())",
+      "recheck": "matched",
+      "scheduleExplained": [],
+      "scheduleWindow": {
+        "clock": "target clock_timestamp()",
+        "end": "2026-11-16T12:51:55.355Z",
+        "lowerBoundExclusive": "2026-11-16T12:50:09.719Z",
+        "start": "2026-11-16T12:51:09.719Z"
+      }
+    },
+    {
+      "id": "D10",
+      "guideSection": "docs/handover/deployment.md#origin-change",
+      "command": "node deploy/scripts/drill/origin-scan.mjs --database-url <target superuser> --origin http://localhost:25301",
+      "exit": 0,
+      "seconds": 0.819,
+      "result": "PASS",
+      "detail": "origin-scan: 1837 columns of 337 tables scanned; 0 failing hits; 0 audit_event rows listed"
+    },
+    {
+      "id": "D11",
+      "guideSection": "docs/handover/deployment.md#first-deployment",
+      "command": "write transfer-drill-report.json",
+      "exit": 0,
+      "seconds": 0,
+      "result": "PASS",
+      "detail": "report written"
+    }
+  ],
+  "note": "SYNTHETIC data and credentials. A local drill is not evidence of high-availability production readiness; it approves nothing.",
+  "result": "PASS"
+}

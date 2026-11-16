@@ -1,0 +1,187 @@
+port-policy: PostgreSQL listening on port 32585 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+start 13:02:39; HEAD 830d7edfdc3c36f55679db29253ebc35c4c838c0; node v24.21.0; free 2963 MB
+mth-db seed-demo: reporting periods relative to 2026-11-16 (Asia/Riyadh): 2 generated, current period 2026-11 open
+export-migration: wrote export 01a1e473-f527-7029-83be-5b03aeec120a (demo, 0152_p7_transfer_recheck_lineage_basis): 335 tables, 4782 rows, 0 attachments to /var/tmp/mth-run.OMqNCZ/claude-0/qa-r6-a18/export; manifest sha256 052a42776a4621ac6a4b3578508a81582354ea153af22952a7eb304b235f0d35
+demo export exit 0; manifest sha256 052a42776a4621ac6a4b3578508a81582354ea153af22952a7eb304b235f0d35
+build-archive: candidate sha256:0b48162701518d1fb47789282112f2d5528429e77d6f108d3f8696570f06bc95 commit 830d7edfdc3c36f55679db29253ebc35c4c838c0
+build-archive: tar sha256 6a581c8965c484d88e8b6865eacf5f95aca61748b1662ae09df8b5f8e9a3dfe6
+build-archive: archive sha256 1bca436d0f28eaa08e4a123551fce1c2d28a27075dc9e84d1b96a8f9b85fd668
+build-archive exit 0
+archive mth-transformation-hub-0.1.0-0b4816270151.tar.gz 14751135 bytes sha256 1bca436d0f28eaa08e4a123551fce1c2d28a27075dc9e84d1b96a8f9b85fd668
+1 archive-checksum: ok
+2 single-top-level-directory: ok
+3 layout: ok
+4 sha256sums: ok
+5 candidate-id: ok
+6 copies: ok
+7 determinism-metadata: ok
+archive-verify: PASS
+archive --verify exit 0
+waiting 1303 s until 13:25:00
+--- part 1: transfer-drill.sh --keep start 13:25:00 free 9697 MB
+part 1 drill exit 2 13:25:00
+node:internal/modules/cjs/loader:1568
+  throw err;
+  ^
+
+Error: Cannot find module '/home/user/My-owns/docs/delivery/test-evidence/DG7/qa/round-6/a18/p1-quarter/transfer-drill-report.json'
+Require stack:
+- /var/tmp/mth-run.OMqNCZ/claude-0/review-qa/[eval]
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1564:15)
+    at wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)
+    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1142:10)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)
+    at Module._load (node:internal/modules/cjs/loader:1341:5)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.require (node:internal/modules/cjs/loader:1674:12)
+    at require (node:internal/modules/helpers:157:16)
+    at [eval]:1:9
+    at runScriptInThisContext (node:internal/vm:219:10) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [ '/var/tmp/mth-run.OMqNCZ/claude-0/review-qa/[eval]' ]
+}
+
+Node.js v24.21.0
+stderr lines: 1
+transfer-drill: BLOCKED: archive /var/tmp/mth-run.OMqNCZ/claude-0/qa-r6-a18/arch/mth-transformation-hub-0.1.0-0b4816270151.tar.gz not found
+--- kept-target probes start 13:25:03
+BLOCKED: no kept target data dir
+kept-target probes exit 2 13:25:03
+drill PostgreSQL left running: none
+removed work tree 13:25:03 free 9697 MB
+waiting 867 s until 13:39:30
+--- part 2: A18 harness start 13:39:30 free 9320 MB
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.OMqNCZ/claude-0/review-qa
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwjb8fyh_86fdee92 (server_encoding UTF8); applied 135 migrations to a fresh database
+ ✓ |integration| tests/qa/integration/a18-transfer-drill.test.ts > A18 clean environment starts: an empty, freshly migrated installation is ready (REQ-S20-018) > ready with database, migrations and storage ok; the worker without a heartbeat is unknown, never alive 380ms
+ ✓ |integration| tests/qa/integration/a18-transfer-drill.test.ts > A18 clean environment starts: an empty, freshly migrated installation is ready (REQ-S20-018) > a missing evidence directory is not ready (503, storage fail), never reported ok 239ms
+ ✓ |integration| tests/qa/integration/a18-transfer-drill.test.ts > A18 transfer drill harness: drill files present; inputs absent = BLOCKED (skipped), wrong = FAIL > DO-D's drill files and DOC-B's deployment guide are present (checked whatever the inputs) 2ms
+ × |integration| tests/qa/integration/a18-transfer-drill.test.ts > A18 transfer drill harness: drill files present; inputs absent = BLOCKED (skipped), wrong = FAIL > the QA_A18_* inputs given are complete and well formed 6ms
+   → A18 input invalid: QA_A18_ARCHIVE is not an existing file: /var/tmp/mth-run.OMqNCZ/claude-0/qa-r6-a18/arch/mth-transformation-hub-0.1.0-0b4816270151.tar.gz (missing); QA_A18_STORE is not an existing directory: /var/tmp/mth-run.OMqNCZ/claude-0/qa-r6-a18/store (missing) (the DO-A release archive, its SHA-256 and the offline pnpm store)
+ × |integration| tests/qa/integration/a18-transfer-drill.test.ts > A18 transfer drill: restored records, files and configuration work on another origin, offline (DO-D) > the drill exits 0 with the PASS line (exit 3 is BLOCKED and fails here, never passes) 1ms
+   → A18 input invalid: QA_A18_ARCHIVE is not an existing file: /var/tmp/mth-run.OMqNCZ/claude-0/qa-r6-a18/arch/mth-transformation-hub-0.1.0-0b4816270151.tar.gz (missing); QA_A18_STORE is not an existing directory: /var/tmp/mth-run.OMqNCZ/claude-0/qa-r6-a18/store (missing) (the DO-A release archive, its SHA-256 and the offline pnpm store)
+ × |integration| tests/qa/integration/a18-transfer-drill.test.ts > A18 transfer drill: restored records, files and configuration work on another origin, offline (DO-D) > the report: D0–D11 each PASS with command, exit and seconds; the given archive; the synthetic drill IdP 0ms
+   → A18 input invalid: QA_A18_ARCHIVE is not an existing file: /var/tmp/mth-run.OMqNCZ/claude-0/qa-r6-a18/arch/mth-transformation-hub-0.1.0-0b4816270151.tar.gz (missing); QA_A18_STORE is not an existing directory: /var/tmp/mth-run.OMqNCZ/claude-0/qa-r6-a18/store (missing) (the DO-A release archive, its SHA-256 and the offline pnpm store)
+ × |integration| tests/qa/integration/a18-transfer-drill.test.ts > A18 transfer drill: restored records, files and configuration work on another origin, offline (DO-D) > D3: configuration only from .env.example keys, each citing a section of the deployment guide 0ms
+   → A18 input invalid: QA_A18_ARCHIVE is not an existing file: /var/tmp/mth-run.OMqNCZ/claude-0/qa-r6-a18/arch/mth-transformation-hub-0.1.0-0b4816270151.tar.gz (missing); QA_A18_STORE is not an existing directory: /var/tmp/mth-run.OMqNCZ/claude-0/qa-r6-a18/store (missing) (the DO-A release archive, its SHA-256 and the offline pnpm store)
+ × |integration| tests/qa/integration/a18-transfer-drill.test.ts > A18 transfer drill: restored records, files and configuration work on another origin, offline (DO-D) > D5/D9: every reconciliation (counts, content digests, attachment checksums, after restart) is equal 0ms
+   → A18 input invalid: QA_A18_ARCHIVE is not an existing file: /var/tmp/mth-run.OMqNCZ/claude-0/qa-r6-a18/arch/mth-transformation-hub-0.1.0-0b4816270151.tar.gz (missing); QA_A18_STORE is not an existing directory: /var/tmp/mth-run.OMqNCZ/claude-0/qa-r6-a18/store (missing) (the DO-A release archive, its SHA-256 and the offline pnpm store)
+ × |integration| tests/qa/integration/a18-transfer-drill.test.ts > A18 transfer drill: restored records, files and configuration work on another origin, offline (DO-D) > D10: the source origin is stored nowhere except audit_event 0ms
+   → A18 input invalid: QA_A18_ARCHIVE is not an existing file: /var/tmp/mth-run.OMqNCZ/claude-0/qa-r6-a18/arch/mth-transformation-hub-0.1.0-0b4816270151.tar.gz (missing); QA_A18_STORE is not an existing directory: /var/tmp/mth-run.OMqNCZ/claude-0/qa-r6-a18/store (missing) (the DO-A release archive, its SHA-256 and the offline pnpm store)
+ × |integration| tests/qa/integration/a18-transfer-drill.test.ts > A18 transfer drill: restored records, files and configuration work on another origin, offline (DO-D) > the drill log names no builder-hosted or public service it reached 0ms
+   → A18 input invalid: QA_A18_ARCHIVE is not an existing file: /var/tmp/mth-run.OMqNCZ/claude-0/qa-r6-a18/arch/mth-transformation-hub-0.1.0-0b4816270151.tar.gz (missing); QA_A18_STORE is not an existing directory: /var/tmp/mth-run.OMqNCZ/claude-0/qa-r6-a18/store (missing) (the DO-A release archive, its SHA-256 and the offline pnpm store)
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/a18-transfer-drill.test.ts > A18 transfer drill harness: drill files present; inputs absent = BLOCKED (skipped), wrong = FAIL > the QA_A18_* inputs given are complete and well formed
+Error: A18 input invalid: QA_A18_ARCHIVE is not an existing file: /var/tmp/mth-run.OMqNCZ/claude-0/qa-r6-a18/arch/mth-transformation-hub-0.1.0-0b4816270151.tar.gz (missing); QA_A18_STORE is not an existing directory: /var/tmp/mth-run.OMqNCZ/claude-0/qa-r6-a18/store (missing) (the DO-A release archive, its SHA-256 and the offline pnpm store)
+ ❯ tests/qa/integration/a18-transfer-drill.test.ts:203:48
+    201|   } else {
+    202|     it("the QA_A18_* inputs given are complete and well formed", () =>…
+    203|       if (inputState.kind === "invalid") throw new Error(inputState.me…
+       |                                                ^
+    204|     });
+    205|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  |integration| tests/qa/integration/a18-transfer-drill.test.ts > A18 transfer drill: restored records, files and configuration work on another origin, offline (DO-D) > the drill exits 0 with the PASS line (exit 3 is BLOCKED and fails here, never passes)
+Error: A18 input invalid: QA_A18_ARCHIVE is not an existing file: /var/tmp/mth-run.OMqNCZ/claude-0/qa-r6-a18/arch/mth-transformation-hub-0.1.0-0b4816270151.tar.gz (missing); QA_A18_STORE is not an existing directory: /var/tmp/mth-run.OMqNCZ/claude-0/qa-r6-a18/store (missing) (the DO-A release archive, its SHA-256 and the offline pnpm store)
+ ❯ drill tests/qa/integration/a18-transfer-drill.test.ts:259:48
+    257|     function drill(): NonNullable<typeof run> {
+    258|       requireBuilt();
+    259|       if (inputState.kind === "invalid") throw new Error(inputState.me…
+       |                                                ^
+    260|       if (!run) throw new Error("A18: the drill did not run in beforeA…
+    261|       return run;
+ ❯ tests/qa/integration/a18-transfer-drill.test.ts:265:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  |integration| tests/qa/integration/a18-transfer-drill.test.ts > A18 transfer drill: restored records, files and configuration work on another origin, offline (DO-D) > the report: D0–D11 each PASS with command, exit and seconds; the given archive; the synthetic drill IdP
+Error: A18 input invalid: QA_A18_ARCHIVE is not an existing file: /var/tmp/mth-run.OMqNCZ/claude-0/qa-r6-a18/arch/mth-transformation-hub-0.1.0-0b4816270151.tar.gz (missing); QA_A18_STORE is not an existing directory: /var/tmp/mth-run.OMqNCZ/claude-0/qa-r6-a18/store (missing) (the DO-A release archive, its SHA-256 and the offline pnpm store)
+ ❯ drill tests/qa/integration/a18-transfer-drill.test.ts:259:48
+    257|     function drill(): NonNullable<typeof run> {
+    258|       requireBuilt();
+    259|       if (inputState.kind === "invalid") throw new Error(inputState.me…
+       |                                                ^
+    260|       if (!run) throw new Error("A18: the drill did not run in beforeA…
+    261|       return run;
+ ❯ tests/qa/integration/a18-transfer-drill.test.ts:278:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  |integration| tests/qa/integration/a18-transfer-drill.test.ts > A18 transfer drill: restored records, files and configuration work on another origin, offline (DO-D) > D3: configuration only from .env.example keys, each citing a section of the deployment guide
+Error: A18 input invalid: QA_A18_ARCHIVE is not an existing file: /var/tmp/mth-run.OMqNCZ/claude-0/qa-r6-a18/arch/mth-transformation-hub-0.1.0-0b4816270151.tar.gz (missing); QA_A18_STORE is not an existing directory: /var/tmp/mth-run.OMqNCZ/claude-0/qa-r6-a18/store (missing) (the DO-A release archive, its SHA-256 and the offline pnpm store)
+ ❯ drill tests/qa/integration/a18-transfer-drill.test.ts:259:48
+    257|     function drill(): NonNullable<typeof run> {
+    258|       requireBuilt();
+    259|       if (inputState.kind === "invalid") throw new Error(inputState.me…
+       |                                                ^
+    260|       if (!run) throw new Error("A18: the drill did not run in beforeA…
+    261|       return run;
+ ❯ tests/qa/integration/a18-transfer-drill.test.ts:283:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  |integration| tests/qa/integration/a18-transfer-drill.test.ts > A18 transfer drill: restored records, files and configuration work on another origin, offline (DO-D) > D5/D9: every reconciliation (counts, content digests, attachment checksums, after restart) is equal
+Error: A18 input invalid: QA_A18_ARCHIVE is not an existing file: /var/tmp/mth-run.OMqNCZ/claude-0/qa-r6-a18/arch/mth-transformation-hub-0.1.0-0b4816270151.tar.gz (missing); QA_A18_STORE is not an existing directory: /var/tmp/mth-run.OMqNCZ/claude-0/qa-r6-a18/store (missing) (the DO-A release archive, its SHA-256 and the offline pnpm store)
+ ❯ drill tests/qa/integration/a18-transfer-drill.test.ts:259:48
+    257|     function drill(): NonNullable<typeof run> {
+    258|       requireBuilt();
+    259|       if (inputState.kind === "invalid") throw new Error(inputState.me…
+       |                                                ^
+    260|       if (!run) throw new Error("A18: the drill did not run in beforeA…
+    261|       return run;
+ ❯ tests/qa/integration/a18-transfer-drill.test.ts:290:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  |integration| tests/qa/integration/a18-transfer-drill.test.ts > A18 transfer drill: restored records, files and configuration work on another origin, offline (DO-D) > D10: the source origin is stored nowhere except audit_event
+Error: A18 input invalid: QA_A18_ARCHIVE is not an existing file: /var/tmp/mth-run.OMqNCZ/claude-0/qa-r6-a18/arch/mth-transformation-hub-0.1.0-0b4816270151.tar.gz (missing); QA_A18_STORE is not an existing directory: /var/tmp/mth-run.OMqNCZ/claude-0/qa-r6-a18/store (missing) (the DO-A release archive, its SHA-256 and the offline pnpm store)
+ ❯ drill tests/qa/integration/a18-transfer-drill.test.ts:259:48
+    257|     function drill(): NonNullable<typeof run> {
+    258|       requireBuilt();
+    259|       if (inputState.kind === "invalid") throw new Error(inputState.me…
+       |                                                ^
+    260|       if (!run) throw new Error("A18: the drill did not run in beforeA…
+    261|       return run;
+ ❯ tests/qa/integration/a18-transfer-drill.test.ts:317:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  |integration| tests/qa/integration/a18-transfer-drill.test.ts > A18 transfer drill: restored records, files and configuration work on another origin, offline (DO-D) > the drill log names no builder-hosted or public service it reached
+Error: A18 input invalid: QA_A18_ARCHIVE is not an existing file: /var/tmp/mth-run.OMqNCZ/claude-0/qa-r6-a18/arch/mth-transformation-hub-0.1.0-0b4816270151.tar.gz (missing); QA_A18_STORE is not an existing directory: /var/tmp/mth-run.OMqNCZ/claude-0/qa-r6-a18/store (missing) (the DO-A release archive, its SHA-256 and the offline pnpm store)
+ ❯ drill tests/qa/integration/a18-transfer-drill.test.ts:259:48
+    257|     function drill(): NonNullable<typeof run> {
+    258|       requireBuilt();
+    259|       if (inputState.kind === "invalid") throw new Error(inputState.me…
+       |                                                ^
+    260|       if (!run) throw new Error("A18: the drill did not run in beforeA…
+    261|       return run;
+ ❯ tests/qa/integration/a18-transfer-drill.test.ts:322:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 3 passed (10)
+   Start at  13:39:31
+   Duration  17.15s (transform 5.75s, setup 0ms, collect 10.02s, tests 3.21s, environment 0ms, prepare 83ms)
+
+A18 harness exit 1 end 13:39:48
+--- part 3: transfer-drill.sh start 13:39:48 free 9192 MB
+part 3 drill exit 2 13:39:48
+report result FAIL | D9 NOT_RUN recheck undefined window undefined | listed []
+stderr lines: 1
+transfer-drill: BLOCKED: archive /var/tmp/mth-run.OMqNCZ/claude-0/qa-r6-a18/arch/mth-transformation-hub-0.1.0-0b4816270151.tar.gz not found
+drill PostgreSQL left running: none
+removed /var/tmp/mth-run.OMqNCZ/claude-0/qa-r6-a18 13:39:48
+part 1 drill exit 2; part 2 harness exit 1; part 3 drill exit 2
+driver exit 1

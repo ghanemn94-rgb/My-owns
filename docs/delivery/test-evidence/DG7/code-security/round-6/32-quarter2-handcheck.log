@@ -1,0 +1,17 @@
+# 2026-11-16T13:01:10Z independent hand check of drill/out-quarter2/schedule-explained-d9.json (S2-S9 against its own window; Asia/Riyadh = UTC+3, no DST)
+recheckExit / applicable / failures                  4 / true / 0
+executions listed                                    1
+S2 initiatingUserId null && runAs service            true
+S3 triggerKind schedule                              true
+S4 key code == triggerCode == scheduleCode           true
+S6 key minute (Riyadh wall minute) % 15 == 0, slot==M true
+S7 W0-60s < slot <= W1                               true
+S8 W0 <= createdAt <= W1                             true
+S9 events on execution with job: request id          2
+S prime: results each with an event of the same job  true
+window clock                                         target clock_timestamp()
+## reconcile-d9.json keeps the real recheck result:
+exit 4 equal false result not matched
+## worker.log: starter run in the window
+57:{"level":"info","msg":"job handled","queue":"approval.escalation_scan","jobId":"e520ee84-e40c-4cf1-9171-c1ea6fef89c5","attempt":{"retryCount":0,"retryLimit":5},"outcome":{"selected":0,"escalated":0,"routingErrors":0,"duplicates":0,"skipped":0}}
+exit=0

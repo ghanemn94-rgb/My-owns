@@ -1,0 +1,31 @@
+## 2026-11-16T12:22:03Z node v24.21.0
+$ git rev-parse HEAD
+f575f05f16a805d74eccb73fcd40b4cbb8c78759
+$ git log --oneline -2
+f575f05f1 DG7: freeze round 6
+830d7edfd DG7: mark F-DG7-971 fixed, D-279, progress
+$ git diff --stat 830d7edfd HEAD
+ .../DG7/round-6/code-security-reviewer.md          |   142 +
+ .../assignments/DG7/round-6/domain-reviewer.md     |   142 +
+ .../assignments/DG7/round-6/qa-verifier.md         |   142 +
+ .../candidates/DG7/0b48162701518d1f.manifest.json  | 15803 +++++++++++++++++++
+ docs/delivery/stages.json                          |    27 +-
+ 5 files changed, 16251 insertions(+), 5 deletions(-)
+$ node tools/gates/candidate.mjs --stage DG7
+{"stage":"DG7","source":"working-tree","candidate_id":"sha256:0b48162701518d1fb47789282112f2d5528429e77d6f108d3f8696570f06bc95","files":3157}
+exit 0
+$ node tools/gates/candidate.mjs --stage DG7 --ref 830d7edfd...
+{"stage":"DG7","source":"830d7edfdc3c36f55679db29253ebc35c4c838c0","candidate_id":"sha256:0b48162701518d1fb47789282112f2d5528429e77d6f108d3f8696570f06bc95","files":3157}
+exit 0
+$ node tools/gates/candidate.mjs --stage DG7 --diff <manifest>
+{
+  "frozen": "sha256:0b48162701518d1fb47789282112f2d5528429e77d6f108d3f8696570f06bc95",
+  "working_tree": "sha256:0b48162701518d1fb47789282112f2d5528429e77d6f108d3f8696570f06bc95",
+  "matches": true,
+  "added": [],
+  "removed": [],
+  "changed": []
+}
+exit 0
+$ sha256sum assignment
+e21b9572dc0f973efae83723d5ac77cb42f86e93b6b94e9a040a32fc3efa9957  docs/delivery/assignments/DG7/round-6/domain-reviewer.md

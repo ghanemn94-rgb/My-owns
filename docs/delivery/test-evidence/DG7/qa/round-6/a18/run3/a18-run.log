@@ -1,0 +1,113 @@
+port-policy: PostgreSQL listening on port 32580 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+start 13:30:55; HEAD 830d7edfdc3c36f55679db29253ebc35c4c838c0; node v24.21.0; free 9656 MB
+mth-db seed-demo: reporting periods relative to 2026-11-16 (Asia/Riyadh): 2 generated, current period 2026-11 open
+export-migration: wrote export 01a1e48d-d447-737d-a7d6-59f9aa7bd7fc (demo, 0152_p7_transfer_recheck_lineage_basis): 335 tables, 4782 rows, 0 attachments to /var/tmp/mth-run.OMqNCZ/claude-0/qa-r6-a18-run3/export; manifest sha256 fd16df3a392da9b8ba5571e2bb2f9ffdbadee10e1f9f8e89e516869a389fa697
+build-archive: archive sha256 f64d23120c00c7b654286b28cd47bddd0119184882292a68cc73c9ca5a9b8633
+archive mth-transformation-hub-0.1.0-0b4816270151.tar.gz sha256 f64d23120c00c7b654286b28cd47bddd0119184882292a68cc73c9ca5a9b8633
+=== drill a
+waiting 1367 s until 13:54:25
+[a] transfer-drill.sh --keep start 13:54:25
+[a] drill exit 0 14:00:07
+transfer-drill: step D0 PASS in 250.189 s
+transfer-drill: step D1 PASS in 12.823 s
+transfer-drill: step D2 PASS in 2.158 s
+transfer-drill: step D3 PASS in 0.414 s
+transfer-drill: step D4 PASS in 6.801 s
+transfer-drill: step D5 PASS in 13.553 s
+transfer-drill: step D6 PASS in 4.443 s
+transfer-drill: step D7 PASS in 3.639 s
+transfer-drill: step D8 PASS in 33.915 s
+transfer-drill: step D9 PASS in 11.672 s
+transfer-drill: step D10 PASS in 0.960 s
+transfer-drill: PASS in 341.481 s: 335 tables and 2 evidence files equal, origin http://127.0.0.1:25302, restart verified; report /home/user/My-owns/docs/delivery/test-evidence/DG7/qa/round-6/a18/run3
+transfer-drill: D7: schedule window start 2026-11-16T13:59:16.575Z (target clock_timestamp())
+transfer-drill: D9: schedule window end 2026-11-16T14:00:05.628Z (target clock_timestamp())
+report result PASS | D9 PASS recheck matched window {"clock":"target clock_timestamp()","end":"2026-11-16T14:00:05.628Z","lowerBoundExclusive":"2026-11-16T13:58:16.575Z","start":"2026-11-16T13:59:16.575Z"} | listed []
+stderr lines: 0
+--- [a] kept-target probes start 14:00:35
+window 2026-11-16T13:59:16.575Z .. 2026-11-16T14:00:05.628Z; explained execution in part 1: none
+digest before: d283cc083f0f372a444fd75f098aaceb ab6d5bde60a313e775b8c45a21fb5d7f 
+[B0] exit 0
+digest after B0 (the stage alone): d283cc083f0f372a444fd75f098aaceb ab6d5bde60a313e775b8c45a21fb5d7f 
+no schedule-explained execution in part 1 (window held no slot): the DB probes P1-P8, P11 cannot run on this target
+[P9-extra-table] exit 1
+    transfer-drill: D9: schedule rule not applicable: table approval_request is not automation_execution or automation_action_result
+[P10-changed-execution] exit 1
+    transfer-drill: D9: schedule rule not applicable: line not allowed: reconcile-migration: matched after use: 289 tables unchanged, 45 tables with allowed differences, 216 audit events added since the import
+[B1-restored] exit 0
+digest after: d283cc083f0f372a444fd75f098aaceb ab6d5bde60a313e775b8c45a21fb5d7f 
+kept target stopped
+[a] kept-target probes exit 0 14:00:36
+=== drill b
+waiting 1402 s until 13:55:00
+[b] transfer-drill.sh --keep start 13:55:00
+[b] drill exit 0 14:00:35
+transfer-drill: step D0 PASS in 241.856 s
+transfer-drill: step D1 PASS in 14.119 s
+transfer-drill: step D2 PASS in 2.503 s
+transfer-drill: step D3 PASS in 0.473 s
+transfer-drill: step D4 PASS in 8.400 s
+transfer-drill: step D5 PASS in 12.932 s
+transfer-drill: step D6 PASS in 3.545 s
+transfer-drill: step D7 PASS in 2.987 s
+transfer-drill: step D8 PASS in 34.021 s
+transfer-drill: step D9 PASS in 10.960 s
+transfer-drill: step D10 PASS in 1.040 s
+transfer-drill: PASS in 334.445 s: 335 tables and 2 evidence files equal, origin http://127.0.0.1:25302, restart verified; report /home/user/My-owns/docs/delivery/test-evidence/DG7/qa/round-6/a18/run3
+transfer-drill: D7: schedule window start 2026-11-16T13:59:45.715Z (target clock_timestamp())
+transfer-drill: D9: schedule window end 2026-11-16T14:00:33.441Z (target clock_timestamp())
+transfer-drill: D9: schedule-triggered execution 01a1e4a8-d634-7143-ac97-54c6dacf9bf4 explained (ADR-0064 A5; trigger approval.escalation_scan, key approval.escalation_scan:2026-11-16T14:00, slot 2026-11-16T14:00:00.000Z, schedule '*/15 * * * *' Asia/Riyadh, 1 action results, 3 audit events)
+transfer-drill: D9: mode 2 recheck exit 4; 1 schedule-triggered executions and 1 action results explained by ADR-0064 A5 (D-278); nothing else unexplained
+report result PASS | D9 PASS recheck schedule_explained window {"clock":"target clock_timestamp()","end":"2026-11-16T14:00:33.441Z","lowerBoundExclusive":"2026-11-16T13:58:45.715Z","start":"2026-11-16T13:59:45.715Z"} | listed [["01a1e4a8-d634-7143-ac97-54c6dacf9bf4","approval.escalation_scan:2026-11-16T14:00","2026-11-16T14:00:00.000Z","succeeded","2026-11-16T14:00:32.561Z",1,3]]
+stderr lines: 0
+--- [b] kept-target probes start 14:00:36
+window 2026-11-16T13:59:45.715Z .. 2026-11-16T14:00:33.441Z; explained execution in part 1: 01a1e4a8-d634-7143-ac97-54c6dacf9bf4
+digest before: 1502f8ec1ad232d530717424a9fe14c5 ab88be413e49d0c843f70beb3ebf3069 
+[B0] exit 0
+    transfer-drill: D9: schedule-triggered execution 01a1e4a8-d634-7143-ac97-54c6dacf9bf4 explained (ADR-0064 A5; trigger approval.escalation_scan, key approval.escalation_scan:2026-11-16T14:00, slot 2026-11-16T14:00:00.000Z, schedule '*/15 * * * *' Asia/Riyadh, 1 action results, 3 audit events)
+    transfer-drill: D9: mode 2 recheck exit 4; 1 schedule-triggered executions and 1 action results explained by ADR-0064 A5 (D-278); nothing else unexplained
+digest after B0 (the stage alone): 1502f8ec1ad232d530717424a9fe14c5 ab88be413e49d0c843f70beb3ebf3069 
+execution: approval.escalation_scan approval.escalation_scan:2026-11-16T14:00 service created 2026-11-16 14:00:32.561086+00
+probe inputs: key approval.escalation_scan:2026-11-16T14:00 slot 2026-11-16T14:00:00.000Z user 01920000-0000-7000-9000-000000000200 event trigger adoption.check_failed schedule trigger without job_schedule row none
+[P1-initiating-user] exit 1
+    transfer-drill: step D9 failed: automation_execution 01a1e4a8-d634-7143-ac97-54c6dacf9bf4 is not schedule-explained: has an initiating user
+    transfer-drill: step D9 failed: automation_action_result 01a1e4a8-d653-7124-88fc-9c9d851575e1 is not schedule-explained: execution 01a1e4a8-d634-7143-ac97-54c6dacf9bf4 is not schedule-explained
+[P2-event-trigger] exit 1
+    transfer-drill: step D9 failed: automation_execution 01a1e4a8-d634-7143-ac97-54c6dacf9bf4 is not schedule-explained: trigger adoption.check_failed is not a schedule trigger
+    transfer-drill: step D9 failed: automation_action_result 01a1e4a8-d653-7124-88fc-9c9d851575e1 is not schedule-explained: execution 01a1e4a8-d634-7143-ac97-54c6dacf9bf4 is not schedule-explained
+[P3a-unscheduled-code] not run: every schedule-kind trigger has a job_schedule row
+[P3b-schedule-disabled] exit 1
+    transfer-drill: step D9 failed: automation_execution 01a1e4a8-d634-7143-ac97-54c6dacf9bf4 is not schedule-explained: no enabled job_schedule row approval.escalation_scan
+    transfer-drill: step D9 failed: automation_action_result 01a1e4a8-d653-7124-88fc-9c9d851575e1 is not schedule-explained: execution 01a1e4a8-d634-7143-ac97-54c6dacf9bf4 is not schedule-explained
+[P4-slot-before-window] exit 1
+    transfer-drill: step D9 failed: automation_execution 01a1e4a8-d634-7143-ac97-54c6dacf9bf4 is not schedule-explained: slot 2026-11-16T13:45:00.000Z is outside the window (2026-11-16T13:58:45.715Z, 2026-11-16T14:00:33.441Z]
+    transfer-drill: step D9 failed: automation_action_result 01a1e4a8-d653-7124-88fc-9c9d851575e1 is not schedule-explained: execution 01a1e4a8-d634-7143-ac97-54c6dacf9bf4 is not schedule-explained
+[P5-key-two-minutes-late] exit 1
+    transfer-drill: step D9 failed: automation_execution 01a1e4a8-d634-7143-ac97-54c6dacf9bf4 is not schedule-explained: key minute 2026-11-16T14:02:00.000Z names no slot of '*/15 * * * *' Asia/Riyadh
+    transfer-drill: step D9 failed: automation_action_result 01a1e4a8-d653-7124-88fc-9c9d851575e1 is not schedule-explained: execution 01a1e4a8-d634-7143-ac97-54c6dacf9bf4 is not schedule-explained
+[P6-created-before-W0] exit 1
+    transfer-drill: step D9 failed: automation_execution 01a1e4a8-d634-7143-ac97-54c6dacf9bf4 is not schedule-explained: created 2026-11-16T13:59:40.715Z outside the window
+    transfer-drill: step D9 failed: automation_action_result 01a1e4a8-d653-7124-88fc-9c9d851575e1 is not schedule-explained: execution 01a1e4a8-d634-7143-ac97-54c6dacf9bf4 is not schedule-explained
+[P7-second-execution-same-slot] exit 1
+    transfer-drill: step D9 failed: automation_execution 01a1e4a8-d634-7143-ac97-54c6dacf9bf4 is not schedule-explained: slot 2026-11-16T14:00:00.000Z of approval.escalation_scan has 2 executions
+    transfer-drill: step D9 failed: automation_action_result 01a1e4a8-d653-7124-88fc-9c9d851575e1 is not schedule-explained: execution 01a1e4a8-d634-7143-ac97-54c6dacf9bf4 is not schedule-explained
+[P8-event-with-user] exit 1
+    transfer-drill: step D9 failed: automation_execution 01a1e4a8-d634-7143-ac97-54c6dacf9bf4 is not schedule-explained: no service audit event without a user
+    transfer-drill: step D9 failed: automation_action_result 01a1e4a8-d653-7124-88fc-9c9d851575e1 is not schedule-explained: execution 01a1e4a8-d634-7143-ac97-54c6dacf9bf4 is not schedule-explained
+[P11-execution-in-package] exit 1
+    transfer-drill: step D9 failed: automation_execution 01a1e4a8-d634-7143-ac97-54c6dacf9bf4 is not schedule-explained: not added
+    transfer-drill: step D9 failed: automation_action_result 01a1e4a8-d653-7124-88fc-9c9d851575e1 is not schedule-explained: execution 01a1e4a8-d634-7143-ac97-54c6dacf9bf4 is not schedule-explained
+[P9-extra-table] exit 1
+    transfer-drill: D9: schedule rule not applicable: table approval_request is not automation_execution or automation_action_result
+[P10-changed-execution] exit 1
+    transfer-drill: D9: schedule rule not applicable: line not allowed:     unexplained changed ["01a1e000-0000-7000-8000-000000000002"]
+[B1-restored] exit 0
+    transfer-drill: D9: schedule-triggered execution 01a1e4a8-d634-7143-ac97-54c6dacf9bf4 explained (ADR-0064 A5; trigger approval.escalation_scan, key approval.escalation_scan:2026-11-16T14:00, slot 2026-11-16T14:00:00.000Z, schedule '*/15 * * * *' Asia/Riyadh, 1 action results, 3 audit events)
+    transfer-drill: D9: mode 2 recheck exit 4; 1 schedule-triggered executions and 1 action results explained by ADR-0064 A5 (D-278); nothing else unexplained
+digest after: 1502f8ec1ad232d530717424a9fe14c5 ab88be413e49d0c843f70beb3ebf3069 
+kept target stopped
+[b] kept-target probes exit 0 14:00:39
+drill PostgreSQL left running: none
+removed /var/tmp/mth-run.OMqNCZ/claude-0/qa-r6-a18-run3 14:00:52
+driver-3 exit 0

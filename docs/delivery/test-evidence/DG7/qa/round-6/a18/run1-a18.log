@@ -1,0 +1,94 @@
+port-policy: PostgreSQL listening on port 32585 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+start 12:42:59; HEAD 830d7edfdc3c36f55679db29253ebc35c4c838c0; node v24.21.0; free 2073 MB
+mth-db seed-demo: reporting periods relative to 2026-11-16 (Asia/Riyadh): 2 generated, current period 2026-11 open
+export-migration: wrote export 01a1e461-f4d9-76f2-90e5-88bee6ec31b7 (demo, 0152_p7_transfer_recheck_lineage_basis): 335 tables, 4782 rows, 0 attachments to /var/tmp/mth-run.OMqNCZ/claude-0/qa-r6-a18/export; manifest sha256 8dc50bc73bdec3b6073cd93c5d12003add741d4ecb43718369542e2caaf32fc4
+demo export exit 0; manifest sha256 8dc50bc73bdec3b6073cd93c5d12003add741d4ecb43718369542e2caaf32fc4
+build-archive: candidate sha256:0b48162701518d1fb47789282112f2d5528429e77d6f108d3f8696570f06bc95 commit 830d7edfdc3c36f55679db29253ebc35c4c838c0
+build-archive: tar sha256 df055639040ebd32b63fd09416076c2518cbe18a7ff6a88ae3da87c7f4b6d880
+build-archive: archive sha256 479acbcb1d8f51cd62dde37ebfdc11ddc302cb63b129e7df88648946fd27cc76
+build-archive exit 0
+archive mth-transformation-hub-0.1.0-0b4816270151.tar.gz 14751136 bytes sha256 479acbcb1d8f51cd62dde37ebfdc11ddc302cb63b129e7df88648946fd27cc76
+1 archive-checksum: ok
+2 single-top-level-directory: ok
+3 layout: ok
+4 sha256sums: ok
+5 candidate-id: ok
+6 copies: ok
+7 determinism-metadata: ok
+archive-verify: PASS
+archive --verify exit 0
+waiting 742 s until 12:56:05
+--- part 1: transfer-drill.sh --keep start 12:56:05 free 1912 MB
+part 1 drill exit 0 13:01:36
+transfer-drill: step D0 PASS in 241.113 s
+transfer-drill: step D1 PASS in 12.188 s
+transfer-drill: step D2 PASS in 1.970 s
+transfer-drill: step D3 PASS in 0.407 s
+transfer-drill: step D4 PASS in 7.630 s
+transfer-drill: step D5 PASS in 14.809 s
+transfer-drill: step D6 PASS in 3.787 s
+transfer-drill: step D7 PASS in 2.703 s
+transfer-drill: step D8 PASS in 34.066 s
+transfer-drill: step D9 PASS in 9.945 s
+transfer-drill: step D10 PASS in 0.989 s
+transfer-drill: PASS in 330.435 s: 335 tables and 2 evidence files equal, origin http://127.0.0.1:25302, restart verified; report /home/user/My-owns/docs/delivery/test-evidence/DG7/qa/round-6/a18/p1-q
+transfer-drill: D7: schedule window start 2026-11-16T13:00:47.982Z (target clock_timestamp())
+transfer-drill: D9: schedule window end 2026-11-16T13:01:34.493Z (target clock_timestamp())
+report result PASS | D9 PASS recheck matched window {"clock":"target clock_timestamp()","end":"2026-11-16T13:01:34.493Z","lowerBoundExclusive":"2026-11-16T12:59:47.982Z","start":"2026-11-16T13:00:47.982Z"} | listed []
+stderr lines: 0
+--- kept-target probes start 13:01:36
+window 2026-11-16T13:00:47.982Z .. 2026-11-16T13:01:34.493Z; explained execution in part 1: none
+digest before: 9c88e179687c0ad5a0841ff1b462f00c d2cdb09a1b2221fc8ceca7d2a61dde32 
+[B0] exit 1
+    transfer-drill: D9: schedule rule not applicable: line not allowed: reconcile-migration: matched after use: 290 tables unchanged, 44 tables with allowed differences, 217 audit events added since the import
+digest after B0 (the stage alone): 9c88e179687c0ad5a0841ff1b462f00c d2cdb09a1b2221fc8ceca7d2a61dde32 
+no schedule-explained execution in part 1 (window held no slot): the DB probes P1-P8, P11 cannot run on this target
+[P9-extra-table] exit 1
+    transfer-drill: D9: schedule rule not applicable: table approval_request is not automation_execution or automation_action_result
+[P10-changed-execution] exit 1
+    transfer-drill: D9: schedule rule not applicable: line not allowed: reconcile-migration: matched after use: 290 tables unchanged, 44 tables with allowed differences, 217 audit events added since the import
+[B1-restored] exit 1
+    transfer-drill: D9: schedule rule not applicable: line not allowed: reconcile-migration: matched after use: 290 tables unchanged, 44 tables with allowed differences, 217 audit events added since the import
+digest after: 9c88e179687c0ad5a0841ff1b462f00c d2cdb09a1b2221fc8ceca7d2a61dde32 
+kept target stopped
+kept-target probes exit 0 13:01:37
+drill PostgreSQL left running: none
+removed work tree 13:01:46 free 2838 MB
+waiting 559 s until 13:11:05
+--- part 2: A18 harness start 13:11:05 free 9745 MB
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.OMqNCZ/claude-0/review-qa
+
+No test files found, exiting with code 1
+
+filter: tests/qa/integration/a18-transfer-drill.test.ts
+projects: integration
+
+|integration| 
+
+include: apps/*/test/integration/**/*.test.ts, packages/*/test/integration/**/*.test.ts, tests/qa/integration/**/*.test.ts, tests/integration/**/*.test.ts
+exclude:  **/node_modules/**, **/dist/**, **/cypress/**, **/.{idea,git,cache,output,temp}/**, **/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build,eslint,prettier}.config.*
+
+
+⎯⎯⎯⎯⎯⎯ Unhandled Error ⎯⎯⎯⎯⎯⎯⎯
+Error: connect ECONNREFUSED 127.0.0.1:32585
+ ❯ TCPConnectWrap.afterConnect [as oncomplete] node:net:2021:16
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -111, code: 'ECONNREFUSED', syscall: 'connect', address: '127.0.0.1', port: 32585 }
+
+
+
+A18 harness exit 1 end 13:11:06
+--- part 3: transfer-drill.sh start 13:11:06 free 9745 MB
+part 3 drill exit 1 13:11:07
+transfer-drill: FAIL: D0 FAIL, D1 NOT_RUN, D2 NOT_RUN, D3 NOT_RUN, D4 NOT_RUN, D5 NOT_RUN, D6 NOT_RUN, D7 NOT_RUN, D8 NOT_RUN, D9 NOT_RUN, D10 NOT_RUN, D11 NOT_RUN; report /home/user/My-owns/docs/deli
+report result FAIL | D9 NOT_RUN recheck undefined window undefined | listed []
+stderr lines: 0
+drill PostgreSQL left running: none
+removed /var/tmp/mth-run.OMqNCZ/claude-0/qa-r6-a18 13:11:10
+part 1 drill exit 0; part 2 harness exit 1; part 3 drill exit 1

@@ -1,0 +1,55 @@
+### node v24.21.0; live repo read-only; 2026-11-16T12:47:11Z
+### git rev-parse HEAD
+f575f05f16a805d74eccb73fcd40b4cbb8c78759
+f575f05f1 2026-11-16T12:20:48+00:00 DG7: freeze round 6
+### git diff --stat 830d7edfd..HEAD (freeze commit content)
+ .../DG7/round-6/code-security-reviewer.md          |   142 +
+ .../assignments/DG7/round-6/domain-reviewer.md     |   142 +
+ .../assignments/DG7/round-6/qa-verifier.md         |   142 +
+ .../candidates/DG7/0b48162701518d1f.manifest.json  | 15803 +++++++++++++++++++
+ docs/delivery/stages.json                          |    27 +-
+ 5 files changed, 16251 insertions(+), 5 deletions(-)
+### node tools/gates/candidate.mjs --stage DG7
+{"stage":"DG7","source":"working-tree","candidate_id":"sha256:0b48162701518d1fb47789282112f2d5528429e77d6f108d3f8696570f06bc95","files":3157}
+exit=0
+### node tools/gates/candidate.mjs --stage DG7 --ref 830d7edfdc3c36f55679db29253ebc35c4c838c0
+{"stage":"DG7","source":"830d7edfdc3c36f55679db29253ebc35c4c838c0","candidate_id":"sha256:0b48162701518d1fb47789282112f2d5528429e77d6f108d3f8696570f06bc95","files":3157}
+exit=0
+### (also on the disposable clone rv at 830d7edf: see 02-install.log line 4)
+### node tools/gates/candidate.mjs --stage DG7 --diff docs/delivery/candidates/DG7/0b48162701518d1f.manifest.json
+{
+  "frozen": "sha256:0b48162701518d1fb47789282112f2d5528429e77d6f108d3f8696570f06bc95",
+  "working_tree": "sha256:0b48162701518d1fb47789282112f2d5528429e77d6f108d3f8696570f06bc95",
+  "matches": true,
+  "added": [],
+  "removed": [],
+  "changed": []
+}
+exit=0
+### manifest-vs-manifest: round-5 07af9fba26f9ae43 vs round-6 0b48162701518d1f (scripts/manifest-diff.mjs)
+{
+  "old": "sha256:07af9fba26f9ae435f6f3de7ca5204ed1e182a125f1fd0f912b70da06035a61d",
+  "new": "sha256:0b48162701518d1fb47789282112f2d5528429e77d6f108d3f8696570f06bc95",
+  "old_recomputed_matches": true,
+  "new_recomputed_matches": true,
+  "spec_equal": true,
+  "added": [
+    "deploy/scripts/drill/schedule-explained.mjs",
+    "deploy/scripts/tests/fixtures/f-dg7-971-reconcile-d9.json"
+  ],
+  "removed": [],
+  "changed": [
+    "deploy/scripts/tests/transfer-drill.test.mjs",
+    "deploy/scripts/transfer-drill.sh",
+    "docs/architecture/adr/ADR-0064-p7-migration-manifest-export-import-reconciliation-identity-rebind.md",
+    "docs/delivery/decisions.md",
+    "docs/delivery/requirements.csv",
+    "docs/handover/deployment.md",
+    "docs/handover/known-limitations.md",
+    "docs/handover/release-notes.md",
+    "tests/qa/integration/a18-transfer-drill.test.ts"
+  ]
+}
+exit=0
+### stages.json round 6 entry
+{"round":6,"candidate_id":"sha256:0b48162701518d1fb47789282112f2d5528429e77d6f108d3f8696570f06bc95","frozen_at":"2026-11-16T12:20:47Z","source_commit":"830d7edfdc3c36f55679db29253ebc35c4c838c0","records":{"domain-reviewer":"docs/delivery/reviews/DG7/round-6/domain-reviewer.json","code-security-reviewer":"docs/delivery/reviews/DG7/round-6/code-security-reviewer.json","qa-verifier":"docs/delivery/reviews/DG7/round-6/qa-verifier.json"},"note":"DG7 round 6: domain, code-security, qa; verify F-DG7-971."}

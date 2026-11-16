@@ -1,0 +1,34 @@
+# 2026-11-16T12:52:17Z handover disclosure of D-278 / ADR-0064 Amendment 5 on the frozen candidate (rv at 830d7edfdc3c36f55679db29253ebc35c4c838c0)
+## ADR-0064 A5.6 (AN, D-278) requires the disclosure in: known-limitations.md, the release notes, deployment.md's drill section:
+1500:**AN (D-278):** the register notes of REQ-S19-017, REQ-S20-018 and REQ-S01-006, and the handover disclosure in `known-limitations.md`, the release notes and `deployment.md`'s drill section. The disclosure must say:
+## D-278 text: 'The rule is disclosed in the handover.'
+1
+## grep -n -i -E 'D-278|schedule-explained|Amendment 5|scheduled starter|escalation_scan|schedule_explained' per handover file (count):
+docs/handover/README.md: 0
+docs/handover/automation-operations.ar-summary.md: 0
+docs/handover/automation-operations.md: 3
+docs/handover/backup-restore.md: 0
+docs/handover/deployment.ar-summary.md: 0
+docs/handover/deployment.md: 1
+docs/handover/final-report.template.md: 0
+docs/handover/known-limitations.ar-summary.md: 0
+docs/handover/known-limitations.md: 0
+docs/handover/operator-guide.ar-summary.md: 0
+docs/handover/operator-guide.md: 0
+docs/handover/release-notes.md: 0
+docs/handover/role-matrix.md: 0
+docs/handover/security-controls.md: 0
+docs/handover/upgrades.md: 0
+## known-limitations.md ADR-0064 row (hand-written section 4-6):
+162:| ADR-0064 | Migration scale is unproven; cross-release imports are out of scope; queued jobs do not travel (stop the source's worker and wait for an empty queue first); the attachment manifest lists evidence object names to ADM_TECH; secrets must be re-bound by IT on the target; every imported user is held until IT confirms the identity. |
+## deployment.md drill paragraph (present):
+247:To rehearse the move, run `deploy/scripts/transfer-drill.sh`. After the full restart (step D9) it runs the after-use reconciliation (`reconcile.mjs --after-use`). Scheduled jobs keep running durin
+## AN-P7H handback flags the gap itself:
+99:1. **Handover disclosure is not written by me.** The assignment forbids `docs/handover/**`, but ADR-0064 A5.6 assigns "the handover disclosure in `known-limitations.md`, the release notes and `deployment.md`'s drill section" to AN.
+101:   - `known-limitations.md`, `release-notes.md`, `deployment.ar-summary.md` and `known-limitations.ar-summary.md` have **no** mention (grep).
+120:1. **The A5.6 handover disclosure.** ADR-0064 A5.6 gives it to AN, while this assignment gives it to the orchestrator's regeneration. Please confirm that `known-limitations.md`, the release notes and the Arabic summaries will carry it, since F-DG7-971's expected result names them.
+## D-279 (orchestrator, fix record) mentions known-limitations / release notes?
+(no output above = not mentioned)
+61:| `approval.escalation_scan` | approvals | `job:approval.escalation_scan` (`transformation.read`, `access.read`) | schedule `*/15 * * * *` (Asia/Riyadh), enabled | retry limit 5 (up to 6 attempts), delay 10 s, exponen
+73:| `gate.condition_escalation_scan` | gates | `job:gate.condition_escalation_scan` (`transformation.read`, `access.read`) | schedule `0 1 * * *` (Asia/Riyadh), enabled | retry limit 5 (up to 6 attempts), delay 10 s, ex
+78:| `governance.blocker_escalation_scan` | escalations | `job:governance.blocker_escalation_scan` (`transformation.read`, `access.read`) | schedule `45 0 * * *` (Asia/Riyadh), enabled | retry limit 5 (up to 6 attempts),

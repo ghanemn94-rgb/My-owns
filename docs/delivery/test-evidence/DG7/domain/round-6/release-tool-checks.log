@@ -1,0 +1,62 @@
+# disposable clone at 830d7edfdc3c36f55679db29253ebc35c4c838c0 (candidate source), read-only checks, 2026-11-16T12:38:35Z node v24.21.0
+## $ node tools/release/protocol-audit.mjs --all --json /home/user/My-owns/docs/delivery/test-evidence/DG7/domain/round-6/protocol-audit-all.json
+  C7 three-failed-fixes   DG3          HIT 1 hit(s): three-failed-fixes-without-blocker
+  C7 three-failed-fixes   DG4          PASS
+  C7 three-failed-fixes   DG5          PASS
+  C7 three-failed-fixes   DG6          PASS
+  C7 three-failed-fixes   DG7          PASS
+  C8 approval-claims      all-selected PASS
+  C9 stage-continuation   DG0          PASS
+  C9 stage-continuation   DG1          PASS
+  C9 stage-continuation   DG2          PASS
+  C9 stage-continuation   DG3          PASS
+  C9 stage-continuation   DG4          PASS
+  C9 stage-continuation   DG5          PASS
+  C9 stage-continuation   DG6          PASS
+  C9 stage-continuation   DG7          PASS
+FAIL (exit 1): 281 hit(s) in 29 check(s), 0 blocked, 36 pass
+## exit 1
+## $ node tools/release/release-notes.mjs --csv docs/delivery/requirements.csv --deps docs/handover/external-dependencies.json --provisional apps/web/src/i18n --out docs/handover/release-notes.md --check
+release-notes: 0 unfinished item(s), 23 later clause(s); docs/handover/release-notes.md is up to date
+## exit 0
+## $ node tools/release/known-limitations.mjs --protocol-audit /home/user/My-owns/docs/delivery/test-evidence/DG7/domain/round-6/protocol-audit-all.json --check
+known-limitations: FAIL: docs/handover/known-limitations.md differ from the generated content; run node tools/release/known-limitations.mjs --protocol-audit <report> --write
+## exit 1
+## $ node tools/release/check-handover.mjs --protocol-audit /home/user/My-owns/docs/delivery/test-evidence/DG7/domain/round-6/protocol-audit-all.json
+  warning: docs/handover/backup-restore.md l.206: the Arabic section 'ملخص باللغة العربية (Arabic summary)' lacks the H.3 provisional line under its heading (§2.3)
+  warning: docs/handover/release-notes.md l.97: the Arabic section 'هوية الإصدار' lacks the H.3 provisional line under its heading (§2.3)
+  warning: docs/handover/release-notes.md l.103: the Arabic section 'المتطلبات حسب الحالة' lacks the H.3 provisional line under its heading (§2.3)
+  warning: docs/handover/release-notes.md l.112: the Arabic section 'البنود غير المكتملة وعوائق الإصدار' lacks the H.3 provisional line under its heading (§2.3)
+  warning: docs/handover/release-notes.md l.116: the Arabic section 'بنود تكتمل بعد البوابة الهندسية' lacks the H.3 provisional line under its heading (§2.3)
+  warning: docs/handover/release-notes.md l.120: the Arabic section 'تبعيات الإعداد الخارجية المتبقية' lacks the H.3 provisional line under its heading (§2.3)
+  warning: docs/handover/release-notes.md l.124: the Arabic section 'النصوص العربية المؤقتة' lacks the H.3 provisional line under its heading (§2.3)
+  warning: docs/handover/upgrades.md l.227: the Arabic section '6. Arabic summary (provisional, D-243 Q7)' lacks the H.3 provisional line under its heading (§2.3)
+check-handover: security-links: PASS
+check-handover: guides: PASS
+check-handover: generated: FAIL
+  FAIL: known-limitations: FAIL: docs/handover/known-limitations.md differ from the generated content; run node tools/release/known-limitations.mjs --protocol-audit <report> --write
+  note: role-matrix.mjs: role-matrix: PASS (/var/tmp/mth-run.2XFbNs/claude-0/review-dom6/docs/handover/role-matrix.md is current)
+  note: automation-jobs.mjs: automation-jobs: PASS (the job table of /var/tmp/mth-run.2XFbNs/claude-0/review-dom6/docs/handover/automation-operations.md is current)
+check-handover: FAIL (index PASS, deployment PASS, summaries PASS, security-links PASS, guides PASS, generated FAIL; root .)
+## exit 1
+## $ node tools/release/claims-scan.mjs
+claims-scan: PASS (891 files; D 141, U 750; negated 28; allowed 19)
+## exit 0
+
+# re-run against the orchestrator's frozen audit report docs/delivery/test-evidence/DG7/orchestrator/protocol-audit/protocol-audit-r6.json (the one the known-limitations disclosure was generated from; sha256 a495abb34f81893bc8f9ed88c1d890907ab5666024498efbf3843f253d74e33a)
+## $ node tools/release/known-limitations.mjs --protocol-audit docs/delivery/test-evidence/DG7/orchestrator/protocol-audit/protocol-audit-r6.json --check
+known-limitations: PASS (docs/handover/known-limitations.md and docs/handover/external-dependencies.json are current)
+## exit 0
+## $ node tools/release/check-handover.mjs --protocol-audit docs/delivery/test-evidence/DG7/orchestrator/protocol-audit/protocol-audit-r6.json
+check-handover: guides: PASS
+check-handover: generated: PASS
+  note: role-matrix.mjs: role-matrix: PASS (/var/tmp/mth-run.2XFbNs/claude-0/review-dom6/docs/handover/role-matrix.md is current)
+  note: automation-jobs.mjs: automation-jobs: PASS (the job table of /var/tmp/mth-run.2XFbNs/claude-0/review-dom6/docs/handover/automation-operations.md is current)
+  note: known-limitations: PASS (docs/handover/known-limitations.md and docs/handover/external-dependencies.json are current)
+check-handover: PASS (index PASS, deployment PASS, summaries PASS, security-links PASS, guides PASS, generated PASS; root .)
+## exit 0
+## compare hit sets: fresh audit (head 830d7ed) vs protocol-audit-r6.json
+top-level keys tool,version,head,git_history_used,stages,verdict,exit_code,totals,checks
+fresh hits 281 r6 hits 281 only fresh 1 only r6 1
+  only fresh: C6|DG6|{"stage":"DG6","kind":"gate-update-missing-elements","candidate_prefix":"10f71f24","best_update":{"version":"working-tree","missing":["stage_and_candidate"],"excerpt":"## Current checkpoint\n\n- **DG7 (P7 \"Independent transfer and release\") is entering round 6** (2026-11-16, D-279). Round 5
+  only r6: C6|DG6|{"stage":"DG6","kind":"gate-update-missing-elements","candidate_prefix":"10f71f24","best_update":{"version":"working-tree","missing":["stage_and_candidate"],"excerpt":"## Current checkpoint\n\n- **DG7 (P7 \"Independent transfer and release\") is entering round 5** (2026-11-16, D-277). Round 4

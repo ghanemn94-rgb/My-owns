@@ -1,0 +1,22 @@
+## end 2026-11-16T15:17:04Z
+$ git rev-parse HEAD
+2ea95b9a6245d01b2fab825d40d0ff204070915e
+$ git log --format="%h %cI %s" f575f05f1..HEAD (subjects only; other reviewers' round-6 records not read)
+2ea95b9a6 2026-11-16T13:13:35+00:00 run: DG7-T-DG7-REV-DOM-R6-domain-reviewer-20261116T122056Z-799e0e2a (review evidence, auto-committed by run-agent.sh)
+ded5c9113 2026-11-16T13:05:30+00:00 run: DG7-T-DG7-REV-CS-R6-code-security-reviewer-20261116T122056Z-c9045dfe (review evidence, auto-committed by run-agent.sh)
+$ node tools/gates/candidate.mjs --stage DG7
+{"stage":"DG7","source":"working-tree","candidate_id":"sha256:0b48162701518d1fb47789282112f2d5528429e77d6f108d3f8696570f06bc95","files":3157}
+exit=0
+$ node tools/gates/candidate.mjs --stage DG7 --diff docs/delivery/candidates/DG7/0b48162701518d1f.manifest.json
+{
+  "frozen": "sha256:0b48162701518d1fb47789282112f2d5528429e77d6f108d3f8696570f06bc95",
+  "working_tree": "sha256:0b48162701518d1fb47789282112f2d5528429e77d6f108d3f8696570f06bc95",
+  "matches": true,
+  "added": [],
+  "removed": [],
+  "changed": []
+}
+exit=0
+$ (clone) git -C $TMPDIR/review-qa rev-parse HEAD; git status --short | wc -l
+830d7edfdc3c36f55679db29253ebc35c4c838c0
+0

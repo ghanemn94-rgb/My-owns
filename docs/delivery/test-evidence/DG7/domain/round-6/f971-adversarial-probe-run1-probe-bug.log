@@ -1,0 +1,44 @@
+OK   P01 control: the F-DG7-971 shape (escalation scan 08:00, starter_handler result) is explained | pass=true recheck=schedule_explained explained=1 reason=null
+OK   P02 control: key one minute after the slot (08:01 -> slot 08:00) is explained | pass=true recheck=schedule_explained explained=1 reason=null
+OK   P03 control: recheck exit 0 -> matched, nothing listed | pass=true recheck=matched explained=0 reason=recheck matched
+OK   P04 control: a daily cron '10 0 * * *' Asia/Riyadh slot is 21:10Z the previous UTC day | pass=true recheck=schedule_explained explained=1 reason=null
+OK   N01 S2 an initiating user (run_as service) is refused | pass=false recheck=not_matched explained=0 reason=has an initiating user
+OK   N02 S2 run_as user with a NULL initiating user is refused | pass=false recheck=not_matched explained=0 reason=has an initiating user
+OK   N03 S3 an event trigger whose code also names a job_schedule row is refused | pass=false recheck=not_matched explained=0 reason=trigger approval.escalation_scan is not a schedule trigger
+OK   N04 S3 a request trigger is refused | pass=false recheck=not_matched explained=0 reason=trigger approval.escalation_scan is not a schedule trigger
+OK   N05 S5 a schedule trigger with no job_schedule row (unscheduled code) is refused | pass=false recheck=not_matched explained=0 reason=no enabled job_schedule row approval.escalation_scan
+OK   N06 S5 a disabled schedule is refused | pass=false recheck=not_matched explained=0 reason=no enabled job_schedule row approval.escalation_scan
+OK   N07 S4 key code differs from trigger_code (another schedule's key) is refused | pass=false recheck=not_matched explained=0 reason=trigger_key 'delegation.expiry_sweep:2026-11-16T08:00' is not 'approval.escalation_scan:YYYY-MM-DDTHH:MM'
+OK   N08 S4 a key with seconds is refused | pass=false recheck=not_matched explained=0 reason=trigger_key 'approval.escalation_scan:2026-11-16T08:00:00' is not 'approval.escalation_scan:YYYY-MM-DDTHH:MM'
+OK   N09 S4 an event-style idempotency key is refused | pass=false recheck=not_matched explained=0 reason=trigger_key 'approval.escalation_scan:01a1e35f-0000' is not 'approval.escalation_scan:YYYY-MM-DDTHH:MM'
+OK   N10 S6 a key two minutes after the slot (08:02) names no slot | pass=false recheck=not_matched explained=0 reason=key minute 2026-11-16T08:02:00.000Z names no slot of '*/15 * * * *' Asia/Riyadh
+OK   N11 S7 a slot before the window (07:45) is refused | pass=false recheck=not_matched explained=0 reason=slot 2026-11-16T07:45:00.000Z is outside the window (2026-11-16T07:58:30.000Z, 2026-11-16T08:01:10.000Z]
+OK   N12 S7 a slot exactly at W0 - 60 s is refused (exclusive bound) | pass=false recheck=not_matched explained=0 reason=slot 2026-11-16T08:00:00.000Z is outside the window (2026-11-16T08:00:00.000Z, 2026-11-16T08:01:30.000Z]
+OK   N13 S7 a slot after W1 (08:15 key, window ends 08:01:10) is refused | pass=false recheck=not_matched explained=0 reason=slot 2026-11-16T08:15:00.000Z is outside the window (2026-11-16T07:58:30.000Z, 2026-11-16T08:01:10.000Z]
+OK   N14 S8 created before W0 is refused | pass=false recheck=not_matched explained=0 reason=created 2026-11-16T07:59:29.999Z outside the window
+OK   N15 S8 created after W1 is refused | pass=false recheck=not_matched explained=0 reason=created 2026-11-16T08:01:10.001Z outside the window
+OK   N16 S9 the execution's event carries a user (forged by a user request) -> refused | pass=false recheck=not_matched explained=0 reason=no service audit event without a user
+OK   N17 S9 an API-sourced event with a request id (not job:) -> refused | pass=false recheck=not_matched explained=0 reason=no service audit event without a user
+OK   N18 S9 the only event is at or below the import baseline -> refused | pass=false recheck=not_matched explained=0 reason=no service audit event without a user
+OK   N19 S9 no event at the execution's current version -> refused | pass=false recheck=not_matched explained=0 reason=no service audit event without a user
+OK   N20 S1 an execution that is in the package (not added) -> refused | pass=false recheck=not_matched explained=0 reason=not added
+OK   N21 uniqueness: a second execution of the same slot exists on T (not listed) -> the listed one is refused | pass=false recheck=not_matched explained=0 reason=slot 2026-11-16T08:00:00.000Z of approval.escalation_scan has 2 executions
+BAD  N22 uniqueness: two listed executions name one slot -> both refused | pass=false recheck=not_matched explained=0 reason=slot 2026-11-16T08:00:00.000Z of approval.escalation_scan has 2 executions
+OK   N23 S' a stray added result of the explained execution not in the recheck list -> refused | pass=false recheck=not_matched explained=0 reason=attempt 1 ordinals 1,2 (expected 1..1, starter_handler)
+OK   N24 S' the result's event belongs to another job (request id not in R(x)) -> refused | pass=false recheck=not_matched explained=0 reason=no worker audit event of the execution's job
+OK   N25 S' a starter with a non-starter_handler action -> refused | pass=false recheck=not_matched explained=0 reason=attempt 1 ordinals 1 (expected 1..1, starter_handler)
+OK   N26 Gate 0 an unrelated table (approval) with an unexplained added row -> not applicable | pass=false recheck=not_matched explained=0 reason=table approval is not automation_execution or automation_action_result
+OK   N27 Gate 0 an unexplained CHANGED execution -> not applicable | pass=false recheck=not_matched explained=0 reason=line not allowed:     unexplained changed ["01a1e35f-9999-7de0-80d2-0aab0e420e27"]
+OK   N28 Gate 0 a reporting_period line (daily kpi.reporting_period_open) -> not applicable | pass=false recheck=not_matched explained=0 reason=table reporting_period is not automation_execution or automation_action_result
+OK   N29 Gate 0 a child_of table line (inbox notification style) -> not applicable | pass=false recheck=not_matched explained=0 reason=table approval_step is not automation_execution or automation_action_result
+OK   N30 Gate 0 a non-zero attachment count -> not applicable | pass=false recheck=not_matched explained=0 reason=line not allowed: reconcile-migration: mismatch: 2 tables, 1 attachments differ
+OK   N31 Gate 0 table count in the final line differs -> not applicable | pass=false recheck=not_matched explained=0 reason=line not allowed: reconcile-migration: mismatch: 3 tables
+OK   N32 Gate 0 recheck exit 1 (refused) -> not applicable | pass=false recheck=not_matched explained=0 reason=recheck exit 1
+OK   N33 Gate 0 a chain-depth line -> not applicable | pass=false recheck=not_matched explained=0 reason=line not allowed:     chain depth 6 exceeds 5 at ["01a1e35f-8e4f-7de0-80d2-0aab0e420e27"]
+OK   N34 Gate 0 20 keys (possibly truncated) -> not applicable | pass=false recheck=not_matched explained=0 reason=key list may be truncated (automation_execution: 20 keys)
+OK   N35 Gate 0 a key line before any table line -> not applicable | pass=false recheck=not_matched explained=0 reason=line not allowed:     unexplained added ["01a1e35f-8e4f-7de0-80d2-0aab0e420e27"]
+OK   N36 Gate 0 only results unexplained, no execution key -> not applicable | pass=false recheck=not_matched explained=0 reason=no unexplained automation_execution key
+OK   N37 cron outside the grammar ('*/15 * * * MON') makes the slot unnamed (strict) | pass=false recheck=not_matched explained=0 reason=key minute 2026-11-16T08:00:00.000Z names no slot of '*/15 * * * MON' Asia/Riyadh
+OK   N38 unknown timezone makes the slot unnamed (strict) | pass=false recheck=not_matched explained=0 reason=key minute 2026-11-16T08:00:00.000Z names no slot of '*/15 * * * *' Mars/Olympus
+f971-adversarial-probe: 42 cases, 41 as expected, 1 unexpected
+exit 1
