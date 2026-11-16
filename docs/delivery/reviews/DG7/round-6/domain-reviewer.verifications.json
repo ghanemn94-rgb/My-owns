@@ -1,0 +1,21 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG7-971",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified by a non-author (domain-reviewer, session 799e0e2a) on candidate sha256:0b48162701518d1fb47789282112f2d5528429e77d6f108d3f8696570f06bc95 (source 830d7edfd; the fix ac650b8b0 is an ancestor), in a disposable clone, on an archive I built from the frozen source (mth-transformation-hub-0.1.0-0b4816270151.tar.gz, sha256 6e770599...b888). (1) Across a quarter hour: the run started 12:55:12 had window 12:59:56.499Z-13:00:44.570Z (target clock). The mode 2 recheck exited 4 with exactly the F-DG7-971 pattern: 17 automation_execution and 17 automation_action_result added, one of each unexplained. The stage explained execution 01a1e472-1235-71fd-810a-519fb35c3844: key approval.escalation_scan:2026-11-16T13:00, slot 13:00:00Z, '*/15 * * * *' Asia/Riyadh, initiating user null, run_as service, created 13:00:43.441Z, 1 starter_handler result, 3 job audit events. The worker log shows selected 0 / escalated 0. D9 recheck = schedule_explained. reconcile-d9.json keeps exit 4 / not matched. D0-D11 PASS, drill exit 0. (2) Two runs gave recheck matched and drill exit 0. One crossed 12:45, but its W0 was 29.8 s after the slot, so no execution was created. The other ran away from any quarter hour. (3) The shipped A18 harness, run with archive inputs and QA_A18_REQUIRE=1 (the run DO-D9 left BLOCKED), passed 10/10 with exit 0 (matched path). (4) Adversarial: my own 42-case probe of stage()/explain()/gate0() refuses every case it should. The cases are an initiating user; run_as user; an event or request trigger on a scheduled code; no or a disabled job_schedule row; a key whose code differs from trigger_code; seconds or event-style keys; a key 2 min after the slot; a slot before the window, at exactly W0-60 s, or after W1; created outside the window; an event with a user, from the api, at or below the baseline, or not at the current version; a package (not added) row; a second execution per slot, listed or not; a stray result; a foreign-job result event; a non-starter_handler action; another table (approval, reporting_period, child_of); unexplained changed; a nonzero attachment count; a wrong table count; recheck exit 1; chain depth; 20 keys; a key line before a table line; no execution key; a cron or zone outside the grammar. The 4 positive controls pass. Run 1 of my probe had one BAD case, a probe construction error that I fixed and disclosed. The shipped deploy tests ran 204: 203 pass, plus 1 environmental failure (no dist build) that passed 13/13 after the build. They include T-S1-T-S9, T-S9 being on PostgreSQL with digests unchanged. The stage is read only (BEGIN READ ONLY plus default_transaction_read_only=on). I found no non-scheduled write that the rule explains, so D-278's re-open condition is not met. The decision is sound and stays within D-278. The disclosure is in deployment.md, which meets this finding's expected 'at least a disclosure'. The ADR A5.6 disclosure in known-limitations and the release notes is still missing; I raised that separately as Low F-DG7-923.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/domain/round-6/drill/drill-quarter2.log",
+        "docs/delivery/test-evidence/DG7/domain/round-6/drill/out-quarter2/transfer-drill-report.json",
+        "docs/delivery/test-evidence/DG7/domain/round-6/drill/out-quarter2/schedule-explained-d9.json",
+        "docs/delivery/test-evidence/DG7/domain/round-6/drill/out-quarter2/reconcile-d9.json",
+        "docs/delivery/test-evidence/DG7/domain/round-6/drill/drill-driver.log",
+        "docs/delivery/test-evidence/DG7/domain/round-6/a18-harness/a18-harness-run.log",
+        "docs/delivery/test-evidence/DG7/domain/round-6/f971-adversarial-probe.log",
+        "docs/delivery/test-evidence/DG7/domain/round-6/f971-adversarial-probe.mjs",
+        "docs/delivery/test-evidence/DG7/domain/round-6/deploy-script-tests.log"
+      ]
+    }
+  ]
+}

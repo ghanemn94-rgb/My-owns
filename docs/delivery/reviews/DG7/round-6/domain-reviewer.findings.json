@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG7-923",
+      "stage_id": "DG7",
+      "requirement": "REQ-S19-017",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The D-278 schedule rule and its A5.7 residuals are disclosed only in deployment.md (English), not in known-limitations.md, the release notes or the Arabic summaries, as ADR-0064 A5.6 requires",
+      "reproduction": "On candidate sha256:0b48162701518d1fb47789282112f2d5528429e77d6f108d3f8696570f06bc95 (source 830d7edfd): grep -n -i 'D-278\\|schedule-explained\\|escalation_scan' docs/handover/known-limitations.md docs/handover/release-notes.md docs/handover/*.ar-summary.md finds nothing about the drill rule. Only docs/handover/deployment.md l.247 carries it (plus the unrelated job table of automation-operations.md). The ADR-0064 row of known-limitations.md (l.162) lists the earlier ADR-0064 residuals but none of Amendment 5 A5.7 residuals 2-4. Read ADR-0064 Amendment 5 A5.6 'AN (D-278)': 'the handover disclosure in known-limitations.md, the release notes and deployment.md's drill section'. The T-DG7-AN-P7H handback section 4 item 1 and open question 1 flagged this gap; D-279 does not answer it.",
+      "expected": "ADR-0064 Amendment 5 A5.6 (amendments win): known-limitations.md and the release notes, as well as deployment.md, state that a scheduled job running in the D7-D9 window is explained only as A5.2 says and is listed in the report, that a scheduled handler writing business rows in the window still makes D9 FAIL (not a data defect), and that the recovery is to re-run the drill and never pause a schedule. known-limitations.md should also carry the open A5.7 residuals: engine ticks are not covered, and the S6/S7 timing rests on pg-boss 11.0.0 defaults. The Arabic summaries should follow the English text (provisional Arabic).",
+      "actual": "Only deployment.md's English drill section discloses the rule, with the three A5.6 points. known-limitations.md (including its ADR-0064 residual row), release-notes.md, deployment.ar-summary.md and known-limitations.ar-summary.md do not mention it. D-278's own wording ('the rule is disclosed in the handover') is literally met by deployment.md, and the register notes of REQ-S19-017, REQ-S20-018 and REQ-S01-006 carry the rule and residuals in full. So no behaviour, acceptance clause or data is affected. This is documentation drift against the ADR's assignment: Low, not mandatory, and not blocking in my judgement.",
+      "evidence": [
+        "docs/handover/known-limitations.md",
+        "docs/handover/release-notes.md",
+        "docs/handover/deployment.md",
+        "docs/architecture/adr/ADR-0064-p7-migration-manifest-export-import-reconciliation-identity-rebind.md",
+        "docs/delivery/handbacks/DG7/T-DG7-AN-P7H-transformation-analyst.md"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG7/round-6/domain-reviewer.json",
+      "owner": "transformation-analyst",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-16T13:15:00Z",
+          "status": "OPEN",
+          "note": "Raised by domain-reviewer in DG7 round 6 on candidate sha256:0b48162701518d1fb47789282112f2d5528429e77d6f108d3f8696570f06bc95. Low (documentation drift, no behavioural effect). ADR-0064 A5.6 assigns the disclosure to AN. The orchestrator regenerates the handover texts, so the owner may need to coordinate with it."
+        }
+      ]
+    }
+  ]
+}
