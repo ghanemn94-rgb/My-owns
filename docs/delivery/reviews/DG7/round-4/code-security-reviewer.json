@@ -1,0 +1,319 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG7",
+  "round": 4,
+  "candidate_id": "sha256:d91f7152950ed7119b412db0135836c53a3f01e95300af32c86db367f0712e59",
+  "source_commit": "471072d6481a346c356e985d07b49721ebdda571",
+  "reviewer_role": "code-security-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG7-T-DG7-REV-CS-R4-code-security-reviewer-20261116T035546Z-e38c10a2",
+    "session_id": "e38c10a2-32f0-4430-8b92-5424623d4226"
+  },
+  "implementation_author": [
+    "solution-architect",
+    "backend-workflow-engineer",
+    "kpi-benefits-engineer",
+    "frontend-ux-engineer",
+    "transformation-analyst",
+    "devops-engineer",
+    "qa-verifier",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I am code-security-reviewer, session e38c10a2 (task T-DG7-REV-CS-R4). I verified the assignment's sha256, db962035…facc (01-candidate-identity.log). I authored no implementation in the DG7 scope.\n\nWho authored what:\n- P7 is by solution-architect, backend-workflow-engineer, kpi-benefits-engineer, frontend-ux-engineer, transformation-analyst and devops-engineer (docs/delivery/handbacks/DG7/).\n- The acceptance suites are by qa-verifier.\n- The drills, host runs, freeze, pre-freeze checks and regenerated handover texts are by the delivery-orchestrator.\n- The round-3 repairs I verify are AN-P7G (920, 921, 960) and BE-R8 (940). F-DG7-940 is my own round-3 finding; I verify its fix and did not author it.\n\nMy only writes are:\n- evidence under docs/delivery/test-evidence/DG7/code-security/round-4/;\n- my three round-4 review files, written with the Write tool.\nEvery build, test, probe and mutant ran in a disposable --shared sparse clone under $TMPDIR, with disposable PostgreSQL clusters (with-pg.sh, ports 32462-32480, probe ports 32490-32491, inside my 32400-32499 range). The clone and scratch were removed at the end (90-cleanup.log). Validators and the protocol audit ran read-only on the live repository.\n\nI formed this verdict before reading any other reviewer's round-4 record. During my run, HEAD moved from a76c2aed4 (the freeze) to 8d1ba28af, the domain reviewer's auto-commit. I saw only file names in git status (90-cleanup.log) and did not open them. The candidate at that HEAD is still d91f7152.\n\nThe assignment says 'round: 7'. The validator (tools/gates/lib/rules.mjs collectVerifications: entry.round is taken from the round directory) and the round-4/ path require 4, so I record round 4, as the round-2 and round-3 records did.\n\nThe assignment's record template, docs/delivery/reviews/DG5/round-4/code-security-reviewer.json, does not exist. I mirrored the DG7 round-3 code-security record's field set, which conforms to review.schema.json."
+  },
+  "assignment": "docs/delivery/assignments/DG7/round-4/code-security-reviewer.md",
+  "requirements_checked": [
+    "REQ-DLV-005",
+    "REQ-DLV-008",
+    "REQ-DLV-009",
+    "REQ-DLV-010",
+    "REQ-DLV-011",
+    "REQ-DLV-012",
+    "REQ-DLV-014",
+    "REQ-DLV-018",
+    "REQ-DLV-021",
+    "REQ-DLV-024",
+    "REQ-DLV-027",
+    "REQ-DLV-028",
+    "REQ-DLV-030",
+    "REQ-DLV-031",
+    "REQ-DLV-039",
+    "REQ-DLV-040",
+    "REQ-DLV-041",
+    "REQ-S01-001",
+    "REQ-S01-006",
+    "REQ-S02-003",
+    "REQ-S02-005",
+    "REQ-S16-008",
+    "REQ-S16-009",
+    "REQ-S16-024",
+    "REQ-S16-031",
+    "REQ-S16-033",
+    "REQ-S17-004",
+    "REQ-S19-001",
+    "REQ-S19-002",
+    "REQ-S19-003",
+    "REQ-S19-005",
+    "REQ-S19-007",
+    "REQ-S19-008",
+    "REQ-S19-009",
+    "REQ-S19-010",
+    "REQ-S19-011",
+    "REQ-S19-012",
+    "REQ-S19-013",
+    "REQ-S19-014",
+    "REQ-S19-015",
+    "REQ-S19-016",
+    "REQ-S19-017",
+    "REQ-S19-018",
+    "REQ-S19-019",
+    "REQ-S20-018",
+    "REQ-S20-019",
+    "REQ-S20-023",
+    "REQ-S20-026",
+    "REQ-S20-027",
+    "REQ-S20-028",
+    "REQ-S20-031",
+    "REQ-S21-002",
+    "REQ-S21-003",
+    "REQ-S21-004"
+  ],
+  "checks_run": [
+    {
+      "id": "SEC-DG7-R4-00-candidate-identity",
+      "procedure": "Recompute the candidate on the working tree, at HEAD and at the source commit, and diff it against the frozen manifest. Confirm that HEAD is a freeze commit touching only META-excluded files. Recompute again at the end of the run.",
+      "command": "git rev-parse HEAD; git diff --stat 471072d6 HEAD; node tools/gates/candidate.mjs --stage DG7 [--ref HEAD | --ref 471072d6… | --diff docs/delivery/candidates/DG7/d91f7152950ed711.manifest.json]",
+      "environment": "Live repository, read-only; Node 24.21.0",
+      "expected": "The candidate ID is sha256:d91f7152…0e59 over 3155 files. HEAD equals the source, or is a freeze commit that touches only META-excluded files.",
+      "actual": "HEAD is a76c2aed4, 'DG7: freeze round 4', the direct child of the source 471072d64. It changes only the 3 round-4 assignments, the manifest and stages.json, all META-excluded.\nThe working tree, --ref HEAD and --ref 471072d64 each give sha256:d91f7152950ed7119b412db0135836c53a3f01e95300af32c86db367f0712e59 over 3155 files, exit 0. --diff reports matches: true, with nothing added, removed or changed. The disposable clone at 471072d64 gives the same ID (02-install.log).\nThis follows the DG5, DG6 and DG7 round-2/3 precedent, so I continued rather than returning BLOCKED. At the end of my run HEAD was 8d1ba28af (the domain reviewer's auto-commit), and the candidate there is still d91f7152 (90-cleanup.log).\nThe freeze commit's stages.json edit is the subject of F-DG7-941 (check SEC-DG7-R4-40). It does not affect the candidate. There are no error lines in 01-candidate-identity.log.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-030", "REQ-DLV-041", "REQ-S20-028"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/code-security/round-4/01-candidate-identity.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-4/90-cleanup.log"
+      ]
+    },
+    {
+      "id": "SEC-DG7-R4-01-install-build",
+      "procedure": "Make a disposable --shared sparse clone at the source commit. Install offline from a scratch copy of the pnpm store with the frozen lockfile, then build every workspace package.",
+      "command": "bash docs/delivery/test-evidence/DG7/code-security/round-4/scripts/setup.sh",
+      "environment": "$TMPDIR/rv (disposable clone at 471072d64), Node 24.21.0, pnpm 10.33.0, offline",
+      "expected": "The install and pnpm -r build both exit 0, and the API build's register snapshot matches the register hash.",
+      "actual": "pnpm install --frozen-lockfile --offline: exit 0. pnpm -r build: exit 0. The API's register-snapshot reports 412 rows, sha256 ec2b526ad703, which matches sha256sum of requirements.csv and the release notes.\nThe first install prints 4 'WARN Failed to create bin … mth-db … dist/cli.js ENOENT' lines. This is expected before the build: the workspace bin points at a build output that does not exist yet. The re-link after the build creates both bins (ls -l in 02-install.log, exit 0).\n03-build.log has no error or warning lines.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S19-001", "REQ-S19-002", "REQ-S19-003"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/code-security/round-4/02-install.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-4/03-build.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-4/scripts/setup.sh"
+      ]
+    },
+    {
+      "id": "SEC-DG7-R4-10-delta-static",
+      "procedure": "Scope the round-4 source delta and run static checks on it: API typecheck, repository lint, prettier on the new test, and OpenAPI lint.",
+      "command": "bash docs/delivery/test-evidence/DG7/code-security/round-4/scripts/static-sec.sh (10-static.log part)",
+      "environment": "$TMPDIR/rv at 471072d64, Node 24.21.0",
+      "expected": "Outside docs/, the only source change since round 3 is the BE-R8 test, and all four static checks exit 0.",
+      "actual": "git diff --stat 8323dacae..471072d6 -- . ':!docs' shows exactly one file, apps/api/test/integration/transfer/export-scope.test.ts (+186). No production source, migration, script, Dockerfile, scanner or allow-list changed this round. The other changes are requirements.csv notes and evidence, decisions D-276, progress.md, the regenerated release-notes.md and known-limitations.md, and handbacks and evidence.\nResults: pnpm --filter @mth/api typecheck exit 0; pnpm lint (eslint --max-warnings=0) exit 0; prettier --check on the new test exit 0; openapi:lint PASS (965 operations), exit 0.\nThe log contains two 'npm warn Unknown project config' lines from npx reading the pnpm .npmrc keys. They are harmless and unrelated to the candidate.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S20-031", "REQ-S19-007"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/code-security/round-4/10-static.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-4/scripts/static-sec.sh"
+      ]
+    },
+    {
+      "id": "SEC-DG7-R4-20-f940-authz-mutants",
+      "procedure": "F-DG7-940: run the shipped tests on the unmodified tree, then apply authorization mutants one at a time and run ONLY export-scope.test.ts. M4 (required by the assignment) removes the scoped authorize() from requireExportRight. M6, M7 and M8 each drop one route's requireExportRight. M9 drops the create pre-check.",
+      "command": "bash docs/delivery/test-evidence/DG7/code-security/round-4/scripts/mutants.sh",
+      "environment": "$TMPDIR/rv at 471072d64, Node 24.21.0, tests/qa/support/with-pg.sh (disposable PostgreSQL 16.15, port 32462), vitest --configLoader runner --project integration",
+      "expected": "The controls pass. M4 makes export-scope.test.ts fail. The sources are restored byte-equal afterwards.",
+      "actual": "R0: export-scope.test.ts 4/4 and export.test.ts 10/10 pass, exit 0.\nM4: 3 of 4 tests fail, exit 1. The ADM_TECH @ business_unit and @ transformation tests fail at l.169 (the six operations are no longer all 403). The audit-trail test fails at l.184 (extra audit events by narrow principals). The org-scope control passes. The mutant is KILLED.\nM6 (list), M7 (get) and M8 (both manifest downloads): each is killed with 3 of 4 failing, exit 1. The failure is 'contract: … does not declare status 500'. The platform's fail-closed response guard (apps/api/src/modules/platform/hooks.ts:5-6) replaces a response from a route that never consulted the policy with a 500, so dropping a route check fails closed rather than leaking data.\nM9 (create pre-check dropped): survives, 4/4 pass, exit 0. This is expected and not a gap: requestExport re-checks the right inside its transaction (service.ts:160), so the narrow principals still get 403 and no row, outbox event or audit event is written.\nThe sha256 sums of service.ts and routes.ts are equal before and after the mutants. Every exit 1 in this log belongs to a mutant run, as designed; there are no other failures.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S19-016", "REQ-S19-014", "REQ-S20-031", "REQ-S21-002"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/code-security/round-4/32-f940-mutants.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-4/scripts/mutants.sh",
+        "apps/api/test/integration/transfer/export-scope.test.ts"
+      ]
+    },
+    {
+      "id": "SEC-DG7-R4-21-f960-f920-c3-count",
+      "procedure": "F-DG7-960/920: run a fresh protocol audit on THIS candidate (--stage DG7 and --all). Compare the C3 hits with REQ-DLV-012, release-notes.md and known-limitations.md. Run release-notes --check, known-limitations --check and check-handover (default and strict). Revert-to-fail with the round-3 handover files.",
+      "command": "node tools/release/protocol-audit.mjs --stage DG7 --root . --json $TMPDIR/pa-dg7.json; node tools/release/protocol-audit.mjs --all …; static-sec.sh (20-f920-f960-handover.log part)",
+      "environment": "Protocol audit: live repository read-only, HEAD a76c2aed4. Generators and checks: $TMPDIR/rv at 471072d64. Node 24.21.0.",
+      "expected": "Every surface states seven C3 hits, all seven named, matching the fresh audit; the --check commands exit 0; the round-3 files revert-to-fail.",
+      "actual": "protocol-audit --stage DG7 exits 1 by design (hits present): 35 hits, C2 27, C3 7, C5 1. C1, C4, C6, C7, C8 and C9 PASS.\nThe C3 hits are AN-P7B, ARCH-R2, ARCH-R5, BE-R5, DO-A2, DO-D8 and FE-C3, out of 77 implementation handbacks. AN-P7G and BE-R8 have all the sections.\nREQ-DLV-012 names all seven. Release notes l.35 says 'seven: the five D-270 hits plus F-DG7-960's FE-C3 and F-DG7-920's DO-D8 handback'. Known-limitations l.62 shows DG7 C3 HIT 7.\n--all exits 1 by design: 281 hits in 29 checks, 0 blocked. Its status and hit count per (check, stage) equal protocol-audit-r4.json, so the table matches this candidate.\nrelease-notes --check exit 0; known-limitations --check exit 0; check-handover exit 0 in both modes. The round-3 release notes and known-limitations each revert-to-fail with exit 1, as expected.\nThe orchestrator's prefreeze-r4/checks.log has two 'find: The -delete action automatically turns on -depth' warnings from its cleanup step (no effect on the checks), and runs the protocol audit with '; true' because the hits exit 1 by design.\nI judge the hits themselves as disclosed deviations (D-249/D-270 user decision), not as met.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-012", "REQ-S02-005", "REQ-S19-015", "REQ-DLV-018"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/code-security/round-4/pa-dg7.json",
+        "docs/delivery/test-evidence/DG7/code-security/round-4/pa-dg7.txt",
+        "docs/delivery/test-evidence/DG7/code-security/round-4/pa-all.txt",
+        "docs/delivery/test-evidence/DG7/code-security/round-4/20-f920-f960-handover.log",
+        "docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r4/checks.log"
+      ]
+    },
+    {
+      "id": "SEC-DG7-R4-22-f921-restart",
+      "procedure": "F-DG7-921: read the DO-D8B T-B11 D9 evidence and the shipped d9() code. Confirm the drill code has not changed since DO-D8B. Run an independent probe of the candidate's stop/restart sequence against a real PostgreSQL 16, with the pre-DO-D8 sequence as a negative control. Run the drill's own test file under with-pg.sh.",
+      "command": "bash …/scripts/f921-restart-probe.sh; node --test deploy/scripts/tests/transfer-drill.test.mjs (first without, then under tests/qa/support/with-pg.sh)",
+      "environment": "$TMPDIR/rv at 471072d64, Node 24.21.0, PostgreSQL 16.15 (/usr/lib/postgresql/16/bin), probe ports 32490-32491, with-pg port 32462",
+      "expected": "The candidate sequence starts a new postmaster and the data persists. The disclosure about the earlier runs is correct. The drill tests pass.",
+      "actual": "git log shows deploy/scripts/transfer-drill.sh and drill/cleanup.sh last changed in 7c819f08c (DO-D8B), so the cited t-b11-run.log describes the shipped code. Its D9 line, job-check PASS, equal export and download SHA-256, mode 2 reconcile and 'D9 PASS in 9.573 s' are as AN-P7G states. There is no 'did not stop before its restart' line.\nProbe P1 (candidate sequence): old postmaster 38 gone, new postmaster 128, later pg_postmaster_start_time, persisted row 42. Result: real restart.\nProbe P2 (pre-fix stop_pid, SIGTERM to the launcher, as in f8f86a78d l.122-127/592): old postmaster 244 still alive with the same start time. Result: no restart. This confirms the disclosure about the DO-D7, DO-E and QA-C runs. P2 omits stop_pid's later SIGKILL to the launcher, which cannot reach the postmaster either. No postgres server was left afterwards.\nThe first drill-test run (34-drill-tests.log) exited 1. The T-B3, T-B10 (x2), T-B16, T-B17 and T-B19 suites failed in under 1 ms because I ran the file without a database. The cause is 'BLOCKED: TEST_DATABASE_ADMIN_URL is not set (run under tests/qa/support/with-pg.sh)' (34a, reproduced on T-B3). This is my invocation error, not a candidate defect.\nThe re-run under with-pg.sh, as the orchestrator runs it, passes 55/55 with 0 fail and 0 skipped, exit 0 (34b). That includes the real-PostgreSQL td_stop_pg and td_stop_pg_dir cases.\nThe 'FAIL status / deeplink / downloads / gatechain' lines in 34b are child output of negative tests that require those failures (wrong origin expectation, empty inbox, no download list, T-B18 missing remedy). Their tests pass.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S19-017", "REQ-S20-018", "REQ-S01-006", "REQ-S19-010"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/code-security/round-4/33-f921-restart-probe.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-4/scripts/f921-restart-probe.sh",
+        "docs/delivery/test-evidence/DG7/code-security/round-4/34-drill-tests.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-4/34a-drill-fail-cause.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-4/34b-drill-tests-with-pg.log",
+        "docs/delivery/handbacks/DG7/T-DG7-DO-D8B-evidence/t-b11-run.log"
+      ]
+    },
+    {
+      "id": "SEC-DG7-R4-23-security-release-tools",
+      "procedure": "Run the security release-tool suites (secret-scan, claims-scan, security-controls, scan-assets, seal, verify-seal, release-notes, protocol-audit, known-limitations, check-handover tests). Then run the payload and history secret scans, the claims scan, and a public-CDN grep over shipped sources.",
+      "command": "static-sec.sh (22-security-tools.log part); node --test tools/release/tests/scan-assets.test.mjs (22b)",
+      "environment": "$TMPDIR/rv at 471072d64, Node 24.21.0",
+      "expected": "All suites and scans pass, there are no CDN references, and every skip is explained.",
+      "actual": "node --test: 315 tests, 314 pass, 0 fail, 1 skipped, exit 0.\nThe skip is T-A11 'the real built SPA, runtime tree and configuration scan exits 0': 'BLOCKED: no assembled runtime tree; set MTH_RELEASE_RUNTIME_DIR' (22b). The orchestrator's prefreeze-r4 release-tool-tests.log skips it too, along with T-A3 because bsdtar is not installed. I ran T-A11 for real in check SEC-DG7-R4-24, where it passes.\nsecret-scan payload PASS (3155 files; allowed 33; documented canaries 22). secret-scan history PASS (36659 files; allowed 243; canaries 46). claims-scan PASS (891 files). The CDN grep has no matches. All exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S16-031", "REQ-S16-033", "REQ-S19-019", "REQ-S19-009", "REQ-DLV-041", "REQ-S20-028"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/code-security/round-4/22-security-tools.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-4/22b-skip-identify.log"
+      ]
+    },
+    {
+      "id": "SEC-DG7-R4-24-asset-scan-real-tree",
+      "procedure": "Unblock T-A11: assemble the production runtime tree with the candidate's deploy/scripts/assemble-runtime.sh (offline, from the frozen lockfile). Then run scan-assets over the built SPA, the runtime tree and the configuration, plus the shipped T-A11 test.",
+      "command": "deploy/scripts/assemble-runtime.sh --store-dir $TMPDIR/pstore/v10 $TMPDIR/rv $TMPDIR/rt; node tools/release/scan-assets.mjs --web apps/web/dist --runtime $TMPDIR/rt --config .; MTH_RELEASE_RUNTIME_DIR=$TMPDIR/rt node --test --test-name-pattern T-A11 tools/release/tests/scan-assets.test.mjs",
+      "environment": "$TMPDIR/rv at 471072d64 (pruned in place by the script, run last), Node 24.21.0, offline",
+      "expected": "The runtime assembles and verifies module resolution, and the scan and T-A11 both exit 0.",
+      "actual": "assemble-runtime: OK, 186 packages, 205 MB; all 7 runtime workspace packages resolve and import; exit 0.\nThe first scan (22c) exited 1 with R2 'builder-host' hits on every occurrence of the word 'user' (SPA bundles, the @aws-sdk d.ts files, journey.mjs:46). The cause is my disposable clone's origin, the local path /home/user/My-owns. gitIdentifiers() (scan-assets.mjs:174-184) derived the identifiers 'user/My-owns' and 'user' from it. This is a setup artefact that fails closed; it cannot hide a hit.\nWith the clone's origin set to the main repository's real remote URL (22d), scan-assets reports PASS over 15732 files (T1 3570, T2 85, T3 12077), exit 0. The --no-git-remote control also passes, and the shipped T-A11 test passes 1/1, exit 0.\nThis check ran on this candidate for the first time: the orchestrator's pre-freeze run skipped it. Observation, not a defect: a checkout whose origin is a local path gets false R2 hits, which fail closed.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S19-019", "REQ-S19-018", "REQ-S01-006", "REQ-S16-008"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/code-security/round-4/22c-scan-assets-runtime.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-4/22d-scan-assets-runtime-rerun.log"
+      ]
+    },
+    {
+      "id": "SEC-DG7-R4-25-code-inspection",
+      "procedure": "Inspect the P7 security surfaces on this candidate directly: the export authorization path (requireExportRight, all route call sites, the platform response guard), the new test's assertions, and the OIDC loopback exception (D-258). Confirm by diff that the other P7 surfaces inspected in round 3 have not changed since then.",
+      "command": "grep/sed over apps/api/src/modules/transfer/export/{service,routes}.ts, apps/api/src/modules/platform/hooks.ts, packages/config/src/load.ts; git diff --stat 8323dacae..471072d6 -- . ':!docs'",
+      "environment": "Live repository, read-only",
+      "expected": "Server-side, organization-scoped authorization on every export operation, and a loopback exception limited to exact loopback hosts. No changes to the round-3-reviewed surfaces.",
+      "actual": "requireExportRight (service.ts:142-147) admits only on authorize(…, MIGRATION_EXPORT, {type:'organization'}). It is called on list (routes.ts:94), create (107, and again inside the transaction at service.ts:160 under an advisory lock), get (132) and both downloads (141). Each route also declares config.access, and the hooks.ts response guard fails closed.\nThe new test asserts all six calls as 403, no body naming the export, no row, outbox event or audit event, plus an org-scope control.\nisLoopbackHost (load.ts:398-403) is an exact match on {localhost, 127.0.0.1, [::1]}, applied to OIDC_ISSUER_URL only when NODE_ENV=production (load.ts:310-316). Look-alike hosts such as localhost.example are refused.\nThe source diff since round 3 is only the new test (10-static.log). So the migration manifest/import/export tools, audit append-only handling, config bundle import, the scanners and allow-lists, the image bundle, the Dockerfile and seal/verify are byte-identical to what round 3 inspected (docs/delivery/test-evidence/DG7/code-security/round-3/25-code-inspection.log). No new issue in the code.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S19-008", "REQ-S19-014", "REQ-S19-016", "REQ-S19-011", "REQ-S16-024", "REQ-S17-004", "REQ-S19-005", "REQ-S19-012", "REQ-S19-013"],
+      "evidence": [
+        "apps/api/src/modules/transfer/export/service.ts",
+        "apps/api/src/modules/transfer/export/routes.ts",
+        "apps/api/src/modules/platform/hooks.ts",
+        "packages/config/src/load.ts",
+        "docs/delivery/test-evidence/DG7/code-security/round-4/10-static.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-3/25-code-inspection.log"
+      ]
+    },
+    {
+      "id": "SEC-DG7-R4-26-disclosures-and-residuals",
+      "procedure": "Judge the disclosures the assignment names (D-249/D-270, D-274, A27 K11 partial, ADR-0065 Amendment 1, D-267, D-269) and the environmental residuals against the register, the orchestrator evidence and the code. Do not treat any disclosed gap as met.",
+      "command": "Read decisions.md D-249, D-267, D-269, D-270, D-274, D-276; ADR-0064 (ADR-0065 Amendment 1 rows); orchestrator/a27/drill-report.md and k11.log; orchestrator/host/*.log; prefreeze-r4/checks.log; requirements.csv notes",
+      "environment": "Live repository, read-only",
+      "expected": "Each disclosure is stated where a reader of the handover would see it, and no record claims a business, Finance, IT or production approval.",
+      "actual": "D-249/D-270: the protocol-audit hits are disclosed per stage in known-limitations and match a fresh audit (check 21). They are user decisions and deviations, not met.\nD-274: the 18 Q19 rows carry completes-after-gate clauses, and release-notes --check passes (23 later clauses).\nA27 K11 (drill-report.md) is recorded as partial, as disclosed.\nADR-0065 Amendment 1: automation_rule is refused explicitly at export and in the import plan with 422 config_bundle.unportable_reference, plus an EN/AR note. That is not a silent drop. REQ-S19-008 is met for the 11 portable kinds, and the automation-rule limitation is the release-auditor's judgement against the literal title.\nD-267: the container half was run by the orchestrator on one host with registry access through the proxy; not air-gapped, not HA; Keycloak e2e outside the build proxy. I did not re-run Docker (no daemon in my sandbox). I judge the orchestrator logs consistent but do not claim them as my own run.\nD-269: the pre-freeze history is disclosed. prefreeze-r4 has 19 checks, all exit 0; live CI was not run.\nResiduals, PASS on the offline and config surface: live registry (REQ-DLV-042 AC-1, D-057), live CI (A24, D-058), Keycloak and a real IdP (D-049; the bundled test issuer), external systems through test adapters and the 'disabled' configuration, and production capacity (REQ-S20-029/030 provisional).\nclaims-scan passes, and no record I read claims a G1-G6, Finance, IT or production approval or that G6 implies DG7.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-005", "REQ-DLV-008", "REQ-DLV-009", "REQ-DLV-010", "REQ-DLV-011", "REQ-DLV-021", "REQ-DLV-027", "REQ-DLV-028", "REQ-DLV-031", "REQ-DLV-039", "REQ-DLV-040", "REQ-S01-001", "REQ-S02-003", "REQ-S16-008", "REQ-S16-009", "REQ-S20-019", "REQ-S20-023", "REQ-S20-026", "REQ-S20-027", "REQ-S21-003", "REQ-S21-004"],
+      "evidence": [
+        "docs/delivery/decisions.md",
+        "docs/delivery/test-evidence/DG7/orchestrator/a27/drill-report.md",
+        "docs/delivery/test-evidence/DG7/orchestrator/a27/k11.log",
+        "docs/delivery/test-evidence/DG7/orchestrator/host/host-run.log",
+        "docs/delivery/test-evidence/DG7/orchestrator/host/no-egress-stack.log",
+        "docs/delivery/test-evidence/DG7/orchestrator/host/keycloak-e2e-stack.log",
+        "docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r4/checks.log",
+        "docs/architecture/adr/ADR-0064-p7-migration-manifest-export-import-reconciliation-identity-rebind.md",
+        "docs/handover/known-limitations.md"
+      ]
+    },
+    {
+      "id": "SEC-DG7-R4-40-gate-validators",
+      "procedure": "Run the required validators on the live repository: --historical for DG6 down to DG1, --stage DG7, --pipeline and --register DG7. Compare stages.json at the source commit and at the freeze commit.",
+      "command": "node tools/gates/validate.mjs --historical --stage DG6|DG5|DG4|DG3|DG2|DG1; --stage DG7; --pipeline; --register DG7",
+      "environment": "Live repository, read-only, HEAD a76c2aed4, Node 24.21.0",
+      "expected": "The assignment says '--historical --stage DG6 must pass (and DG5…DG1)'. --register passes. --stage DG7 fails only because the gate record and the round-4 reviews are missing, which is expected before the audit.",
+      "actual": "All six --historical runs (DG6, DG5, DG4, DG3, DG2, DG1) print 'FAIL … (1 problem) - stages.json: DG7 illegal transition REVIEWING -> REVIEWING', exit 1. --pipeline gives the same single problem, exit 1. --stage DG7 gives the same problem plus the expected 'gate DG7: file not found', exit 1. --register DG7 PASS, exit 0.\nCause: the freeze commit a76c2aed4 appended {REVIEWING, 2026-11-16T03:55:37Z, 'Round 4 frozen…'} directly after round 3's REVIEWING entry, with no FIXING entry for the round-3 FAIL. rules.mjs TRANSITIONS allows REVIEWING -> FIXING|VERIFYING|BLOCKED only.\nAt the source commit the history still ended FIXING -> REVIEWING, which is why prefreeze-r4/historical.log passed: it ran before the freeze.\nRaised as F-DG7-941 (Medium, not mandatory, owner delivery-orchestrator), the same class as F-DG4-104/124 and F-DG6-911/951. It is metadata only and does not change the candidate, but the gate cannot validate until it is fixed.",
+      "exit_status": 1,
+      "result": "FAIL",
+      "requirements": ["REQ-DLV-014", "REQ-DLV-024"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/code-security/round-4/40-validators.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-4/41-validators-pipeline.log",
+        "docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r4/historical.log"
+      ]
+    },
+    {
+      "id": "SEC-DG7-R4-90-cleanup",
+      "procedure": "Remove the disposable clone, store copy, runtime tree and scratch. Check that no PostgreSQL server of mine is left, and recompute the candidate.",
+      "command": "rm -rf $TMPDIR/{rv,pstore,rt,…}; ps -eo pid,comm,args | awk '$2==\"postgres\"' | grep -c $TMPDIR; node tools/gates/candidate.mjs --stage DG7",
+      "environment": "Live repository and $TMPDIR",
+      "expected": "Scratch removed, no leftover servers, candidate unchanged.",
+      "actual": "Removal exit 0, including the leftover integration-test evidence-storage directories, and 0 postgres servers name my $TMPDIR. The first line's count of '3' matched the cleanup shell's own command line, which contains both strings; the addendum's exact check gives 0. The candidate at HEAD 8d1ba28af is still sha256:d91f7152…0e59 over 3155 files, exit 0. git status shows only run directories and evidence, plus the other reviewers' files, which I did not open.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-030"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/code-security/round-4/90-cleanup.log"
+      ]
+    }
+  ],
+  "findings": ["F-DG7-941"],
+  "verdict": "FAIL",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG7/code-security/round-4/01-candidate-identity.log",
+    "docs/delivery/test-evidence/DG7/code-security/round-4/02-install.log",
+    "docs/delivery/test-evidence/DG7/code-security/round-4/03-build.log",
+    "docs/delivery/test-evidence/DG7/code-security/round-4/10-static.log",
+    "docs/delivery/test-evidence/DG7/code-security/round-4/20-f920-f960-handover.log",
+    "docs/delivery/test-evidence/DG7/code-security/round-4/22-security-tools.log",
+    "docs/delivery/test-evidence/DG7/code-security/round-4/22b-skip-identify.log",
+    "docs/delivery/test-evidence/DG7/code-security/round-4/22c-scan-assets-runtime.log",
+    "docs/delivery/test-evidence/DG7/code-security/round-4/22d-scan-assets-runtime-rerun.log",
+    "docs/delivery/test-evidence/DG7/code-security/round-4/32-f940-mutants.log",
+    "docs/delivery/test-evidence/DG7/code-security/round-4/33-f921-restart-probe.log",
+    "docs/delivery/test-evidence/DG7/code-security/round-4/34-drill-tests.log",
+    "docs/delivery/test-evidence/DG7/code-security/round-4/34a-drill-fail-cause.log",
+    "docs/delivery/test-evidence/DG7/code-security/round-4/34b-drill-tests-with-pg.log",
+    "docs/delivery/test-evidence/DG7/code-security/round-4/40-validators.log",
+    "docs/delivery/test-evidence/DG7/code-security/round-4/41-validators-pipeline.log",
+    "docs/delivery/test-evidence/DG7/code-security/round-4/90-cleanup.log",
+    "docs/delivery/test-evidence/DG7/code-security/round-4/pa-dg7.json",
+    "docs/delivery/test-evidence/DG7/code-security/round-4/pa-dg7.txt",
+    "docs/delivery/test-evidence/DG7/code-security/round-4/pa-all.txt",
+    "docs/delivery/test-evidence/DG7/code-security/round-4/scripts/setup.sh",
+    "docs/delivery/test-evidence/DG7/code-security/round-4/scripts/mutants.sh",
+    "docs/delivery/test-evidence/DG7/code-security/round-4/scripts/static-sec.sh",
+    "docs/delivery/test-evidence/DG7/code-security/round-4/scripts/f921-restart-probe.sh",
+    "docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r4/checks.log",
+    "docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r4/historical.log",
+    "docs/delivery/test-evidence/DG7/orchestrator/protocol-audit/protocol-audit-r4.json"
+  ],
+  "reviewed_at": "2026-11-16T04:45:00Z",
+  "summary": "Verdict FAIL. Of the four round-3 findings, F-DG7-940 (mutant M4 now killed by the shipped test), F-DG7-960, F-DG7-920 (seven C3 hits on every surface, matching a fresh audit) and F-DG7-921 (the cited DO-D8B run really restarts PostgreSQL; independent probe with a negative control) are CLOSED_VERIFIED on candidate d91f7152. The round-4 source delta is one test file, and I found no security defect in the code. T-A11, the real built-SPA/runtime/config asset scan that pre-freeze skipped, ran and passes. One new Medium finding, F-DG7-941: the round-4 freeze commit records DG7 REVIEWING -> REVIEWING in stages.json, so every required --historical validation (DG6..DG1), --pipeline and --stage DG7 exit 1. The fix is a metadata-only correction by the delivery-orchestrator that does not change the candidate; it must be repaired before the gate (D-192). No business, Finance, IT or production approval is granted or implied, and product G6 does not imply DG7."
+}

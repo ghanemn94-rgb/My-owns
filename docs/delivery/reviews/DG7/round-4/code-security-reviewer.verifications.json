@@ -1,0 +1,59 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG7-940",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:d91f7152…0e59 (source 471072d64, fix 1fa349f0; BE-R8 test apps/api/test/integration/transfer/export-scope.test.ts), in a disposable --shared clone with a disposable PostgreSQL 16.15 cluster (with-pg.sh), Node 24.21.0 (32-f940-mutants.log).\nR0 controls on the unmodified tree: export-scope.test.ts (4 tests) and export.test.ts (10 tests) pass, 14/14, exit 0.\nM4, the mutant the assignment names (the scoped authorize() removed from requireExportRight in export/service.ts, so any grant holding migration.export at any scope admits): export-scope.test.ts fails 3 of 4, exit 1. Both narrower-scope tests (ADM_TECH @ business_unit and @ transformation) fail at l.169 because the six operations are no longer 403. The audit test fails at l.184 because extra audit events were written by the narrow principals. This is the round-3 hole and the shipped test now kills it. The organization-scope control still passes, as it should.\nAdditional mutants, each dropping one route's requireExportRight call: list (M6), get (M7) and both manifest downloads (M8) are each killed, 3 of 4 tests failing. The narrow principals and the control get a 500 instead of 200 or 403. That 500 comes from the platform's fail-closed response guard (apps/api/src/modules/platform/hooks.ts:5-6: a business-permission route that never consulted the policy has its response replaced by a 500), so no data leaks even without the route check.\nM9 drops the create route's pre-check and survives, as expected: requestExport re-checks the right inside its transaction (service.ts:160), so the narrow principals still get 403 and nothing is written. This is defence in depth, not a gap.\nSources restored byte-equal (sha256 before and after). The test covers all five operations (list, create with and without an Idempotency-Key, get, manifest, attachment-manifest), with no row, no outbox event and no audit event, and checks that the refusal body does not name the export. I did not author this fix; F-DG7-940 is my own round-3 finding.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/code-security/round-4/32-f940-mutants.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-4/scripts/mutants.sh",
+        "apps/api/test/integration/transfer/export-scope.test.ts",
+        "apps/api/src/modules/transfer/export/service.ts",
+        "apps/api/src/modules/transfer/export/routes.ts",
+        "apps/api/src/modules/platform/hooks.ts"
+      ]
+    },
+    {
+      "finding_id": "F-DG7-960",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:d91f7152…0e59 (source 471072d64, fix 1fa349f0; AN-P7G plus the orchestrator's regeneration).\n(1) Fresh 'node tools/release/protocol-audit.mjs --stage DG7' on THIS candidate (live repository read-only, HEAD a76c2aed4, JSON into $TMPDIR, copied to pa-dg7.json): exit 1 by design (hits present), 35 hits. C2 has 27 (assignment-missing-elements), C3 has 7 (handback-missing-sections) over 77 implementation handbacks, and C5 has 1. C1, C4, C6, C7, C8 and C9 PASS.\nThe seven C3 hits are AN-P7B, ARCH-R2, ARCH-R5, BE-R5, DO-A2, DO-D8 and FE-C3. The two new handbacks (AN-P7G, BE-R8) are not hits: their headings include files changed, behaviour, checks run, merge instructions and known gaps (20-f920-f960-handover.log).\n(2) The REQ-DLV-012 notes name all seven handbacks, including T-DG7-FE-C3-frontend-ux-engineer.md (F-DG7-960). The acceptance-surface sentence says 'seven: the five D-270 hits plus F-DG7-960's FE-C3 and F-DG7-920's DO-D8 handback'. The older 'six' wording remains only as a historical pass that the note itself says pass 7 corrects.\n(3) release-notes.md l.35 says seven, and release-notes --check passes (exit 0); the round-3 release notes revert-to-fail with exit 1. known-limitations.md l.62 shows DG7 C3 HIT 7, and known-limitations --check against protocol-audit-r4 passes (exit 0); the round-3 file revert-to-fails with exit 1. check-handover passes in default and strict mode.\n(4) A fresh --all audit agrees with protocol-audit-r4.json on the status and hit count of every (check, stage) pair (pa-all.txt), so the generated known-limitations table matches this candidate.\nThe count is now derived from a fresh audit and agrees on every surface. Whether the hits themselves are acceptable is the release-auditor's decision (D-249/D-270), not met by this fix. I did not author this fix.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/code-security/round-4/pa-dg7.json",
+        "docs/delivery/test-evidence/DG7/code-security/round-4/pa-dg7.txt",
+        "docs/delivery/test-evidence/DG7/code-security/round-4/pa-all.txt",
+        "docs/delivery/test-evidence/DG7/code-security/round-4/20-f920-f960-handover.log",
+        "docs/handover/release-notes.md",
+        "docs/handover/known-limitations.md",
+        "docs/delivery/requirements.csv"
+      ]
+    },
+    {
+      "finding_id": "F-DG7-920",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:d91f7152…0e59 (source 471072d64, fix 1fa349f0). F-DG7-920 is the Low half of the same count defect as F-DG7-960: the DO-D8 handback was unnamed and the count was six.\nThe fresh protocol audit on this candidate lists docs/delivery/handbacks/DG7/T-DG7-DO-D8-devops-engineer.md as a C3 hit (missing merge_instructions; pa-dg7.json). REQ-DLV-012 names it as hit (7) and explains it: a round-2 repair handback committed in 6c606e5b3 after D-270, whose run exited 1 and whose task DO-D8B completed. It also states that the release-auditor's decision must cover all seven.\nThe release notes (l.35) and known-limitations (l.62, DG7 C3 HIT 7) agree, and both generators' --check pass on this tree (20-f920-f960-handover.log). I did not author this fix.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/code-security/round-4/pa-dg7.json",
+        "docs/delivery/test-evidence/DG7/code-security/round-4/20-f920-f960-handover.log",
+        "docs/delivery/requirements.csv"
+      ]
+    },
+    {
+      "finding_id": "F-DG7-921",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:d91f7152…0e59 (source 471072d64, fix 1fa349f0).\n(1) REQ-S19-017, REQ-S20-018 and REQ-S01-006 now cite docs/delivery/handbacks/DG7/T-DG7-DO-D8B-evidence/t-b11-run.log as the full-restart evidence. They disclose that the DO-D7, DO-E and QA-C (A18) D9 runs most probably restarted only the API and worker. The cited log's D9 line reads 'stop API, PostgreSQL; start PostgreSQL, API, worker'. job-check reports PASS: enabled schedules equal, earlier job_run rows unchanged, approval rows equal. The export queued before the restart completes with equal SHA-256, 2 downloads have equal SHA-256, and mode 2 reconcile matches. D9 PASS in 9.573 s, driver exit 0, and there is no 'did not stop before its restart' line.\n(2) The drill code in the candidate (deploy/scripts/transfer-drill.sh d9() and drill/cleanup.sh) is unchanged since the DO-D8B commit 7c819f08c, so the evidence describes the shipped code.\n(3) I ran an independent probe (33-f921-restart-probe.log) using the candidate's cleanup.sh, starting PostgreSQL 16 exactly as pg_start does, on ports 32490-32491.\n  P1, the candidate's sequence 'td_stop_pg <launcher> && td_stop_pg_dir <data>; start': the old postmaster 38 is gone, the new postmaster 128 has a later pg_postmaster_start_time, and a row written before the restart persists. Result: real restart.\n  P2, a negative control with the pre-DO-D8 stop_pid (SIGTERM to the launcher; f8f86a78d:transfer-drill.sh l.122-127 and l.592): the old postmaster 244 survives with the same start time, and the 'restart' reconnects to it. This confirms the mechanism behind the disclosure that the earlier runs did not restart PostgreSQL.\n(4) deploy/scripts/tests/transfer-drill.test.mjs under with-pg.sh passes 55/55, including the real-PostgreSQL td_stop_pg and td_stop_pg_dir cases (34b). The claim is now supported by evidence that restarted PostgreSQL, and the earlier runs are disclosed. I did not author this fix.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/code-security/round-4/33-f921-restart-probe.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-4/scripts/f921-restart-probe.sh",
+        "docs/delivery/test-evidence/DG7/code-security/round-4/34b-drill-tests-with-pg.log",
+        "docs/delivery/handbacks/DG7/T-DG7-DO-D8B-evidence/t-b11-run.log",
+        "deploy/scripts/transfer-drill.sh",
+        "deploy/scripts/drill/cleanup.sh",
+        "docs/delivery/requirements.csv"
+      ]
+    }
+  ]
+}

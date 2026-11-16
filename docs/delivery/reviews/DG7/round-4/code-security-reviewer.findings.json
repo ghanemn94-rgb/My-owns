@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG7-941",
+      "stage_id": "DG7",
+      "requirement": "REQ-DLV-014",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "The round-4 freeze commit records DG7 REVIEWING -> REVIEWING in stages.json (the round-3 FAIL is not recorded as FIXING), so validate.mjs --pipeline, --stage DG7 and every required --historical validation (DG6, DG5, DG4, DG3, DG2, DG1) exit 1",
+      "reproduction": "Main repository at HEAD a76c2aed45cc7e68c07bf150d0494963f9756342 ('DG7: freeze round 4', the direct child of the source commit 471072d6481a346c356e985d07b49721ebdda571 of candidate sha256:d91f7152950ed7119b412db0135836c53a3f01e95300af32c86db367f0712e59), Node 24.21.0, read-only. (1) `node tools/gates/validate.mjs --historical --stage DG6` prints 'FAIL gate DG6 (historical) (1 problem) - stages.json: DG7 illegal transition REVIEWING -> REVIEWING' and exits 1. DG5, DG4, DG3, DG2 and DG1 give the same single problem and exit 1. `--pipeline` and `--stage DG7` report the same problem and exit 1 (40-validators.log, 41-validators-pipeline.log). `--register DG7` passes because it does not read the history. (2) `git diff 471072d6 HEAD -- docs/delivery/stages.json` shows that the freeze commit appended {state: REVIEWING, at: 2026-11-16T03:55:37Z, note: 'Round 4 frozen on sha256:d91f7152 (D-276).'} directly after {state: REVIEWING, at: 2026-11-15T22:34:02Z, note: 'Round 3 frozen on sha256:60dd90b6 (D-275).'}. No FIXING entry was recorded for the round-3 outcome (domain, code-security and qa all FAIL; repairs AN-P7G and BE-R8; D-276). tools/gates/lib/rules.mjs TRANSITIONS allows only REVIEWING -> FIXING | VERIFYING | BLOCKED. (3) The orchestrator's pre-freeze check prefreeze-r4/historical.log ('PASS gate DG6 (historical)') ran on the source commit before the freeze commit, where the history still ended FIXING -> REVIEWING (round 3). Rounds 1 and 2 of DG7 did record REVIEWING -> FIXING -> REVIEWING.",
+      "expected": "The assignment says '`node tools/gates/validate.mjs --historical --stage DG6` must pass (and DG5…DG1)'. CLAUDE.md requires running the validator against the previous approved gate (--historical). REQ-DLV-014 (final gate DG7): each stage's history in stages.json passes through BUILDING, REVIEWING and VERIFYING to APPROVED under the gate state machine (REQ-DLV-015). A round that fails and is repaired records REVIEWING -> FIXING -> REVIEWING, as DG7 did after rounds 1 and 2, and as the same-class precedents F-DG4-104, F-DG4-124, F-DG6-911 and F-DG6-951 (Medium, owner delivery-orchestrator) required.",
+      "actual": "DG7's history goes REVIEWING (round 3) -> REVIEWING (round 4). Every required historical validation and the pipeline validation exit 1, and the DG7 gate validation cannot pass until this is fixed. The candidate is not affected: stages.json is META-excluded and the candidate ID is still sha256:d91f7152…e59 (01-candidate-identity.log). The fix is a metadata-only correction that inserts the missing FIXING entry dated between 2026-11-15T22:34:02Z and 2026-11-16T03:55:37Z (for example at the D-276 marking). It does not change the candidate. The owner is delivery-orchestrator because implementers cannot write stages.json (CLAUDE.md, agent-protocol.md). The findings schema allows this owner, and the four precedents above use it. The assignment's owner list names implementer roles only, and none of them owns this file.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/code-security/round-4/40-validators.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-4/41-validators-pipeline.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-4/01-candidate-identity.log",
+        "docs/delivery/stages.json",
+        "tools/gates/lib/rules.mjs",
+        "docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r4/historical.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG7/round-4/code-security-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-16T04:20:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG7 round 4 by code-security-reviewer (session e38c10a2). This is the same defect class as F-DG4-104/124 and F-DG6-911/951. It is metadata only and does not change the candidate."
+        }
+      ]
+    }
+  ]
+}
