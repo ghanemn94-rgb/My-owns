@@ -1,0 +1,48 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG7-942",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified by the originating reviewer (code-security-reviewer, session 43e1182d), who authored none of the repair, on candidate sha256:0d71d4456adaac949e2c9af4c975f4b9976a166872195f496d5aa75fe8ed2272 (source 7579382c5; the repairs c4bb0cf8b, 19a82f6c2 and abd95136b are ancestors). Every surface that ADR-0064 A5.6 names now carries the D-278 disclosure, plus the Arabic summaries the finding asked for. (1) known-limitations.md section 6 has a new row 'ADR-0064 Amendment 5 (D-278)'. (2) release-notes.md has a new English section 'Known limitations disclosed in this release' and an Arabic section with the provisional marker. Both are generated from tools/release/release-notes-disclosures.json and link to known-limitations.md#adr-residuals (the anchor exists at l.154). (3) deployment.md's drill paragraph, and a new paragraph on residuals 3 and 4. (4) deployment.ar-summary.md and known-limitations.ar-summary.md item 7. (5) The README index row. Each surface states the three A5.6 points: the rule explains a scheduled execution only as A5.2 allows, and lists it in the report (schedule-explained-d9.json); a handler that writes business rows in the window still makes D9 FAIL, and that is not a data defect; the recovery is to re-run, never to pause or reschedule. I checked the content against A5.2, using S2/S3 (no initiating user, run_as service, schedule trigger), S5 (one enabled job_schedule row) and S6/S7 (the slot by the row's cron and timezone, in (W0-60 s, W1]). I also checked it against A5.7 residuals 1-4 and against the unchanged drill code (schedule-explained.mjs l.259-290: enabled filter, the run_as/initiating-user check, the window bounds; a READ ONLY transaction; no write to job_schedule; transfer-drill.sh l.656-707 writes schedule-explained-d9.json and the recheck, scheduleExplained and scheduleWindow fields). It is accurate and consistent in English and Arabic. Reproducible: release-notes --check is up to date, known-limitations --check PASS, and check-handover PASS in default and strict mode. The new Arabic release-notes heading raised no H.3 warning (the 8 warnings are the pre-existing ones). Release-tool tests: 468 of 471 passed. The 1 failure, T-A5, was environmental (read-only default pnpm store) and passed 2/2 on a re-run with a writable store copy. The 2 skips, T-A11 and T-A3, were also environmental; T-A11 was re-run and passed. The new DO-D10 tests pin the entry, so removing it fails a test. My 22-case hostile-input probe of parseDisclosures was refused every time. Observation, not a defect: the Arabic summaries mention the pg-boss defaults but not the upgrade re-verification (A5.7 residual 4). A5.6 does not require it, and the English deployment.md and known-limitations.md carry it.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/code-security/round-7/12-drill-claims.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-7/20-scanners-handover.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-7/11-disclosure-probe.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-7/23-release-tool-tests.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-7/23b-build-from-archive-rerun.log",
+        "docs/handover/known-limitations.md",
+        "docs/handover/release-notes.md",
+        "docs/handover/deployment.md",
+        "docs/handover/deployment.ar-summary.md",
+        "docs/handover/known-limitations.ar-summary.md",
+        "tools/release/release-notes-disclosures.json"
+      ]
+    },
+    {
+      "finding_id": "F-DG7-923",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified by a non-author (code-security-reviewer, session 43e1182d) on candidate sha256:0d71d4456adaac949e2c9af4c975f4b9976a166872195f496d5aa75fe8ed2272 (source 7579382c5). This is the same gap as F-DG7-942, and the evidence is the same. The D-278 rule and its A5.7 residuals are now disclosed in known-limitations.md (section 6 row), the generated release notes (English and provisional Arabic sections, reproducible with --check), deployment.md, both Arabic summaries and the handover README. Each surface states the three A5.6 points accurately against ADR-0064 A5.2/A5.7 and the unchanged drill code. check-handover (default and strict) and known-limitations --check PASS.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/code-security/round-7/12-drill-claims.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-7/20-scanners-handover.log",
+        "docs/handover/known-limitations.md",
+        "docs/handover/release-notes.md",
+        "docs/handover/known-limitations.ar-summary.md"
+      ]
+    },
+    {
+      "finding_id": "F-DG7-972",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified by a non-author (code-security-reviewer, session 43e1182d) on candidate sha256:0d71d4456adaac949e2c9af4c975f4b9976a166872195f496d5aa75fe8ed2272 (source 7579382c5). This is the same gap as F-DG7-942, and the evidence is the same. known-limitations.md and the release notes now carry the D-278 rule, the handler-writes FAIL (not a data defect), the re-run recovery, and the A5.7 residuals 3 (engine ticks not covered) and 4 (pg-boss 11.0.0 timing defaults). The Arabic summaries carry the three A5.6 statements and residual 3. The generated texts are current (release-notes --check, known-limitations --check, check-handover PASS).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/code-security/round-7/20-scanners-handover.log",
+        "docs/handover/known-limitations.md",
+        "docs/handover/release-notes.md",
+        "docs/handover/deployment.ar-summary.md"
+      ]
+    }
+  ]
+}
