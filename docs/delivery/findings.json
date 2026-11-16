@@ -15025,7 +15025,7 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG7/round-2/domain-reviewer.json",
       "owner": "transformation-analyst",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-15T14:59:00Z",
@@ -15036,10 +15036,40 @@
           "at": "2026-11-15T22:33:14Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at ced8d9924918435c44045899d78196c2e17d7807"
+        },
+        {
+          "at": "2026-11-15T23:15:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 3: PASS"
+        },
+        {
+          "at": "2026-11-15T23:45:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 3: PASS"
+        },
+        {
+          "at": "2026-11-16T01:40:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 3: PASS"
         }
       ],
       "fix_revision": "ced8d9924918435c44045899d78196c2e17d7807",
-      "fix_summary": "Release notes regenerated from the current register (prefreeze-r3 release-notes --check exit 0)."
+      "fix_summary": "Release notes regenerated from the current register (prefreeze-r3 release-notes --check exit 0).",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG7-T-DG7-REV-QA-R3-qa-verifier-20261115T223443Z-4c79dba1",
+          "session_id": "4c79dba1-b7f7-4e94-9c7c-823c8271051c"
+        },
+        "at": "2026-11-16T01:40:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG7/qa/round-3/15-f961-release-notes.log",
+          "docs/delivery/test-evidence/DG7/qa/round-3/07-release-tools.log"
+        ],
+        "note": "Verified on candidate sha256:60dd90b6c5a7af3b502f02be68e6b601fd11e90fcbc0a48166cbc389453a80e9 (clone at source commit 8323dac, 3154 files recomputed). docs/handover/release-notes.md cites the register SHA-256 cfa6d37876c62d4a6799e6550d7d7c80775380ffbcc59a94de3be0af701d6fb9 with 412 rows, which is the SHA-256 of the shipped docs/delivery/requirements.csv. The status table reads IMPLEMENTED 412 and SPECIFIED 0, and the notes list the 23 completes-after-gate rows. release-notes.mjs --check exits 0. Revert-to-fail: (1) with the round-2 release-notes.md (f22c97b5) put back, --check exits 1 ('out of date'); (2) with one register byte changed and the notes unchanged, --check exits 1. Both were restored, and the candidate recomputed to 60dd90b6. The pre-freeze log ran --check straight after --write, so it proves nothing on its own. My --check on the frozen bytes is the independent evidence."
+      }
     },
     {
       "id": "F-DG7-935",
@@ -15061,7 +15091,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG7/round-2/code-security-reviewer.json",
       "owner": "transformation-analyst",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-15T15:45:00Z",
@@ -15072,10 +15102,43 @@
           "at": "2026-11-15T22:33:14Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at ced8d9924918435c44045899d78196c2e17d7807"
+        },
+        {
+          "at": "2026-11-15T23:15:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 3: PASS"
+        },
+        {
+          "at": "2026-11-15T23:45:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 3: PASS"
+        },
+        {
+          "at": "2026-11-16T01:40:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 3: PASS"
         }
       ],
       "fix_revision": "ced8d9924918435c44045899d78196c2e17d7807",
-      "fix_summary": "AN-P7F: the 18 SPECIFIED rows are covered by the Q19 extension (D-274); register 412/412 IMPLEMENTED, validate --register DG7 PASS."
+      "fix_summary": "AN-P7F: the 18 SPECIFIED rows are covered by the Q19 extension (D-274); register 412/412 IMPLEMENTED, validate --register DG7 PASS.",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG7-T-DG7-REV-QA-R3-qa-verifier-20261115T223443Z-4c79dba1",
+          "session_id": "4c79dba1-b7f7-4e94-9c7c-823c8271051c"
+        },
+        "at": "2026-11-16T01:40:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG7/qa/round-3/16-f935-register-diff.log",
+          "docs/delivery/test-evidence/DG7/qa/round-3/19-dg7-rows.txt",
+          "docs/delivery/test-evidence/DG7/qa/round-3/04-validate-register-DG7.log",
+          "docs/delivery/test-evidence/DG7/qa/round-3/09-a27-k11-redrill.log",
+          "docs/delivery/test-evidence/DG7/qa/round-3/13-protocol-audit-all.json"
+        ],
+        "note": "Verified on candidate 60dd90b6. The register has 412/412 IMPLEMENTED, and validate.mjs --register DG7 passes (exit 0). The diff f22c97b5..8323dac changes exactly the 18 rows named in D-274, and only their status, evidence and notes. Every earlier note is kept as a prefix, and each row ends with a completes-after-gate: marker. All evidence paths of the 54 DG7 rows exist at 8323dac. I judged each of the 23 Q19 rows (18 plus the 5 of D-243) literally. Each marker names a clause that only the gate, audit or seal can produce: gate records, the DG7 reviews and audit, the pipeline after approval, verify-seal, the final report, the progress.md gate update, or the auditor's decisions on the D-270 hits and the A27 K11 partial. None of these clauses is met yet, and the notes say so ('Disclosed deviation, not met'); none presents it as met. The parts that can be checked before the gate I checked myself: protocol audit C1, C4, C6, C7 and C9 PASS for DG7; a K11 re-drill against the candidate's progress.md (PASS); and the release notes listing the 23 later clauses. I accept the Q19 extension as a faithful disclosure for the 18 rows, with one exception. REQ-DLV-012's disclosure undercounts the DG7 C3 hits: it says six, and there are seven. That is F-DG7-960, kept OPEN separately. The mechanism F-DG7-935 is about (SPECIFIED rows blocking validateGate) is repaired."
+      }
     },
     {
       "id": "F-DG7-960",
@@ -15095,7 +15158,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG7/round-2/qa-verifier.json",
       "owner": "devops-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "OPEN",
       "history": [
         {
           "at": "2026-11-15T16:45:00Z",
@@ -15106,10 +15169,43 @@
           "at": "2026-11-15T22:33:14Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at ced8d9924918435c44045899d78196c2e17d7807"
+        },
+        {
+          "at": "2026-11-15T23:15:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 3: PASS"
+        },
+        {
+          "at": "2026-11-15T23:45:00Z",
+          "status": "OPEN",
+          "note": "verified by code-security-reviewer round 3: FAIL"
+        },
+        {
+          "at": "2026-11-16T01:40:00Z",
+          "status": "OPEN",
+          "note": "verified by qa-verifier round 3: FAIL"
         }
       ],
       "fix_revision": "ced8d9924918435c44045899d78196c2e17d7807",
-      "fix_summary": "Known limitations regenerated from protocol-audit-r3; disclosed C3 hits match the audit (check-handover exit 0)."
+      "fix_summary": "Known limitations regenerated from protocol-audit-r3; disclosed C3 hits match the audit (check-handover exit 0).",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG7-T-DG7-REV-QA-R3-qa-verifier-20261115T223443Z-4c79dba1",
+          "session_id": "4c79dba1-b7f7-4e94-9c7c-823c8271051c"
+        },
+        "at": "2026-11-16T01:40:00Z",
+        "result": "FAIL",
+        "evidence": [
+          "docs/delivery/test-evidence/DG7/qa/round-3/13-protocol-audit.log",
+          "docs/delivery/test-evidence/DG7/qa/round-3/13-protocol-audit-all.json",
+          "docs/delivery/test-evidence/DG7/qa/round-3/14-f960-probes.log",
+          "docs/delivery/test-evidence/DG7/qa/round-3/15-f961-release-notes.log",
+          "docs/delivery/test-evidence/DG7/qa/round-3/19-dg7-rows.txt"
+        ],
+        "note": "NOT closed on candidate 60dd90b6. The finding's own expected result is that the release's disclosure of DG7's protocol hits (known limitations, release notes and the REQ-DLV-012 register notes) covers every handback in the frozen candidate. Part of this is repaired. The FE-C3 handback is now disclosed in the register and the release notes. known-limitations.md is regenerated from protocol-audit-r3.json and shows 'C3 handback-sections | REQ-DLV-012 | DG7 | HIT | 7'. known-limitations --check and check-handover pass, and fail when the round-2 file or a hand-edited count is put back. But my own protocol-audit.mjs --all run on this candidate (281 hits, the same as the shipped r3 report) finds SEVEN DG7 C3 hits. The seventh is docs/delivery/handbacks/DG7/T-DG7-DO-D8-devops-engineer.md, a round-2 repair task (exit 1, continued by DO-D8B), which has no merge-instructions section. Its sections are 1. Files changed, 2. Behaviour, 3. Checks run, 4. Known gaps and 5. Open questions. The REQ-DLV-012 register notes (AN-P7F) and the generated release notes still read 'the D-270 C3 hits (six, F-DG7-960 included)'. They name only the five D-270 handbacks plus FE-C3. The DO-D8 hit is named nowhere, and D-270 and D-274 do not cover it. So the handover contradicts itself: known-limitations says 7, the release notes and the register say six. The release-auditor would decide on an undercounted set (REQ-S21-003's later clause: every disclosed deviation listed in the release notes). This is the same defect class as round 2, now with a new handback. Repair: disclose the DO-D8 hit in the REQ-DLV-012 notes and regenerate the release notes, or have the user's D-270/D-274 disclosure decision cover it explicitly. No behavioural effect."
+      }
     },
     {
       "id": "F-DG7-961",
@@ -15128,7 +15224,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG7/round-2/qa-verifier.json",
       "owner": "devops-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-15T16:45:00Z",
@@ -15139,10 +15235,40 @@
           "at": "2026-11-15T22:33:14Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at ced8d9924918435c44045899d78196c2e17d7807"
+        },
+        {
+          "at": "2026-11-15T23:15:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 3: PASS"
+        },
+        {
+          "at": "2026-11-15T23:45:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 3: PASS"
+        },
+        {
+          "at": "2026-11-16T01:40:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 3: PASS"
         }
       ],
       "fix_revision": "ced8d9924918435c44045899d78196c2e17d7807",
-      "fix_summary": "Release notes regenerated and checked against the register (prefreeze-r3)."
+      "fix_summary": "Release notes regenerated and checked against the register (prefreeze-r3).",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG7-T-DG7-REV-QA-R3-qa-verifier-20261115T223443Z-4c79dba1",
+          "session_id": "4c79dba1-b7f7-4e94-9c7c-823c8271051c"
+        },
+        "at": "2026-11-16T01:40:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG7/qa/round-3/15-f961-release-notes.log",
+          "docs/delivery/test-evidence/DG7/qa/round-3/06-register-snapshot.log"
+        ],
+        "note": "Same defect as F-DG7-915 (release notes stale after the last register change), verified with the same evidence on candidate 60dd90b6. release-notes --check exits 0 on the frozen bytes. The cited register SHA-256 equals the shipped CSV's (cfa6d378...6fb9) and the packaged register snapshot's (dist/release/register-snapshot.json sourceSha256, 412 rows, 0 field mismatches). Two revert-to-fail probes exit 1: the round-2 notes, and a one-byte register change. The no-change register commits after AN-P7F (8323dac changes only decisions.md, findings.json and progress.md) do not feed the generator."
+      }
     },
     {
       "id": "F-DG7-962",
@@ -15164,7 +15290,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG7/round-2/qa-verifier.json",
       "owner": "backend-workflow-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-15T16:45:00Z",
@@ -15175,10 +15301,43 @@
           "at": "2026-11-15T22:33:14Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at ced8d9924918435c44045899d78196c2e17d7807"
+        },
+        {
+          "at": "2026-11-15T23:15:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 3: PASS"
+        },
+        {
+          "at": "2026-11-15T23:45:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 3: PASS"
+        },
+        {
+          "at": "2026-11-16T01:40:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 3: PASS"
         }
       ],
       "fix_revision": "ced8d9924918435c44045899d78196c2e17d7807",
-      "fix_summary": "BE-R7: integration order dependence removed; full integration suite exit 0 (prefreeze-r3)."
+      "fix_summary": "BE-R7: integration order dependence removed; full integration suite exit 0 (prefreeze-r3).",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG7-T-DG7-REV-QA-R3-qa-verifier-20261115T223443Z-4c79dba1",
+          "session_id": "4c79dba1-b7f7-4e94-9c7c-823c8271051c"
+        },
+        "at": "2026-11-16T01:40:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG7/qa/round-3/f962/order-probe.sh",
+          "docs/delivery/test-evidence/DG7/qa/round-3/f962/order-probe.log",
+          "docs/delivery/test-evidence/DG7/qa/round-3/f962/order-probe-attempt1-symlinked-node_modules.log",
+          "docs/delivery/test-evidence/DG7/qa/round-3/f962/contract-alone-attempt1-symlinked-node_modules.log",
+          "docs/delivery/test-evidence/DG7/qa/round-3/10-integration.log"
+        ],
+        "note": "Verified on candidate 60dd90b6 with my own order probe: the round-2 sequencer config, a sparse clone at 8323dac and file parallelism off. Guard file first, then contract and response-validation: 3 files, 252/252, exit 0. Guard file last: 252/252, exit 0. Revert-to-fail: with p7-transfer-guards.test.ts put back to f22c97b5 and run first, 9 tests fail, all from 422 migration.export_in_progress, exit 1; the file was restored and the candidate recomputed. The full integration project on this candidate passes: 474 files, 4692 passed, 8 skipped, 1 todo, exit 0. Attempt 1 of the probe failed 4 tests in both orders with 'RenderError: synthetic renderer validation error'. Its cause was my own environment, not the candidate: node_modules was symlinked to another clone, so @mth/reporting loaded from two paths and the class identity check (instanceof) failed. With real copies the failures are gone. The attempt-1 logs are kept."
+      }
     },
     {
       "id": "F-DG7-963",
@@ -15197,7 +15356,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG7/round-2/qa-verifier.json",
       "owner": "devops-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-15T16:45:00Z",
@@ -15208,10 +15367,131 @@
           "at": "2026-11-15T22:33:14Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at ced8d9924918435c44045899d78196c2e17d7807"
+        },
+        {
+          "at": "2026-11-15T23:15:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 3: PASS"
+        },
+        {
+          "at": "2026-11-15T23:45:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 3: PASS"
+        },
+        {
+          "at": "2026-11-16T01:40:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 3: PASS"
         }
       ],
       "fix_revision": "ced8d9924918435c44045899d78196c2e17d7807",
-      "fix_summary": "DO-D8/DO-D8B: transfer-drill cleanup fixed; transfer-drill tests exit 0 (prefreeze-r3)."
+      "fix_summary": "DO-D8/DO-D8B: transfer-drill cleanup fixed; transfer-drill tests exit 0 (prefreeze-r3).",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG7-T-DG7-REV-QA-R3-qa-verifier-20261115T223443Z-4c79dba1",
+          "session_id": "4c79dba1-b7f7-4e94-9c7c-823c8271051c"
+        },
+        "at": "2026-11-16T01:40:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG7/qa/round-3/f963/f963-probes.sh",
+          "docs/delivery/test-evidence/DG7/qa/round-3/f963/f963-probes.log",
+          "docs/delivery/test-evidence/DG7/qa/round-3/f963/p0-full.tap",
+          "docs/delivery/test-evidence/DG7/qa/round-3/f963/p1-reverted-drill.tap",
+          "docs/delivery/test-evidence/DG7/qa/round-3/f963/p2-remove-returns-1.tap",
+          "docs/delivery/test-evidence/DG7/qa/round-3/a18/a18-run1.log",
+          "docs/delivery/test-evidence/DG7/qa/round-3/a18/qa-r3-a18-driver.sh",
+          "docs/delivery/test-evidence/DG7/qa/round-3/a18/out/forced-cleanup-failure/drill.log"
+        ],
+        "note": "Verified on candidate 60dd90b6. transfer-drill.test.mjs under a disposable PostgreSQL: 55/55, exit 0. That includes the 8 DO-D8/DO-D8B cases: bounded INT/QUIT/KILL shutdown, a real-PostgreSQL fast shutdown, postmaster.pid fallback, and the WARNING-not-exit cleanup. Revert-to-fail: transfer-drill.sh put back to f22c97b5 fails 2 of 8 (static wiring, and the end-to-end WARNING), exit 1; a td_remove_work that returns 1 fails 2 of 8, exit 1. Both were restored. Adversarial end-to-end case (the DO-D8 handback's own known gap): a real A18 drill on an archive built from the frozen commit, with an rm on PATH that refuses only the exact work directory. Result: 'transfer-drill: PASS in 273.752 s ... restart verified', exit 0, and exactly one WARNING line on stderr and in drill.log ('the drill result (exit 0) is unchanged'). The work tree was left for removal by hand. The normal A18 harness run passes 10/10 with D9 restart verified, now with a real target PostgreSQL stop (td_stop_pg) before the restart."
+      }
+    },
+    {
+      "id": "F-DG7-920",
+      "stage_id": "DG7",
+      "requirement": "REQ-DLV-012",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The frozen register and release notes disclose 'six' DG7 C3 handback hits, but the frozen candidate has seven: T-DG7-DO-D8-devops-engineer.md (a round-2 repair handback, committed after D-270) has no merge-instructions section and is named nowhere. known-limitations.md says 7, so two handover documents disagree",
+      "reproduction": "Disposable clone at source commit 8323dacae51a98c8f555fb95d8e1dd0a1e747ea8 (candidate sha256:60dd90b6..., verified, 3154 files). (1) node tools/release/protocol-audit.mjs --stage DG7 --root <clone> --json <file>: C3 handback-sections HIT 7 (exit 1 by design, the tool reports hits): AN-P7B, ARCH-R2, ARCH-R5, BE-R5, DO-A2 (the five D-270 hits), FE-C3 (F-DG7-960) and T-DG7-DO-D8-devops-engineer.md (missing merge_instructions). The orchestrator's own protocol-audit-r3.json (head 0326ee9) lists the same seven. (2) The DO-D8 handback headings are '1. Files changed', '2. Behaviour per requirement', '3. Checks run', '4. Known gaps', '5. Open questions': there is no merge-instructions section. (3) docs/handover/known-limitations.md l.62: '| C3 handback-sections | REQ-DLV-012 | DG7 | HIT | 7 |'. (4) docs/delivery/requirements.csv REQ-DLV-012: the pass-6 notes say 'DG7 C3 6 hits ... six DG7 implementation handbacks each lack one of the five sections' and name only the five D-270 handbacks plus FE-C3. Its completes-after-gate marker is 'the release-auditor's decision on the D-270 C3 hits (six, F-DG7-960 included)'. docs/handover/release-notes.md l.35 quotes that marker. Cause: AN-P7F (base 7c819f0, after DO-D8's commit 6c606e5b3) counted from the round-2 QA audit report (on ca38b65e), not from a run on its own base.",
+      "expected": "D-270 and D-274: the release discloses every DG7 protocol hit in the register, the release notes and known limitations, and the release-auditor decides each one. Every disclosure surface states the same count and names every affected handback on the frozen candidate (the F-DG7-960 lesson: one hit was missed then too).",
+      "actual": "The register and release notes say 'six' and do not name the DO-D8 handback. known-limitations says 7 but names no handbacks. The DO-D8 hit is therefore not disclosed by name anywhere in the handover, and the auditor's D-270 decision, as worded in the marker, covers six. No product behaviour is affected; the C3 hit itself is a write-once process fact. Repair is disclosure only: add the DO-D8 handback to REQ-DLV-012's notes and marker (seven), then regenerate the release notes.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/domain/round-3/scope-and-c3.log",
+        "docs/delivery/test-evidence/DG7/domain/round-3/protocol-audit-DG7-candidate.json",
+        "docs/delivery/test-evidence/DG7/domain/round-3/release-tool-checks.log"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG7/round-3/domain-reviewer.json",
+      "owner": "transformation-analyst",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-15T23:10:00Z",
+          "status": "OPEN",
+          "note": "Raised by domain-reviewer in DG7 round 3 on candidate sha256:60dd90b6c5a7af3b502f02be68e6b601fd11e90fcbc0a48166cbc389453a80e9. A recurrence of the F-DG7-960 class with a new handback. Low: disclosure wording only, no behavioural effect."
+        }
+      ]
+    },
+    {
+      "id": "F-DG7-921",
+      "stage_id": "DG7",
+      "requirement": "REQ-S19-017",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "The register states that A18's 'records, jobs and approvals intact after a full restart' was shown by the DO-D7 and DO-E drills. The delivery's own DO-D8 and DO-D8B handbacks conclude that those drills probably never restarted PostgreSQL. The register cites only those pre-fix runs and not the post-fix run that shows a real restart",
+      "reproduction": "Candidate sha256:60dd90b6... (source 8323dac). (1) docs/delivery/requirements.csv REQ-S19-017 (acceptance: 'records, jobs and approvals intact after a full restart'). Its notes read '... (DO-D7, D-264; rerun by DO-E, D-265 ...) ... D9 records, jobs and approvals intact after a full restart'. Its evidence column cites T-DG7-DO-E-evidence/t-b11-run.log, T-DG7-DO-D7-evidence/t-b11-run.log and T-DG7-DO-D7-evidence/a18-run.log. REQ-S20-018 cites DO-D7 a18-run.log, DO-E t-b11-run.log and QA-C a18-run3. None of the three rows (S19-017, S20-018, S01-006) mentions DO-D8 or DO-D8B. (2) docs/delivery/handbacks/DG7/T-DG7-DO-D8-devops-engineer.md l.27 and l.101 say, from a measured mechanism: stop_pid's SIGTERM reached only pg_start's launcher subshell, so 'the D9 \"restart verified\" claim in earlier runs (DO-D7, QA round 2 A18) probably did not restart PostgreSQL itself ... Only the API and worker restarts were real'. Open question 1 asks the orchestrator to record this against the earlier A18/T-B11 evidence. T-DG7-DO-D8B §4 agrees. (3) The drill code is unchanged between DO-D8B (7c819f08c) and the candidate (git diff empty). DO-D8B's T-B11 run (T-DG7-DO-D8B-evidence/t-b11-run.log, transfer/drill.log l.735) is the first run with a real PostgreSQL stop before the D9 restart, and it PASSes. (4) AN-P7F (base 7c819f0, after both handbacks) and D-275 left the three rows unchanged.",
+      "expected": "REQ-S02-005 / never report a check as passed that did not run: the register's evidence for the A18 'after a full restart' clause is a run that actually restarted PostgreSQL (DO-D8 or DO-D8B T-B11, or a QA round-3 A18 on this candidate). The notes disclose that the earlier D9 runs restarted only the API and worker, as the delivery's own handbacks found.",
+      "actual": "The register presents a full-restart persistence check as demonstrated by runs that the delivery itself now believes did not restart the database, and omits the run that did. The acceptance criterion itself is met on the candidate: DO-D8B's drill with the candidate's drill code passed D9 after a real restart. So no completion state is wrong. The defect is the register's evidence statement for a mandatory A18 clause, which a handover recipient would follow. Repair: the analyst updates the evidence and notes of REQ-S19-017, REQ-S20-018 (and REQ-S01-006 if it relies on D9) to cite the post-DO-D8 run and disclose the earlier runs' restart scope, then regenerates the release notes.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/domain/round-3/f921-restart-evidence.log",
+        "docs/delivery/handbacks/DG7/T-DG7-DO-D8-devops-engineer.md",
+        "docs/delivery/handbacks/DG7/T-DG7-DO-D8B-devops-engineer.md",
+        "docs/delivery/handbacks/DG7/T-DG7-DO-D8B-evidence/t-b11-run.log"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG7/round-3/domain-reviewer.json",
+      "owner": "transformation-analyst",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-15T23:10:00Z",
+          "status": "OPEN",
+          "note": "Raised by domain-reviewer in DG7 round 3 on candidate sha256:60dd90b6c5a7af3b502f02be68e6b601fd11e90fcbc0a48166cbc389453a80e9. Medium under D-192: a register evidence claim for a mandatory A18 clause rests on runs that the delivery's own handbacks say did not restart PostgreSQL; the post-fix run exists and is not cited."
+        }
+      ]
+    },
+    {
+      "id": "F-DG7-940",
+      "stage_id": "DG7",
+      "requirement": "REQ-S19-016",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "No shipped test covers the organization-scope rule of the installation-wide migration export: with the scoped authorize() removed from requireExportRight, every shipped test still passes, so a business-unit ADM_TECH could export the whole installation and no test would catch it",
+      "reproduction": "Candidate sha256:60dd90b6c5a7af3b502f02be68e6b601fd11e90fcbc0a48166cbc389453a80e9 (source 8323dacae51a98c8f555fb95d8e1dd0a1e747ea8). I used a disposable --shared clone under $TMPDIR, Node 24.21.0, and a disposable PostgreSQL 16 from tests/qa/support/with-pg.sh (port 32462). Script: docs/delivery/test-evidence/DG7/code-security/round-3/scripts/mutants.sh. Log: 32-authz-mutants.log.\n\nThe code. apps/api/src/modules/transfer/export/service.ts l.138-147 (requireExportRight) says 'A grant at a narrower scope never admits an installation-wide export'. It loops over organizationsWith(principal, MIGRATION_EXPORT), which returns every organization where the principal holds migration.export at any scope (access/policy.ts l.227-230). For each one it admits only if authorize(..., { type: 'organization', id }) is allowed. All five export routes (export/routes.ts l.92-155: list, create, get, manifest, attachment manifest) gate on this function.\n\nNothing in the data model stops a narrower grant. scoped_assignment allows scope_type business_unit for any role (0001_identity_access.sql l.238), and there is no role/scope constraint for ADM_TECH.\n\n(R0) Unmodified tree, 3 files, 17/17 pass, exit 0:\n- my reproduction repro/zz-cs-r3-transfer-scope.test.ts, copied into the clone and removed afterwards. It gives ADM_TECH at business_unit scope 403 on GET/POST /admin/migration-exports and GET /admin/migration-imports and /admin/identity-rebinds, writes no migration_export row, and has an organization-scope control that gets 200;\n- the shipped export.test.ts;\n- the shipped import-routes.test.ts.\nSo the product is correct today.\n\n(M4) Replace l.144-145 'if ((await authorize(db, principal, MIGRATION_EXPORT, { type: \"organization\", id: organizationId })).allowed) return organizationId;' with 'return organizationId;'. The shipped apps/api/test/integration/transfer/export.test.ts still passes all 10 of its tests. Only my reproduction fails: 'GET /api/v1/admin/migration-exports {\"items\":[],\"nextCursor\":null}: expected 200 to be 403' (2 files, 1 failed / 11 passed, exit 1). With M4, a business-unit ADM_TECH lists exports with 200 and can request (POST) and download the installation-wide manifest.\n\nThe shipped tests do not catch it:\n- export.test.ts l.177-194 tests only roles that lack migration.export entirely (every role but ADM_TECH, plus a user without grants, all granted at organization scope, l.103-110);\n- the contract exercise p7-exercises-be-c.ts tests only AUD (l.114, 131, 155, 160);\n- no other test calls the migration-export routes (grep over apps/api/test, tests/).\n\n(M5) The same mutation in the sibling import/service.ts requireImportReadRight IS killed by the shipped import-routes.test.ts: 'AUD @ business unit GET /api/v1/admin/migration-imports: expected 200 to be 403'. So the import side has the narrower-grant test and the export side does not.\n\nSources were restored byte-equal (sha256 compared in the log).",
+      "expected": "CLAUDE.md and the assignment: 'Every mutation needs a server-side authorization check, validation, optimistic concurrency and an audit event, each covered by tests.' createMigrationExport is a mutation, and its authorization rule is the organization-scope requirement that requireExportRight documents (ADR-0064 §7; T-C6). It reads the whole installation, which is the most sensitive data operation of P7. A shipped test should fail when that scope rule is lost, as import-routes.test.ts does for migration_import.read. Concretely: ADM_TECH granted at business_unit (or transformation) scope gets 403 on all five migration-export operations, and no migration_export row or audit event is written.",
+      "actual": "The scope dimension of the export authorization has no shipped test. Deleting the scoped authorize() call (mutant M4) leaves every shipped test green, so a regression would silently let a business-unit-scoped ADM_TECH request and download an installation-wide migration export. The current code is correct: my reproduction R0 passes on the unmodified tree. This is a coverage defect of a security control, not an exploitable hole on this candidate, so it is not a mandatory violation. It is Medium because the control guards a whole-installation data export, the convention requires the test, and the sibling import control has one. The fix is bounded: add a narrower-scope ADM_TECH case to export.test.ts's 403 loop.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/code-security/round-3/32-authz-mutants.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-3/scripts/mutants.sh",
+        "docs/delivery/test-evidence/DG7/code-security/round-3/repro/zz-cs-r3-transfer-scope.test.ts",
+        "apps/api/src/modules/transfer/export/service.ts",
+        "apps/api/test/integration/transfer/export.test.ts",
+        "apps/api/test/integration/transfer/import-routes.test.ts"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG7/round-3/code-security-reviewer.json",
+      "owner": "backend-workflow-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-15T23:20:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG7 round 3 (candidate 60dd90b6). Mutant M4 on requireExportRight survives the shipped tests. My reproduction kills it. The sibling M5 on requireImportReadRight is killed by import-routes.test.ts."
+        }
+      ]
     }
   ]
 }
