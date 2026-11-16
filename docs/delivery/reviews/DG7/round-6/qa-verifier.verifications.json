@@ -1,0 +1,30 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG7-971",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified adversarially on candidate sha256:0b48162701518d1fb47789282112f2d5528429e77d6f108d3f8696570f06bc95 (source 830d7edf, 3157 files; recomputed in the repository tree at the start and end, and in my clone). The fix ac650b8b0 is an ancestor of 830d7edf. What changed since round 5: deploy/scripts/drill/schedule-explained.mjs (new), transfer-drill.sh (W0 in D7, W1 and the read-only second stage in D9, the report fields), the A18 harness's own re-check, the tests and fixture, ADR-0064 Amendment 5, D-278/D-279, the register notes of 3 rows and the handover texts. No product, migration or recheck.ts/reconcile.ts code changed. (1) Real drills, all PASS on one candidate archive each: 8 drill runs with D9 PASS. Seven were 'matched', including run1 (window 13:00:47.98-13:01:34.49Z; 13:00 sat in the (W0-60 s, W0] band but no execution was created) and run3/a (13:59:16.58-14:00:05.63Z; 14:00 inside but no execution before the recheck). One crossed a quarter hour with a real starter execution: run3/b, window 13:59:45.715-14:00:33.441Z. The recheck exited 4 with exactly the F-DG7-971 pattern (17 automation_execution and 17 automation_action_result added, one of each unexplained). The stage explained execution 01a1e4a8-d634-7143-ac97-54c6dacf9bf4: key approval.escalation_scan:2026-11-16T14:00, slot 14:00:00Z, '*/15 * * * *' Asia/Riyadh, created 14:00:32.561Z, 1 action result, 3 audit events. Its worker job outcome was selected 0 and escalated 0. The report has recheck schedule_explained and lists the execution; reconcile-d9.json keeps the real exit 4; job-check PASS (records, jobs and approvals intact after the restart); D0-D11 PASS; exit 0. The A18 harness (QA_A18_REQUIRE=1) passed 10/10 ('matched'). The harness's own S2-S8 re-check, extracted verbatim from the frozen file, accepts the live run3/b entry and rejects 8 tampered copies. (2) Trying to make the rule explain what it must not. On the kept, disposable run3/b target, using the shipped CLI unchanged, one committed mutation at a time: an initiating user; an event trigger with a schedule-format key; the schedule row disabled; the key on a real slot 15 min before the window; a key two minutes after the slot; created_at before W0; a second execution for the same slot that the recheck did not list; the execution's worker event re-attributed to a user; and the execution id in the package (a changed row). Each gives exit 1 with the exact A5.4 reason. An extra unrelated table (approval_request changed) and an 'unexplained changed' key each make Gate 0 not applicable. Restored, the target passes again, and the job_schedule and pgboss.schedule digests are unchanged throughout (the stage is read only). Pure-function probes: 45 cases incl. exact boundaries (slot = W1 inside, W1 + 1 ms outside, W0 - 60 s outside, W0 - 59.999 s inside, daily cron in the row's zone vs UTC, 20 keys truncated, 19 keys with 18 unknown), all as expected. Mutation check: 12 single-condition mutants of the rule (S1-S9, uniqueness, Gate 0 table and key-line checks, S6 widened to 2 min, S7 widened to 120 s) are all killed by DO-D9's own T-S1..T-S8. The deploy-script suite passes 204/204, including T-S9 on PostgreSQL. (3) Soundness: the rule is exactly D-278. Mode 2 itself is unchanged and stays as strict as before; only the drill's second stage reads it, and it reads only automation rows. The documented recovery (re-run the drill, never pause a schedule) is correct. The remaining residuals (a handler's own business writes, engine ticks, pg-boss timing) fail strict, never loose. Disclosure: deployment.md and the register notes carry the rule. known-limitations.md and the release notes do not, against ADR-0064 A5.6. That is raised separately as F-DG7-972 (Low) and does not reopen F-DG7-971, whose expected result accepted the decision plus a drill change, or a disclosure with the recovery. Process note: my first A18 driver was orphaned by a pkill that hit its own shell, and it later removed a shared scratch path. Its outputs (a18/run1-a18.log parts 2-3, a18/a18-run.log, a18/p1-quarter, a18/p3-away, a18/probes) are BLOCKED or FAIL on missing or replaced inputs, as the drill and harness should be. They are not product results, and runs 2-4 use isolated paths.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-6/a18/run3/a18-run.log",
+        "docs/delivery/test-evidence/DG7/qa/round-6/a18/run3/b/transfer-drill-report.json",
+        "docs/delivery/test-evidence/DG7/qa/round-6/a18/run3/b/schedule-explained-d9.json",
+        "docs/delivery/test-evidence/DG7/qa/round-6/a18/run3/b/reconcile-d9.txt",
+        "docs/delivery/test-evidence/DG7/qa/round-6/a18/run3/b/job-check.json",
+        "docs/delivery/test-evidence/DG7/qa/round-6/a18/run2/a18-run.log",
+        "docs/delivery/test-evidence/DG7/qa/round-6/a18/run4/a18-run.log",
+        "docs/delivery/test-evidence/DG7/qa/round-6/a18/run1-a18.log",
+        "docs/delivery/test-evidence/DG7/qa/round-6/a18/kept-target-probes.sh",
+        "docs/delivery/test-evidence/DG7/qa/round-6/a18/qa-r6-a18-driver-3.sh",
+        "docs/delivery/test-evidence/DG7/qa/round-6/f971/probe-rule.mjs",
+        "docs/delivery/test-evidence/DG7/qa/round-6/f971/probe-rule.log",
+        "docs/delivery/test-evidence/DG7/qa/round-6/f971/mutants.mjs",
+        "docs/delivery/test-evidence/DG7/qa/round-6/f971/mutants.log",
+        "docs/delivery/test-evidence/DG7/qa/round-6/f971/harness-recheck.mjs",
+        "docs/delivery/test-evidence/DG7/qa/round-6/f971/harness-recheck.log",
+        "docs/delivery/test-evidence/DG7/qa/round-6/f971/disclosure-surfaces.log",
+        "docs/delivery/test-evidence/DG7/qa/round-6/08-deploy-scripts.log"
+      ]
+    }
+  ]
+}

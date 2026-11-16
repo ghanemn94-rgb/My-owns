@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG7-972",
+      "stage_id": "DG7",
+      "requirement": "REQ-S19-017",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The D-278 transfer-drill rule and its residuals are disclosed in deployment.md and the register notes, but not in known-limitations.md or the release notes, which ADR-0064 Amendment 5 A5.6 names as disclosure surfaces; the AN-P7H handback's question about this was left unanswered at the freeze",
+      "reproduction": "Repository objects at the frozen source 830d7edf (candidate sha256:0b48162701518d1fb47789282112f2d5528429e77d6f108d3f8696570f06bc95). (1) ADR-0064 Amendment 5 A5.6, 'AN (D-278)': 'the register notes of REQ-S19-017, REQ-S20-018 and REQ-S01-006, and the handover disclosure in known-limitations.md, the release notes and deployment.md's drill section. The disclosure must say: ...'. (2) git show 830d7edf:<file> | grep -c -i -E 'D-278|schedule-explained|schedule_explained|Amendment 5|escalation_scan|tick_hourly|re-run the drill' gives deployment.md 1, known-limitations.md 0, release-notes.md 0, deployment.ar-summary.md 0, known-limitations.ar-summary.md 0. The only ADR-0064 row of known-limitations.md lists migration scale, cross-release imports, queued jobs, the attachment manifest, secrets and held users, and nothing about the drill's schedule rule. (3) T-DG7-AN-P7H handback, open question 1: 'Please confirm that known-limitations.md, the release notes and the Arabic summaries will carry it'. D-279 and the round-6 pre-freeze regeneration (ac650b8b0) do not address it. Commands and output: docs/delivery/test-evidence/DG7/qa/round-6/f971/disclosure-surfaces.log.",
+      "expected": "ADR-0064 Amendment 5 A5.6 (amendments win): the handover disclosure of the D-278 rule is in known-limitations.md, the release notes and deployment.md's drill section. It says that a scheduled job running during the drill is explained only as A5.2 says and is listed in the report; that a scheduled handler which writes business rows in the window still makes D9 FAIL, which is not a data defect; and that the recovery is to re-run the drill, never to pause a schedule. Alternatively, a recorded decision that deployment.md alone is the intended surface.",
+      "actual": "deployment.md's drill paragraph carries all three A5.6 points in English. The register notes of the three rows carry them, plus A5.7 residuals 3 (engine ticks automation.tick_hourly and automation.tick_daily are not covered; open for the orchestrator) and 4 (S6 and S7 rest on pg-boss 11.0.0 timing). known-limitations.md, the release notes and both Arabic summaries mention none of it, so the known-limitations list and the release notes do not show that the A18 drill can still FAIL at D9 on a scheduled handler's own business writes, or that tick-keyed executions are not covered. No product behaviour is affected: the rule works as specified (QA-R6-11, QA-R6-12), and an operator who runs the drill from deployment.md gets the rule and the recovery. Low: a documentation drift from a binding ADR text with no behavioural effect. It does not block this verdict, and it may be fixed or accepted as an observation.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-6/f971/disclosure-surfaces.log",
+        "docs/architecture/adr/ADR-0064-p7-migration-manifest-export-import-reconciliation-identity-rebind.md",
+        "docs/handover/known-limitations.md",
+        "docs/handover/release-notes.md",
+        "docs/handover/deployment.md",
+        "docs/delivery/handbacks/DG7/T-DG7-AN-P7H-transformation-analyst.md"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG7/round-6/qa-verifier.json",
+      "owner": "transformation-analyst",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-16T15:25:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG7 round 6 on candidate sha256:0b48162701518d1fb47789282112f2d5528429e77d6f108d3f8696570f06bc95 while verifying F-DG7-971. The owner is transformation-analyst because ADR-0064 A5.6 assigns this disclosure to AN; the AN-P7H assignment forbade docs/handover/**, so the orchestrator may reassign it. Low and not mandatory: no behavioural effect. Not blocking."
+        }
+      ]
+    }
+  ]
+}
