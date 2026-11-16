@@ -1,0 +1,503 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG7",
+  "round": 7,
+  "candidate_id": "sha256:0d71d4456adaac949e2c9af4c975f4b9976a166872195f496d5aa75fe8ed2272",
+  "source_commit": "7579382c59e1791321d4856ac1cb2eb2cfb4edc7",
+  "reviewer_role": "qa-verifier",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG7-T-DG7-REV-QA-R7-qa-verifier-20261116T184007Z-67eca439",
+    "session_id": "67eca439-bf25-440d-8359-2150c9185d69"
+  },
+  "implementation_author": [
+    "solution-architect",
+    "backend-workflow-engineer",
+    "kpi-benefits-engineer",
+    "frontend-ux-engineer",
+    "transformation-analyst",
+    "devops-engineer",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "qa-verifier, session 67eca439-bf25-440d-8359-2150c9185d69, task T-DG7-REV-QA-R7. At the start I checked the assignment's sha256 (0d78f1d2ff93e3ae40224bb3c9195642729209b46bfb65d5ef8f8b3afc656958). In this run I wrote no product implementation, no test in the candidate, no register row, ADR, handover text, repair or delivery decision, and I changed no candidate file. My drivers and probes ran in disposable sparse shared clones of 7579382c under $TMPDIR, on disposable PostgreSQL clusters; the clones were removed at the end. Their scripts are kept as evidence outside the candidate. The implementer roles listed wrote the product, tools, guides and register, and the round-7 disclosure repair (AN-P7I text, DO-D10 handover texts and the release-notes generator change). The orchestrator decided D-280, froze the candidate and allow-listed the two history entries. I formed this verdict before reading any other reviewer's round-7 record, and I have not read them. Their run commits (dd1bdbf01 code-security, cf01e0486 domain) appeared during my run. I listed only their subjects, and they change no candidate file: the candidate id recomputes unchanged at the end. The round-6 qa-verifier files I read are my own role's earlier run."
+  },
+  "assignment": "docs/delivery/assignments/DG7/round-7/qa-verifier.md",
+  "requirements_checked": [
+    "REQ-DLV-005",
+    "REQ-DLV-008",
+    "REQ-DLV-009",
+    "REQ-DLV-010",
+    "REQ-DLV-011",
+    "REQ-DLV-012",
+    "REQ-DLV-014",
+    "REQ-DLV-018",
+    "REQ-DLV-021",
+    "REQ-DLV-024",
+    "REQ-DLV-027",
+    "REQ-DLV-028",
+    "REQ-DLV-030",
+    "REQ-DLV-031",
+    "REQ-DLV-039",
+    "REQ-DLV-040",
+    "REQ-DLV-041",
+    "REQ-S01-001",
+    "REQ-S01-006",
+    "REQ-S02-003",
+    "REQ-S02-005",
+    "REQ-S16-008",
+    "REQ-S16-009",
+    "REQ-S16-024",
+    "REQ-S16-031",
+    "REQ-S16-033",
+    "REQ-S17-004",
+    "REQ-S19-001",
+    "REQ-S19-002",
+    "REQ-S19-003",
+    "REQ-S19-005",
+    "REQ-S19-007",
+    "REQ-S19-008",
+    "REQ-S19-009",
+    "REQ-S19-010",
+    "REQ-S19-011",
+    "REQ-S19-012",
+    "REQ-S19-013",
+    "REQ-S19-014",
+    "REQ-S19-015",
+    "REQ-S19-016",
+    "REQ-S19-017",
+    "REQ-S19-018",
+    "REQ-S19-019",
+    "REQ-S20-018",
+    "REQ-S20-019",
+    "REQ-S20-023",
+    "REQ-S20-026",
+    "REQ-S20-027",
+    "REQ-S20-028",
+    "REQ-S20-031",
+    "REQ-S21-002",
+    "REQ-S21-003",
+    "REQ-S21-004"
+  ],
+  "checks_run": [
+    {
+      "id": "QA-R7-00-candidate",
+      "procedure": "Confirm the frozen candidate at the start and at the end. Check HEAD and the commits since the source commit. Recompute the candidate id in the repository tree and in a clone at the source commit. Run --diff against the round-7 manifest.",
+      "command": "git rev-parse HEAD; git log 7579382c..HEAD; node tools/gates/candidate.mjs --stage DG7; node tools/gates/candidate.mjs --stage DG7 --diff; (clone) git checkout 7579382c5 && node tools/gates/candidate.mjs --stage DG7; again at the end",
+      "environment": "Repository tree (HEAD 9bb110e43, the round-7 freeze commit, at the start; cf01e0486 at the end); sparse shared clone at 7579382c under $TMPDIR; Node 24.21.0 (first on PATH).",
+      "expected": "candidate_id sha256:0d71d445...2272, 3158 files, in the tree and in the clone. --diff matches. HEAD differs from the source only by the freeze commit's delivery records.",
+      "actual": "Start: HEAD is 9bb110e43 'DG7: freeze round 7 on sha256:0d71d445; assignments'. Its only changes from 7579382c are the three round-7 assignments, the manifest and stages.json. The tree recomputes sha256:0d71d4456adaac949e2c9af4c975f4b9976a166872195f496d5aa75fe8ed2272 (3158 files). --diff matches with no added, removed or changed files. The clone at 7579382c recomputes the same id. I computed it before linking the per-package node_modules shims, which git would otherwise see as untracked symlinks. In the clone, --diff exits 1 by design. It takes no path: it compares with the manifest named by the tree's stages.json, and at 7579382c, before the freeze commit, that is still the round-6 manifest. So it lists the round-7 change set, as the log explains. End (20:42Z): HEAD is cf01e0486, after two run-agent auto-commits (code-security dd1bdbf01, domain cf01e0486; I read only their subjects). The id is unchanged and --diff matches. The clone had no tracked modification. The assignment names docs/delivery/reviews/DG5/round-7/qa-verifier.json as the template; it does not exist (DG5 has rounds 1-5). I mirrored the schema and my DG7 round-6 record.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-7/01-candidate.log",
+        "docs/delivery/test-evidence/DG7/qa/round-7/99-end-candidate.log"
+      ]
+    },
+    {
+      "id": "QA-R7-01-validators",
+      "procedure": "Run the gate validator historically on the approved gates, then the reconcile, pipeline, register and stage modes for DG7.",
+      "command": "node tools/gates/validate.mjs --historical --stage DG6 (then DG5, DG4, DG3, DG2, DG1); --reconcile; --pipeline; --register DG7; --stage DG7",
+      "environment": "Repository tree at 9bb110e43; Node 24.21.0; read-only.",
+      "expected": "Historical DG1-DG6 PASS; reconcile, pipeline and register PASS; --stage DG7 fails only because the gate record does not exist yet.",
+      "actual": "PASS gate DG6, DG5, DG4, DG3, DG2 and DG1 (historical), each exit 0. --reconcile: 'PASS reconcile (structure)', exit 0. Every listed record is marked 'STALE for current content': round 4-6 records belong to earlier candidates, and the round-7 records were 'missing' at that moment (rules.mjs l.1167 counts a missing record as stale). --pipeline: 'PASS pipeline (active stage: DG7 REVIEWING)', exit 0. --register DG7: PASS, exit 0. --stage DG7: exit 1 with exactly one problem, 'gate DG7: file not found (docs/delivery/gates/DG7.json)'. That is expected before the release audit writes the gate record, and it is the only non-zero exit here.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-7/03-validators.log"
+      ]
+    },
+    {
+      "id": "QA-R7-02-static",
+      "procedure": "Build, typecheck, lint, OpenAPI lint, no-CDN check and format check on the frozen source.",
+      "command": "pnpm -r build; pnpm -r typecheck; pnpm lint; pnpm openapi:lint; pnpm check:no-cdn; pnpm format:check; (pnpm deps:verify attempted)",
+      "environment": "Sparse shared clone at 7579382c (docs/delivery/test-evidence and runs left out, except DG7/orchestrator/protocol-audit). node_modules is a writable shim that symlinks the repository's read-only store. Node 24.21.0; no network; 18:41-19:02Z.",
+      "expected": "Every command exits 0.",
+      "actual": "typecheck exit 0, lint exit 0, openapi:lint exit 0 ('OpenAPI 3.1.1, 965 operations'), check:no-cdn exit 0, format:check exit 0. The first two 'pnpm -r build' runs exited 1 with EROFS on apps/web/node_modules/.vite-temp. That was my environment: at first the per-package node_modules were links into the read-only repository, then .vite and .vite-temp were still links. After those became real writable directories, the build exited 0 at 19:02Z. Vite printed its chunk-size advisory, which is a warning, not an error. 'pnpm deps:verify' calls npm view and needs registry access (its header says so; live registry residual, D-057). With no network it printed nothing and was killed by the tool's 30-minute background limit, so it has no exit status and I count it as no result. The offline pin check is QA-R7-21.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-7/02-static.log"
+      ]
+    },
+    {
+      "id": "QA-R7-03-unit",
+      "procedure": "Run the three unit projects: unit-node, unit-web and unit-formula-nocodegen.",
+      "command": "env -u LANG -u LC_ALL QA_EVIDENCE_DIR=$TMPDIR/qaev-unit pnpm test",
+      "environment": "Sparse clone at 7579382c; Node 24.21.0; 19:02-19:15Z.",
+      "expected": "Every file and test passes; any skip is explained.",
+      "actual": "unit-node: 207/207 files, 3042/3042 tests. unit-web: 131/131 files, 2199/2199 tests. unit-formula-nocodegen: 3/3 files, 259 passed and 2 skipped. Exit 0. The 2 skips are by design: fuzz.test.ts it.skipIf(NOCODEGEN) at l.600 and l.833, two ESLint assertions that run in unit-node only. All 19 stderr blocks come from passing tests, and they are the same kinds as in round 6: a secret_ref.refused warn (by design), ajv 'unknown format' notices in branding.test.ts, React duplicate-key warnings from dashboard fixtures that reuse ids, and React Router error-boundary lines ('raci.deliverables is not iterable', and TotalsView 'reading length') in extension-fields.test.tsx T12/T14. Those tests mock the /raci and /benefits payloads without the list and assert only the provenance header. No hook timeout, no retry, no flaky test. This time the handbacks folder was in the clone, so the DG6 load-report test that round 6 had to re-run passed in the main run.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-7/03-unit.log",
+        "docs/delivery/test-evidence/DG7/qa/round-7/04-unit-integration-runner.log"
+      ]
+    },
+    {
+      "id": "QA-R7-04-integration",
+      "procedure": "Run the integration project on a disposable PostgreSQL. Analyse every failure and re-run after any environment fix.",
+      "command": "QA_PG_PORT=32510 MTH_PORT_POOL=32511-32519 tests/qa/support/with-pg.sh npx vitest run --project integration; then the 3 failed files again after fixing the @mth links of the shim",
+      "environment": "Sparse clone at 7579382c; PostgreSQL 16.15 (UTF8, C), 135 migrations; 19:15-20:22Z, concurrent with e2e; re-run 20:22-20:25Z.",
+      "expected": "Every file passes, or a failure is explained and shown to be outside the candidate; skips explained.",
+      "actual": "First run: 472 of 475 files; 4691 passed, 5 failed, 8 skipped, 1 todo; exit 1 (3983 s). The 5 failures are contract.test.ts and response-validation.test.ts (each 'P5 BE-M operations' and 'covers every operation', the latter listing cancelExport) and exports.test.ts 'a renderer's own validation error fails the job at once with export.render_failed'. Cause: my environment. My per-package node_modules shim linked @mth/* to the repository's own workspace links, which resolve to /home/user/My-owns/packages/*. The stack shows renderPdf at ../home/user/My-owns/packages/reporting. The tests import RenderError by relative path from the clone (exports.test.ts l.16), while export-runner.ts imports it via @mth/reporting. That gives two module instances, so 'instanceof RenderError' (export-runner.ts l.462) is false. After I made each @mth link resolve inside the clone, the three files passed 246/246, exit 0. So the candidate has no failing integration test. Skips are the same as in round 6: a18-transfer-drill.test.ts skips 7 by design, because the drill inputs are absent in this run ('BLOCKED: ... skipped, not passed'); my input-driven harness run passed 10/10 (QA-R7-11). presentation.test.ts skips 1 of a mutually exclusive it.runIf pair. The todo is audit-events.test.ts 'PENDING T-DG6-BE-B', carried from the approved DG6. Included and passing: a06-bundle-replay.test.ts (28; REQ-S19-008 replay into a clean installation), a19-backup-restore-drill.test.ts (13), p7-transfer-guards.test.ts (22) and scale-scope-business-units.test.ts (4; the A26 regression). Log lines checked: 'unhandled' appears only as a field of the 'job schedules registered' info log and in the F-DG2-412 ECONNRESET test, which passes by design.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-7/04-integration.log",
+        "docs/delivery/test-evidence/DG7/qa/round-7/04b-integration-rerun.log",
+        "docs/delivery/test-evidence/DG7/qa/round-7/04c-shim-analysis.log",
+        "docs/delivery/test-evidence/DG7/qa/round-7/04-unit-integration-runner.log"
+      ]
+    },
+    {
+      "id": "QA-R7-05-tool-suites",
+      "procedure": "Run the node:test suites of the gate, agent, migration, API-script and deploy tools.",
+      "command": "node --test tools/gates/tests/*.test.mjs; node --test tools/agents/tests/*.test.mjs; QA_PG_PORT=32540 with-pg.sh node --test tools/migration/tests/*.test.mjs apps/api/scripts/*.test.mjs; QA_PG_PORT=32550 with-pg.sh node --test deploy/scripts/tests/*.test.mjs",
+      "environment": "Sparse clone at 7579382c; disposable PostgreSQL 16.15; 19:20-19:50Z.",
+      "expected": "All pass.",
+      "actual": "gates 66/66, exit 0. agents 39/39, exit 0. migration and API scripts 29/29, exit 0. deploy scripts 204/204, exit 0 (217 s); these include the D-278 rule tests T-S1..T-S9 on PostgreSQL. No fail, skip or cancel.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-7/12-tool-suites-gates-agents.log",
+        "docs/delivery/test-evidence/DG7/qa/round-7/15-tool-suites-runner.log",
+        "docs/delivery/test-evidence/DG7/qa/round-7/08-deploy-scripts.log",
+        "docs/delivery/test-evidence/DG7/qa/round-7/08-migration-api-scripts.log"
+      ]
+    },
+    {
+      "id": "QA-R7-06-release-tool-suites",
+      "procedure": "Run the release and licence tool tests, including the new DO-D10 disclosure tests.",
+      "command": "MTH_PNPM_STORE=$TMPDIR/pnpm-store node --test tools/release/tests/*.test.mjs licenses/tests/*.test.mjs",
+      "environment": "Sparse clone at 7579382c (it includes DG7/orchestrator/protocol-audit); a writable copy of the local pnpm store; 19:50-20:11Z.",
+      "expected": "All pass; skips explained.",
+      "actual": "471 tests: 469 pass, 0 fail, 2 skipped; exit 0 (1268 s). The 5 'DO-D10 disclosures' tests pass: input carries D-278 in EN and AR; printed before the provisional section and in the Arabic summary; the committed notes carry the section; an empty list prints the None line; a missing or invalid input is BLOCKED and nothing is written. T-G2 history passes, so the two round-6 lines are allow-listed. The 2 skips are the same as in round 6. T-A11 needs an assembled runtime tree (MTH_RELEASE_RUNTIME_DIR); the A18 drill's D0 builds and scans that tree (QA-R7-11). T-A3 needs bsdtar, which is not installed.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-7/08-release-licenses.log",
+        "docs/delivery/test-evidence/DG7/qa/round-7/15-tool-suites-runner.log"
+      ]
+    },
+    {
+      "id": "QA-R7-07-release-tools",
+      "procedure": "Show that every generated handover text and the scans reproduce on the frozen source.",
+      "command": "service-list, role-matrix, migration-catalogue, connector-handover, automation-jobs --check; licenses/generate-sbom.mjs --check; deploy/scripts/generate-env-example.mjs --check; secret-scan.mjs --scope payload; claims-scan.mjs; release-notes.mjs --csv ... --check; known-limitations.mjs --protocol-audit protocol-audit-r7.json --check; check-handover.mjs --protocol-audit protocol-audit-r7.json; git status",
+      "environment": "Sparse clone at 7579382c (read-only commands); Node 24.21.0; 19:12Z.",
+      "expected": "Each exits 0; the clone is unchanged afterwards.",
+      "actual": "All 12 commands exit 0. release-notes: '0 unfinished item(s), 23 later clause(s); ... up to date'. known-limitations: PASS with protocol-audit-r7.json, the report its generated block names (head 19a82f6c, SHA-256 67b36d7f...). check-handover: 'PASS (index, deployment, summaries, security-links, guides, generated)'. Payload secret scan: PASS (3158 files; allowed 33). Claims scan: PASS. SBOM: OK, 483 packages, direct-dependency problems 0. git status in the clone afterwards is empty.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-7/06-release-tools.log"
+      ]
+    },
+    {
+      "id": "QA-R7-08-register",
+      "procedure": "Check the register at the source commit: row count, statuses, the DG7-final list against the assignment, Q19 markers, the change since round 6, and the SHA-256 the release notes cite.",
+      "command": "python3 over git show 7579382c:docs/delivery/requirements.csv and 830d7edf:docs/delivery/requirements.csv; grep SHA-256 docs/handover/release-notes.md",
+      "environment": "Repository objects.",
+      "expected": "412 rows, all IMPLEMENTED; 54 DG7-final rows equal to the assignment; the release notes cite the register hash.",
+      "actual": "412 rows, all IMPLEMENTED. SHA-256 0be471c06da2d318415031015fbd4e645192e2c25898db73d1cbed6037a8c21a, which the release notes cite (EN in full, AR prefix). The 54 DG7-final rows equal the assignment's list. 23 carry completes-after-gate (Q19 / D-274). No row changed, was added or was removed since the round-6 source 830d7edf. The repair touched handover texts and the generator only, so no register note was needed.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-7/05-register.log"
+      ]
+    },
+    {
+      "id": "QA-R7-09-protocol-audit",
+      "procedure": "Run the protocol audit afresh and compare it, check by check, with the report the frozen known-limitations block names.",
+      "command": "node tools/release/protocol-audit.mjs --stage DG7 --json <evidence>/protocol/protocol-audit-DG7.json; node tools/release/protocol-audit.mjs --all --json $TMPDIR/pa-all.json; python3 per-check comparison with protocol-audit-r7.json",
+      "environment": "Repository tree at 9bb110e43 (git history needed); read-only.",
+      "expected": "Hits equal to protocol-audit-r7.json and to the disclosed D-249/D-270 counts; no new hit from the repair tasks.",
+      "actual": "--stage DG7 exits 1 by design ('FAIL (exit 1): 35 hit(s) in 3 check(s)'): C2 27 (assignment-missing-elements, D-269/D-270), C3 7 (handback-missing-sections, the disclosed seven) and C5 1 (historical-evidence-not-before-first-implementation). C1, C4, C6, C7, C8 and C9 PASS. These are the same counts as in round 6, so the AN-P7I and DO-D10 assignments and handbacks add no hit. --all exits 1 by design: 281 hits in 29 checks, 0 blocked, 36 pass. That equals protocol-audit-r7.json, with 65 checks on each side and no per-check difference.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-7/07-protocol-audit.log",
+        "docs/delivery/test-evidence/DG7/qa/round-7/protocol/protocol-audit-DG7.json"
+      ]
+    },
+    {
+      "id": "QA-R7-10-a27-k11",
+      "procedure": "Check that progress.md's checkpoint at the source commit names the actual next action (the A27 K11 partial must not recur).",
+      "command": "git show 7579382c:docs/delivery/progress.md | grep -A6 'Current checkpoint'; git log -1 9bb110e43",
+      "environment": "Repository objects.",
+      "expected": "The checkpoint names the action actually taken next.",
+      "actual": "progress.md at 7579382c says: 'DG7 ... is entering round 7 (2026-11-16, D-280) ... Next action: freeze round 7, all three reviewers; on three PASS, the release-auditor gate decision, then the A28 seal.' The next commit is 9bb110e43 'DG7: freeze round 7' (18:39:59Z), and the three round-7 reviewer runs started from it. The checkpoint is current. The A27 K11 partial (stale progress.md at the DG6 checkpoint, disclosed) does not recur here.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-7/08-a27-k11.log"
+      ]
+    },
+    {
+      "id": "QA-R7-11-a18-transfer",
+      "procedure": "Build the release archive from the frozen clone with a demo export, verify it, then run the real transfer drill and the shipped A18 harness on it (A18: REQ-S19-017, REQ-S20-018, REQ-S01-006 and others).",
+      "command": "QA_PG_PORT=32570 with-pg.sh bash a18/qa-r7-a18-driver.sh (demo seed and tools/migration/export.mjs; tools/release/build-archive.mjs --candidate sha256:0d71d445...; --verify; deploy/scripts/transfer-drill.sh; QA_A18_REQUIRE=1 npx vitest run --project integration tests/qa/integration/a18-transfer-drill.test.ts)",
+      "environment": "Sparse clone at 7579382c; disposable PostgreSQL 16.15; the drill runs in its own fresh network namespace (no egress). A copy of the local pnpm store; synthetic data only; 19:29-19:44Z.",
+      "expected": "Archive --verify PASS with this candidate id; the drill exits 0 with D0-D11 PASS, equal reconciliations, another origin and a verified restart; harness 10/10.",
+      "actual": "The demo export has 335 tables and 4782 rows. The archive is mth-transformation-hub-0.1.0-0d71d4456ada.tar.gz (14762549 bytes, sha256 bb93eeb8...). --verify PASS on 7 checks, candidate-id included. Drill 1: exit 0; D0-D11 PASS; '335 tables and 2 evidence files equal, origin http://127.0.0.1:25302, restart verified'; 0 stderr lines. D9 window 19:35:00.831-19:35:50.867Z on T's clock (lower bound exclusive 19:34:00.831); recheck 'matched', listed []. No quarter-hour slot fell in the window. The A18 harness (QA_A18_REQUIRE=1) passed 10/10, exit 0 (drill 441 s). Its drill: D0-D11 PASS, window 19:42:13.594-19:43:10.082Z, recheck 'matched'. No drill PostgreSQL was left running, and the work tree was removed. Neither window held a */15 slot, so the schedule_explained path did not occur this round. That path was exercised and verified on a real 14:00 run in round 6 (F-DG7-971). transfer-drill.sh, drill/schedule-explained.mjs and their tests are unchanged since then (empty diff 830d7edf..7579382c outside tools/release), and T-S1..T-S9 pass here (QA-R7-05).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-7/a18/a18-run.log",
+        "docs/delivery/test-evidence/DG7/qa/round-7/a18/qa-r7-a18-driver.sh",
+        "docs/delivery/test-evidence/DG7/qa/round-7/a18/p1-drill/transfer-drill-report.json",
+        "docs/delivery/test-evidence/DG7/qa/round-7/a18/p1-drill/schedule-explained-d9.json",
+        "docs/delivery/test-evidence/DG7/qa/round-7/a18/p1-drill/job-check.json",
+        "docs/delivery/test-evidence/DG7/qa/round-7/a18/p2-harness/transfer-drill-report.json"
+      ]
+    },
+    {
+      "id": "QA-R7-12-verify-disclosure-findings",
+      "procedure": "Verify F-DG7-923, F-DG7-942 and F-DG7-972. Check every surface that ADR-0064 A5.6 names (plus the Arabic summaries) for the three required statements, their accuracy against A5.2 and A5.7 and the drill code, and their consistency in English and Arabic.",
+      "command": "git diff 830d7edf 7579382c -- docs/handover tools/release; per-file greps of the 3 statements and residuals 3 and 4 (22-disclosure-surfaces.log); reads of ADR-0064 A5.2, A5.6 and A5.7; grep of transfer-drill.sh and schedule-explained.mjs for writes to job_schedule; grep of apps/worker for kpi.reporting_period_open",
+      "environment": "Repository objects and tree; read-only.",
+      "expected": "Each A5.6 surface states (1) the A5.2 rule and that each explained execution is listed in the report, (2) a handler's business writes in the window still fail D9 and that is not a data defect, (3) the recovery is to re-run the drill and never pause a schedule. The text is accurate and the Arabic follows the English.",
+      "actual": "Met on every surface. known-limitations.md has a new section-6 row 'ADR-0064 Amendment 5 (D-278)' with all three statements, the A5.2 conditions, A5.7 residual 1 (kpi.reporting_period_open), residual 3 (ticks) and residual 4 (pg-boss 11.0.0), and D-278 added to Sources. release-notes.md has a new 'Known limitations disclosed in this release' section in EN and a provisional AR section with the three statements and the residuals, linking known-limitations.md#adr-residuals (the anchor exists, section 6). deployment.md's drill section already carried the three statements, and a new paragraph adds residuals 3 and 4. known-limitations.ar-summary.md item 7 and deployment.ar-summary.md carry the three statements and residual 3 in Arabic, marked provisional. deployment.ar-summary.md omits the pg-boss sentence, which the Arabic known-limitations summary carries. That is acceptable for a summary and is not one of the three required statements. The texts agree with the code: schedule-explained.mjs uses one READ ONLY transaction and transfer-drill.sh never writes job_schedule ('No job is paused, disabled or rescheduled', l.658). The kpi.reporting_period_open handler opens periods (apps/worker/src/handlers/kpi.ts l.25). No text claims an approval. All three findings are verified CLOSED_VERIFIED in qa-verifier.verifications.json.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-7/22-disclosure-surfaces.log",
+        "docs/delivery/reviews/DG7/round-7/qa-verifier.verifications.json"
+      ]
+    },
+    {
+      "id": "QA-R7-13-release-notes-reproducible",
+      "procedure": "Show that the generated release notes are reproducible from the checked-in disclosure input, and that changes to that input are detected. Judge D-280's ADR-0071 §5.1 note.",
+      "command": "In a second disposable sparse clone at 7579382c: release-notes.mjs --csv ... --check (baseline); then one mutation at a time of tools/release/release-notes-disclosures.json (EN statement removed, AR statement removed, empty list, unknown key, file removed), each followed by --check and git checkout; restored --check",
+      "environment": "Disposable sparse shared clone $TMPDIR/mut-rn (removed). The review clone and the candidate were not changed. Two earlier attempts in a plain file copy are discarded and are explained in the log.",
+      "expected": "Baseline exit 0; each mutation is detected (non-zero); restored exit 0.",
+      "actual": "Baseline: '0 unfinished item(s), 23 later clause(s); ... up to date', exit 0. Removing EN en[3] gives exit 1 ('out of date'). Removing AR ar[2] gives exit 1. An empty list gives exit 1. An unknown key x gives exit 2 ('BLOCKED: ... unknown key x'). A missing file gives exit 2 ('BLOCKED: ... not found'). Restored: exit 0. The non-zero exits are the intended detections. Judgement of D-280's note: the generator now reads one more checked-in file from its own directory. It stays deterministic (no clock, --check compares bytes) and refuses bad input, so the change keeps ADR-0071's intent and the behaviour is sound. But ADR-0071 §5 item 1 still says 'It reads nothing else', and item 2 lists seven sections. No dated amendment records the new input or section; D-280 records it instead of amending the ADR. I raise this documentation drift as F-DG7-973 (Low, not mandatory, not blocking, owner solution-architect).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-7/21-release-notes-mutations.log",
+        "docs/delivery/reviews/DG7/round-7/qa-verifier.findings.json"
+      ]
+    },
+    {
+      "id": "QA-R7-14-allowlist-entries",
+      "procedure": "Check that the two new secret-scan allow-list entries cover only regex text, not secrets, and only the history scope.",
+      "command": "node <scratch>/allowchk.mjs (imports scanContent from tools/release/secret-scan.mjs, rescans the two named files, prints rule, length, regex metacharacters and SHA-256, never the value); python3 over secret-allowlist.json; sed of the two lines",
+      "environment": "Repository tree; read-only; the scratch script was removed.",
+      "expected": "The hashes equal the values flagged on those lines, the values are regex fragments, and the scopes are ['history'].",
+      "actual": "Line 442 of reviews/DG7/round-6/qa-verifier.json gives S3, a 19-character value, sha256 ec2276aa...5f23, equal to entry 46. It is a fragment of the alternation in my round-6 grep -E command ('...|password=...|BEGIN...'). Line 4 of test-evidence/DG7/qa/round-6/98-evidence-hygiene.log gives S2, a 15-character value, sha256 a1fc28a8...db76e, equal to entry 47. It is the character class with a quantifier from the postgres-URL part of the same grep pattern. Neither is a credential. Both entries have scopes ['history'] only. The payload scan has no stale entry (PASS, allowed 33; QA-R7-07), and the history scan passes (QA-R7-23). Observation, not a defect: in the history scope the scanner matches an entry by rule and value hash, whatever the path (secret-scan.mjs l.370). So these two regex values are allowed wherever they occur in history, which is the same design as the earlier history entries.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-7/20-allowlist-values.log",
+        "docs/delivery/test-evidence/DG7/qa/round-7/14-secret-history.log"
+      ]
+    },
+    {
+      "id": "QA-R7-15-a19-restore",
+      "procedure": "Run the A19 backup and restore drill on a disposable cluster.",
+      "command": "QA_PG_PORT=32560 MTH_PORT_POOL=32561-32569 tests/qa/support/with-pg.sh bash -c 'deploy/scripts/restore-drill.sh --admin-url \"$TEST_DATABASE_ADMIN_URL\" --work \"$TMPDIR/qa-r7-a19-drill\"'",
+      "environment": "Sparse clone at 7579382c; PostgreSQL 16.15; 19:52Z.",
+      "expected": "PASS with R1-R9; the reports are kept.",
+      "actual": "'restore-drill: drill-20261116t195301z PASS; backup 3.872 s, restore 7.904 s, R9 PASS', exit 0. restore-report R1-R8 PASS. By design this drill's set holds 0 evidence objects. The non-empty evidence and job-state restore, and the refusals, are covered by the 13-test A19 integration harness, which passed (QA-R7-04). The timings are measured drill values, not RPO/RTO commitments; the report says so.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-7/a19/a19-run.log",
+        "docs/delivery/test-evidence/DG7/qa/round-7/a19/restore-report.json",
+        "docs/delivery/test-evidence/DG7/qa/round-7/a19/drill-report.json"
+      ]
+    },
+    {
+      "id": "QA-R7-16-e2e-product",
+      "procedure": "Run the product Playwright suite in both locales on a real stack, then the demo keyboard walkthrough.",
+      "command": "env -u LANG -u LC_ALL E2E_PG_PORT=32520 E2E_API_PORT=32521 MTH_PORT_POOL=32522-32529 apps/web/e2e/support/with-stack.sh npx playwright test apps/web/e2e --project=chromium-en (then chromium-ar) --workers=1 --trace=off --reporter=list; e2e/support/with-demo-stack.sh npx playwright test apps/web/e2e/p6-walkthrough-keyboard.spec.ts",
+      "environment": "Sparse clone at 7579382c, built dist; disposable PostgreSQL; synthetic seed-dev users, AUTH_MODE=dev; PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers (pre-installed Chromium, no install); retries 0; 19:02-20:19Z.",
+      "expected": "All pass in en and ar; skips explained.",
+      "actual": "chromium-en: 286 passed, 1 skipped (42.3 min), exit 0. chromium-ar: 286 passed, 1 skipped (33.7 min), exit 0. Demo keyboard walkthrough: 2 passed, exit 0. The one skip per locale is p6-walkthrough-keyboard.spec.ts:72, which needs the demo database; the third command runs that spec and it passes. No failure, retry or flaky test. These runs started with the first shim, whose @mth links pointed into the repository (QA-R7-04). The repository tree equals the candidate, and the JS and JSON under every packages/*/dist in the repository are byte-identical to my clone's build of 7579382c (04c-shim-analysis.log). So the stacks ran the candidate's compiled code.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-7/10-e2e-chromium-en.log",
+        "docs/delivery/test-evidence/DG7/qa/round-7/10-e2e-chromium-ar.log",
+        "docs/delivery/test-evidence/DG7/qa/round-7/10-e2e-demo-keyboard.log",
+        "docs/delivery/test-evidence/DG7/qa/round-7/11-e2e-runner.log",
+        "docs/delivery/test-evidence/DG7/qa/round-7/04c-shim-analysis.log"
+      ]
+    },
+    {
+      "id": "QA-R7-17-e2e-acceptance-root",
+      "procedure": "Run the root acceptance specs (A03-A22) in both locales on the real stack, with the A21 connection log.",
+      "command": "MTH_SECRET_QA_A17_WEBHOOK_SIGNING_SECRET=<random per run, never written> env -u LANG -u LC_ALL QA_CONNECTION_LOG=$TMPDIR/conn-root.jsonl E2E_PG_PORT=32530 E2E_API_PORT=32531 MTH_PORT_POOL=32532-32539 e2e/support/a21-connection-log-run.sh npx playwright test <22 specs> --workers=1 --trace=off --reporter=list",
+      "environment": "Sparse clone at 7579382c; real stack; pre-installed Chromium; about 20:08-20:38Z.",
+      "expected": "All pass; skips explained; every outbound connection goes to loopback.",
+      "actual": "288 passed, 18 skipped (26.0 min), exit 0; the same counts as in rounds 5 and 6. The 18 skips are 9 parameterised routes per locale in a20-p6-axe.spec.ts that the plain stack has no fixture value for: sensitive grant, deep-link token, operational exception, webhook, outbound write, import, approval, benefit and walkthrough. The spec marks each 'NOT SCANNED' and never passes it. Connection log: 942 lines, all to 127.0.0.1:32530/32531 or localhost:32539; 'allow-list beyond loopback: []'; 'PASS: every outbound connection of the logged Node processes went to a loopback address'. The NOTICEs ('database mth_fresh_qa_a21_* does not exist, skipping', 'trigger qa_a13_fault_in ... does not exist, skipping') come from the specs' own idempotent DROP IF EXISTS. Playwright's 'Slow test file' lines are advisories. I changed the shim's @mth links at 20:22, while this run was in progress. Both targets hold identical content (QA-R7-16).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-7/17-e2e-root.log",
+        "docs/delivery/test-evidence/DG7/qa/round-7/run-e2e-root.sh"
+      ]
+    },
+    {
+      "id": "QA-R7-18-offline-drill",
+      "procedure": "Run the offline drill in a loopback-only namespace and keep Arabic and English screens.",
+      "command": "PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers QA_EVIDENCE_DIR=$TMPDIR/offline-screens deploy/scripts/offline-drill.sh --out docs/delivery/test-evidence/DG7/qa/round-7/offline/out",
+      "environment": "Sparse clone at 7579382c; loopback-only namespace; 20:38-20:42Z, run alone.",
+      "expected": "Network isolation is effective, every spec run passes, and the connection log is loopback only.",
+      "actual": "Probe: 1.1.1.1:443 ENETUNREACH and registry.npmjs.org EAI_AGAIN (isolated: true). 'offline-drill: PASS in 198.323 s: 10 of 10 spec runs passed; connection log PASS' (295 lines: loopback 295, socket 0, outside 0), exit 0. Kept screens: in the Arabic A21 admin assistant screen the layout is RTL (sidebar on the right) and the provisional wordmark badge reads 'مؤقت'. The assistant is off ('متوقف (غير مُعدّ)', not configured), and unset values read 'غير محدد' (not set), never zero or green. The Arabic A02 KPI-actual screen shows the synthetic-data banner and the value 120.5 accepted. The English A21 screen is kept for the LTR pair.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-7/offline/offline-run.log",
+        "docs/delivery/test-evidence/DG7/qa/round-7/offline/out/offline-drill-report.json",
+        "docs/delivery/test-evidence/DG7/qa/round-7/offline/ar-a21-admin-assistant-off.png",
+        "docs/delivery/test-evidence/DG7/qa/round-7/offline/ar-a02-kpi-actual.png",
+        "docs/delivery/test-evidence/DG7/qa/round-7/offline/en-a21-admin-assistant-off.png"
+      ]
+    },
+    {
+      "id": "QA-R7-19-host-evidence",
+      "procedure": "Judge whether the orchestrator's container host run (D-267) still applies to this candidate.",
+      "command": "git diff --stat d162115e5 7579382c -- apps/api/src apps/worker/src packages/*/src packages/db/migrations deploy/docker deploy/compose; git diff --stat 830d7edf 7579382c -- apps packages deploy tests e2e licenses scripts tools; grep exit= host/host-run-3c.log; docker info",
+      "environment": "Repository objects; docker client without daemon access.",
+      "expected": "No product or image input has changed since the host run; the container half is the orchestrator's evidence, not re-run by me.",
+      "actual": "Empty diff for the product, migration, docker and compose paths between d162115e5 (host run 3) and 7579382c. Since round 6 only tools/release changed (release-notes.mjs, the disclosures JSON, the allow-list and the release-notes test), and none of these is an image input. host-run-3c.log steps b00 and b05-b08 exit 0 (Keycloak e2e 4/4 in run 3c; run 3b's failure is disclosed in D-267). 'docker info' prints 'permission denied while trying to connect to the docker API' (the 'exit=0' in the log is the pipe's tail, not docker's own status). I did not re-run the container half, and I do not mark it as passed by me. The orchestrator's host evidence applies to this candidate unchanged, as D-267 judged acceptable.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-7/09-host-evidence.log",
+        "docs/delivery/test-evidence/DG7/orchestrator/host/host-run-3c.log"
+      ]
+    },
+    {
+      "id": "QA-R7-20-a26-a27-drills",
+      "procedure": "Check the orchestrator's A26 (defect injection) and A27 (resume from checkpoint) drill evidence.",
+      "command": "sha256sum a26/defect-card.md vs k5-hash-check.txt; the K rows of a26/drill-report.md and a27/drill-report.md; git diff 830d7edf 7579382c on both folders",
+      "environment": "Repository tree; read-only.",
+      "expected": "The A26 card hash matches; the K steps are PASS or disclosed; the evidence is unchanged since round 6.",
+      "actual": "The A26 defect card's sha256 is 33eea29a...3b2, equal to the recorded K5 hash. K5-K7 are PASS, and the A26 regression test passes in integration (scale-scope-business-units, QA-R7-04). A27 K9, K10, K12, K13 and K14 are PASS. K11 is 'PASS for REQ-S20-027; PARTIAL for REQ-DLV-030' (stale progress.md at the DG6 checkpoint), and that is disclosed. The checkpoint is current at this candidate (QA-R7-10). Both folders are unchanged since round 6.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-7/16-a26-a27.log",
+        "docs/delivery/test-evidence/DG7/orchestrator/a26/drill-report.md",
+        "docs/delivery/test-evidence/DG7/orchestrator/a27/drill-report.md"
+      ]
+    },
+    {
+      "id": "QA-R7-21-deps-licences",
+      "procedure": "Check the dependency pins and the licence inventory offline.",
+      "command": "python3 over package.json, apps/*/package.json, packages/*/package.json and licenses/inventory.csv; licenses/generate-sbom.mjs --check (QA-R7-07)",
+      "environment": "Sparse clone at 7579382c.",
+      "expected": "Every direct dependency is exactly pinned and in the inventory, and every inventory row has a licence.",
+      "actual": "9 manifests and 52 distinct direct dependencies (workspace links excluded). None is not exactly pinned, and none is missing from the inventory. The inventory has 483 rows, all with a licence: 426 'not_required' and 57 'review', each with a reason. pnpm-lock.yaml is present. generate-sbom --check exits 0. Its procurement counts (428/59) are computed over the SBOM's own package set, which includes containers.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-7/13-deps-licences.log"
+      ]
+    },
+    {
+      "id": "QA-R7-22-environmental-residuals",
+      "procedure": "Record each environmental residual the assignment names, on its offline or configuration surface.",
+      "command": "(within QA-R7-02, 04, 05, 06, 07, 11, 16, 17, 18, 19, 21)",
+      "environment": "No network, no container daemon, no real IdP or external systems.",
+      "expected": "Each residual PASS on its offline/config surface, with the residual stated.",
+      "actual": "Live registry (REQ-DLV-042 AC-1, D-057): every direct dependency is pinned, the lockfile is present, and the archive builds offline from the local store (D0 in both drills). The live registry is not exercised, and deps:verify could not run without it (QA-R7-02). Live CI (REQ-DLV-025 A24, D-058): the deploy tool suite checks the CI configuration (check-ci-needs, pin-images). Live CI was not run; the pre-freeze evidence says the same. Keycloak and a real enterprise IdP (D-049): OIDC is tested against the bundled synthetic drill IdP in both A18 drills and on the dev stack, and the orchestrator's host run 3c ran Keycloak e2e 4/4. The SAML broker is documented, not run. External systems: the assistant, channels, connectors and outbound writes are exercised through test adapters and the shipped 'disabled' configuration (A21 root and offline specs, A17 specs, integration). No real Mobily system was reached, and the connection logs are loopback only. Production capacity: the REQ-S20-029/030 targets are provisional engineering targets from one sandbox host (register notes), not verified Mobily capacity.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-7/17-e2e-root.log",
+        "docs/delivery/test-evidence/DG7/qa/round-7/offline/offline-run.log",
+        "docs/delivery/test-evidence/DG7/qa/round-7/09-host-evidence.log"
+      ]
+    },
+    {
+      "id": "QA-R7-23-secret-history",
+      "procedure": "Run the history secret scan.",
+      "command": "node tools/release/secret-scan.mjs --scope history",
+      "environment": "Repository tree (full history, HEAD cf01e0486 at the time); read-only; 19:29-19:33Z.",
+      "expected": "PASS.",
+      "actual": "'secret-scan: PASS (history; 37828 files; allowed 247; canary (documented) 46)', exit 0. The payload scan PASS is in QA-R7-07.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-7/14-secret-history.log"
+      ]
+    },
+    {
+      "id": "QA-R7-24-clause-reading",
+      "procedure": "Read every DG7-final acceptance text literally against this round's evidence. Judge the disclosures that the assignment lists.",
+      "command": "python3 over docs/delivery/requirements.csv (final_gate = DG7); reads as cited",
+      "environment": "Repository tree.",
+      "expected": "Each row is met by executed evidence, or its remaining clause is named, disclosed and judged.",
+      "actual": "54 rows, all IMPLEMENTED. 23 carry completes-after-gate (Q19; 18 of them through the D-274 extension). This round's executed evidence meets the 31 rows without a marker. A18: two real drills on this candidate's archive, with the real restart and job-check, and the harness 10/10. Also: A19 (drill plus the 13-test harness), A06 (28-test bundle replay), offline, e2e en/ar and root, integration, unit, the tool suites, SBOM and licences, the env template, the secret and claims scans, the regenerated handover texts and A26 (the regression test plus the orchestrator's report). Every mutation is covered by server-side authorization, validation, optimistic concurrency and audit tests in the integration and e2e suites (for example the exports authorization, If-Match 428/409 and audited cancel tests in exports.test.ts). Money uses decimal (financial-parity 11/11). Unknown and Stale show as such (offline screens, percentKpi tests). For the 23 Q19 rows, the remaining clauses can only exist after this review: the gate record, the DG7 reviews and audit, the seal, the pipeline after approval, the progress.md gate update, and the auditor's decisions on the D-270 hits and the A27 K11 partial. They are stated as not met and listed in the release notes ('23 later clauses'), and I judge D-274 a faithful disclosure. Read literally, REQ-DLV-009 ('never exceed four') is not met for DG5/DG6 (H1/H2, five concurrent runs). That is a historic deviation the user decided to disclose without reopening (D-249); DG7's own C1 is PASS. I accept it as disclosed, and the release-auditor decides. D-249/D-270: accepted; the counts equal my fresh audit. ADR-0065 Amendment 1 (automation_rule not carried): disclosed in known-limitations. D-267: QA-R7-19. D-269: the pre-freeze audit is superseded by r7, which equals mine. D-278: the rule is unchanged and verified in round 6, and its disclosure is now complete (QA-R7-12). D-280: the repair is verified, the allow-list entries are sound (QA-R7-14), and the ADR-0071 note is judged in QA-R7-13 (F-DG7-973, Low). Pre-freeze r7 and r7b: in r7, 17 of 19 checks exited 0. secret-payload (two stale allow-list entries) and release-tool-tests exited 1, and both exit 0 in r7b after the entries were scoped to history; I reproduced both green (QA-R7-06, 07). The r7 checks.log starts with two find warnings ('-delete ... -prune does nothing') from its cleanup command; they are not test results. Product gates G1-G6 and DG7 stay separate, and no record I read claims a business, Finance or IT approval.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-7/05-register.log",
+        "docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r7/checks.log",
+        "docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r7b/checks.log"
+      ]
+    },
+    {
+      "id": "QA-R7-25-evidence-hygiene",
+      "procedure": "Secret-scan my evidence folder and remove all scratch.",
+      "command": "node tools/release/secret-scan.mjs --path docs/delivery/test-evidence/DG7/qa/round-7; rm -rf $TMPDIR/review-qa and the test scratch",
+      "environment": "Repository tree; $TMPDIR.",
+      "expected": "No secret in the evidence; scratch removed.",
+      "actual": "'secret-scan: PASS (path; 135 files; allowed 0; canary (documented) 0)', exit 0. The allow-list log prints no raw values. The A17 webhook secret was random per run and never written. The drill outputs list only synthetic subjects. Removed: the clones, the pnpm-store copy, the screenshots scratch and the integration tests' and stacks' temp directories. Only the runner's own folders remain in $TMPDIR.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-7/98-evidence-hygiene.log"
+      ]
+    }
+  ],
+  "findings": [
+    "F-DG7-973"
+  ],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/reviews/DG7/round-7/qa-verifier.findings.json",
+    "docs/delivery/reviews/DG7/round-7/qa-verifier.verifications.json",
+    "docs/delivery/test-evidence/DG7/qa/round-7/01-candidate.log",
+    "docs/delivery/test-evidence/DG7/qa/round-7/02-static.log",
+    "docs/delivery/test-evidence/DG7/qa/round-7/03-validators.log",
+    "docs/delivery/test-evidence/DG7/qa/round-7/03-unit.log",
+    "docs/delivery/test-evidence/DG7/qa/round-7/04-integration.log",
+    "docs/delivery/test-evidence/DG7/qa/round-7/04b-integration-rerun.log",
+    "docs/delivery/test-evidence/DG7/qa/round-7/04c-shim-analysis.log",
+    "docs/delivery/test-evidence/DG7/qa/round-7/05-register.log",
+    "docs/delivery/test-evidence/DG7/qa/round-7/06-release-tools.log",
+    "docs/delivery/test-evidence/DG7/qa/round-7/07-protocol-audit.log",
+    "docs/delivery/test-evidence/DG7/qa/round-7/08-a27-k11.log",
+    "docs/delivery/test-evidence/DG7/qa/round-7/08-release-licenses.log",
+    "docs/delivery/test-evidence/DG7/qa/round-7/08-deploy-scripts.log",
+    "docs/delivery/test-evidence/DG7/qa/round-7/09-host-evidence.log",
+    "docs/delivery/test-evidence/DG7/qa/round-7/10-e2e-chromium-en.log",
+    "docs/delivery/test-evidence/DG7/qa/round-7/10-e2e-chromium-ar.log",
+    "docs/delivery/test-evidence/DG7/qa/round-7/10-e2e-demo-keyboard.log",
+    "docs/delivery/test-evidence/DG7/qa/round-7/12-tool-suites-gates-agents.log",
+    "docs/delivery/test-evidence/DG7/qa/round-7/13-deps-licences.log",
+    "docs/delivery/test-evidence/DG7/qa/round-7/14-secret-history.log",
+    "docs/delivery/test-evidence/DG7/qa/round-7/15-tool-suites-runner.log",
+    "docs/delivery/test-evidence/DG7/qa/round-7/16-a26-a27.log",
+    "docs/delivery/test-evidence/DG7/qa/round-7/17-e2e-root.log",
+    "docs/delivery/test-evidence/DG7/qa/round-7/20-allowlist-values.log",
+    "docs/delivery/test-evidence/DG7/qa/round-7/21-release-notes-mutations.log",
+    "docs/delivery/test-evidence/DG7/qa/round-7/22-disclosure-surfaces.log",
+    "docs/delivery/test-evidence/DG7/qa/round-7/a18/a18-run.log",
+    "docs/delivery/test-evidence/DG7/qa/round-7/a18/p1-drill/transfer-drill-report.json",
+    "docs/delivery/test-evidence/DG7/qa/round-7/a18/p2-harness/transfer-drill-report.json",
+    "docs/delivery/test-evidence/DG7/qa/round-7/a19/restore-report.json",
+    "docs/delivery/test-evidence/DG7/qa/round-7/offline/offline-run.log",
+    "docs/delivery/test-evidence/DG7/qa/round-7/offline/ar-a21-admin-assistant-off.png",
+    "docs/delivery/test-evidence/DG7/qa/round-7/98-evidence-hygiene.log",
+    "docs/delivery/test-evidence/DG7/qa/round-7/99-end-candidate.log"
+  ],
+  "reviewed_at": "2026-11-16T20:50:00Z",
+  "summary": "PASS on candidate sha256:0d71d445...2272 (source 7579382c, 3158 files, verified at the start and the end). F-DG7-923, F-DG7-942 and F-DG7-972 are verified CLOSED_VERIFIED. known-limitations.md, the release notes, deployment.md and both Arabic summaries now carry the three ADR-0064 A5.6 statements, consistent with A5.2, A5.7 and the drill code. The generated texts reproduce with --check, and input mutations are caught. The two new allow-list entries hash regex fragments of my round-6 grep pattern, in the history scope only. The whole candidate passes: static checks (after an environment re-run of the build), unit 3042+2199+259, integration 475 files (5 failures caused by my node_modules shim's module identity, re-run 246/246 after the fix and explained), tool suites, release tools 469/471 (2 explained skips), e2e en/ar 286+286, root 288 (loopback only), offline 10/10, A18 (two real drills D0-D11 PASS and the harness 10/10 on this candidate's archive), A19, the register, the protocol audit (equal to r7), deps and both secret scans. New: F-DG7-973 (Low, not mandatory, not blocking). ADR-0071 §5 still says the release-notes generator 'reads nothing else' and lists seven sections; D-280 records the deviation instead of a dated amendment. No business, Finance or IT approval is granted or implied, and product gate G6 does not imply DG7."
+}

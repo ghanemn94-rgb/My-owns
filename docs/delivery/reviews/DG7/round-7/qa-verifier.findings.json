@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG7-973",
+      "stage_id": "DG7",
+      "requirement": "REQ-S02-005",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "ADR-0071 §5 still says the release-notes generator 'reads nothing else' and lists seven sections, but since DO-D10 it also reads tools/release/release-notes-disclosures.json and prints an eighth section; D-280 accepts the deviation without a dated ADR amendment",
+      "reproduction": "On candidate sha256:0d71d445... (source 7579382c): read docs/architecture/adr/ADR-0071-p7-traceability-register-snapshot-about-release-notes-release-blockers-protocol-audit.md §5 item 1 (l.181: 'It reads the register ..., the dependency list and the provisional Arabic files ... It reads nothing else.') and item 2 (the seven sections of release-notes.md). Then read tools/release/release-notes.mjs l.10-11 and l.28 (DEFAULT_DISCLOSURES = tools/release/release-notes-disclosures.json), and docs/handover/release-notes.md ('## Known limitations disclosed in this release'). grep -rl 'release-notes-disclosures\\|D-280' docs/architecture/ returns nothing. D-280 says: 'I accept this as within ADR-0071's intent ... and record it here instead of amending the ADR'. DO-D10's handback (known gap 1) asked for the ADR text to be settled.",
+      "expected": "Accepted architecture records state the generator's real inputs and output sections. The project records design changes to an ADR as dated amendments that win over the ADR body. ADR-0071 §5.1/§5.2 should get a dated amendment naming the extra checked-in input (read from the tool's own directory, deterministic, refused when missing or invalid) and the 'Known limitations disclosed in this release' section, in English and in the provisional Arabic summary. Alternatively the release-auditor can accept this as an observation, with the ADR owner's agreement as D-280's reversal trigger requires.",
+      "actual": "The behaviour is sound. I verified that the output is deterministic and reproducible (--check exit 0). Mutations of the input are caught: a removed English or Arabic statement and an empty list give exit 1 (drift), and an unknown key or a missing file gives exit 2 (BLOCKED). The tests (DO-D10 disclosures) pass in the 469/471 release-tool run. Only the ADR text is stale: a maintainer who reads ADR-0071 §5 is told the generator has no input beyond the register, the dependencies and the provisional files. The deviation is recorded only in decisions.md (D-280) and in the handover README row. This is documentation drift with no behavioural effect. It is not mandatory and does not block the gate.",
+      "evidence": [
+        "docs/architecture/adr/ADR-0071-p7-traceability-register-snapshot-about-release-notes-release-blockers-protocol-audit.md",
+        "tools/release/release-notes.mjs",
+        "tools/release/release-notes-disclosures.json",
+        "docs/delivery/decisions.md",
+        "docs/delivery/handbacks/DG7/T-DG7-DO-D10-devops-engineer.md",
+        "docs/delivery/test-evidence/DG7/qa/round-7/21-release-notes-mutations.log",
+        "docs/delivery/test-evidence/DG7/qa/round-7/06-release-tools.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG7/round-7/qa-verifier.json",
+      "owner": "solution-architect",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-16T20:50:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG7 round 7 (T-DG7-REV-QA-R7) on candidate sha256:0d71d4456adaac949e2c9af4c975f4b9976a166872195f496d5aa75fe8ed2272. Low, not mandatory, not blocking."
+        }
+      ]
+    }
+  ]
+}
