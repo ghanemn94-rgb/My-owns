@@ -38,7 +38,7 @@ Sign-in has been tested only with a synthetic identity provider. Connecting the 
 ## 2. Protocol-audit disclosure {#protocol-audit}
 
 <!-- generated:protocol-audit begin -->
-Report: `tools/release/protocol-audit.mjs` 1.0.0, repository head `449d6600481e5596d7b3fa3ebebd70fd392d1885`, SHA-256 `911eba9a155b239b0de413a815f83ff2a40a53d93436366d702c90c8462907e9`, stages DG0, DG1, DG2, DG3, DG4, DG5, DG6, DG7.
+Report: `tools/release/protocol-audit.mjs` 1.0.0, repository head `33c237b299e6591746491f3383acdd68e24a4e5b`, SHA-256 `a495abb34f81893bc8f9ed88c1d890907ab5666024498efbf3843f253d74e33a`, stages DG0, DG1, DG2, DG3, DG4, DG5, DG6, DG7.
 
 The delivery records of gates DG0–DG6 contain the historic protocol observations listed below, found by the protocol audit. None changed product behaviour. They are disclosed here, and no gate was reopened (decision D-249).
 
