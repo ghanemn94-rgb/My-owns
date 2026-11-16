@@ -1,0 +1,53 @@
+$ node tools/release/service-list.mjs --check
+service-list: OK deploy/service-list.json matches the Compose files
+exit=0
+$ node tools/release/role-matrix.mjs --check
+role-matrix: PASS (/home/user/My-owns/docs/handover/role-matrix.md is current)
+exit=0
+$ node tools/release/migration-catalogue.mjs --check
+PASS: migration catalogue up to date: 135 migrations (73 additive, 38 data_rewrite, 24 destructive)
+exit=0
+$ node tools/release/connector-handover.mjs --check
+connector-handover: PASS: docs/handover/api/connectors.md equals a fresh generation
+exit=0
+$ node tools/release/automation-jobs.mjs --check
+automation-jobs: PASS (the job table of /home/user/My-owns/docs/handover/automation-operations.md is current)
+exit=0
+$ node licenses/generate-sbom.mjs --check
+OK: packages=483 runtime=171 bundled=15 development=297 containers=4 shipped-without-licence-id=0 procurement(not_required=428 review=59 required=0) direct-dependency-problems=0 lockfile-sha256=4dd7e22dedf2640216767b594af3d1765aa966bb0f229edeac84ba544364ba65
+exit=0
+$ node deploy/scripts/generate-env-example.mjs --check
+OK: .env.example lists exactly the 34 ENV_VARS names, none with a value
+exit=0
+$ node tools/release/secret-scan.mjs --scope payload
+secret-scan: PASS (payload; 3155 files; allowed 33; canary (documented) 22)
+exit=0
+$ node tools/release/claims-scan.mjs
+claims-scan: PASS (891 files; D 141, U 750; negated 28; allowed 19)
+exit=0
+$ node tools/gates/validate.mjs --register DG7
+PASS register rules at DG7
+exit=0
+$ node tools/gates/validate.mjs --reconcile
+round 4 code-security-reviewer: missing (STALE for current content)
+round 4 qa-verifier: missing (STALE for current content)
+FAIL reconcile (structure) (1 problem)
+  - stages.json: DG7 illegal transition REVIEWING -> REVIEWING
+exit=1
+$ git status --short (excluding runs/ and my evidence)
+ D docs/delivery/reviews/DG7/round-4/domain-reviewer.findings.json
+ D docs/delivery/reviews/DG7/round-4/domain-reviewer.json
+ D docs/delivery/reviews/DG7/round-4/domain-reviewer.verifications.json
+?? docs/delivery/test-evidence/DG7/code-security/round-4/
+?? docs/delivery/test-evidence/DG7/domain/round-4/build.log
+?? docs/delivery/test-evidence/DG7/domain/round-4/candidate-verify.log
+?? docs/delivery/test-evidence/DG7/domain/round-4/e2e-about-register.log
+?? docs/delivery/test-evidence/DG7/domain/round-4/f940-mutant.log
+?? docs/delivery/test-evidence/DG7/domain/round-4/f940-unmutated.log
+?? docs/delivery/test-evidence/DG7/domain/round-4/protocol-audit-DG7.json
+?? docs/delivery/test-evidence/DG7/domain/round-4/protocol-audit-DG7.log
+?? docs/delivery/test-evidence/DG7/domain/round-4/release-tool-checks.log
+?? docs/delivery/test-evidence/DG7/domain/round-4/scope-diff.log
+?? docs/delivery/test-evidence/DG7/domain/round-4/screens/
+?? docs/delivery/test-evidence/DG7/domain/round-4/validate-historical-exit.log
+?? docs/delivery/test-evidence/DG7/domain/round-4/validate.log

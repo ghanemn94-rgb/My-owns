@@ -1,0 +1,21 @@
+Mon Nov 16 06:03:07 UTC 2026
+$ git rev-parse HEAD
+44fe6cfedb211e3c7ebf7b3d17be18786293ed56
+$ git log --format='%h %s' a76c2aed4..HEAD
+44fe6cfed run: DG7-T-DG7-REV-CS-R4-code-security-reviewer-20261116T035546Z-e38c10a2 (review evidence, auto-committed by run-agent.sh)
+8d1ba28af run: DG7-T-DG7-REV-DOM-R4-domain-reviewer-20261116T035546Z-7a4f06b7 (review evidence, auto-committed by run-agent.sh)
+$ git diff --stat a76c2aed4 HEAD -- . ':!docs/delivery/runs' ':!docs/delivery/reviews' ':!docs/delivery/test-evidence' | tail -1
+(empty = nothing outside review evidence changed)
+$ node tools/gates/candidate.mjs --stage DG7 --diff docs/delivery/candidates/DG7/d91f7152950ed711.manifest.json
+{
+  "frozen": "sha256:d91f7152950ed7119b412db0135836c53a3f01e95300af32c86db367f0712e59",
+  "working_tree": "sha256:d91f7152950ed7119b412db0135836c53a3f01e95300af32c86db367f0712e59",
+  "matches": true,
+  "added": [],
+  "removed": [],
+  "changed": []
+}
+exit=0
+$ (clone) git -C $TMPDIR/review-qa status --short | head; candidate.mjs
+{"stage":"DG7","source":"working-tree","candidate_id":"sha256:d91f7152950ed7119b412db0135836c53a3f01e95300af32c86db367f0712e59","files":3155}
+exit=0

@@ -1,0 +1,16 @@
+$ node tools/release/release-notes.mjs --check
+release-notes: BLOCKED: --csv and --out are required
+exit=2
+$ node tools/release/known-limitations.mjs --protocol-audit docs/delivery/test-evidence/DG7/qa/round-4/f960/protocol-audit-DG7.json --check
+known-limitations: FAIL: docs/handover/known-limitations.md differ from the generated content; run node tools/release/known-limitations.mjs --protocol-audit <report> --write
+exit=1
+$ node tools/release/check-handover.mjs --protocol-audit docs/delivery/test-evidence/DG7/qa/round-4/f960/protocol-audit-DG7.json
+check-handover: guides: PASS
+check-handover: generated: FAIL
+  FAIL: known-limitations: FAIL: docs/handover/known-limitations.md differ from the generated content; run node tools/release/known-limitations.mjs --protocol-audit <report> --write
+  note: role-matrix.mjs: role-matrix: PASS (/home/user/My-owns/docs/handover/role-matrix.md is current)
+  note: automation-jobs.mjs: automation-jobs: PASS (the job table of /home/user/My-owns/docs/handover/automation-operations.md is current)
+check-handover: FAIL (index PASS, deployment PASS, summaries PASS, security-links PASS, guides PASS, generated FAIL; root .)
+exit=1
+$ grep -n -i -E '\b(six|6) (DG7 )?(C3|hit|handback)' release-notes.md known-limitations.md
+grep exit=1 (1 = no match)

@@ -1,0 +1,57 @@
+# 2026-11-16T04:30:13Z re-run under tests/qa/support/with-pg.sh (34-drill-tests.log ran WITHOUT a database: the T-B3/B10/B16/B17/B19 suites need one) (Node v24.21.0, cwd $TMPDIR/rv at 471072d64)
+port-policy: PostgreSQL listening on port 32462 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+▶ T-B3 origin-scan.mjs: the source origin is accepted only in audit_event
+▶ T-B9 config-trace.mjs: configuration only from the template and the guide
+▶ T-B9 transfer-drill.sh: BLOCKED, isolation and the report
+PASS  signin (169 ms): drill-bound -> user 01a1e29e-d121-721e-aa0b-d6bdae20c37b, roles [ADM_TECH,ADM_ACCESS]
+PASS  csrf (13 ms): Origin http://localhost:25301 -> 403 csrf
+PASS  unbound (24 ms): drill-unbound refused: identity_unbound; /me 401
+▶ T-B10 journey.mjs under NODE_ENV=production, AUTH_MODE=oidc: drill IdP sign-in, CSRF 403, unbound refused
+PASS  signin (36 ms): drill-bound -> user 01a1e29e-d121-721e-aa0b-d6bdae20c37b, roles [ADM_TECH,ADM_ACCESS]
+PASS  status (20 ms): origin http://127.0.0.1:25637, environmentKind production, schema ok
+PASS  signin (24 ms): drill-bound -> user 01a1e29e-d121-721e-aa0b-d6bdae20c37b, roles [ADM_TECH,ADM_ACCESS]
+FAIL  status (13 ms): getDeploymentStatus.origin is http://127.0.0.1:25637, expected http://localhost:25301
+PASS  signin (25 ms): drill-bound -> user 01a1e29e-d121-721e-aa0b-d6bdae20c37b, roles [ADM_TECH,ADM_ACCESS]
+FAIL  deeplink (8 ms): no notification with a link was issued on the target
+FAIL  downloads (0 ms): no --downloads given
+PASS  signin (28 ms): drill-bound -> user 01a1e29e-d121-721e-aa0b-d6bdae20c37b, roles [ADM_TECH,ADM_ACCESS]
+# T-B16 measurement: {"schemaVersion":"mth-drill-signin-measurement/1","appUserChangedBySignIn":true,"userIdentityChangedBySignIn":true,"measuredOn":"T-B10 production suite (NODE_ENV=production, AUTH_MODE=oidc, drill IdP), SYNTHETIC user"}
+PASS  signin (113 ms): drill-bound -> user 01a1e29e-f25d-776e-a644-d1b4d0f8de37, roles [ADM_TECH,ADM_ACCESS]
+PASS  csrf (13 ms): Origin http://localhost:25301 -> 403 csrf
+PASS  unbound (31 ms): drill-unbound refused: identity_unbound; /me 401
+▶ T-B10 (supporting, NOT production semantics) the same journey with NODE_ENV=development, AUTH_MODE=oidc
+PASS  signin (31 ms): drill-bound -> user 01a1e29e-f25d-776e-a644-d1b4d0f8de37, roles [ADM_TECH,ADM_ACCESS]
+PASS  status (25 ms): origin http://127.0.0.1:30774, environmentKind production, schema ok
+PASS  signin (44 ms): drill-bound -> user 01a1e29e-f25d-776e-a644-d1b4d0f8de37, roles [ADM_TECH,ADM_ACCESS]
+FAIL  status (11 ms): getDeploymentStatus.origin is http://127.0.0.1:30774, expected http://localhost:25301
+PASS  signin (27 ms): drill-bound -> user 01a1e29e-f25d-776e-a644-d1b4d0f8de37, roles [ADM_TECH,ADM_ACCESS]
+FAIL  deeplink (11 ms): no notification with a link was issued on the target
+FAIL  downloads (0 ms): no --downloads given
+▶ T-B15 allowance.mjs: mth-recheck-allowance/4 from a fixture journal (p7-work-split §B.9 DO-D7)
+▶ T-B16 job-check.mjs on a fixture database, digests from mth-db table-digest (§2.3 encoder)
+PASS  signin (140 ms): drill-01995000-0000-7000-8000-000000000012 -> user 01995000-0000-7000-8000-000000000012, roles [TL,TL]
+PASS  writes (4948 ms): transformation 01a1e29f-a96c-77fc-9e33-45ef8fd86d76; RAID 01a1e29f-a9d6-7289-a79e-74c79fed9cfe; C0 G5 missing [g5.performance_kpi_not_known, g5.performance_kpi_not_known, g5.performance_kpi_not_known, g5.performance_pilot_evidence_missing, g5.adoption_none, g5.decision_overdue]; C1 KPI 01995000-4102-7000-8000-000000000001 submitted (accepted) in period 2026-11; KPI 01995000
+PASS  approve (30222 ms): C4 canDecide after 0 s; C5 drill-01995000-0000-7000-8000-000000000011 (rebound) decided G5 submission 1: deferred (decision 01a1e29f-bd32-729e-bb49-7a668d556b9a); C6 submission decided; waited 30 s for the worker; KPI evaluations read: 3
+PASS  exportq (27 ms): export 01a1e2a0-32bd-7339-8c38-d99d3ae26e46 queued
+PASS  exportwait (3055 ms): export 01a1e2a0-32bd-7339-8c38-d99d3ae26e46 succeeded after 3 s; 1731 bytes, SHA-256 equal
+# T-B17 measurement: {"schemaVersion":"mth-drill-d8-measurement/1","changed":{"app_user":{"added":0,"changed":4,"missing":0},"audit_event":{"added":177,"changed":0,"missing":0},"outbox_event":{"added":19,"changed":0,"missing":0},"processed_message":{"added":15,"changed":0,"missing":0},"scoped_assignment":{"added":1,"changed":0,"missing":0},"transformation":{"added":1,"changed":0,"missing":0},"auto
+▶ T-B17 the D8 lists of allowance.mjs are measured on a fixture installation (mode 2 exit 0, then 4)
+PASS  signin (41 ms): drill-01995000-0000-7000-8000-000000000012 -> user 01995000-0000-7000-8000-000000000012, roles [TL,TL,TL]
+FAIL  gatechain (74 ms): D8 FAIL: no API remedy for g5.performance_no_kpi at (no pointer)
+PASS  signin (85 ms): drill-01995000-0000-7000-8000-000000000012 -> user 01995000-0000-7000-8000-000000000012, roles [TL,TL]
+PASS  gatechain (4884 ms): C0 G5 missing [g5.performance_kpi_not_known, g5.performance_kpi_not_known, g5.performance_kpi_not_known, g5.performance_pilot_evidence_missing, g5.adoption_none, g5.decision_overdue]; C1 KPI 01995000-4102-7000-8000-000000000001 submitted (accepted) in period 2026-11; KPI 01995000-4102-7000-8000-000000000002 submitted (accepted) in period 2026-11; KPI 01995000-4102-7000-8
+T-DG7-DO-D8 real PostgreSQL: comm bash (the launching pid), 6 processes under it, td_stop_pg 0.26 s, total 1.531 s
+▶ T-B19 DO-D6's grant path on shipped data: seed-demo --as-of the first day of last month (no current period)
+▶ D-264 unexplained-tables.mjs: D9 names only the tables the mode 2 recheck could not explain
+▶ T-DG7-DO-D8 drill/cleanup.sh: bounded PostgreSQL shutdown; cleanup never changes the result
+ℹ tests 55
+ℹ suites 11
+ℹ pass 55
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 158916.502091
+exit=0
+== full pass list

@@ -1,0 +1,12 @@
+$ git show 471072d6:docs/delivery/progress.md | grep -n -i 'next action\|checkpoint' | head
+5:## Current checkpoint
+7:- **DG7 (P7 "Independent transfer and release") is entering round 4** (2026-11-16, D-276). Rounds 1–3 did not pass; round-3 findings 920, 921, 940, 960 repaired and FIXED_PENDING_VERIFICATION; pre-freeze checks all exit 0. **Next action:** freeze round 4, then domain, code-security and qa on the same candidate, then the release audit, then the A28 seal. Product gate G6 never implies DG7.
+158:- This file lagged the real state from W4 to D-267 (the same defect the A27 drill found at the DG6 checkpoint, K11). The current checkpoint above is now current; it is updated at every step change from here.
+$ git log --format='%h %ci %s' 471072d6..HEAD
+8d1ba28af 2026-11-16 04:20:12 +0000 run: DG7-T-DG7-REV-DOM-R4-domain-reviewer-20261116T035546Z-7a4f06b7 (review evidence, auto-committed by run-agent.sh)
+a76c2aed4 2026-11-16 03:55:37 +0000 DG7: freeze round 4
+$ git log -3 --format='%h %s' -- docs/delivery/runs | head
+471072d64 DG7: mark round-3 findings fixed, D-276, progress
+1fa349f01 DG7: round-4 pre-freeze checks (all pass) and regenerated handover texts
+449d66004 DG7: T-DG7-BE-R8 output (exit 0; orchestrator integration review pending)
+c3e2a77b8 DG7: T-DG7-AN-P7G output (exit 0; orchestrator integration review pending)

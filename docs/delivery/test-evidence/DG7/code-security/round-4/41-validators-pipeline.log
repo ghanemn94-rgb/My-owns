@@ -1,0 +1,23 @@
+# 2026-11-16T04:07:26Z pipeline/register validators, live repository read-only (HEAD a76c2aed4)
+== validate --pipeline
+FAIL pipeline (active stage: DG7 REVIEWING) (1 problem)
+  - stages.json: DG7 illegal transition REVIEWING -> REVIEWING
+exit=1
+== validate --register DG7
+PASS register rules at DG7
+exit=0
+== stages.json at the source commit (pre-freeze) vs HEAD: DG7 history tail
+-- 471072d6481a346c356e985d07b49721ebdda571
+state REVIEWING
+  FIXING 2026-11-15T09:54:25Z Round 1: domain FAIL (F-DG7-913 Medium mandatory, 914 Low), code-secur
+  REVIEWING 2026-11-15T14:20:34Z Round 2 frozen on candidate ca38b65e (D-273).
+  FIXING 2026-11-15T17:13:32Z Round 2: all six round-1 findings verified closed by all three; domain
+  REVIEWING 2026-11-15T22:34:02Z Round 3 frozen on sha256:60dd90b6 (D-275).
+-- HEAD
+state REVIEWING
+  REVIEWING 2026-11-15T14:20:34Z Round 2 frozen on candidate ca38b65e (D-273).
+  FIXING 2026-11-15T17:13:32Z Round 2: all six round-1 findings verified closed by all three; domain
+  REVIEWING 2026-11-15T22:34:02Z Round 3 frozen on sha256:60dd90b6 (D-275).
+  REVIEWING 2026-11-16T03:55:37Z Round 4 frozen on sha256:d91f7152 (D-276).
+== prefreeze-r4 historical.log (run before the freeze commit)
+PASS gate DG6 (historical)

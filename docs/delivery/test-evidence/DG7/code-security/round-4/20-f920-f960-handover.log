@@ -1,0 +1,50 @@
+# 2026-11-16T04:29:19Z handover disclosure checks for F-DG7-920/960 (Node v24.21.0, cwd $TMPDIR/rv at 471072d64, load 7.31 6.91 5.88)
+== register sha256 vs release notes
+ec2b526ad70351263cf4bbfb715456dab6157c5b1f5a8cf32021dc3f34856731  docs/delivery/requirements.csv
+9:- Requirement register: `docs/delivery/requirements.csv`, SHA-256 `ec2b526ad70351263cf4bbfb715456dab6157c5b1f5a8cf32021dc3f34856731`, 412 rows
+101:- سجل المتطلبات: 412 صفًا، SHA-256 `ec2b526ad703`
+== release-notes --check
+release-notes: 0 unfinished item(s), 23 later clause(s); docs/handover/release-notes.md is up to date
+exit=0
+== known-limitations --check against protocol-audit-r4
+known-limitations: PASS (docs/handover/known-limitations.md and docs/handover/external-dependencies.json are current)
+exit=0
+== check-handover (default and strict) with protocol-audit-r4
+  note: role-matrix.mjs: role-matrix: PASS (/var/tmp/mth-run.kcE1qq/claude-0/rv/docs/handover/role-matrix.md is current)
+  note: automation-jobs.mjs: automation-jobs: PASS (the job table of /var/tmp/mth-run.kcE1qq/claude-0/rv/docs/handover/automation-operations.md is current)
+  note: known-limitations: PASS (docs/handover/known-limitations.md and docs/handover/external-dependencies.json are current)
+check-handover: PASS (index PASS, deployment PASS, summaries PASS, security-links PASS, guides PASS, generated PASS; root .)
+exit=0
+  note: role-matrix.mjs: role-matrix: PASS (/var/tmp/mth-run.kcE1qq/claude-0/rv/docs/handover/role-matrix.md is current)
+  note: automation-jobs.mjs: automation-jobs: PASS (the job table of /var/tmp/mth-run.kcE1qq/claude-0/rv/docs/handover/automation-operations.md is current)
+  note: known-limitations: PASS (docs/handover/known-limitations.md and docs/handover/external-dependencies.json are current)
+check-handover: PASS (index PASS, deployment PASS, summaries PASS, security-links PASS, guides PASS, generated PASS; root .)
+exit=0
+== revert-to-fail: the round-3 release notes (git show 9c69cd117:docs/handover/release-notes.md) against this register
+release-notes: docs/handover/release-notes.md is out of date (run with --write)
+exit=1 (expected 1)
+== revert-to-fail: the round-3 known-limitations against protocol-audit-r4
+known-limitations: FAIL: docs/handover/known-limitations.md differ from the generated content; run node tools/release/known-limitations.mjs --protocol-audit <report> --write
+exit=1 (expected 1)
+== AN-P7G and BE-R8 handback headings (C3 sections)
+-- docs/delivery/handbacks/DG7/T-DG7-AN-P7G-transformation-analyst.md
+1:# Handback T-DG7-AN-P7G (transformation-analyst): register disclosure repairs for F-DG7-920, F-DG7-960 and F-DG7-921
+9:## 1. Files changed
+19:## 2. Behaviour per requirement
+21:### REQ-DLV-012 (F-DG7-920, F-DG7-960)
+62:### REQ-S19-017 (F-DG7-921)
+84:### REQ-S20-018 (F-DG7-921)
+90:### REQ-S01-006 (F-DG7-921)
+95:## 3. Checks run (Node v24.21.0, `MTH_PNPM_OFFLINE=1`, analyst sandbox, base 5458273cd)
+113:## 4. Known gaps and residual risks
+120:## 5. Merge instructions
+129:## 6. Open questions
+-- docs/delivery/handbacks/DG7/T-DG7-BE-R8-backend-workflow-engineer.md
+1:# Handback T-DG7-BE-R8 (backend-workflow-engineer): F-DG7-940 migration-export organization-scope tests
+11:## 1. Files changed
+21:## 2. Behaviour delivered (per requirement)
+54:## 3. Checks run (Node 24.21.0, `MTH_PNPM_OFFLINE=1`, PostgreSQL 16.15 disposable cluster from `tests/qa/support/with-pg.sh`)
+72:## 4. Merge instructions
+78:## 5. Known gaps / residual risks
+84:## 6. Open questions
+== final git status (must be clean)

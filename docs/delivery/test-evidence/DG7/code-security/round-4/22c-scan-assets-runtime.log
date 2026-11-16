@@ -1,0 +1,43 @@
+# 2026-11-16T04:33:08Z T-A11 unblock: assemble-runtime.sh (prunes $TMPDIR/rv in place; run last) then scan-assets on the built SPA + runtime + config, then the T-A11 test (Node v24.21.0, df 2.1G free)
+- typescript 6.0.2
+- typescript-eslint 8.71.0
+- vitest 3.2.7
+
+Done in 1.9s using pnpm v10.33.0
+runtime workspace packages: apps/api apps/worker packages/config packages/db packages/design-tokens packages/reporting packages/shared
+virtual store: 186 package directories, all in the shipped set (186 runtime+bundled)
+resolve: @mth/api: 18 dependencies resolve; ./dist/index.js imports
+resolve: @mth/worker: 9 dependencies resolve; ./dist/index.js imports
+resolve: @mth/config: 2 dependencies resolve; ./dist/index.js imports
+resolve: @mth/db: 5 dependencies resolve; ./dist/index.js imports
+resolve: @mth/design-tokens: 0 dependencies resolve; ./dist/index.js imports
+resolve: @mth/reporting: 9 dependencies resolve; ./dist/index.js imports
+resolve: @mth/shared: 2 dependencies resolve; ./dist/index.js imports
+assemble-runtime: OK 186 packages, 205M -> /var/tmp/mth-run.kcE1qq/claude-0/rt
+exit=0
+205M	/var/tmp/mth-run.kcE1qq/claude-0/rt
+== scan-assets
+T3 R2 @aws-sdk/client-s3@3.1156.0 runtime/node_modules/.pnpm/@aws-sdk+client-s3@3.1156.0/node_modules/@aws-sdk/client-s3/dist-types/commands/UploadPartCommand.d.ts:56:  *     <i>Amazon S3 [R2:User…] Guide</i>.</p>
+T3 R2 @aws-sdk/client-s3@3.1156.0 runtime/node_modules/.pnpm/@aws-sdk+client-s3@3.1156.0/node_modules/@aws-sdk/client-s3/dist-types/commands/UploadPartCommand.d.ts:74: h KMS</a> in the <i>Amazon S3 [R2:User…] Guide</i>. For information
+T3 R2 @aws-sdk/client-s3@3.1156.0 runtime/node_modules/.pnpm/@aws-sdk+client-s3@3.1156.0/node_modules/@aws-sdk/client-s3/dist-types/commands/UploadPartCommand.d.ts:77: sions</a> in the <i>Amazon S3 [R2:User…] Guide</i>.</p>
+T3 R2 @aws-sdk/client-s3@3.1156.0 runtime/node_modules/.pnpm/@aws-sdk+client-s3@3.1156.0/node_modules/@aws-sdk/client-s3/dist-types/commands/UploadPartCommand.d.ts:146: ption</a> in the <i>Amazon S3 [R2:User…] Guide</i>.</p>
+T3 R2 @aws-sdk/client-s3@3.1156.0 runtime/node_modules/.pnpm/@aws-sdk+client-s3@3.1156.0/node_modules/@aws-sdk/client-s3/dist-types/commands/UploadPartCopyCommand.d.ts:32: imits</a> in the <i>Amazon S3 [R2:User…] Guide</i>. </p>
+T3 R2 @aws-sdk/client-s3@3.1156.0 runtime/node_modules/.pnpm/@aws-sdk+client-s3@3.1156.0/node_modules/@aws-sdk/client-s3/dist-types/commands/UploadPartCopyCommand.d.ts:41:  *       the <i>Amazon S3 [R2:User…] Guide</i>. For information ab
+T3 R2 @aws-sdk/client-s3@3.1156.0 runtime/node_modules/.pnpm/@aws-sdk+client-s3@3.1156.0/node_modules/@aws-sdk/client-s3/dist-types/commands/UploadPartCopyCommand.d.ts:43:  *         <i>Amazon S3 [R2:User…] Guide</i>.</p>
+T3 R2 @aws-sdk/client-s3@3.1156.0 runtime/node_modules/.pnpm/@aws-sdk+client-s3@3.1156.0/node_modules/@aws-sdk/client-s3/dist-types/commands/UploadPartCopyCommand.d.ts:48:  *     <i>Amazon S3 [R2:User…] Guide</i>. For more informati
+exit=1
+== T-A11 via the shipped test
+✖ T-A11 the real built SPA, runtime tree and configuration scan exits 0 (29088.163247ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 29236.918281
+✖ failing tests:
+✖ T-A11 the real built SPA, runtime tree and configuration scan exits 0 (29088.163247ms)
+  T2 R2 deploy/scripts/drill/journey.mjs:46: led; 2 BLOCKED (usage). Every [R2:user…] and value is SYNTHETIC; nothi
+exit=1
+# end 2026-11-16T04:34:21Z

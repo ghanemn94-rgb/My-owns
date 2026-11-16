@@ -1,0 +1,45 @@
+$ node tools/gates/validate.mjs --stage DG7 (expected to fail before the gate record exists; looking for the stages.json line)
+FAIL gate DG7 (current) (2 problems)
+  - stages.json: DG7 illegal transition REVIEWING -> REVIEWING
+  - gate DG7: file not found (docs/delivery/gates/DG7.json)
+exit=1
+$ git show a76c2aed4 -- docs/delivery/stages.json (history hunk)
+--- a/docs/delivery/stages.json
++++ b/docs/delivery/stages.json
+-        "candidate_id": "sha256:60dd90b6c5a7af3b502f02be68e6b601fd11e90fcbc0a48166cbc389453a80e9",
+-        "source_commit": "8323dacae51a98c8f555fb95d8e1dd0a1e747ea8",
+-        "frozen_at": "2026-11-15T22:34:02Z",
+-        "manifest_path": "docs/delivery/candidates/DG7/60dd90b6c5a7af3b.manifest.json"
++        "candidate_id": "sha256:d91f7152950ed7119b412db0135836c53a3f01e95300af32c86db367f0712e59",
++        "source_commit": "471072d6481a346c356e985d07b49721ebdda571",
++        "frozen_at": "2026-11-16T03:55:37Z",
++        "manifest_path": "docs/delivery/candidates/DG7/d91f7152950ed711.manifest.json"
++        },
++        {
++          "round": 4,
++          "candidate_id": "sha256:d91f7152950ed7119b412db0135836c53a3f01e95300af32c86db367f0712e59",
++          "frozen_at": "2026-11-16T03:55:37Z",
++          "source_commit": "471072d6481a346c356e985d07b49721ebdda571",
++          "records": {
++            "domain-reviewer": "docs/delivery/reviews/DG7/round-4/domain-reviewer.json",
++            "code-security-reviewer": "docs/delivery/reviews/DG7/round-4/code-security-reviewer.json",
++            "qa-verifier": "docs/delivery/reviews/DG7/round-4/qa-verifier.json"
++          },
++          "note": "DG7 round 4: domain, code-security, qa; verify F-DG7-920/921/940/960."
++        },
++        {
++          "state": "REVIEWING",
++          "at": "2026-11-16T03:55:37Z",
++          "note": "Round 4 frozen on sha256:d91f7152 (D-276)."
+$ TRANSITIONS (tools/gates/lib/rules.mjs)
+const PROCESS_SANDBOX_EVIDENCE = { "domain-reviewer": "domain", "code-security-reviewer": "code-security", "qa-verifier": "qa", "release-auditor": "audit" };
+export const TRANSITIONS = {
+  PLANNED: ["BUILDING", "BLOCKED"],
+  BUILDING: ["REVIEWING", "BLOCKED"],
+  REVIEWING: ["FIXING", "VERIFYING", "BLOCKED"],
+  FIXING: ["REVIEWING", "VERIFYING", "BLOCKED"],
+  VERIFYING: ["APPROVED", "FIXING", "BLOCKED"],
+  APPROVED: ["FIXING"], // reopening an approved scope keeps its history
+  BLOCKED: ["PLANNED", "BUILDING", "REVIEWING", "FIXING", "VERIFYING"],
+};
+export const REGISTER_COLUMNS = [

@@ -1,0 +1,26 @@
+$ node tools/release/protocol-audit.mjs --all --json docs/delivery/test-evidence/DG7/qa/round-4/f960/protocol-audit-all.json
+  C3 handback-sections    DG0          PASS
+  C3 handback-sections    DG1          PASS
+  C3 handback-sections    DG2          HIT 8 hit(s): handback-missing-sections
+  C3 handback-sections    DG3          HIT 3 hit(s): handback-missing-sections
+  C3 handback-sections    DG4          HIT 4 hit(s): handback-missing-sections
+  C3 handback-sections    DG5          HIT 20 hit(s): handback-missing-sections
+  C3 handback-sections    DG6          HIT 13 hit(s): handback-missing-sections
+  C3 handback-sections    DG7          HIT 7 hit(s): handback-missing-sections
+FAIL (exit 1): 281 hit(s) in 29 check(s), 0 blocked, 36 pass
+exit=1
+$ node tools/release/known-limitations.mjs --protocol-audit docs/delivery/test-evidence/DG7/qa/round-4/f960/protocol-audit-all.json --check
+known-limitations: FAIL: docs/handover/known-limitations.md differ from the generated content; run node tools/release/known-limitations.mjs --protocol-audit <report> --write
+exit=1
+$ node tools/release/check-handover.mjs --protocol-audit docs/delivery/test-evidence/DG7/qa/round-4/f960/protocol-audit-all.json
+  FAIL: known-limitations: FAIL: docs/handover/known-limitations.md differ from the generated content; run node tools/release/known-limitations.mjs --protocol-audit <report> --write
+  note: role-matrix.mjs: role-matrix: PASS (/home/user/My-owns/docs/handover/role-matrix.md is current)
+  note: automation-jobs.mjs: automation-jobs: PASS (the job table of /home/user/My-owns/docs/handover/automation-operations.md is current)
+check-handover: FAIL (index PASS, deployment PASS, summaries PASS, security-links PASS, guides PASS, generated FAIL; root .)
+exit=1
+$ node tools/release/release-notes.mjs --csv docs/delivery/requirements.csv --deps docs/handover/external-dependencies.json --provisional apps/web/src/i18n --out docs/handover/release-notes.md --check
+release-notes: 0 unfinished item(s), 23 later clause(s); docs/handover/release-notes.md is up to date
+exit=0
+$ cmp orchestrator protocol-audit-r4 C3 vs mine
+differences (mine vs orchestrator r4): {}
+DG7 mine: {('C1', 'DG7'): 0, ('C2', 'DG7'): 27, ('C3', 'DG7'): 7, ('C4', 'DG7'): 0, ('C5', 'DG7'): 1, ('C6', 'DG7'): 0, ('C7', 'DG7'): 0, ('C9', 'DG7'): 0}

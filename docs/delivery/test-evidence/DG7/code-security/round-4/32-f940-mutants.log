@@ -1,0 +1,132 @@
+# 2026-11-16T04:00:25Z F-DG7-940 mutants (Node v24.21.0, cwd $TMPDIR/rv at 471072d64, load 4.02 2.88 2.00)
+9f16aeb79d30314ee5cc250e6a43a62101e384d544c035e873fe1edd3957bf06  apps/api/src/modules/transfer/export/service.ts
+1fdc2025f900eb001b920079a5fa78a7fbb1a82f17d04150615e88b46170df65  apps/api/src/modules/transfer/export/routes.ts
+== R0 controls (unmodified tree): export-scope.test.ts + export.test.ts
+ ✓ |integration| apps/api/test/integration/transfer/export.test.ts (10 tests) 5351ms
+   ✓ T-C6: the migration-export routes and the transfer.export job > the job waits on lock 730402, then runs once: running -> succeeded, one audit event per transition  1317ms
+   ✓ T-C6: the migration-export routes and the transfer.export job > the same Idempotency-Key returns the existing request with 200; a failed export is 422 on both manifests  340ms
+ ✓ |integration| apps/api/test/integration/transfer/export-scope.test.ts (4 tests) 3964ms
+ Test Files  2 passed (2)
+      Tests  14 passed (14)
+exit=0
+== M4 requireExportRight: scoped authorize() removed
+-    if ((await authorize(db, principal, MIGRATION_EXPORT, { type: "organization", id: organizationId })).allowed)
+-      return organizationId;
++    return organizationId;
+ ❯ |integration| apps/api/test/integration/transfer/export-scope.test.ts (4 tests | 3 failed) 4200ms
+   ✓ F-DG7-940: a narrower-scope ADM_TECH never reaches the installation-wide migration export > control: ADM_TECH at organization scope reads the list, the export and both manifests (200) 68ms
+   × F-DG7-940: a narrower-scope ADM_TECH never reaches the installation-wide migration export > ADM_TECH @ business_unit: 403 on all five operations; no migration_export row, outbox event or audit event 56ms
+     → ADM_TECH @ business_unit: expected [ …(6) ] to deeply equal [ …(6) ]
+   × F-DG7-940: a narrower-scope ADM_TECH never reaches the installation-wide migration export > ADM_TECH @ transformation: 403 on all five operations; no migration_export row, outbox event or audit event 46ms
+     → ADM_TECH @ transformation: expected [ …(6) ] to deeply equal [ …(6) ]
+   × F-DG7-940: a narrower-scope ADM_TECH never reaches the installation-wide migration export > neither narrower-scope principal wrote anything to the audit trail but its own sign-in 2ms
+     → expected [ 'session.create', …(2) ] to deeply equal [ 'session.create', 'session.create' ]
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  |integration| apps/api/test/integration/transfer/export-scope.test.ts > F-DG7-940: a narrower-scope ADM_TECH never reaches the installation-wide migration export > ADM_TECH @ business_unit: 403 on all five operations; no migration_export row, outbox event or audit event
+AssertionError: ADM_TECH @ business_unit: expected [ …(6) ] to deeply equal [ …(6) ]
+ ❯ apps/api/test/integration/transfer/export-scope.test.ts:169:31
+ FAIL  |integration| apps/api/test/integration/transfer/export-scope.test.ts > F-DG7-940: a narrower-scope ADM_TECH never reaches the installation-wide migration export > ADM_TECH @ transformation: 403 on all five operations; no migration_export row, outbox event or audit event
+AssertionError: ADM_TECH @ transformation: expected [ …(6) ] to deeply equal [ …(6) ]
+ ❯ apps/api/test/integration/transfer/export-scope.test.ts:169:31
+ FAIL  |integration| apps/api/test/integration/transfer/export-scope.test.ts > F-DG7-940: a narrower-scope ADM_TECH never reaches the installation-wide migration export > neither narrower-scope principal wrote anything to the audit trail but its own sign-in
+AssertionError: expected [ 'session.create', …(2) ] to deeply equal [ 'session.create', 'session.create' ]
+ ❯ apps/api/test/integration/transfer/export-scope.test.ts:184:56
+ Test Files  1 failed (1)
+      Tests  3 failed | 1 passed (4)
+exit=1
+== M6 list route: requireExportRight dropped
+-    await requireExportRight(deps.db, principalOf(request));
+ ❯ |integration| apps/api/test/integration/transfer/export-scope.test.ts (4 tests | 3 failed) 4186ms
+   × F-DG7-940: a narrower-scope ADM_TECH never reaches the installation-wide migration export > control: ADM_TECH at organization scope reads the list, the export and both manifests (200) 14ms
+   × F-DG7-940: a narrower-scope ADM_TECH never reaches the installation-wide migration export > ADM_TECH @ business_unit: 403 on all five operations; no migration_export row, outbox event or audit event 15ms
+   × F-DG7-940: a narrower-scope ADM_TECH never reaches the installation-wide migration export > ADM_TECH @ transformation: 403 on all five operations; no migration_export row, outbox event or audit event 6ms
+   ✓ F-DG7-940: a narrower-scope ADM_TECH never reaches the installation-wide migration export > neither narrower-scope principal wrote anything to the audit trail but its own sign-in 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  |integration| apps/api/test/integration/transfer/export-scope.test.ts > F-DG7-940: a narrower-scope ADM_TECH never reaches the installation-wide migration export > control: ADM_TECH at organization scope reads the list, the export and both manifests (200)
+Error: contract: listMigrationExports does not declare status 500 (declared: 200, 400, 401, 403, 429); body: {"type":"urn:mth:problem:internal","title":"Internal error","status":500,"code":"internal","requestId":"01a1e284-96a7-7159-9992-a94be1a521e8"}
+ ❯ assertContract apps/api/test/support/contract.ts:121:11
+    121|     throw new Error(
+ ❯ call apps/api/test/support/harness.ts:188:5
+ ❯ apps/api/test/integration/transfer/export-scope.test.ts:130:19
+ FAIL  |integration| apps/api/test/integration/transfer/export-scope.test.ts > F-DG7-940: a narrower-scope ADM_TECH never reaches the installation-wide migration export > ADM_TECH @ business_unit: 403 on all five operations; no migration_export row, outbox event or audit event
+Error: contract: listMigrationExports does not declare status 500 (declared: 200, 400, 401, 403, 429); body: {"type":"urn:mth:problem:internal","title":"Internal error","status":500,"code":"internal","requestId":"01a1e284-96be-7375-b795-83332d47a22f"}
+ ❯ assertContract apps/api/test/support/contract.ts:121:11
+    121|     throw new Error(
+ ❯ call apps/api/test/support/harness.ts:188:5
+ ❯ apps/api/test/integration/transfer/export-scope.test.ts:164:21
+ FAIL  |integration| apps/api/test/integration/transfer/export-scope.test.ts > F-DG7-940: a narrower-scope ADM_TECH never reaches the installation-wide migration export > ADM_TECH @ transformation: 403 on all five operations; no migration_export row, outbox event or audit event
+Error: contract: listMigrationExports does not declare status 500 (declared: 200, 400, 401, 403, 429); body: {"type":"urn:mth:problem:internal","title":"Internal error","status":500,"code":"internal","requestId":"01a1e284-96c5-76c9-8b92-001ae632a958"}
+ ❯ assertContract apps/api/test/support/contract.ts:121:11
+    121|     throw new Error(
+ ❯ call apps/api/test/support/harness.ts:188:5
+ ❯ apps/api/test/integration/transfer/export-scope.test.ts:164:21
+ Test Files  1 failed (1)
+      Tests  3 failed | 1 passed (4)
+exit=1
+== M7 get route: requireExportRight dropped
+-    await requireExportRight(deps.db, principalOf(request));
+ ❯ |integration| apps/api/test/integration/transfer/export-scope.test.ts (4 tests | 3 failed) 4486ms
+   × F-DG7-940: a narrower-scope ADM_TECH never reaches the installation-wide migration export > control: ADM_TECH at organization scope reads the list, the export and both manifests (200) 33ms
+   × F-DG7-940: a narrower-scope ADM_TECH never reaches the installation-wide migration export > ADM_TECH @ business_unit: 403 on all five operations; no migration_export row, outbox event or audit event 49ms
+   × F-DG7-940: a narrower-scope ADM_TECH never reaches the installation-wide migration export > ADM_TECH @ transformation: 403 on all five operations; no migration_export row, outbox event or audit event 16ms
+   ✓ F-DG7-940: a narrower-scope ADM_TECH never reaches the installation-wide migration export > neither narrower-scope principal wrote anything to the audit trail but its own sign-in 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  |integration| apps/api/test/integration/transfer/export-scope.test.ts > F-DG7-940: a narrower-scope ADM_TECH never reaches the installation-wide migration export > control: ADM_TECH at organization scope reads the list, the export and both manifests (200)
+Error: contract: getMigrationExport does not declare status 500 (declared: 200, 400, 401, 403, 404, 429); body: {"type":"urn:mth:problem:internal","title":"Internal error","status":500,"code":"internal","requestId":"01a1e284-eb17-76c1-be33-8bb784b54094"}
+ ❯ assertContract apps/api/test/support/contract.ts:121:11
+    121|     throw new Error(
+ ❯ call apps/api/test/support/harness.ts:188:5
+ ❯ apps/api/test/integration/transfer/export-scope.test.ts:130:19
+ FAIL  |integration| apps/api/test/integration/transfer/export-scope.test.ts > F-DG7-940: a narrower-scope ADM_TECH never reaches the installation-wide migration export > ADM_TECH @ business_unit: 403 on all five operations; no migration_export row, outbox event or audit event
+Error: contract: getMigrationExport does not declare status 500 (declared: 200, 400, 401, 403, 404, 429); body: {"type":"urn:mth:problem:internal","title":"Internal error","status":500,"code":"internal","requestId":"01a1e284-eb55-748f-ae76-860e6b2c3b9c"}
+ ❯ assertContract apps/api/test/support/contract.ts:121:11
+    121|     throw new Error(
+ ❯ call apps/api/test/support/harness.ts:188:5
+ ❯ apps/api/test/integration/transfer/export-scope.test.ts:164:21
+ FAIL  |integration| apps/api/test/integration/transfer/export-scope.test.ts > F-DG7-940: a narrower-scope ADM_TECH never reaches the installation-wide migration export > ADM_TECH @ transformation: 403 on all five operations; no migration_export row, outbox event or audit event
+Error: contract: getMigrationExport does not declare status 500 (declared: 200, 400, 401, 403, 404, 429); body: {"type":"urn:mth:problem:internal","title":"Internal error","status":500,"code":"internal","requestId":"01a1e284-eb66-76ed-8117-a1174f26592d"}
+ ❯ assertContract apps/api/test/support/contract.ts:121:11
+    121|     throw new Error(
+ ❯ call apps/api/test/support/harness.ts:188:5
+ ❯ apps/api/test/integration/transfer/export-scope.test.ts:164:21
+ Test Files  1 failed (1)
+      Tests  3 failed | 1 passed (4)
+exit=1
+== M8 manifest downloads: requireExportRight dropped
+-    await requireExportRight(deps.db, principalOf(request));
+ ❯ |integration| apps/api/test/integration/transfer/export-scope.test.ts (4 tests | 3 failed) 4251ms
+   × F-DG7-940: a narrower-scope ADM_TECH never reaches the installation-wide migration export > control: ADM_TECH at organization scope reads the list, the export and both manifests (200) 49ms
+   × F-DG7-940: a narrower-scope ADM_TECH never reaches the installation-wide migration export > ADM_TECH @ business_unit: 403 on all five operations; no migration_export row, outbox event or audit event 48ms
+   × F-DG7-940: a narrower-scope ADM_TECH never reaches the installation-wide migration export > ADM_TECH @ transformation: 403 on all five operations; no migration_export row, outbox event or audit event 20ms
+   ✓ F-DG7-940: a narrower-scope ADM_TECH never reaches the installation-wide migration export > neither narrower-scope principal wrote anything to the audit trail but its own sign-in 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  |integration| apps/api/test/integration/transfer/export-scope.test.ts > F-DG7-940: a narrower-scope ADM_TECH never reaches the installation-wide migration export > control: ADM_TECH at organization scope reads the list, the export and both manifests (200)
+Error: contract: downloadMigrationExportManifest does not declare status 500 (declared: 200, 400, 401, 403, 404, 409, 422, 429); body: {"type":"urn:mth:problem:internal","title":"Internal error","status":500,"code":"internal","requestId":"01a1e285-4e6b-736b-ae70-195b8a9f0518"}
+ ❯ assertContract apps/api/test/support/contract.ts:121:11
+    121|     throw new Error(
+ ❯ call apps/api/test/support/harness.ts:188:5
+ ❯ apps/api/test/integration/transfer/export-scope.test.ts:130:19
+ FAIL  |integration| apps/api/test/integration/transfer/export-scope.test.ts > F-DG7-940: a narrower-scope ADM_TECH never reaches the installation-wide migration export > ADM_TECH @ business_unit: 403 on all five operations; no migration_export row, outbox event or audit event
+Error: contract: downloadMigrationExportManifest does not declare status 500 (declared: 200, 400, 401, 403, 404, 409, 422, 429); body: {"type":"urn:mth:problem:internal","title":"Internal error","status":500,"code":"internal","requestId":"01a1e285-4ea3-7687-b1f8-23a4aa5d1bd2"}
+ ❯ assertContract apps/api/test/support/contract.ts:121:11
+    121|     throw new Error(
+ ❯ call apps/api/test/support/harness.ts:188:5
+ ❯ apps/api/test/integration/transfer/export-scope.test.ts:164:21
+ FAIL  |integration| apps/api/test/integration/transfer/export-scope.test.ts > F-DG7-940: a narrower-scope ADM_TECH never reaches the installation-wide migration export > ADM_TECH @ transformation: 403 on all five operations; no migration_export row, outbox event or audit event
+Error: contract: downloadMigrationExportManifest does not declare status 500 (declared: 200, 400, 401, 403, 404, 409, 422, 429); body: {"type":"urn:mth:problem:internal","title":"Internal error","status":500,"code":"internal","requestId":"01a1e285-4eb6-737b-9004-413ac14033c6"}
+ ❯ assertContract apps/api/test/support/contract.ts:121:11
+    121|     throw new Error(
+ ❯ call apps/api/test/support/harness.ts:188:5
+ ❯ apps/api/test/integration/transfer/export-scope.test.ts:164:21
+ Test Files  1 failed (1)
+      Tests  3 failed | 1 passed (4)
+exit=1
+== M9 create route pre-check dropped (in-transaction re-check remains; expected survivor)
+-    await requireExportRight(deps.db, principal);
+ ✓ |integration| apps/api/test/integration/transfer/export-scope.test.ts (4 tests) 5418ms
+ Test Files  1 passed (1)
+      Tests  4 passed (4)
+exit=0
+== restore check
+sources restored byte-equal
+# end 2026-11-16T04:02:57Z

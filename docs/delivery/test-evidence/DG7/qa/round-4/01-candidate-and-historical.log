@@ -1,0 +1,39 @@
+$ git rev-parse HEAD
+a76c2aed45cc7e68c07bf150d0494963f9756342
+$ (clone @471072d6) node tools/gates/candidate.mjs --stage DG7
+{"stage":"DG7","source":"working-tree","candidate_id":"sha256:d91f7152950ed7119b412db0135836c53a3f01e95300af32c86db367f0712e59","files":3155}
+exit=0
+$ node tools/gates/candidate.mjs --stage DG7 --diff docs/delivery/candidates/DG7/d91f7152950ed711.manifest.json
+    "docs/delivery/requirements.csv",
+    "docs/handover/known-limitations.md",
+    "docs/handover/release-notes.md"
+  ]
+}
+exit=1
+$ (HEAD tree) node tools/gates/candidate.mjs --stage DG7
+{"stage":"DG7","source":"working-tree","candidate_id":"sha256:d91f7152950ed7119b412db0135836c53a3f01e95300af32c86db367f0712e59","files":3155}
+exit=0
+$ node tools/gates/validate.mjs --historical --stage DG6
+FAIL gate DG6 (historical) (1 problem)
+  - stages.json: DG7 illegal transition REVIEWING -> REVIEWING
+exit=1
+$ node tools/gates/validate.mjs --historical --stage DG5
+FAIL gate DG5 (historical) (1 problem)
+  - stages.json: DG7 illegal transition REVIEWING -> REVIEWING
+exit=1
+$ node tools/gates/validate.mjs --historical --stage DG4
+FAIL gate DG4 (historical) (1 problem)
+  - stages.json: DG7 illegal transition REVIEWING -> REVIEWING
+exit=1
+$ node tools/gates/validate.mjs --historical --stage DG3
+FAIL gate DG3 (historical) (1 problem)
+  - stages.json: DG7 illegal transition REVIEWING -> REVIEWING
+exit=1
+$ node tools/gates/validate.mjs --historical --stage DG2
+FAIL gate DG2 (historical) (1 problem)
+  - stages.json: DG7 illegal transition REVIEWING -> REVIEWING
+exit=1
+$ node tools/gates/validate.mjs --historical --stage DG1
+FAIL gate DG1 (historical) (1 problem)
+  - stages.json: DG7 illegal transition REVIEWING -> REVIEWING
+exit=1

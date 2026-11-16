@@ -1,0 +1,27 @@
+$ git diff --stat d162115e5 471072d6 -- apps/api/src apps/worker/src packages/*/src packages/*/migrations packages/db/migrations deploy/docker deploy/compose
+exit=0
+$ git diff --stat 8323dac 471072d6 -- apps packages deploy tools tests e2e (product + tooling since round 3)
+ .../test/integration/transfer/export-scope.test.ts | 186 +++++++++++++++++++++
+ 1 file changed, 186 insertions(+)
+$ ls host
+00-env.log
+01-pull.log
+host-run-1-image-build-failed.log
+host-run-2-bundle-names-lost.log
+host-run-3b.log
+host-run-3c.log
+host-run.log
+image-build-probe.diff
+image-build-probe.log
+keycloak-e2e-stack.log
+no-egress-stack.log
+$ grep exit lines host-run-3c.log
+17:### b00 exit=0 seconds=3
+76:### b05 exit=0 seconds=31
+93:### b06 exit=0 seconds=2
+103:  4 passed (10.3s)
+109:### b07 exit=0 seconds=12
+137:### b08 exit=0 seconds=2
+$ docker info
+Client: Docker Engine - Community
+ Version:    29.9.2

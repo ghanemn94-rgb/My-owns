@@ -1,0 +1,41 @@
+# clone 471072d6481a346c356e985d07b49721ebdda571 2026-11-16T04:00:44Z
+## protocol-audit --stage DG7 (clone at source commit)
+protocol-audit 1.0.0 stages=DG7 head=471072d6481a346c356e985d07b49721ebdda571 git-history=true
+  C1 concurrency          DG7          PASS
+  C2 assignment-contract  DG7          HIT 27 hit(s): assignment-missing-elements
+  C3 handback-sections    DG7          HIT 7 hit(s): handback-missing-sections
+  C4 file-ownership       DG7          PASS
+  C5 historical-first     DG7          HIT 1 hit(s): historical-evidence-not-before-first-implementation
+  C6 progress-updates     DG7          PASS
+  C7 three-failed-fixes   DG7          PASS
+  C8 approval-claims      all-selected PASS
+  C9 stage-continuation   DG7          PASS
+FAIL (exit 1): 35 hit(s) in 3 check(s), 0 blocked, 6 pass
+exit=1
+## release-notes --check
+release-notes: BLOCKED: --csv and --out are required
+exit=2
+## known-limitations --check
+known-limitations: BLOCKED: --protocol-audit <report.json> is required
+usage: node tools/release/known-limitations.mjs --protocol-audit <report.json> [--root <dir>] [--environment <file>] [--guide <file>] [--deps <file>] [--review <file>] (--check | --write)
+exit=2
+## sha256 register
+ec2b526ad70351263cf4bbfb715456dab6157c5b1f5a8cf32021dc3f34856731  docs/delivery/requirements.csv
+9:- Requirement register: `docs/delivery/requirements.csv`, SHA-256 `ec2b526ad70351263cf4bbfb715456dab6157c5b1f5a8cf32021dc3f34856731`, 412 rows
+101:- سجل المتطلبات: 412 صفًا، SHA-256 `ec2b526ad703`
+## release-notes --check (prefreeze args)
+release-notes: 0 unfinished item(s), 23 later clause(s); docs/handover/release-notes.md is up to date
+exit=0
+## known-limitations --check with orchestrator report protocol-audit-r4.json
+known-limitations: PASS (docs/handover/known-limitations.md and docs/handover/external-dependencies.json are current)
+exit=0
+## check-handover
+check-handover: generated: PASS
+  note: role-matrix.mjs: role-matrix: PASS (/var/tmp/mth-run.JujUOA/claude-0/review-dom/docs/handover/role-matrix.md is current)
+  note: automation-jobs.mjs: automation-jobs: PASS (the job table of /var/tmp/mth-run.JujUOA/claude-0/review-dom/docs/handover/automation-operations.md is current)
+  note: known-limitations: PASS (docs/handover/known-limitations.md and docs/handover/external-dependencies.json are current)
+check-handover: PASS (index PASS, deployment PASS, summaries PASS, security-links PASS, guides PASS, generated PASS; root .)
+exit=0
+## C3 count in orchestrator protocol-audit-r4.json
+head 449d6600481e5596d7b3fa3ebebd70fd392d1885
+DG7 C3 HIT 7 ['T-DG7-AN-P7B-transformation-analyst.md', 'T-DG7-ARCH-R2-solution-architect.md', 'T-DG7-ARCH-R5-solution-architect.md', 'T-DG7-BE-R5-backend-workflow-engineer.md', 'T-DG7-DO-A2-devops-engineer.md', 'T-DG7-DO-D8-devops-engineer.md', 'T-DG7-FE-C3-frontend-ux-engineer.md']

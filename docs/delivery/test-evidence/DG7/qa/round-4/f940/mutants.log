@@ -1,0 +1,87 @@
+port-policy: PostgreSQL listening on port 32530 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+=== M0-unmodified 04:20:45
+ ✓ |integration| apps/api/test/integration/transfer/export.test.ts > T-C6: the migration-export routes and the transfer.export job > the lock constants equal the registry's migrationExport (730402) 2ms
+ ✓ |integration| apps/api/test/integration/transfer/export.test.ts > T-C6: the migration-export routes and the transfer.export job > validates the request: 400 without a reason, with a short one, or with an unknown field 36ms
+ ✓ |integration| apps/api/test/integration/transfer/export.test.ts > T-C6: the migration-export routes and the transfer.export job > ADM_TECH requests an export: 202 queued, Location, ETag, audit migration_export.requested, the outbox event 38ms
+ ✓ |integration| apps/api/test/integration/transfer/export.test.ts > T-C6: the migration-export routes and the transfer.export job > refuses a second request while one is queued (422 migration.export_in_progress) and the manifests before it ran (409) 34ms
+ ✓ |integration| apps/api/test/integration/transfer/export.test.ts > T-C6: the migration-export routes and the transfer.export job > every role but ADM_TECH (AUD included) and a user without grants gets 403 on all five operations 233ms
+ ✓ |integration| apps/api/test/integration/transfer/export.test.ts > T-C6: the migration-export routes and the transfer.export job > the job waits on lock 730402, then runs once: running -> succeeded, one audit event per transition 1138ms
+ ✓ |integration| apps/api/test/integration/transfer/export.test.ts > T-C6: the migration-export routes and the transfer.export job > getMigrationExport and listMigrationExports show the counts and checksums, never a row value 47ms
+ ✓ |integration| apps/api/test/integration/transfer/export.test.ts > T-C6: the migration-export routes and the transfer.export job > the two manifest downloads: attachment, ETag = SHA-256, the stored bytes, no row data 66ms
+ ✓ |integration| apps/api/test/integration/transfer/export.test.ts > T-C6: the migration-export routes and the transfer.export job > the same Idempotency-Key returns the existing request with 200; a failed export is 422 on both manifests 374ms
+ ✓ |integration| apps/api/test/integration/transfer/export.test.ts > T-C6: the migration-export routes and the transfer.export job > no response of this suite contains a row value 3ms
+ ✓ |integration| apps/api/test/integration/transfer/export-scope.test.ts > F-DG7-940: a narrower-scope ADM_TECH never reaches the installation-wide migration export > control: ADM_TECH at organization scope reads the list, the export and both manifests (200) 70ms
+ ✓ |integration| apps/api/test/integration/transfer/export-scope.test.ts > F-DG7-940: a narrower-scope ADM_TECH never reaches the installation-wide migration export > ADM_TECH @ business_unit: 403 on all five operations; no migration_export row, outbox event or audit event 48ms
+ ✓ |integration| apps/api/test/integration/transfer/export-scope.test.ts > F-DG7-940: a narrower-scope ADM_TECH never reaches the installation-wide migration export > ADM_TECH @ transformation: 403 on all five operations; no migration_export row, outbox event or audit event 26ms
+ ✓ |integration| apps/api/test/integration/transfer/export-scope.test.ts > F-DG7-940: a narrower-scope ADM_TECH never reaches the installation-wide migration export > neither narrower-scope principal wrote anything to the audit trail but its own sign-in 1ms
+ Test Files  2 passed (2)
+      Tests  14 passed (14)
+=== M0-unmodified vitest exit 0
+=== M4-no-scoped-authorize 04:21:10
+ apps/api/src/modules/transfer/export/service.ts | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+-    if ((await authorize(db, principal, MIGRATION_EXPORT, { type: "organization", id: organizationId })).allowed)
+-      return organizationId;
++    return organizationId;
+ ✓ |integration| apps/api/test/integration/transfer/export.test.ts > T-C6: the migration-export routes and the transfer.export job > the lock constants equal the registry's migrationExport (730402) 2ms
+ ✓ |integration| apps/api/test/integration/transfer/export.test.ts > T-C6: the migration-export routes and the transfer.export job > validates the request: 400 without a reason, with a short one, or with an unknown field 29ms
+ ✓ |integration| apps/api/test/integration/transfer/export.test.ts > T-C6: the migration-export routes and the transfer.export job > ADM_TECH requests an export: 202 queued, Location, ETag, audit migration_export.requested, the outbox event 39ms
+ ✓ |integration| apps/api/test/integration/transfer/export.test.ts > T-C6: the migration-export routes and the transfer.export job > refuses a second request while one is queued (422 migration.export_in_progress) and the manifests before it ran (409) 34ms
+ ✓ |integration| apps/api/test/integration/transfer/export.test.ts > T-C6: the migration-export routes and the transfer.export job > every role but ADM_TECH (AUD included) and a user without grants gets 403 on all five operations 232ms
+ ✓ |integration| apps/api/test/integration/transfer/export.test.ts > T-C6: the migration-export routes and the transfer.export job > the job waits on lock 730402, then runs once: running -> succeeded, one audit event per transition 1211ms
+ ✓ |integration| apps/api/test/integration/transfer/export.test.ts > T-C6: the migration-export routes and the transfer.export job > getMigrationExport and listMigrationExports show the counts and checksums, never a row value 40ms
+ ✓ |integration| apps/api/test/integration/transfer/export.test.ts > T-C6: the migration-export routes and the transfer.export job > the two manifest downloads: attachment, ETag = SHA-256, the stored bytes, no row data 50ms
+ ✓ |integration| apps/api/test/integration/transfer/export.test.ts > T-C6: the migration-export routes and the transfer.export job > the same Idempotency-Key returns the existing request with 200; a failed export is 422 on both manifests 386ms
+ ✓ |integration| apps/api/test/integration/transfer/export.test.ts > T-C6: the migration-export routes and the transfer.export job > no response of this suite contains a row value 3ms
+ ✓ |integration| apps/api/test/integration/transfer/export-scope.test.ts > F-DG7-940: a narrower-scope ADM_TECH never reaches the installation-wide migration export > control: ADM_TECH at organization scope reads the list, the export and both manifests (200) 65ms
+ × |integration| apps/api/test/integration/transfer/export-scope.test.ts > F-DG7-940: a narrower-scope ADM_TECH never reaches the installation-wide migration export > ADM_TECH @ business_unit: 403 on all five operations; no migration_export row, outbox event or audit event 51ms
+ × |integration| apps/api/test/integration/transfer/export-scope.test.ts > F-DG7-940: a narrower-scope ADM_TECH never reaches the installation-wide migration export > ADM_TECH @ transformation: 403 on all five operations; no migration_export row, outbox event or audit event 40ms
+ × |integration| apps/api/test/integration/transfer/export-scope.test.ts > F-DG7-940: a narrower-scope ADM_TECH never reaches the installation-wide migration export > neither narrower-scope principal wrote anything to the audit trail but its own sign-in 2ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  |integration| apps/api/test/integration/transfer/export-scope.test.ts > F-DG7-940: a narrower-scope ADM_TECH never reaches the installation-wide migration export > ADM_TECH @ business_unit: 403 on all five operations; no migration_export row, outbox event or audit event
+AssertionError: ADM_TECH @ business_unit: expected [ …(6) ] to deeply equal [ …(6) ]
+[32m- Expected[39m
+[31m+ Received[39m
+ FAIL  |integration| apps/api/test/integration/transfer/export-scope.test.ts > F-DG7-940: a narrower-scope ADM_TECH never reaches the installation-wide migration export > ADM_TECH @ transformation: 403 on all five operations; no migration_export row, outbox event or audit event
+AssertionError: ADM_TECH @ transformation: expected [ …(6) ] to deeply equal [ …(6) ]
+[32m- Expected[39m
+[31m+ Received[39m
+ FAIL  |integration| apps/api/test/integration/transfer/export-scope.test.ts > F-DG7-940: a narrower-scope ADM_TECH never reaches the installation-wide migration export > neither narrower-scope principal wrote anything to the audit trail but its own sign-in
+AssertionError: expected [ 'session.create', …(2) ] to deeply equal [ 'session.create', 'session.create' ]
+[32m- Expected[39m
+[31m+ Received[39m
+ Test Files  1 failed | 1 passed (2)
+      Tests  3 failed | 11 passed (14)
+=== M4-no-scoped-authorize vitest exit 1
+=== M6-get-route-without-requireExportRight 04:21:36
+ apps/api/src/modules/transfer/export/routes.ts | 1 -
+ 1 file changed, 1 deletion(-)
+-    await requireExportRight(deps.db, principalOf(request));
+ × |integration| apps/api/test/integration/transfer/export-scope.test.ts > F-DG7-940: a narrower-scope ADM_TECH never reaches the installation-wide migration export > control: ADM_TECH at organization scope reads the list, the export and both manifests (200) 32ms
+ × |integration| apps/api/test/integration/transfer/export-scope.test.ts > F-DG7-940: a narrower-scope ADM_TECH never reaches the installation-wide migration export > ADM_TECH @ business_unit: 403 on all five operations; no migration_export row, outbox event or audit event 36ms
+ × |integration| apps/api/test/integration/transfer/export-scope.test.ts > F-DG7-940: a narrower-scope ADM_TECH never reaches the installation-wide migration export > ADM_TECH @ transformation: 403 on all five operations; no migration_export row, outbox event or audit event 15ms
+ ✓ |integration| apps/api/test/integration/transfer/export-scope.test.ts > F-DG7-940: a narrower-scope ADM_TECH never reaches the installation-wide migration export > neither narrower-scope principal wrote anything to the audit trail but its own sign-in 1ms
+ ✓ |integration| apps/api/test/integration/transfer/export.test.ts > T-C6: the migration-export routes and the transfer.export job > the lock constants equal the registry's migrationExport (730402) 0ms
+ ✓ |integration| apps/api/test/integration/transfer/export.test.ts > T-C6: the migration-export routes and the transfer.export job > validates the request: 400 without a reason, with a short one, or with an unknown field 28ms
+ ✓ |integration| apps/api/test/integration/transfer/export.test.ts > T-C6: the migration-export routes and the transfer.export job > ADM_TECH requests an export: 202 queued, Location, ETag, audit migration_export.requested, the outbox event 33ms
+ ✓ |integration| apps/api/test/integration/transfer/export.test.ts > T-C6: the migration-export routes and the transfer.export job > refuses a second request while one is queued (422 migration.export_in_progress) and the manifests before it ran (409) 32ms
+ × |integration| apps/api/test/integration/transfer/export.test.ts > T-C6: the migration-export routes and the transfer.export job > every role but ADM_TECH (AUD included) and a user without grants gets 403 on all five operations 22ms
+ ✓ |integration| apps/api/test/integration/transfer/export.test.ts > T-C6: the migration-export routes and the transfer.export job > the job waits on lock 730402, then runs once: running -> succeeded, one audit event per transition 1145ms
+ × |integration| apps/api/test/integration/transfer/export.test.ts > T-C6: the migration-export routes and the transfer.export job > getMigrationExport and listMigrationExports show the counts and checksums, never a row value 5ms
+ ✓ |integration| apps/api/test/integration/transfer/export.test.ts > T-C6: the migration-export routes and the transfer.export job > the two manifest downloads: attachment, ETag = SHA-256, the stored bytes, no row data 58ms
+ × |integration| apps/api/test/integration/transfer/export.test.ts > T-C6: the migration-export routes and the transfer.export job > the same Idempotency-Key returns the existing request with 200; a failed export is 422 on both manifests 316ms
+ × |integration| apps/api/test/integration/transfer/export.test.ts > T-C6: the migration-export routes and the transfer.export job > no response of this suite contains a row value 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  |integration| apps/api/test/integration/transfer/export-scope.test.ts > F-DG7-940: a narrower-scope ADM_TECH never reaches the installation-wide migration export > control: ADM_TECH at organization scope reads the list, the export and both manifests (200)
+ FAIL  |integration| apps/api/test/integration/transfer/export-scope.test.ts > F-DG7-940: a narrower-scope ADM_TECH never reaches the installation-wide migration export > ADM_TECH @ business_unit: 403 on all five operations; no migration_export row, outbox event or audit event
+ FAIL  |integration| apps/api/test/integration/transfer/export-scope.test.ts > F-DG7-940: a narrower-scope ADM_TECH never reaches the installation-wide migration export > ADM_TECH @ transformation: 403 on all five operations; no migration_export row, outbox event or audit event
+ FAIL  |integration| apps/api/test/integration/transfer/export.test.ts > T-C6: the migration-export routes and the transfer.export job > every role but ADM_TECH (AUD included) and a user without grants gets 403 on all five operations
+ FAIL  |integration| apps/api/test/integration/transfer/export.test.ts > T-C6: the migration-export routes and the transfer.export job > getMigrationExport and listMigrationExports show the counts and checksums, never a row value
+ FAIL  |integration| apps/api/test/integration/transfer/export.test.ts > T-C6: the migration-export routes and the transfer.export job > the same Idempotency-Key returns the existing request with 200; a failed export is 422 on both manifests
+ FAIL  |integration| apps/api/test/integration/transfer/export.test.ts > T-C6: the migration-export routes and the transfer.export job > no response of this suite contains a row value
+AssertionError: expected 15 to be greater than 50
+ Test Files  2 failed (2)
+      Tests  7 failed | 7 passed (14)
+=== M6-get-route-without-requireExportRight vitest exit 1
+clone restored: yes
