@@ -1,0 +1,39 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG7-941",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:07af9fba…a61d (source 02aeed6e4, freeze f3f61cd60; fix 9d5691143). F-DG7-941 is my own round-4 finding, and I did not author the fix.\n(1) Validators on this tree: --historical --stage DG6, DG5, DG4, DG3, DG2 and DG1 each PASS, exit 0. --reconcile PASS, exit 0. --pipeline PASS, exit 0. --stage DG7 fails only on the missing gate record, which is expected during REVIEWING. 'illegal transition REVIEWING -> REVIEWING' appears nowhere (40/41 logs).\n(2) DG7's history is REVIEWING -> FIXING -> REVIEWING for each of rounds 1–4, time-monotone, and each FIXING lies strictly between its rounds (10-history-probe.log P1).\n(3) The inserted round-3 FIXING entry is dated 2026-11-16T01:38:50Z, the commit time of 5458273cd (import of round-3 findings), as its note says. The AN-P7G and BE-R8 repair commits fall inside the window it opens. The repair changed or removed no pre-existing entry (P2).\n(4) Mutation: removing the entry in a disposable clone brings back exactly 'stages.json: DG7 illegal transition REVIEWING -> REVIEWING', exit 1; the control exits 0 (P3).\nA disclosed late entry with a truthful timestamp is an acceptable repair, the same as the accepted DG4 (F-DG4-104/124) and DG6 (F-DG6-911/951) precedents. The candidate content is unaffected (stages.json is excluded from the manifest).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/code-security/round-5/40-validators.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-5/41-validators-pipeline.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-5/10-history-probe.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-5/scripts/history-probe.sh",
+        "docs/delivery/stages.json"
+      ]
+    },
+    {
+      "finding_id": "F-DG7-922",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Same defect as F-DG7-941 (domain-reviewer's record, REQ-DLV-015: the gate state machine is enforced and the history passes the validator), verified with the same evidence on candidate 07af9fba (fix 9d5691143). --historical DG6…DG1 exit 0. The DG7 history records REVIEWING (round 3) -> FIXING (2026-11-16T01:38:50Z, the round-3 findings import, disclosed as recorded late) -> REVIEWING (round 4). The AN-P7G/BE-R8 repair period lies inside that FIXING window. Removing the entry reproduces the original failure (P3). I did not author this fix.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/code-security/round-5/40-validators.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-5/10-history-probe.log",
+        "docs/delivery/stages.json"
+      ]
+    },
+    {
+      "finding_id": "F-DG7-970",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Same defect as F-DG7-941 (qa-verifier's record, REQ-DLV-014), verified with the same evidence on candidate 07af9fba (fix 9d5691143). The modes 970 names now pass: --historical DG6…DG1 exit 0, and --reconcile 'PASS reconcile (structure)', exit 0. --stage DG7 no longer reports the transition error; its only remaining problem is the gate record that the release-auditor has not yet written. The history records round 3's FIXING before round 4, as after rounds 1 and 2. I did not author this fix.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/code-security/round-5/40-validators.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-5/10-history-probe.log",
+        "docs/delivery/stages.json"
+      ]
+    }
+  ]
+}
