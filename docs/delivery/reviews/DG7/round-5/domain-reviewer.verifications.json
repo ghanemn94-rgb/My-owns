@@ -1,0 +1,37 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG7-922",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified by its originating reviewer (domain-reviewer, session 91d8527b) on candidate sha256:07af9fba26f9ae435f6f3de7ca5204ed1e182a125f1fd0f912b70da06035a61d (source 02aeed6e; fix 9d5691143 is an ancestor; HEAD is the freeze commit f3f61cd60). The DG7 history now reads REVIEWING (round 3, 22:34:02Z) -> FIXING (01:38:50Z, round-3 outcome) -> REVIEWING (round 4, 03:55:37Z) -> FIXING (06:12:55Z, round-4 outcome) -> REVIEWING (round 5, 06:14:07Z). Every transition is legal under tools/gates/lib/rules.mjs. `git diff a76c2aed4 HEAD -- docs/delivery/stages.json` shows only insertions in the DG7 block: the late FIXING entry, the round-4 FIXING entry, the round-5 REVIEWING entry, the round-5 review_rounds entry and the new candidate pointer. No earlier entry and no other stage was altered. On this tree, with Node 24.21.0: `validate.mjs --historical --stage DG6`, DG5, DG4, DG3, DG2, DG1 and DG0 each print PASS and exit 0. `--pipeline`: PASS, exit 0. `--reconcile`: PASS (structure), exit 0. `--register DG7`: PASS, exit 0. `--stage DG7` exits 1 with one problem only: 'file not found (docs/delivery/gates/DG7.json)'. That is expected before the release audit, and the illegal-transition problem is gone. I accept the late-recorded entry as a repair. It is inserted at its true chronological position. Its time 01:38:50Z equals commit 5458273cd ('import round-3 findings'), which is when round 3 ended. Its note says it was recorded late and why. The same repair was accepted at DG6 (F-DG6-911/951, D-240). Rewriting no prior entry keeps the history honest. D-277 also records the process lesson.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/domain/round-5/validate.log",
+        "docs/delivery/test-evidence/DG7/domain/round-5/candidate-verify.log",
+        "docs/delivery/stages.json",
+        "tools/gates/lib/rules.mjs"
+      ]
+    },
+    {
+      "finding_id": "F-DG7-941",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified independently by domain-reviewer (not the reporter, code-security-reviewer, and not the owner) on candidate sha256:07af9fba.... It is the same stages.json transition defect as F-DG7-922. Its specific clauses now hold: `validate.mjs --pipeline` PASS exit 0, `--historical` DG6..DG1 PASS exit 0 each, and `--stage DG7` reports no transition error (only the expected missing gates/DG7.json). Repair: 9d5691143."
+      ,
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/domain/round-5/validate.log",
+        "docs/delivery/test-evidence/DG7/domain/round-5/candidate-verify.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG7-970",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified independently by domain-reviewer (not the reporter, qa-verifier, and not the owner) on candidate sha256:07af9fba.... It is the same stages.json transition defect. Its clauses now hold: `--historical` DG6..DG1 PASS exit 0, `--reconcile` PASS (structure) exit 0, and `--stage DG7` has no 'illegal transition' problem (its only problem is the expected missing gate record). Repair: 9d5691143."
+      ,
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/domain/round-5/validate.log"
+      ]
+    }
+  ]
+}

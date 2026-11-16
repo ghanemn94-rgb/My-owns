@@ -1,0 +1,254 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG7",
+  "round": 5,
+  "candidate_id": "sha256:07af9fba26f9ae435f6f3de7ca5204ed1e182a125f1fd0f912b70da06035a61d",
+  "source_commit": "02aeed6e434ec1511795302ebd5efbec90eb90c2",
+  "reviewer_role": "domain-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG7-T-DG7-REV-DOM-R5-domain-reviewer-20261116T061415Z-91d8527b",
+    "session_id": "91d8527b-eb11-4c00-80d1-802b9d974cae"
+  },
+  "implementation_author": [
+    "backend-workflow-engineer",
+    "kpi-benefits-engineer",
+    "frontend-ux-engineer",
+    "solution-architect",
+    "transformation-analyst",
+    "devops-engineer",
+    "qa-verifier",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "domain-reviewer authored no DG7 implementation, test, register row, ADR, handover text or delivery record in the reviewed candidate, and did not author the stages.json repair 9d5691143. I raised F-DG7-922 in round 4 and verify it here as its originating reviewer. I verify F-DG7-941 (code-security-reviewer) and F-DG7-970 (qa-verifier) as a non-author. At the start I checked the assignment's sha256 (0d9c0b3c...9f79). Its record-format list says 'round: 7', but the round-5 directory and the validator (rec.round must equal the round-N directory) need 5, so this record uses round 5, as I did in round 4. HEAD is the freeze commit f3f61cd60. It differs from the source commit 02aeed6e only in the three round-5 assignments, the manifest and stages.json. The candidate recomputed at HEAD and at --ref 02aeed6e is sha256:07af9fba... (3155 files), and --diff against the frozen manifest matches, both at the start and at the end. I formed my verdict before reading any other reviewer's round-5 record, and I read none. All data is SYNTHETIC. Nothing here grants a business, Finance, IT or production approval. Product G6 never implies DG7. Code ran only read-only in the repository (validators, release checks) and in a disposable sparse clone under $TMPDIR, which I removed at the end."
+  },
+  "assignment": "docs/delivery/assignments/DG7/round-5/domain-reviewer.md",
+  "requirements_checked": [
+    "REQ-DLV-005",
+    "REQ-DLV-008",
+    "REQ-DLV-009",
+    "REQ-DLV-010",
+    "REQ-DLV-011",
+    "REQ-DLV-012",
+    "REQ-DLV-014",
+    "REQ-DLV-018",
+    "REQ-DLV-021",
+    "REQ-DLV-024",
+    "REQ-DLV-027",
+    "REQ-DLV-028",
+    "REQ-DLV-030",
+    "REQ-DLV-031",
+    "REQ-DLV-039",
+    "REQ-DLV-040",
+    "REQ-DLV-041",
+    "REQ-S01-001",
+    "REQ-S01-006",
+    "REQ-S02-003",
+    "REQ-S02-005",
+    "REQ-S16-008",
+    "REQ-S16-009",
+    "REQ-S16-024",
+    "REQ-S16-031",
+    "REQ-S16-033",
+    "REQ-S17-004",
+    "REQ-S19-001",
+    "REQ-S19-002",
+    "REQ-S19-003",
+    "REQ-S19-005",
+    "REQ-S19-007",
+    "REQ-S19-008",
+    "REQ-S19-009",
+    "REQ-S19-010",
+    "REQ-S19-011",
+    "REQ-S19-012",
+    "REQ-S19-013",
+    "REQ-S19-014",
+    "REQ-S19-015",
+    "REQ-S19-016",
+    "REQ-S19-017",
+    "REQ-S19-018",
+    "REQ-S19-019",
+    "REQ-S20-018",
+    "REQ-S20-019",
+    "REQ-S20-023",
+    "REQ-S20-026",
+    "REQ-S20-027",
+    "REQ-S20-028",
+    "REQ-S20-031",
+    "REQ-S21-002",
+    "REQ-S21-003",
+    "REQ-S21-004"
+  ],
+  "checks_run": [
+    {
+      "id": "DOM-R5-01-candidate",
+      "procedure": "Check HEAD and git status. Recompute the candidate at the working tree and at --ref of the source commit. Diff it against the frozen manifest. List what the freeze commit changes relative to the source commit.",
+      "command": "git rev-parse HEAD; git diff --stat 02aeed6e HEAD; node tools/gates/candidate.mjs --stage DG7; node tools/gates/candidate.mjs --stage DG7 --ref 02aeed6e434ec1511795302ebd5efbec90eb90c2; node tools/gates/candidate.mjs --stage DG7 --diff",
+      "environment": "Repository /home/user/My-owns at HEAD f3f61cd60 (freeze commit), Node 24.21.0 (/opt/nvm/versions/node/v24.21.0/bin first on PATH), agent sandbox",
+      "expected": "candidate_id sha256:07af9fba26f9ae435f6f3de7ca5204ed1e182a125f1fd0f912b70da06035a61d with 3155 files at both the tree and the ref; --diff matches; the freeze commit changes only metadata.",
+      "actual": "Working tree and --ref 02aeed6e both give sha256:07af9fba...a61d, 3155 files, exit 0. --diff: matches true, added, removed and changed all empty, exit 0, both at the start and at the end (cleanup.log). The freeze commit f3f61cd60 changes only the three round-5 assignments, the 07af9fba manifest and stages.json, all outside the candidate. git status shows only the untracked round-5 run, review and evidence directories.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/domain/round-5/candidate-verify.log",
+        "docs/delivery/test-evidence/DG7/domain/round-5/cleanup.log"
+      ]
+    },
+    {
+      "id": "DOM-R5-02-validators-historical-pipeline",
+      "procedure": "Run the gate validator in every mode the assignment names (historical DG6..DG0, register, reconcile, pipeline), read-only, on the repository at HEAD.",
+      "command": "for a in '--historical --stage DG6' ... '--historical --stage DG0' '--register DG7' '--reconcile' '--pipeline'; do node tools/gates/validate.mjs $a; done",
+      "environment": "Repository at HEAD f3f61cd60, Node 24.21.0, read-only",
+      "expected": "Every command PASS, exit 0. The F-DG7-922/941/970 'illegal transition REVIEWING -> REVIEWING' is gone.",
+      "actual": "--historical DG6, DG5, DG4, DG3, DG2, DG1 and DG0: each 'PASS gate DGn (historical)', exit 0. --register DG7: 'PASS register rules at DG7', exit 0. --reconcile: 'PASS reconcile (structure)', exit 0. It lists the round 1-4 records as FAIL/BLOCKED and STALE for current content, and the round-5 records as missing. That is the expected state: earlier rounds were on other candidates, and the round-5 records are being written now. --pipeline: 'PASS pipeline (active stage: DG7 REVIEWING)', exit 0. No problem line appears anywhere in the log.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/domain/round-5/validate.log"
+      ]
+    },
+    {
+      "id": "DOM-R5-03-validate-stage-DG7",
+      "procedure": "Run the current-stage validator for DG7 and check that its only problem is the gate record, which does not exist before the release audit.",
+      "command": "node tools/gates/validate.mjs --stage DG7",
+      "environment": "Repository at HEAD f3f61cd60, Node 24.21.0, read-only",
+      "expected": "Exit 1 is acceptable only if the sole problem is the missing docs/delivery/gates/DG7.json (written by the release-auditor after the reviews), with no stages.json transition problem.",
+      "actual": "'FAIL gate DG7 (current) (1 problem) - gate DG7: file not found (docs/delivery/gates/DG7.json)', exit 1. This is the single, expected pre-audit condition. In round 4 the same command also reported 'DG7 illegal transition REVIEWING -> REVIEWING', and that problem is now absent. No other assertion failed.",
+      "exit_status": 1,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/domain/round-5/validate.log"
+      ]
+    },
+    {
+      "id": "DOM-R5-04-late-fixing-entry-judgement",
+      "procedure": "Diff stages.json between the round-4 freeze (a76c2aed4) and HEAD. Check the inserted entries for position, timestamp provenance and honesty. Compare with the precedent repair at DG6 (D-240, F-DG6-911/951). Read D-277.",
+      "command": "git diff a76c2aed4 HEAD -- docs/delivery/stages.json; git log -1 --format='%h %cI %s' 5458273cd; git log -1 9d5691143; grep D-240/D-277 docs/delivery/decisions.md",
+      "environment": "Repository at HEAD f3f61cd60, read-only",
+      "expected": "The repair is additive and leaves earlier entries and other stages untouched. The inserted FIXING entry sits in its true chronological position, with a time tied to a real event and a note that discloses the late recording. No fabricated approval.",
+      "actual": "The diff changes only the DG7 block. It adds a FIXING entry at 2026-11-16T01:38:50Z between the round-3 REVIEWING (22:34:02Z) and round-4 REVIEWING (03:55:37Z) entries. Its note says 'Entry recorded late (2026-11-16, after round 4) ... the time is the import of the round-3 findings', and commit 5458273cd 'DG7: import round-3 findings' is at exactly 01:38:50Z. The diff also adds the round-4 FIXING entry (06:12:55Z, before commit 9d5691143 at 06:13:24Z), the round-5 REVIEWING entry (06:14:07Z), the round-5 review_rounds entry and the new candidate pointer. No earlier entry was rewritten, and timestamps increase monotonically. D-277 records the error, the repair and a freeze-step lesson. The DG6 precedent (D-240: 'a FIXING entry at 06:42:33Z noted as recorded late') was accepted by the reviewers and the auditor. Judgement: acceptable. The alternative, appending FIXING after round-4 REVIEWING, would misstate when the repair period happened. Rewriting the round-4 entry would erase history.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/domain/round-5/candidate-verify.log",
+        "docs/delivery/stages.json",
+        "docs/delivery/decisions.md",
+        "tools/gates/lib/rules.mjs"
+      ]
+    },
+    {
+      "id": "DOM-R5-05-scope-since-round-4",
+      "procedure": "Compare the round-4 (d91f7152) and round-5 (07af9fba) manifests entry by entry. List the non-evidence files changed in git between the round-4 source 471072d6 and 02aeed6e. Check that the assignment's 54 requirement ids equal the register's DG7-final rows, and count register status and hash.",
+      "command": "python3 manifest/register comparison (scope-check.log); git diff --stat 471072d6 02aeed6e",
+      "environment": "Repository at HEAD f3f61cd60, python3, read-only",
+      "expected": "Only delivery records changed. No product, test, handover or register change. 54 = 54 ids. 412 rows, all IMPLEMENTED, with the same register hash as round 4.",
+      "actual": "Both manifests have 3155 entries. The only changed entry is docs/delivery/decisions.md (D-277 added). Outside reviews, run evidence, test evidence, assignments and manifests, git shows only decisions.md, findings.json, progress.md and stages.json. The assignment's 54 ids equal the register's 54 DG7-final rows. The register has 412 rows, all IMPLEMENTED, sha256 ec2b526ad703...6731, identical to round 4. My round-4 product judgements therefore carry forward unchanged.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/domain/round-5/scope-check.log",
+        "docs/delivery/test-evidence/DG7/domain/round-5/release-tool-checks-repo.log"
+      ]
+    },
+    {
+      "id": "DOM-R5-06-release-handover-tools",
+      "procedure": "Re-run the generated-document checks read-only on the repository at HEAD (the candidate content): release-notes --check, known-limitations --check, check-handover and claims-scan. A sparse disposable clone was tried first and superseded (see actual).",
+      "command": "node tools/release/release-notes.mjs --csv docs/delivery/requirements.csv --deps docs/handover/external-dependencies.json --provisional apps/web/src/i18n --out docs/handover/release-notes.md --check; node tools/release/known-limitations.mjs --protocol-audit docs/delivery/test-evidence/DG7/orchestrator/protocol-audit/protocol-audit-r4.json --check; node tools/release/check-handover.mjs --protocol-audit <same>; node tools/release/claims-scan.mjs",
+      "environment": "Repository at HEAD f3f61cd60 (candidate verified), Node 24.21.0, read-only. git status was unchanged afterwards apart from the untracked review and evidence directories.",
+      "expected": "Each exits 0. The handover texts are current after the D-277 decisions.md change. No unexplained warning.",
+      "actual": "release-notes: '0 unfinished item(s), 23 later clause(s); docs/handover/release-notes.md is up to date', exit 0. known-limitations: PASS, exit 0. check-handover: PASS on index, deployment, summaries, security-links, guides and generated, exit 0. claims-scan: PASS (891 files), exit 0. check-handover prints 8 warnings: Arabic sub-sections in backup-restore.md l.206, release-notes.md l.97-124 and upgrades.md l.227 lack the H.3 provisional line under their own heading. By the tool's design (check-handover.mjs l.17-19) this is a warning that does not change the result. The same 8 warnings are in prefreeze-r4/check-handover.log. Each file is listed in known-limitations.md section 3 as provisional Arabic not checked by a qualified reviewer. release-notes.md has the EN/AR provisional line under its parent Arabic heading, and upgrades.md's heading itself says 'provisional, D-243 Q7'. So the disclosure holds, and this is not a defect. Superseded attempt: my first run in a sparse disposable clone failed on 'No space left on device' during a full checkout. After a sparse re-clone, release-notes and known-limitations exited 1 with ERR_MODULE_NOT_FOUND apps/api/scripts/register-snapshot.mjs, a path outside the sparse set. In that clone the protocol audit gave C2 PASS and C5 'historical-evidence-missing-from-test-evidence', because test-evidence was not checked out. Those results are artefacts of the incomplete checkout. They are kept in release-tool-checks-sparse-clone-superseded.log for transparency and replaced by this run on the complete tree.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/domain/round-5/release-tool-checks-repo.log",
+        "docs/delivery/test-evidence/DG7/domain/round-5/release-tool-checks-sparse-clone-superseded.log",
+        "docs/handover/known-limitations.md",
+        "docs/handover/release-notes.md",
+        "docs/handover/backup-restore.md"
+      ]
+    },
+    {
+      "id": "DOM-R5-07-protocol-audit",
+      "procedure": "Run a fresh protocol audit for DG7 on the complete tree. Compare its hits with the disclosures in the register (DLV-011, DLV-012, DLV-024), the release notes and known-limitations.",
+      "command": "node tools/release/protocol-audit.mjs --stage DG7 --json $TMPDIR/pa-repo.json (copied to evidence)",
+      "environment": "Repository at HEAD f3f61cd60 with git history, Node 24.21.0, read-only",
+      "expected": "Exit 1 by design, with exactly the disclosed hits: C2 27, C3 7 (AN-P7B, ARCH-R2, ARCH-R5, BE-R5, DO-A2, DO-D8, FE-C3), C5 1. No new hit class.",
+      "actual": "Exit 1 by design: 'FAIL (exit 1): 35 hit(s) in 3 check(s), 0 blocked, 6 pass'. The failing assertions are C2 assignment-contract 27 (assignment-missing-elements), C3 handback-sections 7 (handback-missing-sections, merge_instructions, in exactly the seven handbacks named in REQ-DLV-012 and release notes l.35) and C5 historical-first 1 (historical-evidence-not-before-first-implementation). C1, C4 and C6-C9 PASS, including C8 approval-claims. This is identical to round 4. These are the D-270/D-274 disclosed deviations, labelled 'not met' in the register. I do not treat them as met. Whether they are acceptable is the release-auditor's decision under D-274.",
+      "exit_status": 1,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/domain/round-5/protocol-audit-DG7.json",
+        "docs/delivery/test-evidence/DG7/domain/round-5/release-tool-checks-repo.log",
+        "docs/handover/release-notes.md"
+      ]
+    },
+    {
+      "id": "DOM-R5-08-product-carry-forward",
+      "procedure": "Product files, tests, handover texts and the register are byte-identical to round 4 (DOM-R5-05). So I rely on my round-4 product evidence and re-read it for failures: the build, the About and Requirement register e2e in chromium-en and chromium-ar with screens, the F-DG7-940 export-scope mutant run and the A18 restart evidence. I re-inspected the EN and AR About screenshots.",
+      "command": "(cited) docs/delivery/test-evidence/DG7/domain/round-4/*; review of reviews/DG7/round-4/domain-reviewer.json checks DOM-R4-03..09",
+      "environment": "Round-4 evidence on candidate d91f7152, whose product content equals 07af9fba",
+      "expected": "Each cited run has PASS and no unexplained failure. About and the register show 412 IMPLEMENTED with register hash ec2b526ad703, EN LTR and AR RTL, provisional wordmark, no official Mobily/PMI claim, and 'engineering delivery states, not business approvals'.",
+      "actual": "Round 4: pnpm -r build exit 0. The single 'error' match is the chunk name UnplacedFieldErrors-*.js, and Vite's chunk-size advisory is cosmetic. About/register e2e: 4 passed, exit 0. axe passes at 1280 and 360 px with no horizontal scroll at 360. No skip, retry or flake; 3 harmless npm 'Unknown project config' warnings. The screens show 'Register snapshot: 412 rows, SHA-256 ec2b526ad703...' (the current register hash is still ec2b526ad703), Implemented 412 and the others 0, the banner that these are engineering delivery states and not business approvals, and the 'Provisional / مؤقت' wordmark. AR is mirrored RTL. Observation carried (not a defect): the 'Clause that completes later' column shows the full analyst note, which contains the clause. The f940 mutant run killed M4. The A18 full-restart clause rests on DO-D8B's T-B11 run (F-DG7-921 closed in round 4). Since nothing visible changed, no new screenshot was required. The playbook semantics (RAG from trajectory, delivery/adoption/validated value/closure separate, forecast never validated value, Finance validation, gates tied to evidence snapshots) were judged in earlier rounds, and P7 does not touch them.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/reviews/DG7/round-4/domain-reviewer.json",
+        "docs/delivery/test-evidence/DG7/domain/round-4/build.log",
+        "docs/delivery/test-evidence/DG7/domain/round-4/e2e-about-register.log",
+        "docs/delivery/test-evidence/DG7/domain/round-4/f940-mutant.log",
+        "docs/delivery/test-evidence/DG7/domain/round-4/scope-diff.log",
+        "docs/delivery/test-evidence/DG7/domain/round-4/screens/en-p7-about-top.png",
+        "docs/delivery/test-evidence/DG7/domain/round-4/screens/ar-p7-about-top.png",
+        "docs/delivery/test-evidence/DG7/domain/round-4/screens/en-p7-requirements.png",
+        "docs/delivery/test-evidence/DG7/domain/round-4/screens/ar-p7-requirements.png"
+      ]
+    },
+    {
+      "id": "DOM-R5-09-prefreeze-and-disclosures",
+      "procedure": "Re-read the pre-freeze-r4 evidence (unchanged product content) and the disclosures D-249/D-270, D-274 (Q19 extension, 18 rows), A27 K11 partial, ADR-0065 Amendment 1, D-267 and D-269 against the register. Record the environmental residuals the assignment lists.",
+      "command": "(read) docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r4/checks.log and logs; docs/delivery/decisions.md; docs/delivery/requirements.csv",
+      "environment": "Repository at HEAD f3f61cd60, read-only",
+      "expected": "19 pre-freeze checks exit 0 with every skip explained. Disclosures stated as disclosed deviations, not presented as met. Residuals PASS on the offline/config surface.",
+      "actual": "All 19 checks exit 0. Explained items: (a) protocol-audit runs with '; true', and its real result is FAIL exit 1, 281 hits across DG0-DG7 (the disclosed D-249/D-270 hits); (b) two 'find -delete ... -prune' warnings from cleanup, which affect no check; (c) unit 2199 passed, plus 259 passed and 2 skipped in formula fuzz; (d) integration 4696 passed, 8 skipped, 1 todo, where 7 skips are a18-transfer-drill.test.ts without the A18 input environment (A18 is evidenced by T-B11) and 1 is a long-standing skip in presentation/audit-events; (e) release tools 464 passed, 2 skipped (T-A11 needs an assembled runtime tree, T-A3 needs bsdtar). Disclosures: DLV-011/012/024/030 are labelled 'disclosed deviation, not met' under D-270/D-274. The 18 Q19 rows carry completes-after-gate markers. A27 K11 is partial. D-267: the container half and the Keycloak e2e were run by the orchestrator on one host, not air-gapped and not HA, and I did not re-run them. I do not treat any of these as met. Acceptance under D-274 is the release-auditor's decision. Residuals, each PASS on the offline/config surface: live registry (D-057), live CI (D-058, not run), Keycloak/enterprise IdP (D-049; bundled test issuer only, SAML documented and not run), external systems through test adapters and the disabled configuration, and REQ-S20-029/030 capacity as provisional single-host targets, not verified Mobily capacity.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r4/checks.log",
+        "docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r4/integration.log",
+        "docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r4/release-tool-tests.log",
+        "docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r4/protocol-audit.log",
+        "docs/handover/known-limitations.md"
+      ]
+    },
+    {
+      "id": "DOM-R5-10-cleanup",
+      "procedure": "Remove the disposable clone and scratch files. Confirm that no process or port was left, the repository holds only untracked review and evidence output, and the candidate still matches.",
+      "command": "rm -rf $TMPDIR/review-dom; ls -A $TMPDIR; git status --short; node tools/gates/candidate.mjs --stage DG7 --diff",
+      "environment": "Agent sandbox, $TMPDIR",
+      "expected": "Clone gone, no servers started, candidate --diff matches.",
+      "actual": "The clone was removed. $TMPDIR holds only runner-owned entries. No PostgreSQL or web server was started in round 5, so no port in 32300-32399 was used. git status shows only the untracked round-5 run, review and evidence directories. --diff reports matches: true.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/domain/round-5/cleanup.log"
+      ]
+    }
+  ],
+  "findings": [],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG7/domain/round-5/candidate-verify.log",
+    "docs/delivery/test-evidence/DG7/domain/round-5/validate.log",
+    "docs/delivery/test-evidence/DG7/domain/round-5/scope-check.log",
+    "docs/delivery/test-evidence/DG7/domain/round-5/release-tool-checks-repo.log",
+    "docs/delivery/test-evidence/DG7/domain/round-5/release-tool-checks-sparse-clone-superseded.log",
+    "docs/delivery/test-evidence/DG7/domain/round-5/protocol-audit-DG7.json",
+    "docs/delivery/test-evidence/DG7/domain/round-5/cleanup.log",
+    "docs/delivery/reviews/DG7/round-5/domain-reviewer.verifications.json",
+    "docs/delivery/reviews/DG7/round-4/domain-reviewer.json"
+  ],
+  "reviewed_at": "2026-11-16T06:33:00Z",
+  "summary": "PASS on candidate sha256:07af9fba (source 02aeed6e, freeze commit f3f61cd60). F-DG7-922 (mine), F-DG7-941 and F-DG7-970 are CLOSED_VERIFIED. --historical DG6..DG0, --pipeline, --reconcile and --register DG7 all exit 0. --stage DG7 fails only on the expected missing gates/DG7.json. The late-recorded FIXING entry is accepted: it is inserted at its true position, its time equals the round-3 findings import commit, its note discloses the late recording, it matches the DG6 precedent (D-240), and nothing earlier was rewritten. Since round 4 only decisions.md changed inside the candidate; product, tests, handover texts and register (412 IMPLEMENTED, ec2b526ad703) are identical. The release-notes, known-limitations, check-handover and claims checks pass. The protocol audit is unchanged at 35 disclosed hits. No new finding. The disclosed deviations DLV-011/012/024/030 (D-270/D-274, K11 partial) are not treated as met and remain the release-auditor's decision. Nothing here is a business, Finance, IT or production approval."
+}
