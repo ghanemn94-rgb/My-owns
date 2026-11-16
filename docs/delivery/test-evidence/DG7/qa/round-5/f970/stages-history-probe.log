@@ -1,0 +1,61 @@
+$ node docs/delivery/test-evidence/DG7/qa/round-5/f970/stages-history-probe.mjs
+0 2026-09-28T11:30:00Z PLANNED
+1 2026-11-12T12:02:49Z BUILDING  | DG6 APPROVED (D-241). DG7 starts with the planning task T-DG7-ARCH-00 (D-242).
+2 2026-11-15T07:29:30Z REVIEWING  | Round 1 frozen on candidate df8225e5 (D-271).
+3 2026-11-15T09:54:25Z FIXING  | Round 1: domain FAIL (F-DG7-913 Medium mandatory, 914 Low), code-security BLOCKED (freeze commit changed decis
+4 2026-11-15T14:20:34Z REVIEWING  | Round 2 frozen on candidate ca38b65e (D-273).
+5 2026-11-15T17:13:32Z FIXING  | Round 2: all six round-1 findings verified closed by all three; domain FAIL (915), code-security FAIL (935; no
+6 2026-11-15T22:34:02Z REVIEWING  | Round 3 frozen on sha256:60dd90b6 (D-275).
+7 2026-11-16T01:38:50Z FIXING  | Round 3 (60dd90b6): domain FAIL (920 Low, 921 Medium), code-security FAIL (940 Medium; 960 not closed), qa FAI
+8 2026-11-16T03:55:37Z REVIEWING  | Round 4 frozen on sha256:d91f7152 (D-276).
+9 2026-11-16T06:12:55Z FIXING  | Round 4 (d91f7152): 920, 921, 940, 960 verified closed by all three; all three FAIL only on the missing round-
+10 2026-11-16T06:14:07Z REVIEWING  | Round 5 frozen on sha256:07af9fba (D-277).
+(1)(2) transitions legal and timestamps strictly increasing: PASS
+  round 1 frozen_at 2026-11-15T07:29:08Z: REVIEWING entry #-1; next PLANNED 2026-09-28T11:30:00Z BAD
+  round 2 frozen_at 2026-11-15T14:20:16Z: REVIEWING entry #-1; next PLANNED 2026-09-28T11:30:00Z BAD
+  round 3 frozen_at 2026-11-15T22:34:02Z: REVIEWING entry #6; next FIXING 2026-11-16T01:38:50Z ok
+  round 4 frozen_at 2026-11-16T03:55:37Z: REVIEWING entry #8; next FIXING 2026-11-16T06:12:55Z ok
+  round 5 frozen_at 2026-11-16T06:14:07Z: REVIEWING entry #10; next (none: current round) ok
+(3) every round frozen at a REVIEWING entry, every finished round followed by FIXING: FAIL
+stage state REVIEWING; last history state REVIEWING: PASS
+(4) revert-to-fail: removed 1 entry; loadStages errors: ["stages.json: DG7 illegal transition REVIEWING -> REVIEWING"]
+(4) control (unmodified copy): loadStages errors: []
+(4) PASS
+exit=1
+$ git show 5458273cd --format='%h %cI %s' --stat | head -3  (claimed source of the late entry's time)
+5458273cd 2026-11-16T01:38:50+00:00 DG7: import round-3 findings; assignments AN-P7G and BE-R8
+
+ docs/delivery/assignments/DG7/T-DG7-AN-P7G.md |  25 +++
+$ git merge-base --is-ancestor 9d5691143 02aeed6e; echo $?
+exit=0
+$ git show 9d5691143 --stat
+9d5691143 2026-11-16T06:13:24+00:00 DG7: record the missing round-3 FIXING entry and the round-4 outcome in stages.json (F-DG7-922/941/970)
+
+ docs/delivery/findings.json | 234 ++++++++++++++++++++++++++++++++++++++++----
+ docs/delivery/stages.json   |  12 ++-
+ 2 files changed, 228 insertions(+), 18 deletions(-)
+# rerun after relaxing check (3) to the nearest REVIEWING entry within 5 min of frozen_at (first run, exact match, flagged rounds 1-2 whose entries are 22 s and 18 s after the freeze)
+$ node docs/delivery/test-evidence/DG7/qa/round-5/f970/stages-history-probe.mjs
+0 2026-09-28T11:30:00Z PLANNED
+1 2026-11-12T12:02:49Z BUILDING  | DG6 APPROVED (D-241). DG7 starts with the planning task T-DG7-ARCH-00 (D-242).
+2 2026-11-15T07:29:30Z REVIEWING  | Round 1 frozen on candidate df8225e5 (D-271).
+3 2026-11-15T09:54:25Z FIXING  | Round 1: domain FAIL (F-DG7-913 Medium mandatory, 914 Low), code-security BLOCKED (freeze commit changed decis
+4 2026-11-15T14:20:34Z REVIEWING  | Round 2 frozen on candidate ca38b65e (D-273).
+5 2026-11-15T17:13:32Z FIXING  | Round 2: all six round-1 findings verified closed by all three; domain FAIL (915), code-security FAIL (935; no
+6 2026-11-15T22:34:02Z REVIEWING  | Round 3 frozen on sha256:60dd90b6 (D-275).
+7 2026-11-16T01:38:50Z FIXING  | Round 3 (60dd90b6): domain FAIL (920 Low, 921 Medium), code-security FAIL (940 Medium; 960 not closed), qa FAI
+8 2026-11-16T03:55:37Z REVIEWING  | Round 4 frozen on sha256:d91f7152 (D-276).
+9 2026-11-16T06:12:55Z FIXING  | Round 4 (d91f7152): 920, 921, 940, 960 verified closed by all three; all three FAIL only on the missing round-
+10 2026-11-16T06:14:07Z REVIEWING  | Round 5 frozen on sha256:07af9fba (D-277).
+(1)(2) transitions legal and timestamps strictly increasing: PASS
+  round 1 frozen_at 2026-11-15T07:29:08Z: REVIEWING entry #2 (+22 s); next FIXING 2026-11-15T09:54:25Z ok
+  round 2 frozen_at 2026-11-15T14:20:16Z: REVIEWING entry #4 (+18 s); next FIXING 2026-11-15T17:13:32Z ok
+  round 3 frozen_at 2026-11-15T22:34:02Z: REVIEWING entry #6 (+0 s); next FIXING 2026-11-16T01:38:50Z ok
+  round 4 frozen_at 2026-11-16T03:55:37Z: REVIEWING entry #8 (+0 s); next FIXING 2026-11-16T06:12:55Z ok
+  round 5 frozen_at 2026-11-16T06:14:07Z: REVIEWING entry #10 (+0 s); next (none: current round) ok
+(3) every round frozen at a REVIEWING entry, every finished round followed by FIXING: PASS
+stage state REVIEWING; last history state REVIEWING: PASS
+(4) revert-to-fail: removed 1 entry; loadStages errors: ["stages.json: DG7 illegal transition REVIEWING -> REVIEWING"]
+(4) control (unmodified copy): loadStages errors: []
+(4) PASS
+exit=0

@@ -1,0 +1,37 @@
+### $ node tools/release/secret-scan.mjs --scope payload
+secret-scan: PASS (payload; 3155 files; allowed 33; canary (documented) 22)
+### exit=0 seconds=8
+### $ node tools/release/secret-scan.mjs --scope history
+secret-scan: PASS (history; 36832 files; allowed 243; canary (documented) 46)
+### exit=0 seconds=189
+### $ node tools/release/claims-scan.mjs
+claims-scan: PASS (891 files; D 141, U 750; negated 28; allowed 19)
+### exit=0 seconds=7
+### $ node tools/release/check-handover.mjs
+  warning: docs/handover/release-notes.md l.112: the Arabic section 'البنود غير المكتملة وعوائق الإصدار' lacks the H.3 provisional line under its heading (§2.3)
+  warning: docs/handover/release-notes.md l.116: the Arabic section 'بنود تكتمل بعد البوابة الهندسية' lacks the H.3 provisional line under its heading (§2.3)
+  warning: docs/handover/release-notes.md l.120: the Arabic section 'تبعيات الإعداد الخارجية المتبقية' lacks the H.3 provisional line under its heading (§2.3)
+  warning: docs/handover/release-notes.md l.124: the Arabic section 'النصوص العربية المؤقتة' lacks the H.3 provisional line under its heading (§2.3)
+  warning: docs/handover/upgrades.md l.227: the Arabic section '6. Arabic summary (provisional, D-243 Q7)' lacks the H.3 provisional line under its heading (§2.3)
+check-handover: security-links: PASS
+check-handover: guides: PASS
+check-handover: generated: BLOCKED
+  BLOCKED: automation-jobs.mjs --check exit 3: BLOCKED: the worker's dependencies are not installed (run pnpm install): Error [ERR_MODULE_NOT_FOUND]: Cannot find package '@mth/db' imported from /var/tmp/mth-run.4xlyVr/claude-0/scan-clone/apps/worker/src/kit.ts
+  BLOCKED: known-limitations: no --protocol-audit report given, so the generated sections are not checked
+  note: role-matrix.mjs: role-matrix: PASS (/var/tmp/mth-run.4xlyVr/claude-0/scan-clone/docs/handover/role-matrix.md is current)
+check-handover: BLOCKED (index PASS, deployment PASS, summaries PASS, security-links PASS, guides PASS, generated BLOCKED; root .)
+### exit=2 seconds=0
+### $ node --test tools/release/tests/secret-scan.test.mjs tools/release/tests/security-controls.test.mjs tools/release/tests/claims-scan.test.mjs
+▶ T-G8 both scans pass over the matrix
+  ✔ the claims scan passes (78.446159ms)
+  ✔ the secret scan passes (17.821457ms)
+✔ T-G8 both scans pass over the matrix (96.426678ms)
+ℹ tests 192
+ℹ suites 25
+ℹ pass 192
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 217665.86869
+### exit=0 seconds=218

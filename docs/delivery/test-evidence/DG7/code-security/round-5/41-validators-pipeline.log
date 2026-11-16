@@ -1,0 +1,10 @@
+PASS pipeline (active stage: DG7 REVIEWING)
+
+real	8m50.913s
+user	3m13.197s
+sys	4m8.298s
+exit=0
+### NOTE: --pipeline ran twice. Run A (part of the 40-validators loop, started ~06:21Z) printed "--pipeline exit=0 / PASS pipeline (active stage: DG7 REVIEWING)" to the task output.
+### Its log file looked empty mid-run, and `ps` in the nested sandbox did not show the process, so I started run B (above, `time`d, 8m50s, exit=0) on the same file.
+### Both runs exited 0 with PASS. The file holds run B's output (plus run A's PASS line written into the shared file). No failure line in either.
+### Clarification: the file shows one PASS line. Both runs opened it with truncation and wrote the identical line at offset 0, so the line cannot be attributed to one run. Run A's own exit (0) and PASS line are also in its task output; run B's exit=0 and timing are above.

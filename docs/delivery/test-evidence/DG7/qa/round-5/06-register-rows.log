@@ -1,0 +1,60 @@
+register rows 412 statuses {'IMPLEMENTED': 412}
+final_gate=DG7 rows 54 equal to assignment list: True assignment list size 54 unique 54
+REQ-DLV-005 IMPLEMENTED marker=True | Apply each role's independence rule at every gate: no role reviews, certifies or approves 
+REQ-DLV-008 IMPLEMENTED marker=True | Isolate concurrent writers in branches or worktrees, verify each workspace's starting revi
+REQ-DLV-009 IMPLEMENTED marker=False | Activate only the agents a stage needs, with at most four active workers; parallelize inde
+REQ-DLV-010 IMPLEMENTED marker=True | Run the three mandatory independent specialist reviews (domain, code-security, QA) and the
+REQ-DLV-011 IMPLEMENTED marker=True | Issue every delegation with the full assignment contract
+REQ-DLV-012 IMPLEMENTED marker=True | Require implementation handbacks listing changed files, behaviour, checks actually run wit
+REQ-DLV-014 IMPLEMENTED marker=True | Run the eight-step gate loop for every stage: plan, implement, integrate and freeze, revie
+REQ-DLV-018 IMPLEMENTED marker=True | Resolve reviewer disagreement by reproduction and a targeted fresh review; after three unp
+REQ-DLV-021 IMPLEMENTED marker=True | Record each gate's individual review records under reviews/DGx/round-N and the audited gat
+REQ-DLV-024 IMPLEMENTED marker=True | Before implementation in P1-P7, validate the preceding approved gate (--historical), and o
+REQ-DLV-027 IMPLEMENTED marker=False | Continue automatically through DG0-DG7 without routine user confirmation, while real busin
+REQ-DLV-028 IMPLEMENTED marker=True | Send a short evidence-based update at each gate: stage and candidate, capabilities demonst
+REQ-DLV-030 IMPLEMENTED marker=True | On resumption reconcile repository and durable records, reject reviews that no longer matc
+REQ-DLV-031 IMPLEMENTED marker=True | State in every status report and in final delivery that agent count or agreement does not 
+REQ-DLV-039 IMPLEMENTED marker=True | Deliver the P7 outputs and final release: complete source/archive, clean deployment, migra
+REQ-DLV-040 IMPLEMENTED marker=True | Implement stages P0-P7 in order and start a stage only after the preceding gate is APPROVE
+REQ-DLV-041 IMPLEMENTED marker=True | Seal the DG7 release after approval: approve the frozen payload whose hash excludes review
+REQ-S01-001 IMPLEMENTED marker=False | Deliver a complete working enterprise transformation platform with source code, persistent
+REQ-S01-006 IMPLEMENTED marker=False | Deliver a clean source repository and deployment package that Mobily IT can host on its ow
+REQ-S02-003 IMPLEMENTED marker=False | Publish the requirement register read-only in the Administration area and include it in th
+REQ-S02-005 IMPLEMENTED marker=True | Report completion honestly: every incomplete or externally blocked item names the exact mi
+REQ-S16-008 IMPLEMENTED marker=False | Provide Docker images and Compose configuration for reproducible install and test, plus de
+REQ-S16-009 IMPLEMENTED marker=False | Verify official documentation, support windows, licences and security maintenance before s
+REQ-S16-024 IMPLEMENTED marker=False | Define retention and archival policies for records, evidence, audit and snapshots, and do 
+REQ-S16-031 IMPLEMENTED marker=False | Treat production secrets as runtime configuration outside the repository, and integrate TL
+REQ-S16-033 IMPLEMENTED marker=False | Make no organizational or regulatory compliance claims based on these controls; provide ev
+REQ-S17-004 IMPLEMENTED marker=False | Build working local test adapters and contract tests, list the enterprise endpoints and cr
+REQ-S19-001 IMPLEMENTED marker=False | Deliver the complete source repository plus a portable archive, separating application cod
+REQ-S19-002 IMPLEMENTED marker=False | Include the frontend, backend, worker, shared schemas, calculation engine, report template
+REQ-S19-003 IMPLEMENTED marker=False | Include dependency manifests, lockfiles, licence/SBOM inventory, build scripts, container 
+REQ-S19-005 IMPLEMENTED marker=False | Include the final database schema, migrations, data dictionary, ER diagram, validation rul
+REQ-S19-007 IMPLEMENTED marker=False | Include the final versioned API/OpenAPI specification, authentication setup and connector 
+REQ-S19-008 IMPLEMENTED marker=False | Export and import workflow, methodology, form, branding and automation configuration with 
+REQ-S19-009 IMPLEMENTED marker=False | Provide an environment variable template without secrets, identity-provider instructions, 
+REQ-S19-010 IMPLEMENTED marker=False | Provide a reproducible local/clean-VM startup command, health checks and readiness verific
+REQ-S19-011 IMPLEMENTED marker=False | Provide the production deployment guide covering domains/TLS, corporate SSO mapping, servi
+REQ-S19-012 IMPLEMENTED marker=False | Provide backup/restore procedures covering the database, evidence bytes, configuration, au
+REQ-S19-013 IMPLEMENTED marker=False | Provide versioned upgrade, migration dry-run, maintenance window and rollback/recovery pro
+REQ-S19-014 IMPLEMENTED marker=False | Provide data migration tools with mapping, validation, reconciliation, attachment manifest
+REQ-S19-015 IMPLEMENTED marker=True | Provide user and admin guides, the role matrix, the automation operations guide, test evid
+REQ-S19-016 IMPLEMENTED marker=False | Export all business records, relationships, audit history, approvals, evidence files, conf
+REQ-S19-017 IMPLEMENTED marker=False | Demonstrate transfer into a clean, company-like environment with a different base URL and 
+REQ-S19-018 IMPLEMENTED marker=False | Test runtime operation with outbound public internet disabled, document any enabled enterp
+REQ-S19-019 IMPLEMENTED marker=False | Make no required runtime service depend on a builder-hosted database, proprietary workflow
+REQ-S20-018 IMPLEMENTED marker=False | Deliver and pass the executable acceptance test A18 Independent deployment
+REQ-S20-019 IMPLEMENTED marker=False | Deliver and pass the executable acceptance test A19 Backup and recovery
+REQ-S20-023 IMPLEMENTED marker=True | Deliver and pass the executable acceptance test A23 Real independent stage reviews
+REQ-S20-026 IMPLEMENTED marker=False | Deliver and pass the executable acceptance test A26 Repair and re-review
+REQ-S20-027 IMPLEMENTED marker=False | Deliver and pass the executable acceptance test A27 Reliable resumption
+REQ-S20-028 IMPLEMENTED marker=True | Deliver and pass the executable acceptance test A28 Final package integrity
+REQ-S20-031 IMPLEMENTED marker=True | Deliver executable tests at the right level (unit for formulas and state rules, integratio
+REQ-S21-002 IMPLEMENTED marker=True | Deliver usable integrated increments that maintain bilingual behaviour, authorization, per
+REQ-S21-003 IMPLEMENTED marker=True | Preserve the full platform scope through final delivery (the first slice is not the finish
+REQ-S21-004 IMPLEMENTED marker=True | Meet the completion standard: users operate the playbook from inputs to sustained outcomes
+rows with completes-after-gate marker: 23
+
+REQ-DLV-014 acceptance: A23;A26: each stage's history in stages.json passes through BUILDING, REVIEWING and VERIFYING to APPROVED, and every finding raised has a fix revision plus an independent verification by a non-owner before approval
+REQ-DLV-014 notes: AN-10: the integrate-and-freeze step uses the pre-freeze check tools/gates/prefreeze.sh (REQ-DLV-023) from DG0 round 5. DG7 analyst pass (T-DG7-AN-P7, base 3386b90, 2026-11-14): RELEASE BLOCKER at this pass, not IMPLEMENTED. Missing dependency: 'node tools/gates/validate.mjs --stage DG7' at the gate and protocol-audit C9 at the freeze (p7-work-split §J.1): DG7's history must reach APPROVED, which only the gate can show. DG0-DG6 pass; F-DG6-952 stays its accepted observation. Same Q19-extension question as REQ-DLV-005. DG7 analyst pass 2 (T-DG7-AN-P7B, base 55742fd, 2026-11-14): still a RELEASE BLOCKER, not IMPLEMENTED. Missing: the DG7 gate ('validate.mjs --stage DG7', DG7 history reaching APPROVED) and protocol-audit C9 at the freeze. D-266 (d): Q19 not extended; the release-auditor decides. DG7 analyst pass 3 (T-DG7-AN-P7C, base 7f828e0, 2026-11-14): still a RELEASE BLOCKER, not IMPLEMENTED. Missing: the DG7 gate ('validate.mjs --stage DG7', DG7 history reaching APPROVED) and protocol-audit C9 at the freeze; neither exists at base 7f828e0. D-266 (d): the release-auditor decides. DG7 analyst pass 4 (T-DG7-AN-P7D, base 0c78543, 2026-11-15): still a RELEASE BLOCKER, not IMPLEMENTED. Since pass 3, the orchestrator's protocol audit before the freeze (D-269: 'protocol-audit.mjs --all --json' at head b2ba3e3, exit 1, 279 hits; test-evidence/DG7/orchestrator/protocol-audit/protocol-audit-prefreeze.json and .log) ran: DG7 C9 PASS (DG7 entered BUILDING at 2026-11-12T12:02:49Z, after 

@@ -1,0 +1,17 @@
+# A27 K11 re-drill at checkpoint 02aeed6e434ec1511795302ebd5efbec90eb90c2 (round-5 source commit)
+$ git show 02aeed6e434ec1511795302ebd5efbec90eb90c2:docs/delivery/progress.md | grep -m1 'Next action'
+Next action:** freeze round 5, then domain, code-security and qa on the same candidate, then the release audit, then the A28 seal. Product gate G6 never implies DG7.
+$ stages.json DG7 state and last history entry at 02aeed6e434ec1511795302ebd5efbec90eb90c2
+FIXING {'state': 'FIXING', 'at': '2026-11-16T06:12:55Z', 'note': 'Round 4 (d91f7152): 920, 921, 940, 960 verified closed by all three; all three FAIL only on the missing round-3 FIXING entry (F-DG7-922, 941, 970), repaired by the orchestrator. D-277.'}
+$ open (non-closed) DG7 findings at 02aeed6e434ec1511795302ebd5efbec90eb90c2
+[('F-DG7-922', 'FIXED_PENDING_VERIFICATION'), ('F-DG7-941', 'FIXED_PENDING_VERIFICATION'), ('F-DG7-970', 'FIXED_PENDING_VERIFICATION')]
+$ assignments present for round 5 at 02aeed6e434ec1511795302ebd5efbec90eb90c2?
+docs/delivery/assignments/DG7/round-1
+docs/delivery/assignments/DG7/round-2
+docs/delivery/assignments/DG7/round-3
+docs/delivery/assignments/DG7/round-4
+$ git log --format='%h %cI %s' 02aeed6e434ec1511795302ebd5efbec90eb90c2..HEAD (actual next step)
+f3f61cd60 2026-11-16T06:14:08+00:00 DG7: freeze round 5
+7b7bbfbdd 2026-11-16T06:33:10+00:00 run: DG7-T-DG7-REV-DOM-R5-domain-reviewer-20261116T061415Z-91d8527b (review evidence, auto-committed by run-agent.sh)
+b6b645921 2026-11-16T06:47:52+00:00 run: DG7-T-DG7-REV-CS-R5-code-security-reviewer-20261116T061415Z-a087192e (review evidence, auto-committed by run-agent.sh)
+reconstructed next action: freeze round 5, then domain, code-security, qa on the same candidate; actual next commit: f3f61cd60 'DG7: freeze round 5' adding the three round-5 assignments and the 07af9fba manifest -> equal. K11 PASS on this checkpoint.

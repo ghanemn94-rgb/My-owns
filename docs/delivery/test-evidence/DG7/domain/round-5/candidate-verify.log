@@ -1,0 +1,97 @@
+# 2026-11-16T06:28:08Z node v24.21.0
+sha256 assignment: 0d9c0b3cb06a563816f36c339e43224c6c023e7276a69abb90439133fdc49f79  docs/delivery/assignments/DG7/round-5/domain-reviewer.md
+HEAD f3f61cd60e1605010d1b8bc116224065b228beec
+f3f61cd60 DG7: freeze round 5
+02aeed6e4 DG7: mark round-4 findings fixed, D-277, progress
+9d5691143 DG7: record the missing round-3 FIXING entry and the round-4 outcome in stages.json (F-DG7-922/941/970)
+## git diff --stat 02aeed6e HEAD
+ .../DG7/round-5/code-security-reviewer.md          |   141 +
+ .../assignments/DG7/round-5/domain-reviewer.md     |   141 +
+ .../assignments/DG7/round-5/qa-verifier.md         |   141 +
+ .../candidates/DG7/07af9fba26f9ae43.manifest.json  | 15793 +++++++++++++++++++
+ docs/delivery/stages.json                          |    27 +-
+ 5 files changed, 16238 insertions(+), 5 deletions(-)
+## candidate.mjs --stage DG7
+{"stage":"DG7","source":"working-tree","candidate_id":"sha256:07af9fba26f9ae435f6f3de7ca5204ed1e182a125f1fd0f912b70da06035a61d","files":3155}
+exit=0
+## candidate.mjs --stage DG7 --ref 02aeed6e
+{"stage":"DG7","source":"02aeed6e434ec1511795302ebd5efbec90eb90c2","candidate_id":"sha256:07af9fba26f9ae435f6f3de7ca5204ed1e182a125f1fd0f912b70da06035a61d","files":3155}
+exit=0
+## candidate.mjs --stage DG7 --diff
+{
+  "frozen": "sha256:07af9fba26f9ae435f6f3de7ca5204ed1e182a125f1fd0f912b70da06035a61d",
+  "working_tree": "sha256:07af9fba26f9ae435f6f3de7ca5204ed1e182a125f1fd0f912b70da06035a61d",
+  "matches": true,
+  "added": [],
+  "removed": [],
+  "changed": []
+}
+exit=0
+## git diff a76c2aed4 HEAD -- docs/delivery/stages.json
+diff --git a/docs/delivery/stages.json b/docs/delivery/stages.json
+index e4cfd8f44..0ad84c5ad 100644
+--- a/docs/delivery/stages.json
++++ b/docs/delivery/stages.json
+@@ -2082,10 +2082,10 @@
+         ]
+       },
+       "candidate": {
+-        "candidate_id": "sha256:d91f7152950ed7119b412db0135836c53a3f01e95300af32c86db367f0712e59",
+-        "source_commit": "471072d6481a346c356e985d07b49721ebdda571",
+-        "frozen_at": "2026-11-16T03:55:37Z",
+-        "manifest_path": "docs/delivery/candidates/DG7/d91f7152950ed711.manifest.json"
++        "candidate_id": "sha256:07af9fba26f9ae435f6f3de7ca5204ed1e182a125f1fd0f912b70da06035a61d",
++        "source_commit": "02aeed6e434ec1511795302ebd5efbec90eb90c2",
++        "frozen_at": "2026-11-16T06:14:07Z",
++        "manifest_path": "docs/delivery/candidates/DG7/07af9fba26f9ae43.manifest.json"
+       },
+       "review_rounds": [
+         {
+@@ -2135,6 +2135,18 @@
+             "qa-verifier": "docs/delivery/reviews/DG7/round-4/qa-verifier.json"
+           },
+           "note": "DG7 round 4: domain, code-security, qa; verify F-DG7-920/921/940/960."
++        },
++        {
++          "round": 5,
++          "candidate_id": "sha256:07af9fba26f9ae435f6f3de7ca5204ed1e182a125f1fd0f912b70da06035a61d",
++          "frozen_at": "2026-11-16T06:14:07Z",
++          "source_commit": "02aeed6e434ec1511795302ebd5efbec90eb90c2",
++          "records": {
++            "domain-reviewer": "docs/delivery/reviews/DG7/round-5/domain-reviewer.json",
++            "code-security-reviewer": "docs/delivery/reviews/DG7/round-5/code-security-reviewer.json",
++            "qa-verifier": "docs/delivery/reviews/DG7/round-5/qa-verifier.json"
++          },
++          "note": "DG7 round 5: domain, code-security, qa; verify F-DG7-922/941/970."
+         }
+       ],
+       "gate_record": "docs/delivery/gates/DG7.json",
+@@ -2174,10 +2186,25 @@
+           "at": "2026-11-15T22:34:02Z",
+           "note": "Round 3 frozen on sha256:60dd90b6 (D-275)."
+         },
++        {
++          "state": "FIXING",
++          "at": "2026-11-16T01:38:50Z",
++          "note": "Round 3 (60dd90b6): domain FAIL (920 Low, 921 Medium), code-security FAIL (940 Medium; 960 not closed), qa FAIL (960). Repairs AN-P7G, BE-R8. D-276. Entry recorded late (2026-11-16, after round 4): the orchestrator omitted it at the round-4 freeze, which the round-4 reviewers raised as F-DG7-922/941/970; the time is the import of the round-3 findings."
++        },
+         {
+           "state": "REVIEWING",
+           "at": "2026-11-16T03:55:37Z",
+           "note": "Round 4 frozen on sha256:d91f7152 (D-276)."
++        },
++        {
++          "state": "FIXING",
++          "at": "2026-11-16T06:12:55Z",
++          "note": "Round 4 (d91f7152): 920, 921, 940, 960 verified closed by all three; all three FAIL only on the missing round-3 FIXING entry (F-DG7-922, 941, 970), repaired by the orchestrator. D-277."
++        },
++        {
++          "state": "REVIEWING",
++          "at": "2026-11-16T06:14:07Z",
++          "note": "Round 5 frozen on sha256:07af9fba (D-277)."
+         }
+       ]
+     }
+## commit 5458273cd (time used for the late FIXING entry)
+5458273cd 2026-11-16T01:38:50+00:00 DG7: import round-3 findings; assignments AN-P7G and BE-R8
+9d5691143 2026-11-16T06:13:24+00:00 DG7: record the missing round-3 FIXING entry and the round-4 outcome in stages.json (F-DG7-922/941/970)

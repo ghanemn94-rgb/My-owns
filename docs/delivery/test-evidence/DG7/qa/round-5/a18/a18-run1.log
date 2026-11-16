@@ -1,0 +1,255 @@
+port-policy: PostgreSQL listening on port 32585 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+start 07:05:30; HEAD 02aeed6e434ec1511795302ebd5efbec90eb90c2; node v24.21.0; free 7131 MB
+mth-db seed-demo: reporting periods relative to 2026-11-16 (Asia/Riyadh): 2 generated, current period 2026-11 open
+export-migration: wrote export 01a1e32c-fae2-729c-84a9-903611142717 (demo, 0152_p7_transfer_recheck_lineage_basis): 335 tables, 4782 rows, 0 attachments to /var/tmp/mth-run.JnUuNv/claude-0/qa-r5-a18/export; manifest sha256 8d3705ecf7edb33c542342341a13f9343efaaf69aaa452d496b8336fc19d5d06
+demo export exit 0; manifest sha256 8d3705ecf7edb33c542342341a13f9343efaaf69aaa452d496b8336fc19d5d06
+build-archive: candidate sha256:07af9fba26f9ae435f6f3de7ca5204ed1e182a125f1fd0f912b70da06035a61d commit 02aeed6e434ec1511795302ebd5efbec90eb90c2
+build-archive: tar sha256 efe5fff71d78c586e1614d4536a7317569f2587fe7d1027fed81e552fbeb3ab1
+build-archive: archive sha256 977cb55a12a146ab545b2e50661cb97b627213ea4bf8728e58d683bafecc0ee1
+build-archive exit 0
+archive mth-transformation-hub-0.1.0-07af9fba26f9.tar.gz 14684870 bytes sha256 977cb55a12a146ab545b2e50661cb97b627213ea4bf8728e58d683bafecc0ee1
+1 archive-checksum: ok
+2 single-top-level-directory: ok
+3 layout: ok
+4 sha256sums: ok
+5 candidate-id: ok
+6 copies: ok
+7 determinism-metadata: ok
+archive-verify: PASS
+archive --verify exit 0
+--- part 1: transfer-drill.sh --keep start 07:06:02 free 6808 MB
+part 1 drill exit 0 07:10:42
+transfer-drill: step D0 PASS in 195.556 s
+transfer-drill: step D1 PASS in 12.100 s
+transfer-drill: step D2 PASS in 1.783 s
+transfer-drill: step D3 PASS in 0.360 s
+transfer-drill: step D4 PASS in 6.332 s
+transfer-drill: step D5 PASS in 12.192 s
+transfer-drill: step D6 PASS in 3.216 s
+transfer-drill: step D7 PASS in 2.322 s
+transfer-drill: step D8 PASS in 33.617 s
+transfer-drill: step D9 PASS in 9.845 s
+transfer-drill: step D10 PASS in 0.772 s
+transfer-drill: PASS in 278.873 s: 335 tables and 2 evidence files equal, origin http://127.0.0.1:25302, restart verified; report /home/user/My-owns/docs/delivery/test-evidence/DG7/qa/round-5/a18/out/direct/transfer-drill-report.json
+stderr lines: 0
+--- target cluster pg.log: shutdown / startup lines (F-DG7-921)
+  1:2026-11-16 07:09:33.771 UTC [4223] LOG:  starting PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+  4:2026-11-16 07:09:33.777 UTC [4223] LOG:  database system is ready to accept connections
+  10:2026-11-16 07:10:32.475 UTC [4223] LOG:  received fast shutdown request
+  16:2026-11-16 07:10:32.703 UTC [4223] LOG:  database system is shut down
+  17:2026-11-16 07:10:32.835 UTC [4945] LOG:  starting PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+  20:2026-11-16 07:10:32.844 UTC [4945] LOG:  database system is ready to accept connections
+  21:2026-11-16 07:10:41.920 UTC [4945] LOG:  received fast shutdown request
+  27:2026-11-16 07:10:41.950 UTC [4945] LOG:  database system is shut down
+drill PostgreSQL left running: none
+removed work tree 07:10:45
+--- part 2: A18 harness start 07:10:45 free 6832 MB
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.JnUuNv/claude-0/review-qa
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwixci4f_afe321f7 (server_encoding UTF8); applied 135 migrations to a fresh database
+ ✓ |integration| tests/qa/integration/a18-transfer-drill.test.ts > A18 clean environment starts: an empty, freshly migrated installation is ready (REQ-S20-018) > ready with database, migrations and storage ok; the worker without a heartbeat is unknown, never alive 398ms
+ ✓ |integration| tests/qa/integration/a18-transfer-drill.test.ts > A18 clean environment starts: an empty, freshly migrated installation is ready (REQ-S20-018) > a missing evidence directory is not ready (503, storage fail), never reported ok 211ms
+ ✓ |integration| tests/qa/integration/a18-transfer-drill.test.ts > A18 transfer drill harness: drill files present; inputs absent = BLOCKED (skipped), wrong = FAIL > DO-D's drill files and DOC-B's deployment guide are present (checked whatever the inputs) 0ms
+ ✓ |integration| tests/qa/integration/a18-transfer-drill.test.ts > A18 transfer drill harness: drill files present; inputs absent = BLOCKED (skipped), wrong = FAIL > the QA_A18_* inputs given are complete and well formed 0ms
+stdout | tests/qa/integration/a18-transfer-drill.test.ts > A18 transfer drill: restored records, files and configuration work on another origin, offline (DO-D)
+A18-TIMINGS {"drillSeconds":297.24918873999997,"exit":1}
+
+ × |integration| tests/qa/integration/a18-transfer-drill.test.ts > A18 transfer drill: restored records, files and configuration work on another origin, offline (DO-D) > the drill exits 0 with the PASS line (exit 3 is BLOCKED and fails here, never passes) 8ms
+   → 000-8000-000000000001 already remedied; executive decision DEC-01 deferred to 2026-11-30; C2 canSubmit after 2 s; C3 submission 1
+  | PASS  approve (30170 ms): C4 canDecide after 0 s; C5 drill-01995000-0000-7000-8000-000000000011 (rebound) decided G5 submission 1: deferred (decision 01a1e335-cff6-75f0-914b-9db813e48e01); C6 submission decided; waited 30 s for the worker; KPI evaluations read: 3
+  | PASS  downloads (61 ms): 2 evidence files downloaded by drill-01920000-0000-7000-9000-000000000202, SHA-256 equal
+  | PASS  deeplink (23 ms): notification 01a1e335-d64e-7e8a-a44b-2cf80c29b745: http://127.0.0.1:25302/transformations/01995000-0000-7000-8000-000000000001/gates/G5/submissions/1 -> 200
+  | {"result":"PASS","steps":8}
+transfer-drill: step D8 PASS in 33.639 s
+transfer-drill: step D9 start: stop worker; journey exportq; job-check snapshot; stop API, PostgreSQL; start PostgreSQL, API, worker; job-check compare; journey exportwait, downloads; allowance.mjs; node tools/migration/reconcile.mjs --from <package> --after-use --allow <allowance.json> (mode 2)
+  | PASS  signin (77 ms): drill-01995000-0000-7000-8000-000000000012 -> user 01995000-0000-7000-8000-000000000012, roles [TL,TL,TL]
+  | PASS  exportq (39 ms): export 01a1e336-472f-765c-99c9-e745f53d7e3b queued
+  | {"result":"PASS","steps":2}
+  | job-check: snapshot: job_run 0, enabled schedules 22, pg-boss pgboss.job, approvals gate_decision 5, approval 1, approval_decision 0
+  | job-check: PASS: enabled schedules equal, earlier job_run rows unchanged (0 new), approval rows equal
+  | PASS  signin (150 ms): drill-01995000-0000-7000-8000-000000000012 -> user 01995000-0000-7000-8000-000000000012, roles [TL,TL,TL]
+  | PASS  exportwait (1045 ms): export 01a1e336-472f-765c-99c9-e745f53d7e3b succeeded after 1 s; 1731 bytes, SHA-256 equal
+  | PASS  downloads (59 ms): 2 evidence files downloaded by drill-01920000-0000-7000-9000-000000000202, SHA-256 equal
+  | {"result":"PASS","steps":3}
+  | D9: 2 downloads; the attachment manifest lists 2
+  | allowance: 6 actors, 12 tables with exact keys, 17 audited, 7 children, 1 counters, 4 lineage, 6 operational; constants from packages/db/src/transfer/recheck.ts
+  | transfer-attachments verify: matched: 2 objects
+  |   automation_execution: 32 explaining events
+  |   automation_execution: 17 added, 0 changed, 0 missing (audit_explained)
+  |     unexplained added ["01a1e336-6adf-7a11-af63-c8f6347fcaf8"]
+  |   automation_action_result: 16 explaining events
+  |   automation_action_result: 17 added, 0 changed, 0 missing (audit_explained)
+  |     unexplained added ["01a1e336-6b05-78d0-bfae-f1cd15c76b6d"]
+  |   forum: 5 explaining events
+  |   gate_instance: 8 explaining events
+  |   governance_matrix: 2 explaining events
+  |   diagnostic_item: 6 explaining events
+  |   report_snapshot: 1 explaining events
+  |   roadmap_wave: 4 explaining events
+  |   corrective_case: 0 explaining events
+  |   scoring_weight_set: 1 explaining events
+  |   tom_canvas_cell: 10 explaining events
+  |   transformation_decision_right: 4 explaining events
+  |   phase_step: 5 explaining events
+  |   transformation_config_pin: 3 explaining events
+  |   transformation_raci_deliverable: 6 explaining events
+  |   transformation_raci_assignment: 36 explaining events
+  |   work_item: 6 explaining events
+  | reconcile-migration: mismatch: 2 tables, 0 attachments differ
+  | transfer-drill: step D9 failed: automation_execution changed outside the allowance (17 added, 0 changed, 0 missing (audit_explained))
+  | transfer-drill: step D9 failed: automation_action_result changed outside the allowance (17 added, 0 changed, 0 missing (audit_explained))
+transfer-drill: step D9 failed: exit 1: transfer-drill: step D9 failed: automation_action_result changed outside the allowance (17 added, 0 changed, 0 missing (audit_explained))
+transfer-drill: FAIL: D9 FAIL, D10 NOT_RUN, D11 NOT_RUN; report /home/user/My-owns/docs/delivery/test-evidence/DG7/qa/round-5/a18/out/harness/transfer-drill-report.json
+: expected 1 to be +0 // Object.is equality
+ × |integration| tests/qa/integration/a18-transfer-drill.test.ts > A18 transfer drill: restored records, files and configuration work on another origin, offline (DO-D) > the report: D0–D11 each PASS with command, exit and seconds; the given archive; the synthetic drill IdP 3ms
+   → expected [ …(6) ] to deeply equal []
+ ✓ |integration| tests/qa/integration/a18-transfer-drill.test.ts > A18 transfer drill: restored records, files and configuration work on another origin, offline (DO-D) > D3: configuration only from .env.example keys, each citing a section of the deployment guide 2ms
+ × |integration| tests/qa/integration/a18-transfer-drill.test.ts > A18 transfer drill: restored records, files and configuration work on another origin, offline (DO-D) > D5/D9: every reconciliation (counts, content digests, attachment checksums, after restart) is equal 3ms
+   → reconcile-d9.json: expected [ '$.equal' ] to deeply equal []
+ × |integration| tests/qa/integration/a18-transfer-drill.test.ts > A18 transfer drill: restored records, files and configuration work on another origin, offline (DO-D) > D10: the source origin is stored nowhere except audit_event 1ms
+   → ENOENT: no such file or directory, open '/home/user/My-owns/docs/delivery/test-evidence/DG7/qa/round-5/a18/out/harness/origin-scan.json'
+ ✓ |integration| tests/qa/integration/a18-transfer-drill.test.ts > A18 transfer drill: restored records, files and configuration work on another origin, offline (DO-D) > the drill log names no builder-hosted or public service it reached 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| tests/qa/integration/a18-transfer-drill.test.ts > A18 transfer drill: restored records, files and configuration work on another origin, offline (DO-D) > the drill exits 0 with the PASS line (exit 3 is BLOCKED and fails here, never passes)
+AssertionError: 000-8000-000000000001 already remedied; executive decision DEC-01 deferred to 2026-11-30; C2 canSubmit after 2 s; C3 submission 1
+  | PASS  approve (30170 ms): C4 canDecide after 0 s; C5 drill-01995000-0000-7000-8000-000000000011 (rebound) decided G5 submission 1: deferred (decision 01a1e335-cff6-75f0-914b-9db813e48e01); C6 submission decided; waited 30 s for the worker; KPI evaluations read: 3
+  | PASS  downloads (61 ms): 2 evidence files downloaded by drill-01920000-0000-7000-9000-000000000202, SHA-256 equal
+  | PASS  deeplink (23 ms): notification 01a1e335-d64e-7e8a-a44b-2cf80c29b745: http://127.0.0.1:25302/transformations/01995000-0000-7000-8000-000000000001/gates/G5/submissions/1 -> 200
+  | {"result":"PASS","steps":8}
+transfer-drill: step D8 PASS in 33.639 s
+transfer-drill: step D9 start: stop worker; journey exportq; job-check snapshot; stop API, PostgreSQL; start PostgreSQL, API, worker; job-check compare; journey exportwait, downloads; allowance.mjs; node tools/migration/reconcile.mjs --from <package> --after-use --allow <allowance.json> (mode 2)
+  | PASS  signin (77 ms): drill-01995000-0000-7000-8000-000000000012 -> user 01995000-0000-7000-8000-000000000012, roles [TL,TL,TL]
+  | PASS  exportq (39 ms): export 01a1e336-472f-765c-99c9-e745f53d7e3b queued
+  | {"result":"PASS","steps":2}
+  | job-check: snapshot: job_run 0, enabled schedules 22, pg-boss pgboss.job, approvals gate_decision 5, approval 1, approval_decision 0
+  | job-check: PASS: enabled schedules equal, earlier job_run rows unchanged (0 new), approval rows equal
+  | PASS  signin (150 ms): drill-01995000-0000-7000-8000-000000000012 -> user 01995000-0000-7000-8000-000000000012, roles [TL,TL,TL]
+  | PASS  exportwait (1045 ms): export 01a1e336-472f-765c-99c9-e745f53d7e3b succeeded after 1 s; 1731 bytes, SHA-256 equal
+  | PASS  downloads (59 ms): 2 evidence files downloaded by drill-01920000-0000-7000-9000-000000000202, SHA-256 equal
+  | {"result":"PASS","steps":3}
+  | D9: 2 downloads; the attachment manifest lists 2
+  | allowance: 6 actors, 12 tables with exact keys, 17 audited, 7 children, 1 counters, 4 lineage, 6 operational; constants from packages/db/src/transfer/recheck.ts
+  | transfer-attachments verify: matched: 2 objects
+  |   automation_execution: 32 explaining events
+  |   automation_execution: 17 added, 0 changed, 0 missing (audit_explained)
+  |     unexplained added ["01a1e336-6adf-7a11-af63-c8f6347fcaf8"]
+  |   automation_action_result: 16 explaining events
+  |   automation_action_result: 17 added, 0 changed, 0 missing (audit_explained)
+  |     unexplained added ["01a1e336-6b05-78d0-bfae-f1cd15c76b6d"]
+  |   forum: 5 explaining events
+  |   gate_instance: 8 explaining events
+  |   governance_matrix: 2 explaining events
+  |   diagnostic_item: 6 explaining events
+  |   report_snapshot: 1 explaining events
+  |   roadmap_wave: 4 explaining events
+  |   corrective_case: 0 explaining events
+  |   scoring_weight_set: 1 explaining events
+  |   tom_canvas_cell: 10 explaining events
+  |   transformation_decision_right: 4 explaining events
+  |   phase_step: 5 explaining events
+  |   transformation_config_pin: 3 explaining events
+  |   transformation_raci_deliverable: 6 explaining events
+  |   transformation_raci_assignment: 36 explaining events
+  |   work_item: 6 explaining events
+  | reconcile-migration: mismatch: 2 tables, 0 attachments differ
+  | transfer-drill: step D9 failed: automation_execution changed outside the allowance (17 added, 0 changed, 0 missing (audit_explained))
+  | transfer-drill: step D9 failed: automation_action_result changed outside the allowance (17 added, 0 changed, 0 missing (audit_explained))
+transfer-drill: step D9 failed: exit 1: transfer-drill: step D9 failed: automation_action_result changed outside the allowance (17 added, 0 changed, 0 missing (audit_explained))
+transfer-drill: FAIL: D9 FAIL, D10 NOT_RUN, D11 NOT_RUN; report /home/user/My-owns/docs/delivery/test-evidence/DG7/qa/round-5/a18/out/harness/transfer-drill-report.json
+: expected 1 to be +0 // Object.is equality
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- 0[39m
+[31m+ 1[39m
+
+ ❯ tests/qa/integration/a18-transfer-drill.test.ts:192:45
+    190|       if (r.status === 3)
+    191|         throw new Error(`A18 BLOCKED (exit 3): ${r.text.split("\n").fi…
+    192|       expect(r.status, r.text.slice(-4000)).toBe(0);
+       |                                             ^
+    193|       const m = TRANSFER_PASS_LINE.exec(r.text);
+    194|       expect(m, "transfer-drill: PASS line (p7-work-split §B.5)").not.…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  |integration| tests/qa/integration/a18-transfer-drill.test.ts > A18 transfer drill: restored records, files and configuration work on another origin, offline (DO-D) > the report: D0–D11 each PASS with command, exit and seconds; the given archive; the synthetic drill IdP
+AssertionError: expected [ …(6) ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   "A18 step D9: result \"FAIL\", expected PASS",[39m
+[31m+   "A18 step D9: exit 1, expected 0",[39m
+[31m+   "A18 step D10: result \"NOT_RUN\", expected PASS",[39m
+[31m+   "A18 step D10: exit -1, expected 0",[39m
+[31m+   "A18 step D11: result \"NOT_RUN\", expected PASS",[39m
+[31m+   "A18 report: result \"FAIL\", expected PASS",[39m
+[31m+ ][39m
+
+ ❯ tests/qa/integration/a18-transfer-drill.test.ts:203:105
+    201|     it("the report: D0–D11 each PASS with command, exit and seconds; t…
+    202|       drill();
+    203|       expect(transferReportProblems(read("transfer-drill-report.json")…
+       |                                                                                                         ^
+    204|     });
+    205| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  |integration| tests/qa/integration/a18-transfer-drill.test.ts > A18 transfer drill: restored records, files and configuration work on another origin, offline (DO-D) > D5/D9: every reconciliation (counts, content digests, attachment checksums, after restart) is equal
+AssertionError: reconcile-d9.json: expected [ '$.equal' ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   "$.equal",[39m
+[31m+ ][39m
+
+ ❯ tests/qa/integration/a18-transfer-drill.test.ts:217:63
+    215|       const files = readdirSync(out).filter((f) => /^reconcile-.*\.jso…
+    216|       expect(files.length, "reconcile-*.json written").toBeGreaterThan…
+    217|       for (const f of files) expect(inequalities(read(f)), f).toEqual(…
+       |                                                               ^
+    218|     });
+    219| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  |integration| tests/qa/integration/a18-transfer-drill.test.ts > A18 transfer drill: restored records, files and configuration work on another origin, offline (DO-D) > D10: the source origin is stored nowhere except audit_event
+Error: ENOENT: no such file or directory, open '/home/user/My-owns/docs/delivery/test-evidence/DG7/qa/round-5/a18/out/harness/origin-scan.json'
+ ❯ read tests/qa/integration/a18-transfer-drill.test.ts:140:50
+    138|     let out = "";
+    139|     let run: { status: number | null; text: string; seconds: number } …
+    140|     const read = (f: string): Json => JSON.parse(readFileSync(join(out…
+       |                                                  ^
+    141| 
+    142|     // QA-C (T-DG7-QA-C): the drill runs ASYNCHRONOUSLY in beforeAll. …
+ ❯ tests/qa/integration/a18-transfer-drill.test.ts:222:33
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { errno: -2, code: 'ENOENT', syscall: 'open', path: '/home/user/My-owns/docs/delivery/test-evidence/DG7/qa/round-5/a18/out/harness/origin-scan.json' }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  4 failed | 6 passed (10)
+   Start at  07:10:46
+   Duration  315.65s (transform 5.47s, setup 0ms, collect 10.19s, tests 300.94s, environment 0ms, prepare 64ms)
+
+A18 harness exit 1 end 07:16:02
+removed /var/tmp/mth-run.JnUuNv/claude-0/qa-r5-a18
+part 1 drill exit 0; part 2 harness exit 1
+driver exit 1

@@ -1,0 +1,84 @@
+## start 2026-11-16T06:14:56Z
+$ git rev-parse HEAD
+f3f61cd60e1605010d1b8bc116224065b228beec
+$ git log --oneline 02aeed6e..HEAD
+f3f61cd60 DG7: freeze round 5
+$ node tools/gates/candidate.mjs --stage DG7 (working tree)
+{"stage":"DG7","source":"working-tree","candidate_id":"sha256:07af9fba26f9ae435f6f3de7ca5204ed1e182a125f1fd0f912b70da06035a61d","files":3155}
+exit=0
+$ node tools/gates/candidate.mjs --stage DG7 --diff docs/delivery/candidates/DG7/07af9fba26f9ae43.manifest.json
+{
+  "frozen": "sha256:07af9fba26f9ae435f6f3de7ca5204ed1e182a125f1fd0f912b70da06035a61d",
+  "working_tree": "sha256:07af9fba26f9ae435f6f3de7ca5204ed1e182a125f1fd0f912b70da06035a61d",
+  "matches": true,
+  "added": [],
+  "removed": [],
+  "changed": []
+}
+exit=0
+$ node tools/gates/candidate.mjs --stage DG7 --diff docs/delivery/candidates/DG7/d91f7152950ed711.manifest.json
+{
+  "frozen": "sha256:07af9fba26f9ae435f6f3de7ca5204ed1e182a125f1fd0f912b70da06035a61d",
+  "working_tree": "sha256:07af9fba26f9ae435f6f3de7ca5204ed1e182a125f1fd0f912b70da06035a61d",
+  "matches": true,
+  "added": [],
+  "removed": [],
+  "changed": []
+}
+exit=0
+$ git diff --stat 471072d6 02aeed6e (round-4 source -> round-5 source)
+ .../DG7/qa/round-4/a19/drill-report.json           |   162 +
+ .../DG7/qa/round-4/a19/restore-report.json         |   143 +
+ .../DG7/qa/round-4/f921-register-extract.log       |    14 +
+ .../test-evidence/DG7/qa/round-4/f940/mutants.log  |    87 +
+ .../test-evidence/DG7/qa/round-4/f940/mutants.sh   |    32 +
+ .../DG7/qa/round-4/f960/disclosure-surfaces.log    |    22 +
+ .../qa/round-4/f960/known-limitations-control.log  |     9 +
+ .../f960/known-limitations-regenerated.diff        |    13 +
+ .../DG7/qa/round-4/f960/protocol-audit-DG7.json    |  1103 ++
+ .../DG7/qa/round-4/f960/protocol-audit-DG7.out     |    13 +
+ .../DG7/qa/round-4/f960/protocol-audit-all.json    |  8996 +++++++++++
+ .../qa/round-4/f960/release-notes-revert-probe.log |    13 +
+ .../DG7/qa/round-4/f960/release-tools-all.log      |    26 +
+ .../DG7/qa/round-4/f960/release-tools.log          |    16 +
+ .../DG7/qa/round-4/offline/offline-drill-run.log   |   333 +
+ .../qa/round-4/offline/out/connection-check.json   |    29 +
+ .../DG7/qa/round-4/offline/out/connections.ndjson  |   287 +
+ .../DG7/qa/round-4/offline/out/groups.ndjson       |     2 +
+ .../round-4/offline/out/offline-drill-report.json  |   166 +
+ .../DG7/qa/round-4/offline/out/offline-drill.log   |   333 +
+ .../qa/round-4/offline/out/playwright-demo.json    |   562 +
+ .../qa/round-4/offline/out/playwright-plain.json   |   218 +
+ .../DG7/qa/round-4/offline/out/probe.json          |     1 +
+ .../DG7/qa/round-4/run-e2e-product.sh              |    13 +
+ .../test-evidence/DG7/qa/round-4/run-e2e-root.sh   |    11 +
+ .../DG7/qa/round-4/run-tool-suites.sh              |     9 +
+ .../DG7/qa/round-4/run-unit-integration.sh         |     8 +
+ .../screens/offline-a21-assistant-off-ar.png       |   Bin 0 -> 147790 bytes
+ .../screens/offline-a21-assistant-off-en.png       |   Bin 0 -> 140930 bytes
+ 215 files changed, 50584 insertions(+), 23 deletions(-)
+
+NOTE: candidate.mjs --diff ignores a path argument (it always reads stage.candidate.manifest_path, now the 07af9fba manifest); the second --diff above therefore compared with 07af9fba, not d91f7152. Direct manifest comparison follows.
+$ python3 manifest-diff.py d91f7152950ed711.manifest.json 07af9fba26f9ae43.manifest.json
+old sha256:d91f7152950ed7119b412db0135836c53a3f01e95300af32c86db367f0712e59 3155
+new sha256:07af9fba26f9ae435f6f3de7ca5204ed1e182a125f1fd0f912b70da06035a61d 3155
+added []
+removed []
+changed 1 ['docs/delivery/decisions.md']
+exit=0
+$ node tools/gates/candidate.mjs --stage DG7 --ref 471072d6 (round-4 source)
+{"stage":"DG7","source":"471072d6481a346c356e985d07b49721ebdda571","candidate_id":"sha256:d91f7152950ed7119b412db0135836c53a3f01e95300af32c86db367f0712e59","files":3155}
+exit=0
+$ node tools/gates/candidate.mjs --stage DG7 --ref 02aeed6e
+{"stage":"DG7","source":"02aeed6e434ec1511795302ebd5efbec90eb90c2","candidate_id":"sha256:07af9fba26f9ae435f6f3de7ca5204ed1e182a125f1fd0f912b70da06035a61d","files":3155}
+exit=0
+$ git diff --stat 471072d6 02aeed6e -- . ':!docs/delivery/runs' ':!docs/delivery/reviews' ':!docs/delivery/test-evidence'
+ .../DG7/round-4/code-security-reviewer.md          |   144 +
+ .../assignments/DG7/round-4/domain-reviewer.md     |   144 +
+ .../assignments/DG7/round-4/qa-verifier.md         |   144 +
+ .../candidates/DG7/d91f7152950ed711.manifest.json  | 15793 +++++++++++++++++++
+ docs/delivery/decisions.md                         |     1 +
+ docs/delivery/findings.json                        |   255 +-
+ docs/delivery/progress.md                          |     2 +-
+ docs/delivery/stages.json                          |    37 +-
+ 8 files changed, 16497 insertions(+), 23 deletions(-)

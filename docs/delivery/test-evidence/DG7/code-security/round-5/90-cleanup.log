@@ -1,0 +1,21 @@
+### cleanup 2026-11-16T06:44:32Z
+rm -rf disposable clones (scan-clone, probe-clone, review-cs5) exit=0
+-home-user-My-owns
+bash-edit-diff
+cache-break-state-a087192e-361b-47c8-a8c7-4be60e753820.json
+ev
+p3-control.log
+p3-mutant.log
+plugin-tool-staging
+### no PostgreSQL started this round; postgres processes under TMPDIR: 3
+### candidate after run
+{"stage":"DG7","source":"working-tree","candidate_id":"sha256:07af9fba26f9ae435f6f3de7ca5204ed1e182a125f1fd0f912b70da06035a61d","files":3155}
+exit=0
+### HEAD now 7b7bbfbdd678b788d1a5101840828e55e0a92bdb
+### git status (candidate paths, excluding runs/ and my evidence)
+ D docs/delivery/reviews/DG7/round-5/domain-reviewer.json
+ D docs/delivery/reviews/DG7/round-5/domain-reviewer.verifications.json
+?? docs/delivery/test-evidence/DG7/domain/round-5/
+?? docs/delivery/test-evidence/DG7/qa/round-5/
+[end]
+### re-check 2026-11-16T06:44:54Z: 'ps -eo pid,etimes,args | grep postgres | grep -v grep' lists no process. The count of 3 above came from transient processes that matched the shared prefix /var/tmp/mth-run.4xlyVr/claude-0 (the concurrent reviewers' runs share this prefix) or from the grep pipeline itself. I started no PostgreSQL this round, and none is running now. Also removed p3-*.log scratch. Note: git status shows the domain reviewer's round-5 files as deleted in my private staging view (they were auto-committed in 7b7bbfbdd by run-agent.sh; reviewers do not see each other's records during a run). I did not open them.

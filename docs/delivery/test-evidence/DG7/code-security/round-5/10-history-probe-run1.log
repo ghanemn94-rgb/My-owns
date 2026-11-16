@@ -1,0 +1,57 @@
+== P1: history invariants over every stage (time order, DG7 round alignment) ==
+NOT MONOTONE DG0 [56]2026-09-30T15:45:00Z > [57]2026-09-30T15:16:00Z
+NOT MONOTONE DG5 [5]2026-10-26T12:00:00Z > [6]2026-10-26T06:30:00Z
+DG7 history: PLANNED@2026-09-28T11:30:00Z -> BUILDING@2026-11-12T12:02:49Z -> REVIEWING@2026-11-15T07:29:30Z -> FIXING@2026-11-15T09:54:25Z -> REVIEWING@2026-11-15T14:20:34Z -> FIXING@2026-11-15T17:13:32Z -> REVIEWING@2026-11-15T22:34:02Z -> FIXING@2026-11-16T01:38:50Z -> REVIEWING@2026-11-16T03:55:37Z -> FIXING@2026-11-16T06:12:55Z -> REVIEWING@2026-11-16T06:14:07Z
+round 1: frozen_at 2026-11-15T07:29:08Z  REVIEWING entry 2026-11-15T07:29:30Z  MISMATCH
+round 2: frozen_at 2026-11-15T14:20:16Z  REVIEWING entry 2026-11-15T14:20:34Z  MISMATCH
+round 3: frozen_at 2026-11-15T22:34:02Z  REVIEWING entry 2026-11-15T22:34:02Z  OK
+round 4: frozen_at 2026-11-16T03:55:37Z  REVIEWING entry 2026-11-16T03:55:37Z  OK
+round 5: frozen_at 2026-11-16T06:14:07Z  REVIEWING entry 2026-11-16T06:14:07Z  OK
+between round 1 and 2: [FIXING] OK
+between round 2 and 3: [FIXING] OK
+between round 3 and 4: [FIXING] OK
+between round 4 and 5: [FIXING] OK
+stage=REVIEWING last=REVIEWING candidate=sha256:07af9fba26f9ae435f6f3de7ca5204ed1e182a125f1fd0f912b70da06035a61d
+P1 FAIL (4)
+== P2: late entry timestamp vs git history (round-3 findings import commit) ==
+late FIXING entry at: 2026-11-16T01:38:50Z
+471072d64 2026-11-16T03:55:01+00:00 DG7: mark round-3 findings fixed, D-276, progress
+5458273cd 2026-11-16T01:38:50+00:00 DG7: import round-3 findings; assignments AN-P7G and BE-R8
+1d04f8381 2026-11-16T01:38:05+00:00 DG7: round-3 review records and evidence (domain FAIL, code-security FAIL, qa FAIL)
+import commit 5458273cd committed at: 2026-11-16T01:38:50Z
+P2 PASS (late entry time = import of round-3 findings)
+== P3: mutation — remove the late FIXING entry in a disposable clone; validator must fail again ==
+error: copy-fd: write returned: No space left on device
+fatal: failed to copy file to '/var/tmp/mth-run.4xlyVr/claude-0/probe-clone/.git/objects/51/d75f0fcc8224d7d3a2be419a4952bd9dd5488b': No space left on device
+control (unmodified 02aeed6e4): --historical --stage DG6 exit=1
+
+Node.js v24.21.0
+node:fs:483
+    return binding.readFileUtf8(path, stringToFlags(options.flag));
+                   ^
+
+Error: ENOENT: no such file or directory, open '/var/tmp/mth-run.4xlyVr/claude-0/probe-clone/docs/delivery/stages.json'
+    at Object.readFileSync (node:fs:483:20)
+    at [eval]:2:70
+    at runScriptInThisContext (node:internal/vm:219:10)
+    at node:internal/process/execution:451:12
+    at [eval]-wrapper:6:24
+    at runScriptInContext (node:internal/process/execution:449:60)
+    at evalFunction (node:internal/process/execution:283:30)
+    at evalTypeScript (node:internal/process/execution:295:3)
+    at node:internal/main/eval_string:71:3 {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/var/tmp/mth-run.4xlyVr/claude-0/probe-clone/docs/delivery/stages.json'
+}
+
+Node.js v24.21.0
+mutant (late entry removed): --historical --stage DG6 exit=1
+node:internal/modules/cjs/loader:1568
+  throw err;
+  ^
+
+Error: Cannot find module '/var/tmp/mth-run.4xlyVr/claude-0/probe-clone/tools/gates/validate.mjs'
+P3 FAIL
+probe exit=1

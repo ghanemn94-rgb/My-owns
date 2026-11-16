@@ -1,0 +1,27 @@
+2026-11-16 07:09:33.771 UTC [4223] LOG:  starting PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+2026-11-16 07:09:33.771 UTC [4223] LOG:  listening on IPv4 address "127.0.0.1", port 25433
+2026-11-16 07:09:33.774 UTC [4228] LOG:  database system was shut down at 2026-11-16 07:09:33 UTC
+2026-11-16 07:09:33.777 UTC [4223] LOG:  database system is ready to accept connections
+2026-11-16 07:09:39.271 UTC [4226] LOG:  checkpoint starting: immediate force wait
+2026-11-16 07:09:39.277 UTC [4226] LOG:  checkpoint complete: wrote 31 buffers (0.2%); 0 WAL file(s) added, 0 removed, 2 recycled; write=0.002 s, sync=0.002 s, total=0.007 s; sync files=15, longest=0.001 s, average=0.001 s; distance=33505 kB, estimate=33505 kB; lsn=0/35A8318, redo lsn=0/35A82E0
+2026-11-16 07:09:47.899 UTC [4376] ERROR:  new row for relation "gate_instance" violates check constraint "gate_instance_draft_unsubmitted"
+2026-11-16 07:09:47.899 UTC [4376] DETAIL:  Failing row contains (01995000-1013-7000-8000-000000000001, 01995000-0000-7000-8000-000000000002, 01995000-0000-7000-8000-000000000001, G1, approved, SP, null, null, 1, 2026-05-22 07:00:00+00, 3, 2026-05-04 06:00:00+00, 01995000-0000-7000-8000-000000000012, 2026-05-22 07:00:00+00, 01995000-0000-7000-8000-000000000011, f).
+2026-11-16 07:09:47.899 UTC [4376] STATEMENT:  INSERT INTO "gate_instance" ("id", "organization_id", "transformation_id", "gate_code", "status", "approver_role_code", "approver_user_id", "current_submission_id", "latest_submission_no", "approved_at", "version", "created_at", "created_by", "updated_at", "updated_by", "approver_configured") SELECT r."id", r."organization_id", r."transformation_id", r."gate_code", r."status", r."approver_role_code", r."approver_user_id", NULL, r."latest_submission_no", r."approved_at", r."version", r."created_at", r."created_by", r."updated_at", r."updated_by", r."approver_configured" FROM jsonb_populate_recordset(NULL::"gate_instance", $1::jsonb) AS r
+2026-11-16 07:10:32.475 UTC [4223] LOG:  received fast shutdown request
+2026-11-16 07:10:32.476 UTC [4223] LOG:  aborting any active transactions
+2026-11-16 07:10:32.481 UTC [4223] LOG:  background worker "logical replication launcher" (PID 4231) exited with exit code 1
+2026-11-16 07:10:32.481 UTC [4226] LOG:  shutting down
+2026-11-16 07:10:32.482 UTC [4226] LOG:  checkpoint starting: shutdown immediate
+2026-11-16 07:10:32.689 UTC [4226] LOG:  checkpoint complete: wrote 4900 buffers (29.9%); 0 WAL file(s) added, 0 removed, 2 recycled; write=0.040 s, sync=0.165 s, total=0.208 s; sync files=2473, longest=0.028 s, average=0.001 s; distance=38474 kB, estimate=38474 kB; lsn=0/5B3ACB8, redo lsn=0/5B3ACB8
+2026-11-16 07:10:32.703 UTC [4223] LOG:  database system is shut down
+2026-11-16 07:10:32.835 UTC [4945] LOG:  starting PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+2026-11-16 07:10:32.835 UTC [4945] LOG:  listening on IPv4 address "127.0.0.1", port 25433
+2026-11-16 07:10:32.838 UTC [4950] LOG:  database system was shut down at 2026-11-16 07:10:32 UTC
+2026-11-16 07:10:32.844 UTC [4945] LOG:  database system is ready to accept connections
+2026-11-16 07:10:41.920 UTC [4945] LOG:  received fast shutdown request
+2026-11-16 07:10:41.921 UTC [4945] LOG:  aborting any active transactions
+2026-11-16 07:10:41.923 UTC [4945] LOG:  background worker "logical replication launcher" (PID 4953) exited with exit code 1
+2026-11-16 07:10:41.926 UTC [4948] LOG:  shutting down
+2026-11-16 07:10:41.927 UTC [4948] LOG:  checkpoint starting: shutdown immediate
+2026-11-16 07:10:41.942 UTC [4948] LOG:  checkpoint complete: wrote 201 buffers (1.2%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.003 s, sync=0.011 s, total=0.017 s; sync files=104, longest=0.002 s, average=0.001 s; distance=334 kB, estimate=334 kB; lsn=0/5B8E520, redo lsn=0/5B8E520
+2026-11-16 07:10:41.950 UTC [4945] LOG:  database system is shut down

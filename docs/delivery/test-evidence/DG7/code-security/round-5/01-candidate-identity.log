@@ -1,0 +1,56 @@
+### node v24.21.0; live repo read-only
+### git rev-parse HEAD (at start of run)
+f3f61cd60e1605010d1b8bc116224065b228beec  (DG7: freeze round 5; child of source commit 02aeed6e4)
+### git rev-parse HEAD (now)
+7b7bbfbdd678b788d1a5101840828e55e0a92bdb
+7b7bbfbdd 2026-11-16T06:33:10+00:00 run: DG7-T-DG7-REV-DOM-R5-domain-reviewer-20261116T061415Z-91d8527b (review evidence, auto-committed by run-agent.sh)
+### git diff --stat 02aeed6e4..f3f61cd60 (freeze commit content)
+ .../DG7/round-5/code-security-reviewer.md          |   141 +
+ .../assignments/DG7/round-5/domain-reviewer.md     |   141 +
+ .../assignments/DG7/round-5/qa-verifier.md         |   141 +
+ .../candidates/DG7/07af9fba26f9ae43.manifest.json  | 15793 +++++++++++++++++++
+ docs/delivery/stages.json                          |    27 +-
+ 5 files changed, 16238 insertions(+), 5 deletions(-)
+### node tools/gates/candidate.mjs --stage DG7
+{"stage":"DG7","source":"working-tree","candidate_id":"sha256:07af9fba26f9ae435f6f3de7ca5204ed1e182a125f1fd0f912b70da06035a61d","files":3155}
+exit=0
+### node tools/gates/candidate.mjs --stage DG7 --ref 02aeed6e434ec1511795302ebd5efbec90eb90c2
+{"stage":"DG7","source":"02aeed6e434ec1511795302ebd5efbec90eb90c2","candidate_id":"sha256:07af9fba26f9ae435f6f3de7ca5204ed1e182a125f1fd0f912b70da06035a61d","files":3155}
+exit=0
+### (also recomputed on a full disposable clone checked out at 02aeed6e4 earlier in this run: sha256:07af9fba26f9ae435f6f3de7ca5204ed1e182a125f1fd0f912b70da06035a61d, 3155 files, exit 0)
+### node tools/gates/candidate.mjs --stage DG7 --diff
+{
+  "frozen": "sha256:07af9fba26f9ae435f6f3de7ca5204ed1e182a125f1fd0f912b70da06035a61d",
+  "working_tree": "sha256:07af9fba26f9ae435f6f3de7ca5204ed1e182a125f1fd0f912b70da06035a61d",
+  "matches": true,
+  "added": [],
+  "removed": [],
+  "changed": []
+}
+exit=0
+### manifest-vs-manifest: round-4 d91f7152950ed711 vs round-5 07af9fba26f9ae43 (script scripts/manifest-diff.mjs)
+{
+  "old": "sha256:d91f7152950ed7119b412db0135836c53a3f01e95300af32c86db367f0712e59",
+  "new": "sha256:07af9fba26f9ae435f6f3de7ca5204ed1e182a125f1fd0f912b70da06035a61d",
+  "old_recomputed_matches": true,
+  "new_recomputed_matches": true,
+  "spec_equal": true,
+  "added": [],
+  "removed": [],
+  "changed": [
+    "docs/delivery/decisions.md"
+  ]
+}
+exit=0
+### git diff --stat 471072d64..02aeed6e4 -- . ':!docs/delivery'  (product, tests, handover, tooling)
+[empty = no change]
+### git diff --stat 471072d64..02aeed6e4 -- docs/delivery excluding reviews/test-evidence/runs/candidates/assignments
+ docs/delivery/decisions.md  |   1 +
+ docs/delivery/findings.json | 255 +++++++++++++++++++++++++++++++++++++++++---
+ docs/delivery/progress.md   |   2 +-
+ docs/delivery/stages.json   |  37 ++++++-
+ 4 files changed, 272 insertions(+), 23 deletions(-)
+### decisions.md delta
+--- a/docs/delivery/decisions.md
++++ b/docs/delivery/decisions.md
++| D-277 | 2026-11-16 | delivery-orchestrator | **DG7 round 4 outcome on d91f7152 and repair; round 5 to be frozen.** All three reviewers verified 920, 921, 940, 960 closed and found no product defect. All three FAIL on one process error of mine: at the round-4 freeze I appended REVIEWING without first recording the round-3 FIXING state, so stages.json held REVIEWING -> REVIEWING and the validator failed (F-DG7-922, 941, 970, Medium). Repair: the omitted FIXING entry inserted before the round-4 REVIEWING entry, its note saying it was recorded late, plus the round-4 FIXING entry. stages.json is outside the candidate manifest, so the product candidate content is unchanged. Lesson: every round outcome records FIXING before the next freeze; the freeze step now checks that `validate --stage DG7` reports no transition error. | Round-4 records; 9d5691143 | A round-5 reviewer finds another state-machine error |

@@ -1,0 +1,38 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG7-970",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:07af9fba26f9ae435f6f3de7ca5204ed1e182a125f1fd0f912b70da06035a61d (source 02aeed6e, 3155 files; the working tree and --ref 02aeed6e both recompute it). The repair is 9d5691143 (an ancestor of 02aeed6e). It changes only stages.json and findings.json; decisions.md (D-277) and progress.md follow in 02aeed6e. The DG7 history is now PLANNED, BUILDING, REVIEWING (r1), FIXING, REVIEWING (r2), FIXING, REVIEWING (r3), FIXING (inserted late), REVIEWING (r4), FIXING (r4 outcome), REVIEWING (r5). My probe checks every transition against the validator's own TRANSITIONS table: all legal. Timestamps strictly increase. Each review round's frozen_at matches a REVIEWING entry (rounds 1-2 within 22 s, rounds 3-5 exactly), and every finished round is followed by FIXING. Revert-to-fail: dropping the inserted entry from a scratch copy makes loadStages report 'DG7 illegal transition REVIEWING -> REVIEWING' again; the control copy has no error. Validators on this tree: --historical --stage DG6, DG5, DG4, DG3, DG2 and DG1 PASS; --reconcile PASS (structure); --pipeline PASS; --register DG7 PASS. --stage DG7 now reports a single problem, 'gate DG7: file not found (docs/delivery/gates/DG7.json)', which is expected before the release audit writes the gate record. The transition error is gone. On a late-recorded entry: I accept it. It is appended in a new commit (a76c2aed4 still shows the original omission, so history is not rewritten), and its note says plainly that it was recorded late and why. Its time, 2026-11-16T01:38:50Z, is the commit time of 5458273cd 'DG7: import round-3 findings', the real moment the round-3 repairs began. It sits between the round-3 freeze and the round-4 freeze. The outcome is also recorded in D-277. It states a fact that happened and does not fabricate one.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-5/03-validators.log",
+        "docs/delivery/test-evidence/DG7/qa/round-5/f970/stages-history-probe.mjs",
+        "docs/delivery/test-evidence/DG7/qa/round-5/f970/stages-history-probe.log",
+        "docs/delivery/test-evidence/DG7/qa/round-5/02-delivery-record-diff.log",
+        "docs/delivery/test-evidence/DG7/qa/round-5/01-candidate.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG7-922",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "The same defect as F-DG7-970 (DG7 stages.json REVIEWING -> REVIEWING after the round-4 freeze), raised by domain-reviewer. Same evidence as F-DG7-970, on candidate 07af9fba: the history is legal and monotonic, and each round pairs with a REVIEWING entry and a following FIXING. The revert-to-fail probe brings the error back. --historical DG6..DG1, --reconcile and --pipeline pass, and --stage DG7 reports only the missing gate record, expected before the audit.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-5/03-validators.log",
+        "docs/delivery/test-evidence/DG7/qa/round-5/f970/stages-history-probe.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG7-941",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "The same defect as F-DG7-970, raised by code-security-reviewer (the F-DG4-104/124 and F-DG6-911/951 class). Same evidence as F-DG7-970, on candidate 07af9fba: the transitions are legal, the inserted entry is disclosed as late with a real commit time, and the revert-to-fail probe brings the illegal transition back. The validators pass except for --stage DG7's expected missing gate record. The repair changes no candidate file: the round-4 and round-5 manifests differ only in docs/delivery/decisions.md (the D-277 row).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-5/03-validators.log",
+        "docs/delivery/test-evidence/DG7/qa/round-5/f970/stages-history-probe.log",
+        "docs/delivery/test-evidence/DG7/qa/round-5/01-candidate.log"
+      ]
+    }
+  ]
+}

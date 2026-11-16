@@ -1,0 +1,51 @@
+port-policy: PostgreSQL listening on port 32596 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+start 07:30:50; HEAD 02aeed6e434ec1511795302ebd5efbec90eb90c2; target drill start 07:40:30
+mth-db seed-demo: reporting periods relative to 2026-11-16 (Asia/Riyadh): 2 generated, current period 2026-11 open
+export-migration: wrote export 01a1e344-2a11-74c9-bd67-83d4d2e18710 (demo, 0152_p7_transfer_recheck_lineage_basis): 335 tables, 4782 rows, 0 attachments to /var/tmp/mth-run.JnUuNv/claude-0/qa-r5-d9/export; manifest sha256 707fa4eea8018bd7954ef3fc100456884de7c26e9c78cb9bbccd82ceeed58db0
+build-archive: archive sha256 9a37cd710ba407766da326b91ec1bc489e7888432b7355edad00aed0ff5fa8c4
+archive mth-transformation-hub-0.1.0-07af9fba26f9.tar.gz sha256 9a37cd710ba407766da326b91ec1bc489e7888432b7355edad00aed0ff5fa8c4
+waiting 554 s until 07:40:30
+--- transfer-drill.sh --keep start 07:40:30
+drill exit 0 07:44:58
+transfer-drill: step D0 start: node tools/release/build-archive.mjs --verify <archive> --expect-sha256 9a37cd710ba407766da326b91ec1bc489e7888432b7355edad00aed0f
+transfer-drill: step D0 PASS in 185.792 s
+transfer-drill: step D1 start: fresh cluster; mth-db migrate; mth-db seed-demo; mth-db seed-dev; API and worker at http://localhost:25301; deploy/scripts/smoke.
+transfer-drill: step D1 PASS in 10.928 s
+transfer-drill: step D2 start: DATABASE_OWNER_URL=<S> node tools/migration/export.mjs --out <work>/package --operator 'transfer-drill synthetic operator' (attac
+transfer-drill: step D2 PASS in 1.817 s
+transfer-drill: step D3 start: node deploy/scripts/generate-env-example.mjs --check && node deploy/scripts/drill/config-trace.mjs --template .env.example --guid
+transfer-drill: step D3 PASS in 0.375 s
+transfer-drill: step D4 start: mth-db migrate && mth-db bootstrap (twice; the second must refuse) on a separate clean database
+transfer-drill: step D4 PASS in 6.003 s
+transfer-drill: step D5 start: node tools/migration/prepare-target.mjs --from <package> && node tools/migration/import.mjs --from <package> --operator 'transfer
+transfer-drill: step D5 PASS in 11.555 s
+transfer-drill: step D6 start: mth-db rebind-identity --mapping <mapping.csv> --operator 'transfer-drill synthetic operator' (one carried user left unmapped); n
+transfer-drill: step D6 PASS in 3.065 s
+transfer-drill: step D7 start: start the drill IdP, the API and the worker from the runtime tree with target.env; GET /readyz until 200, storage ok, worker aliv
+transfer-drill: step D7 PASS in 2.264 s
+transfer-drill: step D8 start: node deploy/scripts/drill/journey.mjs --mode oidc-drill --app http://127.0.0.1:25302 --source-origin http://localhost:25301 (sign
+transfer-drill: step D8 PASS in 33.630 s
+transfer-drill: step D9 start: stop worker; journey exportq; job-check snapshot; stop API, PostgreSQL; start PostgreSQL, API, worker; job-check compare; journey
+transfer-drill: step D9 PASS in 9.721 s
+transfer-drill: step D10 start: node deploy/scripts/drill/origin-scan.mjs --database-url <target superuser> --origin http://localhost:25301
+transfer-drill: step D10 PASS in 0.848 s
+transfer-drill: PASS in 266.798 s: 335 tables and 2 evidence files equal, origin http://127.0.0.1:25302, restart verified; report /home/user/My-owns/docs/delive
+13:  automation_execution: 32 explaining events
+14:  automation_action_result: 16 explaining events
+--- kept target cluster: start on 127.0.0.1:32595 and read the schedule-triggered executions
+pg_ctl: cannot be run as root
+Please log in (using, e.g., "su") as the (unprivileged) user that will
+own the server process.
+psql: error: connection to server at "127.0.0.1", port 32595 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+psql: error: connection to server at "127.0.0.1", port 32595 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+psql: error: connection to server at "127.0.0.1", port 32595 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+pg_ctl: cannot be run as root
+Please log in (using, e.g., "su") as the (unprivileged) user that will
+own the server process.
+PostgreSQL left running: none
+removed /var/tmp/mth-run.JnUuNv/claude-0/qa-r5-d9 07:45:04
+script exit 0

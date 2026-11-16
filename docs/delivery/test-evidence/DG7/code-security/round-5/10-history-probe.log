@@ -1,0 +1,38 @@
+== P1: DG7 history invariants (strict) + other-stage time order (INFO) ==
+INFO pre-existing non-monotone DG0 [56]REVIEWING@2026-09-30T15:45:00Z > [57]FIXING@2026-09-30T15:16:00Z
+INFO pre-existing non-monotone DG5 [5]VERIFYING@2026-10-26T12:00:00Z > [6]APPROVED@2026-10-26T06:30:00Z
+DG7 history: PLANNED@2026-09-28T11:30:00Z -> BUILDING@2026-11-12T12:02:49Z -> REVIEWING@2026-11-15T07:29:30Z -> FIXING@2026-11-15T09:54:25Z -> REVIEWING@2026-11-15T14:20:34Z -> FIXING@2026-11-15T17:13:32Z -> REVIEWING@2026-11-15T22:34:02Z -> FIXING@2026-11-16T01:38:50Z -> REVIEWING@2026-11-16T03:55:37Z -> FIXING@2026-11-16T06:12:55Z -> REVIEWING@2026-11-16T06:14:07Z
+DG7 history time-monotone: true
+round 1: frozen_at 2026-11-15T07:29:08Z  REVIEWING 2026-11-15T07:29:30Z  delta 22s  OK (INFO: entry written by the freeze commit after the manifest time)
+round 2: frozen_at 2026-11-15T14:20:16Z  REVIEWING 2026-11-15T14:20:34Z  delta 18s  OK (INFO: entry written by the freeze commit after the manifest time)
+round 3: frozen_at 2026-11-15T22:34:02Z  REVIEWING 2026-11-15T22:34:02Z  delta 0s  OK
+round 4: frozen_at 2026-11-16T03:55:37Z  REVIEWING 2026-11-16T03:55:37Z  delta 0s  OK
+round 5: frozen_at 2026-11-16T06:14:07Z  REVIEWING 2026-11-16T06:14:07Z  delta 0s  OK
+between round 1 and 2: [FIXING@2026-11-15T09:54:25Z] OK
+between round 2 and 3: [FIXING@2026-11-15T17:13:32Z] OK
+between round 3 and 4: [FIXING@2026-11-16T01:38:50Z] OK
+between round 4 and 5: [FIXING@2026-11-16T06:12:55Z] OK
+stage=REVIEWING last=REVIEWING candidate=sha256:07af9fba26f9ae435f6f3de7ca5204ed1e182a125f1fd0f912b70da06035a61d matches round 5: true
+P1 PASS
+== P2: late entry timestamp vs git history (round-3 findings import commit) ==
+entries marked 'recorded late' (count, at): 1 2026-11-16T01:38:50Z
+471072d64 2026-11-16T03:55:01+00:00 DG7: mark round-3 findings fixed, D-276, progress
+5458273cd 2026-11-16T01:38:50+00:00 DG7: import round-3 findings; assignments AN-P7G and BE-R8
+1d04f8381 2026-11-16T01:38:05+00:00 DG7: round-3 review records and evidence (domain FAIL, code-security FAIL, qa FAIL)
+import commit 5458273cd committed at: 2026-11-16T01:38:50Z
+P2 PASS (exactly one late entry; its time = import of round-3 findings, D-276)
+-- entries changed or removed by the repair (9d5691143 vs freeze a76c2aed4), DG7 history only:
+removed/changed: 0
+added: 2
+  + {"state":"FIXING","at":"2026-11-16T01:38:50Z","note":"Round 3 (60dd90b6): domain FAIL (920 Low, 921 Medium), code-security FAIL (940 Medium; 960 not closed), qa
+  + {"state":"FIXING","at":"2026-11-16T06:12:55Z","note":"Round 4 (d91f7152): 920, 921, 940, 960 verified closed by all three; all three FAIL only on the missing ro
+pre-existing entries kept in order: true
+== P3: mutation — remove the late FIXING entry in a disposable --shared clone; validator must fail again ==
+control (unmodified 02aeed6e4): --historical --stage DG6 exit=0
+PASS gate DG6 (historical)
+removed 1 entry
+mutant (late entry removed): --historical --stage DG6 exit=1 (expected non-zero)
+FAIL gate DG6 (historical) (1 problem)
+  - stages.json: DG7 illegal transition REVIEWING -> REVIEWING
+P3 PASS (the validator detects the round-4 defect class; the inserted entry is what makes it pass)
+probe exit=0

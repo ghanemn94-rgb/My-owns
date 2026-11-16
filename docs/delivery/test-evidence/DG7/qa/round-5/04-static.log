@@ -1,0 +1,48 @@
+clone 02aeed6e434ec1511795302ebd5efbec90eb90c2 node v24.21.0 06:26:56
+$ pnpm -r build
+packages/db build: Done
+apps/api build$ tsc -p tsconfig.build.json && node scripts/register-snapshot.mjs --csv ../../docs/delivery/requirements.csv --deps ../../docs/handover/external-dependencies.json --out dist/release/register-snapshot.json
+apps/worker build$ tsc -p tsconfig.build.json
+apps/worker build: Done
+apps/api build: register-snapshot: wrote dist/release/register-snapshot.json (412 rows, sha256 ec2b526ad703)
+apps/api build: Done
+apps/web build: dist/assets/UnplacedFieldErrors-DOCwBg3b.js                            0.72 kB │ gzip:   0.43 kB │ map:     2.83 kB
+apps/web build: - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+exit=0 (247s)
+$ pnpm -r typecheck
+packages/db typecheck$ tsc -p tsconfig.json
+packages/db typecheck: Done
+apps/api typecheck$ tsc -p tsconfig.json
+apps/worker typecheck$ tsc -p tsconfig.json
+apps/worker typecheck: Done
+apps/api typecheck: Done
+exit=0 (311s)
+$ pnpm lint
+
+> mobily-transformation-hub@0.1.0 lint /var/tmp/mth-run.JnUuNv/claude-0/review-qa
+> eslint . --max-warnings=0
+
+> eslint . --max-warnings=0
+exit=0 (47s)
+$ pnpm openapi:lint
+
+> mobily-transformation-hub@0.1.0 openapi:lint /var/tmp/mth-run.JnUuNv/claude-0/review-qa
+> node scripts/openapi-lint.mjs docs/api/openapi.yaml
+
+PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 965 operations
+exit=0 (1s)
+$ pnpm check:no-cdn
+
+> mobily-transformation-hub@0.1.0 check:no-cdn /var/tmp/mth-run.JnUuNv/claude-0/review-qa
+> node scripts/check-no-cdn.mjs
+
+PASS no-cdn: scanned apps, packages
+exit=0 (1s)
+$ pnpm format:check
+
+> mobily-transformation-hub@0.1.0 format:check /var/tmp/mth-run.JnUuNv/claude-0/review-qa
+> prettier --check .
+
+Checking formatting...
+All matched files use Prettier code style!
+exit=0 (58s)

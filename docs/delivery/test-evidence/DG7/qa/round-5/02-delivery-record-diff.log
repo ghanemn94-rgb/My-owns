@@ -1,0 +1,155 @@
+$ git diff 471072d6 02aeed6e -- docs/delivery/decisions.md docs/delivery/progress.md docs/delivery/stages.json
+diff --git a/docs/delivery/decisions.md b/docs/delivery/decisions.md
+index a075d6986..39d8a8fe4 100644
+--- a/docs/delivery/decisions.md
++++ b/docs/delivery/decisions.md
+@@ -4,6 +4,7 @@ Engineering and business assumptions for the delivery. Each entry records who de
+ 
+ | ID | Date | Decided by | Decision | Rationale / evidence | Reopen if |
+ |---|---|---|---|---|---|
++| D-277 | 2026-11-16 | delivery-orchestrator | **DG7 round 4 outcome on d91f7152 and repair; round 5 to be frozen.** All three reviewers verified 920, 921, 940, 960 closed and found no product defect. All three FAIL on one process error of mine: at the round-4 freeze I appended REVIEWING without first recording the round-3 FIXING state, so stages.json held REVIEWING -> REVIEWING and the validator failed (F-DG7-922, 941, 970, Medium). Repair: the omitted FIXING entry inserted before the round-4 REVIEWING entry, its note saying it was recorded late, plus the round-4 FIXING entry. stages.json is outside the candidate manifest, so the product candidate content is unchanged. Lesson: every round outcome records FIXING before the next freeze; the freeze step now checks that `validate --stage DG7` reports no transition error. | Round-4 records; 9d5691143 | A round-5 reviewer finds another state-machine error |
+ | D-276 | 2026-11-16 | delivery-orchestrator | **DG7 round 3 outcome on 60dd90b6 and repairs; round 4 to be frozen.** Round 3: domain FAIL (920 Low: C3 count six vs seven, DO-D8 handback unnamed; 921 Medium: A18 full-restart evidence cited pre-fix runs), code-security FAIL (940 Medium: no test for the organization-scope rule of migration export; 960 not closed), qa FAIL (960 not closed). 915, 935, 961, 962, 963 CLOSED_VERIFIED by all three. Repairs: AN-P7G (920, 960, 921; count derived from a fresh protocol audit, C3 = 7), BE-R8 (940; mutant M4 killed). Release notes and known limitations regenerated after the register change. Pre-freeze `prefreeze-r4/checks.log`: all 19 checks exit 0. Marked FIXED_PENDING_VERIFICATION at 1fa349f01. Live CI not run. | Round-3 records and pre-freeze-r4 evidence | A round-4 reviewer reopens any of 920, 921, 940, 960 |
+ | D-275 | 2026-11-15 | delivery-orchestrator | **Round-2 repairs integrated; round 3 to be frozen.** 935 fixed by AN-P7F (register 412/412 IMPLEMENTED, `validate --register DG7` PASS, Q19 extension per D-274); 962 by BE-R7; 963 by DO-D8/DO-D8B; 915, 960, 961 by regenerating release notes and known limitations from protocol-audit-r3 after the last register change. All six marked FIXED_PENDING_VERIFICATION at ced8d992. Pre-freeze run `test-evidence/DG7/orchestrator/prefreeze-r3/checks.log`: all 19 checks exit 0 (typecheck, lint, openapi-lint, prettier, unit, integration, transfer-drill, release/deploy tool tests, e2e-retention, secret scans payload and history, claims, check-handover, register, historical DG6). Live CI not run. | Pre-freeze evidence from round 3 | A round-3 reviewer cannot reproduce a check, or any of the six reopens |
+ | D-274 | 2026-11-15 | delivery-orchestrator (user decision on 935) | **DG7 round 2 outcome on ca38b65e:** F-DG7-913/914/953/954/955/956 verified closed by all three reviewers. New: 915 and 961 (Medium; release notes not regenerated after AN-P7E: my process error), **935 (Medium): 18 DG7 rows SPECIFIED in the frozen register, so the candidate cannot pass validateGate**, 960 (Low; FE-C3 handback lacks merge instructions, 6 DG7 C3 hits vs 5 disclosed), 962 (Medium; integration order-dependence in p7-transfer-guards), 963 (Low; transfer-drill cleanup can exit 1 after PASS). Code-security found no security defect. **User decision on 935:** extend D-243 Q19 to the 18 rows: each becomes IMPLEMENTED with a `completes-after-gate:` marker naming the remaining gate/seal clause and its disclosure (D-270 protocol hits, A27 K11 partial); this supersedes D-266 (d); reviewers and the release-auditor judge it, and a rejection BLOCKS the gate. Repairs: AN-P7F (register), BE-R7 (962), DO-D8 (963); orchestrator: protocol-audit rerun, known-limitations and release notes regenerated (915, 960, 961), all committed before the round-3 freeze. | reviews/DG7/round-2/ | reopen if the release-auditor rejects the Q19 extension |
+diff --git a/docs/delivery/progress.md b/docs/delivery/progress.md
+index d3a36fe31..4000ec7be 100644
+--- a/docs/delivery/progress.md
++++ b/docs/delivery/progress.md
+@@ -4,7 +4,7 @@ _Updated by the delivery-orchestrator at every step change. On resumption, run `
+ 
+ ## Current checkpoint
+ 
+-- **DG7 (P7 "Independent transfer and release") is entering round 4** (2026-11-16, D-276). Rounds 1–3 did not pass; round-3 findings 920, 921, 940, 960 repaired and FIXED_PENDING_VERIFICATION; pre-freeze checks all exit 0. **Next action:** freeze round 4, then domain, code-security and qa on the same candidate, then the release audit, then the A28 seal. Product gate G6 never implies DG7.
++- **DG7 (P7 "Independent transfer and release") is entering round 5** (2026-11-16, D-277). Round 4 closed all product findings; its only finding was a missing FIXING entry in stages.json (922, 941, 970), now repaired. **Next action:** freeze round 5, then domain, code-security and qa on the same candidate, then the release audit, then the A28 seal. Product gate G6 never implies DG7.
+ - **DG0 is APPROVED** (gate `docs/delivery/gates/DG0.json`, candidate `sha256:84130c62…`, 19/19 DG0-final requirements; 29 review rounds). Carried intact onto this branch.
+ - **DG1 is APPROVED** (gate `docs/delivery/gates/DG1.json`, candidate `sha256:6e0c0db1…` (395 files, source `642e6bfb`), 12/12 DG1-final requirements). Round-4 gate round: 3× PASS (domain, code-security, qa) + release-auditor PASS on the same candidate; all 14 DG1 findings CLOSED_VERIFIED by non-authors; zero unresolved Critical/High; zero unresolved mandatory. `validate.mjs --stage DG1`, `--historical --stage DG1` and `--pipeline` all exit 0.
+ - **This branch (`claude/mobily-transformation-platform-regate`) is the clean DG1 re-gate.** The first DG1 drive ran 16 review rounds and reached an all-PASS round-16 gate, but the first complete `validate.mjs --stage DG1` exposed record-integrity debt that predated the frozen gate schema: the round-2 code-security record used the pre-schema `checks_run` shape, and two records re-listed earlier-raised findings without a local `.findings.json`. Those are write-once committed, so they can only be corrected by a history rewrite — which, starting from round 2, cascades new SHAs through every round and breaks all closure anchors. Per the user's decision (D-056 path C), DG1 was re-gated on a **clean base** (`85e5bbd`, the last commit before any DG1 review evidence): the final, fully-remediated P1 product + ADRs/ERD/OpenAPI/register/decisions were carried here and DG1 was reviewed in **4 clean gate rounds** with conformant tooling. The re-gate found and fixed genuine bugs: F-DG1-140/141 (Medium mandatory — BU re-parent cycle-under-concurrency via migration 0009 DB guard + advisory lock, and destination-parent authz), F-DG1-142 (rate-limit cookie bypass → token-hash/IP keying), and Low docs/deps/flaky-test/typecheck-coverage items.
+diff --git a/docs/delivery/stages.json b/docs/delivery/stages.json
+index 63c37bc3a..9fc90b923 100644
+--- a/docs/delivery/stages.json
++++ b/docs/delivery/stages.json
+@@ -2065,7 +2065,7 @@
+       "id": "DG7",
+       "stage": "P7",
+       "name": "Independent transfer and release",
+-      "state": "REVIEWING",
++      "state": "FIXING",
+       "depends_on": [
+         "DG6"
+       ],
+@@ -2082,10 +2082,10 @@
+         ]
+       },
+       "candidate": {
+-        "candidate_id": "sha256:60dd90b6c5a7af3b502f02be68e6b601fd11e90fcbc0a48166cbc389453a80e9",
+-        "source_commit": "8323dacae51a98c8f555fb95d8e1dd0a1e747ea8",
+-        "frozen_at": "2026-11-15T22:34:02Z",
+-        "manifest_path": "docs/delivery/candidates/DG7/60dd90b6c5a7af3b.manifest.json"
++        "candidate_id": "sha256:d91f7152950ed7119b412db0135836c53a3f01e95300af32c86db367f0712e59",
++        "source_commit": "471072d6481a346c356e985d07b49721ebdda571",
++        "frozen_at": "2026-11-16T03:55:37Z",
++        "manifest_path": "docs/delivery/candidates/DG7/d91f7152950ed711.manifest.json"
+       },
+       "review_rounds": [
+         {
+@@ -2123,6 +2123,18 @@
+             "qa-verifier": "docs/delivery/reviews/DG7/round-3/qa-verifier.json"
+           },
+           "note": "DG7 round 3: domain, code-security, qa; verify F-DG7-915/935/960/961/962/963."
++        },
++        {
++          "round": 4,
++          "candidate_id": "sha256:d91f7152950ed7119b412db0135836c53a3f01e95300af32c86db367f0712e59",
++          "frozen_at": "2026-11-16T03:55:37Z",
++          "source_commit": "471072d6481a346c356e985d07b49721ebdda571",
++          "records": {
++            "domain-reviewer": "docs/delivery/reviews/DG7/round-4/domain-reviewer.json",
++            "code-security-reviewer": "docs/delivery/reviews/DG7/round-4/code-security-reviewer.json",
++            "qa-verifier": "docs/delivery/reviews/DG7/round-4/qa-verifier.json"
++          },
++          "note": "DG7 round 4: domain, code-security, qa; verify F-DG7-920/921/940/960."
+         }
+       ],
+       "gate_record": "docs/delivery/gates/DG7.json",
+@@ -2161,6 +2173,21 @@
+           "state": "REVIEWING",
+           "at": "2026-11-15T22:34:02Z",
+           "note": "Round 3 frozen on sha256:60dd90b6 (D-275)."
++        },
++        {
++          "state": "FIXING",
++          "at": "2026-11-16T01:38:50Z",
++          "note": "Round 3 (60dd90b6): domain FAIL (920 Low, 921 Medium), code-security FAIL (940 Medium; 960 not closed), qa FAIL (960). Repairs AN-P7G, BE-R8. D-276. Entry recorded late (2026-11-16, after round 4): the orchestrator omitted it at the round-4 freeze, which the round-4 reviewers raised as F-DG7-922/941/970; the time is the import of the round-3 findings."
++        },
++        {
++          "state": "REVIEWING",
++          "at": "2026-11-16T03:55:37Z",
++          "note": "Round 4 frozen on sha256:d91f7152 (D-276)."
++        },
++        {
++          "state": "FIXING",
++          "at": "2026-11-16T06:12:55Z",
++          "note": "Round 4 (d91f7152): 920, 921, 940, 960 verified closed by all three; all three FAIL only on the missing round-3 FIXING entry (F-DG7-922, 941, 970), repaired by the orchestrator. D-277."
+         }
+       ]
+     }
+$ git diff 02aeed6e HEAD -- docs/delivery/stages.json
+diff --git a/docs/delivery/stages.json b/docs/delivery/stages.json
+index 9fc90b923..0ad84c5ad 100644
+--- a/docs/delivery/stages.json
++++ b/docs/delivery/stages.json
+@@ -2065,7 +2065,7 @@
+       "id": "DG7",
+       "stage": "P7",
+       "name": "Independent transfer and release",
+-      "state": "FIXING",
++      "state": "REVIEWING",
+       "depends_on": [
+         "DG6"
+       ],
+@@ -2082,10 +2082,10 @@
+         ]
+       },
+       "candidate": {
+-        "candidate_id": "sha256:d91f7152950ed7119b412db0135836c53a3f01e95300af32c86db367f0712e59",
+-        "source_commit": "471072d6481a346c356e985d07b49721ebdda571",
+-        "frozen_at": "2026-11-16T03:55:37Z",
+-        "manifest_path": "docs/delivery/candidates/DG7/d91f7152950ed711.manifest.json"
++        "candidate_id": "sha256:07af9fba26f9ae435f6f3de7ca5204ed1e182a125f1fd0f912b70da06035a61d",
++        "source_commit": "02aeed6e434ec1511795302ebd5efbec90eb90c2",
++        "frozen_at": "2026-11-16T06:14:07Z",
++        "manifest_path": "docs/delivery/candidates/DG7/07af9fba26f9ae43.manifest.json"
+       },
+       "review_rounds": [
+         {
+@@ -2135,6 +2135,18 @@
+             "qa-verifier": "docs/delivery/reviews/DG7/round-4/qa-verifier.json"
+           },
+           "note": "DG7 round 4: domain, code-security, qa; verify F-DG7-920/921/940/960."
++        },
++        {
++          "round": 5,
++          "candidate_id": "sha256:07af9fba26f9ae435f6f3de7ca5204ed1e182a125f1fd0f912b70da06035a61d",
++          "frozen_at": "2026-11-16T06:14:07Z",
++          "source_commit": "02aeed6e434ec1511795302ebd5efbec90eb90c2",
++          "records": {
++            "domain-reviewer": "docs/delivery/reviews/DG7/round-5/domain-reviewer.json",
++            "code-security-reviewer": "docs/delivery/reviews/DG7/round-5/code-security-reviewer.json",
++            "qa-verifier": "docs/delivery/reviews/DG7/round-5/qa-verifier.json"
++          },
++          "note": "DG7 round 5: domain, code-security, qa; verify F-DG7-922/941/970."
+         }
+       ],
+       "gate_record": "docs/delivery/gates/DG7.json",
+@@ -2188,6 +2200,11 @@
+           "state": "FIXING",
+           "at": "2026-11-16T06:12:55Z",
+           "note": "Round 4 (d91f7152): 920, 921, 940, 960 verified closed by all three; all three FAIL only on the missing round-3 FIXING entry (F-DG7-922, 941, 970), repaired by the orchestrator. D-277."
++        },
++        {
++          "state": "REVIEWING",
++          "at": "2026-11-16T06:14:07Z",
++          "note": "Round 5 frozen on sha256:07af9fba (D-277)."
+         }
+       ]
+     }

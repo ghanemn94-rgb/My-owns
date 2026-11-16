@@ -1,0 +1,57 @@
+clone 02aeed6e434ec1511795302ebd5efbec90eb90c2 06:38:25
+$ node tools/release/service-list.mjs --check
+service-list: OK deploy/service-list.json matches the Compose files
+exit=0
+$ node tools/release/role-matrix.mjs --check
+role-matrix: PASS (/var/tmp/mth-run.JnUuNv/claude-0/review-qa/docs/handover/role-matrix.md is current)
+exit=0
+$ node tools/release/migration-catalogue.mjs --check
+PASS: migration catalogue up to date: 135 migrations (73 additive, 38 data_rewrite, 24 destructive)
+exit=0
+$ node tools/release/connector-handover.mjs --check
+connector-handover: PASS: docs/handover/api/connectors.md equals a fresh generation
+exit=0
+$ node tools/release/automation-jobs.mjs --check
+automation-jobs: PASS (the job table of /var/tmp/mth-run.JnUuNv/claude-0/review-qa/docs/handover/automation-operations.md is current)
+exit=0
+$ node licenses/generate-sbom.mjs --check
+OK: packages=483 runtime=171 bundled=15 development=297 containers=4 shipped-without-licence-id=0 procurement(not_required=428 review=59 required=0) direct-dependency-problems=0 lockfile-sha256=4dd7e22dedf2640216767b594af3d1765aa966bb0f229edeac84ba544364ba65
+exit=0
+$ node deploy/scripts/generate-env-example.mjs --check
+OK: .env.example lists exactly the 34 ENV_VARS names, none with a value
+exit=0
+$ node tools/release/secret-scan.mjs --scope payload
+secret-scan: PASS (payload; 3155 files; allowed 33; canary (documented) 22)
+exit=0
+$ node tools/release/claims-scan.mjs
+claims-scan: PASS (891 files; D 141, U 750; negated 28; allowed 19)
+exit=0
+$ node tools/release/release-notes.mjs --csv docs/delivery/requirements.csv --deps docs/handover/external-dependencies.json --provisional apps/web/src/i18n --out docs/handover/release-notes.md --check
+release-notes: 0 unfinished item(s), 23 later clause(s); docs/handover/release-notes.md is up to date
+exit=0
+$ node tools/release/known-limitations.mjs --protocol-audit /home/user/My-owns/docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r4/protocol-audit-r4.json --check
+known-limitations: BLOCKED: protocol-audit report not found: /home/user/My-owns/docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r4/protocol-audit-r4.json
+usage: node tools/release/known-limitations.mjs --protocol-audit <report.json> [--root <dir>] [--environment <file>] [--guide <file>] [--deps <file>] [--review <file>] (--check | --write)
+exit=2
+$ node tools/release/check-handover.mjs --protocol-audit /home/user/My-owns/docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r4/protocol-audit-r4.json
+  BLOCKED: known-limitations: BLOCKED: protocol-audit report not found: /home/user/My-owns/docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r4/protocol-audit-r4.json
+  note: role-matrix.mjs: role-matrix: PASS (/var/tmp/mth-run.JnUuNv/claude-0/review-qa/docs/handover/role-matrix.md is current)
+  note: automation-jobs.mjs: automation-jobs: PASS (the job table of /var/tmp/mth-run.JnUuNv/claude-0/review-qa/docs/handover/automation-operations.md is current)
+check-handover: BLOCKED (index PASS, deployment PASS, summaries PASS, security-links PASS, guides PASS, generated BLOCKED; root .)
+exit=2
+$ git status --short
+
+# the two exit=2 lines above used a wrong path (prefreeze-r4/protocol-audit-r4.json does not exist; the report is in orchestrator/protocol-audit/). Re-run:
+911eba9a155b239b0de413a815f83ff2a40a53d93436366d702c90c8462907e9  /home/user/My-owns/docs/delivery/test-evidence/DG7/orchestrator/protocol-audit/protocol-audit-r4.json
+$ node tools/release/known-limitations.mjs --protocol-audit /home/user/My-owns/docs/delivery/test-evidence/DG7/orchestrator/protocol-audit/protocol-audit-r4.json --check
+known-limitations: PASS (docs/handover/known-limitations.md and docs/handover/external-dependencies.json are current)
+exit=0
+$ node tools/release/check-handover.mjs --protocol-audit /home/user/My-owns/docs/delivery/test-evidence/DG7/orchestrator/protocol-audit/protocol-audit-r4.json
+check-handover: guides: PASS
+check-handover: generated: PASS
+  note: role-matrix.mjs: role-matrix: PASS (/var/tmp/mth-run.JnUuNv/claude-0/review-qa/docs/handover/role-matrix.md is current)
+  note: automation-jobs.mjs: automation-jobs: PASS (the job table of /var/tmp/mth-run.JnUuNv/claude-0/review-qa/docs/handover/automation-operations.md is current)
+  note: known-limitations: PASS (docs/handover/known-limitations.md and docs/handover/external-dependencies.json are current)
+check-handover: PASS (index PASS, deployment PASS, summaries PASS, security-links PASS, guides PASS, generated PASS; root .)
+exit=0
+$ git status --short

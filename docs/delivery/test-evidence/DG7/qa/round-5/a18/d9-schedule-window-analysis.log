@@ -1,0 +1,227 @@
+# qa-verifier DG7 round 5: analysis of the A18 harness D9 FAIL in run 1 (a18-run1.log, out-run1/harness). Read-only over the run's own outputs and the clone at 02aeed6e.
+
+## 1. Run 1 result
+part 1 drill exit 0 07:10:42
+transfer-drill: PASS in 278.873 s: 335 tables and 2 evidence files equal, origin http://127.0.0.1:25302, restart verified; report /home/user/My-owns/docs/delivery/test-evidence/DG7/qa/round-5/a18/out/direct/transfer-drill-report.json
+transfer-drill: FAIL: D9 FAIL, D10 NOT_RUN, D11 NOT_RUN; report /home/user/My-owns/docs/delivery/test-evidence/DG7/qa/round-5/a18/out/harness/transfer-drill-report.json
+transfer-drill: FAIL: D9 FAIL, D10 NOT_RUN, D11 NOT_RUN; report /home/user/My-owns/docs/delivery/test-evidence/DG7/qa/round-5/a18/out/harness/transfer-drill-report.json
+      Tests  4 failed | 6 passed (10)
+A18 harness exit 1 end 07:16:02
+part 1 drill exit 0; part 2 harness exit 1
+transfer-drill: PASS in 278.873 s: 335 tables and 2 evidence files equal, origin http://127.0.0.1:25302, restart verified; report /home/user/My-owns/docs/delivery/test-evidence/DG7/qa/round-5/a18/out/direct/transfer-drill-report.json
+
+## 2. D9 reconcile (harness) vs direct
+--- harness step-D9.log (automation lines)
+13:  automation_execution: 32 explaining events
+14:  automation_execution: 17 added, 0 changed, 0 missing (audit_explained)
+16:  automation_action_result: 16 explaining events
+17:  automation_action_result: 17 added, 0 changed, 0 missing (audit_explained)
+35:transfer-drill: step D9 failed: automation_execution changed outside the allowance (17 added, 0 changed, 0 missing (audit_explained))
+36:transfer-drill: step D9 failed: automation_action_result changed outside the allowance (17 added, 0 changed, 0 missing (audit_explained))
+--- direct step-D9.log (automation lines)
+13:  automation_execution: 32 explaining events
+14:  automation_action_result: 16 explaining events
+
+## 3. UUIDv7 times of the unexplained rows
+01a1e336-6adf-7a11-af63-c8f6347fcaf8 2026-11-16T07:15:56.767000+00:00
+01a1e336-6b05-78d0-bfae-f1cd15c76b6d 2026-11-16T07:15:56.805000+00:00
+01a1e336-472f-765c-99c9-e745f53d7e3b 2026-11-16T07:15:47.631000+00:00
+(the last id is the D9 export queued before the restart: 07:15:47.631Z)
+
+## 4. Worker jobs after the D9 restart (second 'mth-worker started')
+--- direct
+   mth-worker started  
+   outbox relay  
+   outbox relay  
+   job handled automation.evaluate []
+   job handled automation.evaluate []
+   job handled automation.evaluate []
+   job handled automation.evaluate []
+   job handled kpi.recalculate {"outcome": "done", "runId": "01a1e330-f9bb-7865-8d43-834144f8d8a3", "evaluationCount": 2}
+   job handled kpi.recalculate {"outcome": "done", "runId": "01a1e330-f9c7-7e9c-86a4-e57f187c9b0b", "evaluationCount": 2}
+   job handled kpi.recalculate {"outcome": "done", "runId": "01a1e330-f9cd-7805-9e8b-43ca39b42dbc", "evaluationCount": 2}
+   job handled transformation.created "done"
+   outbox relay  
+   job handled automation.evaluate []
+   job handled automation.evaluate []
+   job handled automation.evaluate []
+   job handled automation.evaluate []
+   job handled adoption.indicator_evaluated {"outcome": "not_below_trajectory", "interventions": []}
+   job handled benefits.recalculate_pending {"outcome": "done", "created": [], "superseded": [], "unchanged": []}
+   job handled notifications.fanout {"outcome": "no_channel", "created": [], "sends": []}
+   job handled notifications.fanout {"outcome": "no_channel", "created": [], "sends": []}
+   job handled notifications.fanout {"outcome": "no_channel", "created": [], "sends": []}
+   job handled adoption.indicator_evaluated {"outcome": "evaluated", "interventions": []}
+   job handled notifications.fanout {"outcome": "no_channel", "created": [], "sends": []}
+   job handled benefits.recalculate_pending {"outcome": "done", "created": [], "superseded": [], "unchanged": [{"benefitId": "01995000
+   job handled adoption.indicator_evaluated {"outcome": "evaluated", "interventions": []}
+   job handled gates.decided {"outcome": "done", "closedDone": 0, "closedCancelled": 0, "stepsInserted": 0, "phaseStepI
+   job handled benefits.recalculate_pending {"outcome": "done", "created": [], "superseded": [], "unchanged": [{"benefitId": "01995000
+   job handled raid.corrective_kpi {"outcome": "done", "signal": {"outcome": "recorded", "correctiveCaseId": null, "consecuti
+   job handled raid.corrective_kpi {"outcome": "done", "signal": {"outcome": "recorded", "correctiveCaseId": null, "consecuti
+   job handled raid.corrective_kpi {"outcome": "done", "signal": {"outcome": "recorded", "correctiveCaseId": null, "consecuti
+   job handled automation.evaluate []
+   job handled automation.evaluate []
+   job handled automation.evaluate []
+   job handled automation.evaluate []
+   job handled notifications.fanout {"outcome": "no_channel", "created": [], "sends": []}
+   job handled gates.submitted {"outcome": "done", "approverUserIds": ["01995000-0000-7000-8000-000000000011"], "created"
+   outbox relay  
+   job handled notifications.fanout {"outcome": "no_channel", "created": [], "sends": []}
+   mth-worker shutting down  
+   job schedules registered  
+   mth-worker started  
+   outbox relay  
+   job handled reports.export {"exportJobId": "01a1e331-7310-73a5-b9d9-6d0fe6d9896a", "outcome": "succeeded"}
+   job handled notifications.delivery_sweep {"fannedOut": 0, "retried": 0, "sends": {"sent": 0, "failed": 0, "skipped": 0, "not_pendin
+   job handled integrations.connector_run {"created": [], "skipped": []}
+   job handled operations.exception_alerts {"candidates": 0, "alerted": 0, "notifications": 0}
+   job handled search.index_feed {"types": [{"recordType": "transformation", "outcome": "indexed", "events": 8, "upserted":
+   mth-worker shutting down  
+--- harness
+   mth-worker started  
+   outbox relay  
+   job handled automation.evaluate []
+   job handled automation.evaluate []
+   job handled automation.evaluate []
+   job handled automation.evaluate []
+   job handled kpi.recalculate {"outcome": "done", "runId": "01a1e335-ce92-7d3a-9d20-d77e12c423c4", "evaluationCount": 2}
+   job handled kpi.recalculate {"outcome": "done", "runId": "01a1e335-cea0-70dd-bace-7d4997bc7de9", "evaluationCount": 2}
+   job handled kpi.recalculate {"outcome": "done", "runId": "01a1e335-cead-733d-a777-bce6c888ef6d", "evaluationCount": 2}
+   outbox relay  
+   job handled transformation.created "done"
+   outbox relay  
+   job handled gates.decided {"outcome": "done", "closedDone": 0, "closedCancelled": 0, "stepsInserted": 0, "phaseStepI
+   job handled automation.evaluate []
+   job handled automation.evaluate []
+   job handled automation.evaluate []
+   job handled automation.evaluate []
+   job handled benefits.recalculate_pending {"outcome": "done", "created": [], "superseded": [], "unchanged": [{"benefitId": "01995000
+   job handled notifications.fanout {"outcome": "no_channel", "created": [], "sends": []}
+   job handled raid.corrective_kpi {"outcome": "done", "signal": {"outcome": "recorded", "correctiveCaseId": null, "consecuti
+   job handled notifications.fanout {"outcome": "no_channel", "created": [], "sends": []}
+   job handled notifications.fanout {"outcome": "no_channel", "created": [], "sends": []}
+   job handled raid.corrective_kpi {"outcome": "done", "signal": {"outcome": "recorded", "correctiveCaseId": null, "consecuti
+   job handled notifications.fanout {"outcome": "no_channel", "created": [], "sends": []}
+   job handled raid.corrective_kpi {"outcome": "done", "signal": {"outcome": "recorded", "correctiveCaseId": null, "consecuti
+   job handled benefits.recalculate_pending {"outcome": "done", "created": [], "superseded": [], "unchanged": []}
+   job handled gates.submitted {"outcome": "done", "approverUserIds": ["01995000-0000-7000-8000-000000000011"], "created"
+   job handled benefits.recalculate_pending {"outcome": "done", "created": [], "superseded": [], "unchanged": [{"benefitId": "01995000
+   job handled adoption.indicator_evaluated {"outcome": "evaluated", "interventions": []}
+   job handled adoption.indicator_evaluated {"outcome": "evaluated", "interventions": []}
+   job handled automation.evaluate []
+   job handled automation.evaluate []
+   job handled automation.evaluate []
+   job handled adoption.indicator_evaluated {"outcome": "not_below_trajectory", "interventions": []}
+   job handled automation.evaluate []
+   job handled notifications.fanout {"outcome": "no_channel", "created": [], "sends": []}
+   outbox relay  
+   job handled notifications.fanout {"outcome": "no_channel", "created": [], "sends": []}
+   mth-worker shutting down  
+   job schedules registered  
+   mth-worker started  
+   outbox relay  
+   job handled reports.export {"exportJobId": "01a1e336-472f-765c-99c9-e745f53d7e3b", "outcome": "succeeded"}
+   job handled delegation.expiry_sweep {"selected": 0, "expired": 0, "duplicates": 0, "skipped": 0}
+   expired rows purged maintenance.purge_expired 
+   job handled notifications.delivery_sweep {"fannedOut": 0, "retried": 0, "sends": {"sent": 0, "failed": 0, "skipped": 0, "not_pendin
+   job handled notification.digest {"windowStart": "2026-11-16T07:15:00.000Z", "users": []}
+   job handled integrations.connector_run {"created": [], "skipped": []}
+   job handled operations.exception_alerts {"candidates": 0, "alerted": 0, "notifications": 0}
+   job handled approval.escalation_scan {"selected": 0, "escalated": 0, "routingErrors": 0, "duplicates": 0, "skipped": 0}
+   job handled search.index_feed {"types": [{"recordType": "transformation", "outcome": "indexed", "events": 8, "upserted":
+   mth-worker shutting down  
+Only the harness run (restart just after 07:15:00Z) ran the */15 jobs approval.escalation_scan, delegation.expiry_sweep, notification.digest, maintenance.purge_expired.
+
+## 5. approval.escalation_scan is a schedule-triggered starter wrapped as an automation_execution
+48:  "approval.escalation_scan": "starter.decision_sla",
+// one `automation_execution` of the rule's EFFECTIVE (published) version:
+//   1. trigger: an outbox job -> the envelope's event type and `idempotencyKey`; a scheduled job -> the schedule's
+//      code and `<schedule code>:<ISO minute of the job's pg-boss createdOn>` (the key BE-I's failure capture gives
+//      the same job, so a failure-queue retry of the job resumes this execution instead of opening another);
+157:  ('01920004-0001-7000-8000-000000000001', 'approval.escalation_scan', 'approval.escalation_scan', '*/15 * * * *', 'Asia/Riyadh', 'Escal
+624:  ('approval.escalation_scan', 'schedule', 'workflows', 'Approval SLA expires', 'انقضاء مهلة الموافقة', '{}', NULL, fa
+Scheduled starters and their cron (Asia/Riyadh):
+  kpi.reporting_period_open '5 0 * * *'
+  governance.decision_sla_scan '40 0 * * *'
+  approval.escalation_scan '*/15 * * * *'
+  governance.blocker_escalation_scan '45 0 * * *'
+  governance.meeting_cutoff_scan '30 0 * * *'
+  sustainment.review_scan '20 0 * * *'
+  sustainment.control_check_scan '25 0 * * *'
+
+## 6. The design residual
+979:1. **Scheduled automation stays unexplained.** An execution with a `schedule` trigger (for example `kpi.reporting_period_open`, the `*_scan` starters, the engine ticks) has no journalled cause. If one runs on T between the import and D9, its rows, and the rows its job writes, are `unexplained`, and mode 2 exits 4. Explaining them would mean explaining rows by the scheduler, not by the drill's 
+980-   - DO-D4 reports any such row as a FAIL with its key and trigger code;
+981-   - DO-D4 never pauses, disables or reschedules a job to avoid it, because that would also change `job_schedule`, which B.6 job-check pins;
+982-   - the orchestrator decides.
+983-
+984-   T-B17 measured none in its window (DO-D3 handback finding 3).
+985-2. **The same-transaction link is a timestamp equality.** PostgreSQL stores no transaction id per row. Two transactions that start in the same microsecond, write an outbox row and an explained event on the **same aggregate**, would be indistinguishable. Both events would still be on that record, so the record touched is right either way.
+docs/architecture/p7-work-split.md:1597:- A scheduled automation row that lands in the window (A3.9 residual 1) is a FAIL with its key and trigger code. Never pause, disable or reschedule a job to avoid it. Report it, and the orchestrator decides.
+docs/delivery/handbacks/DG7/T-DG7-ARCH-R4-solution-architect.md:65:- **The escalation condition is not met.** The one case that would meet it, scheduled automation that lands in the drill window, is kept **unexplained** (A3.9 residual 1). DO-D4 reports it if it happens and must not pause the schedul
+docs/delivery/handbacks/DG7/T-DG7-ARCH-R4-solution-architect.md:97:2. **Scheduled automation in the drill window stays unexplained** (A3.9 residual 1). If T-B11 hits it, T-B11 FAILs and the orchestrator decides. I did not pre-authorize any loosening.
+docs/delivery/handbacks/DG7/T-DG7-DO-D4-devops-engineer.md:106:5. **No scheduled automation row** (A3.9 residual 1) appeared in T-B17's window. Mode 2 matched.
+
+## 7. Disclosure surfaces (expected: the residual named for the operator; actual: no hit)
+$ grep -n -i -E 'A3\.9|scheduled automation|escalation_scan.*(drill|D9)|(drill|D9).*escalation_scan' docs/handover/*.md docs/delivery/decisions.md
+exit=1 (1 = no match)
+$ python3: REQ-S19-017 / REQ-S20-018 / REQ-S01-006 notes mentioning A3.9 or a schedule/quarter-hour window
+REQ-S01-006 False False False
+REQ-S19-017 False False False
+REQ-S20-018 False False False
+
+## 8. Window estimate
+The worker runs on the target from D7 to the end of D9 (run 1 harness: D7 2.3 s + D8 33.6 s + D9 10.1 s = about 46 s; the pg-boss cron of the 07:15 slot was caught up after the D9 restart). approval.escalation_scan fires every 15 minutes, so a run fails when that ~46-60 s window contains a quarter hour: about 5-7 % of runs by wall-clock time alone, plus the daily starters between 00:05 and 00:45 Asia/Riyadh (21:05-21:45 UTC).
+
+## 9. Run 2 (harness only, a18-run2.log, out-run2/harness): D7-D9 about 07:24:2x-07:25:0x, no quarter hour in the window
+transfer-drill: step D9 start: stop worker; journey exportq; job-check snapshot; stop API, PostgreSQL; start PostgreSQL, API, worker; job-check compare; journey
+transfer-drill: step D9 PASS in 9.885 s
+transfer-drill: PASS in 283.670 s: 335 tables and 2 evidence files equal, origin http://127.0.0.1:25302, restart verified; report /home/user/My-owns/docs/delive
+      Tests  10 passed (10)
+A18 harness exit 0 end 07:25:13
+13:  automation_execution: 32 explaining events
+14:  automation_action_result: 16 explaining events
+-> 16 executions, all explained; harness 10/10.
+
+## 10. Deliberate reproduction (qa-r5-d9-boundary-repro.sh): unmodified candidate, transfer-drill.sh --keep timed so D7-D9 contains a quarter hour
+attempt 1 (d9-boundary-repro-attempt1.log): drill 07:40:30-07:44:58, D7-D9 ~07:44:10-07:44:57; 07:45:00 missed by 3 s -> D9 PASS (16 executions, all explained). Its post-drill DB read failed (pg_ctl refuses root); no conclusion drawn from it beyond the PASS.
+attempt 2 (d9-boundary-repro.log, out-repro/): drill 07:56:05-08:00:54, D7 ~07:59:3x, D9 restart just after 08:00:00:
+drill exit 1 08:00:54
+transfer-drill: step D0 PASS in 201.148 s
+transfer-drill: step D1 PASS in 12.778 s
+transfer-drill: step D2 PASS in 1.974 s
+transfer-drill: step D3 PASS in 0.373 s
+transfer-drill: step D4 PASS in 7.265 s
+transfer-drill: step D5 PASS in 13.318 s
+transfer-drill: step D6 PASS in 3.270 s
+transfer-drill: step D7 PASS in 2.284 s
+transfer-drill: step D8 PASS in 33.830 s
+transfer-drill: FAIL: D9 FAIL, D10 NOT_RUN, D11 NOT_RUN; report /home/user/My-owns/docs/delivery/test-evidence/DG7/qa/round-5/a18/out-repro/transfer-drill-repor
+13:  automation_execution: 32 explaining events
+14:  automation_execution: 17 added, 0 changed, 0 missing (audit_explained)
+16:  automation_action_result: 16 explaining events
+17:  automation_action_result: 17 added, 0 changed, 0 missing (audit_explained)
+35:transfer-drill: step D9 failed: automation_execution changed outside the allowance (17 added, 0 changed, 0 missing (audit_explained))
+36:transfer-drill: step D9 failed: automation_action_result changed outside the allowance (17 added, 0 changed, 0 missing (audit_explained))
+kept target DB (rows with a schedule trigger):
+started pid 5309
+                  id                  |       trigger_code       |                trigger_key                |  status   | initiating_user_id |          created_at           
+--------------------------------------+--------------------------+-------------------------------------------+-----------+--------------------+-------------------------------
+ 01a1e35f-8e4f-7de0-80d2-0aab0e420e27 | approval.escalation_scan | approval.escalation_scan:2026-11-16T08:00 | succeeded |                    | 2026-11-16 08:00:52.806095+00
+(1 row)
+
+                  id                  |       automation_execution_id        |   action_type   | outcome |                               idempotency_key                               
+--------------------------------------+--------------------------------------+-----------------+---------+-----------------------------------------------------------------------------
+ 01a1e35f-8e85-72b8-bcd3-074233427210 | 01a1e35f-8e4f-7de0-80d2-0aab0e420e27 | starter_handler | done    | automation:starter.decision_sla:approval.escalation_scan:2026-11-16T08:00:1
+(1 row)
+
+           code           |     cron     |  timezone   
+--------------------------+--------------+-------------
+ approval.escalation_scan | */15 * * * * | Asia/Riyadh
+(1 row)
+
+stopped
+
+## Conclusion
+On candidate 07af9fba the shipped A18 drill (deploy/scripts/transfer-drill.sh) and the A18 harness (tests/qa/integration/a18-transfer-drill.test.ts) FAIL at D9 whenever approval.escalation_scan (starter.decision_sla, schedule trigger, */15 Asia/Riyadh) runs on the target between D7 and D9. The product behaves correctly (a scheduled job runs after a restart; its execution and audit are written); the mode 2 recheck classifies the schedule-triggered execution as unexplained by design (ADR-0064 A3.9 residual 1). The result of the A18 acceptance drill therefore depends on the wall clock: 2 of my 5 D9 runs on this candidate failed (run-1 harness at 07:15, repro attempt 2 at 08:00) and 3 passed (run-1 direct, run-2 harness, repro attempt 1; none of their windows contained a quarter hour). The residual is recorded in ADR-0064 and p7-work-split only. It is not in known-limitations.md, the release notes, the deployment guide or the A18 register rows (REQ-S19-017, REQ-S20-018, REQ-S01-006), and decisions.md holds no orchestrator decision on it (A3.9: 'the orchestrator decides').

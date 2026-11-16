@@ -1,0 +1,53 @@
+### node tools/gates/validate.mjs historicalstageDG1  (exit printed by the loop; see 40-validators.log header)
+PASS gate DG1 (historical)
+### node tools/gates/validate.mjs historicalstageDG2  (exit printed by the loop; see 40-validators.log header)
+PASS gate DG2 (historical)
+### node tools/gates/validate.mjs historicalstageDG3  (exit printed by the loop; see 40-validators.log header)
+PASS gate DG3 (historical)
+### node tools/gates/validate.mjs historicalstageDG4  (exit printed by the loop; see 40-validators.log header)
+PASS gate DG4 (historical)
+### node tools/gates/validate.mjs historicalstageDG5  (exit printed by the loop; see 40-validators.log header)
+PASS gate DG5 (historical)
+### node tools/gates/validate.mjs historicalstageDG6  (exit printed by the loop; see 40-validators.log header)
+PASS gate DG6 (historical)
+### node tools/gates/validate.mjs pipeline  (exit printed by the loop; see 40-validators.log header)
+PASS pipeline (active stage: DG7 REVIEWING)
+
+real	8m50.913s
+user	3m13.197s
+sys	4m8.298s
+exit=0
+### node tools/gates/validate.mjs reconcile  (exit printed by the loop; see 40-validators.log header)
+active stage: DG7 (REVIEWING)
+frozen candidate: sha256:07af9fba26f9ae435f6f3de7ca5204ed1e182a125f1fd0f912b70da06035a61d
+working tree:     sha256:07af9fba26f9ae435f6f3de7ca5204ed1e182a125f1fd0f912b70da06035a61d (matches)
+round 1 domain-reviewer: FAIL (STALE for current content)
+round 1 code-security-reviewer: BLOCKED (STALE for current content)
+round 1 qa-verifier: FAIL (STALE for current content)
+round 2 domain-reviewer: FAIL (STALE for current content)
+round 2 code-security-reviewer: FAIL (STALE for current content)
+round 2 qa-verifier: FAIL (STALE for current content)
+round 3 domain-reviewer: FAIL (STALE for current content)
+round 3 code-security-reviewer: FAIL (STALE for current content)
+round 3 qa-verifier: FAIL (STALE for current content)
+round 4 domain-reviewer: FAIL (STALE for current content)
+round 4 code-security-reviewer: FAIL (STALE for current content)
+round 4 qa-verifier: FAIL (STALE for current content)
+round 5 domain-reviewer: missing (STALE for current content)
+round 5 code-security-reviewer: missing (STALE for current content)
+round 5 qa-verifier: missing (STALE for current content)
+PASS reconcile (structure)
+### node tools/gates/validate.mjs stageDG7  (exit printed by the loop; see 40-validators.log header)
+FAIL gate DG7 (current) (1 problem)
+  - gate DG7: file not found (docs/delivery/gates/DG7.json)
+### EXIT SUMMARY (Node 24.21.0, live repository read-only, HEAD f3f61cd60 = round-5 freeze commit, run 2026-11-16 ~06:15-06:21Z)
+--stage DG7                 exit=1  sole problem: "gate DG7: file not found (docs/delivery/gates/DG7.json)". Expected during REVIEWING: the gate record is written by the release-auditor after review. No transition, candidate or record error is reported; the working tree matches the frozen candidate.
+--historical --stage DG6    exit=0  PASS gate DG6 (historical)
+--historical --stage DG5    exit=0  PASS
+--historical --stage DG4    exit=0  PASS
+--historical --stage DG3    exit=0  PASS
+--historical --stage DG2    exit=0  PASS
+--historical --stage DG1    exit=0  PASS
+--reconcile                 exit=0  PASS reconcile (structure); round-5 records "missing" because they are being written now.
+--pipeline                  exit=0  PASS pipeline (active stage: DG7 REVIEWING); see 41-validators-pipeline.log
+In round 4 (round-4/40-validators.log) DG6..DG1 historical, --pipeline and --stage DG7 each exited 1 with "stages.json: DG7 illegal transition REVIEWING -> REVIEWING". That problem is absent here.

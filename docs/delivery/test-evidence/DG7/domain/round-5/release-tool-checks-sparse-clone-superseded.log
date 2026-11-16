@@ -1,0 +1,241 @@
+# sparse disposable clone (tools/, docs/handover, docs/delivery records, DG7 handbacks, assignments, i18n, deploy) at 02aeed6e434ec1511795302ebd5efbec90eb90c2 2026-11-16T06:26:48Z node v24.21.0
+## protocol-audit --stage DG7
+protocol-audit 1.0.0 stages=DG7 head=02aeed6e434ec1511795302ebd5efbec90eb90c2 git-history=true
+  C1 concurrency          DG7          PASS
+  C2 assignment-contract  DG7          PASS
+  C3 handback-sections    DG7          HIT 7 hit(s): handback-missing-sections
+  C4 file-ownership       DG7          PASS
+  C5 historical-first     DG7          HIT 1 hit(s): historical-evidence-missing-from-test-evidence
+  C6 progress-updates     DG7          PASS
+  C7 three-failed-fixes   DG7          PASS
+  C8 approval-claims      all-selected PASS
+  C9 stage-continuation   DG7          PASS
+FAIL (exit 1): 8 hit(s) in 2 check(s), 0 blocked, 7 pass
+exit=1
+## release-notes --check
+node:internal/modules/esm/resolve:272
+    throw new ERR_MODULE_NOT_FOUND(
+          ^
+
+Error [ERR_MODULE_NOT_FOUND]: Cannot find module '/var/tmp/mth-run.oTVkDl/claude-0/review-dom/apps/api/scripts/register-snapshot.mjs' imported from /var/tmp/mth-run.oTVkDl/claude-0/review-dom/tools/release/release-notes.mjs
+    at finalizeResolution (node:internal/modules/esm/resolve:272:11)
+    at moduleResolve (node:internal/modules/esm/resolve:879:10)
+    at defaultResolve (node:internal/modules/esm/resolve:1006:11)
+    at #cachedDefaultResolve (node:internal/modules/esm/loader:705:20)
+    at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:725:38)
+    at ModuleLoader.resolveSync (node:internal/modules/esm/loader:763:56)
+    at #resolve (node:internal/modules/esm/loader:687:17)
+    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:607:35)
+    at ModuleJob.syncLink (node:internal/modules/esm/module_job:276:33)
+    at ModuleJob.link (node:internal/modules/esm/module_job:381:17) {
+  code: 'ERR_MODULE_NOT_FOUND',
+  url: 'file:///var/tmp/mth-run.oTVkDl/claude-0/review-dom/apps/api/scripts/register-snapshot.mjs'
+}
+
+Node.js v24.21.0
+exit=1
+## known-limitations --check (orchestrator protocol-audit-r4.json)
+node:internal/modules/esm/resolve:272
+    throw new ERR_MODULE_NOT_FOUND(
+          ^
+
+Error [ERR_MODULE_NOT_FOUND]: Cannot find module '/var/tmp/mth-run.oTVkDl/claude-0/review-dom/apps/api/scripts/register-snapshot.mjs' imported from /var/tmp/mth-run.oTVkDl/claude-0/review-dom/tools/release/release-notes.mjs
+    at finalizeResolution (node:internal/modules/esm/resolve:272:11)
+    at moduleResolve (node:internal/modules/esm/resolve:879:10)
+    at defaultResolve (node:internal/modules/esm/resolve:1006:11)
+    at #cachedDefaultResolve (node:internal/modules/esm/loader:705:20)
+    at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:725:38)
+    at ModuleLoader.resolveSync (node:internal/modules/esm/loader:763:56)
+    at #resolve (node:internal/modules/esm/loader:687:17)
+    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:607:35)
+    at ModuleJob.syncLink (node:internal/modules/esm/module_job:276:33)
+    at ModuleJob.link (node:internal/modules/esm/module_job:381:17) {
+  code: 'ERR_MODULE_NOT_FOUND',
+  url: 'file:///var/tmp/mth-run.oTVkDl/claude-0/review-dom/apps/api/scripts/register-snapshot.mjs'
+}
+
+Node.js v24.21.0
+exit=1
+## sha256 register
+ec2b526ad70351263cf4bbfb715456dab6157c5b1f5a8cf32021dc3f34856731  docs/delivery/requirements.csv
+412 {'IMPLEMENTED': 412} DG7-final 54
+## git diff 471072d6 02aeed6e outside test-evidence/reviews/runs/assignments/candidates
+ .../DG7/round-4/code-security-reviewer.md          |   144 +
+ docs/delivery/decisions.md                         |     1 +
+ docs/delivery/findings.json                        |   255 +-
+ docs/delivery/progress.md                          |     2 +-
+ .../round-4/code-security-reviewer.findings.json   |    35 +
+ .../DG7/round-4/code-security-reviewer.json        |   319 +
+ .../code-security-reviewer.verifications.json      |    59 +
+ .../DG7/round-4/domain-reviewer.findings.json      |    34 +
+ .../DG7/round-4/domain-reviewer.verifications.json |    49 +
+ .../DG7/round-4/qa-verifier.verifications.json     |    55 +
+ docs/delivery/stages.json                          |    37 +-
+ .../round-4/01-candidate-identity.log              |    38 +
+ .../DG7/code-security/round-4/02-install.log       |    46 +
+ .../DG7/code-security/round-4/03-build.log         |    62 +
+ .../DG7/code-security/round-4/10-static.log        |    28 +
+ .../round-4/20-f920-f960-handover.log              |    50 +
+ .../code-security/round-4/22-security-tools.log    |    21 +
+ .../code-security/round-4/22b-skip-identify.log    |    12 +
+ .../round-4/22c-scan-assets-runtime.log            |    43 +
+ .../round-4/22d-scan-assets-runtime-rerun.log      |    21 +
+ .../DG7/code-security/round-4/32-f940-mutants.log  |   132 +
+ .../round-4/33-f921-restart-probe.log              |    15 +
+ .../DG7/code-security/round-4/34-drill-tests.log   |    43 +
+ .../code-security/round-4/34a-drill-fail-cause.log |    14 +
+ .../round-4/34b-drill-tests-with-pg.log            |    57 +
+ .../DG7/code-security/round-4/40-validators.log    |    33 +
+ .../round-4/41-validators-pipeline.log             |    23 +
+ .../DG7/code-security/round-4/90-cleanup.log       |    49 +
+ .../DG7/code-security/round-4/pa-all.txt           |    67 +
+ .../DG7/code-security/round-4/pa-dg7.json          |  1103 ++
+ .../DG7/code-security/round-4/pa-dg7.txt           |    11 +
+ .../round-4/scripts/f921-restart-probe.sh          |    45 +
+ .../DG7/code-security/round-4/scripts/mutants.sh   |    69 +
+ .../DG7/code-security/round-4/scripts/setup.sh     |    22 +
+ .../code-security/round-4/scripts/static-sec.sh    |    50 +
+ .../DG7/domain/round-4/candidate-verify.log        |    30 +
+ .../DG7/domain/round-4/e2e-about-register.log      |   168 +
+ .../DG7/domain/round-4/f940-mutant.log             |   127 +
+ .../DG7/domain/round-4/f940-unmutated.log          |    17 +
+ .../DG7/domain/round-4/protocol-audit-DG7.json     |  1103 ++
+ .../DG7/domain/round-4/protocol-audit-DG7.log      |    12 +
+ .../DG7/domain/round-4/release-tool-checks.log     |    41 +
+ .../DG7/domain/round-4/scope-diff.log              |    22 +
+ .../DG7/domain/round-4/screens/ar-p7-about-top.png |   Bin 0 -> 190329 bytes
+ .../round-4/screens/ar-p7-requirement-detail.png   |   Bin 0 -> 672949 bytes
+ .../domain/round-4/screens/ar-p7-requirements.png  |   Bin 0 -> 553328 bytes
+ .../DG7/domain/round-4/screens/en-p7-about-top.png |   Bin 0 -> 200745 bytes
+ .../round-4/screens/en-p7-requirement-detail.png   |   Bin 0 -> 711065 bytes
+ .../domain/round-4/screens/en-p7-requirements.png  |   Bin 0 -> 589635 bytes
+ .../DG7/domain/round-4/stages-fixing-patch.mjs     |    22 +
+ .../domain/round-4/validate-historical-exit.log    |    27 +
+ .../DG7/qa/round-4/01-candidate-and-historical.log |    39 +
+ .../qa/round-4/01b-historical-at-source-commit.log |     7 +
+ .../DG7/qa/round-4/01c-stages-transition.log       |    45 +
+ .../DG7/qa/round-4/04-integration.log              |  2948 ++++
+ .../DG7/qa/round-4/05-register-diff-r3-r4.log      |    10 +
+ .../DG7/qa/round-4/07-host-evidence.log            |    27 +
+ .../DG7/qa/round-4/08-deploy-scripts.log           |   306 +
+ .../DG7/qa/round-4/08-migration-api-scripts.log    |    55 +
+ .../DG7/qa/round-4/08-release-licenses.log         |   572 +
+ .../DG7/qa/round-4/08-tool-suites-runner.log       |     9 +
+ .../qa/round-4/08a-tool-suites-gates-agents.log    |    22 +
+ .../DG7/qa/round-4/09-release-tools.log            |    53 +
+ .../DG7/qa/round-4/10-e2e-chromium-ar.log          |   477 +
+ .../DG7/qa/round-4/10-e2e-chromium-en.log          |   477 +
+ .../DG7/qa/round-4/10-e2e-demo-keyboard.log        |   155 +
+ .../DG7/qa/round-4/11-register-snapshot.log        |     3 +
+ .../DG7/qa/round-4/12-deps-licences.log            |     4 +
+ .../DG7/qa/round-4/99-end-candidate.log            |    21 +
+ .../round-4/a18/out/direct/allowance-reasons.json  |   286 +
+ .../DG7/qa/round-4/a18/out/direct/allowance.json   |   376 +
+ .../DG7/qa/round-4/a18/out/direct/api.log          |     0
+ .../qa/round-4/a18/out/direct/app-user-signin.json |     1 +
+ .../qa/round-4/a18/out/direct/config-trace.json    |    94 +
+ .../DG7/qa/round-4/a18/out/direct/drill.log        |   735 +
+ .../DG7/qa/round-4/a18/out/direct/idp.json         |     1 +
+ .../DG7/qa/round-4/a18/out/direct/idp.log          |     0
+ .../direct/import-reports/attachments-verify.json  |     1 +
+ .../DG7/qa/round-4/a18/out/direct/job-check.json   |   220 +
+ .../DG7/qa/round-4/a18/out/direct/jobs-before.json |   102 +
+ .../DG7/qa/round-4/a18/out/direct/journal-S.json   |    21 +
+ .../DG7/qa/round-4/a18/out/direct/journal.json     |   264 +
+ .../DG7/qa/round-4/a18/out/direct/journey-D1.json  |    28 +
+ .../DG7/qa/round-4/a18/out/direct/journey-D7.json  |    28 +
+ .../DG7/qa/round-4/a18/out/direct/journey-D8.json  |   100 +
+ .../round-4/a18/out/direct/journey-D9-queue.json   |    28 +
+ .../DG7/qa/round-4/a18/out/direct/journey-D9.json  |    34 +
+ .../DG7/qa/round-4/a18/out/direct/origin-scan.json |    10 +
+ .../DG7/qa/round-4/a18/out/direct/pgT-pg.log       |    27 +
+ .../DG7/qa/round-4/a18/out/direct/readyz-D7.json   |     1 +
+ .../round-4/a18/out/direct/reconcile-d5-delta.txt  |     1 +
+ .../qa/round-4/a18/out/direct/reconcile-d5.json    |    21 +
+ .../round-4/a18/out/direct/reconcile-d6-delta.txt  |     1 +
+ .../qa/round-4/a18/out/direct/reconcile-d6.json    |    16 +
+ .../qa/round-4/a18/out/direct/reconcile-d9.json    |    29 +
+ .../DG7/qa/round-4/a18/out/direct/stderr.txt       |     0
+ .../DG7/qa/round-4/a18/out/direct/stdout.txt       |   735 +
+ .../DG7/qa/round-4/a18/out/direct/step-D0.log      |    24 +
+ .../DG7/qa/round-4/a18/out/direct/step-D1.log      |   322 +
+ .../DG7/qa/round-4/a18/out/direct/step-D10.log     |     1 +
+ .../DG7/qa/round-4/a18/out/direct/step-D2.log      |     4 +
+ .../DG7/qa/round-4/a18/out/direct/step-D3.log      |     3 +
+ .../DG7/qa/round-4/a18/out/direct/step-D4.log      |   148 +
+ .../DG7/qa/round-4/a18/out/direct/step-D5.log      |   147 +
+ .../DG7/qa/round-4/a18/out/direct/step-D6.log      |    11 +
+ .../DG7/qa/round-4/a18/out/direct/step-D7.log      |     6 +
+ .../DG7/qa/round-4/a18/out/direct/step-D8.log      |    11 +
+ .../DG7/qa/round-4/a18/out/direct/step-D9.log      |    30 +
+ .../DG7/qa/round-4/a18/out/direct/steps.ndjson     |    12 +
+ .../a18/out/direct/transfer-drill-report.json      |   146 +
+ .../DG7/qa/round-4/a18/out/direct/worker.log       |    56 +
+ .../round-4/a18/out/harness/allowance-reasons.json |   286 +
+ .../DG7/qa/round-4/a18/out/harness/allowance.json  |   376 +
+ .../DG7/qa/round-4/a18/out/harness/api.log         |     0
+ .../round-4/a18/out/harness/app-user-signin.json   |     1 +
+ .../qa/round-4/a18/out/harness/config-trace.json   |    94 +
+ .../DG7/qa/round-4/a18/out/harness/drill.log       |   735 +
+ .../DG7/qa/round-4/a18/out/harness/idp.json        |     1 +
+ .../DG7/qa/round-4/a18/out/harness/idp.log         |     0
+ .../harness/import-reports/attachments-verify.json |     1 +
+ .../DG7/qa/round-4/a18/out/harness/job-check.json  |   220 +
+ .../qa/round-4/a18/out/harness/jobs-before.json    |   102 +
+ .../DG7/qa/round-4/a18/out/harness/journal-S.json  |    21 +
+ .../DG7/qa/round-4/a18/out/harness/journal.json    |   264 +
+ .../DG7/qa/round-4/a18/out/harness/journey-D1.json |    28 +
+ .../DG7/qa/round-4/a18/out/harness/journey-D7.json |    28 +
+ .../DG7/qa/round-4/a18/out/harness/journey-D8.json |   100 +
+ .../round-4/a18/out/harness/journey-D9-queue.json  |    28 +
+ .../DG7/qa/round-4/a18/out/harness/journey-D9.json |    34 +
+ .../qa/round-4/a18/out/harness/origin-scan.json    |    10 +
+ .../DG7/qa/round-4/a18/out/harness/readyz-D7.json  |     1 +
+ .../round-4/a18/out/harness/reconcile-d5-delta.txt |     1 +
+ .../qa/round-4/a18/out/harness/reconcile-d5.json   |    21 +
+ .../round-4/a18/out/harness/reconcile-d6-delta.txt |     1 +
+ .../qa/round-4/a18/out/harness/reconcile-d6.json   |    16 +
+ .../qa/round-4/a18/out/harness/reconcile-d9.json   |    29 +
+ .../DG7/qa/round-4/a18/out/harness/step-D0.log     |    24 +
+ .../DG7/qa/round-4/a18/out/harness/step-D1.log     |   322 +
+ .../DG7/qa/round-4/a18/out/harness/step-D10.log    |     1 +
+ .../DG7/qa/round-4/a18/out/harness/step-D2.log     |     4 +
+ .../DG7/qa/round-4/a18/out/harness/step-D3.log     |     3 +
+ .../DG7/qa/round-4/a18/out/harness/step-D4.log     |   148 +
+ .../DG7/qa/round-4/a18/out/harness/step-D5.log     |   147 +
+ .../DG7/qa/round-4/a18/out/harness/step-D6.log     |    11 +
+ .../DG7/qa/round-4/a18/out/harness/step-D7.log     |     6 +
+ .../DG7/qa/round-4/a18/out/harness/step-D8.log     |    11 +
+ .../DG7/qa/round-4/a18/out/harness/step-D9.log     |    30 +
+ .../DG7/qa/round-4/a18/out/harness/steps.ndjson    |    12 +
+ .../a18/out/harness/transfer-drill-report.json     |   146 +
+ .../DG7/qa/round-4/a18/out/harness/worker.log      |    53 +
+ .../DG7/qa/round-4/a18/qa-r4-a18-driver.sh         |    48 +
+ .../DG7/qa/round-4/a19/a19-restore-drill.log       |     5 +
+ .../DG7/qa/round-4/a19/drill-report.json           |   162 +
+ .../DG7/qa/round-4/a19/restore-report.json         |   143 +
+ .../DG7/qa/round-4/f921-register-extract.log       |    14 +
+ .../DG7/qa/round-4/f960/disclosure-surfaces.log    |    22 +
+ .../qa/round-4/f960/known-limitations-control.log  |     9 +
+ .../f960/known-limitations-regenerated.diff        |    13 +
+ .../DG7/qa/round-4/f960/protocol-audit-DG7.json    |  1103 ++
+ .../DG7/qa/round-4/f960/protocol-audit-DG7.out     |    13 +
+ .../DG7/qa/round-4/f960/protocol-audit-all.json    |  8996 +++++++++++
+ .../qa/round-4/f960/release-notes-revert-probe.log |    13 +
+ .../DG7/qa/round-4/f960/release-tools-all.log      |    26 +
+ .../DG7/qa/round-4/f960/release-tools.log          |    16 +
+ .../DG7/qa/round-4/offline/offline-drill-run.log   |   333 +
+ .../qa/round-4/offline/out/connection-check.json   |    29 +
+ .../DG7/qa/round-4/offline/out/connections.ndjson  |   287 +
+ .../DG7/qa/round-4/offline/out/groups.ndjson       |     2 +
+ .../round-4/offline/out/offline-drill-report.json  |   166 +
+ .../DG7/qa/round-4/offline/out/offline-drill.log   |   333 +
+ .../qa/round-4/offline/out/playwright-demo.json    |   562 +
+ .../qa/round-4/offline/out/playwright-plain.json   |   218 +
+ .../DG7/qa/round-4/offline/out/probe.json          |     1 +
+ .../DG7/qa/round-4/run-e2e-product.sh              |    13 +
+ .../DG7/qa/round-4/run-tool-suites.sh              |     9 +
+ .../DG7/qa/round-4/run-unit-integration.sh         |     8 +
+ .../screens/offline-a21-assistant-off-ar.png       |   Bin 0 -> 147790 bytes
+ .../screens/offline-a21-assistant-off-en.png       |   Bin 0 -> 140930 bytes
+ 215 files changed, 50584 insertions(+), 23 deletions(-)

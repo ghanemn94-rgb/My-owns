@@ -1,0 +1,34 @@
+$ git diff --stat d162115e5 02aeed6e -- apps/api/src apps/worker/src packages/*/src packages/db/migrations deploy/docker deploy/compose
+(empty = unchanged)
+$ git diff --stat 471072d6 02aeed6e -- apps packages deploy tools tests e2e licenses scripts docs/handover docs/architecture docs/api
+(empty = unchanged)
+$ grep -E 'exit|PASS|FAIL' docs/delivery/test-evidence/DG7/orchestrator/host/host-run-3c.log | tail -20
+### b00 exit=0 seconds=3
+### b05 exit=0 seconds=31
+### b06 exit=0 seconds=2
+### b07 $ env -u HTTPS_PROXY -u HTTP_PROXY -u https_proxy -u http_proxy -u ALL_PROXY -u all_proxy MTH_E2E_KEYCLOAK=1 MTH_E2E_KEYCLOAK_PASSWORD_FILE=/tmp/claude-0/-home-user-My-owns/f7dd9c0b-2b3c-52aa-bca7-45299008f27d/scratchpad/dg7/secrets/test_idp_user_password E2E_BASE_URL=http://localhost:3000 pnpm exec playwright test e2e/identity/keycloak-login.spec.ts --workers=1 --trace off
+  4 passed (10.3s)
+### b07 exit=0 seconds=12
+### b08 exit=0 seconds=2
+$ docker info
+Client: Docker Engine - Community
+ Version:    29.9.2
+ Context:    default
+exit=0
+$ docker info (full, server part)
+Server:
+permission denied while trying to connect to the docker API at unix:///var/run/docker.sock
+exit=1
+$ grep '^### bNN exit' per host-run log
+== docs/delivery/test-evidence/DG7/orchestrator/host/host-run-1-image-build-failed.log
+
+== docs/delivery/test-evidence/DG7/orchestrator/host/host-run-2-bundle-names-lost.log
+
+== docs/delivery/test-evidence/DG7/orchestrator/host/host-run-3b.log
+### b00 exit=0 seconds=2 ### b01 exit=0 seconds=31 ### b02 exit=0 seconds=2 ### b03 exit=0 seconds=3 ### b04 exit=0 seconds=3 ### b05 exit=0 seconds=36 ### b06 exit=0 seconds=2 ### b07 exit=1 seconds=247 ### b08 exit=0 seconds=2 
+== docs/delivery/test-evidence/DG7/orchestrator/host/host-run-3c.log
+### b00 exit=0 seconds=3 ### b05 exit=0 seconds=31 ### b06 exit=0 seconds=2 ### b07 exit=0 seconds=12 ### b08 exit=0 seconds=2 
+== docs/delivery/test-evidence/DG7/orchestrator/host/host-run.log
+
+host-run-1/-2: no step exit lines (image build failed; bundle names lost), kept as disclosed history (D-267).
+host-run-3b: b01-b04 (image build, compose up, migrate, seed) exit 0; b07 (Keycloak e2e) exit 1 (proxy env on Keycloak, D-267); 3c re-ran b00,b05-b08: b07 4 passed exit 0.
