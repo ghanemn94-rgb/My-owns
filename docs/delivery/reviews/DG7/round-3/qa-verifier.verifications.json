@@ -1,0 +1,79 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG7-915",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:60dd90b6c5a7af3b502f02be68e6b601fd11e90fcbc0a48166cbc389453a80e9 (clone at source commit 8323dac, 3154 files recomputed). docs/handover/release-notes.md cites the register SHA-256 cfa6d37876c62d4a6799e6550d7d7c80775380ffbcc59a94de3be0af701d6fb9 with 412 rows, which is the SHA-256 of the shipped docs/delivery/requirements.csv. The status table reads IMPLEMENTED 412 and SPECIFIED 0, and the notes list the 23 completes-after-gate rows. release-notes.mjs --check exits 0. Revert-to-fail: (1) with the round-2 release-notes.md (f22c97b5) put back, --check exits 1 ('out of date'); (2) with one register byte changed and the notes unchanged, --check exits 1. Both were restored, and the candidate recomputed to 60dd90b6. The pre-freeze log ran --check straight after --write, so it proves nothing on its own. My --check on the frozen bytes is the independent evidence.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-3/15-f961-release-notes.log",
+        "docs/delivery/test-evidence/DG7/qa/round-3/07-release-tools.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG7-961",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Same defect as F-DG7-915 (release notes stale after the last register change), verified with the same evidence on candidate 60dd90b6. release-notes --check exits 0 on the frozen bytes. The cited register SHA-256 equals the shipped CSV's (cfa6d378...6fb9) and the packaged register snapshot's (dist/release/register-snapshot.json sourceSha256, 412 rows, 0 field mismatches). Two revert-to-fail probes exit 1: the round-2 notes, and a one-byte register change. The no-change register commits after AN-P7F (8323dac changes only decisions.md, findings.json and progress.md) do not feed the generator.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-3/15-f961-release-notes.log",
+        "docs/delivery/test-evidence/DG7/qa/round-3/06-register-snapshot.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG7-935",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate 60dd90b6. The register has 412/412 IMPLEMENTED, and validate.mjs --register DG7 passes (exit 0). The diff f22c97b5..8323dac changes exactly the 18 rows named in D-274, and only their status, evidence and notes. Every earlier note is kept as a prefix, and each row ends with a completes-after-gate: marker. All evidence paths of the 54 DG7 rows exist at 8323dac. I judged each of the 23 Q19 rows (18 plus the 5 of D-243) literally. Each marker names a clause that only the gate, audit or seal can produce: gate records, the DG7 reviews and audit, the pipeline after approval, verify-seal, the final report, the progress.md gate update, or the auditor's decisions on the D-270 hits and the A27 K11 partial. None of these clauses is met yet, and the notes say so ('Disclosed deviation, not met'); none presents it as met. The parts that can be checked before the gate I checked myself: protocol audit C1, C4, C6, C7 and C9 PASS for DG7; a K11 re-drill against the candidate's progress.md (PASS); and the release notes listing the 23 later clauses. I accept the Q19 extension as a faithful disclosure for the 18 rows, with one exception. REQ-DLV-012's disclosure undercounts the DG7 C3 hits: it says six, and there are seven. That is F-DG7-960, kept OPEN separately. The mechanism F-DG7-935 is about (SPECIFIED rows blocking validateGate) is repaired.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-3/16-f935-register-diff.log",
+        "docs/delivery/test-evidence/DG7/qa/round-3/19-dg7-rows.txt",
+        "docs/delivery/test-evidence/DG7/qa/round-3/04-validate-register-DG7.log",
+        "docs/delivery/test-evidence/DG7/qa/round-3/09-a27-k11-redrill.log",
+        "docs/delivery/test-evidence/DG7/qa/round-3/13-protocol-audit-all.json"
+      ]
+    },
+    {
+      "finding_id": "F-DG7-960",
+      "result": "FAIL",
+      "status_after": "OPEN",
+      "note": "NOT closed on candidate 60dd90b6. The finding's own expected result is that the release's disclosure of DG7's protocol hits (known limitations, release notes and the REQ-DLV-012 register notes) covers every handback in the frozen candidate. Part of this is repaired. The FE-C3 handback is now disclosed in the register and the release notes. known-limitations.md is regenerated from protocol-audit-r3.json and shows 'C3 handback-sections | REQ-DLV-012 | DG7 | HIT | 7'. known-limitations --check and check-handover pass, and fail when the round-2 file or a hand-edited count is put back. But my own protocol-audit.mjs --all run on this candidate (281 hits, the same as the shipped r3 report) finds SEVEN DG7 C3 hits. The seventh is docs/delivery/handbacks/DG7/T-DG7-DO-D8-devops-engineer.md, a round-2 repair task (exit 1, continued by DO-D8B), which has no merge-instructions section. Its sections are 1. Files changed, 2. Behaviour, 3. Checks run, 4. Known gaps and 5. Open questions. The REQ-DLV-012 register notes (AN-P7F) and the generated release notes still read 'the D-270 C3 hits (six, F-DG7-960 included)'. They name only the five D-270 handbacks plus FE-C3. The DO-D8 hit is named nowhere, and D-270 and D-274 do not cover it. So the handover contradicts itself: known-limitations says 7, the release notes and the register say six. The release-auditor would decide on an undercounted set (REQ-S21-003's later clause: every disclosed deviation listed in the release notes). This is the same defect class as round 2, now with a new handback. Repair: disclose the DO-D8 hit in the REQ-DLV-012 notes and regenerate the release notes, or have the user's D-270/D-274 disclosure decision cover it explicitly. No behavioural effect.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-3/13-protocol-audit.log",
+        "docs/delivery/test-evidence/DG7/qa/round-3/13-protocol-audit-all.json",
+        "docs/delivery/test-evidence/DG7/qa/round-3/14-f960-probes.log",
+        "docs/delivery/test-evidence/DG7/qa/round-3/15-f961-release-notes.log",
+        "docs/delivery/test-evidence/DG7/qa/round-3/19-dg7-rows.txt"
+      ]
+    },
+    {
+      "finding_id": "F-DG7-962",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate 60dd90b6 with my own order probe: the round-2 sequencer config, a sparse clone at 8323dac and file parallelism off. Guard file first, then contract and response-validation: 3 files, 252/252, exit 0. Guard file last: 252/252, exit 0. Revert-to-fail: with p7-transfer-guards.test.ts put back to f22c97b5 and run first, 9 tests fail, all from 422 migration.export_in_progress, exit 1; the file was restored and the candidate recomputed. The full integration project on this candidate passes: 474 files, 4692 passed, 8 skipped, 1 todo, exit 0. Attempt 1 of the probe failed 4 tests in both orders with 'RenderError: synthetic renderer validation error'. Its cause was my own environment, not the candidate: node_modules was symlinked to another clone, so @mth/reporting loaded from two paths and the class identity check (instanceof) failed. With real copies the failures are gone. The attempt-1 logs are kept.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-3/f962/order-probe.sh",
+        "docs/delivery/test-evidence/DG7/qa/round-3/f962/order-probe.log",
+        "docs/delivery/test-evidence/DG7/qa/round-3/f962/order-probe-attempt1-symlinked-node_modules.log",
+        "docs/delivery/test-evidence/DG7/qa/round-3/f962/contract-alone-attempt1-symlinked-node_modules.log",
+        "docs/delivery/test-evidence/DG7/qa/round-3/10-integration.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG7-963",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate 60dd90b6. transfer-drill.test.mjs under a disposable PostgreSQL: 55/55, exit 0. That includes the 8 DO-D8/DO-D8B cases: bounded INT/QUIT/KILL shutdown, a real-PostgreSQL fast shutdown, postmaster.pid fallback, and the WARNING-not-exit cleanup. Revert-to-fail: transfer-drill.sh put back to f22c97b5 fails 2 of 8 (static wiring, and the end-to-end WARNING), exit 1; a td_remove_work that returns 1 fails 2 of 8, exit 1. Both were restored. Adversarial end-to-end case (the DO-D8 handback's own known gap): a real A18 drill on an archive built from the frozen commit, with an rm on PATH that refuses only the exact work directory. Result: 'transfer-drill: PASS in 273.752 s ... restart verified', exit 0, and exactly one WARNING line on stderr and in drill.log ('the drill result (exit 0) is unchanged'). The work tree was left for removal by hand. The normal A18 harness run passes 10/10 with D9 restart verified, now with a real target PostgreSQL stop (td_stop_pg) before the restart.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-3/f963/f963-probes.sh",
+        "docs/delivery/test-evidence/DG7/qa/round-3/f963/f963-probes.log",
+        "docs/delivery/test-evidence/DG7/qa/round-3/f963/p0-full.tap",
+        "docs/delivery/test-evidence/DG7/qa/round-3/f963/p1-reverted-drill.tap",
+        "docs/delivery/test-evidence/DG7/qa/round-3/f963/p2-remove-returns-1.tap",
+        "docs/delivery/test-evidence/DG7/qa/round-3/a18/a18-run1.log",
+        "docs/delivery/test-evidence/DG7/qa/round-3/a18/qa-r3-a18-driver.sh",
+        "docs/delivery/test-evidence/DG7/qa/round-3/a18/out/forced-cleanup-failure/drill.log"
+      ]
+    }
+  ]
+}
