@@ -1,3 +1,150 @@
+# Handback T-DG7-ARCH-R6 (solution-architect): ADR-0064 Amendment 5, A3.9 residual 1 decided (D-278)
+
+- **Stage:** DG7 (BUILDING), branch `claude/mobily-transformation-platform-dg6-regate`.
+- **Base:** `HEAD` `6f10ccc78a4f9acd08051ae6a26dbe776ebf2767`, verified with `git rev-parse HEAD`. At the start, `git status` was clean apart from this run's own `docs/delivery/runs/…` directory.
+- **Requirement:** REQ-S19-017. Finding F-DG7-971 (Medium, not mandatory).
+- **Invocation:** run `DG7-T-DG7-ARCH-R6-solution-architect-20261116T085831Z-03f4b14e`, session `03f4b14e-b350-48ad-b9d9-35ebc54e1b4f`.
+- **Time:** started `2026-11-16T08:58:41Z` (`date -u`). The end time is in §3.
+- **Two gate systems.** This is an engineering design record. It grants and implies no G1–G6, Finance or IT approval, and no DG gate. F-DG7-971 is not closed here: only a non-author reviewer can close it.
+
+**Task id collision (assignment contradiction).** `T-DG7-ARCH-R6` was already used on 2026-11-14 for the ADR-0069 §5 launcher amendment, which was integrated in commit `3386b9092` (D-266). Its handback and evidence were already at the paths this assignment names.
+
+- My first check run overwrote that task's `typecheck.log` for about 2 minutes, and my first draft of this handback replaced its handback.
+- I stopped the run and restored both files byte for byte from `HEAD` (`git show HEAD:<path> > <path>`). `git status` showed them unmodified afterwards.
+- The earlier `contract-test.log`, `docs.diff`, `lint.log`, `openapi-lint.log`, `pnpm-test.log`, `prettier-repo.log` and `validate-historical-DG6.log` were never written.
+- This handback now sits at the assigned path, **above** the earlier one, which is kept verbatim after the separator at the end. My logs are in `d278/`.
+
+The orchestrator may prefer a fresh task id and path (open question 4).
+
+## 1. Files changed
+
+| File | Purpose |
+| --- | --- |
+| `docs/architecture/adr/ADR-0064-p7-migration-manifest-export-import-reconciliation-identity-rebind.md` | Adds **Amendment 5** (A5.1–A5.7). It records D-278 word for word and specifies the exact match rule: Gate 0, S1–S9, uniqueness and S′. It also gives the window bounds, the cron semantics, the exact texts, the report fields, who builds it, tests T-S1–T-S10 and the residuals. A one-paragraph note in A3.9 residual 1 marks it **Decided 2026-11-16 (D-278): see Amendment 5**. No other existing text was changed. |
+| `docs/delivery/handbacks/DG7/T-DG7-ARCH-R6-solution-architect.md` | This handback, placed **above** the earlier handback of the same task id, which is kept verbatim below the separator (see the collision note) |
+| `docs/delivery/handbacks/DG7/T-DG7-ARCH-R6-evidence/d278/*.log` | Check logs (§3), in a sub-directory so that the 2026-11-14 logs in the parent directory stay untouched |
+
+No code was changed, and neither were the register, handover texts, gate tooling, reviews, `stages.json`, `findings.json` or test evidence. No `p7-pending*.ts` entry belongs to this task, so none was removed.
+
+## 2. Behaviour delivered per requirement
+
+**REQ-S19-017 (A18 transfer drill), the design for the F-DG7-971 repair.**
+
+**Where the rule lives (A5.1).** It is a drill-side second stage after the unchanged D9 `reconcile-migration --after-use` run. Mode 2 itself (`recheck.ts`, `reconcile.ts`, allowance `/4`) is not loosened. The alternatives were rejected:
+- a window key in the recheck, because the product CLI has no drill window and D-278 assigns the repair to DO;
+- pausing or rescheduling a job, which D-278 and A3.9 forbid;
+- timing the drill.
+
+`reconcile-d9.json` keeps the real exit 4.
+
+**Gate 0.** The recheck output may contain only these lines:
+- the attachments line;
+- `explaining events` lines;
+- per-table lines for `automation_execution` and `automation_action_result` with basis `audit_explained` and 0 missing;
+- `unexplained added ["<uuid>"]` lines;
+- the final mismatch line with 0 attachments.
+
+Any other line, table or kind (`changed`, `missing`, `expected but not`, depth, ordinal, counter or lineage lines) means D9 FAILs as today. If a table lists 20 keys, the list may be truncated, which also FAILs.
+
+**Rule S, per unexplained execution, read only on T.**
+
+| # | Condition |
+| --- | --- |
+| S1 | added |
+| S2 | `initiating_user_id IS NULL` and `run_as = 'service'` |
+| S3 | `automation_trigger.trigger_kind = 'schedule'` |
+| S4 | the key matches `^([a-z_]+\.[a-z_]+):([0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2})$`, the code equals `trigger_code`, and the minute is read as UTC. This is the `scheduleSlotKey` format, for example `approval.escalation_scan:2026-11-16T08:00`. |
+| S5 | an enabled `job_schedule` row on T has that code, and its `cron` and `timezone` are used |
+| S6 | the named slot `s` is `M` if `M` is a cron occurrence, else `M − 60 s` if that is one, else none |
+| S7 | `W0 − 60 s < s ≤ W1` |
+| S8 | `created_at` is within `[W0, W1]` |
+| S9 | its own worker or service audit event exists, with no user and `request_id` `job:…`, at `new_version = x.version` |
+
+Two more checks apply:
+- **Uniqueness:** at most one execution per (code, slot). If two share one, both FAIL.
+- **S′:** each action result must be added, belong to a schedule-explained execution, have its event in `R(x)`, and follow the A4.4 ordinal and attempt structure.
+
+**Window bounds.** Both are read with `clock_timestamp()` on T's database, the clock pg-boss uses.
+- `W0` is read in D7 just before T's worker starts.
+- `W1` is read in D9 just after `reconcile D9` returns.
+
+**The pg-boss evidence behind S6 and S7.** It was read in `node_modules/.pnpm/pg-boss@11.0.0/.../timekeeper.js`:
+- `shouldSendIt` sends only while `now − prev < 60 s`;
+- the cron monitor runs every 30 s and the send-it poll every 5 s;
+- `singletonKey` is the queue name, with `singletonSeconds` 60.
+
+So the key minute is the slot's minute, or the next minute when the worker catches a slot up at start. A slot up to 60 s before `W0` can be sent by the D7 start.
+
+**Report.**
+- `schedule-explained-d9.json`;
+- in the D9 entry of `transfer-drill-report.json`: `recheck` (`matched`, `schedule_explained` or `not_matched`), `scheduleExplained[]` (every explained execution with its key, slot, cron, timezone, action results and audit events) and `scheduleWindow`;
+- exact console texts, including every FAIL reason (A5.4);
+- the A18 harness re-checks S2–S8 from the report.
+
+**Every other added or changed row stays unexplained.** A handler that writes business rows in the window, such as an escalation or `kpi.reporting_period_open` opening 2026-09, still FAILs D9.
+
+**Tests specified for DO (A5.6).** T-S4 replays the QA round-5 output and the evidence row: it is explained, and without the stage it is a FAIL. T-S5–T-S7 violate each condition one at a time and must still FAIL. T-S8 parses every seeded cron. T-S9 shows on PostgreSQL that the stage is read only (digest unchanged).
+
+**AN disclosure content** is named in A5.6, as D-278 requires.
+
+## 3. Checks run (real exit codes)
+
+Environment: Node 24.21.0 (`/opt/nvm/versions/node/v24.21.0/bin`), `MTH_PNPM_OFFLINE=1`, no Docker, no network.
+
+| Command | Exit | Log |
+| --- | --- | --- |
+| `node tools/gates/validate.mjs --historical --stage DG6` (before editing) | 0 (`PASS gate DG6 (historical)`) | `T-DG7-ARCH-R6-evidence/d278/validate-historical-DG6-before.log` |
+| `npx prettier --check <ADR-0064>` | 0 | (console) |
+| `git ls-files -co --exclude-standard -z \| xargs -0 npx prettier --check --ignore-unknown` | 0 (`All matched files use Prettier code style!`) | `T-DG7-ARCH-R6-evidence/d278/prettier.log` |
+| `pnpm -r typecheck` | 0 | `d278/typecheck.log` |
+| `pnpm lint` (eslint `--max-warnings=0`) | 0 | `d278/lint.log` |
+| `pnpm openapi:lint` | 0 (`PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 965 operations`) | `d278/openapi-lint.log` |
+| `pnpm test` | 0 (summaries: 207 files and 3042 tests passed; 131 files and 2199 tests passed; 3 files with 259 passed and 2 skipped) | `d278/test.log` |
+| `node tools/gates/validate.mjs --historical --stage DG6` (after editing) | 0 (`PASS gate DG6 (historical)`) | `d278/validate-historical-DG6-after.log` |
+| Integration tests on a disposable PostgreSQL (`with-pg.sh`) | **NOT RUN, not applicable.** This task touched no integration test, no code and no contract. | — |
+
+The run ended at `2026-11-16T09:27Z`.
+
+**Concurrency caveat.** My first, stopped check chain ran an unlogged `pnpm test` into the earlier task's directory from about 09:12 to 09:22. That overlapped the logged `d278` run above, and its stray output was deleted. The logged run still exited 0. The repository-wide Prettier check ran **before** this handback was written. This handback was checked on its own afterwards with `npx prettier --check docs/delivery/handbacks/DG7/T-DG7-ARCH-R6-solution-architect.md`, and the ADR was re-checked the same way. Both exited 0.
+
+## 4. Known gaps / not done
+
+- **The rule is designed, not built.** DO must implement A5.6 (`schedule-explained.mjs`, the `transfer-drill.sh` window and stage, the harness, T-S1–T-S10), and AN must write the register notes and the disclosure. Until then, F-DG7-971 reproduces as before.
+- **The rule was not executed against the QA fixture by me.** The S4/S6/S7 values were worked through by hand on the evidence:
+  - key `…:2026-11-16T08:00`, `M = 08:00Z`;
+  - `*/15` in Asia/Riyadh, so `s = M`;
+  - D7 about 07:59:3xZ and the recheck at about 08:00:5xZ, so `s` is in the window;
+  - `created_at` 08:00:52.8Z.
+
+  T-S4 makes this executable.
+- **Interpretation to confirm.** S6's one-minute key latency and S7's 60 s lower margin before `W0` are my exact reading of D-278's "slot inside the D7-D9 window, per that schedule's cron". They come from pg-boss 11.0.0's code (A5.3), not from D-278's text. If the orchestrator reads D-278 more narrowly (`M` must itself be a slot, and `W0 ≤ s`), a catch-up near D7's start or the D9 restart can still FAIL. That narrower reading would keep part of F-DG7-971.
+
+## 5. Merge instructions
+
+- Documentation only, with no migration, no ordering constraint and no contract change.
+- One ADR file is appended and one paragraph in its A3.9 is annotated, so conflicts are expected only if another task edits ADR-0064 A3.9 or appends after A4.10 at the same time.
+- DO's and AN's D-278 repairs must follow this merge, because they implement A5.
+
+## 6. Residual risks
+
+From A5.7:
+1. A scheduled handler that writes business rows in the window still FAILs D9. This is intended and disclosed. On the demo, QA measured `selected 0`.
+2. Engine ticks (`automation.tick_hourly` and `tick_daily`) key their executions by hour or day start, not by a cron occurrence, so they are not covered. The demo seeds no tick rule.
+3. The rule depends on pg-boss 11.0.0's cron timing (an ADR-0068 upgrade item).
+4. A failure-queue retry of an earlier slot stays unexplained.
+5. The stage parses the console text, so a text drift can only make it stricter.
+
+## 7. Open questions (for the orchestrator)
+
+1. **The S6 and S7 latitude.** Do you accept that "a slot inside the window" includes the pg-boss catch-up (a slot up to 60 s before `W0`) and a key minute one minute after the slot? If not, A5 needs a narrowing note, and F-DG7-971 is only partly repaired.
+2. **Engine ticks.** Should they be covered as well? That would be a separate decision: their keys name an hour or day start, not a cron slot. D-278 as written does not cover them.
+3. **Harness re-check.** A5.5 has the harness re-check S2–S8 from the report alone. Is that enough for QA, or must the harness also query the kept target database (the drill deletes it unless `--keep` is given)?
+4. **Task id reuse.** Should this handback move to its own id and path, for example `T-DG7-ARCH-R8`? I kept the 2026-11-14 handback verbatim below mine rather than guess.
+
+---
+
+# Earlier handback with the same task id (2026-11-14, integrated in `3386b9092`, D-266): preserved verbatim below
+
 # Handback T-DG7-ARCH-R6: ADR-0069 §5 launcher amendment (solution-architect)
 
 - **Stage:** P7, gate DG7 (BUILDING). Branch `claude/mobily-transformation-platform-dg6-regate`.

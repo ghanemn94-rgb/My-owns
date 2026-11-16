@@ -981,6 +981,8 @@ No table moves to `operational`, no key is taken from "what is new", and every A
    - DO-D4 never pauses, disables or reschedules a job to avoid it, because that would also change `job_schedule`, which B.6 job-check pins;
    - the orchestrator decides.
 
+   **Decided 2026-11-16 (D-278): see Amendment 5.** That amendment replaces "the orchestrator decides". The rest of this text stays as written.
+
    T-B17 measured none in its window (DO-D3 handback finding 3).
 2. **The same-transaction link is a timestamp equality.** PostgreSQL stores no transaction id per row. Two transactions that start in the same microsecond, write an outbox row and an explained event on the **same aggregate**, would be indistinguishable. Both events would still be on that record, so the record touched is right either way.
 3. **`E*` trusts the actors' causes.** A journalled actor's mutation that triggers a starter makes the starter's outputs explained, whatever they are. That is the product's designed behaviour. The JSON report's `automationChain` lets a reviewer read every chain.
@@ -1312,3 +1314,199 @@ No allowance is table-wide. The condition is **not met**, and the orchestrator n
   - allowance `/4` with `lineage`;
   - the remeasured `D8_TOUCHED_*` lists, including `D8_TOUCHED_LINEAGE`;
   - T-B17, T-B11 and the A18 harness to the end.
+
+## Amendment 5 (2026-11-16, T-DG7-ARCH-R6): A3.9 residual 1 decided (D-278): schedule-triggered executions in the drill's D7–D9 window
+
+- **Author:** solution-architect (T-DG7-ARCH-R6). Base `6f10ccc78a4f9acd08051ae6a26dbe776ebf2767` on `claude/mobily-transformation-platform-dg6-regate`.
+- **Why.** A3.9 residual 1 left the case "a schedule-triggered execution runs on T between the import and D9" to the orchestrator. QA hit it in DG7 round 5 (F-DG7-971, Medium). On candidate `07af9fba` the shipped drill and the A18 harness failed at D9 in 2 of 5 runs, whenever the `*/15` starter `approval.escalation_scan` ran on T inside the D7–D9 window (`docs/delivery/test-evidence/DG7/qa/round-5/a18/d9-schedule-window-analysis.log` §1–§10, `qa-r5-d9-boundary-repro.sh`). The product behaved correctly. The kept target held exactly one schedule-triggered execution, `01a1e35f-8e4f-7de0-80d2-0aab0e420e27`: `trigger_code` `approval.escalation_scan`, `trigger_key` `approval.escalation_scan:2026-11-16T08:00`, `initiating_user_id` NULL, `created_at` `2026-11-16 08:00:52.806095+00`. It had one `starter_handler` result, `01a1e35f-8e85-72b8-bcd3-074233427210`. The `job_schedule` row was `approval.escalation_scan '*/15 * * * *' Asia/Riyadh`. The orchestrator decided the residual in **D-278**. This amendment records that decision and specifies it so that DevOps can build and test it.
+- **The decision, as D-278 records it.** The amendment does not change it:
+  > the drill's mode-2 check explains a post-restart write only if it is a schedule-triggered execution (no initiating user; trigger_key names a `job_schedule` row in the target and a slot inside the drill's D7-D9 window, per that schedule's cron and timezone) and the action results and audit events of that execution. Every other added or changed row stays unexplained. The job is never paused or rescheduled to avoid it (the ADR forbids that). The drill report lists every execution explained this way. The rule is disclosed in the handover.
+- **What this amendment replaces.** It replaces only A3.9 residual 1's "the orchestrator decides". That residual is now **decided** (A5.7). Everything else in this ADR and in Amendments 1–4 is unchanged:
+  - `reconcile-migration` mode 2 (A1.9, A2.6, A3.2–A3.4, A4.2–A4.5);
+  - its exit codes, texts, allowance format `/4` and constants;
+  - migrations, the contract and the product.
+- **Hard constraints.** D-258 to D-263 and D-278 are unchanged:
+  - `audit_event` stays append-only, with both triggers enabled;
+  - nothing truncates, deletes or updates it;
+  - no table moves to `operational`;
+  - no row is explained by "whatever is new";
+  - no job is paused, disabled, unscheduled or rescheduled;
+  - `job_schedule` is never written by the drill.
+- **Two gate systems.** Nothing here grants or implies a G1–G6, Finance or IT approval, and nothing reads or writes DG0–DG7. A schedule-explained execution on the drill's disposable target is SYNTHETIC drill data, and it approves nothing.
+
+### A5.1 Where the rule lives
+
+| Option | Verdict |
+| --- | --- |
+| (a) Put it in `reconcile-migration` mode 2 (`recheck.ts`), with a window key in a new allowance `/5` | **Rejected.** Mode 2 is the operator's product CLI. An operator who rechecks their own target has no "drill window", and a window key would let any allowance author widen what the recheck accepts. D-278 assigns the repair to DevOps (the drill and the harness), not to the backend. Mode 2 stays exactly as strict as Amendment 4 left it. |
+| (b) Pause, disable or reschedule the schedules during D7–D9, or start T's worker without cron | **Rejected** (D-278, A3.9). It changes `job_schedule`, which B.6 job-check pins, and it would hide a product behaviour that the drill must prove ("records, jobs and approvals intact after a full restart"). |
+| (c) Run the drill only outside the slots | **Rejected.** The daily starters cover 00:05–00:45 Asia/Riyadh, and an operator cannot be asked to time the drill. It also proves nothing more. |
+| **(d) A drill-side second stage after the D9 mode 2 recheck.** The recheck runs unchanged. When it exits 4, and the **only** thing it could not explain is a set of `automation_execution` rows and their `automation_action_result` rows, each of those rows is tested on T, read only, against the A5.2 match rule. D9 passes only if every one matches. | **Chosen** |
+
+`reconcile-d9.json` keeps the recheck's real result (exit 4, `equal: false`, `not matched`). The drill never rewrites it. The second stage writes its own file and its own report fields (A5.5).
+
+### A5.2 The match rule (exact)
+
+**Inputs** (all read on T, in one `READ ONLY` transaction, as the T superuser that `allowance.mjs` already uses):
+
+- `B` = `audit_baseline_seq_max` of the latest `migration_import`.
+- **The window `[W0, W1]`.** Both bounds are instants of **T's database clock**: `SELECT clock_timestamp()` on T's `mth` database, kept as UTC with milliseconds. pg-boss decides cron slots and writes `createdOn` by the database clock (`timekeeper.js` `shouldSendIt` adds the measured clock skew). So the host clock is never used.
+  - **`W0`** is read in D7 **immediately before** `start_target` starts T's worker. No worker has run on T before that instant: T is imported by the CLI in D5–D6 with no worker.
+  - **`W1`** is read in D9 **immediately after** `reconcile D9` returns, before the second stage starts. No execution that the recheck saw can be created later than that.
+  - The drill records both in the report (A5.5), together with their source `"target clock_timestamp()"`.
+- **`U_x`** = the keys listed as `    unexplained added <key>` under `  automation_execution: … (audit_explained)` in the recheck output. **`U_r`** = the same for `automation_action_result`.
+
+**Gate 0: the recheck output is only automation.** The second stage is attempted only if `reconcile D9` exits **4** and its output (`$WORK/reconcile-d9.txt`) satisfies all of the following. Otherwise D9 FAILs exactly as today, and the stage is reported `not_applicable` with the first offending line.
+
+1. Every line is one of:
+   - the attachments line `transfer-attachments verify: matched: …`;
+   - an informational line `  <table>: <n> explaining events`;
+   - a per-table line (`UNEXPLAINED_LINE` of `unexplained-tables.mjs`);
+   - a key line `    unexplained added ["<uuid>"]`;
+   - the final line `reconcile-migration: mismatch: <n> tables, 0 attachments differ`.
+
+   **Any other line fails Gate 0.** That includes `unexplained changed`, `unexplained missing`, `expected but not`, `chain depth`, `execution <id>: attempt`, `lineage run`, `counter`, `audit_event` and `user_identity` lines, and a non-zero attachment count.
+2. The per-table lines name only `automation_execution` and `automation_action_result`, each with basis `audit_explained` and `0 missing`. `<n>` of the final line equals the number of per-table lines.
+3. Every key line sits under one of those two per-table lines, and `|U_x| ≥ 1`.
+4. **Completeness.** `reconcile.ts` prints at most 20 keys per kind (`listKeys`, `slice(0, 20)`). So `|U_x| ≤ 19` and `|U_r| ≤ 19`. At 20 the list may be truncated and the stage cannot know every key, so 20 fails Gate 0 with reason `key list may be truncated`.
+
+**Rule S: a schedule-explained execution.** A key `x ∈ U_x` is **schedule-explained** only if **all** of S1–S9 hold for the live row `x` on T:
+
+| # | Condition |
+| --- | --- |
+| S1 | `x` exists, and its id is not in the package's `automation_execution` rows (**added**). A changed or missing execution is never schedule-explained. |
+| S2 | **No initiating user:** `x.initiating_user_id IS NULL` and `x.run_as = 'service'`. CHECK `automation_execution_identity` makes these equivalent. Both are read so that a schema drift fails. |
+| S3 | `automation_trigger` row `x.trigger_code` has `trigger_kind = 'schedule'`. CHECK `automation_trigger_schedule_no_user` then guarantees `initiating_user_field IS NULL`. |
+| S4 | **Key format.** `x.trigger_key` matches exactly `^([a-z_]+\.[a-z_]+):([0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2})$`. Group 1, the schedule code, equals `x.trigger_code`. Group 2 is a valid calendar minute, read as **UTC**, and `M` is that instant (seconds 0). This is the format `apps/worker/src/automation/starters.ts` `scheduleSlotKey` writes: `<schedule code>:` and `toISOString().slice(0, 16)` of the pg-boss job's `createdOn`. Example: `approval.escalation_scan:2026-11-16T08:00` gives `M = 2026-11-16T08:00:00.000Z`. The `job_schedule_code_format` CHECK is `^[a-z_]+\.[a-z_]+$`. The regex is anchored, and no suffix, offset, seconds or `Z` is accepted. |
+| S5 | **The schedule row.** T has exactly one `job_schedule` row with `code` = group 1 and `enabled = true`. Its `cron` and `timezone` are read from that row and from nothing else: no constant, no host zone. |
+| S6 | **The slot the key names.** `s` is the slot named by `M` under that row's `cron` in that row's `timezone`. **`s = M` if `M` is a cron occurrence; otherwise `s = M − 60 s` if that is an occurrence; otherwise `x` has no slot and is not explained.** The one-minute step exists because pg-boss inserts a cron job only while `now − s < 60 s` (`shouldSendIt`). The job is then created by the `__pgboss__send-it` worker, which polls every 5 s (`cronWorkerIntervalSeconds` default). So `createdOn` can fall in the minute after the slot, especially at a worker start that catches a slot up (run 1 of the QA analysis: the restart came just after 07:15:00). A key two or more minutes after an occurrence is not explained. |
+| S7 | **The slot is in the window:** `W0 − 60 s < s ≤ W1`. The lower bound is the pg-boss catch-up horizon: a worker started at `W0` sends a slot only if `W0 − s < 60 s`. So no slot at or before `W0 − 60 s` can be created by T's worker in the drill. A slot in `(W0 − 60 s, W0]` is created by the D7 start itself. This is the exact meaning of "a slot inside the drill's D7-D9 window" for a cron job. |
+| S8 | **Created in the window:** `W0 ≤ x.created_at ≤ W1`. |
+| S9 | **Its own audit event:** T has at least one `audit_event` with `seq > B`, `record_type = 'automation_execution'`, `record_id = x.id`, `source = 'worker'`, `actor_type = 'service'`, `actor_user_id IS NULL`, `on_behalf_of_user_id IS NULL` and `request_id ~ '^job:.+$'`. `R(x)` is the set of those events' `request_id` values, as in A3.2 step 4. `automation_execution` has `version`, so one of these events must also carry `new_version = x.version` (the A2.6 rule). |
+
+**Uniqueness.** At most **one** schedule-explained execution per `(trigger_code, s)`. pg-boss's `singletonKey = <queue>` with `singletonSeconds: 60` sends one job per slot, and `automation_execution_once_key` holds one execution per rule version and key. If two executions name the same `(trigger_code, s)` (for example one at `M = s` and one at `M = s + 1 min`), **both** are not explained.
+
+**Rule S′: the execution's action results.** A key `ar ∈ U_r` is schedule-explained only if all of the following hold:
+
+- `ar` is **added**;
+- `ar.automation_execution_id` is a schedule-explained `x`;
+- T has an `audit_event` with `seq > B`, `record_type = 'automation_action_result'`, `record_id = ar.id`, `source = 'worker'`, `actor_type = 'service'` and `request_id ∈ R(x)`.
+
+The A4.4 structure is also required for each schedule-explained `x`:
+
+- no result row of `x` has `attempt_no > x.attempt_no`;
+- per attempt, the ordinals of the added rows are exactly `{1, …, m}`;
+- for a starter (rule code `starter.*`) whose status is not `running`, the current attempt has exactly one row, ordinal 1, action `starter_handler`.
+
+Every result row of `x` on T that is added must be in `U_r`, and every key in `U_r` must belong to a schedule-explained `x`.
+
+**The audit events of the execution** are the events with `seq > B` on `automation_execution`/`x.id` and on `automation_action_result`/each `ar.id` of `x`. They need no allowance, because mode 2 always allows `audit_event` additions (A1.9 rule 1). They are listed in the report (A5.5).
+
+**Nothing else is explained.** The rule explains exactly the rows in `U_x` and `U_r` that pass S/S′. It explains no other table, so Gate 0 already fails if any other table has an unexplained row. A row the scheduled job's **handler** wrote elsewhere stays unexplained, and D9 FAILs. Examples are an escalated approval, a decision, or a corrective case. Rows in an operational table, such as `job_run` or `inbox_notification`, were already counted and not explained (A1.9 rule 4).
+
+**Outcome.**
+- **D9 PASS** only if Gate 0 holds, every `x ∈ U_x` passes S1–S9 and uniqueness, and every `ar ∈ U_r` passes S′.
+- **Otherwise D9 FAIL.** The drill prints one line per failing key with the **first** failing condition (A5.4), then the existing `changed outside the allowance` lines.
+
+**Cron evaluation.** "Is instant `t` an occurrence of `cron` in `timezone`" is evaluated on the wall-clock minute, hour, day of month, month and day of week of `t` in `timezone`, as `Intl.DateTimeFormat` with `hourCycle: "h23"` gives them. Seconds must be 0. The semantics are standard five-field cron:
+- `*`, a number, `a-b`, `*/n`, `a-b/n` and comma lists;
+- day of week 0–7, where 0 and 7 are Sunday;
+- day of month and day of week combined by OR when both are restricted (cron-parser 4 and Vixie behaviour).
+
+A token outside this grammar (names such as `MON`, `L`, `W`, `#`, `?`, or six fields) makes the evaluator return "not an occurrence". So an unsupported cron can only be too strict. A test pins that every `cron` seeded in `job_schedule` by the migrations parses (A5.6, T-S8).
+
+### A5.3 Why this is exactly D-278 and nothing looser
+
+- "**no initiating user**": S2 and S3.
+- "**trigger_key names a `job_schedule` row in the target**": S4 and S5. The code part of the key must equal both `trigger_code` and an enabled `job_schedule.code` on T.
+- "**and a slot inside the drill's D7-D9 window, per that schedule's cron and timezone**": S6 and S7. The slot is computed from the key's minute with that row's cron and timezone. S6 and S7 only state how a key minute names a slot (the pg-boss send latency) and when a slot is "inside" (the pg-boss catch-up horizon), both from pg-boss 11.0.0's own code. S8 adds that the row was written in the window.
+- "**the action results and audit events of that execution**": S′ and the audit list. S9 additionally requires the execution's own service event with no user, which mode 2 does not itself require of a schedule row.
+- "**Every other added or changed row stays unexplained**": Gate 0 and "nothing else is explained".
+- "**The job is never paused or rescheduled**": the stage is read only (A5.2 inputs), and the drill never writes `job_schedule` (B.6 job-check still pins it).
+- "**The drill report lists every execution explained this way**": A5.5.
+
+**What it cannot hide.** A non-scheduled write is never explained:
+- an execution with an `event` or `request` trigger fails S3;
+- one with a user fails S2;
+- a forged schedule key outside the window fails S6, S7 or S8;
+- a second execution for one slot fails uniqueness;
+- any row of another table fails Gate 0.
+
+A reviewer who finds a non-scheduled write that passes is D-278's re-open condition.
+
+### A5.4 Exact texts (add to C.12–C.14; existing lines stay)
+
+All lines go to the drill's stdout and to `step-D9.log`.
+
+| When | Line |
+| --- | --- |
+| window bounds read | `transfer-drill: D7: schedule window start <W0 ISO UTC ms> (target clock_timestamp())` and `transfer-drill: D9: schedule window end <W1 ISO UTC ms> (target clock_timestamp())` |
+| each explained execution | `transfer-drill: D9: schedule-triggered execution <x> explained (ADR-0064 A5; trigger <code>, key <key>, slot <s ISO UTC>, schedule '<cron>' <timezone>, <n> action results, <k> audit events)` |
+| D9 passes with explanations | the existing `transfer-drill: step D9 PASS in <t> s` is preceded by `transfer-drill: D9: mode 2 recheck exit 4; <e> schedule-triggered executions and <r> action results explained by ADR-0064 A5 (D-278); nothing else unexplained` |
+| Gate 0 fails | `transfer-drill: D9: schedule rule not applicable: <reason>` with reason `recheck exit <c>`, `line not allowed: <line, cut to 160 characters>`, `table <t> is not automation_execution or automation_action_result`, `no unexplained automation_execution key` or `key list may be truncated (<table>: 20 keys)` |
+| a key fails | `transfer-drill: step D9 failed: <table> <key> is not schedule-explained: <reason>` with reason one of `not added` (S1), `has an initiating user` (S2), `trigger <code> is not a schedule trigger` (S3), `trigger_key '<key>' is not '<code>:YYYY-MM-DDTHH:MM'` (S4), `no enabled job_schedule row <code>` (S5), `key minute <M> names no slot of '<cron>' <timezone>` (S6), `slot <s> is outside the window (<W0>, <W1>]` (S7, with the open lower bound shown as `<W0 − 60 s>`), `created <ts> outside the window` (S8), `no service audit event without a user` (S9), `slot <s> of <code> has <n> executions` (uniqueness), `execution <x> is not schedule-explained` (S′), `no worker audit event of the execution's job` (S′), `attempt <a> ordinals <list> (expected 1..<m>)` (S′) |
+
+### A5.5 The report
+
+- **`schedule-explained-d9.json`** goes in `--out` and is listed in the report's `reports[]`. It is canonical JSON:
+
+  ```json
+  { "rule": "ADR-0064 A5 (D-278)", "window": { "start": "<W0>", "end": "<W1>", "lowerBoundExclusive": "<W0 − 60 s>", "clock": "target clock_timestamp()" },
+    "recheckExit": 4, "applicable": true, "notApplicableReason": null,
+    "executions": [{ "executionId": "", "triggerCode": "", "triggerKey": "", "slot": "", "scheduleCode": "", "cron": "", "timezone": "",
+      "status": "", "createdAt": "", "actionResultIds": [], "auditEvents": [{ "id": "", "seq": "", "recordType": "", "recordId": "", "requestId": "" }] }],
+    "failures": [{ "table": "", "key": "", "reason": "" }] }
+  ```
+
+  - Sort `executions` by `executionId`, and `auditEvents` by `seq`, written as a decimal string.
+  - When the recheck exits 0, the file is still written, with `recheckExit: 0`, `applicable: false`, `notApplicableReason: "recheck matched"` and empty arrays.
+- **`transfer-drill-report.json`**, D9 entry, gets:
+  - `recheck`: `"matched"` for exit 0, `"schedule_explained"` for a PASS through A5, or `"not_matched"`;
+  - `scheduleExplained`: the `executions` array above, `[]` when none;
+  - `scheduleWindow`: the window object.
+
+  The report's PASS summary line is unchanged.
+- **The A18 harness** (`tests/qa/integration/a18-transfer-drill.test.ts`) accepts D9 when `recheck` is `matched`, or when it is `schedule_explained` **and** every `scheduleExplained` entry passes the harness's own re-check of S2–S8 against the report's window. It prints each entry. It never accepts `not_matched`.
+
+### A5.6 Who builds it, and how it is tested
+
+**DO (devops-engineer, D-278):**
+- `deploy/scripts/drill/schedule-explained.mjs`:
+  - exports `parseScheduleKey`, `cronMatches(cron, timezone, instant)`, `slotOf(cron, timezone, M)`, `gate0(reconcileText)` and `explain({rows, window, baseline})`;
+  - its CLI reads T with `default_transaction_read_only = on` and prints the A5.4 lines.
+- `transfer-drill.sh`:
+  - W0 in D7 and W1 in D9;
+  - the second stage after `reconcile D9` exits 4;
+  - the report fields.
+- The A18 harness.
+- The tests below.
+- No change to `packages/db/**`, to `recheck.ts` or `reconcile.ts`, or to the allowance.
+
+**Tests** (`deploy/scripts/tests/`, `node --test`; T-S9 and T-S10 under `with-pg.sh`). Each states what it proves.
+
+| Test | Proves |
+| --- | --- |
+| T-S1 | `parseScheduleKey("approval.escalation_scan:2026-11-16T08:00")` gives the code and `2026-11-16T08:00:00.000Z`. These are refused: a `Z` suffix, seconds, an offset, `2026-02-30T08:00`, an upper-case code, and a code that differs from `trigger_code`. |
+| T-S2 | `slotOf('*/15 * * * *', 'Asia/Riyadh', M)` gives `s = M` at 08:00 and `s = 08:00` at 08:01. It gives none at 08:02 and none at 08:07. For `'5 0 * * *'` Asia/Riyadh, the slot is `21:05Z` of the previous UTC date, so the zone comes from the row. |
+| T-S3 | S7 bounds: a slot at exactly `W0 − 60 s` is outside, a slot at `W0 − 59 s` is inside, `W1` is inside, and `W1 + 1 min` is outside |
+| T-S4 | **Fails without the rule:** the QA round-5 output (`out-repro/reconcile-d9.json` `output[]`, copied as a fixture) with the evidence's row values (key `…:2026-11-16T08:00`, `created_at` 08:00:52.806Z, window 07:59:30Z–08:01:10Z) is explained. Without the stage, the same fixture is a D9 FAIL. |
+| T-S5 | **Still flags an unexplained execution:** each of S1–S9 and uniqueness, violated one at a time on the T-S4 fixture, gives the A5.4 reason and a FAIL. Cases: an `event` trigger; a non-NULL `initiating_user_id`; a key minute of `08:02`; a slot outside the window; a disabled schedule; a missing service event; two executions for one slot. |
+| T-S6 | Gate 0: an extra `unexplained changed`, a third table, an `expected but not` line, a non-zero attachment count, or a list of 20 keys each makes the rule not applicable, and D9 FAILs |
+| T-S7 | S′: an action result of an unexplained execution, a result without a job event in `R(x)`, and ordinals `{1, 3}` each FAIL |
+| T-S8 | `cronMatches` parses every `cron` value seeded into `job_schedule` by `packages/db/migrations/*.sql` (read from the files), and refuses `MON`, `L` and six fields |
+| T-S9 (PostgreSQL) | On a disposable database with the 0074/0075 schema: an inserted schedule execution plus its result and service events passes, and an inserted `event` execution in the same window fails. The stage leaves `job_schedule`, `pgboss.schedule` and every table unchanged (digest before and after). |
+| T-S10 | T-B11 and the A18 harness still pass with no slot in the window (`recheck: matched`). When run across a quarter hour, they pass with `recheck: schedule_explained` and one listed entry. That run is recorded, not required. |
+
+**AN (D-278):** the register notes of REQ-S19-017, REQ-S20-018 and REQ-S01-006, and the handover disclosure in `known-limitations.md`, the release notes and `deployment.md`'s drill section. The disclosure must say:
+- a scheduled job that runs during the drill is explained only as A5.2 says, and is listed in the report;
+- a scheduled job whose handler writes business rows during the window still makes D9 FAIL, which is not a data defect;
+- the recovery is to re-run the drill, never to pause a schedule.
+
+### A5.7 Residuals of this amendment
+
+1. **A3.9 residual 1 is decided** (D-278). A3.9 residual 1's text stays as it was written, and this amendment replaces its "the orchestrator decides". A4.6 and A4.9 residual 6 refer to the same case. A daily `kpi.reporting_period_open` run in the window that opens the `scheduled` 2026-09 period writes `reporting_period`, so it **still FAILs** by Gate 0, as D-278 requires ("every other added or changed row stays unexplained").
+2. **A scheduled handler that does real work in the window still FAILs D9.** This happens when, for example, `approval.escalation_scan` escalates an approval that went overdue. On the demo, QA measured `selected 0` (analysis §4). This is intended, and it is disclosed with the recovery (A5.6 AN).
+3. **Engine ticks are not covered.** `automation.tick_hourly` and `automation.tick_daily` key their executions by the hour or business-day start (`engine.ts` `tickSlot`), not by a cron occurrence (`'7 * * * *'`, `'20 0 * * *'`), so S6 fails them. The demo seeds no ADMIN rule that names a tick, so they write no execution today. Covering them would widen D-278, so it is an open question for the orchestrator, not a decision made here.
+4. **The window is bounded by the database clock, and the slot latency by pg-boss 11.0.0's defaults** (`cronMonitorIntervalSeconds` 30, `cronWorkerIntervalSeconds` 5, the `< 60 s` send rule). A pg-boss upgrade that changes them is an ADR-0068 upgrade item and must re-verify S6 and S7. A send-it delay of 60 s or more leaves the key two minutes after the slot, and D9 FAILs. That outcome is strict, not loose.
+5. **A failure-queue retry keeps the original slot's key** (`scheduleSlotKey`). A retried scheduled execution from before `W0` is a **changed** row, which S1 refuses, and its key's slot fails S7. It stays unexplained, as D-278 requires.
+6. **The stage parses the recheck's console text.** The texts are fixed by C.12–C.14 and A2.7, A4.7 and A5.4, and Gate 0 fails on any unknown line, so a text change in `reconcile.ts` can only make D9 stricter. The 20-key limit is the same kind of residual, and D9 FAILs on it.
