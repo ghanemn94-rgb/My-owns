@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG7-922",
+      "stage_id": "DG7",
+      "requirement": "REQ-DLV-015",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "stages.json at the round-4 freeze commit records DG7 REVIEWING -> REVIEWING (the round-3 FAIL outcome and the AN-P7G/BE-R8 repair period are not recorded as FIXING), so validate.mjs --historical --stage DG6..DG1 and --stage DG7 all fail on the state-machine rule",
+      "reproduction": "Repository at HEAD a76c2aed45cc7e68c07bf150d0494963f9756342 (the round-4 freeze commit over source 471072d6481a346c356e985d07b49721ebdda571; candidate sha256:d91f7152... verified, --diff matches), Node 24.21.0: `node tools/gates/validate.mjs --historical --stage DG6` prints 'FAIL gate DG6 (historical) (1 problem) - stages.json: DG7 illegal transition REVIEWING -> REVIEWING' and exits 1; the same for --historical --stage DG1 (exit 1), DG5, DG4, DG3 and DG2 (validate.log), and `--stage DG7` reports the same problem besides the expected missing gates/DG7.json (exit 1). `git diff 471072d6 HEAD -- docs/delivery/stages.json` shows the freeze appended {state: REVIEWING, at: 2026-11-16T03:55:37Z, note: 'Round 4 frozen on sha256:d91f7152 (D-276)'} directly after {state: REVIEWING, at: 2026-11-15T22:34:02Z, note: 'Round 3 frozen ...'}. tools/gates/lib/rules.mjs TRANSITIONS allows REVIEWING -> FIXING | VERIFYING | BLOCKED only. Rounds 1 and 2 recorded REVIEWING -> FIXING -> REVIEWING correctly; round 3's outcome (three FAIL records, D-276) was not. Control: the same six historical validators run with stages.json served in memory with one FIXING entry inserted before the last REVIEWING entry (stages-fixing-patch.mjs via `node --import`; the repository is not changed) all print 'PASS gate DGn (historical)', exit 0 (validate-historical-exit.log), so this transition is the only cause. The orchestrator's pre-freeze historical run (prefreeze-r4/historical.log, PASS) predates the freeze commit and so did not see it.",
+      "expected": "REQ-DLV-015: the gate state machine is enforced and a stage history passes the validator. After round 3 ended with three FAIL records on 60dd90b6 and the repairs AN-P7G and BE-R8 were integrated (D-276), the DG7 history records that period (REVIEWING -> FIXING) before the round-4 freeze moves it to REVIEWING. The assignment states that `node tools/gates/validate.mjs --historical --stage DG6` (and DG5..DG1) must pass.",
+      "actual": "The DG7 history goes REVIEWING (round 3 frozen, 2026-11-15T22:34:02Z) -> REVIEWING (round 4 frozen, 2026-11-16T03:55:37Z). All six historical validators exit 1, and `validate.mjs --stage DG7` at gate time would fail on the same rule, so DG7 cannot be APPROVED as recorded. The register check (`--register DG7`) passes. stages.json is outside the candidate (candidate.mjs metadata exclusion), so the repair needs no new candidate and affects no product file, test or review. The same defect was raised at DG4 (F-DG4-104/124) and DG6 (F-DG6-911/951). Owner: the stage record is the orchestrator's (implementers cannot write stages.json), so the owner is delivery-orchestrator as in those precedents, not one of the implementer roles the assignment lists.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/domain/round-4/validate.log",
+        "docs/delivery/test-evidence/DG7/domain/round-4/validate-historical-exit.log",
+        "docs/delivery/test-evidence/DG7/domain/round-4/stages-fixing-patch.mjs",
+        "docs/delivery/stages.json",
+        "tools/gates/lib/rules.mjs"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG7/round-4/domain-reviewer.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-16T04:15:00Z",
+          "status": "OPEN",
+          "note": "Raised by domain-reviewer in DG7 round 4 on candidate sha256:d91f7152950ed7119b412db0135836c53a3f01e95300af32c86db367f0712e59 (freeze commit a76c2aed4). Medium per D-192: repair before the gate; no new candidate needed."
+        }
+      ]
+    }
+  ]
+}

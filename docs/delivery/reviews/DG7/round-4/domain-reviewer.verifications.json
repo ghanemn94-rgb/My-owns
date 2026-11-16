@@ -1,0 +1,49 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG7-920",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified by its originating reviewer (domain-reviewer, session 7a4f06b7) on candidate sha256:d91f7152950ed7119b412db0135836c53a3f01e95300af32c86db367f0712e59 (source 471072d; fix 1fa349f0 an ancestor). A fresh `node tools/release/protocol-audit.mjs --stage DG7` on this tree (repository at HEAD a76c2aed and a disposable clone at 471072d) gives C3 HIT 7 of 77 implementation handbacks, exit 1 by design (35 hits: C2 27, C3 7, C5 1). The seven are AN-P7B, ARCH-R2, ARCH-R5, BE-R5, DO-A2, DO-D8 and FE-C3. REQ-DLV-012's pass-7 note says SEVEN, names all seven including T-DG7-DO-D8-devops-engineer.md (merge instructions), and says the auditor's decision must cover all seven. Its earlier 'six' wording was corrected in place, with the correction stated. release-notes.md l.35 says 'seven: the five D-270 hits plus F-DG7-960's FE-C3 and F-DG7-920's DO-D8 handback'. known-limitations.md l.62 says DG7 C3 HIT 7. The orchestrator's protocol-audit-r4.json lists the same seven files. release-notes --check exits 0, known-limitations --check exits 0 and check-handover exits 0 in the clone. No surface still says six (grep of docs/handover, the register and apps/web/src).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/domain/round-4/protocol-audit-DG7.json",
+        "docs/delivery/test-evidence/DG7/domain/round-4/protocol-audit-DG7.log",
+        "docs/delivery/test-evidence/DG7/domain/round-4/release-tool-checks.log",
+        "docs/handover/release-notes.md",
+        "docs/handover/known-limitations.md"
+      ]
+    },
+    {
+      "finding_id": "F-DG7-960",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified independently (domain-reviewer, not the reporter or the owner) on candidate sha256:d91f7152.... The FE-C3 handback hit (T-DG7-FE-C3-frontend-ux-engineer.md, missing merge instructions) appears in the fresh protocol audit. It is named in REQ-DLV-012 as hit (6) 'F-DG7-960' and is counted in the 'seven' on every disclosure surface (register, release notes l.35, known-limitations l.62). It is marked as coming after D-270, which D-270 and D-274 do not name, so the release-auditor's decision must explicitly cover it. That is an honest classification: the deviation is disclosed as 'not met', and not presented as met.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/domain/round-4/protocol-audit-DG7.json",
+        "docs/delivery/test-evidence/DG7/domain/round-4/release-tool-checks.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG7-921",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified by its originating reviewer on candidate sha256:d91f7152.... REQ-S19-017, REQ-S20-018 and REQ-S01-006 (pass 7) now rest the 'intact after a full restart' clause on DO-D8B's T-B11 run (t-b11-run.log, which is in the row's evidence column and exists). That run's D9 line reads 'stop API, PostgreSQL; start PostgreSQL, API, worker'. job-check reports 'PASS: enabled schedules equal, earlier job_run rows unchanged (0 new), approval rows equal'. The export queued before the restart completes after it with equal SHA-256, 2 downloads have equal SHA-256, D9 PASS in 9.573 s, driver exit 0, and no drill PostgreSQL process is left. The drill code at the candidate fails D9 ('the target PostgreSQL did not stop before its restart') unless td_stop_pg and td_stop_pg_dir confirm the postmaster stopped (transfer-drill.sh l.609-612, drill/cleanup.sh l.91-122, covered by transfer-drill.test.mjs l.1583/1619). git diff 7c819f08c..471072d6 -- deploy/scripts/ is empty, so the drill that produced the log is the shipped one. The rows say plainly that the DO-D7, DO-E and QA a18-run3 D9 restarts most probably restarted only the API and worker, and keep those runs only as history. Residual stated in the row: the log prints no postmaster PID or shutdown line, so the stop rests on the code path plus the PASS. I accept that. I did not re-run the full T-B11 drill in this round (disk and time), so I judged the evidence.",
+      "evidence": [
+        "docs/delivery/handbacks/DG7/T-DG7-DO-D8B-evidence/t-b11-run.log",
+        "docs/delivery/test-evidence/DG7/domain/round-4/scope-diff.log",
+        "deploy/scripts/transfer-drill.sh",
+        "deploy/scripts/drill/cleanup.sh"
+      ]
+    },
+    {
+      "finding_id": "F-DG7-940",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified independently (domain-reviewer, not the reporter or the owner) on candidate sha256:d91f7152... in a disposable clone at 471072d with a disposable PostgreSQL 16.15 (ports 32310/32320). Unmutated: `npx vitest run --configLoader runner --project integration apps/api/test/integration/transfer/export-scope.test.ts` gives 4 tests passed, exit 0. Mutant M4 replaces the `if ((await authorize(db, principal, MIGRATION_EXPORT, {type: 'organization', id})).allowed)` guard in requireExportRight (export/service.ts l.142-146) with an unconditional `return organizationId`. The shipped file then fails 3 of 4 tests, exit 1: 'ADM_TECH @ business_unit: 403 on all five operations; no migration_export row, outbox event or audit event' (status array mismatch), 'ADM_TECH @ transformation: ...' (same), and 'neither narrower-scope principal wrote anything to the audit trail but its own sign-in' (an extra migration_export audit action). The organization-scope control stays green, as intended. The mutant was reverted with git checkout before the clone was removed.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/domain/round-4/f940-unmutated.log",
+        "docs/delivery/test-evidence/DG7/domain/round-4/f940-mutant.log"
+      ]
+    }
+  ]
+}
