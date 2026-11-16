@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG7-942",
+      "stage_id": "DG7",
+      "requirement": "REQ-S19-017",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "D-278 / ADR-0064 Amendment 5 schedule rule and its residuals are disclosed only in deployment.md; known-limitations.md, the release notes and the Arabic summaries named by ADR-0064 A5.6 carry nothing",
+      "reproduction": "On the frozen candidate (830d7edf, candidate 0b481627): grep -c -i -E 'D-278|schedule-explained|Amendment 5|scheduled starter|escalation_scan|schedule_explained' on every docs/handover/*.md (docs/delivery/test-evidence/DG7/code-security/round-6/23-d278-disclosure.log). Only deployment.md:247 carries the rule (automation-operations.md's three hits are job-table rows). known-limitations.md:162 (the ADR-0064 row of the hand-written section) lists scale, cross-release, queued jobs, attachment manifest, secrets and held users, but not the drill's schedule rule or its residuals. release-notes.md, known-limitations.ar-summary.md and deployment.ar-summary.md have 0 matches. ADR-0064 A5.6 (line 1500) assigns 'the handover disclosure in known-limitations.md, the release notes and deployment.md's drill section'. The AN-P7H handback (lines 99-102, 120) reports the same gap and asks the orchestrator to confirm. D-279 does not answer it, and the round-6 regeneration did not add it.",
+      "expected": "ADR-0064 A5.6 (binding for D-278's repair): the handover disclosure is in known-limitations.md, the release notes and deployment.md's drill section. It says (1) a scheduled job that runs during the drill is explained only as A5.2 says and is listed in the report; (2) a scheduled handler that writes business rows in the window still makes D9 FAIL, which is not a data defect; (3) the recovery is to re-run the drill, never to pause a schedule. known-limitations.md is the IT-facing list of what this release has not proven, so it would also carry the A5.7 residuals that remain (handler writes FAIL D9; engine ticks automation.tick_hourly/tick_daily are not covered; S6/S7 depend on pg-boss 11.0.0 timing defaults, an ADR-0068 upgrade item). Arabic summaries are updated where they summarise those sections.",
+      "actual": "Only deployment.md:247 (English) carries points (1)-(3). known-limitations.md (row ADR-0064), release-notes.md and both Arabic summaries are unchanged in substance from round 5 (their diff only updates the register SHA and the protocol-audit head). The A5.7 residuals 3 and 4 (engine ticks; the pg-boss timing assumption) appear in no handover text. The orchestrator's handover checks pass (check-handover, known-limitations --check, release-notes --check: exit 0), because they do not test for this text. Effect: no behaviour changes. The drill and its report behave correctly and the operator-facing drill section discloses the rule and the recovery, so F-DG7-971's own expected result (at least a disclosure to the operator) is met. The gap is documentation drift from a binding ADR amendment: Low, not mandatory. Repair: add the D-278 rule and the A5.7 residuals to the ADR-0064 row (or a D-278 row) of known-limitations.md, and carry them into the Arabic summary. Either let release-notes.mjs carry the A18 note, or record the orchestrator's decision that deployment.md alone satisfies A5.6 (an ADR-0064 dated amendment).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/code-security/round-6/23-d278-disclosure.log",
+        "docs/handover/known-limitations.md",
+        "docs/handover/deployment.md",
+        "docs/handover/release-notes.md",
+        "docs/architecture/adr/ADR-0064-p7-migration-manifest-export-import-reconciliation-identity-rebind.md",
+        "docs/delivery/handbacks/DG7/T-DG7-AN-P7H-transformation-analyst.md"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG7/round-6/code-security-reviewer.json",
+      "owner": "transformation-analyst",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-16T13:05:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG7 round 6 on candidate sha256:0b48162701518d1fb47789282112f2d5528429e77d6f108d3f8696570f06bc95. Low, not mandatory: documentation drift from ADR-0064 A5.6 with no behavioural effect. The rule itself was verified adversarially and found sound in this round. The owner is transformation-analyst, as ADR-0064 A5.6 assigns the disclosure to AN. The generated sections of known-limitations.md and release-notes.md are the orchestrator's regeneration."
+        }
+      ]
+    }
+  ]
+}
