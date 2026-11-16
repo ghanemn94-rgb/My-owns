@@ -1,0 +1,147 @@
+FAIL gate DG7 (current) (145 problems)
+  - gate DG7: decision is BLOCKED
+  - gate DG7: blocking conditions recorded: B1 (F-DG7-996, Medium, mandatory, OPEN, owner delivery-orchestrator): 'node tools/gates/validate.mjs --stage DG7' reports 57 write-once errors. Files committed under docs/delivery/runs/DG7 were later deleted or modified: the runner's transient .pre-config.txt, .pre-snapshot.json, .post-snapshot.json and uncompressed transcript.jsonl, swept into history by concurrent commits. The commits are f6686f0d7 (REV-QA-R5), b4f501c3f (DO-J2), 3b72c507f (DO-E2, DO-J2), 8d0abc3f9 (QA-D), 12229e6b6 (AN-P7) and cabf14268 (QA-C). The final run records are intact, but rules.mjs checkReviewRounds forbids any deletion under runs/ in history. The release-auditor cannot waive this. Clearing it needs a decision by the orchestrator and the user, for example a clean re-gate on a new base (D-184/D-190/D-238) or a reviewed gate-rule change, and then a new audit.; B2 (F-DG7-997, Medium, mandatory, OPEN, owner delivery-orchestrator): stages.json DG7 review_rounds 7, 8 and 9 record frozen_at 2026-11-16T18:39:59Z, but the committed manifest 0d71d4456adaac94 and candidate.frozen_at record 2026-11-16T18:39:12Z. The validator reports 'frozen_at/source_commit differ from its committed manifest' for all three rounds. stages.json is meta-excluded, so a correction needs no re-freeze.; B3 (F-DG7-998, Medium, mandatory, OPEN, owner delivery-orchestrator): findings.json verification blocks of 19 CLOSED_VERIFIED findings carry qa-verifier's sidecar entry: F-DG7-913, 914, 953, 954, 955, 956, 915, 935, 960, 961, 962, 963, 920, 921, 940, 971, 923, 942 and 972. The validator selects code-security-reviewer's entry (domain-reviewer's for 971), giving 57 errors (role, invocation and evidence differ). Every sidecar in each deciding round is PASS by a non-owner, so the closures are substantively valid. findings.json is meta-excluded. A re-import with tools/gates/import-findings.mjs that matches the validator's selection is needed.; B4 (F-DG7-999, Medium, mandatory, OPEN, owner delivery-orchestrator): stages.json DG7 review round 5 lists records.qa-verifier = docs/delivery/reviews/DG7/round-5/qa-verifier.json, which the killed run f4c61bca never wrote (D-278). The validator reports the record and its verifications sidecar's record as not found (2 errors). It tolerates an interrupted run's sidecars only when the record is neither listed nor on disk (D-034). Also: F-DG7-971.reported_in names that missing file.; B5: consequently REQ-DLV-014's gate clause ('shown by validate.mjs --stage DG7 at the gate') and REQ-DLV-005's gate clause are not met. After B1-B4 are repaired and imported, a new release audit must re-run validate --stage DG7 with a gate record present. Every other condition checked in this audit holds: identity, provenance, verdicts, the substance of every finding, pre-freeze evidence, evidence honesty, the protocol-hit and K11 decisions, decisions and the product/engineering gate separation.
+  - review release-auditor (docs/delivery/reviews/DG7/round-9/release-auditor.json): verdict is FAIL
+  - review release-auditor (docs/delivery/reviews/DG7/round-9/release-auditor.json): check AUD-DG7-R9-04-findings is FAIL
+  - review release-auditor (docs/delivery/reviews/DG7/round-9/release-auditor.json): check AUD-DG7-R9-05-write-once is FAIL
+  - review release-auditor (docs/delivery/reviews/DG7/round-9/release-auditor.json): check AUD-DG7-R9-06-incidents-orchestrator-decisions is FAIL
+  - review release-auditor (docs/delivery/reviews/DG7/round-9/release-auditor.json): check AUD-DG7-R9-08-requirements is FAIL
+  - review release-auditor (docs/delivery/reviews/DG7/round-9/release-auditor.json): check AUD-DG7-R9-14-validate-stage-with-gate-record is FAIL
+  - review release-auditor (docs/delivery/reviews/DG7/round-9/release-auditor.json) invocation: file not found (docs/delivery/runs/DG7/DG7-T-DG7-AUDIT-R9-release-auditor-20261116T211135Z-d27cb0e9/meta.json)
+  - gate DG7: test 'DG7 findings: substance of 22 closures holds (non-owner PASS verifications, valid anchors), F-DG7-973 properly accepted; but findings.json verification mirrors of 19 findings differ from the validator-selected sidecar (F-DG7-998)' is FAIL
+  - gate DG7: test 'Write-once: DG0-DG6 unchanged; reviews/candidates/assignments of DG7 untouched; but 57 validator write-once errors on runner transient files in six runs/DG7 directories (F-DG7-996)' is FAIL
+  - gate DG7: test 'Incidents and orchestrator decisions judged from history; stages.json round-5 lists a never-written qa-verifier.json (F-DG7-999) and rounds 7-9 carry a frozen_at that differs from the manifest (F-DG7-997)' is FAIL
+  - gate DG7: test 'Register DG7 (54/54 IMPLEMENTED, equal to the assignment list; register rules PASS); REQ-DLV-014 and REQ-DLV-005 gate clauses not met while validate --stage DG7 fails' is FAIL
+  - gate DG7: test 'validate --stage DG7 with a gate record present: 120 problems, of which 1 concerns this in-flight run and 119 do not (F-DG7-996 to F-DG7-999)' is FAIL
+  - review rounds: DG7 round 5 qa-verifier: file not found (docs/delivery/reviews/DG7/round-5/qa-verifier.json)
+  - review rounds: DG7 round 7 frozen_at/source_commit differ from its committed manifest
+  - review rounds: DG7 round 8 frozen_at/source_commit differ from its committed manifest
+  - review rounds: DG7 round 9 frozen_at/source_commit differ from its committed manifest
+  - write-once: docs/delivery/runs/DG7/DG7-T-DG7-REV-QA-R5-qa-verifier-20261116T061415Z-f4c61bca/.post-snapshot.json has a D event in f6686f0d7d (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG7/DG7-T-DG7-REV-QA-R5-qa-verifier-20261116T061415Z-f4c61bca/.pre-config.txt has a D event in f6686f0d7d (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG7/DG7-T-DG7-REV-QA-R5-qa-verifier-20261116T061415Z-f4c61bca/.pre-snapshot.json has a D event in f6686f0d7d (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG7/DG7-T-DG7-REV-QA-R5-qa-verifier-20261116T061415Z-f4c61bca/transcript.jsonl has a D event in f6686f0d7d (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG7/DG7-T-DG7-DO-J2-devops-engineer-20261114T144717Z-158a2cd2/.pre-config.txt has a D event in b4f501c3f7 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG7/DG7-T-DG7-DO-J2-devops-engineer-20261114T144717Z-158a2cd2/.pre-snapshot.json has a D event in b4f501c3f7 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG7/DG7-T-DG7-DO-J2-devops-engineer-20261114T144717Z-158a2cd2/transcript.jsonl has a D event in b4f501c3f7 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG7/DG7-T-DG7-DO-E2-devops-engineer-20261114T144656Z-bbb0fb15/.pre-config.txt has a D event in 3b72c507ff (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG7/DG7-T-DG7-DO-E2-devops-engineer-20261114T144656Z-bbb0fb15/.pre-snapshot.json has a D event in 3b72c507ff (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG7/DG7-T-DG7-DO-E2-devops-engineer-20261114T144656Z-bbb0fb15/transcript.jsonl has a D event in 3b72c507ff (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG7/DG7-T-DG7-DO-J2-devops-engineer-20261114T144717Z-158a2cd2/transcript.jsonl has a M event in 3b72c507ff (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG7/DG7-T-DG7-QA-D-qa-verifier-20261114T141158Z-e71b6576/.pre-config.txt has a D event in 8d0abc3f90 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG7/DG7-T-DG7-QA-D-qa-verifier-20261114T141158Z-e71b6576/.pre-snapshot.json has a D event in 8d0abc3f90 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG7/DG7-T-DG7-QA-D-qa-verifier-20261114T141158Z-e71b6576/transcript.jsonl has a D event in 8d0abc3f90 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG7/DG7-T-DG7-AN-P7-transformation-analyst-20261114T134324Z-13ecec6e/.pre-config.txt has a D event in 12229e6b69 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG7/DG7-T-DG7-AN-P7-transformation-analyst-20261114T134324Z-13ecec6e/.pre-snapshot.json has a D event in 12229e6b69 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG7/DG7-T-DG7-AN-P7-transformation-analyst-20261114T134324Z-13ecec6e/transcript.jsonl has a D event in 12229e6b69 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG7/DG7-T-DG7-QA-C-qa-verifier-20261114T131344Z-23c9a774/.pre-config.txt has a D event in cabf142684 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG7/DG7-T-DG7-QA-C-qa-verifier-20261114T131344Z-23c9a774/.pre-snapshot.json has a D event in cabf142684 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG7/DG7-T-DG7-QA-C-qa-verifier-20261114T131344Z-23c9a774/transcript.jsonl has a D event in cabf142684 (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG7/DG7-T-DG7-REV-QA-R5-qa-verifier-20261116T061415Z-f4c61bca/.post-snapshot.json was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG7/DG7-T-DG7-REV-QA-R5-qa-verifier-20261116T061415Z-f4c61bca/.post-snapshot.json is missing from the working tree
+  - write-once: docs/delivery/runs/DG7/DG7-T-DG7-REV-QA-R5-qa-verifier-20261116T061415Z-f4c61bca/.pre-config.txt was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG7/DG7-T-DG7-REV-QA-R5-qa-verifier-20261116T061415Z-f4c61bca/.pre-config.txt is missing from the working tree
+  - write-once: docs/delivery/runs/DG7/DG7-T-DG7-REV-QA-R5-qa-verifier-20261116T061415Z-f4c61bca/.pre-snapshot.json was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG7/DG7-T-DG7-REV-QA-R5-qa-verifier-20261116T061415Z-f4c61bca/.pre-snapshot.json is missing from the working tree
+  - write-once: docs/delivery/runs/DG7/DG7-T-DG7-REV-QA-R5-qa-verifier-20261116T061415Z-f4c61bca/transcript.jsonl was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG7/DG7-T-DG7-REV-QA-R5-qa-verifier-20261116T061415Z-f4c61bca/transcript.jsonl is missing from the working tree
+  - write-once: docs/delivery/runs/DG7/DG7-T-DG7-DO-J2-devops-engineer-20261114T144717Z-158a2cd2/transcript.jsonl was committed with 2 different contents (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG7/DG7-T-DG7-DO-E2-devops-engineer-20261114T144656Z-bbb0fb15/.pre-config.txt was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG7/DG7-T-DG7-DO-E2-devops-engineer-20261114T144656Z-bbb0fb15/.pre-config.txt is missing from the working tree
+  - write-once: docs/delivery/runs/DG7/DG7-T-DG7-DO-E2-devops-engineer-20261114T144656Z-bbb0fb15/.pre-snapshot.json was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG7/DG7-T-DG7-DO-E2-devops-engineer-20261114T144656Z-bbb0fb15/.pre-snapshot.json is missing from the working tree
+  - write-once: docs/delivery/runs/DG7/DG7-T-DG7-DO-E2-devops-engineer-20261114T144656Z-bbb0fb15/transcript.jsonl was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG7/DG7-T-DG7-DO-E2-devops-engineer-20261114T144656Z-bbb0fb15/transcript.jsonl is missing from the working tree
+  - write-once: docs/delivery/runs/DG7/DG7-T-DG7-DO-J2-devops-engineer-20261114T144717Z-158a2cd2/.pre-config.txt was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG7/DG7-T-DG7-DO-J2-devops-engineer-20261114T144717Z-158a2cd2/.pre-config.txt is missing from the working tree
+  - write-once: docs/delivery/runs/DG7/DG7-T-DG7-DO-J2-devops-engineer-20261114T144717Z-158a2cd2/.pre-snapshot.json was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG7/DG7-T-DG7-DO-J2-devops-engineer-20261114T144717Z-158a2cd2/.pre-snapshot.json is missing from the working tree
+  - write-once: docs/delivery/runs/DG7/DG7-T-DG7-QA-D-qa-verifier-20261114T141158Z-e71b6576/.pre-config.txt was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG7/DG7-T-DG7-QA-D-qa-verifier-20261114T141158Z-e71b6576/.pre-config.txt is missing from the working tree
+  - write-once: docs/delivery/runs/DG7/DG7-T-DG7-QA-D-qa-verifier-20261114T141158Z-e71b6576/.pre-snapshot.json was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG7/DG7-T-DG7-QA-D-qa-verifier-20261114T141158Z-e71b6576/.pre-snapshot.json is missing from the working tree
+  - write-once: docs/delivery/runs/DG7/DG7-T-DG7-QA-D-qa-verifier-20261114T141158Z-e71b6576/transcript.jsonl was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG7/DG7-T-DG7-QA-D-qa-verifier-20261114T141158Z-e71b6576/transcript.jsonl is missing from the working tree
+  - write-once: docs/delivery/runs/DG7/DG7-T-DG7-AN-P7-transformation-analyst-20261114T134324Z-13ecec6e/.pre-config.txt was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG7/DG7-T-DG7-AN-P7-transformation-analyst-20261114T134324Z-13ecec6e/.pre-config.txt is missing from the working tree
+  - write-once: docs/delivery/runs/DG7/DG7-T-DG7-AN-P7-transformation-analyst-20261114T134324Z-13ecec6e/.pre-snapshot.json was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG7/DG7-T-DG7-AN-P7-transformation-analyst-20261114T134324Z-13ecec6e/.pre-snapshot.json is missing from the working tree
+  - write-once: docs/delivery/runs/DG7/DG7-T-DG7-AN-P7-transformation-analyst-20261114T134324Z-13ecec6e/transcript.jsonl was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG7/DG7-T-DG7-AN-P7-transformation-analyst-20261114T134324Z-13ecec6e/transcript.jsonl is missing from the working tree
+  - write-once: docs/delivery/runs/DG7/DG7-T-DG7-QA-C-qa-verifier-20261114T131344Z-23c9a774/.pre-config.txt was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG7/DG7-T-DG7-QA-C-qa-verifier-20261114T131344Z-23c9a774/.pre-config.txt is missing from the working tree
+  - write-once: docs/delivery/runs/DG7/DG7-T-DG7-QA-C-qa-verifier-20261114T131344Z-23c9a774/.pre-snapshot.json was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG7/DG7-T-DG7-QA-C-qa-verifier-20261114T131344Z-23c9a774/.pre-snapshot.json is missing from the working tree
+  - write-once: docs/delivery/runs/DG7/DG7-T-DG7-QA-C-qa-verifier-20261114T131344Z-23c9a774/transcript.jsonl was removed after it was committed (review evidence is append-only)
+  - write-once: docs/delivery/runs/DG7/DG7-T-DG7-QA-C-qa-verifier-20261114T131344Z-23c9a774/transcript.jsonl is missing from the working tree
+  - verifications sidecar docs/delivery/reviews/DG7/round-5/qa-verifier.verifications.json record: file not found (docs/delivery/reviews/DG7/round-5/qa-verifier.json)
+  - docs/delivery/reviews/DG7/round-9/release-auditor.json: lists finding F-DG7-996, which is not in findings.json
+  - docs/delivery/reviews/DG7/round-9/release-auditor.json: lists finding F-DG7-997, which is not in findings.json
+  - docs/delivery/reviews/DG7/round-9/release-auditor.json: lists finding F-DG7-998, which is not in findings.json
+  - docs/delivery/reviews/DG7/round-9/release-auditor.json: lists finding F-DG7-999, which is not in findings.json
+  - review release-auditor: finding F-DG7-996 not in findings.json
+  - review release-auditor: finding F-DG7-997 not in findings.json
+  - review release-auditor: finding F-DG7-998 not in findings.json
+  - review release-auditor: finding F-DG7-999 not in findings.json
+  - finding F-DG7-996 raised in docs/delivery/reviews/DG7/round-9/release-auditor.findings.json is missing from findings.json (dropped)
+  - finding F-DG7-997 raised in docs/delivery/reviews/DG7/round-9/release-auditor.findings.json is missing from findings.json (dropped)
+  - finding F-DG7-998 raised in docs/delivery/reviews/DG7/round-9/release-auditor.findings.json is missing from findings.json (dropped)
+  - finding F-DG7-999 raised in docs/delivery/reviews/DG7/round-9/release-auditor.findings.json is missing from findings.json (dropped)
+  - finding F-DG7-913 (Medium, mandatory): findings.json verification by qa-verifier, sidecar by code-security-reviewer
+  - finding F-DG7-913 (Medium, mandatory): verification invocation is not the verifying reviewer's own run for round-2
+  - finding F-DG7-913 (Medium, mandatory): findings.json verification evidence differs from the sidecar
+  - finding F-DG7-914 (Low): findings.json verification by qa-verifier, sidecar by code-security-reviewer
+  - finding F-DG7-914 (Low): verification invocation is not the verifying reviewer's own run for round-2
+  - finding F-DG7-914 (Low): findings.json verification evidence differs from the sidecar
+  - finding F-DG7-953 (Medium): findings.json verification by qa-verifier, sidecar by code-security-reviewer
+  - finding F-DG7-953 (Medium): verification invocation is not the verifying reviewer's own run for round-2
+  - finding F-DG7-953 (Medium): findings.json verification evidence differs from the sidecar
+  - finding F-DG7-954 (Medium): findings.json verification by qa-verifier, sidecar by code-security-reviewer
+  - finding F-DG7-954 (Medium): verification invocation is not the verifying reviewer's own run for round-2
+  - finding F-DG7-954 (Medium): findings.json verification evidence differs from the sidecar
+  - finding F-DG7-955 (Low): findings.json verification by qa-verifier, sidecar by code-security-reviewer
+  - finding F-DG7-955 (Low): verification invocation is not the verifying reviewer's own run for round-2
+  - finding F-DG7-955 (Low): findings.json verification evidence differs from the sidecar
+  - finding F-DG7-956 (Medium): findings.json verification by qa-verifier, sidecar by code-security-reviewer
+  - finding F-DG7-956 (Medium): verification invocation is not the verifying reviewer's own run for round-2
+  - finding F-DG7-956 (Medium): findings.json verification evidence differs from the sidecar
+  - finding F-DG7-915 (Medium): findings.json verification by qa-verifier, sidecar by code-security-reviewer
+  - finding F-DG7-915 (Medium): verification invocation is not the verifying reviewer's own run for round-3
+  - finding F-DG7-915 (Medium): findings.json verification evidence differs from the sidecar
+  - finding F-DG7-935 (Medium): findings.json verification by qa-verifier, sidecar by code-security-reviewer
+  - finding F-DG7-935 (Medium): verification invocation is not the verifying reviewer's own run for round-3
+  - finding F-DG7-935 (Medium): findings.json verification evidence differs from the sidecar
+  - finding F-DG7-960 (Low): findings.json verification by qa-verifier, sidecar by code-security-reviewer
+  - finding F-DG7-960 (Low): verification invocation is not the verifying reviewer's own run for round-4
+  - finding F-DG7-960 (Low): findings.json verification evidence differs from the sidecar
+  - finding F-DG7-961 (Medium): findings.json verification by qa-verifier, sidecar by code-security-reviewer
+  - finding F-DG7-961 (Medium): verification invocation is not the verifying reviewer's own run for round-3
+  - finding F-DG7-961 (Medium): findings.json verification evidence differs from the sidecar
+  - finding F-DG7-962 (Medium): findings.json verification by qa-verifier, sidecar by code-security-reviewer
+  - finding F-DG7-962 (Medium): verification invocation is not the verifying reviewer's own run for round-3
+  - finding F-DG7-962 (Medium): findings.json verification evidence differs from the sidecar
+  - finding F-DG7-963 (Low): findings.json verification by qa-verifier, sidecar by code-security-reviewer
+  - finding F-DG7-963 (Low): verification invocation is not the verifying reviewer's own run for round-3
+  - finding F-DG7-963 (Low): findings.json verification evidence differs from the sidecar
+  - finding F-DG7-920 (Low): findings.json verification by qa-verifier, sidecar by code-security-reviewer
+  - finding F-DG7-920 (Low): verification invocation is not the verifying reviewer's own run for round-4
+  - finding F-DG7-920 (Low): findings.json verification evidence differs from the sidecar
+  - finding F-DG7-921 (Medium): findings.json verification by qa-verifier, sidecar by code-security-reviewer
+  - finding F-DG7-921 (Medium): verification invocation is not the verifying reviewer's own run for round-4
+  - finding F-DG7-921 (Medium): findings.json verification evidence differs from the sidecar
+  - finding F-DG7-940 (Medium): findings.json verification by qa-verifier, sidecar by code-security-reviewer
+  - finding F-DG7-940 (Medium): verification invocation is not the verifying reviewer's own run for round-4
+  - finding F-DG7-940 (Medium): findings.json verification evidence differs from the sidecar
+  - finding F-DG7-971 (Medium): findings.json verification by qa-verifier, sidecar by domain-reviewer
+  - finding F-DG7-971 (Medium): verification invocation is not the verifying reviewer's own run for round-6
+  - finding F-DG7-971 (Medium): findings.json verification evidence differs from the sidecar
+  - finding F-DG7-923 (Low): findings.json verification by qa-verifier, sidecar by code-security-reviewer
+  - finding F-DG7-923 (Low): verification invocation is not the verifying reviewer's own run for round-7
+  - finding F-DG7-923 (Low): findings.json verification evidence differs from the sidecar
+  - finding F-DG7-942 (Low): findings.json verification by qa-verifier, sidecar by code-security-reviewer
+  - finding F-DG7-942 (Low): verification invocation is not the verifying reviewer's own run for round-7
+  - finding F-DG7-942 (Low): findings.json verification evidence differs from the sidecar
+  - finding F-DG7-972 (Low): findings.json verification by qa-verifier, sidecar by code-security-reviewer
+  - finding F-DG7-972 (Low): verification invocation is not the verifying reviewer's own run for round-7
+  - finding F-DG7-972 (Low): findings.json verification evidence differs from the sidecar
+EXIT 1

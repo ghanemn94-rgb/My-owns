@@ -1,0 +1,107 @@
+## 19a82f6c2..7579382c5 product tree diff (excluding docs/delivery)
+ docs/handover/known-limitations.md  |  2 +-
+ tools/release/secret-allowlist.json | 10 ++++++++--
+ 2 files changed, 9 insertions(+), 3 deletions(-)
+## commits
+7579382c5 DG7: D-280; mark F-DG7-923/942/972 fixed
+abd95136b DG7: pre-freeze r7 evidence (r7b re-run after scoping allow-list entries), regenerated known-limitations
+## prefreeze-r7/checks.log exit lines
+### protocol-audit exit=0 seconds=5
+### known-limitations exit=0 seconds=0
+### release-notes exit=0 seconds=0
+### check-handover exit=0 seconds=1
+### register exit=0 seconds=1
+### typecheck exit=0 seconds=287
+### lint exit=0 seconds=41
+### openapi-lint exit=0 seconds=1
+### prettier exit=0 seconds=53
+### unit exit=0 seconds=354
+### integration exit=0 seconds=3377
+### transfer-drill-tests exit=0 seconds=155
+### release-tool-tests exit=1 seconds=895
+### deploy-tool-tests exit=0 seconds=7
+### e2e-retention exit=0 seconds=175
+### secret-payload exit=1 seconds=7
+### secret-history exit=0 seconds=174
+### claims exit=0 seconds=5
+### historical exit=0 seconds=130
+count steps: 19
+## prefreeze-r7b/checks.log exit lines
+### secret-payload exit=0 seconds=7
+### secret-history exit=0 seconds=173
+### release-tool-tests exit=0 seconds=875
+### prettier exit=0 seconds=57
+## r7 failures detail
+secret-scan: stale allow-list entry 46 (docs/delivery/reviews/DG7/round-6/qa-verifier.json)
+secret-scan: stale allow-list entry 47 (docs/delivery/test-evidence/DG7/qa/round-6/98-evidence-hygiene.log)
+secret-scan: FAIL (2 hits)
+392:✖ T-G2 the real repository: payload and history are clean (REQ-S16-031) (205704.1764ms)
+570:ℹ tests 471
+572:ℹ pass 468
+573:ℹ fail 1
+575:ℹ skipped 2
+579:✖ failing tests:
+582:✖ --scope payload exits 0 (8432.773833ms)
+## r7b summaries
+secret-scan: PASS (payload; 3158 files; allowed 33; canary (documented) 22)
+secret-scan: PASS (history; 37790 files; allowed 245; canary (documented) 46)
+358:﹣ T-A11 the real built SPA, runtime tree and configuration scan exits 0 (0.355558ms) # BLOCKED: no assembled runtime tree; set MTH_RELEASE_RUNTIME_DIR (deploy/scripts/assemble-runtime.sh)
+546:﹣ T-A3 bsdtar extracts the archive (SKIP when bsdtar is not installed) (1.66613ms) # bsdtar not installed
+570:ℹ tests 471
+572:ℹ pass 469
+573:ℹ fail 0
+575:ℹ skipped 2
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+Checking formatting...
+All matched files use Prettier code style!
+## r7 other summaries
+docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r7/unit.log: Test Files  207 passed (207)
+docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r7/unit.log:      Tests  3042 passed (3042)
+docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r7/unit.log: Test Files  131 passed (131)
+docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r7/unit.log:      Tests  2199 passed (2199)
+docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r7/unit.log: Test Files  3 passed (3)
+docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r7/unit.log:      Tests  259 passed | 2 skipped (261)
+docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r7/integration.log: Test Files  475 passed (475)
+docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r7/integration.log:      Tests  4696 passed | 8 skipped | 1 todo (4705)
+docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r7/transfer-drill-tests.log:ℹ tests 70
+docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r7/transfer-drill-tests.log:ℹ pass 70
+docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r7/transfer-drill-tests.log:ℹ fail 0
+docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r7/deploy-tool-tests.log:ℹ tests 125
+docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r7/deploy-tool-tests.log:ℹ pass 125
+docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r7/deploy-tool-tests.log:ℹ fail 0
+  4 passed (18.6s)
+claims-scan: PASS (891 files; D 141, U 750; negated 28; allowed 19)
+PASS gate DG6 (historical)
+PASS register rules at DG7
+secret-scan: PASS (history; 37790 files; allowed 245; canary (documented) 46)
+known-limitations: wrote docs/handover/known-limitations.md and docs/handover/external-dependencies.json (11 dependencies; report head 19a82f6c2bbb0434fd15e87ef0cfe192d5de6a47)
+  C9 stage-continuation   DG7          PASS
+FAIL (exit 1): 281 hit(s) in 29 check(s), 0 blocked, 36 pass
+## grep for failure markers in r7/r7b logs (✖, 'not ok', N failed)
+docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r7/check-handover.log:0
+docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r7/checks.log:0
+docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r7/claims.log:0
+docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r7/deploy-tool-tests.log:0
+docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r7/e2e-retention.log:0
+docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r7/historical.log:0
+docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r7/integration.log:1
+docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r7/known-limitations.log:0
+docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r7/lint.log:0
+docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r7/openapi-lint.log:0
+docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r7/prettier.log:0
+docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r7/protocol-audit.log:0
+docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r7/register.log:0
+docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r7/release-notes.log:0
+docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r7/release-tool-tests.log:4
+docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r7/secret-history.log:0
+docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r7/secret-payload.log:0
+docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r7/transfer-drill-tests.log:0
+docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r7/typecheck.log:0
+docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r7/unit.log:0
+docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r7b/checks.log:0
+docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r7b/prettier.log:0
+docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r7b/release-tool-tests.log:0
+docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r7b/secret-history.log:0
+docs/delivery/test-evidence/DG7/orchestrator/prefreeze-r7b/secret-payload.log:0
+## the two 'find' warnings at the head of prefreeze-r7/checks.log are GNU find option-order warnings from the orchestrator's cleanup step, not a check
+## protocol-audit runs with '; true' (exit masked); its real result is FAIL 281 hits / 29 checks (disclosed D-249/D-270)

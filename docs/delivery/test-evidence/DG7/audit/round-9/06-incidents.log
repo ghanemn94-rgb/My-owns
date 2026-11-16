@@ -1,0 +1,86 @@
+## (a) round-5 qa run killed
+{'exit_code': 143, 'subtype': 'no-result-line', 'is_error': True, 'written_by_tools': ['docs/delivery/reviews/DG7/round-5/qa-verifier.findings.json', 'docs/delivery/reviews/DG7/round-5/qa-verifier.md', 'docs/delivery/reviews/DG7/round-5/qa-verifier.verifications.json'], 'external_config_changed': [], 'started_at': '2026-11-16T06:14:15Z', 'finished_at': '2026-11-16T08:57:08Z'}
+code-security-reviewer.json
+code-security-reviewer.verifications.json
+domain-reviewer.json
+domain-reviewer.verifications.json
+qa-verifier.findings.json
+qa-verifier.md
+qa-verifier.verifications.json
+8a12af2f7 2026-11-16 08:57:34 +0000 DG7: round-5 review outputs (domain PASS, code-security PASS; qa reached FAIL on F-DG7-971, run killed by a container restart before its record file)
+F-DG7-922 CLOSED_VERIFIED verified_by code-security-reviewer DG7-T-DG7-REV-CS-R5-code-security-reviewer-20261116T061415Z-a087192e | reported_in docs/delivery/reviews/DG7/round-4/domain-reviewer.json
+F-DG7-941 CLOSED_VERIFIED verified_by code-security-reviewer DG7-T-DG7-REV-CS-R5-code-security-reviewer-20261116T061415Z-a087192e | reported_in docs/delivery/reviews/DG7/round-4/code-security-reviewer.json
+F-DG7-970 CLOSED_VERIFIED verified_by code-security-reviewer DG7-T-DG7-REV-CS-R5-code-security-reviewer-20261116T061415Z-a087192e | reported_in docs/delivery/reviews/DG7/round-4/qa-verifier.json
+F-DG7-971 CLOSED_VERIFIED verified_by qa-verifier DG7-T-DG7-REV-QA-R6-qa-verifier-20261116T122056Z-ed63881a | reported_in docs/delivery/reviews/DG7/round-5/qa-verifier.json
+-> round-5 qa verifications not imported (D-278); 922/941/970 closed by code-security round 5; 971 raised from the committed qa sidecar and verified by domain and qa in round 6; round 6 re-ran all three reviewers.
+## (b) stages.json transition error F-DG7-922/941/970
+PLANNED 2026-09-28T11:30:00Z 
+BUILDING 2026-11-12T12:02:49Z DG6 APPROVED (D-241). DG7 starts with the planning task T-DG7-ARCH-00 (D-242).
+REVIEWING 2026-11-15T07:29:30Z Round 1 frozen on candidate df8225e5 (D-271).
+FIXING 2026-11-15T09:54:25Z Round 1: domain FAIL (F-DG7-913 Medium mandatory, 914 Low), code-security BLOCKED (freeze commit changed decisions.md, a candidate file: orchestrator error), qa FAIL (953, 954, 956 Medium; 955 Low). R
+REVIEWING 2026-11-15T14:20:34Z Round 2 frozen on candidate ca38b65e (D-273).
+FIXING 2026-11-15T17:13:32Z Round 2: all six round-1 findings verified closed by all three; domain FAIL (915), code-security FAIL (935; no security defect found), qa FAIL (960, 961, 962, 963). D-274.
+REVIEWING 2026-11-15T22:34:02Z Round 3 frozen on sha256:60dd90b6 (D-275).
+FIXING 2026-11-16T01:38:50Z Round 3 (60dd90b6): domain FAIL (920 Low, 921 Medium), code-security FAIL (940 Medium; 960 not closed), qa FAIL (960). Repairs AN-P7G, BE-R8. D-276. Entry recorded late (2026-11-16, after round 4): th
+REVIEWING 2026-11-16T03:55:37Z Round 4 frozen on sha256:d91f7152 (D-276).
+FIXING 2026-11-16T06:12:55Z Round 4 (d91f7152): 920, 921, 940, 960 verified closed by all three; all three FAIL only on the missing round-3 FIXING entry (F-DG7-922, 941, 970), repaired by the orchestrator. D-277.
+REVIEWING 2026-11-16T06:14:07Z Round 5 frozen on sha256:07af9fba (D-277).
+FIXING 2026-11-16T08:58:07Z Round 5 (07af9fba): domain PASS, code-security PASS, qa reached FAIL (new F-DG7-971 Medium: A18 drill D9 fails when a */15 scheduled starter runs in the D7-D9 window; ADR-0064 A3.9 residual 1 undecide
+REVIEWING 2026-11-16T12:20:47Z Round 6 frozen on sha256:0b481627 (D-279).
+FIXING 2026-11-16T15:30:02Z Round 6 (0b481627): domain, code-security and qa all PASS; 971 verified closed. Three Low findings (F-DG7-923, 942, 972) on one gap: the D-278 rule is not disclosed in known-limitations.md, the releas
+REVIEWING 2026-11-16T18:39:59Z Round 7 frozen on sha256:0d71d445 (D-280).
+VERIFYING 2026-11-16T20:58:09Z Round 7 on 0d71d445: all three PASS; F-DG7-923/942/972 CLOSED_VERIFIED. F-DG7-973 (Low) accepted by the user as an observation (progress.md). Round 8: qa (reporter) and release audit part 1 judge the 
+9d5691143 2026-11-16 06:13:24 +0000 DG7: record the missing round-3 FIXING entry and the round-4 outcome in stages.json (F-DG7-922/941/970)
+## (c) D-278/D-280 repair chain
+7579382c5 2026-11-16 18:38:53 +0000 DG7: D-280; mark F-DG7-923/942/972 fixed
+abd95136b 2026-11-16 18:38:53 +0000 DG7: pre-freeze r7 evidence (r7b re-run after scoping allow-list entries), regenerated known-limitations
+19a82f6c2 2026-11-16 16:44:09 +0000 DG7: allow-list the round-6 QA secret-search grep patterns (not credentials)
+c4bb0cf8b 2026-11-16 16:37:32 +0000 DG7: T-DG7-DO-D10 output (exit 0; orchestrator integration review pending)
+f1acfe4ce 2026-11-16 15:53:38 +0000 DG7: assign DO-D10 (apply D-278 disclosure, release-notes section)
+2c6bdb6e5 2026-11-16 15:52:21 +0000 DG7: T-DG7-AN-P7I output (exit 0; orchestrator integration review pending)
+52db1450d 2026-11-16 15:30:07 +0000 DG7: record round-6 FIXING; assign AN-P7I disclosure repair
+61677ed8b 2026-11-16 15:29:32 +0000 DG7 round 6: import findings (F-DG7-923/942/972 Low)
+961b0256d 2026-11-16 15:29:26 +0000 DG7 round 6: review records and evidence (all three PASS on 0b481627)
+b481b0bb3 2026-11-16 15:27:43 +0000 run: DG7-T-DG7-REV-QA-R6-qa-verifier-20261116T122056Z-ed63881a (review evidence, auto-committed by run-agent.sh)
+2ea95b9a6 2026-11-16 13:13:35 +0000 run: DG7-T-DG7-REV-DOM-R6-domain-reviewer-20261116T122056Z-799e0e2a (review evidence, auto-committed by run-agent.sh)
+ded5c9113 2026-11-16 13:05:30 +0000 run: DG7-T-DG7-REV-CS-R6-code-security-reviewer-20261116T122056Z-c9045dfe (review evidence, auto-committed by run-agent.sh)
+## allow-list entries (history scope only)
+{"rule": "S3", "path": "docs/delivery/reviews/DG7/round-6/qa-verifier.json", "valueSha256": "ec2276aa127a00e0ccdc1d151f75b9aa901e9b8199ae41088bcc026ae5075f23", "reason": "DG7 round-6 QA review record (l.442) quoting the reviewer's own secret-search grep pattern; a regex, not a credential", "scopes": ["history"]}
+{"rule": "S2", "path": "docs/delivery/test-evidence/DG7/qa/round-6/98-evidence-hygiene.log", "valueSha256": "a1fc28a8997d1d2f20f48eca50dd938b3464e1231d5a1ba9f45e51c66f5db76e", "reason": "DG7 round-6 QA evidence log (l.4) echoing the reviewer's secret-search grep pattern; a regex, not a credential", "scopes": ["history"]}
+## (d) user acceptance of F-DG7-973 in progress.md (commit 614c3b975, before round-8 runs started 20:58:28Z)
+commit 614c3b9750badb0cd832c0048e168a623601342b
+Author: Claude <noreply@anthropic.com>
+Date:   Mon Nov 16 20:58:23 2026 +0000
+
+    DG7: user accepts F-DG7-973 as an observation; round 8 (reporter acceptance, audit part 1)
+    
+    Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+    Claude-Session: https://claude.ai/code/session_01BRvdRig4zy9C74ui8P4WXU
+
+ .../assignments/DG7/round-8/qa-verifier.md         | 34 ++++++++++++++++++
+ .../assignments/DG7/round-8/release-auditor.md     | 40 ++++++++++++++++++++++
+ docs/delivery/progress.md                          |  2 +-
+## (e) disclosure surfaces
+22:| `keycloak-e2e` | Keycloak test-realm end-to-end sign-in (passed 4/4 on one delivery host with a container runtime, D-267; synthetic realm, not Mobily's IdP, not HA) | `not_verified` | Mobily IT | A host with a conta
+43:The delivery records of gates DG0–DG6 contain the historic protocol observations listed below, found by the protocol audit. None changed product behaviour. They are disclosed here, and no gate was reopened (decision
+47:| C1 concurrency | REQ-DLV-009 | DG5 | HIT | 2 | D-249 H1 |
+48:| C1 concurrency | REQ-DLV-009 | DG6 | HIT | 1 | D-249 H2 |
+49:| C2 assignment-contract | REQ-DLV-011 | DG0 | HIT | 49 | D-249 H3 |
+50:| C2 assignment-contract | REQ-DLV-011 | DG1 | HIT | 16 | D-249 H3 |
+51:| C2 assignment-contract | REQ-DLV-011 | DG2 | HIT | 39 | D-249 H3 |
+52:| C2 assignment-contract | REQ-DLV-011 | DG3 | HIT | 14 | D-249 H3 |
+53:| C2 assignment-contract | REQ-DLV-011 | DG4 | HIT | 11 | D-249 H3 |
+54:| C2 assignment-contract | REQ-DLV-011 | DG5 | HIT | 6 | D-249 H3 |
+55:| C2 assignment-contract | REQ-DLV-011 | DG6 | HIT | 14 | D-249 H3, H4 |
+56:| C2 assignment-contract | REQ-DLV-011 | DG7 | HIT | 27 | not in D-249 (DG7: disclosed by this release's records) |
+57:| C3 handback-sections | REQ-DLV-012 | DG2 | HIT | 8 | D-249 H5 |
+58:| C3 handback-sections | REQ-DLV-012 | DG3 | HIT | 3 | D-249 H5 |
+59:| C3 handback-sections | REQ-DLV-012 | DG4 | HIT | 4 | D-249 H5 |
+60:| C3 handback-sections | REQ-DLV-012 | DG5 | HIT | 20 | D-249 H5 |
+61:| C3 handback-sections | REQ-DLV-012 | DG6 | HIT | 13 | D-249 H5 |
+62:| C3 handback-sections | REQ-DLV-012 | DG7 | HIT | 7 | not in D-249 (DG7: disclosed by this release's records) |
+63:| C4 file-ownership | REQ-DLV-008 | DG4 | HIT | 24 | D-249 H6 |
+64:| C4 file-ownership | REQ-DLV-008 | DG5 | HIT | 8 | D-249 H7 |
+46:- REQ-S02-005 (IMPLEMENTED): T-I13 (and T-I10) on the frozen DG7 register at the freeze (QA-D's frozen-register half, ADR-0071 §9), and the orchestrator's release-notes --write/--check after this pass, so that the release notes list the 23 later clauses and the D-270 hits.
+52:- REQ-S21-003 (IMPLEMENTED): the release-auditor's check at the DG7 gate that every disclosed deviation and every later clause is listed in the regenerated release notes, and QA-D's T-I10 and T-I13 on the frozen DG7 register.
+71:## Known limitations disclosed in this release

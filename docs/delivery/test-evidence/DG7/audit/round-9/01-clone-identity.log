@@ -1,0 +1,73 @@
+## assignment hash
+93a6ca781188ecd586c945712f1c2956fdac17ab365a7e6ec64599c5afd34acb  docs/delivery/assignments/DG7/round-9/release-auditor.md
+## clone: git clone --no-local /home/user/My-owns $TMPDIR/c; checkout f141d8be4
+f141d8be4684b3703371626027d9453de6f113cf
+shallow: false
+fsck --connectivity-only exit 0
+## candidate --ref 7579382c
+{"stage":"DG7","source":"7579382c59e1791321d4856ac1cb2eb2cfb4edc7","candidate_id":"sha256:0d71d4456adaac949e2c9af4c975f4b9976a166872195f496d5aa75fe8ed2272","files":3158}
+exit 0
+## candidate --ref HEAD
+{"stage":"DG7","source":"HEAD","candidate_id":"sha256:0d71d4456adaac949e2c9af4c975f4b9976a166872195f496d5aa75fe8ed2272","files":3158}
+exit 0
+## manifest
+sha256:0d71d4456adaac949e2c9af4c975f4b9976a166872195f496d5aa75fe8ed2272 7579382c59e1791321d4856ac1cb2eb2cfb4edc7 2026-11-16T18:39:12Z 3158 {'include': ['**'], 'exclude': ['trading_agent/**']}
+## stages.json DG7
+VERIFYING {"candidate_id": "sha256:0d71d4456adaac949e2c9af4c975f4b9976a166872195f496d5aa75fe8ed2272", "source_commit": "7579382c59e1791321d4856ac1cb2eb2cfb4edc7", "frozen_at": "2026-11-16T18:39:12Z", "manifest_path": "docs/delivery/candidates/DG7/0d71d4456adaac94.manifest.json"}
+## git diff --name-status 7579382c..HEAD outside META areas (assignments/reviews/runs/test-evidence)
+A	docs/delivery/candidates/DG7/0d71d4456adaac94.manifest.json
+M	docs/delivery/findings.json
+M	docs/delivery/progress.md
+M	docs/delivery/stages.json
+## counts by area
+      3 A docs/delivery/assignments/DG7/round-7
+      2 A docs/delivery/assignments/DG7/round-8
+      1 A docs/delivery/assignments/DG7/round-9
+      1 A docs/delivery/candidates/DG7/0d71d4456adaac94.manifest.json
+      8 A docs/delivery/reviews/DG7/round-7
+      4 A docs/delivery/reviews/DG7/round-8
+      6 A docs/delivery/runs/DG7/DG7-T-DG7-AUDIT-R8-release-auditor-20261116T205828Z-95e74df7
+      6 A docs/delivery/runs/DG7/DG7-T-DG7-REV-CS-R7-code-security-reviewer-20261116T184007Z-43e1182d
+      6 A docs/delivery/runs/DG7/DG7-T-DG7-REV-DOM-R7-domain-reviewer-20261116T184007Z-79fe1980
+      6 A docs/delivery/runs/DG7/DG7-T-DG7-REV-QA-R7-qa-verifier-20261116T184007Z-67eca439
+      6 A docs/delivery/runs/DG7/DG7-T-DG7-REV-QA-R8-qa-verifier-20261116T205828Z-dacf8073
+      5 A docs/delivery/test-evidence/DG7/audit
+     23 A docs/delivery/test-evidence/DG7/code-security
+     21 A docs/delivery/test-evidence/DG7/domain
+    138 A docs/delivery/test-evidence/DG7/qa
+      1 M docs/delivery/findings.json
+      1 M docs/delivery/progress.md
+      1 M docs/delivery/stages.json
+## META_EXCLUDES
+9:export const META_EXCLUDES = [
+10-  "docs/delivery/reviews/**",
+11-  "docs/delivery/gates/**",
+12-  "docs/delivery/test-evidence/**",
+13-  "docs/delivery/runs/**",
+14-  "docs/delivery/candidates/**",
+15-  "docs/delivery/handbacks/**",
+16-  "docs/delivery/assignments/**",
+17-  "docs/delivery/findings.json",
+18-  "docs/delivery/progress.md",
+19-  "docs/delivery/stages.json",
+20-];
+21-
+22-// The only candidate spec the gates accept (decision D-005). Narrowing it requires a reviewed change to this file.
+23-export const APPROVED_SPEC = { include: ["**"], exclude: ["trading_agent/**"] };
+24-
+25-export function specPolicyErrors(spec) {
+26-  const errors = [];
+27-  if (!spec || JSON.stringify(spec.include) !== JSON.stringify(APPROVED_SPEC.include)) errors.push(`include must be ${JSON.stringify(APPROVED_SPEC.include)}`);
+28-  if (!spec || JSON.stringify(spec.exclude) !== JSON.stringify(APPROVED_SPEC.exclude)) errors.push(`exclude must be ${JSON.stringify(APPROVED_SPEC.exclude)} (D-005)`);
+29-  return errors;
+30-}
+31-
+32-export function globToRegExp(glob) {
+33-  let re = "";
+34-  for (let i = 0; i < glob.length; i++) {
+--
+68:  const exclude = [...(spec.exclude || []), ...META_EXCLUDES];
+69-  return paths.filter((p) => matchesAny(p, include) && !matchesAny(p, exclude)).sort();
+70-}
+## decisions.md diff since freeze
+exit 0
