@@ -1,0 +1,27 @@
+$ node tools/release/known-limitations.mjs --protocol-audit docs/delivery/test-evidence/DG7/orchestrator/protocol-audit/protocol-audit-r6.json --check
+known-limitations: PASS (docs/handover/known-limitations.md and docs/handover/external-dependencies.json are current)
+exit 0
+$ node tools/release/release-notes.mjs --csv docs/delivery/requirements.csv --deps docs/handover/external-dependencies.json --provisional apps/web/src/i18n --out docs/handover/release-notes.md --check
+release-notes: 0 unfinished item(s), 23 later clause(s); docs/handover/release-notes.md is up to date
+exit 0
+$ node tools/release/check-handover.mjs --root . --only index,deployment,summaries,security-links,guides
+check-handover: index: PASS
+check-handover: deployment: PASS
+  note: guide-keys.json: 10 anchors checked
+check-handover: summaries: PASS
+  warning: docs/handover/backup-restore.md l.206: the Arabic section 'ملخص باللغة العربية (Arabic summary)' lacks the H.3 provisional line under its heading (§2.3)
+  warning: docs/handover/release-notes.md l.97: the Arabic section 'هوية الإصدار' lacks the H.3 provisional line under its heading (§2.3)
+  warning: docs/handover/release-notes.md l.103: the Arabic section 'المتطلبات حسب الحالة' lacks the H.3 provisional line under its heading (§2.3)
+  warning: docs/handover/release-notes.md l.112: the Arabic section 'البنود غير المكتملة وعوائق الإصدار' lacks the H.3 provisional line under its heading (§2.3)
+  warning: docs/handover/release-notes.md l.116: the Arabic section 'بنود تكتمل بعد البوابة الهندسية' lacks the H.3 provisional line under its heading (§2.3)
+  warning: docs/handover/release-notes.md l.120: the Arabic section 'تبعيات الإعداد الخارجية المتبقية' lacks the H.3 provisional line under its heading (§2.3)
+  warning: docs/handover/release-notes.md l.124: the Arabic section 'النصوص العربية المؤقتة' lacks the H.3 provisional line under its heading (§2.3)
+  warning: docs/handover/upgrades.md l.227: the Arabic section '6. Arabic summary (provisional, D-243 Q7)' lacks the H.3 provisional line under its heading (§2.3)
+check-handover: security-links: PASS
+check-handover: guides: PASS
+check-handover: PASS (index PASS, deployment PASS, summaries PASS, security-links PASS, guides PASS; root .)
+exit 0
+$ prettier --check (4 files)
+Checking formatting...
+All matched files use Prettier code style!
+exit 0
