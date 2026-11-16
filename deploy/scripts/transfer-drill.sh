@@ -31,12 +31,16 @@
 #       a REBOUND approver, downloads (count = the attachment manifest's), deep link; every key into journal.json
 #   D9  job checks (drill/job-check.mjs): stop the worker, queue one export, snapshot; stop API and PostgreSQL; start
 #       PostgreSQL, API and worker; compare; the export succeeds within 120 s; downloads again; then the mode 2 recheck
-#       with the allowance built from journal.json (drill/allowance.mjs) -> reconcile-d9.json
+#       with the allowance built from journal.json (drill/allowance.mjs) -> reconcile-d9.json; then, read only, the
+#       ADR-0064 A5 schedule stage (drill/schedule-explained.mjs, D-278): a recheck exit 4 whose only unexplained rows
+#       are schedule-triggered executions with a slot in (W0 - 60 s, W1] (target clock; W0 before T's worker starts in
+#       D7, W1 after the recheck) and their action results passes D9, each listed -> schedule-explained-d9.json
 #   D10 old-origin scan (drill/origin-scan.mjs)
 #   D11 transfer-drill-report.json (schemaVersion mth-transfer-drill/1)
 #
 # A step that fails stops the drill: the later steps are recorded NOT_RUN (never PASS) and the report's result is FAIL.
-# Output (--out): transfer-drill-report.json, config-trace.json, reconcile-*.json, origin-scan.json, drill.log and
+# Output (--out): transfer-drill-report.json, config-trace.json, reconcile-*.json, schedule-explained-d9.json,
+# origin-scan.json, drill.log and
 # the step logs. Exit codes (p7-work-split §2 rule 4): 0 PASS, 1 FAIL, 2 BLOCKED (usage), 3 BLOCKED (no bwrap, no
 # PostgreSQL server binaries, not enough free disk: MTH_TD_NEED_MB, default 4 x the archive + 1024 MB, an estimate). The drill IdP and every credential are SYNTHETIC; a local drill is not evidence of
 # high-availability production readiness, and it approves nothing (no G1-G6 decision, no DG0-DG7 record).
@@ -523,9 +527,19 @@ pick_actors() {
 actor() { node -e 'const v = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"))[process.argv[2]];
   if (!v) { console.error("no " + process.argv[2] + " among the rebound users"); process.exit(1); } console.log(v)' "$WORK/actors.json" "$1"; }
 ISSUER_T="http://127.0.0.1:$P_IDP/realms/mth-test"
+# target_clock: T's database clock (clock_timestamp(), UTC, milliseconds). ADR-0064 A5.2 (D-278): the schedule window
+# [W0, W1] is read on T's clock only, as pg-boss decides cron slots by the database clock; the host clock is never used.
+target_clock() {
+  "$PGBIN/psql" -X -qAt -v ON_ERROR_STOP=1 -d "$(su_url "$WORK/pgT" "$P_PG_T" mth)" \
+    -c "select to_char(clock_timestamp() at time zone 'UTC', 'YYYY-MM-DD\"T\"HH24:MI:SS.MS\"Z\"')"
+}
 d7() {
-  local t0; t0="$(clock)"
+  local t0 w0; t0="$(clock)"
   pick_actors
+  # T-DG7-DO-D9 (ADR-0064 A5.2, D-278): W0 is read immediately before T's worker starts; no worker ran on T before it.
+  w0="$(target_clock)"
+  echo "$w0" >"$WORK/window-start"
+  echo "transfer-drill: D7: schedule window start $w0 (target clock_timestamp())"
   start_target
   for _ in $(seq 1 480); do
     body="$(curl -s "http://127.0.0.1:$P_API_T/readyz" || true)"
@@ -635,20 +649,33 @@ d9() {
   node "$REPO/deploy/scripts/drill/allowance.mjs" --journal "$OUT/journal.json" --database-url "$su" \
     --app-user-signin "$MTH_TD_APP_USER_SIGNIN" \
     --out "$OUT/allowance.json" --reasons-out "$OUT/allowance-reasons.json"
-  if ! reconcile D9 --after-use --allow "$OUT/allowance.json"; then
-    # T-DG7-DO-E (D-264): name only the tables the mode 2 report could not explain (its
-    # `<table>: <a> added, <c> changed, <m> missing (<basis>)` lines), never its informational `explaining events` lines.
-    local listed=0 t rest
-    while read -r t rest; do
-      [ -n "$t" ] || continue
-      listed=1
-      echo "transfer-drill: step D9 failed: $t changed outside the allowance ($rest)"
-    done < <(node "$REPO/deploy/scripts/drill/unexplained-tables.mjs" "$WORK/reconcile-d9.txt")
-    [ "$listed" -eq 1 ] || echo "transfer-drill: step D9 failed: the mode 2 recheck did not match (no table line; see reconcile-d9.json)"
-    return 1
-  fi
+  local rc=0 src=0 w1
+  reconcile D9 --after-use --allow "$OUT/allowance.json" || rc=$?
+  # T-DG7-DO-D9 (ADR-0064 Amendment 5, D-278; F-DG7-971): W1 is read immediately after the recheck returns. The second
+  # stage (drill/schedule-explained.mjs, read only) explains exactly the schedule-triggered executions whose slot lies
+  # in (W0 - 60 s, W1], their action results and audit events, and lists them in schedule-explained-d9.json; when the
+  # recheck exits 0 it only writes that file (recheck matched). reconcile-d9.json keeps the recheck's real result.
+  # No job is paused, disabled or rescheduled, and job_schedule is never written.
+  w1="$(target_clock)"
+  echo "transfer-drill: D9: schedule window end $w1 (target clock_timestamp())"
+  node "$REPO/deploy/scripts/drill/schedule-explained.mjs" --database-url "$su" --psql "$PGBIN/psql" \
+    --reconcile "$WORK/reconcile-d9.txt" --recheck-exit "$rc" --package "$PKG" \
+    --window-start "$(cat "$WORK/window-start")" --window-end "$w1" --out "$OUT/schedule-explained-d9.json" || src=$?
+  [ "$src" -ne 2 ] || { echo "transfer-drill: step D9 failed: the schedule stage is BLOCKED (see above)"; return 1; }
+  [ "$rc" -ne 0 ] || return 0
+  [ "$src" -ne 0 ] || return 0
+  # T-DG7-DO-E (D-264): name only the tables the mode 2 report could not explain (its
+  # `<table>: <a> added, <c> changed, <m> missing (<basis>)` lines), never its informational `explaining events` lines.
+  local listed=0 t rest
+  while read -r t rest; do
+    [ -n "$t" ] || continue
+    listed=1
+    echo "transfer-drill: step D9 failed: $t changed outside the allowance ($rest)"
+  done < <(node "$REPO/deploy/scripts/drill/unexplained-tables.mjs" "$WORK/reconcile-d9.txt")
+  [ "$listed" -eq 1 ] || echo "transfer-drill: step D9 failed: the mode 2 recheck did not match (no table line; see reconcile-d9.json)"
+  return 1
 }
-step D9 "stop worker; journey exportq; job-check snapshot; stop API, PostgreSQL; start PostgreSQL, API, worker; job-check compare; journey exportwait, downloads; allowance.mjs; node tools/migration/reconcile.mjs --from <package> --after-use --allow <allowance.json> (mode 2)" d9
+step D9 "stop worker; journey exportq; job-check snapshot; stop API, PostgreSQL; start PostgreSQL, API, worker; job-check compare; journey exportwait, downloads; allowance.mjs; node tools/migration/reconcile.mjs --from <package> --after-use --allow <allowance.json> (mode 2); node deploy/scripts/drill/schedule-explained.mjs (ADR-0064 A5, read only)" d9
 [ -f "$WORK/pgT.pid" ] && PG_T_PID="$(cat "$WORK/pgT.pid")" || true
 [ -f "$WORK/T.pids" ] && read -r IDP_PID API_PID WORKER_PID <"$WORK/T.pids" || true
 
@@ -670,6 +697,15 @@ node -e '
   let tables = null, files = null;
   try { tables = JSON.parse(fs.readFileSync(manifest, "utf8")).tables.length; } catch {}
   try { files = JSON.parse(fs.readFileSync(attachments, "utf8")).items.length; } catch {}
+  // T-DG7-DO-D9 (ADR-0064 A5.5): the D9 entry gets recheck, scheduleExplained and scheduleWindow.
+  let se = null;
+  try { se = JSON.parse(fs.readFileSync(out + "/schedule-explained-d9.json", "utf8")); } catch {}
+  for (const s of steps.filter((x) => x.id === "D9" && x.result !== "NOT_RUN")) {
+    s.recheck = se === null ? "not_matched" : se.recheckExit === 0 ? "matched"
+      : se.applicable && se.failures.length === 0 && se.executions.length > 0 ? "schedule_explained" : "not_matched";
+    s.scheduleExplained = se === null ? [] : se.executions;
+    s.scheduleWindow = se === null ? null : se.window;
+  }
   const pass = steps.length === 12 && steps.every((s) => s.result === "PASS");
   const report = {
     schemaVersion: "mth-transfer-drill/1",
@@ -680,7 +716,7 @@ node -e '
     checksums: { manifest: digest(manifest), attachmentManifest: digest(attachments), mapping: digest(mapping),
       allowance: digest(out + "/allowance.json"), journal: digest(out + "/journal.json") },
     reports: ["reconcile-d5.json", "reconcile-d6.json", "reconcile-d9.json", "allowance.json", "allowance-reasons.json",
-      "job-check.json", "config-trace.json", "origin-scan.json"].filter((f) => fs.existsSync(out + "/" + f)),
+      "schedule-explained-d9.json", "job-check.json", "config-trace.json", "origin-scan.json"].filter((f) => fs.existsSync(out + "/" + f)),
     totals: { tables, evidenceFiles: files, seconds: Number(total) },
     steps,
     note: "SYNTHETIC data and credentials. A local drill is not evidence of high-availability production readiness; it approves nothing.",

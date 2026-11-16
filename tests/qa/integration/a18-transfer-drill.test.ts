@@ -57,9 +57,85 @@ const DRILL_FILES = [
   "deploy/scripts/drill/journey.mjs",
   "deploy/scripts/drill/origin-scan.mjs",
   "deploy/scripts/drill/config-trace.mjs",
+  "deploy/scripts/drill/schedule-explained.mjs",
   "deploy/scripts/drill/guide-keys.json",
   "docs/handover/deployment.md",
 ] as const;
+
+// ------------------------------------------------- the harness's own re-check of ADR-0064 A5.2 S2-S8 (T-DG7-DO-D9)
+// Written independently of deploy/scripts/drill/schedule-explained.mjs: it reads only the report's entries and window.
+const WDAY: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+function cronField(tok: string, lo: number, hi: number, v: number): boolean | null {
+  return tok.split(",").some((item) => {
+    const m = /^(\*|(\d+)(?:-(\d+))?)(?:\/(\d+))?$/.exec(item);
+    if (!m || (m[4] !== undefined && m[2] !== undefined && m[3] === undefined)) throw new Error(`cron token ${item}`);
+    const a = m[2] === undefined ? lo : Number(m[2]);
+    const b = m[2] === undefined ? hi : m[3] === undefined ? a : Number(m[3]);
+    const step = m[4] === undefined ? 1 : Number(m[4]);
+    return v >= a && v <= b && (v - a) % step === 0;
+  });
+}
+function isOccurrence(cron: string, tz: string, ms: number): boolean {
+  try {
+    const f = cron.trim().split(/\s+/);
+    if (f.length !== 5 || ms % 60_000 !== 0) return false;
+    const p = Object.fromEntries(
+      new Intl.DateTimeFormat("en-US", {
+        timeZone: tz,
+        hourCycle: "h23",
+        month: "numeric",
+        day: "numeric",
+        hour: "numeric",
+        minute: "numeric",
+        weekday: "short",
+      })
+        .formatToParts(new Date(ms))
+        .map((x) => [x.type, x.value]),
+    );
+    const dow = WDAY[p["weekday"]!]!;
+    if (!cronField(f[0]!, 0, 59, Number(p["minute"])) || !cronField(f[1]!, 0, 23, Number(p["hour"]))) return false;
+    if (!cronField(f[3]!, 1, 12, Number(p["month"]))) return false;
+    const dom = cronField(f[2]!, 1, 31, Number(p["day"]))!;
+    const dw = cronField(f[4]!, 0, 7, dow)! || (dow === 0 && cronField(f[4]!, 0, 7, 7)!);
+    return f[2]!.startsWith("*") || f[4]!.startsWith("*") ? dom && dw : dom || dw;
+  } catch {
+    return false;
+  }
+}
+/** The problems of the D9 `scheduleExplained` entries against the report's window (S2-S8; S1, S9 need the target). */
+function scheduleExplainedProblems(entries: Json[], window: Json): string[] {
+  const p: string[] = [];
+  const w0 = Date.parse(window?.start),
+    w1 = Date.parse(window?.end);
+  if (!Number.isFinite(w0) || !Number.isFinite(w1) || w0 > w1) return [`scheduleWindow ${JSON.stringify(window)}`];
+  const slots = new Set<string>();
+  for (const x of entries) {
+    const id = x.executionId;
+    if (x.initiatingUserId !== null || x.runAs !== "service") p.push(`${id}: S2 has an initiating user`);
+    if (x.triggerKind !== "schedule") p.push(`${id}: S3 trigger kind ${x.triggerKind}`);
+    const k = /^([a-z_]+\.[a-z_]+):(\d{4}-\d{2}-\d{2}T\d{2}:\d{2})$/.exec(x.triggerKey ?? "");
+    const M = k ? Date.parse(`${k[2]}:00.000Z`) : NaN;
+    if (!k || !Number.isFinite(M) || new Date(M).toISOString().slice(0, 16) !== k[2] || k[1] !== x.triggerCode)
+      p.push(`${id}: S4 key ${x.triggerKey}`);
+    if (x.scheduleCode !== x.triggerCode) p.push(`${id}: S5 schedule ${x.scheduleCode} is not ${x.triggerCode}`);
+    const s = Date.parse(x.slot);
+    const named = isOccurrence(x.cron, x.timezone, M)
+      ? M
+      : isOccurrence(x.cron, x.timezone, M - 60_000)
+        ? M - 60_000
+        : NaN;
+    if (!Number.isFinite(s) || s !== named)
+      p.push(`${id}: S6 slot ${x.slot} is not the slot key ${x.triggerKey} names`);
+    if (!(s > w0 - 60_000 && s <= w1)) p.push(`${id}: S7 slot ${x.slot} outside the window`);
+    const c = Date.parse(x.createdAt);
+    if (!(c >= w0 && c <= w1)) p.push(`${id}: S8 created ${x.createdAt} outside the window`);
+    if (slots.has(`${x.triggerCode}@${s}`)) p.push(`${id}: two executions for slot ${x.slot}`);
+    slots.add(`${x.triggerCode}@${s}`);
+    if (!(x.auditEvents as Json[]).some((e) => e.recordId === id && /^job:.+$/.test(e.requestId ?? "")))
+      p.push(`${id}: no job audit event of the execution listed`);
+  }
+  return p;
+}
 
 function requireBuilt(): void {
   const missing = DRILL_FILES.filter((f) => !existsSync(join(REPO, f)));
@@ -214,7 +290,27 @@ describe.skipIf(inputState.kind === "absent")(
       drill();
       const files = readdirSync(out).filter((f) => /^reconcile-.*\.json$/.test(f));
       expect(files.length, "reconcile-*.json written").toBeGreaterThanOrEqual(2); // D5 and D9
-      for (const f of files) expect(inequalities(read(f)), f).toEqual([]);
+      // T-DG7-DO-D9 (ADR-0064 A5.5, D-278): D9 is accepted when its recheck matched, or when it is `schedule_explained`
+      // AND every listed execution passes this harness's own re-check of S2-S8 against the report's window. Never
+      // `not_matched`. reconcile-d9.json keeps the recheck's real exit 4 in the second case, so it is not re-read then.
+      const d9 = (read("transfer-drill-report.json").steps as Json[]).find((s) => s.id === "D9");
+      expect(["matched", "schedule_explained"], "D9 recheck").toContain(d9?.recheck);
+      if (d9?.recheck === "schedule_explained") {
+        const entries = d9.scheduleExplained as Json[];
+        expect(entries.length, "schedule-explained executions listed").toBeGreaterThan(0);
+        for (const x of entries)
+          console.log(
+            `A18 D9 schedule-explained (ADR-0064 A5): ${x.executionId} trigger ${x.triggerCode} key ${x.triggerKey} slot ${x.slot} '${x.cron}' ${x.timezone}, ${x.actionResultIds.length} action results, ${x.auditEvents.length} audit events`,
+          );
+        expect(scheduleExplainedProblems(entries, d9.scheduleWindow)).toEqual([]);
+        const se = read("schedule-explained-d9.json");
+        expect(se.recheckExit, "schedule-explained-d9.json recheckExit").toBe(4);
+        expect(se.failures, "schedule-explained-d9.json failures").toEqual([]);
+      }
+      for (const f of files) {
+        if (f === "reconcile-d9.json" && d9?.recheck === "schedule_explained") continue;
+        expect(inequalities(read(f)), f).toEqual([]);
+      }
     });
 
     it("D10: the source origin is stored nowhere except audit_event", () => {

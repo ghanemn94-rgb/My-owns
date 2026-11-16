@@ -9,7 +9,7 @@
 import assert from "node:assert/strict";
 import { spawn, spawnSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
-import { chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { after, before, describe, it } from "node:test";
@@ -19,6 +19,7 @@ import { startDrillIdp, readUsers, DRILL_IDP_LABEL } from "../drill/fake-idp-ser
 import { runJourney } from "../drill/journey.mjs";
 import { tableDigest } from "../drill/job-check.mjs";
 import { unexplainedTables } from "../drill/unexplained-tables.mjs";
+import * as SE from "../drill/schedule-explained.mjs";
 import {
   buildAllowance,
   constants,
@@ -1755,5 +1756,654 @@ describe("T-DG7-DO-D8 drill/cleanup.sh: bounded PostgreSQL shutdown; cleanup nev
     assert.match(r.stderr, warn);
     assert.match(readFileSync(join(out, "drill.log"), "utf8"), warn);
     rmSync(w, { recursive: true, force: true });
+  });
+});
+
+// ------------------------------------------------- T-DG7-DO-D9: ADR-0064 Amendment 5 (D-278, F-DG7-971), T-S1 to T-S10
+// The drill-side second stage of D9 (drill/schedule-explained.mjs): it explains exactly the schedule-triggered
+// executions whose key names a slot of their job_schedule row inside (W0 - 60 s, W1], their action results and audit
+// events, and nothing else. T-S9 runs on a disposable PostgreSQL (with-pg.sh) and FAILS with "BLOCKED" without it.
+describe("T-DG7-DO-D9 schedule-explained.mjs: scheduled starters in D7-D9 (ADR-0064 A5, D-278)", () => {
+  const CLI = join(REPO, "deploy/scripts/drill/schedule-explained.mjs");
+  const FIX = JSON.parse(readFileSync(join(REPO, "deploy/scripts/tests/fixtures/f-dg7-971-reconcile-d9.json"), "utf8"));
+  const TEXT = FIX.output.join("\n") + "\n";
+  const X = "01a1e35f-8e4f-7de0-80d2-0aab0e420e27";
+  const AR = "01a1e35f-8e85-72b8-bcd3-074233427210";
+  const WIN = { start: "2026-11-16T07:59:30.000Z", end: "2026-11-16T08:01:10.000Z" };
+  const ESC = { code: "approval.escalation_scan", cron: "*/15 * * * *", timezone: "Asia/Riyadh", enabled: true };
+  /** The QA round-5 evidence's row values (d9-schedule-window-analysis.log §10), as read from T. */
+  const rows = (over = {}) => {
+    const x = {
+      id: X,
+      trigger_code: "approval.escalation_scan",
+      trigger_key: "approval.escalation_scan:2026-11-16T08:00",
+      initiating_user_id: null,
+      run_as: "service",
+      status: "succeeded",
+      attempt_no: 1,
+      version: 2,
+      created_at: "2026-11-16T08:00:52.806Z",
+      rule_code: "starter.decision_sla",
+      ...(over.x ?? {}),
+    };
+    return {
+      ux: [X],
+      ur: [AR],
+      executions: { [X]: x },
+      peers: [x, ...(over.peers ?? [])],
+      packageExecutionIds: over.packageExecutionIds ?? [],
+      packageResultIds: [],
+      triggers: { "approval.escalation_scan": "schedule", ...(over.triggers ?? {}) },
+      schedules: over.schedules ?? [ESC],
+      results: over.results ?? [
+        { id: AR, automation_execution_id: X, attempt_no: 1, ordinal: 1, action_type: "starter_handler" },
+      ],
+      events: over.events ?? [
+        ev("e1", 101, "automation_execution", X, { new_version: 1 }),
+        ev("e2", 102, "automation_action_result", AR),
+        ev("e3", 103, "automation_execution", X, { new_version: 2 }),
+      ],
+    };
+  };
+  function ev(id, seq, record_type, record_id, o = {}) {
+    return {
+      id,
+      seq: String(seq),
+      record_type,
+      record_id,
+      source: "worker",
+      actor_type: "service",
+      actor_user_id: null,
+      on_behalf_of_user_id: null,
+      request_id: "job:7f1c",
+      new_version: null,
+      ...o,
+    };
+  }
+  const run = (r, window = WIN, text = TEXT, exit = 4) =>
+    SE.stage({ text, exit, window, read: () => ({ rows: r, baseline: "100" }) });
+  const firstReason = (res) => res.report.failures[0]?.reason ?? res.report.notApplicableReason;
+
+  it("T-S1 parseScheduleKey: the starters.ts format only, read as UTC; refuses Z, seconds, offsets, bad dates, upper case, another code", () => {
+    assert.deepEqual(SE.parseScheduleKey("approval.escalation_scan:2026-11-16T08:00"), {
+      code: "approval.escalation_scan",
+      minute: "2026-11-16T08:00:00.000Z",
+      ms: Date.parse("2026-11-16T08:00:00.000Z"),
+    });
+    for (const bad of [
+      "approval.escalation_scan:2026-11-16T08:00Z",
+      "approval.escalation_scan:2026-11-16T08:00:00",
+      "approval.escalation_scan:2026-11-16T08:00+03:00",
+      "approval.escalation_scan:2026-02-30T08:00",
+      "Approval.escalation_scan:2026-11-16T08:00",
+      "approval.escalation_scan:2026-11-16T24:00",
+    ])
+      assert.equal(SE.parseScheduleKey(bad), null, bad);
+    assert.equal(
+      SE.parseScheduleKey("approval.escalation_scan:2026-11-16T08:00", "governance.decision_sla_scan"),
+      null,
+    );
+  });
+
+  it("T-S2 slotOf: M or M - 60 s only; the zone comes from the row (5 0 * * * Asia/Riyadh is 21:05Z the day before)", () => {
+    const at = (s) => Date.parse(s);
+    const c = "*/15 * * * *";
+    assert.equal(SE.slotOf(c, "Asia/Riyadh", at("2026-11-16T08:00:00Z")), at("2026-11-16T08:00:00Z"));
+    assert.equal(SE.slotOf(c, "Asia/Riyadh", at("2026-11-16T08:01:00Z")), at("2026-11-16T08:00:00Z"));
+    assert.equal(SE.slotOf(c, "Asia/Riyadh", at("2026-11-16T08:02:00Z")), null);
+    assert.equal(SE.slotOf(c, "Asia/Riyadh", at("2026-11-16T08:07:00Z")), null);
+    assert.equal(SE.slotOf("5 0 * * *", "Asia/Riyadh", at("2026-11-15T21:05:00Z")), at("2026-11-15T21:05:00Z"));
+    assert.equal(SE.slotOf("5 0 * * *", "Asia/Riyadh", at("2026-11-16T00:05:00Z")), null);
+    assert.equal(SE.slotOf("5 0 * * *", "UTC", at("2026-11-16T00:05:00Z")), at("2026-11-16T00:05:00Z"));
+    // day of week 0 and 7 are Sunday; dom and dow ORed when both are restricted
+    assert.ok(SE.cronMatches("0 9 * * 7", "UTC", at("2026-11-15T09:00:00Z"))); // a Sunday
+    assert.ok(SE.cronMatches("0 9 1 * 0", "UTC", at("2026-11-15T09:00:00Z")));
+    assert.ok(
+      !SE.cronMatches("0 9 1 * */2", "UTC", at("2026-11-15T09:00:00Z")),
+      "a '*'-prefixed dow is ANDed with dom",
+    );
+    assert.ok(!SE.cronMatches("0 9 1 * 1", "UTC", at("2026-11-15T09:00:00Z")));
+    assert.ok(!SE.cronMatches("*/15 * * * *", "Asia/Riyadh", at("2026-11-16T08:00:30Z")), "seconds must be 0");
+    assert.ok(!SE.cronMatches("*/15 * * * *", "No/Such_Zone", at("2026-11-16T08:00:00Z")));
+  });
+
+  it("T-S3 S7 bounds: W0 - 60 s is outside, W0 - 59 s inside, W1 inside, W1 + 1 min outside", () => {
+    const w = (start, end) => ({ start, end });
+    // key 08:00 -> slot 08:00; created_at within the window in each case
+    const r = rows({ x: { created_at: "2026-11-16T08:00:00.500Z" } });
+    assert.match(
+      firstReason(run(r, w("2026-11-16T08:01:00.000Z", "2026-11-16T08:02:00.000Z"))),
+      /^slot .* is outside the window/,
+    );
+    assert.equal(
+      run(
+        rows({ x: { created_at: "2026-11-16T08:00:59.500Z" } }),
+        w("2026-11-16T08:00:59.000Z", "2026-11-16T08:02:00.000Z"),
+      ).recheck,
+      "schedule_explained",
+    );
+    assert.equal(
+      run(
+        rows({ x: { created_at: "2026-11-16T07:59:59.000Z" } }),
+        w("2026-11-16T07:59:00.000Z", "2026-11-16T08:00:00.000Z"),
+      ).recheck,
+      "schedule_explained",
+    );
+    const late = rows({
+      x: { trigger_key: "approval.escalation_scan:2026-11-16T08:15", created_at: "2026-11-16T08:00:00.000Z" },
+    });
+    assert.match(
+      firstReason(run(late, w("2026-11-16T07:59:00.000Z", "2026-11-16T08:14:00.000Z"))),
+      /^slot 2026-11-16T08:15:00.000Z is outside the window \(2026-11-16T07:58:00.000Z, 2026-11-16T08:14:00.000Z\]$/,
+    );
+  });
+
+  it("T-S4 fails without the rule: the QA round-5 recheck output is explained with the rule; without it the same output is a D9 FAIL", () => {
+    const res = run(rows());
+    assert.equal(res.pass, true, JSON.stringify(res.report.failures));
+    assert.equal(res.recheck, "schedule_explained");
+    assert.equal(res.report.executions.length, 1);
+    const e = res.report.executions[0];
+    assert.equal(e.executionId, X);
+    assert.equal(e.slot, "2026-11-16T08:00:00.000Z");
+    assert.deepEqual(e.actionResultIds, [AR]);
+    assert.deepEqual(
+      e.auditEvents.map((v) => v.seq),
+      ["101", "102", "103"],
+    );
+    assert.equal(res.report.window.lowerBoundExclusive, "2026-11-16T07:58:30.000Z");
+    assert.deepEqual(res.lines, [
+      `transfer-drill: D9: schedule-triggered execution ${X} explained (ADR-0064 A5; trigger approval.escalation_scan, key approval.escalation_scan:2026-11-16T08:00, slot 2026-11-16T08:00:00.000Z, schedule '*/15 * * * *' Asia/Riyadh, 1 action results, 3 audit events)`,
+      "transfer-drill: D9: mode 2 recheck exit 4; 1 schedule-triggered executions and 1 action results explained by ADR-0064 A5 (D-278); nothing else unexplained",
+    ]);
+    // Without the stage, D9's decision is the recheck's exit alone (transfer-drill.sh before T-DG7-DO-D9): 4 is FAIL,
+    // and the D-264 helper names the two automation tables.
+    assert.equal(FIX.exit, 4);
+    assert.deepEqual(
+      unexplainedTables(TEXT).map((t) => t.table),
+      ["automation_execution", "automation_action_result"],
+    );
+    // The drill passes D9 on exit 4 ONLY through the stage's exit 0 (static check of transfer-drill.sh d9()).
+    const sh = readFileSync(DRILL, "utf8");
+    const d9 = sh.slice(sh.indexOf("\nd9() {"), sh.indexOf("\nstep D9 "));
+    assert.match(d9, /reconcile D9 --after-use --allow "\$OUT\/allowance.json" \|\| rc=\$\?/);
+    assert.match(d9, /\[ "\$rc" -ne 0 \] \|\| return 0\n\s*\[ "\$src" -ne 0 \] \|\| return 0\n/);
+    assert.match(d9, /changed outside the allowance/);
+  });
+
+  it("T-S5 still flags an unexplained execution: S1-S9 and uniqueness violated one at a time each FAIL with the A5.4 reason", () => {
+    const cases = [
+      ["S1 in the package", rows({ packageExecutionIds: [X] }), /^not added$/],
+      [
+        "S2 initiating user",
+        rows({ x: { run_as: "initiating_user", initiating_user_id: "01995000-0000-7000-8000-000000000011" } }),
+        /^has an initiating user$/,
+      ],
+      [
+        "S3 event trigger",
+        rows({ triggers: { "approval.escalation_scan": "event" } }),
+        /^trigger approval\.escalation_scan is not a schedule trigger$/,
+      ],
+      [
+        "S4 key format",
+        rows({ x: { trigger_key: "approval.escalation_scan:2026-11-16T08:00Z" } }),
+        /^trigger_key '.*' is not 'approval\.escalation_scan:YYYY-MM-DDTHH:MM'$/,
+      ],
+      [
+        "S5 disabled schedule",
+        rows({ schedules: [{ ...ESC, enabled: false }] }),
+        /^no enabled job_schedule row approval\.escalation_scan$/,
+      ],
+      ["S5 no schedule row", rows({ schedules: [] }), /^no enabled job_schedule row approval\.escalation_scan$/],
+      [
+        "S6 key minute 08:02",
+        rows({ x: { trigger_key: "approval.escalation_scan:2026-11-16T08:02" } }),
+        /^key minute 2026-11-16T08:02:00\.000Z names no slot of '\*\/15 \* \* \* \*' Asia\/Riyadh$/,
+      ],
+      [
+        "S7 slot outside",
+        rows({ x: { trigger_key: "approval.escalation_scan:2026-11-16T07:45" } }),
+        /^slot 2026-11-16T07:45:00\.000Z is outside the window/,
+      ],
+      [
+        "S8 created outside",
+        rows({ x: { created_at: "2026-11-16T08:01:10.001Z" } }),
+        /^created .* outside the window$/,
+      ],
+      [
+        "S9 no service event",
+        rows({ events: [ev("e2", 102, "automation_action_result", AR)] }),
+        /^no service audit event without a user$/,
+      ],
+      [
+        "S9 a user on the event",
+        rows({
+          events: [
+            ev("e1", 101, "automation_execution", X, {
+              new_version: 2,
+              actor_user_id: "01995000-0000-7000-8000-000000000011",
+            }),
+            ev("e2", 102, "automation_action_result", AR),
+          ],
+        }),
+        /^no service audit event without a user$/,
+      ],
+      [
+        "S9 event at or below B",
+        rows({
+          events: [
+            ev("e1", 100, "automation_execution", X, { new_version: 2 }),
+            ev("e2", 102, "automation_action_result", AR),
+          ],
+        }),
+        /^no service audit event without a user$/,
+      ],
+      [
+        "S9 no job request id",
+        rows({
+          events: [
+            ev("e1", 101, "automation_execution", X, { new_version: 2, request_id: "req-1" }),
+            ev("e2", 102, "automation_action_result", AR),
+          ],
+        }),
+        /^no service audit event without a user$/,
+      ],
+      [
+        "uniqueness",
+        rows({
+          peers: [
+            {
+              id: "01a1e35f-0000-7000-8000-000000000099",
+              trigger_code: "approval.escalation_scan",
+              trigger_key: "approval.escalation_scan:2026-11-16T08:01",
+            },
+          ],
+        }),
+        /^slot 2026-11-16T08:00:00\.000Z of approval\.escalation_scan has 2 executions$/,
+      ],
+    ];
+    for (const [name, r, want] of cases) {
+      const res = run(r);
+      assert.equal(res.pass, false, name);
+      assert.equal(res.recheck, "not_matched", name);
+      assert.deepEqual(res.report.executions, [], name);
+      assert.equal(res.report.failures[0].table, "automation_execution", name);
+      assert.match(res.report.failures[0].reason, want, name);
+      assert.ok(
+        res.lines.some((l) =>
+          l.startsWith(`transfer-drill: step D9 failed: automation_execution ${X} is not schedule-explained: `),
+        ),
+        name,
+      );
+      // its action result is then not explained either
+      assert.ok(
+        res.report.failures.some((f) => f.key === AR && f.reason === `execution ${X} is not schedule-explained`),
+        name,
+      );
+    }
+  });
+
+  it("T-S6 Gate 0: another unexplained line, a third table, expected-but-not, attachments, 20 keys or exit 0/1 are not applicable", () => {
+    const ins = (after, line) => TEXT.replace(after, `${after}\n${line}`);
+    const cases = [
+      [
+        ins(`    unexplained added ["${X}"]`, `    unexplained changed ["${X}"]`),
+        /^line not allowed:     unexplained changed/,
+      ],
+      [
+        TEXT.replace(
+          "  forum: 5 explaining events",
+          "  forum: 5 explaining events\n  forum: 1 added, 0 changed, 0 missing (audit_explained)",
+        ).replace("mismatch: 2 tables", "mismatch: 3 tables"),
+        /^table forum is not automation_execution or automation_action_result$/,
+      ],
+      [
+        ins(`    unexplained added ["${AR}"]`, `    expected but not added ["${AR}"]`),
+        /^line not allowed:     expected but not added/,
+      ],
+      [
+        TEXT.replace("0 attachments differ", "1 attachments differ"),
+        /^line not allowed: reconcile-migration: mismatch: 2 tables, 1 attachments differ$/,
+      ],
+      [
+        TEXT.replace("mismatch: 2 tables", "mismatch: 3 tables"),
+        /^line not allowed: reconcile-migration: mismatch: 3 tables$/,
+      ],
+      [
+        TEXT.replace(
+          "17 added, 0 changed, 0 missing (audit_explained)",
+          "17 added, 0 changed, 1 missing (audit_explained)",
+        ),
+        /^line not allowed: /,
+      ],
+      [
+        ins(
+          `    unexplained added ["${X}"]`,
+          Array.from(
+            { length: 19 },
+            (_, i) => `    unexplained added ["01a1e35f-8e4f-7de0-80d2-0aab0e4200${String(i).padStart(2, "0")}"]`,
+          ).join("\n"),
+        ),
+        /^key list may be truncated \(automation_execution: 20 keys\)$/,
+      ],
+      [TEXT.replace(`    unexplained added ["${X}"]\n`, ""), /^no unexplained automation_execution key$/],
+      [TEXT + "warning: something\n", /^line not allowed: warning: something$/],
+    ];
+    for (const [text, want] of cases) {
+      const res = run(rows(), WIN, text);
+      assert.equal(res.pass, false, String(want));
+      assert.equal(res.report.applicable, false, String(want));
+      assert.match(res.report.notApplicableReason, want);
+      assert.deepEqual(res.lines, [
+        `transfer-drill: D9: schedule rule not applicable: ${res.report.notApplicableReason}`,
+      ]);
+    }
+    assert.match(run(rows(), WIN, TEXT, 1).report.notApplicableReason, /^recheck exit 1$/);
+    const ok = run(rows(), WIN, "reconcile-migration: matched after use: …\n", 0);
+    assert.equal(ok.pass, true);
+    assert.equal(ok.recheck, "matched");
+    assert.equal(ok.report.notApplicableReason, "recheck matched");
+  });
+
+  it("T-S7 S': a result of an unexplained execution, a result without a job event in R(x), and ordinals {1, 3} each FAIL", () => {
+    const other = "01a1e35f-1111-7000-8000-000000000001";
+    const r1 = rows({
+      results: [{ id: AR, automation_execution_id: other, attempt_no: 1, ordinal: 1, action_type: "starter_handler" }],
+    });
+    assert.match(
+      run(r1).report.failures.find((f) => f.key === AR).reason,
+      new RegExp(`^execution ${other} is not schedule-explained$`),
+    );
+    const r2 = rows({
+      events: [
+        ev("e1", 101, "automation_execution", X, { new_version: 2 }),
+        ev("e2", 102, "automation_action_result", AR, { request_id: "job:other" }),
+      ],
+    });
+    assert.equal(
+      run(r2).report.failures.find((f) => f.key === AR).reason,
+      "no worker audit event of the execution's job",
+    );
+    const AR3 = "01a1e35f-8e85-72b8-bcd3-074233427213";
+    const r3 = rows({
+      x: { rule_code: "admin.fixture", status: "succeeded" },
+      results: [
+        { id: AR, automation_execution_id: X, attempt_no: 1, ordinal: 1, action_type: "notify" },
+        { id: AR3, automation_execution_id: X, attempt_no: 1, ordinal: 3, action_type: "notify" },
+      ],
+    });
+    r3.ur = [AR, AR3];
+    assert.equal(run(r3).report.failures[0].reason, "attempt 1 ordinals 1,3 (expected 1..2)");
+    const r4 = rows({
+      results: [{ id: AR, automation_execution_id: X, attempt_no: 1, ordinal: 1, action_type: "notify" }],
+    });
+    assert.match(run(r4).report.failures[0].reason, /^attempt 1 ordinals 1 \(expected 1\.\.1, starter_handler\)$/);
+  });
+
+  it("T-S8 cronMatches parses every cron seeded into job_schedule by the migrations, and refuses MON, L and six fields", () => {
+    const dir = join(REPO, "packages/db/migrations");
+    const crons = new Set();
+    for (const f of readdirSync(dir).filter((n) => n.endsWith(".sql"))) {
+      const sql = readFileSync(join(dir, f), "utf8");
+      if (!/job_schedule/.test(sql)) continue;
+      for (const m of sql.matchAll(
+        /\('[0-9a-f-]{36}',\s*'[a-z_]+\.[a-z_]+',\s*'[a-z_.]+',\s*'([^']+)',\s*'[A-Za-z_/]+'/g,
+      ))
+        crons.add(m[1]);
+      for (const m of sql.matchAll(/\bcron\s*=\s*'([^']+)'/g)) crons.add(m[1]);
+    }
+    assert.ok(crons.size >= 5, `crons found: ${[...crons].join(" | ")}`);
+    for (const c of crons) assert.notEqual(SE.parseCron(c), null, c);
+    for (const bad of ["0 9 * * MON", "0 9 L * *", "0 0 9 * * *", "0 9 ? * *", "0 9 * * 1#2", "5/15 * * * *"])
+      assert.equal(SE.parseCron(bad), null, bad);
+  });
+
+  // T-S9 and the assignment's (a)/(b): a disposable database with the 0074/0075 schema and the seeded job_schedule.
+  describe("T-S9 on PostgreSQL: a real job_schedule slot inside the window passes; a user, an unscheduled code, an outside slot or an event trigger FAIL", () => {
+    const db = `mth_td_sched_${suffix}`;
+    const su = () => dbUrl(db);
+    const raw = (sql) => psql(su(), `SET session_replication_role = replica; ${sql}`);
+    const W0 = "2026-11-16T07:59:30.000Z";
+    const W1 = "2026-11-16T08:01:10.000Z";
+    let pkg, rule, user;
+    before(() => {
+      if (!ADMIN) return;
+      for (const r of ["mth_owner", "mth_app"])
+        psql(
+          ADMIN,
+          `DO $$ BEGIN IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = '${r}') THEN CREATE ROLE ${r} LOGIN; END IF; END $$;`,
+        );
+      psql(ADMIN, `CREATE DATABASE ${db} OWNER mth_owner ENCODING 'UTF8' TEMPLATE template0;`);
+      for (const c of ["migrate", "seed-demo"]) {
+        const r = spawnSync("node", ["--conditions=@mth/source", "src/cli.ts", c], {
+          cwd: join(REPO, "packages/db"),
+          encoding: "utf8",
+          env: {
+            PATH: process.env.PATH,
+            HOME: work,
+            DATABASE_OWNER_URL: dbUrl(db, "mth_owner"),
+            NODE_ENV: "development",
+          },
+        });
+        if (r.status !== 0) throw new Error(`mth-db ${c}: ${r.stdout}${r.stderr}`);
+      }
+      // The import record of a target (fixture): baseline B = the current maximum seq, so only later events count.
+      raw(`INSERT INTO migration_import (id, schema_version, source_environment, source_export_reference, migration_level,
+             manifest_sha256, attachment_manifest_sha256, table_count, row_count, attachment_count, attachment_bytes,
+             operator_name, started_at, imported_at, audit_carried_rows, audit_carried_seq_max, audit_baseline_rows,
+             audit_baseline_seq_min, audit_baseline_seq_max, audit_baseline_digest, seed_rows_replaced)
+           SELECT '01a1e300-0000-7000-8000-000000000001', 'mth-migration/1', 'unmarked', '01a1e300-0000-7000-8000-000000000002',
+             '0001_fixture', repeat('a', 64), repeat('b', 64), 0, 0, 0, 0, 'fixture', '${W0}'::timestamptz - interval '5 min',
+             '${W0}'::timestamptz - interval '4 min', 0, 0, count(*), min(seq), max(seq), repeat('c', 64), 0 FROM audit_event;`);
+      // A synthetic schedule trigger with no job_schedule row (case b).
+      raw(`INSERT INTO automation_trigger (code, trigger_kind, owner_module, label_en, label_ar, admin_selectable, source_ref)
+           VALUES ('fixture.no_schedule', 'schedule', 'workflows', 'Fixture', 'تجربة', false, 'fixture');`);
+      rule = psql(
+        su(),
+        `SELECT r.id || ',' || v.id FROM automation_rule r JOIN automation_rule_version v ON v.automation_rule_id = r.id
+                         WHERE r.code = 'starter.decision_sla' ORDER BY v.version_no DESC LIMIT 1;`,
+      ).split(",");
+      user = psql(su(), `SELECT id FROM app_user ORDER BY id LIMIT 1;`);
+      pkg = mkdtempSync(join(work, "sched-pkg-"));
+      mkdirSync(join(pkg, "tables"));
+      for (const t of ["automation_execution", "automation_action_result"])
+        writeFileSync(
+          join(pkg, "tables", `${t}.ndjson`),
+          psql(su(), `SELECT coalesce(string_agg(json_build_object('id', id)::text, E'\\n'), '') FROM ${t};`) + "\n",
+        );
+    });
+    after(() => {
+      if (ADMIN) psql(ADMIN, `DROP DATABASE IF EXISTS ${db} WITH (FORCE);`);
+    });
+    let n = 0;
+    /** Inserts one execution (+ result, + its worker events) as the fixture superuser; returns its ids. */
+    const inject = ({
+      code = "approval.escalation_scan",
+      key,
+      created = "2026-11-16T08:00:52.806Z",
+      userId = null,
+      events = true,
+    }) => {
+      n += 1;
+      const x = `01a1e35f-8e4f-7de0-80d2-0aab0e42${String(n).padStart(4, "0")}`;
+      const ar = `01a1e35f-8e85-72b8-bcd3-0742334272${String(n).padStart(2, "0")}`;
+      const req = `job:fixture-${n}`;
+      raw(`INSERT INTO automation_execution (id, automation_rule_id, automation_rule_version_id, trigger_code, trigger_key, run_as,
+             initiating_user_id, status, conditions_met, attempt_no, started_at, finished_at, version, created_at, updated_at)
+           VALUES ('${x}', '${rule[0]}', '${rule[1]}', '${code}', '${key}', '${userId ? "initiating_user" : "service"}',
+             ${userId ? `'${userId}'` : "NULL"}, 'succeeded', true, 1, '${created}', '${created}', 2, '${created}', '${created}');
+           INSERT INTO automation_action_result (id, automation_execution_id, attempt_no, ordinal, action_type, idempotency_key, outcome, created_at)
+           VALUES ('${ar}', '${x}', 1, 1, 'starter_handler', 'automation:fixture:${n}', 'done', '${created}');`);
+      if (events)
+        raw(`INSERT INTO audit_event (id, actor_type, action, record_type, record_id, new_version, request_id, source) VALUES
+             (gen_random_uuid(), 'service', 'automation.execution_started', 'automation_execution', '${x}', 1, '${req}', 'worker'),
+             (gen_random_uuid(), 'service', 'automation.action_recorded', 'automation_action_result', '${ar}', NULL, '${req}', 'worker'),
+             (gen_random_uuid(), 'service', 'automation.execution_finished', 'automation_execution', '${x}', 2, '${req}', 'worker');`);
+      return { x, ar };
+    };
+    const recheckText = (ids) =>
+      [
+        "transfer-attachments verify: matched: 2 objects",
+        "  automation_execution: 32 explaining events",
+        `  automation_execution: ${ids.length} added, 0 changed, 0 missing (audit_explained)`,
+        ...ids.map((i) => `    unexplained added ["${i.x}"]`),
+        "  automation_action_result: 16 explaining events",
+        `  automation_action_result: ${ids.length} added, 0 changed, 0 missing (audit_explained)`,
+        ...ids.map((i) => `    unexplained added ["${i.ar}"]`),
+        "reconcile-migration: mismatch: 2 tables, 0 attachments differ",
+      ].join("\n") + "\n";
+    const digest = () =>
+      psql(
+        su(),
+        `SELECT md5(string_agg(d, '|' ORDER BY d)) FROM (
+          SELECT 'js' || md5(coalesce(string_agg(t::text, ',' ORDER BY t.id), '')) d FROM job_schedule t
+          UNION ALL SELECT 'ae' || md5(coalesce(string_agg(t::text, ',' ORDER BY t.id), '')) FROM automation_execution t
+          UNION ALL SELECT 'ar' || md5(coalesce(string_agg(t::text, ',' ORDER BY t.id), '')) FROM automation_action_result t
+          UNION ALL SELECT 'ev' || count(*) || max(seq) FROM audit_event
+          UNION ALL SELECT 'pb' || coalesce((SELECT md5(string_agg(s::text, ',' ORDER BY s.name)) FROM pgboss.schedule s), 'absent')
+            WHERE to_regclass('pgboss.schedule') IS NOT NULL
+          UNION ALL SELECT 'pb-absent' WHERE to_regclass('pgboss.schedule') IS NULL) q;`,
+      );
+    const cli = (ids, { module = CLI } = {}) => {
+      const d = mkdtempSync(join(work, "sched-"));
+      writeFileSync(join(d, "reconcile-d9.txt"), recheckText(ids));
+      const out = join(d, "schedule-explained-d9.json");
+      const r = spawnSync(
+        "node",
+        [
+          module,
+          "--database-url",
+          su(),
+          "--reconcile",
+          join(d, "reconcile-d9.txt"),
+          "--recheck-exit",
+          "4",
+          "--package",
+          pkg,
+          "--window-start",
+          W0,
+          "--window-end",
+          W1,
+          "--out",
+          out,
+        ],
+        { encoding: "utf8" },
+      );
+      return { ...r, report: r.status === 2 ? null : JSON.parse(readFileSync(out, "utf8")) };
+    };
+
+    it("(a) an injected schedule-triggered execution for the real approval.escalation_scan slot 08:00 passes and is listed; tables unchanged", () => {
+      needPg();
+      const sched = psql(
+        su(),
+        `SELECT cron || ' ' || timezone || ' ' || enabled FROM job_schedule WHERE code = 'approval.escalation_scan';`,
+      );
+      assert.equal(sched, "*/15 * * * * Asia/Riyadh true", "the migrations' job_schedule row");
+      for (const c of psql(su(), "SELECT cron FROM job_schedule;").split("\n"))
+        assert.notEqual(SE.parseCron(c), null, c);
+      const ids = inject({ key: "approval.escalation_scan:2026-11-16T08:00" });
+      const before = digest();
+      const r = cli([ids]);
+      assert.equal(r.status, 0, r.stdout + r.stderr);
+      assert.equal(digest(), before, "the stage changed no row (job_schedule, pgboss.schedule, automation, audit)");
+      assert.match(
+        r.stdout,
+        new RegExp(
+          `^transfer-drill: D9: schedule-triggered execution ${ids.x} explained \\(ADR-0064 A5; trigger approval\\.escalation_scan, key approval\\.escalation_scan:2026-11-16T08:00, slot 2026-11-16T08:00:00\\.000Z, schedule '\\*/15 \\* \\* \\* \\*' Asia/Riyadh, 1 action results, 3 audit events\\)$`,
+          "m",
+        ),
+      );
+      assert.match(
+        r.stdout,
+        /^transfer-drill: D9: mode 2 recheck exit 4; 1 schedule-triggered executions and 1 action results explained by ADR-0064 A5 \(D-278\); nothing else unexplained$/m,
+      );
+      assert.equal(r.report.applicable, true);
+      assert.deepEqual(
+        r.report.executions.map((e) => [e.executionId, e.slot, e.actionResultIds]),
+        [[ids.x, "2026-11-16T08:00:00.000Z", [ids.ar]]],
+      );
+      assert.equal(r.report.executions[0].auditEvents.length, 3);
+      // FAIL with the rule removed: the same module with S1-S9 never satisfied (mutation) exits 1, so D9 FAILs.
+      const mut = mkdtempSync(join(work, "sched-mut-"));
+      const src = readFileSync(CLI, "utf8").replace("explained.set(id, {", "void ({");
+      assert.notEqual(src, readFileSync(CLI, "utf8"), "mutation applied");
+      writeFileSync(join(mut, "schedule-explained.mjs"), src);
+      writeFileSync(
+        join(mut, "unexplained-tables.mjs"),
+        readFileSync(join(REPO, "deploy/scripts/drill/unexplained-tables.mjs")),
+      );
+      const m = cli([ids], { module: join(mut, "schedule-explained.mjs") });
+      assert.equal(m.status, 1, m.stdout + m.stderr);
+      assert.match(
+        m.stdout,
+        /^transfer-drill: step D9 failed: automation_action_result .* is not schedule-explained: execution .* is not schedule-explained$/m,
+      );
+      raw(
+        `DELETE FROM automation_action_result WHERE id = '${ids.ar}'; DELETE FROM automation_execution WHERE id = '${ids.x}';`,
+      );
+    });
+
+    const failing = [
+      [
+        "(b) an execution with an initiating user",
+        () => ({ userId: user, key: "approval.escalation_scan:2026-11-16T08:00" }),
+        /is not schedule-explained: has an initiating user$/m,
+      ],
+      [
+        "(b) a trigger_key whose code has no job_schedule row",
+        () => ({ code: "fixture.no_schedule", key: "fixture.no_schedule:2026-11-16T08:00" }),
+        /is not schedule-explained: no enabled job_schedule row fixture\.no_schedule$/m,
+      ],
+      [
+        "(b) a slot outside the window",
+        () => ({ key: "approval.escalation_scan:2026-11-16T07:45" }),
+        /is not schedule-explained: slot 2026-11-16T07:45:00\.000Z is outside the window \(2026-11-16T07:58:30\.000Z, 2026-11-16T08:01:10\.000Z\]$/m,
+      ],
+      [
+        "(T-S9) an event-triggered execution in the same window",
+        () => ({
+          code: psql(su(), "SELECT code FROM automation_trigger WHERE trigger_kind = 'event' ORDER BY code LIMIT 1;"),
+          key: "approval.escalation_scan:2026-11-16T08:00",
+        }),
+        /is not schedule-explained: trigger [a-z_.]+ is not a schedule trigger$/m,
+      ],
+      [
+        "(T-S9) a scheduled execution without its worker audit events",
+        () => ({ key: "approval.escalation_scan:2026-11-16T08:00", events: false }),
+        /is not schedule-explained: no service audit event without a user$/m,
+      ],
+    ];
+    for (const [title, spec, want] of failing)
+      it(`${title} still FAILS D9`, () => {
+        needPg();
+        const ids = inject(spec());
+        const before = digest();
+        const r = cli([ids]);
+        assert.equal(r.status, 1, r.stdout + r.stderr);
+        assert.equal(digest(), before);
+        assert.match(r.stdout, want);
+        assert.deepEqual(r.report.executions, []);
+        assert.doesNotMatch(r.stdout, /nothing else unexplained/);
+        raw(
+          `DELETE FROM automation_action_result WHERE id = '${ids.ar}'; DELETE FROM automation_execution WHERE id = '${ids.x}';`,
+        );
+      });
+
+    it("(T-S9) a scheduled slot execution beside an unexplained one: D9 FAILs as a whole (nothing else is explained)", () => {
+      needPg();
+      const good = inject({ key: "approval.escalation_scan:2026-11-16T08:00" });
+      const bad = inject({
+        userId: user,
+        key: "governance.decision_sla_scan:2026-11-16T08:00",
+        code: "governance.decision_sla_scan",
+      });
+      const r = cli([good, bad]);
+      assert.equal(r.status, 1, r.stdout + r.stderr);
+      assert.deepEqual(r.report.executions, []);
+      assert.doesNotMatch(r.stdout, /explained \(ADR-0064 A5/);
+      raw(
+        `DELETE FROM automation_action_result WHERE id IN ('${good.ar}', '${bad.ar}'); DELETE FROM automation_execution WHERE id IN ('${good.x}', '${bad.x}');`,
+      );
+    });
   });
 });
