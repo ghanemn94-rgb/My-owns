@@ -1,0 +1,136 @@
+## assignment hash
+3a8a51ff702062bcd84a28b65f0b9a62eb3eb827a285cd6c0c6bbb1567d20683  docs/delivery/assignments/DG7/round-8/release-auditor.md
+## main repo HEAD 614c3b9750badb0cd832c0048e168a623601342b; .git size 3.2G
+## Attempt 1: git clone --no-local --no-checkout -> checkout failed: No space left on device (TMPDIR volume shared, ~10G free before, 0 during). Clone deleted.
+$ git clone --shared --no-checkout /home/user/My-owns /var/tmp/mth-run.SaIUrJ/claude-0/aud-r8s
+Cloning into '/var/tmp/mth-run.SaIUrJ/claude-0/aud-r8s'...
+done.
+$ git checkout -q 7579382c59e1791321d4856ac1cb2eb2cfb4edc7
+exit 0
+7579382c59e1791321d4856ac1cb2eb2cfb4edc7
+shallow: false
+$ git fsck --connectivity-only
+0
+fsck exit 0
+$ node tools/gates/candidate.mjs --stage DG7 --ref 7579382c59e1791321d4856ac1cb2eb2cfb4edc7
+{"stage":"DG7","source":"7579382c59e1791321d4856ac1cb2eb2cfb4edc7","candidate_id":"sha256:0d71d4456adaac949e2c9af4c975f4b9976a166872195f496d5aa75fe8ed2272","files":3158}
+exit 0
+$ node tools/gates/candidate.mjs --stage DG7 --ref 614c3b9750badb0cd832c0048e168a623601342b
+{"stage":"DG7","source":"614c3b9750badb0cd832c0048e168a623601342b","candidate_id":"sha256:0d71d4456adaac949e2c9af4c975f4b9976a166872195f496d5aa75fe8ed2272","files":3158}
+exit 0
+$ git diff --name-status 7579382c5 HEAD | awk '{print $1}' | sort | uniq -c
+    211 A
+      3 M
+$ modified files:
+M	docs/delivery/findings.json
+M	docs/delivery/progress.md
+M	docs/delivery/stages.json
+$ added files by dir:
+      1 docs/delivery/assignments/DG7/round-7/code-security-reviewer.md
+      1 docs/delivery/assignments/DG7/round-7/domain-reviewer.md
+      1 docs/delivery/assignments/DG7/round-7/qa-verifier.md
+      1 docs/delivery/assignments/DG7/round-8/qa-verifier.md
+      1 docs/delivery/assignments/DG7/round-8/release-auditor.md
+      1 docs/delivery/candidates/DG7/0d71d4456adaac94.manifest.json/
+      1 docs/delivery/reviews/DG7/round-7/code-security-reviewer.json
+      1 docs/delivery/reviews/DG7/round-7/code-security-reviewer.verifications.json
+      1 docs/delivery/reviews/DG7/round-7/domain-reviewer.json
+      1 docs/delivery/reviews/DG7/round-7/domain-reviewer.verifications.json
+      1 docs/delivery/reviews/DG7/round-7/qa-verifier.findings.json
+      1 docs/delivery/reviews/DG7/round-7/qa-verifier.json
+      1 docs/delivery/reviews/DG7/round-7/qa-verifier.md
+      1 docs/delivery/reviews/DG7/round-7/qa-verifier.verifications.json
+      1 docs/delivery/runs/DG7/DG7-T-DG7-REV-CS-R7-code-security-reviewer-20261116T184007Z-43e1182d/meta.json
+      1 docs/delivery/runs/DG7/DG7-T-DG7-REV-CS-R7-code-security-reviewer-20261116T184007Z-43e1182d/result.json
+      1 docs/delivery/runs/DG7/DG7-T-DG7-REV-CS-R7-code-security-reviewer-20261116T184007Z-43e1182d/sandbox.json
+      1 docs/delivery/runs/DG7/DG7-T-DG7-REV-CS-R7-code-security-reviewer-20261116T184007Z-43e1182d/settings.json
+      1 docs/delivery/runs/DG7/DG7-T-DG7-REV-CS-R7-code-security-reviewer-20261116T184007Z-43e1182d/stderr.log
+      1 docs/delivery/runs/DG7/DG7-T-DG7-REV-CS-R7-code-security-reviewer-20261116T184007Z-43e1182d/transcript.jsonl.gz
+      1 docs/delivery/runs/DG7/DG7-T-DG7-REV-DOM-R7-domain-reviewer-20261116T184007Z-79fe1980/meta.json
+      1 docs/delivery/runs/DG7/DG7-T-DG7-REV-DOM-R7-domain-reviewer-20261116T184007Z-79fe1980/result.json
+      1 docs/delivery/runs/DG7/DG7-T-DG7-REV-DOM-R7-domain-reviewer-20261116T184007Z-79fe1980/sandbox.json
+      1 docs/delivery/runs/DG7/DG7-T-DG7-REV-DOM-R7-domain-reviewer-20261116T184007Z-79fe1980/settings.json
+      1 docs/delivery/runs/DG7/DG7-T-DG7-REV-DOM-R7-domain-reviewer-20261116T184007Z-79fe1980/stderr.log
+      1 docs/delivery/runs/DG7/DG7-T-DG7-REV-DOM-R7-domain-reviewer-20261116T184007Z-79fe1980/transcript.jsonl.gz
+      1 docs/delivery/runs/DG7/DG7-T-DG7-REV-QA-R7-qa-verifier-20261116T184007Z-67eca439/meta.json
+      1 docs/delivery/runs/DG7/DG7-T-DG7-REV-QA-R7-qa-verifier-20261116T184007Z-67eca439/result.json
+      1 docs/delivery/runs/DG7/DG7-T-DG7-REV-QA-R7-qa-verifier-20261116T184007Z-67eca439/sandbox.json
+      1 docs/delivery/runs/DG7/DG7-T-DG7-REV-QA-R7-qa-verifier-20261116T184007Z-67eca439/settings.json
+      1 docs/delivery/runs/DG7/DG7-T-DG7-REV-QA-R7-qa-verifier-20261116T184007Z-67eca439/stderr.log
+      1 docs/delivery/runs/DG7/DG7-T-DG7-REV-QA-R7-qa-verifier-20261116T184007Z-67eca439/transcript.jsonl.gz
+     23 docs/delivery/test-evidence/DG7/code-security/round-7
+     21 docs/delivery/test-evidence/DG7/domain/round-7
+    135 docs/delivery/test-evidence/DG7/qa/round-7
+$ paths outside docs/delivery:
+(end)
+$ git diff --stat 7579382c5 HEAD -- docs/delivery/decisions.md
+(empty = unchanged)
+$ git log --oneline 7579382c5..HEAD
+614c3b975 DG7: user accepts F-DG7-973 as an observation; round 8 (reporter acceptance, audit part 1)
+b65835e02 DG7 round 7: import findings (F-DG7-973 Low)
+bec1773e1 DG7 round 7: review records and evidence
+641c513c8 run: DG7-T-DG7-REV-QA-R7-qa-verifier-20261116T184007Z-67eca439 (review evidence, auto-committed by run-agent.sh)
+cf01e0486 run: DG7-T-DG7-REV-DOM-R7-domain-reviewer-20261116T184007Z-79fe1980 (review evidence, auto-committed by run-agent.sh)
+dd1bdbf01 run: DG7-T-DG7-REV-CS-R7-code-security-reviewer-20261116T184007Z-43e1182d (review evidence, auto-committed by run-agent.sh)
+9bb110e43 DG7: freeze round 7 on sha256:0d71d445; assignments
+$ META_EXCLUDES
+9:export const META_EXCLUDES = [
+10-  "docs/delivery/reviews/**",
+11-  "docs/delivery/gates/**",
+12-  "docs/delivery/test-evidence/**",
+13-  "docs/delivery/runs/**",
+14-  "docs/delivery/candidates/**",
+15-  "docs/delivery/handbacks/**",
+16-  "docs/delivery/assignments/**",
+17-  "docs/delivery/findings.json",
+18-  "docs/delivery/progress.md",
+19-  "docs/delivery/stages.json",
+20-];
+21-
+22-// The only candidate spec the gates accept (decision D-005). Narrowing it requires a reviewed change to this file.
+23-export const APPROVED_SPEC = { include: ["**"], exclude: ["trading_agent/**"] };
+24-
+--
+68:  const exclude = [...(spec.exclude || []), ...META_EXCLUDES];
+69-  return paths.filter((p) => matchesAny(p, include) && !matchesAny(p, exclude)).sort();
+70-}
+71-
+72-/**
+73- * A transient mount stub of a concurrently running agent's OS sandbox (F-DG0-146, F-DG0-236): bubblewrap creates an
+74- * empty, read-only (0444) regular file where it mounts over a denied path that does not exist, and removes nothing
+75- * visible afterwards until the command ends. Such a file is untracked, zero-length and unwritable. It is skipped by the
+$ manifest head
+{
+ "stage_id": "DG7",
+ "candidate_id": "sha256:0d71d4456adaac949e2c9af4c975f4b9976a166872195f496d5aa75fe8ed2272",
+ "hash_algorithm": "mth-candidate-v2",
+ "source_commit": "7579382c59e1791321d4856ac1cb2eb2cfb4edc7",
+ "frozen_at": "2026-11-16T18:39:12Z",
+ "spec": {
+  "include": [
+   "**"
+  ],
+  "exclude": [
+   "trading_agent/**"
+  ]
+ },
+ "meta_excluded": "see tools/gates/lib/candidate.mjs META_EXCLUDES",
+ "entries": [
+  {
+   "path": ".bash_profile",
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "mode": "100644"
+  },
+  {
+   "path": ".bashrc",
+   "sha256": "e3
+[
+  'stage_id',
+  'candidate_id',
+  'hash_algorithm',
+  'source_commit',
+  'frozen_at',
+  'spec',
+  'meta_excluded',
+  'entries'
+] 3158

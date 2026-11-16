@@ -1,0 +1,65 @@
+## 2026-11-16T21:07:04Z release-notes generator in sparse clone at 7579382c59e1791321d4856ac1cb2eb2cfb4edc7
+$ node tools/release/release-notes.mjs --csv docs/delivery/requirements.csv --deps docs/handover/external-dependencies.json --provisional apps/web/src/i18n --out docs/handover/release-notes.md --check
+release-notes: 0 unfinished item(s), 23 later clause(s); docs/handover/release-notes.md is up to date
+exit=0
+$ (second run, determinism) same --check
+release-notes: 0 unfinished item(s), 23 later clause(s); docs/handover/release-notes.md is up to date
+exit=0
+$ --out $TMPDIR/rn1.md --write; again rn2.md; cmp rn1 rn2 and cmp rn1 docs/handover/release-notes.md
+exit=0
+exit=0
+cmp rn1 rn2 exit=0
+cmp rn1 checked-in exit=0
+$ grep -n "^## " docs/handover/release-notes.md
+5:## Release identity
+11:## Requirements by status
+23:## Unfinished items and release blockers
+27:## Clauses that complete after the engineering gate
+55:## Remaining external configuration dependencies
+71:## Known limitations disclosed in this release
+84:## Provisional Arabic texts
+104:## ملخص ملاحظات الإصدار
+$ grep -n "Date\|new Date\|Date.now\|process.env\|fetch(\|http" tools/release/release-notes.mjs (clock/env/network reads)
+grep exit=1 (1 = none)
+$ grep -n "readFileSync\|readdirSync" tools/release/release-notes.mjs (all file reads)
+88:    for (const name of readdirSync(abs).sort())
+103:    api = JSON.parse(readFileSync(join(repo, "apps", "api", "package.json"), "utf8")).version ?? null;
+108:    const y = readFileSync(join(repo, "docs", "api", "openapi.yaml"), "utf8");
+322:      deps = parseDependencies(readFileSync(resolve(repo, o.deps), "utf8"), o.deps);
+335:    disclosures = parseDisclosures(readFileSync(disclosuresAbs, "utf8"), shown(repo, disclosuresAbs));
+345:    entries: countProvisional(readFileSync(abs, "utf8")),
+349:    built = buildReleaseNotes({ csvBytes: readFileSync(csvAbs), csvPath: shown(repo, csvAbs), deps, provisional, identity: identity(repo), disclosures });
+364:    const current = existsSync(outAbs) ? readFileSync(outAbs, "utf8") : null;
+$ git ls-files tools/release/release-notes-disclosures.json
+tools/release/release-notes-disclosures.json
+$ grep -rn "release-notes-disclosures\|D-280\|reads nothing else" docs/architecture/
+docs/architecture/adr/ADR-0071-p7-traceability-register-snapshot-about-release-notes-release-blockers-protocol-audit.md:181:   It reads the register (a named file, never a walk, D-138), the dependency
+$ node --test tools/release/release-notes.test.mjs
+Could not find 'tools/release/release-notes.test.mjs'
+exit=1
+## 2026-11-16T21:07:11Z (correction: the test file is tools/release/tests/release-notes.test.mjs, not tools/release/release-notes.test.mjs as attempted above)
+$ node --test tools/release/tests/release-notes.test.mjs
+exit=0
+--- test output tail (tools/release/tests/release-notes.test.mjs) ---
+✔ T-I11 fixture: the unfinished section is exactly the non-IMPLEMENTED rows; notes are quoted verbatim (6.198277ms)
+✔ T-I11 tree: on the repository's register the unfinished set equals the rows that are not IMPLEMENTED (190.141371ms)
+✔ T-I11 refusals: a non-IMPLEMENTED row with empty notes, and an IMPLEMENTED row without evidence, exit 1 (1.815549ms)
+✔ T-I11 --check: up to date exits 0; one changed byte of the output exits 1 with the §I.3 line (2.386967ms)
+✔ T-I11 no clock: two runs (and a run under another TZ and SOURCE_DATE_EPOCH) give identical bytes (98.331044ms)
+✔ T-I11 dependencies: absent → the Unknown line (EN and AR), never an empty list; invalid → exit 1 (1.53603ms)
+✔ T-I11 usage: a missing register exits 2 (BLOCKED) (0.282678ms)
+✔ T-I13 fixture half: the six Q19 rows carry the marker and are listed with their clause (1.065475ms)
+✔ provisional counts: record keys and array items are counted, comments are not (11.729386ms)
+✔ DO-D10 disclosures: the checked-in input carries the D-278 transfer-drill rule in English and Arabic (0.819373ms)
+✔ DO-D10 disclosures: printed in English before the provisional section, and in the Arabic summary (1.655006ms)
+✔ DO-D10 disclosures: the committed release notes carry the section (regenerated with --write) (0.38869ms)
+✔ DO-D10 disclosures: an empty list prints the None line in both languages, never an empty heading (1.00703ms)
+✔ DO-D10 disclosures: a missing or invalid input is BLOCKED (exit 2) and nothing is written (6.0837ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 420.891576

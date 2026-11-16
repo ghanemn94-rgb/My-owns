@@ -1,0 +1,82 @@
+## ADR-0071 (blob 1a26ccbb, unchanged 7579382c5..HEAD) §5 lines 172-196
+### 5. The release notes (REQ-S02-005, REQ-S21-003; generator built by DO-J)
+
+1. **Generator:** `tools/release/release-notes.mjs` (DO-J; p7-plan §5.1). Dependency-free, it follows p7-work-split §2 rules 3–4. Usage:
+
+   ```text
+   node tools/release/release-notes.mjs --csv docs/delivery/requirements.csv --deps docs/handover/external-dependencies.json --provisional apps/web/src/i18n --out docs/handover/release-notes.md
+   node tools/release/release-notes.mjs … --check
+   ```
+
+   It reads the register (a named file, never a walk, D-138), the dependency list and the provisional Arabic files (`apps/web/src/i18n/provisional-ar*.ts` and the `provisional-ar.ts` files the plan lists in §1.4). It reads nothing else.
+2. **Content of `docs/handover/release-notes.md`.** The output is deterministic: no clock is read, so `--check` compares bytes. Sections:
+   1. the release identity: `@mth/api` version, contract version, the register's SHA-256 and row count;
+   2. counts by status;
+   3. **"Unfinished items and release blockers"**: **every** row whose status is not `IMPLEMENTED`, with id, title, status, final gate and its notes as "missing dependency";
+   4. "Clauses that complete after the engineering gate": every `laterClauses` row (§5.3);
+   5. "Remaining external configuration dependencies", or the Unknown line when the file is missing;
+   6. "Provisional Arabic texts": the count of provisional keys per file;
+   7. an Arabic summary page section (ADR-0072 §2, D-243 Q7), marked provisional.
+3. **The later-clause marker (D-243 Q19).** AN-P7 writes `completes-after-gate: <clause>` into the notes of each Q19 row (REQ-DLV-021, DLV-010, S20-023, DLV-039, DLV-041, S20-028). The marker is the only machine-readable link between such a row and the About and release-notes sections. The six rows are named here so that T-I13 can check that each carries it at the freeze.
+4. **Refusals** (exit 1, with the B-style lines of §I.3):
+   - a row that is not `IMPLEMENTED` with empty notes (REQ-S02-005: "every incomplete or externally blocked item names the exact missing dependency"; the validator's l.217 rule, extended to every status that is not `IMPLEMENTED`);
+   - an `IMPLEMENTED` row without evidence (l.222);
+   - `--check` drift.
+5. **A28.** The archive's `docs/` carries `docs/handover/release-notes.md` (ADR-0062 §2). T-I11 asserts that its unfinished list equals the register's rows that are not `IMPLEMENTED`, exactly (the same set and no other).
+
+
+## ADR-0071 status line
+- **Status:** Proposed for P7 (DG7). Author: solution-architect (T-DG7-ARCH-05), 2026-11-12. Base `7f2d984a077886c703a6db31329b873dbcf8e06f` on `claude/mobily-transformation-platform-dg6-regate`.
+## grep -rn 'release-notes-disclosures\|D-280' docs/architecture/
+(exit 1 ; 1 = no match)
+## generator: file reads
+5://     --provisional apps/web/src/i18n --out docs/handover/release-notes.md [--write | --check] [--repo <dir>] [--disclosures <file>]
+11:// --disclosures): disclosures that IMPLEMENTED rows must carry (ADR-0064 A5.6, D-278), printed in English and in the
+15:import { existsSync, lstatSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+28:export const DEFAULT_DISCLOSURES = join(HERE, "release-notes-disclosures.json");
+88:    for (const name of readdirSync(abs).sort())
+103:    api = JSON.parse(readFileSync(join(repo, "apps", "api", "package.json"), "utf8")).version ?? null;
+108:    const y = readFileSync(join(repo, "docs", "api", "openapi.yaml"), "utf8");
+295:    else if (["--csv", "--deps", "--out", "--repo", "--provisional", "--disclosures"].includes(a)) {
+322:      deps = parseDependencies(readFileSync(resolve(repo, o.deps), "utf8"), o.deps);
+328:  const disclosuresAbs = o.disclosures ? resolve(repo, o.disclosures) : DEFAULT_DISCLOSURES;
+330:    print(`release-notes: BLOCKED: ${o.disclosures ?? shown(REPO, DEFAULT_DISCLOSURES)} not found`);
+335:    disclosures = parseDisclosures(readFileSync(disclosuresAbs, "utf8"), shown(repo, disclosuresAbs));
+345:    entries: countProvisional(readFileSync(abs, "utf8")),
+349:    built = buildReleaseNotes({ csvBytes: readFileSync(csvAbs), csvPath: shown(repo, csvAbs), deps, provisional, identity: identity(repo), disclosures });
+364:    const current = existsSync(outAbs) ? readFileSync(outAbs, "utf8") : null;
+## generator header l.1-14
+#!/usr/bin/env node
+// Release notes generator (ADR-0071 §5; REQ-S02-005, REQ-S21-003). Node 24, no dependency, no network, no clock.
+//
+//   node tools/release/release-notes.mjs --csv docs/delivery/requirements.csv --deps docs/handover/external-dependencies.json \
+//     --provisional apps/web/src/i18n --out docs/handover/release-notes.md [--write | --check] [--repo <dir>] [--disclosures <file>]
+//
+// Reads only named files (D-138): the register, the dependency list (absent → the Unknown line, never "none"), the
+// provisional-Arabic label files (`provisional-ar*.ts` in each --provisional directory, plus the five component files of
+// p7-plan §1.4), and, for the release identity of §5.2 item 1, `apps/api/package.json` and `docs/api/openapi.yaml`.
+// It also reads its own checked-in input `tools/release/release-notes-disclosures.json` (T-DG7-DO-D10; override with
+// --disclosures): disclosures that IMPLEMENTED rows must carry (ADR-0064 A5.6, D-278), printed in English and in the
+// Arabic summary with a link to the full text. A missing or invalid disclosure file is BLOCKED (exit 2), never dropped.
+// The output is deterministic, so --check compares bytes. Exit 0 PASS, 1 FAIL (a refusal or drift), 2 BLOCKED.
+// The register's statuses are engineering delivery states, not business approvals; nothing here grants an approval.
+## headings in docs/handover/release-notes.md
+1:# Mobily Transformation Hub — release notes
+5:## Release identity
+11:## Requirements by status
+23:## Unfinished items and release blockers
+27:## Clauses that complete after the engineering gate
+55:## Remaining external configuration dependencies
+71:## Known limitations disclosed in this release
+75:### Transfer drill and scheduled jobs (ADR-0064 Amendment 5, D-278)
+84:## Provisional Arabic texts
+104:## ملخص ملاحظات الإصدار
+110:### هوية الإصدار
+116:### المتطلبات حسب الحالة
+125:### البنود غير المكتملة وعوائق الإصدار
+129:### بنود تكتمل بعد البوابة الهندسية
+133:### تبعيات الإعداد الخارجية المتبقية
+137:### قيود معروفة يفصح عنها هذا الإصدار
+154:### النصوص العربية المؤقتة
+## D-280 (decisions.md l.7)
+7:| D-280 | 2026-11-16 | delivery-orchestrator | **DG7 round 6 outcome on 0b481627, the disclosure repair, and round 7.** Domain, code-security and qa all PASS on the same candidate; all three verified F-DG7-971 closed. They raised one shared Low gap under three ids (F-DG7-923, 942, 972): ADR-0064 A5.6 requires the D-278 drill disclosure in `known-limitations.md`, the release notes and the Arabic summaries, and only `deployment.md` carried it. Low findings do not block a gate, but A5.6 is mandatory text of an accepted ADR, so it is repaired before the audit rather than waived. AN-P7I wrote the disclosure text (it could not write `docs/handover/**`, its write scope); DO-D10 applied it verbatim to `known-limitations.md`, `deployment.md`, both Arabic summaries and the handover README, and added a release-notes section read from the checked-in `tools/release/release-notes-disclosures.json`, with tests (14/14) and a mutation check. **ADR-0071 §5.1 note:** the release-notes generator now reads that one extra checked-in file of its own, in the way `claims-scan.mjs` reads its allow-list; I accept this as within ADR-0071's intent (deterministic output from checked-in inputs) and record it here instead of amending the ADR. The secret-scan history scope then flagged two lines of the round-6 QA records that quote the reviewer's own secret-search grep pattern; they are regexes, not credentials, and are allow-listed by value hash for the history scope only (as earlier delivery-record entries are). Pre-freeze r7: 17/19 exit 0 at first run; secret-payload and release-tool-tests failed because the two new entries were stale in the payload scope; after scoping them to history, those checks were re-run (prefreeze-r7b). Arabic text stays provisional (`arabic-review.json` is empty). Engine ticks (A5.7 residual 3) stay undecided and disclosed as not covered. | Round-6 records under `docs/delivery/reviews/DG7/round-6/`; handbacks T-DG7-AN-P7I and T-DG7-DO-D10; `test-evidence/DG7/orchestrator/prefreeze-r7` and `prefreeze-r7b`. | A reviewer finds the disclosure inaccurate or a surface still missing; ADR-0071's owner rejects the extra input file. |

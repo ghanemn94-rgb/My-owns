@@ -1,0 +1,28 @@
+# clone /var/tmp/mth-run.SaIUrJ/claude-0/aud-r8s at 7579382c59e1791321d4856ac1cb2eb2cfb4edc7, sparse: tools/ docs/ apps/api/package.json apps/api/scripts/ apps/web/src/ package.json; Node v24.21.0
+54006bc4abbd325482c9a2ee0fe61cc2dea986ef 54006bc4abbd325482c9a2ee0fe61cc2dea986ef tools/release/release-notes.mjs (worktree blob / commit blob)
+7e8fa1d734ed222630d7cd877507bc5f07c29499 7e8fa1d734ed222630d7cd877507bc5f07c29499 tools/release/release-notes-disclosures.json (worktree blob / commit blob)
+c0d4f5ef1aab74490dadc48048335b2697756924 c0d4f5ef1aab74490dadc48048335b2697756924 docs/handover/release-notes.md (worktree blob / commit blob)
+1a26ccbb6ffccae7963b0f64f3ea3641687662ad 1a26ccbb6ffccae7963b0f64f3ea3641687662ad docs/architecture/adr/ADR-0071-p7-traceability-register-snapshot-about-release-notes-release-blockers-protocol-audit.md (worktree blob / commit blob)
+$ node tools/release/release-notes.mjs --csv docs/delivery/requirements.csv --deps docs/handover/external-dependencies.json --provisional apps/web/src/i18n --out docs/handover/release-notes.md --check
+release-notes: 0 unfinished item(s), 23 later clause(s); docs/handover/release-notes.md is up to date
+exit 0
+$ second run (determinism)
+release-notes: 0 unfinished item(s), 23 later clause(s); docs/handover/release-notes.md is up to date
+exit 0
+$ node --test tools/release/tests/release-notes.test.mjs
+✔ T-I13 fixture half: the six Q19 rows carry the marker and are listed with their clause (1.772937ms)
+✔ provisional counts: record keys and array items are counted, comments are not (13.976861ms)
+✔ DO-D10 disclosures: the checked-in input carries the D-278 transfer-drill rule in English and Arabic (0.913711ms)
+✔ DO-D10 disclosures: printed in English before the provisional section, and in the Arabic summary (1.755415ms)
+✔ DO-D10 disclosures: the committed release notes carry the section (regenerated with --write) (0.381923ms)
+✔ DO-D10 disclosures: an empty list prints the None line in both languages, never an empty heading (1.629454ms)
+✔ DO-D10 disclosures: a missing or invalid input is BLOCKED (exit 2) and nothing is written (6.059294ms)
+ℹ tests 14
+ℹ suites 0
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 488.069582
+exit 0

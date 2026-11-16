@@ -1,0 +1,44 @@
+## 2026-11-16T21:04:16Z clone/identity (qa-verifier R8, session dacf8073). Earlier attempt at a full --no-local checkout failed with 'No space left on device' in $TMPDIR (test-evidence trees are large); repeated as a sparse --no-local clone.
+$ node --version
+v24.21.0
+$ git rev-parse HEAD
+614c3b9750badb0cd832c0048e168a623601342b
+$ git log --oneline 7579382c..HEAD
+614c3b975 DG7: user accepts F-DG7-973 as an observation; round 8 (reporter acceptance, audit part 1)
+b65835e02 DG7 round 7: import findings (F-DG7-973 Low)
+bec1773e1 DG7 round 7: review records and evidence
+641c513c8 run: DG7-T-DG7-REV-QA-R7-qa-verifier-20261116T184007Z-67eca439 (review evidence, auto-committed by run-agent.sh)
+cf01e0486 run: DG7-T-DG7-REV-DOM-R7-domain-reviewer-20261116T184007Z-79fe1980 (review evidence, auto-committed by run-agent.sh)
+dd1bdbf01 run: DG7-T-DG7-REV-CS-R7-code-security-reviewer-20261116T184007Z-43e1182d (review evidence, auto-committed by run-agent.sh)
+9bb110e43 DG7: freeze round 7 on sha256:0d71d445; assignments
+$ git diff --name-only 7579382c HEAD | grep -v -E "^docs/delivery/(assignments|reviews|runs|test-evidence)/"
+docs/delivery/candidates/DG7/0d71d4456adaac94.manifest.json
+docs/delivery/findings.json
+docs/delivery/progress.md
+docs/delivery/stages.json
+$ git diff --quiet 7579382c HEAD -- docs/delivery/decisions.md
+exit=0
+$ git clone --no-local --no-checkout /home/user/My-owns $C; sparse-checkout (no-cone) excluding docs/delivery/test-evidence and docs/delivery/runs; checkout 7579382c
+exit=0
+7579382c59e1791321d4856ac1cb2eb2cfb4edc7
+$ (repo) node tools/gates/candidate.mjs --stage DG7 --ref 7579382c...
+{"stage":"DG7","source":"7579382c59e1791321d4856ac1cb2eb2cfb4edc7","candidate_id":"sha256:0d71d4456adaac949e2c9af4c975f4b9976a166872195f496d5aa75fe8ed2272","files":3158}
+exit=0
+$ (clone) node tools/gates/candidate.mjs --stage DG7 --ref 7579382c...
+{"stage":"DG7","source":"7579382c59e1791321d4856ac1cb2eb2cfb4edc7","candidate_id":"sha256:0d71d4456adaac949e2c9af4c975f4b9976a166872195f496d5aa75fe8ed2272","files":3158}
+exit=0
+$ (repo) node tools/gates/candidate.mjs --stage DG7
+{"stage":"DG7","source":"working-tree","candidate_id":"sha256:0d71d4456adaac949e2c9af4c975f4b9976a166872195f496d5aa75fe8ed2272","files":3158}
+exit=0
+$ (repo) node tools/gates/candidate.mjs --stage DG7 --diff
+{
+  "frozen": "sha256:0d71d4456adaac949e2c9af4c975f4b9976a166872195f496d5aa75fe8ed2272",
+  "working_tree": "sha256:0d71d4456adaac949e2c9af4c975f4b9976a166872195f496d5aa75fe8ed2272",
+  "matches": true,
+  "added": [],
+  "removed": [],
+  "changed": []
+}
+exit=0
+$ sha256sum manifest
+8a212f3a37c7bfaae890099fbe0386bee3fcea6b3b4085d967fb78a24a480df0  docs/delivery/candidates/DG7/0d71d4456adaac94.manifest.json

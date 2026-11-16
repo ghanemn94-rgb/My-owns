@@ -1,0 +1,54 @@
+## 2026-11-16T21:07:26Z scope/effect checks in sparse clone at 7579382c59e1791321d4856ac1cb2eb2cfb4edc7
+$ git grep -l "release-notes-disclosures\|release-notes.mjs" -- apps packages deploy (product/runtime references)
+apps/web/src/i18n/provisional-ar-p7-release.ts
+apps/web/src/i18n/provisional-ar-p7-retention.ts
+exit=0 (1 = no product/runtime reference)
+$ git grep -n "release-notes" -- package.json .github/workflows
+.github/workflows/ci.yml:61:  # devops-engineer (T-DG7-DO-J, ADR-0073): the release seal, A28 verification and release-notes tools on the rehearsal.
+.github/workflows/ci.yml:74:      - name: Seal, verify-seal and release-notes self-tests (T-M1..T-M13, T-I11, T-I13 fixture half)
+.github/workflows/ci.yml:75:        run: node --test tools/release/tests/seal.test.mjs tools/release/tests/verify-seal.test.mjs tools/release/tests/release-notes.test.mjs
+$ git diff --stat <round-6 source>..7579382c -- apps packages deploy migrations (product change since round 6)
+round-6 source_commit=830d7edfdc3c36f55679db29253ebc35c4c838c0
+(empty = none)
+$ grep -n "A5.6" docs/architecture/adr/ADR-0064*.md
+1416:A token outside this grammar (names such as `MON`, `L`, `W`, `#`, `?`, or six fields) makes the evaluator return "not an occurrence". So an unsupported cron can only be too strict. A test pins that every `cron` seeded in `job_schedule` by the migrations parses (A5.6, T-S8).
+1471:### A5.6 Who builds it, and how it is tested
+1508:2. **A scheduled handler that does real work in the window still FAILs D9.** This happens when, for example, `approval.escalation_scan` escalates an approval that went overdue. On the demo, QA measured `selected 0` (analysis §4). This is intended, and it is disclosed with the recovery (A5.6 AN).
+$ awk register REQ-S02-005 status
+REQ-S02-005 | Report completion honestly: every incomplete or externally blocked item names the exact missing dependency and no planne | final gate DG7 | status IMPLEMENTED
+$ sed -n 71,84p docs/handover/release-notes.md (8th section)
+## Known limitations disclosed in this release
+
+Behaviour that is implemented as designed but limits how a procedure or check can be used. Each entry is a summary; the linked section gives the full text.
+
+### Transfer drill and scheduled jobs (ADR-0064 Amendment 5, D-278)
+
+- Scheduled jobs keep running during the transfer drill (A18, `deploy/scripts/transfer-drill.sh`). The drill never pauses, disables or reschedules one.
+- At step D9 the drill explains only the scheduled executions that ADR-0064 A5.2 allows: an added `automation_execution` with no initiating user and a `schedule` trigger, whose `trigger_key` names an 
+- A scheduled job whose handler writes business rows inside the window (for example, `approval.escalation_scan` escalates an overdue approval) still makes D9 fail. That is not a data defect.
+- The recovery is to re-run the drill, never to pause or reschedule a job.
+- Not covered: the engine ticks `automation.tick_hourly` and `automation.tick_daily` (A5.7 residual 3). An execution of either inside the window makes D9 fail. The window bounds rest on pg-boss 11.0.0
+- Details: [Known limitations, section 6](known-limitations.md#adr-residuals) (source: ADR-0064 Amendment 5 A5.6, D-278).
+
+## Provisional Arabic texts
+$ grep -n "^### " docs/handover/release-notes.md (Arabic summary subsections)
+75:### Transfer drill and scheduled jobs (ADR-0064 Amendment 5, D-278)
+110:### هوية الإصدار
+116:### المتطلبات حسب الحالة
+125:### البنود غير المكتملة وعوائق الإصدار
+129:### بنود تكتمل بعد البوابة الهندسية
+133:### تبعيات الإعداد الخارجية المتبقية
+137:### قيود معروفة يفصح عنها هذا الإصدار
+154:### النصوص العربية المؤقتة
+$ grep -n "claims-scan\|allow" tools/release/claims-scan.mjs | head -5 (precedent cited by D-280)
+asset-scan-allowlist.json
+claims-allowlist.json
+secret-allowlist.json
+5://   node tools/release/claims-scan.mjs [--root <dir>]... [--allowlist <file>] [--show-negated]
+14:// Exit codes: 0 PASS, 1 FAIL (hits or a stale allow-list entry), 2 BLOCKED (cannot import the PMI rule, a bad
+15:// allow-list, a usage error). Pattern-based: it cannot understand every phrasing (ADR-0063 §5 residual 1).
+$ git grep -n "release-notes" -- apps/web/src/i18n/provisional-ar-p7-release.ts apps/web/src/i18n/provisional-ar-p7-retention.ts (what the two product hits are)
+apps/web/src/i18n/provisional-ar-p7-release.ts:5:// entry is listed explicitly (one quoted key per line), so tools/release/release-notes.mjs counts them exactly. When a
+apps/web/src/i18n/provisional-ar-p7-retention.ts:5:// quoted key per line), so tools/release/release-notes.mjs counts them exactly. When a reviewed translation replaces a
+$ git log --oneline -1 -- the two files at 7579382c
+4e8676de2 DG7: T-DG7-FE-C2 output (exit 0; orchestrator integration review pending)
