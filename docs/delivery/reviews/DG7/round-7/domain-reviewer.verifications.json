@@ -1,0 +1,42 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG7-923",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified by the originating reviewer (domain-reviewer, session 79fe1980), who did not author the repair (AN-P7I text, DO-D10 application), on candidate sha256:0d71d4456adaac949e2c9af4c975f4b9976a166872195f496d5aa75fe8ed2272 (source 7579382c5). ADR-0064 A5.6 surfaces: known-limitations.md §6 row 'ADR-0064 Amendment 5 (D-278)', deployment.md's drill section plus a residuals paragraph, and the generated release-notes.md section 'Known limitations disclosed in this release' (English, plus a provisional Arabic subsection with the H.3 lines). Each carries the three required statements: (1) a scheduled job in the D7-D9 window is explained only as A5.2 says and is listed in the report (schedule-explained-d9.json); (2) a scheduled handler writing business rows in the window still makes D9 fail, which is not a data defect; (3) the recovery is to re-run the drill, never to pause or reschedule a job. Each also gives A5.7 residual 3 (engine ticks not covered) and residual 4 (pg-boss 11.0.0 timing defaults). known-limitations.ar-summary item 7 and deployment.ar-summary carry the same in provisional Arabic. The A5.2 conditions are stated accurately, and match transfer-drill.sh (W0/W1 from the target's clock_timestamp(), job_schedule never written) and schedule-explained.mjs (READ ONLY). release-notes --check, known-limitations --check and check-handover pass (no new warnings), and the release-notes tests pass 14/14.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/domain/round-7/release-tool-checks.log",
+        "docs/handover/known-limitations.md",
+        "docs/handover/deployment.md",
+        "docs/handover/release-notes.md",
+        "docs/handover/known-limitations.ar-summary.md",
+        "docs/handover/deployment.ar-summary.md"
+      ]
+    },
+    {
+      "finding_id": "F-DG7-942",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified by a non-author (domain-reviewer, session 79fe1980) on candidate sha256:0d71d445...2272 (source 7579382c5). This is the same gap as F-DG7-923: the D-278 rule and its residuals were only in deployment.md. known-limitations.md, the release notes and the Arabic summaries now carry the three A5.6 statements (explained only per A5.2 and listed in the report; a handler writing business rows still fails D9 and is not a data defect; re-run, never pause) and the open residuals 3-4, in English and provisional Arabic, consistent with A5.2/A5.7 and the drill code. The generated texts reproduce (release-notes --check exit 0; known-limitations --check exit 0 against protocol-audit-r7.json).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/domain/round-7/release-tool-checks.log",
+        "docs/handover/known-limitations.md",
+        "docs/handover/release-notes.md",
+        "docs/handover/known-limitations.ar-summary.md"
+      ]
+    },
+    {
+      "finding_id": "F-DG7-972",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified by a non-author (domain-reviewer, session 79fe1980) on candidate sha256:0d71d445...2272 (source 7579382c5). known-limitations.md (§6 row and D-278 in Sources) and the release notes (a new generated section read from tools/release/release-notes-disclosures.json, recorded in D-280) now carry the D-278 disclosure. Together with deployment.md, every A5.6 surface states the three required statements accurately. The release-notes generator stays deterministic (--check byte-identical; 14/14 tests, including the 5 DO-D10 tests). D-280 records the generator's extra checked-in input against ADR-0071 §5.1, and I accept that as a recorded decision.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/domain/round-7/release-tool-checks.log",
+        "docs/handover/known-limitations.md",
+        "docs/handover/release-notes.md",
+        "tools/release/release-notes-disclosures.json"
+      ]
+    }
+  ]
+}
