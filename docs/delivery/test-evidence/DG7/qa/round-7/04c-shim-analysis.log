@@ -1,0 +1,12 @@
+## environment analysis of the 5 integration failures in 04-integration.log (20:26:04)
+Cause: the clone's per-package node_modules shim linked @mth/* to the repository's own workspace links, which resolve to /home/user/My-owns/packages/* (the stack in 04-integration.log shows renderPdf at ../../../../../home/user/My-owns/packages/reporting/src/pdf/index.ts). The test files import RenderError by relative path from the clone (exports.test.ts l.16), while apps/worker/src/reports/export-runner.ts imports it via @mth/reporting; two module instances -> 'err instanceof RenderError' (export-runner.ts l.462) is false -> the job is not failed with export.render_failed. contract.test.ts and response-validation.test.ts fail in their P5 BE-M exercise for the same reason, and their coverage assertion then lists cancelExport (exercised only after that point) as never successful.
+Fix (mine): each @mth link replaced by a real directory with relative links into the clone; re-run of the 3 files: 246/246 pass, exit 0 (04b-integration-rerun.log).
+
+## which compiled package code the e2e stacks ran
+The repository tree equals the candidate (git diff 7579382c HEAD touches only docs/delivery; candidate id recomputed). Compiled package output (JS and JSON files under packages/*/dist), repository vs clone build of 7579382c:
+  config repo 68e32dcec34e3877 clone 68e32dcec34e3877 EQUAL
+  db repo 34c3bb4cd25d2ad5 clone 34c3bb4cd25d2ad5 EQUAL
+  design-tokens repo e465877b184ead8b clone e465877b184ead8b EQUAL
+  reporting repo 61b2e504c477f8b3 clone 61b2e504c477f8b3 EQUAL
+  shared repo 92599fd3a9c31ef5 clone 92599fd3a9c31ef5 EQUAL
+So the product e2e runs (en, ar, demo keyboard), which started with the old shim, executed the same compiled code as the candidate build. Unit tests resolve @mth/* to src via the @mth/source condition, and the repository src equals the candidate src. The root acceptance run started at ~20:05 with the old shim, and the links were changed at 20:22 while it ran; both targets hold identical content. The A18 and A19 drills build and install from the clone's git commit, independent of the shim.

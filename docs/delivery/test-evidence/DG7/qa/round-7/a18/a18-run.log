@@ -1,0 +1,73 @@
+port-policy: PostgreSQL listening on port 32570 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+start 19:29:25; HEAD 7579382c59e1791321d4856ac1cb2eb2cfb4edc7; node v24.21.0; free 8515 MB
+mth-db seed-demo: reporting periods relative to 2026-11-16 (Asia/Riyadh): 2 generated, current period 2026-11 open
+export-migration: wrote export 01a1e5d6-0f99-76fd-ad1d-168d41076503 (demo, 0152_p7_transfer_recheck_lineage_basis): 335 tables, 4782 rows, 0 attachments to /var/tmp/mth-run.Kp2j0K/claude-0/qa-r7-a18/export; manifest sha256 b25d992381bfcf343973046e943ea7d0d86fddbcd11196db4c35326b65bf4fca
+demo export exit 0; manifest sha256 b25d992381bfcf343973046e943ea7d0d86fddbcd11196db4c35326b65bf4fca
+build-archive: candidate sha256:0d71d4456adaac949e2c9af4c975f4b9976a166872195f496d5aa75fe8ed2272 commit 7579382c59e1791321d4856ac1cb2eb2cfb4edc7
+build-archive: tar sha256 9d54be965f09734df7b38dd355b58841963c7602ea8eec80f05bc1500680c60e
+build-archive: archive sha256 bb93eeb8c755eb45e15666beba86c0cc32a8e0fded539f5d8ef51de26bec2f92
+build-archive exit 0
+archive mth-transformation-hub-0.1.0-0d71d4456ada.tar.gz 14762549 bytes sha256 bb93eeb8c755eb45e15666beba86c0cc32a8e0fded539f5d8ef51de26bec2f92
+1 archive-checksum: ok
+2 single-top-level-directory: ok
+3 layout: ok
+4 sha256sums: ok
+5 candidate-id: ok
+6 copies: ok
+7 determinism-metadata: ok
+archive-verify: PASS
+archive --verify exit 0
+--- part 1: transfer-drill.sh start 19:29:58 free 7967 MB
+part 1 drill exit 0 19:35:58
+transfer-drill: step D0 PASS in 250.469 s
+transfer-drill: step D1 PASS in 18.808 s
+transfer-drill: step D2 PASS in 2.605 s
+transfer-drill: step D3 PASS in 0.551 s
+transfer-drill: step D4 PASS in 8.632 s
+transfer-drill: step D5 PASS in 15.517 s
+transfer-drill: step D6 PASS in 4.334 s
+transfer-drill: step D7 PASS in 4.308 s
+transfer-drill: step D8 PASS in 34.333 s
+transfer-drill: step D9 PASS in 11.560 s
+transfer-drill: step D10 PASS in 0.927 s
+transfer-drill: PASS in 353.093 s: 335 tables and 2 evidence files equal, origin http://127.0.0.1:25302, restart verified; report /home/user/My-owns/docs/delivery/test-evidence/DG7/qa/round-7/a18/p1-d
+transfer-drill: D7: schedule window start 2026-11-16T19:35:00.831Z (target clock_timestamp())
+transfer-drill: D9: schedule window end 2026-11-16T19:35:50.867Z (target clock_timestamp())
+report result PASS | steps D0:PASS D1:PASS D2:PASS D3:PASS D4:PASS D5:PASS D6:PASS D7:PASS D8:PASS D9:PASS D10:PASS D11:PASS | D9 recheck matched window {"clock":"target clock_timestamp()","end":"2026-11-16T19:35:50.867Z","lowerBoundExclusive":"2026-11-16T19:34:00.831Z","start":"2026-11-16T19:35:00.831Z"} | listed []
+stderr lines: 0
+--- part 2: A18 harness start 19:35:58 free 7542 MB
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.Kp2j0K/claude-0/review-qa
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwjnyulx_99724b5e (server_encoding UTF8); applied 135 migrations to a fresh database
+ ✓ |integration| tests/qa/integration/a18-transfer-drill.test.ts > A18 clean environment starts: an empty, freshly migrated installation is ready (REQ-S20-018) > ready with database, migrations and storage ok; the worker without a heartbeat is unknown, never alive 615ms
+ ✓ |integration| tests/qa/integration/a18-transfer-drill.test.ts > A18 clean environment starts: an empty, freshly migrated installation is ready (REQ-S20-018) > a missing evidence directory is not ready (503, storage fail), never reported ok 315ms
+ ✓ |integration| tests/qa/integration/a18-transfer-drill.test.ts > A18 transfer drill harness: drill files present; inputs absent = BLOCKED (skipped), wrong = FAIL > DO-D's drill files and DOC-B's deployment guide are present (checked whatever the inputs) 0ms
+ ✓ |integration| tests/qa/integration/a18-transfer-drill.test.ts > A18 transfer drill harness: drill files present; inputs absent = BLOCKED (skipped), wrong = FAIL > the QA_A18_* inputs given are complete and well formed 0ms
+stdout | tests/qa/integration/a18-transfer-drill.test.ts > A18 transfer drill: restored records, files and configuration work on another origin, offline (DO-D)
+A18-TIMINGS {"drillSeconds":441.149586721,"exit":0}
+
+ ✓ |integration| tests/qa/integration/a18-transfer-drill.test.ts > A18 transfer drill: restored records, files and configuration work on another origin, offline (DO-D) > the drill exits 0 with the PASS line (exit 3 is BLOCKED and fails here, never passes) 11ms
+ ✓ |integration| tests/qa/integration/a18-transfer-drill.test.ts > A18 transfer drill: restored records, files and configuration work on another origin, offline (DO-D) > the report: D0–D11 each PASS with command, exit and seconds; the given archive; the synthetic drill IdP 1ms
+ ✓ |integration| tests/qa/integration/a18-transfer-drill.test.ts > A18 transfer drill: restored records, files and configuration work on another origin, offline (DO-D) > D3: configuration only from .env.example keys, each citing a section of the deployment guide 4ms
+ ✓ |integration| tests/qa/integration/a18-transfer-drill.test.ts > A18 transfer drill: restored records, files and configuration work on another origin, offline (DO-D) > D5/D9: every reconciliation (counts, content digests, attachment checksums, after restart) is equal 6ms
+ ✓ |integration| tests/qa/integration/a18-transfer-drill.test.ts > A18 transfer drill: restored records, files and configuration work on another origin, offline (DO-D) > D10: the source origin is stored nowhere except audit_event 3ms
+ ✓ |integration| tests/qa/integration/a18-transfer-drill.test.ts > A18 transfer drill: restored records, files and configuration work on another origin, offline (DO-D) > the drill log names no builder-hosted or public service it reached 1ms
+
+ Test Files  1 passed (1)
+      Tests  10 passed (10)
+   Start at  19:35:59
+   Duration  464.84s (transform 8.48s, setup 0ms, collect 15.36s, tests 445.11s, environment 0ms, prepare 96ms)
+
+A18 harness exit 0 end 19:43:45
+transfer-drill: D7: schedule window start 2026-11-16T19:42:13.594Z (target clock_timestamp())
+transfer-drill: D9: schedule window end 2026-11-16T19:43:10.082Z (target clock_timestamp())
+report result PASS | steps D0:PASS D1:PASS D2:PASS D3:PASS D4:PASS D5:PASS D6:PASS D7:PASS D8:PASS D9:PASS D10:PASS D11:PASS | D9 recheck matched window {"clock":"target clock_timestamp()","end":"2026-11-16T19:43:10.082Z","lowerBoundExclusive":"2026-11-16T19:41:13.594Z","start":"2026-11-16T19:42:13.594Z"} | listed []
+drill PostgreSQL left running: none
+removed /var/tmp/mth-run.Kp2j0K/claude-0/qa-r7-a18 19:44:00
+part 1 drill exit 0; part 2 harness exit 0
+driver exit 0

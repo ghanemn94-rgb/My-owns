@@ -1,0 +1,16 @@
+### root cause of 23c/23d: the clone's origin is the local path /home/user/My-owns, so gitIdentifiers() yields owner 'user' and R2 flags every word 'user' (fail-closed artefact of the disposable clone).
+### git remote set-url origin <the live repository's origin URL, same as /home/user/My-owns> (config only; no fetch)
+### 2026-11-16T19:21:57Z MTH_RELEASE_RUNTIME_DIR=$TMPDIR/rt node --test --test-name-pattern T-A11 tools/release/tests/scan-assets.test.mjs
+✔ T-A11 the real built SPA, runtime tree and configuration scan exits 0 (39714.734088ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 39842.573874
+exit=0
+### direct: node tools/release/scan-assets.mjs --web apps/web/dist --runtime $TMPDIR/rt --config .
+scan-assets: PASS (15733 files; T1 3570, T2 87, T3 12076)
+exit=0

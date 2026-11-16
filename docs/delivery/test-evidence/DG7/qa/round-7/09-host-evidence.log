@@ -1,0 +1,24 @@
+$ git diff --stat d162115e5 7579382c -- apps/api/src apps/worker/src packages/*/src packages/db/migrations deploy/docker deploy/compose
+exit=0
+$ git diff --stat 830d7edf 7579382c -- apps packages deploy tests e2e licenses scripts tools
+ tools/release/release-notes-disclosures.json |  29 +++++++
+ tools/release/release-notes.mjs              | 108 ++++++++++++++++++++++--
+ tools/release/secret-allowlist.json          |  18 ++++
+ tools/release/tests/release-notes.test.mjs   | 122 ++++++++++++++++++++++++++-
+ 4 files changed, 271 insertions(+), 6 deletions(-)
+$ grep -E "exit=|^### " host-run-3c.log
+### b00 $ deploy/scripts/init-secrets.sh --dir /tmp/claude-0/-home-user-My-owns/f7dd9c0b-2b3c-52aa-bca7-45299008f27d/scratchpad/dg7/secrets; docker image ls
+### b00 exit=0 seconds=3
+### b05 $ docker compose -p mth-dg7b-1794680607 -f deploy/compose/compose.yaml --profile test-idp up -d --pull never --wait && docker compose -p mth-dg7b-1794680607 -f deploy/compose/compose.yaml --pr
+### b05 exit=0 seconds=31
+### b06 $ docker compose -p mth-dg7b-1794680607 -f deploy/compose/compose.yaml run --rm -T migrate db bootstrap --org-code MTH-E2E --org-name-en 'E2E org (synthetic)' --org-name-ar 'مؤسسة الا�
+### b06 exit=0 seconds=2
+### b07 $ env -u HTTPS_PROXY -u HTTP_PROXY -u https_proxy -u http_proxy -u ALL_PROXY -u all_proxy MTH_E2E_KEYCLOAK=1 MTH_E2E_KEYCLOAK_PASSWORD_FILE=/tmp/claude-0/-home-user-My-owns/f7dd9c0b-2b3c-52aa-
+### b07 exit=0 seconds=12
+### b08 $ docker compose -p mth-dg7b-1794680607 -f deploy/compose/compose.yaml --profile test-idp logs --no-color > docs/delivery/test-evidence/DG7/orchestrator/host/keycloak-e2e-stack.log 2>&1; docke
+### b08 exit=0 seconds=2
+### DONE
+$ docker info
+Server:
+permission denied while trying to connect to the docker API at unix:///var/run/docker.sock
+exit=0

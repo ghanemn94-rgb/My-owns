@@ -1,0 +1,55 @@
+port-policy: PostgreSQL listening on port 32540 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+▶ T-I1: the snapshot of the tree's register equals the file
+  ✔ exits 0 with the I.3 line (6.399344ms)
+  ✔ rowCount, ids in order, sourceSha256 and every field byte for byte (multi-line fields included) (11.576513ms)
+  ✔ the record count equals an independent count of the file's record starts (275.821082ms)
+  ✔ a register with multi-line, quoted and comma fields: the same parity, field by field (134.515624ms)
+  ✔ generatedAt follows SOURCE_DATE_EPOCH (398.040371ms)
+✔ T-I1: the snapshot of the tree's register equals the file (828.054365ms)
+▶ T-I2: --check
+  ✔ exits 0 on a fresh snapshot and 1 with the I.3 line after one byte of the register changes (287.301257ms)
+✔ T-I2: --check (287.657398ms)
+▶ T-I3: refusals
+  ✔ header (214.751543ms)
+  ✔ field count (143.63638ms)
+  ✔ id (76.284495ms)
+  ✔ id pattern (64.507963ms)
+  ✔ duplicate (51.311734ms)
+  ✔ class (55.004379ms)
+  ✔ status (144.924078ms)
+  ✔ final gate (159.826062ms)
+  ✔ unterminated quote (82.888294ms)
+  ✔ byte order mark (59.051901ms)
+  ✔ a record's line is the line it starts on, after a multi-line field (84.60469ms)
+  ✔ a missing --csv file -> exit 2 BLOCKED; a usage error -> exit 2 (169.962774ms)
+  ✔ --deps absent or naming no file -> externalDependencies null (never []) (106.763245ms)
+  ✔ a valid dependency list is carried; an invalid entry -> exit 1 (372.346322ms)
+✔ T-I3: refusals (1938.85492ms)
+▶ parseRegister and buildSnapshot (exports)
+  ✔ keeps quoted commas, doubled quotes and CRLF inside a field as LF, untrimmed (0.639243ms)
+✔ parseRegister and buildSnapshot (exports) (0.761885ms)
+▶ T-R16: the register snapshot passes the T1 asset scan (A2.8)
+  ✔ the snapshot of the tree's register has no T1 finding (347.976405ms)
+  ✔ a SYNTHETIC register with a planted build-host path fails and names the row, the column and R2 (346.978065ms)
+✔ T-R16: the register snapshot passes the T1 asset scan (A2.8) (695.177084ms)
+▶ T-R18: prepare-target.mjs
+  ✔ requires --from (exit 2 with the C.13 line) (93.037617ms)
+  ✔ runs mth-db migrate --reserve-audit-seq-for <dir> and passes the child's exit code and lines through (890.013486ms)
+✔ T-R18: prepare-target.mjs (984.910102ms)
+▶ T-R18: import.mjs
+  ✔ copy-in, then verify --out, then import-migration --attachments-report; no report left behind (574.367046ms)
+  ✔ --keep-reports <dir> keeps the verify report; without it none is left, also after a failed import (1165.665695ms)
+  ✔ a package without attachments runs no copy-in or verify and passes no report (139.934875ms)
+✔ T-R18: import.mjs (1880.541177ms)
+▶ T-R18: reconcile.mjs --from
+  ✔ runs verify exactly when the package lists attachments, and passes mode 2 flags through (421.131871ms)
+✔ T-R18: reconcile.mjs --from (421.519884ms)
+ℹ tests 29
+ℹ suites 8
+ℹ pass 29
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4411.204011

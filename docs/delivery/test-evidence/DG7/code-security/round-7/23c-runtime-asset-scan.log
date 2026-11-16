@@ -1,0 +1,23 @@
+### 2026-11-16T19:19:48Z cp -a $TMPDIR/rv $TMPDIR/rv2; deploy/scripts/assemble-runtime.sh --store-dir $TMPDIR/pstore/v10 $TMPDIR/rv2 $TMPDIR/rt
+
+Done in 1.4s using pnpm v10.33.0
+runtime workspace packages: apps/api apps/worker packages/config packages/db packages/design-tokens packages/reporting packages/shared
+virtual store: 186 package directories, all in the shipped set (186 runtime+bundled)
+resolve: @mth/api: 18 dependencies resolve; ./dist/index.js imports
+resolve: @mth/worker: 9 dependencies resolve; ./dist/index.js imports
+resolve: @mth/config: 2 dependencies resolve; ./dist/index.js imports
+resolve: @mth/db: 5 dependencies resolve; ./dist/index.js imports
+resolve: @mth/design-tokens: 0 dependencies resolve; ./dist/index.js imports
+resolve: @mth/reporting: 9 dependencies resolve; ./dist/index.js imports
+resolve: @mth/shared: 2 dependencies resolve; ./dist/index.js imports
+assemble-runtime: OK 186 packages, 205M -> /var/tmp/mth-run.aOeTkx/claude-0/rt
+exit=0
+### MTH_RELEASE_RUNTIME_DIR=$TMPDIR/rt node --test tools/release/tests/scan-assets.test.mjs (clone rv)
+✖ T-A11 the real built SPA, runtime tree and configuration scan exits 0 (40480.167657ms)
+ℹ tests 9
+ℹ pass 8
+ℹ fail 1
+ℹ skipped 0
+✖ failing tests:
+✖ T-A11 the real built SPA, runtime tree and configuration scan exits 0 (40480.167657ms)
+exit=1

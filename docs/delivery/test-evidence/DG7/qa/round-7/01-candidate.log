@@ -1,0 +1,40 @@
+## 2026-11-16T18:40:41Z start
+$ git rev-parse HEAD
+9bb110e43b2fe88784e8f89609605bdb10f9154c
+$ git log --oneline 7579382c..HEAD
+9bb110e43 DG7: freeze round 7 on sha256:0d71d445; assignments
+docs/delivery/assignments/DG7/round-7/code-security-reviewer.md
+docs/delivery/assignments/DG7/round-7/domain-reviewer.md
+docs/delivery/assignments/DG7/round-7/qa-verifier.md
+docs/delivery/candidates/DG7/0d71d4456adaac94.manifest.json
+docs/delivery/stages.json
+$ node --version
+v24.21.0
+$ sha256sum assignment
+0d78f1d2ff93e3ae40224bb3c9195642729209b46bfb65d5ef8f8b3afc656958  docs/delivery/assignments/DG7/round-7/qa-verifier.md
+$ node tools/gates/candidate.mjs --stage DG7
+{"stage":"DG7","source":"working-tree","candidate_id":"sha256:0d71d4456adaac949e2c9af4c975f4b9976a166872195f496d5aa75fe8ed2272","files":3158}
+exit=0
+$ node tools/gates/candidate.mjs --stage DG7 --diff docs/delivery/candidates/DG7/0d71d4456adaac94.manifest.json
+{
+  "frozen": "sha256:0d71d4456adaac949e2c9af4c975f4b9976a166872195f496d5aa75fe8ed2272",
+  "working_tree": "sha256:0d71d4456adaac949e2c9af4c975f4b9976a166872195f496d5aa75fe8ed2272",
+  "matches": true,
+  "added": [],
+  "removed": [],
+  "changed": []
+}
+exit=0
+## clone /var/tmp/mth-run.Kp2j0K/claude-0/review-qa at 7579382c59e1791321d4856ac1cb2eb2cfb4edc7 (sparse: test-evidence and runs excluded except DG7/orchestrator/protocol-audit)
+{"stage":"DG7","source":"working-tree","candidate_id":"sha256:0d71d4456adaac949e2c9af4c975f4b9976a166872195f496d5aa75fe8ed2272","files":3158}
+exit=0
+{
+  "frozen": "sha256:0b48162701518d1fb47789282112f2d5528429e77d6f108d3f8696570f06bc95",
+  "working_tree": "sha256:0d71d4456adaac949e2c9af4c975f4b9976a166872195f496d5aa75fe8ed2272",
+  "matches": false,
+  "added": [
+    "tools/release/release-notes-disclosures.json"
+  ],
+  "removed": [],
+exit=1
+NOTE: --diff takes no path; it compares with the frozen manifest named by the tree's stages.json. In the clone at 7579382c (before the freeze commit) stages.json still names the round-6 manifest 0b481627, so the diff shows the round-7 change set (exit 1, expected). The authoritative --diff against 0d71d445 is the repository-tree run above (matches true). The clone's recomputed id equals 0d71d445 (3158 files).

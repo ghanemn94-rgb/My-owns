@@ -1,0 +1,73 @@
+## static checks in clone 7579382c59e1791321d4856ac1cb2eb2cfb4edc7 node v24.21.0 18:41:36
+$ pnpm -r build
+apps/web build:     at async createBuilder (file:///home/user/My-owns/node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/chunks/config.js:34126:19)
+apps/web build:     at async CAC.<anonymous> (file:///home/user/My-owns/node_modules/.pnpm/vite@7.3.7_@types+node@22.18.0_yaml@2.8.1/node_modules/vite/dist/node/cli.js:629:10)
+apps/web build: Failed
+/var/tmp/mth-run.Kp2j0K/claude-0/review-qa/apps/web:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @mth/web@0.1.0 build: `tsc -p tsconfig.json && vite build`
+Exit status 1
+apps/web build: error during build:
+apps/web build: Error: EROFS: read-only file system, open '/var/tmp/mth-run.Kp2j0K/claude-0/review-qa/apps/web/node_modules/.vite-temp/vite.config.ts.timestamp-1794854553836-e855d148aba9e8.mjs'
+exit=1 (57s)
+$ pnpm -r typecheck
+packages/db typecheck$ tsc -p tsconfig.json
+packages/db typecheck: Done
+apps/api typecheck$ tsc -p tsconfig.json
+apps/worker typecheck$ tsc -p tsconfig.json
+apps/worker typecheck: Done
+apps/api typecheck: Done
+exit=0 (415s)
+$ pnpm lint
+
+> mobily-transformation-hub@0.1.0 lint /var/tmp/mth-run.Kp2j0K/claude-0/review-qa
+> eslint . --max-warnings=0
+
+> eslint . --max-warnings=0
+exit=0 (78s)
+$ pnpm openapi:lint
+
+> mobily-transformation-hub@0.1.0 openapi:lint /var/tmp/mth-run.Kp2j0K/claude-0/review-qa
+> node scripts/openapi-lint.mjs docs/api/openapi.yaml
+
+PASS docs/api/openapi.yaml: OpenAPI 3.1.1, 965 operations
+exit=0 (1s)
+$ pnpm check:no-cdn
+
+> mobily-transformation-hub@0.1.0 check:no-cdn /var/tmp/mth-run.Kp2j0K/claude-0/review-qa
+> node scripts/check-no-cdn.mjs
+
+PASS no-cdn: scanned apps, packages
+exit=0 (1s)
+$ pnpm format:check
+
+> mobily-transformation-hub@0.1.0 format:check /var/tmp/mth-run.Kp2j0K/claude-0/review-qa
+> prettier --check .
+
+Checking formatting...
+All matched files use Prettier code style!
+exit=0 (69s)
+$ pnpm deps:verify
+## re-run of the build after replacing the per-package node_modules links with writable shim directories (symlinks to each entry of the repository's read-only node_modules) 18:58:05
+$ pnpm -r build
+packages/design-tokens build: Done
+packages/shared build: Done
+packages/config build: Done
+packages/reporting build: Done
+apps/web build: error during build:
+apps/web build: Error: EROFS: read-only file system, open '/var/tmp/mth-run.Kp2j0K/claude-0/review-qa/apps/web/node_modules/.vite-temp/vite.config.ts.timestamp-1794855548631-8c7adbfe430b6.mjs'
+exit=1
+## second re-run: .vite/.vite-temp/.cache entries of the shims made real (writable) directories 18:59:14
+$ pnpm -r build
+packages/design-tokens build: Done
+packages/shared build: Done
+packages/config build: Done
+packages/reporting build: Done
+apps/web build: dist/assets/UnplacedFieldErrors-DOCwBg3b.js                            0.72 kB │ gzip:   0.43 kB │ map:     2.83 kB
+apps/web build: - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+apps/web build: ✓ built in 12.43s
+apps/web build: Done
+packages/db build: Done
+apps/worker build: Done
+apps/api build: Done
+exit=0
+NOTE (qa-verifier, 19:28:50): 'pnpm deps:verify' (scripts/verify-dependency-pins.mjs) needs registry access ('npm view'; its header says so: REQ-DLV-042, live registry). This sandbox has no network; the command produced no output and was killed by the tool's 30-minute background limit, so it has no exit status. It is not counted as a result; the offline pin check is QA-R7 deps-licences (every direct dependency exactly pinned and in the inventory) and licenses/generate-sbom.mjs --check. The first 'pnpm -r build' (exit 1, EROFS on apps/web/node_modules/.vite-temp) was my environment's read-only node_modules link; the re-run with writable shim directories exited 0 (above). The web build prints vite's chunk-size advisory ('Adjust chunk size limit for this warning'), a warning, not an error.

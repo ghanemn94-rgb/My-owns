@@ -1,0 +1,37 @@
+### git diff --stat f575f05f1..7579382c5 -- deploy apps packages tests e2e licenses Dockerfile* tools/migration tools/gates
+(empty = unchanged)
+### drill claims
+37:#       D7, W1 after the recheck) and their action results passes D9, each listed -> schedule-explained-d9.json
+42:# Output (--out): transfer-drill-report.json, config-trace.json, reconcile-*.json, schedule-explained-d9.json,
+656:  # in (W0 - 60 s, W1], their action results and audit events, and lists them in schedule-explained-d9.json; when the
+663:    --window-start "$(cat "$WORK/window-start")" --window-end "$w1" --out "$OUT/schedule-explained-d9.json" || src=$?
+700:  // T-DG7-DO-D9 (ADR-0064 A5.5): the D9 entry gets recheck, scheduleExplained and scheduleWindow.
+702:  try { se = JSON.parse(fs.readFileSync(out + "/schedule-explained-d9.json", "utf8")); } catch {}
+705:      : se.applicable && se.failures.length === 0 && se.executions.length > 0 ? "schedule_explained" : "not_matched";
+707:    s.scheduleWindow = se === null ? null : se.window;
+6://   S1 added; S2 no initiating user (run_as service); S3 a `schedule` trigger; S4 key `<code>:YYYY-MM-DDTHH:MM`;
+7://   S5 one enabled job_schedule row <code>; S6 the key minute names a slot of that row's cron in that row's timezone
+8://   (s = M, or s = M - 60 s); S7 W0 - 60 s < s <= W1; S8 W0 <= created_at <= W1; S9 its own worker service event with
+16://        --recheck-exit <c> --package <package dir> --window-start <W0 ISO> --window-end <W1 ISO>
+33:const MINUTE = 60_000;
+239: * @param {{start: string, end: string}} p.window W0 and W1 (ISO, target clock)
+244:  const W0 = msOf(window.start),
+259:    const sch = schedules.filter((s) => s.code === k.code && s.enabled === true);
+278:      if (x.initiating_user_id !== null || x.run_as !== "service") return "has an initiating user";
+282:      const sch = schedules.filter((s) => s.code === k.code && s.enabled === true);
+283:      if (sch.length !== 1) return `no enabled job_schedule row ${k.code}`;
+287:      if (!(s > W0 - MINUTE && s <= W1))
+288:        return `slot ${iso(s)} is outside the window (${iso(W0 - MINUTE)}, ${iso(W1)}]`;
+290:      if (!(c >= W0 && c <= W1)) return `created ${x.created_at} outside the window`;
+394:        runAs: e.row.run_as,
+478:     x AS (SELECT e.id, e.trigger_code, e.trigger_key, e.initiating_user_id, e.run_as, e.status, e.attempt_no, e.version,
+500:  'triggers', coalesce((SELECT json_object_agg(t.code, t.trigger_kind) FROM automation_trigger t
+503:                          'enabled', s.enabled)) FROM job_schedule s), '[]'::json),
+writes to job_schedule: none above
+12:// The stage never writes: its one transaction is READ ONLY (default_transaction_read_only = on), so no job is paused,
+471:/** The one READ ONLY query of the stage (A5.2 inputs); returns a JSON text. */
+473:BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY;
+packages/db/migrations/0050_p4_sustainment_schedules.sql:10:  ('01920004-0001-7000-8000-000000000004', 'sustainment.review_scan', 'sustainment.review_scan', '20 0 * * *', 'Asia/Riyadh',
+packages/db/migrations/0074_p5_automation_engine.sql:636:  ('automation.tick_hourly', 'schedule', 'automation', 'Every hour', 'كل ساعة', '{}', NULL, true, 'M0221'),
+packages/db/migrations/0074_p5_automation_engine.sql:637:  ('automation.tick_daily', 'schedule', 'automation', 'Every day', 'كل يوم', '{}', NULL, true, 'M0221');
+packages/db/migrations/0074_p5_automation_engine.sql:656:  ('01920005-0074-7000-8000-000000000001', 'automation.tick_hourly', 'automation.tick_hourly', '7 * * * *', 'Asia/Riyadh', 'Evaluate the hourly admin automation rules once per hour; never approves.', 'تقييم قواعد الأتمتة الساعية مرة كل ساعة؛ لا يعتمد أبداً.', 'automation'),

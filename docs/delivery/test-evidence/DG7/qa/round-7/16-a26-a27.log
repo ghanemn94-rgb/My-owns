@@ -1,0 +1,24 @@
+$ sha256sum a26/defect-card.md; cat a26/k5-hash-check.txt
+33eea29a15ab4c9fade0d99c7815e769b5cb1a22dccccc0a27b1825535df23b2  docs/delivery/test-evidence/DG7/orchestrator/a26/defect-card.md
+33eea29a15ab4c9fade0d99c7815e769b5cb1a22dccccc0a27b1825535df23b2  docs/delivery/test-evidence/DG7/orchestrator/a26/defect-card.md
+$ grep result rows of a26/drill-report.md and a27/drill-report.md
+ K1    done 
+ K2    done 
+ K3    done 
+ K4    done 
+ K5    **PASS** (first attempt) 
+ K6    **PASS** 
+ K7    **PASS** 
+ K8    done 
+ K9   PASS 
+ K10   PASS 
+ K11   PASS for REQ-S20-027; **PARTIAL for REQ-DLV-030's "work continues from progress.md"** (disclosed) 
+ K12   PASS 
+ K13   PASS 
+ K14   PASS 
+ K15   done 
+9:| K11 | reconstruct the next action from `progress.md`, `stages.json`, assignments, open findings | the next action equals the one taken (round 7 on a new candidate) | `stages.json`: DG6 FIXING afte
+20:- REQ-DLV-030 "work continues from progress.md": PARTIAL. `progress.md` lagged the real state at this checkpoint; the validator and `decisions.md` carried the resumption. Proposed finding for the D
+$ git log -1 --format=%h -- orchestrator/a26 orchestrator/a27 ; git diff --stat 830d7edf 7579382c -- orchestrator/a26 orchestrator/a27
+b73b14c15
+(empty diff: unchanged since round 6)

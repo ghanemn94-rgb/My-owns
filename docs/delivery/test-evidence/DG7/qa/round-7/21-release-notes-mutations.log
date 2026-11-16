@@ -1,0 +1,22 @@
+## mutation probes in a second disposable sparse shared clone ($TMPDIR/mut-rn) at 7579382c59e1791321d4856ac1cb2eb2cfb4edc7; the review clone and the candidate are not changed. Two earlier attempts in a plain file copy are discarded: the first lacked apps/api/scripts (ERR_MODULE_NOT_FOUND), the second reported 'out of date' even for the unmodified baseline because the copy was not the git checkout the generator expects; neither is evidence.
+$ baseline: node tools/release/release-notes.mjs --csv docs/delivery/requirements.csv --deps docs/handover/external-dependencies.json --provisional apps/web/src/i18n --out docs/handover/release-notes.md --check
+release-notes: 0 unfinished item(s), 23 later clause(s); docs/handover/release-notes.md is up to date
+exit=0
+--- M1: drop en[3] (the 'never pause' statement)
+release-notes: docs/handover/release-notes.md is out of date (run with --write)
+exit=1 (expected non-zero)
+--- M2: drop ar[2] (the Arabic 'handler writes still FAIL D9' statement)
+release-notes: docs/handover/release-notes.md is out of date (run with --write)
+exit=1 (expected non-zero)
+--- M3: disclosures = []
+release-notes: docs/handover/release-notes.md is out of date (run with --write)
+exit=1 (expected non-zero: drift)
+--- M4: unknown top-level key
+release-notes: BLOCKED: tools/release/release-notes-disclosures.json: unknown key x
+exit=2 (expected non-zero: refused)
+--- M5: file removed
+release-notes: BLOCKED: tools/release/release-notes-disclosures.json not found
+exit=2 (expected non-zero)
+--- restored
+release-notes: 0 unfinished item(s), 23 later clause(s); docs/handover/release-notes.md is up to date
+exit=0
