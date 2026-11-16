@@ -1,0 +1,55 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG7-960",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:d91f7152950ed7119b412db0135836c53a3f01e95300af32c86db367f0712e59 (source 471072d6, 3155 files recomputed in a clone and in the tree; --diff matches). A fresh 'protocol-audit.mjs --stage DG7' on this tree reports C3 = 7 hits of 77 DG7 implementation handbacks: AN-P7B, BE-R5, FE-C3, DO-D8 (merge instructions) and ARCH-R2, ARCH-R5, DO-A2 (behaviour). The two new handbacks (AN-P7G, BE-R8) are complete, which explains 77 against AN-P7G's 75. A fresh --all run gives per-stage hit counts identical to the orchestrator's protocol-audit-r4.json, with no difference. Disclosure surfaces: REQ-DLV-012's notes (pass 7) say SEVEN and name all seven handbacks, including T-DG7-FE-C3 and T-DG7-DO-D8 (not D8B). The release notes say 'seven: the five D-270 hits plus F-DG7-960's FE-C3 and F-DG7-920's DO-D8 handback'. known-limitations lists DG7 C3 = 7. No stale 'six' or '6 hits' remains in either handover file. known-limitations --check passes with the orchestrator's r4 report. With my own fresh report it differs only in the provenance line (report head and SHA-256), and the table is identical (diff kept). release-notes --check exits 0. Revert-to-fail: with the round-3 register and the current notes, --check exits 1.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-4/f960/protocol-audit-DG7.out",
+        "docs/delivery/test-evidence/DG7/qa/round-4/f960/protocol-audit-DG7.json",
+        "docs/delivery/test-evidence/DG7/qa/round-4/f960/disclosure-surfaces.log",
+        "docs/delivery/test-evidence/DG7/qa/round-4/f960/release-tools-all.log",
+        "docs/delivery/test-evidence/DG7/qa/round-4/f960/known-limitations-regenerated.diff",
+        "docs/delivery/test-evidence/DG7/qa/round-4/f960/known-limitations-control.log",
+        "docs/delivery/test-evidence/DG7/qa/round-4/f960/release-notes-revert-probe.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG7-920",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Same evidence as F-DG7-960, on candidate d91f7152. The DO-D8 handback (T-DG7-DO-D8-devops-engineer.md, no merge instructions) is one of the seven C3 hits in my fresh audit. It is now named in REQ-DLV-012's notes and in its completes-after-gate marker ('seven: the five D-270 hits plus F-DG7-960's FE-C3 and F-DG7-920's DO-D8 handback'). The regenerated release notes carry the same marker text, and known-limitations states 7. The three surfaces agree with each other and with the audit. The handback itself stays write-once (a disclosed process fact), and the decision on the hits stays with the release-auditor, as the marker says.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-4/f960/protocol-audit-DG7.json",
+        "docs/delivery/test-evidence/DG7/qa/round-4/f960/disclosure-surfaces.log",
+        "docs/delivery/test-evidence/DG7/qa/round-4/f960/release-tools-all.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG7-921",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate d91f7152. REQ-S19-017's notes (pass 7) and evidence now cite DO-D8B's T-B11 run (t-b11-run.log, D9 PASS, job-check PASS, driver exit 0). They disclose that the DO-D7, DO-E and QA round-2 D9 runs most probably restarted only the API and worker, and keep those runs as history. REQ-S20-018 and REQ-S01-006 carry matching notes. I checked the citation: the cited log has the D9 line 'stop API, PostgreSQL; start PostgreSQL, API, worker', job-check PASS, 'D9 PASS in 9.573 s' and driver exit 0, and has no 'did not stop before its restart' line. transfer-drill.sh is unchanged from 7c819f08c to 471072d6 (empty diff). Independent run on this candidate: I built an archive from the frozen clone and ran transfer-drill.sh with --keep. D0-D10 PASS ('restart verified'). The target cluster's pg.log shows postmaster 4261 'received fast shutdown request' at 04:28:59.983 and 'database system is shut down' at 04:29:00.547, then a new postmaster 5001 'ready to accept connections' at 04:29:00.762, inside D9. job-check: 'PASS: enabled schedules equal, earlier job_run rows unchanged (0 new), approval rows equal'. The shipped A18 harness on the same archive passed 10/10.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-4/f921-register-extract.log",
+        "docs/delivery/test-evidence/DG7/qa/round-4/a18/a18-run.log",
+        "docs/delivery/test-evidence/DG7/qa/round-4/a18/out/direct/pgT-pg.log",
+        "docs/delivery/test-evidence/DG7/qa/round-4/a18/out/direct/step-D9.log",
+        "docs/delivery/test-evidence/DG7/qa/round-4/a18/out/direct/job-check.json",
+        "docs/delivery/test-evidence/DG7/qa/round-4/a18/qa-r4-a18-driver.sh"
+      ]
+    },
+    {
+      "finding_id": "F-DG7-940",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate d91f7152 in a disposable clone with a disposable PostgreSQL. The shipped test apps/api/test/integration/transfer/export-scope.test.ts grants ADM_TECH at business_unit and at transformation scope. It asserts 403 on list, create (with and without Idempotency-Key), get, manifest and attachment-manifest; no new migration_export row, outbox event or audit event; and an organization-scope control at 200. M0 (unmodified): export-scope plus export.test.ts, 14/14 pass, exit 0. M4 (the round-3 mutant: the scoped authorize() removed from requireExportRight, so it returns the first organization holding migration.export at any scope): 3 of 4 export-scope tests fail (both narrow-scope 403 tests and the audit-trail test), exit 1. export.test.ts still passes, so the new file is what kills it. Extra mutant M6 (requireExportRight removed from the get-by-id route only): 7 tests fail across both files, exit 1. The clone was restored after each mutant (git diff empty). The full integration suite on the unmodified clone includes the file and passes.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-4/f940/mutants.sh",
+        "docs/delivery/test-evidence/DG7/qa/round-4/f940/mutants.log",
+        "docs/delivery/test-evidence/DG7/qa/round-4/04-integration.log"
+      ]
+    }
+  ]
+}

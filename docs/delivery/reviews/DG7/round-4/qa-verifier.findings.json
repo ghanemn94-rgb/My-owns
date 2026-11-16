@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG7-970",
+      "stage_id": "DG7",
+      "requirement": "REQ-DLV-014",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "The round-4 freeze commit appended a second REVIEWING entry to DG7's stage history without the FIXING state of the round-3 repairs, so the gate validator fails on stages.json: --historical for DG6..DG1, --reconcile and --stage DG7 all exit 1 with 'DG7 illegal transition REVIEWING -> REVIEWING'",
+      "reproduction": "On HEAD a76c2aed4 (the round-4 freeze) or later: node tools/gates/validate.mjs --historical --stage DG6 (and DG5, DG4, DG3, DG2, DG1), node tools/gates/validate.mjs --reconcile, node tools/gates/validate.mjs --stage DG7. Each reports 'stages.json: DG7 illegal transition REVIEWING -> REVIEWING' and exits 1. Control: in a clone at the source commit 471072d6 (pre-freeze stages.json, whose last DG7 entry is the round-3 REVIEWING), --historical --stage DG6 and --stage DG1 print PASS and exit 0. git show a76c2aed4 -- docs/delivery/stages.json shows the appended entry {state: REVIEWING, at: 2026-11-16T03:55:37Z, note: 'Round 4 frozen on sha256:d91f7152 (D-276)'} directly after {state: REVIEWING, at: 2026-11-15T22:34:02Z, note: 'Round 3 frozen on sha256:60dd90b6 (D-275)'}. tools/gates/lib/rules.mjs TRANSITIONS allows REVIEWING -> FIXING | VERIFYING | BLOCKED only.",
+      "expected": "REQ-DLV-014 (A23/A26): each stage's history in stages.json passes through the gate loop, and its completes-after-gate clause is 'validate.mjs --stage DG7' at the gate. The assignment requires 'node tools/gates/validate.mjs --historical --stage DG6 must pass (and DG5...DG1)'. Round 3 failed (D-276) and its findings were repaired (AN-P7G, BE-R8), so the history should record REVIEWING (round 3) -> FIXING -> REVIEWING (round 4), as it did after rounds 1 and 2.",
+      "actual": "The FIXING entry for the round-3 repairs is missing, so the stage history misstates the loop, and every validator mode that reads stages.json fails. The DG7 gate cannot pass validate.mjs until the history is corrected. Scope: stages.json is a delivery record excluded from the candidate (META_EXCLUDES), so the repair does not change candidate sha256:d91f7152...0e59 and no product behaviour is affected. It is not a mandatory violation of the product. Medium under D-192: a real defect with a bounded effect that must be repaired before the gate. Owner: the delivery orchestrator, the only writer of stages.json (implementers may not edit it). The assignment's owner list names only implementer roles, but tools/gates/schemas/findings.schema.json allows delivery-orchestrator, and that is the role that can repair it.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-4/01-candidate-and-historical.log",
+        "docs/delivery/test-evidence/DG7/qa/round-4/01b-historical-at-source-commit.log",
+        "docs/delivery/test-evidence/DG7/qa/round-4/01c-stages-transition.log",
+        "docs/delivery/test-evidence/DG7/qa/round-4/09-release-tools.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG7/round-4/qa-verifier.json",
+      "owner": "delivery-orchestrator",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-16T06:10:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG7 round 4 on candidate sha256:d91f7152950ed7119b412db0135836c53a3f01e95300af32c86db367f0712e59. Delivery-record defect introduced by the freeze commit a76c2aed4; it is outside the candidate and has no product effect, but it makes the gate validator fail."
+        }
+      ]
+    }
+  ]
+}
