@@ -1,0 +1,25 @@
+Mon Nov 16 02:03:32 UTC 2026
+port-policy: PostgreSQL listening on port 26481 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /home/user/My-owns
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwimdf5l_eb051d15 (server_encoding UTF8); applied 135 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/transfer/export-scope.test.ts (4 tests) 3885ms
+ ✓ |integration| apps/api/test/integration/transfer/config-bundle-roundtrip.test.ts (2 tests) 16459ms
+   ✓ T-D6 demo -> clean installation round trip > imports as drafts, publishes through the existing pipeline, and the published hashes equal the source's  670ms
+   ✓ T-D7 an imported draft is published, and migrated to, exactly as a hand-made one > the pin is unchanged by the commit and the publish; the publish and migration records equal a hand-made publish's  758ms
+ ✓ |integration| apps/api/test/integration/transfer/export.test.ts (10 tests) 4945ms
+   ✓ T-C6: the migration-export routes and the transfer.export job > the job waits on lock 730402, then runs once: running -> succeeded, one audit event per transition  1165ms
+   ✓ T-C6: the migration-export routes and the transfer.export job > the same Idempotency-Key returns the existing request with 200; a failed export is 422 on both manifests  334ms
+ ✓ |integration| apps/api/test/integration/transfer/config-bundle.test.ts (23 tests) 4303ms
+ ✓ |integration| apps/api/test/integration/transfer/attachments.test.ts (15 tests) 4113ms
+   ✓ T-C16: copy-out reads the rows that name objects from PostgreSQL (scratch database) > the plan's storage_key columns are evidence_content and export_job; their rows are listed and copy-out exits 0 with their manifest  3626ms
+ ✓ |integration| apps/api/test/integration/transfer/import-routes.test.ts (5 tests) 3944ms
+
+ Test Files  6 passed (6)
+      Tests  59 passed (59)
+   Start at  02:03:33
+   Duration  57.61s (transform 5.14s, setup 0ms, collect 16.49s, tests 37.65s, environment 0ms, prepare 58ms)
+
+EXIT=0

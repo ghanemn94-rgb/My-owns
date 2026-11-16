@@ -1,0 +1,134 @@
+Mon Nov 16 02:03:05 UTC 2026
+== original sha256
+9f16aeb79d30314ee5cc250e6a43a62101e384d544c035e873fe1edd3957bf06  apps/api/src/modules/transfer/export/service.ts
+== mutant M4 diff
+--- /var/tmp/mth-run.6xHxfa/claude-0/service.ts.orig	2026-11-16 02:03:05.020633725 +0000
++++ apps/api/src/modules/transfer/export/service.ts	2026-11-16 02:03:05.038624733 +0000
+@@ -141,8 +141,7 @@
+  */
+ export async function requireExportRight(db: DbOrTx, principal: Principal): Promise<string> {
+   for (const organizationId of organizationsWith(principal, MIGRATION_EXPORT))
+-    if ((await authorize(db, principal, MIGRATION_EXPORT, { type: "organization", id: organizationId })).allowed)
+-      return organizationId;
++    return organizationId;
+   throw problems.forbidden();
+ }
+ 
+== mutant sha256
+c97ae189844095fd9df9530f595f07d997a1d3c1f8967a3bfcd8aa328dee5b91  apps/api/src/modules/transfer/export/service.ts
+port-policy: PostgreSQL listening on port 26481 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+
+ RUN  v3.2.7 /home/user/My-owns
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwimcuce_1a29c926 (server_encoding UTF8); applied 135 migrations to a fresh database
+ ❯ |integration| apps/api/test/integration/transfer/export-scope.test.ts (4 tests | 3 failed) 4843ms
+   ✓ F-DG7-940: a narrower-scope ADM_TECH never reaches the installation-wide migration export > control: ADM_TECH at organization scope reads the list, the export and both manifests (200) 65ms
+   × F-DG7-940: a narrower-scope ADM_TECH never reaches the installation-wide migration export > ADM_TECH @ business_unit: 403 on all five operations; no migration_export row, outbox event or audit event 53ms
+     → ADM_TECH @ business_unit: expected [ …(6) ] to deeply equal [ …(6) ]
+   × F-DG7-940: a narrower-scope ADM_TECH never reaches the installation-wide migration export > ADM_TECH @ transformation: 403 on all five operations; no migration_export row, outbox event or audit event 34ms
+     → ADM_TECH @ transformation: expected [ …(6) ] to deeply equal [ …(6) ]
+   × F-DG7-940: a narrower-scope ADM_TECH never reaches the installation-wide migration export > neither narrower-scope principal wrote anything to the audit trail but its own sign-in 2ms
+     → expected [ 'session.create', …(2) ] to deeply equal [ 'session.create', 'session.create' ]
+ ✓ |integration| apps/api/test/integration/transfer/export.test.ts (10 tests) 5376ms
+   ✓ T-C6: the migration-export routes and the transfer.export job > the job waits on lock 730402, then runs once: running -> succeeded, one audit event per transition  1012ms
+   ✓ T-C6: the migration-export routes and the transfer.export job > the same Idempotency-Key returns the existing request with 200; a failed export is 422 on both manifests  322ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |integration| apps/api/test/integration/transfer/export-scope.test.ts > F-DG7-940: a narrower-scope ADM_TECH never reaches the installation-wide migration export > ADM_TECH @ business_unit: 403 on all five operations; no migration_export row, outbox event or audit event
+AssertionError: ADM_TECH @ business_unit: expected [ …(6) ] to deeply equal [ …(6) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   "GET /api/v1/admin/migration-exports -> 403",[39m
+[32m-   "POST /api/v1/admin/migration-exports -> 403",[39m
+[32m-   "POST /api/v1/admin/migration-exports -> 403",[39m
+[32m-   "GET /api/v1/admin/migration-exports/01a1e218-432e-74aa-ad06-6cbebd325803 -> 403",[39m
+[32m-   "GET /api/v1/admin/migration-exports/01a1e218-432e-74aa-ad06-6cbebd325803/manifest -> 403",[39m
+[32m-   "GET /api/v1/admin/migration-exports/01a1e218-432e-74aa-ad06-6cbebd325803/attachment-manifest -> 403",[39m
+[31m+   "GET /api/v1/admin/migration-exports -> 200 (body names the export)",[39m
+[31m+   "POST /api/v1/admin/migration-exports -> 202",[39m
+[31m+   "POST /api/v1/admin/migration-exports -> 422",[39m
+[31m+   "GET /api/v1/admin/migration-exports/01a1e218-432e-74aa-ad06-6cbebd325803 -> 200 (body names the export)",[39m
+[31m+   "GET /api/v1/admin/migration-exports/01a1e218-432e-74aa-ad06-6cbebd325803/manifest -> 200 (body names the export)",[39m
+[31m+   "GET /api/v1/admin/migration-exports/01a1e218-432e-74aa-ad06-6cbebd325803/attachment-manifest -> 200 (body names the export)",[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/transfer/export-scope.test.ts:169:31
+    167|         seen.push(`${m} ${u} -> ${res.status}${leaks}`);
+    168|       }
+    169|       expect(seen, who.scope).toEqual(calls.map(([m, u]) => `${m} ${u}…
+       |                               ^
+    170|       expect(await exportIds()).toEqual([exportId]);
+    171|       expect(await exportOutbox()).toEqual([exportId]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+ FAIL  |integration| apps/api/test/integration/transfer/export-scope.test.ts > F-DG7-940: a narrower-scope ADM_TECH never reaches the installation-wide migration export > ADM_TECH @ transformation: 403 on all five operations; no migration_export row, outbox event or audit event
+AssertionError: ADM_TECH @ transformation: expected [ …(6) ] to deeply equal [ …(6) ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[32m-   "GET /api/v1/admin/migration-exports -> 403",[39m
+[32m-   "POST /api/v1/admin/migration-exports -> 403",[39m
+[32m-   "POST /api/v1/admin/migration-exports -> 403",[39m
+[32m-   "GET /api/v1/admin/migration-exports/01a1e218-432e-74aa-ad06-6cbebd325803 -> 403",[39m
+[32m-   "GET /api/v1/admin/migration-exports/01a1e218-432e-74aa-ad06-6cbebd325803/manifest -> 403",[39m
+[32m-   "GET /api/v1/admin/migration-exports/01a1e218-432e-74aa-ad06-6cbebd325803/attachment-manifest -> 403",[39m
+[31m+   "GET /api/v1/admin/migration-exports -> 200 (body names the export)",[39m
+[31m+   "POST /api/v1/admin/migration-exports -> 422",[39m
+[31m+   "POST /api/v1/admin/migration-exports -> 422",[39m
+[31m+   "GET /api/v1/admin/migration-exports/01a1e218-432e-74aa-ad06-6cbebd325803 -> 200 (body names the export)",[39m
+[31m+   "GET /api/v1/admin/migration-exports/01a1e218-432e-74aa-ad06-6cbebd325803/manifest -> 200 (body names the export)",[39m
+[31m+   "GET /api/v1/admin/migration-exports/01a1e218-432e-74aa-ad06-6cbebd325803/attachment-manifest -> 200 (body names the export)",[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/transfer/export-scope.test.ts:169:31
+    167|         seen.push(`${m} ${u} -> ${res.status}${leaks}`);
+    168|       }
+    169|       expect(seen, who.scope).toEqual(calls.map(([m, u]) => `${m} ${u}…
+       |                               ^
+    170|       expect(await exportIds()).toEqual([exportId]);
+    171|       expect(await exportOutbox()).toEqual([exportId]);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/3]⎯
+
+ FAIL  |integration| apps/api/test/integration/transfer/export-scope.test.ts > F-DG7-940: a narrower-scope ADM_TECH never reaches the installation-wide migration export > neither narrower-scope principal wrote anything to the audit trail but its own sign-in
+AssertionError: expected [ 'session.create', …(2) ] to deeply equal [ 'session.create', 'session.create' ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    "session.create",[22m
+[2m    "session.create",[22m
+[31m+   "migration_export.requested",[39m
+[2m  ][22m
+
+ ❯ apps/api/test/integration/transfer/export-scope.test.ts:184:56
+    182|   it("neither narrower-scope principal wrote anything to the audit tra…
+    183|     expect(narrow.map((n) => n.scope)).toEqual(["ADM_TECH @ business_u…
+    184|     expect(await auditBy(narrow.map((n) => n.userId))).toEqual(["sessi…
+       |                                                        ^
+    185|   });
+    186| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/3]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  3 failed | 11 passed (14)
+   Start at  02:03:06
+   Duration  25.19s (transform 4.75s, setup 0ms, collect 10.98s, tests 10.22s, environment 0ms, prepare 62ms)
+
+EXIT(mutant run)=1
+== restored sha256
+9f16aeb79d30314ee5cc250e6a43a62101e384d544c035e873fe1edd3957bf06  apps/api/src/modules/transfer/export/service.ts
+9f16aeb79d30314ee5cc250e6a43a62101e384d544c035e873fe1edd3957bf06  /var/tmp/mth-run.6xHxfa/claude-0/service.ts.orig
+RESTORED byte-identical (cmp exit 0)
+git diff --exit-code (service.ts) exit=0
