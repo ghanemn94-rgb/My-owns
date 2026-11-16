@@ -1,0 +1,21 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG7-973",
+      "result": "PASS",
+      "status_after": "ACCEPTED_OBSERVATION",
+      "note": "I am the reporter, and I concur with accepting this finding as an observation. Checked on candidate sha256:0d71d4456adaac949e2c9af4c975f4b9976a166872195f496d5aa75fe8ed2272 (source 7579382c, 3158 files). I recomputed the id with --ref in the repository tree and in a sparse --no-local clone, and the working-tree --diff matches. Since the freeze only meta-excluded records changed: assignments, reviews, runs, test evidence, findings.json, stages.json, progress.md and the freeze manifest. decisions.md is byte-identical to 7579382c. Facts: (1) ADR-0071 §5.1 l.181 still says the generator 'reads nothing else', and §5.2 lists seven sections. No file under docs/architecture/ mentions release-notes-disclosures or D-280. (2) release-notes.mjs reads tools/release/release-notes-disclosures.json from its own directory (DEFAULT_DISCLOSURES l.28; it is a tracked file), and docs/handover/release-notes.md carries an eighth section, 'Known limitations disclosed in this release', in English (l.71) and in the provisional Arabic summary (l.137). (3) D-280 accepts this 'as within ADR-0071's intent (deterministic output from checked-in inputs)' instead of amending the ADR, and names a reversal trigger. (4) The output is deterministic: --check exits 0 twice; two --write runs, one under a different TZ and LANG, are byte-identical to each other and to the committed file; there is no clock, environment or network read in the generator; and tools/release/tests/release-notes.test.mjs passes 14/14, including the 5 DO-D10 disclosure tests (missing or invalid input gives exit 2 and writes nothing). The mutation checks of round 7 (21-release-notes-mutations.log) also stand. Classification: Low, mandatory_violation false, in both the sidecar and findings.json. rules.mjs l.565-583 permits ACCEPTED_OBSERVATION only for Low, non-mandatory findings, and requires a specialist sidecar and a release-auditor sidecar. It has no product or behavioural effect: nothing under apps, packages or deploy changed between round-6 source 830d7edf and 7579382c; the only product-tree mentions of release-notes.mjs are comments in two i18n files; and the generator is release tooling run in CI. Why acceptance is sound: the defect is only text drift in an ADR. The behaviour is correct and is required by ADR-0064 A5.6, and it is tested, reproducible and refused on bad input. The deviation is recorded in D-280, in the DO-D10 handback and in the handover README, so it is traceable. It follows the existing precedent of a tool reading its own checked-in allow-list (claims-scan). §5.1's 'nothing else' was already approximate before DO-D10: the generator also reads apps/api/package.json and docs/api/openapi.yaml for the release identity that §5.2 item 1 itself requires. Amending ADR-0071 would change a candidate file and force a full re-review for no behavioural gain. The user chose acceptance (progress.md, 2026-11-16), which settles D-280's reversal trigger (the ADR owner rejecting the input) for this release. Residual, recommended rather than required: add a dated ADR-0071 amendment naming the extra input and the eighth section in the next stage that touches ADR-0071. This acceptance takes effect only if the release-auditor also accepts it.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-8/01-identity.log",
+        "docs/delivery/test-evidence/DG7/qa/round-8/02-release-notes.log",
+        "docs/delivery/test-evidence/DG7/qa/round-8/03-scope.log",
+        "docs/architecture/adr/ADR-0071-p7-traceability-register-snapshot-about-release-notes-release-blockers-protocol-audit.md",
+        "tools/release/release-notes.mjs",
+        "tools/release/release-notes-disclosures.json",
+        "docs/delivery/decisions.md",
+        "tools/gates/lib/rules.mjs",
+        "docs/delivery/test-evidence/DG7/qa/round-7/21-release-notes-mutations.log"
+      ]
+    }
+  ]
+}

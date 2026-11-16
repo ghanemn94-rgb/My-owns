@@ -1,0 +1,95 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG7",
+  "round": 8,
+  "candidate_id": "sha256:0d71d4456adaac949e2c9af4c975f4b9976a166872195f496d5aa75fe8ed2272",
+  "source_commit": "7579382c59e1791321d4856ac1cb2eb2cfb4edc7",
+  "reviewer_role": "qa-verifier",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG7-T-DG7-REV-QA-R8-qa-verifier-20261116T205828Z-dacf8073",
+    "session_id": "dacf8073-b139-405c-8c37-1c9f360d9395"
+  },
+  "implementation_author": [
+    "solution-architect",
+    "backend-workflow-engineer",
+    "kpi-benefits-engineer",
+    "frontend-ux-engineer",
+    "transformation-analyst",
+    "devops-engineer",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "qa-verifier, session dacf8073-b139-405c-8c37-1c9f360d9395, task T-DG7-REV-QA-R8. At the start I checked the assignment's sha256 (58b36d4f4890f4cec2415d2e9c1ea2af41e82ff85b7e4478ddc4244001ee4a1d). I implemented no DG7 requirement. I did not write ADR-0071, the release-notes generator, its disclosure input or D-280, and in this run I changed no candidate file. I raised F-DG7-973 in round 7 and judge it here as its reporter. I ran the generator and its tests only in a disposable sparse --no-local clone of 7579382c under $TMPDIR, which I removed at the end. I formed this verdict before reading any other reviewer's record for round 8, and I have not read the release-auditor's round-8 record. This is an acceptance-only run: it judges only whether F-DG7-973 may be accepted as an observation. It is not a full review (round 7 was)."
+  },
+  "assignment": "docs/delivery/assignments/DG7/round-8/qa-verifier.md",
+  "requirements_checked": [],
+  "checks_run": [
+    {
+      "id": "QA-R8-00-candidate",
+      "procedure": "Confirm HEAD, the commits since the source commit, and that only meta-excluded records changed since the freeze, with decisions.md unchanged. Recompute the candidate id with --ref in the repository tree and in a --no-local clone, and run --diff on the working tree.",
+      "command": "git rev-parse HEAD; git log --oneline 7579382c..HEAD; git diff --name-only 7579382c HEAD | grep -v delivery-meta; git diff --quiet 7579382c HEAD -- docs/delivery/decisions.md; git clone --no-local --no-checkout + sparse-checkout (excluding docs/delivery/test-evidence and runs) + checkout 7579382c; node tools/gates/candidate.mjs --stage DG7 --ref 7579382c59e1791321d4856ac1cb2eb2cfb4edc7 (tree and clone); node tools/gates/candidate.mjs --stage DG7 [--diff]",
+      "environment": "Repository tree at HEAD 614c3b975; sparse --no-local clone at 7579382c under $TMPDIR; Node 24.21.0; no network.",
+      "expected": "candidate_id sha256:0d71d445...2272 with 3158 files in every computation; --diff matches; only meta-excluded records changed since the freeze; decisions.md unchanged.",
+      "actual": "HEAD is 614c3b975 ('DG7: user accepts F-DG7-973 as an observation; round 8'). Seven commits follow 7579382c: the round-7 freeze, three run auto-commits, the round-7 records, the findings import, and round 8. Outside assignments, reviews, runs and test-evidence, the only changes are the freeze manifest, findings.json, progress.md and stages.json. decisions.md is identical (git diff --quiet exit 0). --ref computed in the tree and in the clone, and the working tree, all give sha256:0d71d4456adaac949e2c9af4c975f4b9976a166872195f496d5aa75fe8ed2272 with 3158 files. --diff: matches true, with nothing added, removed or changed. The first attempt was a full --no-local checkout, which failed with 'No space left on device' in $TMPDIR (the evidence trees are large). A clone that excludes test-evidence and runs is enough, because --ref hashes git objects, and it reproduced the same id.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-8/01-identity.log"
+      ]
+    },
+    {
+      "id": "QA-R8-01-facts",
+      "procedure": "Item 1. Read ADR-0071 §5.1/§5.2, the generator's inputs and output sections, and D-280. Prove that the generator is deterministic from checked-in inputs: run --check twice, run --write twice to scratch under different TZ and LANG and compare the outputs byte for byte, grep the generator for clock, environment and network reads, and run its test file.",
+      "command": "node tools/release/release-notes.mjs --csv docs/delivery/requirements.csv --deps docs/handover/external-dependencies.json --provisional apps/web/src/i18n --out docs/handover/release-notes.md --check (x2); ... --out $TMPDIR/rn{1,2}.md --write (rn2 with TZ=Pacific/Kiritimati LANG=C); cmp; grep; git ls-files; grep -rn on docs/architecture; node --test tools/release/tests/release-notes.test.mjs",
+      "environment": "Sparse --no-local clone at 7579382c under $TMPDIR; Node 24.21.0; no network.",
+      "expected": "ADR text as quoted in F-DG7-973; the generator reads the tracked disclosure file and prints an eighth section in EN and AR; D-280 accepts it without an ADR amendment; --check exit 0; byte-identical outputs; no clock, env or network read; tests pass.",
+      "actual": "ADR-0071 l.181 says 'It reads nothing else.' §5.2 lists 7 sections. No file in docs/architecture mentions release-notes-disclosures or D-280. The generator reads tools/release/release-notes-disclosures.json (DEFAULT_DISCLOSURES l.28; a tracked file), and the committed notes carry '## Known limitations disclosed in this release' (l.71) and '### قيود معروفة يفصح عنها هذا الإصدار' (l.137). D-280 says 'I accept this as within ADR-0071's intent ... and record it here instead of amending the ADR'. --check printed 'docs/handover/release-notes.md is up to date' with exit 0, twice. The two --write outputs are byte-identical to each other and to the committed file (cmp exit 0). The grep for clock, env and network reads finds nothing (exit 1). Every file read is a named, checked-in input: the register, deps, provisional files, apps/api/package.json, docs/api/openapi.yaml and the disclosure file. My first test invocation used the wrong path (tools/release/release-notes.test.mjs, exit 1 'Could not find'). The correct file, tools/release/tests/release-notes.test.mjs, passed 14/14 with 0 fail and 0 skip, including the 5 DO-D10 disclosure tests (a missing or invalid input gives exit 2 and nothing is written).",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-8/02-release-notes.log"
+      ]
+    },
+    {
+      "id": "QA-R8-02-classification",
+      "procedure": "Item 2. Confirm the severity and mandatory flag in the sidecar and in findings.json, that the gate rules permit ACCEPTED_OBSERVATION, and that the finding has no product or behavioural effect (product tree unchanged since round 6; no runtime reference to the generator).",
+      "command": "python3 read of findings.json F-DG7-973; sed -n 555,583p tools/gates/lib/rules.mjs; git grep -l 'release-notes-disclosures|release-notes.mjs' -- apps packages deploy; git diff --stat 830d7edf..7579382c -- apps packages deploy; register lookup of REQ-S02-005",
+      "environment": "Repository tree (findings.json, rules.mjs) and sparse clone at 7579382c; read-only.",
+      "expected": "Severity Low and mandatory_violation false; rules.mjs accepts only Low, non-mandatory findings, with a specialist sidecar and an auditor sidecar; no product code change and no runtime dependency.",
+      "actual": "findings.json and the round-7 sidecar both say Low, mandatory_violation false, status OPEN, owner solution-architect. rules.mjs l.565-583 rejects ACCEPTED_OBSERVATION unless the finding is Low and non-mandatory. It reads the latest sidecar entry per role and requires one specialist and the release-auditor, plus a findings.json accepted_by mirror and the gate's accepted_observations. The diff over apps, packages and deploy from round-6 source 830d7edf to 7579382c is empty. The only mentions of release-notes.mjs in the product tree are comments in apps/web/src/i18n/provisional-ar-p7-release.ts and provisional-ar-p7-retention.ts. The generator runs only as release tooling and in its CI self-test (ci.yml l.75). REQ-S02-005 is IMPLEMENTED, final gate DG7; the finding does not affect its behaviour.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-8/03-scope.log",
+        "tools/gates/lib/rules.mjs",
+        "docs/delivery/findings.json"
+      ]
+    },
+    {
+      "id": "QA-R8-03-judgement",
+      "procedure": "Item 3. Judge independently whether accepting F-DG7-973 as an observation is sound.",
+      "command": "n/a (judgement over QA-R8-00..02 and the round-7 mutation evidence)",
+      "environment": "Records as above.",
+      "expected": "Concur (PASS, ACCEPTED_OBSERVATION), or refuse (FAIL, OPEN) with reasons.",
+      "actual": "I concur. The defect is stale ADR text only. The behaviour it describes is correct, is required by ADR-0064 A5.6, is deterministic from checked-in inputs, and is tested and mutation-checked (round 7, 21-release-notes-mutations.log). The deviation is traceable through D-280, the DO-D10 handback and the handover README, and it follows the claims-scan allow-list precedent. §5.1's 'nothing else' was already approximate: the identity inputs come from §5.2 item 1 itself. An amendment would alter the candidate and force a full re-review for no behavioural gain. The user's decision (progress.md, 2026-11-16) settles D-280's reversal trigger for this release. Recommended follow-up, not required: a dated ADR-0071 amendment in the next stage that touches it. Sidecar entry: PASS, ACCEPTED_OBSERVATION. It takes effect only together with the release-auditor's acceptance.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/reviews/DG7/round-8/qa-verifier.verifications.json",
+        "docs/delivery/test-evidence/DG7/qa/round-7/21-release-notes-mutations.log"
+      ]
+    }
+  ],
+  "findings": [],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/reviews/DG7/round-8/qa-verifier.verifications.json",
+    "docs/delivery/test-evidence/DG7/qa/round-8/01-identity.log",
+    "docs/delivery/test-evidence/DG7/qa/round-8/02-release-notes.log",
+    "docs/delivery/test-evidence/DG7/qa/round-8/03-scope.log"
+  ],
+  "reviewed_at": "2026-11-16T21:10:00Z",
+  "summary": "Acceptance-only run, not a full review: round 7 was the full review. Candidate sha256:0d71d445...2272 (source 7579382c, 3158 files) verified; only meta-excluded records changed since the freeze, and decisions.md is unchanged. As reporter of F-DG7-973 (Low, not mandatory: ADR-0071 §5 text not amended for the generator's extra checked-in disclosure input and eighth section, D-280), I concur with accepting it as an observation: PASS, ACCEPTED_OBSERVATION. The generator is deterministic from checked-in inputs (--check exit 0; byte-identical regeneration; tests 14/14), and the finding has no product or behavioural effect. No new findings. This approves no G1-G6 business, Finance or IT gate, and it is not the DG7 gate decision."
+}
