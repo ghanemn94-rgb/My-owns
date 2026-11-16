@@ -15845,7 +15845,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG7/round-5/qa-verifier.json",
       "owner": "solution-architect",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-16T08:01:00Z",
@@ -15856,10 +15856,140 @@
           "at": "2026-11-16T12:20:12Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at ac650b8b09b8c96b562abffd0e42fa46be78285f"
+        },
+        {
+          "at": "2026-11-16T13:15:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 6: PASS"
+        },
+        {
+          "at": "2026-11-16T15:25:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 6: PASS"
         }
       ],
       "fix_revision": "ac650b8b09b8c96b562abffd0e42fa46be78285f",
-      "fix_summary": "D-278 decision on ADR-0064 A3.9 residual 1, recorded by ARCH-R6; DO-D9 implemented it in transfer-drill.sh (schedule-explained.mjs) and the A18 harness with tests that fail without the rule and still flag non-scheduled writes; quarter-hour run (10:15 slot) PASS with the execution listed, away run PASS; AN-P7H register notes; release notes and known limitations regenerated; prefreeze-r6 19/19 exit 0."
+      "fix_summary": "D-278 decision on ADR-0064 A3.9 residual 1, recorded by ARCH-R6; DO-D9 implemented it in transfer-drill.sh (schedule-explained.mjs) and the A18 harness with tests that fail without the rule and still flag non-scheduled writes; quarter-hour run (10:15 slot) PASS with the execution listed, away run PASS; AN-P7H register notes; release notes and known limitations regenerated; prefreeze-r6 19/19 exit 0.",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG7-T-DG7-REV-QA-R6-qa-verifier-20261116T122056Z-ed63881a",
+          "session_id": "ed63881a-044f-470f-bd1b-844794bf91c7"
+        },
+        "at": "2026-11-16T15:25:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG7/qa/round-6/a18/run3/a18-run.log",
+          "docs/delivery/test-evidence/DG7/qa/round-6/a18/run3/b/transfer-drill-report.json",
+          "docs/delivery/test-evidence/DG7/qa/round-6/a18/run3/b/schedule-explained-d9.json",
+          "docs/delivery/test-evidence/DG7/qa/round-6/a18/run3/b/reconcile-d9.txt",
+          "docs/delivery/test-evidence/DG7/qa/round-6/a18/run3/b/job-check.json",
+          "docs/delivery/test-evidence/DG7/qa/round-6/a18/run2/a18-run.log",
+          "docs/delivery/test-evidence/DG7/qa/round-6/a18/run4/a18-run.log",
+          "docs/delivery/test-evidence/DG7/qa/round-6/a18/run1-a18.log",
+          "docs/delivery/test-evidence/DG7/qa/round-6/a18/kept-target-probes.sh",
+          "docs/delivery/test-evidence/DG7/qa/round-6/a18/qa-r6-a18-driver-3.sh",
+          "docs/delivery/test-evidence/DG7/qa/round-6/f971/probe-rule.mjs",
+          "docs/delivery/test-evidence/DG7/qa/round-6/f971/probe-rule.log",
+          "docs/delivery/test-evidence/DG7/qa/round-6/f971/mutants.mjs",
+          "docs/delivery/test-evidence/DG7/qa/round-6/f971/mutants.log",
+          "docs/delivery/test-evidence/DG7/qa/round-6/f971/harness-recheck.mjs",
+          "docs/delivery/test-evidence/DG7/qa/round-6/f971/harness-recheck.log",
+          "docs/delivery/test-evidence/DG7/qa/round-6/f971/disclosure-surfaces.log",
+          "docs/delivery/test-evidence/DG7/qa/round-6/08-deploy-scripts.log"
+        ],
+        "note": "Verified adversarially on candidate sha256:0b48162701518d1fb47789282112f2d5528429e77d6f108d3f8696570f06bc95 (source 830d7edf, 3157 files; recomputed in the repository tree at the start and end, and in my clone). The fix ac650b8b0 is an ancestor of 830d7edf. What changed since round 5: deploy/scripts/drill/schedule-explained.mjs (new), transfer-drill.sh (W0 in D7, W1 and the read-only second stage in D9, the report fields), the A18 harness's own re-check, the tests and fixture, ADR-0064 Amendment 5, D-278/D-279, the register notes of 3 rows and the handover texts. No product, migration or recheck.ts/reconcile.ts code changed. (1) Real drills, all PASS on one candidate archive each: 8 drill runs with D9 PASS. Seven were 'matched', including run1 (window 13:00:47.98-13:01:34.49Z; 13:00 sat in the (W0-60 s, W0] band but no execution was created) and run3/a (13:59:16.58-14:00:05.63Z; 14:00 inside but no execution before the recheck). One crossed a quarter hour with a real starter execution: run3/b, window 13:59:45.715-14:00:33.441Z. The recheck exited 4 with exactly the F-DG7-971 pattern (17 automation_execution and 17 automation_action_result added, one of each unexplained). The stage explained execution 01a1e4a8-d634-7143-ac97-54c6dacf9bf4: key approval.escalation_scan:2026-11-16T14:00, slot 14:00:00Z, '*/15 * * * *' Asia/Riyadh, created 14:00:32.561Z, 1 action result, 3 audit events. Its worker job outcome was selected 0 and escalated 0. The report has recheck schedule_explained and lists the execution; reconcile-d9.json keeps the real exit 4; job-check PASS (records, jobs and approvals intact after the restart); D0-D11 PASS; exit 0. The A18 harness (QA_A18_REQUIRE=1) passed 10/10 ('matched'). The harness's own S2-S8 re-check, extracted verbatim from the frozen file, accepts the live run3/b entry and rejects 8 tampered copies. (2) Trying to make the rule explain what it must not. On the kept, disposable run3/b target, using the shipped CLI unchanged, one committed mutation at a time: an initiating user; an event trigger with a schedule-format key; the schedule row disabled; the key on a real slot 15 min before the window; a key two minutes after the slot; created_at before W0; a second execution for the same slot that the recheck did not list; the execution's worker event re-attributed to a user; and the execution id in the package (a changed row). Each gives exit 1 with the exact A5.4 reason. An extra unrelated table (approval_request changed) and an 'unexplained changed' key each make Gate 0 not applicable. Restored, the target passes again, and the job_schedule and pgboss.schedule digests are unchanged throughout (the stage is read only). Pure-function probes: 45 cases incl. exact boundaries (slot = W1 inside, W1 + 1 ms outside, W0 - 60 s outside, W0 - 59.999 s inside, daily cron in the row's zone vs UTC, 20 keys truncated, 19 keys with 18 unknown), all as expected. Mutation check: 12 single-condition mutants of the rule (S1-S9, uniqueness, Gate 0 table and key-line checks, S6 widened to 2 min, S7 widened to 120 s) are all killed by DO-D9's own T-S1..T-S8. The deploy-script suite passes 204/204, including T-S9 on PostgreSQL. (3) Soundness: the rule is exactly D-278. Mode 2 itself is unchanged and stays as strict as before; only the drill's second stage reads it, and it reads only automation rows. The documented recovery (re-run the drill, never pause a schedule) is correct. The remaining residuals (a handler's own business writes, engine ticks, pg-boss timing) fail strict, never loose. Disclosure: deployment.md and the register notes carry the rule. known-limitations.md and the release notes do not, against ADR-0064 A5.6. That is raised separately as F-DG7-972 (Low) and does not reopen F-DG7-971, whose expected result accepted the decision plus a drill change, or a disclosure with the recovery. Process note: my first A18 driver was orphaned by a pkill that hit its own shell, and it later removed a shared scratch path. Its outputs (a18/run1-a18.log parts 2-3, a18/a18-run.log, a18/p1-quarter, a18/p3-away, a18/probes) are BLOCKED or FAIL on missing or replaced inputs, as the drill and harness should be. They are not product results, and runs 2-4 use isolated paths."
+      }
+    },
+    {
+      "id": "F-DG7-923",
+      "stage_id": "DG7",
+      "requirement": "REQ-S19-017",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The D-278 schedule rule and its A5.7 residuals are disclosed only in deployment.md (English), not in known-limitations.md, the release notes or the Arabic summaries, as ADR-0064 A5.6 requires",
+      "reproduction": "On candidate sha256:0b48162701518d1fb47789282112f2d5528429e77d6f108d3f8696570f06bc95 (source 830d7edfd): grep -n -i 'D-278\\|schedule-explained\\|escalation_scan' docs/handover/known-limitations.md docs/handover/release-notes.md docs/handover/*.ar-summary.md finds nothing about the drill rule. Only docs/handover/deployment.md l.247 carries it (plus the unrelated job table of automation-operations.md). The ADR-0064 row of known-limitations.md (l.162) lists the earlier ADR-0064 residuals but none of Amendment 5 A5.7 residuals 2-4. Read ADR-0064 Amendment 5 A5.6 'AN (D-278)': 'the handover disclosure in known-limitations.md, the release notes and deployment.md's drill section'. The T-DG7-AN-P7H handback section 4 item 1 and open question 1 flagged this gap; D-279 does not answer it.",
+      "expected": "ADR-0064 Amendment 5 A5.6 (amendments win): known-limitations.md and the release notes, as well as deployment.md, state that a scheduled job running in the D7-D9 window is explained only as A5.2 says and is listed in the report, that a scheduled handler writing business rows in the window still makes D9 FAIL (not a data defect), and that the recovery is to re-run the drill and never pause a schedule. known-limitations.md should also carry the open A5.7 residuals: engine ticks are not covered, and the S6/S7 timing rests on pg-boss 11.0.0 defaults. The Arabic summaries should follow the English text (provisional Arabic).",
+      "actual": "Only deployment.md's English drill section discloses the rule, with the three A5.6 points. known-limitations.md (including its ADR-0064 residual row), release-notes.md, deployment.ar-summary.md and known-limitations.ar-summary.md do not mention it. D-278's own wording ('the rule is disclosed in the handover') is literally met by deployment.md, and the register notes of REQ-S19-017, REQ-S20-018 and REQ-S01-006 carry the rule and residuals in full. So no behaviour, acceptance clause or data is affected. This is documentation drift against the ADR's assignment: Low, not mandatory, and not blocking in my judgement.",
+      "evidence": [
+        "docs/handover/known-limitations.md",
+        "docs/handover/release-notes.md",
+        "docs/handover/deployment.md",
+        "docs/architecture/adr/ADR-0064-p7-migration-manifest-export-import-reconciliation-identity-rebind.md",
+        "docs/delivery/handbacks/DG7/T-DG7-AN-P7H-transformation-analyst.md"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG7/round-6/domain-reviewer.json",
+      "owner": "transformation-analyst",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-16T13:15:00Z",
+          "status": "OPEN",
+          "note": "Raised by domain-reviewer in DG7 round 6 on candidate sha256:0b48162701518d1fb47789282112f2d5528429e77d6f108d3f8696570f06bc95. Low (documentation drift, no behavioural effect). ADR-0064 A5.6 assigns the disclosure to AN. The orchestrator regenerates the handover texts, so the owner may need to coordinate with it."
+        }
+      ]
+    },
+    {
+      "id": "F-DG7-942",
+      "stage_id": "DG7",
+      "requirement": "REQ-S19-017",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "D-278 / ADR-0064 Amendment 5 schedule rule and its residuals are disclosed only in deployment.md; known-limitations.md, the release notes and the Arabic summaries named by ADR-0064 A5.6 carry nothing",
+      "reproduction": "On the frozen candidate (830d7edf, candidate 0b481627): grep -c -i -E 'D-278|schedule-explained|Amendment 5|scheduled starter|escalation_scan|schedule_explained' on every docs/handover/*.md (docs/delivery/test-evidence/DG7/code-security/round-6/23-d278-disclosure.log). Only deployment.md:247 carries the rule (automation-operations.md's three hits are job-table rows). known-limitations.md:162 (the ADR-0064 row of the hand-written section) lists scale, cross-release, queued jobs, attachment manifest, secrets and held users, but not the drill's schedule rule or its residuals. release-notes.md, known-limitations.ar-summary.md and deployment.ar-summary.md have 0 matches. ADR-0064 A5.6 (line 1500) assigns 'the handover disclosure in known-limitations.md, the release notes and deployment.md's drill section'. The AN-P7H handback (lines 99-102, 120) reports the same gap and asks the orchestrator to confirm. D-279 does not answer it, and the round-6 regeneration did not add it.",
+      "expected": "ADR-0064 A5.6 (binding for D-278's repair): the handover disclosure is in known-limitations.md, the release notes and deployment.md's drill section. It says (1) a scheduled job that runs during the drill is explained only as A5.2 says and is listed in the report; (2) a scheduled handler that writes business rows in the window still makes D9 FAIL, which is not a data defect; (3) the recovery is to re-run the drill, never to pause a schedule. known-limitations.md is the IT-facing list of what this release has not proven, so it would also carry the A5.7 residuals that remain (handler writes FAIL D9; engine ticks automation.tick_hourly/tick_daily are not covered; S6/S7 depend on pg-boss 11.0.0 timing defaults, an ADR-0068 upgrade item). Arabic summaries are updated where they summarise those sections.",
+      "actual": "Only deployment.md:247 (English) carries points (1)-(3). known-limitations.md (row ADR-0064), release-notes.md and both Arabic summaries are unchanged in substance from round 5 (their diff only updates the register SHA and the protocol-audit head). The A5.7 residuals 3 and 4 (engine ticks; the pg-boss timing assumption) appear in no handover text. The orchestrator's handover checks pass (check-handover, known-limitations --check, release-notes --check: exit 0), because they do not test for this text. Effect: no behaviour changes. The drill and its report behave correctly and the operator-facing drill section discloses the rule and the recovery, so F-DG7-971's own expected result (at least a disclosure to the operator) is met. The gap is documentation drift from a binding ADR amendment: Low, not mandatory. Repair: add the D-278 rule and the A5.7 residuals to the ADR-0064 row (or a D-278 row) of known-limitations.md, and carry them into the Arabic summary. Either let release-notes.mjs carry the A18 note, or record the orchestrator's decision that deployment.md alone satisfies A5.6 (an ADR-0064 dated amendment).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/code-security/round-6/23-d278-disclosure.log",
+        "docs/handover/known-limitations.md",
+        "docs/handover/deployment.md",
+        "docs/handover/release-notes.md",
+        "docs/architecture/adr/ADR-0064-p7-migration-manifest-export-import-reconciliation-identity-rebind.md",
+        "docs/delivery/handbacks/DG7/T-DG7-AN-P7H-transformation-analyst.md"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG7/round-6/code-security-reviewer.json",
+      "owner": "transformation-analyst",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-16T13:05:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG7 round 6 on candidate sha256:0b48162701518d1fb47789282112f2d5528429e77d6f108d3f8696570f06bc95. Low, not mandatory: documentation drift from ADR-0064 A5.6 with no behavioural effect. The rule itself was verified adversarially and found sound in this round. The owner is transformation-analyst, as ADR-0064 A5.6 assigns the disclosure to AN. The generated sections of known-limitations.md and release-notes.md are the orchestrator's regeneration."
+        }
+      ]
+    },
+    {
+      "id": "F-DG7-972",
+      "stage_id": "DG7",
+      "requirement": "REQ-S19-017",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The D-278 transfer-drill rule and its residuals are disclosed in deployment.md and the register notes, but not in known-limitations.md or the release notes, which ADR-0064 Amendment 5 A5.6 names as disclosure surfaces; the AN-P7H handback's question about this was left unanswered at the freeze",
+      "reproduction": "Repository objects at the frozen source 830d7edf (candidate sha256:0b48162701518d1fb47789282112f2d5528429e77d6f108d3f8696570f06bc95). (1) ADR-0064 Amendment 5 A5.6, 'AN (D-278)': 'the register notes of REQ-S19-017, REQ-S20-018 and REQ-S01-006, and the handover disclosure in known-limitations.md, the release notes and deployment.md's drill section. The disclosure must say: ...'. (2) git show 830d7edf:<file> | grep -c -i -E 'D-278|schedule-explained|schedule_explained|Amendment 5|escalation_scan|tick_hourly|re-run the drill' gives deployment.md 1, known-limitations.md 0, release-notes.md 0, deployment.ar-summary.md 0, known-limitations.ar-summary.md 0. The only ADR-0064 row of known-limitations.md lists migration scale, cross-release imports, queued jobs, the attachment manifest, secrets and held users, and nothing about the drill's schedule rule. (3) T-DG7-AN-P7H handback, open question 1: 'Please confirm that known-limitations.md, the release notes and the Arabic summaries will carry it'. D-279 and the round-6 pre-freeze regeneration (ac650b8b0) do not address it. Commands and output: docs/delivery/test-evidence/DG7/qa/round-6/f971/disclosure-surfaces.log.",
+      "expected": "ADR-0064 Amendment 5 A5.6 (amendments win): the handover disclosure of the D-278 rule is in known-limitations.md, the release notes and deployment.md's drill section. It says that a scheduled job running during the drill is explained only as A5.2 says and is listed in the report; that a scheduled handler which writes business rows in the window still makes D9 FAIL, which is not a data defect; and that the recovery is to re-run the drill, never to pause a schedule. Alternatively, a recorded decision that deployment.md alone is the intended surface.",
+      "actual": "deployment.md's drill paragraph carries all three A5.6 points in English. The register notes of the three rows carry them, plus A5.7 residuals 3 (engine ticks automation.tick_hourly and automation.tick_daily are not covered; open for the orchestrator) and 4 (S6 and S7 rest on pg-boss 11.0.0 timing). known-limitations.md, the release notes and both Arabic summaries mention none of it, so the known-limitations list and the release notes do not show that the A18 drill can still FAIL at D9 on a scheduled handler's own business writes, or that tick-keyed executions are not covered. No product behaviour is affected: the rule works as specified (QA-R6-11, QA-R6-12), and an operator who runs the drill from deployment.md gets the rule and the recovery. Low: a documentation drift from a binding ADR text with no behavioural effect. It does not block this verdict, and it may be fixed or accepted as an observation.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-6/f971/disclosure-surfaces.log",
+        "docs/architecture/adr/ADR-0064-p7-migration-manifest-export-import-reconciliation-identity-rebind.md",
+        "docs/handover/known-limitations.md",
+        "docs/handover/release-notes.md",
+        "docs/handover/deployment.md",
+        "docs/delivery/handbacks/DG7/T-DG7-AN-P7H-transformation-analyst.md"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG7/round-6/qa-verifier.json",
+      "owner": "transformation-analyst",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-16T15:25:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG7 round 6 on candidate sha256:0b48162701518d1fb47789282112f2d5528429e77d6f108d3f8696570f06bc95 while verifying F-DG7-971. The owner is transformation-analyst because ADR-0064 A5.6 assigns this disclosure to AN; the AN-P7H assignment forbade docs/handover/**, so the orchestrator may reassign it. Low and not mandatory: no behavioural effect. Not blocking."
+        }
+      ]
     }
   ]
 }
