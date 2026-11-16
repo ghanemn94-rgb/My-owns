@@ -1,0 +1,82 @@
+### candidate 8323dac: QA_PG_PORT=32320 tests/qa/support/with-pg.sh node --test deploy/scripts/tests/transfer-drill.test.mjs
+✔ T-B3 origin-scan.mjs: the source origin is accepted only in audit_event (1574.011597ms)
+▶ T-B9 config-trace.mjs: configuration only from the template and the guide
+  ✔ documented keys pass, each citing its guide section; a secret is written as <KEY>_FILE and never shown (2.740695ms)
+  ✔ a key outside the map fails with the B.5 undocumented-step line (0.827783ms)
+  ✔ an anchor absent from the (fixture) guide fails with the same line (0.608074ms)
+  ✔ a key that is not in the template fails (not from the template) (0.337076ms)
+  ✔ the shipped map covers every .env.example key and every anchor exists in the shipped guide (2.103115ms)
+  ✔ the CLI exits 1 on an undocumented step and writes a FAIL trace (66.042494ms)
+✔ T-B9 config-trace.mjs: configuration only from the template and the guide (73.330657ms)
+▶ T-B9 transfer-drill.sh: BLOCKED, isolation and the report
+  ✔ without bwrap (stub PATH) it exits 3 with the B.5 BLOCKED line (52.292364ms)
+  ✔ without PostgreSQL server binaries it exits 3 with the B.5 BLOCKED line (74.858173ms)
+  ✔ not enough free disk: exit 3 with the B.6 DO-D2 line, and the work directory is removed (90.713236ms)
+  ✔ a probe that connects exits 1 with the B.5 isolation line (681.65009ms)
+  ✔ a failing step: exit 1, the B.5 step line, later steps NOT_RUN, result FAIL, schemaVersion mth-transfer-drill/1 (1392.410319ms)
+✔ T-B9 transfer-drill.sh: BLOCKED, isolation and the report (2292.435302ms)
+▶ T-B10 journey.mjs under NODE_ENV=production, AUTH_MODE=oidc: drill IdP sign-in, CSRF 403, unbound refused
+  ✔ signs in through the drill IdP (authMode oidc), the source-origin write is 403, the unbound user is refused (271.160862ms)
+  ✔ status: getDeploymentStatus.origin is the target's origin; a wrong expectation FAILS, never passes (105.86654ms)
+  ✔ a step with no data to prove never passes (deeplink with an empty inbox, downloads without a list) (37.012888ms)
+  ✔ T-B16 (measurement): whether a sign-in changes app_user, recorded for allowance.mjs (353.818115ms)
+  ✔ a redirect URI the drill IdP has not registered is refused (57.620573ms)
+✔ T-B10 journey.mjs under NODE_ENV=production, AUTH_MODE=oidc: drill IdP sign-in, CSRF 403, unbound refused (10853.058644ms)
+▶ T-B10 (supporting, NOT production semantics) the same journey with NODE_ENV=development, AUTH_MODE=oidc
+  ✔ signs in through the drill IdP (authMode oidc), the source-origin write is 403, the unbound user is refused (138.05868ms)
+  ✔ status: getDeploymentStatus.origin is the target's origin; a wrong expectation FAILS, never passes (93.998938ms)
+  ✔ a step with no data to prove never passes (deeplink with an empty inbox, downloads without a list) (69.144843ms)
+  ✔ a redirect URI the drill IdP has not registered is refused (2.038496ms)
+✔ T-B10 (supporting, NOT production semantics) the same journey with NODE_ENV=development, AUTH_MODE=oidc (10153.391551ms)
+▶ T-B15 allowance.mjs: mth-recheck-allowance/4 from a fixture journal (p7-work-split §B.9 DO-D7)
+  ✔ writes a /4 file with all eight keys that parseAllowance (packages/db recheck.ts) accepts (292.920265ms)
+  ✔ a lineage table appears only in lineage; a journalled kpi_evaluation key goes to lineage[].mustInclude.added (1.969806ms)
+  ✔ a counter table appears only in counters: in children, audited or the journal it is refused (0.778354ms)
+  ✔ actors from sign-ins; journalled keys of audited tables go to mustInclude; duplicates merged (0.726626ms)
+  ✔ never-operational tables appear only in tables, audited or children; reasons for every list entry (0.423335ms)
+  ✔ the three D8 lists are pinned: audited tables have no child entry, children's parents are listed (0.557067ms)
+  ✔ app_user is listed only when the measurement says a sign-in changes it (0.464091ms)
+  ✔ an audit_event entry, an unknown identity or a bad key is refused (exit 1 via the CLI) (389.374758ms)
+✔ T-B15 allowance.mjs: mth-recheck-allowance/4 from a fixture journal (p7-work-split §B.9 DO-D7) (688.00922ms)
+▶ T-B16 job-check.mjs on a fixture database, digests from mth-db table-digest (§2.3 encoder)
+  ✔ the snapshot holds the encoder's digests: approval digests equal mth-db table-digest's (2492.191643ms)
+  ✔ a new job_run row passes (counted), and the pg-boss table is measured (2768.836593ms)
+  ✔ a changed enabled schedule fails (2698.164408ms)
+  ✔ a removed job_run row fails (2704.931106ms)
+  ✔ a changed approval row fails, and changes the encoder digest (5005.692146ms)
+  ✔ a missing pg-boss table reports BLOCKED (exit 2), never PASS (155.727211ms)
+✔ T-B16 job-check.mjs on a fixture database, digests from mth-db table-digest (§2.3 encoder) (24641.697767ms)
+▶ T-B17 the D8 lists of allowance.mjs are measured on a fixture installation (mode 2 exit 0, then 4)
+  ✔ D8's write chain changes exactly the journalled tables, the operational list, user_identity and the two D8 lists (42544.841352ms)
+  ✔ mode 2 with the generated allowance matches after use (exit 0) (3375.917506ms)
+  ✔ one extra owner-written row in an audited table, its event by a non-journalled user, gives exit 4 (2799.298857ms)
+  ✔ T-B18: a missing code without a remedy row stops D8 at C1 with the A3.6 line, and nothing is written after it (741.559371ms)
+✔ T-B17 the D8 lists of allowance.mjs are measured on a fixture installation (mode 2 exit 0, then 4) (76562.101167ms)
+▶ T-B19 DO-D6's grant path on shipped data: seed-demo --as-of the first day of last month (no current period)
+  ✔ T-B19: with the current period absent, G grants TO at organization scope and the period is opened through the API (5302.774824ms)
+✔ T-B19 DO-D6's grant path on shipped data: seed-demo --as-of the first day of last month (no current period) (32149.191731ms)
+▶ D-264 unexplained-tables.mjs: D9 names only the tables the mode 2 recheck could not explain
+  ✔ lists the `added, changed, missing (<basis>)` tables only, in report order, each once (1.590266ms)
+  ✔ an explaining-events line, a key line or the summary line is never listed (1.817599ms)
+  ✔ the CLI prints one line per unexplained table; a missing file is BLOCKED (exit 2) (174.723674ms)
+  ✔ transfer-drill.sh D9 takes its failure listing from the helper, not from every indented table line (0.545059ms)
+✔ D-264 unexplained-tables.mjs: D9 names only the tables the mode 2 recheck could not explain (178.977053ms)
+▶ T-DG7-DO-D8 drill/cleanup.sh: bounded PostgreSQL shutdown; cleanup never changes the result
+  ✔ td_remove_work removes the work tree and returns 0 (14.554321ms)
+  ✔ a removal that keeps failing under set -e: returns 0, result 0 unchanged, one WARNING line on stderr and in the log (4044.762241ms)
+  ✔ a removal that keeps failing under set -e: returns 0, result 1 unchanged, one WARNING line on stderr and in the log (4048.743351ms)
+  ✔ td_stop_pg escalates INT -> QUIT -> KILL and returns only when the 'postmaster' and its child are gone (bounded) (8005.198919ms)
+  ✔ td_stop_pg on a real PostgreSQL: fast shutdown, no server process left, postmaster.pid removed, the tree removable (2577.685977ms)
+  ✔ T-DG7-DO-D8B td_stop_pg_dir: the launcher pid has gone, the real postmaster is still found and stopped through postmaster.pid (3744.650382ms)
+  ✔ transfer-drill.sh: the EXIT trap stops PostgreSQL with td_stop_pg and the outer mode ends td_remove_work; exit $rc (6.423964ms)
+  ✔ end to end: a failing drill whose work tree cannot be removed still exits 1 (not changed), with the WARNING line (5422.522262ms)
+✔ T-DG7-DO-D8 drill/cleanup.sh: bounded PostgreSQL shutdown; cleanup never changes the result (27865.301075ms)
+ℹ tests 55
+ℹ suites 11
+ℹ pass 55
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 187845.736088
+exit=0

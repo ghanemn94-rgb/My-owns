@@ -1,0 +1,44 @@
+# 2026-11-15T23:01:13Z mutants (Node v24.21.0, cwd $TMPDIR/rv at 8323dacae, load 7.51 8.57 6.81)
+9f16aeb79d30314ee5cc250e6a43a62101e384d544c035e873fe1edd3957bf06  apps/api/src/modules/transfer/export/service.ts
+97f0f86650424c9ed3959c79219de22e64eb3620af6472a92e3fa494df99c494  apps/api/src/modules/transfer/import/service.ts
+== R0 controls (unmodified tree): repro + export.test.ts + import-routes.test.ts
+ Test Files  3 passed (3)
+      Tests  17 passed (17)
+exit=0
+== M4 export: scoped authorize dropped
+-    if ((await authorize(db, principal, MIGRATION_EXPORT, { type: "organization", id: organizationId })).allowed)
+-      return organizationId;
++    return organizationId;
+ ❯ |integration| apps/api/test/integration/transfer/zz-cs-r3-transfer-scope.test.ts (2 tests | 1 failed) 3380ms
+   × CS-R3: narrower-scope ADM_TECH never reaches installation-wide transfer operations > business-unit ADM_TECH: 403 on the export list and request, and on the import and rebind lists; nothing written 23ms
+     → GET /api/v1/admin/migration-exports {"items":[],"nextCursor":null}: expected 200 to be 403 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  |integration| apps/api/test/integration/transfer/zz-cs-r3-transfer-scope.test.ts > CS-R3: narrower-scope ADM_TECH never reaches installation-wide transfer operations > business-unit ADM_TECH: 403 on the export list and request, and on the import and rebind lists; nothing written
+AssertionError: GET /api/v1/admin/migration-exports {"items":[],"nextCursor":null}: expected 200 to be 403 // Object.is equality
+ ❯ apps/api/test/integration/transfer/zz-cs-r3-transfer-scope.test.ts:50:67
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 11 passed (12)
+exit=1
+== M5 import reads: scoped authorize dropped
+-    if ((await authorize(db, principal, MIGRATION_IMPORT_READ, { type: "organization", id: organizationId })).allowed)
+-      return organizationId;
++    return organizationId;
+ ❯ |integration| apps/api/test/integration/transfer/zz-cs-r3-transfer-scope.test.ts (2 tests | 1 failed) 3585ms
+   × CS-R3: narrower-scope ADM_TECH never reaches installation-wide transfer operations > business-unit ADM_TECH: 403 on the export list and request, and on the import and rebind lists; nothing written 68ms
+     → GET /api/v1/admin/migration-imports {"items":[],"nextCursor":null}: expected 200 to be 403 // Object.is equality
+ ❯ |integration| apps/api/test/integration/transfer/import-routes.test.ts (5 tests | 1 failed) 3868ms
+   × T-C14: the read-only migration-import routes > every other role, a user without grants and a narrower AUD grant get 403 on all five 162ms
+     → AUD @ business unit GET /api/v1/admin/migration-imports: expected 200 to be 403 // Object.is equality
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  |integration| apps/api/test/integration/transfer/import-routes.test.ts > T-C14: the read-only migration-import routes > every other role, a user without grants and a narrower AUD grant get 403 on all five
+AssertionError: AUD @ business unit GET /api/v1/admin/migration-imports: expected 200 to be 403 // Object.is equality
+ ❯ apps/api/test/integration/transfer/import-routes.test.ts:119:48
+ FAIL  |integration| apps/api/test/integration/transfer/zz-cs-r3-transfer-scope.test.ts > CS-R3: narrower-scope ADM_TECH never reaches installation-wide transfer operations > business-unit ADM_TECH: 403 on the export list and request, and on the import and rebind lists; nothing written
+AssertionError: GET /api/v1/admin/migration-imports {"items":[],"nextCursor":null}: expected 200 to be 403 // Object.is equality
+ ❯ apps/api/test/integration/transfer/zz-cs-r3-transfer-scope.test.ts:50:67
+ Test Files  2 failed (2)
+      Tests  2 failed | 5 passed (7)
+exit=1
+== restore check
+sources restored byte-equal
+# end 2026-11-15T23:03:05Z

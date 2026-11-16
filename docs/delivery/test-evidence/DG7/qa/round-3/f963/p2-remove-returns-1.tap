@@ -1,0 +1,66 @@
+T-DG7-DO-D8 real PostgreSQL: comm bash (the launching pid), 6 processes under it, td_stop_pg 0.2 s, total 1.277 s
+▶ T-DG7-DO-D8 drill/cleanup.sh: bounded PostgreSQL shutdown; cleanup never changes the result
+  ✔ td_remove_work removes the work tree and returns 0 (11.159655ms)
+  ✖ a removal that keeps failing under set -e: returns 0, result 0 unchanged, one WARNING line on stderr and in the log (4024.76494ms)
+  ✖ a removal that keeps failing under set -e: returns 0, result 1 unchanged, one WARNING line on stderr and in the log (4026.388172ms)
+  ✔ td_stop_pg escalates INT -> QUIT -> KILL and returns only when the 'postmaster' and its child are gone (bounded) (7061.243116ms)
+  ✔ td_stop_pg on a real PostgreSQL: fast shutdown, no server process left, postmaster.pid removed, the tree removable (1293.300337ms)
+  ✔ T-DG7-DO-D8B td_stop_pg_dir: the launcher pid has gone, the real postmaster is still found and stopped through postmaster.pid (1592.200431ms)
+  ✔ transfer-drill.sh: the EXIT trap stops PostgreSQL with td_stop_pg and the outer mode ends td_remove_work; exit $rc (0.828092ms)
+  ✔ end to end: a failing drill whose work tree cannot be removed still exits 1 (not changed), with the WARNING line (4591.128693ms)
+✖ T-DG7-DO-D8 drill/cleanup.sh: bounded PostgreSQL shutdown; cleanup never changes the result (22603.490243ms)
+ℹ tests 8
+ℹ suites 1
+ℹ pass 6
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 22746.738999
+
+✖ failing tests:
+
+test at deploy/scripts/tests/transfer-drill.test.mjs:1564:5
+✖ a removal that keeps failing under set -e: returns 0, result 0 unchanged, one WARNING line on stderr and in the log (4024.76494ms)
+  AssertionError [ERR_ASSERTION]: transfer-drill: WARNING: could not remove the work directory /var/tmp/mth-run.3fTj5D/claude-0/mth-transfer-drill-test-gzjvLj/rw-fail-0-84Z8Qh (rm: cannot remove '/var/tmp/mth-run.3fTj5D/claude-0/mth-transfer-drill-test-gzjvLj/rw-fail-0-84Z8Qh': Directory not empty); the drill result (exit 0) is unchanged; remove the directory by hand
+  
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (file:///var/tmp/mth-run.3fTj5D/claude-0/m2/deploy/scripts/tests/transfer-drill.test.mjs:1574:14)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Suite.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Promise.all (index 0)
+      at async Suite.run (node:internal/test_runner/test:1905:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at deploy/scripts/tests/transfer-drill.test.mjs:1564:5
+✖ a removal that keeps failing under set -e: returns 0, result 1 unchanged, one WARNING line on stderr and in the log (4026.388172ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  '' !== 'after'
+  
+      at TestContext.<anonymous> (file:///var/tmp/mth-run.3fTj5D/claude-0/m2/deploy/scripts/tests/transfer-drill.test.mjs:1575:14)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Suite.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '',
+    expected: 'after',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

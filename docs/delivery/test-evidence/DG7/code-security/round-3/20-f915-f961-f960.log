@@ -1,0 +1,94 @@
+# 2026-11-15T22:40:53Z F-DG7-915/961/960 (Node v24.21.0, cwd $TMPDIR/rv at 8323dacae, git status lines 0)
+== A. register hash vs the hash the release notes state
+cfa6d37876c62d4a6799e6550d7d7c80775380ffbcc59a94de3be0af701d6fb9  docs/delivery/requirements.csv
+9:- Requirement register: `docs/delivery/requirements.csv`, SHA-256 `cfa6d37876c62d4a6799e6550d7d7c80775380ffbcc59a94de3be0af701d6fb9`, 412 rows
+101:- سجل المتطلبات: 412 صفًا، SHA-256 `cfa6d37876c6`
+== B. release-notes --check on the candidate
+release-notes: 0 unfinished item(s), 23 later clause(s); docs/handover/release-notes.md is up to date
+exit=0
+== C. the REQ-S19-015 entry and Q19 marker lines in the release notes (count of completes-after-gate mentions)
+1
+47:- REQ-S19-015 (IMPLEMENTED): T-I10 at the freeze and, at the seal, the A28 archive listing and the byte check that the packaged register equals docs/delivery/requirements.csv at the DG7 candidate.
+== D. revert-to-fail 1: the round-2 release notes (git show f22c97b59:docs/handover/release-notes.md) against this register
+release-notes: docs/handover/release-notes.md is out of date (run with --write)
+exit=1 (expected 1)
+== E. revert-to-fail 2: one register note changed by one character, release notes unchanged
+ docs/delivery/requirements.csv | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+release-notes: docs/handover/release-notes.md is out of date (run with --write)
+exit=1 (expected 1 if the changed row is listed in the notes; 0 is possible for a row not quoted)
+== F. is release-notes --check on the real tree now a test? (grep tools/release/tests for the real register path with --check)
+tools/release/tests/check-handover.test.mjs
+tools/release/tests/verify-seal.test.mjs
+== G. protocol audit on this candidate (stage DG7, JSON into $TMPDIR) vs protocol-audit-r3.json
+exit=1 (1 = hits present)
+pa-dg7.json keys ['tool', 'version', 'head', 'git_history_used', 'stages', 'verdict', 'exit_code', 'totals'] DG7 hits by check {}
+protocol-audit-r3.json keys ['tool', 'version', 'head', 'git_history_used', 'stages', 'verdict', 'exit_code', 'totals'] DG7 hits by check {}
+== H. known-limitations C3 row and --check against protocol-audit-r3
+49:| C2 assignment-contract | REQ-DLV-011 | DG0 | HIT | 49 | D-249 H3 |
+50:| C2 assignment-contract | REQ-DLV-011 | DG1 | HIT | 16 | D-249 H3 |
+51:| C2 assignment-contract | REQ-DLV-011 | DG2 | HIT | 39 | D-249 H3 |
+52:| C2 assignment-contract | REQ-DLV-011 | DG3 | HIT | 14 | D-249 H3 |
+53:| C2 assignment-contract | REQ-DLV-011 | DG4 | HIT | 11 | D-249 H3 |
+54:| C2 assignment-contract | REQ-DLV-011 | DG5 | HIT | 6 | D-249 H3 |
+55:| C2 assignment-contract | REQ-DLV-011 | DG6 | HIT | 14 | D-249 H3, H4 |
+56:| C2 assignment-contract | REQ-DLV-011 | DG7 | HIT | 27 | not in D-249 (DG7: disclosed by this release's records) |
+57:| C3 handback-sections | REQ-DLV-012 | DG2 | HIT | 8 | D-249 H5 |
+58:| C3 handback-sections | REQ-DLV-012 | DG3 | HIT | 3 | D-249 H5 |
+known-limitations: PASS (docs/handover/known-limitations.md and docs/handover/external-dependencies.json are current)
+exit=0
+== I. check-handover (strict and default) with protocol-audit-r3
+  note: role-matrix.mjs: role-matrix: PASS (/var/tmp/mth-run.GqyLL2/claude-0/rv/docs/handover/role-matrix.md is current)
+  note: automation-jobs.mjs: automation-jobs: PASS (the job table of /var/tmp/mth-run.GqyLL2/claude-0/rv/docs/handover/automation-operations.md is current)
+  note: known-limitations: PASS (docs/handover/known-limitations.md and docs/handover/external-dependencies.json are current)
+check-handover: PASS (index PASS, deployment PASS, summaries PASS, security-links PASS, guides PASS, generated PASS; root .)
+exit=0
+  note: role-matrix.mjs: role-matrix: PASS (/var/tmp/mth-run.GqyLL2/claude-0/rv/docs/handover/role-matrix.md is current)
+  note: automation-jobs.mjs: automation-jobs: PASS (the job table of /var/tmp/mth-run.GqyLL2/claude-0/rv/docs/handover/automation-operations.md is current)
+  note: known-limitations: PASS (docs/handover/known-limitations.md and docs/handover/external-dependencies.json are current)
+check-handover: PASS (index PASS, deployment PASS, summaries PASS, security-links PASS, guides PASS, generated PASS; root .)
+exit=0
+== J. FE-C3 handback headings and the new round-2 repair handbacks' headings
+-- docs/delivery/handbacks/DG7/T-DG7-FE-C3-frontend-ux-engineer.md
+1:# Handback T-DG7-FE-C3 (frontend-ux-engineer): T-E25 spec, language isolation
+8:## 1. Files changed
+16:## 2. Behaviour per requirement (REQ-S16-024, REQ-S20-022: the T-E25 axe, keyboard and 360 px checks of the Retention screens)
+18:### Root cause (two layers)
+27:### Fix (in the spec only)
+46:## 3. Checks run (environment: this container, Node 24.21.0, `MTH_PNPM_OFFLINE=1`, existing `apps/web/dist` and `apps/api/dist` builds)
+71:## 4. Known gaps
+77:## 5. Open questions
+-- docs/delivery/handbacks/DG7/T-DG7-AN-P7F-transformation-analyst.md
+1:# Handback T-DG7-AN-P7F (transformation-analyst): D-243 Q19 extended to the 18 DG7 rows (F-DG7-935, D-274)
+9:## 1. Files changed
+21:## 2. Behaviour per requirement
+53:## 3. Checks run (container, Node 24.21.0, `MTH_PNPM_OFFLINE=1`; logs in `T-DG7-AN-P7F-evidence/`)
+79:## 4. Known gaps
+86:## 5. Open questions
+91:## Merge instructions
+-- docs/delivery/handbacks/DG7/T-DG7-BE-R7-backend-workflow-engineer.md
+1:# Handback T-DG7-BE-R7 (backend-workflow-engineer): integration order-dependence in p7-transfer-guards
+10:## 1. Files changed
+29:## 2. Behaviour per requirement
+37:## 3. Checks run (real exit codes)
+64:## 4. Known gaps / not done
+74:### Results appended after the handback was first written
+79:## 5. Open questions
+-- docs/delivery/handbacks/DG7/T-DG7-DO-D8-devops-engineer.md
+1:# Handback T-DG7-DO-D8: transfer-drill cleanup after PASS (devops-engineer)
+10:## 1. Files changed
+21:## 2. Behaviour per requirement
+58:## 3. Checks run (real exit codes)
+96:## 4. Known gaps
+103:## 5. Open questions
+-- docs/delivery/handbacks/DG7/T-DG7-DO-D8B-devops-engineer.md
+1:# Handback T-DG7-DO-D8B: finish F-DG7-963, transfer-drill cleanup after PASS (devops-engineer)
+15:## 1. Files changed
+17:### What DO-D8 did (6c606e5b3), reviewed against F-DG7-963
+37:### What I changed
+57:## 2. Behaviour per requirement
+85:## 3. Checks run (real exit codes)
+123:## 4. Known gaps
+130:## 5. Open questions
+== final git status (must be clean)
+# end 2026-11-15T22:41:03Z

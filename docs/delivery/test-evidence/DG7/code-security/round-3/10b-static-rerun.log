@@ -1,0 +1,16 @@
+# 2026-11-15T23:04:15Z re-run (Node v24.21.0, cwd $TMPDIR/rv at 8323dacae, git status lines 0, probe-order.config.ts present: no, load 8.00 8.66 7.19)
+== why the first lint failed: the 3 errors were in my probe file probe-order.config.ts (lines 8-9 'any'), present in the clone root while f962.sh ran; it is in scripts/probe-order.config.ts.txt:
+6:  async sort(files: any[]) {
+8:    const id = (f: any) => String(f.moduleId ?? f[1] ?? f);
+9:    const rank = (f: any) => { const i = order.findIndex((o) => id(f).endsWith(o)); return i < 0 ? 99 : i; };
+== pnpm lint
+
+> mobily-transformation-hub@0.1.0 lint /var/tmp/mth-run.GqyLL2/claude-0/rv
+> eslint . --max-warnings=0
+
+exit=0
+== prettier --check on the changed .ts/.mjs files
+Checking formatting...
+All matched files use Prettier code style!
+exit=0
+# end 2026-11-15T23:05:15Z

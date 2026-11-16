@@ -1,0 +1,30 @@
+HEAD 8323dacae51a98c8f555fb95d8e1dd0a1e747ea8
+--- C3 DG7 rows in the shipped known-limitations:
+62:| C3 handback-sections | REQ-DLV-012 | DG7 | HIT | 7 | not in D-249 (DG7: disclosed by this release's records) |
+--- P0 candidate
+known-limitations: PASS (docs/handover/known-limitations.md and docs/handover/external-dependencies.json are current)
+kl exit 0
+check-handover exit 0
+--- P1 round-2 known-limitations.md (f22c97b5) put back
+known-limitations: FAIL: docs/handover/known-limitations.md differ from the generated content; run node tools/release/known-limitations.mjs --protocol-audit <report> --write
+kl exit 1
+check-handover: generated: FAIL
+  FAIL: known-limitations: FAIL: docs/handover/known-limitations.md differ from the generated content; run node tools/release/known-limitations.mjs --protocol-audit <report> --write
+check-handover: FAIL (index PASS, deployment PASS, summaries PASS, security-links PASS, guides PASS, generated FAIL; root .)
+check-handover exit 1
+--- P2 DG7 C3 count hand-edited 7 -> 6
+ docs/handover/known-limitations.md | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+known-limitations: FAIL: docs/handover/known-limitations.md differ from the generated content; run node tools/release/known-limitations.mjs --protocol-audit <report> --write
+kl exit 1
+--- P3 my own audit report of this candidate (13-protocol-audit-all.json) instead of the shipped one
+known-limitations: FAIL: docs/handover/known-limitations.md differ from the generated content; run node tools/release/known-limitations.mjs --protocol-audit <report> --write
+kl exit 1
+restored: 0 changed; {"stage":"DG7","source":"working-tree","candidate_id":"sha256:60dd90b6c5a7af3b502f02be68e6b601fd11e90fcbc0a48166cbc389453a80e9","files":3154}
+--- P3b: what differs when generated from my own report of this candidate (--write in the disposable clone, then git diff, then restored)
+known-limitations: wrote docs/handover/known-limitations.md and docs/handover/external-dependencies.json (11 dependencies; report head 9c69cd11716e37120022b60ecaa40764204af774)
+ docs/handover/known-limitations.md | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+-Report: `tools/release/protocol-audit.mjs` 1.0.0, repository head `0326ee9ea18fcff000a8e6e3ac12a447e603e424`, SHA-256 `5e70d3c1c4de4bdcd67e5c34cf629dd869b9f8f9d81f887b61847aaf1af44840`, stages DG0, DG1, DG2, DG3, DG4, DG5, DG6, DG7.
++Report: `tools/release/protocol-audit.mjs` 1.0.0, repository head `9c69cd11716e37120022b60ecaa40764204af774`, SHA-256 `3c21ea95fa9ecb2b7ba75f2df2f792425bcd1a70bdcb881483963bab1bf9e1fe`, stages DG0, DG1, DG2, DG3, DG4, DG5, DG6, DG7.
+restored: 0 changed; {"stage":"DG7","source":"working-tree","candidate_id":"sha256:60dd90b6c5a7af3b502f02be68e6b601fd11e90fcbc0a48166cbc389453a80e9","files":3154}

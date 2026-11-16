@@ -1,0 +1,60 @@
+HEAD 8323dacae51a98c8f555fb95d8e1dd0a1e747ea8; {"stage":"DG7","source":"working-tree","candidate_id":"sha256:60dd90b6c5a7af3b502f02be68e6b601fd11e90fcbc0a48166cbc389453a80e9","files":3154}
+=== P1 candidate, guard first (order: packages/db/test/integration/p7-transfer-guards.test.ts,apps/api/test/integration/contract/contract.test.ts,apps/api/test/integration/contract/response-validation.test.ts) 23:18:36
+ RUN  v3.2.7 /var/tmp/mth-run.3fTj5D/claude-0/m2
+ ✓ |integration| packages/db/test/integration/p7-transfer-guards.test.ts (22 tests) 13145ms
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts (111 tests) 84780ms
+ ✓ |integration| apps/api/test/integration/contract/response-validation.test.ts (119 tests) 86910ms
+ Test Files  3 passed (3)
+      Tests  252 passed (252)
+=== P1 candidate, guard first exit 0
+=== P2 candidate, guard last (order: apps/api/test/integration/contract/contract.test.ts,apps/api/test/integration/contract/response-validation.test.ts,packages/db/test/integration/p7-transfer-guards.test.ts) 23:22:04
+ RUN  v3.2.7 /var/tmp/mth-run.3fTj5D/claude-0/m2
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts (111 tests) 79745ms
+ ✓ |integration| apps/api/test/integration/contract/response-validation.test.ts (119 tests) 89808ms
+ ✓ |integration| packages/db/test/integration/p7-transfer-guards.test.ts (22 tests) 13872ms
+ Test Files  3 passed (3)
+      Tests  252 passed (252)
+=== P2 candidate, guard last exit 0
+--- P3: guard file reverted to f22c97b5 (round-2 candidate):  1 file changed, 5 insertions(+), 52 deletions(-)
+=== P3 reverted guard file, guard first (expected to FAIL) (order: packages/db/test/integration/p7-transfer-guards.test.ts,apps/api/test/integration/contract/contract.test.ts,apps/api/test/integration/contract/response-validation.test.ts) 23:25:27
+ RUN  v3.2.7 /var/tmp/mth-run.3fTj5D/claude-0/m2
+ ✓ |integration| packages/db/test/integration/p7-transfer-guards.test.ts (21 tests) 309ms
+ ❯ |integration| apps/api/test/integration/contract/contract.test.ts (111 tests | 4 failed) 81851ms
+   × every operation, validated against the contract and the zod mirrors > P7 BE-C operations (p7-exercises-be-c.ts): migration exports 57ms
+     → {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"A migration export is already queued or running. Wait for it to finish.","code":"migration.export_in_progress","requestId":"01a1e188-dca9-716b-961e-0571b27c0f6e"}: expected 422 to be 202 // Object.is equality
+   × every operation, validated against the contract and the zod mirrors > P7 BE-D operations (p7-exercises-be-d.ts): migration imports, reconciliations, identity rebinds 64ms
+   × every operation, validated against the contract and the zod mirrors > every operation: an undeclared request media type is a declared 400 validation.content_type; nothing written 11170ms
+   × every operation, validated against the contract and the zod mirrors > covers every operation with at least one success and every successful body with its zod mirror 4ms
+ ❯ |integration| apps/api/test/integration/contract/response-validation.test.ts (119 tests | 5 failed) 87880ms
+   × every operation, validated against the contract and the zod mirrors > P7 BE-C operations (p7-exercises-be-c.ts): migration exports 43ms
+     → {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"A migration export is already queued or running. Wait for it to finish.","code":"migration.export_in_progress","requestId":"01a1e18a-1bc9-772f-a751-66a965454f1f"}: expected 422 to be 202 // Object.is equality
+   × every operation, validated against the contract and the zod mirrors > P7 BE-D operations (p7-exercises-be-d.ts): migration imports, reconciliations, identity rebinds 54ms
+   × every operation, validated against the contract and the zod mirrors > every operation: an undeclared request media type is a declared 400 validation.content_type; nothing written 13888ms
+   × every operation, validated against the contract and the zod mirrors > covers every operation with at least one success and every successful body with its zod mirror 2ms
+   × REQ-S16-027: every operation's responses validated against the contract (ADR-0052 §7) > pagination: every list operation declares nextCursor, and every validated list success carries it 6ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > P7 BE-C operations (p7-exercises-be-c.ts): migration exports
+AssertionError: {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"A migration export is already queued or running. Wait for it to finish.","code":"migration.export_in_progress","requestId":"01a1e188-dca9-716b-961e-0571b27c0f6e"}: expected 422 to be 202 // Object.is equality
+ ❯ apps/api/test/integration/contract/contract.test.ts:953:5
+ FAIL  |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > P7 BE-D operations (p7-exercises-be-d.ts): migration imports, reconciliations, identity rebinds
+ ❯ mirrored apps/api/test/integration/contract/contract.test.ts:444:15
+ ❯ apps/api/test/integration/contract/contract.test.ts:957:5
+ FAIL  |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > every operation: an undeclared request media type is a declared 400 validation.content_type; nothing written
+ ❯ apps/api/test/integration/contract/contract.test.ts:1175:21
+ FAIL  |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > covers every operation with at least one success and every successful body with its zod mirror
+ FAIL  |integration| apps/api/test/integration/contract/response-validation.test.ts > every operation, validated against the contract and the zod mirrors > covers every operation with at least one success and every successful body with its zod mirror
+ ❯ apps/api/test/integration/contract/contract.test.ts:1232:23
+ FAIL  |integration| apps/api/test/integration/contract/response-validation.test.ts > every operation, validated against the contract and the zod mirrors > P7 BE-C operations (p7-exercises-be-c.ts): migration exports
+AssertionError: {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"A migration export is already queued or running. Wait for it to finish.","code":"migration.export_in_progress","requestId":"01a1e18a-1bc9-772f-a751-66a965454f1f"}: expected 422 to be 202 // Object.is equality
+ ❯ apps/api/test/integration/contract/contract.test.ts:953:5
+ FAIL  |integration| apps/api/test/integration/contract/response-validation.test.ts > every operation, validated against the contract and the zod mirrors > P7 BE-D operations (p7-exercises-be-d.ts): migration imports, reconciliations, identity rebinds
+ ❯ mirrored apps/api/test/integration/contract/contract.test.ts:444:15
+ ❯ apps/api/test/integration/contract/contract.test.ts:957:5
+ FAIL  |integration| apps/api/test/integration/contract/response-validation.test.ts > every operation, validated against the contract and the zod mirrors > every operation: an undeclared request media type is a declared 400 validation.content_type; nothing written
+ ❯ apps/api/test/integration/contract/contract.test.ts:1175:21
+ FAIL  |integration| apps/api/test/integration/contract/response-validation.test.ts > REQ-S16-027: every operation's responses validated against the contract (ADR-0052 §7) > pagination: every list operation declares nextCursor, and every validated list success carries it
+ ❯ apps/api/test/integration/contract/response-validation.test.ts:378:33
+ Test Files  2 failed | 1 passed (3)
+      Tests  9 failed | 242 passed (251)
+=== P3 reverted guard file, guard first (expected to FAIL) exit 1
+--- restored: 0 changed; {"stage":"DG7","source":"working-tree","candidate_id":"sha256:60dd90b6c5a7af3b502f02be68e6b601fd11e90fcbc0a48166cbc389453a80e9","files":3154}

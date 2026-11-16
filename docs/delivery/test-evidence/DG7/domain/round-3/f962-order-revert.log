@@ -1,0 +1,37 @@
+### REVERT-TO-FAIL: packages/db/test/integration/p7-transfer-guards.test.ts restored to round-2 f22c97b5 (pre-BE-R7) in the disposable clone; same order guard -> contract -> response-validation
+ .../db/test/integration/p7-transfer-guards.test.ts | 57 ++--------------------
+ 1 file changed, 5 insertions(+), 52 deletions(-)
+[order-probe] /var/tmp/mth-run.2r4Ebf/claude-0/rv/packages/db/test/integration/p7-transfer-guards.test.ts -> /var/tmp/mth-run.2r4Ebf/claude-0/rv/apps/api/test/integration/contract/contract.test.ts -> /var/tmp/mth-run.2r4Ebf/claude-0/rv/apps/api/test/integration/contract/response-validation.test.ts
+   × every operation, validated against the contract and the zod mirrors > P7 BE-C operations (p7-exercises-be-c.ts): migration exports 77ms
+     → {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"A migration export is already queued or running. Wait for it to finish.","code":"migration.export_in_progress","requestId":"01a1e16d-7c85-774c-b128-22583f7d38d8"}: expected 422 to be 202 // Object.is equality
+   × every operation, validated against the contract and the zod mirrors > P7 BE-D operations (p7-exercises-be-d.ts): migration imports, reconciliations, identity rebinds 105ms
+   × every operation, validated against the contract and the zod mirrors > every operation: an undeclared request media type is a declared 400 validation.content_type; nothing written 10679ms
+   × every operation, validated against the contract and the zod mirrors > covers every operation with at least one success and every successful body with its zod mirror 12ms
+     → expected [ 'createMigrationExport', …(8) ] to deeply equal []
+   × every operation, validated against the contract and the zod mirrors > P7 BE-C operations (p7-exercises-be-c.ts): migration exports 44ms
+     → {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"A migration export is already queued or running. Wait for it to finish.","code":"migration.export_in_progress","requestId":"01a1e16e-d6da-71d9-9b25-422edbb3742b"}: expected 422 to be 202 // Object.is equality
+   × every operation, validated against the contract and the zod mirrors > P7 BE-D operations (p7-exercises-be-d.ts): migration imports, reconciliations, identity rebinds 73ms
+   × every operation, validated against the contract and the zod mirrors > every operation: an undeclared request media type is a declared 400 validation.content_type; nothing written 16989ms
+   × every operation, validated against the contract and the zod mirrors > covers every operation with at least one success and every successful body with its zod mirror 2ms
+     → expected [ 'createMigrationExport', …(8) ] to deeply equal []
+   × REQ-S16-027: every operation's responses validated against the contract (ADR-0052 §7) > pagination: every list operation declares nextCursor, and every validated list success carries it 8ms
+     → expected [ 'listMigrationImports', …(2) ] to deeply equal []
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > P7 BE-C operations (p7-exercises-be-c.ts): migration exports
+AssertionError: {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"A migration export is already queued or running. Wait for it to finish.","code":"migration.export_in_progress","requestId":"01a1e16d-7c85-774c-b128-22583f7d38d8"}: expected 422 to be 202 // Object.is equality
+    107|     expect(res.status, JSON.stringify(res.body)).toBe(expected);
+ FAIL  |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > P7 BE-D operations (p7-exercises-be-d.ts): migration imports, reconciliations, identity rebinds
+ FAIL  |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > every operation: an undeclared request media type is a declared 400 validation.content_type; nothing written
+ FAIL  |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > covers every operation with at least one success and every successful body with its zod mirror
+ FAIL  |integration| apps/api/test/integration/contract/response-validation.test.ts > every operation, validated against the contract and the zod mirrors > covers every operation with at least one success and every successful body with its zod mirror
+AssertionError: expected [ 'createMigrationExport', …(8) ] to deeply equal []
+ FAIL  |integration| apps/api/test/integration/contract/response-validation.test.ts > every operation, validated against the contract and the zod mirrors > P7 BE-C operations (p7-exercises-be-c.ts): migration exports
+AssertionError: {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"A migration export is already queued or running. Wait for it to finish.","code":"migration.export_in_progress","requestId":"01a1e16e-d6da-71d9-9b25-422edbb3742b"}: expected 422 to be 202 // Object.is equality
+    107|     expect(res.status, JSON.stringify(res.body)).toBe(expected);
+ FAIL  |integration| apps/api/test/integration/contract/response-validation.test.ts > every operation, validated against the contract and the zod mirrors > P7 BE-D operations (p7-exercises-be-d.ts): migration imports, reconciliations, identity rebinds
+ FAIL  |integration| apps/api/test/integration/contract/response-validation.test.ts > every operation, validated against the contract and the zod mirrors > every operation: an undeclared request media type is a declared 400 validation.content_type; nothing written
+ FAIL  |integration| apps/api/test/integration/contract/response-validation.test.ts > REQ-S16-027: every operation's responses validated against the contract (ADR-0052 §7) > pagination: every list operation declares nextCursor, and every validated list success carries it
+AssertionError: expected [ 'listMigrationImports', …(2) ] to deeply equal []
+ Test Files  2 failed | 1 passed (3)
+      Tests  9 failed | 242 passed (251)
+exit=1

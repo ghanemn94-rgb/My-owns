@@ -1,0 +1,82 @@
+# 2026-11-15T22:55:37Z F-DG7-935: register rows at the candidate (live repository read-only; requirements.csv is a candidate file, unchanged by the freeze commit)
+sha256 cfa6d37876c62d4a6799e6550d7d7c80775380ffbcc59a94de3be0af701d6fb9
+rows 412 status {'IMPLEMENTED': 412}
+DG7-final rows 54 status {'IMPLEMENTED': 54}
+rows with a completes-after-gate marker: 23
+marked but not among the 18 (the six original D-243 Q19 rows etc.): ['REQ-DLV-010', 'REQ-DLV-021', 'REQ-DLV-041', 'REQ-S20-023', 'REQ-S20-028']
+
+== REQ-DLV-005 status=IMPLEMENTED final_gate=DG7 evidence_nonempty=True D-274_cited=True 'not presented as met'/'not met' disclosed=False in_release_notes=True
+   acceptance: A23: at every gate DG0-DG7 the validator accepts only review records whose reviewer_role is not in the gate's implementation authors and whose invocation references are distinct; the P0 test 'A23: a reviewer who authored the scope, or who is an owner, is rejected' passes
+   marker: 'node tools/gates/validate.mjs --stage DG7' on the DG7 candidate with the DG7 round's review records and audit, which only the gate run shows.
+
+== REQ-DLV-008 status=IMPLEMENTED final_gate=DG7 evidence_nonempty=True D-274_cited=True 'not presented as met'/'not met' disclosed=True in_release_notes=True
+   acceptance: A23;A26: for every stage, each assignment names a base revision and permitted files, and no two concurrently active assignments share a writable file (checked by the release-auditor)
+   marker: the release-auditor's check of file ownership and of the D-270 assignment hits at the DG7 gate, and protocol-audit C4 on the frozen DG7 candidate (p7-work-split §J.1).
+
+== REQ-DLV-011 status=IMPLEMENTED final_gate=DG7 evidence_nonempty=True D-274_cited=True 'not presented as met'/'not met' disclosed=True in_release_notes=True
+   acceptance: A23;A27: every run's meta.json records an assignment SHA-256 that matches an assignment file containing all ten contract elements
+   marker: the release-auditor's decision on the D-270 C2 hits at the DG7 gate, and protocol-audit C2 on the frozen DG7 candidate over every DG7 run's assignment hash (p7-work-split §J.1).
+
+== REQ-DLV-012 status=IMPLEMENTED final_gate=DG7 evidence_nonempty=True D-274_cited=True 'not presented as met'/'not met' disclosed=True in_release_notes=True
+   acceptance: A23;A26: every implementation task in a gate has a handback with the five sections; any task whose handback lists open gaps is not reported as complete in progress.md
+   marker: the release-auditor's decision on the D-270 C3 hits (six, F-DG7-960 included) and its reading of progress.md at the DG7 gate, and protocol-audit C3 and C6 on the frozen DG7 candidate (p7-work-split §J.1).
+
+== REQ-DLV-014 status=IMPLEMENTED final_gate=DG7 evidence_nonempty=True D-274_cited=True 'not presented as met'/'not met' disclosed=False in_release_notes=True
+   acceptance: A23;A26: each stage's history in stages.json passes through BUILDING, REVIEWING and VERIFYING to APPROVED, and every finding raised has a fix revision plus an independent verification by a non-owner before approval
+   marker: DG7's history reaching VERIFYING and APPROVED, with each DG7 finding (round 2: 915, 935, 960-963) fixed and verified by a non-owner, shown by 'validate.mjs --stage DG7' at the gate.
+
+== REQ-DLV-018 status=IMPLEMENTED final_gate=DG7 evidence_nonempty=True D-274_cited=True 'not presented as met'/'not met' disclosed=False in_release_notes=True
+   acceptance: A26: no finding is closed by majority vote; any finding with three failed fix verifications has a blocker entry with a recovery plan in progress.md and stages.json
+   marker: protocol-audit C7 (or the release-auditor's reading of findings.json and progress.md) over the findings of the later DG7 rounds, up to the gate.
+
+== REQ-DLV-024 status=IMPLEMENTED final_gate=DG7 evidence_nonempty=True D-274_cited=True 'not presented as met'/'not met' disclosed=True in_release_notes=True
+   acceptance: A24;A27: for each of P1-P7, test-evidence contains a passing --historical run for the previous gate, dated before the stage's first implementation run
+   marker: the release-auditor's decision on the D-270 C5 hit at the DG7 gate.
+
+== REQ-DLV-028 status=IMPLEMENTED final_gate=DG7 evidence_nonempty=True D-274_cited=True 'not presented as met'/'not met' disclosed=False in_release_notes=True
+   acceptance: A23;A27: for each approved gate, progress.md has an update with all six elements and the candidate ID matching gates/DGx.json
+   marker: the DG7 gate update in progress.md with all six elements and the candidate id matching gates/DG7.json, written after the DG7 gate.
+
+== REQ-DLV-030 status=IMPLEMENTED final_gate=DG7 evidence_nonempty=True D-274_cited=True 'not presented as met'/'not met' disclosed=True in_release_notes=True
+   acceptance: A27: in a resumption drill, the reconcile report flags a review whose candidate no longer matches, work continues from progress.md, and no approval appears without a review record
+   marker: a passing K11 re-drill against the current progress.md, or the release-auditor's decision on the disclosed A27 K11 partial at the DG7 gate.
+
+== REQ-DLV-031 status=IMPLEMENTED final_gate=DG7 evidence_nonempty=True D-274_cited=True 'not presented as met'/'not met' disclosed=False in_release_notes=True
+   acceptance: A23;A28: the final delivery report contains the limitation statement and links each claimed capability to an executed check
+   marker: the final delivery report, filled by the orchestrator at sealing (ADR-0073 §7), with the limitation statement and each claimed capability linked to an executed check, verified by verify-seal V18.
+
+== REQ-DLV-039 status=IMPLEMENTED final_gate=DG7 evidence_nonempty=True D-274_cited=True 'not presented as met'/'not met' disclosed=True in_release_notes=True
+   acceptance: A18;A19;A23;A28: A01-A27 tests pass on the DG7 candidate; the offline clean-environment demonstration is recorded; all eight gate reports are included; any unmet mandatory acceptance criterion is listed as a release blocker
+   marker: A23 for DG7 (the DG7 round's reviews and audit on the frozen candidate), the release-auditor's decisions on the D-270 hits and the A27 K11 partial, and 'all eight gate reports are included', checked by the seal (V6, V7) after DG7 is approved.
+
+== REQ-DLV-040 status=IMPLEMENTED final_gate=DG7 evidence_nonempty=True D-274_cited=True 'not presented as met'/'not met' disclosed=False in_release_notes=True
+   acceptance: A24: the validator test 'A24: the pipeline cannot advance past a gate that is not APPROVED' passes, and across P1-P7 no stage history shows BUILDING before the previous gate's APPROVED timestamp
+   marker: 'node tools/gates/validate.mjs --pipeline' after DG7 is APPROVED, showing the P7 history complete.
+
+== REQ-S02-005 status=IMPLEMENTED final_gate=DG7 evidence_nonempty=True D-274_cited=True 'not presented as met'/'not met' disclosed=False in_release_notes=True
+   acceptance: A24;A28: the validator rejects a BLOCKED row with empty notes and an IMPLEMENTED row without evidence; release notes list every non-IMPLEMENTED row
+   marker: T-I13 (and T-I10) on the frozen DG7 register at the freeze (QA-D's frozen-register half, ADR-0071 §9), and the orchestrator's release-notes --write/--check after this pass, so that the release notes list the 23 later clauses and the D-270 hits.
+
+== REQ-S19-015 status=IMPLEMENTED final_gate=DG7 evidence_nonempty=True D-274_cited=True 'not presented as met'/'not met' disclosed=False in_release_notes=True
+   acceptance: A18;A28: the package contains all seven items, and the coverage register equals docs/delivery/requirements.csv at the DG7 candidate
+   marker: T-I10 at the freeze and, at the seal, the A28 archive listing and the byte check that the packaged register equals docs/delivery/requirements.csv at the DG7 candidate.
+
+== REQ-S20-031 status=IMPLEMENTED final_gate=DG7 evidence_nonempty=True D-274_cited=True 'not presented as met'/'not met' disclosed=False in_release_notes=True
+   acceptance: A23;A26: for each gate, test-evidence contains unit, integration, e2e and visual results for the capabilities in scope, and no check is reported passed without an executed command
+   marker: the DG7 section of the test-level index after the final DG7 round (unit, integration, e2e and visual results on the frozen DG7 candidate, every can't-run item with its reason), judged in the DG7 gate review.
+
+== REQ-S21-002 status=IMPLEMENTED final_gate=DG7 evidence_nonempty=True D-274_cited=True 'not presented as met'/'not met' disclosed=False in_release_notes=True
+   acceptance: A23;A25: every gate candidate runs end to end in Arabic and English with audit enabled; any change to a previously approved contract appears as a reopen entry in the affected stage's history with new review records
+   marker: the DG7 gate's reviewed end-to-end run in Arabic and English with audit enabled on the frozen DG7 candidate, and the release-auditor's check of reopen records.
+
+== REQ-S21-003 status=IMPLEMENTED final_gate=DG7 evidence_nonempty=True D-274_cited=True 'not presented as met'/'not met' disclosed=True in_release_notes=True
+   acceptance: A28;A18: at DG7 no register row is below IMPLEMENTED, or it is listed as a release blocker; the secret scan of the repository and the handover text finds no credentials
+   marker: the release-auditor's check at the DG7 gate that every disclosed deviation and every later clause is listed in the regenerated release notes, and QA-D's T-I10 and T-I13 on the frozen DG7 register.
+
+== REQ-S21-004 status=IMPLEMENTED final_gate=DG7 evidence_nonempty=True D-274_cited=True 'not presented as met'/'not met' disclosed=False in_release_notes=True
+   acceptance: A02;A06;A18;A23: the A02, A06, A18 and A23 evidence all pass on the DG7 candidate
+   marker: A23 on the DG7 candidate: the DG7 round's three specialist reviews and the release audit.
+
+release notes 'later clause' section lines:
+   - REQ-S02-005 (IMPLEMENTED): T-I13 (and T-I10) on the frozen DG7 register at the freeze (QA-D's frozen-register half, ADR-0071 §9), and the orchestrator's release-notes --write/--check after this pass
+   - REQ-S21-003 (IMPLEMENTED): the release-auditor's check at the DG7 gate that every disclosed deviation and every later clause is listed in the regenerated release notes, and QA-D's T-I10 and T-I13 on

@@ -1,0 +1,25 @@
+HEAD 8323dacae51a98c8f555fb95d8e1dd0a1e747ea8
+===== M0-control 23:32:48
+093ebfcb18e110a670e654e07f1bbe2dcac530fe3dbba267aa6a7e9d837063ce  apps/api/src/modules/organization/routes.ts
+ ✓ |integration| apps/api/test/integration/organizations.test.ts (15 tests) 1166ms
+ Test Files  1 passed (1)
+      Tests  15 passed (15)
+EXIT 0 M0-control
+ apps/api/src/modules/organization/routes.ts | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+===== M1-a26-defect-patch 23:33:05
+9a367b504862efb75fb22e769c6ef0f9ff758d1bcd0ca200879ff08c039bda42  apps/api/src/modules/organization/routes.ts
+   ✓ organizations > lists only organizations in which the caller holds organization.read 20ms
+   ✓ organizations > reads one organization with ETag; others are 404 38ms
+   ✓ organizations > updates with If-Match (technical admin), 403 for a business role, 404 across organizations; audited 63ms
+   ✓ organizations > creates an organization (organization.manage) and carries over only the creator's technical-admin roles 60ms
+   ✓ business units > lists the organization's units for readers and 404s other organizations 24ms
+   × business unit update authorization (business_unit.manage, not business_unit.read) > office (business_unit.read without business_unit.manage) gets 403; unit unchanged; no update audited 23ms
+   × business unit update authorization (business_unit.manage, not business_unit.read) > auditor (business_unit.read without business_unit.manage) gets 403; unit unchanged; no update audited 19ms
+   × business unit update authorization (business_unit.manage, not business_unit.read) > leadA1 (business_unit.read without business_unit.manage) gets 403; unit unchanged; no update audited 26ms
+   × business unit update authorization (business_unit.manage, not business_unit.read) > split grant: manage on the destination (a2) but only read on the moved unit (a1x) cannot re-parent it (403) 22ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed (1)
+      Tests  4 failed | 11 passed (15)
+EXIT 1 M1-a26-defect-patch
+restored: 0 changed; {"stage":"DG7","source":"working-tree","candidate_id":"sha256:60dd90b6c5a7af3b502f02be68e6b601fd11e90fcbc0a48166cbc389453a80e9","files":3154}

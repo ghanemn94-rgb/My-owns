@@ -1,0 +1,242 @@
+54 Counter({'IMPLEMENTED': 54})
+all 412 Counter({'IMPLEMENTED': 412})
+completes-after-gate rows 23
+
+## REQ-DLV-005 IMPLEMENTED | Q19
+TITLE: Apply each role's independence rule at every gate: no role reviews, certifies or approves its own work, and the orchestrator never records a review verdict
+ACCEPTANCE: A23: at every gate DG0-DG7 the validator accepts only review records whose reviewer_role is not in the gate's implementation authors and whose invocation references are distinct; the P0 test 'A23: a reviewer who authored the scope, or who is an owner, is rejected' passes
+LATER: completes-after-gate: 'node tools/gates/validate.mjs --stage DG7' on the DG7 candidate with the DG7 round's review records and audit, which only the gate run shows.
+
+## REQ-DLV-008 IMPLEMENTED | Q19
+TITLE: Isolate concurrent writers in branches or worktrees, verify each workspace's starting revision, assign explicit file ownership and serialize shared files; only the orchestrator integrates
+ACCEPTANCE: A23;A26: for every stage, each assignment names a base revision and permitted files, and no two concurrently active assignments share a writable file (checked by the release-auditor)
+LATER: completes-after-gate: the release-auditor's check of file ownership and of the D-270 assignment hits at the DG7 gate, and protocol-audit C4 on the frozen DG7 candidate (p7-work-split §J.1).
+
+## REQ-DLV-009 IMPLEMENTED 
+TITLE: Activate only the agents a stage needs, with at most four active workers; parallelize independent tasks and reviews and serialize dependent work
+ACCEPTANCE: A23: for each gate, overlapping run intervals in docs/delivery/runs/<DGx>/*/meta.json never exceed four
+
+## REQ-DLV-010 IMPLEMENTED | Q19
+TITLE: Run the three mandatory independent specialist reviews (domain, code-security, QA) and the release audit at every stage, against the same frozen candidate, before reading each other's conclusions
+ACCEPTANCE: A23: every gate DG0-DG7 has domain-reviewer, code-security-reviewer and qa-verifier PASS records and a release-auditor record on the same candidate_id, each linked to a distinct recorded run
+LATER: completes-after-gate: the DG7 gate's three specialist PASS records and audit on the frozen DG7 candidate; this status grants and implies no DG7 approval.
+
+## REQ-DLV-011 IMPLEMENTED | Q19
+TITLE: Issue every delegation with the full assignment contract
+ACCEPTANCE: A23;A27: every run's meta.json records an assignment SHA-256 that matches an assignment file containing all ten contract elements
+LATER: completes-after-gate: the release-auditor's decision on the D-270 C2 hits at the DG7 gate, and protocol-audit C2 on the frozen DG7 candidate over every DG7 run's assignment hash (p7-work-split §J.1).
+
+## REQ-DLV-012 IMPLEMENTED | Q19
+TITLE: Require implementation handbacks listing changed files, behaviour, checks actually run with results, known gaps and merge instructions; unfinished tasks stay unfinished
+ACCEPTANCE: A23;A26: every implementation task in a gate has a handback with the five sections; any task whose handback lists open gaps is not reported as complete in progress.md
+LATER: completes-after-gate: the release-auditor's decision on the D-270 C3 hits (six, F-DG7-960 included) and its reading of progress.md at the DG7 gate, and protocol-audit C3 and C6 on the frozen DG7 candidate (p7-work-split §J.1).
+
+## REQ-DLV-014 IMPLEMENTED | Q19
+TITLE: Run the eight-step gate loop for every stage: plan, implement, integrate and freeze, review (rendered Arabic and English screens for visible changes), record findings, repair, reverify, audit
+ACCEPTANCE: A23;A26: each stage's history in stages.json passes through BUILDING, REVIEWING and VERIFYING to APPROVED, and every finding raised has a fix revision plus an independent verification by a non-owner before approval
+LATER: completes-after-gate: DG7's history reaching VERIFYING and APPROVED, with each DG7 finding (round 2: 915, 935, 960-963) fixed and verified by a non-owner, shown by 'validate.mjs --stage DG7' at the gate.
+
+## REQ-DLV-018 IMPLEMENTED | Q19
+TITLE: Resolve reviewer disagreement by reproduction and a targeted fresh review; after three unproductive repair cycles record a blocker and recovery plan instead of looping or lowering the gate
+ACCEPTANCE: A26: no finding is closed by majority vote; any finding with three failed fix verifications has a blocker entry with a recovery plan in progress.md and stages.json
+LATER: completes-after-gate: protocol-audit C7 (or the release-auditor's reading of findings.json and progress.md) over the findings of the later DG7 rounds, up to the gate.
+
+## REQ-DLV-021 IMPLEMENTED | Q19
+TITLE: Record each gate's individual review records under reviews/DGx/round-N and the audited gate decision in gates/DGx.json
+ACCEPTANCE: A23;A28: gates/DG0.json ... gates/DG7.json all exist, validate against gate.schema.json and reference review records on the same candidate; the validator tests 'the gate record must be written by the audited release-auditor invocation' and 'F-DG0-121 / F-DG0-211: the gate file must be what the auditor run wrote' pass (a gate decision file that differs from what the audited release-auditor run wrote fails)
+LATER: completes-after-gate: gates/DG7.json written by the audited release-auditor run, then A28 over all eight gate records. No DG7 approval is granted or implied here.
+
+## REQ-DLV-024 IMPLEMENTED | Q19
+TITLE: Before implementation in P1-P7, validate the preceding approved gate (--historical), and on resumption reconcile recorded gate state with the reviewed payload and repository before assigning write tasks
+ACCEPTANCE: A24;A27: for each of P1-P7, test-evidence contains a passing --historical run for the previous gate, dated before the stage's first implementation run
+LATER: completes-after-gate: the release-auditor's decision on the D-270 C5 hit at the DG7 gate.
+
+## REQ-DLV-027 IMPLEMENTED 
+TITLE: Continue automatically through DG0-DG7 without routine user confirmation, while real business approvals, production access, release authorization and irreversible actions stay with the user's and the company's actual authority
+ACCEPTANCE: A27: progress.md and stages.json show each next stage entering BUILDING after the prior APPROVED gate with no recorded user confirmation step; no record claims a business, Finance, IT or production approval
+
+## REQ-DLV-028 IMPLEMENTED | Q19
+TITLE: Send a short evidence-based update at each gate: stage and candidate, capabilities demonstrated, reviewers and verdicts, findings fixed, remaining blockers and next stage
+ACCEPTANCE: A23;A27: for each approved gate, progress.md has an update with all six elements and the candidate ID matching gates/DGx.json
+LATER: completes-after-gate: the DG7 gate update in progress.md with all six elements and the candidate id matching gates/DG7.json, written after the DG7 gate.
+
+## REQ-DLV-030 IMPLEMENTED | Q19
+TITLE: On resumption reconcile repository and durable records, reject reviews that no longer match the candidate, recreate unavailable agent sessions, and never rely on a remembered verbal approval
+ACCEPTANCE: A27: in a resumption drill, the reconcile report flags a review whose candidate no longer matches, work continues from progress.md, and no approval appears without a review record
+LATER: completes-after-gate: a passing K11 re-drill against the current progress.md, or the release-auditor's decision on the disclosed A27 K11 partial at the DG7 gate.
+
+## REQ-DLV-031 IMPLEMENTED | Q19
+TITLE: State in every status report and in final delivery that agent count or agreement does not guarantee correctness; quality rests on independent inspection, executed tests, traceability, repair and reproducible evidence
+ACCEPTANCE: A23;A28: the final delivery report contains the limitation statement and links each claimed capability to an executed check
+LATER: completes-after-gate: the final delivery report, filled by the orchestrator at sealing (ADR-0073 §7), with the limitation statement and each claimed capability linked to an executed check, verified by verify-seal V18.
+
+## REQ-DLV-039 IMPLEMENTED | Q19
+TITLE: Deliver the P7 outputs and final release: complete source/archive, clean deployment, migrated data/files/configuration, restore drill, guides, traceability, final IT handover, secure administrator bootstrap and the remaining external configuration dependencies
+ACCEPTANCE: A18;A19;A23;A28: A01-A27 tests pass on the DG7 candidate; the offline clean-environment demonstration is recorded; all eight gate reports are included; any unmet mandatory acceptance criterion is listed as a release blocker
+LATER: completes-after-gate: A23 for DG7 (the DG7 round's reviews and audit on the frozen candidate), the release-auditor's decisions on the D-270 hits and the A27 K11 partial, and 'all eight gate reports are included', checked by the seal (V6, V7) after DG7 is approved.
+
+## REQ-DLV-040 IMPLEMENTED | Q19
+TITLE: Implement stages P0-P7 in order and start a stage only after the preceding gate is APPROVED (read-only discovery excepted); the register assigns each requirement its increments and one final gate
+ACCEPTANCE: A24: the validator test 'A24: the pipeline cannot advance past a gate that is not APPROVED' passes, and across P1-P7 no stage history shows BUILDING before the previous gate's APPROVED timestamp
+LATER: completes-after-gate: 'node tools/gates/validate.mjs --pipeline' after DG7 is APPROVED, showing the P7 history complete.
+
+## REQ-DLV-041 IMPLEMENTED | Q19
+TITLE: Seal the DG7 release after approval: approve the frozen payload whose hash excludes review and gate metadata, append the DG7 gate record to the evidence envelope, run A28 integrity verification, and record the payload hash and archive checksum separately
+ACCEPTANCE: A28: the sealing check verifies that all eight gate records, the ten agent definitions, the register and the findings are present and match their checksums, that the payload hash equals the DG7 candidate ID, and that no DG record is confused with G1-G6
+LATER: completes-after-gate: the real seal and 'verify-seal: PASS' after DG7 approval, with the payload hash and archive checksum recorded separately.
+
+## REQ-S01-001 IMPLEMENTED 
+TITLE: Deliver a complete working enterprise transformation platform with source code, persistent database, documentation and a tested self-hosting package
+ACCEPTANCE: A02;A18: the guided end-to-end scenario completes on a persisted database using only native workflows, and the package installs and runs in a clean environment without builder-hosted services
+
+## REQ-S01-006 IMPLEMENTED 
+TITLE: Deliver a clean source repository and deployment package that Mobily IT can host on its own infrastructure without the original AI builder, a personal account or a mandatory external SaaS backend
+ACCEPTANCE: A18: a clean environment with a different base URL starts from the package and runs key workflows with outbound public internet disabled and no builder or personal credentials configured
+
+## REQ-S02-003 IMPLEMENTED 
+TITLE: Publish the requirement register read-only in the Administration area and include it in the IT handover
+ACCEPTANCE: A01;A28: the in-app view lists the same row count and IDs as docs/delivery/requirements.csv for the release; the handover archive contains the register
+
+## REQ-S02-005 IMPLEMENTED | Q19
+TITLE: Report completion honestly: every incomplete or externally blocked item names the exact missing dependency and no planned feature is labelled delivered
+ACCEPTANCE: A24;A28: the validator rejects a BLOCKED row with empty notes and an IMPLEMENTED row without evidence; release notes list every non-IMPLEMENTED row
+LATER: completes-after-gate: T-I13 (and T-I10) on the frozen DG7 register at the freeze (QA-D's frozen-register half, ADR-0071 §9), and the orchestrator's release-notes --write/--check after this pass, so that the release notes list the 23 later clauses and the D-270 hits.
+
+## REQ-S16-008 IMPLEMENTED 
+TITLE: Provide Docker images and Compose configuration for reproducible install and test, plus deployment configuration for the actual IT orchestration target when known, without presenting Compose as proof of high-availability readiness
+ACCEPTANCE: A18: docker compose up on a clean host reaches ready health checks; the docs state the HA limitation
+
+## REQ-S16-009 IMPLEMENTED 
+TITLE: Verify official documentation, support windows, licences and security maintenance before selecting dependency versions; pin versions with lockfiles; keep mandatory services runnable in company infrastructure; keep a licence inventory flagging procurement
+ACCEPTANCE: A18: every direct dependency is pinned in a lockfile and listed in the licence inventory with its licence; any licence requiring procurement is flagged
+
+## REQ-S16-024 IMPLEMENTED 
+TITLE: Define retention and archival policies for records, evidence, audit and snapshots, and do not substitute soft deletion for an approved retention policy
+ACCEPTANCE: A19;A22: the retention configuration lists every record class; an archival job run on test data archives only records past retention and logs each action
+
+## REQ-S16-031 IMPLEMENTED 
+TITLE: Treat production secrets as runtime configuration outside the repository, and integrate TLS and database/storage encryption with the hosting environment
+ACCEPTANCE: A18: the secret scan finds no secrets in the repository; the environment template contains placeholders only
+
+## REQ-S16-033 IMPLEMENTED 
+TITLE: Make no organizational or regulatory compliance claims based on these controls; provide evidence for the implemented controls so Mobily IT can assess them
+ACCEPTANCE: A22;A28: a text scan of docs and UI strings finds no compliance or certification claim; the matrix links each control to a test
+
+## REQ-S17-004 IMPLEMENTED 
+TITLE: Build working local test adapters and contract tests, list the enterprise endpoints and credentials IT must supply, and never claim a live integration until it is authenticated and tested
+ACCEPTANCE: A17: contract tests pass against the local adapters; the integration status page shows 'not verified' for every enterprise connector without a recorded authenticated test
+
+## REQ-S19-001 IMPLEMENTED 
+TITLE: Deliver the complete source repository plus a portable archive, separating application code, infrastructure, documentation and demo data
+ACCEPTANCE: A18;A28: the archive checksum matches the recorded value, and the archive contains separate app, infra, docs and demo-data directories
+
+## REQ-S19-002 IMPLEMENTED 
+TITLE: Include the frontend, backend, worker, shared schemas, calculation engine, report templates, local assets and all build configuration (handover item 1)
+ACCEPTANCE: A18: a clean build from the archive succeeds without network access to builder-hosted services
+
+## REQ-S19-003 IMPLEMENTED 
+TITLE: Include dependency manifests, lockfiles, licence/SBOM inventory, build scripts, container definitions and a complete service/dependency list (handover item 2)
+ACCEPTANCE: A18: the SBOM lists every runtime dependency with licence; the service list matches the Compose file
+
+## REQ-S19-005 IMPLEMENTED 
+TITLE: Include the final database schema, migrations, data dictionary, ER diagram, validation rules, indexes and safe production initialization (handover item 3)
+ACCEPTANCE: A18: the data dictionary covers every table and column in the final schema; production initialization on a clean database succeeds
+
+## REQ-S19-007 IMPLEMENTED 
+TITLE: Include the final versioned API/OpenAPI specification, authentication setup and connector contracts (handover item 4)
+ACCEPTANCE: A17;A18: every endpoint and connector in the release is described and passes its contract test
+
+## REQ-S19-008 IMPLEMENTED 
+TITLE: Export and import workflow, methodology, form, branding and automation configuration with schema versions (handover item 5)
+ACCEPTANCE: A06;A18: a bundle exported from the demo installation imports into a clean one, and its published versions behave identically; a bundle with an unknown schema version is rejected
+
+## REQ-S19-009 IMPLEMENTED 
+TITLE: Provide an environment variable template without secrets, identity-provider instructions, storage setup, SMTP/notification settings and optional AI configuration (handover item 6)
+ACCEPTANCE: A18: a clean deployment configured only from the template and guides starts successfully; the template contains no secret values
+
+## REQ-S19-010 IMPLEMENTED 
+TITLE: Provide a reproducible local/clean-VM startup command, health checks and readiness verification, with prerequisite image/package preparation documented for restricted networks (handover item 7)
+ACCEPTANCE: A18;A22: on a clean VM the documented command reaches ready state, and the readiness endpoint reports database, storage and worker status
+
+## REQ-S19-011 IMPLEMENTED 
+TITLE: Provide the production deployment guide covering domains/TLS, corporate SSO mapping, service accounts, secrets, network boundaries, logging and monitoring (handover item 8)
+ACCEPTANCE: A18;A22: the guide covers all seven topics, and the clean-environment transfer follows it without undocumented steps
+
+## REQ-S19-012 IMPLEMENTED 
+TITLE: Provide backup/restore procedures covering the database, evidence bytes, configuration, audit and reporting snapshots, with retention, restore drills and recovery objectives to be agreed with IT (handover item 9)
+ACCEPTANCE: A19: the restore drill recovers the database, evidence, audit, snapshots and job state, with documented checks and timings
+
+## REQ-S19-013 IMPLEMENTED 
+TITLE: Provide versioned upgrade, migration dry-run, maintenance window and rollback/recovery procedures, explaining backup-based recovery where migrations are not reversible (handover item 10)
+ACCEPTANCE: A19;A18: a dry-run migration on a restored copy reports its changes; the guide identifies each irreversible migration and its backup-based recovery
+
+## REQ-S19-014 IMPLEMENTED 
+TITLE: Provide data migration tools with mapping, validation, reconciliation, attachment manifests and checksum/record-count checks (handover item 11)
+ACCEPTANCE: A18: migrating the demo dataset into a clean installation reports equal record counts and matching attachment checksums
+
+## REQ-S19-015 IMPLEMENTED | Q19
+TITLE: Provide user and admin guides, the role matrix, the automation operations guide, test evidence, known limitations, release notes and the source-requirements coverage register (handover item 12)
+ACCEPTANCE: A18;A28: the package contains all seven items, and the coverage register equals docs/delivery/requirements.csv at the DG7 candidate
+LATER: completes-after-gate: T-I10 at the freeze and, at the seal, the A28 archive listing and the byte check that the packaged register equals docs/delivery/requirements.csv at the DG7 candidate.
+
+## REQ-S19-016 IMPLEMENTED 
+TITLE: Export all business records, relationships, audit history, approvals, evidence files, configuration, formulas and report snapshots through a versioned migration manifest that preserves IDs and attachment links, with portable user/role mappings but no corporate passwords
+ACCEPTANCE: A18: an export and import round-trip preserves IDs, links, audit history and evidence checksums; the package contains no password hashes
+
+## REQ-S19-017 IMPLEMENTED 
+TITLE: Demonstrate transfer into a clean, company-like environment with a different base URL and fresh database/storage: restore data, verify links and evidence access, rebind identity, run key workflows, compare counts and checksums, and verify persistence across a restart
+ACCEPTANCE: A18: the drill report shows matching counts and checksums, working evidence downloads under the new base URL, successful key workflows, and records, jobs and approvals intact after a full restart
+
+## REQ-S19-018 IMPLEMENTED 
+TITLE: Test runtime operation with outbound public internet disabled, document any enabled enterprise dependency, and supply images or an approved artifact mirror plan for restricted-network builds
+ACCEPTANCE: A18;A21: the lifecycle e2e suite passes with egress blocked, and the image set loads on a host without registry access
+
+## REQ-S19-019 IMPLEMENTED 
+TITLE: Make no required runtime service depend on a builder-hosted database, proprietary workflow service, external storage URL, public CDN, original workspace identifier or personal API key; isolate any build-environment dependency behind an adapter
+ACCEPTANCE: A18: a scan of built assets and configuration finds no public CDN, builder host or personal key, and the offline e2e run passes
+
+## REQ-S20-018 IMPLEMENTED 
+TITLE: Deliver and pass the executable acceptance test A18 Independent deployment
+ACCEPTANCE: A18: Clean environment starts successfully, restored records/files/configuration work and workflows run without the original builder or mandatory public SaaS
+
+## REQ-S20-019 IMPLEMENTED 
+TITLE: Deliver and pass the executable acceptance test A19 Backup and recovery
+ACCEPTANCE: A19: Restore drill recovers database, evidence, audit, snapshots and job state with documented checks and timings
+
+## REQ-S20-023 IMPLEMENTED | Q19
+TITLE: Deliver and pass the executable acceptance test A23 Real independent stage reviews
+ACCEPTANCE: A23: Each DG gate includes separate actual domain, code/security and QA review evidence plus an independent release audit; implementers cannot approve their own work
+LATER: completes-after-gate: the DG7 reviews and audit on the frozen DG7 candidate; no DG7 approval is granted or implied here.
+
+## REQ-S20-026 IMPLEMENTED 
+TITLE: Deliver and pass the executable acceptance test A26 Repair and re-review
+ACCEPTANCE: A26: Introduce a known defect in a controlled test branch; independent reviewers identify it, the implementer fixes it, and independent rechecks/regression tests prove closure
+
+## REQ-S20-027 IMPLEMENTED 
+TITLE: Deliver and pass the executable acceptance test A27 Reliable resumption
+ACCEPTANCE: A27: Resume from a checkpoint; reconstruct current stage/tasks/evidence, reject stale reviews and continue without inventing approvals or requiring routine user confirmation
+
+## REQ-S20-028 IMPLEMENTED | Q19
+TITLE: Deliver and pass the executable acceptance test A28 Final package integrity
+ACCEPTANCE: A28: After the DG7 candidate review, seal the handover with all eight gate records, agent definitions, requirement coverage and findings; verify package integrity and keep these records distinct from product gates G1–G6. This post-approval sealing check must pass before delivery is declared complete
+LATER: completes-after-gate: the post-approval A28 sealing check over all eight gate records, the agent definitions, the register and the findings, kept distinct from product gates G1-G6; delivery is not complete until it passes.
+
+## REQ-S20-031 IMPLEMENTED | Q19
+TITLE: Deliver executable tests at the right level (unit for formulas and state rules, integration for persistence, authorization and jobs, end-to-end for business journeys, visual checks for both languages and report outputs), treating a passing build alone as not acceptance and reporting any test that cannot run with its exact reason
+ACCEPTANCE: A23;A26: for each gate, test-evidence contains unit, integration, e2e and visual results for the capabilities in scope, and no check is reported passed without an executed command
+LATER: completes-after-gate: the DG7 section of the test-level index after the final DG7 round (unit, integration, e2e and visual results on the frozen DG7 candidate, every can't-run item with its reason), judged in the DG7 gate review.
+
+## REQ-S21-002 IMPLEMENTED | Q19
+TITLE: Deliver usable integrated increments that maintain bilingual behaviour, authorization, persistence, evidence and audit throughout, add tests as each capability is built, and reopen affected earlier gates when a dependency discovered later changes an approved contract
+ACCEPTANCE: A23;A25: every gate candidate runs end to end in Arabic and English with audit enabled; any change to a previously approved contract appears as a reopen entry in the affected stage's history with new review records
+LATER: completes-after-gate: the DG7 gate's reviewed end-to-end run in Arabic and English with audit enabled on the frozen DG7 candidate, and the release-auditor's check of reopen records.
+
+## REQ-S21-003 IMPLEMENTED | Q19
+TITLE: Preserve the full platform scope through final delivery (the first slice is not the finished product), mark any unmet mandatory acceptance criterion as a release blocker, and keep credentials out of text and the repository
+ACCEPTANCE: A28;A18: at DG7 no register row is below IMPLEMENTED, or it is listed as a release blocker; the secret scan of the repository and the handover text finds no credentials
+LATER: completes-after-gate: the release-auditor's check at the DG7 gate that every disclosed deviation and every later clause is listed in the regenerated release notes, and QA-D's T-I10 and T-I13 on the frozen DG7 register.
+
+## REQ-S21-004 IMPLEMENTED | Q19
+TITLE: Meet the completion standard: users operate the playbook from inputs to sustained outcomes in the platform, administrators evolve the methodology without routine code edits, IT independently deploys and maintains the whole system, and each delivery stage has reproducible independent review and test evidence
+ACCEPTANCE: A02;A06;A18;A23: the A02, A06, A18 and A23 evidence all pass on the DG7 candidate
+LATER: completes-after-gate: A23 on the DG7 candidate: the DG7 round's three specialist reviews and the release audit.

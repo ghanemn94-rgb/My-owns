@@ -1,0 +1,61 @@
+# 2026-11-15T23:25:05Z code inspection excerpts (live repository at HEAD 9c69cd11 = source 8323dacae for these paths; product sources unchanged since round-2 source f22c97b59)
+$ git diff --name-only f22c97b59 8323dacae -- apps packages tools deploy tests e2e licenses .github
+deploy/scripts/drill/cleanup.sh
+deploy/scripts/tests/transfer-drill.test.mjs
+deploy/scripts/transfer-drill.sh
+packages/db/test/integration/p7-transfer-guards.test.ts
+
+== OIDC loopback exception (D-258): packages/config/src/load.ts
+265:  if (appBaseUrl && nodeEnv === "production" && !secureOriginAllowed(appBaseUrl, nodeEnv)) {
+310:      if (issuerUrl && nodeEnv === "production" && !secureIssuerAllowed(issuerUrl, nodeEnv)) {
+398:const LOOPBACK_HOSTS: ReadonlySet<string> = new Set(["localhost", "127.0.0.1", "[::1]"]);
+401:export function isLoopbackHost(url: URL): boolean {
+402:  return LOOPBACK_HOSTS.has(url.hostname.toLowerCase());
+410:export function secureOriginAllowed(appBaseUrl: URL, nodeEnv: string): boolean {
+412:  return appBaseUrl.protocol === "https:" || isLoopbackHost(appBaseUrl);
+420:export function secureIssuerAllowed(issuerUrl: URL, nodeEnv: string): boolean {
+422:  return issuerUrl.protocol === "https:" || isLoopbackHost(issuerUrl);
+http://127.0.0.1.evil.example/     hostname= 127.0.0.1.evil.example loopback-set match: false
+http://localhost.evil/             hostname= localhost.evil         loopback-set match: false
+http://127.0.0.1@evil.example/     hostname= evil.example           loopback-set match: false
+http://0x7f.0.0.1/                 hostname= 127.0.0.1              loopback-set match: true
+http://127.1/                      hostname= 127.0.0.1              loopback-set match: true
+http://[::1]:8080/                 hostname= [::1]                  loopback-set match: true
+http://LOCALHOST/                  hostname= localhost              loopback-set match: true
+http://localhost./                 hostname= localhost.             loopback-set match: false
+
+== config-bundle commit: fresh rights in tx, row lock + version, plan re-check, audit (apps/api/src/modules/transfer/config-bundle/service.ts)
+70:import { countPlan, planBundle, samePlan, type PlanRow } from "./plan.ts";
+502:      const { userId } = await freshRightAt(tx, request, CONFIG_BUNDLE_EXPORT, organizationId);
+620:      const { userId } = await freshRightAt(tx, request, CONFIG_BUNDLE_IMPORT, organizationId);
+682:async function lockedImport(tx: Tx, id: string, organizationId: string, expected: number): Promise<ImportRow> {
+698:  const { principal, userId } = await freshRightAt(tx, request, CONFIG_BUNDLE_IMPORT, probe.organization_id);
+699:  const current = await lockedImport(tx, probe.id, probe.organization_id, expected);
+739:    .where("version", "=", current.version)
+766:  const { principal, userId } = await freshRightAt(tx, request, CONFIG_BUNDLE_IMPORT, probe.organization_id);
+767:  const current = await lockedImport(tx, probe.id, probe.organization_id, expected);
+779:  if (!samePlan(plan, storedPlan as never)) throw configBundleRefusals.planChanged();
+810:    .where("version", "=", current.version)
+815:    action: "config_bundle_import.committed",
+
+== migration import: user triggers disabled only on non-audit tables, audit triggers asserted enabled before and after (packages/db/src/transfer/import.ts)
+14://           `LOCK TABLE audit_event IN EXCLUSIVE MODE`; E1-E4 (A1.3: no use, baseline-only audit rows, the audit
+257:export async function assertAuditTriggersEnabled(tx: DbOrTx): Promise<void> {
+269:/** E1-E4 (A1.3), in the load transaction after `LOCK TABLE audit_event IN EXCLUSIVE MODE`. */
+270:export async function checkEmptyTarget(tx: DbOrTx, carriedSeqMax: bigint, dir: string): Promise<void> {
+286:  await assertAuditTriggersEnabled(tx);
+676:  await sql`LOCK TABLE audit_event IN EXCLUSIVE MODE`.execute(tx);
+679:  await checkEmptyTarget(tx, carried.seqMax, pkg.dir);
+706:  for (const t of others) await sql`${sql.raw(`ALTER TABLE ${quoteIdent(t.name)} DISABLE TRIGGER USER`)}`.execute(tx);
+707:  await assertAuditTriggersEnabled(tx);
+777:  for (const t of others) await sql`${sql.raw(`ALTER TABLE ${quoteIdent(t.name)} ENABLE TRIGGER USER`)}`.execute(tx);
+778:  await assertAuditTriggersEnabled(tx);
+
+== export/import read authorization (organization scope)
+apps/api/src/modules/transfer/export/service.ts:144:    if ((await authorize(db, principal, MIGRATION_EXPORT, { type: "organization", id: organizationId })).allowed)
+apps/api/src/modules/transfer/import/service.ts:159:    if ((await authorize(db, principal, MIGRATION_IMPORT_READ, { type: "organization", id: organizationId })).allowed)
+
+== secret allow-list entries are bound to (rule, path, valueSha256); wildcard-path entries are history/envelope scoped
+entries 46 all have valueSha256: True
+wildcard-path entries 17 scopes [('history',), ('history', 'envelope')]
+# end 2026-11-15T23:25:05Z

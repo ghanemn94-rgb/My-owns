@@ -1,0 +1,65 @@
+# 2026-11-15T22:42:35Z F-DG7-962 order probes (Node v24.21.0, cwd $TMPDIR/rv at 8323dacae, load 2.75 4.16 2.91)
+7036b7c80cf2f77ffb29e52f85cd6b936a5a258826509183e9e0b68495d3bd82  packages/db/test/integration/p7-transfer-guards.test.ts
+== P1 candidate: guard file FIRST, then contract, then response-validation
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+ ✓ |integration| packages/db/test/integration/p7-transfer-guards.test.ts (22 tests) 12752ms
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts (111 tests) 78383ms
+ ✓ |integration| apps/api/test/integration/contract/response-validation.test.ts (119 tests) 93715ms
+ Test Files  3 passed (3)
+      Tests  252 passed (252)
+exit=0
+== P2 candidate: contract, response-validation, then guard file LAST
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+ ✓ |integration| apps/api/test/integration/contract/contract.test.ts (111 tests) 103585ms
+ ✓ |integration| apps/api/test/integration/contract/response-validation.test.ts (119 tests) 104116ms
+ ✓ |integration| packages/db/test/integration/p7-transfer-guards.test.ts (22 tests) 14295ms
+ Test Files  3 passed (3)
+      Tests  252 passed (252)
+exit=0
+== M1 revert-to-fail: pre-fix guard file (f22c97b59) FIRST
+ .../db/test/integration/p7-transfer-guards.test.ts | 57 ++--------------------
+ 1 file changed, 5 insertions(+), 52 deletions(-)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+ ✓ |integration| packages/db/test/integration/p7-transfer-guards.test.ts (21 tests) 386ms
+ ❯ |integration| apps/api/test/integration/contract/contract.test.ts (111 tests | 4 failed) 119376ms
+     → {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"A migration export is already queued or running. Wait for it to finish.","code":"migration.export_in_progress","requestId":"01a1e169-33d7-75e1-8d10-4145a7d256c3"}: expected 422 to be 202 // Object.is equality
+     → expected [ 'createMigrationExport', …(8) ] to deeply equal []
+ ❯ |integration| apps/api/test/integration/contract/response-validation.test.ts (119 tests | 5 failed) 127947ms
+     → {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"A migration export is already queued or running. Wait for it to finish.","code":"migration.export_in_progress","requestId":"01a1e16b-19f0-7738-b962-abc71e5be958"}: expected 422 to be 202 // Object.is equality
+     → expected [ 'createMigrationExport', …(8) ] to deeply equal []
+     → expected [ 'listMigrationImports', …(2) ] to deeply equal []
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > P7 BE-C operations (p7-exercises-be-c.ts): migration exports
+AssertionError: {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"A migration export is already queued or running. Wait for it to finish.","code":"migration.export_in_progress","requestId":"01a1e169-33d7-75e1-8d10-4145a7d256c3"}: expected 422 to be 202 // Object.is equality
+ ❯ status apps/api/test/integration/contract/p7-exercises-be-c.ts:107:50
+    107|     expect(res.status, JSON.stringify(res.body)).toBe(expected);
+ ❯ exerciseP7BeCOperations apps/api/test/integration/contract/p7-exercises-be-c.ts:116:19
+ ❯ apps/api/test/integration/contract/contract.test.ts:953:5
+ FAIL  |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > P7 BE-D operations (p7-exercises-be-d.ts): migration imports, reconciliations, identity rebinds
+ ❯ assertContract apps/api/test/support/contract.ts:121:11
+ ❯ call apps/api/test/support/harness.ts:188:5
+ ❯ mirrored apps/api/test/integration/contract/contract.test.ts:444:15
+ ❯ status apps/api/test/integration/contract/p7-exercises-be-d.ts:180:17
+ ❯ exerciseP7BeDOperations apps/api/test/integration/contract/p7-exercises-be-d.ts:187:16
+ ❯ apps/api/test/integration/contract/contract.test.ts:957:5
+ FAIL  |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > every operation: an undeclared request media type is a declared 400 validation.content_type; nothing written
+ ❯ assertContract apps/api/test/support/contract.ts:121:11
+ ❯ call apps/api/test/support/harness.ts:188:5
+ ❯ exerciseUndeclaredMediaTypes apps/api/test/integration/contract/media-types.ts:111:19
+ ❯ apps/api/test/integration/contract/contract.test.ts:1175:21
+ FAIL  |integration| apps/api/test/integration/contract/contract.test.ts > every operation, validated against the contract and the zod mirrors > covers every operation with at least one success and every successful body with its zod mirror
+ FAIL  |integration| apps/api/test/integration/contract/response-validation.test.ts > every operation, validated against the contract and the zod mirrors > covers every operation with at least one success and every successful body with its zod mirror
+AssertionError: expected [ 'createMigrationExport', …(8) ] to deeply equal []
+ ❯ apps/api/test/integration/contract/contract.test.ts:1232:23
+ FAIL  |integration| apps/api/test/integration/contract/response-validation.test.ts > every operation, validated against the contract and the zod mirrors > P7 BE-C operations (p7-exercises-be-c.ts): migration exports
+AssertionError: {"type":"urn:mth:problem:validation","title":"Business rule violated","status":422,"detail":"A migration export is already queued or running. Wait for it to finish.","code":"migration.export_in_progress","requestId":"01a1e16b-19f0-7738-b962-abc71e5be958"}: expected 422 to be 202 // Object.is equality
+ ❯ status apps/api/test/integration/contract/p7-exercises-be-c.ts:107:50
+    107|     expect(res.status, JSON.stringify(res.body)).toBe(expected);
+ ❯ exerciseP7BeCOperations apps/api/test/integration/contract/p7-exercises-be-c.ts:116:19
+ ❯ apps/api/test/integration/contract/contract.test.ts:953:5
+ FAIL  |integration| apps/api/test/integration/contract/response-validation.test.ts > every operation, validated against the contract and the zod mirrors > P7 BE-D operations (p7-exercises-be-d.ts): migration imports, reconciliations, identity rebinds
+ ❯ assertContract apps/api/test/support/contract.ts:121:11
+exit=1
+7036b7c80cf2f77ffb29e52f85cd6b936a5a258826509183e9e0b68495d3bd82  packages/db/test/integration/p7-transfer-guards.test.ts
+== final git status (must be clean)
+# end 2026-11-15T22:55:01Z

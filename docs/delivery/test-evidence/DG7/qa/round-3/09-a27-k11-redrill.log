@@ -1,0 +1,18 @@
+Mon Nov 16 00:16:10 UTC 2026
+K11 re-drill (qa-verifier, A27 / REQ-DLV-030): reconstruct the next action from progress.md AT THE CANDIDATE (8323dac) alone, then compare with what happened next.
+--- progress.md at 8323dac, first checkpoint bullet:
+- **DG7 (P7 "Independent transfer and release") is entering round 3** (2026-11-15, D-275). Round 1 (df8225e5) and round 2 (ca38b65e) did not pass; round-2 findings 915, 935, 960, 961, 962, 963 repaired and FIXED_PENDING_VERIFICATION; pre-freeze checks all exit 0. **Next action:** freeze round 3, then domain, code-security and qa on the same candidate verifying the six findings, then the release audit, then the A28 seal. Product gate G6 never implies DG7.
+--- stages.json at 8323dac (DG7 state, last history):
+{"state":"FIXING","last":[{"state":"REVIEWING","at":"2026-11-15T14:20:34Z","note":"Round 2 frozen on candidate ca38b65e (D-273)."},{"state":"FIXING","at":"2026-11-15T17:13:32Z","note":"Round 2: all six round-1 findings verified closed by all three; domain FAIL (915), code-security FAIL (935; no security defect found), qa FAIL (960, 961, 962, 963). D-274."}]}
+--- the commit that followed the candidate:
+93679b227 run: DG7-T-DG7-REV-CS-R3-code-security-reviewer-20261115T223443Z-151e8ff3 (review evidence, auto-committed by run-agent.sh)
+30c29f6c0 run: DG7-T-DG7-REV-DOM-R3-domain-reviewer-20261115T223443Z-96c7e804 (review evidence, auto-committed by run-agent.sh)
+9c69cd117 DG7: freeze round 3 (sha256:60dd90b6)
+--- reconcile at HEAD (round-2 records STALE for the new candidate):
+active stage: DG7 (REVIEWING)
+working tree:     sha256:60dd90b6c5a7af3b502f02be68e6b601fd11e90fcbc0a48166cbc389453a80e9 (matches)
+round 2 domain-reviewer: FAIL (STALE for current content)
+round 2 code-security-reviewer: FAIL (STALE for current content)
+round 2 qa-verifier: FAIL (STALE for current content)
+PASS reconcile (structure)
+exit 0

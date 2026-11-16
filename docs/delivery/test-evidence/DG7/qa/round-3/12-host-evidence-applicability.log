@@ -1,0 +1,25 @@
+host-run evidence commits:
+fd13af9cb 2026-11-14 18:24:31 +0000 DG7: D-267 container host run PASS (build, bundle, Compose, no-egress smoke, Keycloak e2e)
+d162115e5 2026-11-14 18:17:29 +0000 DG7: host run 3 (bundle load, Compose up --pull never, /readyz ready, no-egress stack healthy; keycloak e2e step misordered)
+bf907c2d5 2026-11-14 18:11:48 +0000 DG7: keep host run 2 log under its own name
+
+--- runtime/image surface changed after the host run 3c commit (d162115e..8323dac):
+ apps/web/src/api/p7.ts                             |   13 +
+ apps/web/src/app/p7-shell.test.tsx                 |   53 +-
+ apps/web/src/app/router.tsx                        |   45 +-
+ apps/web/src/i18n/ar/retention.json                |  184 +++
+ apps/web/src/i18n/ar/transfer.json                 |    3 +-
+ apps/web/src/i18n/en/retention.json                |  184 +++
+ apps/web/src/i18n/en/transfer.json                 |    3 +-
+ apps/web/src/i18n/index.ts                         |    5 +
+ apps/web/src/i18n/provisional-ar-p7-retention.ts   |  161 +++
+ .../admin/config-transfer/ConfigTransferPages.tsx  |   35 +-
+ .../admin/migration/transfer-screens.test.tsx      |  100 +-
+ .../src/pages/admin/retention/RetentionPages.tsx   | 1262 ++++++++++++++++++++
+ .../admin/retention/retention-screens.test.tsx     |  537 +++++++++
+ deploy/scripts/drill/cleanup.sh                    |  137 +++
+ deploy/scripts/tests/dockerfile-context.test.mjs   |   19 +-
+ deploy/scripts/tests/transfer-drill.test.mjs       |  242 ++++
+ deploy/scripts/transfer-drill.sh                   |   30 +-
+ packages/db/src/migrate.test.ts                    |   23 +
+ 18 files changed, 2982 insertions(+), 54 deletions(-)

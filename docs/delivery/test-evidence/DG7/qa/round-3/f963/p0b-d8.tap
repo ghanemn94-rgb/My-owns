@@ -1,0 +1,19 @@
+T-DG7-DO-D8 real PostgreSQL: comm bash (the launching pid), 6 processes under it, td_stop_pg 0.21 s, total 1.238 s
+▶ T-DG7-DO-D8 drill/cleanup.sh: bounded PostgreSQL shutdown; cleanup never changes the result
+  ✔ td_remove_work removes the work tree and returns 0 (11.971011ms)
+  ✔ a removal that keeps failing under set -e: returns 0, result 0 unchanged, one WARNING line on stderr and in the log (4029.351615ms)
+  ✔ a removal that keeps failing under set -e: returns 0, result 1 unchanged, one WARNING line on stderr and in the log (4028.114522ms)
+  ✔ td_stop_pg escalates INT -> QUIT -> KILL and returns only when the 'postmaster' and its child are gone (bounded) (7028.814371ms)
+  ✔ td_stop_pg on a real PostgreSQL: fast shutdown, no server process left, postmaster.pid removed, the tree removable (1248.039973ms)
+  ✔ T-DG7-DO-D8B td_stop_pg_dir: the launcher pid has gone, the real postmaster is still found and stopped through postmaster.pid (1509.535467ms)
+  ✔ transfer-drill.sh: the EXIT trap stops PostgreSQL with td_stop_pg and the outer mode ends td_remove_work; exit $rc (0.836539ms)
+  ✔ end to end: a failing drill whose work tree cannot be removed still exits 1 (not changed), with the WARNING line (4623.72122ms)
+✔ T-DG7-DO-D8 drill/cleanup.sh: bounded PostgreSQL shutdown; cleanup never changes the result (22483.002255ms)
+ℹ tests 8
+ℹ suites 1
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 22624.461504

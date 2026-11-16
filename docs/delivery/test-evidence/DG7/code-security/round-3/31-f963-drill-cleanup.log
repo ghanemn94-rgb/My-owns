@@ -1,0 +1,98 @@
+# 2026-11-15T22:55:25Z F-DG7-963 (Node v24.21.0, cwd $TMPDIR/rv at 8323dacae, load 7.84 8.26 5.79)
+1b2b6dfdf7e83e4ef6f01947dc3aceb11fae195e0290cebe3c95ca15cb377bf4  deploy/scripts/drill/cleanup.sh
+8f651ba77266cfb4ee79b7eca36072fa29a82c93893b288a2e9735fb237b9e32  deploy/scripts/transfer-drill.sh
+== A. full harness file on the candidate: node --test deploy/scripts/tests/transfer-drill.test.mjs
+T-DG7-DO-D8 real PostgreSQL: comm bash (the launching pid), 6 processes under it, td_stop_pg 0.29 s, total 3.302 s
+  ✖ a hit in audit_event only is listed and passes (exit 0) (0.723923ms)
+  ✖ the origin in a text column fails with the B.5 line (exit 1) (0.17324ms)
+  ✖ the origin in a jsonb value fails (exit 1) (0.979478ms)
+  ✖ LIKE wildcards in the data are not matches (a plain substring test) (0.210406ms)
+✖ T-B3 origin-scan.mjs: the source origin is accepted only in audit_event (3.967849ms)
+▶ T-B9 transfer-drill.sh: BLOCKED, isolation and the report
+  ✔ without bwrap (stub PATH) it exits 3 with the B.5 BLOCKED line (53.523836ms)
+  ✔ without PostgreSQL server binaries it exits 3 with the B.5 BLOCKED line (94.233725ms)
+✔ T-B9 transfer-drill.sh: BLOCKED, isolation and the report (2626.953097ms)
+  ✖ signs in through the drill IdP (authMode oidc), the source-origin write is 403, the unbound user is refused (0.330685ms)
+  ✖ status: getDeploymentStatus.origin is the target's origin; a wrong expectation FAILS, never passes (0.159324ms)
+  ✖ a step with no data to prove never passes (deeplink with an empty inbox, downloads without a list) (0.115713ms)
+  ✖ T-B16 (measurement): whether a sign-in changes app_user, recorded for allowance.mjs (0.293097ms)
+  ✖ a redirect URI the drill IdP has not registered is refused (0.260453ms)
+✖ T-B10 journey.mjs under NODE_ENV=production, AUTH_MODE=oidc: drill IdP sign-in, CSRF 403, unbound refused (2.237635ms)
+  ✖ signs in through the drill IdP (authMode oidc), the source-origin write is 403, the unbound user is refused (0.219998ms)
+  ✖ status: getDeploymentStatus.origin is the target's origin; a wrong expectation FAILS, never passes (0.117429ms)
+  ✖ a step with no data to prove never passes (deeplink with an empty inbox, downloads without a list) (0.063255ms)
+  ✖ a redirect URI the drill IdP has not registered is refused (0.061485ms)
+✖ T-B10 (supporting, NOT production semantics) the same journey with NODE_ENV=development, AUTH_MODE=oidc (0.956914ms)
+  ✖ the snapshot holds the encoder's digests: approval digests equal mth-db table-digest's (0.433607ms)
+  ✖ a new job_run row passes (counted), and the pg-boss table is measured (1.506205ms)
+  ✖ a changed enabled schedule fails (0.137771ms)
+  ✖ a removed job_run row fails (0.083669ms)
+  ✖ a changed approval row fails, and changes the encoder digest (0.110459ms)
+  ✖ a missing pg-boss table reports BLOCKED (exit 2), never PASS (0.094807ms)
+✖ T-B16 job-check.mjs on a fixture database, digests from mth-db table-digest (§2.3 encoder) (3.026017ms)
+  ✖ D8's write chain changes exactly the journalled tables, the operational list, user_identity and the two D8 lists (0.403966ms)
+  ✖ mode 2 with the generated allowance matches after use (exit 0) (0.22843ms)
+  ✖ one extra owner-written row in an audited table, its event by a non-journalled user, gives exit 4 (0.162752ms)
+  ✖ T-B18: a missing code without a remedy row stops D8 at C1 with the A3.6 line, and nothing is written after it (0.190898ms)
+✖ T-B17 the D8 lists of allowance.mjs are measured on a fixture installation (mode 2 exit 0, then 4) (1.709355ms)
+  ✖ T-B19: with the current period absent, G grants TO at organization scope and the period is opened through the API (0.510992ms)
+✖ T-B19 DO-D6's grant path on shipped data: seed-demo --as-of the first day of last month (no current period) (0.90823ms)
+  ✔ the CLI prints one line per unexplained table; a missing file is BLOCKED (exit 2) (202.869911ms)
+ℹ tests 55
+ℹ suites 11
+ℹ pass 31
+ℹ fail 24
+exit=1
+== B. control: only the T-DG7-DO-D8 cases (name pattern 'T-DG7-DO-D8')
+ℹ tests 8
+ℹ pass 8
+ℹ fail 0
+ℹ skipped 0
+exit=0
+== M1 td_remove_work: return the rm status (pre-fix behaviour)
++  rm -rf -- "$dir"; return $?
+  ✖ a removal that keeps failing under set -e: returns 0, result 0 unchanged, one WARNING line on stderr and in the log (11.138493ms)
+  ✖ a removal that keeps failing under set -e: returns 0, result 1 unchanged, one WARNING line on stderr and in the log (13.618517ms)
+  ✖ end to end: a failing drill whose work tree cannot be removed still exits 1 (not changed), with the WARNING line (1196.742564ms)
+✖ T-DG7-DO-D8 drill/cleanup.sh: bounded PostgreSQL shutdown; cleanup never changes the result (14644.707531ms)
+ℹ tests 8
+ℹ pass 5
+ℹ fail 3
+ℹ skipped 0
+✖ failing tests:
+✖ a removal that keeps failing under set -e: returns 0, result 0 unchanged, one WARNING line on stderr and in the log (11.138493ms)
+    actual: 1,
+    expected: 0,
+✖ a removal that keeps failing under set -e: returns 0, result 1 unchanged, one WARNING line on stderr and in the log (13.618517ms)
+    actual: '',
+    expected: 'after',
+✖ end to end: a failing drill whose work tree cannot be removed still exits 1 (not changed), with the WARNING line (1196.742564ms)
+    actual: "rm: cannot remove '/var/tmp/mth-run.GqyLL2/claude-0/mth-transfer-drill-test-uyPjcu/w-d8': Directory not empty\n",
+    expected: /^transfer-drill: WARNING: could not remove the work directory \/var\/tmp\/mth-run.GqyLL2\/claude-0\/mth-transfer-drill-test-uyPjcu\/w-d8 \(.*\); the drill result \(exit 1\) is unchanged; remove the directory by hand$/m,
+exit=1
+== M2 td_stop_pg: TERM to the launcher pid only, no wait (pre-fix stop_pid race)
++  kill -TERM "$pid" 2>/dev/null; return 0
+  ✖ td_stop_pg escalates INT -> QUIT -> KILL and returns only when the 'postmaster' and its child are gone (bounded) (711.702393ms)
+  ✖ td_stop_pg on a real PostgreSQL: fast shutdown, no server process left, postmaster.pid removed, the tree removable (2581.887788ms)
+  ✖ T-DG7-DO-D8B td_stop_pg_dir: the launcher pid has gone, the real postmaster is still found and stopped through postmaster.pid (2608.997769ms)
+✖ T-DG7-DO-D8 drill/cleanup.sh: bounded PostgreSQL shutdown; cleanup never changes the result (19681.332811ms)
+ℹ tests 8
+ℹ pass 5
+ℹ fail 3
+ℹ skipped 0
+✖ failing tests:
+✖ td_stop_pg escalates INT -> QUIT -> KILL and returns only when the 'postmaster' and its child are gone (bounded) (711.702393ms)
+    actual: true,
+    expected: false,
+✖ td_stop_pg on a real PostgreSQL: fast shutdown, no server process left, postmaster.pid removed, the tree removable (2581.887788ms)
+    actual: 1,
+    expected: 0,
+✖ T-DG7-DO-D8B td_stop_pg_dir: the launcher pid has gone, the real postmaster is still found and stopped through postmaster.pid (2608.997769ms)
+    actual: 1,
+    expected: 0,
+exit=1
+1b2b6dfdf7e83e4ef6f01947dc3aceb11fae195e0290cebe3c95ca15cb377bf4  deploy/scripts/drill/cleanup.sh
+== leftover postgres processes from these runs (none expected)
+1
+== final git status (must be clean)
+# end 2026-11-15T22:57:02Z

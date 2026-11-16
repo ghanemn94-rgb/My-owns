@@ -1,0 +1,61 @@
+$ QA_REPO=$TMPDIR/rv QA_OUT=<evidence>/a18/out QA_STORE_SRC=$TMPDIR/pnpm-store QA_PG_PORT=32585 MTH_PORT_POOL=32586-32589 tests/qa/support/with-pg.sh bash docs/delivery/test-evidence/DG7/qa/round-3/a18/qa-r3-a18-driver.sh
+port-policy: PostgreSQL listening on port 32585 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+start 23:54:25; HEAD 8323dacae51a98c8f555fb95d8e1dd0a1e747ea8; node v24.21.0; free 8199 MB
+mth-db seed-demo: reporting periods relative to 2026-11-16 (Asia/Riyadh): 2 generated, current period 2026-11 open
+export-migration: wrote export 01a1e1a2-4e51-7032-a434-f10f67d22e7d (demo, 0152_p7_transfer_recheck_lineage_basis): 335 tables, 4782 rows, 0 attachments to /var/tmp/mth-run.3fTj5D/claude-0/qa-r3-a18/export; manifest sha256 5d5c1f11869034d44a9ca9a6b5bd2179ee904f1110f48bc48154307e143e8c9f
+demo export exit 0 in 8 s; manifest sha256 5d5c1f11869034d44a9ca9a6b5bd2179ee904f1110f48bc48154307e143e8c9f
+tables 335 rows 4782
+build-archive: wrote /var/tmp/mth-run.3fTj5D/claude-0/qa-r3-a18/arch/mth-transformation-hub-0.1.0-60dd90b6c5a7.tar.gz
+build-archive: candidate sha256:60dd90b6c5a7af3b502f02be68e6b601fd11e90fcbc0a48166cbc389453a80e9 commit 8323dacae51a98c8f555fb95d8e1dd0a1e747ea8
+build-archive: tar sha256 bd793c3b9a302030a49cb81bcd062ef2cd8862b9664d5e9ac1888d8d5c80b5b2
+build-archive: archive sha256 d0f72c3e896c808eab5521699d71270cb616b9ff8027e6e0a5b2cddef5e9265a
+build-archive exit 0 in 17 s
+archive mth-transformation-hub-0.1.0-60dd90b6c5a7.tar.gz 14676933 bytes sha256 d0f72c3e896c808eab5521699d71270cb616b9ff8027e6e0a5b2cddef5e9265a
+archive top-level layout:
+mth-transformation-hub-0.1.0-60dd90b6c5a7/
+mth-transformation-hub-0.1.0-60dd90b6c5a7/ARCHIVE-MANIFEST.json
+mth-transformation-hub-0.1.0-60dd90b6c5a7/README.txt
+mth-transformation-hub-0.1.0-60dd90b6c5a7/SHA256SUMS
+mth-transformation-hub-0.1.0-60dd90b6c5a7/demo-data
+mth-transformation-hub-0.1.0-60dd90b6c5a7/docs
+mth-transformation-hub-0.1.0-60dd90b6c5a7/infra
+mth-transformation-hub-0.1.0-60dd90b6c5a7/source
+1 archive-checksum: ok
+2 single-top-level-directory: ok
+3 layout: ok
+4 sha256sums: ok
+5 candidate-id: ok
+6 copies: ok
+7 determinism-metadata: ok
+archive-verify: PASS
+archive --verify exit 0
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.3fTj5D/claude-0/rv
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwihryvu_9bd64987 (server_encoding UTF8); applied 135 migrations to a fresh database
+stdout | tests/qa/integration/a18-transfer-drill.test.ts > A18 transfer drill: restored records, files and configuration work on another origin, offline (DO-D)
+A18-TIMINGS {"drillSeconds":274.418562034,"exit":0}
+
+ ✓ |integration| tests/qa/integration/a18-transfer-drill.test.ts (10 tests) 277638ms
+   ✓ A18 clean environment starts: an empty, freshly migrated installation is ready (REQ-S20-018) > ready with database, migrations and storage ok; the worker without a heartbeat is unknown, never alive  403ms
+
+ Test Files  1 passed (1)
+      Tests  10 passed (10)
+   Start at  23:54:54
+   Duration  291.17s (transform 5.15s, setup 0ms, collect 9.26s, tests 277.64s, environment 0ms, prepare 72ms)
+
+A18 harness exit 0 in 292 s; end 23:59:45
+--- forced-cleanup-failure drill start 23:59:45
+forced-cleanup-failure drill exit 0 end 00:04:24
+transfer-drill: PASS in 273.752 s: 335 tables and 2 evidence files equal, origin http://127.0.0.1:25302, restart verified; report /home/user/My-owns/docs/delivery/test-evidence/DG7/qa/round-3/a18/out/forced-cleanup-failure/transfer-drill-report.json
+stderr WARNING lines: 1
+transfer-drill: WARNING: could not remove the work directory /var/tmp/mth-run.3fTj5D/claude-0/qa-r3-a18-w2 (rm: cannot remove '/var/tmp/mth-run.3fTj5D/claude-0/qa-r3-a18-w2': QA forced failure); the drill result (exit 0) is unchanged; remove the directory by hand
+drill.log WARNING lines: 1
+work tree left in place (expected)
+removed /var/tmp/mth-run.3fTj5D/claude-0/qa-r3-a18
+A18 harness exit 0; forced-cleanup drill exit 0
+exit 0
