@@ -14626,7 +14626,7 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG7/round-1/domain-reviewer.json",
       "owner": "transformation-analyst",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-17T10:10:00Z",
@@ -14637,10 +14637,37 @@
           "at": "2026-11-17T13:06:46Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 4f44cd707f149f826943c12a6da03bedafcea1b7"
+        },
+        {
+          "at": "2026-11-17T15:15:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 2: PASS"
         }
       ],
       "fix_revision": "4f44cd707f149f826943c12a6da03bedafcea1b7",
-      "fix_summary": "D-282 discloses the C2 hit of run a0fbc6f1 (assignment text overwritten under the same name; original in 85f6ebe9f on 1612f85fc)"
+      "fix_summary": "D-282 discloses the C2 hit of run a0fbc6f1 (assignment text overwritten under the same name; original in 85f6ebe9f on 1612f85fc)",
+      "verification": {
+        "by_role": "domain-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG7-T-DG7-REV-DOM-RG2-domain-reviewer-20261117T144530Z-9f75337d",
+          "session_id": "9f75337d-3f2b-4b84-bb1e-16c52bf215f6"
+        },
+        "at": "2026-11-17T15:15:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG7/domain/round-2/protocol-audit-dom-rg2.json",
+          "docs/delivery/test-evidence/DG7/domain/round-2/protocol-audit.log",
+          "docs/delivery/test-evidence/DG7/domain/round-2/handover-checks.log",
+          "docs/delivery/test-evidence/DG7/domain/round-2/release-scans.log",
+          "docs/delivery/test-evidence/DG7/domain/round-2/validator-tests.log",
+          "docs/delivery/test-evidence/DG7/domain/round-2/validate.txt",
+          "docs/delivery/decisions.md",
+          "docs/handover/known-limitations.md",
+          "tools/gates/schemas/findings.schema.json"
+        ],
+        "note": "Verified on candidate sha256:33266ccd… (source 152db5b51155282b28e82472629d07b8d87feb2a). My protocol audit of this tree (exit 1 by design, 279 hits in 29 checks, 0 blocked, 36 pass) still reports DG7 C2 = 25: 24 assignment-missing-elements and 1 assignment-sha-mismatch for run DG7-T-DG7-ARCH-R6-solution-architect-20261114T131339Z-a0fbc6f1 (recorded 37916ead…, current 9bd8d121…). Its hit set equals the orchestrator's protocol-audit-rg2.json except for the C5 hit's evidence list, which grows with new round-1 evidence files (same hit, same count). The finding was the absence of any disclosure of that hit while known-limitations.md said every DG7 C2 hit is disclosed. D-282 now discloses it exactly: the run, the recorded hash, the two commits 85f6ebe9f and 6f10ccc78 on branch head 1612f85fc, the orchestrator naming error, and that no product content depends on the lost text. I checked that last point: ARCH-R6's output is the ADR-0064 Amendment 5 text and the D-278 rule, both in this tree and reviewed in later rounds; the assignment text itself is not read by any product or tool path. The generated known-limitations §2 (C2 DG7 HIT 25, 'disclosed by this release's records') is current for this tree (known-limitations --check exit 0 with the rg2 report; regenerating from my report changes only the report-identity line). The release-auditor's decision on the DG7 C2 hits remains the REQ-DLV-011 completes-after-gate clause (D-270, D-274). Residual, accepted by me as non-blocking: the REQ-DLV-011 register notes still give the old-branch counts (27 hits, '24 lack only the ids') as dated pass history and do not mention the sha-mismatch; the current-tree count and the mismatch are stated in D-282 and the generated table. D-282's schema change (finding id pattern ^F-DG[0-7]-[0-9]{3,4}$) is sound: every existing id stays valid (221 three-digit, 7 four-digit ids in findings.json), the validator tests pass 66/66, and --pipeline passes. Minor note: protocol-audit.mjs l.121 detects a 'Findings fixed' handback section with /F-DG[0-7]-\\d{3}\\b/, which does not match a four-digit id on its own; it caused no hit (DG7 C3 stays 7) because the handbacks also use the word 'finding'."
+      }
     },
     {
       "id": "F-DG7-1002",
@@ -14662,7 +14689,7 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG7/round-1/domain-reviewer.json",
       "owner": "solution-architect",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-17T10:10:00Z",
@@ -14673,10 +14700,32 @@
           "at": "2026-11-17T13:06:46Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 4f44cd707f149f826943c12a6da03bedafcea1b7"
+        },
+        {
+          "at": "2026-11-17T15:15:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 2: PASS"
         }
       ],
       "fix_revision": "4f44cd707f149f826943c12a6da03bedafcea1b7",
-      "fix_summary": "SA-ADR71: ADR-0071 amendment states release-notes.mjs reads release-notes-disclosures.json and writes the disclosures section"
+      "fix_summary": "SA-ADR71: ADR-0071 amendment states release-notes.mjs reads release-notes-disclosures.json and writes the disclosures section",
+      "verification": {
+        "by_role": "domain-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG7-T-DG7-REV-DOM-RG2-domain-reviewer-20261117T144530Z-9f75337d",
+          "session_id": "9f75337d-3f2b-4b84-bb1e-16c52bf215f6"
+        },
+        "at": "2026-11-17T15:15:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/architecture/adr/ADR-0071-p7-traceability-register-snapshot-about-release-notes-release-blockers-protocol-audit.md",
+          "tools/release/release-notes.mjs",
+          "docs/handover/release-notes.md",
+          "docs/delivery/test-evidence/DG7/domain/round-2/release-scans.log"
+        ],
+        "note": "Verified on candidate sha256:33266ccd…. ADR-0071 now carries a dated Amendment 1 (2026-11-17, T-DG7-SA-ADR71) with pointers in §5.1, §5.2 and §5.4. I checked it against tools/release/release-notes.mjs: the five inputs of A1.2 are exactly what the generator reads (register via --csv; --deps; the provisional-ar files and the five component files; apps/api/package.json and docs/api/openapi.yaml for the identity; the disclosure input defaulting to tools/release/release-notes-disclosures.json in the tool's directory), plus the existing output in --check mode; no clock or environment read. A1.4's eight sections match docs/handover/release-notes.md headings in order (identity, status counts, unfinished, later clauses, external dependencies, 'Known limitations disclosed in this release', provisional Arabic texts, Arabic summary with the matching subsection). A1.5 honestly records the exit-1 for an invalid dependency list as a deviation as built. release-notes --check exit 0. The amendment grants no approval and changes no code."
+      }
     },
     {
       "id": "F-DG7-1011",
@@ -14700,7 +14749,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG7/round-1/code-security-reviewer.json",
       "owner": "devops-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-17T10:20:00Z",
@@ -14711,10 +14760,38 @@
           "at": "2026-11-17T13:06:46Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 4f44cd707f149f826943c12a6da03bedafcea1b7"
+        },
+        {
+          "at": "2026-11-17T15:20:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 2: PASS"
         }
       ],
       "fix_revision": "4f44cd707f149f826943c12a6da03bedafcea1b7",
-      "fix_summary": "DO-D11: S3 no longer exempts high-entropy lower-case/hex values under secret-named keys; 7 tests, negative control"
+      "fix_summary": "DO-D11: S3 no longer exempts high-entropy lower-case/hex values under secret-named keys; 7 tests, negative control",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG7-T-DG7-REV-CS-RG2-code-security-reviewer-20261117T144530Z-da744e37",
+          "session_id": "da744e37-29eb-4508-aad0-60d57fdbc700"
+        },
+        "at": "2026-11-17T15:20:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG7/code-security/round-2/10-s3-secret-shapes-repro.log",
+          "docs/delivery/test-evidence/DG7/code-security/round-2/11-s3-exemption-rates.log",
+          "docs/delivery/test-evidence/DG7/code-security/round-2/12-secret-scan-probe-no64hex-nokeyname.log",
+          "docs/delivery/test-evidence/DG7/code-security/round-2/12b-probe-hits-explained.log",
+          "docs/delivery/test-evidence/DG7/code-security/round-2/13-secret-scan-payload-handover.log",
+          "docs/delivery/test-evidence/DG7/code-security/round-2/14-secret-scan-history.log",
+          "docs/delivery/test-evidence/DG7/code-security/round-2/15-secret-scan-service-list-tests.log",
+          "docs/delivery/test-evidence/DG7/code-security/round-2/15b-service-list-test.log",
+          "docs/delivery/test-evidence/DG7/code-security/round-2/repro/s3-secret-shapes-rg2.sh",
+          "docs/delivery/test-evidence/DG7/code-security/round-2/repro/s3-exemption-rates.mjs"
+        ],
+        "note": "Verified by its originating reviewer role (code-security-reviewer, session da744e37, T-DG7-REV-CS-RG2) on candidate sha256:33266ccd9ce4ec4475de745ebacfaafbd2f25870f8be966086f4a74578b7259c (source 152db5b51; repair T-DG7-DO-D11, commit 4f44cd707).\n\n1. Code: tools/release/secret-scan.mjs replaces the S3 exemption /^[a-z0-9_.]+$/ with isI18nKey() (l.82-85). The rule needs lower-case words joined by '.'/'_', at least one separator, and each segment at most 20 characters and 3 digits. A bare lower-case or hex value now falls through to the entropy rule.\n\n2. The round-1 reproduction, re-run on this candidate with freshly generated values (10-s3-secret-shapes-repro.log):\n- case (a), POSTGRES_PASSWORD = openssl rand -hex 24: S3 hit, exit 1;\n- case (c), OIDC_CLIENT_SECRET = 24 lower-case alphanumerics: S3 hit, exit 1;\n- case (d), the mixed-case control: S3 hit, exit 1.\nIn round 1, (a) and (c) gave PASS, exit 0. Case (b), a 32-hex value, was not reported in that one draw because its entropy was 3.44, below the ADR-0063 threshold of 3.5. isI18nKey was false, so that is not the defect.\n\n3. Over 5000 random values per shape (11-s3-exemption-rates.log), isI18nKey exempts 0.0% of hex16, hex24, hex32, lower24, upper-hex, base32 and base64 values. The remaining non-reports come from other rules: the ADR entropy threshold (hex16 18.7%, hex24 1.0%), the 64-hex checksum shape (hex32 100%, disclosed in SC-13) and the upper-case 'key NAME' rule. None of these is the i18n exemption this finding was about.\n\n4. No false positive was added:\n- payload scan PASS (3158 files, allowed 33) and docs/handover PASS (13-secret-scan-payload-handover.log);\n- history scan PASS (36211 blobs, allowed 219, exit 0; 14-secret-scan-history.log);\n- secret-scan.test.mjs 32/32, including the 7 F-DG7-1011 tests (15-secret-scan-service-list-tests.log).\nThat log's one failure is service-list.test.mjs failing to load (MODULE_NOT_FOUND) in my clone, which had no node_modules. It was re-run with the repository's node_modules linked: 7/7 (15b-service-list-test.log).\n\n5. Nothing is hidden today: a probe without the 64-hex and key-NAME exemptions finds only six environment-variable names and the T-G1 64-hex fixture in the payload (12-secret-scan-probe-no64hex-nokeyname.log, 12b-probe-hits-explained.log).\n\nThe ADR text was not amended. That residual is raised separately as F-DG7-1041 (Low)."
+      }
     },
     {
       "id": "F-DG7-1012",
@@ -14736,7 +14813,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG7/round-1/code-security-reviewer.json",
       "owner": "devops-engineer",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-17T10:20:00Z",
@@ -14747,10 +14824,33 @@
           "at": "2026-11-17T13:06:46Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 4f44cd707f149f826943c12a6da03bedafcea1b7"
+        },
+        {
+          "at": "2026-11-17T15:20:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 2: PASS"
         }
       ],
       "fix_revision": "4f44cd707f149f826943c12a6da03bedafcea1b7",
-      "fix_summary": "DO-D11: backup set owner-only (umask 077, 0700/0600, ownerOnly check), group/world-writable root such as /tmp refused; T-E10..T-E12"
+      "fix_summary": "DO-D11: backup set owner-only (umask 077, 0700/0600, ownerOnly check), group/world-writable root such as /tmp refused; T-E10..T-E12",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG7-T-DG7-REV-CS-RG2-code-security-reviewer-20261117T144530Z-da744e37",
+          "session_id": "da744e37-29eb-4508-aad0-60d57fdbc700"
+        },
+        "at": "2026-11-17T15:20:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG7/code-security/round-2/16-backup-set-mode-repro.log",
+          "docs/delivery/test-evidence/DG7/code-security/round-2/17-backup-restore-tests.log",
+          "docs/delivery/test-evidence/DG7/code-security/round-2/18-compose-config-backup.log",
+          "docs/delivery/test-evidence/DG7/code-security/round-2/15b-service-list-test.log",
+          "docs/delivery/test-evidence/DG7/code-security/round-2/repro/backup-set-mode-rg2.sh"
+        ],
+        "note": "Verified by its originating reviewer role (code-security-reviewer, session da744e37) on candidate sha256:33266ccd (source 152db5b51; repair T-DG7-DO-D11).\n\n1. The round-1 probe, re-run on a disposable PostgreSQL 16.15 (with-pg.sh, port 32460): backup.sh --phase database under umask 022 with MTH_TRANSFER_ATTACHMENTS=none (16-backup-set-mode-repro.log).\n- Every entry is now 0700 (directories) or 0600 (files): the root, the set, .backup-state/*, config/*, db/database.dump and db/table-counts.tsv. In round 1 they were 0755/0644.\n- Nothing is readable or writable by group or others.\n- The dump still holds TABLE DATA app_user, audit_event and session, so the protection matters.\n\n2. New root checks:\n- a 1777 root (the host /tmp shape) is refused with exit 2 and the BLOCKED line, and 0 entries are written;\n- a symlinked root is also refused. That is fail-closed, but the message 'writable by group or others' is misleading, because find reads the symlink's own mode. Recorded as an observation in the review record, not a defect.\n- A 0700 root owned by another uid could not be tested: chown is not permitted in the sandbox. Statically, the script checks the root's mode but not its owner. Recorded as a hardening observation.\n\n3. Test suite: backup-restore.test.mjs 13/13, including T-E10 (owner-only set), T-E11 (the Compose sequence: database phase, copy-out under umask 022, finish) and T-E12 x2 (1777 and 0770 roots refused) (17-backup-restore-tests.log, exit 0).\n\n4. Compose:\n- docker compose v5.6.1 `config` (parse and validate only, no daemon), with MTH_BACKUP_ROOT unset, renders the backup bind as source /MTH_BACKUP_ROOT-is-not-set, target /backups, bind.create_host_path false. With it set, it renders source /srv/mth-backups. The default profile still renders db, migrate, api and worker (18-compose-config-backup.log).\n- service-list.test.mjs F-DG7-1012 static test passes (15b-service-list-test.log).\n- Residual, not run: Docker's runtime refusal of the missing host path and the root `backup` container's modes need a Docker daemon, which this sandbox lacks (the container half is the orchestrator's, D-267). backup-restore.md §10 discloses it. The script behaviour that produces the modes is the same script the container runs.\n\n5. backup-restore.md §3.3 documents the root's permissions."
+      }
     },
     {
       "id": "F-DG7-1013",
@@ -14771,7 +14871,7 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG7/round-1/code-security-reviewer.json",
       "owner": "solution-architect",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-17T10:20:00Z",
@@ -14782,10 +14882,32 @@
           "at": "2026-11-17T13:06:46Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 4f44cd707f149f826943c12a6da03bedafcea1b7"
+        },
+        {
+          "at": "2026-11-17T15:20:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 2: PASS"
         }
       ],
       "fix_revision": "4f44cd707f149f826943c12a6da03bedafcea1b7",
-      "fix_summary": "SA-ADR71: same ADR-0071 amendment"
+      "fix_summary": "SA-ADR71: same ADR-0071 amendment",
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG7-T-DG7-REV-CS-RG2-code-security-reviewer-20261117T144530Z-da744e37",
+          "session_id": "da744e37-29eb-4508-aad0-60d57fdbc700"
+        },
+        "at": "2026-11-17T15:20:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG7/code-security/round-2/19-release-notes-tests.log",
+          "docs/architecture/adr/ADR-0071-p7-traceability-register-snapshot-about-release-notes-release-blockers-protocol-audit.md",
+          "tools/release/release-notes.mjs",
+          "docs/delivery/test-evidence/DG7/orchestrator/prefreeze-rg2/release-notes.log"
+        ],
+        "note": "Verified by its originating reviewer role (code-security-reviewer, session da744e37) on candidate sha256:33266ccd (repair T-DG7-SA-ADR71).\n\n1. ADR-0071 now carries pointers in §5.1, §5.2 and §5.4 to a dated Amendment 1 (2026-11-17):\n- A1.1 gives the full usage;\n- A1.2 replaces 'It reads nothing else' with the complete input list: register, dependency list, provisional files, the two release-identity files, the disclosure input, and the --out file in --check mode only;\n- A1.3 gives the disclosure format;\n- A1.4 lists eight sections, with 'Known limitations disclosed in this release' as item 6;\n- A1.5 gives the exit codes.\n\n2. I checked A1.2 against tools/release/release-notes.mjs. Its readFileSync/existsSync/readdirSync calls (l.83-108, 315-364) read exactly these inputs, with no clock, environment or network.\n\n3. release-notes.test.mjs passes 14/14, including the five DO-D10 disclosure tests (19-release-notes-tests.log). The pre-freeze `--check` exits 0 (orchestrator prefreeze-rg2/release-notes.log).\n\n4. The amendment discloses the 'invalid dependency list exits 1' deviation (A1.5, A1.7 item 2) rather than hiding it. F-DG7-1002 and F-DG7-1021 (the same defect, other reporters) are theirs to verify."
+      }
     },
     {
       "id": "F-DG7-1021",
@@ -14806,7 +14928,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG7/round-1/qa-verifier.json",
       "owner": "solution-architect",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-17T11:10:00Z",
@@ -14817,10 +14939,34 @@
           "at": "2026-11-17T13:06:46Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 4f44cd707f149f826943c12a6da03bedafcea1b7"
+        },
+        {
+          "at": "2026-11-17T16:50:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 2: PASS"
         }
       ],
       "fix_revision": "4f44cd707f149f826943c12a6da03bedafcea1b7",
-      "fix_summary": "SA-ADR71: same ADR-0071 amendment"
+      "fix_summary": "SA-ADR71: same ADR-0071 amendment",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG7-T-DG7-REV-QA-RG2-qa-verifier-20261117T144530Z-0fbf419f",
+          "session_id": "0fbf419f-65ca-4b15-a5be-2ce686fed295"
+        },
+        "at": "2026-11-17T16:50:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/architecture/adr/ADR-0071-p7-traceability-register-snapshot-about-release-notes-release-blockers-protocol-audit.md",
+          "tools/release/release-notes.mjs",
+          "tools/release/tests/release-notes.test.mjs",
+          "docs/delivery/test-evidence/DG7/qa/round-2/79-f1021-f1022-verification.log",
+          "docs/delivery/test-evidence/DG7/qa/round-2/72-release-tool-tests.log",
+          "docs/delivery/test-evidence/DG7/qa/round-2/54-handover-tools.log"
+        ],
+        "note": "Verified as the reporter on candidate sha256:33266ccd9ce4ec4475de745ebacfaafbd2f25870f8be966086f4a74578b7259c (source 152db5b51, which contains the fix 4f44cd707: merge-base --is-ancestor rc=0, log 79). ADR-0071 now carries dated pointers in §5.1 (l.183), §5.2 (l.193) and §5.4 (l.200) and 'Amendment 1 (2026-11-17, T-DG7-SA-ADR71)' with A1.1-A1.7. I checked each claim against tools/release/release-notes.mjs as built, which did not change: the usage and option list (l.295, the six value options plus --check/--write); --disclosures defaults to the tool's own directory, not under --repo (l.28, l.328); the five inputs, i.e. the register, the dependency list (absent: the Unknown line; invalid: exit 1, l.325, recorded in A1.5 as a deviation), the provisional files with the five component files (l.30, l.79-96), the release identity from apps/api/package.json and docs/api/openapi.yaml (l.103, l.108), and the disclosure input; a missing or invalid disclosure input exits 2 with nothing written (l.329-339); the disclosure format rules (l.136-171: keys, kebab id, one-line strings, link regex refusing URLs and ./ ../); the eighth section and its Arabic subsection (l.237-280). The A1.6 test names exist in tools/release/tests/release-notes.test.mjs (l.128-249), and that file passes on the candidate (T-I11 x7, DO-D10 x5 in log 72). Nothing in apps/ or packages/ reads the disclosure file (grep), and the file is in the candidate manifest. release-notes --check exits 0 on the candidate (log 54). The ADR and the generator now agree on every input and section, which is what the finding expected."
+      }
     },
     {
       "id": "F-DG7-1022",
@@ -14842,7 +14988,7 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG7/round-1/qa-verifier.json",
       "owner": "transformation-analyst",
-      "status": "FIXED_PENDING_VERIFICATION",
+      "status": "OPEN",
       "history": [
         {
           "at": "2026-11-17T11:10:00Z",
@@ -14853,10 +14999,221 @@
           "at": "2026-11-17T13:06:46Z",
           "status": "FIXED_PENDING_VERIFICATION",
           "note": "fix at 4f44cd707f149f826943c12a6da03bedafcea1b7"
+        },
+        {
+          "at": "2026-11-17T16:50:00Z",
+          "status": "OPEN",
+          "note": "verified by qa-verifier round 2: FAIL"
         }
       ],
       "fix_revision": "4f44cd707f149f826943c12a6da03bedafcea1b7",
-      "fix_summary": "D-282 discloses the old-branch finding citations as historical, with where their records are"
+      "fix_summary": "D-282 discloses the old-branch finding citations as historical, with where their records are",
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG7-T-DG7-REV-QA-RG2-qa-verifier-20261117T144530Z-0fbf419f",
+          "session_id": "0fbf419f-65ca-4b15-a5be-2ce686fed295"
+        },
+        "at": "2026-11-17T16:50:00Z",
+        "result": "FAIL",
+        "evidence": [
+          "docs/delivery/test-evidence/DG7/qa/round-2/79-f1021-f1022-verification.log",
+          "docs/delivery/decisions.md",
+          "docs/delivery/requirements.csv",
+          "docs/handover/release-notes.md",
+          "docs/delivery/test-evidence/DG7/qa/round-2/58-q19-rows.log"
+        ],
+        "note": "Checked as the reporter on candidate sha256:33266ccd (source 152db5b51). The repair is a disclosure only: D-282 in docs/delivery/decisions.md says the release notes and 25 register rows cite old-branch findings F-DG7-913…971, whose records are at 1612f85fc, that 'validate --stage DG7 here cannot show them' and that 'they are not findings of this gate'. Nothing that the finding named changed (log 79): requirements.csv and docs/handover/release-notes.md are byte-identical to the round-1 candidate; the same 25 rows still cite 14 F-DG7-9xx ids and none of them qualifies the ids (no 1612f85fc, 'old branch' or D-282); no docs/handover file mentions 1612f85fc or D-282; findings.json on this branch holds no F-DG7-9xx id. The finding expected both (a) cited ids to resolve or be qualified where they are cited, and (b) each completes-after-gate clause to name a condition the DG7 gate on this branch can show. (b) is still contradicted: the REQ-DLV-014 later clause in the register and release-notes.md l.36 still reads 'with each DG7 finding (round 2: 915, 935, 960-963) fixed and verified by a non-owner, shown by validate.mjs --stage DG7 at the gate', which D-282 itself says cannot be shown; the REQ-DLV-012 clause (l.35) still counts F-DG7-960's and F-DG7-920's hits as DG7 C3 hits. D-282 is in decisions.md, which ships only in the archive's source/ tree, not in the handover or the register a reader uses. Still Low and non-mandatory, no product behaviour affected; I do not consider it blocking on its own. The minimal repair is a register-note and release-notes wording change by the analyst (REQ-DLV-012, REQ-DLV-014 clauses naming this branch's findings, the other citations qualified as old-branch records), or an ACCEPTED_OBSERVATION decision taken through the protocol (reporting specialist and release-auditor). This assignment allows me only CLOSED_VERIFIED or REOPENED, so I reopen it."
+      }
+    },
+    {
+      "id": "F-DG7-1031",
+      "stage_id": "DG7",
+      "requirement": "REQ-S19-012",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "The handover says the Compose half of the backup sequence runs on the orchestrator's host and 'is recorded there', but no Compose backup run exists in any evidence, and DO-D11 changed that Compose sequence (root backup service, '--user 0:0' copy-out, create_host_path: false) without it being run",
+      "reproduction": "On the frozen candidate (sha256:33266ccd…, source 152db5b5): read docs/handover/backup-restore.md l.76 ('The Compose sequence runs on the orchestrator's host (D-243 Q1). Its result is recorded there, not here.'), l.202 ('The Compose half runs on the orchestrator's host and is recorded there: the backup profile on postgres:18, a second Compose project with new volumes, and /readyz over HTTP.') and l.217 (§10, 'has not been run here … It runs on the orchestrator's host'), and known-limitations.md §5 ('D-256 | The container half of the backup and restore drill (A19) is the orchestrator's host run.'). Then search the orchestrator's host evidence: grep -rl -e '--profile backup' -e 'phase finish' docs/delivery/test-evidence docs/delivery/decisions.md docs/delivery/progress.md finds only a code-security round-1 reviewer repro; host-run.log, host-run-3b.log and host-run-3c.log (steps 00-11, b01-b07) contain no backup step; prefreeze-rg2 has none; the old branch 1612f85fc has no orchestrator backup run either. D-267 (the container host run) lists build, bundle, up/readyz, no-egress smoke and Keycloak, not A19. The DO-D11 handback §4 item 1-2 says the changed Compose sequence was not run and 'The orchestrator's Compose run should confirm step 2'; no decision or evidence of round 2 records that run.",
+      "expected": "The handover IT inherits states truthfully what has and has not been executed (agent protocol honesty rules: no planned item labelled as done; never report a check as passed that did not run). Either the Compose sequence of backup-restore.md §3.2 (backup profile on postgres:18, the '--user 0:0' copy-out, --phase finish, create_host_path: false refusing an unset MTH_BACKUP_ROOT) and the Compose restore are run on the orchestrator's host and recorded in the evidence, or backup-restore.md (l.76, l.202, §10) and known-limitations.md say plainly that the Compose half has not been run in this release and that only the container-free scripts are tested.",
+      "actual": "No Compose backup or restore run exists in the candidate's evidence or in the old branch's orchestrator evidence, yet the handover twice says its result 'is recorded there'. DO-D11 then changed the Compose procedure materially (the copy-out now runs the app image as root; the bind mount syntax and its refusal behaviour are new) and asked for an orchestrator Compose run that did not happen. The scripts themselves are sound: in my run on a disposable PostgreSQL backup-restore.test.mjs gives 13/13 (T-E10..T-E12 included), and REQ-S19-012/S20-019's A19 acceptance is met by the container-free drill (DO-F drill and the QA A19 harness). The defect is the false 'recorded there' evidence claim in a handover document plus an untested change to the operator procedure IT will run first; its effect is bounded (documentation and a first-use risk), so Medium, not High.",
+      "evidence": [
+        "docs/handover/backup-restore.md",
+        "docs/handover/known-limitations.md",
+        "deploy/compose/compose.yaml",
+        "docs/delivery/handbacks/DG7/T-DG7-DO-D11-devops-engineer.md",
+        "docs/delivery/test-evidence/DG7/orchestrator/host/host-run.log",
+        "docs/delivery/test-evidence/DG7/orchestrator/host/host-run-3b.log",
+        "docs/delivery/test-evidence/DG7/orchestrator/host/host-run-3c.log",
+        "docs/delivery/test-evidence/DG7/orchestrator/prefreeze-rg2/checks.log",
+        "docs/delivery/decisions.md",
+        "docs/delivery/test-evidence/DG7/domain/round-2/backup-restore-tests.log"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG7/round-2/domain-reviewer.json",
+      "owner": "devops-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-17T15:10:00Z",
+          "status": "OPEN",
+          "note": "Raised by domain-reviewer in DG7 round 2 on candidate sha256:33266ccd…. Repair options: run and record the Compose backup/restore sequence on the orchestrator's host (D-243 Q1), or correct backup-restore.md l.76, l.202 and §10 and the known-limitations D-256 line to say the Compose half was not run in this release."
+        }
+      ]
+    },
+    {
+      "id": "F-DG7-1032",
+      "stage_id": "DG7",
+      "requirement": "REQ-S16-031",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "ADR-0063 §1.2 (S3 i18n-key exception) and ADR-0066 §4 (backup-time checks) were not amended for the DO-D11 behaviour changes (narrower isI18nKey rule; new ownerOnly check and refused shared root)",
+      "reproduction": "Read docs/architecture/adr/ADR-0063-…md l.82: the S3 row still exempts 'an i18n key ([a-z0-9_.]+)'. tools/release/secret-scan.mjs now uses isI18nKey (needs a separator, segments ≤20 chars and ≤3 digits). Read ADR-0066-…md §4: the set fails 'unless all hold' items 1-5; backup.sh now also fails the set on the ownerOnly check and refuses a group/other-writable root (exit 2). DO-D11 handback §5 open questions 1 and 2 ask the solution-architect for these amendments; D-282 does not answer them.",
+      "expected": "The ADRs state the rules as built (p7-work-split §2 rule 2, the rule F-DG7-1002 was repaired under).",
+      "actual": "The ADR texts are now broader (ADR-0063) or incomplete (ADR-0066 §4) relative to the code. The IT-facing handover is correct (security-controls.md SC-13 and backup-restore.md §3.3 describe the new rules), so there is no behavioural effect. Documentation drift only; proposed for acceptance as an observation or a dated amendment.",
+      "evidence": [
+        "docs/architecture/adr/ADR-0063-p7-secret-hygiene-claims-scan-security-controls-evidence.md",
+        "docs/architecture/adr/ADR-0066-p7-backup-restore-backup-set-manifest-restore-checks-drill.md",
+        "tools/release/secret-scan.mjs",
+        "deploy/scripts/backup.sh",
+        "docs/delivery/handbacks/DG7/T-DG7-DO-D11-devops-engineer.md"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG7/round-2/domain-reviewer.json",
+      "owner": "solution-architect",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-17T15:10:00Z",
+          "status": "OPEN",
+          "note": "Raised by domain-reviewer in DG7 round 2 on candidate sha256:33266ccd…; Low, not mandatory; proposed as an observation or a dated ADR amendment."
+        }
+      ]
+    },
+    {
+      "id": "F-DG7-1041",
+      "stage_id": "DG7",
+      "requirement": "REQ-S16-031",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The DO-D11 repairs changed shipped behaviour that ADR-0063 §1.2/§5 and ADR-0066 §4 still describe as before (S3 i18n-key rule, the 64-hex trade-off, the ownerOnly check and the refused shared root); no dated amendment records them",
+      "reproduction": "On candidate sha256:33266ccd (source 152db5b51155282b28e82472629d07b8d87feb2a): (1) grep -n 'an i18n key' docs/architecture/adr/ADR-0063-p7-secret-hygiene-claims-scan-security-controls-evidence.md shows l.82, the S3 'do not match' cell: 'an i18n key (`[a-z0-9_.]+`)'. tools/release/secret-scan.mjs l.82-85 now implements isI18nKey() (lower-case words joined by '.'/'_', at least one separator, each segment at most 20 characters and 3 digits; F-DG7-1011). ADR-0063 has only Amendment 1 (2026-11-14, l.278), which does not mention the rule. (2) ADR-0063 §5 residual 1 (l.239) does not state that a value of exactly 64 hex characters under a secret-named key is exempt, although docs/operations/storage.md l.187 generates the S3 secret_access_key with `openssl rand -hex 32` (that shape is exempt 100% of the time: docs/delivery/test-evidence/DG7/code-security/round-2/11-s3-exemption-rates.log). The round-1 finding F-DG7-1011 asked that 'SC-13 and ADR-0063 §5 should state it'. SC-13 now does; the ADR does not. (3) ADR-0066 §4 (l.77-85) says 'The script fails the set ... unless all hold' and lists five checks. deploy/scripts/backup.sh l.526-529 now adds a sixth, `ownerOnly`, and l.233-241 refuses (exit 2) a backup root that group or others can write. ADR-0066 has no amendment section. The DO-D11 handback (docs/delivery/handbacks/DG7/T-DG7-DO-D11-devops-engineer.md §5 Q1, Q2) asked for exactly these amendments. No later decision or assignment answered them (SA-ADR71 amended only ADR-0071).",
+      "expected": "ADR claims are enumerated and exactly true (p7-work-split §2 rule 2, the carried rule that F-DG7-1013 and the ADR-0071 Amendment 1 applied). A dated amendment to ADR-0063 records the narrowed S3 i18n-key rule and adds the 64-hex checksum trade-off to §5. A dated amendment to ADR-0066 adds the ownerOnly check to §4, plus the refused group- or world-writable root and the required MTH_BACKUP_ROOT with create_host_path: false to §5. Alternatively, the orchestrator records in a decision that the handover documents (security-controls.md SC-13, backup-restore.md §3.3) are the accepted home.",
+      "actual": "The code and the handover documents (security-controls.md SC-13, backup-restore.md §3.3, §4 and §10) describe the new behaviour, but the two ADRs still describe the old behaviour. Documentation drift only: the shipped behaviour is the safer one, and the tests pin it. secret-scan.test.mjs is 32/32 and backup-restore.test.mjs 13/13 on this candidate (15-secret-scan-service-list-tests.log, 17-backup-restore-tests.log). I raise it for acceptance as an observation or a dated amendment. It does not block.",
+      "evidence": [
+        "docs/architecture/adr/ADR-0063-p7-secret-hygiene-claims-scan-security-controls-evidence.md",
+        "docs/architecture/adr/ADR-0066-p7-backup-restore-backup-set-manifest-restore-checks-drill.md",
+        "tools/release/secret-scan.mjs",
+        "deploy/scripts/backup.sh",
+        "docs/handover/security-controls.md",
+        "docs/delivery/handbacks/DG7/T-DG7-DO-D11-devops-engineer.md",
+        "docs/delivery/test-evidence/DG7/code-security/round-2/11-s3-exemption-rates.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG7/round-2/code-security-reviewer.json",
+      "owner": "solution-architect",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-17T15:10:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG7 round 2 (T-DG7-REV-CS-RG2) on candidate sha256:33266ccd. Low, not mandatory: ADR text only. It does not block this reviewer's verdict."
+        }
+      ]
+    },
+    {
+      "id": "F-DG7-1051",
+      "stage_id": "DG7",
+      "requirement": "REQ-S19-012",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "The Compose half of the A19 backup and restore has never been run, but the handover says it runs on the orchestrator's host and 'is recorded there'; DO-D11 changed that sequence again without a run, and nothing lists it as unrun",
+      "reproduction": "On the candidate (source 152db5b51, candidate sha256:33266ccd…): (1) docs/handover/backup-restore.md l.202 (§8): 'The Compose half runs on the orchestrator's host and is recorded there: the backup profile on postgres:18, a second Compose project with new volumes, and /readyz over HTTP.' §3.2 l.76: 'The Compose sequence runs on the orchestrator's host (D-243 Q1). Its result is recorded there, not here.' known-limitations.md l.152 (D-256): 'The container half of the backup and restore drill (A19) is the orchestrator's host run.' (2) grep of every DG7 log for '--phase database', 'profile backup run' and 'run --rm backup' (log 78 §1) finds only handbacks, a round-1 code-security repro script and findings.json, no run log. The orchestrator's container host run (D-267; orchestrator/host/host-run.log steps 00-12) builds, saves, loads and starts the stack and runs the Keycloak e2e; none of its steps runs the backup profile, backup.sh, restore.sh or restore-drill.sh (log 78 §2-§3; the only 'backup' lines are migrations 0145/0146 being applied). prefreeze-rg2/checks.log has no backup step (log 78 §4). (3) DO-F's handback (l.86, l.91, Q6 l.114) recorded the Compose half as BLOCKED and asked the orchestrator to run §3.2 and restore.sh --readyz-url; DO-D11's handback (l.109-110) records that the §3.2 sequence had a pre-existing defect (the root backup service creates the set, so step 2 as uid 10001 could not write evidence/attachments.json), changes it (--user 0:0, create_host_path: false, umask 077, the new root refusal) and says 'The orchestrator's Compose run should confirm step 2'. No such run exists. (4) p7-plan.md risk R1 (D-243 Q1): 'The orchestrator runs the container halves. An unrun half is a disclosed release blocker, never a pass.' release-notes.md l.25: 'Unfinished items and release blockers: None'. ADR-0066 §9 defines the drill as 'backup.sh -> a fresh Compose project -> restore.sh'. (5) The container-free half passes on the candidate: restore-drill.sh R1-R9 (log 76), A19 harness 13/13 (log 40), backup-restore.test.mjs 13/13 incl. T-E11, which simulates the three phases with the scripts, not with Compose (log 73b).",
+      "expected": "Per D-243 Q1 and p7-plan R1, either (a) the orchestrator runs the backup-restore.md §3.2 Compose sequence (backup profile on the pinned postgres:18, the app-image copy-out with --user 0:0, --phase finish) and a restore into a second Compose project with /readyz on its host, on this candidate's tree, and commits the log as orchestrator evidence that the guide can point to; or (b) the handover says plainly that the Compose half has not been run (backup-restore.md §3.2, §8 and §10, known-limitations.md), and the unrun half is listed as a release blocker or disclosed limitation in the release notes, never as 'recorded there'.",
+      "actual": "The documented production backup procedure for IT (handover item 9) has never been executed in any DG7 evidence, one defect in it was found by reading only, and its repair is untested. The handover tells IT that the Compose half's result 'is recorded' on the orchestrator's host, which no record supports, and the release notes list no blocker for it. The A19 acceptance text itself is met by the container-free drill (logs 76, 40, 73b). I missed this in round 1 (my QA-RG1-21 judged D-267 for REQ-S16-008, S19-018 and S19-010 only); it was present then too.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-2/78-a19-compose-half-search.log",
+        "docs/handover/backup-restore.md",
+        "docs/handover/known-limitations.md",
+        "docs/handover/release-notes.md",
+        "docs/delivery/handbacks/DG7/T-DG7-DO-F-devops-engineer.md",
+        "docs/delivery/handbacks/DG7/T-DG7-DO-D11-devops-engineer.md",
+        "docs/delivery/test-evidence/DG7/orchestrator/host/host-run.log",
+        "docs/delivery/test-evidence/DG7/orchestrator/prefreeze-rg2/checks.log",
+        "docs/architecture/p7-plan.md",
+        "docs/delivery/test-evidence/DG7/qa/round-2/76-a19-restore-drill.log",
+        "docs/delivery/test-evidence/DG7/qa/round-2/73b-backup-restore-tests.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG7/round-2/qa-verifier.json",
+      "owner": "devops-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-17T16:40:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG7 round 2 (T-DG7-REV-QA-RG2) on candidate sha256:33266ccd. Medium: the A19 acceptance is met container-free, but the handover's Compose procedure is unrun and the guide states otherwise (D-192: repair before the gate, either by the host run or by an honest disclosure)."
+        }
+      ]
+    },
+    {
+      "id": "F-DG7-1052",
+      "stage_id": "DG7",
+      "requirement": "REQ-S16-031",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "ADR-0063 §1.2 (S3 exceptions) and ADR-0066 §4 (backup-time checks) were not amended for the DO-D11 repairs; DO-D11's open questions Q1 and Q2 have no answer",
+      "reproduction": "On the candidate (log 80): (1) git diff ddf42ccd2 152db5b51 touches no ADR-0063 or ADR-0066 file. (2) ADR-0063 §1.2 S3 still lists the exception 'an i18n key ([a-z0-9_.]+)'; tools/release/secret-scan.mjs now applies isI18nKey (l.82, l.101: at least one separator, each segment at most 20 characters and at most 3 digits), so a bare lower-case or hex value is no longer exempt, and the 64-hex checksum exemption (l.99) that lets an 'openssl rand -hex 32' secret pass is disclosed only in security-controls.md SC-13, not in ADR-0063 §1.2 or §5. ADR-0063 has only Amendment 1 (2026-11-14). (3) ADR-0066 §4 lists five backup-time checks; backup.sh now adds the ownerOnly check (l.529), umask 077 (l.215), the refusal of a group- or other-writable root (l.237) and the Compose mount without a /tmp fallback; ADR-0066 mentions none of them (grep for ownerOnly, umask, 0700, create_host_path, MTH_BACKUP_ROOT: only an unrelated 'owner-only write' at l.145). (4) DO-D11 handback §5 Q1 ('ADR-0063 needs an amendment (solution-architect)') and Q2 ('ADR-0066 §4 lists the checks. Should the architect add it there') are not answered in decisions.md (D-282 is the last entry).",
+      "expected": "The accepted ADRs that specify the secret scan and the backup set describe the shipped rules, through dated amendments as was done for ADR-0071 in this round (F-DG7-1021) and as p7-work-split §2 rule 2 requires ('ADR claims enumerated and exactly true'): ADR-0063 §1.2 names the narrowed i18n-key rule and §5 the 64-hex trade-off; ADR-0066 §4 lists ownerOnly, and §5 or a new item states the owner-only modes, the refused shared root and the required MTH_BACKUP_ROOT.",
+      "actual": "The ADR text is now broader (S3) or narrower (§4) than the code. Behaviour is correct and documented in the handover (SC-13; backup-restore.md §3.3 and §7), and tests pin it (secret-scan F-DG7-1011 test, T-E10..T-E12). This is the same documentation-drift class all three reviewers raised for ADR-0071 in round 1, created by the round-1 repairs themselves.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-2/80-adr-drift-do-d11.log",
+        "docs/architecture/adr/ADR-0063-p7-secret-hygiene-claims-scan-security-controls-evidence.md",
+        "docs/architecture/adr/ADR-0066-p7-backup-restore-backup-set-manifest-restore-checks-drill.md",
+        "tools/release/secret-scan.mjs",
+        "deploy/scripts/backup.sh",
+        "docs/delivery/handbacks/DG7/T-DG7-DO-D11-devops-engineer.md",
+        "docs/handover/security-controls.md"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG7/round-2/qa-verifier.json",
+      "owner": "solution-architect",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-17T16:40:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG7 round 2 (T-DG7-REV-QA-RG2) on candidate sha256:33266ccd. Low: documentation drift, no behavioural effect."
+        }
+      ]
+    },
+    {
+      "id": "F-DG7-1053",
+      "stage_id": "DG7",
+      "requirement": "REQ-S19-012",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "backup.sh refuses a backup root that is a symbolic link to an owner-only directory, with the misleading message that the root is writable by group or others",
+      "reproduction": "Script docs/delivery/test-evidence/DG7/qa/round-2/scripts/backup-root-probe.sh, log 77, in the disposable clone at 152db5b51, no database needed (the root check runs before DATABASE_URL is read): 'ln -s real700 link-to-700' where real700 is mode 0700; 'bash deploy/scripts/backup.sh --out <P>/link-to-700 --label qa-probe --operator qa' exits 2 with 'BLOCKED: the backup root <P>/link-to-700 is writable by group or others; use an owner-only directory (chmod 0700)'. The same command on real700 itself passes the check (it stops later at 'DATABASE_URL ... is not set'). Cause: backup.sh l.237 'find \"$root\" -maxdepth 0 -perm /022' tests the symbolic link's own mode (always lrwxrwxrwx on Linux), because find does not follow a command-line symlink by default (-P). chmod 0700 on the target, as the message advises, does not help.",
+      "expected": "backup-restore.md §3.3: backup.sh 'refuses a root that group or others can write'. A symlink whose target is an owner-only directory is not writable by group or others, so it is accepted (for example by testing the resolved path, find -H, or [ -L ] handled explicitly), or, if symlinked roots are refused on purpose, the message and the guide say so.",
+      "actual": "A common, safe layout (/srv/mth-backups -> /data/backups, mode 0700) is refused on the host path (§3.1) with a message that names the wrong cause. It fails closed and the workaround is to pass the resolved path. In Compose the bind mount resolves the link, so the container sees a directory and is unaffected. Symlinks to 1777 directories are correctly refused.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-2/77-backup-root-probe.log",
+        "docs/delivery/test-evidence/DG7/qa/round-2/scripts/backup-root-probe.sh",
+        "deploy/scripts/backup.sh",
+        "docs/handover/backup-restore.md"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG7/round-2/qa-verifier.json",
+      "owner": "devops-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-17T16:40:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG7 round 2 (T-DG7-REV-QA-RG2) on candidate sha256:33266ccd. Low: fails closed with a trivial workaround; wrong message."
+        }
+      ]
     }
   ]
 }

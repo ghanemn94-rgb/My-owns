@@ -70,7 +70,8 @@ if (opt("--fix")) {
             by_role: role, invocation_reference: rec.invocation_reference, at: rec.reviewed_at,
             result: v.result, evidence: v.evidence || [], note: v.note || "",
           };
-          f.status = v.status_after;
+          // A failed verification may say REOPENED (D-283, the DG7 round-2 assignment wording); the finding is OPEN again.
+          f.status = v.result === "FAIL" && v.status_after === "REOPENED" ? "OPEN" : v.status_after;
           f.history.push({ at: rec.reviewed_at, status: f.status, note: `verified by ${role} round ${round}: ${v.result}` });
           log.push(`~ ${f.id} -> ${f.status} (${role})`);
         }
