@@ -1,0 +1,33 @@
+## 2026-11-17T09:21:31Z candidate identity (code-security-reviewer, T-DG7-REV-CS-RG1)
+$ git rev-parse HEAD  (live repository)
+2561ce969b01d9b03be5a416999193056f68d36a
+$ git rev-parse --is-shallow-repository
+false
+$ git diff --stat ddf42ccd2..HEAD  (freeze commit content)
+ .../DG7/round-1/code-security-reviewer.md          |   141 +
+ .../assignments/DG7/round-1/domain-reviewer.md     |   141 +
+ .../assignments/DG7/round-1/qa-verifier.md         |   141 +
+ .../candidates/DG7/9822d8fe947b572d.manifest.json  | 15808 +++++++++++++++++++
+ docs/delivery/stages.json                          |    70 +-
+ 5 files changed, 16275 insertions(+), 26 deletions(-)
+$ git diff --name-only ddf42ccd2..HEAD -- . ':!docs/delivery' | wc -l
+0
+$ node tools/gates/candidate.mjs --stage DG7
+{"stage":"DG7","source":"working-tree","candidate_id":"sha256:9822d8fe947b572d30a24e1f59798587edd610a0c8b8f81a21eaceeb3233a744","files":3158}
+exit=0
+$ node tools/gates/candidate.mjs --stage DG7 --ref ddf42ccd2630f3d62f6aaf360ff401bbc2bde025
+{"stage":"DG7","source":"ddf42ccd2630f3d62f6aaf360ff401bbc2bde025","candidate_id":"sha256:9822d8fe947b572d30a24e1f59798587edd610a0c8b8f81a21eaceeb3233a744","files":3158}
+exit=0
+$ node tools/gates/candidate.mjs --stage DG7 --diff
+{
+  "frozen": "sha256:9822d8fe947b572d30a24e1f59798587edd610a0c8b8f81a21eaceeb3233a744",
+  "working_tree": "sha256:9822d8fe947b572d30a24e1f59798587edd610a0c8b8f81a21eaceeb3233a744",
+  "matches": true,
+  "added": [],
+  "removed": [],
+  "changed": []
+}
+exit=0
+$ node --version
+v24.21.0
+Note: a first full clone under $TMPDIR also computed sha256:9822d8fe...3233a744 (3158 files, exit 0) before it was removed for disk space (shared volume at 100%); the review clone is a --shared sparse clone at ddf42ccd2 without docs/delivery/{test-evidence,handbacks,runs} and trading_agent.

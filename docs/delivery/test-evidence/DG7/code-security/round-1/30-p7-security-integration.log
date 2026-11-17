@@ -1,0 +1,95 @@
+$ QA_PG_PORT=32400 MTH_PORT_POOL=32400-32499 tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration apps/api/test/integration/transfer apps/api/test/integration/retention apps/api/test/integration/release apps/api/test/integration/identity/unbound-signin.test.ts apps/api/test/integration/aud-write-deny.test.ts apps/api/test/integration/platform/deployment-status.test.ts apps/api/test/integration/platform/readiness-storage-worker.test.ts apps/worker/test/integration/retention-archive.test.ts packages/db/test/integration/p7-retention-guards.test.ts packages/db/test/integration/p7-transfer-guards.test.ts packages/db/test/integration/transfer-roundtrip.test.ts packages/db/test/integration/transfer-load.test.ts packages/db/test/integration/transfer-export.test.ts packages/db/test/integration/transfer-locks.test.ts
+2026-11-17T09:24:53Z
+port-policy: PostgreSQL listening on port 32400 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.qofMdt/claude-0/rev
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwkhkzk8_00508b8f (server_encoding UTF8); applied 135 migrations to a fresh database
+stdout | packages/db/test/integration/transfer-load.test.ts > T-R13 + T-R4 + T-R3: the real load with carried events already present in the baseline (A2.2, A2.3) > imports (exit 0), never inserts P twice, records P, reconstructs the trail, keeps the triggers on
+T-R13 measured |P| = 45
+
+ ✓ |integration| packages/db/test/integration/transfer-load.test.ts (10 tests) 162163ms
+   ✓ T-R2: mth-db migrate --reserve-audit-seq-for > starts the target's audit trail at M + 1, fires once after 0003, and the plan defers no audit column  6217ms
+   ✓ T-R2: mth-db migrate --reserve-audit-seq-for > refuses on a database with an applied migration (exit-2 line), changing nothing  7658ms
+   ✓ T-R2: mth-db migrate --reserve-audit-seq-for > the CLI prints the line; a bad package is refused before any connection (unreachable URL)  11317ms
+   ✓ T-R1: the empty-target rule E1-E4 > a fresh target (with and without the reservation) satisfies E1, E2 and E4, measured  16873ms
+   ✓ T-R1: the empty-target rule E1-E4 > a plainly migrated target is refused by E3 (exit 2, exact line), unchanged  8103ms
+   ✓ T-R1: the empty-target rule E1-E4 > one organization: exit 3 with the detail line; one api audit row as mth_app: exit 3 with the E2 line  19531ms
+   ✓ T-R13 + T-R4 + T-R3: the real load with carried events already present in the baseline (A2.2, A2.3) > imports (exit 0), never inserts P twice, records P, reconstructs the trail, keeps the triggers on  14566ms
+   ✓ T-R14: a shared-id carried event that is not the same event refuses the import (A2.2, A2.7) > a differing reason, and a source copy that is not a baseline event: exit 1, both lines, nothing changed  9113ms
+   ✓ T-R5 (b): a changed loaded row at L8 makes the reconciliation mismatch and rolls everything back > exit 4 with the C.5 line; counts, trail and triggers unchanged; no migration_import  13261ms
+ ✓ |integration| packages/db/test/integration/transfer-export.test.ts (11 tests) 66962ms
+   ✓ T-C3: the marker and the demo checksum (ADR-0064 §2.1; D-244 O2) > an unmarked source exports unmarked and a production source production, both with demoChecksum null  8790ms
+   ✓ mth-db export-migration and tools/migration/export.mjs (ADR-0064 §7; p7-work-split §2 rule 4, §C.5) > writes the package with a recorded cli export (requested, started, succeeded); refuses a non-empty --out (2)  18726ms
+ ✓ |integration| apps/api/test/integration/transfer/config-bundle-roundtrip.test.ts (2 tests) 51499ms
+   ✓ T-D6 demo -> clean installation round trip > imports as drafts, publishes through the existing pipeline, and the published hashes equal the source's  1361ms
+   ✓ T-D7 an imported draft is published, and migrated to, exactly as a hand-made one > the pin is unchanged by the commit and the publish; the publish and migration records equal a hand-made publish's  1986ms
+ ✓ |integration| packages/db/test/integration/p7-transfer-guards.test.ts (22 tests) 18624ms
+ ✓ |integration| packages/db/test/integration/transfer-roundtrip.test.ts (12 tests) 44388ms
+   ✓ T-C10 and T-C12 (refusals): each refusal exits with its code and line and changes nothing > schema version: exit 2  1039ms
+   ✓ T-C10 and T-C12 (refusals): each refusal exits with its code and line and changes nothing > file checksum: exit 2  425ms
+   ✓ T-C10 and T-C12 (refusals): each refusal exits with its code and line and changes nothing > migration level: exit 2  345ms
+   ✓ T-C10 and T-C12 (refusals): each refusal exits with its code and line and changes nothing > app version: exit 2  535ms
+   ✓ T-C10 and T-C12 (refusals): each refusal exits with its code and line and changes nothing > non-empty target (the seeded demo source itself): exit 3  462ms
+   ✓ the reconciliation (step 8) of the package against its live source > matches table for table; a change after the export is reported, never hidden  1431ms
+   ✓ the reconciliation (step 8) of the package against its live source > reconcile-migration refuses (exit 2) where no import is recorded, and writes nothing  385ms
+   ✓ E3 (ADR-0064 A1.3): a target migrated without the reservation is refused > its audit events start at seq 1, at or below the package's M: exit 2 with the remedy; nothing changes  1177ms
+   ✓ the CLI lines and the wrappers (p7-work-split §C.5, §2 rule 4), as subprocesses > import.mjs passes mth-db's refusal through; reconcile.mjs exits 2; usage errors are 2  5571ms
+   ✓ the CLI lines and the wrappers (p7-work-split §C.5, §2 rule 4), as subprocesses > mth-db rebind-identity refuses an invalid file with exit 2 and one line per problem; nothing changes  2787ms
+ ✓ |integration| apps/api/test/integration/platform/deployment-status.test.ts (9 tests) 17279ms
+   ✓ T-B4: getDeploymentStatus > 200 for ADM_TECH, TO, KDS, TD and AUD; 403 for SP, TL, BO, WL, FIN, CM, SEC, ADM_METHOD, ADM_ACCESS and no grant  430ms
+   ✓ T-B5: no storage endpoint, bucket or SecretRef name in the body > with an S3 setting holding canary names, the body names none of them (storage: fail, driver s3)  5179ms
+   ✓ T-B6: APP_BASE_URL with a sub-path > a configuration with the path /hub/ reaching buildServer: it starts, logs the B.5 warning exactly once, reports basePath /hub/  828ms
+   ✓ T-B6: APP_BASE_URL with a sub-path > an origin-root APP_BASE_URL logs no sub-path warning  566ms
+ ✓ |integration| apps/api/test/integration/platform/readiness-storage-worker.test.ts (10 tests) 13609ms
+   ✓ T-B2: the evidence-storage probe > a store that accepts the connection and never answers -> fail Timeout within 2 500 ms  2024ms
+ ✓ |integration| apps/api/test/integration/transfer/export.test.ts (10 tests) 16810ms
+   ✓ T-C6: the migration-export routes and the transfer.export job > every role but ADM_TECH (AUD included) and a user without grants gets 403 on all five operations  714ms
+   ✓ T-C6: the migration-export routes and the transfer.export job > the job waits on lock 730402, then runs once: running -> succeeded, one audit event per transition  4668ms
+   ✓ T-C6: the migration-export routes and the transfer.export job > the same Idempotency-Key returns the existing request with 200; a failed export is 422 on both manifests  1037ms
+ ✓ |integration| apps/api/test/integration/transfer/config-bundle.test.ts (23 tests) 16588ms
+   ✓ T-D3 the plan > plans each action; a conflict leaves the open draft untouched; invalid is terminal  302ms
+   ✓ T-D4 commit writes drafts, never publishes; job schedules arrive disabled > writes each item through its kind's path with its own audit event  439ms
+   ✓ T-D5 permissions and concurrency > AUD and a user without grants get 403 on all nine operations  372ms
+ ✓ |integration| apps/api/test/integration/transfer/export-scope.test.ts (4 tests) 16179ms
+ ✓ |integration| apps/api/test/integration/retention/classes.test.ts (8 tests) 10967ms
+   ✓ T-E12: authorization > reads for ADM_TECH, ADM_ACCESS and AUD only; 403 for every other role and a user without grants  408ms
+ ✓ |integration| apps/api/test/integration/transfer/attachments.test.ts (15 tests) 11416ms
+   ✓ T-C16: copy-out reads the rows that name objects from PostgreSQL (scratch database) > the plan's storage_key columns are evidence_content and export_job; their rows are listed and copy-out exits 0 with their manifest  10796ms
+ ✓ |integration| apps/api/test/integration/retention/runs.test.ts (7 tests) 15441ms
+   ✓ the run request (createRetentionRun, createRetentionDryRun) > 403 on both requests for every role but ADM_TECH (AUD and ADM_ACCESS included); reads for ADM_TECH, ADM_ACCESS, AUD  1388ms
+   ✓ the read routes (listRetentionRuns, getRetentionRun, listRetentionRunActions, listRetentionArchivedRecords) > a real run's actions and markers: primary key values only, newest first, filters  402ms
+ ✓ |integration| apps/api/test/integration/transfer/import-routes.test.ts (5 tests) 14636ms
+   ✓ T-C14: the read-only migration-import routes > ADM_TECH, ADM_ACCESS and AUD read all five; the reads write no audit event  693ms
+   ✓ T-C14: the read-only migration-import routes > every other role, a user without grants and a narrower AUD grant get 403 on all five  812ms
+ ✓ |integration| apps/api/test/integration/identity/unbound-signin.test.ts (5 tests) 12608ms
+   ✓ T-C15: an unbound user cannot sign in; rebind-identity binds under IT control > OIDC: the carried subject ends at /login?error=identity_unbound, no session, session.login_failed  456ms
+   ✓ T-C15: an unbound user cannot sign in; rebind-identity binds under IT control > after the rebind the user signs in with the new subject; the old one no longer resolves to them  356ms
+ ✓ |integration| apps/api/test/integration/retention/backups.test.ts (2 tests) 11342ms
+ ✓ |integration| apps/worker/test/integration/retention-archive.test.ts (8 tests) 11989ms
+ ✓ |integration| packages/db/test/integration/transfer-locks.test.ts (3 tests) 10104ms
+ ✓ |integration| apps/api/test/integration/aud-write-deny.test.ts (128 tests) 22697ms
+   ✓ read-only auditor (AUD) write-deny over every P2 mutating operation (generated from the contract) > updateDependency (PATCH /api/v1/transformations/{transformationId}/dependencies/{dependencyId}): AUD gets 403 and nothing is written  595ms
+   ✓ read-only auditor (AUD) write-deny over every P2 mutating operation (generated from the contract) > updateActionItem (PATCH /api/v1/transformations/{transformationId}/actions/{actionItemId}): AUD gets 403 and nothing is written  1104ms
+   ✓ the same auditor can read every P2 resource > listEvidence (GET /api/v1/transformations/{transformationId}/evidence): 200  441ms
+   ✓ the same auditor can read every P2 resource > listRoleAccountabilities (GET /api/v1/role-accountabilities): 200  327ms
+   ✓ the same auditor can read every P2 resource > listGates (GET /api/v1/transformations/{transformationId}/gates): 200  4066ms
+ ✓ |integration| apps/api/test/integration/release/register.test.ts (9 tests) 6113ms
+   ✓ T-I4: listRequirements > each filter alone and combined returns exactly the matching rows  321ms
+   ✓ T-I5: getRequirement and the role set > returns every column verbatim for a multi-line row  336ms
+   ✓ T-I5: getRequirement and the role set > all three operations: 200 for ADM_TECH, TO, KDS, TD, AUD; 403 for the nine others and no grant; 401 without a session (G1, G2)  1080ms
+   ✓ T-I6 (G4): a missing or corrupt snapshot > list and get -> 503 release.register_snapshot_unavailable (never an empty 200); fixed without a restart  971ms
+ ✓ |integration| apps/api/test/integration/release/about.test.ts (4 tests) 1882ms
+ ✓ |integration| packages/db/test/integration/p7-retention-guards.test.ts (15 tests) 439ms
+
+ Test Files  22 passed (22)
+      Tests  322 passed (322)
+   Start at  09:25:00
+   Duration  683.74s (transform 10.34s, setup 0ms, collect 118.55s, tests 553.74s, environment 0ms, prepare 150ms)
+
+exit=0
+2026-11-17T09:36:42Z

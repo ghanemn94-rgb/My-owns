@@ -1,0 +1,17 @@
+## asset scan on the real build (REQ-S19-019; T-A11 equivalent). Clone at ddf42ccd2 built with pnpm -r build (40-build.log).
+(attempt 1 stopped before assembling: 'rsync: command not found' on this host, so the workspace copy was missing; assemble-runtime exit 1 and scan-assets BLOCKED exit 2 for that reason only. Attempt 2 below copies with tar.)
+$ cp -a <pnpm store> $TMPDIR/pstore (done in attempt 1); tar copy of the clone without .git to $TMPDIR/rtws (disposable; assemble-runtime prunes it in place)
+copied
+$ deploy/scripts/assemble-runtime.sh --store-dir $TMPDIR/pstore $TMPDIR/rtws $TMPDIR/runtime
+collect-notices: 186 shipped packages, 174 files, 12 without a licence file -> /var/tmp/mth-run.qofMdt/claude-0/runtime/licenses
+Scope: all 9 workspace projects
+Recreating /var/tmp/mth-run.qofMdt/claude-0/rtws/node_modules
+Lockfile is up to date, resolution step is skipped
+Progress: resolved 1, reused 0, downloaded 0, added 0
+Packages: +186
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ ERR_PNPM_NO_OFFLINE_TARBALL  A package is missing from the store but cannot download it in offline mode. The missing package may be downloaded from https://registry.npmjs.org/@aws-sdk/client-s3/-/client-s3-3.1156.0.tgz.
+exit=1
+$ node tools/release/scan-assets.mjs --web apps/web/dist --runtime $TMPDIR/runtime --config .   (in the clone)
+scan-assets: BLOCKED: /var/tmp/mth-run.qofMdt/claude-0/runtime/node_modules not found; run pnpm -r build first
+exit=2

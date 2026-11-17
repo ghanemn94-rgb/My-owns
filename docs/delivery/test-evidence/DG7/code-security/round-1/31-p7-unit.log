@@ -1,0 +1,54 @@
+$ npx vitest run --configLoader runner --project unit-node packages/db/src/transfer apps/api/src/modules/transfer apps/api/src/modules/retention apps/api/src/modules/release apps/api/src/modules/platform packages/config/src apps/api/src/p7-wiring.test.ts apps/api/src/architecture.test.ts
+ ✓ |unit-node| apps/api/src/modules/platform/in-flight.test.ts (4 tests) 484ms
+ ✓ |unit-node| apps/api/src/modules/platform/health.test.ts (8 tests) 577ms
+   ✓ /readyz database encoding > is ready on UTF8 and asks for the encoding only once per process  315ms
+ ✓ |unit-node| apps/api/src/modules/platform/media-types.test.ts (57 tests) 269ms
+ ✓ |unit-node| packages/config/src/load.test.ts (61 tests) 352ms
+ ✓ |unit-node| apps/api/src/modules/platform/platform.test.ts (19 tests) 318ms
+ ✓ |unit-node| apps/api/src/modules/platform/connection-hygiene.test.ts (6 tests) 171ms
+ ✓ |unit-node| apps/api/src/modules/platform/incomplete-body.test.ts (10 tests) 122ms
+ ✓ |unit-node| apps/api/src/modules/platform/secrets.test.ts (39 tests) 240ms
+ ✓ |unit-node| apps/api/src/modules/release/release.test.ts (10 tests) 144ms
+ ✓ |unit-node| apps/api/src/modules/transfer/transfer.test.ts (3 tests) 73ms
+ ✓ |unit-node| apps/api/src/modules/platform/advisory-locks.test.ts (3 tests) 157ms
+ ✓ |unit-node| apps/api/src/modules/platform/framework-errors.test.ts (6 tests) 151ms
+ ✓ |unit-node| apps/api/src/modules/retention/retention.test.ts (4 tests) 114ms
+ ✓ |unit-node| packages/config/src/redaction.test.ts (23 tests) 35ms
+ ✓ |unit-node| packages/config/src/secret-bindings.test.ts (38 tests) 55ms
+ ✓ |unit-node| packages/db/src/transfer/recheck.test.ts (16 tests) 19ms
+ ✓ |unit-node| apps/api/src/p7-wiring.test.ts (3 tests) 5965ms
+   ✓ P7 permission wiring (T-DG7-BE-A) > every guard row is a contract operation with the same method, path and stated permission  4220ms
+   ✓ P7 permission wiring (T-DG7-BE-A) > a guarded operation is not routed yet, or routed with exactly its guard's permission  1733ms
+ ✓ |unit-node| packages/db/src/transfer/import.test.ts (3 tests) 56ms
+ ✓ |unit-node| apps/api/src/modules/platform/db-errors.test.ts (7 tests) 13ms
+ ✓ |unit-node| apps/api/src/modules/platform/cursor.test.ts (14 tests) 53ms
+ ✓ |unit-node| apps/api/src/modules/platform/db-errors-p4.test.ts (5 tests) 31ms
+ ✓ |unit-node| apps/api/src/modules/platform/db-errors-p5-demo.test.ts (11 tests) 17ms
+ ✓ |unit-node| apps/api/src/modules/platform/secrets-registry.test.ts (12 tests) 16ms
+ ✓ |unit-node| packages/db/src/transfer/manifest.test.ts (5 tests) 9ms
+ ✓ |unit-node| apps/api/src/modules/platform/db-errors-p5-restatements.test.ts (5 tests) 53ms
+ ✓ |unit-node| apps/api/src/modules/platform/db-errors-p5-owner-updates.test.ts (4 tests) 21ms
+ ✓ |unit-node| apps/api/src/modules/platform/db-errors-p4-meetings.test.ts (4 tests) 137ms
+ ✓ |unit-node| apps/api/src/modules/platform/db-errors-p5-reports.test.ts (3 tests) 9ms
+ ✓ |unit-node| apps/api/src/modules/platform/db-errors-p5.test.ts (3 tests) 8ms
+ ✓ |unit-node| packages/db/src/transfer/attachment-report.test.ts (5 tests) 8ms
+ ✓ |unit-node| apps/api/src/modules/platform/db-errors-p6.test.ts (14 tests) 24ms
+ ✓ |unit-node| apps/api/src/modules/platform/db-errors-p6-saved-views.test.ts (10 tests) 9ms
+ ✓ |unit-node| apps/api/src/modules/platform/db-errors-p6-jc.test.ts (15 tests) 63ms
+ ✓ |unit-node| packages/db/src/transfer/plan.test.ts (8 tests) 8ms
+ ✓ |unit-node| apps/api/src/modules/platform/request-encoding.test.ts (7 tests) 15ms
+ ✓ |unit-node| packages/db/src/transfer/export.test.ts (7 tests) 25ms
+ ✓ |unit-node| packages/db/src/transfer/rebind.test.ts (6 tests) 9ms
+ ✓ |unit-node| apps/api/src/modules/platform/db-errors-p5-cutoff-pack.test.ts (4 tests) 6ms
+ ✓ |unit-node| packages/db/src/transfer/reconcile.test.ts (4 tests) 7ms
+ ✓ |unit-node| apps/api/src/architecture.test.ts (142 tests) 57677ms
+   ✓ API module boundaries (ADR-0002) > every import respects dependsOn, public surfaces and allowed packages  26076ms
+   ✓ the checker itself catches planted violations (self-check, incl. F-DG1-109, F-DG1-117, F-DG1-124) > rule 4 reports exactly the diagnostics of a full ts.transpileModule, for every extension (F-DG5-102/145)  1455ms
+   ✓ package dependency direction (ADR-0002 rule 5) > packages/db imports only @mth/config and @mth/shared  2839ms
+   ✓ package dependency direction (ADR-0002 rule 5) > packages/shared imports no workspace package  4241ms
+   ✓ package dependency direction (ADR-0002 rule 5) > apps/web never imports @mth/db or @mth/config (browser bundle, no secrets)  20512ms
+   ✓ package dependency direction (ADR-0002 rule 5) > apps/worker imports no API code  1022ms
+ Test Files  40 passed (40)
+      Tests  608 passed (608)
+   Duration  60.07s (transform 17.47s, setup 0ms, collect 84.22s, tests 67.52s, environment 11ms, prepare 5.87s)
+exit=0

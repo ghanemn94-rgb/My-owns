@@ -1,0 +1,14 @@
+$ git diff --stat 1612f85fc ddf42ccd2 -- . ':!docs/delivery' ':!trading_agent'
+ docs/handover/known-limitations.md  |  4 ++--
+ docs/handover/release-notes.md      |  4 ++--
+ tools/release/secret-allowlist.json | 36 ------------------------------------
+ 3 files changed, 4 insertions(+), 40 deletions(-)
+exit=0
+$ git diff --stat 1612f85fc ddf42ccd2 -- docs/delivery/requirements.csv docs/delivery/decisions.md
+ docs/delivery/decisions.md     |  1 +
+ docs/delivery/requirements.csv | 28 ++++++++++++++--------------
+ 2 files changed, 15 insertions(+), 14 deletions(-)
+$ diff of the two candidate-relevant manifest-included files under docs/delivery is not shown (decisions/register are reviewed separately)
+$ node tools/release/release-notes.mjs --csv docs/delivery/requirements.csv --deps docs/handover/external-dependencies.json --provisional apps/web/src/i18n --out docs/handover/release-notes.md --check   (clone at ddf42ccd2)
+release-notes: 0 unfinished item(s), 23 later clause(s); docs/handover/release-notes.md is up to date
+exit=0

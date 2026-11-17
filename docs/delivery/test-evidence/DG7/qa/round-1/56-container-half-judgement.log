@@ -1,0 +1,26 @@
+### check-dockerfile-context on the candidate clone (ddf42ccd2): every apps/*/src and packages/*/src file, incl. the post-host-run SPA files, must be in the Docker build context
+check-dockerfile-context: 12 install inputs (package.json, pnpm-lock.yaml, pnpm-workspace.yaml, .npmrc, apps/api/package.json, apps/web/package.json, apps/worker/package.json, packages/config/package.json, packages/db/package.json, packages/design-tokens/package.json, packages/reporting/package.json, packages/shared/package.json); 1584 tracked source files; 0 problem(s)
+RESULT: PASS
+exit=0
+### product files changed between the D-267 host-run tree d162115e5 and the candidate (deploy/** unchanged)
+ deploy/scripts/transfer-drill.sh                   | 100 ++-
+ 7 files changed, 1786 insertions(+), 27 deletions(-)
+(empty above = no change under deploy/ or .dockerignore)
+apps/web/src/api/p7.ts
+apps/web/src/app/router.tsx
+apps/web/src/i18n/ar/retention.json
+apps/web/src/i18n/ar/transfer.json
+apps/web/src/i18n/en/retention.json
+apps/web/src/i18n/en/transfer.json
+apps/web/src/i18n/index.ts
+apps/web/src/i18n/provisional-ar-p7-retention.ts
+apps/web/src/pages/admin/config-transfer/ConfigTransferPages.tsx
+apps/web/src/pages/admin/retention/RetentionPages.tsx
+ deploy/ci/ci.yml                                   |  18 +-
+ deploy/scripts/drill/cleanup.sh                    | 137 ++++
+ deploy/scripts/drill/schedule-explained.mjs        | 616 ++++++++++++++
+ deploy/scripts/tests/dockerfile-context.test.mjs   |  19 +-
+ .../tests/fixtures/f-dg7-971-reconcile-d9.json     |  29 +
+ deploy/scripts/tests/transfer-drill.test.mjs       | 894 ++++++++++++++++++++-
+ deploy/scripts/transfer-drill.sh                   | 100 ++-
+ 7 files changed, 1786 insertions(+), 27 deletions(-)

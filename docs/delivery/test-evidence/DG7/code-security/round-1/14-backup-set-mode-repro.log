@@ -1,0 +1,37 @@
+(attempt 1 failed before any backup: 'mth-db: NODE_ENV is required for db-cli'; the script now sets NODE_ENV=test)
+$ QA_PG_PORT=32450 MTH_PORT_POOL=32400-32499 tests/qa/support/with-pg.sh bash docs/delivery/test-evidence/DG7/code-security/round-1/repro/backup-set-mode-repro.sh <clone>
+port-policy: PostgreSQL listening on port 32450 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applying 0152_p7_transfer_recheck_lineage_basis.sql
+mth-db migrate: applied 135 migration(s)
+umask 0022
+backup: set modeprobe database phase done; run the evidence copy-out, then --phase finish
+backup.sh exit=0
+--- modes of the set (octal, type, path relative to the backup root):
+755 d .
+755 d ./modeprobe
+755 d ./modeprobe/.backup-state
+644 f ./modeprobe/.backup-state/config_sha256
+644 f ./modeprobe/.backup-state/dump_bytes
+644 f ./modeprobe/.backup-state/dump_sha256
+644 f ./modeprobe/.backup-state/facts.json
+644 f ./modeprobe/.backup-state/id
+644 f ./modeprobe/.backup-state/migration_level
+644 f ./modeprobe/.backup-state/pg_dump_version
+644 f ./modeprobe/.backup-state/schedule_digest
+644 f ./modeprobe/.backup-state/server_major
+644 f ./modeprobe/.backup-state/snapshot_digest
+644 f ./modeprobe/.backup-state/started_at
+644 f ./modeprobe/.backup-state/timings
+755 d ./modeprobe/config
+644 f ./modeprobe/config/compose.yaml
+644 f ./modeprobe/config/images.lock.json
+755 d ./modeprobe/db
+644 f ./modeprobe/db/database.dump
+644 f ./modeprobe/db/table-counts.tsv
+755 d ./modeprobe/evidence
+--- what the dump holds (pg_restore --list, the user_account and audit_event TABLE DATA lines):
+13833; 0 16422 TABLE DATA public app_user mth_owner
+13845; 0 16805 TABLE DATA public audit_event mth_owner
+13836; 0 16536 TABLE DATA public session mth_owner
+exit=0

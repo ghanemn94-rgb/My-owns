@@ -1,0 +1,28 @@
+## attempt 1 (09:15Z): full 'git clone' of the 3.2 GB repository into $TMPDIR/rv; aborted by me when the shared disk fell to 222 MB free (other reviewers' runs share /dev/vda); git reported 'unable to read tree ... Clone succeeded, but checkout failed', rc=128 (killed mid-checkout). Removed. Not used.
+
+## attempt 2 (09:24Z): git clone --shared --no-checkout + sparse-checkout '/*' '!/docs/delivery/test-evidence/' '!/docs/delivery/handbacks/' '!/docs/delivery/runs/' '!/trading_agent/'; checkout ddf42ccd2630f3d62f6aaf360ff401bbc2bde025
+clone HEAD: ddf42ccd2630f3d62f6aaf360ff401bbc2bde025
+clone sparse: true
+
+## candidate recomputed in the MAIN repository (complete working tree, not shallow)
+main HEAD: 2561ce969b01d9b03be5a416999193056f68d36a (freeze commit 2561ce969: ddf42ccd2 + assignments, manifest, stages.json only)
+is-shallow: false
+{"stage":"DG7","source":"working-tree","candidate_id":"sha256:9822d8fe947b572d30a24e1f59798587edd610a0c8b8f81a21eaceeb3233a744","files":3158}
+exit=0
+## --ref ddf42ccd2 (full tree of the source commit)
+{"stage":"DG7","source":"ddf42ccd2630f3d62f6aaf360ff401bbc2bde025","candidate_id":"sha256:9822d8fe947b572d30a24e1f59798587edd610a0c8b8f81a21eaceeb3233a744","files":3158}
+exit=0
+## --diff against the committed manifest
+  "working_tree": "sha256:9822d8fe947b572d30a24e1f59798587edd610a0c8b8f81a21eaceeb3233a744",
+  "matches": true,
+  "added": [],
+  "removed": [],
+  "changed": []
+}
+exit=0
+## git diff --name-only ddf42ccd2 2561ce969
+docs/delivery/assignments/DG7/round-1/code-security-reviewer.md
+docs/delivery/assignments/DG7/round-1/domain-reviewer.md
+docs/delivery/assignments/DG7/round-1/qa-verifier.md
+docs/delivery/candidates/DG7/9822d8fe947b572d.manifest.json
+docs/delivery/stages.json

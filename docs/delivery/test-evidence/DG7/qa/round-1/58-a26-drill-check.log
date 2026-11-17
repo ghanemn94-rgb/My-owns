@@ -1,0 +1,50 @@
+## A26 drill commits (branch drill/dg7-a26)
+c4943c8d1 2026-11-14 21:03:24 +0000 A26 K6: restore business_unit.manage on business-unit PATCH; regression tests (drill branch, never merged)
+c3bbc780c 2026-11-14 19:18:06 +0000 organization: tidy business-unit update route
+## K3 defect commit c3bbc780c (diff)
+diff --git a/apps/api/src/modules/organization/routes.ts b/apps/api/src/modules/organization/routes.ts
+index 038666590..1d5ddc51d 100644
+--- a/apps/api/src/modules/organization/routes.ts
++++ b/apps/api/src/modules/organization/routes.ts
+@@ -347,7 +347,7 @@ export function registerOrganizationRoutes(app: FastifyInstance, { db, config }:
+ 
+   app.patch(
+     "/api/v1/business-units/:businessUnitId",
+-    { config: { access: { permission: "business_unit.manage" } } },
++    { config: { access: { permission: "business_unit.read" } } },
+     async (request, reply) => {
+       const { businessUnitId } = parse(buParams, request.params, "params");
+       const body = parseBody(businessUnitUpdate, request.body);
+@@ -358,7 +358,7 @@ export function registerOrganizationRoutes(app: FastifyInstance, { db, config }:
+           type: "business_unit",
+           id: businessUnitId,
+         });
+-        await requireAction(tx, principal, "business_unit.manage", target);
++        await requireAction(tx, principal, "business_unit.read", target);
+         const expected = requireIfMatch(request);
+         // F-DG1-140: a re-parent serializes on the organization's hierarchy lock BEFORE reading anything it checks, so
+         // two concurrent moves can never both pass the cycle/depth checks against the same committed hierarchy. The
+## K6 fix commit c4943c8d1 (stat)
+ .../a26/integration-failed9-parent-3e0cec962.log   |  790 +++++
+ .../DG7/qa/a26/integration-full-HEAD.log           | 3647 ++++++++++++++++++++
+ .../DG7/qa/a26/integration-parent-3e0cec962.log    |   26 +
+ .../DG7/qa/a26/qa-a26-bu-update-authz.test.ts      |   97 +
+ .../test-evidence/DG7/qa/a26/qa-test-3e0cec962.log |   29 +
+ .../test-evidence/DG7/qa/a26/qa-test-HEAD.log      |   73 +
+ .../test-evidence/DG7/qa/a26/unit-HEAD.log         | 1445 ++++++++
+ 20 files changed, 6739 insertions(+), 2 deletions(-)
+## candidate routes.ts: the business-unit PATCH permission
+237:    { config: { access: { permission: "business_unit.read" } } },
+244:      if (!org || !organizationsWith(principal, "business_unit.read").includes(organizationId))
+253:          scopeFilter(principal, "business_unit.read", {
+273:    { config: { access: { permission: "business_unit.manage" } } },
+284:        await requireAction(tx, principal, "business_unit.manage", target);
+337:    { config: { access: { permission: "business_unit.read" } } },
+341:      await requireRead(db, principal, "business_unit.read", { type: "business_unit", id: businessUnitId });
+350:    { config: { access: { permission: "business_unit.manage" } } },
+357:        const target = await requireRead(tx, principal, "business_unit.read", {
+361:        await requireAction(tx, principal, "business_unit.manage", target);
+## K5 card hash
+33eea29a15ab4c9fade0d99c7815e769b5cb1a22dccccc0a27b1825535df23b2  docs/delivery/test-evidence/DG7/orchestrator/a26/defect-card.md
+867a3ba2a 2026-11-14 19:18:16 +0000
+33eea29a15ab4c9fade0d99c7815e769b5cb1a22dccccc0a27b1825535df23b2
