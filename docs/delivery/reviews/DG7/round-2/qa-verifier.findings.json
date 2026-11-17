@@ -1,0 +1,99 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG7-1051",
+      "stage_id": "DG7",
+      "requirement": "REQ-S19-012",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "The Compose half of the A19 backup and restore has never been run, but the handover says it runs on the orchestrator's host and 'is recorded there'; DO-D11 changed that sequence again without a run, and nothing lists it as unrun",
+      "reproduction": "On the candidate (source 152db5b51, candidate sha256:33266ccd…): (1) docs/handover/backup-restore.md l.202 (§8): 'The Compose half runs on the orchestrator's host and is recorded there: the backup profile on postgres:18, a second Compose project with new volumes, and /readyz over HTTP.' §3.2 l.76: 'The Compose sequence runs on the orchestrator's host (D-243 Q1). Its result is recorded there, not here.' known-limitations.md l.152 (D-256): 'The container half of the backup and restore drill (A19) is the orchestrator's host run.' (2) grep of every DG7 log for '--phase database', 'profile backup run' and 'run --rm backup' (log 78 §1) finds only handbacks, a round-1 code-security repro script and findings.json, no run log. The orchestrator's container host run (D-267; orchestrator/host/host-run.log steps 00-12) builds, saves, loads and starts the stack and runs the Keycloak e2e; none of its steps runs the backup profile, backup.sh, restore.sh or restore-drill.sh (log 78 §2-§3; the only 'backup' lines are migrations 0145/0146 being applied). prefreeze-rg2/checks.log has no backup step (log 78 §4). (3) DO-F's handback (l.86, l.91, Q6 l.114) recorded the Compose half as BLOCKED and asked the orchestrator to run §3.2 and restore.sh --readyz-url; DO-D11's handback (l.109-110) records that the §3.2 sequence had a pre-existing defect (the root backup service creates the set, so step 2 as uid 10001 could not write evidence/attachments.json), changes it (--user 0:0, create_host_path: false, umask 077, the new root refusal) and says 'The orchestrator's Compose run should confirm step 2'. No such run exists. (4) p7-plan.md risk R1 (D-243 Q1): 'The orchestrator runs the container halves. An unrun half is a disclosed release blocker, never a pass.' release-notes.md l.25: 'Unfinished items and release blockers: None'. ADR-0066 §9 defines the drill as 'backup.sh -> a fresh Compose project -> restore.sh'. (5) The container-free half passes on the candidate: restore-drill.sh R1-R9 (log 76), A19 harness 13/13 (log 40), backup-restore.test.mjs 13/13 incl. T-E11, which simulates the three phases with the scripts, not with Compose (log 73b).",
+      "expected": "Per D-243 Q1 and p7-plan R1, either (a) the orchestrator runs the backup-restore.md §3.2 Compose sequence (backup profile on the pinned postgres:18, the app-image copy-out with --user 0:0, --phase finish) and a restore into a second Compose project with /readyz on its host, on this candidate's tree, and commits the log as orchestrator evidence that the guide can point to; or (b) the handover says plainly that the Compose half has not been run (backup-restore.md §3.2, §8 and §10, known-limitations.md), and the unrun half is listed as a release blocker or disclosed limitation in the release notes, never as 'recorded there'.",
+      "actual": "The documented production backup procedure for IT (handover item 9) has never been executed in any DG7 evidence, one defect in it was found by reading only, and its repair is untested. The handover tells IT that the Compose half's result 'is recorded' on the orchestrator's host, which no record supports, and the release notes list no blocker for it. The A19 acceptance text itself is met by the container-free drill (logs 76, 40, 73b). I missed this in round 1 (my QA-RG1-21 judged D-267 for REQ-S16-008, S19-018 and S19-010 only); it was present then too.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-2/78-a19-compose-half-search.log",
+        "docs/handover/backup-restore.md",
+        "docs/handover/known-limitations.md",
+        "docs/handover/release-notes.md",
+        "docs/delivery/handbacks/DG7/T-DG7-DO-F-devops-engineer.md",
+        "docs/delivery/handbacks/DG7/T-DG7-DO-D11-devops-engineer.md",
+        "docs/delivery/test-evidence/DG7/orchestrator/host/host-run.log",
+        "docs/delivery/test-evidence/DG7/orchestrator/prefreeze-rg2/checks.log",
+        "docs/architecture/p7-plan.md",
+        "docs/delivery/test-evidence/DG7/qa/round-2/76-a19-restore-drill.log",
+        "docs/delivery/test-evidence/DG7/qa/round-2/73b-backup-restore-tests.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG7/round-2/qa-verifier.json",
+      "owner": "devops-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-17T16:40:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG7 round 2 (T-DG7-REV-QA-RG2) on candidate sha256:33266ccd. Medium: the A19 acceptance is met container-free, but the handover's Compose procedure is unrun and the guide states otherwise (D-192: repair before the gate, either by the host run or by an honest disclosure)."
+        }
+      ]
+    },
+    {
+      "id": "F-DG7-1052",
+      "stage_id": "DG7",
+      "requirement": "REQ-S16-031",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "ADR-0063 §1.2 (S3 exceptions) and ADR-0066 §4 (backup-time checks) were not amended for the DO-D11 repairs; DO-D11's open questions Q1 and Q2 have no answer",
+      "reproduction": "On the candidate (log 80): (1) git diff ddf42ccd2 152db5b51 touches no ADR-0063 or ADR-0066 file. (2) ADR-0063 §1.2 S3 still lists the exception 'an i18n key ([a-z0-9_.]+)'; tools/release/secret-scan.mjs now applies isI18nKey (l.82, l.101: at least one separator, each segment at most 20 characters and at most 3 digits), so a bare lower-case or hex value is no longer exempt, and the 64-hex checksum exemption (l.99) that lets an 'openssl rand -hex 32' secret pass is disclosed only in security-controls.md SC-13, not in ADR-0063 §1.2 or §5. ADR-0063 has only Amendment 1 (2026-11-14). (3) ADR-0066 §4 lists five backup-time checks; backup.sh now adds the ownerOnly check (l.529), umask 077 (l.215), the refusal of a group- or other-writable root (l.237) and the Compose mount without a /tmp fallback; ADR-0066 mentions none of them (grep for ownerOnly, umask, 0700, create_host_path, MTH_BACKUP_ROOT: only an unrelated 'owner-only write' at l.145). (4) DO-D11 handback §5 Q1 ('ADR-0063 needs an amendment (solution-architect)') and Q2 ('ADR-0066 §4 lists the checks. Should the architect add it there') are not answered in decisions.md (D-282 is the last entry).",
+      "expected": "The accepted ADRs that specify the secret scan and the backup set describe the shipped rules, through dated amendments as was done for ADR-0071 in this round (F-DG7-1021) and as p7-work-split §2 rule 2 requires ('ADR claims enumerated and exactly true'): ADR-0063 §1.2 names the narrowed i18n-key rule and §5 the 64-hex trade-off; ADR-0066 §4 lists ownerOnly, and §5 or a new item states the owner-only modes, the refused shared root and the required MTH_BACKUP_ROOT.",
+      "actual": "The ADR text is now broader (S3) or narrower (§4) than the code. Behaviour is correct and documented in the handover (SC-13; backup-restore.md §3.3 and §7), and tests pin it (secret-scan F-DG7-1011 test, T-E10..T-E12). This is the same documentation-drift class all three reviewers raised for ADR-0071 in round 1, created by the round-1 repairs themselves.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-2/80-adr-drift-do-d11.log",
+        "docs/architecture/adr/ADR-0063-p7-secret-hygiene-claims-scan-security-controls-evidence.md",
+        "docs/architecture/adr/ADR-0066-p7-backup-restore-backup-set-manifest-restore-checks-drill.md",
+        "tools/release/secret-scan.mjs",
+        "deploy/scripts/backup.sh",
+        "docs/delivery/handbacks/DG7/T-DG7-DO-D11-devops-engineer.md",
+        "docs/handover/security-controls.md"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG7/round-2/qa-verifier.json",
+      "owner": "solution-architect",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-17T16:40:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG7 round 2 (T-DG7-REV-QA-RG2) on candidate sha256:33266ccd. Low: documentation drift, no behavioural effect."
+        }
+      ]
+    },
+    {
+      "id": "F-DG7-1053",
+      "stage_id": "DG7",
+      "requirement": "REQ-S19-012",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "backup.sh refuses a backup root that is a symbolic link to an owner-only directory, with the misleading message that the root is writable by group or others",
+      "reproduction": "Script docs/delivery/test-evidence/DG7/qa/round-2/scripts/backup-root-probe.sh, log 77, in the disposable clone at 152db5b51, no database needed (the root check runs before DATABASE_URL is read): 'ln -s real700 link-to-700' where real700 is mode 0700; 'bash deploy/scripts/backup.sh --out <P>/link-to-700 --label qa-probe --operator qa' exits 2 with 'BLOCKED: the backup root <P>/link-to-700 is writable by group or others; use an owner-only directory (chmod 0700)'. The same command on real700 itself passes the check (it stops later at 'DATABASE_URL ... is not set'). Cause: backup.sh l.237 'find \"$root\" -maxdepth 0 -perm /022' tests the symbolic link's own mode (always lrwxrwxrwx on Linux), because find does not follow a command-line symlink by default (-P). chmod 0700 on the target, as the message advises, does not help.",
+      "expected": "backup-restore.md §3.3: backup.sh 'refuses a root that group or others can write'. A symlink whose target is an owner-only directory is not writable by group or others, so it is accepted (for example by testing the resolved path, find -H, or [ -L ] handled explicitly), or, if symlinked roots are refused on purpose, the message and the guide say so.",
+      "actual": "A common, safe layout (/srv/mth-backups -> /data/backups, mode 0700) is refused on the host path (§3.1) with a message that names the wrong cause. It fails closed and the workaround is to pass the resolved path. In Compose the bind mount resolves the link, so the container sees a directory and is unaffected. Symlinks to 1777 directories are correctly refused.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-2/77-backup-root-probe.log",
+        "docs/delivery/test-evidence/DG7/qa/round-2/scripts/backup-root-probe.sh",
+        "deploy/scripts/backup.sh",
+        "docs/handover/backup-restore.md"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG7/round-2/qa-verifier.json",
+      "owner": "devops-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-17T16:40:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG7 round 2 (T-DG7-REV-QA-RG2) on candidate sha256:33266ccd. Low: fails closed with a trivial workaround; wrong message."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG7-1021",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified as the reporter on candidate sha256:33266ccd9ce4ec4475de745ebacfaafbd2f25870f8be966086f4a74578b7259c (source 152db5b51, which contains the fix 4f44cd707: merge-base --is-ancestor rc=0, log 79). ADR-0071 now carries dated pointers in §5.1 (l.183), §5.2 (l.193) and §5.4 (l.200) and 'Amendment 1 (2026-11-17, T-DG7-SA-ADR71)' with A1.1-A1.7. I checked each claim against tools/release/release-notes.mjs as built, which did not change: the usage and option list (l.295, the six value options plus --check/--write); --disclosures defaults to the tool's own directory, not under --repo (l.28, l.328); the five inputs, i.e. the register, the dependency list (absent: the Unknown line; invalid: exit 1, l.325, recorded in A1.5 as a deviation), the provisional files with the five component files (l.30, l.79-96), the release identity from apps/api/package.json and docs/api/openapi.yaml (l.103, l.108), and the disclosure input; a missing or invalid disclosure input exits 2 with nothing written (l.329-339); the disclosure format rules (l.136-171: keys, kebab id, one-line strings, link regex refusing URLs and ./ ../); the eighth section and its Arabic subsection (l.237-280). The A1.6 test names exist in tools/release/tests/release-notes.test.mjs (l.128-249), and that file passes on the candidate (T-I11 x7, DO-D10 x5 in log 72). Nothing in apps/ or packages/ reads the disclosure file (grep), and the file is in the candidate manifest. release-notes --check exits 0 on the candidate (log 54). The ADR and the generator now agree on every input and section, which is what the finding expected.",
+      "evidence": [
+        "docs/architecture/adr/ADR-0071-p7-traceability-register-snapshot-about-release-notes-release-blockers-protocol-audit.md",
+        "tools/release/release-notes.mjs",
+        "tools/release/tests/release-notes.test.mjs",
+        "docs/delivery/test-evidence/DG7/qa/round-2/79-f1021-f1022-verification.log",
+        "docs/delivery/test-evidence/DG7/qa/round-2/72-release-tool-tests.log",
+        "docs/delivery/test-evidence/DG7/qa/round-2/54-handover-tools.log"
+      ]
+    },
+    {
+      "finding_id": "F-DG7-1022",
+      "result": "FAIL",
+      "status_after": "REOPENED",
+      "note": "Checked as the reporter on candidate sha256:33266ccd (source 152db5b51). The repair is a disclosure only: D-282 in docs/delivery/decisions.md says the release notes and 25 register rows cite old-branch findings F-DG7-913…971, whose records are at 1612f85fc, that 'validate --stage DG7 here cannot show them' and that 'they are not findings of this gate'. Nothing that the finding named changed (log 79): requirements.csv and docs/handover/release-notes.md are byte-identical to the round-1 candidate; the same 25 rows still cite 14 F-DG7-9xx ids and none of them qualifies the ids (no 1612f85fc, 'old branch' or D-282); no docs/handover file mentions 1612f85fc or D-282; findings.json on this branch holds no F-DG7-9xx id. The finding expected both (a) cited ids to resolve or be qualified where they are cited, and (b) each completes-after-gate clause to name a condition the DG7 gate on this branch can show. (b) is still contradicted: the REQ-DLV-014 later clause in the register and release-notes.md l.36 still reads 'with each DG7 finding (round 2: 915, 935, 960-963) fixed and verified by a non-owner, shown by validate.mjs --stage DG7 at the gate', which D-282 itself says cannot be shown; the REQ-DLV-012 clause (l.35) still counts F-DG7-960's and F-DG7-920's hits as DG7 C3 hits. D-282 is in decisions.md, which ships only in the archive's source/ tree, not in the handover or the register a reader uses. Still Low and non-mandatory, no product behaviour affected; I do not consider it blocking on its own. The minimal repair is a register-note and release-notes wording change by the analyst (REQ-DLV-012, REQ-DLV-014 clauses naming this branch's findings, the other citations qualified as old-branch records), or an ACCEPTED_OBSERVATION decision taken through the protocol (reporting specialist and release-auditor). This assignment allows me only CLOSED_VERIFIED or REOPENED, so I reopen it.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-2/79-f1021-f1022-verification.log",
+        "docs/delivery/decisions.md",
+        "docs/delivery/requirements.csv",
+        "docs/handover/release-notes.md",
+        "docs/delivery/test-evidence/DG7/qa/round-2/58-q19-rows.log"
+      ]
+    }
+  ]
+}
