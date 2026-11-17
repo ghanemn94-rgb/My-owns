@@ -3,11 +3,11 @@
 // so this file holds no whole planted value and the repository scans stay clean without an entry for it. Fixtures are
 // written under $TMPDIR and removed.
 import assert from "node:assert/strict";
-import { createHash } from "node:crypto";
-import { copyFileSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { createHash, randomBytes } from "node:crypto";
+import { copyFileSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { after, describe, it } from "node:test";
-import { scanContent, scanSecrets } from "../secret-scan.mjs";
+import { entropy, isI18nKey, isNonSecretValue, scanContent, scanSecrets } from "../secret-scan.mjs";
 import { FIXTURES, REPO, runNode, tmp } from "./helpers.mjs";
 
 const SCAN = join(REPO, "tools", "release", "secret-scan.mjs");
@@ -200,6 +200,94 @@ describe("T-G1 secret-scan self-test (S1-S6, non-matches, allow-list, masking)",
     const r = await scanSecrets({ scope: "envelope", repo: d, list: join(d, "list.txt"), allowlist: null });
     assert.equal(r.files, 2);
     assert.deepEqual(r.hits.map((h) => h.rule), ["S1"]);
+  });
+});
+
+// F-DG7-1011: the S3 "i18n key" exception used to exempt every lower-case alphanumeric value, so the shapes this
+// project's own tooling generates (`openssl rand -hex`, deploy/scripts/init-secrets.sh) were never reported. The
+// generated values are derived at run time from a hash (deterministic, never stored whole in the repository).
+const LOWER_ALNUM = "abcdefghijklmnopqrstuvwxyz0123456789";
+const derivedHex = (seed, n) => createHash("sha512").update(seed).digest("hex").slice(0, n);
+const derivedLower = (seed, n) =>
+  [...createHash("sha512").update(seed).digest()].slice(0, n).map((b) => LOWER_ALNUM[b % 36]).join("");
+const GENERATED = {
+  hex48: derivedHex("F-DG7-1011 postgres", 48), // openssl rand -hex 24
+  hex32: derivedHex("F-DG7-1011 s3", 32), // openssl rand -hex 16
+  lower24: derivedLower("F-DG7-1011 oidc", 24), // 24 random lower-case alphanumerics
+};
+const mixedCase = (v) => v.replace(/[a-f]/g, (c, i) => (i % 2 ? c.toUpperCase() : c));
+
+/** Every key path of the real web dictionaries (en and ar), e.g. `auth.password.reset_hint_text`. */
+function realI18nKeys() {
+  const keys = new Set();
+  const walk = (o, p) => {
+    for (const [k, v] of Object.entries(o)) {
+      const q = `${p}.${k}`;
+      if (v && typeof v === "object") walk(v, q);
+      else keys.add(q);
+    }
+  };
+  for (const lang of ["en", "ar"]) {
+    const d = join(REPO, "apps", "web", "src", "i18n", lang);
+    for (const f of readdirSync(d).filter((x) => x.endsWith(".json")))
+      walk(JSON.parse(readFileSync(join(d, f), "utf8")), f.replace(/\.json$/, ""));
+  }
+  return [...keys];
+}
+
+describe("F-DG7-1011 S3: a generated lower-case or hex secret is reported, a real i18n key is not", () => {
+  it("the derived values are high-entropy secret shapes (ADR-0063 §1.2: >= 16 chars, >= 3.5 bits/char)", () => {
+    for (const [name, v] of Object.entries(GENERATED)) {
+      assert.ok(v.length >= 16, name);
+      assert.ok(entropy(v) >= 3.5, `${name} entropy ${entropy(v)}`);
+      assert.match(v, /^[a-z0-9]+$/, `${name} is all lower-case alphanumeric (the shape the old exemption covered)`);
+    }
+  });
+
+  for (const [file, line, key] of [
+    ["compose.override.yaml", (v) => `    POSTGRES_PASSWORD: ${v}`, "hex48"],
+    ["values.yaml", (v) => `s3_access_key: ${v}`, "hex32"],
+    ["deploy.conf", (v) => `OIDC_CLIENT_SECRET="${v}"`, "lower24"],
+  ])
+    it(`reports ${key} under a secret-named key in ${file} as S3 (exit 1, masked)`, () => {
+      const d = tmp("secret-lower");
+      cleanup.push(d);
+      const value = GENERATED[key];
+      writeFileSync(join(d, file), `${line(value)}\n`);
+      assert.deepEqual(
+        scanContent(file, readFileSync(join(d, file))).map((h) => [h.rule, h.line, h.value === value]),
+        [["S3", 1, true]],
+      );
+      // the real default allow-list: its payload/history entries never apply to a --path scan
+      const real = runNode([SCAN, "--path", join(d, file)], { cwd: d });
+      assert.equal(real.code, 1, real.stdout + real.stderr);
+      assert.match(real.stdout, /^S3 .*\[S3:[a-z0-9]{4}…\]/m);
+      assert.match(real.stdout, /^secret-scan: FAIL \(1 hits?\)$/m);
+      assert.ok(!real.stdout.includes(value), "the generated value is never printed whole");
+    });
+
+  it("the mixed-case control is reported as before", () => {
+    const v = mixedCase(GENERATED.lower24);
+    assert.equal(isNonSecretValue("OIDC_CLIENT_SECRET", v), false);
+  });
+
+  it("no random lower-case or hex string is an i18n key (500 samples per shape)", () => {
+    for (let i = 0; i < 500; i++) {
+      for (const v of [randomBytes(24).toString("hex"), randomBytes(16).toString("hex")])
+        assert.equal(isI18nKey(v), false, "hex");
+      const lower = [...randomBytes(24)].map((b) => LOWER_ALNUM[b % 36]).join("");
+      assert.equal(isI18nKey(lower), false, "lower-case alphanumeric");
+    }
+  });
+
+  it("every real i18n key of the web dictionaries (en, ar) stays exempt", () => {
+    const keys = realI18nKeys().filter((k) => /^[a-z0-9_.]+$/.test(k) && k.length >= 16);
+    assert.ok(keys.length > 1000, `found ${keys.length} lower-case keys`);
+    const refused = keys.filter((k) => !isI18nKey(k) || !isNonSecretValue("password_hint", k));
+    assert.deepEqual(refused, []);
+    // in context: a secret-named key whose value is an i18n key is not a hit
+    for (const k of ["auth.password.reset_hint_text", "capacity.problem.resource_role__archived", ...keys.slice(0, 50)])
+      assert.deepEqual(scanContent("x.yaml", Buffer.from(`password_label: ${k}\n`)), [], k);
   });
 });
 

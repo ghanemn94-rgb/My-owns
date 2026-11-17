@@ -60,11 +60,12 @@ The `postgres:18` image has no Node, so the set is taken in three steps. Run the
 
 ```bash
 export MTH_BACKUP_ROOT=/srv/mth-backups LABEL=mth-$(date -u +%Y%m%dt%H%M%Sz)
+sudo install -d -m 0700 -o root -g root "$MTH_BACKUP_ROOT"   # once: it must exist, owner-only (§3.3)
 # 1. snapshot, table counts, pg_dump in the same snapshot, config/ (secret values removed)
 docker compose -f deploy/compose/compose.yaml --profile backup run --rm backup --label "$LABEL" --phase database
 # 2. evidence copy-out (after the dump) and the store-side verify, in the pinned app image
 ID=$(cat "$MTH_BACKUP_ROOT/$LABEL/.backup-state/id")
-docker compose -f deploy/compose/compose.yaml run --rm --no-deps -v "$MTH_BACKUP_ROOT:/backups" \
+docker compose -f deploy/compose/compose.yaml run --rm --no-deps -v "$MTH_BACKUP_ROOT:/backups" --user 0:0 \
   -e DATABASE_URL_FILE=/run/secrets/database_url --entrypoint node api \
   /app/apps/api/dist/cli/transfer-attachments.js copy-out --to "/backups/$LABEL/evidence" \
   --out "/backups/$LABEL/evidence/attachments.json" --export-id "$ID"
@@ -72,7 +73,17 @@ docker compose -f deploy/compose/compose.yaml run --rm --no-deps -v "$MTH_BACKUP
 docker compose -f deploy/compose/compose.yaml --profile backup run --rm backup --label "$LABEL" --phase finish
 ```
 
-Step 2 passes the set's own id with `--export-id`, so `attachments.json` names the backup set. The paths inside the app image are those of `deploy/docker/Dockerfile`. The Compose sequence runs on the orchestrator's host (D-243 Q1). Its result is recorded there, not here.
+Step 2 passes the set's own id with `--export-id`, so `attachments.json` names the backup set. The paths inside the app image are those of `deploy/docker/Dockerfile`. Step 2 runs as root (`--user 0:0`) for this one command only: the `backup` service runs as root and creates the set owner-only (§3.3), so the image's own user (uid 10001) could not write into it. The Compose sequence runs on the orchestrator's host (D-243 Q1). Its result is recorded there, not here.
+
+### 3.3 Permissions of the backup root and the set
+
+A set holds the whole installation: user accounts, sessions, the audit trail, every business and Finance record and the evidence bytes. Protect it like the database itself.
+
+- **The set is owner-only.** `backup.sh` runs with `umask 077`. Every directory of the set is `0700` and every file `0600`, including `db/database.dump`, `.backup-state/` and the `--record-out` file. The owner is the account that ran the script (root in the Compose `backup` service). Run `restore.sh`, copies and pruning as that account.
+- **The evidence copy-out is repaired.** Compose step 2 runs in another container with its own umask. `--phase finish` removes every group and other permission bit from the set again. It then fails the set if anything is still readable by group or others (check `ownerOnly` in the manifest's `checks`).
+- **The backup root must not be shared.** `backup.sh` refuses a root that group or others can write, such as `/tmp` (mode `1777`): `BLOCKED: the backup root <path> is writable by group or others; use an owner-only directory (chmod 0700)` (exit 2). Nothing is written. A missing root is created with mode `0700`. Create it yourself, for example `install -d -m 0700 -o root -g root /srv/mth-backups`.
+- **Compose requires `MTH_BACKUP_ROOT`.** There is no fallback to the host's `/tmp`. The `backup` service mounts it with `create_host_path: false`, so an unset or missing directory stops the run before any backup (`bind source path does not exist`). The other profiles are unaffected.
+- **Copies elsewhere are IT's.** Keep the modes when you copy a set off the host (for example `tar -p` or `rsync -a`), and encrypt it at rest and in transit as for the database (a hosting function, [deployment guide](deployment.md)).
 
 ## 4. The set (`<backup-root>/<label>/`)
 
@@ -105,7 +116,8 @@ config/                     compose.yaml, images.lock.json, environment.env (sec
 - `transfer-attachments verify` reports no mismatch;
 - every evidence file equals its name's SHA-256;
 - every retention set equals the store and its `archive_set_sha256`;
-- every listed file is re-read and matches.
+- every listed file is re-read and matches;
+- the set is owner-only: no directory or file is readable or writable by group or others (§3.3).
 
 ## 5. Restore (into a fresh database and an empty evidence store)
 
@@ -202,11 +214,13 @@ The logs are in `docs/delivery/handbacks/DG7/T-DG7-DO-F-evidence/`. The Compose 
 - **PostgreSQL major.** The container-free drill ran on PostgreSQL 16. The pinned Compose image is PostgreSQL 18, and that half is the orchestrator's.
 - **Scale.** Scale beyond the demo and the P6 fixtures is unproven.
 - **Availability.** This is not a high-availability design: one database, no replication, no off-site copy. Those are IT's.
+- **Permissions in Compose.** The owner-only modes, the refused shared root and the split-phase repair are tested with the scripts on a disposable PostgreSQL (T-E10 to T-E12). The Compose sequence of §3.2 (root `backup` service, `--user 0:0` copy-out, `create_host_path: false`) has not been run here, because there is no Docker daemon (D-243 Q1). It runs on the orchestrator's host.
 
 ## ملخص باللغة العربية (Arabic summary)
 
 - **المحتوى:** تحتوي مجموعة النسخ الاحتياطي على قاعدة البيانات كاملة، بما فيها سجل التدقيق ولقطات التقارير وحالة المهام. وتحتوي كذلك على ملفات الأدلة، ومجموعات أرشيف الاحتفاظ، وإعدادات النشر بعد حذف كل قيمة سرية.
 - **الأسرار:** لا تُحفظ الأسرار في النسخة. توفرها تقنية المعلومات من جديد عند الاستعادة.
+- **الصلاحيات:** تُكتب النسخة لمالكها فقط (المجلدات 0700 والملفات 0600). ترفض الأداة مجلداً جذرياً يمكن للمجموعة أو للآخرين الكتابة فيه، مثل `/tmp`. ويجب تعيين `MTH_BACKUP_ROOT` في Compose لمجلد موجود.
 - **شروط الاستعادة:** تتم الاستعادة إلى قاعدة بيانات فارغة ومخزن أدلة فارغ فقط، وبنفس الإصدار الرئيسي من PostgreSQL. ترفض أداة الاستعادة أي ملف تغيّر، أو إصدار مخطط غير مدعوم، أو هدف غير فارغ (رمز الخروج 2).
 - **التحققات:** بعد الاستعادة تُجرى التحققات من R1 إلى R8: سلامة الملفات، ومستوى الترحيل، وعدد الصفوف، والتدقيق، واللقطات، وحالة المهام، والأدلة، والجاهزية. ويضيف التمرين التحقق R9 (مجموع التحقق للبيانات التجريبية). يُكتب تقرير `restore-report.json` بالقيم المتوقعة والفعلية وبزمن كل خطوة.
 - **الأزمنة المقاسة:** الأزمنة المذكورة مقاسة على بيانات تجريبية اصطناعية، وليست أهدافاً للتعافي.

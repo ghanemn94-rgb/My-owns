@@ -209,6 +209,10 @@ backup_usage() {
 }
 
 backup_main() {
+  # F-DG7-1012: a set holds the whole installation (users, audit, sessions, every business and Finance record, the
+  # evidence bytes), so everything this script creates is owner-only: directories 0700, files 0600. Set here, not at
+  # the top, so restore.sh (which sources this file for its helpers) keeps its own umask.
+  umask 077
   local root="" label="" operator="" release="unknown" env_file="" phase="all" record_out=""
   local -a compose_files=()
   while [ $# -gt 0 ]; do
@@ -226,6 +230,15 @@ backup_main() {
   done
   [ -n "$root" ] || { echo "BLOCKED: --out is required" >&2; backup_usage; exit 2; }
   case "$phase" in all | database | finish) ;; *) echo "BLOCKED: --phase must be all, database or finish" >&2; exit 2 ;; esac
+  # F-DG7-1012: a root that group or others can write (the host's /tmp, a shared directory) lets another account
+  # replace a set together with its manifest. A missing root is created owner-only (umask 077).
+  if [ -e "$root" ] || [ -L "$root" ]; then
+    [ -d "$root" ] || { echo "BLOCKED: the backup root $root is not a directory" >&2; exit 2; }
+    if [ -n "$(find "$root" -maxdepth 0 -perm /022 -print)" ]; then
+      echo "BLOCKED: the backup root $root is writable by group or others; use an owner-only directory (chmod 0700)" >&2
+      exit 2
+    fi
+  fi
   [ -n "$label" ] || label="mth-$(date -u +%Y%m%dT%H%M%SZ)"
   [[ "$label" =~ ^[a-z0-9][a-z0-9._-]{0,99}$ ]] || {
     echo "BLOCKED: the label must match ^[a-z0-9][a-z0-9._-]{0,99}\$" >&2
@@ -279,6 +292,7 @@ backup_main() {
       exit 2
     fi
     mkdir -p "$set/db" "$set/evidence" "$set/config" "$state"
+    chmod 700 "$set" "$set/db" "$set/evidence" "$set/config" "$state"
     mth_now >"$state/started_at"
     mth_psql "$url" -c "SELECT mth_uuid_v7()" >"$state/id" || backup_fail "the database cannot be reached as the owner role"
   fi
@@ -286,12 +300,22 @@ backup_main() {
   B_STARTED="$(cat "$state/started_at")"
 
   if [ "$phase" != "finish" ]; then backup_database_phase "$set" "$state" "$url" "$env_file" "${compose_files[@]}"; fi
+  backup_owner_only "$set"
   if [ "$phase" = "database" ]; then
     echo "backup: set $label database phase done; run the evidence copy-out, then --phase finish"
     exit 0
   fi
   if [ "$phase" = "all" ]; then backup_evidence_copy "$set" "$state" "$url"; fi
   backup_finish_phase "$set" "$state" "$url" "$store" "$release"
+}
+
+# F-DG7-1012: removes every group and other permission bit from the set. The evidence copy-out of the Compose sequence
+# runs in another container with its own umask, so --phase finish applies this again before its checks; the
+# ownerOnly check then fails the set if anything is still readable by group or others.
+backup_owner_only() {
+  local set="$1"
+  chmod -R go-rwx "$set" 2>"$WORK/chmod.err" ||
+    backup_fail "cannot make the set owner-only: $(head -c 300 "$WORK/chmod.err" | tr '\n' ' ')"
 }
 
 # Records the set as failed (when the database answers) and exits 1 with the §E.5 line.
@@ -499,6 +523,10 @@ backup_finish_phase() {
     [ "$(mth_sha256 "$set/$f")" = "$sha" ] || backup_fail "the set file $f changed while it was written"
   done <"$WORK/files.tsv"
   checks+=("everyFileMatches")
+  backup_owner_only "$set"
+  [ -z "$(find "$set" -perm /077 -print -quit)" ] ||
+    backup_fail "the set is readable by group or others: $(find "$set" -perm /077 -printf '%P ' | head -c 200)"
+  checks+=("ownerOnly")
   t2="$(mth_clock)"
 
   # The manifest, written last (ADR-0066 §2).

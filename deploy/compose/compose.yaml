@@ -249,6 +249,9 @@ services:
   # The database phase of a backup set (ADR-0066 §1-§5; docs/handover/backup-restore.md). Off by default. It runs on the
   # SAME pinned PostgreSQL 18 image as `db` (no new image), with the owner URL as a secret, the evidence volume
   # read-only (retention archive sets) and the backup root the operator chooses (MTH_BACKUP_ROOT, a host directory).
+  # MTH_BACKUP_ROOT is required and must already exist (never the host's /tmp). Create it root-owned with mode 0700;
+  # backup.sh refuses a root that group or others can write. The set is written owner-only (umask 077: directories
+  # 0700, files 0600; F-DG7-1012).
   # The platform never schedules its own backup: run it from IT's scheduler. Sequence (from the repository root):
   #   MTH_BACKUP_ROOT=/srv/mth-backups docker compose -f deploy/compose/compose.yaml --profile backup run --rm \
   #     backup --label <label> --phase database
@@ -271,7 +274,13 @@ services:
       - "./compose.yaml:/mth/deploy/compose/compose.yaml:ro"
       - "../images.lock.json:/mth/deploy/images.lock.json:ro"
       - "evidence:/var/lib/mth/evidence:ro"
-      - "${MTH_BACKUP_ROOT:-/tmp/mth-backups}:/backups"
+      # F-DG7-1012: no /tmp fallback. An unset MTH_BACKUP_ROOT names a path that does not exist, and Docker refuses to
+      # create a missing host path (create_host_path: false), so the run stops before any backup. This is not
+      # `${MTH_BACKUP_ROOT:?}`, because Compose interpolates the whole file, and that would stop `up` for every profile.
+      - type: bind
+        source: "${MTH_BACKUP_ROOT:-/MTH_BACKUP_ROOT-is-not-set}"
+        target: /backups
+        bind: { create_host_path: false }
     depends_on:
       db: { condition: service_healthy }
 

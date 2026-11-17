@@ -11,7 +11,18 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  chmodSync,
+  cpSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { after, before, test } from "node:test";
@@ -66,8 +77,10 @@ function createDatabase(prefix) {
   databases.push(name);
   return name;
 }
+// F-DG7-1012: every script runs under umask 022 (the default of root in the postgres:18 backup container and of a
+// usual operator shell), so the owner-only modes the tests assert come from backup.sh itself, not from the caller.
 function run(file, args, env = {}) {
-  const r = spawnSync("bash", [file, ...args], {
+  const r = spawnSync("bash", ["-c", 'umask 022; exec bash "$0" "$@"', file, ...args], {
     cwd: REPO,
     env: { PATH: process.env.PATH, HOME: process.env.HOME ?? tmpdir(), TMPDIR: work, LANG: "C.UTF-8", ...env },
     encoding: "utf8",
@@ -391,3 +404,101 @@ test("T-E9: the backup_set_record() argument has exactly the 19 keys of ADR-0066
   assert.equal(ok.evidenceObjectCount, 0);
   assert.equal(ok.manifestSha256, sha256(readFileSync(join(set, "backup-manifest.json"))));
 });
+
+/** Every entry of a tree whose mode is not owner-only (directories 0700, files 0600), as "<mode> <path>". */
+function notOwnerOnly(dir) {
+  const bad = [];
+  const top = statSync(dir);
+  if ((top.mode & 0o777) !== 0o700) bad.push(`${(top.mode & 0o777).toString(8)} .`);
+  for (const d of readdirSync(dir, { recursive: true, withFileTypes: true })) {
+    const p = join(d.parentPath, d.name);
+    const mode = statSync(p).mode & 0o777;
+    const want = d.isDirectory() ? 0o700 : 0o600;
+    if (mode !== want) bad.push(`${mode.toString(8)} ${p.slice(dir.length + 1)}`);
+  }
+  return bad;
+}
+
+test("T-E10 (F-DG7-1012): a set taken under umask 022 is owner-only: directories 0700, files 0600", () => {
+  blocked();
+  assert.equal(backupOut.status, 0, backupOut.out);
+  assert.deepEqual(notOwnerOnly(set), []);
+  assert.ok(
+    manifest.checks.some((c) => c.id === "ownerOnly" && c.result === "PASS"),
+    JSON.stringify(manifest.checks),
+  );
+  // the database dump holds user, audit and session rows, so its mode is asserted by name as well
+  assert.equal(statSync(join(set, "db/database.dump")).mode & 0o777, 0o600);
+  assert.equal(statSync(join(work, "record.json")).mode & 0o777, 0o600, "--record-out is owner-only too");
+});
+
+test("T-E11 (F-DG7-1012): the Compose sequence (database, a copy-out under umask 022, finish) ends owner-only", () => {
+  blocked();
+  const label = "test-do-d11-phases";
+  const env = { MTH_TRANSFER_ATTACHMENTS: "none" };
+  const db = backup(label, ["--phase", "database"], env);
+  assert.equal(db.status, 0, db.out);
+  const phased = join(work, "backups", label);
+  assert.deepEqual(notOwnerOnly(phased), [], "after --phase database");
+  // step 2 of docs/handover/backup-restore.md §3.2: the copy-out runs in another process with its own umask (022)
+  const id = readFileSync(join(phased, ".backup-state/id"), "utf8").trim();
+  const copy = spawnSync(
+    "bash",
+    [
+      "-c",
+      'umask 022; exec node --conditions=@mth/source apps/api/src/cli/transfer-attachments.ts "$@"',
+      "transfer-attachments", // $0 of the bash -c script
+      "copy-out",
+      "--to",
+      join(phased, "evidence"),
+      "--out",
+      join(phased, "evidence/attachments.json"),
+      "--export-id",
+      id,
+    ],
+    {
+      cwd: REPO,
+      env: {
+        ...process.env,
+        NODE_ENV: "development",
+        DATABASE_URL: dbUrl(source),
+        EVIDENCE_STORAGE_DRIVER: "filesystem",
+        EVIDENCE_STORAGE_PATH: sourceEvidence,
+      },
+      encoding: "utf8",
+    },
+  );
+  assert.equal(copy.status, 0, `${copy.stdout}${copy.stderr}`);
+  // the copy-out's own files are not owner-only before finish (this is what --phase finish must repair)
+  chmodSync(join(phased, "evidence/attachments.json"), 0o644);
+  assert.notDeepEqual(notOwnerOnly(phased), []);
+  const fin = backup(label, ["--phase", "finish"], env);
+  assert.equal(fin.status, 0, fin.out);
+  assert.match(fin.out, new RegExp(`^backup: set ${label} succeeded: `, "m"));
+  assert.deepEqual(notOwnerOnly(phased), [], "after --phase finish");
+  const m = JSON.parse(readFileSync(join(phased, "backup-manifest.json"), "utf8"));
+  assert.ok(
+    m.checks.some((c) => c.id === "ownerOnly" && c.result === "PASS"),
+    JSON.stringify(m.checks),
+  );
+});
+
+for (const [label, mode] of [
+  ["world-writable like /tmp (1777)", 0o1777],
+  ["group-writable (0770)", 0o770],
+])
+  test(`T-E12 (F-DG7-1012): a backup root that is ${label} is refused (exit 2); nothing is written`, () => {
+    blocked();
+    const root = join(work, `shared-root-${mode.toString(8)}`);
+    mkdirSync(root);
+    chmodSync(root, mode);
+    const r = run(BACKUP, ["--out", root, "--label", "test-do-d11-shared", "--phase", "database"], {
+      DATABASE_URL: dbUrl(source),
+      EVIDENCE_STORAGE_DRIVER: "filesystem",
+      EVIDENCE_STORAGE_PATH: sourceEvidence,
+      MTH_TRANSFER_ATTACHMENTS: "none",
+    });
+    assert.equal(r.status, 2, r.out);
+    assert.match(r.out, /^BLOCKED: the backup root .* is writable by group or others; use an owner-only directory/m);
+    assert.deepEqual(readdirSync(root), []);
+  });

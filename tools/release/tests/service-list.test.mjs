@@ -130,3 +130,25 @@ test("T-A6 every optional external row has a restricted-network.md row; every re
   const list = generateServiceList();
   assert.deepEqual(list.external, EXTERNAL_DEPENDENCIES.map((e) => ({ ...e })));
 });
+
+// F-DG7-1012: the Compose backup profile has no host /tmp fallback. An unset MTH_BACKUP_ROOT names a path that does
+// not exist, and Docker must not create it (create_host_path: false). The whole-file `${…:?}` form is not used,
+// because Compose interpolates every service and it would stop `up` for every profile.
+test("F-DG7-1012: the backup profile's /backups bind needs an existing MTH_BACKUP_ROOT and never falls back to /tmp", () => {
+  const text = readFileSync(join(REPO, "deploy", "compose", "compose.yaml"), "utf8");
+  const backup = YAML.parse(text).services.backup;
+  const mounts = backup.volumes.filter((v) => (typeof v === "string" ? v.endsWith(":/backups") : v.target === "/backups"));
+  assert.equal(mounts.length, 1, JSON.stringify(backup.volumes));
+  const [m] = mounts;
+  assert.equal(typeof m, "object", "long syntax, so that create_host_path can be set");
+  assert.equal(m.type, "bind");
+  assert.equal(m.bind?.create_host_path, false);
+  assert.match(m.source, /^\$\{MTH_BACKUP_ROOT:-\/[^}]+\}$/);
+  assert.doesNotMatch(m.source, /\/tmp\b/);
+  const code = text.split("\n").filter((l) => !l.trimStart().startsWith("#")).join("\n");
+  assert.doesNotMatch(code, /MTH_BACKUP_ROOT:-\/tmp|MTH_BACKUP_ROOT:\?/);
+  const svc = JSON.parse(readFileSync(join(REPO, "deploy", "service-list.json"), "utf8")).services.find(
+    (s) => s.name === "backup",
+  );
+  assert.ok(!svc.volumes.some((v) => v.includes("/tmp")), JSON.stringify(svc.volumes));
+});

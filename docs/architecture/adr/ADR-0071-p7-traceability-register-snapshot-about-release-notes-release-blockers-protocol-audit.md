@@ -179,6 +179,8 @@ Both screens live inside the existing Administration area (seam 15), and both sh
    ```
 
    It reads the register (a named file, never a walk, D-138), the dependency list and the provisional Arabic files (`apps/web/src/i18n/provisional-ar*.ts` and the `provisional-ar.ts` files the plan lists in §1.4). It reads nothing else.
+
+   **Amended 2026-11-17 (D-280): see Amendment 1, A1.1–A1.3.** The generator also reads the two release-identity files of §5.2 item 1 and its own checked-in disclosure input `tools/release/release-notes-disclosures.json`. Amendment 1 replaces "It reads nothing else" with the complete list of inputs, and the usage block with the full option list. The rest of this item stands.
 2. **Content of `docs/handover/release-notes.md`.** The output is deterministic: no clock is read, so `--check` compares bytes. Sections:
    1. the release identity: `@mth/api` version, contract version, the register's SHA-256 and row count;
    2. counts by status;
@@ -187,11 +189,15 @@ Both screens live inside the existing Administration area (seam 15), and both sh
    5. "Remaining external configuration dependencies", or the Unknown line when the file is missing;
    6. "Provisional Arabic texts": the count of provisional keys per file;
    7. an Arabic summary page section (ADR-0072 §2, D-243 Q7), marked provisional.
+
+   **Amended 2026-11-17 (D-280): see Amendment 1, A1.4.** There are eight sections, not seven: "Known limitations disclosed in this release" comes between items 5 and 6, and the Arabic summary has a matching subsection. Items 1–5 keep their numbers. The rest of this item stands.
 3. **The later-clause marker (D-243 Q19).** AN-P7 writes `completes-after-gate: <clause>` into the notes of each Q19 row (REQ-DLV-021, DLV-010, S20-023, DLV-039, DLV-041, S20-028). The marker is the only machine-readable link between such a row and the About and release-notes sections. The six rows are named here so that T-I13 can check that each carries it at the freeze.
 4. **Refusals** (exit 1, with the B-style lines of §I.3):
    - a row that is not `IMPLEMENTED` with empty notes (REQ-S02-005: "every incomplete or externally blocked item names the exact missing dependency"; the validator's l.217 rule, extended to every status that is not `IMPLEMENTED`);
    - an `IMPLEMENTED` row without evidence (l.222);
    - `--check` drift.
+
+   **Amended 2026-11-17: see Amendment 1, A1.5.** That section adds the generator's BLOCKED exits (exit 2), including a missing or invalid disclosure input. The three exit-1 refusals above stand.
 5. **A28.** The archive's `docs/` carries `docs/handover/release-notes.md` (ADR-0062 §2). T-I11 asserts that its unfinished list equals the register's rows that are not `IMPLEMENTED`, exactly (the same set and no other).
 
 ### 6. The release-blocker rule and the handover secret scan (REQ-S21-003)
@@ -270,3 +276,136 @@ Classes 730418–730419 are reserved for this block and not allocated, because n
 ## Version evidence (M0314)
 
 No new runtime or build dependency. The generator and the loader use Node built-ins (`node:fs`, `node:crypto`, `node:path`, `node:url`) on the pinned Node 24.21.0. No version is pinned or changed by this ADR.
+
+## Amendment 1 (2026-11-17, T-DG7-SA-ADR71): §5, the release-notes generator's inputs as built, its checked-in disclosure input, and its eighth section (D-280; F-DG7-1002, F-DG7-1013, F-DG7-1021)
+
+- **Author:** solution-architect (T-DG7-SA-ADR71). Base `3127835cff6c576b5a2f6d91918f8557f67cbe2b` on `claude/mobily-transformation-platform-dg6-regate`.
+- **Why.**
+  - D-280 added a release-notes section, read from the checked-in `tools/release/release-notes-disclosures.json`, so that the release notes carry the D-278 transfer-drill disclosure that ADR-0064 A5.6 requires (T-DG7-DO-D10).
+  - The orchestrator accepted the extra input "instead of amending the ADR". So §5.1 still said "It reads nothing else", and §5.2 still listed seven sections.
+  - In round 1 of the clean re-gate (D-281), all three reviewers raised this drift: F-DG7-1002 (domain), F-DG7-1013 (code-security) and F-DG7-1021 (qa).
+  - The carried rule "ADR claims enumerated and exactly true" (p7-work-split §2 rule 2) requires the ADR to name every input and every section.
+  - §5.1 also never named the two release-identity files the generator has read since DO-J built it. DO-J disclosed this in its handback (`T-DG7-DO-J-devops-engineer.md` §5 (i)). This amendment corrects that too.
+- **What this amendment does.** It records the generator **as built** at the base (`tools/release/release-notes.mjs`, `tools/release/tests/release-notes.test.mjs`). It changes no code, no test, no input file, and no byte of `docs/handover/release-notes.md`.
+- **The owner's position on the extra input.** As ADR-0071's author role, I accept the checked-in disclosure input as consistent with §5's intent: deterministic output from named, checked-in inputs, read without a walk and without a clock. D-280's revisit condition ("ADR-0071's owner rejects the extra input file") is therefore not met.
+- **What it replaces.** Each replaced place carries a pointer here. Everything else in §1–§9 stands:
+  - in §5.1, the usage block and the sentence "It reads nothing else" (A1.1–A1.3);
+  - in §5.2, the list of seven sections (A1.4);
+  - in §5.4, the refusals, which A1.5 extends with the BLOCKED exits.
+- **Unchanged.**
+  - The OpenAPI contract, migrations, permissions, advisory locks (§8), the register and its snapshot (§2) are unchanged, and no dependency is added.
+  - §1.2 still holds: the generator is release tooling, and nothing in the product runtime reads the disclosure file.
+  - The unfinished list (§5.2 item 3, §6.1) still comes only from the register. A disclosure is never an unfinished item or a release blocker, and a release blocker is never moved into the disclosure list.
+- **Two gate systems.** Nothing here grants or implies a G1–G6, Finance or IT approval. The generator reads no gate, review or stage record. A disclosure describes engineering behaviour; it is not an approval or a waiver.
+
+### A1.1 Usage (replaces the §5.1 usage block)
+
+```text
+node tools/release/release-notes.mjs --csv <requirements.csv> --out <release-notes.md>
+    [--deps <external-dependencies.json>] [--provisional <directory or file>]… [--disclosures <file>]
+    [--repo <dir>] [--write | --check]
+```
+
+- `--csv` and `--out` are required; without them, the generator exits 2.
+- `--write` is the default mode. `--check` compares the bytes of the output file with a fresh generation and writes nothing.
+- `--repo` defaults to the repository that contains the tool. `--csv`, `--deps`, `--provisional`, `--out` and `--disclosures` resolve relative to it.
+- `--provisional` may be repeated. When it is absent, it defaults to `apps/web/src/i18n`.
+- `--disclosures` defaults to `release-notes-disclosures.json` **in the tool's own directory** (`tools/release/`). The default is not resolved under `--repo`.
+- The two commands in §5.1 remain valid as written.
+
+### A1.2 The inputs, complete (replaces "It reads nothing else")
+
+The generator reads exactly the following files:
+
+| # | Input | Path | When it is missing | When it is invalid |
+| --- | --- | --- | --- | --- |
+| 1 | The register | `--csv` (named, never a walk; D-138). Parsed by `parseRegister` of `apps/api/scripts/register-snapshot.mjs` (§2.2). | exit 2, `release-notes: BLOCKED: <path> not found` | exit 1, `release-notes: <line>: <reason>` |
+| 2 | The external dependency list | `--deps`. Parsed by `parseDependencies` of the same module (the `ExternalDependency` contract schema). | The flag is absent or the file does not exist: the Unknown line in English and Arabic, never "none" (§5.2 item 5). | exit 1, `release-notes: <location>: <reason>`, for example `… invalid dependency entry` (test "T-I11 dependencies") |
+| 3 | The provisional Arabic files | For each `--provisional` value: a file is read as is; for a directory, the files directly inside it whose names match `provisional-ar*.ts` and do not end in `.test.ts`, in sorted order. Then the five component files of p7-plan §1.4 (`PROVISIONAL_COMPONENT_FILES`): `apps/web/src/components/{assistant,compare,saved-views}/provisional-ar.ts` and `apps/web/src/pages/{integrations,my-work}/provisional-ar.ts`, each read once. | A missing directory or component file is skipped. | Not applicable: only the entry lines are counted (`countProvisional`). |
+| 4 | The release identity (§5.2 item 1) | `apps/api/package.json` (`version`) and `docs/api/openapi.yaml` (`info.version`), under `--repo` | `Unknown`, never guessed | `Unknown` |
+| 5 | **The disclosure input** (D-280) | `--disclosures`, by default `tools/release/release-notes-disclosures.json` (A1.3) | exit 2, `release-notes: BLOCKED: <path> not found`; nothing is written | exit 2, `release-notes: BLOCKED: <path>: <reason>`; nothing is written |
+
+**What it reads beyond this list:** in `--check` mode only, the existing output file at `--out`.
+
+**What it never reads:**
+- any other file;
+- any directory other than the `--provisional` directories, which it lists one level deep;
+- anything under `docs/delivery/**` other than the file named by `--csv`;
+- a clock, an environment variable, or the network.
+
+The output is therefore a function of the five inputs alone, and `--check` stays a byte comparison (§5.2; test "T-I11 no clock").
+
+### A1.3 The disclosure input (`mth-release-notes-disclosures/1`)
+
+1. **Purpose.**
+   - It lists the disclosures that the release notes must carry for rows that are `IMPLEMENTED`.
+   - Such rows never appear in the unfinished section. The disclosure text does not go in the register's notes, because the analyst maintains the register; this file holds it instead.
+   - Today it has one entry, `d278-transfer-drill`: the ADR-0064 Amendment 5 A5.6 disclosure of the D-278 transfer-drill rule. It links to `known-limitations.md#adr-residuals`.
+2. **Where it lives.**
+   - It lives in the tool's own directory, as `claims-scan.mjs` reads `claims-allowlist.json`. It is never under `docs/delivery/**`, so p7-work-split §2 rule 3 holds.
+   - It is checked in, so it is part of the candidate manifest and of the release archive's source tree.
+   - The secret scan's payload scope (§6.3) covers the file itself.
+   - The claims scan (ADR-0063 T-G6) does not scan `tools/release/*.json`. It covers the disclosure texts as the generator prints them in `docs/handover/release-notes.md`, which is in its docs group.
+3. **Format.**
+   - The file is strict JSON.
+   - Top-level keys are `$comment` (optional), `format` (equal to `mth-release-notes-disclosures/1`) and `disclosures` (an array). Any other key is refused.
+   - Each entry has exactly these keys, and any other key is refused:
+     - `id`: lower-case kebab case, unique;
+     - `source`: one line;
+     - `heading`: `[English, Arabic]`;
+     - `en`: a non-empty list of one-line texts;
+     - `ar`: a non-empty list of one-line texts;
+     - `link`: `{ href, text }`. `href` is a relative `.md` path under `docs/handover/` with an optional `#fragment`; it is never a URL and never starts with `./` or `../`. `text` is `[English, Arabic]`.
+   - "One line" means a non-empty string with no line break and no leading or trailing white space.
+   - Entries are printed in file order.
+4. **Refusal.** Any violation is BLOCKED (exit 2, one line `release-notes: BLOCKED: <file>: <reason>`), and the output is not written. A disclosure is never silently dropped.
+5. **Arabic.** The `ar` texts are provisional, like every Arabic text in the release notes (D-243 Q7). The Arabic subsection prints the provisional marker lines (A1.4).
+
+### A1.4 The sections (replaces the §5.2 list)
+
+1. The release identity (unchanged).
+2. Counts by status (unchanged).
+3. "Unfinished items and release blockers" (unchanged).
+4. "Clauses that complete after the engineering gate" (unchanged).
+5. "Remaining external configuration dependencies", or the Unknown line (unchanged).
+6. **"Known limitations disclosed in this release"** (new, D-280):
+   - an introduction line, then one `###` subsection per entry with its English heading;
+   - each `en` line as a bullet;
+   - a "Details" bullet that links to `link.href` and names `source`.
+   - With an empty list, it prints the line "None: this release lists no such disclosure.", never an empty heading.
+7. "Provisional Arabic texts": the count of provisional entries per file (§5.2 item 6, renumbered).
+8. The Arabic summary section, marked provisional (§5.2 item 7, renumbered). Between its dependency and provisional-text subsections, it has the subsection "قيود معروفة يفصح عنها هذا الإصدار":
+   - the provisional marker lines in English and Arabic (p7-work-split §H.3). For an Arabic section inside an English handover file, `check-handover.mjs` only warns when these lines are missing; test "DO-D10 disclosures: printed in English…" asserts that they are present;
+   - the Arabic introduction;
+   - for each entry, a bold Arabic heading, the `ar` lines as bullets, and the Arabic "Details" link;
+   - with an empty list, the Arabic None line.
+
+References elsewhere to "§5.2 item 1" (the release identity, for example in `release-notes.mjs`) stay valid, because items 1–5 keep their numbers.
+
+### A1.5 Exit codes (extends §5.4)
+
+| Exit | When |
+| --- | --- |
+| 0 | Written (`--write`), or up to date (`--check`). |
+| 1 | The three §5.4 refusals (a non-`IMPLEMENTED` row with empty notes; an `IMPLEMENTED` row without evidence; `--check` drift), a register that violates §2.2, or an invalid dependency list. |
+| 2 | BLOCKED: `--csv` or `--out` is missing, an option has no value, an argument is unknown, the register is not found, or the disclosure input is missing or invalid (A1.3 item 4). |
+
+**An invalid dependency list exits 1, not 2.** p7-work-split §2 rule 4 classes invalid input as exit 2, so this is a recorded deviation as built. Test "T-I11 dependencies" pins it. This amendment changes no code, so it records the deviation and does not correct it (A1.7 item 2).
+
+### A1.6 Tests (existing, `node --test tools/release/tests/release-notes.test.mjs`)
+
+| Test | Proves |
+| --- | --- |
+| "DO-D10 disclosures: the checked-in input carries the D-278 transfer-drill rule in English and Arabic" | The A1.3 item 1 entry and its link target `{#adr-residuals}` in `docs/handover/known-limitations.md`. |
+| "DO-D10 disclosures: printed in English before the provisional section, and in the Arabic summary" | The A1.4 order (5 < 6 < 7) and the item 8 subsection with its provisional lines. |
+| "DO-D10 disclosures: the committed release notes carry the section (regenerated with --write)" | `docs/handover/release-notes.md` carries every `en` and `ar` line. |
+| "DO-D10 disclosures: an empty list prints the None line in both languages, never an empty heading" | The A1.4 items 6 and 8 for an empty list. |
+| "DO-D10 disclosures: a missing or invalid input is BLOCKED (exit 2) and nothing is written" | A1.3 items 3–4, with 11 invalid variants. |
+| "T-I11 dependencies", "T-I11 usage", "T-I11 no clock", "T-I11 --check" | A1.2 rows 1–2, A1.5, and determinism. |
+
+T-I11 and T-I13 (§9) are unchanged.
+
+### A1.7 Residuals added
+
+1. **The disclosure list is maintained by hand.** No tool derives it from the ADRs. A future accepted ADR that requires a release-notes disclosure is caught only by review, and the tests pin only the D-278 entry.
+2. **The invalid dependency list exits 1** (A1.5). It is recorded here and unchanged, because it is a code change outside this task. The orchestrator decides whether to align it with p7-work-split §2 rule 4.

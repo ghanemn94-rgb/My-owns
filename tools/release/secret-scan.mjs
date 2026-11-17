@@ -72,6 +72,18 @@ export function entropy(s) {
   return h;
 }
 
+/**
+ * An i18n key (ADR-0063 §1.2 S3 exception, narrowed by F-DG7-1011): lower-case words joined by `.` or `_` (or a run
+ * of them, as in `capacity.problem.resource_role__archived`), for example `auth.password.reset_hint_text`. It needs
+ * at least one separator, and every segment must read as a word: at most 20 characters and at most 3 digits. A bare
+ * lower-case or hex string (`openssl rand -hex 24`, a 24-character lower-case password) is therefore not an i18n key
+ * and falls through to the entropy rule.
+ */
+export function isI18nKey(v) {
+  if (!/^[a-z][a-z0-9]*(?:[._]+[a-z0-9]+)+$/.test(v)) return false;
+  return v.split(/[._]+/).every((seg) => seg.length <= 20 && (seg.match(/[0-9]/g) ?? []).length <= 3);
+}
+
 /** True when an S3 value is a placeholder or a known non-secret shape (ADR-0063 §1.2). */
 export function isNonSecretValue(key, value) {
   const v = value.trim();
@@ -86,7 +98,7 @@ export function isNonSecretValue(key, value) {
   if (/^\/run\/secrets\//.test(v) || /_FILE$|File$/i.test(key)) return true;
   if (/^[0-9a-f]{64}$/i.test(v) || /^sha256:[0-9a-f]+$/i.test(v) || /^sha512-[A-Za-z0-9+/=]+$/.test(v)) return true;
   if (/^[A-Z][A-Z0-9_]+$/.test(v)) return true; // a key NAME
-  if (/^[a-z0-9_.]+$/.test(v)) return true; // an i18n key
+  if (isI18nKey(v)) return true; // an i18n key (dotted or snake_case words), never a bare generated string
   // a namespaced lower-case identifier, module id or repository path (`mth.automation.x.v1`, `virtual:x.css`, `a/b.ts`)
   if (/^(?:\\0)?[a-z][a-z0-9_-]*(?:[.:/][a-z0-9][a-z0-9_-]*)+$/.test(v)) return true;
   if (/[(){}]|=>|\$\{/.test(v)) return true; // code, not a literal
