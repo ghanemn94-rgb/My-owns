@@ -1,0 +1,33 @@
+2026-11-17T17:45:20Z compose-backup-drill: label rg3; source project mthbk-src (API :28301); target project mthbk-dst (API :28302)
+2026-11-17T17:45:20Z SYNTHETIC demo data only; a local Compose drill is not evidence of high-availability production readiness.
+2026-11-17T17:45:20Z C0 start: environment facts
+2026-11-17T17:45:20Z C0 PASS exit=0 0.35s
+2026-11-17T17:45:20Z C1 start: source project mthbk-src: up -d --wait (new volumes)
+2026-11-17T17:45:46Z C1 PASS exit=0 25.15s
+2026-11-17T17:45:46Z C2 start: seed-demo (SYNTHETIC) into the source
+2026-11-17T17:45:49Z C2 PASS exit=0 3.16s
+2026-11-17T17:45:49Z C3 start: §3.2 step 1: backup profile on postgres:18, --phase database
+2026-11-17T17:45:51Z C3 FAIL exit=1 2.56s
+2026-11-17T17:45:51Z C4 NOT_RUN (§3.2 step 2: evidence copy-out in the app image (--user 0:0)): an earlier step (C3) failed
+2026-11-17T17:45:51Z C5 NOT_RUN (§3.2 step 3: backup profile, --phase finish): an earlier step (C3) failed
+2026-11-17T17:45:51Z C6 NOT_RUN (the set is owner-only (§3.3)): an earlier step (C3) failed
+2026-11-17T17:45:51Z C7 NOT_RUN (target project mthbk-dst: new volumes, db only): an earlier step (C3) failed
+2026-11-17T17:45:51Z C8 NOT_RUN (restore.sh into mthbk-dst (postgres:18 client tools, --manifest-sha256)): an earlier step (C3) failed
+2026-11-17T17:45:51Z C9 NOT_RUN (restored evidence owned by the evidence root's owner): an earlier step (C3) failed
+2026-11-17T17:45:51Z C10 NOT_RUN (start mthbk-dst; migrate up to date; GET /readyz over HTTP): an earlier step (C3) failed
+2026-11-17T17:45:51Z C11 start: cleanup (down -v of both projects unless --keep)
+2026-11-17T17:45:52Z C11 PASS exit=0 1.21s
+2026-11-17T17:45:52Z summary:
+2026-11-17T17:45:52Z   C0 PASS 0.35s environment facts
+2026-11-17T17:45:52Z   C1 PASS 25.15s source project mthbk-src: up -d --wait (new volumes)
+2026-11-17T17:45:52Z   C2 PASS 3.16s seed-demo (SYNTHETIC) into the source
+2026-11-17T17:45:52Z   C3 FAIL exit=1 2.56s §3.2 step 1: backup profile on postgres:18, --phase database
+2026-11-17T17:45:52Z   C4 NOT_RUN §3.2 step 2: evidence copy-out in the app image (--user 0:0)
+2026-11-17T17:45:52Z   C5 NOT_RUN §3.2 step 3: backup profile, --phase finish
+2026-11-17T17:45:53Z   C6 NOT_RUN the set is owner-only (§3.3)
+2026-11-17T17:45:53Z   C7 NOT_RUN target project mthbk-dst: new volumes, db only
+2026-11-17T17:45:53Z   C8 NOT_RUN restore.sh into mthbk-dst (postgres:18 client tools, --manifest-sha256)
+2026-11-17T17:45:53Z   C9 NOT_RUN restored evidence owned by the evidence root's owner
+2026-11-17T17:45:53Z   C10 NOT_RUN start mthbk-dst; migrate up to date; GET /readyz over HTTP
+2026-11-17T17:45:53Z   C11 PASS 1.21s cleanup (down -v of both projects unless --keep)
+2026-11-17T17:45:53Z compose-backup-drill: FAIL in 32.50s (label rg3; restore report /home/user/My-owns/docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg3/02-compose-backup-drill.d/restore/restore-report.json)
