@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG7-1021",
+      "stage_id": "DG7",
+      "requirement": "REQ-S02-005",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "ADR-0071 §5 still says the release-notes generator reads nothing but the register, the dependency list and the provisional Arabic files, and lists seven sections; since D-280 it also reads tools/release/release-notes-disclosures.json and writes an eighth section",
+      "reproduction": "On the candidate (source ddf42ccd2): (1) docs/architecture/adr/ADR-0071-p7-traceability-register-snapshot-about-release-notes-release-blockers-protocol-audit.md §5.1 ends 'It reads nothing else.' and §5.2 lists sections 1-7 (identity, counts, unfinished items, later clauses, external dependencies, provisional Arabic, Arabic summary); no amendment section exists (grep -n 'Amendment' on the file finds none). (2) tools/release/release-notes.mjs l.10 and l.28: 'It also reads its own checked-in input tools/release/release-notes-disclosures.json' (DEFAULT_DISCLOSURES). (3) docs/handover/release-notes.md l.71 '## Known limitations disclosed in this release' and its Arabic twin l.137, a section §5.2 does not list. (4) decisions.md D-280 records the orchestrator's acceptance 'instead of amending the ADR'.",
+      "expected": "The accepted ADR that specifies the generator (ADR-0071 §5.1, §5.2) describes its actual inputs and sections, through a dated amendment as the other P7 ADRs do (for example ADR-0064 Amendment 5, ADR-0065 Amendment 1), so that a maintainer who regenerates the release notes from the ADR's description gets the shipped output.",
+      "actual": "The ADR text and the shipped generator disagree on one input file and one output section. Behaviour is unaffected: release-notes.mjs --check exits 0 on the candidate and the disclosures section is correct (54-handover-tools.log). Raised afresh as the assignment directs; it is the same drift as the old branch's F-DG7-973, which was accepted there as an observation (D-280, D-281).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-1/54-handover-tools.log",
+        "docs/architecture/adr/ADR-0071-p7-traceability-register-snapshot-about-release-notes-release-blockers-protocol-audit.md",
+        "tools/release/release-notes.mjs",
+        "docs/handover/release-notes.md"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG7/round-1/qa-verifier.json",
+      "owner": "solution-architect",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-17T11:10:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG7 round 1 (T-DG7-REV-QA-RG1) on candidate sha256:9822d8fe. Low, documentation drift with no behavioural effect; not blocking in the reporter's view."
+        }
+      ]
+    },
+    {
+      "id": "F-DG7-1022",
+      "stage_id": "DG7",
+      "requirement": "REQ-DLV-014",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The handover release notes and 25 register rows cite DG7 finding ids (F-DG7-913…971) that do not exist in this branch's findings.json, and the REQ-DLV-014 later clause names old-branch findings that validate --stage DG7 on this branch cannot show",
+      "reproduction": "On the candidate: (1) grep -c F-DG7 docs/delivery/findings.json -> 0 (D-281 reset DG7 findings for the clean re-gate). (2) docs/handover/release-notes.md l.35 (REQ-DLV-012 later clause) cites 'F-DG7-960's FE-C3 and F-DG7-920's DO-D8 handback'; l.36 (REQ-DLV-014 later clause) reads 'with each DG7 finding (round 2: 915, 935, 960-963) fixed and verified by a non-owner, shown by validate.mjs --stage DG7 at the gate'. (3) python3 csv reader over docs/delivery/requirements.csv: 25 rows' notes cite F-DG7-913, 914, 915, 920, 921, 935, 954, 955, 956, 960, 961, 962, 963, 971; none of the 25 notes, nor any docs/handover file, says that these ids live on the old branch (commit 1612f85fc). D-281 qualifies only path mentions ('Path mentions in register notes, handbacks and this file ... refer to commit 1612f85fc'), and decisions.md is not part of the handover.",
+      "expected": "Every finding id that the handover documents and the register cite resolves in the delivered findings register, or is explicitly qualified as an old-branch record (commit 1612f85fc, D-281); and each completes-after-gate clause names a condition that the DG7 gate on this branch can actually show.",
+      "actual": "A reader of the sealed package (release notes, register, findings.json) cannot resolve these ids, and the REQ-DLV-014 clause 'shown by validate.mjs --stage DG7' refers to findings that are not in this branch's findings.json, so the gate check is vacuous for them. No product behaviour is affected; the findings' substance was verified on the old branch.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-1/54-handover-tools.log",
+        "docs/handover/release-notes.md",
+        "docs/delivery/requirements.csv",
+        "docs/delivery/findings.json",
+        "docs/delivery/decisions.md"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG7/round-1/qa-verifier.json",
+      "owner": "transformation-analyst",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-17T11:10:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG7 round 1 (T-DG7-REV-QA-RG1) on candidate sha256:9822d8fe. Low, traceability drift of the clean re-gate (D-281) with no behavioural effect; not blocking in the reporter's view."
+        }
+      ]
+    }
+  ]
+}
