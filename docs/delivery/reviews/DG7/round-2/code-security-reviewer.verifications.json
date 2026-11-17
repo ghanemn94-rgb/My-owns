@@ -1,0 +1,47 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG7-1011",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified by its originating reviewer role (code-security-reviewer, session da744e37, T-DG7-REV-CS-RG2) on candidate sha256:33266ccd9ce4ec4475de745ebacfaafbd2f25870f8be966086f4a74578b7259c (source 152db5b51; repair T-DG7-DO-D11, commit 4f44cd707).\n\n1. Code: tools/release/secret-scan.mjs replaces the S3 exemption /^[a-z0-9_.]+$/ with isI18nKey() (l.82-85). The rule needs lower-case words joined by '.'/'_', at least one separator, and each segment at most 20 characters and 3 digits. A bare lower-case or hex value now falls through to the entropy rule.\n\n2. The round-1 reproduction, re-run on this candidate with freshly generated values (10-s3-secret-shapes-repro.log):\n- case (a), POSTGRES_PASSWORD = openssl rand -hex 24: S3 hit, exit 1;\n- case (c), OIDC_CLIENT_SECRET = 24 lower-case alphanumerics: S3 hit, exit 1;\n- case (d), the mixed-case control: S3 hit, exit 1.\nIn round 1, (a) and (c) gave PASS, exit 0. Case (b), a 32-hex value, was not reported in that one draw because its entropy was 3.44, below the ADR-0063 threshold of 3.5. isI18nKey was false, so that is not the defect.\n\n3. Over 5000 random values per shape (11-s3-exemption-rates.log), isI18nKey exempts 0.0% of hex16, hex24, hex32, lower24, upper-hex, base32 and base64 values. The remaining non-reports come from other rules: the ADR entropy threshold (hex16 18.7%, hex24 1.0%), the 64-hex checksum shape (hex32 100%, disclosed in SC-13) and the upper-case 'key NAME' rule. None of these is the i18n exemption this finding was about.\n\n4. No false positive was added:\n- payload scan PASS (3158 files, allowed 33) and docs/handover PASS (13-secret-scan-payload-handover.log);\n- history scan PASS (36211 blobs, allowed 219, exit 0; 14-secret-scan-history.log);\n- secret-scan.test.mjs 32/32, including the 7 F-DG7-1011 tests (15-secret-scan-service-list-tests.log).\nThat log's one failure is service-list.test.mjs failing to load (MODULE_NOT_FOUND) in my clone, which had no node_modules. It was re-run with the repository's node_modules linked: 7/7 (15b-service-list-test.log).\n\n5. Nothing is hidden today: a probe without the 64-hex and key-NAME exemptions finds only six environment-variable names and the T-G1 64-hex fixture in the payload (12-secret-scan-probe-no64hex-nokeyname.log, 12b-probe-hits-explained.log).\n\nThe ADR text was not amended. That residual is raised separately as F-DG7-1041 (Low).",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/code-security/round-2/10-s3-secret-shapes-repro.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-2/11-s3-exemption-rates.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-2/12-secret-scan-probe-no64hex-nokeyname.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-2/12b-probe-hits-explained.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-2/13-secret-scan-payload-handover.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-2/14-secret-scan-history.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-2/15-secret-scan-service-list-tests.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-2/15b-service-list-test.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-2/repro/s3-secret-shapes-rg2.sh",
+        "docs/delivery/test-evidence/DG7/code-security/round-2/repro/s3-exemption-rates.mjs"
+      ]
+    },
+    {
+      "finding_id": "F-DG7-1012",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified by its originating reviewer role (code-security-reviewer, session da744e37) on candidate sha256:33266ccd (source 152db5b51; repair T-DG7-DO-D11).\n\n1. The round-1 probe, re-run on a disposable PostgreSQL 16.15 (with-pg.sh, port 32460): backup.sh --phase database under umask 022 with MTH_TRANSFER_ATTACHMENTS=none (16-backup-set-mode-repro.log).\n- Every entry is now 0700 (directories) or 0600 (files): the root, the set, .backup-state/*, config/*, db/database.dump and db/table-counts.tsv. In round 1 they were 0755/0644.\n- Nothing is readable or writable by group or others.\n- The dump still holds TABLE DATA app_user, audit_event and session, so the protection matters.\n\n2. New root checks:\n- a 1777 root (the host /tmp shape) is refused with exit 2 and the BLOCKED line, and 0 entries are written;\n- a symlinked root is also refused. That is fail-closed, but the message 'writable by group or others' is misleading, because find reads the symlink's own mode. Recorded as an observation in the review record, not a defect.\n- A 0700 root owned by another uid could not be tested: chown is not permitted in the sandbox. Statically, the script checks the root's mode but not its owner. Recorded as a hardening observation.\n\n3. Test suite: backup-restore.test.mjs 13/13, including T-E10 (owner-only set), T-E11 (the Compose sequence: database phase, copy-out under umask 022, finish) and T-E12 x2 (1777 and 0770 roots refused) (17-backup-restore-tests.log, exit 0).\n\n4. Compose:\n- docker compose v5.6.1 `config` (parse and validate only, no daemon), with MTH_BACKUP_ROOT unset, renders the backup bind as source /MTH_BACKUP_ROOT-is-not-set, target /backups, bind.create_host_path false. With it set, it renders source /srv/mth-backups. The default profile still renders db, migrate, api and worker (18-compose-config-backup.log).\n- service-list.test.mjs F-DG7-1012 static test passes (15b-service-list-test.log).\n- Residual, not run: Docker's runtime refusal of the missing host path and the root `backup` container's modes need a Docker daemon, which this sandbox lacks (the container half is the orchestrator's, D-267). backup-restore.md §10 discloses it. The script behaviour that produces the modes is the same script the container runs.\n\n5. backup-restore.md §3.3 documents the root's permissions.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/code-security/round-2/16-backup-set-mode-repro.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-2/17-backup-restore-tests.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-2/18-compose-config-backup.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-2/15b-service-list-test.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-2/repro/backup-set-mode-rg2.sh"
+      ]
+    },
+    {
+      "finding_id": "F-DG7-1013",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified by its originating reviewer role (code-security-reviewer, session da744e37) on candidate sha256:33266ccd (repair T-DG7-SA-ADR71).\n\n1. ADR-0071 now carries pointers in §5.1, §5.2 and §5.4 to a dated Amendment 1 (2026-11-17):\n- A1.1 gives the full usage;\n- A1.2 replaces 'It reads nothing else' with the complete input list: register, dependency list, provisional files, the two release-identity files, the disclosure input, and the --out file in --check mode only;\n- A1.3 gives the disclosure format;\n- A1.4 lists eight sections, with 'Known limitations disclosed in this release' as item 6;\n- A1.5 gives the exit codes.\n\n2. I checked A1.2 against tools/release/release-notes.mjs. Its readFileSync/existsSync/readdirSync calls (l.83-108, 315-364) read exactly these inputs, with no clock, environment or network.\n\n3. release-notes.test.mjs passes 14/14, including the five DO-D10 disclosure tests (19-release-notes-tests.log). The pre-freeze `--check` exits 0 (orchestrator prefreeze-rg2/release-notes.log).\n\n4. The amendment discloses the 'invalid dependency list exits 1' deviation (A1.5, A1.7 item 2) rather than hiding it. F-DG7-1002 and F-DG7-1021 (the same defect, other reporters) are theirs to verify.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/code-security/round-2/19-release-notes-tests.log",
+        "docs/architecture/adr/ADR-0071-p7-traceability-register-snapshot-about-release-notes-release-blockers-protocol-audit.md",
+        "tools/release/release-notes.mjs",
+        "docs/delivery/test-evidence/DG7/orchestrator/prefreeze-rg2/release-notes.log"
+      ]
+    }
+  ]
+}

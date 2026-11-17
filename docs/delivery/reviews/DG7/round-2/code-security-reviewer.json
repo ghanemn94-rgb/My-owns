@@ -1,0 +1,452 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG7",
+  "round": 2,
+  "candidate_id": "sha256:33266ccd9ce4ec4475de745ebacfaafbd2f25870f8be966086f4a74578b7259c",
+  "source_commit": "152db5b51155282b28e82472629d07b8d87feb2a",
+  "reviewer_role": "code-security-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG7-T-DG7-REV-CS-RG2-code-security-reviewer-20261117T144530Z-da744e37",
+    "session_id": "da744e37-29eb-4508-aad0-60d57fdbc700"
+  },
+  "implementation_author": [
+    "solution-architect",
+    "backend-workflow-engineer",
+    "kpi-benefits-engineer",
+    "frontend-ux-engineer",
+    "devops-engineer",
+    "transformation-analyst",
+    "qa-verifier",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I am code-security-reviewer, session da744e37-29eb-4508-aad0-60d57fdbc700, task T-DG7-REV-CS-RG2. I verified the assignment's SHA-256 (3490c28cadf73a8cfb3bdcb31b4251d015aa7cd19c5ce99fc0d93428c29eac7c).\n\nI authored no implementation in the DG7 scope. P7 and its repairs (DO-D11 by devops-engineer, SA-ADR71 by solution-architect) were built by implementer roles. qa-verifier wrote the pre-freeze acceptance tests, and delivery-orchestrator integrated the work and ran the drills.\n\nI formed this verdict without opening any other reviewer's round-2 record or evidence; I read only my own role's round-1 findings, to verify them. HEAD at the start was 1c119c031. The commits after source_commit 152db5b51 (c26f69d70, 1c119c031) touch only the three assignments, the frozen manifest and stages.json.\n\nTwo inconsistencies in the assignment are reported, not followed:\n- It asks for `round: 7`, but the record path is round-2, and tools/gates/lib/rules.mjs l.682/794 requires rec.round to equal the round directory and the stages.json round entry. This record says round 2.\n- It names docs/delivery/reviews/DG5/round-7/code-security-reviewer.json as the field-set template, but DG5 has no round 7 (rounds 1-5 only). I mirrored the field set of docs/delivery/reviews/DG7/round-1/code-security-reviewer.json, which is the schema's full property set.\n\nThis review is engineering evidence only. It grants no business, Finance or IT approval. Product gate G6 does not imply DG7, and DG7 implies no G1-G6 approval."
+  },
+  "assignment": "docs/delivery/assignments/DG7/round-2/code-security-reviewer.md",
+  "requirements_checked": [
+    "REQ-DLV-005",
+    "REQ-DLV-008",
+    "REQ-DLV-009",
+    "REQ-DLV-010",
+    "REQ-DLV-011",
+    "REQ-DLV-012",
+    "REQ-DLV-014",
+    "REQ-DLV-018",
+    "REQ-DLV-021",
+    "REQ-DLV-024",
+    "REQ-DLV-027",
+    "REQ-DLV-028",
+    "REQ-DLV-030",
+    "REQ-DLV-031",
+    "REQ-DLV-039",
+    "REQ-DLV-040",
+    "REQ-DLV-041",
+    "REQ-S01-001",
+    "REQ-S01-006",
+    "REQ-S02-003",
+    "REQ-S02-005",
+    "REQ-S16-008",
+    "REQ-S16-009",
+    "REQ-S16-024",
+    "REQ-S16-031",
+    "REQ-S16-033",
+    "REQ-S17-004",
+    "REQ-S19-001",
+    "REQ-S19-002",
+    "REQ-S19-003",
+    "REQ-S19-005",
+    "REQ-S19-007",
+    "REQ-S19-008",
+    "REQ-S19-009",
+    "REQ-S19-010",
+    "REQ-S19-011",
+    "REQ-S19-012",
+    "REQ-S19-013",
+    "REQ-S19-014",
+    "REQ-S19-015",
+    "REQ-S19-016",
+    "REQ-S19-017",
+    "REQ-S19-018",
+    "REQ-S19-019",
+    "REQ-S20-018",
+    "REQ-S20-019",
+    "REQ-S20-023",
+    "REQ-S20-026",
+    "REQ-S20-027",
+    "REQ-S20-028",
+    "REQ-S20-031",
+    "REQ-S21-002",
+    "REQ-S21-003",
+    "REQ-S21-004"
+  ],
+  "checks_run": [
+    {
+      "id": "SEC-RG2-00-candidate-identity",
+      "procedure": "Confirm HEAD and what the commits after source_commit change, then recompute the candidate from the working tree and with --diff against the frozen manifest.",
+      "command": "git rev-parse HEAD; git diff --stat 152db5b51155282b28e82472629d07b8d87feb2a..HEAD; node tools/gates/candidate.mjs --stage DG7; node tools/gates/candidate.mjs --stage DG7 --diff docs/delivery/candidates/DG7/33266ccd9ce4ec44.manifest.json",
+      "environment": "Live repository, read-only; Node v24.21.0 (/opt/nvm/versions/node/v24.21.0/bin first on PATH).",
+      "expected": "candidate sha256:33266ccd9ce4ec4475de745ebacfaafbd2f25870f8be966086f4a74578b7259c over 3158 files; the commits after the source commit change only metadata.",
+      "actual": "HEAD is 1c119c031. The diff 152db5b51..HEAD touches only the three round-2 assignments, candidates/DG7/33266ccd9ce4ec44.manifest.json and stages.json, all excluded from the candidate.\n\ncandidate.mjs gives sha256:33266ccd9ce4ec4475de745ebacfaafbd2f25870f8be966086f4a74578b7259c over 3158 files, exit 0. --diff gives matches: true, with added, removed and changed all empty.\n\nCode was executed only in a disposable sparse clone at 152db5b51 under $TMPDIR (docs/delivery/ and trading_agent/ excluded). A full clone failed with ENOSPC on the shared /var/tmp volume, and the partial checkout was deleted at once. The 7 docs/delivery manifest entries were read from the main tree, which is identical to the candidate.",
+      "exit_status": 0,
+      "result": "PASS",
+      "evidence": [
+        "docs/delivery/candidates/DG7/33266ccd9ce4ec44.manifest.json"
+      ]
+    },
+    {
+      "id": "SEC-RG2-01-validate-historical",
+      "procedure": "Historical validation of the approved gates DG6 to DG1 (the assignment's precondition).",
+      "command": "for s in DG6 DG5 DG4 DG3 DG2 DG1; do node tools/gates/validate.mjs --historical --stage $s; done",
+      "environment": "Live repository, read-only; Node v24.21.0.",
+      "expected": "PASS gate DGx (historical), exit 0, for each.",
+      "actual": "All six give 'PASS gate DGx (historical)' with exit 0. There are no other lines in the logs.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-005",
+        "REQ-DLV-008",
+        "REQ-DLV-009"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/code-security/round-2/validate-historical-DG6.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-2/validate-historical-DG5.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-2/validate-historical-DG4.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-2/validate-historical-DG3.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-2/validate-historical-DG2.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-2/validate-historical-DG1.log"
+      ]
+    },
+    {
+      "id": "SEC-RG2-10-F-DG7-1011-repro",
+      "procedure": "Re-run the round-1 S3 reproduction on this candidate's scanner, extended with probes of the remaining exemptions. Values are generated at run time under $TMPDIR with openssl, and none is committed.",
+      "command": "bash docs/delivery/test-evidence/DG7/code-security/round-2/repro/s3-secret-shapes-rg2.sh $TMPDIR/review-cs",
+      "environment": "Disposable sparse clone at 152db5b51; Node v24.21.0; OpenSSL.",
+      "expected": "Round-1 cases (a) 48-hex POSTGRES_PASSWORD and (c) 24 lower-case OIDC_CLIENT_SECRET are reported S3 with exit 1, like the (d) mixed-case control. A real i18n key (i) stays exempt.",
+      "actual": "(a), (c) and (d) each give one S3 hit, 'secret-scan: FAIL (1 hits)', exit 1, and the value is masked. In round 1, (a) and (c) gave PASS, exit 0. (i) 'auth.password.reset_hint_text' gives PASS, exit 0.\n\nThe exit-0 results in this log, each explained:\n- (b) 32-hex: this draw's entropy is 3.44, below the ADR-0063 threshold of 3.5, so it is not reported. isI18nKey is false, so this is not the i18n defect; SEC-RG2-11 measures the rate.\n- (e) 64-hex secret_access_key: the checksum exemption, disclosed in SC-13; see F-DG7-1041.\n- (f) upper-case hex: this draw's entropy is 3.06, below the threshold.\n- (g) base32 upper-case: the 'key NAME' rule.\n- (h) four lower-case words joined by '_': the i18n-key shape, inherently indistinguishable from a passphrase (ADR-0063 §5 residual 1).\n(e) to (h) are probes of other rules, not the round-1 defect. The script itself exits 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-031",
+        "REQ-S21-003"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/code-security/round-2/10-s3-secret-shapes-repro.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-2/repro/s3-secret-shapes-rg2.sh"
+      ]
+    },
+    {
+      "id": "SEC-RG2-11-S3-exemption-rates-and-probe",
+      "procedure": "Measure how many random generated secrets per shape the S3 rule does not report, and why: entropy, i18n key, or key NAME (5000 samples each). Then run a probe scanner without the 64-hex and key-NAME exemptions over the payload, to see whether any real value hides behind them today.",
+      "command": "node docs/delivery/test-evidence/DG7/code-security/round-2/repro/s3-exemption-rates.mjs $TMPDIR/review-cs 5000; node tools/release/secret-scan-probe.mjs --scope payload (disposable copy in the clone; diff in 12-secret-scan-probe.diff); the same probe with --path over the 7 docs/delivery manifest entries",
+      "environment": "Disposable sparse clone at 152db5b51 (the probe file was deleted afterwards); Node v24.21.0.",
+      "expected": "isI18nKey exempts no generated secret. The remaining non-reports are explained by documented rules. The probe's extra hits, if any, are not secrets.",
+      "actual": "isI18nKey exempts 0.0% of every shape. Values not reported, by shape and cause:\n- hex16: 18.7% (entropy < 3.5);\n- hex24: 1.0% (entropy);\n- hex32/64-hex: 100% (the checksum rule; docs/operations/storage.md l.187 generates the S3 secret_access_key in this shape; disclosed in SC-13, not in ADR-0063: F-DG7-1041);\n- lower24: 0.3% (entropy);\n- upper-case hex: 38.7%, of which 38.1% is the key-NAME rule /^[A-Z][A-Z0-9_]+$/;\n- base32: 80.9% (key-NAME rule);\n- base64: 0.8%.\nObservation, not a finding: the key-NAME rule also exempts upper-case random secrets. No project tool generates that shape (the generators are openssl rand -hex and randomBytes hex), and ADR-0063 §5 residual 1 discloses that the scan is pattern-based.\n\nThe probe (exit 1 by design) reports 7 hits, each explained: six values are environment-variable names (MTH_SECRET_CONTRACT_WEBHOOK_SECRET, MTH_SECRET_LOG_REDACTION_TEST_SECRET, CANARY_DEPLOYMENT_SECRET, MTH_SECRET_QA_A17_WEBHOOK_SIGNING_SECRET twice, SECRET_BINDINGS_FILE), and one is the T-G1 64-hex non-match fixture. The 7 docs/delivery entries give PASS, exit 0. Nothing real hides behind either exemption in this candidate.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-031",
+        "REQ-S21-003"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/code-security/round-2/11-s3-exemption-rates.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-2/12-secret-scan-probe-no64hex-nokeyname.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-2/12-secret-scan-probe.diff",
+        "docs/delivery/test-evidence/DG7/code-security/round-2/12b-probe-hits-explained.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-2/repro/s3-exemption-rates.mjs"
+      ]
+    },
+    {
+      "id": "SEC-RG2-12-secret-scans",
+      "procedure": "Run the real secret scan on the payload, the handover text and the history (A18; REQ-S21-003).",
+      "command": "node tools/release/secret-scan.mjs --scope payload; node tools/release/secret-scan.mjs --path docs/handover; node tools/release/secret-scan.mjs --scope history",
+      "environment": "Live repository, read-only (identical to the candidate); Node v24.21.0.",
+      "expected": "PASS and exit 0 for all three.",
+      "actual": "- payload: PASS (3158 files; allowed 33; canary (documented) 22), exit 0;\n- docs/handover: PASS (29 files; allowed 0), exit 0;\n- history: PASS (36211 blobs; allowed 219; canary (documented) 27), exit 0, 3 min 48 s.\nThe allow-lists are unchanged since round 1, and the narrowed rule added no hit.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-031",
+        "REQ-S21-003"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/code-security/round-2/13-secret-scan-payload-handover.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-2/14-secret-scan-history.log"
+      ]
+    },
+    {
+      "id": "SEC-RG2-13-secret-scan-and-service-list-tests",
+      "procedure": "Run the scanner's self-tests (T-G1, T-G2, and the 7 new F-DG7-1011 tests) and the service-list tests, including the F-DG7-1012 static Compose test.",
+      "command": "node --test tools/release/tests/secret-scan.test.mjs tools/release/tests/service-list.test.mjs; then, with the repository's node_modules symlinked into the clone, node --test tools/release/tests/service-list.test.mjs",
+      "environment": "Disposable sparse clone at 152db5b51; Node v24.21.0. The first run had no node_modules in the clone.",
+      "expected": "All tests pass.",
+      "actual": "First run (exit 1): secret-scan.test.mjs passes 32/32, including 'F-DG7-1011 S3: a generated lower-case or hex secret is reported, a real i18n key is not', in 2 min 50 s. The only failure is service-list.test.mjs failing to load: MODULE_NOT_FOUND from apps/api/package.json, because my clone had no node_modules. That is an environment failure of my clone, not a test result.\n\nRe-run with node_modules linked: service-list.test.mjs passes 7/7, exit 0, including 'F-DG7-1012: the backup profile's /backups bind needs an existing MTH_BACKUP_ROOT and never falls back to /tmp'.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-031",
+        "REQ-S19-012"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/code-security/round-2/15-secret-scan-service-list-tests.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-2/15b-service-list-test.log"
+      ]
+    },
+    {
+      "id": "SEC-RG2-20-F-DG7-1012-backup-modes",
+      "procedure": "Re-run the round-1 backup-mode probe on a disposable PostgreSQL: backup.sh --phase database under umask 022 with MTH_TRANSFER_ATTACHMENTS=none, the Compose service's sequence. Also probe the new root checks: a 1777 root, a symlinked root, and a foreign-owned 0700 root.",
+      "command": "QA_PG_PORT=32460 MTH_PORT_POOL=32400-32499 LANG= LC_ALL= tests/qa/support/with-pg.sh bash docs/delivery/test-evidence/DG7/code-security/round-2/repro/backup-set-mode-rg2.sh $TMPDIR/review-cs",
+      "environment": "Disposable sparse clone at 152db5b51; disposable PostgreSQL 16.15 on port 32460; migrations 0001-0152 (135 applied); sandbox uid 0 with umask set to 022.",
+      "expected": "Every set entry is 0700 or 0600, with nothing open to group or others. A 1777 root is refused with exit 2 and nothing written.",
+      "actual": "P1: backup.sh exit 0. The root, the set, .backup-state/*, config/*, db/database.dump and db/table-counts.tsv are all 700 (d) or 600 (f), and no entry has a group or other bit. In round 1 they were 755/644. The dump holds TABLE DATA app_user, audit_event and session.\n\nP2: the 1777 root gives 'BLOCKED: the backup root <W>/shared is writable by group or others; use an owner-only directory (chmod 0700)', exit 2, 0 entries written.\n\nP3 (observation): a symlinked root to a 0700 directory is refused with exit 2 and the same 'writable by group or others' text. The refusal is fail-closed, but the message is misleading, because find -perm reads the symlink's own mode (0777). In Compose the bind mount resolves symlinks, so /backups is the directory itself.\n\nP4: BLOCKED in this sandbox (chown to 65534 is not permitted). Statically, backup.sh checks the root's mode, not its owner. Hardening observation: a 0700 root pre-created by another account would be accepted. That needs the operator to point MTH_BACKUP_ROOT at another account's directory, while backup-restore.md §3.2 creates it with install -d -m 0700 -o root -g root and the /tmp default is gone.\n\nThe probe script exits 0, and so does the harness. The 'BLOCKED' and 'exit=2' lines are the asserted refusals, explained above.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S19-012",
+        "REQ-S20-019"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/code-security/round-2/16-backup-set-mode-repro.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-2/repro/backup-set-mode-rg2.sh"
+      ]
+    },
+    {
+      "id": "SEC-RG2-21-backup-restore-tests",
+      "procedure": "Run the backup and restore script tests T-E1 to T-E12 on a disposable PostgreSQL.",
+      "command": "QA_PG_PORT=32470 MTH_PORT_POOL=32400-32499 LANG= LC_ALL= tests/qa/support/with-pg.sh node --test deploy/scripts/tests/backup-restore.test.mjs",
+      "environment": "Disposable sparse clone at 152db5b51; disposable PostgreSQL 16.15 on port 32470; Node v24.21.0.",
+      "expected": "13/13 pass.",
+      "actual": "13 tests, 13 pass, 0 fail, 0 skipped, exit 0, 28.4 s. This includes T-E10 (owner-only set under umask 022), T-E11 (database phase, copy-out under umask 022, then finish ends owner-only), T-E12 (1777 root refused) and T-E12 (0770 root refused). T-E4/E5/E6 restore refusals and T-E7 (restore R1-R8 with timings) also pass.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S19-012",
+        "REQ-S20-019"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/code-security/round-2/17-backup-restore-tests.log"
+      ]
+    },
+    {
+      "id": "SEC-RG2-22-compose-backup-bind",
+      "procedure": "Parse and validate the Compose backup profile with docker compose config (no daemon needed), with MTH_BACKUP_ROOT unset and set; check that the default profile still interpolates.",
+      "command": "MTH_SECRETS_DIR=<empty scratch dir> docker compose -f deploy/compose/compose.yaml --profile backup config backup (MTH_BACKUP_ROOT unset, then =/srv/mth-backups); docker compose -f deploy/compose/compose.yaml config --services",
+      "environment": "Disposable sparse clone; Docker Compose v5.6.1 CLI, no Docker daemon.",
+      "expected": "There is no /tmp fallback. With the variable unset, the bind source does not exist and create_host_path is false. The default services still render.",
+      "actual": "Unset: exit 0, and the backup service has 'type: bind, source: /MTH_BACKUP_ROOT-is-not-set, target: /backups, bind: create_host_path: false'.\nSet: exit 0, source /srv/mth-backups, create_host_path false.\nDefault profile: db, migrate, api and worker, exit 0.\n\nA first attempt without MTH_SECRETS_DIR exited 1 on the file's own pre-existing required-variable rule ('required variable MTH_SECRETS_DIR is missing a value: run deploy/scripts/init-secrets.sh first'). That is expected, and the logged run sets it.\n\nResidual (environmental, D-267): Docker's runtime refusal of the missing host path, and the root backup container writing 0700/0600, need a daemon, which this sandbox lacks. backup-restore.md §10 discloses it. Recorded as PASS on the config surface.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S19-012",
+        "REQ-S19-001"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/code-security/round-2/18-compose-config-backup.log"
+      ]
+    },
+    {
+      "id": "SEC-RG2-30-F-DG7-1013-adr71-and-release-notes",
+      "procedure": "Read the ADR-0071 Amendment 1 diff, check its A1.2 input list against tools/release/release-notes.mjs, and run the release-notes tests.",
+      "command": "git diff ddf42ccd2..152db5b51 -- docs/architecture/adr/ADR-0071-*.md; grep -nE 'readFileSync|readdirSync|existsSync|process.env|Date' tools/release/release-notes.mjs; node --test tools/release/tests/release-notes.test.mjs",
+      "environment": "Live repository (read) and disposable sparse clone (tests; docs/delivery/requirements.csv copied in); Node v24.21.0.",
+      "expected": "The amendment names every input and section. The code reads nothing else. Tests pass.",
+      "actual": "Amendment 1 (2026-11-17), with pointers in §5.1, §5.2 and §5.4:\n- the full usage (A1.1);\n- the five inputs, plus --out in --check mode (A1.2);\n- the disclosure format (A1.3);\n- eight sections (A1.4);\n- exits (A1.5), disclosing the 'invalid dependency list exits 1' deviation.\nThe code reads exactly those files (l.83-108, l.315-364), with no clock, environment or network.\n\nrelease-notes.test.mjs: 14/14 pass, exit 0. The pre-freeze `--check` exits 0 (orchestrator prefreeze-rg2/release-notes.log).",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S02-005",
+        "REQ-DLV-041",
+        "REQ-S21-002"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/code-security/round-2/19-release-notes-tests.log",
+        "docs/architecture/adr/ADR-0071-p7-traceability-register-snapshot-about-release-notes-release-blockers-protocol-audit.md",
+        "docs/delivery/test-evidence/DG7/orchestrator/prefreeze-rg2/release-notes.log"
+      ]
+    },
+    {
+      "id": "SEC-RG2-31-D-282-findings-schema",
+      "procedure": "Judge the D-282 widening of the finding-id pattern. Read every place in the gate tooling that parses or orders finding ids.",
+      "command": "git diff ddf42ccd2..152db5b51 -- tools/gates/schemas/findings.schema.json; grep -rnE 'F-DG|\\[0-9\\]\\{3\\}' tools/gates/*.mjs tools/gates/lib/*.mjs; read tools/gates/import-findings.mjs l.40-75, tools/gates/lib/rules.mjs l.486-570",
+      "environment": "Live repository, read-only.",
+      "expected": "The change admits 4-digit ids without weakening stage ownership, relabel or closure checks.",
+      "actual": "Only the pattern changed: ^F-DG[0-7]-[0-9]{3}$ became ^F-DG[0-7]-[0-9]{3,4}$. Ownership and relabel checks use the prefix `F-${stage}-` (import-findings.mjs l.48; rules.mjs l.491, 553, 556), so F-DG7-1041 still belongs only to DG7. No tool assumes a fixed length or sorts ids lexically for closure. Closure is keyed by the exact id (collectVerifications). Every existing 3-digit id stays valid. The change is sound.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-011",
+        "REQ-DLV-012"
+      ],
+      "evidence": [
+        "tools/gates/schemas/findings.schema.json",
+        "tools/gates/import-findings.mjs",
+        "docs/delivery/decisions.md"
+      ]
+    },
+    {
+      "id": "SEC-RG2-40-p7-security-integration",
+      "procedure": "Re-run the P7 security integration suites on this candidate:\n- the transfer, retention and release API, unbound sign-in, the auditor write-deny, deployment status and readiness;\n- the worker retention archive;\n- the DB guards for P7 retention and transfer, transfer round-trip, load, export and locks.",
+      "command": "QA_PG_PORT=32480 MTH_PORT_POOL=32400-32499 LANG= LC_ALL= tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration apps/api/test/integration/transfer apps/api/test/integration/retention apps/api/test/integration/release apps/api/test/integration/identity/unbound-signin.test.ts apps/api/test/integration/aud-write-deny.test.ts apps/api/test/integration/platform/deployment-status.test.ts apps/api/test/integration/platform/readiness-storage-worker.test.ts apps/worker/test/integration/retention-archive.test.ts packages/db/test/integration/p7-retention-guards.test.ts packages/db/test/integration/p7-transfer-guards.test.ts packages/db/test/integration/transfer-roundtrip.test.ts packages/db/test/integration/transfer-load.test.ts packages/db/test/integration/transfer-export.test.ts packages/db/test/integration/transfer-locks.test.ts; then the failing file alone, 3 times (port 32490)",
+      "environment": "Disposable sparse clone at 152db5b51 with the repository's read-only node_modules symlinked; disposable PostgreSQL 16.15; Vitest 3.2.7. The P7 unit run (SEC-RG2-41) ran concurrently.",
+      "expected": "All tests pass, with no unexplained failure.",
+      "actual": "322/322 tests pass, but Vitest reports '1 failed | 21 passed (22)' test files, exit 1. The failed 'suite' is the afterAll teardown of packages/db/test/integration/p7-transfer-guards.test.ts: 'test teardown: 1 connection(s) to mth_p7guard_... are still open, so it is not dropped (a pool or client was not ended): ? (active)', thrown by dropScratchDatabase in packages/db/test/global-setup.ts l.144 after its 10 s grace period.\n\nExplanation: the test's own pools carry application names (test-app-p7guard, test-owner-p7guard), and both are destroyed first. The leftover backend had no application name and was 'active'. otherBackends() (global-setup.ts l.110-115) counts every backend on the database without filtering backend_type. The most likely cause is an autovacuum worker on the freshly loaded scratch database outliving the 10 s window under load: the unit run was sharing the CPU. I could not prove that, because the backend was gone by the time I looked.\n\nThe file re-run alone three times gives 22/22, exit 0, each time (30b-...-1/2/3). The orchestrator's full pre-freeze integration run passed it too (475/475 files). This is a DG1-era test-harness sensitivity, not a product defect, and no assertion failed.",
+      "exit_status": 1,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S19-002",
+        "REQ-S19-003",
+        "REQ-S19-005",
+        "REQ-S19-007",
+        "REQ-S19-008",
+        "REQ-S19-013",
+        "REQ-S19-014",
+        "REQ-S16-008",
+        "REQ-S16-009",
+        "REQ-S16-024",
+        "REQ-S16-033"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/code-security/round-2/30-p7-security-integration.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-2/30b-p7-transfer-guards-rerun-1.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-2/30b-p7-transfer-guards-rerun-2.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-2/30b-p7-transfer-guards-rerun-3.log"
+      ]
+    },
+    {
+      "id": "SEC-RG2-41-p7-unit",
+      "procedure": "Run the P7 unit tests: transfer, retention, release, platform, config (loopback, redaction), P7 permission wiring and architecture.",
+      "command": "npx vitest run --configLoader runner --project unit-node packages/db/src/transfer apps/api/src/modules/transfer apps/api/src/modules/retention apps/api/src/modules/release apps/api/src/modules/platform packages/config/src apps/api/src/p7-wiring.test.ts apps/api/src/architecture.test.ts; then npx vitest run --configLoader runner --project unit-node apps/api/src/p7-wiring.test.ts",
+      "environment": "Disposable sparse clone at 152db5b51, read-only node_modules symlinked; Vitest 3.2.7. It ran concurrently with SEC-RG2-40.",
+      "expected": "608/608 pass.",
+      "actual": "607 pass and 1 fails, exit 1. The failure is p7-wiring.test.ts 'every guard row is a contract operation with the same method, path and stated permission': 'Test timed out in 5000ms'. It is a timeout, not an assertion failure. The test parses the 965-operation OpenAPI contract while the integration suite was loading the CPU.\n\nRe-run alone: 3/3 pass, exit 0. The same test takes 3289 ms against the 5000 ms limit, so it is load-sensitive. The orchestrator's pre-freeze unit run passed it (3042/3042).",
+      "exit_status": 1,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S16-008",
+        "REQ-S16-009",
+        "REQ-S19-008",
+        "REQ-S19-016"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/code-security/round-2/31-p7-unit.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-2/31b-p7-wiring-rerun.log"
+      ]
+    },
+    {
+      "id": "SEC-RG2-50-static-security-review",
+      "procedure": "Direct source review of the security-relevant P7 paths, re-judged on this candidate. Since round 1 (ddf42ccd2..152db5b51), product source changed only in deploy/scripts/backup.sh, deploy/compose/compose.yaml, deploy/service-list.json, tools/release/secret-scan.mjs, findings.schema.json and their tests. Everything else is byte-identical to the round-1 candidate.",
+      "command": "git diff --stat ddf42ccd2630f3d62f6aaf360ff401bbc2bde025..152db5b51 -- . ':!docs/delivery/{runs,reviews,test-evidence,handbacks}'; read apps/api/src/modules/transfer/config-bundle/{routes,service}.ts, packages/db/src/transfer/import.ts, packages/config/src/load.ts l.397-423, apps/api/src/modules/identity/oidc.ts l.60-95, tools/release/secret-scan.mjs, deploy/scripts/backup.sh",
+      "environment": "Live repository, read-only.",
+      "expected": "Every mutation has server-side authorization, validation, optimistic concurrency and an audit event. The audit stays append-only. The loopback exception is exact. The new shell code is safe.",
+      "actual": "Config-bundle routes: every operation does requireSomeRight plus an organization-scoped requireRightAt, with strict zod params and query. Upload has a 5 MiB declared and streamed limit (413). Commit runs in one transaction: freshRightAt (grants reloaded in the transaction), lockedImport (If-Match version), a re-plan compared with the stored validation (planChanged rolls back), each kind's adapter enforcing its own configure right, an UPDATE ... WHERE version, and an audit event config_bundle_import.committed.\n\nObservation: GET by id returns 404 for a missing id and 403 for another organization's id, an existence oracle limited to UUIDv7 ids. This is the project-wide convention, not new.\n\nMigration import: LOCK TABLE audit_event IN EXCLUSIVE MODE; both immutability triggers are checked enabled ('O'); user triggers are disabled only on the other tables; audit_event is never updated, deleted or truncated, and a deferred audit column is refused (D-258).\n\nOIDC loopback: secureIssuerAllowed allows http only for the hostnames localhost, 127.0.0.1 and [::1], after WHATWG normalisation, and only in production. allowInsecureRequests is set only for that case.\n\nHardening observation: allowInsecureRequests applies to every endpoint the loopback issuer's discovery returns, so an operator-controlled local drill IdP that advertised a remote http token endpoint would be followed. That is bounded to the D-258 drill configuration and is not reachable by an outside party.\n\nbackup.sh: umask 077 is scoped to backup_main, so restore.sh keeps its own; chmod -R does not follow symlinks met during traversal; the ownerOnly check fails the set.\n\nRound-1 findings F-DG7-1001 and F-DG7-1022 (records): I agree with D-282's disclosure; neither has a product effect. The asset-scan allow-list, Dockerfile, image bundle and seal/verify tools are unchanged since round 1.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-S19-008",
+        "REQ-S19-009",
+        "REQ-S19-010",
+        "REQ-S19-011",
+        "REQ-S16-008",
+        "REQ-S16-009",
+        "REQ-S16-024",
+        "REQ-S16-033",
+        "REQ-S17-004",
+        "REQ-S01-001",
+        "REQ-S01-006"
+      ],
+      "evidence": [
+        "apps/api/src/modules/transfer/config-bundle/routes.ts",
+        "apps/api/src/modules/transfer/config-bundle/service.ts",
+        "packages/db/src/transfer/import.ts",
+        "packages/config/src/load.ts",
+        "apps/api/src/modules/identity/oidc.ts",
+        "deploy/scripts/backup.sh"
+      ]
+    },
+    {
+      "id": "SEC-RG2-51-orchestrator-prefreeze-evidence",
+      "procedure": "Judge the orchestrator's pre-freeze evidence for this candidate (19 checks). Read every log's summary and every fail, error or skip line.",
+      "command": "cat docs/delivery/test-evidence/DG7/orchestrator/prefreeze-rg2/checks.log; grep -E 'ℹ (tests|pass|fail|skipped)|Test Files|Tests  |﹣|FAIL' docs/delivery/test-evidence/DG7/orchestrator/prefreeze-rg2/*.log; python3 over protocol-audit/protocol-audit-rg2.json",
+      "environment": "Live repository, read-only.",
+      "expected": "19/19 exit 0, and every failure or skip line explained.",
+      "actual": "checks.log: 19 checks, exit 0. These include typecheck, lint, openapi-lint (965 operations), prettier, pnpm test (unit-node 3042/3042, unit-web 2199/2199, formula-nocodegen 259 + 2 skipped), and test:integration (475 files; 4696 pass, 8 skipped, 1 todo). They also include transfer-drill 70/70, release-tool 479 (477 pass, 2 skipped, 0 fail), deploy tools 125/125, e2e-retention, the secret payload and history scans, the claims scan and historical DG6.\n\nThe skips and failures:\n- The two release-tool skips are T-A11, marked BLOCKED (no assembled runtime tree; the real-build asset scan is the orchestrator's host evidence), and T-A3 (bsdtar not installed).\n- The 'fail' and 'error' greps in the logs are test names (fixtures that assert failure), not failures.\n- protocol-audit.log ends 'FAIL (exit 1): 279 hit(s) in 29 check(s)'. The pre-freeze script runs it with '; true', so it is recorded as exit 0. Of the hits, 33 are DG7: 24 assignments lacking task/requirement ids or other elements, 7 handbacks lacking one section, the a0fbc6f1 assignment-hash mismatch (F-DG7-1001, D-282), and one historical-evidence timing hit. All are process records disclosed under D-249/D-270/D-282 in known-limitations.md. None comes from DO-D11 or SA-ADR71, and none affects product behaviour.\n\nLive CI was not run (D-058). That is environmental, recorded as PASS on the offline surface.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-010",
+        "REQ-DLV-011",
+        "REQ-DLV-014",
+        "REQ-DLV-018",
+        "REQ-DLV-024",
+        "REQ-DLV-027",
+        "REQ-DLV-028",
+        "REQ-DLV-030",
+        "REQ-DLV-031",
+        "REQ-DLV-039",
+        "REQ-DLV-040",
+        "REQ-S20-018",
+        "REQ-S20-026",
+        "REQ-S20-027",
+        "REQ-S20-031"
+      ],
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/orchestrator/prefreeze-rg2/checks.log",
+        "docs/delivery/test-evidence/DG7/orchestrator/prefreeze-rg2/release-tool-tests.log",
+        "docs/delivery/test-evidence/DG7/orchestrator/prefreeze-rg2/integration.log",
+        "docs/delivery/test-evidence/DG7/orchestrator/prefreeze-rg2/protocol-audit.log",
+        "docs/delivery/test-evidence/DG7/orchestrator/protocol-audit/protocol-audit-rg2.json"
+      ]
+    },
+    {
+      "id": "SEC-RG2-52-disclosures-and-environmental-residuals",
+      "procedure": "Judge the disclosures the assignment names, from the code-security side: D-249/D-270, D-274, D-278, D-280, D-281, D-282, A27 K11 partial, ADR-0065 Amendment 1, D-267 and D-269. Then record the environmental residuals as the assignment directs.",
+      "command": "grep '^| D-2(49|67|69|70|74|78|80|81|82) ' docs/delivery/decisions.md; read docs/architecture/adr/ADR-0065-*.md Amendment 1; packages/shared/src/transfer/config-bundle.ts l.30-60; ls docs/delivery/test-evidence/DG7/orchestrator/host/",
+      "environment": "Live repository, read-only.",
+      "expected": "No disclosure hides a security defect or claims a business, Finance or IT approval.",
+      "actual": "- D-249/D-270/D-282: process-record observations (protocol audit), disclosed in known-limitations.md, with no product effect.\n- D-274 (Q19 extension to 18 rows): the completes-after-gate markers are register notes. They do not alter authorization or behaviour, and the release notes list 23 later clauses.\n- D-278: the drill's mode-2 explanation of schedule-triggered executions. The product is unchanged and the rule is disclosed (A5.6, D-280).\n- D-280/F-DG7-1013: now in ADR-0071 Amendment 1.\n- ADR-0065 Amendment 1: automation_rule is not carried and is refused explicitly (it names its owner by user id), so an import can never re-own a rule.\n- D-267/D-269: the container half (image build, save/load, Compose up, no-egress) is the orchestrator's host evidence, judged and not re-run (no daemon). The DO-D11 Compose change postdates it, which is the residual noted in SEC-RG2-22.\n- A27 K11 partial: disclosed, a records and seal clause.\nNo record claims an approval.\n\nEnvironmental residuals, PASS on the offline/config surface:\n- live registry (REQ-DLV-042 AC-1, D-057);\n- live CI (D-058);\n- Keycloak and a real IdP (D-049): the OIDC clauses ran against the bundled test issuer;\n- external systems through test adapters and the disabled configuration;\n- REQ-S20-029/030 capacity: provisional figures from one sandbox host.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": [
+        "REQ-DLV-021",
+        "REQ-S02-003",
+        "REQ-S02-005",
+        "REQ-S19-015",
+        "REQ-S19-016",
+        "REQ-S19-017",
+        "REQ-S19-018",
+        "REQ-S19-019",
+        "REQ-S20-023",
+        "REQ-S20-028",
+        "REQ-S21-004"
+      ],
+      "evidence": [
+        "docs/delivery/decisions.md",
+        "docs/architecture/adr/ADR-0065-p7-configuration-transfer-bundle-schema-version-drafts-publish-pipeline.md",
+        "docs/handover/known-limitations.md",
+        "docs/delivery/test-evidence/DG7/orchestrator/host/host-run-3c.log"
+      ]
+    }
+  ],
+  "findings": [
+    "F-DG7-1041"
+  ],
+  "verdict": "PASS",
+  "evidence_paths": [
+    "docs/delivery/reviews/DG7/round-2/code-security-reviewer.verifications.json",
+    "docs/delivery/reviews/DG7/round-2/code-security-reviewer.findings.json",
+    "docs/delivery/test-evidence/DG7/code-security/round-2/10-s3-secret-shapes-repro.log",
+    "docs/delivery/test-evidence/DG7/code-security/round-2/11-s3-exemption-rates.log",
+    "docs/delivery/test-evidence/DG7/code-security/round-2/12-secret-scan-probe-no64hex-nokeyname.log",
+    "docs/delivery/test-evidence/DG7/code-security/round-2/13-secret-scan-payload-handover.log",
+    "docs/delivery/test-evidence/DG7/code-security/round-2/14-secret-scan-history.log",
+    "docs/delivery/test-evidence/DG7/code-security/round-2/16-backup-set-mode-repro.log",
+    "docs/delivery/test-evidence/DG7/code-security/round-2/17-backup-restore-tests.log",
+    "docs/delivery/test-evidence/DG7/code-security/round-2/18-compose-config-backup.log",
+    "docs/delivery/test-evidence/DG7/code-security/round-2/19-release-notes-tests.log",
+    "docs/delivery/test-evidence/DG7/code-security/round-2/30-p7-security-integration.log",
+    "docs/delivery/test-evidence/DG7/code-security/round-2/31-p7-unit.log"
+  ],
+  "reviewed_at": "2026-11-17T15:20:00Z",
+  "summary": "PASS on sha256:33266ccd. All three round-1 findings I reported are CLOSED_VERIFIED on this candidate. F-DG7-1011: the narrowed i18n rule exempts 0% of generated secrets, and the scans add no false positive. F-DG7-1012: the set is owner-only, a 1777 root is refused, and the /tmp fallback is gone. F-DG7-1013: ADR-0071 Amendment 1 matches the code. One new Low, non-mandatory finding, F-DG7-1041: ADR-0063 §1.2/§5 and ADR-0066 §4 were not amended for the DO-D11 behaviour. It is documentation drift and does not block. Every failure in my logs is explained: a no-node_modules load error, a load timeout, a teardown connection after 322/322 passing tests, and a masked protocol-audit exit. Each was re-run clean where possible. The D-282 schema widening is sound. Nothing is Critical, High or mandatory. This record grants no business, Finance or IT approval and does not imply DG7."
+}

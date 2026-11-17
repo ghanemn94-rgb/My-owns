@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG7-1041",
+      "stage_id": "DG7",
+      "requirement": "REQ-S16-031",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "The DO-D11 repairs changed shipped behaviour that ADR-0063 §1.2/§5 and ADR-0066 §4 still describe as before (S3 i18n-key rule, the 64-hex trade-off, the ownerOnly check and the refused shared root); no dated amendment records them",
+      "reproduction": "On candidate sha256:33266ccd (source 152db5b51155282b28e82472629d07b8d87feb2a): (1) grep -n 'an i18n key' docs/architecture/adr/ADR-0063-p7-secret-hygiene-claims-scan-security-controls-evidence.md shows l.82, the S3 'do not match' cell: 'an i18n key (`[a-z0-9_.]+`)'. tools/release/secret-scan.mjs l.82-85 now implements isI18nKey() (lower-case words joined by '.'/'_', at least one separator, each segment at most 20 characters and 3 digits; F-DG7-1011). ADR-0063 has only Amendment 1 (2026-11-14, l.278), which does not mention the rule. (2) ADR-0063 §5 residual 1 (l.239) does not state that a value of exactly 64 hex characters under a secret-named key is exempt, although docs/operations/storage.md l.187 generates the S3 secret_access_key with `openssl rand -hex 32` (that shape is exempt 100% of the time: docs/delivery/test-evidence/DG7/code-security/round-2/11-s3-exemption-rates.log). The round-1 finding F-DG7-1011 asked that 'SC-13 and ADR-0063 §5 should state it'. SC-13 now does; the ADR does not. (3) ADR-0066 §4 (l.77-85) says 'The script fails the set ... unless all hold' and lists five checks. deploy/scripts/backup.sh l.526-529 now adds a sixth, `ownerOnly`, and l.233-241 refuses (exit 2) a backup root that group or others can write. ADR-0066 has no amendment section. The DO-D11 handback (docs/delivery/handbacks/DG7/T-DG7-DO-D11-devops-engineer.md §5 Q1, Q2) asked for exactly these amendments. No later decision or assignment answered them (SA-ADR71 amended only ADR-0071).",
+      "expected": "ADR claims are enumerated and exactly true (p7-work-split §2 rule 2, the carried rule that F-DG7-1013 and the ADR-0071 Amendment 1 applied). A dated amendment to ADR-0063 records the narrowed S3 i18n-key rule and adds the 64-hex checksum trade-off to §5. A dated amendment to ADR-0066 adds the ownerOnly check to §4, plus the refused group- or world-writable root and the required MTH_BACKUP_ROOT with create_host_path: false to §5. Alternatively, the orchestrator records in a decision that the handover documents (security-controls.md SC-13, backup-restore.md §3.3) are the accepted home.",
+      "actual": "The code and the handover documents (security-controls.md SC-13, backup-restore.md §3.3, §4 and §10) describe the new behaviour, but the two ADRs still describe the old behaviour. Documentation drift only: the shipped behaviour is the safer one, and the tests pin it. secret-scan.test.mjs is 32/32 and backup-restore.test.mjs 13/13 on this candidate (15-secret-scan-service-list-tests.log, 17-backup-restore-tests.log). I raise it for acceptance as an observation or a dated amendment. It does not block.",
+      "evidence": [
+        "docs/architecture/adr/ADR-0063-p7-secret-hygiene-claims-scan-security-controls-evidence.md",
+        "docs/architecture/adr/ADR-0066-p7-backup-restore-backup-set-manifest-restore-checks-drill.md",
+        "tools/release/secret-scan.mjs",
+        "deploy/scripts/backup.sh",
+        "docs/handover/security-controls.md",
+        "docs/delivery/handbacks/DG7/T-DG7-DO-D11-devops-engineer.md",
+        "docs/delivery/test-evidence/DG7/code-security/round-2/11-s3-exemption-rates.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG7/round-2/code-security-reviewer.json",
+      "owner": "solution-architect",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-17T15:10:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG7 round 2 (T-DG7-REV-CS-RG2) on candidate sha256:33266ccd. Low, not mandatory: ADR text only. It does not block this reviewer's verdict."
+        }
+      ]
+    }
+  ]
+}
