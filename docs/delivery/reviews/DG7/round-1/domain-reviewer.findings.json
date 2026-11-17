@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG7-1001",
+      "stage_id": "DG7",
+      "requirement": "REQ-DLV-011",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "The clean re-gate (D-281) exposes an undisclosed DG7 C2 hit: run T-DG7-ARCH-R6 (a0fbc6f1) records an assignment SHA-256 that no assignment text on this branch matches, while the handover says every DG7 C2 hit is disclosed by this release's records",
+      "reproduction": "On the frozen candidate (HEAD 2561ce969, candidate sha256:9822d8fe…): node tools/release/protocol-audit.mjs --all --json <out>. DG7 C2 reports 25 hits: 24 assignment-missing-elements and 1 assignment-sha-mismatch {assignment: docs/delivery/assignments/DG7/T-DG7-ARCH-R6.md, run_id: DG7-T-DG7-ARCH-R6-solution-architect-20261114T131339Z-a0fbc6f1, recorded 37916ead…, current 9bd8d121…}. The orchestrator's own pre-freeze report protocol-audit-rg1.json has the identical hit set. Cause: on the old branch the file was written twice under one task id (85f6ebe9f, 2026-11-14, sha 37916ead…, used by run a0fbc6f1; then overwritten by 6f10ccc78, 2026-11-16, sha 9bd8d121…, for the second ARCH-R6 run 03f4b14e). protocol-audit.mjs l.394-401 accepts a mismatch only when git history still holds the bytes the run received. The D-281 branch carries the tree in one commit (e44dcd90e), so the 2026-11-14 version is not reachable from HEAD. The old-branch audits (prefreeze, r3, r4, r6, r7) all show 27 assignment-missing-elements and no sha-mismatch. Then read the disclosures: D-269/D-270 (27 hits: assignments lacking task/requirement ids and the A26 drill assignments), REQ-DLV-011 notes (pass 6: '27 hits (assignment-missing-elements) of 75 DG7 assignments … 24 lack only the task and requirement ids'), docs/handover/known-limitations.md §2 ('C2 … DG7 | HIT | 25 | not in D-249 (DG7: disclosed by this release's records)'), D-281 and docs/handover/release-notes.md. None mentions an assignment-sha-mismatch, an unrecoverable DG7 assignment, or the change from 27 to 25.",
+      "expected": "REQ-DLV-011 acceptance: 'every run's meta.json records an assignment SHA-256 that matches an assignment file containing all ten contract elements'. A DG7 C2 hit is either absent or covered by an accepted disclosure (D-270 covers only the 27 missing-element hits; the register's pass-1 rule says a DG7 C2 hit is a DG7 finding, not a disclosure). The handover's statement 'disclosed by this release's records' is true for every counted hit, as D-249 H4 did for the equivalent DG6 case ('one DG6 assignment hash not recoverable'). The REQ-DLV-011 notes give the counts the frozen candidate's audit actually reports.",
+      "actual": "One DG7 run's assignment hash is not matched by any assignment text in the shipped tree or the history reachable from HEAD. The bytes exist only at 85f6ebe9f on the old branch. No record of the candidate discloses this hit. known-limitations.md claims all 25 DG7 C2 hits are disclosed. REQ-DLV-011's notes still describe 27 missing-element hits (on this branch 24: 23 that lack only the ids plus T-DG7-BE-A26; the three T-DG7-REV-A26-* assignments are no longer audited because D-281 dropped their runs). Their '24 lack only the task and requirement ids' was already 23 on the old branch. A related, undisclosed consequence of the same D-281 exclusion: the A26 drill report (test-evidence/DG7/orchestrator/a26/drill-report.md, K4 and K7) cites the reviewer runs …REV-A26-CS…1859bd10, …REV-A26-QA…ce106f91 and …REV-A26-V…01f2ad5e. Those run directories are not in this tree, and D-281's pointer to 1612f85fc names only 'reviews/DG7 or reviewer round-* evidence'. I verified those three runs at 1612f85fc (meta.json role and task, exit 0, assignment hashes equal to the files on this branch), so A26 itself remains verifiable. The product is not affected. This is a delivery-record disclosure gap on a gate-obligation row. The disclosure decision (as in D-249/D-270) belongs to the orchestrator, the user and the release-auditor, not to this review.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/domain/round-1/protocol-audit-dom-rg1.json",
+        "docs/delivery/test-evidence/DG7/domain/round-1/release-scans.log",
+        "docs/delivery/test-evidence/DG7/domain/round-1/candidate-check.txt",
+        "docs/delivery/test-evidence/DG7/domain/round-1/handover-checks.log",
+        "docs/delivery/test-evidence/DG7/orchestrator/protocol-audit/protocol-audit-rg1.json",
+        "docs/delivery/test-evidence/DG7/orchestrator/protocol-audit/protocol-audit-r7.json",
+        "docs/delivery/runs/DG7/DG7-T-DG7-ARCH-R6-solution-architect-20261114T131339Z-a0fbc6f1/meta.json",
+        "docs/delivery/assignments/DG7/T-DG7-ARCH-R6.md",
+        "docs/handover/known-limitations.md",
+        "docs/delivery/requirements.csv",
+        "docs/delivery/decisions.md",
+        "docs/delivery/test-evidence/DG7/orchestrator/a26/drill-report.md",
+        "tools/release/protocol-audit.mjs"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG7/round-1/domain-reviewer.json",
+      "owner": "transformation-analyst",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-17T10:10:00Z",
+          "status": "OPEN",
+          "note": "Raised by domain-reviewer in DG7 round 1 (clean re-gate) on candidate sha256:9822d8fe…. Repair suggestion: an orchestrator decision that discloses (or otherwise resolves) the ARCH-R6 assignment-sha-mismatch and the D-281 effect on the A26 run references; REQ-DLV-011 notes corrected to the frozen candidate's audit (25 = 23 ids-only + T-DG7-BE-A26 + 1 sha-mismatch); known-limitations and release notes regenerated."
+        }
+      ]
+    },
+    {
+      "id": "F-DG7-1002",
+      "stage_id": "DG7",
+      "requirement": "REQ-S02-005",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "ADR-0071 §5 still says the release-notes generator 'reads nothing else' and lists seven sections, but the generator also reads tools/release/release-notes-disclosures.json and writes an eighth 'Known limitations disclosed in this release' section (D-280)",
+      "reproduction": "Read docs/architecture/adr/ADR-0071-…md §5.1 ('It reads the register…, the dependency list and the provisional Arabic files… It reads nothing else.') and §5.2 (sections 1-7). The ADR has no amendment. Compare with docs/handover/release-notes.md, which has a section 'Known limitations disclosed in this release' read from tools/release/release-notes-disclosures.json. D-280 records the orchestrator's acceptance 'instead of amending the ADR'.",
+      "expected": "The architecture record that IT inherits describes the generator's actual inputs and output sections, either by an ADR-0071 amendment or by a note in §5 pointing to D-280.",
+      "actual": "The ADR text and the shipped generator differ. The behaviour is correct, deterministic and checked (release-notes --check exit 0), and the drift is disclosed only in decisions.md (D-280). This is the substance of the old branch's F-DG7-973, which the user accepted there as an observation. It is raised again here as the assignment instructs. It is a documentation drift with no behavioural effect, so I propose it for acceptance as an observation.",
+      "evidence": [
+        "docs/architecture/adr/ADR-0071-p7-traceability-register-snapshot-about-release-notes-release-blockers-protocol-audit.md",
+        "docs/handover/release-notes.md",
+        "tools/release/release-notes-disclosures.json",
+        "docs/delivery/decisions.md",
+        "docs/delivery/test-evidence/DG7/domain/round-1/handover-checks.log"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG7/round-1/domain-reviewer.json",
+      "owner": "solution-architect",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-17T10:10:00Z",
+          "status": "OPEN",
+          "note": "Raised by domain-reviewer in DG7 round 1 (clean re-gate) on candidate sha256:9822d8fe…; Low, not mandatory; proposed for acceptance as an observation (context: old-branch F-DG7-973, D-280)."
+        }
+      ]
+    }
+  ]
+}
