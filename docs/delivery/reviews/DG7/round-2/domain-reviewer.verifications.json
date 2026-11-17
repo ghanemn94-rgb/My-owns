@@ -1,0 +1,33 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG7-1001",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:33266ccd… (source 152db5b51155282b28e82472629d07b8d87feb2a). My protocol audit of this tree (exit 1 by design, 279 hits in 29 checks, 0 blocked, 36 pass) still reports DG7 C2 = 25: 24 assignment-missing-elements and 1 assignment-sha-mismatch for run DG7-T-DG7-ARCH-R6-solution-architect-20261114T131339Z-a0fbc6f1 (recorded 37916ead…, current 9bd8d121…). Its hit set equals the orchestrator's protocol-audit-rg2.json except for the C5 hit's evidence list, which grows with new round-1 evidence files (same hit, same count). The finding was the absence of any disclosure of that hit while known-limitations.md said every DG7 C2 hit is disclosed. D-282 now discloses it exactly: the run, the recorded hash, the two commits 85f6ebe9f and 6f10ccc78 on branch head 1612f85fc, the orchestrator naming error, and that no product content depends on the lost text. I checked that last point: ARCH-R6's output is the ADR-0064 Amendment 5 text and the D-278 rule, both in this tree and reviewed in later rounds; the assignment text itself is not read by any product or tool path. The generated known-limitations §2 (C2 DG7 HIT 25, 'disclosed by this release's records') is current for this tree (known-limitations --check exit 0 with the rg2 report; regenerating from my report changes only the report-identity line). The release-auditor's decision on the DG7 C2 hits remains the REQ-DLV-011 completes-after-gate clause (D-270, D-274). Residual, accepted by me as non-blocking: the REQ-DLV-011 register notes still give the old-branch counts (27 hits, '24 lack only the ids') as dated pass history and do not mention the sha-mismatch; the current-tree count and the mismatch are stated in D-282 and the generated table. D-282's schema change (finding id pattern ^F-DG[0-7]-[0-9]{3,4}$) is sound: every existing id stays valid (221 three-digit, 7 four-digit ids in findings.json), the validator tests pass 66/66, and --pipeline passes. Minor note: protocol-audit.mjs l.121 detects a 'Findings fixed' handback section with /F-DG[0-7]-\\d{3}\\b/, which does not match a four-digit id on its own; it caused no hit (DG7 C3 stays 7) because the handbacks also use the word 'finding'.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/domain/round-2/protocol-audit-dom-rg2.json",
+        "docs/delivery/test-evidence/DG7/domain/round-2/protocol-audit.log",
+        "docs/delivery/test-evidence/DG7/domain/round-2/handover-checks.log",
+        "docs/delivery/test-evidence/DG7/domain/round-2/release-scans.log",
+        "docs/delivery/test-evidence/DG7/domain/round-2/validator-tests.log",
+        "docs/delivery/test-evidence/DG7/domain/round-2/validate.txt",
+        "docs/delivery/decisions.md",
+        "docs/handover/known-limitations.md",
+        "tools/gates/schemas/findings.schema.json"
+      ]
+    },
+    {
+      "finding_id": "F-DG7-1002",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:33266ccd…. ADR-0071 now carries a dated Amendment 1 (2026-11-17, T-DG7-SA-ADR71) with pointers in §5.1, §5.2 and §5.4. I checked it against tools/release/release-notes.mjs: the five inputs of A1.2 are exactly what the generator reads (register via --csv; --deps; the provisional-ar files and the five component files; apps/api/package.json and docs/api/openapi.yaml for the identity; the disclosure input defaulting to tools/release/release-notes-disclosures.json in the tool's directory), plus the existing output in --check mode; no clock or environment read. A1.4's eight sections match docs/handover/release-notes.md headings in order (identity, status counts, unfinished, later clauses, external dependencies, 'Known limitations disclosed in this release', provisional Arabic texts, Arabic summary with the matching subsection). A1.5 honestly records the exit-1 for an invalid dependency list as a deviation as built. release-notes --check exit 0. The amendment grants no approval and changes no code.",
+      "evidence": [
+        "docs/architecture/adr/ADR-0071-p7-traceability-register-snapshot-about-release-notes-release-blockers-protocol-audit.md",
+        "tools/release/release-notes.mjs",
+        "docs/handover/release-notes.md",
+        "docs/delivery/test-evidence/DG7/domain/round-2/release-scans.log"
+      ]
+    }
+  ]
+}
