@@ -261,7 +261,11 @@ services:
     image: postgres:18@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722
     profiles: ["backup"]
     restart: "no"
-    entrypoint: ["bash", "/mth/scripts/backup.sh", "--out", "/backups"]
+    # The repository layout under /mth (T-DG7-DO-D13): backup.sh derives the repository root as `dirname(script)/../..`,
+    # so the script sits at /mth/deploy/scripts/backup.sh and reads /mth/deploy/compose/compose.yaml, /mth/deploy/compose/
+    # .env (when present; secret values removed) and /mth/deploy/images.lock.json for config/. A script mounted anywhere
+    # else resolves another root and the database phase is refused (rg3 drill: "//deploy/compose/compose.yaml").
+    entrypoint: ["bash", "/mth/deploy/scripts/backup.sh", "--out", "/backups"]
     command: ["--phase", "database"]
     environment:
       DATABASE_URL_FILE: /run/secrets/database_owner_url
@@ -270,8 +274,10 @@ services:
       MTH_TRANSFER_ATTACHMENTS: "none"
     secrets: [database_owner_url]
     volumes:
-      - "../scripts/backup.sh:/mth/scripts/backup.sh:ro"
-      - "./compose.yaml:/mth/deploy/compose/compose.yaml:ro"
+      - "../scripts/backup.sh:/mth/deploy/scripts/backup.sh:ro"
+      # The whole Compose directory (read-only): compose.yaml and, when init-secrets.sh wrote it, .env (MTH_SECRETS_DIR
+      # only). A single-file bind of a missing .env would make Docker create a directory in its place.
+      - ".:/mth/deploy/compose:ro"
       - "../images.lock.json:/mth/deploy/images.lock.json:ro"
       - "evidence:/var/lib/mth/evidence:ro"
       # F-DG7-1012: no /tmp fallback. An unset MTH_BACKUP_ROOT names a path that does not exist, and Docker refuses to

@@ -34,8 +34,8 @@
       "imageScope": "production",
       "dependsOn": ["db"],
       "volumes": [
-        "../scripts/backup.sh:/mth/scripts/backup.sh:ro",
-        "./compose.yaml:/mth/deploy/compose/compose.yaml:ro",
+        "../scripts/backup.sh:/mth/deploy/scripts/backup.sh:ro",
+        ".:/mth/deploy/compose:ro",
         "../images.lock.json:/mth/deploy/images.lock.json:ro",
         "evidence:/var/lib/mth/evidence:ro",
         "${MTH_BACKUP_ROOT:-/MTH_BACKUP_ROOT-is-not-set}:/backups"

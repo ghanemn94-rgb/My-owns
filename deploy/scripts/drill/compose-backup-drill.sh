@@ -18,7 +18,8 @@
 #   C2  synthetic demo data in the source: `mth-db seed-demo` (MTH_ENV=demo) from the source tree, run in a one-off
 #       container on the pinned postgres:18 image with the host's Node mounted read-only (no new image).
 #   C3  backup-restore.md §3.2 step 1: `--profile backup run --rm backup --label <label> --phase database`.
-#   C4  §3.2 step 2: the evidence copy-out in the app image (`--user 0:0`, `--export-id` = the set's id).
+#   C4  §3.2 step 2: the evidence copy-out in the app image (`--user 0:0` with `--cap-add DAC_READ_SEARCH`: root writes
+#       into the root-owned set and reads the store, which uid 10001 owns with mode 0700; `--export-id` = the set's id).
 #   C5  §3.2 step 3: `--profile backup run --rm backup --label <label> --phase finish`; the success line and the
 #       manifest SHA-256 are taken from its output.
 #   C6  the set is owner-only (no group/other bit on any path of the set; backup-restore.md §3.3).
@@ -187,7 +188,7 @@ c4_copyout() {
   local id
   id="$(cat "$MTH_BACKUP_ROOT/$LABEL/.backup-state/id")"
   MTH_API_PORT="$SRC_PORT" dc -p "$SRC" run --rm --no-deps -v "$MTH_BACKUP_ROOT:/backups" --user 0:0 \
-    -e DATABASE_URL_FILE=/run/secrets/database_url --entrypoint node api \
+    --cap-add DAC_READ_SEARCH -e DATABASE_URL_FILE=/run/secrets/database_url --entrypoint node api \
     /app/apps/api/dist/cli/transfer-attachments.js copy-out --to "/backups/$LABEL/evidence" \
     --out "/backups/$LABEL/evidence/attachments.json" --export-id "$id"
 }
@@ -245,7 +246,7 @@ run_step C0 "environment facts" c0_facts
 run_step C1 "source project $SRC: up -d --wait (new volumes)" c1_source
 run_step C2 "seed-demo (SYNTHETIC) into the source" c2_seed
 run_step C3 "§3.2 step 1: backup profile on postgres:18, --phase database" c3_database
-run_step C4 "§3.2 step 2: evidence copy-out in the app image (--user 0:0)" c4_copyout
+run_step C4 "§3.2 step 2: evidence copy-out in the app image (--user 0:0, DAC_READ_SEARCH)" c4_copyout
 run_step C5 "§3.2 step 3: backup profile, --phase finish" c5_finish
 if [ -z "$FAILED" ]; then
   MANIFEST_SHA="$(sed -n 's/.*manifest sha256 \([0-9a-f]\{64\}\).*/\1/p' "$OUT/finish.out" | tail -1)"

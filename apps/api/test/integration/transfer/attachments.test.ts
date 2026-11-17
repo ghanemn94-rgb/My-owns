@@ -442,6 +442,34 @@ describe("T-C16: the transfer-attachments CLI (exit codes of p7-work-split §2 r
     const o = capture();
     expect(await runTransferAttachments(["copy-out", "--to", root, "--out", join(root, "a.json")], env, o.io)).toBe(2);
     expect(o.err[0]).toBe("BLOCKED: transfer-attachments copy-out: DATABASE_URL is not set");
+
+    // T-DG7-DO-D13: DATABASE_URL_FILE (backup-restore.md §3.2 step 2) follows the ADR-0011 rule: an unreadable file and
+    // both forms at once are refused (exit 2) naming the variable, never a value.
+    const f = capture();
+    const missing = join(root, "no-such-secret");
+    expect(
+      await runTransferAttachments(
+        ["copy-out", "--to", root, "--out", join(root, "a.json")],
+        { ...env, DATABASE_URL_FILE: missing },
+        f.io,
+      ),
+    ).toBe(2);
+    expect(f.err[0]).toBe(
+      "BLOCKED: transfer-attachments copy-out: DATABASE_URL_FILE points to a file that cannot be read",
+    );
+    const both = capture();
+    const urlFile = join(root, "database_url");
+    await writeFile(urlFile, "postgres://synthetic@127.0.0.1:1/none\n");
+    expect(
+      await runTransferAttachments(
+        ["copy-out", "--to", root, "--out", join(root, "a.json")],
+        { ...env, DATABASE_URL: "postgres://synthetic@127.0.0.1:1/none", DATABASE_URL_FILE: urlFile },
+        both.io,
+      ),
+    ).toBe(2);
+    expect(both.err[0]).toBe(
+      "BLOCKED: transfer-attachments copy-out: DATABASE_URL and DATABASE_URL_FILE are both set; set only one",
+    );
   });
 });
 
@@ -531,5 +559,23 @@ describe("T-C16: copy-out reads the rows that name objects from PostgreSQL (scra
       },
     ]);
     expect((await readFile(join(out, manifest.items[0]!.file))).equals(data)).toBe(true);
+
+    // T-DG7-DO-D13 (rg3 drill, step C4): the same copy-out with the URL in a secret file, as the app image receives it
+    // in backup-restore.md §3.2 step 2 (`-e DATABASE_URL_FILE=/run/secrets/database_url`), with a trailing newline.
+    const secretDir = await mkdtemp(join(base, "cli-db-secret-"));
+    const urlFile = join(secretDir, "database_url");
+    await writeFile(urlFile, `${roleUrl(adminUrl, scratch, "mth_app")}\n`, { mode: 0o600 });
+    const out2 = await mkdtemp(join(base, "cli-db-out-file-"));
+    const c2 = capture();
+    const code2 = await runTransferAttachments(
+      ["copy-out", "--to", out2, "--out", join(out2, "attachments.json")],
+      { EVIDENCE_STORAGE_DRIVER: "filesystem", EVIDENCE_STORAGE_PATH: root, DATABASE_URL_FILE: urlFile },
+      c2.io,
+    );
+    expect([code2, c2.err]).toEqual([0, []]);
+    expect(c2.out).toEqual(["transfer-attachments copy-out: copied 1 objects (1 distinct files, 31 bytes)"]);
+    expect(parseAttachmentManifest(await readFile(join(out2, "attachments.json"), "utf8")).items).toEqual(
+      manifest.items,
+    );
   }, 240_000);
 });

@@ -444,6 +444,8 @@ test("T-E11 (F-DG7-1012): the Compose sequence (database, a copy-out under umask
   assert.deepEqual(notOwnerOnly(phased), [], "after --phase database");
   // step 2 of docs/handover/backup-restore.md §3.2: the copy-out runs in another process with its own umask (022)
   const id = readFileSync(join(phased, ".backup-state/id"), "utf8").trim();
+  const urlFile = join(work, "database_url.secret");
+  writeFileSync(urlFile, `${dbUrl(source)}\n`, { mode: 0o600 });
   const copy = spawnSync(
     "bash",
     [
@@ -463,7 +465,9 @@ test("T-E11 (F-DG7-1012): the Compose sequence (database, a copy-out under umask
       env: {
         ...process.env,
         NODE_ENV: "development",
-        DATABASE_URL: dbUrl(source),
+        // T-DG7-DO-D13: as in §3.2 step 2, the URL comes from a secret file (DATABASE_URL_FILE), not the environment
+        DATABASE_URL: "",
+        DATABASE_URL_FILE: urlFile,
         EVIDENCE_STORAGE_DRIVER: "filesystem",
         EVIDENCE_STORAGE_PATH: sourceEvidence,
       },

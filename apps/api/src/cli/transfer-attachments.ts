@@ -6,7 +6,8 @@
 //   transfer-attachments copy-out --to <dir> --out <attachments.json> [--export-id <uuid>]
 //
 // The store is this installation's evidence store from the environment (EVIDENCE_STORAGE_DRIVER, EVIDENCE_STORAGE_PATH,
-// the ADR-0010/ADR-0011 variables the API reads). copy-out also reads DATABASE_URL (the rows that name objects).
+// the ADR-0010/ADR-0011 variables the API reads). copy-out also reads DATABASE_URL or DATABASE_URL_FILE (the rows that
+// name objects).
 // `<dir>` holds `attachments.json` and `attachments/<sha256>`; when it also holds a migration `manifest.json`, the
 // attachments.json SHA-256 and count must equal the manifest's `attachmentManifest`.
 //
@@ -21,6 +22,7 @@ import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 import { v7 as uuidv7 } from "uuid";
+import { ConfigError, readSecretVariable } from "@mth/config";
 import {
   ATTACHMENT_MANIFEST_FILE,
   createDb,
@@ -255,8 +257,15 @@ async function commandCopyOut(
   let rows: readonly ObjectRow[];
   if (deps.listRows !== undefined) rows = await deps.listRows();
   else {
-    const url = env["DATABASE_URL"];
-    if (url === undefined || url === "") throw new Blocked(2, "DATABASE_URL is not set");
+    // DATABASE_URL or DATABASE_URL_FILE (the ADR-0011 `<NAME>_FILE` rule; T-DG7-DO-D13): §3.2 step 2 of
+    // backup-restore.md runs this CLI in the app image with the URL as the Compose secret file /run/secrets/database_url.
+    let url: string | undefined;
+    try {
+      url = readSecretVariable("DATABASE_URL", env);
+    } catch (err) {
+      throw new Blocked(2, err instanceof ConfigError ? err.problems.join("; ") : "DATABASE_URL cannot be read");
+    }
+    if (url === undefined) throw new Blocked(2, "DATABASE_URL is not set");
     const db = createDb(createPool(url, { max: 1 }));
     try {
       rows = await listObjectRows(db);

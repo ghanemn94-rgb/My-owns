@@ -66,14 +66,19 @@ docker compose -f deploy/compose/compose.yaml --profile backup run --rm backup -
 # 2. evidence copy-out (after the dump) and the store-side verify, in the pinned app image
 ID=$(cat "$MTH_BACKUP_ROOT/$LABEL/.backup-state/id")
 docker compose -f deploy/compose/compose.yaml run --rm --no-deps -v "$MTH_BACKUP_ROOT:/backups" --user 0:0 \
-  -e DATABASE_URL_FILE=/run/secrets/database_url --entrypoint node api \
+  --cap-add DAC_READ_SEARCH -e DATABASE_URL_FILE=/run/secrets/database_url --entrypoint node api \
   /app/apps/api/dist/cli/transfer-attachments.js copy-out --to "/backups/$LABEL/evidence" \
   --out "/backups/$LABEL/evidence/attachments.json" --export-id "$ID"
 # 3. retention sets, checks, manifest (written last), backup_set_record()
 docker compose -f deploy/compose/compose.yaml --profile backup run --rm backup --label "$LABEL" --phase finish
 ```
 
-Step 2 passes the set's own id with `--export-id`, so `attachments.json` names the backup set. The paths inside the app image are those of `deploy/docker/Dockerfile`. Step 2 runs as root (`--user 0:0`) for this one command only: the `backup` service runs as root and creates the set owner-only (§3.3), so the image's own user (uid 10001) could not write into it. The Compose sequence runs on the orchestrator's host (D-243 Q1). Its result is recorded there, not here.
+Step 2 passes the set's own id with `--export-id`, so `attachments.json` names the backup set. The paths inside the app image are those of `deploy/docker/Dockerfile`.
+
+- **Why root, and why one capability.** Step 2 runs as root (`--user 0:0`) for this one command only. The `backup` service runs as root and creates the set owner-only (§3.3), so the image's own user (uid 10001) could not write into it. The `api` service drops every capability (`cap_drop: ALL`), and the evidence store belongs to uid 10001 with mode `0700`. So root could write into the set but could not read the store. `--cap-add DAC_READ_SEARCH` gives back only the right to read and list files the account does not own, for this one command. It does not give the right to write them (no `DAC_OVERRIDE`).
+- **The database URL.** The command reads the URL from the Compose secret file (`DATABASE_URL_FILE`). `transfer-attachments` reads `DATABASE_URL` or `DATABASE_URL_FILE` (never both).
+- **Where the `backup` service finds its files.** The service mounts the repository's files read-only under `/mth`, in the repository's own layout: `/mth/deploy/scripts/backup.sh`, the Compose directory at `/mth/deploy/compose` and `/mth/deploy/images.lock.json`. The script finds the repository root from its own path, two directories up, so `config/` gets `compose.yaml`, `images.lock.json` and, when `deploy/compose/.env` exists, `environment.env` with its secret values removed. A missing Compose file or a missing `--env-file` is refused before anything is written: `BLOCKED: the Compose file <path> does not exist (repository root resolved to <dir> …)` (exit 2), and the label stays free for the next run.
+- **Where it was run.** The Compose sequence runs on the orchestrator's host (D-243 Q1). Its result is recorded there, not here.
 
 ### 3.3 Permissions of the backup root and the set
 

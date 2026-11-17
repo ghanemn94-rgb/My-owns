@@ -265,6 +265,23 @@ backup_main() {
   [ "${#operator}" -le 200 ] || { echo "BLOCKED: --operator is longer than 200 characters" >&2; exit 2; }
   [ "${#compose_files[@]}" -gt 0 ] || compose_files=("$MTH_REPO/deploy/compose/compose.yaml")
   if [ -z "$env_file" ] && [ -f "$MTH_REPO/deploy/compose/.env" ]; then env_file="$MTH_REPO/deploy/compose/.env"; fi
+  # T-DG7-DO-D13: the configuration files of config/ are checked before anything is written, so a script started
+  # outside the repository layout (the Compose `backup` service once mounted it at /mth/scripts/, which resolved the
+  # root to `/`) is refused with exit 2 and leaves no half-written set behind that would block the label.
+  if [ "$phase" != "finish" ]; then
+    local cf
+    for cf in "${compose_files[@]}"; do
+      [ -f "$cf" ] || {
+        echo "BLOCKED: the Compose file $cf does not exist (repository root resolved to $MTH_REPO from" \
+          "${BASH_SOURCE[0]}; pass --compose-file, or run the script from deploy/scripts/ of the repository)" >&2
+        exit 2
+      }
+    done
+    if [ -n "$env_file" ] && [ ! -f "$env_file" ]; then
+      echo "BLOCKED: the environment file $env_file does not exist" >&2
+      exit 2
+    fi
+  fi
 
   local url="${DATABASE_URL:-}"
   if [ -z "$url" ] && [ -n "${DATABASE_URL_FILE:-}" ]; then url="$(cat "$DATABASE_URL_FILE")"; fi
