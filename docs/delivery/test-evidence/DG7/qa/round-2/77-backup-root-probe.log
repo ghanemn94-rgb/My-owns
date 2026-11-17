@@ -1,0 +1,21 @@
+## qa-verifier round 2: backup.sh root-permission probe (F-DG7-1012 repair), no database; clone $TMPDIR/rv at 152db5b51155282b28e82472629d07b8d87feb2a; paths shown as <P>
+total 32
+drwxr-xr-x   6 root root  4096 Nov 17 15:27 .
+drwx------ 226 root root 12288 Nov 17 15:27 ..
+-rw-------   1 root root     0 Nov 17 15:27 afile
+drwxr-x---   2 root root  4096 Nov 17 15:27 grp750
+lrwxrwxrwx   1 root root    10 Nov 17 15:27 link-to-1777 -> shared1777
+lrwxrwxrwx   1 root root     7 Nov 17 15:27 link-to-700 -> real700
+drwxrwxrwx   2 root root  4096 Nov 17 15:27 open777
+drwx------   2 root root  4096 Nov 17 15:27 real700
+drwxrwxrwt   2 root root  4096 Nov 17 15:27 shared1777
+shared1777 exit=2: BLOCKED: the backup root <P>/shared1777 is writable by group or others; use an owner-only directory (chmod 0700)
+open777 exit=2: BLOCKED: the backup root <P>/open777 is writable by group or others; use an owner-only directory (chmod 0700)
+link-to-1777 exit=2: BLOCKED: the backup root <P>/link-to-1777 is writable by group or others; use an owner-only directory (chmod 0700)
+link-to-700 exit=2: BLOCKED: the backup root <P>/link-to-700 is writable by group or others; use an owner-only directory (chmod 0700)
+afile exit=2: BLOCKED: the backup root <P>/afile is not a directory
+grp750 exit=2: BLOCKED: DATABASE_URL (the owner role's URL) is not set
+real700 exit=2: BLOCKED: DATABASE_URL (the owner role's URL) is not set
+## realpath of link-to-700: 700 directory
+## anything written under the probe roots:
+(end)

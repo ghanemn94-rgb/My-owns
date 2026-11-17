@@ -1,0 +1,26 @@
+### 73b-backup-restore-tests start 2026-11-17T15:51:58Z node v24.21.0 HEAD 152db5b51155282b28e82472629d07b8d87feb2a LANG=unset LC_ALL=unset
+### $ bash tests/qa/support/with-pg.sh node --test deploy/scripts/tests/backup-restore.test.mjs
+port-policy: PostgreSQL listening on port 32544 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+✔ T-E1: the set has exactly the ADR-0066 §1 layout, schemaVersion mth-backup/1, every listed SHA-256 matches (13.43567ms)
+✔ T-E2: table-counts.tsv equals the dump's snapshot: a row committed during the dump is in neither (36.322464ms)
+✔ T-E3: config/ holds no secret value; the keys and the *_FILE pointers are kept (0.795285ms)
+✔ T-E4: a changed byte in any set file -> restore exit 2 naming the file; the target stays empty (2115.375525ms)
+✔ T-E5: a manifest from another PostgreSQL major -> exit 2 with the §E.5 line (597.708482ms)
+✔ T-E6: a non-empty target database or evidence store -> exit 2; nothing written (1523.203755ms)
+✔ T-E7: a restore into a fresh database passes R1–R8 and writes restore-report.json with every step's seconds (10974.140266ms)
+✔ T-E8: a failing step records a `failed` set with its reason through backup_set_record() (1416.566842ms)
+✔ T-E9: the backup_set_record() argument has exactly the 19 keys of ADR-0066 §6 (0.617039ms)
+✔ T-E10 (F-DG7-1012): a set taken under umask 022 is owner-only: directories 0700, files 0600 (11.546715ms)
+✔ T-E11 (F-DG7-1012): the Compose sequence (database, a copy-out under umask 022, finish) ends owner-only (3005.734803ms)
+✔ T-E12 (F-DG7-1012): a backup root that is world-writable like /tmp (1777) is refused (exit 2); nothing is written (12.752806ms)
+✔ T-E12 (F-DG7-1012): a backup root that is group-writable (0770) is refused (exit 2); nothing is written (11.455623ms)
+ℹ tests 13
+ℹ suites 0
+ℹ pass 13
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 32585.958597
+### 73b-backup-restore-tests end 2026-11-17T15:52:32Z exit=0

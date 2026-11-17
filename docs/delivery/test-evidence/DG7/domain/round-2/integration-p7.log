@@ -1,0 +1,40 @@
+port-policy: PostgreSQL listening on port 32350 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.q4PSA2/claude-0/review-dom-rg2
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwktebkn_3c429598 (server_encoding UTF8); applied 135 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/transfer/config-bundle-roundtrip.test.ts (2 tests) 24812ms
+   ✓ T-D6 demo -> clean installation round trip > imports as drafts, publishes through the existing pipeline, and the published hashes equal the source's  1142ms
+   ✓ T-D7 an imported draft is published, and migrated to, exactly as a hand-made one > the pin is unchanged by the commit and the publish; the publish and migration records equal a hand-made publish's  1495ms
+ ✓ |integration| apps/api/test/integration/transfer/export.test.ts (10 tests) 6677ms
+   ✓ T-C6: the migration-export routes and the transfer.export job > the job waits on lock 730402, then runs once: running -> succeeded, one audit event per transition  1566ms
+   ✓ T-C6: the migration-export routes and the transfer.export job > the same Idempotency-Key returns the existing request with 200; a failed export is 422 on both manifests  379ms
+ ✓ |integration| apps/api/test/integration/transfer/config-bundle.test.ts (23 tests) 21062ms
+   ✓ export (ADR-0065 §3) and T-D8 > re-hashes on download: an altered object is 422 checksum_mismatch  431ms
+   ✓ T-D3 the plan > plans each action; a conflict leaves the open draft untouched; invalid is terminal  385ms
+   ✓ T-D4 commit writes drafts, never publishes; job schedules arrive disabled > writes each item through its kind's path with its own audit event  410ms
+ ✓ |integration| apps/api/test/integration/retention/runs.test.ts (7 tests) 8827ms
+   ✓ the run request (createRetentionRun, createRetentionDryRun) > 403 on both requests for every role but ADM_TECH (AUD and ADM_ACCESS included); reads for ADM_TECH, ADM_ACCESS, AUD  478ms
+   ✓ the read routes (listRetentionRuns, getRetentionRun, listRetentionRunActions, listRetentionArchivedRecords) > a real run's actions and markers: primary key values only, newest first, filters  563ms
+ ✓ |integration| apps/api/test/integration/transfer/attachments.test.ts (15 tests) 5781ms
+   ✓ T-C16: evidence bytes through the s3 (in-process SigV4-verifying fake) adapter > copy-in writes every object under the same name with equal size and SHA-256; verify finds nothing; no temporary is left  336ms
+   ✓ T-C16: copy-out reads the rows that name objects from PostgreSQL (scratch database) > the plan's storage_key columns are evidence_content and export_job; their rows are listed and copy-out exits 0 with their manifest  4505ms
+ ✓ |integration| apps/api/test/integration/transfer/export-scope.test.ts (4 tests) 8757ms
+ ✓ |integration| apps/api/test/integration/transfer/import-routes.test.ts (5 tests) 5409ms
+   ✓ T-C14: the read-only migration-import routes > ADM_TECH, ADM_ACCESS and AUD read all five; the reads write no audit event  339ms
+   ✓ T-C14: the read-only migration-import routes > every other role, a user without grants and a narrower AUD grant get 403 on all five  392ms
+ ✓ |integration| apps/api/test/integration/retention/classes.test.ts (8 tests) 9194ms
+ ✓ |integration| apps/api/test/integration/retention/backups.test.ts (2 tests) 5461ms
+ ✓ |integration| apps/api/test/integration/release/register.test.ts (9 tests) 2184ms
+   ✓ T-I5: getRequirement and the role set > returns every column verbatim for a multi-line row  391ms
+ ✓ |integration| apps/api/test/integration/release/about.test.ts (4 tests) 781ms
+
+ Test Files  11 passed (11)
+      Tests  89 passed (89)
+   Start at  14:55:45
+   Duration  150.55s (transform 8.65s, setup 0ms, collect 45.16s, tests 98.94s, environment 0ms, prepare 78ms)
+

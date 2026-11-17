@@ -1,0 +1,79 @@
+## qa-verifier round 2: is the Compose half of A19 (backup profile, backup-restore.md §3.2) run anywhere in the DG7 evidence?
+main repo HEAD 1c3b668112fdb119bb394467d9e3b49942edd41d (read-only); same-round reviewer files excluded from the search output by design
+
+## 1. any log that runs the backup profile: grep -rl -- "--phase database|profile backup run|run --rm backup" docs/delivery (minus assignments, reviews, runs, other reviewers round-2)
+docs/delivery/handbacks/DG7/T-DG7-DO-D11-evidence/05-backup-tests-against-OLD-backup-sh.log
+docs/delivery/handbacks/DG7/T-DG7-DO-D11-devops-engineer.md
+docs/delivery/handbacks/DG7/T-DG7-DO-F-devops-engineer.md
+docs/delivery/test-evidence/DG7/code-security/round-1/repro/backup-set-mode-repro.sh
+docs/delivery/test-evidence/DG7/qa/round-2/78-a19-compose-half-search.log
+docs/delivery/findings.json
+
+## 2. orchestrator host logs (D-267) mentioning backup / restore.sh / restore-drill:
+docs/delivery/test-evidence/DG7/orchestrator/host/keycloak-e2e-stack.log
+docs/delivery/test-evidence/DG7/orchestrator/host/no-egress-stack.log
+docs/delivery/test-evidence/DG7/orchestrator/host/keycloak-e2e-stack.log:142:migrate-1  | mth-db migrate: applying 0145_p7_backup_sets.sql
+docs/delivery/test-evidence/DG7/orchestrator/host/keycloak-e2e-stack.log:143:migrate-1  | mth-db migrate: applying 0146_p7_retention_backup_permissions.sql
+docs/delivery/test-evidence/DG7/orchestrator/host/no-egress-stack.log:226:migrate-1   | mth-db migrate: applying 0145_p7_backup_sets.sql
+docs/delivery/test-evidence/DG7/orchestrator/host/no-egress-stack.log:227:migrate-1   | mth-db migrate: applying 0146_p7_retention_backup_permissions.sql
+
+## 3. host-run steps (D-267):
+1:### 00 $ deploy/scripts/ensure-docker.sh; docker info; docker version; docker compose version
+94:### 00 exit=0 seconds=0
+95:### 01 $ deploy/scripts/init-secrets.sh --dir /tmp/claude-0/-home-user-My-owns/f7dd9c0b-2b3c-52aa-bca7-45299008f27d/scratchpad/dg7/secrets
+106:### 01 exit=0 seconds=1
+107:### 02 $ docker compose -f deploy/compose/compose.yaml --profile test-idp pull
+115:### 02 exit=0 seconds=1
+116:### 03 $ deploy/scripts/build-image.sh --tag mth-app:local --network host --proxy-from-env --build-ca /root/.ccr/ca-bundle.crt
+547:### 03 exit=0 seconds=192
+548:### 04 $ deploy/scripts/image-bundle.sh save --out /tmp/claude-0/-home-user-My-owns/f7dd9c0b-2b3c-52aa-bca7-45299008f27d/scratchpad/dg7/bundle --app-image mth-app:local && sha256sum /tmp/claude-0/-home-user-My-owns/f7dd9c0b-2b3c-52aa-bca7-45299008f27d/scratchpad/dg7/bundle/images.tar && cat /tmp/claude-0/-home-user-My-owns/f7dd9c0b-2b3c-52aa-bca7-45299008f27d/scratchpad/dg7/bundle/images.json
+608:### 04 exit=0 seconds=15
+609:### 05 $ node -e 'for (const i of require(process.argv[1]).images) console.log(i.name)' /tmp/claude-0/-home-user-My-owns/f7dd9c0b-2b3c-52aa-bca7-45299008f27d/scratchpad/dg7/bundle/images.json | xargs -r docker image rm -f; docker image ls
+620:### 05 exit=0 seconds=4
+621:### 06 $ deploy/scripts/image-bundle.sh load --from /tmp/claude-0/-home-user-My-owns/f7dd9c0b-2b3c-52aa-bca7-45299008f27d/scratchpad/dg7/bundle && deploy/scripts/image-bundle.sh verify --from /tmp/claude-0/-home-user-My-owns/f7dd9c0b-2b3c-52aa-bca7-45299008f27d/scratchpad/dg7/bundle
+641:### 06 exit=0 seconds=15
+642:### 07 $ docker compose -p mth-dg7-1794680139 -f deploy/compose/compose.yaml up -d --pull never --wait && docker compose -p mth-dg7-1794680139 -f deploy/compose/compose.yaml ps && curl -sS -i http://127.0.0.1:3000/readyz
+714:### 08 $ docker compose -p mth-dg7-1794680139 -f deploy/compose/compose.yaml down -v
+737:### 08 exit=0 seconds=2
+738:### 09 $ docker compose -p mth-dg7-1794680139-ne -f deploy/compose/compose.yaml -f deploy/compose/compose.no-egress.yaml --profile test-idp up -d --pull never --wait && docker compose -p mth-dg7-1794680139-ne -f deploy/compose/compose.yaml -f deploy/compose/compose.no-egress.yaml --profile test-idp ps
+796:### 09 exit=0 seconds=31
+797:### 10 $ docker compose -p mth-dg7-1794680139-ne -f deploy/compose/compose.yaml -f deploy/compose/compose.no-egress.yaml run --rm -T migrate db bootstrap --org-code MTH-E2E --org-name-en 'E2E org (synthetic)' --org-name-ar 'مؤسسة الاختبار (اصطناعية)' --admin-name 'Synthetic Access Admin' --admin-email smoke.admin@example.invalid --admin-issuer https://keycloak:8443/realms/mth-test --admin-subject 5f0c7a52-1d1e-4c9a-9a51-6a0d0e5a0001
+813:### 10 exit=0 seconds=2
+814:### 11 $ MTH_E2E_KEYCLOAK=1 MTH_E2E_KEYCLOAK_PASSWORD_FILE=/tmp/claude-0/-home-user-My-owns/f7dd9c0b-2b3c-52aa-bca7-45299008f27d/scratchpad/dg7/secrets/test_idp_user_password E2E_BASE_URL=http://localhost:3000 pnpm exec playwright test e2e/identity/keycloak-login.spec.ts --workers=1 --trace off
+914:### 11 exit=1 seconds=7
+915:### 12 $ docker compose -p mth-dg7-1794680139-ne -f deploy/compose/compose.yaml -f deploy/compose/compose.no-egress.yaml --profile test-idp logs --no-color > docs/delivery/test-evidence/DG7/orchestrator/host/no-egress-stack.log 2>&1; docker compose -p mth-dg7-1794680139-ne -f deploy/compose/compose.yaml -f deploy/compose/compose.no-egress.yaml --profile test-idp down -v
+942:### 12 exit=0 seconds=2
+943:### DONE
+
+## 4. prefreeze-rg2: does any step run backup-restore.test.mjs or the backup profile?
+0
+
+## 5. what the handover says
+docs/handover/backup-restore.md:76:Step 2 passes the set's own id with `--export-id`, so `attachments.json` names the backup set. The paths inside the app image are those of `deploy/docker/Dockerfile`. Step 2 runs as root (`--user 0:0`) for this one command only: the `backup` service runs as root and creates the set owner-only (§3.3), so the image's own user (uid 10001) could not write into it. T
+docs/handover/backup-restore.md:202:The logs are in `docs/delivery/handbacks/DG7/T-DG7-DO-F-evidence/`. The Compose half runs on the orchestrator's host and is recorded there: the `backup` profile on `postgres:18`, a second Compose project with new volumes, and `/readyz` over HTTP.
+docs/handover/backup-restore.md:217:- **Permissions in Compose.** The owner-only modes, the refused shared root and the split-phase repair are tested with the scripts on a disposable PostgreSQL (T-E10 to T-E12). The Compose sequence of §3.2 (root `backup` service, `--user 0:0` copy-out, `create_host_path: false`) has not been run here, because there is no Docker daemon (D-243 Q1). It runs on the 
+docs/handover/known-limitations.md:152:| D-256 | The container half of the backup and restore drill (A19) is the orchestrator's host run. |
+docs/handover/known-limitations.md:160:| ADR-0062 | The `.tar.gz` archive is reproducible only for the same Node major and zlib; `demo-data/` bytes differ between seedings; the image build and `docker compose up` from the archive need a Docker daemon (orchestrator's host); no IT npm mirror exists in the delivery environment; the asset scan is pattern-based; the procurement flag is an engineering c
+docs/handover/known-limitations.md:169:| ADR-0069 | Container halves depend on the orchestrator's host; a "clean VM" is approximated by a fresh cluster and a namespace with no network; sub-path serving is not supported; the corporate IdP, object store and mail stay external; "host without registry access" is shown with `--pull never`, not on an air-gapped host; already-sent messages keep the old o
+
+## 6. DO-F handback (the half was BLOCKED and handed to the orchestrator)
+12:  - **No Docker daemon** (D-243 Q1), so the Compose half was not run.
+86:- **The Compose half:** BLOCKED, no Docker daemon (D-243 Q1; the orchestrator's). That covers the `backup` profile run, the app-image copy-out path `/app/apps/api/dist/cli/transfer-attachments.js`, `--readyz-url` over HTTP, and PostgreSQL 18.
+91:1. **Compose half not run** (see above). In particular, the in-image CLI path and the `postgres:18` tools (`find -printf`, `du -b`, `stat -c`, all GNU coreutils in Debian) are not proven here.
+114:- **Q6 (orchestrator, Compose drill):** please confirm the app-image CLI path `/app/apps/api/dist/cli/transfer-attachments.js` and the three-step sequence of guide §3.2 on the host. Then run `restore.sh --readyz-url` against the second project.
+
+## 7. DO-D11 handback (changed the Compose sequence; not run)
+109:1. **The Compose half is unverified.** The `create_host_path: false` mount, the refusal of an unset `MTH_BACKUP_ROOT`, the root `backup` service writing 0700/0600, and step 2 with `--user 0:0` were not run, because there is no Docker daemon. They run on the orchestrator's host (D-243 Q1), and backup-restore.md §10 says so. The scripts' behaviour is proven on a disposable PostgreSQL (T-E10 to 
+110:2. **Step 2 of §3.2 now runs the app image as root (`--user 0:0`).** It is a pre-existing defect I fixed along the way. Before this change the `backup` service (root) created the set as root 0755, so the app image's user (uid 10001, `deploy/docker/Dockerfile` l.95) could not write `evidence/attachments.json` either. Running that one command as root is the least invasive fix. The alternative i
+
+## 8. p7-plan risk R1
+509:| R1  | Container-dependent acceptance (Compose up, image load, Keycloak e2e) cannot run in the agent sandbox.                                                                                       | Q1. The scripts are built and tested container-free. The orchestrator runs the container halves. An unrun half is a disclosed release blocker, never a pass.                                                                       |
+
+## 9. ADR-0066 drill definition
+130:- **Steps:** start the demo installation (synthetic data) → `backup.sh` → a fresh Compose project (new project name, new volumes) → `restore.sh` → checks R1–R9 → `drill-report.json`.
+
+## 10. release notes: unfinished items / blockers
+23:## Unfinished items and release blockers
+24-
+25-None: every requirement of this release is implemented.
+26-

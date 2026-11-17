@@ -1,0 +1,204 @@
+// domain-reviewer DG7 round-2 probe (T-DG7-REV-DOM-RG2). Runs only in a disposable clone, copied to
+// apps/web/e2e/zz-dom-rg2-probe.spec.ts, under apps/web/e2e/support/with-stack.sh (real API, SYNTHETIC dev users).
+// It checks what a user of the release actually sees and gets back:
+//  P1 the in-app register (API, every page) lists exactly the ids and row count of docs/delivery/requirements.csv,
+//     and the snapshot hash equals the file's SHA-256 (REQ-S02-003);
+//  P2 About: status counts equal the CSV; every non-IMPLEMENTED row is an open item; the later clauses are exactly the
+//     rows whose notes carry "completes-after-gate:"; the external dependencies equal docs/handover/external-dependencies.json
+//     (REQ-S02-005, REQ-S21-003);
+//  P3 the rendered About and register pages in ar (rtl) and en (ltr): headings, the "not business approvals" statement,
+//     no text claiming an approval, PMI certification or official Mobily branding; screenshots kept;
+//  P4 authorization: AUD reads the register, a user without a role gets 403 from the API and the no-permission state.
+import { createHash } from "node:crypto";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+import { expect, test } from "@playwright/test";
+import { BASE, langOf, signIn, tr } from "./support/ui.ts";
+
+const ROOT = join(import.meta.dirname, "..", "..", "..");
+const OUT = process.env["DOM_PROBE_OUT"] ?? join(ROOT, "dom-probe-out");
+
+/** RFC 4180 CSV parser (quoted fields, doubled quotes, embedded newlines). */
+function parseCsv(text: string): string[][] {
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let field = "";
+  let quoted = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i]!;
+    if (quoted) {
+      if (c === '"') {
+        if (text[i + 1] === '"') {
+          field += '"';
+          i++;
+        } else quoted = false;
+      } else field += c;
+    } else if (c === '"') quoted = true;
+    else if (c === ",") {
+      row.push(field);
+      field = "";
+    } else if (c === "\n" || c === "\r") {
+      if (c === "\r" && text[i + 1] === "\n") i++;
+      row.push(field);
+      rows.push(row);
+      row = [];
+      field = "";
+    } else field += c;
+  }
+  if (field !== "" || row.length > 0) {
+    row.push(field);
+    rows.push(row);
+  }
+  return rows;
+}
+
+const csvBytes = readFileSync(join(ROOT, "docs/delivery/requirements.csv"));
+const csvSha = createHash("sha256").update(csvBytes).digest("hex");
+const [header, ...body] = parseCsv(csvBytes.toString("utf8"));
+const col = (name: string) => header!.indexOf(name);
+const csvRows = body.filter((r) => r.length === header!.length);
+const csvIds = csvRows.map((r) => r[col("req_id")]!);
+const csvStatus = new Map(csvRows.map((r) => [r[col("req_id")]!, r[col("status")]!]));
+const csvLater = csvRows
+  .filter((r) => r[col("status")] === "IMPLEMENTED" && r[col("notes")]!.includes("completes-after-gate:"))
+  .map((r) => r[col("req_id")]!);
+const deps = JSON.parse(readFileSync(join(ROOT, "docs/handover/external-dependencies.json"), "utf8")) as unknown;
+
+function log(lang: string, name: string, value: unknown) {
+  mkdirSync(join(OUT, lang), { recursive: true });
+  writeFileSync(join(OUT, lang, `${name}.json`), `${JSON.stringify(value, null, 2)}\n`);
+}
+
+test.setTimeout(180_000);
+
+test("P1-P3 register and About: API equals the CSV; rendered in the project's language", async ({ page }, info) => {
+  const lang = langOf(info);
+  await signIn(page, lang, "dev.admin");
+
+  // P1: every page of the register through the API, with the session of the signed-in page.
+  const ids: string[] = [];
+  let cursor: string | null = null;
+  let snapshot: Record<string, unknown> | null = null;
+  do {
+    const res = await page.request.get(
+      `${BASE}/api/v1/admin/requirements?limit=100${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`,
+    );
+    expect(res.status()).toBe(200);
+    const json = (await res.json()) as {
+      items: { reqId: string; status: string }[];
+      nextCursor: string | null;
+      snapshot: Record<string, unknown>;
+    };
+    for (const it of json.items) {
+      ids.push(it.reqId);
+      expect(it.status, it.reqId).toBe(csvStatus.get(it.reqId));
+    }
+    snapshot = json.snapshot;
+    cursor = json.nextCursor;
+  } while (cursor !== null);
+  const p1 = {
+    csvRows: csvIds.length,
+    apiRows: ids.length,
+    snapshotRowCount: snapshot!["rowCount"],
+    csvSha256: csvSha,
+    snapshotSha256: snapshot!["sourceSha256"],
+    sameIdsInOrder: JSON.stringify(ids) === JSON.stringify([...csvIds].sort()),
+    sameIdSet: JSON.stringify([...ids].sort()) === JSON.stringify([...csvIds].sort()),
+  };
+  log(lang, "p1-register", p1);
+  expect(p1.apiRows).toBe(p1.csvRows);
+  expect(p1.snapshotRowCount).toBe(p1.csvRows);
+  expect(p1.snapshotSha256).toBe(csvSha);
+  expect(p1.sameIdSet).toBe(true);
+
+  // P2: About.
+  const about = (await (await page.request.get(`${BASE}/api/v1/admin/about`)).json()) as {
+    statusCounts: Record<string, number>;
+    openItems: { reqId: string }[];
+    laterClauses: { reqId: string }[];
+    externalDependencies: { key: string; status: string }[];
+    register: Record<string, unknown>;
+  };
+  const counts: Record<string, number> = { PLANNED: 0, SPECIFIED: 0, IMPLEMENTED: 0, BLOCKED: 0 };
+  for (const s of csvStatus.values()) counts[s] = (counts[s] ?? 0) + 1;
+  const depList = (Array.isArray(deps) ? deps : (deps as { dependencies: { key: string }[] }).dependencies) as {
+    key: string;
+    status: string;
+  }[];
+  const p2 = {
+    statusCounts: about.statusCounts,
+    csvCounts: counts,
+    openItems: about.openItems.map((o) => o.reqId),
+    laterClauses: about.laterClauses.map((o) => o.reqId),
+    csvLater,
+    externalDependencies: about.externalDependencies.map((d) => `${d.key}:${d.status}`),
+    handoverDependencies: depList.map((d) => `${d.key}:${d.status}`),
+  };
+  log(lang, "p2-about", p2);
+  expect(about.statusCounts).toEqual(counts);
+  expect(p2.openItems).toEqual(csvIds.filter((id) => csvStatus.get(id) !== "IMPLEMENTED").sort());
+  expect([...p2.laterClauses].sort()).toEqual([...csvLater].sort());
+  expect(p2.externalDependencies).toEqual(p2.handoverDependencies);
+
+  // P3: the rendered pages.
+  const claims = /certified|official PMI|PMI standard|official Mobily|is approved|DG7 (is )?approved|gate DG7 passed/i;
+  for (const [name, path, titleKey] of [
+    ["about", "/admin/about", "release.about.title"],
+    ["register", "/admin/requirements", "release.register.title"],
+    ["register-detail-S19-017", "/admin/requirements/REQ-S19-017", "release.register.title"],
+  ] as const) {
+    await page.goto(path);
+    await expect(page.locator("main#main h1")).toHaveText(tr(lang, titleKey));
+    await expect(page.locator("html")).toHaveAttribute("dir", lang === "ar" ? "rtl" : "ltr");
+    await expect(page.locator("[data-state='loading']")).toHaveCount(0);
+    const dir = await page.locator("main#main").evaluate((el) => getComputedStyle(el).direction);
+    expect(dir).toBe(lang === "ar" ? "rtl" : "ltr");
+    const text = await page.locator("main#main").innerText();
+    // The register text itself (English by design) may legitimately quote "approved" in notes; the claim check is on
+    // the page chrome: strip the register rows and the detail fields.
+    const chrome = await page
+      .locator("main#main")
+      .evaluate(
+        (el) =>
+          [...el.querySelectorAll("h1,h2,h3,p,caption,legend,label,[role='status'],[role='note']")]
+            .map((n) => (n as HTMLElement).innerText)
+            .join("\n"),
+      );
+    log(lang, `p3-${name}-text`, { path, dir, chrome, length: text.length });
+    expect(chrome).not.toMatch(claims);
+    if (name === "register") expect(text).toContain(tr(lang, "release.register.notEngineeringApproval"));
+    if (name === "about") {
+      expect(text).toContain(tr(lang, "release.about.laterClauses"));
+      expect(text).toContain(tr(lang, "release.about.openItems.none"));
+      for (const id of csvLater) expect(text, `About lists later clause ${id}`).toContain(id);
+    }
+    mkdirSync(join(OUT, lang), { recursive: true });
+    await page.screenshot({ path: join(OUT, lang, `${name}.png`), fullPage: true });
+  }
+});
+
+test("P4 authorization: AUD reads, a user without a role is refused", async ({ page, playwright }, info) => {
+  const lang = langOf(info);
+  const result: Record<string, number> = {};
+  for (const user of ["dev.auditor", "dev.nobody"]) {
+    const req = await playwright.request.newContext({ baseURL: BASE, extraHTTPHeaders: { Origin: BASE } });
+    expect((await req.post("/api/v1/auth/dev-login", { data: { username: user } })).status()).toBe(204);
+    for (const p of ["/api/v1/admin/requirements", "/api/v1/admin/requirements/REQ-S02-003", "/api/v1/admin/about"])
+      result[`${user} GET ${p}`] = (await req.get(p)).status();
+    await req.dispose();
+  }
+  const anon = await playwright.request.newContext({ baseURL: BASE });
+  result["anonymous GET /api/v1/admin/requirements"] = (await anon.get("/api/v1/admin/requirements")).status();
+  await anon.dispose();
+  log(lang, "p4-authz", result);
+  expect(result["dev.auditor GET /api/v1/admin/requirements"]).toBe(200);
+  expect(result["dev.auditor GET /api/v1/admin/about"]).toBe(200);
+  expect(result["dev.nobody GET /api/v1/admin/requirements"]).toBe(403);
+  expect(result["dev.nobody GET /api/v1/admin/about"]).toBe(403);
+  expect(result["anonymous GET /api/v1/admin/requirements"]).toBe(401);
+  await signIn(page, lang, "dev.nobody");
+  await page.goto("/admin/requirements");
+  await expect(page.getByText(tr(lang, "release.register.title")).first()).toBeVisible();
+  mkdirSync(join(OUT, lang), { recursive: true });
+  await page.screenshot({ path: join(OUT, lang, "register-no-permission.png"), fullPage: true });
+});

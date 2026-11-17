@@ -1,0 +1,51 @@
+## qa-verifier round 2: F-DG7-1021 / F-DG7-1022 verification facts (main repo, read-only)
+## fix revision in the candidate
+4f44cd707 ancestor of 152db5b51: rc=0
+## findings.json status
+F-DG7-1021 FIXED_PENDING_VERIFICATION 4f44cd707f149f826943c12a6da03bedafcea1b7 solution-architect
+F-DG7-1022 FIXED_PENDING_VERIFICATION 4f44cd707f149f826943c12a6da03bedafcea1b7 transformation-analyst
+## F-DG7-1021: ADR-0071 amendment present
+183:   **Amended 2026-11-17 (D-280): see Amendment 1, A1.1–A1.3.** The generator also reads the two release-identity files of §5.2 item 1 and its own checked
+193:   **Amended 2026-11-17 (D-280): see Amendment 1, A1.4.** There are eight sections, not seven: "Known limitations disclosed in this release" comes between i
+200:   **Amended 2026-11-17: see Amendment 1, A1.5.** That section adds the generator's BLOCKED exits (exit 2), including a missing or invalid disclosure input.
+280:## Amendment 1 (2026-11-17, T-DG7-SA-ADR71): §5, the release-notes generator's inputs as built, its checked-in disclosure input, and its eighth section (D-
+301:### A1.1 Usage (replaces the §5.1 usage block)
+316:### A1.2 The inputs, complete (replaces "It reads nothing else")
+338:### A1.3 The disclosure input (`mth-release-notes-disclosures/1`)
+364:### A1.4 The sections (replaces the §5.2 list)
+385:### A1.5 Exit codes (extends §5.4)
+395:### A1.6 Tests (existing, `node --test tools/release/tests/release-notes.test.mjs`)
+408:### A1.7 Residuals added
+## F-DG7-1021: generator facts the amendment states (release-notes.mjs)
+9:// p7-plan §1.4), and, for the release identity of §5.2 item 1, `apps/api/package.json` and `docs/api/openapi.yaml`.
+28:export const DEFAULT_DISCLOSURES = join(HERE, "release-notes-disclosures.json");
+30:export const PROVISIONAL_COMPONENT_FILES = Object.freeze([
+108:    const y = readFileSync(join(repo, "docs", "api", "openapi.yaml"), "utf8");
+299:        return 2;
+306:      return 2;
+312:    return 2;
+317:    return 2;
+325:      return 1;
+328:  const disclosuresAbs = o.disclosures ? resolve(repo, o.disclosures) : DEFAULT_DISCLOSURES;
+331:    return 2;
+339:      return 2;
+353:      return 1;
+359:    return 1;
+367:      return 1;
+## F-DG7-1022: files changed between the round-1 source ddf42ccd2 and 152db5b51 among the cited places
+docs/handover/backup-restore.md
+docs/handover/known-limitations.md
+docs/handover/security-controls.md
+(end of list)
+## F-DG7-1022: register rows citing F-DG7-9xx ids now
+25 rows; ['F-DG7-913', 'F-DG7-914', 'F-DG7-915', 'F-DG7-920', 'F-DG7-921', 'F-DG7-935', 'F-DG7-954', 'F-DG7-955', 'F-DG7-956', 'F-DG7-960', 'F-DG7-961', 'F-DG7-962', 'F-DG7-963', 'F-DG7-971']
+rows that qualify the ids (1612f85fc / old branch / D-282): []
+## F-DG7-1022: release notes lines citing F-DG7-9xx, and the REQ-DLV-014 later clause
+35:- REQ-DLV-012 (IMPLEMENTED): the release-auditor's decision on the DG7 C3 hits (seven: the five D-270 hits plus F-DG7-960's FE-C3 and F-DG7-920's DO-D8 handback) and its reading of progress.md at the DG7 gate, and protocol-audit C3 and C6 on the frozen DG7 candidate (p7-work-split §J.1).
+36:- REQ-DLV-014 (IMPLEMENTED): DG7's history reaching VERIFYING and APPROVED, with each DG7 finding (round 2: 915, 935, 960-963) fixed and verified by a non-owner, shown by 'validate.mjs --stage DG7' at the gate.
+## F-DG7-1022: findings.json ids F-DG7-9xx on this branch
+0
+## F-DG7-1022: qualification in the handover
+(none in docs/handover)
+## D-282 (decisions.md, in the candidate and in the archive's source/)
+7:| D-282 | 2026-11-17 | delivery-orchestrator | **Clean re-gate round 1 on `982

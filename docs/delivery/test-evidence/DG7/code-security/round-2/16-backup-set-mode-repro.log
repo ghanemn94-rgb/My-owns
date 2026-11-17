@@ -1,0 +1,46 @@
+port-policy: PostgreSQL listening on port 32460 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+mth-db migrate: applying 0152_p7_transfer_recheck_lineage_basis.sql
+mth-db migrate: applied 135 migration(s)
+umask 0022
+=== P1 owner-only root (created by backup.sh), umask 022
+backup: set modeprobe database phase done; run the evidence copy-out, then --phase finish
+P1 backup.sh exit=0
+--- modes (octal, type, path relative to the root):
+700 d .
+700 d ./modeprobe
+700 d ./modeprobe/.backup-state
+600 f ./modeprobe/.backup-state/config_sha256
+600 f ./modeprobe/.backup-state/dump_bytes
+600 f ./modeprobe/.backup-state/dump_sha256
+600 f ./modeprobe/.backup-state/facts.json
+600 f ./modeprobe/.backup-state/id
+600 f ./modeprobe/.backup-state/migration_level
+600 f ./modeprobe/.backup-state/pg_dump_version
+600 f ./modeprobe/.backup-state/schedule_digest
+600 f ./modeprobe/.backup-state/server_major
+600 f ./modeprobe/.backup-state/snapshot_digest
+600 f ./modeprobe/.backup-state/started_at
+600 f ./modeprobe/.backup-state/timings
+700 d ./modeprobe/config
+600 f ./modeprobe/config/compose.yaml
+600 f ./modeprobe/config/images.lock.json
+700 d ./modeprobe/db
+600 f ./modeprobe/db/database.dump
+600 f ./modeprobe/db/table-counts.tsv
+700 d ./modeprobe/evidence
+--- entries readable or writable by group/others (must be none):
+--- dump TABLE DATA (app_user, audit_event, session):
+13833; 0 16422 TABLE DATA public app_user mth_owner
+13845; 0 16805 TABLE DATA public audit_event mth_owner
+13836; 0 16536 TABLE DATA public session mth_owner
+=== P2 1777 root
+BLOCKED: the backup root <W>/shared is writable by group or others; use an owner-only directory (chmod 0700)
+P2 backup.sh exit=2
+entries written under the 1777 root: 0
+=== P3 symlink root -> owner-only directory
+BLOCKED: the backup root <W>/link is writable by group or others; use an owner-only directory (chmod 0700)
+P3 backup.sh exit=2
+=== P4 0700 root owned by uid 65534
+P4 BLOCKED: chown to 65534 is not permitted in this sandbox
+exit=0

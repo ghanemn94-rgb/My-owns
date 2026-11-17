@@ -1,0 +1,36 @@
+### protocol-audit
+  C7 three-failed-fixes   DG3          HIT 1 hit(s): three-failed-fixes-without-blocker
+  C7 three-failed-fixes   DG4          PASS
+  C7 three-failed-fixes   DG5          PASS
+  C7 three-failed-fixes   DG6          PASS
+  C7 three-failed-fixes   DG7          PASS
+  C8 approval-claims      all-selected PASS
+  C9 stage-continuation   DG0          PASS
+  C9 stage-continuation   DG1          PASS
+  C9 stage-continuation   DG2          PASS
+  C9 stage-continuation   DG3          PASS
+  C9 stage-continuation   DG4          PASS
+  C9 stage-continuation   DG5          PASS
+  C9 stage-continuation   DG6          PASS
+  C9 stage-continuation   DG7          PASS
+FAIL (exit 1): 279 hit(s) in 29 check(s), 0 blocked, 36 pass
+exit=1
+### compare with orchestrator rg2 and rg1
+mine tool,version,head,git_history_used,stages,verdict,exit_code,totals,checks 279
+orch-rg2 tool,version,head,git_history_used,stages,verdict,exit_code,totals,checks 279
+orch-rg1 tool,version,head,git_history_used,stages,verdict,exit_code,totals,checks 279
+identical hit sets: false
+C2 25 {"assignment-missing-elements":24,"assignment-sha-mismatch":1}
+C3 7 {"handback-missing-sections":7}
+C5 1 {"historical-evidence-not-before-first-implementation":1}
+{"stage":"DG7","kind":"assignment-sha-mismatch","assignment":"docs/delivery/assignments/DG7/T-DG7-ARCH-R6.md","run_id":"DG7-T-DG7-ARCH-R6-solution-architect-20261114T131339Z-a0fbc6f1","recorded":"37916ead813a367e58b09ba91d4d22a57b2297fe9695e2a563ef99e5a2d3efdd","current":"9bd8d121f662001b89ea8a752eeafc8ebb89c1c9cc3aef969d8dafed2cbd6994"}
+[
+  'id',          'name',
+  'requirement', 'clause',
+  'stage',       'status',
+  'stats',       'hits',
+  'notes'
+]
+only mine: ["C5","DG7",{"stage":"DG7","kind":"historical-evidence-not-before-first-implementation","previous_gate":"DG6","first_implementation_run":{"run_id":"DG7-T-DG7-DO-A-devops-engineer-20261112T150213Z-a1b38000","started_at":"2026-11-12T15:02:13Z"},"test_evidence_found":[{"path":"docs/delivery/test-evidence/DG7/code-security/round-1/02-validate-historical.log","passed":true,"dated":"2026-11-17T10:11:25Z
+only orch: ["C5","DG7",{"stage":"DG7","kind":"historical-evidence-not-before-first-implementation","previous_gate":"DG6","first_implementation_run":{"run_id":"DG7-T-DG7-DO-A-devops-engineer-20261112T150213Z-a1b38000","started_at":"2026-11-12T15:02:13Z"},"test_evidence_found":[{"path":"docs/delivery/test-evidence/DG7/code-security/round-1/02-validate-historical.log","passed":true,"dated":"2026-11-17T10:11:25Z
+1c119c031340108dde053083e80e6336f7c00691 38a46712885246b2cabf771aef04c04d16605687

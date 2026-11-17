@@ -1,0 +1,21 @@
+### 57-dictionary-and-init start 2026-11-17T15:56:02Z node v24.21.0 HEAD 152db5b51155282b28e82472629d07b8d87feb2a LANG=unset LC_ALL=unset
+### $ bash tests/qa/support/with-pg.sh bash /home/user/My-owns/docs/delivery/test-evidence/DG7/qa/round-2/scripts/dictionary.sh
+port-policy: PostgreSQL listening on port 32546 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+## migrate (NODE_ENV=production)
+mth-db migrate: applying 0151_p7_transfer_recheck_counter_basis.sql
+mth-db migrate: applying 0152_p7_transfer_recheck_lineage_basis.sql
+mth-db migrate: applied 135 migration(s)
+exit=0
+## bootstrap 1
+    "01a1ea39-082b-707f-bdb7-8bcecc52e1e3"
+  ]
+}
+exit=0
+## bootstrap 2 (must refuse)
+mth-db: refusing to bootstrap: an organization already exists
+exit=1
+## dictionary-coverage (no pgboss schema yet: the worker creates it)
+dictionary-coverage: PASS: 365 tables and 5776 columns documented (2 schemas); reported only: 342 indexes, 3734 constraints, 24 triggers not named; ERD: 9 tables in no section
+exit=0
+### 57-dictionary-and-init end 2026-11-17T15:56:10Z exit=0

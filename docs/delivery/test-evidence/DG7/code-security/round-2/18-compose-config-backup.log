@@ -1,0 +1,29 @@
+# docker compose v5.6.1 'config' (parse/validate only; no daemon), MTH_SECRETS_DIR=<empty scratch dir>
+## MTH_BACKUP_ROOT unset
+exit=0
+45-        read_only: true
+46-        volume: {}
+47-      - type: bind
+48-        source: /MTH_BACKUP_ROOT-is-not-set
+49:        target: /backups
+50-        bind:
+51-          create_host_path: false
+52-    depends_on:
+53-      db:
+## MTH_BACKUP_ROOT=/srv/mth-backups
+exit=0
+45-        read_only: true
+46-        volume: {}
+47-      - type: bind
+48-        source: /srv/mth-backups
+49:        target: /backups
+50-        bind:
+51-          create_host_path: false
+52-    depends_on:
+53-      db:
+## default profile 'up' interpolation unaffected (config of all default services)
+db
+migrate
+api
+worker
+exit=0

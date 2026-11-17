@@ -1,0 +1,38 @@
+## qa-verifier round 2: ADR text vs the DO-D11 code (F-DG7-1011, F-DG7-1012 repairs), main repo read-only
+## ADR-0063 files changed since round 1 (ddf42ccd2..152db5b51):
+(end)
+## ADR-0063 §1.2 S3 exception list (unchanged)
+82:| **S3 secret-assignment** | a key na
+an i18n key (`[a-z0-9_.]+`)
+## ADR-0063 amendments
+278:## Amendment 1 (2026-11-14, T-DG7-ARCH-R7): allow-list scopes, the history-only entries, and the scanner's own mask
+## code: tools/release/secret-scan.mjs
+82:export function isI18nKey(v) {
+99:  if (/^[0-9a-f]{64}$/i.test(v) || /^sha256:[0-9a-f]+$/i.test(v) || /^sha512-[A-Za-z0-9+/=]+$/.test(v)) return true;
+101:  if (isI18nKey(v)) return true; // an i18n key (dotted or snake_case words), never a bare generated string
+233:    if (!/^[0-9a-f]{64}$/.test(e.valueSha256))
+## ADR-0066 §4 backup-time checks (unchanged; 5 items)
+### 4. Backup-time checks
+
+The script fails the set (status `failed`, reason given) unless all hold:
+
+1. `pg_dump` exited 0 and `pg_restore --list db/database.dump` reads the archive.
+2. The `pg_dump` major is at least the server's major (a newer client can dump an older server; never the reverse).
+3. `transfer-attachments verify` over the copied set reports 0 missing, 0 size and 0 SHA-256 mismatches.
+4. Every retention set file matches its SHA-256.
+5. Every file listed in the manifest exists and matches its SHA-256.
+
+### 5. The `backup` Compose profile (seam 14)
+## ADR-0066 mentions of the DO-D11 behaviour (owner-only, umask, root refusal, create_host_path, MTH_BACKUP_ROOT, --user 0:0)
+145:The database half is already probed: `packages/db/test/integration/p7-retention-guards.test.ts` "0145 backup_set" (owner-only write, audited, unknown key refused, incomplete set refused).
+## code: deploy/scripts/backup.sh
+215:  umask 077
+234:  # replace a set together with its manifest. A missing root is created owner-only (umask 077).
+237:    if [ -n "$(find "$root" -maxdepth 0 -perm /022 -print)" ]; then
+315:backup_owner_only() {
+529:  checks+=("ownerOnly")
+## DO-D11 handback open questions
+116:1. **ADR-0063 needs an amendment (solution-architect).** §1.2 still describes the S3 exception as "an i18n key (`[a-z0-9_.]+`)", and §5 residual 1 does not mention the 64-hex trade-off. The code now implements the narrower `isI18nKey`. Implementers do not own ADR text, so I did not edit it. Sh
+117:2. **Manifest checks.** The manifest's `checks` list gains `ownerOnly`, after `everyFileMatches`. ADR-0066 §4 lists the checks. Should the architect add it there, and to backup-restore.md §7 if the A19 restore checks are meant to mirror it?
+## any decision answering them (decisions.md mentions of DO-D11 Q1/Q2, ADR-0063 amendment, ownerOnly)
+(end)
