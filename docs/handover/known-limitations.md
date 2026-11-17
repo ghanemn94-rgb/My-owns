@@ -38,7 +38,7 @@ Sign-in has been tested only with a synthetic identity provider. Connecting the 
 ## 2. Protocol-audit disclosure {#protocol-audit}
 
 <!-- generated:protocol-audit begin -->
-Report: `tools/release/protocol-audit.mjs` 1.0.0, repository head `19a82f6c2bbb0434fd15e87ef0cfe192d5de6a47`, SHA-256 `67b36d7f3c8a483d7475bae7c5f755d70ef83216231fcc049141ae82d232f09b`, stages DG0, DG1, DG2, DG3, DG4, DG5, DG6, DG7.
+Report: `tools/release/protocol-audit.mjs` 1.0.0, repository head `e44dcd90e30714f3f0956f24561bc49183478b96`, SHA-256 `0bc940d0c1b0a9e8b25a178dca6ac194a2d02b16d21c624dd12f1edb2e8d2901`, stages DG0, DG1, DG2, DG3, DG4, DG5, DG6, DG7.
 
 The delivery records of gates DG0–DG6 contain the historic protocol observations listed below, found by the protocol audit. None changed product behaviour. They are disclosed here, and no gate was reopened (decision D-249).
 
@@ -53,7 +53,7 @@ The delivery records of gates DG0–DG6 contain the historic protocol observatio
 | C2 assignment-contract | REQ-DLV-011 | DG4 | HIT | 11 | D-249 H3 |
 | C2 assignment-contract | REQ-DLV-011 | DG5 | HIT | 6 | D-249 H3 |
 | C2 assignment-contract | REQ-DLV-011 | DG6 | HIT | 14 | D-249 H3, H4 |
-| C2 assignment-contract | REQ-DLV-011 | DG7 | HIT | 27 | not in D-249 (DG7: disclosed by this release's records) |
+| C2 assignment-contract | REQ-DLV-011 | DG7 | HIT | 25 | not in D-249 (DG7: disclosed by this release's records) |
 | C3 handback-sections | REQ-DLV-012 | DG2 | HIT | 8 | D-249 H5 |
 | C3 handback-sections | REQ-DLV-012 | DG3 | HIT | 3 | D-249 H5 |
 | C3 handback-sections | REQ-DLV-012 | DG4 | HIT | 4 | D-249 H5 |
