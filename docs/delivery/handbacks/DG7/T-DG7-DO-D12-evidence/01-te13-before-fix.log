@@ -1,0 +1,109 @@
+port-policy: PostgreSQL listening on port 24351 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+✖ T-E13a (F-DG7-1053): a symbolic link (and a chain of two) to an owner-only directory is accepted (15.07027ms)
+✖ T-E13b (F-DG7-1053): a symbolic link to a world-writable like /tmp (1777) directory is refused, naming the target (14.380582ms)
+✖ T-E13b (F-DG7-1053): a symbolic link to a group-writable (0770) directory is refused, naming the target (12.307452ms)
+✖ T-E13c (F-DG7-1053): a dangling symbolic link is refused (exit 2) and nothing is created (10.733262ms)
+✖ T-E13d (F-DG7-1053): a symbolic link to a regular file is refused as not a directory (11.048201ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 0
+ℹ fail 5
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 10252.009411
+
+✖ failing tests:
+
+test at deploy/scripts/tests/backup-restore.test.mjs:523:1
+✖ T-E13a (F-DG7-1053): a symbolic link (and a chain of two) to an owner-only directory is accepted (15.07027ms)
+  AssertionError [ERR_ASSERTION]: BLOCKED: the backup root /var/tmp/mth-run.FPy9Hm/claude-0/mth-backup-test-PbjrZ4/link-root-700 is writable by group or others; use an owner-only directory (chmod 0700)
+  
+  
+  2 !== 0
+  
+      at TestContext.<anonymous> (file:///home/user/My-owns/deploy/scripts/tests/backup-restore.test.mjs:530:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 2,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at deploy/scripts/tests/backup-restore.test.mjs:546:3
+✖ T-E13b (F-DG7-1053): a symbolic link to a world-writable like /tmp (1777) directory is refused, naming the target (14.380582ms)
+  AssertionError [ERR_ASSERTION]: BLOCKED: the backup root /var/tmp/mth-run.FPy9Hm/claude-0/mth-backup-test-PbjrZ4/link-shared-1777 is writable by group or others; use an owner-only directory (chmod 0700)
+  
+      at TestContext.<anonymous> (file:///home/user/My-owns/deploy/scripts/tests/backup-restore.test.mjs:554:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at deploy/scripts/tests/backup-restore.test.mjs:546:3
+✖ T-E13b (F-DG7-1053): a symbolic link to a group-writable (0770) directory is refused, naming the target (12.307452ms)
+  AssertionError [ERR_ASSERTION]: BLOCKED: the backup root /var/tmp/mth-run.FPy9Hm/claude-0/mth-backup-test-PbjrZ4/link-shared-770 is writable by group or others; use an owner-only directory (chmod 0700)
+  
+      at TestContext.<anonymous> (file:///home/user/My-owns/deploy/scripts/tests/backup-restore.test.mjs:554:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at deploy/scripts/tests/backup-restore.test.mjs:564:1
+✖ T-E13c (F-DG7-1053): a dangling symbolic link is refused (exit 2) and nothing is created (10.733262ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /^BLOCKED: the backup root .* is a symbolic link whose target does not exist/m. Input:
+  
+  'BLOCKED: the backup root /var/tmp/mth-run.FPy9Hm/claude-0/mth-backup-test-PbjrZ4/link-dangling is not a directory\n'
+  
+      at TestContext.<anonymous> (file:///home/user/My-owns/deploy/scripts/tests/backup-restore.test.mjs:570:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'BLOCKED: the backup root /var/tmp/mth-run.FPy9Hm/claude-0/mth-backup-test-PbjrZ4/link-dangling is not a directory\n',
+    expected: /^BLOCKED: the backup root .* is a symbolic link whose target does not exist/m,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at deploy/scripts/tests/backup-restore.test.mjs:574:1
+✖ T-E13d (F-DG7-1053): a symbolic link to a regular file is refused as not a directory (11.048201ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /^BLOCKED: the backup root .* is a symbolic link to .*, which is not a directory/m. Input:
+  
+  'BLOCKED: the backup root /var/tmp/mth-run.FPy9Hm/claude-0/mth-backup-test-PbjrZ4/link-to-file is not a directory\n'
+  
+      at TestContext.<anonymous> (file:///home/user/My-owns/deploy/scripts/tests/backup-restore.test.mjs:581:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'BLOCKED: the backup root /var/tmp/mth-run.FPy9Hm/claude-0/mth-backup-test-PbjrZ4/link-to-file is not a directory\n',
+    expected: /^BLOCKED: the backup root .* is a symbolic link to .*, which is not a directory/m,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+real	0m11.546s
+user	0m9.606s
+sys	0m1.940s
+exit=1

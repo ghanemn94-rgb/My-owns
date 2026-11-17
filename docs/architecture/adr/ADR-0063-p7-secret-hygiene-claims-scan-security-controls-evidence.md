@@ -79,7 +79,7 @@ A file is scanned as UTF-8 text. A file with a NUL byte in its first 8 KiB is sc
 | --- | --- | --- |
 | **S1 key-shape** | `KEY_SHAPES` of `tools/release/lib/patterns.mjs` (delivered by ARCH-01, shared with ADR-0062 R3; frozen), in simplified form: `sk-ant-…`, `sk-…`, `AKIA…`/`ASIA…`, `ghp_…`, `github_pat_…`, `xox?-…`, `AIza…`, `-----BEGIN … PRIVATE KEY-----`, JWT `eyJ….eyJ` | — |
 | **S2 credential-url** | `<scheme>://<user>:<password>@` where the password is a literal | password `%s`, `${…}`, `$NAME`, `<…>`, `***`, `[REDACTED]`, `…`; the scanner's own mask `[S<n>:…` (Amendment 1, A1.2) |
-| **S3 secret-assignment** | a key name matching `(secret|password|passwd|pwd|token|api[_-]?key|access[_-]?key|private[_-]?key|client[_-]?secret|signing[_-]?key)` (any case, also inside a longer name such as `smtpPassword`), then `=`, `:` or `": "`, then a value of at least 16 characters whose Shannon entropy is at least 3.5 bits per character | the placeholders of S2; `process.env.…`; `/run/secrets/…` and other `*_FILE` paths; checksum shapes (64 hex, `sha256:<hex>`, `sha512-<base64>`); a value that is a key **name** (`[A-Z][A-Z0-9_]+`); an i18n key (`[a-z0-9_.]+`) |
+| **S3 secret-assignment** | a key name matching `(secret|password|passwd|pwd|token|api[_-]?key|access[_-]?key|private[_-]?key|client[_-]?secret|signing[_-]?key)` (any case, also inside a longer name such as `smtpPassword`), then `=`, `:` or `": "`, then a value of at least 16 characters whose Shannon entropy is at least 3.5 bits per character | the placeholders of S2; `process.env.…`; `/run/secrets/…` and other `*_FILE` paths; checksum shapes (64 hex, `sha256:<hex>`, `sha512-<base64>`); a value that is a key **name** (`[A-Z][A-Z0-9_]+`); an i18n key, narrowed by Amendment 2 (A2.2; it was `[a-z0-9_.]+`). _This cell is a summary. The complete list as built is Amendment 2, A2.1, and the 64-hex trade-off is A2.3._ |
 | **S4 canary-misplaced** | a value starting with `mth-canary-` (the ADR-0053 §5 prefix) **outside** test and CI paths. The test and CI paths are `**/*.test.*`, `**/*.vitest.mjs`, `**/test/**`, `**/tests/**`, `tests/**`, `e2e/**`, `deploy/ci/**`, `.github/workflows/**`, `deploy/scripts/log-scan.mjs` and `docs/architecture/**` | canaries inside those paths are reported in the summary count as `canary (documented)`, never as a pass in disguise |
 | **S5 env-template** | in `.env.example`: any non-blank, non-comment line not matching `^[A-Z][A-Z0-9_]*=$`. That is REQ-S16-031 "the environment template contains placeholders only": a variable **name** with an empty value. Comment lines are still subject to S1–S3 | — |
 | **S6 secret-file** | a scanned path whose name is `.env` or `.env.*` other than `.env.example`, or that ends in `.pem`, `.key`, `.p12`, `.pfx`, `.keystore`, `.jks`, or is named `id_rsa*`, `id_ed25519*` or `credentials.json` | — |
@@ -236,7 +236,7 @@ REQ-S16-031's procedure ("the deployment guide documents TLS and encryption inte
 
 ### 5. Residuals (honest)
 
-1. **The scans are pattern-based.** The secret scan finds the listed shapes, credential URLs and high-entropy assignments. It cannot prove that no secret exists in a shape it does not know. The claims scan cannot understand every phrasing, and the negation window can let through an unusual sentence that both negates and claims. `--show-negated` exists so a reviewer can sample it.
+1. **The scans are pattern-based.** The secret scan finds the listed shapes, credential URLs and high-entropy assignments. It cannot prove that no secret exists in a shape it does not know. The claims scan cannot understand every phrasing, and the negation window can let through an unusual sentence that both negates and claims. `--show-negated` exists so a reviewer can sample it. _Extended by Amendment 2 (A2.4): residual 9, a 64-hex secret is not reported by S3, and residual 10, the other shape-based S3 exemptions._
 2. **Database TLS has no product-side code.** It depends on the driver honouring `sslmode` in the URL. Whether a test can be run depends on the host PostgreSQL (§4.3 HR-02). Encryption at rest is entirely a hosting function (HR-04, HR-05).
 3. **History scope covers `HEAD`'s ancestry only.** Other branches of the repository (for example the user's unrelated branches) are not part of the handover and are not scanned.
 4. **Live CI** of the new job is not run (D-058).
@@ -321,3 +321,123 @@ They are entries of the kind §1.3 already permits ("History scope matches on `r
 
 7. **History entries are value-wide** (A1.3). A future real credential that happened to equal one of the two values (the anchor text, or the password `x`) would be accepted in history only. It would still be a hit in the payload and envelope scans.
 8. **The own-mask exclusion** (A1.2) would miss a real password that literally begins with `[S<digit>:`. That is accepted as negligible next to a permanent false history hit.
+
+## Amendment 2 (2026-11-17, T-DG7-SA-ADR72): the S3 exceptions as built, the narrowed i18n-key rule, and the 64-hex checksum trade-off (F-DG7-1032, F-DG7-1041, F-DG7-1052)
+
+- **Author:** solution-architect (T-DG7-SA-ADR72). Base `faa1154ca9d15e160bf39f5a2a0df575ec1bf133` on `claude/mobily-transformation-platform-dg7-regate`.
+- **Why.**
+  - T-DG7-DO-D11 repaired F-DG7-1011. It replaced the S3 exception "an i18n key (`[a-z0-9_.]+`)" with the narrower `isI18nKey` of `tools/release/secret-scan.mjs`. It also disclosed in `docs/handover/security-controls.md` SC-13 that a value of exactly 64 hex characters stays exempt.
+  - DO-D11 asked for this amendment (`docs/delivery/handbacks/DG7/T-DG7-DO-D11-devops-engineer.md` §5 Q1, and §4 item 3 for the 64-hex decision).
+  - In round 2 of the clean re-gate, all three reviewers raised the drift: F-DG7-1032 (domain), F-DG7-1041 (code-security) and F-DG7-1052 (qa).
+  - The carried rule "ADR claims enumerated and exactly true" (p7-work-split §2 rule 2) requires §1.2 to state the rule as built. The S3 "do not match" cell was also a simplified subset of the exceptions in the code before DO-D11. A2.1 therefore lists **all** of them, not only the changed one.
+- **What this amendment does.**
+  - It records S3 **as built** at the base: `SECRET_KEY`, `ASSIGNMENT`, `CODE_FILE`, `isI18nKey` and `isNonSecretValue` in `tools/release/secret-scan.mjs`, and `tools/release/tests/secret-scan.test.mjs`.
+  - It changes no code, no test, no fixture and no allow-list entry.
+  - It answers the 64-hex question that DO-D11 left to the architect (A2.3). The exemption is recorded as built and disclosed (residual 9). The architect recommends narrowing it to digest-named keys, and the orchestrator decides whether to assign that code change.
+- **What it replaces.** Each replaced place carries a pointer here:
+  - the "do not match" cell of S3 in §1.2 (A2.1, A2.2);
+  - §5 residual 1, which A2.4 extends.
+- **Unchanged.**
+  - Rules S1, S2, S4, S5 and S6, the scopes (§1.1), the allow-list (§1.3 and Amendment 1), and the output and exit codes (§1.4).
+  - No API, schema, migration, permission, i18n key or lock change, and no new dependency.
+- **Two gate systems.** Nothing here grants or implies a G1–G6, Finance or IT approval. The secret scan is engineering tooling.
+
+### A2.1 S3 as built (replaces the S3 cell of §1.2)
+
+**What is matched.**
+
+- The key is a name containing one of these words, in any case: `secret` (but not `secretar…`, so `secretary_user_id` is not a key), `password`, `passwd`, `pwd`, `token`, `api_key`, `access_key`, `private_key`, `client_secret`, `signing_key`. In `api_key`, `access_key`, `private_key`, `client_secret` and `signing_key`, the separator may be `_`, `-` or nothing. The word may be inside a longer name made of `[A-Za-z0-9_.-]`, such as `smtpPassword`.
+- The key may be quoted with `"` or `'`. It is followed by `=` (not `==` or `=>`) or `:` (not `::`), optional white space, then the value.
+- The value is a `"…"`, `'…'` or backtick literal, or an unquoted run up to white space, a quote, `,`, `;`, `)`, `}` or `]`.
+
+**When a match is not a hit.** The match is dropped in these cases:
+
+1. **Code files.** The file name matches `\.[cm]?[jt]sx?$` in any case (`.js`, `.ts`, `.jsx`, `.tsx`, each also with a `c` or `m` prefix, such as `.mjs` or `.cts`), and the value is unquoted. An unquoted value in code is an expression, not a literal.
+2. **Already reported.** On the same line, an S1 or S2 hit contains the value, or the value contains it. The value is reported once, under that rule.
+3. **A non-secret value** (`isNonSecretValue`). The value is trimmed and tested in this order. The first test that applies exempts it:
+   1. shorter than 16 characters;
+   2. contains white space (prose, such as an i18n message);
+   3. contains `${` or `$` followed by a letter or `_` (a shell or template expansion);
+   4. starts with `[` or `{` (a YAML or JSON flow collection, such as a list of secret names);
+   5. starts with `mth-canary-` (rule S4 handles canaries);
+   6. contains, in any case, `synthetic`, `example`, `not-a-secret`, `not-used`, `dummy` or `placeholder` (a value that declares itself a test value, such as AWS's documented example keys);
+   7. is a placeholder of S2: `%s`, `%d`, `${…}`, `$NAME`, `<…>`, three or more `*`, `[REDACTED]`, `…`, `...` or `{{…}}`;
+   8. starts with `process.env`, `import.meta.env` or `env.`;
+   9. starts with `/run/secrets/`, or the **key** ends in `_FILE` or `file`, in any case (a file pointer);
+   10. **is exactly 64 hex characters** in either case, or `sha256:` followed by hex, or `sha512-` followed by base64 (a checksum shape; see A2.3);
+   11. is a key **name**: `[A-Z][A-Z0-9_]+`;
+   12. **is an i18n key** by `isI18nKey` (A2.2);
+   13. is a namespaced lower-case identifier, module id or repository path: a lower-case word, then one or more segments that each start with `.`, `:` or `/`, for example `mth.automation.x.v1` or `virtual:x.css`. A segment is made of `[a-z0-9_-]` and does not start with `_` or `-`. A leading `\0` is allowed;
+   14. contains `(`, `)`, `{`, `}`, `=>` or `${` (code);
+   15. is a member expression such as `a.b.c` or `a?.b`, optionally followed by `]`, `)` or `;` (code);
+   16. contains an escaped `\n`, `\r`, `\t` or `\"` (code quoted inside JSON, not a single value);
+   17. is a URL (`http://`, `https://` or `//`) or a path (`/x`, `./x`, `../x`), as long as it contains no `:<password>@` credential part;
+   18. its Shannon entropy is below 3.5 bits per character.
+
+   Otherwise the match is an S3 hit. So a hit is at least 16 characters long, has at least 3.5 bits per character, and fails tests 2–17.
+
+**How it is pinned.**
+
+- In T-G1, the non-match fixture `tools/release/tests/fixtures/secrets/non-matches.txt` pins these tests. Each line is exempted by the first test that applies:
+  - test 1 (line 17, where the unquoted value ends at `,`);
+  - test 3 (line 18);
+  - test 8 (line 10);
+  - test 9 (line 11);
+  - all three shapes of test 10 (lines 12–14; line 13 is a 64-hex value under the key `token`);
+  - test 11 (line 15);
+  - test 12 (line 16).
+- The companion code fixture of the same T-G1 case pins exception 1 (an unquoted value in a `.ts` file), test 11, test 13 (`mth.automation.restricted-token.v1`, which is not an i18n key because of its `-`), and the `secretar…` exclusion of the key.
+- The F-DG7-1011 tests (`describe("F-DG7-1011 S3: …")`) pin:
+  - test 12 and its limits (A2.2);
+  - the hit side of test 18: the derived values have at least 3.5 bits per character and are reported.
+- These have **no dedicated fixture**:
+  - tests 2, 4, 5, 6, 7 and 14–17. In the S3 position, the T-G1 placeholder lines reach test 1 or test 3 first, so they do not exercise test 7;
+  - the low-entropy side of test 18;
+  - exception 2.
+
+  They are exercised only to the extent that the real scans (T-G2) meet such values.
+
+### A2.2 The i18n-key rule, narrowed by F-DG7-1011
+
+The exception is now `isI18nKey(v)`. Before DO-D11 it was any value matching `[a-z0-9_.]+`. The new rule requires all of the following:
+
+- The value matches `^[a-z][a-z0-9]*(?:[._]+[a-z0-9]+)+$`. It starts with a lower-case letter and has **at least one** separator. A separator is `.` or `_`, or a run of them, as in `resource_role__archived`.
+- Split on runs of `.` and `_`, **every segment** is at most **20 characters** and contains at most **3 digits**.
+
+**Consequences.**
+
+- A bare lower-case or hex string has no separator, so it is no longer exempt. Examples are the output of `openssl rand -hex 24` (`deploy/scripts/init-secrets.sh`) and `openssl rand -hex 16`, or 24 random lower-case alphanumerics. Such a value falls through to the entropy test and is reported. The F-DG7-1011 tests show this:
+  - values derived at run time (48 hex, 32 hex, 24 lower-case) under `POSTGRES_PASSWORD`, `s3_access_key` and `OIDC_CLIENT_SECRET` are each reported as S3, with exit 1 and masked;
+  - 500 random samples of each shape are never i18n keys.
+- Every lower-case key path of at least 16 characters in `apps/web/src/i18n/{en,ar}/*.json` stays exempt, including in context (`password_label: <key>`). The test requires more than 1,000 such keys. DO-D11 counted 8,562.
+
+**Limit (not covered by the narrowing).** A value can still be exempt by test 13 of A2.1, the namespaced identifier test, even though it is not an i18n key. Test 13 applies to a lower-case value with a `.`, `:` or `/` separator, and its segments have no length or digit limit. A generated secret has no separator, unless someone deliberately splits it with `.`, `:` or `/`. The F-DG7-1011 shapes are not affected. This is recorded as residual 10 (A2.4).
+
+### A2.3 The 64-hex checksum exemption: recorded as built; narrowing recommended (decision)
+
+- **Behaviour as built.** A value of exactly 64 hex characters (`/^[0-9a-f]{64}$/i`) under a secret-named key is exempt, whatever the key, and so is a secret made with `openssl rand -hex 32`. `docs/operations/storage.md` uses that command to generate the S3 test secret access key, written to a file outside the repository.
+  - Under a secret-named key, such a value is never reported, in any scope.
+  - The code-security reviewer measured this in round 2 (`docs/delivery/test-evidence/DG7/code-security/round-2/11-s3-exemption-rates.log`).
+- **What the exemption protects today.** One fixture line, and nothing else.
+  - At the base, an S3 match whose value is exactly 64 hex occurs in **one** place: line 13 of the T-G1 non-match fixture (`token = "<64 hex>"`). This holds for the tracked tree, and for every text blob among the 54,427 tree and blob entries that `git rev-list --objects HEAD` lists outside `trading_agent/`, which is the history scope's input.
+  - The measurement re-implements `ASSIGNMENT` over every text blob. It checks the key pattern against the source, so the two cannot drift silently (handback evidence `02-64hex-s3-values.log`).
+  - So the original reason, "checksum shapes", has no real instance in this repository. The digests in this repository sit under keys that contain no secret word, such as `sha256`, `valueSha256`, `manifest_sha256` or a file path.
+- **What the exemption still guards against elsewhere.** A 64-hex secret still fails S5 in `.env.example`, because S5 accepts no value at all. It still fails S2 in a credential URL, because S2 has no checksum exemption. Production secrets are runtime configuration, `NAME` or `NAME_FILE` (SC-12, SC-13). Secret files are an S6 hit by name.
+- **Decision (the solution-architect's, as ADR owner).**
+  1. **This amendment records the behaviour as built** and discloses it as residual 9 (A2.4). It changes no code, because this task is documentation only.
+  2. **Recommended narrowing (not built).** Exempt a 64-hex value only when the key also names a digest: the key contains `sha`, `hash`, `digest`, `checksum`, `integrity` or `fingerprint`, in any case. Keep `sha256:<hex>` and `sha512-<base64>` exempt under any key, because they declare themselves. The change would touch:
+     - `isNonSecretValue` in `tools/release/secret-scan.mjs`;
+     - the T-G1 non-match fixture: line 13 rekeyed to a digest name, plus a planted 64-hex secret under a plain secret key that must be reported;
+     - one history-only allow-list entry for the fixture value that line 13 holds in earlier blobs. It would be value-wide, like Amendment 1 A1.3, and accepted on the same terms.
+  3. **Whether and when to build it is the orchestrator's call**, as a new assignment. Until then residual 9 stands. SC-13 already discloses it to Mobily IT, so the handover is accurate either way. This amendment raises it as an open question in its handback; it is not a breaking contract change.
+
+### A2.4 Residuals added (extends §5)
+
+9. **A 64-hex secret is not reported by S3** (A2.3). An `openssl rand -hex 32` value under a secret-named key passes the payload, history, path and envelope scans. S5 (in `.env.example`) and S2 (in a credential URL) still catch it there. No real content of the repository needs the exemption today (A2.3). SC-13 discloses the residual, and A2.3 item 2 gives the recommended narrowing, pending the orchestrator's decision.
+10. **Other S3 exemptions are shape-based** (A2.1 item 3). Some values that are not secrets by meaning are still exempt:
+    - a value containing a self-declaration word such as `example` or `dummy` (test 6);
+    - any value under a key ending in `file` (test 9);
+    - a lower-case value split by `.`, `:` or `/` (test 13);
+    - a value with an escaped `\n` (test 16).
+
+    A real secret of these shapes would not be reported. Residual 1 still applies: the scan finds the listed shapes, not every secret.

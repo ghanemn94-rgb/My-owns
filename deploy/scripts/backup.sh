@@ -232,7 +232,24 @@ backup_main() {
   case "$phase" in all | database | finish) ;; *) echo "BLOCKED: --phase must be all, database or finish" >&2; exit 2 ;; esac
   # F-DG7-1012: a root that group or others can write (the host's /tmp, a shared directory) lets another account
   # replace a set together with its manifest. A missing root is created owner-only (umask 077).
-  if [ -e "$root" ] || [ -L "$root" ]; then
+  # F-DG7-1053: a root given as a symbolic link is judged by its resolved target (find -perm on the link itself sees
+  # the link's own mode, lrwxrwxrwx). An owner-only target is accepted, and the set is then written through the
+  # resolved path, so the directory that was checked is the one written to even if the link is later re-pointed.
+  if [ -L "$root" ]; then
+    local target=""
+    target="$(readlink -e -- "$root")" || {
+      echo "BLOCKED: the backup root $root is a symbolic link whose target does not exist or cannot be resolved" \
+        "($(readlink -- "$root")); create the target owner-only (install -d -m 0700) or pass an existing directory" >&2
+      exit 2
+    }
+    [ -d "$target" ] || { echo "BLOCKED: the backup root $root is a symbolic link to $target, which is not a directory" >&2; exit 2; }
+    if [ -n "$(find "$target" -maxdepth 0 -perm /022 -print)" ]; then
+      echo "BLOCKED: the backup root $root is a symbolic link to $target, which is writable by group or others;" \
+        "use an owner-only directory (chmod 0700)" >&2
+      exit 2
+    fi
+    root="$target"
+  elif [ -e "$root" ]; then
     [ -d "$root" ] || { echo "BLOCKED: the backup root $root is not a directory" >&2; exit 2; }
     if [ -n "$(find "$root" -maxdepth 0 -perm /022 -print)" ]; then
       echo "BLOCKED: the backup root $root is writable by group or others; use an owner-only directory (chmod 0700)" >&2

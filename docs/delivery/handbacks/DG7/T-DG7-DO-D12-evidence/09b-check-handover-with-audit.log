@@ -1,0 +1,23 @@
+$ node tools/release/protocol-audit.mjs --all --json $TMPDIR/pa.json --quiet; node tools/release/check-handover.mjs --protocol-audit $TMPDIR/pa.json
+2026-11-17T16:57:47Z
+protocol-audit exit=1
+check-handover: index: PASS
+check-handover: deployment: PASS
+  note: guide-keys.json: 10 anchors checked
+check-handover: summaries: PASS
+  warning: docs/handover/backup-restore.md l.220: the Arabic section 'ملخص باللغة العربية (Arabic summary)' lacks the H.3 provisional line under its heading (§2.3)
+  warning: docs/handover/release-notes.md l.110: the Arabic section 'هوية الإصدار' lacks the H.3 provisional line under its heading (§2.3)
+  warning: docs/handover/release-notes.md l.116: the Arabic section 'المتطلبات حسب الحالة' lacks the H.3 provisional line under its heading (§2.3)
+  warning: docs/handover/release-notes.md l.125: the Arabic section 'البنود غير المكتملة وعوائق الإصدار' lacks the H.3 provisional line under its heading (§2.3)
+  warning: docs/handover/release-notes.md l.129: the Arabic section 'بنود تكتمل بعد البوابة الهندسية' lacks the H.3 provisional line under its heading (§2.3)
+  warning: docs/handover/release-notes.md l.133: the Arabic section 'تبعيات الإعداد الخارجية المتبقية' lacks the H.3 provisional line under its heading (§2.3)
+  warning: docs/handover/release-notes.md l.154: the Arabic section 'النصوص العربية المؤقتة' lacks the H.3 provisional line under its heading (§2.3)
+  warning: docs/handover/upgrades.md l.227: the Arabic section '6. Arabic summary (provisional, D-243 Q7)' lacks the H.3 provisional line under its heading (§2.3)
+check-handover: security-links: PASS
+check-handover: guides: PASS
+check-handover: generated: FAIL
+  FAIL: known-limitations: FAIL: docs/handover/known-limitations.md differ from the generated content; run node tools/release/known-limitations.mjs --protocol-audit <report> --write
+  note: role-matrix.mjs: role-matrix: PASS (/home/user/My-owns/docs/handover/role-matrix.md is current)
+  note: automation-jobs.mjs: automation-jobs: PASS (the job table of /home/user/My-owns/docs/handover/automation-operations.md is current)
+check-handover: FAIL (index PASS, deployment PASS, summaries PASS, security-links PASS, guides PASS, generated FAIL; root .)
+exit=1

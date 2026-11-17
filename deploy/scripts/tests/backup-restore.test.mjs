@@ -1,4 +1,4 @@
-// T-E1…T-E9 (p7-work-split §E.4; ADR-0066 §1-§8; T-DG7-DO-F): deploy/scripts/backup.sh and restore.sh against a
+// T-E1…T-E13 (p7-work-split §E.4; ADR-0066 §1-§8; T-DG7-DO-F): deploy/scripts/backup.sh and restore.sh against a
 // DISPOSABLE PostgreSQL cluster. REQ-S19-012, REQ-S20-019 (A19, container-free half; D-243 Q1, Q14).
 //
 //   tests/qa/support/with-pg.sh node --test deploy/scripts/tests/backup-restore.test.mjs
@@ -15,12 +15,14 @@ import {
   chmodSync,
   cpSync,
   existsSync,
+  lstatSync,
   mkdirSync,
   mkdtempSync,
   readdirSync,
   readFileSync,
   rmSync,
   statSync,
+  symlinkSync,
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
@@ -502,3 +504,79 @@ for (const [label, mode] of [
     assert.match(r.out, /^BLOCKED: the backup root .* is writable by group or others; use an owner-only directory/m);
     assert.deepEqual(readdirSync(root), []);
   });
+
+// T-E13 (F-DG7-1053): a backup root given as a symbolic link is judged by its resolved target, not by the link's own
+// mode (always lrwxrwxrwx on Linux). An owner-only target is accepted and the set is written inside it; a target that
+// group or others can write is refused with a message naming the link and its target; a dangling link is refused.
+function symlinkRoot(name, target) {
+  const link = join(work, name);
+  symlinkSync(target, link);
+  return link;
+}
+const ROOT_ENV = () => ({
+  DATABASE_URL: dbUrl(source),
+  EVIDENCE_STORAGE_DRIVER: "filesystem",
+  EVIDENCE_STORAGE_PATH: sourceEvidence,
+  MTH_TRANSFER_ATTACHMENTS: "none",
+});
+
+test("T-E13a (F-DG7-1053): a symbolic link (and a chain of two) to an owner-only directory is accepted", () => {
+  blocked();
+  const real = join(work, "real-root-700");
+  mkdirSync(real, { mode: 0o700 });
+  chmodSync(real, 0o700);
+  const link = symlinkRoot("link-root-700", real);
+  const r = run(BACKUP, ["--out", link, "--label", "test-do-d12-link", "--phase", "database"], ROOT_ENV());
+  assert.equal(r.status, 0, r.out);
+  assert.doesNotMatch(r.out, /BLOCKED/);
+  // the set lives in the target, owner-only, and the link itself is left as it was
+  assert.ok(lstatSync(link).isSymbolicLink());
+  assert.deepEqual(readdirSync(real), ["test-do-d12-link"]);
+  assert.deepEqual(notOwnerOnly(join(real, "test-do-d12-link")), []);
+  const chain = symlinkRoot("link-to-link-root-700", link);
+  const r2 = run(BACKUP, ["--out", chain, "--label", "test-do-d12-chain", "--phase", "database"], ROOT_ENV());
+  assert.equal(r2.status, 0, r2.out);
+  assert.deepEqual(readdirSync(real).sort(), ["test-do-d12-chain", "test-do-d12-link"]);
+});
+
+for (const [label, mode] of [
+  ["world-writable like /tmp (1777)", 0o1777],
+  ["group-writable (0770)", 0o770],
+])
+  test(`T-E13b (F-DG7-1053): a symbolic link to a ${label} directory is refused, naming the target`, () => {
+    blocked();
+    const real = join(work, `real-shared-${mode.toString(8)}`);
+    mkdirSync(real);
+    chmodSync(real, mode);
+    const link = symlinkRoot(`link-shared-${mode.toString(8)}`, real);
+    const r = run(BACKUP, ["--out", link, "--label", "test-do-d12-shared", "--phase", "database"], ROOT_ENV());
+    assert.equal(r.status, 2, r.out);
+    assert.ok(
+      r.out.includes(
+        `BLOCKED: the backup root ${link} is a symbolic link to ${real}, which is writable by group or others; ` +
+          "use an owner-only directory (chmod 0700)",
+      ),
+      r.out,
+    );
+    assert.deepEqual(readdirSync(real), []);
+  });
+
+test("T-E13c (F-DG7-1053): a dangling symbolic link is refused (exit 2) and nothing is created", () => {
+  blocked();
+  const missing = join(work, "no-such-root");
+  const link = symlinkRoot("link-dangling", missing);
+  const r = run(BACKUP, ["--out", link, "--label", "test-do-d12-dangling", "--phase", "database"], ROOT_ENV());
+  assert.equal(r.status, 2, r.out);
+  assert.match(r.out, /^BLOCKED: the backup root .* is a symbolic link whose target does not exist/m);
+  assert.equal(existsSync(missing), false);
+});
+
+test("T-E13d (F-DG7-1053): a symbolic link to a regular file is refused as not a directory", () => {
+  blocked();
+  const file = join(work, "root-is-a-file");
+  writeFileSync(file, "x", { mode: 0o600 });
+  const link = symlinkRoot("link-to-file", file);
+  const r = run(BACKUP, ["--out", link, "--label", "test-do-d12-file", "--phase", "database"], ROOT_ENV());
+  assert.equal(r.status, 2, r.out);
+  assert.match(r.out, /^BLOCKED: the backup root .* is a symbolic link to .*, which is not a directory/m);
+});
