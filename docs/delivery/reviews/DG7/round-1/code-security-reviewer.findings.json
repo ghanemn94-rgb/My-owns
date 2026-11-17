@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG7-1011",
+      "stage_id": "DG7",
+      "requirement": "REQ-S16-031",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "Secret scan rule S3 exempts every lower-case alphanumeric value as an 'i18n key', so the high-entropy secrets this project's own tooling generates (openssl rand -hex) are never reported",
+      "reproduction": "On a clone of ddf42ccd2630f3d62f6aaf360ff401bbc2bde025 run: bash docs/delivery/test-evidence/DG7/code-security/round-1/repro/s3-lowercase-secret-repro.sh <clone>. Under $TMPDIR it writes four one-line files and runs `node tools/release/secret-scan.mjs --path <dir>` on each: (a) compose.override.yaml `POSTGRES_PASSWORD: <openssl rand -hex 24>` (the rand() of deploy/scripts/init-secrets.sh l.48), (b) values.yaml `s3_access_key: <openssl rand -hex 16>` (the docs/operations/storage.md l.186 shape), (c) deploy.conf `OIDC_CLIENT_SECRET=\"<24 random lower-case alphanumerics>\"`, (d) the same as (c) with a mixed-case value (control). It also prints isNonSecretValue() and entropy() for the four values. Cause: tools/release/secret-scan.mjs l.89 `if (/^[a-z0-9_.]+$/.test(v)) return true; // an i18n key` in isNonSecretValue(), which returns before the entropy rule at l.96 (ADR-0063 §1.2, S3 exception 'an i18n key ([a-z0-9_.]+)').",
+      "expected": "ADR-0063 §1.2 (S3: a secret-named key and a value of at least 16 characters with Shannon entropy of at least 3.5 bits per character), ADR-0063 §5 residual 1 and docs/handover/security-controls.md SC-13 state that the scan finds high-entropy assignments. A 48-hex password (entropy 3.70), a 32-hex access key (3.65) and a 24-character lower-case password (4.25) under POSTGRES_PASSWORD / s3_access_key / OIDC_CLIENT_SECRET are such assignments, so (a) to (c) must be reported S3 and exit 1, like (d). The i18n-key exemption should only cover i18n keys (for example values containing a '.' or '_', or low entropy), not every lower-case value.",
+      "actual": "(a), (b) and (c): `secret-scan: PASS (path; 1 files; allowed 0; canary (documented) 0)`, exit 0; isNonSecretValue() returns true for all three. (d), mixed case: one S3 hit, exit 1. The exemption covers every lower-case hex or alphanumeric value of any length: exactly the shape init-secrets.sh, clean-start-local.sh l.128/150 and storage.md generate. A password of that shape committed to the repository or the handover text would pass the REQ-S16-031 A18 check ('the secret scan finds no secrets in the repository') and the REQ-S21-003 handover scan, while SC-13 tells IT that high-entropy assignments are found. Bounded: a probe that narrows the exemption to values containing '.' or '_' still passes the real payload (3159 files, 13-secret-scan-payload-probe.log) and history (35926 blobs, 13b-secret-scan-history-probe.log) with no new hit. Nothing is hidden today, and a fix adds no false positive. Separately, 64-hex values are exempt as checksum shapes (an ADR-documented trade-off) that also covers `openssl rand -hex 32`; if that stays, SC-13 and ADR-0063 §5 should state it.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/code-security/round-1/repro/s3-lowercase-secret-repro.sh",
+        "docs/delivery/test-evidence/DG7/code-security/round-1/10-s3-lowercase-secret-repro.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-1/13-secret-scan-payload-probe.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-1/13b-secret-scan-history-probe.log",
+        "tools/release/secret-scan.mjs",
+        "docs/handover/security-controls.md",
+        "deploy/scripts/init-secrets.sh"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG7/round-1/code-security-reviewer.json",
+      "owner": "devops-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-17T10:20:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG7 round 1 (clean re-gate, candidate sha256:9822d8fe) by code-security-reviewer, session b5b4d929-9047-48b6-99d7-f47da960b43d."
+        }
+      ]
+    },
+    {
+      "id": "F-DG7-1012",
+      "stage_id": "DG7",
+      "requirement": "REQ-S19-012",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "backup.sh writes the full database dump world-readable (0644 files in 0755 directories), and the Compose backup profile falls back to the host's /tmp/mth-backups when MTH_BACKUP_ROOT is unset",
+      "reproduction": "From a clone of ddf42ccd2630f3d62f6aaf360ff401bbc2bde025: QA_PG_PORT=32450 MTH_PORT_POOL=32400-32499 tests/qa/support/with-pg.sh bash docs/delivery/test-evidence/DG7/code-security/round-1/repro/backup-set-mode-repro.sh <clone>. It migrates a disposable database (0001-0152, as mth_owner), runs deploy/scripts/backup.sh --out <dir> --label modeprobe --phase database with MTH_TRANSFER_ATTACHMENTS=none (as the Compose `backup` service does) under umask 022 (the default of the root process in the postgres:18 backup container, and of a usual operator shell), and lists the set's modes and the dump's TABLE DATA entries. Code: backup.sh sets no umask and no chmod on the set (only the scratch WORK directory is chmod 700, l.264-265; the set is created by `mkdir -p \"$set/db\" ...` at l.281 and pg_dump writes db/database.dump into it); deploy/compose/compose.yaml l.274 mounts `${MTH_BACKUP_ROOT:-/tmp/mth-backups}:/backups`.",
+      "expected": "A backup set holds the whole installation: user accounts, the audit trail, the session table, every business and Finance record and, in --phase all, the evidence bytes. Like the product's own migration package (packages/db/src/transfer/export.ts directorySink opens files 0640), it should be created owner-only, for example with umask 077 in backup.sh (directories 0700, files 0600). The Compose profile should refuse an unset MTH_BACKUP_ROOT (`${MTH_BACKUP_ROOT:?...}`) instead of falling back to the world-writable /tmp. docs/handover/backup-restore.md should state the permissions the backup root needs.",
+      "actual": "backup.sh exit 0. Modes: `755 d modeprobe`, `755 d modeprobe/db`, `644 f modeprobe/db/database.dump`; every .backup-state file and config copy is 644. pg_restore --list of the dump shows TABLE DATA public app_user, audit_event and session. Any local account on the Docker host can read the whole dump. With MTH_BACKUP_ROOT unset, Docker creates /tmp/mth-backups on the host. On a shared host, a local user who creates that directory first owns it and can read or replace the set, whose manifest and checksums sit in the same directory. Neither backup-restore.md nor deployment.md (l.184-186: encryption at rest is a hosting function) mentions the set's permissions, and known-limitations.md does not disclose them. Bounded: the documented procedure (backup-restore.md l.62) sets MTH_BACKUP_ROOT=/srv/mth-backups, and the exposure needs another local account on the host or shared storage.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/code-security/round-1/repro/backup-set-mode-repro.sh",
+        "docs/delivery/test-evidence/DG7/code-security/round-1/14-backup-set-mode-repro.log",
+        "deploy/scripts/backup.sh",
+        "deploy/compose/compose.yaml",
+        "docs/handover/backup-restore.md"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG7/round-1/code-security-reviewer.json",
+      "owner": "devops-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-17T10:20:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG7 round 1 (clean re-gate, candidate sha256:9822d8fe) by code-security-reviewer, session b5b4d929-9047-48b6-99d7-f47da960b43d."
+        }
+      ]
+    },
+    {
+      "id": "F-DG7-1013",
+      "stage_id": "DG7",
+      "requirement": "REQ-S02-005",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "ADR-0071 §5.1-§5.2 still say release-notes.mjs 'reads nothing else' and list seven sections; the generator also reads tools/release/release-notes-disclosures.json and writes a disclosures section (D-280)",
+      "reproduction": "grep -n 'It reads nothing else' docs/architecture/adr/ADR-0071-p7-traceability-register-snapshot-about-release-notes-release-blockers-protocol-audit.md (§5.1); grep -n 'release-notes-disclosures' tools/release/release-notes.mjs (l.10, l.28, l.328); grep -n '^## ' docs/handover/release-notes.md (l.71 'Known limitations disclosed in this release').",
+      "expected": "ADR claims are enumerated and exactly true (p7-plan carried rules). ADR-0071 §5.1 names every input the generator reads and §5.2 every section it writes, or a dated amendment records the extra input and section.",
+      "actual": "§5.1 ends 'It reads nothing else.', and the §5.2 list has no disclosures section. D-280 accepted the extra input 'instead of amending the ADR'. Documentation drift only: the generator's behaviour is deterministic from checked-in inputs and tested (D-280: 14/14; release-tool suite in 20-release-tool-tests-sparse.log). Raised afresh as the assignment asks (the old branch's F-DG7-973 is context only, D-281), for acceptance as an observation.",
+      "evidence": [
+        "docs/architecture/adr/ADR-0071-p7-traceability-register-snapshot-about-release-notes-release-blockers-protocol-audit.md",
+        "tools/release/release-notes.mjs",
+        "docs/handover/release-notes.md",
+        "docs/delivery/decisions.md"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG7/round-1/code-security-reviewer.json",
+      "owner": "solution-architect",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-17T10:20:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG7 round 1 (clean re-gate, candidate sha256:9822d8fe) by code-security-reviewer, session b5b4d929-9047-48b6-99d7-f47da960b43d."
+        }
+      ]
+    }
+  ]
+}

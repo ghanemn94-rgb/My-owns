@@ -1,0 +1,368 @@
+{
+  "schema_version": 1,
+  "stage_id": "DG7",
+  "round": 1,
+  "candidate_id": "sha256:9822d8fe947b572d30a24e1f59798587edd610a0c8b8f81a21eaceeb3233a744",
+  "source_commit": "ddf42ccd2630f3d62f6aaf360ff401bbc2bde025",
+  "reviewer_role": "code-security-reviewer",
+  "invocation_reference": {
+    "kind": "claude-code-cli-session",
+    "run_id": "DG7-T-DG7-REV-CS-RG1-code-security-reviewer-20261117T091006Z-b5b4d929",
+    "session_id": "b5b4d929-9047-48b6-99d7-f47da960b43d"
+  },
+  "implementation_author": [
+    "solution-architect",
+    "backend-workflow-engineer",
+    "kpi-benefits-engineer",
+    "frontend-ux-engineer",
+    "devops-engineer",
+    "transformation-analyst",
+    "qa-verifier",
+    "delivery-orchestrator"
+  ],
+  "independence_declaration": {
+    "reviewer_authored_reviewed_scope": false,
+    "statement": "I am code-security-reviewer, session b5b4d929-9047-48b6-99d7-f47da960b43d, task T-DG7-REV-CS-RG1. I verified the assignment's sha256 (b960757eb5d5015e0c993f641489e47a024a7a8de619117237c02c402267340b), and I authored no implementation in the DG7 scope. P7 and its repairs were built by solution-architect, backend-workflow-engineer, kpi-benefits-engineer, frontend-ux-engineer, devops-engineer and transformation-analyst; qa-verifier wrote the pre-freeze acceptance tests, and delivery-orchestrator integrated the work and ran the drills. I formed this verdict without reading any other reviewer's round-1 record or evidence. The directories docs/delivery/test-evidence/DG7/{domain,qa}/round-1 existed during my run, and I did not open them. Two inconsistencies in the assignment are reported, not followed. It asks for `round: 7`, but the record path is round-1 and tools/gates/lib/rules.mjs l.682/794 requires rec.round to equal the round directory and the stages.json round entry (round 1), so this record says round 1. It names docs/delivery/reviews/DG5/round-7/code-security-reviewer.json as the field-set template, but DG5 has no round 7, so I mirrored the field set of docs/delivery/reviews/DG6/round-7/code-security-reviewer.json. This review is engineering evidence only: it grants no business, Finance or IT approval, product gate G6 does not imply DG7, and DG7 implies no G1-G6 approval."
+  },
+  "assignment": "docs/delivery/assignments/DG7/round-1/code-security-reviewer.md",
+  "requirements_checked": [
+    "REQ-DLV-005",
+    "REQ-DLV-008",
+    "REQ-DLV-009",
+    "REQ-DLV-010",
+    "REQ-DLV-011",
+    "REQ-DLV-012",
+    "REQ-DLV-014",
+    "REQ-DLV-018",
+    "REQ-DLV-021",
+    "REQ-DLV-024",
+    "REQ-DLV-027",
+    "REQ-DLV-028",
+    "REQ-DLV-030",
+    "REQ-DLV-031",
+    "REQ-DLV-039",
+    "REQ-DLV-040",
+    "REQ-DLV-041",
+    "REQ-S01-001",
+    "REQ-S01-006",
+    "REQ-S02-003",
+    "REQ-S02-005",
+    "REQ-S16-008",
+    "REQ-S16-009",
+    "REQ-S16-024",
+    "REQ-S16-031",
+    "REQ-S16-033",
+    "REQ-S17-004",
+    "REQ-S19-001",
+    "REQ-S19-002",
+    "REQ-S19-003",
+    "REQ-S19-005",
+    "REQ-S19-007",
+    "REQ-S19-008",
+    "REQ-S19-009",
+    "REQ-S19-010",
+    "REQ-S19-011",
+    "REQ-S19-012",
+    "REQ-S19-013",
+    "REQ-S19-014",
+    "REQ-S19-015",
+    "REQ-S19-016",
+    "REQ-S19-017",
+    "REQ-S19-018",
+    "REQ-S19-019",
+    "REQ-S20-018",
+    "REQ-S20-019",
+    "REQ-S20-023",
+    "REQ-S20-026",
+    "REQ-S20-027",
+    "REQ-S20-028",
+    "REQ-S20-031",
+    "REQ-S21-002",
+    "REQ-S21-003",
+    "REQ-S21-004"
+  ],
+  "checks_run": [
+    {
+      "id": "SEC-RG1-00-candidate-identity",
+      "procedure": "Confirm HEAD and the freeze commit's content, and recompute the candidate from the working tree, with --ref of the source commit, with --diff against the frozen manifest, and in a separate clone.",
+      "command": "git rev-parse HEAD; git rev-parse --is-shallow-repository; git diff --stat ddf42ccd2..HEAD; node tools/gates/candidate.mjs --stage DG7 [--ref ddf42ccd2630f3d62f6aaf360ff401bbc2bde025 | --diff]; the same command in a clone under $TMPDIR",
+      "environment": "Live repository, read-only, not shallow; Node v24.21.0 (/opt/nvm/versions/node/v24.21.0/bin first on PATH). Clone: first a full clone (removed when the shared /var/tmp volume reached 100%), then a --shared sparse clone at ddf42ccd2 without docs/delivery/{test-evidence,handbacks,runs} and trading_agent.",
+      "expected": "candidate sha256:9822d8fe947b572d30a24e1f59798587edd610a0c8b8f81a21eaceeb3233a744 over 3158 files; the freeze commit changes only metadata.",
+      "actual": "Every computation gives sha256:9822d8fe947b572d30a24e1f59798587edd610a0c8b8f81a21eaceeb3233a744 over 3158 files with exit 0: working tree, --ref ddf42ccd2, the full clone, and the sparse clone. --diff reports matches:true with 0 added, removed or changed. HEAD is 2561ce969, the round-1 freeze commit and a child of ddf42ccd2. Its diff touches only the three assignments, the manifest and stages.json, with 0 files outside docs/delivery. The stages.json change is unicode re-escaping of older notes plus the DG7 REVIEWING round-1 entry, whose source_commit and frozen_at equal the manifest's. Not shallow.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-010", "REQ-S20-023", "REQ-DLV-005"],
+      "evidence": ["docs/delivery/test-evidence/DG7/code-security/round-1/01-candidate-identity.log"]
+    },
+    {
+      "id": "SEC-RG1-01-validate-historical-pipeline",
+      "procedure": "Run the validator historically on every approved gate DG6 to DG1, then the pipeline check.",
+      "command": "for s in DG6 DG5 DG4 DG3 DG2 DG1; do node tools/gates/validate.mjs --historical --stage $s; done; node tools/gates/validate.mjs --pipeline",
+      "environment": "Live repository, read-only (HEAD 2561ce969); Node v24.21.0. The validator needs the full delivery records that the sparse clone omits.",
+      "expected": "Each prints PASS and exits 0; the pipeline shows DG7 as the active stage and nothing past it.",
+      "actual": "PASS gate DG6/DG5/DG4/DG3/DG2/DG1 (historical), each exit 0. 'PASS pipeline (active stage: DG7 REVIEWING)', exit 0. No error line.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-014", "REQ-DLV-021", "REQ-DLV-040", "REQ-S21-002", "REQ-DLV-005", "REQ-DLV-010"],
+      "evidence": ["docs/delivery/test-evidence/DG7/code-security/round-1/02-validate-historical.log"]
+    },
+    {
+      "id": "SEC-RG1-02-register-and-release-notes",
+      "procedure": "Validate the register rules at DG7, check that the 54 assigned ids equal the register's DG7-final rows, and check that the generated release notes are current.",
+      "command": "node tools/gates/validate.mjs --register DG7; python3 comparison of the assignment's ids with requirements.csv final_gate=DG7; node tools/release/release-notes.mjs --csv docs/delivery/requirements.csv --deps docs/handover/external-dependencies.json --provisional apps/web/src/i18n --out docs/handover/release-notes.md --check",
+      "environment": "Live repository, read-only (register); review clone at ddf42ccd2 (release notes); Node v24.21.0.",
+      "expected": "PASS register rules; the same 54 ids, all IMPLEMENTED; the release notes up to date with no unfinished item.",
+      "actual": "'PASS register rules at DG7', exit 0. The 54 assigned ids equal the register's 54 DG7-final rows (no duplicate), all IMPLEMENTED. release-notes --check: '0 unfinished item(s), 23 later clause(s); docs/handover/release-notes.md is up to date', exit 0.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S02-005", "REQ-S21-003", "REQ-S02-003"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/code-security/round-1/03-validate-register.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-1/04-d281-tree-diff.log"
+      ]
+    },
+    {
+      "id": "SEC-RG1-03-d281-product-tree",
+      "procedure": "Compare this branch's product tree with the old branch head 1612f85fc, as D-281's reopen condition asks.",
+      "command": "git diff --stat 1612f85fce1a1d67e1da0094bd8e30f7de9c10d0 ddf42ccd2630f3d62f6aaf360ff401bbc2bde025 -- . ':!docs/delivery' ':!trading_agent'; git diff of the same pair for docs/handover/{known-limitations,release-notes}.md",
+      "environment": "Live repository, read-only.",
+      "expected": "Only tools/release/secret-allowlist.json differs outside docs/delivery, plus outputs that D-281's listed changes regenerate.",
+      "actual": "Three files differ. tools/release/secret-allowlist.json: -36 lines, the four entries D-281 and the assignment name. docs/handover/release-notes.md: the register SHA-256 (0be471c0... to edf229cf...) in the English and Arabic identity lines, regenerated from the requirements.csv change D-281 lists. docs/handover/known-limitations.md: the protocol-audit report reference (head e44dcd90e, report SHA-256 0bc940d0..., the committed protocol-audit-rg1.json) and the DG7 C2 count 27 to 25, regenerated by known-limitations.mjs on this branch. The assignment's 'only product difference' statement is therefore slightly incomplete, but both extra files are generated outputs of the disclosed changes and pass their own --check (release-notes above; known-limitations in SEC-RG1-12). No behaviour change. Observation, not a finding.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S21-003", "REQ-S02-005"],
+      "evidence": ["docs/delivery/test-evidence/DG7/code-security/round-1/04-d281-tree-diff.log"]
+    },
+    {
+      "id": "SEC-RG1-04-static-config-bundle",
+      "procedure": "Read the configuration-bundle routes, service, plan and every kind adapter, and check authorization, validation, optimistic concurrency, locking, audit, the per-kind right (ADR-0065 §8), no publish, and the explicit refusal of unportable kinds (ADR-0065 Amendment 1).",
+      "command": "git diff 944aaf810..ddf42ccd2 plus the full files: apps/api/src/modules/transfer/config-bundle/{routes,service,plan,registry}.ts, apps/api/src/modules/{admin/config-bundle-adapters,jobs/config-bundle-adapter,methodology/config-bundle-adapter,tasks/config-bundle-adapter}.ts",
+      "environment": "Source review at ddf42ccd2 (read-only).",
+      "expected": "Every operation checks config_bundle.* at the row's organization. Mutations re-check rights inside the transaction, use If-Match plus the organization lock plus FOR UPDATE, and write an audit event. A commit re-plans and never widens a user's rights, and never publishes.",
+      "actual": "As expected. requireSomeRight and requireRightAt guard every route. freshRightAt (service.ts l.404) re-checks on reloaded grants inside the transaction. Validate and commit take the configBundleImport lock, lock the row FOR UPDATE and check the version. The stored object is read outside the transaction and checked against its SHA-256. plan.ts refuses kind_not_permitted with the reloaded principal, and each adapter re-checks the kind's right at write time with that kind's own rules: upload_policy and branding apply as their routes do; job schedules are written disabled with an outbox event; methodology kinds are written as drafts only, under lockConfigDraft; review policies refuse AUD and technical_admin reviewers. Unportable kinds are refused with 422, never dropped. No finding.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S19-008"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/code-security/round-1/05-static-review-notes.md",
+        "docs/delivery/test-evidence/DG7/code-security/round-1/30-p7-security-integration.log"
+      ]
+    },
+    {
+      "id": "SEC-RG1-05-static-migration-transfer",
+      "procedure": "Read the migration export API, the export plan and manifest, the owner-role import, attachment copy-in, path confinement, identity rebind and unbound sign-in. Sweep the final schema for credential-like columns that the exclusion rules do not cover.",
+      "command": "Source review of apps/api/src/modules/transfer/**, packages/db/src/transfer/{plan,manifest,export,import,rebind}.ts, packages/db/migrations/0133_p7_transfer_migration_manifest.sql, apps/api/src/modules/identity/{oidc,routes}.ts; awk sweep of packages/db/src/schema.ts for hash|token|secret|password|key|credential|nonce|verifier column names",
+      "environment": "Source review at ddf42ccd2 (read-only).",
+      "expected": "No row data or credential leaves through the API. The import loads into an empty database only, never disables or edits audit_event, and is free of SQL injection and path traversal. Unbound carried users cannot sign in.",
+      "actual": "As expected; details in 05-static-review-notes.md. The export needs migration.export at organization scope; it is installation-wide by design (ADR-0064 §7, Residual 4). Manifests are served only when succeeded and checksum-matched, and hold no row values. session and oidc_login_state are excluded, and every *_ref secret reference is unbound. The import verifies that the audit_event triggers are enabled, disables only the user triggers of the other tables inside one transaction, compares the table and column sets with the target catalogue, quotes identifiers and binds row values as one JSON parameter. confinedPath refuses absolute paths and '..'. Both OIDC and dev login refuse identity_unbound. The schema sweep found no unclassified credential. Observation: automation_rule_version.restricted_token_key (0127, a per-row HMAC key for restricted tokens) travels in the package as row data so that tokens stay valid after transfer; it is not a password hash, session or credential, so the REQ-S19-016 'no password hashes' clause holds. No finding.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S19-014", "REQ-S19-016", "REQ-S19-017", "REQ-S20-018", "REQ-S17-004"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/code-security/round-1/05-static-review-notes.md",
+        "docs/delivery/test-evidence/DG7/code-security/round-1/30-p7-security-integration.log"
+      ]
+    },
+    {
+      "id": "SEC-RG1-06-static-retention-backup-restore-dryrun",
+      "procedure": "Read the retention classes and runs, the archival job, the 0144 purge function and grants, the backup and restore scripts and the migrate dry-run.",
+      "command": "Source review of apps/api/src/modules/retention/**, apps/worker/src/handlers/retention/archive.ts, packages/db/migrations/0143-0148, deploy/scripts/{backup,restore}.sh, packages/db/src/dry-run.ts",
+      "environment": "Source review at ddf42ccd2 (read-only).",
+      "expected": "Only approved operational classes can archive or purge, with database rechecks, no injection, audit per action, and a restore into an empty target only.",
+      "actual": "Retention matches the expectation. updateClass and createRun re-check rights inside the transaction, take the retention lock, check If-Match and the single-active-run rule, and audit. retention_purge_record() is SECURITY DEFINER with EXECUTE granted only to mth_app; it uses %I/%L quoting and refuses non-operational, unarchived, append-only and not-past-retention rows. Read endpoints return keys only. restore.sh checks every checksum, the same PostgreSQL major and an empty target. dry-run.ts drops only the throw-away database it created (throwAway is set after CREATE succeeds, l.421). The defect is in backup.sh (F-DG7-1012), recorded in SEC-RG1-11.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S16-024", "REQ-S19-013", "REQ-S20-019"],
+      "evidence": ["docs/delivery/test-evidence/DG7/code-security/round-1/05-static-review-notes.md"]
+    },
+    {
+      "id": "SEC-RG1-07-static-oidc-readiness-web",
+      "procedure": "Review the OIDC loopback exception (D-258), the /readyz storage and worker probe, the /admin/deployment status, and the P7 web screens for raw-HTML sinks.",
+      "command": "git diff 944aaf810..ddf42ccd2 -- apps/api/src/modules/identity/oidc.ts packages/config/src; source review of apps/api/src/modules/evidence/readiness.ts and apps/api/src/modules/platform/{health,deployment}.ts; grep of the P7 web diff for dangerouslySetInnerHTML|innerHTML|eval|href",
+      "environment": "Source review at ddf42ccd2 (read-only).",
+      "expected": "In production, http issuers are accepted only on exact loopback hosts. Probes are read-only and leak no configuration. No XSS sink.",
+      "actual": "secureIssuerAllowed allows https, or http on an exact LOOPBACK_HOSTS hostname match (localhost, 127.0.0.1, [::1]). load.test.ts T-R10 refuses http://localhost.evil.example and passed in SEC-RG1-09. The storage probe is a head() call, cached 5 s, returning enums and an error code only. /admin/deployment requires operations.read and returns base URL, versions and enums. The P7 web diff has no raw-HTML sink, and its download hrefs come from internal path helpers and uuids. No finding.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S19-010", "REQ-S01-006", "REQ-S16-008"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/code-security/round-1/05-static-review-notes.md",
+        "docs/delivery/test-evidence/DG7/code-security/round-1/31-p7-unit.log"
+      ]
+    },
+    {
+      "id": "SEC-RG1-08-p7-security-integration",
+      "procedure": "Run the security-relevant P7 integration suites on a disposable PostgreSQL in my port range.",
+      "command": "QA_PG_PORT=32400 MTH_PORT_POOL=32400-32499 LANG= LC_ALL= tests/qa/support/with-pg.sh npx vitest run --configLoader runner --project integration apps/api/test/integration/{transfer,retention,release} apps/api/test/integration/identity/unbound-signin.test.ts apps/api/test/integration/aud-write-deny.test.ts apps/api/test/integration/platform/{deployment-status,readiness-storage-worker}.test.ts apps/worker/test/integration/retention-archive.test.ts packages/db/test/integration/{p7-retention-guards,p7-transfer-guards,transfer-roundtrip,transfer-load,transfer-export,transfer-locks}.test.ts",
+      "environment": "Review clone at ddf42ccd2 (node_modules copied from the live tree, symlinks preserved); disposable PostgreSQL 16.15 cluster on port 32400 (UTF8, C locale); Node v24.21.0; locale unset; machine shared with two other reviewers (load average about 20 on 4 CPUs).",
+      "expected": "All files pass, exit 0.",
+      "actual": "Test Files 22 passed (22); Tests 322 passed (322); Duration 683.74 s; exit 0. No failed, skipped or flaky test. The five lines matching 'error|fail' are test titles (for example 'reconcile.mjs exits 2; usage errors are 2'), not failures. The suites cover 403 for every non-holder (aud-write-deny 128 tests), If-Match/409, the 422 codes, audit rows, kind_not_permitted, plan_changed, the organization-scope export rule, the import guards and triggers, purge guards and unbound sign-in.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S19-008", "REQ-S19-014", "REQ-S19-016", "REQ-S16-024", "REQ-S19-010", "REQ-S02-003", "REQ-S20-018"],
+      "evidence": ["docs/delivery/test-evidence/DG7/code-security/round-1/30-p7-security-integration.log"]
+    },
+    {
+      "id": "SEC-RG1-09-p7-unit",
+      "procedure": "Run the unit tests of the P7 modules, the config loader (OIDC loopback T-R10), the P7 wiring and the architecture boundaries.",
+      "command": "LANG= LC_ALL= npx vitest run --configLoader runner --project unit-node packages/db/src/transfer apps/api/src/modules/transfer apps/api/src/modules/retention apps/api/src/modules/release apps/api/src/modules/platform packages/config/src apps/api/src/p7-wiring.test.ts apps/api/src/architecture.test.ts",
+      "environment": "Review clone at ddf42ccd2; Node v24.21.0; locale unset.",
+      "expected": "All pass, exit 0.",
+      "actual": "Test Files 40 passed (40); Tests 608 passed (608); exit 0. No failure or skip.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S19-010", "REQ-S19-014", "REQ-S19-008", "REQ-S02-003"],
+      "evidence": ["docs/delivery/test-evidence/DG7/code-security/round-1/31-p7-unit.log"]
+    },
+    {
+      "id": "SEC-RG1-10-secret-scan-payload-history-allowlist",
+      "procedure": "Run the repository secret scan on the payload and over the whole history, and judge the allow-list: value-hash pinning, protected paths, and stale detection after the four removals on this branch.",
+      "command": "node tools/release/secret-scan.mjs --scope payload; node tools/release/secret-scan.mjs --scope history; review of tools/release/secret-allowlist.json (44 entries) and its git diff against 1612f85fc",
+      "environment": "Review clone at ddf42ccd2 (history through git alternates of the live repository's objects); Node v24.21.0.",
+      "expected": "PASS with no stale entry in both scopes; every entry pinned by value hash, with no entry covering a protected path.",
+      "actual": "Payload: 'secret-scan: PASS (payload; 3158 files; allowed 33; canary (documented) 22)', exit 0. History: 'secret-scan: PASS (history; 35926 files; allowed 219; canary (documented) 27)', exit 0, in 5 min 50 s. The orchestrator's prefreeze-rg1b reported 35909 blobs; the 17 more here are the pre-freeze evidence that ddf42ccd2 added. No stale entry, so the four removed entries are correctly absent and the remaining history-only entries still match. Entries are pinned by rule plus valueSha256 (plus path outside the history scope), protected paths are refused by the loader, and an unused entry fails. This confirms the allow-list is sound on this branch. The rule-level gap is in SEC-RG1-11.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S16-031", "REQ-S21-003"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/code-security/round-1/11-secret-scan-payload.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-1/12-secret-scan-history.log"
+      ]
+    },
+    {
+      "id": "SEC-RG1-11-secret-scan-s3-lowercase-exemption",
+      "procedure": "Reproduce the S3 'i18n key' exemption with the secret shapes this project generates. Then probe, in the disposable clone only, whether narrowing the exemption hides or adds anything in the real payload and history.",
+      "command": "bash docs/delivery/test-evidence/DG7/code-security/round-1/repro/s3-lowercase-secret-repro.sh <clone>; patched copy of secret-scan.mjs (l.89 narrowed to values containing '.' or '_') run with --scope payload and --scope history",
+      "environment": "Review clone at ddf42ccd2; fixtures generated at run time under $TMPDIR with openssl rand (no secret-shaped value committed); Node v24.21.0.",
+      "expected": "Per ADR-0063 §1.2/§5 and security-controls.md SC-13, a 48-hex POSTGRES_PASSWORD, a 32-hex s3_access_key and a 24-character lower-case OIDC_CLIENT_SECRET are high-entropy secret assignments and are reported S3 (exit 1).",
+      "actual": "FAIL (F-DG7-1011, Medium). The three lower-case cases give 'secret-scan: PASS (path; 1 files; allowed 0 ...)', exit 0 each. isNonSecretValue() returns true for entropies 3.70, 3.65 and 4.25, because secret-scan.mjs l.89 /^[a-z0-9_.]+$/ ('an i18n key') returns before the entropy rule at l.96. The mixed-case control is one S3 hit, exit 1. The probe with the narrowed rule PASSes the payload (3159 files: the probe file itself was in the tree) and history (35926 blobs) with no new hit. Nothing is hidden today, and a fix adds no false positive. The repro script itself exits 0: it prints each scanner exit and does not assert.",
+      "exit_status": 0,
+      "result": "FAIL",
+      "requirements": ["REQ-S16-031", "REQ-S21-003"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/code-security/round-1/repro/s3-lowercase-secret-repro.sh",
+        "docs/delivery/test-evidence/DG7/code-security/round-1/10-s3-lowercase-secret-repro.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-1/13-secret-scan-payload-probe.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-1/13b-secret-scan-history-probe.log"
+      ]
+    },
+    {
+      "id": "SEC-RG1-12-backup-set-file-modes",
+      "procedure": "Run backup.sh's database phase on a migrated disposable database under the default umask 022, and list the set's file modes and the dump's table data.",
+      "command": "QA_PG_PORT=32450 MTH_PORT_POOL=32400-32499 tests/qa/support/with-pg.sh bash docs/delivery/test-evidence/DG7/code-security/round-1/repro/backup-set-mode-repro.sh <clone>",
+      "environment": "Review clone at ddf42ccd2; disposable PostgreSQL 16.15 on port 32450; migrations 0001-0152 applied as mth_owner (135 files); MTH_TRANSFER_ATTACHMENTS=none as in the Compose backup service; umask 0022.",
+      "expected": "The set (whole database including users, audit and sessions) is owner-only (0700/0600), and the Compose profile does not fall back to /tmp.",
+      "actual": "FAIL (F-DG7-1012, Medium). backup.sh exit 0. db/database.dump and every state and config file are 644, and the set directories are 755. pg_restore --list shows TABLE DATA app_user, audit_event and session. compose.yaml l.274 mounts ${MTH_BACKUP_ROOT:-/tmp/mth-backups}. Attempt 1 of the script stopped before any backup with 'mth-db: Invalid configuration: NODE_ENV is required for db-cli' (exit 1). The script then set NODE_ENV=test, and attempt 2 is the result above; both are in the log.",
+      "exit_status": 0,
+      "result": "FAIL",
+      "requirements": ["REQ-S19-012"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/code-security/round-1/repro/backup-set-mode-repro.sh",
+        "docs/delivery/test-evidence/DG7/code-security/round-1/14-backup-set-mode-repro.log"
+      ]
+    },
+    {
+      "id": "SEC-RG1-13-release-tool-suite",
+      "procedure": "Run every release-tool and licence test: seal and verify-seal tamper cases, secret, claims and asset scanner self-tests, protocol audit, archive and tar, and handover checks. Re-run the file whose failures came from the sparse clone.",
+      "command": "node --test tools/release/tests/*.test.mjs licenses/tests/*.test.mjs; then, after adding docs/delivery/test-evidence/DG7/orchestrator/protocol-audit/ to the sparse checkout: node --test tools/release/tests/check-handover.test.mjs",
+      "environment": "Review clone at ddf42ccd2 (sparse; read-only HOME, so the pnpm store under /root is not writable); Node v24.21.0; heavily loaded machine.",
+      "expected": "All tests pass, except environment-dependent tests that skip with a BLOCKED reason.",
+      "actual": "Run 1: tests 471, pass 462, fail 7, skipped 2, exit 1, duration 2970 s. Every failure is explained. (a) Six T-H4 subtests failed with 'no protocol-audit*.json under docs/delivery has SHA-256 0bc940d0...' or ENOENT, because the sparse clone omitted docs/delivery/test-evidence. After adding that one directory, check-handover.test.mjs passed 51/51, exit 0, T-H4 included (21-check-handover-rerun.log). (b) T-A5 failed at 'step install exit 226' with 'EROFS: read-only file system, symlink ... -> /root/.local/share/pnpm/store/v10/projects/...': pnpm writes into the read-only HOME store of this sandbox; see SEC-RG1-14. Skips: T-A3 (bsdtar not installed) and T-A11 (apps/web/dist absent at suite start; see SEC-RG1-14). All seal and verify-seal tamper cases (T-M9 to T-M12) and the secret and claims self-tests pass. The orchestrator's prefreeze-rg1b run reports 469 pass, 0 fail and 2 skipped on the same tree.",
+      "exit_status": 1,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-041", "REQ-S20-028", "REQ-DLV-031", "REQ-S16-033", "REQ-S16-009", "REQ-S19-001", "REQ-S19-003", "REQ-S19-005", "REQ-S19-007", "REQ-S19-011", "REQ-S19-015", "REQ-DLV-008", "REQ-DLV-009", "REQ-DLV-011", "REQ-DLV-012", "REQ-DLV-018", "REQ-DLV-024", "REQ-DLV-027", "REQ-DLV-028"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/code-security/round-1/20-release-tool-tests-sparse.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-1/21-check-handover-rerun.log",
+        "docs/delivery/test-evidence/DG7/orchestrator/prefreeze-rg1b/release-tool-tests.log"
+      ]
+    },
+    {
+      "id": "SEC-RG1-14-build-from-archive-and-real-asset-scan",
+      "procedure": "Reproduce the build from the archive in a network namespace (T-A5), and the asset scan of the real built SPA, assembled runtime and configuration (T-A11, REQ-S19-019).",
+      "command": "pnpm -r build (clone); cp of the pnpm store to $TMPDIR; deploy/scripts/assemble-runtime.sh --store-dir $TMPDIR/pstore $TMPDIR/rtws $TMPDIR/runtime; node tools/release/scan-assets.mjs --web apps/web/dist --runtime $TMPDIR/runtime --config .",
+      "environment": "Review clone at ddf42ccd2; read-only HOME; local pnpm store /root/.local/share/pnpm/store/v10 (290 MB); no network.",
+      "expected": "build-from-archive exit 0 with its scan-assets step; scan-assets exit 0 on the real build.",
+      "actual": "BLOCKED in this environment. pnpm -r build exit 0; the only warning is vite's 'Adjust chunk size limit' advisory. T-A5 fails on EROFS (SEC-RG1-13). With a writable store copy, assemble-runtime fails 'ERR_PNPM_NO_OFFLINE_TARBALL ... @aws-sdk/client-s3 3.1156.0' (the local store lacks that tarball), so no runtime tree exists, and scan-assets is BLOCKED, exit 2. An earlier attempt failed only because rsync is not installed; it is shown in the log. I reviewed, but did not reproduce, the orchestrator's prefreeze-rg1b log, where T-A5 passes in 207 s; T-A5 asserts that install, build, runtime assembly and the scan-assets step all succeed. That run also skipped T-A11 (no assembled runtime tree). By reading I checked the scan-assets allow-list (T3 entries pinned by package, file and SHA-256; R1/R3/R5 refused in T1/T2), and its T-A10 self-tests passed in SEC-RG1-13.",
+      "exit_status": 2,
+      "result": "BLOCKED",
+      "requirements": ["REQ-S19-002", "REQ-S19-019"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/code-security/round-1/40-build.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-1/41-asset-scan-real-build.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-1/20-release-tool-tests-sparse.log",
+        "docs/delivery/test-evidence/DG7/orchestrator/prefreeze-rg1b/release-tool-tests.log"
+      ]
+    },
+    {
+      "id": "SEC-RG1-15-image-compose-container-half",
+      "procedure": "Review the Dockerfile, .dockerignore, Compose and image-bundle changes, and judge the orchestrator's container-half evidence (D-267). I did not re-run it: there is no Docker daemon in agent sandboxes.",
+      "command": "git diff 944aaf810..ddf42ccd2 -- deploy/docker .dockerignore deploy/compose; reading of docs/delivery/test-evidence/DG7/orchestrator/host/* and D-267",
+      "environment": "Source review at ddf42ccd2 (read-only); no Docker daemon.",
+      "expected": "No secret or delivery material enters an image layer; the fixes for host runs 1 and 2 are sound.",
+      "actual": "Static review: PASS. The .dockerignore re-include is limited to apps/*/src/**/*secret*.ts(x) and packages/*/src/**/*secret*.ts(x) (source files) and docs/delivery/requirements.csv (the register snapshot). .env*, *.pem, *.key, other *secret* files, docs/delivery, tools and .claude stay excluded. The Dockerfile adds the packages/reporting manifest and a PNPM_HOME directory. Container half: the D-267 host-run logs report build, save/load, compose up and /readyz, the no-egress smoke and Keycloak e2e PASS. I judge them as consistent evidence, but this check does not mark them PASS as a run of mine, and live registry, live CI and the enterprise IdP remain the documented residuals (D-057, D-058, D-049). The backup profile's /tmp fallback is in F-DG7-1012.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-S16-008", "REQ-S19-018", "REQ-S01-001", "REQ-S19-009"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/code-security/round-1/05-static-review-notes.md",
+        "docs/delivery/test-evidence/DG7/orchestrator/host/host-run-3c.log"
+      ]
+    },
+    {
+      "id": "SEC-RG1-16-adr-0071-release-notes-text",
+      "procedure": "Check that the ADR-0071 §5 claims about the release-notes generator are exactly true (raised afresh, as the assignment asks for the old F-DG7-973).",
+      "command": "grep -n 'It reads nothing else' docs/architecture/adr/ADR-0071-*.md; grep -n 'release-notes-disclosures' tools/release/release-notes.mjs; grep -n '^## ' docs/handover/release-notes.md",
+      "environment": "Source review at ddf42ccd2 (read-only).",
+      "expected": "§5.1 names every input the generator reads, and §5.2 every section it writes.",
+      "actual": "FAIL (F-DG7-1013, Low, documentation only). §5.1 says 'It reads nothing else' and §5.2 lists seven sections. The generator also reads tools/release/release-notes-disclosures.json (l.10, 28, 328) and writes 'Known limitations disclosed in this release' (release-notes.md l.71). D-280 accepted this without amending the ADR. Not blocking; proposed for acceptance as an observation.",
+      "exit_status": 0,
+      "result": "FAIL",
+      "requirements": ["REQ-S02-005"],
+      "evidence": ["docs/delivery/test-evidence/DG7/code-security/round-1/05-static-review-notes.md"]
+    },
+    {
+      "id": "SEC-RG1-17-disclosures-and-q19-rows",
+      "procedure": "Judge the assigned disclosures from the code-security view: D-249/D-270, D-274 (Q19 extension, 18 rows), D-278, D-280, D-281, A27 K11 partial, ADR-0065 Amendment 1, D-267 and D-269. Read the A26 and A27 drill reports and the register notes of the Q19 rows.",
+      "command": "reading of docs/delivery/decisions.md (D-249, D-267, D-269, D-270, D-274, D-278, D-280, D-281), docs/delivery/test-evidence/DG7/orchestrator/{a26,a27}/drill-report.md, the requirements.csv notes of REQ-DLV-030 and REQ-S20-027; code check of UNPORTABLE_BUNDLE_KINDS (config-bundle/service.ts createExport)",
+      "environment": "Live repository, read-only.",
+      "expected": "No disclosure hides a security or integrity defect. Each Q19 row names an exact later clause. ADR-0065 Amendment 1's exclusion of automation_rule is refused explicitly in code.",
+      "actual": "No security or integrity defect is hidden. The protocol hits of D-249 and D-270 are record-keeping, with no product effect (C4 actual shared writes 0, C8 clean). ADR-0065 Amendment 1: createExport refuses an unportable kind with 422 config_bundle.unportable_reference, so nothing is silently dropped. D-267, D-269 and D-278 concern drill environment and timing; the D-278 mode-2 rule explains only schedule-triggered executions inside the window. D-281 holds (SEC-RG1-03). A26: the injected defect was found, fixed with regression tests and reverified by a non-author. REQ-DLV-030 judged literally: the clause 'work continues from progress.md' was NOT demonstrated, because A27 K11 is PARTIAL and the resumption was rebuilt from stages.json and decisions.md, with no K11 re-drill against the refreshed progress.md. The row's own marker makes completion 'a passing K11 re-drill ... or the release-auditor's decision on the disclosed A27 K11 partial at the DG7 gate'. I do not treat that clause as met, and I raise no security finding on it. Under D-274 the acceptance decision is the release-auditor's. The other Q19 rows (for example REQ-DLV-041 and REQ-S20-028, sealing after approval) name genuinely post-approval clauses whose tooling passes in SEC-RG1-13.",
+      "exit_status": 0,
+      "result": "PASS",
+      "requirements": ["REQ-DLV-030", "REQ-S20-026", "REQ-S20-027", "REQ-S20-031", "REQ-DLV-039", "REQ-S21-004", "REQ-DLV-008", "REQ-DLV-009", "REQ-DLV-011", "REQ-DLV-012", "REQ-DLV-018", "REQ-DLV-024", "REQ-DLV-027", "REQ-DLV-028"],
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/orchestrator/a27/drill-report.md",
+        "docs/delivery/test-evidence/DG7/orchestrator/a26/drill-report.md",
+        "docs/delivery/test-evidence/DG7/orchestrator/protocol-audit/protocol-audit-rg1.json",
+        "docs/delivery/test-evidence/DG7/qa/test-level-index.md",
+        "docs/delivery/decisions.md"
+      ]
+    }
+  ],
+  "findings": ["F-DG7-1011", "F-DG7-1012", "F-DG7-1013"],
+  "verdict": "FAIL",
+  "evidence_paths": [
+    "docs/delivery/test-evidence/DG7/code-security/round-1/01-candidate-identity.log",
+    "docs/delivery/test-evidence/DG7/code-security/round-1/02-validate-historical.log",
+    "docs/delivery/test-evidence/DG7/code-security/round-1/03-validate-register.log",
+    "docs/delivery/test-evidence/DG7/code-security/round-1/04-d281-tree-diff.log",
+    "docs/delivery/test-evidence/DG7/code-security/round-1/05-static-review-notes.md",
+    "docs/delivery/test-evidence/DG7/code-security/round-1/10-s3-lowercase-secret-repro.log",
+    "docs/delivery/test-evidence/DG7/code-security/round-1/11-secret-scan-payload.log",
+    "docs/delivery/test-evidence/DG7/code-security/round-1/12-secret-scan-history.log",
+    "docs/delivery/test-evidence/DG7/code-security/round-1/13-secret-scan-payload-probe.log",
+    "docs/delivery/test-evidence/DG7/code-security/round-1/13b-secret-scan-history-probe.log",
+    "docs/delivery/test-evidence/DG7/code-security/round-1/14-backup-set-mode-repro.log",
+    "docs/delivery/test-evidence/DG7/code-security/round-1/20-release-tool-tests-sparse.log",
+    "docs/delivery/test-evidence/DG7/code-security/round-1/21-check-handover-rerun.log",
+    "docs/delivery/test-evidence/DG7/code-security/round-1/30-p7-security-integration.log",
+    "docs/delivery/test-evidence/DG7/code-security/round-1/31-p7-unit.log",
+    "docs/delivery/test-evidence/DG7/code-security/round-1/40-build.log",
+    "docs/delivery/test-evidence/DG7/code-security/round-1/41-asset-scan-real-build.log",
+    "docs/delivery/test-evidence/DG7/code-security/round-1/repro/s3-lowercase-secret-repro.sh",
+    "docs/delivery/test-evidence/DG7/code-security/round-1/repro/backup-set-mode-repro.sh"
+  ],
+  "reviewed_at": "2026-11-17T10:25:00Z",
+  "summary": "FAIL, with two Medium findings that must be repaired before the gate (D-192) and one Low documentation finding.\n- F-DG7-1011 (Medium, REQ-S16-031): secret-scan.mjs l.89 exempts every lower-case alphanumeric S3 value as an 'i18n key' before the entropy rule. A committed 48-hex password (init-secrets.sh's own `openssl rand -hex 24` shape) therefore passes the repository scan, contrary to ADR-0063 §5 and security-controls.md SC-13. Probes show nothing is hidden today.\n- F-DG7-1012 (Medium, REQ-S19-012): backup.sh writes the full database dump (users, audit, sessions) as 0644 in 0755 directories, and the Compose backup profile falls back to the host's /tmp/mth-backups.\n- F-DG7-1013 (Low, REQ-S02-005): ADR-0071 §5.1-§5.2 not amended for the release-notes disclosures input and section (D-280; the old F-DG7-973 raised afresh).\nEverything else I reviewed in P7 is sound: configuration bundles, migration export and import, retention and purge, the OIDC loopback exception, the scanner allow-lists, the image and Compose changes, and seal and verify. The candidate identity holds (sha256:9822d8fe, 3158 files), --historical DG6-DG1 and --pipeline pass, register DG7 passes, the P7 integration suites pass (322/322) and so do the unit suites (608/608). The release-tool suite passes, except for failures explained by the sparse clone (T-H4, which then passes 51/51) and by this sandbox (T-A5). The real-build asset scan (T-A5/T-A11) is BLOCKED here: the HOME pnpm store is read-only and lacks the @aws-sdk/client-s3 tarball. REQ-DLV-030's progress.md clause is not demonstrated (A27 K11 partial); per D-274 the acceptance decision is the release-auditor's. The record's round is 1, not the assignment's 7, as the validator requires."
+}
