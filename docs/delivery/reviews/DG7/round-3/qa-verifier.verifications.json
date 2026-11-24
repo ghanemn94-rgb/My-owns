@@ -1,0 +1,58 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG7-1022",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified as the reporter on candidate sha256:cf1fb7d5 (source 3e8f5bce2). The AN-P7J repair changed what the finding named. (a) Citations: docs/handover/release-notes.md cites no F-DG7-9xx id any more; in docs/delivery/requirements.csv the same 25 rows still cite F-DG7-913…971, and every citation (checked within ±400 characters of each id) is now qualified in place as '[old-branch record: branch claude/mobily-transformation-platform-dg6-regate at 1612f85fc, D-281/D-282]' (0 unqualified, log 79); findings.json on this branch has no F-DG7-9xx id, which is now stated rather than implied. (b) Later clauses: REQ-DLV-014 now reads 'every DG7 finding in this branch's docs/delivery/findings.json (the re-gate rounds' findings, F-DG7-1001 onward) fixed and verified by a non-owner before approval (or … accepted as an observation …), shown by validate.mjs --stage DG7 at the DG7 gate on this branch', which this branch's gate can show; REQ-DLV-012 names the C3 hits 'that protocol-audit.mjs --stage DG7 reports on this branch's frozen DG7 candidate' and lists seven handbacks, which my independent protocol audit reproduces exactly (C3 DG7: AN-P7B, ARCH-R2, ARCH-R5, BE-R5, DO-A2, DO-D8, FE-C3; log 55b); REQ-DLV-011 and REQ-DLV-018 are rewritten the same way. release-notes --check is current (23 later clauses) and the register SHA-256 in the notes equals the file (log 54). Closed.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-3/79-f1022-verification.log",
+        "docs/delivery/test-evidence/DG7/qa/round-3/55b-protocol-audit-compare.log",
+        "docs/delivery/test-evidence/DG7/qa/round-3/54-handover-tools.log",
+        "docs/delivery/requirements.csv",
+        "docs/handover/release-notes.md"
+      ]
+    },
+    {
+      "finding_id": "F-DG7-1051",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified as the reporter on candidate sha256:cf1fb7d5. The finding was that the Compose half of A19 had never been run although the handover said it was recorded. It has now been run and recorded: compose-backup-rg3 (tree bf5bf82a7) FAILED at C3 ('the Compose file //deploy/compose/compose.yaml does not exist'), a real defect that DO-D13 repaired (mounts under /mth/deploy, preflight refusal before anything is written, DATABASE_URL_FILE in transfer-attachments copy-out with an integration test, --cap-add DAC_READ_SEARCH); compose-backup-rg3b (tree ebe11c378, image rebuilt, build exit 0) PASS C0-C11: the three §3.2 commands on the pinned postgres:18 and app image, an owner-only set (C6), restore.sh into a second Compose project with new volumes (C7-C8, R1-R8 PASS), migrate 'up to date' and GET /readyz 200 over HTTP (C10). The drill tree differs from this candidate only in records and docs (log 81: decisions.md, findings.json, known-limitations.md, release-notes.md, secret-allowlist.json), and the four DO-D13 file hashes equal the candidate's. I cannot reproduce the drill (no Docker daemon in this sandbox) and do not mark the drill PASS myself; I judge its logs. The guide's statement 'recorded there' is now supported, and compose-backup-drill.sh is named in §8. The run's own log, however, holds an unexplained error line in C5 ('cat: /tmp/mth-backup.hBaAOK/config.sha: No such file or directory'), and the drill copied 0 evidence objects and needed an undocumented chown (C9). Those are new, distinct defects, raised as F-DG7-1081 and F-DG7-1082 (Medium); they do not reopen this finding, whose subject (the half was never run and the claim was unsupported) is resolved. Closed.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg3b/02-compose-backup-drill.log",
+        "docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg3b/02-stdout.log",
+        "docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg3b/run.txt",
+        "docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg3/02-stdout.log",
+        "docs/delivery/test-evidence/DG7/qa/round-3/81-compose-drill-tree.log",
+        "docs/delivery/handbacks/DG7/T-DG7-DO-D13-devops-engineer.md",
+        "docs/handover/backup-restore.md"
+      ]
+    },
+    {
+      "finding_id": "F-DG7-1052",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified as the reporter on candidate sha256:cf1fb7d5. SA-ADR72 added dated amendments: ADR-0063 Amendment 2 (2026-11-17) replaces the S3 'do not match' cell of §1.2 with S3 as built (A2.1, 18 ordered exemptions and how each is pinned), states the narrowed isI18nKey rule (A2.2: at least one separator, segments at most 20 characters and 3 digits) and records the 64-hex checksum exemption with its trade-off and recommended narrowing (A2.3), adding residuals 9 and 10 to §5 (A2.4); §1.2 and §5 carry pointers. ADR-0066 Amendment 1 (2026-11-17) replaces the §4 list with the seven checks as built including ownerOnly (A1.1), states where check 3 runs in the Compose sequence (A1.2), and extends §5 with umask 077 and owner-only modes, the refused shared root, the symlink rule (A1.3 item 3, matching DO-D12's code and T-E13a-d, which pass: log 73b; my probe log 77) and the required MTH_BACKUP_ROOT with create_host_path: false (A1.4). DO-D11 Q1 and Q2 are answered (ADR amendments; DO-D12 handback §5). I checked the stated rules against tools/release/secret-scan.mjs and deploy/scripts/backup.sh. Closed. The later DO-D13 change (DAC_READ_SEARCH, DATABASE_URL_FILE, /mth/deploy mounts) is not in ADR-0066; that is new drift created after SA-ADR72, raised separately as F-DG7-1083 (Low).",
+      "evidence": [
+        "docs/architecture/adr/ADR-0063-p7-secret-hygiene-claims-scan-security-controls-evidence.md",
+        "docs/architecture/adr/ADR-0066-p7-backup-restore-backup-set-manifest-restore-checks-drill.md",
+        "docs/delivery/test-evidence/DG7/qa/round-3/73b-backup-restore-tests.log",
+        "docs/delivery/test-evidence/DG7/qa/round-3/77-backup-root-probe.log",
+        "docs/delivery/handbacks/DG7/T-DG7-DO-D12-devops-engineer.md"
+      ]
+    },
+    {
+      "finding_id": "F-DG7-1053",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified as the reporter on candidate sha256:cf1fb7d5 with my round-2 probe extended (log 77, no database: a root that passes the check stops later at 'DATABASE_URL … is not set'). A symlink to an owner-only 0700 directory, a chain of two links, a relative link given from another working directory and a link to a 0750 directory are accepted; links to 1777 and 0770 directories are refused with 'BLOCKED: the backup root <link> is a symbolic link to <target>, which is writable by group or others; use an owner-only directory (chmod 0700)' (exit 2), naming the target; a dangling link and a link to a regular file are refused with accurate messages; the plain-directory cases are unchanged (1777, 0777, 0770 refused; 0700, 0750 accepted; a regular file refused); nothing is created in any probed root. T-E13a-d pass (log 73b). The message and backup-restore.md §3.3 now say what the script does. Informational: a link to an owner-only directory under a world-writable parent is accepted, as a plain directory there is; ADR-0066 A1.3 item 4 and residual 7 disclose that ancestors are not checked. Closed.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-3/77-backup-root-probe.log",
+        "docs/delivery/test-evidence/DG7/qa/round-3/scripts/backup-root-probe.sh",
+        "docs/delivery/test-evidence/DG7/qa/round-3/73b-backup-restore-tests.log",
+        "deploy/scripts/backup.sh",
+        "docs/handover/backup-restore.md"
+      ]
+    }
+  ]
+}

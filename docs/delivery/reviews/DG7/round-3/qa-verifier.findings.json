@@ -1,0 +1,99 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG7-1081",
+      "stage_id": "DG7",
+      "requirement": "REQ-S19-012",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "The split-phase (Compose) backup of backup-restore.md §3.2 writes a manifest whose config section lists no file, and --phase finish prints 'cat: …/config.sha: No such file or directory': the config listing is kept in the per-process temporary directory of the database phase",
+      "reproduction": "Independent test docs/delivery/test-evidence/DG7/qa/tests/qa-dg7-rg3-backup-split-phase-config.test.mjs, copied into deploy/scripts/tests/ of a disposable clone at 3e8f5bce2 and run with 'tests/qa/support/with-pg.sh node --test deploy/scripts/tests/qa-dg7-rg3-backup-split-phase-config.test.mjs' (log 82). Demo data (mth-db migrate + seed-demo, SYNTHETIC). (a) Control: backup.sh --phase all -> manifest.config.files lists config/compose.yaml and config/images.lock.json with their SHA-256, config.sha256 = SHA-256 of that listing: PASS. (b) The §3.2 sequence: backup.sh --phase database (MTH_TRANSFER_ATTACHMENTS=none), transfer-attachments copy-out in another process (DATABASE_URL_FILE, --export-id from .backup-state/id), backup.sh --phase finish: exit 0 and 'succeeded', but stderr is 'cat: <TMPDIR>/qa-rg3-split-…/mth-backup.pGlngd/config.sha: No such file or directory' and the manifest has config = {\"files\":[],\"sha256\":\"3a7ce9…\"} while config/ holds compose.yaml and images.lock.json: FAIL. Cause: deploy/scripts/backup.sh l.446-447 (database phase) writes the listing to \"$WORK/config.sha\" and only its digest to .backup-state/config_sha256; WORK is a new mktemp directory per process (l.311) removed by the EXIT trap (l.319); the finish phase (l.585) reads -v cfg=\"$(cat \"$WORK/config.sha\")\" from its own new WORK, so cfg is empty. The orchestrator's PASS run shows the same line: docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg3b/02-compose-backup-drill.log l.257 ('cat: /tmp/mth-backup.hBaAOK/config.sha: No such file or directory' inside step C5, which the drill marked PASS; nothing in the drill reads stderr or the manifest's config section). T-E11 (backup-restore.test.mjs) checks only ownerOnly and the success line, so the suite stays green.",
+      "expected": "ADR-0066 §2: the manifest's config is { \"files\": [{ \"path\", \"sha256\" }], \"sha256\" } describing config/ (§3). A set from the documented Compose procedure (§3.2, the production procedure for IT) has the same config section as one from --phase all, config.sha256 is the digest of the listed entries, and no phase prints an error line (for example: keep the listing in .backup-state/ like the other phase facts, or recompute it in the finish phase). A regression test covers the split sequence (the test above can be promoted), and the orchestrator's Compose drill is re-run after the repair, with the drill also failing on an error line or an empty config section, and with at least one evidence object in the source (see F-DG7-1082).",
+      "actual": "Every backup taken with the documented Compose sequence has a manifest that lists no configuration file and a config.sha256 that is the digest of a listing the manifest does not contain, and the operator sees a 'No such file or directory' error in a run reported as succeeded. Bounded: the config files are present in config/ and are hashed in the manifest's files[] (R1 at restore checks them), restore.sh does not read the config section, and the A19 acceptance (database, evidence, audit, snapshots, job state recovered) is met by the container-free drill. The orchestrator's rg3b log contains this error line unexplained although its run was recorded as PASS C0-C11.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-3/82-split-phase-config.log",
+        "docs/delivery/test-evidence/DG7/qa/tests/qa-dg7-rg3-backup-split-phase-config.test.mjs",
+        "docs/delivery/test-evidence/DG7/qa/round-3/scripts/split-phase.sh",
+        "docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg3b/02-compose-backup-drill.log",
+        "deploy/scripts/backup.sh",
+        "deploy/scripts/tests/backup-restore.test.mjs",
+        "docs/architecture/adr/ADR-0066-p7-backup-restore-backup-set-manifest-restore-checks-drill.md",
+        "docs/handover/backup-restore.md"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG7/round-3/qa-verifier.json",
+      "owner": "devops-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-24T10:40:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG7 round 3 (T-DG7-REV-QA-RG3) on candidate sha256:cf1fb7d5. Medium: a real defect in the documented production backup procedure (wrong manifest content and an error line), bounded because restore does not use the section and files[] still hashes the config files. Found while explaining the error line in the orchestrator's rg3b PASS log."
+        }
+      ]
+    },
+    {
+      "id": "F-DG7-1082",
+      "stage_id": "DG7",
+      "requirement": "REQ-S19-012",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "A Compose restore that follows backup-restore.md leaves the restored evidence owned by root with owner-only modes, which the API (uid 10001, cap_drop ALL) cannot read; the Compose drill passes only through an undocumented chown step (C9) and with zero evidence objects",
+      "reproduction": "Code reading on the candidate (log 84; no Docker daemon in this sandbox). (1) The filesystem evidence store creates directories 0700 and files 0600 as the account that runs it (apps/api/src/modules/evidence/stores/filesystem.ts l.53, l.59); restore.sh step 5 writes the evidence through transfer-attachments copy-in, which uses that store. (2) restore.sh has no chown or owner option (0 matches). In the Compose restore the script runs as root (deploy/scripts/drill/compose-backup-drill.sh C8 runs it in a root postgres:18 one-off container; backup-restore.md §3.3 tells operators to run restore.sh as the owner of the set, which is root for the Compose backup service). (3) The API runs as uid 10001 (deploy/docker/Dockerfile l.95 'USER 10001:10001') with cap_drop: [\"ALL\"] (compose.yaml x-app anchor l.34), so it cannot enter a root-owned 0700 directory or read a root-owned 0600 file. (4) The drill's own header says so: 'C9 ownership of the restored evidence objects set to the owner of the evidence root (the image's app user), so the API can read and later remove them. restore.sh runs as root and does not do this itself.' C9 runs 'chown -R \"$o\" /var/lib/mth/evidence'. (5) backup-restore.md §5 (Restore) and §10 contain no such step and no Compose restore command; known-limitations.md does not mention it. DO-D12's handback disclosed it (gap 2, Q3 'should backup-restore.md §5 tell the Compose operator to align the restored evidence files to the app user (uid 10001)? Or should restore.sh take a --evidence-owner option?'); decisions.md has no answer (D-284 does not mention it). (6) The rg3b drill copied 0 evidence objects (log l.249 'copied 0 objects', l.258 '0 evidence objects'), so neither the C4 DAC_READ_SEARCH read of the store (DO-D13 defect 2) nor the restored ownership was exercised on a real object; /readyz checks only the store root, which is uid 10001's.",
+      "expected": "REQ-S19-012 / handover item 9: the documented restore of a Compose installation yields evidence that the running application can read and later remove, without an undocumented step. Either restore.sh (or the guide's Compose restore command) sets the restored evidence to the evidence root's owner (for example an --evidence-owner option, or running copy-in as uid 10001), or backup-restore.md §5 documents the Compose restore including the ownership step, with a test; and the orchestrator's Compose drill is re-run with at least one evidence object in the source, proving C4 (copy-out under DAC_READ_SEARCH) and an API read of the restored object (for example a download through the API after C10).",
+      "actual": "An IT operator who follows backup-restore.md for a Compose installation restores evidence that the API cannot read, which is likely to fail evidence downloads (and later removal) after restore; the guide is silent and the drill hides it with C9. Inferred from code and from the drill author's own statement, not observed in a container (no Docker daemon here; the drill had no evidence object). Bounded: the bytes are recovered and verified (R7), and a chown repairs it. The container-free A19 drill is unaffected because restore runs as the same account as the API.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-3/84-compose-restore-evidence-ownership.log",
+        "deploy/scripts/drill/compose-backup-drill.sh",
+        "deploy/scripts/restore.sh",
+        "apps/api/src/modules/evidence/stores/filesystem.ts",
+        "deploy/docker/Dockerfile",
+        "deploy/compose/compose.yaml",
+        "docs/handover/backup-restore.md",
+        "docs/delivery/handbacks/DG7/T-DG7-DO-D12-devops-engineer.md",
+        "docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg3b/02-compose-backup-drill.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG7/round-3/qa-verifier.json",
+      "owner": "devops-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-24T10:40:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG7 round 3 (T-DG7-REV-QA-RG3) on candidate sha256:cf1fb7d5. Medium: the documented Compose restore omits a step the drill needs (C9) and that DO-D12 disclosed only in its handback; bounded, repairable by chown; not observed in a container here."
+        }
+      ]
+    },
+    {
+      "id": "F-DG7-1083",
+      "stage_id": "DG7",
+      "requirement": "REQ-S19-012",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "ADR-0066 Amendment 1 (A1.4) was not amended for DO-D13: step 2 now adds --cap-add DAC_READ_SEARCH and reads DATABASE_URL_FILE, and the backup service mounts the repository layout under /mth/deploy; DO-D13's question Q2 (is CAP_DAC_READ_SEARCH the least privilege?) has no answer",
+      "reproduction": "Log 85 on the candidate: DO-D13 (ebe11c378) landed after SA-ADR72 (bf5bf82a7). ADR-0066 contains no 'DAC_READ_SEARCH', 'cap-add', 'DATABASE_URL_FILE' or '/mth/deploy/scripts' (0 matches each); A1.4 l.259 still describes step 2 only as 'runs the app image as root (--user 0:0) for the copy-out command only'. backup-restore.md l.69/l.78 and compose-backup-drill.sh l.191 ship '--cap-add DAC_READ_SEARCH'. DO-D13's handback §4 gap 3 ('ADR-0066 A1.4 is now incomplete … It needs an amendment line') and Q2 ('do you accept CAP_DAC_READ_SEARCH for the one-off copy-out command as the least privilege (ADR-0066 A1.4 amendment)?') are unanswered in decisions.md (0 matches) and in no ADR.",
+      "expected": "As for F-DG7-1052 (p7-work-split §2 rule 2, 'ADR claims enumerated and exactly true'): a dated ADR-0066 amendment line records the step-2 capability (and the architect's answer to DO-D13 Q2 on least privilege), the DATABASE_URL_FILE rule of transfer-attachments copy-out and the /mth/deploy mount layout with its preflight refusal.",
+      "actual": "The accepted ADR is narrower than the shipped Compose sequence on a privilege decision (a Linux capability granted to a root one-off container), which only the handover guide and a handback describe. Documentation drift with no behavioural effect; not blocking on its own.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-3/85-adr-drift-do-d13.log",
+        "docs/architecture/adr/ADR-0066-p7-backup-restore-backup-set-manifest-restore-checks-drill.md",
+        "docs/delivery/handbacks/DG7/T-DG7-DO-D13-devops-engineer.md",
+        "docs/handover/backup-restore.md",
+        "deploy/scripts/drill/compose-backup-drill.sh"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG7/round-3/qa-verifier.json",
+      "owner": "solution-architect",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-24T10:40:00Z",
+          "status": "OPEN",
+          "note": "Raised by qa-verifier in DG7 round 3 (T-DG7-REV-QA-RG3) on candidate sha256:cf1fb7d5. Low: ADR documentation drift created by the DO-D13 repair, disclosed by DO-D13 itself; no behavioural effect."
+        }
+      ]
+    }
+  ]
+}
