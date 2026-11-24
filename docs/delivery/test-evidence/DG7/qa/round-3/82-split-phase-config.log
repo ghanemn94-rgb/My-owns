@@ -1,0 +1,44 @@
+### 82-split-phase-config start 2026-11-24T08:20:41Z node v24.21.0 HEAD 3e8f5bce2b76320613bb25751675d02c1f89d185 LANG=unset LC_ALL=unset free=4368MB
+### $ bash tests/qa/support/with-pg.sh node --test deploy/scripts/tests/qa-dg7-rg3-backup-split-phase-config.test.mjs
+port-policy: PostgreSQL listening on port 32560 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+split sequence: manifest.config = {"files":[],"sha256":"3a7ce9a264111335f6af1b04e408a38c32929a5520e62a882bfcab0151828595"}; config/ = ["compose.yaml","images.lock.json"]
+split sequence: --phase finish stderr = "cat: /var/tmp/mth-run.xmTFhF/claude-0/qa-rg3-split-i9g4Uf/mth-backup.pGlngd/config.sha: No such file or directory\n"
+✔ QA-RG3-a (control): --phase all writes a manifest whose config section lists config/ exactly (4317.389068ms)
+✖ QA-RG3-b: the split sequence of backup-restore.md §3.2 (database, copy-out, finish) writes the same config section and no error line (2757.958192ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 1
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 15456.24428
+
+✖ failing tests:
+
+test at deploy/scripts/tests/qa-dg7-rg3-backup-split-phase-config.test.mjs:115:1
+✖ QA-RG3-b: the split sequence of backup-restore.md §3.2 (database, copy-out, finish) writes the same config section and no error line (2757.958192ms)
+  AssertionError [ERR_ASSERTION]: split sequence: manifest.config.files [] vs config/ ["compose.yaml","images.lock.json"]
+  + actual - expected
+  
+  + []
+  - [
+  -   'config/compose.yaml',
+  -   'config/images.lock.json'
+  - ]
+  
+      at assertConfigSection (file:///var/tmp/mth-run.xmTFhF/claude-0/rv/deploy/scripts/tests/qa-dg7-rg3-backup-split-phase-config.test.mjs:78:10)
+      at TestContext.<anonymous> (file:///var/tmp/mth-run.xmTFhF/claude-0/rv/deploy/scripts/tests/qa-dg7-rg3-backup-split-phase-config.test.mjs:140:3)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [],
+    expected: [ 'config/compose.yaml', 'config/images.lock.json' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+### 82-split-phase-config end 2026-11-24T08:20:59Z exit=1 free=4336MB
+copy removed: yes; test exit=1

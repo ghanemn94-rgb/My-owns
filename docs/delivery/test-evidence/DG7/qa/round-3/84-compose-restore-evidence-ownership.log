@@ -1,0 +1,45 @@
+## qa-verifier DG7 round 3: restored evidence ownership in the Compose restore (candidate cf1fb7d5, source 3e8f5bce2). Code reading; no Docker daemon here.
+## 1. the filesystem evidence store writes directories 0700 and files 0600 (owner-only), as the account that runs it
+53:      await mkdir(dirname(final), { recursive: true, mode: 0o700 });
+59:    const handle = await open(temp, "wx", 0o600);
+## 2. transfer-attachments copy-in (restore.sh step 5) uses that store
+38:import { FilesystemEvidenceStore } from "../modules/evidence/stores/filesystem.ts";
+43:  copyIn,
+91:  return new FilesystemEvidenceStore(path);
+200:    result = await copyIn(store, dir, manifest);
+## 3. the image's app user and the api service
+78:    useradd --system --uid 10001 --gid mth --home-dir /nonexistent --no-create-home --shell /usr/sbin/nologin mth; \
+80:    chown mth:mth /var/lib/mth/evidence; \
+81:    chmod 0700 /var/lib/mth/evidence
+95:USER 10001:10001
+17:      EVIDENCE_STORAGE_PATH: /var/lib/mth/evidence
+25:    volumes: ["evidence:/var/lib/mth/evidence"]
+## 4. the drill's own statement and workaround (C9)
+32:#   C9  ownership of the restored evidence objects set to the owner of the evidence root (the image's app user), so
+33:#       the API can read and later remove them. restore.sh runs as root and does not do this itself.
+220:    chown -R "$o" /var/lib/mth/evidence; find /var/lib/mth/evidence ! -user "${o%%:*}" -printf "not owned: %p\n" | head'
+259:run_step C9 "restored evidence owned by the evidence root's owner" c9_owner
+## 5. restore.sh: any chown / owner handling?
+0
+## 6. the guide: any ownership step after restore (chown, 10001, owner of the evidence)?
+78:- **Why root, and why one capability.** Step 2 runs as root (`--user 0:0`) for this one command only. The `backup` service runs as root and creates the set o
+(only §3.2 step 2's capability bullet mentions uid 10001; §5 Restore has no ownership step)
+## 7. DO-D12 handback disclosure
+123:2. **The restored evidence files are owned by root after a restore.** `restore.sh` writes the evidence as root (and `transfer-attachments copy-in` uses its default umask), but the API runs as uid 10001. Step C9 of the drill script works around this with `chown -R`. `backup-restore.md` §5 does n
+143:- **Q3 (new, for the solution-architect and DOC owner):** should `backup-restore.md` §5 tell the Compose operator to align the restored evidence files to the app user (uid 10001)? Or should `restore.sh` take a `--evidence-owner` option? Today the drill script does this itself (C9), and the guid
+## 8. decisions.md answers DO-D12 Q3?
+0
+## 9. known-limitations mentions it?
+## 10. the rg3b drill restored 0 evidence objects (so neither C4's DAC_READ_SEARCH read nor the C8/C9 ownership was exercised on a real object)
+249:transfer-attachments copy-out: copied 0 objects (0 distinct files, 0 bytes)
+258:backup: set rg3b succeeded: 3539447 database bytes, 0 evidence objects; manifest sha256 04e6771f4765266c616face2d43a6019e5ec12864c36abcf9bf502cd06547bf4
+259:backup: set rg3b succeeded: 3539447 database bytes, 0 evidence objects; manifest sha256 04e6771f4765266c616face2d43a6019e5ec12864c36abcf9bf502cd06547bf4
+293:evidence root owner 10001:10001
+## cap_drop in compose.yaml
+34:  cap_drop: ["ALL"]
+67:    <<: *app
+80:    <<: *app
+117:    <<: *app
+177:    <<: *app
+209:    <<: *app
+225:    <<: *app

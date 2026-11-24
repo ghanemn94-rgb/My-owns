@@ -1,0 +1,30 @@
+Scratch copy of tools/gates + findings.json at candidate 3e8f5bce in $TMPDIR; synthetic round-99 record (run_id DG7-PROBE-not-a-real-run, not a real run). Removed afterwards. Nothing in the repository was written.
+== case FAIL+REOPENED (D-283 wording) -> expect status OPEN
+exit=0
+~ F-DG7-1041 -> OPEN (code-security-reviewer)
+   findings.json: F-DG7-1041 OPEN FAIL
+== case PASS+REOPENED (inconsistent) -> expect refusal (REOPENED not a findings status)
+exit=1
+refusing to write findings.json:
+  $.findings[230].status: 'REOPENED' not in [OPEN, FIXING, FIXED_PENDING_VERIFICATION, CLOSED_VERIFIED, ACCEPTED_OBSERVATION, REJECTED_INVALID, BLOCKED]
+  $.findings[230].history[2].status: 'REOPENED' not in [OPEN, FIXING, FIXED_PENDING_VERIFICATION, CLOSED_VERIFIED, ACCEPTED_OBSERVATION, REJECTED_INVALID, BLOCKED]
+   findings.json: F-DG7-1041 FIXED_PENDING_VERIFICATION 
+== case FAIL+CLOSED_VERIFIED (inconsistent) -> imported as given (pre-existing behaviour, unchanged); validate.mjs checkClosure rejects a closed finding whose latest verification is not PASS (rules.mjs:702)
+exit=0
+~ F-DG7-1041 -> CLOSED_VERIFIED (code-security-reviewer)
+   findings.json: F-DG7-1041 CLOSED_VERIFIED FAIL
+== case new finding id F-DG7-1071 against ^F-DG[0-7]-[0-9]{3,4}$
+exit=0
++ F-DG7-1071 Low probe title
+   findings.json: F-DG7-1041 FIXED_PENDING_VERIFICATION 
+   findings.json: F-DG7-1071 OPEN 
+== case new finding id F-DG7-12345 against ^F-DG[0-7]-[0-9]{3,4}$
+exit=1
+refusing to write findings.json:
+  $.findings[234].id: 'F-DG7-12345' does not match /^F-DG[0-7]-[0-9]{3,4}$/
+   findings.json: F-DG7-1041 FIXED_PENDING_VERIFICATION 
+== case new finding id F-DG7-99 against ^F-DG[0-7]-[0-9]{3,4}$
+exit=1
+refusing to write findings.json:
+  $.findings[234].id: 'F-DG7-99' does not match /^F-DG[0-7]-[0-9]{3,4}$/
+   findings.json: F-DG7-1041 FIXED_PENDING_VERIFICATION 

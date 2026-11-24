@@ -1,0 +1,37 @@
+port-policy: PostgreSQL listening on port 32430 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+REPRO phased config/ on disk: ["compose.yaml","images.lock.json"]
+REPRO phased manifest.config: {"files":[],"sha256":"3a7ce9a264111335f6af1b04e408a38c32929a5520e62a882bfcab0151828595"}
+REPRO --phase all manifest.config.files paths: ["config/compose.yaml","config/environment.env","config/images.lock.json"]
+REPRO phased manifest files[] entries under config/: ["config/compose.yaml","config/images.lock.json"]
+REPRO finish stderr/stdout: "backup: set test-do-d11-phases succeeded: 3511126 database bytes, 0 evidence objects; manifest sha256 fda07bcf1b1fb1fbc96f3670e817e1e154ba2f1b8a380e2e48fe650d18a01ad5\ncat: $TMPDIR/mth-backup-test-JON4UI/mth-backup.KItQsG/config.sha: No such file or directory\n"
+✖ T-E11 (F-DG7-1012): the Compose sequence (database, a copy-out under umask 022, finish) ends owner-only (4886.134548ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 25550.963924
+
+✖ failing tests:
+
+test at deploy/scripts/tests/zz-cs3-repro-config-files.test.mjs:437:1
+✖ T-E11 (F-DG7-1012): the Compose sequence (database, a copy-out under umask 022, finish) ends owner-only (4886.134548ms)
+  AssertionError [ERR_ASSERTION]: ADR-0066 §2: manifest config.files lists every file of config/
+  
+  0 !== 2
+  
+      at TestContext.<anonymous> (file://$TMPDIR/review-cs3/deploy/scripts/tests/zz-cs3-repro-config-files.test.mjs:495:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 2,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+exit=1

@@ -1,0 +1,43 @@
+port-policy: PostgreSQL listening on port 32370 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /var/tmp/mth-run.14WX8S/claude-0/review-dom
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwug8ozw_96ff3369 (server_encoding UTF8); applied 135 migrations to a fresh database
+ ✓ |integration| apps/api/test/integration/transfer/config-bundle-roundtrip.test.ts (2 tests) 42951ms
+   ✓ T-D6 demo -> clean installation round trip > imports as drafts, publishes through the existing pipeline, and the published hashes equal the source's  2292ms
+   ✓ T-D7 an imported draft is published, and migrated to, exactly as a hand-made one > the pin is unchanged by the commit and the publish; the publish and migration records equal a hand-made publish's  2318ms
+ ✓ |integration| apps/api/test/integration/transfer/export.test.ts (10 tests) 14639ms
+   ✓ T-C6: the migration-export routes and the transfer.export job > every role but ADM_TECH (AUD included) and a user without grants gets 403 on all five operations  627ms
+   ✓ T-C6: the migration-export routes and the transfer.export job > the job waits on lock 730402, then runs once: running -> succeeded, one audit event per transition  3475ms
+   ✓ T-C6: the migration-export routes and the transfer.export job > the two manifest downloads: attachment, ETag = SHA-256, the stored bytes, no row data  313ms
+   ✓ T-C6: the migration-export routes and the transfer.export job > the same Idempotency-Key returns the existing request with 200; a failed export is 422 on both manifests  662ms
+ ✓ |integration| apps/api/test/integration/transfer/config-bundle.test.ts (23 tests) 10493ms
+   ✓ T-D3 the plan > plans each action; a conflict leaves the open draft untouched; invalid is terminal  535ms
+   ✓ T-D4 commit writes drafts, never publishes; job schedules arrive disabled > writes each item through its kind's path with its own audit event  793ms
+   ✓ T-D5 permissions and concurrency > ADM_METHOD and ADM_TECH each hold both rights; the kind's own right decides per item  330ms
+ ✓ |integration| apps/api/test/integration/transfer/export-scope.test.ts (4 tests) 11008ms
+ ✓ |integration| apps/api/test/integration/transfer/import-routes.test.ts (5 tests) 8600ms
+   ✓ T-C14: the read-only migration-import routes > every other role, a user without grants and a narrower AUD grant get 403 on all five  456ms
+ ✓ |integration| apps/api/test/integration/retention/classes.test.ts (8 tests) 8663ms
+   ✓ T-E11: updateRetentionClass > each E.5 422 code, with its exact text  303ms
+ ✓ |integration| apps/api/test/integration/retention/runs.test.ts (7 tests) 6246ms
+   ✓ the run request (createRetentionRun, createRetentionDryRun) > 403 on both requests for every role but ADM_TECH (AUD and ADM_ACCESS included); reads for ADM_TECH, ADM_ACCESS, AUD  413ms
+ ✓ |integration| apps/api/test/integration/retention/backups.test.ts (2 tests) 6827ms
+ ✓ |integration| apps/api/test/integration/transfer/attachments.test.ts (15 tests) 8589ms
+   ✓ T-C16: evidence bytes through the filesystem adapter > copy-in writes every object under the same name with equal size and SHA-256; verify finds nothing; no temporary is left  408ms
+   ✓ T-C16: evidence bytes through the s3 (in-process SigV4-verifying fake) adapter > copy-in writes every object under the same name with equal size and SHA-256; verify finds nothing; no temporary is left  308ms
+   ✓ T-C16: evidence bytes through the s3 (in-process SigV4-verifying fake) adapter > copy-out then copy-in into a second store round-trips every object under its name; a missing or altered source object is reported  365ms
+   ✓ T-C16: copy-out reads the rows that name objects from PostgreSQL (scratch database) > the plan's storage_key columns are evidence_content and export_job; their rows are listed and copy-out exits 0 with their manifest  6779ms
+ ✓ |integration| apps/api/test/integration/release/register.test.ts (9 tests) 2061ms
+ ✓ |integration| apps/api/test/integration/release/about.test.ts (4 tests) 1100ms
+   ✓ T-I7: getReleaseAbout > counts every status (sum = rowCount); openItems = exactly the two unfinished rows with their notes; laterClauses = the marked row  487ms
+
+ Test Files  11 passed (11)
+      Tests  89 passed (89)
+   Start at  08:45:09
+   Duration  202.79s (transform 13.03s, setup 0ms, collect 71.58s, tests 121.18s, environment 0ms, prepare 208ms)
+

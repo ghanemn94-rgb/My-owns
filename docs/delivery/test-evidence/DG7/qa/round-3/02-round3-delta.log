@@ -1,0 +1,45 @@
+## round-2 source 152db5b51 -> round-3 source 3e8f5bce (candidate files only)
+{"stage":"DG7","source":"152db5b51155282b28e82472629d07b8d87feb2a","candidate_id":"sha256:33266ccd9ce4ec4475de745ebacfaafbd2f25870f8be966086f4a74578b7259c","files":3158}
+ apps/api/src/cli/transfer-attachments.ts           |    15 +-
+ .../test/integration/transfer/attachments.test.ts  |    46 +
+ deploy/compose/compose.yaml                        |    12 +-
+ deploy/scripts/backup.sh                           |    36 +-
+ deploy/scripts/drill/compose-backup-drill.sh       |   271 +
+ .../scripts/tests/backup-compose-layout.vitest.mjs |   213 +
+ deploy/scripts/tests/backup-restore.test.mjs       |    86 +-
+ deploy/service-list.json                           |     4 +-
+ ...giene-claims-scan-security-controls-evidence.md |   124 +-
+ ...ore-backup-set-manifest-restore-checks-drill.md |    98 +-
+ docs/delivery/assignments/DG7/T-DG7-AN-P7J.md      |    25 +
+ docs/delivery/assignments/DG7/T-DG7-DO-D12.md      |    25 +
+ docs/delivery/assignments/DG7/T-DG7-DO-D13.md      |    25 +
+ docs/delivery/assignments/DG7/T-DG7-SA-ADR72.md    |    25 +
+ .../DG7/round-2/code-security-reviewer.md          |   147 +
+ .../assignments/DG7/round-2/domain-reviewer.md     |   147 +
+ .../assignments/DG7/round-2/qa-verifier.md         |   147 +
+ .../candidates/DG7/33266ccd9ce4ec44.manifest.json  | 15808 +++++++++++++++++++
+ docs/delivery/decisions.md                         |     2 +
+ docs/delivery/findings.json                        |   432 +-
+ docs/delivery/requirements.csv                     |    50 +-
+ docs/delivery/stages.json                          |    30 +-
+ docs/handover/backup-restore.md                    |    16 +-
+ docs/handover/known-limitations.md                 |     2 +-
+ docs/handover/release-notes.md                     |    12 +-
+ tools/gates/import-findings.mjs                    |     3 +-
+ tools/release/secret-allowlist.json                |     9 +
+ 27 files changed, 17739 insertions(+), 71 deletions(-)
+
+3e8f5bce2 DG7 re-gate: round-3 pre-freeze evidence; history allow-list entry for the SA-ADR72 scan-log quote
+ea5114812 DG7 re-gate: D-284; round-2 findings FIXED_PENDING_VERIFICATION
+2a346b864 DG7 re-gate: Compose backup drill rerun after DO-D13: PASS C0-C11
+ebe11c378 DG7 re-gate: DO-D13 Compose backup profile path/mount repair (F-DG7-1031/1051)
+92c134bbc DG7 re-gate: assignment DO-D13 (Compose backup C3 failure)
+7ea1d1f2f DG7 re-gate: first Compose backup drill run (orchestrator host): FAIL at C3, backup.sh cannot find the Compose file in the backup container
+bf5bf82a7 DG7 re-gate: DO-D12 (F-DG7-1053, Compose drill script), SA-ADR72 (F-DG7-1032/1041/1052), AN-P7J (F-DG7-1022)
+90cbc1c3b DG7 re-gate: D-283 round-2 outcome; import round-2 findings (REOPENED recorded as OPEN); repair assignments DO-D12, SA-ADR72, AN-P7J
+faa1154ca DG7 re-gate round 2: reviewer evidence not covered by the run auto-commit
+7a370ccad run: DG7-T-DG7-REV-QA-RG2-qa-verifier-20261117T144530Z-0fbf419f (review evidence, auto-committed by run-agent.sh)
+1c3b66811 run: DG7-T-DG7-REV-CS-RG2-code-security-reviewer-20261117T144530Z-da744e37 (review evidence, auto-committed by run-agent.sh)
+981773f96 run: DG7-T-DG7-REV-DOM-RG2-domain-reviewer-20261117T144530Z-9f75337d (review evidence, auto-committed by run-agent.sh)
+1c119c031 DG7 re-gate round 2: assignments and REVIEWING (the freeze itself is in c26f69d70)
+c26f69d70 DG7 re-gate round 2: freeze sha256:33266ccd, assignments, REVIEWING

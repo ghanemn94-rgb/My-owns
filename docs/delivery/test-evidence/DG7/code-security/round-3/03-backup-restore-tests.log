@@ -1,0 +1,29 @@
+port-policy: PostgreSQL listening on port 32410 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+✔ T-E1: the set has exactly the ADR-0066 §1 layout, schemaVersion mth-backup/1, every listed SHA-256 matches (14.00397ms)
+✔ T-E2: table-counts.tsv equals the dump's snapshot: a row committed during the dump is in neither (38.131324ms)
+✔ T-E3: config/ holds no secret value; the keys and the *_FILE pointers are kept (0.851654ms)
+✔ T-E4: a changed byte in any set file -> restore exit 2 naming the file; the target stays empty (2030.732882ms)
+✔ T-E5: a manifest from another PostgreSQL major -> exit 2 with the §E.5 line (574.927322ms)
+✔ T-E6: a non-empty target database or evidence store -> exit 2; nothing written (1140.298781ms)
+✔ T-E7: a restore into a fresh database passes R1–R8 and writes restore-report.json with every step's seconds (7790.877795ms)
+✔ T-E8: a failing step records a `failed` set with its reason through backup_set_record() (1129.992241ms)
+✔ T-E9: the backup_set_record() argument has exactly the 19 keys of ADR-0066 §6 (2.875857ms)
+✔ T-E10 (F-DG7-1012): a set taken under umask 022 is owner-only: directories 0700, files 0600 (4.586485ms)
+✔ T-E11 (F-DG7-1012): the Compose sequence (database, a copy-out under umask 022, finish) ends owner-only (2509.2212ms)
+✔ T-E12 (F-DG7-1012): a backup root that is world-writable like /tmp (1777) is refused (exit 2); nothing is written (12.194578ms)
+✔ T-E12 (F-DG7-1012): a backup root that is group-writable (0770) is refused (exit 2); nothing is written (11.036579ms)
+✔ T-E13a (F-DG7-1053): a symbolic link (and a chain of two) to an owner-only directory is accepted (2077.192145ms)
+✔ T-E13b (F-DG7-1053): a symbolic link to a world-writable like /tmp (1777) directory is refused, naming the target (20.391481ms)
+✔ T-E13b (F-DG7-1053): a symbolic link to a group-writable (0770) directory is refused, naming the target (17.12392ms)
+✔ T-E13c (F-DG7-1053): a dangling symbolic link is refused (exit 2) and nothing is created (16.745325ms)
+✔ T-E13d (F-DG7-1053): a symbolic link to a regular file is refused as not a directory (13.972291ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 18
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 29669.476509
+exit=0

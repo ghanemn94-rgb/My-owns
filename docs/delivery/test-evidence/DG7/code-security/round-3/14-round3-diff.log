@@ -1,0 +1,209 @@
+== git diff --stat 152db5b51155282b28e82472629d07b8d87feb2a..3e8f5bce2b76320613bb25751675d02c1f89d185 (excluding meta-excluded delivery records)
+ apps/api/src/cli/transfer-attachments.ts                                                     |  15 +++-
+ apps/api/test/integration/transfer/attachments.test.ts                                       |  46 +++++++++++
+ deploy/compose/compose.yaml                                                                  |  12 ++-
+ deploy/scripts/backup.sh                                                                     |  36 ++++++++-
+ deploy/scripts/drill/compose-backup-drill.sh                                                 | 271 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ deploy/scripts/tests/backup-compose-layout.vitest.mjs                                        | 213 +++++++++++++++++++++++++++++++++++++++++++++++++
+ deploy/scripts/tests/backup-restore.test.mjs                                                 |  86 +++++++++++++++++++-
+ deploy/service-list.json                                                                     |   4 +-
+ docs/architecture/adr/ADR-0063-p7-secret-hygiene-claims-scan-security-controls-evidence.md   | 124 ++++++++++++++++++++++++++++-
+ docs/architecture/adr/ADR-0066-p7-backup-restore-backup-set-manifest-restore-checks-drill.md |  98 ++++++++++++++++++++++-
+ docs/delivery/decisions.md                                                                   |   2 +
+ docs/delivery/findings.json                                                                  | 432 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++----
+ docs/delivery/requirements.csv                                                               |  50 ++++++------
+ docs/delivery/stages.json                                                                    |  30 ++++++-
+ docs/handover/backup-restore.md                                                              |  16 ++--
+ docs/handover/known-limitations.md                                                           |   2 +-
+ docs/handover/release-notes.md                                                               |  12 +--
+ tools/gates/import-findings.mjs                                                              |   3 +-
+ tools/release/secret-allowlist.json                                                          |   9 +++
+ 19 files changed, 1390 insertions(+), 71 deletions(-)
+
+== unchanged surfaces (each path verified to exist; empty diff stat = no change between the round-2 and round-3 sources):
+-- apps/api/src/modules/identity: 
+-- deploy/docker: 
+-- tools/release/seal.mjs: 
+-- tools/release/verify-seal.mjs: 
+-- tools/release/scan-assets.mjs: 
+-- tools/release/asset-scan-allowlist.json: 
+-- tools/release/secret-scan.mjs: 
+-- packages/db/src/transfer: 
+-- apps/api/src/modules/config-bundle: (path does not exist; not counted)
+-- packages/db/migrations: 
+-- apps/api/src/modules: 
+
+== code diff of this round (product/tool files)
+diff --git a/apps/api/src/cli/transfer-attachments.ts b/apps/api/src/cli/transfer-attachments.ts
+index 9296eb8b6..836aace2a 100644
+--- a/apps/api/src/cli/transfer-attachments.ts
++++ b/apps/api/src/cli/transfer-attachments.ts
+@@ -6,7 +6,8 @@
+ //   transfer-attachments copy-out --to <dir> --out <attachments.json> [--export-id <uuid>]
+ //
+ // The store is this installation's evidence store from the environment (EVIDENCE_STORAGE_DRIVER, EVIDENCE_STORAGE_PATH,
+-// the ADR-0010/ADR-0011 variables the API reads). copy-out also reads DATABASE_URL (the rows that name objects).
++// the ADR-0010/ADR-0011 variables the API reads). copy-out also reads DATABASE_URL or DATABASE_URL_FILE (the rows that
++// name objects).
+ // `<dir>` holds `attachments.json` and `attachments/<sha256>`; when it also holds a migration `manifest.json`, the
+ // attachments.json SHA-256 and count must equal the manifest's `attachmentManifest`.
+ //
+@@ -21,6 +22,7 @@ import { join, resolve } from "node:path";
+ import { fileURLToPath } from "node:url";
+ import { parseArgs } from "node:util";
+ import { v7 as uuidv7 } from "uuid";
++import { ConfigError, readSecretVariable } from "@mth/config";
+ import {
+   ATTACHMENT_MANIFEST_FILE,
+   createDb,
+@@ -255,8 +257,15 @@ async function commandCopyOut(
+   let rows: readonly ObjectRow[];
+   if (deps.listRows !== undefined) rows = await deps.listRows();
+   else {
+-    const url = env["DATABASE_URL"];
+-    if (url === undefined || url === "") throw new Blocked(2, "DATABASE_URL is not set");
++    // DATABASE_URL or DATABASE_URL_FILE (the ADR-0011 `<NAME>_FILE` rule; T-DG7-DO-D13): §3.2 step 2 of
++    // backup-restore.md runs this CLI in the app image with the URL as the Compose secret file /run/secrets/database_url.
++    let url: string | undefined;
++    try {
++      url = readSecretVariable("DATABASE_URL", env);
++    } catch (err) {
++      throw new Blocked(2, err instanceof ConfigError ? err.problems.join("; ") : "DATABASE_URL cannot be read");
++    }
++    if (url === undefined) throw new Blocked(2, "DATABASE_URL is not set");
+     const db = createDb(createPool(url, { max: 1 }));
+     try {
+       rows = await listObjectRows(db);
+diff --git a/deploy/compose/compose.yaml b/deploy/compose/compose.yaml
+index e0b1336c1..6381901d9 100644
+--- a/deploy/compose/compose.yaml
++++ b/deploy/compose/compose.yaml
+@@ -261,7 +261,11 @@ services:
+     image: postgres:18@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722
+     profiles: ["backup"]
+     restart: "no"
+-    entrypoint: ["bash", "/mth/scripts/backup.sh", "--out", "/backups"]
++    # The repository layout under /mth (T-DG7-DO-D13): backup.sh derives the repository root as `dirname(script)/../..`,
++    # so the script sits at /mth/deploy/scripts/backup.sh and reads /mth/deploy/compose/compose.yaml, /mth/deploy/compose/
++    # .env (when present; secret values removed) and /mth/deploy/images.lock.json for config/. A script mounted anywhere
++    # else resolves another root and the database phase is refused (rg3 drill: "//deploy/compose/compose.yaml").
++    entrypoint: ["bash", "/mth/deploy/scripts/backup.sh", "--out", "/backups"]
+     command: ["--phase", "database"]
+     environment:
+       DATABASE_URL_FILE: /run/secrets/database_owner_url
+@@ -270,8 +274,10 @@ services:
+       MTH_TRANSFER_ATTACHMENTS: "none"
+     secrets: [database_owner_url]
+     volumes:
+-      - "../scripts/backup.sh:/mth/scripts/backup.sh:ro"
+-      - "./compose.yaml:/mth/deploy/compose/compose.yaml:ro"
++      - "../scripts/backup.sh:/mth/deploy/scripts/backup.sh:ro"
++      # The whole Compose directory (read-only): compose.yaml and, when init-secrets.sh wrote it, .env (MTH_SECRETS_DIR
++      # only). A single-file bind of a missing .env would make Docker create a directory in its place.
++      - ".:/mth/deploy/compose:ro"
+       - "../images.lock.json:/mth/deploy/images.lock.json:ro"
+       - "evidence:/var/lib/mth/evidence:ro"
+       # F-DG7-1012: no /tmp fallback. An unset MTH_BACKUP_ROOT names a path that does not exist, and Docker refuses to
+diff --git a/deploy/scripts/backup.sh b/deploy/scripts/backup.sh
+index f1e4995dc..a64406aa6 100755
+--- a/deploy/scripts/backup.sh
++++ b/deploy/scripts/backup.sh
+@@ -232,7 +232,24 @@ backup_main() {
+   case "$phase" in all | database | finish) ;; *) echo "BLOCKED: --phase must be all, database or finish" >&2; exit 2 ;; esac
+   # F-DG7-1012: a root that group or others can write (the host's /tmp, a shared directory) lets another account
+   # replace a set together with its manifest. A missing root is created owner-only (umask 077).
+-  if [ -e "$root" ] || [ -L "$root" ]; then
++  # F-DG7-1053: a root given as a symbolic link is judged by its resolved target (find -perm on the link itself sees
++  # the link's own mode, lrwxrwxrwx). An owner-only target is accepted, and the set is then written through the
++  # resolved path, so the directory that was checked is the one written to even if the link is later re-pointed.
++  if [ -L "$root" ]; then
++    local target=""
++    target="$(readlink -e -- "$root")" || {
++      echo "BLOCKED: the backup root $root is a symbolic link whose target does not exist or cannot be resolved" \
++        "($(readlink -- "$root")); create the target owner-only (install -d -m 0700) or pass an existing directory" >&2
++      exit 2
++    }
++    [ -d "$target" ] || { echo "BLOCKED: the backup root $root is a symbolic link to $target, which is not a directory" >&2; exit 2; }
++    if [ -n "$(find "$target" -maxdepth 0 -perm /022 -print)" ]; then
++      echo "BLOCKED: the backup root $root is a symbolic link to $target, which is writable by group or others;" \
++        "use an owner-only directory (chmod 0700)" >&2
++      exit 2
++    fi
++    root="$target"
++  elif [ -e "$root" ]; then
+     [ -d "$root" ] || { echo "BLOCKED: the backup root $root is not a directory" >&2; exit 2; }
+     if [ -n "$(find "$root" -maxdepth 0 -perm /022 -print)" ]; then
+       echo "BLOCKED: the backup root $root is writable by group or others; use an owner-only directory (chmod 0700)" >&2
+@@ -248,6 +265,23 @@ backup_main() {
+   [ "${#operator}" -le 200 ] || { echo "BLOCKED: --operator is longer than 200 characters" >&2; exit 2; }
+   [ "${#compose_files[@]}" -gt 0 ] || compose_files=("$MTH_REPO/deploy/compose/compose.yaml")
+   if [ -z "$env_file" ] && [ -f "$MTH_REPO/deploy/compose/.env" ]; then env_file="$MTH_REPO/deploy/compose/.env"; fi
++  # T-DG7-DO-D13: the configuration files of config/ are checked before anything is written, so a script started
++  # outside the repository layout (the Compose `backup` service once mounted it at /mth/scripts/, which resolved the
++  # root to `/`) is refused with exit 2 and leaves no half-written set behind that would block the label.
++  if [ "$phase" != "finish" ]; then
++    local cf
++    for cf in "${compose_files[@]}"; do
++      [ -f "$cf" ] || {
++        echo "BLOCKED: the Compose file $cf does not exist (repository root resolved to $MTH_REPO from" \
++          "${BASH_SOURCE[0]}; pass --compose-file, or run the script from deploy/scripts/ of the repository)" >&2
++        exit 2
++      }
++    done
++    if [ -n "$env_file" ] && [ ! -f "$env_file" ]; then
++      echo "BLOCKED: the environment file $env_file does not exist" >&2
++      exit 2
++    fi
++  fi
+ 
+   local url="${DATABASE_URL:-}"
+   if [ -z "$url" ] && [ -n "${DATABASE_URL_FILE:-}" ]; then url="$(cat "$DATABASE_URL_FILE")"; fi
+diff --git a/deploy/service-list.json b/deploy/service-list.json
+index 6cb65b8c8..c163d601b 100644
+--- a/deploy/service-list.json
++++ b/deploy/service-list.json
+@@ -34,8 +34,8 @@
+       "imageScope": "production",
+       "dependsOn": ["db"],
+       "volumes": [
+-        "../scripts/backup.sh:/mth/scripts/backup.sh:ro",
+-        "./compose.yaml:/mth/deploy/compose/compose.yaml:ro",
++        "../scripts/backup.sh:/mth/deploy/scripts/backup.sh:ro",
++        ".:/mth/deploy/compose:ro",
+         "../images.lock.json:/mth/deploy/images.lock.json:ro",
+         "evidence:/var/lib/mth/evidence:ro",
+         "${MTH_BACKUP_ROOT:-/MTH_BACKUP_ROOT-is-not-set}:/backups"
+diff --git a/tools/gates/import-findings.mjs b/tools/gates/import-findings.mjs
+index 1efbf32ff..de066f0b1 100644
+--- a/tools/gates/import-findings.mjs
++++ b/tools/gates/import-findings.mjs
+@@ -70,7 +70,8 @@ if (opt("--fix")) {
+             by_role: role, invocation_reference: rec.invocation_reference, at: rec.reviewed_at,
+             result: v.result, evidence: v.evidence || [], note: v.note || "",
+           };
+-          f.status = v.status_after;
++          // A failed verification may say REOPENED (D-283, the DG7 round-2 assignment wording); the finding is OPEN again.
++          f.status = v.result === "FAIL" && v.status_after === "REOPENED" ? "OPEN" : v.status_after;
+           f.history.push({ at: rec.reviewed_at, status: f.status, note: `verified by ${role} round ${round}: ${v.result}` });
+           log.push(`~ ${f.id} -> ${f.status} (${role})`);
+         }
+diff --git a/tools/release/secret-allowlist.json b/tools/release/secret-allowlist.json
+index 125a28cda..2dcbdc4b4 100644
+--- a/tools/release/secret-allowlist.json
++++ b/tools/release/secret-allowlist.json
+@@ -354,6 +354,15 @@
+         "history"
+       ],
+       "firstSeen": "docs/delivery/handbacks/DG7/T-DG7-DO-E5-devops-engineer.md"
++    },
++    {
++      "rule": "S2",
++      "path": "docs/delivery/handbacks/DG7/T-DG7-SA-ADR72-evidence/06-secret-scan-added-lines.log",
++      "valueSha256": "be9da0855ec384797d36061f3966e34e61c7846c0141d7c1d8bc7341cb2c78b9",
++      "reason": "history only: a scan log written by SA-ADR72 that quotes, in masked form, the fixture connection string 'postgres://mth_app:...@' already used in apps/worker/src/exception-redaction.test.ts; documentation of a scan result, not a credential. A delivery record (write-once), so it is allow-listed here and not reworded (T-DG7-SA-ADR72, D-285)",
++      "scopes": [
++        "history"
++      ]
+     }
+   ]
+ }

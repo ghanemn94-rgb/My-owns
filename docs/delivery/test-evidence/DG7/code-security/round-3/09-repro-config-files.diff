@@ -1,0 +1,16 @@
+486,489c486,495
+<   assert.ok(
+<     m.checks.some((c) => c.id === "ownerOnly" && c.result === "PASS"),
+<     JSON.stringify(m.checks),
+<   );
+---
+>   // REVIEW REPRO (code-security-reviewer, DG7 round 3): compare the manifest's config section with config/ on disk
+>   // and with the --phase all set of before() (manifest).
+>   const onDisk = listFiles(join(phased, "config"));
+>   console.log("REPRO phased config/ on disk:", JSON.stringify(onDisk));
+>   console.log("REPRO phased manifest.config:", JSON.stringify(m.config));
+>   console.log("REPRO --phase all manifest.config.files paths:", JSON.stringify(manifest.config.files.map((f) => f.path)));
+>   console.log("REPRO phased manifest files[] entries under config/:", JSON.stringify(m.files.filter((f) => f.path.startsWith("config/")).map((f) => f.path)));
+>   console.log("REPRO finish stderr/stdout:", JSON.stringify(fin.out));
+>   assert.ok(manifest.config.files.length > 0, "the --phase all manifest lists its config files");
+>   assert.equal(m.config.files.length, onDisk.length, "ADR-0066 §2: manifest config.files lists every file of config/");

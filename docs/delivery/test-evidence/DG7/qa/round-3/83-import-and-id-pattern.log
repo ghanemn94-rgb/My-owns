@@ -1,0 +1,16 @@
+finding id pattern: ^F-DG[0-7]-[0-9]{3,4}$
+  F-DG7-913 accepted
+  F-DG7-1081 accepted
+  F-DG7-1089 accepted
+  F-DG0-001 accepted
+  F-DG7-12 refused
+  F-DG7-10811 refused
+  F-DG8-100 refused
+  F-DG7-1O8 refused
+import line: f.status = v.result === "FAIL" && v.status_after === "REOPENED" ? "OPEN" : v.status_after;
+  {"result":"FAIL","status_after":"REOPENED"} -> OPEN
+  {"result":"FAIL","status_after":"OPEN"} -> OPEN
+  {"result":"PASS","status_after":"CLOSED_VERIFIED"} -> CLOSED_VERIFIED
+  {"result":"PASS","status_after":"REOPENED"} -> REOPENED
+  {"result":"PASS","status_after":"ACCEPTED_OBSERVATION"} -> ACCEPTED_OBSERVATION
+status enum: ["OPEN","FIXING","FIXED_PENDING_VERIFICATION","CLOSED_VERIFIED","ACCEPTED_OBSERVATION","REJECTED_INVALID","BLOCKED"]

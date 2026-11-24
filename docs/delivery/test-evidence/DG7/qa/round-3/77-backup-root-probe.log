@@ -1,0 +1,19 @@
+shared1777 exit=2: BLOCKED: the backup root <P>/shared1777 is writable by group or others; use an owner-only directory (chmod 0700)
+open777 exit=2: BLOCKED: the backup root <P>/open777 is writable by group or others; use an owner-only directory (chmod 0700)
+grp770 exit=2: BLOCKED: the backup root <P>/grp770 is writable by group or others; use an owner-only directory (chmod 0700)
+link-to-1777 exit=2: BLOCKED: the backup root <P>/link-to-1777 is a symbolic link to <P>/shared1777, which is writable by group or others; use an owner-only directory (chmod 0700)
+link-to-770 exit=2: BLOCKED: the backup root <P>/link-to-770 is a symbolic link to <P>/grp770, which is writable by group or others; use an owner-only directory (chmod 0700)
+link-to-700 exit=2: BLOCKED: DATABASE_URL (the owner role's URL) is not set
+chain-to-700 exit=2: BLOCKED: DATABASE_URL (the owner role's URL) is not set
+link-to-750 exit=2: BLOCKED: DATABASE_URL (the owner role's URL) is not set
+dangling exit=2: BLOCKED: the backup root <P>/dangling is a symbolic link whose target does not exist or cannot be resolved (missing); create the target owner-only (install -d -m 0700) or pass an existing directory
+link-to-file exit=2: BLOCKED: the backup root <P>/link-to-file is a symbolic link to <P>/afile, which is not a directory
+afile exit=2: BLOCKED: the backup root <P>/afile is not a directory
+grp750 exit=2: BLOCKED: DATABASE_URL (the owner role's URL) is not set
+real700 exit=2: BLOCKED: DATABASE_URL (the owner role's URL) is not set
+link-under-ww exit=2: BLOCKED: DATABASE_URL (the owner role's URL) is not set
+## relative link given from another cwd
+BLOCKED: DATABASE_URL (the owner role's URL) is not set
+exit=2
+## anything created inside the probe roots (expected: nothing)
+<P>/wwparent/inner700

@@ -1,0 +1,24 @@
+== case empty
+transfer-attachments copy-out: failed: Invalid URL
+exit=1
+== case unreadable
+transfer-attachments copy-out: failed: getaddrinfo EAI_AGAIN db
+exit=1
+== case both
+BLOCKED: transfer-attachments copy-out: DATABASE_URL and DATABASE_URL_FILE are both set; set only one
+exit=2
+== case malformed
+transfer-attachments copy-out: failed: Invalid URL
+exit=1
+== case unset
+BLOCKED: transfer-attachments copy-out: DATABASE_URL is not set
+exit=2
+== NOTE: case 'unreadable' above used chmod 000, but this shell runs as root so the file was still readable; the CLI read the URL and tried to resolve host 'db' (EAI_AGAIN: no network in the sandbox). Re-run with a missing path and a directory:
+== case unreadable-path /var/tmp/mth-run.dX3sZp/claude-0/cs3-scratch/does-not-exist
+BLOCKED: transfer-attachments copy-out: DATABASE_URL_FILE points to a file that cannot be read
+exit=2
+== case unreadable-path /var/tmp/mth-run.dX3sZp/claude-0/cs3-scratch/store
+BLOCKED: transfer-attachments copy-out: DATABASE_URL_FILE points to a file that cannot be read
+exit=2
+== grep for the planted values in all outputs above (expect none): 
+occurrences of planted secret values in CLI output: 0 (expected 0)

@@ -1,0 +1,28 @@
+## qa-verifier DG7 round 3: ADR text vs the DO-D13 repair (candidate cf1fb7d5, source 3e8f5bce2)
+## 1. DO-D13 changed shipped behaviour after SA-ADR72 (commit order)
+ebe11c378 DG7 re-gate: DO-D13 Compose backup profile path/mount repair (F-DG7-1031/1051)
+bf5bf82a7 DG7 re-gate: DO-D12 (F-DG7-1053, Compose drill script), SA-ADR72 (F-DG7-1032/1041/1052), AN-P7J (F-DG7-1022)
+## 2. ADR-0066 mentions of DAC_READ_SEARCH / DATABASE_URL_FILE in copy-out / /mth/deploy/scripts mount / preflight
+DAC_READ_SEARCH                    0
+cap-add                            0
+DATABASE_URL_FILE                  0
+/mth/deploy/scripts                0
+/mth/scripts                       0
+does not exist (repository root    0
+## 3. ADR-0066 A1.4 step-2 sentence (unchanged)
+259:- The service's set is owned by root. Step 2 of the Compose sequence therefore runs the app image as root (`--user 0:0`) for the copy-out command only, so that it can write into the set (DO-D11 §4 item 2).
+## 4. the shipped step 2 (guide and drill)
+docs/handover/backup-restore.md:69:  --cap-add DAC_READ_SEARCH -e DATABASE_URL_FILE=/run/secrets/database_url --entrypoint node api \
+docs/handover/backup-restore.md:78:- **Why root, and why one capability.** Step 2 runs as root (`--user 0:0`) for this one command only. The `backup` service runs as root and creates the set owner-onl
+deploy/scripts/drill/compose-backup-drill.sh:21:#   C4  §3.2 step 2: the evidence copy-out in the app image (`--user 0:0` with `--cap-add DAC_READ_SEARCH`: root writes
+deploy/scripts/drill/compose-backup-drill.sh:191:    --cap-add DAC_READ_SEARCH -e DATABASE_URL_FILE=/run/secrets/database_url --entrypoint node api \
+## 5. DO-D13 handback: gap 3 and Q2
+95:3. **ADR-0066 A1.4 is now incomplete.** It says step 2 runs "as root (`--user 0:0`)" and does not mention `--cap-add DAC_READ_SEARCH` or `DATABASE_URL_FILE`. I did not edit the ADR, which is the architect's. It needs an amendment line.
+102:- **Q2 (solution-architect):** do you accept `CAP_DAC_READ_SEARCH` for the one-off copy-out command as the least privilege (ADR-0066 A1.4 amendment)? The alternative is a store-readable group, which the image does not have today.
+## 6. decisions.md answers DO-D13 Q2 / DAC_READ_SEARCH?
+0
+## 7. any ADR mentions DAC_READ_SEARCH?
+(none)
+## 8. secret-allowlist reason cites D-285; decisions.md entries matching D-285:
+0
+362:      "reason": "history only: a scan log written by SA-ADR72 that quotes, in masked form, the fixture connection st

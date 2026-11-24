@@ -1,0 +1,25 @@
+== node tools/release/scan-assets.mjs (after vite build of apps/web in the disposable clone)
+scan-assets: BLOCKED: --web not found; run pnpm -r build first
+exit=2
+== node tools/release/scan-assets.mjs --web apps/web/dist --runtime <empty dir: T3 NOT covered by this run> --config . --no-git-remote
+scan-assets: BLOCKED: apps/api/dist not found; run pnpm -r build first
+exit=2
+
+== after building packages/* and apps/api, apps/worker (13-builds-for-asset-scan.log): node tools/release/scan-assets.mjs --web apps/web/dist --runtime <EMPTY dir: T3 NOT covered> --config . --no-git-remote
+scan-assets: BLOCKED: $TMPDIR/empty-runtime/node_modules not found; run pnpm -r build first
+exit=2
+
+== same, with an EMPTY $TMPDIR/empty-runtime/node_modules (T3 scans nothing; T1 web+api+worker+packages dist and T2 configuration are real)
+scan-assets: stale allow-list entry 64
+scan-assets: stale allow-list entry 65
+scan-assets: stale allow-list entry 66
+scan-assets: stale allow-list entry 67
+scan-assets: stale allow-list entry 68
+scan-assets: stale allow-list entry 69
+scan-assets: stale allow-list entry 70
+scan-assets: stale allow-list entry 71
+scan-assets: stale allow-list entry 72
+scan-assets: stale allow-list entry 73
+scan-assets: stale allow-list entry 74
+scan-assets: FAIL (12 hits)
+exit=1

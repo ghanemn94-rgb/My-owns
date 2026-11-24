@@ -1,0 +1,23 @@
+diff --git a/deploy/scripts/tests/backup-restore.test.mjs b/deploy/scripts/tests/backup-restore.test.mjs
+index 4212dc775..4cb311e25 100644
+--- a/deploy/scripts/tests/backup-restore.test.mjs
++++ b/deploy/scripts/tests/backup-restore.test.mjs
+@@ -241,6 +241,7 @@ test("T-E1: the set has exactly the ADR-0066 §1 layout, schemaVersion mth-backu
+   for (const t of ["snapshot", "dump", "evidence", "config", "verify"])
+     assert.ok(Number.isFinite(manifest.timings[t]) && manifest.timings[t] >= 0, t);
+   assert.ok(manifest.database.pgbossJobsByState.created >= 1, "the synthetic queued job is counted by state");
++  console.log("PROBE-SINGLE config=" + JSON.stringify(manifest.config));
+   assert.doesNotMatch(JSON.stringify(manifest), /password|BEGIN [A-Z ]*PRIVATE KEY/i);
+ });
+ 
+@@ -483,6 +484,10 @@ test("T-E11 (F-DG7-1012): the Compose sequence (database, a copy-out under umask
+   assert.match(fin.out, new RegExp(`^backup: set ${label} succeeded: `, "m"));
+   assert.deepEqual(notOwnerOnly(phased), [], "after --phase finish");
+   const m = JSON.parse(readFileSync(join(phased, "backup-manifest.json"), "utf8"));
++  console.log("PROBE fin.out=" + JSON.stringify(fin.out));
++  console.log("PROBE config=" + JSON.stringify(m.config));
++  console.log("PROBE files=" + JSON.stringify(m.files.map((x) => x.path)));
++  assert.ok(m.config.files.length > 0, "PROBE: split-phase manifest config.files is empty");
+   assert.ok(
+     m.checks.some((c) => c.id === "ownerOnly" && c.result === "PASS"),
+     JSON.stringify(m.checks),
