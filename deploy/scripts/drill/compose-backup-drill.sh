@@ -192,9 +192,11 @@ c0_facts() {
   df -h "$MTH_BACKUP_ROOT" "$(docker info --format '{{.DockerRootDir}}')" 2>/dev/null || df -h "$MTH_BACKUP_ROOT"
 }
 c1_source() { MTH_API_PORT="$SRC_PORT" dc -p "$SRC" up -d --wait; }
+# seed-demo runs WITHOUT AUTH_MODE=dev (as deploy/scripts/transfer-drill.sh D1 does): with it every demo user is also bound to
+# the dev issuer and dev.office then sees no transformation (orchestrator repair of the DO-D14 drill, D-285).
 c2_seed() {
   runner "$SRC" 'set -e; cd packages/db && DATABASE_OWNER_URL="$(cat /run/secrets/database_owner_url)" NODE_ENV=development \
-    AUTH_MODE=dev MTH_ENV=demo node --conditions=@mth/source src/cli.ts seed-demo &&
+    MTH_ENV=demo node --conditions=@mth/source src/cli.ts seed-demo &&
     DATABASE_OWNER_URL="$(cat /run/secrets/database_owner_url)" NODE_ENV=development AUTH_MODE=dev \
     node --conditions=@mth/source src/cli.ts seed-dev'
 }
