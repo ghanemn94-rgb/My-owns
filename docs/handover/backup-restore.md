@@ -75,6 +75,8 @@ docker compose -f deploy/compose/compose.yaml --profile backup run --rm backup -
 
 Step 2 passes the set's own id with `--export-id`, so `attachments.json` names the backup set. The paths inside the app image are those of `deploy/docker/Dockerfile`.
 
+- **The configuration listing survives between the steps.** Step 1 keeps the `config/` listing (every file with its SHA-256) in the set's own `.backup-state/`, on the shared backup root. Step 3 checks that the listing still matches `config/` and its recorded digest, and writes it as the manifest's `config.files`, exactly as `--phase all` does. If the listing is missing or `config/` changed between the steps, step 3 fails the set: `backup: set <label> failed: the config/ listing of the database phase is missing from .backup-state` or `… config/ changed after the database phase` (exit 1). No step prints anything on standard error when it succeeds.
+
 - **Why root, and why one capability.** Step 2 runs as root (`--user 0:0`) for this one command only. The `backup` service runs as root and creates the set owner-only (§3.3), so the image's own user (uid 10001) could not write into it. The `api` service drops every capability (`cap_drop: ALL`), and the evidence store belongs to uid 10001 with mode `0700`. So root could write into the set but could not read the store. `--cap-add DAC_READ_SEARCH` gives back only the right to read and list files the account does not own, for this one command. It does not give the right to write them (no `DAC_OVERRIDE`).
 - **The database URL.** The command reads the URL from the Compose secret file (`DATABASE_URL_FILE`). `transfer-attachments` reads `DATABASE_URL` or `DATABASE_URL_FILE` (never both).
 - **Where the `backup` service finds its files.** The service mounts the repository's files read-only under `/mth`, in the repository's own layout: `/mth/deploy/scripts/backup.sh`, the Compose directory at `/mth/deploy/compose` and `/mth/deploy/images.lock.json`. The script finds the repository root from its own path, two directories up, so `config/` gets `compose.yaml`, `images.lock.json` and, when `deploy/compose/.env` exists, `environment.env` with its secret values removed. A missing Compose file or a missing `--env-file` is refused before anything is written: `BLOCKED: the Compose file <path> does not exist (repository root resolved to <dir> …)` (exit 2), and the label stays free for the next run.
@@ -131,7 +133,7 @@ Preconditions:
 
 - **Target cluster.** A PostgreSQL cluster of the **same major** as the set's `server.major` (D-243 Q14), with the roles `mth_owner` and `mth_app` (`deploy/compose/db-init`).
 - **Target database.** An **empty** database owned by `mth_owner` (UTF8).
-- **Target evidence root.** An **empty** evidence root.
+- **Target evidence root.** An **empty** evidence root. When it already exists, its owner is taken as the account of the API and the worker (see "Ownership of the restored evidence" below).
 - **Secrets.** The secrets of §6 are provided again by IT.
 
 ```bash
@@ -139,8 +141,16 @@ deploy/scripts/restore.sh --from /srv/mth-backups/<label> \
   --target-database-url "$(cat /run/secrets/database_owner_url)" \
   --target-evidence-path /var/lib/mth/evidence --out /srv/mth-restore-reports/<label> \
   --manifest-sha256 <hex recorded by backup.sh or in backup_set.manifest_sha256> \
-  [--readyz-url http://127.0.0.1:3000/readyz]
+  [--readyz-url http://127.0.0.1:3000/readyz] [--evidence-owner <uid>:<gid>]
 ```
+
+**Ownership of the restored evidence.** The API and the worker run without any capability (`cap_drop: ALL`), so they can read and remove only the evidence files their own account owns. `restore.sh` therefore gives every restored evidence directory and file to that account, with mode `0700` for directories and `0600` for files, the modes the filesystem store writes itself. You do **not** need a separate `chown` step.
+
+- **Which account.** By default, the owner of the existing, empty target evidence root. In Compose this is the image's app user, uid `10001`, which owns the evidence volume. If the root does not exist yet, the account that runs `restore.sh` creates it and keeps it. `--evidence-owner <uid>:<gid>` names the account explicitly, for example `--evidence-owner 10001:10001`. Any other value is refused: `BLOCKED: --evidence-owner must be <uid>:<gid> (numbers), for example 10001:10001` (exit 2).
+- **Who runs it.** Handing files to another account needs root. Run `restore.sh` as root when the API's account differs from yours, as in the Compose restore below. If the change of owner fails, the restore stops: `restore: check R7 failed: expected the evidence owned by <uid>:<gid>, got: <error>` (exit 1).
+- **Check.** R7 also reports the owner of the evidence root, the number of paths with another owner and the number of paths with a group or other permission bit. It passes only when the owner is the expected account and both numbers are 0 (§7).
+
+**Compose restore.** The `postgres:18` image has the PostgreSQL client tools of the same major. Run `restore.sh` from the repository in a one-off root container of that image, on the target project's network, with the target's evidence volume mounted. Initialize the empty evidence volume from the app image first, so it belongs to uid `10001` (for example `docker compose -p <target> run --rm --no-deps --entrypoint true api`). `deploy/scripts/drill/compose-backup-drill.sh` steps C7 and C8 run exactly this sequence. `restore.sh` then hands the evidence to uid `10001`, and the drill's step C9 only verifies the result.
 
 | Step | What happens | On failure |
 | --- | --- | --- |
@@ -177,7 +187,7 @@ On success: `restore: <label> restored and ready in <s> s; all checks passed` (e
 | R4 audit | `audit_event` count and `max(seq)` equal `database.auditEvents` | audit |
 | R5 snapshots | `snapshotDigest` recomputed on the target is equal, so every row of the six snapshot tables (including `report_snapshot_version.content_sha256`) is byte-equal | snapshots |
 | R6 job state | pg-boss jobs by state, the `job_schedule` digest (every column, `enabled` included) and the `job_run` count are equal | job state |
-| R7 evidence | `transfer-attachments verify` on the target reports no mismatch over every `attachments.json` entry, and every retention set file is equal | evidence bytes |
+| R7 evidence | `transfer-attachments verify` on the target reports no mismatch over every `attachments.json` entry, and every retention set file is equal. Every path of the evidence root belongs to the API's account (`owner`, `otherOwner` 0) with no group or other bit (`groupOrOtherBits` 0) | evidence bytes, readable by the API |
 | R8 readiness | `/readyz` reports `ready` (with `--readyz-url`). Without it, the script evaluates the same rule offline: a UTF8 database, `mth-db status` up to date, and an evidence root that is readable and writable. The report says which mode was used. | the restored installation runs |
 | R9 demo checksum (drill only) | the ADR-0050 demo checksum of the restored demo equals the source's | business content, end to end |
 
@@ -205,7 +215,16 @@ To run it locally: `tests/qa/support/with-pg.sh bash -c 'deploy/scripts/restore-
 | `restore-drill.sh`, 2026-11-13 04:39 UTC (T-DG7-DO-F; `drill-report.json`) | 2.2 (snapshot 0.13, dump 0.41, evidence 0.67, config 0.10, verify 0.65) | 5.9 (restore.sh 5.6: package checks 0.17, target checks 0.10, database 3.11, evidence 0.63, checks 1.63); R9 0.71; R1–R9 PASS | demo only: 0 evidence objects, 0 pg-boss jobs |
 | QA A19 harness, 2026-11-13 04:41 UTC (T-DG7-DO-F run) | 2.5 (snapshot 0.15, dump 0.46, evidence 0.82, config 0.10, verify 0.78) | 5.1 (database 2.70, evidence 0.69, checks 1.49); first `/readyz` after start 0.15 | demo + 3 evidence rows (2 objects) + 1 queued job |
 
-The logs are in `docs/delivery/handbacks/DG7/T-DG7-DO-F-evidence/`. The Compose half runs on the orchestrator's host and is recorded there: the `backup` profile on `postgres:18`, a second Compose project with new volumes, and `/readyz` over HTTP. `deploy/scripts/drill/compose-backup-drill.sh --log <file>` performs that sequence (the three commands of §3.2 in a new source project with synthetic demo data, then restore.sh into a second new project and `GET /readyz`), timing every step. It needs a Docker daemon and runs as root.
+The logs are in `docs/delivery/handbacks/DG7/T-DG7-DO-F-evidence/`. The Compose half runs on the orchestrator's host and is recorded there: the `backup` profile on `postgres:18`, a second Compose project with new volumes, and `/readyz` over HTTP. `deploy/scripts/drill/compose-backup-drill.sh --log <file>` performs that sequence, timing every step. It needs a Docker daemon and runs as root. Its steps:
+
+1. A new source project with synthetic demo data.
+2. Two synthetic evidence files uploaded through a one-off dev-auth API of the app image (as uid `10001`, the API's own write path), and one queued synthetic job.
+3. The three commands of §3.2. The copy-out must copy at least 2 files. The finish step must print no error line, and the manifest must list `config.files`, the evidence objects and the queued job.
+4. `restore.sh` into a second new project.
+5. A verification only, with no `chown`: R6 and R7 with non-zero counts and owner `10001:10001`. In the app image as uid `10001` without capabilities, every restored object is read and its SHA-256 compared with the source's. Every path is `10001:10001` with `0700`/`0600`, and the queued job is still queued.
+6. `GET /readyz`.
+
+**Compose runs.** The previous Compose run (orchestrator, round 3, `compose-backup-rg3b`) moved **0 evidence objects and 0 jobs**, so it did not exercise the evidence and job-state legs. It also carried the `cat: …/config.sha` error line, which was repaired afterwards (T-DG7-DO-D14). The extended drill above has **not been run** in the agent sandbox, because the sandbox has no access to a Docker daemon. Its result is recorded only when a run on a host with Docker exists.
 
 ## 9. Recovery objectives (RPO/RTO): to agree with Mobily IT
 
@@ -220,7 +239,7 @@ The logs are in `docs/delivery/handbacks/DG7/T-DG7-DO-F-evidence/`. The Compose 
 - **PostgreSQL major.** The container-free drill ran on PostgreSQL 16. The pinned Compose image is PostgreSQL 18, and that half is the orchestrator's.
 - **Scale.** Scale beyond the demo and the P6 fixtures is unproven.
 - **Availability.** This is not a high-availability design: one database, no replication, no off-site copy. Those are IT's.
-- **Permissions in Compose.** The owner-only modes, the refused shared root and the split-phase repair are tested with the scripts on a disposable PostgreSQL (T-E10 to T-E12; a root given as a symbolic link: T-E13). The Compose sequence of §3.2 (root `backup` service, `--user 0:0` copy-out, `create_host_path: false`) has not been run here, because there is no Docker daemon (D-243 Q1). It runs on the orchestrator's host.
+- **Permissions in Compose.** The owner-only modes, the refused shared root and the split-phase repair are tested with the scripts on a disposable PostgreSQL (T-E10 to T-E12; the `config.files` of the split sequence and no standard-error output: T-E11 and T-E11b; a root given as a symbolic link: T-E13). The owner and modes of the restored evidence are tested for the account that runs the test (T-E14). The hand-over to uid `10001` as root (T-E14c) needs a mapped uid `10001` and is skipped, with its reason, in a user namespace without one. The Compose sequence of §3.2 and §5 (root `backup` service, `--user 0:0` copy-out, `create_host_path: false`, the root restore to uid `10001`) has not been run here, because there is no Docker daemon (D-243 Q1). It runs on the orchestrator's host.
 
 ## ملخص باللغة العربية (Arabic summary)
 
@@ -228,6 +247,7 @@ The logs are in `docs/delivery/handbacks/DG7/T-DG7-DO-F-evidence/`. The Compose 
 - **الأسرار:** لا تُحفظ الأسرار في النسخة. توفرها تقنية المعلومات من جديد عند الاستعادة.
 - **الصلاحيات:** تُكتب النسخة لمالكها فقط (المجلدات 0700 والملفات 0600). ترفض الأداة مجلداً جذرياً يمكن للمجموعة أو للآخرين الكتابة فيه، مثل `/tmp`. وإذا كان المجلد الجذري رابطاً رمزياً فإن الأداة تفحص المجلد الذي يشير إليه: تقبله إذا كان لمالكه فقط، وترفضه إذا كان قابلاً للكتابة من المجموعة أو من الآخرين أو إذا لم يكن موجوداً. ويجب تعيين `MTH_BACKUP_ROOT` في Compose لمجلد موجود.
 - **شروط الاستعادة:** تتم الاستعادة إلى قاعدة بيانات فارغة ومخزن أدلة فارغ فقط، وبنفس الإصدار الرئيسي من PostgreSQL. ترفض أداة الاستعادة أي ملف تغيّر، أو إصدار مخطط غير مدعوم، أو هدف غير فارغ (رمز الخروج 2).
+- **ملكية ملفات الأدلة بعد الاستعادة:** تنقل أداة الاستعادة ملكية كل ملفات الأدلة المستعادة إلى الحساب الذي تعمل به الواجهة البرمجية والعامل، وهو مالك مجلد الأدلة الفارغ (في Compose المستخدم 10001)، أو الحساب المحدد في `--evidence-owner`. وتضبط صلاحيات المجلدات على 0700 والملفات على 0600. لا حاجة إلى خطوة `chown` منفصلة، ويفشل التحقق R7 إذا بقي أي مسار بمالك آخر.
 - **التحققات:** بعد الاستعادة تُجرى التحققات من R1 إلى R8: سلامة الملفات، ومستوى الترحيل، وعدد الصفوف، والتدقيق، واللقطات، وحالة المهام، والأدلة، والجاهزية. ويضيف التمرين التحقق R9 (مجموع التحقق للبيانات التجريبية). يُكتب تقرير `restore-report.json` بالقيم المتوقعة والفعلية وبزمن كل خطوة.
 - **الأزمنة المقاسة:** الأزمنة المذكورة مقاسة على بيانات تجريبية اصطناعية، وليست أهدافاً للتعافي.
 - **أهداف التعافي:** أهداف نقطة الاستعادة (RPO) وزمن الاستعادة (RTO) يُتفق عليها مع تقنية المعلومات في موبايلي.

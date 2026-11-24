@@ -443,14 +443,22 @@ backup_database_phase() {
     [ -f "$env_file" ] || backup_fail "the environment file $env_file does not exist"
     backup_scrub_env <"$env_file" >"$set/config/environment.env"
   fi
-  (cd "$set" && find config -type f -print0 | LC_ALL=C sort -z | xargs -0 sha256sum) >"$WORK/config.sha"
-  mth_sha256 "$WORK/config.sha" >"$state/config_sha256"
+  # F-DG7-1061/1071/1081: the listing is kept in the set's .backup-state/, not in this process's $WORK, so that
+  # --phase finish (another process; in Compose another container) writes it into the manifest's config.files.
+  backup_config_listing "$set" >"$state/config.sha" || backup_fail "the config/ listing could not be written"
+  mth_sha256 "$state/config.sha" >"$state/config_sha256"
   t3="$(mth_clock)"
   {
     echo "snapshot=$(mth_secs "$t0" "$t1")"
     echo "dump=$(mth_secs "$t1" "$t2")"
     echo "config=$(mth_secs "$t2" "$t3")"
   } >"$state/timings"
+}
+
+# "<sha256>  config/<file>" for every file of config/, sorted bytewise (the manifest's config.files).
+backup_config_listing() {
+  local set="$1"
+  (cd "$set" && find config -type f -print0 | LC_ALL=C sort -z | xargs -0 -r sha256sum)
 }
 
 # Secret-looking keys: their value is removed, the key is kept (ADR-0066 §3). `*_FILE` pointers are paths and stay.
@@ -546,6 +554,15 @@ backup_finish_phase() {
     >"$state/evidence_bytes"; else echo 0 >"$state/evidence_bytes"; fi
   mth_sha256 "$set/evidence/attachments.json" >"$state/attachments_sha256"
 
+  # F-DG7-1061/1071/1081: the config/ listing of the database phase must still describe config/ exactly (every file,
+  # same SHA-256) and match its recorded digest; it becomes the manifest's config.files.
+  [ -f "$state/config.sha" ] && [ -f "$state/config_sha256" ] ||
+    backup_fail "the config/ listing of the database phase is missing from .backup-state"
+  [ "$(mth_sha256 "$state/config.sha")" = "$(cat "$state/config_sha256")" ] ||
+    backup_fail "the config/ listing does not match its recorded SHA-256"
+  backup_config_listing "$set" >"$WORK/config.now" || backup_fail "config/ cannot be listed"
+  cmp -s "$WORK/config.now" "$state/config.sha" || backup_fail "config/ changed after the database phase"
+
   # Every file of the set (the manifest itself excepted), then check 5 by re-reading each one.
   (cd "$set" && find . -path ./.backup-state -prune -o -type f ! -name backup-manifest.json -printf '%P\n' |
     LC_ALL=C sort) >"$WORK/files.txt"
@@ -582,7 +599,7 @@ backup_finish_phase() {
     -v acount="$(cat "$state/evidence_count")" -v abytes="$(cat "$state/evidence_bytes")" \
     -v aentries="$(grep -o '"objectName"' "$set/evidence/attachments.json" | wc -l)" \
     -v rsets="$(cat "$WORK/retention.tsv")" -v files="$(cat "$WORK/files.tsv")" \
-    -v cfg="$(cat "$WORK/config.sha")" -v cfgsha="$(cat "$state/config_sha256")" \
+    -v cfg="$(cat "$state/config.sha")" -v cfgsha="$(cat "$state/config_sha256")" \
     -v checks="$(printf '%s\n' "${checks[@]}")" \
     -v t_snapshot="${tm[snapshot]}" -v t_dump="${tm[dump]}" -v t_config="${tm[config]}" -v t_evidence="$ev_secs" \
     -v t_verify="$(mth_secs "$t1" "$t2")" -c "

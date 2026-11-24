@@ -1,0 +1,36 @@
+diff --git a/deploy/scripts/tests/backup-compose-layout.vitest.mjs b/deploy/scripts/tests/backup-compose-layout.vitest.mjs
+index 1931a9dc7..2c19d7abd 100644
+--- a/deploy/scripts/tests/backup-compose-layout.vitest.mjs
++++ b/deploy/scripts/tests/backup-compose-layout.vitest.mjs
+@@ -211,3 +211,31 @@ describe("§3.2 step 2 (C4): the evidence copy-out in the app image", () => {
+     expect(d).toEqual(g);
+   });
+ });
++
++describe("Compose restore ownership (F-DG7-1072/1082): no undocumented chown; real objects in the drill", () => {
++  const drill = readFileSync(join(REPO, "deploy", "scripts", "drill", "compose-backup-drill.sh"), "utf8");
++  const code = drill
++    .split("\n")
++    .filter((l) => !/^\s*#/.test(l))
++    .join("\n");
++  const restore = readFileSync(join(REPO, "deploy", "scripts", "restore.sh"), "utf8");
++  const guide = readFileSync(join(REPO, "docs", "handover", "backup-restore.md"), "utf8");
++  const section5 = guide.slice(guide.indexOf("## 5. Restore"), guide.indexOf("## 6. Secrets"));
++
++  it("the drill never changes an owner itself: restore.sh does it, as the guide says", () => {
++    expect(code).not.toMatch(/\bchown\b/);
++    expect(restore).toMatch(/--evidence-owner\)/);
++    expect(restore).toMatch(/chown -R "\$eowner" "\$store"/);
++    expect(section5).toMatch(/--evidence-owner/);
++    expect(section5).toMatch(/10001/);
++  });
++
++  it("the drill seeds real evidence objects and a queued job, and fails on a zero copy-out or an empty config.files", () => {
++    expect(code).toMatch(/--steps signin,uploads/);
++    expect(code).toMatch(/INSERT INTO pgboss\.job/);
++    expect(code).toMatch(/\[ "\$n" -ge 2 \]/);
++    expect(code).toMatch(/config\.files is empty/);
++    expect(code).toMatch(/evidence_check "\$OUT\/target-evidence\.txt" 2/);
++    expect(code).toMatch(/--user 10001:10001/);
++  });
++});

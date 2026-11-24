@@ -1,0 +1,31 @@
+ ✓ |unit-node| apps/api/src/modules/automation/conditions.test.ts (4 tests) 8ms
+ ✓ |unit-node| packages/db/src/transfer/reconcile.test.ts (4 tests) 4ms
+ ✓ |unit-node| apps/api/src/modules/workflows/t08-cycle-problem.test.ts (2 tests) 3ms
+ ✓ |unit-node| apps/api/src/modules/methodology/source-coverage.test.ts (1 test) 4ms
+ ✓ |unit-node| apps/worker/src/reports/export-runner.test.ts (2 tests) 6ms
+ ✓ |unit-node| apps/api/src/modules/identity/oidc-allow-http.test.ts (2 tests) 3ms
+ ✓ |unit-node| apps/api/src/modules/governance/raci.test.ts (2 tests) 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |unit-node| deploy/scripts/tests/backup-compose-layout.vitest.mjs > Compose restore ownership (F-DG7-1072/1082): no undocumented chown; real objects in the drill > the drill never changes an owner itself: restore.sh does it, as the guide says
+AssertionError: expected 'set -euo pipefail\n\nHERE="$(cd "$(di…' not to match /\bchown\b/
+
+[32m- Expected:[39m 
+/\bchown\b/
+
+[31m+ Received:[39m 
+"set -euo pipefail
+
+HERE=\"$(cd \"$(dirname \"${BASH_SOURCE[0]}\")\" && pwd)\"
+REPO=\"$(cd \"$HERE/../../..\" && pwd)\"
+COMPOSE_FILE=\"$REPO/deploy/compose/compose.yaml\"
+PG_IMAGE=\"$(sed -n 's/^ *image: \\(postgres:18@sha256:[0-9a-f]\\{64\\}\\) *$/\\1/p' \"$COMPOSE_FILE\" | head -1)\"
+APP_IMAGE=\"${MTH_APP_IMAGE:-mth-app:local}\"
+SRC=\"mthbk-src\" DST=\"mthbk-dst\" SRC_PORT=28301 DST_PORT=28302 SEED_PORT=28303 LOG=\"\" KEEP=0
+DRILL_QUEUE=\"drill.backup.synthetic\"
+LABEL=\"drill-$(date -u +%Y%m%dt%H%M%Sz)\"
+
+usage() {
+  echo \"compose-backup-drill: BLOCKED: usage: compose-backup-drill.sh --log <file> [--src-project <p>]\" \\
+    \"[--dst-project <p>] [--src-api-port <n>] [--dst-api-port <n>] [--seed-api-port <n>] [--label <label>] [--keep]\" >&2

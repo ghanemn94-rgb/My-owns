@@ -88,7 +88,7 @@ function run(file, args, env = {}) {
     encoding: "utf8",
     timeout: 600_000,
   });
-  return { status: r.status, out: `${r.stdout}${r.stderr}` };
+  return { status: r.status, out: `${r.stdout}${r.stderr}`, stderr: r.stderr };
 }
 function cli(args, env) {
   const r = spawnSync("node", ["--conditions=@mth/source", "src/cli.ts", ...args], {
@@ -127,7 +127,7 @@ function backup(label, extra = [], env = {}) {
     },
   );
 }
-function restore(from, target, evidence, out = join(work, "reports", target)) {
+function restore(from, target, evidence, out = join(work, "reports", target), extra = []) {
   return run(RESTORE, [
     "--from",
     from,
@@ -137,7 +137,15 @@ function restore(from, target, evidence, out = join(work, "reports", target)) {
     evidence,
     "--out",
     out,
+    ...extra,
   ]);
+}
+/** The config/ listing of a set as the manifest must hold it: every file with its SHA-256, sorted by path. */
+function configListing(setDir) {
+  return listFiles(join(setDir, "config")).map((f) => ({
+    path: `config/${f}`,
+    sha256: sha256(readFileSync(join(setDir, "config", f))),
+  }));
 }
 
 before(() => {
@@ -440,6 +448,8 @@ test("T-E11 (F-DG7-1012): the Compose sequence (database, a copy-out under umask
   const env = { MTH_TRANSFER_ATTACHMENTS: "none" };
   const db = backup(label, ["--phase", "database"], env);
   assert.equal(db.status, 0, db.out);
+  // F-DG7-1061/1071/1081: no phase writes anything to stderr (it was "cat: …/config.sha: No such file or directory")
+  assert.equal(db.stderr, "", "stderr of --phase database");
   const phased = join(work, "backups", label);
   assert.deepEqual(notOwnerOnly(phased), [], "after --phase database");
   // step 2 of docs/handover/backup-restore.md §3.2: the copy-out runs in another process with its own umask (022)
@@ -481,12 +491,48 @@ test("T-E11 (F-DG7-1012): the Compose sequence (database, a copy-out under umask
   const fin = backup(label, ["--phase", "finish"], env);
   assert.equal(fin.status, 0, fin.out);
   assert.match(fin.out, new RegExp(`^backup: set ${label} succeeded: `, "m"));
+  assert.equal(fin.stderr, "", "stderr of --phase finish");
   assert.deepEqual(notOwnerOnly(phased), [], "after --phase finish");
   const m = JSON.parse(readFileSync(join(phased, "backup-manifest.json"), "utf8"));
   assert.ok(
     m.checks.some((c) => c.id === "ownerOnly" && c.result === "PASS"),
     JSON.stringify(m.checks),
   );
+  // F-DG7-1061/1071/1081 (ADR-0066 §2): config.files lists every file of config/ with its SHA-256, as --phase all does,
+  // and config.sha256 is the digest of that listing ("<sha256>  <path>" lines, sha256sum's format).
+  const listing = configListing(phased);
+  assert.ok(listing.length > 0, "config/ of the phased set holds files");
+  assert.ok(m.config.files.length > 0, `config.files is empty: ${JSON.stringify(m.config)}`);
+  assert.deepEqual(m.config.files, listing);
+  assert.equal(m.config.sha256, sha256(listing.map((f) => `${f.sha256}  ${f.path}\n`).join("")));
+  assert.ok(!existsSync(join(phased, ".backup-state")), ".backup-state is removed after finish");
+});
+
+test("T-E11b (F-DG7-1081): --phase finish refuses a set whose config/ listing is missing or whose config/ changed", () => {
+  blocked();
+  const env = { MTH_TRANSFER_ATTACHMENTS: "none" };
+  for (const [label, damage, reason] of [
+    [
+      "test-do-d14-nolisting",
+      (dir) => rmSync(join(dir, ".backup-state/config.sha")),
+      /config\/ listing of the database phase is missing/,
+    ],
+    [
+      "test-do-d14-changed",
+      (dir) => writeFileSync(join(dir, "config/images.lock.json"), "{}\n", { mode: 0o600 }),
+      /config\/ changed after the database phase/,
+    ],
+  ]) {
+    const db = backup(label, ["--phase", "database"], env);
+    assert.equal(db.status, 0, db.out);
+    const dir = join(work, "backups", label);
+    writeFileSync(join(dir, "evidence/attachments.json"), '{"items":[]}\n', { mode: 0o600 });
+    damage(dir);
+    const fin = backup(label, ["--phase", "finish"], env);
+    assert.equal(fin.status, 1, fin.out);
+    assert.match(fin.out, reason);
+    assert.ok(!existsSync(join(dir, "backup-manifest.json")), "no manifest for a refused set");
+  }
 });
 
 for (const [label, mode] of [
@@ -583,4 +629,74 @@ test("T-E13d (F-DG7-1053): a symbolic link to a regular file is refused as not a
   const r = run(BACKUP, ["--out", link, "--label", "test-do-d12-file", "--phase", "database"], ROOT_ENV());
   assert.equal(r.status, 2, r.out);
   assert.match(r.out, /^BLOCKED: the backup root .* is a symbolic link to .*, which is not a directory/m);
+});
+
+/** Every path under dir (dir included) with its numeric owner and permission bits. */
+function owners(dir) {
+  return [dir, ...readdirSync(dir, { recursive: true }).map((p) => join(dir, p))].map((p) => {
+    const st = lstatSync(p);
+    return { path: p, owner: `${st.uid}:${st.gid}`, mode: st.mode & 0o777, dir: st.isDirectory() };
+  });
+}
+
+test("T-E14 (F-DG7-1072/1082): restored evidence belongs to the evidence root's owner, directories 0700, files 0600", () => {
+  blocked();
+  const target = createDatabase("mth_dod14_t14");
+  const ev = join(work, "t14-evidence");
+  mkdirSync(ev, { mode: 0o755 }); // an existing, empty root, as the Compose volume (its owner is the API's account)
+  const me = `${process.getuid()}:${process.getgid()}`;
+  const out = join(work, "t14-report");
+  const r = restore(set, target, ev, out);
+  assert.equal(r.status, 0, r.out);
+  const paths = owners(ev);
+  const files = paths.filter((p) => !p.dir);
+  assert.ok(files.length >= 2, `restored evidence files: ${files.length}`); // the object and the retention set
+  for (const p of paths) {
+    assert.equal(p.owner, me, p.path);
+    assert.equal(p.mode, p.dir ? 0o700 : 0o600, `${p.path} mode ${p.mode.toString(8)}`);
+  }
+  const r7 = JSON.parse(readFileSync(join(out, "restore-report.json"), "utf8")).checks.find((c) => c.id === "R7");
+  assert.equal(r7.result, "PASS");
+  assert.deepEqual(r7.actual, r7.expected);
+  assert.equal(r7.actual.owner, me);
+  assert.equal(r7.actual.otherOwner, 0);
+  assert.equal(r7.actual.groupOrOtherBits, 0);
+  assert.equal(r7.actual.verified, manifest.evidence.attachmentManifest.entries);
+});
+
+test("T-E14b (F-DG7-1082): --evidence-owner must be <uid>:<gid> (exit 2, nothing written)", () => {
+  blocked();
+  const target = createDatabase("mth_dod14_t14b");
+  const ev = join(work, "t14b-evidence");
+  const r = restore(set, target, ev, join(work, "t14b-report"), ["--evidence-owner", "app"]);
+  assert.equal(r.status, 2, r.out);
+  assert.match(r.out, /^BLOCKED: --evidence-owner must be <uid>:<gid>/m);
+  assert.equal(tableCount(target), 0);
+  assert.equal(existsSync(ev), false);
+});
+
+test("T-E14c (F-DG7-1082): as root, the restore hands the evidence to the root's owner (uid 10001 as in Compose)", (t) => {
+  blocked();
+  const ev = join(work, "t14c-evidence");
+  mkdirSync(ev, { mode: 0o700 });
+  // The Compose evidence volume belongs to the image's app user (uid 10001). Changing an owner needs root with
+  // CAP_CHOWN and a mapped uid 10001; a user namespace without that mapping cannot express the case.
+  const probe = spawnSync("chown", ["10001:10001", ev], { encoding: "utf8" });
+  if (process.getuid() !== 0 || probe.status !== 0) {
+    t.skip(`not runnable here: chown to 10001:10001 failed (${(probe.stderr || "not root").trim()})`);
+    return;
+  }
+  const target = createDatabase("mth_dod14_t14c");
+  const out = join(work, "t14c-report");
+  const r = restore(set, target, ev, out);
+  assert.equal(r.status, 0, r.out);
+  for (const p of owners(ev)) {
+    assert.equal(p.owner, "10001:10001", p.path);
+    assert.equal(p.mode, p.dir ? 0o700 : 0o600, p.path);
+  }
+  // uid 10001 without any capability reads every restored file (what the API needs).
+  for (const p of owners(ev).filter((x) => !x.dir)) {
+    const c = spawnSync("cat", [p.path], { uid: 10001, gid: 10001 });
+    assert.equal(c.status, 0, `uid 10001 cannot read ${p.path}`);
+  }
 });

@@ -256,11 +256,148 @@ The script runs the checks in `--phase finish`, which is also the last part of `
 - An unset `MTH_BACKUP_ROOT` names a host path that does not exist, and so does a missing directory. Docker then refuses the mount, so the run stops before any backup.
 - `${MTH_BACKUP_ROOT:?}` is deliberately not used. Compose interpolates the whole file, so it would also stop `up` for every other profile.
 - The guide tells IT to create the root once, owner-only: `install -d -m 0700 -o root -g root <root>` (`backup-restore.md` §3.2, §3.3).
-- The service's set is owned by root. Step 2 of the Compose sequence therefore runs the app image as root (`--user 0:0`) for the copy-out command only, so that it can write into the set (DO-D11 §4 item 2).
-- **Verification status.** T-DG7-DO-D11's static test in `tools/release/tests/service-list.test.mjs` pins the mount's shape: one `/backups` bind, `create_host_path: false`, no `/tmp` and no `:?`. The Compose run itself was not executed in an agent sandbox, because there is no Docker daemon (D-243 Q1). This covers the refusal of an unset root, the root-owned `0700`/`0600` set, and step 2 with `--user 0:0`. It is the orchestrator's host run (D-283; F-DG7-1031/1051), and this amendment claims no result for it.
+- The service's set is owned by root. Step 2 of the Compose sequence therefore runs the app image as root (`--user 0:0`) for the copy-out command only, so that it can write into the set (DO-D11 §4 item 2). _Amended by Amendment 2 (A2.2): step 2 also adds `--cap-add DAC_READ_SEARCH` and reads the URL through `DATABASE_URL_FILE`; the `backup` service mounts the repository layout under `/mth/deploy` (A2.1)._
+- **Verification status.** T-DG7-DO-D11's static test in `tools/release/tests/service-list.test.mjs` pins the mount's shape: one `/backups` bind, `create_host_path: false`, no `/tmp` and no `:?`. The Compose run itself was not executed in an agent sandbox, because there is no Docker daemon (D-243 Q1). This covers the refusal of an unset root, the root-owned `0700`/`0600` set, and step 2 with `--user 0:0`. It is the orchestrator's host run (D-283; F-DG7-1031/1051), and this amendment claims no result for it. _Superseded by Amendment 2 (A2.6): the orchestrator ran the Compose sequence on its host; rg3 failed at C3 and rg3b passed C0 to C11, with the limits A2.6 states._
 
 ### A1.5 Residuals added (extends the Residuals section)
 
 7. **The ancestors of the backup root are not checked** (A1.3 item 4). An account that can write a parent directory could rename the root and put another in its place between runs. IT owns the host's directory tree, so the guide gives `/srv/mth-backups`, created by root.
 8. **The `ownerOnly` check covers modes, not ACLs or the owner's identity.** A POSIX ACL that grants another account access, or a root owned by a different account, is not detected. Keeping the set's permissions when it is copied off the host is IT's (`backup-restore.md` §3.3).
-9. **The Compose half of the owner-only and root rules is unverified here** (A1.4). It depends on the orchestrator's host run.
+9. **The Compose half of the owner-only and root rules is unverified here** (A1.4). It depends on the orchestrator's host run. _Replaced by residual 9 of Amendment 2 (A2.8)._
+
+## Amendment 2 (2026-11-24, T-DG7-SA-ADR73): the Compose sequence as built after T-DG7-DO-D13 (the `/mth/deploy` layout of the `backup` service, the step-2 `CAP_DAC_READ_SEARCH` grant and `DATABASE_URL_FILE` read), the answer to DO-D13 Q2, and the Compose run's real status (F-DG7-1073, F-DG7-1083)
+
+- **Author:** solution-architect (T-DG7-SA-ADR73). Base `ef91b97d7068206aa4e1f0473b9671d1973b2afa` on `claude/mobily-transformation-platform-dg6-regate`.
+- **Why.**
+  - Amendment 1 (SA-ADR72, `bf5bf82a7`) was written before T-DG7-DO-D13 (`ebe11c378`). DO-D13 changed the Compose sequence in three places that A1.4 does not state. Its handback says so itself (`docs/delivery/handbacks/DG7/T-DG7-DO-D13-devops-engineer.md` §4 gap 3) and asks the architect a question (§5 Q2).
+  - In round 3 of the re-gate, two reviewers raised the drift: F-DG7-1073 (code-security) and F-DG7-1083 (qa). The rule is the one Amendment 1 applied: ADR claims enumerated and exactly true (p7-work-split §2 rule 2).
+  - A1.4 "Verification status" says the Compose run "was not executed". It was executed later, by the orchestrator on its host (D-284): run `compose-backup-rg3` failed and run `compose-backup-rg3b` passed. A1.4 is therefore out of date.
+- **What this amendment does.**
+  - A2.1 to A2.3 record as built: the `backup` service of `deploy/compose/compose.yaml`, the preflight in `deploy/scripts/backup.sh`, §3.2 step 2 of `docs/handover/backup-restore.md`, step C4 of `deploy/scripts/drill/compose-backup-drill.sh` and the `copy-out` database URL rule of `apps/api/src/cli/transfer-attachments.ts`.
+  - A2.4 answers DO-D13 Q2, and A2.5 answers DO-D13 Q3.
+  - A2.6 replaces the "Verification status" bullet of A1.4 with what the two host runs prove and what they do not prove.
+  - A2.7 records the follow-on change that T-DG7-DO-D14 is assigned to make. This amendment claims no result for it.
+  - It changes no code, no test, no guide text, no migration, no OpenAPI contract and no image lock. No new dependency and no new image.
+- **What it replaces.** Each replaced place carries a pointer here:
+  - in A1.4, the bullet "The service's set is owned by root. Step 2 … runs the app image as root (`--user 0:0`) for the copy-out command only" (A2.2 adds the capability and the URL rule);
+  - in A1.4, the "Verification status" bullet (A2.6);
+  - residual 9 of A1.5 (A2.8).
+- **Unchanged.** The set layout (§1), the manifest fields (§2), the restore and its checks R1 to R9 (§7, §8), the container-free drill (§9), Amendment 1's checks (A1.1, A1.2) and the owner-only rules (A1.3).
+- **Two gate systems.** These are engineering artefacts. A local Compose drill on synthetic data approves nothing. None of this is a business, Finance or IT approval, and recovery objectives stay IT placeholders (§9).
+
+### A2.1 Where the `backup` service finds its files (extends §5 and A1.4)
+
+- `backup.sh` derives the repository root from its own path, two directories up (`MTH_REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"`). It reads `$MTH_REPO/deploy/compose/compose.yaml`, `$MTH_REPO/deploy/compose/.env` (when present) and `$MTH_REPO/deploy/images.lock.json` for `config/` (§3).
+- The service therefore mounts the repository's files read-only in the repository's own layout under `/mth`, so that `MTH_REPO` is `/mth`:
+
+  | Host path (relative to `deploy/compose/`) | Container path | Mode |
+  | --- | --- | --- |
+  | `../scripts/backup.sh` | `/mth/deploy/scripts/backup.sh` (also the entrypoint: `bash /mth/deploy/scripts/backup.sh --out /backups`) | `ro` |
+  | `.` (the whole Compose directory) | `/mth/deploy/compose` | `ro` |
+  | `../images.lock.json` | `/mth/deploy/images.lock.json` | `ro` |
+  | volume `evidence` | `/var/lib/mth/evidence` | `ro` |
+  | `${MTH_BACKUP_ROOT}` (A1.4) | `/backups` | read-write, `create_host_path: false` |
+
+- The whole Compose directory is mounted, not single files. A single-file bind of a missing `.env` would make Docker create a directory in its place.
+- **Preflight.** In `--phase all` and `--phase database`, a missing Compose file or `--env-file` is refused **before anything is written**, with `BLOCKED: the Compose file <path> does not exist (repository root resolved to <MTH_REPO> from <script>; …)` (exit 2). No half set is left behind, and the label stays free for the next run. The check inside the database phase is kept as a backstop.
+- **The defect this fixes** (rg3, A2.6): the script was mounted at `/mth/scripts/backup.sh`, one level too shallow. The root resolved to `/`, the database phase failed on `//deploy/compose/compose.yaml`, and `images.lock.json` would have been left out of `config/` without an error, because its copy is guarded by a file test.
+- **Tests:** `deploy/scripts/tests/backup-compose-layout.vitest.mjs` (12 Docker-free tests in `pnpm test`). It rebuilds the service's binds from `compose.yaml` in a temporary container root and checks that `MTH_REPO` is `/mth` and that the Compose and lock files are found. It checks the preflight against the old layout (exit 2, nothing written). DO-D13 log 03: the same file fails 8 of 12 against the files before the fix.
+
+### A2.2 Step 2 of the Compose sequence as built (replaces the A1.4 bullet on `--user 0:0`)
+
+Step 2 (`backup-restore.md` §3.2; drill step C4) is one `docker compose run` of the `api` service:
+
+```text
+docker compose -f deploy/compose/compose.yaml run --rm --no-deps -v "$MTH_BACKUP_ROOT:/backups" --user 0:0 \
+  --cap-add DAC_READ_SEARCH -e DATABASE_URL_FILE=/run/secrets/database_url --entrypoint node api \
+  /app/apps/api/dist/cli/transfer-attachments.js copy-out --to "/backups/$LABEL/evidence" \
+  --out "/backups/$LABEL/evidence/attachments.json" --export-id "$ID"
+```
+
+- **`--user 0:0`** (unchanged from A1.4): the set is root-owned and `0700` (A1.3), so only root can write into it.
+- **`--cap-add DAC_READ_SEARCH`** (new, DO-D13): the `api` service keeps `cap_drop: ["ALL"]`, `read_only: true` and `no-new-privileges:true`. The image creates the evidence store `/var/lib/mth/evidence` as `mth:mth` (uid 10001) with mode `0700` (`deploy/docker/Dockerfile`). Root with no capability cannot list or read that directory, so before DO-D13 the copy-out would have failed with `EACCES` on the store. The added capability gives back only the right to read files and to list and search directories the account does not own. It is **not** `CAP_DAC_OVERRIDE`, so this command cannot write into the store or change it. Root writes into its own set as the owner, which needs no capability.
+- **`-e DATABASE_URL_FILE=/run/secrets/database_url`** with **`--entrypoint node`**: the entrypoint bypasses the image's `mth` dispatcher, so the CLI must read the URL from the Compose secret file itself (A2.3).
+- The flags are scoped to this one command. The long-running `api` and `worker` services are unchanged: no capability, uid 10001.
+- **Tests:** `backup-compose-layout.vitest.mjs` checks that the guide and drill step C4 carry the same flags (`--user 0:0`, `--cap-add DAC_READ_SEARCH`, `DATABASE_URL_FILE`) and that the Dockerfile and `cap_drop` facts above hold.
+
+### A2.3 `transfer-attachments copy-out` reads `DATABASE_URL` or `DATABASE_URL_FILE`
+
+- `copy-out` reads the database URL through `@mth/config` `readSecretVariable("DATABASE_URL")`. This is the ADR-0011 `<NAME>_FILE` rule the API already follows. Before DO-D13 it read only `DATABASE_URL`, so step 2 would have stopped with `BLOCKED: transfer-attachments copy-out: DATABASE_URL is not set` (exit 2).
+- Both variables set, or a file that cannot be read, is BLOCKED with exit 2. The message names the variable and never the value. With neither set, the message is still `DATABASE_URL is not set` (exit 2).
+- The rule covers `copy-out` only, the one subcommand that reads the database. `copy-in` and `verify` read the store and a manifest.
+- **Tests:** `apps/api/test/integration/transfer/attachments.test.ts` covers an unreadable file and both forms set (exit 2), and T-C16 (copy-out through `DATABASE_URL_FILE`, the same manifest items). In `deploy/scripts/tests/backup-restore.test.mjs`, T-E11 runs the three-step sequence with `DATABASE_URL_FILE` (a `0600` file) and an empty `DATABASE_URL`.
+
+### A2.4 DO-D13 Q2: is `CAP_DAC_READ_SEARCH` the least privilege for step 2? Accepted, with one disclosed residual
+
+**Decision.** `--user 0:0` plus `--cap-add DAC_READ_SEARCH`, for the one-off copy-out command only, is accepted as the least privilege that meets both needs of step 2 without changing the ownership model of A1.3:
+
+- (a) write into a root-owned `0700` set;
+- (b) read a store owned by uid 10001 with mode `0700`.
+
+**Alternatives judged.**
+
+| # | Alternative | Why not |
+| --- | --- | --- |
+| 1 | Run as uid 10001 with no capability | It meets (b) but not (a). Meeting (a) would mean making the set, or a directory inside it, writable by the application account. Then a compromised API or worker, which runs as that account, could read or alter backups. A1.3 keeps the set away from the application account on purpose. |
+| 2 | `--cap-add DAC_OVERRIDE` (or root with Docker's default capabilities) | Strictly broader: it also lets the command write, replace and delete any file in the store. Step 2 only reads the store. |
+| 3 | A store-readable group (store `0750` with a shared group, and `--group-add` on step 2) | The image has no such group today (DO-D13 Q2). It is a lasting change: the store's mode would widen for every container that joins the group, and the adapter's file modes would have to follow. Step 2's capability lasts for one command. This needs an image and adapter change, which is out of scope for this release's repair. |
+| 4 | Copy out as uid 10001 into a staging directory outside the set, then move it into the set as root | It avoids the capability, but adds a second copy and a directory the application account can write on the backup host. That breaks the guarantee of A1.3 that only the set's owner has touched its content. DO-D13 §4 gap 2 keeps it as the fallback in case a Compose version rejects `--cap-add` on `run`. The host's Compose accepted the flag in rg3b (A2.6), so the fallback is not needed. |
+| 5 | Run the copy-out in the `backup` service, which already mounts the store read-only as root | `postgres:18` has no Node, and the copy-out and its manifest are the API's CLI (ADR-0064 §5). A new image is rejected by Alternative 4 of this ADR. |
+| 6 | `CAP_FOWNER` or `CAP_CHOWN` | Neither grants read access to another account's files. They do not meet (b). |
+
+**Residual disclosed with the decision (residual 10, A2.8).**
+
+- Granting `CAP_DAC_READ_SEARCH` to a container also lets it call `open_by_handle_at(2)`. Docker's default seccomp profile allows that system call only when this capability is granted.
+- With the capability, a process that holds a file descriptor on a bind-mounted host file system can, in principle, open other files on that file system by handle. That is the known 2014 "shocker" escape class. In step 2 the bind mounts are `/backups` (the backup root) and the Compose secret files.
+- **Why it is accepted here:**
+  - the container runs one fixed command from the pinned, locally built app image, with `--rm`, a read-only root file system and `no-new-privileges`;
+  - it runs no operator- or user-supplied code;
+  - it lives for seconds (C4 took 1.26 s in rg3b).
+- **How IT can narrow it further.** Put the backup root on a dedicated file system, so that the handle reach of the `/backups` mount is limited to the backups. Choose `MTH_SECRETS_DIR` with the same care. This advice is not yet in `backup-restore.md`; the guide is the devops-engineer's (open question 1 of this task's handback).
+- **Not verified online.** This environment is offline. The `open_by_handle_at` and seccomp facts above come from the Docker and Linux documentation as the author knows it. They were not re-checked against the current official pages in this run. The orchestrator or the devops-engineer should check them before the guide cites them.
+
+**If Alternative 3 is ever adopted** (an image change), the capability can be dropped. That needs a new amendment of this ADR.
+
+### A2.5 DO-D13 Q3: the extra read-only files in the `backup` service
+
+- Mounting the whole Compose directory also exposes `db-init/`, `compose.load.yaml`, `compose.no-egress.yaml` and `.env` (which holds only `MTH_SECRETS_DIR`) to the `backup` container, read-only.
+- None of them holds a secret value, and only `compose.yaml` and `.env` (as `environment.env`, secret values removed, §3) are copied into `config/`.
+- **Accepted.** The secret files themselves stay Compose secrets (`/run/secrets`) and are never copied (§3, D-243 Q16).
+
+### A2.6 Verification status of the Compose sequence (replaces the A1.4 "Verification status" bullet)
+
+The Compose half **was executed**, by the orchestrator on its host's Docker daemon (D-284; the D-267 precedent; D-243 Q1 still holds for agent sandboxes). The evidence is under `docs/delivery/test-evidence/DG7/orchestrator/`.
+
+| Run | Source | Result | What happened |
+| --- | --- | --- | --- |
+| `compose-backup-rg3` | `bf5bf82a736dbdafffa89551158ef835b3ccf108` | **FAIL**: image build exit 0, drill exit 1 | C3 (`--phase database`) failed: `backup: set rg3 failed: the Compose file //deploy/compose/compose.yaml does not exist`. C4 to C10 were NOT_RUN. This confirmed F-DG7-1031/1051 as a product defect, which DO-D13 repaired (A2.1). |
+| `compose-backup-rg3b` | `ebe11c378687f3ff48ee269e5bfa4971d6addcbc` (image rebuilt from it) | **PASS**: build exit 0, drill exit 0, C0 to C11 PASS in 46.34 s | The backup profile on `postgres:18` (C3), the copy-out with `--user 0:0` and `DAC_READ_SEARCH` (C4), the finish phase (C5), a set with no group or other bit (C6), a restore into a second project with new volumes (C7, C8), migrate "up to date" and `GET /readyz` (C10). |
+
+**What rg3b proves:**
+
+- the `/mth/deploy` layout of A2.1 works in a container;
+- the host's Compose accepts `--cap-add` on `run`, which closes DO-D13 §4 gap 2;
+- `DATABASE_URL_FILE` reaches the CLI (C4 exit 0);
+- the three-step sequence produces a set that restores and starts.
+
+**What rg3b does not prove** (stated so that nothing above is read as more than it is):
+
+- **The capability's read path was not exercised.** C4 logged `copied 0 objects (0 distinct files, 0 bytes)`. The source had no evidence object, so the read of the uid-10001 store under `DAC_READ_SEARCH` was never tested on a real file. The source had no job either, so the job-state leg is vacuous too (F-DG7-1072, open).
+- **The restored evidence's ownership was set by the drill, not by the documented restore.** C9 runs `chown -R` to the evidence root's owner, and `backup-restore.md` does not document that step (F-DG7-1082, open).
+- **The manifest's config list was empty.** The finish phase printed `cat: …/config.sha: No such file or directory`, and the manifest's `config.files` was empty (F-DG7-1061, open). The `config/` files were still hashed in the top-level `files` and checked by R1 on restore.
+- **No refusal case ran in Compose.** The unset or missing `MTH_BACKUP_ROOT` refusal (A1.4) was not run as a drill step. Its shape is pinned only by the static test in `tools/release/tests/service-list.test.mjs`.
+
+### A2.7 The follow-on change assigned to T-DG7-DO-D14 (not built at this amendment's base)
+
+T-DG7-DO-D14 is assigned (2026-11-24) to repair F-DG7-1061/1071/1081 and F-DG7-1072/1082. At this amendment's base none of it is merged, and this amendment states no rule for it. The assignment's scope, as given:
+
+1. **Split-phase config list.** `--phase finish` records `config.files`. The config listing survives from the database phase to the finish phase through the shared backup root, never through a per-process temporary directory. No stray `cat` error. A test fails on an empty `config.files` and on any stderr noise.
+2. **Restored evidence ownership.** A Compose restore that follows `backup-restore.md` leaves the evidence readable by uid 10001, with its intended owner and modes, and with no undocumented `chown`. This changes the restore design of §7 step 5 for Compose. Today `copy-in` writes as the account that runs `restore.sh` (root in the Compose runner), and only the drill's C9 corrects the owner.
+3. **A Compose drill that moves real data.** The drill seeds and moves real evidence objects and job state. It verifies ownership, count and hashes after the restore, which also exercises A2.4's read path. DO-D14 is to run the drill itself on the host's Docker daemon and record the log.
+
+When DO-D14 is merged, the ownership rule as built (who owns the restored store, how it is set, and its test) must be recorded by a further amendment of §7. The same amendment should restate A2.6 from DO-D14's drill log. Until then, items 1 to 3 are open findings, not behaviour.
+
+### A2.8 Residuals (replaces residual 9; extends the Residuals section)
+
+9. **The Compose half has run, but only the database, audit and snapshot legs carry data** (A2.6). The evidence and job-state legs and the `DAC_READ_SEARCH` read path moved zero items in rg3b. The restored ownership depends on an undocumented drill step. These stay open until DO-D14's drill (A2.7) or a later host run shows them with real objects.
+10. **Step 2 grants `CAP_DAC_READ_SEARCH`, which re-enables `open_by_handle_at(2)` for one short-lived command** (A2.4). It is bounded by the fixed, pinned command, the read-only root file system, `no-new-privileges` and `--rm`. IT can narrow it by putting the backup root on a dedicated file system. The guide does not yet say so.
