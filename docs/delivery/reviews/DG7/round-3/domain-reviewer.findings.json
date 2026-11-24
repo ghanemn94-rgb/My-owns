@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG7-1061",
+      "stage_id": "DG7",
+      "requirement": "REQ-S19-012",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "In the Compose backup sequence (--phase database, then --phase finish in a new container), the manifest's config.files is always empty and finish prints 'cat: <tmp>/config.sha: No such file or directory'; the orchestrator's PASS drill log rg3b carries that error line unexplained",
+      "reproduction": "On the frozen candidate (sha256:cf1fb7d5…, source 3e8f5bce): deploy/scripts/backup.sh l.311 makes WORK a fresh mktemp directory per process (removed on EXIT, l.319). The database phase writes the config listing to \"$WORK/config.sha\" (l.446) and only its hash to the persistent .backup-state (l.447). The finish phase, a separate process (and in Compose a separate container), builds the manifest with -v cfg=\"$(cat \"$WORK/config.sha\")\" (l.585), a file in ITS OWN new WORK that does not exist, so cat fails and config.files becomes []. Evidence: (1) docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg3b/02-compose-backup-drill.log l.257 and 02-compose-backup-drill.d/finish.out: 'cat: /tmp/mth-backup.hBaAOK/config.sha: No such file or directory' just before 'backup: set rg3b succeeded'. (2) My probe in a disposable clone of 3e8f5bce on a disposable PostgreSQL: I added to T-E11 (the split-phase test) console output of the manifest and one assertion 'm.config.files.length > 0' (diff in probe-t-e11-config-files.diff); command: QA_PG_PORT=32320 tests/qa/support/with-pg.sh node --test deploy/scripts/tests/backup-restore.test.mjs. Result: T-E11 split phase config={\"files\":[],\"sha256\":\"3a7ce9a2…\"} with the same 'cat: …/config.sha' line in fin.out, while T-E1 (single --phase all) lists config/compose.yaml, config/environment.env, config/images.lock.json with their SHA-256. The only failing assertion was my probe's; the unmodified suite passes 18/18 because T-E11 never asserts config.files.",
+      "expected": "ADR-0066 §2 and docs/handover/backup-restore.md §2 (manifest 'config' = { files: [{path, sha256}], sha256 }), unchanged by ADR-0066 Amendment 1: the backup manifest lists every file of config/ with its SHA-256, whichever procedure produced the set; the documented Compose procedure (§3.2), which is the primary deployment, produces the same manifest content as --phase all, without an error line on the operator's output; and any error line in the evidence cited for the A19 Compose drill is explained.",
+      "actual": "Every set produced by the documented Compose sequence has 'config': {'files': [], 'sha256': <hash of a listing that is not in the manifest>}, so the manifest's configuration section is not self-describing and cannot be checked against the config/ files from the manifest's config entry. The operator sees a 'cat: … No such file or directory' error on every Compose backup that nevertheless reports success. T-E11 and the layout tests do not cover it; the DO-D13 handback, D-284 and the rg3b evidence do not mention the error line. Bounded effect: the config/ files are still listed and hashed in the manifest's top-level 'files' array (restore R1 verifies them; the rg3b restore R1 passed 6 files, 0 mismatches), and nothing reads config.files at restore. Not a data loss and not a security or authorization defect, so Medium, not High. Repair: persist the listing in .backup-state (as config_sha256 already is) or recompute it in the finish phase, and assert config.files in T-E11.",
+      "evidence": [
+        "deploy/scripts/backup.sh",
+        "docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg3b/02-compose-backup-drill.log",
+        "docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg3b/02-compose-backup-drill.d/finish.out",
+        "docs/delivery/test-evidence/DG7/domain/round-3/backup-restore-probe2.log",
+        "docs/delivery/test-evidence/DG7/domain/round-3/probe-t-e11-config-files.diff",
+        "docs/delivery/test-evidence/DG7/domain/round-3/backup-restore-baseline.log",
+        "docs/architecture/adr/ADR-0066-p7-backup-restore-backup-set-manifest-restore-checks-drill.md",
+        "docs/handover/backup-restore.md",
+        "deploy/scripts/tests/backup-restore.test.mjs"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG7/round-3/domain-reviewer.json",
+      "owner": "devops-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-24T08:58:00Z",
+          "status": "OPEN",
+          "note": "Raised by domain-reviewer in DG7 round 3 on candidate sha256:cf1fb7d5…; found from the unexplained error line in the orchestrator's compose-backup-rg3b drill log and reproduced with a probe on a disposable PostgreSQL. Medium, not mandatory."
+        }
+      ]
+    }
+  ]
+}

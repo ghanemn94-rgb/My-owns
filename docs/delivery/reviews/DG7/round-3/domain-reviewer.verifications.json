@@ -1,0 +1,41 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG7-1031",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:cf1fb7d5… (source 3e8f5bce2b76320613bb25751675d02c1f89d185). The finding was that the handover said the Compose half of A19 'is recorded' on the orchestrator's host while no such run existed, and that DO-D11 had changed the Compose procedure without running it. Now: (1) the orchestrator ran the §3.2 sequence on its Docker daemon: compose-backup-rg3 (source bf5bf82a) FAILED at C3 with 'the Compose file //deploy/compose/compose.yaml does not exist', which proved a real defect (script mounted at /mth/scripts/, so backup.sh derived the root as /); C4-C10 NOT_RUN, C11 cleanup PASS, drill exit 1, all explained by the C3 cause. (2) DO-D13 moved the script mount to /mth/deploy/scripts/backup.sh and the Compose directory to /mth/deploy/compose (ro), added a preflight that refuses a missing Compose/env file with exit 2 before anything is written, added --cap-add DAC_READ_SEARCH to step 2 (guide and drill identical, pinned by a test) and DATABASE_URL_FILE support in transfer-attachments; service-list.json mirrors the mounts. I ran backup-compose-layout.vitest.mjs (12/12) and backup-restore.test.mjs (18/18, T-E10..T-E13 incl.) in a disposable clone, and the P7 integration suites including transfer/attachments (89/89). (3) compose-backup-rg3b (repository HEAD ebe11c378, image rebuilt) PASS C0-C11, drill exit 0, restore R1 6 files 0 mismatches, R2 migration level 0152, /readyz {database ok, migrations ok, storage ok, worker alive}. Between ebe11c378 and the candidate only known-limitations.md, release-notes.md and secret-allowlist.json changed outside docs/delivery, so the run used this candidate's deploy and app code. (4) The handover statements are now true: a Compose run exists and is recorded in the orchestrator's evidence; backup-restore.md §10 'has not been run here … It runs on the orchestrator's host' is accurate for the agent sandbox. I have no Docker daemon and did not re-run the drill; its PASS is the orchestrator's, judged from its logs. Residuals I did not count against this finding: the rg3b build log's Docker lint warning (SecretsUsedInArgOrEnv on ENV AUTH_MODE, a mode name, not a secret) and the synthetic set held 0 evidence objects, so the copy-out was exercised on an empty store in Compose (non-empty stores are covered by T-E7 and the QA A19 harness). The rg3b log also holds an unexplained 'cat: …/config.sha: No such file or directory' line at the finish phase; that is a separate defect of the split-phase manifest, raised as F-DG7-1061 (Medium), not a reopening of this finding.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg3/02-compose-backup-drill.log",
+        "docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg3/run.txt",
+        "docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg3b/02-compose-backup-drill.log",
+        "docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg3b/run.txt",
+        "docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg3b/02-compose-backup-drill.d/restore/restore-report.json",
+        "docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg3b/02-compose-backup-drill.d/readyz.json",
+        "docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg3b/01-build-image.log",
+        "docs/delivery/handbacks/DG7/T-DG7-DO-D13-devops-engineer.md",
+        "deploy/compose/compose.yaml",
+        "deploy/scripts/backup.sh",
+        "docs/handover/backup-restore.md",
+        "docs/delivery/test-evidence/DG7/domain/round-3/layout-vitest.log",
+        "docs/delivery/test-evidence/DG7/domain/round-3/backup-restore-baseline.log",
+        "docs/delivery/test-evidence/DG7/domain/round-3/integration-p7.log",
+        "docs/delivery/test-evidence/DG7/domain/round-3/candidate-check.txt"
+      ]
+    },
+    {
+      "finding_id": "F-DG7-1032",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:cf1fb7d5…. ADR-0063 Amendment 2 (2026-11-17, T-DG7-SA-ADR72) records the S3 exceptions as built, replaces the old '[a-z0-9_.]+' i18n-key exception with isI18nKey (A2.2, matching tools/release/secret-scan.mjs), and discloses the 64-hex trade-off (A2.3, residual 9 and 10); the §1.2 S3 cell now points to it. ADR-0066 Amendment 1 (A1.1) lists the backup-time checks as built with ownerOnly as check 7, A1.2 explains why a Compose manifest has six check entries (no evidenceVerified), A1.3 records the owner-only set, the refused group/other-writable root and the DO-D12 symbolic-link rule (resolved target judged; dangling or non-directory refused), which I confirmed against backup.sh and T-E13a-d (pass in my run), and A1.4 the required MTH_BACKUP_ROOT. Each replaced place carries a pointer. Cosmetic residual, not a defect: A1 'Why' says DO-D11 'added a sixth backup-time check', while §4's pointer and the A1.1 table number ownerOnly as the seventh (it is the sixth entry only in a Compose manifest). The amendments grant no approval.",
+      "evidence": [
+        "docs/architecture/adr/ADR-0063-p7-secret-hygiene-claims-scan-security-controls-evidence.md",
+        "docs/architecture/adr/ADR-0066-p7-backup-restore-backup-set-manifest-restore-checks-drill.md",
+        "tools/release/secret-scan.mjs",
+        "deploy/scripts/backup.sh",
+        "docs/delivery/handbacks/DG7/T-DG7-SA-ADR72-solution-architect.md",
+        "docs/delivery/test-evidence/DG7/domain/round-3/backup-restore-baseline.log"
+      ]
+    }
+  ]
+}
