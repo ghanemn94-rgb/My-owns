@@ -1,0 +1,435 @@
+proxy build args passed from the environment: HTTPS_PROXY NO_PROXY https_proxy no_proxy
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 5.62kB done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/node:24-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
+#2 DONE 0.9s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 1.67kB done
+#3 DONE 0.0s
+
+#4 [internal] load build context
+#4 DONE 0.0s
+
+#5 [build  1/15] FROM docker.io/library/node:24-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
+#5 resolve docker.io/library/node:24-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
+#5 resolve docker.io/library/node:24-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6 0.2s done
+#5 DONE 0.2s
+
+#4 [internal] load build context
+#4 transferring context: 233.55kB 1.7s done
+#4 DONE 1.7s
+
+#6 [build  4/15] COPY apps/api/package.json apps/api/package.json
+#6 CACHED
+
+#7 [build  5/15] COPY apps/worker/package.json apps/worker/package.json
+#7 CACHED
+
+#8 [build  8/15] COPY packages/db/package.json packages/db/package.json
+#8 CACHED
+
+#9 [build  2/15] WORKDIR /src
+#9 CACHED
+
+#10 [build  3/15] COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
+#10 CACHED
+
+#11 [build  6/15] COPY apps/web/package.json apps/web/package.json
+#11 CACHED
+
+#12 [build  9/15] COPY packages/design-tokens/package.json packages/design-tokens/package.json
+#12 CACHED
+
+#13 [build 10/15] COPY packages/reporting/package.json packages/reporting/package.json
+#13 CACHED
+
+#14 [build 11/15] COPY packages/shared/package.json packages/shared/package.json
+#14 CACHED
+
+#15 [build  7/15] COPY packages/config/package.json packages/config/package.json
+#15 CACHED
+
+#16 [build 12/15] RUN --mount=type=secret,id=build_ca,required=false     set -eu;     if [ -s /run/secrets/build_ca ]; then export NODE_EXTRA_CA_CERTS=/run/secrets/build_ca; fi;     if [ -n "" ]; then export npm_config_registry="" COREPACK_NPM_REGISTRY=""; fi;     mkdir -p "/pnpm";     corepack enable --install-directory "/pnpm";     pnpm --version;     pnpm install --frozen-lockfile
+#16 CACHED
+
+#17 [build 13/15] COPY . .
+#17 DONE 0.7s
+
+#18 [build 14/15] RUN pnpm -r build
+#18 0.476 Scope: 8 of 9 workspace projects
+#18 0.481 packages/design-tokens build$ tsc -p tsconfig.build.json && node src/cli.ts generate
+#18 0.481 packages/shared build$ tsc -p tsconfig.build.json
+#18 2.358 packages/design-tokens build: generated /src/packages/design-tokens/dist/tokens.css
+#18 2.366 packages/design-tokens build: Done
+#18 7.944 packages/shared build: Done
+#18 7.945 apps/web build$ tsc -p tsconfig.json && vite build
+#18 7.947 packages/reporting build$ tsc -p tsconfig.build.json
+#18 7.947 packages/config build$ tsc -p tsconfig.build.json
+#18 13.85 packages/reporting build: Done
+#18 14.05 packages/config build: Done
+#18 73.67 apps/web build: [36mvite v7.3.7 [32mbuilding client environment for production...[36m[39m
+#18 73.76 apps/web build: transforming...
+#18 77.72 apps/web build: [33m../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js (400:0): A comment
+#18 77.72 apps/web build: "// Wrapped in a `@__PURE__` IIFE: esbuild never tree-shakes a top-level initializer that contains a member access on `Number`, so the bare object literal survived into every bundle."
+#18 77.72 apps/web build: in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/util.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.[39m
+#18 77.73 apps/web build: [33m../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js (74:0): A comment
+#18 77.73 apps/web build: "/** Anchors a pattern source. The interpolation lives here rather than at the call site because
+#18 77.73 apps/web build:  * esbuild will not drop a `@__PURE__` call whose own argument interpolates a variable, but it
+#18 77.73 apps/web build:  * will drop `anchor(dateSource)`. Keeping it inline pinned `date` into every bundle. */"
+#18 77.73 apps/web build: in "../../node_modules/.pnpm/zod@4.6.7/node_modules/zod/v4/core/regexes.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.[39m
+#18 82.31 apps/web build: [32m✓[39m 820 modules transformed.
+#18 83.55 apps/web build: rendering chunks...
+#18 86.64 apps/web build: computing gzip size...
+#18 87.45 apps/web build: [2mdist/[22m[32mindex.html                                                    [39m[1m[2m    1.11 kB[22m[1m[22m[2m │ gzip:   0.48 kB[22m
+#18 87.45 apps/web build: [2mdist/[22m[2massets/[22m[32mibm-plex-sans-latin-400-normal-CYLoc0-x.woff           [39m[1m[2m   22.10 kB[22m[1m[22m
+#18 87.45 apps/web build: [2mdist/[22m[2massets/[22m[32mibm-plex-sans-latin-400-normal-CDDApCn2.woff2          [39m[1m[2m   22.59 kB[22m[1m[22m
+#18 87.45 apps/web build: [2mdist/[22m[2massets/[22m[32mibm-plex-sans-latin-600-normal-Cu4Hd6ag.woff           [39m[1m[2m   23.88 kB[22m[1m[22m
+#18 87.45 apps/web build: [2mdist/[22m[2massets/[22m[32mibm-plex-sans-latin-500-normal-BgVn5rGT.woff           [39m[1m[2m   23.92 kB[22m[1m[22m
+#18 87.45 apps/web build: [2mdist/[22m[2massets/[22m[32mibm-plex-sans-latin-500-normal-6ng42L7E.woff2          [39m[1m[2m   24.18 kB[22m[1m[22m
+#18 87.45 apps/web build: [2mdist/[22m[2massets/[22m[32mibm-plex-sans-latin-600-normal-CuJfVYMP.woff2          [39m[1m[2m   24.25 kB[22m[1m[22m
+#18 87.46 apps/web build: [2mdist/[22m[2massets/[22m[32mibm-plex-sans-arabic-arabic-400-normal-BM00HIL5.woff2  [39m[1m[2m   42.88 kB[22m[1m[22m
+#18 87.46 apps/web build: [2mdist/[22m[2massets/[22m[32mibm-plex-sans-arabic-arabic-400-normal-D-ylXcdQ.woff   [39m[1m[2m   44.18 kB[22m[1m[22m
+#18 87.46 apps/web build: [2mdist/[22m[2massets/[22m[32mibm-plex-sans-arabic-arabic-500-normal-CVSLUoBh.woff2  [39m[1m[2m   45.49 kB[22m[1m[22m
+#18 87.46 apps/web build: [2mdist/[22m[2massets/[22m[32mibm-plex-sans-arabic-arabic-600-normal-a0NpOJIw.woff2  [39m[1m[2m   45.73 kB[22m[1m[22m
+#18 87.46 apps/web build: [2mdist/[22m[2massets/[22m[32mibm-plex-sans-arabic-arabic-600-normal-BQ7tCLaK.woff   [39m[1m[2m   46.83 kB[22m[1m[22m
+#18 87.46 apps/web build: [2mdist/[22m[2massets/[22m[32mibm-plex-sans-arabic-arabic-500-normal-DCkCZrW1.woff   [39m[1m[2m   46.96 kB[22m[1m[22m
+#18 87.46 apps/web build: [2mdist/[22m[2massets/[22m[35mpanels-BOxaP_-H.css                                    [39m[1m[2m    0.89 kB[22m[1m[22m[2m │ gzip:   0.37 kB[22m
+#18 87.46 apps/web build: [2mdist/[22m[2massets/[22m[35mintegrations-CKRMmDWb.css                              [39m[1m[2m    1.27 kB[22m[1m[22m[2m │ gzip:   0.51 kB[22m
+#18 87.46 apps/web build: [2mdist/[22m[2massets/[22m[35mRecordForm-D4B1akcy.css                                [39m[1m[2m    1.51 kB[22m[1m[22m[2m │ gzip:   0.48 kB[22m
+#18 87.46 apps/web build: [2mdist/[22m[2massets/[22m[35mvendor-DXNDhYAL.css                                    [39m[1m[2m    1.52 kB[22m[1m[22m[2m │ gzip:   0.33 kB[22m
+#18 87.46 apps/web build: [2mdist/[22m[2massets/[22m[35mindex-CowLZ_Uu.css                                     [39m[1m[2m   39.06 kB[22m[1m[22m[2m │ gzip:   6.91 kB[22m
+#18 87.46 apps/web build: [2mdist/[22m[2massets/[22m[36mTableScrollRegion-DUOvDBJ3.js                          [39m[1m[2m    0.39 kB[22m[1m[22m[2m │ gzip:   0.29 kB[22m[2m │ map:     1.87 kB[22m
+#18 87.47 apps/web build: [2mdist/[22m[2massets/[22m[36mapi-C8mmSZ19.js                                        [39m[1m[2m    0.50 kB[22m[1m[22m[2m │ gzip:   0.32 kB[22m[2m │ map:     4.39 kB[22m
+#18 87.47 apps/web build: [2mdist/[22m[2massets/[22m[36mapi-Dv8JwOha.js                                        [39m[1m[2m    0.55 kB[22m[1m[22m[2m │ gzip:   0.33 kB[22m[2m │ map:     6.96 kB[22m
+#18 87.47 apps/web build: [2mdist/[22m[2massets/[22m[36mP6NotAvailablePage-Bwhx3HGh.js                         [39m[1m[2m    0.61 kB[22m[1m[22m[2m │ gzip:   0.38 kB[22m[2m │ map:     1.64 kB[22m
+#18 87.47 apps/web build: [2mdist/[22m[2massets/[22m[36mP7NotAvailablePage-BxrMQB49.js                         [39m[1m[2m    0.61 kB[22m[1m[22m[2m │ gzip:   0.38 kB[22m[2m │ map:     1.67 kB[22m
+#18 87.47 apps/web build: [2mdist/[22m[2massets/[22m[36mRestrictedRecordsLabel-C8dstdOl.js                     [39m[1m[2m    0.65 kB[22m[1m[22m[2m │ gzip:   0.40 kB[22m[2m │ map:     2.18 kB[22m
+#18 87.47 apps/web build: [2mdist/[22m[2massets/[22m[36mactions-DX-5CCyu.js                                    [39m[1m[2m    0.67 kB[22m[1m[22m[2m │ gzip:   0.46 kB[22m[2m │ map:     2.58 kB[22m
+#18 87.47 apps/web build: [2mdist/[22m[2massets/[22m[36mUnplacedFieldErrors-DOCwBg3b.js                        [39m[1m[2m    0.72 kB[22m[1m[22m[2m │ gzip:   0.43 kB[22m[2m │ map:     2.83 kB[22m
+#18 87.47 apps/web build: [2mdist/[22m[2massets/[22m[36mExtensionBadge-CiQsvmas.js                             [39m[1m[2m    0.77 kB[22m[1m[22m[2m │ gzip:   0.41 kB[22m[2m │ map:     2.97 kB[22m
+#18 87.47 apps/web build: [2mdist/[22m[2massets/[22m[36mmethodology-C1sYRf_3.js                                [39m[1m[2m    0.81 kB[22m[1m[22m[2m │ gzip:   0.35 kB[22m[2m │ map:     3.93 kB[22m
+#18 87.48 apps/web build: [2mdist/[22m[2massets/[22m[36mapi-Ba41Ej4C.js                                        [39m[1m[2m    0.92 kB[22m[1m[22m[2m │ gzip:   0.45 kB[22m[2m │ map:     3.99 kB[22m
+#18 87.48 apps/web build: [2mdist/[22m[2massets/[22m[36mvendor-CCMBgAGF.js                                     [39m[1m[2m    0.96 kB[22m[1m[22m[2m │ gzip:   0.52 kB[22m[2m │ map:     4.19 kB[22m
+#18 87.48 apps/web build: [2mdist/[22m[2massets/[22m[36mBadges-DUVRw_nE.js                                     [39m[1m[2m    0.99 kB[22m[1m[22m[2m │ gzip:   0.49 kB[22m[2m │ map:     3.78 kB[22m
+#18 87.48 apps/web build: [2mdist/[22m[2massets/[22m[36mapi-B_GJIXdw.js                                        [39m[1m[2m    0.99 kB[22m[1m[22m[2m │ gzip:   0.50 kB[22m[2m │ map:     4.11 kB[22m
+#18 87.48 apps/web build: [2mdist/[22m[2massets/[22m[36mapi-BPgVwpMB.js                                        [39m[1m[2m    1.02 kB[22m[1m[22m[2m │ gzip:   0.57 kB[22m[2m │ map:     5.04 kB[22m
+#18 87.48 apps/web build: [2mdist/[22m[2massets/[22m[36mmessages-CffDDxdA.js                                   [39m[1m[2m    1.05 kB[22m[1m[22m[2m │ gzip:   0.62 kB[22m[2m │ map:     4.82 kB[22m
+#18 87.48 apps/web build: [2mdist/[22m[2massets/[22m[36mSection-5jvommDv.js                                    [39m[1m[2m    1.08 kB[22m[1m[22m[2m │ gzip:   0.51 kB[22m[2m │ map:     3.12 kB[22m
+#18 87.48 apps/web build: [2mdist/[22m[2massets/[22m[36mui-BEe7K_G2.js                                         [39m[1m[2m    1.24 kB[22m[1m[22m[2m │ gzip:   0.74 kB[22m[2m │ map:     5.63 kB[22m
+#18 87.48 apps/web build: [2mdist/[22m[2massets/[22m[36mapi-x9a_utOt.js                                        [39m[1m[2m    1.31 kB[22m[1m[22m[2m │ gzip:   0.57 kB[22m[2m │ map:     5.60 kB[22m
+#18 87.48 apps/web build: [2mdist/[22m[2massets/[22m[36mdialogs-CxLj6k8G.js                                    [39m[1m[2m    1.35 kB[22m[1m[22m[2m │ gzip:   0.78 kB[22m[2m │ map:     5.11 kB[22m
+#18 87.48 apps/web build: [2mdist/[22m[2massets/[22m[36mapi-Cq-yQKrj.js                                        [39m[1m[2m    1.38 kB[22m[1m[22m[2m │ gzip:   0.59 kB[22m[2m │ map:     5.41 kB[22m
+#18 87.49 apps/web build: [2mdist/[22m[2massets/[22m[36mapi-Ce4cullH.js                                        [39m[1m[2m    1.40 kB[22m[1m[22m[2m │ gzip:   0.60 kB[22m[2m │ map:     5.81 kB[22m
+#18 87.49 apps/web build: [2mdist/[22m[2massets/[22m[36museVersionedSave-DyAXNRo8.js                           [39m[1m[2m    1.44 kB[22m[1m[22m[2m │ gzip:   0.73 kB[22m[2m │ map:     7.63 kB[22m
+#18 87.49 apps/web build: [2mdist/[22m[2massets/[22m[36mReasonDialog-S_GZUzvZ.js                               [39m[1m[2m    1.47 kB[22m[1m[22m[2m │ gzip:   0.83 kB[22m[2m │ map:     6.32 kB[22m
+#18 87.49 apps/web build: [2mdist/[22m[2massets/[22m[36mPeople-CkUO0Lji.js                                     [39m[1m[2m    1.50 kB[22m[1m[22m[2m │ gzip:   0.84 kB[22m[2m │ map:     5.50 kB[22m
+#18 87.49 apps/web build: [2mdist/[22m[2massets/[22m[36mMigrationsEntryPage-DiM6H8KU.js                        [39m[1m[2m    1.66 kB[22m[1m[22m[2m │ gzip:   0.76 kB[22m[2m │ map:     4.17 kB[22m
+#18 87.49 apps/web build: [2mdist/[22m[2massets/[22m[36mProvenanceBadge-CVDSqQqF.js                            [39m[1m[2m    1.68 kB[22m[1m[22m[2m │ gzip:   0.76 kB[22m[2m │ map:     5.62 kB[22m
+#18 87.49 apps/web build: [2mdist/[22m[2massets/[22m[36mui-C4YiyQvF.js                                         [39m[1m[2m    1.82 kB[22m[1m[22m[2m │ gzip:   0.93 kB[22m[2m │ map:     7.08 kB[22m
+#18 87.49 apps/web build: [2mdist/[22m[2massets/[22m[36mDeepLinkPage-D-25wfRh.js                               [39m[1m[2m    1.84 kB[22m[1m[22m[2m │ gzip:   0.85 kB[22m[2m │ map:     5.67 kB[22m
+#18 87.49 apps/web build: [2mdist/[22m[2massets/[22m[36mAdminHomePage-rlrmeFLb.js                              [39m[1m[2m    1.85 kB[22m[1m[22m[2m │ gzip:   0.80 kB[22m[2m │ map:     5.22 kB[22m
+#18 87.49 apps/web build: [2mdist/[22m[2massets/[22m[36mcommon-BESwUTsA.js                                     [39m[1m[2m    1.91 kB[22m[1m[22m[2m │ gzip:   0.87 kB[22m[2m │ map:     6.14 kB[22m
+#18 87.49 apps/web build: [2mdist/[22m[2massets/[22m[36mAmount-Bji8sk7r.js                                     [39m[1m[2m    1.92 kB[22m[1m[22m[2m │ gzip:   0.75 kB[22m[2m │ map:     5.75 kB[22m
+#18 87.49 apps/web build: [2mdist/[22m[2massets/[22m[36mportfolio-BgOZwIy8.js                                  [39m[1m[2m    1.99 kB[22m[1m[22m[2m │ gzip:   0.80 kB[22m[2m │ map:     8.70 kB[22m
+#18 87.49 apps/web build: [2mdist/[22m[2massets/[22m[36mTransformReadinessPage-BB7x5Rft.js                     [39m[1m[2m    2.13 kB[22m[1m[22m[2m │ gzip:   0.94 kB[22m[2m │ map:     5.59 kB[22m
+#18 87.49 apps/web build: [2mdist/[22m[2massets/[22m[36mui-CB9F4Hd_.js                                         [39m[1m[2m    2.27 kB[22m[1m[22m[2m │ gzip:   1.00 kB[22m[2m │ map:     8.09 kB[22m
+#18 87.49 apps/web build: [2mdist/[22m[2massets/[22m[36mSecurityPage-tz1AGGZf.js                               [39m[1m[2m    2.41 kB[22m[1m[22m[2m │ gzip:   0.98 kB[22m[2m │ map:     5.97 kB[22m
+#18 87.49 apps/web build: [2mdist/[22m[2massets/[22m[36mDecisionLogPage-C50beM2p.js                            [39m[1m[2m    2.45 kB[22m[1m[22m[2m │ gzip:   1.08 kB[22m[2m │ map:     6.60 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mp4api-DSQc5Pqh.js                                      [39m[1m[2m    2.57 kB[22m[1m[22m[2m │ gzip:   0.99 kB[22m[2m │ map:    12.20 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mapi-DMZaX2Ig.js                                        [39m[1m[2m    2.61 kB[22m[1m[22m[2m │ gzip:   1.27 kB[22m[2m │ map:    14.84 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mapi-BI5WZK_z.js                                        [39m[1m[2m    2.66 kB[22m[1m[22m[2m │ gzip:   1.01 kB[22m[2m │ map:    15.51 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mApprovalRecordsPage-A7kx0Nv3.js                        [39m[1m[2m    2.76 kB[22m[1m[22m[2m │ gzip:   1.17 kB[22m[2m │ map:     7.27 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mp3ui-D89ZkTla.js                                       [39m[1m[2m    2.80 kB[22m[1m[22m[2m │ gzip:   1.27 kB[22m[2m │ map:    10.50 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mFormBuilderPage-Cvk73NyH.js                            [39m[1m[2m    2.90 kB[22m[1m[22m[2m │ gzip:   1.16 kB[22m[2m │ map:     7.37 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mui-BBU51jBM.js                                         [39m[1m[2m    2.90 kB[22m[1m[22m[2m │ gzip:   1.20 kB[22m[2m │ map:     8.70 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mIdentityPage-DAjRxwcn.js                               [39m[1m[2m    2.95 kB[22m[1m[22m[2m │ gzip:   1.03 kB[22m[2m │ map:     7.76 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mapi-Cb0a-cye.js                                        [39m[1m[2m    3.05 kB[22m[1m[22m[2m │ gzip:   1.00 kB[22m[2m │ map:    24.30 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mapi-Bz4dHXEa.js                                        [39m[1m[2m    3.07 kB[22m[1m[22m[2m │ gzip:   0.87 kB[22m[2m │ map:    12.48 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mui-A2tZMvr8.js                                         [39m[1m[2m    3.09 kB[22m[1m[22m[2m │ gzip:   1.43 kB[22m[2m │ map:    12.63 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mui-ayS1rHHs.js                                         [39m[1m[2m    3.12 kB[22m[1m[22m[2m │ gzip:   1.29 kB[22m[2m │ map:    10.02 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mP2Badges-C6uIL5ND.js                                   [39m[1m[2m    3.17 kB[22m[1m[22m[2m │ gzip:   1.11 kB[22m[2m │ map:     9.55 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mReviewPoliciesPage-BUlg14oo.js                         [39m[1m[2m    3.26 kB[22m[1m[22m[2m │ gzip:   1.27 kB[22m[2m │ map:     9.07 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mWalkthroughPage-Cy-GKGj4.js                            [39m[1m[2m    3.27 kB[22m[1m[22m[2m │ gzip:   1.30 kB[22m[2m │ map:    10.04 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mui-D68AaWaS.js                                         [39m[1m[2m    3.32 kB[22m[1m[22m[2m │ gzip:   1.44 kB[22m[2m │ map:    11.59 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mTransformationDashboardPage-CFs4Ru1x.js                [39m[1m[2m    3.33 kB[22m[1m[22m[2m │ gzip:   1.31 kB[22m[2m │ map:     9.74 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mExportDialog-JlRC5FNh.js                               [39m[1m[2m    3.39 kB[22m[1m[22m[2m │ gzip:   1.42 kB[22m[2m │ map:    10.55 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mui-Chm-30-r.js                                         [39m[1m[2m    3.40 kB[22m[1m[22m[2m │ gzip:   1.51 kB[22m[2m │ map:    17.70 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mConfigPinsPage-Bad-BRo2.js                             [39m[1m[2m    3.49 kB[22m[1m[22m[2m │ gzip:   1.12 kB[22m[2m │ map:     9.67 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mRevisionProposalsPage-DIQ3nY_t.js                      [39m[1m[2m    3.50 kB[22m[1m[22m[2m │ gzip:   1.33 kB[22m[2m │ map:    10.12 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mMyDraftsPage-2I_lxooD.js                               [39m[1m[2m    3.62 kB[22m[1m[22m[2m │ gzip:   1.41 kB[22m[2m │ map:     9.84 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mapi-DwD49Wcd.js                                        [39m[1m[2m    3.69 kB[22m[1m[22m[2m │ gzip:   1.12 kB[22m[2m │ map:    16.27 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mRowActions-DUQdHOsQ.js                                 [39m[1m[2m    3.70 kB[22m[1m[22m[2m │ gzip:   1.50 kB[22m[2m │ map:    14.01 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mHomeRegions-CZzgh_0B.js                                [39m[1m[2m    3.88 kB[22m[1m[22m[2m │ gzip:   1.48 kB[22m[2m │ map:    14.06 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mCoveragePage-BCSCs5IQ.js                               [39m[1m[2m    3.94 kB[22m[1m[22m[2m │ gzip:   1.47 kB[22m[2m │ map:     9.61 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mRegisterTable-CtaIpuTT.js                              [39m[1m[2m    3.97 kB[22m[1m[22m[2m │ gzip:   1.72 kB[22m[2m │ map:    15.40 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mJobsPage-Bd7586Yv.js                                   [39m[1m[2m    4.00 kB[22m[1m[22m[2m │ gzip:   1.64 kB[22m[2m │ map:    11.53 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mui-BVZXHfH5.js                                         [39m[1m[2m    4.02 kB[22m[1m[22m[2m │ gzip:   1.50 kB[22m[2m │ map:    14.45 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mapi-BZGljTwy.js                                        [39m[1m[2m    4.02 kB[22m[1m[22m[2m │ gzip:   1.06 kB[22m[2m │ map:    16.30 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mapi-BtjI8nDL.js                                        [39m[1m[2m    4.05 kB[22m[1m[22m[2m │ gzip:   1.40 kB[22m[2m │ map:    17.42 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mshared-BHoVD1eQ.js                                     [39m[1m[2m    4.22 kB[22m[1m[22m[2m │ gzip:   1.55 kB[22m[2m │ map:    15.87 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mReviewPage-C3otKlQQ.js                                 [39m[1m[2m    4.22 kB[22m[1m[22m[2m │ gzip:   1.58 kB[22m[2m │ map:    12.19 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mDataQualityPage-Bd6GRScS.js                            [39m[1m[2m    4.27 kB[22m[1m[22m[2m │ gzip:   1.75 kB[22m[2m │ map:    11.59 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mfinance-C53044xu.js                                    [39m[1m[2m    4.29 kB[22m[1m[22m[2m │ gzip:   1.95 kB[22m[2m │ map:    17.86 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mDataTable-BvJOlhDK.js                                  [39m[1m[2m    4.45 kB[22m[1m[22m[2m │ gzip:   1.81 kB[22m[2m │ map:    17.14 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mSourceCoveragePage-kUstl6vt.js                         [39m[1m[2m    4.49 kB[22m[1m[22m[2m │ gzip:   1.63 kB[22m[2m │ map:    13.32 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mCutoffPackPage-CsSqAQ2v.js                             [39m[1m[2m    4.60 kB[22m[1m[22m[2m │ gzip:   1.64 kB[22m[2m │ map:    12.10 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mui-C6C-lHrs.js                                         [39m[1m[2m    4.63 kB[22m[1m[22m[2m │ gzip:   1.56 kB[22m[2m │ map:    17.94 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mGatesPage-Cwqg1PSX.js                                  [39m[1m[2m    4.64 kB[22m[1m[22m[2m │ gzip:   1.77 kB[22m[2m │ map:    15.54 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mslips-CoBX6dgh.js                                      [39m[1m[2m    4.71 kB[22m[1m[22m[2m │ gzip:   1.61 kB[22m[2m │ map:    15.19 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mapi-YnQf2LCo.js                                        [39m[1m[2m    4.73 kB[22m[1m[22m[2m │ gzip:   1.31 kB[22m[2m │ map:    19.33 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mProceduresAdminPage-DC97hv_-.js                        [39m[1m[2m    4.75 kB[22m[1m[22m[2m │ gzip:   1.90 kB[22m[2m │ map:    13.37 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mui-CQM42BQg.js                                         [39m[1m[2m    4.86 kB[22m[1m[22m[2m │ gzip:   1.99 kB[22m[2m │ map:    18.55 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mcommon-B3MiJxTL.js                                     [39m[1m[2m    4.91 kB[22m[1m[22m[2m │ gzip:   2.00 kB[22m[2m │ map:    18.65 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mExecutiveOverviewPage-CsyCoy1Y.js                      [39m[1m[2m    4.96 kB[22m[1m[22m[2m │ gzip:   2.11 kB[22m[2m │ map:    16.32 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mPresentationPage-q58mi2rp.js                           [39m[1m[2m    4.97 kB[22m[1m[22m[2m │ gzip:   1.75 kB[22m[2m │ map:    13.85 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mapi-DpJuCgvL.js                                        [39m[1m[2m    4.99 kB[22m[1m[22m[2m │ gzip:   1.18 kB[22m[2m │ map:    21.17 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mGateConditionsPage-qzwJlU5N.js                         [39m[1m[2m    5.14 kB[22m[1m[22m[2m │ gzip:   1.98 kB[22m[2m │ map:    14.69 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mWorkspace-C4EAGwsV.js                                  [39m[1m[2m    5.16 kB[22m[1m[22m[2m │ gzip:   1.83 kB[22m[2m │ map:    17.27 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mapi-D2qs0VoW.js                                        [39m[1m[2m    5.19 kB[22m[1m[22m[2m │ gzip:   1.46 kB[22m[2m │ map:    22.83 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mMyWorkSections-BPgC3Otm.js                             [39m[1m[2m    5.21 kB[22m[1m[22m[2m │ gzip:   1.98 kB[22m[2m │ map:    16.64 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mMeetingsPage-CTwhi1bn.js                               [39m[1m[2m    5.38 kB[22m[1m[22m[2m │ gzip:   2.07 kB[22m[2m │ map:    15.41 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mHealthSchemesPage-2JscnUOJ.js                          [39m[1m[2m    5.45 kB[22m[1m[22m[2m │ gzip:   1.62 kB[22m[2m │ map:    14.18 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mEnvironmentPage-kFdTQAP7.js                            [39m[1m[2m    5.45 kB[22m[1m[22m[2m │ gzip:   1.83 kB[22m[2m │ map:    15.02 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mMigrationsPage-DD17DDje.js                             [39m[1m[2m    5.56 kB[22m[1m[22m[2m │ gzip:   1.85 kB[22m[2m │ map:    16.40 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mMappingsPage-B9HgasPb.js                               [39m[1m[2m    5.59 kB[22m[1m[22m[2m │ gzip:   2.11 kB[22m[2m │ map:    17.32 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mRagPolicyPage-CpRHpM1t.js                              [39m[1m[2m    5.61 kB[22m[1m[22m[2m │ gzip:   2.30 kB[22m[2m │ map:    18.80 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mUploadPolicyPage-1IlclUI9.js                           [39m[1m[2m    5.73 kB[22m[1m[22m[2m │ gzip:   2.18 kB[22m[2m │ map:    16.69 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mStudioFormDialog-BWc2GvJ5.js                           [39m[1m[2m    5.73 kB[22m[1m[22m[2m │ gzip:   2.31 kB[22m[2m │ map:    21.76 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mAboutReleasePage-BeKVsc6v.js                           [39m[1m[2m    5.88 kB[22m[1m[22m[2m │ gzip:   1.77 kB[22m[2m │ map:    17.04 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mRoleMappingsPage-osAxjV72.js                           [39m[1m[2m    5.88 kB[22m[1m[22m[2m │ gzip:   2.10 kB[22m[2m │ map:    16.99 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mStudioPage-B0t1dP2d.js                                 [39m[1m[2m    5.98 kB[22m[1m[22m[2m │ gzip:   2.28 kB[22m[2m │ map:    18.93 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mRecordPage-DCMzccCW.js                                 [39m[1m[2m    5.98 kB[22m[1m[22m[2m │ gzip:   2.14 kB[22m[2m │ map:    16.49 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mp4ui-BCFORQiZ.js                                       [39m[1m[2m    6.00 kB[22m[1m[22m[2m │ gzip:   2.56 kB[22m[2m │ map:    25.17 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mp6-B__VvacF.js                                         [39m[1m[2m    6.06 kB[22m[1m[22m[2m │ gzip:   1.68 kB[22m[2m │ map:    32.65 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mSensitivityPanel-BtbA8Zz-.js                           [39m[1m[2m    6.17 kB[22m[1m[22m[2m │ gzip:   2.13 kB[22m[2m │ map:    18.46 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mDayNinetyTestPage-Cv8QTz6X.js                          [39m[1m[2m    6.23 kB[22m[1m[22m[2m │ gzip:   2.23 kB[22m[2m │ map:    17.72 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mExportsPage-BImDv1Q8.js                                [39m[1m[2m    6.23 kB[22m[1m[22m[2m │ gzip:   2.30 kB[22m[2m │ map:    18.77 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mBlockPage-CM_L0kz8.js                                  [39m[1m[2m    6.40 kB[22m[1m[22m[2m │ gzip:   2.28 kB[22m[2m │ map:    18.94 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mMyProceduresPage-BS4TBvGc.js                           [39m[1m[2m    6.59 kB[22m[1m[22m[2m │ gzip:   2.24 kB[22m[2m │ map:    19.97 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mReadinessPage-CR4V3Bp2.js                              [39m[1m[2m    6.62 kB[22m[1m[22m[2m │ gzip:   1.96 kB[22m[2m │ map:    17.41 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mui-C9vCKd0M.js                                         [39m[1m[2m    6.68 kB[22m[1m[22m[2m │ gzip:   2.46 kB[22m[2m │ map:    22.44 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mSearchPage-CWxGKtxK.js                                 [39m[1m[2m    6.76 kB[22m[1m[22m[2m │ gzip:   2.57 kB[22m[2m │ map:    21.83 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mjobsOperations-DTSnR5v2.js                             [39m[1m[2m    6.77 kB[22m[1m[22m[2m │ gzip:   2.07 kB[22m[2m │ map:    17.98 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mp4-DMjPtUDx.js                                         [39m[1m[2m    6.84 kB[22m[1m[22m[2m │ gzip:   2.10 kB[22m[2m │ map:    28.39 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mFormulaPreviewPage-CFCkgLZp.js                         [39m[1m[2m    6.91 kB[22m[1m[22m[2m │ gzip:   2.16 kB[22m[2m │ map:    18.87 kB[22m
+#18 87.50 apps/web build: [2mdist/[22m[2massets/[22m[36mServiceIdentitiesPages-Cfk7D9PR.js                     [39m[1m[2m    6.95 kB[22m[1m[22m[2m │ gzip:   2.26 kB[22m[2m │ map:    19.30 kB[22m
+#18 87.51 apps/web build: [2mdist/[22m[2massets/[22m[36mMyWorkPage-BAXXnu-l.js                                 [39m[1m[2m    6.95 kB[22m[1m[22m[2m │ gzip:   2.38 kB[22m[2m │ map:    21.17 kB[22m
+#18 87.51 apps/web build: [2mdist/[22m[2massets/[22m[36mImprovementPage-Bos1CPs7.js                            [39m[1m[2m    7.03 kB[22m[1m[22m[2m │ gzip:   2.47 kB[22m[2m │ map:    19.72 kB[22m
+#18 87.51 apps/web build: [2mdist/[22m[2massets/[22m[36mTransformationEditPage-4Dkys-l4.js                     [39m[1m[2m    7.09 kB[22m[1m[22m[2m │ gzip:   2.77 kB[22m[2m │ map:    24.58 kB[22m
+#18 87.51 apps/web build: [2mdist/[22m[2massets/[22m[36mAreaPages-DK3Ks0Pg.js                                  [39m[1m[2m    7.12 kB[22m[1m[22m[2m │ gzip:   2.11 kB[22m[2m │ map:    21.95 kB[22m
+#18 87.51 apps/web build: [2mdist/[22m[2massets/[22m[36mMigrationPage-BmrnvLyx.js                              [39m[1m[2m    7.13 kB[22m[1m[22m[2m │ gzip:   2.36 kB[22m[2m │ map:    20.72 kB[22m
+#18 87.51 apps/web build: [2mdist/[22m[2massets/[22m[36mRaciPage-D1EMEkF1.js                                   [39m[1m[2m    7.14 kB[22m[1m[22m[2m │ gzip:   2.86 kB[22m[2m │ map:    22.33 kB[22m
+#18 87.51 apps/web build: [2mdist/[22m[2massets/[22m[36mApprovalRoutesPage-BUXjBYjc.js                         [39m[1m[2m    7.33 kB[22m[1m[22m[2m │ gzip:   2.50 kB[22m[2m │ map:    19.23 kB[22m
+#18 87.51 apps/web build: [2mdist/[22m[2massets/[22m[36mTeamPage-BiuFtyE0.js                                   [39m[1m[2m    7.41 kB[22m[1m[22m[2m │ gzip:   2.70 kB[22m[2m │ map:    24.93 kB[22m
+#18 87.51 apps/web build: [2mdist/[22m[2massets/[22m[36mEvidenceRegisterPage-DX0WlK3w.js                       [39m[1m[2m    7.61 kB[22m[1m[22m[2m │ gzip:   2.13 kB[22m[2m │ map:    20.92 kB[22m
+#18 87.51 apps/web build: [2mdist/[22m[2massets/[22m[36mScoringDefaultsPage-CDLMDJvn.js                        [39m[1m[2m    7.61 kB[22m[1m[22m[2m │ gzip:   2.85 kB[22m[2m │ map:    24.45 kB[22m
+#18 87.51 apps/web build: [2mdist/[22m[2massets/[22m[36mMeasurementPage-bROaX_Md.js                            [39m[1m[2m    7.78 kB[22m[1m[22m[2m │ gzip:   2.28 kB[22m[2m │ map:    17.84 kB[22m
+#18 87.51 apps/web build: [2mdist/[22m[2massets/[22m[36mDelegationsPage-BFR0XUFS.js                            [39m[1m[2m    8.17 kB[22m[1m[22m[2m │ gzip:   2.68 kB[22m[2m │ map:    24.15 kB[22m
+#18 87.51 apps/web build: [2mdist/[22m[2massets/[22m[36mSensitiveGrantsPages-DnEgNxct.js                       [39m[1m[2m    8.18 kB[22m[1m[22m[2m │ gzip:   2.57 kB[22m[2m │ map:    22.84 kB[22m
+#18 87.51 apps/web build: [2mdist/[22m[2massets/[22m[36mActionsPage-CiH5P0Q1.js                                [39m[1m[2m    8.35 kB[22m[1m[22m[2m │ gzip:   2.69 kB[22m[2m │ map:    24.63 kB[22m
+#18 87.51 apps/web build: [2mdist/[22m[2massets/[22m[36mOwnerUpdatesPage-st-kpVWn.js                           [39m[1m[2m    8.38 kB[22m[1m[22m[2m │ gzip:   3.04 kB[22m[2m │ map:    26.58 kB[22m
+#18 87.51 apps/web build: [2mdist/[22m[2massets/[22m[36mTrainingPage-CJZGTJFN.js                               [39m[1m[2m    8.45 kB[22m[1m[22m[2m │ gzip:   2.78 kB[22m[2m │ map:    23.91 kB[22m
+#18 87.51 apps/web build: [2mdist/[22m[2massets/[22m[36mStoragePage-xjNG1JWq.js                                [39m[1m[2m    8.52 kB[22m[1m[22m[2m │ gzip:   2.99 kB[22m[2m │ map:    26.96 kB[22m
+#18 87.51 apps/web build: [2mdist/[22m[2massets/[22m[36mCapacityPage-msasCb42.js                               [39m[1m[2m    8.56 kB[22m[1m[22m[2m │ gzip:   2.82 kB[22m[2m │ map:    29.12 kB[22m
+#18 87.51 apps/web build: [2mdist/[22m[2massets/[22m[36mRequirementsPage-BqmblgL1.js                           [39m[1m[2m    8.56 kB[22m[1m[22m[2m │ gzip:   3.11 kB[22m[2m │ map:    32.28 kB[22m
+#18 87.51 apps/web build: [2mdist/[22m[2massets/[22m[36mapi-WuHk5Ayz.js                                        [39m[1m[2m    8.65 kB[22m[1m[22m[2m │ gzip:   3.21 kB[22m[2m │ map:    49.07 kB[22m
+#18 87.51 apps/web build: [2mdist/[22m[2massets/[22m[36mNotificationPreferencesPage-CKx-vcLP.js                [39m[1m[2m    8.73 kB[22m[1m[22m[2m │ gzip:   2.60 kB[22m[2m │ map:    25.38 kB[22m
+#18 87.51 apps/web build: [2mdist/[22m[2massets/[22m[36mOutboundWritesPage-C25dyXur.js                         [39m[1m[2m    8.75 kB[22m[1m[22m[2m │ gzip:   2.47 kB[22m[2m │ map:    23.02 kB[22m
+#18 87.51 apps/web build: [2mdist/[22m[2massets/[22m[36mTransformationListPage-CQvYSl1w.js                     [39m[1m[2m    8.75 kB[22m[1m[22m[2m │ gzip:   2.85 kB[22m[2m │ map:    26.75 kB[22m
+#18 87.51 apps/web build: [2mdist/[22m[2massets/[22m[36mBusinessCasesPage-C0QvkSPU.js                          [39m[1m[2m    8.77 kB[22m[1m[22m[2m │ gzip:   3.26 kB[22m[2m │ map:    26.50 kB[22m
+#18 87.51 apps/web build: [2mdist/[22m[2massets/[22m[36mTransformationCreatePage-BORaHV5J.js                   [39m[1m[2m    8.92 kB[22m[1m[22m[2m │ gzip:   2.88 kB[22m[2m │ map:    27.98 kB[22m
+#18 87.51 apps/web build: [2mdist/[22m[2massets/[22m[36mui-DNj47PTV.js                                         [39m[1m[2m    9.04 kB[22m[1m[22m[2m │ gzip:   2.70 kB[22m[2m │ map:    32.95 kB[22m
+#18 87.51 apps/web build: [2mdist/[22m[2massets/[22m[36mAuditPages-DwkOkRaQ.js                                 [39m[1m[2m    9.15 kB[22m[1m[22m[2m │ gzip:   2.78 kB[22m[2m │ map:    25.96 kB[22m
+#18 87.51 apps/web build: [2mdist/[22m[2massets/[22m[36mInterventionsPage-BcmFqaFu.js                          [39m[1m[2m    9.24 kB[22m[1m[22m[2m │ gzip:   2.82 kB[22m[2m │ map:    26.33 kB[22m
+#18 87.51 apps/web build: [2mdist/[22m[2massets/[22m[36mDraftRecovery-B-xaOP9_.js                              [39m[1m[2m    9.29 kB[22m[1m[22m[2m │ gzip:   3.36 kB[22m[2m │ map:    40.61 kB[22m
+#18 87.51 apps/web build: [2mdist/[22m[2massets/[22m[36mKpisPage-rfbxKfVC.js                                   [39m[1m[2m    9.37 kB[22m[1m[22m[2m │ gzip:   2.84 kB[22m[2m │ map:    26.05 kB[22m
+#18 87.51 apps/web build: [2mdist/[22m[2massets/[22m[36mChangeRequestsPage-DUrx_nmF.js                         [39m[1m[2m    9.41 kB[22m[1m[22m[2m │ gzip:   3.08 kB[22m[2m │ map:    27.41 kB[22m
+#18 87.51 apps/web build: [2mdist/[22m[2massets/[22m[36mIndicatorsPage-D3G6Ue6m.js                             [39m[1m[2m    9.47 kB[22m[1m[22m[2m │ gzip:   2.96 kB[22m[2m │ map:    27.43 kB[22m
+#18 87.51 apps/web build: [2mdist/[22m[2massets/[22m[36mImportsPage-pyhat5zY.js                                [39m[1m[2m    9.60 kB[22m[1m[22m[2m │ gzip:   3.09 kB[22m[2m │ map:    27.61 kB[22m
+#18 87.51 apps/web build: [2mdist/[22m[2massets/[22m[36mGroupsPage-kCKeSKn-.js                                 [39m[1m[2m    9.70 kB[22m[1m[22m[2m │ gzip:   3.04 kB[22m[2m │ map:    29.15 kB[22m
+#18 87.51 apps/web build: [2mdist/[22m[2massets/[22m[36mp5-BsN7nzVd.js                                         [39m[1m[2m    9.87 kB[22m[1m[22m[2m │ gzip:   2.35 kB[22m[2m │ map:    41.04 kB[22m
+#18 87.51 apps/web build: [2mdist/[22m[2massets/[22m[36mKpiActualPage-COVjDwzT.js                              [39m[1m[2m   10.24 kB[22m[1m[22m[2m │ gzip:   3.07 kB[22m[2m │ map:    29.17 kB[22m
+#18 87.51 apps/web build: [2mdist/[22m[2massets/[22m[36mLessonsPage-I-m-DVGS.js                                [39m[1m[2m   10.24 kB[22m[1m[22m[2m │ gzip:   3.31 kB[22m[2m │ map:    29.14 kB[22m
+#18 87.51 apps/web build: [2mdist/[22m[2massets/[22m[36mFailuresPage-DXKFF-Ym.js                               [39m[1m[2m   10.38 kB[22m[1m[22m[2m │ gzip:   2.84 kB[22m[2m │ map:    27.10 kB[22m
+#18 87.51 apps/web build: [2mdist/[22m[2massets/[22m[36mFormSchemaPage-DnLSZSy6.js                             [39m[1m[2m   10.40 kB[22m[1m[22m[2m │ gzip:   3.59 kB[22m[2m │ map:    32.27 kB[22m
+#18 87.51 apps/web build: [2mdist/[22m[2massets/[22m[36mediting-Baj8sTPO.js                                    [39m[1m[2m   10.44 kB[22m[1m[22m[2m │ gzip:   3.15 kB[22m[2m │ map:    34.79 kB[22m
+#18 87.51 apps/web build: [2mdist/[22m[2massets/[22m[36mui-CVnMmm0E.js                                         [39m[1m[2m   10.45 kB[22m[1m[22m[2m │ gzip:   3.44 kB[22m[2m │ map:    36.10 kB[22m
+#18 87.51 apps/web build: [2mdist/[22m[2massets/[22m[36mImportPage-hVGqQByN.js                                 [39m[1m[2m   10.57 kB[22m[1m[22m[2m │ gzip:   3.27 kB[22m[2m │ map:    29.97 kB[22m
+#18 87.51 apps/web build: [2mdist/[22m[2massets/[22m[36mReaderPage-9E4OBXsu.js                                 [39m[1m[2m   10.80 kB[22m[1m[22m[2m │ gzip:   3.05 kB[22m[2m │ map:    31.26 kB[22m
+#18 87.51 apps/web build: [2mdist/[22m[2massets/[22m[36mCalendarPage-DXMK-YQt.js                               [39m[1m[2m   10.98 kB[22m[1m[22m[2m │ gzip:   3.52 kB[22m[2m │ map:    34.33 kB[22m
+#18 87.51 apps/web build: [2mdist/[22m[2massets/[22m[36mReportsPage-Bp7seFd2.js                                [39m[1m[2m   11.43 kB[22m[1m[22m[2m │ gzip:   3.36 kB[22m[2m │ map:    33.53 kB[22m
+#18 87.51 apps/web build: [2mdist/[22m[2massets/[22m[36mAssistantSettingsPage-CB0ACurT.js                      [39m[1m[2m   11.53 kB[22m[1m[22m[2m │ gzip:   3.28 kB[22m[2m │ map:    33.89 kB[22m
+#18 87.51 apps/web build: [2mdist/[22m[2massets/[22m[36mui-CgXi58Eu.js                                         [39m[1m[2m   11.86 kB[22m[1m[22m[2m │ gzip:   3.81 kB[22m[2m │ map:    69.16 kB[22m
+#18 87.51 apps/web build: [2mdist/[22m[2massets/[22m[36mRaidPage-DX9elykt.js                                   [39m[1m[2m   11.89 kB[22m[1m[22m[2m │ gzip:   3.54 kB[22m[2m │ map:    34.25 kB[22m
+#18 87.52 apps/web build: [2mdist/[22m[2massets/[22m[36mFinancialMetricsPage-D_ym6phP.js                       [39m[1m[2m   12.30 kB[22m[1m[22m[2m │ gzip:   3.42 kB[22m[2m │ map:    34.45 kB[22m
+#18 87.52 apps/web build: [2mdist/[22m[2massets/[22m[36mSnapshotPage-CclCd5Yj.js                               [39m[1m[2m   12.58 kB[22m[1m[22m[2m │ gzip:   3.33 kB[22m[2m │ map:    36.52 kB[22m
+#18 87.52 apps/web build: [2mdist/[22m[2massets/[22m[36mModularPage-Xpflla-B.js                                [39m[1m[2m   12.73 kB[22m[1m[22m[2m │ gzip:   3.67 kB[22m[2m │ map:    35.51 kB[22m
+#18 87.52 apps/web build: [2mdist/[22m[2massets/[22m[36mNotificationChannelsPages-Zw19xli7.js                  [39m[1m[2m   12.76 kB[22m[1m[22m[2m │ gzip:   4.01 kB[22m[2m │ map:    39.50 kB[22m
+#18 87.52 apps/web build: [2mdist/[22m[2massets/[22m[36mHealthCheckPage-BIWBzZ_V.js                            [39m[1m[2m   12.78 kB[22m[1m[22m[2m │ gzip:   3.89 kB[22m[2m │ map:    39.25 kB[22m
+#18 87.52 apps/web build: [2mdist/[22m[2massets/[22m[36mChangeRequestPage-CHZwBpoW.js                          [39m[1m[2m   13.10 kB[22m[1m[22m[2m │ gzip:   3.97 kB[22m[2m │ map:    36.43 kB[22m
+#18 87.52 apps/web build: [2mdist/[22m[2massets/[22m[36mDashboardsPage-Y3z8RnZR.js                             [39m[1m[2m   13.17 kB[22m[1m[22m[2m │ gzip:   3.86 kB[22m[2m │ map:    38.53 kB[22m
+#18 87.52 apps/web build: [2mdist/[22m[2massets/[22m[36mOperationsPages-Eb-7QYL_.js                            [39m[1m[2m   13.31 kB[22m[1m[22m[2m │ gzip:   3.49 kB[22m[2m │ map:    39.40 kB[22m
+#18 87.52 apps/web build: [33m
+#18 87.52 apps/web build: (!) Some chunks are larger than 500 kB after minification. Consider:
+#18 87.52 apps/web build: - Using dynamic import() to code-split the application
+#18 87.52 apps/web build: - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+#18 87.52 apps/web build: - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.[39m
+#18 87.52 apps/web build: [2mdist/[22m[2massets/[22m[36mBauPage-KGFPOnoF.js                                    [39m[1m[2m   13.34 kB[22m[1m[22m[2m │ gzip:   3.92 kB[22m[2m │ map:    37.68 kB[22m
+#18 87.52 apps/web build: [2mdist/[22m[2massets/[22m[36museListView-DCizLeTr.js                                [39m[1m[2m   13.67 kB[22m[1m[22m[2m │ gzip:   4.23 kB[22m[2m │ map:    53.03 kB[22m
+#18 87.52 apps/web build: [2mdist/[22m[2massets/[22m[36mDispensationsPage-zLafBO0r.js                          [39m[1m[2m   13.77 kB[22m[1m[22m[2m │ gzip:   4.18 kB[22m[2m │ map:    40.91 kB[22m
+#18 87.52 apps/web build: [2mdist/[22m[2massets/[22m[36mBenefitFormulasPage-zEwg-4Vt.js                        [39m[1m[2m   13.98 kB[22m[1m[22m[2m │ gzip:   4.63 kB[22m[2m │ map:    44.72 kB[22m
+#18 87.52 apps/web build: [2mdist/[22m[2massets/[22m[36mWebhooksPage-Cn9U_7f4.js                               [39m[1m[2m   14.05 kB[22m[1m[22m[2m │ gzip:   4.15 kB[22m[2m │ map:    40.66 kB[22m
+#18 87.52 apps/web build: [2mdist/[22m[2massets/[22m[36mRecordForm-C8C4eLd0.js                                 [39m[1m[2m   14.17 kB[22m[1m[22m[2m │ gzip:   4.98 kB[22m[2m │ map:    63.65 kB[22m
+#18 87.52 apps/web build: [2mdist/[22m[2massets/[22m[36mControlsPage-V6Od4vhW.js                               [39m[1m[2m   14.31 kB[22m[1m[22m[2m │ gzip:   3.91 kB[22m[2m │ map:    41.24 kB[22m
+#18 87.52 apps/web build: [2mdist/[22m[2massets/[22m[36mDecisionsPage-ftQOBpp0.js                              [39m[1m[2m   14.32 kB[22m[1m[22m[2m │ gzip:   4.32 kB[22m[2m │ map:    42.35 kB[22m
+#18 87.52 apps/web build: [2mdist/[22m[2massets/[22m[36mKpiRestatementPages-DAZZk01B.js                        [39m[1m[2m   14.53 kB[22m[1m[22m[2m │ gzip:   4.05 kB[22m[2m │ map:    43.61 kB[22m
+#18 87.52 apps/web build: [2mdist/[22m[2massets/[22m[36mConnectorFormPage-Db5o9xyr.js                          [39m[1m[2m   15.10 kB[22m[1m[22m[2m │ gzip:   4.40 kB[22m[2m │ map:    44.58 kB[22m
+#18 87.52 apps/web build: [2mdist/[22m[2massets/[22m[36mHandoverPage-fSQwrAy2.js                               [39m[1m[2m   15.17 kB[22m[1m[22m[2m │ gzip:   4.51 kB[22m[2m │ map:    43.31 kB[22m
+#18 87.52 apps/web build: [2mdist/[22m[2massets/[22m[36mAdoptionPage-D7Nd0EMt.js                               [39m[1m[2m   15.41 kB[22m[1m[22m[2m │ gzip:   4.36 kB[22m[2m │ map:    43.79 kB[22m
+#18 87.53 apps/web build: [2mdist/[22m[2massets/[22m[36mApprovalsPage-CjC69uQw.js                              [39m[1m[2m   15.55 kB[22m[1m[22m[2m │ gzip:   4.42 kB[22m[2m │ map:    44.16 kB[22m
+#18 87.53 apps/web build: [2mdist/[22m[2massets/[22m[36mConfigTransferPages-BY5kK5KL.js                        [39m[1m[2m   15.63 kB[22m[1m[22m[2m │ gzip:   4.20 kB[22m[2m │ map:    50.11 kB[22m
+#18 87.53 apps/web build: [2mdist/[22m[2massets/[22m[36mLaunchPlanPage-d7JS2124.js                             [39m[1m[2m   15.74 kB[22m[1m[22m[2m │ gzip:   4.39 kB[22m[2m │ map:    46.41 kB[22m
+#18 87.53 apps/web build: [2mdist/[22m[2massets/[22m[36mPhasesPage-BMMTBZyh.js                                 [39m[1m[2m   16.11 kB[22m[1m[22m[2m │ gzip:   4.75 kB[22m[2m │ map:    49.64 kB[22m
+#18 87.53 apps/web build: [2mdist/[22m[2massets/[22m[36mDecisionRightsPage-C9D-sxKO.js                         [39m[1m[2m   16.31 kB[22m[1m[22m[2m │ gzip:   4.84 kB[22m[2m │ map:    46.97 kB[22m
+#18 87.53 apps/web build: [2mdist/[22m[2massets/[22m[36mRulesPage-lfIIenpO.js                                  [39m[1m[2m   16.39 kB[22m[1m[22m[2m │ gzip:   4.41 kB[22m[2m │ map:    50.31 kB[22m
+#18 87.53 apps/web build: [2mdist/[22m[2massets/[22m[36mPortfolioPage-CXVqIxso.js                              [39m[1m[2m   16.66 kB[22m[1m[22m[2m │ gzip:   5.60 kB[22m[2m │ map:    57.70 kB[22m
+#18 87.53 apps/web build: [2mdist/[22m[2massets/[22m[36mOrganizationsPage-CM3-Ntld.js                          [39m[1m[2m   17.06 kB[22m[1m[22m[2m │ gzip:   4.32 kB[22m[2m │ map:    52.81 kB[22m
+#18 87.53 apps/web build: [2mdist/[22m[2massets/[22m[36mExecutiveDecisionsPage-C6p7nxLI.js                     [39m[1m[2m   17.08 kB[22m[1m[22m[2m │ gzip:   4.80 kB[22m[2m │ map:    49.99 kB[22m
+#18 87.53 apps/web build: [2mdist/[22m[2massets/[22m[36mDependenciesPage-q7zouTIY.js                           [39m[1m[2m   17.13 kB[22m[1m[22m[2m │ gzip:   5.10 kB[22m[2m │ map:    55.65 kB[22m
+#18 87.53 apps/web build: [2mdist/[22m[2massets/[22m[36mStructurePages-380b7JjW.js                             [39m[1m[2m   17.16 kB[22m[1m[22m[2m │ gzip:   3.95 kB[22m[2m │ map:    52.60 kB[22m
+#18 87.53 apps/web build: [2mdist/[22m[2massets/[22m[36mFinanceValidationPages-BFEH2cgn.js                     [39m[1m[2m   17.26 kB[22m[1m[22m[2m │ gzip:   4.95 kB[22m[2m │ map:    50.22 kB[22m
+#18 87.53 apps/web build: [2mdist/[22m[2massets/[22m[36mCorrectivePages-C08TN9UF.js                            [39m[1m[2m   17.28 kB[22m[1m[22m[2m │ gzip:   4.67 kB[22m[2m │ map:    51.21 kB[22m
+#18 87.54 apps/web build: [2mdist/[22m[2massets/[22m[36mForumsPage-CXV3bh7d.js                                 [39m[1m[2m   17.30 kB[22m[1m[22m[2m │ gzip:   4.89 kB[22m[2m │ map:    49.40 kB[22m
+#18 87.54 apps/web build: [2mdist/[22m[2massets/[22m[36mKpiUpdatePage-Di8DPpcU.js                              [39m[1m[2m   17.50 kB[22m[1m[22m[2m │ gzip:   5.31 kB[22m[2m │ map:    53.11 kB[22m
+#18 87.54 apps/web build: [2mdist/[22m[2massets/[22m[36mEvidencePage-CnzPclZ_.js                               [39m[1m[2m   17.60 kB[22m[1m[22m[2m │ gzip:   5.42 kB[22m[2m │ map:    53.27 kB[22m
+#18 87.54 apps/web build: [2mdist/[22m[2massets/[22m[36mpanels-Chljr3i9.js                                     [39m[1m[2m   18.21 kB[22m[1m[22m[2m │ gzip:   5.19 kB[22m[2m │ map:    68.91 kB[22m
+#18 87.54 apps/web build: [2mdist/[22m[2massets/[22m[36mRulePage-DEgGJpL9.js                                   [39m[1m[2m   18.36 kB[22m[1m[22m[2m │ gzip:   5.35 kB[22m[2m │ map:    55.43 kB[22m
+#18 87.54 apps/web build: [2mdist/[22m[2massets/[22m[36mCreateChangeRequest-BWd4VK2F.js                        [39m[1m[2m   18.79 kB[22m[1m[22m[2m │ gzip:   6.05 kB[22m[2m │ map:    65.24 kB[22m
+#18 87.54 apps/web build: [2mdist/[22m[2massets/[22m[36mInstancePage-DuTjTZCJ.js                               [39m[1m[2m   18.80 kB[22m[1m[22m[2m │ gzip:   5.56 kB[22m[2m │ map:    61.34 kB[22m
+#18 87.54 apps/web build: [2mdist/[22m[2massets/[22m[36mCharterPage-aQj8kEPC.js                                [39m[1m[2m   19.64 kB[22m[1m[22m[2m │ gzip:   5.24 kB[22m[2m │ map:    55.14 kB[22m
+#18 87.54 apps/web build: [2mdist/[22m[2massets/[22m[36mMigrationPages-CqjbVKEH.js                             [39m[1m[2m   19.75 kB[22m[1m[22m[2m │ gzip:   4.40 kB[22m[2m │ map:    58.28 kB[22m
+#18 87.54 apps/web build: [2mdist/[22m[2massets/[22m[36mClosurePage-BiloS6aB.js                                [39m[1m[2m   21.61 kB[22m[1m[22m[2m │ gzip:   5.35 kB[22m[2m │ map:    64.50 kB[22m
+#18 87.54 apps/web build: [2mdist/[22m[2massets/[22m[36mBrandingPage-pFXNyqRH.js                               [39m[1m[2m   21.73 kB[22m[1m[22m[2m │ gzip:   5.75 kB[22m[2m │ map:    66.48 kB[22m
+#18 87.54 apps/web build: [2mdist/[22m[2massets/[22m[36mRoadmapPage-a17row_A.js                                [39m[1m[2m   23.59 kB[22m[1m[22m[2m │ gzip:   6.32 kB[22m[2m │ map:    72.47 kB[22m
+#18 87.55 apps/web build: [2mdist/[22m[2massets/[22m[36mConnectorsPage-CMmwSMhK.js                             [39m[1m[2m   23.67 kB[22m[1m[22m[2m │ gzip:   5.24 kB[22m[2m │ map:    62.06 kB[22m
+#18 87.55 apps/web build: [2mdist/[22m[2massets/[22m[36mFormsPage-Fk-PqDnx.js                                  [39m[1m[2m   24.36 kB[22m[1m[22m[2m │ gzip:   6.71 kB[22m[2m │ map:    79.52 kB[22m
+#18 87.55 apps/web build: [2mdist/[22m[2massets/[22m[36mAssignmentsPage-DLdkX4ab.js                            [39m[1m[2m   24.51 kB[22m[1m[22m[2m │ gzip:   6.82 kB[22m[2m │ map:    75.55 kB[22m
+#18 87.55 apps/web build: [2mdist/[22m[2massets/[22m[36mDefinitionPage-hAjljN1_.js                             [39m[1m[2m   24.68 kB[22m[1m[22m[2m │ gzip:   6.12 kB[22m[2m │ map:    71.32 kB[22m
+#18 87.55 apps/web build: [2mdist/[22m[2massets/[22m[36mRegisterPages-D0QwxvxQ.js                              [39m[1m[2m   24.70 kB[22m[1m[22m[2m │ gzip:   5.96 kB[22m[2m │ map:    72.32 kB[22m
+#18 87.55 apps/web build: [2mdist/[22m[2massets/[22m[36mDiagnosePage-ADRbEJMc.js                               [39m[1m[2m   25.07 kB[22m[1m[22m[2m │ gzip:   5.79 kB[22m[2m │ map:    73.04 kB[22m
+#18 87.55 apps/web build: [2mdist/[22m[2massets/[22m[36mGateP4-CVAIcuMM.js                                     [39m[1m[2m   25.62 kB[22m[1m[22m[2m │ gzip:   6.50 kB[22m[2m │ map:    79.74 kB[22m
+#18 87.55 apps/web build: [2mdist/[22m[2massets/[22m[36mBenefitsPage-Dc86D8tF.js                               [39m[1m[2m   25.75 kB[22m[1m[22m[2m │ gzip:   7.21 kB[22m[2m │ map:    80.33 kB[22m
+#18 87.55 apps/web build: [2mdist/[22m[2massets/[22m[36mRetentionPages-Dt4vIMcv.js                             [39m[1m[2m   25.98 kB[22m[1m[22m[2m │ gzip:   6.55 kB[22m[2m │ map:    78.83 kB[22m
+#18 87.55 apps/web build: [2mdist/[22m[2massets/[22m[36mExtensionEntry-DqniZC_N.js                             [39m[1m[2m   26.37 kB[22m[1m[22m[2m │ gzip:   7.74 kB[22m[2m │ map:   100.49 kB[22m
+#18 87.55 apps/web build: [2mdist/[22m[2massets/[22m[36mDefinePage-B0c_Xpje.js                                 [39m[1m[2m   27.15 kB[22m[1m[22m[2m │ gzip:   7.04 kB[22m[2m │ map:    78.83 kB[22m
+#18 87.55 apps/web build: [2mdist/[22m[2massets/[22m[36mBenefitFormulaPage-ByLCL8Rf.js                         [39m[1m[2m   27.32 kB[22m[1m[22m[2m │ gzip:   7.74 kB[22m[2m │ map:    88.15 kB[22m
+#18 87.55 apps/web build: [2mdist/[22m[2massets/[22m[36mbenefit-realized-OGp1hXNJ.js                           [39m[1m[2m   27.56 kB[22m[1m[22m[2m │ gzip:   8.73 kB[22m[2m │ map:   146.07 kB[22m
+#18 87.55 apps/web build: [2mdist/[22m[2massets/[22m[36mMeetingPage-CBeaXcTw.js                                [39m[1m[2m   27.56 kB[22m[1m[22m[2m │ gzip:   6.81 kB[22m[2m │ map:    82.00 kB[22m
+#18 87.55 apps/web build: [2mdist/[22m[2massets/[22m[36mVersionPage-BpzbQazr.js                                [39m[1m[2m   28.00 kB[22m[1m[22m[2m │ gzip:   7.35 kB[22m[2m │ map:    88.98 kB[22m
+#18 87.55 apps/web build: [2mdist/[22m[2massets/[22m[36mTransformationDetailPage-CmqMgVPq.js                   [39m[1m[2m   28.07 kB[22m[1m[22m[2m │ gzip:   8.00 kB[22m[2m │ map:    90.05 kB[22m
+#18 87.55 apps/web build: [2mdist/[22m[2massets/[22m[36mTraceabilityPage-DBe1J2xL.js                           [39m[1m[2m   28.79 kB[22m[1m[22m[2m │ gzip:   7.32 kB[22m[2m │ map:    89.87 kB[22m
+#18 87.55 apps/web build: [2mdist/[22m[2massets/[22m[36mBusinessCasePage-BxXsbtAq.js                           [39m[1m[2m   30.04 kB[22m[1m[22m[2m │ gzip:   8.67 kB[22m[2m │ map:    96.28 kB[22m
+#18 87.55 apps/web build: [2mdist/[22m[2massets/[22m[36mKpiPage-CnK0o73y.js                                    [39m[1m[2m   31.68 kB[22m[1m[22m[2m │ gzip:   7.84 kB[22m[2m │ map:    90.32 kB[22m
+#18 87.55 apps/web build: [2mdist/[22m[2massets/[22m[36mGateDetailPage-BETvtsX2.js                             [39m[1m[2m   32.55 kB[22m[1m[22m[2m │ gzip:   9.16 kB[22m[2m │ map:   108.20 kB[22m
+#18 87.55 apps/web build: [2mdist/[22m[2massets/[22m[36mui-BIS3nrFZ.js                                         [39m[1m[2m   34.21 kB[22m[1m[22m[2m │ gzip:   9.24 kB[22m[2m │ map:   119.42 kB[22m
+#18 87.55 apps/web build: [2mdist/[22m[2massets/[22m[36mBenefitPage-CFdiTdyg.js                                [39m[1m[2m   36.41 kB[22m[1m[22m[2m │ gzip:   8.90 kB[22m[2m │ map:   106.43 kB[22m
+#18 87.55 apps/web build: [2mdist/[22m[2massets/[22m[36mPrioritizationPage-CJAIGR58.js                         [39m[1m[2m   40.28 kB[22m[1m[22m[2m │ gzip:  10.15 kB[22m[2m │ map:   132.11 kB[22m
+#18 87.55 apps/web build: [2mdist/[22m[2massets/[22m[36mDesignPage-2mBrWO5s.js                                 [39m[1m[2m   41.54 kB[22m[1m[22m[2m │ gzip:   9.16 kB[22m[2m │ map:   125.80 kB[22m
+#18 87.56 apps/web build: [2mdist/[22m[2massets/[22m[36mvendor-i18n-DIgLw1Ps.js                                [39m[1m[2m   49.18 kB[22m[1m[22m[2m │ gzip:  16.30 kB[22m[2m │ map:   166.95 kB[22m
+#18 87.56 apps/web build: [2mdist/[22m[2massets/[22m[36mInitiativePage-DxJGkMwh.js                             [39m[1m[2m   71.12 kB[22m[1m[22m[2m │ gzip:  16.98 kB[22m[2m │ map:   229.37 kB[22m
+#18 87.56 apps/web build: [2mdist/[22m[2massets/[22m[36mvendor-tanstack-BC_PukRK.js                            [39m[1m[2m   85.98 kB[22m[1m[22m[2m │ gzip:  23.77 kB[22m[2m │ map:   376.13 kB[22m
+#18 87.56 apps/web build: [2mdist/[22m[2massets/[22m[36mvendor-forms-DLh3TFGs.js                               [39m[1m[2m  152.26 kB[22m[1m[22m[2m │ gzip:  48.69 kB[22m[2m │ map:   891.20 kB[22m
+#18 87.56 apps/web build: [2mdist/[22m[2massets/[22m[36mvendor-react-BooCP96l.js                               [39m[1m[2m  286.32 kB[22m[1m[22m[2m │ gzip:  91.97 kB[22m[2m │ map: 1,446.43 kB[22m
+#18 87.56 apps/web build: [2mdist/[22m[2massets/[22m[36mindex-DLzrZjXy.js                                      [39m[1m[33m1,879.26 kB[39m[22m[2m │ gzip: 510.52 kB[22m[2m │ map: 1,767.58 kB[22m
+#18 87.56 apps/web build: [32m✓ built in 13.76s[39m
+#18 87.72 apps/web build: Done
+#18 87.73 packages/db build$ tsc -p tsconfig.build.json
+#18 93.87 packages/db build: Done
+#18 93.87 apps/api build$ tsc -p tsconfig.build.json && node scripts/register-snapshot.mjs --csv ../../docs/delivery/requirements.csv --deps ../../docs/handover/external-dependencies.json --out dist/release/register-snapshot.json
+#18 93.87 apps/worker build$ tsc -p tsconfig.build.json
+#18 117.9 apps/worker build: Done
+#18 206.1 apps/api build: register-snapshot: wrote dist/release/register-snapshot.json (412 rows, sha256 6c3604f1b1d9)
+#18 206.1 apps/api build: Done
+#18 DONE 206.2s
+
+#19 [build 15/15] RUN bash deploy/scripts/assemble-runtime.sh /src /out/app
+#19 0.360 collect-notices: 186 shipped packages, 174 files, 12 without a licence file -> /out/app/licenses
+#19 0.912 Scope: all 9 workspace projects
+#19 1.096 Lockfile is up to date, resolution step is skipped
+#19 2.286 Packages: -246
+#19 2.286 --------------------------------------------------------------------------------
+#19 2.468 
+#19 2.468 devDependencies:
+#19 2.468 - @apidevtools/swagger-parser 10.1.1
+#19 2.468 - @axe-core/playwright 4.10.2
+#19 2.468 - @playwright/test 1.56.1
+#19 2.468 - @types/node 22.18.0
+#19 2.468 - eslint 10.1.0
+#19 2.468 - eslint-plugin-react-hooks 7.1.1
+#19 2.468 - openapi-types 12.1.3
+#19 2.468 - prettier 3.8.1
+#19 2.468 - typescript 6.0.2
+#19 2.468 - typescript-eslint 8.71.0
+#19 2.468 - vitest 3.2.7
+#19 2.468 
+#19 2.509 Done in 2s using pnpm v10.33.0
+#19 3.676 runtime workspace packages: apps/api apps/worker packages/config packages/db packages/design-tokens packages/reporting packages/shared
+#19 3.890 virtual store: 186 package directories, all in the shipped set (186 runtime+bundled)
+#19 5.168 resolve: @mth/api: 18 dependencies resolve; ./dist/index.js imports
+#19 6.773 resolve: @mth/worker: 9 dependencies resolve; ./dist/index.js imports
+#19 6.914 resolve: @mth/config: 2 dependencies resolve; ./dist/index.js imports
+#19 7.505 resolve: @mth/db: 5 dependencies resolve; ./dist/index.js imports
+#19 7.565 resolve: @mth/design-tokens: 0 dependencies resolve; ./dist/index.js imports
+#19 8.124 resolve: @mth/reporting: 9 dependencies resolve; ./dist/index.js imports
+#19 8.196 resolve: @mth/shared: 2 dependencies resolve; ./dist/index.js imports
+#19 8.263 assemble-runtime: OK 186 packages, 205M -> /out/app
+#19 DONE 8.8s
+
+#20 [runtime 2/7] RUN set -eu;     rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack /opt/yarn-*;     rm -f /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack /usr/local/bin/yarn /usr/local/bin/yarnpkg;     groupadd --system --gid 10001 mth;     useradd --system --uid 10001 --gid mth --home-dir /nonexistent --no-create-home --shell /usr/sbin/nologin mth;     mkdir -p /var/lib/mth/evidence;     chown mth:mth /var/lib/mth/evidence;     chmod 0700 /var/lib/mth/evidence
+#20 CACHED
+
+#21 [runtime 3/7] COPY --from=build /out/app /app
+#21 DONE 1.9s
+
+#22 [runtime 4/7] COPY deploy/docker/entrypoint.sh /usr/local/bin/mth
+#22 DONE 0.1s
+
+#23 [runtime 5/7] COPY deploy/docker/healthcheck.mjs /app/healthcheck.mjs
+#23 DONE 0.0s
+
+#24 [runtime 6/7] RUN chmod 0555 /usr/local/bin/mth && chmod 0444 /app/healthcheck.mjs
+#24 DONE 0.1s
+
+#25 [runtime 7/7] WORKDIR /app
+#25 DONE 0.0s
+
+#26 exporting to image
+#26 exporting layers
+#26 exporting layers 8.8s done
+#26 exporting manifest sha256:2f42928573d775b137bbc4ec579c790f3dcdbc4de63e0b3edf514ac6c4df23d5 0.0s done
+#26 exporting config sha256:f3e58345d03347eae21cbac34bf9fa48af2fe10c87db22548052e55bfacec6d7 0.0s done
+#26 exporting attestation manifest sha256:bce53e8c7dc4b7bc273665da872890f1959fdd609dbb033fbf62645836c44386 0.0s done
+#26 exporting manifest list sha256:7c4a85bf1cc914d8cb3140ac1c61af6ffdca23b264fe9a177635187bafbcb1c7 0.0s done
+#26 naming to docker.io/library/mth-app:local done
+#26 unpacking to docker.io/library/mth-app:local
+#26 unpacking to docker.io/library/mth-app:local 2.6s done
+#26 DONE 11.5s
+
+ [33m1 warning found (use docker --debug to expand):
+[0m - SecretsUsedInArgOrEnv: Do not use ARG or ENV instructions for sensitive data (ENV "AUTH_MODE") (line 83)
+build: 234 s
+== verifying mth-app:local
+  non-root: Config.User=10001:10001, id -u=10001
+  env: NODE_ENV=production AUTH_MODE=oidc
+  env: no *_PROXY variable in the image
+  no npm/npx/corepack/pnpm/yarn at runtime
+{"node":"v24.21.0","api":"0.1.0","worker":"0.1.0"}
+  commands: api | worker | migrate | db | health | version; seed-dev refused
+  /app/licenses: THIRD-PARTY-NOTICES.md, sbom.cdx.json
+image sha256:7c4a85bf1cc914d8cb3140ac1c61af6ffdca23b264fe9a177635187bafbcb1c7 size 582376037 bytes
+BUILD+VERIFY: PASS (mth-app:local)

@@ -1,0 +1,442 @@
+2026-11-24T11:56:28Z compose-backup-drill: label rg4c; source project mthbk-src (API :28301); target project mthbk-dst (API :28302)
+2026-11-24T11:56:28Z SYNTHETIC demo data only; a local Compose drill is not evidence of high-availability production readiness.
+2026-11-24T11:56:28Z C0 start: environment facts
+Tue Nov 24 11:56:28 UTC 2026
+Linux vm 6.18.44-fc-v819 #1 SMP PREEMPT_DYNAMIC @0 x86_64 x86_64 x86_64 GNU/Linux
+docker client 29.9.2 server 29.9.2
+Docker Compose version v5.6.1
+storage driver overlayfs; cgroup 1; images 4
+image mth-app:local id sha256:7c4a85bf1cc914d8cb3140ac1c61af6ffdca23b264fe9a177635187bafbcb1c7 digests [mth-app@sha256:7c4a85bf1cc914d8cb3140ac1c61af6ffdca23b264fe9a177635187bafbcb1c7]
+image postgres:18@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722 id sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722 digests [postgres@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722]
+node v24.21.0 at /opt/nvm/versions/node/v24.21.0/bin/node
+repository HEAD 389482803fd5e338bb83e9078cfc944bda1890ed
+backup root /tmp/claude-0/-home-user-My-owns/f7dd9c0b-2b3c-52aa-bca7-45299008f27d/scratchpad/dg7/backup-root mode 700 root:root
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/vda        252G   33G  6.4G  84% /
+/dev/vda        252G   33G  6.4G  84% /var/lib/docker
+2026-11-24T11:56:28Z C0 PASS exit=0 0.45s
+2026-11-24T11:56:28Z C1 start: source project mthbk-src: up -d --wait (new volumes)
+ Network mthbk-src_default Creating 
+ Network mthbk-src_default Creating 
+ Volume mthbk-src_evidence Creating 
+ Volume mthbk-src_evidence Creating 
+ Volume mthbk-src_pgdata Creating 
+ Volume mthbk-src_pgdata Creating 
+ Volume mthbk-src_evidence Created 
+ Volume mthbk-src_evidence Created 
+ Volume mthbk-src_pgdata Created 
+ Volume mthbk-src_pgdata Created 
+ Network mthbk-src_default Created 
+ Network mthbk-src_default Created 
+ Container mthbk-src-db-1 Creating 
+ Container mthbk-src-db-1 Created 
+ Container mthbk-src-migrate-1 Creating 
+ Container mthbk-src-migrate-1 Created 
+ Container mthbk-src-api-1 Creating 
+ Container mthbk-src-worker-1 Creating 
+ Container mthbk-src-worker-1 Created 
+ Container mthbk-src-api-1 Created 
+ Container mthbk-src-db-1 Starting 
+ Container mthbk-src-db-1 Started 
+ Container mthbk-src-db-1 Waiting 
+ Container mthbk-src-db-1 Healthy 
+ Container mthbk-src-migrate-1 Starting 
+ Container mthbk-src-migrate-1 Started 
+ Container mthbk-src-migrate-1 Waiting 
+ Container mthbk-src-db-1 Waiting 
+ Container mthbk-src-db-1 Waiting 
+ Container mthbk-src-migrate-1 Waiting 
+ Container mthbk-src-db-1 Healthy 
+ Container mthbk-src-db-1 Healthy 
+ Container mthbk-src-migrate-1 Exited 
+ Container mthbk-src-api-1 Starting 
+ Container mthbk-src-migrate-1 Exited 
+ Container mthbk-src-worker-1 Starting 
+ Container mthbk-src-api-1 Started 
+ Container mthbk-src-worker-1 Started 
+ Container mthbk-src-api-1 Waiting 
+ Container mthbk-src-db-1 Waiting 
+ Container mthbk-src-migrate-1 Waiting 
+ Container mthbk-src-worker-1 Waiting 
+ Container mthbk-src-worker-1 Healthy 
+ Container mthbk-src-migrate-1 Exited 
+ Container mthbk-src-db-1 Healthy 
+ Container mthbk-src-api-1 Healthy 
+2026-11-24T11:56:45Z C1 PASS exit=0 16.89s
+2026-11-24T11:56:45Z C2 start: seed-demo and seed-dev (SYNTHETIC) into the source
+mth-db seed-demo: SYNTHETIC demonstration dataset (illustrative example; not Mobily actual performance)
+mth-db seed-demo: run 1 (seed), 568 seeded record(s)
+count  adoption_indicator_template	8
+count  adoption_intervention	1
+count  app_user	9
+count  approval	1
+count  approval_type	8
+count  audit_event	918
+count  automation_action_type	11
+count  automation_rule	16
+count  automation_rule_enablement	16
+count  automation_rule_version	17
+count  automation_trigger	33
+count  baseline	1
+count  bau_handover	1
+count  benefit	3
+count  benefit_allocation	2
+count  benefit_calculation	3
+count  benefit_enabler	3
+count  benefit_formula	3
+count  benefit_formula_example	2
+count  benefit_formula_example_variable	7
+count  benefit_formula_variable	11
+count  benefit_formula_version	3
+count  benefit_lifecycle_event	11
+count  benefit_lifecycle_step_definition	6
+count  benefit_measurement	3
+count  benefit_measurement_input	11
+count  benefit_plan_value	10
+count  business_case	4
+count  business_case_line	7
+count  business_unit	1
+count  calculation_run	9
+count  capability	3
+count  capacity	18
+count  charter	1
+count  charter_scope_check_definition	5
+count  charter_version	1
+count  config_review_policy	7
+count  connector	1
+count  connector_change	1
+count  connector_config_version	1
+count  data_quality_finding	1
+count  day_ninety_question	6
+count  day_ninety_test	1
+count  decision	9
+count  decision_option	4
+count  decision_right_template	4
+count  deliverable	9
+count  demo_seed_record	568
+count  dependency	1
+count  dependency_type	5
+count  deployment_environment	1
+count  diagnostic_dimension	6
+count  diagnostic_finding	4
+count  diagnostic_item	6
+count  diagnostic_workstream	6
+count  evidence	1
+count  evidence_link	7
+count  finance_validation	3
+count  form_record_type	33
+count  form_source_field	111
+count  forum	5
+count  forum_template	5
+count  funding_decision	3
+count  gate_criterion_definition	32
+count  gate_decision	4
+count  gate_decision_agreement	3
+count  gate_definition	6
+count  gate_instance	6
+count  gate_submission	4
+count  gate_submission_criterion	24
+count  good_outcome_criterion	5
+count  governance_matrix	2
+count  governance_party	18
+count  guiding_question	4
+count  health_assessment	1
+count  health_assessment_action	3
+count  health_assessment_answer	25
+count  help_topic	11
+count  inbox_notification	1
+count  initiative	3
+count  initiative_gap_link	3
+count  initiative_outcome_contribution	3
+count  initiative_score	15
+count  initiative_score_result	3
+count  job_schedule	23
+count  journey	1
+count  kpi_actual	9
+count  kpi_actual_review	9
+count  kpi_actual_value	9
+count  kpi_definition	3
+count  kpi_evaluation	18
+count  kpi_rag_threshold	2
+count  kpi_version	3
+count  launch_plan	1
+count  launch_task	33
+count  launch_template_item	33
+count  launch_window	3
+count  methodology_coverage_link	114
+count  methodology_element	17
+count  methodology_element_profile	56
+count  methodology_version	6
+count  milestone	6
+count  north_star	1
+count  organization	1
+count  outcome	3
+count  outcome_kpi	3
+count  performance_area	1
+count  performance_area_cycle	1
+count  permission	193
+count  phase_definition	6
+count  phase_step	25
+count  phase_step_definition	25
+count  playbook_block	165
+count  playbook_block_link	240
+count  portfolio_selection	3
+count  procedure_definition	20
+count  procedure_step_definition	62
+count  raci_template_cell	36
+count  raci_template_deliverable	6
+count  raid_entry	1
+count  ranking_entry	3
+count  ranking_snapshot	1
+count  record_code_counter	11
+count  report_definition	12
+count  reporting_period	6
+count  resource_demand	18
+count  resource_role	3
+count  retention_class	12
+count  retention_table_class	350
+count  roadmap_wave	4
+count  role	14
+count  role_accountability	14
+count  role_mapping	1
+count  role_permission	570
+count  schema_migration	135
+count  scoped_assignment	12
+count  scoring_weight	5
+count  scoring_weight_set	1
+count  search_index_state	12
+count  service_identity	52
+count  service_identity_change	101
+count  source_element	80
+count  source_foundation	3
+count  stakeholder_group	1
+count  strategic_guardrail	1
+count  t10_area_definition	6
+count  target_trajectory	3
+count  target_trajectory_point	21
+count  tom_canvas_cell	10
+count  tom_dimension	10
+count  tom_gap	3
+count  trace_link	15
+count  transfer_column_rule	15
+count  transfer_table_rule	15
+count  transformation	1
+count  transformation_config_pin	3
+count  transformation_decision_right	4
+count  transformation_raci_assignment	36
+count  transformation_raci_deliverable	6
+count  user_identity	9
+count  value_pool	1
+count  walkthrough_step	12
+count  work_item	1
+count  work_item_kind	42
+count  worker_heartbeat	1
+checksum  ededf77be800de31413280faff68db02ca3a96fce2b2f17d558c89388a2f7a17
+coverage  complete
+mth-db seed-demo: reporting periods relative to 2026-11-24 (Asia/Riyadh): 2 generated, current period 2026-11 open
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+2026-11-24T11:56:51Z C2 PASS exit=0 5.43s
+2026-11-24T11:56:51Z C2b start: 2 evidence uploads through a one-off dev-auth API (uid 10001) and 1 queued job (SYNTHETIC)
+ Container mthbk-src-seed-api Creating 
+ Container mthbk-src-seed-api Created 
+debc772475b7227bbdfd4c1d01e2d89e73cbb70a7158c3896018d6c7b53a395a
+one-off dev-auth API on 127.0.0.1:28303: /readyz HTTP 200
+mth smoke: mode=dev api=http://127.0.0.1:28303 app=http://127.0.0.1:28303 run=96781EDB (all users and data SYNTHETIC)
+PASS  GET /healthz returns 200 {status: ok} (51 ms): HTTP 200 {"status":"ok"}
+PASS  GET /readyz returns 200 ready (database + migrations) (16 ms): HTTP 200 {"status":"ready","checks":{"database":"ok","migrations":"ok","storage":"ok","worker":"alive"}}
+PASS  technical admin signs in (dev) (63 ms): dev.admin -> user 01920000-0000-7000-9000-000000000201, roles [ADM_ACCESS,ADM_TECH]
+PASS  technical admin holds no business role (0 ms)
+PASS  admin creates a business unit (201 + ETag) (30 ms): business unit 01a20d6a-83e6-712f-add7-cda0233abd2d
+PASS  transformation-office user signs in (dev) (33 ms): dev.office -> user 01920000-0000-7000-9000-000000000202, roles [TO]
+PASS  office creates a transformation (201 + ETag, Idempotency-Key) (114 ms): transformation 01a20d6a-8425-72b3-8582-c718eff65787 code TR-0001
+PASS  office reads it back: detail, list and audit trail (51 ms): audit actions [transformation_config_pin.create,forum.create,forum.create,forum.create,forum.create,forum.create,transformation_raci_assignment.create,transformation_raci_assignment.create,transformation_raci_assignment.create,transformation_raci_assignment.create,transformation_raci_assignment.create,transformation_raci_assignment.create,transformation_raci_deliverable.create,transformation_raci_assignment.create,transformation_raci_assignment.create,transformation_raci_assignment.create,transformation_raci_assignment.create,transformation_raci_assignment.create,transformation_raci_assignment.create,transformation_raci_deliverable.create,transformation_raci_assignment.create,transformation_raci_assignment.create,transformation_raci_assignment.create,transformation_raci_assignment.create,transformation_raci_assignment.create]
+PASS  technical admin cannot see the business record: list excludes it, detail is 404 (18 ms): list 200 with 0 visible, detail 404
+PASS  both users sign out (34 ms)
+{"smoke":"PASS","mode":"dev","run":"96781EDB","steps":10,"passed":10,"totalMs":412,"transformationId":"01a20d6a-8425-72b3-8582-c718eff65787"}
+PASS  signin (154 ms): dev.office -> user 01920000-0000-7000-9000-000000000202, roles [TO]
+PASS  uploads (185 ms): 2 evidence files uploaded on 01a20d6a-8425-72b3-8582-c718eff65787: 01a20d6a-8628-74c8-a5f1-ee30c8476924 sha256 8b6da5edfb3f; 01a20d6a-8689-71f8-b3ea-716378e28161 sha256 f6eac89a3b11
+{"result":"PASS","steps":2}
+ create_queue 
+--------------
+ 
+(1 row)
+
+source: evidence_content rows 2, queued synthetic jobs 1
+ Container mthbk-src-api-run-4a8dda4ae140 Creating 
+ Container mthbk-src-api-run-4a8dda4ae140 Created 
+10001:10001 700 - ./
+10001:10001 700 - 01920000-0000-7000-9000-000000000001/
+10001:10001 700 - 01920000-0000-7000-9000-000000000001/01a20d6a-8425-72b3-8582-c718eff65787/
+10001:10001 700 - 01920000-0000-7000-9000-000000000001/01a20d6a-8425-72b3-8582-c718eff65787/01a20d6a-8628-74c8-a5f1-ee30c8476924/
+10001:10001 600 8b6da5edfb3f2af2620eaffe8c90021250d062f042c20898eba68bfadf3918a3 01920000-0000-7000-9000-000000000001/01a20d6a-8425-72b3-8582-c718eff65787/01a20d6a-8628-74c8-a5f1-ee30c8476924/01a20d6a-8659-72af-b4a9-47ae2d0336ad
+10001:10001 700 - 01920000-0000-7000-9000-000000000001/01a20d6a-8425-72b3-8582-c718eff65787/01a20d6a-8689-71f8-b3ea-716378e28161/
+10001:10001 600 f6eac89a3b11530c51112e64f85ece457a5b6898a0d0e7a2c4c210360da84876 01920000-0000-7000-9000-000000000001/01a20d6a-8425-72b3-8582-c718eff65787/01a20d6a-8689-71f8-b3ea-716378e28161/01a20d6a-86a7-728d-bb8d-999215ff1434
+evidence files: 2 (at least 2 expected); paths not 10001:10001 0700/0600: none
+2026-11-24T11:56:56Z C2b PASS exit=0 5.21s
+2026-11-24T11:56:56Z C3 start: §3.2 step 1: backup profile on postgres:18, --phase database
+ Container mthbk-src-db-1 Running 
+ Container mthbk-src-db-1 Waiting 
+ Container mthbk-src-db-1 Healthy 
+ Container mthbk-src-backup-run-14bc95acf1bf Creating 
+ Container mthbk-src-backup-run-14bc95acf1bf Created 
+backup: set rg4c database phase done; run the evidence copy-out, then --phase finish
+2026-11-24T11:56:59Z C3 PASS exit=0 3.02s
+2026-11-24T11:56:59Z C4 start: §3.2 step 2: evidence copy-out in the app image (--user 0:0, DAC_READ_SEARCH), >= 2 files
+ Container mthbk-src-api-run-ca6cc6b3df8e Creating 
+ Container mthbk-src-api-run-ca6cc6b3df8e Created 
+transfer-attachments copy-out: copied 2 objects (2 distinct files, 146 bytes)
+distinct files copied out: 2
+2026-11-24T11:57:01Z C4 PASS exit=0 1.81s
+2026-11-24T11:57:01Z C5 start: §3.2 step 3: backup profile, --phase finish (no stderr noise, config.files, counts)
+backup: set rg4c succeeded: 3554917 database bytes, 2 evidence objects; manifest sha256 aa517802e7048ceaf521c60a3490a9c4ca0b9855a07c9077ddd0ac0ad0b3e261
+ Container mthbk-src-db-1 Running 
+ Container mthbk-src-db-1 Waiting 
+ Container mthbk-src-db-1 Healthy 
+ Container mthbk-src-backup-run-faa46cedbed8 Creating 
+ Container mthbk-src-backup-run-faa46cedbed8 Created 
+backup: set rg4c succeeded: 3554917 database bytes, 2 evidence objects; manifest sha256 aa517802e7048ceaf521c60a3490a9c4ca0b9855a07c9077ddd0ac0ad0b3e261
+stderr lines other than Compose progress: none
+manifest: config.files ["config/compose.yaml","config/environment.env","config/images.lock.json"], evidence 2 files / 2 entries, pgbossJobsByState {"created":6,"completed":2}, jobRunCount 0
+2026-11-24T11:57:03Z C5 PASS exit=0 2.24s
+2026-11-24T11:57:03Z manifest sha256 (from the backup line): aa517802e7048ceaf521c60a3490a9c4ca0b9855a07c9077ddd0ac0ad0b3e261
+2026-11-24T11:57:03Z C6 start: the set is owner-only (§3.3)
+paths with a group/other bit: none
+files in the set: 9
+aa517802e7048ceaf521c60a3490a9c4ca0b9855a07c9077ddd0ac0ad0b3e261  /tmp/claude-0/-home-user-My-owns/f7dd9c0b-2b3c-52aa-bca7-45299008f27d/scratchpad/dg7/backup-root/rg4c/backup-manifest.json
+2026-11-24T11:57:03Z C6 PASS exit=0 0.01s
+2026-11-24T11:57:03Z C7 start: target project mthbk-dst: new volumes, db only
+ Volume mthbk-dst_pgdata Creating 
+ Volume mthbk-dst_pgdata Creating 
+ Network mthbk-dst_default Creating 
+ Network mthbk-dst_default Creating 
+ Volume mthbk-dst_pgdata Created 
+ Volume mthbk-dst_pgdata Created 
+ Network mthbk-dst_default Created 
+ Network mthbk-dst_default Created 
+ Container mthbk-dst-db-1 Creating 
+ Container mthbk-dst-db-1 Created 
+ Container mthbk-dst-db-1 Starting 
+ Container mthbk-dst-db-1 Started 
+ Container mthbk-dst-db-1 Waiting 
+ Container mthbk-dst-db-1 Healthy 
+ Volume mthbk-dst_evidence Creating 
+ Volume mthbk-dst_evidence Creating 
+ Volume mthbk-dst_evidence Created 
+ Volume mthbk-dst_evidence Created 
+ Container mthbk-dst-api-run-77e1b41380e2 Creating 
+ Container mthbk-dst-api-run-77e1b41380e2 Created 
+2026-11-24T11:57:10Z C7 PASS exit=0 6.85s
+2026-11-24T11:57:10Z C8 start: restore.sh into mthbk-dst (postgres:18 client tools, --manifest-sha256)
+restore: rg4c restored and ready in 9.1 s; all checks passed
+2026-11-24T11:57:20Z C8 PASS exit=0 9.78s
+2026-11-24T11:57:20Z C9 start: verify only (no owner change): R6/R7, uid 10001 reads every object, owner/modes, hashes, queued job
+R6 {"jobRunCount":0,"jobScheduleDigest":"ed3e5a95b053c8b872e463f1a26d16c3d06273d08290672626de039e9b2b3700","pgbossJobsByState":{"created":6,"completed":2}}; R7 {"owner":"10001:10001","verified":2,"mismatches":0,"otherOwner":0,"retentionFiles":0,"groupOrOtherBits":0}
+ Container mthbk-dst-api-run-53fac7330fd0 Creating 
+ Container mthbk-dst-api-run-53fac7330fd0 Created 
+10001:10001 700 - ./
+10001:10001 700 - 01920000-0000-7000-9000-000000000001/
+10001:10001 700 - 01920000-0000-7000-9000-000000000001/01a20d6a-8425-72b3-8582-c718eff65787/
+10001:10001 700 - 01920000-0000-7000-9000-000000000001/01a20d6a-8425-72b3-8582-c718eff65787/01a20d6a-8628-74c8-a5f1-ee30c8476924/
+10001:10001 600 8b6da5edfb3f2af2620eaffe8c90021250d062f042c20898eba68bfadf3918a3 01920000-0000-7000-9000-000000000001/01a20d6a-8425-72b3-8582-c718eff65787/01a20d6a-8628-74c8-a5f1-ee30c8476924/01a20d6a-8659-72af-b4a9-47ae2d0336ad
+10001:10001 700 - 01920000-0000-7000-9000-000000000001/01a20d6a-8425-72b3-8582-c718eff65787/01a20d6a-8689-71f8-b3ea-716378e28161/
+10001:10001 600 f6eac89a3b11530c51112e64f85ece457a5b6898a0d0e7a2c4c210360da84876 01920000-0000-7000-9000-000000000001/01a20d6a-8425-72b3-8582-c718eff65787/01a20d6a-8689-71f8-b3ea-716378e28161/01a20d6a-86a7-728d-bb8d-999215ff1434
+evidence files: 2 (at least 2 expected); paths not 10001:10001 0700/0600: none
+source and target evidence: same 2 files, same SHA-256
+target: queued synthetic jobs 1
+2026-11-24T11:57:21Z C9 PASS exit=0 1.24s
+2026-11-24T11:57:21Z C10 start: start mthbk-dst; migrate up to date; GET /readyz over HTTP
+ Container mthbk-dst-db-1 Running 
+ Container mthbk-dst-migrate-1 Creating 
+ Container mthbk-dst-migrate-1 Created 
+ Container mthbk-dst-worker-1 Creating 
+ Container mthbk-dst-api-1 Creating 
+ Container mthbk-dst-api-1 Created 
+ Container mthbk-dst-worker-1 Created 
+ Container mthbk-dst-db-1 Waiting 
+ Container mthbk-dst-db-1 Healthy 
+ Container mthbk-dst-migrate-1 Starting 
+ Container mthbk-dst-migrate-1 Started 
+ Container mthbk-dst-migrate-1 Waiting 
+ Container mthbk-dst-db-1 Waiting 
+ Container mthbk-dst-migrate-1 Waiting 
+ Container mthbk-dst-db-1 Waiting 
+ Container mthbk-dst-db-1 Healthy 
+ Container mthbk-dst-db-1 Healthy 
+ Container mthbk-dst-migrate-1 Exited 
+ Container mthbk-dst-api-1 Starting 
+ Container mthbk-dst-migrate-1 Exited 
+ Container mthbk-dst-worker-1 Starting 
+ Container mthbk-dst-api-1 Started 
+ Container mthbk-dst-worker-1 Started 
+ Container mthbk-dst-worker-1 Waiting 
+ Container mthbk-dst-migrate-1 Waiting 
+ Container mthbk-dst-api-1 Waiting 
+ Container mthbk-dst-db-1 Waiting 
+ Container mthbk-dst-worker-1 Healthy 
+ Container mthbk-dst-db-1 Healthy 
+ Container mthbk-dst-migrate-1 Exited 
+ Container mthbk-dst-api-1 Healthy 
+migrate-1  | mth-db migrate: database is up to date
+GET http://127.0.0.1:28302/readyz -> HTTP 200: {"status":"ready","checks":{"database":"ok","migrations":"ok","storage":"ok","worker":"alive"}}
+2026-11-24T11:57:29Z C10 PASS exit=0 8.11s
+2026-11-24T11:57:29Z C11 start: cleanup (down -v of both projects unless --keep)
+ Container mthbk-dst-worker-1 Stopping 
+ Container mthbk-dst-api-1 Stopping 
+ Container mthbk-dst-worker-1 Stopped 
+ Container mthbk-dst-worker-1 Removing 
+ Container mthbk-dst-worker-1 Removed 
+ Container mthbk-dst-api-1 Stopped 
+ Container mthbk-dst-api-1 Removing 
+ Container mthbk-dst-api-1 Removed 
+ Container mthbk-dst-migrate-1 Stopping 
+ Container mthbk-dst-migrate-1 Stopped 
+ Container mthbk-dst-migrate-1 Removing 
+ Container mthbk-dst-migrate-1 Removed 
+ Container mthbk-dst-db-1 Stopping 
+ Container mthbk-dst-db-1 Stopped 
+ Container mthbk-dst-db-1 Removing 
+ Container mthbk-dst-db-1 Removed 
+ Volume mthbk-dst_pgdata Removing 
+ Volume mthbk-dst_evidence Removing 
+ Network mthbk-dst_default Removing 
+ Network mthbk-dst_default Removed 
+ Volume mthbk-dst_pgdata Removed 
+ Volume mthbk-dst_evidence Removed 
+ Container mthbk-src-worker-1 Stopping 
+ Container mthbk-src-api-1 Stopping 
+ Container mthbk-src-api-1 Stopped 
+ Container mthbk-src-api-1 Removing 
+ Container mthbk-src-worker-1 Stopped 
+ Container mthbk-src-worker-1 Removing 
+ Container mthbk-src-api-1 Removed 
+ Container mthbk-src-worker-1 Removed 
+ Container mthbk-src-migrate-1 Stopping 
+ Container mthbk-src-migrate-1 Stopped 
+ Container mthbk-src-migrate-1 Removing 
+ Container mthbk-src-migrate-1 Removed 
+ Container mthbk-src-db-1 Stopping 
+ Container mthbk-src-db-1 Stopped 
+ Container mthbk-src-db-1 Removing 
+ Container mthbk-src-db-1 Removed 
+ Volume mthbk-src_evidence Removing 
+ Volume mthbk-src_pgdata Removing 
+ Network mthbk-src_default Removing 
+ Volume mthbk-src_evidence Removed 
+ Network mthbk-src_default Removed 
+ Volume mthbk-src_pgdata Removed 
+2026-11-24T11:57:34Z C11 PASS exit=0 4.73s
+2026-11-24T11:57:34Z summary:
+2026-11-24T11:57:34Z   C0 PASS 0.45s environment facts
+2026-11-24T11:57:34Z   C1 PASS 16.89s source project mthbk-src: up -d --wait (new volumes)
+2026-11-24T11:57:34Z   C2 PASS 5.43s seed-demo and seed-dev (SYNTHETIC) into the source
+2026-11-24T11:57:34Z   C2b PASS 5.21s 2 evidence uploads through a one-off dev-auth API (uid 10001) and 1 queued job (SYNTHETIC)
+2026-11-24T11:57:34Z   C3 PASS 3.02s §3.2 step 1: backup profile on postgres:18, --phase database
+2026-11-24T11:57:34Z   C4 PASS 1.81s §3.2 step 2: evidence copy-out in the app image (--user 0:0, DAC_READ_SEARCH), >= 2 files
+2026-11-24T11:57:34Z   C5 PASS 2.24s §3.2 step 3: backup profile, --phase finish (no stderr noise, config.files, counts)
+2026-11-24T11:57:34Z   C6 PASS 0.01s the set is owner-only (§3.3)
+2026-11-24T11:57:34Z   C7 PASS 6.85s target project mthbk-dst: new volumes, db only
+2026-11-24T11:57:34Z   C8 PASS 9.78s restore.sh into mthbk-dst (postgres:18 client tools, --manifest-sha256)
+2026-11-24T11:57:34Z   C9 PASS 1.24s verify only (no owner change): R6/R7, uid 10001 reads every object, owner/modes, hashes, queued job
+2026-11-24T11:57:34Z   C10 PASS 8.11s start mthbk-dst; migrate up to date; GET /readyz over HTTP
+2026-11-24T11:57:34Z   C11 PASS 4.73s cleanup (down -v of both projects unless --keep)
+2026-11-24T11:57:34Z compose-backup-drill: PASS in 65.95s (label rg4c; restore report /home/user/My-owns/docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg4c/02-compose-backup-drill.d/restore/restore-report.json)

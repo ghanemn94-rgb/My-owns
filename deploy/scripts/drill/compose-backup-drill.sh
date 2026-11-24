@@ -240,6 +240,11 @@ c2b_objects() {
   done
   echo "one-off dev-auth API on 127.0.0.1:$SEED_PORT: /readyz HTTP ${code:-none}"
   if [ "$code" = 200 ]; then
+    # smoke.mjs (dev auth) creates the SYNTHETIC transformation dev.office can read, as transfer-drill.sh D1 does; the
+    # seed-dev users sit in their own organization and see none of the demo data (orchestrator repair, D-285).
+    MTH_SMOKE_API_URL="http://127.0.0.1:$SEED_PORT" APP_BASE_URL="http://127.0.0.1:$SEED_PORT" MTH_SMOKE_AUTH=dev \
+      "$NODE" "$REPO/deploy/scripts/smoke.mjs" || rc=$?
+    [ "$rc" -eq 0 ] || { docker logs "$name" >"$OUT/seed-api.log" 2>&1 || true; docker rm -f "$name" >/dev/null 2>&1 || true; return 1; }
     "$NODE" "$REPO/deploy/scripts/drill/journey.mjs" --mode dev --app "http://127.0.0.1:$SEED_PORT" \
       --api "http://127.0.0.1:$SEED_PORT" --user dev.office --steps signin,uploads \
       --journal "$OUT/journal-src.json" --out "$OUT/journey-uploads.json" || rc=$?

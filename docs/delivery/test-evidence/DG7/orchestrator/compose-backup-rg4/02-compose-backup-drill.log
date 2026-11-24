@@ -1,0 +1,294 @@
+2026-11-24T11:40:00Z compose-backup-drill: label rg4; source project mthbk-src (API :28301); target project mthbk-dst (API :28302)
+2026-11-24T11:40:00Z SYNTHETIC demo data only; a local Compose drill is not evidence of high-availability production readiness.
+2026-11-24T11:40:00Z C0 start: environment facts
+Tue Nov 24 11:40:00 UTC 2026
+Linux vm 6.18.44-fc-v819 #1 SMP PREEMPT_DYNAMIC @0 x86_64 x86_64 x86_64 GNU/Linux
+docker client 29.9.2 server 29.9.2
+Docker Compose version v5.6.1
+storage driver overlayfs; cgroup 1; images 4
+image mth-app:local id sha256:050473c7989632abb42b1f76c2eaff7b3d6204221f4be330c67590df94cf026b digests [mth-app@sha256:050473c7989632abb42b1f76c2eaff7b3d6204221f4be330c67590df94cf026b]
+image postgres:18@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722 id sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722 digests [postgres@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722]
+node v24.21.0 at /opt/nvm/versions/node/v24.21.0/bin/node
+repository HEAD b2864f2abf2397c27bbb73d3535b8b7c1f30fc6b
+backup root /tmp/claude-0/-home-user-My-owns/f7dd9c0b-2b3c-52aa-bca7-45299008f27d/scratchpad/dg7/backup-root mode 700 root:root
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/vda        252G   31G  7.6G  81% /
+/dev/vda        252G   31G  7.6G  81% /var/lib/docker
+2026-11-24T11:40:00Z C0 PASS exit=0 0.47s
+2026-11-24T11:40:00Z C1 start: source project mthbk-src: up -d --wait (new volumes)
+ Network mthbk-src_default Creating 
+ Volume mthbk-src_evidence Creating 
+ Network mthbk-src_default Creating 
+ Volume mthbk-src_evidence Creating 
+ Volume mthbk-src_pgdata Creating 
+ Volume mthbk-src_pgdata Creating 
+ Volume mthbk-src_evidence Created 
+ Volume mthbk-src_evidence Created 
+ Volume mthbk-src_pgdata Created 
+ Volume mthbk-src_pgdata Created 
+ Network mthbk-src_default Created 
+ Network mthbk-src_default Created 
+ Container mthbk-src-db-1 Creating 
+ Container mthbk-src-db-1 Created 
+ Container mthbk-src-migrate-1 Creating 
+ Container mthbk-src-migrate-1 Created 
+ Container mthbk-src-worker-1 Creating 
+ Container mthbk-src-api-1 Creating 
+ Container mthbk-src-api-1 Created 
+ Container mthbk-src-worker-1 Created 
+ Container mthbk-src-db-1 Starting 
+ Container mthbk-src-db-1 Started 
+ Container mthbk-src-db-1 Waiting 
+ Container mthbk-src-db-1 Healthy 
+ Container mthbk-src-migrate-1 Starting 
+ Container mthbk-src-migrate-1 Started 
+ Container mthbk-src-migrate-1 Waiting 
+ Container mthbk-src-db-1 Waiting 
+ Container mthbk-src-db-1 Waiting 
+ Container mthbk-src-migrate-1 Waiting 
+ Container mthbk-src-db-1 Healthy 
+ Container mthbk-src-db-1 Healthy 
+ Container mthbk-src-migrate-1 Exited 
+ Container mthbk-src-api-1 Starting 
+ Container mthbk-src-migrate-1 Exited 
+ Container mthbk-src-worker-1 Starting 
+ Container mthbk-src-api-1 Started 
+ Container mthbk-src-worker-1 Started 
+ Container mthbk-src-worker-1 Waiting 
+ Container mthbk-src-api-1 Waiting 
+ Container mthbk-src-migrate-1 Waiting 
+ Container mthbk-src-db-1 Waiting 
+ Container mthbk-src-db-1 Healthy 
+ Container mthbk-src-migrate-1 Exited 
+ Container mthbk-src-worker-1 Healthy 
+ Container mthbk-src-api-1 Healthy 
+2026-11-24T11:40:27Z C1 PASS exit=0 27.16s
+2026-11-24T11:40:27Z C2 start: seed-demo and seed-dev (SYNTHETIC) into the source
+mth-db seed-demo: SYNTHETIC demonstration dataset (illustrative example; not Mobily actual performance)
+mth-db seed-demo: run 1 (seed), 577 seeded record(s)
+count  adoption_indicator_template	8
+count  adoption_intervention	1
+count  app_user	9
+count  approval	1
+count  approval_type	8
+count  audit_event	927
+count  automation_action_type	11
+count  automation_rule	16
+count  automation_rule_enablement	16
+count  automation_rule_version	17
+count  automation_trigger	33
+count  baseline	1
+count  bau_handover	1
+count  benefit	3
+count  benefit_allocation	2
+count  benefit_calculation	3
+count  benefit_enabler	3
+count  benefit_formula	3
+count  benefit_formula_example	2
+count  benefit_formula_example_variable	7
+count  benefit_formula_variable	11
+count  benefit_formula_version	3
+count  benefit_lifecycle_event	11
+count  benefit_lifecycle_step_definition	6
+count  benefit_measurement	3
+count  benefit_measurement_input	11
+count  benefit_plan_value	10
+count  business_case	4
+count  business_case_line	7
+count  business_unit	1
+count  calculation_run	9
+count  capability	3
+count  capacity	18
+count  charter	1
+count  charter_scope_check_definition	5
+count  charter_version	1
+count  config_review_policy	7
+count  connector	1
+count  connector_change	1
+count  connector_config_version	1
+count  data_quality_finding	1
+count  day_ninety_question	6
+count  day_ninety_test	1
+count  decision	9
+count  decision_option	4
+count  decision_right_template	4
+count  deliverable	9
+count  demo_seed_record	577
+count  dependency	1
+count  dependency_type	5
+count  deployment_environment	1
+count  diagnostic_dimension	6
+count  diagnostic_finding	4
+count  diagnostic_item	6
+count  diagnostic_workstream	6
+count  evidence	1
+count  evidence_link	7
+count  finance_validation	3
+count  form_record_type	33
+count  form_source_field	111
+count  forum	5
+count  forum_template	5
+count  funding_decision	3
+count  gate_criterion_definition	32
+count  gate_decision	4
+count  gate_decision_agreement	3
+count  gate_definition	6
+count  gate_instance	6
+count  gate_submission	4
+count  gate_submission_criterion	24
+count  good_outcome_criterion	5
+count  governance_matrix	2
+count  governance_party	18
+count  guiding_question	4
+count  health_assessment	1
+count  health_assessment_action	3
+count  health_assessment_answer	25
+count  help_topic	11
+count  inbox_notification	1
+count  initiative	3
+count  initiative_gap_link	3
+count  initiative_outcome_contribution	3
+count  initiative_score	15
+count  initiative_score_result	3
+count  job_schedule	23
+count  journey	1
+count  kpi_actual	9
+count  kpi_actual_review	9
+count  kpi_actual_value	9
+count  kpi_definition	3
+count  kpi_evaluation	18
+count  kpi_rag_threshold	2
+count  kpi_version	3
+count  launch_plan	1
+count  launch_task	33
+count  launch_template_item	33
+count  launch_window	3
+count  methodology_coverage_link	114
+count  methodology_element	17
+count  methodology_element_profile	56
+count  methodology_version	6
+count  milestone	6
+count  north_star	1
+count  organization	1
+count  outcome	3
+count  outcome_kpi	3
+count  performance_area	1
+count  performance_area_cycle	1
+count  permission	193
+count  phase_definition	6
+count  phase_step	25
+count  phase_step_definition	25
+count  playbook_block	165
+count  playbook_block_link	240
+count  portfolio_selection	3
+count  procedure_definition	20
+count  procedure_step_definition	62
+count  raci_template_cell	36
+count  raci_template_deliverable	6
+count  raid_entry	1
+count  ranking_entry	3
+count  ranking_snapshot	1
+count  record_code_counter	11
+count  report_definition	12
+count  reporting_period	6
+count  resource_demand	18
+count  resource_role	3
+count  retention_class	12
+count  retention_table_class	350
+count  roadmap_wave	4
+count  role	14
+count  role_accountability	14
+count  role_mapping	1
+count  role_permission	570
+count  schema_migration	135
+count  scoped_assignment	12
+count  scoring_weight	5
+count  scoring_weight_set	1
+count  search_index_state	12
+count  service_identity	52
+count  service_identity_change	101
+count  source_element	80
+count  source_foundation	3
+count  stakeholder_group	1
+count  strategic_guardrail	1
+count  t10_area_definition	6
+count  target_trajectory	3
+count  target_trajectory_point	21
+count  tom_canvas_cell	10
+count  tom_dimension	10
+count  tom_gap	3
+count  trace_link	15
+count  transfer_column_rule	15
+count  transfer_table_rule	15
+count  transformation	1
+count  transformation_config_pin	3
+count  transformation_decision_right	4
+count  transformation_raci_assignment	36
+count  transformation_raci_deliverable	6
+count  user_identity	18
+count  value_pool	1
+count  walkthrough_step	12
+count  work_item	1
+count  work_item_kind	42
+count  worker_heartbeat	1
+checksum  56cfebe5578ababa7e80de83819df57347f9620bbd4a9c06e44e58c483e4e421
+coverage  complete
+mth-db seed-demo: reporting periods relative to 2026-11-24 (Asia/Riyadh): 2 generated, current period 2026-11 open
+mth-db seed-dev: seeded SYNTHETIC dev users: dev.admin, dev.office, dev.lead, dev.auditor, dev.nobody
+2026-11-24T11:40:33Z C2 PASS exit=0 5.36s
+2026-11-24T11:40:33Z C2b start: 2 evidence uploads through a one-off dev-auth API (uid 10001) and 1 queued job (SYNTHETIC)
+ Container mthbk-src-seed-api Creating 
+ Container mthbk-src-seed-api Created 
+0dc6a4237be4b67b5dfec3f3cab4b5bb5db64c40e5f181d0281e195efc84534f
+one-off dev-auth API on 127.0.0.1:28303: /readyz HTTP 200
+PASS  signin (109 ms): dev.office -> user 01920000-0000-7000-9000-000000000202, roles [TO]
+FAIL  uploads (21 ms): no transformation readable by the signed-in user (HTTP 200)
+{"result":"FAIL","steps":2}
+2026-11-24T11:40:38Z C2b FAIL exit=1 5.27s
+2026-11-24T11:40:38Z C3 NOT_RUN (§3.2 step 1: backup profile on postgres:18, --phase database): an earlier step (C2b) failed
+2026-11-24T11:40:38Z C4 NOT_RUN (§3.2 step 2: evidence copy-out in the app image (--user 0:0, DAC_READ_SEARCH), >= 2 files): an earlier step (C2b) failed
+2026-11-24T11:40:38Z C5 NOT_RUN (§3.2 step 3: backup profile, --phase finish (no stderr noise, config.files, counts)): an earlier step (C2b) failed
+2026-11-24T11:40:38Z C6 NOT_RUN (the set is owner-only (§3.3)): an earlier step (C2b) failed
+2026-11-24T11:40:38Z C7 NOT_RUN (target project mthbk-dst: new volumes, db only): an earlier step (C2b) failed
+2026-11-24T11:40:38Z C8 NOT_RUN (restore.sh into mthbk-dst (postgres:18 client tools, --manifest-sha256)): an earlier step (C2b) failed
+2026-11-24T11:40:38Z C9 NOT_RUN (verify only (no owner change): R6/R7, uid 10001 reads every object, owner/modes, hashes, queued job): an earlier step (C2b) failed
+2026-11-24T11:40:38Z C10 NOT_RUN (start mthbk-dst; migrate up to date; GET /readyz over HTTP): an earlier step (C2b) failed
+2026-11-24T11:40:38Z C11 start: cleanup (down -v of both projects unless --keep)
+ Container mthbk-src-worker-1 Stopping 
+ Container mthbk-src-api-1 Stopping 
+ Container mthbk-src-api-1 Stopped 
+ Container mthbk-src-api-1 Removing 
+ Container mthbk-src-api-1 Removed 
+ Container mthbk-src-worker-1 Stopped 
+ Container mthbk-src-worker-1 Removing 
+ Container mthbk-src-worker-1 Removed 
+ Container mthbk-src-migrate-1 Stopping 
+ Container mthbk-src-migrate-1 Stopped 
+ Container mthbk-src-migrate-1 Removing 
+ Container mthbk-src-migrate-1 Removed 
+ Container mthbk-src-db-1 Stopping 
+ Container mthbk-src-db-1 Stopped 
+ Container mthbk-src-db-1 Removing 
+ Container mthbk-src-db-1 Removed 
+ Volume mthbk-src_evidence Removing 
+ Volume mthbk-src_pgdata Removing 
+ Network mthbk-src_default Removing 
+ Volume mthbk-src_evidence Removed 
+ Network mthbk-src_default Removed 
+ Volume mthbk-src_pgdata Removed 
+2026-11-24T11:40:41Z C11 PASS exit=0 3.24s
+2026-11-24T11:40:41Z summary:
+2026-11-24T11:40:41Z   C0 PASS 0.47s environment facts
+2026-11-24T11:40:41Z   C1 PASS 27.16s source project mthbk-src: up -d --wait (new volumes)
+2026-11-24T11:40:41Z   C2 PASS 5.36s seed-demo and seed-dev (SYNTHETIC) into the source
+2026-11-24T11:40:41Z   C2b FAIL exit=1 5.27s 2 evidence uploads through a one-off dev-auth API (uid 10001) and 1 queued job (SYNTHETIC)
+2026-11-24T11:40:41Z   C3 NOT_RUN §3.2 step 1: backup profile on postgres:18, --phase database
+2026-11-24T11:40:41Z   C4 NOT_RUN §3.2 step 2: evidence copy-out in the app image (--user 0:0, DAC_READ_SEARCH), >= 2 files
+2026-11-24T11:40:41Z   C5 NOT_RUN §3.2 step 3: backup profile, --phase finish (no stderr noise, config.files, counts)
+2026-11-24T11:40:41Z   C6 NOT_RUN the set is owner-only (§3.3)
+2026-11-24T11:40:41Z   C7 NOT_RUN target project mthbk-dst: new volumes, db only
+2026-11-24T11:40:41Z   C8 NOT_RUN restore.sh into mthbk-dst (postgres:18 client tools, --manifest-sha256)
+2026-11-24T11:40:41Z   C9 NOT_RUN verify only (no owner change): R6/R7, uid 10001 reads every object, owner/modes, hashes, queued job
+2026-11-24T11:40:41Z   C10 NOT_RUN start mthbk-dst; migrate up to date; GET /readyz over HTTP
+2026-11-24T11:40:41Z   C11 PASS 3.24s cleanup (down -v of both projects unless --keep)
+2026-11-24T11:40:41Z compose-backup-drill: FAIL in 41.58s (label rg4; restore report /home/user/My-owns/docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg4/02-compose-backup-drill.d/restore/restore-report.json)
