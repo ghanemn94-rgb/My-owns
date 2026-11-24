@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG7-1071",
+      "stage_id": "DG7",
+      "requirement": "REQ-S19-012",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "In the phased (Compose) backup sequence the manifest's config.files is always empty: --phase finish reads $WORK/config.sha from the database phase's temporary directory, which that phase's EXIT trap has already deleted",
+      "reproduction": "On candidate sha256:cf1fb7d5 (source 3e8f5bce2b76320613bb25751675d02c1f89d185). Code: deploy/scripts/backup.sh l.446 writes the config/ file list to \"$WORK/config.sha\" in the database phase. $WORK is a per-process mktemp directory (l.311), removed by `trap 'rm -rf \"$WORK\"' EXIT` (l.319). In --phase finish (a separate process, as in backup-restore.md §3.2 steps 1 and 3), l.585 builds the manifest with -v cfg=\"$(cat \"$WORK/config.sha\")\" from the finish phase's NEW, empty $WORK. So cat fails, cfg is empty, and the manifest's config.files is []. Behavioural reproduction: a copy of deploy/scripts/tests/backup-restore.test.mjs whose T-E11 (the three-step Compose sequence) also asserts that manifest.config.files lists every file of config/ (09-repro-config-files.diff), run in a disposable clone with `QA_PG_PORT=32430 tests/qa/support/with-pg.sh node --test --test-name-pattern T-E11 <copy>`: exit 1. config/ on disk holds [compose.yaml, images.lock.json]; the phased manifest has \"config\": {\"files\": [], \"sha256\": \"3a7ce9a2…\"}; the --phase all set of the same run lists config/compose.yaml, config/environment.env and config/images.lock.json. The finish output contains `cat: $TMPDIR/…/mth-backup.KItQsG/config.sha: No such file or directory`. The same stderr line is in the orchestrator's Compose drill rg3b at step C5 (`cat: /tmp/mth-backup.hBaAOK/config.sha: No such file or directory`), which was recorded as C5 PASS without explanation. The shipped T-E11 passes because it never inspects manifest.config and prints the finish output only on failure.",
+      "expected": "ADR-0066 §2 defines the manifest field `config` as { \"files\": [{ \"path\", \"sha256\" }], \"sha256\" } (§3: the deployment configuration bundle). A set taken by the documented Compose sequence (backup-restore.md §3.2, the default deployment path) lists its config/ files in config.files, exactly as a --phase all set does, and config.sha256 is the digest of that recorded list. The finish phase prints no error line. A test pins config.files for the phased sequence.",
+      "actual": "Every phased set, and so every Compose backup, has config.files = [] while config/ holds two or three files. config.sha256 is the digest of a list the manifest no longer contains, so it cannot be re-derived from the manifest. The config/ files are still hashed in the manifest's top-level files[] and checked by everyFileMatches, and restore.sh does not read config.files, so no file goes unprotected and restore is unaffected. The defect is a wrong, contract-breaking manifest field on the main deployment path (bounded effect), plus an unexplained error line in the drill evidence that closes F-DG7-1031/1051. It predates DO-D13 (the phased mode came with DO-D11) but is in this candidate and was first visible in the rg3b drill.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/code-security/round-3/09-repro-config-files.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-3/09-repro-config-files.diff",
+        "docs/delivery/test-evidence/DG7/code-security/round-3/09-repro-config-files.test.mjs.txt",
+        "docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg3b/02-compose-backup-drill.log",
+        "deploy/scripts/backup.sh",
+        "docs/architecture/adr/ADR-0066-p7-backup-restore-backup-set-manifest-restore-checks-drill.md"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG7/round-3/code-security-reviewer.json",
+      "owner": "devops-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-24T09:17:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG7 round 3 (T-DG7-REV-CS-RG3) on sha256:cf1fb7d5; reproduced on a disposable PostgreSQL."
+        }
+      ]
+    },
+    {
+      "id": "F-DG7-1072",
+      "stage_id": "DG7",
+      "requirement": "REQ-S20-019",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "The Compose A19 drill moves zero evidence objects and zero jobs, so the DO-D13 copy-out repair (root + CAP_DAC_READ_SEARCH reading the uid-10001 0700 store) and the evidence and job-state legs of the Compose restore are not demonstrated; D-284 reports the run as PASS without disclosing this",
+      "reproduction": "Read the orchestrator's run that D-284 cites for closing F-DG7-1031/1051: docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg3b/02-compose-backup-drill.log. C4 (§3.2 step 2, the copy-out with --user 0:0 --cap-add DAC_READ_SEARCH) prints `transfer-attachments copy-out: copied 0 objects (0 distinct files, 0 bytes)`; C5 `0 evidence objects`. The restore report 02-compose-backup-drill.d/restore/restore-report.json has R7 evidence {\"verified\": 0, \"mismatches\": 0, \"retentionFiles\": 0} and R6 job state {\"jobRunCount\": 0, \"pgbossJobsByState\": {}}. deploy/scripts/drill/compose-backup-drill.sh seeds only `seed-demo` (no evidence object, no retention set, no queued job) and asserts no non-zero count. With 0 rows, copyOut (apps/api/src/cli/transfer-attachments.ts commandCopyOut) never opens a store object. So C4 passes whether or not root with DAC_READ_SEARCH can read the 0700 uid-10001 store, which is the very defect 2 that the DO-D13 handback says this capability repairs. C9 (chown of restored evidence) likewise acts on an empty tree.",
+      "expected": "The A19 acceptance (REQ-S20-019, REQ-S19-012) is that the restore drill recovers database, evidence, audit, snapshots and job state. F-DG7-1031/1051 required the Compose half to be run. The Compose drill therefore seeds at least one evidence object (and preferably a retention archive set and a queued job, as the QA A19 harness and T-E fixtures do). It asserts non-zero copy-out, R7 verified and R6 job counts, so that a failure of the DAC_READ_SEARCH read path or of the restored ownership would fail the drill. Alternatively, D-284 and backup-restore.md §8 disclose that the Compose half was run with zero evidence objects and zero jobs.",
+      "actual": "The Compose half has demonstrated the database, audit and snapshot legs only. The evidence and job-state legs and the security-relevant permission repair of DO-D13 are vacuous in the only Compose run. D-284 summarises rg3b as 'PASS C0-C11 (backup profile on postgres:18, copy-out, finish, owner-only set, restore …)' with no mention of 0 objects; backup-restore.md §8 discloses 0 evidence objects for restore-drill.sh but has no row for the Compose run. The failure mode in production would be loud (copy-out exits 1 on any unreadable object), not silent data loss, so the effect is bounded. I report it for the reporters of F-DG7-1031/1051 to weigh as well; it is a new, specific defect in the drill tooling of this candidate.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg3b/02-compose-backup-drill.log",
+        "docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg3b/02-compose-backup-drill.d/restore/restore-report.json",
+        "deploy/scripts/drill/compose-backup-drill.sh",
+        "docs/delivery/handbacks/DG7/T-DG7-DO-D13-devops-engineer.md",
+        "docs/handover/backup-restore.md",
+        "docs/delivery/decisions.md"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG7/round-3/code-security-reviewer.json",
+      "owner": "devops-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-24T09:17:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG7 round 3 (T-DG7-REV-CS-RG3) on sha256:cf1fb7d5, from the orchestrator's rg3b drill log and restore report."
+        }
+      ]
+    },
+    {
+      "id": "F-DG7-1073",
+      "stage_id": "DG7",
+      "requirement": "REQ-S19-012",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "ADR-0066 is not amended for DO-D13: step 2's added CAP_DAC_READ_SEARCH grant, the DATABASE_URL_FILE read and the /mth/deploy mount layout are unrecorded, the architect question DO-D13 Q2 is unanswered, and A1.4 still says the Compose run was not executed",
+      "reproduction": "grep -n 'DAC_READ_SEARCH\\|DATABASE_URL_FILE\\|/mth' docs/architecture/adr/ADR-0066-p7-backup-restore-backup-set-manifest-restore-checks-drill.md finds nothing about them. A1.4 (l.259) says step 2 runs the app image 'as root (`--user 0:0`) for the copy-out command only'. A1.4 'Verification status' (l.260) says the Compose run 'was not executed' and that the amendment 'claims no result for it'. The shipped guide (docs/handover/backup-restore.md §3.2) and deploy/scripts/drill/compose-backup-drill.sh C4 add `--cap-add DAC_READ_SEARCH` to an `api` service that has `cap_drop: [\"ALL\"]`, pass `-e DATABASE_URL_FILE=/run/secrets/database_url` (apps/api/src/cli/transfer-attachments.ts now reads DATABASE_URL or DATABASE_URL_FILE) and mount the script at /mth/deploy/scripts/backup.sh with the whole Compose directory at /mth/deploy/compose. The DO-D13 handback §4 gap 3 says 'ADR-0066 A1.4 is now incomplete … It needs an amendment line', and §5 Q2 asks the solution-architect to accept CAP_DAC_READ_SEARCH as least privilege. SA-ADR72 predates DO-D13 (commit bf5bf82a7 before ebe11c378), and decisions.md has no answer (no DAC_READ_SEARCH mention).",
+      "expected": "ADR claims are enumerated and exactly true (p7-work-split §2 rule 2, the rule F-DG7-1041 applied). A dated ADR-0066 amendment records the step-2 privilege as built, including the one added capability and why DAC_OVERRIDE is not added. It records the DATABASE_URL_FILE read and the /mth/deploy layout with the read-only Compose directory mount, and updates the A1.4 verification status to the rg3b host run. Or the orchestrator records a decision accepting the capability and naming the guide as its home.",
+      "actual": "The behaviour is sound and is documented in the handover guide (backup-restore.md §3.2 'Why root, and why one capability'). I judged the grant as least privilege: read and search only, no DAC_OVERRIDE, one-off command, root writes only into its own set. Only the ADR record and the architect's acceptance are missing, so this is documentation drift with no behavioural effect, the same class as F-DG7-1041. Separately, the new secret-allowlist entry's reason cites 'D-285', which does not exist in decisions.md (a traceability slip in the same documentation set; the entry itself is correct).",
+      "evidence": [
+        "docs/architecture/adr/ADR-0066-p7-backup-restore-backup-set-manifest-restore-checks-drill.md",
+        "docs/delivery/handbacks/DG7/T-DG7-DO-D13-devops-engineer.md",
+        "docs/handover/backup-restore.md",
+        "deploy/scripts/drill/compose-backup-drill.sh",
+        "tools/release/secret-allowlist.json"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG7/round-3/code-security-reviewer.json",
+      "owner": "solution-architect",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-24T09:17:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG7 round 3 (T-DG7-REV-CS-RG3) on sha256:cf1fb7d5."
+        }
+      ]
+    }
+  ]
+}

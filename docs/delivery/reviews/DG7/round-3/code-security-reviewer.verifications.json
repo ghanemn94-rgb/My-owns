@@ -1,0 +1,19 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG7-1041",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified by its originating reviewer role (code-security-reviewer, session 5764bad1, T-DG7-REV-CS-RG3) on candidate sha256:cf1fb7d59a04e2f0d18a7773eca4e10893b72f3119a70d0e74796c8a8437a541 (source 3e8f5bce2; repair T-DG7-SA-ADR72, commit bf5bf82a7; the solution-architect is the owner, and I authored none of it).\n\nThe finding had three parts. Each now has a dated amendment that matches the code at this candidate.\n\n1. ADR-0063 S3 i18n-key rule. Amendment 2 (2026-11-17), A2.2, states isI18nKey exactly as tools/release/secret-scan.mjs l.82-85 implements it: the regex ^[a-z][a-z0-9]*(?:[._]+[a-z0-9]+)+$, at least one separator, each segment at most 20 characters and 3 digits. The §1.2 S3 cell (l.82) now points to A2. A2.1 enumerates the 18 isNonSecretValue tests, in code order (secret-scan.mjs l.88-110). I compared them line by line, and every test and its order match.\n\n2. The 64-hex trade-off. A2.3 records that a value of exactly 64 hex characters under any secret-named key is exempt. It names the openssl rand -hex 32 case of docs/operations/storage.md, and §5 residual 1 now points to A2.4 residual 9. The recommended narrowing is explicitly 'not built' and left to the orchestrator. That is an honest statement of the as-built behaviour, which is what the finding asked for.\n\n3. ADR-0066 §4/§5. Amendment 1 (2026-11-17) covers the following:\n- A1.1 lists the seven checks in the order of deploy/scripts/backup.sh l.522-563 (dumpReadable, clientMajorAtLeastServer, evidenceVerified, evidenceFilesMatchNames, retentionSetsMatch, everyFileMatches, ownerOnly), with ownerOnly's find -perm /077 and its reason text.\n- A1.3 covers umask 077, the refused group- or world-writable root (find -perm /022) and the symlink-target rule of DO-D12 (backup.sh l.238-258).\n- A1.4 covers the required MTH_BACKUP_ROOT, with create_host_path: false and no :? (compose.yaml l.283-289).\n- §4 and §5 carry pointers to the amendment.\n\nBehaviour behind the text, re-run on this candidate:\n- backup-restore.test.mjs: 18/18, including T-E10 to T-E13 (03-backup-restore-tests.log);\n- my own symlink-root probe: 7 cases, each as A1.3 states, nothing created (04-backup-root-symlink-probe.log);\n- secret-scan payload and history scans exit 0, and the release-tool suite's secret-scan.test.mjs passes (07-scans.log, 06-release-tool-tests.log).\n\nResidual, not part of this finding: ADR-0066 was not amended for the later DO-D13 changes (CAP_DAC_READ_SEARCH in step 2, DATABASE_URL_FILE, the /mth/deploy layout), and A1.4 still says the Compose run was not executed. That is newer drift of the same class, raised separately as F-DG7-1073 (Low).",
+      "evidence": [
+        "docs/architecture/adr/ADR-0063-p7-secret-hygiene-claims-scan-security-controls-evidence.md",
+        "docs/architecture/adr/ADR-0066-p7-backup-restore-backup-set-manifest-restore-checks-drill.md",
+        "tools/release/secret-scan.mjs",
+        "deploy/scripts/backup.sh",
+        "docs/delivery/test-evidence/DG7/code-security/round-3/03-backup-restore-tests.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-3/04-backup-root-symlink-probe.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-3/07-scans.log"
+      ]
+    }
+  ]
+}
