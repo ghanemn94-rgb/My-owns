@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG7-1111",
+      "stage_id": "DG7",
+      "requirement": "REQ-S19-012",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "ADR-0066 was not amended for DO-D14: §7 step 5 and R7 still describe a restore without the ownership rule, and Amendment 2 (A2.6-A2.8) still states the DO-D14 behaviour as 'not built' and 'open findings', although the candidate ships it and the rg4c Compose run exercised it",
+      "reproduction": "On candidate sha256:9d3d5f62 (source 2fd69c375): grep -nE 'evidence-owner|otherOwner|groupOrOtherBits|rg4c' in docs/architecture/adr/ADR-0066-p7-backup-restore-backup-set-manifest-restore-checks-drill.md finds nothing; the §7 table row 'R7 evidence' (l.124) lists only the verify counts; A2.7 (l.390) is titled 'not built at this amendment's base' and l.398 says 'When DO-D14 is merged, the ownership rule as built ... must be recorded by a further amendment of §7 ... Until then, items 1 to 3 are open findings, not behaviour'; residual 9 (l.402) says the evidence and job-state legs 'moved zero items' and that 'the restored ownership depends on an undocumented drill step'. The candidate's deploy/scripts/restore.sh has --evidence-owner, a chown -R to the evidence root's owner, 0700/0600 modes and R7 fields owner/otherOwner/groupOrOtherBits; docs/handover/backup-restore.md §5/§7 document them; compose-backup-rg4c moved 2 evidence objects and 1 job and verified owner 10001:10001. The SA-ADR73 handback (gap 3, Q2) disclosed exactly this lag and asked the orchestrator to assign 'Amendment 3'; D-285 does not mention it and no amendment exists. Related, same cause: backup-restore.md §8 still says the extended Compose drill 'has not been run' and that its result is recorded only when a host run exists; rg4c is that run and is not recorded there. Log: docs/delivery/test-evidence/DG7/qa/round-4/85-adr-drift-do-d14.log.",
+      "expected": "As for F-DG7-1052 and F-DG7-1083 (p7-work-split §2 rule 2, ADR claims enumerated and exactly true; ADR-0066 A2.7's own last paragraph): a dated ADR-0066 amendment records the restore ownership rule as built (default owner = the existing empty root's owner, else the running account; --evidence-owner <uid>:<gid>; chown -R then 0700/0600 in step 5; a failed chown is an R7 failure with exit 1 after the database is already restored), the extended R7 (owner, otherOwner 0, groupOrOtherBits 0), the phased config listing kept in .backup-state with the finish-phase refusals, and restates A2.6/residual 9 from the rg4c drill log. backup-restore.md §8 records the rg4c result (devops-engineer).",
+      "actual": "The accepted ADR, whose dated amendments win over other documents, still describes the restore as it was before DO-D14 and labels the shipped behaviour as open findings, so a reader of ADR-0066 gets a wrong picture of who owns restored evidence and what R7 checks. Documentation drift with no behavioural effect: code, tests (T-E11/11b/14/14b, my QA-RG4-a..f) and the handover guide §5/§7 agree with each other; the drift was disclosed in the SA-ADR73 handback but not acted on. Not blocking on its own.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-4/85-adr-drift-do-d14.log",
+        "docs/architecture/adr/ADR-0066-p7-backup-restore-backup-set-manifest-restore-checks-drill.md",
+        "docs/delivery/handbacks/DG7/T-DG7-SA-ADR73-solution-architect.md",
+        "deploy/scripts/restore.sh",
+        "docs/handover/backup-restore.md",
+        "docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg4c/02-compose-backup-drill.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG7/round-4/qa-verifier.json",
+      "owner": "solution-architect",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-25T10:00:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG7 round 4 by qa-verifier (T-DG7-REV-QA-RG4) on candidate sha256:9d3d5f62. Low, not mandatory, not blocking on its own."
+        }
+      ]
+    }
+  ]
+}
