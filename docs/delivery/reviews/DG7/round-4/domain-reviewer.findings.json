@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG7-1091",
+      "stage_id": "DG7",
+      "requirement": "REQ-S19-012",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "ADR-0066 is not amended for the restore ownership rule DO-D14 built: Amendment 2 still says §7/§8 (R1-R9) are unchanged, that restored ownership 'depends on an undocumented drill step', and it requires a further §7 amendment that does not exist",
+      "reproduction": "On candidate sha256:9d3d5f62… (source 2fd69c37): read docs/architecture/adr/ADR-0066-p7-backup-restore-backup-set-manifest-restore-checks-drill.md. Amendment 2 (T-DG7-SA-ADR73, written at base ef91b97d7 before DO-D14 merged) says under 'Unchanged': 'the restore and its checks R1 to R9 (§7, §8)'; A2.6 says 'The restored evidence's ownership was set by the drill, not by the documented restore' and 'The manifest's config list was empty' (F-DG7-1061, open); A2.7 ends 'When DO-D14 is merged, the ownership rule as built (who owns the restored store, how it is set, and its test) must be recorded by a further amendment of §7. The same amendment should restate A2.6 from DO-D14's drill log. Until then, items 1 to 3 are open findings, not behaviour.'; A2.8 residual 9 says 'The restored ownership depends on an undocumented drill step. These stay open until DO-D14's drill (A2.7) or a later host run shows them'. Then compare with the candidate's deploy/scripts/restore.sh (new --evidence-owner option, step 5 chown -R to the evidence root's owner and chmod 0700/0600, R7 with the new keys owner, otherOwner, groupOrOtherBits) and with the rg4c drill (PASS C0-C11, R7 owner 10001:10001, 2 evidence files and 1 job moved). There is no Amendment 3; grep for 'Amendment 3' or 'evidence-owner' in the ADR finds nothing. The DO-D14 handback §4 gap 4 and §5 Q2 asked the architect for exactly this amendment; D-285 does not assign it.",
+      "expected": "ADR-0066 states the restore design and the R7 check as built (ADR claims enumerated and exactly true, p7-work-split §2 rule 2, the rule Amendments 1 and 2 applied), and A2.7's own instruction is carried out: a §7 amendment recording the default owner (owner of the empty target root, else the running account), --evidence-owner, step-5 owner/modes, R7's three new fields and T-E14/T-E14b/T-E14c, and A2.6/A2.8 restated from the rg4c drill log.",
+      "actual": "The ADR describes the pre-DO-D14 restore (copy-in as the running account, ownership fixed only by the drill) and declares §7/§8 unchanged, while the code, the guide (backup-restore.md §5 and §7 R7) and the rg4c drill show the new rule. Residual 9 and A2.6's three bullets are stale. Documentation drift only: the guide and the scripts agree with each other and the behaviour is tested, so Low and not mandatory; same class as F-DG7-1073/1083 one round earlier.",
+      "evidence": [
+        "docs/architecture/adr/ADR-0066-p7-backup-restore-backup-set-manifest-restore-checks-drill.md",
+        "deploy/scripts/restore.sh",
+        "docs/handover/backup-restore.md",
+        "docs/delivery/handbacks/DG7/T-DG7-DO-D14-devops-engineer.md",
+        "docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg4c/02-compose-backup-drill.log",
+        "docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg4c/02-compose-backup-drill.d/restore/restore-report.json"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG7/round-4/domain-reviewer.json",
+      "owner": "solution-architect",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-25T09:10:00Z",
+          "status": "OPEN",
+          "note": "Raised by domain-reviewer in DG7 round 4 on candidate sha256:9d3d5f62…; documentation drift between ADR-0066 Amendment 2 and the DO-D14 code and drill. Low, not mandatory, not blocking in my verdict."
+        }
+      ]
+    },
+    {
+      "id": "F-DG7-1092",
+      "stage_id": "DG7",
+      "requirement": "REQ-S20-019",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "backup-restore.md §8 says the extended Compose drill 'has not been run' and that its result 'is recorded only when a run on a host with Docker exists', but the candidate carries that run (compose-backup-rg4c, PASS C0-C11) and the guide does not record it",
+      "reproduction": "On candidate sha256:9d3d5f62… (source 2fd69c37): docs/handover/backup-restore.md §8 'Compose runs' (l.227): 'The previous Compose run (orchestrator, round 3, compose-backup-rg3b) moved 0 evidence objects and 0 jobs … The extended drill above has not been run in the agent sandbox, because the sandbox has no access to a Docker daemon. Its result is recorded only when a run on a host with Docker exists.' The §8 timings table lists only the container-free drill and the QA A19 harness. §10 'Permissions in Compose' (l.242) likewise says the Compose sequence 'has not been run here … It runs on the orchestrator's host'. The run exists in the same candidate commit: docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg4c/ (drill exit 0, C0-C11 PASS in 65.95 s; C4 copied 2 files; C5 config.files 3 entries and no stderr; C8 restore 9.1 s; C9 R7 owner 10001:10001, verified 2, same SHA-256 as the source, 1 queued job; C10 /readyz 200), committed in 9b3547113 before the freeze. The guide was last written by DO-D14 before that run and was not updated after it.",
+      "expected": "The hand-over guide, whose §8 is the A19 'documented checks and timings' record for IT, states the measured result of the extended Compose drill once it exists (as it did for rg3b): the run id, its source, C0-C11 result, the step timings, the objects and job moved, and the two failed runs rg4/rg4b with their cause (drill seeding, D-285), or at least a pointer to that evidence.",
+      "actual": "A reader of the transfer package is told the evidence and job-state legs of the Compose restore are unproven, while the release's own evidence shows them proven on synthetic data. The statement errs on the side of under-claiming and is literally scoped to 'the agent sandbox', so there is no false claim of delivery and no behavioural effect: Low, not mandatory. Cosmetic-to-documentation drift; the orchestrator's evidence and D-285 are complete.",
+      "evidence": [
+        "docs/handover/backup-restore.md",
+        "docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg4c/02-stdout.log",
+        "docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg4c/02-compose-backup-drill.log",
+        "docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg4c/run.txt",
+        "docs/delivery/decisions.md"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG7/round-4/domain-reviewer.json",
+      "owner": "devops-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-25T09:10:00Z",
+          "status": "OPEN",
+          "note": "Raised by domain-reviewer in DG7 round 4 on candidate sha256:9d3d5f62…; the handover guide under-states the Compose drill result that the candidate's own evidence holds. Low, not mandatory, not blocking in my verdict."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG7-1061",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified on candidate sha256:9d3d5f62c921eb8f07ffb323b57d500a04e0608cbea2ed1ab0ebddec7b625403 (source 2fd69c3753ffb1f96aaf787f8526daa0bf59abe7). The defect: the split-phase (Compose) backup kept the config/ listing in the per-process $WORK, so --phase finish wrote config.files [] and printed 'cat: …/config.sha: No such file or directory'. (1) Code: deploy/scripts/backup.sh now writes the listing to the set's .backup-state/config.sha (on the shared backup root) through backup_config_listing(); --phase finish refuses a missing listing, a listing that does not match config_sha256, and a config/ that changed between phases, and builds config.files from .backup-state/config.sha. (2) Tests, run by me in a disposable export of 2fd69c37 on a disposable PostgreSQL (port 32310): backup-restore.test.mjs 22 tests, 21 pass, 0 fail, 1 skipped (T-E14c: chown to 10001 impossible in a user namespace without a mapped uid 10001; unrelated to this finding). T-E11 now asserts empty stderr in both phases, config.files non-empty and equal to every config/ file with its SHA-256, and config.sha256 = digest of that listing; T-E11b covers the two refusals. (3) Mutation: I reverted the repair in the disposable copy (listing back in $WORK, finish reading $WORK/config.sha, finish checks removed; diff kept). T-E11 then FAILED on 'stderr of --phase finish' with the exact 'cat: …/config.sha: No such file or directory' line, and T-E11b failed; T-E1 (--phase all) passed. So the test kills the original defect. The file was restored byte-identical (cmp). (4) Compose: the orchestrator's compose-backup-rg4c run (drill exit 0) shows at C5 'stderr lines other than Compose progress: none' and 'config.files [config/compose.yaml, config/environment.env, config/images.lock.json]'; finish.err holds only five Compose progress lines (Container … Running/Waiting/Healthy/Creating/Created). That run used the same backup.sh/restore.sh/image inputs as the candidate (only the drill harness differs by the 5-line smoke step, whose output is visible in the run). I did not re-run the Compose drill myself (no Docker daemon in the reviewer sandbox).",
+      "evidence": [
+        "deploy/scripts/backup.sh",
+        "deploy/scripts/tests/backup-restore.test.mjs",
+        "docs/delivery/test-evidence/DG7/domain/round-4/backup-restore-suite.log",
+        "docs/delivery/test-evidence/DG7/domain/round-4/mutation-revert-1061.diff",
+        "docs/delivery/test-evidence/DG7/domain/round-4/mutation-revert-1061.log",
+        "docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg4c/02-compose-backup-drill.log",
+        "docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg4c/02-compose-backup-drill.d/finish.err",
+        "docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg4c/02-compose-backup-drill.d/finish.out",
+        "docs/delivery/test-evidence/DG7/domain/round-4/candidate-check.txt"
+      ]
+    }
+  ]
+}
