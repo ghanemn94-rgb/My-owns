@@ -1,4 +1,4 @@
-// T-E1…T-E13 (p7-work-split §E.4; ADR-0066 §1-§8; T-DG7-DO-F): deploy/scripts/backup.sh and restore.sh against a
+// T-E1…T-E15 (p7-work-split §E.4; ADR-0066 §1-§8; T-DG7-DO-F): deploy/scripts/backup.sh and restore.sh against a
 // DISPOSABLE PostgreSQL cluster. REQ-S19-012, REQ-S20-019 (A19, container-free half; D-243 Q1, Q14).
 //
 //   tests/qa/support/with-pg.sh node --test deploy/scripts/tests/backup-restore.test.mjs
@@ -699,4 +699,102 @@ test("T-E14c (F-DG7-1082): as root, the restore hands the evidence to the root's
     const c = spawnSync("cat", [p.path], { uid: 10001, gid: 10001 });
     assert.equal(c.status, 0, `uid 10001 cannot read ${p.path}`);
   }
+});
+
+// T-E15 (F-DG7-1101): a target evidence root given as a symbolic link is the directory it resolves to, as backup.sh
+// treats a symlinked backup root (T-E13). The default owner, chown, chmod and the R7 counts apply to that directory;
+// a link the restore cannot use is refused before the database is touched.
+test("T-E15a (F-DG7-1101): a symbolic link to an empty 0700 directory is restored like that directory; R7 passes", () => {
+  blocked();
+  const target = createDatabase("mth_dod15_t15a");
+  const real = join(work, "t15a-real-evidence");
+  mkdirSync(real, { mode: 0o700 });
+  chmodSync(real, 0o700);
+  const link = join(work, "t15a-evidence-link");
+  symlinkSync(real, link);
+  const me = `${process.getuid()}:${process.getgid()}`;
+  const out = join(work, "t15a-report");
+  const r = restore(set, target, link, out);
+  assert.equal(r.status, 0, r.out);
+  assert.ok(lstatSync(link).isSymbolicLink(), "the link itself is left in place");
+  const paths = owners(real);
+  const files = paths.filter((p) => !p.dir);
+  assert.ok(files.length >= 2, `restored evidence files: ${files.length}`); // the object and the retention set
+  for (const p of paths) {
+    assert.equal(p.owner, me, p.path);
+    assert.equal(p.mode, p.dir ? 0o700 : 0o600, `${p.path} mode ${p.mode.toString(8)}`);
+  }
+  const r7 = JSON.parse(readFileSync(join(out, "restore-report.json"), "utf8")).checks.find((c) => c.id === "R7");
+  assert.equal(r7.result, "PASS");
+  assert.deepEqual(r7.actual, r7.expected);
+  assert.equal(r7.actual.owner, me);
+  assert.equal(r7.actual.otherOwner, 0);
+  assert.equal(r7.actual.groupOrOtherBits, 0);
+});
+
+test("T-E15b (F-DG7-1101): the default owner is the link target's owner, not the link's (uid 10001 as in Compose)", (t) => {
+  blocked();
+  const real = join(work, "t15b-real-evidence");
+  mkdirSync(real, { mode: 0o700 });
+  const link = join(work, "t15b-evidence-link"); // created by the runner: the link's owner is the runner, not 10001
+  symlinkSync(real, link);
+  const probe = spawnSync("chown", ["10001:10001", real], { encoding: "utf8" });
+  if (process.getuid() !== 0 || probe.status !== 0) {
+    t.skip(`not runnable here: chown to 10001:10001 failed (${(probe.stderr || "not root").trim()})`);
+    return;
+  }
+  assert.notEqual(`${lstatSync(link).uid}:${lstatSync(link).gid}`, "10001:10001");
+  const target = createDatabase("mth_dod15_t15b");
+  const out = join(work, "t15b-report");
+  const r = restore(set, target, link, out);
+  assert.equal(r.status, 0, r.out);
+  for (const p of owners(real)) {
+    assert.equal(p.owner, "10001:10001", p.path);
+    assert.equal(p.mode, p.dir ? 0o700 : 0o600, p.path);
+  }
+  const r7 = JSON.parse(readFileSync(join(out, "restore-report.json"), "utf8")).checks.find((c) => c.id === "R7");
+  assert.equal(r7.result, "PASS");
+  assert.equal(r7.actual.owner, "10001:10001");
+});
+
+test("T-E15c (F-DG7-1101): a dangling link or a link to a regular file is refused (exit 2); the database stays empty", () => {
+  blocked();
+  const target = createDatabase("mth_dod15_t15c");
+  const missing = join(work, "t15c-missing");
+  const dangling = join(work, "t15c-dangling-link");
+  symlinkSync(missing, dangling);
+  let r = restore(set, target, dangling, join(work, "t15c-report"));
+  assert.equal(r.status, 2, r.out);
+  assert.match(r.out, /^restore: refused: the target evidence path .* is a symbolic link whose target does not exist/m);
+  assert.equal(tableCount(target), 0);
+  assert.equal(existsSync(missing), false, "nothing is created at the link's target");
+  const file = join(work, "t15c-regular-file");
+  writeFileSync(file, "synthetic");
+  const toFile = join(work, "t15c-file-link");
+  symlinkSync(file, toFile);
+  r = restore(set, target, toFile, join(work, "t15c-report"));
+  assert.equal(r.status, 2, r.out);
+  assert.match(
+    r.out,
+    /^restore: refused: the target evidence path .* is a symbolic link to .*, which is not a directory/m,
+  );
+  assert.equal(tableCount(target), 0);
+  assert.equal(readFileSync(file, "utf8"), "synthetic");
+});
+
+test("T-E15d (F-DG7-1101, DO-D14 Q3): without root, another evidence owner is refused before the database is touched", (t) => {
+  blocked();
+  if (process.getuid() === 0) {
+    t.skip("not runnable here: the runner is root, which may change owners; the case needs a non-root runner");
+    return;
+  }
+  const target = createDatabase("mth_dod15_t15d");
+  const ev = join(work, "t15d-evidence");
+  mkdirSync(ev, { mode: 0o700 });
+  const other = `${process.getuid() + 1}:${process.getgid()}`;
+  const r = restore(set, target, ev, join(work, "t15d-report"), ["--evidence-owner", other]);
+  assert.equal(r.status, 2, r.out);
+  assert.match(r.out, /^restore: refused: the evidence owner .* is not the account running restore\.sh/m);
+  assert.equal(tableCount(target), 0);
+  assert.deepEqual(readdirSync(ev), []);
 });

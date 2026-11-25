@@ -8,7 +8,10 @@
 #
 #   --target-database-url   the OWNER role's (mth_owner) URL of an existing, EMPTY database on a cluster that already
 #                           has the roles mth_owner and mth_app (deploy/compose/db-init). Also TARGET_DATABASE_URL_FILE.
-#   --target-evidence-path  the filesystem evidence root of the target: missing or empty.
+#   --target-evidence-path  the filesystem evidence root of the target: missing or empty. A symbolic link to a
+#                           directory is accepted and resolved once (F-DG7-1101): the restore, the owner and modes and
+#                           R7 then apply to the directory it points to. A dangling link or a link to a non-directory
+#                           is refused (exit 2) before the database is touched.
 #   --manifest-sha256       the SHA-256 of backup-manifest.json that IT recorded (backup_set.manifest_sha256, or the
 #                           backup line); when given, a different manifest is refused.
 #   --readyz-url            the restored API's /readyz (R8 over HTTP). Without it, R8 evaluates the same rule as
@@ -20,7 +23,9 @@
 #                           owns the volume), else the account running restore.sh. Every restored evidence directory
 #                           becomes <owner> 0700 and every file <owner> 0600, the modes the filesystem store writes;
 #                           R7 fails if any path under the root has another owner or a group/other bit. Changing the
-#                           owner to another account needs root (as in the Compose restore of backup-restore.md §5).
+#                           owner to another account needs root (as in the Compose restore of backup-restore.md §5);
+#                           without root, an owner other than the runner's uid and groups is refused (exit 2) before
+#                           the database is touched.
 #
 # Steps (ADR-0066 §7): 1 package checks (schema version, every file SHA-256, the manifest SHA-256 when given);
 # 2 same PostgreSQL major (D-243 Q14); 3 fresh target only; 4 pg_restore --exit-on-error --single-transaction
@@ -133,12 +138,35 @@ restore_main() {
   tables="$(mth_psql "$url" -c "SELECT (SELECT count(*) FROM pg_tables WHERE schemaname = 'public')
                                      + (SELECT count(*) FROM pg_namespace WHERE nspname = 'pgboss')")"
   [ "$tables" = "0" ] || refuse "the target database is not empty"
+  # F-DG7-1101: an evidence root given as a symbolic link (or below one) is the directory it resolves to, as backup.sh
+  # treats a symlinked backup root (F-DG7-1053). It is resolved once, here, and every later step (the default owner,
+  # copy-in, chown, chmod and the R7 counts) works on the resolved directory: stat, chown -R and find never follow a
+  # symlinked argument by default, so on the link itself they would see the link (mode 0777) and leave the tree as
+  # copied. A dangling link or a link to a non-directory is refused here, before the database is touched.
+  if [ -L "$store" ]; then
+    local resolved=""
+    resolved="$(readlink -e -- "$store")" ||
+      refuse "the target evidence path $store is a symbolic link whose target does not exist ($(readlink -- "$store")); create the target directory or pass it directly"
+    [ -d "$resolved" ] || refuse "the target evidence path $store is a symbolic link to $resolved, which is not a directory"
+    store="$resolved"
+  fi
   if [ -e "$store" ]; then
     [ -d "$store" ] && [ -z "$(ls -A "$store")" ] || refuse "the target evidence store is not empty"
-    # F-DG7-1072/1082: the existing (empty) root names the account of the API and the worker.
-    [ -n "$eowner" ] || eowner="$(stat -c '%u:%g' "$store")"
+    store="$(readlink -e -- "$store")" || refuse "the target evidence path $store cannot be resolved"
+    # F-DG7-1072/1082: the existing (empty) root names the account of the API and the worker (the directory's
+    # owner, never a link's).
+    [ -n "$eowner" ] || eowner="$(stat -L -c '%u:%g' "$store")"
   fi
   [ -n "$eowner" ] || eowner="$(id -u):$(id -g)"
+  # F-DG7-1101 (DO-D14 Q3): preconditions step 5 needs are checked while the target is still empty. Without root,
+  # chown can give the evidence only to the runner's own uid and one of its groups, and an existing root must be
+  # writable by the runner; otherwise the restore would fail at R7 after the database is committed.
+  if [ "$(id -u)" != 0 ]; then
+    [ "${eowner%%:*}" = "$(id -u)" ] && [[ " $(id -G) " == *" ${eowner##*:} "* ]] ||
+      refuse "the evidence owner $eowner is not the account running restore.sh ($(id -u):$(id -g)); run the restore as that account or as root"
+    [ ! -e "$store" ] || [ -w "$store" ] ||
+      refuse "the target evidence store $store is not writable by the account running restore.sh ($(id -u):$(id -g))"
+  fi
   t0="$(mth_clock)"
   step targetChecks "$t1" "$t0"
 

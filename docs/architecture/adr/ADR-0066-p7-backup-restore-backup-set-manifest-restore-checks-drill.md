@@ -106,7 +106,7 @@ The script fails the set (status `failed`, reason given) unless all hold. _Amend
 2. **Same major (D-243 Q14).** The target server's major must equal `server.major`, else exit 2 with `restore: refused: backup is from PostgreSQL <m>, target is <n>; a cross-major restore is an upgrade (dump with the newer client), see upgrades.md`.
 3. **Fresh target only.** The target database must have no table in `public` and no `pgboss` schema, and the target evidence store must be empty, else exit 2. A restore never overwrites.
 4. **Roles first.** The target cluster has `mth_owner` and `mth_app` (the existing `deploy/compose/db-init`). `pg_restore --exit-on-error --single-transaction --no-owner --role=mth_owner` keeps every GRANT, so `mth_app` has exactly the dumped privileges.
-5. **Evidence.** `transfer-attachments copy-in` writes every object under its **same name** and verifies it (ADR-0064 §5); the retention sets are copied back under `retention/<runId>/`.
+5. **Evidence.** `transfer-attachments copy-in` writes every object under its **same name** and verifies it (ADR-0064 §5); the retention sets are copied back under `retention/<runId>/`. _Amended by Amendment 3 (A3.2): step 5 then hands the restored evidence to the evidence owner (`--evidence-owner`, default the owner of the empty target root) with directories `0700` and files `0600`; a target root given as a symbolic link is judged by its target (A3.3)._
 6. **Checks** (§8). Any failed check exits 1 and leaves the target for inspection; nothing is started.
 7. **Start.** `migrate` (reports "up to date"; it never runs a migration on a restore), then `api` and `worker`. `/readyz` must be ready.
 8. **Report.** `restore-report.json` with every check, its expected and actual value, and the seconds of every step.
@@ -121,7 +121,7 @@ The script fails the set (status `failed`, reason given) unless all hold. _Amend
 | R4 audit | `audit_event` count and `max(seq)` equal `database.auditEvents` | audit |
 | R5 snapshots | `report_snapshot*` and `ranking_snapshot` counts equal (in R3), and `snapshotDigest` recomputed on the target is equal, so every snapshot row (including `report_snapshot_version.content_sha256`) is byte-equal | snapshots |
 | R6 job state | `pgboss.job` counts by state equal `pgbossJobsByState`; `job_schedule` rows (including `enabled`) and `job_run` counts equal | job state |
-| R7 evidence | `transfer-attachments verify` on the target: 0 missing, 0 size and 0 SHA-256 mismatches against `attachments.json`; every retention set file matches | evidence bytes |
+| R7 evidence | `transfer-attachments verify` on the target: 0 missing, 0 size and 0 SHA-256 mismatches against `attachments.json`; every retention set file matches. _Amended by Amendment 3 (A3.2): also `owner`, `otherOwner` = 0 and `groupOrOtherBits` = 0._ | evidence bytes |
 | R8 readiness | `/readyz` ready (database and storage; ADR-0011 as extended by seam 1) | the restored installation runs |
 | R9 demo checksum (drill only) | the ADR-0050 demo checksum of the restored demo equals the source's | business content, end to end |
 
@@ -366,6 +366,8 @@ docker compose -f deploy/compose/compose.yaml run --rm --no-deps -v "$MTH_BACKUP
 
 ### A2.6 Verification status of the Compose sequence (replaces the A1.4 "Verification status" bullet)
 
+_Restated by Amendment 3 (A3.4) from the rg4, rg4b and rg4c drill logs. The rg3/rg3b record below stays as history; its "does not prove" list is answered in A3.4._
+
 The Compose half **was executed**, by the orchestrator on its host's Docker daemon (D-284; the D-267 precedent; D-243 Q1 still holds for agent sandboxes). The evidence is under `docs/delivery/test-evidence/DG7/orchestrator/`.
 
 | Run | Source | Result | What happened |
@@ -395,9 +397,134 @@ T-DG7-DO-D14 is assigned (2026-11-24) to repair F-DG7-1061/1071/1081 and F-DG7-1
 2. **Restored evidence ownership.** A Compose restore that follows `backup-restore.md` leaves the evidence readable by uid 10001, with its intended owner and modes, and with no undocumented `chown`. This changes the restore design of §7 step 5 for Compose. Today `copy-in` writes as the account that runs `restore.sh` (root in the Compose runner), and only the drill's C9 corrects the owner.
 3. **A Compose drill that moves real data.** The drill seeds and moves real evidence objects and job state. It verifies ownership, count and hashes after the restore, which also exercises A2.4's read path. DO-D14 is to run the drill itself on the host's Docker daemon and record the log.
 
-When DO-D14 is merged, the ownership rule as built (who owns the restored store, how it is set, and its test) must be recorded by a further amendment of §7. The same amendment should restate A2.6 from DO-D14's drill log. Until then, items 1 to 3 are open findings, not behaviour.
+When DO-D14 is merged, the ownership rule as built (who owns the restored store, how it is set, and its test) must be recorded by a further amendment of §7. The same amendment should restate A2.6 from DO-D14's drill log. Until then, items 1 to 3 are open findings, not behaviour. _Superseded by Amendment 3 (A3.5): DO-D14 is merged (`b2864f2ab`), and items 1 to 3 are now behaviour, recorded in A3.1, A3.2 and A3.4._
 
 ### A2.8 Residuals (replaces residual 9; extends the Residuals section)
 
-9. **The Compose half has run, but only the database, audit and snapshot legs carry data** (A2.6). The evidence and job-state legs and the `DAC_READ_SEARCH` read path moved zero items in rg3b. The restored ownership depends on an undocumented drill step. These stay open until DO-D14's drill (A2.7) or a later host run shows them with real objects.
+9. **The Compose half has run, but only the database, audit and snapshot legs carry data** (A2.6). The evidence and job-state legs and the `DAC_READ_SEARCH` read path moved zero items in rg3b. The restored ownership depends on an undocumented drill step. These stay open until DO-D14's drill (A2.7) or a later host run shows them with real objects. _Replaced by residual 9 of Amendment 3 (A3.6)._
 10. **Step 2 grants `CAP_DAC_READ_SEARCH`, which re-enables `open_by_handle_at(2)` for one short-lived command** (A2.4). It is bounded by the fixed, pinned command, the read-only root file system, `no-new-privileges` and `--rm`. IT can narrow it by putting the backup root on a dedicated file system. The guide does not yet say so.
+
+## Amendment 3 (2026-11-25, T-DG7-SA-ADR74): the DO-D14 rules as built (the `.backup-state` config listing and its finish-phase refusals; `restore.sh --evidence-owner` and the evidence hand-over in §7 step 5; R7's `owner`, `otherOwner` and `groupOrOtherBits`), A2.6 restated from the rg4, rg4b and rg4c drill logs, residual 9 corrected, and the symbolic-link evidence root rule that T-DG7-DO-D15 builds (F-DG7-1091, F-DG7-1102)
+
+- **Author:** solution-architect (T-DG7-SA-ADR74). Base `3f48bd28b10d4696281430727040de537aa8911d` on `claude/mobily-transformation-platform-dg6-regate`. The round-4 candidate's source is `2fd69c3753ffb1f96aaf787f8526daa0bf59abe7`. `deploy/scripts/backup.sh`, `deploy/scripts/restore.sh`, `apps/**`, `deploy/docker/**` and `deploy/compose/**` are the same at both commits and at `389482803` (the source of the rg4c run).
+- **Why.**
+  - Amendment 2 (SA-ADR73) was written at `ef91b97d7`, before T-DG7-DO-D14 was merged (`b2864f2ab`). Its A2.7 required a further amendment of §7 once DO-D14 was merged, and said that until then A2.7 items 1 to 3 were "open findings, not behaviour". DO-D14 asked for that amendment itself (`docs/delivery/handbacks/DG7/T-DG7-DO-D14-devops-engineer.md` §4 gap 4, §5 Q2), and so did SA-ADR73 (`docs/delivery/handbacks/DG7/T-DG7-SA-ADR73-solution-architect.md` §4 gap 3, §5 Q2).
+  - In round 4 of the re-gate, two reviewers raised the drift: F-DG7-1091 (domain) and F-DG7-1102 (code-security). The rule is the one Amendments 1 and 2 applied: ADR claims enumerated and exactly true (p7-work-split §2 rule 2).
+  - In the same round, F-DG7-1101 (code-security, Medium) showed that `restore.sh` fails R7 for a target evidence root given as a symbolic link, after step 4 has committed the database. T-DG7-DO-D15 is assigned to repair it. A3.3 states the rule DO-D15 builds.
+- **What this amendment does.**
+  - A3.1 and A3.2 record as built: `deploy/scripts/backup.sh` (`backup_config_listing`, the database and finish phases), `deploy/scripts/restore.sh` (`--evidence-owner`, step 3's default owner, step 5's hand-over, R7), and their tests in `deploy/scripts/tests/backup-restore.test.mjs` and `deploy/scripts/tests/backup-compose-layout.vitest.mjs`.
+  - A3.3 states the symbolic-link evidence root rule (F-DG7-1101), which is **not built at this amendment's base**.
+  - A3.4 restates A2.6 from the drill logs `compose-backup-rg4`, `compose-backup-rg4b` and `compose-backup-rg4c`.
+  - A3.5 says which items of A2.7 are now behaviour. A3.6 replaces residual 9 and adds residual 11.
+  - It changes no code, no test, no guide text, no migration, no OpenAPI contract and no image lock. No new dependency and no new image.
+- **What it replaces.** Each replaced place carries a pointer here:
+  - §7 step 5 (A3.2, A3.3) and the R7 row of §8 (A3.2);
+  - the A2.6 record, restated by A3.4 (the rg3/rg3b table stays as history);
+  - the last paragraph of A2.7 (A3.5);
+  - residual 9 of A2.8 (A3.6).
+- **Unchanged.** The set layout (§1), the manifest fields (§2), the configuration bundle (§3), the backup-time checks and their ids (A1.1, A1.2), the owner-only set and backup root (A1.3, A1.4), the Compose layout and step 2 (A2.1 to A2.5), `backup_set_record` and its keys (§6), R1 to R6, R8 and R9 (§8) and the restore's exit codes 0, 1, 2 and 3. The restore still never overwrites: §7 step 3's checks are unchanged, and A3.2 only adds the default owner read there.
+- **Two gate systems.** These are engineering artefacts. A local Compose drill on synthetic data approves nothing. None of this is a business, Finance or IT approval, and recovery objectives stay IT placeholders (§9).
+
+### A3.1 The `config/` listing survives between the phases (F-DG7-1061/1071/1081; extends A1.1 and A2.1)
+
+- **Where the listing lives.** The database phase (`--phase database`, and the database part of `--phase all`) writes the `config/` listing to the set's own `.backup-state/config.sha`, and its SHA-256 to `.backup-state/config_sha256`. It no longer writes them to the process's temporary directory, which the EXIT trap removes. In Compose, `.backup-state/` is on the `MTH_BACKUP_ROOT` bind (A1.4), so the listing survives from the database container to the finish container.
+- **The listing.** `backup_config_listing` prints `<sha256>  config/<file>` for every file under `config/`, sorted bytewise (`LC_ALL=C`). It becomes the manifest's `config.files`, and `config.sha256` is the SHA-256 of exactly that listing. A set from the split sequence and a set from `--phase all` therefore have the same `config` section.
+- **`.backup-state/` stays out of the set's content.** It is owner-only (A1.3 item 1, and A1.1 check 7 covers it), it is excluded from the manifest's `files` and from check 6 `everyFileMatches`, and it is removed when the set succeeds.
+- **Refusals in the finish phase.** Before it hashes the set's files, `--phase finish` refuses the set (`backup_fail`: the set is recorded as `failed` when the database answers, the line `backup: set <label> failed: <reason>` is printed, exit 1, and no manifest is written) with one of these reasons:
+
+  | Condition | Reason |
+  | --- | --- |
+  | `.backup-state/config.sha` or `.backup-state/config_sha256` is missing | `the config/ listing of the database phase is missing from .backup-state` |
+  | the listing's SHA-256 differs from `config_sha256` | `the config/ listing does not match its recorded SHA-256` |
+  | `config/` cannot be listed again | `config/ cannot be listed` |
+  | a fresh listing of `config/` differs from the recorded one | `config/ changed after the database phase` |
+
+  The database phase fails with `the config/ listing could not be written` when it cannot write the listing.
+- **No standard-error output on success.** Neither phase writes to standard error when it succeeds. This removes the stray `cat: …/config.sha: No such file or directory` line of rg3b (A2.6).
+- **Tests** (`deploy/scripts/tests/backup-restore.test.mjs`; these ids are the test file's own, as in A1.3):
+  - T-E11: in the three-step sequence, both phases have empty standard error; `config.files` is every file of `config/` with its SHA-256 and is not empty; `config.sha256` is the digest of that listing; `.backup-state/` is removed.
+  - T-E11b: a missing listing, and a `config/` changed between the phases, each give exit 1 and no manifest. The other two reasons in the table have no test of their own.
+  - `deploy/scripts/tests/backup-compose-layout.vitest.mjs`: the Compose drill fails on an empty `config.files`.
+
+### A3.2 Restored evidence ownership, `--evidence-owner` and R7 (F-DG7-1072/1082; amends §7 steps 3 and 5 and the R7 row of §8)
+
+1. **The evidence owner.** `restore.sh` takes the account that runs the API and the worker as the evidence owner, `<uid>:<gid>`:
+   - `--evidence-owner <uid>:<gid>`, when given. The value must match `^[0-9]+:[0-9]+$`. Anything else is refused right after the usage check, before the set or the target is read, with `BLOCKED: --evidence-owner must be <uid>:<gid> (numbers), for example 10001:10001` (exit 2), and nothing is written.
+   - Otherwise, in §7 step 3, the owner of the existing, empty target evidence root (`stat -c '%u:%g'`). In Compose this is the image's app user, uid `10001`, which owns the evidence volume once the volume has been initialized from the app image (`backup-restore.md` §5, "Compose restore").
+   - Otherwise (the root does not exist), the account that runs `restore.sh`.
+2. **§7 step 5 as built.** After the copy-in and the copy of the retention sets:
+   - `chown -R <owner>` over the evidence root, when the owner differs from the running account or the root's current owner differs from it. A failed `chown` stops the restore with `restore: check R7 failed: expected the evidence owned by <uid>:<gid>, got: <error>` (exit 1). Handing files to another account needs root, so a Compose restore runs `restore.sh` as root.
+   - Then every directory under the root, the root included, is set to `0700`, and every file to `0600`. These are the modes the filesystem store writes itself. A failure gives `restore: check R7 failed: expected the evidence modes 0700/0600 to be set` (exit 1).
+   - The API and the worker run without capabilities (`cap_drop: ["ALL"]`), so they can read only what their own account owns. That is why the hand-over is part of the restore and not a separate operator or drill step. The drill's C9 no longer changes an owner (A3.4).
+3. **The R7 row as built** (replaces the R7 row of §8):
+
+   | Check | Expected | Proves |
+   | --- | --- | --- |
+   | R7 evidence | `{ "verified": <attachmentManifest.entries>, "mismatches": 0, "retentionFiles": <n>, "owner": "<uid>:<gid>", "otherOwner": 0, "groupOrOtherBits": 0 }`. `verified` and `mismatches` come from `transfer-attachments verify` against `attachments.json`; `retentionFiles` counts the retention set files whose SHA-256 matches the set; `owner` is the evidence root's owner (`stat`); `otherOwner` counts the paths under the root, the root included, whose uid or gid differs from the evidence owner; `groupOrOtherBits` counts the paths with any group or other permission bit (`find -perm /077`) | evidence bytes, and that the restored API's account owns them, owner-only |
+
+4. **A failure after step 4 leaves the target for inspection.** As §7 step 6 already says, a failed check (R7 included) exits 1 and starts nothing. The database committed in step 4 stays, and the target is no longer fresh, so a second restore needs a new target. This is why A3.3 and residual 11 move the preconditions they can before step 4.
+5. **Tests** (`deploy/scripts/tests/backup-restore.test.mjs`):
+   - T-E14: restored evidence belongs to the evidence root's owner, with `0700`/`0600`, and the report's R7 carries the three new keys.
+   - T-E14b: an invalid `--evidence-owner` gives exit 2 and nothing is written.
+   - T-E14c: as root, the restore hands the evidence to uid `10001`, and uid `10001` can read it. **It is skipped, with its reason, where uid `10001` cannot be expressed** (a user namespace without that mapping, as in DO-D14's sandbox). The root-to-`10001` hand-over is shown by the rg4c host run (A3.4), not by this test in an agent sandbox.
+   - `deploy/scripts/tests/backup-compose-layout.vitest.mjs`: the drill has no `chown` of its own; `restore.sh` carries `--evidence-owner` and its `chown`; `backup-restore.md` §5 documents `--evidence-owner` and `10001`.
+
+### A3.3 A target evidence root given as a symbolic link is judged by its target (F-DG7-1101; the rule T-DG7-DO-D15 builds, not built at this amendment's base)
+
+**At this amendment's base** `restore.sh` follows the link in step 3 (`[ -d ]`, `ls -A`) but reads the default owner from the link itself (`stat` without `-L`). Its `chown -R` and `find … -exec chmod` (both `-P` by default) and R7's `find` counts do not descend through a symbolic-link argument. So a restore into a symbolic link to an empty `0700` directory fails R7 (`groupOrOtherBits` counts the link's own `0777`), after step 4 has committed the database, and leaves the restored evidence un-normalised (F-DG7-1101, reproduced by the code-security reviewer's probe; the round-3 `restore.sh` passed the same case).
+
+**The rule** (the same as A1.3 item 3 for the backup root):
+
+1. When `--target-evidence-path` is a symbolic link, `restore.sh` resolves it once, through a chain of links too, to its target directory, **before step 4**. Every later use is the resolved path: the emptiness check of step 3, the default owner (the **target's** owner, not the link's), the copy-in, the `chown`, the modes of step 5 and every R7 count and `owner` value. So the directory that was checked is the one that is restored into and counted, even if the link is re-pointed during the run.
+2. A link whose target does not exist (a dangling link) or is not a directory is refused with exit 2 before step 4, and nothing is written to the target database or store. A target that is not empty is refused like a non-empty root (`restore: refused: the target evidence store is not empty`).
+3. A link to an empty directory behaves exactly as that directory: same default owner, same step 5, same R7.
+4. Only the root is resolved. As for the backup root (A1.3 item 4), the root's ancestors are not judged.
+
+**Verification status.** None of this is built or tested at this amendment's base. DO-D15 is assigned to build it with a test (T-E15 of `backup-restore.test.mjs`) that fails on the code of this base. The exact messages, and whether a dangling link is refused by its own message or by the existing step-3 refusals, are recorded as built by the next amendment if they differ from items 1 to 3. **If DO-D15 is not merged, A3.3 is the open rule F-DG7-1101 requires, and the code does not meet it.** The documented Compose path (a named volume, not a link) is not affected (rg4c, A3.4).
+
+### A3.4 Verification status of the Compose sequence after DO-D14 (restates A2.6 from the rg4, rg4b and rg4c drill logs)
+
+The orchestrator ran the extended drill `deploy/scripts/drill/compose-backup-drill.sh` three times on its host's Docker daemon (D-285). The rg4c log's C0 facts: Docker 29.9.2, Compose v5.6.1, image `postgres:18` at the lock digest `sha256:5a5a84b1…`. The evidence is under `docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg4{,b,c}/`.
+
+| Run | Source (the log's `repository HEAD`) | Result | What happened |
+| --- | --- | --- | --- |
+| `compose-backup-rg4` | `b2864f2abf2397c27bbb73d3535b8b7c1f30fc6b` | **FAIL**: image build exit 0, drill exit 1 in 41.58 s | C0 to C2 PASS. C2b FAILED: `uploads … no transformation readable by the signed-in user (HTTP 200)`. C3 to C10 NOT_RUN; C11 cleanup PASS. |
+| `compose-backup-rg4b` | `389482803fd5e338bb83e9078cfc944bda1890ed` (its `run.txt` says `b2864f2…`; the drill log's C0 says `389482803…`) | **FAIL**: build exit 0, drill exit 1 in 31.38 s | The same C2b failure. D-285 gives the cause: the drill's `seed-dev` users sit in their own organization and see none of the demo data. This was a defect of the drill's seeding, not of the backup or restore. |
+| `compose-backup-rg4c` | `389482803fd5e338bb83e9078cfc944bda1890ed`, with the drill's `smoke.mjs`-first seeding that D-285 describes, committed after the run in `9b3547113` | **PASS**: build exit 0, drill exit 0, C0 to C11 PASS in 65.95 s | See below. |
+
+**What rg4c shows** (from `02-compose-backup-drill.log`, `02-compose-backup-drill.d/` and `restore/restore-report.json`; synthetic data only):
+
+- **Real evidence and job state at the source (C2b, 5.21 s).** A one-off API of the app image (uid `10001`, `cap_drop ALL`) wrote 2 evidence objects through the API's own upload path, and 1 synthetic job was queued: `source: evidence_content rows 2, queued synthetic jobs 1`.
+- **A2.4's read path with a real file (C4, 1.81 s).** Step 2 (`--user 0:0`, `--cap-add DAC_READ_SEARCH`) read the uid-`10001` store: `transfer-attachments copy-out: copied 2 objects (2 distinct files, 146 bytes)`.
+- **The split-phase `config` section (C5, 2.24 s; A3.1).** `stderr lines other than Compose progress: none`; `config.files` lists `config/compose.yaml`, `config/environment.env` and `config/images.lock.json`; the manifest has 2 evidence files and 2 entries, and `pgbossJobsByState {"created":6,"completed":2}`.
+- **An owner-only set (C6).** 9 files, no path with a group or other bit.
+- **The documented restore (C7, C8; A3.2).** C7 created the target project with new volumes and initialized the evidence volume from the app image. C8 ran `restore.sh` as root (`--user 0:0`, in the `postgres:18` image, with the target's evidence volume mounted) with `--manifest-sha256` and **without `--evidence-owner`**, so the default owner (the root's owner, uid `10001`) was used: `restore: rg4c restored and ready in 9.1 s; all checks passed`. Report steps: package checks 0.162 s, target checks 0.076 s, database 4.894 s, evidence 1.061 s, checks 2.854 s, total 9.051 s.
+- **R1 to R8 PASS.** R1 8 files and 0 mismatches; R2 `0152_p7_transfer_recheck_lineage_basis` and up to date; R3 356 tables and 0 differences; R4 1047 audit events, max seq 1047; R5 the snapshot digest equal; R6 `{"created":6,"completed":2}` and 0 job runs; R7 `{"owner":"10001:10001","verified":2,"mismatches":0,"otherOwner":0,"retentionFiles":0,"groupOrOtherBits":0}`; R8 ready.
+- **No owner change by the drill (C9, 1.24 s).** C9 only verifies. Read as uid `10001` in the app image: 2 files, every path `10001:10001` with `0700`/`0600`, the same 2 files with the same SHA-256 as the source, and `target: queued synthetic jobs 1`.
+- **The restored installation runs (C10, 8.11 s).** `migrate` up to date and `GET /readyz` `{"status":"ready","checks":{"database":"ok","migrations":"ok","storage":"ok","worker":"alive"}}`.
+
+**What rg4c does not show** (so that nothing above is read as more than it is):
+
+- **No retention set moved.** R7's `retentionFiles` is 0. The retention leg is covered only by the container-free tests.
+- **`--evidence-owner` given explicitly, and a non-root restore, did not run in Compose.** Only the default owner path ran.
+- **A symbolic-link evidence root did not run** (the target is a named volume). That case is F-DG7-1101 and A3.3.
+- **No refusal case ran in Compose**, as in A2.6 (an unset or missing `MTH_BACKUP_ROOT`, the finish-phase refusals of A3.1). They are covered by the static and container-free tests only.
+- **No evidence object was downloaded through the API's HTTP route.** C9 reads every object as uid `10001` with no capability, which is the API's own file access, but the target runs OIDC with no test identity provider in this drill (DO-D14 §4 gap 5).
+- **rg4c is one run on one host**, on the demo data and two small files. No timing is claimed for production volumes (residual 3), and the timings are measurements, not recovery objectives (§9).
+
+### A3.5 A2.7 items 1 to 3 are behaviour now (supersedes the last paragraph of A2.7)
+
+DO-D14 is merged (`b2864f2ab`), with the orchestrator's drill-seeding repairs of D-285 (`389482803`, `9b3547113`).
+
+1. **Split-phase config list:** behaviour, A3.1 (T-E11, T-E11b; rg4c C5).
+2. **Restored evidence ownership:** behaviour, A3.2 (T-E14, T-E14b; T-E14c where uid `10001` exists; rg4c C8 and C9). A Compose restore that follows `backup-restore.md` §5 leaves the evidence owned by uid `10001` with `0700`/`0600`, and the drill has no `chown`. The one exception, a symbolic-link target root, is F-DG7-1101, open until DO-D15 is merged (A3.3).
+3. **A Compose drill that moves real data:** behaviour of the drill, and shown by rg4c (A3.4) with 2 evidence objects and 1 queued job. DO-D14 itself could not reach a Docker daemon; the orchestrator ran it (D-285).
+
+### A3.6 Residuals (replaces residual 9; extends the Residuals section)
+
+9. **The Compose half has run with data in every leg except the retention sets** (A3.4). rg4c moved 2 evidence objects and 1 queued job, read the store under `CAP_DAC_READ_SEARCH`, and restored with ownership set by `restore.sh` itself (default owner, uid `10001`). Not shown in Compose: a retention set, an explicit `--evidence-owner`, a non-root restore, a symbolic-link evidence root, the refusal cases and a download over HTTP. rg4c is one run on synthetic demo data.
+11. **Two preconditions are found only after step 4 has committed the database.**
+    - A non-root `restore.sh` whose account differs from the evidence owner cannot `chown`, and stops in step 5 with exit 1 (DO-D14 §5 Q3).
+    - A symbolic-link evidence root fails R7 the same way, until DO-D15 is merged (A3.3).
+
+    Either leaves a target that is no longer fresh, so a second restore needs a new one; the backup set is untouched and nothing is lost. **The architect's answer to DO-D14 Q3:** a precondition the script can test before step 4 should be refused there, with exit 2 and an empty target, the same rule as §7 step 3. A3.3 applies it to the symbolic-link root. For the non-root case the rule is: refuse before step 4 when the running account is not root and the evidence owner differs from it. That check is **not built** at this amendment's base. When this amendment was finished, the concurrent T-DG7-DO-D15 run had an uncommitted change in the shared tree. It resolves a symbolic-link root before step 4 (A3.3), and without root it refuses an evidence owner other than the runner's account, or a root the runner cannot write, before step 4 (exit 2; its tests T-E15a to T-E15d). This amendment claims no result for that change. If it is merged and its tests pass, both cases of this residual are refused before step 4, and the next amendment records the messages as built. Until then, `backup-restore.md` §5 tells the operator to run `restore.sh` as root when the API's account differs.

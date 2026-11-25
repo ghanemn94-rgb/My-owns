@@ -15444,14 +15444,41 @@
       "reported_by": "domain-reviewer",
       "reported_in": "docs/delivery/reviews/DG7/round-3/domain-reviewer.json",
       "owner": "devops-engineer",
-      "status": "OPEN",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-24T08:58:00Z",
           "status": "OPEN",
           "note": "Raised by domain-reviewer in DG7 round 3 on candidate sha256:cf1fb7d5…; found from the unexplained error line in the orchestrator's compose-backup-rg3b drill log and reproduced with a probe on a disposable PostgreSQL. Medium, not mandatory."
+        },
+        {
+          "at": "2026-11-25T09:12:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by domain-reviewer round 4: PASS"
         }
-      ]
+      ],
+      "verification": {
+        "by_role": "domain-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG7-T-DG7-REV-DOM-RG4-domain-reviewer-20261125T081722Z-13c7b7f7",
+          "session_id": "13c7b7f7-a813-4622-8a11-28664f4472c2"
+        },
+        "at": "2026-11-25T09:12:00Z",
+        "result": "PASS",
+        "evidence": [
+          "deploy/scripts/backup.sh",
+          "deploy/scripts/tests/backup-restore.test.mjs",
+          "docs/delivery/test-evidence/DG7/domain/round-4/backup-restore-suite.log",
+          "docs/delivery/test-evidence/DG7/domain/round-4/mutation-revert-1061.diff",
+          "docs/delivery/test-evidence/DG7/domain/round-4/mutation-revert-1061.log",
+          "docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg4c/02-compose-backup-drill.log",
+          "docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg4c/02-compose-backup-drill.d/finish.err",
+          "docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg4c/02-compose-backup-drill.d/finish.out",
+          "docs/delivery/test-evidence/DG7/domain/round-4/candidate-check.txt"
+        ],
+        "note": "Verified on candidate sha256:9d3d5f62c921eb8f07ffb323b57d500a04e0608cbea2ed1ab0ebddec7b625403 (source 2fd69c3753ffb1f96aaf787f8526daa0bf59abe7). The defect: the split-phase (Compose) backup kept the config/ listing in the per-process $WORK, so --phase finish wrote config.files [] and printed 'cat: …/config.sha: No such file or directory'. (1) Code: deploy/scripts/backup.sh now writes the listing to the set's .backup-state/config.sha (on the shared backup root) through backup_config_listing(); --phase finish refuses a missing listing, a listing that does not match config_sha256, and a config/ that changed between phases, and builds config.files from .backup-state/config.sha. (2) Tests, run by me in a disposable export of 2fd69c37 on a disposable PostgreSQL (port 32310): backup-restore.test.mjs 22 tests, 21 pass, 0 fail, 1 skipped (T-E14c: chown to 10001 impossible in a user namespace without a mapped uid 10001; unrelated to this finding). T-E11 now asserts empty stderr in both phases, config.files non-empty and equal to every config/ file with its SHA-256, and config.sha256 = digest of that listing; T-E11b covers the two refusals. (3) Mutation: I reverted the repair in the disposable copy (listing back in $WORK, finish reading $WORK/config.sha, finish checks removed; diff kept). T-E11 then FAILED on 'stderr of --phase finish' with the exact 'cat: …/config.sha: No such file or directory' line, and T-E11b failed; T-E1 (--phase all) passed. So the test kills the original defect. The file was restored byte-identical (cmp). (4) Compose: the orchestrator's compose-backup-rg4c run (drill exit 0) shows at C5 'stderr lines other than Compose progress: none' and 'config.files [config/compose.yaml, config/environment.env, config/images.lock.json]'; finish.err holds only five Compose progress lines (Container … Running/Waiting/Healthy/Creating/Created). That run used the same backup.sh/restore.sh/image inputs as the candidate (only the drill harness differs by the 5-line smoke step, whose output is visible in the run). I did not re-run the Compose drill myself (no Docker daemon in the reviewer sandbox)."
+      }
     },
     {
       "id": "F-DG7-1071",
@@ -15474,14 +15501,38 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG7/round-3/code-security-reviewer.json",
       "owner": "devops-engineer",
-      "status": "OPEN",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-24T09:17:00Z",
           "status": "OPEN",
           "note": "Raised by code-security-reviewer in DG7 round 3 (T-DG7-REV-CS-RG3) on sha256:cf1fb7d5; reproduced on a disposable PostgreSQL."
+        },
+        {
+          "at": "2026-11-25T09:40:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 4: PASS"
         }
-      ]
+      ],
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG7-T-DG7-REV-CS-RG4-code-security-reviewer-20261125T081722Z-b527b36d",
+          "session_id": "b527b36d-96b8-4ef0-b097-d8b61cf2659c"
+        },
+        "at": "2026-11-25T09:40:00Z",
+        "result": "PASS",
+        "evidence": [
+          "deploy/scripts/backup.sh",
+          "deploy/scripts/tests/backup-restore.test.mjs",
+          "docs/delivery/test-evidence/DG7/code-security/round-4/03-backup-restore-tests.log",
+          "docs/delivery/test-evidence/DG7/code-security/round-4/02-round4-diff.log",
+          "docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg4c/02-compose-backup-drill.log",
+          "docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg4c/02-compose-backup-drill.d/finish.err"
+        ],
+        "note": "Verified by its originating reviewer role (code-security-reviewer, session b527b36d, T-DG7-REV-CS-RG4) on candidate sha256:9d3d5f62c921eb8f07ffb323b57d500a04e0608cbea2ed1ab0ebddec7b625403 (source 2fd69c375). The repair is T-DG7-DO-D14 (devops-engineer, b2864f2ab); I authored none of it.\n\nCode (deploy/scripts/backup.sh):\n- The database phase now writes the config/ listing to the set's own .backup-state/config.sha (l.446-449, through backup_config_listing l.459-462) instead of the per-process $WORK, and hashes it into config_sha256.\n- --phase finish (l.557-564) refuses the set if the listing is missing, if it no longer matches its recorded SHA-256, or if config/ changed since the database phase. It then feeds the listing from .backup-state into the manifest (l.602).\n- .backup-state is still pruned from the manifest's file list (l.567) and removed after success (l.645).\n- xargs -r avoids running sha256sum with no arguments on an empty config/.\n\nBehaviour, re-run on this candidate in a disposable clone (03 log, 21 pass, 1 skipped, 0 fail):\n- T-E11 runs the three-step phased sequence with DATABASE_URL_FILE. It asserts empty stderr in both phases, a non-empty config.files equal to the on-disk config/ listing, config.sha256 equal to the digest of that listing, and .backup-state removed.\n- T-E11b asserts exit 1 and no manifest for a missing listing and for a changed config/.\n\nCompose evidence (orchestrator run compose-backup-rg4c, C5):\n- finish.err holds only Compose progress lines (the drill's noise filter reports 'none');\n- the manifest lists config.files [config/compose.yaml, config/environment.env, config/images.lock.json].\n\nThis was the 'cat: …/config.sha' line and the empty config.files I reproduced in round 3. Both are gone."
+      }
     },
     {
       "id": "F-DG7-1072",
@@ -15504,14 +15555,43 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG7/round-3/code-security-reviewer.json",
       "owner": "devops-engineer",
-      "status": "OPEN",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-24T09:17:00Z",
           "status": "OPEN",
           "note": "Raised by code-security-reviewer in DG7 round 3 (T-DG7-REV-CS-RG3) on sha256:cf1fb7d5, from the orchestrator's rg3b drill log and restore report."
+        },
+        {
+          "at": "2026-11-25T09:40:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 4: PASS"
         }
-      ]
+      ],
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG7-T-DG7-REV-CS-RG4-code-security-reviewer-20261125T081722Z-b527b36d",
+          "session_id": "b527b36d-96b8-4ef0-b097-d8b61cf2659c"
+        },
+        "at": "2026-11-25T09:40:00Z",
+        "result": "PASS",
+        "evidence": [
+          "deploy/scripts/drill/compose-backup-drill.sh",
+          "deploy/scripts/restore.sh",
+          "deploy/scripts/tests/backup-compose-layout.vitest.mjs",
+          "docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg4c/02-compose-backup-drill.log",
+          "docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg4c/run.txt",
+          "docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg4c/02-compose-backup-drill.d/restore/restore-report.json",
+          "docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg4c/02-compose-backup-drill.d/target-evidence.txt",
+          "docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg4/02-compose-backup-drill.log",
+          "docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg4b/02-compose-backup-drill.log",
+          "docs/delivery/test-evidence/DG7/code-security/round-4/04b-unit-node-rerun.log",
+          "docs/delivery/decisions.md"
+        ],
+        "note": "Verified by its originating reviewer role (code-security-reviewer, session b527b36d, T-DG7-REV-CS-RG4) on candidate sha256:9d3d5f62 (source 2fd69c375). The repairs are T-DG7-DO-D14 (devops-engineer) and the orchestrator's drill edits disclosed in D-285; I authored none of it.\n\nThe finding said that the only Compose A19 drill moved 0 evidence objects and 0 jobs, so the DAC_READ_SEARCH copy-out read path and the evidence and job legs of the Compose restore were undemonstrated, and that D-284 did not disclose this.\n\nDrill script (deploy/scripts/drill/compose-backup-drill.sh):\n- C2b uploads 2 synthetic files through a loopback-only one-off dev-auth API of the app image (uid 10001, cap_drop ALL) and queues 1 pg-boss job on a queue no worker consumes.\n- C4 fails on fewer than 2 distinct files copied out.\n- C5 fails on stderr noise, an empty config.files, too few objects or no created job.\n- C9 no longer chowns. It only verifies: R6 and R7, then reads and hashes every object as uid 10001 in the app image, diffs (SHA-256, path) against the source listing, requires 10001:10001 with 0700/0600, and checks that the job is still 'created'.\n- backup-compose-layout.vitest.mjs pins 'no chown in the drill code' and these checks (14/14 in my re-run, 04b log).\n\nEvidence, run compose-backup-rg4c (exit 0, C0-C11 PASS):\n- C2b stored 2 objects, all 10001:10001 0600, directories 0700.\n- C4, run as root with only DAC_READ_SEARCH, copied 2 objects (2 distinct files, 146 bytes) out of the uid-10001 0700 store. That is the read path the finding said was untested.\n- C8 restore.sh passed R1-R8. R7 = {verified 2, mismatches 0, owner 10001:10001, otherOwner 0, groupOrOtherBits 0}, and R6 carried the created jobs.\n- C9: the target listing equals the source's (same 2 files, same SHA-256), and 1 queued synthetic job remains.\n- C10: GET /readyz returned 200 ready over HTTP.\n- restore-report.json in the evidence matches.\n\nDisclosure: D-285 now records the two failed runs, rg4 and rg4b (both C2b 'no transformation readable by the signed-in user', caused by the drill's own seeding and explained), and the fix.\n\nProvenance caveats, which I judged acceptable:\n(1) run.txt of rg4c names source_commit 389482803, but the run executed the smoke.mjs insertion that was committed only later, in 9b3547113. That is the only product-path difference to the candidate: git diff 389482803..2fd69c375 outside docs/delivery is exactly those 5 drill lines, and the log shows the smoke step running. The image therefore has the candidate's content.\n(2) rg4 and rg4b both name b2864f2ab, although rg4b already carried the uncommitted seeding change.\nNeither changes the result. The restore leg for a symlinked target root is a separate defect, raised as F-DG7-1101; it does not affect the Compose volume path this finding covered."
+      }
     },
     {
       "id": "F-DG7-1073",
@@ -15533,14 +15613,38 @@
       "reported_by": "code-security-reviewer",
       "reported_in": "docs/delivery/reviews/DG7/round-3/code-security-reviewer.json",
       "owner": "solution-architect",
-      "status": "OPEN",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-24T09:17:00Z",
           "status": "OPEN",
           "note": "Raised by code-security-reviewer in DG7 round 3 (T-DG7-REV-CS-RG3) on sha256:cf1fb7d5."
+        },
+        {
+          "at": "2026-11-25T09:40:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by code-security-reviewer round 4: PASS"
         }
-      ]
+      ],
+      "verification": {
+        "by_role": "code-security-reviewer",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG7-T-DG7-REV-CS-RG4-code-security-reviewer-20261125T081722Z-b527b36d",
+          "session_id": "b527b36d-96b8-4ef0-b097-d8b61cf2659c"
+        },
+        "at": "2026-11-25T09:40:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/architecture/adr/ADR-0066-p7-backup-restore-backup-set-manifest-restore-checks-drill.md",
+          "docs/delivery/decisions.md",
+          "tools/release/secret-allowlist.json",
+          "docs/handover/backup-restore.md",
+          "docs/delivery/test-evidence/DG7/code-security/round-4/06-scans.log",
+          "docs/delivery/test-evidence/DG7/orchestrator/prefreeze-rg4c/checks.log"
+        ],
+        "note": "Verified by its originating reviewer role (code-security-reviewer, session b527b36d, T-DG7-REV-CS-RG4) on candidate sha256:9d3d5f62 (source 2fd69c375). The repair is T-DG7-SA-ADR73 (solution-architect) plus D-285 (orchestrator); I authored none of it.\n\nThe finding had three parts, and each is now true.\n\n(1) ADR-0066 Amendment 2 (2026-11-24) records DO-D13 as built:\n- A2.1: the /mth/deploy bind layout of the backup service and the preflight. I checked these against compose.yaml and backup.sh.\n- A2.2: step 2 with --user 0:0, --cap-add DAC_READ_SEARCH and DATABASE_URL_FILE. This matches drill C4 and backup-restore.md §3.2 verbatim.\n- A2.3: the copy-out URL rule.\n- The replaced A1.4 bullets and residual 9 carry pointers.\n\n(2) DO-D13 Q2 is answered in A2.4: the least-privilege decision, with six alternatives judged. The open_by_handle_at ('shocker') residual is disclosed as residual 10, and the ADR says plainly that its facts were not re-checked online. That is honest.\n\n(3) D-285 now exists in decisions.md and states that it supplies the citation used by the secret-allowlist.json history entry (l.362).\n\nThe prettier check of the allow-list and the secret-scan payload and history scans exit 0 (06 log; orchestrator prefreeze-rg4c).\n\nResidual, not part of this finding: Amendment 2 (A2.7) itself requires a further amendment once DO-D14 merges, and none was written. That is the same class of drift for the newer change, raised separately as F-DG7-1102 (Low)."
+      }
     },
     {
       "id": "F-DG7-1081",
@@ -15565,14 +15669,40 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG7/round-3/qa-verifier.json",
       "owner": "devops-engineer",
-      "status": "OPEN",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-24T10:40:00Z",
           "status": "OPEN",
           "note": "Raised by qa-verifier in DG7 round 3 (T-DG7-REV-QA-RG3) on candidate sha256:cf1fb7d5. Medium: a real defect in the documented production backup procedure (wrong manifest content and an error line), bounded because restore does not use the section and files[] still hashes the config files. Found while explaining the error line in the orchestrator's rg3b PASS log."
+        },
+        {
+          "at": "2026-11-25T11:20:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 4: PASS"
         }
-      ]
+      ],
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG7-T-DG7-REV-QA-RG4-qa-verifier-20261125T081722Z-5a0e04f9",
+          "session_id": "5a0e04f9-d304-463d-b228-8d5d9fbb0c39"
+        },
+        "at": "2026-11-25T11:20:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG7/qa/round-4/82-split-phase-config.log",
+          "docs/delivery/test-evidence/DG7/qa/round-4/83-split-phase-and-owner.log",
+          "docs/delivery/test-evidence/DG7/qa/tests/qa-dg7-rg4-backup-split-phase-and-owner.test.mjs",
+          "docs/delivery/test-evidence/DG7/qa/tests/qa-dg7-rg3-backup-split-phase-config.test.mjs",
+          "docs/delivery/test-evidence/DG7/qa/round-4/73b-backup-restore-tests.log",
+          "docs/delivery/test-evidence/DG7/qa/round-4/02-round4-delta.log",
+          "docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg4c/02-compose-backup-drill.log",
+          "docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg4c/02-compose-backup-drill.d/finish.err"
+        ],
+        "note": "Verified as the reporter on candidate sha256:9d3d5f62 (source 2fd69c375). (1) My round-3 test that reproduced the defect (qa-dg7-rg3-backup-split-phase-config.test.mjs, unchanged) now passes 2/2: the split sequence (--phase database, copy-out in another process, --phase finish) writes config.files = every config/ file with its SHA-256, config.sha256 is the digest of exactly that listing, and --phase finish prints no 'No such file or directory' (log 82). (2) My new independent test (qa-dg7-rg4-backup-split-phase-and-owner.test.mjs, 6/6, log 83): QA-RG4-a runs the three steps as three processes each with its OWN TMPDIR (as separate containers) - config section exact, stderr empty in both phases, .backup-state removed and not in files[]; QA-RG4-b a config/ file added between the phases is refused 'config/ changed after the database phase' (exit 1, no manifest); QA-RG4-c a tampered .backup-state listing is refused 'the config/ listing does not match its recorded SHA-256' (exit 1, no manifest). (3) The repair's own T-E11 (empty stderr, exact config.files, digest, .backup-state removed) and T-E11b pass (backup-restore tests 21 pass, 1 skip T-E14c by design, log 73b). (4) The expected Compose re-run exists: compose-backup-rg4c C5 'stderr lines other than Compose progress: none', manifest config.files [compose.yaml, environment.env, images.lock.json], 2 evidence files, a created job; finish.err holds only Compose progress lines. Judged from the orchestrator's logs, not re-run (no Docker daemon here). rg4c recorded HEAD 389482803 while the candidate's drill script adds 5 lines (smoke.mjs first) from 9b3547113; the log shows those lines executed, and no product or backup/restore file differs between 389482803 and the candidate (log 02)."
+      }
     },
     {
       "id": "F-DG7-1082",
@@ -15598,14 +15728,41 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG7/round-3/qa-verifier.json",
       "owner": "devops-engineer",
-      "status": "OPEN",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-24T10:40:00Z",
           "status": "OPEN",
           "note": "Raised by qa-verifier in DG7 round 3 (T-DG7-REV-QA-RG3) on candidate sha256:cf1fb7d5. Medium: the documented Compose restore omits a step the drill needs (C9) and that DO-D12 disclosed only in its handback; bounded, repairable by chown; not observed in a container here."
+        },
+        {
+          "at": "2026-11-25T11:20:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 4: PASS"
         }
-      ]
+      ],
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG7-T-DG7-REV-QA-RG4-qa-verifier-20261125T081722Z-5a0e04f9",
+          "session_id": "5a0e04f9-d304-463d-b228-8d5d9fbb0c39"
+        },
+        "at": "2026-11-25T11:20:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/delivery/test-evidence/DG7/qa/round-4/83-split-phase-and-owner.log",
+          "docs/delivery/test-evidence/DG7/qa/tests/qa-dg7-rg4-backup-split-phase-and-owner.test.mjs",
+          "docs/delivery/test-evidence/DG7/qa/round-4/73b-backup-restore-tests.log",
+          "docs/delivery/test-evidence/DG7/qa/round-4/73c-backup-compose-layout.log",
+          "docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg4c/02-compose-backup-drill.log",
+          "docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg4c/02-compose-backup-drill.d/target-evidence.txt",
+          "docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg4c/02-compose-backup-drill.d/source-evidence.txt",
+          "docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg4c/02-compose-backup-drill.d/restore/restore-report.json",
+          "docs/handover/backup-restore.md"
+        ],
+        "note": "Verified as the reporter on candidate sha256:9d3d5f62 against the finding's expected text. (a) The documented restore sets ownership itself: restore.sh step 5 hands the restored evidence to the existing empty root's owner (or --evidence-owner <uid>:<gid>), directories 0700, files 0600, and R7 fails on any other owner or a group/other bit; backup-restore.md §5 documents the rule, the option, that root is needed, and the Compose sequence (initialise the volume from the app image so it belongs to 10001, then restore.sh as root). The drill has no chown left (layout test 'no chown' passes, 14/14, log 73c). (b) Tests: T-E14/T-E14b pass, T-E14c is skipped here by design (this sandbox maps only uid 0: 'chown 10001:10001 ... Invalid argument'). My QA-RG4-d: an existing 0755 root becomes owner-only 0700/0600 with R7 PASS and owner/otherOwner/groupOrOtherBits present; QA-RG4-e: an owner that cannot be set fails exit 1 with 'restore: check R7 failed: expected the evidence owned by 10001:10001' (observed: the database is already restored, 350 public tables - the guide's step-6 'target left for inspection' rule and DO-D14 Q3, disclosed; not a defect of this finding); QA-RG4-f: six malformed --evidence-owner forms are BLOCKED exit 2 with nothing written (log 83). (c) The Compose drill was re-run with real data: compose-backup-rg4c C2b uploaded 2 evidence files through the app image's API as uid 10001 and queued 1 job; C4 copied 2 distinct files under DAC_READ_SEARCH; C8 ran restore.sh with the default owner; C9 (no owner change) found R7 owner 10001:10001, verified 2, otherOwner 0, groupOrOtherBits 0, read and hashed every restored object as uid 10001 with cap_drop ALL in the app image (same 2 files, same SHA-256), and the job still created; C10 /readyz ready. The finding asked for 'an API read of the restored object (for example a download through the API)': C9 reads with exactly the API's account and capabilities in the API image rather than over HTTP (the target runs OIDC with no test IdP; DO-D14 gap 5, disclosed). I accept that as meeting the expectation, because the defect was file ownership and permissions, not the HTTP route. Judged from the orchestrator's logs, not re-run (no Docker daemon here)."
+      }
     },
     {
       "id": "F-DG7-1083",
@@ -15627,12 +15784,183 @@
       "reported_by": "qa-verifier",
       "reported_in": "docs/delivery/reviews/DG7/round-3/qa-verifier.json",
       "owner": "solution-architect",
-      "status": "OPEN",
+      "status": "CLOSED_VERIFIED",
       "history": [
         {
           "at": "2026-11-24T10:40:00Z",
           "status": "OPEN",
           "note": "Raised by qa-verifier in DG7 round 3 (T-DG7-REV-QA-RG3) on candidate sha256:cf1fb7d5. Low: ADR documentation drift created by the DO-D13 repair, disclosed by DO-D13 itself; no behavioural effect."
+        },
+        {
+          "at": "2026-11-25T11:20:00Z",
+          "status": "CLOSED_VERIFIED",
+          "note": "verified by qa-verifier round 4: PASS"
+        }
+      ],
+      "verification": {
+        "by_role": "qa-verifier",
+        "invocation_reference": {
+          "kind": "claude-code-cli-session",
+          "run_id": "DG7-T-DG7-REV-QA-RG4-qa-verifier-20261125T081722Z-5a0e04f9",
+          "session_id": "5a0e04f9-d304-463d-b228-8d5d9fbb0c39"
+        },
+        "at": "2026-11-25T11:20:00Z",
+        "result": "PASS",
+        "evidence": [
+          "docs/architecture/adr/ADR-0066-p7-backup-restore-backup-set-manifest-restore-checks-drill.md",
+          "docs/delivery/test-evidence/DG7/qa/round-4/85-adr-drift-do-d14.log",
+          "docs/delivery/handbacks/DG7/T-DG7-SA-ADR73-solution-architect.md",
+          "docs/delivery/decisions.md"
+        ],
+        "note": "Verified as the reporter: ADR-0066 Amendment 2 (2026-11-24, T-DG7-SA-ADR73) records exactly what the finding asked for - A2.1 the /mth/deploy mount layout of the backup service and its preflight refusal, A2.2 step 2 with --user 0:0, --cap-add DAC_READ_SEARCH and DATABASE_URL_FILE, A2.3 the copy-out DATABASE_URL/_FILE rule, A2.4 the answer to DO-D13 Q2 (accepted as least privilege, six alternatives judged, the open_by_handle_at residual disclosed as residual 10) - and each matches the candidate's compose.yaml, guide §3.2, drill C4 and transfer-attachments.ts; D-285 now exists. Closed. The ADR now lags the NEXT change (DO-D14: restore ownership rule, R7 fields, rg4c), which A2.7 itself says must be recorded by a further amendment; that is a new drift, raised separately as F-DG7-1111 (Low), and does not reopen this one."
+      }
+    },
+    {
+      "id": "F-DG7-1091",
+      "stage_id": "DG7",
+      "requirement": "REQ-S19-012",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "ADR-0066 is not amended for the restore ownership rule DO-D14 built: Amendment 2 still says §7/§8 (R1-R9) are unchanged, that restored ownership 'depends on an undocumented drill step', and it requires a further §7 amendment that does not exist",
+      "reproduction": "On candidate sha256:9d3d5f62… (source 2fd69c37): read docs/architecture/adr/ADR-0066-p7-backup-restore-backup-set-manifest-restore-checks-drill.md. Amendment 2 (T-DG7-SA-ADR73, written at base ef91b97d7 before DO-D14 merged) says under 'Unchanged': 'the restore and its checks R1 to R9 (§7, §8)'; A2.6 says 'The restored evidence's ownership was set by the drill, not by the documented restore' and 'The manifest's config list was empty' (F-DG7-1061, open); A2.7 ends 'When DO-D14 is merged, the ownership rule as built (who owns the restored store, how it is set, and its test) must be recorded by a further amendment of §7. The same amendment should restate A2.6 from DO-D14's drill log. Until then, items 1 to 3 are open findings, not behaviour.'; A2.8 residual 9 says 'The restored ownership depends on an undocumented drill step. These stay open until DO-D14's drill (A2.7) or a later host run shows them'. Then compare with the candidate's deploy/scripts/restore.sh (new --evidence-owner option, step 5 chown -R to the evidence root's owner and chmod 0700/0600, R7 with the new keys owner, otherOwner, groupOrOtherBits) and with the rg4c drill (PASS C0-C11, R7 owner 10001:10001, 2 evidence files and 1 job moved). There is no Amendment 3; grep for 'Amendment 3' or 'evidence-owner' in the ADR finds nothing. The DO-D14 handback §4 gap 4 and §5 Q2 asked the architect for exactly this amendment; D-285 does not assign it.",
+      "expected": "ADR-0066 states the restore design and the R7 check as built (ADR claims enumerated and exactly true, p7-work-split §2 rule 2, the rule Amendments 1 and 2 applied), and A2.7's own instruction is carried out: a §7 amendment recording the default owner (owner of the empty target root, else the running account), --evidence-owner, step-5 owner/modes, R7's three new fields and T-E14/T-E14b/T-E14c, and A2.6/A2.8 restated from the rg4c drill log.",
+      "actual": "The ADR describes the pre-DO-D14 restore (copy-in as the running account, ownership fixed only by the drill) and declares §7/§8 unchanged, while the code, the guide (backup-restore.md §5 and §7 R7) and the rg4c drill show the new rule. Residual 9 and A2.6's three bullets are stale. Documentation drift only: the guide and the scripts agree with each other and the behaviour is tested, so Low and not mandatory; same class as F-DG7-1073/1083 one round earlier.",
+      "evidence": [
+        "docs/architecture/adr/ADR-0066-p7-backup-restore-backup-set-manifest-restore-checks-drill.md",
+        "deploy/scripts/restore.sh",
+        "docs/handover/backup-restore.md",
+        "docs/delivery/handbacks/DG7/T-DG7-DO-D14-devops-engineer.md",
+        "docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg4c/02-compose-backup-drill.log",
+        "docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg4c/02-compose-backup-drill.d/restore/restore-report.json"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG7/round-4/domain-reviewer.json",
+      "owner": "solution-architect",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-25T09:10:00Z",
+          "status": "OPEN",
+          "note": "Raised by domain-reviewer in DG7 round 4 on candidate sha256:9d3d5f62…; documentation drift between ADR-0066 Amendment 2 and the DO-D14 code and drill. Low, not mandatory, not blocking in my verdict."
+        }
+      ]
+    },
+    {
+      "id": "F-DG7-1092",
+      "stage_id": "DG7",
+      "requirement": "REQ-S20-019",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "backup-restore.md §8 says the extended Compose drill 'has not been run' and that its result 'is recorded only when a run on a host with Docker exists', but the candidate carries that run (compose-backup-rg4c, PASS C0-C11) and the guide does not record it",
+      "reproduction": "On candidate sha256:9d3d5f62… (source 2fd69c37): docs/handover/backup-restore.md §8 'Compose runs' (l.227): 'The previous Compose run (orchestrator, round 3, compose-backup-rg3b) moved 0 evidence objects and 0 jobs … The extended drill above has not been run in the agent sandbox, because the sandbox has no access to a Docker daemon. Its result is recorded only when a run on a host with Docker exists.' The §8 timings table lists only the container-free drill and the QA A19 harness. §10 'Permissions in Compose' (l.242) likewise says the Compose sequence 'has not been run here … It runs on the orchestrator's host'. The run exists in the same candidate commit: docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg4c/ (drill exit 0, C0-C11 PASS in 65.95 s; C4 copied 2 files; C5 config.files 3 entries and no stderr; C8 restore 9.1 s; C9 R7 owner 10001:10001, verified 2, same SHA-256 as the source, 1 queued job; C10 /readyz 200), committed in 9b3547113 before the freeze. The guide was last written by DO-D14 before that run and was not updated after it.",
+      "expected": "The hand-over guide, whose §8 is the A19 'documented checks and timings' record for IT, states the measured result of the extended Compose drill once it exists (as it did for rg3b): the run id, its source, C0-C11 result, the step timings, the objects and job moved, and the two failed runs rg4/rg4b with their cause (drill seeding, D-285), or at least a pointer to that evidence.",
+      "actual": "A reader of the transfer package is told the evidence and job-state legs of the Compose restore are unproven, while the release's own evidence shows them proven on synthetic data. The statement errs on the side of under-claiming and is literally scoped to 'the agent sandbox', so there is no false claim of delivery and no behavioural effect: Low, not mandatory. Cosmetic-to-documentation drift; the orchestrator's evidence and D-285 are complete.",
+      "evidence": [
+        "docs/handover/backup-restore.md",
+        "docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg4c/02-stdout.log",
+        "docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg4c/02-compose-backup-drill.log",
+        "docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg4c/run.txt",
+        "docs/delivery/decisions.md"
+      ],
+      "reported_by": "domain-reviewer",
+      "reported_in": "docs/delivery/reviews/DG7/round-4/domain-reviewer.json",
+      "owner": "devops-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-25T09:10:00Z",
+          "status": "OPEN",
+          "note": "Raised by domain-reviewer in DG7 round 4 on candidate sha256:9d3d5f62…; the handover guide under-states the Compose drill result that the candidate's own evidence holds. Low, not mandatory, not blocking in my verdict."
+        }
+      ]
+    },
+    {
+      "id": "F-DG7-1101",
+      "stage_id": "DG7",
+      "requirement": "REQ-S19-012",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "restore.sh (DO-D14) fails R7 for a target evidence root given as a symbolic link, after it has already restored the database, and takes the default evidence owner from the link instead of its target; this is a regression from round 3",
+      "reproduction": "On candidate sha256:9d3d5f62 (source 2fd69c3753ffb1f96aaf787f8526daa0bf59abe7).\n\nCode, deploy/scripts/restore.sh:\n- l.137 accepts an existing symlinked root, because `[ -d ]` and `ls -A` follow the link.\n- l.139 takes the default owner with `stat -c '%u:%g' \"$store\"`. Without -L, stat reports the LINK's owner, not the directory's.\n- l.175-176 `chown -R` and l.181 `find \"$store\" -type d|f -exec chmod`. With their default -P, they do not descend through a symlinked command-line argument.\n- l.238-239 count `otherOwner` and `groupOrOtherBits` with `find \"$store\"` (-P). That visits only the link itself, whose mode is always 0777.\n\nBehavioural reproduction (05 probe, run in a disposable clone):\n- A copy of deploy/scripts/tests/backup-restore.test.mjs plus one test (05-probe-symlink-evidence-root.test.mjs.txt).\n- The test restores the suite's own backup set into a fresh database, with --target-evidence-path set to a symbolic link to an existing, empty 0700 directory.\n- Command: `QA_PG_PORT=32420 tests/qa/support/with-pg.sh node --test --test-name-pattern CS-RG4-P1 <copy>`.\n\nResult:\n- restore.sh exits 1 with `restore: check R7 failed: expected {... \"groupOrOtherBits\": 0}, got {... \"groupOrOtherBits\": 1}`.\n- By then the target database already holds 351 tables (step 4 committed).\n- The restored evidence under the real directory was never normalised: retention/ is still 0755.\n\nControl, same probe and same set, with restore.sh of round-3 source 3e8f5bce (before DO-D14): exit 0, all checks passed, R7 PASS (05b log). So DO-D14 introduced the failure.",
+      "expected": "A target evidence root given as a symbolic link to an empty directory behaves like that directory. backup.sh judges a symlinked backup root by its resolved target (DO-D12, F-DG7-1053, backup-restore.md §3.3), and the API's filesystem store and backup.sh's EVIDENCE_STORAGE_PATH check both accept a symlinked root. The fix should resolve the root once, for example `store=\"$(realpath -e \"$store\")\"` when it exists, or use stat -L, chown -R -H and find -H. Then:\n- the default owner is the target directory's owner;\n- chown and chmod reach the restored files;\n- R7 counts the real tree.\n\nA precondition the script cannot meet should be refused before step 4, while the target is still empty. The same applies to the late failure that DO-D14 handback Q3 already names: a non-root runner whose account is not the store's owner.",
+      "actual": "Any restore into a symlinked evidence root now fails at R7. It fails after pg_restore has committed the database and the evidence has been copied, so the 'fresh target only' target is left half-restored and must be rebuilt. The error message gives no hint that the link is the cause. If the link and its target have different owners (for example, a root-owned link to a directory of the API's account), the default owner would also be wrong (the link's), which is the F-DG7-1082 failure mode again.\n\nThe documented Compose path (a named volume, drill rg4c) is not affected. A non-Compose restore with a symlinked evidence path, the case backup-restore.md §5 shows with `--target-evidence-path /var/lib/mth/evidence`, is affected.\n\nNo test covers a symlinked target root (T-E14 and T-E14c use plain directories). The effect is bounded: it fails closed, loses no data and the backup set stays intact. That is why the severity is Medium and not High.",
+      "evidence": [
+        "deploy/scripts/restore.sh",
+        "docs/handover/backup-restore.md",
+        "docs/delivery/test-evidence/DG7/code-security/round-4/05-probe-symlink-evidence-root.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-4/05-probe-symlink-evidence-root.test.mjs.txt",
+        "docs/delivery/test-evidence/DG7/code-security/round-4/05b-probe-symlink-control-round3-restore.log",
+        "docs/delivery/handbacks/DG7/T-DG7-DO-D14-devops-engineer.md"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG7/round-4/code-security-reviewer.json",
+      "owner": "devops-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-25T09:30:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG7 round 4 (T-DG7-REV-CS-RG4, session b527b36d) on candidate sha256:9d3d5f62. Reproduced on a disposable PostgreSQL 16; the round-3 restore.sh control passes the same case."
+        }
+      ]
+    },
+    {
+      "id": "F-DG7-1102",
+      "stage_id": "DG7",
+      "requirement": "REQ-S19-012",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "ADR-0066 and backup-restore.md §8 were not updated for DO-D14 as built or for the passing rg4c Compose run. The ADR still calls the DO-D14 behaviour 'open findings, not behaviour' and describes the old R7",
+      "reproduction": "On candidate sha256:9d3d5f62. ADR-0066:\n- §7 step 5 (l.109) and the §8 R7 row (l.124) still describe R7 without the owner, otherOwner and groupOrOtherBits keys, and without the hand-over of the restored evidence to the evidence root's owner (restore.sh l.139-141, 175-185, 238-240; --evidence-owner).\n- Amendment 2 A2.7 says: 'When DO-D14 is merged, the ownership rule as built ... must be recorded by a further amendment of §7. The same amendment should restate A2.6 from DO-D14's drill log. Until then, items 1 to 3 are open findings, not behaviour.'\n- DO-D14 is merged (b2864f2ab), but there is no Amendment 3.\n- A2.6 lists only rg3 and rg3b. Residual 9 (A2.8) still says the evidence and job-state legs and the DAC_READ_SEARCH read path 'moved zero items'.\n- The .backup-state config listing and the new finish-phase refusals are not recorded either.\n\nbackup-restore.md §8 (l.227) still says: 'The extended drill above has not been run ... Its result is recorded only when a run on a host with Docker exists.' Run compose-backup-rg4c exists (C0-C11 PASS, 2 objects, 1 job, owner 10001), and the guide does not record it.\n\nBoth gaps were flagged by the implementers themselves and not taken up: DO-D14 handback §4 gap 4 and §5 Q1/Q2, and SA-ADR73 handback §4 gap 3 and Q2. D-285 does not dispose of them.",
+      "expected": "A dated ADR-0066 amendment records the DO-D14 rules as built: the .backup-state listing and its finish-phase checks, the ownership rule (default owner, --evidence-owner, 0700/0600), R7's extra keys, and A2.6/A2.8 restated from rg4c. backup-restore.md §8 records the rg4c run, or the guide says where its result is. This is the same 'ADR claims enumerated and exactly true' rule that closed F-DG7-1041 and F-DG7-1073.",
+      "actual": "The binding design record (amendments win) calls the shipped restore behaviour 'not behaviour' and states the old R7 contract. The IT-facing guide says the extended drill has no result. Code, tests and the drill evidence are correct; this is documentation drift only, with no behavioural effect.",
+      "evidence": [
+        "docs/architecture/adr/ADR-0066-p7-backup-restore-backup-set-manifest-restore-checks-drill.md",
+        "docs/handover/backup-restore.md",
+        "deploy/scripts/restore.sh",
+        "docs/delivery/handbacks/DG7/T-DG7-DO-D14-devops-engineer.md",
+        "docs/delivery/handbacks/DG7/T-DG7-SA-ADR73-solution-architect.md",
+        "docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg4c/02-compose-backup-drill.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG7/round-4/code-security-reviewer.json",
+      "owner": "solution-architect",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-25T09:30:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG7 round 4 (T-DG7-REV-CS-RG4, session b527b36d) on candidate sha256:9d3d5f62. The backup-restore.md §8 sentence is the devops-engineer's to update. The ADR amendment is the solution-architect's."
+        }
+      ]
+    },
+    {
+      "id": "F-DG7-1111",
+      "stage_id": "DG7",
+      "requirement": "REQ-S19-012",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "ADR-0066 was not amended for DO-D14: §7 step 5 and R7 still describe a restore without the ownership rule, and Amendment 2 (A2.6-A2.8) still states the DO-D14 behaviour as 'not built' and 'open findings', although the candidate ships it and the rg4c Compose run exercised it",
+      "reproduction": "On candidate sha256:9d3d5f62 (source 2fd69c375): grep -nE 'evidence-owner|otherOwner|groupOrOtherBits|rg4c' in docs/architecture/adr/ADR-0066-p7-backup-restore-backup-set-manifest-restore-checks-drill.md finds nothing; the §7 table row 'R7 evidence' (l.124) lists only the verify counts; A2.7 (l.390) is titled 'not built at this amendment's base' and l.398 says 'When DO-D14 is merged, the ownership rule as built ... must be recorded by a further amendment of §7 ... Until then, items 1 to 3 are open findings, not behaviour'; residual 9 (l.402) says the evidence and job-state legs 'moved zero items' and that 'the restored ownership depends on an undocumented drill step'. The candidate's deploy/scripts/restore.sh has --evidence-owner, a chown -R to the evidence root's owner, 0700/0600 modes and R7 fields owner/otherOwner/groupOrOtherBits; docs/handover/backup-restore.md §5/§7 document them; compose-backup-rg4c moved 2 evidence objects and 1 job and verified owner 10001:10001. The SA-ADR73 handback (gap 3, Q2) disclosed exactly this lag and asked the orchestrator to assign 'Amendment 3'; D-285 does not mention it and no amendment exists. Related, same cause: backup-restore.md §8 still says the extended Compose drill 'has not been run' and that its result is recorded only when a host run exists; rg4c is that run and is not recorded there. Log: docs/delivery/test-evidence/DG7/qa/round-4/85-adr-drift-do-d14.log.",
+      "expected": "As for F-DG7-1052 and F-DG7-1083 (p7-work-split §2 rule 2, ADR claims enumerated and exactly true; ADR-0066 A2.7's own last paragraph): a dated ADR-0066 amendment records the restore ownership rule as built (default owner = the existing empty root's owner, else the running account; --evidence-owner <uid>:<gid>; chown -R then 0700/0600 in step 5; a failed chown is an R7 failure with exit 1 after the database is already restored), the extended R7 (owner, otherOwner 0, groupOrOtherBits 0), the phased config listing kept in .backup-state with the finish-phase refusals, and restates A2.6/residual 9 from the rg4c drill log. backup-restore.md §8 records the rg4c result (devops-engineer).",
+      "actual": "The accepted ADR, whose dated amendments win over other documents, still describes the restore as it was before DO-D14 and labels the shipped behaviour as open findings, so a reader of ADR-0066 gets a wrong picture of who owns restored evidence and what R7 checks. Documentation drift with no behavioural effect: code, tests (T-E11/11b/14/14b, my QA-RG4-a..f) and the handover guide §5/§7 agree with each other; the drift was disclosed in the SA-ADR73 handback but not acted on. Not blocking on its own.",
+      "evidence": [
+        "docs/delivery/test-evidence/DG7/qa/round-4/85-adr-drift-do-d14.log",
+        "docs/architecture/adr/ADR-0066-p7-backup-restore-backup-set-manifest-restore-checks-drill.md",
+        "docs/delivery/handbacks/DG7/T-DG7-SA-ADR73-solution-architect.md",
+        "deploy/scripts/restore.sh",
+        "docs/handover/backup-restore.md",
+        "docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg4c/02-compose-backup-drill.log"
+      ],
+      "reported_by": "qa-verifier",
+      "reported_in": "docs/delivery/reviews/DG7/round-4/qa-verifier.json",
+      "owner": "solution-architect",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-25T10:00:00Z",
+          "status": "OPEN",
+          "note": "Raised in DG7 round 4 by qa-verifier (T-DG7-REV-QA-RG4) on candidate sha256:9d3d5f62. Low, not mandatory, not blocking on its own."
         }
       ]
     }

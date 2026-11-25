@@ -1,0 +1,49 @@
+port-policy: PostgreSQL listening on port 28420 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+PROBE exit 1
+PROBE output tail: restore: check R7 failed: expected {"verified": 0, "mismatches": 0, "retentionFiles": 2, "owner": "0:0", "otherOwner": 0, "groupOrOtherBits": 0}, got {"verified": 0, "mismatches": 0, "retentionFiles": 2, "owner": "0:0", "otherOwner": 0, "groupOrOtherBits": 1}
+
+PROBE target tables after the run: 351
+PROBE files in the real root: 5
+PROBE R7: {"id":"R7","name":"evidence","actual":{"owner":"0:0","verified":0,"mismatches":0,"otherOwner":0,"retentionFiles":2,"groupOrOtherBits":1},"result":"FAIL","expected":{"owner":"0:0","verified":0,"mismatches":0,"otherOwner":0,"retentionFiles":2,"groupOrOtherBits":0}}
+PROBE real-root modes:
+0:0 700 /
+0:0 755 /retention
+0:0 700 /retention/01a21237-2c3f-7843-b73d-9bba21186a11
+0:0 600 /retention/01a21237-2c3f-7843-b73d-9bba21186a11/manifest.json
+0:0 700 /retention/01a21237-2c3f-7843-b73d-9bba21186a11/tables
+0:0 600 /retention/01a21237-2c3f-7843-b73d-9bba21186a11/tables/processed_message.ndjson
+✖ CS-RG4-P1: restore into a target evidence root that is a symbolic link to an empty 0700 directory (8021.456753ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 20429.803418
+
+✖ failing tests:
+
+test at deploy/scripts/tests/zz-d15-probe.test.mjs:706:1
+✖ CS-RG4-P1: restore into a target evidence root that is a symbolic link to an empty 0700 directory (8021.456753ms)
+  AssertionError [ERR_ASSERTION]: a symlinked evidence root is restored like a directory
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (file:///home/user/My-owns/deploy/scripts/tests/zz-d15-probe.test.mjs:727:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+real	0m21.860s
+user	0m18.209s
+sys	0m3.700s
+exit 1

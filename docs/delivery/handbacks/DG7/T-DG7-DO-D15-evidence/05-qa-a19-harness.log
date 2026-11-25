@@ -1,0 +1,31 @@
+port-policy: PostgreSQL listening on port 28424 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+npm warn Unknown project config "strict-peer-dependencies". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+npm warn Unknown project config "link-workspace-packages". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+ RUN  v3.2.7 /home/user/My-owns
+
+[integration] PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1); database mth_test_mwvz5sm7_b506a928 (server_encoding UTF8); applied 135 migrations to a fresh database
+stdout | tests/qa/integration/a19-backup-restore-drill.test.ts
+A19-TIMINGS {"backup.total":4.061716490999999,"backup.dump":0.684,"backup.config":0.206,"backup.verify":1.33,"backup.evidence":1.247,"backup.snapshot":0.219,"restore.total":8.423,"restore.packageChecks":0.299,"restore.targetChecks":0.132,"restore.database":4.115,"restore.evidence":1.28,"restore.checks":2.594,"check.timeToReady":0.2868891530000037}
+
+ ✓ |integration| tests/qa/integration/a19-backup-restore-drill.test.ts (13 tests) 23925ms
+   ✓ A19 pre-drill: the source installation is not vacuous > the source holds demo records, audit, snapshots, job state and evidence objects to recover  313ms
+   ✓ A19 drill: backup, then restore into a fresh database and an empty evidence store (REQ-S20-019) > backup.sh writes a set with the mth-backup/1 manifest, five timings, and records it audited  4392ms
+   ✓ A19 drill: backup, then restore into a fresh database and an empty evidence store (REQ-S20-019) > restore.sh restores into a fresh database and an empty evidence store, passing R1–R8 with timings  8824ms
+   ✓ A19 drill: backup, then restore into a fresh database and an empty evidence store (REQ-S20-019) > evidence (R7) and readiness (R8): every file downloads from the restored installation with its SHA-256  436ms
+   ✓ A19 drill: backup, then restore into a fresh database and an empty evidence store (REQ-S20-019) > a non-empty target database is refused (exit 2) and left unchanged  863ms
+   ✓ A19 drill: backup, then restore into a fresh database and an empty evidence store (REQ-S20-019) > a non-empty target evidence store is refused (exit 2); nothing is written to the database  520ms
+   ✓ A19 drill: backup, then restore into a fresh database and an empty evidence store (REQ-S20-019) > a changed byte in a set file is refused (exit 2) naming the file; the target stays empty  305ms
+
+ Test Files  1 passed (1)
+      Tests  13 passed (13)
+   Start at  10:22:33
+   Duration  46.92s (transform 9.02s, setup 0ms, collect 17.19s, tests 23.93s, environment 0ms, prepare 92ms)
+
+
+real	0m50.378s
+user	0m36.797s
+sys	0m8.771s
+exit 0

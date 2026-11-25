@@ -1,0 +1,60 @@
+29d8344b9775fe7839d70ae0063c4a01d132f541e024250f3d3b3f1f80ef865a  deploy/scripts/restore.sh
+port-policy: PostgreSQL listening on port 28421 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+✖ T-E15a (F-DG7-1101): a symbolic link to an empty 0700 directory is restored like that directory; R7 passes (8423.341173ms)
+﹣ T-E15b (F-DG7-1101): the default owner is the link target's owner, not the link's (uid 10001 as in Compose) (6.807924ms) # not runnable here: chown to 10001:10001 failed (chown: changing ownership of '/var/tmp/mth-run.2Nuy2E/claude-0/mth-backup-test-hwApXX/t15b-real-evidence': Invalid argument)
+✖ T-E15c (F-DG7-1101): a dangling link or a link to a regular file is refused (exit 2); the database stays empty (4375.212018ms)
+﹣ T-E15d (F-DG7-1101, DO-D14 Q3): without root, another evidence owner is refused before the database is touched (0.489191ms) # not runnable here: the runner is root, which may change owners; the case needs a non-root runner
+ℹ tests 4
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 2
+ℹ todo 0
+ℹ duration_ms 24685.857308
+
+✖ failing tests:
+
+test at deploy/scripts/tests/backup-restore.test.mjs:707:1
+✖ T-E15a (F-DG7-1101): a symbolic link to an empty 0700 directory is restored like that directory; R7 passes (8423.341173ms)
+  AssertionError [ERR_ASSERTION]: restore: check R7 failed: expected {"verified": 0, "mismatches": 0, "retentionFiles": 2, "owner": "0:0", "otherOwner": 0, "groupOrOtherBits": 0}, got {"verified": 0, "mismatches": 0, "retentionFiles": 2, "owner": "0:0", "otherOwner": 0, "groupOrOtherBits": 1}
+  
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (file:///home/user/My-owns/deploy/scripts/tests/backup-restore.test.mjs:718:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at deploy/scripts/tests/backup-restore.test.mjs:760:1
+✖ T-E15c (F-DG7-1101): a dangling link or a link to a regular file is refused (exit 2); the database stays empty (4375.212018ms)
+  AssertionError [ERR_ASSERTION]: mkdir: cannot create directory ‘/var/tmp/mth-run.2Nuy2E/claude-0/mth-backup-test-hwApXX/t15c-dangling-link’: File exists
+  
+  
+  1 !== 2
+  
+      at TestContext.<anonymous> (file:///home/user/My-owns/deploy/scripts/tests/backup-restore.test.mjs:767:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 2,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+real	0m26.078s
+user	0m21.647s
+sys	0m5.190s
+exit 1

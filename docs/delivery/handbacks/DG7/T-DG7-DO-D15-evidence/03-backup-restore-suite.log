@@ -1,0 +1,43 @@
+4dca1e4e8f97016140cdc46d0b223e2cd19452a4e6ee1081dd8b6fa51aafb9a7  deploy/scripts/restore.sh
+c96c2ad67b470162239b4967b2ba4b987236d011ff1a375a0d28b2bba608c273  deploy/scripts/tests/backup-restore.test.mjs
+port-policy: PostgreSQL listening on port 28422 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+✔ T-E1: the set has exactly the ADR-0066 §1 layout, schemaVersion mth-backup/1, every listed SHA-256 matches (15.242575ms)
+✔ T-E2: table-counts.tsv equals the dump's snapshot: a row committed during the dump is in neither (38.590379ms)
+✔ T-E3: config/ holds no secret value; the keys and the *_FILE pointers are kept (1.370517ms)
+✔ T-E4: a changed byte in any set file -> restore exit 2 naming the file; the target stays empty (1932.987903ms)
+✔ T-E5: a manifest from another PostgreSQL major -> exit 2 with the §E.5 line (551.357239ms)
+✔ T-E6: a non-empty target database or evidence store -> exit 2; nothing written (1148.679572ms)
+✔ T-E7: a restore into a fresh database passes R1–R8 and writes restore-report.json with every step's seconds (8740.198244ms)
+✔ T-E8: a failing step records a `failed` set with its reason through backup_set_record() (1355.480369ms)
+✔ T-E9: the backup_set_record() argument has exactly the 19 keys of ADR-0066 §6 (1.23469ms)
+✔ T-E10 (F-DG7-1012): a set taken under umask 022 is owner-only: directories 0700, files 0600 (14.111328ms)
+✔ T-E11 (F-DG7-1012): the Compose sequence (database, a copy-out under umask 022, finish) ends owner-only (3009.530417ms)
+✔ T-E11b (F-DG7-1081): --phase finish refuses a set whose config/ listing is missing or whose config/ changed (2781.823908ms)
+✔ T-E12 (F-DG7-1012): a backup root that is world-writable like /tmp (1777) is refused (exit 2); nothing is written (12.912821ms)
+✔ T-E12 (F-DG7-1012): a backup root that is group-writable (0770) is refused (exit 2); nothing is written (14.092985ms)
+✔ T-E13a (F-DG7-1053): a symbolic link (and a chain of two) to an owner-only directory is accepted (2086.571719ms)
+✔ T-E13b (F-DG7-1053): a symbolic link to a world-writable like /tmp (1777) directory is refused, naming the target (30.143876ms)
+✔ T-E13b (F-DG7-1053): a symbolic link to a group-writable (0770) directory is refused, naming the target (21.833033ms)
+✔ T-E13c (F-DG7-1053): a dangling symbolic link is refused (exit 2) and nothing is created (23.663534ms)
+✔ T-E13d (F-DG7-1053): a symbolic link to a regular file is refused as not a directory (28.708611ms)
+✔ T-E14 (F-DG7-1072/1082): restored evidence belongs to the evidence root's owner, directories 0700, files 0600 (8430.800722ms)
+✔ T-E14b (F-DG7-1082): --evidence-owner must be <uid>:<gid> (exit 2, nothing written) (114.107587ms)
+﹣ T-E14c (F-DG7-1082): as root, the restore hands the evidence to the root's owner (uid 10001 as in Compose) (3.253279ms) # not runnable here: chown to 10001:10001 failed (chown: changing ownership of '/var/tmp/mth-run.2Nuy2E/claude-0/mth-backup-test-8V4Gc1/t14c-evidence': Invalid argument)
+✔ T-E15a (F-DG7-1101): a symbolic link to an empty 0700 directory is restored like that directory; R7 passes (8973.319866ms)
+﹣ T-E15b (F-DG7-1101): the default owner is the link target's owner, not the link's (uid 10001 as in Compose) (3.280134ms) # not runnable here: chown to 10001:10001 failed (chown: changing ownership of '/var/tmp/mth-run.2Nuy2E/claude-0/mth-backup-test-8V4Gc1/t15b-real-evidence': Invalid argument)
+✔ T-E15c (F-DG7-1101): a dangling link or a link to a regular file is refused (exit 2); the database stays empty (1004.836477ms)
+﹣ T-E15d (F-DG7-1101, DO-D14 Q3): without root, another evidence owner is refused before the database is touched (0.455526ms) # not runnable here: the runner is root, which may change owners; the case needs a non-root runner
+ℹ tests 26
+ℹ suites 0
+ℹ pass 23
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 3
+ℹ todo 0
+ℹ duration_ms 52973.611263
+
+real	0m54.382s
+user	0m44.445s
+sys	0m9.948s
+exit 0
