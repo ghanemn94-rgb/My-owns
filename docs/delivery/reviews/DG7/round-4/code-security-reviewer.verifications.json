@@ -1,0 +1,51 @@
+{
+  "verifications": [
+    {
+      "finding_id": "F-DG7-1071",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified by its originating reviewer role (code-security-reviewer, session b527b36d, T-DG7-REV-CS-RG4) on candidate sha256:9d3d5f62c921eb8f07ffb323b57d500a04e0608cbea2ed1ab0ebddec7b625403 (source 2fd69c375). The repair is T-DG7-DO-D14 (devops-engineer, b2864f2ab); I authored none of it.\n\nCode (deploy/scripts/backup.sh):\n- The database phase now writes the config/ listing to the set's own .backup-state/config.sha (l.446-449, through backup_config_listing l.459-462) instead of the per-process $WORK, and hashes it into config_sha256.\n- --phase finish (l.557-564) refuses the set if the listing is missing, if it no longer matches its recorded SHA-256, or if config/ changed since the database phase. It then feeds the listing from .backup-state into the manifest (l.602).\n- .backup-state is still pruned from the manifest's file list (l.567) and removed after success (l.645).\n- xargs -r avoids running sha256sum with no arguments on an empty config/.\n\nBehaviour, re-run on this candidate in a disposable clone (03 log, 21 pass, 1 skipped, 0 fail):\n- T-E11 runs the three-step phased sequence with DATABASE_URL_FILE. It asserts empty stderr in both phases, a non-empty config.files equal to the on-disk config/ listing, config.sha256 equal to the digest of that listing, and .backup-state removed.\n- T-E11b asserts exit 1 and no manifest for a missing listing and for a changed config/.\n\nCompose evidence (orchestrator run compose-backup-rg4c, C5):\n- finish.err holds only Compose progress lines (the drill's noise filter reports 'none');\n- the manifest lists config.files [config/compose.yaml, config/environment.env, config/images.lock.json].\n\nThis was the 'cat: …/config.sha' line and the empty config.files I reproduced in round 3. Both are gone.",
+      "evidence": [
+        "deploy/scripts/backup.sh",
+        "deploy/scripts/tests/backup-restore.test.mjs",
+        "docs/delivery/test-evidence/DG7/code-security/round-4/03-backup-restore-tests.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-4/02-round4-diff.log",
+        "docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg4c/02-compose-backup-drill.log",
+        "docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg4c/02-compose-backup-drill.d/finish.err"
+      ]
+    },
+    {
+      "finding_id": "F-DG7-1072",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified by its originating reviewer role (code-security-reviewer, session b527b36d, T-DG7-REV-CS-RG4) on candidate sha256:9d3d5f62 (source 2fd69c375). The repairs are T-DG7-DO-D14 (devops-engineer) and the orchestrator's drill edits disclosed in D-285; I authored none of it.\n\nThe finding said that the only Compose A19 drill moved 0 evidence objects and 0 jobs, so the DAC_READ_SEARCH copy-out read path and the evidence and job legs of the Compose restore were undemonstrated, and that D-284 did not disclose this.\n\nDrill script (deploy/scripts/drill/compose-backup-drill.sh):\n- C2b uploads 2 synthetic files through a loopback-only one-off dev-auth API of the app image (uid 10001, cap_drop ALL) and queues 1 pg-boss job on a queue no worker consumes.\n- C4 fails on fewer than 2 distinct files copied out.\n- C5 fails on stderr noise, an empty config.files, too few objects or no created job.\n- C9 no longer chowns. It only verifies: R6 and R7, then reads and hashes every object as uid 10001 in the app image, diffs (SHA-256, path) against the source listing, requires 10001:10001 with 0700/0600, and checks that the job is still 'created'.\n- backup-compose-layout.vitest.mjs pins 'no chown in the drill code' and these checks (14/14 in my re-run, 04b log).\n\nEvidence, run compose-backup-rg4c (exit 0, C0-C11 PASS):\n- C2b stored 2 objects, all 10001:10001 0600, directories 0700.\n- C4, run as root with only DAC_READ_SEARCH, copied 2 objects (2 distinct files, 146 bytes) out of the uid-10001 0700 store. That is the read path the finding said was untested.\n- C8 restore.sh passed R1-R8. R7 = {verified 2, mismatches 0, owner 10001:10001, otherOwner 0, groupOrOtherBits 0}, and R6 carried the created jobs.\n- C9: the target listing equals the source's (same 2 files, same SHA-256), and 1 queued synthetic job remains.\n- C10: GET /readyz returned 200 ready over HTTP.\n- restore-report.json in the evidence matches.\n\nDisclosure: D-285 now records the two failed runs, rg4 and rg4b (both C2b 'no transformation readable by the signed-in user', caused by the drill's own seeding and explained), and the fix.\n\nProvenance caveats, which I judged acceptable:\n(1) run.txt of rg4c names source_commit 389482803, but the run executed the smoke.mjs insertion that was committed only later, in 9b3547113. That is the only product-path difference to the candidate: git diff 389482803..2fd69c375 outside docs/delivery is exactly those 5 drill lines, and the log shows the smoke step running. The image therefore has the candidate's content.\n(2) rg4 and rg4b both name b2864f2ab, although rg4b already carried the uncommitted seeding change.\nNeither changes the result. The restore leg for a symlinked target root is a separate defect, raised as F-DG7-1101; it does not affect the Compose volume path this finding covered.",
+      "evidence": [
+        "deploy/scripts/drill/compose-backup-drill.sh",
+        "deploy/scripts/restore.sh",
+        "deploy/scripts/tests/backup-compose-layout.vitest.mjs",
+        "docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg4c/02-compose-backup-drill.log",
+        "docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg4c/run.txt",
+        "docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg4c/02-compose-backup-drill.d/restore/restore-report.json",
+        "docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg4c/02-compose-backup-drill.d/target-evidence.txt",
+        "docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg4/02-compose-backup-drill.log",
+        "docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg4b/02-compose-backup-drill.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-4/04b-unit-node-rerun.log",
+        "docs/delivery/decisions.md"
+      ]
+    },
+    {
+      "finding_id": "F-DG7-1073",
+      "result": "PASS",
+      "status_after": "CLOSED_VERIFIED",
+      "note": "Verified by its originating reviewer role (code-security-reviewer, session b527b36d, T-DG7-REV-CS-RG4) on candidate sha256:9d3d5f62 (source 2fd69c375). The repair is T-DG7-SA-ADR73 (solution-architect) plus D-285 (orchestrator); I authored none of it.\n\nThe finding had three parts, and each is now true.\n\n(1) ADR-0066 Amendment 2 (2026-11-24) records DO-D13 as built:\n- A2.1: the /mth/deploy bind layout of the backup service and the preflight. I checked these against compose.yaml and backup.sh.\n- A2.2: step 2 with --user 0:0, --cap-add DAC_READ_SEARCH and DATABASE_URL_FILE. This matches drill C4 and backup-restore.md §3.2 verbatim.\n- A2.3: the copy-out URL rule.\n- The replaced A1.4 bullets and residual 9 carry pointers.\n\n(2) DO-D13 Q2 is answered in A2.4: the least-privilege decision, with six alternatives judged. The open_by_handle_at ('shocker') residual is disclosed as residual 10, and the ADR says plainly that its facts were not re-checked online. That is honest.\n\n(3) D-285 now exists in decisions.md and states that it supplies the citation used by the secret-allowlist.json history entry (l.362).\n\nThe prettier check of the allow-list and the secret-scan payload and history scans exit 0 (06 log; orchestrator prefreeze-rg4c).\n\nResidual, not part of this finding: Amendment 2 (A2.7) itself requires a further amendment once DO-D14 merges, and none was written. That is the same class of drift for the newer change, raised separately as F-DG7-1102 (Low).",
+      "evidence": [
+        "docs/architecture/adr/ADR-0066-p7-backup-restore-backup-set-manifest-restore-checks-drill.md",
+        "docs/delivery/decisions.md",
+        "tools/release/secret-allowlist.json",
+        "docs/handover/backup-restore.md",
+        "docs/delivery/test-evidence/DG7/code-security/round-4/06-scans.log",
+        "docs/delivery/test-evidence/DG7/orchestrator/prefreeze-rg4c/checks.log"
+      ]
+    }
+  ]
+}

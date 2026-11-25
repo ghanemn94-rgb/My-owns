@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "F-DG7-1101",
+      "stage_id": "DG7",
+      "requirement": "REQ-S19-012",
+      "severity": "Medium",
+      "mandatory_violation": false,
+      "title": "restore.sh (DO-D14) fails R7 for a target evidence root given as a symbolic link, after it has already restored the database, and takes the default evidence owner from the link instead of its target; this is a regression from round 3",
+      "reproduction": "On candidate sha256:9d3d5f62 (source 2fd69c3753ffb1f96aaf787f8526daa0bf59abe7).\n\nCode, deploy/scripts/restore.sh:\n- l.137 accepts an existing symlinked root, because `[ -d ]` and `ls -A` follow the link.\n- l.139 takes the default owner with `stat -c '%u:%g' \"$store\"`. Without -L, stat reports the LINK's owner, not the directory's.\n- l.175-176 `chown -R` and l.181 `find \"$store\" -type d|f -exec chmod`. With their default -P, they do not descend through a symlinked command-line argument.\n- l.238-239 count `otherOwner` and `groupOrOtherBits` with `find \"$store\"` (-P). That visits only the link itself, whose mode is always 0777.\n\nBehavioural reproduction (05 probe, run in a disposable clone):\n- A copy of deploy/scripts/tests/backup-restore.test.mjs plus one test (05-probe-symlink-evidence-root.test.mjs.txt).\n- The test restores the suite's own backup set into a fresh database, with --target-evidence-path set to a symbolic link to an existing, empty 0700 directory.\n- Command: `QA_PG_PORT=32420 tests/qa/support/with-pg.sh node --test --test-name-pattern CS-RG4-P1 <copy>`.\n\nResult:\n- restore.sh exits 1 with `restore: check R7 failed: expected {... \"groupOrOtherBits\": 0}, got {... \"groupOrOtherBits\": 1}`.\n- By then the target database already holds 351 tables (step 4 committed).\n- The restored evidence under the real directory was never normalised: retention/ is still 0755.\n\nControl, same probe and same set, with restore.sh of round-3 source 3e8f5bce (before DO-D14): exit 0, all checks passed, R7 PASS (05b log). So DO-D14 introduced the failure.",
+      "expected": "A target evidence root given as a symbolic link to an empty directory behaves like that directory. backup.sh judges a symlinked backup root by its resolved target (DO-D12, F-DG7-1053, backup-restore.md §3.3), and the API's filesystem store and backup.sh's EVIDENCE_STORAGE_PATH check both accept a symlinked root. The fix should resolve the root once, for example `store=\"$(realpath -e \"$store\")\"` when it exists, or use stat -L, chown -R -H and find -H. Then:\n- the default owner is the target directory's owner;\n- chown and chmod reach the restored files;\n- R7 counts the real tree.\n\nA precondition the script cannot meet should be refused before step 4, while the target is still empty. The same applies to the late failure that DO-D14 handback Q3 already names: a non-root runner whose account is not the store's owner.",
+      "actual": "Any restore into a symlinked evidence root now fails at R7. It fails after pg_restore has committed the database and the evidence has been copied, so the 'fresh target only' target is left half-restored and must be rebuilt. The error message gives no hint that the link is the cause. If the link and its target have different owners (for example, a root-owned link to a directory of the API's account), the default owner would also be wrong (the link's), which is the F-DG7-1082 failure mode again.\n\nThe documented Compose path (a named volume, drill rg4c) is not affected. A non-Compose restore with a symlinked evidence path, the case backup-restore.md §5 shows with `--target-evidence-path /var/lib/mth/evidence`, is affected.\n\nNo test covers a symlinked target root (T-E14 and T-E14c use plain directories). The effect is bounded: it fails closed, loses no data and the backup set stays intact. That is why the severity is Medium and not High.",
+      "evidence": [
+        "deploy/scripts/restore.sh",
+        "docs/handover/backup-restore.md",
+        "docs/delivery/test-evidence/DG7/code-security/round-4/05-probe-symlink-evidence-root.log",
+        "docs/delivery/test-evidence/DG7/code-security/round-4/05-probe-symlink-evidence-root.test.mjs.txt",
+        "docs/delivery/test-evidence/DG7/code-security/round-4/05b-probe-symlink-control-round3-restore.log",
+        "docs/delivery/handbacks/DG7/T-DG7-DO-D14-devops-engineer.md"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG7/round-4/code-security-reviewer.json",
+      "owner": "devops-engineer",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-25T09:30:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG7 round 4 (T-DG7-REV-CS-RG4, session b527b36d) on candidate sha256:9d3d5f62. Reproduced on a disposable PostgreSQL 16; the round-3 restore.sh control passes the same case."
+        }
+      ]
+    },
+    {
+      "id": "F-DG7-1102",
+      "stage_id": "DG7",
+      "requirement": "REQ-S19-012",
+      "severity": "Low",
+      "mandatory_violation": false,
+      "title": "ADR-0066 and backup-restore.md §8 were not updated for DO-D14 as built or for the passing rg4c Compose run. The ADR still calls the DO-D14 behaviour 'open findings, not behaviour' and describes the old R7",
+      "reproduction": "On candidate sha256:9d3d5f62. ADR-0066:\n- §7 step 5 (l.109) and the §8 R7 row (l.124) still describe R7 without the owner, otherOwner and groupOrOtherBits keys, and without the hand-over of the restored evidence to the evidence root's owner (restore.sh l.139-141, 175-185, 238-240; --evidence-owner).\n- Amendment 2 A2.7 says: 'When DO-D14 is merged, the ownership rule as built ... must be recorded by a further amendment of §7. The same amendment should restate A2.6 from DO-D14's drill log. Until then, items 1 to 3 are open findings, not behaviour.'\n- DO-D14 is merged (b2864f2ab), but there is no Amendment 3.\n- A2.6 lists only rg3 and rg3b. Residual 9 (A2.8) still says the evidence and job-state legs and the DAC_READ_SEARCH read path 'moved zero items'.\n- The .backup-state config listing and the new finish-phase refusals are not recorded either.\n\nbackup-restore.md §8 (l.227) still says: 'The extended drill above has not been run ... Its result is recorded only when a run on a host with Docker exists.' Run compose-backup-rg4c exists (C0-C11 PASS, 2 objects, 1 job, owner 10001), and the guide does not record it.\n\nBoth gaps were flagged by the implementers themselves and not taken up: DO-D14 handback §4 gap 4 and §5 Q1/Q2, and SA-ADR73 handback §4 gap 3 and Q2. D-285 does not dispose of them.",
+      "expected": "A dated ADR-0066 amendment records the DO-D14 rules as built: the .backup-state listing and its finish-phase checks, the ownership rule (default owner, --evidence-owner, 0700/0600), R7's extra keys, and A2.6/A2.8 restated from rg4c. backup-restore.md §8 records the rg4c run, or the guide says where its result is. This is the same 'ADR claims enumerated and exactly true' rule that closed F-DG7-1041 and F-DG7-1073.",
+      "actual": "The binding design record (amendments win) calls the shipped restore behaviour 'not behaviour' and states the old R7 contract. The IT-facing guide says the extended drill has no result. Code, tests and the drill evidence are correct; this is documentation drift only, with no behavioural effect.",
+      "evidence": [
+        "docs/architecture/adr/ADR-0066-p7-backup-restore-backup-set-manifest-restore-checks-drill.md",
+        "docs/handover/backup-restore.md",
+        "deploy/scripts/restore.sh",
+        "docs/delivery/handbacks/DG7/T-DG7-DO-D14-devops-engineer.md",
+        "docs/delivery/handbacks/DG7/T-DG7-SA-ADR73-solution-architect.md",
+        "docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg4c/02-compose-backup-drill.log"
+      ],
+      "reported_by": "code-security-reviewer",
+      "reported_in": "docs/delivery/reviews/DG7/round-4/code-security-reviewer.json",
+      "owner": "solution-architect",
+      "status": "OPEN",
+      "history": [
+        {
+          "at": "2026-11-25T09:30:00Z",
+          "status": "OPEN",
+          "note": "Raised by code-security-reviewer in DG7 round 4 (T-DG7-REV-CS-RG4, session b527b36d) on candidate sha256:9d3d5f62. The backup-restore.md §8 sentence is the devops-engineer's to update. The ADR amendment is the solution-architect's."
+        }
+      ]
+    }
+  ]
+}
