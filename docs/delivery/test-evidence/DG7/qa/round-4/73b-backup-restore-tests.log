@@ -1,0 +1,35 @@
+### 73b-backup-restore-tests start clone /var/tmp/mth-run.JaMlfV/claude-0/rv 2026-11-25T08:52:45Z node v24.21.0 HEAD 2fd69c3753ffb1f96aaf787f8526daa0bf59abe7 LANG=unset LC_ALL=unset free=4210MB
+### $ bash tests/qa/support/with-pg.sh node --test deploy/scripts/tests/backup-restore.test.mjs
+port-policy: PostgreSQL listening on port 32544 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+✔ T-E1: the set has exactly the ADR-0066 §1 layout, schemaVersion mth-backup/1, every listed SHA-256 matches (14.244693ms)
+✔ T-E2: table-counts.tsv equals the dump's snapshot: a row committed during the dump is in neither (68.208558ms)
+✔ T-E3: config/ holds no secret value; the keys and the *_FILE pointers are kept (1.018943ms)
+✔ T-E4: a changed byte in any set file -> restore exit 2 naming the file; the target stays empty (5950.395408ms)
+✔ T-E5: a manifest from another PostgreSQL major -> exit 2 with the §E.5 line (1342.510798ms)
+✔ T-E6: a non-empty target database or evidence store -> exit 2; nothing written (2411.232957ms)
+✔ T-E7: a restore into a fresh database passes R1–R8 and writes restore-report.json with every step's seconds (22648.047829ms)
+✔ T-E8: a failing step records a `failed` set with its reason through backup_set_record() (3047.793175ms)
+✔ T-E9: the backup_set_record() argument has exactly the 19 keys of ADR-0066 §6 (1.216149ms)
+✔ T-E10 (F-DG7-1012): a set taken under umask 022 is owner-only: directories 0700, files 0600 (5.029889ms)
+✔ T-E11 (F-DG7-1012): the Compose sequence (database, a copy-out under umask 022, finish) ends owner-only (6598.744401ms)
+✔ T-E11b (F-DG7-1081): --phase finish refuses a set whose config/ listing is missing or whose config/ changed (6436.854393ms)
+✔ T-E12 (F-DG7-1012): a backup root that is world-writable like /tmp (1777) is refused (exit 2); nothing is written (30.432991ms)
+✔ T-E12 (F-DG7-1012): a backup root that is group-writable (0770) is refused (exit 2); nothing is written (35.598376ms)
+✔ T-E13a (F-DG7-1053): a symbolic link (and a chain of two) to an owner-only directory is accepted (4291.008188ms)
+✔ T-E13b (F-DG7-1053): a symbolic link to a world-writable like /tmp (1777) directory is refused, naming the target (37.704601ms)
+✔ T-E13b (F-DG7-1053): a symbolic link to a group-writable (0770) directory is refused, naming the target (44.862943ms)
+✔ T-E13c (F-DG7-1053): a dangling symbolic link is refused (exit 2) and nothing is created (30.537428ms)
+✔ T-E13d (F-DG7-1053): a symbolic link to a regular file is refused as not a directory (25.822445ms)
+✔ T-E14 (F-DG7-1072/1082): restored evidence belongs to the evidence root's owner, directories 0700, files 0600 (23588.992435ms)
+✔ T-E14b (F-DG7-1082): --evidence-owner must be <uid>:<gid> (exit 2, nothing written) (213.822515ms)
+﹣ T-E14c (F-DG7-1082): as root, the restore hands the evidence to the root's owner (uid 10001 as in Compose) (6.328186ms) # not runnable here: chown to 10001:10001 failed (chown: changing ownership of '/var/tmp/mth-run.JaMlfV/claude-0/mth-backup-test-KRK4N8/t14c-evidence': Invalid argument)
+ℹ tests 22
+ℹ suites 0
+ℹ pass 21
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 1
+ℹ todo 0
+ℹ duration_ms 124773.110988
+### 73b-backup-restore-tests end 2026-11-25T08:54:56Z exit=0 free=3953MB

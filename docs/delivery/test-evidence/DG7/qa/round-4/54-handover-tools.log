@@ -1,0 +1,28 @@
+### 54-handover-tools start clone /var/tmp/mth-run.JaMlfV/claude-0/rv 2026-11-25T08:57:05Z node v24.21.0 HEAD 2fd69c3753ffb1f96aaf787f8526daa0bf59abe7 LANG=unset LC_ALL=unset free=3782MB
+### $ bash -c echo "## claims-scan"; node tools/release/claims-scan.mjs 2>&1 | tail -3; echo "exit=${PIPESTATUS[0]}"; echo "## check-handover (strict, the rg4 report)"; MTH_STRICT_HANDOVER=1 node tools/release/check-handover.mjs --protocol-audit /home/user/My-owns/docs/delivery/test-evidence/DG7/orchestrator/protocol-audit/protocol-audit-rg4.json 2>&1 | tail -14; echo "exit=${PIPESTATUS[0]}"; echo "## release-notes --check"; node tools/release/release-notes.mjs --csv docs/delivery/requirements.csv --deps docs/handover/external-dependencies.json --provisional apps/web/src/i18n --out docs/handover/release-notes.md --check 2>&1 | tail -3; echo "exit=${PIPESTATUS[0]}"; echo "## known-limitations --check"; node tools/release/known-limitations.mjs --protocol-audit /home/user/My-owns/docs/delivery/test-evidence/DG7/orchestrator/protocol-audit/protocol-audit-rg4.json --check 2>&1 | tail -3; echo "exit=${PIPESTATUS[0]}"
+## claims-scan
+claims-scan: PASS (891 files; D 141, U 750; negated 28; allowed 19)
+exit=0
+## check-handover (strict, the rg4 report)
+  warning: docs/handover/release-notes.md l.110: the Arabic section 'هوية الإصدار' lacks the H.3 provisional line under its heading (§2.3)
+  warning: docs/handover/release-notes.md l.116: the Arabic section 'المتطلبات حسب الحالة' lacks the H.3 provisional line under its heading (§2.3)
+  warning: docs/handover/release-notes.md l.125: the Arabic section 'البنود غير المكتملة وعوائق الإصدار' lacks the H.3 provisional line under its heading (§2.3)
+  warning: docs/handover/release-notes.md l.129: the Arabic section 'بنود تكتمل بعد البوابة الهندسية' lacks the H.3 provisional line under its heading (§2.3)
+  warning: docs/handover/release-notes.md l.133: the Arabic section 'تبعيات الإعداد الخارجية المتبقية' lacks the H.3 provisional line under its heading (§2.3)
+  warning: docs/handover/release-notes.md l.154: the Arabic section 'النصوص العربية المؤقتة' lacks the H.3 provisional line under its heading (§2.3)
+  warning: docs/handover/upgrades.md l.227: the Arabic section '6. Arabic summary (provisional, D-243 Q7)' lacks the H.3 provisional line under its heading (§2.3)
+check-handover: security-links: PASS
+check-handover: guides: PASS
+check-handover: generated: FAIL
+  FAIL: known-limitations: FAIL: docs/handover/known-limitations.md differ from the generated content; run node tools/release/known-limitations.mjs --protocol-audit <report> --write
+  note: role-matrix.mjs: role-matrix: PASS (/var/tmp/mth-run.JaMlfV/claude-0/rv/docs/handover/role-matrix.md is current)
+  note: automation-jobs.mjs: automation-jobs: PASS (the job table of /var/tmp/mth-run.JaMlfV/claude-0/rv/docs/handover/automation-operations.md is current)
+check-handover: FAIL (index PASS, deployment PASS, summaries PASS, security-links PASS, guides PASS, generated FAIL; root .)
+exit=1
+## release-notes --check
+release-notes: 0 unfinished item(s), 23 later clause(s); docs/handover/release-notes.md is up to date
+exit=0
+## known-limitations --check
+known-limitations: FAIL: docs/handover/known-limitations.md differ from the generated content; run node tools/release/known-limitations.mjs --protocol-audit <report> --write
+exit=1
+### 54-handover-tools end 2026-11-25T08:57:22Z exit=0 free=3831MB

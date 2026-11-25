@@ -1,0 +1,32 @@
+git rev-parse HEAD: 08a9eb4188c3c5a16e4e01b416f3ed96c7829196
+git log 2fd69c37..HEAD:
+08a9eb418 DG7 round 4: freeze candidate 9d3d5f62 and assignments
+$ node tools/gates/candidate.mjs --stage DG7 --ref 2fd69c3753ffb1f96aaf787f8526daa0bf59abe7
+{"stage":"DG7","source":"2fd69c3753ffb1f96aaf787f8526daa0bf59abe7","candidate_id":"sha256:9d3d5f62c921eb8f07ffb323b57d500a04e0608cbea2ed1ab0ebddec7b625403","files":3160}
+exit=0
+$ node tools/gates/candidate.mjs --stage DG7 --ref 08a9eb418
+{"stage":"DG7","source":"08a9eb418","candidate_id":"sha256:9d3d5f62c921eb8f07ffb323b57d500a04e0608cbea2ed1ab0ebddec7b625403","files":3160}
+exit=0
+$ node tools/gates/candidate.mjs --stage DG7 --diff
+{
+  "frozen": "sha256:9d3d5f62c921eb8f07ffb323b57d500a04e0608cbea2ed1ab0ebddec7b625403",
+  "working_tree": "sha256:9d3d5f62c921eb8f07ffb323b57d500a04e0608cbea2ed1ab0ebddec7b625403",
+  "matches": true,
+  "added": [],
+  "removed": [],
+  "changed": []
+}
+exit=0
+manifest entries: 3160
+product delta ef91b97d7..2fd69c37 outside delivery records:
+ deploy/scripts/backup.sh                           |  23 ++-
+ deploy/scripts/drill/compose-backup-drill.sh       | 182 ++++++++++++++++++---
+ deploy/scripts/restore.sh                          |  39 ++++-
+ .../scripts/tests/backup-compose-layout.vitest.mjs |  28 ++++
+ deploy/scripts/tests/backup-restore.test.mjs       | 120 +++++++++++++-
+ ...ore-backup-set-manifest-restore-checks-drill.md | 143 +++++++++++++++-
+ docs/handover/backup-restore.md                    |  30 +++-
+ 7 files changed, 522 insertions(+), 43 deletions(-)
+rg4c drilled commit 389482803 vs candidate source, outside delivery records:
+ deploy/scripts/drill/compose-backup-drill.sh | 5 +++++
+ 1 file changed, 5 insertions(+)

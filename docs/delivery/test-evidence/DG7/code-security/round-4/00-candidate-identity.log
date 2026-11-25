@@ -1,0 +1,72 @@
+## git rev-parse HEAD
+08a9eb4188c3c5a16e4e01b416f3ed96c7829196
+## git log 2fd69c37..HEAD
+08a9eb418 DG7 round 4: freeze candidate 9d3d5f62 and assignments
+## diff --name-status
+A	docs/delivery/assignments/DG7/round-4/code-security-reviewer.md
+A	docs/delivery/assignments/DG7/round-4/domain-reviewer.md
+A	docs/delivery/assignments/DG7/round-4/qa-verifier.md
+A	docs/delivery/candidates/DG7/9d3d5f62c921eb8f.manifest.json
+M	docs/delivery/stages.json
+A	docs/delivery/test-evidence/DG7/orchestrator/protocol-audit/protocol-audit-rg4.json
+## candidate working tree
+{"stage":"DG7","source":"working-tree","candidate_id":"sha256:9d3d5f62c921eb8f07ffb323b57d500a04e0608cbea2ed1ab0ebddec7b625403","files":3160}
+exit 0
+## --ref source_commit
+{"stage":"DG7","source":"2fd69c3753ffb1f96aaf787f8526daa0bf59abe7","candidate_id":"sha256:9d3d5f62c921eb8f07ffb323b57d500a04e0608cbea2ed1ab0ebddec7b625403","files":3160}
+exit 0
+## --ref HEAD
+{"stage":"DG7","source":"HEAD","candidate_id":"sha256:9d3d5f62c921eb8f07ffb323b57d500a04e0608cbea2ed1ab0ebddec7b625403","files":3160}
+exit 0
+## --diff
+{
+  "frozen": "sha256:9d3d5f62c921eb8f07ffb323b57d500a04e0608cbea2ed1ab0ebddec7b625403",
+  "working_tree": "sha256:9d3d5f62c921eb8f07ffb323b57d500a04e0608cbea2ed1ab0ebddec7b625403",
+  "matches": true,
+  "added": [],
+  "removed": [],
+  "changed": []
+}
+
+exit 0
+## manifest entries
+[
+  'stage_id',
+  'candidate_id',
+  'hash_algorithm',
+  'source_commit',
+  'frozen_at',
+  'spec',
+  'meta_excluded',
+  'entries'
+] 3160 sha256:9d3d5f62c921eb8f07ffb323b57d500a04e0608cbea2ed1ab0ebddec7b625403
+9:export const META_EXCLUDES = [
+10-  "docs/delivery/reviews/**",
+11-  "docs/delivery/gates/**",
+12-  "docs/delivery/test-evidence/**",
+13-  "docs/delivery/runs/**",
+14-  "docs/delivery/candidates/**",
+15-  "docs/delivery/handbacks/**",
+16-  "docs/delivery/assignments/**",
+17-  "docs/delivery/findings.json",
+18-  "docs/delivery/progress.md",
+19-  "docs/delivery/stages.json",
+20-];
+21-
+22-// The only candidate spec the gates accept (decision D-005). Narrowing it requires a reviewed change to this file.
+23-export const APPROVED_SPEC = { include: ["**"], exclude: ["trading_agent/**"] };
+24-
+--
+68:  const exclude = [...(spec.exclude || []), ...META_EXCLUDES];
+69-  return paths.filter((p) => matchesAny(p, include) && !matchesAny(p, exclude)).sort();
+70-}
+71-
+72-/**
+73- * A transient mount stub of a concurrently running agent's OS sandbox (F-DG0-146, F-DG0-236): bubblewrap creates an
+74- * empty, read-only (0444) regular file where it mounts over a denied path that does not exist, and removes nothing
+75- * visible afterwards until the command ends. Such a file is untracked, zero-length and unwritable. It is skipped by the
+76- * working-tree manifest only: a frozen candidate always comes from committed content (manifestFromRef), so skipping an
+77- * untracked empty file can never change what is frozen or approved.
+78- */
+79-function isSandboxStub(st, tracked) {
+80-  return !tracked && st.isFile() && st.size === 0 && (st.mode & 0o222) === 0;

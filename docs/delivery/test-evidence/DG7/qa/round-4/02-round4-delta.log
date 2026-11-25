@@ -1,0 +1,26 @@
+# round-3 source 3e8f5bce2 -> round-4 source 2fd69c375 (records and evidence excluded)
+2fd69c375 DG7 round 4: pre-freeze evidence (rg4c)
+9b3547113 DG7: Compose drill fix (smoke first), rg4/rg4b/rg4c evidence, D-285
+389482803 DG7: compose drill seeds demo data without AUTH_MODE=dev (orchestrator repair after rg4 C2b failure)
+b2864f2ab DG7 repairs: DO-D14 (phased manifest, Compose restore ownership, evidence drill) and SA-ADR73 (ADR-0066 amendment)
+ef91b97d7 DG7 round 3: import findings
+471129ead DG7 round 3: reviewer evidence and records
+a4df4fa21 run: DG7-T-DG7-REV-QA-RG3-qa-verifier-20261124T080848Z-8ee644b7 (review evidence, auto-committed by run-agent.sh)
+b4cdf4b78 run: DG7-T-DG7-REV-CS-RG3-code-security-reviewer-20261124T080848Z-5764bad1 (review evidence, auto-committed by run-agent.sh)
+20452aed8 run: DG7-T-DG7-REV-DOM-RG3-domain-reviewer-20261124T080848Z-358ba01f (review evidence, auto-committed by run-agent.sh)
+557a95133 DG7 re-gate round 3: freeze sha256:cf1fb7d5, assignments, REVIEWING
+## candidate files changed (candidate.mjs --diff in the clone, see 00): backup.sh, compose-backup-drill.sh, restore.sh, backup-compose-layout.vitest.mjs, backup-restore.test.mjs, ADR-0066, decisions.md, backup-restore.md
+ deploy/scripts/backup.sh                           |  23 +-
+ deploy/scripts/drill/compose-backup-drill.sh       | 182 +++++++--
+ deploy/scripts/restore.sh                          |  39 +-
+ .../scripts/tests/backup-compose-layout.vitest.mjs |  28 ++
+ deploy/scripts/tests/backup-restore.test.mjs       | 120 +++++-
+ ...ore-backup-set-manifest-restore-checks-drill.md | 143 ++++++-
+ docs/delivery/decisions.md                         |   1 +
+ docs/delivery/findings.json                        | 418 +++++++++++++++++++--
+ docs/handover/backup-restore.md                    |  30 +-
+ 9 files changed, 919 insertions(+), 65 deletions(-)
+## the orchestrator's rg4c Compose run: recorded HEAD 389482803; candidate vs that commit (records excluded):
+ deploy/scripts/drill/compose-backup-drill.sh | 5 +++++
+ docs/delivery/decisions.md                   | 1 +
+ 2 files changed, 6 insertions(+)

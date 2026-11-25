@@ -1,0 +1,40 @@
+## known-limitations --check with protocol-audit-rg3.json
+known-limitations: PASS (docs/handover/known-limitations.md and docs/handover/external-dependencies.json are current)
+exit=0
+## known-limitations --check with protocol-audit-rg4.json
+known-limitations: FAIL: docs/handover/known-limitations.md differ from the generated content; run node tools/release/known-limitations.mjs --protocol-audit <report> --write
+exit=1
+## my own report (55-protocol-audit.json)
+known-limitations: FAIL: docs/handover/known-limitations.md differ from the generated content; run node tools/release/known-limitations.mjs --protocol-audit <report> --write
+exit=1
+## regenerate from rg4 in the disposable clone and diff against the candidate
+known-limitations: wrote docs/handover/known-limitations.md and docs/handover/external-dependencies.json (11 dependencies; report head 2fd69c3753ffb1f96aaf787f8526daa0bf59abe7)
+ docs/handover/known-limitations.md | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+diff --git a/docs/handover/known-limitations.md b/docs/handover/known-limitations.md
+index 740b6d0f2..5593941cd 100644
+--- a/docs/handover/known-limitations.md
++++ b/docs/handover/known-limitations.md
+@@ -38,7 +38,7 @@ Sign-in has been tested only with a synthetic identity provider. Connecting the
+ ## 2. Protocol-audit disclosure {#protocol-audit}
+ 
+ <!-- generated:protocol-audit begin -->
+-Report: `tools/release/protocol-audit.mjs` 1.0.0, repository head `ea51148120426af6cbb5a557d4568152e7a8787b`, SHA-256 `0215b172568324fdb3feba00e2e9519c177af6376f7b94272bebdc4b8fecdc7d`, stages DG0, DG1, DG2, DG3, DG4, DG5, DG6, DG7.
++Report: `tools/release/protocol-audit.mjs` 1.0.0, repository head `2fd69c3753ffb1f96aaf787f8526daa0bf59abe7`, SHA-256 `73efc3952ba59ca1ec1aa73a285085690708b2a9c3f84b0397faeb4d97cc7662`, stages DG0, DG1, DG2, DG3, DG4, DG5, DG6, DG7.
+ 
+ The delivery records of gates DG0–DG6 contain the historic protocol observations listed below, found by the protocol audit. None changed product behaviour. They are disclosed here, and no gate was reopened (decision D-249).
+ 
+restored: 0 changed
+## check-handover (strict) with protocol-audit-rg3.json (the report known-limitations.md names: head ea5114812, SHA-256 0215b172…)
+0215b172568324fdb3feba00e2e9519c177af6376f7b94272bebdc4b8fecdc7d
+check-handover: guides: PASS
+check-handover: generated: PASS
+  note: role-matrix.mjs: role-matrix: PASS (/var/tmp/mth-run.JaMlfV/claude-0/rv/docs/handover/role-matrix.md is current)
+  note: automation-jobs.mjs: automation-jobs: PASS (the job table of /var/tmp/mth-run.JaMlfV/claude-0/rv/docs/handover/automation-operations.md is current)
+  note: known-limitations: PASS (docs/handover/known-limitations.md and docs/handover/external-dependencies.json are current)
+check-handover: PASS (index PASS, deployment PASS, summaries PASS, security-links PASS, guides PASS, generated PASS; root .)
+exit=0
+## rg3 vs rg4 report: per-check results and hits
+rg3 ea5114812 {'checks': 65, 'pass': 36, 'hit': 29, 'blocked': 0, 'hits': 279}
+rg4 2fd69c375 {'checks': 65, 'pass': 36, 'hit': 29, 'blocked': 0, 'hits': 279}
+entries with different hits: [('C5', 'DG7')]

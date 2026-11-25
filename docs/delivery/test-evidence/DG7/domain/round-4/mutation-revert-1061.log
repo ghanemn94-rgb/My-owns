@@ -1,0 +1,50 @@
+port-policy: PostgreSQL listening on port 32312 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+✔ T-E1: the set has exactly the ADR-0066 §1 layout, schemaVersion mth-backup/1, every listed SHA-256 matches (16.561512ms)
+✖ T-E11 (F-DG7-1012): the Compose sequence (database, a copy-out under umask 022, finish) ends owner-only (4099.049617ms)
+✖ T-E11b (F-DG7-1081): --phase finish refuses a set whose config/ listing is missing or whose config/ changed (1393.024553ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 1
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 21268.706411
+
+✖ failing tests:
+
+test at deploy/scripts/tests/backup-restore.test.mjs:445:1
+✖ T-E11 (F-DG7-1012): the Compose sequence (database, a copy-out under umask 022, finish) ends owner-only (4099.049617ms)
+  AssertionError [ERR_ASSERTION]: stderr of --phase finish
+  + actual - expected
+  
+  + 'cat: /var/tmp/mth-run.5TylwX/claude-0/mth-backup-test-GiYOH2/mth-backup.Ztdmf5/config.sha: No such file or directory\n'
+  - ''
+  
+      at TestContext.<anonymous> (file:///var/tmp/mth-run.5TylwX/claude-0/c/deploy/scripts/tests/backup-restore.test.mjs:494:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'cat: /var/tmp/mth-run.5TylwX/claude-0/mth-backup-test-GiYOH2/mth-backup.Ztdmf5/config.sha: No such file or directory\n',
+    expected: '',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at deploy/scripts/tests/backup-restore.test.mjs:511:1
+✖ T-E11b (F-DG7-1081): --phase finish refuses a set whose config/ listing is missing or whose config/ changed (1393.024553ms)
+  Error: ENOENT: no such file or directory, lstat '/var/tmp/mth-run.5TylwX/claude-0/mth-backup-test-GiYOH2/backups/test-do-d14-nolisting/.backup-state/config.sha'
+      at rmSync (node:fs:1281:16)
+      at file:///var/tmp/mth-run.5TylwX/claude-0/c/deploy/scripts/tests/backup-restore.test.mjs:517:16
+      at TestContext.<anonymous> (file:///var/tmp/mth-run.5TylwX/claude-0/c/deploy/scripts/tests/backup-restore.test.mjs:530:5)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -2,
+    code: 'ENOENT',
+    syscall: 'lstat',
+    path: '/var/tmp/mth-run.5TylwX/claude-0/mth-backup-test-GiYOH2/backups/test-do-d14-nolisting/.backup-state/config.sha'
+  }

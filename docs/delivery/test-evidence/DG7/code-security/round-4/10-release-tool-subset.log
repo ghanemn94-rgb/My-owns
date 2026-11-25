@@ -1,0 +1,27 @@
+== node --test tools/release/tests/{secret-scan,scan-assets,claims-scan,patterns,service-list,verify-seal,seal}.test.mjs (clone at 2fd69c37)
+== NOTE: the first run (all 7 files incl. seal.test.mjs and verify-seal.test.mjs) was stopped by the 30-minute background limit of my shell, with no result line; it is NOT counted. Re-run of the five scanner/service-list files only:
+== node --test tools/release/tests/{secret-scan,scan-assets,claims-scan,patterns,service-list}.test.mjs (clone at 2fd69c37)
+﹣ T-A11 the real built SPA, runtime tree and configuration scan exits 0 (0.644416ms) # BLOCKED: no assembled runtime tree; set MTH_RELEASE_RUNTIME_DIR (deploy/scripts/assemble-runtime.sh)
+✖ tools/release/tests/service-list.test.mjs (124.226067ms)
+ℹ tests 113
+ℹ suites 7
+ℹ pass 111
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 1
+ℹ todo 0
+ℹ duration_ms 238435.515619
+✖ failing tests:
+✖ tools/release/tests/service-list.test.mjs (124.226067ms)
+exit=1
+
+== The service-list.test.mjs failure above is an artefact of my own step 08: assemble-runtime.sh prunes the workspace's node_modules IN PLACE to production dependencies (documented in its header), which removed the dev dependency 'yaml' (Error: Cannot find module 'yaml', from apps/api/package.json). node_modules re-linked to the repository's full install; re-run:
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3927.959199
+exit=0

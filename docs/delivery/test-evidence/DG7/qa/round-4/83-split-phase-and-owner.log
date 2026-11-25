@@ -1,0 +1,25 @@
+### 83-split-phase-and-owner start clone /var/tmp/mth-run.JaMlfV/claude-0/rv 2026-11-25T08:39:34Z node v24.21.0 HEAD 2fd69c3753ffb1f96aaf787f8526daa0bf59abe7 LANG=unset LC_ALL=unset free=5926MB
+### $ bash tests/qa/support/with-pg.sh node --test deploy/scripts/tests/qa-dg7-rg4-backup-split-phase-and-owner.test.mjs
+port-policy: PostgreSQL listening on port 32561 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+split: manifest.config = {"files":[{"path":"config/compose.yaml","sha256":"91d8aa5d97f515ea0c3ca27671c09ab63307922aad63aa173013b6a5638ed394"},{"path":"config/images.lock.json","sha256":"f72a87fecbcf0a3a0492fce26b0e60617401d405cc6b28ae3f7874bb6edd6982"}],"sha256":"3a7ce9a264111335f6af1b04e408a38c32929a5520e62a882bfcab0151828595"}
+added: exit 1: backup: set qa-rg4-added failed: config/ changed after the database phase
+tampered: exit 1: backup: set qa-rg4-tampered failed: the config/ listing does not match its recorded SHA-256
+R7 {"id":"R7","name":"evidence","actual":{"owner":"0:0","verified":0,"mismatches":0,"otherOwner":0,"retentionFiles":0,"groupOrOtherBits":0},"result":"PASS","expected":{"owner":"0:0","verified":0,"mismatches":0,"otherOwner":0,"retentionFiles":0,"groupOrOtherBits":0}}
+unsettable owner: exit 1: restore: check R7 failed: expected the evidence owned by 10001:10001, got: chown: changing ownership of '/var/tmp/mth-run.JaMlfV/claude-0/qa-rg4-split-TI81a8/neg-evidence': Invalid argument; target public tables 350
+✔ QA-RG4-a (F-DG7-1081): database / copy-out / finish in three processes with separate TMPDIRs: config.files lists config/ exactly, no stderr (3716.430669ms)
+✔ QA-RG4-b (F-DG7-1081): a config/ file ADDED between the phases is refused (exit 1, no manifest) (3567.002546ms)
+✔ QA-RG4-c (F-DG7-1081): a tampered .backup-state listing (digest mismatch) is refused (exit 1, no manifest) (4717.118556ms)
+✔ QA-RG4-d (F-DG7-1082): restore of the split set into an existing 0755 root: every path owner-only 0700/0600, R7 PASS with owner fields (11307.8437ms)
+✔ QA-RG4-e (F-DG7-1082): an owner that cannot be set fails as R7 (exit 1) and says so; observed: the database is already restored (7491.050384ms)
+✔ QA-RG4-f (F-DG7-1082): --evidence-owner forms that are not <uid>:<gid> numbers are BLOCKED before anything is written (1021.453274ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 46819.579604
+### 83-split-phase-and-owner end 2026-11-25T08:40:27Z exit=0 free=5926MB
+copy removed: yes; test exit=0

@@ -1,0 +1,35 @@
+# ADR-0066 at the candidate (2fd69c375) vs what DO-D14 built (F-DG7-1083 verification; new drift)
+## ADR-0066 amendments present
+174:## Amendment 1 (2026-11-17, T-DG7-SA-ADR72): §4 the backup-time checks as built and the `ownerOnly` check; §5 the owner-only set, the refused shared backup root (a symbolic link judged by its target) and the required `MTH_BACKUP_ROOT` (F-DG7-1032, F-DG7-1041, F-DG7-1052; F-DG7-1012, F-DG7-1053)
+268:## Amendment 2 (2026-11-24, T-DG7-SA-ADR73): the Compose sequence as built after T-DG7-DO-D13 (the `/mth/deploy` layout of the `backup` service, the step-2 `CAP_DAC_READ_SEARCH` grant and `DATABASE_URL_FILE` read), the answer to DO-D13 Q2, and the Compose run's real status (F-DG7-1073, F-DG7-1083)
+## any ADR mention of the DO-D14 behaviour (--evidence-owner, R7 owner/otherOwner/groupOrOtherBits, rg4c)
+(none)
+## §7 step 5 and R7 as the ADR states them
+124:| R7 evidence | `transfer-attachments verify` on the target: 0 missing, 0 size and 0 SHA-256 mismatches against `attachments.json`; every retention set file matches | evidence bytes |
+174:## Amendment 1 (2026-11-17, T-DG7-SA-ADR72): §4 the backup-time checks as built and the `ownerOnly` check; §5 the owner-only set, the refused shared backup root (a symbolic link judged by its target) and the required `MTH_BACKUP_ROOT` (F-DG7-1032, F-DG7-1041, F-DG7-1052; F-DG7-1012, F-DG7-1053)
+176:- **Author:** solution-architect (T-DG7-SA-ADR72). Base `faa1154ca9d15e160bf39f5a2a0df575ec1bf133` on `claude/mobily-transformation-platform-dg7-regate`.
+211:| 5 | `retentionSetsMatch` | every retention archive set named by `retention_run.archive_set_key` exists in the store, and its manifest matches `retention_run.archive_set_sha256`. Every one of its files matches the store copy | 4 |
+268:## Amendment 2 (2026-11-24, T-DG7-SA-ADR73): the Compose sequence as built after T-DG7-DO-D13 (the `/mth/deploy` layout of the `backup` service, the step-2 `CAP_DAC_READ_SEARCH` grant and `DATABASE_URL_FILE` read), the answer to DO-D13 Q2, and the Compose run's real status (F-DG7-1073, F-DG7-1083)
+270:- **Author:** solution-architect (T-DG7-SA-ADR73). Base `ef91b97d7068206aa4e1f0473b9671d1973b2afa` on `claude/mobily-transformation-platform-dg6-regate`.
+272:  - Amendment 1 (SA-ADR72, `bf5bf82a7`) was written before T-DG7-DO-D13 (`ebe11c378`). DO-D13 changed the Compose sequence in three places that A1.4 does not state. Its handback says so itself (`docs/delivery/handbacks/DG7/T-DG7-DO-D13-devops-engineer.md` §4 gap 3) and asks the architect a question (§5 Q2).
+345:| 5 | Run the copy-out in the `backup` service, which already mounts the store read-only as root | `postgres:18` has no Node, and the copy-out and its manifest are the API's CLI (ADR-0064 §5). A new image is rejected by Alternative 4 of this ADR. |
+## A2.6 / A2.7 / A2.8 statements now outdated by the candidate
+390:### A2.7 The follow-on change assigned to T-DG7-DO-D14 (not built at this amendment's base)
+398:When DO-D14 is merged, the ownership rule as built (who owns the restored store, how it is set, and its test) must be recorded by a further amendment of §7. The same amendment should restate A2.6 from DO-D14's drill log. Until then, items 1 to 3 are open findings, not behaviour.
+402:9. **The Compose half has run, but only the database, audit and snapshot legs carry data** (A2.6). The evidence and job-state legs and the `DAC_READ_SEARCH` read path moved zero items in rg3b. The restored ownership depends on an undocumented drill step. These stay open until DO-D14's drill (A2.7) or a later host run shows them with real objects.
+## what the candidate's code and guide do
+57:      --evidence-owner) eowner="${2:-}"; shift 2 ;;
+240:  chk R7 "evidence" "{\"verified\": ${entries:-null}, \"mismatches\": 0, \"retentionFiles\": $ret_files, \"owner\": \"$eowner\", \"otherOwner\": 0, \"groupOrOtherBits\": 0}" \
+241:    "{\"verified\": ${vcount:-null}, \"mismatches\": $([ "$verify_rc" = 0 ] && echo 0 || echo "\"verify exit $verify_rc\""), \"retentionFiles\": $((ret_files - ret_bad)), \"owner\": \"$(stat -c '%u:%g' "$store")\", \"otherOwner\": $foreign, \"groupOrOtherBits\": $loose}"
+136:- **Target evidence root.** An **empty** evidence root. When it already exists, its owner is taken as the account of the API and the worker (see "Ownership of the restored evidence" below).
+144:  [--readyz-url http://127.0.0.1:3000/readyz] [--evidence-owner <uid>:<gid>]
+147:**Ownership of the restored evidence.** The API and the worker run without any capability (`cap_drop: ALL`), so they can read and remove only the evidence files their own account owns. `restore.sh` therefore gives every restored evidence directory and file to that account, with mode `0700` for directories and `0600` for files, the modes the filesystem store writes itself. You do **not** need a separate `chown` step.
+149:- **Which account.** By default, the owner of the existing, empty target evidence root. In Compose this is the image's app user, uid `10001`, which owns the evidence volume. If the root does not exist yet, the account that runs `restore.sh` creates it and keeps it. `--evidence-owner <uid>:<gid>` names the account explicitly, for example `--evidence-owner 10001:10001`. Any other value is refused: `BLOCKED: --evidence-owner must be <uid>:<gid> (numbers), for example 10001:10001` (exit 2).
+## the SA-ADR73 handback disclosed the lag and asked for Amendment 3
+73:3. **A2.6 and A2.7 describe DO-D14 as not built.** If DO-D14 merges in the same integration, the ADR then lags its behaviour on restored evidence ownership (§7 step 5) until a further amendment records it (A2.7, last paragraph).
+80:- **Q2 (orchestrator):** after DO-D14 merges, assign the §7 ownership amendment of A2.7 (Amendment 3), with A2.6 restated from DO-D14's drill log.
+## D-285 / progress.md mention of the Amendment 3 follow-up
+0
+## guide §8: the extended Compose drill is recorded as not run, while rg4c exists
+227:**Compose runs.** The previous Compose run (orchestrator, round 3, `compose-backup-rg3b`) moved **0 evidence objects and 0 jobs**, so it did not exercise the evidence and job-state legs. It also carried the `cat: …/config.sha` error line, which was repaired afterwards (T-DG7-DO-D14). The extended drill above has **not been run** in the agent sandbox, because the sandbox has no access to a Docker daemon. Its result is recorded only when a run on a host with Docker exists.
+docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg4c/run.txt

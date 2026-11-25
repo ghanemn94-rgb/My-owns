@@ -1,0 +1,26 @@
+# ADR-0066 at the FROZEN source commit 2fd69c3753ffb1f96aaf787f8526daa0bf59abe7 (read with git show, not from the working tree) vs what DO-D14 built (F-DG7-1083 verification; new drift F-DG7-1111)
+# (85-adr-drift-do-d14-worktree.log is the earlier reading of the main working tree; at 11:05Z the main working tree was found to carry uncommitted, concurrent edits by others to this ADR, restore.sh, backup-restore.test.mjs and backup-restore.md, so this file replaces it. The two readings are identical for every line quoted below.)
+## amendments
+174:## Amendment 1 (2026-11-17, T-DG7-SA-ADR72): §4 the backup-time checks as built and the `ownerOnly` check; §5 the owner-only set, the refused shared backup root (a symbolic link judged by its target) and the required `MTH_BACKUP_ROOT` (F-DG7-1032, F-DG7-1041, F-DG7-1052; F-DG7-1012, F-DG7-1053)
+268:## Amendment 2 (2026-11-24, T-DG7-SA-ADR73): the Compose sequence as built after T-DG7-DO-D13 (the `/mth/deploy` layout of the `backup` service, the step-2 `CAP_DAC_READ_SEARCH` grant and `DATABASE_URL_FILE` read), the answer to DO-D13 Q2, and the Compose run's real status (F-DG7-1073, F-DG7-1083)
+## any mention of the DO-D14 behaviour (--evidence-owner, R7 owner/otherOwner/groupOrOtherBits, rg4c)
+(none)
+## R7 in the §7 table
+124:| R7 evidence | `transfer-attachments verify` on the target: 0 missing, 0 size and 0 SHA-256 mismatches against `attachments.json`; every retention set file matches | evidence bytes |
+## A2.7 / residual 9 statements
+390:### A2.7 The follow-on change assigned to T-DG7-DO-D14 (not built at this amendment's base)
+398:When DO-D14 is merged, the ownership rule as built (who owns the restored store, how it is set, and its test) must be recorded by a further amendment of §7. The same amendment should restate A2.6 from DO-D14's drill log. Until then, items 1 to 3 are open 
+402:9. **The Compose half has run, but only the database, audit and snapshot legs carry data** (A2.6). The evidence and job-state legs and the `DAC_READ_SEARCH` read path moved zero items in rg3b. The restored ownership depends on an undocumented drill step. T
+## restore.sh at 2fd69c3753ffb1f96aaf787f8526daa0bf59abe7
+57:      --evidence-owner) eowner="${2:-}"; shift 2 ;;
+176:    chown -R "$eowner" "$store" 2>"$WORK/chown.err" || {
+240:  chk R7 "evidence" "{\"verified\": ${entries:-null}, \"mismatches\": 0, \"retentionFiles\": $ret_files, \"owner\": \"$eowner\", \"otherOwner\": 0, \"groupOrOtherBits\": 0}" \
+241:    "{\"verified\": ${vcount:-null}, \"mismatches\": $([ "$verify_rc" = 0 ] && echo 0 || echo "\"verify exit $verify_rc\""), \"retentionFiles\": $((ret_files - ret_bad)), \"owner\": \"$(stat -c '%
+## backup-restore.md at 2fd69c3753ffb1f96aaf787f8526daa0bf59abe7
+136:- **Target evidence root.** An **empty** evidence root. When it already exists, its owner is taken as the account of the API and the worker (see "Ownership of the restored evidence" below).
+147:**Ownership of the restored evidence.** The API and the worker run without any capability (`cap_drop: ALL`), so they can read and remove only the evidence files their own account owns. `restore.sh
+227:**Compose runs.** The previous Compose run (orchestrator, round 3, `compose-backup-rg3b`) moved **0 evidence objects and 0 jobs**, so it did not exercise the evidence and job-state legs. It also c
+## SA-ADR73 handback (gap 3, Q2)
+73:3. **A2.6 and A2.7 describe DO-D14 as not built.** If DO-D14 merges in the same integration, the ADR then lags its behaviour on restored evidence ownership (§7 step 5) until a further amendment re
+80:- **Q2 (orchestrator):** after DO-D14 merges, assign the §7 ownership amendment of A2.7 (Amendment 3), with A2.6 restated from DO-D14's drill log.
+## D-285 mentions Amendment 3: 0

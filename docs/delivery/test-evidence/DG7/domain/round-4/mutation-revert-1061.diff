@@ -1,0 +1,18 @@
+448,449c448,449
+<   backup_config_listing "$set" >"$state/config.sha" || backup_fail "the config/ listing could not be written"
+<   mth_sha256 "$state/config.sha" >"$state/config_sha256"
+---
+>   backup_config_listing "$set" >"$WORK/config.sha"
+>   mth_sha256 "$WORK/config.sha" >"$state/config_sha256"
+559,565d558
+<   [ -f "$state/config.sha" ] && [ -f "$state/config_sha256" ] ||
+<     backup_fail "the config/ listing of the database phase is missing from .backup-state"
+<   [ "$(mth_sha256 "$state/config.sha")" = "$(cat "$state/config_sha256")" ] ||
+<     backup_fail "the config/ listing does not match its recorded SHA-256"
+<   backup_config_listing "$set" >"$WORK/config.now" || backup_fail "config/ cannot be listed"
+<   cmp -s "$WORK/config.now" "$state/config.sha" || backup_fail "config/ changed after the database phase"
+< 
+602c595
+<     -v cfg="$(cat "$state/config.sha")" -v cfgsha="$(cat "$state/config_sha256")" \
+---
+>     -v cfg="$(cat "$WORK/config.sha")" -v cfgsha="$(cat "$state/config_sha256")" \

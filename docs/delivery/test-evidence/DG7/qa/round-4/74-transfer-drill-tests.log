@@ -1,0 +1,184 @@
+### 74-transfer-drill-tests start clone /var/tmp/mth-run.JaMlfV/claude-0/rv 2026-11-25T08:57:22Z node v24.21.0 HEAD 2fd69c3753ffb1f96aaf787f8526daa0bf59abe7 LANG=unset LC_ALL=unset free=3831MB
+### $ bash tests/qa/support/with-pg.sh node --test deploy/scripts/tests/transfer-drill.test.mjs
+port-policy: PostgreSQL listening on port 32540 (attempt 1)
+qa disposable cluster: PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit; server_encoding UTF8, lc_collate C, lc_ctype C
+▶ T-B3 origin-scan.mjs: the source origin is accepted only in audit_event
+  ✔ a hit in audit_event only is listed and passes (exit 0) (471.905748ms)
+  ✔ the origin in a text column fails with the B.5 line (exit 1) (733.517297ms)
+  ✔ the origin in a jsonb value fails (exit 1) (1258.215743ms)
+  ✔ LIKE wildcards in the data are not matches (a plain substring test) (334.305712ms)
+✔ T-B3 origin-scan.mjs: the source origin is accepted only in audit_event (3080.273278ms)
+▶ T-B9 config-trace.mjs: configuration only from the template and the guide
+  ✔ documented keys pass, each citing its guide section; a secret is written as <KEY>_FILE and never shown (14.763588ms)
+  ✔ a key outside the map fails with the B.5 undocumented-step line (6.878426ms)
+  ✔ an anchor absent from the (fixture) guide fails with the same line (0.841646ms)
+  ✔ a key that is not in the template fails (not from the template) (0.693201ms)
+  ✔ the shipped map covers every .env.example key and every anchor exists in the shipped guide (8.23053ms)
+  ✔ the CLI exits 1 on an undocumented step and writes a FAIL trace (136.706404ms)
+✔ T-B9 config-trace.mjs: configuration only from the template and the guide (177.833458ms)
+▶ T-B9 transfer-drill.sh: BLOCKED, isolation and the report
+  ✔ without bwrap (stub PATH) it exits 3 with the B.5 BLOCKED line (56.764362ms)
+  ✔ without PostgreSQL server binaries it exits 3 with the B.5 BLOCKED line (85.853428ms)
+  ✔ not enough free disk: exit 3 with the B.6 DO-D2 line, and the work directory is removed (222.401343ms)
+  ✔ a probe that connects exits 1 with the B.5 isolation line (789.90507ms)
+  ✔ a failing step: exit 1, the B.5 step line, later steps NOT_RUN, result FAIL, schemaVersion mth-transfer-drill/1 (2270.65598ms)
+✔ T-B9 transfer-drill.sh: BLOCKED, isolation and the report (3426.096941ms)
+PASS  signin (566 ms): drill-bound -> user 01a211ec-cd49-73ec-bd89-c75101bdc4fb, roles [ADM_TECH,ADM_ACCESS]
+PASS  csrf (20 ms): Origin http://localhost:25301 -> 403 csrf
+PASS  unbound (40 ms): drill-unbound refused: identity_unbound; /me 401
+▶ T-B10 journey.mjs under NODE_ENV=production, AUTH_MODE=oidc: drill IdP sign-in, CSRF 403, unbound refused
+  ✔ signs in through the drill IdP (authMode oidc), the source-origin write is 403, the unbound user is refused (629.816188ms)
+PASS  signin (56 ms): drill-bound -> user 01a211ec-cd49-73ec-bd89-c75101bdc4fb, roles [ADM_TECH,ADM_ACCESS]
+PASS  status (89 ms): origin http://127.0.0.1:27608, environmentKind production, schema ok
+PASS  signin (59 ms): drill-bound -> user 01a211ec-cd49-73ec-bd89-c75101bdc4fb, roles [ADM_TECH,ADM_ACCESS]
+FAIL  status (50 ms): getDeploymentStatus.origin is http://127.0.0.1:27608, expected http://localhost:25301
+  ✔ status: getDeploymentStatus.origin is the target's origin; a wrong expectation FAILS, never passes (254.769152ms)
+PASS  signin (173 ms): drill-bound -> user 01a211ec-cd49-73ec-bd89-c75101bdc4fb, roles [ADM_TECH,ADM_ACCESS]
+FAIL  deeplink (77 ms): no notification with a link was issued on the target
+FAIL  downloads (0 ms): no --downloads given
+  ✔ a step with no data to prove never passes (deeplink with an empty inbox, downloads without a list) (250.925568ms)
+PASS  signin (53 ms): drill-bound -> user 01a211ec-cd49-73ec-bd89-c75101bdc4fb, roles [ADM_TECH,ADM_ACCESS]
+# T-B16 measurement: {"schemaVersion":"mth-drill-signin-measurement/1","appUserChangedBySignIn":true,"userIdentityChangedBySignIn":true,"measuredOn":"T-B10 production suite (NODE_ENV=production, AUTH_MODE=oidc, drill IdP), SYNTHETIC user"}
+  ✔ T-B16 (measurement): whether a sign-in changes app_user, recorded for allowance.mjs (483.431979ms)
+  ✔ a redirect URI the drill IdP has not registered is refused (9.546791ms)
+✔ T-B10 journey.mjs under NODE_ENV=production, AUTH_MODE=oidc: drill IdP sign-in, CSRF 403, unbound refused (16401.777547ms)
+PASS  signin (261 ms): drill-bound -> user 01a211ed-0bed-75cd-bfa9-70cc8b58c0ed, roles [ADM_TECH,ADM_ACCESS]
+PASS  csrf (16 ms): Origin http://localhost:25301 -> 403 csrf
+PASS  unbound (51 ms): drill-unbound refused: identity_unbound; /me 401
+▶ T-B10 (supporting, NOT production semantics) the same journey with NODE_ENV=development, AUTH_MODE=oidc
+  ✔ signs in through the drill IdP (authMode oidc), the source-origin write is 403, the unbound user is refused (336.033718ms)
+PASS  signin (38 ms): drill-bound -> user 01a211ed-0bed-75cd-bfa9-70cc8b58c0ed, roles [ADM_TECH,ADM_ACCESS]
+PASS  status (87 ms): origin http://127.0.0.1:28969, environmentKind production, schema ok
+PASS  signin (40 ms): drill-bound -> user 01a211ed-0bed-75cd-bfa9-70cc8b58c0ed, roles [ADM_TECH,ADM_ACCESS]
+FAIL  status (50 ms): getDeploymentStatus.origin is http://127.0.0.1:28969, expected http://localhost:25301
+  ✔ status: getDeploymentStatus.origin is the target's origin; a wrong expectation FAILS, never passes (217.250523ms)
+PASS  signin (43 ms): drill-bound -> user 01a211ed-0bed-75cd-bfa9-70cc8b58c0ed, roles [ADM_TECH,ADM_ACCESS]
+FAIL  deeplink (35 ms): no notification with a link was issued on the target
+FAIL  downloads (0 ms): no --downloads given
+  ✔ a step with no data to prove never passes (deeplink with an empty inbox, downloads without a list) (78.817302ms)
+  ✔ a redirect URI the drill IdP has not registered is refused (2.388277ms)
+✔ T-B10 (supporting, NOT production semantics) the same journey with NODE_ENV=development, AUTH_MODE=oidc (15822.476167ms)
+▶ T-B15 allowance.mjs: mth-recheck-allowance/4 from a fixture journal (p7-work-split §B.9 DO-D7)
+  ✔ writes a /4 file with all eight keys that parseAllowance (packages/db recheck.ts) accepts (655.060265ms)
+  ✔ a lineage table appears only in lineage; a journalled kpi_evaluation key goes to lineage[].mustInclude.added (12.786146ms)
+  ✔ a counter table appears only in counters: in children, audited or the journal it is refused (0.905803ms)
+  ✔ actors from sign-ins; journalled keys of audited tables go to mustInclude; duplicates merged (0.488158ms)
+  ✔ never-operational tables appear only in tables, audited or children; reasons for every list entry (0.463716ms)
+  ✔ the three D8 lists are pinned: audited tables have no child entry, children's parents are listed (0.350629ms)
+  ✔ app_user is listed only when the measurement says a sign-in changes it (0.322727ms)
+  ✔ an audit_event entry, an unknown identity or a bad key is refused (exit 1 via the CLI) (472.713224ms)
+✔ T-B15 allowance.mjs: mth-recheck-allowance/4 from a fixture journal (p7-work-split §B.9 DO-D7) (1143.691233ms)
+▶ T-B16 job-check.mjs on a fixture database, digests from mth-db table-digest (§2.3 encoder)
+  ✔ the snapshot holds the encoder's digests: approval digests equal mth-db table-digest's (4598.815589ms)
+  ✔ a new job_run row passes (counted), and the pg-boss table is measured (5220.672603ms)
+  ✔ a changed enabled schedule fails (4387.155606ms)
+  ✔ a removed job_run row fails (5553.478722ms)
+  ✔ a changed approval row fails, and changes the encoder digest (9484.634371ms)
+  ✔ a missing pg-boss table reports BLOCKED (exit 2), never PASS (409.398835ms)
+✔ T-B16 job-check.mjs on a fixture database, digests from mth-db table-digest (§2.3 encoder) (48312.090406ms)
+PASS  signin (282 ms): drill-01995000-0000-7000-8000-000000000012 -> user 01995000-0000-7000-8000-000000000012, roles [TL,TL]
+PASS  writes (4073 ms): transformation 01a211ee-af62-71a5-b289-841e7fa6dfde; RAID 01a211ee-b101-709c-9733-aef72cedd382; C0 G5 missing [g5.performance_kpi_not_known, g5.performance_kpi_not_known, g5.performance_kpi_not_known, g5.performance_pilot_evidence_missing, g5.adoption_none, g5.decision_overdue]; C1 KPI 01995000-4102-7000-8000-000000000001 submitted (accepted) in period 2026-11; KPI 01995000-4102-7000-8000-000000000002 submitted (accepted) in period 2026-11; KPI 01995000-4102-7000-8000-000000000003 submitted (accepted) in period 2026-11; pilot evidence 01a211ee-b318-77e6-ab1a-8382793ac93a verified and linked; adoption link 01a211ee-b3bf-7247-ba2f-9880cacb376c (usage_activation_rate <- KPI 01995000-4102-7000-8000-000000000001): KPI 01995000-4102-7000-8000-000000000001 already remedied; executive decision DEC-01 deferred to 2026-12-09; C2 canSubmit after 2 s; C3 submission 1
+PASS  approve (30341 ms): C4 canDecide after 0 s; C5 drill-01995000-0000-7000-8000-000000000011 (rebound) decided G5 submission 1: deferred (decision 01a211ee-bfc8-75f6-a425-f21442d6af14); C6 submission decided; waited 30 s for the worker; KPI evaluations read: 3
+PASS  exportq (38 ms): export 01a211ef-35a1-7437-a84b-235de52e088d queued
+PASS  exportwait (3232 ms): export 01a211ef-35a1-7437-a84b-235de52e088d succeeded after 3 s; 1731 bytes, SHA-256 equal
+# T-B17 measurement: {"schemaVersion":"mth-drill-d8-measurement/1","changed":{"app_user":{"added":0,"changed":4,"missing":0},"audit_event":{"added":178,"changed":0,"missing":0},"outbox_event":{"added":19,"changed":0,"missing":0},"processed_message":{"added":15,"changed":0,"missing":0},"scoped_assignment":{"added":1,"changed":0,"missing":0},"transformation":{"added":1,"changed":0,"missing":0},"automation_execution":{"added":16,"changed":0,"missing":0},"automation_action_result":{"added":16,"changed":0,"missing":0},"calculation_run":{"added":3,"changed":0,"missing":0},"evidence":{"added":1,"changed":0,"missing":0},"forum":{"added":5,"changed":0,"missing":0},"gate_instance":{"added":6,"changed":1,"missing":0},"governance_matrix":{"added":2,"changed":0,"missing":0},"diagnostic_item":{"added":6,"changed":0,"missing":0},"kpi_actual":{"added":3,"changed":0,"missing":0},"data_quality_finding":{"added":3,"changed":0,"missing":0},"gate_submission":{"added":1,"changed":0,"missing":0},"gate_submission_criterion":{"added":4,"changed":0,"missing":0},"record_code_counter":{"added":1,"changed":1,"missing":0},"report_snapshot":{"added":1,"changed":0,"missing":0},"export_job":{"added":1,"changed":0,"missing":0},"export_job_progress":{"added":1,"changed":0,"missing":0},"report_snapshot_source":{"added":3,"changed":0,"missing":0},"report_snapshot_version":{"added":1,"changed":0,"missing":0},"roadmap_wave":{"added":4,"changed":0,"missing":0},"corrective_signal":{"added":3,"changed":0,"missing":0},"raid_entry":{"added":1,"changed":0,"missing":0},"scoring_weight_set":{"added":1,"changed":0,"missing":0},"scoring_weight":{"added":5,"changed":0,"missing":0},"adoption_metric_link":{"added":1,"changed":0,"missing":0},"tom_canvas_cell":{"added":10,"changed":0,"missing":0},"transformation_decision_right":{"added":4,"changed":0,"missing":0},"decision":{"added":1,"changed":1,"missing":0},"gate_decision":{"added":1,"changed":0,"missing":0},"kpi_actual_value":{"added":3,"changed":0,"missing":0},"kpi_actual_review":{"added":3,"changed":0,"missing":0},"kpi_evaluation":{"added":6,"changed":0,"missing":0},"phase_step":{"added":5,"changed":0,"missing":0},"phase_step_evidence":{"added":1,"changed":0,"missing":0},"transformation_config_pin":{"added":3,"changed":0,"missing":0},"transformation_raci_deliverable":{"added":6,"changed":0,"missing":0},"transformation_raci_assignment":{"added":36,"changed":0,"missing":0},"user_identity":{"added":0,"changed":4,"missing":0},"work_item":{"added":6,"changed":0,"missing":0},"inbox_notification":{"added":6,"changed":0,"missing":0}},"journalledTables":["adoption_metric_link","app_user","decision","evidence","export_job","gate_decision","gate_submission","kpi_actual","phase_step_evidence","raid_entry","transformation"],"residue":[{"table":"automation_action_result","auditRequired":true,"fkeys":"automation_action_result_action_type_fkey->automation_action_type automation_action_result_automation_execution_id_fkey->automation_execution"},{"table":"automation_execution","auditRequired":true,"fkeys":"automation_execution_created_by_fkey->app_user automation_execution_initiating_user_id_fkey->app_user automation_execution_organization_id_fkey->organization automation_execution_rule_version_fkey->automation_rule_version automation_execution_transformation_id_fkey->transformation automation_execution_trigger_code_fkey->automation_trigger automation_execution_updated_by_fkey->app_user"},{"table":"calculation_run","auditRequired":false,"fkeys":"calculation_run_organization_id_fkey->organization calculation_run_transformation_id_fkey->transformation"},{"table":"corrective_signal","auditRequired":false,"fkeys":"corrective_signal_case_fkey->corrective_case corrective_signal_organization_id_fkey->organization corrective_signal_transformation_id_fkey->transformation"},{"table":"data_quality_finding","auditRequired":true,"fkeys":"data_quality_finding_actual_fkey->kpi_actual data_quality_finding_created_by_fkey->app_user data_quality_finding_kpi_fkey->kpi_definition data_quality_finding_organization_id_fkey->organization data_quality_finding_period_fkey->reporting_period data_quality_finding_resolved_by_fkey->app_user data_quality_finding_run_fkey->calculation_run data_quality_finding_transformation_id_fkey->transformation data_quality_finding_updated_by_fkey->app_user"},{"table":"diagnostic_item","auditRequired":true,"fkeys":"diagnostic_item_archived_by_fkey->app_user diagnostic_item_baseline_id_fkey->baseline diagnostic_item_created_by_fkey->app_user diagnostic_item_dimension_code_fkey->diagnostic_dimension diagnostic_item_impact_kpi_definition_id_fkey->kpi_definition diagnostic_item_organization_id_fkey->organization diagnostic_item_owner_user_id_fkey->app_user diagnostic_item_transformation_id_fkey->transformation diagnostic_item_updated_by_fkey->app_user"},{"table":"forum","auditRequired":true,"fkeys":"forum_chair_party_code_fkey->governance_party forum_created_by_fkey->app_user forum_organization_id_fkey->organization forum_secretary_user_id_fkey->app_user forum_template_key_fkey->forum_template forum_transformation_id_fkey->transformation forum_updated_by_fkey->app_user"},{"table":"gate_instance","auditRequired":true,"fkeys":"gate_instance_approver_role_code_fkey->role gate_instance_approver_user_id_fkey->app_user gate_instance_created_by_fkey->app_user gate_instance_current_submission_fkey->gate_submission gate_instance_gate_code_fkey->gate_definition gate_instance_organization_id_fkey->organization gate_instance_transformation_id_fkey->transformation gate_instance_updated_by_fkey->app_user"},{"table":"gate_submission_criterion","auditRequired":false,"fkeys":"gate_submission_criterion_criterion_key_fkey->gate_criterion_definition gate_submission_criterion_exception_fkey->gate_exception gate_submission_criterion_gate_submission_id_fkey->gate_submission gate_submission_criterion_organization_id_fkey->organization gate_submission_criterion_transformation_id_fkey->transformation"},{"table":"governance_matrix","auditRequired":true,"fkeys":"governance_matrix_approved_by_fkey->app_user governance_matrix_created_by_fkey->app_user governance_matrix_organization_id_fkey->organization governance_matrix_transformation_id_fkey->transformation governance_matrix_updated_by_fkey->app_user"},{"table":"kpi_actual_review","auditRequired":false,"fkeys":"kpi_actual_review_actual_fkey->kpi_actual kpi_actual_review_decided_by_fkey->app_user kpi_actual_review_on_behalf_of_user_id_fkey->app_user kpi_actual_review_organization_id_fkey->organization kpi_actual_review_transformation_id_fkey->transformation kpi_actual_review_value_fkey->kpi_actual_value"},{"table":"kpi_actual_value","auditRequired":false,"fkeys":"kpi_actual_value_actual_fkey->kpi_actual kpi_actual_value_entered_by_fkey->app_user kpi_actual_value_organization_id_fkey->organization kpi_actual_value_transformation_id_fkey->transformation kpi_actual_value_version_fkey->kpi_version"},{"table":"kpi_evaluation","auditRequired":false,"fkeys":"kpi_evaluation_kpi_fkey->kpi_definition kpi_evaluation_organization_id_fkey->organization kpi_evaluation_period_fkey->reporting_period kpi_evaluation_run_fkey->calculation_run kpi_evaluation_threshold_fkey->kpi_rag_threshold kpi_evaluation_trajectory_fkey->target_trajectory kpi_evaluation_transformation_id_fkey->transformation kpi_evaluation_version_fkey->kpi_version"},{"table":"phase_step","auditRequired":true,"fkeys":"phase_step_created_by_fkey->app_user phase_step_definition_fkey->phase_step_definition phase_step_enabled_by_gate_decision_id_fkey->gate_decision phase_step_organization_id_fkey->organization phase_step_owner_user_id_fkey->app_user phase_step_review_requested_by_fkey->app_user phase_step_reviewed_by_fkey->app_user phase_step_transformation_id_fkey->transformation phase_step_updated_by_fkey->app_user"},{"table":"record_code_counter","auditRequired":false,"fkeys":"record_code_counter_transformation_id_fkey->transformation"},{"table":"report_snapshot","auditRequired":true,"fkeys":"report_snapshot_created_by_fkey->app_user report_snapshot_definition_code_fkey->report_definition report_snapshot_discarded_by_fkey->app_user report_snapshot_issued_by_fkey->app_user report_snapshot_methodology_version_id_fkey->methodology_version report_snapshot_organization_id_fkey->organization report_snapshot_reissue_of_id_fkey->report_snapshot report_snapshot_reporting_period_id_fkey->reporting_period report_snapshot_superseded_by_id_fkey->report_snapshot report_snapshot_transformation_id_fkey->transformation report_snapshot_updated_by_fkey->app_user"},{"table":"report_snapshot_source","auditRequired":false,"fkeys":"report_snapshot_source_organization_id_fkey->organization report_snapshot_source_snapshot_fkey->report_snapshot report_snapshot_source_transformation_id_fkey->transformation"},{"table":"report_snapshot_version","auditRequired":false,"fkeys":"report_snapshot_version_organization_id_fkey->organization report_snapshot_version_snapshot_fkey->report_snapshot report_snapshot_version_transformation_id_fkey->transformation"},{"table":"roadmap_wave","auditRequired":true,"fkeys":"roadmap_wave_created_by_fkey->app_user roadmap_wave_organization_id_fkey->organization roadmap_wave_owner_user_id_fkey->app_user roadmap_wave_transformation_id_fkey->transformation roadmap_wave_updated_by_fkey->app_user"},{"table":"scoped_assignment","auditRequired":false,"fkeys":"scoped_assignment_created_by_fkey->app_user scoped_assignment_derived_from_assignment_id_fkey->scoped_assignment scoped_assignment_granted_by_fkey->app_user scoped_assignment_organization_id_fkey->organization scoped_assignment_revoked_by_fkey->app_user scoped_assignment_role_id_fkey->role scoped_assignment_updated_by_fkey->app_user scoped_assignment_user_id_fkey->app_user"},{"table":"scoring_weight","auditRequired":false,"fkeys":"scoring_weight_created_by_fkey->app_user scoring_weight_organization_id_fkey->organization scoring_weight_transformation_id_fkey->transformation scoring_weight_weight_set_id_fkey->scoring_weight_set"},{"table":"scoring_weight_set","auditRequired":true,"fkeys":"scoring_weight_set_approved_by_fkey->app_user scoring_weight_set_created_by_fkey->app_user scoring_weight_set_organization_id_fkey->organization scoring_weight_set_transformation_id_fkey->transformation scoring_weight_set_updated_by_fkey->app_user"},{"table":"tom_canvas_cell","auditRequired":true,"fkeys":"tom_canvas_cell_created_by_fkey->app_user tom_canvas_cell_dimension_code_fkey->tom_dimension tom_canvas_cell_organization_id_fkey->organization tom_canvas_cell_owner_user_id_fkey->app_user tom_canvas_cell_transformation_id_fkey->transformation tom_canvas_cell_updated_by_fkey->app_user"},{"table":"transformation_config_pin","auditRequired":true,"fkeys":"transformation_config_pin_created_by_fkey->app_user transformation_config_pin_last_migration_fkey->methodology_migration transformation_config_pin_methodology_version_id_fkey->methodology_version transformation_config_pin_organization_id_fkey->organization transformation_config_pin_pinned_by_fkey->app_user transformation_config_pin_transformation_id_fkey->transformation transformation_config_pin_updated_by_fkey->app_user"},{"table":"transformation_decision_right","auditRequired":true,"fkeys":"transformation_decision_right_approve_party_code_fkey->governance_party transformation_decision_right_created_by_fkey->app_user transformation_decision_right_organization_id_fkey->organization transformation_decision_right_template_key_fkey->decision_right_template transformation_decision_right_transformation_id_fkey->transformation transformation_decision_right_updated_by_fkey->app_user"},{"table":"transformation_raci_assignment","auditRequired":true,"fkeys":"transformation_raci_assignment_created_by_fkey->app_user transformation_raci_assignment_deliverable_fkey->transformation_raci_deliverable transformation_raci_assignment_organization_id_fkey->organization transformation_raci_assignment_party_code_fkey->governance_party transformation_raci_assignment_transformation_id_fkey->transformation transformation_raci_assignment_updated_by_fkey->app_user"},{"table":"transformation_raci_deliverable","auditRequired":true,"fkeys":"transformation_raci_deliverable_created_by_fkey->app_user transformation_raci_deliverable_organization_id_fkey->organization transformation_raci_deliverable_template_key_fkey->raci_template_deliverable transformation_raci_deliverable_transformation_id_fkey->transformation transformation_raci_deliverable_updated_by_fkey->app_user"},{"table":"work_item","auditRequired":true,"fkeys":"work_item_assignee_user_id_fkey->app_user work_item_completed_by_fkey->app_user work_item_created_by_fkey->app_user work_item_kind_fkey->work_item_kind work_item_organization_id_fkey->organization work_item_transformation_id_fkey->transformation work_item_updated_by_fkey->app_user"}],"signedIn":4,"journey":[{"step":"signin","result":"PASS","detail":"drill-01995000-0000-7000-8000-000000000012 -> user 01995000-0000-7000-8000-000000000012, roles [TL,TL]"},{"step":"writes","result":"PASS","detail":"transformation 01a211ee-af62-71a5-b289-841e7fa6dfde; RAID 01a211ee-b101-709c-9733-aef72cedd382; C0 G5 missing [g5.performance_kpi_not_known, g5.performance_kpi_not_known, g5.performance_kpi_not_known, g5.performance_pilot_evidence_missing, g5.adoption_none, g5.decision_overdue]; C1 KPI 01995000-4102-7000-8000-000000000001 submitted (accepted) in period 2026-11; KPI 01995000-4102-7000-8000-000000000002 submitted (accepted) in period 2026-11; KPI 01995000-4102-7000-8000-000000000003 submitted (accepted) in period 2026-11; pilot evidence 01a211ee-b318-77e6-ab1a-8382793ac93a verified and linked; adoption link 01a211ee-b3bf-7247-ba2f-9880cacb376c (usage_activation_rate <- KPI 01995000-4102-7000-8000-000000000001): KPI 01995000-4102-7000-8000-000000000001 already remedied; executive decision DEC-01 deferred to 2026-12-09; C2 canSubmit after 2 s; C3 submission 1"},{"step":"approve","result":"PASS","detail":"C4 canDecide after 0 s; C5 drill-01995000-0000-7000-8000-000000000011 (rebound) decided G5 submission 1: deferred (decision 01a211ee-bfc8-75f6-a425-f21442d6af14); C6 submission decided; waited 30 s for the worker; KPI evaluations read: 3"},{"step":"exportq","result":"PASS","detail":"export 01a211ef-35a1-7437-a84b-235de52e088d queued"},{"step":"exportwait","result":"PASS","detail":"export 01a211ef-35a1-7437-a84b-235de52e088d succeeded after 3 s; 1731 bytes, SHA-256 equal"}],"gateChain":{"gate":"G5","c0Missing":[{"code":"g5.performance_kpi_not_known","pointer":"/kpiDefinitions/01995000-4102-7000-8000-000000000001"},{"code":"g5.performance_kpi_not_known","pointer":"/kpiDefinitions/01995000-4102-7000-8000-000000000002"},{"code":"g5.performance_kpi_not_known","pointer":"/kpiDefinitions/01995000-4102-7000-8000-000000000003"},{"code":"g5.performance_pilot_evidence_missing","pointer":"/phase-steps/transform.deliver_pilots"},{"code":"g5.adoption_none","pointer":null},{"code":"g5.decision_overdue","pointer":"/decisions/01995000-1040-7000-8000-000000000002"}],"writes":["submitKpiActual","submitKpiActual","submitKpiActual","createEvidence","reviewEvidence","linkPhaseStepEvidence","createAdoptionMetricLink","recordExecutiveDecisionOutcome","submitGate","decideGate"]},"actors":{"admin":"01995000-0000-7000-8000-000000000015","transformation":"01995000-0000-7000-8000-000000000001","submitter":"01995000-0000-7000-8000-000000000012","approver":"01995000-0000-7000-8000-000000000011","kpiUser":"01995000-0000-7000-8000-000000000015","kpiDefinition":"01995000-4102-7000-8000-000000000001","gate":"G5","kpiValueNature":"ratio","kpis":{"01995000-4102-7000-8000-000000000001":{"user":"01995000-0000-7000-8000-000000000015","reviewer":null,"reviewerParty":null,"valueNature":"ratio"},"01995000-4102-7000-8000-000000000002":{"user":"01995000-0000-7000-8000-000000000015","reviewer":null,"reviewerParty":null,"valueNature":"ratio"},"01995000-4102-7000-8000-000000000003":{"user":"01995000-0000-7000-8000-000000000015","reviewer":null,"reviewerParty":null,"valueNature":"ratio"}},"evidenceReviewer":"01995000-0000-7000-8000-000000000013","decisionOwner":"01995000-0000-7000-8000-000000000011","decisionOwners":{"01995000-1040-7000-8000-000000000007":"01995000-0000-7000-8000-000000000014","01995000-1040-7000-8000-000000000008":"01995000-0000-7000-8000-000000000014","01995000-1040-7000-8000-000000000009":"01995000-0000-7000-8000-000000000014","01995000-1040-7000-8000-000000000002":"01995000-0000-7000-8000-000000000011"},"trainer":"01995000-0000-7000-8000-000000000013","riskEditor":"01995000-0000-7000-8000-000000000012","adoptionEditor":"01995000-0000-7000-8000-000000000012","periodManager":null,"accessAdmin":"01995000-1001-7000-8000-000000000003","periodGrantee":"01995000-1001-7000-8000-000000000001","adoptionLink":{"templateKey":"usage_activation_rate","kpiDefinition":"01995000-4102-7000-8000-000000000001"}},"complete":true,"note":"SYNTHETIC fixture (seed-demo, drill IdP); measured by T-B17 on the ADR-0064 A3.6 chain C0-C6. complete=false: the chain stopped at the failing step, so the lists cover only the steps before it. Every write, including the gate submission and its deferred decision, is SYNTHETIC and approves nothing."}
+▶ T-B17 the D8 lists of allowance.mjs are measured on a fixture installation (mode 2 exit 0, then 4)
+  ✔ D8's write chain changes exactly the journalled tables, the operational list, user_identity and the two D8 lists (47772.507691ms)
+  ✖ mode 2 with the generated allowance matches after use (exit 0) (5807.955869ms)
+  ✔ one extra owner-written row in an audited table, its event by a non-journalled user, gives exit 4 (4877.730131ms)
+PASS  signin (81 ms): drill-01995000-0000-7000-8000-000000000012 -> user 01995000-0000-7000-8000-000000000012, roles [TL,TL,TL]
+FAIL  gatechain (534 ms): D8 FAIL: no API remedy for g5.performance_no_kpi at (no pointer)
+  ✔ T-B18: a missing code without a remedy row stops D8 at C1 with the A3.6 line, and nothing is written after it (2134.222288ms)
+✖ T-B17 the D8 lists of allowance.mjs are measured on a fixture installation (mode 2 exit 0, then 4) (119535.274747ms)
+PASS  signin (113 ms): drill-01995000-0000-7000-8000-000000000012 -> user 01995000-0000-7000-8000-000000000012, roles [TL,TL]
+PASS  gatechain (4059 ms): C0 G5 missing [g5.performance_kpi_not_known, g5.performance_kpi_not_known, g5.performance_kpi_not_known, g5.performance_pilot_evidence_missing, g5.adoption_none, g5.decision_overdue]; C1 KPI 01995000-4102-7000-8000-000000000001 submitted (accepted) in period 2026-11; KPI 01995000-4102-7000-8000-000000000002 submitted (accepted) in period 2026-11; KPI 01995000-4102-7000-8000-000000000003 submitted (accepted) in period 2026-11; pilot evidence 01a211f0-89e9-755a-a812-45c8c1dd6fde verified and linked; adoption link 01a211f0-8a6e-73fd-aabd-a0a0fa07ef0e (usage_activation_rate <- KPI 01995000-4102-7000-8000-000000000001): KPI 01995000-4102-7000-8000-000000000001 already remedied; executive decision DEC-01 deferred to 2026-12-09; C2 canSubmit after 2 s; C3 submission 1
+T-DG7-DO-D8 real PostgreSQL: comm bash (the launching pid), 6 processes under it, td_stop_pg 0.78 s, total 5.562 s
+▶ T-B19 DO-D6's grant path on shipped data: seed-demo --as-of the first day of last month (no current period)
+  ✔ T-B19: with the current period absent, G grants TO at organization scope and the period is opened through the API (4464.643223ms)
+✔ T-B19 DO-D6's grant path on shipped data: seed-demo --as-of the first day of last month (no current period) (62402.74441ms)
+▶ D-264 unexplained-tables.mjs: D9 names only the tables the mode 2 recheck could not explain
+  ✔ lists the `added, changed, missing (<basis>)` tables only, in report order, each once (0.739388ms)
+  ✔ an explaining-events line, a key line or the summary line is never listed (2.174095ms)
+  ✔ the CLI prints one line per unexplained table; a missing file is BLOCKED (exit 2) (211.313518ms)
+  ✔ transfer-drill.sh D9 takes its failure listing from the helper, not from every indented table line (0.449477ms)
+✔ D-264 unexplained-tables.mjs: D9 names only the tables the mode 2 recheck could not explain (215.060408ms)
+▶ T-DG7-DO-D8 drill/cleanup.sh: bounded PostgreSQL shutdown; cleanup never changes the result
+  ✔ td_remove_work removes the work tree and returns 0 (46.492504ms)
+  ✔ a removal that keeps failing under set -e: returns 0, result 0 unchanged, one WARNING line on stderr and in the log (4055.717683ms)
+  ✔ a removal that keeps failing under set -e: returns 0, result 1 unchanged, one WARNING line on stderr and in the log (4135.737224ms)
+  ✔ td_stop_pg escalates INT -> QUIT -> KILL and returns only when the 'postmaster' and its child are gone (bounded) (8978.676282ms)
+  ✔ td_stop_pg on a real PostgreSQL: fast shutdown, no server process left, postmaster.pid removed, the tree removable (5577.734535ms)
+  ✔ T-DG7-DO-D8B td_stop_pg_dir: the launcher pid has gone, the real postmaster is still found and stopped through postmaster.pid (4964.080615ms)
+  ✔ transfer-drill.sh: the EXIT trap stops PostgreSQL with td_stop_pg and the outer mode ends td_remove_work; exit $rc (0.747933ms)
+  ✔ end to end: a failing drill whose work tree cannot be removed still exits 1 (not changed), with the WARNING line (6126.894224ms)
+✔ T-DG7-DO-D8 drill/cleanup.sh: bounded PostgreSQL shutdown; cleanup never changes the result (33886.788691ms)
+▶ T-DG7-DO-D9 schedule-explained.mjs: scheduled starters in D7-D9 (ADR-0064 A5, D-278)
+  ✔ T-S1 parseScheduleKey: the starters.ts format only, read as UTC; refuses Z, seconds, offsets, bad dates, upper case, another code (0.803222ms)
+  ✔ T-S2 slotOf: M or M - 60 s only; the zone comes from the row (5 0 * * * Asia/Riyadh is 21:05Z the day before) (7.570536ms)
+  ✔ T-S3 S7 bounds: W0 - 60 s is outside, W0 - 59 s inside, W1 inside, W1 + 1 min outside (11.777109ms)
+  ✔ T-S4 fails without the rule: the QA round-5 recheck output is explained with the rule; without it the same output is a D9 FAIL (1.078211ms)
+  ✔ T-S5 still flags an unexplained execution: S1-S9 and uniqueness violated one at a time each FAIL with the A5.4 reason (14.084346ms)
+  ✔ T-S6 Gate 0: another unexplained line, a third table, expected-but-not, attachments, 20 keys or exit 0/1 are not applicable (0.893327ms)
+  ✔ T-S7 S': a result of an unexplained execution, a result without a job event in R(x), and ordinals {1, 3} each FAIL (7.097946ms)
+  ✔ T-S8 cronMatches parses every cron seeded into job_schedule by the migrations, and refuses MON, L and six fields (11.151882ms)
+  ▶ T-S9 on PostgreSQL: a real job_schedule slot inside the window passes; a user, an unscheduled code, an outside slot or an event trigger FAIL
+    ✔ (a) an injected schedule-triggered execution for the real approval.escalation_scan slot 08:00 passes and is listed; tables unchanged (1227.661858ms)
+    ✔ (b) an execution with an initiating user still FAILS D9 (811.036253ms)
+    ✔ (b) a trigger_key whose code has no job_schedule row still FAILS D9 (576.06717ms)
+    ✔ (b) a slot outside the window still FAILS D9 (797.58082ms)
+    ✔ (T-S9) an event-triggered execution in the same window still FAILS D9 (972.121014ms)
+    ✔ (T-S9) a scheduled execution without its worker audit events still FAILS D9 (570.320211ms)
+    ✔ (T-S9) a scheduled slot execution beside an unexplained one: D9 FAILs as a whole (nothing else is explained) (688.137911ms)
+  ✔ T-S9 on PostgreSQL: a real job_schedule slot inside the window passes; a user, an unscheduled code, an outside slot or an event trigger FAIL (23652.950319ms)
+✔ T-DG7-DO-D9 schedule-explained.mjs: scheduled starters in D7-D9 (ADR-0064 A5, D-278) (23708.993719ms)
+ℹ tests 70
+ℹ suites 13
+ℹ pass 69
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 328968.669349
+
+✖ failing tests:
+
+test at deploy/scripts/tests/transfer-drill.test.mjs:1274:5
+✖ mode 2 with the generated allowance matches after use (exit 0) (5807.955869ms)
+  AssertionError [ERR_ASSERTION]:   automation_execution: 32 explaining events
+    automation_execution: 17 added, 0 changed, 0 missing (audit_explained)
+      unexplained added ["01a211ef-7b51-7066-8306-d5f4a862cacf"]
+    automation_action_result: 16 explaining events
+    automation_action_result: 17 added, 0 changed, 0 missing (audit_explained)
+      unexplained added ["01a211ef-7b9d-773e-84f9-140f8fb25a03"]
+    forum: 5 explaining events
+    gate_instance: 8 explaining events
+    governance_matrix: 2 explaining events
+    diagnostic_item: 6 explaining events
+    report_snapshot: 1 explaining events
+    roadmap_wave: 4 explaining events
+    corrective_case: 0 explaining events
+    scoring_weight_set: 1 explaining events
+    tom_canvas_cell: 10 explaining events
+    transformation_decision_right: 4 explaining events
+    phase_step: 5 explaining events
+    transformation_config_pin: 3 explaining events
+    transformation_raci_deliverable: 6 explaining events
+    transformation_raci_assignment: 36 explaining events
+    work_item: 7 explaining events
+  reconcile-migration: mismatch: 2 tables, 0 attachments differ
+  
+  
+  4 !== 0
+  
+      at TestContext.<anonymous> (file:///var/tmp/mth-run.JaMlfV/claude-0/rv/deploy/scripts/tests/transfer-drill.test.mjs:1314:14)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 4,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+### 74-transfer-drill-tests end 2026-11-25T09:02:56Z exit=1 free=3256MB

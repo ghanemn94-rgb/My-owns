@@ -1,0 +1,36 @@
+clone HEAD 08a9eb4188c3c5a16e4e01b416f3ed96c7829196
+## (a) reconcile at the frozen round-4 state
+round 2 qa-verifier: FAIL (STALE for current content)
+round 3 domain-reviewer: FAIL (STALE for current content)
+round 3 code-security-reviewer: FAIL (STALE for current content)
+round 3 qa-verifier: FAIL (STALE for current content)
+round 4 domain-reviewer: missing (STALE for current content)
+round 4 code-security-reviewer: missing (STALE for current content)
+round 4 qa-verifier: missing (STALE for current content)
+PASS reconcile (structure)
+exit=0
+## (b) synthetic record on the frozen candidate
+round 2 qa-verifier: FAIL (STALE for current content)
+round 3 domain-reviewer: FAIL (STALE for current content)
+round 3 code-security-reviewer: FAIL (STALE for current content)
+round 3 qa-verifier: FAIL (STALE for current content)
+round 4 domain-reviewer: missing (STALE for current content)
+round 4 code-security-reviewer: missing (STALE for current content)
+round 4 qa-verifier: PASS (current)
+PASS reconcile (structure)
+exit=0
+## (c) one candidate source file changed
+round 2 qa-verifier: FAIL (STALE for current content)
+round 3 domain-reviewer: FAIL (STALE for current content)
+round 3 code-security-reviewer: FAIL (STALE for current content)
+round 3 qa-verifier: FAIL (STALE for current content)
+round 4 domain-reviewer: missing (STALE for current content)
+round 4 code-security-reviewer: missing (STALE for current content)
+round 4 qa-verifier: PASS (STALE for current content)
+PASS reconcile (structure)
+exit=0
+## (d) DG7 stage validation must FAIL (no approval without real records and a gate record)
+FAIL gate DG7 (current) (1 problem)
+  - gate DG7: file not found (docs/delivery/gates/DG7.json)
+exit=1
+clone removed
