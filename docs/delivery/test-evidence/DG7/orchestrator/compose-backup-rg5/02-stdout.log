@@ -1,0 +1,44 @@
+2026-11-26T08:06:54Z compose-backup-drill: label rg5; source project mthbk-src (API :28301); target project mthbk-dst (API :28302)
+2026-11-26T08:06:54Z SYNTHETIC demo data only; a local Compose drill is not evidence of high-availability production readiness.
+2026-11-26T08:06:54Z C0 start: environment facts
+2026-11-26T08:06:55Z C0 PASS exit=0 0.35s
+2026-11-26T08:06:55Z C1 start: source project mthbk-src: up -d --wait (new volumes)
+2026-11-26T08:07:10Z C1 PASS exit=0 15.51s
+2026-11-26T08:07:10Z C2 start: seed-demo and seed-dev (SYNTHETIC) into the source
+2026-11-26T08:07:13Z C2 PASS exit=0 3.05s
+2026-11-26T08:07:13Z C2b start: 2 evidence uploads through a one-off dev-auth API (uid 10001) and 1 queued job (SYNTHETIC)
+2026-11-26T08:07:17Z C2b PASS exit=0 4.18s
+2026-11-26T08:07:17Z C3 start: §3.2 step 1: backup profile on postgres:18, --phase database
+2026-11-26T08:07:19Z C3 PASS exit=0 1.55s
+2026-11-26T08:07:19Z C4 start: §3.2 step 2: evidence copy-out in the app image (--user 0:0, DAC_READ_SEARCH), >= 2 files
+2026-11-26T08:07:20Z C4 PASS exit=0 1.24s
+2026-11-26T08:07:20Z C5 start: §3.2 step 3: backup profile, --phase finish (no stderr noise, config.files, counts)
+2026-11-26T08:07:21Z C5 PASS exit=0 1.21s
+2026-11-26T08:07:21Z manifest sha256 (from the backup line): 6e4b3964e50a8fd63cc2910b75e97ec00b5b0c750cfa94e4dab172cca42db790
+2026-11-26T08:07:21Z C6 start: the set is owner-only (§3.3)
+2026-11-26T08:07:21Z C6 PASS exit=0 0.01s
+2026-11-26T08:07:21Z C7 start: target project mthbk-dst: new volumes, db only
+2026-11-26T08:07:28Z C7 PASS exit=0 6.39s
+2026-11-26T08:07:28Z C8 start: restore.sh into mthbk-dst (postgres:18 client tools, --manifest-sha256)
+2026-11-26T08:07:33Z C8 PASS exit=0 5.35s
+2026-11-26T08:07:33Z C9 start: verify only (no owner change): R6/R7, uid 10001 reads every object, owner/modes, hashes, queued job
+2026-11-26T08:07:34Z C9 PASS exit=0 1.01s
+2026-11-26T08:07:34Z C10 start: start mthbk-dst; migrate up to date; GET /readyz over HTTP
+2026-11-26T08:07:41Z C10 PASS exit=0 6.85s
+2026-11-26T08:07:41Z C11 start: cleanup (down -v of both projects unless --keep)
+2026-11-26T08:07:43Z C11 PASS exit=0 2.31s
+2026-11-26T08:07:43Z summary:
+2026-11-26T08:07:43Z   C0 PASS 0.35s environment facts
+2026-11-26T08:07:43Z   C1 PASS 15.51s source project mthbk-src: up -d --wait (new volumes)
+2026-11-26T08:07:43Z   C2 PASS 3.05s seed-demo and seed-dev (SYNTHETIC) into the source
+2026-11-26T08:07:43Z   C2b PASS 4.18s 2 evidence uploads through a one-off dev-auth API (uid 10001) and 1 queued job (SYNTHETIC)
+2026-11-26T08:07:43Z   C3 PASS 1.55s §3.2 step 1: backup profile on postgres:18, --phase database
+2026-11-26T08:07:43Z   C4 PASS 1.24s §3.2 step 2: evidence copy-out in the app image (--user 0:0, DAC_READ_SEARCH), >= 2 files
+2026-11-26T08:07:43Z   C5 PASS 1.21s §3.2 step 3: backup profile, --phase finish (no stderr noise, config.files, counts)
+2026-11-26T08:07:43Z   C6 PASS 0.01s the set is owner-only (§3.3)
+2026-11-26T08:07:43Z   C7 PASS 6.39s target project mthbk-dst: new volumes, db only
+2026-11-26T08:07:43Z   C8 PASS 5.35s restore.sh into mthbk-dst (postgres:18 client tools, --manifest-sha256)
+2026-11-26T08:07:43Z   C9 PASS 1.01s verify only (no owner change): R6/R7, uid 10001 reads every object, owner/modes, hashes, queued job
+2026-11-26T08:07:43Z   C10 PASS 6.85s start mthbk-dst; migrate up to date; GET /readyz over HTTP
+2026-11-26T08:07:43Z   C11 PASS 2.31s cleanup (down -v of both projects unless --keep)
+2026-11-26T08:07:43Z compose-backup-drill: PASS in 49.12s (label rg5; restore report /home/user/My-owns/docs/delivery/test-evidence/DG7/orchestrator/compose-backup-rg5/02-compose-backup-drill.d/restore/restore-report.json)
